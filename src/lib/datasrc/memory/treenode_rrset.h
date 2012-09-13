@@ -28,6 +28,8 @@
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/rdataset.h>
 
+#include <boost/noncopyable.hpp>
+
 #include <string>
 
 namespace isc {
@@ -65,12 +67,17 @@ namespace memory {
 /// it should be safe, but we should eventually provide complete
 /// implementations of these methods.
 ///
+/// This class can internally maintain dynamically allocated resource.
+/// It would cause copying a class object complicated while objects of
+/// this class are not expected to be copyable in the usage, so it's
+/// explicitly defined non copyable.
+///
 /// \note This class is exposed in this separate header file so that other
 /// part of the in-memory data source implementation and test code
 /// can refer to its definition, and only for that purpose.  Otherwise this is
 /// essentially a private class of the in-memory data source implementation,
 /// and an application shouldn't directly refer to this class.
-class TreeNodeRRset : public dns::AbstractRRset {
+class TreeNodeRRset : boost::noncopyable, public dns::AbstractRRset {
 public:
     /// \brief Normal case constructor.
     ///

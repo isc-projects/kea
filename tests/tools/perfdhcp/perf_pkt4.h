@@ -20,6 +20,7 @@
 #include <dhcp/pkt4.h>
 
 #include "localized_option.h"
+#include "pkt_transform.h"
 
 namespace isc {
 namespace perfdhcp {
@@ -102,10 +103,35 @@ public:
     /// \return false If unpack operation failed.
     bool rawUnpack();
 
+    /// \brief Replace contents of buffer with data.
+    ///
+    /// Function replaces part of the buffer with data from vector.
+    ///
+    /// \param dest_pos position in buffer where data is replaced.
+    /// \param first beginning of data range in source vector.
+    /// \param last end of data range in source vector.
+    void writeAt(size_t dest_pos,
+                 std::vector<uint8_t>::iterator first,
+                 std::vector<uint8_t>::iterator last);
+    
+    /// \brief Replace contents of buffer with value.
+    ///
+    /// Function replaces part of buffer with value.
+    ///
+    /// \param dest_pos position in buffer where value is
+    /// to be written.
+    /// \param val value to be written.
+    template<typename T>
+    void writeValueAt(size_t dest_pos, T val) {
+        PktTransform::writeValueAt<T>(data_, dest_pos, val);
+    }
+
 private:
     size_t transid_offset_;      ///< transaction id offset
 
 };
+
+typedef boost::shared_ptr<PerfPkt4> PerfPkt4Ptr;
 
 } // namespace perfdhcp
 } // namespace isc

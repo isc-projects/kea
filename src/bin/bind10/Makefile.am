@@ -17,12 +17,26 @@ bind10_DATA = bob.spec
 EXTRA_DIST = bob.spec
 
 man_MANS = bind10.8
+DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST += $(man_MANS) bind10.xml bind10_messages.mes
 
-if ENABLE_MAN
+if GENERATE_DOCS
 
 bind10.8: bind10.xml
-	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/bind10.xml 
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/bind10.xml 
+
+#dist-local-check-mans-enabled:
+#	@if grep "Man generation disabled" $(man_MANS) >/dev/null; then $(RM) $(man_MANS); fi
+
+else
+
+$(man_MANS):
+	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
+	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild BIND 10 > $@
+
+#dist-local-check-mans-enabled:
+#	@echo "*** --enable-generate-docs must be used in order to make dist"
+#	@false
 
 endif
 

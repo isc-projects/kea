@@ -36,7 +36,8 @@ TEST_F(AuthConfigSyntaxTest, inmemoryDefaultFileType) {
     EXPECT_TRUE(
         mspec_.validateConfig(
             Element::fromJSON(
-                "{\"listen_on\": [], \"datasources\": "
+                "{\"tcp_recv_timeout\": 1000,"
+                " \"listen_on\": [], \"datasources\": "
                 "  [{\"type\": \"memory\", \"class\": \"IN\", "
                 "    \"zones\": [{\"origin\": \"example.com\","
                 "                 \"file\": \""
@@ -48,7 +49,8 @@ TEST_F(AuthConfigSyntaxTest, inmemorySQLite3Backend) {
     EXPECT_TRUE(
         mspec_.validateConfig(
             Element::fromJSON(
-                "{\"datasources\": "
+                "{\"tcp_recv_timeout\": 1000,"
+                " \"datasources\": "
                 "  [{\"type\": \"memory\","
                 "    \"zones\": [{\"origin\": \"example.com\","
                 "                 \"file\": \""
@@ -58,14 +60,30 @@ TEST_F(AuthConfigSyntaxTest, inmemorySQLite3Backend) {
 
 TEST_F(AuthConfigSyntaxTest, badInmemoryFileType) {
     // filetype must be a string
-    EXPECT_FALSE(
+    ASSERT_FALSE(
         mspec_.validateConfig(
             Element::fromJSON(
-                "{\"datasources\": "
+                "{\"tcp_recv_timeout\": 1000,"
+                " \"datasources\": "
                 "  [{\"type\": \"memory\","
                 "    \"zones\": [{\"origin\": \"example.com\","
                 "                 \"file\": \""
                 TEST_DATA_DIR "/example.zone\","
                 "                 \"filetype\": 42}]}]}"), false));
 }
+
+TEST_F(AuthConfigSyntaxTest, badTCPRecvTimeout) {
+    // tcp_recv_timeout must be int
+    EXPECT_FALSE(
+        mspec_.validateConfig(
+            Element::fromJSON(
+                "{\"tcp_recv_timeout\": \"foo\","
+                " \"datasources\": "
+                "  [{\"type\": \"memory\","
+                "    \"zones\": [{\"origin\": \"example.com\","
+                "                 \"file\": \""
+                TEST_DATA_DIR "/example.zone\","
+                "                 \"filetype\": \"sqlite3\"}]}]}"), false));
+}
+
 }

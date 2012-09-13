@@ -25,6 +25,8 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/shared_ptr.hpp>
+
 #include <string>
 #include <vector>
 
@@ -150,33 +152,53 @@ checkBasicFields(const AbstractRRset& actual_rrset, const Name& expected_name,
     EXPECT_EQ(expected_sigcount, actual_rrset.getRRsigDataCount());
 }
 
+// The following two are trivial wrapper to create a shared pointer
+// version of TreeNodeRRset object in order to work around dubious
+// behavior of some C++ compiler: they reject getting a const reference to
+// a temporary non-copyable object.
+boost::shared_ptr<TreeNodeRRset>
+createRRset(const RRClass& rrclass, const ZoneNode* node,
+            const RdataSet* rdataset, bool dnssec_ok)
+{
+    return (boost::shared_ptr<TreeNodeRRset>(
+                new TreeNodeRRset(rrclass, node, rdataset, dnssec_ok)));
+}
+
+boost::shared_ptr<TreeNodeRRset>
+createRRset(const Name& realname, const RRClass& rrclass, const ZoneNode* node,
+            const RdataSet* rdataset, bool dnssec_ok)
+{
+    return (boost::shared_ptr<TreeNodeRRset>(
+                new TreeNodeRRset(realname, rrclass, node, rdataset,
+                                  dnssec_ok)));
+}
+
 TEST_F(TreeNodeRRsetTest, create) {
     // Constructed with RRSIG, and it should be visible.
-    checkBasicFields(TreeNodeRRset(rrclass_, www_node_, a_rdataset_, true),
+    checkBasicFields(*createRRset(rrclass_, www_node_, a_rdataset_, true),
                      www_name_, rrclass_, RRType::A(), 2, 1);
     // Constructed with RRSIG, and it should be invisible.
-    checkBasicFields(TreeNodeRRset(rrclass_, www_node_, a_rdataset_, false),
+    checkBasicFields(*createRRset(rrclass_, www_node_, a_rdataset_, false),
                      www_name_, rrclass_, RRType::A(), 2, 0);
     // Constructed without RRSIG, and it would be visible (but of course won't)
-    checkBasicFields(TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_, true),
+    checkBasicFields(*createRRset(rrclass_, origin_node_, ns_rdataset_, true),
                      origin_name_, rrclass_, RRType::NS(), 1, 0);
     // Constructed without RRSIG, and it should be visible
-    checkBasicFields(TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_,
-                                   false),
+    checkBasicFields(*createRRset(rrclass_, origin_node_, ns_rdataset_, false),
                      origin_name_, rrclass_, RRType::NS(), 1, 0);
     // RRSIG-only case (note the RRset's type is covered type)
-    checkBasicFields(TreeNodeRRset(rrclass_, www_node_, rrsig_only_rdataset_,
-                                   true),
+    checkBasicFields(*createRRset(rrclass_, www_node_, rrsig_only_rdataset_,
+                                  true),
                      www_name_, rrclass_, RRType::TXT(), 0, 1);
     // RRSIG-only case (note the RRset's type is covered type), but it's
     // invisible
-    checkBasicFields(TreeNodeRRset(rrclass_, www_node_, rrsig_only_rdataset_,
-                                   false),
+    checkBasicFields(*createRRset(rrclass_, www_node_, rrsig_only_rdataset_,
+                                  false),
                      www_name_, rrclass_, RRType::TXT(), 0, 0);
     // Wildcard substitution
-    checkBasicFields(TreeNodeRRset(match_name_, rrclass_,
-                                   wildcard_node_, wildcard_rdataset_,
-                                   true),
+    checkBasicFields(*createRRset(match_name_, rrclass_,
+                                  wildcard_node_, wildcard_rdataset_,
+                                  true),
                      match_name_, rrclass_, RRType::A(), 2, 1);
 }
 
@@ -307,8 +329,8 @@ TEST_F(TreeNodeRRsetTest, toWire) {
     {
         SCOPED_TRACE("wildcard with RRSIG");
         checkToWireResult(expected_renderer, actual_renderer,
-                          TreeNodeRRset(match_name_, rrclass_, wildcard_node_,
-                                        wildcard_rdataset_, true),
+                          *createRRset(match_name_, rrclass_, wildcard_node_,
+                                       wildcard_rdataset_, true),
                           origin_name_, wildmatch_rrset_,
                           wildmatch_rrsig_rrset_, true);
     }
@@ -316,8 +338,8 @@ TEST_F(TreeNodeRRsetTest, toWire) {
     {
         SCOPED_TRACE("wildcard without RRSIG");
         checkToWireResult(expected_renderer, actual_renderer,
-                          TreeNodeRRset(match_name_, rrclass_, wildcard_node_,
-                                        wildcard_rdataset_, false),
+                          *createRRset(match_name_, rrclass_, wildcard_node_,
+                                       wildcard_rdataset_, false),
                           origin_name_, wildmatch_rrset_,
                           wildmatch_rrsig_rrset_, false);
     }
@@ -355,7 +377,7 @@ TEST_F(TreeNodeRRsetTest, toWireTruncated) {
     // (type, class, TTL, rdlen, and 4-byte IPv4 address).  Then we can only
     // render just one RR, without any garbage trailing data.
     checkToWireResult(expected_renderer, actual_renderer,
-                      TreeNodeRRset(rrclass_, www_node_, a_rdataset_, true),
+                      *createRRset(rrclass_, www_node_, a_rdataset_, true),
                       name, a_rrset_, a_rrsig_rrset_, true,
                       www_name_.getLength() + 14,
                       1);   // 1 main RR, no RRSIG
@@ -363,7 +385,7 @@ TEST_F(TreeNodeRRsetTest, toWireTruncated) {
     // The first main RRs should fit in the renderer (the name will be
     // fully compressed, so its size is 2 bytes), but the RRSIG doesn't.
     checkToWireResult(expected_renderer, actual_renderer,
-                      TreeNodeRRset(rrclass_, www_node_, a_rdataset_, true),
+                      *createRRset(rrclass_, www_node_, a_rdataset_, true),
                       name, a_rrset_, a_rrsig_rrset_, true,
                       www_name_.getLength() + 14 + 2 + 14,
                       2);   // 2 main RR, no RRSIG
@@ -379,15 +401,15 @@ TEST_F(TreeNodeRRsetTest, toWireTruncated) {
     const size_t limit_len = expected_renderer.getLength();
     // Then perform the test
     checkToWireResult(expected_renderer, actual_renderer,
-                      TreeNodeRRset(rrclass_, www_node_, aaaa_rdataset_, true),
+                      *createRRset(rrclass_, www_node_, aaaa_rdataset_, true),
                       name, aaaa_rrset_, aaaa_rrsig_rrset_, true, limit_len,
                       2);   // 1 main RR, 1 RRSIG
 
     // RRSIG only case.  Render length limit being 1, so it won't fit,
     // and will cause truncation.
     checkToWireResult(expected_renderer, actual_renderer,
-                      TreeNodeRRset(rrclass_, www_node_, rrsig_only_rdataset_,
-                                    true),
+                      *createRRset(rrclass_, www_node_, rrsig_only_rdataset_,
+                                   true),
                       name, ConstRRsetPtr(), txt_rrsig_rrset_, true, 1,
                       0);   // no RR
 }
@@ -455,32 +477,32 @@ checkToText(const AbstractRRset& actual_rrset,
 
 TEST_F(TreeNodeRRsetTest, toText) {
     // Constructed with RRSIG, and it should be visible.
-    checkToText(TreeNodeRRset(rrclass_, www_node_, a_rdataset_, true),
+    checkToText(*createRRset(rrclass_, www_node_, a_rdataset_, true),
                 a_rrset_, a_rrsig_rrset_);
     // Constructed with RRSIG, and it should be invisible.
-    checkToText(TreeNodeRRset(rrclass_, www_node_, a_rdataset_, false),
+    checkToText(*createRRset(rrclass_, www_node_, a_rdataset_, false),
                 a_rrset_, ConstRRsetPtr());
     // Constructed without RRSIG, and it would be visible (but of course won't)
-    checkToText(TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_, true),
+    checkToText(*createRRset(rrclass_, origin_node_, ns_rdataset_, true),
                 ns_rrset_, ConstRRsetPtr());
     // Constructed without RRSIG, and it should be visible
-    checkToText(TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_, false),
+    checkToText(*createRRset(rrclass_, origin_node_, ns_rdataset_, false),
                 ns_rrset_, ConstRRsetPtr());
     // Wildcard expanded name with RRSIG
-    checkToText(TreeNodeRRset(match_name_, rrclass_, wildcard_node_,
-                              wildcard_rdataset_, true),
+    checkToText(*createRRset(match_name_, rrclass_, wildcard_node_,
+                             wildcard_rdataset_, true),
                 wildmatch_rrset_, wildmatch_rrsig_rrset_);
     // Wildcard expanded name without RRSIG
-    checkToText(TreeNodeRRset(match_name_, rrclass_, wildcard_node_,
-                              wildcard_rdataset_, false),
+    checkToText(*createRRset(match_name_, rrclass_, wildcard_node_,
+                             wildcard_rdataset_, false),
                 wildmatch_rrset_, ConstRRsetPtr());
     // RRSIG case
-    checkToText(TreeNodeRRset(rrclass_, www_node_, rrsig_only_rdataset_,
-                              true),
+    checkToText(*createRRset(rrclass_, www_node_, rrsig_only_rdataset_,
+                             true),
                 ConstRRsetPtr(), txt_rrsig_rrset_);
     // Similar to the previous case, but completely empty.
-    checkToText(TreeNodeRRset(rrclass_, www_node_, rrsig_only_rdataset_,
-                              false),
+    checkToText(*createRRset(rrclass_, www_node_, rrsig_only_rdataset_,
+                             false),
                 ConstRRsetPtr(), ConstRRsetPtr());
 }
 
@@ -488,22 +510,22 @@ TEST_F(TreeNodeRRsetTest, isSameKind) {
     const TreeNodeRRset rrset(rrclass_, www_node_, a_rdataset_, true);
 
     // Same name (node), same type (rdataset) => same kind
-    EXPECT_TRUE(rrset.isSameKind(TreeNodeRRset(rrclass_, www_node_,
-                                               a_rdataset_, true)));
+    EXPECT_TRUE(rrset.isSameKind(*createRRset(rrclass_, www_node_,
+                                              a_rdataset_, true)));
 
     // Same name (node), different type (rdataset) => not same kind
-    EXPECT_FALSE(rrset.isSameKind(TreeNodeRRset(rrclass_, www_node_,
-                                                aaaa_rdataset_, true)));
+    EXPECT_FALSE(rrset.isSameKind(*createRRset(rrclass_, www_node_,
+                                               aaaa_rdataset_, true)));
 
     // Different name, different type => not same kind
-    EXPECT_FALSE(rrset.isSameKind(TreeNodeRRset(rrclass_, origin_node_,
-                                                ns_rdataset_, true)));
+    EXPECT_FALSE(rrset.isSameKind(*createRRset(rrclass_, origin_node_,
+                                               ns_rdataset_, true)));
 
     // Different name, same type => not same kind.
     // Note: this shouldn't happen in our in-memory data source implementation,
     // but API doesn't prohibit it.
-    EXPECT_FALSE(rrset.isSameKind(TreeNodeRRset(rrclass_, origin_node_,
-                                                a_rdataset_, true)));
+    EXPECT_FALSE(rrset.isSameKind(*createRRset(rrclass_, origin_node_,
+                                               a_rdataset_, true)));
 
     // Wildcard and expanded RRset
     const TreeNodeRRset wildcard_rrset(rrclass_, wildcard_node_,
@@ -535,8 +557,8 @@ TEST_F(TreeNodeRRsetTest, isSameKind) {
     // tree node, they must belong to the same RR class.  This case is
     // a caller's bug, and the isSameKind() implementation returns the
     // "wrong" (= true) answer.
-    EXPECT_TRUE(rrset.isSameKind(TreeNodeRRset(RRClass::CH(), www_node_,
-                                               a_rdataset_, true)));
+    EXPECT_TRUE(rrset.isSameKind(*createRRset(RRClass::CH(), www_node_,
+                                              a_rdataset_, true)));
 
     // Same kind of different RRset class
     EXPECT_TRUE(rrset.isSameKind(*a_rrset_));

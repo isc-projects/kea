@@ -46,11 +46,16 @@ def pop(line):
 #   whitespace removed, and all other whitespace compressed to
 #   single spaces
 #########################################################################
-decomment = re.compile('\s*(?:;.*)+')
+decomment = re.compile('^\s*((?:[^;"]|"[^"]*")*)\s*(?:|;.*)$')
+# Regular expression explained:
+# First, ignore any whitespace at the start. Then take the content,
+# each bit is either a harmless character (no ; nor ") or a string -
+# sequence between " " not containing double quotes. Then there may
+# be a comment at the end.
 def cleanup(s):
     global decomment
     s = s.strip().expandtabs()
-    s = decomment.sub('', s)
+    s = decomment.search(s).group(1)
     return ' '.join(s.split())
 
 #########################################################################

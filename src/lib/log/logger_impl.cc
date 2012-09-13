@@ -151,6 +151,15 @@ LoggerImpl::outputRaw(const Severity& severity, const string& message) {
 
         case FATAL:
             LOG4CPLUS_FATAL(logger_, message);
+            break;
+
+        case NONE:
+             break;
+
+        default:
+            LOG4CPLUS_ERROR(logger_,
+                            "Unsupported severity in LoggerImpl::outputRaw(): "
+                            << severity);
     }
 
     if (!locker.unlock()) {
