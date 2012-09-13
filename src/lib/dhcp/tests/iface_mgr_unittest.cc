@@ -233,31 +233,24 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
     // Socket is open if its descriptor is greater than zero.
     ASSERT_GT(socket1, 0);
 
-    // Time when call to IfaceMgr::receive6() started.
-    ptime start_time;
-    // Time when call to IfaceMgr::receive6() ended.
-    ptime stop_time;
-    // Time duration between start_time and stop_time.
-    time_duration duration;
-
     // Remember when we call receive6().
-    start_time = microsec_clock::universal_time();
+    ptime start_time = microsec_clock::universal_time();
     // Call receive with timeout of 1s + 400000us = 1.4s.
     Pkt6Ptr pkt;
     ASSERT_NO_THROW(pkt = ifacemgr->receive6(1, 400000));
     // Remember when call to receive6() ended.
-    stop_time = microsec_clock::universal_time();
+    ptime stop_time = microsec_clock::universal_time();
     // We did not send a packet to lo interface so we expect that
     // nothing has been received and timeout has been reached.
     ASSERT_FALSE(pkt);
     // Calculate duration of call to receive6().
-    duration = stop_time - start_time;
+    time_duration duration = stop_time - start_time;
     // We stop the clock when the call completes so it does not
     // precisely reflect the receive timeout. However the
     // uncertainity should be low enough to expect that measured
-    // value is in the range <1.4; 2).
+    // value is in the range <1.4s; 1.7s>.
     EXPECT_GE(duration.total_microseconds(), 1400000);
-    EXPECT_LT(duration.total_seconds(), 2);
+    EXPECT_LE(duration.total_microseconds(), 1700000);
 
     // Test timeout shorter than 1s.
     start_time = microsec_clock::universal_time();
@@ -265,9 +258,9 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
     stop_time = microsec_clock::universal_time();
     ASSERT_FALSE(pkt);
     duration = stop_time - start_time;
-    // Check if measured duration is within <0.5s; 1s).
+    // Check if measured duration is within <0.5s; 0.8s>.
     EXPECT_GE(duration.total_microseconds(), 500000);
-    EXPECT_LT(duration.total_seconds(), 1);
+    EXPECT_LE(duration.total_microseconds(), 800000);
 
     // Test with invalid fractional timeout values.
     EXPECT_THROW(ifacemgr->receive6(0, 1000000), isc::BadValue);
@@ -290,31 +283,24 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     // Socket is open if its descriptor is greater than zero.
     ASSERT_GT(socket1, 0);
 
-    // Time when call to IfaceMgr::receive4() started.
-    ptime start_time;
-    // Time when call to IfaceMgr::receive4() ended.
-    ptime stop_time;
-    // Time duration between start_time and stop_time.
-    time_duration duration;
-
     Pkt4Ptr pkt;
     // Remember when we call receive4().
-    start_time = microsec_clock::universal_time();
+    ptime start_time = microsec_clock::universal_time();
     // Call receive with timeout of 2s + 300000us = 2.3s.
     ASSERT_NO_THROW(pkt = ifacemgr->receive4(2, 300000));
     // Remember when call to receive4() ended.
-    stop_time = microsec_clock::universal_time();
+    ptime stop_time = microsec_clock::universal_time();
     // We did not send a packet to lo interface so we expect that
     // nothing has been received and timeout has been reached.
     ASSERT_FALSE(pkt);
     // Calculate duration of call to receive4().
-    duration = stop_time - start_time;
+    time_duration duration = stop_time - start_time;
     // We stop the clock when the call completes so it does not
     // precisely reflect the receive timeout. However the
     // uncertainity should be low enough to expect that measured
-    // value is in the range <2.3s; 3s).
+    // value is in the range <2.3s; 2.6s>.
     EXPECT_GE(duration.total_microseconds(), 2300000);
-    EXPECT_LT(duration.total_seconds(), 3);
+    EXPECT_LE(duration.total_microseconds(), 2600000);
 
     // Test timeout shorter than 1s.
     start_time = microsec_clock::universal_time();
@@ -322,9 +308,9 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     stop_time = microsec_clock::universal_time();
     ASSERT_FALSE(pkt);
     duration = stop_time - start_time;
-    // Check if measured duration is within <0.4s; 1s).
+    // Check if measured duration is within <0.4s; 0.7s>.
     EXPECT_GE(duration.total_microseconds(), 400000);
-    EXPECT_LT(duration.total_seconds(), 1);
+    EXPECT_LE(duration.total_microseconds(), 700000);
 
     // Test with invalid fractional timeout values.
     EXPECT_THROW(ifacemgr->receive6(0, 1000000), isc::BadValue);
