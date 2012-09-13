@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2011  Internet Systems Consortium.
+# Copyright (C) 2009-2012  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -853,6 +853,8 @@ class TestAXFR(TestXfrinConnection):
 
     def tearDown(self):
         time.time = self.orig_time_time
+        # clear all statistics counters after each test
+        counter.clear_counters()
         super().tearDown()
 
     def __create_mock_tsig(self, key, error, has_last_signature=True):
@@ -1065,11 +1067,30 @@ class TestAXFR(TestXfrinConnection):
         self.assertRaises(XfrinProtocolError,
                           self.conn._handle_xfrin_responses)
 
+    def test_ipver_str(self):
+        orig_socket = self.conn.socket
+        class FakeSocket(): pass
+        self.conn.socket = FakeSocket()
+        self.conn.socket.family = socket.AF_INET
+        self.assertEqual(self.conn.get_ipver_str(), 'v4')
+        self.conn.socket.family = socket.AF_INET6
+        self.assertEqual(self.conn.get_ipver_str(), 'v6')
+        self.conn.socket.family = None
+        self.assertIsNone(self.conn.get_ipver_str())
+        self.conn.socket = orig_socket
+
     def test_soacheck(self):
         # we need to defer the creation until we know the QID, which is
         # determined in _check_soa_serial(), so we use response_generator.
         self.conn.response_generator = self._create_soa_response_data
+        # check the statistics counters
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_soaoutv4, TEST_ZONE_NAME_STR)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_soaoutv6, TEST_ZONE_NAME_STR)
         self.assertEqual(self.conn._check_soa_serial(), XFRIN_OK)
+        self.assertEqual(1, counter.get_soaoutv4(TEST_ZONE_NAME_STR))
+        self.assertEqual(0, counter.get_soaoutv6(TEST_ZONE_NAME_STR))
 
     def test_soacheck_with_bad_response(self):
         self.conn.response_generator = self._create_broken_response_data
@@ -1435,6 +1456,19 @@ class TestAXFR(TestXfrinConnection):
 
     def test_do_xfrin(self):
         self.conn.response_generator = self._create_normal_response_data
+        # check the statistics counters
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_axfrreqv4, TEST_ZONE_NAME_STR)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_axfrreqv6, TEST_ZONE_NAME_STR)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_ixfrreqv4, TEST_ZONE_NAME_STR)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_ixfrreqv6, TEST_ZONE_NAME_STR)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_xfrsuccess, TEST_ZONE_NAME_STR)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_time_to_axfr, TEST_ZONE_NAME_STR)
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
         self.assertFalse(self.conn._datasrc_client._journaling_enabled)
 
@@ -1445,6 +1479,18 @@ class TestAXFR(TestXfrinConnection):
         self.assertEqual(0, self.conn._transfer_stats.ixfr_addition_count)
         self.assertEqual(177, self.conn._transfer_stats.byte_count)
         self.assertGreater(self.conn._transfer_stats.get_running_time(), 0)
+        self.assertEqual(1,
+                         counter.get_axfrreqv4(TEST_ZONE_NAME_STR))
+        self.assertEqual(0,
+                         counter.get_axfrreqv6(TEST_ZONE_NAME_STR))
+        self.assertEqual(0,
+                         counter.get_ixfrreqv4(TEST_ZONE_NAME_STR))
+        self.assertEqual(0,
+                         counter.get_ixfrreqv6(TEST_ZONE_NAME_STR))
+        self.assertEqual(1,
+                         counter.get_xfrsuccess(TEST_ZONE_NAME_STR))
+        self.assertGreater(counter.get_time_to_axfr(TEST_ZONE_NAME_STR),
+                           0.0)
 
     def test_do_xfrin_with_tsig(self):
         # use TSIG with a mock context.  we fake all verify results to
@@ -1466,8 +1512,12 @@ class TestAXFR(TestXfrinConnection):
         self.conn._tsig_ctx_creator = \
             lambda key: self.__create_mock_tsig(key, TSIGError.BAD_SIG)
         self.conn.response_generator = self._create_normal_response_data
+        # check the statistics counters
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_xfrfail, TEST_ZONE_NAME_STR)
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
         self.assertEqual(1, self.conn._tsig_ctx.verify_called)
+        self.assertEqual(1, counter.get_xfrfail(TEST_ZONE_NAME_STR))
 
     def test_do_xfrin_without_last_tsig(self):
         # TSIG verify will succeed, but it will pretend the last message is
@@ -2511,6 +2561,15 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(self.xfr.config_handler({})['result'][0], 0)
         self.assertEqual(self.xfr.config_handler({'transfers_in': 3})['result'][0], 0)
         self.assertEqual(self.xfr._max_transfers_in, 3)
+
+    def test_command_handler_getstats(self):
+        module_spec = isc.config.module_spec_from_file(
+            xfrin.SPECFILE_LOCATION)
+        ans = isc.config.parse_answer(
+            self.xfr.command_handler("getstats", None))
+        self.assertEqual(0, ans[0])
+        self.assertTrue(module_spec.validate_statistics(
+                False, ans[1]))
 
     def _check_zones_config(self, config_given):
         if 'transfers_in' in config_given:
