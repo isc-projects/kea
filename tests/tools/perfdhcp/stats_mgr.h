@@ -73,14 +73,19 @@ public:
         /// \brief Increment operator.
         const CustomCounter& operator++() {
             ++counter_;
-            return(*this);
+            return (*this);
         }
 
         /// \brief Increment operator.
         const CustomCounter& operator++(int) {
             CustomCounter& this_counter(*this);
             operator++();
-            return(this_counter);
+            return (this_counter);
+        }
+
+        const CustomCounter& operator+=(int val) {
+            counter_ = counter_ + val;
+            return (*this);
         }
 
         /// \brief Return counter value.
@@ -824,6 +829,20 @@ public:
             CustomCounterPtr(new CustomCounter(long_name));
     }
 
+    /// \brief Check if any packet drops occured.
+    ///
+    // \return true, if packet drops occured.
+    bool droppedPackets() const {
+        for (ExchangesMapIterator it = exchanges_.begin();
+             it != exchanges_.end();
+             ++it) {
+            if (it->second->getDroppedPacketsNum() > 0) {
+                return (true);
+            }
+        }
+        return (false);
+    }
+
     /// \brief Return specified counter.
     ///
     /// Method returns specified counter.
@@ -844,11 +863,13 @@ public:
     ///
     /// Increement counter value by one.
     ///
-    /// \param counter_key key poitinh to the counter in the counters map.
+    /// \param counter_key key poiting to the counter in the counters map.
     /// \return pointer to specified counter after incrementation.
-    const CustomCounter& incrementCounter(const std::string& counter_key) {
+    const CustomCounter& incrementCounter(const std::string& counter_key,
+                                          const uint64_t value = 1) {
         CustomCounterPtr counter = getCounter(counter_key);
-        return(++(*counter));
+        *counter += value;
+        return (*counter);
     }
 
     /// \brief Adds new packet to the sent packets list.

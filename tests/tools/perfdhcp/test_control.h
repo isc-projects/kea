@@ -504,7 +504,8 @@ protected:
     /// \param socket socket to be used.
     /// \throw isc::BadValue if unknown message type received.
     /// \throw isc::Unexpected if unexpected error occured.
-    void receivePackets(const TestControlSocket& socket);
+    /// \return number of received packets.
+    uint64_t receivePackets(const TestControlSocket& socket);
 
     /// \brief Register option factory functions for DHCPv4
     ///
