@@ -43,16 +43,24 @@ namespace {
 /// \param node The ZoneNode found by the find() calls
 /// \param rdataset The RdataSet to create the RRsetPtr for
 /// \param rrclass The RRClass as passed by the client
+/// \param realname If given, the TreeNodeRRset is created with this name
+///                 (e.g. for wildcard substitution)
 ///
 /// Returns an empty TreeNodeRRsetPtr is either node or rdataset is NULL.
 TreeNodeRRsetPtr
 createTreeNodeRRset(const ZoneNode* node,
                     const RdataSet* rdataset,
-                    const RRClass& rrclass)
+                    const RRClass& rrclass,
+                    const Name* realname = NULL)
 {
     if (node != NULL && rdataset != NULL) {
-        return TreeNodeRRsetPtr(new TreeNodeRRset(rrclass, node,
-                                                  rdataset, true));
+        if (realname != NULL) {
+            return TreeNodeRRsetPtr(new TreeNodeRRset(*realname, rrclass, node,
+                                                      rdataset, true));
+        } else {
+            return TreeNodeRRsetPtr(new TreeNodeRRset(rrclass, node,
+                                                      rdataset, true));
+        }
     } else {
         return TreeNodeRRsetPtr();
     }
@@ -147,17 +155,24 @@ bool cutCallback(const ZoneNode& node, FindState* state) {
 //
 // Also performs the conversion of node + RdataSet into a TreeNodeRRsetPtr
 //
+// if wild is true, the RESULT_WILDCARD flag will be set.
+// If qname is not NULL, this is the query name, to be used in wildcard
+// substitution instead of the Node's name).
 isc::datasrc::memory::ZoneFinderResultContext
 createFindResult(const RRClass& rrclass,
                  const ZoneData& zone_data,
                  ZoneFinder::Result code,
                  const RdataSet* rrset,
                  const ZoneNode* node,
-                 bool wild = false) {
+                 bool wild = false,
+                 const Name* qname = NULL) {
     ZoneFinder::FindResultFlags flags = ZoneFinder::RESULT_DEFAULT;
+    const Name* rename = NULL;
 
     if (wild) {
         flags = flags | ZoneFinder::RESULT_WILDCARD;
+        // only use the rename qname if wild is true
+        rename = qname;
     }
     if (code == ZoneFinder::NXRRSET || code == ZoneFinder::NXDOMAIN || wild) {
         if (zone_data.isNSEC3Signed()) {
@@ -167,9 +182,8 @@ createFindResult(const RRClass& rrclass,
         }
     }
 
-    return (ZoneFinderResultContext(code, createTreeNodeRRset(node,
-                                                              rrset,
-                                                              rrclass),
+    return (ZoneFinderResultContext(code, createTreeNodeRRset(node, rrset,
+                                                              rrclass, rename),
                                     flags, node));
 }
 
@@ -297,7 +311,6 @@ public:
 // non-terminal node.  In this case the search name is considered to exist
 // but no data should be found there.
 //
-// (TODO: check this part when doing #2110)
 // If none of above is the case, we then consider whether there's a matching
 // wildcard.  DomainTree::find() records the node if it encounters a
 // "wildcarding" node, i.e., the immediate ancestor of a wildcard name
@@ -373,8 +386,51 @@ FindNodeResult findNode(const ZoneData& zone_data,
             return (FindNodeResult(ZoneFinder::NXRRSET, nsec_node,
                                    nsec_rds));
         }
-        // TODO: wildcard (see memory_datasrc.cc:480 and ticket #2110)
         // Nothing really matched.
+
+        // May be a wildcard, but check only if not disabled
+        if (node->getFlag(ZoneData::WILDCARD_NODE) &&
+            (options & ZoneFinder::NO_WILDCARD) == 0) {
+            if (node_path.getLastComparisonResult().getRelation() ==
+                NameComparisonResult::COMMONANCESTOR) {
+                // This means, e.g., we have *.wild.example and
+                // bar.foo.wild.example and are looking for
+                // baz.foo.wild.example. The common ancestor, foo.wild.example,
+                // should cancel wildcard.  Treat it as NXDOMAIN.
+                LOG_DEBUG(logger, DBG_TRACE_DATA,
+                          DATASRC_MEM_WILDCARD_CANCEL).arg(name);
+                    const ZoneNode* nsec_node;
+                    const RdataSet* nsec_rds = getClosestNSEC(zone_data,
+                                                              node_path,
+                                                              &nsec_node,
+                                                              options);
+                    return (FindNodeResult(ZoneFinder::NXDOMAIN, nsec_node,
+                                           nsec_rds));
+            }
+            uint8_t ls_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+
+            // Create the wildcard name (i.e. take "*" and extend it
+            // with all node labels down to the wildcard node
+            LabelSequence wildcard_ls(LabelSequence::WILDCARD(), ls_buf);
+            const ZoneNode* extend_with = node;
+            while (extend_with != NULL) {
+                wildcard_ls.extend(extend_with->getLabels(), ls_buf);
+                extend_with = extend_with->getUpperNode();
+            }
+
+            // Clear the node_path so that we don't keep incorrect (NSEC)
+            // context
+            node_path.clear();
+            ZoneTree::Result result = tree.find(LabelSequence(wildcard_ls),
+                                                &node, node_path, cutCallback,
+                                                &state);
+            // Otherwise, why would the domain_flag::WILD be there if
+            // there was no wildcard under it?
+            assert(result == ZoneTree::EXACTMATCH);
+            return (FindNodeResult(ZoneFinder::SUCCESS, node, state.rrset_,
+                        FindNodeResult::FIND_WILDCARD | zonecut_flag));
+        }
+
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).arg(name);
         const ZoneNode* nsec_node;
         const RdataSet* nsec_rds = getClosestNSEC(zone_data, node_path,
@@ -456,7 +512,9 @@ InMemoryZoneFinder::find_internal(const isc::dns::Name& name,
     assert(node != NULL);
 
     // We've found an exact match, may or may not be a result of wildcard.
-    // TODO, ticket #2110
+    const bool wild = ((node_result.flags &
+                        FindNodeResult::FIND_WILDCARD) != 0);
+
     // If there is an exact match but the node is empty, it's equivalent
     // to NXRRSET.
     if (node->isEmpty()) {
@@ -467,7 +525,8 @@ InMemoryZoneFinder::find_internal(const isc::dns::Name& name,
                                                   &nsec_node, options);
         return (createFindResult(rrclass_, zone_data_, NXRRSET,
                                  nsec_rds,
-                                 nsec_node));
+                                 nsec_node,
+                                 wild));
     }
 
     const RdataSet* found;
@@ -482,9 +541,8 @@ InMemoryZoneFinder::find_internal(const isc::dns::Name& name,
         if (found != NULL) {
             LOG_DEBUG(logger, DBG_TRACE_DATA,
                       DATASRC_MEM_EXACT_DELEGATION).arg(name);
-            // TODO: rename argument (wildcards, see #2110)
             return (createFindResult(rrclass_, zone_data_, DELEGATION,
-                                     found, node));
+                                     found, node, wild, &name));
         }
     }
 
@@ -493,12 +551,14 @@ InMemoryZoneFinder::find_internal(const isc::dns::Name& name,
         // Empty domain will be handled as NXRRSET by normal processing
         const RdataSet* cur_rds = node->getData();
         while (cur_rds != NULL) {
-            target->push_back(createTreeNodeRRset(node, cur_rds, rrclass_));
+            target->push_back(createTreeNodeRRset(node, cur_rds, rrclass_,
+                                                  &name));
             cur_rds = cur_rds->getNext();
         }
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ANY_SUCCESS).
             arg(name);
-        return (createFindResult(rrclass_, zone_data_, SUCCESS, NULL, node));
+        return (createFindResult(rrclass_, zone_data_, SUCCESS, NULL, node,
+                                 wild, &name));
     }
 
     const RdataSet* currds = node->getData();
@@ -510,19 +570,22 @@ InMemoryZoneFinder::find_internal(const isc::dns::Name& name,
         // Good, it is here
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUCCESS).arg(name).
             arg(type);
-        return (createFindResult(rrclass_, zone_data_, SUCCESS, found, node));
+        return (createFindResult(rrclass_, zone_data_, SUCCESS, found, node,
+                                 wild, &name));
     } else {
         // Next, try CNAME.
         found = RdataSet::find(node->getData(), RRType::CNAME());
         if (found != NULL) {
+
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_CNAME).arg(name);
-            return (createFindResult(rrclass_, zone_data_, CNAME, found, node));
+            return (createFindResult(rrclass_, zone_data_, CNAME, found, node,
+                                     wild, &name));
         }
     }
     // No exact match or CNAME.  Get NSEC if necessary and return NXRRSET.
     return (createFindResult(rrclass_, zone_data_, NXRRSET,
                              getNSECForNXRRSET(zone_data_, options, node),
-                             node));
+                             node, wild, &name));
 }
 
 isc::datasrc::ZoneFinder::FindNSEC3Result
