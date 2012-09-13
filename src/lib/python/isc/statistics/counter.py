@@ -13,8 +13,63 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-'''Statistics counter countainer for modules'''
+"""BIND 10 Statistics counter module
 
+This module handles the statistics counters for BIND 10 modules.  For
+using the module `counter.py`, firstly the init() method should be
+invoked in each module like b10-xfrin or b10-xfrout after importing
+this module.
+
+  import counter
+  counter.init(SPECFILE_LOCATION)
+
+The first argument of counter.init() is required, which is the
+location of the specification file like src/bin/xfrout/xfrout.spec. If
+this initial preparation is done, statistics counters can be accessed
+from each module. For example, in case that the item `xfrreqdone` is
+defined in statistics_spec in xfrout.spec, the following methods can
+be dynamically created: counter.inc_xfrreqdone(),
+counter.get_xfrreqdone(). Since these methods requires the string of
+the zone name in the first argument, in the b10-xfrout,
+
+  counter.inc_xfrreqdone(zone_name)
+
+then the xfrreqdone counter corresponding to zone_name was
+incremented. For getting the current number of this counter, we can do
+this,
+
+  number = counter.get_xfrreqdone(zone_name)
+
+then the current number was obtained and set in the above variable
+`number`. Such a getter method would be mainly used for unittesting.
+These dynamic accessor are defined in detail in the concrete class
+XfroutCounter. In other example, regarding the item `axfr_running`,
+the decrementer method is also created:
+counter.dec_axfr_running(). This method is used for decrementing the
+counter number.  Regarding the item `axfr_running`, an argument like
+zone name is not required.
+
+  counter.dec_axfr_running()
+
+These accessors are effective in other module. For example, in case
+that this module `counter.py` is once imported in such a main module
+as b10-xfrout, Regarding the item `notifyoutv4`, the incrementer
+inc_notifyoutv4() can be invoked via other module like notify_out.py,
+which is firstly imported in the main module.
+
+  counter.inc_notifyoutv4(zone_name)
+
+In this example this is for incrementing the counter of the item
+notifyoutv4. Thus, such statement can be also written in the other
+library like isc.notify.notify_out. If this module `counter.py` isn't
+imported in the main module but imported in such a library module as
+isc.notify.notify_out, in this example, empty methods would be
+invoked, which is directly defined in `counter.py`.
+
+Other accessors can be also defined in such individual class in
+future. For adding or modifying such accessor, we need to implement in
+`counter.py`.
+"""
 import threading
 import isc.config
 
@@ -38,8 +93,12 @@ def init(spec_file_name):
 
 # These method are dummies for notify_out in case XfroutCounter is not
 # loaded.
-def inc_notifyoutv4(self, arg): pass
-def inc_notifyoutv6(self, arg): pass
+def inc_notifyoutv4(self, arg):
+    """An empty method to be disclosed"""
+    pass
+def inc_notifyoutv6(self, arg):
+    """An empty method to be disclosed"""
+    pass
 
 class Counter():
     """A basic counter class for concrete classes"""
