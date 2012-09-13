@@ -815,16 +815,12 @@ The exit status is:
         As DHCP uses low port numbers (67 for DHCPv4 relays and
         547 for DHCPv6), running perfdhcp with non-root privileges will
         usually result in the error message similar to this:
-        
         <screen><userinput>$./perfdhcp -4 -l eth3 -r 100 all</userinput>
 Error running perfdhcp: Failed to bind socket 3 to 172.16.1.2/port=67
         </screen>
-        
         The '-L' command line switch allows the use of a custom local port.
         However, although the following command line will work:
-        
         <screen><userinput>$./perfdhcp -4 -l eth3 -r 100 -L 10067 all</userinput></screen>
-        
         in the standard configuration no responses will be received
         from the DHCP server because the server responds to default relay
         port 67.  A way to overcome this issue is to run
@@ -1007,7 +1003,7 @@ std deviation: 5.876 ms
 collected packets: 0
           </screen>
           There are now no packet drops, confirming that the server is able to
-          handle a load of 100 leases/second.  
+          handle a load of 100 leases/second.
           Note that the last parameter (-R 30) configures perfdhcp to simulate
           traffic from 30 distinct clients.
         </para>
@@ -1017,8 +1013,17 @@ collected packets: 0
         <para>
           By default the DHCP messages are formed with default options.  With
           template files, it is possible to define a custom packet format.
-          </para>
-          <para>
+        </para>
+        <para>
+          The template file names are specified with <![CDATA[-T<template-file>]]>
+          command line option. This option can be specified zero, one or two times.
+          The first occurence of this option refers to DISCOVER or SOLICIT message
+          and the second occurence refers to REQUEST (DHCPv4 or DHCPv6) message.
+          If -T option occurs only once the DISCOVER or SOLICIT message will be
+          created from the template and the REQUEST message will be created
+          dynamically (without the template). Note that each template file
+          holds data for exactly one DHCP message type. Templates for multiple
+          message types must not be combined in the single file.
           The content in template files is encoded in hexadecimal format.
           perfdhcp forms the packet by replacing parts of the binary stream read
           from the file with variable data such as elapsed time, hardware address, DUID
@@ -1067,6 +1072,19 @@ collected packets: 0
             <listitem><para>-I 40 - IA_NA option position in the REQUEST
             template</para></listitem>
           </itemizedlist>
+        </para>
+        <para>
+          The offsets of options indicate where they begin in the packet.
+          The only exception from this rule is <![CDATA[-O<random-offset>]]>
+          option that specifies the end of the DUID (DHCPv6) or MAC address
+          (DHCPv4). Depending on the number of simulated clients
+          (see <![CDATA[-R<random-range>]]> command line option) perfdhcp
+          will be randomizing bytes in packet buffer starting from this
+          position backwards. For the number of simulated clients
+          <![CDATA[<=]]> 256 only one octet (at random-offset position)
+          will be ranomized, for the number of clients <![CDATA[<=]]> 65536
+          two octets (at random-offset and random-offset-1)
+          will be randmized etc.
         </para>
       </section>
     </section>
