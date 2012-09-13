@@ -40,3 +40,6 @@ libb10_perfdhcp___la_LIBADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.
 
 pkglibexec_PROGRAMS  = perfdhcp
 perfdhcp_SOURCES  = perfdhcp.c
+
+# ... and the documentation
+EXTRA_DIST = perfdhcp_internals.dox
