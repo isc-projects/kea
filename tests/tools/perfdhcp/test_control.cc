@@ -515,12 +515,12 @@ TestControl::initializeStatsMgr() {
             stats_mgr4_->addCustomCounter("latesend", "Late sent packets");
             stats_mgr4_->addCustomCounter("shortwait", "Short waits for packets");
             stats_mgr4_->addCustomCounter("multircvd", "Multiple packets receives");
-            //            stats_mgr4_->addCustomCounter("latercvd", "Late received packets");
+            stats_mgr4_->addCustomCounter("latercvd", "Late received packets");
         } else if (options.getIpVersion() == 6) {
             stats_mgr6_->addCustomCounter("latesend", "Late sent packets");
             stats_mgr6_->addCustomCounter("shortwait", "Short waits for packets");
             stats_mgr6_->addCustomCounter("multircvd", "Multiple packets receives");
-            //            stats_mgr6_->addCustomCounter("latercvd", "Late received packets");
+            stats_mgr6_->addCustomCounter("latercvd", "Late received packets");
         }
     }
 }
@@ -786,7 +786,7 @@ TestControl::processReceivedPacket6(const TestControlSocket& socket,
     }
 }
 
-void
+uint64_t
 TestControl::receivePackets(const TestControlSocket& socket) {
     int timeout = 0;
     bool receiving = true;
@@ -819,6 +819,7 @@ TestControl::receivePackets(const TestControlSocket& socket) {
             }
         }
     }
+    return received;
 }
 
 void
@@ -992,12 +993,6 @@ TestControl::run() {
     for (;;) {
         // Calculate send due based on when last exchange was initiated.
         updateSendDue();
-        // If test period finished, maximum number of packet drops
-        // has been reached or test has been interrupted we have to
-        // finish the test.
-        if (checkExitConditions()) {
-            break;
-        }
         // Calculate number of packets to be sent to stay
         // catch up with rate.
         uint64_t packets_due = getNextExchangesNum();
@@ -1012,6 +1007,14 @@ TestControl::run() {
         // @todo: set non-zero timeout for packets once we implement
         // microseconds timeout in IfaceMgr.
         receivePackets(socket);
+
+        // If test period finished, maximum number of packet drops
+        // has been reached or test has been interrupted we have to
+        // finish the test.
+        if (checkExitConditions()) {
+            break;
+        }
+
         // Send packets.
         for (uint64_t i = packets_due; i > 0; --i) {
             if (options.getIpVersion() == 4) {
@@ -1033,6 +1036,15 @@ TestControl::run() {
                     // @todo add defines for packet type index that can be
                     // used to access template_buffers_.
                     sendSolicit6(socket, template_buffers_[0]);
+                }
+            }
+            // Receive late packets.
+            uint64_t latercvd = receivePackets(socket);
+            if (testDiags('i')) {
+                if (options.getIpVersion() == 4) {
+                    stats_mgr4_->incrementCounter("latercvd", latercvd);
+                } else if (options.getIpVersion() == 6) {
+                    stats_mgr6_->incrementCounter("latercvd", latercvd);
                 }
             }
         }
