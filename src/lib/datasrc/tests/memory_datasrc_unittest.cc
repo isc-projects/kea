@@ -1511,7 +1511,7 @@ InMemoryZoneFinderTest::anyWildcardCheck(
 
     // First try directly the name (normal match)
     {
-        SCOPED_TRACE("Asking direcly for *");
+        SCOPED_TRACE("Asking directly for *");
         expected_sets.push_back(rr_wild_);
         findAllTest(Name("*.wild.example.org"), ZoneFinder::SUCCESS,
                     expected_sets);

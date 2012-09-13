@@ -394,16 +394,19 @@ int checkSchemaVersionElement(sqlite3* db, const char* const query) {
         if (rc == SQLITE_ERROR) {
             // this is the error that is returned when the table does not
             // exist
+            sqlite3_finalize(prepared);
             return (-1);
         } else if (rc == SQLITE_OK) {
             break;
         } else if (rc != SQLITE_BUSY || i == 50) {
+            sqlite3_finalize(prepared);
             isc_throw(SQLite3Error, "Unable to prepare version query: "
                         << rc << " " << sqlite3_errmsg(db));
         }
         doSleep();
     }
     if (sqlite3_step(prepared) != SQLITE_ROW) {
+        sqlite3_finalize(prepared);
         isc_throw(SQLite3Error,
                     "Unable to query version: " << sqlite3_errmsg(db));
     }
@@ -474,8 +477,8 @@ private:
 
 // return db version
 pair<int, int>
-createDatabase(sqlite3* db) {
-    logger.info(DATASRC_SQLITE_SETUP);
+createDatabase(sqlite3* db, const std::string& name) {
+    logger.warn(DATASRC_SQLITE_SETUP).arg(name);
 
     // try to get an exclusive lock. Once that is obtained, do the version
     // check *again*, just in case this process was racing another
@@ -501,12 +504,12 @@ createDatabase(sqlite3* db) {
 }
 
 void
-checkAndSetupSchema(Initializer* initializer) {
+checkAndSetupSchema(Initializer* initializer, const std::string& name) {
     sqlite3* const db = initializer->params_.db_;
 
     pair<int, int> schema_version = checkSchemaVersion(db);
     if (schema_version.first == -1) {
-        schema_version = createDatabase(db);
+        schema_version = createDatabase(db, name);
     } else if (schema_version.first != SQLITE_SCHEMA_MAJOR_VERSION) {
         LOG_ERROR(logger, DATASRC_SQLITE_INCOMPATIBLE_VERSION)
             .arg(schema_version.first).arg(schema_version.second)
@@ -540,7 +543,7 @@ SQLite3Accessor::open(const std::string& name) {
         isc_throw(SQLite3Error, "Cannot open SQLite database file: " << name);
     }
 
-    checkAndSetupSchema(&initializer);
+    checkAndSetupSchema(&initializer, name);
     initializer.move(dbparameters_.get());
 }
 

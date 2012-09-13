@@ -103,8 +103,10 @@ endif
 EXTRA_DIST =  testdata/brokendb.sqlite3
 EXTRA_DIST += testdata/contexttest.zone
 EXTRA_DIST += testdata/diffs.sqlite3
+EXTRA_DIST += testdata/duplicate_rrset.zone
 EXTRA_DIST += testdata/example2.com
 EXTRA_DIST += testdata/example2.com.sqlite3
+EXTRA_DIST += testdata/example.com.flattened
 EXTRA_DIST += testdata/example.com.signed
 EXTRA_DIST += testdata/example.org
 EXTRA_DIST += testdata/example.org.nsec3-signed

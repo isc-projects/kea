@@ -1,0 +1,8 @@
+; Test removal of comments and not removal from strings.
+; We had a bug - see #2188.
+comment.example.com.		60	IN	SOA	ns1.example.com. hostmaster.example.com. 1 43200 900 1814400 7200
+comment.example.com.		60	IN	NS	ns1.example.com.
+comment.example.com.		60	IN	TXT	"Simple text"
+comment.example.com.		60	IN	TXT	"; No comment"
+comment.example.com.		60	IN	TXT	"Also no comment here" ; But here it is a comment
+comment.example.com.		60	IN	TXT	"A combination ; see?" ; This is a "comment

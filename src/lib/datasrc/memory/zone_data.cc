@@ -27,6 +27,7 @@
 #include <boost/function.hpp>
 
 #include <cassert>
+#include <cstring>
 #include <new>                  // for the placement new
 #include <vector>
 
@@ -94,7 +95,7 @@ NSEC3Data::create(util::MemorySegment& mem_sgmt, uint8_t hashalg,
     uint8_t* dp = param_data->getSaltBuf();
     *dp++ = salt_len;
     if (salt_len > 0) {
-        memcpy(dp, &salt.at(0), salt_len); // use at for safety
+        std::memcpy(dp, &salt.at(0), salt_len); // use at for safety
     }
 
     return (param_data);

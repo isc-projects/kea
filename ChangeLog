@@ -1,3 +1,24 @@
+473.	[bug]		jelte
+	TCP connections now time out in b10-auth if no (or not all) query
+	data is sent by the client. The timeout value defaults to 5000
+	milliseconds, but is configurable in Auth/tcp_recv_timeout.
+	(Trac #357, git cdf3f04442f8f131542bd1d4a2228a9d0bed12ff)
+
+472.	[build]		jreed
+	All generated documentation is removed from the git repository.
+	The ./configure --enable-man option is removed. A new option
+	-enable-generate-docs is added; it checks for required
+	documentation building dependencies. Dummy documentation is
+	built and installed if not used. Distributed tarballs will
+	contain the generated documentation.
+	(Trac #1687, git 2d4063b1a354f5048ca9dfb195e8e169650f43d0)
+
+471.    [bug]		vorner
+	Fixed a problem when b10-loadzone tried to tread semicolon
+	in string data as start of comment, which caused invalid
+	data being loaded.
+	(Trac #2188, git 12efec3477feb62d7cbe36bdcfbfc7aa28a36f57)
+
 470.	[func]		naokikambe
 	The stats module now supports partial statistics updates. Each
 	module can return only statistics data which have been updated since

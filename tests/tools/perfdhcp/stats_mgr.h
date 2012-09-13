@@ -47,8 +47,8 @@ namespace perfdhcp {
 /// stored on the list of sent packets. When packets are matched the
 /// round trip time can be calculated.
 ///
-/// \tparam T class representing DHCPv4 or DHCPv6 packet.
-template <class T>
+/// \param T class representing DHCPv4 or DHCPv6 packet.
+template <class T = dhcp::Pkt4>
 class StatsMgr : public boost::noncopyable {
 public:
 
@@ -138,7 +138,7 @@ public:
         /// \param packet packet which transaction id is to be hashed.
         /// \throw isc::BadValue if packet is null.
         /// \return transaction id hash.
-        static uint32_t hashTransid(const boost::shared_ptr<const T>& packet) {
+        static uint32_t hashTransid(const boost::shared_ptr<T>& packet) {
             if (!packet) {
                 isc_throw(BadValue, "Packet is null");
             }
@@ -214,21 +214,33 @@ public:
         /// }
         /// \endcode
         typedef boost::multi_index_container<
-            boost::shared_ptr<const T>,
+            // Container holds shared_ptr<Pkt4> or shared_ptr<Pkt6> objects.
+            boost::shared_ptr<T>,
+            // List container indexes.
             boost::multi_index::indexed_by<
+                // Sequenced index provides the way to use this container
+                // in the same way as std::list.
                 boost::multi_index::sequenced<>,
+                // The other index keeps products of transaction id.
                 boost::multi_index::hashed_non_unique<
-                        boost::multi_index::global_fun<
-                            const boost::shared_ptr<const T>&,
-                            uint32_t,
-                            &ExchangeStats::hashTransid
-                        >
+                    // Specify hash function to get the product of
+                    // transaction id. This product is obtained by calling
+                    // hashTransid() function.
+                    boost::multi_index::global_fun<
+                        // Hashing function takes shared_ptr<Pkt4> or
+                        // shared_ptr<Pkt6> as argument.
+                        const boost::shared_ptr<T>&,
+                        // ... and returns uint32 value.
+                        uint32_t,
+                        // ... and here is a reference to it.
+                        &ExchangeStats::hashTransid
+                    >
                 >
             >
         > PktList;
 
         /// Packet list iterator for sequencial access to elements.
-        typedef typename PktList::const_iterator PktListIterator;
+        typedef typename PktList::iterator PktListIterator;
         /// Packet list index to search packets using transaction id hash.
         typedef typename PktList::template nth_index<1>::type
             PktListTransidHashIndex;
@@ -243,20 +255,21 @@ public:
         /// In this mode all packets are stored throughout the test execution.
         ExchangeStats(const ExchangeType xchg_type, const bool archive_enabled)
             : xchg_type_(xchg_type),
-            min_delay_(std::numeric_limits<double>::max()),
-            max_delay_(0.),
-            sum_delay_(0.),
-            orphans_(0),
-            sum_delay_squared_(0.),
-            ordered_lookups_(0),
-            unordered_lookup_size_sum_(0),
-            unordered_lookups_(0),
-            sent_packets_num_(0),
-            rcvd_packets_num_(0),
             sent_packets_(),
             rcvd_packets_(),
             archived_packets_(),
-            archive_enabled_(archive_enabled) {
+            archive_enabled_(archive_enabled),
+            min_delay_(std::numeric_limits<double>::max()),
+            max_delay_(0.),
+            sum_delay_(0.),
+            sum_delay_squared_(0.),
+            orphans_(0),
+            unordered_lookup_size_sum_(0),
+            unordered_lookups_(0),
+            ordered_lookups_(0),
+            sent_packets_num_(0),
+            rcvd_packets_num_(0)
+        {
             next_sent_ = sent_packets_.begin();
         }
 
@@ -266,7 +279,7 @@ public:
         ///
         /// \param packet packet object to be added.
         /// \throw isc::BadValue if packet is null.
-        void appendSent(const boost::shared_ptr<const T>& packet) {
+        void appendSent(const boost::shared_ptr<T>& packet) {
             if (!packet) {
                 isc_throw(BadValue, "Packet is null");
             }
@@ -280,7 +293,7 @@ public:
         ///
         /// \param packet packet object to be added.
         /// \throw isc::BadValue if packet is null.
-        void appendRcvd(const boost::shared_ptr<const T>& packet) {
+        void appendRcvd(const boost::shared_ptr<T>& packet) {
             if (!packet) {
                 isc_throw(BadValue, "Packet is null");
             }
@@ -296,8 +309,8 @@ public:
         /// \param rcvd_packet received packet
         /// \throw isc::BadValue if sent or received packet is null.
         /// \throw isc::Unexpected if failed to calculate timestamps
-        void updateDelays(const boost::shared_ptr<const T>& sent_packet,
-                          const boost::shared_ptr<const T>& rcvd_packet) {
+        void updateDelays(const boost::shared_ptr<T>& sent_packet,
+                          const boost::shared_ptr<T>& rcvd_packet) {
             if (!sent_packet) {
                 isc_throw(BadValue, "Sent packet is null");
             }
@@ -355,7 +368,8 @@ public:
         /// \throw isc::BadValue if received packet is null.
         /// \return packet having specified transaction or NULL if packet
         /// not found
-        boost::shared_ptr<const T> matchPackets(const boost::shared_ptr<const T>& rcvd_packet) {
+        boost::shared_ptr<T>
+        matchPackets(const boost::shared_ptr<T>& rcvd_packet) {
             if (!rcvd_packet) {
                 isc_throw(BadValue, "Received packet is null");
             }
@@ -366,7 +380,7 @@ public:
                 // that the received packet we got has no corresponding
                 // sent packet so orphans counter has to be updated.
                 ++orphans_;
-                return(boost::shared_ptr<const T>());
+                return(boost::shared_ptr<T>());
             } else if (next_sent_ == sent_packets_.end()) {
                 // Even if there are still many unmatched packets on the
                 // list we might hit the end of it because of unordered
@@ -425,13 +439,13 @@ public:
                 // If we are here, it means that both ordered lookup and
                 // unordered lookup failed. Searched packet is not on the list.
                 ++orphans_;
-                return(boost::shared_ptr<const T>());
+                return(boost::shared_ptr<T>());
             }
 
             // Packet is matched so we count it. We don't count unmatched packets
             // as they are counted as orphans with a separate counter.
             ++rcvd_packets_num_;
-            boost::shared_ptr<const T> sent_packet(*next_sent_);
+            boost::shared_ptr<T> sent_packet(*next_sent_);
             // If packet was found, we assume it will be never searched
             // again. We want to delete this packet from the list to
             // improve performance of future searches.
@@ -548,6 +562,19 @@ public:
         /// \return number of received packets.
         uint64_t getRcvdPacketsNum() const { return(rcvd_packets_num_); }
 
+        /// \brief Return number of dropped packets.
+        ///
+        /// Method returns number of dropped packets.
+        ///
+        /// \return number of dropped packets.
+        uint64_t getDroppedPacketsNum() const {
+            uint64_t drops = 0;
+            if (getSentPacketsNum() > getRcvdPacketsNum()) {
+                drops = getSentPacketsNum() - getRcvdPacketsNum();
+            }
+            return(drops);
+        }
+
         /// \brief Print main statistics for packet exchange.
         ///
         /// Method prints main statistics for particular exchange.
@@ -555,10 +582,9 @@ public:
         /// number of dropped packets and number of orphans.
         void printMainStats() const {
             using namespace std;
-            uint64_t drops = getRcvdPacketsNum() - getSentPacketsNum();
             cout << "sent packets: " << getSentPacketsNum() << endl
                  << "received packets: " << getRcvdPacketsNum() << endl
-                 << "drops: " << drops << endl
+                 << "drops: " << getDroppedPacketsNum() << endl
                  << "orphans: " << getOrphans() << endl;
         }
 
@@ -610,7 +636,7 @@ public:
             for (PktListIterator it = rcvd_packets_.begin();
                  it != rcvd_packets_.end();
                  ++it) {
-                boost::shared_ptr<const T> rcvd_packet = *it;
+                boost::shared_ptr<T> rcvd_packet = *it;
                 PktListTransidHashIndex& idx =
                     archived_packets_.template get<1>();
                 std::pair<PktListTransidHashIterator,
@@ -621,7 +647,7 @@ public:
                      ++it) {
                     if ((*it_archived)->getTransid() ==
                         rcvd_packet->getTransid()) {
-                        boost::shared_ptr<const T> sent_packet = *it_archived;
+                        boost::shared_ptr<T> sent_packet = *it_archived;
                         // Get sent and received packet times.
                         ptime sent_time = sent_packet->getTimestamp();
                         ptime rcvd_time = rcvd_packet->getTimestamp();
@@ -761,7 +787,8 @@ public:
     StatsMgr(const bool archive_enabled = false) :
         exchanges_(),
         custom_counters_(),
-        archive_enabled_(archive_enabled) {
+        archive_enabled_(archive_enabled),
+        boot_time_(boost::posix_time::microsec_clock::universal_time()) {
     }
 
     /// \brief Specify new exchange type.
@@ -819,7 +846,7 @@ public:
     ///
     /// \param counter_key key poitinh to the counter in the counters map.
     /// \return pointer to specified counter after incrementation.
-    const CustomCounter& IncrementCounter(const std::string& counter_key) {
+    const CustomCounter& incrementCounter(const std::string& counter_key) {
         CustomCounterPtr counter = getCounter(counter_key);
         return(++(*counter));
     }
@@ -835,7 +862,7 @@ public:
     /// \throw isc::BadValue if invalid exchange type specified or
     /// packet is null.
     void passSentPacket(const ExchangeType xchg_type,
-                        const boost::shared_ptr<const T>& packet) {
+                        const boost::shared_ptr<T>& packet) {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         xchg_stats->appendSent(packet);
     }
@@ -853,10 +880,11 @@ public:
     /// or packet is null.
     /// \throw isc::Unexpected if corresponding packet was not
     /// found on the list of sent packets.
-    void passRcvdPacket(const ExchangeType xchg_type,
-                        const boost::shared_ptr<const T>& packet) {
+    boost::shared_ptr<T>
+    passRcvdPacket(const ExchangeType xchg_type,
+                   const boost::shared_ptr<T>& packet) {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        boost::shared_ptr<const T> sent_packet
+        boost::shared_ptr<T> sent_packet
             = xchg_stats->matchPackets(packet);
 
         if (sent_packet) {
@@ -865,6 +893,7 @@ public:
                 xchg_stats->appendRcvd(packet);
             }
         }
+        return(sent_packet);
     }
 
     /// \brief Return minumum delay between sent and received packet.
@@ -999,6 +1028,33 @@ public:
         return(xchg_stats->getRcvdPacketsNum());
     }
 
+    /// \brief Return total number of dropped packets.
+    ///
+    /// Method returns total number of dropped packets for specified
+    /// exchange type.
+    ///
+    /// \param xchg_type exchange type.
+    /// \throw isc::BadValue if invalid exchange type specified.
+    /// \return number of dropped packets.
+    uint64_t getDroppedPacketsNum(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return(xchg_stats->getDroppedPacketsNum());
+    }
+
+    /// \brief Get time period since the start of test.
+    ///
+    /// Calculate dna return period since the test start. This
+    /// can be specifically helpful when calculating packet
+    /// exchange rates.
+    ///
+    /// \return test period so far.
+    boost::posix_time::time_period getTestPeriod() const {
+        using namespace boost::posix_time;
+        time_period test_period(boot_time_,
+                                microsec_clock::universal_time());
+        return test_period;
+    }
+
     /// \brief Return name of the exchange.
     ///
     /// Method returns name of the specified exchange type.
@@ -1050,6 +1106,32 @@ public:
             xchg_stats->printRTTStats();
             std::cout << std::endl;
         }
+    }
+
+    /// \brief Print intermediate statistics.
+    ///
+    /// Method prints intermediate statistics for all exchanges.
+    /// Statistics includes sent, received and dropped packets
+    /// counters.
+    void printIntermediateStats() const {
+        std::ostringstream stream_sent;
+        std::ostringstream stream_rcvd;
+        std::ostringstream stream_drops;
+        std::string sep("");
+        for (ExchangesMapIterator it = exchanges_.begin();
+             it != exchanges_.end(); ++it) {
+
+            if (it != exchanges_.begin()) {
+                sep = "/";
+            }
+            stream_sent << sep << it->second->getSentPacketsNum();
+            stream_rcvd << sep << it->second->getRcvdPacketsNum();
+            stream_drops << sep << it->second->getDroppedPacketsNum();
+        }
+        std::cout << "sent: " << stream_sent.str() 
+                  << "; received: " << stream_rcvd.str()
+                  << "; drops: " << stream_drops.str()
+                  << std::endl;
     }
 
     /// \brief Print timestamps of all packets.
@@ -1129,6 +1211,8 @@ private:
     /// for extended period of time and many packets have to be
     /// archived.
     bool archive_enabled_;
+
+    boost::posix_time::ptime boot_time_; ///< Time when test is started.
 };
 
 } // namespace perfdhcp
