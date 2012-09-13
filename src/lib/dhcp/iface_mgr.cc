@@ -785,7 +785,7 @@ IfaceMgr::send(const Pkt4Ptr& pkt)
 
 
 boost::shared_ptr<Pkt4>
-IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec) {
+IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     // Sanity check for microsecond timeout.
     if (timeout_usec >= 1000000) {
         isc_throw(BadValue, "fractional timeout must be shorter than"
@@ -957,7 +957,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec) {
     return (pkt);
 }
 
-Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec) {
+Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ ) {
     // Sanity check for microsecond timeout.
     if (timeout_usec >= 1000000) {
         isc_throw(BadValue, "fractional timeout must be shorter than"
