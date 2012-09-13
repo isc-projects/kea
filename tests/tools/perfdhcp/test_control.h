@@ -731,6 +731,34 @@ private:
     template<class T>
     uint32_t getElapsedTime(const T& pkt1, const T& pkt2);
 
+    /// \brief Return elapsed time offset in packet.
+    ///
+    /// \return elapsed time offset in packet.
+    int getElapsedTimeOffset() const;
+
+    /// \brief Return randomization offset in packet.
+    ///
+    /// \return randomization offset in packet.
+    int getRandomOffset(const int arg_idx) const;
+
+    /// \brief Return requested ip offset in packet.
+    ///
+    /// \return randomization offset in packet.
+    int getRequestedIpOffset() const;
+
+    /// \brief Return server id offset in packet.
+    ///
+    /// \return server id offset in packet.
+    int getServerIdOffset() const;
+
+    /// \brief Return transaction id offset in packet.
+    ///
+    /// \param arg_idx command line argument index to be used.
+    /// If multiple -X parameters specifed it points to the
+    /// one to be used.
+    /// \return transaction id offset in packet.
+    int getTransactionIdOffset(const int arg_idx) const;
+
     /// \brief Get number of received packets.
     ///
     /// Get the number of received packets from the Statistics Manager.
@@ -769,6 +797,17 @@ private:
     ///
     /// Method prints main diagnostics data.
     void printDiagnostics() const;
+
+    /// \brief Print template information
+    ///
+    /// \param packet_type packet type.
+    void printTemplate(const uint8_t packet_type) const;
+
+    /// \brief Print templates information.
+    ///
+    /// Method prints information about data offsets
+    /// packet templates and their contents.
+    void printTemplates() const;
 
     /// \brief Read DHCP message template from file.
     ///
@@ -809,6 +848,11 @@ private:
 
     /// Packet template buffers.
     TemplateBufferCollection template_buffers_;
+
+    /// First packets send. They are used at the end of the test
+    /// to print packet templates when diagnostics flag T is specifed.
+    std::map<uint8_t, dhcp::Pkt4Ptr> template_packets_v4_;
+    std::map<uint8_t, dhcp::Pkt6Ptr> template_packets_v6_;
 
     static bool interrupted_;  ///< Is program interrupted.
 };
