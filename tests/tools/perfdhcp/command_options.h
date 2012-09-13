@@ -230,7 +230,7 @@ public:
     ///
     /// \return server name.
     std::string getServerName() const { return server_name_; }
-    
+
     /// \brief Print command line arguments.
     void printCommandLine() const;
 
@@ -349,7 +349,7 @@ private:
     /// \param base Base string given as -b duid=0F1234.
     /// \throws isc::InvalidParameter if DUID is invalid.
     void decodeDuid(const std::string& base);
-    
+
     /// \brief Generates DUID-LLT (based on link layer address).
     ///
     /// Function generates DUID based on link layer address and
@@ -364,65 +364,99 @@ private:
     /// \throw isc::InvalidParameter if string does not represent hex byte.
     uint8_t convertHexString(const std::string& hex_text) const;
 
-    uint8_t ipversion_;                      ///< IP protocol version to be used, expected values are:
-                                             ///< 4 for IPv4 and 6 for IPv6, default value 0 means "not set"
-    ExchangeMode exchange_mode_;             ///< Packet exchange mode (e.g. DORA/SARR)
-    int rate_;                               ///< Rate in exchange per second
-    int report_delay_;                       ///< Delay between generation of two consecutive
-                                             ///< performance reports
-    uint32_t clients_num_;                   ///< Number of simulated clients (aka randomization range).
-    std::vector<uint8_t> mac_template_;      ///< MAC address template used to generate unique DUIDs
-                                             ///< for simulated clients.
-    std::vector<uint8_t> duid_template_;     ///< DUID template used to generate unique DUIDs for
-                                             ///< simulated clients
-    std::vector<std::string> base_;          ///< Collection of base values specified with -b<value>
-                                             ///< options. Supported "bases" are mac=<mac> and duid=<duid>
-    std::vector<int> num_request_;           ///< Number of 2 or 4-way exchanges to perform
-    int period_;                             ///< Test period in seconds
-    uint8_t drop_time_set_;                  ///< Indicates number of -d<value> parameters specified by user.
-                                             ///< If this value goes above 2, command line parsing fails.
-    std::vector<double> drop_time_;          ///< Time to elapse before request is lost. The fisrt value of
-                                             ///< two-element vector refers to DO/SA exchanges,
-                                             ///< second value refers to RA/RR. Default values are { 1, 1 }
-    std::vector<int> max_drop_;              ///< Maximum number of drops request before aborting test.
-                                             ///< First value of two-element vector specifies maximum
-                                             ///< number of drops for DO/SA exchange, second value
-                                             ///< specifies maximum number of drops for RA/RR.
-    std::vector<double> max_pdrop_;          ///< Maximal percentage of lost requests before aborting test.
-                                             ///< First value of two-element vector specifies percentage for
-                                             ///< DO/SA exchanges, second value for RA/RR.
-    std::string localname_;                  ///< Local address or interface specified with -l<value> option.
-    bool is_interface_;                      ///< Indicates that specified value with -l<value> is
-                                             ///< rather interface (not address)
-    int preload_;                            ///< Number of preload packets. Preload packets are used to
-                                             ///< initiate communication with server before doing performance
-                                             ///< measurements.
-    int aggressivity_;                       ///< Number of exchanges sent before next pause.
-    int local_port_;                         ///< Local port number (host endian)
-    bool seeded_;                            ///< Indicates that randomization seed was provided.
-    uint32_t seed_;                          ///< Randomization seed.
-    bool broadcast_;                         ///< Indicates that we use broadcast address.
-    bool rapid_commit_;                      ///< Indicates that we do rapid commit option.
-    bool use_first_;                         ///< Indicates that we take server id from first received packet.
-    std::vector<std::string> template_file_; ///< Packet template file names. These files store template packets
-                                             ///< that are used for initiating echanges. Template packets
-                                             ///< read from files are later tuned with variable data.
-    std::vector<int> xid_offset_;            ///< Offset of transaction id in template files. First vector
-                                             ///< element points to offset for DISCOVER/SOLICIT messages,
-                                             ///< second element points to trasaction id offset for
-                                             ///< REQUEST messages
-    std::vector<int> rnd_offset_;            ///< Random value offset in templates. Random value offset
-                                             ///< points to last octet of DUID. Up to 4 last octets of
-                                             ///< DUID are randomized to simulate differnt clients.
-    int elp_offset_;                         ///< Offset of elapsed time option in template packet.
-    int sid_offset_;                         ///< Offset of server id option in template packet.
-    int rip_offset_;                         ///< Offset of requested ip data in template packet/
-    std::string diags_;                      ///< String representing diagnostic selectors specified
-                                             ///< by user with -x<value>.
-    std::string wrapped_;                    ///< Wrapped command specified as -w<value>. Expected
-                                             ///< values are start and stop.
-    std::string server_name_;                ///< Server name specified as last argument of command line.
-    std::string commandline_;                ///< Entire command line as typed in by the user.
+    /// IP protocol version to be used, expected values are:
+    /// 4 for IPv4 and 6 for IPv6, default value 0 means "not set"
+    uint8_t ipversion_;
+    /// Packet exchange mode (e.g. DORA/SARR)
+    ExchangeMode exchange_mode_;
+    /// Rate in exchange per second
+    int rate_;
+    /// Delay between generation of two consecutive
+    /// performance reports
+    int report_delay_;
+    /// Number of simulated clients (aka randomization range).
+    uint32_t clients_num_;
+    /// MAC address template used to generate unique MAC
+    /// addresses for simulated clients.
+    std::vector<uint8_t> mac_template_;
+    /// DUID template used to generate unique DUIDs for
+    /// simulated clients
+    std::vector<uint8_t> duid_template_;
+    /// Collection of base values specified with -b<value>
+    /// options. Supported "bases" are mac=<mac> and duid=<duid>
+    std::vector<std::string> base_;
+    /// Number of 2 or 4-way exchanges to perform.
+    std::vector<int> num_request_;
+    /// Test period in seconds
+    int period_;
+    /// Indicates number of -d<value> parameters specified by user.
+    /// If this value goes above 2, command line parsing fails.
+    uint8_t drop_time_set_;
+    /// Time to elapse before request is lost. The fisrt value of
+    /// two-element vector refers to DO/SA exchanges,
+    /// second value refers to RA/RR. Default values are { 1, 1 }
+    std::vector<double> drop_time_;
+    /// Maximum number of drops request before aborting test.
+    /// First value of two-element vector specifies maximum
+    /// number of drops for DO/SA exchange, second value
+    /// specifies maximum number of drops for RA/RR.
+    std::vector<int> max_drop_;
+    /// Maximal percentage of lost requests before aborting test.
+    /// First value of two-element vector specifies percentage for
+    /// DO/SA exchanges, second value for RA/RR.
+    std::vector<double> max_pdrop_;
+    /// Local address or interface specified with -l<value> option.
+    std::string localname_;
+    /// Indicates that specified value with -l<value> is
+    /// rather interface (not address)
+    bool is_interface_;
+    /// Number of preload packets. Preload packets are used to
+    /// initiate communication with server before doing performance
+    /// measurements.
+    int preload_;
+    /// Number of exchanges sent before next pause.
+    int aggressivity_;
+    /// Local port number (host endian)
+    int local_port_;
+    /// Randomization seed.
+    uint32_t seed_;
+    /// Indicates that randomization seed was provided.
+    bool seeded_;
+    /// Indicates that we use broadcast address.
+    bool broadcast_;
+    /// Indicates that we do rapid commit option.
+    bool rapid_commit_;
+    /// Indicates that we take server id from first received packet.
+    bool use_first_;
+    /// Packet template file names. These files store template packets
+    /// that are used for initiating echanges. Template packets
+    /// read from files are later tuned with variable data.
+    std::vector<std::string> template_file_;
+    /// Offset of transaction id in template files. First vector
+    /// element points to offset for DISCOVER/SOLICIT messages,
+    /// second element points to trasaction id offset for
+    /// REQUEST messages
+    std::vector<int> xid_offset_;
+    /// Random value offset in templates. Random value offset
+    /// points to last octet of DUID. Up to 4 last octets of
+    /// DUID are randomized to simulate differnt clients.
+    std::vector<int> rnd_offset_;
+    /// Offset of elapsed time option in template packet.
+    int elp_offset_;
+    /// Offset of server id option in template packet.
+    int sid_offset_;
+    /// Offset of requested ip data in template packet
+    int rip_offset_;
+    /// String representing diagnostic selectors specified
+    /// by user with -x<value>.
+    std::string diags_;
+    /// Command to be executed at the beginning/end of the test.
+    /// This command is expected to expose start and stop argument.
+    std::string wrapped_;
+    /// Server name specified as last argument of command line.
+    std::string server_name_;
+    /// Entire command line as typed in by the user.
+    std::string command_line_;
 };
 
 } // namespace perfdhcp
