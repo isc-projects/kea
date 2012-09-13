@@ -218,6 +218,7 @@ TEST_F(IfaceMgrTest, getIface) {
 }
 
 TEST_F(IfaceMgrTest, receiveTimeout6) {
+    using namespace boost::posix_time;
     std::cout << "Testing DHCPv6 packet reception timeouts."
               << " Test will block for a few seconds when waiting"
               << " for timeout to occur." << std::endl;
@@ -233,45 +234,40 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
     ASSERT_GT(socket1, 0);
 
     // Time when call to IfaceMgr::receive6() started.
-    timeval start_time;
+    ptime start_time;
     // Time when call to IfaceMgr::receive6() ended.
-    timeval stop_time;
+    ptime stop_time;
+    // Time duration between start_time and stop_time.
+    time_duration duration;
 
     // Remember when we call receive6().
-    memset(&start_time, 0, sizeof(start_time));
-    memset(&stop_time, 0, sizeof(start_time));
-    gettimeofday(&start_time, NULL);
+    start_time = microsec_clock::universal_time();
     // Call receive with timeout of 1s + 400000us = 1.4s.
     Pkt6Ptr pkt;
     ASSERT_NO_THROW(pkt = ifacemgr->receive6(1, 400000));
     // Remember when call to receive6() ended.
-    gettimeofday(&stop_time, NULL);
+    stop_time = microsec_clock::universal_time();
     // We did not send a packet to lo interface so we expect that
     // nothing has been received and timeout has been reached.
     ASSERT_FALSE(pkt);
     // Calculate duration of call to receive6().
-    stop_time.tv_sec -= start_time.tv_sec;
-    stop_time.tv_usec -= start_time.tv_usec;
-    // Duration should be equal or greater or equal timeout specified
-    // for the receive6() call.
-    EXPECT_EQ(1, stop_time.tv_sec);
-    EXPECT_GE(stop_time.tv_usec, 400000);
+    duration = stop_time - start_time;
+    // We stop the clock when the call completes so it does not
+    // precisely reflect the receive timeout. However the
+    // uncertainity should be low enough to expect that measured
+    // value is in the range <1.4; 2).
+    EXPECT_GE(duration.total_microseconds(), 1400000);
+    EXPECT_LT(duration.total_seconds(), 2);
 
     // Test timeout shorter than 1s.
-    memset(&start_time, 0, sizeof(start_time));
-    memset(&stop_time, 0, sizeof(start_time));
-    gettimeofday(&start_time, NULL);
+    start_time = microsec_clock::universal_time();
     ASSERT_NO_THROW(pkt = ifacemgr->receive6(0, 500000));
-    gettimeofday(&stop_time, NULL);
+    stop_time = microsec_clock::universal_time();
     ASSERT_FALSE(pkt);
-    stop_time.tv_sec -= start_time.tv_sec;
-    stop_time.tv_usec -= start_time.tv_usec;
-    // Even though the way we measure duration of receive6() may result in
-    // durations slightly longer than timeout it is safe to assume that
-    // measured value will not exceed 1s when timeout is 0.5s.
-    // If it exceeds, this is an error and should be investigated.
-    EXPECT_EQ(0, stop_time.tv_sec);
-    EXPECT_GE(stop_time.tv_usec, 500000);
+    duration = stop_time - start_time;
+    // Check if measured duration is within <0.5s; 1s).
+    EXPECT_GE(duration.total_microseconds(), 500000);
+    EXPECT_LT(duration.total_seconds(), 1);
 
     // Test with invalid fractional timeout values.
     EXPECT_THROW(ifacemgr->receive6(0, 1000000), isc::BadValue);
@@ -279,6 +275,7 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
 }
 
 TEST_F(IfaceMgrTest, receiveTimeout4) {
+    using namespace boost::posix_time;
     std::cout << "Testing DHCPv6 packet reception timeouts."
               << " Test will block for a few seconds when waiting"
               << " for timeout to occur." << std::endl;
@@ -294,45 +291,40 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     ASSERT_GT(socket1, 0);
 
     // Time when call to IfaceMgr::receive4() started.
-    timeval start_time;
+    ptime start_time;
     // Time when call to IfaceMgr::receive4() ended.
-    timeval stop_time;
+    ptime stop_time;
+    // Time duration between start_time and stop_time.
+    time_duration duration;
 
-    // Remember when we call receive4().
-    memset(&start_time, 0, sizeof(start_time));
-    memset(&stop_time, 0, sizeof(start_time));
-    gettimeofday(&start_time, NULL);
-    // Call receive with timeout of 2s + 300000us = 2.3s.
     Pkt4Ptr pkt;
+    // Remember when we call receive4().
+    start_time = microsec_clock::universal_time();
+    // Call receive with timeout of 2s + 300000us = 2.3s.
     ASSERT_NO_THROW(pkt = ifacemgr->receive4(2, 300000));
     // Remember when call to receive4() ended.
-    gettimeofday(&stop_time, NULL);
+    stop_time = microsec_clock::universal_time();
     // We did not send a packet to lo interface so we expect that
     // nothing has been received and timeout has been reached.
     ASSERT_FALSE(pkt);
     // Calculate duration of call to receive4().
-    stop_time.tv_sec -= start_time.tv_sec;
-    stop_time.tv_usec -= start_time.tv_usec;
-    // Duration should be equal or greater than timeout specified
-    // for the receive4() call.
-    EXPECT_EQ(2, stop_time.tv_sec);
-    EXPECT_GE(stop_time.tv_usec, 300000);
+    duration = stop_time - start_time;
+    // We stop the clock when the call completes so it does not
+    // precisely reflect the receive timeout. However the
+    // uncertainity should be low enough to expect that measured
+    // value is in the range <2.3s; 3s).
+    EXPECT_GE(duration.total_microseconds(), 2300000);
+    EXPECT_LT(duration.total_seconds(), 3);
 
     // Test timeout shorter than 1s.
-    memset(&start_time, 0, sizeof(start_time));
-    memset(&stop_time, 0, sizeof(start_time));
-    gettimeofday(&start_time, NULL);
+    start_time = microsec_clock::universal_time();
     ASSERT_NO_THROW(pkt = ifacemgr->receive4(0, 400000));
-    gettimeofday(&stop_time, NULL);
+    stop_time = microsec_clock::universal_time();
     ASSERT_FALSE(pkt);
-    stop_time.tv_sec -= start_time.tv_sec;
-    stop_time.tv_usec -= start_time.tv_usec;
-    // Even though the way we measure duration of receive4() may result
-    // in durations slightly longer than timeout it is safe to assume
-    // that measured value will not exceed 1s when timeout is only 0.4s.
-    // If it exceeds, this is an error and should be investigated.
-    EXPECT_EQ(0, stop_time.tv_sec);
-    EXPECT_GE(stop_time.tv_usec, 400000);
+    duration = stop_time - start_time;
+    // Check if measured duration is within <0.4s; 1s).
+    EXPECT_GE(duration.total_microseconds(), 400000);
+    EXPECT_LT(duration.total_seconds(), 1);
 
     // Test with invalid fractional timeout values.
     EXPECT_THROW(ifacemgr->receive6(0, 1000000), isc::BadValue);
