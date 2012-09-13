@@ -455,8 +455,6 @@ private:
     std::string wrapped_;
     /// Server name specified as last argument of command line.
     std::string server_name_;
-    /// Entire command line as typed in by the user.
-    std::string command_line_;
 };
 
 } // namespace perfdhcp

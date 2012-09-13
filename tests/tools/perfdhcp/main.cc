@@ -26,25 +26,30 @@ using namespace isc::perfdhcp;
 int
 main(int argc, char* argv[]) {
     CommandOptions& command_options = CommandOptions::instance();
+    std::string diags(command_options.getDiags());
+    int ret_code = 0;
     try {
         command_options.parse(argc, argv);
     } catch(isc::Exception& e) {
+        ret_code = 1;
         std::cout << "Error parsing command line options: "
                   << e.what() << std::endl;
         command_options.usage();
-        return(1);
-    }
-    try{
-        TestControl& test_control = TestControl::instance();
-        test_control.run();
-    } catch (isc::Exception& e) {
-        std::cout << "Error running perfdhcp: " << e.what() << std::endl;
-        std::string diags(command_options.getDiags());
         if (diags.find('e') != std::string::npos) {
             std::cout << "Fatal error" << std::endl;
         }
-        return(1);
+        return (ret_code);
     }
-    return(0);
+    try{
+        TestControl& test_control = TestControl::instance();
+        ret_code =  test_control.run();
+    } catch (isc::Exception& e) {
+        ret_code = 1;
+        std::cout << "Error running perfdhcp: " << e.what() << std::endl;
+        if (diags.find('e') != std::string::npos) {
+            std::cout << "Fatal error" << std::endl;
+        }
+    }
+    return (ret_code);
 }
 

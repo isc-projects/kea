@@ -905,7 +905,7 @@ TestControl::reset() {
     interrupted_ = false;
 }
 
-void
+int
 TestControl::run() {
     // Reset singleton state before test starts.
     reset();
@@ -1057,6 +1057,15 @@ TestControl::run() {
     if (testDiags('e')) {
         std::cout << "Interrupted" << std::endl;
     }
+
+    int ret_code = 0;
+    // Check if any packet drops occured.
+    if (options.getIpVersion() == 4) {
+        ret_code = stats_mgr4_->droppedPackets() ? 3 : 0;
+    } else if (options.getIpVersion() == 6)  {
+        ret_code = stats_mgr6_->droppedPackets() ? 3 : 0;
+    }
+    return (ret_code);
 }
 
 void
