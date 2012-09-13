@@ -727,6 +727,13 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
     m.msg_control = &control_buf_[0];
     m.msg_controllen = control_buf_len_;
     struct cmsghdr *cmsg = CMSG_FIRSTHDR(&m);
+
+    // FIXME: Code below assumes that cmsg is not NULL, but
+    // CMSG_FIRSTHDR() is coded to return NULL as a possibility.  The
+    // following assertion should never fail, but if it did and you came
+    // here, fix the code. :)
+    assert(cmsg != NULL);
+
     cmsg->cmsg_level = IPPROTO_IPV6;
     cmsg->cmsg_type = IPV6_PKTINFO;
     cmsg->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
