@@ -150,7 +150,7 @@ public:
     /// Operations within one protocol family are obvious.
     /// Comparisons between v4 and v6 will allways return v4
     /// being smaller. This follows boost::asio::ip implementation
-    bool smaller_than(const IOAddress& other) const {
+    bool smallerThan(const IOAddress& other) const {
         if (this->getFamily() < other.getFamily()) {
             return (true);
         }
@@ -164,13 +164,34 @@ public:
         }
     }
 
+    /// \brief Checks if one address is smaller or equal than the other
+    ///
+    /// \param other Address to compare against.
+    ///
+    /// \return true if this address is smaller than the other address.
+    bool smallerEqual(const IOAddress& other) const {
+        if (equals(other)) {
+            return (true);
+        }
+        return (smallerThan(other));
+    }
+
     /// \brief Checks if one address is smaller than the other
     ///
     /// \param other Address to compare against.
     ///
     /// See \ref smaller_than method for details.
     bool operator<(const IOAddress& other) const {
-        return (smaller_than(other));
+        return (smallerThan(other));
+    }
+
+    /// \brief Checks if one address is smaller or equal than the other
+    ///
+    /// \param other Address to compare against.
+    ///
+    /// See \ref smaller_equal method for details.
+    bool operator<=(const IOAddress& other) const {
+        return (smallerEqual(other));
     }
 
     /// \brief Compare addresses for inequality
