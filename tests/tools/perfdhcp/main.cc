@@ -29,7 +29,12 @@ main(int argc, char* argv[]) {
     std::string diags(command_options.getDiags());
     int ret_code = 0;
     try {
-        command_options.parse(argc, argv);
+        // If parser returns true it means that user specified
+        // 'h' or 'v' command line option. Program shows the
+        // help or version message and exits here.
+        if (command_options.parse(argc, argv)) {
+            return (ret_code);
+        }
     } catch(isc::Exception& e) {
         ret_code = 1;
         std::cout << "Error parsing command line options: "

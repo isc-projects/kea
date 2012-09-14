@@ -57,7 +57,8 @@ public:
     /// \param argc Argument count passed to main().
     /// \param argv Argument value array passed to main().
     /// \throws isc::InvalidParameter if parse fails.
-    void parse(int argc, char** const argv);
+    /// \return true if program has been run in help or version mode ('h' or 'v' flag).
+    bool parse(int argc, char** const argv);
 
     /// \brief Returns IP version.
     ///
@@ -261,7 +262,8 @@ private:
     /// \param argc Argument count passed to main().
     /// \param argv Argument value array passed to main().
     /// \throws isc::InvalidParameter if command line options initialization fails.
-    void initialize(int argc, char** argv);
+    /// \return true if program has been run in help or version mode ('h' or 'v' flag).
+    bool initialize(int argc, char** argv);
 
     /// \brief Validates initialized options.
     ///
