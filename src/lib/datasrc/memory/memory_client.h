@@ -223,7 +223,7 @@ public:
     virtual isc::datasrc::ZoneIteratorPtr
     getIterator(const isc::dns::Name& name, bool separate_rrs = false) const;
 
-    /// In-memory data source doesn't write back peristently, so this
+    /// In-memory data source doesn't write back persistently, so this
     /// derived method will result in a NotImplemented exception.
     ///
     /// \note We plan to use a database-based data source as a backend
