@@ -132,14 +132,15 @@ public:
     ///
     /// This method returns the name of the zone's master file to be loaded.
     /// The returned string will be an empty unless the data source client has
-    /// successfully loaded the zone before.
+    /// successfully loaded the \c zone_name zone from a file before.
     ///
     /// This method should normally not throw an exception.  But the creation
     /// of the return string may involve a resource allocation, and if it
     /// fails, the corresponding standard exception will be thrown.
     ///
-    /// \return The name of the zone file loaded in the client, or an empty
-    /// string if the client hasn't loaded any file.
+    /// \return The name of the zone file corresponding to the zone, or
+    /// an empty string if the client hasn't loaded the \c zone_name
+    /// zone from a file before.
     const std::string getFileName(const isc::dns::Name& zone_name) const;
 
     /// \brief Inserts an rrset into the zone.
