@@ -529,8 +529,7 @@ public:
     }
 
     /*
-     * Same as above, but it checks the return value and if it already exists,
-     * it throws.
+     * Wrapper around above.
      */
     void addFromLoad(const ConstRRsetPtr& set,
                      const Name& zone_name, ZoneData* zone_data)
