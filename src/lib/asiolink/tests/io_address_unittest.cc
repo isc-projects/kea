@@ -99,3 +99,29 @@ TEST(IOAddressTest, uint32) {
 
     EXPECT_EQ(addr3.toText(), "192.0.2.5");
 }
+
+TEST(IOAddressTest, compare) {
+    IOAddress addr1("192.0.2.5");
+    IOAddress addr2("192.0.2.6");
+    IOAddress addr3("0.0.0.0");
+
+    IOAddress addr4("::");
+    IOAddress addr5("2001:db8::1");
+    IOAddress addr6("2001:db8::1:0");
+
+    // v4 comparisons
+    EXPECT_TRUE(addr1 < addr2);
+    EXPECT_FALSE(addr2 < addr1);
+    EXPECT_TRUE(addr3 < addr1);
+    EXPECT_TRUE(addr3 < addr2);
+
+    // v6 comparisons
+    EXPECT_TRUE(addr4 < addr5);
+    EXPECT_TRUE(addr5 < addr6);
+    EXPECT_FALSE(addr6 < addr5);
+
+    // v4 to v6 - v4 should always be smaller
+    EXPECT_TRUE(addr1 < addr4);
+    EXPECT_TRUE(addr3 < addr4);
+    EXPECT_TRUE(addr2 < addr5);
+}
