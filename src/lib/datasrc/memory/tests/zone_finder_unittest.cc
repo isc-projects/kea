@@ -259,14 +259,45 @@ public:
     void addZoneDataNSEC3(const ConstRRsetPtr rrset) {
         assert(rrset->getType() == RRType::NSEC3());
 
-        const Rdata* rdata = &rrset->getRdataIterator()->getCurrent();
-        const generic::NSEC3* nsec3_rdata =
-            dynamic_cast<const generic::NSEC3*>(rdata);
-        NSEC3Data* nsec3_data = NSEC3Data::create(mem_sgmt_, *nsec3_rdata);
-        // in case we happen to be replacing, destroy old
-        NSEC3Data* old_data = zone_data_->setNSEC3Data(nsec3_data);
-        if (old_data != NULL) {
-            NSEC3Data::destroy(mem_sgmt_, old_data, rrset->getClass());
+        const generic::NSEC3& nsec3_rdata =
+             dynamic_cast<const generic::NSEC3&>(
+                  rrset->getRdataIterator()->getCurrent());
+
+        NSEC3Data* nsec3_data = zone_data_->getNSEC3Data();
+        if (nsec3_data == NULL) {
+             nsec3_data = NSEC3Data::create(mem_sgmt_, nsec3_rdata);
+             zone_data_->setNSEC3Data(nsec3_data);
+        } else {
+             size_t salt_len = nsec3_data->getSaltLen();
+             const uint8_t* salt_data = nsec3_data->getSaltData();
+             const vector<uint8_t>& salt_data_2 = nsec3_rdata.getSalt();
+
+             if ((nsec3_rdata.getHashalg() != nsec3_data->hashalg) ||
+                 (nsec3_rdata.getIterations() != nsec3_data->iterations) ||
+                 (salt_data_2.size() != salt_len) ||
+                 (std::memcmp(&salt_data_2[0], salt_data, salt_len) != 0)) {
+                  isc_throw(isc::Unexpected,
+                            "NSEC3 with inconsistent parameters: " <<
+                            rrset->toText());
+             }
+        }
+
+        string fst_label = rrset->getName().split(0, 1).toText(true);
+        transform(fst_label.begin(), fst_label.end(), fst_label.begin(),
+                  ::toupper);
+
+        ZoneNode *node;
+        nsec3_data->insertName(mem_sgmt_, Name(fst_label), &node);
+
+        RdataEncoder encoder;
+
+        // We assume that rrsig has already been checked to match rrset
+        // by the caller.
+        RdataSet *set = RdataSet::create(mem_sgmt_, encoder,
+                                         rrset, ConstRRsetPtr());
+        RdataSet *old_set = node->setData(set);
+        if (old_set != NULL) {
+             RdataSet::destroy(mem_sgmt_, class_, old_set);
         }
         zone_data_->setSigned(true);
     }
