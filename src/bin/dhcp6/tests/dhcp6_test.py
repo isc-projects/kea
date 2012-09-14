@@ -32,8 +32,12 @@ class TestDhcpv6Daemon(unittest.TestCase):
         #
         # However, we do want to set the logging lock directory to somewhere
         # to which we can write - use the current working directory.  We then
-        # set the appropriate environment variable.  os.putenv() doesn't work
-        # on Ubuntu, so we access os.environ directly.
+        # set the appropriate environment variable.  os.putenv() may be not
+        # supported on some platforms as suggested in
+        # http://docs.python.org/release/3.2/library/os.html?highlight=putenv#os.environ:
+        # "If the platform supports the putenv() function...". It was checked
+        # that it does not work on Ubuntu. To overcome this problem we access
+        # os.environ directly.
         lockdir_envvar = "B10_LOCKFILE_DIR_FROM_BUILD"
         if lockdir_envvar not in os.environ:
             os.environ[lockdir_envvar] = os.getcwd()
