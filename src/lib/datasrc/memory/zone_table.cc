@@ -132,19 +132,18 @@ ZoneTable::findZone(const Name& name) const {
     return (FindResult(my_result, node->getData()));
 }
 
-ZoneData*
+ZoneTable::FindResult
 ZoneTable::setZoneData(const Name& name, ZoneData* data)
 {
     ZoneTableNode* node(NULL);
 
     ZoneTableTree::Result result(zones_->find(name, &node));
 
-    if ((result != ZoneTableTree::EXACTMATCH) &&
-        (result != ZoneTableTree::PARTIALMATCH)) {
-        return (NULL);
+    if (result != ZoneTableTree::EXACTMATCH) {
+        return (FindResult(result::NOTFOUND, NULL));
+    } else {
+        return (FindResult(result::SUCCESS, node->setData(data)));
     }
-
-    return (node->setData(data));
 }
 
 } // end of namespace memory

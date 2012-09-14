@@ -191,9 +191,9 @@ public:
     ///
     /// \param name A domain name for which the zone data is set.
     /// \param data The new zone data to set.
-    /// \return A \c ZoneData object containing the old data if the zone
-    /// was found, or \c NULL otherwise.
-    ZoneData* setZoneData(const isc::dns::Name& name, ZoneData* data);
+    /// \return A \c FindResult object containing the old data if the
+    /// zone was found.
+    FindResult setZoneData(const isc::dns::Name& name, ZoneData* data);
 
 private:
     boost::interprocess::offset_ptr<ZoneTableTree> zones_;

@@ -620,9 +620,11 @@ InMemoryClient::InMemoryClientImpl::load(
         ++zone_count_;
     }
 
-    ZoneData *data = zone_table_->setZoneData(zone_name, holder.release());
-    if (data != NULL) {
-        ZoneData::destroy(local_mem_sgmt_, data, rrclass_);
+    ZoneTable::FindResult fr(zone_table_->setZoneData(zone_name,
+                                                      holder.release()));
+    assert(fr.code == result::SUCCESS);
+    if (fr.zone_data != NULL) {
+        ZoneData::destroy(local_mem_sgmt_, fr.zone_data, rrclass_);
     }
 
     return (result.code);
