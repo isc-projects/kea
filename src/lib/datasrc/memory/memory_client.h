@@ -45,8 +45,8 @@ namespace memory {
 /// allowing much faster lookups.  The in memory data is a copy of some
 /// real physical source - in the current implementation a list of zones
 /// are populated as a result of \c load() calls; zone data is given in
-/// a standard master file (but there's a plan to use database backends
-/// as a source of the in memory data).
+/// a standard master file, or as an iterator of some other datasource
+/// including database backed ones.
 ///
 /// The InMemoryClient enforces through its interface that all data
 /// loaded to the data source is of the same RR class.  For example, the
