@@ -122,7 +122,6 @@ protected:
     const RRClass zclass_;
     TestMemorySegment mem_sgmt_;
     InMemoryClient* client_;
-    memory::ZoneTable* zone_table;
 };
 
 TEST_F(MemoryClientTest, loadRRsetDoesntMatchOrigin) {
