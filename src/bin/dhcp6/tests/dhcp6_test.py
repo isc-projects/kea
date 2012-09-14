@@ -32,11 +32,11 @@ class TestDhcpv6Daemon(unittest.TestCase):
         #
         # However, we do want to set the logging lock directory to somewhere
         # to which we can write - use the current working directory.  We then
-        # set the appropriate environment variable.
+        # set the appropriate environment variable.  os.putenv() doesn't work
+        # on Ubuntu, so we access os.environ directly.
         lockdir_envvar = "B10_LOCKFILE_DIR_FROM_BUILD"
-        lockdir = os.getenv(lockdir_envvar)
-        if lockdir is None:
-            os.putenv(lockdir_envvar, os.getcwd())
+        if lockdir_envvar not in os.environ:
+            os.environ[lockdir_envvar] = os.getcwd()
 
     def tearDown(self):
         pass
