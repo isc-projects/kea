@@ -85,7 +85,7 @@ CommandOptions::reset() {
     generateDuidTemplate();
 }
 
-void
+bool
 CommandOptions::parse(int argc, char** const argv) {
     // Reset internal variables used by getopt
     // to eliminate undefined behavior when
@@ -114,11 +114,15 @@ CommandOptions::parse(int argc, char** const argv) {
     // Reset values of class members
     reset();
 
-    initialize(argc, argv);
-    validate();
+    // Informs if program has been run with 'h' or 'v' option.
+    bool help_or_version_mode = initialize(argc, argv);
+    if (!help_or_version_mode) {
+        validate();
+    }
+    return (help_or_version_mode);
 }
 
-void
+bool
 CommandOptions::initialize(int argc, char** argv) {
     char opt = 0;               // Subsequent options returned by getopt()
     std::string drop_arg;       // Value of -D<value>argument
@@ -144,7 +148,7 @@ CommandOptions::initialize(int argc, char** argv) {
         switch (opt) {
         case 'v':
             version();
-            return;
+            return (true);
 
         case '1':
             use_first_ = true;
@@ -229,7 +233,7 @@ CommandOptions::initialize(int argc, char** argv) {
 
         case 'h':
             usage();
-            return;
+            return (true);
 
         case 'i':
             exchange_mode_ = DO_SA;
@@ -424,6 +428,7 @@ CommandOptions::initialize(int argc, char** argv) {
     if (duid_template_.size() == 0) {
         generateDuidTemplate();
     }
+    return (false);
 }
 
 void
@@ -863,7 +868,6 @@ CommandOptions::usage() const {
         "   * 'a': print the decoded command line arguments\n"
         "   * 'e': print the exit reason\n"
         "   * 'i': print rate processing details\n"
-        "   * 'r': print randomization details\n"
         "   * 's': print first server-id\n"
         "   * 't': when finished, print timers of all successful exchanges\n"
         "   * 'T': when finished, print templates\n"

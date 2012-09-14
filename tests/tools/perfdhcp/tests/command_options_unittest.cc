@@ -21,7 +21,7 @@
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
 
-#include "../command_options.h"
+#include "command_options_helper.h"
 
 using namespace std;
 using namespace isc;
@@ -45,19 +45,11 @@ protected:
     /// parses arguments using CommandOptions class to set
     /// its data members and de-allocates array of C-strings.
     ///
-    /// \param cmdline Command line to parse
-    /// \throws std::bad allocation if tokenization failed
-    void process(const std::string& cmdline) {
-        CommandOptions& opt = CommandOptions::instance();
-        int argc = 0;
-        char** argv = tokenizeString(cmdline, &argc);
-        opt.reset();
-        opt.parse(argc, argv);
-        for(int i = 0; i < argc; ++i) {
-            free(argv[i]);
-            argv[i] = NULL;
-        }
-        free(argv);
+    /// \param cmdline Command line to parse.
+    /// \throws std::bad allocation if tokenization failed.
+    /// \return true if program has been run in help or version mode ('h' or 'v' flag).
+    bool process(const std::string& cmdline) {
+        CommandOptionsHelper::process(cmdline);
     }
 
     /// \brief Check default initialized values
@@ -143,47 +135,24 @@ protected:
         EXPECT_EQ("", opt.getWrapped());
         EXPECT_EQ("192.168.0.1", opt.getServerName());
     }
-
-    /// \brief Split string to array of C-strings
-    ///
-    /// \param s String to split (tokenize)
-    /// \param num Number of tokens returned
-    /// \return array of C-strings (tokens)
-    char** tokenizeString(const std::string& text_to_split, int* num) const {
-        char** results = NULL;
-        // Tokenization with std streams
-        std::stringstream text_stream(text_to_split);
-        // Iterators to be used for tokenization
-        std::istream_iterator<std::string> text_iterator(text_stream);
-        std::istream_iterator<std::string> text_end;
-        // Tokenize string (space is a separator) using begin and end iteratos
-        std::vector<std::string> tokens(text_iterator, text_end);
-
-        if (tokens.size() > 0) {
-            // Allocate array of C-strings where we will store tokens
-            results = static_cast<char**>(malloc(tokens.size() * sizeof(char*)));
-            if (results == NULL) {
-                throw std::bad_alloc();
-            }
-            // Store tokens in C-strings array
-            for (int i = 0; i < tokens.size(); ++i) {
-                char* cs = static_cast<char*>(malloc(tokens[i].length() + 1));
-                strcpy(cs, tokens[i].c_str());
-                results[i] = cs;
-            }
-            // Return number of tokens to calling function
-            if (num != NULL) {
-                *num = tokens.size();
-            }
-        }
-        return results;
-    }
-
 };
 
 TEST_F(CommandOptionsTest, Defaults) {
     process("perfdhcp all");
     checkDefaults();
+}
+
+TEST_F(CommandOptionsTest, HelpVersion) {
+    // The parser is supposed to return true if 'h' or 'v' options
+    // are specified.
+    EXPECT_TRUE(process("perfdhcp -h"));
+    EXPECT_TRUE(process("perfdhcp -v"));
+    EXPECT_TRUE(process("perfdhcp -h -v"));
+    EXPECT_TRUE(process("perfdhcp -6 -l ethx -h all"));
+    EXPECT_TRUE(process("perfdhcp -l ethx -v all"));
+    // No 'h' or 'v' option specified. The false value
+    // should be returned.
+    EXPECT_FALSE(process("perfdhcp -l ethx all"));
 }
 
 TEST_F(CommandOptionsTest, UseFirst) {
