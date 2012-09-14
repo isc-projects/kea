@@ -107,27 +107,15 @@ protected:
     T max_;
 };
 
-class Pool6 {
+class Pool {
+
 public:
-    typedef enum {
-        TYPE_IA,
-        TYPE_TA,
-        TYPE_PD
-    }  Pool6Type;
-
-    Pool6(Pool6Type type, const isc::asiolink::IOAddress first,
-          const isc::asiolink::IOAddress last,
-          const Triplet<uint32_t>& t1,
-          const Triplet<uint32_t>& t2,
-          const Triplet<uint32_t>& preferred_lifetime,
-          const Triplet<uint32_t>& valid_lifetime);
-
     uint32_t getId() const {
         return (id_);
     }
 
-    Pool6Type getType() const {
-        return (type_);
+    Triplet<uint32_t> getValid() const {
+        return (valid_);
     }
 
     const isc::asiolink::IOAddress& getFirstAddress() const {
@@ -146,21 +134,27 @@ public:
         return (t2_);
     }
 
-    Triplet<uint32_t> getPreferred() const {
-        return (preferred_);
-    }
-
-    Triplet<uint32_t> getValid() const {
-        return (valid_);
-    }
+    /// @brief checks if specified address is in range
+    bool inRange(const isc::asiolink::IOAddress& addr);
 
 protected:
+
+    /// @brief protected constructor
+    Pool(const isc::asiolink::IOAddress& first,
+         const isc::asiolink::IOAddress& last,
+         const Triplet<uint32_t>& t1,
+         const Triplet<uint32_t>& t2,
+         const Triplet<uint32_t>& valid_lifetime);
+
+    static uint32_t getNextID() {
+        static uint32_t id = 0;
+        return (id++);
+    }
+
     /// @brief pool-id
     ///
     /// This ID is used to indentify this specific pool.
     uint32_t id_;
-
-    Pool6Type type_;
 
     isc::asiolink::IOAddress first_;
 
@@ -170,32 +164,94 @@ protected:
 
     Triplet<uint32_t> t2_;
 
-    Triplet<uint32_t> preferred_;
-
     Triplet<uint32_t> valid_;
+
+    std::string comments_;
 
     ///uint128_t available_leases_;
 
     ///uint128_t total_leases_;
-
-    std::string comments_;
 };
 
+class Pool6 : public Pool {
+public:
+    typedef enum {
+        TYPE_IA,
+        TYPE_TA,
+        TYPE_PD
+    }  Pool6Type;
+
+    Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
+          const isc::asiolink::IOAddress& last,
+          const Triplet<uint32_t>& t1,
+          const Triplet<uint32_t>& t2,
+          const Triplet<uint32_t>& preferred_lifetime,
+          const Triplet<uint32_t>& valid_lifetime);
+
+    Pool6(Pool6Type type, const isc::asiolink::IOAddress& addr,
+          uint8_t prefix_len,
+          const Triplet<uint32_t>& t1,
+          const Triplet<uint32_t>& t2,
+          const Triplet<uint32_t>& preferred_lifetime,
+          const Triplet<uint32_t>& valid_lifetime);
+
+    Pool6Type getType() const {
+        return (type_);
+    }
+
+    Triplet<uint32_t> getPreferred() const {
+        return (preferred_);
+    }
+
+protected:
+
+    Pool6Type type_;
+
+    /// @brief prefix length
+    /// used by TYPE_PD only (zeroed for other types)
+    uint8_t prefix_len_;
+
+    Triplet<uint32_t> preferred_;
+};
+
+typedef boost::shared_ptr<Pool> PoolPtr;
 typedef boost::shared_ptr<Pool6> Pool6Ptr;
 
 typedef std::vector<Pool6Ptr> Pool6Collection;
 
-class Subnet6 {
+class Subnet {
 public:
+    /// @brief checks if specified address is in range
+    bool inRange(const isc::asiolink::IOAddress& addr);
+
+protected:
+    /// @brief protected constructor
+    //
+    /// By making the constructor protected, we make sure that noone will
+    /// ever instantiate that class. Pool4 and Pool6 should be used instead.
+    Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len);
+
+    static uint32_t getNextID() {
+        static uint32_t id = 0;
+        return (id++);
+    }
+
     /// @brief subnet-id
     uint32_t id_;
 
-    isc::asiolink::IOAddress addr_;
+    isc::asiolink::IOAddress prefix_;
 
-    uint8_t prefix_len_;
+    uint8_t len_;
+};
 
+class Subnet6 : public Subnet {
+public:
+    Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length);
+
+protected:
     /// collection of pools in that list
     Pool6Collection pools_;
+
 };
 
 } // namespace isc::dhcp
