@@ -52,6 +52,7 @@ libdhcpsrv_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 libdhcpsrv_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 libdhcpsrv_unittests_LDADD  = $(GTEST_LDADD)
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 
 
 if USE_CLANGPP

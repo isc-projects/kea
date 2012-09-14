@@ -55,7 +55,7 @@ TEST(TripletTest, constructor) {
     EXPECT_EQ(17, x.get(17));
 
     EXPECT_EQ(30, x.get(30));
-    
+
     EXPECT_EQ(30, x.get(35));
 
     // this will be boring. It is expected to return 42 no matter what
@@ -71,8 +71,8 @@ TEST(TripletTest, constructor) {
     EXPECT_EQ(42, y.get(80));  // time!
 }
 
-// triplets must be easy to use
-// simple int conversions must be done on the fly
+// Triplets must be easy to use.
+// Simple to/from int conversions must be done on the fly.
 TEST(TripletTest, operator) {
 
     uint32_t x = 47;
@@ -97,6 +97,105 @@ TEST(TripletTest, sanity_check) {
     // max is smaller than default
     EXPECT_THROW(Triplet<uint32_t>(5,5,4), BadValue);
 
+}
+
+TEST(Pool6Test, constructor_first_last) {
+
+    // let's construct 2001:db8:1:: - 2001:db8:1::ffff:ffff:ffff:ffff pool
+    Pool6 pool1(Pool6::TYPE_IA, IOAddress("2001:db8:1::"),
+                IOAddress("2001:db8:1::ffff:ffff:ffff:ffff"),
+                1000, 2000, 3000, 4000);
+
+    EXPECT_EQ(Pool6::TYPE_IA, pool1.getType());
+    EXPECT_EQ(IOAddress("2001:db8:1::"), pool1.getFirstAddress());
+    EXPECT_EQ(IOAddress("2001:db8:1::ffff:ffff:ffff:ffff"),
+              pool1.getLastAddress());
+    EXPECT_EQ(1000, pool1.getT1());
+    EXPECT_EQ(2000, pool1.getT2());
+    EXPECT_EQ(3000, pool1.getPreferred());
+    EXPECT_EQ(4000, pool1.getValid());
+
+    // This is Pool6, IPv4 addresses do not belong here
+    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::1"),
+                       IOAddress("192.168.0.5"),
+                       1000, 2000, 3000, 4000), BadValue);
+    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("192.168.0.2"),
+                       IOAddress("2001:db8::1"),
+                       1000, 2000, 3000, 4000), BadValue);
+
+
+    // Should throw. Range should be 2001:db8::1 - 2001:db8::2, not
+    // the other way around.
+    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::2"),
+                       IOAddress("2001:db8::1"),
+                       1000, 2000, 3000, 4000), BadValue);
+}
+
+TEST(Pool6Test, constructor_prefix_len) {
+
+    // let's construct 2001:db8:1::/96 pool
+    Pool6 pool1(Pool6::TYPE_IA, IOAddress("2001:db8:1::"),
+                96, 1000, 2000, 3000, 4000);
+
+    EXPECT_EQ(Pool6::TYPE_IA, pool1.getType());
+    EXPECT_EQ("2001:db8:1::", pool1.getFirstAddress().toText());
+    EXPECT_EQ("2001:db8:1::ffff:ffff", pool1.getLastAddress().toText());
+    EXPECT_EQ(1000, pool1.getT1());
+    EXPECT_EQ(2000, pool1.getT2());
+    EXPECT_EQ(3000, pool1.getPreferred());
+    EXPECT_EQ(4000, pool1.getValid());
+
+    // This is Pool6, IPv4 addresses do not belong here
+    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("192.168.0.2"),
+                       96, 1000, 2000, 3000, 4000),
+                 BadValue);
+}
+
+TEST(Pool6Test, in_range) {
+   Pool6 pool1(Pool6::TYPE_IA, IOAddress("2001:db8:1::1"),
+               IOAddress("2001:db8:1::f"),
+               1000, 2000, 3000, 4000);
+
+   EXPECT_FALSE(pool1.inRange(IOAddress("2001:db8:1::")));
+   EXPECT_TRUE(pool1.inRange(IOAddress("2001:db8:1::1")));
+   EXPECT_TRUE(pool1.inRange(IOAddress("2001:db8:1::7")));
+   EXPECT_TRUE(pool1.inRange(IOAddress("2001:db8:1::f")));
+   EXPECT_FALSE(pool1.inRange(IOAddress("2001:db8:1::10")));
+   EXPECT_FALSE(pool1.inRange(IOAddress("::")));
+}
+
+// This test creates 100 pools and verifies that their IDs are unique.
+TEST(Pool6Test, unique_id) {
+
+    const int num_pools = 100;
+    vector<Pool6Ptr> pools;
+
+    for (int i = 0; i < num_pools; ++i) {
+        pools.push_back(Pool6Ptr(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1::"),
+                                           IOAddress("2001:db8:1::ffff:ffff:ffff:ffff"),
+                                           1000, 2000, 3000, 4000)));
+    }
+
+    for (int i = 0; i < num_pools; ++i) {
+        for (int j = i + 1; j < num_pools; ++j) {
+            if (pools[i]->getId() == pools[j]->getId()) {
+                FAIL() << "Pool-ids must be unique";
+            }
+        }
+    }
+
+}
+
+
+TEST(Subnet6Test, in_range) {
+    Subnet6 subnet(IOAddress("2001:db8:1::"), 64);
+
+   EXPECT_FALSE(subnet.inRange(IOAddress("2001:db8:0:ffff:ffff:ffff:ffff:ffff")));
+   EXPECT_TRUE(subnet.inRange(IOAddress("2001:db8:1::0")));
+   EXPECT_TRUE(subnet.inRange(IOAddress("2001:db8:1::1")));
+   EXPECT_TRUE(subnet.inRange(IOAddress("2001:db8:1::ffff:ffff:ffff:ffff")));
+   EXPECT_FALSE(subnet.inRange(IOAddress("2001:db8:1:1::")));
+   EXPECT_FALSE(subnet.inRange(IOAddress("::")));
 }
 
 } // end of anonymous namespace
