@@ -486,10 +486,11 @@ TEST_F(DomainTreeTest, findInSubTree) {
                  isc::BadValue);
 
     // Now, find "o.w.y.d.e.f." by right-stripping the "w.y.d.e.f."
-    // suffix.
+    // suffix to "o" (non-absolute).
     const Name n2("o.w.y.d.e.f");
     LabelSequence ls2(n2);
     ls2.stripRight(6);
+    EXPECT_EQ("o", ls2.toText());
 
     result = dtree_expose_empty_node.find(ls2, &cdtnode, chain,
                                           testCallback, &flag);
