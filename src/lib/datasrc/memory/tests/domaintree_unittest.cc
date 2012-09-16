@@ -496,6 +496,28 @@ TEST_F(DomainTreeTest, findInSubTree) {
                                           testCallback, &flag);
     EXPECT_EQ(DomainTree<int>::EXACTMATCH, result);
     EXPECT_EQ(n2, chain.getAbsoluteName());
+
+    // Another test. Start with "d.e.f." node.
+    chain.clear();
+    const Name n3("d.e.f");
+    const LabelSequence ls3(n3);
+    result =
+        dtree_expose_empty_node.find(ls3, &cdtnode, chain,
+                                     testCallback, &flag);
+    EXPECT_EQ(DomainTree<int>::EXACTMATCH, result);
+    EXPECT_EQ(n3, chain.getAbsoluteName());
+
+    // Now, find "o.w.y.d.e.f." by right-stripping the "w.y.d.e.f."
+    // suffix to "o.w.y" (non-absolute).
+    const Name n4("o.w.y.d.e.f");
+    LabelSequence ls4(n2);
+    ls4.stripRight(4);
+    EXPECT_EQ("o.w.y", ls4.toText());
+
+    result = dtree_expose_empty_node.find(ls4, &cdtnode, chain,
+                                          testCallback, &flag);
+    EXPECT_EQ(DomainTree<int>::EXACTMATCH, result);
+    EXPECT_EQ(n4, chain.getAbsoluteName());
 }
 
 TEST_F(DomainTreeTest, chainLevel) {
