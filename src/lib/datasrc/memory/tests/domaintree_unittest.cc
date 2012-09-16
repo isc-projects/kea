@@ -469,6 +469,7 @@ TEST_F(DomainTreeTest, findInSubTree) {
                  isc::BadValue);
 
     // First, find a sub-tree node
+    chain.clear();
     const LabelSequence ls1(n0);
     DomainTree<int>::Result result =
         dtree_expose_empty_node.find(ls1, &cdtnode, chain,
