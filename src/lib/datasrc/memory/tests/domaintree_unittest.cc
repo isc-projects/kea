@@ -520,6 +520,56 @@ TEST_F(DomainTreeTest, findInSubTree) {
     EXPECT_EQ(n4, chain.getAbsoluteName());
 }
 
+TEST_F(DomainTreeTest, findInSubTreeSameLabelSequence) {
+    // For the version that takes a node chain, the chain must be empty.
+    DomainTreeNodeChain<int> chain;
+    bool flag;
+
+    const Name n1("c.g.h");
+
+    // First insert a "c.g.h." node.
+    dtree_expose_empty_node.insert(mem_sgmt_, n1, &dtnode);
+
+    // Make a non-absolute label sequence. We will search for this same
+    // sequence in two places in the tree.
+    LabelSequence ls1(n1);
+    ls1.stripRight(3);
+    EXPECT_EQ("c", ls1.toText());
+
+    // First, find "g.h."
+    const Name n2("g.h");
+    const LabelSequence ls2(n2);
+    DomainTree<int>::Result result =
+        dtree_expose_empty_node.find(ls2, &cdtnode, chain,
+                                     testCallback, &flag);
+    EXPECT_EQ(DomainTree<int>::EXACTMATCH, result);
+    EXPECT_EQ(n2, chain.getAbsoluteName());
+
+    // Now, find "c.g.h." by searching just the non-absolute ls1 label
+    // sequence.
+    result = dtree_expose_empty_node.find(ls1, &cdtnode, chain,
+                                          testCallback, &flag);
+    EXPECT_EQ(DomainTree<int>::EXACTMATCH, result);
+    EXPECT_EQ(n1, chain.getAbsoluteName());
+
+    // Now, find "." (the root node)
+    chain.clear();
+    const Name n3(".");
+    const LabelSequence ls3(n3);
+    result =
+        dtree_expose_empty_node.find(ls3, &cdtnode, chain,
+                                     testCallback, &flag);
+    EXPECT_EQ(DomainTree<int>::EXACTMATCH, result);
+    EXPECT_EQ(n3, chain.getAbsoluteName());
+
+    // Now, find "c." by searching just the non-absolute ls1 label
+    // sequence.
+    result = dtree_expose_empty_node.find(ls1, &cdtnode, chain,
+                                          testCallback, &flag);
+    EXPECT_EQ(DomainTree<int>::EXACTMATCH, result);
+    EXPECT_EQ(Name("c."), chain.getAbsoluteName());
+}
+
 TEST_F(DomainTreeTest, chainLevel) {
     TestDomainTreeNodeChain chain;
 
