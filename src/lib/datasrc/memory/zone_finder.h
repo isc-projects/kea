@@ -48,6 +48,12 @@ public:
     const ZoneNode* const found_node;
 };
 
+std::string
+InMemoryZoneFinderNSEC3Calculate(const isc::dns::Name& name,
+                                 const uint16_t iterations,
+                                 const uint8_t* salt,
+                                 size_t salt_len);
+
 /// A derived zone finder class intended to be used with the memory data
 /// source, using ZoneData for its contents.
 class InMemoryZoneFinder : boost::noncopyable, public ZoneFinder {
@@ -66,7 +72,8 @@ public:
     InMemoryZoneFinder(const ZoneData& zone_data,
                        const isc::dns::RRClass& rrclass) :
         zone_data_(zone_data),
-        rrclass_(rrclass)
+        rrclass_(rrclass),
+        nsec3_calculate_(InMemoryZoneFinderNSEC3Calculate)
     {}
 
     /// \brief Find an RRset in the datasource
@@ -101,7 +108,6 @@ public:
         return rrclass_;
     }
 
-
 private:
     /// \brief In-memory version of finder context.
     ///
@@ -119,6 +125,13 @@ private:
 
     const ZoneData& zone_data_;
     const isc::dns::RRClass& rrclass_;
+
+protected:
+    typedef std::string (NSEC3CalculateFn) (const isc::dns::Name& name,
+                                            const uint16_t iterations,
+                                            const uint8_t* salt,
+                                            size_t salt_len);
+    NSEC3CalculateFn* nsec3_calculate_;
 };
 
 } // namespace memory

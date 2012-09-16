@@ -266,45 +266,6 @@ getNSECForNXRRSET(const ZoneData& zone_data,
     return (NULL);
 }
 
-inline void
-iterateSHA1(SHA1Context* ctx, const uint8_t* input, size_t inlength,
-            const uint8_t* salt, size_t saltlen,
-            uint8_t output[SHA1_HASHSIZE])
-{
-    SHA1Reset(ctx);
-    SHA1Input(ctx, input, inlength);
-    SHA1Input(ctx, salt, saltlen); // this works whether saltlen == or > 0
-    SHA1Result(ctx, output);
-}
-
-std::string
-NSEC3Calculate(const Name& name,
-               const uint16_t iterations,
-               const uint8_t* salt,
-               size_t salt_len) {
-    // We first need to normalize the name by converting all upper case
-    // characters in the labels to lower ones.
-    OutputBuffer obuf(Name::MAX_WIRE);
-    Name name_copy(name);
-    name_copy.downcase();
-    name_copy.toWire(obuf);
-
-    const uint8_t* const salt_buf = (salt_len > 0) ? salt : NULL;
-    std::vector<uint8_t> digest(SHA1_HASHSIZE);
-    uint8_t* const digest_buf = &digest[0];
-
-    SHA1Context sha1_ctx;
-    iterateSHA1(&sha1_ctx, static_cast<const uint8_t*>(obuf.getData()),
-                obuf.getLength(), salt_buf, salt_len, digest_buf);
-    for (unsigned int n = 0; n < iterations; ++n) {
-        iterateSHA1(&sha1_ctx, digest_buf, SHA1_HASHSIZE,
-                    salt_buf, salt_len,
-                    digest_buf);
-    }
-
-    return (encodeBase32Hex(digest));
-}
-
 // Structure to hold result data of the findNode() call
 class FindNodeResult {
 public:
@@ -492,6 +453,45 @@ FindNodeResult findNode(const ZoneData& zone_data,
 
 } // end anonymous namespace
 
+inline void
+iterateSHA1(SHA1Context* ctx, const uint8_t* input, size_t inlength,
+            const uint8_t* salt, size_t saltlen,
+            uint8_t output[SHA1_HASHSIZE])
+{
+    SHA1Reset(ctx);
+    SHA1Input(ctx, input, inlength);
+    SHA1Input(ctx, salt, saltlen); // this works whether saltlen == or > 0
+    SHA1Result(ctx, output);
+}
+
+std::string
+InMemoryZoneFinderNSEC3Calculate(const Name& name,
+                                 const uint16_t iterations,
+                                 const uint8_t* salt,
+                                 size_t salt_len) {
+    // We first need to normalize the name by converting all upper case
+    // characters in the labels to lower ones.
+    OutputBuffer obuf(Name::MAX_WIRE);
+    Name name_copy(name);
+    name_copy.downcase();
+    name_copy.toWire(obuf);
+
+    const uint8_t* const salt_buf = (salt_len > 0) ? salt : NULL;
+    std::vector<uint8_t> digest(SHA1_HASHSIZE);
+    uint8_t* const digest_buf = &digest[0];
+
+    SHA1Context sha1_ctx;
+    iterateSHA1(&sha1_ctx, static_cast<const uint8_t*>(obuf.getData()),
+                obuf.getLength(), salt_buf, salt_len, digest_buf);
+    for (unsigned int n = 0; n < iterations; ++n) {
+        iterateSHA1(&sha1_ctx, digest_buf, SHA1_HASHSIZE,
+                    salt_buf, salt_len,
+                    digest_buf);
+    }
+
+    return (encodeBase32Hex(digest));
+}
+
 // Specialization of the ZoneFinder::Context for the in-memory finder.
 class InMemoryZoneFinder::Context : public ZoneFinder::Context {
 public:
@@ -664,11 +664,11 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
     // NSEC3 hash.
     for (unsigned int labels = qlabels; labels >= olabels; --labels) {
         const std::string hlabel =
-             NSEC3Calculate((labels == qlabels ?
-                             name : name.split(qlabels - labels, labels)),
-                            nsec3_data->iterations,
-                            nsec3_data->getSaltData(),
-                            nsec3_data->getSaltLen());
+             (nsec3_calculate_)((labels == qlabels ?
+                                 name : name.split(qlabels - labels, labels)),
+                                nsec3_data->iterations,
+                                nsec3_data->getSaltData(),
+                                nsec3_data->getSaltLen());
 
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FINDNSEC3_TRYHASH).
             arg(name).arg(labels).arg(hlabel);
