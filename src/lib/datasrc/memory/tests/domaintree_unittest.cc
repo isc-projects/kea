@@ -459,14 +459,22 @@ TEST_F(DomainTreeTest, findInSubTree) {
     DomainTreeNodeChain<int> chain;
     bool flag;
 
+    // Searching for a non-absolute (right-stripped) label sequence when
+    // chain is empty should throw.
+    const Name n0("w.y.d.e.f");
+    LabelSequence ls0(n0);
+    ls0.stripRight(1);
+    EXPECT_THROW(dtree_expose_empty_node.find(ls0, &cdtnode, chain,
+                                              testCallback, &flag),
+                 isc::BadValue);
+
     // First, find a sub-tree node
-    const Name n1("w.y.d.e.f");
-    const LabelSequence ls1(n1);
+    const LabelSequence ls1(n0);
     DomainTree<int>::Result result =
         dtree_expose_empty_node.find(ls1, &cdtnode, chain,
                                      testCallback, &flag);
     EXPECT_EQ(DomainTree<int>::EXACTMATCH, result);
-    EXPECT_EQ(n1, chain.getAbsoluteName());
+    EXPECT_EQ(n0, chain.getAbsoluteName());
 
     // Searching for an absolute label sequence when chain is already
     // populated should throw.
