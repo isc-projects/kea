@@ -131,9 +131,9 @@ class MsgQ:
     def setup_poller(self):
         """Set up the poll thing.  Internal function."""
         try:
-            self.poller = select.poll()
-        except AttributeError:
             self.kqueue = select.kqueue()
+        except AttributeError:
+            self.poller = select.poll()
 
     def add_kqueue_socket(self, socket, write_filter=False):
         """Add a kquque filter for a socket.  By default the read
