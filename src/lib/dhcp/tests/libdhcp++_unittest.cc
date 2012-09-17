@@ -18,6 +18,8 @@
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 #include <util/buffer.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include "config.h"
 
@@ -31,6 +33,19 @@ class LibDhcpTest : public ::testing::Test {
 public:
     LibDhcpTest() {
     }
+
+    /// @brief Generic factory function to create any option.
+    ///
+    /// Generic factory function to create any option.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param type option-type
+    /// @param buf option-buffer
+    static OptionPtr genericOptionFactory(Option::Universe u, uint16_t type,
+                                          const OptionBuffer& buf) {
+        Option* option = new Option(u, type, buf);
+        return OptionPtr(option);
+    }
 };
 
 static const uint8_t packed[] = {
@@ -40,6 +55,78 @@ static const uint8_t packed[] = {
     1,  0, 0, 4, 110, 111, 112, 113, // opt4 (8 bytes)
     1,  1, 0, 1, 114 // opt5 (5 bytes)
 };
+
+TEST(LibDhcpTest, optionFactory) {
+    OptionBuffer buf;
+    // Factory functions for specific options must be registered before
+    // they can be used to create options instances. Otherwise exception
+    // is rised.
+    EXPECT_THROW(LibDHCP::optionFactory(Option::V4, DHO_SUBNET_MASK, buf),
+                 isc::BadValue);
+
+    // Let's register some factory functions (two v4 and one v6 function).
+    // Registration may trigger exception if function for the specified
+    // option has been registered already.
+    ASSERT_NO_THROW(
+        LibDHCP::OptionFactoryRegister(Option::V4, DHO_SUBNET_MASK,
+                                       &LibDhcpTest::genericOptionFactory);
+    );
+    ASSERT_NO_THROW(
+        LibDHCP::OptionFactoryRegister(Option::V4, DHO_TIME_OFFSET,
+                                       &LibDhcpTest::genericOptionFactory);
+    );
+    ASSERT_NO_THROW(
+        LibDHCP::OptionFactoryRegister(Option::V6, D6O_CLIENTID,
+                                       &LibDhcpTest::genericOptionFactory);
+    );
+
+    // Invoke factory functions for all options (check if registration
+    // was successful).
+    OptionPtr opt_subnet_mask;
+    opt_subnet_mask = LibDHCP::optionFactory(Option::V4,
+                                             DHO_SUBNET_MASK,
+                                             buf);
+    // Check if non-NULL DHO_SUBNET_MASK option pointer has been returned.
+    ASSERT_TRUE(opt_subnet_mask);
+    // Validate if type and universe is correct.
+    EXPECT_EQ(Option::V4, opt_subnet_mask->getUniverse());
+    EXPECT_EQ(DHO_SUBNET_MASK, opt_subnet_mask->getType());
+    // Expect that option does not have content..
+    EXPECT_EQ(0, opt_subnet_mask->len() - opt_subnet_mask->getHeaderLen());
+
+    // Fill the time offset buffer with 4 bytes of data. Each byte set to 1.
+    OptionBuffer time_offset_buf(4, 1);
+    OptionPtr opt_time_offset;
+    opt_time_offset = LibDHCP::optionFactory(Option::V4,
+                                             DHO_TIME_OFFSET,
+                                             time_offset_buf);
+    // Check if non-NULL DHO_TIME_OFFSET option pointer has been returned.
+    ASSERT_TRUE(opt_time_offset);
+    // Validate if option length, type and universe is correct.
+    EXPECT_EQ(Option::V4, opt_time_offset->getUniverse());
+    EXPECT_EQ(DHO_TIME_OFFSET, opt_time_offset->getType());
+    EXPECT_EQ(time_offset_buf.size(),
+              opt_time_offset->len() - opt_time_offset->getHeaderLen());
+    // Validate data in the option.
+    EXPECT_TRUE(std::equal(time_offset_buf.begin(), time_offset_buf.end(),
+                           opt_time_offset->getData().begin()));
+
+    // Fill the client id buffer with 20 bytes of data. Each byte set to 2.
+    OptionBuffer clientid_buf(20, 2);
+    OptionPtr opt_clientid;
+    opt_clientid = LibDHCP::optionFactory(Option::V6,
+                                          D6O_CLIENTID,
+                                          clientid_buf);
+    // Check if non-NULL D6O_CLIENTID option pointer has been returned.
+    ASSERT_TRUE(opt_clientid);
+    // Validate if option length, type and universe is correct.
+    EXPECT_EQ(Option::V6, opt_clientid->getUniverse());
+    EXPECT_EQ(D6O_CLIENTID, opt_clientid->getType());
+    EXPECT_EQ(clientid_buf.size(), opt_clientid->len() - opt_clientid->getHeaderLen());
+    // Validate data in the option.
+    EXPECT_TRUE(std::equal(clientid_buf.begin(), clientid_buf.end(),
+                           opt_clientid->getData().begin()));
+}
 
 TEST(LibDhcpTest, packOptions6) {
     OptionBuffer buf(512);

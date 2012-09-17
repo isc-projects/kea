@@ -394,16 +394,19 @@ int checkSchemaVersionElement(sqlite3* db, const char* const query) {
         if (rc == SQLITE_ERROR) {
             // this is the error that is returned when the table does not
             // exist
+            sqlite3_finalize(prepared);
             return (-1);
         } else if (rc == SQLITE_OK) {
             break;
         } else if (rc != SQLITE_BUSY || i == 50) {
+            sqlite3_finalize(prepared);
             isc_throw(SQLite3Error, "Unable to prepare version query: "
                         << rc << " " << sqlite3_errmsg(db));
         }
         doSleep();
     }
     if (sqlite3_step(prepared) != SQLITE_ROW) {
+        sqlite3_finalize(prepared);
         isc_throw(SQLite3Error,
                     "Unable to query version: " << sqlite3_errmsg(db));
     }

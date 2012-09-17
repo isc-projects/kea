@@ -387,13 +387,13 @@ TEST_F(StatsMgrTest, CustomCounters) {
     // Increment one of the counters 10 times.
     const uint64_t tooshort_num = 10;
     for (uint64_t i = 0; i < tooshort_num; ++i) {
-        stats_mgr->IncrementCounter(too_short_key);
+        stats_mgr->incrementCounter(too_short_key);
     }
 
     // Increment another counter by 5 times.
     const uint64_t toolate_num = 5;
     for (uint64_t i = 0; i < toolate_num; ++i) {
-        stats_mgr->IncrementCounter(too_late_key);
+        stats_mgr->incrementCounter(too_late_key);
     }
 
     // Check counter's current value and name.
