@@ -138,9 +138,18 @@ public:
         return (udp_fd_params_);
     }
 
+    virtual void setTCPRecvTimeout(size_t timeout) {
+        tcp_recv_timeout_ = timeout;
+    }
+
+    size_t getTCPRecvTimeout() {
+        return tcp_recv_timeout_;
+    }
+
 private:
     std::vector<std::pair<int, int> > tcp_fd_params_;
     std::vector<UDPFdParams> udp_fd_params_;
+    size_t tcp_recv_timeout_;
 };
 
 // A nonoperative DNSServer object to be used in calls to processMessage().

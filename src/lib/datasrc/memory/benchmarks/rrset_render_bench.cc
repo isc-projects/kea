@@ -151,6 +151,7 @@ buildZone(isc::util::MemorySegmentLocal& mem_sgmt,
         if ((it + 1) != rrsets.end() &&
             (*(it + 1))->getType() == RRType::RRSIG()) {
             sig_rrset = *(++it);
+            assert(it != rrsets.end()); // to be safe, and silence cppcheck
         }
         RdataSet* rdataset =
             RdataSet::create(mem_sgmt, encoder, rrset, sig_rrset);

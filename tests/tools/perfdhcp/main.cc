@@ -1,0 +1,50 @@
+// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+#include <iostream>
+#include <stdint.h>
+
+#include <config.h>
+#include <exceptions/exceptions.h>
+
+#include "test_control.h"
+#include "command_options.h"
+
+using namespace isc::perfdhcp;
+
+int
+main(int argc, char* argv[]) {
+    CommandOptions& command_options = CommandOptions::instance();
+    try {
+        command_options.parse(argc, argv);
+    } catch(isc::Exception& e) {
+        std::cout << "Error parsing command line options: "
+                  << e.what() << std::endl;
+        command_options.usage();
+        return(1);
+    }
+    try{
+        TestControl& test_control = TestControl::instance();
+        test_control.run();
+    } catch (isc::Exception& e) {
+        std::cout << "Error running perfdhcp: " << e.what() << std::endl;
+        std::string diags(command_options.getDiags());
+        if (diags.find('e') != std::string::npos) {
+            std::cout << "Fatal error" << std::endl;
+        }
+        return(1);
+    }
+    return(0);
+}
+

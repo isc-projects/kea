@@ -1,15 +1,18 @@
-dist_doc_DATA = bind10-guide.txt
-dist_html_DATA = bind10-guide.css bind10-guide.html bind10-messages.html
+# generated documentation
+HTMLDOCS = bind10-guide.html bind10-messages.html
+DOCS = bind10-guide.txt
 
-EXTRA_DIST = bind10-guide.xml bind10-messages.xml
+dist_doc_DATA = $(DOCS)
+dist_html_DATA = $(HTMLDOCS) bind10-guide.css
+
+EXTRA_DIST = bind10-guide.xml
+DISTCLEANFILES = $(HTMLDOCS) $(DOCS) bind10-messages.xml
 
 # This is not a "man" manual, but reuse this for now for docbook.
-if ENABLE_MAN
-
-.PHONY: bind10-messages.xml
+if GENERATE_DOCS
 
 bind10-guide.html: bind10-guide.xml
-	xsltproc --novalid --xinclude --nonet \
+	@XSLTPROC@ --novalid --xinclude --nonet \
 		--path $(top_builddir)/doc \
 		-o $@ \
 		--stringparam section.autolabel 1 \
@@ -21,18 +24,23 @@ bind10-guide.html: bind10-guide.xml
 HTML2TXT = elinks -dump -no-numbering -no-references
 
 bind10-guide.txt: bind10-guide.html
-	$(HTML2TXT) $(srcdir)/bind10-guide.html > $@
+	$(HTML2TXT) bind10-guide.html > $@
 
 bind10-messages.html: bind10-messages.xml
-	xsltproc --novalid --xinclude --nonet \
+	@XSLTPROC@ --novalid --xinclude --nonet \
 		--path $(top_builddir)/doc \
 		-o $@ \
 		--stringparam html.stylesheet $(srcdir)/bind10-guide.css \
 		http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl \
-		$(srcdir)/bind10-messages.xml
+		bind10-messages.xml
 
-# So many dependencies that it's easiest just to regenerate it every time
 bind10-messages.xml:
 	$(PYTHON) $(top_srcdir)/tools/system_messages.py -o $@ $(top_srcdir)
+
+else
+
+$(HTMLDOCS) $(DOCS):
+	@echo Doc generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
+	@echo Doc generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild BIND 10 > $@
 
 endif

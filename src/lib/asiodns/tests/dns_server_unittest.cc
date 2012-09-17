@@ -258,7 +258,8 @@ class TCPClient : public SimpleClient {
     // this includes connect, send message and recevice message
     static const unsigned int SERVER_TIME_OUT = 2;
     TCPClient(asio::io_service& service, const ip::tcp::endpoint& server)
-        : SimpleClient(service, SERVER_TIME_OUT)
+        : SimpleClient(service, SERVER_TIME_OUT),
+          send_data_delay_(0), send_data_len_delay_(0)
     {
         server_ = server;
         socket_.reset(new ip::tcp::socket(service));
@@ -280,6 +281,20 @@ class TCPClient : public SimpleClient {
                                 std::string(received_data_ + 2));
     }
 
+    /// Set the delay before the data len is sent (in seconds)
+    /// If this is non-zero, the actual data is never sent
+    /// (it is used to test timeout, in which case the connection
+    /// should have been closed by the other side anyway)
+    void setSendDataLenDelay(size_t send_data_len_delay) {
+        send_data_len_delay_ = send_data_len_delay;
+    }
+
+    /// Set the delay before the packet data itself is sent
+    /// (in seconds)
+    void setSendDataDelay(size_t send_data_delay) {
+        send_data_delay_ = send_data_delay;
+    }
+
     private:
     void stopWaitingforResponse() {
         socket_->close();
@@ -288,6 +303,7 @@ class TCPClient : public SimpleClient {
     void connectHandler(const asio::error_code& error) {
         if (!error) {
             data_to_send_len_ = htons(data_to_send_len_);
+            sleep(send_data_len_delay_);
             socket_->async_send(buffer(&data_to_send_len_, 2),
                                 boost::bind(&TCPClient::sendMessageBodyHandler,
                                             this, _1, _2));
@@ -297,7 +313,8 @@ class TCPClient : public SimpleClient {
     void sendMessageBodyHandler(const asio::error_code& error,
                                 size_t send_bytes)
     {
-        if (!error && send_bytes == 2) {
+        if (!error && send_bytes == 2 && send_data_len_delay_ == 0) {
+            sleep(send_data_delay_);
             socket_->async_send(buffer(data_to_send_.c_str(),
                                        data_to_send_.size() + 1),
                     boost::bind(&TCPClient::finishSendHandler, this, _1, _2));
@@ -316,6 +333,9 @@ class TCPClient : public SimpleClient {
     ip::tcp::endpoint server_;
     std::string data_to_send_;
     uint16_t data_to_send_len_;
+
+    size_t send_data_delay_;
+    size_t send_data_len_delay_;
 };
 
 // \brief provide the context which including two clients and
@@ -565,6 +585,34 @@ TYPED_TEST(DNSServerTest, stopTCPServerAfterOneQuery) {
     EXPECT_TRUE(this->serverStopSucceed());
 }
 
+TYPED_TEST(DNSServerTest, TCPTimeoutOnLen) {
+    this->tcp_server_->setTCPRecvTimeout(100);
+    this->tcp_client_->setSendDataLenDelay(2);
+    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+                                  this->tcp_client_);
+    EXPECT_EQ("", this->tcp_client_->getReceivedData());
+    EXPECT_FALSE(this->serverStopSucceed());
+}
+
+TYPED_TEST(DNSServerTest, TCPTimeout) {
+    // set delay higher than timeout
+    this->tcp_server_->setTCPRecvTimeout(100);
+    this->tcp_client_->setSendDataDelay(2);
+    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+                                  this->tcp_client_);
+    EXPECT_EQ("", this->tcp_client_->getReceivedData());
+    EXPECT_TRUE(this->serverStopSucceed());
+}
+
+TYPED_TEST(DNSServerTest, TCPNoTimeout) {
+    // set delay lower than timeout
+    this->tcp_server_->setTCPRecvTimeout(3000);
+    this->tcp_client_->setSendDataDelay(1);
+    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+                                  this->tcp_client_);
+    EXPECT_EQ("BIND10 is awesome", this->tcp_client_->getReceivedData());
+    EXPECT_TRUE(this->serverStopSucceed());
+}
 
 // Test whether tcp server stopped successfully before server start to serve
 TYPED_TEST(DNSServerTest, stopTCPServerBeforeItStartServing) {

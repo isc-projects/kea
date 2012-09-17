@@ -28,6 +28,8 @@
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/rdataset.h>
 
+#include <boost/noncopyable.hpp>
+
 #include <string>
 
 namespace isc {
@@ -65,17 +67,22 @@ namespace memory {
 /// it should be safe, but we should eventually provide complete
 /// implementations of these methods.
 ///
+/// This class can internally maintain dynamically allocated resource.
+/// It would cause copying a class object complicated while objects of
+/// this class are not expected to be copyable in the usage, so it's
+/// explicitly defined non copyable.
+///
 /// \note This class is exposed in this separate header file so that other
 /// part of the in-memory data source implementation and test code
 /// can refer to its definition, and only for that purpose.  Otherwise this is
 /// essentially a private class of the in-memory data source implementation,
 /// and an application shouldn't directly refer to this class.
-class TreeNodeRRset : public dns::AbstractRRset {
+class TreeNodeRRset : boost::noncopyable, public dns::AbstractRRset {
 public:
     /// \brief Normal case constructor.
     ///
     /// This class object is basically defined with a \c ZoneNode and
-    /// \c RdataSet.  The former determine the owner name of the RRset,
+    /// \c RdataSet.  The former determines the owner name of the RRset,
     /// and the latter provides the rest of the RRset parameters.
     /// Since the RR class is maintained outside of the \c ZoneData,
     /// it must be explicitly given as a constructor parameter.
@@ -105,7 +112,7 @@ public:
                   const RdataSet* rdataset, bool dnssec_ok) :
         node_(node), rdataset_(rdataset),
         rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
-        dnssec_ok_(dnssec_ok), name_(NULL), realname_buf_(NULL), ttl_(NULL)
+        dnssec_ok_(dnssec_ok), name_(NULL), realname_(NULL), ttl_(NULL)
     {}
 
     /// \brief Constructor for wildcard-expanded owner name.
@@ -122,10 +129,15 @@ public:
     /// \throw std::bad_alloc Memory allocation fails
     TreeNodeRRset(const dns::Name& realname, const dns::RRClass& rrclass,
                   const ZoneNode* node, const RdataSet* rdataset,
-                  bool dnssec_ok);
+                  bool dnssec_ok) :
+        node_(node), rdataset_(rdataset),
+        rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
+        dnssec_ok_(dnssec_ok), name_(NULL), realname_(new dns::Name(realname)),
+	ttl_(NULL)
+    {}
 
     virtual ~TreeNodeRRset() {
-        delete[] realname_buf_;
+        delete realname_;
         delete ttl_;
         delete name_;
     }
@@ -234,16 +246,11 @@ private:
     dns::LabelSequence getOwnerLabels(
         uint8_t labels_buf[dns::LabelSequence::MAX_SERIALIZED_LENGTH]) const
     {
-        if (realname_buf_ != NULL) {
-            return (dns::LabelSequence(realname_buf_));
+        if (realname_ != NULL) {
+            return (dns::LabelSequence(*realname_));
         }
         return (node_->getAbsoluteLabels(labels_buf));
     }
-
-    // A helper for isSameKind() to check if 'this' and 'other' has
-    // the same "real" name in case at least either is constructed with
-    // a real name.
-    bool hasSameRealName(const TreeNodeRRset& other) const;
 
     const ZoneNode* node_;
     const RdataSet* rdataset_;
@@ -251,7 +258,7 @@ private:
     const dns::RRClass rrclass_;
     const bool dnssec_ok_;
     mutable dns::Name* name_;
-    uint8_t* realname_buf_;
+    const dns::Name* const realname_;
     mutable dns::RRTTL* ttl_;
 };
 

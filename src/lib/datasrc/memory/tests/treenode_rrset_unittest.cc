@@ -25,6 +25,8 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/shared_ptr.hpp>
+
 #include <string>
 #include <vector>
 
@@ -70,7 +72,10 @@ protected:
                                    "match.example.com. 3600 IN RRSIG "
                                    "A 5 2 3600 20120814220826 20120715220826 "
                                    "1234 example.com. FAKE")),
-        zone_data_(NULL)
+        zone_data_(NULL), origin_node_(NULL), www_node_(NULL),
+        wildcard_node_(NULL), ns_rdataset_(NULL), dname_rdataset_(NULL),
+        a_rdataset_(NULL), aaaa_rdataset_(NULL), rrsig_only_rdataset_(NULL),
+        wildcard_rdataset_(NULL)
     {}
     void SetUp() {
         // We create some common test data here in SetUp() so it will be
@@ -149,64 +154,123 @@ checkBasicFields(const AbstractRRset& actual_rrset, const Name& expected_name,
     EXPECT_EQ(expected_sigcount, actual_rrset.getRRsigDataCount());
 }
 
+// The following two are trivial wrapper to create a shared pointer
+// version of TreeNodeRRset object in order to work around dubious
+// behavior of some C++ compiler: they reject getting a const reference to
+// a temporary non-copyable object.
+boost::shared_ptr<TreeNodeRRset>
+createRRset(const RRClass& rrclass, const ZoneNode* node,
+            const RdataSet* rdataset, bool dnssec_ok)
+{
+    return (boost::shared_ptr<TreeNodeRRset>(
+                new TreeNodeRRset(rrclass, node, rdataset, dnssec_ok)));
+}
+
+boost::shared_ptr<TreeNodeRRset>
+createRRset(const Name& realname, const RRClass& rrclass, const ZoneNode* node,
+            const RdataSet* rdataset, bool dnssec_ok)
+{
+    return (boost::shared_ptr<TreeNodeRRset>(
+                new TreeNodeRRset(realname, rrclass, node, rdataset,
+                                  dnssec_ok)));
+}
+
 TEST_F(TreeNodeRRsetTest, create) {
     // Constructed with RRSIG, and it should be visible.
-    checkBasicFields(TreeNodeRRset(rrclass_, www_node_, a_rdataset_, true),
+    checkBasicFields(*createRRset(rrclass_, www_node_, a_rdataset_, true),
                      www_name_, rrclass_, RRType::A(), 3600, 2, 1);
     // Constructed with RRSIG, and it should be invisible.
-    checkBasicFields(TreeNodeRRset(rrclass_, www_node_, a_rdataset_, false),
+    checkBasicFields(*createRRset(rrclass_, www_node_, a_rdataset_, false),
                      www_name_, rrclass_, RRType::A(), 3600, 2, 0);
     // Constructed without RRSIG, and it would be visible (but of course won't)
-    checkBasicFields(TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_, true),
+    checkBasicFields(*createRRset(rrclass_, origin_node_, ns_rdataset_, true),
                      origin_name_, rrclass_, RRType::NS(), 3600, 1, 0);
     // Constructed without RRSIG, and it should be visible
-    checkBasicFields(TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_,
-                                   false),
+    checkBasicFields(*createRRset(rrclass_, origin_node_, ns_rdataset_, false),
                      origin_name_, rrclass_, RRType::NS(), 3600, 1, 0);
     // RRSIG-only case (note the RRset's type is covered type)
-    checkBasicFields(TreeNodeRRset(rrclass_, www_node_, rrsig_only_rdataset_,
-                                   true),
+    checkBasicFields(*createRRset(rrclass_, www_node_, rrsig_only_rdataset_,
+                                  true),
                      www_name_, rrclass_, RRType::TXT(), 3600, 0, 1);
     // RRSIG-only case (note the RRset's type is covered type), but it's
     // invisible
-    checkBasicFields(TreeNodeRRset(rrclass_, www_node_, rrsig_only_rdataset_,
-                                   false),
+    checkBasicFields(*createRRset(rrclass_, www_node_, rrsig_only_rdataset_,
+                                  false),
                      www_name_, rrclass_, RRType::TXT(), 3600, 0, 0);
     // Wildcard substitution
-    checkBasicFields(TreeNodeRRset(match_name_, rrclass_,
-                                   wildcard_node_, wildcard_rdataset_,
-                                   true),
+    checkBasicFields(*createRRset(match_name_, rrclass_,
+                                  wildcard_node_, wildcard_rdataset_,
+                                  true),
                      match_name_, rrclass_, RRType::A(), 3600, 2, 1);
 }
 
-// Templated if and when we support OutputBuffer version of toWire().
-// Right now, we take a minimalist approach, only implementing testing the
-// renderer version.
+// The following two templated functions are helper to encapsulate the
+// concept truncation and handle MessageRenderer and OutputBuffer transparently
+// in templated test cases.
+template <typename OutputType>
+void
+setOutputLengthLimit(OutputType& output, size_t len_limit) {
+    output.setLengthLimit(len_limit);
+}
+template <>
+void
+setOutputLengthLimit<OutputBuffer>(OutputBuffer&, size_t) {
+}
+
+template <typename OutputType>
+bool
+isOutputTruncated(OutputType& output) {
+    return (output.isTruncated());
+}
+template <>
+bool
+isOutputTruncated<OutputBuffer>(OutputBuffer&) {
+    return (false);
+}
+
+// Templated so we so can support OutputBuffer version of toWire().
+// We use the above helper templated functions for some renderer only methods.
+// We test two sets of cases: normal rendering case and case when truncation
+// is expected.  The latter is effectively for MessageRenderer only.
+// If len_limit == 0, we consider it the normal case; otherwise it's for
+// truncation.  prepended_name isn't used for the truncation case.
 template <typename OutputType>
 void
 checkToWireResult(OutputType& expected_output, OutputType& actual_output,
                   const AbstractRRset& actual_rrset,
                   const Name& prepended_name,
                   ConstRRsetPtr rrset, ConstRRsetPtr rrsig_rrset,
-                  bool dnssec_ok)
+                  bool dnssec_ok,
+                  size_t len_limit = 0,
+                  size_t expected_result = 0)
 {
     expected_output.clear();
     actual_output.clear();
 
-    // Prepare "actual" rendered data.  We prepend a name to confirm the
-    // owner name should be compressed in both cases.
-    prepended_name.toWire(actual_output);
-    const size_t rdata_count = rrset ? rrset->getRdataCount() : 0;
-    const int expected_ret = (dnssec_ok && rrsig_rrset) ?
-        rdata_count + rrsig_rrset->getRdataCount() : rdata_count;
-    EXPECT_EQ(expected_ret, actual_rrset.toWire(actual_output));
+    if (len_limit == 0) {       // normal rendering
+        // Prepare "actual" rendered data.  We prepend a name to confirm the
+        // owner name should be compressed in both cases.
+        prepended_name.toWire(actual_output);
+        const size_t rdata_count = rrset ? rrset->getRdataCount() : 0;
+        const int expected_ret = (dnssec_ok && rrsig_rrset) ?
+            rdata_count + rrsig_rrset->getRdataCount() : rdata_count;
+        EXPECT_EQ(expected_ret, actual_rrset.toWire(actual_output));
+    } else {                    // truncation
+        setOutputLengthLimit(actual_output, len_limit);
+        EXPECT_EQ(expected_result, actual_rrset.toWire(actual_output));
+        EXPECT_TRUE(isOutputTruncated(actual_output)); // always true here
+    }
 
     // Prepare "expected" data.
-    prepended_name.toWire(expected_output);
+    if (len_limit == 0) {       // normal rendering
+        prepended_name.toWire(expected_output);
+    } else {                    // truncation
+        setOutputLengthLimit(expected_output, len_limit);
+    }
     if (rrset) {
         rrset->toWire(expected_output);
     }
-    if (dnssec_ok && rrsig_rrset) {
+    if (!isOutputTruncated(expected_output) && dnssec_ok && rrsig_rrset) {
         rrsig_rrset->toWire(expected_output);
     }
 
@@ -217,33 +281,39 @@ checkToWireResult(OutputType& expected_output, OutputType& actual_output,
 
 TEST_F(TreeNodeRRsetTest, toWire) {
     MessageRenderer expected_renderer, actual_renderer;
+    OutputBuffer expected_buffer(0), actual_buffer(0);
 
     {
         SCOPED_TRACE("with RRSIG, DNSSEC OK");
-        const TreeNodeRRset rrset1(rrclass_, www_node_, a_rdataset_, true);
-        checkToWireResult(expected_renderer, actual_renderer, rrset1,
+        const TreeNodeRRset rrset(rrclass_, www_node_, a_rdataset_, true);
+        checkToWireResult(expected_renderer, actual_renderer, rrset,
                           www_name_, a_rrset_, a_rrsig_rrset_, true);
+        // Currently the buffer version throws
+        EXPECT_THROW(
+            checkToWireResult(expected_buffer, actual_buffer, rrset,
+                              www_name_, a_rrset_, a_rrsig_rrset_, true),
+            isc::Unexpected);
     }
 
     {
         SCOPED_TRACE("with RRSIG, DNSSEC not OK");
-        const TreeNodeRRset rrset2(rrclass_, www_node_, a_rdataset_, false);
-        checkToWireResult(expected_renderer, actual_renderer, rrset2,
+        const TreeNodeRRset rrset(rrclass_, www_node_, a_rdataset_, false);
+        checkToWireResult(expected_renderer, actual_renderer, rrset,
                           www_name_, a_rrset_, a_rrsig_rrset_, false);
     }
 
     {
         SCOPED_TRACE("without RRSIG, DNSSEC OK");
-        const TreeNodeRRset rrset3(rrclass_, origin_node_, ns_rdataset_, true);
-        checkToWireResult(expected_renderer, actual_renderer, rrset3,
+        const TreeNodeRRset rrset(rrclass_, origin_node_, ns_rdataset_, true);
+        checkToWireResult(expected_renderer, actual_renderer, rrset,
                           origin_name_, ns_rrset_, ConstRRsetPtr(), true);
     }
 
     {
         SCOPED_TRACE("without RRSIG, DNSSEC not OK");
-        const TreeNodeRRset rrset4(rrclass_, origin_node_, ns_rdataset_,
-                                   false);
-        checkToWireResult(expected_renderer, actual_renderer, rrset4,
+        const TreeNodeRRset rrset(rrclass_, origin_node_, ns_rdataset_,
+                                  false);
+        checkToWireResult(expected_renderer, actual_renderer, rrset,
                           origin_name_, ns_rrset_, ConstRRsetPtr(), false);
     }
 
@@ -251,9 +321,9 @@ TEST_F(TreeNodeRRsetTest, toWire) {
         // RDATA of DNAME DR shouldn't be compressed.  Prepending "example.org"
         // will check that.
         SCOPED_TRACE("uncompressed RDATA");
-        const TreeNodeRRset rrset5(rrclass_, origin_node_, dname_rdataset_,
-                                   false);
-        checkToWireResult(expected_renderer, actual_renderer, rrset5,
+        const TreeNodeRRset rrset(rrclass_, origin_node_, dname_rdataset_,
+                                  false);
+        checkToWireResult(expected_renderer, actual_renderer, rrset,
                           Name("example.org"), dname_rrset_, ConstRRsetPtr(),
                           false);
     }
@@ -261,8 +331,8 @@ TEST_F(TreeNodeRRsetTest, toWire) {
     {
         SCOPED_TRACE("wildcard with RRSIG");
         checkToWireResult(expected_renderer, actual_renderer,
-                          TreeNodeRRset(match_name_, rrclass_, wildcard_node_,
-                                        wildcard_rdataset_, true),
+                          *createRRset(match_name_, rrclass_, wildcard_node_,
+                                       wildcard_rdataset_, true),
                           origin_name_, wildmatch_rrset_,
                           wildmatch_rrsig_rrset_, true);
     }
@@ -270,8 +340,8 @@ TEST_F(TreeNodeRRsetTest, toWire) {
     {
         SCOPED_TRACE("wildcard without RRSIG");
         checkToWireResult(expected_renderer, actual_renderer,
-                          TreeNodeRRset(match_name_, rrclass_, wildcard_node_,
-                                        wildcard_rdataset_, false),
+                          *createRRset(match_name_, rrclass_, wildcard_node_,
+                                       wildcard_rdataset_, false),
                           origin_name_, wildmatch_rrset_,
                           wildmatch_rrsig_rrset_, false);
     }
@@ -282,9 +352,9 @@ TEST_F(TreeNodeRRsetTest, toWire) {
         // ANY or type-RRSIG queries, which are rare also).  But can still
         // happen.
         SCOPED_TRACE("RRSIG only, DNSSEC OK");
-        const TreeNodeRRset rrset6(rrclass_, www_node_, rrsig_only_rdataset_,
-                                   true);
-        checkToWireResult(expected_renderer, actual_renderer, rrset6,
+        const TreeNodeRRset rrset(rrclass_, www_node_, rrsig_only_rdataset_,
+                                  true);
+        checkToWireResult(expected_renderer, actual_renderer, rrset,
                           www_name_, ConstRRsetPtr(), txt_rrsig_rrset_,true);
     }
 
@@ -293,60 +363,34 @@ TEST_F(TreeNodeRRsetTest, toWire) {
         // In practice this case wouldn't happen, but API-wise possible, so
         // we test it explicitly.
         SCOPED_TRACE("RRSIG only, DNSSEC not OK");
-        const TreeNodeRRset rrset7(rrclass_, www_node_, rrsig_only_rdataset_,
-                                   false);
-        checkToWireResult(expected_renderer, actual_renderer, rrset7,
+        const TreeNodeRRset rrset(rrclass_, www_node_, rrsig_only_rdataset_,
+                                  false);
+        checkToWireResult(expected_renderer, actual_renderer, rrset,
                           www_name_, ConstRRsetPtr(), txt_rrsig_rrset_,false);
     }
 }
 
-void
-checkTruncationResult(MessageRenderer& expected_renderer,
-                      MessageRenderer& actual_renderer,
-                      const AbstractRRset& actual_rrset,
-                      ConstRRsetPtr rrset, ConstRRsetPtr rrsig_rrset,
-                      bool dnssec_ok, size_t len_limit, size_t expected_result)
-{
-    expected_renderer.clear();
-    actual_renderer.clear();
-
-    actual_renderer.setLengthLimit(len_limit);
-    EXPECT_EQ(expected_result, actual_rrset.toWire(actual_renderer));
-    EXPECT_TRUE(actual_renderer.isTruncated()); // always true in this test
-
-    expected_renderer.setLengthLimit(len_limit);
-    if (rrset) {
-        rrset->toWire(expected_renderer);
-    }
-    if (!expected_renderer.isTruncated() && dnssec_ok && rrsig_rrset) {
-        rrsig_rrset->toWire(expected_renderer);
-    }
-
-    matchWireData(expected_renderer.getData(), expected_renderer.getLength(),
-                  actual_renderer.getData(), actual_renderer.getLength());
-}
-
 TEST_F(TreeNodeRRsetTest, toWireTruncated) {
     MessageRenderer expected_renderer, actual_renderer;
+    // dummy parameter to checkToWireResult (unused for the this test case)
+    const Name& name = Name::ROOT_NAME();
 
     // Set the truncation limit to name len + 14 bytes of fixed data for A RR
     // (type, class, TTL, rdlen, and 4-byte IPv4 address).  Then we can only
     // render just one RR, without any garbage trailing data.
-    checkTruncationResult(expected_renderer, actual_renderer,
-                          TreeNodeRRset(rrclass_, www_node_, a_rdataset_,
-                                        true),
-                          a_rrset_, a_rrsig_rrset_, true,
-                          www_name_.getLength() + 14,
-                          1);   // 1 main RR, no RRSIG
+    checkToWireResult(expected_renderer, actual_renderer,
+                      *createRRset(rrclass_, www_node_, a_rdataset_, true),
+                      name, a_rrset_, a_rrsig_rrset_, true,
+                      www_name_.getLength() + 14,
+                      1);   // 1 main RR, no RRSIG
 
     // The first main RRs should fit in the renderer (the name will be
     // fully compressed, so its size is 2 bytes), but the RRSIG doesn't.
-    checkTruncationResult(expected_renderer, actual_renderer,
-                          TreeNodeRRset(rrclass_, www_node_, a_rdataset_,
-                                        true),
-                          a_rrset_, a_rrsig_rrset_, true,
-                          www_name_.getLength() + 14 + 2 + 14,
-                          2);   // 2 main RR, no RRSIG
+    checkToWireResult(expected_renderer, actual_renderer,
+                      *createRRset(rrclass_, www_node_, a_rdataset_, true),
+                      name, a_rrset_, a_rrsig_rrset_, true,
+                      www_name_.getLength() + 14 + 2 + 14,
+                      2);   // 2 main RR, no RRSIG
 
     // This RRset has one main RR and two RRSIGs.  Rendering the second RRSIG
     // causes truncation.
@@ -358,19 +402,18 @@ TEST_F(TreeNodeRRsetTest, toWireTruncated) {
     a_rrsig_rrset_->toWire(expected_renderer);
     const size_t limit_len = expected_renderer.getLength();
     // Then perform the test
-    checkTruncationResult(expected_renderer, actual_renderer,
-                          TreeNodeRRset(rrclass_, www_node_, aaaa_rdataset_,
-                                        true),
-                          aaaa_rrset_, aaaa_rrsig_rrset_, true, limit_len,
-                          2);   // 1 main RR, 1 RRSIG
+    checkToWireResult(expected_renderer, actual_renderer,
+                      *createRRset(rrclass_, www_node_, aaaa_rdataset_, true),
+                      name, aaaa_rrset_, aaaa_rrsig_rrset_, true, limit_len,
+                      2);   // 1 main RR, 1 RRSIG
 
     // RRSIG only case.  Render length limit being 1, so it won't fit,
     // and will cause truncation.
-    checkTruncationResult(expected_renderer, actual_renderer,
-                          TreeNodeRRset(rrclass_, www_node_,
-                                        rrsig_only_rdataset_, true),
-                          ConstRRsetPtr(), txt_rrsig_rrset_, true, 1,
-                          0);   // no RR
+    checkToWireResult(expected_renderer, actual_renderer,
+                      *createRRset(rrclass_, www_node_, rrsig_only_rdataset_,
+                                   true),
+                      name, ConstRRsetPtr(), txt_rrsig_rrset_, true, 1,
+                      0);   // no RR
 }
 
 void
@@ -436,32 +479,32 @@ checkToText(const AbstractRRset& actual_rrset,
 
 TEST_F(TreeNodeRRsetTest, toText) {
     // Constructed with RRSIG, and it should be visible.
-    checkToText(TreeNodeRRset(rrclass_, www_node_, a_rdataset_, true),
+    checkToText(*createRRset(rrclass_, www_node_, a_rdataset_, true),
                 a_rrset_, a_rrsig_rrset_);
     // Constructed with RRSIG, and it should be invisible.
-    checkToText(TreeNodeRRset(rrclass_, www_node_, a_rdataset_, false),
+    checkToText(*createRRset(rrclass_, www_node_, a_rdataset_, false),
                 a_rrset_, ConstRRsetPtr());
     // Constructed without RRSIG, and it would be visible (but of course won't)
-    checkToText(TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_, true),
+    checkToText(*createRRset(rrclass_, origin_node_, ns_rdataset_, true),
                 ns_rrset_, ConstRRsetPtr());
     // Constructed without RRSIG, and it should be visible
-    checkToText(TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_, false),
+    checkToText(*createRRset(rrclass_, origin_node_, ns_rdataset_, false),
                 ns_rrset_, ConstRRsetPtr());
     // Wildcard expanded name with RRSIG
-    checkToText(TreeNodeRRset(match_name_, rrclass_, wildcard_node_,
-                              wildcard_rdataset_, true),
+    checkToText(*createRRset(match_name_, rrclass_, wildcard_node_,
+                             wildcard_rdataset_, true),
                 wildmatch_rrset_, wildmatch_rrsig_rrset_);
     // Wildcard expanded name without RRSIG
-    checkToText(TreeNodeRRset(match_name_, rrclass_, wildcard_node_,
-                              wildcard_rdataset_, false),
+    checkToText(*createRRset(match_name_, rrclass_, wildcard_node_,
+                             wildcard_rdataset_, false),
                 wildmatch_rrset_, ConstRRsetPtr());
     // RRSIG case
-    checkToText(TreeNodeRRset(rrclass_, www_node_, rrsig_only_rdataset_,
-                              true),
+    checkToText(*createRRset(rrclass_, www_node_, rrsig_only_rdataset_,
+                             true),
                 ConstRRsetPtr(), txt_rrsig_rrset_);
     // Similar to the previous case, but completely empty.
-    checkToText(TreeNodeRRset(rrclass_, www_node_, rrsig_only_rdataset_,
-                              false),
+    checkToText(*createRRset(rrclass_, www_node_, rrsig_only_rdataset_,
+                             false),
                 ConstRRsetPtr(), ConstRRsetPtr());
 }
 
@@ -469,22 +512,22 @@ TEST_F(TreeNodeRRsetTest, isSameKind) {
     const TreeNodeRRset rrset(rrclass_, www_node_, a_rdataset_, true);
 
     // Same name (node), same type (rdataset) => same kind
-    EXPECT_TRUE(rrset.isSameKind(TreeNodeRRset(rrclass_, www_node_,
-                                               a_rdataset_, true)));
+    EXPECT_TRUE(rrset.isSameKind(*createRRset(rrclass_, www_node_,
+                                              a_rdataset_, true)));
 
     // Same name (node), different type (rdataset) => not same kind
-    EXPECT_FALSE(rrset.isSameKind(TreeNodeRRset(rrclass_, www_node_,
-                                                aaaa_rdataset_, true)));
+    EXPECT_FALSE(rrset.isSameKind(*createRRset(rrclass_, www_node_,
+                                               aaaa_rdataset_, true)));
 
     // Different name, different type => not same kind
-    EXPECT_FALSE(rrset.isSameKind(TreeNodeRRset(rrclass_, origin_node_,
-                                                ns_rdataset_, true)));
+    EXPECT_FALSE(rrset.isSameKind(*createRRset(rrclass_, origin_node_,
+                                               ns_rdataset_, true)));
 
     // Different name, same type => not same kind.
     // Note: this shouldn't happen in our in-memory data source implementation,
     // but API doesn't prohibit it.
-    EXPECT_FALSE(rrset.isSameKind(TreeNodeRRset(rrclass_, origin_node_,
-                                                a_rdataset_, true)));
+    EXPECT_FALSE(rrset.isSameKind(*createRRset(rrclass_, origin_node_,
+                                               a_rdataset_, true)));
 
     // Wildcard and expanded RRset
     const TreeNodeRRset wildcard_rrset(rrclass_, wildcard_node_,
@@ -516,13 +559,33 @@ TEST_F(TreeNodeRRsetTest, isSameKind) {
     // tree node, they must belong to the same RR class.  This case is
     // a caller's bug, and the isSameKind() implementation returns the
     // "wrong" (= true) answer.
-    EXPECT_TRUE(rrset.isSameKind(TreeNodeRRset(RRClass::CH(), www_node_,
-                                               a_rdataset_, true)));
+    EXPECT_TRUE(rrset.isSameKind(*createRRset(RRClass::CH(), www_node_,
+                                              a_rdataset_, true)));
 
     // Same kind of different RRset class
     EXPECT_TRUE(rrset.isSameKind(*a_rrset_));
 
     // Different kind of different RRset class
     EXPECT_FALSE(rrset.isSameKind(*aaaa_rrset_));
+}
+
+TEST_F(TreeNodeRRsetTest, unexpectedMethods) {
+    // Note: buffer version of toWire() is checked in the toWire test.
+
+    TreeNodeRRset rrset(rrclass_, www_node_, a_rdataset_, true);
+
+    EXPECT_THROW(rrset.setTTL(RRTTL(0)), isc::Unexpected);
+    EXPECT_THROW(rrset.setName(Name("example")), isc::Unexpected);
+    EXPECT_THROW(rrset.addRdata(createRdata(RRType::A(), rrclass_, "0.0.0.0")),
+                 isc::Unexpected);
+    EXPECT_THROW(rrset.getRRsig(), isc::Unexpected);
+    RdataPtr sig_rdata = createRdata(
+        RRType::RRSIG(), rrclass_,
+        "A 5 2 3600 20120814220826 20120715220826 5300 example.com. FAKE");
+    EXPECT_THROW(rrset.addRRsig(sig_rdata), isc::Unexpected);
+    EXPECT_THROW(rrset.addRRsig(*a_rrsig_rrset_), isc::Unexpected);
+    EXPECT_THROW(rrset.addRRsig(a_rrsig_rrset_), isc::Unexpected);
+    EXPECT_THROW(rrset.addRRsig(RRsetPtr()), isc::Unexpected);
+    EXPECT_THROW(rrset.removeRRsig(), isc::Unexpected);
 }
 }

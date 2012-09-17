@@ -81,7 +81,7 @@ public:
     /// \brief Stop current running server
     virtual void stop() { self_->stop();}
 
-    /// \brief Resume processing of the server coroutine after an 
+    /// \brief Resume processing of the server coroutine after an
     /// asynchronous call (e.g., to the DNS Lookup provider) has completed.
     ///
     /// \param done If true, this signals the system there is an answer
@@ -98,6 +98,18 @@ public:
     /// \return A deep copy of this DNSServer object
     virtual DNSServer* clone() { return (self_->clone()); }
     //@}
+
+    /// \brief Set timeout for incoming TCP connections
+    ///
+    /// Since this value is not relevant for every type of DNSServer
+    /// (like UDPServer), it has a no-op default implementation.
+    /// It is in the base class because the AuthSrv's DNSService has
+    /// no direct access to the derived API's after initialization,
+    /// and it does need to update running servers if the timeout
+    /// setting is changed.
+    ///
+    /// \param timeout The timeout in milliseconds
+    virtual void setTCPRecvTimeout(size_t) {}
 
 protected:
     /// \brief Lookup handler object.
