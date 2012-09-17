@@ -30,7 +30,7 @@ AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_top_srcdir)/src/lib/testutils/testdata\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/dhcp6/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
-CLEANFILES = $(builddir)/interfaces.txt
+CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
@@ -48,10 +48,10 @@ TESTS += dhcp4_unittests
 
 dhcp4_unittests_SOURCES = ../dhcp4_srv.h ../dhcp4_srv.cc ../ctrl_dhcp4_srv.cc
 dhcp4_unittests_SOURCES += ../dhcp4_log.h ../dhcp4_log.cc
-dhcp4_unittests_SOURCES += ../dhcp4_messages.h ../dhcp4_messages.cc
 dhcp4_unittests_SOURCES += dhcp4_unittests.cc
 dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += ctrl_dhcp4_srv_unittest.cc
+nodist_dhcp4_unittests_SOURCES = ../dhcp4_messages.h ../dhcp4_messages.cc
 
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
