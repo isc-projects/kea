@@ -156,8 +156,6 @@ public:
     }
 
     /// \brief Specialized version of \c getTTL() for \c TreeNodeRRset.
-    ///
-    /// It throws \c isc::Unexpected unconditionally.
     virtual const dns::RRTTL& getTTL() const;
 
     /// \brief Specialized version of \c setName() for \c TreeNodeRRset.
