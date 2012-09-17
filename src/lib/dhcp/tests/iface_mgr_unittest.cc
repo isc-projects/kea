@@ -42,6 +42,13 @@ char LOOPBACK[BUF_SIZE] = "lo";
 const uint16_t PORT1 = 10547;   // V6 socket
 const uint16_t PORT2 = 10548;   // V4 socket
 
+// On some systems measured duration of receive6() and
+// receive4() appears to be shorter than select() timeout.
+// called by these functions. This may be the case
+// if different ime resolutions are used by these functions.
+// For such cases we set the tolerance of 0.01s.
+const uint32_t TIMEOUT_TOLERANCE = 10000;
+
 
 class NakedIfaceMgr: public IfaceMgr {
     // "naked" Interface Manager, exposes internal fields
@@ -250,7 +257,8 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
     // precisely reflect the receive timeout. However the
     // uncertainity should be low enough to expect that measured
     // value is in the range <1.4s; 1.7s>.
-    EXPECT_GE(duration.total_microseconds(), 1400000);
+    EXPECT_GE(duration.total_microseconds(),
+              1400000 - TIMEOUT_TOLERANCE);
     EXPECT_LE(duration.total_microseconds(), 1700000);
 
     // Test timeout shorter than 1s.
@@ -260,7 +268,8 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
     ASSERT_FALSE(pkt);
     duration = stop_time - start_time;
     // Check if measured duration is within <0.5s; 0.8s>.
-    EXPECT_GE(duration.total_microseconds(), 500000);
+    EXPECT_GE(duration.total_microseconds(),
+              500000 - TIMEOUT_TOLERANCE);
     EXPECT_LE(duration.total_microseconds(), 800000);
 
     // Test with invalid fractional timeout values.
@@ -300,7 +309,8 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     // precisely reflect the receive timeout. However the
     // uncertainity should be low enough to expect that measured
     // value is in the range <2.3s; 2.6s>.
-    EXPECT_GE(duration.total_microseconds(), 2300000);
+    EXPECT_GE(duration.total_microseconds(),
+              2300000 - TIMEOUT_TOLERANCE);
     EXPECT_LE(duration.total_microseconds(), 2600000);
 
     // Test timeout shorter than 1s.
@@ -310,7 +320,8 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     ASSERT_FALSE(pkt);
     duration = stop_time - start_time;
     // Check if measured duration is within <0.4s; 0.7s>.
-    EXPECT_GE(duration.total_microseconds(), 400000);
+    EXPECT_GE(duration.total_microseconds(),
+              400000 - TIMEOUT_TOLERANCE);
     EXPECT_LE(duration.total_microseconds(), 700000);
 
     // Test with invalid fractional timeout values.
