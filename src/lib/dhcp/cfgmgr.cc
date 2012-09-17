@@ -23,12 +23,8 @@ namespace isc {
 namespace dhcp {
 
 Pool::Pool(const isc::asiolink::IOAddress& first,
-           const isc::asiolink::IOAddress& last,
-           const Triplet<uint32_t>& t1,
-           const Triplet<uint32_t>& t2,
-           const Triplet<uint32_t>& valid_lifetime)
-    :id_(getNextID()), first_(first), last_(last), t1_(t1), t2_(t2),
-     valid_(valid_lifetime) {
+           const isc::asiolink::IOAddress& last)
+    :id_(getNextID()), first_(first), last_(last) {
 }
 
 bool Pool::inRange(const isc::asiolink::IOAddress& addr) {
@@ -36,13 +32,8 @@ bool Pool::inRange(const isc::asiolink::IOAddress& addr) {
 }
 
 Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
-             const isc::asiolink::IOAddress& last,
-             const Triplet<uint32_t>& t1,
-             const Triplet<uint32_t>& t2,
-             const Triplet<uint32_t>& preferred_lifetime,
-             const Triplet<uint32_t>& valid_lifetime)
-    :Pool(first, last, t1, t2, valid_lifetime),
-     type_(type), prefix_len_(0), preferred_(preferred_lifetime) {
+             const isc::asiolink::IOAddress& last)
+    :Pool(first, last), type_(type), prefix_len_(0) {
 
     // check if specified address boundaries are sane
     if (first.getFamily() != AF_INET6 || last.getFamily() != AF_INET6) {
@@ -70,13 +61,9 @@ Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
 }
 
 Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& prefix,
-             uint8_t prefix_len,
-             const Triplet<uint32_t>& t1,
-             const Triplet<uint32_t>& t2,
-             const Triplet<uint32_t>& preferred_lifetime,
-             const Triplet<uint32_t>& valid_lifetime)
-    :Pool(prefix, IOAddress("::"), t1, t2, valid_lifetime),
-     type_(type), prefix_len_(prefix_len), preferred_(preferred_lifetime) {
+             uint8_t prefix_len)
+    :Pool(prefix, IOAddress("::")),
+     type_(type), prefix_len_(prefix_len) {
 
     // check if the prefix is sane
     if (prefix.getFamily() != AF_INET6) {
@@ -92,8 +79,12 @@ Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& prefix,
     last_ = lastAddrInPrefix(prefix, prefix_len);
 }
 
-Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len)
-    :id_(getNextID()), prefix_(prefix), prefix_len_(len) {
+Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
+               const Triplet<uint32_t>& t1,
+               const Triplet<uint32_t>& t2,
+               const Triplet<uint32_t>& valid_lifetime)
+    :id_(getNextID()), prefix_(prefix), prefix_len_(len), t1_(t1),
+     t2_(t2), valid_(valid_lifetime) {
     if ( (prefix.getFamily() == AF_INET6 && len > 128) ||
          (prefix.getFamily() == AF_INET && len > 32) ) {
         isc_throw(BadValue, "Invalid prefix length specified for subnet: " << len);
@@ -107,10 +98,16 @@ bool Subnet::inRange(const isc::asiolink::IOAddress& addr) {
     return ( (first <= addr) && (addr <= last) );
 }
 
-Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length)
-    :Subnet(prefix, length) {
+Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
+                 const Triplet<uint32_t>& t1,
+                 const Triplet<uint32_t>& t2,
+                 const Triplet<uint32_t>& preferred_lifetime,
+                 const Triplet<uint32_t>& valid_lifetime)
+    :Subnet(prefix, length, t1, t2, valid_lifetime),
+     preferred_(preferred_lifetime){
     if (prefix.getFamily() != AF_INET6) {
-        isc_throw(BadValue, "Invalid prefix " << prefix.toText() << " specified in subnet6");
+        isc_throw(BadValue, "Invalid prefix " << prefix.toText()
+                  << " specified in subnet6");
     }
 }
 
@@ -126,7 +123,6 @@ void Subnet6::addPool6(const Pool6Ptr& pool) {
 
     pools_.push_back(pool);
 }
-
 
 Pool6Ptr Subnet6::getPool6(const isc::asiolink::IOAddress& hint /* = IOAddress("::")*/ ) {
     Pool6Ptr candidate;

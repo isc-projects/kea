@@ -28,14 +28,18 @@ namespace isc {
 namespace dhcp {
 
 class Pool6;
+
 class Subnet6;
 
-/// @brief this class specifes parameter value
+/// @brief this template specifes a parameter value
 ///
-/// This class is used to store configuration parameters, like lifetime or T1.
-/// It defines 3 parameters: min/default/max values. There are 2 constructors:
+/// This template class is used to store configuration parameters, like lifetime or T1.
+/// It defines 3 parameters: min, default, and max value. There are 2 constructors:
 /// - simple (just one value that sets all parameters)
 /// - extended (that sets default value and two thresholds)
+/// It will be used with integer types. It provides necessary operators, so
+/// it can be assigned to a plain integer or integer assigned to a Triplet.
+/// See TripletTest.operator test for details on an easy Triplet usage.
 template <class T>
 class Triplet {
 public:
@@ -57,6 +61,9 @@ public:
     }
 
     /// @brief sets a fixed value
+    ///
+    /// This constructor assigns a fixed (i.e. no range, just a single value)
+    /// value.
     Triplet(T value)
         :min_(value), default_(value), max_(value) {
     }
@@ -109,15 +116,16 @@ protected:
     T max_;
 };
 
+
+/// @brief base class for Pool4 and Pool6
+///
+/// Stores information about pool of IPv4 or IPv6 addresses.
+/// That is a basic component of a configuration.
 class Pool {
 
 public:
     uint32_t getId() const {
         return (id_);
-    }
-
-    Triplet<uint32_t> getValid() const {
-        return (valid_);
     }
 
     const isc::asiolink::IOAddress& getFirstAddress() const {
@@ -128,14 +136,6 @@ public:
         return (last_);
     }
 
-    Triplet<uint32_t> getT1() const {
-        return (t1_);
-    }
-
-    Triplet<uint32_t> getT2() const {
-        return (t2_);
-    }
-
     /// @brief checks if specified address is in range
     bool inRange(const isc::asiolink::IOAddress& addr);
 
@@ -143,10 +143,7 @@ protected:
 
     /// @brief protected constructor
     Pool(const isc::asiolink::IOAddress& first,
-         const isc::asiolink::IOAddress& last,
-         const Triplet<uint32_t>& t1,
-         const Triplet<uint32_t>& t2,
-         const Triplet<uint32_t>& valid_lifetime);
+         const isc::asiolink::IOAddress& last);
 
     static uint32_t getNextID() {
         static uint32_t id = 0;
@@ -161,12 +158,6 @@ protected:
     isc::asiolink::IOAddress first_;
 
     isc::asiolink::IOAddress last_;
-
-    Triplet<uint32_t> t1_;
-
-    Triplet<uint32_t> t2_;
-
-    Triplet<uint32_t> valid_;
 
     std::string comments_;
 
@@ -184,25 +175,13 @@ public:
     }  Pool6Type;
 
     Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
-          const isc::asiolink::IOAddress& last,
-          const Triplet<uint32_t>& t1,
-          const Triplet<uint32_t>& t2,
-          const Triplet<uint32_t>& preferred_lifetime,
-          const Triplet<uint32_t>& valid_lifetime);
+          const isc::asiolink::IOAddress& last);
 
     Pool6(Pool6Type type, const isc::asiolink::IOAddress& addr,
-          uint8_t prefix_len,
-          const Triplet<uint32_t>& t1,
-          const Triplet<uint32_t>& t2,
-          const Triplet<uint32_t>& preferred_lifetime,
-          const Triplet<uint32_t>& valid_lifetime);
+          uint8_t prefix_len);
 
     Pool6Type getType() const {
         return (type_);
-    }
-
-    Triplet<uint32_t> getPreferred() const {
-        return (preferred_);
     }
 
 protected:
@@ -212,8 +191,6 @@ protected:
     /// @brief prefix length
     /// used by TYPE_PD only (zeroed for other types)
     uint8_t prefix_len_;
-
-    Triplet<uint32_t> preferred_;
 };
 
 typedef boost::shared_ptr<Pool> PoolPtr;
@@ -226,12 +203,27 @@ public:
     /// @brief checks if specified address is in range
     bool inRange(const isc::asiolink::IOAddress& addr);
 
+    Triplet<uint32_t> getValid() const {
+        return (valid_);
+    }
+
+    Triplet<uint32_t> getT1() const {
+        return (t1_);
+    }
+
+    Triplet<uint32_t> getT2() const {
+        return (t2_);
+    }
+
 protected:
     /// @brief protected constructor
     //
     /// By making the constructor protected, we make sure that noone will
     /// ever instantiate that class. Pool4 and Pool6 should be used instead.
-    Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len);
+    Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
+           const Triplet<uint32_t>& t1,
+           const Triplet<uint32_t>& t2,
+           const Triplet<uint32_t>& valid_lifetime);
 
     static uint32_t getNextID() {
         static uint32_t id = 0;
@@ -246,13 +238,28 @@ protected:
     uint8_t prefix_len_;
 
     Pool6Collection pool_;
+
+    Triplet<uint32_t> t1_;
+
+    Triplet<uint32_t> t2_;
+
+    Triplet<uint32_t> valid_;
 };
 
 class Subnet6 : public Subnet {
 public:
-    Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length);
+    Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
+            const Triplet<uint32_t>& t1,
+            const Triplet<uint32_t>& t2,
+            const Triplet<uint32_t>& preferred_lifetime,
+            const Triplet<uint32_t>& valid_lifetime);
 
-    Pool6Ptr getPool6(const isc::asiolink::IOAddress& hint = isc::asiolink::IOAddress("::"));
+    Triplet<uint32_t> getPreferred() const {
+        return (preferred_);
+    }
+
+    Pool6Ptr getPool6(const isc::asiolink::IOAddress& hint =
+                      isc::asiolink::IOAddress("::"));
 
     void addPool6(const Pool6Ptr& pool);
 
@@ -264,11 +271,39 @@ protected:
     /// collection of pools in that list
     Pool6Collection pools_;
 
+    Triplet<uint32_t> preferred_;
 };
 typedef boost::shared_ptr<Subnet6> Subnet6Ptr;
 
 typedef std::vector<Subnet6Ptr> Subnet6Collection;
 
+
+/// @brief Configuration Manager
+///
+/// This singleton class holds the whole configuration for DHCPv4 and DHCPv6
+/// servers. It currently holds information about zero or more subnets6.
+/// Each subnet may contain zero or more pools. Pool4 and Pool6 is the most
+/// basic "chunk" of configuration. It contains a range of assigneable
+/// addresses.
+///
+/// The sketch of configuration inheritance (it is not implemented yet).
+/// Let's investigate the following configuration:
+///
+/// valid-lifetime 1000;
+/// subnet6 2001:db8:1::/48 {
+///     pool6 2001::db8:1::1 - 2001::db8:1::ff;
+/// };
+/// subnet6 2001:db8:2::/48 {
+///     valid-lifetime 2000;
+///     pool6 2001::db8:2::1 - 2001::db8:2::ff;
+/// };
+/// Parameters defined in a global scope are considered valid until
+/// they are overwritten in a smaller scope, in this case subnet6.
+/// In the example above, the first subnet6
+///
+/// @todo: Implement Subnet4 support (ticket #2237)
+/// @todo: Implement option definition support
+/// @todo: Implement inheritance.
 class CfgMgr : public boost::noncopyable {
 public:
     static CfgMgr& instance();
