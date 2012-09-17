@@ -112,7 +112,7 @@ public:
                   const RdataSet* rdataset, bool dnssec_ok) :
         node_(node), rdataset_(rdataset),
         rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
-        dnssec_ok_(dnssec_ok), name_(NULL), realname_(NULL)
+        dnssec_ok_(dnssec_ok), name_(NULL), realname_(NULL), ttl_(NULL)
     {}
 
     /// \brief Constructor for wildcard-expanded owner name.
@@ -132,11 +132,13 @@ public:
                   bool dnssec_ok) :
         node_(node), rdataset_(rdataset),
         rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
-        dnssec_ok_(dnssec_ok), name_(NULL), realname_(new dns::Name(realname))
+        dnssec_ok_(dnssec_ok), name_(NULL), realname_(new dns::Name(realname)),
+	ttl_(NULL)
     {}
 
     virtual ~TreeNodeRRset() {
         delete realname_;
+        delete ttl_;
         delete name_;
     }
 
@@ -257,6 +259,7 @@ private:
     const bool dnssec_ok_;
     mutable dns::Name* name_;
     const dns::Name* const realname_;
+    mutable dns::RRTTL* ttl_;
 };
 
 } // namespace memory

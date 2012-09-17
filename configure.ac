@@ -1188,6 +1188,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/datasrc/Makefile
                  src/lib/datasrc/memory/Makefile
                  src/lib/datasrc/memory/tests/Makefile
+                 src/lib/datasrc/memory/tests/testdata/Makefile
                  src/lib/datasrc/memory/benchmarks/Makefile
                  src/lib/datasrc/tests/Makefile
                  src/lib/datasrc/tests/testdata/Makefile
@@ -1223,6 +1224,7 @@ AC_CONFIG_FILES([Makefile
                  tests/tools/badpacket/tests/Makefile
                  tests/tools/perfdhcp/Makefile
                  tests/tools/perfdhcp/tests/Makefile
+                 tests/tools/perfdhcp/templates/Makefile
                  dns++.pc
                ])
 AC_OUTPUT([doc/version.ent

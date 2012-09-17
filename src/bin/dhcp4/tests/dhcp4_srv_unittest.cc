@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -269,6 +269,38 @@ TEST_F(Dhcpv4SrvTest, processInform) {
     // work on processSomething() method.
 
     delete srv;
+}
+
+TEST_F(Dhcpv4SrvTest, serverReceivedPacketName) {
+    // Check all possible packet types
+    for (int itype = 0; itype < 256; ++itype) {
+        uint8_t type = itype;
+
+        switch (type) {
+        case DHCPDECLINE:
+            EXPECT_STREQ("DECLINE", Dhcpv4Srv::serverReceivedPacketName(type));
+            break;
+
+        case DHCPDISCOVER:
+            EXPECT_STREQ("DISCOVER", Dhcpv4Srv::serverReceivedPacketName(type));
+            break;
+
+        case DHCPINFORM:
+            EXPECT_STREQ("INFORM", Dhcpv4Srv::serverReceivedPacketName(type));
+            break;
+
+        case DHCPRELEASE:
+            EXPECT_STREQ("RELEASE", Dhcpv4Srv::serverReceivedPacketName(type));
+            break;
+
+        case DHCPREQUEST:
+            EXPECT_STREQ("REQUEST", Dhcpv4Srv::serverReceivedPacketName(type));
+            break;
+
+        default:
+            EXPECT_STREQ("UNKNOWN", Dhcpv4Srv::serverReceivedPacketName(type));
+        }
+    }
 }
 
 } // end of anonymous namespace

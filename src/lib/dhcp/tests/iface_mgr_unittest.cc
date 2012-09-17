@@ -42,6 +42,13 @@ char LOOPBACK[BUF_SIZE] = "lo";
 const uint16_t PORT1 = 10547;   // V6 socket
 const uint16_t PORT2 = 10548;   // V4 socket
 
+// On some systems measured duration of receive6() and
+// receive4() appears to be shorter than select() timeout.
+// called by these functions. This may be the case
+// if different ime resolutions are used by these functions.
+// For such cases we set the tolerance of 0.01s.
+const uint32_t TIMEOUT_TOLERANCE = 10000;
+
 
 class NakedIfaceMgr: public IfaceMgr {
     // "naked" Interface Manager, exposes internal fields
@@ -59,6 +66,7 @@ public:
 
     ~IfaceMgrTest() {
     }
+
 };
 
 // We need some known interface to work reliably. Loopback interface
@@ -217,6 +225,198 @@ TEST_F(IfaceMgrTest, getIface) {
 
 }
 
+TEST_F(IfaceMgrTest, receiveTimeout6) {
+    using namespace boost::posix_time;
+    std::cout << "Testing DHCPv6 packet reception timeouts."
+              << " Test will block for a few seconds when waiting"
+              << " for timeout to occur." << std::endl;
+
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+    // Open socket on the lo interface.
+    IOAddress loAddr("::1");
+    int socket1 = 0;
+    ASSERT_NO_THROW(
+        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547)
+    );
+    // Socket is open if its descriptor is greater than zero.
+    ASSERT_GT(socket1, 0);
+
+    // Remember when we call receive6().
+    ptime start_time = microsec_clock::universal_time();
+    // Call receive with timeout of 1s + 400000us = 1.4s.
+    Pkt6Ptr pkt;
+    ASSERT_NO_THROW(pkt = ifacemgr->receive6(1, 400000));
+    // Remember when call to receive6() ended.
+    ptime stop_time = microsec_clock::universal_time();
+    // We did not send a packet to lo interface so we expect that
+    // nothing has been received and timeout has been reached.
+    ASSERT_FALSE(pkt);
+    // Calculate duration of call to receive6().
+    time_duration duration = stop_time - start_time;
+    // We stop the clock when the call completes so it does not
+    // precisely reflect the receive timeout. However the
+    // uncertainity should be low enough to expect that measured
+    // value is in the range <1.4s; 1.7s>.
+    EXPECT_GE(duration.total_microseconds(),
+              1400000 - TIMEOUT_TOLERANCE);
+    EXPECT_LE(duration.total_microseconds(), 1700000);
+
+    // Test timeout shorter than 1s.
+    start_time = microsec_clock::universal_time();
+    ASSERT_NO_THROW(pkt = ifacemgr->receive6(0, 500000));
+    stop_time = microsec_clock::universal_time();
+    ASSERT_FALSE(pkt);
+    duration = stop_time - start_time;
+    // Check if measured duration is within <0.5s; 0.8s>.
+    EXPECT_GE(duration.total_microseconds(),
+              500000 - TIMEOUT_TOLERANCE);
+    EXPECT_LE(duration.total_microseconds(), 800000);
+
+    // Test with invalid fractional timeout values.
+    EXPECT_THROW(ifacemgr->receive6(0, 1000000), isc::BadValue);
+    EXPECT_THROW(ifacemgr->receive6(1, 1000010), isc::BadValue);
+}
+
+TEST_F(IfaceMgrTest, receiveTimeout4) {
+    using namespace boost::posix_time;
+    std::cout << "Testing DHCPv6 packet reception timeouts."
+              << " Test will block for a few seconds when waiting"
+              << " for timeout to occur." << std::endl;
+
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+    // Open socket on the lo interface.
+    IOAddress loAddr("127.0.0.1");
+    int socket1 = 0;
+    ASSERT_NO_THROW(
+        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10067)
+    );
+    // Socket is open if its descriptor is greater than zero.
+    ASSERT_GT(socket1, 0);
+
+    Pkt4Ptr pkt;
+    // Remember when we call receive4().
+    ptime start_time = microsec_clock::universal_time();
+    // Call receive with timeout of 2s + 300000us = 2.3s.
+    ASSERT_NO_THROW(pkt = ifacemgr->receive4(2, 300000));
+    // Remember when call to receive4() ended.
+    ptime stop_time = microsec_clock::universal_time();
+    // We did not send a packet to lo interface so we expect that
+    // nothing has been received and timeout has been reached.
+    ASSERT_FALSE(pkt);
+    // Calculate duration of call to receive4().
+    time_duration duration = stop_time - start_time;
+    // We stop the clock when the call completes so it does not
+    // precisely reflect the receive timeout. However the
+    // uncertainity should be low enough to expect that measured
+    // value is in the range <2.3s; 2.6s>.
+    EXPECT_GE(duration.total_microseconds(),
+              2300000 - TIMEOUT_TOLERANCE);
+    EXPECT_LE(duration.total_microseconds(), 2600000);
+
+    // Test timeout shorter than 1s.
+    start_time = microsec_clock::universal_time();
+    ASSERT_NO_THROW(pkt = ifacemgr->receive4(0, 400000));
+    stop_time = microsec_clock::universal_time();
+    ASSERT_FALSE(pkt);
+    duration = stop_time - start_time;
+    // Check if measured duration is within <0.4s; 0.7s>.
+    EXPECT_GE(duration.total_microseconds(),
+              400000 - TIMEOUT_TOLERANCE);
+    EXPECT_LE(duration.total_microseconds(), 700000);
+
+    // Test with invalid fractional timeout values.
+    EXPECT_THROW(ifacemgr->receive6(0, 1000000), isc::BadValue);
+    EXPECT_THROW(ifacemgr->receive6(2, 1000005), isc::BadValue);
+}
+
+TEST_F(IfaceMgrTest, multipleSockets) {
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+    // container for initialized socket descriptors
+    std::list<uint16_t> init_sockets;
+
+    // create socket #1
+    int socket1 = 0;
+    ASSERT_NO_THROW(
+        socket1 = ifacemgr->openSocketFromIface(LOOPBACK, PORT1, AF_INET);
+    );
+    ASSERT_GT(socket1, 0);
+    init_sockets.push_back(socket1);
+
+    // create socket #2
+    IOAddress loAddr("127.0.0.1");
+    int socket2 = 0;
+    ASSERT_NO_THROW(
+        socket2 = ifacemgr->openSocketFromRemoteAddress(loAddr, PORT2);
+    );
+    ASSERT_GT(socket2, 0);
+    init_sockets.push_back(socket2);
+
+    // Get loopback interface. If we don't find one we are unable to run
+    // this test but we don't want to fail.
+    IfaceMgr::Iface* iface_ptr = ifacemgr->getIface(LOOPBACK);
+    if (iface_ptr == NULL) {
+        cout << "Local loopback interface not found. Skipping test. " << endl;
+        return;
+    }
+    // Once sockets have been sucessfully opened, they are supposed to
+    // be on the list. Here we start to test if all expected sockets
+    // are on the list and no other (unexpected) socket is there.
+    IfaceMgr::SocketCollection sockets = iface_ptr->getSockets();
+    int matched_sockets = 0;
+    for (std::list<uint16_t>::iterator init_sockets_it =
+             init_sockets.begin();
+         init_sockets_it != init_sockets.end(); ++init_sockets_it) {
+        // Set socket descriptors non blocking in order to be able
+        // to call recv() on them without hang.
+        int flags = fcntl(*init_sockets_it, F_GETFL, 0);
+        ASSERT_GE(flags, 0);
+        ASSERT_GE(fcntl(*init_sockets_it, F_SETFL, flags | O_NONBLOCK), 0);
+        // recv() is expected to result in EWOULDBLOCK error on non-blocking
+        // socket in case socket is valid but simply no data are coming in.
+        char buf;
+        recv(*init_sockets_it, &buf, 1, MSG_PEEK);
+        EXPECT_EQ(EWOULDBLOCK, errno);
+        // Apart from the ability to use the socket we want to make
+        // sure that socket on the list is the one that we created.
+        for (IfaceMgr::SocketCollection::const_iterator socket_it =
+                 sockets.begin(); socket_it != sockets.end(); ++socket_it) {
+            if (*init_sockets_it == socket_it->sockfd_) {
+                // This socket is the one that we created.
+                ++matched_sockets;
+                break;
+            }
+        }
+    }
+    // all created sockets have been matched if this condition works.
+    EXPECT_EQ(sockets.size(), matched_sockets);
+
+    // closeSockets() is the other function that we want to test. It
+    // is supposed to close all sockets so as we will not be able to use
+    // them anymore communication.
+    ifacemgr->closeSockets();
+
+    // closed sockets are supposed to be removed from the list
+    sockets = iface_ptr->getSockets();
+    ASSERT_EQ(0, sockets.size());
+
+    // We are still in posession of socket descriptors that we created
+    // on the beginning of this test. We can use them to check whether
+    // closeSockets() only removed them from the list or they have been
+    // really closed.
+    for (std::list<uint16_t>::const_iterator init_sockets_it =
+             init_sockets.begin();
+         init_sockets_it != init_sockets.end(); ++init_sockets_it) {
+        // recv() must result in error when using invalid socket.
+        char buf;
+        recv(*init_sockets_it, &buf, 1, MSG_PEEK);
+        // EWOULDBLOCK would mean that socket is valid/open but
+        // simply no data is received so we have to check for
+        // other errors.
+        EXPECT_NE(EWOULDBLOCK, errno);
+    }
+}
+
 TEST_F(IfaceMgrTest, sockets6) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
@@ -317,6 +517,21 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
     );
     EXPECT_GT(socket2, 0);
     close(socket2);
+
+    // The following test is currently disabled for OSes other than
+    // Linux because interface detection is not implemented on them.
+    // @todo enable this test for all OSes once interface detection
+    // is implemented.
+#if defined(OS_LINUX)
+    // Open v4 socket to connect to broadcast address.
+    int socket3  = 0;
+    IOAddress bcastAddr("255.255.255.255");
+    EXPECT_NO_THROW(
+        socket3 = ifacemgr->openSocketFromRemoteAddress(bcastAddr, PORT2);
+    );
+    EXPECT_GT(socket3, 0);
+    close(socket3);
+#endif
 }
 
 // TODO: disabled due to other naming on various systems
