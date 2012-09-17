@@ -2,3 +2,5 @@
 /b10-stats-httpd
 /stats.py
 /stats_httpd.py
+/b10-stats-httpd.8
+/b10-stats.8

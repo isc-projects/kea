@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -72,7 +72,9 @@ public:
     };
 
     /// type that holds a list of socket informations
+    /// @todo: Add SocketCollectionConstIter type
     typedef std::list<SocketInfo> SocketCollection;
+
 
     /// @brief represents a single network interface
     ///
@@ -88,6 +90,9 @@ public:
         /// @param name name of the interface
         /// @param ifindex interface index (unique integer identifier)
         Iface(const std::string& name, int ifindex);
+
+        /// @brief Closes all open sockets on interface.
+        void closeSockets();
 
         /// @brief Returns full interface name as "ifname/ifindex" string.
         ///
@@ -192,11 +197,25 @@ public:
         /// @return true if there was such socket, false otherwise
         bool delSocket(uint16_t sockfd);
 
-        /// socket used to sending data
-        /// TODO: this should be protected
-        SocketCollection sockets_;
+        /// @brief Returns collection of all sockets added to interface.
+        ///
+        /// When new socket is created with @ref IfaceMgr::openSocket
+        /// it is added to sockets collection on particular interface.
+        /// If socket is opened by other means (e.g. function that does
+        /// not use @ref IfaceMgr::openSocket) it will not be available
+        /// in this collection. Note that functions like
+        /// @ref IfaceMgr::openSocketFromIface use
+        /// @ref IfaceMgr::openSocket internally.
+        /// The returned reference is only valid during the lifetime of
+        /// the IfaceMgr object that returned it.
+        ///
+        /// @return collection of sockets added to interface
+        const SocketCollection& getSockets() const { return sockets_; }
 
     protected:
+        /// socket used to sending data
+        SocketCollection sockets_;
+
         /// network interface name
         std::string name_;
 
@@ -345,10 +364,13 @@ public:
     /// to not wait infinitely, but rather do something useful
     /// (e.g. remove expired leases)
     ///
-    /// @param timeout specifies timeout (in seconds)
+    /// @param timeout_sec specifies integral part of the timeout (in seconds)
+    /// @param timeout_usec specifies fractional part of the timeout
+    /// (in microseconds)
     ///
+    /// @throw isc::BadValue if timeout_usec is greater than one million
     /// @return Pkt6 object representing received packet (or NULL)
-    Pkt6Ptr receive6(uint32_t timeout);
+    Pkt6Ptr receive6(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
     /// @brief Tries to receive IPv4 packet over open IPv4 sockets.
     ///
@@ -356,10 +378,13 @@ public:
     /// If reception is successful and all information about its sender
     /// are obtained, Pkt4 object is created and returned.
     ///
-    /// @param timeout specifies timeout (in seconds)
+    /// @param timeout_sec specifies integral part of the timeout (in seconds)
+    /// @param timeout_usec specifies fractional part of the timeout
+    /// (in microseconds)
     ///
+    /// @throw isc::BadValue if timeout_usec is greater than one million
     /// @return Pkt4 object representing received packet (or NULL)
-    Pkt4Ptr receive4(uint32_t timeout);
+    Pkt4Ptr receive4(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
     /// Opens UDP/IP socket and binds it to address, interface and port.
     ///

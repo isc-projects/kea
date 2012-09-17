@@ -13,28 +13,30 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+
 #include <cassert>
 #include <iostream>
 
-#include <cc/session.h>
+#include <asiolink/asiolink.h>
 #include <cc/data.h>
-#include <exceptions/exceptions.h>
+#include <cc/session.h>
 #include <cc/session.h>
 #include <config/ccsession.h>
-#include <util/buffer.h>
-#include <dhcp4/spec_config.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
+#include <dhcp4/dhcp4_log.h>
+#include <dhcp4/spec_config.h>
 #include <dhcp/iface_mgr.h>
-#include <asiolink/asiolink.h>
+#include <exceptions/exceptions.h>
+#include <util/buffer.h>
 
-using namespace std;
-using namespace isc::util;
-using namespace isc::dhcp;
-using namespace isc::util;
-using namespace isc::data;
+using namespace isc::asiolink;
 using namespace isc::cc;
 using namespace isc::config;
-using namespace isc::asiolink;
+using namespace isc::data;
+using namespace isc::dhcp;
+using namespace isc::log;
+using namespace isc::util;
+using namespace std;
 
 namespace isc {
 namespace dhcp {
@@ -43,7 +45,8 @@ ControlledDhcpv4Srv* ControlledDhcpv4Srv::server_ = NULL;
 
 ConstElementPtr
 ControlledDhcpv4Srv::dhcp4ConfigHandler(ConstElementPtr new_config) {
-    cout << "b10-dhcp4: Received new config:" << new_config->str() << endl;
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_UPDATE)
+              .arg(new_config->str());
     ConstElementPtr answer = isc::config::createAnswer(0,
                              "Thank you for sending config.");
     return (answer);
@@ -51,13 +54,14 @@ ControlledDhcpv4Srv::dhcp4ConfigHandler(ConstElementPtr new_config) {
 
 ConstElementPtr
 ControlledDhcpv4Srv::dhcp4CommandHandler(const string& command, ConstElementPtr args) {
-    cout << "b10-dhcp4: Received new command: [" << command << "], args="
-         << args->str() << endl;
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_COMMAND_RECEIVED)
+              .arg(command).arg(args->str());
+
     if (command == "shutdown") {
         if (ControlledDhcpv4Srv::server_) {
             ControlledDhcpv4Srv::server_->shutdown();
         } else {
-            cout << "Server not initialized yet or already shut down." << endl;
+            LOG_WARN(dhcp4_logger, DHCP4_NOT_RUNNING);
             ConstElementPtr answer = isc::config::createAnswer(1,
                                      "Shutdown failure.");
             return (answer);
@@ -93,10 +97,9 @@ void ControlledDhcpv4Srv::establishSession() {
 
     /// @todo: Check if session is not established already. Throw, if it is.
 
-    cout << "b10-dhcp4: my specfile is " << specfile << endl;
-
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_CCSESSION_STARTING)
+              .arg(specfile);
     cc_session_ = new Session(io_service_.get_io_service());
-
     config_session_ = new ModuleCCSession(specfile, *cc_session_,
                                           dhcp4ConfigHandler,
                                           dhcp4CommandHandler, false);
@@ -106,8 +109,8 @@ void ControlledDhcpv4Srv::establishSession() {
     /// control with the "select" model of the DHCP server.  This is
     /// fully explained in \ref dhcpv4Session.
     int ctrl_socket = cc_session_->getSocketDesc();
-    cout << "b10-dhcp4: Control session started, socket="
-         << ctrl_socket << endl;
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_CCSESSION_STARTED)
+              .arg(ctrl_socket);
     IfaceMgr::instance().set_session_socket(ctrl_socket, sessionReader);
 }
 

@@ -216,7 +216,13 @@ PktTransform::unpackOptions(const OptionBuffer& in_buffer,
                         in_buffer.begin() + offset + opt_len);
     }
 }
-
+    
+void
+PktTransform::writeAt(dhcp::OptionBuffer& in_buffer, size_t dest_pos,
+                      dhcp::OptionBuffer::iterator first,
+                      dhcp::OptionBuffer::iterator last) {
+    memcpy(&in_buffer[dest_pos], &(*first), std::distance(first, last));
+}
 
 } // namespace perfdhcp
 } // namespace isc

@@ -98,8 +98,9 @@ TEST_F(NegativeCacheTest, testNXDOMAIN){
     rrset_ptr = *iter;
 
     // The TTL should equal to the TTL of negative response SOA record
+    // Allow for three second range.
     const RRTTL& nxdomain_ttl2 = rrset_ptr->getTTL();
-    EXPECT_GE(nxdomain_ttl2.getValue(), 86397);
+    EXPECT_GE(nxdomain_ttl2.getValue(), 86396);
     EXPECT_LE(nxdomain_ttl2.getValue(), 86398);
     // No RRset in ANSWER section
     EXPECT_TRUE(msg_nxdomain2.getRRCount(Message::SECTION_ANSWER) == 0);
@@ -120,7 +121,8 @@ TEST_F(NegativeCacheTest, testNXDOMAIN){
     rrset_ptr = *iter;
     const RRTTL& soa_ttl2 = rrset_ptr->getTTL();
     // The TTL should equal to the TTL of SOA record in answer section
-    EXPECT_GE(soa_ttl2.getValue(), 172797);
+    // Allow for three second range.
+    EXPECT_GE(soa_ttl2.getValue(), 172796);
     EXPECT_LE(soa_ttl2.getValue(), 172798);
 }
 

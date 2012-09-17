@@ -26,12 +26,19 @@ CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/cmdctl_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/cmdctl_messages.pyc
 
 man_MANS = b10-cmdctl.8
+DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST += $(man_MANS) b10-cmdctl.xml cmdctl_messages.mes
 
-if ENABLE_MAN
+if GENERATE_DOCS
 
 b10-cmdctl.8: b10-cmdctl.xml
-	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-cmdctl.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-cmdctl.xml
+
+else
+
+$(man_MANS):
+	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
+	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild BIND 10 > $@
 
 endif
 

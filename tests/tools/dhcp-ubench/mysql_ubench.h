@@ -80,7 +80,24 @@ protected:
     /// Compared to its base version in uBenchmark class, this one logs additional
     /// MySQL specific information using mysql_errno() and mysql_error() functions.
     /// The outcome is the same: exception is thrown.
+    ///
+    /// @param operation brief description of the operation that caused error
+    ///
+    /// @sa stmt_failure()
     void failure(const char* operation);
+
+    /// @brief Used to report compiled statement failures.
+    ///
+    /// Compared to its base version in uBenchmark class, this one logs additional
+    /// MySQL specific information using mysql_stmt_errno() and mysql_stmt_error()
+    /// functions that are used for compiled statements error reporting.
+    ///
+    /// @param stmt MySQL compiled statement structure
+    /// @param operation brief description of the operation that caused error
+    ///
+    /// @sa failure()
+    void stmt_failure(MYSQL_STMT * stmt, const char* operation);
+
 
     /// Handle to MySQL database connection.
     MYSQL* conn_;
