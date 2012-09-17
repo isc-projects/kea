@@ -16,13 +16,15 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp4/dhcp4_srv.h>
+#include <dhcp4/dhcp4_log.h>
 #include <asiolink/io_address.h>
 #include <dhcp/option4_addrlst.h>
 
-using namespace std;
 using namespace isc;
-using namespace isc::dhcp;
 using namespace isc::asiolink;
+using namespace isc::dhcp;
+using namespace isc::log;
+using namespace std;
 
 // These are hardcoded parameters. Currently this is a skeleton server that only
 // grants those options and a single, fixed, hardcoded lease.
@@ -35,20 +37,19 @@ const std::string HARDCODED_DOMAIN_NAME = "isc.example.com";
 const std::string HARDCODED_SERVER_ID = "192.0.2.1";
 
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port) {
-    cout << "Initialization: opening sockets on port " << port << endl;
-
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
     try {
-        // first call to instance() will create IfaceMgr (it's a singleton)
+        // First call to instance() will create IfaceMgr (it's a singleton)
         // it may throw something if things go wrong
         IfaceMgr::instance();
 
         /// @todo: instantiate LeaseMgr here once it is imlpemented.
-
         IfaceMgr::instance().openSockets4(port);
 
         setServerID();
+
     } catch (const std::exception &e) {
-        cerr << "Error during DHCPv4 server startup: " << e.what() << endl;
+        LOG_ERROR(dhcp4_logger, DHCP4_SRV_CONSTRUCT_ERROR).arg(e.what());
         shutdown_ = true;
         return;
     }
@@ -57,12 +58,11 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port) {
 }
 
 Dhcpv4Srv::~Dhcpv4Srv() {
-    cout << "b10-dhcp4: DHCPv4 server terminating." << endl;
     IfaceMgr::instance().closeSockets();
 }
 
 void Dhcpv4Srv::shutdown() {
-    cout << "b10-dhcp4: DHCPv4 server shutdown." << endl;
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_SHUTDOWN_REQUEST);
     shutdown_ = true;
 }
 
@@ -79,38 +79,47 @@ Dhcpv4Srv::run() {
         if (query) {
             try {
                 query->unpack();
+
             } catch (const std::exception& e) {
-                /// TODO: Printout reasons of failed parsing
-                cout << "Failed to parse incoming packet " << endl;
+                // Failed to parse the packet.
+                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
+                          DHCP4_PACKET_PARSE_FAIL).arg(e.what());
                 continue;
             }
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_RECEIVED)
+                      .arg(serverReceivedPacketName(query->getType()))
+                      .arg(query->getType())
+                      .arg(query->getIface());
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUERY_DATA)
+                      .arg(query->toText());
 
             switch (query->getType()) {
             case DHCPDISCOVER:
                 rsp = processDiscover(query);
                 break;
+
             case DHCPREQUEST:
                 rsp = processRequest(query);
                 break;
+
             case DHCPRELEASE:
                 processRelease(query);
                 break;
+
             case DHCPDECLINE:
                 processDecline(query);
                 break;
+
             case DHCPINFORM:
                 processInform(query);
                 break;
+
             default:
-                cout << "Unknown pkt type received:"
-                     << query->getType() << endl;
+                // Only action is to output a message if debug is enabled,
+                // and that will be covered by the debug statement before
+                // the "switch" statement.
+                ;
             }
-
-            cout << "Received message type " << int(query->getType()) << endl;
-
-            // TODO: print out received packets only if verbose (or debug)
-            // mode is enabled
-            cout << query->toText();
 
             if (rsp) {
                 if (rsp->getRemoteAddr().toText() == "0.0.0.0") {
@@ -127,14 +136,15 @@ Dhcpv4Srv::run() {
                 rsp->setIface(query->getIface());
                 rsp->setIndex(query->getIndex());
 
-                cout << "Replying with message type "
-                     << static_cast<int>(rsp->getType()) << ":" << endl;
-                cout << rsp->toText();
-                cout << "----" << endl;
+                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA,
+                          DHCP4_RESPONSE_DATA)
+                          .arg(rsp->getType()).arg(rsp->toText());
+
                 if (rsp->pack()) {
-                    cout << "Packet assembled correctly." << endl;
+                    IfaceMgr::instance().send(rsp);
+                } else {
+                    LOG_ERROR(dhcp4_logger, DHCP4_PACK_FAIL);
                 }
-                IfaceMgr::instance().send(rsp);
             }
         }
 
@@ -266,15 +276,44 @@ Pkt4Ptr Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 
 void Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
     /// TODO: Implement this.
-    cout << "Received RELEASE on " << release->getIface() << " interface." << endl;
 }
 
 void Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
     /// TODO: Implement this.
-    cout << "Received DECLINE on " << decline->getIface() << " interface." << endl;
 }
 
 Pkt4Ptr Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     /// TODO: Currently implemented echo mode. Implement this for real
     return (inform);
+}
+
+const char*
+Dhcpv4Srv::serverReceivedPacketName(uint8_t type) {
+    static const char* DISCOVER = "DISCOVER";
+    static const char* REQUEST = "REQUEST";
+    static const char* RELEASE = "RELEASE";
+    static const char* DECLINE = "DECLINE";
+    static const char* INFORM = "INFORM";
+    static const char* UNKNOWN = "UNKNOWN";
+
+    switch (type) {
+    case DHCPDISCOVER:
+        return (DISCOVER);
+
+    case DHCPREQUEST:
+        return (REQUEST);
+
+    case DHCPRELEASE:
+        return (RELEASE);
+
+    case DHCPDECLINE:
+        return (DECLINE);
+
+    case DHCPINFORM:
+        return (INFORM);
+
+    default:
+        ;
+    }
+    return (UNKNOWN);
 }

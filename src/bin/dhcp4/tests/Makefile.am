@@ -47,6 +47,8 @@ if HAVE_GTEST
 TESTS += dhcp4_unittests
 
 dhcp4_unittests_SOURCES = ../dhcp4_srv.h ../dhcp4_srv.cc ../ctrl_dhcp4_srv.cc
+dhcp4_unittests_SOURCES += ../dhcp4_log.h ../dhcp4_log.cc
+dhcp4_unittests_SOURCES += ../dhcp4_messages.h ../dhcp4_messages.cc
 dhcp4_unittests_SOURCES += dhcp4_unittests.cc
 dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += ctrl_dhcp4_srv_unittest.cc

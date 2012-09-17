@@ -40,22 +40,11 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
-TreeNodeRRset::TreeNodeRRset(const dns::Name& realname,
-                             const dns::RRClass& rrclass,
-                             const ZoneNode* node, const RdataSet* rdataset,
-                             bool dnssec_ok) :
-    node_(node), rdataset_(rdataset),
-    rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
-    dnssec_ok_(dnssec_ok), name_(NULL), ttl_(NULL)
-{
-    const LabelSequence labels(realname);
-    const size_t labels_storangelen = labels.getSerializedLength();
-    realname_buf_ = new uint8_t[labels_storangelen];
-    labels.serialize(realname_buf_, labels_storangelen);
-}
-
 const Name&
 TreeNodeRRset::getName() const {
+    if (realname_ != NULL) {
+        return (*realname_);
+    }
     if (name_ == NULL) {
         uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
         const LabelSequence name_labels = getOwnerLabels(labels_buf);
@@ -212,7 +201,7 @@ TreeNodeRRset::toWire(AbstractMessageRenderer& renderer) const {
 }
 
 unsigned int
-TreeNodeRRset::toWire(isc::util::OutputBuffer& /*buffer*/) const {
+TreeNodeRRset::toWire(isc::util::OutputBuffer&) const {
     isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
 }
 
@@ -345,40 +334,27 @@ TreeNodeRRset::isSameKind(const AbstractRRset& abs_other) const {
         if (rdataset_ != other->rdataset_) {
             return (false);
         }
-        // Same for the owner name (note: in practice this method would be
-        // called for rrsets at different nodes, so we check that condition
-        // first).  Note also that based on the basic assumption of the
-        // ZoneTree, if the nodes are different their RR classes must be
-        // different.
-        if (node_ != other->node_ || !hasSameRealName(*other)) {
+        // Same for the owner name.  Comparing the nodes also detect
+        // the case where RR classes are different (see the method description
+        // of the header for details).
+        if (node_ != other->node_ ) {
+            return (false);
+        }
+        // If one is constructed with a "real name" and the other isn't
+        // *we consider* them different.
+        if ((realname_ == NULL && other->realname_ != NULL) ||
+            (realname_ != NULL && other->realname_ == NULL)) {
+            return (false);
+        }
+        // If both are constructed with a "real name", we compare their names
+        // explicitly.
+        if (realname_ != NULL && other->realname_ != NULL &&
+            realname_->nequals(*other->realname_)) {
             return (false);
         }
         return (true);
     }
     return (AbstractRRset::isSameKind(abs_other));
-}
-
-bool
-TreeNodeRRset::hasSameRealName(const TreeNodeRRset& other) const {
-    // If one is constructed with a "real name" and the other isn't
-    // *we consider* them different.
-    if ((realname_buf_ == NULL && other.realname_buf_ != NULL) ||
-        (realname_buf_ != NULL && other.realname_buf_ == NULL)) {
-        return (false);
-    }
-
-    // If both are constructed with a "real name", we compare their names
-    // (as label sequences) explicitly.
-    if (realname_buf_ != NULL && other.realname_buf_ != NULL) {
-        uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
-        uint8_t other_labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
-        if (!getOwnerLabels(labels_buf).equals(
-                other.getOwnerLabels(other_labels_buf))) {
-            return (false);
-        }
-    }
-
-    return (true);
 }
 
 } // namespace memory

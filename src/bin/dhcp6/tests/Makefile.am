@@ -42,10 +42,13 @@ if HAVE_GTEST
 
 TESTS += dhcp6_unittests
 
-dhcp6_unittests_SOURCES = ../dhcp6_srv.h ../dhcp6_srv.cc ../ctrl_dhcp6_srv.cc
-dhcp6_unittests_SOURCES += dhcp6_unittests.cc
+dhcp6_unittests_SOURCES  = dhcp6_unittests.cc
 dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
+dhcp6_unittests_SOURCES += ../dhcp6_srv.h ../dhcp6_srv.cc
+dhcp6_unittests_SOURCES += ../dhcp6_log.h ../dhcp6_log.cc
+dhcp6_unittests_SOURCES += ../dhcp6_messages.h ../dhcp6_messages.cc
+dhcp6_unittests_SOURCES += ../ctrl_dhcp6_srv.cc
 
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
