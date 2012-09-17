@@ -1,5 +1,5 @@
 # Linux switches
-CFLAGS=-g -O0 -Wall -pedantic -Wextra
+CFLAGS= -Ofast -Wall -pedantic -Wextra
 
 # Mac OS: We don't use pedantic as Mac OS version of MySQL (5.5.24) does use long long (not part of ISO C++)
 #CFLAGS=-g -O0 -Wall -Wextra -I/opt/local/include
@@ -62,4 +62,4 @@ dhcp-perf-guide.html: dhcp-perf-guide.xml version.ent
 		dhcp-perf-guide.xml
 
 dhcp-perf-guide.pdf: dhcp-perf-guide.xml
-	docbook2pdf $<
+	dblatex -P doc.collab.show=0 -P latex.output.revhistory=0 $<

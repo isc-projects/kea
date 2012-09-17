@@ -25,6 +25,26 @@ namespace dhcp {
 class LibDHCP {
 
 public:
+
+    /// Map of factory functions.
+    typedef std::map<unsigned short, Option::Factory*>  FactoryMap;
+
+    /// @brief Factory function to create instance of option.
+    ///
+    /// Factory method creates instance of specified option. The option
+    /// to be created has to have corresponding factory function
+    /// registered with \ref LibDHCP::OptionFactoryRegister.
+    ///
+    /// @param u universe of the option (V4 or V6)
+    /// @param type option-type
+    /// @param buf option-buffer
+    /// @throw isc::InvalidOperation if there is no factory function
+    /// registered for specified option type.
+    /// @return instance of option.
+    static isc::dhcp::OptionPtr optionFactory(isc::dhcp::Option::Universe u,
+                                              uint16_t type,
+                                              const OptionBuffer& buf);
+
     /// Builds collection of options.
     ///
     /// Builds raw (on-wire) data for provided collection of options.
@@ -84,10 +104,10 @@ public:
                                       Option::Factory * factory);
 protected:
     /// pointers to factories that produce DHCPv6 options
-    static std::map<unsigned short, Option::Factory*> v4factories_;
+    static FactoryMap v4factories_;
 
     /// pointers to factories that produce DHCPv6 options
-    static std::map<unsigned short, Option::Factory*> v6factories_;
+    static FactoryMap v6factories_;
 };
 
 }

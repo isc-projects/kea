@@ -43,6 +43,7 @@ namespace memory {
 
 typedef DomainTree<RdataSet> ZoneTree;
 typedef DomainTreeNode<RdataSet> ZoneNode;
+typedef DomainTreeNodeChain<RdataSet> ZoneChain;
 
 /// \brief NSEC3 data for a DNS zone.
 ///

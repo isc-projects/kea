@@ -86,11 +86,11 @@ public:
     /// \brief Result data of findZone() method.
     struct FindResult {
         FindResult(result::Result param_code,
-                   const ZoneData* param_zone_data) :
+                   ZoneData* param_zone_data) :
             code(param_code), zone_data(param_zone_data)
         {}
         const result::Result code;
-        const ZoneData* const zone_data;
+        ZoneData* const zone_data;
     };
 
 private:
@@ -184,6 +184,16 @@ public:
     /// \param name A domain name for which the search is performed.
     /// \return A \c FindResult object enclosing the search result (see above).
     FindResult findZone(const isc::dns::Name& name) const;
+
+    /// Override the ZoneData for a node (zone) in the zone tree.
+    ///
+    /// \throw none
+    ///
+    /// \param name A domain name for which the zone data is set.
+    /// \param data The new zone data to set.
+    /// \return A \c FindResult object containing the old data if the
+    /// zone was found.
+    FindResult setZoneData(const isc::dns::Name& name, ZoneData* data);
 
 private:
     boost::interprocess::offset_ptr<ZoneTableTree> zones_;

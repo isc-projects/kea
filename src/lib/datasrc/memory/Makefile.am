@@ -6,7 +6,7 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
-CLEANFILES = *.gcno *.gcda datasrc_messages.h datasrc_messages.cc
+CLEANFILES = *.gcno *.gcda
 
 noinst_LTLIBRARIES = libdatasrc_memory.la
 
@@ -17,4 +17,15 @@ libdatasrc_memory_la_SOURCES += rdata_serialization.h rdata_serialization.cc
 libdatasrc_memory_la_SOURCES += zone_data.h zone_data.cc
 libdatasrc_memory_la_SOURCES += segment_object_holder.h
 libdatasrc_memory_la_SOURCES += zone_table.h zone_table.cc
+libdatasrc_memory_la_SOURCES += memory_client.h memory_client.cc
+libdatasrc_memory_la_SOURCES += logger.h logger.cc
+nodist_libdatasrc_memory_la_SOURCES = memory_messages.h memory_messages.cc
+
 EXTRA_DIST  = rdata_serialization_priv.cc
+
+BUILT_SOURCES = memory_messages.h memory_messages.cc
+memory_messages.h memory_messages.cc: Makefile memory_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/datasrc/memory/memory_messages.mes
+
+EXTRA_DIST += memory_messages.mes
+CLEANFILES += memory_messages.h memory_messages.cc
