@@ -19,8 +19,10 @@
 #include <map>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <boost/noncopyable.hpp>
 #include <asiolink/io_address.h>
 #include <util/buffer.h>
+#include <dhcp/option.h>
 
 namespace isc {
 namespace dhcp {
@@ -241,17 +243,62 @@ protected:
 
     isc::asiolink::IOAddress prefix_;
 
-    uint8_t len_;
+    uint8_t prefix_len_;
+
+    Pool6Collection pool_;
 };
 
 class Subnet6 : public Subnet {
 public:
     Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length);
 
+    Pool6Ptr getPool6(const isc::asiolink::IOAddress& hint = isc::asiolink::IOAddress("::"));
+
+    void addPool6(const Pool6Ptr& pool);
+
+    const Pool6Collection& getPools() const {
+        return pools_;
+    }
+
 protected:
     /// collection of pools in that list
     Pool6Collection pools_;
 
+};
+typedef boost::shared_ptr<Subnet6> Subnet6Ptr;
+
+typedef std::vector<Subnet6Ptr> Subnet6Collection;
+
+class CfgMgr : public boost::noncopyable {
+public:
+    static CfgMgr& instance();
+
+    /// @brief get subnet by address
+    ///
+    /// Finds a matching subnet, based on an address. This can be used
+    /// in two cases: when trying to find an appropriate lease based on
+    /// a) relay link address (that must be the address that is on link)
+    /// b) our global address on the interface the message was received on
+    ///    (for directly connected clients)
+    Subnet6Ptr getSubnet6(const isc::asiolink::IOAddress& hint);
+
+    /// @brief get subnet by interface-id
+    ///
+    /// Another possibility is to find a subnet based on interface-id.
+    /// @todo This method is not currently supported.
+    Subnet6Ptr getSubnet6(OptionPtr interfaceId);
+
+
+    void addSubnet6(const Subnet6Ptr& subnet);
+
+protected:
+
+    /// @brief Protected constructor.
+    CfgMgr();
+
+    virtual ~CfgMgr();
+
+    Subnet6Collection subnets6_;
 };
 
 } // namespace isc::dhcp
