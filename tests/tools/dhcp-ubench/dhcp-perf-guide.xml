@@ -1024,7 +1024,10 @@ collected packets: 0
           dynamically (without the template). Note that each template file
           holds data for exactly one DHCP message type. Templates for multiple
           message types must not be combined in the single file.
-          The content in template files is encoded in hexadecimal format.
+          The content in template files is encoded as series of ASCII hexadecimal
+          digits (each byte represented by two ASCII chars 00..FF). Data in a
+          template file is laid in network byte order and it can be used on the
+          systems with different endianess.
           perfdhcp forms the packet by replacing parts of the message buffer read
           from the file with variable data such as elapsed time, hardware address, DUID
           etc. The offsets where such variable data is placed is specific to the
