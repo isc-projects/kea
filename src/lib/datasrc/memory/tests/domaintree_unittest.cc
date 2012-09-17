@@ -530,6 +530,26 @@ TEST_F(DomainTreeTest, findInSubTreeSameLabelSequence) {
     // First insert a "c.g.h." node.
     dtree_expose_empty_node.insert(mem_sgmt_, n1, &dtnode);
 
+    /* Now, the tree looks like:
+     *
+     *             .
+     *             |
+     *             b
+     *           /   \
+     *          a    d.e.f
+     *              /  |  \____
+     *             c   |       \
+     *                 |        g.h
+     *                 |         |
+     *                w.y        i
+     *              /  |  \     / \
+     *             x   |   z   c   k
+     *                 |   |
+     *                 p   j
+     *               /   \
+     *              o     q
+     */
+
     // Make a non-absolute label sequence. We will search for this same
     // sequence in two places in the tree.
     LabelSequence ls1(n1);
