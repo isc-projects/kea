@@ -8,3 +8,4 @@ b10-dhcp6
 spec_config.h
 spec_config.h.pre
 tests/dhcp6_unittests
+/b10-dhcp6.8

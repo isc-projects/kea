@@ -562,8 +562,7 @@ Query::reset() {
 
 bool
 Query::processDSAtChild() {
-    const ClientList::FindResult zresult =
-        client_list_->find(*qname_, true);
+    const ClientList::FindResult zresult = client_list_->find(*qname_, true);
 
     if (zresult.dsrc_client_ == NULL) {
         return (false);

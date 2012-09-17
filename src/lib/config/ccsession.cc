@@ -456,7 +456,7 @@ ModuleCCSession::ModuleCCSession(
 
     ConstElementPtr answer, env;
     session_.group_recvmsg(env, answer, false, seq);
-    int rcode;
+    int rcode = -1;
     ConstElementPtr err = parseAnswer(rcode, answer);
     if (rcode != 0) {
         LOG_ERROR(config_logger, CONFIG_MOD_SPEC_REJECT).arg(answer->str());
@@ -535,7 +535,7 @@ ModuleCCSession::handleConfigUpdate(ConstElementPtr new_config) {
         ConstElementPtr diff = removeIdentical(new_config, getLocalConfig());
         // handle config update
         answer = config_handler_(diff);
-        int rcode;
+        int rcode = -1;
         parseAnswer(rcode, answer);
         if (rcode == 0) {
             ElementPtr local_config = getLocalConfig();
@@ -652,7 +652,7 @@ ModuleCCSession::fetchRemoteSpec(const std::string& module, bool is_filename) {
         unsigned int seq = session_.group_sendmsg(cmd, "ConfigManager");
         ConstElementPtr env, answer;
         session_.group_recvmsg(env, answer, false, seq);
-        int rcode;
+        int rcode = -1;
         ConstElementPtr spec_data = parseAnswer(rcode, answer);
         if (rcode == 0 && spec_data) {
             // received OK, construct the spec out of it
@@ -689,7 +689,7 @@ ModuleCCSession::addRemoteConfig(const std::string& spec_name,
 
     ConstElementPtr env, answer;
     session_.group_recvmsg(env, answer, false, seq);
-    int rcode;
+    int rcode = -1;
     ConstElementPtr new_config = parseAnswer(rcode, answer);
     ElementPtr local_config;
     if (rcode == 0 && new_config) {
