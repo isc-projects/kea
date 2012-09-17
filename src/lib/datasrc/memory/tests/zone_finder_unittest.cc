@@ -13,12 +13,19 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "memory_segment_test.h"
+
+// NOTE: this faked_nsec3 inclusion (and all related code below)
+// was ported during #2109 for the convenience of implementing #2218
+// In #2218 the NSEC3 test code in this file is expected to be finalized.
+// In #2219 the original is expected to be removed, and this file should
+// probably be moved here (and any leftover code not handled in #2218 should
+// be cleaned up)
 #include "../../tests/faked_nsec3.h"
-#include <datasrc/data_source.h>
-#include <testutils/dnsmessage_test.h>
 
 #include <datasrc/memory/zone_finder.h>
 #include <datasrc/memory/rdata_serialization.h>
+#include <datasrc/data_source.h>
+#include <testutils/dnsmessage_test.h>
 
 #include <boost/foreach.hpp>
 
@@ -57,6 +64,7 @@ const char* const zzz_hash = "R53BQ7CC2UVMUBFU5OCMM6PERS9TK9EN";
 // A simple faked NSEC3 hash calculator with a dedicated creator for it.
 //
 // This is used in some NSEC3-related tests below.
+// Also see NOTE at inclusion of "../../tests/faked_nsec3.h"
 class TestNSEC3HashCreator : public NSEC3HashCreator {
     class TestNSEC3Hash : public NSEC3Hash {
     private:
@@ -685,8 +693,6 @@ TEST_F(InMemoryZoneFinderTest, glue) {
  * \brief Test searching.
  *
  * Check it finds or does not find correctly and does not throw exceptions.
- * \todo This doesn't do any kind of CNAME and so on. If it isn't
- *     directly there, it just tells it doesn't exist.
  */
 void
 InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags,

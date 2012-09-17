@@ -44,7 +44,7 @@ namespace {
 /// \param rdataset The RdataSet to create the RRsetPtr for
 /// \param rrclass The RRClass as passed by the client
 ///
-/// Returns an empty TreeNodeRRsetPtr is either node or rdataset is NULL.
+/// Returns an empty TreeNodeRRsetPtr if node is NULL or if rdataset is NULL.
 TreeNodeRRsetPtr
 createTreeNodeRRset(const ZoneNode* node,
                     const RdataSet* rdataset,
