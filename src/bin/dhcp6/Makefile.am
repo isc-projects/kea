@@ -13,7 +13,7 @@ endif
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
-CLEANFILES = spec_config.h
+CLEANFILES = spec_config.h dhcp6_messages.h dhcp6_messages.cc
 
 man_MANS = b10-dhcp6.8
 DISTCLEANFILES = $(man_MANS)
@@ -37,11 +37,20 @@ endif
 spec_config.h: spec_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
 
-BUILT_SOURCES = spec_config.h
+dhcp6_messages.h dhcp6_messages.cc: dhcp6_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/bin/dhcp6/dhcp6_messages.mes
+
+BUILT_SOURCES = spec_config.h dhcp6_messages.h dhcp6_messages.cc
+
 pkglibexec_PROGRAMS = b10-dhcp6
 
-b10_dhcp6_SOURCES = main.cc dhcp6_srv.cc dhcp6_srv.h
+b10_dhcp6_SOURCES  = main.cc
 b10_dhcp6_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
+b10_dhcp6_SOURCES += dhcp6_log.cc dhcp6_log.h
+b10_dhcp6_SOURCES += dhcp6_srv.cc dhcp6_srv.h
+
+nodist_b10_dhcp6_SOURCES = dhcp6_messages.h dhcp6_messages.cc
+EXTRA_DIST += dhcp6_messages.mes
 
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
@@ -49,7 +58,7 @@ if USE_CLANGPP
 b10_dhcp6_CXXFLAGS = -Wno-unused-parameter
 endif
 
-b10_dhcp6_LDADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+b10_dhcp6_LDADD  = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la

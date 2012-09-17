@@ -1,0 +1,4 @@
+;; DNAME + NS (apex)
+example.org.				      86400 IN SOA	ns.example.org. ns.example.org. 2012091016 7200 3600 2592000 1200
+example.org.				      3600  IN NS	bar.example.com.
+example.org.				      3600  IN DNAME	foo.example.com.
