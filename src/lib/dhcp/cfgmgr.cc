@@ -27,8 +27,8 @@ Pool::Pool(const isc::asiolink::IOAddress& first,
            const Triplet<uint32_t>& t1,
            const Triplet<uint32_t>& t2,
            const Triplet<uint32_t>& valid_lifetime)
-    :id_(getNextID()), first_(first), last_(last), t1_(t1), t2_(t2), valid_(valid_lifetime) {
-
+    :id_(getNextID()), first_(first), last_(last), t1_(t1), t2_(t2),
+     valid_(valid_lifetime) {
 }
 
 bool Pool::inRange(const isc::asiolink::IOAddress& addr) {
@@ -44,17 +44,21 @@ Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
     :Pool(first, last, t1, t2, valid_lifetime),
      type_(type), prefix_len_(0), preferred_(preferred_lifetime) {
 
+    // check if specified address boundaries are sane
+    if (first.getFamily() != AF_INET6 || last.getFamily() != AF_INET6) {
+        isc_throw(BadValue, "Invalid Pool6 address boundaries: not IPv6");
+    }
+
     if (last < first) {
         isc_throw(BadValue, "Upper boundary is smaller than lower boundary.");
-        // This check is strict. If we decide that it is too strict,
+        // This check is a bit strict. If we decide that it is too strict,
         // we need to comment it and uncomment lines below.
+        // On one hand, letting the user specify 2001::f - 2001::1 is nice, but
+        // on the other hand, 2001::1 may be a typo and the user really meant
+        // 2001::1:0 (or 1something), so a at least a warning would be useful.
 
         // first_  = last;
         // last_ = first;
-    }
-
-    if (first.getFamily() != AF_INET6 || last.getFamily() != AF_INET6) {
-        isc_throw(BadValue, "Invalid Pool6 address boundaries: not IPv6");
     }
 
     // TYPE_PD is not supported by this constructor. first-last style
@@ -65,30 +69,31 @@ Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
     }
 }
 
-Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& addr,
+Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& prefix,
              uint8_t prefix_len,
              const Triplet<uint32_t>& t1,
              const Triplet<uint32_t>& t2,
              const Triplet<uint32_t>& preferred_lifetime,
              const Triplet<uint32_t>& valid_lifetime)
-    :Pool(addr, IOAddress("::"), t1, t2, valid_lifetime),
+    :Pool(prefix, IOAddress("::"), t1, t2, valid_lifetime),
      type_(type), prefix_len_(prefix_len), preferred_(preferred_lifetime) {
 
+    // check if the prefix is sane
+    if (prefix.getFamily() != AF_INET6) {
+        isc_throw(BadValue, "Invalid Pool6 address boundaries: not IPv6");
+    }
+
+    // check if the prefix length is sane
     if (prefix_len == 0 || prefix_len > 128) {
         isc_throw(BadValue, "Invalid prefix length");
     }
 
-    if (addr.getFamily() != AF_INET6) {
-        isc_throw(BadValue, "Invalid Pool6 address boundaries: not IPv6");
-    }
-
     // Let's now calculate the last address in defined pool
-    last_ = lastAddrInPrefix(addr, prefix_len);
+    last_ = lastAddrInPrefix(prefix, prefix_len);
 }
 
-
 Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len)
-    :id_(getNextID()), prefix_(prefix), len_(len) {
+    :id_(getNextID()), prefix_(prefix), prefix_len_(len) {
     if ( (prefix.getFamily() == AF_INET6 && len > 128) ||
          (prefix.getFamily() == AF_INET && len > 32) ) {
         isc_throw(BadValue, "Invalid prefix length specified for subnet: " << len);
@@ -96,8 +101,8 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len)
 }
 
 bool Subnet::inRange(const isc::asiolink::IOAddress& addr) {
-    IOAddress first = firstAddrInPrefix(prefix_, len_);
-    IOAddress last = lastAddrInPrefix(prefix_, len_);
+    IOAddress first = firstAddrInPrefix(prefix_, prefix_len_);
+    IOAddress last = lastAddrInPrefix(prefix_, prefix_len_);
 
     return ( (first <= addr) && (addr <= last) );
 }
@@ -109,8 +114,79 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length)
     }
 }
 
+void Subnet6::addPool6(const Pool6Ptr& pool) {
+    IOAddress first_addr = pool->getFirstAddress();
+    IOAddress last_addr = pool->getLastAddress();
+
+    if (!inRange(first_addr) || !inRange(last_addr)) {
+        isc_throw(BadValue, "Pool6 (" << first_addr.toText() << "-" << last_addr.toText()
+                  << " does not belong in this (" << prefix_ << "/" << prefix_len_
+                  << ") subnet6");
+    }
+
+    pools_.push_back(pool);
+}
 
 
+Pool6Ptr Subnet6::getPool6(const isc::asiolink::IOAddress& hint /* = IOAddress("::")*/ ) {
+    Pool6Ptr candidate;
+    for (Pool6Collection::iterator pool = pools_.begin(); pool != pools_.end(); ++pool) {
+
+        // if we won't find anything better, then let's just use the first pool
+        if (!candidate) {
+            candidate = *pool;
+        }
+
+        // if the client provided a pool and there's a pool that hint is valid in,
+        // then let's use that pool
+        if ((*pool)->inRange(hint)) {
+            return (*pool);
+        }
+    }
+    return (candidate);
+}
+
+
+CfgMgr&
+CfgMgr::instance() {
+    static CfgMgr cfg_mgr;
+    return (cfg_mgr);
+}
+
+Subnet6Ptr
+CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
+
+    // If there's only one subnet configured, let's just use it
+    if (subnets6_.size() == 1) {
+        return (subnets6_[0]);
+    }
+
+    // If there is more than one, we need to choose the proper one
+    for (Subnet6Collection::iterator subnet = subnets6_.begin();
+         subnet != subnets6_.end(); ++subnet) {
+        if ((*subnet)->inRange(hint)) {
+            return (*subnet);
+        }
+    }
+
+    // sorry, we don't support that subnet
+    return (Subnet6Ptr());
+}
+
+Subnet6Ptr CfgMgr::getSubnet6(OptionPtr /*interfaceId*/) {
+    /// @todo: Implement get subnet6 by interface-id (for relayed traffic)
+    isc_throw(NotImplemented, "Relayed DHCPv6 traffic is not supported yet.");
+}
+
+void CfgMgr::addSubnet6(const Subnet6Ptr& subnet) {
+    subnets6_.push_back(subnet);
+}
+
+CfgMgr::CfgMgr() {
+}
+
+CfgMgr::~CfgMgr() {
+}
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

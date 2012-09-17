@@ -187,15 +187,109 @@ TEST(Pool6Test, unique_id) {
 }
 
 
+TEST(Subnet6Test, constructor) {
+
+    EXPECT_NO_THROW(Subnet6 subnet1(IOAddress("2001:db8:1::"), 64));
+
+    EXPECT_THROW(Subnet6 subnet2(IOAddress("2001:db8:1::"), 129),
+                BadValue); // invalid prefix length
+    EXPECT_THROW(Subnet6 subnet3(IOAddress("192.168.0.0"), 32),
+                BadValue); // IPv4 addresses are not allowed in Subnet6
+}
+
 TEST(Subnet6Test, in_range) {
     Subnet6 subnet(IOAddress("2001:db8:1::"), 64);
 
-   EXPECT_FALSE(subnet.inRange(IOAddress("2001:db8:0:ffff:ffff:ffff:ffff:ffff")));
-   EXPECT_TRUE(subnet.inRange(IOAddress("2001:db8:1::0")));
-   EXPECT_TRUE(subnet.inRange(IOAddress("2001:db8:1::1")));
-   EXPECT_TRUE(subnet.inRange(IOAddress("2001:db8:1::ffff:ffff:ffff:ffff")));
-   EXPECT_FALSE(subnet.inRange(IOAddress("2001:db8:1:1::")));
-   EXPECT_FALSE(subnet.inRange(IOAddress("::")));
+    EXPECT_FALSE(subnet.inRange(IOAddress("2001:db8:0:ffff:ffff:ffff:ffff:ffff")));
+    EXPECT_TRUE(subnet.inRange(IOAddress("2001:db8:1::0")));
+    EXPECT_TRUE(subnet.inRange(IOAddress("2001:db8:1::1")));
+    EXPECT_TRUE(subnet.inRange(IOAddress("2001:db8:1::ffff:ffff:ffff:ffff")));
+    EXPECT_FALSE(subnet.inRange(IOAddress("2001:db8:1:1::")));
+    EXPECT_FALSE(subnet.inRange(IOAddress("::")));
+}
+
+TEST(Subnet6Test, Pool6InSubnet6) {
+
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56));
+
+    Pool6Ptr pool1(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"),
+                             64, 101, 102, 103, 104));
+    Pool6Ptr pool2(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:2::"),
+                             64, 201, 202, 203, 204));
+    Pool6Ptr pool3(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:3::"),
+                             64, 301, 302, 303, 304));
+
+
+    subnet->addPool6(pool1);
+
+    // If there's only one pool, get that pool
+    Pool6Ptr mypool = subnet->getPool6();
+    EXPECT_EQ(mypool, pool1);
+
+
+    subnet->addPool6(pool2);
+    subnet->addPool6(pool3);
+
+    // If there are more than one pool and we didn't provide hint, we
+    // should get the first pool
+    mypool = subnet->getPool6();
+
+    EXPECT_EQ(mypool, pool1);
+
+    // If we provide a hint, we should get a pool that this hint belongs to
+    mypool = subnet->getPool6(IOAddress("2001:db8:1:3::dead:beef"));
+
+    EXPECT_EQ(mypool, pool3);
+
+}
+
+TEST(Subnet6Test, Subnet6_Pool6_checks) {
+
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56));
+
+    // this one is in subnet
+    Pool6Ptr pool1(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"),
+                             64, 101, 102, 103, 104));
+    subnet->addPool6(pool1);
+
+    Pool6Ptr pool2(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::"),
+                             48, 201, 202, 203, 204)); // this one is larger than the subnet!
+    EXPECT_THROW(subnet->addPool6(pool2), BadValue);
+
+
+    // this one is totally out of blue
+    Pool6Ptr pool3(new Pool6(Pool6::TYPE_IA, IOAddress("3000::"),
+                             16, 301, 302, 303, 304));
+    EXPECT_THROW(subnet->addPool6(pool3), BadValue);
+
+}
+
+// This test verifies if the configuration manager is able to hold and return
+// valid leases
+TEST(CfgMgrTest, subnet6) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    ASSERT_TRUE(&cfg_mgr != 0);
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48));
+
+    // there shouldn't be any subnet configured at this stage
+    EXPECT_EQ( Subnet6Ptr(), cfg_mgr.getSubnet6(IOAddress("2000::1")));
+
+    cfg_mgr.addSubnet6(subnet1);
+
+    // Now we have only one subnet, any request will be served from it
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(IOAddress("2001:db8::1")));
+
+    cfg_mgr.addSubnet6(subnet2);
+    cfg_mgr.addSubnet6(subnet3);
+
+    EXPECT_EQ(subnet3, cfg_mgr.getSubnet6(IOAddress("4000::123")));
+    EXPECT_EQ(subnet2, cfg_mgr.getSubnet6(IOAddress("3000::dead:beef")));
+    EXPECT_EQ(Subnet6Ptr(), cfg_mgr.getSubnet6(IOAddress("5000::1")));
+
 }
 
 } // end of anonymous namespace

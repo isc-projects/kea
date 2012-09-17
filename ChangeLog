@@ -1,3 +1,10 @@
+4XX.	[func]		tomek
+	Configuration Manager for DHCP servers has been
+	implemented. Currently only supports basic configuration storage
+	for DHCPv6 server, but that capability is expected to be expanded
+	in a near future.
+	(Trac #2238, git TBD)
+
 473.	[bug]		jelte
 	TCP connections now time out in b10-auth if no (or not all) query
 	data is sent by the client. The timeout value defaults to 5000
