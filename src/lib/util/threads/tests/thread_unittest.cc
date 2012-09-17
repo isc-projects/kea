@@ -44,7 +44,7 @@ doSomething(int* x) {
 // We just test that we can forget about the thread and nothing
 // bad will happen on our side.
 TEST(ThreadTest, detached) {
-    for (size_t i = 0; i < detached_iterations; ++ i) {
+    for (size_t i = 0; i < detached_iterations; ++i) {
         int* x = new int[10];
         Thread thread(boost::bind(&doSomething, x));
     }
@@ -58,7 +58,7 @@ markRun(bool* mark) {
 
 // Wait for a thread to end first. The variable must be set at the time.
 TEST(ThreadTest, wait) {
-    for (size_t i = 0; i < iterations; ++ i) {
+    for (size_t i = 0; i < iterations; ++i) {
         bool mark = false;
         Thread thread(boost::bind(markRun, &mark));
         thread.wait();
@@ -75,14 +75,14 @@ throwSomething() {
 
 // Exception in the thread we forget about should not do anything to us
 TEST(ThreadTest, detachedException) {
-    for (size_t i = 0; i < detached_iterations; ++ i) {
+    for (size_t i = 0; i < detached_iterations; ++i) {
         Thread thread(throwSomething);
     }
 }
 
 // An uncaught exception in the thread should propagate through wait
 TEST(ThreadTest, exception) {
-    for (size_t i = 0; i < iterations; ++ i) {
+    for (size_t i = 0; i < iterations; ++i) {
         Thread thread(throwSomething);
         ASSERT_THROW(thread.wait(), Thread::UncaughtException);
     }
