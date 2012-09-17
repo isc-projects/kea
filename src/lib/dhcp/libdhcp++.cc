@@ -15,6 +15,7 @@
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 #include <util/buffer.h>
+#include <exceptions/exceptions.h>
 #include <dhcp/libdhcp++.h>
 #include "config.h"
 #include <dhcp/dhcp4.h>
@@ -32,6 +33,31 @@ std::map<unsigned short, Option::Factory*> LibDHCP::v4factories_;
 
 // static array with factories for options
 std::map<unsigned short, Option::Factory*> LibDHCP::v6factories_;
+
+
+OptionPtr
+LibDHCP::optionFactory(Option::Universe u,
+                       uint16_t type,
+                       const OptionBuffer& buf) {
+    FactoryMap::iterator it;
+    if (u == Option::V4) {
+        it = v4factories_.find(type);
+        if (it == v4factories_.end()) {
+            isc_throw(BadValue, "factory function not registered "
+            "for DHCP v4 option type " << type);
+        }
+    } else if (u == Option::V6) {
+        it = v6factories_.find(type);
+        if (it == v6factories_.end()) {
+            isc_throw(BadValue, "factory function not registered "
+                      "for DHCPv6 option type " << type);
+        }
+    } else {
+        isc_throw(BadValue, "invalid universe specified (expected "
+                  "Option::V4 or Option::V6");
+    }
+    return (it->second(u, type, buf));
+}
 
 
 size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,

@@ -63,8 +63,44 @@ public:
     /// @param type option type
     /// @param buf pointer to a buffer
     ///
+    /// @todo Passing a separate buffer for each option means that a copy
+    ///       was done. We can avoid it by passing 2 iterators.
+    ///
     /// @return a pointer to a created option object
     typedef OptionPtr Factory(Option::Universe u, uint16_t type, const OptionBuffer& buf);
+
+    /// @brief Factory function to create instance of option.
+    ///
+    /// Factory method creates instance of specified option. The option
+    /// to be created has to have corresponding factory function
+    /// registered with \ref LibDHCP::OptionFactoryRegister.
+    ///
+    /// @param u universe of the option (V4 or V6)
+    /// @param type option-type
+    /// @param buf option-buffer
+    /// @throw isc::InvalidOperation if there is no factory function
+    /// registered for specified option type.
+    /// @return instance of option.
+    static OptionPtr factory(Option::Universe u,
+                             uint16_t type,
+                             const OptionBuffer& buf);
+
+    /// @brief Factory function to create instance of option.
+    ///
+    /// Factory method creates instance of specified option. The option
+    /// to be created has to have corresponding factory function
+    /// registered with \ref LibDHCP::OptionFactoryRegister.
+    /// This method creates empty \ref OptionBuffer object. Use this
+    /// factory function if it is not needed to pass custom buffer.
+    ///
+    /// @param u universe of the option (V4 or V6)
+    /// @param type option-type
+    /// @throw isc::InvalidOperation if there is no factory function
+    /// registered for specified option type.
+    /// @return instance of option.
+    static OptionPtr factory(Option::Universe u, uint16_t type) {
+        return factory(u, type, OptionBuffer());
+    }
 
     /// @brief ctor, used for options constructed, usually during transmission
     ///

@@ -16,7 +16,6 @@
 #include <dhcp/dhcp6.h>
 
 #include "perf_pkt4.h"
-#include "pkt_transform.h"
 
 using namespace std;
 using namespace isc;
@@ -57,6 +56,15 @@ PerfPkt4::rawUnpack() {
     }
     return (res);
 }
+
+void
+PerfPkt4::writeAt(size_t dest_pos,
+                  std::vector<uint8_t>::iterator first,
+                  std::vector<uint8_t>::iterator last) {
+    return (PktTransform::writeAt(data_, dest_pos, first, last));
+}
+
+
 
 } // namespace perfdhcp
 } // namespace isc

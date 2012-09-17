@@ -114,6 +114,18 @@ private:
     MessageRenderer& renderer_;
 };
 
+// Similar to Renderer holder, this is a very basic RAII-style class
+// that calls clear(Message::PARSE) on the given Message upon destruction
+class MessageHolder {
+public:
+    MessageHolder(Message& message) : message_(message) {}
+    ~MessageHolder() {
+        message_.clear(Message::PARSE);
+    }
+private:
+    Message& message_;
+};
+
 // A helper container of socket session forwarder.
 //
 // This class provides a simple wrapper interface to SocketSessionForwarder
@@ -344,6 +356,11 @@ public:
                             OutputBufferPtr buffer,
                             DNSServer* server) const
     {
+        // Keep a holder on the message, so that it is automatically
+        // cleared if processMessage() is done
+        // This is not done in processMessage itself (which would be
+        // equivalent), to allow tests to inspect the message handling.
+        MessageHolder message_holder(*message);
         server_->processMessage(io_message, *message, *buffer, server);
     }
 private:

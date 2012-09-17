@@ -23,7 +23,7 @@
 namespace isc {
 namespace perfdhcp {
 
-/// \brief Command Options
+/// \brief Command Options.
 ///
 /// This class is responsible for parsing the command-line and storing the
 /// specified options.
@@ -49,64 +49,64 @@ public:
     /// command line options.
     void reset();
 
-    /// \brief Parse command line
+    /// \brief Parse command line.
     ///
     /// Parses the command line and stores the selected options
     /// in class data members.
     ///
     /// \param argc Argument count passed to main().
     /// \param argv Argument value array passed to main().
-    /// \throws isc::InvalidParameter if parse fails
+    /// \throws isc::InvalidParameter if parse fails.
     void parse(int argc, char** const argv);
 
-    /// \brief Returns IP version
+    /// \brief Returns IP version.
     ///
-    /// \return IP version to be used
+    /// \return IP version to be used.
     uint8_t getIpVersion() const { return ipversion_; }
 
-    /// \brief Returns packet exchange mode
+    /// \brief Returns packet exchange mode.
     ///
-    /// \return packet exchange mode
+    /// \return packet exchange mode.
     ExchangeMode getExchangeMode() const { return exchange_mode_; }
 
-    /// \brief Returns echange rate
+    /// \brief Returns echange rate.
     ///
-    /// \return exchange rate per second
+    /// \return exchange rate per second.
     int getRate() const { return rate_; }
 
-    /// \brief Returns delay between two performance reports
+    /// \brief Returns delay between two performance reports.
     ///
-    /// \return delay between two consecutive performance reports
+    /// \return delay between two consecutive performance reports.
     int getReportDelay() const { return report_delay_; }
 
-    /// \brief Returns number of simulated clients
+    /// \brief Returns number of simulated clients.
     ///
-    /// \return number of simulated clients
+    /// \return number of simulated clients.
     uint32_t getClientsNum() const { return clients_num_; }
 
-    /// \brief Returns MAC address prefix
+    /// \brief Returns MAC address template.
     ///
-    /// \ return MAC address prefix to simulate different clients
-    std::vector<uint8_t> getMacPrefix() const { return mac_prefix_; }
+    /// \return MAC address template to simulate different clients.
+    std::vector<uint8_t> getMacTemplate() const { return mac_template_; }
 
-    /// \brief Returns DUID prefix
+    /// \brief Returns DUID template.
     ///
-    /// \return DUID prefix to simulate different clients
-    std::vector<uint8_t> getDuidPrefix() const { return duid_prefix_; }
+    /// \return DUID template to simulate different clients.
+    std::vector<uint8_t> getDuidTemplate() const { return duid_template_; }
 
-    /// \brief Returns base values
+    /// \brief Returns base values.
     ///
-    /// \return all base values specified
+    /// \return all base values specified.
     std::vector<std::string> getBase() const { return base_; }
 
-    /// \brief Returns maximum number of exchanges
+    /// \brief Returns maximum number of exchanges.
     ///
-    /// \return number of exchange requests before test is aborted
+    /// \return number of exchange requests before test is aborted.
     std::vector<int> getNumRequests() const { return num_request_; }
 
-    /// \brief Returns test period
+    /// \brief Returns test period.
     ///
-    /// \return test period before it is aborted
+    /// \return test period before it is aborted.
     int getPeriod() const { return period_; }
 
     /// \brief Returns drop time
@@ -114,136 +114,139 @@ public:
     /// The method returns maximum time elapsed from
     /// sending the packet before it is assumed dropped.
     ///
-    /// \return return time before request is assumed dropped
+    /// \return return time before request is assumed dropped.
     std::vector<double> getDropTime() const { return drop_time_; }
 
-    /// \brief Returns maximum drops number
+    /// \brief Returns maximum drops number.
     ///
     /// Returns maximum number of packet drops before
     /// aborting a test.
     ///
-    /// \return maximum number of dropped requests
+    /// \return maximum number of dropped requests.
     std::vector<int> getMaxDrop() const { return max_drop_; }
 
-    /// \brief Returns maximal percentage of drops
+    /// \brief Returns maximal percentage of drops.
     ///
     /// Returns maximal percentage of packet drops
     /// before aborting a test.
     ///
-    /// \return maximum percentage of lost requests
+    /// \return maximum percentage of lost requests.
     std::vector<double> getMaxDropPercentage() const { return max_pdrop_; }
 
-    /// \brief Returns local address or interface name
+    /// \brief Returns local address or interface name.
     ///
-    /// \return local address or interface name
+    /// \return local address or interface name.
     std::string getLocalName() const { return localname_; }
 
-    /// \brief Checks if interface name was used
+    /// \brief Checks if interface name was used.
     ///
     /// The method checks if interface name was used
     /// rather than address.
     ///
-    /// \return true if interface name was used
+    /// \return true if interface name was used.
     bool isInterface() const { return is_interface_; }
 
-    /// \brief Returns number of preload exchanges
+    /// \brief Returns number of preload exchanges.
     ///
-    /// \return number of preload exchanges
+    /// \return number of preload exchanges.
     int getPreload() const { return preload_; }
 
-    /// \brief Returns aggressivity value
+    /// \brief Returns aggressivity value.
     ///
-    /// \return aggressivity value
+    /// \return aggressivity value.
     int getAggressivity() const { return aggressivity_; }
 
-    /// \brief Returns local port number
+    /// \brief Returns local port number.
     ///
-    /// \return local port number
+    /// \return local port number.
     int getLocalPort() const { return local_port_; }
 
-    /// \brief Checks if seed provided
+    /// \brief Checks if seed provided.
     ///
-    /// \return true if seed was provided
+    /// \return true if seed was provided.
     bool isSeeded() const { return seeded_; }
 
-    /// \brief Returns radom seed
+    /// \brief Returns radom seed.
     ///
-    /// \return random seed
+    /// \return random seed.
     uint32_t getSeed() const { return seed_; }
 
-    /// \brief Checks if broadcast address is to be used
+    /// \brief Checks if broadcast address is to be used.
     ///
-    /// \return true if broadcast address is to be used
+    /// \return true if broadcast address is to be used.
     bool isBroadcast() const { return broadcast_; }
 
-    /// \brief Check if rapid commit option used
+    /// \brief Check if rapid commit option used.
     ///
-    /// \return true if rapid commit option is used
+    /// \return true if rapid commit option is used.
     bool isRapidCommit() const { return rapid_commit_; }
 
-    /// \brief Check if server-ID to be taken from first package
+    /// \brief Check if server-ID to be taken from first package.
     ///
-    /// \return true if server-iD to be taken from first package
+    /// \return true if server-iD to be taken from first package.
     bool isUseFirst() const { return use_first_; }
 
-    /// \brief Returns template file names
+    /// \brief Returns template file names.
     ///
-    /// \return template file names
+    /// \return template file names.
     std::vector<std::string> getTemplateFiles() const { return template_file_; }
 
-    /// brief Returns template offsets for xid
+    /// brief Returns template offsets for xid.
     ///
-    /// \return template offsets for xid
+    /// \return template offsets for xid.
     std::vector<int> getTransactionIdOffset() const { return xid_offset_; }
 
-    /// \brief Returns template offsets for rnd
+    /// \brief Returns template offsets for rnd.
     ///
-    /// \return template offsets for rnd
+    /// \return template offsets for rnd.
     std::vector<int> getRandomOffset() const { return rnd_offset_; }
 
-    /// \brief Returns template offset for elapsed time
+    /// \brief Returns template offset for elapsed time.
     ///
-    /// \return template offset for elapsed time
+    /// \return template offset for elapsed time.
     int getElapsedTimeOffset() const { return elp_offset_; }
 
-    /// \brief Returns template offset for server-ID
+    /// \brief Returns template offset for server-ID.
     ///
-    /// \return template offset for server-ID
+    /// \return template offset for server-ID.
     int getServerIdOffset() const { return sid_offset_; }
 
-    /// \brief Returns template offset for requested IP
+    /// \brief Returns template offset for requested IP.
     ///
-    /// \return template offset for requested IP
+    /// \return template offset for requested IP.
     int getRequestedIpOffset() const { return rip_offset_; }
 
-    /// \brief Returns diagnostic selectors
+    /// \brief Returns diagnostic selectors.
     ///
-    /// \return diagnostics selector
+    /// \return diagnostics selector.
     std::string getDiags() const { return diags_; }
 
-    /// \brief Returns wrapped command
+    /// \brief Returns wrapped command.
     ///
-    /// \return wrapped command (start/stop)
+    /// \return wrapped command (start/stop).
     std::string getWrapped() const { return wrapped_; }
 
-    /// \brief Returns server name
+    /// \brief Returns server name.
     ///
-    /// \return server name
+    /// \return server name.
     std::string getServerName() const { return server_name_; }
+    
+    /// \brief Print command line arguments.
+    void printCommandLine() const;
 
-    /// \brief Print usage
+    /// \brief Print usage.
     ///
-    /// Prints perfdhcp usage
+    /// Prints perfdhcp usage.
     void usage() const;
 
-    /// \brief Print program version
+    /// \brief Print program version.
     ///
-    /// Prints perfdhcp version
+    /// Prints perfdhcp version.
     void version() const;
 
 private:
 
-    /// \brief Default Constructor
+    /// \brief Default Constructor.
     ///
     /// Private constructor as this is a singleton class.
     /// Use CommandOptions::instance() to get instance of it.
@@ -251,57 +254,64 @@ private:
         reset();
     }
 
-    /// \brief Initializes class members based command line
+    /// \brief Initializes class members based on the command line.
     ///
-    /// Reads each command line parameter and sets class member values
+    /// Reads each command line parameter and sets class member values.
     ///
     /// \param argc Argument count passed to main().
     /// \param argv Argument value array passed to main().
-    /// \throws isc::InvalidParameter if command line options initialization fails
+    /// \throws isc::InvalidParameter if command line options initialization fails.
     void initialize(int argc, char** argv);
 
-    /// \brief Validates initialized options
+    /// \brief Validates initialized options.
     ///
-    /// \throws isc::InvalidParameter if command line validation fails
+    /// \throws isc::InvalidParameter if command line validation fails.
     void validate() const;
 
-    /// \brief Throws !InvalidParameter exception if condition is true
+    /// \brief Throws !InvalidParameter exception if condition is true.
     ///
     /// Convenience function that throws an InvalidParameter exception if
-    /// the condition argument is true
+    /// the condition argument is true.
     ///
-    /// \param condition Condition to be checked
-    /// \param errmsg Error message in exception
-    /// \throws isc::InvalidParameter if condition argument true
+    /// \param condition Condition to be checked.
+    /// \param errmsg Error message in exception.
+    /// \throws isc::InvalidParameter if condition argument true.
     inline void check(bool condition, const std::string& errmsg) const;
 
-    /// \brief Casts command line argument to positive integer
+    /// \brief Casts command line argument to positive integer.
     ///
-    /// \param errmsg Error message if lexical cast fails
-    /// \throw InvalidParameter if lexical cast fails
+    /// \param errmsg Error message if lexical cast fails.
+    /// \throw InvalidParameter if lexical cast fails.
     int positiveInteger(const std::string& errmsg) const;
 
-    /// \brief Casts command line argument to non-negative integer
+    /// \brief Casts command line argument to non-negative integer.
     ///
-    /// \param errmsg Error message if lexical cast fails
-    /// \throw InvalidParameter if lexical cast fails
+    /// \param errmsg Error message if lexical cast fails.
+    /// \throw InvalidParameter if lexical cast fails.
     int nonNegativeInteger(const std::string& errmsg) const;
 
-    /// \brief Returns command line string if it is not empty
+    /// \brief Returns command line string if it is not empty.
     ///
-    /// \param errmsg Error message if string is empty
-    /// \throw InvalidParameter if string is empty
+    /// \param errmsg Error message if string is empty.
+    /// \throw InvalidParameter if string is empty.
     std::string nonEmptyString(const std::string& errmsg) const;
 
-    /// \brief Set number of clients
+    /// \brief Set number of clients.
     ///
     /// Interprets the getopt() "opt" global variable as the number of clients
     /// (a non-negative number).  This value is specified by the "-R" switch.
     ///
-    /// \throw InvalidParameter if -R<value> is wrong
+    /// \throw InvalidParameter if -R<value> is wrong.
     void initClientsNum();
 
-    /// \brief Decodes base provided with -b<base>
+    /// \brief Sets value indicating if interface name was given.
+    ///
+    /// Method checks if the command line argument given with
+    /// '-l' option is the interface name. The is_interface_ member
+    /// is set accordingly.
+    void initIsInterface();
+
+    /// \brief Decodes base provided with -b<base>.
     ///
     /// Function decodes argument of -b switch, which
     /// specifies a base value used to generate unique
@@ -311,39 +321,47 @@ private:
     /// - -b mac=00:01:02:03:04:05
     /// - -b duid=0F1234 (duid can be up to 128 hex digits)
     //  Function will decode 00:01:02:03:04:05 and/or
-    /// 0F1234 respectively and initialize mac_prefix_
-    /// and/or duid_prefix_ members
+    /// 0F1234 respectively and initialize mac_template_
+    /// and/or duid_template_ members.
     ///
-    /// \param base Base in string format
-    /// \throws isc::InvalidParameter if base is invalid
+    /// \param base Base in string format.
+    /// \throws isc::InvalidParameter if base is invalid.
     void decodeBase(const std::string& base);
 
-    /// \brief Decodes base MAC address provided with -b<base>
+    /// \brief Decodes base MAC address provided with -b<base>.
     ///
     /// Function decodes parameter given as -b mac=00:01:02:03:04:05
-    /// The function will decode 00:01:02:03:04:05 initialize mac_prefix_
+    /// The function will decode 00:01:02:03:04:05 initialize mac_template_
     /// class member.
-    /// Provided MAC address is for example only
+    /// Provided MAC address is for example only.
     ///
-    /// \param base Base string given as -b mac=00:01:02:03:04:05
-    /// \throws isc::InvalidParameter if mac address is invalid
+    /// \param base Base string given as -b mac=00:01:02:03:04:05.
+    /// \throws isc::InvalidParameter if mac address is invalid.
     void decodeMac(const std::string& base);
 
-    /// \brief Decodes base DUID provided with -b<base>
+    /// \brief Decodes base DUID provided with -b<base>.
     ///
-    /// Function decodes parameter given as -b duid=0F1234
-    /// The function will decode 0F1234 and initialize duid_prefix_
+    /// Function decodes parameter given as -b duid=0F1234.
+    /// The function will decode 0F1234 and initialize duid_template_
     /// class member.
     /// Provided DUID is for example only.
     ///
-    /// \param base Base string given as -b duid=0F1234
-    /// \throws isc::InvalidParameter if DUID is invalid
+    /// \param base Base string given as -b duid=0F1234.
+    /// \throws isc::InvalidParameter if DUID is invalid.
     void decodeDuid(const std::string& base);
-
-    /// \brief Converts two-digit hexadecimal string to a byte
+    
+    /// \brief Generates DUID-LLT (based on link layer address).
     ///
-    /// \param hex_text Hexadecimal string e.g. AF
-    /// \throw isc::InvalidParameter if string does not represent hex byte
+    /// Function generates DUID based on link layer address and
+    /// initiates duid_template_ value with it.
+    /// \todo add support to generate DUIDs other than based on
+    /// 6-octets long MACs (e.g. DUID-UUID.
+    void generateDuidTemplate();
+
+    /// \brief Converts two-digit hexadecimal string to a byte.
+    ///
+    /// \param hex_text Hexadecimal string e.g. AF.
+    /// \throw isc::InvalidParameter if string does not represent hex byte.
     uint8_t convertHexString(const std::string& hex_text) const;
 
     uint8_t ipversion_;                      ///< IP protocol version to be used, expected values are:
@@ -353,9 +371,9 @@ private:
     int report_delay_;                       ///< Delay between generation of two consecutive
                                              ///< performance reports
     uint32_t clients_num_;                   ///< Number of simulated clients (aka randomization range).
-    std::vector<uint8_t> mac_prefix_;        ///< MAC address prefix used to generate unique DUIDs
+    std::vector<uint8_t> mac_template_;      ///< MAC address template used to generate unique DUIDs
                                              ///< for simulated clients.
-    std::vector<uint8_t> duid_prefix_;       ///< DUID prefix used to generate unique DUIDs for
+    std::vector<uint8_t> duid_template_;     ///< DUID template used to generate unique DUIDs for
                                              ///< simulated clients
     std::vector<std::string> base_;          ///< Collection of base values specified with -b<value>
                                              ///< options. Supported "bases" are mac=<mac> and duid=<duid>
@@ -404,6 +422,7 @@ private:
     std::string wrapped_;                    ///< Wrapped command specified as -w<value>. Expected
                                              ///< values are start and stop.
     std::string server_name_;                ///< Server name specified as last argument of command line.
+    std::string commandline_;                ///< Entire command line as typed in by the user.
 };
 
 } // namespace perfdhcp
