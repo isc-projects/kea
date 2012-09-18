@@ -1180,7 +1180,7 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
                          << " address on " << detected->getFullName() << " interface." << endl;
                     FAIL();
                 }
-                cout << "Address " << addr->toText() << " on iterface " << detected->getFullName()
+                cout << "Address " << addr->toText() << " on interface " << detected->getFullName()
                      << " matched with 'ifconfig -a' output." << endl;
             }
         }
