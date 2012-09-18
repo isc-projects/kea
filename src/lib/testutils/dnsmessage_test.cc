@@ -91,10 +91,16 @@ matchRdata(const char*, const char*,
 void
 setRRset(RRsetPtr rrset, RRsetPtr* rrsetp) {
     if (*rrsetp) {
-        isc_throw(isc::Unexpected,
-                  "multiple RRsets are given to textToRRset");
+        // may be a sig
+        if (rrset->getType() == RRType::RRSIG()) {
+            (*rrsetp)->addRRsig(rrset);
+        } else {
+            isc_throw(isc::Unexpected,
+                      "multiple RRsets are given to textToRRset");
+        }
+    } else {
+        *rrsetp = rrset;
     }
-    *rrsetp = rrset;
 }
 }
 
