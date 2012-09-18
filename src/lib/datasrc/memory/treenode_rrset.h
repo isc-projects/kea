@@ -260,6 +260,8 @@ private:
     mutable dns::RRTTL* ttl_;
 };
 
+typedef boost::shared_ptr<TreeNodeRRset> TreeNodeRRsetPtr;
+
 } // namespace memory
 } // namespace datasrc
 } // namespace isc
