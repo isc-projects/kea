@@ -3,7 +3,7 @@
 	xfrreqdone. These are per-zone type counters. The value of these
 	counters can be seen with zone name by invoking "Stats show Xfrout" via
 	bindctl.
-	(Trac #2158, git TBD)
+	(Trac #2158, git e68c127fed52e6034ab5309ddd506da03c37a08a)
 
 474.	[func]      stephen
 	DHCP servers now use the BIND 10 logging system for messages.
