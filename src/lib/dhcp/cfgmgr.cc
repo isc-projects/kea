@@ -175,6 +175,8 @@ Subnet6Ptr CfgMgr::getSubnet6(OptionPtr /*interfaceId*/) {
 }
 
 void CfgMgr::addSubnet6(const Subnet6Ptr& subnet) {
+    /// @todo: Check that this new subnet does not cross boundaries of any
+    /// other already defined subnet.
     subnets6_.push_back(subnet);
 }
 
