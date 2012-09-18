@@ -67,9 +67,15 @@ private:
 };
 
 const char* rrset_data[] = {
-    "example.org. 3600 IN SOA   ns1.example.org. bugs.x.w.example.org. 68 3600 300 3600000 3600",
-    "a.example.org.		   	 3600 IN A	192.168.0.1",
-    "a.example.org.		   	 3600 IN MX	10 mail.example.org.",
+    "example.org. 3600 IN SOA ns1.example.org. bugs.x.w.example.org. "
+    "68 3600 300 3600000 3600",
+    "a.example.org. 3600 IN A 192.168.0.1",
+// This will trigger a bug in the implementation
+//     "a.example.org. 3600 IN RRSIG A 5 3 3600 20150420235959 20051021000000 "
+//     "40430 example.org. FAKEFAKE",
+    "a.example.org. 3600 IN MX 10 mail.example.org.",
+    "a.example.org. 3600 IN RRSIG MX 5 3 3600 20150420235959 20051021000000 "
+    "40430 example.org. FAKEFAKEFAKE",
     NULL
 };
 
@@ -88,9 +94,9 @@ public:
              return (ConstRRsetPtr());
         }
 
-        RRsetPtr result(textToRRset(*rrset_data_ptr_,
-                                    RRClass::IN(), Name("example.org")));
-        rrset_data_ptr_++;
+        ConstRRsetPtr result(textToRRset(*rrset_data_ptr_,
+                                         RRClass::IN(), Name("example.org")));
+        ++rrset_data_ptr_;
 
         return (result);
     }
@@ -183,8 +189,7 @@ TEST_F(MemoryClientTest, load) {
 }
 
 TEST_F(MemoryClientTest, loadFromIterator) {
-    client_->load(Name("example.org"),
-                  *MockIterator::makeIterator());
+    client_->load(Name("example.org"), *MockIterator::makeIterator());
 
     ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
 
@@ -197,11 +202,13 @@ TEST_F(MemoryClientTest, loadFromIterator) {
     rrset = iterator->getNextRRset();
     EXPECT_TRUE(rrset);
     EXPECT_EQ(RRType::MX(), rrset->getType());
+    EXPECT_EQ(1, rrset->getRRsigDataCount()); // this RRset is signed
 
     // RRType::A() RRset
     rrset = iterator->getNextRRset();
     EXPECT_TRUE(rrset);
     EXPECT_EQ(RRType::A(), rrset->getType());
+    EXPECT_EQ(0, rrset->getRRsigDataCount()); // this is unsigned (for now)
 
     // There's nothing else in this iterator
     EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
