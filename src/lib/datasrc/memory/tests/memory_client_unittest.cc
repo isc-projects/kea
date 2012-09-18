@@ -34,6 +34,8 @@
 
 #include <testutils/dnsmessage_test.h>
 
+#include "memory_segment_test.h"
+
 #include <gtest/gtest.h>
 
 #include <new>                  // for bad_alloc
@@ -45,26 +47,6 @@ using namespace isc::datasrc::memory;
 using namespace isc::testutils;
 
 namespace {
-// Memory segment specified for tests.  It normally behaves like a "local"
-// memory segment.  If "throw count" is set to non 0 via setThrowCount(),
-// it continues the normal behavior up to the specified number of calls to
-// allocate(), and throws an exception at the next call.
-class TestMemorySegment : public isc::util::MemorySegmentLocal {
-public:
-    TestMemorySegment() : throw_count_(0) {}
-    virtual void* allocate(size_t size) {
-        if (throw_count_ > 0) {
-            if (--throw_count_ == 0) {
-                throw std::bad_alloc();
-            }
-        }
-        return (isc::util::MemorySegmentLocal::allocate(size));
-    }
-    void setThrowCount(size_t count) { throw_count_ = count; }
-
-private:
-    size_t throw_count_;
-};
 
 const char* rrset_data[] = {
     "example.org. 3600 IN SOA ns1.example.org. bugs.x.w.example.org. "
@@ -126,7 +108,7 @@ protected:
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated()); // catch any leak here.
     }
     const RRClass zclass_;
-    TestMemorySegment mem_sgmt_;
+    test::MemorySegmentTest mem_sgmt_;
     InMemoryClient* client_;
 };
 
