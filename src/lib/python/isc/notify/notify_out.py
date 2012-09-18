@@ -145,12 +145,8 @@ class NotifyOut:
         self._nonblock_event = threading.Event()
         # Set counter handlers for counting notifies. An argument is
         # required for zone name.
-        self._counter_notifyoutv4 = lambda x: None
-        if hasattr(counter_notifyoutv4, '__call__'):
-            self._counter_notifyoutv4 = counter_notifyoutv4
-        self._counter_notifyoutv6 = lambda x: None
-        if hasattr(counter_notifyoutv6, '__call__'):
-            self._counter_notifyoutv6 = counter_notifyoutv6
+        self._counter_notifyoutv4 = counter_notifyoutv4
+        self._counter_notifyoutv6 = counter_notifyoutv6
 
     def _init_notify_out(self, datasrc_file):
         '''Get all the zones name and its notify target's address.
@@ -488,9 +484,13 @@ class NotifyOut:
             sock = zone_notify_info.create_socket(addrinfo[0])
             sock.sendto(render.get_data(), 0, addrinfo)
             # count notifying by IPv4 or IPv6 for statistics
-            if zone_notify_info.get_socket().family == socket.AF_INET:
+            if zone_notify_info.get_socket().family \
+                    == socket.AF_INET \
+                    and self._counter_notifyoutv4 is not None:
                 self._counter_notifyoutv4(zone_notify_info.zone_name)
-            elif zone_notify_info.get_socket().family == socket.AF_INET6:
+            elif zone_notify_info.get_socket().family \
+                    == socket.AF_INET6 \
+                    and self._counter_notifyoutv6 is not None:
                 self._counter_notifyoutv6(zone_notify_info.zone_name)
             logger.info(NOTIFY_OUT_SENDING_NOTIFY, addrinfo[0],
                         addrinfo[1])
