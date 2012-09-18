@@ -675,12 +675,6 @@ TEST_F(MemoryClientTest, add) {
     EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
 }
 
-TEST_F(MemoryClientTest, findZoneThrowsNotImplemented) {
-    // This method is not implemented.
-    EXPECT_THROW(client_->findZone(Name(".")),
-                 isc::NotImplemented);
-}
-
 TEST_F(MemoryClientTest, findZone2) {
     client_->load(Name("example.org"),
                   TEST_DATA_DIR "/example.org-rrsigs.zone");
