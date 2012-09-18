@@ -149,6 +149,10 @@ protected:
                    ZoneFinder::FIND_DEFAULT);
     void emptyNodeCheck(ZoneFinder::FindResultFlags expected_flags =
                         ZoneFinder::RESULT_DEFAULT);
+    void wildcardCheck(ZoneFinder::FindResultFlags expected_flags =
+                       ZoneFinder::RESULT_DEFAULT,
+                       ZoneFinder::FindOptions find_options =
+                       ZoneFinder::FIND_DEFAULT);
     void doCancelWildcardCheck(ZoneFinder::FindResultFlags expected_flags =
                                ZoneFinder::RESULT_DEFAULT,
                                ZoneFinder::FindOptions find_options =
@@ -264,6 +268,7 @@ public:
         if (old_data != NULL) {
             NSEC3Data::destroy(mem_sgmt_, old_data, rrset->getClass());
         }
+        zone_data_->setSigned(true);
     }
 
     // simplified version of 'loading' data
@@ -272,9 +277,11 @@ public:
 
         if (rrset->getType() == RRType::NSEC3()) {
             return (addZoneDataNSEC3(rrset));
+        } else if (rrset->getType() == RRType::NSEC()) {
+            zone_data_->setSigned(true);
         }
+
         zone_data_->insertName(mem_sgmt_, rrset->getName(), &node);
-        RdataSet* next_rds = node->getData();
 
         if (rrset->getType() == RRType::NS() &&
             rrset->getName() != zone_data_->getOriginNode()->getName()) {
@@ -283,10 +290,28 @@ public:
             node->setFlag(DomainTreeNode<RdataSet>::FLAG_CALLBACK);
         }
 
+        RdataSet* next_rds = node->getData();
         RdataSet* rdataset =
-            RdataSet::create(mem_sgmt_, encoder_, rrset, ConstRRsetPtr());
+            RdataSet::create(mem_sgmt_, encoder_, rrset, rrset->getRRsig());
         rdataset->next = next_rds;
         node->setData(rdataset);
+
+        // find wildcard nodes in name (go through all of them in case there
+        // is a nonterminal one)
+        // Note that this method is pretty much equal to the 'real' loader;
+        // but less efficient
+        Name name(rrset->getName());
+        while (name.getLabelCount() > 1) {
+            if (name.isWildcard()) {
+                ZoneNode* wnode = NULL;
+                // add Wild node
+                zone_data_->insertName(mem_sgmt_, name.split(1), &wnode);
+                wnode->setFlag(ZoneData::WILDCARD_NODE);
+                // add wildcard name itself too
+                zone_data_->insertName(mem_sgmt_, name, &wnode);
+            }
+            name = name.split(1);
+        }
     }
 
     // Some data to test with
@@ -407,11 +432,12 @@ public:
                         ASSERT_FALSE(find_result->rrset);
                     } else {
                         ASSERT_TRUE(find_result->rrset);
-                        rrsetCheck(answer, convertRRset(find_result->rrset));
+                        ConstRRsetPtr result_rrset(
+                            convertRRset(find_result->rrset));
+                        rrsetCheck(answer, result_rrset);
                         if (answer_sig) {
-                            ASSERT_TRUE(find_result->rrset->getRRsig());
-                            rrsetCheck(answer_sig,
-                                       find_result->rrset->getRRsig());
+                            ASSERT_TRUE(result_rrset->getRRsig());
+                            rrsetCheck(answer_sig, result_rrset->getRRsig());
                         }
                     }
                 } else if (check_wild_answer) {
@@ -429,11 +455,14 @@ public:
                     for (; !expectedIt->isLast(); expectedIt->next()) {
                         wildanswer->addRdata(expectedIt->getCurrent());
                     }
-                    rrsetCheck(wildanswer, find_result->rrset);
+
+                    ConstRRsetPtr result_rrset(
+                        convertRRset(find_result->rrset));
+                    rrsetCheck(wildanswer, result_rrset);
 
                     // Same for the RRSIG, if any.
                     if (answer_sig) {
-                        ASSERT_TRUE(find_result->rrset->getRRsig());
+                        ASSERT_TRUE(result_rrset->getRRsig());
 
                         RRsetPtr wildsig(new RRset(name,
                                                    answer_sig->getClass(),
@@ -444,7 +473,7 @@ public:
                         for (; !expectedIt->isLast(); expectedIt->next()) {
                             wildsig->addRdata(expectedIt->getCurrent());
                         }
-                        rrsetCheck(wildsig, find_result->rrset->getRRsig());
+                        rrsetCheck(wildsig, result_rrset->getRRsig());
                     }
                 }
             });
@@ -751,6 +780,7 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags,
 
     if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
         addZoneData(rr_ns_nsec_);
+        zone_data_->setSigned(true);
         if ((find_options & ZoneFinder::FIND_DNSSEC) != 0) {
             expected_nsec = rr_ns_nsec_;
         }
@@ -820,12 +850,12 @@ TEST_F(InMemoryZoneFinderTest,findNSECEmptyNonterminal) {
     findNSECENTCheck(Name("wild.example.org"), rr_ent_nsec3_);
 }
 
-TEST_F(InMemoryZoneFinderTest, DISABLED_findNSECEmptyNonterminalWildcard) {
+TEST_F(InMemoryZoneFinderTest, findNSECEmptyNonterminalWildcard) {
     // Wildcard case, above actual wildcard
     findNSECENTCheck(Name("foo.example.org"), rr_nsec_);
 }
 
-TEST_F(InMemoryZoneFinderTest,DISABLED_findNSECEmptyNonterminalAtWildcard) {
+TEST_F(InMemoryZoneFinderTest, findNSECEmptyNonterminalAtWildcard) {
     // Wildcard case, at actual wildcard
     findNSECENTCheck(Name("bar.foo.example.org"), rr_nsec_,
                      ZoneFinder::RESULT_WILDCARD);
@@ -899,6 +929,503 @@ TEST_F(InMemoryZoneFinderTest, emptyNodeNSEC3) {
 TEST_F(InMemoryZoneFinderTest, emptyNodeNSEC) {
     emptyNodeCheck(ZoneFinder::RESULT_NSEC_SIGNED);
 }
+
+/*
+ * Test that puts a (simple) wildcard into the zone and checks we can
+ * correctly find the data.
+ */
+void
+InMemoryZoneFinderTest::wildcardCheck(
+    ZoneFinder::FindResultFlags expected_flags,
+    ZoneFinder::FindOptions find_options)
+{
+    /*
+     *            example.org.
+     *                 |
+     *             [cname]wild (not *.wild, should have wild mark)
+     *                 |
+     *                 *
+     */
+
+    // If the zone is "signed" (detecting it by the NSEC/NSEC3 signed flags),
+    // add RRSIGs to the records.
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0 ||
+        (expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
+        // Convenience shortcut.  The RDATA is not really validatable, but
+        // it doesn't matter for our tests.
+        const char* const rrsig_common = "5 3 3600 "
+            "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE";
+
+        find_options = find_options | ZoneFinder::FIND_DNSSEC;
+        rr_wild_->addRRsig(textToRRset("*.wild.example.org. 300 IN RRSIG A " +
+                                       string(rrsig_common)));
+        rr_cnamewild_->addRRsig(textToRRset("*.cnamewild.example.org. 300 IN "
+                                            "RRSIG CNAME " +
+                                            string(rrsig_common)));
+    }
+    addZoneData(rr_wild_);
+    addZoneData(rr_cnamewild_);
+    // If the zone is expected to be "signed" with NSEC3, add an NSEC3.
+    // (the content of the NSEC3 shouldn't matter)
+    if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
+        addZoneData(rr_nsec3_);
+    }
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        addZoneData(rr_nsec_);
+    }
+
+    // Search at the parent. The parent will not have the A, but it will
+    // be in the wildcard (so check the wildcard isn't matched at the parent)
+    {
+        SCOPED_TRACE("Search at parent");
+        if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+            findTest(Name("wild.example.org"), RRType::A(),
+                     ZoneFinder::NXRRSET, true, rr_nsec_, expected_flags,
+                     NULL, find_options);
+        } else {
+            findTest(Name("wild.example.org"), RRType::A(),
+                     ZoneFinder::NXRRSET, true, ConstRRsetPtr(),
+                     expected_flags, NULL, find_options);
+        }
+    }
+
+    // For the test setup of "NSEC-signed" zone, we might expect it will
+    // be returned with a negative result, either because wildcard match is
+    // disabled by the search option or because wildcard match is canceled
+    // per protocol.
+    ConstRRsetPtr expected_nsec; // by default it's NULL
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0 &&
+        (find_options & ZoneFinder::FIND_DNSSEC) != 0) {
+        expected_nsec = rr_nsec_;
+    }
+    // Explicitly converting the following to const pointers; some compilers
+    // would complain about mixed use of const and non const in ?: below.
+    const ConstRRsetPtr rr_wild = rr_wild_;
+    const ConstRRsetPtr rr_cnamewild = rr_cnamewild_;
+
+    // Search the original name of wildcard
+    {
+        SCOPED_TRACE("Search directly at *");
+        findTest(Name("*.wild.example.org"), RRType::A(), ZoneFinder::SUCCESS,
+                 true, rr_wild_, ZoneFinder::RESULT_DEFAULT, NULL,
+                 find_options);
+    }
+
+    // Below some of the test cases will normally result in a wildcard match;
+    // if NO_WILDCARD is specified, it should result in NXDOMAIN instead,
+    // and, when available and requested, the covering NSEC will be returned.
+    // The following are shortcut parameters to unify these cases.
+    const bool wild_ok = ((find_options & ZoneFinder::NO_WILDCARD) == 0);
+    const ZoneFinder::FindResultFlags wild_expected_flags =
+        wild_ok ? (ZoneFinder::RESULT_WILDCARD | expected_flags) :
+        expected_flags;
+
+    // Search "created" name.
+    {
+        SCOPED_TRACE("Search at created child");
+        findTest(Name("a.wild.example.org"), RRType::A(),
+                 wild_ok ? ZoneFinder::SUCCESS : ZoneFinder::NXDOMAIN, false,
+                 wild_ok ? rr_wild : expected_nsec,
+                 wild_expected_flags, NULL, find_options, wild_ok);
+    }
+
+    // Search name that has CNAME.
+    {
+        SCOPED_TRACE("Matching CNAME");
+        findTest(Name("a.cnamewild.example.org"), RRType::A(),
+                 wild_ok ? ZoneFinder::CNAME : ZoneFinder::NXDOMAIN, false,
+                 wild_ok ? rr_cnamewild : expected_nsec,
+                 wild_expected_flags, NULL, find_options, wild_ok);
+    }
+
+    // Search another created name, this time little bit lower
+    {
+        SCOPED_TRACE("Search at created grand-child");
+        findTest(Name("a.b.wild.example.org"), RRType::A(),
+                 wild_ok ? ZoneFinder::SUCCESS : ZoneFinder::NXDOMAIN, false,
+                 wild_ok ? rr_wild : expected_nsec,
+                 wild_expected_flags, NULL, find_options, wild_ok);
+    }
+
+    addZoneData(rr_under_wild_);
+    {
+        SCOPED_TRACE("Search under non-wildcard");
+        findTest(Name("bar.foo.wild.example.org"), RRType::A(),
+                 ZoneFinder::NXDOMAIN, true, expected_nsec, expected_flags,
+                 NULL, find_options);
+    }
+
+    // Wildcard match, but no data.  We add the additional NSEC at the wildcard
+    // at this point so that it wouldn't break other tests above.  Note also
+    // that in the NO_WILDCARD case the resulting NSEC is the same.  Ideally
+    // we could use a more tricky setup so we can distinguish these cases,
+    // but for this purpose it's not bad; what we'd like to test here is that
+    // wildcard substitution doesn't happen for either case, and the
+    // NO_WILDCARD effect itself can be checked by the result code (NXDOMAIN).
+    ConstRRsetPtr expected_wild_nsec; // by default it's NULL
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        addZoneData(rr_wild_nsec_);
+        expected_wild_nsec = rr_wild_nsec_;
+    }
+    {
+        SCOPED_TRACE("Search at wildcard, no data");
+        findTest(Name("a.wild.example.org"), RRType::AAAA(),
+                 wild_ok ? ZoneFinder::NXRRSET : ZoneFinder::NXDOMAIN, true,
+                 wild_ok ? expected_wild_nsec : expected_wild_nsec,
+                 wild_expected_flags, NULL, find_options);
+    }
+}
+
+TEST_F(InMemoryZoneFinderTest, wildcard) {
+    // Normal case
+    wildcardCheck();
+}
+
+TEST_F(InMemoryZoneFinderTest, wildcardDisabledWithNSEC) {
+    // Wildcard is disabled.  In practice, this is used as part of query
+    // processing for an NSEC-signed zone, so we test that case specifically.
+    wildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED, ZoneFinder::NO_WILDCARD);
+}
+
+TEST_F(InMemoryZoneFinderTest, wildcardDisabledWithoutNSEC) {
+    // Similar to the previous once, but check the behavior for a non signed
+    // zone just in case.
+    wildcardCheck(ZoneFinder::RESULT_DEFAULT, ZoneFinder::NO_WILDCARD);
+}
+
+/*
+ * Test that we don't match a wildcard if we get under delegation.
+ * By 4.3.3 of RFC1034:
+ * "Wildcard RRs do not apply:
+ *   - When the query is in another zone.  That is, delegation cancels
+ *     the wildcard defaults."
+ */
+TEST_F(InMemoryZoneFinderTest, delegatedWildcard) {
+    addZoneData(rr_child_wild_);
+    addZoneData(rr_child_ns_);
+
+    {
+        SCOPED_TRACE("Looking under delegation point");
+        findTest(Name("a.child.example.org"), RRType::A(),
+                 ZoneFinder::DELEGATION, true, rr_child_ns_);
+    }
+
+    {
+        SCOPED_TRACE("Looking under delegation point in GLUE_OK mode");
+        findTest(Name("a.child.example.org"), RRType::A(),
+                 ZoneFinder::DELEGATION, true, rr_child_ns_,
+                 ZoneFinder::RESULT_DEFAULT, NULL, ZoneFinder::FIND_GLUE_OK);
+    }
+}
+
+// Tests combination of wildcard and ANY.
+void
+InMemoryZoneFinderTest::anyWildcardCheck(
+    ZoneFinder::FindResultFlags expected_flags)
+{
+    addZoneData(rr_wild_);
+    if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
+        addZoneData(rr_nsec3_);
+    }
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        addZoneData(rr_nsec_);
+    }
+
+    vector<ConstRRsetPtr> expected_sets;
+
+    // First try directly the name (normal match)
+    {
+        SCOPED_TRACE("Asking directly for *");
+        expected_sets.push_back(rr_wild_);
+        findAllTest(Name("*.wild.example.org"), ZoneFinder::SUCCESS,
+                    expected_sets);
+    }
+
+    // Then a wildcard match
+    {
+        SCOPED_TRACE("Asking in the wild way");
+        expected_sets.clear();
+        RRsetPtr expected(new RRset(Name("a.wild.example.org"),
+                                    rr_wild_->getClass(), rr_wild_->getType(),
+                                    rr_wild_->getTTL()));
+        expected->addRdata(rr_wild_->getRdataIterator()->getCurrent());
+        expected_sets.push_back(expected);
+        findAllTest(Name("a.wild.example.org"), ZoneFinder::SUCCESS,
+                    expected_sets,
+                    ZoneFinder::RESULT_WILDCARD | expected_flags);
+    }
+}
+
+TEST_F(InMemoryZoneFinderTest, anyWildcard) {
+    anyWildcardCheck();
+}
+
+TEST_F(InMemoryZoneFinderTest, anyWildcardNSEC3) {
+    anyWildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
+}
+
+TEST_F(InMemoryZoneFinderTest, anyWildcardNSEC) {
+    anyWildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED);
+}
+
+// Test there's nothing in the wildcard in the middle if we load
+// wild.*.foo.example.org.
+void
+InMemoryZoneFinderTest::emptyWildcardCheck(
+    ZoneFinder::FindResultFlags expected_flags)
+{
+    /*
+     *            example.org.
+     *                foo
+     *                 *
+     *               wild
+     */
+    addZoneData(rr_emptywild_);
+    if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
+        addZoneData(rr_nsec3_);
+    }
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        addZoneData(rr_nsec_);
+    }
+
+    {
+        SCOPED_TRACE("Asking for the original record under wildcard");
+        findTest(Name("wild.*.foo.example.org"), RRType::A(),
+                 ZoneFinder::SUCCESS, true, rr_emptywild_);
+    }
+
+    {
+        SCOPED_TRACE("Asking for A record");
+        findTest(Name("a.foo.example.org"), RRType::A(), ZoneFinder::NXRRSET,
+                 true, ConstRRsetPtr(),
+                 ZoneFinder::RESULT_WILDCARD | expected_flags);
+        findTest(Name("*.foo.example.org"), RRType::A(), ZoneFinder::NXRRSET,
+                 true, ConstRRsetPtr(), expected_flags);
+        findTest(Name("foo.example.org"), RRType::A(), ZoneFinder::NXRRSET,
+                 true, ConstRRsetPtr(), expected_flags);
+    }
+
+    {
+        SCOPED_TRACE("Asking for ANY record");
+        findAllTest(Name("*.foo.example.org"), ZoneFinder::NXRRSET,
+                    vector<ConstRRsetPtr>(), expected_flags);
+
+        findAllTest(Name("a.foo.example.org"), ZoneFinder::NXRRSET,
+                    vector<ConstRRsetPtr>(),
+                    ZoneFinder::RESULT_WILDCARD | expected_flags);
+    }
+
+    {
+        SCOPED_TRACE("Asking on the non-terminal");
+        findTest(Name("wild.bar.foo.example.org"), RRType::A(),
+                 ZoneFinder::NXRRSET, true, ConstRRsetPtr(),
+                 ZoneFinder::RESULT_WILDCARD | expected_flags);
+    }
+}
+
+TEST_F(InMemoryZoneFinderTest, emptyWildcard) {
+    emptyWildcardCheck();
+}
+
+TEST_F(InMemoryZoneFinderTest, emptyWildcardNSEC3) {
+    emptyWildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
+}
+
+TEST_F(InMemoryZoneFinderTest, emptyWildcardNSEC) {
+    emptyWildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED);
+}
+
+// Same as emptyWildcard, but with multiple * in the path.
+TEST_F(InMemoryZoneFinderTest, nestedEmptyWildcard) {
+    addZoneData(rr_nested_emptywild_);
+
+    {
+        SCOPED_TRACE("Asking for the original record under wildcards");
+        findTest(Name("wild.*.foo.*.bar.example.org"), RRType::A(),
+            ZoneFinder::SUCCESS, true, rr_nested_emptywild_);
+    }
+
+    {
+        SCOPED_TRACE("Matching wildcard against empty nonterminal");
+
+        const char* names[] = {
+            "baz.foo.*.bar.example.org",
+            "baz.foo.baz.bar.example.org",
+            "*.foo.baz.bar.example.org",
+            NULL
+        };
+
+        for (const char** name = names; *name != NULL; ++ name) {
+            SCOPED_TRACE(string("Node ") + *name);
+            findTest(Name(*name), RRType::A(), ZoneFinder::NXRRSET, true,
+                     ConstRRsetPtr(), ZoneFinder::RESULT_WILDCARD);
+        }
+    }
+
+    // Domains to test
+    const char* names[] = {
+        "*.foo.*.bar.example.org",
+        "foo.*.bar.example.org",
+        "*.bar.example.org",
+        "bar.example.org",
+        NULL
+    };
+
+    {
+        SCOPED_TRACE("Asking directly for A on parent nodes");
+
+        for (const char** name = names; *name != NULL; ++ name) {
+            SCOPED_TRACE(string("Node ") + *name);
+            findTest(Name(*name), RRType::A(), ZoneFinder::NXRRSET);
+        }
+    }
+
+    {
+        SCOPED_TRACE("Asking for ANY on parent nodes");
+
+        for (const char** name = names; *name != NULL; ++ name) {
+            SCOPED_TRACE(string("Node ") + *name);
+
+            findAllTest(Name(*name), ZoneFinder::NXRRSET,
+                        vector<ConstRRsetPtr>());
+        }
+    }
+}
+
+// We run this part twice from the below test, in two slightly different
+// situations
+void
+InMemoryZoneFinderTest::doCancelWildcardCheck(
+    ZoneFinder::FindResultFlags expected_flags,
+    ZoneFinder::FindOptions find_options)
+{
+    // These should be canceled
+    {
+        SCOPED_TRACE("Canceled under foo.wild.example.org");
+
+        // For an NSEC-signed zone with DNSSEC requested, the covering NSEC
+        // should be returned.  The expected NSEC is actually just the only
+        // NSEC in the test data, but in this context it doesn't matter;
+        // it's sufficient just to check any NSEC is returned (or not).
+        ConstRRsetPtr expected_nsec; // by default it's NULL
+        if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0 &&
+            (find_options & ZoneFinder::FIND_DNSSEC)) {
+            expected_nsec = rr_nsec_;
+        }
+
+        findTest(Name("aaa.foo.wild.example.org"), RRType::A(),
+                 ZoneFinder::NXDOMAIN, true, expected_nsec, expected_flags,
+                 NULL, find_options);
+        findTest(Name("zzz.foo.wild.example.org"), RRType::A(),
+                 ZoneFinder::NXDOMAIN, true, expected_nsec, expected_flags,
+                 NULL, find_options);
+    }
+
+    // This is existing, non-wildcard domain, shouldn't wildcard at all
+    {
+        SCOPED_TRACE("Existing domain under foo.wild.example.org");
+        findTest(Name("bar.foo.wild.example.org"), RRType::A(),
+                 ZoneFinder::SUCCESS, true, rr_not_wild_);
+    }
+
+    // These should be caught by the wildcard
+    {
+        SCOPED_TRACE("Neighbor wildcards to foo.wild.example.org");
+
+        const char* names[] = {
+            "aaa.bbb.wild.example.org",
+            "aaa.zzz.wild.example.org",
+            "zzz.wild.example.org",
+            NULL
+        };
+
+        for (const char** name = names; *name != NULL; ++ name) {
+            SCOPED_TRACE(string("Node ") + *name);
+
+            findTest(Name(*name), RRType::A(), ZoneFinder::SUCCESS, false,
+                     rr_wild_,
+                     ZoneFinder::RESULT_WILDCARD | expected_flags, NULL,
+                     ZoneFinder::FIND_DEFAULT, true);
+        }
+    }
+
+    // This shouldn't be wildcarded, it's an existing domain
+    {
+        SCOPED_TRACE("The foo.wild.example.org itself");
+        findTest(Name("foo.wild.example.org"), RRType::A(),
+                 ZoneFinder::NXRRSET, true, ConstRRsetPtr(), expected_flags);
+    }
+}
+
+/*
+ * This tests that if there's a name between the wildcard domain and the
+ * searched one, it will not trigger wildcard, for example, if we have
+ * *.wild.example.org and bar.foo.wild.example.org, then we know
+ * foo.wild.example.org exists and is not wildcard. Therefore, search for
+ * aaa.foo.wild.example.org should return NXDOMAIN.
+ *
+ * Tests few cases "around" the canceled wildcard match, to see something that
+ * shouldn't be canceled isn't.
+ */
+TEST_F(InMemoryZoneFinderTest, cancelWildcard) {
+    addZoneData(rr_wild_);
+    addZoneData(rr_not_wild_);
+
+    {
+        SCOPED_TRACE("Runnig with single entry under foo.wild.example.org");
+        doCancelWildcardCheck();
+    }
+
+    // Try putting another one under foo.wild....
+    // The result should be the same but it will be done in another way in the
+    // code, because the foo.wild.example.org will exist in the tree.
+    addZoneData(rr_not_wild_another_);
+    {
+        SCOPED_TRACE("Runnig with two entries under foo.wild.example.org");
+        doCancelWildcardCheck();
+    }
+}
+
+// Same tests as cancelWildcard for NSEC3-signed zone
+TEST_F(InMemoryZoneFinderTest, cancelWildcardNSEC3) {
+    addZoneData(rr_wild_);
+    addZoneData(rr_not_wild_);
+    addZoneData(rr_nsec3_);
+
+    {
+        SCOPED_TRACE("Runnig with single entry under foo.wild.example.org");
+        doCancelWildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
+    }
+    addZoneData(rr_not_wild_another_);
+    {
+        SCOPED_TRACE("Runnig with two entries under foo.wild.example.org");
+        doCancelWildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
+    }
+}
+
+// Same tests as cancelWildcard for NSEC-signed zone.  Check both cases with
+// or without FIND_DNSSEC option.  NSEC should be returned only when the option
+// is given.
+TEST_F(InMemoryZoneFinderTest, cancelWildcardNSEC) {
+    addZoneData(rr_wild_);
+    addZoneData(rr_not_wild_);
+    addZoneData(rr_nsec_);
+
+    {
+        SCOPED_TRACE("Runnig with single entry under foo.wild.example.org");
+        doCancelWildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED,
+                              ZoneFinder::FIND_DNSSEC);
+        doCancelWildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED);
+    }
+    addZoneData(rr_not_wild_another_);
+    {
+        SCOPED_TRACE("Runnig with two entries under foo.wild.example.org");
+        doCancelWildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED,
+                              ZoneFinder::FIND_DNSSEC);
+        doCancelWildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED);
+    }
+}
+
 
 // DISABLED: nsec3 will be re-added in #2118
 TEST_F(InMemoryZoneFinderTest, DISABLED_findNSEC3) {
