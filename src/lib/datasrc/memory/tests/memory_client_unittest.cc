@@ -66,7 +66,7 @@ private:
     size_t throw_count_;
 };
 
-static const char* rrset_data[] = {
+const char* rrset_data[] = {
     "example.org. 3600 IN SOA   ns1.example.org. bugs.x.w.example.org. 68 3600 300 3600000 3600",
     "a.example.org.		   	 3600 IN A	192.168.0.1",
     "a.example.org.		   	 3600 IN MX	10 mail.example.org.",
