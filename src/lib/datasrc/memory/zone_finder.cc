@@ -676,7 +676,7 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
         const ZoneTree& tree = nsec3_data->getNSEC3Tree();
 
         ZoneNode* node(NULL);
-        ZoneNodeChain chain;
+        ZoneChain chain;
 
         ZoneTree::Result result = tree.find(Name(hlabel), &node, chain);
 
