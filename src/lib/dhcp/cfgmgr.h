@@ -124,27 +124,45 @@ protected:
 class Pool {
 
 public:
+
+    /// @brief returns Pool-id
+    ///
+    /// Pool-id is an unique value that can be used to identify a pool.
     uint32_t getId() const {
         return (id_);
     }
 
+    /// @brief Returns the first address in a pool.
+    ///
+    /// @return first address in a pool
     const isc::asiolink::IOAddress& getFirstAddress() const {
         return (first_);
     }
 
+    /// @brief Returns the last address in a pool.
+    /// @return last address in a pool
     const isc::asiolink::IOAddress& getLastAddress() const {
         return (last_);
     }
 
-    /// @brief checks if specified address is in range
+    /// @brief Checks if a given address is in the range.
+    ///
+    /// @return true, if the address is in pool
     bool inRange(const isc::asiolink::IOAddress& addr);
 
 protected:
 
     /// @brief protected constructor
+    ///
+    /// This constructor is protected to prevent anyone from instantiating
+    /// Pool class directly. Instances of Pool4 and Pool6 should be created
+    /// instead.
     Pool(const isc::asiolink::IOAddress& first,
          const isc::asiolink::IOAddress& last);
 
+    /// @brief returns the next unique Pool-ID
+    ///
+    /// @return the next unique Pool-ID
     static uint32_t getNextID() {
         static uint32_t id = 0;
         return (id++);
@@ -155,37 +173,62 @@ protected:
     /// This ID is used to indentify this specific pool.
     uint32_t id_;
 
+    /// @brief The first address in a pool
     isc::asiolink::IOAddress first_;
 
+    /// @brief The last address in a pool
     isc::asiolink::IOAddress last_;
 
+    /// @brief Comments field
+    ///
+    /// @todo: This field is currently not used.
     std::string comments_;
-
-    ///uint128_t available_leases_;
-
-    ///uint128_t total_leases_;
 };
 
+/// @brief Pool information for IPv6 addresses and prefixes
+///
+/// It holds information about pool6, i.e. a range of IPv6 address space that
+/// is configured for DHCP allocation.
 class Pool6 : public Pool {
 public:
+
+    /// @brief specifies Pool type
+    ///
+    /// Currently there are 3 pool types defined in DHCPv6:
+    /// - Non-temporary addresses (conveyed in IA_NA)
+    /// - Temporary addresses (conveyed in IA_TA)
+    /// - Delegated Prefixes (conveyed in IA_PD)
+    /// There is a new one being worked on (IA_PA, see draft-ietf-dhc-host-gen-id), but
+    /// support for it is not planned for now.
     typedef enum {
         TYPE_IA,
         TYPE_TA,
         TYPE_PD
     }  Pool6Type;
 
+    /// @brief the constructor for Pool6 "min-max" style definition
+    ///
+    /// @param first the first address in a pool
+    /// @param last the last address in a pool
     Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
           const isc::asiolink::IOAddress& last);
 
-    Pool6(Pool6Type type, const isc::asiolink::IOAddress& addr,
+    /// @brief the constructor for Pool6 "prefix/len" style definition
+    ///
+    /// @param prefix specifies prefix of the pool
+    /// @param prefix_len specifies length of the prefix of the pool
+    Pool6(Pool6Type type, const isc::asiolink::IOAddress& prefix,
           uint8_t prefix_len);
 
+    /// @brief returns pool type
+    ///
+    /// @return pool type
     Pool6Type getType() const {
         return (type_);
     }
 
 protected:
-
+    /// @brief defines a pool type
     Pool6Type type_;
 
     /// @brief prefix length
@@ -193,24 +236,38 @@ protected:
     uint8_t prefix_len_;
 };
 
-typedef boost::shared_ptr<Pool> PoolPtr;
+/// @brief a pointer an IPv6 Pool
 typedef boost::shared_ptr<Pool6> Pool6Ptr;
 
+/// @brief a container for IPv6 Pools
 typedef std::vector<Pool6Ptr> Pool6Collection;
 
+/// @brief a base class for Subnet4 and Subnet6
+///
+/// This class presents a common base for IPv4 and IPv6 subnets.
+/// In a physical sense, a subnet defines a single network link with all devices
+/// attached to it. In most cases all devices attached to a single link can
+/// share the same parameters. Therefore Subnet holds several values that are
+/// typically shared by all hosts: renew timer (T1), rebind timer (T2) and
+/// leased addresses lifetime (valid-lifetime).
+///
+/// @todo: Implement support for options here
 class Subnet {
 public:
     /// @brief checks if specified address is in range
     bool inRange(const isc::asiolink::IOAddress& addr);
 
+    /// @brief return valid-lifetime for addresses in that prefix
     Triplet<uint32_t> getValid() const {
         return (valid_);
     }
 
+    /// @brief returns T1 (renew timer), expressed in seconds
     Triplet<uint32_t> getT1() const {
         return (t1_);
     }
 
+    /// @brief returns T2 (rebind timer), expressed in seconds
     Triplet<uint32_t> getT2() const {
         return (t2_);
     }
@@ -225,27 +282,39 @@ protected:
            const Triplet<uint32_t>& t2,
            const Triplet<uint32_t>& valid_lifetime);
 
+    /// @brief returns the next unique Subnet-ID
+    ///
+    /// @return the next unique Subnet-ID
     static uint32_t getNextID() {
         static uint32_t id = 0;
         return (id++);
     }
 
     /// @brief subnet-id
+    ///
+    /// Subnet-id is a unique value that can be used to find or identify
+    /// a Subnet4 or Subnet6.
     uint32_t id_;
 
+    /// @brief a prefix of the subnet
     isc::asiolink::IOAddress prefix_;
 
+    /// @brief a prefix length of the subnet
     uint8_t prefix_len_;
 
-    Pool6Collection pool_;
-
+    /// @brief a tripet (min/default/max) holding allowed renew timer values
     Triplet<uint32_t> t1_;
 
+    /// @brief a tripet (min/default/max) holding allowed rebind timer values
     Triplet<uint32_t> t2_;
 
+    /// @brief a tripet (min/default/max) holding allowed valid lifetime values
     Triplet<uint32_t> valid_;
 };
 
+/// @brief A configuration holder for IPv6 subnet.
+///
+/// This class represents an IPv6 subnet.
 class Subnet6 : public Subnet {
 public:
     Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
@@ -273,10 +342,12 @@ protected:
 
     Triplet<uint32_t> preferred_;
 };
+
+/// @brief A pointer to a Subnet6 object
 typedef boost::shared_ptr<Subnet6> Subnet6Ptr;
 
+/// @brief A collection of Subnet6 objects
 typedef std::vector<Subnet6Ptr> Subnet6Collection;
-
 
 /// @brief Configuration Manager
 ///
@@ -286,9 +357,10 @@ typedef std::vector<Subnet6Ptr> Subnet6Collection;
 /// basic "chunk" of configuration. It contains a range of assigneable
 /// addresses.
 ///
-/// The sketch of configuration inheritance (it is not implemented yet).
+/// Below is a sketch of configuration inheritance (not implemented yet).
 /// Let's investigate the following configuration:
 ///
+/// preferred-lifetime 500;
 /// valid-lifetime 1000;
 /// subnet6 2001:db8:1::/48 {
 ///     pool6 2001::db8:1::1 - 2001::db8:1::ff;
@@ -297,15 +369,26 @@ typedef std::vector<Subnet6Ptr> Subnet6Collection;
 ///     valid-lifetime 2000;
 ///     pool6 2001::db8:2::1 - 2001::db8:2::ff;
 /// };
-/// Parameters defined in a global scope are considered valid until
+/// Parameters defined in a global scope are applicable to everything until
 /// they are overwritten in a smaller scope, in this case subnet6.
-/// In the example above, the first subnet6
+/// In the example above, the first subnet6 has preferred lifetime of 500s
+/// and a valid lifetime of 1000s. The second subnet has preferred lifetime
+/// of 500s, but valid lifetime of 2000s.
+///
+/// Parameter inheritance is likely to be implemented in configuration handling
+/// routines, so there is no storage capability in a global scope for
+/// subnet-specific parameters.
 ///
 /// @todo: Implement Subnet4 support (ticket #2237)
 /// @todo: Implement option definition support
-/// @todo: Implement inheritance.
+/// @todo: Implement parameter inheritance
 class CfgMgr : public boost::noncopyable {
 public:
+
+    /// @brief returns a single instance of Configuration Manager
+    ///
+    /// CfgMgr is a singleton and this method is the only way of
+    /// accessing it.
     static CfgMgr& instance();
 
     /// @brief get subnet by address
@@ -315,24 +398,44 @@ public:
     /// a) relay link address (that must be the address that is on link)
     /// b) our global address on the interface the message was received on
     ///    (for directly connected clients)
+    ///
+    /// @param hint an address that belongs to a searched subnet
     Subnet6Ptr getSubnet6(const isc::asiolink::IOAddress& hint);
 
     /// @brief get subnet by interface-id
     ///
-    /// Another possibility is to find a subnet based on interface-id.
+    /// Another possibility to find a subnet is based on interface-id.
+    ///
+    /// @param interface_id content of interface-id option returned by a relay
     /// @todo This method is not currently supported.
-    Subnet6Ptr getSubnet6(OptionPtr interfaceId);
+    Subnet6Ptr getSubnet6(OptionPtr interface_id);
 
-
+    /// @brief adds a subnet6
     void addSubnet6(const Subnet6Ptr& subnet);
 
+    /// @todo: Add subnet6 removal routines. Currently it is not possible
+    /// to remove subnets. The only case where subnet6 removal would be
+    /// needed is a dynamic server reconfiguration - a use case that is not
+    /// planned to be supported any time soon.
 protected:
 
     /// @brief Protected constructor.
+    ///
+    /// This constructor is protected for 2 reasons. First, it forbids any
+    /// instantiations of this class (CfgMgr is a singleton). Second, it
+    /// allows derived class to instantiate it. That is useful for testing
+    /// purposes.
     CfgMgr();
 
+    /// @brief virtual desctructor
     virtual ~CfgMgr();
 
+    /// @brief a container for Subnet6
+    ///
+    /// That is a simple vector of pointers. It does not make much sense to
+    /// optimize access time (e.g. using a map), because typical search
+    /// pattern will use calling inRange() method on each subnet until
+    /// a match is found.
     Subnet6Collection subnets6_;
 };
 
