@@ -42,3 +42,6 @@ perfdhcp2_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 
 #pkglibexec_PROGRAMS  = perfdhcp
 #perfdhcp_SOURCES  = perfdhcp.c
+
+# ... and the documentation
+EXTRA_DIST = perfdhcp_internals.dox
