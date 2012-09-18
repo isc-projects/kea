@@ -22,6 +22,7 @@
 #include <datasrc/memory/domaintree.h>
 #include <datasrc/memory/segment_object_holder.h>
 #include <datasrc/memory/treenode_rrset.h>
+#include <datasrc/memory/zone_finder.h>
 
 #include <util/memory_segment_local.h>
 
@@ -686,21 +687,25 @@ InMemoryClient::getZoneCount() const {
     return (impl_->zone_count_);
 }
 
-isc::datasrc::memory::ZoneTable::FindResult
-InMemoryClient::findZone2(const isc::dns::Name& zone_name) const {
+isc::datasrc::DataSourceClient::FindResult
+InMemoryClient::findZone(const isc::dns::Name& zone_name) const {
     LOG_DEBUG(logger, DBG_TRACE_DATA,
               DATASRC_MEMORY_MEM_FIND_ZONE).arg(zone_name);
+
     ZoneTable::FindResult result(impl_->zone_table_->findZone(zone_name));
-    return (result);
+
+    ZoneFinderPtr finder;
+    if (result.code != result::NOTFOUND) {
+        finder.reset(new InMemoryZoneFinder(*result.zone_data, getClass()));
+    }
+
+    return (DataSourceClient::FindResult(result.code, finder));
 }
 
-isc::datasrc::DataSourceClient::FindResult
-InMemoryClient::findZone(const isc::dns::Name&) const {
-    // This variant of findZone() is not implemented and should be
-    // removed eventually. It currently throws an exception. It is
-    // required right now to derive from DataSourceClient.
-    isc_throw(isc::NotImplemented,
-              "This variant of findZone() is not implemented.");
+isc::datasrc::memory::ZoneTable::FindResult
+InMemoryClient::findZone2(const isc::dns::Name& zone_name) const {
+    ZoneTable::FindResult result(impl_->zone_table_->findZone(zone_name));
+    return (result);
 }
 
 result::Result
