@@ -97,17 +97,7 @@ TreeNodeRRset::toText() const {
     }
 
     // Dump any RRSIGs
-    tmp_rrset.reset();
-    for (RdataIteratorPtr rit = getSigRdataIterator();
-         !rit->isLast();
-         rit->next())
-    {
-        if (!tmp_rrset) {
-            tmp_rrset = RRsetPtr(new RRset(getName(), rrclass_,
-                                           RRType::RRSIG(), getTTL()));
-        }
-        tmp_rrset->addRdata(rit->getCurrent());
-    }
+    tmp_rrset = getRRsig();
     if (tmp_rrset) {
         ret += tmp_rrset->toText();
     }
@@ -288,7 +278,19 @@ TreeNodeRRset::getSigRdataIterator() const {
 
 RRsetPtr
 TreeNodeRRset::getRRsig() const {
-    isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
+    RRsetPtr tmp_rrset;
+    for (RdataIteratorPtr rit = getSigRdataIterator();
+         !rit->isLast();
+         rit->next())
+    {
+        if (!tmp_rrset) {
+            tmp_rrset = RRsetPtr(new RRset(getName(), rrclass_,
+                                           RRType::RRSIG(), getTTL()));
+        }
+        tmp_rrset->addRdata(rit->getCurrent());
+    }
+
+    return (tmp_rrset);
 }
 
 void
