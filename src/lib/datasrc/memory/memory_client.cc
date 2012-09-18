@@ -150,7 +150,7 @@ public:
 
                 // Ensure a separate level exists for the "wildcarding" name,
                 // and mark the node as "wild".
-                ZoneNode *node;
+                ZoneNode* node;
                 zone_data.insertName(mem_sgmt_, wname.split(1), &node);
                 node->setFlag(ZoneData::WILDCARD_NODE);
 
