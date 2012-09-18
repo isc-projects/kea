@@ -472,6 +472,25 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.check_transfer_acl(acl_setter)
         self.assertEqual(self._zone_name_xfrrej, TEST_ZONE_NAME_STR)
 
+    def test_transfer_acl_with_nonetype_xfrrej(self):
+        # ACL checks only with the default ACL and NoneType xfrrej
+        # counter
+        def acl_setter(acl):
+            self.xfrsess._acl = acl
+        self.xfrsess._counter_xfrrej = None
+        self.assertIsNone(self._zone_name_xfrrej)
+        self.check_transfer_acl(acl_setter)
+        self.assertIsNone(self._zone_name_xfrrej)
+
+    def test_transfer_acl_with_notcallable_xfrrej(self):
+        # ACL checks only with the default ACL and not callable xfrrej
+        # counter
+        def acl_setter(acl):
+            self.xfrsess._acl = acl
+        self.xfrsess._counter_xfrrej = 'NOT CALLABLE'
+        self.assertRaises(TypeError,
+                          self.check_transfer_acl, acl_setter)
+
     def test_transfer_zoneacl(self):
         # ACL check with a per zone ACL + default ACL.  The per zone ACL
         # should match the queryied zone, so it should be used.
@@ -852,6 +871,34 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
         self.assertEqual(self.sock.readsent(), b"success")
         self.assertEqual(self._zone_name_xfrreqdone, TEST_ZONE_NAME_STR)
+
+    def test_dns_xfrout_start_with_nonetype_xfrreqdone(self):
+        def noerror(msg, name, rrclass):
+            return Rcode.NOERROR()
+        self.xfrsess._xfrout_setup = noerror
+
+        def myreply(msg, sock):
+            self.sock.send(b"success")
+
+        self.assertIsNone(self._zone_name_xfrreqdone)
+        self.xfrsess._reply_xfrout_query = myreply
+        self.xfrsess._counter_xfrreqdone = None
+        self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
+        self.assertIsNone(self._zone_name_xfrreqdone)
+
+    def test_dns_xfrout_start_with_notcallable_xfrreqdone(self):
+        def noerror(msg, name, rrclass):
+            return Rcode.NOERROR()
+        self.xfrsess._xfrout_setup = noerror
+
+        def myreply(msg, sock):
+            self.sock.send(b"success")
+
+        self.xfrsess._reply_xfrout_query = myreply
+        self.xfrsess._counter_xfrreqdone = 'NOT CALLABLE'
+        self.assertRaises(TypeError,
+                          self.xfrsess.dns_xfrout_start, self.sock,
+                          self.mdata)
 
     def test_reply_xfrout_query_axfr(self):
         self.xfrsess._soa = self.soa_rrset

@@ -289,6 +289,42 @@ class TestNotifyOut(unittest.TestCase):
         self.assertIsNone(self._notifiedv4_zone_name)
         self.assertEqual(self._notifiedv6_zone_name, 'example.net.')
 
+    def test_send_notify_message_udp_ipv4_with_nonetype_notifyoutv4(self):
+        example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
+        example_com_info.prepare_notify_out()
+        self.assertIsNone(self._notifiedv4_zone_name)
+        self.assertIsNone(self._notifiedv6_zone_name)
+        self._notify._counter_notifyoutv4 = None
+        self._notify._send_notify_message_udp(example_com_info,
+                                              ('192.0.2.1', 53))
+        self.assertIsNone(self._notifiedv4_zone_name)
+        self.assertIsNone(self._notifiedv6_zone_name)
+
+    def test_send_notify_message_udp_ipv4_with_notcallable_notifyoutv4(self):
+        example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
+        example_com_info.prepare_notify_out()
+        self._notify._counter_notifyoutv4 = 'NOT CALLABLE'
+        self.assertRaises(TypeError,
+                          self._notify._send_notify_message_udp,
+                          example_com_info, ('192.0.2.1', 53))
+
+    def test_send_notify_message_udp_ipv6_with_nonetype_notifyoutv6(self):
+        example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
+        self.assertIsNone(self._notifiedv4_zone_name)
+        self.assertIsNone(self._notifiedv6_zone_name)
+        self._notify._counter_notifyoutv6 = None
+        self._notify._send_notify_message_udp(example_com_info,
+                                              ('2001:db8::53', 53))
+        self.assertIsNone(self._notifiedv4_zone_name)
+        self.assertIsNone(self._notifiedv6_zone_name)
+
+    def test_send_notify_message_udp_ipv6_with_notcallable_notifyoutv6(self):
+        example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
+        self._notify._counter_notifyoutv6 = 'NOT CALLABLE'
+        self.assertRaises(TypeError,
+                          self._notify._send_notify_message_udp,
+                          example_com_info, ('2001:db8::53', 53))
+
     def test_send_notify_message_with_bogus_address(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
 
