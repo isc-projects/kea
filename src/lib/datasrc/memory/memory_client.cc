@@ -651,20 +651,22 @@ public:
 
         return (result::SUCCESS);
     }
+};
 
-    /*
-     * Wrapper around above.
-     */
-    void addFromLoad(const ConstRRsetPtr& set,
+// A helper internal class for load().
+class InMemoryClient::Loader {
+public:
+    Loader(InMemoryClientImpl* client_impl) : client_impl_(client_impl) {}
+    void addFromLoad(const ConstRRsetPtr& rrset,
                      const Name& zone_name, ZoneData* zone_data)
     {
-        switch (add(set, zone_name, *zone_data)) {
-        case result::SUCCESS:
-            return;
-        default:
-            assert(0);
-        }
+        const result::Result result =
+            client_impl_->add(rrset, zone_name, *zone_data);
+        assert(result == result::SUCCESS);
     }
+
+private:
+    InMemoryClientImpl* client_impl_;
 };
 
 result::Result
@@ -680,7 +682,7 @@ InMemoryClient::InMemoryClientImpl::load(
     assert(!last_rrset_);
 
     try {
-        rrset_installer(boost::bind(&InMemoryClientImpl::addFromLoad, this,
+        rrset_installer(boost::bind(&Loader::addFromLoad, Loader(this),
                                     _1, zone_name, holder.get()));
         // Add any last RRset that was left
         addRdataSet(zone_name, *holder.get(),
