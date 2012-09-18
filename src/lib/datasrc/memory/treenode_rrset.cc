@@ -79,10 +79,6 @@ TreeNodeRRset::setTTL(const RRTTL&) {
 
 std::string
 TreeNodeRRset::toText() const {
-    // Create TTL from internal data
-    util::InputBuffer ttl_buffer(rdataset_->getTTLData(), sizeof(uint32_t));
-    const RRTTL ttl(ttl_buffer);
-
     // Dump the main RRset, if not empty
     std::string ret;
     RRsetPtr tmp_rrset;
@@ -92,7 +88,7 @@ TreeNodeRRset::toText() const {
     {
         if (!tmp_rrset) {
             tmp_rrset = RRsetPtr(new RRset(getName(), rrclass_, getType(),
-                                           ttl));
+                                           getTTL()));
         }
         tmp_rrset->addRdata(rit->getCurrent());
     }
@@ -108,7 +104,7 @@ TreeNodeRRset::toText() const {
     {
         if (!tmp_rrset) {
             tmp_rrset = RRsetPtr(new RRset(getName(), rrclass_,
-                                           RRType::RRSIG(), ttl));
+                                           RRType::RRSIG(), getTTL()));
         }
         tmp_rrset->addRdata(rit->getCurrent());
     }
