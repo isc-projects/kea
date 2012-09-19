@@ -526,15 +526,24 @@ public:
     void flushNodeRRsets(const Name& zone_name, ZoneData* zone_data) {
         BOOST_FOREACH(NodeRRsetsVal val, node_rrsets_) {
             ConstRRsetPtr sig_rrset;
-            NodeRRsets::const_iterator sig_it =
+            NodeRRsets::iterator sig_it =
                 node_rrsigsets_.find(val.first);
             if (sig_it != node_rrsigsets_.end()) {
                 sig_rrset = sig_it->second;
+                node_rrsigsets_.erase(sig_it);
             }
             const result::Result result =
                 client_impl_->add(val.second, sig_rrset, zone_name,
                                   *zone_data);
             assert(result == result::SUCCESS);
+        }
+
+        // Right now, we don't accept RRSIG without covered RRsets (this
+        // should eventually allowed, but to do so we'll need to update the
+        // finder).
+        if (!node_rrsigsets_.empty()) {
+            isc_throw(AddError, "RRSIG is added without covered RRset for "
+                      << getCurrentName());
         }
 
         node_rrsets_.clear();
