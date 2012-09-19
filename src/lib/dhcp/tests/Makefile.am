@@ -26,19 +26,15 @@ TESTS =
 if HAVE_GTEST
 TESTS += libdhcp++_unittests
 libdhcp___unittests_SOURCES  = run_unittests.cc
-libdhcp___unittests_SOURCES += ../libdhcp++.h ../libdhcp++.cc
 libdhcp___unittests_SOURCES += libdhcp++_unittest.cc
-libdhcp___unittests_SOURCES += ../iface_mgr.cc ../iface_mgr.h iface_mgr_unittest.cc
-libdhcp___unittests_SOURCES += ../iface_mgr_linux.cc
-libdhcp___unittests_SOURCES += ../iface_mgr_bsd.cc
-libdhcp___unittests_SOURCES += ../iface_mgr_sun.cc
-libdhcp___unittests_SOURCES += ../option6_iaaddr.h ../option6_iaaddr.cc option6_iaaddr_unittest.cc
-libdhcp___unittests_SOURCES += ../option6_ia.h ../option6_ia.cc option6_ia_unittest.cc
-libdhcp___unittests_SOURCES += ../option6_addrlst.h ../option6_addrlst.cc option6_addrlst_unittest.cc
-libdhcp___unittests_SOURCES += ../option4_addrlst.cc ../option4_addrlst.h option4_addrlst_unittest.cc
-libdhcp___unittests_SOURCES += ../option.h ../option.cc option_unittest.cc
-libdhcp___unittests_SOURCES += ../pkt6.h ../pkt6.cc pkt6_unittest.cc
-libdhcp___unittests_SOURCES += ../pkt4.h ../pkt4.cc pkt4_unittest.cc
+libdhcp___unittests_SOURCES += iface_mgr_unittest.cc
+libdhcp___unittests_SOURCES += option6_iaaddr_unittest.cc
+libdhcp___unittests_SOURCES += option6_ia_unittest.cc
+libdhcp___unittests_SOURCES += option6_addrlst_unittest.cc
+libdhcp___unittests_SOURCES += option4_addrlst_unittest.cc
+libdhcp___unittests_SOURCES += option_unittest.cc
+libdhcp___unittests_SOURCES += pkt6_unittest.cc
+libdhcp___unittests_SOURCES += pkt4_unittest.cc
 
 libdhcp___unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 libdhcp___unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
@@ -51,11 +47,12 @@ if USE_CLANGPP
 # Boost headers.
 libdhcp___unittests_CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter
 endif
-libdhcp___unittests_LDADD  = $(GTEST_LDADD)
+libdhcp___unittests_LDADD  = $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+libdhcp___unittests_LDADD += $(GTEST_LDADD)
 endif
 
 noinst_PROGRAMS = $(TESTS)
