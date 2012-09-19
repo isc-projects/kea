@@ -687,7 +687,9 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
                                                         set,
                                                         getClass());
             ConstRRsetPtr next = createTreeNodeRRset(covering_node,
-                                                     covering_node->getData(),
+                                                     (covering_node != NULL ?
+                                                      covering_node->getData() :
+                                                      NULL),
                                                      getClass());
 
             LOG_DEBUG(logger, DBG_TRACE_BASIC,
@@ -719,12 +721,16 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
             if (!recursive) {   // in non recursive mode, we are done.
                 ConstRRsetPtr closest =
                     createTreeNodeRRset(covering_node,
-                                        covering_node->getData(),
+                                        (covering_node != NULL ?
+                                         covering_node->getData() :
+                                         NULL),
                                         getClass());
 
-                LOG_DEBUG(logger, DBG_TRACE_BASIC,
-                          DATASRC_MEM_FINDNSEC3_COVER).
-                    arg(name).arg(*closest);
+                if (closest) {
+                    LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                              DATASRC_MEM_FINDNSEC3_COVER).
+                        arg(name).arg(*closest);
+                }
 
                 return (FindNSEC3Result(false, labels,
                                         closest, ConstRRsetPtr()));
