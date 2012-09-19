@@ -401,6 +401,14 @@ public:
     /// This method never throws an exception.
     const DomainTreeNode<T>* getUpperNode() const;
 
+    /// \brief returns the largest node of this node's subtree
+    ///
+    /// This method takes a node and returns the largest node in its
+    /// subtree.
+    ///
+    /// This method never throws an exception.
+    const DomainTreeNode<T>* getLargestInSubTree() const;
+
     /// \brief return the next node which is bigger than current node
     /// in the same subtree
     ///
@@ -567,6 +575,17 @@ template <typename T>
 const DomainTreeNode<T>*
 DomainTreeNode<T>::getUpperNode() const {
     return (getSubTreeRoot()->getParent());
+}
+
+template <typename T>
+const DomainTreeNode<T>*
+DomainTreeNode<T>::getLargestInSubTree() const {
+    const DomainTreeNode<T>* sroot = getSubTreeRoot();
+    while (sroot->getRight() != NULL) {
+        sroot = sroot->getRight();
+    }
+
+    return (sroot);
 }
 
 template <typename T>
