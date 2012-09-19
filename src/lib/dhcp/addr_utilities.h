@@ -15,7 +15,7 @@
 #include <asiolink/io_address.h>
 
 namespace isc {
-namespace util {
+namespace dhcp {
 
 /// This code is based on similar code from the Dibbler project. I, Tomasz Mrugalski,
 /// as a sole creater of that code hereby release it under BSD license for the benefit
