@@ -525,6 +525,8 @@ public:
     }
     void flushNodeRRsets(const Name& zone_name, ZoneData* zone_data) {
         BOOST_FOREACH(NodeRRsetsVal val, node_rrsets_) {
+            // Identify the corresponding RRSIG for the RRset, if any.
+            // If found add both the RRset and its RRSIG at once.
             ConstRRsetPtr sig_rrset;
             NodeRRsets::iterator sig_it =
                 node_rrsigsets_.find(val.first);
