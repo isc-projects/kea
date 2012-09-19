@@ -480,16 +480,16 @@ public:
 // The current internal implementation expects that both a normal
 // (non RRSIG) RRset and (when signed) its RRSIG are added at once.
 // Also in the current implementation, the input sequence of RRsets
-// are grouped with their owner name (so if the owner name is changed
+// are grouped with their owner name (so once a new owner name is encountered,
 // no subsequent RRset has the previous owner name), but the ordering
 // in the same group is not fixed.  So we hold all RRsets of the same
-// owner name in node_rrsets_ and node_rrsets_, and add the matching
+// owner name in node_rrsets_ and node_rrsigsets_, and add the matching
 // pairs of RRsets to the zone when we see a new owner name.
 //
 // The caller is responsible for adding the RRsets of the last group
 // in the input sequence by explicitly calling flushNodeRRsets() at the
-// end.  It's cleaner and more robust if we let the destructor of this class,
-// but since we cannot guarantee the adding operation is exception free,
+// end.  It's cleaner and more robust if we let the destructor of this class
+// do it, but since we cannot guarantee the adding operation is exception free,
 // we don't choose that option to maintain the common expectation for
 // destructors.
 class InMemoryClient::Loader : boost::noncopyable {
