@@ -41,6 +41,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <algorithm>
 #include <map>
@@ -482,9 +483,6 @@ public:
     void addRdataSet2(const Name& zone_name, ZoneData& zone_data,
                       const ConstRRsetPtr rrset, const ConstRRsetPtr rrsig)
     {
-        // Only one of these can be passed at a time.
-        assert(!(rrset && rrsig));
-
         if (rrset->getType() == RRType::NSEC3()) {
             addNSEC3(rrset, rrsig, zone_data);
         } else {
@@ -653,20 +651,84 @@ public:
     }
 };
 
-// A helper internal class for load().
-class InMemoryClient::Loader {
+// A helper internal class for load().  make it non-copyable to avoid
+// accidental copy.
+//
+// The current internal implementation expects that both a normal
+// (non RRSIG) RRset and (when signed) its RRSIG are added at once.
+// Also in the current implementation, the input sequence of RRsets
+// are grouped with their owner name (so if the owner name is changed
+// no subsequent RRset has the previous owner name), but the ordering
+// in the same group is not fixed.  So we hold all RRsets of the same
+// owner name in node_rrsets_ and node_rrsets_, and add the matching
+// pairs of RRsets to the zone when we see a new owner name.
+//
+// The caller is responsible for adding the RRsets of the last group
+// in the input sequence by explicitly calling flushNodeRRsets() at the
+// end.  It's cleaner and more robust if we let the destructor of this class,
+// but since we cannot guarantee the adding operation is exception free,
+// we don't choose that option to maintain the common expectation for
+// destructors.
+class InMemoryClient::Loader : boost::noncopyable {
+    typedef std::map<RRType, ConstRRsetPtr> NodeRRsets;
+    typedef NodeRRsets::value_type NodeRRsetsVal;
 public:
     Loader(InMemoryClientImpl* client_impl) : client_impl_(client_impl) {}
     void addFromLoad(const ConstRRsetPtr& rrset,
                      const Name& zone_name, ZoneData* zone_data)
     {
-        const result::Result result =
-            client_impl_->add(rrset, zone_name, *zone_data);
-        assert(result == result::SUCCESS);
+        if ((!node_rrsets_.empty() || !node_rrsigsets_.empty()) &&
+            getCurrentName() != rrset->getName()) {
+            flushNodeRRsets(zone_name, zone_data);
+        }
+        if (rrset->getType() == RRType::RRSIG()) {
+            node_rrsigsets_.insert(NodeRRsetsVal(getCoveredType(rrset),
+                                                 rrset));
+        } else {
+            if (!node_rrsets_.insert(NodeRRsetsVal(rrset->getType(),
+                                                   rrset)).second) {
+                isc_throw(AddError,
+                          "Duplicate add of the same type of RRset: "
+                          << rrset->getName() << "/" << rrset->getType());
+            }
+        }
+    }
+    void flushNodeRRsets(const Name& zone_name, ZoneData* zone_data) {
+        BOOST_FOREACH(NodeRRsetsVal val, node_rrsets_) {
+            ConstRRsetPtr sig_rrset;
+            NodeRRsets::const_iterator sig_it =
+                node_rrsigsets_.find(val.first);
+            if (sig_it != node_rrsigsets_.end()) {
+                sig_rrset = sig_it->second;
+            }
+            const result::Result result =
+                client_impl_->add(val.second, sig_rrset, zone_name,
+                                  *zone_data);
+            assert(result == result::SUCCESS);
+        }
+
+        node_rrsets_.clear();
+        node_rrsigsets_.clear();
+    }
+private:
+    static RRType getCoveredType(const ConstRRsetPtr& sig_rrset) {
+        RdataIteratorPtr it = sig_rrset->getRdataIterator();
+        // TBD: empty case
+        return (dynamic_cast<const generic::RRSIG&>(it->getCurrent()).
+                typeCovered());
+    }
+    const Name& getCurrentName() const {
+        if (!node_rrsets_.empty()) {
+            return (node_rrsets_.begin()->second->getName());
+        }
+        assert(!node_rrsigsets_.empty());
+        return (node_rrsigsets_.begin()->second->getName());
     }
 
 private:
     InMemoryClientImpl* client_impl_;
+    NodeRRsets node_rrsets_;
+    NodeRRsets node_rrsigsets_;
 };
 
 result::Result
@@ -676,17 +738,16 @@ InMemoryClient::InMemoryClientImpl::load(
     boost::function<void(LoadCallback)> rrset_installer)
 {
     SegmentObjectHolder<ZoneData, RRClass> holder(
-        mem_sgmt_, ZoneData::create(mem_sgmt_, zone_name),
-        rrclass_);
+        mem_sgmt_, ZoneData::create(mem_sgmt_, zone_name), rrclass_);
 
     assert(!last_rrset_);
 
     try {
-        rrset_installer(boost::bind(&Loader::addFromLoad, Loader(this),
+        Loader loader(this);
+        rrset_installer(boost::bind(&Loader::addFromLoad, &loader,
                                     _1, zone_name, holder.get()));
-        // Add any last RRset that was left
-        addRdataSet(zone_name, *holder.get(),
-                    ConstRRsetPtr(), ConstRRsetPtr());
+        // Add any last RRsets that were left
+        loader.flushNodeRRsets(zone_name, holder.get());
     } catch (...) {
         last_rrset_ = ConstRRsetPtr();
         throw;
@@ -771,30 +832,8 @@ masterLoadWrapper(const char* const filename, const Name& origin,
 void
 generateRRsetFromIterator(ZoneIterator* iterator, LoadCallback callback) {
     ConstRRsetPtr rrset;
-    vector<ConstRRsetPtr> rrsigs; // placeholder for RRSIGs until "commitable".
-
-    // The current internal implementation assumes an RRSIG is always added
-    // after the RRset they cover.  So we store any RRSIGs in 'rrsigs' until
-    // it's safe to add them; based on our assumption if the owner name
-    // changes, all covered RRsets of the previous name should have been
-    // installed and any pending RRSIGs can be added at that point.  RRSIGs
-    // of the last name from the iterator must be added separately.
     while ((rrset = iterator->getNextRRset()) != NULL) {
-        if (!rrsigs.empty() && rrset->getName() != rrsigs[0]->getName()) {
-            BOOST_FOREACH(ConstRRsetPtr sig_rrset, rrsigs) {
-                callback(sig_rrset);
-            }
-            rrsigs.clear();
-        }
-        if (rrset->getType() == RRType::RRSIG()) {
-            rrsigs.push_back(rrset);
-        } else {
-            callback(rrset);
-        }
-    }
-
-    BOOST_FOREACH(ConstRRsetPtr sig_rrset, rrsigs) {
-        callback(sig_rrset);
+        callback(rrset);
     }
 }
 }
