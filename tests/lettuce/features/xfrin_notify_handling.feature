@@ -125,6 +125,7 @@ Feature: Xfrin incoming notify handling
     #
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
     last bindctl output should not contain "error"
+    Then wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
     The counter notifyoutv4 for the zone _SERVER_ should be 0
     The counter notifyoutv4 for the zone example.org. should be 0
     The counter notifyoutv6 for the zone _SERVER_ should be 5
