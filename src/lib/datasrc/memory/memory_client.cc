@@ -552,9 +552,17 @@ public:
         node_rrsigsets_.clear();
     }
 private:
+    // A helper to identify the covered type of an RRSIG.
     static RRType getCoveredType(const ConstRRsetPtr& sig_rrset) {
         RdataIteratorPtr it = sig_rrset->getRdataIterator();
-        // TBD: empty case
+        // Empty RRSIG shouldn't be passed either via a master file or another
+        // data source iterator, but it could still happen if the iterator
+        // has a bug.  We catch and reject such cases.
+        if (it->isLast()) {
+            isc_throw(isc::Unexpected,
+                      "Empty RRset is passed in-memory loader, name: "
+                      << sig_rrset->getName());
+        }
         return (dynamic_cast<const generic::RRSIG&>(it->getCurrent()).
                 typeCovered());
     }
