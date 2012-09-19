@@ -183,6 +183,35 @@ class BaseTestXfrCounter():
                 self.assertGreaterEqual(getter(TEST_ZONE_NAME_STR), 0)
         self.check_dump_statistics()
 
+    def test_xfrrunning_counters(self):
+        # for counters of xfer running
+        for counter_name in self._xfrrunning_names:
+            incrementer = self.counter._to_global\
+                ['inc_%s' % counter_name]
+            getter = self.counter._to_global\
+                ['get_%s' % counter_name]
+            decrementer = self.counter._to_global\
+                ['dec_%s' % counter_name]
+            incrementer()
+            self.assertEqual(getter(), 1)
+            decrementer()
+            self.assertEqual(getter(), 0)
+            # checks disable/enable
+            self.counter.disable()
+            incrementer()
+            self.assertEqual(getter(), 0)
+            self.counter.enable()
+            incrementer()
+            self.assertEqual(getter(), 1)
+            self.counter.disable()
+            decrementer()
+            self.assertEqual(getter(), 1)
+            self.counter.enable()
+            decrementer()
+            self.assertEqual(getter(), 0)
+            self._statistics_data[counter_name] = 0
+        self.check_dump_statistics()
+
     def check_dump_statistics(self):
         """Checks no differences between the value returned from
         dump_statistics() and locally collected statistics data. Also
@@ -213,35 +242,6 @@ class TestXfroutCounter(unittest.TestCase, BaseTestXfrCounter):
         self._unixsocket_names = self.counter._unixsocket_names
         self._started = threading.Event()
         self._zones_item_list   = self.counter._zones_item_list
-
-    def test_xfrrunning_counters(self):
-        # for {a|i}xfrrunning counters
-        for counter_name in self._xfrrunning_names:
-            incrementer = self.counter._to_global\
-                ['inc_%s' % counter_name]
-            getter = self.counter._to_global\
-                ['get_%s' % counter_name]
-            decrementer = self.counter._to_global\
-                ['dec_%s' % counter_name]
-            incrementer()
-            self.assertEqual(getter(), 1)
-            decrementer()
-            self.assertEqual(getter(), 0)
-            # checks disable/enable
-            self.counter.disable()
-            incrementer()
-            self.assertEqual(getter(), 0)
-            self.counter.enable()
-            incrementer()
-            self.assertEqual(getter(), 1)
-            self.counter.disable()
-            decrementer()
-            self.assertEqual(getter(), 1)
-            self.counter.enable()
-            decrementer()
-            self.assertEqual(getter(), 0)
-            self._statistics_data[counter_name] = 0
-        self.check_dump_statistics()
 
     def test_unixsocket_counters(self):
         # for unixsocket counters
@@ -276,6 +276,7 @@ class TestXfrinCounter(unittest.TestCase, BaseTestXfrCounter):
             counter.XfrinCounter(self._module_spec)
         self._entire_server    = self.counter._entire_server
         self._perzone_prefix   = self.counter._perzone_prefix
+        self._xfrrunning_names = self.counter._xfrrunning_names
         self._zones_item_list   = self.counter._zones_item_list
         self._started = threading.Event()
 
