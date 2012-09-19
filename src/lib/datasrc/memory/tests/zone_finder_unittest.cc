@@ -287,11 +287,10 @@ public:
         ZoneNode *node;
         nsec3_data->insertName(mem_sgmt_, Name(fst_label), &node);
 
-        RdataEncoder encoder;
 
         // We assume that rrsig has already been checked to match rrset
         // by the caller.
-        RdataSet *set = RdataSet::create(mem_sgmt_, encoder,
+        RdataSet *set = RdataSet::create(mem_sgmt_, encoder_,
                                          rrset, ConstRRsetPtr());
         RdataSet *old_set = node->setData(set);
         if (old_set != NULL) {
