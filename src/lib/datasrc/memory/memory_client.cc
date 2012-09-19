@@ -171,7 +171,8 @@ public:
      * If such condition is found, it throws AddError.
      */
     void contextCheck(const Name& zone_name, const AbstractRRset& rrset,
-                      const RdataSet* set) const {
+                      const RdataSet* set) const
+    {
         // Ensure CNAME and other type of RR don't coexist for the same
         // owner name except with NSEC, which is the only RR that can coexist
         // with CNAME (and also RRSIG, which is handled separately)
@@ -278,10 +279,9 @@ public:
         // Even though the protocol specifically doesn't completely ban such
         // usage, we refuse to load a zone containing such RR in order to
         // keep the lookup logic simpler and more predictable.
-        // See RFC4592 and (for DNAME) draft-ietf-dnsext-rfc2672bis-dname
-        // for more technical background.  Note also that BIND 9 refuses
-        // NS at a wildcard, so in that sense we simply provide compatible
-        // behavior.
+        // See RFC4592 and (for DNAME) RFC6672 for more technical background.
+        // Note also that BIND 9 refuses NS at a wildcard, so in that sense
+        // we simply provide compatible behavior.
         if (rrset->getName().isWildcard()) {
             if (rrset->getType() == RRType::NS()) {
                 LOG_ERROR(logger, DATASRC_MEMORY_MEM_WILDCARD_NS).
@@ -315,7 +315,8 @@ public:
 
     void addNSEC3(const ConstRRsetPtr rrset,
                   const ConstRRsetPtr rrsig,
-                  ZoneData& zone_data) {
+                  ZoneData& zone_data)
+    {
         // We know rrset has exactly one RDATA
         const generic::NSEC3& nsec3_rdata =
             dynamic_cast<const generic::NSEC3&>(
@@ -438,11 +439,6 @@ public:
         }
     }
 
-    /*
-     * Implementation of longer methods. We put them here, because the
-     * access is without the impl_-> and it will get inlined anyway.
-     */
-
     // Implementation of InMemoryClient::add()
     void add(const ConstRRsetPtr& rrset, const ConstRRsetPtr& sig_rrset,
              const Name& zone_name, ZoneData& zone_data)
@@ -466,7 +462,8 @@ public:
         // Add wildcards possibly contained in the owner name to the domain
         // tree.
         // Note: this can throw an exception, breaking strong exception
-        // guarantee.  (see also the note for contextCheck() below).
+        // guarantee.  (see also the note for the call to contextCheck()
+        // above).
         addWildcards(zone_name, zone_data, rrset->getName());
 
         addRdataSet(zone_name, zone_data, rrset, sig_rrset);
@@ -597,9 +594,6 @@ InMemoryClient::InMemoryClientImpl::load(
     const RdataSet* set = origin_node->getData();
     // If the zone is NSEC3-signed, check if it has NSEC3PARAM
     if (holder.get()->isNSEC3Signed()) {
-        // Note: origin_data_ is set on creation of ZoneData, and the load
-        // process only adds new nodes (and their data), so this assertion
-        // should hold.
         if (RdataSet::find(set, RRType::NSEC3PARAM()) == NULL) {
             LOG_WARN(logger, DATASRC_MEMORY_MEM_NO_NSEC3PARAM).
                 arg(zone_name).arg(rrclass_);
