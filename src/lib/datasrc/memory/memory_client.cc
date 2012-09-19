@@ -432,8 +432,10 @@ public:
                     }
                 }
             } else if (rrset->getType() == RRType::NSEC()) {
-                // If it is NSEC signed zone, so we put a flag there
-                // (flag is enough)
+                // If it is NSEC signed zone, we mark the zone as signed
+                // (conceptually "signed" is a broader notion but our current
+                // zone finder implementation regards "signed" as "NSEC
+                // signed")
                 zone_data.setSigned(true);
             }
         }
