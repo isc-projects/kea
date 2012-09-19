@@ -20,10 +20,6 @@
 #include <datasrc/iterator.h>
 #include <datasrc/client.h>
 #include <datasrc/memory/zone_table.h>
-
-// for isc::datasrc::ZoneTable::FindResult returned by findZone(). This
-// variant of findZone() is not implemented and should be removed
-// eventually.
 #include <datasrc/zonetable.h>
 
 #include <string>
@@ -206,18 +202,19 @@ public:
         { }
     };
 
+    /// Returns a \c ZoneFinder result that best matches the given name.
+    ///
+    /// This derived version of the method never throws an exception.
+    /// For other details see \c DataSourceClient::findZone().
+    virtual isc::datasrc::DataSourceClient::FindResult
+    findZone(const isc::dns::Name& name) const;
+
     /// Returns a \c ZoneTable result that best matches the given name.
     ///
     /// This derived version of the method never throws an exception.
     /// For other details see \c DataSourceClient::findZone().
     virtual isc::datasrc::memory::ZoneTable::FindResult
     findZone2(const isc::dns::Name& name) const;
-
-    // This variant of findZone() is not implemented and should be
-    // removed eventually. It currently throws an exception. It is
-    // required right now to derive from DataSourceClient.
-    virtual isc::datasrc::DataSourceClient::FindResult
-    findZone(const isc::dns::Name& name) const;
 
     /// \brief Implementation of the getIterator method
     virtual isc::datasrc::ZoneIteratorPtr
