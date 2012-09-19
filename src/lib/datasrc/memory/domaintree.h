@@ -394,7 +394,6 @@ public:
     /// This method never throws an exception.
     const DomainTreeNode<T>* getUpperNode() const;
 
-private:
     /// \brief return the next node which is bigger than current node
     /// in the same subtree
     ///
@@ -429,6 +428,7 @@ private:
     /// This method never throws an exception.
     const DomainTreeNode<T>* predecessor() const;
 
+private:
     /// \brief private shared implementation of successor and predecessor
     ///
     /// As the two mentioned functions are merely mirror images of each other,
