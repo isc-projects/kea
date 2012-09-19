@@ -699,19 +699,21 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
 
             return (FindNSEC3Result(true, labels, closest, next));
         } else {
-            const NameComparisonResult& cmp = chain.getLastComparisonResult();
-            assert(cmp.getOrder() != 0);
+            const NameComparisonResult& last_cmp =
+                chain.getLastComparisonResult();
+            const ZoneNode* last_node = chain.getLastComparedNode();
+            assert(last_cmp.getOrder() != 0);
 
-            // find() finished in between these two:
-            const ZoneNode* previous_node = tree.previousNode(chain);
-            const ZoneNode* next_node = tree.nextNode(chain);
+            // find() finished in between one of these and last_node:
+            const ZoneNode* previous_node = last_node->predecessor();
+            const ZoneNode* next_node = last_node->successor();
 
             // If the given hash is larger than the largest stored hash or
             // the first label doesn't match the target, identify the "previous"
             // hash value and remember it as the candidate next closer proof.
-            if (((cmp.getOrder() < 0) && (previous_node == NULL)) ||
-                ((cmp.getOrder() > 0) && (next_node == NULL))) {
-                covering_node = tree.getLargestNode();
+            if (((last_cmp.getOrder() < 0) && (previous_node == NULL)) ||
+                ((last_cmp.getOrder() > 0) && (next_node == NULL))) {
+                covering_node = last_node->getLargestInSubTree();
             } else {
                 // Otherwise, H(found_entry-1) < given_hash < H(found_entry).
                 // The covering proof is the first one (and it's valid
