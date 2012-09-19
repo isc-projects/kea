@@ -28,7 +28,6 @@ libb10_util_la_SOURCES += encode/binary_from_base32hex.h
 libb10_util_la_SOURCES += encode/binary_from_base16.h
 libb10_util_la_SOURCES += random/qid_gen.h random/qid_gen.cc
 libb10_util_la_SOURCES += random/random_number_generator.h
-libb10_util_la_SOURCES += addr_utilities.cc addr_utilities.h
 
 EXTRA_DIST = python/pycppwrapper_util.h
 

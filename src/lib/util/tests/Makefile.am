@@ -41,7 +41,6 @@ run_unittests_SOURCES += socketsession_unittest.cc
 run_unittests_SOURCES += strutil_unittest.cc
 run_unittests_SOURCES += time_utilities_unittest.cc
 run_unittests_SOURCES += range_utilities_unittest.cc
-run_unittests_SOURCES += addr_utilities_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
@@ -51,7 +50,6 @@ run_unittests_LDADD += $(top_builddir)/src/lib/util/io/libb10-util-io.la
 run_unittests_LDADD += \
 	$(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 run_unittests_LDADD += $(GTEST_LDADD)
 endif
 

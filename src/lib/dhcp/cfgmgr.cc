@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/addr_utilities.h>
+#include <dhcp/addr_utilities.h>
 #include <asiolink/io_address.h>
 #include <dhcp/cfgmgr.h>
 
