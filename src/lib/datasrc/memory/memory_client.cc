@@ -456,17 +456,14 @@ public:
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEMORY_MEM_ADD_RRSET).
             arg(rrset->getName()).arg(rrset->getType()).arg(zone_name);
 
-        if (rrset->getType() == RRType::NSEC3()) {
-            addRdataSet(zone_name, zone_data, rrset, sig_rrset);
-            return;
-        }
-
         // Add wildcards possibly contained in the owner name to the domain
-        // tree.
+        // tree.  This can only happen for the normal (non-NSEC3) tree.
         // Note: this can throw an exception, breaking strong exception
         // guarantee.  (see also the note for the call to contextCheck()
         // above).
-        addWildcards(zone_name, zone_data, rrset->getName());
+        if (rrset->getType() != RRType::NSEC3()) {
+            addWildcards(zone_name, zone_data, rrset->getName());
+        }
 
         addRdataSet(zone_name, zone_data, rrset, sig_rrset);
 
