@@ -384,6 +384,13 @@ public:
         return ((flags_ & FLAG_SUBTREE_ROOT) != 0);
     }
 
+    /// \brief returns the root of its subtree
+    ///
+    /// This method takes a node and returns the root of its subtree.
+    ///
+    /// This method never throws an exception.
+    const DomainTreeNode<T>* getSubTreeRoot() const;
+
     /// \brief returns the parent of the root of its subtree
     ///
     /// This method takes a node and returns the parent of the root of
@@ -544,7 +551,7 @@ DomainTreeNode<T>::~DomainTreeNode() {
 
 template <typename T>
 const DomainTreeNode<T>*
-DomainTreeNode<T>::getUpperNode() const {
+DomainTreeNode<T>::getSubTreeRoot() const {
     const DomainTreeNode<T>* current = this;
 
     // current would never be equal to NULL here (in a correct tree
@@ -553,7 +560,13 @@ DomainTreeNode<T>::getUpperNode() const {
         current = current->getParent();
     }
 
-    return (current->getParent());
+    return (current);
+}
+
+template <typename T>
+const DomainTreeNode<T>*
+DomainTreeNode<T>::getUpperNode() const {
+    return (getSubTreeRoot()->getParent());
 }
 
 template <typename T>
