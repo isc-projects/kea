@@ -325,12 +325,15 @@ public:
             }
         }
 
+        // Make just the NSEC3 hash label uppercase, and insert the
+        // entire name into the NSEC3Data ZoneTree.
         string fst_label = rrset->getName().split(0, 1).toText(true);
         transform(fst_label.begin(), fst_label.end(), fst_label.begin(),
                   ::toupper);
+        const string rest = rrset->getName().split(1).toText(true);
 
         ZoneNode* node;
-        nsec3_data->insertName(mem_sgmt_, Name(fst_label), &node);
+        nsec3_data->insertName(mem_sgmt_, Name(fst_label + "." + rest), &node);
 
         RdataEncoder encoder;
 
