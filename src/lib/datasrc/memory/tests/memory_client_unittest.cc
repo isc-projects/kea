@@ -489,29 +489,12 @@ TEST_F(MemoryClientTest, loadDNAMEAndNSNonApex2) {
     // Teardown checks for memory segment leaks
 }
 
-// Disable for now: we should actually allow this case.
-TEST_F(MemoryClientTest, DISABLED_loadRRSIGFollowsNothing) {
+TEST_F(MemoryClientTest, loadRRSIGFollowsNothing) {
+    // This causes the situation where an RRSIG is added without a covered
+    // RRset.  Such cases are currently rejected.
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-rrsig-follows-nothing.zone"),
-                 InMemoryClient::AddError);
-    // Teardown checks for memory segment leaks
-}
-
-// Disable for now: we should actually allow this case.
-TEST_F(MemoryClientTest, DISABLED_loadRRSIGNameUnmatched) {
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-rrsig-name-unmatched.zone"),
-                 InMemoryClient::AddError);
-    // Teardown checks for memory segment leaks
-}
-
-// Disable for now: we should actually allow this case.
-TEST_F(MemoryClientTest, DISABLED_loadRRSIGTypeUnmatched) {
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-rrsig-type-unmatched.zone"),
                  InMemoryClient::AddError);
     // Teardown checks for memory segment leaks
 }
