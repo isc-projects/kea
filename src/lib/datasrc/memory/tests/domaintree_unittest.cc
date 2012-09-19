@@ -257,7 +257,7 @@ TEST_F(DomainTreeTest, subTreeRoot) {
     // "g.h" is not a subtree root
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("g.h"), &dtnode));
-    EXPECT_FALSE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
+    EXPECT_FALSE(dtnode->isSubTreeRoot());
 
     // fission the node "g.h"
     EXPECT_EQ(TestDomainTree::ALREADYEXISTS,
@@ -266,12 +266,12 @@ TEST_F(DomainTreeTest, subTreeRoot) {
 
     // the node "h" (h.down_ -> "g") should not be a subtree root. "g"
     // should be a subtree root.
-    EXPECT_FALSE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
+    EXPECT_FALSE(dtnode->isSubTreeRoot());
 
     // "g.h" should be a subtree root now.
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("g.h"), &dtnode));
-    EXPECT_TRUE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
+    EXPECT_TRUE(dtnode->isSubTreeRoot());
 }
 
 TEST_F(DomainTreeTest, additionalNodeFission) {
@@ -287,7 +287,7 @@ TEST_F(DomainTreeTest, additionalNodeFission) {
     // "t.0" is not a subtree root
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("t.0"), &dtnode));
-    EXPECT_FALSE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
+    EXPECT_FALSE(dtnode->isSubTreeRoot());
 
     // fission the node "t.0"
     EXPECT_EQ(TestDomainTree::ALREADYEXISTS,
@@ -296,12 +296,12 @@ TEST_F(DomainTreeTest, additionalNodeFission) {
 
     // the node "0" ("0".down_ -> "t") should not be a subtree root. "t"
     // should be a subtree root.
-    EXPECT_FALSE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
+    EXPECT_FALSE(dtnode->isSubTreeRoot());
 
     // "t.0" should be a subtree root now.
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("t.0"), &dtnode));
-    EXPECT_TRUE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
+    EXPECT_TRUE(dtnode->isSubTreeRoot());
 }
 
 TEST_F(DomainTreeTest, findName) {

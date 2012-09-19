@@ -373,11 +373,17 @@ private:
         }
     }
 
+public:
+    /// \brief returns if the node is a subtree's root node
+    ///
+    /// This method takes a node and returns \c true if it is the root
+    /// node of the subtree it belongs to.
+    ///
+    /// This method never throws an exception.
     bool isSubTreeRoot() const {
         return ((flags_ & FLAG_SUBTREE_ROOT) != 0);
     }
 
-public:
     /// \brief returns the parent of the root of its subtree
     ///
     /// This method takes a node and returns the parent of the root of
