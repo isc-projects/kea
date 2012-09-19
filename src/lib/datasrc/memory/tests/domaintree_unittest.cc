@@ -692,6 +692,11 @@ const char* const subtree_root_node_names[] = {
     "p.w.y.d.e.f", "p.w.y.d.e.f", "w.y.d.e.f", "j.z.d.e.f",
     "b", "i.g.h", "i.g.h"};
 
+const char* const largest_node_names[] = {
+    "g.h", "g.h", "g.h", "g.h", "z.d.e.f", "z.d.e.f", "q.w.y.d.e.f",
+    "q.w.y.d.e.f", "q.w.y.d.e.f", "z.d.e.f", "j.z.d.e.f",
+    "g.h", "k.g.h", "k.g.h"};
+
 TEST_F(DomainTreeTest, getUpperNode) {
     TestDomainTreeNodeChain node_path;
     const TestDomainTreeNode* node = NULL;
@@ -741,6 +746,35 @@ TEST_F(DomainTreeTest, getSubTreeRoot) {
             EXPECT_EQ(sr_node, sr_node2);
         } else {
             EXPECT_EQ(static_cast<void*>(NULL), sr_node);
+        }
+
+        node = dtree_expose_empty_node.nextNode(node_path);
+    }
+
+    // We should have reached the end of the tree.
+    EXPECT_EQ(static_cast<void*>(NULL), node);
+}
+
+TEST_F(DomainTreeTest, getLargestInSubTree) {
+    TestDomainTreeNodeChain node_path;
+    const TestDomainTreeNode* node = NULL;
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name(names[0]),
+                                            &node,
+                                            node_path));
+    for (int i = 0; i < name_count; ++i) {
+        EXPECT_NE(static_cast<void*>(NULL), node);
+
+        const TestDomainTreeNode* largest_node = node->getLargestInSubTree();
+        if (largest_node_names[i] != NULL) {
+            const TestDomainTreeNode* largest_node2 = NULL;
+            EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                dtree_expose_empty_node.find(Name(largest_node_names[i]),
+                                             &largest_node2));
+            EXPECT_NE(static_cast<void*>(NULL), largest_node2);
+            EXPECT_EQ(largest_node, largest_node2);
+        } else {
+            EXPECT_EQ(static_cast<void*>(NULL), largest_node);
         }
 
         node = dtree_expose_empty_node.nextNode(node_path);
