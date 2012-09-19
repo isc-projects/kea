@@ -244,6 +244,10 @@ private:
     // directly any more (it should be handled through DataSourceClient)?
     class InMemoryClientImpl;
     InMemoryClientImpl* impl_;
+
+    // A helper internal class used by load().  It maintains some intermediate
+    // states while loading RRs of the zone.
+    class Loader;
 };
 
 } // namespace memory

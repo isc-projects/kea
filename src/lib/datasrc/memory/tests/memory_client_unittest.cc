@@ -34,6 +34,8 @@
 
 #include <testutils/dnsmessage_test.h>
 
+#include "memory_segment_test.h"
+
 #include <gtest/gtest.h>
 
 #include <new>                  // for bad_alloc
@@ -45,42 +47,53 @@ using namespace isc::datasrc::memory;
 using namespace isc::testutils;
 
 namespace {
-// Memory segment specified for tests.  It normally behaves like a "local"
-// memory segment.  If "throw count" is set to non 0 via setThrowCount(),
-// it continues the normal behavior up to the specified number of calls to
-// allocate(), and throws an exception at the next call.
-class TestMemorySegment : public isc::util::MemorySegmentLocal {
-public:
-    TestMemorySegment() : throw_count_(0) {}
-    virtual void* allocate(size_t size) {
-        if (throw_count_ > 0) {
-            if (--throw_count_ == 0) {
-                throw std::bad_alloc();
-            }
-        }
-        return (isc::util::MemorySegmentLocal::allocate(size));
-    }
-    void setThrowCount(size_t count) { throw_count_ = count; }
-
-private:
-    size_t throw_count_;
-};
 
 const char* rrset_data[] = {
-    "example.org. 3600 IN SOA   ns1.example.org. bugs.x.w.example.org. 68 3600 300 3600000 3600",
-    "a.example.org.		   	 3600 IN A	192.168.0.1",
-    "a.example.org.		   	 3600 IN MX	10 mail.example.org.",
+    "example.org. 3600 IN SOA ns1.example.org. bugs.x.w.example.org. "
+    "68 3600 300 3600000 3600",
+    "a.example.org. 3600 IN A 192.168.0.1\n" // RRset containing 2 RRs
+    "a.example.org. 3600 IN A 192.168.0.2",
+    "a.example.org. 3600 IN RRSIG A 5 3 3600 20150420235959 20051021000000 "
+    "40430 example.org. FAKEFAKE",
+    "a.example.org. 3600 IN MX 10 mail.example.org.",
+    "a.example.org. 3600 IN RRSIG MX 5 3 3600 20150420235959 20051021000000 "
+    "40430 example.org. FAKEFAKEFAKE",
+    NULL
+};
+
+// RRsets that emulate the "separate RRs" mode.
+const char* rrset_data_separated[] = {
+    "example.org. 3600 IN SOA ns1.example.org. bugs.x.w.example.org. "
+    "68 3600 300 3600000 3600",
+    "a.example.org. 3600 IN A 192.168.0.1", // these two belong to the same
+    "a.example.org. 3600 IN A 192.168.0.2", // RRset, but are separated.
+    NULL
+};
+
+// Similar to the previous one, but with separated RRSIGs
+const char* rrset_data_sigseparated[] = {
+    "example.org. 3600 IN SOA ns1.example.org. bugs.x.w.example.org. "
+    "68 3600 300 3600000 3600",
+    "a.example.org. 3600 IN A 192.168.0.1",
+    "a.example.org. 3600 IN RRSIG A 5 3 3600 20150420235959 20051021000000 "
+    "40430 example.org. FAKEFAKE",
+    "a.example.org. 3600 IN RRSIG A 5 3 3600 20150420235959 20051021000000 "
+    "53535 example.org. FAKEFAKE",
     NULL
 };
 
 class MockIterator : public ZoneIterator {
 private:
-    MockIterator() :
-        rrset_data_ptr_(rrset_data)
+    MockIterator(const char** rrset_data_ptr, bool pass_empty_rrsig) :
+        rrset_data_ptr_(rrset_data_ptr),
+        pass_empty_rrsig_(pass_empty_rrsig)
     {
     }
 
     const char** rrset_data_ptr_;
+    // If true, emulate an unexpected bogus case where an RRSIG RRset is
+    // returned without the RDATA.  For brevity allow tests tweak it directly.
+    bool pass_empty_rrsig_;
 
 public:
     virtual ConstRRsetPtr getNextRRset() {
@@ -88,9 +101,13 @@ public:
              return (ConstRRsetPtr());
         }
 
-        RRsetPtr result(textToRRset(*rrset_data_ptr_,
-                                    RRClass::IN(), Name("example.org")));
-        rrset_data_ptr_++;
+        ConstRRsetPtr result(textToRRset(*rrset_data_ptr_,
+                                         RRClass::IN(), Name("example.org")));
+        if (pass_empty_rrsig_ && result->getType() == RRType::RRSIG()) {
+            result.reset(new RRset(result->getName(), result->getClass(),
+                                   result->getType(), result->getTTL()));
+        }
+        ++rrset_data_ptr_;
 
         return (result);
     }
@@ -99,8 +116,11 @@ public:
         isc_throw(isc::NotImplemented, "Not implemented");
     }
 
-    static ZoneIteratorPtr makeIterator(void) {
-        return (ZoneIteratorPtr(new MockIterator()));
+    static ZoneIteratorPtr makeIterator(const char** rrset_data_ptr,
+                                        bool pass_empty_rrsig = false)
+    {
+        return (ZoneIteratorPtr(new MockIterator(rrset_data_ptr,
+                                                 pass_empty_rrsig)));
     }
 };
 
@@ -120,7 +140,7 @@ protected:
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated()); // catch any leak here.
     }
     const RRClass zclass_;
-    TestMemorySegment mem_sgmt_;
+    test::MemorySegmentTest mem_sgmt_;
     InMemoryClient* client_;
 };
 
@@ -184,7 +204,7 @@ TEST_F(MemoryClientTest, load) {
 
 TEST_F(MemoryClientTest, loadFromIterator) {
     client_->load(Name("example.org"),
-                  *MockIterator::makeIterator());
+                  *MockIterator::makeIterator(rrset_data));
 
     ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
 
@@ -197,17 +217,38 @@ TEST_F(MemoryClientTest, loadFromIterator) {
     rrset = iterator->getNextRRset();
     EXPECT_TRUE(rrset);
     EXPECT_EQ(RRType::MX(), rrset->getType());
+    EXPECT_EQ(1, rrset->getRRsigDataCount()); // this RRset is signed
 
     // RRType::A() RRset
     rrset = iterator->getNextRRset();
     EXPECT_TRUE(rrset);
     EXPECT_EQ(RRType::A(), rrset->getType());
+    EXPECT_EQ(1, rrset->getRRsigDataCount()); // also signed
 
     // There's nothing else in this iterator
     EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
 
     // Iterating past the end should result in an exception
     EXPECT_THROW(iterator->getNextRRset(), isc::Unexpected);
+
+    // Loading the zone with an iterator separating RRs of the same RRset
+    // will fail because the resulting sequence doesn't meet assumptions of
+    // the (current) in-memory implementation.
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               *MockIterator::makeIterator(
+                                   rrset_data_separated)),
+                 InMemoryClient::AddError);
+
+    // Similar to the previous case, but with separated RRSIGs.
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               *MockIterator::makeIterator(
+                                   rrset_data_sigseparated)),
+                 InMemoryClient::AddError);
+
+    // Emulating bogus iterator implementation that passes empty RRSIGs.
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               *MockIterator::makeIterator(rrset_data, true)),
+                 isc::Unexpected);
 }
 
 TEST_F(MemoryClientTest, loadMemoryAllocationFailures) {
@@ -465,25 +506,11 @@ TEST_F(MemoryClientTest, loadDNAMEAndNSNonApex2) {
 }
 
 TEST_F(MemoryClientTest, loadRRSIGFollowsNothing) {
+    // This causes the situation where an RRSIG is added without a covered
+    // RRset.  Such cases are currently rejected.
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-rrsig-follows-nothing.zone"),
-                 InMemoryClient::AddError);
-    // Teardown checks for memory segment leaks
-}
-
-TEST_F(MemoryClientTest, loadRRSIGNameUnmatched) {
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-rrsig-name-unmatched.zone"),
-                 InMemoryClient::AddError);
-    // Teardown checks for memory segment leaks
-}
-
-TEST_F(MemoryClientTest, loadRRSIGTypeUnmatched) {
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-rrsig-type-unmatched.zone"),
                  InMemoryClient::AddError);
     // Teardown checks for memory segment leaks
 }
