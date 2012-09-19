@@ -498,15 +498,16 @@ class InMemoryClient::Loader : boost::noncopyable {
     typedef std::map<RRType, ConstRRsetPtr> NodeRRsets;
     typedef NodeRRsets::value_type NodeRRsetsVal;
 public:
-    Loader(InMemoryClientImpl* client_impl) : client_impl_(client_impl) {}
-    void addFromLoad(const ConstRRsetPtr& rrset,
-                     const Name& zone_name, ZoneData* zone_data)
-    {
+    Loader(InMemoryClientImpl* client_impl, const Name& zone_name,
+           ZoneData& zone_data) :
+        client_impl_(client_impl), zone_name_(zone_name), zone_data_(zone_data)
+    {}
+    void addFromLoad(const ConstRRsetPtr& rrset) {
         // If we see a new name, flush the temporary holders, adding the
         // pairs of RRsets and RRSIGs of the previous name to the zone.
         if ((!node_rrsets_.empty() || !node_rrsigsets_.empty()) &&
             getCurrentName() != rrset->getName()) {
-            flushNodeRRsets(zone_name, zone_data);
+            flushNodeRRsets();
         }
 
         // Store this RRset until it can be added to the zone.  The current
@@ -523,7 +524,7 @@ public:
                       << rrset->getName() << "/" << rrtype);
         }
     }
-    void flushNodeRRsets(const Name& zone_name, ZoneData* zone_data) {
+    void flushNodeRRsets() {
         BOOST_FOREACH(NodeRRsetsVal val, node_rrsets_) {
             // Identify the corresponding RRSIG for the RRset, if any.
             // If found add both the RRset and its RRSIG at once.
@@ -535,8 +536,8 @@ public:
                 node_rrsigsets_.erase(sig_it);
             }
             const result::Result result =
-                client_impl_->add(val.second, sig_rrset, zone_name,
-                                  *zone_data);
+                client_impl_->add(val.second, sig_rrset, zone_name_,
+                                  zone_data_);
             assert(result == result::SUCCESS);
         }
 
@@ -576,6 +577,8 @@ private:
 
 private:
     InMemoryClientImpl* client_impl_;
+    const Name& zone_name_;
+    ZoneData& zone_data_;
     NodeRRsets node_rrsets_;
     NodeRRsets node_rrsigsets_;
 };
@@ -589,11 +592,10 @@ InMemoryClient::InMemoryClientImpl::load(
     SegmentObjectHolder<ZoneData, RRClass> holder(
         mem_sgmt_, ZoneData::create(mem_sgmt_, zone_name), rrclass_);
 
-    Loader loader(this);
-    rrset_installer(boost::bind(&Loader::addFromLoad, &loader,
-                                _1, zone_name, holder.get()));
+    Loader loader(this, zone_name, *holder.get());
+    rrset_installer(boost::bind(&Loader::addFromLoad, &loader, _1));
     // Add any last RRsets that were left
-    loader.flushNodeRRsets(zone_name, holder.get());
+    loader.flushNodeRRsets();
 
     const ZoneNode* origin_node = holder.get()->getOriginNode();
     const RdataSet* set = origin_node->getData();
