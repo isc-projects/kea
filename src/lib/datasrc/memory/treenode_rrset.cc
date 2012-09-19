@@ -79,10 +79,6 @@ TreeNodeRRset::setTTL(const RRTTL&) {
 
 std::string
 TreeNodeRRset::toText() const {
-    // Create TTL from internal data
-    util::InputBuffer ttl_buffer(rdataset_->getTTLData(), sizeof(uint32_t));
-    const RRTTL ttl(ttl_buffer);
-
     // Dump the main RRset, if not empty
     std::string ret;
     RRsetPtr tmp_rrset;
@@ -92,7 +88,7 @@ TreeNodeRRset::toText() const {
     {
         if (!tmp_rrset) {
             tmp_rrset = RRsetPtr(new RRset(getName(), rrclass_, getType(),
-                                           ttl));
+                                           getTTL()));
         }
         tmp_rrset->addRdata(rit->getCurrent());
     }
@@ -101,17 +97,7 @@ TreeNodeRRset::toText() const {
     }
 
     // Dump any RRSIGs
-    tmp_rrset.reset();
-    for (RdataIteratorPtr rit = getSigRdataIterator();
-         !rit->isLast();
-         rit->next())
-    {
-        if (!tmp_rrset) {
-            tmp_rrset = RRsetPtr(new RRset(getName(), rrclass_,
-                                           RRType::RRSIG(), ttl));
-        }
-        tmp_rrset->addRdata(rit->getCurrent());
-    }
+    tmp_rrset = getRRsig();
     if (tmp_rrset) {
         ret += tmp_rrset->toText();
     }
@@ -292,7 +278,19 @@ TreeNodeRRset::getSigRdataIterator() const {
 
 RRsetPtr
 TreeNodeRRset::getRRsig() const {
-    isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
+    RRsetPtr tmp_rrset;
+    for (RdataIteratorPtr rit = getSigRdataIterator();
+         !rit->isLast();
+         rit->next())
+    {
+        if (!tmp_rrset) {
+            tmp_rrset = RRsetPtr(new RRset(getName(), rrclass_,
+                                           RRType::RRSIG(), getTTL()));
+        }
+        tmp_rrset->addRdata(rit->getCurrent());
+    }
+
+    return (tmp_rrset);
 }
 
 void
