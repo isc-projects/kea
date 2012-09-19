@@ -20,10 +20,10 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-#include <util/addr_utilities.h>
+#include <dhcp/addr_utilities.h>
 
 using namespace std;
-using namespace isc::util;
+using namespace isc::dhcp;
 using namespace isc::asiolink;
 
 TEST(Pool6Test, lastAddrInPrefix) {

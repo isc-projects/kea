@@ -12,10 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/addr_utilities.h>
+#include <dhcp/addr_utilities.h>
 
 namespace isc {
-namespace util {
+namespace dhcp {
 
 isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefix,
                                            uint8_t len) {
