@@ -273,6 +273,26 @@ class Counter():
             self._to_global['inc_%s' % item] = __incrementer
             self._to_global['get_%s' % item] = __getter
 
+    def _create_xfrrunning_functors(self):
+        """Creates increment/decrement method of (a|i)xfr_running
+        based on the spec file. Incrementer can be accessed by name
+        "inc_${item_name}". Decrementer can be accessed by name
+        "dec_${item_name}". Both of them are passed to the
+        XfroutSession as counter handlers."""
+        for item in self._xfrrunning_names:
+            def __incrementer(counter_name=item, step=1):
+                """A incrementer for axfr or ixfr running."""
+                self._incrementer(counter_name, step)
+            def __decrementer(counter_name=item, step=-1):
+                """A decrementer for axfr or ixfr running."""
+                self._decrementer(counter_name, step)
+            def __getter(counter_name=item):
+                """A getter method for xfr_running counters"""
+                return self._getter(counter_name)
+            self._to_global['inc_%s' % item] = __incrementer
+            self._to_global['dec_%s' % item] = __decrementer
+            self._to_global['get_%s' % item] = __getter
+
     def dump_statistics(self):
         """Calculates an entire server counts, and returns statistics
         data format to send out the stats module including each
@@ -350,26 +370,6 @@ class XfroutCounter(Counter):
         self._create_unixsocket_functors()
         self._to_global['dump_statistics'] = self.dump_statistics
 
-    def _create_xfrrunning_functors(self):
-        """Creates increment/decrement method of (a|i)xfr_running
-        based on the spec file. Incrementer can be accessed by name
-        "inc_${item_name}". Decrementer can be accessed by name
-        "dec_${item_name}". Both of them are passed to the
-        XfroutSession as counter handlers."""
-        for item in self._xfrrunning_names:
-            def __incrementer(counter_name=item, step=1):
-                """A incrementer for axfr or ixfr running."""
-                self._incrementer(counter_name, step)
-            def __decrementer(counter_name=item, step=-1):
-                """A decrementer for axfr or ixfr running."""
-                self._decrementer(counter_name, step)
-            def __getter(counter_name=item):
-                """A getter method for xfr_running counters"""
-                return self._getter(counter_name)
-            self._to_global['inc_%s' % item] = __incrementer
-            self._to_global['dec_%s' % item] = __decrementer
-            self._to_global['get_%s' % item] = __getter
-
     def _create_unixsocket_functors(self):
         """Creates increment method of unixsocket socket. Incrementer
         can be accessed by name "inc_unixsocket_${item_name}"."""
@@ -413,8 +413,15 @@ class XfrinCounter(Counter):
             isc.config.find_spec_part(
             self._statistics_spec, self._perzone_prefix)\
                 ['named_set_item_spec']['map_item_spec'])
+        self._xfrrunning_names = [
+            n for n in isc.config.spec_name_list\
+                (self._statistics_spec) \
+                if n.find('xfr_running') == 1 \
+                or n.find('xfr_deferred') == 1 \
+                or n.find('soa_in_progress') == 0 ]
         self._create_perzone_functors()
         self._create_perzone_timer_functors()
+        self._create_xfrrunning_functors()
         self._to_global['dump_statistics'] = self.dump_statistics
 
     def _create_perzone_timer_functors(self):
