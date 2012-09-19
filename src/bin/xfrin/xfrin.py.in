@@ -876,37 +876,44 @@ class XfrinConnection(asyncore.dispatcher):
 
         '''
 
-        self._send_query(RRType.SOA)
-        # count soaoutv4 or soaoutv6 requests
-        self._counters.inc('zones', self._rrclass.to_text(),
-                           self._zone_name.to_text(), 'soaout' +
-                           self._get_ipver_str())
-        data_len = self._get_request_response(2)
-        msg_len = socket.htons(struct.unpack('H', data_len)[0])
-        soa_response = self._get_request_response(msg_len)
-        msg = Message(Message.PARSE)
-        msg.from_wire(soa_response, Message.PRESERVE_ORDER)
+        # increment SOA query in progress
+        self._counters.inc('soa_in_progress')
+        try:
+            self._send_query(RRType.SOA)
+            # count soaoutv4 or soaoutv6 requests
+            self._counters.inc('zones', self._rrclass.to_text(),
+                               self._zone_name.to_text(), 'soaout' +
+                               self._get_ipver_str())
+            data_len = self._get_request_response(2)
+            msg_len = socket.htons(struct.unpack('H', data_len)[0])
+            soa_response = self._get_request_response(msg_len)
+            msg = Message(Message.PARSE)
+            msg.from_wire(soa_response, Message.PRESERVE_ORDER)
 
-        # Validate/parse the rest of the response, and extract the SOA
-        # from the answer section
-        soa = self.__parse_soa_response(msg, soa_response)
+            # Validate/parse the rest of the response, and extract the SOA
+            # from the answer section
+            soa = self.__parse_soa_response(msg, soa_response)
 
-        # Compare the two serials.  If ours is 'new', abort with ZoneUptodate.
-        primary_serial = get_soa_serial(soa.get_rdata()[0])
-        if self._request_serial is not None and \
-                self._request_serial >= primary_serial:
-            if self._request_serial != primary_serial:
-                logger.info(XFRIN_ZONE_SERIAL_AHEAD, primary_serial,
-                            self.zone_str(),
-                            format_addrinfo(self._master_addrinfo),
-                            self._request_serial)
-            raise XfrinZoneUptodate
+            # Compare the two serials.  If ours is 'new', abort with ZoneUptodate.
+            primary_serial = get_soa_serial(soa.get_rdata()[0])
+            if self._request_serial is not None and \
+                    self._request_serial >= primary_serial:
+                if self._request_serial != primary_serial:
+                    logger.info(XFRIN_ZONE_SERIAL_AHEAD, primary_serial,
+                                self.zone_str(),
+                                format_addrinfo(self._master_addrinfo),
+                                self._request_serial)
+                raise XfrinZoneUptodate
 
-        return XFRIN_OK
+            return XFRIN_OK
+        finally:
+            # decrement SOA query in progress
+            self._counters.dec('soa_in_progress')
 
     def do_xfrin(self, check_soa, request_type=RRType.AXFR):
         '''Do an xfr session by sending xfr request and parsing responses.'''
 
+        xfer_started = False # Don't set True until xfer is started
         try:
             ret = XFRIN_OK
             self._request_type = request_type
@@ -918,6 +925,9 @@ class XfrinConnection(asyncore.dispatcher):
                 if not self.connect_to_master():
                     raise XfrinException('Unable to reconnect to master')
 
+            xfer_started = True
+            # increment xfer running
+            self._counters.inc(req_str.lower() + '_running')
             # start statistics timer
             # Note: If the timer for the zone is already started but
             # not yet stopped due to some error, the last start time
@@ -1008,6 +1018,9 @@ class XfrinConnection(asyncore.dispatcher):
                                           self._zone_name.to_text(),
                                           'last_' + req_str.lower() +
                                           '_duration')
+            # decrement xfer running only if started
+            if xfer_started:
+                self._counters.dec(req_str.lower() + '_running')
             # Make sure any remaining transaction in the diff is closed
             # (if not yet - possible in case of xfr-level exception) as soon
             # as possible
