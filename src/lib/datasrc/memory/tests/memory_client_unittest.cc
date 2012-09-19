@@ -61,25 +61,31 @@ const char* rrset_data[] = {
     NULL
 };
 
-// Similar to the previous, but RRs of the same RRset are separated.
+// RRsets that emulate the "separate RRs" mode.
 const char* rrset_data_separated[] = {
     "example.org. 3600 IN SOA ns1.example.org. bugs.x.w.example.org. "
     "68 3600 300 3600000 3600",
+    "a.example.org. 3600 IN A 192.168.0.1", // these two belong to the same
+    "a.example.org. 3600 IN A 192.168.0.2", // RRset, but are separated.
+    NULL
+};
+
+// Similar to the previous one, but with separated RRSIGs
+const char* rrset_data_sigseparated[] = {
+    "example.org. 3600 IN SOA ns1.example.org. bugs.x.w.example.org. "
+    "68 3600 300 3600000 3600",
     "a.example.org. 3600 IN A 192.168.0.1",
-    "a.example.org. 3600 IN A 192.168.0.2",
-// This will trigger a bug in the implementation
-//     "a.example.org. 3600 IN RRSIG A 5 3 3600 20150420235959 20051021000000 "
-//     "40430 example.org. FAKEFAKE",
-    "a.example.org. 3600 IN MX 10 mail.example.org.",
-    "a.example.org. 3600 IN RRSIG MX 5 3 3600 20150420235959 20051021000000 "
-    "40430 example.org. FAKEFAKEFAKE",
+    "a.example.org. 3600 IN RRSIG A 5 3 3600 20150420235959 20051021000000 "
+    "40430 example.org. FAKEFAKE",
+    "a.example.org. 3600 IN RRSIG A 5 3 3600 20150420235959 20051021000000 "
+    "53535 example.org. FAKEFAKE",
     NULL
 };
 
 class MockIterator : public ZoneIterator {
 private:
-    MockIterator(bool separate_rrs) :
-        rrset_data_ptr_(separate_rrs ? rrset_data_separated : rrset_data)
+    MockIterator(const char** rrset_data_ptr) :
+        rrset_data_ptr_(rrset_data_ptr)
     {
     }
 
@@ -102,8 +108,8 @@ public:
         isc_throw(isc::NotImplemented, "Not implemented");
     }
 
-    static ZoneIteratorPtr makeIterator(bool separate_rrs = false) {
-        return (ZoneIteratorPtr(new MockIterator(separate_rrs)));
+    static ZoneIteratorPtr makeIterator(const char** rrset_data_ptr) {
+        return (ZoneIteratorPtr(new MockIterator(rrset_data_ptr)));
     }
 };
 
@@ -186,7 +192,8 @@ TEST_F(MemoryClientTest, load) {
 }
 
 TEST_F(MemoryClientTest, loadFromIterator) {
-    client_->load(Name("example.org"), *MockIterator::makeIterator());
+    client_->load(Name("example.org"),
+                  *MockIterator::makeIterator(rrset_data));
 
     ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
 
@@ -217,7 +224,14 @@ TEST_F(MemoryClientTest, loadFromIterator) {
     // will fail because the resulting sequence doesn't meet assumptions of
     // the (current) in-memory implementation.
     EXPECT_THROW(client_->load(Name("example.org"),
-                               *MockIterator::makeIterator(true)),
+                               *MockIterator::makeIterator(
+                                   rrset_data_separated)),
+                 InMemoryClient::AddError);
+
+    // Similar to the previous case, but with separated RRSIGs.
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               *MockIterator::makeIterator(
+                                   rrset_data_sigseparated)),
                  InMemoryClient::AddError);
 }
 
