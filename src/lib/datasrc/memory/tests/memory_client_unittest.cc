@@ -84,12 +84,16 @@ const char* rrset_data_sigseparated[] = {
 
 class MockIterator : public ZoneIterator {
 private:
-    MockIterator(const char** rrset_data_ptr) :
-        rrset_data_ptr_(rrset_data_ptr)
+    MockIterator(const char** rrset_data_ptr, bool pass_empty_rrsig) :
+        rrset_data_ptr_(rrset_data_ptr),
+        pass_empty_rrsig_(pass_empty_rrsig)
     {
     }
 
     const char** rrset_data_ptr_;
+    // If true, emulate an unexpected bogus case where an RRSIG RRset is
+    // returned without the RDATA.  For brevity allow tests tweak it directly.
+    bool pass_empty_rrsig_;
 
 public:
     virtual ConstRRsetPtr getNextRRset() {
@@ -99,6 +103,10 @@ public:
 
         ConstRRsetPtr result(textToRRset(*rrset_data_ptr_,
                                          RRClass::IN(), Name("example.org")));
+        if (pass_empty_rrsig_ && result->getType() == RRType::RRSIG()) {
+            result.reset(new RRset(result->getName(), result->getClass(),
+                                   result->getType(), result->getTTL()));
+        }
         ++rrset_data_ptr_;
 
         return (result);
@@ -108,8 +116,11 @@ public:
         isc_throw(isc::NotImplemented, "Not implemented");
     }
 
-    static ZoneIteratorPtr makeIterator(const char** rrset_data_ptr) {
-        return (ZoneIteratorPtr(new MockIterator(rrset_data_ptr)));
+    static ZoneIteratorPtr makeIterator(const char** rrset_data_ptr,
+                                        bool pass_empty_rrsig = false)
+    {
+        return (ZoneIteratorPtr(new MockIterator(rrset_data_ptr,
+                                                 pass_empty_rrsig)));
     }
 };
 
@@ -233,6 +244,11 @@ TEST_F(MemoryClientTest, loadFromIterator) {
                                *MockIterator::makeIterator(
                                    rrset_data_sigseparated)),
                  InMemoryClient::AddError);
+
+    // Emulating bogus iterator implementation that passes empty RRSIGs.
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               *MockIterator::makeIterator(rrset_data, true)),
+                 isc::Unexpected);
 }
 
 TEST_F(MemoryClientTest, loadMemoryAllocationFailures) {
