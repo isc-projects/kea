@@ -687,6 +687,11 @@ const char* const upper_node_names[] = {
     "w.y.d.e.f", "w.y.d.e.f", "d.e.f", "z.d.e.f",
     ".", "g.h", "g.h"};
 
+const char* const subtree_root_node_names[] = {
+    "b", "b", "b", "b", "w.y.d.e.f", "w.y.d.e.f", "p.w.y.d.e.f",
+    "p.w.y.d.e.f", "p.w.y.d.e.f", "w.y.d.e.f", "j.z.d.e.f",
+    "b", "i.g.h", "i.g.h"};
+
 TEST_F(DomainTreeTest, getUpperNode) {
     TestDomainTreeNodeChain node_path;
     const TestDomainTreeNode* node = NULL;
@@ -707,6 +712,35 @@ TEST_F(DomainTreeTest, getUpperNode) {
             EXPECT_EQ(upper_node, upper_node2);
         } else {
             EXPECT_EQ(static_cast<void*>(NULL), upper_node);
+        }
+
+        node = dtree_expose_empty_node.nextNode(node_path);
+    }
+
+    // We should have reached the end of the tree.
+    EXPECT_EQ(static_cast<void*>(NULL), node);
+}
+
+TEST_F(DomainTreeTest, getSubTreeRoot) {
+    TestDomainTreeNodeChain node_path;
+    const TestDomainTreeNode* node = NULL;
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name(names[0]),
+                                            &node,
+                                            node_path));
+    for (int i = 0; i < name_count; ++i) {
+        EXPECT_NE(static_cast<void*>(NULL), node);
+
+        const TestDomainTreeNode* sr_node = node->getSubTreeRoot();
+        if (subtree_root_node_names[i] != NULL) {
+            const TestDomainTreeNode* sr_node2 = NULL;
+            EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                dtree_expose_empty_node.find(Name(subtree_root_node_names[i]),
+                                             &sr_node2));
+            EXPECT_NE(static_cast<void*>(NULL), sr_node2);
+            EXPECT_EQ(sr_node, sr_node2);
+        } else {
+            EXPECT_EQ(static_cast<void*>(NULL), sr_node);
         }
 
         node = dtree_expose_empty_node.nextNode(node_path);
