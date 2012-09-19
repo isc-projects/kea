@@ -337,6 +337,88 @@ operation
         </listitem>
       </varlistentry><!-- end of zones -->
 
+      <varlistentry>
+        <term>socket</term>
+        <listitem><simpara>
+          A directory name of socket statistics
+          </simpara>
+          <variablelist>
+
+            <varlistentry>
+              <term><replaceable>ipversion</replaceable></term>
+              <listitem><simpara>
+                A directory name of an IP version as ipv4 or ipv6
+                </simpara>
+                <variablelist>
+
+                  <varlistentry>
+                    <term>tcp</term>
+                    <listitem><simpara>
+                      A directory name of TCP statistics
+                      </simpara>
+                      <variablelist>
+
+                        <varlistentry>
+                          <term>open</term>
+                          <listitem><simpara>
+                           IPv4 or IPv6 TCP sockets opened successfully
+                          </simpara></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                          <term>openfail</term>
+                          <listitem><simpara>
+                           IPv4 or IPv6 TCP sockets open failures
+                          </simpara></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                          <term>close</term>
+                          <listitem><simpara>
+                           IPv4 or IPv6 TCP sockets closed
+                          </simpara></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                          <term>connfail</term>
+                          <listitem><simpara>
+                           IPv4 or IPv6 TCP sockets connection failures
+                          </simpara></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                          <term>conn</term>
+                          <listitem><simpara>
+                           IPv4 or IPv6 TCP connections established successfully
+                          </simpara></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                          <term>senderr</term>
+                          <listitem><simpara>
+                           IPv4 or IPv6 TCP sockets send errors
+                          </simpara></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                          <term>recverr</term>
+                          <listitem><simpara>
+                           IPv4 or IPv6 TCP sockets receive errors
+                          </simpara></listitem>
+                        </varlistentry>
+
+                      </variablelist>
+                    </listitem>
+                  </varlistentry><!-- end of tcp -->
+
+                </variablelist>
+              </listitem>
+            </varlistentry><!-- end of ipv4 | ipv6 -->
+
+          </variablelist>
+        </listitem>
+      </varlistentry><!-- end of socket -->
+
     </variablelist>
 
     <para>
