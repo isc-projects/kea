@@ -444,9 +444,8 @@ public:
      */
 
     // Implementation of InMemoryClient::add()
-    result::Result add(const ConstRRsetPtr& rrset,
-                       const ConstRRsetPtr& sig_rrset,
-                       const Name& zone_name, ZoneData& zone_data)
+    void add(const ConstRRsetPtr& rrset, const ConstRRsetPtr& sig_rrset,
+             const Name& zone_name, ZoneData& zone_data)
     {
         // Sanitize input.  This will cause an exception to be thrown
         // if the input RRset is empty.
@@ -461,7 +460,7 @@ public:
 
         if (rrset->getType() == RRType::NSEC3()) {
             addRdataSet(zone_name, zone_data, rrset, sig_rrset);
-            return (result::SUCCESS);
+            return;
         }
 
         // Add wildcards possibly contained in the owner name to the domain
@@ -472,7 +471,7 @@ public:
 
         addRdataSet(zone_name, zone_data, rrset, sig_rrset);
 
-        return (result::SUCCESS);
+        return;
     }
 };
 
@@ -535,10 +534,7 @@ public:
                 sig_rrset = sig_it->second;
                 node_rrsigsets_.erase(sig_it);
             }
-            const result::Result result =
-                client_impl_->add(val.second, sig_rrset, zone_name_,
-                                  zone_data_);
-            assert(result == result::SUCCESS);
+            client_impl_->add(val.second, sig_rrset, zone_name_, zone_data_);
         }
 
         // Right now, we don't accept RRSIG without covered RRsets (this
@@ -759,10 +755,10 @@ InMemoryClient::add(const isc::dns::Name& zone_name,
 
     const ConstRRsetPtr sig_rrset =
         rrset ? rrset->getRRsig() : ConstRRsetPtr();
-    const result::Result ret(impl_->add(rrset, sig_rrset,
-                                        zone_name, *result.zone_data));
+    impl_->add(rrset, sig_rrset, zone_name, *result.zone_data);
 
-    return (ret);
+    // add() doesn't allow duplicate add, so we always return SUCCESS.
+    return (result::SUCCESS);
 }
 
 namespace {
