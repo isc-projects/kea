@@ -53,9 +53,8 @@ const char* rrset_data[] = {
     "68 3600 300 3600000 3600",
     "a.example.org. 3600 IN A 192.168.0.1\n" // RRset containing 2 RRs
     "a.example.org. 3600 IN A 192.168.0.2",
-// This will trigger a bug in the implementation
-//     "a.example.org. 3600 IN RRSIG A 5 3 3600 20150420235959 20051021000000 "
-//     "40430 example.org. FAKEFAKE",
+    "a.example.org. 3600 IN RRSIG A 5 3 3600 20150420235959 20051021000000 "
+    "40430 example.org. FAKEFAKE",
     "a.example.org. 3600 IN MX 10 mail.example.org.",
     "a.example.org. 3600 IN RRSIG MX 5 3 3600 20150420235959 20051021000000 "
     "40430 example.org. FAKEFAKEFAKE",
@@ -206,7 +205,7 @@ TEST_F(MemoryClientTest, loadFromIterator) {
     rrset = iterator->getNextRRset();
     EXPECT_TRUE(rrset);
     EXPECT_EQ(RRType::A(), rrset->getType());
-    EXPECT_EQ(0, rrset->getRRsigDataCount()); // this is unsigned (for now)
+    EXPECT_EQ(1, rrset->getRRsigDataCount()); // also signed
 
     // There's nothing else in this iterator
     EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
