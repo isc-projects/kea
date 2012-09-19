@@ -110,7 +110,6 @@ public:
     unsigned int zone_count_;
     ZoneTable* zone_table_;
     FileNameTree* file_name_tree_;
-    ConstRRsetPtr last_rrset_;
 
     // Common process for zone load.
     // rrset_installer is a functor that takes another functor as an argument,
@@ -566,20 +565,11 @@ InMemoryClient::InMemoryClientImpl::load(
     SegmentObjectHolder<ZoneData, RRClass> holder(
         mem_sgmt_, ZoneData::create(mem_sgmt_, zone_name), rrclass_);
 
-    assert(!last_rrset_);
-
-    try {
-        Loader loader(this);
-        rrset_installer(boost::bind(&Loader::addFromLoad, &loader,
-                                    _1, zone_name, holder.get()));
-        // Add any last RRsets that were left
-        loader.flushNodeRRsets(zone_name, holder.get());
-    } catch (...) {
-        last_rrset_ = ConstRRsetPtr();
-        throw;
-    }
-
-    assert(!last_rrset_);
+    Loader loader(this);
+    rrset_installer(boost::bind(&Loader::addFromLoad, &loader,
+                                _1, zone_name, holder.get()));
+    // Add any last RRsets that were left
+    loader.flushNodeRRsets(zone_name, holder.get());
 
     const ZoneNode* origin_node = holder.get()->getOriginNode();
     const RdataSet* set = origin_node->getData();
@@ -735,8 +725,6 @@ result::Result
 InMemoryClient::add(const isc::dns::Name& zone_name,
                     const ConstRRsetPtr& rrset)
 {
-    assert(!impl_->last_rrset_);
-
     const ZoneTable::FindResult result =
         impl_->zone_table_->findZone(zone_name);
     if (result.code != result::SUCCESS) {
@@ -747,8 +735,6 @@ InMemoryClient::add(const isc::dns::Name& zone_name,
         rrset ? rrset->getRRsig() : ConstRRsetPtr();
     const result::Result ret(impl_->add(rrset, sig_rrset,
                                         zone_name, *result.zone_data));
-
-    assert(!impl_->last_rrset_);
 
     return (ret);
 }
