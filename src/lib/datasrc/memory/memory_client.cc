@@ -41,6 +41,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <algorithm>
 #include <map>
@@ -109,7 +110,6 @@ public:
     unsigned int zone_count_;
     ZoneTable* zone_table_;
     FileNameTree* file_name_tree_;
-    ConstRRsetPtr last_rrset_;
 
     // Common process for zone load.
     // rrset_installer is a functor that takes another functor as an argument,
@@ -171,7 +171,8 @@ public:
      * If such condition is found, it throws AddError.
      */
     void contextCheck(const Name& zone_name, const AbstractRRset& rrset,
-                      const RdataSet* set) const {
+                      const RdataSet* set) const
+    {
         // Ensure CNAME and other type of RR don't coexist for the same
         // owner name except with NSEC, which is the only RR that can coexist
         // with CNAME (and also RRSIG, which is handled separately)
@@ -247,7 +248,23 @@ public:
                       << rrset->getName() << " which isn't supported");
         }
 
-        NameComparisonResult compare(zone_name.compare(rrset->getName()));
+        // For RRSIGs, check consistency of the type covered.
+        // We know the RRset isn't empty, so the following check is safe.
+        if (rrset->getType() == RRType::RRSIG()) {
+            RdataIteratorPtr rit = rrset->getRdataIterator();
+            const RRType covered = dynamic_cast<const generic::RRSIG&>(
+                rit->getCurrent()).typeCovered();
+            for (rit->next(); !rit->isLast(); rit->next()) {
+                if (dynamic_cast<const generic::RRSIG&>(
+                        rit->getCurrent()).typeCovered() != covered) {
+                    isc_throw(AddError, "RRSIG contains mixed covered types: "
+                              << rrset->toText());
+                }
+            }
+        }
+
+        const NameComparisonResult compare =
+            zone_name.compare(rrset->getName());
         if (compare.getRelation() != NameComparisonResult::SUPERDOMAIN &&
             compare.getRelation() != NameComparisonResult::EQUAL)
         {
@@ -262,10 +279,9 @@ public:
         // Even though the protocol specifically doesn't completely ban such
         // usage, we refuse to load a zone containing such RR in order to
         // keep the lookup logic simpler and more predictable.
-        // See RFC4592 and (for DNAME) draft-ietf-dnsext-rfc2672bis-dname
-        // for more technical background.  Note also that BIND 9 refuses
-        // NS at a wildcard, so in that sense we simply provide compatible
-        // behavior.
+        // See RFC4592 and (for DNAME) RFC6672 for more technical background.
+        // Note also that BIND 9 refuses NS at a wildcard, so in that sense
+        // we simply provide compatible behavior.
         if (rrset->getName().isWildcard()) {
             if (rrset->getType() == RRType::NS()) {
                 LOG_ERROR(logger, DATASRC_MEMORY_MEM_WILDCARD_NS).
@@ -299,7 +315,8 @@ public:
 
     void addNSEC3(const ConstRRsetPtr rrset,
                   const ConstRRsetPtr rrsig,
-                  ZoneData& zone_data) {
+                  ZoneData& zone_data)
+    {
         // We know rrset has exactly one RDATA
         const generic::NSEC3& nsec3_rdata =
             dynamic_cast<const generic::NSEC3&>(
@@ -343,96 +360,57 @@ public:
     }
 
     void addRdataSet(const Name& zone_name, ZoneData& zone_data,
-                     const ConstRRsetPtr rrset, const ConstRRsetPtr rrsig) {
-        // Only one of these can be passed at a time.
-        assert(!(rrset && rrsig));
-
-        // If rrsig is passed, validate it against the last-saved rrset.
-        if (rrsig) {
-            // The covered RRset should have been saved by now.
-            if (!last_rrset_) {
-                isc_throw(AddError,
-                          "RRSIG is being added, "
-                          "but doesn't follow its covered RR: "
-                          << rrsig->getName());
-            }
-
-            if (rrsig->getName() != last_rrset_->getName()) {
-                isc_throw(AddError,
-                          "RRSIG is being added, "
-                          "but doesn't match the last RR's name: "
-                          << last_rrset_->getName() << " vs. "
-                          << rrsig->getName());
-            }
-
-            // Consistency of other types in rrsig are checked in addRRsig().
-            RdataIteratorPtr rit = rrsig->getRdataIterator();
-            const RRType covered = dynamic_cast<const generic::RRSIG&>(
-                rit->getCurrent()).typeCovered();
-
-            if (covered != last_rrset_->getType()) {
-                isc_throw(AddError,
-                          "RRSIG is being added, "
-                          "but doesn't match the last RR's type: "
-                          << last_rrset_->getType() << " vs. "
-                          << covered);
-            }
-        }
-
-        if (!last_rrset_) {
-            last_rrset_ = rrset;
-            return;
-        }
-
-        if (last_rrset_->getType() == RRType::NSEC3()) {
-            addNSEC3(last_rrset_, rrsig, zone_data);
+                     const ConstRRsetPtr rrset, const ConstRRsetPtr rrsig)
+    {
+        if (rrset->getType() == RRType::NSEC3()) {
+            addNSEC3(rrset, rrsig, zone_data);
         } else {
             ZoneNode* node;
-            zone_data.insertName(mem_sgmt_, last_rrset_->getName(), &node);
+            zone_data.insertName(mem_sgmt_, rrset->getName(), &node);
 
-            RdataSet* set = node->getData();
+            RdataSet* rdataset_head = node->getData();
 
             // Checks related to the surrounding data.
             // Note: when the check fails and the exception is thrown,
             // it may break strong exception guarantee.  At the moment
             // we prefer code simplicity and don't bother to introduce
             // complicated recovery code.
-            contextCheck(zone_name, *last_rrset_, set);
+            contextCheck(zone_name, *rrset, rdataset_head);
 
-            if (RdataSet::find(set, last_rrset_->getType()) != NULL) {
+            if (RdataSet::find(rdataset_head, rrset->getType()) != NULL) {
                 isc_throw(AddError,
                           "RRset of the type already exists: "
-                          << last_rrset_->getName() << " (type: "
-                          << last_rrset_->getType() << ")");
+                          << rrset->getName() << " (type: "
+                          << rrset->getType() << ")");
             }
 
             RdataEncoder encoder;
-            RdataSet *new_set = RdataSet::create(mem_sgmt_, encoder,
-                                                 last_rrset_, rrsig);
-            new_set->next = set;
-            node->setData(new_set);
+            RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder, rrset,
+                                                  rrsig);
+            rdataset->next = rdataset_head;
+            node->setData(rdataset);
 
             // Ok, we just put it in
 
             // If this RRset creates a zone cut at this node, mark the
             // node indicating the need for callback in find().
-            if (last_rrset_->getType() == RRType::NS() &&
-                last_rrset_->getName() != zone_name) {
+            if (rrset->getType() == RRType::NS() &&
+                rrset->getName() != zone_name) {
                 node->setFlag(ZoneNode::FLAG_CALLBACK);
                 // If it is DNAME, we have a callback as well here
-            } else if (last_rrset_->getType() == RRType::DNAME()) {
+            } else if (rrset->getType() == RRType::DNAME()) {
                 node->setFlag(ZoneNode::FLAG_CALLBACK);
             }
 
             // If we've added NSEC3PARAM at zone origin, set up NSEC3
             // specific data or check consistency with already set up
             // parameters.
-            if (last_rrset_->getType() == RRType::NSEC3PARAM() &&
-                last_rrset_->getName() == zone_name) {
+            if (rrset->getType() == RRType::NSEC3PARAM() &&
+                rrset->getName() == zone_name) {
                 // We know rrset has exactly one RDATA
                 const generic::NSEC3PARAM& param =
                     dynamic_cast<const generic::NSEC3PARAM&>
-                      (last_rrset_->getRdataIterator()->getCurrent());
+                      (rrset->getRdataIterator()->getCurrent());
 
                 NSEC3Data* nsec3_data = zone_data.getNSEC3Data();
                 if (nsec3_data == NULL) {
@@ -450,91 +428,151 @@ public:
                                      salt_data, salt_len) != 0)) {
                         isc_throw(AddError,
                                   "NSEC3PARAM with inconsistent parameters: "
-                                  << last_rrset_->toText());
+                                  << rrset->toText());
                     }
                 }
-            } else if (last_rrset_->getType() == RRType::NSEC()) {
-                // If it is NSEC signed zone, so we put a flag there
-                // (flag is enough)
+            } else if (rrset->getType() == RRType::NSEC()) {
+                // If it is NSEC signed zone, we mark the zone as signed
+                // (conceptually "signed" is a broader notion but our current
+                // zone finder implementation regards "signed" as "NSEC
+                // signed")
                 zone_data.setSigned(true);
             }
         }
-
-        last_rrset_ = rrset;
     }
-
-    result::Result addRRsig(const ConstRRsetPtr sig_rrset,
-                            const Name& zone_name, ZoneData& zone_data)
-    {
-        // Check consistency of the type covered.
-        // We know the RRset isn't empty, so the following check is safe.
-        RdataIteratorPtr rit = sig_rrset->getRdataIterator();
-        const RRType covered = dynamic_cast<const generic::RRSIG&>(
-            rit->getCurrent()).typeCovered();
-        for (rit->next(); !rit->isLast(); rit->next()) {
-            if (dynamic_cast<const generic::RRSIG&>(
-                    rit->getCurrent()).typeCovered() != covered) {
-                isc_throw(AddError, "RRSIG contains mixed covered types: "
-                          << sig_rrset->toText());
-            }
-        }
-
-        addRdataSet(zone_name, zone_data, ConstRRsetPtr(), sig_rrset);
-        return (result::SUCCESS);
-    }
-
-    /*
-     * Implementation of longer methods. We put them here, because the
-     * access is without the impl_-> and it will get inlined anyway.
-     */
 
     // Implementation of InMemoryClient::add()
-    result::Result add(const ConstRRsetPtr& rrset,
-                       const Name& zone_name, ZoneData& zone_data)
+    void add(const ConstRRsetPtr& rrset, const ConstRRsetPtr& sig_rrset,
+             const Name& zone_name, ZoneData& zone_data)
     {
         // Sanitize input.  This will cause an exception to be thrown
         // if the input RRset is empty.
         addValidation(zone_name, rrset);
+        if (sig_rrset) {
+            addValidation(zone_name, sig_rrset);
+        }
 
         // OK, can add the RRset.
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEMORY_MEM_ADD_RRSET).
             arg(rrset->getName()).arg(rrset->getType()).arg(zone_name);
 
-        if (rrset->getType() == RRType::NSEC3()) {
-            addRdataSet(zone_name, zone_data, rrset, ConstRRsetPtr());
-            return (result::SUCCESS);
-        }
-
-        // RRSIGs are special in various points, so we handle it in a
-        // separate dedicated method.
-        if (rrset->getType() == RRType::RRSIG()) {
-            return (addRRsig(rrset, zone_name, zone_data));
-        }
-
         // Add wildcards possibly contained in the owner name to the domain
-        // tree.
+        // tree.  This can only happen for the normal (non-NSEC3) tree.
         // Note: this can throw an exception, breaking strong exception
-        // guarantee.  (see also the note for contextCheck() below).
-        addWildcards(zone_name, zone_data, rrset->getName());
+        // guarantee.  (see also the note for the call to contextCheck()
+        // above).
+        if (rrset->getType() != RRType::NSEC3()) {
+            addWildcards(zone_name, zone_data, rrset->getName());
+        }
 
-        addRdataSet(zone_name, zone_data, rrset, ConstRRsetPtr());
+        addRdataSet(zone_name, zone_data, rrset, sig_rrset);
 
-        return (result::SUCCESS);
+        return;
     }
+};
 
-    /*
-     * Wrapper around above.
-     */
-    void addFromLoad(const ConstRRsetPtr& set,
-                     const Name& zone_name, ZoneData* zone_data)
-    {
-        switch (add(set, zone_name, *zone_data)) {
-        case result::SUCCESS:
-            return;
-        default:
-            assert(0);
+// A helper internal class for load().  make it non-copyable to avoid
+// accidental copy.
+//
+// The current internal implementation expects that both a normal
+// (non RRSIG) RRset and (when signed) its RRSIG are added at once.
+// Also in the current implementation, the input sequence of RRsets
+// are grouped with their owner name (so once a new owner name is encountered,
+// no subsequent RRset has the previous owner name), but the ordering
+// in the same group is not fixed.  So we hold all RRsets of the same
+// owner name in node_rrsets_ and node_rrsigsets_, and add the matching
+// pairs of RRsets to the zone when we see a new owner name.
+//
+// The caller is responsible for adding the RRsets of the last group
+// in the input sequence by explicitly calling flushNodeRRsets() at the
+// end.  It's cleaner and more robust if we let the destructor of this class
+// do it, but since we cannot guarantee the adding operation is exception free,
+// we don't choose that option to maintain the common expectation for
+// destructors.
+class InMemoryClient::Loader : boost::noncopyable {
+    typedef std::map<RRType, ConstRRsetPtr> NodeRRsets;
+    typedef NodeRRsets::value_type NodeRRsetsVal;
+public:
+    Loader(InMemoryClientImpl* client_impl, const Name& zone_name,
+           ZoneData& zone_data) :
+        client_impl_(client_impl), zone_name_(zone_name), zone_data_(zone_data)
+    {}
+    void addFromLoad(const ConstRRsetPtr& rrset) {
+        // If we see a new name, flush the temporary holders, adding the
+        // pairs of RRsets and RRSIGs of the previous name to the zone.
+        if ((!node_rrsets_.empty() || !node_rrsigsets_.empty()) &&
+            getCurrentName() != rrset->getName()) {
+            flushNodeRRsets();
+        }
+
+        // Store this RRset until it can be added to the zone.  The current
+        // implementation requires RRs of the same RRset should be added at
+        // once, so we check the "duplicate" here.
+        const bool is_rrsig = rrset->getType() == RRType::RRSIG();
+        NodeRRsets& node_rrsets = is_rrsig ? node_rrsigsets_ : node_rrsets_;
+        const RRType& rrtype = is_rrsig ?
+            getCoveredType(rrset) : rrset->getType();
+        if (!node_rrsets.insert(NodeRRsetsVal(rrtype, rrset)).second) {
+            isc_throw(AddError,
+                      "Duplicate add of the same type of"
+                      << (is_rrsig ? " RRSIG" : "") << " RRset: "
+                      << rrset->getName() << "/" << rrtype);
         }
     }
+    void flushNodeRRsets() {
+        BOOST_FOREACH(NodeRRsetsVal val, node_rrsets_) {
+            // Identify the corresponding RRSIG for the RRset, if any.
+            // If found add both the RRset and its RRSIG at once.
+            ConstRRsetPtr sig_rrset;
+            NodeRRsets::iterator sig_it =
+                node_rrsigsets_.find(val.first);
+            if (sig_it != node_rrsigsets_.end()) {
+                sig_rrset = sig_it->second;
+                node_rrsigsets_.erase(sig_it);
+            }
+            client_impl_->add(val.second, sig_rrset, zone_name_, zone_data_);
+        }
+
+        // Right now, we don't accept RRSIG without covered RRsets (this
+        // should eventually allowed, but to do so we'll need to update the
+        // finder).
+        if (!node_rrsigsets_.empty()) {
+            isc_throw(AddError, "RRSIG is added without covered RRset for "
+                      << getCurrentName());
+        }
+
+        node_rrsets_.clear();
+        node_rrsigsets_.clear();
+    }
+private:
+    // A helper to identify the covered type of an RRSIG.
+    static RRType getCoveredType(const ConstRRsetPtr& sig_rrset) {
+        RdataIteratorPtr it = sig_rrset->getRdataIterator();
+        // Empty RRSIG shouldn't be passed either via a master file or another
+        // data source iterator, but it could still happen if the iterator
+        // has a bug.  We catch and reject such cases.
+        if (it->isLast()) {
+            isc_throw(isc::Unexpected,
+                      "Empty RRset is passed in-memory loader, name: "
+                      << sig_rrset->getName());
+        }
+        return (dynamic_cast<const generic::RRSIG&>(it->getCurrent()).
+                typeCovered());
+    }
+    const Name& getCurrentName() const {
+        if (!node_rrsets_.empty()) {
+            return (node_rrsets_.begin()->second->getName());
+        }
+        assert(!node_rrsigsets_.empty());
+        return (node_rrsigsets_.begin()->second->getName());
+    }
+
+private:
+    InMemoryClientImpl* client_impl_;
+    const Name& zone_name_;
+    ZoneData& zone_data_;
+    NodeRRsets node_rrsets_;
+    NodeRRsets node_rrsigsets_;
 };
 
 result::Result
@@ -544,31 +582,17 @@ InMemoryClient::InMemoryClientImpl::load(
     boost::function<void(LoadCallback)> rrset_installer)
 {
     SegmentObjectHolder<ZoneData, RRClass> holder(
-        mem_sgmt_, ZoneData::create(mem_sgmt_, zone_name),
-        rrclass_);
+        mem_sgmt_, ZoneData::create(mem_sgmt_, zone_name), rrclass_);
 
-    assert(!last_rrset_);
-
-    try {
-        rrset_installer(boost::bind(&InMemoryClientImpl::addFromLoad, this,
-                                    _1, zone_name, holder.get()));
-        // Add any last RRset that was left
-        addRdataSet(zone_name, *holder.get(),
-                    ConstRRsetPtr(), ConstRRsetPtr());
-    } catch (...) {
-        last_rrset_ = ConstRRsetPtr();
-        throw;
-    }
-
-    assert(!last_rrset_);
+    Loader loader(this, zone_name, *holder.get());
+    rrset_installer(boost::bind(&Loader::addFromLoad, &loader, _1));
+    // Add any last RRsets that were left
+    loader.flushNodeRRsets();
 
     const ZoneNode* origin_node = holder.get()->getOriginNode();
     const RdataSet* set = origin_node->getData();
     // If the zone is NSEC3-signed, check if it has NSEC3PARAM
     if (holder.get()->isNSEC3Signed()) {
-        // Note: origin_data_ is set on creation of ZoneData, and the load
-        // process only adds new nodes (and their data), so this assertion
-        // should hold.
         if (RdataSet::find(set, RRType::NSEC3PARAM()) == NULL) {
             LOG_WARN(logger, DATASRC_MEMORY_MEM_NO_NSEC3PARAM).
                 arg(zone_name).arg(rrclass_);
@@ -639,30 +663,8 @@ masterLoadWrapper(const char* const filename, const Name& origin,
 void
 generateRRsetFromIterator(ZoneIterator* iterator, LoadCallback callback) {
     ConstRRsetPtr rrset;
-    vector<ConstRRsetPtr> rrsigs; // placeholder for RRSIGs until "commitable".
-
-    // The current internal implementation assumes an RRSIG is always added
-    // after the RRset they cover.  So we store any RRSIGs in 'rrsigs' until
-    // it's safe to add them; based on our assumption if the owner name
-    // changes, all covered RRsets of the previous name should have been
-    // installed and any pending RRSIGs can be added at that point.  RRSIGs
-    // of the last name from the iterator must be added separately.
     while ((rrset = iterator->getNextRRset()) != NULL) {
-        if (!rrsigs.empty() && rrset->getName() != rrsigs[0]->getName()) {
-            BOOST_FOREACH(ConstRRsetPtr sig_rrset, rrsigs) {
-                callback(sig_rrset);
-            }
-            rrsigs.clear();
-        }
-        if (rrset->getType() == RRType::RRSIG()) {
-            rrsigs.push_back(rrset);
-        } else {
-            callback(rrset);
-        }
-    }
-
-    BOOST_FOREACH(ConstRRsetPtr sig_rrset, rrsigs) {
-        callback(sig_rrset);
+        callback(rrset);
     }
 }
 }
@@ -736,29 +738,20 @@ InMemoryClient::getFileName(const isc::dns::Name& zone_name) const {
 
 result::Result
 InMemoryClient::add(const isc::dns::Name& zone_name,
-                    const ConstRRsetPtr& rrset) {
-    assert(!impl_->last_rrset_);
-
-    ZoneTable::FindResult result(impl_->zone_table_->findZone(zone_name));
+                    const ConstRRsetPtr& rrset)
+{
+    const ZoneTable::FindResult result =
+        impl_->zone_table_->findZone(zone_name);
     if (result.code != result::SUCCESS) {
         isc_throw(DataSourceError, "No such zone: " + zone_name.toText());
     }
 
-    result::Result ret(impl_->add(rrset, zone_name, *result.zone_data));
-    // Add any associated RRSIG too. This has to be done here, as both
-    // the RRset and its RRSIG have to be passed when constructing an
-    // RdataSet.
-    if ((ret == result::SUCCESS) && rrset->getRRsig()) {
-        impl_->add(rrset->getRRsig(), zone_name, *result.zone_data);
-    }
+    const ConstRRsetPtr sig_rrset =
+        rrset ? rrset->getRRsig() : ConstRRsetPtr();
+    impl_->add(rrset, sig_rrset, zone_name, *result.zone_data);
 
-    // Add any last RRset that was left
-    impl_->addRdataSet(zone_name, *result.zone_data,
-                       ConstRRsetPtr(), ConstRRsetPtr());
-
-    assert(!impl_->last_rrset_);
-
-    return (ret);
+    // add() doesn't allow duplicate add, so we always return SUCCESS.
+    return (result::SUCCESS);
 }
 
 namespace {
