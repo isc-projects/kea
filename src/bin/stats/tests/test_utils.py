@@ -107,19 +107,10 @@ class MockMsgq:
 
     def run(self):
         self._started.set()
-        try:
-            self.msgq.run()
-        except Exception:
-            pass
-        finally:
-            # explicitly shut down the socket of the msgq before
-            # shutting down the msgq
-            self.msgq.listen_socket.shutdown(msgq.socket.SHUT_RDWR)
-            self.msgq.shutdown()
+        self.msgq.run()
 
     def shutdown(self):
-        # do nothing
-        pass
+        self.msgq.shutdown()
 
 class MockCfgmgr:
     def __init__(self):
