@@ -502,20 +502,25 @@ public:
     void addFromLoad(const ConstRRsetPtr& rrset,
                      const Name& zone_name, ZoneData* zone_data)
     {
+        // If we see a new name, flush the temporary holders, adding the
+        // pairs of RRsets and RRSIGs of the previous name to the zone.
         if ((!node_rrsets_.empty() || !node_rrsigsets_.empty()) &&
             getCurrentName() != rrset->getName()) {
             flushNodeRRsets(zone_name, zone_data);
         }
-        if (rrset->getType() == RRType::RRSIG()) {
-            node_rrsigsets_.insert(NodeRRsetsVal(getCoveredType(rrset),
-                                                 rrset));
-        } else {
-            if (!node_rrsets_.insert(NodeRRsetsVal(rrset->getType(),
-                                                   rrset)).second) {
-                isc_throw(AddError,
-                          "Duplicate add of the same type of RRset: "
-                          << rrset->getName() << "/" << rrset->getType());
-            }
+
+        // Store this RRset until it can be added to the zone.  The current
+        // implementation requires RRs of the same RRset should be added at
+        // once, so we check the "duplicate" here.
+        const bool is_rrsig = rrset->getType() == RRType::RRSIG();
+        NodeRRsets& node_rrsets = is_rrsig ? node_rrsigsets_ : node_rrsets_;
+        const RRType& rrtype = is_rrsig ?
+            getCoveredType(rrset) : rrset->getType();
+        if (!node_rrsets.insert(NodeRRsetsVal(rrtype, rrset)).second) {
+            isc_throw(AddError,
+                      "Duplicate add of the same type of"
+                      << (is_rrsig ? " RRSIG" : "") << " RRset: "
+                      << rrset->getName() << "/" << rrtype);
         }
     }
     void flushNodeRRsets(const Name& zone_name, ZoneData* zone_data) {
