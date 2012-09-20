@@ -466,8 +466,6 @@ public:
         }
 
         addRdataSet(zone_name, zone_data, rrset, sig_rrset);
-
-        return;
     }
 };
 
