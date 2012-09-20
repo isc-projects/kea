@@ -139,8 +139,6 @@ Feature: Xfrin incoming notify handling
     # The counts of rejection would be between 1 and 2. They are not
     # fixed. It would depend on timing or the platform.
     The counter xfrrej for the zone _SERVER_ should be greater than 0
-    The counter xfrrej for the zone _SERVER_ should be less than 3
     The counter xfrrej for the zone example.org. should be greater than 0
-    The counter xfrrej for the zone example.org. should be less than 3
     The counter xfrreqdone for the zone _SERVER_ should be 0
     The counter xfrreqdone for the zone example.org. should be 0
