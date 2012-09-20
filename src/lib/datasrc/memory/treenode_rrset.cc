@@ -278,6 +278,13 @@ TreeNodeRRset::getSigRdataIterator() const {
 
 RRsetPtr
 TreeNodeRRset::getRRsig() const {
+    // Shortcut: if DNSSEC is disabled for the RRset, simply return NULL.
+    // The generic code below provides the same behavior, but with much more
+    // overhead.
+    if (!dnssec_ok_) {
+        return (RRsetPtr());
+    }
+
     RRsetPtr tmp_rrset;
     for (RdataIteratorPtr rit = getSigRdataIterator();
          !rit->isLast();
