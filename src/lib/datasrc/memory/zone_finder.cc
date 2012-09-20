@@ -64,14 +64,15 @@ createTreeNodeRRset(const ZoneNode* node,
     const bool dnssec = ((options & ZoneFinder::FIND_DNSSEC) != 0);
     if (node != NULL && rdataset != NULL) {
         if (realname != NULL) {
-            return TreeNodeRRsetPtr(new TreeNodeRRset(*realname, rrclass, node,
-                                                      rdataset, dnssec));
+            return (TreeNodeRRsetPtr(new TreeNodeRRset(*realname, rrclass,
+                                                       node, rdataset,
+                                                       dnssec)));
         } else {
-            return TreeNodeRRsetPtr(new TreeNodeRRset(rrclass, node,
-                                                      rdataset, dnssec));
+            return (TreeNodeRRsetPtr(new TreeNodeRRset(rrclass, node, rdataset,
+                                                       dnssec)));
         }
     } else {
-        return TreeNodeRRsetPtr();
+        return (TreeNodeRRsetPtr());
     }
 }
 
