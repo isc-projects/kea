@@ -502,16 +502,6 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.check_transfer_acl(acl_setter)
         self.assertGreater(self.get_counter('xfrrej'), 0)
 
-    def test_transfer_acl_with_nonetype_xfrrej(self):
-        # ACL checks only with the default ACL and NoneType xfrrej
-        # counter
-        def acl_setter(acl):
-            self.xfrsess._acl = acl
-        self.xfrsess._counter_xfrrej = None
-        self.assertIsNone(self._zone_name_xfrrej)
-        self.check_transfer_acl(acl_setter)
-        self.assertIsNone(self._zone_name_xfrrej)
-
     def test_transfer_acl_with_notcallable_xfrrej(self):
         # ACL checks only with the default ACL and not callable xfrrej
         # counter
@@ -901,20 +891,6 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
         self.assertEqual(self.sock.readsent(), b"success")
         self.assertGreater(self.get_counter('xfrreqdone'), 0)
-
-    def test_dns_xfrout_start_with_nonetype_xfrreqdone(self):
-        def noerror(msg, name, rrclass):
-            return Rcode.NOERROR()
-        self.xfrsess._xfrout_setup = noerror
-
-        def myreply(msg, sock):
-            self.sock.send(b"success")
-
-        self.assertIsNone(self._zone_name_xfrreqdone)
-        self.xfrsess._reply_xfrout_query = myreply
-        self.xfrsess._counter_xfrreqdone = None
-        self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
-        self.assertIsNone(self._zone_name_xfrreqdone)
 
     def test_dns_xfrout_start_with_notcallable_xfrreqdone(self):
         def noerror(msg, name, rrclass):
