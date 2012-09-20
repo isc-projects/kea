@@ -180,6 +180,8 @@ public:
             {"example.org. 300 IN NS ns.example.org.", &rr_ns_},
             {"example.org. 300 IN A 192.0.2.1", &rr_a_},
             {"ns.example.org. 300 IN A 192.0.2.2", &rr_ns_a_},
+            // This one will place rr_ns_a_ at a zone cut, making it a glue:
+            {"ns.example.org. 300 IN NS 192.0.2.2", &rr_ns_ns_},
             {"ns.example.org. 300 IN AAAA 2001:db8::2", &rr_ns_aaaa_},
             {"cname.example.org. 300 IN CNAME canonical.example.org",
              &rr_cname_},
@@ -370,6 +372,7 @@ public:
         rr_ns_aaaa_,
         // A of example.org
         rr_a_;
+    RRsetPtr rr_ns_ns_;         // used to make rr_ns_a_ a glue.
     RRsetPtr rr_cname_;         // CNAME in example.org (RDATA will be added)
     RRsetPtr rr_cname_a_; // for mixed CNAME + A case
     RRsetPtr rr_dname_;         // DNAME in example.org (RDATA will be added)
@@ -711,6 +714,9 @@ TEST_F(InMemoryZoneFinderTest, glue) {
     EXPECT_NO_THROW(addZoneData(rr_grandchild_ns_));
     // glue under the deeper zone cut
     EXPECT_NO_THROW(addZoneData(rr_grandchild_glue_));
+    // glue 'at the' zone cut
+    EXPECT_NO_THROW(addZoneData(rr_ns_a_));
+    EXPECT_NO_THROW(addZoneData(rr_ns_ns_));
 
     // by default glue is hidden due to the zone cut
     findTest(rr_child_glue_->getName(), RRType::A(), ZoneFinder::DELEGATION,
@@ -743,6 +749,13 @@ TEST_F(InMemoryZoneFinderTest, glue) {
     findTest(Name("www.grand.child.example.org"), RRType::TXT(),
              ZoneFinder::DELEGATION, true, rr_child_ns_,
              ZoneFinder::RESULT_DEFAULT, NULL, ZoneFinder::FIND_GLUE_OK);
+
+    // Glue at a zone cut
+    findTest(Name("ns.example.org"), RRType::A(),
+             ZoneFinder::DELEGATION, true, rr_ns_ns_);
+    findTest(Name("ns.example.org"), RRType::A(), ZoneFinder::SUCCESS,
+             true, rr_ns_a_, ZoneFinder::RESULT_DEFAULT,
+             NULL, ZoneFinder::FIND_GLUE_OK);
 }
 
 /**
