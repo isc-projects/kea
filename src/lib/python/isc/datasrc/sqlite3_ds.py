@@ -73,6 +73,8 @@ def create(cur):
         cur.execute("CREATE INDEX records_byrname ON records (rname)")
         cur.execute("""CREATE INDEX records_bytype_and_rname ON records
                        (rdtype, rname)""")
+        cur.execute("""CREATE INDEX records_byrname_and_rdtype ON records
+                       (rname, rdtype)""")
         cur.execute("""CREATE TABLE nsec3 (id INTEGER PRIMARY KEY,
                     zone_id INTEGER NOT NULL,
                     hash TEXT NOT NULL COLLATE NOCASE,
