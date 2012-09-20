@@ -1092,7 +1092,7 @@ AC_TRY_LINK(
       var_optreset_exists=no]
 )
 AM_CONDITIONAL(HAVE_OPTRESET, test "x$var_optreset_exists" != "xno")
-AM_COND_IF([HAVE_OPTRESET], [AC_DEFINE([HAVE_OPT_RESET], [1], [Check for optreset?])])
+AM_COND_IF([HAVE_OPTRESET], [AC_DEFINE([HAVE_OPTRESET], [1], [Check for optreset?])])
 
 AC_CONFIG_FILES([Makefile
                  doc/Makefile
