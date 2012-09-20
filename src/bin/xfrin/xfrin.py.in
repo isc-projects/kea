@@ -420,9 +420,9 @@ class XfrinIXFRAdd(XfrinState):
             conn.get_transfer_stats().ixfr_changeset_count += 1
             soa_serial = get_soa_serial(rr.get_rdata()[0])
             if soa_serial == conn._end_serial:
-                # FIXME: It's insecure to do a full commit here, due
-                # to the fact that the message we're working on might not
-                # be signed right now.
+                # The final part is there. Check all was signed
+                # and commit it to the database.
+                conn._check_response_tsig_last()
                 conn._diff.commit()
                 self.set_xfrstate(conn, XfrinIXFREnd())
                 return True
@@ -432,8 +432,10 @@ class XfrinIXFRAdd(XfrinState):
                                          str(conn._current_serial) +
                                          ', got ' + str(soa_serial))
             else:
-                conn._check_response_tsig_last()
-                conn._diff.commit()
+                # Apply a change to the database. But don't commit it yet,
+                # we can't know if the message is/will be properly signed.
+                # A complete commit will happen after the last bit.
+                conn._diff.apply()
                 self.set_xfrstate(conn, XfrinIXFRDeleteSOA())
                 return False
         conn._diff.add_data(rr)
