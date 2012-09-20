@@ -582,10 +582,13 @@ InMemoryZoneFinder::find_internal(const isc::dns::Name& name,
 
     // If the node callback is enabled, this may be a zone cut.  If it
     // has a NS RR, we should return a delegation, but not in the apex.
-    // There is one exception: the case for DS query, which should always
-    // be considered in-zone lookup.
+    // There are two exceptions:
+    // - the case for DS query, which should always be considered in-zone
+    //   lookup.
+    // - when we are looking for glue records (FIND_GLUE_OK)
     if (node->getFlag(ZoneNode::FLAG_CALLBACK) &&
-            node != zone_data_.getOriginNode() && type != RRType::DS()) {
+        (options & FIND_GLUE_OK) == 0 &&
+        node != zone_data_.getOriginNode() && type != RRType::DS()) {
         found = RdataSet::find(node->getData(), RRType::NS());
         if (found != NULL) {
             LOG_DEBUG(logger, DBG_TRACE_DATA,
