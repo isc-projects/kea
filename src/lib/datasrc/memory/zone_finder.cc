@@ -561,10 +561,6 @@ InMemoryZoneFinder::find_internal(const isc::dns::Name& name,
                                  wild, &name));
     }
 
-    const RdataSet* currds = node->getData();
-    while (currds != NULL) {
-        currds = currds->getNext();
-    }
     found = RdataSet::find(node->getData(), type);
     if (found != NULL) {
         // Good, it is here
