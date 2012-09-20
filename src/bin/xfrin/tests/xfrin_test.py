@@ -571,10 +571,18 @@ class TestXfrinIXFRAdd(TestXfrinState):
         self.conn._diff.add_data(self.ns_rrset) # put some dummy change
         self.conn._tsig_ctx = MockTSIGContext(TSIG_KEY)
         self.conn._tsig_ctx.last_has_signature = lambda: False
+        # First, push a starting SOA inside. This should be OK, nothing checked
+        # yet.
+        self.state.handle_rr(self.conn, self.begin_soa)
+        end_soa_rdata = Rdata(RRType.SOA(), TEST_RRCLASS,
+                              'm. r. 1234 0 0 0 0')
+        end_soa_rrset = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(),
+                                RRTTL(3600))
+        end_soa_rrset.add_rdata(end_soa_rdata)
         # This would try to finish up. But the TSIG pretends not everything is
         # signed, rejecting it.
         self.assertRaises(xfrin.XfrinProtocolError, self.state.handle_rr,
-                          self.conn, self.begin_soa)
+                          self.conn, end_soa_rrset)
 
     def test_handle_out_of_sync(self):
         # getting SOA with an inconsistent serial.  This is an error.
@@ -1577,16 +1585,18 @@ class TestIXFRResponse(TestXfrinConnection):
         self.conn._handle_xfrin_responses()
         self.assertEqual(type(XfrinIXFREnd()), type(self.conn.get_xfrstate()))
         self.assertEqual([], self.conn._datasrc_client.diffs)
+        # Everything is committed as one bunch, currently we commit at the very
+        # end.
         check_diffs(self.assertEqual,
                     [[('delete', begin_soa_rrset),
                       ('delete', self._create_a('192.0.2.1')),
                       ('add', self._create_soa('1231')),
-                      ('add', self._create_a('192.0.2.2'))],
-                     [('delete', self._create_soa('1231')),
+                      ('add', self._create_a('192.0.2.2')),
+                      ('delete', self._create_soa('1231')),
                       ('delete', self._create_a('192.0.2.3')),
                       ('add', self._create_soa('1232')),
-                      ('add', self._create_a('192.0.2.4'))],
-                     [('delete', self._create_soa('1232')),
+                      ('add', self._create_a('192.0.2.4')),
+                      ('delete', self._create_soa('1232')),
                       ('delete', self._create_a('192.0.2.5')),
                       ('add', soa_rrset),
                       ('add', self._create_a('192.0.2.6'))]],
