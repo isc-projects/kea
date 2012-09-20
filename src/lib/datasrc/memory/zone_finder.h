@@ -105,7 +105,7 @@ public:
 
     /// \brief Returns the RR class of the zone.
     virtual isc::dns::RRClass getClass() const {
-        return rrclass_;
+        return (rrclass_);
     }
 
 private:
@@ -124,7 +124,7 @@ private:
         FIND_DEFAULT);
 
     const ZoneData& zone_data_;
-    const isc::dns::RRClass& rrclass_;
+    const isc::dns::RRClass rrclass_;
 
 protected:
     typedef std::string (NSEC3CalculateFn) (const isc::dns::Name& name,
