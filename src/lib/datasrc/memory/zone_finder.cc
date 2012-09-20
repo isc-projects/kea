@@ -658,7 +658,8 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
     const unsigned int qlabels = name.getLabelCount();
     const NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
 
-    const ZoneNode* covering_node(NULL); // placeholder of the next closer proof
+    // placeholder of the next closer proof
+    const ZoneNode* covering_node(NULL);
     // Examine all names from the query name to the origin name, stripping
     // the deepest label one by one, until we find a name that has a matching
     // NSEC3 hash.
@@ -678,20 +679,18 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
         ZoneNode* node(NULL);
         ZoneChain chain;
 
-        ZoneTree::Result result =
+        const ZoneTree::Result result =
             tree.find(Name(hlabel + "." + getOrigin().toText()), &node, chain);
 
         if (result == ZoneTree::EXACTMATCH) {
             // We found an exact match.
             RdataSet* set = node->getData();
-            ConstRRsetPtr closest = createTreeNodeRRset(node,
-                                                        set,
-                                                        getClass());
-            ConstRRsetPtr next = createTreeNodeRRset(covering_node,
-                                                     (covering_node != NULL ?
-                                                      covering_node->getData() :
-                                                      NULL),
-                                                     getClass());
+            ConstRRsetPtr closest = createTreeNodeRRset(node, set, getClass());
+            ConstRRsetPtr next =
+                createTreeNodeRRset(covering_node,
+                                    (covering_node != NULL ?
+                                     covering_node->getData() : NULL),
+                                    getClass());
 
             LOG_DEBUG(logger, DBG_TRACE_BASIC,
                       DATASRC_MEM_FINDNSEC3_MATCH).arg(name).arg(labels).
@@ -709,8 +708,9 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
             const ZoneNode* next_node = last_node->successor();
 
             // If the given hash is larger than the largest stored hash or
-            // the first label doesn't match the target, identify the "previous"
-            // hash value and remember it as the candidate next closer proof.
+            // the first label doesn't match the target, identify the
+            // "previous" hash value and remember it as the candidate next
+            // closer proof.
             if (((last_cmp.getOrder() < 0) && (previous_node == NULL)) ||
                 ((last_cmp.getOrder() > 0) && (next_node == NULL))) {
                 covering_node = last_node->getLargestInSubTree();
