@@ -459,9 +459,12 @@ public:
                         ConstRRsetPtr result_rrset(
                             convertRRset(find_result->rrset));
                         rrsetCheck(answer, result_rrset);
-                        if (answer_sig) {
+                        if (answer_sig &&
+                            (options & ZoneFinder::FIND_DNSSEC) != 0) {
                             ASSERT_TRUE(result_rrset->getRRsig());
                             rrsetCheck(answer_sig, result_rrset->getRRsig());
+                        } else {
+                            EXPECT_FALSE(result_rrset->getRRsig());
                         }
                     }
                 } else if (check_wild_answer) {
@@ -753,6 +756,9 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags,
 {
     // Fill some data inside
     // Now put all the data we have there. It should throw nothing
+    rr_a_->addRRsig(createRdata(RRType::RRSIG(), RRClass::IN(),
+                                "A 5 3 3600 20120814220826 20120715220826 "
+                                "1234 example.com. FAKE"));
     EXPECT_NO_THROW(addZoneData(rr_ns_));
     EXPECT_NO_THROW(addZoneData(rr_ns_a_));
     EXPECT_NO_THROW(addZoneData(rr_ns_aaaa_));
@@ -770,6 +776,12 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags,
     findTest(origin_, RRType::NS(), ZoneFinder::SUCCESS, true, rr_ns_);
     findTest(rr_ns_a_->getName(), RRType::A(), ZoneFinder::SUCCESS, true,
              rr_ns_a_);
+
+    // Similar test for a signed RRset.  We should see the RRSIG iff
+    // FIND_DNSSEC option is specified.
+    findTest(rr_a_->getName(), RRType::A(), ZoneFinder::SUCCESS, true, rr_a_);
+    findTest(rr_a_->getName(), RRType::A(), ZoneFinder::SUCCESS, true,
+             rr_a_, ZoneFinder::RESULT_DEFAULT, NULL, ZoneFinder::FIND_DNSSEC);
 
     // These domains don't exist. (and one is out of the zone).  In an
     // NSEC-signed zone with DNSSEC records requested, it should return the
