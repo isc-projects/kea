@@ -362,6 +362,7 @@ class XfrinFirstData(XfrinState):
                 conn._request_serial == get_soa_serial(rr.get_rdata()[0]):
             logger.debug(DBG_XFRIN_TRACE, XFRIN_GOT_INCREMENTAL_RESP,
                          conn.zone_str())
+            conn._diff = None # Will be created on-demand
             self.set_xfrstate(conn, XfrinIXFRDeleteSOA())
         else:
             logger.debug(DBG_XFRIN_TRACE, XFRIN_GOT_NONINCREMENTAL_RESP,
@@ -380,11 +381,13 @@ class XfrinIXFRDeleteSOA(XfrinState):
             raise XfrinException(rr.get_type().to_text() +
                                  ' RR is given in IXFRDeleteSOA state')
         # This is the beginning state of one difference sequence (changes
-        # for one SOA update).  We need to create a new Diff object now.
+        # for one SOA update).  We may need to create a new Diff object now.
         # Note also that we (unconditionally) enable journaling here.  The
         # Diff constructor may internally disable it, however, if the
         # underlying data source doesn't support journaling.
-        conn._diff = Diff(conn._datasrc_client, conn._zone_name, False, True)
+        if conn._diff is None:
+            conn._diff = Diff(conn._datasrc_client, conn._zone_name, False,
+                              True)
         conn._diff.delete_data(rr)
         self.set_xfrstate(conn, XfrinIXFRDelete())
         conn.get_transfer_stats().ixfr_deletion_count += 1
