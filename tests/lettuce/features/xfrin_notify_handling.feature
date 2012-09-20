@@ -44,6 +44,9 @@ Feature: Xfrin incoming notify handling
 
     A query for www.example.org to [::1]:47806 should have rcode NOERROR
 
+    # waiting for a second since the last query to Stats
+    sleep for 1 seconds
+
     #
     # Test for statistics
     #
@@ -117,6 +120,9 @@ Feature: Xfrin incoming notify handling
     Then wait for new master stderr message NOTIFY_OUT_RETRY_EXCEEDED
 
     A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
+
+    # waiting for a second since the last query to Stats
+    sleep for 1 seconds
 
     #
     # Test2 for statistics
