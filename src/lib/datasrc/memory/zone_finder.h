@@ -100,7 +100,7 @@ public:
 
     /// \brief Returns the origin of the zone.
     virtual isc::dns::Name getOrigin() const {
-        return zone_data_.getOriginNode()->getName();
+        return (zone_data_.getOriginNode()->getName());
     }
 
     /// \brief Returns the RR class of the zone.
