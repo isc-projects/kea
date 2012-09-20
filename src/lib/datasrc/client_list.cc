@@ -12,10 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <util/memory_segment_local.h>
+
 #include "client_list.h"
 #include "client.h"
 #include "factory.h"
-#include "memory_datasrc.h"
+#include "memory/memory_client.h"
 #include "logger.h"
 #include <dns/masterload.h>
 
@@ -25,31 +27,42 @@
 using namespace isc::data;
 using namespace isc::dns;
 using namespace std;
+using isc::util::MemorySegment;
 using boost::lexical_cast;
 using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
+using isc::datasrc::memory::InMemoryClient;
 
 namespace isc {
 namespace datasrc {
 
 ConfigurableClientList::DataSourceInfo::DataSourceInfo(
     DataSourceClient* data_src_client,
-    const DataSourceClientContainerPtr& container, bool has_cache) :
+    const DataSourceClientContainerPtr& container, bool has_cache,
+    const RRClass& rrclass, MemorySegment& mem_sgmt) :
     data_src_client_(data_src_client),
     container_(container)
 {
     if (has_cache) {
-        cache_.reset(new InMemoryClient);
+        cache_.reset(new InMemoryClient(mem_sgmt, rrclass));
     }
 }
 
-ConfigurableClientList::DataSourceInfo::DataSourceInfo(bool has_cache) :
+ConfigurableClientList::DataSourceInfo::DataSourceInfo(
+    const RRClass& rrclass, MemorySegment& mem_sgmt, bool has_cache) :
     data_src_client_(NULL)
 {
     if (has_cache) {
-        cache_.reset(new InMemoryClient);
+        cache_.reset(new InMemoryClient(mem_sgmt, rrclass));
     }
 }
+
+ConfigurableClientList::ConfigurableClientList(const RRClass& rrclass) :
+    rrclass_(rrclass),
+    mem_sgmt_(new util::MemorySegmentLocal),
+    configuration_(new isc::data::ListElement),
+    allow_cache_(false)
+{}
 
 void
 ConfigurableClientList::configure(const ConstElementPtr& config,
@@ -98,14 +111,16 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                     isc_throw(ConfigurationError, "The cache must be enabled "
                               "for the MasterFiles type");
                 }
-                new_data_sources.push_back(DataSourceInfo(true));
+                new_data_sources.push_back(DataSourceInfo(rrclass_, *mem_sgmt_,
+                                                          true));
             } else {
                 // Ask the factory to create the data source for us
                 const DataSourcePair ds(this->getDataSourceClient(type,
                                                                   paramConf));
                 // And put it into the vector
                 new_data_sources.push_back(DataSourceInfo(ds.first, ds.second,
-                                                          want_cache));
+                                                          want_cache, rrclass_,
+                                                          *mem_sgmt_));
             }
 
             if (want_cache) {
@@ -141,13 +156,10 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                 for (vector<string>::const_iterator it(zones_origins.begin());
                      it != zones_origins.end(); ++it) {
                     const Name origin(*it);
-                    shared_ptr<InMemoryZoneFinder>
-                        finder(new
-                            InMemoryZoneFinder(rrclass_, origin));
                     if (type == "MasterFiles") {
                         try {
-                            finder->load(paramConf->get(*it)->stringValue());
-                            cache->addZone(finder);
+                            cache->load(origin,
+                                        paramConf->get(*it)->stringValue());
                         } catch (const isc::dns::MasterLoadError& mle) {
                             LOG_ERROR(logger, DATASRC_MASTERLOAD_ERROR)
                                 .arg(mle.what());
@@ -165,8 +177,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                             isc_throw(isc::Unexpected, "Got NULL iterator "
                                       "for zone " << origin);
                         }
-                        finder->load(*iterator);
-                        cache->addZone(finder);
+                        cache->load(origin, *iterator);
                     }
                 }
             }
@@ -324,14 +335,11 @@ ConfigurableClientList::reload(const Name& name) {
     }
     // Try to convert the finder to in-memory one. If it is the cache,
     // it should work.
-    shared_ptr<InMemoryZoneFinder>
-        finder(dynamic_pointer_cast<InMemoryZoneFinder>(result.finder));
-    const DataSourceInfo* info(result.info);
     // It is of a different type or there's no cache.
-    if (!info->cache_ || !finder) {
+    if (!result.info->cache_) {
         return (ZONE_NOT_CACHED);
     }
-    DataSourceClient* client(info->data_src_client_);
+    DataSourceClient* client(result.info->data_src_client_);
     if (client) {
         // Now do the final reload. If it does not exist in client,
         // DataSourceError is thrown, which is exactly the result what we
@@ -340,15 +348,15 @@ ConfigurableClientList::reload(const Name& name) {
         if (!iterator) {
             isc_throw(isc::Unexpected, "Null iterator from " << name);
         }
-        finder->load(*iterator);
+        result.info->cache_->load(name, *iterator);
     } else {
         // The MasterFiles special case
-        const string filename(finder->getFileName());
+        const string filename(result.info->cache_->getFileName(name));
         if (filename.empty()) {
             isc_throw(isc::Unexpected, "Confused about missing both filename "
                       "and data source");
         }
-        finder->load(filename);
+        result.info->cache_->load(name, filename);
     }
     return (ZONE_RELOADED);
 }

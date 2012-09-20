@@ -12,11 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <util/memory_segment_local.h>
+
 #include <datasrc/client_list.h>
 #include <datasrc/client.h>
 #include <datasrc/iterator.h>
 #include <datasrc/data_source.h>
-#include <datasrc/memory_datasrc.h>
+#include <datasrc/memory/memory_client.h>
+#include <datasrc/memory/zone_finder.h>
 
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
@@ -28,6 +31,8 @@
 #include <fstream>
 
 using namespace isc::datasrc;
+using isc::datasrc::memory::InMemoryClient;
+using isc::datasrc::memory::InMemoryZoneFinder;
 using namespace isc::data;
 using namespace isc::dns;
 using namespace boost;
@@ -220,8 +225,9 @@ const size_t ds_count = (sizeof(ds_zones) / sizeof(*ds_zones));
 class ListTest : public ::testing::Test {
 public:
     ListTest() :
+        rrclass_(RRClass::IN()),
         // The empty list corresponds to a list with no elements inside
-        list_(new TestedList(RRClass::IN())),
+        list_(new TestedList(rrclass_)),
         config_elem_(Element::fromJSON("["
             "{"
             "   \"type\": \"test_type\","
@@ -238,14 +244,14 @@ public:
             shared_ptr<MockDataSourceClient>
                 ds(new MockDataSourceClient(ds_zones[i]));
             ds_.push_back(ds);
-            ds_info_.push_back(ConfigurableClientList::DataSourceInfo(ds.get(),
-                DataSourceClientContainerPtr(), false));
+            ds_info_.push_back(ConfigurableClientList::DataSourceInfo(
+                                   ds.get(), DataSourceClientContainerPtr(),
+                                   false, rrclass_, mem_sgmt_));
         }
     }
     void prepareCache(size_t index, const Name& zone, bool prefill = false) {
-        const shared_ptr<InMemoryClient> cache(new InMemoryClient());
-        const shared_ptr<InMemoryZoneFinder>
-            finder(new InMemoryZoneFinder(RRClass::IN(), zone));
+        const shared_ptr<InMemoryClient> cache(new InMemoryClient(mem_sgmt_,
+                                                                  rrclass_));
         if (prefill) {
             RRsetPtr soa(new RRset(zone, RRClass::IN(), RRType::SOA(),
                                    RRTTL(3600)));
@@ -254,11 +260,10 @@ public:
             soa->addRdata(rdata::generic::SOA(Name::ROOT_NAME(),
                                               Name::ROOT_NAME(),
                                               0, 0, 0, 0, 0));
-            finder->add(soa);
+            cache->add(zone, soa);
         }
         // If we don't do prefill, we leave the zone empty. This way,
         // we can check when it was reloaded.
-        cache->addZone(finder);
         list_->getDataSources()[index].cache_ = cache;
     }
     // Check the positive result is as we expect it.
@@ -331,6 +336,8 @@ public:
         EXPECT_EQ(cache, list_->getDataSources()[index].cache_ !=
                   shared_ptr<InMemoryClient>());
     }
+    const RRClass rrclass_;
+    isc::util::MemorySegmentLocal mem_sgmt_;
     shared_ptr<TestedList> list_;
     const ClientList::FindResult negative_result_;
     vector<shared_ptr<MockDataSourceClient> > ds_;
@@ -815,7 +822,7 @@ TEST_F(ListTest, BadMasterFile) {
 // Test we can reload a zone
 TEST_F(ListTest, reloadSuccess) {
     list_->configure(config_elem_zones_, true);
-    Name name("example.org");
+    const Name name("example.org");
     prepareCache(0, name);
     // Not there yet. It would be NXDOMAIN, but it is in apex and
     // it returns NXRRSET instead.
@@ -830,7 +837,7 @@ TEST_F(ListTest, reloadSuccess) {
 // The cache is not enabled. The load should be rejected.
 TEST_F(ListTest, reloadNotEnabled) {
     list_->configure(config_elem_zones_, false);
-    Name name("example.org");
+    const Name name("example.org");
     // We put the cache in even when not enabled. This won't confuse the thing.
     prepareCache(0, name);
     // Not there yet. It would be NXDOMAIN, but it is in apex and
@@ -847,7 +854,7 @@ TEST_F(ListTest, reloadNotEnabled) {
 // Test several cases when the zone does not exist
 TEST_F(ListTest, reloadNoSuchZone) {
     list_->configure(config_elem_zones_, true);
-    Name name("example.org");
+    const Name name("example.org");
     // We put the cache in even when not enabled. This won't confuse the
     // reload method, as that one looks at the real state of things, not
     // at the configuration.
@@ -877,7 +884,7 @@ TEST_F(ListTest, reloadNoSuchZone) {
 // the underlying data source when we want to reload it
 TEST_F(ListTest, reloadZoneGone) {
     list_->configure(config_elem_, true);
-    Name name("example.org");
+    const Name name("example.org");
     // We put in a cache for non-existant zone. This emulates being loaded
     // and then the zone disappearing. We prefill the cache, so we can check
     // it.
@@ -895,7 +902,7 @@ TEST_F(ListTest, reloadZoneGone) {
 // The underlying data source throws. Check we don't modify the state.
 TEST_F(ListTest, reloadZoneThrow) {
     list_->configure(config_elem_zones_, true);
-    Name name("noiter.org");
+    const Name name("noiter.org");
     prepareCache(0, name, true);
     // The zone contains stuff now
     EXPECT_EQ(ZoneFinder::SUCCESS,
@@ -909,7 +916,7 @@ TEST_F(ListTest, reloadZoneThrow) {
 
 TEST_F(ListTest, reloadNullIterator) {
     list_->configure(config_elem_zones_, true);
-    Name name("null.org");
+    const Name name("null.org");
     prepareCache(0, name, true);
     // The zone contains stuff now
     EXPECT_EQ(ZoneFinder::SUCCESS,
