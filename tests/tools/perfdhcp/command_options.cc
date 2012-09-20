@@ -113,6 +113,15 @@ CommandOptions::parse(int argc, char** const argv) {
     optind = 1;
 #endif
 
+    // optreset is declared on BSD systems and is used to reset internal
+    // state of getopt(). When parsing command line arguments multiple
+    // times with getopt() the optreset must be set to 1 every time before
+    // parsing starts. Failing to do so will result in random behavior of
+    // getopt().
+#ifdef HAVE_OPTRESET
+    optreset = 1;
+#endif
+
     opterr = 0;
 
     // Reset values of class members
