@@ -100,7 +100,7 @@ TEST(IOAddressTest, uint32) {
     EXPECT_EQ(addr3.toText(), "192.0.2.5");
 }
 
-TEST(IOAddressTest, compare) {
+TEST(IOAddressTest, lessThanEqual) {
     IOAddress addr1("192.0.2.5");
     IOAddress addr2("192.0.2.6");
     IOAddress addr3("0.0.0.0");

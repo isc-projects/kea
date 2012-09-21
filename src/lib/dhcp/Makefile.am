@@ -30,6 +30,9 @@ libb10_dhcp___la_SOURCES += pkt6.cc pkt6.h
 libb10_dhcp___la_SOURCES += pkt4.cc pkt4.h
 
 libb10_dhcpsrv_la_SOURCES  = cfgmgr.cc cfgmgr.h
+libb10_dhcpsrv_la_SOURCES += pool.cc pool.h
+libb10_dhcpsrv_la_SOURCES += subnet.cc subnet.h
+libb10_dhcpsrv_la_SOURCES += triplet.h
 libb10_dhcpsrv_la_SOURCES += addr_utilities.cc addr_utilities.h
 libb10_dhcpsrv_la_CXXFLAGS = $(AM_CXXFLAGS)
 libb10_dhcpsrv_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)

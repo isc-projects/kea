@@ -42,6 +42,13 @@ char LOOPBACK[BUF_SIZE] = "lo";
 const uint16_t PORT1 = 10547;   // V6 socket
 const uint16_t PORT2 = 10548;   // V4 socket
 
+// On some systems measured duration of receive6() and
+// receive4() appears to be shorter than select() timeout.
+// called by these functions. This may be the case
+// if different ime resolutions are used by these functions.
+// For such cases we set the tolerance of 0.01s.
+const uint32_t TIMEOUT_TOLERANCE = 10000;
+
 
 class NakedIfaceMgr: public IfaceMgr {
     // "naked" Interface Manager, exposes internal fields
@@ -216,6 +223,110 @@ TEST_F(IfaceMgrTest, getIface) {
 
     delete ifacemgr;
 
+}
+
+TEST_F(IfaceMgrTest, receiveTimeout6) {
+    using namespace boost::posix_time;
+    std::cout << "Testing DHCPv6 packet reception timeouts."
+              << " Test will block for a few seconds when waiting"
+              << " for timeout to occur." << std::endl;
+
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+    // Open socket on the lo interface.
+    IOAddress loAddr("::1");
+    int socket1 = 0;
+    ASSERT_NO_THROW(
+        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547)
+    );
+    // Socket is open if its descriptor is greater than zero.
+    ASSERT_GT(socket1, 0);
+
+    // Remember when we call receive6().
+    ptime start_time = microsec_clock::universal_time();
+    // Call receive with timeout of 1s + 400000us = 1.4s.
+    Pkt6Ptr pkt;
+    ASSERT_NO_THROW(pkt = ifacemgr->receive6(1, 400000));
+    // Remember when call to receive6() ended.
+    ptime stop_time = microsec_clock::universal_time();
+    // We did not send a packet to lo interface so we expect that
+    // nothing has been received and timeout has been reached.
+    ASSERT_FALSE(pkt);
+    // Calculate duration of call to receive6().
+    time_duration duration = stop_time - start_time;
+    // We stop the clock when the call completes so it does not
+    // precisely reflect the receive timeout. However the
+    // uncertainity should be low enough to expect that measured
+    // value is in the range <1.4s; 1.7s>.
+    EXPECT_GE(duration.total_microseconds(),
+              1400000 - TIMEOUT_TOLERANCE);
+    EXPECT_LE(duration.total_microseconds(), 1700000);
+
+    // Test timeout shorter than 1s.
+    start_time = microsec_clock::universal_time();
+    ASSERT_NO_THROW(pkt = ifacemgr->receive6(0, 500000));
+    stop_time = microsec_clock::universal_time();
+    ASSERT_FALSE(pkt);
+    duration = stop_time - start_time;
+    // Check if measured duration is within <0.5s; 0.8s>.
+    EXPECT_GE(duration.total_microseconds(),
+              500000 - TIMEOUT_TOLERANCE);
+    EXPECT_LE(duration.total_microseconds(), 800000);
+
+    // Test with invalid fractional timeout values.
+    EXPECT_THROW(ifacemgr->receive6(0, 1000000), isc::BadValue);
+    EXPECT_THROW(ifacemgr->receive6(1, 1000010), isc::BadValue);
+}
+
+TEST_F(IfaceMgrTest, receiveTimeout4) {
+    using namespace boost::posix_time;
+    std::cout << "Testing DHCPv6 packet reception timeouts."
+              << " Test will block for a few seconds when waiting"
+              << " for timeout to occur." << std::endl;
+
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+    // Open socket on the lo interface.
+    IOAddress loAddr("127.0.0.1");
+    int socket1 = 0;
+    ASSERT_NO_THROW(
+        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10067)
+    );
+    // Socket is open if its descriptor is greater than zero.
+    ASSERT_GT(socket1, 0);
+
+    Pkt4Ptr pkt;
+    // Remember when we call receive4().
+    ptime start_time = microsec_clock::universal_time();
+    // Call receive with timeout of 2s + 300000us = 2.3s.
+    ASSERT_NO_THROW(pkt = ifacemgr->receive4(2, 300000));
+    // Remember when call to receive4() ended.
+    ptime stop_time = microsec_clock::universal_time();
+    // We did not send a packet to lo interface so we expect that
+    // nothing has been received and timeout has been reached.
+    ASSERT_FALSE(pkt);
+    // Calculate duration of call to receive4().
+    time_duration duration = stop_time - start_time;
+    // We stop the clock when the call completes so it does not
+    // precisely reflect the receive timeout. However the
+    // uncertainity should be low enough to expect that measured
+    // value is in the range <2.3s; 2.6s>.
+    EXPECT_GE(duration.total_microseconds(),
+              2300000 - TIMEOUT_TOLERANCE);
+    EXPECT_LE(duration.total_microseconds(), 2600000);
+
+    // Test timeout shorter than 1s.
+    start_time = microsec_clock::universal_time();
+    ASSERT_NO_THROW(pkt = ifacemgr->receive4(0, 400000));
+    stop_time = microsec_clock::universal_time();
+    ASSERT_FALSE(pkt);
+    duration = stop_time - start_time;
+    // Check if measured duration is within <0.4s; 0.7s>.
+    EXPECT_GE(duration.total_microseconds(),
+              400000 - TIMEOUT_TOLERANCE);
+    EXPECT_LE(duration.total_microseconds(), 700000);
+
+    // Test with invalid fractional timeout values.
+    EXPECT_THROW(ifacemgr->receive6(0, 1000000), isc::BadValue);
+    EXPECT_THROW(ifacemgr->receive6(2, 1000005), isc::BadValue);
 }
 
 TEST_F(IfaceMgrTest, multipleSockets) {
@@ -1069,7 +1180,7 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
                          << " address on " << detected->getFullName() << " interface." << endl;
                     FAIL();
                 }
-                cout << "Address " << addr->toText() << " on iterface " << detected->getFullName()
+                cout << "Address " << addr->toText() << " on interface " << detected->getFullName()
                      << " matched with 'ifconfig -a' output." << endl;
             }
         }

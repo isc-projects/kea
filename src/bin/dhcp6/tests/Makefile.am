@@ -26,7 +26,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/bin
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
-CLEANFILES = $(builddir)/interfaces.txt
+CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
@@ -42,10 +42,13 @@ if HAVE_GTEST
 
 TESTS += dhcp6_unittests
 
-dhcp6_unittests_SOURCES = ../dhcp6_srv.h ../dhcp6_srv.cc ../ctrl_dhcp6_srv.cc
-dhcp6_unittests_SOURCES += dhcp6_unittests.cc
+dhcp6_unittests_SOURCES  = dhcp6_unittests.cc
 dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
+dhcp6_unittests_SOURCES += ../dhcp6_srv.h ../dhcp6_srv.cc
+dhcp6_unittests_SOURCES += ../dhcp6_log.h ../dhcp6_log.cc
+dhcp6_unittests_SOURCES += ../ctrl_dhcp6_srv.cc
+nodist_dhcp6_unittests_SOURCES = ../dhcp6_messages.h ../dhcp6_messages.cc
 
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the

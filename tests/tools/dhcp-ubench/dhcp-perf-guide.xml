@@ -22,9 +22,9 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<book>
-  <?xml-stylesheet href="bind10-guide.css" type="text/css"?>
+<?xml-stylesheet href="bind10-guide.css" type="text/css"?>
 
+<book>
   <bookinfo>
     <title>DHCP Performance Guide</title>
     <!-- <subtitle>Various aspects of DHCP Performance in BIND 10</subtitle> -->
@@ -37,7 +37,10 @@
       <firstname>Tomasz</firstname>
       <surname>Mrugalski</surname>
     </author>
-
+    <author>
+      <firstname>Marcin</firstname>
+      <surname>Siodelski</surname>
+    </author>
     <abstract>
       <para>BIND 10 is a framework that features Domain Name System
       (DNS) and Dynamic Host Configuration Protocol (DHCP)
@@ -943,9 +946,507 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
 
   <chapter id="perfdhcp">
     <title>perfdhcp</title>
-    <para>
-      TODO: Write something about perfdhcp here.
-    </para>
-  </chapter>
+    <section>
+      <title>Purpose</title>
+      <para>
+        Evaluation of the performance of a DHCP server requires that it
+        be tested under varying traffic loads.  perfdhcp is a testing
+        tool with the capability to create traffic loads
+        and generate statistics from the results.  Additional features,
+        such as the ability to send customised DHCP packets, allow it to
+        be used in a wide range of functional testing.
+      </para>
+    </section>
+    <section id="perfdhcp-key-features">
+      <title>Key features</title>
+      <para>
+        perfdhcp has a number of command line switches to
+        control DHCP message exchanges. Currently they fall into
+        the following categories:
+        <itemizedlist>
+          <listitem>
+            <para>
+              Rate control - control how many DHCP exchanges
+              are initiated within a period of time. The tool can also simulate
+              best effort conditions by attempting to initiate as many DHCP
+              packet exchanges as possible within a unit of time.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Test exit specifiers - control the conditions for test
+              completion, including the number of initiated exchanges,
+              the test period orthe maximum number of dropped packets.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Packet templates - specify files containing packet templates that
+              are used by perfdhcp to create custom DHCP messages. The tool
+              allows the specification of a number of values indicating
+              offsets of values within a packet that are set by the tool.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Reporting - for each test produce a set of performance data
+              including the achieved packet exchange rate (server performance).
+              There are a number of diagnostic selectors available that
+              enable periodic (intermediate) reporting, printing of packet timestamps,
+              and the listing of detailed information about internal perfdhcp
+              states (for debugging).
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Different mode of operations - specify the DHCP protocol used
+              (v4 or v6), two-way or four-way exchanges, use of the
+              Rapid Commit option for DHCPv6.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              IP layer options - specify the local/remote address, local interface
+              and local port to be used for communication with DHCP server.
+            </para>
+          </listitem>
+        </itemizedlist>
+      </para>
+    </section>
+    <section id="perfdhcp-command-line">
+      <title>Command line options</title>
+      <para>
+        The following "help" output from the tool describes the
+        command line switches.  This summary also lists the tool's
+        possible exit codes as well as describing the
+        error counters printed when the test is complete:
+        <screen>$ <userinput>./perfdhcp -h</userinput>
+<![CDATA[perfdhcp [-hv] [-4|-6] [-r<rate>] [-t<report>] [-R<range>] [-b<base>]
+    [-n<num-request>] [-p<test-period>] [-d<drop-time>] [-D<max-drop>]
+    [-l<local-addr|interface>] [-P<preload>] [-a<aggressivity>]
+    [-L<local-port>] [-s<seed>] [-i] [-B] [-c] [-1]
+    [-T<template-file>] [-X<xid-offset>] [-O<random-offset]
+    [-E<time-offset>] [-S<srvid-offset>] [-I<ip-offset>]
+    [-x<diagnostic-selector>] [-w<wrapped>] [server]
 
+The [server] argument is the name/address of the DHCP server to
+contact.  For DHCPv4 operation, exchanges are initiated by
+transmitting a DHCP DISCOVER to this address.
+
+For DHCPv6 operation, exchanges are initiated by transmitting a DHCP
+SOLICIT to this address.  In the DHCPv6 case, the special name 'all'
+can be used to refer to All_DHCP_Relay_Agents_and_Servers (the
+multicast address FF02::1:2), or the special name 'servers' to refer
+to All_DHCP_Servers (the multicast address FF05::1:3).  The [server]
+argument is optional only in the case that -l is used to specify an
+interface, in which case [server] defaults to 'all'.
+
+The default is to perform a single 4-way exchange, effectively pinging
+the server.
+The -r option is used to set up a performance test, without
+it exchanges are initiated as fast as possible.
+
+Options:
+-1: Take the server-ID option from the first received message.
+-4: DHCPv4 operation (default). This is incompatible with the -6 option.
+-6: DHCPv6 operation. This is incompatible with the -4 option.
+-a<aggressivity>: When the target sending rate is not yet reached,
+    control how many exchanges are initiated before the next pause.
+-b<base>: The base mac, duid, IP, etc, used to simulate different
+    clients.  This can be specified multiple times, each instance is
+    in the <type>=<value> form, for instance:
+    (and default) mac=00:0c:01:02:03:04.
+-d<drop-time>: Specify the time after which a request is treated as
+    having been lost.  The value is given in seconds and may contain a
+    fractional component.  The default is 1 second.
+-E<time-offset>: Offset of the (DHCPv4) secs field / (DHCPv6)
+    elapsed-time option in the (second/request) template.
+    The value 0 disables it.
+-h: Print this help.
+-i: Do only the initial part of an exchange: DO or SA, depending on
+    whether -6 is given.
+-I<ip-offset>: Offset of the (DHCPv4) IP address in the requested-IP
+    option / (DHCPv6) IA_NA option in the (second/request) template.
+-l<local-addr|interface>: For DHCPv4 operation, specify the local
+    hostname/address to use when communicating with the server.  By
+    default, the interface address through which traffic would
+    normally be routed to the server is used.
+    For DHCPv6 operation, specify the name of the network interface
+    via which exchanges are initiated.
+-L<local-port>: Specify the local port to use
+    (the value 0 means to use the default).
+-O<random-offset>: Offset of the last octet to randomize in the template.
+-P<preload>: Initiate first <preload> exchanges back to back at startup.
+-r<rate>: Initiate <rate> DORA/SARR (or if -i is given, DO/SA)
+    exchanges per second.  A periodic report is generated showing the
+    number of exchanges which were not completed, as well as the
+    average response latency.  The program continues until
+    interrupted, at which point a final report is generated.
+-R<range>: Specify how many different clients are used. With 1
+    (the default), all requests seem to come from the same client.
+-s<seed>: Specify the seed for randomization, making it repeatable.
+-S<srvid-offset>: Offset of the server-ID option in the
+    (second/request) template.
+-T<template-file>: The name of a file containing the template to use
+    as a stream of hexadecimal digits.
+-v: Report the version number of this program.
+-w<wrapped>: Command to call with start/stop at the beginning/end of
+    the program.
+-x<diagnostic-selector>: Include extended diagnostics in the output.
+    <diagnostic-selector> is a string of single-keywords specifying
+    the operations for which verbose output is desired.  The selector
+    keyletters are:
+   * 'a': print the decoded command line arguments
+   * 'e': print the exit reason
+   * 'i': print rate processing details
+   * 'r': print randomization details
+   * 's': print first server-id
+   * 't': when finished, print timers of all successful exchanges
+   * 'T': when finished, print templates
+-X<xid-offset>: Transaction ID (aka. xid) offset in the template.
+
+DHCPv4 only options:
+-B: Force broadcast handling.
+
+DHCPv6 only options:
+-c: Add a rapid commit option (exchanges will be SA).
+
+The remaining options are used only in conjunction with -r:
+
+-D<max-drop>: Abort the test if more than <max-drop> requests have
+    been dropped.  Use -D0 to abort if even a single request has been
+    dropped.  If <max-drop> includes the suffix '%', it specifies a
+    maximum percentage of requests that may be dropped before abort.
+    In this case, testing of the threshold begins after 10 requests
+    have been expected to be received.
+-n<num-request>: Initiate <num-request> transactions.  No report is
+    generated until all transactions have been initiated/waited-for,
+    after which a report is generated and the program terminates.
+-p<test-period>: Send requests for the given test period, which is
+    specified in the same manner as -d.  This can be used as an
+    alternative to -n, or both options can be given, in which case the
+    testing is completed when either limit is reached.
+-t<report>: Delay in seconds between two periodic reports.
+
+Errors:
+- tooshort: received a too short message
+- orphans: received a message which doesn't match an exchange
+   (duplicate, late or not related)
+- locallimit: reached to local system limits when sending a message.
+
+Exit status:
+The exit status is:
+0 on complete success.
+1 for a general error.
+2 if an error is found in the command line arguments.
+3 if there are no general failures in operation, but one or more
+  exchanges are not successfully completed.
+]]>
+        </screen>
+      </para>
+    </section>
+    <section id="starting-perfdhcp">
+      <title>Starting perfdhcp</title>
+      <para>
+        In order to run a performance test, at least two separate systems
+        have to be installed: client and server. The first one must have
+        perfdhcp installed, and the latter must be running the DHCP server
+        (either v4 or v6). If only single system is available the client
+        and server can be run on virtual machines (running on the same
+        physical system) but in this case performance data may be heavily
+        impacted by the overhead involved in running such the virtual
+        machines.
+      </para>
+      <para>
+        Currently, perfdhcp is seen from the server perspective as relay agent.
+        This simplifies its implementation: specifically there is no need to
+        receive traffic sent to braodcast addresses. However, it does impose
+        a requirement that the IPv4
+        address has to be set manually on the interface that will be used to
+        communicate with the server. For example, if the DHCPv4 server is listening
+        on the interface connected to the 172.16.1.0 subnet, the interface on client
+        machine has to have network address assigned from the same subnet, e.g.
+        <screen><userinput>#ifconfig eth3 172.16.1.2. netmask 255.255.255.0 up</userinput></screen>
+      </para>
+      <para>
+        As DHCP uses low port numbers (67 for DHCPv4 relays and
+        547 for DHCPv6), running perfdhcp with non-root privileges will
+        usually result in the error message similar to this:
+        <screen><userinput>$./perfdhcp -4 -l eth3 -r 100 all</userinput>
+Error running perfdhcp: Failed to bind socket 3 to 172.16.1.2/port=67
+        </screen>
+        The '-L' command line switch allows the use of a custom local port.
+        However, although the following command line will work:
+        <screen><userinput>$./perfdhcp -4 -l eth3 -r 100 -L 10067 all</userinput></screen>
+        in the standard configuration no responses will be received
+        from the DHCP server because the server responds to default relay
+        port 67.  A way to overcome this issue is to run
+        perfdhcp as root.
+      </para>
+
+    </section>
+    <section id="perfdhcp-commandline-examples">
+      <title>perfdhcp command line examples</title>
+      <para>
+        In this section, a number of perfdhcp command line examples
+        are presented as a quick start guide for new users. For the
+        detailed list of command line options refer to
+        <xref linkend="perfdhcp-command-line"/>.
+      </para>
+      <section id="perfdhcp-basic-usage">
+        <title>Example: basic usage</title>
+        <para>
+          If server is listening on interface with IPv4 address 172.16.1.1,
+          the simplest perfdhcp command line will look like:
+          <screen><userinput>#./perfdhcp 172.16.1.1</userinput>
+***Rate statistics***
+Rate: 206.345
+
+***Statistics for: DISCOVER-OFFER***
+sent packets: 21641
+received packets: 350
+drops: 21291
+orphans: 0
+
+min delay: 9.022 ms
+avg delay: 143.100 ms
+max delay: 259.303 ms
+std deviation: 56.074 ms
+collected packets: 30
+
+***Statistics for: REQUEST-ACK***
+sent packets: 350
+received packets: 268
+drops: 82
+orphans: 0
+
+min delay: 3.010 ms
+avg delay: 152.470 ms
+max delay: 258.634 ms
+std deviation: 56.936 ms
+collected packets: 0
+          </screen>
+          Here, perfdhcp uses remote address 172.16.1.1 as a
+          destination address and will use a suitable local interface for
+          communication. Since, no rate control parameters have been specified,
+          it will initiate DHCP exchanges at the maximum possible rate. Due to the server's
+          performance limitation, it is likely that many of the packets will be dropped.
+          The performance test will continue running until it is
+          interrupted by the user (with ^C).
+        </para>
+        <para>
+          The default performance statistics reported by perfdhcp have the
+          following meaning:
+          <itemizedlist>
+            <listitem><para>Rate - number of packet exchanges (packet sent
+            to the server and matching response received from the server)
+            completed within a second.</para></listitem>
+            <listitem><para>sent packets - total number of DHCP packets of
+            a specific type sent to the server.</para></listitem>
+            <listitem><para>received packets - total number of DHCP packets
+            of specific type received from the server.</para></listitem>
+            <listitem><para>drops - number of dropped packets for the
+            particular exchange. The number of dropped packets is calculated as
+            the difference between the number of sent packets and number of
+            response packets received from the server.  In some cases, the
+            server will have sent a reponse but perfdhcp execution ended before
+            the reponse arrived. In such case this packet will be counted
+            as dropped.</para></listitem>
+            <listitem><para>orphans - number of packets that have been
+            received from the server and did not match any packet sent by
+            perfdhcp. This may occur if received packet has been sent
+            to some other host or if then exchange timed out and
+            the sent packet was removed from perfdhcp's list of packets
+            awaiting a response.</para></listitem>
+            <listitem><para>min delay - minimum delay that occured between
+            sending the packet to the server and receiving a reponse from
+            it.</para></listitem>
+            <listitem><para>avg delay - average delay between sending the
+            packet of the specific type the server and receiving a response
+            from it.</para></listitem>
+            <listitem><para>max delay - maximum delay that occured between
+            sending the packet to the server and receiving a response from
+            it.</para></listitem>
+            <listitem><para>std deviation - standard deviation of the delay
+            between sending the packet of a specific type to the server and
+            receiving response from it.</para></listitem>
+            <listitem><para>collected packets - number of sent packets that
+            were garbage collected. Packets may get garbage collected when
+            the waiting time for server a response exceeds value set with the
+            '-d' (drop time) switch.
+            <![CDATA[-d<drop-time>]]>.</para></listitem>
+          </itemizedlist>
+        </para>
+        <para>
+          Note: should multiple interfaces on the system running perfdhcp be
+          connected to the same subnet, the interface to be used for the test
+          can be specified using either the interface name:
+          <screen><userinput>#./perfdhcp -l eth3</userinput></screen>
+          or a local address assigned to it:
+          <screen><userinput>#./perfdhcp -l 172.16.1.2</userinput></screen>
+        </para>
+      </section>
+      <section id="perfdhcp-rate-control">
+        <title>Example: rate control</title>
+        <para>
+          In the examples above perfdhcp initiates new exchanges with a best
+          effort rate. With this setting, many packets are expected to be dropped
+          by the server due to performance limitations. In many cases though, it is
+          desired to verify that the server can handle an expected (reasonable) rate
+          without dropping any packets. The following command is an example of such
+          a test: it causes perfdhcp to initiate 300 four-way exchanges
+          per second, and runs the test for 60 seconds:
+          <screen><userinput>#./perfdhcp -l eth3 -p 60 -r 300</userinput>
+***Rate statistics***
+Rate: 256.683 exchanges/second, expected rate: 300 exchanges/second
+
+***Statistics for: DISCOVER-OFFER***
+sent packets: 17783
+received packets: 15401
+drops: 2382
+orphans: 0
+
+min delay: 0.109 ms
+avg delay: 75.756 ms
+max delay: 575.614 ms
+std deviation: 60.513 ms
+collected packets: 11
+
+***Statistics for: REQUEST-ACK***
+sent packets: 15401
+received packets: 15317
+drops: 84
+orphans: 0
+
+min delay: 0.536 ms
+avg delay: 72.072 ms
+max delay: 576.749 ms
+std deviation: 58.189 ms
+collected packets: 0
+          </screen>
+          Note that here, the packet drops for the DISCOVER-OFFER
+          exchange have been significantly reduced (when compared with the
+          output from the previous example) thanks to the setting of a
+          reasonable rate. The non-zero number of packet drops and achieved
+          rate (256/s) indicate that server's measured performance is lower than 300 leases
+          per second. A further rate decrease should eliminate most of the packet
+          drops and bring the achieved rate close to expected rate:
+          <screen><userinput>#./perfdhcp -l eth3 -p 60 -r 100 -R 30</userinput>
+***Rate statistics***
+Rate: 99.8164 exchanges/second, expected rate: 100 exchanges/second
+
+***Statistics for: DISCOVER-OFFER***
+sent packets: 5989
+received packets: 5989
+drops: 0
+orphans: 0
+
+min delay: 0.023 ms
+avg delay: 2.198 ms
+max delay: 181.760 ms
+std deviation: 9.429 ms
+collected packets: 0
+
+***Statistics for: REQUEST-ACK***
+sent packets: 5989
+received packets: 5989
+drops: 0
+orphans: 0
+
+min delay: 0.473 ms
+avg delay: 2.355 ms
+max delay: 189.658 ms
+std deviation: 5.876 ms
+collected packets: 0
+          </screen>
+          There are now no packet drops, confirming that the server is able to
+          handle a load of 100 leases/second.
+          Note that the last parameter (-R 30) configures perfdhcp to simulate
+          traffic from 30 distinct clients.
+        </para>
+      </section>
+      <section id="perfdhcp-templates">
+        <title>Example: templates</title>
+        <para>
+          By default the DHCP messages are formed with default options.  With
+          template files, it is possible to define a custom packet format.
+        </para>
+        <para>
+          The template file names are specified with <![CDATA[-T<template-file>]]>
+          command line option. This option can be specified zero, one or two times.
+          The first occurence of this option refers to DISCOVER or SOLICIT message
+          and the second occurence refers to REQUEST (DHCPv4 or DHCPv6) message.
+          If -T option occurs only once the DISCOVER or SOLICIT message will be
+          created from the template and the REQUEST message will be created
+          dynamically (without the template). Note that each template file
+          holds data for exactly one DHCP message type. Templates for multiple
+          message types must not be combined in the single file.
+          The content in template files is encoded as series of ASCII hexadecimal
+          digits (each byte represented by two ASCII chars 00..FF). Data in a
+          template file is laid in network byte order and it can be used on the
+          systems with different endianess.
+          perfdhcp forms the packet by replacing parts of the message buffer read
+          from the file with variable data such as elapsed time, hardware address, DUID
+          etc. The offsets where such variable data is placed is specific to the
+          template file and have to be specified from the command line. Refer to
+          <xref linkend="perfdhcp-command-line"/> to find out how to
+          specify offsets for particular options and fields. With the following
+          command line the DHCPv6 SOLICIT and REQUEST packets will be formed from
+          solicit.hex and request6.hex packets:
+          <screen><userinput>#./perfdhcp -6 -l eth3 -r 100 -R 20 -T solicit.hex -T request6.hex -O 21 -E 84 -S 22 -I 40 servers</userinput>
+***Rate statistics***
+Rate: 99.5398 exchanges/second, expected rate: 100 exchanges/second
+
+***Statistics for: SOLICIT-ADVERTISE***
+sent packets: 570
+received packets: 569
+drops: 1
+orphans: 0
+
+min delay: 0.259 ms
+avg delay: 0.912 ms
+max delay: 6.979 ms
+std deviation: 0.709 ms
+collected packets: 0
+
+***Statistics for: REQUEST-REPLY***
+sent packets: 569
+received packets: 569
+drops: 0
+orphans: 0
+
+min delay: 0.084 ms
+avg delay: 0.607 ms
+max delay: 6.490 ms
+std deviation: 0.518 ms
+collected packets: 0
+          </screen>
+          where the switches have the following meaning:
+          <itemizedlist>
+            <listitem><para>two occurences of -O 21 - DUID's last octet
+            positions in SOLICIT and REQUEST respectively.</para></listitem>
+            <listitem><para>-E 84 - elapsed time option position in the
+            REQUEST template</para></listitem>
+            <listitem><para>-S 22 - server id position in the REQUEST
+            template</para></listitem>
+            <listitem><para>-I 40 - IA_NA option position in the REQUEST
+            template</para></listitem>
+          </itemizedlist>
+        </para>
+        <para>
+          The offsets of options indicate where they begin in the packet.
+          The only exception from this rule is <![CDATA[-O<random-offset>]]>
+          option that specifies the end of the DUID (DHCPv6) or MAC address
+          (DHCPv4). Depending on the number of simulated clients
+          (see <![CDATA[-R<random-range>]]> command line option) perfdhcp
+          will be randomizing bytes in packet buffer starting from this
+          position backwards. For the number of simulated clients
+          <![CDATA[<=]]> 256 only one octet (at random-offset position)
+          will be ranomized, for the number of clients <![CDATA[<=]]> 65536
+          two octets (at random-offset and random-offset-1)
+          will be randmized etc.
+        </para>
+      </section>
+    </section>
+  </chapter>
 </book>

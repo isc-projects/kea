@@ -1,0 +1,3 @@
+example.org.				      86400 IN SOA	ns.example.org. ns.example.org. 2012090700 7200 3600 2592000 1200
+example.org.				      0	IN NSEC3PARAM	1 0 10 AABBCCDD
+example.org.				      0	IN NSEC3PARAM	1 0 10 AABBCCDD
