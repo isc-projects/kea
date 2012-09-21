@@ -1,9 +1,8 @@
 4XX.	[func]		tomek
-	A new library (libb10-dhcpsrv) has been create. Currently its
-	functionality is limited to a Configuration Manager. CfgMgr
-	currently only supports basic configuration storage for DHCPv6
-	server,	but that capability is expected to be expanded in a near
-	future.
+	A new library (libb10-dhcpsrv) has been created. At present, it
+	only holds the code for the DHCP Configuration Manager. Currently
+	this object only supports basic configuration storage for the DHCPv6
+	server,	but that capability will be expanded.
 	(Trac #2238, git TBD)
 
 475.	[func]		naokikambe
