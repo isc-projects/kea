@@ -1,4 +1,4 @@
-SUBDIRS = . tests templates
+1SUBDIRS = . tests templates
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/log -I$(top_builddir)/src/lib/log
@@ -12,8 +12,7 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 # But older GCC compilers don't have the flag.
 AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
-AM_LDFLAGS = $(CLOCK_GETTIME_LDFLAGS)
-AM_LDFLAGS += -lm
+AM_LDFLAGS = -lm
 if USE_STATIC_LINK
 AM_LDFLAGS += -static
 endif
