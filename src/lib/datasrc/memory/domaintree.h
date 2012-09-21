@@ -1308,7 +1308,7 @@ public:
     /// It includes nodes internally created as a result of adding a domain
     /// name that is a subdomain of an existing node of the tree.
     /// This function is mainly intended to be used for debugging.
-    int getNodeCount() const { return (node_count_); }
+    size_t getNodeCount() const { return (node_count_); }
 
     /// \name Debug function
     //@{
@@ -1441,7 +1441,7 @@ private:
 
     typename DomainTreeNode<T>::DomainTreeNodePtr root_;
     /// the node count of current tree
-    unsigned int node_count_;
+    size_t node_count_;
     /// search policy for domaintree
     const bool needsReturnEmptyNode_;
 };
