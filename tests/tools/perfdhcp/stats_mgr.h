@@ -256,6 +256,8 @@ public:
         /// \brief Constructor
         ///
         /// \param xchg_type exchange type
+        /// \param drop_time maximum time elapsed before packet is
+        /// assumed dropped. Negative value disables it.
         /// \param archive_enabled if true packets archive mode is enabled.
         /// In this mode all packets are stored throughout the test execution.
         ExchangeStats(const ExchangeType xchg_type,
@@ -825,8 +827,6 @@ public:
     /// for performance reasons and to avoid waste of memory for storing
     /// large list of archived packets.
     ///
-    /// \param drop_time maximum time elapsed before packet is
-    /// assumed dropped. Negative value disables it.
     /// \param archive_enabled true indicates that packets
     /// archive mode is enabled.
     StatsMgr(const bool archive_enabled = false) :
@@ -842,6 +842,8 @@ public:
     /// type.
     ///
     /// \param xchg_type exchange type.
+    /// \param drop_time maximum time elapsed before packet is
+    /// assumed dropped. Negative value disables it.
     /// \throw isc::BadValue if exchange of specified type exists.
     void addExchangeStats(const ExchangeType xchg_type,
                           const double drop_time = -1) {
@@ -906,6 +908,7 @@ public:
     /// Increement counter value by one.
     ///
     /// \param counter_key key poiting to the counter in the counters map.
+    /// \param value value to increment counter by.
     /// \return pointer to specified counter after incrementation.
     const CustomCounter& incrementCounter(const std::string& counter_key,
                                           const uint64_t value = 1) {
