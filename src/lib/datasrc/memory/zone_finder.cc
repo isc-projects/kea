@@ -686,13 +686,21 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
 
         if (result == ZoneTree::EXACTMATCH) {
             // We found an exact match.
-            RdataSet* rdataset = node->getData();
+            const RdataSet* rdataset = node->getData();
+            assert(rdataset != NULL);
+            assert(rdataset->type == RRType::NSEC3());
+
             ConstRRsetPtr closest = createTreeNodeRRset(node, rdataset,
                                                         getClass());
-            ConstRRsetPtr next = (covering_node == NULL) ?
-                ConstRRsetPtr() :
-                createTreeNodeRRset(covering_node, covering_node->getData(),
-                                    getClass());
+            ConstRRsetPtr next;
+            if (covering_node != NULL) {
+                rdataset = covering_node->getData();
+                assert(rdataset != NULL);
+                assert(rdataset->type == RRType::NSEC3());
+
+                next = createTreeNodeRRset(covering_node, rdataset,
+                                           getClass());
+            }
 
             LOG_DEBUG(logger, DBG_TRACE_BASIC,
                       DATASRC_MEM_FINDNSEC3_MATCH).arg(name).arg(labels).
@@ -724,10 +732,15 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
             }
 
             if (!recursive) {   // in non recursive mode, we are done.
-                ConstRRsetPtr closest = (covering_node == NULL) ?
-                    ConstRRsetPtr() :
-                    createTreeNodeRRset(covering_node, covering_node->getData(),
-                                        getClass());
+                ConstRRsetPtr closest;
+                if (covering_node != NULL) {
+                    const RdataSet* rdataset = covering_node->getData();
+                    assert(rdataset != NULL);
+                    assert(rdataset->type == RRType::NSEC3());
+
+                    closest = createTreeNodeRRset(covering_node, rdataset,
+                                                  getClass());
+                }
 
                 if (closest) {
                     LOG_DEBUG(logger, DBG_TRACE_BASIC,
