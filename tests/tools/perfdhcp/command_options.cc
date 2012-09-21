@@ -146,10 +146,6 @@ CommandOptions::initialize(int argc, char** argv) {
             stream << " " << optarg;
         }  
         switch (opt) {
-        case 'v':
-            version();
-            return (true);
-
         case '1':
             use_first_ = true;
             break;
@@ -337,6 +333,10 @@ CommandOptions::initialize(int argc, char** argv) {
             }
             break;
 
+        case 'v':
+            version();
+            return (true);
+
         case 'w':
             wrapped_ = nonEmptyString("command for wrapped mode:"
                                       " -w<command> must be specified");
@@ -396,14 +396,14 @@ CommandOptions::initialize(int argc, char** argv) {
         server_name_ = argv[optind];
         // Decode special cases
         if ((ipversion_ == 4) && (server_name_.compare("all") == 0)) {
-            broadcast_ = 1;
-            // 255.255.255.255 is IPv4 broadcast address
-            server_name_ = "255.255.255.255";
+            broadcast_ = true;
+            // Use broadcast address as server name.
+            server_name_ = DHCP_IPV4_BROADCAST_ADDRESS;
         } else if ((ipversion_ == 6) && (server_name_.compare("all") == 0)) {
-            server_name_ = "FF02::1:2";
+            server_name_ = ALL_DHCP_RELAY_AGENTS_AND_SERVERS;
         } else if ((ipversion_ == 6) &&
                    (server_name_.compare("servers") == 0)) {
-            server_name_ = "FF05::1:3";
+            server_name_ = ALL_DHCP_SERVERS;
         }
     }
 
@@ -411,10 +411,10 @@ CommandOptions::initialize(int argc, char** argv) {
     if (!localname_.empty()) {
         if (server_name_.empty()) {
             if (is_interface_ && (ipversion_ == 4)) {
-                broadcast_ = 1;
-                server_name_ = "255.255.255.255";
+                broadcast_ = true;
+                server_name_ = DHCP_IPV4_BROADCAST_ADDRESS;
             } else if (is_interface_ && (ipversion_ == 6)) {
-                server_name_ = "FF02::1:2";
+                server_name_ = ALL_DHCP_RELAY_AGENTS_AND_SERVERS;
             }
         }
     }
@@ -443,11 +443,7 @@ CommandOptions::initClientsNum() {
     long long clients_num = 0;
     try {
         clients_num = boost::lexical_cast<long long>(optarg);
-    } catch (boost::bad_lexical_cast&) {
-        isc_throw(isc::InvalidParameter, errmsg.c_str());
-    }
-    check(clients_num < 0, errmsg);
-    try {
+        check(clients_num < 0, errmsg);
         clients_num_ = boost::lexical_cast<uint32_t>(optarg);
     } catch (boost::bad_lexical_cast&) {
         isc_throw(isc::InvalidParameter, errmsg);
@@ -487,7 +483,8 @@ CommandOptions::decodeMac(const std::string& base) {
     // Strip string from mac=
     size_t found = base.find('=');
     static const char* errmsg = "expected -b<base> format for"
-        " mac address is -b mac=00::0C::01::02::03::04";
+        " mac address is -b mac=00::0C::01::02::03::04 or"
+        " -b mac=00:0C:01:02:03:04";
     check(found == std::string::npos, errmsg);
 
     // Decode mac address to vector of uint8_t

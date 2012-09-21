@@ -581,19 +581,19 @@ TEST_F(CommandOptionsTest, Server) {
     // set to broadcast address because 'all' was specified.
     EXPECT_TRUE(opt.isBroadcast());
     // The broadcast address is 255.255.255.255.
-    EXPECT_EQ("255.255.255.255", opt.getServerName());
+    EXPECT_EQ(DHCP_IPV4_BROADCAST_ADDRESS, opt.getServerName());
 
     // When all is specified for DHCPv6 mode we expect
     // FF02::1:2 as a server name which means All DHCP
     // servers and relay agents in local network segment
     ASSERT_NO_THROW(process("perfdhcp -6 all"));
-    EXPECT_EQ("FF02::1:2", opt.getServerName());
+    EXPECT_EQ(ALL_DHCP_RELAY_AGENTS_AND_SERVERS, opt.getServerName());
 
     // When server='servers' in DHCPv6 mode we expect
     // FF05::1:3 as server name which means All DHCP
     // servers in local network.
     ASSERT_NO_THROW(process("perfdhcp -6 servers"));
-    EXPECT_EQ("FF05::1:3", opt.getServerName());
+    EXPECT_EQ(ALL_DHCP_SERVERS, opt.getServerName());
 
     // If server name is neither 'all' nor 'servers'
     // the given argument value is expected to be

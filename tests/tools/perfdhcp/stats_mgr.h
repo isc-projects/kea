@@ -84,7 +84,7 @@ public:
         }
 
         const CustomCounter& operator+=(int val) {
-            counter_ = counter_ + val;
+            counter_ += val;
             return (*this);
         }
 
