@@ -518,7 +518,12 @@ class BindCmdInterpreter(Cmd):
             except BindCtlException:
                 hints = []
 
+            # there are a couple of 'standard' names that are usable, but
+            # should not be included in direct tab-completion
+            hints = [ h for h in hints if h not in [ 'argument', 'identifier']]
+
             self.hint = hints
+
 
         if state < len(self.hint):
             return self.hint[state]
