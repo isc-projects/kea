@@ -15,6 +15,7 @@
 #include <config.h>
 
 #include <util/io/sockaddr_util.h>
+#include <util/memory_segment_local.h>
 
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -1393,16 +1394,19 @@ public:
              const isc::datasrc::DataSourceClientPtr
                  client(new FakeClient(info.data_src_client_ != NULL ?
                                        info.data_src_client_ :
-                                       info.cache_.get(),
+                                       info.getCacheClient(),
                                        throw_when, isc_exception, fake_rrset));
              clients_.push_back(client);
-             data_sources_.push_back(DataSourceInfo(client.get(),
-                 isc::datasrc::DataSourceClientContainerPtr(), false));
+             data_sources_.push_back(
+                 DataSourceInfo(client.get(),
+                                isc::datasrc::DataSourceClientContainerPtr(),
+                                false, RRClass::IN(), mem_sgmt_));
         }
     }
 private:
     const boost::shared_ptr<isc::datasrc::ConfigurableClientList> real_;
     vector<isc::datasrc::DataSourceClientPtr> clients_;
+    MemorySegmentLocal mem_sgmt_;
 };
 
 } // end anonymous namespace for throwing proxy classes
