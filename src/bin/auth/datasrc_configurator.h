@@ -48,6 +48,21 @@ private:
                                     isc::data::ConstElementPtr config,
                                     const isc::config::ConfigData&)
     {
+        // XXX: when this is first called it's a callback as a result of
+        // registration in addRemoteConfig().  Since the configuration can
+        // be incomplete, the main() function will then reconfigure the
+        // data sources with full configurations.  The redundant initialization
+        // can take too long if there's a large zone in-memory in the
+        // configuration, so we'll skip the first configuration setup
+        // completely.  This should be safe as long as main() explicitly
+        // configures everything, but we should eventually solve it in a
+        // cleaner way.
+        static bool started_ = false;
+        if (!started_) {
+            started_ = true;
+            return;
+        }
+
         if (config->contains("classes")) {
             reconfigure(config->get("classes"));
         }
@@ -69,7 +84,8 @@ public:
     /// \param session The session to hook into and to access the configuration
     ///     through.
     /// \param server It is the server to configure.
-    /// \throw isc::InvalidOperation if this is called when already initialized.
+    /// \throw isc::InvalidOperation if this is called when already
+    ///     initialized.
     /// \throw isc::InvalidParameter if any of the parameters is NULL
     /// \throw isc::config::ModuleCCError if the remote configuration is not
     ///     available for some reason.
