@@ -169,7 +169,8 @@ std::string
 NSEC3Hash::calculate(const Name& name,
                      const uint16_t iterations,
                      const uint8_t* salt,
-                     size_t salt_len) {
+                     size_t salt_len)
+{
     // We first need to normalize the name by converting all upper case
     // characters in the labels to lower ones.
     OutputBuffer obuf(Name::MAX_WIRE);
