@@ -24,6 +24,8 @@
 #include <dns/rrtype.h>
 #include <dns/nsec3hash.h>
 
+#include <string>
+
 namespace isc {
 namespace datasrc {
 namespace memory {

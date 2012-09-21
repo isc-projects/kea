@@ -31,6 +31,8 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
+
 using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
@@ -242,7 +244,7 @@ public:
              nsec3_data = NSEC3Data::create(mem_sgmt_, nsec3_rdata);
              zone_data_->setNSEC3Data(nsec3_data);
         } else {
-             size_t salt_len = nsec3_data->getSaltLen();
+             const size_t salt_len = nsec3_data->getSaltLen();
              const uint8_t* salt_data = nsec3_data->getSaltData();
              const vector<uint8_t>& salt_data_2 = nsec3_rdata.getSalt();
 
@@ -256,16 +258,16 @@ public:
              }
         }
 
-        ZoneNode *node;
+        ZoneNode* node;
         nsec3_data->insertName(mem_sgmt_, rrset->getName(), &node);
 
         // We assume that rrsig has already been checked to match rrset
         // by the caller.
-        RdataSet *set = RdataSet::create(mem_sgmt_, encoder_,
-                                         rrset, ConstRRsetPtr());
-        RdataSet *old_set = node->setData(set);
-        if (old_set != NULL) {
-             RdataSet::destroy(mem_sgmt_, class_, old_set);
+        RdataSet* rdset = RdataSet::create(mem_sgmt_, encoder_,
+                                           rrset, ConstRRsetPtr());
+        RdataSet* old_rdset = node->setData(rdset);
+        if (old_rdset != NULL) {
+             RdataSet::destroy(mem_sgmt_, class_, old_rdset);
         }
         zone_data_->setSigned(true);
     }
