@@ -172,11 +172,12 @@ isc::datasrc::memory::ZoneFinderResultContext
 createFindResult(const RRClass& rrclass,
                  const ZoneData& zone_data,
                  ZoneFinder::Result code,
-                 const RdataSet* rrset,
+                 const RdataSet* rdset,
                  const ZoneNode* node,
                  ZoneFinder::FindOptions options,
                  bool wild = false,
-                 const Name* qname = NULL) {
+                 const Name* qname = NULL)
+{
     ZoneFinder::FindResultFlags flags = ZoneFinder::RESULT_DEFAULT;
     const Name* rename = NULL;
 
@@ -194,7 +195,7 @@ createFindResult(const RRClass& rrclass,
     }
 
     return (ZoneFinderResultContext(code, createTreeNodeRRset(
-                                        node, rrset, rrclass, options, rename),
+                                        node, rdset, rrclass, options, rename),
                                     flags, node));
 }
 
@@ -496,20 +497,35 @@ InMemoryZoneFinderNSEC3Calculate(const Name& name,
     return (encodeBase32Hex(digest));
 }
 
-// Specialization of the ZoneFinder::Context for the in-memory finder.
+/// \brief Specialization of the ZoneFinder::Context for the in-memory finder.
+///
+/// \note Right now we don't implement optimization using this specialized
+/// version, but assuming we'll do pretty soon we'll keep and use the
+/// definition.  The note below will apply at that point (and at that point
+/// we should remove the other constructor for findAll()).
+///
+/// Note that we don't have a specific constructor for the findAll() case.
+/// For (successful) type ANY query, found_node points to the
+/// corresponding zone node, which is recorded within this specialized
+/// context.
 class InMemoryZoneFinder::Context : public ZoneFinder::Context {
 public:
-    /// \brief Constructor.
-    ///
-    /// Note that we don't have a specific constructor for the findAll() case.
-    /// For (successful) type ANY query, found_node points to the
-    /// corresponding RB node, which is recorded within this specialized
-    /// context.
+    /// \brief Constructor for normal find().
     Context(ZoneFinder& finder, ZoneFinder::FindOptions options,
             ZoneFinderResultContext result) :
         ZoneFinder::Context(finder, options,
                             ResultContext(result.code, result.rrset,
                                           result.flags)),
+        rrset_(result.rrset), found_node_(result.found_node)
+    {}
+
+    /// \brief Constructor for findAll().
+    Context(ZoneFinder& finder, ZoneFinder::FindOptions options,
+            ZoneFinderResultContext result,
+            std::vector<isc::dns::ConstRRsetPtr>& target) :
+        ZoneFinder::Context(finder, options,
+                            ResultContext(result.code, result.rrset,
+                                          result.flags), target),
         rrset_(result.rrset), found_node_(result.found_node)
     {}
 
@@ -523,11 +539,9 @@ InMemoryZoneFinder::find(const isc::dns::Name& name,
                 const isc::dns::RRType& type,
                 const FindOptions options)
 {
-    return ZoneFinderContextPtr(new Context(*this, options,
-                                            find_internal(name,
-                                                          type,
-                                                          NULL,
-                                                          options)));
+    return (ZoneFinderContextPtr(new Context(*this, options,
+                                             find_internal(name, type,
+                                                           NULL, options))));
 }
 
 boost::shared_ptr<ZoneFinder::Context>
@@ -535,11 +549,12 @@ InMemoryZoneFinder::findAll(const isc::dns::Name& name,
         std::vector<isc::dns::ConstRRsetPtr>& target,
         const FindOptions options)
 {
-    return ZoneFinderContextPtr(new Context(*this, options,
-                                            find_internal(name,
-                                                          RRType::ANY(),
-                                                          &target,
-                                                          options)));
+    return (ZoneFinderContextPtr(new Context(*this, options,
+                                             find_internal(name,
+                                                           RRType::ANY(),
+                                                           &target,
+                                                           options),
+                                             target)));
 }
 
 ZoneFinderResultContext
