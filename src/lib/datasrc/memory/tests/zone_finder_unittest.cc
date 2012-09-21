@@ -46,7 +46,14 @@ namespace {
 using result::SUCCESS;
 using result::EXIST;
 
-NSEC3HashMap nsec3_hash_map;
+// Proxy accessor for faked NSEC3 mapping for tests.  map isn't a trivial
+// type, so it's safer to get access to it via a proxy to avoid initialization
+// fiasco.
+NSEC3HashMap&
+getNSEC3HashMap() {
+    static NSEC3HashMap nsec3_hash_map;
+    return (nsec3_hash_map);
+}
 
 // A faked NSEC3 hash calculator for convenience. Tests that need to use
 // the faked hashed values should call setFakeNSEC3Calculate() on the
@@ -56,9 +63,10 @@ std::string
 fakeNSEC3Calculate(const Name& name,
                    const uint16_t,
                    const uint8_t*,
-                   size_t) {
-    const NSEC3HashMap::const_iterator found = nsec3_hash_map.find(name);
-    if (found != nsec3_hash_map.end()) {
+                   size_t)
+{
+    const NSEC3HashMap::const_iterator found = getNSEC3HashMap().find(name);
+    if (found != getNSEC3HashMap().end()) {
         return (found->second);
     }
 
@@ -67,13 +75,12 @@ fakeNSEC3Calculate(const Name& name,
 }
 
 class MyZoneFinder : public memory::InMemoryZoneFinder {
-private:
 public:
     MyZoneFinder(const ZoneData& zone_data,
                  const isc::dns::RRClass& rrclass) :
          memory::InMemoryZoneFinder(zone_data, rrclass)
     {
-        buildFakeNSEC3Map(nsec3_hash_map);
+        buildFakeNSEC3Map(getNSEC3HashMap());
     }
 
     void setFakeNSEC3Calculate() {
