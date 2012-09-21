@@ -37,11 +37,11 @@ main(int argc, char* argv[]) {
         }
     } catch(isc::Exception& e) {
         ret_code = 1;
-        std::cout << "Error parsing command line options: "
+        std::cerr << "Error parsing command line options: "
                   << e.what() << std::endl;
         command_options.usage();
         if (diags.find('e') != std::string::npos) {
-            std::cout << "Fatal error" << std::endl;
+            std::cerr << "Fatal error" << std::endl;
         }
         return (ret_code);
     }
@@ -50,9 +50,9 @@ main(int argc, char* argv[]) {
         ret_code =  test_control.run();
     } catch (isc::Exception& e) {
         ret_code = 1;
-        std::cout << "Error running perfdhcp: " << e.what() << std::endl;
+        std::cerr << "Error running perfdhcp: " << e.what() << std::endl;
         if (diags.find('e') != std::string::npos) {
-            std::cout << "Fatal error" << std::endl;
+            std::cerr << "Fatal error" << std::endl;
         }
     }
     return (ret_code);

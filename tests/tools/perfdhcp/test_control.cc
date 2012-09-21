@@ -674,6 +674,47 @@ TestControl::openSocket() const {
 }
 
 void
+TestControl::sendPackets(const TestControlSocket& socket,
+                         const uint64_t packets_num,
+                         const bool preload /* = false */) {
+    CommandOptions& options = CommandOptions::instance();
+    for (uint64_t i = packets_num; i > 0; --i) {
+        if (options.getIpVersion() == 4) {
+            // No template packets means that no -T option was specified.
+            // We have to build packets ourselfs.
+            if (template_buffers_.size() == 0) {
+                sendDiscover4(socket, preload);
+            } else {
+                // @todo add defines for packet type index that can be
+                // used to access template_buffers_.
+                sendDiscover4(socket, template_buffers_[0], preload);
+            }
+        } else {
+            // No template packets means that no -T option was specified.
+            // We have to build packets ourselfs.
+            if (template_buffers_.size() == 0) {
+                sendSolicit6(socket, preload);
+            } else {
+                // @todo add defines for packet type index that can be
+                // used to access template_buffers_.
+                sendSolicit6(socket, template_buffers_[0], preload);
+            }
+        }
+        // If we preload server we don't want to receive any packets.
+        if (!preload) {
+            uint64_t latercvd = receivePackets(socket);
+            if (testDiags('i')) {
+                if (options.getIpVersion() == 4) {
+                    stats_mgr4_->incrementCounter("latercvd", latercvd);
+                } else if (options.getIpVersion() == 6) {
+                    stats_mgr6_->incrementCounter("latercvd", latercvd);
+                }
+            }
+        }
+    }
+}
+
+void
 TestControl::printDiagnostics() const {
     CommandOptions& options = CommandOptions::instance();
     if (testDiags('a')) {
@@ -948,7 +989,7 @@ TestControl::receivePackets(const TestControlSocket& socket) {
             }
         }
     }
-    return received;
+    return (received);
 }
 
 void
@@ -1049,14 +1090,14 @@ TestControl::run() {
         isc_throw(InvalidOperation,
                   "command options must be parsed before running a test");
     } else if (options.getIpVersion() == 4) {
-        setTransidGenerator(NumberGeneratorPtr(new SequencialGenerator()));
+        setTransidGenerator(NumberGeneratorPtr(new SequentialGenerator()));
     } else {
-        setTransidGenerator(NumberGeneratorPtr(new SequencialGenerator(0x00FFFFFF)));
+        setTransidGenerator(NumberGeneratorPtr(new SequentialGenerator(0x00FFFFFF)));
     }
 
     uint32_t clients_num = options.getClientsNum() == 0 ?
         1 : options.getClientsNum();
-    setMacAddrGenerator(NumberGeneratorPtr(new SequencialGenerator(clients_num)));
+    setMacAddrGenerator(NumberGeneratorPtr(new SequentialGenerator(clients_num)));
 
     // Diagnostics are command line options mainly.
     printDiagnostics();
@@ -1080,37 +1121,9 @@ TestControl::run() {
     }
     // If user interrupts the program we will exit gracefully.
     signal(SIGINT, TestControl::handleInterrupt);
-    // Preload server with number of packets.
-    const bool do_preload = true;
-    for (int i = 0; i < options.getPreload(); ++i) {
-        if (options.getIpVersion() == 4) {
-            // No template buffer means no -T option specified.
-            // We will build packet ourselves.
-            if (template_buffers_.size() == 0) {
-                sendDiscover4(socket, do_preload);
-            } else {
-                // Pick template #0 if Discover is being sent.
-                // For Request it would be #1.
-                // @todo add defines for packet type index that can be
-                // used to access template_buffers_.
-                sendDiscover4(socket, template_buffers_[0],
-                              do_preload);
-            }
-        } else if (options.getIpVersion() == 6) {
-            // No template buffer means no -T option specified.
-            // We will build packet ourselfs.
-            if (template_buffers_.size() == 0) {
-                sendSolicit6(socket, do_preload);
-            } else {
-                // Pick template #0 if Solicit is being sent.
-                // For Request it would be #1.
-                // @todo add defines for packet type index that can be
-                // used to access template_buffers_.
-                sendSolicit6(socket, template_buffers_[0],
-                             do_preload);
-            }
-        }
-    }
+
+    // Preload server with the number of packets.
+    sendPackets(socket, options.getPreload(), true);
 
     // Fork and run command specified with -w<wrapped-command>
     if (!options.getWrapped().empty()) {
@@ -1144,39 +1157,9 @@ TestControl::run() {
             break;
         }
 
-        // Send packets.
-        for (uint64_t i = packets_due; i > 0; --i) {
-            if (options.getIpVersion() == 4) {
-                // No template packets means that no -T option was specified.
-                // We have to build packets ourselfs.
-                if (template_buffers_.size() == 0) {
-                    sendDiscover4(socket);
-                } else {
-                    // @todo add defines for packet type index that can be
-                    // used to access template_buffers_.
-                    sendDiscover4(socket, template_buffers_[0]);
-                }
-            } else {
-                // No template packets means that no -T option was specified.
-                // We have to build packets ourselfs.
-                if (template_buffers_.size() == 0) {
-                    sendSolicit6(socket);
-                } else {
-                    // @todo add defines for packet type index that can be
-                    // used to access template_buffers_.
-                    sendSolicit6(socket, template_buffers_[0]);
-                }
-            }
-            // Receive late packets.
-            uint64_t latercvd = receivePackets(socket);
-            if (testDiags('i')) {
-                if (options.getIpVersion() == 4) {
-                    stats_mgr4_->incrementCounter("latercvd", latercvd);
-                } else if (options.getIpVersion() == 6) {
-                    stats_mgr6_->incrementCounter("latercvd", latercvd);
-                }
-            }
-        }
+        // Initiate new DHCP packet exchanges.
+        sendPackets(socket, packets_due);
+
         // Report delay means that user requested printing number
         // of sent/received/dropped packets repeatedly.
         if (options.getReportDelay() > 0) {
@@ -1186,8 +1169,8 @@ TestControl::run() {
     printStats();
 
     if (!options.getWrapped().empty()) {
-        const bool do_stop = true;
-        runWrapped(do_stop);
+        // true means that we execute wrapped command with 'stop' argument.
+        runWrapped(true);
     }
 
     // Print packet timestamps
@@ -1234,9 +1217,27 @@ TestControl::runWrapped(bool do_stop /*= false */) const {
         if (pid < 0) {
             isc_throw(Unexpected, "unable to fork");
         } else if (pid == 0) {
-            execlp(options.getWrapped().c_str(), 
+            execlp(options.getWrapped().c_str(),
                    do_stop ? "stop" : "start",
                    NULL);
+        }
+    }
+}
+
+void
+TestControl::saveFirstPacket(const Pkt4Ptr& pkt) {
+    if (testDiags('T')) {
+        if (template_packets_v4_.find(pkt->getType()) == template_packets_v4_.end()) {
+            template_packets_v4_[pkt->getType()] = pkt;
+        }
+    }
+}
+
+void
+TestControl::saveFirstPacket(const Pkt6Ptr& pkt) {
+    if (testDiags('T')) {
+        if (template_packets_v6_.find(pkt->getType()) == template_packets_v6_.end()) {
+            template_packets_v6_[pkt->getType()] = pkt;
         }
     }
 }
@@ -1278,10 +1279,7 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
         }
         stats_mgr4_->passSentPacket(StatsMgr4::XCHG_DO, pkt4);
     }
-    if (testDiags('T') &&
-        (template_packets_v4_.find(DHCPDISCOVER) == template_packets_v4_.end())) {
-        template_packets_v4_[DHCPDISCOVER] = pkt4;
-    }
+    saveFirstPacket(pkt4);
 }
 
 void
@@ -1335,10 +1333,7 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
         stats_mgr4_->passSentPacket(StatsMgr4::XCHG_DO,
                                     boost::static_pointer_cast<Pkt4>(pkt4));
     }
-    if (testDiags('T') &&
-        (template_packets_v4_.find(DHCPDISCOVER) == template_packets_v4_.end())) {
-        template_packets_v4_[DHCPDISCOVER] = pkt4;
-    }
+    saveFirstPacket(pkt4);
 }
 
 void
@@ -1402,10 +1397,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
                   "hasn't been initialized");
     }
     stats_mgr4_->passSentPacket(StatsMgr4::XCHG_RA, pkt4);
-    if (testDiags('T') &&
-        (template_packets_v4_.find(DHCPREQUEST) == template_packets_v4_.end())) {
-        template_packets_v4_[DHCPREQUEST] = pkt4;
-    }
+    saveFirstPacket(pkt4);
 }
 
 void
@@ -1508,10 +1500,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     // Update packet stats.
     stats_mgr4_->passSentPacket(StatsMgr4::XCHG_RA,
                                 boost::static_pointer_cast<Pkt4>(pkt4));
-    if (testDiags('T') &&
-        (template_packets_v4_.find(DHCPREQUEST) == template_packets_v4_.end())) {
-        template_packets_v4_[DHCPREQUEST] = pkt4;
-    }
+    saveFirstPacket(pkt4);
 }
 
 void
@@ -1564,10 +1553,7 @@ TestControl::sendRequest6(const TestControlSocket& socket,
                   "hasn't been initialized");
     }
     stats_mgr6_->passSentPacket(StatsMgr6::XCHG_RR, pkt6);
-    if (testDiags('T') &&
-        (template_packets_v6_.find(DHCPV6_REQUEST) == template_packets_v6_.end())) {
-        template_packets_v6_[DHCPV6_REQUEST] = pkt6;
-    }
+    saveFirstPacket(pkt6);
 }
 
 void
@@ -1671,6 +1657,12 @@ TestControl::sendRequest6(const TestControlSocket& socket,
     }
     // Update packet stats.
     stats_mgr6_->passSentPacket(StatsMgr6::XCHG_RR, pkt6);
+
+    // When 'T' diagnostics flag is specified it means that user requested
+    // printing packet contents. It will be just one (first) packet which
+    // contents will be printed. Here we check if this packet has been already
+    // collected. If it hasn't we save this packet so as we can print its
+    // contents when test is finished.
     if (testDiags('T') &&
         (template_packets_v6_.find(DHCPV6_REQUEST) == template_packets_v6_.end())) {
         template_packets_v6_[DHCPV6_REQUEST] = pkt6;
@@ -1708,10 +1700,8 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
         }
         stats_mgr6_->passSentPacket(StatsMgr6::XCHG_SA, pkt6);
     }
-    if (testDiags('T') &&
-        (template_packets_v6_.find(DHCPV6_SOLICIT) == template_packets_v6_.end())) {
-        template_packets_v6_[DHCPV6_SOLICIT] = pkt6;
-    }
+
+    saveFirstPacket(pkt6);
 }
 
 void
@@ -1756,10 +1746,7 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
         // Update packet stats.
         stats_mgr6_->passSentPacket(StatsMgr6::XCHG_SA, pkt6);
     }
-    if (testDiags('T') &&
-        (template_packets_v6_.find(DHCPV6_SOLICIT) == template_packets_v6_.end())) {
-        template_packets_v6_[DHCPV6_SOLICIT] = pkt6;
-    }
+    saveFirstPacket(pkt6);
 }
 
 

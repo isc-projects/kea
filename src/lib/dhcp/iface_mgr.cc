@@ -483,7 +483,7 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
     // If remote address is broadcast address we have to
     // allow this on the socket.
     if (remote_addr.getAddress().is_v4() &&
-        (remote_addr == IOAddress("255.255.255.255"))) {
+        (remote_addr == IOAddress(DHCP_IPV4_BROADCAST_ADDRESS))) {
         // Socket has to be open prior to setting the broadcast
         // option. Otherwise set_option will complain about
         // bad file descriptor.
