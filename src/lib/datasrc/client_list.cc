@@ -64,6 +64,11 @@ ConfigurableClientList::ConfigurableClientList(const RRClass& rrclass) :
     allow_cache_(false)
 {}
 
+const DataSourceClient*
+ConfigurableClientList::DataSourceInfo::getCacheClient() const {
+    return (cache_.get());
+}
+
 void
 ConfigurableClientList::configure(const ConstElementPtr& config,
                                   bool allow_cache)

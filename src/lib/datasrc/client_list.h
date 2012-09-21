@@ -305,6 +305,13 @@ public:
                        util::MemorySegment& mem_sgmt);
         DataSourceClient* data_src_client_;
         DataSourceClientContainerPtr container_;
+
+        // Accessor to cache_ in the form of DataSourceClient, hiding
+        // the existence of InMemoryClient as much as possible.  We should
+        // really consider cleaner abstraction, but for now it works.
+        // This is also only intended to be used in auth unit tests right now.
+        // No other applications or tests may use it.
+        const DataSourceClient* getCacheClient() const;
         boost::shared_ptr<memory::InMemoryClient> cache_;
     };
 
