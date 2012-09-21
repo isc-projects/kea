@@ -25,6 +25,8 @@ import isc.config.module_spec
 import ast
 import copy
 
+import traceback
+
 class ConfigDataError(Exception): pass
 
 BIND10_CONFIG_DATA_VERSION = 2
@@ -44,6 +46,13 @@ def spec_part_is_named_set(spec_part):
     """Returns True if the given spec_part is a dict that contains a
        named_set specification, and False otherwise."""
     return (type(spec_part) == dict and 'named_set_item_spec' in spec_part)
+
+def spec_part_is_any(spec_part):
+    """Returns true if the given spec_part specifies an element of type
+       any, and False otherwise.
+    """
+    return (type(spec_part) == dict and 'item_type' in spec_part and
+            spec_part['item_type'] == "any")
 
 def check_type(spec_part, value):
     """Does nothing if the value is of the correct type given the
@@ -237,7 +246,8 @@ def spec_name_list(spec, prefix="", recurse=False):
         elif 'named_set_item_spec' in spec:
             # we added a '/' above, but in this one case we don't want it
             result.append(prefix[:-1])
-        else:
+        # ignore any
+        elif not spec_part_is_any(spec):
             for name in spec:
                 result.append(prefix + name + "/")
                 if recurse:
@@ -392,14 +402,25 @@ class MultiConfigData:
            identifier, or None if not found. The first part of the
            identifier (up to the first /) is interpreted as the module
            name. Returns None if not found, or if identifier is not a
-           string."""
+           string.
+           If an index is given for a List-type element, it returns
+           the specification of the list elements, not of the list itself
+           """
         if type(identifier) != str or identifier == "":
             return None
         if identifier[0] == '/':
             identifier = identifier[1:]
         module, sep, id = identifier.partition("/")
+        if id != "":
+            id, indices = isc.cc.data.split_identifier_list_indices(id)
+        else:
+            indices = None
         try:
-            return find_spec_part(self._specifications[module].get_config_spec(), id)
+            spec_part = find_spec_part(self._specifications[module].get_config_spec(), id)
+            if indices is not None and spec_part_is_list(spec_part):
+                return spec_part['list_item_spec']
+            else:
+                return spec_part
         except isc.cc.data.DataNotFoundError as dnfe:
             return None
         except KeyError as ke:
@@ -782,8 +803,7 @@ class MultiConfigData:
            return a list of those (appended to item_name), otherwise
            the list will only contain the item_name itself."""
         spec_part = self.find_spec_part(item_name)
-        if 'item_type' in spec_part and \
-           spec_part['item_type'] == 'named_set':
+        if spec_part_is_named_set(spec_part):
             subslash = ""
             if spec_part['named_set_item_spec']['item_type'] == 'map' or\
                spec_part['named_set_item_spec']['item_type'] == 'named_set':
@@ -791,6 +811,16 @@ class MultiConfigData:
             values, status = self.get_value(item_name)
             if len(values) > 0:
                 return [ item_name + "/" + v + subslash for v in values.keys() ]
+            else:
+                return [ item_name ]
+        elif spec_part_is_list(spec_part):
+            values, status = self.get_value(item_name)
+            if len(values) > 0:
+                result = []
+                for i in range(len(values)):
+                    name = item_name + '[%d]' % i
+                    result.extend(self._get_list_items(name))
+                return result
             else:
                 return [ item_name ]
         else:
