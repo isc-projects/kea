@@ -362,3 +362,64 @@ def configure_ddns_off(step):
         config commit
         \"\"\"
     """)
+
+@step('query statistics(?: (\S+))? of bind10 module (\S+)(?: with cmdctl port (\d+))?')
+def query_statistics(step, statistics, name, cmdctl_port):
+    """
+    query statistics data via bindctl.
+    Parameters:
+    statistics  ('statistics <statistics>', optional) : The queried statistics name.
+    name ('module <name>'): The name of the module (case sensitive!)
+    cmdctl_port ('with cmdctl port <portnr>', optional): cmdctl port to send
+                the command to.
+    """
+    port_str = ' with cmdctl port %s' % cmdctl_port \
+        if cmdctl_port else ''
+    step.given('send bind10%s the command Stats show owner=%s%s'\
+        % (port_str, name,\
+               ' name=%s' % statistics if statistics else ''))
+
+def find_value(dictionary, key):
+    """A helper method. Recursively find a value corresponding to the
+    key of the dictionary and returns it. Returns None if the
+    dictionary is not dict type."""
+    if type(dictionary) is not dict:
+        return
+    if key in dictionary:
+        return dictionary[key]
+    else:
+        for v in dictionary.values():
+            return find_value(v, key)
+
+@step('The counter (\S+)(?: for the zone (\S+))? should be' + \
+          '(?:( greater than| less than))? (\d+)')
+def check_statistics(step, counter, zone, gtlt, number):
+    """
+    check the output of bindctl for statistics of specified counter
+    and zone.
+    Parameters:
+    counter ('counter <counter>'): The counter name of statistics.
+    zone ('zone <zone>', optional): The zone name.
+    gtlt (' greater than'|' less than', optional): greater than
+          <number> or less than <number>.
+    number ('<number>): The expect counter number. <number> is assumed
+          to be an unsigned integer.
+    """
+    output = parse_bindctl_output_as_data_structure()
+    found = None
+    zone_str = ""
+    if zone:
+        found = find_value(find_value(output, zone), counter)
+        zone_str = " for zone %s" % zone
+    else:
+        found = find_value(output, counter)
+    assert found is not None, \
+        'Not found statistics counter %s%s' % (counter, zone_str)
+    msg = "Got %s, expected%s %s as counter %s%s" % \
+        (found, gtlt, number, counter, zone_str)
+    if gtlt and 'greater' in gtlt:
+        assert int(found) > int(number), msg
+    elif gtlt and 'less' in gtlt:
+        assert int(found) < int(number), msg
+    else:
+        assert int(found) == int(number), msg
