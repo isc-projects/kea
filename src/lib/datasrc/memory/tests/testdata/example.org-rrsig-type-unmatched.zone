@@ -1,0 +1,6 @@
+;; test zone file used for ZoneFinderContext tests.
+;; RRSIGs are (obviouslly) faked ones for testing.
+
+example.org. 3600 IN SOA	ns1.example.org. bugs.x.w.example.org. 72 3600 300 3600000 3600
+ns1.example.org.		      3600 IN AAAA	2001:db8::1
+ns1.example.org.		      3600 IN RRSIG	A 7 3 3600 20150420235959 20051021000000 40430 example.org. FAKEFAKE

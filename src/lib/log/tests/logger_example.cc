@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
             if (c_found || f_found || y_found) {
                 cur_spec.addOutputOption(cur_opt);
                 cur_opt = def_opt;
-                c_found = f_found = y_found = false;
+                f_found = y_found = false;
             }
 
             // Set the output option for this switch.
@@ -174,7 +174,7 @@ int main(int argc, char** argv) {
             if (c_found || f_found || y_found) {
                 cur_spec.addOutputOption(cur_opt);
                 cur_opt = def_opt;
-                c_found = f_found = y_found = false;
+                c_found = y_found = false;
             }
 
             // Set the output option for this switch.
@@ -236,7 +236,7 @@ int main(int argc, char** argv) {
             if (c_found || f_found || y_found) {
                 cur_spec.addOutputOption(cur_opt);
                 cur_opt = def_opt;
-                c_found = f_found = y_found = false;
+                c_found = f_found = false;
             }
             y_found = true;
             cur_opt.destination = OutputOption::DEST_SYSLOG;

@@ -35,28 +35,28 @@ namespace {
 // constructor validation
 TEST(TripletTest, constructor) {
 
-    uint32_t min = 10;
-    uint32_t value = 20;
-    uint32_t max = 30;
+    const uint32_t min = 10;
+    const uint32_t value = 20;
+    const uint32_t max = 30;
 
     Triplet<uint32_t> x(min, value, max);
 
-    EXPECT_EQ(10, x.getMin());
-    EXPECT_EQ(20, x.get());
-    EXPECT_EQ(30, x.getMax());
+    EXPECT_EQ(min, x.getMin());
+    EXPECT_EQ(value, x.get());
+    EXPECT_EQ(max, x.getMax());
 
     // requested values below min should return allowed min value
-    EXPECT_EQ(10, x.get(5));
+    EXPECT_EQ(min, x.get(min - 5));
 
-    EXPECT_EQ(10, x.get(10));
+    EXPECT_EQ(min, x.get(min));
 
     // requesting a value from within the range (min < x < max) should
     // return the requested value
     EXPECT_EQ(17, x.get(17));
 
-    EXPECT_EQ(30, x.get(30));
+    EXPECT_EQ(max, x.get(max));
 
-    EXPECT_EQ(30, x.get(35));
+    EXPECT_EQ(max, x.get(max + 5));
 
     // this will be boring. It is expected to return 42 no matter what
     Triplet<uint32_t> y(42);
@@ -77,15 +77,26 @@ TEST(TripletTest, operator) {
 
     uint32_t x = 47;
 
-    // assignment operator: uint32_t => triplet
-    Triplet<uint32_t> y = x;
+    Triplet<uint32_t> foo(1,2,3);
+    Triplet<uint32_t> bar(4,5,6);
 
-    EXPECT_EQ(47, y.get());
+    foo = bar;
+
+    EXPECT_EQ(4, foo.getMin());
+    EXPECT_EQ(5, foo.get());
+    EXPECT_EQ(6, foo.getMax());
+
+    // assignment operator: uint32_t => triplet
+    Triplet<uint32_t> y(0);
+    y = x;
+
+    EXPECT_EQ(x, y.get());
 
     // let's try the other way around: triplet => uint32_t
-    uint32_t z = y;
+    uint32_t z = 0;
+    z = y;
 
-    EXPECT_EQ(47, z);
+    EXPECT_EQ(x, z);
 }
 
 // check if specified values are sane
@@ -130,6 +141,14 @@ TEST(Pool6Test, constructor_prefix_len) {
     EXPECT_EQ(Pool6::TYPE_IA, pool1.getType());
     EXPECT_EQ("2001:db8:1::", pool1.getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::ffff:ffff", pool1.getLastAddress().toText());
+
+    // No such thing as /130 prefix
+    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::"), 130),
+                 BadValue);
+
+    // /0 prefix does not make sense
+    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::"), 0),
+                 BadValue);
 
     // This is Pool6, IPv4 addresses do not belong here
     EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("192.168.0.2"), 96),
