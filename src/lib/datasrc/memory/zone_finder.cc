@@ -704,9 +704,7 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
 
                     closest = createTreeNodeRRset(covering_node, rdataset,
                                                   getClass());
-                }
 
-                if (closest) {
                     LOG_DEBUG(logger, DBG_TRACE_BASIC,
                               DATASRC_MEM_FINDNSEC3_COVER).
                         arg(name).arg(*closest);
