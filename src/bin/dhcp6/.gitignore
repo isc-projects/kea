@@ -1,11 +1,6 @@
-*~
-Makefile
-Makefile.in
-*.o
-.deps
-.libs
-b10-dhcp6
-spec_config.h
-spec_config.h.pre
-tests/dhcp6_unittests
+/b10-dhcp6
 /b10-dhcp6.8
+/dhcp6_messages.cc
+/dhcp6_messages.h
+/spec_config.h
+/spec_config.h.pre

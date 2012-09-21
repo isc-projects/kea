@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -727,6 +727,13 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
     m.msg_control = &control_buf_[0];
     m.msg_controllen = control_buf_len_;
     struct cmsghdr *cmsg = CMSG_FIRSTHDR(&m);
+
+    // FIXME: Code below assumes that cmsg is not NULL, but
+    // CMSG_FIRSTHDR() is coded to return NULL as a possibility.  The
+    // following assertion should never fail, but if it did and you came
+    // here, fix the code. :)
+    assert(cmsg != NULL);
+
     cmsg->cmsg_level = IPPROTO_IPV6;
     cmsg->cmsg_type = IPV6_PKTINFO;
     cmsg->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
@@ -813,8 +820,12 @@ IfaceMgr::send(const Pkt4Ptr& pkt)
 
 
 boost::shared_ptr<Pkt4>
-IfaceMgr::receive4(uint32_t timeout) {
-
+IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
+    // Sanity check for microsecond timeout.
+    if (timeout_usec >= 1000000) {
+        isc_throw(BadValue, "fractional timeout must be shorter than"
+                  " one million microseconds");
+    }
     const SocketInfo* candidate = 0;
     IfaceCollection::const_iterator iface;
     fd_set sockets;
@@ -854,13 +865,13 @@ IfaceMgr::receive4(uint32_t timeout) {
         names << session_socket_ << "(session)";
     }
 
-    /// @todo: implement sub-second precision one day
     struct timeval select_timeout;
-    select_timeout.tv_sec = timeout;
-    select_timeout.tv_usec = 0;
+    select_timeout.tv_sec = timeout_sec;
+    select_timeout.tv_usec = timeout_usec;
 
     cout << "Trying to receive data on sockets: " << names.str()
-         << ". Timeout is " << timeout << " seconds." << endl;
+         << ". Timeout is " << timeout_sec << "." << setw(6) << setfill('0')
+         << timeout_usec << " seconds." << endl;
     int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
     cout << "select returned " << result << endl;
 
@@ -983,7 +994,12 @@ IfaceMgr::receive4(uint32_t timeout) {
     return (pkt);
 }
 
-Pkt6Ptr IfaceMgr::receive6(uint32_t timeout) {
+Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ ) {
+    // Sanity check for microsecond timeout.
+    if (timeout_usec >= 1000000) {
+        isc_throw(BadValue, "fractional timeout must be shorter than"
+                  " one million microseconds");
+    }
 
     const SocketInfo* candidate = 0;
     fd_set sockets;
@@ -1023,13 +1039,13 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout) {
         names << session_socket_ << "(session)";
     }
 
-    cout << "Trying to receive data on sockets:" << names.str()
-         << ".Timeout is " << timeout << " seconds." << endl;
+    cout << "Trying to receive data on sockets: " << names.str()
+         << ". Timeout is " << timeout_sec << "." << setw(6) << setfill('0')
+         << timeout_usec << " seconds." << endl;
 
-    /// @todo: implement sub-second precision one day
     struct timeval select_timeout;
-    select_timeout.tv_sec = timeout;
-    select_timeout.tv_usec = 0;
+    select_timeout.tv_sec = timeout_sec;
+    select_timeout.tv_usec = timeout_usec;
 
     int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
 

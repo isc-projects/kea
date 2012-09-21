@@ -153,6 +153,54 @@
 
   </refsect1>
 
+  <refsect1>
+    <title>STATISTICS DATA</title>
+
+    <para>
+      The statistics data collected by the <command>b10-xfrout</command>
+      daemon for <quote>Xfrout</quote> include:
+    </para>
+
+    <variablelist>
+
+      <varlistentry>
+        <term>notifyoutv4</term>
+        <listitem><simpara>
+	 Number of IPv4 notifies per zone name sent out from Xfrout
+	</simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>notifyoutv6</term>
+        <listitem><simpara>
+	 Number of IPv6 notifies per zone name sent out from Xfrout
+	</simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>xfrrej</term>
+        <listitem><simpara>
+         Number of XFR requests per zone name rejected by Xfrout
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>xfrreqdone</term>
+        <listitem><simpara>
+	 Number of requested zone transfers per zone name completed
+        </simpara></listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>
+      In per-zone counters the special zone name '_SERVER_' exists. It doesn't
+      mean a specific zone. It represents an entire server and its value means
+      a total count of all zones.
+    </para>
+
+  </refsect1>
+
 <!--
   <refsect1>
     <title>OPTIONS</title>

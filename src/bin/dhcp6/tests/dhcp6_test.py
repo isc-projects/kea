@@ -27,16 +27,27 @@ import fcntl
 
 class TestDhcpv6Daemon(unittest.TestCase):
     def setUp(self):
-        # don't redirect stdout/stderr here as we want to print out things
+        # Don't redirect stdout/stderr here as we want to print out things
         # during the test
-        pass
+        #
+        # However, we do want to set the logging lock directory to somewhere
+        # to which we can write - use the current working directory.  We then
+        # set the appropriate environment variable.  os.putenv() may be not
+        # supported on some platforms as suggested in
+        # http://docs.python.org/release/3.2/library/os.html?highlight=putenv#os.environ:
+        # "If the platform supports the putenv() function...". It was checked
+        # that it does not work on Ubuntu. To overcome this problem we access
+        # os.environ directly.
+        lockdir_envvar = "B10_LOCKFILE_DIR_FROM_BUILD"
+        if lockdir_envvar not in os.environ:
+            os.environ[lockdir_envvar] = os.getcwd()
 
     def tearDown(self):
         pass
 
     def runCommand(self, params, wait=1):
         """
-        This method runs a command and returns a touple: (returncode, stdout, stderr)
+        This method runs a command and returns a tuple: (returncode, stdout, stderr)
         """
         ## @todo: Convert this into generic method and reuse it in dhcp4 and dhcp6
 
@@ -79,9 +90,9 @@ class TestDhcpv6Daemon(unittest.TestCase):
         fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
         # There's potential problem if b10-dhcp4 prints out more
-        # than 4k of text
+        # than 16k of text
         try:
-            output = os.read(self.stdout_pipes[0], 4096)
+            output = os.read(self.stdout_pipes[0], 16384)
         except OSError:
             print("No data available from stdout")
             output = ""
@@ -91,7 +102,7 @@ class TestDhcpv6Daemon(unittest.TestCase):
             output = ""
 
         try:
-            error = os.read(self.stderr_pipes[0], 4096)
+            error = os.read(self.stderr_pipes[0], 16384)
         except OSError:
             print("No data available on stderr")
             error = ""
@@ -130,8 +141,8 @@ class TestDhcpv6Daemon(unittest.TestCase):
         print("Note: Purpose of some of the tests is to check if DHCPv6 server can be started,")
         print("      not that is can bind sockets correctly. Please ignore binding errors.")
         (returncode, output, error) = self.runCommand(["../b10-dhcp6", "-v"])
-
-        self.assertEqual( str(output).count("b10-dhcp6: Initiating DHCPv6 server operation."), 1)
+        output_text = str(output) + str(error)
+        self.assertEqual(output_text.count("DHCP6_STARTING"), 1)
 
     def test_portnumber_0(self):
         print("Check that specifying port number 0 is not allowed.")
@@ -180,27 +191,19 @@ class TestDhcpv6Daemon(unittest.TestCase):
     def test_portnumber_nonroot(self):
         print("Check that specifying unprivileged port number will work.")
 
-        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-s', '-p', '10547'])
-
-        # When invalid port number is specified, return code must not be success
-        # TODO: Temporarily commented out as socket binding on systems that do not have
-        #       interface detection implemented currently fails.
-        # self.assertTrue(returncode == 0)
-
-        self.assertEqual( str(output).count("opening sockets on port 10547"), 1)
+        # Check that there is a message about running with an unprivileged port
+        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-v', '-s', '-p', '10547'])
+        output_text = str(output) + str(error)
+        self.assertEqual(output_text.count("DHCP6_OPEN_SOCKET opening sockets on port 10547"), 1)
 
     def test_skip_msgq(self):
         print("Check that connection to BIND10 msgq can be disabled.")
 
-        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-s', '-p', '10547'])
-
-        # When invalid port number is specified, return code must not be success
-        # TODO: Temporarily commented out as socket binding on systems that do not have
-        #       interface detection implemented currently fails.
-        # self.assertTrue(returncode == 0)
-
-        self.assertEqual( str(output).count("Skipping connection to the BIND10 msgq."), 1)
-
+        # Check that the system outputs a message on one of its streams about running
+        # standalone.
+        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-v', '-s', '-p', '10547'])
+        output_text = str(output) + str(error)
+        self.assertEqual(output_text.count("DHCP6_STANDALONE"), 1)
 
 if __name__ == '__main__':
     unittest.main()

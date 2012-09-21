@@ -24,6 +24,7 @@
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpIfaceMgr
+ * - @subpage perfdhcpInternals
  *
  * @section misc Miscellaneous topics
  * - @subpage LoggingApi

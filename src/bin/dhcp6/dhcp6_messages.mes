@@ -1,0 +1,101 @@
+# Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+$NAMESPACE isc::dhcp
+
+% DHCP6_CCSESSION_STARTED control channel session started on socket %1
+A debug message issued during startup after the IPv6 DHCP server has
+successfully established a session with the BIND 10 control channel.
+
+% DHCP6_CCSESSION_STARTING starting control channel session, specfile: %1
+This debug message is issued just before the IPv6 DHCP server attempts
+to establish a session with the BIND 10 control channel.
+
+% DHCP6_COMMAND_RECEIVED received command %1, arguments: %2
+A debug message listing the command (and possible arguments) received
+from the BIND 10 control system by the IPv6 DHCP server.
+
+% DHCP6_CONFIG_UPDATE updated configuration received: %1
+A debug message indicating that the IPv6 DHCP server has received an
+updated configuration from the BIND 10 configuration system.
+
+% DHCP6_NOT_RUNNING IPv6 DHCP server is not running
+A warning message is issued when an attempt is made to shut down the
+IPv6 DHCP server but it is not running.
+
+% DHCP6_NO_INTERFACES failed to detect any network interfaces
+During startup the IPv6 DHCP server failed to detect any network
+interfaces and is therefore shutting down.
+
+% DHCP6_OPEN_SOCKET opening sockets on port %1
+A debug message issued during startup, this indicates that the IPv6 DHCP
+server is about to open sockets on the specified port.
+
+% DHCP6_PACKET_PARSE_FAIL failed to parse incoming packet
+The IPv6 DHCP server has received a packet that it is unable to interpret.
+
+% DHCP6_PACKET_RECEIVED %1 (type %2) packet received
+A debug message noting that the server has received the specified type
+of packet.  Note that a packet marked as UNKNOWN may well be a valid
+DHCP packet, just a type not expected by the server (e.g. it will report
+a received OFFER packet as UNKNOWN).
+
+% DHCP6_PACK_FAIL failed to assemble response correctly
+This error is output if the server failed to assemble the data to be
+returned to the client into a valid packet.  The reason is most likely
+to be to a programming error: please raise a bug report.
+
+% DHCP6_QUERY_DATA received packet length %1, data length %2, data is <%3>
+A debug message listing the data received from the client or relay.
+
+% DHCP6_RESPONSE_DATA responding with packet type %1 data is <%2>
+A debug message listing the data returned to the client.
+
+% DHCP6_SERVER_FAILED server failed: %1
+The IPv6 DHCP server has encountered a fatal error and is terminating.
+The reason for the failure is included in the message.
+
+% DHCP6_SESSION_FAIL failed to establish BIND 10 session (%1), running stand-alone
+The server has failed to establish communication with the rest of BIND
+10 and is running in stand-alone mode.  (This behavior will change once
+the IPv6 DHCP server is properly integrated with the rest of BIND 10.)
+
+% DHCP6_SHUTDOWN server shutdown
+The IPv6 DHCP server has terminated normally.
+
+% DHCP6_SHUTDOWN_REQUEST shutdown of server requested
+This debug message indicates that a shutdown of the IPv6 server has
+been requested via a call to the 'shutdown' method of the core Dhcpv6Srv
+object.
+
+% DHCP6_SRV_CONSTRUCT_ERROR error creating Dhcpv6Srv object, reason: %1
+This error message indicates that during startup, the construction of a
+core component within the IPv6 DHCP server (the Dhcpv6 server object)
+has failed.  As a result, the server will exit.  The reason for the
+failure is given within the message.
+
+% DHCP6_STANDALONE skipping message queue, running standalone
+This is a debug message indicating that the IPv6 server is running in
+standalone mode, not connected to the message queue.  Standalone mode
+is only useful during program development, and should not be used in a
+production environment.
+
+% DHCP6_STARTING server starting
+This informational message indicates that the IPv6 DHCP server has
+processed any command-line switches and is starting.
+
+% DHCP6_START_INFO pid: %1, port: %2, verbose: %3, standalone: %4
+This is a debug message issued during the IPv6 DHCP server startup.
+It lists some information about the parameters with which the server
+is running.

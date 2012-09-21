@@ -6,6 +6,17 @@
 	future.
 	(Trac #2238, git TBD)
 
+475.	[func]		naokikambe
+	Added Xfrout statistics counters: notifyoutv4, notifyoutv6, xfrrej, and
+	xfrreqdone. These are per-zone type counters. The value of these
+	counters can be seen with zone name by invoking "Stats show Xfrout" via
+	bindctl.
+	(Trac #2158, git e68c127fed52e6034ab5309ddd506da03c37a08a)
+
+474.	[func]      stephen
+	DHCP servers now use the BIND 10 logging system for messages.
+	(Trac #1545, git de69a92613b36bd3944cb061e1b7c611c3c85506)
+
 473.	[bug]		jelte
 	TCP connections now time out in b10-auth if no (or not all) query
 	data is sent by the client. The timeout value defaults to 5000
