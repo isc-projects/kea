@@ -17,12 +17,6 @@ query_bench_SOURCES += ../auth_srv.h ../auth_srv.cc
 query_bench_SOURCES += ../auth_config.h ../auth_config.cc
 query_bench_SOURCES += ../statistics.h ../statistics.cc
 query_bench_SOURCES += ../auth_log.h ../auth_log.cc
-# This is a temporary workaround for #1206, where the InMemoryClient has been
-# moved to an ldopened library. We could add that library to LDADD, but that
-# is nonportable. When #1207 is done this becomes moot anyway, and the
-# specific workaround is not needed anymore, so we can then remove this
-# line again.
-query_bench_SOURCES += ${top_srcdir}/src/lib/datasrc/memory_datasrc.cc
 
 nodist_query_bench_SOURCES = ../auth_messages.h ../auth_messages.cc
 
