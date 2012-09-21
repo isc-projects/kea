@@ -31,7 +31,7 @@ class Pool6;
 
 class Subnet6;
 
-/// @brief this template specifes a parameter value
+/// @brief this template specifies a parameter value
 ///
 /// This template class is used to store configuration parameters, like lifetime or T1.
 /// It defines 3 parameters: min, default, and max value. There are 2 constructors:
@@ -48,15 +48,18 @@ public:
     ///
     /// Typically: uint32_t to Triplet assignment. It is very convenient
     /// to be able to simply write Triplet<uint32_t> x = 7;
-    Triplet<T>& operator = (T base_type) {
-        return Triplet<T>(base_type);
+    Triplet<T> operator=(T other) {
+        min_ = other;
+        default_ = other;
+        max_ = other;
+        return *this;
     }
 
     /// @brief triplet to base type conversion
     ///
     /// Typically: Triplet to uint32_t assignment. It is very convenient
     /// to be able to simply write uint32_t z = x; (where x is a Triplet)
-    operator T () const {
+    operator T() const {
         return (default_);
     }
 
@@ -73,7 +76,7 @@ public:
     /// @throw BadValue if min <= def <= max rule is violated
     Triplet(T min, T def, T max)
         :min_(min), default_(def), max_(max) {
-        if ( (min_>def) || (def > max_) ) {
+        if ( (min_ > def) || (def > max_) ) {
             isc_throw(BadValue, "Invalid triplet values.");
         }
     }
@@ -127,6 +130,7 @@ public:
 
     /// @brief returns Pool-id
     ///
+    /// @return pool-id value
     /// Pool-id is an unique value that can be used to identify a pool.
     uint32_t getId() const {
         return (id_);
@@ -148,7 +152,7 @@ public:
     /// @brief Checks if a given address is in the range.
     ///
     /// @return true, if the address is in pool
-    bool inRange(const isc::asiolink::IOAddress& addr);
+    bool inRange(const isc::asiolink::IOAddress& addr) const;
 
 protected:
 
@@ -170,7 +174,7 @@ protected:
 
     /// @brief pool-id
     ///
-    /// This ID is used to indentify this specific pool.
+    /// This ID is used to identify this specific pool.
     uint32_t id_;
 
     /// @brief The first address in a pool
@@ -227,7 +231,7 @@ public:
         return (type_);
     }
 
-protected:
+private:
     /// @brief defines a pool type
     Pool6Type type_;
 
@@ -255,7 +259,7 @@ typedef std::vector<Pool6Ptr> Pool6Collection;
 class Subnet {
 public:
     /// @brief checks if specified address is in range
-    bool inRange(const isc::asiolink::IOAddress& addr);
+    bool inRange(const isc::asiolink::IOAddress& addr) const;
 
     /// @brief return valid-lifetime for addresses in that prefix
     Triplet<uint32_t> getValid() const {
@@ -317,29 +321,54 @@ protected:
 /// This class represents an IPv6 subnet.
 class Subnet6 : public Subnet {
 public:
+
+    /// @brief Constructor with all parameters
+    ///
+    /// @param prefix Subnet6 prefix
+    /// @param length prefix length
+    /// @param t1 renewal timer (in seconds)
+    /// @param t2 rebind timer (in seconds)
+    /// @param preferred_lifetime preferred lifetime of leases (in seconds)
+    /// @param valid_lifetime preferred lifetime of leases (in seconds)
     Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
             const Triplet<uint32_t>& t1,
             const Triplet<uint32_t>& t2,
             const Triplet<uint32_t>& preferred_lifetime,
             const Triplet<uint32_t>& valid_lifetime);
 
+    /// @brief Returns preverred lifetime (in seconds)
+    ///
+    /// @return a triplet with preferred lifetime
     Triplet<uint32_t> getPreferred() const {
         return (preferred_);
     }
 
+    /// @brief Returns a pool that specified address belongs to
+    ///
+    /// @param hint address that the returned pool should cover (optional)
+    /// @return Pointer to found pool6 (or NULL)
     Pool6Ptr getPool6(const isc::asiolink::IOAddress& hint =
                       isc::asiolink::IOAddress("::"));
 
+    /// @brief Adds a new pool.
+    /// @param pool pool to be added
     void addPool6(const Pool6Ptr& pool);
 
+    /// @brief returns all pools
+    ///
+    /// The reference is only valid as long as the object that
+    /// returned it.
+    ///
+    /// @return a collection of all pools
     const Pool6Collection& getPools() const {
         return pools_;
     }
 
 protected:
-    /// collection of pools in that list
+    /// @brief collection of pools in that list
     Pool6Collection pools_;
 
+    /// @brief a triplet with preferred lifetime (in seconds)
     Triplet<uint32_t> preferred_;
 };
 
