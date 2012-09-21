@@ -6,9 +6,8 @@
       { "item_name": "interface",
         "item_type": "string",
         "item_optional": false,
-        "item_default": "eth0"
+        "item_default": "all"
       } ,
-
 
       { "item_name": "renew-timer",
         "item_type": "integer",
@@ -46,6 +45,12 @@
             "item_default": {},
             "map_item_spec": [
 
+                { "item_name": "subnet",
+                  "item_type": "string",
+                  "item_optional": false,
+                  "item_default": ""
+                },
+
                 { "item_name": "renew-timer",
                     "item_type": "integer",
                     "item_optional": false,
@@ -69,7 +74,7 @@
                     "item_optional": false,
                     "item_default": 7200
                 },
-                { "item_name": "pool6",
+                { "item_name": "pool",
                     "item_type": "list",
                     "item_optional": false,
                     "item_default": [],
