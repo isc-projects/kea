@@ -723,12 +723,10 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
             const ZoneNode* previous_node = last_node->predecessor();
             const ZoneNode* next_node = last_node->successor();
 
-            // If the given hash is larger than the largest stored hash or
-            // the first label doesn't match the target, identify the
-            // "previous" hash value and remember it as the candidate next
-            // closer proof.
             if (((last_cmp.getOrder() < 0) && (previous_node == NULL)) ||
                 ((last_cmp.getOrder() > 0) && (next_node == NULL))) {
+                // If the given hash is larger or smaller than everything,
+                // the covering proof is the NSEC3 that has the largest hash.
                 covering_node = last_node->getLargestInSubTree();
             } else {
                 // Otherwise, H(found_entry-1) < given_hash < H(found_entry).
