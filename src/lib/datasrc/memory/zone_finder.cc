@@ -686,8 +686,9 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
 
         if (result == ZoneTree::EXACTMATCH) {
             // We found an exact match.
-            RdataSet* set = node->getData();
-            ConstRRsetPtr closest = createTreeNodeRRset(node, set, getClass());
+            RdataSet* rdataset = node->getData();
+            ConstRRsetPtr closest = createTreeNodeRRset(node, rdataset,
+                                                        getClass());
             ConstRRsetPtr next =
                 createTreeNodeRRset(covering_node,
                                     (covering_node != NULL ?
