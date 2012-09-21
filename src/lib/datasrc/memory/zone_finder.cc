@@ -645,6 +645,14 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
                   getOrigin() << "/" << getClass());
     }
 
+    const NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
+    const ZoneTree& tree = nsec3_data->getNSEC3Tree();
+    if (tree.getNodeCount() == 0) {
+        isc_throw(DataSourceError,
+                  "findNSEC3 attempt but zone has no NSEC3 RR: " <<
+                  getOrigin() << "/" << getClass());
+    }
+
     const NameComparisonResult cmp_result = name.compare(getOrigin());
     if (cmp_result.getRelation() != NameComparisonResult::EQUAL &&
         cmp_result.getRelation() != NameComparisonResult::SUBDOMAIN) {
@@ -656,12 +664,10 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
     // Convenient shortcuts
     const unsigned int olabels = getOrigin().getLabelCount();
     const unsigned int qlabels = name.getLabelCount();
-    const NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
 
     // placeholder of the next closer proof
     const ZoneNode* covering_node(NULL);
 
-    const ZoneTree& tree = nsec3_data->getNSEC3Tree();
     ZoneChain chain;
 
     // Examine all names from the query name to the origin name, stripping
