@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <util/buffer.h>
+
 #include <dns/labelsequence.h>
 #include <dns/name.h>
 #include <exceptions/exceptions.h>
@@ -771,6 +773,37 @@ TEST_F(LabelSequenceTest, serialize) {
     const uint8_t expected_data5[] = {
         1, 0, 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e' };
     expected.push_back(DataPair(sizeof(expected_data5), expected_data5));
+
+    // Labels containing a longest possible label
+    const Name name_longlabel(std::string(63, 'x')); // 63 'x's
+    LabelSequence ls_longlabel(name_longlabel);
+    actual_labelseqs.push_back(ls_longlabel);
+    vector<uint8_t> expected_data6;
+    expected_data6.push_back(2); // 2 labels
+    expected_data6.push_back(0); // 1st offset
+    expected_data6.push_back(64); // 2nd offset
+    expected_data6.push_back(63); // 1st label length
+    expected_data6.insert(expected_data6.end(), 63, 'x'); // 1st label: 63 'x's
+    expected_data6.push_back(0); // 2nd label: trailing 0
+    expected.push_back(DataPair(expected_data6.size(), &expected_data6[0]));
+
+    // Max number of labels and longest possible name
+    EXPECT_EQ(Name::MAX_WIRE, n_maxlabel.getLength());
+    LabelSequence ls_maxlabel(n_maxlabel);
+    actual_labelseqs.push_back(ls_maxlabel);
+    vector<uint8_t> expected_data7;
+    expected_data7.push_back(Name::MAX_LABELS); // number of labels
+    for (size_t i = 0; i < Name::MAX_LABELS; ++i) {
+        expected_data7.push_back(i * 2); // each label has length and 1 byte
+    }
+    // Copy wire data of the name
+    isc::util::OutputBuffer ob(0);
+    n_maxlabel.toWire(ob);
+    expected_data7.insert(expected_data7.end(),
+                          static_cast<const uint8_t*>(ob.getData()),
+                          static_cast<const uint8_t*>(ob.getData()) +
+                          ob.getLength());
+    expected.push_back(DataPair(expected_data7.size(), &expected_data7[0]));
 
     // For each data set, serialize the labels and compare the data to the
     // expected one.
