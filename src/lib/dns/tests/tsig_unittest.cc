@@ -66,6 +66,22 @@ testGetTime() {
     return (NOW);
 }
 
+// Thin wrapper around TSIGContext to allow access to the
+// update method.
+class TestTSIGContext : public TSIGContext {
+public:
+    TestTSIGContext(const TSIGKey& key) :
+        TSIGContext(key)
+    {}
+    TestTSIGContext(const Name& key_name, const Name& algorithm_name,
+                    const TSIGKeyRing& keyring) :
+        TSIGContext(key_name, algorithm_name, keyring)
+    {}
+    void update(const void* const data, size_t len) {
+        TSIGContext::update(data, len);
+    }
+};
+
 class TSIGTest : public ::testing::Test {
 protected:
     TSIGTest() :
@@ -83,9 +99,10 @@ protected:
         isc::util::detail::gettimeFunction = NULL;
 
         decodeBase64("SFuWd/q99SzF8Yzd1QbB9g==", secret);
-        tsig_ctx.reset(new TSIGContext(TSIGKey(test_name,
-                                               TSIGKey::HMACMD5_NAME(),
-                                               &secret[0], secret.size())));
+        tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                                   TSIGKey::HMACMD5_NAME(),
+                                                   &secret[0],
+                                                   secret.size())));
         tsig_verify_ctx.reset(new TSIGContext(TSIGKey(test_name,
                                                       TSIGKey::HMACMD5_NAME(),
                                                       &secret[0],
@@ -116,7 +133,7 @@ protected:
     static const unsigned int AA_FLAG = 0x2;
     static const unsigned int RD_FLAG = 0x4;
 
-    boost::scoped_ptr<TSIGContext> tsig_ctx;
+    boost::scoped_ptr<TestTSIGContext> tsig_ctx;
     boost::scoped_ptr<TSIGContext> tsig_verify_ctx;
     TSIGKeyRing keyring;
     const uint16_t qid;
@@ -166,16 +183,20 @@ TSIGTest::createMessageAndSign(uint16_t id, const Name& qname,
         message.addRRset(Message::SECTION_ANSWER, answer_rrset);
     }
     renderer.clear();
-    message.toWire(renderer);
 
     TSIGContext::State expected_new_state =
         (ctx->getState() == TSIGContext::INIT) ?
         TSIGContext::SENT_REQUEST : TSIGContext::SENT_RESPONSE;
-    ConstTSIGRecordPtr tsig = ctx->sign(id, renderer.getData(),
-                                        renderer.getLength());
+
+    message.toWire(renderer, *ctx);
+
+    message.clear(Message::PARSE);
+    InputBuffer buffer(renderer.getData(), renderer.getLength());
+    message.fromWire(buffer);
+
     EXPECT_EQ(expected_new_state, ctx->getState());
 
-    return (tsig);
+    return (ConstTSIGRecordPtr(new TSIGRecord(*message.getTSIGRecord())));
 }
 
 void
@@ -218,11 +239,17 @@ void
 commonVerifyChecks(TSIGContext& ctx, const TSIGRecord* record,
                    const void* data, size_t data_len, TSIGError expected_error,
                    TSIGContext::State expected_new_state =
-                   TSIGContext::VERIFIED_RESPONSE)
+                   TSIGContext::VERIFIED_RESPONSE,
+                   bool last_should_throw = false)
 {
     EXPECT_EQ(expected_error, ctx.verify(record, data, data_len));
     EXPECT_EQ(expected_error, ctx.getError());
     EXPECT_EQ(expected_new_state, ctx.getState());
+    if (last_should_throw) {
+        EXPECT_THROW(ctx.lastHadSignature(), TSIGContextError);
+    } else {
+        EXPECT_EQ(record != NULL, ctx.lastHadSignature());
+    }
 }
 
 TEST_F(TSIGTest, initialState) {
@@ -231,6 +258,9 @@ TEST_F(TSIGTest, initialState) {
 
     // And there should be no error code.
     EXPECT_EQ(TSIGError(Rcode::NOERROR()), tsig_ctx->getError());
+
+    // Nothing verified yet
+    EXPECT_THROW(tsig_ctx->lastHadSignature(), TSIGContextError);
 }
 
 TEST_F(TSIGTest, constructFromKeyRing) {
@@ -354,10 +384,17 @@ TEST_F(TSIGTest, verifyBadData) {
                                   12 + dummy_record.getLength() - 1),
                  InvalidParameter);
 
+    // Still nothing verified
+    EXPECT_THROW(tsig_ctx->lastHadSignature(), TSIGContextError);
+
     // And the data must not be NULL.
     EXPECT_THROW(tsig_ctx->verify(&dummy_record, NULL,
                                   12 + dummy_record.getLength()),
                  InvalidParameter);
+
+    // Still nothing verified
+    EXPECT_THROW(tsig_ctx->lastHadSignature(), TSIGContextError);
+
 }
 
 #ifdef ENABLE_CUSTOM_OPERATOR_NEW
@@ -726,8 +763,8 @@ TEST_F(TSIGTest, badsigResponse) {
 TEST_F(TSIGTest, badkeyResponse) {
     // A similar test as badsigResponse but for BADKEY
     isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
-    tsig_ctx.reset(new TSIGContext(badkey_name, TSIGKey::HMACMD5_NAME(),
-                                   keyring));
+    tsig_ctx.reset(new TestTSIGContext(badkey_name, TSIGKey::HMACMD5_NAME(),
+                                       keyring));
     {
         SCOPED_TRACE("Verify resulting in BADKEY");
         commonVerifyChecks(*tsig_ctx, &dummy_record, &dummy_data[0],
@@ -806,7 +843,7 @@ TEST_F(TSIGTest, nosigThenValidate) {
         SCOPED_TRACE("Verify a response without TSIG that should exist");
         commonVerifyChecks(*tsig_ctx, NULL, &dummy_data[0],
                            dummy_data.size(), TSIGError::FORMERR(),
-                           TSIGContext::SENT_REQUEST);
+                           TSIGContext::SENT_REQUEST, true);
     }
 
     createMessageFromFile("tsig_verify5.wire");
@@ -936,45 +973,47 @@ TEST_F(TSIGTest, getTSIGLength) {
     EXPECT_EQ(85, tsig_ctx->getTSIGLength());
 
     // hmac-sha1: n2=11, x=20
-    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name, TSIGKey::HMACSHA1_NAME(),
-                                           &dummy_data[0], 20)));
+    tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                               TSIGKey::HMACSHA1_NAME(),
+                                               &dummy_data[0], 20)));
     EXPECT_EQ(74, tsig_ctx->getTSIGLength());
 
     // hmac-sha256: n2=13, x=32
-    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name,
-                                           TSIGKey::HMACSHA256_NAME(),
-                                           &dummy_data[0], 32)));
+    tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                               TSIGKey::HMACSHA256_NAME(),
+                                               &dummy_data[0], 32)));
     EXPECT_EQ(88, tsig_ctx->getTSIGLength());
 
     // hmac-sha224: n2=13, x=28
-    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name,
-                                           TSIGKey::HMACSHA224_NAME(),
-                                           &dummy_data[0], 28)));
+    tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                               TSIGKey::HMACSHA224_NAME(),
+                                               &dummy_data[0], 28)));
     EXPECT_EQ(84, tsig_ctx->getTSIGLength());
 
     // hmac-sha384: n2=13, x=48
-    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name,
-                                           TSIGKey::HMACSHA384_NAME(),
-                                           &dummy_data[0], 48)));
+    tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                               TSIGKey::HMACSHA384_NAME(),
+                                               &dummy_data[0], 48)));
     EXPECT_EQ(104, tsig_ctx->getTSIGLength());
 
     // hmac-sha512: n2=13, x=64
-    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name,
-                                           TSIGKey::HMACSHA512_NAME(),
-                                           &dummy_data[0], 64)));
+    tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                               TSIGKey::HMACSHA512_NAME(),
+                                               &dummy_data[0], 64)));
     EXPECT_EQ(120, tsig_ctx->getTSIGLength());
 
     // bad key case: n1=len(badkey.example.com)=20, n2=26, x=0
-    tsig_ctx.reset(new TSIGContext(badkey_name, TSIGKey::HMACMD5_NAME(),
-                                   keyring));
+    tsig_ctx.reset(new TestTSIGContext(badkey_name, TSIGKey::HMACMD5_NAME(),
+                                       keyring));
     EXPECT_EQ(72, tsig_ctx->getTSIGLength());
 
     // bad sig case: n1=17, n2=26, x=0
     isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
     createMessageFromFile("message_toWire2.wire");
-    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name, TSIGKey::HMACMD5_NAME(),
-                                           &dummy_data[0],
-                                           dummy_data.size())));
+    tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                               TSIGKey::HMACMD5_NAME(),
+                                               &dummy_data[0],
+                                               dummy_data.size())));
     {
         SCOPED_TRACE("Verify resulting in BADSIG");
         commonVerifyChecks(*tsig_ctx, message.getTSIGRecord(),
@@ -985,9 +1024,10 @@ TEST_F(TSIGTest, getTSIGLength) {
 
     // bad time case: n1=17, n2=26, x=16, y=6
     isc::util::detail::gettimeFunction = testGetTime<0x4da8877a - 1000>;
-    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name, TSIGKey::HMACMD5_NAME(),
-                                           &dummy_data[0],
-                                           dummy_data.size())));
+    tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                               TSIGKey::HMACMD5_NAME(),
+                                               &dummy_data[0],
+                                               dummy_data.size())));
     {
         SCOPED_TRACE("Verify resulting in BADTIME");
         commonVerifyChecks(*tsig_ctx, message.getTSIGRecord(),
@@ -996,6 +1036,116 @@ TEST_F(TSIGTest, getTSIGLength) {
                            TSIGContext::RECEIVED_REQUEST);
     }
     EXPECT_EQ(91, tsig_ctx->getTSIGLength());
+}
+
+// Verify a stream of multiple messages. Some of them have a signature omitted.
+//
+// We have two contexts, one that signs, another that verifies.
+TEST_F(TSIGTest, verifyMulti) {
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+
+    // First, send query from the verify one to the normal one, so
+    // we initialize something like AXFR
+    {
+        SCOPED_TRACE("Query");
+        ConstTSIGRecordPtr tsig = createMessageAndSign(1234, test_name,
+                                                       tsig_verify_ctx.get());
+        commonVerifyChecks(*tsig_ctx, tsig.get(),
+                           renderer.getData(), renderer.getLength(),
+                           TSIGError(Rcode::NOERROR()),
+                           TSIGContext::RECEIVED_REQUEST);
+    }
+
+    {
+        SCOPED_TRACE("First message");
+        ConstTSIGRecordPtr tsig = createMessageAndSign(1234, test_name,
+                                                       tsig_ctx.get());
+        commonVerifyChecks(*tsig_verify_ctx, tsig.get(),
+                           renderer.getData(), renderer.getLength(),
+                           TSIGError(Rcode::NOERROR()),
+                           TSIGContext::VERIFIED_RESPONSE);
+        EXPECT_TRUE(tsig_verify_ctx->lastHadSignature());
+    }
+
+    {
+        SCOPED_TRACE("Second message");
+        ConstTSIGRecordPtr tsig = createMessageAndSign(1234, test_name,
+                                                       tsig_ctx.get());
+        commonVerifyChecks(*tsig_verify_ctx, tsig.get(),
+                           renderer.getData(), renderer.getLength(),
+                           TSIGError(Rcode::NOERROR()),
+                           TSIGContext::VERIFIED_RESPONSE);
+        EXPECT_TRUE(tsig_verify_ctx->lastHadSignature());
+    }
+
+    {
+        SCOPED_TRACE("Third message. Unsigned.");
+        // Another message does not carry the TSIG on it. But it should
+        // be OK, it's in the middle of stream.
+        message.clear(Message::RENDER);
+        message.setQid(1234);
+        message.setOpcode(Opcode::QUERY());
+        message.setRcode(Rcode::NOERROR());
+        RRsetPtr answer_rrset(new RRset(test_name, test_class, RRType::A(),
+                                        test_ttl));
+        answer_rrset->addRdata(createRdata(RRType::A(), test_class,
+                                           "192.0.2.1"));
+        message.addRRset(Message::SECTION_ANSWER, answer_rrset);
+        message.toWire(renderer);
+        // Update the internal state. We abuse the knowledge of
+        // internals here a little bit to generate correct test data
+        tsig_ctx->update(renderer.getData(), renderer.getLength());
+
+        commonVerifyChecks(*tsig_verify_ctx, NULL,
+                           renderer.getData(), renderer.getLength(),
+                           TSIGError(Rcode::NOERROR()),
+                           TSIGContext::VERIFIED_RESPONSE);
+
+        EXPECT_FALSE(tsig_verify_ctx->lastHadSignature());
+    }
+
+    {
+        SCOPED_TRACE("Fourth message. Signed again.");
+        ConstTSIGRecordPtr tsig = createMessageAndSign(1234, test_name,
+                                                       tsig_ctx.get());
+        commonVerifyChecks(*tsig_verify_ctx, tsig.get(),
+                           renderer.getData(), renderer.getLength(),
+                           TSIGError(Rcode::NOERROR()),
+                           TSIGContext::VERIFIED_RESPONSE);
+        EXPECT_TRUE(tsig_verify_ctx->lastHadSignature());
+    }
+
+    {
+        SCOPED_TRACE("Filling in bunch of unsigned messages");
+        for (size_t i = 0; i < 100; ++i) {
+            SCOPED_TRACE(i);
+            // Another message does not carry the TSIG on it. But it should
+            // be OK, it's in the middle of stream.
+            message.clear(Message::RENDER);
+            message.setQid(1234);
+            message.setOpcode(Opcode::QUERY());
+            message.setRcode(Rcode::NOERROR());
+            RRsetPtr answer_rrset(new RRset(test_name, test_class, RRType::A(),
+                                            test_ttl));
+            answer_rrset->addRdata(createRdata(RRType::A(), test_class,
+                                               "192.0.2.1"));
+            message.addRRset(Message::SECTION_ANSWER, answer_rrset);
+            message.toWire(renderer);
+            // Update the internal state. We abuse the knowledge of
+            // internals here a little bit to generate correct test data
+            tsig_ctx->update(renderer.getData(), renderer.getLength());
+
+            // 99 unsigned messages is OK. But the 100th must be signed, according
+            // to the RFC2845, section 4.4
+            commonVerifyChecks(*tsig_verify_ctx, NULL,
+                               renderer.getData(), renderer.getLength(),
+                               i == 99 ? TSIGError::FORMERR() :
+                                   TSIGError(Rcode::NOERROR()),
+                               TSIGContext::VERIFIED_RESPONSE);
+
+            EXPECT_FALSE(tsig_verify_ctx->lastHadSignature());
+        }
+    }
 }
 
 } // end namespace

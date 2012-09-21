@@ -534,7 +534,7 @@ TEST_F(MessageTest, appendSection) {
         RRClass::IN(), RRType::A()));
     EXPECT_TRUE(target.hasRRset(Message::SECTION_ANSWER, test_name,
         RRClass::IN(), RRType::AAAA()));
-    
+
 }
 
 TEST_F(MessageTest, parseHeader) {
@@ -1091,7 +1091,7 @@ TEST_F(MessageTest, toWireWithoutRcode) {
 TEST_F(MessageTest, toText) {
     // Check toText() output for a typical DNS response with records in
     // all sections
-    
+
     factoryFromFile(message_parse, "message_toText1.wire");
     {
         SCOPED_TRACE("Message toText test (basic case)");
