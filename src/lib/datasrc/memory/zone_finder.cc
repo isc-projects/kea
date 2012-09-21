@@ -682,7 +682,7 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
         ZoneNode* node(NULL);
         chain.clear();
         const ZoneTree::Result result =
-            tree.find(Name(hlabel + "." + getOrigin().toText()), &node, chain);
+            tree.find(Name(hlabel).concatenate(getOrigin()), &node, chain);
 
         if (result == ZoneTree::EXACTMATCH) {
             // We found an exact match.
