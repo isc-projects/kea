@@ -220,6 +220,9 @@ public:
     /// \param rrclass For which class the list should work.
     ConfigurableClientList(const isc::dns::RRClass& rrclass);
 
+    /// \brief Destructor
+    virtual ~ConfigurableClientList();
+
     /// \brief Exception thrown when there's an error in configuration.
     class ConfigurationError : public Exception {
     public:
