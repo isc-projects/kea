@@ -35,8 +35,45 @@ namespace perfdhcp {
 
 /// \brief Test Control class.
 ///
-/// This class is responsible for executing DHCP performance
-/// test end to end.
+/// This singleton class is used to run performance test with
+/// with \ref TestControl::run function. This function can be executed
+/// multiple times if desired because it resets TestControl's internal
+/// state efery time it is executed. Prior to running \ref TestControl::run
+/// one must make sure to parse command line options by calling
+/// \ref CommandOptions::parse. Failing to do this will result in exception.
+/// The following major stages of the test are performed by this class:
+/// - set default transaction id and MAC address generators - the generator
+/// is the object of \ref TestControl::NumberGenerator type and it provides
+/// the custom randomization algorithms,
+/// - print command line arguments,
+/// - register option factory functions which are used to generate DHCP options
+/// being sent to a server,
+/// - create the socket for communication with a server,
+/// - read packet templates if user specified template files with '-T' command
+/// line option,
+/// - set the interrupt handler (invoked when ^C is pressed) which makes
+/// perfdhcp stop gracefully and print the test results before exiting,
+/// - executes external command (if specified '-w' option), e.g. if user specified
+/// -w ./foo in the command line then program will execute ./foo start at the
+/// beginning of the test and ./foo stop when test ends,
+/// - initialize Statistics Manager,
+/// - execute the main loop:
+///   - calculate how many packets must be send to satisfy desired rate,
+///   - receive incoming packets from the server,
+///   - check the exit conditions - terminate the program if exit criteria
+///   are fulfiled, e.g. reached maximum number of packet drops,
+///   - send number of packets appropriate to satisfy the desired rate,
+///   - optionally print intermediate reports,
+/// - print statistics, e.g. achived rate,
+/// - optionally print some diagnostics.
+///
+/// With the '-w' command line option user may specify the external application
+/// or script to be executed first time when test starts and second time when
+/// test ends. This external script or application must support 'start' and 'stop'
+/// arguments. The first time it is called it is called with'start' and
+/// the second time with 'stop'. The way it is executed is to fork() the current
+/// perfdhcp process and in turn executed execlp function that replaces current
+/// process image with new image.
 ///
 /// Option factory functions are registered using
 /// \ref dhcp::LibDHCP::OptionFactoryRegister. Registered factory functions
@@ -138,7 +175,7 @@ public:
     /// This is default numbers generator class. The member function is
     /// used to generate uint32_t values. Other generator classes should
     /// derive from this one to implement generation algorithms
-    /// (e.g. sequencial or based on random function).
+    /// (e.g. sequential or based on random function).
     class NumberGenerator {
     public:
         /// \brief Generate number.
@@ -150,14 +187,14 @@ public:
     /// The default generator pointer.
     typedef boost::shared_ptr<NumberGenerator> NumberGeneratorPtr;
 
-    /// \brief Sequencial numbers generatorc class.
-    class SequencialGenerator : public NumberGenerator {
+    /// \brief Sequential numbers generatorc class.
+    class SequentialGenerator : public NumberGenerator {
     public:
         /// \brief Constructor.
         ///
         /// \param range maximum number generated. If 0 is given then
-        /// range defaults to maximym uint32_t value.
-        SequencialGenerator(uint32_t range = 0xFFFFFFFF) :
+        /// range defaults to maximum uint32_t value.
+        SequentialGenerator(uint32_t range = 0xFFFFFFFF) :
             NumberGenerator(),
             num_(0),
             range_(range) {
@@ -166,7 +203,7 @@ public:
             }
         }
 
-        /// \brief Generate number sequencialy.
+        /// \brief Generate number sequentialy.
         ///
         /// \return generated number.
         virtual uint32_t generate() {
@@ -176,7 +213,7 @@ public:
         }
     private:
         uint32_t num_;   ///< Current number.
-        uint32_t range_; ///< Maximum number generated.
+        uint32_t range_; ///< Number of unique numbers generated.
     };
 
     /// \brief Length of the Ethernet HW address (MAC) in bytes.
@@ -538,6 +575,36 @@ protected:
     /// called before new test is started.
     void reset();
 
+    /// \brief Save the first DHCPv4 sent packet of the specified type.
+    ///
+    /// This method saves first packet of the specified being sent
+    /// to the server if user requested diagnostics flag 'T'. In
+    /// such case program has to print contents of selected packets
+    /// being sent to the server. It collects first packets of each
+    /// type and keeps them around until test finishes. Then they
+    /// are printed to the user. If packet of specified type has
+    /// been already stored this function perfroms no operation.
+    /// This function does not perform sainty check if packet
+    /// pointer is valid. Make sure it is before calling it.
+    ///
+    /// \param pkt packet to be stored.
+    inline void saveFirstPacket(const dhcp::Pkt4Ptr& pkt);
+
+    /// \brief Save the first DHCPv6 sent packet of the specified type.
+    ///
+    /// This method saves first packet of the specified being sent
+    /// to the server if user requested diagnostics flag 'T'. In
+    /// such case program has to print contents of selected packets
+    /// being sent to the server. It collects first packets of each
+    /// type and keeps them around until test finishes. Then they
+    /// are printed to the user. If packet of specified type has
+    /// been already stored this function perfroms no operation.
+    /// This function does not perform sainty check if packet
+    /// pointer is valid. Make sure it is before calling it.
+    ///
+    /// \param pkt packet to be stored.
+    inline void saveFirstPacket(const dhcp::Pkt6Ptr& pkt);
+
     /// \brief Send DHCPv4 DISCOVER message.
     ///
     /// Method creates and sends DHCPv4 DISCOVER message to the server
@@ -574,6 +641,31 @@ protected:
     void sendDiscover4(const TestControlSocket& socket,
                        const std::vector<uint8_t>& template_buf,
                        const bool preload = false);
+
+    /// \brief Send number of packets to initiate new exchanges.
+    ///
+    /// Method initiates the new DHCP exchanges by sending number
+    /// of DISCOVER (DHCPv4) or SOLICIT (DHCPv6) packets. If preload
+    /// mode was requested sent packets will not be counted in
+    /// the statistics. The responses from the server will be
+    /// received and counted as orphans because corresponding sent
+    /// packets are not included in StatsMgr for match.
+    /// When preload mode is disabled and diagnostics flag 'i' is
+    /// specified then function will be trying to receive late packets
+    /// before new packets are sent to the server. Statistics of
+    /// late received packets is updated accordingly.
+    ///
+    /// \todo do not count responses in preload mode as orphans.
+    ///
+    /// \param socket socket to be used to send packets.
+    /// \param packets_num number of packets to be sent.
+    /// \param preload preload mode, packets not included in statistics.
+    /// \throw isc::Unexpected if thrown by packet sending method.
+    /// \throw isc::InvalidOperation if thrown by packet sending method.
+    /// \throw isc::OutOfRange if thrown by packet sending method.
+    void sendPackets(const TestControlSocket &socket,
+                     const uint64_t packets_num,
+                     const bool preload = false);
 
     /// \brief Send DHCPv4 REQUEST message.
     ///

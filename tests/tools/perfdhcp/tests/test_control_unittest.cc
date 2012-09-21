@@ -92,7 +92,7 @@ public:
     NakedTestControl() : TestControl() {
         uint32_t clients_num = CommandOptions::instance().getClientsNum() == 0 ?
             1 : CommandOptions::instance().getClientsNum();
-        setMacAddrGenerator(NumberGeneratorPtr(new TestControl::SequencialGenerator(clients_num)));
+        setMacAddrGenerator(NumberGeneratorPtr(new TestControl::SequentialGenerator(clients_num)));
     };
 
 };
