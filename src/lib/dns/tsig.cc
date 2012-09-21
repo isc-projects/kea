@@ -61,7 +61,8 @@ struct TSIGContext::TSIGContextImpl {
     TSIGContextImpl(const TSIGKey& key,
                     TSIGError error = TSIGError::NOERROR()) :
         state_(INIT), key_(key), error_(error),
-        previous_timesigned_(0), digest_len_(0)
+        previous_timesigned_(0), digest_len_(0),
+        last_sig_dist_(-1)
     {
         if (error == TSIGError::NOERROR()) {
             // In normal (NOERROR) case, the key should be valid, and we
@@ -137,7 +138,7 @@ struct TSIGContext::TSIGContextImpl {
     // performance bottleneck, we could have this class a buffer as a member
     // variable and reuse it throughout the object's lifetime.  Right now,
     // we prefer keeping the scope for local things as small as possible.
-    void digestPreviousMAC(HMACPtr hmac) const;
+    void digestPreviousMAC(HMACPtr hmac);
     void digestTSIGVariables(HMACPtr hmac, uint16_t rrclass, uint32_t rrttl,
                              uint64_t time_signed, uint16_t fudge,
                              uint16_t error, uint16_t otherlen,
@@ -152,13 +153,24 @@ struct TSIGContext::TSIGContextImpl {
     uint64_t previous_timesigned_; // only meaningful for response with BADTIME
     size_t digest_len_;
     HMACPtr hmac_;
+    // This is the distance from the last verified signed message. Value of 0
+    // means the last message was signed. Special value -1 means there was no
+    // signed message yet.
+    int last_sig_dist_;
 };
 
 void
-TSIGContext::TSIGContextImpl::digestPreviousMAC(HMACPtr hmac) const {
+TSIGContext::TSIGContextImpl::digestPreviousMAC(HMACPtr hmac) {
     // We should have ensured the digest size fits 16 bits within this class
     // implementation.
     assert(previous_digest_.size() <= 0xffff);
+
+    if (previous_digest_.empty()) {
+        // The previous digest was already used. We're in the middle of
+        // TCP stream somewhere and we already pushed some unsigned message
+        // into the HMAC state.
+        return;
+    }
 
     OutputBuffer buffer(sizeof(uint16_t) + previous_digest_.size());
     const uint16_t previous_digest_len(previous_digest_.size());
@@ -414,11 +426,21 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
                   "TSIG verify attempt after sending a response");
     }
 
-    // This case happens when we sent a signed request and have received an
-    // unsigned response.  According to RFC2845 Section 4.6 this case should be
-    // considered a "format error" (although the specific error code
-    // wouldn't matter much for the caller).
     if (record == NULL) {
+        if (impl_->last_sig_dist_ >= 0 && impl_->last_sig_dist_ < 99) {
+            // It is not signed, but in the middle of TCP stream. We just
+            // update the HMAC state and consider this message OK.
+            update(data, data_len);
+            // This one is not signed, the last signed is one message further
+            // now.
+            impl_->last_sig_dist_++;
+            // No digest to return now. Just say it's OK.
+            return (impl_->postVerifyUpdate(TSIGError::NOERROR(), NULL, 0));
+        }
+        // This case happens when we sent a signed request and have received an
+        // unsigned response.  According to RFC2845 Section 4.6 this case should be
+        // considered a "format error" (although the specific error code
+        // wouldn't matter much for the caller).
         return (impl_->postVerifyUpdate(TSIGError::FORMERR(), NULL, 0));
     }
 
@@ -432,6 +454,9 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
     if (data == NULL) {
         isc_throw(InvalidParameter, "TSIG verify: empty data is invalid");
     }
+
+    // This message is signed and we won't throw any more.
+    impl_->last_sig_dist_ = 0;
 
     // Check key: whether we first verify it with a known key or we verify
     // it using the consistent key in the context.  If the check fails we are
@@ -518,6 +543,25 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
     }
 
     return (impl_->postVerifyUpdate(TSIGError::BAD_SIG(), NULL, 0));
+}
+
+bool
+TSIGContext::lastHadSignature() const {
+    if (impl_->last_sig_dist_ == -1) {
+        isc_throw(TSIGContextError, "No message was verified yet");
+    }
+    return (impl_->last_sig_dist_ == 0);
+}
+
+void
+TSIGContext::update(const void* const data, size_t len) {
+    HMACPtr hmac(impl_->createHMAC());
+    // Use the previous digest and never use it again
+    impl_->digestPreviousMAC(hmac);
+    impl_->previous_digest_.clear();
+    // Push the message there
+    hmac->update(data, len);
+    impl_->hmac_ = hmac;
 }
 
 } // namespace dns

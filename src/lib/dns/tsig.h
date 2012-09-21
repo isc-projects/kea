@@ -339,7 +339,6 @@ public:
     /// returns (without an exception being thrown), the internal state of
     /// the \c TSIGContext won't be modified.
     ///
-    /// \todo Support intermediate TCP DNS messages without TSIG (RFC2845 4.4)
     /// \todo Signature truncation support based on RFC4635
     ///
     /// \exception TSIGContextError Context already signed a response.
@@ -352,6 +351,19 @@ public:
     /// \return The \c TSIGError that indicates verification result
     TSIGError verify(const TSIGRecord* const record, const void* const data,
                      const size_t data_len);
+
+    /// \brief Check whether the last verified message was signed.
+    ///
+    /// RFC2845 allows for some of the messages not to be signed. However,
+    /// the last message must be signed and the class has no knowledge if a
+    /// given message is the last one, therefore it can't check directly.
+    ///
+    /// It is up to the caller to check if the last verified message was signed
+    /// after all are verified by calling this function.
+    ///
+    /// \return If the last message was signed or not.
+    /// \exception TSIGContextError if no message was verified yet.
+    bool lastHadSignature() const;
 
     /// Return the expected length of TSIG RR after \c sign()
     ///
@@ -400,6 +412,19 @@ public:
     /// will have this value of fudge.
     static const uint16_t DEFAULT_FUDGE = 300;
     //@}
+
+protected:
+    /// \brief Update internal HMAC state by more data.
+    ///
+    /// This is used mostly internaly, when we need to verify a message without
+    /// TSIG signature in the middle of signed TCP stream. However, it is also
+    /// used in tests, so it's protected instead of private, to allow tests
+    /// in.
+    ///
+    /// It doesn't contain sanity checks, and it is not tested directly. But
+    /// we may want to add these one day to allow generating the skipped TSIG
+    /// messages too. Until then, do not use this method.
+    void update(const void* const data, size_t len);
 
 private:
     struct TSIGContextImpl;
