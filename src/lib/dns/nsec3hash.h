@@ -16,7 +16,7 @@
 #define __NSEC3HASH_H 1
 
 #include <string>
-
+#include <stdint.h>
 #include <exceptions/exceptions.h>
 
 namespace isc {
@@ -130,6 +130,15 @@ public:
     /// calculated.
     /// \return Base32hex-encoded string of the hash value.
     virtual std::string calculate(const Name& name) const = 0;
+
+    /// \brief Calculate the NSEC3 SHA-1 hash.
+    ///
+    /// This method calculates the NSEC3 hash value for the given
+    /// \c name and hash parameters. It assumes the SHA-1 algorithm.
+    static std::string calculate(const Name& name,
+                                 const uint16_t iterations,
+                                 const uint8_t* salt,
+                                 size_t salt_len);
 
     /// \brief Match given NSEC3 parameters with that of the hash.
     ///
