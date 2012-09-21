@@ -531,8 +531,8 @@ protected:
     /// \brief Receive DHCPv4 or DHCPv6 packets from the server.
     ///
     /// Method receives DHCPv4 or DHCPv6 packets from the server.
-    /// This function will call \ref receivePacket4 or
-    /// \ref receivePacket6 depending if DHCPv4 or DHCPv6 packet
+    /// This function will call \ref processReceivedPacket4 or
+    /// \ref processReceivedPacket6 depending if DHCPv4 or DHCPv6 packet
     /// has arrived.
     ///
     /// \warning this method does not check if provided socket is
