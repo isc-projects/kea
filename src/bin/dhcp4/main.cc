@@ -14,13 +14,15 @@
 
 #include <config.h>
 #include <iostream>
-#include <log/dummylog.h>
-#include <log/logger_support.h>
-#include <dhcp4/ctrl_dhcp4_srv.h>
+
 #include <boost/lexical_cast.hpp>
 
-using namespace std;
+#include <dhcp4/ctrl_dhcp4_srv.h>
+#include <dhcp4/dhcp4_log.h>
+#include <log/logger_support.h>
+
 using namespace isc::dhcp;
+using namespace std;
 
 /// This file contains entry point (main() function) for standard DHCPv4 server
 /// component for BIND10 framework. It parses command-line arguments and
@@ -37,11 +39,10 @@ const char* const DHCP4_NAME = "b10-dhcp4";
 
 void
 usage() {
-    cerr << "Usage:  b10-dhcp4 [-v]"
-         << endl;
-    cerr << "\t-v: verbose output" << endl;
-    cerr << "\t-s: stand-alone mode (don't connect to BIND10)" << endl;
-    cerr << "\t-p number: specify non-standard port number 1-65535 "
+    cerr << "Usage: " << DHCP4_NAME << " [-v] [-s] [-p number]" << endl;
+    cerr << "  -v: verbose output" << endl;
+    cerr << "  -s: stand-alone mode (don't connect to BIND10)" << endl;
+    cerr << "  -p number: specify non-standard port number 1-65535 "
          << "(useful for testing only)" << endl;
     exit(EXIT_FAILURE);
 }
@@ -50,20 +51,21 @@ usage() {
 int
 main(int argc, char* argv[]) {
     int ch;
-    bool verbose_mode = false; // should server be verbose?
     int port_number = DHCP4_SERVER_PORT; // The default. any other values are
                                          // useful for testing only.
-    bool stand_alone = false; // should be connect to BIND10 msgq?
+    bool stand_alone = false;  // Should be connect to BIND10 msgq?
+    bool verbose_mode = false; // Should server be verbose?
 
     while ((ch = getopt(argc, argv, "vsp:")) != -1) {
         switch (ch) {
         case 'v':
             verbose_mode = true;
-            isc::log::denabled = true;
             break;
+
         case 's':
             stand_alone = true;
             break;
+
         case 'p':
             try {
                 port_number = boost::lexical_cast<int>(optarg);
@@ -78,50 +80,46 @@ main(int argc, char* argv[]) {
                 usage();
             }
             break;
-        case ':':
+
         default:
             usage();
         }
+    }
+
+    // Check for extraneous parameters.
+    if (argc > optind) {
+        usage();
     }
 
     // Initialize logging.  If verbose, we'll use maximum verbosity.
     isc::log::initLogger(DHCP4_NAME,
                          (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
                          isc::log::MAX_DEBUG_LEVEL, NULL);
+    LOG_INFO(dhcp4_logger, DHCP4_STARTING);
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_START_INFO)
+              .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no")
+              .arg(stand_alone ? "yes" : "no" );
 
-    cout << "b10-dhcp4: My pid=" << getpid() << ", binding to port "
-         << port_number << ", verbose " << (verbose_mode?"yes":"no")
-         << ", stand-alone=" << (stand_alone?"yes":"no") << endl;
-
-    if (argc - optind > 0) {
-        usage();
-    }
 
     int ret = EXIT_SUCCESS;
-
     try {
-
-        cout << "[b10-dhcp4] Initiating DHCPv4 server operation." << endl;
-
-        /// @todo: pass verbose to the actul server once logging is implemented
         ControlledDhcpv4Srv server(port_number);
-
         if (!stand_alone) {
             try {
                 server.establishSession();
             } catch (const std::exception& ex) {
-                cerr << "Failed to establish BIND10 session. "
-                    "Running in stand-alone mode:" << ex.what() << endl;
+                LOG_ERROR(dhcp4_logger, DHCP4_SESSION_FAIL).arg(ex.what());
                 // Let's continue. It is useful to have the ability to run
                 // DHCP server in stand-alone mode, e.g. for testing
             }
         } else {
-            cout << "Skipping connection to the BIND10 msgq." << endl;
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_STANDALONE);
         }
-
         server.run();
+        LOG_INFO(dhcp4_logger, DHCP4_SHUTDOWN);
+
     } catch (const std::exception& ex) {
-        cerr << "[b10-dhcp4] Server failed: " << ex.what() << endl;
+        LOG_FATAL(dhcp4_logger, DHCP4_SERVER_FAILED).arg(ex.what());
         ret = EXIT_FAILURE;
     }
 

@@ -1,0 +1,4 @@
+;; Multiple RDATA for testing separate RRs iterator
+example.org.  		   	 3600 IN SOA	ns1.example.org. bugs.x.w.example.org. 78 3600 300 3600000 3600
+a.example.org.		   	 3600 IN A	192.168.0.1
+a.example.org.		   	 3600 IN A	192.168.0.2

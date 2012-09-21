@@ -58,7 +58,13 @@ TreeNodeRRset::getName() const {
 
 const RRTTL&
 TreeNodeRRset::getTTL() const {
-    isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
+    if (ttl_ == NULL) {
+        util::InputBuffer ttl_buffer(rdataset_->getTTLData(),
+                                     sizeof(uint32_t));
+        ttl_ = new RRTTL(ttl_buffer);
+    }
+
+    return (*ttl_);
 }
 
 void

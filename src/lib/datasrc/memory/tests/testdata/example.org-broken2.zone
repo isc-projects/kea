@@ -1,0 +1,5 @@
+;; broken example.org zone, where some RRs are OK, but others aren't
+example.org. 3600 IN SOA	ns1.example.org. bugs.x.w.example.org. 73 3600 300 3600000 3600
+ns1.example.org.		      3600 IN A		192.0.2.1
+ns2.example.org.		      3600 IN A		192.0.2.2
+ns2.a.example.com.		      3600 IN AAAA

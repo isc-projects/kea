@@ -259,19 +259,11 @@ createSerialObject(const Serial& source) {
 
 bool
 PySerial_Check(PyObject* obj) {
-    if (obj == NULL) {
-        isc_throw(PyCPPWrapperException,
-                  "obj argument NULL in Serial typecheck");
-    }
     return (PyObject_TypeCheck(obj, &serial_type));
 }
 
 const Serial&
 PySerial_ToSerial(const PyObject* serial_obj) {
-    if (serial_obj == NULL) {
-        isc_throw(PyCPPWrapperException,
-                  "obj argument NULL in Serial PyObject conversion");
-    }
     const s_Serial* serial = static_cast<const s_Serial*>(serial_obj);
     return (*serial->cppobj);
 }
