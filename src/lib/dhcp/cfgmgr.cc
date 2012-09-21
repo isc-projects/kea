@@ -27,8 +27,8 @@ Pool::Pool(const isc::asiolink::IOAddress& first,
     :id_(getNextID()), first_(first), last_(last) {
 }
 
-bool Pool::inRange(const isc::asiolink::IOAddress& addr) {
-    return ( first_.smallerEqual(addr) && addr.smallerEqual(last_) );
+bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
+    return (first_.smallerEqual(addr) && addr.smallerEqual(last_));
 }
 
 Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
@@ -46,11 +46,13 @@ Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
         // we need to comment it and uncomment lines below.
         // On one hand, letting the user specify 2001::f - 2001::1 is nice, but
         // on the other hand, 2001::1 may be a typo and the user really meant
-        // 2001::1:0 (or 1something), so a at least a warning would be useful.
+        // 2001::1:0 (or 1 followed by some hex digit), so a at least a warning
+        // would be useful.
 
         // first_  = last;
         // last_ = first;
     }
+
 
     // TYPE_PD is not supported by this constructor. first-last style
     // parameters are for IA and TA only. There is another dedicated
@@ -75,6 +77,9 @@ Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& prefix,
         isc_throw(BadValue, "Invalid prefix length");
     }
 
+    /// @todo: We should probably implement checks against weird addresses
+    /// here, like ::, starting with fe80, starting with ff etc. .
+
     // Let's now calculate the last address in defined pool
     last_ = lastAddrInPrefix(prefix, prefix_len);
 }
@@ -91,11 +96,11 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
     }
 }
 
-bool Subnet::inRange(const isc::asiolink::IOAddress& addr) {
+bool Subnet::inRange(const isc::asiolink::IOAddress& addr) const {
     IOAddress first = firstAddrInPrefix(prefix_, prefix_len_);
     IOAddress last = lastAddrInPrefix(prefix_, prefix_len_);
 
-    return ( (first <= addr) && (addr <= last) );
+    return ((first <= addr) && (addr <= last));
 }
 
 Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
@@ -106,7 +111,7 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
     :Subnet(prefix, length, t1, t2, valid_lifetime),
      preferred_(preferred_lifetime){
     if (prefix.getFamily() != AF_INET6) {
-        isc_throw(BadValue, "Invalid prefix " << prefix.toText()
+        isc_throw(BadValue, "Non IPv6 prefix " << prefix.toText()
                   << " specified in subnet6");
     }
 }
@@ -120,6 +125,8 @@ void Subnet6::addPool6(const Pool6Ptr& pool) {
                   << " does not belong in this (" << prefix_ << "/" << prefix_len_
                   << ") subnet6");
     }
+
+    /// @todo: Check that pools do not overlap
 
     pools_.push_back(pool);
 }
@@ -153,6 +160,13 @@ Subnet6Ptr
 CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
 
     // If there's only one subnet configured, let's just use it
+    // The idea is to keep small deployments easy. In a small network - one
+    // router that also runs DHCPv6 server. Users specifies a single pool and
+    // expects it to just work. Without this, the server would complain that it
+    // doesn't have IP address on its interfaces that matches that
+    // configuration. Such requirement makes sense in IPv4, but not in IPv6.
+    // The server does not need to have a global address (using just link-local
+    // is ok for DHCPv6 server) from the pool it serves.
     if (subnets6_.size() == 1) {
         return (subnets6_[0]);
     }

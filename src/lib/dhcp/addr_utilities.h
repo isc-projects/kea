@@ -18,32 +18,36 @@ namespace isc {
 namespace dhcp {
 
 /// This code is based on similar code from the Dibbler project. I, Tomasz Mrugalski,
-/// as a sole creater of that code hereby release it under BSD license for the benefit
+/// as a sole creator of that code hereby release it under BSD license for the benefit
 /// of the BIND10 project.
 
 /// @brief returns a first address in a given prefix
 ///
 /// Example: For 2001:db8:1::deaf:beef and length /120 the function will return
-/// 2001:db8:1::dead:bee0. See also @ref lastAddrInPrefix.
+/// 2001:db8:1::dead:be00. See also @ref lastAddrInPrefix.
+///
+/// @todo It currently works for v6 only and will throw if v4 address is passed.
 ///
 /// @param prefix and address that belongs to a prefix
 /// @param len prefix length
 ///
 /// @return first address from a prefix
 isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefix,
-                                           uint8_t len);
+                                            uint8_t len);
 
 /// @brief returns a last address in a given prefix
 ///
 /// Example: For 2001:db8:1::deaf:beef and length /112 the function will return
 /// 2001:db8:1::dead:ffff. See also @ref firstAddrInPrefix.
 ///
+/// @todo It currently works for v6 only and will throw if v4 address is passed.
+///
 /// @param prefix and address that belongs to a prefix
 /// @param len prefix length
 ///
 /// @return first address from a prefix
 isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix,
-                                          uint8_t len);
+                                           uint8_t len);
 
 };
 };

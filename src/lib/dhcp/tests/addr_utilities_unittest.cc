@@ -53,6 +53,14 @@ TEST(Pool6Test, lastAddrInPrefix) {
     EXPECT_EQ("2001::3f", lastAddrInPrefix(addr2, 122).toText());
     EXPECT_EQ("2001::7f", lastAddrInPrefix(addr2, 121).toText());
     EXPECT_EQ("2001::ff", lastAddrInPrefix(addr2, 120).toText());
+
+    // Let's check extreme cases
+    IOAddress anyAddr("::");
+    EXPECT_EQ("7fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+              lastAddrInPrefix(anyAddr, 1).toText());
+    EXPECT_EQ("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+              lastAddrInPrefix(anyAddr, 0).toText());
+    EXPECT_EQ("::", lastAddrInPrefix(anyAddr, 128).toText());
 }
 
 TEST(Pool6Test, firstAddrInPrefix) {
