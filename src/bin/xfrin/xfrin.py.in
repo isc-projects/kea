@@ -362,6 +362,7 @@ class XfrinFirstData(XfrinState):
                 conn._request_serial == get_soa_serial(rr.get_rdata()[0]):
             logger.debug(DBG_XFRIN_TRACE, XFRIN_GOT_INCREMENTAL_RESP,
                          conn.zone_str())
+            conn._diff = None # Will be created on-demand
             self.set_xfrstate(conn, XfrinIXFRDeleteSOA())
         else:
             logger.debug(DBG_XFRIN_TRACE, XFRIN_GOT_NONINCREMENTAL_RESP,
@@ -380,11 +381,13 @@ class XfrinIXFRDeleteSOA(XfrinState):
             raise XfrinException(rr.get_type().to_text() +
                                  ' RR is given in IXFRDeleteSOA state')
         # This is the beginning state of one difference sequence (changes
-        # for one SOA update).  We need to create a new Diff object now.
+        # for one SOA update).  We may need to create a new Diff object now.
         # Note also that we (unconditionally) enable journaling here.  The
         # Diff constructor may internally disable it, however, if the
         # underlying data source doesn't support journaling.
-        conn._diff = Diff(conn._datasrc_client, conn._zone_name, False, True)
+        if conn._diff is None:
+            conn._diff = Diff(conn._datasrc_client, conn._zone_name, False,
+                              True)
         conn._diff.delete_data(rr)
         self.set_xfrstate(conn, XfrinIXFRDelete())
         conn.get_transfer_stats().ixfr_deletion_count += 1
@@ -420,6 +423,9 @@ class XfrinIXFRAdd(XfrinState):
             conn.get_transfer_stats().ixfr_changeset_count += 1
             soa_serial = get_soa_serial(rr.get_rdata()[0])
             if soa_serial == conn._end_serial:
+                # The final part is there. Check all was signed
+                # and commit it to the database.
+                conn._check_response_tsig_last()
                 conn._diff.commit()
                 self.set_xfrstate(conn, XfrinIXFREnd())
                 return True
@@ -429,7 +435,10 @@ class XfrinIXFRAdd(XfrinState):
                                          str(conn._current_serial) +
                                          ', got ' + str(soa_serial))
             else:
-                conn._diff.commit()
+                # Apply a change to the database. But don't commit it yet,
+                # we can't know if the message is/will be properly signed.
+                # A complete commit will happen after the last bit.
+                conn._diff.apply()
                 self.set_xfrstate(conn, XfrinIXFRDeleteSOA())
                 return False
         conn._diff.add_data(rr)
@@ -494,6 +503,7 @@ class XfrinAXFREnd(XfrinState):
         indicating there will be no more message to receive.
 
         """
+        conn._check_response_tsig_last()
         conn._diff.commit()
         return False
 
@@ -781,6 +791,15 @@ class XfrinConnection(asyncore.dispatcher):
             # part of security mechanism, it's probably better to be more
             # strict.
             raise XfrinProtocolError('Unexpected TSIG in response')
+
+    def _check_response_tsig_last(self):
+        """
+        Check there's a signature at the last message.
+        """
+        if self._tsig_ctx is not None:
+            if not self._tsig_ctx.last_has_signature():
+                raise XfrinProtocolError('TSIG verify fail: no TSIG on last '+
+                                         'message')
 
     def __parse_soa_response(self, msg, response_data):
         '''Parse a response to SOA query and extract the SOA from answer.
