@@ -660,6 +660,10 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
 
     // placeholder of the next closer proof
     const ZoneNode* covering_node(NULL);
+
+    const ZoneTree& tree = nsec3_data->getNSEC3Tree();
+    ZoneChain chain;
+
     // Examine all names from the query name to the origin name, stripping
     // the deepest label one by one, until we find a name that has a matching
     // NSEC3 hash.
@@ -675,11 +679,8 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FINDNSEC3_TRYHASH).
             arg(name).arg(labels).arg(hlabel);
 
-        const ZoneTree& tree = nsec3_data->getNSEC3Tree();
-
         ZoneNode* node(NULL);
-        ZoneChain chain;
-
+        chain.clear();
         const ZoneTree::Result result =
             tree.find(Name(hlabel + "." + getOrigin().toText()), &node, chain);
 
