@@ -731,13 +731,13 @@ class TestMultiConfigData(unittest.TestCase):
         config_items = self.mcd.get_config_item_list(None, True)
         self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
         config_items = self.mcd.get_config_item_list("Spec2", True)
-        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
+        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5[0]', 'Spec2/item5[1]', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
         config_items = self.mcd.get_config_item_list("Spec2")
-        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6'], config_items)
+        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5[0]', 'Spec2/item5[1]', 'Spec2/item6'], config_items)
         config_items = self.mcd.get_config_item_list("/Spec2")
-        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6'], config_items)
+        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5[0]', 'Spec2/item5[1]', 'Spec2/item6'], config_items)
         config_items = self.mcd.get_config_item_list("Spec2", True)
-        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
+        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5[0]', 'Spec2/item5[1]', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
 
     def test_is_named_set(self):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec32.spec")

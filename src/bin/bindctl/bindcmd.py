@@ -497,7 +497,11 @@ class BindCmdInterpreter(Cmd):
                         list = self.config_data.get_config_item_list(my_text.rpartition("/")[0], True)
                         hints.extend([val for val in list if val.startswith(my_text[1:])])
                         # remove the common prefix from the hints so we don't get it twice
-                        hints = self.remove_prefix(hints, my_text.rpartition("/")[0])
+                        prefix, _, rest = my_text.rpartition("/")
+                        hints = self.remove_prefix(hints, prefix)
+                        # And prevent 'double addition' by also removing final
+                        # part matches
+                        hints = [ h for h in hints if h != rest ]
             except CmdModuleNameFormatError:
                 if not text:
                     hints = self.get_module_names()
