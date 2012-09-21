@@ -609,7 +609,7 @@ InMemoryClient::InMemoryClientImpl::load(
     }
 
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_ADD_ZONE).
-        arg(zone_name).arg(rrclass_.toText());
+        arg(zone_name).arg(rrclass_);
 
     // Set the filename in file_name_tree_ now, so that getFileName()
     // can use it (during zone reloading).
