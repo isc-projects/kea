@@ -132,6 +132,20 @@ ZoneTable::findZone(const Name& name) const {
     return (FindResult(my_result, node->getData()));
 }
 
+ZoneTable::FindResult
+ZoneTable::setZoneData(const Name& name, ZoneData* data)
+{
+    ZoneTableNode* node(NULL);
+
+    ZoneTableTree::Result result(zones_->find(name, &node));
+
+    if (result != ZoneTableTree::EXACTMATCH) {
+        return (FindResult(result::NOTFOUND, NULL));
+    } else {
+        return (FindResult(result::SUCCESS, node->setData(data)));
+    }
+}
+
 } // end of namespace memory
 } // end of namespace datasrc
 } // end of namespace isc

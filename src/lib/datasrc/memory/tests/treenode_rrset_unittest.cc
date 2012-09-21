@@ -143,11 +143,13 @@ protected:
 void
 checkBasicFields(const AbstractRRset& actual_rrset, const Name& expected_name,
                  const RRClass& expected_class, const RRType& expected_type,
+                 const uint32_t expected_ttl,
                  size_t expected_rdatacount, size_t expected_sigcount)
 {
     EXPECT_EQ(expected_name, actual_rrset.getName());
     EXPECT_EQ(expected_class, actual_rrset.getClass());
     EXPECT_EQ(expected_type, actual_rrset.getType());
+    EXPECT_EQ(RRTTL(expected_ttl), actual_rrset.getTTL());
     EXPECT_EQ(expected_rdatacount, actual_rrset.getRdataCount());
     EXPECT_EQ(expected_sigcount, actual_rrset.getRRsigDataCount());
 }
@@ -176,30 +178,30 @@ createRRset(const Name& realname, const RRClass& rrclass, const ZoneNode* node,
 TEST_F(TreeNodeRRsetTest, create) {
     // Constructed with RRSIG, and it should be visible.
     checkBasicFields(*createRRset(rrclass_, www_node_, a_rdataset_, true),
-                     www_name_, rrclass_, RRType::A(), 2, 1);
+                     www_name_, rrclass_, RRType::A(), 3600, 2, 1);
     // Constructed with RRSIG, and it should be invisible.
     checkBasicFields(*createRRset(rrclass_, www_node_, a_rdataset_, false),
-                     www_name_, rrclass_, RRType::A(), 2, 0);
+                     www_name_, rrclass_, RRType::A(), 3600, 2, 0);
     // Constructed without RRSIG, and it would be visible (but of course won't)
     checkBasicFields(*createRRset(rrclass_, origin_node_, ns_rdataset_, true),
-                     origin_name_, rrclass_, RRType::NS(), 1, 0);
+                     origin_name_, rrclass_, RRType::NS(), 3600, 1, 0);
     // Constructed without RRSIG, and it should be visible
     checkBasicFields(*createRRset(rrclass_, origin_node_, ns_rdataset_, false),
-                     origin_name_, rrclass_, RRType::NS(), 1, 0);
+                     origin_name_, rrclass_, RRType::NS(), 3600, 1, 0);
     // RRSIG-only case (note the RRset's type is covered type)
     checkBasicFields(*createRRset(rrclass_, www_node_, rrsig_only_rdataset_,
                                   true),
-                     www_name_, rrclass_, RRType::TXT(), 0, 1);
+                     www_name_, rrclass_, RRType::TXT(), 3600, 0, 1);
     // RRSIG-only case (note the RRset's type is covered type), but it's
     // invisible
     checkBasicFields(*createRRset(rrclass_, www_node_, rrsig_only_rdataset_,
                                   false),
-                     www_name_, rrclass_, RRType::TXT(), 0, 0);
+                     www_name_, rrclass_, RRType::TXT(), 3600, 0, 0);
     // Wildcard substitution
     checkBasicFields(*createRRset(match_name_, rrclass_,
                                   wildcard_node_, wildcard_rdataset_,
                                   true),
-                     match_name_, rrclass_, RRType::A(), 2, 1);
+                     match_name_, rrclass_, RRType::A(), 3600, 2, 1);
 }
 
 // The following two templated functions are helper to encapsulate the
@@ -572,7 +574,6 @@ TEST_F(TreeNodeRRsetTest, unexpectedMethods) {
 
     TreeNodeRRset rrset(rrclass_, www_node_, a_rdataset_, true);
 
-    EXPECT_THROW(rrset.getTTL(), isc::Unexpected);
     EXPECT_THROW(rrset.setTTL(RRTTL(0)), isc::Unexpected);
     EXPECT_THROW(rrset.setName(Name("example")), isc::Unexpected);
     EXPECT_THROW(rrset.addRdata(createRdata(RRType::A(), rrclass_, "0.0.0.0")),

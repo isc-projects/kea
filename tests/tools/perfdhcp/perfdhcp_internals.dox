@@ -1,0 +1,172 @@
+//  Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+//
+//  Permission to use, copy, modify, and/or distribute this software for any
+//  purpose with or without fee is hereby granted, provided that the above
+//  copyright notice and this permission notice appear in all copies.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+//  REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+//  AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+//  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+//  LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+//  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+//  PERFORMANCE OF THIS SOFTWARE.
+
+/// @namespace perfdhcp
+/// @page perfdhcpInternals perfdhcp Internals
+///
+/// The perfdhcp utility provides a way of measuring the performance of
+/// DHCP servers by generating large amounts of traffic. Written in C++,
+/// its use is described in detail in the DHCP Performance Guide.
+///
+/// This document is aimed at people wishing to understand the internals
+/// of the perfdhcp program. It describes the major components in the
+/// utility and their interaction.
+///
+/// @section perfdhcpClasses perfdhcp Classes
+///
+/// @subsection perfdhcpCommandOptions CommandOptions (Command Options)
+///
+/// isc::perfdhcp::CommandOptions is a singleton class that parses
+/// the perfdhcp command line parameters and initializes its members
+/// accordingly. If the parameters are invalid, the parser method throws
+/// an exception.  Usage is simple:
+///
+/// @code int main(int argc, char* argv[]) {
+///     try {
+///         CommandOptions& command_options = CommandOptions::instance();
+///         command_options.parse(argc, argv);
+///     } catch(const Exception& e) {
+///         ...
+///     }
+/// @endcode
+///
+/// If the argument parsing is successful, the parsed values can be read
+/// from the isc::perfdhcp::CommandOptions singleton from any class or
+/// function in the program, e.g.
+///
+/// @code
+///     int rate = CommandOptions::instance().getRate();
+/// @endcode
+///
+/// @subsection perfdhcpTestControl TestControl (Test Control)
+///
+/// The isc::perfdhcp::TestControl singleton is responsible
+/// for test execution coordination.  It relies on the
+/// isc::perfdhcp::CommandOptions object to get all required test
+/// parameters and for this reason, isc::perfdhcp::CommandOptions has
+/// to be initialized and isc::perfdhcp::CommandOptions::parse() called
+/// prior to calling isc::perfdhcp::TestControl::run().
+///
+/// isc::perfdhcp::TestControl::run() performs initialization of
+/// isc::perfdhcp::TestControl then executes the main program loop. In
+/// detail, isc::perfdhcp::TestControl::run() performs the following
+/// major operations:
+///
+/// -# check if the command line has been parsed,
+/// -# print diagnostics if specified from command line,
+/// -# register DHCP options factory functions,
+/// -# read packet templates from files,
+/// -# initialize the isc::perfdhcp::StatisticsManager object,
+/// -# set interrupt signal handler (handle ^C),
+/// -# open and close socket for communication with server,
+/// -# coordinate sending and receiving packets,
+/// -# coordinate intermediate reporting,
+/// -# prints test statistics.
+///
+/// isc::perfdhcp::TestControl is a singleton object, so there is one sole
+/// instance of it throughout the program. In order to allow the running
+/// of unit tests, where a single instance of isc::perfdhcp::TestControl
+/// is used multiple times with different command line options, a
+/// isc::perfdhcp::TestControl::reset() function is provided to reset
+/// the state of the class members. Also, functions that initialize
+/// various class members (such as  Statistics Manager) will release
+/// any objects from previous test runs.
+///
+/// @subsection perfStatsMgr StatsMgr (Statistics Manager)
+///
+/// isc::perfdhcp::StatsMgr is a class that holds all performance
+/// statistics gathered throughout the test execution and is created
+/// in isc::perfdhcp::TestControl.  isc::perfdhcp::TestControl posts all
+/// sent and received packets to isc::perfdhcp::StatsMgr: outgoing packets
+/// are recorded and incoming packets are matched with the corresponding
+/// outgoing packer to calculate calculate round trip time, number of
+/// packet drops etc. Apart from the standard counters implemented in
+/// isc::perfdhcp::StatsMgr, custom (named) counters can be specified and
+/// incremented by the calling class. isc::perfdhcp::StatsMgr also exposes
+/// multiple functions that print gathered statistics into the console.
+///
+/// isc::perfdhcp::StatsMgr is a template class that takes an
+/// isc::dhcp::Pkt4, isc::dhcp::Pkt6, isc::perfdhcp::PerfPkt4
+/// or isc::perfdhcp::PerfPkt6 as a typename. An instance of
+/// isc::perfdhcp::StatsMgr can be created by:
+///
+/// @code
+///     typedef StatsMgr<Pkt4> StatsMgr4; StatsMgr4 stats_mgr4 =
+///     boost::shared_ptr<StatsMgr4>(new StatsMgr4()); try {
+///         stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
+///     } catch(const Exception& e) {
+///         std::cout << e.what() << std::endl;
+///     }
+/// @endcode
+///
+/// The isc::perfdhcp::StatsMgr instance created in the example above will be used
+/// for DHCPv4 testing (i.e. to collect DHCPv4 packets) and will be
+/// configured to monitor statistics for DISCOVER-OFFER packet exchanges.
+///
+/// @subsection  perfdhcpPkt PerfPkt4 and PerfPkt6
+///
+/// The isc::perfdhcp::PerfPkt4 and isc::perfdhcp::PerfPkt6 classes
+/// are derived from isc::dhcp::Pkt4 and isc::dhcp::Pkt6.  They extend
+/// the parent class functionality by adding support for template
+/// files. Instances of these classes can be created using a raw buffer
+/// (read from a packet template file).  Once the packet object is
+/// initialized, it is possible to replace parts of the on-wire data by
+/// using the isc::perfdhcp::LocalizedOption mechanism.
+///
+/// @subsection perfdhcpLocalizedOption LocalizedOption (Localized Option)
+///
+/// isc::perfdhcp::LocalizedOption derives from the isc::dhcp::Option
+/// class. It represents the DHCP option (v4 or v6) to be
+/// placed at specified position in the packet buffer (see @ref
+/// perfdhcpPkt). Such an option is added to the option collection in
+/// a isc::perfdhcp::PerfPkt4 or isc::perfdhcp::PerfPkt6 object; when
+/// any of PerfPktX::rawPack() functions are called their content is
+/// stored in the packet output buffer at the position pointed to by
+/// the isc::perfdhcp::LocalizedOption object.
+///
+/// isc::perfdhcp::LocalizedOption also allows the reading of the
+/// on wire data in received packet at the specified position. In
+/// this case, isc::perfdhcp::LocalizedOption has to be created and
+/// added to the received packet.  When PerfPktX::rawUnpack() is
+/// called, the contents of the buffer will be read and stored in a
+/// isc::perfdhcp::LocalizedOption object for further processing.
+///
+/// The following code shows how to create a packet from a
+/// (template) buffer and replace option data in the buffer with
+/// isc::perfdhcp::LocalizedOption.
+///
+/// @code
+///     OptionBuffer buf; // fill buf with data here.  ...
+///     boost::scoped_ptr<PerfPkt4> pkt(new PerfPkt4(&buf[0], buf.size());
+///     const size_t offset_hostname = 240;
+///     OptionBuffer vec_hostname;
+///     // fill the hostname vector with data ...
+///     LocalizedOptionPtr opt_hostname(new LocalizedOption(Option::V4,
+///                                                           DHO_HOST_NAME,
+///                                                           vec_hostname,
+///                                                           offset_hostname));
+///     pkt->addOption(opt_hostname);
+///     // by calling rawPack() we replace the packet contents with option
+///     // contents at buffer position 240.
+///     pkt->rawPack();
+/// @endcode
+///
+/// @subsection perfdhcpPktTransform PktTransform (Packet Transform)
+///
+/// The isc::perfdhcp::PktTransform helper class contains the
+/// static functions to pack and unpack DHCP options (specifically
+/// isc::perfdhcp::LocalizedOption) to and from the packet buffer. This
+/// logic has been moved away from isc::perfdhcp::PerfPkt4 and
+/// isc::perfdhcp::PerfPkt6 classes to isc::perfdhcp::PktTransform
+/// because PerfPktX classes share the logic here.

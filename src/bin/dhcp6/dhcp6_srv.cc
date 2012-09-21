@@ -14,23 +14,25 @@
 
 #include <stdlib.h>
 #include <time.h>
-#include <dhcp/dhcp6.h>
-#include <dhcp/pkt6.h>
-#include <dhcp/iface_mgr.h>
-#include <dhcp6/dhcp6_srv.h>
-#include <dhcp/option6_ia.h>
-#include <dhcp/option6_iaaddr.h>
-#include <dhcp/option6_addrlst.h>
+
 #include <asiolink/io_address.h>
+#include <dhcp6/dhcp6_log.h>
+#include <dhcp6/dhcp6_srv.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/iface_mgr.h>
+#include <dhcp/option6_addrlst.h>
+#include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_ia.h>
+#include <dhcp/pkt6.h>
 #include <exceptions/exceptions.h>
 #include <util/io_utilities.h>
 #include <util/range_utilities.h>
 
-using namespace std;
 using namespace isc;
-using namespace isc::dhcp;
 using namespace isc::asiolink;
+using namespace isc::dhcp;
 using namespace isc::util;
+using namespace std;
 
 const std::string HARDCODED_LEASE = "2001:db8:1::1234:abcd";
 const uint32_t HARDCODED_T1 = 1500; // in seconds
@@ -40,14 +42,14 @@ const uint32_t HARDCODED_VALID_LIFETIME = 7200; // in seconds
 const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
-    cout << "Initialization: opening sockets on port " << port << endl;
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
 
-    // first call to instance() will create IfaceMgr (it's a singleton)
+    // First call to instance() will create IfaceMgr (it's a singleton)
     // it may throw something if things go wrong
     try {
 
         if (IfaceMgr::instance().countIfaces() == 0) {
-            cout << "Failed to detect any network interfaces. Aborting." << endl;
+            LOG_ERROR(dhcp6_logger, DHCP6_NO_INTERFACES);
             shutdown_ = true;
             return;
         }
@@ -59,7 +61,7 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
         /// @todo: instantiate LeaseMgr here once it is imlpemented.
 
     } catch (const std::exception &e) {
-        cerr << "Error during DHCPv4 server startup: " << e.what() << endl;
+        LOG_ERROR(dhcp6_logger, DHCP6_SRV_CONSTRUCT_ERROR).arg(e.what());
         shutdown_ = true;
         return;
     }
@@ -68,13 +70,11 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
 }
 
 Dhcpv6Srv::~Dhcpv6Srv() {
-    cout << "DHCPv6 Srv shutdown." << endl;
-
     IfaceMgr::instance().closeSockets();
 }
 
 void Dhcpv6Srv::shutdown() {
-    cout << "b10-dhcp6: DHCPv6 server shutdown." << endl;
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_SHUTDOWN_REQUEST);
     shutdown_ = true;
 }
 
@@ -89,42 +89,58 @@ bool Dhcpv6Srv::run() {
 
         if (query) {
             if (!query->unpack()) {
-                cout << "Failed to parse incoming packet" << endl;
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                          DHCP6_PACKET_PARSE_FAIL);
                 continue;
             }
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PACKET_RECEIVED)
+                      .arg(serverReceivedPacketName(query->getType()))
+                      .arg(query->getType());
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_QUERY_DATA)
+                      .arg(query->getType())
+                      .arg(query->getBuffer().getLength())
+                      .arg(query->toText());
+
             switch (query->getType()) {
             case DHCPV6_SOLICIT:
                 rsp = processSolicit(query);
                 break;
+
             case DHCPV6_REQUEST:
                 rsp = processRequest(query);
                 break;
+
             case DHCPV6_RENEW:
                 rsp = processRenew(query);
                 break;
+
             case DHCPV6_REBIND:
                 rsp = processRebind(query);
                 break;
+
             case DHCPV6_CONFIRM:
                 rsp = processConfirm(query);
                 break;
+
             case DHCPV6_RELEASE:
                 rsp = processRelease(query);
                 break;
+
             case DHCPV6_DECLINE:
                 rsp = processDecline(query);
                 break;
+
             case DHCPV6_INFORMATION_REQUEST:
                 rsp = processInfRequest(query);
                 break;
+
             default:
-                cout << "Unknown pkt type received:"
-                     << query->getType() << endl;
+                // Only action is to output a message if debug is enabled,
+                // and that will be covered by the debug statement before
+                // the "switch" statement.
+                ;
             }
 
-            cout << "Received " << query->getBuffer().getLength() << " bytes packet type="
-                 << query->getType() << endl;
-            cout << query->toText();
             if (rsp) {
                 rsp->setRemoteAddr(query->getRemoteAddr());
                 rsp->setLocalAddr(query->getLocalAddr());
@@ -132,14 +148,16 @@ bool Dhcpv6Srv::run() {
                 rsp->setLocalPort(DHCP6_SERVER_PORT);
                 rsp->setIndex(query->getIndex());
                 rsp->setIface(query->getIface());
-                cout << "Replying with:" << rsp->getType() << endl;
-                cout << rsp->toText();
-                cout << "----" << endl;
-                if (!rsp->pack()) {
-                    cout << "Failed to assemble response packet." << endl;
-                    continue;
+
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA,
+                          DHCP6_RESPONSE_DATA)
+                          .arg(rsp->getType()).arg(rsp->toText());
+
+                if (rsp->pack()) {
+                    IfaceMgr::instance().send(rsp);
+                } else {
+                    LOG_ERROR(dhcp6_logger, DHCP6_PACK_FAIL);
                 }
-                IfaceMgr::instance().send(rsp);
             }
         }
 
@@ -349,4 +367,47 @@ Pkt6Ptr Dhcpv6Srv::processInfRequest(const Pkt6Ptr& infRequest) {
     /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, infRequest->getTransid()));
     return reply;
+}
+
+const char*
+Dhcpv6Srv::serverReceivedPacketName(uint8_t type) {
+    static const char* CONFIRM = "CONFIRM";
+    static const char* DECLINE = "DECLINE";
+    static const char* INFORMATION_REQUEST = "INFORMATION_REQUEST";
+    static const char* REBIND = "REBIND";
+    static const char* RELEASE = "RELEASE";
+    static const char* RENEW = "RENEW";
+    static const char* REQUEST = "REQUEST";
+    static const char* SOLICIT = "SOLICIT";
+    static const char* UNKNOWN = "UNKNOWN";
+
+    switch (type) {
+    case DHCPV6_CONFIRM:
+        return (CONFIRM);
+
+    case DHCPV6_DECLINE:
+        return (DECLINE);
+
+    case DHCPV6_INFORMATION_REQUEST:
+        return (INFORMATION_REQUEST);
+
+    case DHCPV6_REBIND:
+        return (REBIND);
+
+    case DHCPV6_RELEASE:
+        return (RELEASE);
+
+    case DHCPV6_RENEW:
+        return (RENEW);
+
+    case DHCPV6_REQUEST:
+        return (REQUEST);
+
+    case DHCPV6_SOLICIT:
+        return (SOLICIT);
+
+    default:
+        ;
+    }
+    return (UNKNOWN);
 }
