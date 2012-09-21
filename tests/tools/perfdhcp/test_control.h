@@ -92,25 +92,26 @@ namespace perfdhcp {
 class TestControl : public boost::noncopyable {
 public:
 
-    /// Default transaction id offset.
+    /// Default transaction id offset in the packet template.
     static const size_t DHCPV4_TRANSID_OFFSET = 4;
-    /// Default offset of MAC's last octet.
+    /// Default offset of MAC's last octet in the packet template..
     static const size_t DHCPV4_RANDOMIZATION_OFFSET = 35;
-    /// Default elapsed time offset.
+    /// Default elapsed time offset in the packet template.
     static const size_t DHCPV4_ELAPSED_TIME_OFFSET = 8;
-    /// Default server id offset.
+    /// Default server id offset in the packet template.
     static const size_t DHCPV4_SERVERID_OFFSET = 54;
-    /// Default requested ip offset.
+    /// Default requested ip offset in the packet template.
     static const size_t DHCPV4_REQUESTED_IP_OFFSET = 240;
-    /// Default DHCPV6 transaction id offset.
+    /// Default DHCPV6 transaction id offset in t the packet template.
     static const size_t DHCPV6_TRANSID_OFFSET = 1;
     /// Default DHCPV6 randomization offset (last octet of DUID)
+    /// in the packet template.
     static const size_t DHCPV6_RANDOMIZATION_OFFSET = 21;
-    /// Default DHCPV6 elapsed time offset.
+    /// Default DHCPV6 elapsed time offset in the packet template.
     static const size_t DHCPV6_ELAPSED_TIME_OFFSET = 84;
-    /// Default DHCPV6 server id offset.
+    /// Default DHCPV6 server id offset in the packet template.
     static const size_t DHCPV6_SERVERID_OFFSET = 22;
-    /// Default DHCPV6 IA_NA offset.
+    /// Default DHCPV6 IA_NA offset in the packet template.
     static const size_t DHCPV6_IA_NA_OFFSET = 40;
 
     /// Statistics Manager for DHCPv4.
@@ -823,27 +824,27 @@ private:
     template<class T>
     uint32_t getElapsedTime(const T& pkt1, const T& pkt2);
 
-    /// \brief Return elapsed time offset in packet.
+    /// \brief Return elapsed time offset in a packet.
     ///
     /// \return elapsed time offset in packet.
     int getElapsedTimeOffset() const;
 
-    /// \brief Return randomization offset in packet.
+    /// \brief Return randomization offset in a packet.
     ///
     /// \return randomization offset in packet.
     int getRandomOffset(const int arg_idx) const;
 
-    /// \brief Return requested ip offset in packet.
+    /// \brief Return requested ip offset in a packet.
     ///
-    /// \return randomization offset in packet.
+    /// \return randomization offset in a packet.
     int getRequestedIpOffset() const;
 
-    /// \brief Return server id offset in packet.
+    /// \brief Return server id offset in a packet.
     ///
     /// \return server id offset in packet.
     int getServerIdOffset() const;
 
-    /// \brief Return transaction id offset in packet.
+    /// \brief Return transaction id offset in a packet.
     ///
     /// \param arg_idx command line argument index to be used.
     /// If multiple -X parameters specifed it points to the
@@ -898,7 +899,7 @@ private:
     /// \brief Print templates information.
     ///
     /// Method prints information about data offsets
-    /// packet templates and their contents.
+    /// in packet templates and their contents.
     void printTemplates() const;
 
     /// \brief Read DHCP message template from file.
