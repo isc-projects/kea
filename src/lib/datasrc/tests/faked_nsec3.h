@@ -18,9 +18,11 @@
 #include <datasrc/zone.h>
 
 #include <dns/nsec3hash.h>
+#include <dns/name.h>
 
 #include <stdint.h>
 #include <string>
+#include <map>
 
 namespace isc {
 namespace datasrc {
@@ -63,6 +65,13 @@ public:
     virtual isc::dns::NSEC3Hash* create(const isc::dns::rdata::generic::NSEC3&)
         const;
 };
+
+typedef std::map<isc::dns::Name, std::string> NSEC3HashMap;
+typedef NSEC3HashMap::value_type NSEC3HashPair;
+
+// Build the test map with the fake NSEC3 hashes.
+void
+buildFakeNSEC3Map(NSEC3HashMap& fmap);
 
 // Check the result against expected values. It directly calls EXPECT_ macros
 void

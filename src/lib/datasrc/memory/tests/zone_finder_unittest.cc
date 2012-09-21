@@ -46,23 +46,6 @@ namespace {
 using result::SUCCESS;
 using result::EXIST;
 
-// Some faked NSEC3 hash values commonly used in tests and the faked NSEC3Hash
-// object.
-//
-// For apex (example.org)
-const char* const apex_hash = "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-const char* const apex_hash_lower = "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom";
-// For ns1.example.org
-const char* const ns1_hash = "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR";
-// For w.example.org
-const char* const w_hash = "01UDEMVP1J2F7EG6JEBPS17VP3N8I58H";
-// For x.y.w.example.org (lower-cased)
-const char* const xyw_hash = "2vptu5timamqttgl4luu9kg21e0aor3s";
-// For zzz.example.org.
-const char* const zzz_hash = "R53BQ7CC2UVMUBFU5OCMM6PERS9TK9EN";
-
-typedef map<Name, string> NSEC3HashMap;
-typedef NSEC3HashMap::value_type NSEC3HashPair;
 NSEC3HashMap nsec3_hash_map;
 
 // A faked NSEC3 hash calculator for convenience. Tests that need to use
@@ -90,40 +73,7 @@ public:
                  const isc::dns::RRClass& rrclass) :
          memory::InMemoryZoneFinder(zone_data, rrclass)
     {
-        // Build pre-defined hash
-        nsec3_hash_map.clear();
-        nsec3_hash_map[Name("example.org")] = apex_hash;
-        nsec3_hash_map[Name("www.example.org")] = "2S9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-        nsec3_hash_map[Name("xxx.example.org")] = "Q09MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-        nsec3_hash_map[Name("yyy.example.org")] = "0A9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-        nsec3_hash_map[Name("x.y.w.example.org")] =
-            "2VPTU5TIMAMQTTGL4LUU9KG21E0AOR3S";
-        nsec3_hash_map[Name("y.w.example.org")] = "K8UDEMVP1J2F7EG6JEBPS17VP3N8I58H";
-        nsec3_hash_map[Name("w.example.org")] = w_hash;
-        nsec3_hash_map[Name("zzz.example.org")] = zzz_hash;
-        nsec3_hash_map[Name("smallest.example.org")] =
-            "00000000000000000000000000000000";
-        nsec3_hash_map[Name("largest.example.org")] =
-            "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU";
-
-        nsec3_hash_map[Name("n0.example.org")] =
-            "00000000000000000000000000000000";
-        nsec3_hash_map[Name("n1.example.org")] =
-            "01UDEMVP1J2F7EG6JEBPS17VP3N8I58H";
-        nsec3_hash_map[Name("n2.example.org")] =
-            "02UDEMVP1J2F7EG6JEBPS17VP3N8I58H";
-        nsec3_hash_map[Name("n3.example.org")] =
-            "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-        nsec3_hash_map[Name("n4.example.org")] =
-            "11111111111111111111111111111111";
-        nsec3_hash_map[Name("n5.example.org")] =
-            "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR";
-        nsec3_hash_map[Name("n6.example.org")] =
-            "44444444444444444444444444444444";
-        nsec3_hash_map[Name("n7.example.org")] =
-            "R53BQ7CC2UVMUBFU5OCMM6PERS9TK9EN";
-        nsec3_hash_map[Name("n8.example.org")] =
-            "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";
+        buildFakeNSEC3Map(nsec3_hash_map);
     }
 
     void setFakeNSEC3Calculate() {
