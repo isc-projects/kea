@@ -1347,6 +1347,8 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     OptionPtr opt_msg_type = Option::factory(Option::V4, DHO_DHCP_MESSAGE_TYPE,
                                              buf_msg_type);
     pkt4->addOption(opt_msg_type);
+    // Use first flags indicates that we want to use the server
+    // id captured in first packet.
     if (CommandOptions::instance().isUseFirst() &&
         (first_packet_serverid_.size() > 0)) {
         pkt4->addOption(Option::factory(Option::V4, DHO_DHCP_SERVER_IDENTIFIER,
@@ -1442,6 +1444,8 @@ TestControl::sendRequest4(const TestControlSocket& socket,
 
     // Get the actual server id offset.
     size_t sid_offset = getServerIdOffset();
+    // Use first flags indicates that we want to use the server
+    // id captured in first packet.
     if (CommandOptions::instance().isUseFirst() &&
         (first_packet_serverid_.size() > 0)) {
         boost::shared_ptr<LocalizedOption>
@@ -1520,7 +1524,7 @@ TestControl::sendRequest6(const TestControlSocket& socket,
     pkt6->addOption(opt_clientid);
 
     // Use first flags indicates that we want to use the server
-    // id captured in fisrt packet.
+    // id captured in first packet.
     if (CommandOptions::instance().isUseFirst() &&
         (first_packet_serverid_.size() > 0)) {
         pkt6->addOption(Option::factory(Option::V6, D6O_SERVERID,
@@ -1578,6 +1582,8 @@ TestControl::sendRequest6(const TestControlSocket& socket,
 
     // Get the actual server id offset.
     size_t sid_offset = getServerIdOffset();
+    // Use first flags indicates that we want to use the server
+    // id captured in first packet.
     if (CommandOptions::instance().isUseFirst() &&
         (first_packet_serverid_.size() > 0)) {
         boost::shared_ptr<LocalizedOption>
