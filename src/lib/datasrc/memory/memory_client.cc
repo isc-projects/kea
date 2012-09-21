@@ -101,9 +101,6 @@ public:
         FileNameTree::destroy(mem_sgmt_, file_name_tree_, deleter);
 
         ZoneTable::destroy(mem_sgmt_, zone_table_, rrclass_);
-
-        // see above for the assert().
-        assert(mem_sgmt_.allMemoryDeallocated());
     }
 
     util::MemorySegment& mem_sgmt_;
