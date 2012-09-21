@@ -2872,16 +2872,84 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
     <section id="dhcp6-config">
       <title>DHCPv6 Server Configuration</title>
       <para>
-        The DHCPv6 server does not have lease database implemented yet
-        or any support for configuration, so every time the same set
-        of configuration options (including the same fixed address)
-        will be assigned every time.
+        Once the server is started, its configuration becomes possible. To view
+        existing configuration, use the following command in <command>bindctl</command>:
+        <screen>
+          &gt; <userinput>config show Dhcp6</userinput></screen>
+        When starting Dhcp6 daemon for the first time, the initial configuration
+        will be available. It will look similar to this:
+        <screen>
+&gt; <userinput>config show Dhcp6</userinput>
+Dhcp6/interface	         "eth0" string	(default)
+Dhcp6/renew-timer        1000   integer	(default)
+Dhcp6/rebind-timer       2000   integer	(default)
+Dhcp6/preferred-lifetime 3000   integer	(default)
+Dhcp6/valid-lifetime	 4000   integer	(default)
+Dhcp6/subnet6	         []     list    (default)</screen>
+      </para>
+
+      <para>
+        To change one of the existing configurations, simply follow
+        the usual <command>bindctl</command> procedure. For example, to make the
+        leases longer, change their valid-lifetime parameter:
+        <screen>
+&gt; <userinput>config set Dhcp6/valid-lifetime 7200</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Please note that most parameters specified in Dhcp6 scope are global
+        and apply to all defined subnets, unless they are overwritten in a more
+        specific scope.
+      </para>
+
+      <para>
+        The essential role of DHCPv6 server is address assignment. The server
+        has to be configured with at least a subnet and pool of dynamic
+        addresses that it can manage. For example, let's assume that the server
+        is connected to a network segment that uses 2001:db8:1::/64
+        prefix. Administrator of that network decided that addresses from range
+        2001:db8:1::1 to 2001:db8:1::ffff are going to be managed by the Dhcp6
+        server. Such configuration can be achieved in the following way:
+        <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:1::/64"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pool6 [ "2001:db8:1::1 - 2001:db8:1::ffff" ]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Please note that subnet is defined as a simple string, but the pool is
+        an actual list of pools, therefore must be defined with square
+        brackets. It is possible to define more than one pool in a
+        subnet. Continuing the previous example, let's further assume that also
+        2001:db8:1:0:5::/80 should be used. It could be written as
+        2001:db8:1:0:5:: to 2001:db8:1::5:ffff:ffff:ffff, but typing so many Fs
+        is cumbersome. It can be expressed simply as 2001:db8:1:0:5::/80. Both
+        formats are supported by Dhcp6. For example, one could define the following pools:
+        <screen>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pool6 [ "2001:db8:1::1 - 2001:db8:1::ffff", "2001:db8:1:0:5::/80" ]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Number of subnets is not limited, but for performance reasons it is recommended to keep
+        them as low as possible.
       </para>
       <para>
-        At this stage of development, the only way to alter server
-        configuration is to tweak its source code. To do so, please
-        edit src/bin/dhcp6/dhcp6_srv.cc file, modify the following
-        parameters and recompile:
+         The server may be configured to serve more than one subnet. To add a second subnet,
+         use command similar to the following:
+        <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/subnet "2001:db8:beef::/48"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/pool6 [ "2001:db8:beef::/48" ]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Arrays are counted from 0. subnet[0] refers to the subnet defined in the
+        previous example.  The <command>config add Dhcp6/subnet6</command> adds
+        another (second) subnet. It can be referred to as
+        <command>Dhcp6/subnet6[1]</command>. In this example, we allow server to
+        dynamically assign all addresses available in the whole subnet. Although
+        very wasteful, it is certainly a valid configuration to dedicate the
+        whole /48 subnet for that purpose.
+      </para>
+
+      <para>
+        Note: Although configuration is now accepted, it is not internally used
+        by they server yet.  At this stage of development, the only way to alter
+        server configuration is to tweak its source code. To do so, please edit
+        src/bin/dhcp6/dhcp6_srv.cc file, modify the following parameters and
+        recompile:
         <screen>
 const std::string HARDCODED_LEASE = "2001:db8:1::1234:abcd";
 const uint32_t HARDCODED_T1 = 1500; // in seconds
