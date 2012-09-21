@@ -653,7 +653,7 @@ class UIModuleCCSession(MultiConfigData):
         # for type any, we determine the 'type' by what value is set
         # (which would be either list or dict)
         cur_value, _ = self.get_value(identifier)
-        type_any = module_spec['item_type'] == 'any'
+        type_any = isc.config.config_data.spec_part_is_any(module_spec)
 
         # there's two forms of 'remove from list'; the remove-value-from-list
         # form, and the 'remove-by-index' form. We can recognize the second
