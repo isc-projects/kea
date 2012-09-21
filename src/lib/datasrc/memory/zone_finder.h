@@ -22,6 +22,7 @@
 #include <dns/name.h>
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
+#include <dns/nsec3hash.h>
 
 namespace isc {
 namespace datasrc {
@@ -73,7 +74,7 @@ public:
                        const isc::dns::RRClass& rrclass) :
         zone_data_(zone_data),
         rrclass_(rrclass),
-        nsec3_calculate_(InMemoryZoneFinderNSEC3Calculate)
+        nsec3_calculate_(isc::dns::NSEC3Hash::calculate)
     {}
 
     /// \brief Find an RRset in the datasource

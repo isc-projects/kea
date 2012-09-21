@@ -23,18 +23,11 @@
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
 
-#include <util/buffer.h>
-#include <util/encode/base32hex.h>
-#include <util/hash/sha1.h>
-
 #include <datasrc/logger.h>
 
 using namespace isc::dns;
 using namespace isc::datasrc::memory;
 using namespace isc::datasrc;
-using namespace isc::util;
-using namespace isc::util::encode;
-using namespace isc::util::hash;
 
 namespace isc {
 namespace datasrc {
@@ -453,44 +446,6 @@ FindNodeResult findNode(const ZoneData& zone_data,
 
 } // end anonymous namespace
 
-inline void
-iterateSHA1(SHA1Context* ctx, const uint8_t* input, size_t inlength,
-            const uint8_t* salt, size_t saltlen,
-            uint8_t output[SHA1_HASHSIZE])
-{
-    SHA1Reset(ctx);
-    SHA1Input(ctx, input, inlength);
-    SHA1Input(ctx, salt, saltlen); // this works whether saltlen == or > 0
-    SHA1Result(ctx, output);
-}
-
-std::string
-InMemoryZoneFinderNSEC3Calculate(const Name& name,
-                                 const uint16_t iterations,
-                                 const uint8_t* salt,
-                                 size_t salt_len) {
-    // We first need to normalize the name by converting all upper case
-    // characters in the labels to lower ones.
-    OutputBuffer obuf(Name::MAX_WIRE);
-    Name name_copy(name);
-    name_copy.downcase();
-    name_copy.toWire(obuf);
-
-    const uint8_t* const salt_buf = (salt_len > 0) ? salt : NULL;
-    std::vector<uint8_t> digest(SHA1_HASHSIZE);
-    uint8_t* const digest_buf = &digest[0];
-
-    SHA1Context sha1_ctx;
-    iterateSHA1(&sha1_ctx, static_cast<const uint8_t*>(obuf.getData()),
-                obuf.getLength(), salt_buf, salt_len, digest_buf);
-    for (unsigned int n = 0; n < iterations; ++n) {
-        iterateSHA1(&sha1_ctx, digest_buf, SHA1_HASHSIZE,
-                    salt_buf, salt_len,
-                    digest_buf);
-    }
-
-    return (encodeBase32Hex(digest));
-}
 
 // Specialization of the ZoneFinder::Context for the in-memory finder.
 class InMemoryZoneFinder::Context : public ZoneFinder::Context {
