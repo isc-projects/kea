@@ -710,7 +710,7 @@ public:
     /// The default constructor.
     ///
     /// \exception None
-    DomainTreeNodeChain() : node_count_(0), last_compared_(NULL),
+    DomainTreeNodeChain() : level_count_(0), last_compared_(NULL),
                         // XXX: meaningless initial values:
                         last_comparison_(0, 0,
                                          isc::dns::NameComparisonResult::EQUAL)
@@ -729,7 +729,7 @@ public:
     ///
     /// \exception None
     void clear() {
-        node_count_ = 0;
+        level_count_ = 0;
         last_compared_ = NULL;
     }
 
@@ -770,7 +770,7 @@ public:
     /// chain, 0 will be returned.
     ///
     /// \exception None
-    unsigned int getLevelCount() const { return (node_count_); }
+    size_t getLevelCount() const { return (level_count_); }
 
     /// \brief return the absolute name for the node which this
     /// \c DomainTreeNodeChain currently refers to.
@@ -788,11 +788,11 @@ public:
 
         const DomainTreeNode<T>* top_node = top();
         isc::dns::Name absolute_name = top_node->getName();
-        int node_count = node_count_ - 1;
-        while (node_count > 0) {
-            top_node = nodes_[node_count - 1];
+        size_t level = level_count_ - 1;
+        while (level > 0) {
+            top_node = nodes_[level - 1];
             absolute_name = absolute_name.concatenate(top_node->getName());
-            --node_count;
+            --level;
         }
         return (absolute_name);
     }
@@ -806,7 +806,7 @@ private:
     /// \brief return whether node chain has node in it.
     ///
     /// \exception None
-    bool isEmpty() const { return (node_count_ == 0); }
+    bool isEmpty() const { return (level_count_ == 0); }
 
     /// \brief return the top node for the node chain
     ///
@@ -816,7 +816,7 @@ private:
     /// \exception None
     const DomainTreeNode<T>* top() const {
         assert(!isEmpty());
-        return (nodes_[node_count_ - 1]);
+        return (nodes_[level_count_ - 1]);
     }
 
     /// \brief pop the top node from the node chain
@@ -827,7 +827,7 @@ private:
     /// \exception None
     void pop() {
         assert(!isEmpty());
-        --node_count_;
+        --level_count_;
     }
 
     /// \brief add the node into the node chain
@@ -838,8 +838,8 @@ private:
     ///
     /// \exception None
     void push(const DomainTreeNode<T>* node) {
-        assert(node_count_ < RBT_MAX_LEVEL);
-        nodes_[node_count_++] = node;
+        assert(level_count_ < RBT_MAX_LEVEL);
+        nodes_[level_count_++] = node;
     }
 
 private:
@@ -848,7 +848,7 @@ private:
     // it's also equal to the possible maximum level.
     const static int RBT_MAX_LEVEL = isc::dns::Name::MAX_LABELS;
 
-    int node_count_;
+    size_t level_count_;
     const DomainTreeNode<T>* nodes_[RBT_MAX_LEVEL];
     const DomainTreeNode<T>* last_compared_;
     isc::dns::NameComparisonResult last_comparison_;
