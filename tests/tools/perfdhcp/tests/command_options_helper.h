@@ -115,7 +115,7 @@ private:
 
         if (tokens.size() > 0) {
             // Allocate array of C-strings where we will store tokens
-            results = new (std::nothrow) char*[tokens.size() * sizeof(char*)];
+            results = new (std::nothrow) char*[tokens.size()];
             assert(results != NULL);
             // Store tokens in C-strings array
             for (int i = 0; i < tokens.size(); ++i) {
