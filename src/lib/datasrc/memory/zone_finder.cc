@@ -689,10 +689,9 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
             RdataSet* rdataset = node->getData();
             ConstRRsetPtr closest = createTreeNodeRRset(node, rdataset,
                                                         getClass());
-            ConstRRsetPtr next =
-                createTreeNodeRRset(covering_node,
-                                    (covering_node != NULL ?
-                                     covering_node->getData() : NULL),
+            ConstRRsetPtr next = (covering_node == NULL) ?
+                ConstRRsetPtr() :
+                createTreeNodeRRset(covering_node, covering_node->getData(),
                                     getClass());
 
             LOG_DEBUG(logger, DBG_TRACE_BASIC,
@@ -725,11 +724,9 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
             }
 
             if (!recursive) {   // in non recursive mode, we are done.
-                ConstRRsetPtr closest =
-                    createTreeNodeRRset(covering_node,
-                                        (covering_node != NULL ?
-                                         covering_node->getData() :
-                                         NULL),
+                ConstRRsetPtr closest = (covering_node == NULL) ?
+                    ConstRRsetPtr() :
+                    createTreeNodeRRset(covering_node, covering_node->getData(),
                                         getClass());
 
                 if (closest) {
