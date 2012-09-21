@@ -583,6 +583,8 @@ class TestXfrinIXFRAdd(TestXfrinState):
         # signed, rejecting it.
         self.assertRaises(xfrin.XfrinProtocolError, self.state.handle_rr,
                           self.conn, end_soa_rrset)
+        # No diffs were commited
+        self.assertEqual([], self.conn._datasrc_client.committed_diffs)
 
     def test_handle_out_of_sync(self):
         # getting SOA with an inconsistent serial.  This is an error.
