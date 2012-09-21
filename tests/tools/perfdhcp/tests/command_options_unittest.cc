@@ -57,7 +57,7 @@ protected:
     /// Check if initialized values are correct
     void checkDefaults() {
         CommandOptions& opt = CommandOptions::instance();
-        process("perfdhcp 192.168.0.1");
+        EXPECT_NO_THROW(process("perfdhcp 192.168.0.1"));
         EXPECT_EQ(4, opt.getIpVersion());
         EXPECT_EQ(CommandOptions::DORA_SARR, opt.getExchangeMode());
         EXPECT_EQ(0, opt.getRate());
@@ -138,7 +138,7 @@ protected:
 };
 
 TEST_F(CommandOptionsTest, Defaults) {
-    process("perfdhcp all");
+    EXPECT_NO_THROW(process("perfdhcp all"));
     checkDefaults();
 }
 
@@ -157,12 +157,12 @@ TEST_F(CommandOptionsTest, HelpVersion) {
 
 TEST_F(CommandOptionsTest, UseFirst) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -1 -B -l ethx all");
+    EXPECT_NO_THROW(process("perfdhcp -1 -B -l ethx all"));
     EXPECT_TRUE(opt.isUseFirst());
 }
 TEST_F(CommandOptionsTest, IpVersion) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -6 -l ethx -c -i all");
+    EXPECT_NO_THROW(process("perfdhcp -6 -l ethx -c -i all"));
     EXPECT_EQ(6, opt.getIpVersion());
     EXPECT_EQ("ethx", opt.getLocalName());
     EXPECT_TRUE(opt.isRapidCommit());
@@ -183,7 +183,7 @@ TEST_F(CommandOptionsTest, IpVersion) {
 
 TEST_F(CommandOptionsTest, Rate) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -4 -r 10 -l ethx all");
+    EXPECT_NO_THROW(process("perfdhcp -4 -r 10 -l ethx all"));
     EXPECT_EQ(10, opt.getRate());
 
     // Negative test cases
@@ -203,7 +203,7 @@ TEST_F(CommandOptionsTest, Rate) {
 
 TEST_F(CommandOptionsTest, ReportDelay) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -r 100 -t 17 -l ethx all");
+    EXPECT_NO_THROW(process("perfdhcp -r 100 -t 17 -l ethx all"));
     EXPECT_EQ(17, opt.getReportDelay());
 
     // Negative test cases
@@ -218,7 +218,7 @@ TEST_F(CommandOptionsTest, ReportDelay) {
 
 TEST_F(CommandOptionsTest, ClientsNum) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -R 200 -l ethx all");
+    EXPECT_NO_THROW(process("perfdhcp -R 200 -l ethx all"));
     EXPECT_EQ(200, opt.getClientsNum());
     process("perfdhcp -R 0 -l ethx all");
     EXPECT_EQ(0, opt.getClientsNum());
@@ -296,12 +296,12 @@ TEST_F(CommandOptionsTest, Base) {
 
 TEST_F(CommandOptionsTest, DropTime) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -l ethx -d 12 all");
+    EXPECT_NO_THROW(process("perfdhcp -l ethx -d 12 all"));
     ASSERT_EQ(2, opt.getDropTime().size());
     EXPECT_DOUBLE_EQ(12, opt.getDropTime()[0]);
     EXPECT_DOUBLE_EQ(1, opt.getDropTime()[1]);
 
-    process("perfdhcp -l ethx -d 2 -d 4.7 all");
+    EXPECT_NO_THROW(process("perfdhcp -l ethx -d 2 -d 4.7 all"));
     ASSERT_EQ(2, opt.getDropTime().size());
     EXPECT_DOUBLE_EQ(2, opt.getDropTime()[0]);
     EXPECT_DOUBLE_EQ(4.7, opt.getDropTime()[1]);
@@ -316,7 +316,7 @@ TEST_F(CommandOptionsTest, DropTime) {
 
 TEST_F(CommandOptionsTest, TimeOffset) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -l ethx -T file1.x -T file2.x -E 4 all");
+    EXPECT_NO_THROW(process("perfdhcp -l ethx -T file1.x -T file2.x -E 4 all"));
     EXPECT_EQ(4, opt.getElapsedTimeOffset());
 
     // Negative test cases
@@ -353,8 +353,8 @@ TEST_F(CommandOptionsTest, ExchangeMode) {
 
 TEST_F(CommandOptionsTest, Offsets) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -E5 -4 -I 2 -S3 -O 30 -X7 -l ethx "
-            "-X3 -T file1.x -T file2.x all");
+    EXPECT_NO_THROW(process("perfdhcp -E5 -4 -I 2 -S3 -O 30 -X7 -l ethx "
+                            "-X3 -T file1.x -T file2.x all"));
     EXPECT_EQ(2, opt.getRequestedIpOffset());
     EXPECT_EQ(5, opt.getElapsedTimeOffset());
     EXPECT_EQ(3, opt.getServerIdOffset());
@@ -377,7 +377,7 @@ TEST_F(CommandOptionsTest, Offsets) {
 
 TEST_F(CommandOptionsTest, LocalPort) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -l ethx -L 2000 all");
+    EXPECT_NO_THROW(process("perfdhcp -l ethx -L 2000 all"));
     EXPECT_EQ(2000, opt.getLocalPort());
 
     // Negative test cases
@@ -392,7 +392,7 @@ TEST_F(CommandOptionsTest, LocalPort) {
 
 TEST_F(CommandOptionsTest, Preload) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -1 -P 3 -l ethx all");
+    EXPECT_NO_THROW(process("perfdhcp -1 -P 3 -l ethx all"));
     EXPECT_EQ(3, opt.getPreload());
 
     // Negative test cases
@@ -405,11 +405,11 @@ TEST_F(CommandOptionsTest, Preload) {
 
 TEST_F(CommandOptionsTest, Seed) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -6 -P 2 -s 23 -l ethx all");
+    EXPECT_NO_THROW(process("perfdhcp -6 -P 2 -s 23 -l ethx all"));
     EXPECT_EQ(23, opt.getSeed());
     EXPECT_TRUE(opt.isSeeded());
 
-    process("perfdhcp -6 -P 2 -s 0 -l ethx all");
+    EXPECT_NO_THROW(process("perfdhcp -6 -P 2 -s 0 -l ethx all"));
     EXPECT_EQ(0, opt.getSeed());
     EXPECT_FALSE(opt.isSeeded());
 
@@ -423,11 +423,11 @@ TEST_F(CommandOptionsTest, Seed) {
 
 TEST_F(CommandOptionsTest, TemplateFiles) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -T file1.x -l ethx all");
+    EXPECT_NO_THROW(process("perfdhcp -T file1.x -l ethx all"));
     ASSERT_EQ(1, opt.getTemplateFiles().size());
     EXPECT_EQ("file1.x", opt.getTemplateFiles()[0]);
 
-    process("perfdhcp -T file1.x -s 12 -w start -T file2.x -4 -l ethx all");
+    EXPECT_NO_THROW(process("perfdhcp -T file1.x -s 12 -w start -T file2.x -4 -l ethx all"));
     ASSERT_EQ(2, opt.getTemplateFiles().size());
     EXPECT_EQ("file1.x", opt.getTemplateFiles()[0]);
     EXPECT_EQ("file2.x", opt.getTemplateFiles()[1]);
@@ -444,7 +444,7 @@ TEST_F(CommandOptionsTest, TemplateFiles) {
 
 TEST_F(CommandOptionsTest, Wrapped) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -B -w start -i -l ethx all");
+    EXPECT_NO_THROW(process("perfdhcp -B -w start -i -l ethx all"));
     EXPECT_EQ("start", opt.getWrapped());
 
     // Negative test cases
@@ -455,7 +455,7 @@ TEST_F(CommandOptionsTest, Wrapped) {
 
 TEST_F(CommandOptionsTest, Diagnostics) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -l ethx -i -x asTe all");
+    EXPECT_NO_THROW(process("perfdhcp -l ethx -i -x asTe all"));
     EXPECT_EQ("asTe", opt.getDiags());
 
     // Negative test cases
@@ -481,18 +481,18 @@ TEST_F(CommandOptionsTest, Aggressivity) {
 
 TEST_F(CommandOptionsTest, MaxDrop) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -D 25 -l ethx -r 10 all");
+    EXPECT_NO_THROW(process("perfdhcp -D 25 -l ethx -r 10 all"));
     EXPECT_EQ(25, opt.getMaxDrop()[0]);
-    process("perfdhcp -D 25 -l ethx -D 15 -r 10 all");
+    EXPECT_NO_THROW(process("perfdhcp -D 25 -l ethx -D 15 -r 10 all"));
     EXPECT_EQ(25, opt.getMaxDrop()[0]);
     EXPECT_EQ(15, opt.getMaxDrop()[1]);
 
-    process("perfdhcp -D 15% -l ethx -r 10 all");
+    EXPECT_NO_THROW(process("perfdhcp -D 15% -l ethx -r 10 all"));
     EXPECT_EQ(15, opt.getMaxDropPercentage()[0]);
-    process("perfdhcp -D 15% -D25% -l ethx -r 10 all");
+    EXPECT_NO_THROW(process("perfdhcp -D 15% -D25% -l ethx -r 10 all"));
     EXPECT_EQ(15, opt.getMaxDropPercentage()[0]);
     EXPECT_EQ(25, opt.getMaxDropPercentage()[1]);
-    process("perfdhcp -D 1% -D 99% -l ethx -r 10 all");
+    EXPECT_NO_THROW(process("perfdhcp -D 1% -D 99% -l ethx -r 10 all"));
     EXPECT_EQ(1, opt.getMaxDropPercentage()[0]);
     EXPECT_EQ(99, opt.getMaxDropPercentage()[1]);
 
@@ -512,9 +512,9 @@ TEST_F(CommandOptionsTest, MaxDrop) {
 
 TEST_F(CommandOptionsTest, NumRequest) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -n 1000 -r 10 -l ethx all");
+    EXPECT_NO_THROW(process("perfdhcp -n 1000 -r 10 -l ethx all"));
     EXPECT_EQ(1000, opt.getNumRequests()[0]);
-    process("perfdhcp -n 5 -r 10 -n 500 -l ethx all");
+    EXPECT_NO_THROW(process("perfdhcp -n 5 -r 10 -n 500 -l ethx all"));
     EXPECT_EQ(5, opt.getNumRequests()[0]);
     EXPECT_EQ(500, opt.getNumRequests()[1]);
 
@@ -531,7 +531,7 @@ TEST_F(CommandOptionsTest, NumRequest) {
 
 TEST_F(CommandOptionsTest, Period) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -p 120 -l ethx -r 100 all");
+    EXPECT_NO_THROW(process("perfdhcp -p 120 -l ethx -r 100 all"));
     EXPECT_EQ(120, opt.getPeriod());
 
     // Negative test cases
