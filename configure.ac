@@ -1085,7 +1085,7 @@ fi
 AC_MSG_CHECKING([whether optreset variable is defined in unistd.h])
 AC_TRY_LINK(
     [#include <unistd.h>],
-    [extern int optreset; optreset=1],
+    [extern int optreset; optreset=1;],
     [ AC_MSG_RESULT(yes)
       var_optreset_exists=yes],
     [ AC_MSG_RESULT(no)
