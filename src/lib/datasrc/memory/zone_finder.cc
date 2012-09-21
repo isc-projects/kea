@@ -714,25 +714,30 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
 
             return (FindNSEC3Result(true, labels, closest, next));
         } else {
+            const ZoneNode* last_node = chain.getLastComparedNode();
+
             const NameComparisonResult& last_cmp =
                 chain.getLastComparisonResult();
-            const ZoneNode* last_node = chain.getLastComparedNode();
             assert(last_cmp.getOrder() != 0);
 
-            // find() finished in between one of these and last_node:
-            const ZoneNode* previous_node = last_node->predecessor();
-            const ZoneNode* next_node = last_node->successor();
-
-            if (((last_cmp.getOrder() < 0) && (previous_node == NULL)) ||
-                ((last_cmp.getOrder() > 0) && (next_node == NULL))) {
-                // If the given hash is larger or smaller than everything,
-                // the covering proof is the NSEC3 that has the largest hash.
-                covering_node = last_node->getLargestInSubTree();
+            if (last_cmp.getOrder() < 0) {
+                // We exited on the left side of the last compared node,
+                // so the covering node is the previous one to the last
+                // compared node.
+                covering_node = last_node->predecessor();
+                if (covering_node == NULL) {
+                    // If the given hash is smaller than everything, the
+                    // covering proof is the NSEC3 that has the largest
+                    // hash.
+                    covering_node = last_node->getLargestInSubTree();
+                }
             } else {
-                // Otherwise, H(found_entry-1) < given_hash < H(found_entry).
-                // The covering proof is the first one (and it's valid
-                // because found is neither begin nor end)
-                covering_node = previous_node;
+                // We exited on the right side of the last compared
+                // node, so the covering node is the last compared node.
+                covering_node = last_node;
+                // If the given hash is larger than everything, then
+                // covering proof is the NSEC3 that has the largest
+                // hash, which is automatically the last compared node.
             }
 
             if (!recursive) {   // in non recursive mode, we are done.
