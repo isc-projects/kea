@@ -57,17 +57,17 @@ ConfigurableClientList::DataSourceInfo::DataSourceInfo(
     }
 }
 
+const DataSourceClient*
+ConfigurableClientList::DataSourceInfo::getCacheClient() const {
+    return (cache_.get());
+}
+
 ConfigurableClientList::ConfigurableClientList(const RRClass& rrclass) :
     rrclass_(rrclass),
     mem_sgmt_(new util::MemorySegmentLocal),
     configuration_(new isc::data::ListElement),
     allow_cache_(false)
 {}
-
-const DataSourceClient*
-ConfigurableClientList::DataSourceInfo::getCacheClient() const {
-    return (cache_.get());
-}
 
 void
 ConfigurableClientList::configure(const ConstElementPtr& config,
