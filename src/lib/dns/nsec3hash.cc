@@ -40,6 +40,17 @@ using namespace isc::dns::rdata;
 
 namespace {
 
+inline void
+iterateSHA1(SHA1Context* ctx, const uint8_t* input, size_t inlength,
+            const uint8_t* salt, size_t saltlen,
+            uint8_t output[SHA1_HASHSIZE])
+{
+    SHA1Reset(ctx);
+    SHA1Input(ctx, input, inlength);
+    SHA1Input(ctx, salt, saltlen); // this works whether saltlen == or > 0
+    SHA1Result(ctx, output);
+}
+
 /// \brief A derived class of \c NSEC3Hash that implements the standard hash
 /// calculation specified in RFC5155.
 ///
@@ -59,13 +70,12 @@ public:
     NSEC3HashRFC5155(uint8_t algorithm, uint16_t iterations,
                      const vector<uint8_t>& salt) :
         algorithm_(algorithm), iterations_(iterations),
-        salt_(salt), digest_(SHA1_HASHSIZE), obuf_(Name::MAX_WIRE)
+        salt_(salt)
     {
         if (algorithm_ != NSEC3_HASH_SHA1) {
             isc_throw(UnknownNSEC3HashAlgorithm, "Unknown NSEC3 algorithm: " <<
                       static_cast<unsigned int>(algorithm_));
         }
-        SHA1Reset(&sha1_ctx_);
     }
 
     virtual std::string calculate(const Name& name) const;
@@ -79,47 +89,11 @@ private:
     const uint8_t algorithm_;
     const uint16_t iterations_;
     const vector<uint8_t> salt_;
-
-    // The following members are placeholder of work place and don't hold
-    // any state over multiple calls so can be mutable without breaking
-    // constness.
-    mutable SHA1Context sha1_ctx_;
-    mutable vector<uint8_t> digest_;
-    mutable OutputBuffer obuf_;
 };
-
-inline void
-iterateSHA1(SHA1Context* ctx, const uint8_t* input, size_t inlength,
-            const uint8_t* salt, size_t saltlen,
-            uint8_t output[SHA1_HASHSIZE])
-{
-    SHA1Reset(ctx);
-    SHA1Input(ctx, input, inlength);
-    SHA1Input(ctx, salt, saltlen); // this works whether saltlen == or > 0
-    SHA1Result(ctx, output);
-}
 
 string
 NSEC3HashRFC5155::calculate(const Name& name) const {
-    // We first need to normalize the name by converting all upper case
-    // characters in the labels to lower ones.
-    obuf_.clear();
-    Name name_copy(name);
-    name_copy.downcase();
-    name_copy.toWire(obuf_);
-
-    const uint8_t saltlen = salt_.size();
-    const uint8_t* const salt = (saltlen > 0) ? &salt_[0] : NULL;
-    uint8_t* const digest = &digest_[0];
-    assert(digest_.size() == SHA1_HASHSIZE);
-
-    iterateSHA1(&sha1_ctx_, static_cast<const uint8_t*>(obuf_.getData()),
-                obuf_.getLength(), salt, saltlen, digest);
-    for (unsigned int n = 0; n < iterations_; ++n) {
-        iterateSHA1(&sha1_ctx_, digest, SHA1_HASHSIZE, salt, saltlen, digest);
-    }
-
-    return (encodeBase32Hex(digest_));
+    return (NSEC3Hash::calculate(name, iterations_, &salt_[0], salt_.size()));
 }
 
 bool
@@ -189,6 +163,34 @@ DefaultNSEC3HashCreator::create(const generic::NSEC3& nsec3) const {
 void
 setNSEC3HashCreator(const NSEC3HashCreator* new_creator) {
     creator = new_creator;
+}
+
+std::string
+NSEC3Hash::calculate(const Name& name,
+                     const uint16_t iterations,
+                     const uint8_t* salt,
+                     size_t salt_len) {
+    // We first need to normalize the name by converting all upper case
+    // characters in the labels to lower ones.
+    OutputBuffer obuf(Name::MAX_WIRE);
+    Name name_copy(name);
+    name_copy.downcase();
+    name_copy.toWire(obuf);
+
+    const uint8_t* const salt_buf = (salt_len > 0) ? salt : NULL;
+    std::vector<uint8_t> digest(SHA1_HASHSIZE);
+    uint8_t* const digest_buf = &digest[0];
+
+    SHA1Context sha1_ctx;
+    iterateSHA1(&sha1_ctx, static_cast<const uint8_t*>(obuf.getData()),
+                obuf.getLength(), salt_buf, salt_len, digest_buf);
+    for (unsigned int n = 0; n < iterations; ++n) {
+        iterateSHA1(&sha1_ctx, digest_buf, SHA1_HASHSIZE,
+                    salt_buf, salt_len,
+                    digest_buf);
+    }
+
+    return (encodeBase32Hex(digest));
 }
 
 } // namespace dns
