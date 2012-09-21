@@ -1544,10 +1544,14 @@ const size_t data_count(sizeof(nsec3_data) / sizeof(*nsec3_data));
 TEST_F(InMemoryZoneFinderNSEC3Test, findNSEC3Walk) {
     const Name origin("example.org");
     for (size_t i = 0; i < data_count; ++i) {
+        const Name name = Name(nsec3_data[i].name).concatenate(origin);
+
+        SCOPED_TRACE(name.toText() + (nsec3_data[i].recursive ?
+                                      ", recursive" :
+                                      ", non-recursive"));
+
         const ZoneFinder::FindNSEC3Result result =
-            zone_finder_.findNSEC3
-                (Name(nsec3_data[i].name).concatenate(origin),
-                 nsec3_data[i].recursive);
+            zone_finder_.findNSEC3(name, nsec3_data[i].recursive);
 
         EXPECT_EQ(nsec3_data[i].matched, result.matched);
         EXPECT_EQ(nsec3_data[i].closest_labels, result.closest_labels);
