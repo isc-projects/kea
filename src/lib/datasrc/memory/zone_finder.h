@@ -99,9 +99,7 @@ public:
     findNSEC3(const isc::dns::Name& name, bool recursive);
 
     /// \brief Returns the origin of the zone.
-    virtual isc::dns::Name getOrigin() const {
-        return (zone_data_.getOriginNode()->getName());
-    }
+    virtual isc::dns::Name getOrigin() const;
 
     /// \brief Returns the RR class of the zone.
     virtual isc::dns::RRClass getClass() const {

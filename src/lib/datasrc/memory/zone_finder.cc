@@ -768,6 +768,29 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
               << getClass());
 }
 
+Name
+InMemoryZoneFinder::getOrigin() const {
+    size_t data_len;
+    const uint8_t* data;
+
+    // Normally the label sequence of the origin node should be absolute,
+    // in which case we can simply generate the origin name from the labels.
+    const LabelSequence node_labels = zone_data_.getOriginNode()->getLabels();
+    if (node_labels.isAbsolute()) {
+        data = node_labels.getData(&data_len);
+    } else {
+        // If and when we allow non absolute label at the origin (e.g. for
+        // the convenience of out-of-zone glue handling), we first need to
+        // construct the absolute label sequence and then construct the name.
+        uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+        const LabelSequence name_labels =
+            zone_data_.getOriginNode()->getAbsoluteLabels(labels_buf);
+        data = name_labels.getData(&data_len);
+    }
+    util::InputBuffer buffer(data, data_len);
+    return (Name(buffer));
+}
+
 } // namespace memory
 } // namespace datasrc
 } // namespace isc
