@@ -557,6 +557,13 @@ public:
  */
 TEST_F(InMemoryZoneFinderTest, constructor) {
     ASSERT_EQ(origin_, zone_finder_.getOrigin());
+
+    // Some unusual (abnormal case): if we add a super domain name of the
+    // zone somehow, the label of the origin node won't be absolute.
+    // getOrigin() should still be the correct one.
+    ZoneNode *node;
+    zone_data_->insertName(mem_sgmt_, Name("org"), &node);
+    ASSERT_EQ(origin_, zone_finder_.getOrigin());
 }
 
 TEST_F(InMemoryZoneFinderTest, findCNAME) {
