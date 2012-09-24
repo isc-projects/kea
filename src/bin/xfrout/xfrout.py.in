@@ -278,9 +278,8 @@ class XfroutSession():
                          format_zone_str(zone_name, zone_class))
             return None, None
         elif acl_result == REJECT:
-            if self._counter_xfrrej is not None:
-                # count rejected Xfr request by each zone name
-                self._counter_xfrrej(zone_name.to_text())
+            # count rejected Xfr request by each zone name
+            self._counter_xfrrej(zone_name.to_text())
             logger.debug(DBG_XFROUT_TRACE, XFROUT_QUERY_REJECTED,
                          self._request_type, format_addrinfo(self._remote),
                          format_zone_str(zone_name, zone_class))
