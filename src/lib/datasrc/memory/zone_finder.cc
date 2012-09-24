@@ -194,8 +194,9 @@ createFindResult(const RRClass& rrclass,
         }
     }
 
-    return (ZoneFinderResultContext(code, createTreeNodeRRset(
-                                        node, rdset, rrclass, options, rename),
+    return (ZoneFinderResultContext(code, createTreeNodeRRset(node, rdset,
+                                                              rrclass, options,
+                                                              rename),
                                     flags, node));
 }
 
