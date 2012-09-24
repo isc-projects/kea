@@ -419,6 +419,8 @@ class TestXfroutSession(TestXfroutSessionBase):
                 "action": "DROP"
             }
         ]))
+        # check the 'xfrrej' counter initially
+        self.assertEqual(self.get_counter('xfrrej'), 0)
         # Localhost (the default in this test) is accepted
         rcode, msg = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "NOERROR")
@@ -432,6 +434,8 @@ class TestXfroutSession(TestXfroutSessionBase):
                                 ('192.0.2.2', 12345))
         rcode, msg = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
+        # check the 'xfrrej' counter after incrementing
+        self.assertEqual(self.get_counter('xfrrej'), 1)
 
         # TSIG signed request
         request_data = self.create_request_data(with_tsig=True)
@@ -460,6 +464,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         ]))
         [rcode, msg] = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(rcode.to_text(), "REFUSED")
+        # check the 'xfrrej' counter after incrementing
+        self.assertEqual(self.get_counter('xfrrej'), 2)
 
         # ACL using TSIG: no TSIG; should be rejected
         acl_setter(isc.acl.dns.REQUEST_LOADER.load([
@@ -467,6 +473,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         ]))
         [rcode, msg] = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
+        # check the 'xfrrej' counter after incrementing
+        self.assertEqual(self.get_counter('xfrrej'), 3)
 
         #
         # ACL using IP + TSIG: both should match
@@ -486,24 +494,28 @@ class TestXfroutSession(TestXfroutSessionBase):
                                 ('192.0.2.2', 12345))
         [rcode, msg] = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(rcode.to_text(), "REFUSED")
+        # check the 'xfrrej' counter after incrementing
+        self.assertEqual(self.get_counter('xfrrej'), 4)
         # Address matches, but TSIG doesn't (not included)
         self.xfrsess._remote = (socket.AF_INET, socket.SOCK_STREAM,
                                 ('192.0.2.1', 12345))
         [rcode, msg] = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
+        # check the 'xfrrej' counter after incrementing
+        self.assertEqual(self.get_counter('xfrrej'), 5)
         # Neither address nor TSIG matches
         self.xfrsess._remote = (socket.AF_INET, socket.SOCK_STREAM,
                                 ('192.0.2.2', 12345))
         [rcode, msg] = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
+        # check the 'xfrrej' counter after incrementing
+        self.assertEqual(self.get_counter('xfrrej'), 6)
 
     def test_transfer_acl(self):
         # ACL checks only with the default ACL
         def acl_setter(acl):
             self.xfrsess._acl = acl
-        self.assertEqual(self.get_counter('xfrrej'), 0)
         self.check_transfer_acl(acl_setter)
-        self.assertGreater(self.get_counter('xfrrej'), 0)
 
     def test_transfer_acl_with_notcallable_xfrrej(self):
         # ACL checks only with the default ACL and not callable xfrrej
@@ -523,9 +535,7 @@ class TestXfroutSession(TestXfroutSessionBase):
             self.xfrsess._zone_config[zone_key]['transfer_acl'] = acl
             self.xfrsess._acl = isc.acl.dns.REQUEST_LOADER.load([
                     {"from": "127.0.0.1", "action": "DROP"}])
-        self.assertEqual(self.get_counter('xfrrej'), 0)
         self.check_transfer_acl(acl_setter)
-        self.assertGreater(self.get_counter('xfrrej'), 0)
 
     def test_transfer_zoneacl_nomatch(self):
         # similar to the previous one, but the per zone doesn't match the
@@ -537,9 +547,7 @@ class TestXfroutSession(TestXfroutSessionBase):
                 isc.acl.dns.REQUEST_LOADER.load([
                     {"from": "127.0.0.1", "action": "DROP"}])
             self.xfrsess._acl = acl
-        self.assertEqual(self.get_counter('xfrrej'), 0)
         self.check_transfer_acl(acl_setter)
-        self.assertGreater(self.get_counter('xfrrej'), 0)
 
     def test_get_transfer_acl(self):
         # set the default ACL.  If there's no specific zone ACL, this one
