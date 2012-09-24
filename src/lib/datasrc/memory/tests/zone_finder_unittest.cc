@@ -1449,7 +1449,7 @@ TEST_F(InMemoryZoneFinderTest, findNSEC3ForBadZone) {
                  DataSourceError);
 }
 
-/// \brief Test fixture for the InMemoryZoneFinder class
+/// \brief NSEC3 specific tests fixture for the InMemoryZoneFinder class
 class InMemoryZoneFinderNSEC3Test : public InMemoryZoneFinderTest {
 public:
     InMemoryZoneFinderNSEC3Test() {
