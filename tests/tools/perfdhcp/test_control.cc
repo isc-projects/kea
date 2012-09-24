@@ -884,21 +884,38 @@ TestControl::readPacketTemplate(const std::string& file_name) {
     if (!temp_file.is_open()) {
         isc_throw(BadValue, "unable to open template file " << file_name);
     }
+    // Read template file contents.
     std::ifstream::pos_type temp_size = temp_file.tellg();
-    if (temp_size % 2 != 0) {
+    if (temp_size == 0) {
         temp_file.close();
-        isc_throw(BadValue, "odd number of digits in template file");
+        isc_throw(OutOfRange, "the template file " << file_name << " is empty");
     }
     temp_file.seekg(0, ios::beg);
-    std::vector<char> hex_digits(temp_size);
-    std::vector<uint8_t> binary_stream;
-    temp_file.read(&hex_digits[0], temp_size);
+    std::vector<char> file_contents(temp_size);
+    temp_file.read(&file_contents[0], temp_size);
     temp_file.close();
-    for (int i = 0; i < hex_digits.size(); i += 2) {
-        if (!isxdigit(hex_digits[i]) || !isxdigit(hex_digits[i+1])) {
-            isc_throw(BadValue, "the '" << hex_digits[i] << hex_digits[i+1]
-                      << "' is not hexadecimal digit");
+    // Spaces are allowed so we have to strip the contents
+    // from them. In the same time we want to make sure that
+    // apart from spaces the file contains hexadecimal digits
+    // only.
+    std::vector<char> hex_digits;
+    for (int i = 0; i < file_contents.size(); ++i) {
+        if (isxdigit(file_contents[i])) {
+            hex_digits.push_back(file_contents[i]);
+        } else if (!isxdigit(file_contents[i]) &&
+                   !isspace(file_contents[i])) {
+            isc_throw(BadValue, "the '" << file_contents[i] << "' is not a"
+                      " heaxadecimal digit");
         }
+    }
+    // Expect even number of digits.
+    if (hex_digits.size() % 2 != 0) {
+        isc_throw(OutOfRange, "odd number of digits in template file");
+    } else if (hex_digits.size() == 0) {
+        isc_throw(OutOfRange, "template file " << file_name << " is empty");
+    }
+    std::vector<uint8_t> binary_stream;
+    for (int i = 0; i < hex_digits.size(); i += 2) {
         stringstream s;
         s << "0x" << hex_digits[i] << hex_digits[i+1];
         int b;

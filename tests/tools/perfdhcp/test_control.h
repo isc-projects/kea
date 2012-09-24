@@ -448,7 +448,10 @@ protected:
     /// their content and stores it in class internal buffers. Template
     /// file names are specified from the command line with -T option.
     ///
-    /// \throw isc::BadValue if any of the template files does not exist
+    /// \throw isc::BadValue if any of the template files does not exist,
+    /// contains characters other than hexadecimal digits or spaces.
+    /// \throw OutOfRange if any of the template files is empty or has
+    /// odd number of hexadecimal digits.
     void initPacketTemplates();
 
     /// \brief Initializes Statistics Manager.
@@ -907,6 +910,12 @@ private:
     /// Method reads DHCP message template from file and
     /// converts it to binary format. Read data is appended
     /// to template_buffers_ vector.
+    ///
+    /// \param file_name name of the packet template file.
+    /// \throw isc::OutOfRange if file is empty or has odd number
+    /// of hexadecimal digits.
+    /// \throw isc::BadValue if file contains characters other than
+    /// spaces or hexadecimal digits.
     void readPacketTemplate(const std::string& file_name);
 
     /// \brief Run wrapped command.
