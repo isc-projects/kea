@@ -231,7 +231,6 @@ public:
     }
 
     // NSEC3-specific call for 'loading' data
-    // This needs to be updated and checked when implementing #2118
     void addZoneDataNSEC3(const ConstRRsetPtr rrset) {
         assert(rrset->getType() == RRType::NSEC3());
 
