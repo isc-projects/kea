@@ -627,7 +627,7 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
     const ZoneTree& tree = nsec3_data->getNSEC3Tree();
     if (tree.getNodeCount() == 0) {
         isc_throw(DataSourceError,
-                  "findNSEC3 attempt but zone has no NSEC3 RR: " <<
+                  "findNSEC3 attempt but zone has no NSEC3 RRs: " <<
                   getOrigin() << "/" << getClass());
     }
 
