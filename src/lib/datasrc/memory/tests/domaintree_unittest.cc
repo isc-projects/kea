@@ -257,7 +257,7 @@ TEST_F(DomainTreeTest, subTreeRoot) {
     // "g.h" is not a subtree root
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("g.h"), &dtnode));
-    EXPECT_FALSE(dtnode->isSubTreeRoot());
+    EXPECT_FALSE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
 
     // fission the node "g.h"
     EXPECT_EQ(TestDomainTree::ALREADYEXISTS,
@@ -266,12 +266,12 @@ TEST_F(DomainTreeTest, subTreeRoot) {
 
     // the node "h" (h.down_ -> "g") should not be a subtree root. "g"
     // should be a subtree root.
-    EXPECT_FALSE(dtnode->isSubTreeRoot());
+    EXPECT_FALSE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
 
     // "g.h" should be a subtree root now.
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("g.h"), &dtnode));
-    EXPECT_TRUE(dtnode->isSubTreeRoot());
+    EXPECT_TRUE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
 }
 
 TEST_F(DomainTreeTest, additionalNodeFission) {
@@ -287,7 +287,7 @@ TEST_F(DomainTreeTest, additionalNodeFission) {
     // "t.0" is not a subtree root
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("t.0"), &dtnode));
-    EXPECT_FALSE(dtnode->isSubTreeRoot());
+    EXPECT_FALSE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
 
     // fission the node "t.0"
     EXPECT_EQ(TestDomainTree::ALREADYEXISTS,
@@ -296,12 +296,12 @@ TEST_F(DomainTreeTest, additionalNodeFission) {
 
     // the node "0" ("0".down_ -> "t") should not be a subtree root. "t"
     // should be a subtree root.
-    EXPECT_FALSE(dtnode->isSubTreeRoot());
+    EXPECT_FALSE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
 
     // "t.0" should be a subtree root now.
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("t.0"), &dtnode));
-    EXPECT_TRUE(dtnode->isSubTreeRoot());
+    EXPECT_TRUE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
 }
 
 TEST_F(DomainTreeTest, findName) {
@@ -687,16 +687,6 @@ const char* const upper_node_names[] = {
     "w.y.d.e.f", "w.y.d.e.f", "d.e.f", "z.d.e.f",
     ".", "g.h", "g.h"};
 
-const char* const subtree_root_node_names[] = {
-    "b", "b", "b", "b", "w.y.d.e.f", "w.y.d.e.f", "p.w.y.d.e.f",
-    "p.w.y.d.e.f", "p.w.y.d.e.f", "w.y.d.e.f", "j.z.d.e.f",
-    "b", "i.g.h", "i.g.h"};
-
-const char* const largest_node_names[] = {
-    "g.h", "g.h", "g.h", "g.h", "z.d.e.f", "z.d.e.f", "q.w.y.d.e.f",
-    "q.w.y.d.e.f", "q.w.y.d.e.f", "z.d.e.f", "j.z.d.e.f",
-    "g.h", "k.g.h", "k.g.h"};
-
 TEST_F(DomainTreeTest, getUpperNode) {
     TestDomainTreeNodeChain node_path;
     const TestDomainTreeNode* node = NULL;
@@ -725,6 +715,16 @@ TEST_F(DomainTreeTest, getUpperNode) {
     // We should have reached the end of the tree.
     EXPECT_EQ(static_cast<void*>(NULL), node);
 }
+
+
+#if 0
+// Disabled and kept still, for use in case we make getSubTreeRoot() and
+// getLargestInSubTree() public functions again.
+
+const char* const subtree_root_node_names[] = {
+    "b", "b", "b", "b", "w.y.d.e.f", "w.y.d.e.f", "p.w.y.d.e.f",
+    "p.w.y.d.e.f", "p.w.y.d.e.f", "w.y.d.e.f", "j.z.d.e.f",
+    "b", "i.g.h", "i.g.h"};
 
 TEST_F(DomainTreeTest, getSubTreeRoot) {
     TestDomainTreeNodeChain node_path;
@@ -755,6 +755,11 @@ TEST_F(DomainTreeTest, getSubTreeRoot) {
     EXPECT_EQ(static_cast<void*>(NULL), node);
 }
 
+const char* const largest_node_names[] = {
+    "g.h", "g.h", "g.h", "g.h", "z.d.e.f", "z.d.e.f", "q.w.y.d.e.f",
+    "q.w.y.d.e.f", "q.w.y.d.e.f", "z.d.e.f", "j.z.d.e.f",
+    "g.h", "k.g.h", "k.g.h"};
+
 TEST_F(DomainTreeTest, getLargestInSubTree) {
     TestDomainTreeNodeChain node_path;
     const TestDomainTreeNode* node = NULL;
@@ -783,6 +788,9 @@ TEST_F(DomainTreeTest, getLargestInSubTree) {
     // We should have reached the end of the tree.
     EXPECT_EQ(static_cast<void*>(NULL), node);
 }
+
+#endif // disabled getSubTreeRoot() and getLargestInSubTree()
+
 
 TEST_F(DomainTreeTest, nextNode) {
     TestDomainTreeNodeChain node_path;
