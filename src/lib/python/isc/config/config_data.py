@@ -25,8 +25,6 @@ import isc.config.module_spec
 import ast
 import copy
 
-import traceback
-
 class ConfigDataError(Exception): pass
 
 BIND10_CONFIG_DATA_VERSION = 2
