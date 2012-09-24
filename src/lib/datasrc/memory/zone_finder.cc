@@ -779,9 +779,13 @@ InMemoryZoneFinder::getOrigin() const {
     if (node_labels.isAbsolute()) {
         data = node_labels.getData(&data_len);
     } else {
-        // If and when we allow non absolute label at the origin (e.g. for
-        // the convenience of out-of-zone glue handling), we first need to
-        // construct the absolute label sequence and then construct the name.
+        // In future we may allow adding out-of-zone names in the zone tree.
+        // For example, to hold out-of-zone NS names so we can establish a
+        // shortcut link to them as an optimization.  If and when that happens
+        // the origin node may not have an absolute label (consider the zone
+        // is example.org and we add ns.noexample.org).  In that case
+        // we first need to construct the absolute label sequence and then
+        // construct the name.
         uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
         const LabelSequence name_labels =
             zone_data_.getOriginNode()->getAbsoluteLabels(labels_buf);
