@@ -669,30 +669,12 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
 
             return (FindNSEC3Result(true, labels, closest, next));
         } else {
-            const ZoneNode* last_node = chain.getLastComparedNode();
-
-            const NameComparisonResult& last_cmp =
-                chain.getLastComparisonResult();
-            assert(last_cmp.getOrder() != 0);
-
-            if (last_cmp.getOrder() < 0) {
-                // We exited on the left side of the last compared node,
-                // so the covering node is the previous one to the last
-                // compared node.
-                covering_node = last_node->predecessor();
-                if (covering_node == NULL) {
-                    // If the given hash is smaller than everything, the
-                    // covering proof is the NSEC3 that has the largest
-                    // hash.
-                    covering_node = last_node->getLargestInSubTree();
-                }
-            } else {
-                // We exited on the right side of the last compared
-                // node, so the covering node is the last compared node.
-                covering_node = last_node;
-                // If the given hash is larger than everything, then
-                // covering proof is the NSEC3 that has the largest
-                // hash, which is automatically the last compared node.
+            while ((covering_node = tree.previousNode(chain)) != NULL &&
+                   covering_node->isEmpty()) {
+                ;
+            }
+            if (covering_node == NULL) {
+                covering_node = tree.largestNode();
             }
 
             if (!recursive) {   // in non recursive mode, we are done.
