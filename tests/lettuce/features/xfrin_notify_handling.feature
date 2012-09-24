@@ -46,8 +46,13 @@ Feature: Xfrin incoming notify handling
     Then wait for new bind10 stderr message ZONEMGR_RECEIVE_NOTIFY
     Then wait for new bind10 stderr message XFRIN_XFR_TRANSFER_STARTED
     And when I query statistics axfr_running of bind10 module Xfrout with cmdctl port 47804
-    # xfering might not be started yet.
+
+    # The counter may or may not have been incremented. Whatever the
+    # server likes. This test should have been actually effective but
+    # the axfr transfering is mostly done in real short time. it is
+    # hardly to observe 'axfr_running' incremented to one.
     Then the statistics counter axfr_running should be between 0 and 1
+
     Then wait for new bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
     Then wait for new bind10 stderr message ZONEMGR_RECEIVE_XFRIN_SUCCESS
     Then wait 5 times for new master stderr message NOTIFY_OUT_SENDING_NOTIFY
