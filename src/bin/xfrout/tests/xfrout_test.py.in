@@ -1656,7 +1656,7 @@ class TestXfroutCounter(unittest.TestCase):
                 '%s/%s/%s' % (XfroutCounter.perzone_prefix,\
                                   zone_name, counter_name))
 
-    def test_xxcrementers(self):
+    def test_incdecrementers(self):
         # for per-zone counters
         result = { XfroutCounter.entire_server: {},
                    TEST_ZONE_NAME_STR: {} }

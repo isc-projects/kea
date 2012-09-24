@@ -981,7 +981,7 @@ class XfroutCounter:
                 if n.find('xfr_running') == 1 ]
         self._lock = threading.RLock()
         self._create_perzone_incrementers()
-        self._create_xfrrunning_xxcrementers()
+        self._create_xfrrunning_incdecrementers()
 
     def get_statistics(self):
         """Calculates an entire server counts, and returns statistics
@@ -1054,7 +1054,7 @@ class XfroutCounter:
                 self._counters_for_xfroutsession['counter_%s' % item] \
                     = __perzone_incrementer
 
-    def _create_xfrrunning_xxcrementers(self):
+    def _create_xfrrunning_incdecrementers(self):
         """Creates increment/decrement method of (a|i)xfr_running
         based on the spec file. Incrementer can be accessed by name
         "inc_${item_name}". Decrementer can be accessed by name
