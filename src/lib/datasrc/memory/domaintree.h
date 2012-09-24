@@ -770,7 +770,7 @@ public:
     /// chain, 0 will be returned.
     ///
     /// \exception None
-    size_t getLevelCount() const { return (level_count_); }
+    uint32_t getLevelCount() const { return (level_count_); }
 
     /// \brief return the absolute name for the node which this
     /// \c DomainTreeNodeChain currently refers to.
@@ -788,7 +788,7 @@ public:
 
         const DomainTreeNode<T>* top_node = top();
         isc::dns::Name absolute_name = top_node->getName();
-        size_t level = level_count_ - 1;
+        uint32_t level = level_count_ - 1;
         while (level > 0) {
             top_node = nodes_[level - 1];
             absolute_name = absolute_name.concatenate(top_node->getName());
@@ -848,7 +848,7 @@ private:
     // it's also equal to the possible maximum level.
     const static int RBT_MAX_LEVEL = isc::dns::Name::MAX_LABELS;
 
-    size_t level_count_;
+    uint32_t level_count_;
     const DomainTreeNode<T>* nodes_[RBT_MAX_LEVEL];
     const DomainTreeNode<T>* last_compared_;
     isc::dns::NameComparisonResult last_comparison_;
@@ -1315,7 +1315,7 @@ public:
     /// It includes nodes internally created as a result of adding a domain
     /// name that is a subdomain of an existing node of the tree.
     /// This function is mainly intended to be used for debugging.
-    size_t getNodeCount() const { return (node_count_); }
+    uint32_t getNodeCount() const { return (node_count_); }
 
     /// \name Debug function
     //@{
@@ -1448,7 +1448,7 @@ private:
 
     typename DomainTreeNode<T>::DomainTreeNodePtr root_;
     /// the node count of current tree
-    size_t node_count_;
+    uint32_t node_count_;
     /// search policy for domaintree
     const bool needsReturnEmptyNode_;
 };
