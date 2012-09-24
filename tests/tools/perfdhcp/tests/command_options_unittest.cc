@@ -49,7 +49,7 @@ protected:
     /// \throws std::bad allocation if tokenization failed.
     /// \return true if program has been run in help or version mode ('h' or 'v' flag).
     bool process(const std::string& cmdline) {
-        CommandOptionsHelper::process(cmdline);
+        return (CommandOptionsHelper::process(cmdline));
     }
 
     /// \brief Check default initialized values
