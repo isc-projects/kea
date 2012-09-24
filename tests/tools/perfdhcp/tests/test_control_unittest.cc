@@ -117,12 +117,20 @@ public:
     /// \brief Create packet template file from binary data.
     ///
     /// Function creates file containing data from the provided buffer
-    /// in hexadecimal format.
+    /// in hexadecimal format. The size parameter specifies the maximum
+    /// size of the file. If total number of hexadecimal digits resulting
+    /// from buffer size is greater than maximum file size the file is
+    /// truncated.
+    ///
     /// \param filename template file to be created.
     /// \param buffer with binary datato be stored in file.
+    /// \param size target size of the file.
+    /// \param invalid_chars inject invalid chars to the template file.
     /// \return true if file creation successful.
     bool createTemplateFile(const std::string& filename,
-                            const std::vector<uint8_t>& buf) const {
+                            const std::vector<uint8_t>& buf,
+                            const size_t size,
+                            const bool invalid_chars = false) const {
         std::ofstream temp_file;
         temp_file.open(filename.c_str(), ios::out | ios::trunc);
         if (!temp_file.is_open()) {
@@ -131,7 +139,24 @@ public:
         for (int i = 0; i < buf.size(); ++i) {
             int first_digit = buf[i] / 16;
             int second_digit = buf[i] % 16;
-            temp_file << std::hex << first_digit << second_digit << std::dec;
+            // Insert two spaces between two hexadecimal digits.
+            // Spaces are allowed in template files.
+            temp_file << std::string(2, ' ');
+            if (2 * i + 1 < size) {
+                if (!invalid_chars) {
+                    temp_file << std::hex << first_digit << second_digit << std::dec;
+                } else {
+                    temp_file << "XY";
+                }
+            } else if (2 * i < size) {
+                if (!invalid_chars) {
+                    temp_file << std::hex << first_digit;
+                } else {
+                    temp_file << "X";
+                }
+            } else {
+                break;
+            }
         }
         temp_file.close();
         return (true);
@@ -965,8 +990,9 @@ TEST_F(TestControlTest, PacketTemplates) {
     for (int i = 0; i < template2.size(); ++i) {
         template2[i] = static_cast<uint8_t>(random() % 256);
     }
-    ASSERT_TRUE(createTemplateFile(file1, template1));
-    ASSERT_TRUE(createTemplateFile(file2, template2));
+    // Size of the file is 2 times larger than binary data size.
+    ASSERT_TRUE(createTemplateFile(file1, template1, template1.size() * 2));
+    ASSERT_TRUE(createTemplateFile(file2, template2, template2.size() * 2));
     CommandOptions& options = CommandOptions::instance();
     NakedTestControl tc;
 
@@ -983,6 +1009,32 @@ TEST_F(TestControlTest, PacketTemplates) {
     ASSERT_EQ(template2.size(), buf2.size());
     EXPECT_TRUE(std::equal(template1.begin(), template1.end(), buf1.begin()));
     EXPECT_TRUE(std::equal(template2.begin(), template2.end(), buf2.begin()));
+
+    // Try to read template file with odd number of digits.
+    std::string file3("../templates/test3.hex");
+    // Size of the file is 2 times larger than binary data size and it is always
+    // even number. Substracting 1 makes file size odd.
+    ASSERT_TRUE(createTemplateFile(file3, template1, template1.size() * 2 - 1));
+    ASSERT_NO_THROW(
+        processCmdLine("perfdhcp -l 127.0.0.1 -T " + file3 + " all")
+    );
+    EXPECT_THROW(tc.initPacketTemplates(), isc::OutOfRange);
+
+    // Try to read empty file.
+    std::string file4("../templates/test4.hex");
+    ASSERT_TRUE(createTemplateFile(file4, template2, 0));
+    ASSERT_NO_THROW(
+        processCmdLine("perfdhcp -l 127.0.0.1 -T " + file4 + " all")
+    );
+    EXPECT_THROW(tc.initPacketTemplates(), isc::OutOfRange);
+
+    // Try reading file with non hexadecimal characters.
+    std::string file5("../templates/test5.hex");
+    ASSERT_TRUE(createTemplateFile(file5, template1, template1.size() * 2, true));
+    ASSERT_NO_THROW(
+        processCmdLine("perfdhcp -l 127.0.0.1 -T " + file5 + " all")
+    );
+    EXPECT_THROW(tc.initPacketTemplates(), isc::BadValue);
 }
 
 TEST_F(TestControlTest, RateControl) {

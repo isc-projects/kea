@@ -1,8 +1,8 @@
 SUBDIRS = .
 
-# The test1.hex and test2.hex are created by the TestControl.PacketTemplates
+# The test[1-5].hex are created by the TestControl.PacketTemplates
 # unit tests and have to be removed.
-CLEANFILES = test1.hex test2.hex
+CLEANFILES = test1.hex test2.hex test3.hex test4.hex test5.hex
 
 perfdhcpdir = $(pkgdatadir)
 perfdhcp_DATA = discover-example.hex request4-example.hex
