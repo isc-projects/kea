@@ -249,7 +249,13 @@ public:
 
              if ((nsec3_rdata.getHashalg() != nsec3_data->hashalg) ||
                  (nsec3_rdata.getIterations() != nsec3_data->iterations) ||
-                 (salt_data_2.size() != salt_len) ||
+                 (salt_data_2.size() != salt_len)) {
+                  isc_throw(isc::Unexpected,
+                            "NSEC3 with inconsistent parameters: " <<
+                            rrset->toText());
+             }
+
+             if ((salt_len > 0) &&
                  (std::memcmp(&salt_data_2[0], salt_data, salt_len) != 0)) {
                   isc_throw(isc::Unexpected,
                             "NSEC3 with inconsistent parameters: " <<
