@@ -1481,8 +1481,16 @@ TEST_F(InMemoryZoneFinderNSEC3Test, findNSEC3) {
 }
 
 struct TestData {
+     // String for the name passed to findNSEC3() (concatenated with
+     // "example.org.")
      const char* const name;
+     // Should recursive findNSEC3() be performed?
      const bool recursive;
+     // The following are members of the FindNSEC3Result returned by
+     // findNSEC3(). The proofs are given as char*, which are converted
+     // to Name objects and checked against getName() on the returned
+     // ConstRRsetPtr. If any of these is NULL, then it's expected that
+     // ConstRRsetPtr() will be returned.
      const bool matched;
      const uint8_t closest_labels;
      const char* const closest_proof;
