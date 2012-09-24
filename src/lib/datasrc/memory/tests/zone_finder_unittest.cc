@@ -48,48 +48,6 @@ namespace {
 using result::SUCCESS;
 using result::EXIST;
 
-// Proxy accessor for faked NSEC3 mapping for tests.  map isn't a trivial
-// type, so it's safer to get access to it via a proxy to avoid initialization
-// fiasco.
-NSEC3HashMap&
-getNSEC3HashMap() {
-    static NSEC3HashMap nsec3_hash_map;
-    return (nsec3_hash_map);
-}
-
-// A faked NSEC3 hash calculator for convenience. Tests that need to use
-// the faked hashed values should call setFakeNSEC3Calculate() on the
-// MyZoneFinder object at the beginning of the test (at least before
-// adding any NSEC3/NSEC3PARAM RR).
-std::string
-fakeNSEC3Calculate(const Name& name,
-                   const uint16_t,
-                   const uint8_t*,
-                   size_t)
-{
-    const NSEC3HashMap::const_iterator found = getNSEC3HashMap().find(name);
-    if (found != getNSEC3HashMap().end()) {
-        return (found->second);
-    }
-
-    isc_throw(isc::Unexpected,
-              "unexpected name for NSEC3 test: " << name);
-}
-
-class MyZoneFinder : public memory::InMemoryZoneFinder {
-public:
-    MyZoneFinder(const ZoneData& zone_data,
-                 const isc::dns::RRClass& rrclass) :
-         memory::InMemoryZoneFinder(zone_data, rrclass)
-    {
-        buildFakeNSEC3Map(getNSEC3HashMap());
-    }
-
-    void setFakeNSEC3Calculate() {
-        nsec3_calculate_ = fakeNSEC3Calculate;
-    }
-};
-
 /// \brief expensive rrset converter
 ///
 /// converts any specialized rrset (which may not have implemented some
@@ -362,7 +320,7 @@ public:
     // The zone finder to torture by tests
     MemorySegmentTest mem_sgmt_;
     memory::ZoneData* zone_data_;
-    MyZoneFinder zone_finder_;
+    memory::InMemoryZoneFinder zone_finder_;
     isc::datasrc::memory::RdataEncoder encoder_;
 
     // Placeholder for storing RRsets to be checked with rrsetsCheck()
@@ -1465,7 +1423,8 @@ TEST_F(InMemoryZoneFinderTest, cancelWildcardNSEC) {
 
 TEST_F(InMemoryZoneFinderTest, findNSEC3ForBadZone) {
     // Set up the faked hash calculator.
-    zone_finder_.setFakeNSEC3Calculate();
+    const TestNSEC3HashCreator creator;
+    setNSEC3HashCreator(&creator);
 
     // If the zone has nothing about NSEC3 (neither NSEC3 or NSEC3PARAM),
     // findNSEC3() should be rejected.
@@ -1492,7 +1451,7 @@ class InMemoryZoneFinderNSEC3Test : public InMemoryZoneFinderTest {
 public:
     InMemoryZoneFinderNSEC3Test() {
         // Set up the faked hash calculator.
-        zone_finder_.setFakeNSEC3Calculate();
+        setNSEC3HashCreator(&creator_);
 
         // Add a few NSEC3 records:
         // apex (example.org.): hash=0P..
@@ -1512,6 +1471,9 @@ public:
             string(nsec3_common);
         addZoneData(textToRRset(zzz_nsec3_text));
     }
+
+private:
+    const TestNSEC3HashCreator creator_;
 };
 
 TEST_F(InMemoryZoneFinderNSEC3Test, findNSEC3) {
