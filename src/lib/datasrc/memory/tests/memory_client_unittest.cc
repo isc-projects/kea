@@ -248,7 +248,7 @@ TEST_F(MemoryClientTest, loadReloadZone) {
     EXPECT_EQ(1, client_->getZoneCount());
 
     isc::datasrc::memory::ZoneTable::FindResult
-        result(client_->findZone2(Name("example.org")));
+        result(client_->findZoneData(Name("example.org")));
     EXPECT_EQ(result::SUCCESS, result.code);
     EXPECT_NE(static_cast<ZoneData*>(NULL),
               result.zone_data);
@@ -276,7 +276,7 @@ TEST_F(MemoryClientTest, loadReloadZone) {
     EXPECT_EQ(1, client_->getZoneCount());
 
     isc::datasrc::memory::ZoneTable::FindResult
-        result2(client_->findZone2(Name("example.org")));
+        result2(client_->findZoneData(Name("example.org")));
     EXPECT_EQ(result::SUCCESS, result2.code);
     EXPECT_NE(static_cast<ZoneData*>(NULL),
               result2.zone_data);
@@ -675,18 +675,18 @@ TEST_F(MemoryClientTest, add) {
     EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
 }
 
-TEST_F(MemoryClientTest, findZone2) {
+TEST_F(MemoryClientTest, findZoneData) {
     client_->load(Name("example.org"),
                   TEST_DATA_DIR "/example.org-rrsigs.zone");
 
     isc::datasrc::memory::ZoneTable::FindResult
-        result(client_->findZone2(Name("example.com")));
+        result(client_->findZoneData(Name("example.com")));
     EXPECT_EQ(result::NOTFOUND, result.code);
     EXPECT_EQ(static_cast<ZoneData*>(NULL),
               result.zone_data);
 
     isc::datasrc::memory::ZoneTable::FindResult
-        result2(client_->findZone2(Name("example.org")));
+        result2(client_->findZoneData(Name("example.org")));
     EXPECT_EQ(result::SUCCESS, result2.code);
     EXPECT_NE(static_cast<ZoneData*>(NULL),
               result2.zone_data);
