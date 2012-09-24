@@ -1303,6 +1303,13 @@ public:
     const DomainTreeNode<T>*
     previousNode(DomainTreeNodeChain<T>& node_path) const;
 
+    /// \brief return the largest node in the tree of trees.
+    ///
+    /// \return A \c DomainTreeNode that is the largest node in the
+    /// tree. If there are no nodes, then \c NULL is returned.
+    const DomainTreeNode<T>*
+    largestNode() const;
+
     /// \brief Get the total number of nodes in the tree
     ///
     /// It includes nodes internally created as a result of adding a domain
@@ -1744,6 +1751,24 @@ DomainTree<T>::previousNode(DomainTreeNodeChain<T>& node_path) const {
 
     // Now, if the current node has no down_ pointer any more, it's the
     // correct one.
+    return (node);
+}
+
+template <typename T>
+const DomainTreeNode<T>*
+DomainTree<T>::largestNode() const {
+    const DomainTreeNode<T>* node = root_.get();
+    while (node != NULL) {
+        // We go right first, then down.
+        if (node->getRight() != NULL) {
+            node = node->getRight();
+        } else if (node->getDown() != NULL) {
+            node = node->getDown();
+        } else {
+	    break;
+	}
+    }
+
     return (node);
 }
 

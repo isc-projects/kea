@@ -1005,6 +1005,11 @@ TEST_F(DomainTreeTest, previousNode) {
     }
 }
 
+TEST_F(DomainTreeTest, largestNode) {
+    cdtnode = dtree.largestNode();
+    EXPECT_EQ(Name("k"), cdtnode->getName());
+}
+
 TEST_F(DomainTreeTest, nextNodeError) {
     // Empty chain for nextNode() is invalid.
     TestDomainTreeNodeChain chain;
