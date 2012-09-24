@@ -391,6 +391,14 @@ public:
     /// This method never throws an exception.
     const DomainTreeNode<T>* getSubTreeRoot() const;
 
+    /// \brief returns the largest node of this node's subtree
+    ///
+    /// This method takes a node and returns the largest node in its
+    /// subtree.
+    ///
+    /// This method never throws an exception.
+    const DomainTreeNode<T>* getLargestInSubTree() const;
+
     /// \brief returns the parent of the root of its subtree
     ///
     /// This method takes a node and returns the parent of the root of
@@ -400,14 +408,6 @@ public:
     ///
     /// This method never throws an exception.
     const DomainTreeNode<T>* getUpperNode() const;
-
-    /// \brief returns the largest node of this node's subtree
-    ///
-    /// This method takes a node and returns the largest node in its
-    /// subtree.
-    ///
-    /// This method never throws an exception.
-    const DomainTreeNode<T>* getLargestInSubTree() const;
 
     /// \brief return the next node which is bigger than current node
     /// in the same subtree
