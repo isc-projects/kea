@@ -320,10 +320,13 @@ class TestXfroutSessionBase(unittest.TestCase):
             'inc_axfr_running': _inc_axfr_running,
             'dec_axfr_running': _dec_axfr_running
             }
-        self.get_counter = lambda n: \
-            self._statistics_data[n] \
-            if n.find('ixfr_') == 0 or n.find('axfr_') == 0 \
-            else self._statistics_data['zones'][TEST_ZONE_NAME_STR][n]
+
+    def get_counter(self, name):
+        if name.find('ixfr_') == 0 or name.find('axfr_') == 0:
+            return self._statistics_data[name]
+        else:
+            return \
+                self._statistics_data['zones'][TEST_ZONE_NAME_STR][name]
 
     def tearDown(self):
         xfrout.get_rrset_len = self.orig_get_rrset_len
