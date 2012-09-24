@@ -145,6 +145,25 @@ bool cutCallback(const ZoneNode& node, FindState* state) {
     return (false);
 }
 
+/// Creates a NSEC3 ConstRRsetPtr for the given ZoneNode inside the
+/// NSEC3 tree, for the given RRClass.
+///
+/// It asserts that the node contains data (RdataSet) and is of type
+/// NSEC3.
+///
+/// \param node The ZoneNode inside the NSEC3 tree
+/// \param rrclass The RRClass as passed by the client
+ConstRRsetPtr
+createNSEC3RRset(const ZoneNode* node, const RRClass& rrclass) {
+     const RdataSet* rdataset = node->getData();
+     // Only NSEC3 ZoneNodes are allowed to be passed to this method. We
+     // assert that these have data, and also are of type NSEC3.
+     assert(rdataset != NULL);
+     assert(rdataset->type == RRType::NSEC3());
+
+     return (createTreeNodeRRset(node, rdataset, rrclass));
+}
+
 // convenience function to fill in the final details
 //
 // Set up ZoneFinderResultContext object as a return value of find(),
@@ -647,20 +666,10 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
 
         if (result == ZoneTree::EXACTMATCH) {
             // We found an exact match.
-            const RdataSet* rdataset = node->getData();
-            assert(rdataset != NULL);
-            assert(rdataset->type == RRType::NSEC3());
-
-            ConstRRsetPtr closest = createTreeNodeRRset(node, rdataset,
-                                                        getClass());
+            ConstRRsetPtr closest = createNSEC3RRset(node, getClass());
             ConstRRsetPtr next;
             if (covering_node != NULL) {
-                rdataset = covering_node->getData();
-                assert(rdataset != NULL);
-                assert(rdataset->type == RRType::NSEC3());
-
-                next = createTreeNodeRRset(covering_node, rdataset,
-                                           getClass());
+                next = createNSEC3RRset(covering_node, getClass());
             }
 
             LOG_DEBUG(logger, DBG_TRACE_BASIC,
@@ -680,12 +689,7 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
             if (!recursive) {   // in non recursive mode, we are done.
                 ConstRRsetPtr closest;
                 if (covering_node != NULL) {
-                    const RdataSet* rdataset = covering_node->getData();
-                    assert(rdataset != NULL);
-                    assert(rdataset->type == RRType::NSEC3());
-
-                    closest = createTreeNodeRRset(covering_node, rdataset,
-                                                  getClass());
+                    closest = createNSEC3RRset(covering_node, getClass());
 
                     LOG_DEBUG(logger, DBG_TRACE_BASIC,
                               DATASRC_MEM_FINDNSEC3_COVER).
