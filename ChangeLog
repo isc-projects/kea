@@ -5,8 +5,8 @@
 
 476.	[bug]		vorner
 	The XfrIn now accepts transfers with some TSIG signatures omitted, as
-	allowed per RFC2845, section 4.4. This solves a compatibility issues with
-	Knot and NSD.
+	allowed per RFC2845, section 4.4. This solves a compatibility
+	issues with Knot and NSD.
 	(Trac #1375, git 7ca65cb9ec528118f370142d7e7b792fcc31c9cf)
 
 475.	[func]		naokikambe
