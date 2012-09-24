@@ -35,15 +35,16 @@ namespace perfdhcp {
 
 /// \brief Test Control class.
 ///
-/// This singleton class is used to run performance test with
+/// This singleton class is used to run the performance test with
 /// with \ref TestControl::run function. This function can be executed
 /// multiple times if desired because it resets TestControl's internal
-/// state efery time it is executed. Prior to running \ref TestControl::run
+/// state every time it is executed. Prior to running \ref TestControl::run,
 /// one must make sure to parse command line options by calling
-/// \ref CommandOptions::parse. Failing to do this will result in exception.
+/// \ref CommandOptions::parse. Failing to do this will result in an exception.
+///
 /// The following major stages of the test are performed by this class:
 /// - set default transaction id and MAC address generators - the generator
-/// is the object of \ref TestControl::NumberGenerator type and it provides
+/// is an object of \ref TestControl::NumberGenerator type and it provides
 /// the custom randomization algorithms,
 /// - print command line arguments,
 /// - register option factory functions which are used to generate DHCP options
@@ -53,32 +54,36 @@ namespace perfdhcp {
 /// line option,
 /// - set the interrupt handler (invoked when ^C is pressed) which makes
 /// perfdhcp stop gracefully and print the test results before exiting,
-/// - executes external command (if specified '-w' option), e.g. if user specified
-/// -w ./foo in the command line then program will execute ./foo start at the
-/// beginning of the test and ./foo stop when test ends,
-/// - initialize Statistics Manager,
-/// - execute the main loop:
+/// - executes an external command (if specified '-w' option), e.g. if user
+/// specified -w ./foo in the command line then program will execute
+/// "./foo start" at the beginning of the test and "./foo stop" when the test
+/// ends,
+/// - initialize the Statistics Manager,
+/// - executes the main loop:
 ///   - calculate how many packets must be send to satisfy desired rate,
 ///   - receive incoming packets from the server,
-///   - check the exit conditions - terminate the program if exit criteria
+///   - check the exit conditions - terminate the program if the exit criteria
 ///   are fulfiled, e.g. reached maximum number of packet drops,
-///   - send number of packets appropriate to satisfy the desired rate,
+///   - send the number of packets appropriate to satisfy the desired rate,
 ///   - optionally print intermediate reports,
-/// - print statistics, e.g. achived rate,
+/// - print statistics, e.g. achieved rate,
 /// - optionally print some diagnostics.
 ///
 /// With the '-w' command line option user may specify the external application
-/// or script to be executed first time when test starts and second time when
-/// test ends. This external script or application must support 'start' and 'stop'
-/// arguments. The first time it is called it is called with'start' and
-/// the second time with 'stop'. The way it is executed is to fork() the current
-/// perfdhcp process and in turn executed execlp function that replaces current
-/// process image with new image.
+/// or script to be executed. The is executed twice, first when the test starts
+/// and second time when the test ends. This external script or application must
+/// accept 'start' and 'stop' arguments. The first time it is called, it is
+/// called with the argument 'start' and the second time with the argument
+/// 'stop'.
+///   
+/// The applicated is executed by calling fork() to fork the current perfdhcp
+/// process and then call execlp() to replace the current process image with
+/// the new one.
 ///
 /// Option factory functions are registered using
 /// \ref dhcp::LibDHCP::OptionFactoryRegister. Registered factory functions
 /// provide a way to create options of the same type in the same way.
-///  When new option instance is needed the corresponding factory
+///  When a new option instance is needed, the corresponding factory
 /// function is called to create it. This is done by calling
 /// \ref dhcp::Option::factory with DHCP message type specified as one of
 ///  parameters. Some of the parameters passed to factory function
@@ -588,7 +593,7 @@ protected:
     /// type and keeps them around until test finishes. Then they
     /// are printed to the user. If packet of specified type has
     /// been already stored this function perfroms no operation.
-    /// This function does not perform sainty check if packet
+    /// This function does not perform sanity check if packet
     /// pointer is valid. Make sure it is before calling it.
     ///
     /// \param pkt packet to be stored.
