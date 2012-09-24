@@ -316,6 +316,44 @@ public:
             }
             name = name.split(1);
         }
+
+        // If we've added NSEC3PARAM at zone origin, set up NSEC3
+        // specific data or check consistency with already set up
+        // parameters.
+        if (rrset->getType() == RRType::NSEC3PARAM() &&
+            rrset->getName() == origin_) {
+            // We know rrset has exactly one RDATA
+            const generic::NSEC3PARAM& param =
+                dynamic_cast<const generic::NSEC3PARAM&>
+                 (rrset->getRdataIterator()->getCurrent());
+
+            NSEC3Data* nsec3_data = zone_data_->getNSEC3Data();
+            if (nsec3_data == NULL) {
+                nsec3_data = NSEC3Data::create(mem_sgmt_, param);
+                zone_data_->setNSEC3Data(nsec3_data);
+                zone_data_->setSigned(true);
+            } else {
+                size_t salt_len = nsec3_data->getSaltLen();
+                const uint8_t* salt_data = nsec3_data->getSaltData();
+                const vector<uint8_t>& salt_data_2 = param.getSalt();
+
+                if ((param.getHashalg() != nsec3_data->hashalg) ||
+                    (param.getIterations() != nsec3_data->iterations) ||
+                    (salt_data_2.size() != salt_len)) {
+                     isc_throw(isc::Unexpected,
+                               "NSEC3PARAM with inconsistent parameters: "
+                               << rrset->toText());
+                }
+
+                if ((salt_len > 0) &&
+                    (std::memcmp(&salt_data_2[0],
+                                 salt_data, salt_len) != 0)) {
+                     isc_throw(isc::Unexpected,
+                               "NSEC3PARAM with inconsistent parameters: "
+                               << rrset->toText());
+                }
+            }
+        }
     }
 
     // Some data to test with
