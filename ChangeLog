@@ -1,3 +1,8 @@
+477.	[bug]		jelte
+	Fixed a problem with b10-msgq on OSX when using a custom Python
+	installation, that offers an unreliable select.poll() interface.
+	(Trac #2190, git e0ffa11d49ab949ee5a4ffe7682b0e6906667baa)
+
 476.	[bug]		vorner
 	The XfrIn now accepts transfers with some TSIG signatures omitted, as
 	allowed per RFC2845, section 4.4. This solves a compatibility issues with
