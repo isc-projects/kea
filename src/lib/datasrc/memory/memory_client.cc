@@ -334,9 +334,6 @@ public:
         nsec3_data->insertName(mem_sgmt_, rrset->getName(), &node);
 
         RdataEncoder encoder;
-
-        // We assume that rrsig has already been checked to match rrset
-        // by the caller.
         RdataSet* set = RdataSet::create(mem_sgmt_, encoder, rrset, rrsig);
         RdataSet* old_set = node->setData(set);
         if (old_set != NULL) {
