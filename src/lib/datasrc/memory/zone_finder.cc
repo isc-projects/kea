@@ -620,6 +620,10 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
     }
 
     const NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
+    // This would be a programming mistake, as ZoneData::isNSEC3Signed()
+    // should check this.
+    assert(nsec3_data != NULL);
+
     const ZoneTree& tree = nsec3_data->getNSEC3Tree();
     if (tree.getNodeCount() == 0) {
         isc_throw(DataSourceError,
