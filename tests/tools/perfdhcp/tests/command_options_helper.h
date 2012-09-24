@@ -102,6 +102,7 @@ private:
     ///
     /// \param text_to_split string to be splited.
     /// \param [out] num number of substrings returned.
+    /// \param std::bad_alloc if allocation of C-strings failed.
     /// \return array of C-strings created from split.
     static char** tokenizeString(const std::string& text_to_split, int& num) {
         char** results = NULL;
@@ -115,13 +116,11 @@ private:
 
         if (tokens.size() > 0) {
             // Allocate array of C-strings where we will store tokens
-            results = new (std::nothrow) char*[tokens.size()];
-            assert(results != NULL);
+            results = new char*[tokens.size()];
             // Store tokens in C-strings array
             for (int i = 0; i < tokens.size(); ++i) {
                 size_t cs_size = tokens[i].length() + 1;
-                char* cs = new (std::nothrow) char[cs_size];
-                assert (cs != NULL);
+                char* cs = new char[cs_size];
                 strncpy(cs, tokens[i].c_str(), cs_size);
                 assert(cs[cs_size - 1] == '\0');
                 results[i] = cs;
