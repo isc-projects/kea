@@ -53,7 +53,31 @@ private:
     NSEC3HashMap map_;
 public:
     TestNSEC3Hash() {
-        buildFakeNSEC3Map(map_);
+        // Build pre-defined hash
+        map_[Name("example.org")] = apex_hash;
+        map_[Name("www.example.org")] = "2S9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+        map_[Name("xxx.example.org")] = "Q09MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+        map_[Name("yyy.example.org")] = "0A9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+        map_[Name("x.y.w.example.org")] =
+            "2VPTU5TIMAMQTTGL4LUU9KG21E0AOR3S";
+        map_[Name("y.w.example.org")] = "K8UDEMVP1J2F7EG6JEBPS17VP3N8I58H";
+        map_[Name("w.example.org")] = w_hash;
+        map_[Name("zzz.example.org")] = zzz_hash;
+        map_[Name("smallest.example.org")] =
+            "00000000000000000000000000000000";
+        map_[Name("largest.example.org")] =
+            "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU";
+
+        // These are used by the findNSEC3Walk test.
+        map_[Name("n0.example.org")] = "00000000000000000000000000000000";
+        map_[Name("n1.example.org")] = "01UDEMVP1J2F7EG6JEBPS17VP3N8I58H";
+        map_[Name("n2.example.org")] = "02UDEMVP1J2F7EG6JEBPS17VP3N8I58H";
+        map_[Name("n3.example.org")] = "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+        map_[Name("n4.example.org")] = "11111111111111111111111111111111";
+        map_[Name("n5.example.org")] = "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR";
+        map_[Name("n6.example.org")] = "44444444444444444444444444444444";
+        map_[Name("n7.example.org")] = "R53BQ7CC2UVMUBFU5OCMM6PERS9TK9EN";
+        map_[Name("n8.example.org")] = "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";
     }
     virtual string calculate(const Name& name) const {
         const NSEC3HashMap::const_iterator found = map_.find(name);
@@ -81,35 +105,10 @@ NSEC3Hash* TestNSEC3HashCreator::create(const rdata::generic::NSEC3&) const {
     return (new TestNSEC3Hash);
 }
 
-void
-buildFakeNSEC3Map(NSEC3HashMap& fmap)
-{
-    // Build pre-defined hash
-    fmap.clear();
-    fmap[Name("example.org")] = apex_hash;
-    fmap[Name("www.example.org")] = "2S9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-    fmap[Name("xxx.example.org")] = "Q09MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-    fmap[Name("yyy.example.org")] = "0A9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-    fmap[Name("x.y.w.example.org")] =
-        "2VPTU5TIMAMQTTGL4LUU9KG21E0AOR3S";
-    fmap[Name("y.w.example.org")] = "K8UDEMVP1J2F7EG6JEBPS17VP3N8I58H";
-    fmap[Name("w.example.org")] = w_hash;
-    fmap[Name("zzz.example.org")] = zzz_hash;
-    fmap[Name("smallest.example.org")] =
-         "00000000000000000000000000000000";
-    fmap[Name("largest.example.org")] =
-         "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU";
-
-    // These are used by the findNSEC3Walk test.
-    fmap[Name("n0.example.org")] = "00000000000000000000000000000000";
-    fmap[Name("n1.example.org")] = "01UDEMVP1J2F7EG6JEBPS17VP3N8I58H";
-    fmap[Name("n2.example.org")] = "02UDEMVP1J2F7EG6JEBPS17VP3N8I58H";
-    fmap[Name("n3.example.org")] = "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-    fmap[Name("n4.example.org")] = "11111111111111111111111111111111";
-    fmap[Name("n5.example.org")] = "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR";
-    fmap[Name("n6.example.org")] = "44444444444444444444444444444444";
-    fmap[Name("n7.example.org")] = "R53BQ7CC2UVMUBFU5OCMM6PERS9TK9EN";
-    fmap[Name("n8.example.org")] = "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";
+NSEC3Hash*
+TestNSEC3HashCreator::create(uint8_t, uint16_t,
+                             const vector<uint8_t>&) const {
+    return (new TestNSEC3Hash);
 }
 
 void
