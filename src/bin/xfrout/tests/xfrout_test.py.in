@@ -1650,10 +1650,16 @@ class TestXfroutCounter(unittest.TestCase):
         result = { XfroutCounter.entire_server: {},
                    TEST_ZONE_NAME_STR: {} }
         for counter_name in self._counters:
-            incrementer = \
-                dict(self.xfrout_counter.get_counters_for_xfroutsession(), \
-                         **self.xfrout_counter.get_counters_for_notifyout())\
-                         ['counter_%s' % counter_name]
+            cntrs_xfrss = \
+                self.xfrout_counter.get_counters_for_xfroutsession()
+            cntrs_notfy = \
+                self.xfrout_counter.get_counters_for_notifyout()
+            cnt_name = 'counter_%s' % counter_name
+            incrementer = None
+            if cnt_name in cntrs_xfrss:
+                incrementer = cntrs_xfrss[cnt_name]
+            else:
+                incrementer = cntrs_notfy[cnt_name]
             self.start_incrementer(incrementer, TEST_ZONE_NAME_STR)
             self.assertEqual(self.get_count(\
                         TEST_ZONE_NAME_STR, counter_name), \
