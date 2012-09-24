@@ -357,6 +357,11 @@ public:
     virtual NSEC3Hash* create(const generic::NSEC3&) const {
         return (new TestNSEC3Hash);
     }
+    virtual NSEC3Hash* create(uint8_t, uint16_t,
+                              const vector<uint8_t>&) const {
+    return (new TestNSEC3Hash);
+}
+
 };
 
 /// \brief Test fixture for the InMemoryZoneFinder class
