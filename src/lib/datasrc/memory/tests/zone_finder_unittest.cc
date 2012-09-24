@@ -266,8 +266,6 @@ public:
         ZoneNode* node;
         nsec3_data->insertName(mem_sgmt_, rrset->getName(), &node);
 
-        // We assume that rrsig has already been checked to match rrset
-        // by the caller.
         RdataSet* rdset = RdataSet::create(mem_sgmt_, encoder_,
                                            rrset, ConstRRsetPtr());
         RdataSet* old_rdset = node->setData(rdset);
