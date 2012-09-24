@@ -373,7 +373,6 @@ private:
         }
     }
 
-public:
     /// \brief returns if the node is a subtree's root node
     ///
     /// This method takes a node and returns \c true if it is the root
@@ -399,6 +398,7 @@ public:
     /// This method never throws an exception.
     const DomainTreeNode<T>* getLargestInSubTree() const;
 
+public:
     /// \brief returns the parent of the root of its subtree
     ///
     /// This method takes a node and returns the parent of the root of
