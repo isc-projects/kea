@@ -446,7 +446,13 @@ public:
 
                     if ((param.getHashalg() != nsec3_data->hashalg) ||
                         (param.getIterations() != nsec3_data->iterations) ||
-                        (salt_data_2.size() != salt_len) ||
+                        (salt_data_2.size() != salt_len)) {
+                        isc_throw(AddError,
+                                  "NSEC3PARAM with inconsistent parameters: "
+                                  << last_rrset_->toText());
+                    }
+
+                    if ((salt_len > 0) &&
                         (std::memcmp(&salt_data_2[0],
                                      salt_data, salt_len) != 0)) {
                         isc_throw(AddError,
