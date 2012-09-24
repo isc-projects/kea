@@ -997,6 +997,7 @@ class TestUIModuleCCSession(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataNotFoundError, uccs.remove_value, 1, "a")
         self.assertRaises(isc.cc.data.DataNotFoundError, uccs.remove_value, "no_such_item", "a")
         self.assertRaises(isc.cc.data.DataNotFoundError, uccs.remove_value, "Spec2/item1", "a")
+        self.assertRaises(isc.cc.data.DataNotFoundError, uccs.remove_value, "Spec2", "")
 
         self.assertEqual({}, uccs._local_changes)
         uccs.add_value("Spec2/item5", "foo")
@@ -1019,6 +1020,7 @@ class TestUIModuleCCSession(unittest.TestCase):
         # Intending to empty a list element, but forget specifying the index.
         self.assertRaises(isc.cc.data.DataTypeError,
                           uccs.remove_value, "Spec2/item5", None)
+
 
     # Check that the difference between no default and default = null
     # is recognized
