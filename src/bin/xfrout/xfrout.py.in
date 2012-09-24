@@ -169,9 +169,9 @@ class XfroutSession():
         self.ClientClass = client_class # parameterize this for testing
         self._soa = None # will be set in _xfrout_setup or in tests
         self._jnl_reader = None # will be set to a reader for IXFR
-        # Set counter handlers for counting Xfr requests or
-        # incrementing or decrementing Xfr running. An argument
-        # is required for zone name in counting Xfr requests.
+        # Extract counter handler from the `counters` argument and add
+        # it to the class attribute of the name whose prefix is
+        # '_counter_' '_inc_' or '_dec_'
         for (k, v) in counters.items():
             if k.find('counter_') == 0 or k.find('inc_') == 0 \
                     or k.find('dec_') == 0:
