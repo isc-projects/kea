@@ -1498,6 +1498,7 @@ struct TestData {
 };
 
 const TestData nsec3_data[] = {
+     // ==== These are non-recursive tests.
      {"n0", false, false, 4, "R53BQ7CC2UVMUBFU5OCMM6PERS9TK9EN", NULL},
      {"n1", false,  true, 4, "01UDEMVP1J2F7EG6JEBPS17VP3N8I58H", NULL},
      {"n2", false, false, 4, "01UDEMVP1J2F7EG6JEBPS17VP3N8I58H", NULL},
@@ -1507,6 +1508,8 @@ const TestData nsec3_data[] = {
      {"n6", false, false, 4, "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR", NULL},
      {"n7", false,  true, 4, "R53BQ7CC2UVMUBFU5OCMM6PERS9TK9EN", NULL},
      {"n8", false, false, 4, "R53BQ7CC2UVMUBFU5OCMM6PERS9TK9EN", NULL},
+
+     // ==== These are recursive tests.
      {"n0",  true,  true, 3, "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM",
          "R53BQ7CC2UVMUBFU5OCMM6PERS9TK9EN"},
      {"n1",  true,  true, 4, "01UDEMVP1J2F7EG6JEBPS17VP3N8I58H", NULL},
@@ -1526,6 +1529,15 @@ const TestData nsec3_data[] = {
 const size_t data_count(sizeof(nsec3_data) / sizeof(*nsec3_data));
 
 TEST_F(InMemoryZoneFinderNSEC3Test, findNSEC3Walk) {
+    // This test basically uses nsec3_data[] declared above along with
+    // the fake hash setup to walk the NSEC3 tree. The names and fake
+    // hash calculation is specially setup so that the tree search
+    // terminates at specific locations in the tree. We findNSEC3() on
+    // each of the nsec3_data[], which is setup such that the hash
+    // results in the search terminating on either side of each node of
+    // the NSEC3 tree. This way, we check what result is returned in
+    // every search termination case in the NSEC3 tree.
+
     const Name origin("example.org");
     for (size_t i = 0; i < data_count; ++i) {
         const Name name = Name(nsec3_data[i].name).concatenate(origin);
