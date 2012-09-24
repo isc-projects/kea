@@ -310,6 +310,7 @@ public:
         if (nsec3_data == NULL) {
             nsec3_data = NSEC3Data::create(mem_sgmt_, nsec3_rdata);
             zone_data.setNSEC3Data(nsec3_data);
+            zone_data.setSigned(true);
         } else {
             size_t salt_len = nsec3_data->getSaltLen();
             const uint8_t* salt_data = nsec3_data->getSaltData();
@@ -437,6 +438,7 @@ public:
                 if (nsec3_data == NULL) {
                     nsec3_data = NSEC3Data::create(mem_sgmt_, param);
                     zone_data.setNSEC3Data(nsec3_data);
+                    zone_data.setSigned(true);
                 } else {
                     size_t salt_len = nsec3_data->getSaltLen();
                     const uint8_t* salt_data = nsec3_data->getSaltData();
