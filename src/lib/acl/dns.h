@@ -137,9 +137,8 @@ public:
     create(const std::string& name, isc::data::ConstElementPtr definition,
            const acl::Loader<RequestContext>& loader);
 
-    /// Until we are sure how the various rules work for this case, we won't
-    /// allow unexpected special interpretation for list definitions.
-    virtual bool allowListAbbreviation() const { return (false); }
+    // Allow things like "from": ["127.0.0.1", "::1"]
+    virtual bool allowListAbbreviation() const { return (true); }
 };
 } // end of namespace "internal"
 
