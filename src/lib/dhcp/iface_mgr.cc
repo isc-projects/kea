@@ -122,8 +122,6 @@ IfaceMgr::IfaceMgr()
      session_socket_(INVALID_SOCKET), session_callback_(NULL)
 {
 
-    cout << "IfaceMgr initialization." << endl;
-
     try {
         // required for sending/receiving packets
         // let's keep it in front, just in case someone
@@ -166,9 +164,6 @@ void IfaceMgr::stubDetectIfaces() {
     // is faked by detecting loopback interface (lo or lo0). It will eventually
     // be removed once we have actual implementations for all supported systems.
 
-    cout << "Interface detection is not implemented on this Operating System yet. "
-         << endl;
-
     try {
         if (if_nametoindex("lo") > 0) {
             ifaceName = "lo";
@@ -198,9 +193,6 @@ void IfaceMgr::stubDetectIfaces() {
         iface.addAddress(IOAddress(v4addr));
         iface.addAddress(IOAddress(v6addr));
         addInterface(iface);
-
-        cout << "Detected interface " << ifaceName << "/" << v4addr << "/"
-             << v6addr << endl;
     } catch (const std::exception& ex) {
         // TODO: deallocate whatever memory we used
         // not that important, since this function is going to be
@@ -221,13 +213,9 @@ bool IfaceMgr::openSockets4(const uint16_t port) {
          iface != ifaces_.end();
          ++iface) {
 
-        cout << "Trying opening socket on interface " << iface->getFullName() << endl;
-
         if (iface->flag_loopback_ ||
             !iface->flag_up_ ||
             !iface->flag_running_) {
-            cout << "Interface " << iface->getFullName()
-                 << " not suitable: is loopback, is down or not running" << endl;
             continue;
         }
 
@@ -523,9 +511,6 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
 
 int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, uint16_t port) {
 
-    cout << "Creating UDP4 socket on " << iface.getFullName()
-         << " " << addr.toText() << "/port=" << port << endl;
-
     struct sockaddr_in addr4;
     memset(&addr4, 0, sizeof(sockaddr));
     addr4.sin_family = AF_INET;
@@ -556,9 +541,6 @@ int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, uint16_t port) {
     }
 #endif
 
-    cout << "Created socket " << sock << " on " << iface.getName() << "/" <<
-        addr.toText() << "/port=" << port << endl;
-
     SocketInfo info(sock, addr, port);
     iface.addSocket(info);
 
@@ -566,9 +548,6 @@ int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, uint16_t port) {
 }
 
 int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
-
-    cout << "Creating UDP6 socket on " << iface.getFullName()
-         << " " << addr.toText() << "/port=" << port << endl;
 
     struct sockaddr_in6 addr6;
     memset(&addr6, 0, sizeof(addr6));
@@ -637,9 +616,6 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
         }
     }
 
-    cout << "Created socket " << sock << " on " << iface.getName() << "/" <<
-        addr.toText() << "/port=" << port << endl;
-
     SocketInfo info(sock, addr, port);
     iface.addSocket(info);
 
@@ -665,8 +641,6 @@ const std::string & mcast) {
         cout << "Failed to join " << mcast << " multicast group." << endl;
         return (false);
     }
-
-    cout << "Joined multicast " << mcast << " group." << endl;
 
     return (true);
 }
@@ -748,11 +722,6 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
     if (result < 0) {
         isc_throw(Unexpected, "Pkt6 send failed: sendmsg() returned " << result);
     }
-    cout << "Sent " << pkt->getBuffer().getLength() << " bytes over socket " << getSocket(*pkt)
-         << " on " << iface->getFullName() << " interface: "
-         << " dst=[" << pkt->getRemoteAddr().toText() << "]:" << pkt->getRemotePort()
-         << ", src=" << pkt->getLocalAddr().toText() << "]:" << pkt->getLocalPort()
-         << endl;
 
     return (result);
 }
@@ -797,23 +766,12 @@ IfaceMgr::send(const Pkt4Ptr& pkt)
     // call OS-specific routines (like setting interface index)
     os_send4(m, control_buf_, control_buf_len_, pkt);
 
-    cout << "Trying to send " << pkt->getBuffer().getLength() << " bytes to "
-         << pkt->getRemoteAddr().toText() << ":" << pkt->getRemotePort()
-         << " over socket " << getSocket(*pkt) << " on interface "
-         << getIface(pkt->getIface())->getFullName() << endl;
-
     pkt->updateTimestamp();
 
     int result = sendmsg(getSocket(*pkt), &m, 0);
     if (result < 0) {
         isc_throw(Unexpected, "Pkt4 send failed.");
     }
-
-    cout << "Sent " << pkt->getBuffer().getLength() << " bytes over socket " << getSocket(*pkt)
-         << " on " << iface->getFullName() << " interface: "
-         << " dst=" << pkt->getRemoteAddr().toText() << ":" << pkt->getRemotePort()
-         << ", src=" << pkt->getLocalAddr().toText() << ":" << pkt->getLocalPort()
-         << endl;
 
     return (result);
 }
@@ -869,11 +827,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     select_timeout.tv_sec = timeout_sec;
     select_timeout.tv_usec = timeout_usec;
 
-    cout << "Trying to receive data on sockets: " << names.str()
-         << ". Timeout is " << timeout_sec << "." << setw(6) << setfill('0')
-         << timeout_usec << " seconds." << endl;
     int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
-    cout << "select returned " << result << endl;
 
     if (result == 0) {
         // nothing received and timeout has been reached
@@ -888,8 +842,6 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     // Let's find out which socket has the data
     if ((session_socket_ != INVALID_SOCKET) && (FD_ISSET(session_socket_, &sockets))) {
         // something received over session socket
-        cout << "BIND10 command or config available over session socket." << endl;
-
         if (session_callback_) {
             // in theory we could call io_service.run_one() here, instead of
             // implementing callback mechanism, but that would introduce
@@ -921,10 +873,6 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
         cout << "Received data over unknown socket." << endl;
         return (Pkt4Ptr()); // NULL
     }
-
-    cout << "Trying to receive over UDP4 socket " << candidate->sockfd_ << " bound to "
-         << candidate->addr_.toText() << "/port=" << candidate->port_ << " on "
-         << iface->getFullName() << endl;
 
     // Now we have a socket, let's get some data from it!
     struct sockaddr_in from_addr;
@@ -986,11 +934,6 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
         return (boost::shared_ptr<Pkt4>()); // NULL
     }
 
-    cout << "Received " << result << " bytes from " << from.toText()
-         << "/port=" << from_port
-         << " sent to " << pkt->getLocalAddr().toText() << " over interface "
-         << iface->getFullName() << endl;
-
     return (pkt);
 }
 
@@ -1039,10 +982,6 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         names << session_socket_ << "(session)";
     }
 
-    cout << "Trying to receive data on sockets: " << names.str()
-         << ". Timeout is " << timeout_sec << "." << setw(6) << setfill('0')
-         << timeout_usec << " seconds." << endl;
-
     struct timeval select_timeout;
     select_timeout.tv_sec = timeout_sec;
     select_timeout.tv_usec = timeout_usec;
@@ -1062,8 +1001,6 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     // Let's find out which socket has the data
     if ((session_socket_ != INVALID_SOCKET) && (FD_ISSET(session_socket_, &sockets))) {
         // something received over session socket
-        cout << "BIND10 command or config available over session socket." << endl;
-
         if (session_callback_) {
             // in theory we could call io_service.run_one() here, instead of
             // implementing callback mechanism, but that would introduce
@@ -1095,10 +1032,6 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         cout << "Received data over unknown socket." << endl;
         return (Pkt6Ptr()); // NULL
     }
-
-    cout << "Trying to receive over UDP6 socket " << candidate->sockfd_ << " bound to "
-         << candidate->addr_.toText() << "/port=" << candidate->port_ << " on "
-         << iface->getFullName() << endl;
 
     // Now we have a socket, let's get some data from it!
     uint8_t buf[RCVBUFSIZE];
@@ -1197,13 +1130,6 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
              << pkt->getIndex() << ")." << endl;
         return (boost::shared_ptr<Pkt6>()); // NULL
     }
-
-    /// @todo: Move this to LOG_DEBUG
-    cout << "Received " << pkt->getBuffer().getLength() << " bytes over "
-         << pkt->getIface() << "/" << pkt->getIndex() << " interface: "
-         << " src=" << pkt->getRemoteAddr().toText()
-         << ", dst=" << pkt->getLocalAddr().toText()
-         << endl;
 
     return (pkt);
 }
