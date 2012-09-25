@@ -885,8 +885,8 @@ TestControl::readPacketTemplate(const std::string& file_name) {
         isc_throw(BadValue, "unable to open template file " << file_name);
     }
     // Read template file contents.
-    std::ifstream::pos_type temp_size = temp_file.tellg();
-    if (temp_size == 0) {
+    std::streampos temp_size = temp_file.tellg();
+    if (temp_size == std::streampos(0)) {
         temp_file.close();
         isc_throw(OutOfRange, "the template file " << file_name << " is empty");
     }
