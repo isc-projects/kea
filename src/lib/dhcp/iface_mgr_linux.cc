@@ -493,8 +493,6 @@ void IfaceMgr::detectIfaces() {
 
     nl.release_list(link_info);
     nl.release_list(addr_info);
-
-    printIfaces();
 }
 
 /// @brief sets flag_*_ fields.
