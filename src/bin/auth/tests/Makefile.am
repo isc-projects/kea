@@ -52,13 +52,6 @@ run_unittests_SOURCES += query_unittest.cc
 run_unittests_SOURCES += statistics_unittest.cc
 run_unittests_SOURCES += datasrc_configurator_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
-# This is a temporary workaround for #1206, where the InMemoryClient has been
-# moved to an ldopened library. We could add that library to LDADD, but that
-# is nonportable. This should've been moot after #1207, but there is still
-# one dependency; the in-memory-specific zone loader call is still in
-# auth.
-run_unittests_SOURCES += ${top_srcdir}/src/lib/datasrc/memory_datasrc.cc
-
 
 nodist_run_unittests_SOURCES = ../auth_messages.h ../auth_messages.cc
 

@@ -52,7 +52,7 @@ namespace isc {
 namespace datasrc{
 namespace memory {
 
-#include "../rdata_serialization_priv.cc"
+#include <datasrc/memory/rdata_serialization_priv.cc>
 
 }
 }

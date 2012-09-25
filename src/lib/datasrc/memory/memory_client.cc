@@ -22,6 +22,7 @@
 #include <datasrc/memory/domaintree.h>
 #include <datasrc/memory/segment_object_holder.h>
 #include <datasrc/memory/treenode_rrset.h>
+#include <datasrc/memory/zone_finder.h>
 
 #include <util/memory_segment_local.h>
 
@@ -100,9 +101,6 @@ public:
         FileNameTree::destroy(mem_sgmt_, file_name_tree_, deleter);
 
         ZoneTable::destroy(mem_sgmt_, zone_table_, rrclass_);
-
-        // see above for the assert().
-        assert(mem_sgmt_.allMemoryDeallocated());
     }
 
     util::MemorySegment& mem_sgmt_;
@@ -341,12 +339,15 @@ public:
             }
         }
 
+        // Make just the NSEC3 hash label uppercase, and insert the
+        // entire name into the NSEC3Data ZoneTree.
         string fst_label = rrset->getName().split(0, 1).toText(true);
         transform(fst_label.begin(), fst_label.end(), fst_label.begin(),
                   ::toupper);
+        const string rest = rrset->getName().split(1).toText(true);
 
         ZoneNode* node;
-        nsec3_data->insertName(mem_sgmt_, Name(fst_label), &node);
+        nsec3_data->insertName(mem_sgmt_, Name(fst_label + "." + rest), &node);
 
         RdataEncoder encoder;
 
@@ -606,7 +607,7 @@ InMemoryClient::InMemoryClientImpl::load(
     }
 
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_ADD_ZONE).
-        arg(zone_name).arg(rrclass_.toText());
+        arg(zone_name).arg(rrclass_);
 
     // Set the filename in file_name_tree_ now, so that getFileName()
     // can use it (during zone reloading).
@@ -686,21 +687,25 @@ InMemoryClient::getZoneCount() const {
     return (impl_->zone_count_);
 }
 
-isc::datasrc::memory::ZoneTable::FindResult
-InMemoryClient::findZone2(const isc::dns::Name& zone_name) const {
+isc::datasrc::DataSourceClient::FindResult
+InMemoryClient::findZone(const isc::dns::Name& zone_name) const {
     LOG_DEBUG(logger, DBG_TRACE_DATA,
               DATASRC_MEMORY_MEM_FIND_ZONE).arg(zone_name);
+
     ZoneTable::FindResult result(impl_->zone_table_->findZone(zone_name));
-    return (result);
+
+    ZoneFinderPtr finder;
+    if (result.code != result::NOTFOUND) {
+        finder.reset(new InMemoryZoneFinder(*result.zone_data, getClass()));
+    }
+
+    return (DataSourceClient::FindResult(result.code, finder));
 }
 
-isc::datasrc::DataSourceClient::FindResult
-InMemoryClient::findZone(const isc::dns::Name&) const {
-    // This variant of findZone() is not implemented and should be
-    // removed eventually. It currently throws an exception. It is
-    // required right now to derive from DataSourceClient.
-    isc_throw(isc::NotImplemented,
-              "This variant of findZone() is not implemented.");
+isc::datasrc::memory::ZoneTable::FindResult
+InMemoryClient::findZone2(const isc::dns::Name& zone_name) const {
+    ZoneTable::FindResult result(impl_->zone_table_->findZone(zone_name));
+    return (result);
 }
 
 result::Result

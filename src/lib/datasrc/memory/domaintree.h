@@ -373,11 +373,24 @@ private:
         }
     }
 
+public:
+    /// \brief returns if the node is a subtree's root node
+    ///
+    /// This method takes a node and returns \c true if it is the root
+    /// node of the subtree it belongs to.
+    ///
+    /// This method never throws an exception.
     bool isSubTreeRoot() const {
         return ((flags_ & FLAG_SUBTREE_ROOT) != 0);
     }
 
-public:
+    /// \brief returns the root of its subtree
+    ///
+    /// This method takes a node and returns the root of its subtree.
+    ///
+    /// This method never throws an exception.
+    const DomainTreeNode<T>* getSubTreeRoot() const;
+
     /// \brief returns the parent of the root of its subtree
     ///
     /// This method takes a node and returns the parent of the root of
@@ -388,7 +401,14 @@ public:
     /// This method never throws an exception.
     const DomainTreeNode<T>* getUpperNode() const;
 
-private:
+    /// \brief returns the largest node of this node's subtree
+    ///
+    /// This method takes a node and returns the largest node in its
+    /// subtree.
+    ///
+    /// This method never throws an exception.
+    const DomainTreeNode<T>* getLargestInSubTree() const;
+
     /// \brief return the next node which is bigger than current node
     /// in the same subtree
     ///
@@ -423,6 +443,7 @@ private:
     /// This method never throws an exception.
     const DomainTreeNode<T>* predecessor() const;
 
+private:
     /// \brief private shared implementation of successor and predecessor
     ///
     /// As the two mentioned functions are merely mirror images of each other,
@@ -538,7 +559,7 @@ DomainTreeNode<T>::~DomainTreeNode() {
 
 template <typename T>
 const DomainTreeNode<T>*
-DomainTreeNode<T>::getUpperNode() const {
+DomainTreeNode<T>::getSubTreeRoot() const {
     const DomainTreeNode<T>* current = this;
 
     // current would never be equal to NULL here (in a correct tree
@@ -547,7 +568,24 @@ DomainTreeNode<T>::getUpperNode() const {
         current = current->getParent();
     }
 
-    return (current->getParent());
+    return (current);
+}
+
+template <typename T>
+const DomainTreeNode<T>*
+DomainTreeNode<T>::getUpperNode() const {
+    return (getSubTreeRoot()->getParent());
+}
+
+template <typename T>
+const DomainTreeNode<T>*
+DomainTreeNode<T>::getLargestInSubTree() const {
+    const DomainTreeNode<T>* sroot = getSubTreeRoot();
+    while (sroot->getRight() != NULL) {
+        sroot = sroot->getRight();
+    }
+
+    return (sroot);
 }
 
 template <typename T>
