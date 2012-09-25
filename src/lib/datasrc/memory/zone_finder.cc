@@ -544,29 +544,30 @@ class InMemoryZoneFinder::Context : public ZoneFinder::Context {
 public:
     /// \brief Constructor for normal find().
     Context(ZoneFinder& finder, ZoneFinder::FindOptions options,
-            const ZoneFinderResultContext& result) :
+            const RRClass& rrclass, const ZoneFinderResultContext& result) :
         ZoneFinder::Context(finder, options,
                             ResultContext(result.code, result.rrset,
                                           result.flags)),
-        rrset_(result.rrset), zone_data_(result.zone_data),
+        rrset_(result.rrset), rrclass_(rrclass), zone_data_(result.zone_data),
         found_node_(result.found_node),
         found_rdset_(result.found_rdset)
     {}
 
     /// \brief Constructor for findAll().
     Context(ZoneFinder& finder, ZoneFinder::FindOptions options,
-            const ZoneFinderResultContext& result,
+            const RRClass& rrclass, const ZoneFinderResultContext& result,
             std::vector<isc::dns::ConstRRsetPtr>& target) :
         ZoneFinder::Context(finder, options,
                             ResultContext(result.code, result.rrset,
                                           result.flags), target),
-        rrset_(result.rrset), zone_data_(result.zone_data),
+        rrset_(result.rrset), rrclass_(rrclass), zone_data_(result.zone_data),
         found_node_(result.found_node),
         found_rdset_(result.found_rdset)
     {}
 
 private:
     const TreeNodeRRsetPtr rrset_;
+    const RRClass rrclass_;
     const ZoneData* const zone_data_;
     const ZoneNode* const found_node_;
     const RdataSet* const found_rdset_;
@@ -577,7 +578,7 @@ InMemoryZoneFinder::find(const isc::dns::Name& name,
                 const isc::dns::RRType& type,
                 const FindOptions options)
 {
-    return (ZoneFinderContextPtr(new Context(*this, options,
+    return (ZoneFinderContextPtr(new Context(*this, options, rrclass_,
                                              find_internal(name, type,
                                                            NULL, options))));
 }
@@ -587,7 +588,7 @@ InMemoryZoneFinder::findAll(const isc::dns::Name& name,
         std::vector<isc::dns::ConstRRsetPtr>& target,
         const FindOptions options)
 {
-    return (ZoneFinderContextPtr(new Context(*this, options,
+    return (ZoneFinderContextPtr(new Context(*this, options, rrclass_,
                                              find_internal(name,
                                                            RRType::ANY(),
                                                            &target,
