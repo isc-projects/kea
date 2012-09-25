@@ -185,7 +185,8 @@ createFindResult(const RRClass& rrclass,
                  const RdataSet* rrset,
                  const ZoneNode* node,
                  bool wild = false,
-                 const Name* qname = NULL) {
+                 const Name* qname = NULL)
+{
     ZoneFinder::FindResultFlags flags = ZoneFinder::RESULT_DEFAULT;
     const Name* rename = NULL;
 

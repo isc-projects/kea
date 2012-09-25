@@ -1562,8 +1562,8 @@ TEST_F(InMemoryZoneFinderNSEC3Test, findNSEC3Walk) {
 
         if (nsec3_data[i].next_proof != NULL) {
             ASSERT_TRUE(result.next_proof);
-             EXPECT_EQ(Name(nsec3_data[i].next_proof).concatenate(origin),
-                       result.next_proof->getName());
+            EXPECT_EQ(Name(nsec3_data[i].next_proof).concatenate(origin),
+                      result.next_proof->getName());
         } else {
             EXPECT_FALSE(result.next_proof);
         }

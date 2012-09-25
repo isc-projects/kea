@@ -194,7 +194,8 @@ DefaultNSEC3HashCreator::create(const generic::NSEC3& nsec3) const {
 
 NSEC3Hash*
 DefaultNSEC3HashCreator::create(uint8_t algorithm, uint16_t iterations,
-                                const vector<uint8_t>& salt) const {
+                                const vector<uint8_t>& salt) const
+{
     return (new NSEC3HashRFC5155(algorithm, iterations, salt));
 }
 
