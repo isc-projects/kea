@@ -802,12 +802,12 @@ class MultiConfigData:
            the list will only contain the item_name itself."""
         spec_part = self.find_spec_part(item_name)
         if spec_part_is_named_set(spec_part):
-            subslash = ""
-            if spec_part['named_set_item_spec']['item_type'] == 'map' or\
-               spec_part['named_set_item_spec']['item_type'] == 'named_set':
-                subslash = "/"
             values, status = self.get_value(item_name)
             if values is not None and len(values) > 0:
+                subslash = ""
+                if spec_part['named_set_item_spec']['item_type'] == 'map' or\
+                   spec_part['named_set_item_spec']['item_type'] == 'named_set':
+                    subslash = "/"
                 return [ item_name + "/" + v + subslash for v in values.keys() ]
             else:
                 return [ item_name ]
