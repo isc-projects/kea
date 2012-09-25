@@ -252,6 +252,18 @@ class TestConfigData(unittest.TestCase):
         self.assertRaises(ConfigDataError, spec_name_list, 1)
         self.assertRaises(ConfigDataError, spec_name_list, [ 'a' ])
 
+        # Test one with type any as well
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec40.spec")
+        spec_part = module_spec.get_config_spec()
+        name_list = spec_name_list(module_spec.get_config_spec())
+        self.assertEqual(['item1', 'item2', 'item3'], name_list)
+
+        # item3 itself is 'empty'
+        spec_part = find_spec_part(spec_part, 'item3')
+        name_list = spec_name_list(spec_part)
+        self.assertEqual([], name_list)
+
+
     def test_init(self):
         self.assertRaises(ConfigDataError, ConfigData, "asdf")
 
@@ -739,6 +751,11 @@ class TestMultiConfigData(unittest.TestCase):
         config_items = self.mcd.get_config_item_list("Spec2", True)
         self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5[0]', 'Spec2/item5[1]', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
 
+        # When lists are empty, it should only show the name
+        self.mcd.set_value('Spec2/item5', [])
+        config_items = self.mcd.get_config_item_list("Spec2", True)
+        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
+
     def test_is_named_set(self):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec32.spec")
         self.mcd.set_specification(module_spec)
@@ -765,6 +782,11 @@ class TestMultiConfigData(unittest.TestCase):
                           'Spec32/named_set_item/aabb',
                           'Spec32/named_set_item/bbbb',
                          ], config_items)
+
+        self.mcd.set_value('Spec32/named_set_item', {})
+        config_items = self.mcd.get_config_item_list("/Spec32/named_set_item",
+                                                     True)
+        self.assertEqual(['Spec32/named_set_item'], config_items)
 
     def test_set_named_set_nonlocal(self):
         # Test whether a default named set is copied to local if a subitem
