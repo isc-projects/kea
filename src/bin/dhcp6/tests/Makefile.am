@@ -48,6 +48,7 @@ dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += ../dhcp6_srv.h ../dhcp6_srv.cc
 dhcp6_unittests_SOURCES += ../dhcp6_log.h ../dhcp6_log.cc
 dhcp6_unittests_SOURCES += ../ctrl_dhcp6_srv.cc
+dhcp6_unittests_SOURCES += ../config_parser.cc ../config_parser.h
 nodist_dhcp6_unittests_SOURCES = ../dhcp6_messages.h ../dhcp6_messages.cc
 
 if USE_CLANGPP
@@ -61,6 +62,7 @@ dhcp6_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 dhcp6_unittests_LDADD = $(GTEST_LDADD)
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcpsrv.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la

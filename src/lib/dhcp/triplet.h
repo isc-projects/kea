@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef TRIPLET_H
+#define TRIPLET_H
+
 namespace isc {
 namespace dhcp {
 
@@ -106,3 +109,5 @@ protected:
 
 } // namespace isc::dhcp
 } // namespace isc
+
+#endif // ifdef TRIPLET_H
