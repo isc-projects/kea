@@ -1307,8 +1307,7 @@ public:
     ///
     /// \return A \c DomainTreeNode that is the largest node in the
     /// tree. If there are no nodes, then \c NULL is returned.
-    const DomainTreeNode<T>*
-    largestNode() const;
+    const DomainTreeNode<T>* largestNode() const;
 
     /// \brief Get the total number of nodes in the tree
     ///
