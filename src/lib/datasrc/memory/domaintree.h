@@ -1446,8 +1446,15 @@ private:
     //@}
 
     typename DomainTreeNode<T>::DomainTreeNodePtr root_;
-    /// the node count of current tree
+
+    /// the node count of current tree.
+    ///
+    /// Note: uint32_t may look awkward, but we intentionally choose it so
+    /// that needsReturnEmptyNode_ below won't make cause extra padding
+    /// in 64-bit machines (and we can minimize the total size of this class).
+    /// 2^32 - 1 should be a reasonable max of possible number of nodes.
     uint32_t node_count_;
+
     /// search policy for domaintree
     const bool needsReturnEmptyNode_;
 };
