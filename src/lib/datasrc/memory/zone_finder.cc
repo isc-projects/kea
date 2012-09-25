@@ -40,6 +40,37 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
+namespace internal {
+
+// Specialized version of ZoneFinder::ResultContext, which  holds objects
+// related to find() results using internal representations of the in-memory
+// data source implementation.
+class ZoneFinderResultContext {
+public:
+    /// \brief Constructor
+    ///
+    /// The first three parameters correspond to those of
+    /// ZoneFinder::ResultContext.  If node is non NULL, it specifies the
+    /// found ZoneNode in the search.
+    ZoneFinderResultContext(ZoneFinder::Result code_param,
+                            TreeNodeRRsetPtr rrset_param,
+                            ZoneFinder::FindResultFlags flags_param,
+                            const ZoneData& zone_data_param,
+                            const ZoneNode* node, const RdataSet* rdset) :
+	code(code_param), rrset(rrset_param), flags(flags_param),
+        zone_data(&zone_data_param), found_node(node), found_rdset(rdset)
+    {}
+
+    const ZoneFinder::Result code;
+    const TreeNodeRRsetPtr rrset;
+    const ZoneFinder::FindResultFlags flags;
+    const ZoneData* const zone_data;
+    const ZoneNode* const found_node;
+    const RdataSet* const found_rdset;
+};
+}
+using internal::ZoneFinderResultContext;
+
 namespace {
 /// Creates a TreeNodeRRsetPtr for the given RdataSet at the given Node, for
 /// the given RRClass
@@ -168,7 +199,7 @@ bool cutCallback(const ZoneNode& node, FindState* state) {
 // if wild is true, the RESULT_WILDCARD flag will be set.
 // If qname is not NULL, this is the query name, to be used in wildcard
 // substitution instead of the Node's name).
-isc::datasrc::memory::ZoneFinderResultContext
+ZoneFinderResultContext
 createFindResult(const RRClass& rrclass,
                  const ZoneData& zone_data,
                  ZoneFinder::Result code,
@@ -197,7 +228,7 @@ createFindResult(const RRClass& rrclass,
     return (ZoneFinderResultContext(code, createTreeNodeRRset(node, rdset,
                                                               rrclass, options,
                                                               rename),
-                                    flags, node));
+                                    flags, zone_data, node, rdset));
 }
 
 // A helper function for NSEC-signed zones.  It searches the zone for
@@ -513,26 +544,32 @@ class InMemoryZoneFinder::Context : public ZoneFinder::Context {
 public:
     /// \brief Constructor for normal find().
     Context(ZoneFinder& finder, ZoneFinder::FindOptions options,
-            ZoneFinderResultContext result) :
+            const ZoneFinderResultContext& result) :
         ZoneFinder::Context(finder, options,
                             ResultContext(result.code, result.rrset,
                                           result.flags)),
-        rrset_(result.rrset), found_node_(result.found_node)
+        rrset_(result.rrset), zone_data_(result.zone_data),
+        found_node_(result.found_node),
+        found_rdset_(result.found_rdset)
     {}
 
     /// \brief Constructor for findAll().
     Context(ZoneFinder& finder, ZoneFinder::FindOptions options,
-            ZoneFinderResultContext result,
+            const ZoneFinderResultContext& result,
             std::vector<isc::dns::ConstRRsetPtr>& target) :
         ZoneFinder::Context(finder, options,
                             ResultContext(result.code, result.rrset,
                                           result.flags), target),
-        rrset_(result.rrset), found_node_(result.found_node)
+        rrset_(result.rrset), zone_data_(result.zone_data),
+        found_node_(result.found_node),
+        found_rdset_(result.found_rdset)
     {}
 
 private:
     const TreeNodeRRsetPtr rrset_;
+    const ZoneData* const zone_data_;
     const ZoneNode* const found_node_;
+    const RdataSet* const found_rdset_;
 };
 
 boost::shared_ptr<ZoneFinder::Context>
