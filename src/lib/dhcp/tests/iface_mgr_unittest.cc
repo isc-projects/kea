@@ -639,10 +639,11 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     // we should accept both values as source ports.
     EXPECT_TRUE((rcvPkt->getRemotePort() == 10546) || (rcvPkt->getRemotePort() == 10547));
 
-    // try to receive data over the closed socket. Closed socket's descriptor is
+    // try to send/receive data over the closed socket. Closed socket's descriptor is
     // still being hold by IfaceMgr which will try to use it to receive data.
     close(socket1);
     EXPECT_THROW(ifacemgr->receive6(10), SocketReadError);
+    EXPECT_THROW(ifacemgr->send(sendPkt), SocketWriteError);
 }
 
 TEST_F(IfaceMgrTest, sendReceive4) {
@@ -736,6 +737,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     // still being hold by IfaceMgr which will try to use it to receive data.
     close(socket1);
     EXPECT_THROW(ifacemgr->receive4(10), SocketReadError);
+    EXPECT_THROW(ifacemgr->send(sendPkt), SocketWriteError);
 }
 
 

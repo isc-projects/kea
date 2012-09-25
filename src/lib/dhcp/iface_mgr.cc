@@ -702,7 +702,7 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
 
     result = sendmsg(getSocket(*pkt), &m, 0);
     if (result < 0) {
-        isc_throw(Unexpected, "Pkt6 send failed: sendmsg() returned " << result);
+        isc_throw(SocketWriteError, "Pkt6 send failed: sendmsg() returned " << result);
     }
 
     return (result);
@@ -752,7 +752,7 @@ IfaceMgr::send(const Pkt4Ptr& pkt)
 
     int result = sendmsg(getSocket(*pkt), &m, 0);
     if (result < 0) {
-        isc_throw(Unexpected, "Pkt4 send failed.");
+        isc_throw(SocketWriteError, "pkt4 send failed");
     }
 
     return (result);
