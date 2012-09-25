@@ -82,10 +82,8 @@ TEST_F(IfaceMgrTest, loDetect) {
     // it will go away as soon as proper interface detection
     // is implemented
     if (if_nametoindex("lo") > 0) {
-        cout << "This is Linux, using lo as loopback." << endl;
         snprintf(LOOPBACK, BUF_SIZE - 1, "lo");
     } else if (if_nametoindex("lo0") > 0) {
-        cout << "This is BSD, using lo0 as loopback." << endl;
         snprintf(LOOPBACK, BUF_SIZE - 1, "lo0");
     } else {
         cout << "Failed to detect loopback interface. Neither "
