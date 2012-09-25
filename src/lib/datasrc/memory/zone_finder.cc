@@ -387,7 +387,7 @@ public:
 // If none of the above succeeds, we conclude the name doesn't exist in
 // the zone, and throw an OutOfZone exception.
 FindNodeResult findNode(const ZoneData& zone_data,
-                        const Name& name,
+                        const LabelSequence& name_labels,
                         ZoneChain& node_path,
                         ZoneFinder::FindOptions options)
 {
@@ -395,9 +395,8 @@ FindNodeResult findNode(const ZoneData& zone_data,
     FindState state((options & ZoneFinder::FIND_GLUE_OK) != 0);
 
     const ZoneTree& tree(zone_data.getZoneTree());
-    ZoneTree::Result result = tree.find(isc::dns::LabelSequence(name),
-                                        &node, node_path, cutCallback,
-                                        &state);
+    const ZoneTree::Result result = tree.find(name_labels, &node, node_path,
+                                              cutCallback, &state);
     const unsigned int zonecut_flag =
         (state.zonecut_node_ != NULL) ? FindNodeResult::FIND_ZONECUT : 0;
     if (result == ZoneTree::EXACTMATCH) {
@@ -421,7 +420,7 @@ FindNodeResult findNode(const ZoneData& zone_data,
         if (node_path.getLastComparisonResult().getRelation() ==
             NameComparisonResult::SUPERDOMAIN) { // empty node, so NXRRSET
             LOG_DEBUG(logger, DBG_TRACE_DATA,
-                      DATASRC_MEM_SUPER_STOP).arg(name);
+                      DATASRC_MEM_SUPER_STOP).arg(name_labels);
             const ZoneNode* nsec_node;
             const RdataSet* nsec_rds = getClosestNSEC(zone_data,
                                                       node_path,
@@ -442,7 +441,7 @@ FindNodeResult findNode(const ZoneData& zone_data,
                 // baz.foo.wild.example. The common ancestor, foo.wild.example,
                 // should cancel wildcard.  Treat it as NXDOMAIN.
                 LOG_DEBUG(logger, DBG_TRACE_DATA,
-                          DATASRC_MEM_WILDCARD_CANCEL).arg(name);
+                          DATASRC_MEM_WILDCARD_CANCEL).arg(name_labels);
                     const ZoneNode* nsec_node;
                     const RdataSet* nsec_rds = getClosestNSEC(zone_data,
                                                               node_path,
@@ -475,7 +474,8 @@ FindNodeResult findNode(const ZoneData& zone_data,
                         FindNodeResult::FIND_WILDCARD | zonecut_flag));
         }
 
-        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).arg(name);
+        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).
+            arg(name_labels);
         const ZoneNode* nsec_node;
         const RdataSet* nsec_rds = getClosestNSEC(zone_data, node_path,
                                                   &nsec_node, options);
@@ -483,7 +483,7 @@ FindNodeResult findNode(const ZoneData& zone_data,
     } else {
         // If the name is neither an exact or partial match, it is
         // out of bailiwick, which is considered an error.
-        isc_throw(OutOfZone, name.toText() << " not in " <<
+        isc_throw(OutOfZone, name_labels << " not in " <<
                              zone_data.getOriginNode()->getName());
     }
 }
@@ -606,7 +606,7 @@ InMemoryZoneFinder::find_internal(const isc::dns::Name& name,
     // in findNode().  We simply construct a result structure and return.
     ZoneChain node_path;
     const FindNodeResult node_result =
-        findNode(zone_data_, name, node_path, options);
+        findNode(zone_data_, LabelSequence(name), node_path, options);
     if (node_result.code != SUCCESS) {
         return (createFindResult(rrclass_, zone_data_, node_result.code,
                                  node_result.rrset, node_result.node,
