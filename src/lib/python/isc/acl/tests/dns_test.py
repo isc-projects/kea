@@ -198,10 +198,6 @@ class RequestACLTest(unittest.TestCase):
         self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           [{"action": "ACCEPT", "from": 4}])
         self.assertRaises(LoaderError, REQUEST_LOADER.load,
-                          '[{"action": "ACCEPT", "from": []}]')
-        self.assertRaises(LoaderError, REQUEST_LOADER.load,
-                          [{"action": "ACCEPT", "from": []}])
-        self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           '[{"action": "ACCEPT", "key": 1}]')
         self.assertRaises(LoaderError, REQUEST_LOADER.load,
                           [{"action": "ACCEPT", "key": 1}])
