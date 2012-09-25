@@ -57,10 +57,10 @@ public:
         ~ArgvPtr() {
             if (argv_ != NULL) {
                 for(int i = 0; i < argc_; ++i) {
-                    free(argv_[i]);
+                    delete[] (argv_[i]);
                     argv_[i] = NULL;
                 }
-                free(argv_);
+                delete[] (argv_);
             }
         }
 
@@ -102,6 +102,7 @@ private:
     ///
     /// \param text_to_split string to be splited.
     /// \param [out] num number of substrings returned.
+    /// \param std::bad_alloc if allocation of C-strings failed.
     /// \return array of C-strings created from split.
     static char** tokenizeString(const std::string& text_to_split, int& num) {
         char** results = NULL;
@@ -115,14 +116,13 @@ private:
 
         if (tokens.size() > 0) {
             // Allocate array of C-strings where we will store tokens
-            results = static_cast<char**>(malloc(tokens.size() * sizeof(char*)));
-            if (results == NULL) {
-                isc_throw(Unexpected, "unable to allocate array of c-strings");
-            }
+            results = new char*[tokens.size()];
             // Store tokens in C-strings array
             for (int i = 0; i < tokens.size(); ++i) {
-                char* cs = static_cast<char*>(malloc(tokens[i].length() + 1));
-                strcpy(cs, tokens[i].c_str());
+                size_t cs_size = tokens[i].length() + 1;
+                char* cs = new char[cs_size];
+                strncpy(cs, tokens[i].c_str(), cs_size);
+                assert(cs[cs_size - 1] == '\0');
                 results[i] = cs;
             }
             // Return number of tokens to calling function

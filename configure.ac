@@ -1074,6 +1074,26 @@ if test "x$VALGRIND" != "xno"; then
    found_valgrind="found"
 fi
 
+# Check for optreset in unistd.h. On BSD systems the optreset is
+# used to reset the state of getopt() function. Resetting its state
+# is required if command line arguments are parsed multiple times
+# during a program. On Linux this variable will not exist because
+# getopt() reset is performed by setting optind = 0. On Operating
+# Systems where optreset is defined use optreset = 1 and optind = 1
+# to reset internal state of getopt(). Failing to do so will result
+# in unpredictable output from getopt().
+AC_MSG_CHECKING([whether optreset variable is defined in unistd.h])
+AC_TRY_LINK(
+    [#include <unistd.h>],
+    [extern int optreset; optreset=1;],
+    [ AC_MSG_RESULT(yes)
+      var_optreset_exists=yes],
+    [ AC_MSG_RESULT(no)
+      var_optreset_exists=no]
+)
+AM_CONDITIONAL(HAVE_OPTRESET, test "x$var_optreset_exists" != "xno")
+AM_COND_IF([HAVE_OPTRESET], [AC_DEFINE([HAVE_OPTRESET], [1], [Check for optreset?])])
+
 AC_CONFIG_FILES([Makefile
                  doc/Makefile
                  doc/guide/Makefile
