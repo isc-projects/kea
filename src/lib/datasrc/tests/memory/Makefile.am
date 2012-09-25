@@ -36,8 +36,7 @@ run_unittests_SOURCES += memory_client_unittest.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 
-run_unittests_LDADD = $(builddir)/../libdatasrc_memory.la
-run_unittests_LDADD += $(top_builddir)/src/lib/datasrc/libb10-datasrc.la
+run_unittests_LDADD = $(top_builddir)/src/lib/datasrc/libb10-datasrc.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
