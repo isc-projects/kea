@@ -212,6 +212,9 @@ public:
     /// Returns a \c ZoneData in the result that best matches the given
     /// name.
     ///
+    /// This is mainly intended for use in unit tests and should not be
+    /// used in other code.
+    ///
     /// This derived version of the method never throws an exception.
     /// For other details see \c DataSourceClient::findZone().
     isc::datasrc::memory::ZoneTable::FindResult
