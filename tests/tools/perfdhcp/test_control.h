@@ -33,6 +33,28 @@
 namespace isc {
 namespace perfdhcp {
 
+/// Default transaction id offset in the packet template.
+static const size_t DHCPV4_TRANSID_OFFSET = 4;
+/// Default offset of MAC's last octet in the packet template..
+static const size_t DHCPV4_RANDOMIZATION_OFFSET = 35;
+/// Default elapsed time offset in the packet template.
+static const size_t DHCPV4_ELAPSED_TIME_OFFSET = 8;
+/// Default server id offset in the packet template.
+static const size_t DHCPV4_SERVERID_OFFSET = 54;
+/// Default requested ip offset in the packet template.
+static const size_t DHCPV4_REQUESTED_IP_OFFSET = 240;
+/// Default DHCPV6 transaction id offset in t the packet template.
+static const size_t DHCPV6_TRANSID_OFFSET = 1;
+/// Default DHCPV6 randomization offset (last octet of DUID)
+/// in the packet template.
+static const size_t DHCPV6_RANDOMIZATION_OFFSET = 21;
+/// Default DHCPV6 elapsed time offset in the packet template.
+static const size_t DHCPV6_ELAPSED_TIME_OFFSET = 84;
+/// Default DHCPV6 server id offset in the packet template.
+static const size_t DHCPV6_SERVERID_OFFSET = 22;
+/// Default DHCPV6 IA_NA offset in the packet template.
+static const size_t DHCPV6_IA_NA_OFFSET = 40;
+
 /// \brief Test Control class.
 ///
 /// This singleton class is used to run the performance test with
@@ -96,28 +118,6 @@ namespace perfdhcp {
 /// DHCPv4 or DHCPv6 option.
 class TestControl : public boost::noncopyable {
 public:
-
-    /// Default transaction id offset in the packet template.
-    static const size_t DHCPV4_TRANSID_OFFSET = 4;
-    /// Default offset of MAC's last octet in the packet template..
-    static const size_t DHCPV4_RANDOMIZATION_OFFSET = 35;
-    /// Default elapsed time offset in the packet template.
-    static const size_t DHCPV4_ELAPSED_TIME_OFFSET = 8;
-    /// Default server id offset in the packet template.
-    static const size_t DHCPV4_SERVERID_OFFSET = 54;
-    /// Default requested ip offset in the packet template.
-    static const size_t DHCPV4_REQUESTED_IP_OFFSET = 240;
-    /// Default DHCPV6 transaction id offset in t the packet template.
-    static const size_t DHCPV6_TRANSID_OFFSET = 1;
-    /// Default DHCPV6 randomization offset (last octet of DUID)
-    /// in the packet template.
-    static const size_t DHCPV6_RANDOMIZATION_OFFSET = 21;
-    /// Default DHCPV6 elapsed time offset in the packet template.
-    static const size_t DHCPV6_ELAPSED_TIME_OFFSET = 84;
-    /// Default DHCPV6 server id offset in the packet template.
-    static const size_t DHCPV6_SERVERID_OFFSET = 22;
-    /// Default DHCPV6 IA_NA offset in the packet template.
-    static const size_t DHCPV6_IA_NA_OFFSET = 40;
 
     /// Statistics Manager for DHCPv4.
     typedef StatsMgr<dhcp::Pkt4> StatsMgr4;
