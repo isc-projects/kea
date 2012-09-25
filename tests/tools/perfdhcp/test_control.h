@@ -141,6 +141,10 @@ public:
     /// (e.g. sequencial or based on random function).
     class NumberGenerator {
     public:
+
+        /// \brief Destructor.
+        virtual ~NumberGenerator() { }
+
         /// \brief Generate number.
         ///
         /// \return Generate number.
