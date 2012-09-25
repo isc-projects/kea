@@ -28,6 +28,38 @@
 namespace isc {
 
 namespace dhcp {
+
+/// @brief IfaceMgr exception thrown thrown when interface detection fails.
+class IfaceDetectError : public Exception {
+public:
+    IfaceDetectError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief IfaceMgr exception thrown thrown when socket opening
+/// or configuration failed.
+class SocketConfigError : public Exception {
+public:
+    SocketConfigError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief IfaceMgr exception thrown thrown when error occured during
+/// reading data from socket.
+class SocketReadError : public Exception {
+public:
+    SocketReadError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief IfaceMgr exception thrown thrown when error occured during
+/// sedning data through socket.
+class SocketWriteError : public Exception {
+public:
+    SocketWriteError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 /// @brief handles network interfaces, transmission and reception
 ///
 /// IfaceMgr is an interface manager class that detects available network
@@ -460,6 +492,7 @@ public:
     ///
     /// @param port specifies port number (usually DHCP6_SERVER_PORT)
     ///
+    /// @throw SocketOpenFailure if tried and failed to open socket.
     /// @return true if any sockets were open
     bool openSockets6(const uint16_t port = DHCP6_SERVER_PORT);
 
@@ -472,6 +505,7 @@ public:
     ///
     /// @param port specifies port number (usually DHCP4_SERVER_PORT)
     ///
+    /// @throw SocketOpenFailure if tried and failed to open socket.
     /// @return true if any sockets were open
     bool openSockets4(const uint16_t port = DHCP4_SERVER_PORT);
 

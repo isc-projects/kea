@@ -419,7 +419,7 @@ TEST_F(IfaceMgrTest, sockets6) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     IOAddress loAddr("::1");
 
@@ -439,10 +439,20 @@ TEST_F(IfaceMgrTest, sockets6) {
     // removed code for binding socket twice to the same address/port
     // as it caused problems on some platforms (e.g. Mac OS X)
 
-    close(socket1);
-    close(socket2);
+    ifacemgr->closeSockets();
 
-    delete ifacemgr;
+    // Use address that is not assigned to LOOPBACK iface.
+    IOAddress invalidAddr("::2");
+    EXPECT_THROW(
+        ifacemgr->openSocket(LOOPBACK, invalidAddr, 10547),
+        SocketConfigError
+    );
+
+    // Use non-existing interface name.
+    EXPECT_THROW(
+        ifacemgr->openSocket("non_existing_interface", loAddr, 10548),
+        BadValue
+    );
 }
 
 TEST_F(IfaceMgrTest, socketsFromIface) {
@@ -466,6 +476,13 @@ TEST_F(IfaceMgrTest, socketsFromIface) {
     EXPECT_GT(socket2, 0);
     close(socket2);
 
+    ifacemgr->closeSockets();
+
+    // Use invalid interface name.
+    EXPECT_THROW(
+        ifacemgr->openSocketFromIface("non_existing_interface", PORT1, AF_INET),
+        BadValue
+    );
 }
 
 
@@ -480,7 +497,6 @@ TEST_F(IfaceMgrTest, socketsFromAddress) {
     );
     // socket descriptor must be positive integer
     EXPECT_GT(socket1, 0);
-    close(socket1);
 
     // Open v4 socket on loopback interface and bind to different port
     int socket2 = 0;
@@ -490,7 +506,14 @@ TEST_F(IfaceMgrTest, socketsFromAddress) {
     );
     // socket descriptor must be positive integer
     EXPECT_GT(socket2, 0);
-    close(socket2);
+
+    ifacemgr->closeSockets();
+
+    // Use non-existing address.
+    IOAddress invalidAddr("1.2.3.4");
+    EXPECT_THROW(
+        ifacemgr->openSocketFromAddress(invalidAddr, PORT1), BadValue
+    );
 }
 
 TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
@@ -505,7 +528,6 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
         socket1 = ifacemgr->openSocketFromRemoteAddress(loAddr6, PORT1);
     );
     EXPECT_GT(socket1, 0);
-    close(socket1);
 
     // Open v4 socket to connect to remote address.
     int socket2 = 0;
@@ -514,7 +536,8 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
         socket2 = ifacemgr->openSocketFromRemoteAddress(loAddr, PORT2);
     );
     EXPECT_GT(socket2, 0);
-    close(socket2);
+
+    ifacemgr->closeSockets();
 
     // The following test is currently disabled for OSes other than
     // Linux because interface detection is not implemented on them.
@@ -528,7 +551,6 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
         socket3 = ifacemgr->openSocketFromRemoteAddress(bcastAddr, PORT2);
     );
     EXPECT_GT(socket3, 0);
-    close(socket3);
 #endif
 }
 
