@@ -70,13 +70,13 @@ namespace perfdhcp {
 /// - optionally print some diagnostics.
 ///
 /// With the '-w' command line option user may specify the external application
-/// or script to be executed. The is executed twice, first when the test starts
+/// or script to be executed. This is executed twice, first when the test starts
 /// and second time when the test ends. This external script or application must
 /// accept 'start' and 'stop' arguments. The first time it is called, it is
 /// called with the argument 'start' and the second time with the argument
 /// 'stop'.
 ///   
-/// The applicated is executed by calling fork() to fork the current perfdhcp
+/// The application is executed by calling fork() to fork the current perfdhcp
 /// process and then call execlp() to replace the current process image with
 /// the new one.
 ///
