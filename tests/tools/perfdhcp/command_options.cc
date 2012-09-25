@@ -365,8 +365,6 @@ CommandOptions::initialize(int argc, char** argv) {
         }
     }
 
-    std::cout << "Running: " << stream.str() << std::endl;
-
     // If the IP version was not specified in the
     // command line, assume IPv4.
     if (ipversion_ == 0) {
@@ -394,6 +392,7 @@ CommandOptions::initialize(int argc, char** argv) {
     check(optind < argc -1, "extra arguments?");
     if (optind == argc - 1) {
         server_name_ = argv[optind];
+        stream << " " << server_name_;
         // Decode special cases
         if ((ipversion_ == 4) && (server_name_.compare("all") == 0)) {
             broadcast_ = true;
@@ -406,6 +405,8 @@ CommandOptions::initialize(int argc, char** argv) {
             server_name_ = ALL_DHCP_SERVERS;
         }
     }
+
+    std::cout << "Running: " << stream.str() << std::endl;
 
     // Handle the local '-l' address/interface
     if (!localname_.empty()) {
