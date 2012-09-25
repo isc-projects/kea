@@ -132,13 +132,7 @@ IfaceMgr::IfaceMgr()
         detectIfaces();
 
     } catch (const std::exception& ex) {
-        cout << "IfaceMgr creation failed:" << ex.what() << endl;
-
-        // TODO Uncomment this (or call LOG_FATAL) once
-        // interface detection is implemented. Otherwise
-        // it is not possible to run tests in a portable
-        // way (see detectIfaces() method).
-        throw;
+        isc_throw(IfaceDetectError, ex.what());
     }
 }
 
@@ -164,45 +158,34 @@ void IfaceMgr::stubDetectIfaces() {
     // is faked by detecting loopback interface (lo or lo0). It will eventually
     // be removed once we have actual implementations for all supported systems.
 
-    try {
-        if (if_nametoindex("lo") > 0) {
-            ifaceName = "lo";
-            // this is Linux-like OS
-        } else if (if_nametoindex("lo0") > 0) {
-            ifaceName = "lo0";
-            // this is BSD-like OS
-        } else {
-            // we give up. What OS is this, anyway? Solaris? Hurd?
-            isc_throw(NotImplemented,
-                      "Interface detection on this OS is not supported.");
-        }
-
-        Iface iface(ifaceName, if_nametoindex(ifaceName.c_str()));
-        iface.flag_up_ = true;
-        iface.flag_running_ = true;
-
-        // Note that we claim that this is not a loopback. iface_mgr tries to open a
-        // socket on all interaces that are up, running and not loopback. As this is
-        // the only interface we were able to detect, let's pretend this is a normal
-        // interface.
-        iface.flag_loopback_ = false;
-        iface.flag_multicast_ = true;
-        iface.flag_broadcast_ = true;
-        iface.setHWType(HWTYPE_ETHERNET);
-
-        iface.addAddress(IOAddress(v4addr));
-        iface.addAddress(IOAddress(v6addr));
-        addInterface(iface);
-    } catch (const std::exception& ex) {
-        // TODO: deallocate whatever memory we used
-        // not that important, since this function is going to be
-        // thrown away as soon as we get proper interface detection
-        // implemented
-
-        // TODO Do LOG_FATAL here
-        std::cerr << "Interface detection failed." << std::endl;
-        throw;
+    if (if_nametoindex("lo") > 0) {
+        ifaceName = "lo";
+        // this is Linux-like OS
+    } else if (if_nametoindex("lo0") > 0) {
+        ifaceName = "lo0";
+        // this is BSD-like OS
+    } else {
+        // we give up. What OS is this, anyway? Solaris? Hurd?
+        isc_throw(NotImplemented,
+                  "Interface detection on this OS is not supported.");
     }
+
+    Iface iface(ifaceName, if_nametoindex(ifaceName.c_str()));
+    iface.flag_up_ = true;
+    iface.flag_running_ = true;
+
+    // Note that we claim that this is not a loopback. iface_mgr tries to open a
+    // socket on all interaces that are up, running and not loopback. As this is
+    // the only interface we were able to detect, let's pretend this is a normal
+    // interface.
+    iface.flag_loopback_ = false;
+    iface.flag_multicast_ = true;
+    iface.flag_broadcast_ = true;
+    iface.setHWType(HWTYPE_ETHERNET);
+
+    iface.addAddress(IOAddress(v4addr));
+    iface.addAddress(IOAddress(v6addr));
+    addInterface(iface);
 }
 
 bool IfaceMgr::openSockets4(const uint16_t port) {
@@ -231,15 +214,13 @@ bool IfaceMgr::openSockets4(const uint16_t port) {
 
             sock = openSocket(iface->getName(), *addr, port);
             if (sock < 0) {
-                cout << "Failed to open unicast socket." << endl;
-                return (false);
+                isc_throw(SocketConfigError, "failed to open unicast socket");
             }
 
             count++;
         }
     }
     return (count > 0);
-
 }
 
 bool IfaceMgr::openSockets6(const uint16_t port) {
@@ -268,8 +249,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
 
             sock = openSocket(iface->getName(), *addr, port);
             if (sock < 0) {
-                cout << "Failed to open unicast socket." << endl;
-                return (false);
+                isc_throw(SocketConfigError, "failed to open unicast socket");
             }
 
             // Binding socket to unicast address and then joining multicast group
@@ -278,7 +258,8 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
             if ( !joinMulticast(sock, iface->getName(),
                                 string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS))) {
                 close(sock);
-                isc_throw(Unexpected, "Failed to join " << ALL_DHCP_RELAY_AGENTS_AND_SERVERS
+                isc_throw(SocketConfigError, "Failed to join "
+                          << ALL_DHCP_RELAY_AGENTS_AND_SERVERS
                           << " multicast group.");
             }
 
@@ -293,7 +274,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
                                    IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
                                    port);
             if (sock2 < 0) {
-                isc_throw(Unexpected, "Failed to open multicast socket on "
+                isc_throw(SocketConfigError, "Failed to open multicast socket on "
                           << " interface " << iface->getFullName());
                 iface->delSocket(sock); // delete previously opened socket
             }
@@ -406,7 +387,7 @@ int IfaceMgr::openSocketFromIface(const std::string& ifname,
                 family_name = "AF_INET6";
             }
             // We did not find address on the interface.
-            isc_throw(BadValue, "There is no address for interface: "
+            isc_throw(SocketConfigError, "There is no address for interface: "
                       << ifname << ", port: " << port << ", address "
                       " family: " << family_name);
         }
@@ -448,9 +429,13 @@ int IfaceMgr::openSocketFromAddress(const IOAddress& addr,
 
 int IfaceMgr::openSocketFromRemoteAddress(const IOAddress& remote_addr,
                                           const uint16_t port) {
-    // Get local address to be used to connect to remote location.
-    IOAddress local_address(getLocalAddress(remote_addr, port).getAddress());
-    return openSocketFromAddress(local_address, port);
+    try {
+        // Get local address to be used to connect to remote location.
+        IOAddress local_address(getLocalAddress(remote_addr, port).getAddress());
+        return openSocketFromAddress(local_address, port);
+    } catch (const Exception& e) {
+        isc_throw(SocketConfigError, e.what());
+    }
 }
 
 isc::asiolink::IOAddress
@@ -494,7 +479,7 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
     sock.connect(remote_endpoint->getASIOEndpoint(), err_code);
     if (err_code) {
         sock.close();
-        isc_throw(Unexpected,"failed to connect to remote endpoint.");
+        isc_throw(Unexpected, "failed to connect to remote endpoint.");
     }
 
     // Once we are connected socket object holds local endpoint.
@@ -522,12 +507,12 @@ int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, uint16_t port) {
 
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
-        isc_throw(Unexpected, "Failed to create UDP6 socket.");
+        isc_throw(SocketConfigError, "Failed to create UDP6 socket.");
     }
 
     if (bind(sock, (struct sockaddr *)&addr4, sizeof(addr4)) < 0) {
         close(sock);
-        isc_throw(Unexpected, "Failed to bind socket " << sock << " to " << addr.toText()
+        isc_throw(SocketConfigError, "Failed to bind socket " << sock << " to " << addr.toText()
                   << "/port=" << port);
     }
 
@@ -537,7 +522,7 @@ int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, uint16_t port) {
     int flag = 1;
     if (setsockopt(sock, IPPROTO_IP, IP_PKTINFO, &flag, sizeof(flag)) != 0) {
         close(sock);
-        isc_throw(Unexpected, "setsockopt: IP_PKTINFO: failed.");
+        isc_throw(SocketConfigError, "setsockopt: IP_PKTINFO: failed.");
     }
 #endif
 
@@ -569,7 +554,7 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
     // make a socket
     int sock = socket(AF_INET6, SOCK_DGRAM, 0);
     if (sock < 0) {
-        isc_throw(Unexpected, "Failed to create UDP6 socket.");
+        isc_throw(SocketConfigError, "Failed to create UDP6 socket.");
     }
 
     // Set the REUSEADDR option so that we don't fail to start if
@@ -578,12 +563,12 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
                    (char *)&flag, sizeof(flag)) < 0) {
         close(sock);
-        isc_throw(Unexpected, "Can't set SO_REUSEADDR option on dhcpv6 socket.");
+        isc_throw(SocketConfigError, "Can't set SO_REUSEADDR option on dhcpv6 socket.");
     }
 
     if (bind(sock, (struct sockaddr *)&addr6, sizeof(addr6)) < 0) {
         close(sock);
-        isc_throw(Unexpected, "Failed to bind socket " << sock << " to " << addr.toText()
+        isc_throw(SocketConfigError, "Failed to bind socket " << sock << " to " << addr.toText()
                   << "/port=" << port);
     }
 #ifdef IPV6_RECVPKTINFO
@@ -591,14 +576,14 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
     if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO,
                    &flag, sizeof(flag)) != 0) {
         close(sock);
-        isc_throw(Unexpected, "setsockopt: IPV6_RECVPKTINFO failed.");
+        isc_throw(SocketConfigError, "setsockopt: IPV6_RECVPKTINFO failed.");
     }
 #else
     // RFC2292 - an old way
     if (setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO,
                    &flag, sizeof(flag)) != 0) {
         close(sock);
-        isc_throw(Unexpected, "setsockopt: IPV6_PKTINFO: failed.");
+        isc_throw(SocketConfigError, "setsockopt: IPV6_PKTINFO: failed.");
     }
 #endif
 
@@ -611,7 +596,7 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
         if ( !joinMulticast( sock, iface.getName(),
                          string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS) ) ) {
             close(sock);
-            isc_throw(Unexpected, "Failed to join " << ALL_DHCP_RELAY_AGENTS_AND_SERVERS
+            isc_throw(SocketConfigError, "Failed to join " << ALL_DHCP_RELAY_AGENTS_AND_SERVERS
                       << " multicast group.");
         }
     }
