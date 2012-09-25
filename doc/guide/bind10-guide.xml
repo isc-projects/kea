@@ -1333,14 +1333,14 @@ TODO
           Each key has three attributes. One is a name by which it is referred
           both in DNS packets and the rest of the configuration. Another is the
           algorithm used to compute the signature. And the last part is base64
-          encoded secret, which might be any blob of binary data.
+          encoded secret, which might be any blob of data.
         </para>
 
         <para>
           The parts are written into a string, concatenated together by colons.
           So if you wanted to have a key called "example.key", used as HMAC-MD5
           key with secret "secret", you'd write it as:
-<screen>"example.key.:c2VjcmV0:hmac-md5"</screen>.
+<screen>"example.key.:c2VjcmV0:hmac-md5"</screen>
         </para>
 
         <para>
@@ -1458,9 +1458,8 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
         <para>
           The other is TSIG key by which the message was signed. The ACL
           contains only the name (under the name "key"), the key itself
-          must be stored in the global keyring. This property is applicable only
-          to the DNS context.
-<!-- TODO: Section for the keyring and link to it.-->
+          must be stored in the global <link linkend="tsig-key-ring">key ring</link>. This
+          property is applicable only to the DNS context.
         </para>
 
         <para>
@@ -2234,7 +2233,7 @@ Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
 
     <para>
       If you want to require TSIG in access control, a system wide TSIG
-      "key ring" must be configured.
+      <link linkend='tsig-key-ring'>key ring</link> must be configured.
       In this example, we allow client matching both the IP address
       and key.
     </para>
@@ -2454,7 +2453,7 @@ what is XfroutClient xfr_client??
 &gt; <userinput>config commit</userinput>
 </screen>
       The TSIG key must be configured system wide
-      (see <xref linkend="xfrout"/>.)
+      (see <xref linkend="common-tsig"/>.)
       </para>
 
       <para>
