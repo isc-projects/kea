@@ -45,8 +45,7 @@ LabelSequence::LabelSequence(const void* buf) {
     // Check the integrity on the offsets and the name data
     const uint8_t* dp = data_;
     for (size_t cur_offset = 0; cur_offset < offsets_len; ++cur_offset) {
-        if (offsets_[cur_offset] > Name::MAX_LABELLEN ||
-            dp - data_ != offsets_[cur_offset]) {
+        if (dp - data_ != offsets_[cur_offset] || *dp > Name::MAX_LABELLEN) {
             isc_throw(BadValue,
                       "Broken offset or name data in serialized "
                       "LabelSequence data");
