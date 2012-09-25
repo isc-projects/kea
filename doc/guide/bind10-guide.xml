@@ -1310,6 +1310,89 @@ TODO
       many modules. So we show them here in one place.
     </para>
 
+    <section id='common-tsig'>
+      <title>TSIG keys</title>
+
+      <para>
+        TSIG is a way to sign requests and responses in DNS. It is defined in
+        RFC 2845 and uses symmetric cryptography to sign the DNS messages. If
+        you want to make any use of TSIG (to authenticate transfers or DDNS,
+        for example), you need to set up shared secrets between the endpoints.
+      </para>
+
+      <para>
+        BIND 10 uses a global key ring for the secrets. It doesn't currently
+        mean they would be stored differently, they are just in one place of
+        the configuration.
+      </para>
+
+      <section id='tsig-key-syntax'>
+        <title>Key anatomy and syntax</title>
+
+        <para>
+          Each key has three attributes. One is a name by which it is referred
+          both in DNS packets and the rest of the configuration. Another is the
+          algorithm used to compute the signature. And the last part is base64
+          encoded secret, which might be any blob of binary data.
+        </para>
+
+        <para>
+          The parts are written into a string, concatenated together by colons.
+          So if you wanted to have a key called "example.key", used as HMAC-MD5
+          key with secret "secret", you'd write it as:
+<screen>"example.key.:c2VjcmV0:hmac-md5"</screen>.
+        </para>
+
+        <para>
+          The HMAC-MD5 algorithm is the default, so you can omit it. You could
+          write the same key as:
+<screen>"example.key.:c2VjcmV0"</screen>
+        </para>
+
+        <para>
+          You can also use these algorithms (which may not be omitted from the
+          key definition if used):
+          <itemizedlist>
+            <listitem>hmac-sha1</listitem>
+            <listitem>hmac-sha224</listitem>
+            <listitem>hmac-sha256</listitem>
+            <listitem>hmac-sha384</listitem>
+            <listitem>hmac-sha512</listitem>
+          </itemizedlist>
+        </para>
+
+        <para>
+          The name of the key must be a valid DNS name.
+        </para>
+      </section>
+
+      <section id='tsig-key-ring'>
+        <title>Key ring</title>
+        <para>
+          The key ring lives in the configuration in "tsig_keys/keys". Most of
+          the system uses the keys from there ‒ ACLs, authoritative server to
+          sign responses to signed queries, the <command>b10-xfrout</command>
+          to sign transfers. The <command>b10-xfrin</command> uses its own
+          configuration for keys, but that will be fixed in track ticket
+          <ulink url="http://bind10.isc.org/ticket/1351">#1351</ulink>.
+        </para>
+
+        <para>
+          The key ring is just a list of strings, each describing one key. So,
+          to add a new key, you can do this:
+          <screen>&gt; <userinput>config add tsig_keyring/keys "example.key.:c2VjcmV0"</userinput>
+&gt; <userinput>config show tsig_keyring/keys</userinput>
+tsig_keys/keys[0]   "example.key.:c2VjcmV0" string  (modified)
+&gt; <userinput>config commit</userinput></screen>
+        </para>
+
+        <para>
+          You can keep as many keys as you want in the key ring, but they must
+          have a different name each.
+        </para>
+      </section>
+    </section>
+
     <section id='common-acl'>
       <title>ACLs</title>
 
