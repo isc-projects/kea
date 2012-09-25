@@ -773,7 +773,8 @@ class TestMultiConfigData(unittest.TestCase):
         self.assertEqual(['Spec32'], config_items)
         config_items = self.mcd.get_config_item_list(None, True)
         self.assertEqual(['Spec32/named_set_item', 'Spec32/named_set_item2',
-                          'Spec32/named_set_item3'], config_items)
+                          'Spec32/named_set_item3', 'Spec32/named_set_item4'],
+                         config_items)
         self.mcd.set_value('Spec32/named_set_item', { "aaaa": 4, "aabb": 5,
                                                       "bbbb": 6})
         config_items = self.mcd.get_config_item_list("/Spec32/named_set_item",
@@ -787,6 +788,14 @@ class TestMultiConfigData(unittest.TestCase):
         config_items = self.mcd.get_config_item_list("/Spec32/named_set_item",
                                                      True)
         self.assertEqual(['Spec32/named_set_item'], config_items)
+
+        self.mcd.set_value('Spec32/named_set_item4', { "a": { "aa": 4 } } )
+        config_items = self.mcd.get_config_item_list("/Spec32/named_set_item4",
+                                                     True)
+        self.assertEqual(['Spec32/named_set_item4/a/'], config_items)
+        config_items = self.mcd.get_config_item_list("/Spec32/named_set_item4/a",
+                                                     True)
+        self.assertEqual(['Spec32/named_set_item4/a/aa'], config_items)
 
     def test_set_named_set_nonlocal(self):
         # Test whether a default named set is copied to local if a subitem
