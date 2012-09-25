@@ -2911,7 +2911,7 @@ Dhcp6/subnet6	         []     list    (default)</screen>
         <screen>
 &gt; <userinput>config add Dhcp6/subnet6</userinput>
 &gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:1::/64"</userinput>
-&gt; <userinput>config set Dhcp6/subnet6[0]/pool6 [ "2001:db8:1::1 - 2001:db8:1::ffff" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pool [ "2001:db8:1::1 - 2001:db8:1::ffff" ]</userinput>
 &gt; <userinput>config commit</userinput></screen>
         Please note that subnet is defined as a simple string, but the pool is
         an actual list of pools, therefore must be defined with square
@@ -2922,7 +2922,7 @@ Dhcp6/subnet6	         []     list    (default)</screen>
         is cumbersome. It can be expressed simply as 2001:db8:1:0:5::/80. Both
         formats are supported by Dhcp6. For example, one could define the following pools:
         <screen>
-&gt; <userinput>config set Dhcp6/subnet6[0]/pool6 [ "2001:db8:1::1 - 2001:db8:1::ffff", "2001:db8:1:0:5::/80" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pool [ "2001:db8:1::1 - 2001:db8:1::ffff", "2001:db8:1:0:5::/80" ]</userinput>
 &gt; <userinput>config commit</userinput></screen>
         Number of subnets is not limited, but for performance reasons it is recommended to keep
         them as low as possible.
@@ -2933,7 +2933,7 @@ Dhcp6/subnet6	         []     list    (default)</screen>
         <screen>
 &gt; <userinput>config add Dhcp6/subnet6</userinput>
 &gt; <userinput>config set Dhcp6/subnet6[1]/subnet "2001:db8:beef::/48"</userinput>
-&gt; <userinput>config set Dhcp6/subnet6[1]/pool6 [ "2001:db8:beef::/48" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/pool [ "2001:db8:beef::/48" ]</userinput>
 &gt; <userinput>config commit</userinput></screen>
         Arrays are counted from 0. subnet[0] refers to the subnet defined in the
         previous example.  The <command>config add Dhcp6/subnet6</command> adds

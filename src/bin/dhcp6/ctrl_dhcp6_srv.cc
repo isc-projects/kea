@@ -25,6 +25,7 @@
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/spec_config.h>
+#include <dhcp6/config_parser.h>
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
@@ -47,6 +48,13 @@ ConstElementPtr
 ControlledDhcpv6Srv::dhcp6ConfigHandler(ConstElementPtr new_config) {
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_UPDATE)
               .arg(new_config->str());
+
+    /// @todo: commented out as server is not able to understand partial
+    /// configuration (only the diff and not the whole configuration)
+    /* if (server_) {
+        configureDhcp6Server(*server_, new_config);
+        } */
+
     ConstElementPtr answer = isc::config::createAnswer(0,
                              "Thank you for sending config.");
     return (answer);
@@ -104,6 +112,12 @@ void ControlledDhcpv6Srv::establishSession() {
                                           dhcp6ConfigHandler,
                                           dhcp6CommandHandler, false);
     config_session_->start();
+
+    try {
+        configureDhcp6Server(*this, config_session_->getFullConfig());
+    } catch (const Dhcp6ConfigError& ex) {
+        LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL).arg(ex.what());
+    }
 
     /// Integrate the asynchronous I/O model of BIND 10 configuration
     /// control with the "select" model of the DHCP server.  This is

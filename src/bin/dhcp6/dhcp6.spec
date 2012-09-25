@@ -4,9 +4,16 @@
     "module_description": "DHCPv6 server daemon",
     "config_data": [
       { "item_name": "interface",
-        "item_type": "string",
+        "item_type": "list",
         "item_optional": false,
-        "item_default": "all"
+        "item_default": [ "all" ],
+        "list_item_spec":
+        {
+          "item_name": "interface_name",
+          "item_type": "string",
+          "item_optional": false,
+          "item_default": "all"
+        }
       } ,
 
       { "item_name": "renew-timer",
