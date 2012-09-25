@@ -615,15 +615,12 @@ const std::string & mcast) {
 
     if (inet_pton(AF_INET6, mcast.c_str(),
                   &mreq.ipv6mr_multiaddr) <= 0) {
-        cout << "Failed to convert " << ifname
-             << " to IPv6 multicast address." << endl;
         return (false);
     }
 
     mreq.ipv6mr_interface = if_nametoindex(ifname.c_str());
     if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP,
                    &mreq, sizeof(mreq)) < 0) {
-        cout << "Failed to join " << mcast << " multicast group." << endl;
         return (false);
     }
 
@@ -818,10 +815,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
         // nothing received and timeout has been reached
         return (Pkt4Ptr()); // NULL
     } else if (result < 0) {
-        cout << "Socket read error: " << strerror(errno) << endl;
-
-        /// @todo: perhaps throw here?
-        return (Pkt4Ptr()); // NULL
+        isc_throw(SocketReadError, strerror(errno));
     }
 
     // Let's find out which socket has the data
@@ -855,8 +849,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     }
 
     if (!candidate) {
-        cout << "Received data over unknown socket." << endl;
-        return (Pkt4Ptr()); // NULL
+        isc_throw(SocketReadError, "received data over unknown socket");
     }
 
     // Now we have a socket, let's get some data from it!
@@ -891,8 +884,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
 
     result = recvmsg(candidate->sockfd_, &m, 0);
     if (result < 0) {
-        cout << "Failed to receive UDP4 data." << endl;
-        return (Pkt4Ptr()); // NULL
+        isc_throw(SocketReadError, "failed to receive UDP4 data");
     }
 
     // We have all data let's create Pkt4 object.
@@ -915,8 +907,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     pkt->setLocalPort(candidate->port_);
 
     if (!os_receive4(m, pkt)) {
-        cout << "Unable to find pktinfo" << endl;
-        return (boost::shared_ptr<Pkt4>()); // NULL
+        isc_throw(SocketReadError, "unable to find pktinfo");
     }
 
     return (pkt);
@@ -977,10 +968,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         // nothing received and timeout has been reached
         return (Pkt6Ptr()); // NULL
     } else if (result < 0) {
-        cout << "Socket read error: " << strerror(errno) << endl;
-
-        /// @todo: perhaps throw here?
-        return (Pkt6Ptr()); // NULL
+        isc_throw(SocketReadError, strerror(errno));
     }
 
     // Let's find out which socket has the data
@@ -1014,8 +1002,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     }
 
     if (!candidate) {
-        cout << "Received data over unknown socket." << endl;
-        return (Pkt6Ptr()); // NULL
+        isc_throw(SocketReadError, "received data over unknown socket");
     }
 
     // Now we have a socket, let's get some data from it!
@@ -1081,12 +1068,10 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
             cmsg = CMSG_NXTHDR(&m, cmsg);
         }
         if (!found_pktinfo) {
-            cout << "Unable to find pktinfo" << endl;
-            return (Pkt6Ptr()); // NULL
+            isc_throw(SocketReadError, "unable to find pktinfo");
         }
     } else {
-        cout << "Failed to receive data." << endl;
-        return (Pkt6Ptr()); // NULL
+        isc_throw(SocketReadError, "failed to receive data");
     }
 
     // Let's create a packet.
@@ -1094,8 +1079,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     try {
         pkt = Pkt6Ptr(new Pkt6(buf, result));
     } catch (const std::exception& ex) {
-        cout << "Failed to create new packet." << endl;
-        return (Pkt6Ptr()); // NULL
+        isc_throw(SocketReadError, "failed to create new packet");
     }
 
     pkt->updateTimestamp();
@@ -1111,9 +1095,8 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     if (received) {
         pkt->setIface(received->getName());
     } else {
-        cout << "Received packet over unknown interface (ifindex="
-             << pkt->getIndex() << ")." << endl;
-        return (boost::shared_ptr<Pkt6>()); // NULL
+        isc_throw(SocketReadError, "received packet over unknown interface"
+                  << "(ifindex=" << pkt->getIndex() << ")");
     }
 
     return (pkt);
