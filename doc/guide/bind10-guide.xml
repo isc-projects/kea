@@ -1403,18 +1403,6 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
           will work in a similar way.
         </para>
 
-        <note>
-          <simpara>
-	    The list form is currently rejected due to an
-	    implementation bug.  There is a plan to fix it relatively
-	    soon, so the syntax is kept here, but note that it won't
-	    work until the bug is fixed.  To keep track of the status
-	    of the issue, see
-	    <ulink url="http://bind10.isc.org/ticket/2191">Trac #2191</ulink>.
-	    Until then, the value must be a single string.
-          </simpara>
-        </note>
-
         <para>
           If that is not enough, you can compose the matching conditions
           to logical expressions. They are called "ANY", "ALL" and "NOT".
