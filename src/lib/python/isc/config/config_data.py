@@ -807,13 +807,13 @@ class MultiConfigData:
                spec_part['named_set_item_spec']['item_type'] == 'named_set':
                 subslash = "/"
             values, status = self.get_value(item_name)
-            if len(values) > 0:
+            if values is not None and len(values) > 0:
                 return [ item_name + "/" + v + subslash for v in values.keys() ]
             else:
                 return [ item_name ]
         elif spec_part_is_list(spec_part):
             values, status = self.get_value(item_name)
-            if len(values) > 0:
+            if values is not None and len(values) > 0:
                 result = []
                 for i in range(len(values)):
                     name = item_name + '[%d]' % i

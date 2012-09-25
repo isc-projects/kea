@@ -419,6 +419,40 @@ class TestConfigCommands(unittest.TestCase):
     def tearDown(self):
         sys.stdout = self.stdout_backup
 
+    def test_cmd_has_identifier_param(self):
+        module = ModuleInfo(name = "test_module")
+
+        cmd = CommandInfo(name = "command_with_identifier")
+        param = ParamInfo(name = bindcmd.IDENTIFIER_PARAM)
+        cmd.add_param(param)
+        module.add_command(cmd)
+
+        cmd = CommandInfo(name = "command_without_identifier")
+        param = ParamInfo(name = "some_argument")
+        cmd.add_param(param)
+        module.add_command(cmd)
+
+        self.tool.add_module_info(module)
+
+        cmd = cmdparse.BindCmdParse("test_module command_with_identifier")
+        self.assertTrue(self.tool._cmd_has_identifier_param(cmd))
+
+        cmd = cmdparse.BindCmdParse("test_module command_without_identifier")
+        self.assertFalse(self.tool._cmd_has_identifier_param(cmd))
+
+        cmd = cmdparse.BindCmdParse("badmodule command_without_identifier")
+        self.assertFalse(self.tool._cmd_has_identifier_param(cmd))
+
+    def test_get_identifier_startswith(self):
+        hints = self.tool._get_identifier_startswith("/")
+        self.assertEqual([ 'foo/an_int', 'foo/a_list'], hints)
+
+        hints = self.tool._get_identifier_startswith("/foo/an")
+        self.assertEqual(['foo/an_int'], hints)
+
+        hints = self.tool._get_identifier_startswith("/bar")
+        self.assertEqual([], hints)
+
 class FakeBindCmdInterpreter(bindcmd.BindCmdInterpreter):
     def __init__(self):
         pass

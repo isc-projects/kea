@@ -48,19 +48,17 @@ except ImportError:
 # if we have readline support, use that, otherwise use normal stdio
 try:
     import readline
-    # This is a fix for the problem described in
-    # http://bind10.isc.org/ticket/1345
-    # If '-' is seen as a word-boundary, the final completion-step
-    # (as handled by the cmd module, and hence outside our reach) can
-    # mistakenly add data twice, resulting in wrong completion results
-    # The solution is to remove it.
-    delims = readline.get_completer_delims()
-    delims = delims.replace('-', '')
-    readline.set_completer_delims(delims)
+    # Only consider whitespace as word boundaries
+    readline.set_completer_delims(' \t\n')
 
     my_readline = readline.get_line_buffer
 except ImportError:
     my_readline = sys.stdin.readline
+
+# Used for tab-completion of 'identifiers' (i.e. config values)
+# If a command parameter has this name, the tab completion hints
+# are derived from config data
+IDENTIFIER_PARAM = 'identifier'
 
 CSV_FILE_NAME = 'default_user.csv'
 CONFIG_MODULE_NAME = 'config'
@@ -463,20 +461,24 @@ class BindCmdInterpreter(Cmd):
 
         Cmd.onecmd(self, line)
 
-    def remove_prefix(self, list, prefix):
-        """Removes the prefix already entered, and all elements from the
-           list that don't match it"""
-        if prefix.startswith('/'):
-            prefix = prefix[1:]
+    def _get_identifier_startswith(self, id_text):
+        """Return the tab-completion hints for identifiers starting with
+           id_text"""
+        # First get all items from the given module (up to the first /)
+        list = self.config_data.get_config_item_list(
+                        id_text.rpartition("/")[0], True)
+        hints = [val for val in list if val.startswith(id_text[1:])]
+        return hints
 
-        new_list = []
-        for val in list:
-            if val.startswith(prefix):
-                new_val = val[len(prefix):]
-                if new_val.startswith("/"):
-                    new_val = new_val[1:]
-                new_list.append(new_val)
-        return new_list
+    def _cmd_has_identifier_param(self, cmd):
+        """
+        Returns True if the given (parsed) command is known and has a
+        parameter which points to a config data identifier
+        """
+        if cmd.module not in self.modules:
+            return False
+        command = self.modules[cmd.module].get_command_with_name(cmd.command)
+        return command.has_param_with_name(IDENTIFIER_PARAM)
 
     def complete(self, text, state):
         if 0 == state:
@@ -491,17 +493,12 @@ class BindCmdInterpreter(Cmd):
                 else:
                     hints = self._get_param_startswith(cmd.module, cmd.command,
                                                        text)
-                    if cmd.module == CONFIG_MODULE_NAME:
-                        # grm text has been stripped of slashes...
-                        my_text = self.location + "/" + cur_line.rpartition(" ")[2]
-                        list = self.config_data.get_config_item_list(my_text.rpartition("/")[0], True)
-                        hints.extend([val for val in list if val.startswith(my_text[1:])])
-                        # remove the common prefix from the hints so we don't get it twice
-                        prefix, _, rest = my_text.rpartition("/")
-                        hints = self.remove_prefix(hints, prefix)
-                        # And prevent 'double addition' by also removing final
-                        # part matches
-                        hints = [ h for h in hints if h != rest ]
+                    if self._cmd_has_identifier_param(cmd):
+                        # For tab-completion of identifiers, replace hardcoded
+                        # hints with hints derived from the config data
+                        id_text = self.location + "/" + cur_line.rpartition(" ")[2]
+                        hints = self._get_identifier_startswith(id_text)
+
             except CmdModuleNameFormatError:
                 if not text:
                     hints = self.get_module_names()
@@ -522,12 +519,7 @@ class BindCmdInterpreter(Cmd):
             except BindCtlException:
                 hints = []
 
-            # there are a couple of 'standard' names that are usable, but
-            # should not be included in direct tab-completion
-            hints = [ h for h in hints if h not in [ 'argument', 'identifier']]
-
             self.hint = hints
-
 
         if state < len(self.hint):
             return self.hint[state]
