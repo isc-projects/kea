@@ -590,7 +590,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     // let's assume that every supported OS have lo interface
     IOAddress loAddr("::1");
@@ -639,7 +639,10 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     // we should accept both values as source ports.
     EXPECT_TRUE((rcvPkt->getRemotePort() == 10546) || (rcvPkt->getRemotePort() == 10547));
 
-    delete ifacemgr;
+    // try to receive data over the closed socket. Closed socket's descriptor is
+    // still being hold by IfaceMgr which will try to use it to receive data.
+    close(socket1);
+    EXPECT_THROW(ifacemgr->receive6(10), SocketReadError);
 }
 
 TEST_F(IfaceMgrTest, sendReceive4) {
@@ -647,7 +650,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     // let's assume that every supported OS have lo interface
     IOAddress loAddr("127.0.0.1");
@@ -695,8 +698,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
     EXPECT_EQ(true, ifacemgr->send(sendPkt));
 
-    rcvPkt = ifacemgr->receive4(10);
-
+    ASSERT_NO_THROW(rcvPkt = ifacemgr->receive4(10));
     ASSERT_TRUE(rcvPkt); // received our own packet
 
     ASSERT_NO_THROW(
@@ -730,7 +732,10 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     // assume the one or the other will always be choosen for sending data. We should
     // skip checking source port of sent address.
 
-    delete ifacemgr;
+    // try to receive data over the closed socket. Closed socket's descriptor is
+    // still being hold by IfaceMgr which will try to use it to receive data.
+    close(socket1);
+    EXPECT_THROW(ifacemgr->receive4(10), SocketReadError);
 }
 
 
@@ -1234,7 +1239,7 @@ TEST_F(IfaceMgrTest, controlSession) {
     EXPECT_NO_THROW(ifacemgr->set_session_socket(pipefd[0], my_callback));
 
     Pkt4Ptr pkt4;
-    pkt4 = ifacemgr->receive4(1);
+    ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(1));
 
     // Our callback should not be called this time (there was no data)
     EXPECT_FALSE(callback_ok);
@@ -1246,7 +1251,7 @@ TEST_F(IfaceMgrTest, controlSession) {
     EXPECT_EQ(38, write(pipefd[1], "Hi, this is a message sent over a pipe", 38));
 
     // ... and repeat
-    pkt4 = ifacemgr->receive4(1);
+    ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(1));
 
     // IfaceMgr should not process control socket data as incoming packets
     EXPECT_FALSE(pkt4);
