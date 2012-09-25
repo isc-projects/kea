@@ -1,6 +1,6 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-	       [<!ENTITY mdash "&#8212;">]>
+               [<!ENTITY mdash "&#8212;">]>
 <!--
  - Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  -
@@ -166,15 +166,15 @@
       <varlistentry>
         <term>notifyoutv4</term>
         <listitem><simpara>
-	 Number of IPv4 notifies per zone name sent out from Xfrout
-	</simpara></listitem>
+         Number of IPv4 notifies per zone name sent out from Xfrout
+        </simpara></listitem>
       </varlistentry>
 
       <varlistentry>
         <term>notifyoutv6</term>
         <listitem><simpara>
-	 Number of IPv6 notifies per zone name sent out from Xfrout
-	</simpara></listitem>
+         Number of IPv6 notifies per zone name sent out from Xfrout
+        </simpara></listitem>
       </varlistentry>
 
       <varlistentry>
@@ -187,7 +187,21 @@
       <varlistentry>
         <term>xfrreqdone</term>
         <listitem><simpara>
-	 Number of requested zone transfers per zone name completed
+         Number of requested zone transfers per zone name completed
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>ixfr_running</term>
+        <listitem><simpara>
+         Number of IXFRs in progress
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>axfr_running</term>
+        <listitem><simpara>
+         Number of AXFRs in progress
         </simpara></listitem>
       </varlistentry>
 
