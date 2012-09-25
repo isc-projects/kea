@@ -1,3 +1,9 @@
+478.	[func]		naokikambe
+	New statistics items added into b10-xfrout: ixfr_running and
+	axfr_running.  Their values can be obtained by invoking "Stats show
+	Xfrout" via bindctl while b10-xfrout is running.
+	(Trac #2222, git 91311bdbfea95f65c5e8bd8294ba08fac12405f1)
+
 477.	[bug]		jelte
 	Fixed a problem with b10-msgq on OSX when using a custom Python
 	installation, that offers an unreliable select.poll() interface.
