@@ -26,27 +26,10 @@
 namespace isc {
 namespace datasrc {
 namespace memory {
-
-class ZoneFinderResultContext {
-public:
-    /// \brief Constructor
-    ///
-    /// The first three parameters correspond to those of
-    /// ZoneFinder::ResultContext.  If node is non NULL, it specifies the
-    /// found RBNode in the search.
-    ZoneFinderResultContext(ZoneFinder::Result code_param,
-                            TreeNodeRRsetPtr rrset_param,
-                            ZoneFinder::FindResultFlags flags_param,
-                            const ZoneNode* node) :
-        code(code_param), rrset(rrset_param), flags(flags_param),
-        found_node(node)
-    {}
-
-    const ZoneFinder::Result code;
-    const TreeNodeRRsetPtr rrset;
-    const ZoneFinder::FindResultFlags flags;
-    const ZoneNode* const found_node;
-};
+namespace internal {
+// intermediate result context, only used in the zone finder implementation.
+class ZoneFinderResultContext;
+}
 
 std::string
 InMemoryZoneFinderNSEC3Calculate(const isc::dns::Name& name,
@@ -114,7 +97,7 @@ private:
     class Context;
 
     /// Actual implementation for both find() and findAll()
-    ZoneFinderResultContext find_internal(
+    internal::ZoneFinderResultContext find_internal(
         const isc::dns::Name& name,
         const isc::dns::RRType& type,
         std::vector<isc::dns::ConstRRsetPtr>* target,
