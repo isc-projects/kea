@@ -79,7 +79,7 @@ public:
         SHA1Reset(&sha1_ctx_);
     }
 
-    ~NSEC3HashRFC5155() {
+    virtual ~NSEC3HashRFC5155() {
         std::free(salt_data_);
     }
 
