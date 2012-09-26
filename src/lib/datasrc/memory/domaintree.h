@@ -373,9 +373,22 @@ private:
         }
     }
 
+    /// \brief returns if the node is a subtree's root node
+    ///
+    /// This method takes a node and returns \c true if it is the root
+    /// node of the subtree it belongs to.
+    ///
+    /// This method never throws an exception.
     bool isSubTreeRoot() const {
         return ((flags_ & FLAG_SUBTREE_ROOT) != 0);
     }
+
+    /// \brief returns the root of its subtree
+    ///
+    /// This method takes a node and returns the root of its subtree.
+    ///
+    /// This method never throws an exception.
+    const DomainTreeNode<T>* getSubTreeRoot() const;
 
 public:
     /// \brief returns the parent of the root of its subtree
@@ -388,7 +401,6 @@ public:
     /// This method never throws an exception.
     const DomainTreeNode<T>* getUpperNode() const;
 
-private:
     /// \brief return the next node which is bigger than current node
     /// in the same subtree
     ///
@@ -423,6 +435,7 @@ private:
     /// This method never throws an exception.
     const DomainTreeNode<T>* predecessor() const;
 
+private:
     /// \brief private shared implementation of successor and predecessor
     ///
     /// As the two mentioned functions are merely mirror images of each other,
@@ -538,7 +551,7 @@ DomainTreeNode<T>::~DomainTreeNode() {
 
 template <typename T>
 const DomainTreeNode<T>*
-DomainTreeNode<T>::getUpperNode() const {
+DomainTreeNode<T>::getSubTreeRoot() const {
     const DomainTreeNode<T>* current = this;
 
     // current would never be equal to NULL here (in a correct tree
@@ -547,7 +560,13 @@ DomainTreeNode<T>::getUpperNode() const {
         current = current->getParent();
     }
 
-    return (current->getParent());
+    return (current);
+}
+
+template <typename T>
+const DomainTreeNode<T>*
+DomainTreeNode<T>::getUpperNode() const {
+    return (getSubTreeRoot()->getParent());
 }
 
 template <typename T>
@@ -555,7 +574,17 @@ isc::dns::LabelSequence
 DomainTreeNode<T>::getAbsoluteLabels(
     uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH]) const
 {
-    isc::dns::LabelSequence result(getLabels(), buf);
+    // If the current node already has absolute labels, just return it.
+    // This should normally be the case for the origin node if this tree
+    // is used to represent a single DNS zone.
+    const isc::dns::LabelSequence cur_labels(getLabels());
+    if (cur_labels.isAbsolute()) {
+        return (cur_labels);
+    }
+
+    // Otherwise, build the absolute sequence traversing the tree of tree
+    // toward the top root.
+    isc::dns::LabelSequence result(cur_labels, buf);
     const DomainTreeNode<T>* upper = getUpperNode();
     while (upper != NULL) {
         result.extend(upper->getLabels(), buf);
@@ -672,14 +701,26 @@ public:
     /// The default constructor.
     ///
     /// \exception None
-    DomainTreeNodeChain() : node_count_(0), last_compared_(NULL),
+    DomainTreeNodeChain() : level_count_(0), last_compared_(NULL),
                         // XXX: meaningless initial values:
                         last_comparison_(0, 0,
                                          isc::dns::NameComparisonResult::EQUAL)
     {}
 
+    /// \brief Copy constructor.
+    ///
+    /// \exception None
+    DomainTreeNodeChain(const DomainTreeNodeChain<T>& other) :
+        level_count_(other.level_count_),
+        last_compared_(other.last_compared_),
+        last_comparison_(other.last_comparison_)
+    {
+        for (size_t i = 0; i < level_count_; i++) {
+            nodes_[i] = other.nodes_[i];
+        }
+    }
+
 private:
-    DomainTreeNodeChain(const DomainTreeNodeChain<T>&);
     DomainTreeNodeChain<T>& operator=(const DomainTreeNodeChain<T>&);
     //@}
 
@@ -691,7 +732,7 @@ public:
     ///
     /// \exception None
     void clear() {
-        node_count_ = 0;
+        level_count_ = 0;
         last_compared_ = NULL;
     }
 
@@ -732,7 +773,7 @@ public:
     /// chain, 0 will be returned.
     ///
     /// \exception None
-    unsigned int getLevelCount() const { return (node_count_); }
+    size_t getLevelCount() const { return (level_count_); }
 
     /// \brief return the absolute name for the node which this
     /// \c DomainTreeNodeChain currently refers to.
@@ -750,11 +791,11 @@ public:
 
         const DomainTreeNode<T>* top_node = top();
         isc::dns::Name absolute_name = top_node->getName();
-        int node_count = node_count_ - 1;
-        while (node_count > 0) {
-            top_node = nodes_[node_count - 1];
+        size_t level = level_count_ - 1;
+        while (level > 0) {
+            top_node = nodes_[level - 1];
             absolute_name = absolute_name.concatenate(top_node->getName());
-            --node_count;
+            --level;
         }
         return (absolute_name);
     }
@@ -768,7 +809,7 @@ private:
     /// \brief return whether node chain has node in it.
     ///
     /// \exception None
-    bool isEmpty() const { return (node_count_ == 0); }
+    bool isEmpty() const { return (level_count_ == 0); }
 
     /// \brief return the top node for the node chain
     ///
@@ -778,7 +819,7 @@ private:
     /// \exception None
     const DomainTreeNode<T>* top() const {
         assert(!isEmpty());
-        return (nodes_[node_count_ - 1]);
+        return (nodes_[level_count_ - 1]);
     }
 
     /// \brief pop the top node from the node chain
@@ -789,7 +830,7 @@ private:
     /// \exception None
     void pop() {
         assert(!isEmpty());
-        --node_count_;
+        --level_count_;
     }
 
     /// \brief add the node into the node chain
@@ -800,8 +841,8 @@ private:
     ///
     /// \exception None
     void push(const DomainTreeNode<T>* node) {
-        assert(node_count_ < RBT_MAX_LEVEL);
-        nodes_[node_count_++] = node;
+        assert(level_count_ < RBT_MAX_LEVEL);
+        nodes_[level_count_++] = node;
     }
 
 private:
@@ -810,7 +851,7 @@ private:
     // it's also equal to the possible maximum level.
     const static int RBT_MAX_LEVEL = isc::dns::Name::MAX_LABELS;
 
-    int node_count_;
+    size_t level_count_;
     const DomainTreeNode<T>* nodes_[RBT_MAX_LEVEL];
     const DomainTreeNode<T>* last_compared_;
     isc::dns::NameComparisonResult last_comparison_;
@@ -1265,12 +1306,20 @@ public:
     const DomainTreeNode<T>*
     previousNode(DomainTreeNodeChain<T>& node_path) const;
 
+    /// \brief return the largest node in the tree of trees.
+    ///
+    /// \throw none
+    ///
+    /// \return A \c DomainTreeNode that is the largest node in the
+    /// tree. If there are no nodes, then \c NULL is returned.
+    const DomainTreeNode<T>* largestNode() const;
+
     /// \brief Get the total number of nodes in the tree
     ///
     /// It includes nodes internally created as a result of adding a domain
     /// name that is a subdomain of an existing node of the tree.
     /// This function is mainly intended to be used for debugging.
-    int getNodeCount() const { return (node_count_); }
+    uint32_t getNodeCount() const { return (node_count_); }
 
     /// \name Debug function
     //@{
@@ -1402,8 +1451,15 @@ private:
     //@}
 
     typename DomainTreeNode<T>::DomainTreeNodePtr root_;
-    /// the node count of current tree
-    unsigned int node_count_;
+
+    /// the node count of current tree.
+    ///
+    /// Note: uint32_t may look awkward, but we intentionally choose it so
+    /// that needsReturnEmptyNode_ below won't make cause extra padding
+    /// in 64-bit machines (and we can minimize the total size of this class).
+    /// 2^32 - 1 should be a reasonable max of possible number of nodes.
+    uint32_t node_count_;
+
     /// search policy for domaintree
     const bool needsReturnEmptyNode_;
 };
@@ -1706,6 +1762,24 @@ DomainTree<T>::previousNode(DomainTreeNodeChain<T>& node_path) const {
 
     // Now, if the current node has no down_ pointer any more, it's the
     // correct one.
+    return (node);
+}
+
+template <typename T>
+const DomainTreeNode<T>*
+DomainTree<T>::largestNode() const {
+    const DomainTreeNode<T>* node = root_.get();
+    while (node != NULL) {
+        // We go right first, then down.
+        if (node->getRight() != NULL) {
+            node = node->getRight();
+        } else if (node->getDown() != NULL) {
+            node = node->getDown();
+        } else {
+            break;
+        }
+    }
+
     return (node);
 }
 
