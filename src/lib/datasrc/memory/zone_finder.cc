@@ -23,13 +23,11 @@
 #include <dns/name.h>
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
-
-#include <util/buffer.h>
-#include <util/encode/base32hex.h>
-#include <util/hash/sha1.h>
+#include <dns/nsec3hash.h>
 
 #include <datasrc/logger.h>
 
+#include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
 
 #include <algorithm>
@@ -38,9 +36,6 @@
 using namespace isc::dns;
 using namespace isc::datasrc::memory;
 using namespace isc::datasrc;
-using namespace isc::util;
-using namespace isc::util::encode;
-using namespace isc::util::hash;
 
 namespace isc {
 namespace datasrc {
@@ -190,6 +185,27 @@ bool cutCallback(const ZoneNode& node, FindState* state) {
     // in case assert is turned off. Otherwise we could get "Control
     // reached end of non-void function".
     return (false);
+}
+
+/// Creates a NSEC3 ConstRRsetPtr for the given ZoneNode inside the
+/// NSEC3 tree, for the given RRClass.
+///
+/// It asserts that the node contains data (RdataSet) and is of type
+/// NSEC3.
+///
+/// \param node The ZoneNode inside the NSEC3 tree
+/// \param rrclass The RRClass as passed by the client
+ConstRRsetPtr
+createNSEC3RRset(const ZoneNode* node, const RRClass& rrclass) {
+     const RdataSet* rdataset = node->getData();
+     // Only NSEC3 ZoneNodes are allowed to be passed to this method. We
+     // assert that these have data, and also are of type NSEC3.
+     assert(rdataset != NULL);
+     assert(rdataset->type == RRType::NSEC3());
+
+    // Create the RRset.  Note the DNSSEC flag: NSEC3 implies DNSSEC.
+    return (createTreeNodeRRset(node, rdataset, rrclass,
+                                ZoneFinder::FIND_DNSSEC));
 }
 
 // convenience function to fill in the final details
@@ -504,44 +520,6 @@ FindNodeResult findNode(const ZoneData& zone_data,
 
 } // end anonymous namespace
 
-inline void
-iterateSHA1(SHA1Context* ctx, const uint8_t* input, size_t inlength,
-            const uint8_t* salt, size_t saltlen,
-            uint8_t output[SHA1_HASHSIZE])
-{
-    SHA1Reset(ctx);
-    SHA1Input(ctx, input, inlength);
-    SHA1Input(ctx, salt, saltlen); // this works whether saltlen == or > 0
-    SHA1Result(ctx, output);
-}
-
-std::string
-InMemoryZoneFinderNSEC3Calculate(const Name& name,
-                                 const uint16_t iterations,
-                                 const uint8_t* salt,
-                                 size_t salt_len) {
-    // We first need to normalize the name by converting all upper case
-    // characters in the labels to lower ones.
-    OutputBuffer obuf(Name::MAX_WIRE);
-    Name name_copy(name);
-    name_copy.downcase();
-    name_copy.toWire(obuf);
-
-    const uint8_t* const salt_buf = (salt_len > 0) ? salt : NULL;
-    std::vector<uint8_t> digest(SHA1_HASHSIZE);
-    uint8_t* const digest_buf = &digest[0];
-
-    SHA1Context sha1_ctx;
-    iterateSHA1(&sha1_ctx, static_cast<const uint8_t*>(obuf.getData()),
-                obuf.getLength(), salt_buf, salt_len, digest_buf);
-    for (unsigned int n = 0; n < iterations; ++n) {
-        iterateSHA1(&sha1_ctx, digest_buf, SHA1_HASHSIZE,
-                    salt_buf, salt_len,
-                    digest_buf);
-    }
-
-    return (encodeBase32Hex(digest));
-}
 
 /// \brief Specialization of the ZoneFinder::Context for the in-memory finder.
 ///
@@ -827,60 +805,91 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FINDNSEC3).arg(name).
         arg(recursive ? "recursive" : "non-recursive");
 
+    uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+    const LabelSequence origin_ls(zone_data_.getOriginNode()->
+                                  getAbsoluteLabels(labels_buf));
+    const LabelSequence name_ls(name);
+
     if (!zone_data_.isNSEC3Signed()) {
         isc_throw(DataSourceError,
                   "findNSEC3 attempt for non NSEC3 signed zone: " <<
-                  getOrigin() << "/" << getClass());
+                  origin_ls << "/" << getClass());
     }
 
-    const NameComparisonResult cmp_result = name.compare(getOrigin());
+    const NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
+    // This would be a programming mistake, as ZoneData::isNSEC3Signed()
+    // should check this.
+    assert(nsec3_data != NULL);
+
+    const ZoneTree& tree = nsec3_data->getNSEC3Tree();
+    if (tree.getNodeCount() == 0) {
+        isc_throw(DataSourceError,
+                  "findNSEC3 attempt but zone has no NSEC3 RRs: " <<
+                  origin_ls << "/" << getClass());
+    }
+
+    const NameComparisonResult cmp_result = name_ls.compare(origin_ls);
     if (cmp_result.getRelation() != NameComparisonResult::EQUAL &&
         cmp_result.getRelation() != NameComparisonResult::SUBDOMAIN) {
         isc_throw(OutOfZone, "findNSEC3 attempt for out-of-zone name: "
-                  << name << ", zone: " << getOrigin() << "/"
+                  << name_ls << ", zone: " << origin_ls << "/"
                   << getClass());
     }
 
     // Convenient shortcuts
-    const ZoneFinder::FindOptions options =
-        ZoneFinder::FIND_DNSSEC; // NSEC3 implies DNSSEC
-    const unsigned int olabels = getOrigin().getLabelCount();
+    const unsigned int olabels = origin_ls.getLabelCount();
     const unsigned int qlabels = name.getLabelCount();
-    const NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
+    // placeholder of the next closer proof
+    const ZoneNode* covering_node(NULL);
 
-    const ZoneNode* covering_node(NULL); // placeholder of the next closer proof
+    // Now we'll first look up the origin node and initialize orig_chain
+    // with it.
+    ZoneChain orig_chain;
+    const ZoneNode* node(NULL);
+    ZoneTree::Result result =
+         tree.find<void*>(origin_ls, &node, orig_chain, NULL, NULL);
+    if (result != ZoneTree::EXACTMATCH) {
+        // If the origin node doesn't exist, simply fail.
+        isc_throw(DataSourceError,
+                  "findNSEC3 attempt but zone has no NSEC3 RRs: " <<
+                  origin_ls << "/" << getClass());
+    }
+
+    const boost::scoped_ptr<NSEC3Hash> hash
+        (NSEC3Hash::create(nsec3_data->hashalg,
+                           nsec3_data->iterations,
+                           nsec3_data->getSaltData(),
+                           nsec3_data->getSaltLen()));
+
     // Examine all names from the query name to the origin name, stripping
     // the deepest label one by one, until we find a name that has a matching
     // NSEC3 hash.
     for (unsigned int labels = qlabels; labels >= olabels; --labels) {
-        const std::string hlabel = (nsec3_calculate_)
-            ((labels == qlabels ?
-              name : name.split(qlabels - labels, labels)),
-             nsec3_data->iterations,
-             nsec3_data->getSaltData(),
-             nsec3_data->getSaltLen());
+        const Name& hname = (labels == qlabels ?
+                             name : name.split(qlabels - labels, labels));
+        const std::string hlabel = hash->calculate(hname);
 
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FINDNSEC3_TRYHASH).
             arg(name).arg(labels).arg(hlabel);
 
-        const ZoneTree& tree = nsec3_data->getNSEC3Tree();
+        node = NULL;
+        ZoneChain chain(orig_chain);
 
-        ZoneNode* node(NULL);
-        ZoneChain chain;
+        // Now, make a label sequence relative to the origin.
+        const Name hlabel_name(hlabel);
+        LabelSequence hlabel_ls(hlabel_name);
+        // Remove trailing '.' making it relative
+        hlabel_ls.stripRight(1);
 
-        ZoneTree::Result result =
-            tree.find(Name(hlabel + "." + getOrigin().toText()), &node, chain);
-
+        // Find hlabel relative to the orig_chain.
+        result = tree.find<void*>(hlabel_ls, &node, chain, NULL, NULL);
         if (result == ZoneTree::EXACTMATCH) {
             // We found an exact match.
-            RdataSet* set = node->getData();
-            ConstRRsetPtr closest = createTreeNodeRRset(node, set, getClass(),
-                                                        options);
-            ConstRRsetPtr next =
-                createTreeNodeRRset(covering_node,
-                                    (covering_node != NULL ?
-                                     covering_node->getData() : NULL),
-                                    getClass(), options);
+            ConstRRsetPtr closest = createNSEC3RRset(node, getClass());
+            ConstRRsetPtr next;
+            if (covering_node != NULL) {
+                next = createNSEC3RRset(covering_node, getClass());
+            }
 
             LOG_DEBUG(logger, DBG_TRACE_BASIC,
                       DATASRC_MEM_FINDNSEC3_MATCH).arg(name).arg(labels).
@@ -888,37 +897,19 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
 
             return (FindNSEC3Result(true, labels, closest, next));
         } else {
-            const NameComparisonResult& last_cmp =
-                chain.getLastComparisonResult();
-            const ZoneNode* last_node = chain.getLastComparedNode();
-            assert(last_cmp.getOrder() != 0);
-
-            // find() finished in between one of these and last_node:
-            const ZoneNode* previous_node = last_node->predecessor();
-            const ZoneNode* next_node = last_node->successor();
-
-            // If the given hash is larger than the largest stored hash or
-            // the first label doesn't match the target, identify the "previous"
-            // hash value and remember it as the candidate next closer proof.
-            if (((last_cmp.getOrder() < 0) && (previous_node == NULL)) ||
-                ((last_cmp.getOrder() > 0) && (next_node == NULL))) {
-                covering_node = last_node->getLargestInSubTree();
-            } else {
-                // Otherwise, H(found_entry-1) < given_hash < H(found_entry).
-                // The covering proof is the first one (and it's valid
-                // because found is neither begin nor end)
-                covering_node = previous_node;
+            while ((covering_node = tree.previousNode(chain)) != NULL &&
+                   covering_node->isEmpty()) {
+                ;
+            }
+            if (covering_node == NULL) {
+                covering_node = tree.largestNode();
             }
 
             if (!recursive) {   // in non recursive mode, we are done.
-                ConstRRsetPtr closest =
-                    createTreeNodeRRset(covering_node,
-                                        (covering_node != NULL ?
-                                         covering_node->getData() :
-                                         NULL),
-                                        getClass(), options);
+                ConstRRsetPtr closest;
+                if (covering_node != NULL) {
+                    closest = createNSEC3RRset(covering_node, getClass());
 
-                if (closest) {
                     LOG_DEBUG(logger, DBG_TRACE_BASIC,
                               DATASRC_MEM_FINDNSEC3_COVER).
                         arg(name).arg(*closest);
