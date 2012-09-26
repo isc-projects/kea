@@ -982,6 +982,13 @@ TEST_F(DomainTreeTest, previousNode) {
 TEST_F(DomainTreeTest, largestNode) {
     cdtnode = dtree.largestNode();
     EXPECT_EQ(Name("k"), cdtnode->getName());
+
+    // Check for largest node in an empty tree.
+    TreeHolder empty_tree_holder
+        (mem_sgmt_, TestDomainTree::create(mem_sgmt_));
+    TestDomainTree& empty_tree(*empty_tree_holder.get());
+    EXPECT_EQ(static_cast<void*>(NULL),
+              empty_tree.largestNode());
 }
 
 TEST_F(DomainTreeTest, nextNodeError) {
