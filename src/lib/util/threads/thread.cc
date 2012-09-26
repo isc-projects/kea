@@ -22,7 +22,9 @@
 
 #include <pthread.h>
 
-using namespace std;
+using std::string;
+using std::exception;
+using std::auto_ptr;
 
 namespace isc {
 namespace util {
