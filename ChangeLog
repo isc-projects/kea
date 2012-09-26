@@ -1,6 +1,6 @@
 480.	[doc]		vorner
 	Added documentation about global TSIG key ring to the Guide.
-	(Trac #2189, git ....)
+	(Trac #2189, git 52177bb31f5fb8e134aecb9fd039c368684ad2df)
 
 479.	[func]		marcin
 	Refactored perfdhcp tool to C++, added missing unit tests and removed
