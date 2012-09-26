@@ -716,7 +716,7 @@ public:
         last_comparison_(other.last_comparison_)
     {
         for (size_t i = 0; i < level_count_; i++) {
-	    nodes_[i] = other.nodes_[i];
+            nodes_[i] = other.nodes_[i];
         }
     }
 
@@ -1776,8 +1776,8 @@ DomainTree<T>::largestNode() const {
         } else if (node->getDown() != NULL) {
             node = node->getDown();
         } else {
-	    break;
-	}
+            break;
+        }
     }
 
     return (node);
