@@ -63,8 +63,8 @@ public:
         const;
     virtual isc::dns::NSEC3Hash* create(const isc::dns::rdata::generic::NSEC3&)
         const;
-    virtual isc::dns::NSEC3Hash* create(uint8_t algorithm, uint16_t iterations,
-					const std::vector<uint8_t>& salt)
+    virtual isc::dns::NSEC3Hash* create(uint8_t, uint16_t,
+                                        const uint8_t*, size_t)
         const;
 };
 
