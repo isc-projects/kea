@@ -593,7 +593,17 @@ isc::dns::LabelSequence
 DomainTreeNode<T>::getAbsoluteLabels(
     uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH]) const
 {
-    isc::dns::LabelSequence result(getLabels(), buf);
+    // If the current node already has absolute labels, just return it.
+    // This should normally be the case for the origin node if this tree
+    // is used to represent a single DNS zone.
+    const isc::dns::LabelSequence cur_labels(getLabels());
+    if (cur_labels.isAbsolute()) {
+        return (cur_labels);
+    }
+
+    // Otherwise, build the absolute sequence traversing the tree of tree
+    // toward the top root.
+    isc::dns::LabelSequence result(cur_labels, buf);
     const DomainTreeNode<T>* upper = getUpperNode();
     while (upper != NULL) {
         result.extend(upper->getLabels(), buf);
