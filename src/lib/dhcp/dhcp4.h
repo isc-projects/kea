@@ -39,6 +39,9 @@
 namespace isc {
 namespace dhcp {
 
+/* IPv4 Broadcast address */
+#define DHCP_IPV4_BROADCAST_ADDRESS "255.255.255.255"
+
 /* BOOTP (rfc951) message types */
 enum BOOTPTypes {
     BOOTREQUEST = 1,

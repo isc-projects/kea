@@ -166,6 +166,7 @@ TEST_F(StatsMgrTest, Constructor) {
     EXPECT_EQ(0, stats_mgr->getUnorderedLookups(StatsMgr4::XCHG_DO));
     EXPECT_EQ(0, stats_mgr->getSentPacketsNum(StatsMgr4::XCHG_DO));
     EXPECT_EQ(0, stats_mgr->getRcvdPacketsNum(StatsMgr4::XCHG_DO));
+    EXPECT_EQ(0, stats_mgr->getCollectedNum(StatsMgr4::XCHG_DO));
 
     EXPECT_THROW(stats_mgr->getAvgDelay(StatsMgr4::XCHG_DO), InvalidOperation);
     EXPECT_THROW(stats_mgr->getStdDevDelay(StatsMgr4::XCHG_DO),
@@ -342,7 +343,7 @@ TEST_F(StatsMgrTest, Orphans) {
 TEST_F(StatsMgrTest, Delays) {
 
     boost::shared_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
-    stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
+    stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO, 5);
 
     // Send DISCOVER, wait 2s and receive OFFER. This will affect
     // counters in Stats Manager.

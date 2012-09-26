@@ -73,14 +73,19 @@ public:
         /// \brief Increment operator.
         const CustomCounter& operator++() {
             ++counter_;
-            return(*this);
+            return (*this);
         }
 
         /// \brief Increment operator.
         const CustomCounter& operator++(int) {
             CustomCounter& this_counter(*this);
             operator++();
-            return(this_counter);
+            return (this_counter);
+        }
+
+        const CustomCounter& operator+=(int val) {
+            counter_ += val;
+            return (*this);
         }
 
         /// \brief Return counter value.
@@ -251,24 +256,30 @@ public:
         /// \brief Constructor
         ///
         /// \param xchg_type exchange type
+        /// \param drop_time maximum time elapsed before packet is
+        /// assumed dropped. Negative value disables it.
         /// \param archive_enabled if true packets archive mode is enabled.
         /// In this mode all packets are stored throughout the test execution.
-        ExchangeStats(const ExchangeType xchg_type, const bool archive_enabled)
+        ExchangeStats(const ExchangeType xchg_type,
+                      const double drop_time,
+                      const bool archive_enabled)
             : xchg_type_(xchg_type),
-            sent_packets_(),
-            rcvd_packets_(),
-            archived_packets_(),
-            archive_enabled_(archive_enabled),
-            min_delay_(std::numeric_limits<double>::max()),
-            max_delay_(0.),
-            sum_delay_(0.),
-            sum_delay_squared_(0.),
-            orphans_(0),
-            unordered_lookup_size_sum_(0),
-            unordered_lookups_(0),
-            ordered_lookups_(0),
-            sent_packets_num_(0),
-            rcvd_packets_num_(0)
+              sent_packets_(),
+              rcvd_packets_(),
+              archived_packets_(),
+              archive_enabled_(archive_enabled),
+              drop_time_(drop_time),
+              min_delay_(std::numeric_limits<double>::max()),
+              max_delay_(0.),
+              sum_delay_(0.),
+              sum_delay_squared_(0.),
+              orphans_(0),
+              collected_(0),
+              unordered_lookup_size_sum_(0),
+              unordered_lookups_(0),
+              ordered_lookups_(0),
+              sent_packets_num_(0),
+              rcvd_packets_num_(0)
         {
             next_sent_ = sent_packets_.begin();
         }
@@ -370,6 +381,8 @@ public:
         /// not found
         boost::shared_ptr<T>
         matchPackets(const boost::shared_ptr<T>& rcvd_packet) {
+            using namespace boost::posix_time;
+
             if (!rcvd_packet) {
                 isc_throw(BadValue, "Received packet is null");
             }
@@ -431,6 +444,20 @@ public:
                         next_sent_ =
                             sent_packets_.template project<0>(it);
                         break;
+                    }
+                    ptime now = microsec_clock::universal_time();
+                    ptime packet_time = (*it)->getTimestamp();
+                    time_period packet_period(packet_time, now);
+                    if (!packet_period.is_null()) {
+                        double period_fractional =
+                            packet_period.length().total_seconds() +
+                            (static_cast<double>(packet_period.length().fractional_seconds())
+                             / packet_period.length().ticks_per_second());
+                        if (drop_time_ > 0 &&
+                            (period_fractional > drop_time_)) {
+                            eraseSent(sent_packets_.template project<0>(it));
+                            ++collected_;
+                        }
                     }
                 }
             }
@@ -509,6 +536,17 @@ public:
         ///
         /// \return number of orphant received packets.
         uint64_t getOrphans() const { return(orphans_); }
+
+        /// \brief Return number of garbage collected packets.
+        ///
+        /// Method returns number of garbage collected timed out
+        /// packets. Packet is assumed timed out when duration
+        /// between sending it to server and receiving server's
+        /// response is greater than value specified with -d<value>
+        /// command line argument.
+        ///
+        /// \return number of garbage collected packets.
+        uint64_t getCollectedNum() const { return(collected_); }
 
         /// \brief Return average unordered lookup set size.
         ///
@@ -603,9 +641,10 @@ public:
                      << "avg delay: " << getAvgDelay() * 1e3 << " ms" << endl
                      << "max delay: " << getMaxDelay() * 1e3 << " ms" << endl
                      << "std deviation: " << getStdDevDelay() * 1e3 << " ms"
-                     << endl;
+                     << endl
+                     << "collected packets: " << getCollectedNum() << endl;
             } catch (const Exception& e) {
-                cout << "Unavailable! No packets received." << endl;
+                cout << "Delay summary unavailable! No packets received." << endl;
             }
         }
 
@@ -644,7 +683,7 @@ public:
                     idx.equal_range(hashTransid(rcvd_packet));
                 for (PktListTransidHashIterator it_archived = p.first;
                      it_archived != p.second;
-                     ++it) {
+                     ++it_archived) {
                     if ((*it_archived)->getTransid() ==
                         rcvd_packet->getTransid()) {
                         boost::shared_ptr<T> sent_packet = *it_archived;
@@ -733,6 +772,10 @@ public:
         /// to keep all packets archived throughout the test.
         bool archive_enabled_;
 
+        /// Maxmimum time elapsed between sending and receiving packet
+        /// before packet is assumed dropped.
+        double drop_time_;
+
         double min_delay_;             ///< Minimum delay between sent
                                        ///< and received packets.
         double max_delay_;             ///< Maximum delay between sent
@@ -743,6 +786,8 @@ public:
                                        ///< sent and recived packets.
 
         uint64_t orphans_;   ///< Number of orphant received packets.
+
+        uint64_t collected_; ///< Number of garbage collected packets.
 
         /// Sum of unordered lookup sets. Needed to calculate mean size of
         /// lookup set. It is desired that number of unordered lookups is
@@ -786,7 +831,6 @@ public:
     /// archive mode is enabled.
     StatsMgr(const bool archive_enabled = false) :
         exchanges_(),
-        custom_counters_(),
         archive_enabled_(archive_enabled),
         boot_time_(boost::posix_time::microsec_clock::universal_time()) {
     }
@@ -798,13 +842,18 @@ public:
     /// type.
     ///
     /// \param xchg_type exchange type.
+    /// \param drop_time maximum time elapsed before packet is
+    /// assumed dropped. Negative value disables it.
     /// \throw isc::BadValue if exchange of specified type exists.
-    void addExchangeStats(const ExchangeType xchg_type) {
+    void addExchangeStats(const ExchangeType xchg_type,
+                          const double drop_time = -1) {
         if (exchanges_.find(xchg_type) != exchanges_.end()) {
             isc_throw(BadValue, "Exchange of specified type already added.");
         }
         exchanges_[xchg_type] =
-            ExchangeStatsPtr(new ExchangeStats(xchg_type, archive_enabled_));
+            ExchangeStatsPtr(new ExchangeStats(xchg_type,
+                                               drop_time,
+                                               archive_enabled_));
     }
 
     /// \brief Add named custom uint64 counter.
@@ -822,6 +871,20 @@ public:
         }
         custom_counters_[short_name] =
             CustomCounterPtr(new CustomCounter(long_name));
+    }
+
+    /// \brief Check if any packet drops occured.
+    ///
+    // \return true, if packet drops occured.
+    bool droppedPackets() const {
+        for (ExchangesMapIterator it = exchanges_.begin();
+             it != exchanges_.end();
+             ++it) {
+            if (it->second->getDroppedPacketsNum() > 0) {
+                return (true);
+            }
+        }
+        return (false);
     }
 
     /// \brief Return specified counter.
@@ -844,11 +907,14 @@ public:
     ///
     /// Increement counter value by one.
     ///
-    /// \param counter_key key poitinh to the counter in the counters map.
+    /// \param counter_key key poiting to the counter in the counters map.
+    /// \param value value to increment counter by.
     /// \return pointer to specified counter after incrementation.
-    const CustomCounter& incrementCounter(const std::string& counter_key) {
+    const CustomCounter& incrementCounter(const std::string& counter_key,
+                                          const uint64_t value = 1) {
         CustomCounterPtr counter = getCounter(counter_key);
-        return(++(*counter));
+        *counter += value;
+        return (*counter);
     }
 
     /// \brief Adds new packet to the sent packets list.
@@ -1041,6 +1107,22 @@ public:
         return(xchg_stats->getDroppedPacketsNum());
     }
 
+    /// \brief Return number of garbage collected packets.
+    ///
+    /// Method returns number of garbage collected timed out
+    /// packets. Packet is assumed timed out when duration
+    /// between sending it to server and receiving server's
+    /// response is greater than value specified with -d<value>
+    /// command line argument.
+    ///
+    /// \throw isc::BadValue if invalid exchange type specified.
+    /// \return number of garbage collected packets.
+    uint64_t getCollectedNum(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return(xchg_stats->getCollectedNum());
+    }
+
+
     /// \brief Get time period since the start of test.
     ///
     /// Calculate dna return period since the test start. This
@@ -1128,7 +1210,7 @@ public:
             stream_rcvd << sep << it->second->getRcvdPacketsNum();
             stream_drops << sep << it->second->getDroppedPacketsNum();
         }
-        std::cout << "sent: " << stream_sent.str() 
+        std::cout << "sent: " << stream_sent.str()
                   << "; received: " << stream_rcvd.str()
                   << "; drops: " << stream_drops.str()
                   << std::endl;
