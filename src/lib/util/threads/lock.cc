@@ -23,7 +23,7 @@
 
 #include <pthread.h>
 
-using namespace std;
+using std::auto_ptr;
 
 namespace isc {
 namespace util {

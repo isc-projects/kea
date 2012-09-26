@@ -19,7 +19,6 @@
 
 #include <boost/bind.hpp>
 
-using namespace std;
 using namespace isc::util::thread;
 
 namespace {
