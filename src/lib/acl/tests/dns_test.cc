@@ -62,6 +62,18 @@ TEST(DNSACL, getRequestLoader) {
                                               "  \"from\": \"192.0.2.1\"}]")));
 }
 
+// Check we can abbreviate the IP address lists and TSIG keys
+TEST(DNSACL, abbreviated) {
+    dns::RequestLoader* l(&getRequestLoader());
+
+    EXPECT_NO_THROW(l->load(Element::fromJSON("[{\"action\": \"DROP\","
+                                              "  \"from\": [\"127.0.0.1\","
+                                              "             \"::1\"]}]")));
+    EXPECT_NO_THROW(l->load(Element::fromJSON("[{\"action\": \"DROP\","
+                                              "  \"key\": [\"key.example.\","
+                                              "            \"other.\"]}]")));
+}
+
 class RequestCheckCreatorTest : public ::testing::Test {
 protected:
     dns::internal::RequestCheckCreator creator_;
@@ -78,7 +90,7 @@ TEST_F(RequestCheckCreatorTest, names) {
 }
 
 TEST_F(RequestCheckCreatorTest, allowListAbbreviation) {
-    EXPECT_FALSE(creator_.allowListAbbreviation());
+    EXPECT_TRUE(creator_.allowListAbbreviation());
 }
 
 // The following two tests check the creator for the form of
