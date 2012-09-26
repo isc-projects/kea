@@ -1310,6 +1310,89 @@ TODO
       many modules. So we show them here in one place.
     </para>
 
+    <section id='common-tsig'>
+      <title>TSIG keys</title>
+
+      <para>
+        TSIG is a way to sign requests and responses in DNS. It is defined in
+        RFC 2845 and uses symmetric cryptography to sign the DNS messages. If
+        you want to make any use of TSIG (to authenticate transfers or DDNS,
+        for example), you need to set up shared secrets between the endpoints.
+      </para>
+
+      <para>
+        BIND 10 uses a global key ring for the secrets. It doesn't currently
+        mean they would be stored differently, they are just in one place of
+        the configuration.
+      </para>
+
+      <section id='tsig-key-syntax'>
+        <title>Key anatomy and syntax</title>
+
+        <para>
+          Each key has three attributes. One is a name by which it is referred
+          both in DNS packets and the rest of the configuration. Another is the
+          algorithm used to compute the signature. And the last part is a
+          base64 encoded secret, which might be any blob of data.
+        </para>
+
+        <para>
+          The parts are written into a string, concatenated together by colons.
+          So if you wanted to have a key called "example.key", used as a
+          HMAC-MD5 key with secret "secret", you'd write it as:
+<screen>"example.key.:c2VjcmV0:hmac-md5"</screen>
+        </para>
+
+        <para>
+          The HMAC-MD5 algorithm is the default, so you can omit it. You could
+          write the same key as:
+<screen>"example.key.:c2VjcmV0"</screen>
+        </para>
+
+        <para>
+          You can also use these algorithms (which may not be omitted from the
+          key definition if used):
+          <itemizedlist>
+            <listitem>hmac-sha1</listitem>
+            <listitem>hmac-sha224</listitem>
+            <listitem>hmac-sha256</listitem>
+            <listitem>hmac-sha384</listitem>
+            <listitem>hmac-sha512</listitem>
+          </itemizedlist>
+        </para>
+
+        <para>
+          The name of the key must be a valid DNS name.
+        </para>
+      </section>
+
+      <section id='tsig-key-ring'>
+        <title>Key ring</title>
+        <para>
+          The key ring lives in the configuration in "tsig_keys/keys". Most of
+          the system uses the keys from there &mdash; ACLs, authoritative server to
+          sign responses to signed queries, and <command>b10-xfrout</command>
+          to sign transfers. The <command>b10-xfrin</command> uses its own
+          configuration for keys, but that will be fixed in Trac ticket
+          <ulink url="http://bind10.isc.org/ticket/1351">#1351</ulink>.
+        </para>
+
+        <para>
+          The key ring is just a list of strings, each describing one key. So,
+          to add a new key, you can do this:
+          <screen>&gt; <userinput>config add tsig_keys/keys "example.key.:c2VjcmV0"</userinput>
+&gt; <userinput>config show tsig_keys/keys</userinput>
+tsig_keys/keys[0]   "example.key.:c2VjcmV0" string  (modified)
+&gt; <userinput>config commit</userinput></screen>
+        </para>
+
+        <para>
+          You can keep as many keys as you want in the key ring, but each must
+          have a different name.
+        </para>
+      </section>
+    </section>
+
     <section id='common-acl'>
       <title>ACLs</title>
 
@@ -1375,9 +1458,9 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
         <para>
           The other is TSIG key by which the message was signed. The ACL
           contains only the name (under the name "key"), the key itself
-          must be stored in the global keyring. This property is applicable only
-          to the DNS context.
-<!-- TODO: Section for the keyring and link to it.-->
+	  must be stored in the global key ring (see <xref
+	  linkend="tsig-key-ring"/>).
+          This property is applicable only to the DNS context.
         </para>
 
         <para>
@@ -2151,7 +2234,7 @@ Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
 
     <para>
       If you want to require TSIG in access control, a system wide TSIG
-      "key ring" must be configured.
+      key ring must be configured (see <xref linkend="tsig-key-ring"/>).
       In this example, we allow client matching both the IP address
       and key.
     </para>
@@ -2161,7 +2244,7 @@ Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
 &gt; <userinput>config commit</userinput></screen>
 
     <para>Both <command>b10-xfrout</command> and <command>b10-auth</command>
-      will use the system wide keyring to check
+      will use the system wide key ring to check
       TSIGs in the incoming messages and to sign responses.</para>
 
     <para>
@@ -2371,11 +2454,12 @@ what is XfroutClient xfr_client??
 &gt; <userinput>config commit</userinput>
 </screen>
       The TSIG key must be configured system wide
-      (see <xref linkend="xfrout"/>.)
+      (see <xref linkend="common-tsig"/>).
       </para>
 
       <para>
-        Full description of ACLs can be found in <xref linkend="common-acl" />.
+	The full description of ACLs can be found in <xref
+	linkend="common-acl" />.
       </para>
 
       <note><simpara>
