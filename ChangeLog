@@ -51,13 +51,13 @@
 	(Trac #1375, git 7ca65cb9ec528118f370142d7e7b792fcc31c9cf)
 
 475.	[func]		naokikambe
-	Added Xfrout statistics counters: notifyoutv4, notifyoutv6, xfrrej, and
-	xfrreqdone. These are per-zone type counters. The value of these
-	counters can be seen with zone name by invoking "Stats show Xfrout" via
-	bindctl.
+	Added Xfrout statistics counters: notifyoutv4, notifyoutv6,
+	xfrrej, and xfrreqdone. These are per-zone type counters.
+	The value of these counters can be seen with zone name by
+	invoking "Stats show Xfrout" via bindctl.
 	(Trac #2158, git e68c127fed52e6034ab5309ddd506da03c37a08a)
 
-474.	[func]      stephen
+474.	[func]		stephen
 	DHCP servers now use the BIND 10 logging system for messages.
 	(Trac #1545, git de69a92613b36bd3944cb061e1b7c611c3c85506)
 
@@ -76,7 +76,7 @@
 	contain the generated documentation.
 	(Trac #1687, git 2d4063b1a354f5048ca9dfb195e8e169650f43d0)
 
-471.    [bug]		vorner
+471.	[bug]		vorner
 	Fixed a problem when b10-loadzone tried to tread semicolon
 	in string data as start of comment, which caused invalid
 	data being loaded.
