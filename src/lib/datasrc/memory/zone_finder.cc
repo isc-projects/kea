@@ -15,6 +15,7 @@
 #include <datasrc/memory/zone_finder.h>
 #include <datasrc/memory/domaintree.h>
 #include <datasrc/memory/treenode_rrset.h>
+#include <datasrc/memory/rdata_serialization.h>
 
 #include <datasrc/zone.h>
 #include <datasrc/data_source.h>
@@ -28,6 +29,11 @@
 #include <util/hash/sha1.h>
 
 #include <datasrc/logger.h>
+
+#include <boost/bind.hpp>
+
+#include <algorithm>
+#include <vector>
 
 using namespace isc::dns;
 using namespace isc::datasrc::memory;
@@ -548,7 +554,7 @@ public:
         ZoneFinder::Context(finder, options,
                             ResultContext(result.code, result.rrset,
                                           result.flags)),
-        rrset_(result.rrset), rrclass_(rrclass), zone_data_(result.zone_data),
+        rrclass_(rrclass), zone_data_(result.zone_data),
         found_node_(result.found_node),
         found_rdset_(result.found_rdset)
     {}
@@ -560,18 +566,159 @@ public:
         ZoneFinder::Context(finder, options,
                             ResultContext(result.code, result.rrset,
                                           result.flags), target),
-        rrset_(result.rrset), rrclass_(rrclass), zone_data_(result.zone_data),
+        rrclass_(rrclass), zone_data_(result.zone_data),
         found_node_(result.found_node),
         found_rdset_(result.found_rdset)
     {}
 
+protected:
+    virtual void getAdditionalImpl(const std::vector<RRType>& requested_types,
+                                   std::vector<ConstRRsetPtr>& result)
+    {
+        if (found_rdset_ != NULL) {
+            // Normal query with successful result.
+            getAdditionalForRdataset(found_rdset_, requested_types, result,
+                                     options_);
+        } else if (found_node_ != NULL) {
+            // Successful type ANY query result.  Call
+            // getAdditionalForRdataset for each RdataSet of the node.
+            for (const RdataSet* rdset = found_node_->getData();
+                 rdset != NULL;
+                 rdset = rdset->getNext())
+            {
+                getAdditionalForRdataset(rdset, requested_types, result,
+                                         options_);
+            }
+        }
+    }
+
 private:
-    const TreeNodeRRsetPtr rrset_;
+    // Main subroutine of getAdditionalImpl, iterate over Rdata fields
+    // find, create, and insert necessary additional RRsets.
+    void
+    getAdditionalForRdataset(const RdataSet* rdset,
+                             const std::vector<RRType>& requested_types,
+                             std::vector<ConstRRsetPtr>& result,
+                             ZoneFinder::FindOptions orig_options) const
+    {
+        ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT;
+        if ((orig_options & ZoneFinder::FIND_DNSSEC) != 0) {
+            options = options | ZoneFinder::FIND_DNSSEC;
+        }
+        if (rdset->type == RRType::NS()) {
+            options = options | ZoneFinder::FIND_GLUE_OK;
+        }
+
+        RdataReader(rrclass_, rdset->type, rdset->getDataBuf(),
+                    rdset->getRdataCount(), rdset->getSigRdataCount(),
+                    boost::bind(&Context::findAdditional, this,
+                                &requested_types, &result, options, _1, _2),
+                    &RdataReader::emptyDataAction).iterate();
+    }
+
+    // RdataReader callback for additional section processing.
+    void
+    findAdditional(const std::vector<RRType>* requested_types,
+                   std::vector<ConstRRsetPtr>* result,
+                   ZoneFinder::FindOptions options,
+                   const LabelSequence& name_labels,
+                   RdataNameAttributes attr) const;
+
+    // Subroutine for findAdditional() to unify the normal and wildcard match
+    // cases.
+    void
+    findAdditionalHelper(const std::vector<RRType>* requested_types,
+                         std::vector<ConstRRsetPtr>* result,
+                         const ZoneNode* node,
+                         ZoneFinder::FindOptions options,
+                         const Name* real_name) const
+    {
+        const std::vector<RRType>::const_iterator type_beg =
+            requested_types->begin();
+        const std::vector<RRType>::const_iterator type_end =
+            requested_types->end();
+        for (const RdataSet* rdset = node->getData();
+             rdset != NULL;
+             rdset = rdset->getNext())
+        {
+            // Checking all types for all RdataSets could be suboptimal.
+            // This can be a bit more optimized, but unless we have many
+            // requested types the effect is probably marginal.  For now we
+            // keep it simple.
+            if (std::find(type_beg, type_end, rdset->type) != type_end) {
+                result->push_back(createTreeNodeRRset(node, rdset, rrclass_,
+                                                      options, real_name));
+            }
+        }
+    }
+
+private:
     const RRClass rrclass_;
     const ZoneData* const zone_data_;
     const ZoneNode* const found_node_;
     const RdataSet* const found_rdset_;
 };
+
+void
+InMemoryZoneFinder::Context::findAdditional(
+    const std::vector<RRType>* requested_types,
+    std::vector<ConstRRsetPtr>* result,
+    ZoneFinder::FindOptions options,
+    const LabelSequence& name_labels,
+    RdataNameAttributes attr) const
+{
+    // Ignore name data that don't need additional processing.
+    if ((attr & NAMEATTR_ADDITIONAL) == 0) {
+        return;
+    }
+
+    // Ignore out-of-zone names
+    uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+    const NameComparisonResult cmp =
+        zone_data_->getOriginNode()->getAbsoluteLabels(labels_buf).
+        compare(name_labels);
+    if ((cmp.getRelation() != NameComparisonResult::SUPERDOMAIN) &&
+        (cmp.getRelation() != NameComparisonResult::EQUAL)) {
+        return;
+    }
+
+    // Find the zone node for the additional name
+    ZoneChain node_path;
+    const FindNodeResult node_result =
+        findNode(*zone_data_, name_labels, node_path, options);
+    // we only need non-empty exact match
+    if (node_result.code != SUCCESS) {
+        return;
+    }
+
+    // Ignore data at a zone cut unless glue is allowed.
+    // TODO: DNAME case consideration (with test)
+    const ZoneNode* node = node_result.node;
+    if ((options & ZoneFinder::FIND_GLUE_OK) == 0 &&
+        node->getFlag(ZoneNode::FLAG_CALLBACK) &&
+        node != zone_data_->getOriginNode()) {
+        return;
+    }
+
+    // Examine RdataSets of the node, and create and insert requested types
+    // of RRsets as we find them.
+    if ((node_result.flags & FindNodeResult::FIND_WILDCARD) == 0) {
+        // normal case
+        findAdditionalHelper(requested_types, result, node, options, NULL);
+    } else {
+        // if the additional name is subject to wildcard substitution, we need
+        // to create a name object for the "real" (after substitution) name.
+        // This is expensive, but in the additional processing this should be
+        // very rare cases and acceptable.
+        size_t data_len;
+        const uint8_t* data;
+        data = name_labels.getData(&data_len);
+        util::InputBuffer buffer(data, data_len);
+        const Name real_name(buffer);
+        findAdditionalHelper(requested_types, result, node, options,
+                             &real_name);
+    }
+}
 
 boost::shared_ptr<ZoneFinder::Context>
 InMemoryZoneFinder::find(const isc::dns::Name& name,
