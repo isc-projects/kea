@@ -43,10 +43,8 @@ protected:
                                           ("1 0 12 aabbccdd " +
                                            string(nsec3_common))))
     {
-        std::string salt_hex("aabbccdd");
-        std::vector<uint8_t> salt;
-        decodeHex(salt_hex, salt);
-        test_hash_args.reset(NSEC3Hash::create(1, 12, salt));
+        const uint8_t salt[] = {0xaa, 0xbb, 0xcc, 0xdd};
+        test_hash_args.reset(NSEC3Hash::create(1, 12, salt, sizeof(salt)));
     }
 
     ~NSEC3HashTest() {
@@ -77,10 +75,8 @@ TEST_F(NSEC3HashTest, unknownAlgorithm) {
                                         string(nsec3_common)))),
                      UnknownNSEC3HashAlgorithm);
 
-    std::string salt_hex("aabbccdd");
-    std::vector<uint8_t> salt;
-    decodeHex(salt_hex, salt);
-    EXPECT_THROW(NSEC3HashPtr(NSEC3Hash::create(2, 12, salt)),
+    const uint8_t salt[] = {0xaa, 0xbb, 0xcc, 0xdd};
+    EXPECT_THROW(NSEC3HashPtr(NSEC3Hash::create(2, 12, salt, sizeof(salt))),
                  UnknownNSEC3HashAlgorithm);
 }
 
@@ -199,7 +195,7 @@ public:
         return (new TestNSEC3Hash);
     }
     virtual NSEC3Hash* create(uint8_t, uint16_t,
-                              const std::vector<uint8_t>&) const {
+                              const uint8_t*, size_t) const {
         isc_throw(isc::Unexpected,
                   "This method is not implemented here.");
     }
