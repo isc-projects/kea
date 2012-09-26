@@ -537,35 +537,17 @@ InMemoryZoneFinderNSEC3Calculate(const Name& name,
 
 /// \brief Specialization of the ZoneFinder::Context for the in-memory finder.
 ///
-/// \note Right now we don't implement optimization using this specialized
-/// version, but assuming we'll do pretty soon we'll keep and use the
-/// definition.  The note below will apply at that point (and at that point
-/// we should remove the other constructor for findAll()).
-///
 /// Note that we don't have a specific constructor for the findAll() case.
 /// For (successful) type ANY query, found_node points to the
 /// corresponding zone node, which is recorded within this specialized
 /// context.
 class InMemoryZoneFinder::Context : public ZoneFinder::Context {
 public:
-    /// \brief Constructor for normal find().
     Context(ZoneFinder& finder, ZoneFinder::FindOptions options,
             const RRClass& rrclass, const ZoneFinderResultContext& result) :
         ZoneFinder::Context(finder, options,
                             ResultContext(result.code, result.rrset,
                                           result.flags)),
-        rrclass_(rrclass), zone_data_(result.zone_data),
-        found_node_(result.found_node),
-        found_rdset_(result.found_rdset)
-    {}
-
-    /// \brief Constructor for findAll().
-    Context(ZoneFinder& finder, ZoneFinder::FindOptions options,
-            const RRClass& rrclass, const ZoneFinderResultContext& result,
-            std::vector<isc::dns::ConstRRsetPtr>& target) :
-        ZoneFinder::Context(finder, options,
-                            ResultContext(result.code, result.rrset,
-                                          result.flags), target),
         rrclass_(rrclass), zone_data_(result.zone_data),
         found_node_(result.found_node),
         found_rdset_(result.found_rdset)
@@ -739,8 +721,7 @@ InMemoryZoneFinder::findAll(const isc::dns::Name& name,
                                              find_internal(name,
                                                            RRType::ANY(),
                                                            &target,
-                                                           options),
-                                             target)));
+                                                           options))));
 }
 
 ZoneFinderResultContext
