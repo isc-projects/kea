@@ -105,9 +105,9 @@ NSEC3Hash* TestNSEC3HashCreator::create(const rdata::generic::NSEC3&) const {
     return (new TestNSEC3Hash);
 }
 
-NSEC3Hash*
-TestNSEC3HashCreator::create(uint8_t, uint16_t,
-                             const vector<uint8_t>&) const {
+NSEC3Hash* TestNSEC3HashCreator::create(uint8_t, uint16_t,
+                                        const uint8_t*, size_t) const
+{
     return (new TestNSEC3Hash);
 }
 
