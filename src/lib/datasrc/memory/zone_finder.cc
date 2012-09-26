@@ -617,8 +617,9 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FINDNSEC3).arg(name).
         arg(recursive ? "recursive" : "non-recursive");
 
-    Name origin(getOrigin());
-    const LabelSequence origin_ls(origin);
+    uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+    const LabelSequence origin_ls(zone_data_.getOriginNode()->
+                                  getAbsoluteLabels(labels_buf));
     const LabelSequence name_ls(name);
 
     if (!zone_data_.isNSEC3Signed()) {
@@ -648,7 +649,7 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
     }
 
     // Convenient shortcuts
-    const unsigned int olabels = origin.getLabelCount();
+    const unsigned int olabels = origin_ls.getLabelCount();
     const unsigned int qlabels = name.getLabelCount();
     // placeholder of the next closer proof
     const ZoneNode* covering_node(NULL);
@@ -656,7 +657,7 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
     // Now we'll first look up the origin node and initialize orig_chain
     // with it.
     ZoneChain orig_chain;
-    ZoneNode* node(NULL);
+    const ZoneNode* node(NULL);
     ZoneTree::Result result =
          tree.find<void*>(origin_ls, &node, orig_chain, NULL, NULL);
     if (result != ZoneTree::EXACTMATCH) {
