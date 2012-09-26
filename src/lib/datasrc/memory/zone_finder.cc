@@ -63,7 +63,7 @@ public:
                             ZoneFinder::FindResultFlags flags_param,
                             const ZoneData& zone_data_param,
                             const ZoneNode* node, const RdataSet* rdset) :
-	code(code_param), rrset(rrset_param), flags(flags_param),
+        code(code_param), rrset(rrset_param), flags(flags_param),
         zone_data(&zone_data_param), found_node(node), found_rdset(rdset)
     {}
 
