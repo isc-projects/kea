@@ -689,6 +689,7 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
         // Now, make a label sequence relative to the origin.
         const Name hlabel_name(hlabel);
         LabelSequence hlabel_ls(hlabel_name);
+        // Remove trailing '.' making it relative
         hlabel_ls.stripRight(1);
 
         // Find hlabel relative to the orig_chain.
