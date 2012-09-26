@@ -788,7 +788,7 @@ TestControl::receivePackets(const TestControlSocket& socket) {
             try {
                 pkt4 = IfaceMgr::instance().receive4(timeout);
             } catch (const Exception& e) {
-                std::cout << "Failed to receive DHCPv4 packet: "
+                std::cerr << "Failed to receive DHCPv4 packet: "
                           << e.what() <<  std::endl;
             }
             if (!pkt4) {
@@ -806,7 +806,7 @@ TestControl::receivePackets(const TestControlSocket& socket) {
             try {
                 pkt6 = IfaceMgr::instance().receive6(timeout);
             } catch (const Exception& e) {
-                std::cout << "Failed to receive DHCPv6 packet: "
+                std::cerr << "Failed to receive DHCPv6 packet: "
                           << e.what() << std::endl;
             }
             if (!pkt6) {

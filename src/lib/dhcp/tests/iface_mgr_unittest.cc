@@ -439,6 +439,8 @@ TEST_F(IfaceMgrTest, sockets6) {
     // removed code for binding socket twice to the same address/port
     // as it caused problems on some platforms (e.g. Mac OS X)
 
+    // Close sockets here because the following tests will want to
+    // open sockets on the same ports.
     ifacemgr->closeSockets();
 
     // Use address that is not assigned to LOOPBACK iface.
@@ -453,6 +455,9 @@ TEST_F(IfaceMgrTest, sockets6) {
         ifacemgr->openSocket("non_existing_interface", loAddr, 10548),
         BadValue
     );
+
+    // Do not call closeSockets() because it is called by IfaceMgr's
+    // virtual destructor.
 }
 
 TEST_F(IfaceMgrTest, socketsFromIface) {
@@ -476,6 +481,8 @@ TEST_F(IfaceMgrTest, socketsFromIface) {
     EXPECT_GT(socket2, 0);
     close(socket2);
 
+    // Close sockets here because the following tests will want to
+    // open sockets on the same ports.
     ifacemgr->closeSockets();
 
     // Use invalid interface name.
@@ -483,6 +490,9 @@ TEST_F(IfaceMgrTest, socketsFromIface) {
         ifacemgr->openSocketFromIface("non_existing_interface", PORT1, AF_INET),
         BadValue
     );
+
+    // Do not call closeSockets() because it is called by IfaceMgr's
+    // virtual destructor.
 }
 
 
@@ -507,6 +517,8 @@ TEST_F(IfaceMgrTest, socketsFromAddress) {
     // socket descriptor must be positive integer
     EXPECT_GT(socket2, 0);
 
+    // Close sockets here because the following tests will want to
+    // open sockets on the same ports.
     ifacemgr->closeSockets();
 
     // Use non-existing address.
@@ -514,6 +526,9 @@ TEST_F(IfaceMgrTest, socketsFromAddress) {
     EXPECT_THROW(
         ifacemgr->openSocketFromAddress(invalidAddr, PORT1), BadValue
     );
+
+    // Do not call closeSockets() because it is called by IfaceMgr's
+    // virtual destructor.
 }
 
 TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
@@ -537,6 +552,8 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
     );
     EXPECT_GT(socket2, 0);
 
+    // Close sockets here because the following tests will want to
+    // open sockets on the same ports.
     ifacemgr->closeSockets();
 
     // The following test is currently disabled for OSes other than
@@ -552,6 +569,9 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
     );
     EXPECT_GT(socket3, 0);
 #endif
+
+    // Do not call closeSockets() because it is called by IfaceMgr's
+    // virtual destructor.
 }
 
 // TODO: disabled due to other naming on various systems
