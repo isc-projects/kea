@@ -32,11 +32,11 @@ namespace thread {
 class Mutex::Impl {
 public:
     Impl() :
-        locked(0)
+        locked_count(0)
     {}
     pthread_mutex_t mutex;
     // Only in debug mode
-    size_t locked;
+    size_t locked_count;
 };
 
 namespace {
@@ -99,7 +99,7 @@ Mutex::Mutex(bool recursive) :
 Mutex::~Mutex() {
     if (impl_ != NULL) {
         const int result = pthread_mutex_destroy(&impl_->mutex);
-        const bool locked = impl_->locked != 0;
+        const bool locked = impl_->locked_count != 0;
         delete impl_;
         if (result != 0) {
             // Yes, really throwing from the destructor.
@@ -121,13 +121,13 @@ Mutex::lock() {
     if (result != 0) {
         isc_throw(isc::InvalidOperation, strerror(result));
     }
-    ++impl_->locked; // Only in debug mode
+    ++impl_->locked_count; // Only in debug mode
 }
 
 void
 Mutex::unlock() {
     assert(impl_ != NULL);
-    --impl_->locked; // Only in debug mode
+    --impl_->locked_count; // Only in debug mode
     const int result = pthread_mutex_unlock(&impl_->mutex);
     if (result != 0) {
         isc_throw(isc::InvalidOperation, strerror(result));
@@ -137,7 +137,7 @@ Mutex::unlock() {
 // TODO: Disable in non-debug build
 bool
 Mutex::locked() const {
-    return (impl_->locked != 0);
+    return (impl_->locked_count != 0);
 }
 
 }
