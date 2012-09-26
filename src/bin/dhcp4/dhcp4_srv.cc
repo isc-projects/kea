@@ -149,8 +149,8 @@ Dhcpv4Srv::run() {
                 if (rsp->pack()) {
                     try {
                         IfaceMgr::instance().send(rsp);
-                    } catch (const std::exception& ex) {
-                        LOG_ERROR(dhcp4_logger, DHCP4_PACKET_SEND_FAIL).arg(ex.what());
+                    } catch (const std::exception& e) {
+                        LOG_ERROR(dhcp4_logger, DHCP4_PACKET_SEND_FAIL).arg(e.what());
                     }
                 } else {
                     LOG_ERROR(dhcp4_logger, DHCP4_PACK_FAIL);

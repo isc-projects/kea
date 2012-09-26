@@ -89,7 +89,7 @@ bool Dhcpv6Srv::run() {
 
         try {
             query = IfaceMgr::instance().receive6(timeout);
-        } catch (const std::exception& ex) {
+        } catch (const std::exception& e) {
             LOG_ERROR(dhcp6_logger, DHCP6_PACKET_RECEIVE_FAIL).arg(e.what());
         }
 
@@ -162,8 +162,8 @@ bool Dhcpv6Srv::run() {
                 if (rsp->pack()) {
                     try {
                         IfaceMgr::instance().send(rsp);
-                    } catch (const std::exception& ex) {
-                        LOG_ERROR(dhcp6_logger, DHCP6_PACKET_SEND_FAIL).arg(ex.what());
+                    } catch (const std::exception& e) {
+                        LOG_ERROR(dhcp6_logger, DHCP6_PACKET_SEND_FAIL).arg(e.what());
                     }
                 } else {
                     LOG_ERROR(dhcp6_logger, DHCP6_PACK_FAIL);
