@@ -22,7 +22,6 @@ CLEANFILES += static.zone
 
 lib_LTLIBRARIES = libb10-datasrc.la
 libb10_datasrc_la_SOURCES = data_source.h data_source.cc
-libb10_datasrc_la_SOURCES += static_datasrc.h static_datasrc.cc
 libb10_datasrc_la_SOURCES += sqlite3_datasrc.h sqlite3_datasrc.cc
 libb10_datasrc_la_SOURCES += query.h query.cc
 libb10_datasrc_la_SOURCES += cache.h cache.cc
