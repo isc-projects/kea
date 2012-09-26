@@ -136,10 +136,6 @@ public:
     virtual boost::shared_ptr<RequestCheck>
     create(const std::string& name, isc::data::ConstElementPtr definition,
            const acl::Loader<RequestContext>& loader);
-
-    /// Until we are sure how the various rules work for this case, we won't
-    /// allow unexpected special interpretation for list definitions.
-    virtual bool allowListAbbreviation() const { return (false); }
 };
 } // end of namespace "internal"
 

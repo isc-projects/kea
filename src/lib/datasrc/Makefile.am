@@ -1,4 +1,4 @@
-SUBDIRS = . memory tests
+SUBDIRS = memory . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
@@ -21,11 +21,7 @@ CLEANFILES += datasrc_config.h
 CLEANFILES += static.zone
 
 lib_LTLIBRARIES = libb10-datasrc.la
-libb10_datasrc_la_SOURCES = data_source.h data_source.cc
-libb10_datasrc_la_SOURCES += static_datasrc.h static_datasrc.cc
-libb10_datasrc_la_SOURCES += sqlite3_datasrc.h sqlite3_datasrc.cc
-libb10_datasrc_la_SOURCES += query.h query.cc
-libb10_datasrc_la_SOURCES += cache.h cache.cc
+libb10_datasrc_la_SOURCES = data_source.h
 libb10_datasrc_la_SOURCES += rbnode_rrset.h
 libb10_datasrc_la_SOURCES += rbtree.h
 libb10_datasrc_la_SOURCES += zonetable.h zonetable.cc
@@ -64,6 +60,7 @@ libb10_datasrc_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.
 libb10_datasrc_la_LIBADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 libb10_datasrc_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
 libb10_datasrc_la_LIBADD += $(top_builddir)/src/lib/cc/libb10-cc.la
+libb10_datasrc_la_LIBADD += $(builddir)/memory/libdatasrc_memory.la
 libb10_datasrc_la_LIBADD += $(SQLITE_LIBS)
 
 BUILT_SOURCES = datasrc_config.h datasrc_messages.h datasrc_messages.cc

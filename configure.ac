@@ -1193,11 +1193,11 @@ AC_CONFIG_FILES([Makefile
                  src/lib/exceptions/tests/Makefile
                  src/lib/datasrc/Makefile
                  src/lib/datasrc/memory/Makefile
-                 src/lib/datasrc/memory/tests/Makefile
-                 src/lib/datasrc/memory/tests/testdata/Makefile
                  src/lib/datasrc/memory/benchmarks/Makefile
                  src/lib/datasrc/tests/Makefile
                  src/lib/datasrc/tests/testdata/Makefile
+                 src/lib/datasrc/tests/memory/Makefile
+                 src/lib/datasrc/tests/memory/testdata/Makefile
                  src/lib/xfr/Makefile
                  src/lib/xfr/tests/Makefile
                  src/lib/log/Makefile

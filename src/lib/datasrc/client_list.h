@@ -15,6 +15,8 @@
 #ifndef DATASRC_CONTAINER_H
 #define DATASRC_CONTAINER_H
 
+#include <util/memory_segment.h>
+
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <cc/data.h>
@@ -22,6 +24,7 @@
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
 namespace isc {
@@ -34,7 +37,13 @@ typedef boost::shared_ptr<DataSourceClient> DataSourceClientPtr;
 class DataSourceClientContainer;
 typedef boost::shared_ptr<DataSourceClientContainer>
     DataSourceClientContainerPtr;
+
+// XXX: it's better to even hide the existence of the "memory" namespace.
+// We should probably consider pimpl for details of ConfigurableClientList
+// and hide real definitions except for itself and tests.
+namespace memory {
 class InMemoryClient;
+}
 
 /// \brief The list of data source clients.
 ///
@@ -209,11 +218,11 @@ public:
     /// \brief Constructor
     ///
     /// \param rrclass For which class the list should work.
-    ConfigurableClientList(const isc::dns::RRClass &rrclass) :
-        rrclass_(rrclass),
-        configuration_(new isc::data::ListElement),
-        allow_cache_(false)
-    {}
+    ConfigurableClientList(const isc::dns::RRClass& rrclass);
+
+    /// \brief Destructor
+    virtual ~ConfigurableClientList();
+
     /// \brief Exception thrown when there's an error in configuration.
     class ConfigurationError : public Exception {
     public:
@@ -290,24 +299,27 @@ public:
     /// \todo The content yet to be defined.
     struct DataSourceInfo {
         // Plays a role of default constructor too (for vector)
-        DataSourceInfo(bool has_cache = false);
+        DataSourceInfo(const dns::RRClass& rrclass,
+                       util::MemorySegment& mem_sgmt,
+                       bool has_cache = false);
         DataSourceInfo(DataSourceClient* data_src_client,
                        const DataSourceClientContainerPtr& container,
-                       bool has_cache);
+                       bool has_cache, const dns::RRClass& rrclass,
+                       util::MemorySegment& mem_sgmt);
         DataSourceClient* data_src_client_;
         DataSourceClientContainerPtr container_;
-        boost::shared_ptr<InMemoryClient> cache_;
+
+        // Accessor to cache_ in the form of DataSourceClient, hiding
+        // the existence of InMemoryClient as much as possible.  We should
+        // really consider cleaner abstraction, but for now it works.
+        // This is also only intended to be used in auth unit tests right now.
+        // No other applications or tests may use it.
+        const DataSourceClient* getCacheClient() const;
+        boost::shared_ptr<memory::InMemoryClient> cache_;
     };
 
     /// \brief The collection of data sources.
     typedef std::vector<DataSourceInfo> DataSources;
-protected:
-    /// \brief The data sources held here.
-    ///
-    /// All our data sources are stored here. It is protected to let the
-    /// tests in. You should consider it private if you ever want to
-    /// derive this class (which is not really recommended anyway).
-    DataSources data_sources_;
 
     /// \brief Convenience type alias.
     ///
@@ -357,10 +369,26 @@ private:
     void findInternal(MutableResult& result, const dns::Name& name,
                       bool want_exact_match, bool want_finder) const;
     const isc::dns::RRClass rrclass_;
+
+    /// \brief Memory segment for in-memory cache.
+    ///
+    /// Note that this must be placed before data_sources_ so it won't be
+    /// destroyed before the built objects in the destructor.
+    boost::scoped_ptr<util::MemorySegment> mem_sgmt_;
+
     /// \brief Currently active configuration.
     isc::data::ConstElementPtr configuration_;
+
     /// \brief The last set value of allow_cache.
     bool allow_cache_;
+
+protected:
+    /// \brief The data sources held here.
+    ///
+    /// All our data sources are stored here. It is protected to let the
+    /// tests in. You should consider it private if you ever want to
+    /// derive this class (which is not really recommended anyway).
+    DataSources data_sources_;
 };
 
 } // namespace datasrc

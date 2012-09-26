@@ -197,8 +197,6 @@ void Pkt4::check() {
 }
 
 void Pkt4::repack() {
-    cout << "Convering RX packet to TX packet: " << data_.size() << " bytes." << endl;
-
     bufferOut_.writeData(&data_[0], data_.size());
 }
 
