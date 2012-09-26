@@ -617,10 +617,14 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FINDNSEC3).arg(name).
         arg(recursive ? "recursive" : "non-recursive");
 
+    Name origin(getOrigin());
+    const LabelSequence origin_ls(origin);
+    const LabelSequence name_ls(name);
+
     if (!zone_data_.isNSEC3Signed()) {
         isc_throw(DataSourceError,
                   "findNSEC3 attempt for non NSEC3 signed zone: " <<
-                  getOrigin() << "/" << getClass());
+                  origin_ls << "/" << getClass());
     }
 
     const NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
@@ -632,23 +636,36 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
     if (tree.getNodeCount() == 0) {
         isc_throw(DataSourceError,
                   "findNSEC3 attempt but zone has no NSEC3 RRs: " <<
-                  getOrigin() << "/" << getClass());
+                  origin_ls << "/" << getClass());
     }
 
-    const NameComparisonResult cmp_result = name.compare(getOrigin());
+    const NameComparisonResult cmp_result = name_ls.compare(origin_ls);
     if (cmp_result.getRelation() != NameComparisonResult::EQUAL &&
         cmp_result.getRelation() != NameComparisonResult::SUBDOMAIN) {
         isc_throw(OutOfZone, "findNSEC3 attempt for out-of-zone name: "
-                  << name << ", zone: " << getOrigin() << "/"
+                  << name_ls << ", zone: " << origin_ls << "/"
                   << getClass());
     }
 
     // Convenient shortcuts
-    const unsigned int olabels = getOrigin().getLabelCount();
+    const unsigned int olabels = origin.getLabelCount();
     const unsigned int qlabels = name.getLabelCount();
     // placeholder of the next closer proof
     const ZoneNode* covering_node(NULL);
-    ZoneChain chain;
+
+    // Now we'll first look up the origin node and initialize orig_chain
+    // with it.
+    ZoneChain orig_chain;
+    ZoneNode* node(NULL);
+    ZoneTree::Result result =
+         tree.find<void*>(origin_ls, &node, orig_chain, NULL, NULL);
+    if (result != ZoneTree::EXACTMATCH) {
+        // If the origin node doesn't exist, simply fail.
+        isc_throw(DataSourceError,
+                  "findNSEC3 attempt but zone has no NSEC3 RRs: " <<
+                  origin_ls << "/" << getClass());
+    }
+
     const boost::scoped_ptr<NSEC3Hash> hash
         (NSEC3Hash::create(nsec3_data->hashalg,
                            nsec3_data->iterations,
@@ -666,11 +683,16 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FINDNSEC3_TRYHASH).
             arg(name).arg(labels).arg(hlabel);
 
-        ZoneNode* node(NULL);
-        chain.clear();
-        const ZoneTree::Result result =
-            tree.find(Name(hlabel).concatenate(getOrigin()), &node, chain);
+        node = NULL;
+        ZoneChain chain(orig_chain);
 
+        // Now, make a label sequence relative to the origin.
+        const Name hlabel_name(hlabel);
+        LabelSequence hlabel_ls(hlabel_name);
+        hlabel_ls.stripRight(1);
+
+        // Find hlabel relative to the orig_chain.
+        result = tree.find<void*>(hlabel_ls, &node, chain, NULL, NULL);
         if (result == ZoneTree::EXACTMATCH) {
             // We found an exact match.
             ConstRRsetPtr closest = createNSEC3RRset(node, getClass());
