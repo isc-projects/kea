@@ -1020,7 +1020,7 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
         command line switches.  This summary also lists the tool's
         possible exit codes as well as describing the
         error counters printed when the test is complete:
-        <screen>$ <userinput>./perfdhcp -h</userinput>
+        <screen>$ <userinput>perfdhcp -h</userinput>
 <![CDATA[perfdhcp [-hv] [-4|-6] [-r<rate>] [-t<report>] [-R<range>] [-b<base>]
     [-n<num-request>] [-p<test-period>] [-d<drop-time>] [-D<max-drop>]
     [-l<local-addr|interface>] [-P<preload>] [-a<aggressivity>]
@@ -1172,12 +1172,12 @@ The exit status is:
         As DHCP uses low port numbers (67 for DHCPv4 relays and
         547 for DHCPv6), running perfdhcp with non-root privileges will
         usually result in the error message similar to this:
-        <screen><userinput>$./perfdhcp -4 -l eth3 -r 100 all</userinput>
+        <screen><userinput>$ perfdhcp -4 -l eth3 -r 100 all</userinput>
 Error running perfdhcp: Failed to bind socket 3 to 172.16.1.2/port=67
         </screen>
         The '-L' command line switch allows the use of a custom local port.
         However, although the following command line will work:
-        <screen><userinput>$./perfdhcp -4 -l eth3 -r 100 -L 10067 all</userinput></screen>
+        <screen><userinput>$ perfdhcp -4 -l eth3 -r 100 -L 10067 all</userinput></screen>
         in the standard configuration no responses will be received
         from the DHCP server because the server responds to default relay
         port 67.  A way to overcome this issue is to run
@@ -1198,7 +1198,7 @@ Error running perfdhcp: Failed to bind socket 3 to 172.16.1.2/port=67
         <para>
           If server is listening on interface with IPv4 address 172.16.1.1,
           the simplest perfdhcp command line will look like:
-          <screen><userinput>#./perfdhcp 172.16.1.1</userinput>
+          <screen><userinput># perfdhcp 172.16.1.1</userinput>
 ***Rate statistics***
 Rate: 206.345
 
@@ -1281,9 +1281,9 @@ collected packets: 0
           Note: should multiple interfaces on the system running perfdhcp be
           connected to the same subnet, the interface to be used for the test
           can be specified using either the interface name:
-          <screen><userinput>#./perfdhcp -l eth3</userinput></screen>
+          <screen><userinput># perfdhcp -l eth3</userinput></screen>
           or a local address assigned to it:
-          <screen><userinput>#./perfdhcp -l 172.16.1.2</userinput></screen>
+          <screen><userinput># perfdhcp -l 172.16.1.2</userinput></screen>
         </para>
       </section>
       <section id="perfdhcp-rate-control">
@@ -1296,7 +1296,7 @@ collected packets: 0
           without dropping any packets. The following command is an example of such
           a test: it causes perfdhcp to initiate 300 four-way exchanges
           per second, and runs the test for 60 seconds:
-          <screen><userinput>#./perfdhcp -l eth3 -p 60 -r 300</userinput>
+          <screen><userinput># perfdhcp -l eth3 -p 60 -r 300</userinput>
 ***Rate statistics***
 Rate: 256.683 exchanges/second, expected rate: 300 exchanges/second
 
@@ -1331,7 +1331,7 @@ collected packets: 0
           rate (256/s) indicate that server's measured performance is lower than 300 leases
           per second. A further rate decrease should eliminate most of the packet
           drops and bring the achieved rate close to expected rate:
-          <screen><userinput>#./perfdhcp -l eth3 -p 60 -r 100 -R 30</userinput>
+          <screen><userinput># perfdhcp -l eth3 -p 60 -r 100 -R 30</userinput>
 ***Rate statistics***
 Rate: 99.8164 exchanges/second, expected rate: 100 exchanges/second
 
@@ -1393,7 +1393,7 @@ collected packets: 0
           specify offsets for particular options and fields. With the following
           command line the DHCPv6 SOLICIT and REQUEST packets will be formed from
           solicit.hex and request6.hex packets:
-          <screen><userinput>#./perfdhcp -6 -l eth3 -r 100 -R 20 -T solicit.hex -T request6.hex -O 21 -E 84 -S 22 -I 40 servers</userinput>
+          <screen><userinput># perfdhcp -6 -l eth3 -r 100 -R 20 -T solicit.hex -T request6.hex -O 21 -E 84 -S 22 -I 40 servers</userinput>
 ***Rate statistics***
 Rate: 99.5398 exchanges/second, expected rate: 100 exchanges/second
 
