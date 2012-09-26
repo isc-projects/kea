@@ -1305,6 +1305,8 @@ public:
 
     /// \brief return the largest node in the tree of trees.
     ///
+    /// \throw none
+    ///
     /// \return A \c DomainTreeNode that is the largest node in the
     /// tree. If there are no nodes, then \c NULL is returned.
     const DomainTreeNode<T>* largestNode() const;
