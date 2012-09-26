@@ -1,3 +1,7 @@
+480.	[doc]		vorner
+	Added documentation about global TSIG key ring to the Guide.
+	(Trac #2189, git ....)
+
 479.	[func]		marcin
 	Refactored perfdhcp tool to C++, added missing unit tests and removed
 	the old code. The new code uses libdhcp++ (src/lib/dhcp) for DHCP
