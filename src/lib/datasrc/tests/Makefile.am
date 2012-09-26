@@ -47,13 +47,6 @@ common_ldadd += $(GTEST_LDADD) $(SQLITE_LIBS)
 # The general tests
 run_unittests_SOURCES = $(common_sources)
 
-# Commented out by ticket #2165. If you re-enable these, please modify
-# EXTRA_DIST at the bottom of this file.
-#run_unittests_SOURCES += datasrc_unittest.cc
-#run_unittests_SOURCES += query_unittest.cc
-#run_unittests_SOURCES += cache_unittest.cc
-#run_unittests_SOURCES += test_datasrc.h test_datasrc.cc
-
 run_unittests_SOURCES += test_client.h test_client.cc
 run_unittests_SOURCES += rbtree_unittest.cc
 run_unittests_SOURCES += logger_unittest.cc
@@ -122,9 +115,3 @@ EXTRA_DIST += testdata/new_minor_schema.sqlite3
 EXTRA_DIST += testdata/newschema.sqlite3
 EXTRA_DIST += testdata/oldschema.sqlite3
 EXTRA_DIST += testdata/static.zone
-
-# Added by ticket #2165
-EXTRA_DIST += datasrc_unittest.cc
-EXTRA_DIST += query_unittest.cc
-EXTRA_DIST += cache_unittest.cc
-EXTRA_DIST += test_datasrc.h test_datasrc.cc

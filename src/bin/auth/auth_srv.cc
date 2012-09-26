@@ -41,7 +41,6 @@
 
 #include <asiodns/dns_service.h>
 
-#include <datasrc/query.h>
 #include <datasrc/data_source.h>
 #include <datasrc/client_list.h>
 
