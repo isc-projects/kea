@@ -100,7 +100,7 @@ Pkt6::packUDP() {
         LibDHCP::packOptions6(bufferOut_, options_);
     }
     catch (const Exception& e) {
-        cout << "Packet build failed:" << e.what() << endl;
+        /// @todo: throw exception here once we turn this function to void.
         return (false);
     }
     return (true);
@@ -129,8 +129,8 @@ Pkt6::unpack() {
 bool
 Pkt6::unpackUDP() {
     if (data_.size() < 4) {
-        std::cout << "DHCPv6 packet truncated. Only " << data_.size()
-                  << " bytes. Need at least 4." << std::endl;
+        // @todo: throw exception here informing that packet is truncated
+        // once we turn this function to void.
         return (false);
     }
     msg_type_ = data_[0];
@@ -143,7 +143,7 @@ Pkt6::unpackUDP() {
 
         LibDHCP::unpackOptions6(opt_buffer, options_);
     } catch (const Exception& e) {
-        cout << "Packet parsing failed:" << e.what() << endl;
+        // @todo: throw exception here once we turn this function to void.
         return (false);
     }
     return (true);
@@ -197,8 +197,6 @@ Pkt6::delOption(uint16_t type) {
 }
 
 void Pkt6::repack() {
-    cout << "Convering RX packet to TX packet: " << data_.size() << " bytes." << endl;
-
     bufferOut_.writeData(&data_[0], data_.size());
 }
 

@@ -16,7 +16,8 @@
 #define __NSEC3HASH_H 1
 
 #include <string>
-
+#include <vector>
+#include <stdint.h>
 #include <exceptions/exceptions.h>
 
 namespace isc {
@@ -115,6 +116,16 @@ public:
     /// for hash calculation from an NSEC3 RDATA object.
     static NSEC3Hash* create(const rdata::generic::NSEC3& nsec3);
 
+    /// \brief Factory method of NSECHash from args.
+    ///
+    /// \param algorithm the NSEC3 algorithm to use; currently only 1
+    ///                  (SHA-1) is supported
+    /// \param iterations the number of iterations
+    /// \param salt_data the salt data as a byte array
+    /// \param salt_data_length the length of the salt data
+    static NSEC3Hash* create(uint8_t algorithm, uint16_t iterations,
+                             const uint8_t* salt_data, size_t salt_length);
+
     /// \brief The destructor.
     virtual ~NSEC3Hash() {}
 
@@ -167,7 +178,7 @@ public:
 /// would be an experimental extension for a newer hash algorithm or
 /// implementation.
 ///
-/// The two main methods named \c create() correspond to the static factory
+/// The three main methods named \c create() correspond to the static factory
 /// methods of \c NSEC3Hash of the same name.
 ///
 /// By default, the library uses the \c DefaultNSEC3HashCreator creator.
@@ -210,6 +221,22 @@ public:
     /// <code>NSEC3Hash::create(const rdata::generic::NSEC3& param)</code>
     virtual NSEC3Hash* create(const rdata::generic::NSEC3& nsec3)
         const = 0;
+
+    /// \brief Factory method of NSECHash from args.
+    ///
+    /// See
+    /// <code>NSEC3Hash::create(uint8_t algorithm, uint16_t iterations,
+    ///                         const uint8_t* salt_data,
+    ///                         size_t salt_length)</code>
+    ///
+    /// \param algorithm the NSEC3 algorithm to use; currently only 1
+    ///                  (SHA-1) is supported
+    /// \param iterations the number of iterations
+    /// \param salt_data the salt data as a byte array
+    /// \param salt_data_length the length of the salt data
+    virtual NSEC3Hash* create(uint8_t algorithm, uint16_t iterations,
+                              const uint8_t* salt_data, size_t salt_length)
+        const = 0;
 };
 
 /// \brief The default NSEC3Hash creator.
@@ -225,6 +252,9 @@ class DefaultNSEC3HashCreator : public NSEC3HashCreator {
 public:
     virtual NSEC3Hash* create(const rdata::generic::NSEC3PARAM& param) const;
     virtual NSEC3Hash* create(const rdata::generic::NSEC3& nsec3) const;
+    virtual NSEC3Hash* create(uint8_t algorithm, uint16_t iterations,
+                              const uint8_t* salt_data,
+                              size_t salt_length) const;
 };
 
 /// \brief The registrar of \c NSEC3HashCreator.

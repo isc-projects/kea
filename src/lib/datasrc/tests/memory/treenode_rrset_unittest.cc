@@ -25,6 +25,7 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <string>
@@ -137,11 +138,22 @@ protected:
     RdataSet* wildcard_rdataset_; // for wildcard (type doesn't matter much)
 };
 
+void
+compareRRSIGData(RdataIteratorPtr rit, const void* data, size_t data_len) {
+    ASSERT_FALSE(rit->isLast());
+
+    OutputBuffer buffer(0);
+    rit->getCurrent().toWire(buffer);
+    matchWireData(data, data_len, buffer.getData(), buffer.getLength());
+    rit->next();
+}
+
 // Check some trivial fields of a constructed TreeNodeRRset (passed as
 // AbstractRRset as we'd normally use it in polymorphic way).
 // Other complicated fields are checked through rendering tests.
 void
-checkBasicFields(const AbstractRRset& actual_rrset, const Name& expected_name,
+checkBasicFields(const AbstractRRset& actual_rrset, const RdataSet* rdataset,
+                 const Name& expected_name,
                  const RRClass& expected_class, const RRType& expected_type,
                  const uint32_t expected_ttl,
                  size_t expected_rdatacount, size_t expected_sigcount)
@@ -152,6 +164,28 @@ checkBasicFields(const AbstractRRset& actual_rrset, const Name& expected_name,
     EXPECT_EQ(RRTTL(expected_ttl), actual_rrset.getTTL());
     EXPECT_EQ(expected_rdatacount, actual_rrset.getRdataCount());
     EXPECT_EQ(expected_sigcount, actual_rrset.getRRsigDataCount());
+
+    // getRRsig() should return non NULL iff the RRset is expected to be signed
+    if (expected_sigcount == 0) {
+        EXPECT_FALSE(actual_rrset.getRRsig());
+    } else {
+        ConstRRsetPtr actual_sigrrset = actual_rrset.getRRsig();
+        ASSERT_TRUE(actual_sigrrset);
+        EXPECT_EQ(expected_name, actual_sigrrset->getName());
+        EXPECT_EQ(expected_class, actual_sigrrset->getClass());
+        EXPECT_EQ(RRType::RRSIG(), actual_sigrrset->getType());
+        EXPECT_EQ(RRTTL(expected_ttl), actual_sigrrset->getTTL());
+        EXPECT_EQ(expected_sigcount, actual_sigrrset->getRdataCount());
+
+        // Compare each RRSIG RDATA
+        RdataIteratorPtr rit = actual_sigrrset->getRdataIterator();
+        RdataReader reader(expected_class, expected_type,
+                           rdataset->getDataBuf(), expected_rdatacount,
+                           expected_sigcount, &RdataReader::emptyNameAction,
+                           boost::bind(compareRRSIGData, rit, _1, _2));
+        while (reader.nextSig() != RdataReader::RRSET_BOUNDARY) {}
+        EXPECT_TRUE(rit->isLast()); // should check all RDATAs
+    }
 }
 
 // The following two are trivial wrapper to create a shared pointer
@@ -178,30 +212,37 @@ createRRset(const Name& realname, const RRClass& rrclass, const ZoneNode* node,
 TEST_F(TreeNodeRRsetTest, create) {
     // Constructed with RRSIG, and it should be visible.
     checkBasicFields(*createRRset(rrclass_, www_node_, a_rdataset_, true),
-                     www_name_, rrclass_, RRType::A(), 3600, 2, 1);
+                     a_rdataset_, www_name_, rrclass_, RRType::A(), 3600, 2,
+                     1);
     // Constructed with RRSIG, and it should be invisible.
     checkBasicFields(*createRRset(rrclass_, www_node_, a_rdataset_, false),
-                     www_name_, rrclass_, RRType::A(), 3600, 2, 0);
+                     a_rdataset_, www_name_, rrclass_, RRType::A(), 3600, 2,
+                     0);
     // Constructed without RRSIG, and it would be visible (but of course won't)
     checkBasicFields(*createRRset(rrclass_, origin_node_, ns_rdataset_, true),
-                     origin_name_, rrclass_, RRType::NS(), 3600, 1, 0);
+                     ns_rdataset_, origin_name_, rrclass_, RRType::NS(), 3600,
+                     1, 0);
     // Constructed without RRSIG, and it should be visible
     checkBasicFields(*createRRset(rrclass_, origin_node_, ns_rdataset_, false),
-                     origin_name_, rrclass_, RRType::NS(), 3600, 1, 0);
+                     ns_rdataset_, origin_name_, rrclass_, RRType::NS(), 3600,
+                     1, 0);
     // RRSIG-only case (note the RRset's type is covered type)
     checkBasicFields(*createRRset(rrclass_, www_node_, rrsig_only_rdataset_,
                                   true),
-                     www_name_, rrclass_, RRType::TXT(), 3600, 0, 1);
+                     rrsig_only_rdataset_, www_name_, rrclass_, RRType::TXT(),
+                     3600, 0, 1);
     // RRSIG-only case (note the RRset's type is covered type), but it's
     // invisible
     checkBasicFields(*createRRset(rrclass_, www_node_, rrsig_only_rdataset_,
                                   false),
-                     www_name_, rrclass_, RRType::TXT(), 3600, 0, 0);
+                     rrsig_only_rdataset_, www_name_, rrclass_, RRType::TXT(),
+                     3600, 0, 0);
     // Wildcard substitution
     checkBasicFields(*createRRset(match_name_, rrclass_,
                                   wildcard_node_, wildcard_rdataset_,
                                   true),
-                     match_name_, rrclass_, RRType::A(), 3600, 2, 1);
+                     wildcard_rdataset_, match_name_, rrclass_, RRType::A(),
+                     3600, 2, 1);
 }
 
 // The following two templated functions are helper to encapsulate the
@@ -578,7 +619,6 @@ TEST_F(TreeNodeRRsetTest, unexpectedMethods) {
     EXPECT_THROW(rrset.setName(Name("example")), isc::Unexpected);
     EXPECT_THROW(rrset.addRdata(createRdata(RRType::A(), rrclass_, "0.0.0.0")),
                  isc::Unexpected);
-    EXPECT_THROW(rrset.getRRsig(), isc::Unexpected);
     RdataPtr sig_rdata = createRdata(
         RRType::RRSIG(), rrclass_,
         "A 5 2 3600 20120814220826 20120715220826 5300 example.com. FAKE");

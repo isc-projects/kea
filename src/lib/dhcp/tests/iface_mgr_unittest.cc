@@ -82,10 +82,8 @@ TEST_F(IfaceMgrTest, loDetect) {
     // it will go away as soon as proper interface detection
     // is implemented
     if (if_nametoindex("lo") > 0) {
-        cout << "This is Linux, using lo as loopback." << endl;
         snprintf(LOOPBACK, BUF_SIZE - 1, "lo");
     } else if (if_nametoindex("lo0") > 0) {
-        cout << "This is BSD, using lo0 as loopback." << endl;
         snprintf(LOOPBACK, BUF_SIZE - 1, "lo0");
     } else {
         cout << "Failed to detect loopback interface. Neither "
@@ -421,7 +419,7 @@ TEST_F(IfaceMgrTest, sockets6) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     IOAddress loAddr("::1");
 
@@ -441,10 +439,25 @@ TEST_F(IfaceMgrTest, sockets6) {
     // removed code for binding socket twice to the same address/port
     // as it caused problems on some platforms (e.g. Mac OS X)
 
-    close(socket1);
-    close(socket2);
+    // Close sockets here because the following tests will want to
+    // open sockets on the same ports.
+    ifacemgr->closeSockets();
 
-    delete ifacemgr;
+    // Use address that is not assigned to LOOPBACK iface.
+    IOAddress invalidAddr("::2");
+    EXPECT_THROW(
+        ifacemgr->openSocket(LOOPBACK, invalidAddr, 10547),
+        SocketConfigError
+    );
+
+    // Use non-existing interface name.
+    EXPECT_THROW(
+        ifacemgr->openSocket("non_existing_interface", loAddr, 10548),
+        BadValue
+    );
+
+    // Do not call closeSockets() because it is called by IfaceMgr's
+    // virtual destructor.
 }
 
 TEST_F(IfaceMgrTest, socketsFromIface) {
@@ -468,6 +481,18 @@ TEST_F(IfaceMgrTest, socketsFromIface) {
     EXPECT_GT(socket2, 0);
     close(socket2);
 
+    // Close sockets here because the following tests will want to
+    // open sockets on the same ports.
+    ifacemgr->closeSockets();
+
+    // Use invalid interface name.
+    EXPECT_THROW(
+        ifacemgr->openSocketFromIface("non_existing_interface", PORT1, AF_INET),
+        BadValue
+    );
+
+    // Do not call closeSockets() because it is called by IfaceMgr's
+    // virtual destructor.
 }
 
 
@@ -482,7 +507,6 @@ TEST_F(IfaceMgrTest, socketsFromAddress) {
     );
     // socket descriptor must be positive integer
     EXPECT_GT(socket1, 0);
-    close(socket1);
 
     // Open v4 socket on loopback interface and bind to different port
     int socket2 = 0;
@@ -492,7 +516,19 @@ TEST_F(IfaceMgrTest, socketsFromAddress) {
     );
     // socket descriptor must be positive integer
     EXPECT_GT(socket2, 0);
-    close(socket2);
+
+    // Close sockets here because the following tests will want to
+    // open sockets on the same ports.
+    ifacemgr->closeSockets();
+
+    // Use non-existing address.
+    IOAddress invalidAddr("1.2.3.4");
+    EXPECT_THROW(
+        ifacemgr->openSocketFromAddress(invalidAddr, PORT1), BadValue
+    );
+
+    // Do not call closeSockets() because it is called by IfaceMgr's
+    // virtual destructor.
 }
 
 TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
@@ -507,7 +543,6 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
         socket1 = ifacemgr->openSocketFromRemoteAddress(loAddr6, PORT1);
     );
     EXPECT_GT(socket1, 0);
-    close(socket1);
 
     // Open v4 socket to connect to remote address.
     int socket2 = 0;
@@ -516,7 +551,10 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
         socket2 = ifacemgr->openSocketFromRemoteAddress(loAddr, PORT2);
     );
     EXPECT_GT(socket2, 0);
-    close(socket2);
+
+    // Close sockets here because the following tests will want to
+    // open sockets on the same ports.
+    ifacemgr->closeSockets();
 
     // The following test is currently disabled for OSes other than
     // Linux because interface detection is not implemented on them.
@@ -530,8 +568,10 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
         socket3 = ifacemgr->openSocketFromRemoteAddress(bcastAddr, PORT2);
     );
     EXPECT_GT(socket3, 0);
-    close(socket3);
 #endif
+
+    // Do not call closeSockets() because it is called by IfaceMgr's
+    // virtual destructor.
 }
 
 // TODO: disabled due to other naming on various systems
@@ -570,7 +610,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     // let's assume that every supported OS have lo interface
     IOAddress loAddr("::1");
@@ -619,7 +659,11 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     // we should accept both values as source ports.
     EXPECT_TRUE((rcvPkt->getRemotePort() == 10546) || (rcvPkt->getRemotePort() == 10547));
 
-    delete ifacemgr;
+    // try to send/receive data over the closed socket. Closed socket's descriptor is
+    // still being hold by IfaceMgr which will try to use it to receive data.
+    close(socket1);
+    EXPECT_THROW(ifacemgr->receive6(10), SocketReadError);
+    EXPECT_THROW(ifacemgr->send(sendPkt), SocketWriteError);
 }
 
 TEST_F(IfaceMgrTest, sendReceive4) {
@@ -627,7 +671,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     // let's assume that every supported OS have lo interface
     IOAddress loAddr("127.0.0.1");
@@ -675,8 +719,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
     EXPECT_EQ(true, ifacemgr->send(sendPkt));
 
-    rcvPkt = ifacemgr->receive4(10);
-
+    ASSERT_NO_THROW(rcvPkt = ifacemgr->receive4(10));
     ASSERT_TRUE(rcvPkt); // received our own packet
 
     ASSERT_NO_THROW(
@@ -710,7 +753,11 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     // assume the one or the other will always be choosen for sending data. We should
     // skip checking source port of sent address.
 
-    delete ifacemgr;
+    // try to receive data over the closed socket. Closed socket's descriptor is
+    // still being hold by IfaceMgr which will try to use it to receive data.
+    close(socket1);
+    EXPECT_THROW(ifacemgr->receive4(10), SocketReadError);
+    EXPECT_THROW(ifacemgr->send(sendPkt), SocketWriteError);
 }
 
 
@@ -1214,7 +1261,7 @@ TEST_F(IfaceMgrTest, controlSession) {
     EXPECT_NO_THROW(ifacemgr->set_session_socket(pipefd[0], my_callback));
 
     Pkt4Ptr pkt4;
-    pkt4 = ifacemgr->receive4(1);
+    ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(1));
 
     // Our callback should not be called this time (there was no data)
     EXPECT_FALSE(callback_ok);
@@ -1226,7 +1273,7 @@ TEST_F(IfaceMgrTest, controlSession) {
     EXPECT_EQ(38, write(pipefd[1], "Hi, this is a message sent over a pipe", 38));
 
     // ... and repeat
-    pkt4 = ifacemgr->receive4(1);
+    ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(1));
 
     // IfaceMgr should not process control socket data as incoming packets
     EXPECT_FALSE(pkt4);

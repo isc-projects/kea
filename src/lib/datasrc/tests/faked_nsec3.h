@@ -57,10 +57,14 @@ class TestNSEC3HashCreator : public isc::dns::NSEC3HashCreator {
 private:
     class TestNSEC3Hash;
 public:
+    TestNSEC3HashCreator() {}
     virtual isc::dns::NSEC3Hash* create(const
                                         isc::dns::rdata::generic::NSEC3PARAM&)
         const;
     virtual isc::dns::NSEC3Hash* create(const isc::dns::rdata::generic::NSEC3&)
+        const;
+    virtual isc::dns::NSEC3Hash* create(uint8_t, uint16_t,
+                                        const uint8_t*, size_t)
         const;
 };
 
