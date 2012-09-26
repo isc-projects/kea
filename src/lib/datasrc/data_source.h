@@ -38,13 +38,6 @@ class RRsetList;
 
 namespace datasrc {
 
-class DataSrcMatch;
-class Query;
-
-class DataSrc;
-typedef boost::shared_ptr<DataSrc> DataSrcPtr;
-typedef boost::shared_ptr<const DataSrc> ConstDataSrcPtr;
-
 /// This exception represents Backend-independent errors relating to
 /// data source operations.
 class DataSourceError : public Exception {
