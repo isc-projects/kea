@@ -1900,7 +1900,7 @@ DomainTree<T>::nodeFission(util::MemorySegment& mem_sgmt,
             node.getParent()->down_ = up_node;
         }
     } else {
-        this->root_ = up_node;
+        root_ = up_node;
     }
 
     up_node->down_ = &node;
