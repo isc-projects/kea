@@ -20,7 +20,7 @@
 #include <datasrc/iterator.h>
 #include <datasrc/client.h>
 #include <datasrc/memory/zone_table.h>
-#include <datasrc/zonetable.h>
+#include <datasrc/memory/zone_data.h>
 
 #include <string>
 
@@ -216,8 +216,7 @@ public:
     /// used in other code.
     ///
     /// \throws none
-    isc::datasrc::memory::ZoneTable::FindResult
-    findZoneData(const isc::dns::Name& name);
+    const ZoneData* findZoneData(const isc::dns::Name& name);
 
     /// \brief Implementation of the getIterator method
     virtual isc::datasrc::ZoneIteratorPtr
