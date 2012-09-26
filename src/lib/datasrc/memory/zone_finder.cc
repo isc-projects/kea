@@ -391,11 +391,15 @@ public:
 // caught above.
 //
 // If none of the above succeeds, we conclude the name doesn't exist in
-// the zone, and throw an OutOfZone exception.
+// the zone, and throw an OutOfZone exception by default.  If the optional
+// out_of_zone_ok is true, it returns an NXDOMAIN result with NULL data so
+// the caller can take an action to it (technically it's not "NXDOMAIN",
+// but the caller is assumed not to rely on the difference.)
 FindNodeResult findNode(const ZoneData& zone_data,
                         const LabelSequence& name_labels,
                         ZoneChain& node_path,
-                        ZoneFinder::FindOptions options)
+                        ZoneFinder::FindOptions options,
+                        bool out_of_zone_ok = false)
 {
     ZoneNode* node = NULL;
     FindState state((options & ZoneFinder::FIND_GLUE_OK) != 0);
@@ -488,7 +492,11 @@ FindNodeResult findNode(const ZoneData& zone_data,
         return (FindNodeResult(ZoneFinder::NXDOMAIN, nsec_node, nsec_rds));
     } else {
         // If the name is neither an exact or partial match, it is
-        // out of bailiwick, which is considered an error.
+        // out of bailiwick, which is considered an error, unless the caller
+        // is willing to accept it.
+        if (out_of_zone_ok) {
+            return (FindNodeResult(ZoneFinder::NXDOMAIN, NULL, NULL));
+        }
         isc_throw(OutOfZone, name_labels << " not in " <<
                              zone_data.getOriginNode()->getName());
     }
@@ -654,20 +662,11 @@ InMemoryZoneFinder::Context::findAdditional(
         return;
     }
 
-    // Ignore out-of-zone names
-    uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
-    const NameComparisonResult cmp =
-        zone_data_->getOriginNode()->getAbsoluteLabels(labels_buf).
-        compare(name_labels);
-    if ((cmp.getRelation() != NameComparisonResult::SUPERDOMAIN) &&
-        (cmp.getRelation() != NameComparisonResult::EQUAL)) {
-        return;
-    }
-
-    // Find the zone node for the additional name
+    // Find the zone node for the additional name.  By passing true as the
+    // last parameter of findNode() we ignore out-of-zone names.
     ZoneChain node_path;
     const FindNodeResult node_result =
-        findNode(*zone_data_, name_labels, node_path, options);
+        findNode(*zone_data_, name_labels, node_path, options, true);
     // we only need non-empty exact match
     if (node_result.code != SUCCESS) {
         return;
