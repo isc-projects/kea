@@ -235,6 +235,18 @@ TEST_P(ZoneFinderContextTest, getAdditionalDelegationWithDname) {
                 result_sets_.begin(), result_sets_.end());
 }
 
+TEST_P(ZoneFinderContextTest, getAdditionalOnDname) {
+    // The additional name has a DNAME as well as the additional record.
+    // The existence of DNAME shouldn't hide the additional record.
+    ZoneFinderContextPtr ctx = finder_->find(Name("dnamemx.example.org"),
+                                             RRType::MX());
+    EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
+
+    ctx->getAdditional(REQUESTED_BOTH, result_sets_);
+    rrsetsCheck("dname.example.org. 3600 IN A 192.0.2.12\n",
+                result_sets_.begin(), result_sets_.end());
+}
+
 TEST_P(ZoneFinderContextTest, getAdditionalDelegationWithEmptyName) {
     // One of NS names is at an empty non terminal node.  It shouldn't cause
     // any disruption.

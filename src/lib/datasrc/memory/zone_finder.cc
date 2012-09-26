@@ -673,12 +673,17 @@ InMemoryZoneFinder::Context::findAdditional(
         return;
     }
 
-    // Ignore data at a zone cut unless glue is allowed.
-    // TODO: DNAME case consideration (with test)
+    // Ignore data at a zone cut (due to subdomain delegation) unless glue is
+    // allowed.  Checking the node callback flag is a cheap way to detect
+    // zone cuts, but it includes DNAME delegation, in which case we should
+    // keep finding the additional records regardless of the 'GLUE_OK' flag.
+    // The last two conditions limit the case to delegation NS, i.e, the node
+    // has an NS and it's not the zone origin.
     const ZoneNode* node = node_result.node;
     if ((options & ZoneFinder::FIND_GLUE_OK) == 0 &&
         node->getFlag(ZoneNode::FLAG_CALLBACK) &&
-        node != zone_data_->getOriginNode()) {
+        node != zone_data_->getOriginNode() &&
+        RdataSet::find(node->getData(), RRType::NS()) != NULL) {
         return;
     }
 
