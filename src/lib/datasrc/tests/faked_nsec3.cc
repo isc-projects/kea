@@ -67,6 +67,17 @@ public:
             "00000000000000000000000000000000";
         map_[Name("largest.example.org")] =
             "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU";
+
+        // These are used by the findNSEC3Walk test.
+        map_[Name("n0.example.org")] = "00000000000000000000000000000000";
+        map_[Name("n1.example.org")] = "01UDEMVP1J2F7EG6JEBPS17VP3N8I58H";
+        map_[Name("n2.example.org")] = "02UDEMVP1J2F7EG6JEBPS17VP3N8I58H";
+        map_[Name("n3.example.org")] = "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+        map_[Name("n4.example.org")] = "11111111111111111111111111111111";
+        map_[Name("n5.example.org")] = "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR";
+        map_[Name("n6.example.org")] = "44444444444444444444444444444444";
+        map_[Name("n7.example.org")] = "R53BQ7CC2UVMUBFU5OCMM6PERS9TK9EN";
+        map_[Name("n8.example.org")] = "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";
     }
     virtual string calculate(const Name& name) const {
         const NSEC3HashMap::const_iterator found = map_.find(name);
@@ -91,6 +102,12 @@ NSEC3Hash* TestNSEC3HashCreator::create(const rdata::generic::NSEC3PARAM&)
 }
 
 NSEC3Hash* TestNSEC3HashCreator::create(const rdata::generic::NSEC3&) const {
+    return (new TestNSEC3Hash);
+}
+
+NSEC3Hash* TestNSEC3HashCreator::create(uint8_t, uint16_t,
+                                        const uint8_t*, size_t) const
+{
     return (new TestNSEC3Hash);
 }
 

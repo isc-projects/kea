@@ -14,12 +14,14 @@
 
 #include <exceptions/exceptions.h>
 
+#include <util/memory_segment_local.h>
+
 #include <dns/masterload.h>
 #include <dns/name.h>
 #include <dns/rrclass.h>
 
 #include <datasrc/zone.h>
-#include <datasrc/memory_datasrc.h>
+#include <datasrc/memory/memory_client.h>
 #include <datasrc/database.h>
 #include <datasrc/sqlite3_accessor.h>
 
@@ -39,8 +41,10 @@
 using namespace std;
 using boost::shared_ptr;
 
+using namespace isc::util;
 using namespace isc::dns;
 using namespace isc::datasrc;
+using isc::datasrc::memory::InMemoryClient;
 using namespace isc::testutils;
 
 namespace {
@@ -54,18 +58,16 @@ typedef shared_ptr<DataSourceClient> DataSourceClientPtr;
 // This is the type used as the test parameter.  Note that this is
 // intentionally a plain old type (i.e. a function pointer), not a class;
 // otherwise it could cause initialization fiasco at the instantiation time.
-typedef DataSourceClientPtr (*ClientCreator)(RRClass, const Name&);
+typedef DataSourceClientPtr (*ClientCreator)(MemorySegment&, RRClass,
+                                             const Name&);
 
 // Creator for the in-memory client to be tested
 DataSourceClientPtr
-createInMemoryClient(RRClass zclass, const Name& zname) {
-    shared_ptr<InMemoryClient> client(new InMemoryClient);
-
-    shared_ptr<InMemoryZoneFinder> finder(
-        new InMemoryZoneFinder(zclass, zname));
-    finder->load(TEST_ZONE_FILE);
-
-    client->addZone(finder);
+createInMemoryClient(MemorySegment& mem_sgmt, RRClass zclass,
+                     const Name& zname)
+{
+    shared_ptr<InMemoryClient> client(new InMemoryClient(mem_sgmt, zclass));
+    client->load(zname, TEST_ZONE_FILE);
 
     return (client);
 }
@@ -76,7 +78,7 @@ addRRset(ZoneUpdaterPtr updater, ConstRRsetPtr rrset) {
 }
 
 DataSourceClientPtr
-createSQLite3Client(RRClass zclass, const Name& zname) {
+createSQLite3Client(MemorySegment&, RRClass zclass, const Name& zname) {
     // We always begin with an empty template SQLite3 DB file and install
     // the zone data from the zone file to ensure both cases have the
     // same test data.
@@ -103,7 +105,7 @@ class ZoneFinderContextTest :
 {
 protected:
     ZoneFinderContextTest() : qclass_(RRClass::IN()), qzone_("example.org") {
-        client_ = (*GetParam())(qclass_, qzone_);
+        client_ = (*GetParam())(mem_sgmt_, qclass_, qzone_);
         REQUESTED_A.push_back(RRType::A());
         REQUESTED_AAAA.push_back(RRType::AAAA());
         REQUESTED_BOTH.push_back(RRType::A());
@@ -114,6 +116,7 @@ protected:
         ASSERT_TRUE(finder_);
     }
 
+    MemorySegmentLocal mem_sgmt_;
     const RRClass qclass_;
     const Name qzone_;
     DataSourceClientPtr client_;
@@ -229,6 +232,18 @@ TEST_P(ZoneFinderContextTest, getAdditionalDelegationWithDname) {
     ctx->getAdditional(REQUESTED_BOTH, result_sets_);
     rrsetsCheck("dname.example.org. 3600 IN A 192.0.2.12\n"
                 "ns.deepdname.example.org. 3600 IN AAAA 2001:db8::9\n",
+                result_sets_.begin(), result_sets_.end());
+}
+
+TEST_P(ZoneFinderContextTest, getAdditionalOnDname) {
+    // The additional name has a DNAME as well as the additional record.
+    // The existence of DNAME shouldn't hide the additional record.
+    ZoneFinderContextPtr ctx = finder_->find(Name("dnamemx.example.org"),
+                                             RRType::MX());
+    EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
+
+    ctx->getAdditional(REQUESTED_BOTH, result_sets_);
+    rrsetsCheck("dname.example.org. 3600 IN A 192.0.2.12\n",
                 result_sets_.begin(), result_sets_.end());
 }
 
