@@ -702,8 +702,8 @@ public:
     /// \exception None
     DomainTreeNodeChain(const DomainTreeNodeChain<T>& other) :
         level_count_(other.level_count_),
-	last_compared_(other.last_compared_),
-	last_comparison_(other.last_comparison_)
+        last_compared_(other.last_compared_),
+        last_comparison_(other.last_comparison_)
     {
         for (size_t i = 0; i < level_count_; i++) {
 	    nodes_[i] = other.nodes_[i];
