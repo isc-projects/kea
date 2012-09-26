@@ -257,7 +257,7 @@ TEST_F(DomainTreeTest, subTreeRoot) {
     // "g.h" is not a subtree root
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("g.h"), &dtnode));
-    EXPECT_FALSE(dtnode->isSubTreeRoot());
+    EXPECT_FALSE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
 
     // fission the node "g.h"
     EXPECT_EQ(TestDomainTree::ALREADYEXISTS,
@@ -266,12 +266,12 @@ TEST_F(DomainTreeTest, subTreeRoot) {
 
     // the node "h" (h.down_ -> "g") should not be a subtree root. "g"
     // should be a subtree root.
-    EXPECT_FALSE(dtnode->isSubTreeRoot());
+    EXPECT_FALSE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
 
     // "g.h" should be a subtree root now.
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("g.h"), &dtnode));
-    EXPECT_TRUE(dtnode->isSubTreeRoot());
+    EXPECT_TRUE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
 }
 
 TEST_F(DomainTreeTest, additionalNodeFission) {
@@ -287,7 +287,7 @@ TEST_F(DomainTreeTest, additionalNodeFission) {
     // "t.0" is not a subtree root
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("t.0"), &dtnode));
-    EXPECT_FALSE(dtnode->isSubTreeRoot());
+    EXPECT_FALSE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
 
     // fission the node "t.0"
     EXPECT_EQ(TestDomainTree::ALREADYEXISTS,
@@ -296,12 +296,12 @@ TEST_F(DomainTreeTest, additionalNodeFission) {
 
     // the node "0" ("0".down_ -> "t") should not be a subtree root. "t"
     // should be a subtree root.
-    EXPECT_FALSE(dtnode->isSubTreeRoot());
+    EXPECT_FALSE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
 
     // "t.0" should be a subtree root now.
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("t.0"), &dtnode));
-    EXPECT_TRUE(dtnode->isSubTreeRoot());
+    EXPECT_TRUE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
 }
 
 TEST_F(DomainTreeTest, findName) {
@@ -596,6 +596,10 @@ TEST_F(DomainTreeTest, chainLevel) {
     // by default there should be no level in the chain.
     EXPECT_EQ(0, chain.getLevelCount());
 
+    // Copy should be consistent
+    TestDomainTreeNodeChain chain2(chain);
+    EXPECT_EQ(chain.getLevelCount(), chain2.getLevelCount());
+
     // insert one node to the tree and find it.  there should be exactly
     // one level in the chain.
     TreeHolder tree_holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_, true));
@@ -606,6 +610,11 @@ TEST_F(DomainTreeTest, chainLevel) {
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               tree.find(node_name, &cdtnode, chain));
     EXPECT_EQ(1, chain.getLevelCount());
+
+    // Copy should be consistent
+    TestDomainTreeNodeChain chain3(chain);
+    EXPECT_EQ(chain.getLevelCount(), chain3.getLevelCount());
+    EXPECT_EQ(chain.getAbsoluteName(), chain3.getAbsoluteName());
 
     // Check the name of the found node (should have '.' as both non-absolute
     // and absolute name
@@ -687,16 +696,6 @@ const char* const upper_node_names[] = {
     "w.y.d.e.f", "w.y.d.e.f", "d.e.f", "z.d.e.f",
     ".", "g.h", "g.h"};
 
-const char* const subtree_root_node_names[] = {
-    "b", "b", "b", "b", "w.y.d.e.f", "w.y.d.e.f", "p.w.y.d.e.f",
-    "p.w.y.d.e.f", "p.w.y.d.e.f", "w.y.d.e.f", "j.z.d.e.f",
-    "b", "i.g.h", "i.g.h"};
-
-const char* const largest_node_names[] = {
-    "g.h", "g.h", "g.h", "g.h", "z.d.e.f", "z.d.e.f", "q.w.y.d.e.f",
-    "q.w.y.d.e.f", "q.w.y.d.e.f", "z.d.e.f", "j.z.d.e.f",
-    "g.h", "k.g.h", "k.g.h"};
-
 TEST_F(DomainTreeTest, getUpperNode) {
     TestDomainTreeNodeChain node_path;
     const TestDomainTreeNode* node = NULL;
@@ -725,6 +724,16 @@ TEST_F(DomainTreeTest, getUpperNode) {
     // We should have reached the end of the tree.
     EXPECT_EQ(static_cast<void*>(NULL), node);
 }
+
+
+#if 0
+// Disabled and kept still, for use in case we make getSubTreeRoot() a
+// public function again.
+
+const char* const subtree_root_node_names[] = {
+    "b", "b", "b", "b", "w.y.d.e.f", "w.y.d.e.f", "p.w.y.d.e.f",
+    "p.w.y.d.e.f", "p.w.y.d.e.f", "w.y.d.e.f", "j.z.d.e.f",
+    "b", "i.g.h", "i.g.h"};
 
 TEST_F(DomainTreeTest, getSubTreeRoot) {
     TestDomainTreeNodeChain node_path;
@@ -755,34 +764,8 @@ TEST_F(DomainTreeTest, getSubTreeRoot) {
     EXPECT_EQ(static_cast<void*>(NULL), node);
 }
 
-TEST_F(DomainTreeTest, getLargestInSubTree) {
-    TestDomainTreeNodeChain node_path;
-    const TestDomainTreeNode* node = NULL;
-    EXPECT_EQ(TestDomainTree::EXACTMATCH,
-              dtree_expose_empty_node.find(Name(names[0]),
-                                            &node,
-                                            node_path));
-    for (int i = 0; i < name_count; ++i) {
-        EXPECT_NE(static_cast<void*>(NULL), node);
+#endif // disabled getSubTreeRoot()
 
-        const TestDomainTreeNode* largest_node = node->getLargestInSubTree();
-        if (largest_node_names[i] != NULL) {
-            const TestDomainTreeNode* largest_node2 = NULL;
-            EXPECT_EQ(TestDomainTree::EXACTMATCH,
-                dtree_expose_empty_node.find(Name(largest_node_names[i]),
-                                             &largest_node2));
-            EXPECT_NE(static_cast<void*>(NULL), largest_node2);
-            EXPECT_EQ(largest_node, largest_node2);
-        } else {
-            EXPECT_EQ(static_cast<void*>(NULL), largest_node);
-        }
-
-        node = dtree_expose_empty_node.nextNode(node_path);
-    }
-
-    // We should have reached the end of the tree.
-    EXPECT_EQ(static_cast<void*>(NULL), node);
-}
 
 TEST_F(DomainTreeTest, nextNode) {
     TestDomainTreeNodeChain node_path;
@@ -1003,6 +986,17 @@ TEST_F(DomainTreeTest, previousNode) {
         node = NULL;
         node_path.clear();
     }
+}
+
+TEST_F(DomainTreeTest, largestNode) {
+    cdtnode = dtree.largestNode();
+    EXPECT_EQ(Name("k"), cdtnode->getName());
+
+    // Check for largest node in an empty tree.
+    TreeHolder empty_tree_holder
+        (mem_sgmt_, TestDomainTree::create(mem_sgmt_));
+    TestDomainTree& empty_tree(*empty_tree_holder.get());
+    EXPECT_EQ(static_cast<void*>(NULL), empty_tree.largestNode());
 }
 
 TEST_F(DomainTreeTest, nextNodeError) {

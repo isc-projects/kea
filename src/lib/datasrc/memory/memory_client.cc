@@ -324,6 +324,7 @@ public:
         if (nsec3_data == NULL) {
             nsec3_data = NSEC3Data::create(mem_sgmt_, nsec3_rdata);
             zone_data.setNSEC3Data(nsec3_data);
+            zone_data.setSigned(true);
         } else {
             size_t salt_len = nsec3_data->getSaltLen();
             const uint8_t* salt_data = nsec3_data->getSaltData();
@@ -331,7 +332,12 @@ public:
 
             if ((nsec3_rdata.getHashalg() != nsec3_data->hashalg) ||
                 (nsec3_rdata.getIterations() != nsec3_data->iterations) ||
-                (salt_data_2.size() != salt_len) ||
+                (salt_data_2.size() != salt_len)) {
+                isc_throw(AddError,
+                          "NSEC3 with inconsistent parameters: " <<
+                          rrset->toText());
+            }
+            if ((salt_len > 0) &&
                 (std::memcmp(&salt_data_2[0], salt_data, salt_len) != 0)) {
                 isc_throw(AddError,
                           "NSEC3 with inconsistent parameters: " <<
@@ -339,20 +345,10 @@ public:
             }
         }
 
-        // Make just the NSEC3 hash label uppercase, and insert the
-        // entire name into the NSEC3Data ZoneTree.
-        string fst_label = rrset->getName().split(0, 1).toText(true);
-        transform(fst_label.begin(), fst_label.end(), fst_label.begin(),
-                  ::toupper);
-        const string rest = rrset->getName().split(1).toText(true);
-
         ZoneNode* node;
-        nsec3_data->insertName(mem_sgmt_, Name(fst_label + "." + rest), &node);
+        nsec3_data->insertName(mem_sgmt_, rrset->getName(), &node);
 
         RdataEncoder encoder;
-
-        // We assume that rrsig has already been checked to match rrset
-        // by the caller.
         RdataSet* set = RdataSet::create(mem_sgmt_, encoder, rrset, rrsig);
         RdataSet* old_set = node->setData(set);
         if (old_set != NULL) {
@@ -417,6 +413,7 @@ public:
                 if (nsec3_data == NULL) {
                     nsec3_data = NSEC3Data::create(mem_sgmt_, param);
                     zone_data.setNSEC3Data(nsec3_data);
+                    zone_data.setSigned(true);
                 } else {
                     size_t salt_len = nsec3_data->getSaltLen();
                     const uint8_t* salt_data = nsec3_data->getSaltData();
@@ -424,7 +421,13 @@ public:
 
                     if ((param.getHashalg() != nsec3_data->hashalg) ||
                         (param.getIterations() != nsec3_data->iterations) ||
-                        (salt_data_2.size() != salt_len) ||
+                        (salt_data_2.size() != salt_len)) {
+                        isc_throw(AddError,
+                                  "NSEC3PARAM with inconsistent parameters: "
+                                  << rrset->toText());
+                    }
+
+                    if ((salt_len > 0) &&
                         (std::memcmp(&salt_data_2[0],
                                      salt_data, salt_len) != 0)) {
                         isc_throw(AddError,
@@ -702,10 +705,10 @@ InMemoryClient::findZone(const isc::dns::Name& zone_name) const {
     return (DataSourceClient::FindResult(result.code, finder));
 }
 
-isc::datasrc::memory::ZoneTable::FindResult
-InMemoryClient::findZone2(const isc::dns::Name& zone_name) const {
+const ZoneData*
+InMemoryClient::findZoneData(const isc::dns::Name& zone_name) {
     ZoneTable::FindResult result(impl_->zone_table_->findZone(zone_name));
-    return (result);
+    return (result.zone_data);
 }
 
 result::Result

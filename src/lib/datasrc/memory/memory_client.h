@@ -20,7 +20,7 @@
 #include <datasrc/iterator.h>
 #include <datasrc/client.h>
 #include <datasrc/memory/zone_table.h>
-#include <datasrc/zonetable.h>
+#include <datasrc/memory/zone_data.h>
 
 #include <string>
 
@@ -209,12 +209,14 @@ public:
     virtual isc::datasrc::DataSourceClient::FindResult
     findZone(const isc::dns::Name& name) const;
 
-    /// Returns a \c ZoneTable result that best matches the given name.
+    /// Returns a \c ZoneData in the result that best matches the given
+    /// name.
     ///
-    /// This derived version of the method never throws an exception.
-    /// For other details see \c DataSourceClient::findZone().
-    virtual isc::datasrc::memory::ZoneTable::FindResult
-    findZone2(const isc::dns::Name& name) const;
+    /// This is mainly intended for use in unit tests and should not be
+    /// used in other code.
+    ///
+    /// \throws none
+    const ZoneData* findZoneData(const isc::dns::Name& name);
 
     /// \brief Implementation of the getIterator method
     virtual isc::datasrc::ZoneIteratorPtr

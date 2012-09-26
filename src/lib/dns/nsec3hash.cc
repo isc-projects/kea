@@ -16,6 +16,7 @@
 
 #include <cassert>
 #include <cstring>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -57,15 +58,29 @@ private:
 
 public:
     NSEC3HashRFC5155(uint8_t algorithm, uint16_t iterations,
-                     const vector<uint8_t>& salt) :
+                     const uint8_t* salt_data, size_t salt_length) :
         algorithm_(algorithm), iterations_(iterations),
-        salt_(salt), digest_(SHA1_HASHSIZE), obuf_(Name::MAX_WIRE)
+        salt_data_(NULL), salt_length_(salt_length),
+        digest_(SHA1_HASHSIZE), obuf_(Name::MAX_WIRE)
     {
         if (algorithm_ != NSEC3_HASH_SHA1) {
             isc_throw(UnknownNSEC3HashAlgorithm, "Unknown NSEC3 algorithm: " <<
                       static_cast<unsigned int>(algorithm_));
         }
+
+        if (salt_length > 0) {
+            salt_data_ = static_cast<uint8_t*>(std::malloc(salt_length));
+            if (salt_data_ == NULL) {
+                throw std::bad_alloc();
+            }
+            std::memcpy(salt_data_, salt_data, salt_length);
+        }
+
         SHA1Reset(&sha1_ctx_);
+    }
+
+    ~NSEC3HashRFC5155() {
+        std::free(salt_data_);
     }
 
     virtual std::string calculate(const Name& name) const;
@@ -78,7 +93,8 @@ public:
 private:
     const uint8_t algorithm_;
     const uint16_t iterations_;
-    const vector<uint8_t> salt_;
+    uint8_t* salt_data_;
+    const size_t salt_length_;
 
     // The following members are placeholder of work place and don't hold
     // any state over multiple calls so can be mutable without breaking
@@ -108,15 +124,14 @@ NSEC3HashRFC5155::calculate(const Name& name) const {
     name_copy.downcase();
     name_copy.toWire(obuf_);
 
-    const uint8_t saltlen = salt_.size();
-    const uint8_t* const salt = (saltlen > 0) ? &salt_[0] : NULL;
     uint8_t* const digest = &digest_[0];
     assert(digest_.size() == SHA1_HASHSIZE);
 
     iterateSHA1(&sha1_ctx_, static_cast<const uint8_t*>(obuf_.getData()),
-                obuf_.getLength(), salt, saltlen, digest);
+                obuf_.getLength(), salt_data_, salt_length_, digest);
     for (unsigned int n = 0; n < iterations_; ++n) {
-        iterateSHA1(&sha1_ctx_, digest, SHA1_HASHSIZE, salt, saltlen, digest);
+        iterateSHA1(&sha1_ctx_, digest, SHA1_HASHSIZE,
+                    salt_data_, salt_length_, digest);
     }
 
     return (encodeBase32Hex(digest_));
@@ -127,8 +142,9 @@ NSEC3HashRFC5155::match(uint8_t algorithm, uint16_t iterations,
                         const vector<uint8_t>& salt) const
 {
     return (algorithm_ == algorithm && iterations_ == iterations &&
-            salt_.size() == salt.size() &&
-            (salt_.empty() || memcmp(&salt_[0], &salt[0], salt_.size()) == 0));
+            salt_length_ == salt.size() &&
+            ((salt_length_ == 0) ||
+             memcmp(salt_data_, &salt[0], salt_length_) == 0));
 }
 
 bool
@@ -175,15 +191,35 @@ NSEC3Hash::create(const generic::NSEC3& nsec3) {
 }
 
 NSEC3Hash*
+NSEC3Hash::create(uint8_t algorithm, uint16_t iterations,
+                  const uint8_t* salt_data, size_t salt_length) {
+    return (getNSEC3HashCreator()->create(algorithm, iterations,
+                                          salt_data, salt_length));
+}
+
+NSEC3Hash*
 DefaultNSEC3HashCreator::create(const generic::NSEC3PARAM& param) const {
+    const vector<uint8_t>& salt = param.getSalt();
     return (new NSEC3HashRFC5155(param.getHashalg(), param.getIterations(),
-                                 param.getSalt()));
+                                 salt.empty() ? NULL : &salt[0],
+                                 salt.size()));
 }
 
 NSEC3Hash*
 DefaultNSEC3HashCreator::create(const generic::NSEC3& nsec3) const {
+    const vector<uint8_t>& salt = nsec3.getSalt();
     return (new NSEC3HashRFC5155(nsec3.getHashalg(), nsec3.getIterations(),
-                                 nsec3.getSalt()));
+                                 salt.empty() ? NULL : &salt[0],
+                                 salt.size()));
+}
+
+NSEC3Hash*
+DefaultNSEC3HashCreator::create(uint8_t algorithm, uint16_t iterations,
+                                const uint8_t* salt_data,
+                                size_t salt_length) const
+{
+    return (new NSEC3HashRFC5155(algorithm, iterations,
+                                 salt_data, salt_length));
 }
 
 void
