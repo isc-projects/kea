@@ -708,10 +708,10 @@ InMemoryClient::findZone(const isc::dns::Name& zone_name) const {
     return (DataSourceClient::FindResult(result.code, finder));
 }
 
-isc::datasrc::memory::ZoneTable::FindResult
+const ZoneData*
 InMemoryClient::findZoneData(const isc::dns::Name& zone_name) {
     ZoneTable::FindResult result(impl_->zone_table_->findZone(zone_name));
-    return (result);
+    return (result.zone_data);
 }
 
 result::Result

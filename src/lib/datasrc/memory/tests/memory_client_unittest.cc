@@ -282,14 +282,12 @@ TEST_F(MemoryClientTest, loadReloadZone) {
                   client_->getFileName(Name("example.org")));
     EXPECT_EQ(1, client_->getZoneCount());
 
-    isc::datasrc::memory::ZoneTable::FindResult
-        result(client_->findZoneData(Name("example.org")));
-    EXPECT_EQ(result::SUCCESS, result.code);
-    EXPECT_NE(static_cast<ZoneData*>(NULL),
-              result.zone_data);
+    const ZoneData* zone_data =
+        client_->findZoneData(Name("example.org"));
+    EXPECT_NE(static_cast<const ZoneData*>(NULL), zone_data);
 
     /* Check SOA */
-    const ZoneNode* node = result.zone_data->getOriginNode();
+    const ZoneNode* node = zone_data->getOriginNode();
     EXPECT_NE(static_cast<const ZoneNode*>(NULL), node);
 
     const RdataSet* set = node->getData();
@@ -300,7 +298,7 @@ TEST_F(MemoryClientTest, loadReloadZone) {
     EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);
 
     /* Check ns1.example.org */
-    const ZoneTree& tree = result.zone_data->getZoneTree();
+    const ZoneTree& tree = zone_data->getZoneTree();
     ZoneTree::Result zresult(tree.find(Name("ns1.example.org"), &node));
     EXPECT_NE(ZoneTree::EXACTMATCH, zresult);
 
@@ -310,14 +308,11 @@ TEST_F(MemoryClientTest, loadReloadZone) {
                   TEST_DATA_DIR "/example.org-rrsigs.zone");
     EXPECT_EQ(1, client_->getZoneCount());
 
-    isc::datasrc::memory::ZoneTable::FindResult
-        result2(client_->findZoneData(Name("example.org")));
-    EXPECT_EQ(result::SUCCESS, result2.code);
-    EXPECT_NE(static_cast<ZoneData*>(NULL),
-              result2.zone_data);
+    zone_data = client_->findZoneData(Name("example.org"));
+    EXPECT_NE(static_cast<const ZoneData*>(NULL), zone_data);
 
     /* Check SOA */
-    node = result2.zone_data->getOriginNode();
+    node = zone_data->getOriginNode();
     EXPECT_NE(static_cast<const ZoneNode*>(NULL), node);
 
     set = node->getData();
@@ -328,7 +323,7 @@ TEST_F(MemoryClientTest, loadReloadZone) {
     EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);
 
     /* Check ns1.example.org */
-    const ZoneTree& tree2 = result2.zone_data->getZoneTree();
+    const ZoneTree& tree2 = zone_data->getZoneTree();
     ZoneTree::Result zresult2(tree2.find(Name("ns1.example.org"), &node));
     EXPECT_EQ(ZoneTree::EXACTMATCH, zresult2);
     EXPECT_NE(static_cast<const ZoneNode*>(NULL), node);
@@ -714,20 +709,14 @@ TEST_F(MemoryClientTest, findZoneData) {
     client_->load(Name("example.org"),
                   TEST_DATA_DIR "/example.org-rrsigs.zone");
 
-    isc::datasrc::memory::ZoneTable::FindResult
-        result(client_->findZoneData(Name("example.com")));
-    EXPECT_EQ(result::NOTFOUND, result.code);
-    EXPECT_EQ(static_cast<ZoneData*>(NULL),
-              result.zone_data);
+    const ZoneData* zone_data = client_->findZoneData(Name("example.com"));
+    EXPECT_EQ(static_cast<const ZoneData*>(NULL), zone_data);
 
-    isc::datasrc::memory::ZoneTable::FindResult
-        result2(client_->findZoneData(Name("example.org")));
-    EXPECT_EQ(result::SUCCESS, result2.code);
-    EXPECT_NE(static_cast<ZoneData*>(NULL),
-              result2.zone_data);
+    zone_data = client_->findZoneData(Name("example.org"));
+    EXPECT_NE(static_cast<const ZoneData*>(NULL), zone_data);
 
     /* Check SOA */
-    const ZoneNode* node = result2.zone_data->getOriginNode();
+    const ZoneNode* node = zone_data->getOriginNode();
     EXPECT_NE(static_cast<const ZoneNode*>(NULL), node);
 
     const RdataSet* set = node->getData();
@@ -738,7 +727,7 @@ TEST_F(MemoryClientTest, findZoneData) {
     EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);
 
     /* Check ns1.example.org */
-    const ZoneTree& tree = result2.zone_data->getZoneTree();
+    const ZoneTree& tree = zone_data->getZoneTree();
     ZoneTree::Result result3(tree.find(Name("ns1.example.org"), &node));
     EXPECT_EQ(ZoneTree::EXACTMATCH, result3);
     EXPECT_NE(static_cast<const ZoneNode*>(NULL), node);
