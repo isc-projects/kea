@@ -52,7 +52,6 @@ run_unittests_SOURCES = $(common_sources)
 #run_unittests_SOURCES += datasrc_unittest.cc
 #run_unittests_SOURCES += query_unittest.cc
 #run_unittests_SOURCES += cache_unittest.cc
-#run_unittests_SOURCES += sqlite3_unittest.cc
 #run_unittests_SOURCES += test_datasrc.h test_datasrc.cc
 
 run_unittests_SOURCES += test_client.h test_client.cc
@@ -128,5 +127,4 @@ EXTRA_DIST += testdata/static.zone
 EXTRA_DIST += datasrc_unittest.cc
 EXTRA_DIST += query_unittest.cc
 EXTRA_DIST += cache_unittest.cc
-EXTRA_DIST += sqlite3_unittest.cc
 EXTRA_DIST += test_datasrc.h test_datasrc.cc
