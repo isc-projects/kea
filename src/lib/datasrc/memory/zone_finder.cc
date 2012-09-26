@@ -928,27 +928,19 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
 
 Name
 InMemoryZoneFinder::getOrigin() const {
+    // In future we may allow adding out-of-zone names in the zone tree.
+    // For example, to hold out-of-zone NS names so we can establish a
+    // shortcut link to them as an optimization.  If and when that happens
+    // the origin node may not have an absolute label (consider the zone
+    // is example.org and we add ns.noexample.org).  Even in such cases,
+    // DomainTreeNode::getAbsoluteLabels() returns the correct absolute
+    // label sequence.
+    uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+    const LabelSequence name_labels =
+         zone_data_.getOriginNode()->getAbsoluteLabels(labels_buf);
     size_t data_len;
-    const uint8_t* data;
+    const uint8_t* data = name_labels.getData(&data_len);
 
-    // Normally the label sequence of the origin node should be absolute,
-    // in which case we can simply generate the origin name from the labels.
-    const LabelSequence node_labels = zone_data_.getOriginNode()->getLabels();
-    if (node_labels.isAbsolute()) {
-        data = node_labels.getData(&data_len);
-    } else {
-        // In future we may allow adding out-of-zone names in the zone tree.
-        // For example, to hold out-of-zone NS names so we can establish a
-        // shortcut link to them as an optimization.  If and when that happens
-        // the origin node may not have an absolute label (consider the zone
-        // is example.org and we add ns.noexample.org).  In that case
-        // we first need to construct the absolute label sequence and then
-        // construct the name.
-        uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
-        const LabelSequence name_labels =
-            zone_data_.getOriginNode()->getAbsoluteLabels(labels_buf);
-        data = name_labels.getData(&data_len);
-    }
     util::InputBuffer buffer(data, data_len);
     return (Name(buffer));
 }
