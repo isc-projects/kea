@@ -1827,7 +1827,7 @@ can use various data source backends.
           operator, the authoritative server needs to be told to reload it, by
           <screen>&gt; <userinput>Auth loadzone example.org</userinput></screen>
           You don't need to do this when the zone is modified by
-          XfrIn, it does so automatically.
+          <command>b10-xfrin</command>; it does so automatically.
         </para>
 
         <para>
