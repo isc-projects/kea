@@ -1,3 +1,7 @@
+478.	[doc]		vorner
+	Added documentation about global TSIG key ring to the Guide.
+	(Trac #2189, git ....)
+
 477.	[bug]		jelte
 	Fixed a problem with b10-msgq on OSX when using a custom Python
 	installation, that offers an unreliable select.poll() interface.
