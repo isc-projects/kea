@@ -19,6 +19,7 @@ EXTRA_DIST += example.org-multiple-dname.zone
 EXTRA_DIST += example.org-multiple-nsec3.zone
 EXTRA_DIST += example.org-multiple-nsec3param.zone
 EXTRA_DIST += example.org-multiple.zone
+EXTRA_DIST += example.org-nsec3-empty-salt.zone
 EXTRA_DIST += example.org-nsec3-fewer-labels.zone example.org-nsec3-more-labels.zone
 EXTRA_DIST += example.org-nsec3-signed-no-param.zone
 EXTRA_DIST += example.org-nsec3-signed.zone
