@@ -215,8 +215,7 @@ public:
     /// This is mainly intended for use in unit tests and should not be
     /// used in other code.
     ///
-    /// This derived version of the method never throws an exception.
-    /// For other details see \c DataSourceClient::findZone().
+    /// \throws none
     isc::datasrc::memory::ZoneTable::FindResult
     findZoneData(const isc::dns::Name& name);
 
