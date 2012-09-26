@@ -75,7 +75,7 @@ public:
 
     /// \brief This holds a lock on a Mutex.
     ///
-    /// To lock a mutex, create a locket. It'll get unlocked when the locker
+    /// To lock a mutex, create a locker. It'll get unlocked when the locker
     /// is destroyed.
     ///
     /// If you create the locker on the stack or using some other "garbage
@@ -127,7 +127,6 @@ public:
     /// \todo Disable in non-debug build
     bool locked() const;
 private:
-    friend class Locker;
     class Impl;
     Impl* impl_;
     void lock();
