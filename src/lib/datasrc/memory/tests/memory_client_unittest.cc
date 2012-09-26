@@ -180,6 +180,13 @@ TEST_F(MemoryClientTest, load) {
     // should not result in any exceptions.
     client_->load(Name("example.org"),
                   TEST_DATA_DIR "/example.org.zone");
+    isc::datasrc::memory::ZoneTable::FindResult
+        result(client_->findZoneData(Name("example.org")));
+    EXPECT_EQ(result::SUCCESS, result.code);
+    ASSERT_NE(static_cast<ZoneData*>(NULL),
+              result.zone_data);
+    EXPECT_FALSE(result.zone_data->isSigned());
+    EXPECT_FALSE(result.zone_data->isNSEC3Signed());
 }
 
 TEST_F(MemoryClientTest, loadFromIterator) {
@@ -225,11 +232,25 @@ TEST_F(MemoryClientTest, loadMemoryAllocationFailures) {
 TEST_F(MemoryClientTest, loadNSEC3Signed) {
     client_->load(Name("example.org"),
                   TEST_DATA_DIR "/example.org-nsec3-signed.zone");
+    isc::datasrc::memory::ZoneTable::FindResult
+        result(client_->findZoneData(Name("example.org")));
+    EXPECT_EQ(result::SUCCESS, result.code);
+    ASSERT_NE(static_cast<ZoneData*>(NULL),
+              result.zone_data);
+    EXPECT_TRUE(result.zone_data->isSigned());
+    EXPECT_TRUE(result.zone_data->isNSEC3Signed());
 }
 
 TEST_F(MemoryClientTest, loadNSEC3SignedNoParam) {
     client_->load(Name("example.org"),
                   TEST_DATA_DIR "/example.org-nsec3-signed-no-param.zone");
+    isc::datasrc::memory::ZoneTable::FindResult
+        result(client_->findZoneData(Name("example.org")));
+    EXPECT_EQ(result::SUCCESS, result.code);
+    ASSERT_NE(static_cast<ZoneData*>(NULL),
+              result.zone_data);
+    EXPECT_TRUE(result.zone_data->isSigned());
+    EXPECT_TRUE(result.zone_data->isNSEC3Signed());
 }
 
 TEST_F(MemoryClientTest, loadReloadZone) {
