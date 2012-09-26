@@ -550,8 +550,10 @@ protected:
     ///
     /// \param socket socket to be used to send the message.
     /// \param preload preload mode, packets not included in statistics.
+    ///
     /// \throw isc::Unexpected if failed to create new packet instance.
     /// \throw isc::BadValue if MAC address has invalid length.
+    /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
     void sendDiscover4(const TestControlSocket& socket,
                        const bool preload = false);
 
@@ -567,7 +569,9 @@ protected:
     /// \param socket socket to be used to send the message.
     /// \param template_buf buffer holding template packet.
     /// \param preload preload mode, packets not included in statistics.
+    ///
     /// \throw isc::OutOfRange if randomization offset is out of bounds.
+    /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
     void sendDiscover4(const TestControlSocket& socket,
                        const std::vector<uint8_t>& template_buf,
                        const bool preload = false);
@@ -581,9 +585,11 @@ protected:
     /// \param socket socket to be used to send message.
     /// \param discover_pkt4 DISCOVER packet sent.
     /// \param offer_pkt4 OFFER packet object.
+    ///
     /// \throw isc::Unexpected if unexpected error occured.
     /// \throw isc::InvalidOperation if Statistics Manager has not been
     /// initialized.
+    /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
     void sendRequest4(const TestControlSocket& socket,
                       const dhcp::Pkt4Ptr& discover_pkt4,
                       const dhcp::Pkt4Ptr& offer_pkt4);
@@ -598,6 +604,8 @@ protected:
     /// \param template_buf buffer holding template packet.
     /// \param discover_pkt4 DISCOVER packet sent.
     /// \param offer_pkt4 OFFER packet received.
+    ///
+    /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
     void sendRequest4(const TestControlSocket& socket,
                       const std::vector<uint8_t>& template_buf,
                       const dhcp::Pkt4Ptr& discover_pkt4,
@@ -618,6 +626,8 @@ protected:
     /// \throw isc::Unexpected if unexpected error occured.
     /// \throw isc::InvalidOperation if Statistics Manager has not been
     /// initialized.
+    ///
+    /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
     void sendRequest6(const TestControlSocket& socket,
                       const dhcp::Pkt6Ptr& advertise_pkt6);
 
@@ -630,6 +640,8 @@ protected:
     /// \param socket socket to be used to send message.
     /// \param template_buf packet template buffer.
     /// \param advertise_pkt6 ADVERTISE packet object.
+    ///
+    /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
     void sendRequest6(const TestControlSocket& socket,
                       const std::vector<uint8_t>& template_buf,
                       const dhcp::Pkt6Ptr& advertise_pkt6);
@@ -648,7 +660,9 @@ protected:
     ///
     /// \param socket socket to be used to send the message.
     /// \param preload mode, packets not included in statistics.
+    ///
     /// \throw isc::Unexpected if failed to create new packet instance.
+    /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
     void sendSolicit6(const TestControlSocket& socket,
                       const bool preload = false);
 
@@ -661,6 +675,8 @@ protected:
     /// \param socket socket to be used to send the message.
     /// \param template_buf packet template buffer.
     /// \param preload mode, packets not included in statistics.
+    ///
+    /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
     void sendSolicit6(const TestControlSocket& socket,
                       const std::vector<uint8_t>& template_buf,
                       const bool preload = false);
