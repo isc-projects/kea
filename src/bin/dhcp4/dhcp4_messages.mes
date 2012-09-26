@@ -53,7 +53,7 @@ packet on the specified interface.  Note that a packet marked as UNKNOWN
 may well be a valid DHCP packet, just a type not expected by the server
 (e.g. it will report a received OFFER packet as UNKNOWN).
 
-% DHCPV4_PACKET_SEND_FAIL failed to send DHCPv4 packet: %1
+% DHCP4_PACKET_SEND_FAIL failed to send DHCPv4 packet: %1
 This error is output if IPv6 DHCP server fails to send assembled DHCP
 message to a client. The reason for the error is included in the message.
 
