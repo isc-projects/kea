@@ -42,11 +42,20 @@ server is about to open sockets on the specified port.
 The IPv4 DHCP server has received a packet that it is unable to
 interpret. The reason why the packet is invalid is included in the message.
 
+% DHCP4_PACKET_RECEIVE_FAIL error on attempt to receive packet: %1
+The IPv4 DHCP server tried to receive a packet but unexpected error
+occured during this attempt. The reason for the error is included in
+the message.
+
 % DHCP4_PACKET_RECEIVED %1 (type %2) packet received on interface %3
 A debug message noting that the server has received the specified type of
 packet on the specified interface.  Note that a packet marked as UNKNOWN
 may well be a valid DHCP packet, just a type not expected by the server
 (e.g. it will report a received OFFER packet as UNKNOWN).
+
+% DHCPV4_PACKET_SEND_FAIL failed to send DHCPv4 packet: %1
+This error is output if IPv6 DHCP server fails to send assembled DHCP
+message to a client. The reason for the error is included in the message.
 
 % DHCP4_PACK_FAIL failed to assemble response correctly
 This error is output if the server failed to assemble the data to be
