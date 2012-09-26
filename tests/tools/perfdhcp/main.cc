@@ -26,25 +26,35 @@ using namespace isc::perfdhcp;
 int
 main(int argc, char* argv[]) {
     CommandOptions& command_options = CommandOptions::instance();
+    std::string diags(command_options.getDiags());
+    int ret_code = 0;
     try {
-        command_options.parse(argc, argv);
+        // If parser returns true it means that user specified
+        // 'h' or 'v' command line option. Program shows the
+        // help or version message and exits here.
+        if (command_options.parse(argc, argv)) {
+            return (ret_code);
+        }
     } catch(isc::Exception& e) {
-        std::cout << "Error parsing command line options: "
+        ret_code = 1;
+        std::cerr << "Error parsing command line options: "
                   << e.what() << std::endl;
         command_options.usage();
-        return(1);
+        if (diags.find('e') != std::string::npos) {
+            std::cerr << "Fatal error" << std::endl;
+        }
+        return (ret_code);
     }
     try{
         TestControl& test_control = TestControl::instance();
-        test_control.run();
+        ret_code =  test_control.run();
     } catch (isc::Exception& e) {
-        std::cout << "Error running perfdhcp: " << e.what() << std::endl;
-        std::string diags(command_options.getDiags());
+        ret_code = 1;
+        std::cerr << "Error running perfdhcp: " << e.what() << std::endl;
         if (diags.find('e') != std::string::npos) {
-            std::cout << "Fatal error" << std::endl;
+            std::cerr << "Fatal error" << std::endl;
         }
-        return(1);
     }
-    return(0);
+    return (ret_code);
 }
 

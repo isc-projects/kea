@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/wait.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -378,6 +379,16 @@ TestControl::generateDuid(uint8_t& randomized) const {
     return (duid);
 }
 
+int
+TestControl::getElapsedTimeOffset() const {
+    int elp_offset = CommandOptions::instance().getIpVersion() == 4 ?
+        DHCPV4_ELAPSED_TIME_OFFSET : DHCPV6_ELAPSED_TIME_OFFSET;
+    if (CommandOptions::instance().getElapsedTimeOffset() > 0) {
+        elp_offset = CommandOptions::instance().getElapsedTimeOffset();
+    }
+    return (elp_offset);
+}
+
 template<class T>
 uint32_t
 TestControl::getElapsedTime(const T& pkt1, const T& pkt2) {
@@ -438,6 +449,26 @@ TestControl::getNextExchangesNum() const {
     return (0);
 }
 
+int
+TestControl::getRandomOffset(const int arg_idx) const {
+    int rand_offset = CommandOptions::instance().getIpVersion() == 4 ?
+        DHCPV4_RANDOMIZATION_OFFSET : DHCPV6_RANDOMIZATION_OFFSET;
+    if (CommandOptions::instance().getRandomOffset().size() > arg_idx) {
+        rand_offset = CommandOptions::instance().getRandomOffset()[arg_idx];
+    }
+    return (rand_offset);
+}
+
+int
+TestControl::getRequestedIpOffset() const {
+    int rip_offset = CommandOptions::instance().getIpVersion() == 4 ?
+        DHCPV4_REQUESTED_IP_OFFSET : DHCPV6_IA_NA_OFFSET;
+    if (CommandOptions::instance().getRequestedIpOffset() > 0) {
+        rip_offset = CommandOptions::instance().getRequestedIpOffset();
+    }
+    return (rip_offset);
+}
+
 uint64_t
 TestControl::getRcvdPacketsNum(const ExchangeType xchg_type) const {
     uint8_t ip_version = CommandOptions::instance().getIpVersion();
@@ -458,12 +489,40 @@ TestControl::getSentPacketsNum(const ExchangeType xchg_type) const {
             getSentPacketsNum(static_cast<StatsMgr6::ExchangeType>(xchg_type)));
 }
 
+int
+TestControl::getServerIdOffset() const {
+    int srvid_offset = CommandOptions::instance().getIpVersion() == 4 ?
+        DHCPV4_SERVERID_OFFSET : DHCPV6_SERVERID_OFFSET;
+    if (CommandOptions::instance().getServerIdOffset() > 0) {
+        srvid_offset = CommandOptions::instance().getServerIdOffset();
+    }
+    return (srvid_offset);
+}
+
 TestControl::TemplateBuffer
 TestControl::getTemplateBuffer(const size_t idx) const {
     if (template_buffers_.size() > idx) {
         return (template_buffers_[idx]);
     }
     isc_throw(OutOfRange, "invalid buffer index");
+}
+
+int
+TestControl::getTransactionIdOffset(const int arg_idx) const {
+    int xid_offset = CommandOptions::instance().getIpVersion() == 4 ?
+        DHCPV4_TRANSID_OFFSET : DHCPV6_TRANSID_OFFSET;
+    if (CommandOptions::instance().getTransactionIdOffset().size() > arg_idx) {
+        xid_offset = CommandOptions::instance().getTransactionIdOffset()[arg_idx];
+    }
+    return (xid_offset);
+}
+
+void
+TestControl::handleChild(int) {
+    int status = 0;
+    while (wait3(&status, WNOHANG, NULL) > 0) {
+        // continue
+    }
 }
 
 void
@@ -473,6 +532,8 @@ TestControl::handleInterrupt(int) {
 
 void
 TestControl::initPacketTemplates() {
+    template_packets_v4_.clear();
+    template_packets_v6_.clear();
     template_buffers_.clear();
     CommandOptions& options = CommandOptions::instance();
     std::vector<std::string> template_files = options.getTemplateFiles();
@@ -485,20 +546,28 @@ TestControl::initPacketTemplates() {
 void
 TestControl::initializeStatsMgr() {
     CommandOptions& options = CommandOptions::instance();
+    // Check if packet archive mode is required. If user
+    // requested diagnostics option -x t we have to enable
+    // it so as StatsMgr preserves all packets.
+    const bool archive_mode = testDiags('t') ? true : false;
     if (options.getIpVersion() == 4) {
         stats_mgr4_.reset();
-        stats_mgr4_ = StatsMgr4Ptr(new StatsMgr4());
-        stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_DO);
+        stats_mgr4_ = StatsMgr4Ptr(new StatsMgr4(archive_mode));
+        stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_DO,
+                                      options.getDropTime()[0]);
         if (options.getExchangeMode() == CommandOptions::DORA_SARR) {
-            stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_RA);
+            stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_RA,
+                                          options.getDropTime()[1]);
         }
 
     } else if (options.getIpVersion() == 6) {
         stats_mgr6_.reset();
-        stats_mgr6_ = StatsMgr6Ptr(new StatsMgr6());
-        stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_SA);
+        stats_mgr6_ = StatsMgr6Ptr(new StatsMgr6(archive_mode));
+        stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_SA,
+                                      options.getDropTime()[0]);
         if (options.getExchangeMode() == CommandOptions::DORA_SARR) {
-            stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_RR);
+            stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_RR,
+                                          options.getDropTime()[1]);
         }
     }
     if (testDiags('i')) {
@@ -506,12 +575,12 @@ TestControl::initializeStatsMgr() {
             stats_mgr4_->addCustomCounter("latesend", "Late sent packets");
             stats_mgr4_->addCustomCounter("shortwait", "Short waits for packets");
             stats_mgr4_->addCustomCounter("multircvd", "Multiple packets receives");
-            //            stats_mgr4_->addCustomCounter("latercvd", "Late received packets");
+            stats_mgr4_->addCustomCounter("latercvd", "Late received packets");
         } else if (options.getIpVersion() == 6) {
             stats_mgr6_->addCustomCounter("latesend", "Late sent packets");
             stats_mgr6_->addCustomCounter("shortwait", "Short waits for packets");
             stats_mgr6_->addCustomCounter("multircvd", "Multiple packets receives");
-            //            stats_mgr6_->addCustomCounter("latercvd", "Late received packets");
+            stats_mgr6_->addCustomCounter("latercvd", "Late received packets");
         }
     }
 }
@@ -605,6 +674,47 @@ TestControl::openSocket() const {
 }
 
 void
+TestControl::sendPackets(const TestControlSocket& socket,
+                         const uint64_t packets_num,
+                         const bool preload /* = false */) {
+    CommandOptions& options = CommandOptions::instance();
+    for (uint64_t i = packets_num; i > 0; --i) {
+        if (options.getIpVersion() == 4) {
+            // No template packets means that no -T option was specified.
+            // We have to build packets ourselfs.
+            if (template_buffers_.size() == 0) {
+                sendDiscover4(socket, preload);
+            } else {
+                // @todo add defines for packet type index that can be
+                // used to access template_buffers_.
+                sendDiscover4(socket, template_buffers_[0], preload);
+            }
+        } else {
+            // No template packets means that no -T option was specified.
+            // We have to build packets ourselfs.
+            if (template_buffers_.size() == 0) {
+                sendSolicit6(socket, preload);
+            } else {
+                // @todo add defines for packet type index that can be
+                // used to access template_buffers_.
+                sendSolicit6(socket, template_buffers_[0], preload);
+            }
+        }
+        // If we preload server we don't want to receive any packets.
+        if (!preload) {
+            uint64_t latercvd = receivePackets(socket);
+            if (testDiags('i')) {
+                if (options.getIpVersion() == 4) {
+                    stats_mgr4_->incrementCounter("latercvd", latercvd);
+                } else if (options.getIpVersion() == 6) {
+                    stats_mgr6_->incrementCounter("latercvd", latercvd);
+                }
+            }
+        }
+    }
+}
+
+void
 TestControl::printDiagnostics() const {
     CommandOptions& options = CommandOptions::instance();
     if (testDiags('a')) {
@@ -616,6 +726,75 @@ TestControl::printDiagnostics() const {
         if (options.getDuidTemplate().size() > 0) {
             std::cout << "Set DUID to " << vector2Hex(options.getDuidTemplate()) << std::endl; 
         }
+    }
+}
+
+void
+TestControl::printTemplate(const uint8_t packet_type) const {
+    std::string hex_buf;
+    int arg_idx = 0;
+    if (CommandOptions::instance().getIpVersion() == 4) {
+        if (packet_type == DHCPREQUEST) {
+            arg_idx = 1;
+        }
+        std::map<uint8_t, dhcp::Pkt4Ptr>::const_iterator pkt_it =
+            template_packets_v4_.find(packet_type);
+        if ((pkt_it != template_packets_v4_.end()) &&
+            pkt_it->second) {
+            const util::OutputBuffer& out_buf(pkt_it->second->getBuffer());
+            const char* out_buf_data =
+                static_cast<const char*>(out_buf.getData());
+            std::vector<uint8_t> buf(out_buf_data, out_buf_data + out_buf.getLength());
+            hex_buf = vector2Hex(buf);
+        }
+    } else if (CommandOptions::instance().getIpVersion() == 6) {
+        if (packet_type == DHCPV6_REQUEST) {
+            arg_idx = 1;
+        }
+        std::map<uint8_t, dhcp::Pkt6Ptr>::const_iterator pkt_it =
+            template_packets_v6_.find(packet_type);
+        if (pkt_it != template_packets_v6_.end() &&
+            pkt_it->second) {
+            const util::OutputBuffer& out_buf(pkt_it->second->getBuffer());
+            const char* out_buf_data =
+                static_cast<const char*>(out_buf.getData());
+            std::vector<uint8_t> buf(out_buf_data, out_buf_data + out_buf.getLength());
+            hex_buf = vector2Hex(buf);
+        }
+    }
+    std::cout << "xid-offset=" << getTransactionIdOffset(arg_idx) << std::endl;
+    std::cout << "random-offset=" << getRandomOffset(arg_idx) << std::endl;
+    if (arg_idx > 0) {
+        std::cout << "srvid-offset=" << getServerIdOffset() << std::endl;
+        std::cout << "time-offset=" << getElapsedTimeOffset() << std::endl;
+        std::cout << "ip-offset=" << getRequestedIpOffset() << std::endl;
+    }
+
+    std::cout << "contents: " << std::endl;
+    int line_len = 32;
+    int i = 0;
+    while (line_len == 32) {
+        if (hex_buf.length() - i < 32) {
+            line_len = hex_buf.length() - i;
+        };
+        if (line_len > 0) {
+            std::cout << setfill('0') << setw(4) << std::hex << i << std::dec
+                      << "   " << hex_buf.substr(i, line_len) << std::endl;
+        }
+        i += 32;
+    }
+    std::cout << std::endl;
+}
+
+void
+TestControl::printTemplates() const {
+    CommandOptions& options = CommandOptions::instance();
+    if (options.getIpVersion() == 4) {
+        printTemplate(DHCPDISCOVER);
+        printTemplate(DHCPREQUEST);
+    } else if (options.getIpVersion() == 6) {
+        printTemplate(DHCPV6_SOLICIT);
+        printTemplate(DHCPV6_REQUEST);
     }
 }
 
@@ -634,8 +813,8 @@ TestControl::printRate() const {
     }
     std::cout << "***Rate statistics***" << std::endl;
     if (options.getRate() > 0) {
-        std::cout << "Rate: " << rate << ", expected rate: "
-                  << options.getRate() << std::endl << std::endl;
+        std::cout << "Rate: " << rate << " exchanges/second, expected rate: "
+                  << options.getRate() << " exchanges/second" <<  std::endl << std::endl;
     } else {
         std::cout << "Rate: " << rate << std::endl << std::endl;
     }
@@ -705,21 +884,38 @@ TestControl::readPacketTemplate(const std::string& file_name) {
     if (!temp_file.is_open()) {
         isc_throw(BadValue, "unable to open template file " << file_name);
     }
-    std::ifstream::pos_type temp_size = temp_file.tellg();
-    if (temp_size % 2 != 0) {
+    // Read template file contents.
+    std::streampos temp_size = temp_file.tellg();
+    if (temp_size == std::streampos(0)) {
         temp_file.close();
-        isc_throw(BadValue, "odd number of digits in template file");
+        isc_throw(OutOfRange, "the template file " << file_name << " is empty");
     }
     temp_file.seekg(0, ios::beg);
-    std::vector<char> hex_digits(temp_size);
-    std::vector<uint8_t> binary_stream;
-    temp_file.read(&hex_digits[0], temp_size);
+    std::vector<char> file_contents(temp_size);
+    temp_file.read(&file_contents[0], temp_size);
     temp_file.close();
-    for (int i = 0; i < hex_digits.size(); i += 2) {
-        if (!isxdigit(hex_digits[i]) || !isxdigit(hex_digits[i+1])) {
-            isc_throw(BadValue, "the '" << hex_digits[i] << hex_digits[i+1]
-                      << "' is not hexadecimal digit");
+    // Spaces are allowed so we have to strip the contents
+    // from them. In the same time we want to make sure that
+    // apart from spaces the file contains hexadecimal digits
+    // only.
+    std::vector<char> hex_digits;
+    for (int i = 0; i < file_contents.size(); ++i) {
+        if (isxdigit(file_contents[i])) {
+            hex_digits.push_back(file_contents[i]);
+        } else if (!isxdigit(file_contents[i]) &&
+                   !isspace(file_contents[i])) {
+            isc_throw(BadValue, "the '" << file_contents[i] << "' is not a"
+                      " heaxadecimal digit");
         }
+    }
+    // Expect even number of digits.
+    if (hex_digits.size() % 2 != 0) {
+        isc_throw(OutOfRange, "odd number of digits in template file");
+    } else if (hex_digits.size() == 0) {
+        isc_throw(OutOfRange, "template file " << file_name << " is empty");
+    }
+    std::vector<uint8_t> binary_stream;
+    for (int i = 0; i < hex_digits.size(); i += 2) {
         stringstream s;
         s << "0x" << hex_digits[i] << hex_digits[i+1];
         int b;
@@ -777,7 +973,7 @@ TestControl::processReceivedPacket6(const TestControlSocket& socket,
     }
 }
 
-void
+uint64_t
 TestControl::receivePackets(const TestControlSocket& socket) {
     int timeout = 0;
     bool receiving = true;
@@ -810,6 +1006,7 @@ TestControl::receivePackets(const TestControlSocket& socket) {
             }
         }
     }
+    return (received);
 }
 
 void
@@ -896,7 +1093,7 @@ TestControl::reset() {
     interrupted_ = false;
 }
 
-void
+int
 TestControl::run() {
     // Reset singleton state before test starts.
     reset();
@@ -910,14 +1107,14 @@ TestControl::run() {
         isc_throw(InvalidOperation,
                   "command options must be parsed before running a test");
     } else if (options.getIpVersion() == 4) {
-        setTransidGenerator(NumberGeneratorPtr(new SequencialGenerator()));
+        setTransidGenerator(NumberGeneratorPtr(new SequentialGenerator()));
     } else {
-        setTransidGenerator(NumberGeneratorPtr(new SequencialGenerator(0x00FFFFFF)));
+        setTransidGenerator(NumberGeneratorPtr(new SequentialGenerator(0x00FFFFFF)));
     }
 
     uint32_t clients_num = options.getClientsNum() == 0 ?
         1 : options.getClientsNum();
-    setMacAddrGenerator(NumberGeneratorPtr(new SequencialGenerator(clients_num)));
+    setMacAddrGenerator(NumberGeneratorPtr(new SequentialGenerator(clients_num)));
 
     // Diagnostics are command line options mainly.
     printDiagnostics();
@@ -941,48 +1138,20 @@ TestControl::run() {
     }
     // If user interrupts the program we will exit gracefully.
     signal(SIGINT, TestControl::handleInterrupt);
-    // Preload server with number of packets.
-    const bool do_preload = true;
-    for (int i = 0; i < options.getPreload(); ++i) {
-        if (options.getIpVersion() == 4) {
-            // No template buffer means no -T option specified.
-            // We will build packet ourselves.
-            if (template_buffers_.size() == 0) {
-                sendDiscover4(socket, do_preload);
-            } else {
-                // Pick template #0 if Discover is being sent.
-                // For Request it would be #1.
-                // @todo add defines for packet type index that can be
-                // used to access template_buffers_.
-                sendDiscover4(socket, template_buffers_[0],
-                              do_preload);
-            }
-        } else if (options.getIpVersion() == 6) {
-            // No template buffer means no -T option specified.
-            // We will build packet ourselfs.
-            if (template_buffers_.size() == 0) {
-                sendSolicit6(socket, do_preload);
-            } else {
-                // Pick template #0 if Solicit is being sent.
-                // For Request it would be #1.
-                // @todo add defines for packet type index that can be
-                // used to access template_buffers_.
-                sendSolicit6(socket, template_buffers_[0],
-                             do_preload);
-            }
-        }
+
+    // Preload server with the number of packets.
+    sendPackets(socket, options.getPreload(), true);
+
+    // Fork and run command specified with -w<wrapped-command>
+    if (!options.getWrapped().empty()) {
+        runWrapped();
     }
+
     // Initialize Statistics Manager. Release previous if any.
     initializeStatsMgr();
     for (;;) {
         // Calculate send due based on when last exchange was initiated.
         updateSendDue();
-        // If test period finished, maximum number of packet drops
-        // has been reached or test has been interrupted we have to
-        // finish the test.
-        if (checkExitConditions()) {
-            break;
-        }
         // Calculate number of packets to be sent to stay
         // catch up with rate.
         uint64_t packets_due = getNextExchangesNum();
@@ -997,30 +1166,17 @@ TestControl::run() {
         // @todo: set non-zero timeout for packets once we implement
         // microseconds timeout in IfaceMgr.
         receivePackets(socket);
-        // Send packets.
-        for (uint64_t i = packets_due; i > 0; --i) {
-            if (options.getIpVersion() == 4) {
-                // No template packets means that no -T option was specified.
-                // We have to build packets ourselfs.
-                if (template_buffers_.size() == 0) {
-                    sendDiscover4(socket);
-                } else {
-                    // @todo add defines for packet type index that can be
-                    // used to access template_buffers_.
-                    sendDiscover4(socket, template_buffers_[0]);
-                }
-            } else {
-                // No template packets means that no -T option was specified.
-                // We have to build packets ourselfs.
-                if (template_buffers_.size() == 0) {
-                    sendSolicit6(socket);
-                } else {
-                    // @todo add defines for packet type index that can be
-                    // used to access template_buffers_.
-                    sendSolicit6(socket, template_buffers_[0]);
-                }
-            }
+
+        // If test period finished, maximum number of packet drops
+        // has been reached or test has been interrupted we have to
+        // finish the test.
+        if (checkExitConditions()) {
+            break;
         }
+
+        // Initiate new DHCP packet exchanges.
+        sendPackets(socket, packets_due);
+
         // Report delay means that user requested printing number
         // of sent/received/dropped packets repeatedly.
         if (options.getReportDelay() > 0) {
@@ -1028,13 +1184,78 @@ TestControl::run() {
         }
     }
     printStats();
+
+    if (!options.getWrapped().empty()) {
+        // true means that we execute wrapped command with 'stop' argument.
+        runWrapped(true);
+    }
+
+    // Print packet timestamps
+    if (testDiags('t')) {
+        if (options.getIpVersion() == 4) {
+            stats_mgr4_->printTimestamps();
+        } else if (options.getIpVersion() == 6) {
+            stats_mgr6_->printTimestamps();
+        }
+    }
+
     // Print server id.
     if (testDiags('s') && (first_packet_serverid_.size() > 0)) {
         std::cout << "Server id: " << vector2Hex(first_packet_serverid_) << std::endl;
     }
+
     // Diagnostics flag 'e' means show exit reason.
     if (testDiags('e')) {
         std::cout << "Interrupted" << std::endl;
+    }
+    // Print packet templates. Even if -T options have not been specified the
+    // dynamically build packet will be printed if at least one has been sent.
+    if (testDiags('T')) {
+        printTemplates();
+    }
+
+    int ret_code = 0;
+    // Check if any packet drops occured.
+    if (options.getIpVersion() == 4) {
+        ret_code = stats_mgr4_->droppedPackets() ? 3 : 0;
+    } else if (options.getIpVersion() == 6)  {
+        ret_code = stats_mgr6_->droppedPackets() ? 3 : 0;
+    }
+    return (ret_code);
+}
+
+void
+TestControl::runWrapped(bool do_stop /*= false */) const {
+    CommandOptions& options = CommandOptions::instance();
+    if (!options.getWrapped().empty()) {
+        pid_t pid = 0;
+        signal(SIGCHLD, handleChild);
+        pid = fork();
+        if (pid < 0) {
+            isc_throw(Unexpected, "unable to fork");
+        } else if (pid == 0) {
+            execlp(options.getWrapped().c_str(),
+                   do_stop ? "stop" : "start",
+                   NULL);
+        }
+    }
+}
+
+void
+TestControl::saveFirstPacket(const Pkt4Ptr& pkt) {
+    if (testDiags('T')) {
+        if (template_packets_v4_.find(pkt->getType()) == template_packets_v4_.end()) {
+            template_packets_v4_[pkt->getType()] = pkt;
+        }
+    }
+}
+
+void
+TestControl::saveFirstPacket(const Pkt6Ptr& pkt) {
+    if (testDiags('T')) {
+        if (template_packets_v6_.find(pkt->getType()) == template_packets_v6_.end()) {
+            template_packets_v6_[pkt->getType()] = pkt;
+        }
     }
 }
 
@@ -1075,6 +1296,7 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
         }
         stats_mgr4_->passSentPacket(StatsMgr4::XCHG_DO, pkt4);
     }
+    saveFirstPacket(pkt4);
 }
 
 void
@@ -1084,7 +1306,6 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
     // last_sent_ has to be updated for each function that initiates
     // new transaction. The packet exchange synchronization relies on this.
     last_sent_ = microsec_clock::universal_time();
-    CommandOptions& options = CommandOptions::instance();
     // Get the first argument if mulitple the same arguments specified
     // in the command line. First one refers to DISCOVER packets.
     const uint8_t arg_idx = 0;
@@ -1094,18 +1315,11 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
     // Generate trasnaction id to be set for the new exchange.
     const uint32_t transid = generateTransid();
     // Get transaction id offset.
-    size_t transid_offset = DHCPV4_TRANSID_OFFSET;
-    if (options.getTransactionIdOffset().size() > arg_idx) {
-        transid_offset = options.getTransactionIdOffset()[arg_idx];
-    }
-    // Calculate randomization offset.
-    size_t rand_offset = DHCPV4_RANDOMIZATION_OFFSET;
-    if (options.getRandomOffset().size() > arg_idx) {
-        rand_offset = options.getRandomOffset()[arg_idx];
-    }
+    size_t transid_offset = getTransactionIdOffset(arg_idx);
+    // Get randomization offset.
     // We need to go back by HW_ETHER_LEN (MAC address length)
     // because this offset points to last octet of MAC address.
-    rand_offset -= HW_ETHER_LEN + 1;
+    size_t rand_offset = getRandomOffset(arg_idx) - HW_ETHER_LEN + 1;
     // Create temporary buffer with template contents. We will
     // modify this temporary buffer but we don't want to modify
     // the original template.
@@ -1136,6 +1350,7 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
         stats_mgr4_->passSentPacket(StatsMgr4::XCHG_DO,
                                     boost::static_pointer_cast<Pkt4>(pkt4));
     }
+    saveFirstPacket(pkt4);
 }
 
 void
@@ -1149,6 +1364,8 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     OptionPtr opt_msg_type = Option::factory(Option::V4, DHO_DHCP_MESSAGE_TYPE,
                                              buf_msg_type);
     pkt4->addOption(opt_msg_type);
+    // Use first flags indicates that we want to use the server
+    // id captured in first packet.
     if (CommandOptions::instance().isUseFirst() &&
         (first_packet_serverid_.size() > 0)) {
         pkt4->addOption(Option::factory(Option::V4, DHO_DHCP_SERVER_IDENTIFIER,
@@ -1199,6 +1416,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
                   "hasn't been initialized");
     }
     stats_mgr4_->passSentPacket(StatsMgr4::XCHG_RA, pkt4);
+    saveFirstPacket(pkt4);
 }
 
 void
@@ -1206,25 +1424,17 @@ TestControl::sendRequest4(const TestControlSocket& socket,
                           const std::vector<uint8_t>& template_buf,
                           const dhcp::Pkt4Ptr& discover_pkt4,
                           const dhcp::Pkt4Ptr& offer_pkt4) {
-    CommandOptions& options = CommandOptions::instance();
     // Get the second argument if multiple the same arguments specified
     // in the command line. Second one refers to REQUEST packets.
     const uint8_t arg_idx = 1;
     // Generate new transaction id.
     const uint32_t transid = generateTransid();
     // Get transaction id offset.
-    size_t transid_offset = DHCPV4_TRANSID_OFFSET;
-    if (options.getTransactionIdOffset().size() > arg_idx) {
-        transid_offset = options.getTransactionIdOffset()[arg_idx];
-    }
+    size_t transid_offset = getTransactionIdOffset(arg_idx);
     // Get the offset of MAC's last octet.
-    size_t rand_offset = DHCPV4_RANDOMIZATION_OFFSET;
-    if (options.getRandomOffset().size() > arg_idx) {
-        rand_offset = options.getRandomOffset()[arg_idx];
-    }
     // We need to go back by HW_ETHER_LEN (MAC address length)
     // because this offset points to last octet of MAC address.
-    rand_offset -= HW_ETHER_LEN + 1;
+    size_t rand_offset = getRandomOffset(arg_idx) - HW_ETHER_LEN + 1;
     // Create temporaru buffer from the template.
     std::vector<uint8_t> in_buf(template_buf.begin(),
                                 template_buf.end());
@@ -1244,19 +1454,15 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     pkt4->writeAt(rand_offset, mac_address.begin(), mac_address.end());
 
     // Set elapsed time.
-    size_t elp_offset = 0;
-    if (options.getElapsedTimeOffset() > 0) {
-        elp_offset = options.getElapsedTimeOffset();
-    }
+    size_t elp_offset = getElapsedTimeOffset();
     uint32_t elapsed_time = getElapsedTime<Pkt4Ptr>(discover_pkt4, offer_pkt4);
     pkt4->writeValueAt<uint16_t>(elp_offset,
                                  static_cast<uint16_t>(elapsed_time / 1000));
 
     // Get the actual server id offset.
-    size_t sid_offset = DHCPV4_SERVERID_OFFSET;
-    if (options.getServerIdOffset() > 0) {
-        sid_offset = options.getServerIdOffset();
-    }
+    size_t sid_offset = getServerIdOffset();
+    // Use first flags indicates that we want to use the server
+    // id captured in first packet.
     if (CommandOptions::instance().isUseFirst() &&
         (first_packet_serverid_.size() > 0)) {
         boost::shared_ptr<LocalizedOption>
@@ -1293,10 +1499,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     }
 
     // Get the actual offset of requested ip.
-    size_t rip_offset = DHCPV4_REQUESTED_IP_OFFSET;
-    if (options.getRequestedIpOffset() > 0) {
-        rip_offset = options.getRequestedIpOffset();
-    }
+    size_t rip_offset = getRequestedIpOffset();
     // Place requested IP option at specified position (rip_offset).
     boost::shared_ptr<LocalizedOption>
         opt_requested_ip(new LocalizedOption(Option::V4,
@@ -1318,6 +1521,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     // Update packet stats.
     stats_mgr4_->passSentPacket(StatsMgr4::XCHG_RA,
                                 boost::static_pointer_cast<Pkt4>(pkt4));
+    saveFirstPacket(pkt4);
 }
 
 void
@@ -1337,7 +1541,7 @@ TestControl::sendRequest6(const TestControlSocket& socket,
     pkt6->addOption(opt_clientid);
 
     // Use first flags indicates that we want to use the server
-    // id captured in fisrt packet.
+    // id captured in first packet.
     if (CommandOptions::instance().isUseFirst() &&
         (first_packet_serverid_.size() > 0)) {
         pkt6->addOption(Option::factory(Option::V6, D6O_SERVERID,
@@ -1370,40 +1574,33 @@ TestControl::sendRequest6(const TestControlSocket& socket,
                   "hasn't been initialized");
     }
     stats_mgr6_->passSentPacket(StatsMgr6::XCHG_RR, pkt6);
+    saveFirstPacket(pkt6);
 }
 
 void
 TestControl::sendRequest6(const TestControlSocket& socket,
                           const std::vector<uint8_t>& template_buf,
                           const Pkt6Ptr& advertise_pkt6) {
-    CommandOptions& options = CommandOptions::instance();
     // Get the second argument if multiple the same arguments specified
     // in the command line. Second one refers to REQUEST packets.
     const uint8_t arg_idx = 1;
     // Generate transaction id.
     const uint32_t transid = generateTransid();
     // Get transaction id offset.
-    size_t transid_offset = DHCPV6_TRANSID_OFFSET;
-    if (options.getTransactionIdOffset().size() > arg_idx) {
-        transid_offset = options.getTransactionIdOffset()[arg_idx];
-    }
+    size_t transid_offset = getTransactionIdOffset(arg_idx);
     PerfPkt6Ptr pkt6(new PerfPkt6(&template_buf[0], template_buf.size(),
                                   transid_offset, transid));
     // Set elapsed time.
-    size_t elp_offset = DHCPV6_ELAPSED_TIME_OFFSET;
-    if (options.getElapsedTimeOffset() > 0) {
-        elp_offset = options.getElapsedTimeOffset();
-    }
+    size_t elp_offset = getElapsedTimeOffset();
     boost::shared_ptr<LocalizedOption>
         opt_elapsed_time(new LocalizedOption(Option::V6, D6O_ELAPSED_TIME,
                                              OptionBuffer(), elp_offset));
     pkt6->addOption(opt_elapsed_time);
 
     // Get the actual server id offset.
-    size_t sid_offset = DHCPV6_SERVERID_OFFSET;
-    if (options.getServerIdOffset() > 0) {
-        sid_offset = options.getServerIdOffset();
-    }
+    size_t sid_offset = getServerIdOffset();
+    // Use first flags indicates that we want to use the server
+    // id captured in first packet.
     if (CommandOptions::instance().isUseFirst() &&
         (first_packet_serverid_.size() > 0)) {
         boost::shared_ptr<LocalizedOption>
@@ -1439,10 +1636,7 @@ TestControl::sendRequest6(const TestControlSocket& socket,
         isc_throw(Unexpected, "DHCPv6 IA_NA option not found in received "
                   "packet");
     }
-    size_t addr_offset = DHCPV6_IA_NA_OFFSET;
-    if (options.getRequestedIpOffset() > 0) {
-        addr_offset = options.getRequestedIpOffset();
-    }
+    size_t addr_offset = getRequestedIpOffset();
     boost::shared_ptr<LocalizedOption>
         opt_ia_na(new LocalizedOption(opt_ia_na_advertise, addr_offset));
     if (!opt_ia_na->valid()) {
@@ -1455,20 +1649,14 @@ TestControl::sendRequest6(const TestControlSocket& socket,
         isc_throw(Unexpected, "DHCPV6 SERVERID option not found in received "
                   "packet");
     }
-    size_t srvid_offset = DHCPV6_SERVERID_OFFSET;
-    if (options.getServerIdOffset() > 0) {
-        srvid_offset = options.getServerIdOffset();
-    }
+    size_t srvid_offset = getServerIdOffset();
     boost::shared_ptr<LocalizedOption>
         opt_serverid(new LocalizedOption(Option::V6, D6O_SERVERID,
                                          opt_serverid_advertise->getData(),
                                          srvid_offset));
     pkt6->addOption(opt_serverid);
     // Get randomization offset.
-    size_t rand_offset = DHCPV6_RANDOMIZATION_OFFSET;
-    if (options.getRandomOffset().size() > arg_idx) {
-        rand_offset = options.getRandomOffset()[arg_idx];
-    }
+    size_t rand_offset = getRandomOffset(arg_idx);
     OptionPtr opt_clientid_advertise = advertise_pkt6->getOption(D6O_CLIENTID);
     if (!opt_clientid_advertise) {
         isc_throw(Unexpected, "DHCPV6 CLIENTID option not found in received packet");
@@ -1493,6 +1681,15 @@ TestControl::sendRequest6(const TestControlSocket& socket,
     // Update packet stats.
     stats_mgr6_->passSentPacket(StatsMgr6::XCHG_RR, pkt6);
 
+    // When 'T' diagnostics flag is specified it means that user requested
+    // printing packet contents. It will be just one (first) packet which
+    // contents will be printed. Here we check if this packet has been already
+    // collected. If it hasn't we save this packet so as we can print its
+    // contents when test is finished.
+    if (testDiags('T') &&
+        (template_packets_v6_.find(DHCPV6_REQUEST) == template_packets_v6_.end())) {
+        template_packets_v6_[DHCPV6_REQUEST] = pkt6;
+    }
 }
 
 void
@@ -1526,6 +1723,8 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
         }
         stats_mgr6_->passSentPacket(StatsMgr6::XCHG_SA, pkt6);
     }
+
+    saveFirstPacket(pkt6);
 }
 
 void
@@ -1533,13 +1732,9 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
                           const std::vector<uint8_t>& template_buf,
                           const bool preload /*= false*/) {
     last_sent_ = microsec_clock::universal_time();
-    CommandOptions& options = CommandOptions::instance();
     const int arg_idx = 0;
     // Get transaction id offset.
-    size_t transid_offset = DHCPV6_TRANSID_OFFSET;
-    if (options.getTransactionIdOffset().size() > arg_idx) {
-        transid_offset = options.getTransactionIdOffset()[arg_idx];
-    }
+    size_t transid_offset = getTransactionIdOffset(arg_idx);
     // Generate trasnaction id to be set for the new exchange.
     const uint32_t transid = generateTransid();
     // Create packet.
@@ -1548,10 +1743,7 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
     if (!pkt6) {
         isc_throw(Unexpected, "failed to create SOLICIT packet");
     }
-    size_t rand_offset = DHCPV6_RANDOMIZATION_OFFSET;
-    if (options.getRandomOffset().size() > arg_idx) {
-        rand_offset = options.getRandomOffset()[arg_idx];
-    }
+    size_t rand_offset = getRandomOffset(arg_idx);
     // randomized will pick number of bytes randomized so we can
     // just use part of the generated duid and substitude a few bytes
     /// in template.
@@ -1577,6 +1769,7 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
         // Update packet stats.
         stats_mgr6_->passSentPacket(StatsMgr6::XCHG_SA, pkt6);
     }
+    saveFirstPacket(pkt6);
 }
 
 

@@ -87,13 +87,14 @@ public:
     /// parsing.
     ///
     /// \param cmdline command line provided as single string.
-    static void process(const std::string& cmdline) {
+    /// \return true if program has been run in help or version mode ('h' or 'v' flag).
+    static bool process(const std::string& cmdline) {
         CommandOptions& opt = CommandOptions::instance();
         int argc = 0;
         char** argv = tokenizeString(cmdline, argc);
         ArgvPtr args(argv, argc);
         opt.reset();
-        opt.parse(args.getArgc(), args.getArgv());
+        return (opt.parse(args.getArgc(), args.getArgv()));
     }
 
 private:
