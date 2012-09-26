@@ -372,6 +372,8 @@ public:
     ///
     /// @param pkt packet to be sent
     ///
+    /// @throw isc::BadValue if invalid interface specified in the packet.
+    /// @throw isc::dhcp::SocketWriteError if sendmsg() failed to send packet.
     /// @return true if sending was successful
     bool send(const Pkt6Ptr& pkt);
 
@@ -383,6 +385,8 @@ public:
     ///
     /// @param pkt a packet to be sent
     ///
+    /// @throw isc::BadValue if invalid interface specified in the packet.
+    /// @throw isc::dhcp::SocketWriteError if sendmsg() failed to send packet.
     /// @return true if sending was successful
     bool send(const Pkt4Ptr& pkt);
 
@@ -401,6 +405,7 @@ public:
     /// (in microseconds)
     ///
     /// @throw isc::BadValue if timeout_usec is greater than one million
+    /// @throw isc::dhcp::SocketReadError if error occured when receiving a packet.
     /// @return Pkt6 object representing received packet (or NULL)
     Pkt6Ptr receive6(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
@@ -415,6 +420,7 @@ public:
     /// (in microseconds)
     ///
     /// @throw isc::BadValue if timeout_usec is greater than one million
+    /// @throw isc::dhcp::SocketReadError if error occured when receiving a packet.
     /// @return Pkt4 object representing received packet (or NULL)
     Pkt4Ptr receive4(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
