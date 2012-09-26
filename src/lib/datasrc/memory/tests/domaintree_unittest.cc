@@ -596,6 +596,10 @@ TEST_F(DomainTreeTest, chainLevel) {
     // by default there should be no level in the chain.
     EXPECT_EQ(0, chain.getLevelCount());
 
+    // Copy should be consistent
+    TestDomainTreeNodeChain chain2(chain);
+    EXPECT_EQ(chain.getLevelCount(), chain2.getLevelCount());
+
     // insert one node to the tree and find it.  there should be exactly
     // one level in the chain.
     TreeHolder tree_holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_, true));
@@ -606,6 +610,11 @@ TEST_F(DomainTreeTest, chainLevel) {
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               tree.find(node_name, &cdtnode, chain));
     EXPECT_EQ(1, chain.getLevelCount());
+
+    // Copy should be consistent
+    TestDomainTreeNodeChain chain3(chain);
+    EXPECT_EQ(chain.getLevelCount(), chain3.getLevelCount());
+    EXPECT_EQ(chain.getAbsoluteName(), chain3.getAbsoluteName());
 
     // Check the name of the found node (should have '.' as both non-absolute
     // and absolute name
