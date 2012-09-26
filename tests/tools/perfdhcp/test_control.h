@@ -33,15 +33,79 @@
 namespace isc {
 namespace perfdhcp {
 
+/// Default transaction id offset in the packet template.
+static const size_t DHCPV4_TRANSID_OFFSET = 4;
+/// Default offset of MAC's last octet in the packet template..
+static const size_t DHCPV4_RANDOMIZATION_OFFSET = 35;
+/// Default elapsed time offset in the packet template.
+static const size_t DHCPV4_ELAPSED_TIME_OFFSET = 8;
+/// Default server id offset in the packet template.
+static const size_t DHCPV4_SERVERID_OFFSET = 54;
+/// Default requested ip offset in the packet template.
+static const size_t DHCPV4_REQUESTED_IP_OFFSET = 240;
+/// Default DHCPV6 transaction id offset in t the packet template.
+static const size_t DHCPV6_TRANSID_OFFSET = 1;
+/// Default DHCPV6 randomization offset (last octet of DUID)
+/// in the packet template.
+static const size_t DHCPV6_RANDOMIZATION_OFFSET = 21;
+/// Default DHCPV6 elapsed time offset in the packet template.
+static const size_t DHCPV6_ELAPSED_TIME_OFFSET = 84;
+/// Default DHCPV6 server id offset in the packet template.
+static const size_t DHCPV6_SERVERID_OFFSET = 22;
+/// Default DHCPV6 IA_NA offset in the packet template.
+static const size_t DHCPV6_IA_NA_OFFSET = 40;
+
 /// \brief Test Control class.
 ///
-/// This class is responsible for executing DHCP performance
-/// test end to end.
+/// This singleton class is used to run the performance test with
+/// with \ref TestControl::run function. This function can be executed
+/// multiple times if desired because it resets TestControl's internal
+/// state every time it is executed. Prior to running \ref TestControl::run,
+/// one must make sure to parse command line options by calling
+/// \ref CommandOptions::parse. Failing to do this will result in an exception.
+///
+/// The following major stages of the test are performed by this class:
+/// - set default transaction id and MAC address generators - the generator
+/// is an object of \ref TestControl::NumberGenerator type and it provides
+/// the custom randomization algorithms,
+/// - print command line arguments,
+/// - register option factory functions which are used to generate DHCP options
+/// being sent to a server,
+/// - create the socket for communication with a server,
+/// - read packet templates if user specified template files with '-T' command
+/// line option,
+/// - set the interrupt handler (invoked when ^C is pressed) which makes
+/// perfdhcp stop gracefully and print the test results before exiting,
+/// - executes an external command (if specified '-w' option), e.g. if user
+/// specified -w ./foo in the command line then program will execute
+/// "./foo start" at the beginning of the test and "./foo stop" when the test
+/// ends,
+/// - initialize the Statistics Manager,
+/// - executes the main loop:
+///   - calculate how many packets must be send to satisfy desired rate,
+///   - receive incoming packets from the server,
+///   - check the exit conditions - terminate the program if the exit criteria
+///   are fulfiled, e.g. reached maximum number of packet drops,
+///   - send the number of packets appropriate to satisfy the desired rate,
+///   - optionally print intermediate reports,
+/// - print statistics, e.g. achieved rate,
+/// - optionally print some diagnostics.
+///
+/// With the '-w' command line option user may specify the external application
+/// or script to be executed. This is executed twice, first when the test starts
+/// and second time when the test ends. This external script or application must
+/// accept 'start' and 'stop' arguments. The first time it is called, it is
+/// called with the argument 'start' and the second time with the argument
+/// 'stop'.
+///   
+/// The application is executed by calling fork() to fork the current perfdhcp
+/// process and then call execlp() to replace the current process image with
+/// the new one.
 ///
 /// Option factory functions are registered using
 /// \ref dhcp::LibDHCP::OptionFactoryRegister. Registered factory functions
 /// provide a way to create options of the same type in the same way.
-///  When new option instance is needed the corresponding factory
+///  When a new option instance is needed, the corresponding factory
 /// function is called to create it. This is done by calling
 /// \ref dhcp::Option::factory with DHCP message type specified as one of
 ///  parameters. Some of the parameters passed to factory function
@@ -54,27 +118,6 @@ namespace perfdhcp {
 /// DHCPv4 or DHCPv6 option.
 class TestControl : public boost::noncopyable {
 public:
-
-    /// Default transaction id offset.
-    static const size_t DHCPV4_TRANSID_OFFSET = 4;
-    /// Default offset of MAC's last octet.
-    static const size_t DHCPV4_RANDOMIZATION_OFFSET = 35;
-    /// Default elapsed time offset.
-    static const size_t DHCPV4_ELAPSED_TIME_OFFSET = 8;
-    /// Default server id offset.
-    static const size_t DHCPV4_SERVERID_OFFSET = 54;
-    /// Default requested ip offset.
-    static const size_t DHCPV4_REQUESTED_IP_OFFSET = 240;
-    /// Default DHCPV6 transaction id offset.
-    static const size_t DHCPV6_TRANSID_OFFSET = 1;
-    /// Default DHCPV6 randomization offset (last octet of DUID)
-    static const size_t DHCPV6_RANDOMIZATION_OFFSET = 21;
-    /// Default DHCPV6 elapsed time offset.
-    static const size_t DHCPV6_ELAPSED_TIME_OFFSET = 84;
-    /// Default DHCPV6 server id offset.
-    static const size_t DHCPV6_SERVERID_OFFSET = 22;
-    /// Default DHCPV6 IA_NA offset.
-    static const size_t DHCPV6_IA_NA_OFFSET = 40;
 
     /// Statistics Manager for DHCPv4.
     typedef StatsMgr<dhcp::Pkt4> StatsMgr4;
@@ -138,7 +181,7 @@ public:
     /// This is default numbers generator class. The member function is
     /// used to generate uint32_t values. Other generator classes should
     /// derive from this one to implement generation algorithms
-    /// (e.g. sequencial or based on random function).
+    /// (e.g. sequential or based on random function).
     class NumberGenerator {
     public:
 
@@ -154,14 +197,14 @@ public:
     /// The default generator pointer.
     typedef boost::shared_ptr<NumberGenerator> NumberGeneratorPtr;
 
-    /// \brief Sequencial numbers generatorc class.
-    class SequencialGenerator : public NumberGenerator {
+    /// \brief Sequential numbers generatorc class.
+    class SequentialGenerator : public NumberGenerator {
     public:
         /// \brief Constructor.
         ///
         /// \param range maximum number generated. If 0 is given then
-        /// range defaults to maximym uint32_t value.
-        SequencialGenerator(uint32_t range = 0xFFFFFFFF) :
+        /// range defaults to maximum uint32_t value.
+        SequentialGenerator(uint32_t range = 0xFFFFFFFF) :
             NumberGenerator(),
             num_(0),
             range_(range) {
@@ -170,7 +213,7 @@ public:
             }
         }
 
-        /// \brief Generate number sequencialy.
+        /// \brief Generate number sequentialy.
         ///
         /// \return generated number.
         virtual uint32_t generate() {
@@ -180,7 +223,7 @@ public:
         }
     private:
         uint32_t num_;   ///< Current number.
-        uint32_t range_; ///< Maximum number generated.
+        uint32_t range_; ///< Number of unique numbers generated.
     };
 
     /// \brief Length of the Ethernet HW address (MAC) in bytes.
@@ -203,7 +246,9 @@ public:
     ///
     /// \throw isc::InvalidOperation if command line options are not parsed.
     /// \throw isc::Unexpected if internal Test Controler error occured.
-    void run();
+    /// \return error_code, 3 if number of received packets is not equal
+    /// to number of sent packets, 0 if everything is ok.
+    int run();
 
     /// \brief Set new transaction id generator.
     ///
@@ -412,7 +457,10 @@ protected:
     /// their content and stores it in class internal buffers. Template
     /// file names are specified from the command line with -T option.
     ///
-    /// \throw isc::BadValue if any of the template files does not exist
+    /// \throw isc::BadValue if any of the template files does not exist,
+    /// contains characters other than hexadecimal digits or spaces.
+    /// \throw OutOfRange if any of the template files is empty or has
+    /// odd number of hexadecimal digits.
     void initPacketTemplates();
 
     /// \brief Initializes Statistics Manager.
@@ -496,8 +544,8 @@ protected:
     /// \brief Receive DHCPv4 or DHCPv6 packets from the server.
     ///
     /// Method receives DHCPv4 or DHCPv6 packets from the server.
-    /// This function will call \ref receivePacket4 or
-    /// \ref receivePacket6 depending if DHCPv4 or DHCPv6 packet
+    /// This function will call \ref processReceivedPacket4 or
+    /// \ref processReceivedPacket6 depending if DHCPv4 or DHCPv6 packet
     /// has arrived.
     ///
     /// \warning this method does not check if provided socket is
@@ -506,7 +554,8 @@ protected:
     /// \param socket socket to be used.
     /// \throw isc::BadValue if unknown message type received.
     /// \throw isc::Unexpected if unexpected error occured.
-    void receivePackets(const TestControlSocket& socket);
+    /// \return number of received packets.
+    uint64_t receivePackets(const TestControlSocket& socket);
 
     /// \brief Register option factory functions for DHCPv4
     ///
@@ -538,6 +587,36 @@ protected:
     /// Method resets internal state of the object. It has to be
     /// called before new test is started.
     void reset();
+
+    /// \brief Save the first DHCPv4 sent packet of the specified type.
+    ///
+    /// This method saves first packet of the specified being sent
+    /// to the server if user requested diagnostics flag 'T'. In
+    /// such case program has to print contents of selected packets
+    /// being sent to the server. It collects first packets of each
+    /// type and keeps them around until test finishes. Then they
+    /// are printed to the user. If packet of specified type has
+    /// been already stored this function perfroms no operation.
+    /// This function does not perform sanity check if packet
+    /// pointer is valid. Make sure it is before calling it.
+    ///
+    /// \param pkt packet to be stored.
+    inline void saveFirstPacket(const dhcp::Pkt4Ptr& pkt);
+
+    /// \brief Save the first DHCPv6 sent packet of the specified type.
+    ///
+    /// This method saves first packet of the specified being sent
+    /// to the server if user requested diagnostics flag 'T'. In
+    /// such case program has to print contents of selected packets
+    /// being sent to the server. It collects first packets of each
+    /// type and keeps them around until test finishes. Then they
+    /// are printed to the user. If packet of specified type has
+    /// been already stored this function perfroms no operation.
+    /// This function does not perform sainty check if packet
+    /// pointer is valid. Make sure it is before calling it.
+    ///
+    /// \param pkt packet to be stored.
+    inline void saveFirstPacket(const dhcp::Pkt6Ptr& pkt);
 
     /// \brief Send DHCPv4 DISCOVER message.
     ///
@@ -575,6 +654,31 @@ protected:
     void sendDiscover4(const TestControlSocket& socket,
                        const std::vector<uint8_t>& template_buf,
                        const bool preload = false);
+
+    /// \brief Send number of packets to initiate new exchanges.
+    ///
+    /// Method initiates the new DHCP exchanges by sending number
+    /// of DISCOVER (DHCPv4) or SOLICIT (DHCPv6) packets. If preload
+    /// mode was requested sent packets will not be counted in
+    /// the statistics. The responses from the server will be
+    /// received and counted as orphans because corresponding sent
+    /// packets are not included in StatsMgr for match.
+    /// When preload mode is disabled and diagnostics flag 'i' is
+    /// specified then function will be trying to receive late packets
+    /// before new packets are sent to the server. Statistics of
+    /// late received packets is updated accordingly.
+    ///
+    /// \todo do not count responses in preload mode as orphans.
+    ///
+    /// \param socket socket to be used to send packets.
+    /// \param packets_num number of packets to be sent.
+    /// \param preload preload mode, packets not included in statistics.
+    /// \throw isc::Unexpected if thrown by packet sending method.
+    /// \throw isc::InvalidOperation if thrown by packet sending method.
+    /// \throw isc::OutOfRange if thrown by packet sending method.
+    void sendPackets(const TestControlSocket &socket,
+                     const uint64_t packets_num,
+                     const bool preload = false);
 
     /// \brief Send DHCPv4 REQUEST message.
     ///
@@ -732,6 +836,34 @@ private:
     template<class T>
     uint32_t getElapsedTime(const T& pkt1, const T& pkt2);
 
+    /// \brief Return elapsed time offset in a packet.
+    ///
+    /// \return elapsed time offset in packet.
+    int getElapsedTimeOffset() const;
+
+    /// \brief Return randomization offset in a packet.
+    ///
+    /// \return randomization offset in packet.
+    int getRandomOffset(const int arg_idx) const;
+
+    /// \brief Return requested ip offset in a packet.
+    ///
+    /// \return randomization offset in a packet.
+    int getRequestedIpOffset() const;
+
+    /// \brief Return server id offset in a packet.
+    ///
+    /// \return server id offset in packet.
+    int getServerIdOffset() const;
+
+    /// \brief Return transaction id offset in a packet.
+    ///
+    /// \param arg_idx command line argument index to be used.
+    /// If multiple -X parameters specifed it points to the
+    /// one to be used.
+    /// \return transaction id offset in packet.
+    int getTransactionIdOffset(const int arg_idx) const;
+
     /// \brief Get number of received packets.
     ///
     /// Get the number of received packets from the Statistics Manager.
@@ -750,6 +882,14 @@ private:
     /// \return number of sent packets.
     uint64_t getSentPacketsNum(const ExchangeType xchg_type) const;
 
+    /// \brief Handle child signal.
+    ///
+    /// Function handles child signal by waiting for
+    /// the process to complete.
+    ///
+    /// \param sig signal (ignored)
+    static void handleChild(int sig);
+
     /// \brief Handle interrupt signal.
     ///
     /// Function sets flag indicating that program has been
@@ -763,12 +903,34 @@ private:
     /// Method prints main diagnostics data.
     void printDiagnostics() const;
 
+    /// \brief Print template information
+    ///
+    /// \param packet_type packet type.
+    void printTemplate(const uint8_t packet_type) const;
+
+    /// \brief Print templates information.
+    ///
+    /// Method prints information about data offsets
+    /// in packet templates and their contents.
+    void printTemplates() const;
+
     /// \brief Read DHCP message template from file.
     ///
     /// Method reads DHCP message template from file and
     /// converts it to binary format. Read data is appended
     /// to template_buffers_ vector.
+    ///
+    /// \param file_name name of the packet template file.
+    /// \throw isc::OutOfRange if file is empty or has odd number
+    /// of hexadecimal digits.
+    /// \throw isc::BadValue if file contains characters other than
+    /// spaces or hexadecimal digits.
     void readPacketTemplate(const std::string& file_name);
+
+    /// \brief Run wrapped command.
+    ///
+    /// \param do_stop execute wrapped command with "stop" argument.
+    void runWrapped(bool do_stop = false) const;
 
     /// \brief Convert vector in hexadecimal string.
     ///
@@ -797,6 +959,11 @@ private:
 
     /// Packet template buffers.
     TemplateBufferCollection template_buffers_;
+
+    /// First packets send. They are used at the end of the test
+    /// to print packet templates when diagnostics flag T is specifed.
+    std::map<uint8_t, dhcp::Pkt4Ptr> template_packets_v4_;
+    std::map<uint8_t, dhcp::Pkt6Ptr> template_packets_v6_;
 
     static bool interrupted_;  ///< Is program interrupted.
 };

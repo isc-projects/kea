@@ -990,20 +990,6 @@ CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_THREADS=1"
 # Check for functions that are not available on all platforms
 AC_CHECK_FUNCS([pselect])
 
-# perfdhcp: If the clock_gettime() function does not exist on the system,
-# use an alternative supplied in the code based on gettimeofday().
-CLOCK_GETTIME_LDFLAGS=
-AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_GETTIME_LDFLAGS=-lrt], [])
-AC_SUBST([CLOCK_GETTIME_LDFLAGS])
-
-# perfdhcp: if getifaddrs() does not exist, have the code output a message
-# that it can't be run on this version of the operating system.  For the
-# systems on which BIND 10 is built, this means Solaris 10. (Replacements
-# for this function are long and involved, and the function is reported present
-# on Solaris 11 and later, either in the libsocket or libnsl libraries.)
-AC_SEARCH_LIBS([getifaddrs], [socket nsl],
-               [AC_DEFINE([HAVE_GETIFADDRS], [1], [getifaddrs() present])])
-
 # /dev/poll issue: ASIO uses /dev/poll by default if it's available (generally
 # the case with Solaris).  Unfortunately its /dev/poll specific code would
 # trigger the gcc's "missing-field-initializers" warning, which would

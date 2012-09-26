@@ -18,13 +18,10 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <exceptions/exceptions.h>
-#include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
 #include "command_options.h"
 
@@ -86,10 +83,9 @@ CommandOptions::reset() {
     wrapped_.clear();
     server_name_.clear();
     generateDuidTemplate();
-    commandline_.clear();
 }
 
-void
+bool
 CommandOptions::parse(int argc, char** const argv) {
     // Reset internal variables used by getopt
     // to eliminate undefined behavior when
@@ -127,18 +123,23 @@ CommandOptions::parse(int argc, char** const argv) {
     // Reset values of class members
     reset();
 
-    initialize(argc, argv);
-    validate();
+    // Informs if program has been run with 'h' or 'v' option.
+    bool help_or_version_mode = initialize(argc, argv);
+    if (!help_or_version_mode) {
+        validate();
+    }
+    return (help_or_version_mode);
 }
 
-void
+bool
 CommandOptions::initialize(int argc, char** argv) {
     char opt = 0;               // Subsequent options returned by getopt()
     std::string drop_arg;       // Value of -D<value>argument
     size_t percent_loc = 0;     // Location of % sign in -D<value>
     double drop_percent = 0;    // % value (1..100) in -D<value%>
     int num_drops = 0;          // Max number of drops specified in -D<value>
-    int num_req = 0;            // Max number of dropped requests in -n<max-drops>
+    int num_req = 0;            // Max number of dropped
+                                // requests in -n<max-drops>
     int offset_arg = 0;         // Temporary variable holding offset arguments
     std::string sarg;           // Temporary variable for string args
 
@@ -147,16 +148,13 @@ CommandOptions::initialize(int argc, char** argv) {
 
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
-    while((opt = getopt(argc, argv, "hv46r:t:R:b:n:p:d:D:l:P:a:L:s:iBc1T:X:O:E:S:I:x:w:")) != -1) {
+    while((opt = getopt(argc, argv, "hv46r:t:R:b:n:p:d:D:l:P:a:L:"
+                        "s:iBc1T:X:O:E:S:I:x:w:")) != -1) {
         stream << " -" << opt;
         if (optarg) {
             stream << " " << optarg;
         }  
         switch (opt) {
-        case 'v':
-            version();
-            return;
-
         case '1':
             use_first_ = true;
             break;
@@ -172,11 +170,13 @@ CommandOptions::initialize(int argc, char** argv) {
             break;
 
         case 'a':
-            aggressivity_ = positiveInteger("value of aggressivity: -a<value> must be a positive integer");
+            aggressivity_ = positiveInteger("value of aggressivity: -a<value>"
+                                            " must be a positive integer");
             break;
 
         case 'b':
-            check(base_.size() > 3, "-b<value> already specified, unexpected occurence of 5th -b<value>");
+            check(base_.size() > 3, "-b<value> already specified,"
+                  " unexpected occurence of 5th -b<value>");
             base_.push_back(optarg);
             decodeBase(base_.back());
             break;
@@ -190,53 +190,64 @@ CommandOptions::initialize(int argc, char** argv) {
             break;
 
         case 'd':
-            check(drop_time_set_ > 1, "maximum number of drops already specified, "
+            check(drop_time_set_ > 1,
+                  "maximum number of drops already specified, "
                   "unexpected 3rd occurence of -d<value>");
             try {
-                drop_time_[drop_time_set_] = boost::lexical_cast<double>(optarg);
+                drop_time_[drop_time_set_] =
+                    boost::lexical_cast<double>(optarg);
             } catch (boost::bad_lexical_cast&) {
                 isc_throw(isc::InvalidParameter,
-                          "value of drop time: -d<value> must be positive number");
+                          "value of drop time: -d<value>"
+                          " must be positive number");
             }
-            check(drop_time_[drop_time_set_] <= 0., "drop-time must be a positive number");
+            check(drop_time_[drop_time_set_] <= 0.,
+                  "drop-time must be a positive number");
             drop_time_set_ = true;
             break;
 
         case 'D':
             drop_arg = std::string(optarg);
             percent_loc = drop_arg.find('%');
-            check(max_pdrop_.size() > 1 || max_drop_.size() > 1, "values of maximum drops: -D<value> already "
+            check(max_pdrop_.size() > 1 || max_drop_.size() > 1,
+                  "values of maximum drops: -D<value> already "
                   "specified, unexpected 3rd occurence of -D,value>");
             if ((percent_loc) != std::string::npos) {
                 try {
-                    drop_percent = boost::lexical_cast<double>(drop_arg.substr(0, percent_loc));
+                    drop_percent =
+                        boost::lexical_cast<double>(drop_arg.substr(0, percent_loc));
                 } catch (boost::bad_lexical_cast&) {
                     isc_throw(isc::InvalidParameter,
-                              "value of drop percentage: -D<value%> must be 0..100");
+                              "value of drop percentage: -D<value%>"
+                              " must be 0..100");
                 }
                 check((drop_percent <= 0) || (drop_percent >= 100),
                   "value of drop percentage: -D<value%> must be 0..100");
                 max_pdrop_.push_back(drop_percent);
             } else {
-                num_drops = positiveInteger("value of max drops number: -d<value> must be a positive integer");
+                num_drops = positiveInteger("value of max drops number:"
+                                            " -d<value> must be a positive integer");
                 max_drop_.push_back(num_drops);
             }
             break;
 
         case 'E':
-            elp_offset_ = nonNegativeInteger("value of time-offset: -E<value> must not be a negative integer");
+            elp_offset_ = nonNegativeInteger("value of time-offset: -E<value>"
+                                             " must not be a negative integer");
             break;
 
         case 'h':
             usage();
-            return;
+            return (true);
 
         case 'i':
             exchange_mode_ = DO_SA;
             break;
 
         case 'I':
-            rip_offset_ = positiveInteger("value of ip address offset: -I<value> must be a positive integer");
+            rip_offset_ = positiveInteger("value of ip address offset:"
+                                          " -I<value> must be a"
+                                          " positive integer");
             break;
 
         case 'l':
@@ -245,43 +256,55 @@ CommandOptions::initialize(int argc, char** argv) {
             break;
 
         case 'L':
-             local_port_ = nonNegativeInteger("value of local port: -L<value> must not be a negative integer");
-             check(local_port_ > static_cast<int>(std::numeric_limits<uint16_t>::max()),
+             local_port_ = nonNegativeInteger("value of local port:"
+                                              " -L<value> must not be a"
+                                              " negative integer");
+             check(local_port_ >
+                   static_cast<int>(std::numeric_limits<uint16_t>::max()),
                   "local-port must be lower than " +
                   boost::lexical_cast<std::string>(std::numeric_limits<uint16_t>::max()));
             break;
 
         case 'n':
-            num_req = positiveInteger("value of num-request: -n<value> must be a positive integer");
+            num_req = positiveInteger("value of num-request:"
+                                      " -n<value> must be a positive integer");
             if (num_request_.size() >= 2) {
-                isc_throw(isc::InvalidParameter,"value of maximum number of requests: -n<value> "
-                          "already specified, unexpected 3rd occurence of -n<value>");
+                isc_throw(isc::InvalidParameter,
+                          "value of maximum number of requests: -n<value> "
+                          "already specified, unexpected 3rd occurence"
+                          " of -n<value>");
             }
             num_request_.push_back(num_req);
             break;
 
         case 'O':
             if (rnd_offset_.size() < 2) {
-                offset_arg = positiveInteger("value of random offset: -O<value> must be greater than 3");
+                offset_arg = positiveInteger("value of random offset: "
+                                             "-O<value> must be greater than 3");
             } else {
                 isc_throw(isc::InvalidParameter,
-                          "random offsets already specified, unexpected 3rd occurence of -O<value>");
+                          "random offsets already specified,"
+                          " unexpected 3rd occurence of -O<value>");
             }
-            check(offset_arg < 3, "value of random random-offset: -O<value> must be greater than 3 ");
+            check(offset_arg < 3, "value of random random-offset:"
+                  " -O<value> must be greater than 3 ");
             rnd_offset_.push_back(offset_arg);
             break;
 
         case 'p':
-            period_ = positiveInteger("value of test period: -p<value> must be a positive integer");
+            period_ = positiveInteger("value of test period:"
+                                      " -p<value> must be a positive integer");
             break;
 
         case 'P':
-            preload_ = nonNegativeInteger("number of preload packets: -P<value> must not be "
+            preload_ = nonNegativeInteger("number of preload packets:"
+                                          " -P<value> must not be "
                                           "a negative integer");
             break;
 
         case 'r':
-            rate_ = positiveInteger("value of rate: -r<value> must be a positive integer");
+            rate_ = positiveInteger("value of rate:"
+                                    " -r<value> must be a positive integer");
             break;
 
         case 'R':
@@ -290,42 +313,58 @@ CommandOptions::initialize(int argc, char** argv) {
 
         case 's':
             seed_ = static_cast<unsigned int>
-                (nonNegativeInteger("value of seed: -s <seed> must be non-negative integer"));
+                (nonNegativeInteger("value of seed:"
+                                    " -s <seed> must be non-negative integer"));
             seeded_ = seed_ > 0 ? true : false;
             break;
 
         case 'S':
-            sid_offset_ = positiveInteger("value of server id offset: -S<value> must be a positive integer");
+            sid_offset_ = positiveInteger("value of server id offset:"
+                                          " -S<value> must be a"
+                                          " positive integer");
             break;
 
         case 't':
-            report_delay_ = positiveInteger("value of report delay: -t<value> must be a positive integer");
+            report_delay_ = positiveInteger("value of report delay:"
+                                            " -t<value> must be a"
+                                            " positive integer");
             break;
 
         case 'T':
             if (template_file_.size() < 2) {
-                sarg = nonEmptyString("template file name not specified, expected -T<filename>");
+                sarg = nonEmptyString("template file name not specified,"
+                                      " expected -T<filename>");
                 template_file_.push_back(sarg);
             } else {
                 isc_throw(isc::InvalidParameter,
-                          "template files are already specified, unexpected 3rd -T<filename> occurence");
+                          "template files are already specified,"
+                          " unexpected 3rd -T<filename> occurence");
             }
             break;
 
+        case 'v':
+            version();
+            return (true);
+
         case 'w':
-            wrapped_ = nonEmptyString("command for wrapped mode: -w<command> must be specified");
+            wrapped_ = nonEmptyString("command for wrapped mode:"
+                                      " -w<command> must be specified");
             break;
 
         case 'x':
-            diags_ = nonEmptyString("value of diagnostics selectors: -x<value> must be specified");
+            diags_ = nonEmptyString("value of diagnostics selectors:"
+                                    " -x<value> must be specified");
             break;
 
         case 'X':
             if (xid_offset_.size() < 2) {
-                offset_arg = positiveInteger("value of transaction id: -X<value> must be a positive integer");
+                offset_arg = positiveInteger("value of transaction id:"
+                                             " -X<value> must be a"
+                                             " positive integer");
             } else {
                 isc_throw(isc::InvalidParameter,
-                          "transaction ids already specified, unexpected 3rd -X<value> occurence");
+                          "transaction ids already specified,"
+                          " unexpected 3rd -X<value> occurence");
             }
             xid_offset_.push_back(offset_arg);
             break;
@@ -334,8 +373,6 @@ CommandOptions::initialize(int argc, char** argv) {
             isc_throw(isc::InvalidParameter, "unknown command line option");
         }
     }
-
-    std::cout << "Running: " << stream.str() << std::endl;
 
     // If the IP version was not specified in the
     // command line, assume IPv4.
@@ -364,26 +401,30 @@ CommandOptions::initialize(int argc, char** argv) {
     check(optind < argc -1, "extra arguments?");
     if (optind == argc - 1) {
         server_name_ = argv[optind];
+        stream << " " << server_name_;
         // Decode special cases
         if ((ipversion_ == 4) && (server_name_.compare("all") == 0)) {
-            broadcast_ = 1;
-            // 255.255.255.255 is IPv4 broadcast address
-            server_name_ = "255.255.255.255";
+            broadcast_ = true;
+            // Use broadcast address as server name.
+            server_name_ = DHCP_IPV4_BROADCAST_ADDRESS;
         } else if ((ipversion_ == 6) && (server_name_.compare("all") == 0)) {
-            server_name_ = "FF02::1:2";
-        } else if ((ipversion_ == 6) && (server_name_.compare("servers") == 0)) {
-            server_name_ = "FF05::1:3";
+            server_name_ = ALL_DHCP_RELAY_AGENTS_AND_SERVERS;
+        } else if ((ipversion_ == 6) &&
+                   (server_name_.compare("servers") == 0)) {
+            server_name_ = ALL_DHCP_SERVERS;
         }
     }
+
+    std::cout << "Running: " << stream.str() << std::endl;
 
     // Handle the local '-l' address/interface
     if (!localname_.empty()) {
         if (server_name_.empty()) {
             if (is_interface_ && (ipversion_ == 4)) {
-                broadcast_ = 1;
-                server_name_ = "255.255.255.255";
+                broadcast_ = true;
+                server_name_ = DHCP_IPV4_BROADCAST_ADDRESS;
             } else if (is_interface_ && (ipversion_ == 6)) {
-                server_name_ = "FF02::1:2";
+                server_name_ = ALL_DHCP_RELAY_AGENTS_AND_SERVERS;
             }
         }
     }
@@ -397,11 +438,13 @@ CommandOptions::initialize(int argc, char** argv) {
     if (duid_template_.size() == 0) {
         generateDuidTemplate();
     }
+    return (false);
 }
 
 void
 CommandOptions::initClientsNum() {
-    const std::string errmsg = "value of -R <value> must be non-negative integer";
+    const std::string errmsg =
+        "value of -R <value> must be non-negative integer";
 
     // Declare clients_num as as 64-bit signed value to
     // be able to detect negative values provided
@@ -410,11 +453,7 @@ CommandOptions::initClientsNum() {
     long long clients_num = 0;
     try {
         clients_num = boost::lexical_cast<long long>(optarg);
-    } catch (boost::bad_lexical_cast&) {
-        isc_throw(isc::InvalidParameter, errmsg.c_str());
-    }
-    check(clients_num < 0, errmsg);
-    try {
+        check(clients_num < 0, errmsg);
         clients_num_ = boost::lexical_cast<uint32_t>(optarg);
     } catch (boost::bad_lexical_cast&) {
         isc_throw(isc::InvalidParameter, errmsg);
@@ -444,7 +483,8 @@ CommandOptions::decodeBase(const std::string& base) {
         decodeDuid(b);
     } else {
         isc_throw(isc::InvalidParameter,
-                  "base value not provided as -b<value>, expected -b mac=<mac> or -b duid=<duid>");
+                  "base value not provided as -b<value>,"
+                  " expected -b mac=<mac> or -b duid=<duid>");
     }
 }
 
@@ -452,7 +492,9 @@ void
 CommandOptions::decodeMac(const std::string& base) {
     // Strip string from mac=
     size_t found = base.find('=');
-    static const char* errmsg = "expected -b<base> format for mac address is -b mac=00::0C::01::02::03::04";
+    static const char* errmsg = "expected -b<base> format for"
+        " mac address is -b mac=00::0C::01::02::03::04 or"
+        " -b mac=00:0C:01:02:03:04";
     check(found == std::string::npos, errmsg);
 
     // Decode mac address to vector of uint8_t
@@ -485,7 +527,8 @@ CommandOptions::decodeDuid(const std::string& base) {
     // Strip argument from duid=
     std::vector<uint8_t> duid_template;
     size_t found = base.find('=');
-    check(found == std::string::npos, "expected -b<base> format for duid is -b duid=<duid>");
+    check(found == std::string::npos, "expected -b<base>"
+          " format for duid is -b duid=<duid>");
     std::string b = base.substr(found + 1);
 
     // DUID must have even number of digits and must not be longer than 64 bytes
@@ -501,7 +544,8 @@ CommandOptions::decodeDuid(const std::string& base) {
             ui = convertHexString(b.substr(i, 2));
         } catch (isc::InvalidParameter&) {
             isc_throw(isc::InvalidParameter,
-                      "invalid characters in DUID provided, exepected hex digits");
+                      "invalid characters in DUID provided,"
+                      " exepected hex digits");
         }
         duid_template.push_back(static_cast<uint8_t>(ui));
     }
@@ -527,7 +571,7 @@ CommandOptions::generateDuidTemplate() {
     duid_template_[1] = DUID_LLT & 0xff;
     duid_template_[2] = HWTYPE_ETHERNET >> 8;
     duid_template_[3] = HWTYPE_ETHERNET & 0xff;
-    
+
     // As described in RFC3315: 'the time value is the time
     // that the DUID is generated represented in seconds
     // since midnight (UTC), January 1, 2000, modulo 2^32.'
@@ -559,7 +603,8 @@ CommandOptions::convertHexString(const std::string& text) const {
     text_stream >> std::hex >> ui >> std::dec;
     // Check if for some reason we have overflow - this should never happen!
     if (ui > 0xFF) {
-        isc_throw(isc::InvalidParameter, "Can't convert more than two hex digits to byte");
+        isc_throw(isc::InvalidParameter, "Can't convert more than"
+                  " two hex digits to byte");
     }
     return ui;
 }
@@ -591,29 +636,29 @@ CommandOptions::validate() const {
           "-S<srvid-offset> is not compatible with -i\n");
     check((getExchangeMode() == DO_SA) && (getRequestedIpOffset() >= 0),
           "-I<ip-offset> is not compatible with -i\n");
-	check((getExchangeMode() != DO_SA) && (isRapidCommit() != 0),
+    check((getExchangeMode() != DO_SA) && (isRapidCommit() != 0),
           "-i must be set to use -c\n");
-	check((getRate() == 0) && (getReportDelay() != 0),
+    check((getRate() == 0) && (getReportDelay() != 0),
           "-r<rate> must be set to use -t<report>\n");
-	check((getRate() == 0) && (getNumRequests().size() > 0),
+    check((getRate() == 0) && (getNumRequests().size() > 0),
           "-r<rate> must be set to use -n<num-request>\n");
-	check((getRate() == 0) && (getPeriod() != 0),
+    check((getRate() == 0) && (getPeriod() != 0),
           "-r<rate> must be set to use -p<test-period>\n");
-	check((getRate() == 0) &&
+    check((getRate() == 0) &&
           ((getMaxDrop().size() > 0) || getMaxDropPercentage().size() > 0),
           "-r<rate> must be set to use -D<max-drop>\n");
-	check((getTemplateFiles().size() < getTransactionIdOffset().size()),
+    check((getTemplateFiles().size() < getTransactionIdOffset().size()),
           "-T<template-file> must be set to use -X<xid-offset>\n");
-	check((getTemplateFiles().size() < getRandomOffset().size()),
+    check((getTemplateFiles().size() < getRandomOffset().size()),
           "-T<template-file> must be set to use -O<random-offset>\n");
-	check((getTemplateFiles().size() < 2) && (getElapsedTimeOffset() >= 0),
+    check((getTemplateFiles().size() < 2) && (getElapsedTimeOffset() >= 0),
           "second/request -T<template-file> must be set to use -E<time-offset>\n");
-	check((getTemplateFiles().size() < 2) && (getServerIdOffset() >= 0),
+    check((getTemplateFiles().size() < 2) && (getServerIdOffset() >= 0),
           "second/request -T<template-file> must be set to "
           "use -S<srvid-offset>\n");
-	check((getTemplateFiles().size() < 2) && (getRequestedIpOffset() >= 0),
-			"second/request -T<template-file> must be set to "
-			"use -I<ip-offset>\n");
+    check((getTemplateFiles().size() < 2) && (getRequestedIpOffset() >= 0),
+          "second/request -T<template-file> must be set to "
+          "use -I<ip-offset>\n");
 
 }
 
@@ -666,7 +711,7 @@ CommandOptions::printCommandLine() const {
         } else {
             std::cout << "SOLICIT-ADVERETISE only" << std::endl;
         }
-    } 
+    }
     if (rate_ != 0) {
         std::cout << "rate[1/s]=" << rate_ <<  std::endl;
     }
@@ -675,7 +720,7 @@ CommandOptions::printCommandLine() const {
     }
     if (clients_num_ != 0) {
         std::cout << "clients=" << clients_num_ << std::endl;
-    } 
+    }
     for (int i = 0; i < base_.size(); ++i) {
         std::cout << "base[" << i << "]=" << base_[i] <<  std::endl;
     }
@@ -751,127 +796,126 @@ CommandOptions::printCommandLine() const {
 
 void
 CommandOptions::usage() const {
-	fprintf(stdout, "%s",
-"perfdhcp [-hv] [-4|-6] [-r<rate>] [-t<report>] [-R<range>] [-b<base>]\n"
-"    [-n<num-request>] [-p<test-period>] [-d<drop-time>] [-D<max-drop>]\n"
-"    [-l<local-addr|interface>] [-P<preload>] [-a<aggressivity>]\n"
-"    [-L<local-port>] [-s<seed>] [-i] [-B] [-c] [-1]\n"
-"    [-T<template-file>] [-X<xid-offset>] [-O<random-offset]\n"
-"    [-E<time-offset>] [-S<srvid-offset>] [-I<ip-offset>]\n"
-"    [-x<diagnostic-selector>] [-w<wrapped>] [server]\n"
-"\n"
-"The [server] argument is the name/address of the DHCP server to\n"
-"contact.  For DHCPv4 operation, exchanges are initiated by\n"
-"transmitting a DHCP DISCOVER to this address.\n"
-"\n"
-"For DHCPv6 operation, exchanges are initiated by transmitting a DHCP\n"
-"SOLICIT to this address.  In the DHCPv6 case, the special name 'all'\n"
-"can be used to refer to All_DHCP_Relay_Agents_and_Servers (the\n"
-"multicast address FF02::1:2), or the special name 'servers' to refer\n"
-"to All_DHCP_Servers (the multicast address FF05::1:3).  The [server]\n"
-"argument is optional only in the case that -l is used to specify an\n"
-"interface, in which case [server] defaults to 'all'.\n"
-"\n"
-"The default is to perform a single 4-way exchange, effectively pinging\n"
-"the server.\n"
-"The -r option is used to set up a performance test, without\n"
-"it exchanges are initiated as fast as possible.\n"
-"\n"
-"Options:\n"
-"-1: Take the server-ID option from the first received message.\n"
-"-4: DHCPv4 operation (default). This is incompatible with the -6 option.\n"
-"-6: DHCPv6 operation. This is incompatible with the -4 option.\n"
-"-a<aggressivity>: When the target sending rate is not yet reached,\n"
-"    control how many exchanges are initiated before the next pause.\n"
-"-b<base>: The base mac, duid, IP, etc, used to simulate different\n"
-"    clients.  This can be specified multiple times, each instance is\n"
-"    in the <type>=<value> form, for instance:\n"
-"    (and default) mac=00:0c:01:02:03:04.\n"
-"-d<drop-time>: Specify the time after which a request is treated as\n"
-"    having been lost.  The value is given in seconds and may contain a\n"
-"    fractional component.  The default is 1 second.\n"
-"-E<time-offset>: Offset of the (DHCPv4) secs field / (DHCPv6)\n"
-"    elapsed-time option in the (second/request) template.\n"
-"    The value 0 disables it.\n"
-"-h: Print this help.\n"
-"-i: Do only the initial part of an exchange: DO or SA, depending on\n"
-"    whether -6 is given.\n"
-"-I<ip-offset>: Offset of the (DHCPv4) IP address in the requested-IP\n"
-"    option / (DHCPv6) IA_NA option in the (second/request) template.\n"
-"-l<local-addr|interface>: For DHCPv4 operation, specify the local\n"
-"    hostname/address to use when communicating with the server.  By\n"
-"    default, the interface address through which traffic would\n"
-"    normally be routed to the server is used.\n"
-"    For DHCPv6 operation, specify the name of the network interface\n"
-"    via which exchanges are initiated.\n"
-"-L<local-port>: Specify the local port to use\n"
-"    (the value 0 means to use the default).\n"
-"-O<random-offset>: Offset of the last octet to randomize in the template.\n"
-"-P<preload>: Initiate first <preload> exchanges back to back at startup.\n"
-"-r<rate>: Initiate <rate> DORA/SARR (or if -i is given, DO/SA)\n"
-"    exchanges per second.  A periodic report is generated showing the\n"
-"    number of exchanges which were not completed, as well as the\n"
-"    average response latency.  The program continues until\n"
-"    interrupted, at which point a final report is generated.\n"
-"-R<range>: Specify how many different clients are used. With 1\n"
-"    (the default), all requests seem to come from the same client.\n"
-"-s<seed>: Specify the seed for randomization, making it repeatable.\n"
-"-S<srvid-offset>: Offset of the server-ID option in the\n"
-"    (second/request) template.\n"
-"-T<template-file>: The name of a file containing the template to use\n"
-"    as a stream of hexadecimal digits.\n"
-"-v: Report the version number of this program.\n"
-"-w<wrapped>: Command to call with start/stop at the beginning/end of\n"
-"    the program.\n"
-"-x<diagnostic-selector>: Include extended diagnostics in the output.\n"
-"    <diagnostic-selector> is a string of single-keywords specifying\n"
-"    the operations for which verbose output is desired.  The selector\n"
-"    keyletters are:\n"
-"   * 'a': print the decoded command line arguments\n"
-"   * 'e': print the exit reason\n"
-"   * 'i': print rate processing details\n"
-"   * 'r': print randomization details\n"
-"   * 's': print first server-id\n"
-"   * 't': when finished, print timers of all successful exchanges\n"
-"   * 'T': when finished, print templates\n"
-"-X<xid-offset>: Transaction ID (aka. xid) offset in the template.\n"
-"\n"
-"DHCPv4 only options:\n"
-"-B: Force broadcast handling.\n"
-"\n"
-"DHCPv6 only options:\n"
-"-c: Add a rapid commit option (exchanges will be SA).\n"
-"\n"
-"The remaining options are used only in conjunction with -r:\n"
-"\n"
-"-D<max-drop>: Abort the test if more than <max-drop> requests have\n"
-"    been dropped.  Use -D0 to abort if even a single request has been\n"
-"    dropped.  If <max-drop> includes the suffix '%', it specifies a\n"
-"    maximum percentage of requests that may be dropped before abort.\n"
-"    In this case, testing of the threshold begins after 10 requests\n"
-"    have been expected to be received.\n"
-"-n<num-request>: Initiate <num-request> transactions.  No report is\n"
-"    generated until all transactions have been initiated/waited-for,\n"
-"    after which a report is generated and the program terminates.\n"
-"-p<test-period>: Send requests for the given test period, which is\n"
-"    specified in the same manner as -d.  This can be used as an\n"
-"    alternative to -n, or both options can be given, in which case the\n"
-"    testing is completed when either limit is reached.\n"
-"-t<report>: Delay in seconds between two periodic reports.\n"
-"\n"
-"Errors:\n"
-"- tooshort: received a too short message\n"
-"- orphans: received a message which doesn't match an exchange\n"
-"   (duplicate, late or not related)\n"
-"- locallimit: reached to local system limits when sending a message.\n"
-"\n"
-"Exit status:\n"
-"The exit status is:\n"
-"0 on complete success.\n"
-"1 for a general error.\n"
-"2 if an error is found in the command line arguments.\n"
-"3 if there are no general failures in operation, but one or more\n"
-"  exchanges are not successfully completed.\n");
+    std::cout <<
+        "perfdhcp [-hv] [-4|-6] [-r<rate>] [-t<report>] [-R<range>] [-b<base>]\n"
+        "    [-n<num-request>] [-p<test-period>] [-d<drop-time>] [-D<max-drop>]\n"
+        "    [-l<local-addr|interface>] [-P<preload>] [-a<aggressivity>]\n"
+        "    [-L<local-port>] [-s<seed>] [-i] [-B] [-c] [-1]\n"
+        "    [-T<template-file>] [-X<xid-offset>] [-O<random-offset]\n"
+        "    [-E<time-offset>] [-S<srvid-offset>] [-I<ip-offset>]\n"
+        "    [-x<diagnostic-selector>] [-w<wrapped>] [server]\n"
+        "\n"
+        "The [server] argument is the name/address of the DHCP server to\n"
+        "contact.  For DHCPv4 operation, exchanges are initiated by\n"
+        "transmitting a DHCP DISCOVER to this address.\n"
+        "\n"
+        "For DHCPv6 operation, exchanges are initiated by transmitting a DHCP\n"
+        "SOLICIT to this address.  In the DHCPv6 case, the special name 'all'\n"
+        "can be used to refer to All_DHCP_Relay_Agents_and_Servers (the\n"
+        "multicast address FF02::1:2), or the special name 'servers' to refer\n"
+        "to All_DHCP_Servers (the multicast address FF05::1:3).  The [server]\n"
+        "argument is optional only in the case that -l is used to specify an\n"
+        "interface, in which case [server] defaults to 'all'.\n"
+        "\n"
+        "The default is to perform a single 4-way exchange, effectively pinging\n"
+        "the server.\n"
+        "The -r option is used to set up a performance test, without\n"
+        "it exchanges are initiated as fast as possible.\n"
+        "\n"
+        "Options:\n"
+        "-1: Take the server-ID option from the first received message.\n"
+        "-4: DHCPv4 operation (default). This is incompatible with the -6 option.\n"
+        "-6: DHCPv6 operation. This is incompatible with the -4 option.\n"
+        "-a<aggressivity>: When the target sending rate is not yet reached,\n"
+        "    control how many exchanges are initiated before the next pause.\n"
+        "-b<base>: The base mac, duid, IP, etc, used to simulate different\n"
+        "    clients.  This can be specified multiple times, each instance is\n"
+        "    in the <type>=<value> form, for instance:\n"
+        "    (and default) mac=00:0c:01:02:03:04.\n"
+        "-d<drop-time>: Specify the time after which a requeqst is treated as\n"
+        "    having been lost.  The value is given in seconds and may contain a\n"
+        "    fractional component.  The default is 1 second.\n"
+        "-E<time-offset>: Offset of the (DHCPv4) secs field / (DHCPv6)\n"
+        "    elapsed-time option in the (second/request) template.\n"
+        "    The value 0 disables it.\n"
+        "-h: Print this help.\n"
+        "-i: Do only the initial part of an exchange: DO or SA, depending on\n"
+        "    whether -6 is given.\n"
+        "-I<ip-offset>: Offset of the (DHCPv4) IP address in the requested-IP\n"
+        "    option / (DHCPv6) IA_NA option in the (second/request) template.\n"
+        "-l<local-addr|interface>: For DHCPv4 operation, specify the local\n"
+        "    hostname/address to use when communicating with the server.  By\n"
+        "    default, the interface address through which traffic would\n"
+        "    normally be routed to the server is used.\n"
+        "    For DHCPv6 operation, specify the name of the network interface\n"
+        "    via which exchanges are initiated.\n"
+        "-L<local-port>: Specify the local port to use\n"
+        "    (the value 0 means to use the default).\n"
+        "-O<random-offset>: Offset of the last octet to randomize in the template.\n"
+        "-P<preload>: Initiate first <preload> exchanges back to back at startup.\n"
+        "-r<rate>: Initiate <rate> DORA/SARR (or if -i is given, DO/SA)\n"
+        "    exchanges per second.  A periodic report is generated showing the\n"
+        "    number of exchanges which were not completed, as well as the\n"
+        "    average response latency.  The program continues until\n"
+        "    interrupted, at which point a final report is generated.\n"
+        "-R<range>: Specify how many different clients are used. With 1\n"
+        "    (the default), all requests seem to come from the same client.\n"
+        "-s<seed>: Specify the seed for randomization, making it repeatable.\n"
+        "-S<srvid-offset>: Offset of the server-ID option in the\n"
+        "    (second/request) template.\n"
+        "-T<template-file>: The name of a file containing the template to use\n"
+        "    as a stream of hexadecimal digits.\n"
+        "-v: Report the version number of this program.\n"
+        "-w<wrapped>: Command to call with start/stop at the beginning/end of\n"
+        "    the program.\n"
+        "-x<diagnostic-selector>: Include extended diagnostics in the output.\n"
+        "    <diagnostic-selector> is a string of single-keywords specifying\n"
+        "    the operations for which verbose output is desired.  The selector\n"
+        "    keyletters are:\n"
+        "   * 'a': print the decoded command line arguments\n"
+        "   * 'e': print the exit reason\n"
+        "   * 'i': print rate processing details\n"
+        "   * 's': print first server-id\n"
+        "   * 't': when finished, print timers of all successful exchanges\n"
+        "   * 'T': when finished, print templates\n"
+        "-X<xid-offset>: Transaction ID (aka. xid) offset in the template.\n"
+        "\n"
+        "DHCPv4 only options:\n"
+        "-B: Force broadcast handling.\n"
+        "\n"
+        "DHCPv6 only options:\n"
+        "-c: Add a rapid commit option (exchanges will be SA).\n"
+        "\n"
+        "The remaining options are used only in conjunction with -r:\n"
+        "\n"
+        "-D<max-drop>: Abort the test if more than <max-drop> requests have\n"
+        "    been dropped.  Use -D0 to abort if even a single request has been\n"
+        "    dropped.  If <max-drop> includes the suffix '%', it specifies a\n"
+        "    maximum percentage of requests that may be dropped before abort.\n"
+        "    In this case, testing of the threshold begins after 10 requests\n"
+        "    have been expected to be received.\n"
+        "-n<num-request>: Initiate <num-request> transactions.  No report is\n"
+        "    generated until all transactions have been initiated/waited-for,\n"
+        "    after which a report is generated and the program terminates.\n"
+        "-p<test-period>: Send requests for the given test period, which is\n"
+        "    specified in the same manner as -d.  This can be used as an\n"
+        "    alternative to -n, or both options can be given, in which case the\n"
+        "    testing is completed when either limit is reached.\n"
+        "-t<report>: Delay in seconds between two periodic reports.\n"
+        "\n"
+        "Errors:\n"
+        "- tooshort: received a too short message\n"
+        "- orphans: received a message which doesn't match an exchange\n"
+        "   (duplicate, late or not related)\n"
+        "- locallimit: reached to local system limits when sending a message.\n"
+        "\n"
+        "Exit status:\n"
+        "The exit status is:\n"
+        "0 on complete success.\n"
+        "1 for a general error.\n"
+        "2 if an error is found in the command line arguments.\n"
+        "3 if there are no general failures in operation, but one or more\n"
+        "  exchanges are not successfully completed.\n";
 }
 
 void
