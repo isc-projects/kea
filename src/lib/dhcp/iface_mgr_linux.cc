@@ -554,10 +554,7 @@ bool IfaceMgr::os_receive4(struct msghdr& m, Pkt4Ptr& pkt) {
             // broadcast. This will return broadcast address, not
             // the address we are bound to.
 
-            // IOAddress tmp(htonl(pktinfo->ipi_spec_dst.s_addr));
-            // cout << "The other addr is: " << tmp.toText() << endl;
-
-            // Perhaps we should uncomment this:
+            // XXX: Perhaps we should uncomment this:
             // to_addr = pktinfo->ipi_spec_dst;
         }
         cmsg = CMSG_NXTHDR(&m, cmsg);
