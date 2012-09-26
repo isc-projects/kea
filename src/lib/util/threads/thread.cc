@@ -113,13 +113,9 @@ Thread::~Thread() {
         const int result = pthread_detach(impl_->tid);
         Impl::done(impl_);
         impl_ = NULL;
-        if (result != 0) {
-            // Yes, really throwing from destructor. But this would
-            // mean someone really messed up the internal state, so
-            // we need to do something about it, even if it causes
-            // application to terminate.
-            isc_throw(isc::InvalidOperation, strerror(result));
-        }
+        // If the detach ever fails, something is screwed rather
+        // badly.
+        assert(result == 0);
     }
 }
 
