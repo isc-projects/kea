@@ -646,23 +646,19 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
     // Convenient shortcuts
     const unsigned int olabels = getOrigin().getLabelCount();
     const unsigned int qlabels = name.getLabelCount();
-
     // placeholder of the next closer proof
     const ZoneNode* covering_node(NULL);
-
     ZoneChain chain;
+    const boost::scoped_ptr<NSEC3Hash> hash
+        (NSEC3Hash::create(nsec3_data->hashalg,
+                           nsec3_data->iterations,
+                           nsec3_data->getSaltData(),
+                           nsec3_data->getSaltLen()));
 
     // Examine all names from the query name to the origin name, stripping
     // the deepest label one by one, until we find a name that has a matching
     // NSEC3 hash.
     for (unsigned int labels = qlabels; labels >= olabels; --labels) {
-        const std::vector<uint8_t> salt(nsec3_data->getSaltData(),
-                                        (nsec3_data->getSaltData() +
-                                         nsec3_data->getSaltLen()));
-        const boost::scoped_ptr<NSEC3Hash> hash
-            (NSEC3Hash::create(nsec3_data->hashalg,
-                               nsec3_data->iterations,
-                               salt));
         const Name& hname = (labels == qlabels ?
                              name : name.split(qlabels - labels, labels));
         const std::string hlabel = hash->calculate(hname);
