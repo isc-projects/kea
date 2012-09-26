@@ -136,9 +136,6 @@ public:
     virtual boost::shared_ptr<RequestCheck>
     create(const std::string& name, isc::data::ConstElementPtr definition,
            const acl::Loader<RequestContext>& loader);
-
-    // Allow things like "from": ["127.0.0.1", "::1"]
-    virtual bool allowListAbbreviation() const { return (true); }
 };
 } // end of namespace "internal"
 
