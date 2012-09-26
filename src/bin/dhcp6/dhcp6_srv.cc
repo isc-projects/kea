@@ -84,8 +84,14 @@ bool Dhcpv6Srv::run() {
         int timeout = 1000;
 
         // client's message and server's response
-        Pkt6Ptr query = IfaceMgr::instance().receive6(timeout);
+        Pkt6Ptr query;
         Pkt6Ptr rsp;
+
+        try {
+            query = IfaceMgr::instance().receive6(timeout);
+        } catch (const std::exception& ex) {
+            LOG_ERROR(dhcp6_logger, DHCP6_PACKET_RECEIVE_FAIL).arg(e.what());
+        }
 
         if (query) {
             if (!query->unpack()) {
@@ -154,7 +160,11 @@ bool Dhcpv6Srv::run() {
                           .arg(rsp->getType()).arg(rsp->toText());
 
                 if (rsp->pack()) {
-                    IfaceMgr::instance().send(rsp);
+                    try {
+                        IfaceMgr::instance().send(rsp);
+                    } catch (const std::exception& ex) {
+                        LOG_ERROR(dhcp6_logger, DHCP6_PACKET_SEND_FAIL).arg(ex.what());
+                    }
                 } else {
                     LOG_ERROR(dhcp6_logger, DHCP6_PACK_FAIL);
                 }

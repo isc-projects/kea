@@ -73,8 +73,14 @@ Dhcpv4Srv::run() {
         int timeout = 1000;
 
         // client's message and server's response
-        Pkt4Ptr query = IfaceMgr::instance().receive4(timeout);
+        Pkt4Ptr query;
         Pkt4Ptr rsp;
+
+        try {
+            query = IfaceMgr::instance().receive4(timeout);
+        } catch (const std::exception& e) {
+            LOG_ERROR(dhcp4_logger, DHCP4_PACKET_RECEIVE_FAIL).arg(e.what());
+        }
 
         if (query) {
             try {
@@ -141,7 +147,11 @@ Dhcpv4Srv::run() {
                           .arg(rsp->getType()).arg(rsp->toText());
 
                 if (rsp->pack()) {
-                    IfaceMgr::instance().send(rsp);
+                    try {
+                        IfaceMgr::instance().send(rsp);
+                    } catch (const std::exception& ex) {
+                        LOG_ERROR(dhcp4_logger, DHCP4_PACKET_SEND_FAIL).arg(ex.what());
+                    }
                 } else {
                     LOG_ERROR(dhcp4_logger, DHCP4_PACK_FAIL);
                 }
