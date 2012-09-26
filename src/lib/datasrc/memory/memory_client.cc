@@ -22,6 +22,7 @@
 #include <datasrc/memory/domaintree.h>
 #include <datasrc/memory/segment_object_holder.h>
 #include <datasrc/memory/treenode_rrset.h>
+#include <datasrc/memory/zone_finder.h>
 
 #include <util/memory_segment_local.h>
 
@@ -100,9 +101,6 @@ public:
         FileNameTree::destroy(mem_sgmt_, file_name_tree_, deleter);
 
         ZoneTable::destroy(mem_sgmt_, zone_table_, rrclass_);
-
-        // see above for the assert().
-        assert(mem_sgmt_.allMemoryDeallocated());
     }
 
     util::MemorySegment& mem_sgmt_;
@@ -326,6 +324,7 @@ public:
         if (nsec3_data == NULL) {
             nsec3_data = NSEC3Data::create(mem_sgmt_, nsec3_rdata);
             zone_data.setNSEC3Data(nsec3_data);
+            zone_data.setSigned(true);
         } else {
             size_t salt_len = nsec3_data->getSaltLen();
             const uint8_t* salt_data = nsec3_data->getSaltData();
@@ -333,7 +332,12 @@ public:
 
             if ((nsec3_rdata.getHashalg() != nsec3_data->hashalg) ||
                 (nsec3_rdata.getIterations() != nsec3_data->iterations) ||
-                (salt_data_2.size() != salt_len) ||
+                (salt_data_2.size() != salt_len)) {
+                isc_throw(AddError,
+                          "NSEC3 with inconsistent parameters: " <<
+                          rrset->toText());
+            }
+            if ((salt_len > 0) &&
                 (std::memcmp(&salt_data_2[0], salt_data, salt_len) != 0)) {
                 isc_throw(AddError,
                           "NSEC3 with inconsistent parameters: " <<
@@ -341,17 +345,10 @@ public:
             }
         }
 
-        string fst_label = rrset->getName().split(0, 1).toText(true);
-        transform(fst_label.begin(), fst_label.end(), fst_label.begin(),
-                  ::toupper);
-
         ZoneNode* node;
-        nsec3_data->insertName(mem_sgmt_, Name(fst_label), &node);
+        nsec3_data->insertName(mem_sgmt_, rrset->getName(), &node);
 
         RdataEncoder encoder;
-
-        // We assume that rrsig has already been checked to match rrset
-        // by the caller.
         RdataSet* set = RdataSet::create(mem_sgmt_, encoder, rrset, rrsig);
         RdataSet* old_set = node->setData(set);
         if (old_set != NULL) {
@@ -416,6 +413,7 @@ public:
                 if (nsec3_data == NULL) {
                     nsec3_data = NSEC3Data::create(mem_sgmt_, param);
                     zone_data.setNSEC3Data(nsec3_data);
+                    zone_data.setSigned(true);
                 } else {
                     size_t salt_len = nsec3_data->getSaltLen();
                     const uint8_t* salt_data = nsec3_data->getSaltData();
@@ -423,7 +421,13 @@ public:
 
                     if ((param.getHashalg() != nsec3_data->hashalg) ||
                         (param.getIterations() != nsec3_data->iterations) ||
-                        (salt_data_2.size() != salt_len) ||
+                        (salt_data_2.size() != salt_len)) {
+                        isc_throw(AddError,
+                                  "NSEC3PARAM with inconsistent parameters: "
+                                  << rrset->toText());
+                    }
+
+                    if ((salt_len > 0) &&
                         (std::memcmp(&salt_data_2[0],
                                      salt_data, salt_len) != 0)) {
                         isc_throw(AddError,
@@ -606,7 +610,7 @@ InMemoryClient::InMemoryClientImpl::load(
     }
 
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_ADD_ZONE).
-        arg(zone_name).arg(rrclass_.toText());
+        arg(zone_name).arg(rrclass_);
 
     // Set the filename in file_name_tree_ now, so that getFileName()
     // can use it (during zone reloading).
@@ -686,21 +690,25 @@ InMemoryClient::getZoneCount() const {
     return (impl_->zone_count_);
 }
 
-isc::datasrc::memory::ZoneTable::FindResult
-InMemoryClient::findZone2(const isc::dns::Name& zone_name) const {
+isc::datasrc::DataSourceClient::FindResult
+InMemoryClient::findZone(const isc::dns::Name& zone_name) const {
     LOG_DEBUG(logger, DBG_TRACE_DATA,
               DATASRC_MEMORY_MEM_FIND_ZONE).arg(zone_name);
+
     ZoneTable::FindResult result(impl_->zone_table_->findZone(zone_name));
-    return (result);
+
+    ZoneFinderPtr finder;
+    if (result.code != result::NOTFOUND) {
+        finder.reset(new InMemoryZoneFinder(*result.zone_data, getClass()));
+    }
+
+    return (DataSourceClient::FindResult(result.code, finder));
 }
 
-isc::datasrc::DataSourceClient::FindResult
-InMemoryClient::findZone(const isc::dns::Name&) const {
-    // This variant of findZone() is not implemented and should be
-    // removed eventually. It currently throws an exception. It is
-    // required right now to derive from DataSourceClient.
-    isc_throw(isc::NotImplemented,
-              "This variant of findZone() is not implemented.");
+const ZoneData*
+InMemoryClient::findZoneData(const isc::dns::Name& zone_name) {
+    ZoneTable::FindResult result(impl_->zone_table_->findZone(zone_name));
+    return (result.zone_data);
 }
 
 result::Result

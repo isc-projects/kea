@@ -41,10 +41,7 @@
 
 #include <asiodns/dns_service.h>
 
-#include <datasrc/query.h>
 #include <datasrc/data_source.h>
-#include <datasrc/static_datasrc.h>
-#include <datasrc/sqlite3_datasrc.h>
 #include <datasrc/client_list.h>
 
 #include <xfr/xfrout_client.h>

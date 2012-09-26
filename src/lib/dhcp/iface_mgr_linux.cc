@@ -417,8 +417,6 @@ namespace dhcp {
 /// Uses the socket-based netlink protocol to retrieve the list of interfaces
 /// from the Linux kernel.
 void IfaceMgr::detectIfaces() {
-    cout << "Linux: detecting interfaces." << endl;
-
     // Copies of netlink messages about links will be stored here.
     Netlink::NetlinkMessages link_info;
 
@@ -495,8 +493,6 @@ void IfaceMgr::detectIfaces() {
 
     nl.release_list(link_info);
     nl.release_list(addr_info);
-
-    printIfaces();
 }
 
 /// @brief sets flag_*_ fields.
@@ -558,10 +554,7 @@ bool IfaceMgr::os_receive4(struct msghdr& m, Pkt4Ptr& pkt) {
             // broadcast. This will return broadcast address, not
             // the address we are bound to.
 
-            // IOAddress tmp(htonl(pktinfo->ipi_spec_dst.s_addr));
-            // cout << "The other addr is: " << tmp.toText() << endl;
-
-            // Perhaps we should uncomment this:
+            // XXX: Perhaps we should uncomment this:
             // to_addr = pktinfo->ipi_spec_dst;
         }
         cmsg = CMSG_NXTHDR(&m, cmsg);

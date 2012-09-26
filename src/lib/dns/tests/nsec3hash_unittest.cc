@@ -20,11 +20,14 @@
 
 #include <dns/nsec3hash.h>
 #include <dns/rdataclass.h>
+#include <util/encode/hex.h>
 
 using boost::scoped_ptr;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
+using namespace isc::util;
+using namespace isc::util::encode;
 
 namespace {
 typedef scoped_ptr<NSEC3Hash> NSEC3HashPtr;
@@ -39,7 +42,10 @@ protected:
         test_hash_nsec3(NSEC3Hash::create(generic::NSEC3
                                           ("1 0 12 aabbccdd " +
                                            string(nsec3_common))))
-    {}
+    {
+        const uint8_t salt[] = {0xaa, 0xbb, 0xcc, 0xdd};
+        test_hash_args.reset(NSEC3Hash::create(1, 12, salt, sizeof(salt)));
+    }
 
     ~NSEC3HashTest() {
         // Make sure we reset the hash creator to the default
@@ -53,6 +59,9 @@ protected:
 
     // Similar to test_hash, but created from NSEC3 RR.
     NSEC3HashPtr test_hash_nsec3;
+
+    // Similar to test_hash, but created from passed args.
+    NSEC3HashPtr test_hash_args;
 };
 
 TEST_F(NSEC3HashTest, unknownAlgorithm) {
@@ -65,6 +74,10 @@ TEST_F(NSEC3HashTest, unknownAlgorithm) {
                          generic::NSEC3("2 0 12 aabbccdd " +
                                         string(nsec3_common)))),
                      UnknownNSEC3HashAlgorithm);
+
+    const uint8_t salt[] = {0xaa, 0xbb, 0xcc, 0xdd};
+    EXPECT_THROW(NSEC3HashPtr(NSEC3Hash::create(2, 12, salt, sizeof(salt))),
+                 UnknownNSEC3HashAlgorithm);
 }
 
 // Common checks for NSEC3 hash calculation
@@ -89,6 +102,10 @@ TEST_F(NSEC3HashTest, calculate) {
     {
         SCOPED_TRACE("calculate check with NSEC3 based hash");
         calculateCheck(*test_hash_nsec3);
+    }
+    {
+        SCOPED_TRACE("calculate check with args based hash");
+        calculateCheck(*test_hash_args);
     }
 
     // Some boundary cases: 0-iteration and empty salt.  Borrowed from the
@@ -176,6 +193,11 @@ public:
             return (default_creator_.create(nsec3));
         }
         return (new TestNSEC3Hash);
+    }
+    virtual NSEC3Hash* create(uint8_t, uint16_t,
+                              const uint8_t*, size_t) const {
+        isc_throw(isc::Unexpected,
+                  "This method is not implemented here.");
     }
 private:
     DefaultNSEC3HashCreator default_creator_;

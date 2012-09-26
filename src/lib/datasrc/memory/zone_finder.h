@@ -23,30 +23,15 @@
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
 
+#include <string>
+
 namespace isc {
 namespace datasrc {
 namespace memory {
-
-class ZoneFinderResultContext {
-public:
-    /// \brief Constructor
-    ///
-    /// The first three parameters correspond to those of
-    /// ZoneFinder::ResultContext.  If node is non NULL, it specifies the
-    /// found RBNode in the search.
-    ZoneFinderResultContext(ZoneFinder::Result code_param,
-                            TreeNodeRRsetPtr rrset_param,
-                            ZoneFinder::FindResultFlags flags_param,
-                            const ZoneNode* node) :
-        code(code_param), rrset(rrset_param), flags(flags_param),
-        found_node(node)
-    {}
-
-    const ZoneFinder::Result code;
-    const TreeNodeRRsetPtr rrset;
-    const ZoneFinder::FindResultFlags flags;
-    const ZoneNode* const found_node;
-};
+namespace internal {
+// intermediate result context, only used in the zone finder implementation.
+class ZoneFinderResultContext;
+}
 
 /// A derived zone finder class intended to be used with the memory data
 /// source, using ZoneData for its contents.
@@ -92,15 +77,12 @@ public:
     findNSEC3(const isc::dns::Name& name, bool recursive);
 
     /// \brief Returns the origin of the zone.
-    virtual isc::dns::Name getOrigin() const {
-        return zone_data_.getOriginNode()->getName();
-    }
+    virtual isc::dns::Name getOrigin() const;
 
     /// \brief Returns the RR class of the zone.
     virtual isc::dns::RRClass getClass() const {
-        return rrclass_;
+        return (rrclass_);
     }
-
 
 private:
     /// \brief In-memory version of finder context.
@@ -110,7 +92,7 @@ private:
     class Context;
 
     /// Actual implementation for both find() and findAll()
-    ZoneFinderResultContext find_internal(
+    internal::ZoneFinderResultContext find_internal(
         const isc::dns::Name& name,
         const isc::dns::RRType& type,
         std::vector<isc::dns::ConstRRsetPtr>* target,
@@ -118,7 +100,7 @@ private:
         FIND_DEFAULT);
 
     const ZoneData& zone_data_;
-    const isc::dns::RRClass& rrclass_;
+    const isc::dns::RRClass rrclass_;
 };
 
 } // namespace memory

@@ -190,8 +190,6 @@ public:
     virtual dns::RdataIteratorPtr getRdataIterator() const;
 
     /// \brief Specialized version of \c getRRsig() for \c TreeNodeRRset.
-    ///
-    /// It throws \c isc::Unexpected unconditionally.
     virtual dns::RRsetPtr getRRsig() const;
 
     virtual unsigned int getRRsigDataCount() const {
