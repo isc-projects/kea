@@ -72,26 +72,23 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
         offset += 2;
 
         if (offset + opt_len > end) {
-            cout << "Option " << opt_type << " truncated." << endl;
+            // @todo: consider throwing exception here.
             return (offset);
         }
         OptionPtr opt;
         switch (opt_type) {
         case D6O_IA_NA:
         case D6O_IA_PD:
-            // cout << "Creating Option6IA" << endl;
             opt = OptionPtr(new Option6IA(opt_type,
                                           buf.begin() + offset,
                                           buf.begin() + offset + opt_len));
             break;
         case D6O_IAADDR:
-            // cout << "Creating Option6IAAddr" << endl;
             opt = OptionPtr(new Option6IAAddr(opt_type,
                                               buf.begin() + offset,
                                               buf.begin() + offset + opt_len));
             break;
         default:
-            // cout << "Creating Option" << endl;
             opt = OptionPtr(new Option(Option::V6,
                                        opt_type,
                                        buf.begin() + offset,
@@ -151,15 +148,9 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
 
 void LibDHCP::packOptions6(isc::util::OutputBuffer &buf,
                            const isc::dhcp::Option::OptionCollection& options) {
-    try {
-        for (Option::OptionCollection::const_iterator it = options.begin();
-             it != options.end(); ++it) {
-            it->second->pack(buf);
-        }
-    }
-    catch (const Exception&) {
-        cout << "Packet build failed (Option build failed)." << endl;
-        throw;
+    for (Option::OptionCollection::const_iterator it = options.begin();
+         it != options.end(); ++it) {
+        it->second->pack(buf);
     }
 }
 
