@@ -1,3 +1,8 @@
+481.	[bug]		vorner
+	The abbreviated form of IP addresses in ACLs is accepted
+	(eg. "from": ["127.0.01", "::1"] now works).
+	(Trac #2191, git 48b6e91386b46eed383126ad98dddfafc9f7e75e)
+
 480.	[doc]		vorner
 	Added documentation about global TSIG key ring to the Guide.
 	(Trac #2189, git 52177bb31f5fb8e134aecb9fd039c368684ad2df)
