@@ -1,3 +1,15 @@
+479.	[func]		marcin
+	Refactored perfdhcp tool to C++, added missing unit tests and removed
+	the old code. The new code uses libdhcp++ (src/lib/dhcp) for DHCP
+	packet management, network interface management and packet transmission.
+	(Trac #1954, git 8d56105742f3043ed4b561f26241f3e4331f51dc)
+	(Trac #1955, git 6f914bb2c388eb4dd3e5c55297f8988ab9529b3f)
+	(Trac #1956, git 6f914bb2c388eb4dd3e5c55297f8988ab9529b3f)
+	(Trac #1957, git 7fca81716ad3a755bf5744e88c3adeef15b04450)
+	(Trac #1958, git 94e17184270cda58f55e6da62e845695117fede3)
+	(Trac #1959, git a8cf043db8f44604c7773e047a9dc2861e58462a)
+	(Trac #1960, git 6c192e5c0903f349b4d80cf2bb6cd964040ae7da)
+
 478.	[func]		naokikambe
 	New statistics items added into b10-xfrout: ixfr_running and
 	axfr_running.  Their values can be obtained by invoking "Stats show
