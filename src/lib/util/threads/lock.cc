@@ -47,11 +47,9 @@ struct Deinitializer {
     {}
     ~Deinitializer() {
         const int result = pthread_mutexattr_destroy(&attributes_);
-        if (result != 0) {
-            // This really should not happen. We might as well
-            // try to use assert here.
-            isc_throw(isc::InvalidOperation, strerror(result));
-        }
+        // This should never happen. According to the man page,
+        // if there's error, it's our fault.
+        assert(result == 0);
     }
     pthread_mutexattr_t& attributes_;
 };
@@ -101,16 +99,17 @@ Mutex::~Mutex() {
         const int result = pthread_mutex_destroy(&impl_->mutex);
         const bool locked = impl_->locked_count != 0;
         delete impl_;
-        if (result != 0) {
-            // Yes, really throwing from the destructor.
-            // But the error should not happen during normal
-            // operations, this means something is screwed up
-            // and must be fixed.
-            isc_throw(isc::InvalidOperation, strerror(result));
-        }
-        if (locked) {
-            isc_throw(isc::InvalidOperation, "Destroying locked mutex");
-        }
+        // We don't want to throw from the destructor. Also, if this ever
+        // fails, something is really screwed up a lot.
+        assert(result == 0);
+
+        // We should not try to destroy a locked mutex, bad threaded monsters
+        // could get loose if we ever do and it is also forbidden by pthreads.
+
+        // This should not be possible to happen, since the
+        // pthread_mutex_destroy should check for it already. But it seems
+        // there are systems that don't check it.
+        assert(!locked);
     }
 }
 
