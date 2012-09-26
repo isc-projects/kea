@@ -16,6 +16,7 @@
 
 #include <cassert>
 #include <cstring>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -78,11 +79,8 @@ public:
         SHA1Reset(&sha1_ctx_);
     }
 
-    ~NSEC3HashRFC5155()
-    {
-        if (salt_data_ != NULL) {
-            free(salt_data_);
-        }
+    ~NSEC3HashRFC5155() {
+        std::free(salt_data_);
     }
 
     virtual std::string calculate(const Name& name) const;
@@ -126,15 +124,14 @@ NSEC3HashRFC5155::calculate(const Name& name) const {
     name_copy.downcase();
     name_copy.toWire(obuf_);
 
-    const uint8_t* const salt = (salt_length_ > 0) ? salt_data_ : NULL;
     uint8_t* const digest = &digest_[0];
     assert(digest_.size() == SHA1_HASHSIZE);
 
     iterateSHA1(&sha1_ctx_, static_cast<const uint8_t*>(obuf_.getData()),
-                obuf_.getLength(), salt, salt_length_, digest);
+                obuf_.getLength(), salt_data_, salt_length_, digest);
     for (unsigned int n = 0; n < iterations_; ++n) {
         iterateSHA1(&sha1_ctx_, digest, SHA1_HASHSIZE,
-                    salt, salt_length_, digest);
+                    salt_data_, salt_length_, digest);
     }
 
     return (encodeBase32Hex(digest_));
@@ -204,14 +201,16 @@ NSEC3Hash*
 DefaultNSEC3HashCreator::create(const generic::NSEC3PARAM& param) const {
     const vector<uint8_t>& salt = param.getSalt();
     return (new NSEC3HashRFC5155(param.getHashalg(), param.getIterations(),
-                                 &salt[0], salt.size()));
+                                 salt.empty() ? NULL : &salt[0],
+                                 salt.size()));
 }
 
 NSEC3Hash*
 DefaultNSEC3HashCreator::create(const generic::NSEC3& nsec3) const {
     const vector<uint8_t>& salt = nsec3.getSalt();
     return (new NSEC3HashRFC5155(nsec3.getHashalg(), nsec3.getIterations(),
-                                 &salt[0], salt.size()));
+                                 salt.empty() ? NULL : &salt[0],
+                                 salt.size()));
 }
 
 NSEC3Hash*
