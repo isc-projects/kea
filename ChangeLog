@@ -1,3 +1,16 @@
+482.	[func]		team
+	Memory footprint of the in-memory data source has been
+	substantially improved.  For example, b10-auth now requires much
+	less memory than BIND 9 named for loading and serving the same
+	zone in-memory.  This is a transparent change in terms of user
+	operation; there's no need to update or change the configuration
+	to enable this feature.
+	Notes: multiple instances of b10-auth still make separate copies
+	of the memory image.  Also, loading zones in memory still suspends
+	query processing, so manual reloading or reloading after incoming
+	transfer may cause service disruption for huge zones.
+	(Multiple Trac tickets)
+
 481.	[bug]		vorner
 	The abbreviated form of IP addresses in ACLs is accepted
 	(eg. "from": ["127.0.01", "::1"] now works).
@@ -10,7 +23,8 @@
 479.	[func]		marcin
 	Refactored perfdhcp tool to C++, added missing unit tests and removed
 	the old code. The new code uses libdhcp++ (src/lib/dhcp) for DHCP
-	packet management, network interface management and packet transmission.
+	packet management, network interface management and packet
+	transmission.
 	(Trac #1954, git 8d56105742f3043ed4b561f26241f3e4331f51dc)
 	(Trac #1955, git 6f914bb2c388eb4dd3e5c55297f8988ab9529b3f)
 	(Trac #1956, git 6f914bb2c388eb4dd3e5c55297f8988ab9529b3f)
