@@ -26,6 +26,8 @@
 
 #include <datasrc/logger.h>
 
+#include <boost/scoped_ptr.hpp>
+
 using namespace isc::dns;
 using namespace isc::datasrc::memory;
 using namespace isc::datasrc;
@@ -657,7 +659,7 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
         const std::vector<uint8_t> salt(nsec3_data->getSaltData(),
                                         (nsec3_data->getSaltData() +
                                          nsec3_data->getSaltLen()));
-        const std::auto_ptr<NSEC3Hash> hash
+        const boost::scoped_ptr<NSEC3Hash> hash
             (NSEC3Hash::create(nsec3_data->hashalg,
                                nsec3_data->iterations,
                                salt));
