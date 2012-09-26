@@ -241,6 +241,20 @@ TEST_F(MemoryClientTest, loadNSEC3Signed) {
     EXPECT_TRUE(result.zone_data->isNSEC3Signed());
 }
 
+TEST_F(MemoryClientTest, loadNSEC3EmptySalt) {
+    // Load NSEC3 with empty ("-") salt. This should not throw or crash
+    // or anything.
+    client_->load(Name("example.org"),
+                  TEST_DATA_DIR "/example.org-nsec3-empty-salt.zone");
+    isc::datasrc::memory::ZoneTable::FindResult
+        result(client_->findZoneData(Name("example.org")));
+    EXPECT_EQ(result::SUCCESS, result.code);
+    ASSERT_NE(static_cast<ZoneData*>(NULL),
+              result.zone_data);
+    EXPECT_TRUE(result.zone_data->isSigned());
+    EXPECT_TRUE(result.zone_data->isNSEC3Signed());
+}
+
 TEST_F(MemoryClientTest, loadNSEC3SignedNoParam) {
     client_->load(Name("example.org"),
                   TEST_DATA_DIR "/example.org-nsec3-signed-no-param.zone");
