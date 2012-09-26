@@ -996,8 +996,7 @@ TEST_F(DomainTreeTest, largestNode) {
     TreeHolder empty_tree_holder
         (mem_sgmt_, TestDomainTree::create(mem_sgmt_));
     TestDomainTree& empty_tree(*empty_tree_holder.get());
-    EXPECT_EQ(static_cast<void*>(NULL),
-              empty_tree.largestNode());
+    EXPECT_EQ(static_cast<void*>(NULL), empty_tree.largestNode());
 }
 
 TEST_F(DomainTreeTest, nextNodeError) {
