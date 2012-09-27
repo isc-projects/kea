@@ -1,3 +1,13 @@
+bind10-devel-20120927 released on September 27, 2012
+
+483.	[func]		marcin
+	libdhcp++: Added new parameter to define sub-second timeout
+	for DHCP packet reception. The total timeout is now specified
+	by two parameters:  first specifies integral number of
+	seconds, second (which defaults to 0) specifies fractional
+	seconds with microsecond resolution.
+	(Trac #2231, git 15560cac16e4c52129322e3cb1787e0f47cf7850)
+
 482.	[func]		team
 	Memory footprint of the in-memory data source has been
 	substantially improved.  For example, b10-auth now requires much
@@ -9,7 +19,7 @@
 	of the memory image.  Also, loading zones in memory still suspends
 	query processing, so manual reloading or reloading after incoming
 	transfer may cause service disruption for huge zones.
-	(Multiple Trac tickets)
+	(Multiple Trac tickets, Summarized in Trac #2101)
 
 481.	[bug]		vorner
 	The abbreviated form of IP addresses in ACLs is accepted
@@ -45,10 +55,10 @@
 	(Trac #2190, git e0ffa11d49ab949ee5a4ffe7682b0e6906667baa)
 
 476.	[bug]		vorner
-	The XfrIn now accepts transfers with some TSIG signatures omitted, as
+	The Xfrin now accepts transfers with some TSIG signatures omitted, as
 	allowed per RFC2845, section 4.4. This solves a compatibility
 	issues with Knot and NSD.
-	(Trac #1375, git 7ca65cb9ec528118f370142d7e7b792fcc31c9cf)
+	(Trac #1357, git 7ca65cb9ec528118f370142d7e7b792fcc31c9cf)
 
 475.	[func]		naokikambe
 	Added Xfrout statistics counters: notifyoutv4, notifyoutv6,
