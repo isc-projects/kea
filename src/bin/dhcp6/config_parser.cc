@@ -22,12 +22,15 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 #include <cc/data.h>
+#include <config/ccsession.h>
 #include <asiolink/io_address.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp/triplet.h>
 #include <dhcp/pool.h>
 #include <dhcp/subnet.h>
 #include <dhcp/cfgmgr.h>
+#include <dhcp6/dhcp6_log.h>
+#include <log/logger_support.h>
 
 using namespace std;
 using namespace isc::data;
@@ -64,12 +67,14 @@ public:
         :param_name_(param_name) {
     }
     virtual void build(ConstElementPtr new_config) {
+        std::cout << "Build for token: [" << param_name_ << "] = ["
+                  << value_->str() << "]" << std::endl;
         value_ = new_config;
     }
     virtual void commit() {
-        // debug message. The whole DummyParser class is used only for parser
+        // Debug message. The whole DummyParser class is used only for parser
         // debugging, and is not used in production code. It is very convenient
-        // to keep it around. Please do not turn this cout into logger calls
+        // to keep it around. Please do not turn this cout into logger calls.
         std::cout << "Commit for token: [" << param_name_ << "] = ["
                   << value_->str() << "]" << std::endl;
     }
@@ -96,8 +101,6 @@ public:
             isc_throw(BadValue, "Failed to parse value " << value->str()
                       << " as unsigned 32-bit integer.");
         }
-        cout << "### storing " << param_name_ << "=" << value_ <<
-          " in " << storage_ << endl;
         storage_->insert(pair<string, uint32_t>(param_name_, value_));
     }
 
@@ -158,7 +161,6 @@ public:
     virtual void build(ConstElementPtr value) {
         BOOST_FOREACH(ConstElementPtr iface, value->listValue()) {
             interfaces_.push_back(iface->str());
-            cout << "#### Configured to listen on interface " << iface->str() << endl;
         }
     }
 
@@ -201,6 +203,7 @@ public:
             boost::erase_all(txt, " ");
             boost::erase_all(txt, "\t");
 
+            // Is this prefix/len notation?
             size_t pos = txt.find("/");
             if (pos != string::npos) {
                 IOAddress addr("::");
@@ -220,21 +223,17 @@ public:
                               "definition: " << text_pool->stringValue());
                 }
 
-                cout << "#### Creating Pool6(TYPE_IA, " <<  addr.toText() << "/"
-                     << (int)len << ")" << endl;
-                // using prefix/len notation
                 Pool6Ptr pool(new Pool6(Pool6::TYPE_IA, addr, len));
                 pools_->push_back(pool);
                 continue;
             }
 
+            // Is this min-max notation?
             pos = txt.find("-");
             if (pos != string::npos) {
+                // using min-max notation
                 IOAddress min(txt.substr(0,pos-1));
                 IOAddress max(txt.substr(pos+1));
-
-                cout << "#### Creating Pool6(TYPE_IA, " << min.toText() << ","
-                     << max.toText() << ")" << endl;
 
                 Pool6Ptr pool(new Pool6(Pool6::TYPE_IA, min, max));
 
@@ -270,7 +269,6 @@ public:
 
     void build(ConstElementPtr subnet) {
 
-        cout << "#### Subnet6ConfigParser::build(): parsing: [" << subnet->str() << "]" << endl;
         BOOST_FOREACH(ConfigPair param, subnet->mapValue()) {
 
             ParserPtr parser(createSubnet6ConfigParser(param.first));
@@ -305,8 +303,6 @@ public:
     void commit() {
 
         StringStorage::const_iterator it = string_values_.find("subnet");
-        cout << "#### Subnet6ConfigParser::commit() string_values_.size()="
-             << string_values_.size() << endl;
         if (it == string_values_.end()) {
             isc_throw(Dhcp6ConfigError,
                       "Mandatory subnet definition in subnet missing");
@@ -328,7 +324,8 @@ public:
         Triplet<uint32_t> pref = getParam("preferred-lifetime");
         Triplet<uint32_t> valid = getParam("valid-lifetime");
 
-        cout << "#### Adding subnet " << addr.toText() << "/" << (int)len
+        /// @todo: Convert this to logger once the parser is working reliably
+        cout << "Adding subnet " << addr.toText() << "/" << (int)len
              << " with params t1=" << t1 << ", t2=" << t2 << ", pref="
              << pref << ", valid=" << valid << endl;
 
@@ -471,12 +468,17 @@ Dhcp6ConfigParser* createGlobalDhcp6ConfigParser(const std::string& config_id) {
     return (f->second(config_id));
 }
 
-void
+ConstElementPtr
 configureDhcp6Server(Dhcpv6Srv& server, ConstElementPtr config_set) {
     if (!config_set) {
         isc_throw(Dhcp6ConfigError,
                   "Null pointer is passed to configuration parser");
     }
+
+    /// @todo: append most essential info here (like "2 new subnets configured")
+    string config_details;
+
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_START).arg(config_set->str());
 
     ParserCollection parsers;
     try {
@@ -501,6 +503,11 @@ configureDhcp6Server(Dhcpv6Srv& server, ConstElementPtr config_set) {
         isc_throw(Dhcp6ConfigError, "Unrecoverable error: "
                   "a configuration parser threw in commit");
     }
+
+    LOG_INFO(dhcp6_logger, DHCP6_CONFIG_COMPLETE).arg(config_details);
+
+    ConstElementPtr answer = isc::config::createAnswer(0, "Configuration commited.");
+    return (answer);
 }
 
 }; // end of isc::dhcp namespace

@@ -49,14 +49,13 @@ ControlledDhcpv6Srv::dhcp6ConfigHandler(ConstElementPtr new_config) {
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_UPDATE)
               .arg(new_config->str());
 
-    /// @todo: commented out as server is not able to understand partial
-    /// configuration (only the diff and not the whole configuration)
-    /* if (server_) {
-        configureDhcp6Server(*server_, new_config);
-        } */
+    if (server_) {
+        return (configureDhcp6Server(*server_, new_config));
+    }
 
-    ConstElementPtr answer = isc::config::createAnswer(0,
-                             "Thank you for sending config.");
+    // that should never happen as we install config_handler after we
+    ConstElementPtr answer = isc::config::createAnswer(1,
+           "Configuration rejected, server is during startup/shutdown phase.");
     return (answer);
 }
 
@@ -94,7 +93,7 @@ void ControlledDhcpv6Srv::sessionReader(void) {
 }
 
 void ControlledDhcpv6Srv::establishSession() {
-    
+
     string specfile;
     if (getenv("B10_FROM_BUILD")) {
         specfile = string(getenv("B10_FROM_BUILD")) +
@@ -104,14 +103,20 @@ void ControlledDhcpv6Srv::establishSession() {
     }
 
     /// @todo: Check if session is not established already. Throw, if it is.
-    
+
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_CCSESSION_STARTING)
               .arg(specfile);
     cc_session_ = new Session(io_service_.get_io_service());
     config_session_ = new ModuleCCSession(specfile, *cc_session_,
-                                          dhcp6ConfigHandler,
+                                          NULL,
                                           dhcp6CommandHandler, false);
     config_session_->start();
+
+    // We initially create ModuleCCSession() without configHandler, as
+    // the session module is too eager to send partial configuration.
+    // We want to get the full configuration, so we explicitly call
+    // getFullConfig() and then pass it to our configHandler.
+    config_session_->setConfigHandler(dhcp6ConfigHandler);
 
     try {
         configureDhcp6Server(*this, config_session_->getFullConfig());

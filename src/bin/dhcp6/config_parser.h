@@ -128,8 +128,9 @@ public:
 ///
 /// \param server The \c Dhcpv6Srv object to be configured.
 /// \param config_set A JSON style configuration to apply to \c server.
-void configureDhcp6Server(Dhcpv6Srv& server,
-                         isc::data::ConstElementPtr config_set);
+isc::data::ConstElementPtr
+configureDhcp6Server(Dhcpv6Srv& server,
+                     isc::data::ConstElementPtr config_set);
 
 
 /// Create a new \c Dhcp6ConfigParser object for a given configuration
