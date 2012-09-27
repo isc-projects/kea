@@ -496,7 +496,8 @@ class BindCmdInterpreter(Cmd):
                     if self._cmd_has_identifier_param(cmd):
                         # For tab-completion of identifiers, replace hardcoded
                         # hints with hints derived from the config data
-                        id_text = self.location + "/" + cur_line.rpartition(" ")[2]
+                        id_text = self.location + "/" +\
+                            cur_line.rpartition(" ")[2]
                         hints = self._get_identifier_startswith(id_text)
 
             except CmdModuleNameFormatError:
