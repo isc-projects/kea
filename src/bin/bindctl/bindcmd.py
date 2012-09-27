@@ -474,6 +474,10 @@ class BindCmdInterpreter(Cmd):
         """
         Returns True if the given (parsed) command is known and has a
         parameter which points to a config data identifier
+
+        Parameters:
+        cmd (cmdparse.BindCmdParse): command context, including given params
+
         """
         if cmd.module not in self.modules:
             return False
