@@ -137,7 +137,7 @@ struct FindState {
 };
 
 // A callback called from possible zone cut nodes and nodes with DNAME.
-// This will be passed from findNode() to \c RBTree::find().
+// This will be passed from findNode() to \c ZoneTree::find().
 bool cutCallback(const ZoneNode& node, FindState* state) {
     // We need to look for DNAME first, there's allowed case where
     // DNAME and NS coexist in the apex. DNAME is the one to notice,
@@ -264,7 +264,7 @@ createFindResult(const RRClass& rrclass,
 // it should always succeed.
 //
 // node_path must store valid search context (in practice, it's expected
-// to be set by findNode()); otherwise the underlying RBTree implementation
+// to be set by findNode()); otherwise the underlying ZoneTree implementation
 // throws.
 //
 // If the zone is not considered NSEC-signed or DNSSEC records were not

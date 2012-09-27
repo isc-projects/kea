@@ -897,7 +897,7 @@ InMemoryZoneFinderTest::emptyNodeCheck(
     ZoneFinder::FindResultFlags expected_flags)
 {
     /*
-     * The backend RBTree for this test should look like as follows:
+     * The backend ZoneTree for this test should look like as follows:
      *          example.org
      *               |
      *              baz (empty; easy case)
