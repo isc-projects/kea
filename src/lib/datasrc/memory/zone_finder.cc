@@ -490,9 +490,8 @@ FindNodeResult findNode(const ZoneData& zone_data,
             // Clear the node_path so that we don't keep incorrect (NSEC)
             // context
             node_path.clear();
-            ZoneTree::Result result = tree.find(LabelSequence(wildcard_ls),
-                                                &node, node_path, cutCallback,
-                                                &state);
+            ZoneTree::Result result = tree.find(wildcard_ls, &node, node_path,
+                                                cutCallback, &state);
             // Otherwise, why would the domain_flag::WILD be there if
             // there was no wildcard under it?
             assert(result == ZoneTree::EXACTMATCH);
