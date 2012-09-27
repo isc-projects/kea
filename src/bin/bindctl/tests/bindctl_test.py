@@ -420,15 +420,15 @@ class TestConfigCommands(unittest.TestCase):
         sys.stdout = self.stdout_backup
 
     def test_cmd_has_identifier_param(self):
-        module = ModuleInfo(name = "test_module")
+        module = ModuleInfo(name="test_module")
 
-        cmd = CommandInfo(name = "command_with_identifier")
-        param = ParamInfo(name = bindcmd.IDENTIFIER_PARAM)
+        cmd = CommandInfo(name="command_with_identifier")
+        param = ParamInfo(name=bindcmd.IDENTIFIER_PARAM)
         cmd.add_param(param)
         module.add_command(cmd)
 
-        cmd = CommandInfo(name = "command_without_identifier")
-        param = ParamInfo(name = "some_argument")
+        cmd = CommandInfo(name="command_without_identifier")
+        param = ParamInfo(name="some_argument")
         cmd.add_param(param)
         module.add_command(cmd)
 
@@ -445,7 +445,7 @@ class TestConfigCommands(unittest.TestCase):
 
     def test_get_identifier_startswith(self):
         hints = self.tool._get_identifier_startswith("/")
-        self.assertEqual([ 'foo/an_int', 'foo/a_list'], hints)
+        self.assertEqual(['foo/an_int', 'foo/a_list'], hints)
 
         hints = self.tool._get_identifier_startswith("/foo/an")
         self.assertEqual(['foo/an_int'], hints)
