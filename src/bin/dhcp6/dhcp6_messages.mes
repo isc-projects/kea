@@ -105,3 +105,14 @@ This critical error message indicates that the initial DHCPv6
 configuration has failed. The server will continue to run, but
 administrator's intervention is required. The server's configuration
 must be fixed before it can become usable.
+
+% DHCP6_CONFIG_START DHCPv6 server is processing the following configuration: %1
+This is a debug message that is issued every time the server receives
+configuration. That happens during every start up and also when server
+configuration change is committed by the administrator.
+
+% DHCP6_CONFIG_COMPLETE DHCPv6 server has completed configuration: %1
+This is an informational message that announces successful processing
+of a new configuration. That may happen as a result of one of two
+events: server startup or commit of configuration change, done by the
+administrator. Additional information may be provided.
