@@ -199,8 +199,6 @@ class UpdateSession:
           logging and access control.
         - zone_config (ZoneConfig) A tentative container that encapsulates
           the server's zone configuration.  See zone_config.py.
-        - req_data (binary) Wire format data of the request message.
-          It will be used for TSIG verification if necessary.
 
         '''
         self.__message = req_message
