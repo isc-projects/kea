@@ -37,6 +37,7 @@ protected:
     {
         ostringstream oss1;
         oss1 << test_class_code;
+        // cppcheck-suppress useInitializationList
         test_class_unknown_str = "CLASS" + oss1.str();
 
         ostringstream oss2;
