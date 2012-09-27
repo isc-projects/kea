@@ -57,7 +57,6 @@ AFSDB::AFSDB(const std::string& afsdb_str) :
     try {
         const uint32_t subtype = tokenToNum<int32_t, 16>(getToken(iss));
         const Name servername(getToken(iss));
-        string server;
 
         if (!iss.eof()) {
             isc_throw(InvalidRdataText, "Unexpected input for AFSDB"

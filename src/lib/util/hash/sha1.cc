@@ -48,7 +48,7 @@
  *      merchantability of this software or the suitability of this
  *      software for any particular purpose.  It is provided "as is"
  *      without express or implied warranty of any kind.
- *      
+ *
  */
 #include <util/hash/sha1.h>
 
@@ -79,7 +79,7 @@ SHA_Parity(const uint32_t x, const uint32_t y, const uint32_t z) {
     return ((x) ^ (y) ^ (z));
 }
 
-static inline int 
+static inline int
 SHA1CircularShift(uint8_t bits, uint32_t word) {
     return ((word << bits) | (word >> (32 - bits)));
 }

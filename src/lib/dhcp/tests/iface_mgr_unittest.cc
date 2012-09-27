@@ -1096,7 +1096,7 @@ void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifac
             addr = addr.substr(0, addr.find_first_of(" "));
             IOAddress a(addr);
             iface->addAddress(a);
-        } else if(line.find("Metric")) {
+        } else if(line.find("Metric") != string::npos) {
             // flags
             if (line.find("UP") != string::npos) {
                 iface->flag_up_ = true;
