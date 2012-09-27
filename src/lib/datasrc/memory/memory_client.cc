@@ -125,7 +125,7 @@ public:
     //
     // In order for wildcard matching to work correctly in the zone finder,
     // we must ensure that a node for the wildcarding level exists in the
-    // backend RBTree.
+    // backend ZoneTree.
     // E.g. if the wildcard name is "*.sub.example." then we must ensure
     // that "sub.example." exists and is marked as a wildcard level.
     // Note: the "wildcarding level" is for the parent name of the wildcard
