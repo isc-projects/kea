@@ -23,7 +23,7 @@ bind10-devel-20120927 released on September 27, 2012
 
 481.	[bug]		vorner
 	The abbreviated form of IP addresses in ACLs is accepted
-	(eg. "from": ["127.0.01", "::1"] now works).
+	(eg. "from": ["127.0.0.1", "::1"] now works).
 	(Trac #2191, git 48b6e91386b46eed383126ad98dddfafc9f7e75e)
 
 480.	[doc]		vorner
