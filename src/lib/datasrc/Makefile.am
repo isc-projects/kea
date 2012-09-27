@@ -12,7 +12,9 @@ pkglibdir = $(libexecdir)/@PACKAGE@/backends
 datasrc_config.h: datasrc_config.h.pre
 	$(SED) -e "s|@@PKGLIBDIR@@|$(pkglibdir)|" datasrc_config.h.pre >$@
 
-static.zone: static.zone.pre
+# The top config.h defines "PACKAGE_STRING".  When it's changed we neeed to
+# regenerate this zone file.
+static.zone: static.zone.pre $(top_builddir)/config.h $(top_srcdir)/AUTHORS
 	$(SED) -e "s|@@VERSION_STRING@@|$(PACKAGE_STRING)|" $(srcdir)/static.zone.pre >$@
 	$(SED) -e 's/\(.*\)/AUTHORS.BIND.	0	CH	TXT	"\1"/' $(top_srcdir)/AUTHORS >>$@
 
