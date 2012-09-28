@@ -240,8 +240,8 @@ class TestXfroutCounter(unittest.TestCase, BaseTestXfrCounter):
         self._perzone_prefix   = self.counter._perzone_prefix
         self._xfrrunning_names = self.counter._xfrrunning_names
         self._unixsocket_names = self.counter._unixsocket_names
-        self._started = threading.Event()
         self._zones_item_list   = self.counter._zones_item_list
+        self._started = threading.Event()
 
     def test_unixsocket_counters(self):
         # for unixsocket counters
@@ -277,6 +277,7 @@ class TestXfrinCounter(unittest.TestCase, BaseTestXfrCounter):
         self._entire_server    = self.counter._entire_server
         self._perzone_prefix   = self.counter._perzone_prefix
         self._xfrrunning_names = self.counter._xfrrunning_names
+        self._ipsocket_names = self.counter._ipsocket_names
         self._zones_item_list   = self.counter._zones_item_list
         self._started = threading.Event()
 
@@ -309,6 +310,27 @@ class TestXfrinCounter(unittest.TestCase, BaseTestXfrCounter):
             # twice exec stopper, then second is not changed
             stopper(TEST_ZONE_NAME_STR)
             self.assertEqual(getter(TEST_ZONE_NAME_STR), sec)
+        self.check_dump_statistics()
+
+    def test_ipsocket_counters(self):
+        # for unixsocket counters
+        for counter_name in self._ipsocket_names:
+            incrementer = self.counter._to_global\
+                ['inc_%ssocket_%s' % counter_name]
+            getter = self.counter._to_global\
+                ['get_%ssocket_%s' % counter_name]
+            incrementer()
+            self.assertEqual(getter(), 1)
+            # checks disable/enable
+            self.counter.disable()
+            incrementer()
+            self.assertEqual(getter(), 1)
+            self.counter.enable()
+            incrementer()
+            self.assertEqual(getter(), 2)
+            isc.cc.data.set(
+                self._statistics_data,
+                'socket/%s/tcp/%s' % counter_name, 2)
         self.check_dump_statistics()
 
 if __name__== "__main__":
