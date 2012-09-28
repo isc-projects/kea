@@ -34,10 +34,8 @@ Feature: Xfrin incoming notify handling
 
     When I query statistics ixfr_running of bind10 module Xfrout with cmdctl port 47804
     Then the statistics counter ixfr_running should be 0
-    Then the statistics counter ixfr_running should be 0
 
     When I query statistics axfr_running of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter axfr_running should be 0
     Then the statistics counter axfr_running should be 0
 
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
