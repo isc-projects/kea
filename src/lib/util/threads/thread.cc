@@ -113,8 +113,7 @@ Thread::~Thread() {
         const int result = pthread_detach(impl_->tid);
         Impl::done(impl_);
         impl_ = NULL;
-        // If the detach ever fails, something is screwed rather
-        // badly.
+        // If the detach ever fails, something is screwed rather badly.
         assert(result == 0);
     }
 }

@@ -55,8 +55,8 @@ TEST(MutexTest, lockMultiple) {
 // tests fail then with rather cryptic messages, memory dumps and stuff).
 // Any idea how to make the test work and reasonably safe?
 TEST(MutexTest, DISABLED_destroyLocked) {
-    // TODO: This probably won't work for non-debug mutexes. Disable on non-debug
-    // compilation.
+    // TODO: This probably won't work for non-debug mutexes. Disable on
+    // non-debug compilation.
     Mutex* mutex = new Mutex;
     new Mutex::Locker(*mutex);
     EXPECT_THROW(delete mutex, isc::InvalidOperation);
@@ -86,11 +86,10 @@ const unsigned long long length = 1000;
 const unsigned long long iterations = 10000;
 const unsigned long long value = 2000;
 void
-performStrangeOperation(long long unsigned* array, int direction,
-                        Mutex* mutex)
+performStrangeOperation(long long unsigned* array, int direction, Mutex* mutex)
 {
     unsigned long long position = 0;
-    for (size_t i = 0; i < iterations; i ++) {
+    for (size_t i = 0; i < iterations; ++i) {
         Mutex::Locker lock(*mutex);
         while (array[position % length] < value) {
             position += direction;
@@ -102,8 +101,8 @@ performStrangeOperation(long long unsigned* array, int direction,
             if (p2 % length == position % length) {
                 continue;
             }
-            array[p2 % length] ++;
-            value --;
+            ++array[p2 % length];
+            --value;
         }
         array[position % length] = 0;
     }
@@ -113,7 +112,7 @@ TEST(MutexTest, swarm) {
     // This type has a low chance of being atomic itself, further raising
     // the chance of problems appearing.
     long long unsigned array[length];
-    for (size_t i = 0; i < length; ++ i) {
+    for (size_t i = 0; i < length; ++i) {
         array[i] = value;
     }
     Mutex mutex;
@@ -122,7 +121,7 @@ TEST(MutexTest, swarm) {
     t1.wait();
     t2.wait();
     long long unsigned sum = 0;
-    for (size_t i = 0; i < length; ++ i) {
+    for (size_t i = 0; i < length; ++i) {
         sum += array[i];
     }
     EXPECT_EQ(length * value, sum) << "Threads are badly synchronized";

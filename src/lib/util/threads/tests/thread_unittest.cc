@@ -29,12 +29,11 @@
 // started in parallel (the other tests wait for the previous one to terminate
 // before starting new one).
 
-const size_t iterations = 200;
-const size_t detached_iterations = 25;
-
 using namespace isc::util::thread;
 
 namespace {
+const size_t iterations = 200;
+const size_t detached_iterations = 25;
 
 void
 doSomething(int* x) {
