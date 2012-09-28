@@ -266,6 +266,9 @@ TEST(Subnet6Test, Subnet6_Pool6_checks) {
     Pool6Ptr pool3(new Pool6(Pool6::TYPE_IA, IOAddress("3000::"), 16));
     EXPECT_THROW(subnet->addPool6(pool3), BadValue);
 
+
+    Pool6Ptr pool4(new Pool6(Pool6::TYPE_IA, IOAddress("4001:db8:1::"), 80));
+    EXPECT_THROW(subnet->addPool6(pool4), BadValue);
 }
 
 // This test verifies if the configuration manager is able to hold and return
@@ -294,6 +297,10 @@ TEST(CfgMgrTest, subnet6) {
     EXPECT_EQ(subnet2, cfg_mgr.getSubnet6(IOAddress("3000::dead:beef")));
     EXPECT_EQ(Subnet6Ptr(), cfg_mgr.getSubnet6(IOAddress("5000::1")));
 
+    cfg_mgr.deleteSubnets6();
+    EXPECT_EQ(Subnet6Ptr(), cfg_mgr.getSubnet6(IOAddress("200::123")));
+    EXPECT_EQ(Subnet6Ptr(), cfg_mgr.getSubnet6(IOAddress("3000::123")));
+    EXPECT_EQ(Subnet6Ptr(), cfg_mgr.getSubnet6(IOAddress("4000::123")));
 }
 
 } // end of anonymous namespace
