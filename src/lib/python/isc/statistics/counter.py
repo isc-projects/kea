@@ -402,6 +402,20 @@ class XfrinCounter(Counter):
 	zones/example.com./xfrfail
 	zones/example.com./time_to_ixfr
 	zones/example.com./time_to_axfr
+        socket/ipv4/tcp/open
+        socket/ipv4/tcp/openfail
+        socket/ipv4/tcp/close
+        socket/ipv4/tcp/connfail
+        socket/ipv4/tcp/conn
+        socket/ipv4/tcp/senderr
+        socket/ipv4/tcp/recverr
+        socket/ipv6/tcp/open
+        socket/ipv6/tcp/openfail
+        socket/ipv6/tcp/close
+        socket/ipv6/tcp/connfail
+        socket/ipv6/tcp/conn
+        socket/ipv6/tcp/senderr
+        socket/ipv6/tcp/recverr
     """
 
     def __init__(self, module_spec):
@@ -419,9 +433,16 @@ class XfrinCounter(Counter):
                 if n.find('xfr_running') == 1 \
                 or n.find('xfr_deferred') == 1 \
                 or n.find('soa_in_progress') == 0 ]
+        self._ipsocket_names = [ \
+            (n.split('/')[-3], n.split('/')[-1]) for n in \
+                isc.config.spec_name_list(
+                self._statistics_spec, "", True) \
+                if n.find('socket/ipv4/tcp/') == 0 \
+                or n.find('socket/ipv6/tcp/') == 0 ]
         self._create_perzone_functors()
         self._create_perzone_timer_functors()
         self._create_xfrrunning_functors()
+        self._create_ipsocket_functors()
         self._to_global['dump_statistics'] = self.dump_statistics
 
     def _create_perzone_timer_functors(self):
@@ -453,3 +474,22 @@ class XfrinCounter(Counter):
             self._to_global['start_%s' % item] = __starttimer
             self._to_global['stop_%s' % item] = __stoptimer
             self._to_global['get_%s' % item] = __getter
+
+    def _create_ipsocket_functors(self):
+        """Creates increment method of ip socket. Incrementer can be
+        accessed by name "inc_ipv4socket_${item_name}" for ipv4 or
+        "inc_ipv6socket_${item_name}" for ipv6."""
+        for item in self._ipsocket_names:
+            # item should be tuple-type
+            def __incrementer(counter_name=item, step=1):
+                """A incrementer for ip socket counter"""
+                self._incrementer(
+                    'socket/%s/tcp/%s' % counter_name,
+                    step)
+            def __getter(counter_name=item):
+                """A getter method for ip socket counter"""
+                return self._getter(
+                    'socket/%s/tcp/%s' % counter_name)
+            self._to_global['inc_%ssocket_%s' % item] = __incrementer
+            self._to_global['get_%ssocket_%s' % item] = __getter
+
