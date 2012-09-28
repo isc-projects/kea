@@ -1105,12 +1105,10 @@ class TestAXFR(TestXfrinConnection):
         for (info, ver) in addrs:
             c = MockXfrinConnection({}, TEST_ZONE_NAME, RRClass.CH, None,
                                     threading.Event(), info)
-            c.init_socket()
             if ver is not None:
                 self.assertEqual(ver, c._get_ipver_str())
             else:
                 self.assertRaises(ValueError, c._get_ipver_str)
-            c.close()
 
     def test_soacheck(self):
         # we need to defer the creation until we know the QID, which is
