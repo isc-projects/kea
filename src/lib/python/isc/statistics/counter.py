@@ -371,19 +371,16 @@ class XfroutCounter(Counter):
             self._to_global['get_%s' % item] = __getter
 
     def _create_unixsocket_functors(self):
-        """Creates increment/decrement method of (a|i)xfr_running
-        based on the spec file. Incrementer can be accessed by name
-        "inc_${item_name}". Decrementer can be accessed by name
-        "dec_${item_name}". Both of them are passed to the
-        XfroutSession as counter handlers."""
+        """Creates increment method of unixsocket socket. Incrementer
+        can be accessed by name "inc_unixsocket_${item_name}"."""
         for item in self._unixsocket_names:
             def __incrementer(counter_name=item, step=1):
-                """A incrementer for axfr or ixfr running."""
+                """A incrementer for unix socket counter"""
                 self._incrementer(
                     'socket/unixdomain/%s' % counter_name,
                     step)
             def __getter(counter_name=item):
-                """A getter method for unixsockets counters"""
+                """A getter method for unix socket counter"""
                 return self._getter(
                     'socket/unixdomain/%s' % counter_name)
             self._to_global['inc_unixsocket_%s' % item] = __incrementer
