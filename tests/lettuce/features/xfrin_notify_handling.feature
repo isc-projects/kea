@@ -196,3 +196,52 @@ Feature: Xfrin incoming notify handling
     Then the statistics counter accept should be 1
     Then the statistics counter senderr should be 0
     Then the statistics counter recverr should be 0
+
+    #
+    # Test for unreachable slave
+    #
+    Scenario: Handle incoming notify (unreachable slave)
+    Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 47804 as master
+    And wait for master stderr message BIND10_STARTED_CC
+    And wait for master stderr message CMDCTL_STARTED
+    And wait for master stderr message AUTH_SERVER_STARTED
+    And wait for master stderr message XFROUT_STARTED
+    And wait for master stderr message ZONEMGR_STARTED
+    And wait for master stderr message STATS_STARTING
+
+    When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
+    Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
+    Then wait for new master stderr message NOTIFY_OUT_SENDING_NOTIFY
+    Then wait for new master stderr message NOTIFY_OUT_TIMEOUT
+
+    #
+    # Test1 for Xfrout statistics
+    #
+    # check statistics change
+    #
+
+    # wait until the last stats requesting is finished
+    wait for new master stderr message STATS_SEND_STATISTICS_REQUEST
+    wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
+
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
+    last bindctl output should not contain "error"
+    Then the statistics counter notifyoutv4 for the zone _SERVER_ should be 0
+    Then the statistics counter notifyoutv4 for the zone example.org. should be 0
+    Then the statistics counter notifyoutv6 for the zone _SERVER_ should be greater than 0
+    Then the statistics counter notifyoutv6 for the zone example.org. should be greater than 0
+    Then the statistics counter xfrrej for the zone _SERVER_ should be 0
+    Then the statistics counter xfrrej for the zone example.org. should be 0
+    Then the statistics counter xfrreqdone for the zone _SERVER_ should be 0
+    Then the statistics counter xfrreqdone for the zone example.org. should be 0
+
+    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
+    Then the statistics counter open should be 1
+    Then the statistics counter openfail should be 0
+    Then the statistics counter close should be 0
+    Then the statistics counter bindfail should be 0
+    Then the statistics counter acceptfail should be 0
+    Then the statistics counter accept should be 0
+    Then the statistics counter senderr should be 0
+    Then the statistics counter recverr should be 0
+
