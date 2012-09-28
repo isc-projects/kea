@@ -125,6 +125,22 @@ Feature: Xfrin incoming notify handling
     Then the statistics counter xfrrej for the zone _SERVER_ should be 0
     Then the statistics counter xfrreqdone for the zone _SERVER_ should be 0
 
+    When I query statistics ixfr_running of bind10 module Xfrout with cmdctl port 47804
+    Then the statistics counter ixfr_running should be 0
+
+    When I query statistics axfr_running of bind10 module Xfrout with cmdctl port 47804
+    Then the statistics counter axfr_running should be 0
+
+    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
+    Then the statistics counter open should be between 0 and 1
+    Then the statistics counter openfail should be 0
+    Then the statistics counter close should be 0
+    Then the statistics counter bindfail should be 0
+    Then the statistics counter acceptfail should be 0
+    Then the statistics counter accept should be 0
+    Then the statistics counter senderr should be 0
+    Then the statistics counter recverr should be 0
+
     #
     # set transfer_acl rejection
     # Local xfr requests from Xfrin module would be rejected here.
@@ -170,3 +186,13 @@ Feature: Xfrin incoming notify handling
     Then the statistics counter xfrrej for the zone example.org. should be greater than 0
     Then the statistics counter xfrreqdone for the zone _SERVER_ should be 0
     Then the statistics counter xfrreqdone for the zone example.org. should be 0
+
+    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
+    Then the statistics counter open should be 1
+    Then the statistics counter openfail should be 0
+    Then the statistics counter close should be 0
+    Then the statistics counter bindfail should be 0
+    Then the statistics counter acceptfail should be 0
+    Then the statistics counter accept should be 1
+    Then the statistics counter senderr should be 0
+    Then the statistics counter recverr should be 0
