@@ -279,6 +279,29 @@ Feature: Xfrin incoming notify handling
     Then wait for new master stderr message NOTIFY_OUT_SENDING_NOTIFY
     Then wait for new master stderr message NOTIFY_OUT_TIMEOUT
 
+    When I query statistics zones of bind10 module Xfrin with cmdctl
+    last bindctl output should not contain "error"
+    Then the statistics counter soaoutv4 for the zone _SERVER_ should be 0
+    Then the statistics counter soaoutv4 for the zone example.org. should be 0
+    Then the statistics counter soaoutv6 for the zone _SERVER_ should be greater than 0
+    Then the statistics counter soaoutv6 for the zone example.org. should be greater than 0
+    Then the statistics counter axfrreqv4 for the zone _SERVER_ should be 0
+    Then the statistics counter axfrreqv4 for the zone example.org. should be 0
+    Then the statistics counter axfrreqv6 for the zone _SERVER_ should be greater than 0
+    Then the statistics counter axfrreqv6 for the zone example.org. should be greater than 0
+    Then the statistics counter ixfrreqv4 for the zone _SERVER_ should be 0
+    Then the statistics counter ixfrreqv4 for the zone example.org. should be 0
+    Then the statistics counter ixfrreqv6 for the zone _SERVER_ should be 0
+    Then the statistics counter ixfrreqv6 for the zone example.org. should be 0
+    Then the statistics counter xfrsuccess for the zone _SERVER_ should be 0
+    Then the statistics counter xfrsuccess for the zone example.org. should be 0
+    Then the statistics counter xfrfail for the zone _SERVER_ should be greater than 0
+    Then the statistics counter xfrfail for the zone example.org. should be greater than 0
+    Then the statistics counter time_to_ixfr for the zone _SERVER_ should be 0.0
+    Then the statistics counter time_to_ixfr for the zone example.org. should be 0.0
+    Then the statistics counter time_to_axfr for the zone _SERVER_ should be 0.0
+    Then the statistics counter time_to_axfr for the zone example.org. should be 0.0
+
     #
     # Test1 for Xfrout statistics
     #
