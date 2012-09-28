@@ -25,7 +25,7 @@ except ImportError:
 
 param_name_str = "^\s*(?P<param_name>[\w]+)\s*=\s*"
 
-# The value string can be a sequence without space or comma 
+# The value string can be a sequence without space or comma
 # characters, or a string surroundedby quotation marks(such marks
 # can be part of string in an escaped form)
 #param_value_str  = "(?P<param_value>[\"\'].+?(?<!\\\)[\"\']|[^\'\"][^, ]+)"
@@ -34,8 +34,8 @@ param_value_with_quota_str  = "[\"\'](?P<param_value>.+?)(?<!\\\)[\"\']"
 next_params_str = "(?P<blank>\s*)(?P<comma>,?)(?P<next_params>.*)$"
 
 
-PARAM_WITH_QUOTA_PATTERN = re.compile(param_name_str + 
-                                      param_value_with_quota_str + 
+PARAM_WITH_QUOTA_PATTERN = re.compile(param_name_str +
+                                      param_value_with_quota_str +
                                       next_params_str)
 PARAM_PATTERN = re.compile(param_name_str + param_value_str + next_params_str)
 # Used for module and command name
@@ -83,52 +83,52 @@ def _remove_list_and_map_whitespace(text):
                 if map_count == 0:
                     result.append(_remove_unquoted_whitespace(text[cur_start_map_pos:pos + 1]))
                     start_pos = pos + 1
-        
+
 
         pos = pos + 1
     if start_pos <= len(text):
         result.append(text[start_pos:len(text)])
     return "".join(result)
-    
-    
-class BindCmdParse:
+
+
+class BindCmdParser:
     """ This class will parse the command line user input into three parts:
     module name, command, parameters
-    the first two parts are strings and parameter is one hash, 
+    the first two parts are strings and parameter is one hash,
     parameters part is optional
-    
-    Example: zone reload, zone_name=example.com 
+
+    Example: zone reload, zone_name=example.com
     module == zone
     command == reload
     params == [zone_name = 'example.com']
     """
-    
+
     def __init__(self, cmd):
         self.params = OrderedDict()
         self.module = ''
         self.command = ''
         self._parse_cmd(cmd)
 
-    def _parse_cmd(self, text_str):    
+    def _parse_cmd(self, text_str):
         '''Parse command line. '''
         # Get module name
         groups = NAME_PATTERN.match(text_str)
         if not groups:
             raise CmdModuleNameFormatError
-        
+
         self.module = groups.group('name')
         cmd_str = groups.group('others')
         if cmd_str:
             if not groups.group('blank'):
                 raise CmdModuleNameFormatError
-        else:            
+        else:
             raise CmdMissCommandNameFormatError(self.module)
-            
+
         # Get command name
         groups = NAME_PATTERN.match(cmd_str)
         if (not groups):
             raise CmdCommandNameFormatError(self.module)
-        
+
         self.command = groups.group('name')
         param_str = groups.group('others')
         if param_str:
@@ -143,7 +143,7 @@ class BindCmdParse:
     def _parse_params(self, param_text):
         """convert a=b,c=d into one hash """
         param_text = _remove_list_and_map_whitespace(param_text)
-        
+
         # Check parameter name "help"
         param = NAME_PATTERN.match(param_text)
         if param and param.group('name') == "help":
@@ -153,7 +153,7 @@ class BindCmdParse:
         while True:
             if not param_text.strip():
                 break
-                
+
             groups = PARAM_PATTERN.match(param_text) or \
                      PARAM_WITH_QUOTA_PATTERN.match(param_text)
             if not groups:
