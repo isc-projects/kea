@@ -111,6 +111,10 @@ This is a debug message that is issued every time the server receives
 configuration. That happens during every start up and also when server
 configuration change is committed by the administrator.
 
+% DHCP6_CONFIG_NEW_SUBNET A new subnet has been added to configuration: %1
+This is an informational message that the configuration has extended
+and specified new subnet is now supported.
+
 % DHCP6_CONFIG_COMPLETE DHCPv6 server has completed configuration: %1
 This is an informational message that announces successful processing
 of a new configuration. That may happen as a result of one of two
