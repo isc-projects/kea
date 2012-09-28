@@ -162,7 +162,7 @@ configureDhcp6Server(Dhcpv6Srv& server,
 /// is to be created.
 /// \return A pointer to an \c Dhcp6ConfigParser object.
 Dhcp6ConfigParser* createDhcp6ConfigParser(Dhcpv6Srv& server,
-                                         const std::string& config_id);
+                                           const std::string& config_id);
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
