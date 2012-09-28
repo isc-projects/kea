@@ -35,10 +35,11 @@ using namespace std;
 using namespace isc::cc;
 using namespace isc::dns;
 using namespace isc::data;
+using isc::auth::statistics::Counters;
 
 namespace {
 
-class AuthCountersTest : public ::testing::Test {
+class CountersTest : public ::testing::Test {
 private:
     class MockSession : public AbstractSession {
     public:
@@ -76,11 +77,11 @@ private:
     };
 
 protected:
-    AuthCountersTest() : counters() {
+    CountersTest() : counters() {
     }
-    ~AuthCountersTest() {
+    ~CountersTest() {
     }
-    AuthCounters counters;
+    Counters counters;
     // no need to be inherited from the original class here.
     class MockModuleSpec {
     public:
@@ -91,35 +92,35 @@ protected:
 };
 
 void
-AuthCountersTest::MockSession::establish(const char*) {}
+CountersTest::MockSession::establish(const char*) {}
 
 void
-AuthCountersTest::MockSession::disconnect() {}
+CountersTest::MockSession::disconnect() {}
 
 void
-AuthCountersTest::MockSession::subscribe(string, string)
+CountersTest::MockSession::subscribe(string, string)
 {}
 
 void
-AuthCountersTest::MockSession::unsubscribe(string, string)
+CountersTest::MockSession::unsubscribe(string, string)
 {}
 
 void
-AuthCountersTest::MockSession::startRead(boost::function<void()>)
+CountersTest::MockSession::startRead(boost::function<void()>)
 {}
 
 int
-AuthCountersTest::MockSession::reply(ConstElementPtr, ConstElementPtr) {
+CountersTest::MockSession::reply(ConstElementPtr, ConstElementPtr) {
     return (-1);
 }
 
 bool
-AuthCountersTest::MockSession::hasQueuedMsgs() const {
+CountersTest::MockSession::hasQueuedMsgs() const {
     return (false);
 }
 
 int
-AuthCountersTest::MockSession::group_sendmsg(ConstElementPtr msg,
+CountersTest::MockSession::group_sendmsg(ConstElementPtr msg,
                                               string group, string, string)
 {
     if (throw_session_error_) {
@@ -131,7 +132,7 @@ AuthCountersTest::MockSession::group_sendmsg(ConstElementPtr msg,
 }
 
 bool
-AuthCountersTest::MockSession::group_recvmsg(ConstElementPtr&,
+CountersTest::MockSession::group_recvmsg(ConstElementPtr&,
                                               ConstElementPtr& msg, bool, int)
 {
     if (throw_session_timeout_) {
@@ -142,38 +143,38 @@ AuthCountersTest::MockSession::group_recvmsg(ConstElementPtr&,
 }
 
 void
-AuthCountersTest::MockSession::setThrowSessionError(bool flag) {
+CountersTest::MockSession::setThrowSessionError(bool flag) {
     throw_session_error_ = flag;
 }
 
 void
-AuthCountersTest::MockSession::setThrowSessionTimeout(bool flag) {
+CountersTest::MockSession::setThrowSessionTimeout(bool flag) {
     throw_session_timeout_ = flag;
 }
 
-TEST_F(AuthCountersTest, incrementUDPCounter) {
+TEST_F(CountersTest, incrementUDPCounter) {
     // The counter should be initialized to 0.
-    EXPECT_EQ(0, counters.getCounter(AuthCounters::SERVER_UDP_QUERY));
-    EXPECT_NO_THROW(counters.inc(AuthCounters::SERVER_UDP_QUERY));
+    EXPECT_EQ(0, counters.getCounter(Counters::SERVER_UDP_QUERY));
+    EXPECT_NO_THROW(counters.inc(Counters::SERVER_UDP_QUERY));
     // After increment, the counter should be 1.
-    EXPECT_EQ(1, counters.getCounter(AuthCounters::SERVER_UDP_QUERY));
+    EXPECT_EQ(1, counters.getCounter(Counters::SERVER_UDP_QUERY));
 }
 
-TEST_F(AuthCountersTest, incrementTCPCounter) {
+TEST_F(CountersTest, incrementTCPCounter) {
     // The counter should be initialized to 0.
-    EXPECT_EQ(0, counters.getCounter(AuthCounters::SERVER_TCP_QUERY));
-    EXPECT_NO_THROW(counters.inc(AuthCounters::SERVER_TCP_QUERY));
+    EXPECT_EQ(0, counters.getCounter(Counters::SERVER_TCP_QUERY));
+    EXPECT_NO_THROW(counters.inc(Counters::SERVER_TCP_QUERY));
     // After increment, the counter should be 1.
-    EXPECT_EQ(1, counters.getCounter(AuthCounters::SERVER_TCP_QUERY));
+    EXPECT_EQ(1, counters.getCounter(Counters::SERVER_TCP_QUERY));
 }
 
-TEST_F(AuthCountersTest, incrementInvalidCounter) {
+TEST_F(CountersTest, incrementInvalidCounter) {
     // Expect to throw an isc::OutOfRange
-    EXPECT_THROW(counters.inc(AuthCounters::SERVER_COUNTER_TYPES),
+    EXPECT_THROW(counters.inc(Counters::SERVER_COUNTER_TYPES),
                  isc::OutOfRange);
 }
 
-TEST_F(AuthCountersTest, incrementOpcodeCounter) {
+TEST_F(CountersTest, incrementOpcodeCounter) {
     // The counter should be initialized to 0.  If we increment it by 1
     // the counter should be 1.
     for (int i = 0; i < 16; ++i) {
@@ -183,7 +184,7 @@ TEST_F(AuthCountersTest, incrementOpcodeCounter) {
     }
 }
 
-TEST_F(AuthCountersTest, incrementRcodeCounter) {
+TEST_F(CountersTest, incrementRcodeCounter) {
     // The counter should be initialized to 0.  If we increment it by 1
     // the counter should be 1.
     for (int i = 0; i < 17; ++i) {
@@ -237,19 +238,19 @@ rcodeDataCheck(ConstElementPtr data, const int expected[17]) {
     ASSERT_EQ(static_cast<const char*>(NULL), item_names[i]);
 }
 
-TEST_F(AuthCountersTest, getStatisticsWithoutValidator) {
+TEST_F(CountersTest, getStatisticsWithoutValidator) {
     // Get statistics data.
     // Validate if it answers correct data.
 
     // Counters should be initialized to 0.
-    EXPECT_EQ(0, counters.getCounter(AuthCounters::SERVER_UDP_QUERY));
-    EXPECT_EQ(0, counters.getCounter(AuthCounters::SERVER_TCP_QUERY));
+    EXPECT_EQ(0, counters.getCounter(Counters::SERVER_UDP_QUERY));
+    EXPECT_EQ(0, counters.getCounter(Counters::SERVER_TCP_QUERY));
 
     // UDP query counter is set to 2.
-    counters.inc(AuthCounters::SERVER_UDP_QUERY);
-    counters.inc(AuthCounters::SERVER_UDP_QUERY);
+    counters.inc(Counters::SERVER_UDP_QUERY);
+    counters.inc(Counters::SERVER_UDP_QUERY);
     // TCP query counter is set to 1.
-    counters.inc(AuthCounters::SERVER_TCP_QUERY);
+    counters.inc(Counters::SERVER_TCP_QUERY);
     ConstElementPtr statistics_data = counters.getStatistics();
 
     // UDP query counter is 2 and TCP query counter is 1.
@@ -267,7 +268,7 @@ TEST_F(AuthCountersTest, getStatisticsWithoutValidator) {
 }
 
 void
-updateOpcodeCounters(AuthCounters &counters, const int expected[16]) {
+updateOpcodeCounters(Counters &counters, const int expected[16]) {
     for (int i = 0; i < 16; ++i) {
         for (int j = 0; j < expected[i]; ++j) {
             counters.inc(Opcode(i));
@@ -276,7 +277,7 @@ updateOpcodeCounters(AuthCounters &counters, const int expected[16]) {
 }
 
 void
-updateRcodeCounters(AuthCounters &counters, const int expected[17]) {
+updateRcodeCounters(Counters &counters, const int expected[17]) {
     for (int i = 0; i < 17; ++i) {
         for (int j = 0; j < expected[i]; ++j) {
             counters.inc(Rcode(i));
@@ -284,7 +285,7 @@ updateRcodeCounters(AuthCounters &counters, const int expected[17]) {
     }
 }
 
-TEST_F(AuthCountersTest, getStatisticsWithOpcodeCounters) {
+TEST_F(CountersTest, getStatisticsWithOpcodeCounters) {
     // Increment some of the opcode counters.  Then they should appear in the
     // submitted data; others shouldn't
     const int opcode_results[16] = { 1, 2, 3, 0, 4, 5, 0, 0,
@@ -294,7 +295,7 @@ TEST_F(AuthCountersTest, getStatisticsWithOpcodeCounters) {
     opcodeDataCheck(statistics_data, opcode_results);
 }
 
-TEST_F(AuthCountersTest, getStatisticsWithAllOpcodeCounters) {
+TEST_F(CountersTest, getStatisticsWithAllOpcodeCounters) {
     // Increment all opcode counters.  Then they should appear in the
     // submitted data.
     const int opcode_results[16] = { 1, 1, 1, 1, 1, 1, 1, 1,
@@ -304,7 +305,7 @@ TEST_F(AuthCountersTest, getStatisticsWithAllOpcodeCounters) {
     opcodeDataCheck(statistics_data, opcode_results);
 }
 
-TEST_F(AuthCountersTest, getStatisticsWithRcodeCounters) {
+TEST_F(CountersTest, getStatisticsWithRcodeCounters) {
     // Increment some of the rcode counters.  Then they should appear in the
     // submitted data; others shouldn't
     const int rcode_results[17] = { 1, 2, 3, 4, 5, 6, 7, 8, 9,
@@ -314,7 +315,7 @@ TEST_F(AuthCountersTest, getStatisticsWithRcodeCounters) {
     rcodeDataCheck(statistics_data, rcode_results);
 }
 
-TEST_F(AuthCountersTest, getStatisticsWithAllRcodeCounters) {
+TEST_F(CountersTest, getStatisticsWithAllRcodeCounters) {
     // Increment all rcode counters.  Then they should appear in the
     // submitted data.
     const int rcode_results[17] = { 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -324,31 +325,31 @@ TEST_F(AuthCountersTest, getStatisticsWithAllRcodeCounters) {
     opcodeDataCheck(statistics_data, rcode_results);
 }
 
-TEST_F(AuthCountersTest, getStatisticsWithValidator) {
+TEST_F(CountersTest, getStatisticsWithValidator) {
 
     //a validator for the unittest
-    AuthCounters::validator_type validator;
+    Counters::validator_type validator;
     ConstElementPtr el;
 
     // Get statistics data with correct statistics validator.
     validator = boost::bind(
-        &AuthCountersTest::MockModuleSpec::validateStatistics,
+        &CountersTest::MockModuleSpec::validateStatistics,
         &module_spec_, _1, true);
 
     EXPECT_TRUE(validator(el));
 
-    // register validator to AuthCounters
+    // register validator to Counters
     counters.registerStatisticsValidator(validator);
 
     // Counters should be initialized to 0.
-    EXPECT_EQ(0, counters.getCounter(AuthCounters::SERVER_UDP_QUERY));
-    EXPECT_EQ(0, counters.getCounter(AuthCounters::SERVER_TCP_QUERY));
+    EXPECT_EQ(0, counters.getCounter(Counters::SERVER_UDP_QUERY));
+    EXPECT_EQ(0, counters.getCounter(Counters::SERVER_TCP_QUERY));
 
     // UDP query counter is set to 2.
-    counters.inc(AuthCounters::SERVER_UDP_QUERY);
-    counters.inc(AuthCounters::SERVER_UDP_QUERY);
+    counters.inc(Counters::SERVER_UDP_QUERY);
+    counters.inc(Counters::SERVER_UDP_QUERY);
     // TCP query counter is set to 1.
-    counters.inc(AuthCounters::SERVER_TCP_QUERY);
+    counters.inc(Counters::SERVER_TCP_QUERY);
 
     // checks the value returned by getStatistics
     ConstElementPtr statistics_data = counters.getStatistics();
@@ -359,7 +360,7 @@ TEST_F(AuthCountersTest, getStatisticsWithValidator) {
 
     // Get statistics data with incorrect statistics validator.
     validator = boost::bind(
-        &AuthCountersTest::MockModuleSpec::validateStatistics,
+        &CountersTest::MockModuleSpec::validateStatistics,
         &module_spec_, _1, false);
 
     EXPECT_FALSE(validator(el));

@@ -23,11 +23,11 @@
 #include <stdint.h>
 #include <boost/scoped_ptr.hpp>
 
-class AuthCountersImpl;
-
 namespace isc {
 namespace auth {
 namespace statistics {
+
+class CountersImpl;
 
 class QRAttributes {
 /// \brief Query/Response attributes for statistics.
@@ -36,8 +36,8 @@ class QRAttributes {
 /// for statistics data collection.
 ///
 /// This class does not have getter methods since it exposes private members
-/// to \c AuthCountersImpl directly.
-friend class AuthCountersImpl;
+/// to \c CountersImpl directly.
+friend class CountersImpl;
 private:
     // request attributes
     int req_ip_version_;            // IP version
@@ -174,13 +174,9 @@ QRAttributes::reset() {
     res_is_truncated_ = false;
 }
 
-} // namespace statistics
-} // namespace auth
-} // namespace isc
-
 /// \brief Set of query counters.
 ///
-/// \c AuthCounters is set of query counters class. It holds query counters
+/// \c Counters is set of query counters class. It holds query counters
 /// and provides an interface to increment the counter of specified type
 /// (e.g. UDP query, TCP query).
 ///
@@ -203,10 +199,10 @@ QRAttributes::reset() {
 /// construction overhead of this approach should be acceptable.
 ///
 /// \todo Hold counters for each query types (Notify, Axfr, Ixfr, Normal)
-/// \todo Consider overhead of \c AuthCounters::inc()
-class AuthCounters {
+/// \todo Consider overhead of \c Counters::inc()
+class Counters {
 private:
-    boost::scoped_ptr<AuthCountersImpl> impl_;
+    boost::scoped_ptr<CountersImpl> impl_;
 public:
     // Enum for the type of counter
     enum ServerCounterType {
@@ -224,12 +220,12 @@ public:
     /// This constructor is mostly exception free. But it may still throw
     /// a standard exception if memory allocation fails inside the method.
     ///
-    AuthCounters();
+    Counters();
     /// The destructor.
     ///
     /// This method never throws an exception.
     ///
-    ~AuthCounters();
+    ~Counters();
 
     /// \brief Increment the counter specified by the parameter.
     ///
@@ -237,7 +233,7 @@ public:
     ///
     /// \throw std::out_of_range \a type is unknown.
     ///
-    /// usage: counter.inc(AuthCounters::SERVER_UDP_QUERY);
+    /// usage: counter.inc(Counters::SERVER_UDP_QUERY);
     /// 
     void inc(const ServerCounterType type);
 
@@ -269,7 +265,7 @@ public:
     ///
     isc::data::ConstElementPtr getStatistics() const;
 
-    /// \brief Get the value of a counter in the AuthCounters.
+    /// \brief Get the value of a counter in the Counters.
     ///
     /// This function returns a value of the counter specified by \a type.
     /// This method never throws an exception.
@@ -279,7 +275,7 @@ public:
     /// \param type Type of a counter to get the value of
     ///
     /// \return the value of the counter specified by \a type.
-    uint64_t getCounter(const AuthCounters::ServerCounterType type) const;
+    uint64_t getCounter(const Counters::ServerCounterType type) const;
 
     /// \brief Get the value of a per opcode counter.
     ///
@@ -321,15 +317,19 @@ public:
     validator_type;
 
     /// \brief Register a function type of the statistics validation
-    /// function for AuthCounters.
+    /// function for Counters.
     ///
     /// This method never throws an exception.
     ///
     /// \param validator A function type of the validation of
     /// statistics specification.
     ///
-    void registerStatisticsValidator(AuthCounters::validator_type validator) const;
+    void registerStatisticsValidator(Counters::validator_type validator) const;
 };
+
+} // namespace statistics
+} // namespace auth
+} // namespace isc
 
 #endif // __STATISTICS_H
 

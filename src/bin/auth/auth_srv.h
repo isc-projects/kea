@@ -205,18 +205,18 @@ public:
     /// \brief Returns statistics data
     ///
     /// This function can throw an exception from
-    /// AuthCounters::getStatistics().
+    /// Counters::getStatistics().
     ///
     /// \return JSON format statistics data.
     isc::data::ConstElementPtr getStatistics() const;
 
-    /// \brief Get the value of counter in the AuthCounters.
+    /// \brief Get the value of counter in the Counters.
     ///
-    /// This function calls AuthCounters::getStatistics() and
+    /// This function calls Counters::getStatistics() and
     /// returns its return value.
     ///
     /// This function never throws an exception as far as
-    /// AuthCounters::getStatistics() doesn't throw.
+    /// Counters::getStatistics() doesn't throw.
     ///
     /// Note: Currently this function is for testing purpose only.
     ///
@@ -224,11 +224,13 @@ public:
     ///
     /// \return the value of the counter.
 
-    uint64_t getCounter(const AuthCounters::ServerCounterType type) const;
+    uint64_t getCounter(
+        const isc::auth::statistics::Counters::ServerCounterType type)
+        const;
 
     /// \brief Get the value of per Opcode counter in the Auth Counters.
     ///
-    /// This function calls AuthCounters::getCounter(isc::dns::Opcode) and
+    /// This function calls Counters::getCounter(isc::dns::Opcode) and
     /// returns its return value.
     ///
     /// \note This is a tentative interface as an attempt of experimentally
@@ -242,7 +244,7 @@ public:
 
     /// \brief Get the value of per Rcode counter in the Auth Counters.
     ///
-    /// This function calls AuthCounters::getCounter(isc::dns::Rcode) and
+    /// This function calls Counters::getCounter(isc::dns::Rcode) and
     /// returns its return value.
     ///
     /// \note This is a tentative interface as an attempt of experimentally
