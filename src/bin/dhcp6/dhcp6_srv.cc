@@ -42,6 +42,13 @@ const uint32_t HARDCODED_VALID_LIFETIME = 7200; // in seconds
 const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
+    if (port == 0) {
+        // used for testing purposes. Some tests, e.g. configuration parser,
+        // require Dhcpv6Srv object, but they don't really need it to do
+        // anything. This speed up and simplifies the tests.
+        return;
+    }
+
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
 
     // First call to instance() will create IfaceMgr (it's a singleton)
