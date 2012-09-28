@@ -48,8 +48,11 @@ except ImportError:
 # if we have readline support, use that, otherwise use normal stdio
 try:
     import readline
-    # Only consider whitespace as word boundaries
-    readline.set_completer_delims(' \t\n')
+    # Only consider spaces as word boundaries; identifiers can contain
+    # '/' and '[]', and configuration item names can in theory use any
+    # printable  character. See the discussion in tickets #1345 and
+    # #2254 for more information.
+    readline.set_completer_delims(' ')
 
     my_readline = readline.get_line_buffer
 except ImportError:
@@ -463,11 +466,21 @@ class BindCmdInterpreter(Cmd):
 
     def _get_identifier_startswith(self, id_text):
         """Return the tab-completion hints for identifiers starting with
-           id_text"""
-        # First get all items from the given module (up to the first /)
+           id_text.
+
+           Parameters:
+           id_text (string): the currently entered identifier part, which
+           is to be completed.
+        """
+        # Strip starting "/" from id_text
+        if id_text.startswith('/'):
+            id_text = id_text[1:]
+        # Get all items from the given module (up to the first /)
         list = self.config_data.get_config_item_list(
-                        id_text.rpartition("/")[0], True)
-        hints = [val for val in list if val.startswith(id_text[1:])]
+                        id_text.rpartition("/")[0], recurse=True)
+        # filter out all possibilities that don't match currently entered
+        # text part
+        hints = [val for val in list if val.startswith(id_text)]
         return hints
 
     def _cmd_has_identifier_param(self, cmd):
@@ -485,6 +498,36 @@ class BindCmdInterpreter(Cmd):
         return command.has_param_with_name(IDENTIFIER_PARAM)
 
     def complete(self, text, state):
+        """
+        Returns tab-completion hints. See the python documentation of the
+        readline and Cmd modules for more information.
+
+        The first time this is called (within one 'completer' action), it
+        has state 0, and a list of possible completions is made. This list
+        is stored; complete() will then be called with increasing values of
+        state, until it returns None. For each call it returns the state'th
+        element of the hints it collected in the first call.
+
+        The hints list contents depend on which part of the full command
+        line; if no module is given yet, it will list all modules. If a
+        module is given, but no command, it will complete with module
+        commands. If both have been given, it will create the hints based on
+        the command parameters.
+
+        If module and command have already been specified, and the command
+        has a parameter 'identifier', the configuration data is used to
+        create the hints list.
+
+        Parameters:
+        text (string): The text entered so far in the 'current' part of
+                       the command (module, command, parameters)
+        state (int): state used in the readline tab-completion logic;
+                     0 on first call, increasing by one until there are
+                     no (more) hints to return.
+
+        Returns the string value of the hints list with index 'state',
+        or None if no (more) hints are available.
+        """
         if 0 == state:
             self._update_all_modules_info()
             text = text.strip()
@@ -494,15 +537,13 @@ class BindCmdInterpreter(Cmd):
                 cmd = BindCmdParse(cur_line)
                 if not cmd.params and text:
                     hints = self._get_command_startswith(cmd.module, text)
+                elif self._cmd_has_identifier_param(cmd):
+                    # For tab-completion of identifiers, replace hardcoded
+                    # hints with hints derived from the config data
+                    hints = self._get_identifier_startswith(text)
                 else:
                     hints = self._get_param_startswith(cmd.module, cmd.command,
                                                        text)
-                    if self._cmd_has_identifier_param(cmd):
-                        # For tab-completion of identifiers, replace hardcoded
-                        # hints with hints derived from the config data
-                        id_text = self.location + "/" +\
-                            cur_line.rpartition(" ")[2]
-                        hints = self._get_identifier_startswith(id_text)
 
             except CmdModuleNameFormatError:
                 if not text:
