@@ -64,7 +64,7 @@ public:
 
     /// \brief Destructor.
     ///
-    /// Destroyes the mutex. It is not allowed to destroy a mutex which is
+    /// Destroys the mutex. It is not allowed to destroy a mutex which is
     /// currently locked. This means a Locker created with this Mutex must
     /// never live longer than the Mutex itself.
     ///
