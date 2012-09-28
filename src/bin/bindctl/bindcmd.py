@@ -22,7 +22,7 @@ import sys
 from cmd import Cmd
 from bindctl.exception import *
 from bindctl.moduleinfo import *
-from bindctl.cmdparse import BindCmdParse
+from bindctl.cmdparse import BindCmdParser
 from bindctl import command_sets
 from xml.dom import minidom
 import isc
@@ -489,7 +489,7 @@ class BindCmdInterpreter(Cmd):
         parameter which points to a config data identifier
 
         Parameters:
-        cmd (cmdparse.BindCmdParse): command context, including given params
+        cmd (cmdparse.BindCmdParser): command context, including given params
 
         """
         if cmd.module not in self.modules:
@@ -534,7 +534,7 @@ class BindCmdInterpreter(Cmd):
             hints = []
             cur_line = my_readline()
             try:
-                cmd = BindCmdParse(cur_line)
+                cmd = BindCmdParser(cur_line)
                 if not cmd.params and text:
                     hints = self._get_command_startswith(cmd.module, text)
                 elif self._cmd_has_identifier_param(cmd):
@@ -609,7 +609,7 @@ class BindCmdInterpreter(Cmd):
 
     def _parse_cmd(self, line):
         try:
-            cmd = BindCmdParse(line)
+            cmd = BindCmdParser(line)
             self._validate_cmd(cmd)
             self._handle_cmd(cmd)
         except (IOError, http.client.HTTPException) as err:
@@ -841,7 +841,7 @@ class BindCmdInterpreter(Cmd):
                     else:
                         print("Warning: ignoring unknown directive: " + line)
                 else:
-                    cmd = BindCmdParse(line)
+                    cmd = BindCmdParser(line)
                     self._validate_cmd(cmd)
                     self._handle_cmd(cmd)
         except (isc.config.ModuleCCSessionError,
