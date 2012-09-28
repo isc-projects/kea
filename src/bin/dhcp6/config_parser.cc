@@ -21,16 +21,16 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <config/ccsession.h>
-#include <asiolink/io_address.h>
-#include <dhcp6/config_parser.h>
+#include <log/logger_support.h>
 #include <dhcp/triplet.h>
 #include <dhcp/pool.h>
 #include <dhcp/subnet.h>
 #include <dhcp/cfgmgr.h>
+#include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_log.h>
-#include <log/logger_support.h>
 
 using namespace std;
 using namespace isc::data;
@@ -43,9 +43,7 @@ typedef boost::shared_ptr<Dhcp6ConfigParser> ParserPtr;
 typedef pair<string, ConstElementPtr> ConfigPair;
 typedef std::vector<ParserPtr> ParserCollection;
 typedef Dhcp6ConfigParser* ParserFactory(const std::string& config_id);
-
 typedef std::map<std::string, ParserFactory*> FactoryMap;
-
 typedef std::map<string, uint32_t> Uint32Storage;
 /// @brief That is a map with global parameters that will be used as defaults
 Uint32Storage uint32_defaults;
@@ -54,23 +52,40 @@ typedef std::map<string, string> StringStorage;
 StringStorage string_defaults;
 
 typedef std::vector<Pool6Ptr> PoolStorage;
-PoolStorage pool_defaults;
 
 /// @brief a dummy configuration parser
 ///
 /// It is a debugging parser. It does not configure anything,
 /// will accept any configuration and will just print it out
-/// on commit.
+/// on commit. Useful for debugging existing configurations and
+/// adding new ones.
 class DummyParser : public Dhcp6ConfigParser {
 public:
+
+    /// @brief Constructor
+    ///
+    /// See \ref Dhcp6ConfigParser class for details.
+    ///
+    /// @param param_name name of the parsed parameter
     DummyParser(const std::string& param_name)
         :param_name_(param_name) {
     }
+
+    /// @brief builds parameter value
+    ///
+    /// See \ref Dhcp6ConfigParser class for details.
     virtual void build(ConstElementPtr new_config) {
         std::cout << "Build for token: [" << param_name_ << "] = ["
                   << value_->str() << "]" << std::endl;
         value_ = new_config;
     }
+
+    /// @brief pretends to apply the configuration
+    ///
+    /// This is a method required by base class. It pretends to apply the
+    /// configuration, but in fact it only prints the parameter out.
+    ///
+    /// See \ref Dhcp6ConfigParser class for details.
     virtual void commit() {
         // Debug message. The whole DummyParser class is used only for parser
         // debugging, and is not used in production code. It is very convenient
@@ -79,21 +94,45 @@ public:
                   << value_->str() << "]" << std::endl;
     }
 
+    /// @brief factory that constructs DummyParser objects
+    ///
+    /// @param param_name name of the parameter to be parsed
     static Dhcp6ConfigParser* Factory(const std::string& param_name) {
         return (new DummyParser(param_name));
     }
 
 protected:
+    /// name of the parsed parameter
     std::string param_name_;
+
+    /// pointer to the actual value of the parameter
     ConstElementPtr value_;
 };
 
+/// @brief Configuration parser for uint32 types
+///
+/// This class is a generic parser that is able to handle any uint32 integer
+/// type. By default it stores the value in external global container
+/// (uint32_defaults). If used in smaller scopes (e.g. to parse parameters
+/// in subnet config), it can be pointed to a different storage, using
+/// setStorage() method. This class follows the parser interface, laid out
+/// in its base class, \ref Dhcp6ConfigParser.
+
 class Uint32Parser : public Dhcp6ConfigParser {
 public:
+
+    /// @brief constructor for Uint32Parser
+    /// @param param_name name of the parameter that is going to be parsed
     Uint32Parser(const std::string& param_name)
         :storage_(&uint32_defaults), param_name_(param_name) {
     }
 
+    /// @brief builds parameter value
+    ///
+    /// Parses configuration entry and stored it in storage. See
+    /// \ref setStorage() for details.
+    ///
+    /// @param value pointer to the content of parsed values
     virtual void build(ConstElementPtr value) {
         try {
             value_ = boost::lexical_cast<uint32_t>(value->str());
@@ -104,9 +143,20 @@ public:
         storage_->insert(pair<string, uint32_t>(param_name_, value_));
     }
 
+    /// @brief does nothing
+    ///
+    /// This method is required for all parser. The value itself
+    /// is not commited anywhere. Higher level parsers are expected to
+    /// use values stored in the storage, e.g. renew-timer for a given
+    /// subnet is stored in subnet-specific storage. It is not commited
+    /// here, but is rather used by \ref Subnet6Parser when constructing
+    /// the subnet.
     virtual void commit() {
     }
 
+    /// @brief factory that constructs DummyParser objects
+    ///
+    /// @param param_name name of the parameter to be parsed
     static Dhcp6ConfigParser* Factory(const std::string& param_name) {
         return (new Uint32Parser(param_name));
     }
@@ -325,13 +375,18 @@ public:
         Triplet<uint32_t> valid = getParam("valid-lifetime");
 
         /// @todo: Convert this to logger once the parser is working reliably
-        cout << "Adding subnet " << addr.toText() << "/" << (int)len
-             << " with params t1=" << t1 << ", t2=" << t2 << ", pref="
-             << pref << ", valid=" << valid << endl;
+        stringstream tmp;
+        tmp << addr.toText() << "/" << (int)len
+            << " with params t1=" << t1 << ", t2=" << t2 << ", pref="
+            << pref << ", valid=" << valid;
+
+        LOG_INFO(dhcp6_logger, DHCP6_CONFIG_NEW_SUBNET).arg(tmp.str());
 
         Subnet6Ptr subnet(new Subnet6(addr, len, t1, t2, pref, valid));
 
-
+        for (PoolStorage::iterator it = pools_.begin(); it != pools_.end(); ++it) {
+            subnet->addPool6(*it);
+        }
 
         CfgMgr::instance().addSubnet6(subnet);
     }
@@ -418,6 +473,12 @@ public:
     }
 
     void commit() {
+        // @todo: Implement more subtle reconfiguration than toss
+        // the old one and replace with the new one.
+
+        // remove old subnets
+        CfgMgr::instance().deleteSubnets6();
+
         BOOST_FOREACH(ParserPtr subnet, subnets_) {
             subnet->commit();
         }
@@ -469,7 +530,7 @@ Dhcp6ConfigParser* createGlobalDhcp6ConfigParser(const std::string& config_id) {
 }
 
 ConstElementPtr
-configureDhcp6Server(Dhcpv6Srv& server, ConstElementPtr config_set) {
+configureDhcp6Server(Dhcpv6Srv& , ConstElementPtr config_set) {
     if (!config_set) {
         isc_throw(Dhcp6ConfigError,
                   "Null pointer is passed to configuration parser");
@@ -488,20 +549,29 @@ configureDhcp6Server(Dhcpv6Srv& server, ConstElementPtr config_set) {
             parser->build(config_pair.second);
             parsers.push_back(parser);
         }
-    } catch (const Dhcp6ConfigError& ex) {
-        throw;                  // simply rethrowing it
     } catch (const isc::Exception& ex) {
-        isc_throw(Dhcp6ConfigError, "Server configuration failed: " <<
-                  ex.what());
+        ConstElementPtr answer = isc::config::createAnswer(1,
+                                 string("Configuration parsing failed:") + ex.what());
+        return (answer);
+    } catch (...) {
+        // for things like bad_cast in boost::lexical_cast
+        ConstElementPtr answer = isc::config::createAnswer(1,
+                                 string("Configuration parsing failed"));
     }
 
     try {
         BOOST_FOREACH(ParserPtr parser, parsers) {
             parser->commit();
         }
+    }
+    catch (const isc::Exception& ex) {
+        ConstElementPtr answer = isc::config::createAnswer(2,
+                                 string("Configuration commit failed:") + ex.what());
+        return (answer);
     } catch (...) {
-        isc_throw(Dhcp6ConfigError, "Unrecoverable error: "
-                  "a configuration parser threw in commit");
+        // for things like bad_cast in boost::lexical_cast
+        ConstElementPtr answer = isc::config::createAnswer(2,
+                                 string("Configuration commit failed"));
     }
 
     LOG_INFO(dhcp6_logger, DHCP6_CONFIG_COMPLETE).arg(config_details);
