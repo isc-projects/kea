@@ -860,9 +860,9 @@ class XfrinConnection(asyncore.dispatcher):
         It raises a ValueError exception on other address families.
 
         """
-        if self.socket.family == socket.AF_INET:
+        if self._master_addrinfo[0] == socket.AF_INET:
             return 'v4'
-        elif self.socket.family == socket.AF_INET6:
+        elif self._master_addrinfo[0] == socket.AF_INET6:
             return 'v6'
         raise ValueError("Invalid address family. "
                          "This is supported only for IP sockets")
