@@ -25,6 +25,159 @@
 
 class AuthCountersImpl;
 
+namespace isc {
+namespace auth {
+namespace statistics {
+
+class QRAttributes {
+/// \brief Query/Response attributes for statistics.
+///
+/// This class holds some attributes related to a query/response
+/// for statistics data collection.
+///
+/// This class does not have getter methods since it exposes private members
+/// to \c AuthCountersImpl directly.
+friend class AuthCountersImpl;
+private:
+    // request attributes
+    int req_ip_version_;            // IP version
+    int req_transport_protocol_;    // Transport layer protocol
+    int req_opcode_;                // OpCode
+    bool req_is_edns_0_;            // EDNS ver.0
+    bool req_is_edns_badver_;       // other EDNS version
+    bool req_is_dnssec_ok_;         // DO bit
+    bool req_is_tsig_;              // signed with valid TSIG
+    bool req_is_sig0_;              // signed with valid SIG(0)
+    bool req_is_badsig_;            // signed but bad signature
+    // zone origin
+    std::string zone_origin_;       // zone origin
+    // response attributes
+    bool answer_sent_;              // DNS message has sent
+    bool res_is_truncated_;         // DNS message is truncated
+public:
+    /// The constructor.
+    ///
+    /// This constructor is mostly exception free. But it may still throw
+    /// a standard exception if memory allocation fails inside the method.
+    ///
+    inline QRAttributes();
+    /// The destructor.
+    ///
+    /// This method never throws an exception.
+    ///
+    inline ~QRAttributes();
+    /// \brief Set query opcode.
+    /// \throw None
+    inline void setQueryOpCode(const int opcode);
+    /// \brief Set IP version carrying a query.
+    /// \throw None
+    inline void setQueryIPVersion(const int ip_version);
+    /// \brief Set transport protocol carrying a query.
+    /// \throw None
+    inline void setQueryTransportProtocol(const int transport_protocol);
+    /// \brief Set query EDNS attributes.
+    /// \throw None
+    inline void setQueryEDNS(const bool is_edns_0, const bool is_edns_badver);
+    /// \brief Set query DO bit.
+    /// \throw None
+    inline void setQueryDO(const bool is_dnssec_ok);
+    /// \brief Set query TSIG attributes.
+    /// \throw None
+    inline void setQuerySig(const bool is_tsig, const bool is_sig0,
+                            const bool is_badsig);
+    /// \brief Set zone origin.
+    /// \throw None
+    inline void setOrigin(const std::string& origin);
+    /// \brief Set if the answer has sent.
+    /// \throw None
+    inline void answerWasSent();
+    /// \brief Set if the response is truncated.
+    /// \throw None
+    inline void setResponseTruncated(const bool is_truncated);
+    /// \brief Reset attributes.
+    /// \throw None
+    inline void reset();
+};
+
+inline QRAttributes::QRAttributes() :
+    req_ip_version_(0), req_transport_protocol_(0),
+    req_opcode_(0),
+    req_is_edns_0_(false), req_is_edns_badver_(false),
+    req_is_dnssec_ok_(false),
+    req_is_tsig_(false), req_is_sig0_(false), req_is_badsig_(false),
+    zone_origin_(),
+    answer_sent_(false),
+    res_is_truncated_(false)
+{}
+
+inline QRAttributes::~QRAttributes()
+{}
+
+inline void
+QRAttributes::setQueryIPVersion(const int ip_version) {
+    req_ip_version_ = ip_version;
+}
+
+inline void
+QRAttributes::setQueryTransportProtocol(const int transport_protocol) {
+    req_transport_protocol_ = transport_protocol;
+}
+
+inline void
+QRAttributes::setQueryOpCode(const int opcode) {
+    req_opcode_ = opcode;
+}
+
+inline void
+QRAttributes::setQueryEDNS(const bool is_edns_0, const bool is_edns_badver) {
+    req_is_edns_0_ = is_edns_0;
+    req_is_edns_badver_ = is_edns_badver;
+}
+
+inline void
+QRAttributes::setQueryDO(const bool is_dnssec_ok) {
+    req_is_dnssec_ok_ = is_dnssec_ok;
+}
+
+inline void
+QRAttributes::setQuerySig(const bool is_tsig, const bool is_sig0,
+                          const bool is_badsig)
+{
+    req_is_tsig_ = is_tsig;
+    req_is_sig0_ = is_sig0;
+    req_is_badsig_ = is_badsig;
+}
+
+inline void
+QRAttributes::answerWasSent() {
+    answer_sent_ = true;
+}
+
+inline void
+QRAttributes::setResponseTruncated(const bool is_truncated) {
+    res_is_truncated_ = is_truncated;
+}
+
+inline void
+QRAttributes::reset() {
+    req_ip_version_ = 0;
+    req_transport_protocol_ = 0;
+    req_opcode_ = 0;
+    req_is_edns_0_ = false;
+    req_is_edns_badver_ = false;
+    req_is_dnssec_ok_ = false;
+    req_is_tsig_ = false;
+    req_is_sig0_ = false;
+    req_is_badsig_ = false;
+    zone_origin_.clear();
+    answer_sent_ = false;
+    res_is_truncated_ = false;
+}
+
+} // namespace statistics
+} // namespace auth
+} // namespace isc
+
 /// \brief Set of query counters.
 ///
 /// \c AuthCounters is set of query counters class. It holds query counters
