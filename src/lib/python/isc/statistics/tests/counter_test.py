@@ -277,7 +277,6 @@ class TestXfrinCounter(unittest.TestCase, BaseTestXfrCounter):
         self._entire_server    = self.counter._entire_server
         self._perzone_prefix   = self.counter._perzone_prefix
         self._zones_item_list   = self.counter._zones_item_list
-        self._zones_item_list   = self.counter._zones_item_list
         self._started = threading.Event()
 
     def test_perzone_timers(self):
