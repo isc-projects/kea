@@ -114,8 +114,12 @@ Feature: Xfrin incoming notify handling
     #
     # check statistics change
     #
+
+    # wait until the last stats requesting is finished
+    wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+    wait for new bind10 stderr message XFRIN_RECEIVED_GETSTATS_COMMAND
+
     When I query statistics zones of bind10 module Xfrin with cmdctl
-    Then wait for new bind10 stderr message XFRIN_RECEIVED_GETSTATS_COMMAND
     last bindctl output should not contain "error"
     Then the statistics counter soaoutv4 for the zone _SERVER_ should be 0
     Then the statistics counter soaoutv4 for the zone example.org. should be 0
@@ -263,6 +267,16 @@ Feature: Xfrin incoming notify handling
     Then the statistics counter recverr should be 0
 
     #
+    # Test8 for Xfrin statistics
+    #
+    # check statistics change
+    #
+
+    # wait until the last stats requesting is finished
+    wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+    wait for new bind10 stderr message XFRIN_RECEIVED_GETSTATS_COMMAND
+
+    #
     # Test for unreachable slave
     #
     Scenario: Handle incoming notify (unreachable slave)
@@ -303,7 +317,7 @@ Feature: Xfrin incoming notify handling
     Then the statistics counter time_to_axfr for the zone example.org. should be 0.0
 
     #
-    # Test1 for Xfrout statistics
+    # Test9 for Xfrout statistics
     #
     # check statistics change
     #
