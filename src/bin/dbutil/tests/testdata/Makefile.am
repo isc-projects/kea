@@ -10,3 +10,4 @@ EXTRA_DIST += old_v1.sqlite3
 EXTRA_DIST += README
 EXTRA_DIST += too_many_version.sqlite3
 EXTRA_DIST += v2_0.sqlite3
+EXTRA_DIST += v2_1.sqlite3

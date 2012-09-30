@@ -44,7 +44,7 @@ namespace {
 // program may not be taking advantage of features (possibly performance
 // improvements) added to the database.
 const int SQLITE_SCHEMA_MAJOR_VERSION = 2;
-const int SQLITE_SCHEMA_MINOR_VERSION = 0;
+const int SQLITE_SCHEMA_MINOR_VERSION = 1;
 }
 
 namespace isc {
@@ -332,7 +332,7 @@ public:
 const char* const SCHEMA_LIST[] = {
     "CREATE TABLE schema_version (version INTEGER NOT NULL, "
         "minor INTEGER NOT NULL DEFAULT 0)",
-    "INSERT INTO schema_version VALUES (2, 0)",
+    "INSERT INTO schema_version VALUES (2, 1)",
     "CREATE TABLE zones (id INTEGER PRIMARY KEY, "
     "name TEXT NOT NULL COLLATE NOCASE, "
     "rdclass TEXT NOT NULL COLLATE NOCASE DEFAULT 'IN', "
@@ -358,6 +358,8 @@ const char* const SCHEMA_LIST[] = {
         "ttl INTEGER NOT NULL, rdtype TEXT NOT NULL COLLATE NOCASE, "
         "rdata TEXT NOT NULL)",
     "CREATE INDEX nsec3_byhash ON nsec3 (hash)",
+    // Enforce that only one NSEC3 RR exists for an owner name in the zone.
+    "CREATE UNIQUE INDEX nsec3_by_zoneid_and_owner ON nsec3 (zone_id, owner)",
     "CREATE TABLE diffs (id INTEGER PRIMARY KEY, "
         "zone_id INTEGER NOT NULL, "
         "version INTEGER NOT NULL, "
