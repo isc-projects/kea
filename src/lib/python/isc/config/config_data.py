@@ -805,6 +805,19 @@ class MultiConfigData:
            or named_sets as well, a / is appended to the result
            strings.
 
+           If the item is a list, this method is then called recursively
+           for each list entry.
+
+           This behaviour is slightly arbitrary, and currently reflects
+           the most probable way the resulting data should look like;
+           for lists, bindctl would always expect their contents to
+           be added as well. For named_sets, however, we do not
+           do recursion, since the resulting list may be too long.
+           This will probably change in a revision of the way this
+           data is handled; ideally, the result should always recurse,
+           but only up to a limited depth, and the resulting list
+           should probably be paginated clientside.
+
            Parameters:
            item_name (string): the (full) identifier for the list or
                                named_set to enumerate.
@@ -828,6 +841,9 @@ class MultiConfigData:
            _get_list_items("Module/list")
                where the list contains 2 elements, returns
                [ "Module/list[0]", "Module/list[1]" ]
+           _get_list_items("Module/list")
+               where the list contains 2 elements, returns
+               [ "Module/list[0]", "Module/list[1]" ]
         """
         spec_part = self.find_spec_part(item_name)
         if spec_part_is_named_set(spec_part):
@@ -837,6 +853,9 @@ class MultiConfigData:
                 if spec_part['named_set_item_spec']['item_type'] == 'map' or\
                    spec_part['named_set_item_spec']['item_type'] == 'named_set':
                     subslash = "/"
+                # Don't recurse for named_sets (so as not to return too
+                # much data), but do add a / so the client so that
+                # the user can immediately tab-complete further if needed.
                 return [ item_name + "/" + v + subslash for v in values.keys() ]
             else:
                 return [ item_name ]
@@ -846,6 +865,8 @@ class MultiConfigData:
                 result = []
                 for i in range(len(values)):
                     name = item_name + '[%d]' % i
+                    # Recurse for list entries, so that its sub-contents
+                    # are also added to the result
                     result.extend(self._get_list_items(name))
                 return result
             else:
