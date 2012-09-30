@@ -130,7 +130,7 @@ struct FindState {
     FindState(bool glue_ok) :
         zonecut_node_(NULL),
         dname_node_(NULL),
-        rrset_(NULL),
+        rdataset_(NULL),
         glue_ok_(glue_ok)
     {}
 
@@ -142,7 +142,7 @@ struct FindState {
     const ZoneNode* dname_node_;
 
     // Delegation RRset (NS or DNAME), if found.
-    const RdataSet* rrset_;
+    const RdataSet* rdataset_;
 
     // Whether to continue search below a delegation point.
     // Set at construction time.
@@ -162,7 +162,7 @@ bool cutCallback(const ZoneNode& node, FindState* state) {
     if (found_dname != NULL) {
         LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_MEM_DNAME_ENCOUNTERED);
         state->dname_node_ = &node;
-        state->rrset_ = found_dname;
+        state->rdataset_ = found_dname;
         return (true);
     }
 
@@ -184,7 +184,7 @@ bool cutCallback(const ZoneNode& node, FindState* state) {
         // It cannot happen for us (at least for now), so we don't do
         // that check.
         state->zonecut_node_ = &node;
-        state->rrset_ = found_ns;
+        state->rdataset_ = found_ns;
 
         // Unless glue is allowed the search stops here, so we return
         // false; otherwise return true to continue the search.
@@ -238,7 +238,7 @@ ZoneFinderResultContext
 createFindResult(const RRClass& rrclass,
                  const ZoneData& zone_data,
                  ZoneFinder::Result code,
-                 const RdataSet* rdset,
+                 const RdataSet* rdataset,
                  const ZoneNode* node,
                  ZoneFinder::FindOptions options,
                  bool wild = false,
@@ -260,10 +260,10 @@ createFindResult(const RRClass& rrclass,
         }
     }
 
-    return (ZoneFinderResultContext(code, createTreeNodeRRset(node, rdset,
+    return (ZoneFinderResultContext(code, createTreeNodeRRset(node, rdataset,
                                                               rrclass, options,
                                                               rename),
-                                    flags, zone_data, node, rdset));
+                                    flags, zone_data, node, rdataset));
 }
 
 // A helper function for NSEC-signed zones.  It searches the zone for
@@ -349,16 +349,16 @@ public:
 
     FindNodeResult(ZoneFinder::Result code_param,
                    const ZoneNode* node_param,
-                   const RdataSet* rrset_param,
+                   const RdataSet* rdataset_param,
                    unsigned int flags_param = 0) :
         code(code_param),
         node(node_param),
-        rrset(rrset_param),
+        rdataset(rdataset_param),
         flags(flags_param)
     {}
     const ZoneFinder::Result code;
     const ZoneNode* node;
-    const RdataSet* rrset;
+    const RdataSet* rdataset;
     const unsigned int flags;
 };
 
@@ -437,7 +437,7 @@ FindNodeResult findNode(const ZoneData& zone_data,
     const unsigned int zonecut_flag =
         (state.zonecut_node_ != NULL) ? FindNodeResult::FIND_ZONECUT : 0;
     if (result == ZoneTree::EXACTMATCH) {
-        return (FindNodeResult(ZoneFinder::SUCCESS, node, state.rrset_,
+        return (FindNodeResult(ZoneFinder::SUCCESS, node, state.rdataset_,
                                zonecut_flag));
     } else if (result == ZoneTree::PARTIALMATCH) {
         assert(node != NULL);
@@ -445,14 +445,14 @@ FindNodeResult findNode(const ZoneData& zone_data,
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DNAME_FOUND).
                 arg(state.dname_node_->getName());
             return (FindNodeResult(ZoneFinder::DNAME, state.dname_node_,
-                                   state.rrset_));
+                                   state.rdataset_));
         }
         if (state.zonecut_node_ != NULL) { // DELEGATION due to NS
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DELEG_FOUND).
                 arg(state.zonecut_node_->getName());
             return (FindNodeResult(ZoneFinder::DELEGATION,
                                    state.zonecut_node_,
-                                   state.rrset_));
+                                   state.rdataset_));
         }
         if (node_path.getLastComparisonResult().getRelation() ==
             NameComparisonResult::SUPERDOMAIN) { // empty node, so NXRRSET
@@ -501,7 +501,7 @@ FindNodeResult findNode(const ZoneData& zone_data,
             // Otherwise, why would the domain_flag::WILD be there if
             // there was no wildcard under it?
             assert(result == ZoneTree::EXACTMATCH);
-            return (FindNodeResult(ZoneFinder::SUCCESS, node, state.rrset_,
+            return (FindNodeResult(ZoneFinder::SUCCESS, node, state.rdataset_,
                         FindNodeResult::FIND_WILDCARD | zonecut_flag));
         }
 
@@ -724,7 +724,7 @@ InMemoryZoneFinder::findInternal(const isc::dns::Name& name,
         findNode(zone_data_, LabelSequence(name), node_path, options);
     if (node_result.code != SUCCESS) {
         return (createFindResult(rrclass_, zone_data_, node_result.code,
-                                 node_result.rrset, node_result.node,
+                                 node_result.rdataset, node_result.node,
                                  options));
     }
 
