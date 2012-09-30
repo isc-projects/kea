@@ -165,7 +165,7 @@ upgrade_ok_test() {
     if [ $? -eq 0 ]
     then
         # Compare schema with the reference
-        get_schema $testdata/v2_0.sqlite3
+        get_schema $testdata/v2_1.sqlite3
         expected_schema=$db_schema
         get_schema $tempfile
         actual_schema=$db_schema
@@ -177,7 +177,7 @@ upgrade_ok_test() {
         fi
 
         # Check the version is set correctly
-        check_version $tempfile "V2.0"
+        check_version $tempfile "V2.1"
 
         # Check that a backup was made
         check_backup $1 $2
@@ -449,7 +449,7 @@ copy_file $testdata/old_v1.sqlite3 $tempfile
 Yes
 .
 passzero $?
-check_version $tempfile "V2.0"
+check_version $tempfile "V2.1"
 rm -f $tempfile $backupfile
 
 echo "13.4 Interactive prompt - no"
