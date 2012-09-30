@@ -743,7 +743,8 @@ InMemoryZoneFinder::find_internal(const isc::dns::Name& name,
         ConstNodeRRset nsec_rrset = getClosestNSEC(zone_data_, node_path,
                                                    options);
         return (createFindResult(rrclass_, zone_data_, NXRRSET,
-                                 nsec_rrset.second, nsec_rrset.first, wild));
+                                 nsec_rrset.second, nsec_rrset.first,
+                                 options, wild));
     }
 
     const RdataSet* found;
