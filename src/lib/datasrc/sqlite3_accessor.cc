@@ -65,19 +65,20 @@ enum StatementID {
     DEL_ZONE_RECORDS = 6,
     ADD_RECORD = 7,
     DEL_RECORD = 8,
-    ITERATE = 9,
-    FIND_PREVIOUS = 10,
-    ADD_RECORD_DIFF = 11,
-    LOW_DIFF_ID = 12,
-    HIGH_DIFF_ID = 13,
-    DIFF_RECS = 14,
-    NSEC3 = 15,
-    NSEC3_PREVIOUS = 16,
-    NSEC3_LAST = 17,
-    ADD_NSEC3_RECORD = 18,
-    DEL_ZONE_NSEC3_RECORDS = 19,
-    DEL_NSEC3_RECORD = 20,
-    NUM_STATEMENTS = 21
+    ITERATE_RECORDS = 9,
+    ITERATE_NSEC3 = 10,
+    FIND_PREVIOUS = 11,
+    ADD_RECORD_DIFF = 12,
+    LOW_DIFF_ID = 13,
+    HIGH_DIFF_ID = 14,
+    DIFF_RECS = 15,
+    NSEC3 = 16,
+    NSEC3_PREVIOUS = 17,
+    NSEC3_LAST = 18,
+    ADD_NSEC3_RECORD = 19,
+    DEL_ZONE_NSEC3_RECORDS = 20,
+    DEL_NSEC3_RECORD = 21,
+    NUM_STATEMENTS = 22
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -102,19 +103,19 @@ const char* const text_statements[NUM_STATEMENTS] = {
         "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
     "DELETE FROM records WHERE zone_id=?1 AND name=?2 " // DEL_RECORD
         "AND rdtype=?3 AND rdata=?4",
-    // The following iterates the whole zone. As the NSEC3 records
-    // (and corresponding RRSIGs) live in separate table, we need to
-    // take both of them. As the RRSIGs are for NSEC3s in the other
-    // table, we can easily hardcode the sigtype.
-    //
-    // The extra column is so we can order it by rname. This is to
-    // preserve the previous order, mostly for tests.
-    // TODO: Is it possible to get rid of the ordering?
-    "SELECT rdtype, ttl, sigtype, rdata, name, rname FROM records " // ITERATE
-        "WHERE zone_id = ?1 "
-        "UNION "
-        "SELECT rdtype, ttl, \"NSEC3\", rdata, owner, owner FROM nsec3 "
-        "WHERE zone_id = ?1 ORDER by rname, rdtype",
+
+    // ITERATE_RECORDS:
+    // The following iterates the whole zone in the records table.
+    "SELECT rdtype, ttl, sigtype, rdata, name FROM records "
+        "WHERE zone_id = ?1 ORDER BY rname, rdtype",
+
+    // ITERATE_NSEC3:
+    // The following iterates the whole zone in the nsec3 table. As the
+    // RRSIGs are for NSEC3s, we can hardcode the sigtype. As there is
+    // only one RR per-owner per-zone, there's no need to order these
+    // for the sake of any post-processing.
+    "SELECT rdtype, ttl, \"NSEC3\", rdata, owner FROM nsec3 "
+        "WHERE zone_id = ?1",
     /*
      * This one looks for previous name with NSEC record. It is done by
      * using the reversed name. The NSEC is checked because we need to
@@ -644,11 +645,21 @@ public:
         iterator_type_(ITT_ALL),
         accessor_(accessor),
         statement_(NULL),
+        statement2_(NULL),
+        rc_(SQLITE_OK),
+        rc2_(SQLITE_OK),
         name_("")
     {
-        // We create the statement now and then just keep getting data from it
+        // We create the statements now and then just keep getting data
+        // from them.
         statement_ = prepare(accessor->dbparameters_->db_,
-                             text_statements[ITERATE]);
+                             text_statements[ITERATE_NSEC3]);
+        bindZoneId(id);
+
+        std::swap(statement_, statement2_);
+
+        statement_ = prepare(accessor->dbparameters_->db_,
+                             text_statements[ITERATE_RECORDS]);
         bindZoneId(id);
     }
 
@@ -667,6 +678,9 @@ public:
         iterator_type_(qtype == QT_NSEC3 ? ITT_NSEC3 : ITT_NAME),
         accessor_(accessor),
         statement_(NULL),
+        statement2_(NULL),
+        rc_(SQLITE_OK),
+        rc2_(SQLITE_OK),
         name_(name)
     {
         // Choose the statement text depending on the query type, and
@@ -705,29 +719,35 @@ public:
         // If there's another row, get it
         // If finalize has been called (e.g. when previous getNext() got
         // SQLITE_DONE), directly return false
-        if (statement_ == NULL) {
-            return false;
-        }
-        const int rc(sqlite3_step(statement_));
-        if (rc == SQLITE_ROW) {
-            // For both types, we copy the first four columns
-            copyColumn(data, TYPE_COLUMN);
-            copyColumn(data, TTL_COLUMN);
-            // The NSEC3 lookup does not provide the SIGTYPE, it is not
-            // necessary and not contained in the table.
-            if (iterator_type_ != ITT_NSEC3) {
-                copyColumn(data, SIGTYPE_COLUMN);
+        while (statement_ != NULL) {
+            rc_ = sqlite3_step(statement_);
+            if (rc_ == SQLITE_ROW) {
+                // For both types, we copy the first four columns
+                copyColumn(data, TYPE_COLUMN);
+                copyColumn(data, TTL_COLUMN);
+                // The NSEC3 lookup does not provide the SIGTYPE, it is not
+                // necessary and not contained in the table.
+                if (iterator_type_ != ITT_NSEC3) {
+                    copyColumn(data, SIGTYPE_COLUMN);
+                }
+                copyColumn(data, RDATA_COLUMN);
+                // Only copy Name if we are iterating over every record
+                if (iterator_type_ == ITT_ALL) {
+                    copyColumn(data, NAME_COLUMN);
+                }
+                return (true);
+            } else if (rc_ != SQLITE_DONE) {
+                isc_throw(DataSourceError,
+                          "Unexpected failure in sqlite3_step: " <<
+                          sqlite3_errmsg(accessor_->dbparameters_->db_));
             }
-            copyColumn(data, RDATA_COLUMN);
-            // Only copy Name if we are iterating over every record
-            if (iterator_type_ == ITT_ALL) {
-                copyColumn(data, NAME_COLUMN);
+            // We are done with statement_. If statement2_ has not been
+            // used yet, try that one now.
+            if ((statement2_ == NULL) || (rc2_ != SQLITE_OK)) {
+                break;
             }
-            return (true);
-        } else if (rc != SQLITE_DONE) {
-            isc_throw(DataSourceError,
-                      "Unexpected failure in sqlite3_step: " <<
-                      sqlite3_errmsg(accessor_->dbparameters_->db_));
+            std::swap(statement_, statement2_);
+            std::swap(rc_, rc2_);
         }
         finalize();
         return (false);
@@ -773,13 +793,22 @@ private:
     }
 
     void finalize() {
-        sqlite3_finalize(statement_);
-        statement_ = NULL;
+        if (statement_ != NULL) {
+             sqlite3_finalize(statement_);
+             statement_ = NULL;
+        }
+        if (statement2_ != NULL) {
+             sqlite3_finalize(statement2_);
+             statement2_ = NULL;
+        }
     }
 
     const IteratorType iterator_type_;
     boost::shared_ptr<const SQLite3Accessor> accessor_;
     sqlite3_stmt* statement_;
+    sqlite3_stmt* statement2_;
+    int rc_;
+    int rc2_;
     const std::string name_;
 };
 
