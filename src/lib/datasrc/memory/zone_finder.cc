@@ -238,8 +238,8 @@ ZoneFinderResultContext
 createFindResult(const RRClass& rrclass,
                  const ZoneData& zone_data,
                  ZoneFinder::Result code,
-                 const RdataSet* rdataset,
                  const ZoneNode* node,
+                 const RdataSet* rdataset,
                  ZoneFinder::FindOptions options,
                  bool wild = false,
                  const Name* qname = NULL)
@@ -724,7 +724,7 @@ InMemoryZoneFinder::findInternal(const isc::dns::Name& name,
         findNode(zone_data_, LabelSequence(name), node_path, options);
     if (node_result.code != SUCCESS) {
         return (createFindResult(rrclass_, zone_data_, node_result.code,
-                                 node_result.rdataset, node_result.node,
+                                 node_result.node, node_result.rdataset,
                                  options));
     }
 
@@ -743,7 +743,7 @@ InMemoryZoneFinder::findInternal(const isc::dns::Name& name,
         ConstNodeRRset nsec_rrset = getClosestNSEC(zone_data_, node_path,
                                                    options);
         return (createFindResult(rrclass_, zone_data_, NXRRSET,
-                                 nsec_rrset.second, nsec_rrset.first,
+                                 nsec_rrset.first, nsec_rrset.second,
                                  options, wild));
     }
 
@@ -763,7 +763,7 @@ InMemoryZoneFinder::findInternal(const isc::dns::Name& name,
             LOG_DEBUG(logger, DBG_TRACE_DATA,
                       DATASRC_MEM_EXACT_DELEGATION).arg(name);
             return (createFindResult(rrclass_, zone_data_, DELEGATION,
-                                     found, node, options, wild, &name));
+                                     node, found, options, wild, &name));
         }
     }
 
@@ -778,7 +778,7 @@ InMemoryZoneFinder::findInternal(const isc::dns::Name& name,
         }
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ANY_SUCCESS).
             arg(name);
-        return (createFindResult(rrclass_, zone_data_, SUCCESS, NULL, node,
+        return (createFindResult(rrclass_, zone_data_, SUCCESS, node, NULL,
                                  options, wild, &name));
     }
 
@@ -787,7 +787,7 @@ InMemoryZoneFinder::findInternal(const isc::dns::Name& name,
         // Good, it is here
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUCCESS).arg(name).
             arg(type);
-        return (createFindResult(rrclass_, zone_data_, SUCCESS, found, node,
+        return (createFindResult(rrclass_, zone_data_, SUCCESS, node, found,
                                  options, wild, &name));
     } else {
         // Next, try CNAME.
@@ -795,14 +795,14 @@ InMemoryZoneFinder::findInternal(const isc::dns::Name& name,
         if (found != NULL) {
 
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_CNAME).arg(name);
-            return (createFindResult(rrclass_, zone_data_, CNAME, found, node,
+            return (createFindResult(rrclass_, zone_data_, CNAME, node, found,
                                      options, wild, &name));
         }
     }
     // No exact match or CNAME.  Get NSEC if necessary and return NXRRSET.
-    return (createFindResult(rrclass_, zone_data_, NXRRSET,
+    return (createFindResult(rrclass_, zone_data_, NXRRSET, node,
                              getNSECForNXRRSET(zone_data_, options, node),
-                             node, options, wild, &name));
+                             options, wild, &name));
 }
 
 isc::datasrc::ZoneFinder::FindNSEC3Result
