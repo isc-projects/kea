@@ -847,7 +847,7 @@ class MultiConfigData:
         """
         spec_part = self.find_spec_part(item_name)
         if spec_part_is_named_set(spec_part):
-            values, status = self.get_value(item_name)
+            values, _ = self.get_value(item_name)
             if values is not None and len(values) > 0:
                 subslash = ""
                 if spec_part['named_set_item_spec']['item_type'] == 'map' or\
@@ -860,7 +860,7 @@ class MultiConfigData:
             else:
                 return [ item_name ]
         elif spec_part_is_list(spec_part):
-            values, status = self.get_value(item_name)
+            values, _ = self.get_value(item_name)
             if values is not None and len(values) > 0:
                 result = []
                 for i in range(len(values)):
