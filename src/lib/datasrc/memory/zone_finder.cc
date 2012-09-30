@@ -695,8 +695,8 @@ InMemoryZoneFinder::find(const isc::dns::Name& name,
                 const FindOptions options)
 {
     return (ZoneFinderContextPtr(new Context(*this, options, rrclass_,
-                                             find_internal(name, type,
-                                                           NULL, options))));
+                                             findInternal(name, type,
+                                                          NULL, options))));
 }
 
 boost::shared_ptr<ZoneFinder::Context>
@@ -705,17 +705,17 @@ InMemoryZoneFinder::findAll(const isc::dns::Name& name,
         const FindOptions options)
 {
     return (ZoneFinderContextPtr(new Context(*this, options, rrclass_,
-                                             find_internal(name,
-                                                           RRType::ANY(),
-                                                           &target,
-                                                           options))));
+                                             findInternal(name,
+                                                          RRType::ANY(),
+                                                          &target,
+                                                          options))));
 }
 
 ZoneFinderResultContext
-InMemoryZoneFinder::find_internal(const isc::dns::Name& name,
-                                  const isc::dns::RRType& type,
-                                  std::vector<ConstRRsetPtr>* target,
-                                  const FindOptions options)
+InMemoryZoneFinder::findInternal(const isc::dns::Name& name,
+                                 const isc::dns::RRType& type,
+                                 std::vector<ConstRRsetPtr>* target,
+                                 const FindOptions options)
 {
     // Get the node.  All other cases than an exact match are handled
     // in findNode().  We simply construct a result structure and return.
