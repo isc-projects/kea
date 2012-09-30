@@ -799,7 +799,36 @@ class MultiConfigData:
            indices and named_set names to the completion list. If
            the given item_name is for a list or named_set, it'll
            return a list of those (appended to item_name), otherwise
-           the list will only contain the item_name itself."""
+           the list will only contain the item_name itself.
+
+           If the item is a named set, and it's contents are maps
+           or named_sets as well, a / is appended to the result
+           strings.
+
+           Parameters:
+           item_name (string): the (full) identifier for the list or
+                               named_set to enumerate.
+
+           Returns a list of strings with item names
+
+           Examples:
+           _get_list_items("Module/some_item")
+               where item is not a list of a named_set, or where
+               said list or named set is empty, returns
+               ["Module/some_item"]
+           _get_list_items("Module/named_set")
+               where the named_set contains items with names 'a'
+               and 'b', returns
+               [ "Module/named_set/a", "Module/named_set/b" ]
+           _get_list_items("Module/named_set_of_maps")
+               where the named_set contains items with names 'a'
+               and 'b', and those items are maps themselves
+               (or other named_sets), returns
+               [ "Module/named_set/a/", "Module/named_set/b/" ]
+           _get_list_items("Module/list")
+               where the list contains 2 elements, returns
+               [ "Module/list[0]", "Module/list[1]" ]
+        """
         spec_part = self.find_spec_part(item_name)
         if spec_part_is_named_set(spec_part):
             values, status = self.get_value(item_name)
