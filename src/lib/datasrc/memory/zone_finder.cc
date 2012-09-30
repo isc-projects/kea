@@ -33,6 +33,8 @@
 #include <algorithm>
 #include <vector>
 
+#include <utility>
+
 using namespace isc::dns;
 using namespace isc::datasrc::memory;
 using namespace isc::datasrc;
@@ -73,6 +75,17 @@ public:
 using internal::ZoneFinderResultContext;
 
 namespace {
+/// Conceptual RRset in the form of a pair of zone node and RdataSet.
+///
+/// In this implementation, the owner name of an RRset is derived from the
+/// corresponding zone node, and the rest of the attributes come from
+/// an RdataSet.  This shortcut type can be used when we want to refer to
+/// the conceptual RRset without knowing these details.
+///
+/// This is a read-only version of the pair (and at the moment we don't need
+/// a mutable version).
+typedef std::pair<const ZoneNode*, const RdataSet*> ConstNodeRRset;
+
 /// Creates a TreeNodeRRsetPtr for the given RdataSet at the given Node, for
 /// the given RRClass
 ///
@@ -272,16 +285,15 @@ createFindResult(const RRClass& rrclass,
 // method doesn't bother to find NSEC, and simply returns NULL.  So, by
 // definition of "NSEC-signed", when it really tries to find an NSEC it
 // should succeed; there should be one at least at the zone origin.
-const RdataSet*
+ConstNodeRRset
 getClosestNSEC(const ZoneData& zone_data,
                ZoneChain& node_path,
-               const ZoneNode** nsec_node,
                ZoneFinder::FindOptions options)
 {
     if (!zone_data.isSigned() ||
         (options & ZoneFinder::FIND_DNSSEC) == 0 ||
         zone_data.isNSEC3Signed()) {
-        return (NULL);
+        return (ConstNodeRRset(NULL, NULL));
     }
 
     const ZoneNode* prev_node;
@@ -291,8 +303,7 @@ getClosestNSEC(const ZoneData& zone_data,
             const RdataSet* found =
                 RdataSet::find(prev_node->getData(), RRType::NSEC());
             if (found != NULL) {
-                *nsec_node = prev_node;
-                return (found);
+                return (ConstNodeRRset(prev_node, found));
             }
         }
     }
@@ -301,7 +312,7 @@ getClosestNSEC(const ZoneData& zone_data,
     assert(false);
     // Even though there is an assert here, strict compilers
     // will still need some return value.
-    return (NULL);
+    return (ConstNodeRRset(NULL, NULL));
 }
 
 // A helper function for the NXRRSET case in find().  If the zone is
@@ -447,13 +458,10 @@ FindNodeResult findNode(const ZoneData& zone_data,
             NameComparisonResult::SUPERDOMAIN) { // empty node, so NXRRSET
             LOG_DEBUG(logger, DBG_TRACE_DATA,
                       DATASRC_MEM_SUPER_STOP).arg(name_labels);
-            const ZoneNode* nsec_node;
-            const RdataSet* nsec_rds = getClosestNSEC(zone_data,
-                                                      node_path,
-                                                      &nsec_node,
-                                                      options);
-            return (FindNodeResult(ZoneFinder::NXRRSET, nsec_node,
-                                   nsec_rds));
+            ConstNodeRRset nsec_rrset = getClosestNSEC(zone_data, node_path,
+                                                       options);
+            return (FindNodeResult(ZoneFinder::NXRRSET, nsec_rrset.first,
+                                   nsec_rrset.second));
         }
         // Nothing really matched.
 
@@ -468,13 +476,11 @@ FindNodeResult findNode(const ZoneData& zone_data,
                 // should cancel wildcard.  Treat it as NXDOMAIN.
                 LOG_DEBUG(logger, DBG_TRACE_DATA,
                           DATASRC_MEM_WILDCARD_CANCEL).arg(name_labels);
-                    const ZoneNode* nsec_node;
-                    const RdataSet* nsec_rds = getClosestNSEC(zone_data,
-                                                              node_path,
-                                                              &nsec_node,
-                                                              options);
-                    return (FindNodeResult(ZoneFinder::NXDOMAIN, nsec_node,
-                                           nsec_rds));
+                ConstNodeRRset nsec_rrset = getClosestNSEC(zone_data,
+                                                           node_path,
+                                                           options);
+                return (FindNodeResult(ZoneFinder::NXDOMAIN, nsec_rrset.first,
+                                       nsec_rrset.second));
             }
             uint8_t ls_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
 
@@ -501,10 +507,10 @@ FindNodeResult findNode(const ZoneData& zone_data,
 
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).
             arg(name_labels);
-        const ZoneNode* nsec_node;
-        const RdataSet* nsec_rds = getClosestNSEC(zone_data, node_path,
-                                                  &nsec_node, options);
-        return (FindNodeResult(ZoneFinder::NXDOMAIN, nsec_node, nsec_rds));
+        ConstNodeRRset nsec_rrset = getClosestNSEC(zone_data, node_path,
+                                                   options);
+        return (FindNodeResult(ZoneFinder::NXDOMAIN, nsec_rrset.first,
+                               nsec_rrset.second));
     } else {
         // If the name is neither an exact or partial match, it is
         // out of bailiwick, which is considered an error, unless the caller
@@ -734,11 +740,10 @@ InMemoryZoneFinder::find_internal(const isc::dns::Name& name,
     if (node->isEmpty()) {
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DOMAIN_EMPTY).
             arg(name);
-        const ZoneNode* nsec_node;
-        const RdataSet* nsec_rds = getClosestNSEC(zone_data_, node_path,
-                                                  &nsec_node, options);
+        ConstNodeRRset nsec_rrset = getClosestNSEC(zone_data_, node_path,
+                                                   options);
         return (createFindResult(rrclass_, zone_data_, NXRRSET,
-                                 nsec_rds, nsec_node, options, wild));
+                                 nsec_rrset.second, nsec_rrset.first, wild));
     }
 
     const RdataSet* found;
