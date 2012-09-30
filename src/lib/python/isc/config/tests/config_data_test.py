@@ -394,6 +394,27 @@ class TestMultiConfigData(unittest.TestCase):
         spec_part = self.mcd.find_spec_part("Spec2/item1")
         self.assertEqual({'item_name': 'item1', 'item_type': 'integer', 'item_optional': False, 'item_default': 1, }, spec_part)
 
+        # For lists, either the spec of the list itself, or the
+        # spec for the list contents should be returned (the
+        # latter when an index is given in the identifier)
+        spec_part = self.mcd.find_spec_part("Spec2/item5")
+        self.assertEqual({'item_default': ['a', 'b'],
+                          'item_name': 'item5',
+                          'item_optional': False,
+                          'item_type': 'list',
+                          'list_item_spec': {'item_default': '',
+                                             'item_name': 'list_element',
+                                             'item_optional': False,
+                                             'item_type': 'string'}},
+                         spec_part)
+        spec_part = self.mcd.find_spec_part("Spec2/item5[0]")
+        self.assertEqual({'item_default': '',
+                          'item_name': 'list_element',
+                          'item_optional': False,
+                          'item_type': 'string'},
+                         spec_part)
+
+
     def test_find_spec_part_nested(self):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec30.spec")
         self.mcd.set_specification(module_spec)
