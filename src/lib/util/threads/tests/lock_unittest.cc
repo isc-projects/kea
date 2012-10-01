@@ -79,7 +79,7 @@ const unsigned long long length = 1000;
 const unsigned long long iterations = 10000;
 const unsigned long long value = 2000;
 void
-performStrangeOperation(std::vector<long long unsigned> array, int direction,
+performStrangeOperation(std::vector<long long unsigned>& array, int direction,
                         Mutex* mutex)
 {
     unsigned long long position = 0;
