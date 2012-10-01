@@ -31,247 +31,90 @@
 
 #include <dns/tests/unittest_util.h>
 
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
 using namespace std;
 using namespace isc::cc;
 using namespace isc::dns;
 using namespace isc::data;
 using isc::auth::statistics::Counters;
+using isc::auth::statistics::QRAttributes;
 
 namespace {
 
 class CountersTest : public ::testing::Test {
 protected:
-    CountersTest() : counters() {
-    }
-    ~CountersTest() {
-    }
+    CountersTest() : counters() {}
+    ~CountersTest() {}
     Counters counters;
-    // no need to be inherited from the original class here.
-    class MockModuleSpec {
-    public:
-        bool validateStatistics(ConstElementPtr, const bool valid) const
-            { return (valid); }
-    };
-    MockModuleSpec module_spec_;
 };
 
-TEST_F(CountersTest, incrementUDPCounter) {
-    // The counter should be initialized to 0.
-    EXPECT_EQ(0, counters.getCounter(Counters::SERVER_UDP_QUERY));
-    EXPECT_NO_THROW(counters.inc(Counters::SERVER_UDP_QUERY));
-    // After increment, the counter should be 1.
-    EXPECT_EQ(1, counters.getCounter(Counters::SERVER_UDP_QUERY));
-}
+bool
+checkCountersAllZeroExcept(const isc::data::ConstElementPtr counters,
+                           const std::set<std::string>& except_for) {
+    std::map<std::string, ConstElementPtr> stats_map = counters->mapValue();
 
-TEST_F(CountersTest, incrementTCPCounter) {
-    // The counter should be initialized to 0.
-    EXPECT_EQ(0, counters.getCounter(Counters::SERVER_TCP_QUERY));
-    EXPECT_NO_THROW(counters.inc(Counters::SERVER_TCP_QUERY));
-    // After increment, the counter should be 1.
-    EXPECT_EQ(1, counters.getCounter(Counters::SERVER_TCP_QUERY));
-}
-
-TEST_F(CountersTest, incrementInvalidCounter) {
-    // Expect to throw an isc::OutOfRange
-    EXPECT_THROW(counters.inc(Counters::SERVER_COUNTER_TYPES),
-                 isc::OutOfRange);
-}
-
-TEST_F(CountersTest, incrementOpcodeCounter) {
-    // The counter should be initialized to 0.  If we increment it by 1
-    // the counter should be 1.
-    for (int i = 0; i < 16; ++i) {
-        EXPECT_EQ(0, counters.getCounter(Opcode(i)));
-        counters.inc(Opcode(i));
-        EXPECT_EQ(1, counters.getCounter(Opcode(i)));
-    }
-}
-
-TEST_F(CountersTest, incrementRcodeCounter) {
-    // The counter should be initialized to 0.  If we increment it by 1
-    // the counter should be 1.
-    for (int i = 0; i < 17; ++i) {
-        EXPECT_EQ(0, counters.getCounter(Rcode(i)));
-        counters.inc(Rcode(i));
-        EXPECT_EQ(1, counters.getCounter(Rcode(i)));
-    }
-}
-
-void
-opcodeDataCheck(ConstElementPtr data, const int expected[16]) {
-    const char* item_names[] = {
-        "query", "iquery", "status", "reserved3", "notify", "update",
-        "reserved6", "reserved7", "reserved8", "reserved9", "reserved10",
-        "reserved11", "reserved12", "reserved13", "reserved14", "reserved15",
-        NULL
-    };
-    int i;
-    for (i = 0; i < 16; ++i) {
-        ASSERT_NE(static_cast<const char*>(NULL), item_names[i]);
-        const string item_name = "opcode." + string(item_names[i]);
-        if (expected[i] == 0) {
-            EXPECT_FALSE(data->get(item_name));
-        } else {
-            EXPECT_EQ(expected[i], data->get(item_name)->intValue());
+    for (std::map<std::string, ConstElementPtr>::const_iterator
+            i = stats_map.begin(), e = stats_map.end();
+            i != e;
+            ++i)
+    {
+        int expect = 0;
+        if (except_for.count(i->first) != 0) {
+            expect = 1;
         }
+        EXPECT_EQ(expect, i->second->intValue()) << "Expected counter "
+            << i->first << " = " << expect << ", actual: "
+            << i->second->intValue();
     }
-    // We should have examined all names
-    ASSERT_EQ(static_cast<const char*>(NULL), item_names[i]);
+
+    return false;
 }
 
-void
-rcodeDataCheck(ConstElementPtr data, const int expected[17]) {
-    const char* item_names[] = {
-        "noerror", "formerr", "servfail", "nxdomain", "notimp", "refused",
-        "yxdomain", "yxrrset", "nxrrset", "notauth", "notzone", "reserved11",
-        "reserved12", "reserved13", "reserved14", "reserved15", "badvers",
-        NULL
-    };
-    int i;
-    for (i = 0; i < 17; ++i) {
-        ASSERT_NE(static_cast<const char*>(NULL), item_names[i]);
-        const string item_name = "rcode." + string(item_names[i]);
-        if (expected[i] == 0) {
-            EXPECT_FALSE(data->get(item_name));
-        } else {
-            EXPECT_EQ(expected[i], data->get(item_name)->intValue());
-        }
+TEST_F(CountersTest, incrementNormalQuery) {
+    Message response(Message::RENDER);
+    QRAttributes qrattrs;
+    std::set<std::string> expect_nonzero;
+
+    expect_nonzero.clear();
+    checkCountersAllZeroExcept(counters.getStatistics(), expect_nonzero);
+
+    qrattrs.setQueryIPVersion(AF_INET6);
+    qrattrs.setQueryTransportProtocol(IPPROTO_UDP);
+    qrattrs.setQueryOpCode(Opcode::QUERY_CODE);
+    qrattrs.setQueryEDNS(true, false);
+    qrattrs.setQueryDO(true);
+    qrattrs.answerWasSent();
+
+    response.setRcode(Rcode::REFUSED());
+    response.addQuestion(Question(Name("example.com"),
+                                  RRClass::IN(), RRType::AAAA()));
+
+    counters.inc(qrattrs, response);
+
+    expect_nonzero.clear();
+    expect_nonzero.insert("opcode.query");
+    expect_nonzero.insert("queries.udp");
+    expect_nonzero.insert("rcode.refused");
+    checkCountersAllZeroExcept(counters.getStatistics(), expect_nonzero);
+}
+
+TEST_F(CountersTest, getStatistics) {
+    std::map<std::string, ConstElementPtr> stats_map =
+        counters.getStatistics()->mapValue();
+    for (std::map<std::string, ConstElementPtr>::const_iterator
+            i = stats_map.begin(), e = stats_map.end();
+            i != e;
+            ++i)
+    {
+        // item type check
+        EXPECT_NO_THROW(i->second->intValue())
+            << "Item " << i->first << " is not IntElement";
     }
-    // We should have examined all names
-    ASSERT_EQ(static_cast<const char*>(NULL), item_names[i]);
-}
-
-TEST_F(CountersTest, getStatisticsWithoutValidator) {
-    // Get statistics data.
-    // Validate if it answers correct data.
-
-    // Counters should be initialized to 0.
-    EXPECT_EQ(0, counters.getCounter(Counters::SERVER_UDP_QUERY));
-    EXPECT_EQ(0, counters.getCounter(Counters::SERVER_TCP_QUERY));
-
-    // UDP query counter is set to 2.
-    counters.inc(Counters::SERVER_UDP_QUERY);
-    counters.inc(Counters::SERVER_UDP_QUERY);
-    // TCP query counter is set to 1.
-    counters.inc(Counters::SERVER_TCP_QUERY);
-    ConstElementPtr statistics_data = counters.getStatistics();
-
-    // UDP query counter is 2 and TCP query counter is 1.
-    EXPECT_EQ(2, statistics_data->get("queries.udp")->intValue());
-    EXPECT_EQ(1, statistics_data->get("queries.tcp")->intValue());
-
-    // By default opcode counters are all 0 and omitted
-    const int opcode_results[16] = { 0, 0, 0, 0, 0, 0, 0, 0,
-                                     0, 0, 0, 0, 0, 0, 0, 0 };
-    opcodeDataCheck(statistics_data, opcode_results);
-    // By default rcode counters are all 0 and omitted
-    const int rcode_results[17] = { 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                    0, 0, 0, 0, 0, 0, 0, 0 };
-    rcodeDataCheck(statistics_data, rcode_results);
-}
-
-void
-updateOpcodeCounters(Counters &counters, const int expected[16]) {
-    for (int i = 0; i < 16; ++i) {
-        for (int j = 0; j < expected[i]; ++j) {
-            counters.inc(Opcode(i));
-        }
-    }
-}
-
-void
-updateRcodeCounters(Counters &counters, const int expected[17]) {
-    for (int i = 0; i < 17; ++i) {
-        for (int j = 0; j < expected[i]; ++j) {
-            counters.inc(Rcode(i));
-        }
-    }
-}
-
-TEST_F(CountersTest, getStatisticsWithOpcodeCounters) {
-    // Increment some of the opcode counters.  Then they should appear in the
-    // submitted data; others shouldn't
-    const int opcode_results[16] = { 1, 2, 3, 0, 4, 5, 0, 0,
-                                     0, 0, 0, 0, 0, 0, 0, 0 };
-    updateOpcodeCounters(counters, opcode_results);
-    ConstElementPtr statistics_data = counters.getStatistics();
-    opcodeDataCheck(statistics_data, opcode_results);
-}
-
-TEST_F(CountersTest, getStatisticsWithAllOpcodeCounters) {
-    // Increment all opcode counters.  Then they should appear in the
-    // submitted data.
-    const int opcode_results[16] = { 1, 1, 1, 1, 1, 1, 1, 1,
-                                     1, 1, 1, 1, 1, 1, 1, 1 };
-    updateOpcodeCounters(counters, opcode_results);
-    ConstElementPtr statistics_data = counters.getStatistics();
-    opcodeDataCheck(statistics_data, opcode_results);
-}
-
-TEST_F(CountersTest, getStatisticsWithRcodeCounters) {
-    // Increment some of the rcode counters.  Then they should appear in the
-    // submitted data; others shouldn't
-    const int rcode_results[17] = { 1, 2, 3, 4, 5, 6, 7, 8, 9,
-                                    10, 0, 0, 0, 0, 0, 0, 11 };
-    updateRcodeCounters(counters, rcode_results);
-    ConstElementPtr statistics_data = counters.getStatistics();
-    rcodeDataCheck(statistics_data, rcode_results);
-}
-
-TEST_F(CountersTest, getStatisticsWithAllRcodeCounters) {
-    // Increment all rcode counters.  Then they should appear in the
-    // submitted data.
-    const int rcode_results[17] = { 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                     1, 1, 1, 1, 1, 1, 1, 1 };
-    updateOpcodeCounters(counters, rcode_results);
-    ConstElementPtr statistics_data = counters.getStatistics();
-    opcodeDataCheck(statistics_data, rcode_results);
-}
-
-TEST_F(CountersTest, getStatisticsWithValidator) {
-
-    //a validator for the unittest
-    Counters::validator_type validator;
-    ConstElementPtr el;
-
-    // Get statistics data with correct statistics validator.
-    validator = boost::bind(
-        &CountersTest::MockModuleSpec::validateStatistics,
-        &module_spec_, _1, true);
-
-    EXPECT_TRUE(validator(el));
-
-    // register validator to Counters
-    counters.registerStatisticsValidator(validator);
-
-    // Counters should be initialized to 0.
-    EXPECT_EQ(0, counters.getCounter(Counters::SERVER_UDP_QUERY));
-    EXPECT_EQ(0, counters.getCounter(Counters::SERVER_TCP_QUERY));
-
-    // UDP query counter is set to 2.
-    counters.inc(Counters::SERVER_UDP_QUERY);
-    counters.inc(Counters::SERVER_UDP_QUERY);
-    // TCP query counter is set to 1.
-    counters.inc(Counters::SERVER_TCP_QUERY);
-
-    // checks the value returned by getStatistics
-    ConstElementPtr statistics_data = counters.getStatistics();
-
-    // UDP query counter is 2 and TCP query counter is 1.
-    EXPECT_EQ(2, statistics_data->get("queries.udp")->intValue());
-    EXPECT_EQ(1, statistics_data->get("queries.tcp")->intValue());
-
-    // Get statistics data with incorrect statistics validator.
-    validator = boost::bind(
-        &CountersTest::MockModuleSpec::validateStatistics,
-        &module_spec_, _1, false);
-
-    EXPECT_FALSE(validator(el));
-
-    counters.registerStatisticsValidator(validator);
-
-    // checks the value returned by getStatistics
-    EXPECT_FALSE(counters.getStatistics());
 }
 
 TEST(StatisticsItemsTest, QRItemNamesCheck) {
