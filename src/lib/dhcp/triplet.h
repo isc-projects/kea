@@ -15,6 +15,8 @@
 #ifndef TRIPLET_H
 #define TRIPLET_H
 
+#include <exceptions/exceptions.h>
+
 namespace isc {
 namespace dhcp {
 
