@@ -11,9 +11,15 @@ dnl This macro calls:
 dnl
 dnl   AC_SUBST(BIND10_CPPFLAGS)
 dnl   AC_SUBST(BIND10_LDFLAGS)
+dnl   AC_SUBST(BIND10_COMMON_LIB)
 dnl   AC_SUBST(BIND10_DNS_LIB)
 dnl
-
+dnl If this macro finds CPPFLAGS, LDFLAGS or COMMON_LIB unavailable, it treats
+dnl that as a fatal error.
+dnl Checks for other BIND 10 module libraries are option, as not all
+dnl applications need all libraries.  The main configure.ac can handle any
+dnl missing library as fatal by checking whether the corresponding
+dnl BIND10_xxx_LIB is defined.
 
 AC_DEFUN([AX_ISC_BIND10], [
 AC_REQUIRE([AX_BOOST_INCLUDE])
@@ -22,7 +28,7 @@ AC_LANG([C++])
 
 AX_BOOST_INCLUDE
 
-# Check for BIND10 libdns++ headers
+# Check for BIND10 common headers
 
 AC_ARG_WITH(bind10-include,
   AS_HELP_STRING([--with-bind10-include=PATH],
@@ -32,7 +38,7 @@ AC_ARG_WITH(bind10-include,
 if test "$bind10_inc_path" = "no"; then
    for d in /usr/local /usr/pkg /opt /opt/local
    do
-	if test -f $d/include/dns/rrtype.h; then
+	if test -f $d/include/util/buffer.h; then
 	   bind10_inc_path=$d
 	   break
 	fi
@@ -43,8 +49,8 @@ if test "${bind10_inc_path}" ; then
    BIND10_CPPFLAGS="-I${bind10_inc_path}"
    CPPFLAGS="$CPPFLAGS $BIND10_CPPFLAGS"
 fi
-AC_CHECK_HEADERS([dns/rrtype.h],,
-  AC_MSG_ERROR([Missing required BIND 10 header files.]))
+AC_CHECK_HEADERS([util/buffer.h],,
+  AC_MSG_ERROR([Missing a commonly used BIND 10 header files]))
 CPPFLAGS="$CPPFLAGS_SAVES"
 AC_SUBST(BIND10_CPPFLAGS)
 
@@ -64,18 +70,18 @@ else
 fi
 
 # make sure we have buildable libraries
-AC_MSG_CHECKING([BIND 10 libraries])
-BIND10_DNS_LIB="-lb10-dns++ -lb10-util -lb10-exceptions"
+AC_MSG_CHECKING([for BIND 10 common library])
+BIND10_COMMON_LIB="-lb10-util -lb10-exceptions"
 LDFLAGS="$LDFLAGS $BIND10_LDFLAGS"
-LIBS="$LIBS $BIND10_DNS_LIB"
+LIBS="$LIBS $BIND10_COMMON_LIB"
 for d in $bind10_lib_dirs
 do
   LDFLAGS_SAVED="$LDFLAGS"
   LDFLAGS="$LDFLAGS -L$d"
   AC_TRY_LINK([
-#include <dns/rrtype.h>
+#include <util/buffer.h>
 ],[
-isc::dns::RRType rrtype(1);
+isc::util::OutputBuffer buffer(0);
 ], [BIND10_LDFLAGS="-L${d}"])
   if test "x$BIND10_LDFLAGS" != "x"; then
      break
@@ -86,15 +92,33 @@ if test "x$BIND10_LDFLAGS" != "x"; then
   AC_MSG_RESULT(yes)
 else
   AC_MSG_RESULT(no)
-  AC_MSG_ERROR(unable to find required BIND 10 libraries)
+  AC_MSG_ERROR([unable to find required BIND 10 libraries])
 fi
 
-CPPFLAGS="$CPPFLAGS_SAVED"
-LDFLAGS="$LDFLAGS_SAVES"
+# restore LIBS once at this point
 LIBS="$LIBS_SAVES"
 
 AC_SUBST(BIND10_LDFLAGS)
+AC_SUBST(BIND10_COMMON_LIB)
+
+# Check per-module BIND 10 libraries
+
+# DNS library
+AC_MSG_CHECKING([for BIND 10 DNS library])
+LIBS="$LIBS $BIND10_COMMON_LIB -lb10-dns++"
+AC_TRY_LINK([
+#include <dns/rrtype.h>
+],[
+isc::dns::RRType rrtype(1);
+], [BIND10_DNS_LIB="-lb10-dns++"
+    AC_MSG_RESULT(yes)],
+   [AC_MSG_RESULT(no)])
+LIBS="$LIBS_SAVES"
 AC_SUBST(BIND10_DNS_LIB)
+
+# Restore other flags
+CPPFLAGS="$CPPFLAGS_SAVED"
+LDFLAGS="$LDFLAGS_SAVES"
 
 AC_LANG_RESTORE
 ])dnl AX_ISC_BIND10
