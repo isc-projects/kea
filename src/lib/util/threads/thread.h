@@ -22,6 +22,11 @@
 
 namespace isc {
 namespace util {
+/// \brief Wrappers for thread related functionality
+///
+/// We provide our own wrappers, currently around pthreads. We tried using
+/// the boost thread support, but it gave us some trouble, so we implemented
+/// in-house ones.
 namespace thread {
 
 /// \brief A separate thread.
@@ -58,6 +63,9 @@ public:
     /// may just want to use boost::bind or alike to store them within the
     /// body functor.
     ///
+    /// \note The main functor will be copied internally. You need to consider
+    ///     this when returning the result.
+    ///
     /// The body should terminate by exiting the function. If it throws, it
     /// is considered an error. You should generally catch any exceptions form
     /// within there and handle them somehow.
@@ -65,7 +73,7 @@ public:
     /// \param main The code to run inside the thread.
     ///
     /// \throw std::bad_alloc if allocation of the new thread or other
-    /// resources fails.
+    ///     resources fails.
     /// \throw isc::InvalidOperation for other errors (should not happen).
     Thread(const boost::function<void()>& main);
 

@@ -22,9 +22,12 @@
 
 #include <pthread.h>
 
+#include <boost/scoped_ptr.hpp>
+
 using std::string;
 using std::exception;
 using std::auto_ptr;
+using boost::scoped_ptr;
 
 namespace isc {
 namespace util {
@@ -41,6 +44,8 @@ namespace thread {
 class Thread::Impl {
 public:
     Impl(const boost::function<void ()>& main) :
+        // Two things to happen before destruction - thread needs to terminate
+        // and the creating thread needs to release it.
         waiting_(2),
         main_(main),
         exception_(false)
@@ -50,7 +55,7 @@ public:
     static void done(Impl* impl) {
         bool should_delete(false);
         { // We need to make sure the mutex is unlocked before it is deleted
-            Mutex::Locker locker(impl->mutex);
+            Mutex::Locker locker(impl->mutex_);
             if (--impl->waiting_ == 0) {
                 should_delete = true;
             }
@@ -61,16 +66,15 @@ public:
     }
     // Run the thread. The type of parameter is because the pthread API.
     static void* run(void* impl_raw) {
-        Impl* impl = reinterpret_cast<Impl*>(impl_raw);
+        Impl* impl = static_cast<Impl*>(impl_raw);
         try {
             impl->main_();
         } catch (const exception& e) {
-            Mutex::Locker locker(impl->mutex);
             impl->exception_ = true;
             impl->exception_text_ = e.what();
         } catch (...) {
-            Mutex::Locker locker(impl->mutex);
             impl->exception_ = true;
+            impl->exception_text_ = "Uknown exception";
         }
         done(impl);
         return (NULL);
@@ -84,16 +88,24 @@ public:
     // Was there an exception?
     bool exception_;
     string exception_text_;
-    Mutex mutex;
+    // The mutex protects the waiting_ member, which ensures there are
+    // no race conditions and collisions when terminating. The other members
+    // should be safe, because:
+    // * tid_ is read only.
+    // * exception_ and exception_text_ is accessed outside of the thread
+    //   only after join, by that time the thread must have terminated.
+    // * main_ is used in a read-only way here. If there are any shared
+    //   resources used inside, it is up to the main_ itself to take care.
+    Mutex mutex_;
     // Which thread are we talking about anyway?
-    pthread_t tid;
+    pthread_t tid_;
 };
 
 Thread::Thread(const boost::function<void ()>& main) :
     impl_(NULL)
 {
     auto_ptr<Impl> impl(new Impl(main));
-    const int result = pthread_create(&impl->tid, NULL, &Impl::run,
+    const int result = pthread_create(&impl->tid_, NULL, &Impl::run,
                                       impl.get());
     // Any error here?
     switch (result) {
@@ -110,7 +122,7 @@ Thread::Thread(const boost::function<void ()>& main) :
 Thread::~Thread() {
     if (impl_ != NULL) {
         // In case we didn't call wait yet
-        const int result = pthread_detach(impl_->tid);
+        const int result = pthread_detach(impl_->tid_);
         Impl::done(impl_);
         impl_ = NULL;
         // If the detach ever fails, something is screwed rather badly.
@@ -125,17 +137,24 @@ Thread::wait() {
                   "Wait called and no thread to wait for");
     }
 
-    const int result = pthread_join(impl_->tid, NULL);
+    const int result = pthread_join(impl_->tid_, NULL);
     if (result != 0) {
         isc_throw(isc::InvalidOperation, strerror(result));
     }
 
     // Was there an exception in the thread?
-    auto_ptr<UncaughtException> ex;
-    if (impl_->exception_) {
-        ex.reset(new UncaughtException(__FILE__, __LINE__,
-                                       impl_->exception_text_.c_str()));
+    scoped_ptr<UncaughtException> ex;
+    try { // Something in here could in theory throw.
+        if (impl_->exception_) {
+            ex.reset(new UncaughtException(__FILE__, __LINE__,
+                                           impl_->exception_text_.c_str()));
+        }
+    } catch (...) {
+        Impl::done(impl_);
+        impl_ = NULL;
+        throw;
     }
+
     Impl::done(impl_);
     impl_ = NULL;
     if (ex.get() != NULL) {
