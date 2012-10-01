@@ -57,29 +57,6 @@
  * that does not support msgq. That is useful for embedded environments.
  * It may also be useful in validation.
  *
- * @page dhcpv6 DHCPv6 Server Component
- *
- * BIND10 offers DHCPv6 server implementation. It is implemented as
- * b10-dhcp6 component. Its primary code is located in
- * isc::dhcp::Dhcpv6Srv class. It uses \ref libdhcp extensively,
- * especially lib::dhcp::Pkt6, isc::dhcp::Option and
- * isc::dhcp::IfaceMgr classes. Currently this code offers skeleton
- * functionality, i.e. it is able to receive and process incoming
- * requests and trasmit responses. However, it does not have database
- * management, so it returns only one, hardcoded lease to whoever asks
- * for it.
- *
- * DHCPv6 server component does not support relayed traffic yet, as
- * support for relay decapsulation is not implemented yet.
- *
- * DHCPv6 server component does not use BIND10 logging yet.
- *
- * @section dhcpv6Session BIND10 message queue integration
- *
- * DHCPv4 server component is now integrated with BIND10 message queue.
- * It follows the same principle as DHCPv4. See \ref dhcpv4Session for
- * details.
- *
  * @page libdhcp libdhcp++
  *
  * @section libdhcpIntro Libdhcp++ Library Introduction

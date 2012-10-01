@@ -28,6 +28,12 @@ class Dhcpv6Srv;
 /// \c Dhcpv6Srv object.
 class Dhcp6ConfigError : public isc::Exception {
 public:
+
+/// @brief constructor
+///
+/// @param file name of the file, where exception occurred
+/// @param line line of the file, where exception occurred
+/// @param what text description of the issue that caused exception
 Dhcp6ConfigError(const char* file, size_t line, const char* what) :
     isc::Exception(file, line, what) {}
 };
@@ -102,6 +108,15 @@ public:
     /// The result is undefined otherwise.
     virtual void commit() = 0;
 };
+
+/// @brief a pointer to configuration parser
+typedef boost::shared_ptr<Dhcp6ConfigParser> ParserPtr;
+
+/// @brief a collection of parsers
+///
+/// This container is used to store pointer to parsers for a given scope.
+typedef std::vector<ParserPtr> ParserCollection;
+
 
 /// Configure an \c Dhcpv6Srv object with a set of configuration values.
 ///
