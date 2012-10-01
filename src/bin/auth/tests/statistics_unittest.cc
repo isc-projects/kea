@@ -40,42 +40,6 @@ using isc::auth::statistics::Counters;
 namespace {
 
 class CountersTest : public ::testing::Test {
-private:
-    class MockSession : public AbstractSession {
-    public:
-        MockSession() :
-            // by default we return a simple "success" message.
-            msg_(Element::fromJSON("{\"result\": [0, \"SUCCESS\"]}")),
-            throw_session_error_(false), throw_session_timeout_(false)
-        {}
-        virtual void establish(const char* socket_file);
-        virtual void disconnect();
-        virtual int group_sendmsg(ConstElementPtr msg, string group,
-                                  string instance, string to);
-        virtual bool group_recvmsg(ConstElementPtr& envelope,
-                                   ConstElementPtr& msg,
-                                   bool nonblock, int seq);
-        virtual void subscribe(string group, string instance);
-        virtual void unsubscribe(string group, string instance);
-        virtual void startRead(boost::function<void()> read_callback);
-        virtual int reply(ConstElementPtr envelope, ConstElementPtr newmsg);
-        virtual bool hasQueuedMsgs() const;
-        virtual void setTimeout(size_t) {}
-        virtual size_t getTimeout() const { return (0); };
-
-        void setThrowSessionError(bool flag);
-        void setThrowSessionTimeout(bool flag);
-
-        void setMessage(ConstElementPtr msg) { msg_ = msg; }
-
-        ConstElementPtr sent_msg;
-        string msg_destination;
-    private:
-        ConstElementPtr msg_;
-        bool throw_session_error_;
-        bool throw_session_timeout_;
-    };
-
 protected:
     CountersTest() : counters() {
     }
@@ -90,67 +54,6 @@ protected:
     };
     MockModuleSpec module_spec_;
 };
-
-void
-CountersTest::MockSession::establish(const char*) {}
-
-void
-CountersTest::MockSession::disconnect() {}
-
-void
-CountersTest::MockSession::subscribe(string, string)
-{}
-
-void
-CountersTest::MockSession::unsubscribe(string, string)
-{}
-
-void
-CountersTest::MockSession::startRead(boost::function<void()>)
-{}
-
-int
-CountersTest::MockSession::reply(ConstElementPtr, ConstElementPtr) {
-    return (-1);
-}
-
-bool
-CountersTest::MockSession::hasQueuedMsgs() const {
-    return (false);
-}
-
-int
-CountersTest::MockSession::group_sendmsg(ConstElementPtr msg,
-                                              string group, string, string)
-{
-    if (throw_session_error_) {
-        isc_throw(SessionError, "Session Error");
-    }
-    sent_msg = msg;
-    msg_destination = group;
-    return (0);
-}
-
-bool
-CountersTest::MockSession::group_recvmsg(ConstElementPtr&,
-                                              ConstElementPtr& msg, bool, int)
-{
-    if (throw_session_timeout_) {
-        isc_throw(SessionTimeout, "Session Timeout");
-    }
-    msg = msg_;
-    return (true);
-}
-
-void
-CountersTest::MockSession::setThrowSessionError(bool flag) {
-    throw_session_error_ = flag;
-}
-
-void
-CountersTest::MockSession::setThrowSessionTimeout(bool flag) {
-    throw_session_timeout_ = flag;
-}
 
 TEST_F(CountersTest, incrementUDPCounter) {
     // The counter should be initialized to 0.
