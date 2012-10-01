@@ -25,18 +25,6 @@ using namespace isc::util::thread;
 
 namespace {
 
-// Test a recursive mutex can be locked multiple times
-TEST(MutexTest, recursiveLockMultiple) {
-    Mutex mutex(true);
-    EXPECT_FALSE(mutex.locked()); // Debug-only build
-    Mutex::Locker l1(mutex);
-    EXPECT_TRUE(mutex.locked()); // Debug-only build
-    Mutex::Locker l2(mutex);
-    Mutex::Locker l3(mutex);
-    Mutex::Locker l4(mutex);
-    Mutex::Locker l5(mutex);
-}
-
 // If we try to lock the debug mutex multiple times, it should throw.
 TEST(MutexTest, lockMultiple) {
     // TODO: Once we support non-debug mutexes, disable the test if we compile

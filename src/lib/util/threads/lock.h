@@ -44,23 +44,18 @@ class Mutex : public boost::noncopyable {
 public:
     /// \brief Constructor.
     ///
-    /// Creates a mutex. Depending on the parameter, it is either recursive
-    /// (the same thread may lock it multiple times, others wait; it must be
-    /// unlocked as many times to become really unlocked) or normal (can be
-    /// locked just once, if the same threads tries to lock it again, Bad
-    /// Things Happen).
+    /// Creates a mutex. It is a non-recursive mutex (can be locked just once,
+    /// if the same threads tries to lock it again, Bad Things Happen).
     ///
     /// Depending on compilation parameters and OS, the mutex may or may not
     /// do some error and sanity checking. However, such checking is meant
     /// only to aid development, not rely on it as a feature.
     ///
-    /// \param recursive If the thread should be recursive (lockable multiple
-    ///     times from the same thread) or not.
     /// \throw std::bad_alloc In case allocation of something (memory, the
     ///     OS mutex) fails.
     /// \throw isc::InvalidOperation Other unspecified errors around the mutex.
     ///     This should be rare.
-    Mutex(bool recursive = false);
+    Mutex();
 
     /// \brief Destructor.
     ///
@@ -86,8 +81,7 @@ public:
         ///
         /// \throw isc::InvalidOperation when OS reports error. This usually
         ///     means an attempt to use the mutex in a wrong way (locking
-        ///     a non-recursive mutex a second time from the same thread,
-        ///     for example).
+        ///     a mutex second time from the same thread, for example).
         Locker(Mutex& mutex) :
             mutex_(NULL)
         {
