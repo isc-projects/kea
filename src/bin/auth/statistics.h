@@ -15,10 +15,12 @@
 #ifndef __STATISTICS_H
 #define __STATISTICS_H 1
 
-#include <dns/opcode.h>
-#include <dns/rcode.h>
 #include <cc/session.h>
 #include <cc/data.h>
+
+#include <dns/message.h>
+
+#include <string>
 
 #include <stdint.h>
 #include <boost/scoped_ptr.hpp>
@@ -184,9 +186,7 @@ QRAttributes::reset() {
 /// statistics module.
 ///
 /// This class is designed to be a part of \c AuthSrv.
-/// Call \c inc() to increment a counter for specific type of query in
-/// the query processing function. use \c enum \c CounterType to specify
-/// the type of query.
+/// Call \c inc() to increment a counter for the query.
 /// Call \c getStatistics() to answer statistics information to statistics
 /// module with statistics_session, when the command \c getstats is received.
 ///
@@ -204,17 +204,6 @@ class Counters {
 private:
     boost::scoped_ptr<CountersImpl> impl_;
 public:
-    // Enum for the type of counter
-    enum ServerCounterType {
-        SERVER_UDP_QUERY,       ///< SERVER_UDP_QUERY: counter for UDP queries
-        SERVER_TCP_QUERY,       ///< SERVER_TCP_QUERY: counter for TCP queries
-        SERVER_COUNTER_TYPES    ///< The number of defined counters
-    };
-    enum PerZoneCounterType {
-        ZONE_UDP_QUERY,         ///< ZONE_UDP_QUERY: counter for UDP queries
-        ZONE_TCP_QUERY,         ///< ZONE_TCP_QUERY: counter for TCP queries
-        PER_ZONE_COUNTER_TYPES  ///< The number of defined counters
-    };
     /// The constructor.
     ///
     /// This constructor is mostly exception free. But it may still throw
@@ -227,33 +216,14 @@ public:
     ///
     ~Counters();
 
-    /// \brief Increment the counter specified by the parameter.
+    /// \brief Increment counters according to the parameters.
     ///
-    /// \param type Type of a counter to increment.
-    ///
-    /// \throw std::out_of_range \a type is unknown.
-    ///
-    /// usage: counter.inc(Counters::SERVER_UDP_QUERY);
-    /// 
-    void inc(const ServerCounterType type);
-
-    /// \brief Increment the counter of a per opcode counter.
-    ///
-    /// \note This is a tentative interface.  See \c getCounter().
-    ///
-    /// \param opcode The opcode of the counter to increment.
+    /// \param qrattrs Query/Response attributes.
+    /// \param response DNS response message.
     ///
     /// \throw None
-    void inc(const isc::dns::Opcode opcode);
-
-    /// \brief Increment the counter of a per rcode counter.
     ///
-    /// \note This is a tentative interface.  See \c getCounter().
-    ///
-    /// \param rcode The rcode of the counter to increment.
-    ///
-    /// \throw None
-    void inc(const isc::dns::Rcode rcode);
+    void inc(const QRAttributes& qrattrs, const isc::dns::Message& response);
 
     /// \brief Answers statistics counters to statistics module.
     ///
@@ -264,47 +234,6 @@ public:
     /// \return statistics data
     ///
     isc::data::ConstElementPtr getStatistics() const;
-
-    /// \brief Get the value of a counter in the Counters.
-    ///
-    /// This function returns a value of the counter specified by \a type.
-    /// This method never throws an exception.
-    ///
-    /// Note: Currently this function is for testing purpose only.
-    ///
-    /// \param type Type of a counter to get the value of
-    ///
-    /// \return the value of the counter specified by \a type.
-    uint64_t getCounter(const Counters::ServerCounterType type) const;
-
-    /// \brief Get the value of a per opcode counter.
-    ///
-    /// This method returns the value of the per opcode counter for the
-    /// specified \c opcode.
-    ///
-    /// \note This is a tentative interface as an attempt of experimentally
-    /// supporting more statistics counters.  This should eventually be more
-    /// generalized.  In any case, this method is mainly for testing.
-    ///
-    /// \throw None
-    /// \param opcode The opcode of the counter to get the value of
-    /// \return the value of the counter.
-    uint64_t getCounter(const isc::dns::Opcode opcode) const;
-
-    /// \brief Get the value of a per rcode counter.
-    ///
-    /// This method returns the value of the per rcode counter for the
-    /// specified \c rcode.
-    ///
-    /// \note As mentioned in getCounter(const isc::dns::Opcode opcode),
-    /// This is a tentative interface as an attempt of experimentally
-    /// supporting more statistics counters.  This should eventually be more
-    /// generalized.  In any case, this method is mainly for testing.
-    ///
-    /// \throw None
-    /// \param rcode The rcode of the counter to get the value of
-    /// \return the value of the counter.
-    uint64_t getCounter(const isc::dns::Rcode rcode) const;
 
     /// \brief A type of validation function for the specification in
     /// isc::config::ModuleSpec.
