@@ -41,7 +41,8 @@ libdhcp___unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 libdhcp___unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
 libdhcpsrv_unittests_SOURCES  = run_unittests.cc
-libdhcpsrv_unittests_SOURCES += ../cfgmgr.cc ../cfgmgr.h cfgmgr_unittest.cc
+libdhcpsrv_unittests_SOURCES += cfgmgr_unittest.cc triplet_unittest.cc
+libdhcpsrv_unittests_SOURCES += pool_unittest.cc subnet_unittest.cc
 libdhcpsrv_unittests_SOURCES += addr_utilities_unittest.cc
 
 libdhcpsrv_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
