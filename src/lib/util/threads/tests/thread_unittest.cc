@@ -73,10 +73,18 @@ throwSomething() {
     throw 42; // Throw something really unusual, to see everything is caught.
 }
 
+void
+throwException() {
+    throw std::exception();
+}
+
 // Exception in the thread we forget about should not do anything to us
 TEST(ThreadTest, detachedException) {
     for (size_t i = 0; i < detached_iterations; ++i) {
         Thread thread(throwSomething);
+    }
+    for (size_t i = 0; i < detached_iterations; ++i) {
+        Thread thread(throwException);
     }
 }
 
@@ -84,7 +92,9 @@ TEST(ThreadTest, detachedException) {
 TEST(ThreadTest, exception) {
     for (size_t i = 0; i < iterations; ++i) {
         Thread thread(throwSomething);
+        Thread thread2(throwException);
         ASSERT_THROW(thread.wait(), Thread::UncaughtException);
+        ASSERT_THROW(thread2.wait(), Thread::UncaughtException);
     }
 }
 
