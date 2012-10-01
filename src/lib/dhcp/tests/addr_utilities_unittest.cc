@@ -64,15 +64,15 @@ TEST(Pool6Test, lastAddrInPrefix) {
 }
 
 TEST(Pool6Test, firstAddrInPrefix) {
-    IOAddress addr1("2001:db8:1:1234:5678:abcd:1234:beef");
+    IOAddress addr1("2001:db8:1:1234:5678:1234:abcd:beef");
 
     // Prefixes rounded to nibbles are easy...
-    EXPECT_EQ("2001:db8:1:1234:5678:abcd:1234:0",
-              firstAddrInPrefix(addr1, 112).toText());
-    EXPECT_EQ("2001:db8:1:1234:5678:abcd:1230:0",
-              firstAddrInPrefix(addr1, 108).toText());
-    EXPECT_EQ("2001:db8:1:1234:5678:abcd:1200:0",
-              firstAddrInPrefix(addr1, 104).toText());
+    EXPECT_EQ("2001:db8:1:1234:5678:1234::",
+              firstAddrInPrefix(addr1, 96).toText());
+    EXPECT_EQ("2001:db8:1:1234:5678:1230::",
+              firstAddrInPrefix(addr1, 92).toText());
+    EXPECT_EQ("2001:db8:1:1234:5678:1200::",
+              firstAddrInPrefix(addr1, 88).toText());
     EXPECT_EQ("2001:db8:1:1234::",
               firstAddrInPrefix(addr1, 64).toText());
 
