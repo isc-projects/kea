@@ -218,7 +218,7 @@ public:
         :storage_(&string_defaults), param_name_(param_name) {
     }
 
-    /// @brief builds parameter value
+    /// @brief parses parameter value
     ///
     /// Parses configuration entry and stored it in storage. See
     /// \ref setStorage() for details.
@@ -275,6 +275,8 @@ protected:
 /// It contains a list of network interfaces that the server listens on.
 /// In particular, it can contain an entry called "all" or "any" that
 /// designates all interfaces.
+///
+/// It is useful for parsing Dhcp6/interface parameter.
 class InterfaceListConfigParser : public Dhcp6ConfigParser {
 public:
 
@@ -321,12 +323,30 @@ protected:
     vector<string> interfaces_;
 };
 
+/// @brief parser for pool definition
+///
+/// This parser handles pool definitions, i.e. a list of entries of one
+/// of two syntaxes: min-max and prefix/len. Pool6 objects are created
+/// and stored in chosen PoolStorage container.
+///
+/// As there are no default values for pool, setStorage() must be called
+/// before build(). Otherwise exception will be thrown.
+///
+/// It is useful for parsing Dhcp6/subnet6[X]/pool parameters.
 class PoolParser : public Dhcp6ConfigParser {
 public:
+
+    /// @brief constructor.
     PoolParser(const std::string& /*param_name*/)
         :pools_(NULL) {
         // ignore parameter name, it is always Dhcp6/subnet6[X]/pool
     }
+
+    /// @brief parses the actual list
+    ///
+    /// This method parses the actual list of interfaces.
+    /// No validation is done at this stage, everything is interpreted as
+    /// interface name.
     void build(ConstElementPtr pools_list) {
         // setStorage() should have been called before build
         if (!pools_) {
@@ -335,8 +355,6 @@ public:
         }
 
         BOOST_FOREACH(ConstElementPtr text_pool, pools_list->listValue()) {
-
-
 
             // That should be a single pool representation. It should contain
             // text is form prefix/len or first - last. Note that spaces
@@ -390,27 +408,54 @@ public:
                       ". Does not contain - (for min-max) nor / (prefix/len)");
         }
     }
+
+    /// @brief sets storage for value of this parameter
+    ///
+    /// See \ref dhcpv6-config-inherit for details.
+    ///
+    /// @param storage pointer to the storage container
     void setStorage(PoolStorage* storage) {
         pools_ = storage;
     }
 
-    void commit() {}
+    /// @brief does nothing.
+    ///
+    /// This method is required for all parser. The value itself
+    /// is not commited anywhere. Higher level parsers (for subnet) are expected
+    /// to use values stored in the storage,
+    virtual void commit() {}
 
+    /// @brief factory that constructs PoolParser objects
+    ///
+    /// @param param_name name of the parameter to be parsed
     static Dhcp6ConfigParser* Factory(const std::string& param_name) {
         return (new PoolParser(param_name));
     }
 
 protected:
+    /// @brief pointer to the actual Pools storage
+    ///
+    /// That is typically a storage somewhere in Subnet parser
+    /// (an upper level parser).
     PoolStorage * pools_;
-
 };
 
 /// @brief this class parses a single subnet
+///
+/// This class parses the whole subnet definition. It creates parsers
+/// for received configuration parameters as needed.
 class Subnet6ConfigParser : public Dhcp6ConfigParser {
 public:
-    Subnet6ConfigParser(const std::string& param_name) {
+
+    /// @brief constructor
+    Subnet6ConfigParser(const std::string& ) {
+        // The parameter should always be "subnet", but we don't check here
+        // against it in case some wants to reuse this parser somewhere.
     }
 
+    /// @brief parses parameter value
+    ///
+    /// @param subnet pointer to the content of subnet definition
     void build(ConstElementPtr subnet) {
 
         BOOST_FOREACH(ConfigPair param, subnet->mapValue()) {
@@ -444,6 +489,12 @@ public:
         // Ok, we now have subnet parsed
     }
 
+    /// @brief commits received configuration.
+    ///
+    /// This method does most of the configuration. Many other parsers are just
+    /// storing the values that are actually consumed here. Pool definitions
+    /// created in other parsers are used here and added to newly created Subnet6
+    /// objects. Subnet6 are then added to DHCP CfgMgr.
     void commit() {
 
         StringStorage::const_iterator it = string_values_.find("subnet");
@@ -486,6 +537,13 @@ public:
     }
 
 protected:
+
+    /// @brief creates parsers for entries in subnet definition
+    ///
+    /// @todo Add subnet-specific things here (e.g. subnet-specific options)
+    ///
+    /// @param config_id name od the entry
+    /// @return parser object for specified entry name
     Dhcp6ConfigParser* createSubnet6ConfigParser(const std::string& config_id) {
         FactoryMap factories;
 
@@ -516,6 +574,14 @@ protected:
         return (f->second(config_id));
     }
 
+    /// @brief returns value for a given parameter (after using inheritance)
+    ///
+    /// This method implements inheritance. For a given parameter name, it first
+    /// checks if there is a global value for it and overwrites it with specific
+    /// value if such value was defined in subnet.
+    ///
+    /// @param name name of the parameter
+    /// @return triplet with the parameter name
     Triplet<uint32_t> getParam(const std::string& name) {
         uint32_t value = 0;
         bool found = false;
@@ -540,18 +606,39 @@ protected:
         }
     }
 
+    /// storage for subnet-specific uint32 values
     Uint32Storage uint32_values_;
+
+    /// storage for subnet-specific integer values
     StringStorage string_values_;
+
+    /// storage for pools belonging to this subnet
     PoolStorage pools_;
+
+    /// parsers are stored here
     ParserCollection parsers_;
 };
 
 /// @brief this class parses list of subnets
+///
+/// This is a wrapper parser that handles the whole list of Subnet6
+/// definitions. It iterates over all entries and creates Subnet6ConfigParser
+/// for each entry.
 class Subnets6ListConfigParser : public Dhcp6ConfigParser {
 public:
-    Subnets6ListConfigParser(const std::string& param_name) {
+
+    /// @brief constructor
+    ///
+    Subnets6ListConfigParser(const std::string&) {
+        /// parameter name is ignored
     }
 
+    /// @brief parses contents of the list
+    ///
+    /// Iterates over all entries on the list and creates Subnet6ConfigParser
+    /// for each entry.
+    ///
+    /// @param subnets_list pointer to a list of IPv6 subnets
     void build(ConstElementPtr subnets_list) {
 
         // No need to define FactoryMap here. There's only one type
@@ -566,6 +653,10 @@ public:
 
     }
 
+    /// @brief commits subnets definitions.
+    ///
+    /// Iterates over all Subnet6 parsers. Each parser contains definitions
+    /// of a single subnet and its parameters and commits each subnet separately.
     void commit() {
         // @todo: Implement more subtle reconfiguration than toss
         // the old one and replace with the new one.
@@ -579,10 +670,14 @@ public:
 
     }
 
+    /// @brief Returns Subnet6ListConfigParser object
+    /// @param param_name name of the parameter
+    /// @return Subnets6ListConfigParser object
     static Dhcp6ConfigParser* Factory(const std::string& param_name) {
         return (new Subnets6ListConfigParser(param_name));
     }
 
+    /// @brief collection of subnet parsers.
     ParserCollection subnets_;
 };
 
@@ -590,6 +685,9 @@ public:
 ///
 /// This method creates global parsers that parse global parameters, i.e.
 /// those that take format of Dhcp6/param1, Dhcp6/param2 and so forth.
+///
+/// @param config_id pointer to received global configuration entry
+/// @return parser for specified global DHCPv6 parameter
 Dhcp6ConfigParser* createGlobalDhcp6ConfigParser(const std::string& config_id) {
     FactoryMap factories;
 
@@ -623,6 +721,20 @@ Dhcp6ConfigParser* createGlobalDhcp6ConfigParser(const std::string& config_id) {
     return (f->second(config_id));
 }
 
+/// @brief configures DHCPv6 server
+///
+/// This function is called every time a new configuration is received. The extra
+/// parameter is a reference to DHCPv6 server component. It is currently not used
+/// and CfgMgr::instance() is accessed instead.
+///
+/// This method does not throw. It catches all exceptions and returns them as
+/// reconfiguration statuses. It may return the following response codes:
+/// 0 - configuration successful
+/// 1 - malformed configuration (parsing failed)
+/// 2 - logical error (parsing was successful, but the values are invalid)
+///
+/// @param config_set a new configuration for DHCPv6 server
+/// @return answer that contains result of reconfiguration
 ConstElementPtr
 configureDhcp6Server(Dhcpv6Srv& , ConstElementPtr config_set) {
     if (!config_set) {
