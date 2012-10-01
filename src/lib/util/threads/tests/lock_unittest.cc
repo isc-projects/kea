@@ -18,6 +18,8 @@
 #include <gtest/gtest.h>
 
 #include <boost/bind.hpp>
+#include <unistd.h>
+#include <signal.h>
 
 using namespace isc::util::thread;
 
@@ -117,7 +119,18 @@ performStrangeOperation(std::vector<long long unsigned> array, int direction,
     }
 }
 
+void
+no_handler(int) {}
+
 TEST(MutexTest, swarm) {
+    // Create a timeout in case something got stuck here
+    struct sigaction ignored, original;
+    memset(&ignored, 0, sizeof ignored);
+    ignored.sa_handler = no_handler;
+    if (sigaction(SIGALRM, &ignored, &original)) {
+        FAIL() << "Couldn't set alarm";
+    }
+    alarm(10);
     // This type has a low chance of being atomic itself, further raising
     // the chance of problems appearing.
     std::vector<long long unsigned> array(length);
@@ -136,6 +149,11 @@ TEST(MutexTest, swarm) {
         sum += array[i];
     }
     EXPECT_EQ(length * value, sum) << "Threads are badly synchronized";
+    // Cancel the alarm and return the original handler
+    alarm(0);
+    if (sigaction(SIGALRM, &original, NULL)) {
+        FAIL() << "Couldn't restore alarm";
+    }
 }
 
 }
