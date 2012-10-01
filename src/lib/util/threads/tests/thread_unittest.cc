@@ -37,16 +37,14 @@ using namespace isc::util::thread;
 namespace {
 
 void
-doSomething(int* x) {
-    delete[] x;
-}
+doSomething(int*) { }
 
 // We just test that we can forget about the thread and nothing
 // bad will happen on our side.
 TEST(ThreadTest, detached) {
+    int x;
     for (size_t i = 0; i < detached_iterations; ++i) {
-        int* x = new int[10];
-        Thread thread(boost::bind(&doSomething, x));
+        Thread thread(boost::bind(&doSomething, &x));
     }
 }
 
