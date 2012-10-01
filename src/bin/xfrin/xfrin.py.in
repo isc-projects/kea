@@ -956,15 +956,15 @@ class XfrinConnection(asyncore.dispatcher):
                 if not self.connect_to_master():
                     raise XfrinException('Unable to reconnect to master')
 
+            # start statistics timer
+            getattr(counter,
+                    'start_time_to_%s' % req_str.lower())(self._zone_name)
             logger.info(XFRIN_XFR_TRANSFER_STARTED, req_str, self.zone_str())
             self._send_query(self._request_type)
             # count (A|X)IXFR requests for statistics
             getattr(counter,
                     'inc_%sreq%s' % (req_str.lower(), self.get_ipver_str()))\
                     (self._zone_name)
-            # start statistics timer
-            getattr(counter,
-                    'start_time_to_%s' % req_str.lower())(self._zone_name)
             self.__state = XfrinInitialSOA()
             self._handle_xfrin_responses()
             # Depending what data was found, we log different status reports
@@ -990,6 +990,9 @@ class XfrinConnection(asyncore.dispatcher):
                             "%.3f" % self._transfer_stats.get_running_time(),
                             "%.f" % self._transfer_stats.get_bytes_per_second()
                            )
+            # stop start timer
+            getattr(counter,
+                    'stop_time_to_%s' % req_str.lower())(self._zone_name)
 
         except XfrinZoneUptodate:
             # Eventually we'll probably have to treat this case as a trigger
@@ -1033,10 +1036,6 @@ class XfrinConnection(asyncore.dispatcher):
             if ret == XFRIN_OK:
                 # count successful xfer requests
                 counter.inc_xfrsuccess(self._zone_name)
-                # stop timer
-                getattr(counter,
-                        'stop_time_to_%s' % req_str.lower())\
-                        (self._zone_name)
             elif ret == XFRIN_FAIL:
                 # count failed xfer requests
                 counter.inc_xfrfail(self._zone_name)
