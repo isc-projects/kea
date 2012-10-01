@@ -39,19 +39,32 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
-typedef boost::shared_ptr<Dhcp6ConfigParser> ParserPtr;
+/// @brief auxiliary type used for storing element name and its parser
 typedef pair<string, ConstElementPtr> ConfigPair;
-typedef std::vector<ParserPtr> ParserCollection;
+
+/// @brief a factory method that will create a parser for a given element name
 typedef Dhcp6ConfigParser* ParserFactory(const std::string& config_id);
+
+/// @brief a collection of factories that creates parsers for specified element names
 typedef std::map<std::string, ParserFactory*> FactoryMap;
+
+/// @brief a collection of elements that store uint32 values (e.g. renew-timer = 900)
 typedef std::map<string, uint32_t> Uint32Storage;
-/// @brief That is a map with global parameters that will be used as defaults
+
+/// @brief a collection of elements that store string values
+typedef std::map<string, string> StringStorage;
+
+/// @brief a collection of pools
+///
+/// That type is used as intermediate storage, when pools are parsed, but there is
+/// no subnet object created yet to store them.
+typedef std::vector<Pool6Ptr> PoolStorage;
+
+/// @brief Global uint32 parameters that will be used as defaults.
 Uint32Storage uint32_defaults;
 
-typedef std::map<string, string> StringStorage;
+/// @brief global string parameters that will be used as defaults.
 StringStorage string_defaults;
-
-typedef std::vector<Pool6Ptr> PoolStorage;
 
 /// @brief a dummy configuration parser
 ///
@@ -74,6 +87,8 @@ public:
     /// @brief builds parameter value
     ///
     /// See \ref Dhcp6ConfigParser class for details.
+    ///
+    /// @param new_config pointer to the new configuration
     virtual void build(ConstElementPtr new_config) {
         std::cout << "Build for token: [" << param_name_ << "] = ["
                   << value_->str() << "]" << std::endl;
@@ -109,7 +124,7 @@ protected:
     ConstElementPtr value_;
 };
 
-/// @brief Configuration parser for uint32 types
+/// @brief Configuration parser for uint32 parameters
 ///
 /// This class is a generic parser that is able to handle any uint32 integer
 /// type. By default it stores the value in external global container
@@ -117,19 +132,21 @@ protected:
 /// in subnet config), it can be pointed to a different storage, using
 /// setStorage() method. This class follows the parser interface, laid out
 /// in its base class, \ref Dhcp6ConfigParser.
-
+///
+/// For overview of usability of this generic purpose parser, see
+/// \ref dhcpv6-config-inherit page.
 class Uint32Parser : public Dhcp6ConfigParser {
 public:
 
     /// @brief constructor for Uint32Parser
-    /// @param param_name name of the parameter that is going to be parsed
+    /// @param param_name name of the configuration parameter being parsed
     Uint32Parser(const std::string& param_name)
         :storage_(&uint32_defaults), param_name_(param_name) {
     }
 
     /// @brief builds parameter value
     ///
-    /// Parses configuration entry and stored it in storage. See
+    /// Parses configuration entry and stores it in a storage. See
     /// \ref setStorage() for details.
     ///
     /// @param value pointer to the content of parsed values
@@ -154,76 +171,153 @@ public:
     virtual void commit() {
     }
 
-    /// @brief factory that constructs DummyParser objects
+    /// @brief factory that constructs Uint32Parser objects
     ///
     /// @param param_name name of the parameter to be parsed
     static Dhcp6ConfigParser* Factory(const std::string& param_name) {
         return (new Uint32Parser(param_name));
     }
 
+    /// @brief sets storage for value of this parameter
+    ///
+    /// See \ref dhcpv6-config-inherit for details.
+    ///
+    /// @param storage pointer to the storage container
     void setStorage(Uint32Storage* storage) {
         storage_ = storage;
     }
 
 protected:
+    /// pointer to the storage, where parsed value will be stored
     Uint32Storage * storage_;
+
+    /// name of the parameter to be parsed
     std::string param_name_;
+
+    /// the actual parsed value
     uint32_t value_;
 };
 
+/// @brief Configuration parser for string parameters
+///
+/// This class is a generic parser that is able to handle any string
+/// parameter. By default it stores the value in external global container
+/// (string_defaults). If used in smaller scopes (e.g. to parse parameters
+/// in subnet config), it can be pointed to a different storage, using
+/// setStorage() method. This class follows the parser interface, laid out
+/// in its base class, \ref Dhcp6ConfigParser.
+///
+/// For overview of usability of this generic purpose parser, see
+/// \ref dhcpv6-config-inherit page.
 class StringParser : public Dhcp6ConfigParser {
 public:
+
+    /// @brief constructor for StringParser
+    /// @param param_name name of the configuration parameter being parsed
     StringParser(const std::string& param_name)
         :storage_(&string_defaults), param_name_(param_name) {
     }
 
+    /// @brief builds parameter value
+    ///
+    /// Parses configuration entry and stored it in storage. See
+    /// \ref setStorage() for details.
+    ///
+    /// @param value pointer to the content of parsed values
     virtual void build(ConstElementPtr value) {
         value_ = value->str();
         boost::erase_all(value_, "\"");
         storage_->insert(pair<string, string>(param_name_, value_));
     }
 
+    /// @brief does nothing
+    ///
+    /// This method is required for all parser. The value itself
+    /// is not commited anywhere. Higher level parsers are expected to
+    /// use values stored in the storage, e.g. renew-timer for a given
+    /// subnet is stored in subnet-specific storage. It is not commited
+    /// here, but is rather used by its parent parser when constructing
+    /// an object, e.g. the subnet.
     virtual void commit() {
     }
 
+    /// @brief factory that constructs StringParser objects
+    ///
+    /// @param param_name name of the parameter to be parsed
     static Dhcp6ConfigParser* Factory(const std::string& param_name) {
         return (new StringParser(param_name));
     }
 
+    /// @brief sets storage for value of this parameter
+    ///
+    /// See \ref dhcpv6-config-inherit for details.
+    ///
+    /// @param storage pointer to the storage container
     void setStorage(StringStorage * storage) {
         storage_ = storage;
     }
 
 protected:
+    /// pointer to the storage, where parsed value will be stored
     StringStorage * storage_;
+
+    /// name of the parameter to be parsed
     std::string param_name_;
+
+    /// the actual parsed value
     std::string value_;
 };
 
+
+/// @brief parser for interface list definition
+///
+/// This parser handles Dhcp6/interface entry.
+/// It contains a list of network interfaces that the server listens on.
+/// In particular, it can contain an entry called "all" or "any" that
+/// designates all interfaces.
 class InterfaceListConfigParser : public Dhcp6ConfigParser {
 public:
+
+    /// @brief constructor
+    ///
+    /// As this is a dedicated parser, it must be used to parse
+    /// "interface" parameter only. All other types will throw exception.
+    ///
+    /// @param param_name name of the configuration parameter being parsed
     InterfaceListConfigParser(const std::string& param_name) {
         if (param_name != "interface") {
             isc_throw(NotImplemented, "Internal error. Interface configuration "
                       "parser called for the wrong parameter: " << param_name);
         }
     }
+
+    /// @brief parses parameters value
+    ///
+    /// Parses configuration entry (list of parameters) and stores it in
+    /// storage. See \ref setStorage() for details.
+    ///
+    /// @param value pointer to the content of parsed values
     virtual void build(ConstElementPtr value) {
         BOOST_FOREACH(ConstElementPtr iface, value->listValue()) {
             interfaces_.push_back(iface->str());
         }
     }
 
+    /// @brief commits interfaces list configuration
     virtual void commit() {
-        /// @todo: Implement per interface listening. Currently always listening on all
-        /// interfaces.
+        /// @todo: Implement per interface listening. Currently always listening
+        /// on all interfaces.
     }
 
+    /// @brief factory that constructs InterfaceListConfigParser objects
+    ///
+    /// @param param_name name of the parameter to be parsed
     static Dhcp6ConfigParser* Factory(const std::string& param_name) {
         return (new InterfaceListConfigParser(param_name));
     }
 
 protected:
+    /// contains list of network interfaces
     vector<string> interfaces_;
 };
 
