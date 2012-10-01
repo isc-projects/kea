@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "../thread.h"
+#include <util/threads/thread.h>
 
 #include <boost/bind.hpp>
 
@@ -36,16 +36,14 @@ const size_t iterations = 200;
 const size_t detached_iterations = 25;
 
 void
-doSomething(int* x) {
-    delete[] x;
-}
+doSomething(int*) { }
 
 // We just test that we can forget about the thread and nothing
 // bad will happen on our side.
 TEST(ThreadTest, detached) {
+    int x;
     for (size_t i = 0; i < detached_iterations; ++i) {
-        int* x = new int[10];
-        Thread thread(boost::bind(&doSomething, x));
+        Thread thread(boost::bind(&doSomething, &x));
     }
 }
 
@@ -72,10 +70,18 @@ throwSomething() {
     throw 42; // Throw something really unusual, to see everything is caught.
 }
 
+void
+throwException() {
+    throw std::exception();
+}
+
 // Exception in the thread we forget about should not do anything to us
 TEST(ThreadTest, detachedException) {
     for (size_t i = 0; i < detached_iterations; ++i) {
         Thread thread(throwSomething);
+    }
+    for (size_t i = 0; i < detached_iterations; ++i) {
+        Thread thread(throwException);
     }
 }
 
@@ -83,7 +89,9 @@ TEST(ThreadTest, detachedException) {
 TEST(ThreadTest, exception) {
     for (size_t i = 0; i < iterations; ++i) {
         Thread thread(throwSomething);
+        Thread thread2(throwException);
         ASSERT_THROW(thread.wait(), Thread::UncaughtException);
+        ASSERT_THROW(thread2.wait(), Thread::UncaughtException);
     }
 }
 
