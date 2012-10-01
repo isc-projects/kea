@@ -56,7 +56,7 @@ struct Deinitializer {
 
 }
 
-Mutex::Mutex(bool recursive) :
+Mutex::Mutex() :
     impl_(NULL)
 {
     pthread_mutexattr_t attributes;
@@ -72,11 +72,7 @@ Mutex::Mutex(bool recursive) :
     Deinitializer deinitializer(attributes);
     // TODO: Distinguish if debug mode is enabled in compilation.
     // If so, it should be PTHREAD_MUTEX_NORMAL or NULL
-    int type = PTHREAD_MUTEX_ERRORCHECK;
-    if (recursive) {
-        type = PTHREAD_MUTEX_RECURSIVE;
-    }
-    result = pthread_mutexattr_settype(&attributes, type);
+    result = pthread_mutexattr_settype(&attributes, PTHREAD_MUTEX_ERRORCHECK);
     if (result != 0) {
         isc_throw(isc::InvalidOperation, strerror(result));
     }
