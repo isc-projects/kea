@@ -629,13 +629,13 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
         local_edns->setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
         message.setEDNS(local_edns);
     }
+    // Lock the client lists and keep them under the lock until the processing
+    // and rendering is done (this is the same mutex as from
+    // AuthSrv::getClientListMutex()).
+    isc::util::thread::Mutex::Locker locker(mutex_);
 
     try {
         const ConstQuestionPtr question = *message.beginQuestion();
-        // Lock the client lists and keep them under the lock until
-        // the processing is done (this is the same mutex as from
-        // AuthSrv::getClientListMutex()).
-        isc::util::thread::Mutex::Locker locker(mutex_);
         const boost::shared_ptr<datasrc::ClientList>
             list(getClientList(question->getClass()));
         if (list) {
@@ -664,6 +664,8 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     LOG_DEBUG(auth_logger, DBG_AUTH_MESSAGES, AUTH_SEND_NORMAL_RESPONSE)
               .arg(renderer_.getLength()).arg(message);
     return (true);
+    // The message can contain some data from the locked resource. But outside
+    // this method, we touch only the RCode of it, so it should be safe.
 }
 
 bool
