@@ -67,10 +67,6 @@ public:
     /// Destroyes the mutex. It is not allowed to destroy a mutex which is
     /// currently locked. This means a Locker created with this Mutex must
     /// never live longer than the Mutex itself.
-    ///
-    /// \throw isc::InvalidOperation when the OS reports an error. This should
-    ///     generally happen only when the Mutex was used in a wrong way,
-    ///     meaning programmer error.
     ~Mutex();
 
     /// \brief This holds a lock on a Mutex.
@@ -107,7 +103,7 @@ public:
         ///
         /// Unlocks the mutex.
         ///
-        /// \throw isc::InvalidOperation when OS repotrs error. This usually
+        /// \throw isc::InvalidOperation when OS reports error. This usually
         ///     means an attempt to use the mutex in a wrong way (unlocking
         ///     a mutex belonging to a differen thread).
         ~Locker() {
