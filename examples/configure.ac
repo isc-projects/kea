@@ -14,6 +14,11 @@ AC_LANG([C++])
 # Checks for BIND 10 headers and libraries
 AX_ISC_BIND10
 
+# For the example host program, we require the BIND 10 DNS library
+if test "x$BIND10_DNS_LIB" = "x"; then
+   AC_MSG_ERROR([unable to find BIND 10 DNS library needed to build 'host'])
+fi
+
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
 
