@@ -1,3 +1,10 @@
+484.	[func]		tomek
+	A new library (libb10-dhcpsrv) has been created. At present, it
+	only holds the code for the DHCP Configuration Manager. Currently
+	this object only supports basic configuration storage for the DHCPv6
+	server,	but that capability will be expanded.
+	(Trac #2238, git 6f29861b92742da34be9ae76968e82222b5bfd7d)
+
 bind10-devel-20120927 released on September 27, 2012
 
 483.	[func]		marcin
