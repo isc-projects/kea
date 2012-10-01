@@ -528,7 +528,7 @@ class BindCmdInterpreter(Cmd):
         Returns the string value of the hints list with index 'state',
         or None if no (more) hints are available.
         """
-        if 0 == state:
+        if state == 0:
             self._update_all_modules_info()
             text = text.strip()
             hints = []
