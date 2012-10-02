@@ -25,8 +25,8 @@ status=0
 n=0
 
 # TODO: consider consistency with statistics definition in auth.spec
-cnt_name1="\<queries\.tcp\>"
-cnt_name2="\<queries\.udp\>"
+cnt_name1="\<request\.tcp\>"
+cnt_name2="\<request\.udp\>"
 cnt_name3="\<opcode\.query\>"
 cnt_value1=0
 cnt_value2=0
