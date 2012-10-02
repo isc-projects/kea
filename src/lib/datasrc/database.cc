@@ -386,10 +386,11 @@ DatabaseClient::Finder::findAll(const isc::dns::Name& name,
                                 std::vector<isc::dns::ConstRRsetPtr>& target,
                                 const FindOptions options)
 {
-    return (ZoneFinderContextPtr(new Context(*this, options,
-                                             findInternal(name, RRType::ANY(),
-                                                          &target, options),
-                                             target)));
+    return (ZoneFinderContextPtr(new GenericContext(
+                                     *this, options,
+                                     findInternal(name, RRType::ANY(),
+                                                  &target, options),
+                                     target)));
 }
 
 ZoneFinderContextPtr
@@ -400,9 +401,10 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     if (type == RRType::ANY()) {
         isc_throw(isc::Unexpected, "Use findAll to answer ANY");
     }
-    return (ZoneFinderContextPtr(new Context(*this, options,
-                                             findInternal(name, type, NULL,
-                                                          options))));
+    return (ZoneFinderContextPtr(new GenericContext(
+                                     *this, options,
+                                     findInternal(name, type, NULL,
+                                                  options))));
 }
 
 DatabaseClient::Finder::DelegationSearchResult
