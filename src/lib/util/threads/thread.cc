@@ -144,7 +144,10 @@ Thread::wait() {
 
     // Was there an exception in the thread?
     scoped_ptr<UncaughtException> ex;
-    try { // Something in here could in theory throw.
+    // Something here could in theory throw. But we already terminated the thread, so
+    // we need to make sure we are in consistent state even in such situation (like
+    // releasing the mutex and impl_).
+    try {
         if (impl_->exception_) {
             ex.reset(new UncaughtException(__FILE__, __LINE__,
                                            impl_->exception_text_.c_str()));
@@ -152,6 +155,8 @@ Thread::wait() {
     } catch (...) {
         Impl::done(impl_);
         impl_ = NULL;
+        // We have eaten the UncaughtException by now, but there's another
+        // exception instead, so we have at least something.
         throw;
     }
 
