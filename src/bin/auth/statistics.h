@@ -20,16 +20,18 @@
 
 #include <dns/message.h>
 
+#include <statistics/counter.h>
+#include <statistics/counter_dict.h>
+
+#include <boost/noncopyable.hpp>
+
 #include <string>
 
 #include <stdint.h>
-#include <boost/scoped_ptr.hpp>
 
 namespace isc {
 namespace auth {
 namespace statistics {
-
-class CountersImpl;
 
 class QRAttributes {
 /// \brief Query/Response attributes for statistics.
@@ -38,8 +40,8 @@ class QRAttributes {
 /// for statistics data collection.
 ///
 /// This class does not have getter methods since it exposes private members
-/// to \c CountersImpl directly.
-friend class CountersImpl;
+/// to \c Counters directly.
+friend class Counters;
 private:
     // request attributes
     int req_ip_version_;            // IP version
@@ -200,9 +202,18 @@ QRAttributes::reset() {
 ///
 /// \todo Hold counters for each query types (Notify, Axfr, Ixfr, Normal)
 /// \todo Consider overhead of \c Counters::inc()
-class Counters {
+class Counters : boost::noncopyable {
 private:
-    boost::scoped_ptr<CountersImpl> impl_;
+    // counter for query/response
+    isc::statistics::Counter server_qr_counter_;
+    // counter for socket
+    isc::statistics::Counter socket_counter_;
+    // set of counters for zones
+    isc::statistics::CounterDictionary zone_qr_counters_;
+    void incRequest(const QRAttributes& qrattrs,
+                    const isc::dns::Message& response);
+    void incResponse(const QRAttributes& qrattrs,
+                     const isc::dns::Message& response);
 public:
     /// \brief A type of statistics item tree in isc::data::MapElement.
     ///        {
