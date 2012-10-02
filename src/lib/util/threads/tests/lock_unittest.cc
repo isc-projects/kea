@@ -52,58 +52,30 @@ TEST(MutexTest, destroyLocked) {
 }
 #endif
 
-// This test tries if a mutex really locks. We could try that with a deadlock,
-// but that's not practical (the test would not end).
+// In this test, we try to check if a mutex really locks. We could try that with
+// a deadlock, but that's not practical (the test would not end).
 //
-// So instead, we try to do some operations from multiple threads that are
-// likely to break if not locked. Also, they must run for some time so all
-// threads are started and the operation must be complicated enough so the
-// compiler won't turn it into some kind of single atomic instruction.
+// Instead, we try do to some operation on the same data from multiple threads
+// that's likely to break if not locked. Also, the test must run for a while
+// to have an opportunity to manifest.
 //
-// FIXME: Any idea for a simpler but non-atomic operation that keeps an
-// invariant?
-//
-// So, we'll have an array of numbers. Each thread will try to repeatedly
-// find a number large at least as half of the average, take the number,
-// distribute the value across the rest of the positions of the array and
-// zero the found position. This operation keeps the sum of the array
-// the same. But if two threads access it at the same time, it is likely
-// one will add something to the position another one have chosen and
-// the other one will then zero it, not taking the new value into account.
-// That'd lower the total value of the array.
-//
-// We run the threads in opposite directions (so we have no chance of them
-// keeping the same distance to each other and not meeting). Also, the indexing
-// is performed in a circular manner like with a ring buffer.
-const unsigned long long length = 1000;
-const unsigned long long iterations = 10000;
-const unsigned long long value = 2000;
+// Currently we try incrementing a double variable. That one is large enough
+// and complex enough so it should not be possible for the CPU to do it as an
+// atomic operation, at least on common architectures.
+const size_t iterations = 100000;
+
 void
-performStrangeOperation(std::vector<long long unsigned>& array, int direction,
-                        Mutex* mutex)
+performIncrement(volatile double* canary, volatile bool* ready_me,
+                 volatile bool* ready_other, Mutex* mutex)
 {
-    unsigned long long position = 0;
+    // Loosely (busy) wait for the other thread so both will start
+    // approximately at the same time.
+    *ready_me = true;
+    while (!*ready_other) {}
+
     for (size_t i = 0; i < iterations; ++i) {
         Mutex::Locker lock(*mutex);
-        // Find a place with large enough value
-        while (array[position % length] < value) {
-            position += direction;
-        }
-        // Take the value
-        unsigned long long found_value = array[position % length];
-        // And distribute it to places following the found one, by
-        // adding 1 to each.
-        unsigned long long p2 = position;
-        while (found_value > 0) {
-            p2 += direction;
-            if (p2 % length == position % length) {
-                continue;
-            }
-            ++array[p2 % length];
-            --found_value;
-        }
-        // Zero the distributed value
-        array[position % length] = 0;
+        *canary += 1;
     }
 }
 
@@ -121,22 +93,19 @@ TEST(MutexTest, swarm) {
     alarm(10);
     // This type has a low chance of being atomic itself, further raising
     // the chance of problems appearing.
-    std::vector<long long unsigned> array(length);
-    for (size_t i = 0; i < length; ++i) {
-        array[i] = value;
-    }
+    double canary = 0;
     Mutex mutex;
-    // Run two parallel threads, each in one direction
-    Thread t1(boost::bind(&performStrangeOperation, array, 1, &mutex));
-    Thread t2(boost::bind(&performStrangeOperation, array, -1, &mutex));
+    // Run two parallel threads
+    bool ready1 = false;
+    bool ready2 = false;
+    Thread t1(boost::bind(&performIncrement, &canary, &ready1, &ready2,
+                          &mutex));
+    Thread t2(boost::bind(&performIncrement, &canary, &ready2, &ready1,
+                          &mutex));
     t1.wait();
     t2.wait();
-    // Check the sum didn't change.
-    long long unsigned sum = 0;
-    for (size_t i = 0; i < length; ++i) {
-        sum += array[i];
-    }
-    EXPECT_EQ(length * value, sum) << "Threads are badly synchronized";
+    // Check it the sum is the expected value.
+    EXPECT_EQ(iterations * 2, canary) << "Threads are badly synchronized";
     // Cancel the alarm and return the original handler
     alarm(0);
     if (sigaction(SIGALRM, &original, NULL)) {
