@@ -18,3 +18,6 @@ AM_CXXFLAGS += -Wno-unused-parameter
 endif
 
 CLEANFILES = *.gcno *.gcda
+
+# These header files should be in the distribution.
+EXTRA_DIST = counter.h counter_dict.h
