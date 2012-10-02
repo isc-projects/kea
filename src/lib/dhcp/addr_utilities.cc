@@ -13,17 +13,30 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <string.h>
+#include <exceptions/exceptions.h>
 #include <dhcp/addr_utilities.h>
 
 using namespace isc::asiolink;
 
+const static uint32_t masks[] = { 0x00000000, 0x00000001, 0x00000003, 0x00000007,
+                                  0x0000000f, 0x0000001f, 0x0000003f, 0x0000007f,
+                                  0x000000ff, 0x000001ff, 0x000003ff, 0x000007ff,
+                                  0x00000fff, 0x00001fff, 0x00003fff, 0x00007fff,
+                                  0x0000ffff, 0x0001ffff, 0x0003ffff, 0x0007ffff,
+                                  0x000fffff, 0x001fffff, 0x003fffff, 0x007fffff,
+                                  0x00ffffff, 0x01ffffff, 0x03ffffff, 0x07ffffff,
+                                  0x0fffffff, 0x1fffffff, 0x3fffffff, 0x7fffffff,
+                                  0xffffffff };
+
+const static uint8_t bitMask[]= { 0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
+
+
 namespace isc {
 namespace dhcp {
 
-isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefix,
+isc::asiolink::IOAddress firstAddrInPrefix6(const isc::asiolink::IOAddress& prefix,
                                             uint8_t len) {
 
-    const static uint8_t bitMask[]= { 0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
     uint8_t packed[V6ADDRESS_LEN];
 
     // First we copy the whole address as 16 bytes.
@@ -55,7 +68,36 @@ isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefi
     return (isc::asiolink::IOAddress::from_bytes(AF_INET6, packed));
 }
 
-isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix,
+isc::asiolink::IOAddress firstAddrInPrefix4(const isc::asiolink::IOAddress& prefix,
+                                            uint8_t len) {
+    uint32_t addr = prefix;
+    if (len>32) {
+        isc_throw(BadValue, "Too large netmask. 0..32 is allowed in IPv4");
+    }
+
+    return (IOAddress(addr & (~masks[32-len])));
+}
+
+isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefix,
+                                            uint8_t len) {
+    if (prefix.getFamily() == AF_INET) {
+        return firstAddrInPrefix4(prefix, len);
+    } else {
+        return firstAddrInPrefix6(prefix, len);
+    }
+}
+
+isc::asiolink::IOAddress lastAddrInPrefix4(const isc::asiolink::IOAddress& prefix,
+                                           uint8_t len) {
+    uint32_t addr = prefix;
+    if (len>32) {
+        isc_throw(BadValue, "Too large netmask. 0..32 is allowed in IPv4");
+    }
+
+    return (IOAddress(addr | masks[32-len]));
+}
+
+isc::asiolink::IOAddress lastAddrInPrefix6(const isc::asiolink::IOAddress& prefix,
                                            uint8_t len) {
 
     const static uint8_t bitMask[]= { 0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
@@ -90,6 +132,15 @@ isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix
 
     // Finally, let's wrap this into nice and easy IOAddress object.
     return (isc::asiolink::IOAddress::from_bytes(AF_INET6, packed));
+}
+
+isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix,
+                                           uint8_t len) {
+    if (prefix.getFamily() == AF_INET) {
+        return lastAddrInPrefix4(prefix, len);
+    } else {
+        return lastAddrInPrefix6(prefix, len);
+    }
 }
 
 };
