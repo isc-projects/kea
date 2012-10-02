@@ -798,6 +798,14 @@ class TestMultiConfigData(unittest.TestCase):
                           'Spec2/item4', 'Spec2/item5', 'Spec2/item6/value1',
                           'Spec2/item6/value2'], config_items)
 
+        # Also if the list is None (optional value and no default)
+        module_spec = isc.config.module_spec_from_file(self.data_path
+                                                       + os.sep
+                                                       + "spec42.spec")
+        self.mcd.set_specification(module_spec)
+        config_items = self.mcd.get_config_item_list("Spec42", True)
+        self.assertEqual(['Spec42/list_item'], config_items)
+
     def test_is_named_set(self):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec32.spec")
         self.mcd.set_specification(module_spec)
