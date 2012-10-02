@@ -22,17 +22,12 @@
 #include <cc/data.h>
 #include <cc/session.h>
 
-#include <statistics/counter.h>
-#include <statistics/counter_dict.h>
-
 #include <algorithm>
 #include <cctype>
 #include <cassert>
 #include <string>
 #include <sstream>
 #include <iostream>
-
-#include <boost/noncopyable.hpp>
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -66,24 +61,7 @@ namespace isc {
 namespace auth {
 namespace statistics {
 
-class CountersImpl : boost::noncopyable {
-public:
-    CountersImpl();
-    ~CountersImpl();
-    void inc(const QRAttributes& qrattrs, const Message& response);
-    Counters::ItemTreeType get() const;
-private:
-    // counter for query/response
-    Counter server_qr_counter_;
-    // counter for socket
-    Counter socket_counter_;
-    // set of counters for zones
-    CounterDictionary zone_qr_counters_;
-    void incRequest(const QRAttributes& qrattrs, const Message& response);
-    void incResponse(const QRAttributes& qrattrs, const Message& response);
-};
-
-CountersImpl::CountersImpl() :
+Counters::Counters() :
     // size of server_qr_counter_, zone_qr_counters_: QR_COUNTER_TYPES
     // size of server_socket_counter_: SOCKET_COUNTER_TYPES
     server_qr_counter_(QR_COUNTER_TYPES),
@@ -91,13 +69,11 @@ CountersImpl::CountersImpl() :
     zone_qr_counters_(QR_COUNTER_TYPES)
 {}
 
-CountersImpl::~CountersImpl()
+Counters::~Counters()
 {}
 
 void
-CountersImpl::incRequest(const QRAttributes& qrattrs,
-                         const Message& response)
-{
+Counters::incRequest(const QRAttributes& qrattrs, const Message& response) {
     // protocols carrying request
     if (qrattrs.req_ip_version_ == AF_INET) {
         server_qr_counter_.inc(QR_REQUEST_IPV4);
@@ -167,9 +143,7 @@ CountersImpl::incRequest(const QRAttributes& qrattrs,
 }
 
 void
-CountersImpl::incResponse(const QRAttributes& qrattrs,
-                          const Message& response)
-{
+Counters::incResponse(const QRAttributes& qrattrs, const Message& response) {
     // responded
     server_qr_counter_.inc(QR_RESPONSE);
 
@@ -237,7 +211,7 @@ CountersImpl::incResponse(const QRAttributes& qrattrs,
 }
 
 void
-CountersImpl::inc(const QRAttributes& qrattrs, const Message& response) {
+Counters::inc(const QRAttributes& qrattrs, const Message& response) {
     // increment request counters
     incRequest(qrattrs, response);
 
@@ -248,7 +222,7 @@ CountersImpl::inc(const QRAttributes& qrattrs, const Message& response) {
 }
 
 Counters::ItemTreeType
-CountersImpl::get() const {
+Counters::get() const {
     using namespace isc::data;
 
     Counters::ItemTreeType item_tree = Element::createMap();
@@ -262,21 +236,6 @@ CountersImpl::get() const {
     zones->set("_SERVER_", server);
 
     return (item_tree);
-}
-
-Counters::Counters() : impl_(new CountersImpl())
-{}
-
-Counters::~Counters() {}
-
-void
-Counters::inc(const QRAttributes& qrattrs, const Message& response) {
-    impl_->inc(qrattrs, response);
-}
-
-Counters::ItemTreeType
-Counters::get() const {
-    return (impl_->get());
 }
 
 } // namespace statistics
