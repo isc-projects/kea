@@ -841,9 +841,6 @@ class MultiConfigData:
            _get_list_items("Module/list")
                where the list contains 2 elements, returns
                [ "Module/list[0]", "Module/list[1]" ]
-           _get_list_items("Module/list")
-               where the list contains 2 elements, returns
-               [ "Module/list[0]", "Module/list[1]" ]
         """
         spec_part = self.find_spec_part(item_name)
         if spec_part_is_named_set(spec_part):

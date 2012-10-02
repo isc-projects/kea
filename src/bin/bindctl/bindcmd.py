@@ -61,7 +61,7 @@ except ImportError:
 # Used for tab-completion of 'identifiers' (i.e. config values)
 # If a command parameter has this name, the tab completion hints
 # are derived from config data
-IDENTIFIER_PARAM = 'identifier'
+CFGITEM_IDENTIFIER_PARAM = 'identifier'
 
 CSV_FILE_NAME = 'default_user.csv'
 CONFIG_MODULE_NAME = 'config'
@@ -495,7 +495,7 @@ class BindCmdInterpreter(Cmd):
         if cmd.module not in self.modules:
             return False
         command = self.modules[cmd.module].get_command_with_name(cmd.command)
-        return command.has_param_with_name(IDENTIFIER_PARAM)
+        return command.has_param_with_name(CFGITEM_IDENTIFIER_PARAM)
 
     def complete(self, text, state):
         """
@@ -538,8 +538,17 @@ class BindCmdInterpreter(Cmd):
                 if not cmd.params and text:
                     hints = self._get_command_startswith(cmd.module, text)
                 elif self._cmd_has_identifier_param(cmd):
-                    # For tab-completion of identifiers, replace hardcoded
-                    # hints with hints derived from the config data
+                    # If the command has an argument that is a configuration
+                    # identifier (currently, this is only a subset of
+                    # the config commands), then don't tab-complete with
+                    # hints derived from command parameters, but from
+                    # possible configuration identifiers.
+                    #
+                    # This solves the issue reported in #2254, where
+                    # there were hints such as 'argument' and 'identifier'.
+                    #
+                    # Since they are replaced, the tab-completion no longer
+                    # adds 'help' as an option (but it still works)
                     hints = self._get_identifier_startswith(text)
                 else:
                     hints = self._get_param_startswith(cmd.module, cmd.command,
