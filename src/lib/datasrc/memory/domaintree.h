@@ -684,7 +684,7 @@ DomainTreeNode<T>::predecessor() const {
 /// DomainTree.
 /// This is the reason why manipulation methods such as \c push() and \c pop()
 /// are private (and not shown in the doxygen document).
-template <typename T>
+template <typename T, typename NodeType = const DomainTreeNode<T> >
 class DomainTreeNodeChain {
     /// DomainTreeNodeChain is initialized by DomainTree, only DomainTree has
     /// knowledge to manipulate it.
@@ -817,7 +817,7 @@ private:
     /// root node of DomainTree
     ///
     /// \exception None
-    const DomainTreeNode<T>* top() const {
+    NodeType* top() const {
         assert(!isEmpty());
         return (nodes_[level_count_ - 1]);
     }
@@ -840,7 +840,7 @@ private:
     /// otherwise the node should be the root node of DomainTree.
     ///
     /// \exception None
-    void push(const DomainTreeNode<T>* node) {
+    void push(NodeType* node) {
         assert(level_count_ < RBT_MAX_LEVEL);
         nodes_[level_count_++] = node;
     }
@@ -852,7 +852,7 @@ private:
     const static int RBT_MAX_LEVEL = isc::dns::Name::MAX_LABELS;
 
     size_t level_count_;
-    const DomainTreeNode<T>* nodes_[RBT_MAX_LEVEL];
+    NodeType* nodes_[RBT_MAX_LEVEL];
     const DomainTreeNode<T>* last_compared_;
     isc::dns::NameComparisonResult last_comparison_;
 };
