@@ -33,10 +33,11 @@ namespace thread {
 ///
 /// Also, as mutex is a low-level system object, an error might happen at any
 /// operation with it. We convert many errors to the isc::InvalidOperation,
-/// since the errors usually happen only when used in a wrong way. Any methods,
-/// constructors or even destructors in this class can throw. Allocation errors
-/// are converted to std::bad_alloc (for example when OS-dependant limit of
-/// mutexes is exceeded).
+/// since the errors usually happen only when used in a wrong way. Any methods
+/// or constructors in this class can throw. Allocation errors are converted
+/// to std::bad_alloc (for example when OS-dependant limit of mutexes is
+/// exceeded). Some errors which usually mean a programmer error abort the
+/// program, since there could be no safe way to recover from them.
 ///
 /// The current interface is somewhat minimalistic. If we ever need more, we
 /// can add it later.
@@ -96,10 +97,6 @@ public:
         /// \brief Destructor.
         ///
         /// Unlocks the mutex.
-        ///
-        /// \throw isc::InvalidOperation when OS reports error. This usually
-        ///     means an attempt to use the mutex in a wrong way (unlocking
-        ///     a mutex belonging to a differen thread).
         ~Locker() {
             if (mutex_ != NULL) {
                 mutex_->unlock();
