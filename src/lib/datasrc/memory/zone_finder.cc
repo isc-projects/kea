@@ -528,17 +528,26 @@ FindNodeResult findNode(const ZoneData& zone_data,
 /// context.
 class InMemoryZoneFinder::Context : public ZoneFinder::Context {
 public:
-    Context(ZoneFinder& finder, ZoneFinder::FindOptions options,
+    Context(InMemoryZoneFinder& finder, ZoneFinder::FindOptions options,
             const RRClass& rrclass, const ZoneFinderResultContext& result) :
-        ZoneFinder::Context(finder, options,
-                            ResultContext(result.code, result.rrset,
-                                          result.flags)),
+        ZoneFinder::Context(options, ResultContext(result.code, result.rrset,
+                                                   result.flags)),
+        finder_(finder),        // NOTE: when #2284 is done we won't need this
         rrclass_(rrclass), zone_data_(result.zone_data),
         found_node_(result.found_node),
         found_rdset_(result.found_rdset)
     {}
 
 protected:
+    // When #2284 is done this can simply return NULL.
+    virtual ZoneFinder* getFinder() { return (&finder_); }
+
+    // We don't use the default protected methods that rely on this method,
+    // so we can simply return NULL.
+    virtual const std::vector<isc::dns::ConstRRsetPtr>* getAllRRsets() const {
+        return (NULL);
+    }
+
     virtual void getAdditionalImpl(const std::vector<RRType>& requested_types,
                                    std::vector<ConstRRsetPtr>& result)
     {
@@ -620,6 +629,7 @@ private:
     }
 
 private:
+    InMemoryZoneFinder& finder_;
     const RRClass rrclass_;
     const ZoneData* const zone_data_;
     const ZoneNode* const found_node_;

@@ -1286,7 +1286,7 @@ public:
         if (fake_rrset_ && fake_rrset_->getName() == name &&
             fake_rrset_->getType() == type)
         {
-            return (ZoneFinderContextPtr(new ZoneFinder::Context(
+            return (ZoneFinderContextPtr(new ZoneFinder::GenericContext(
                                              *this, options,
                                              ResultContext(SUCCESS,
                                                            fake_rrset_))));

@@ -168,48 +168,25 @@ public:
     /// can define a derived class of the base Context and override the
     /// specific virtual method.
     ///
+    /// This base class defines these common protected methods along with
+    /// some helper pure virtual methods that would be necessary for the
+    /// common methods.  If a derived class wants to use the common version
+    /// of the protected method, it needs to provide expected result through
+    /// their implementation of the pure virtual methods.
+    ///
     /// This class object is generally expected to be associated with the
     /// ZoneFinder that originally performed the \c find() call, and expects
     /// the finder is valid throughout the lifetime of this object.  It's
     /// caller's responsibility to ensure that assumption.
     class Context {
     public:
-        /// \brief The constructor for the normal find call.
+        /// \brief The constructor.
         ///
-        /// This constructor is expected to be called from the \c find()
-        /// method when it constructs the return value.
-        ///
-        /// \param finder The ZoneFinder on which find() is called.
         /// \param options The find options specified for the find() call.
         /// \param result The result of the find() call.
-        Context(ZoneFinder& finder, FindOptions options,
-                const ResultContext& result) :
+        Context(FindOptions options, const ResultContext& result) :
             code(result.code), rrset(result.rrset),
-            finder_(finder), flags_(result.flags), options_(options)
-        {}
-
-        /// \brief The constructor for the normal findAll call.
-        ///
-        /// This constructor is expected to be called from the \c findAll()
-        /// method when it constructs the return value.
-        ///
-        /// It copies the vector that is to be returned to the caller of
-        /// \c findAll() for possible subsequent use.  Note that it cannot
-        /// simply hold a reference to the vector because the caller may
-        /// alter it after the \c findAll() call.
-        ///
-        /// \param finder The ZoneFinder on which findAll() is called.
-        /// \param options The find options specified for the findAll() call.
-        /// \param result The result of the findAll() call (whose rrset is
-        ///        expected to be NULL).
-        /// \param all_set Reference to the vector given by the caller of
-        ///       \c findAll(), storing the RRsets to be returned.
-        Context(ZoneFinder& finder, FindOptions options,
-                const ResultContext& result,
-                const std::vector<isc::dns::ConstRRsetPtr> &all_set) :
-            code(result.code), rrset(result.rrset),
-            finder_(finder), flags_(result.flags), options_(options),
-            all_set_(all_set)
+            flags_(result.flags), options_(options)
         {}
 
         /// \brief The destructor.
@@ -353,11 +330,34 @@ public:
         }
 
     protected:
+        /// \brief Return the \c ZoneFinder that created this \c Context.
+        ///
+        /// A derived class implementation can return NULL if it specializes
+        /// other protected methods that require a non NULL result from
+        /// this method.  Otherwise it must return a valid, non NULL pointer
+        /// to the \c ZoneFinder object.
+        virtual ZoneFinder* getFinder() = 0;
+
+        /// \brief Return a vector of RRsets corresponding to findAll() result.
+        ///
+        /// This method returns a set of RRsets that correspond to the
+        /// returned RRsets to a prior \c findAll() call.
+        ///
+        /// A derived class implementation can return NULL if it specializes
+        /// other protected methods that require a non NULL result from
+        /// this method.  Otherwise it must return a valid, non NULL pointer
+        /// to a vector that correspond to the expected set of RRsets.
+        virtual const std::vector<isc::dns::ConstRRsetPtr>*
+        getAllRRsets() const = 0;
+
         /// \brief Actual implementation of getAdditional().
         ///
         /// This base class defines a default implementation that can be
         /// used for any type of data sources.  A data source implementation
         /// can override it.
+        ///
+        /// The default version of this implementation requires both
+        /// \c getFinder() and \c getAllRRsets() return valid results.
         virtual void getAdditionalImpl(
             const std::vector<isc::dns::RRType>& requested_types,
             std::vector<isc::dns::ConstRRsetPtr>& result);
@@ -367,14 +367,72 @@ public:
         /// This base class defines a default implementation that can be
         /// used for any type of data sources.  A data source implementation
         /// can override it.
+        ///
+        /// The default version of this implementation requires
+        /// \c getFinder() return a valid result.
         virtual dns::ConstRRsetPtr getAtOriginImpl(const dns::RRType& type);
 
     private:
-        ZoneFinder& finder_;
+
         const FindResultFlags flags_;
     protected:
         const FindOptions options_;
+    };
+
+    /// \brief Generic ZoneFinder context that works for all implementations.
+    ///
+    /// This is a concrete derived class of \c ZoneFinder::Context that
+    /// only use the generic (default) versions of the protected methods
+    /// and therefore work for any data source implementation.
+    ///
+    /// A data source implementation can use this class to create a
+    /// \c Context object as a return value of \c find() or \c findAll()
+    /// method if it doesn't have to optimize specific protected methods.
+    class GenericContext : public Context {
+    public:
+        /// \brief The constructor for the normal find call.
+        ///
+        /// This constructor is expected to be called from the \c find()
+        /// method when it constructs the return value.
+        ///
+        /// \param finder The ZoneFinder on which find() is called.
+        /// \param options See the \c Context class.
+        /// \param result See the \c Context class.
+        GenericContext(ZoneFinder& finder, FindOptions options,
+                       const ResultContext& result) :
+            Context(options, result), finder_(finder)
+        {}
+
+        /// \brief The constructor for the normal findAll call.
+        ///
+        /// This constructor is expected to be called from the \c findAll()
+        /// method when it constructs the return value.
+        ///
+        /// It copies the vector that is to be returned to the caller of
+        /// \c findAll() for possible subsequent use.  Note that it cannot
+        /// simply hold a reference to the vector because the caller may
+        /// alter it after the \c findAll() call.
+        ///
+        /// \param finder The ZoneFinder on which findAll() is called.
+        /// \param options See the \c Context class.
+        /// \param result See the \c Context class.
+        /// \param all_set Reference to the vector given by the caller of
+        ///       \c findAll(), storing the RRsets to be returned.
+        GenericContext(ZoneFinder& finder, FindOptions options,
+                       const ResultContext& result,
+                       const std::vector<isc::dns::ConstRRsetPtr>& all_set) :
+            Context(options, result), finder_(finder), all_set_(all_set)
+        {}
+
+    protected:
+        virtual ZoneFinder* getFinder() { return (&finder_); }
+        virtual const std::vector<isc::dns::ConstRRsetPtr>*
+        getAllRRsets() const {
+            return (&all_set_);
+        }
+
     private:
+        ZoneFinder& finder_;
         std::vector<isc::dns::ConstRRsetPtr> all_set_;
     };
 
