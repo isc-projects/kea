@@ -282,10 +282,6 @@ public:
         }
     }
 
-    /// Bind the ModuleSpec object in config_session_ with
-    /// isc:config::ModuleSpec::validateStatistics.
-    void registerStatisticsValidator();
-
     /// Socket session forwarder for dynamic update requests
     BaseSocketSessionForwarder& ddns_base_forwarder_;
 
@@ -318,9 +314,6 @@ public:
 private:
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
-
-    // validateStatistics
-    bool validateStatistics(isc::data::ConstElementPtr data) const;
 
     auth::Query query_;
 };
@@ -489,7 +482,6 @@ AuthSrv::setXfrinSession(AbstractSession* xfrin_session) {
 void
 AuthSrv::setConfigSession(ModuleCCSession* config_session) {
     impl_->config_session_ = config_session;
-    impl_->registerStatisticsValidator();
 }
 
 ModuleCCSession*
@@ -566,7 +558,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         // statistics: check TSIG attributes
         // SIG(0) is currently not implemented in Auth
         stats_attrs.setQuerySig(true, false,
-                                tsig_error == TSIGError::NOERROR());
+                                tsig_error != TSIGError::NOERROR());
     }
 
     if (tsig_error != TSIGError::NOERROR()) {
@@ -584,7 +576,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         {
             ConstEDNSPtr edns = message.getEDNS();
             if (edns != NULL) {
-                stats_attrs.setQueryEDNS(true, edns->getVersion() == 0);
+                stats_attrs.setQueryEDNS(true, edns->getVersion() != 0);
                 stats_attrs.setQueryDO(edns->getDNSSECAwareness());
             }
         }
@@ -826,22 +818,6 @@ AuthSrvImpl::processUpdate(const IOMessage& io_message) {
 }
 
 void
-AuthSrvImpl::registerStatisticsValidator() {
-    counters_.registerStatisticsValidator(
-        boost::bind(&AuthSrvImpl::validateStatistics, this, _1));
-}
-
-bool
-AuthSrvImpl::validateStatistics(isc::data::ConstElementPtr data) const {
-    if (config_session_ == NULL) {
-        return (false);
-    }
-    return (
-        config_session_->getModuleSpec().validateStatistics(
-            data, true));
-}
-
-void
 AuthSrvImpl::resumeServer(DNSServer* server, Message& message,
                           statistics::QRAttributes& stats_attrs,
                           const bool done) {
@@ -870,7 +846,7 @@ AuthSrv::updateConfig(ConstElementPtr new_config) {
 }
 
 ConstElementPtr AuthSrv::getStatistics() const {
-    return (impl_->counters_.getStatistics());
+    return (impl_->counters_.get());
 }
 
 const AddressList&

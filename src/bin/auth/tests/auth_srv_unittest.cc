@@ -252,14 +252,9 @@ void
 expectCounterItem(ConstElementPtr stats,
                   const std::string& item, const int expected) {
     ConstElementPtr value(Element::create(0));
-    if (item == "queries.udp" || item == "queries.tcp" || expected != 0) {
-        ASSERT_TRUE(stats->find(item, value)) << "    Item: " << item;
-        value = stats->find(item);
-        EXPECT_EQ(expected, value->intValue()) << "    Item: " << item;
-    } else {
-        ASSERT_FALSE(stats->find(item, value)) << "    Item: " << item <<
-            std::endl << "   Value: " << value->intValue();
-    }
+    ASSERT_TRUE(stats->find(item, value)) << "    Item: " << item;
+    value = stats->find(item);
+    EXPECT_EQ(expected, value->intValue()) << "    Item: " << item;
 }
 
 // We did not configure any client lists. Therefore it should be REFUSED
@@ -446,8 +441,7 @@ TEST_F(AuthSrvTest, TSIGCheckFirst) {
     // TSIG should have failed, and so the per opcode counter shouldn't be
     // incremented.
     ConstElementPtr stats = server.getStatistics();
-    expectCounterItem(stats, "opcode.normal", 0);
-    expectCounterItem(stats, "opcode.other", 0);
+    expectCounterItem(stats->get("zones")->get("_SERVER_"), "opcode.other", 0);
 
     checkAllRcodeCountersZeroExcept(Rcode::NOTAUTH(), 1);
 }
@@ -1076,9 +1070,10 @@ TEST_F(AuthSrvTest,
 // Submit UDP normal query and check query counter
 TEST_F(AuthSrvTest, queryCounterUDPNormal) {
     // The counters should be initialized to 0.
-    ConstElementPtr stats_init = server.getStatistics();
-    expectCounterItem(stats_init, "queries.udp", 0);
-    expectCounterItem(stats_init, "queries.tcp", 0);
+    ConstElementPtr stats_init = server.getStatistics()->
+        get("zones")->get("_SERVER_");
+    expectCounterItem(stats_init, "request.udp", 0);
+    expectCounterItem(stats_init, "request.tcp", 0);
     expectCounterItem(stats_init, "opcode.query", 0);
     expectCounterItem(stats_init, "rcode.refused", 0);
     // Create UDP message and process.
@@ -1092,9 +1087,10 @@ TEST_F(AuthSrvTest, queryCounterUDPNormal) {
     //   request.tcp, opcode.query, qtype.ns, rcode.refused, response
     // and these counters should not be incremented:
     //   request.tcp
-    ConstElementPtr stats_after = server.getStatistics();
-    expectCounterItem(stats_after, "queries.udp", 1);
-    expectCounterItem(stats_after, "queries.tcp", 0);
+    ConstElementPtr stats_after = server.getStatistics()->
+        get("zones")->get("_SERVER_");
+    expectCounterItem(stats_after, "request.udp", 1);
+    expectCounterItem(stats_after, "request.tcp", 0);
     expectCounterItem(stats_after, "opcode.query", 1);
     expectCounterItem(stats_after, "rcode.refused", 1);
 }
@@ -1102,9 +1098,10 @@ TEST_F(AuthSrvTest, queryCounterUDPNormal) {
 // Submit TCP normal query and check query counter
 TEST_F(AuthSrvTest, queryCounterTCPNormal) {
     // The counters should be initialized to 0.
-    ConstElementPtr stats_init = server.getStatistics();
-    expectCounterItem(stats_init, "queries.udp", 0);
-    expectCounterItem(stats_init, "queries.tcp", 0);
+    ConstElementPtr stats_init = server.getStatistics()->
+        get("zones")->get("_SERVER_");
+    expectCounterItem(stats_init, "request.udp", 0);
+    expectCounterItem(stats_init, "request.tcp", 0);
     expectCounterItem(stats_init, "opcode.query", 0);
     expectCounterItem(stats_init, "rcode.refused", 0);
     // Create TCP message and process.
@@ -1118,9 +1115,10 @@ TEST_F(AuthSrvTest, queryCounterTCPNormal) {
     //   request.tcp, opcode.query, qtype.ns, rcode.refused, response
     // and these counters should not be incremented:
     //   request.udp
-    ConstElementPtr stats_after = server.getStatistics();
-    expectCounterItem(stats_after, "queries.udp", 0);
-    expectCounterItem(stats_after, "queries.tcp", 1);
+    ConstElementPtr stats_after = server.getStatistics()->
+        get("zones")->get("_SERVER_");
+    expectCounterItem(stats_after, "request.udp", 0);
+    expectCounterItem(stats_after, "request.tcp", 1);
     expectCounterItem(stats_after, "opcode.query", 1);
     expectCounterItem(stats_after, "rcode.refused", 1);
 }
@@ -1128,9 +1126,10 @@ TEST_F(AuthSrvTest, queryCounterTCPNormal) {
 // Submit TCP AXFR query and check query counter
 TEST_F(AuthSrvTest, queryCounterTCPAXFR) {
     // The counters should be initialized to 0.
-    ConstElementPtr stats_init = server.getStatistics();
-    expectCounterItem(stats_init, "queries.udp", 0);
-    expectCounterItem(stats_init, "queries.tcp", 0);
+    ConstElementPtr stats_init = server.getStatistics()->
+        get("zones")->get("_SERVER_");
+    expectCounterItem(stats_init, "request.udp", 0);
+    expectCounterItem(stats_init, "request.tcp", 0);
     expectCounterItem(stats_init, "opcode.query", 0);
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
                          Name("example.com"), RRClass::IN(), RRType::AXFR());
@@ -1145,18 +1144,20 @@ TEST_F(AuthSrvTest, queryCounterTCPAXFR) {
     //   request.tcp, opcode.query, qtype.axfr
     // and these counters should not be incremented:
     //   request.udp, response
-    ConstElementPtr stats_after = server.getStatistics();
-    expectCounterItem(stats_after, "queries.udp", 0);
-    expectCounterItem(stats_after, "queries.tcp", 1);
+    ConstElementPtr stats_after = server.getStatistics()->
+        get("zones")->get("_SERVER_");
+    expectCounterItem(stats_after, "request.udp", 0);
+    expectCounterItem(stats_after, "request.tcp", 1);
     expectCounterItem(stats_after, "opcode.query", 1);
 }
 
 // Submit TCP IXFR query and check query counter
 TEST_F(AuthSrvTest, queryCounterTCPIXFR) {
     // The counters should be initialized to 0.
-    ConstElementPtr stats_init = server.getStatistics();
-    expectCounterItem(stats_init, "queries.udp", 0);
-    expectCounterItem(stats_init, "queries.tcp", 0);
+    ConstElementPtr stats_init = server.getStatistics()->
+        get("zones")->get("_SERVER_");
+    expectCounterItem(stats_init, "request.udp", 0);
+    expectCounterItem(stats_init, "request.tcp", 0);
     expectCounterItem(stats_init, "opcode.query", 0);
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
                          Name("example.com"), RRClass::IN(), RRType::IXFR());
@@ -1171,9 +1172,10 @@ TEST_F(AuthSrvTest, queryCounterTCPIXFR) {
     //   request.tcp, opcode.query, qtype.ixfr
     // and these counters should not be incremented:
     //   request.udp, response
-    ConstElementPtr stats_after = server.getStatistics();
-    expectCounterItem(stats_after, "queries.udp", 0);
-    expectCounterItem(stats_after, "queries.tcp", 1);
+    ConstElementPtr stats_after = server.getStatistics()->
+        get("zones")->get("_SERVER_");
+    expectCounterItem(stats_after, "request.udp", 0);
+    expectCounterItem(stats_after, "request.tcp", 1);
     expectCounterItem(stats_after, "opcode.query", 1);
 }
 
@@ -1182,7 +1184,8 @@ TEST_F(AuthSrvTest, queryCounterOpcodes) {
     // The counter should be initialized to 0.
     for (int i = 0; i < 6; ++i) {
         // The counter should be initialized to 0.
-        expectCounterItem(server.getStatistics(),
+        expectCounterItem(server.getStatistics()->
+                              get("zones")->get("_SERVER_"),
                           QRCounterItemName[QROpCodeToQRCounterType[i]], 0);
 
         // For each possible opcode, create a request message and send it
@@ -1201,7 +1204,8 @@ TEST_F(AuthSrvTest, queryCounterOpcodes) {
         }
 
         // Confirm the counter.
-        expectCounterItem(server.getStatistics(),
+        expectCounterItem(server.getStatistics()->
+                              get("zones")->get("_SERVER_"),
                           QRCounterItemName[QROpCodeToQRCounterType[i]],
                           i + 1);
     }
@@ -1211,7 +1215,8 @@ TEST_F(AuthSrvTest, queryCounterOpcodes) {
     int expected = 4;
     for (int i = 6; i < 16; ++i) {
         // The counter should be initialized to 0.
-        expectCounterItem(server.getStatistics(),
+        expectCounterItem(server.getStatistics()->
+                              get("zones")->get("_SERVER_"),
                           QRCounterItemName[QROpCodeToQRCounterType[i]],
                           expected);
 
@@ -1231,7 +1236,8 @@ TEST_F(AuthSrvTest, queryCounterOpcodes) {
         ++expected;
 
         // Confirm the counter.
-        expectCounterItem(server.getStatistics(),
+        expectCounterItem(server.getStatistics()->
+                              get("zones")->get("_SERVER_"),
                           QRCounterItemName[QROpCodeToQRCounterType[i]],
                           expected);
     }

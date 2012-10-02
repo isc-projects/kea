@@ -44,20 +44,34 @@ using namespace isc::dns;
 using namespace isc::auth;
 using namespace isc::statistics;
 
+namespace {
+
+void
+fillNodes(const Counter& counter, const char* const nodename[],
+          const size_t size,
+          isc::auth::statistics::Counters::ItemTreeType& trees)
+{
+    using namespace isc::data;
+
+    for (size_t i = 0; i < size; ++i) {
+        trees->set (nodename[i],
+                    Element::create(static_cast<long int>(counter.get(i)))
+                    );
+    }
+}
+
+} // anonymous namespace
+
 namespace isc {
 namespace auth {
 namespace statistics {
-
-// TODO: Make use of wrappers like isc::dns::Opcode
-// for counter item type.
 
 class CountersImpl : boost::noncopyable {
 public:
     CountersImpl();
     ~CountersImpl();
     void inc(const QRAttributes& qrattrs, const Message& response);
-    isc::data::ConstElementPtr getStatistics() const;
-    void registerStatisticsValidator(Counters::validator_type validator);
+    Counters::ItemTreeType get() const;
 private:
     // counter for query/response
     Counter server_qr_counter_;
@@ -65,8 +79,8 @@ private:
     Counter socket_counter_;
     // set of counters for zones
     CounterDictionary zone_qr_counters_;
-    // validator
-    Counters::validator_type validator_;
+    void incRequest(const QRAttributes& qrattrs, const Message& response);
+    void incResponse(const QRAttributes& qrattrs, const Message& response);
 };
 
 CountersImpl::CountersImpl() :
@@ -74,15 +88,16 @@ CountersImpl::CountersImpl() :
     // size of server_socket_counter_: SOCKET_COUNTER_TYPES
     server_qr_counter_(QR_COUNTER_TYPES),
     socket_counter_(SOCKET_COUNTER_TYPES),
-    zone_qr_counters_(QR_COUNTER_TYPES),
-    validator_()
+    zone_qr_counters_(QR_COUNTER_TYPES)
 {}
 
 CountersImpl::~CountersImpl()
 {}
 
 void
-CountersImpl::inc(const QRAttributes& qrattrs, const Message& response) {
+CountersImpl::incRequest(const QRAttributes& qrattrs,
+                         const Message& response)
+{
     // protocols carrying request
     if (qrattrs.req_ip_version_ == AF_INET) {
         server_qr_counter_.inc(QR_REQUEST_IPV4);
@@ -104,7 +119,8 @@ CountersImpl::inc(const QRAttributes& qrattrs, const Message& response) {
     }
     if (qrattrs.req_is_badsig_) {
         server_qr_counter_.inc(QR_REQUEST_BADSIG);
-        // If signature validation is failed, no other attributes are reliable
+        // If signature validation is failed, no other query attributes are
+        // reliable. Skip processing of the rest of query counters.
         return;
     }
 
@@ -148,118 +164,104 @@ CountersImpl::inc(const QRAttributes& qrattrs, const Message& response) {
     server_qr_counter_.inc(qtype_type);
     // OPCODE
     server_qr_counter_.inc(QROpCodeToQRCounterType[qrattrs.req_opcode_]);
-
-    // response
-    if (qrattrs.answer_sent_) {
-        // responded
-        server_qr_counter_.inc(QR_RESPONSE);
-
-        // response truncated
-        if (qrattrs.res_is_truncated_) {
-            server_qr_counter_.inc(QR_RESPONSE_TRUNCATED);
-        }
-
-        // response EDNS
-        ConstEDNSPtr response_edns = response.getEDNS();
-        if (response_edns != NULL && response_edns->getVersion() == 0) {
-            server_qr_counter_.inc(QR_RESPONSE_EDNS0);
-        }
-
-        // response TSIG
-        if (qrattrs.req_is_tsig_) {
-            // assume response is TSIG signed if request is TSIG signed
-            server_qr_counter_.inc(QR_RESPONSE_TSIG);
-        }
-
-        // response SIG(0) is currently not implemented
-
-        // RCODE
-        const unsigned int rcode = response.getRcode().getCode();
-        unsigned int rcode_type = QR_RCODE_OTHER;
-        if (rcode < 23) {
-            // rcode 0..22
-            rcode_type = QRRCodeToQRCounterType[rcode];
-        } else {
-            // opcode larger than 22 is reserved or unassigned
-            rcode_type = QR_RCODE_OTHER;
-        }
-        server_qr_counter_.inc(rcode_type);
-
-        // compound attributes
-        const unsigned int answer_rrs =
-            response.getRRCount(Message::SECTION_ANSWER);
-        const bool is_aa_set = response.getHeaderFlag(Message::HEADERFLAG_AA);
-
-        if (is_aa_set) {
-            // QryAuthAns
-            server_qr_counter_.inc(QR_QRYAUTHANS);
-        } else {
-            // QryNoAuthAns
-            server_qr_counter_.inc(QR_QRYNOAUTHANS);
-        }
-
-        if (rcode == Rcode::NOERROR_CODE) {
-            if (answer_rrs > 0) {
-                // QrySuccess
-                server_qr_counter_.inc(QR_QRYSUCCESS);
-            } else {
-                if (is_aa_set) {
-                    // QryNxrrset
-                    server_qr_counter_.inc(QR_QRYNXRRSET);
-                } else {
-                    // QryReferral
-                    server_qr_counter_.inc(QR_QRYREFERRAL);
-                }
-            }
-        } else if (rcode == Rcode::REFUSED_CODE) {
-            // AuthRej
-            server_qr_counter_.inc(QR_QRYREJECT);
-        }
-    }
-}
-
-isc::data::ConstElementPtr
-CountersImpl::getStatistics() const {
-    std::stringstream statistics_string;
-    statistics_string << "{ \"queries.udp\": "
-                      << server_qr_counter_.get(QR_REQUEST_UDP)
-                      << ", \"queries.tcp\": "
-                      << server_qr_counter_.get(QR_REQUEST_TCP);
-    // Insert non 0 Opcode counters.
-    for (int i = QR_OPCODE_QUERY; i <= QR_OPCODE_OTHER; ++i) {
-        const Counter::Type counter = server_qr_counter_.get(i);
-        if (counter != 0) {
-            statistics_string << ", \"" << QRCounterItemName[i] << "\": "
-                              << counter;
-        }
-    }
-    // Insert non 0 Rcode counters.
-    for (int i = QR_RCODE_NOERROR; i <= QR_RCODE_OTHER; ++i) {
-        const Counter::Type counter = server_qr_counter_.get(i);
-        if (counter != 0) {
-            statistics_string << ", \"" << QRCounterItemName[i] << "\": "
-                              << counter;
-        }
-    }
-    statistics_string << "}";
-
-    isc::data::ConstElementPtr statistics_element =
-        isc::data::Element::fromJSON(statistics_string);
-    // validate the statistics data before send
-    if (validator_) {
-        if (!validator_(statistics_element)) {
-            LOG_ERROR(auth_logger, AUTH_INVALID_STATISTICS_DATA);
-            return (isc::data::ElementPtr());
-        }
-    }
-    return (statistics_element);
 }
 
 void
-CountersImpl::registerStatisticsValidator
-    (Counters::validator_type validator)
+CountersImpl::incResponse(const QRAttributes& qrattrs,
+                          const Message& response)
 {
-    validator_ = validator;
+    // responded
+    server_qr_counter_.inc(QR_RESPONSE);
+
+    // response truncated
+    if (qrattrs.res_is_truncated_) {
+        server_qr_counter_.inc(QR_RESPONSE_TRUNCATED);
+    }
+
+    // response EDNS
+    ConstEDNSPtr response_edns = response.getEDNS();
+    if (response_edns != NULL && response_edns->getVersion() == 0) {
+        server_qr_counter_.inc(QR_RESPONSE_EDNS0);
+    }
+
+    // response TSIG
+    if (qrattrs.req_is_tsig_) {
+        // assume response is TSIG signed if request is TSIG signed
+        server_qr_counter_.inc(QR_RESPONSE_TSIG);
+    }
+
+    // response SIG(0) is currently not implemented
+
+    // RCODE
+    const unsigned int rcode = response.getRcode().getCode();
+    unsigned int rcode_type = QR_RCODE_OTHER;
+    if (rcode < 23) {
+        // rcode 0..22
+        rcode_type = QRRCodeToQRCounterType[rcode];
+    } else {
+        // opcode larger than 22 is reserved or unassigned
+        rcode_type = QR_RCODE_OTHER;
+    }
+    server_qr_counter_.inc(rcode_type);
+
+    // compound attributes
+    const unsigned int answer_rrs =
+        response.getRRCount(Message::SECTION_ANSWER);
+    const bool is_aa_set = response.getHeaderFlag(Message::HEADERFLAG_AA);
+
+    if (is_aa_set) {
+        // QryAuthAns
+        server_qr_counter_.inc(QR_QRYAUTHANS);
+    } else {
+        // QryNoAuthAns
+        server_qr_counter_.inc(QR_QRYNOAUTHANS);
+    }
+
+    if (rcode == Rcode::NOERROR_CODE) {
+        if (answer_rrs > 0) {
+            // QrySuccess
+            server_qr_counter_.inc(QR_QRYSUCCESS);
+        } else {
+            if (is_aa_set) {
+                // QryNxrrset
+                server_qr_counter_.inc(QR_QRYNXRRSET);
+            } else {
+                // QryReferral
+                server_qr_counter_.inc(QR_QRYREFERRAL);
+            }
+        }
+    } else if (rcode == Rcode::REFUSED_CODE) {
+        // AuthRej
+        server_qr_counter_.inc(QR_QRYREJECT);
+    }
+}
+
+void
+CountersImpl::inc(const QRAttributes& qrattrs, const Message& response) {
+    // increment request counters
+    incRequest(qrattrs, response);
+
+    if (qrattrs.answer_sent_) {
+        // increment response counters if answer was sent
+        incResponse(qrattrs, response);
+    }
+}
+
+Counters::ItemTreeType
+CountersImpl::get() const {
+    using namespace isc::data;
+
+    Counters::ItemTreeType item_tree = Element::createMap();
+
+    Counters::ItemTreeType zones = Element::createMap();
+    item_tree->set("zones", zones);
+
+    Counters::ItemTreeType server = Element::createMap();
+    fillNodes(server_qr_counter_, QRCounterItemName, QR_COUNTER_TYPES,
+              server);
+    zones->set("_SERVER_", server);
+
+    return (item_tree);
 }
 
 Counters::Counters() : impl_(new CountersImpl())
@@ -272,16 +274,9 @@ Counters::inc(const QRAttributes& qrattrs, const Message& response) {
     impl_->inc(qrattrs, response);
 }
 
-isc::data::ConstElementPtr
-Counters::getStatistics() const {
-    return (impl_->getStatistics());
-}
-
-void
-Counters::registerStatisticsValidator
-    (Counters::validator_type validator) const
-{
-    return (impl_->registerStatisticsValidator(validator));
+Counters::ItemTreeType
+Counters::get() const {
+    return (impl_->get());
 }
 
 } // namespace statistics
