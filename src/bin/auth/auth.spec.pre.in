@@ -141,220 +141,1076 @@
     ],
     "statistics": [
       {
-        "item_name": "queries.tcp",
-        "item_type": "integer",
+        "item_name": "zones",
+        "item_type": "named_set",
         "item_optional": false,
-        "item_default": 0,
-        "item_title": "Queries TCP",
-        "item_description": "A number of total query counts which all auth servers receive over TCP since they started initially"
-      },
-      {
-        "item_name": "queries.udp",
-        "item_type": "integer",
-        "item_optional": false,
-        "item_default": 0,
-        "item_title": "Queries UDP",
-        "item_description": "A number of total query counts which all auth servers receive over UDP since they started initially"
-      },
-      {
-        "item_name": "opcode.query",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Received query requests",
-        "item_description": "The number of total request counts whose opcode is query"
-      },
-      {
-        "item_name": "opcode.iquery",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Received inverse query requests",
-        "item_description": "The number of total request counts whose opcode is inverse query"
-      },
-      {
-        "item_name": "opcode.status",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Received status requests",
-        "item_description": "The number of total request counts whose opcode is status"
-      },
-      {
-        "item_name": "opcode.notify",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Received notify requests",
-        "item_description": "The number of total request counts whose opcode is notify"
-      },
-      {
-        "item_name": "opcode.update",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Received update requests",
-        "item_description": "The number of total request counts whose opcode is update"
-      },
-      {
-        "item_name": "opcode.other",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Received requests opcode other",
-        "item_description": "The number of total request counts whose opcode is other (not well-known)"
-      },
-      {
-        "item_name": "rcode.noerror",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent success response",
-        "item_description": "The number of total responses with rcode 0 (NOERROR)"
-      },
-      {
-        "item_name": "rcode.formerr",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent 'format error' response",
-        "item_description": "The number of total responses with rcode 1 (FORMERR)"
-      },
-      {
-        "item_name": "rcode.servfail",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent 'server failure' response",
-        "item_description": "The number of total responses with rcode 2 (SERVFAIL)"
-      },
-      {
-        "item_name": "rcode.nxdomain",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent 'name error' response",
-        "item_description": "The number of total responses with rcode 3 (NXDOMAIN)"
-      },
-      {
-        "item_name": "rcode.notimp",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent 'not implemented' response",
-        "item_description": "The number of total responses with rcode 4 (NOTIMP)"
-      },
-      {
-        "item_name": "rcode.refused",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent 'refused' response",
-        "item_description": "The number of total responses with rcode 5 (REFUSED)"
-      },
-      {
-        "item_name": "rcode.yxdomain",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent 'name unexpectedly exists' response",
-        "item_description": "The number of total responses with rcode 6 (YXDOMAIN)"
-      },
-      {
-        "item_name": "rcode.yxrrset",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent 'rrset unexpectedly exists' response",
-        "item_description": "The number of total responses with rcode 7 (YXRRSET)"
-      },
-      {
-        "item_name": "rcode.nxrrset",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent 'no such rrset' response",
-        "item_description": "The number of total responses with rcode 8 (NXRRSET)"
-      },
-      {
-        "item_name": "rcode.notauth",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent 'not authoritative' response",
-        "item_description": "The number of total responses with rcode 9 (NOTAUTH)"
-      },
-      {
-        "item_name": "rcode.notzone",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent 'name not in zone' response",
-        "item_description": "The number of total responses with rcode 10 (NOTZONE)"
-      },
-      {
-        "item_name": "rcode.badsigvers",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent 'EDNS version not implemented' response",
-        "item_description": "The number of total responses with rcode 16 (BADVERS)"
-      },
-      {
-        "item_name": "rcode.badkey",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent 'Key not recognized' response",
-        "item_description": "The number of total responses with rcode 17 (BADKEY)"
-      },
-      {
-        "item_name": "rcode.badtime",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent 'Signature out of time window' response",
-        "item_description": "The number of total responses with rcode 18 (BADTIME)"
-      },
-      {
-        "item_name": "rcode.badmode",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent 'Bad TKEY Mode' response",
-        "item_description": "The number of total responses with rcode 19 (BADMODE)"
-      },
-      {
-        "item_name": "rcode.badname",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent 'Duplicate key name' response",
-        "item_description": "The number of total responses with rcode 20 (BADNAME)"
-      },
-      {
-        "item_name": "rcode.badalg",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent 'Algorithm not supported' response",
-        "item_description": "The number of total responses with rcode 21 (BADALG)"
-      },
-      {
-        "item_name": "rcode.badtrunc",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent 'Bad Truncation' response",
-        "item_description": "The number of total responses with rcode 22 (BADTRUNC)"
-      },
-      {
-        "item_name": "rcode.other",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent responses with rcode other",
-        "item_description": "The number of total responses with rcode other (not well-known)"
+        "item_title": "Zone statistics",
+        "item_description": "Zone statistics items. Items for all zones are stored in '_SERVER_'.",
+        "item_default": {
+          "_SERVER_": {
+            "request.v4": 0,
+            "request.v6": 0,
+            "request.edns0": 0,
+            "request.badednsver": 0,
+            "request.tsig": 0,
+            "request.sig0": 0,
+            "request.badsig": 0,
+            "request.udp": 0,
+            "request.tcp": 0,
+            "request.dnssec_ok": 0,
+            "opcode.query": 0,
+            "opcode.iquery": 0,
+            "opcode.status": 0,
+            "opcode.notify": 0,
+            "opcode.update": 0,
+            "opcode.other": 0,
+            "qtype.a": 0,
+            "qtype.ns": 0,
+            "qtype.md": 0,
+            "qtype.mf": 0,
+            "qtype.cname": 0,
+            "qtype.soa": 0,
+            "qtype.mb": 0,
+            "qtype.mg": 0,
+            "qtype.mr": 0,
+            "qtype.null": 0,
+            "qtype.wks": 0,
+            "qtype.ptr": 0,
+            "qtype.hinfo": 0,
+            "qtype.minfo": 0,
+            "qtype.mx": 0,
+            "qtype.txt": 0,
+            "qtype.rp": 0,
+            "qtype.afsdb": 0,
+            "qtype.x25": 0,
+            "qtype.isdn": 0,
+            "qtype.rt": 0,
+            "qtype.nsap": 0,
+            "qtype.nsap-ptr": 0,
+            "qtype.sig": 0,
+            "qtype.key": 0,
+            "qtype.px": 0,
+            "qtype.gpos": 0,
+            "qtype.aaaa": 0,
+            "qtype.loc": 0,
+            "qtype.nxt": 0,
+            "qtype.eid": 0,
+            "qtype.nimloc": 0,
+            "qtype.srv": 0,
+            "qtype.atma": 0,
+            "qtype.naptr": 0,
+            "qtype.kx": 0,
+            "qtype.cert": 0,
+            "qtype.a6": 0,
+            "qtype.dname": 0,
+            "qtype.sink": 0,
+            "qtype.opt": 0,
+            "qtype.apl": 0,
+            "qtype.ds": 0,
+            "qtype.sshfp": 0,
+            "qtype.ipseckey": 0,
+            "qtype.rrsig": 0,
+            "qtype.nsec": 0,
+            "qtype.dnskey": 0,
+            "qtype.dhcid": 0,
+            "qtype.nsec3": 0,
+            "qtype.nsec3param": 0,
+            "qtype.hip": 0,
+            "qtype.ninfo": 0,
+            "qtype.rkey": 0,
+            "qtype.talink": 0,
+            "qtype.spf": 0,
+            "qtype.uinfo": 0,
+            "qtype.uid": 0,
+            "qtype.gid": 0,
+            "qtype.unspec": 0,
+            "qtype.tkey": 0,
+            "qtype.tsig": 0,
+            "qtype.ixfr": 0,
+            "qtype.axfr": 0,
+            "qtype.mailb": 0,
+            "qtype.maila": 0,
+            "qtype.uri": 0,
+            "qtype.caa": 0,
+            "qtype.ta": 0,
+            "qtype.dlv": 0,
+            "qtype.other": 0,
+            "response": 0,
+            "response.truncated": 0,
+            "response.edns0": 0,
+            "response.tsig": 0,
+            "response.sig0": 0,
+            "qrysuccess": 0,
+            "qryauthans": 0,
+            "qrynoauthans": 0,
+            "qryreferral": 0,
+            "qrynxrrset": 0,
+            "authqryrej": 0,
+            "rcode.noerror": 0,
+            "rcode.formerr": 0,
+            "rcode.servfail": 0,
+            "rcode.nxdomain": 0,
+            "rcode.notimp": 0,
+            "rcode.refused": 0,
+            "rcode.yxdomain": 0,
+            "rcode.yxrrset": 0,
+            "rcode.nxrrset": 0,
+            "rcode.notauth": 0,
+            "rcode.notzone": 0,
+            "rcode.badsigvers": 0,
+            "rcode.badkey": 0,
+            "rcode.badtime": 0,
+            "rcode.badmode": 0,
+            "rcode.badname": 0,
+            "rcode.badalg": 0,
+            "rcode.badtrunc": 0,
+            "rcode.other": 0
+          }
+        },
+        "named_set_item_spec": {
+          "item_name": "zone",
+          "item_type": "map",
+          "item_optional": false,
+          "item_default": { },
+          "map_item_spec": [
+            {
+              "item_name": "request.v4",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "request.v4",
+              "item_description": "Number of IPv4 requests received"
+            },
+            {
+              "item_name": "request.v6",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "request.v6",
+              "item_description": "Number of IPv6 requests received"
+            },
+            {
+              "item_name": "request.edns0",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "request.edns0",
+              "item_description": "Number of requests with EDNS(0) received"
+            },
+            {
+              "item_name": "request.badednsver",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "request.badednsver",
+              "item_description": "Number of requests with unsupported EDNS version received"
+            },
+            {
+              "item_name": "request.tsig",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "request.tsig",
+              "item_description": "Number of requests with TSIG received"
+            },
+            {
+              "item_name": "request.sig0",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "request.sig0",
+              "item_description": "Number of requests with SIG(0) received; not implemented in BIND 10"
+            },
+            {
+              "item_name": "request.badsig",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "request.badsig",
+              "item_description": "Number of requests with invalid TSIG or SIG(0) signature received"
+            },
+            {
+              "item_name": "request.udp",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "request.udp",
+              "item_description": "Number of UDP requests received"
+            },
+            {
+              "item_name": "request.tcp",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "request.tcp",
+              "item_description": "Number of TCP requests received"
+            },
+            {
+              "item_name": "request.dnssec_ok",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "request.dnssec_ok",
+              "item_description": "Number of requests with DO bit"
+            },
+            {
+              "item_name": "opcode.query",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "opcode.query",
+              "item_description": "Number of Opcode=QUERY requests received"
+            },
+            {
+              "item_name": "opcode.iquery",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "opcode.iquery",
+              "item_description": "Number of Opcode=IQUERY requests received"
+            },
+            {
+              "item_name": "opcode.status",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "opcode.status",
+              "item_description": "Number of Opcode=STATUS requests received"
+            },
+            {
+              "item_name": "opcode.notify",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "opcode.notify",
+              "item_description": "Number of Opcode=NOTIFY requests received"
+            },
+            {
+              "item_name": "opcode.update",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "opcode.update",
+              "item_description": "Number of Opcode=UPDATE requests received"
+            },
+            {
+              "item_name": "opcode.other",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "opcode.other",
+              "item_description": "Number of requests in other OpCode received"
+            },
+            {
+              "item_name": "qtype.a",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.a",
+              "item_description": "Number of QTYPE = A queries received"
+            },
+            {
+              "item_name": "qtype.ns",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.ns",
+              "item_description": "Number of QTYPE = NS queries received"
+            },
+            {
+              "item_name": "qtype.md",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.md",
+              "item_description": "Number of QTYPE = MD queries received"
+            },
+            {
+              "item_name": "qtype.mf",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.mf",
+              "item_description": "Number of QTYPE = MF queries received"
+            },
+            {
+              "item_name": "qtype.cname",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.cname",
+              "item_description": "Number of QTYPE = CNAME queries received"
+            },
+            {
+              "item_name": "qtype.soa",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.soa",
+              "item_description": "Number of QTYPE = SOA queries received"
+            },
+            {
+              "item_name": "qtype.mb",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.mb",
+              "item_description": "Number of QTYPE = MB queries received"
+            },
+            {
+              "item_name": "qtype.mg",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.mg",
+              "item_description": "Number of QTYPE = MG queries received"
+            },
+            {
+              "item_name": "qtype.mr",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.mr",
+              "item_description": "Number of QTYPE = MR queries received"
+            },
+            {
+              "item_name": "qtype.null",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.null",
+              "item_description": "Number of QTYPE = NULL queries received"
+            },
+            {
+              "item_name": "qtype.wks",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.wks",
+              "item_description": "Number of QTYPE = WKS queries received"
+            },
+            {
+              "item_name": "qtype.ptr",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.ptr",
+              "item_description": "Number of QTYPE = PTR queries received"
+            },
+            {
+              "item_name": "qtype.hinfo",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.hinfo",
+              "item_description": "Number of QTYPE = HINFO queries received"
+            },
+            {
+              "item_name": "qtype.minfo",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.minfo",
+              "item_description": "Number of QTYPE = MINFO queries received"
+            },
+            {
+              "item_name": "qtype.mx",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.mx",
+              "item_description": "Number of QTYPE = MX queries received"
+            },
+            {
+              "item_name": "qtype.txt",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.txt",
+              "item_description": "Number of QTYPE = TXT queries received"
+            },
+            {
+              "item_name": "qtype.rp",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.rp",
+              "item_description": "Number of QTYPE = RP queries received"
+            },
+            {
+              "item_name": "qtype.afsdb",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.afsdb",
+              "item_description": "Number of QTYPE = AFSDB queries received"
+            },
+            {
+              "item_name": "qtype.x25",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.x25",
+              "item_description": "Number of QTYPE = X25 queries received"
+            },
+            {
+              "item_name": "qtype.isdn",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.isdn",
+              "item_description": "Number of QTYPE = ISDN queries received"
+            },
+            {
+              "item_name": "qtype.rt",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.rt",
+              "item_description": "Number of QTYPE = RT queries received"
+            },
+            {
+              "item_name": "qtype.nsap",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.nsap",
+              "item_description": "Number of QTYPE = NSAP queries received"
+            },
+            {
+              "item_name": "qtype.nsap-ptr",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.nsap-ptr",
+              "item_description": "Number of QTYPE = NSAP-PTR queries received"
+            },
+            {
+              "item_name": "qtype.sig",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.sig",
+              "item_description": "Number of QTYPE = SIG queries received"
+            },
+            {
+              "item_name": "qtype.key",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.key",
+              "item_description": "Number of QTYPE = KEY queries received"
+            },
+            {
+              "item_name": "qtype.px",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.px",
+              "item_description": "Number of QTYPE = PX queries received"
+            },
+            {
+              "item_name": "qtype.gpos",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.gpos",
+              "item_description": "Number of QTYPE = GPOS queries received"
+            },
+            {
+              "item_name": "qtype.aaaa",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.aaaa",
+              "item_description": "Number of QTYPE = AAAA queries received"
+            },
+            {
+              "item_name": "qtype.loc",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.loc",
+              "item_description": "Number of QTYPE = LOC queries received"
+            },
+            {
+              "item_name": "qtype.nxt",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.nxt",
+              "item_description": "Number of QTYPE = NXT queries received"
+            },
+            {
+              "item_name": "qtype.eid",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.eid",
+              "item_description": "Number of QTYPE = EID queries received"
+            },
+            {
+              "item_name": "qtype.nimloc",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.nimloc",
+              "item_description": "Number of QTYPE = NIMLOC queries received"
+            },
+            {
+              "item_name": "qtype.srv",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.srv",
+              "item_description": "Number of QTYPE = SRV queries received"
+            },
+            {
+              "item_name": "qtype.atma",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.atma",
+              "item_description": "Number of QTYPE = ATMA queries received"
+            },
+            {
+              "item_name": "qtype.naptr",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.naptr",
+              "item_description": "Number of QTYPE = NAPTR queries received"
+            },
+            {
+              "item_name": "qtype.kx",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.kx",
+              "item_description": "Number of QTYPE = KX queries received"
+            },
+            {
+              "item_name": "qtype.cert",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.cert",
+              "item_description": "Number of QTYPE = CERT queries received"
+            },
+            {
+              "item_name": "qtype.a6",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.a6",
+              "item_description": "Number of QTYPE = A6 queries received"
+            },
+            {
+              "item_name": "qtype.dname",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.dname",
+              "item_description": "Number of QTYPE = DNAME queries received"
+            },
+            {
+              "item_name": "qtype.sink",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.sink",
+              "item_description": "Number of QTYPE = SINK queries received"
+            },
+            {
+              "item_name": "qtype.opt",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.opt",
+              "item_description": "Number of QTYPE = OPT queries received"
+            },
+            {
+              "item_name": "qtype.apl",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.apl",
+              "item_description": "Number of QTYPE = APL queries received"
+            },
+            {
+              "item_name": "qtype.ds",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.ds",
+              "item_description": "Number of QTYPE = DS queries received"
+            },
+            {
+              "item_name": "qtype.sshfp",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.sshfp",
+              "item_description": "Number of QTYPE = SSHFP queries received"
+            },
+            {
+              "item_name": "qtype.ipseckey",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.ipseckey",
+              "item_description": "Number of QTYPE = IPSECKEY queries received"
+            },
+            {
+              "item_name": "qtype.rrsig",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.rrsig",
+              "item_description": "Number of QTYPE = RRSIG queries received"
+            },
+            {
+              "item_name": "qtype.nsec",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.nsec",
+              "item_description": "Number of QTYPE = NSEC queries received"
+            },
+            {
+              "item_name": "qtype.dnskey",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.dnskey",
+              "item_description": "Number of QTYPE = DNSKEY queries received"
+            },
+            {
+              "item_name": "qtype.dhcid",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.dhcid",
+              "item_description": "Number of QTYPE = DHCID queries received"
+            },
+            {
+              "item_name": "qtype.nsec3",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.nsec3",
+              "item_description": "Number of QTYPE = NSEC3 queries received"
+            },
+            {
+              "item_name": "qtype.nsec3param",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.nsec3param",
+              "item_description": "Number of QTYPE = NSEC3PARAM queries received"
+            },
+            {
+              "item_name": "qtype.hip",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.hip",
+              "item_description": "Number of QTYPE = HIP queries received"
+            },
+            {
+              "item_name": "qtype.ninfo",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.ninfo",
+              "item_description": "Number of QTYPE = NINFO queries received"
+            },
+            {
+              "item_name": "qtype.rkey",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.rkey",
+              "item_description": "Number of QTYPE = RKEY queries received"
+            },
+            {
+              "item_name": "qtype.talink",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.talink",
+              "item_description": "Number of QTYPE = TALINK queries received"
+            },
+            {
+              "item_name": "qtype.spf",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.spf",
+              "item_description": "Number of QTYPE = SPF queries received"
+            },
+            {
+              "item_name": "qtype.uinfo",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.uinfo",
+              "item_description": "Number of QTYPE = UINFO queries received"
+            },
+            {
+              "item_name": "qtype.uid",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.uid",
+              "item_description": "Number of QTYPE = UID queries received"
+            },
+            {
+              "item_name": "qtype.gid",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.gid",
+              "item_description": "Number of QTYPE = GID queries received"
+            },
+            {
+              "item_name": "qtype.unspec",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.unspec",
+              "item_description": "Number of QTYPE = UNSPEC queries received"
+            },
+            {
+              "item_name": "qtype.tkey",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.tkey",
+              "item_description": "Number of QTYPE = TKEY queries received"
+            },
+            {
+              "item_name": "qtype.tsig",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.tsig",
+              "item_description": "Number of QTYPE = TSIG queries received"
+            },
+            {
+              "item_name": "qtype.ixfr",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.ixfr",
+              "item_description": "Number of QTYPE = IXFR queries received"
+            },
+            {
+              "item_name": "qtype.axfr",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.axfr",
+              "item_description": "Number of QTYPE = AXFR queries received"
+            },
+            {
+              "item_name": "qtype.mailb",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.mailb",
+              "item_description": "Number of QTYPE = MAILB queries received"
+            },
+            {
+              "item_name": "qtype.maila",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.maila",
+              "item_description": "Number of QTYPE = MAILA queries received"
+            },
+            {
+              "item_name": "qtype.uri",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.uri",
+              "item_description": "Number of QTYPE = URI queries received"
+            },
+            {
+              "item_name": "qtype.caa",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.caa",
+              "item_description": "Number of QTYPE = CAA queries received"
+            },
+            {
+              "item_name": "qtype.ta",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.ta",
+              "item_description": "Number of QTYPE = TA queries received"
+            },
+            {
+              "item_name": "qtype.dlv",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.dlv",
+              "item_description": "Number of QTYPE = DLV queries received"
+            },
+            {
+              "item_name": "qtype.other",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qtype.other",
+              "item_description": "Number of queries in other QTYPE received"
+            },
+            {
+              "item_name": "response",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "response",
+              "item_description": "Number of responses sent"
+            },
+            {
+              "item_name": "response.truncated",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "response.truncated",
+              "item_description": "Number of truncated responses sent"
+            },
+            {
+              "item_name": "response.edns0",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "response.edns0",
+              "item_description": "Number of responses with EDNS0; not implemented in BIND 10"
+            },
+            {
+              "item_name": "response.tsig",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "response.tsig",
+              "item_description": "Number of responses with TSIG"
+            },
+            {
+              "item_name": "response.sig0",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "response.sig0",
+              "item_description": "Number of responses with SIG(0); not implemented in BIND 10"
+            },
+            {
+              "item_name": "qrysuccess",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qrysuccess",
+              "item_description": "Number of queries resulted in rcode = NOERROR and answer RR >= 1"
+            },
+            {
+              "item_name": "qryauthans",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qryauthans",
+              "item_description": "Number of queries resulted in authoritative answer"
+            },
+            {
+              "item_name": "qrynoauthans",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qrynoauthans",
+              "item_description": "Number of queries resulted in non-authoritative answer"
+            },
+            {
+              "item_name": "qryreferral",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qryreferral",
+              "item_description": "Number of queries resulted in referral answer"
+            },
+            {
+              "item_name": "qrynxrrset",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "qrynxrrset",
+              "item_description": "Number of queries resulted in NOERROR but answer RR == 0"
+            },
+            {
+              "item_name": "authqryrej",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "authqryrej",
+              "item_description": "Number of authoritative queries rejected"
+            },
+            {
+              "item_name": "rcode.noerror",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.noerror",
+              "item_description": "Number of queries resulted in RCODE = 0 (NoError)"
+            },
+            {
+              "item_name": "rcode.formerr",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.formerr",
+              "item_description": "Number of queries resulted in RCODE = 1 (FormErr)"
+            },
+            {
+              "item_name": "rcode.servfail",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.servfail",
+              "item_description": "Number of queries resulted in RCODE = 2 (ServFail)"
+            },
+            {
+              "item_name": "rcode.nxdomain",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.nxdomain",
+              "item_description": "Number of queries resulted in RCODE = 3 (NXDomain)"
+            },
+            {
+              "item_name": "rcode.notimp",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.notimp",
+              "item_description": "Number of queries resulted in RCODE = 4 (NotImp)"
+            },
+            {
+              "item_name": "rcode.refused",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.refused",
+              "item_description": "Number of queries resulted in RCODE = 5 (Refused)"
+            },
+            {
+              "item_name": "rcode.yxdomain",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.yxdomain",
+              "item_description": "Number of queries resulted in RCODE = 6 (YXDomain)"
+            },
+            {
+              "item_name": "rcode.yxrrset",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.yxrrset",
+              "item_description": "Number of queries resulted in RCODE = 7 (YXRRSet)"
+            },
+            {
+              "item_name": "rcode.nxrrset",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.nxrrset",
+              "item_description": "Number of queries resulted in RCODE = 8 (NXRRSet)"
+            },
+            {
+              "item_name": "rcode.notauth",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.notauth",
+              "item_description": "Number of queries resulted in RCODE = 9 (NotAuth)"
+            },
+            {
+              "item_name": "rcode.notzone",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.notzone",
+              "item_description": "Number of queries resulted in RCODE = 10 (NotZone)"
+            },
+            {
+              "item_name": "rcode.badsigvers",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.badsigvers",
+              "item_description": "Number of queries resulted in RCODE = 16 (BADVERS, BADSIG)"
+            },
+            {
+              "item_name": "rcode.badkey",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.badkey",
+              "item_description": "Number of queries resulted in RCODE = 17 (BADKEY)"
+            },
+            {
+              "item_name": "rcode.badtime",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.badtime",
+              "item_description": "Number of queries resulted in RCODE = 18 (BADTIME)"
+            },
+            {
+              "item_name": "rcode.badmode",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.badmode",
+              "item_description": "Number of queries resulted in RCODE = 19 (BADMODE)"
+            },
+            {
+              "item_name": "rcode.badname",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.badname",
+              "item_description": "Number of queries resulted in RCODE = 20 (BADNAME)"
+            },
+            {
+              "item_name": "rcode.badalg",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.badalg",
+              "item_description": "Number of queries resulted in RCODE = 21 (BADALG)"
+            },
+            {
+              "item_name": "rcode.badtrunc",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.badtrunc",
+              "item_description": "Number of queries resulted in RCODE = 22 (BADTRUNC)"
+            },
+            {
+              "item_name": "rcode.other",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "rcode.other",
+              "item_description": "Number of queries resulted in other RCODEs"
+            }
+          ]
+	}
       }
     ]
   }
