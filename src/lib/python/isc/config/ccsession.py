@@ -575,7 +575,7 @@ class UIModuleCCSession(MultiConfigData):
         # for type any, we determine the 'type' by what value is set
         # (which would be either list or dict)
         cur_value, _ = self.get_value(identifier)
-        type_any = module_spec['item_type'] == 'any'
+        type_any = isc.config.config_data.spec_part_is_any(module_spec)
 
         # the specified element must be a list or a named_set
         if 'list_item_spec' in module_spec or\
@@ -603,7 +603,7 @@ class UIModuleCCSession(MultiConfigData):
             self._add_value_to_named_set(identifier, item_name,
                                          item_value)
         else:
-            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list or a named set")
+            raise isc.cc.data.DataTypeError(str(identifier) + " is not a list or a named set")
 
     def _remove_value_from_list(self, identifier, value):
         if value is None:
@@ -653,7 +653,7 @@ class UIModuleCCSession(MultiConfigData):
         # for type any, we determine the 'type' by what value is set
         # (which would be either list or dict)
         cur_value, _ = self.get_value(identifier)
-        type_any = module_spec['item_type'] == 'any'
+        type_any = isc.config.config_data.spec_part_is_any(module_spec)
 
         # there's two forms of 'remove from list'; the remove-value-from-list
         # form, and the 'remove-by-index' form. We can recognize the second
@@ -668,7 +668,7 @@ class UIModuleCCSession(MultiConfigData):
            (type_any and type(cur_value) == dict):
             self._remove_value_from_named_set(identifier, value_str)
         else:
-            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list or a named_set")
+            raise isc.cc.data.DataTypeError(str(identifier) + " is not a list or a named_set")
 
 
 
