@@ -40,14 +40,14 @@ except ImportError:
 class TestCmdLex(unittest.TestCase):
 
     def my_assert_raise(self, exception_type, cmd_line):
-        self.assertRaises(exception_type, cmdparse.BindCmdParse, cmd_line)
+        self.assertRaises(exception_type, cmdparse.BindCmdParser, cmd_line)
 
 
     def testCommandWithoutParameter(self):
-        cmd = cmdparse.BindCmdParse("zone add")
-        assert cmd.module == "zone"
-        assert cmd.command == "add"
-        self.assertEqual(len(cmd.params), 0)
+        cmd_parser = cmdparse.BindCmdParser("zone add")
+        assert cmd_parser.module == "zone"
+        assert cmd_parser.command == "add"
+        self.assertEqual(len(cmd_parser.params), 0)
 
 
     def testCommandWithParameters(self):
@@ -56,45 +56,51 @@ class TestCmdLex(unittest.TestCase):
                  "zone add zone_name = 'cnnic.cn\", file ='cnnic.cn.file' master=1.1.1.1, " }
 
         for cmd_line in lines:
-            cmd = cmdparse.BindCmdParse(cmd_line)
-            assert cmd.module == "zone"
-            assert cmd.command == "add"
-            assert cmd.params["zone_name"] == "cnnic.cn"
-            assert cmd.params["file"] == "cnnic.cn.file"
-            assert cmd.params["master"] == '1.1.1.1'
+            cmd_parser = cmdparse.BindCmdParser(cmd_line)
+            assert cmd_parser.module == "zone"
+            assert cmd_parser.command == "add"
+            assert cmd_parser.params["zone_name"] == "cnnic.cn"
+            assert cmd_parser.params["file"] == "cnnic.cn.file"
+            assert cmd_parser.params["master"] == '1.1.1.1'
 
     def testCommandWithParamters_2(self):
         '''Test whether the parameters in key=value can be parsed properly.'''
-        cmd = cmdparse.BindCmdParse('zone cmd name = 1:34::2')
-        self.assertEqual(cmd.params['name'], '1:34::2')
+        cmd_parser = cmdparse.BindCmdParser('zone cmd name = 1:34::2')
+        self.assertEqual(cmd_parser.params['name'], '1:34::2')
 
-        cmd = cmdparse.BindCmdParse('zone cmd name = 1\"\'34**&2 value=44\"\'\"')
-        self.assertEqual(cmd.params['name'], '1\"\'34**&2')
-        self.assertEqual(cmd.params['value'], '44\"\'\"')
+        cmd_parser = cmdparse.BindCmdParser('zone cmd name = 1\"\'34**&2'
+                                            ' value=44\"\'\"')
+        self.assertEqual(cmd_parser.params['name'], '1\"\'34**&2')
+        self.assertEqual(cmd_parser.params['value'], '44\"\'\"')
 
-        cmd = cmdparse.BindCmdParse('zone cmd name = 1\"\'34**&2 ,value=  44\"\'\"')
-        self.assertEqual(cmd.params['name'], '1\"\'34**&2')
-        self.assertEqual(cmd.params['value'], '44\"\'\"')
+        cmd_parser = cmdparse.BindCmdParser('zone cmd name = 1\"\'34**&2'
+                                            ',value=  44\"\'\"')
+        self.assertEqual(cmd_parser.params['name'], '1\"\'34**&2')
+        self.assertEqual(cmd_parser.params['value'], '44\"\'\"')
 
-        cmd = cmdparse.BindCmdParse('zone cmd name =  1\'34**&2value=44\"\'\" value = \"==============\'')
-        self.assertEqual(cmd.params['name'], '1\'34**&2value=44\"\'\"')
-        self.assertEqual(cmd.params['value'], '==============')
+        cmd_parser = cmdparse.BindCmdParser('zone cmd name =  1\'34**&2'
+                                            'value=44\"\'\" value = '
+                                            '\"==============\'')
+        self.assertEqual(cmd_parser.params['name'], '1\'34**&2value=44\"\'\"')
+        self.assertEqual(cmd_parser.params['value'], '==============')
 
-        cmd = cmdparse.BindCmdParse('zone cmd name =    \"1234, 567890 \" value ==&*/')
-        self.assertEqual(cmd.params['name'], '1234, 567890 ')
-        self.assertEqual(cmd.params['value'], '=&*/')
+        cmd_parser = cmdparse.BindCmdParser('zone cmd name =    \"1234, '
+                                            '567890 \" value ==&*/')
+        self.assertEqual(cmd_parser.params['name'], '1234, 567890 ')
+        self.assertEqual(cmd_parser.params['value'], '=&*/')
 
     def testCommandWithListParam(self):
-        cmd = cmdparse.BindCmdParse("zone set zone_name='cnnic.cn', master='1.1.1.1, 2.2.2.2'")
-        assert cmd.params["master"] == '1.1.1.1, 2.2.2.2'
+        cmd_parser = cmdparse.BindCmdParser("zone set zone_name='cnnic.cn', "
+                                            "master='1.1.1.1, 2.2.2.2'")
+        assert cmd_parser.params["master"] == '1.1.1.1, 2.2.2.2'
 
     def testCommandWithHelpParam(self):
-        cmd = cmdparse.BindCmdParse("zone add help")
-        assert cmd.params["help"] == "help"
+        cmd_parser = cmdparse.BindCmdParser("zone add help")
+        assert cmd_parser.params["help"] == "help"
 
-        cmd = cmdparse.BindCmdParse("zone add help *&)&)*&&$#$^%")
-        assert cmd.params["help"] == "help"
-        self.assertEqual(len(cmd.params), 1)
+        cmd_parser = cmdparse.BindCmdParser("zone add help *&)&)*&&$#$^%")
+        assert cmd_parser.params["help"] == "help"
+        self.assertEqual(len(cmd_parser.params), 1)
 
 
     def testCmdModuleNameFormatError(self):
@@ -130,15 +136,20 @@ class TestCmdSyntax(unittest.TestCase):
         int_spec = { 'item_type' : 'integer',
                        'item_optional' : False,
                        'item_default' : 10}
-        zone_file_param = ParamInfo(name = "zone_file", param_spec = string_spec)
+        zone_file_param = ParamInfo(name = "zone_file",
+                                    param_spec = string_spec)
         zone_name = ParamInfo(name = 'zone_name', param_spec = string_spec)
         load_cmd = CommandInfo(name = "load")
         load_cmd.add_param(zone_file_param)
         load_cmd.add_param(zone_name)
 
-        param_master = ParamInfo(name = "master", optional = True, param_spec = string_spec)
-        param_master = ParamInfo(name = "port", optional = True, param_spec = int_spec)
-        param_allow_update = ParamInfo(name = "allow_update", optional = True, param_spec = string_spec)
+        param_master = ParamInfo(name = "master", optional = True,
+                                 param_spec = string_spec)
+        param_master = ParamInfo(name = "port", optional = True,
+                                 param_spec = int_spec)
+        param_allow_update = ParamInfo(name = "allow_update",
+                                       optional = True,
+                                       param_spec = string_spec)
         set_cmd = CommandInfo(name = "set")
         set_cmd.add_param(param_master)
         set_cmd.add_param(param_allow_update)
@@ -160,13 +171,14 @@ class TestCmdSyntax(unittest.TestCase):
 
 
     def no_assert_raise(self, cmd_line):
-        cmd = cmdparse.BindCmdParse(cmd_line)
-        self.bindcmd._validate_cmd(cmd)
+        cmd_parser = cmdparse.BindCmdParser(cmd_line)
+        self.bindcmd._validate_cmd(cmd_parser)
 
 
     def my_assert_raise(self, exception_type, cmd_line):
-        cmd = cmdparse.BindCmdParse(cmd_line)
-        self.assertRaises(exception_type, self.bindcmd._validate_cmd, cmd)
+        cmd_parser = cmdparse.BindCmdParser(cmd_line)
+        self.assertRaises(exception_type, self.bindcmd._validate_cmd,
+                          cmd_parser)
 
 
     def testValidateSuccess(self):
@@ -177,7 +189,8 @@ class TestCmdSyntax(unittest.TestCase):
         self.no_assert_raise("zone help help='dd' ")
         self.no_assert_raise("zone set allow_update='1.1.1.1' zone_name='cn'")
         self.no_assert_raise("zone set zone_name='cn'")
-        self.my_assert_raise(isc.cc.data.DataTypeError, "zone set zone_name ='cn', port='cn'")
+        self.my_assert_raise(isc.cc.data.DataTypeError,
+                             "zone set zone_name ='cn', port='cn'")
         self.no_assert_raise("zone reload_all")
 
     def testCmdUnknownModuleSyntaxError(self):
@@ -188,15 +201,22 @@ class TestCmdSyntax(unittest.TestCase):
         self.my_assert_raise(CmdUnknownCmdSyntaxError, "zone dd")
 
     def testCmdMissParamSyntaxError(self):
-        self.my_assert_raise(CmdMissParamSyntaxError, "zone load zone_file='cn'")
-        self.my_assert_raise(CmdMissParamSyntaxError, "zone load zone_name='cn'")
-        self.my_assert_raise(CmdMissParamSyntaxError, "zone set allow_update='1.1.1.1'")
-        self.my_assert_raise(CmdMissParamSyntaxError, "zone set ")
+        self.my_assert_raise(CmdMissParamSyntaxError,
+                             "zone load zone_file='cn'")
+        self.my_assert_raise(CmdMissParamSyntaxError,
+                             "zone load zone_name='cn'")
+        self.my_assert_raise(CmdMissParamSyntaxError,
+                             "zone set allow_update='1.1.1.1'")
+        self.my_assert_raise(CmdMissParamSyntaxError,
+                             "zone set ")
 
     def testCmdUnknownParamSyntaxError(self):
-        self.my_assert_raise(CmdUnknownParamSyntaxError, "zone load zone_d='cn'")
-        self.my_assert_raise(CmdUnknownParamSyntaxError, "zone reload_all zone_name = 'cn'")
-        self.my_assert_raise(CmdUnknownParamSyntaxError, "zone help a b c")
+        self.my_assert_raise(CmdUnknownParamSyntaxError,
+                             "zone load zone_d='cn'")
+        self.my_assert_raise(CmdUnknownParamSyntaxError,
+                             "zone reload_all zone_name = 'cn'")
+        self.my_assert_raise(CmdUnknownParamSyntaxError,
+                             "zone help a b c")
 
 class TestModuleInfo(unittest.TestCase):
 
@@ -233,7 +253,8 @@ class TestNameSequence(unittest.TestCase):
             self.tool.add_module_info(ModuleInfo(name = random_str))
 
     def setUp(self):
-        self.random_names = ['1erdfeDDWsd', '3fe', '2009erd', 'Fe231', 'tere142', 'rei8WD']
+        self.random_names = ['1erdfeDDWsd', '3fe', '2009erd',
+                             'Fe231', 'tere142', 'rei8WD']
         self._create_bindcmd()
 
     def testSequence(self):
@@ -321,7 +342,8 @@ class TestConfigCommands(unittest.TestCase):
         def precmd(line):
             self.tool.precmd(line)
         self.tool._update_all_modules_info = update_all_modules_info
-        # If line is equals to 'EOF', _update_all_modules_info() shouldn't be called
+        # If line is equals to 'EOF', _update_all_modules_info()
+        # shouldn't be called
         precmd('EOF')
         self.assertRaises(socket.error, precmd, 'continue')
 
@@ -360,34 +382,41 @@ class TestConfigCommands(unittest.TestCase):
         self.assertEqual((1, MultiConfigData.DEFAULT),
                          self.tool.config_data.get_value("/foo/an_int"))
 
-        cmd = cmdparse.BindCmdParse("config set identifier=\"foo/an_int\" value=\"5\"")
-        self.tool.apply_config_cmd(cmd)
+        cmd_parser = cmdparse.BindCmdParser('config set identifier='
+                                            '"foo/an_int" value="5"')
+        self.tool.apply_config_cmd(cmd_parser)
         self.assertEqual((5, MultiConfigData.LOCAL),
                          self.tool.config_data.get_value("/foo/an_int"))
 
-        cmd = cmdparse.BindCmdParse("config unset identifier=\"foo/an_int\"")
-        self.tool.apply_config_cmd(cmd)
+        cmd_parser = cmdparse.BindCmdParser('config unset identifier='
+                                            '"foo/an_int"')
+        self.tool.apply_config_cmd(cmd_parser)
 
         self.assertEqual((1, MultiConfigData.DEFAULT),
                          self.tool.config_data.get_value("/foo/an_int"))
 
         # this should raise a NotFoundError
-        cmd = cmdparse.BindCmdParse("config set identifier=\"foo/bar\" value=\"[]\"")
-        self.assertRaises(isc.cc.data.DataNotFoundError, self.tool.apply_config_cmd, cmd)
-
-        cmd = cmdparse.BindCmdParse("config unset identifier=\"foo/bar\"")
+        cmd_parser = cmdparse.BindCmdParser('config set identifier='
+                                            '"foo/bar" value="[]"')
         self.assertRaises(isc.cc.data.DataNotFoundError,
-                          self.tool.apply_config_cmd, cmd)
+                          self.tool.apply_config_cmd, cmd_parser)
+
+        cmd_parser = cmdparse.BindCmdParser('config unset identifier='
+                                            '"foo/bar"')
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.tool.apply_config_cmd, cmd_parser)
 
         # this should raise a TypeError
-        cmd = cmdparse.BindCmdParse("config set identifier=\"foo/an_int\" value=\"[]\"")
-        self.assertRaises(isc.cc.data.DataTypeError, self.tool.apply_config_cmd, cmd)
+        cmd_parser = cmdparse.BindCmdParser('config set identifier='
+                                            '"foo/an_int" value="[]"')
+        self.assertRaises(isc.cc.data.DataTypeError,
+                          self.tool.apply_config_cmd, cmd_parser)
 
     # this is a very specific one for use with a set of list tests
     # to try out the flexibility of the parser (only in the next test)
     def clt(self, full_cmd_string, item_value):
-        cmd = cmdparse.BindCmdParse(full_cmd_string)
-        self.tool.apply_config_cmd(cmd)
+        cmd_parser = cmdparse.BindCmdParser(full_cmd_string)
+        self.tool.apply_config_cmd(cmd_parser)
         self.assertEqual(([item_value], MultiConfigData.LOCAL),
                          self.tool.config_data.get_value("/foo/a_list"))
 
@@ -410,14 +439,55 @@ class TestConfigCommands(unittest.TestCase):
         self.clt("config set identifier = \"foo/a_list\" value=[ \"k\" ]", "k")
 
         # this should raise a TypeError
-        cmd = cmdparse.BindCmdParse("config set identifier=\"foo/a_list\" value=\"a\"")
-        self.assertRaises(isc.cc.data.DataTypeError, self.tool.apply_config_cmd, cmd)
+        cmd_parser = cmdparse.BindCmdParser('config set identifier='
+                                            '"foo/a_list" value="a"')
+        self.assertRaises(isc.cc.data.DataTypeError,
+                          self.tool.apply_config_cmd, cmd_parser)
 
-        cmd = cmdparse.BindCmdParse("config set identifier=\"foo/a_list\" value=[1]")
-        self.assertRaises(isc.cc.data.DataTypeError, self.tool.apply_config_cmd, cmd)
+        cmd_parser = cmdparse.BindCmdParser('config set identifier='
+                                            '"foo/a_list" value=[1]')
+        self.assertRaises(isc.cc.data.DataTypeError,
+                          self.tool.apply_config_cmd, cmd_parser)
 
     def tearDown(self):
         sys.stdout = self.stdout_backup
+
+    def test_cmd_has_identifier_param(self):
+        module = ModuleInfo(name="test_module")
+
+        cmd = CommandInfo(name="command_with_identifier")
+        param = ParamInfo(name=bindcmd.CFGITEM_IDENTIFIER_PARAM)
+        cmd.add_param(param)
+        module.add_command(cmd)
+
+        cmd = CommandInfo(name="command_without_identifier")
+        param = ParamInfo(name="some_argument")
+        cmd.add_param(param)
+        module.add_command(cmd)
+
+        self.tool.add_module_info(module)
+
+        cmd_parser = cmdparse.BindCmdParser('test_module '
+                                            'command_with_identifier')
+        self.assertTrue(self.tool._cmd_has_identifier_param(cmd_parser))
+
+        cmd_parser = cmdparse.BindCmdParser('test_module '
+                                            'command_without_identifier')
+        self.assertFalse(self.tool._cmd_has_identifier_param(cmd_parser))
+
+        cmd_parser = cmdparse.BindCmdParser('badmodule '
+                                            'command_without_identifier')
+        self.assertFalse(self.tool._cmd_has_identifier_param(cmd_parser))
+
+    def test_get_identifier_startswith(self):
+        hints = self.tool._get_identifier_startswith("/")
+        self.assertEqual(['foo/an_int', 'foo/a_list'], hints)
+
+        hints = self.tool._get_identifier_startswith("/foo/an")
+        self.assertEqual(['foo/an_int'], hints)
+
+        hints = self.tool._get_identifier_startswith("/bar")
+        self.assertEqual([], hints)
 
 class FakeBindCmdInterpreter(bindcmd.BindCmdInterpreter):
     def __init__(self):
