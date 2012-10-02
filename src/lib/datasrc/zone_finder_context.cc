@@ -98,5 +98,18 @@ ZoneFinder::Context::getAdditionalImpl(const vector<RRType>& requested_types,
     }
 }
 
+ConstRRsetPtr
+ZoneFinder::Context::getAtOriginImpl(const dns::RRType& type) {
+    const ZoneFinder::FindOptions options =
+        (options_ & ZoneFinder::FIND_DNSSEC) != 0 ?
+        ZoneFinder::FIND_DNSSEC : ZoneFinder::FIND_DEFAULT;
+    ConstZoneFinderContextPtr ctx = finder_.find(finder_.getOrigin(), type,
+                                                 options);
+    if (ctx->code == ZoneFinder::SUCCESS) {
+        return (ctx->rrset);
+    }
+    return (ConstRRsetPtr());
+}
+
 } // namespace datasrc
 } // datasrc isc
