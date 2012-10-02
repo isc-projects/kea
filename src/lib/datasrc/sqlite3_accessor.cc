@@ -86,8 +86,13 @@ const char* const text_statements[NUM_STATEMENTS] = {
     "SELECT id FROM zones WHERE name=?1 AND rdclass = ?2", // ZONE
     "SELECT rdtype, ttl, sigtype, rdata FROM records "     // ANY
         "WHERE zone_id=?1 AND name=?2",
-    "SELECT rdtype, ttl, sigtype, rdata " // ANY_SUB
+
+    // ANY_SUB:
+    // This query returns records in the specified zone for the domain
+    // matching the passed name, and its sub-domains.
+    "SELECT rdtype, ttl, sigtype, rdata "
         "FROM records WHERE zone_id=?1 AND rname LIKE ?2",
+
     "BEGIN",                    // BEGIN
     "COMMIT",                   // COMMIT
     "ROLLBACK",                 // ROLLBACK
