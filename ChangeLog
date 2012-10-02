@@ -1,3 +1,12 @@
+485.	[bug]		jelte
+	Several bugs have been fixed in bindctl; tab-completion now works
+	within configuration lists, the problem where sometimes the
+	completion added a part twice has been solved, and it no longer
+	suggests the confusing value 'argument' as a completion-hint for
+	configuration items. Additionally, bindctl no longer crashes upon
+	input like 'config remove Boss'.
+	(Trac #2254, git 9047de5e8f973e12e536f7180738e6b515439448)
+
 484.	[func]		tomek
 	A new library (libb10-dhcpsrv) has been created. At present, it
 	only holds the code for the DHCP Configuration Manager. Currently
