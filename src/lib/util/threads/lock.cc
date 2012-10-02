@@ -124,9 +124,7 @@ Mutex::unlock() {
     assert(impl_ != NULL);
     --impl_->locked_count; // Only in debug mode
     const int result = pthread_mutex_unlock(&impl_->mutex);
-    if (result != 0) {
-        isc_throw(isc::InvalidOperation, strerror(result));
-    }
+    assert(result == 0); // This should never be possible
 }
 
 // TODO: Disable in non-debug build
