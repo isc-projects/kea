@@ -20,6 +20,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <dns/name.h>
+
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/logger.h>
 #include <datasrc/data_source.h>
@@ -84,8 +86,13 @@ const char* const text_statements[NUM_STATEMENTS] = {
     "SELECT id FROM zones WHERE name=?1 AND rdclass = ?2", // ZONE
     "SELECT rdtype, ttl, sigtype, rdata FROM records "     // ANY
         "WHERE zone_id=?1 AND name=?2",
-    "SELECT rdtype, ttl, sigtype, rdata " // ANY_SUB
-        "FROM records WHERE zone_id=?1 AND name LIKE (\"%.\" || ?2)",
+
+    // ANY_SUB:
+    // This query returns records in the specified zone for the domain
+    // matching the passed name, and its sub-domains.
+    "SELECT rdtype, ttl, sigtype, rdata "
+        "FROM records WHERE zone_id=?1 AND rname LIKE ?2",
+
     "BEGIN",                    // BEGIN
     "COMMIT",                   // COMMIT
     "ROLLBACK",                 // ROLLBACK
@@ -660,17 +667,27 @@ public:
         statement_(NULL),
         name_(name)
     {
-        // Choose the statement text depending on the query type
-        const char* statement(NULL);
+        // Choose the statement text depending on the query type, and
+        // prepare a statement to get data from it.
         switch (qtype) {
             case QT_ANY:
-                statement = text_statements[ANY];
+                statement_ = prepare(accessor->dbparameters_->db_,
+                                     text_statements[ANY]);
+                bindZoneId(id);
+                bindName(name_);
                 break;
             case QT_SUBDOMAINS:
-                statement = text_statements[ANY_SUB];
+                statement_ = prepare(accessor->dbparameters_->db_,
+                                     text_statements[ANY_SUB]);
+                bindZoneId(id);
+                // Done once, this should not be very inefficient.
+                bindName(isc::dns::Name(name_).reverse().toText() + "%");
                 break;
             case QT_NSEC3:
-                statement = text_statements[NSEC3];
+                statement_ = prepare(accessor->dbparameters_->db_,
+                                     text_statements[NSEC3]);
+                bindZoneId(id);
+                bindName(name_);
                 break;
             default:
                 // Can Not Happen - there isn't any other type of query
@@ -680,11 +697,6 @@ public:
                           "Invalid qtype passed - unreachable code branch "
                           "reached");
         }
-
-        // We create the statement now and then just keep getting data from it
-        statement_ = prepare(accessor->dbparameters_->db_, statement);
-        bindZoneId(id);
-        bindName(name_);
     }
 
     bool getNext(std::string (&data)[COLUMN_COUNT]) {
