@@ -52,8 +52,8 @@ TEST(MutexTest, destroyLocked) {
 }
 #endif
 
-// In this test, we try to check if a mutex really locks. We could try that with
-// a deadlock, but that's not practical (the test would not end).
+// In this test, we try to check if a mutex really locks. We could try that
+// with a deadlock, but that's not practical (the test would not end).
 //
 // Instead, we try do to some operation on the same data from multiple threads
 // that's likely to break if not locked. Also, the test must run for a while
