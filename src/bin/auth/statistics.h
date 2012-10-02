@@ -204,6 +204,19 @@ class Counters {
 private:
     boost::scoped_ptr<CountersImpl> impl_;
 public:
+    /// \brief A type of statistics item tree in isc::data::MapElement.
+    ///        {
+    ///          zone_name => {
+    ///                         item_name => item_value,
+    ///                         item_name => item_value, ...
+    ///                       },
+    ///          ...
+    ///        }
+    ///        item_name is a string seperated by '.'.
+    ///        item_value is an integer.
+    ///
+    typedef isc::data::ElementPtr ItemTreeType;
+
     /// The constructor.
     ///
     /// This constructor is mostly exception free. But it may still throw
@@ -218,42 +231,26 @@ public:
 
     /// \brief Increment counters according to the parameters.
     ///
+    /// This constructor is mostly exception free. But it may still throw
+    /// a standard exception if memory allocation fails inside the method.
+    ///
     /// \param qrattrs Query/Response attributes.
     /// \param response DNS response message.
     ///
-    /// \throw None
+    /// \throw std::bad_alloc Internal resource allocation fails
     ///
     void inc(const QRAttributes& qrattrs, const isc::dns::Message& response);
 
-    /// \brief Answers statistics counters to statistics module.
+    /// \brief Get statistics counters.
     ///
-    /// This method is mostly exception free (error conditions are
-    /// represented via the return value). But it may still throw
+    /// This method is mostly exception free. But it may still throw
     /// a standard exception if memory allocation fails inside the method.
     ///
     /// \return statistics data
     ///
-    isc::data::ConstElementPtr getStatistics() const;
-
-    /// \brief A type of validation function for the specification in
-    /// isc::config::ModuleSpec.
+    /// \throw std::bad_alloc Internal resource allocation fails
     ///
-    /// This type might be useful for not only statistics
-    /// specificatoin but also for config_data specification and for
-    /// commnad.
-    ///
-    typedef boost::function<bool(const isc::data::ConstElementPtr&)>
-    validator_type;
-
-    /// \brief Register a function type of the statistics validation
-    /// function for Counters.
-    ///
-    /// This method never throws an exception.
-    ///
-    /// \param validator A function type of the validation of
-    /// statistics specification.
-    ///
-    void registerStatisticsValidator(Counters::validator_type validator) const;
+    ItemTreeType get() const;
 };
 
 } // namespace statistics

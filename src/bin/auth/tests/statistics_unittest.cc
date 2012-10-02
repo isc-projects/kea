@@ -81,7 +81,8 @@ TEST_F(CountersTest, incrementNormalQuery) {
     std::set<std::string> expect_nonzero;
 
     expect_nonzero.clear();
-    checkCountersAllZeroExcept(counters.getStatistics(), expect_nonzero);
+    checkCountersAllZeroExcept(counters.get()->get("zones")->get("_SERVER_"),
+                               expect_nonzero);
 
     qrattrs.setQueryIPVersion(AF_INET6);
     qrattrs.setQueryTransportProtocol(IPPROTO_UDP);
@@ -98,14 +99,22 @@ TEST_F(CountersTest, incrementNormalQuery) {
 
     expect_nonzero.clear();
     expect_nonzero.insert("opcode.query");
-    expect_nonzero.insert("queries.udp");
+    expect_nonzero.insert("qtype.aaaa");
+    expect_nonzero.insert("request.v6");
+    expect_nonzero.insert("request.udp");
+    expect_nonzero.insert("request.edns0");
+    expect_nonzero.insert("request.dnssec_ok");
+    expect_nonzero.insert("response");
+    expect_nonzero.insert("qrynoauthans");
     expect_nonzero.insert("rcode.refused");
-    checkCountersAllZeroExcept(counters.getStatistics(), expect_nonzero);
+    expect_nonzero.insert("authqryrej");
+    checkCountersAllZeroExcept(counters.get()->get("zones")->get("_SERVER_"),
+                               expect_nonzero);
 }
 
 TEST_F(CountersTest, getStatistics) {
     std::map<std::string, ConstElementPtr> stats_map =
-        counters.getStatistics()->mapValue();
+        counters.get()->get("zones")->get("_SERVER_")->mapValue();
     for (std::map<std::string, ConstElementPtr>::const_iterator
             i = stats_map.begin(), e = stats_map.end();
             i != e;

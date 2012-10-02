@@ -319,7 +319,7 @@
               "item_optional": false,
               "item_default": 0,
               "item_title": "request.sig0",
-              "item_description": "Number of requests with SIG(0) received; not implemented in BIND 10"
+              "item_description": "Number of requests with SIG(0) received; currently not implemented in BIND 10"
             },
             {
               "item_name": "request.badsig",
@@ -991,7 +991,7 @@
               "item_optional": false,
               "item_default": 0,
               "item_title": "response.edns0",
-              "item_description": "Number of responses with EDNS0; not implemented in BIND 10"
+              "item_description": "Number of responses with EDNS0"
             },
             {
               "item_name": "response.tsig",
@@ -1007,7 +1007,7 @@
               "item_optional": false,
               "item_default": 0,
               "item_title": "response.sig0",
-              "item_description": "Number of responses with SIG(0); not implemented in BIND 10"
+              "item_description": "Number of responses with SIG(0); currently not implemented in BIND 10"
             },
             {
               "item_name": "qrysuccess",
