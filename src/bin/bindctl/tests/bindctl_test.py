@@ -456,7 +456,7 @@ class TestConfigCommands(unittest.TestCase):
         module = ModuleInfo(name="test_module")
 
         cmd = CommandInfo(name="command_with_identifier")
-        param = ParamInfo(name=bindcmd.IDENTIFIER_PARAM)
+        param = ParamInfo(name=bindcmd.CFGITEM_IDENTIFIER_PARAM)
         cmd.add_param(param)
         module.add_command(cmd)
 
