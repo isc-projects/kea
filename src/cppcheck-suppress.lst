@@ -11,3 +11,18 @@ missingInclude
 //
 //    // cppcheck-suppress duplicateExpression
 //    EXPECT_FALSE(small_name < small_name);
+
+// With cppcheck 1.56, there are a number of false positives, which
+// All of these should be checked and hopefully removed after upgrading
+// cppcheck past 1.56
+
+// eraseDereference: This is a known false positive, which has been
+// fixed in the current development version of cppcheck
+eraseDereference
+
+// Unused functions: there suddenly are a lot of unused function errors
+// We could address those by adding for instance early declarations or
+// (unnecessary) header files, but they were all somewhat false positives
+// When we upgrade past 1.56, we should re-check this, and perhaps enable
+// unused-functions again.
+unusedFunction
