@@ -417,7 +417,7 @@ FindNodeResult findNode(const ZoneData& zone_data,
                         ZoneFinder::FindOptions options,
                         bool out_of_zone_ok = false)
 {
-    ZoneNode* node = NULL;
+    const ZoneNode* node = NULL;
     FindState state((options & ZoneFinder::FIND_GLUE_OK) != 0);
 
     const ZoneTree& tree(zone_data.getZoneTree());
