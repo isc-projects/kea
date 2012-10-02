@@ -549,6 +549,11 @@ class BindCmdInterpreter(Cmd):
                     #
                     # Since they are replaced, the tab-completion no longer
                     # adds 'help' as an option (but it still works)
+                    #
+                    # Also, currently, tab-completion does not work
+                    # together with 'config go' (it does not take 'current
+                    # position' into account). But config go currently has
+                    # problems by itself, unrelated to completion.
                     hints = self._get_identifier_startswith(text)
                 else:
                     hints = self._get_param_startswith(cmd.module, cmd.command,
