@@ -36,6 +36,7 @@ TEST(ZoneTableSegment, getHeader) {
     auto_ptr<ZoneTableSegment>
         seg(ZoneTableSegment::create((*config.get())));
 
+    // getHeader() should never return NULL.
     ZoneTableHeader* header = seg->getHeader();
     EXPECT_NE(static_cast<void*>(NULL), header);
 
