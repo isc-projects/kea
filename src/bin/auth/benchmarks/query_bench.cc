@@ -81,7 +81,6 @@ protected:
     QueryBenchMark(const BenchQueries& queries, Message& query_message,
                    OutputBuffer& buffer) :
         server_(new AuthSrv(xfrout_client, ddns_forwarder)),
-        datasrc_configurator_(server_.get()),
         queries_(queries),
         query_message_(query_message),
         buffer_(buffer),
@@ -128,6 +127,7 @@ public:
         QueryBenchMark(queries, query_message, buffer)
     {
         datasrc_configurator_.reconfigure(
+            *server_,
             Element::fromJSON("{\"IN\":"
                               "  [{\"type\": \"sqlite3\","
                               "    \"params\": {"
@@ -146,6 +146,7 @@ public:
         QueryBenchMark(queries, query_message, buffer)
     {
         datasrc_configurator_.reconfigure(
+            *server_,
             Element::fromJSON("{\"IN\":"
                               "  [{\"type\": \"MasterFiles\","
                               "    \"cache-enable\": true, "

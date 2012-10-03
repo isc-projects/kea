@@ -18,8 +18,6 @@
 #include "auth_srv.h"
 
 #include <datasrc/client_list.h>
-#include <config/ccsession.h>
-#include <cc/data.h>
 #include <util/threads/lock.h>
 
 #include <set>
@@ -36,48 +34,10 @@
 template<class Server, class List>
 class DataSourceConfiguratorGeneric {
 private:
-    Server* server_;
     typedef boost::shared_ptr<List> ListPtr;
 public:
-    /// \brief Constructor.
-    ///
-    /// \throw isc::InvalidParameter if server is NULL
-    /// \param server The server to configure.
-    DataSourceConfiguratorGeneric(Server* server) : server_(server) {
-        if (server == NULL) {
-            isc_throw(isc::InvalidParameter, "The server must not be NULL");
-        }
-    }
-
-    /// \brief Initializes the class.
-    ///
-    /// This configures which session and server should be used.
-    /// It hooks to the session now and downloads the configuration.
-    /// It is synchronous (it may block for some time).
-    ///
-    /// Note that you need to call cleanup before the server or
-    /// session dies, otherwise it might access them after they
-    /// are destroyed.
-    ///
-    /// \param server It is the server to configure.
-    /// \throw isc::InvalidOperation if this is called when already
-    /// initialized.
-    /// \throw isc::InvalidParameter if any of the parameters is NULL
-    /// \throw isc::config::ModuleCCError if the remote configuration is not
-    ///     available for some reason.
-    void init() {
-    }
-
-    /// \brief Deinitializes the class.
-    ///
-    /// This detaches from the session and removes the server from internal
-    /// storage. The current configuration in the server is preserved.
-    ///
-    /// This can be called even if it is not initialized currently. You
-    /// can initialize it again after this.
-    void cleanup() {
-        server_ = NULL;
-    }
+    /// \brief Default constructor.
+    DataSourceConfiguratorGeneric() {}
 
     /// \brief Reads new configuration and replaces the old one.
     ///
@@ -86,16 +46,15 @@ public:
     /// is unknown and it would be questionable at least). It is called
     /// automatically on normal updates.
     ///
+    /// \param server The server for which the data sources are to be
+    /// configured.
     /// \param config The configuration value to parse. It is in the form
     ///     as an update from the config manager.
-    /// \throw InvalidOperation if it is called when not initialized.
-    void reconfigure(const isc::data::ConstElementPtr& config) {
-        if (server_ == NULL) {
-            isc_throw(isc::InvalidOperation,
-                      "Can't reconfigure while not initialized by init()");
-        }
+    void reconfigure(Server& server,
+                     const isc::data::ConstElementPtr& config)
+    {
         // Lock the client lists, we're going to manipulate them.
-        isc::util::thread::Mutex::Locker locker(server_->getClientListMutex());
+        isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
         typedef std::map<std::string, isc::data::ConstElementPtr> Map;
         typedef std::pair<isc::dns::RRClass, ListPtr> RollbackPair;
         typedef std::pair<isc::dns::RRClass, isc::data::ConstElementPtr>
@@ -107,14 +66,14 @@ public:
             // Get the configuration and current state.
             const Map& map(config->mapValue());
             const std::vector<isc::dns::RRClass>
-                activeVector(server_->getClientListClasses());
+                activeVector(server.getClientListClasses());
             std::set<isc::dns::RRClass> active(activeVector.begin(),
                                                activeVector.end());
             // Go through the configuration and change everything.
             for (Map::const_iterator it(map.begin()); it != map.end(); ++it) {
                 isc::dns::RRClass rrclass(it->first);
                 active.erase(rrclass);
-                ListPtr list(server_->getClientList(rrclass));
+                ListPtr list(server.getClientList(rrclass));
                 bool need_set(false);
                 if (list) {
                     rollback_configurations.
@@ -127,7 +86,7 @@ public:
                 }
                 list->configure(it->second, true);
                 if (need_set) {
-                    server_->setClientList(rrclass, list);
+                    server.setClientList(rrclass, list);
                 }
             }
             // Remove the ones that are not in the configuration.
@@ -137,20 +96,20 @@ public:
                 // But this is just to make sure in case it did to restore
                 // the original.
                 rollback_sets.push_back(
-                    RollbackPair(*it, server_->getClientList(*it)));
-                server_->setClientList(*it, ListPtr());
+                    RollbackPair(*it, server.getClientList(*it)));
+                server.setClientList(*it, ListPtr());
             }
         } catch (...) {
             // Perform a rollback of the changes. The old configuration should
             // work.
             for (typename std::vector<RollbackPair>::const_iterator
                  it(rollback_sets.begin()); it != rollback_sets.end(); ++it) {
-                server_->setClientList(it->first, it->second);
+                server.setClientList(it->first, it->second);
             }
             for (typename std::vector<RollbackConfiguration>::const_iterator
                  it(rollback_configurations.begin());
                  it != rollback_configurations.end(); ++it) {
-                server_->getClientList(it->first)->configure(it->second, true);
+                server.getClientList(it->first)->configure(it->second, true);
             }
             throw;
         }
