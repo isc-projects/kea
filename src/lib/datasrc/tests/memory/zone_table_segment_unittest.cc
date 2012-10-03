@@ -64,6 +64,17 @@ TEST_F(ZoneTableSegmentTest, getHeader) {
     EXPECT_EQ(static_cast<void*>(NULL), table);
 }
 
+TEST_F(ZoneTableSegmentTest, getHeaderConst) {
+    // getHeader() should never return NULL.
+    const ZoneTableHeader* header =
+         static_cast<const ZoneTableSegment*>(segment_)->getHeader();
+    EXPECT_NE(static_cast<void*>(NULL), header);
+
+    // The zone table is unset.
+    const ZoneTable* table = header->getTable();
+    EXPECT_EQ(static_cast<void*>(NULL), table);
+}
+
 TEST_F(ZoneTableSegmentTest, getMemorySegment) {
     // This doesn't do anything fun except test the API.
     MemorySegment& mem_sgmt = segment_->getMemorySegment();
