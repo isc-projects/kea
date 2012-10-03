@@ -97,8 +97,7 @@ public:
     /// \brief Destroy a ZoneTableSegment
     ///
     /// This method destroys the passed ZoneTableSegment. It must be
-    /// passed a segment previously created by \c
-    /// ZoneTableSegment::create().
+    /// passed a segment previously created by \c ZoneTableSegment::create().
     ///
     /// \param segment The segment to destroy.
     static void destroy(ZoneTableSegment* segment);
