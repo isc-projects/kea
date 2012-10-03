@@ -58,6 +58,14 @@ private:
 /// management implementation. Derived classes would implement the
 /// interface for specific memory-implementation behavior.
 class ZoneTableSegment {
+protected:
+    /// \brief Protected constructor
+    ///
+    /// An instance implementing this interface is expected to be
+    /// created by the factory method (\c create()), so this constructor
+    /// is protected.
+    ZoneTableSegment()
+    {}
 public:
     /// \brief Destructor
     virtual ~ZoneTableSegment() {}
