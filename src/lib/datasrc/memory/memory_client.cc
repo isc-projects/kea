@@ -38,7 +38,6 @@
 #include <dns/rrsetlist.h>
 #include <dns/masterload.h>
 
-#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
@@ -63,63 +62,13 @@ namespace memory {
 
 using detail::SegmentObjectHolder;
 
-namespace {
-// Some type aliases
-typedef DomainTree<std::string> FileNameTree;
-typedef DomainTreeNode<std::string> FileNameNode;
-
-// A functor type used for loading.
-typedef boost::function<void(ConstRRsetPtr)> LoadCallback;
-
-} // end of anonymous namespace
-
-/// Implementation details for \c InMemoryClient hidden from the public
-/// interface.
-///
-/// For now, \c InMemoryClient only contains a \c ZoneTable object, which
-/// consists of (pointers to) \c InMemoryZoneFinder objects, we may add more
-/// member variables later for new features.
-class InMemoryClient::InMemoryClientImpl {
-private:
-    // The deleter for the filenames stored in the tree.
-    struct FileNameDeleter {
-        FileNameDeleter() {}
-        void operator()(std::string* filename) const {
-            delete filename;
-        }
-    };
-
+class InMemoryClient::FileNameDeleter {
 public:
-    InMemoryClientImpl(util::MemorySegment& mem_sgmt, RRClass rrclass) :
-        mem_sgmt_(mem_sgmt),
-        rrclass_(rrclass),
-        zone_count_(0),
-        zone_table_(ZoneTable::create(mem_sgmt_, rrclass)),
-        file_name_tree_(FileNameTree::create(mem_sgmt_, false))
-    {}
-    ~InMemoryClientImpl() {
-        FileNameDeleter deleter;
-        FileNameTree::destroy(mem_sgmt_, file_name_tree_, deleter);
+    FileNameDeleter() {}
 
-        ZoneTable::destroy(mem_sgmt_, zone_table_, rrclass_);
+    void operator()(std::string* filename) const {
+        delete filename;
     }
-
-    util::MemorySegment& mem_sgmt_;
-    const RRClass rrclass_;
-    unsigned int zone_count_;
-    ZoneTable* zone_table_;
-    FileNameTree* file_name_tree_;
-
-    // Common process for zone load.
-    // rrset_installer is a functor that takes another functor as an argument,
-    // and expected to call the latter for each RRset of the zone.  How the
-    // sequence of the RRsets is generated depends on the internal
-    // details  of the loader: either from a textual master file or from
-    // another data source.
-    // filename is the file name of the master file or empty if the zone is
-    // loaded from another data source.
-    result::Result load(const Name& zone_name, const string& filename,
-                        boost::function<void(LoadCallback)> rrset_installer);
 };
 
 // A helper internal class for load().  make it non-copyable to avoid
@@ -226,10 +175,9 @@ private:
 };
 
 result::Result
-InMemoryClient::InMemoryClientImpl::load(
-    const Name& zone_name,
-    const string& filename,
-    boost::function<void(LoadCallback)> rrset_installer)
+InMemoryClient::load(const Name& zone_name,
+                     const string& filename,
+                     boost::function<void(LoadCallback)> rrset_installer)
 {
     SegmentObjectHolder<ZoneData, RRClass> holder(
         mem_sgmt_, ZoneData::create(mem_sgmt_, zone_name), rrclass_);
@@ -304,14 +252,16 @@ namespace {
 // doesn't seem to do this conversion if we just pass 'callback'.
 void
 masterLoadWrapper(const char* const filename, const Name& origin,
-                  const RRClass& zone_class, LoadCallback callback)
+                  const RRClass& zone_class,
+                  InMemoryClient::LoadCallback callback)
 {
     masterLoad(filename, origin, zone_class, boost::bind(callback, _1));
 }
 
-// The installer called from Impl::load() for the iterator version of load().
+// The installer called from load() for the iterator version of load().
 void
-generateRRsetFromIterator(ZoneIterator* iterator, LoadCallback callback) {
+generateRRsetFromIterator(ZoneIterator* iterator,
+                          InMemoryClient::LoadCallback callback) {
     ConstRRsetPtr rrset;
     while ((rrset = iterator->getNextRRset()) != NULL) {
         callback(rrset);
@@ -321,21 +271,28 @@ generateRRsetFromIterator(ZoneIterator* iterator, LoadCallback callback) {
 
 InMemoryClient::InMemoryClient(util::MemorySegment& mem_sgmt,
                                RRClass rrclass) :
-    impl_(new InMemoryClientImpl(mem_sgmt, rrclass))
+    mem_sgmt_(mem_sgmt),
+    rrclass_(rrclass),
+    zone_count_(0),
+    zone_table_(ZoneTable::create(mem_sgmt_, rrclass)),
+    file_name_tree_(FileNameTree::create(mem_sgmt_, false))
 {}
 
 InMemoryClient::~InMemoryClient() {
-    delete impl_;
+    FileNameDeleter deleter;
+    FileNameTree::destroy(mem_sgmt_, file_name_tree_, deleter);
+
+    ZoneTable::destroy(mem_sgmt_, zone_table_, rrclass_);
 }
 
 RRClass
 InMemoryClient::getClass() const {
-    return (impl_->rrclass_);
+    return (rrclass_);
 }
 
 unsigned int
 InMemoryClient::getZoneCount() const {
-    return (impl_->zone_count_);
+    return (zone_count_);
 }
 
 isc::datasrc::DataSourceClient::FindResult
@@ -343,7 +300,7 @@ InMemoryClient::findZone(const isc::dns::Name& zone_name) const {
     LOG_DEBUG(logger, DBG_TRACE_DATA,
               DATASRC_MEMORY_MEM_FIND_ZONE).arg(zone_name);
 
-    ZoneTable::FindResult result(impl_->zone_table_->findZone(zone_name));
+    ZoneTable::FindResult result(zone_table_->findZone(zone_name));
 
     ZoneFinderPtr finder;
     if (result.code != result::NOTFOUND) {
@@ -355,7 +312,7 @@ InMemoryClient::findZone(const isc::dns::Name& zone_name) const {
 
 const ZoneData*
 InMemoryClient::findZoneData(const isc::dns::Name& zone_name) {
-    ZoneTable::FindResult result(impl_->zone_table_->findZone(zone_name));
+    ZoneTable::FindResult result(zone_table_->findZone(zone_name));
     return (result.zone_data);
 }
 
@@ -365,24 +322,23 @@ InMemoryClient::load(const isc::dns::Name& zone_name,
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_LOAD).arg(zone_name).
         arg(filename);
 
-    return (impl_->load(zone_name, filename,
-                        boost::bind(masterLoadWrapper, filename.c_str(),
-                                    zone_name, getClass(), _1)));
+    return (load(zone_name, filename,
+                 boost::bind(masterLoadWrapper, filename.c_str(),
+                             zone_name, getClass(), _1)));
 }
 
 result::Result
 InMemoryClient::load(const isc::dns::Name& zone_name,
                      ZoneIterator& iterator) {
-    return (impl_->load(zone_name, string(),
-                        boost::bind(generateRRsetFromIterator,
-                                    &iterator, _1)));
+    return (load(zone_name, string(),
+                 boost::bind(generateRRsetFromIterator,
+                             &iterator, _1)));
 }
 
 const std::string
 InMemoryClient::getFileName(const isc::dns::Name& zone_name) const {
     FileNameNode* node(NULL);
-    FileNameTree::Result result = impl_->file_name_tree_->find(zone_name,
-                                                               &node);
+    FileNameTree::Result result = file_name_tree_->find(zone_name, &node);
     if (result == FileNameTree::EXACTMATCH) {
         return (*node->getData());
     } else {
@@ -394,8 +350,7 @@ result::Result
 InMemoryClient::add(const isc::dns::Name& zone_name,
                     const ConstRRsetPtr& rrset)
 {
-    const ZoneTable::FindResult result =
-        impl_->zone_table_->findZone(zone_name);
+    const ZoneTable::FindResult result = zone_table_->findZone(zone_name);
     if (result.code != result::SUCCESS) {
         isc_throw(DataSourceError, "No such zone: " + zone_name.toText());
     }
@@ -403,8 +358,7 @@ InMemoryClient::add(const isc::dns::Name& zone_name,
     const ConstRRsetPtr sig_rrset =
         rrset ? rrset->getRRsig() : ConstRRsetPtr();
 
-    ZoneDataUpdater updater(impl_->mem_sgmt_, impl_->rrclass_,
-                            zone_name, *result.zone_data);
+    ZoneDataUpdater updater(mem_sgmt_, rrclass_, zone_name, *result.zone_data);
     updater.add(rrset, sig_rrset);
 
     // add() doesn't allow duplicate add, so we always return SUCCESS.
@@ -525,7 +479,7 @@ public:
 
 ZoneIteratorPtr
 InMemoryClient::getIterator(const Name& name, bool separate_rrs) const {
-    ZoneTable::FindResult result(impl_->zone_table_->findZone(name));
+    ZoneTable::FindResult result(zone_table_->findZone(name));
     if (result.code != result::SUCCESS) {
         isc_throw(DataSourceError, "No such zone: " + name.toText());
     }
