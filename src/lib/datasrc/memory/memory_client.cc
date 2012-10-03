@@ -23,6 +23,7 @@
 #include <datasrc/memory/segment_object_holder.h>
 #include <datasrc/memory/treenode_rrset.h>
 #include <datasrc/memory/zone_finder.h>
+#include <datasrc/memory/zone_data_updater.h>
 
 #include <util/memory_segment_local.h>
 
@@ -119,358 +120,6 @@ public:
     // loaded from another data source.
     result::Result load(const Name& zone_name, const string& filename,
                         boost::function<void(LoadCallback)> rrset_installer);
-
-    // Add the necessary magic for any wildcard contained in 'name'
-    // (including itself) to be found in the zone.
-    //
-    // In order for wildcard matching to work correctly in the zone finder,
-    // we must ensure that a node for the wildcarding level exists in the
-    // backend ZoneTree.
-    // E.g. if the wildcard name is "*.sub.example." then we must ensure
-    // that "sub.example." exists and is marked as a wildcard level.
-    // Note: the "wildcarding level" is for the parent name of the wildcard
-    // name (such as "sub.example.").
-    //
-    // We also perform the same trick for empty wild card names possibly
-    // contained in 'name' (e.g., '*.foo.example' in 'bar.*.foo.example').
-    void addWildcards(const Name& zone_name, ZoneData& zone_data,
-                      const Name& name)
-    {
-        Name wname(name);
-        const unsigned int labels(wname.getLabelCount());
-        const unsigned int origin_labels(zone_name.getLabelCount());
-        for (unsigned int l = labels;
-             l > origin_labels;
-             --l, wname = wname.split(1)) {
-            if (wname.isWildcard()) {
-                LOG_DEBUG(logger, DBG_TRACE_DATA,
-                          DATASRC_MEMORY_MEM_ADD_WILDCARD).arg(name);
-
-                // Ensure a separate level exists for the "wildcarding" name,
-                // and mark the node as "wild".
-                ZoneNode* node;
-                zone_data.insertName(mem_sgmt_, wname.split(1), &node);
-                node->setFlag(ZoneData::WILDCARD_NODE);
-
-                // Ensure a separate level exists for the wildcard name.
-                // Note: for 'name' itself we do this later anyway, but the
-                // overhead should be marginal because wildcard names should
-                // be rare.
-                zone_data.insertName(mem_sgmt_, wname, &node);
-            }
-        }
-    }
-
-    /*
-     * Does some checks in context of the data that are already in the zone.
-     * Currently checks for forbidden combinations of RRsets in the same
-     * domain (CNAME+anything, DNAME+NS).
-     *
-     * If such condition is found, it throws AddError.
-     */
-    void contextCheck(const Name& zone_name, const AbstractRRset& rrset,
-                      const RdataSet* set) const
-    {
-        // Ensure CNAME and other type of RR don't coexist for the same
-        // owner name except with NSEC, which is the only RR that can coexist
-        // with CNAME (and also RRSIG, which is handled separately)
-        if (rrset.getType() == RRType::CNAME()) {
-            for (const RdataSet* sp = set; sp != NULL; sp = sp->getNext()) {
-                if (sp->type != RRType::NSEC()) {
-                    LOG_ERROR(logger, DATASRC_MEMORY_MEM_CNAME_TO_NONEMPTY).
-                        arg(rrset.getName());
-                    isc_throw(AddError, "CNAME can't be added with "
-                              << sp->type << " RRType for "
-                              << rrset.getName());
-                }
-            }
-        } else if ((rrset.getType() != RRType::NSEC()) &&
-                   (RdataSet::find(set, RRType::CNAME()) != NULL)) {
-            LOG_ERROR(logger,
-                      DATASRC_MEMORY_MEM_CNAME_COEXIST).arg(rrset.getName());
-            isc_throw(AddError, "CNAME and " << rrset.getType() <<
-                      " can't coexist for " << rrset.getName());
-        }
-
-        /*
-         * Similar with DNAME, but it must not coexist only with NS and only in
-         * non-apex domains.
-         * RFC 2672 section 3 mentions that it is implied from it and RFC 2181
-         */
-        if (rrset.getName() != zone_name &&
-            // Adding DNAME, NS already there
-            ((rrset.getType() == RRType::DNAME() &&
-              RdataSet::find(set, RRType::NS()) != NULL) ||
-            // Adding NS, DNAME already there
-            (rrset.getType() == RRType::NS() &&
-             RdataSet::find(set, RRType::DNAME()) != NULL)))
-        {
-            LOG_ERROR(logger, DATASRC_MEMORY_MEM_DNAME_NS).arg(rrset.getName());
-            isc_throw(AddError, "DNAME can't coexist with NS in non-apex "
-                "domain " << rrset.getName());
-        }
-    }
-
-    // Validate rrset before adding it to the zone.  If something is wrong
-    // it throws an exception.  It doesn't modify the zone, and provides
-    // the strong exception guarantee.
-    void addValidation(const Name& zone_name, const ConstRRsetPtr rrset) {
-        if (!rrset) {
-            isc_throw(NullRRset, "The rrset provided is NULL");
-        }
-        if (rrset->getRdataCount() == 0) {
-            isc_throw(AddError, "The rrset provided is empty: " <<
-                      rrset->getName() << "/" << rrset->getType());
-        }
-        // Check for singleton RRs. It should probably handled at a different
-        // layer in future.
-        if ((rrset->getType() == RRType::CNAME() ||
-            rrset->getType() == RRType::DNAME()) &&
-            rrset->getRdataCount() > 1)
-        {
-            // XXX: this is not only for CNAME or DNAME. We should generalize
-            // this code for all other "singleton RR types" (such as SOA) in a
-            // separate task.
-            LOG_ERROR(logger,
-                      DATASRC_MEMORY_MEM_SINGLETON).arg(rrset->getName()).
-                arg(rrset->getType());
-            isc_throw(AddError, "multiple RRs of singleton type for "
-                      << rrset->getName());
-        }
-        // NSEC3/NSEC3PARAM is not a "singleton" per protocol, but this
-        // implementation requests it be so at the moment.
-        if ((rrset->getType() == RRType::NSEC3() ||
-             rrset->getType() == RRType::NSEC3PARAM()) &&
-            rrset->getRdataCount() > 1) {
-            isc_throw(AddError, "Multiple NSEC3/NSEC3PARAM RDATA is given for "
-                      << rrset->getName() << " which isn't supported");
-        }
-
-        // For RRSIGs, check consistency of the type covered.
-        // We know the RRset isn't empty, so the following check is safe.
-        if (rrset->getType() == RRType::RRSIG()) {
-            RdataIteratorPtr rit = rrset->getRdataIterator();
-            const RRType covered = dynamic_cast<const generic::RRSIG&>(
-                rit->getCurrent()).typeCovered();
-            for (rit->next(); !rit->isLast(); rit->next()) {
-                if (dynamic_cast<const generic::RRSIG&>(
-                        rit->getCurrent()).typeCovered() != covered) {
-                    isc_throw(AddError, "RRSIG contains mixed covered types: "
-                              << rrset->toText());
-                }
-            }
-        }
-
-        const NameComparisonResult compare =
-            zone_name.compare(rrset->getName());
-        if (compare.getRelation() != NameComparisonResult::SUPERDOMAIN &&
-            compare.getRelation() != NameComparisonResult::EQUAL)
-        {
-            LOG_ERROR(logger,
-                      DATASRC_MEMORY_MEM_OUT_OF_ZONE).arg(rrset->getName()).
-                arg(zone_name);
-            isc_throw(OutOfZone, "The name " << rrset->getName() <<
-                " is not contained in zone " << zone_name);
-        }
-
-        // Some RR types do not really work well with a wildcard.
-        // Even though the protocol specifically doesn't completely ban such
-        // usage, we refuse to load a zone containing such RR in order to
-        // keep the lookup logic simpler and more predictable.
-        // See RFC4592 and (for DNAME) RFC6672 for more technical background.
-        // Note also that BIND 9 refuses NS at a wildcard, so in that sense
-        // we simply provide compatible behavior.
-        if (rrset->getName().isWildcard()) {
-            if (rrset->getType() == RRType::NS()) {
-                LOG_ERROR(logger, DATASRC_MEMORY_MEM_WILDCARD_NS).
-                    arg(rrset->getName());
-                isc_throw(AddError, "Invalid NS owner name (wildcard): " <<
-                          rrset->getName());
-            }
-            if (rrset->getType() == RRType::DNAME()) {
-                LOG_ERROR(logger, DATASRC_MEMORY_MEM_WILDCARD_DNAME).
-                    arg(rrset->getName());
-                isc_throw(AddError, "Invalid DNAME owner name (wildcard): " <<
-                          rrset->getName());
-            }
-        }
-
-        // Owner names of NSEC3 have special format as defined in RFC5155,
-        // and cannot be a wildcard name or must be one label longer than
-        // the zone origin.  While the RFC doesn't prohibit other forms of
-        // names, no sane zone would have such names for NSEC3.
-        // BIND 9 also refuses NSEC3 at wildcard.
-        if (rrset->getType() == RRType::NSEC3() &&
-            (rrset->getName().isWildcard() ||
-             rrset->getName().getLabelCount() !=
-             zone_name.getLabelCount() + 1)) {
-            LOG_ERROR(logger, DATASRC_MEMORY_BAD_NSEC3_NAME).
-                arg(rrset->getName());
-            isc_throw(AddError, "Invalid NSEC3 owner name: " <<
-                      rrset->getName());
-        }
-    }
-
-    void addNSEC3(const ConstRRsetPtr rrset,
-                  const ConstRRsetPtr rrsig,
-                  ZoneData& zone_data)
-    {
-        // We know rrset has exactly one RDATA
-        const generic::NSEC3& nsec3_rdata =
-            dynamic_cast<const generic::NSEC3&>(
-                rrset->getRdataIterator()->getCurrent());
-
-        NSEC3Data* nsec3_data = zone_data.getNSEC3Data();
-        if (nsec3_data == NULL) {
-            nsec3_data = NSEC3Data::create(mem_sgmt_, nsec3_rdata);
-            zone_data.setNSEC3Data(nsec3_data);
-            zone_data.setSigned(true);
-        } else {
-            size_t salt_len = nsec3_data->getSaltLen();
-            const uint8_t* salt_data = nsec3_data->getSaltData();
-            const vector<uint8_t>& salt_data_2 = nsec3_rdata.getSalt();
-
-            if ((nsec3_rdata.getHashalg() != nsec3_data->hashalg) ||
-                (nsec3_rdata.getIterations() != nsec3_data->iterations) ||
-                (salt_data_2.size() != salt_len)) {
-                isc_throw(AddError,
-                          "NSEC3 with inconsistent parameters: " <<
-                          rrset->toText());
-            }
-            if ((salt_len > 0) &&
-                (std::memcmp(&salt_data_2[0], salt_data, salt_len) != 0)) {
-                isc_throw(AddError,
-                          "NSEC3 with inconsistent parameters: " <<
-                          rrset->toText());
-            }
-        }
-
-        ZoneNode* node;
-        nsec3_data->insertName(mem_sgmt_, rrset->getName(), &node);
-
-        RdataEncoder encoder;
-        RdataSet* set = RdataSet::create(mem_sgmt_, encoder, rrset, rrsig);
-        RdataSet* old_set = node->setData(set);
-        if (old_set != NULL) {
-            RdataSet::destroy(mem_sgmt_, rrclass_, old_set);
-        }
-    }
-
-    void addRdataSet(const Name& zone_name, ZoneData& zone_data,
-                     const ConstRRsetPtr rrset, const ConstRRsetPtr rrsig)
-    {
-        if (rrset->getType() == RRType::NSEC3()) {
-            addNSEC3(rrset, rrsig, zone_data);
-        } else {
-            ZoneNode* node;
-            zone_data.insertName(mem_sgmt_, rrset->getName(), &node);
-
-            RdataSet* rdataset_head = node->getData();
-
-            // Checks related to the surrounding data.
-            // Note: when the check fails and the exception is thrown,
-            // it may break strong exception guarantee.  At the moment
-            // we prefer code simplicity and don't bother to introduce
-            // complicated recovery code.
-            contextCheck(zone_name, *rrset, rdataset_head);
-
-            if (RdataSet::find(rdataset_head, rrset->getType()) != NULL) {
-                isc_throw(AddError,
-                          "RRset of the type already exists: "
-                          << rrset->getName() << " (type: "
-                          << rrset->getType() << ")");
-            }
-
-            RdataEncoder encoder;
-            RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder, rrset,
-                                                  rrsig);
-            rdataset->next = rdataset_head;
-            node->setData(rdataset);
-
-            // Ok, we just put it in
-
-            // If this RRset creates a zone cut at this node, mark the
-            // node indicating the need for callback in find().
-            if (rrset->getType() == RRType::NS() &&
-                rrset->getName() != zone_name) {
-                node->setFlag(ZoneNode::FLAG_CALLBACK);
-                // If it is DNAME, we have a callback as well here
-            } else if (rrset->getType() == RRType::DNAME()) {
-                node->setFlag(ZoneNode::FLAG_CALLBACK);
-            }
-
-            // If we've added NSEC3PARAM at zone origin, set up NSEC3
-            // specific data or check consistency with already set up
-            // parameters.
-            if (rrset->getType() == RRType::NSEC3PARAM() &&
-                rrset->getName() == zone_name) {
-                // We know rrset has exactly one RDATA
-                const generic::NSEC3PARAM& param =
-                    dynamic_cast<const generic::NSEC3PARAM&>
-                      (rrset->getRdataIterator()->getCurrent());
-
-                NSEC3Data* nsec3_data = zone_data.getNSEC3Data();
-                if (nsec3_data == NULL) {
-                    nsec3_data = NSEC3Data::create(mem_sgmt_, param);
-                    zone_data.setNSEC3Data(nsec3_data);
-                    zone_data.setSigned(true);
-                } else {
-                    size_t salt_len = nsec3_data->getSaltLen();
-                    const uint8_t* salt_data = nsec3_data->getSaltData();
-                    const vector<uint8_t>& salt_data_2 = param.getSalt();
-
-                    if ((param.getHashalg() != nsec3_data->hashalg) ||
-                        (param.getIterations() != nsec3_data->iterations) ||
-                        (salt_data_2.size() != salt_len)) {
-                        isc_throw(AddError,
-                                  "NSEC3PARAM with inconsistent parameters: "
-                                  << rrset->toText());
-                    }
-
-                    if ((salt_len > 0) &&
-                        (std::memcmp(&salt_data_2[0],
-                                     salt_data, salt_len) != 0)) {
-                        isc_throw(AddError,
-                                  "NSEC3PARAM with inconsistent parameters: "
-                                  << rrset->toText());
-                    }
-                }
-            } else if (rrset->getType() == RRType::NSEC()) {
-                // If it is NSEC signed zone, we mark the zone as signed
-                // (conceptually "signed" is a broader notion but our current
-                // zone finder implementation regards "signed" as "NSEC
-                // signed")
-                zone_data.setSigned(true);
-            }
-        }
-    }
-
-    // Implementation of InMemoryClient::add()
-    void add(const ConstRRsetPtr& rrset, const ConstRRsetPtr& sig_rrset,
-             const Name& zone_name, ZoneData& zone_data)
-    {
-        // Sanitize input.  This will cause an exception to be thrown
-        // if the input RRset is empty.
-        addValidation(zone_name, rrset);
-        if (sig_rrset) {
-            addValidation(zone_name, sig_rrset);
-        }
-
-        // OK, can add the RRset.
-        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEMORY_MEM_ADD_RRSET).
-            arg(rrset->getName()).arg(rrset->getType()).arg(zone_name);
-
-        // Add wildcards possibly contained in the owner name to the domain
-        // tree.  This can only happen for the normal (non-NSEC3) tree.
-        // Note: this can throw an exception, breaking strong exception
-        // guarantee.  (see also the note for the call to contextCheck()
-        // above).
-        if (rrset->getType() != RRType::NSEC3()) {
-            addWildcards(zone_name, zone_data, rrset->getName());
-        }
-
-        addRdataSet(zone_name, zone_data, rrset, sig_rrset);
-    }
 };
 
 // A helper internal class for load().  make it non-copyable to avoid
@@ -497,7 +146,9 @@ class InMemoryClient::Loader : boost::noncopyable {
 public:
     Loader(InMemoryClientImpl* client_impl, const Name& zone_name,
            ZoneData& zone_data) :
-        client_impl_(client_impl), zone_name_(zone_name), zone_data_(zone_data)
+        client_impl_(client_impl), zone_name_(zone_name), zone_data_(zone_data),
+        updater_(client_impl->mem_sgmt_, client_impl->rrclass_,
+                 zone_name, zone_data)
     {}
     void addFromLoad(const ConstRRsetPtr& rrset) {
         // If we see a new name, flush the temporary holders, adding the
@@ -515,7 +166,7 @@ public:
         const RRType& rrtype = is_rrsig ?
             getCoveredType(rrset) : rrset->getType();
         if (!node_rrsets.insert(NodeRRsetsVal(rrtype, rrset)).second) {
-            isc_throw(AddError,
+            isc_throw(ZoneDataUpdater::AddError,
                       "Duplicate add of the same type of"
                       << (is_rrsig ? " RRSIG" : "") << " RRset: "
                       << rrset->getName() << "/" << rrtype);
@@ -532,14 +183,15 @@ public:
                 sig_rrset = sig_it->second;
                 node_rrsigsets_.erase(sig_it);
             }
-            client_impl_->add(val.second, sig_rrset, zone_name_, zone_data_);
+            updater_.add(val.second, sig_rrset);
         }
 
         // Right now, we don't accept RRSIG without covered RRsets (this
         // should eventually allowed, but to do so we'll need to update the
         // finder).
         if (!node_rrsigsets_.empty()) {
-            isc_throw(AddError, "RRSIG is added without covered RRset for "
+            isc_throw(ZoneDataUpdater::AddError,
+                      "RRSIG is added without covered RRset for "
                       << getCurrentName());
         }
 
@@ -575,6 +227,7 @@ private:
     ZoneData& zone_data_;
     NodeRRsets node_rrsets_;
     NodeRRsets node_rrsigsets_;
+    ZoneDataUpdater updater_;
 };
 
 result::Result
@@ -605,7 +258,7 @@ InMemoryClient::InMemoryClientImpl::load(
     // an SOA RR. This condition should be avoided, and hence load()
     // should throw when an empty zone is loaded.
     if (RdataSet::find(set, RRType::SOA()) == NULL) {
-        isc_throw(EmptyZone,
+        isc_throw(ZoneDataUpdater::EmptyZone,
                   "Won't create an empty zone for: " << zone_name);
     }
 
@@ -754,7 +407,10 @@ InMemoryClient::add(const isc::dns::Name& zone_name,
 
     const ConstRRsetPtr sig_rrset =
         rrset ? rrset->getRRsig() : ConstRRsetPtr();
-    impl_->add(rrset, sig_rrset, zone_name, *result.zone_data);
+
+    ZoneDataUpdater updater(impl_->mem_sgmt_, impl_->rrclass_,
+                            zone_name, *result.zone_data);
+    updater.add(rrset, sig_rrset);
 
     // add() doesn't allow duplicate add, so we always return SUCCESS.
     return (result::SUCCESS);
