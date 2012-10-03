@@ -27,35 +27,37 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
-/// \brief Zone Table Header Class
+/// \brief Memory-management independent entry point that contains a
+/// pointer to a zone table in memory.
+///
+/// An instance of this type lives inside a ZoneTableSegment
+/// implementation. It contains an offset pointer to the zone table (a
+/// map from domain names to zone locators) in memory.
 struct ZoneTableHeader {
     boost::interprocess::offset_ptr<ZoneTable> table;
 };
 
-/// \brief Zone Table Segment Class
+/// \brief Manages a ZoneTableHeader, an entry point into a table of
+/// zones
 ///
 /// This class specifies an interface for derived implementations which
 /// return a pointer to an object of type ZoneTableHeader, an entry
-/// point of some memory image regardless of the underlying memory
-/// management implementation.
+/// point into a table of zones regardless of the underlying memory
+/// management implementation. Derived classes would implement the
+/// interface for specific memory-implementation behavior.
 class ZoneTableSegment {
 public:
     /// \brief Destructor
     virtual ~ZoneTableSegment() {}
 
-    /// \brief Return a ZoneTableHeader for the zone table segment.
+    /// \brief Return the ZoneTableHeader for the zone table segment.
     ///
-    /// Returns a ZoneTableHeader that contains a pointer to the zone
-    /// table data in memory.
-    ///
-    /// \return Returns a ZoneTableHeader for this zone table segment.
+    /// \return Returns the ZoneTableHeader for this zone table segment.
     virtual ZoneTableHeader* getHeader() = 0;
 
     /// \brief Return the MemorySegment for the zone table segment.
     ///
-    /// Returns the MemorySegment used in this zone table segment.
-    ///
-    /// \return Returns a ZoneTableHeader for this zone table segment.
+    /// \return Returns the ZoneTableHeader for this zone table segment.
     virtual isc::util::MemorySegment& getMemorySegment() = 0;
 
     /// \brief Create a subclass depending on the memory segment model
