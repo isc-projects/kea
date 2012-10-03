@@ -16,6 +16,9 @@
 #include <datasrc/zone.h>
 
 #include <dns/rdataclass.h>
+#include <dns/nsec3hash.h>
+
+#include <boost/scoped_ptr.hpp>
 
 using namespace isc::dns;
 using namespace isc::dns::rdata;
@@ -243,20 +246,13 @@ ZoneDataUpdater::setupNSEC3(const ConstRRsetPtr rrset) {
         zone_data_.setNSEC3Data(nsec3_data);
         zone_data_.setSigned(true);
     } else {
-        size_t salt_len = nsec3_data->getSaltLen();
-        const uint8_t* salt_data = nsec3_data->getSaltData();
-        const std::vector<uint8_t>& salt_data_2 = nsec3_rdata.getSalt();
+        const boost::scoped_ptr<NSEC3Hash> hash
+            (NSEC3Hash::create(nsec3_data->hashalg,
+                               nsec3_data->iterations,
+                               nsec3_data->getSaltData(),
+                               nsec3_data->getSaltLen()));
 
-        if ((nsec3_rdata.getHashalg() != nsec3_data->hashalg) ||
-            (nsec3_rdata.getIterations() != nsec3_data->iterations) ||
-            (salt_data_2.size() != salt_len)) {
-            isc_throw(AddError,
-                      rrset->getType() << " with inconsistent parameters: "
-                      << rrset->toText());
-        }
-
-        if ((salt_len > 0) &&
-            (std::memcmp(&salt_data_2[0], salt_data, salt_len) != 0)) {
+        if (!hash->match(nsec3_rdata)) {
             isc_throw(AddError,
                       rrset->getType() << " with inconsistent parameters: "
                       << rrset->toText());
