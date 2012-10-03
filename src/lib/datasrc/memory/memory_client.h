@@ -22,6 +22,8 @@
 #include <datasrc/memory/zone_table.h>
 #include <datasrc/memory/zone_data.h>
 
+#include <boost/function.hpp>
+
 #include <string>
 
 namespace isc {
@@ -204,11 +206,35 @@ public:
     getJournalReader(const isc::dns::Name& zone, uint32_t begin_serial,
                      uint32_t end_serial) const;
 
+    // A functor type used for loading.
+    typedef boost::function<void(isc::dns::ConstRRsetPtr)> LoadCallback;
+
 private:
-    // TODO: Do we still need the PImpl if nobody should manipulate this class
-    // directly any more (it should be handled through DataSourceClient)?
-    class InMemoryClientImpl;
-    InMemoryClientImpl* impl_;
+    // Some type aliases
+    typedef DomainTree<std::string> FileNameTree;
+    typedef DomainTreeNode<std::string> FileNameNode;
+
+    // Common process for zone load.
+    // rrset_installer is a functor that takes another functor as an argument,
+    // and expected to call the latter for each RRset of the zone.  How the
+    // sequence of the RRsets is generated depends on the internal
+    // details  of the loader: either from a textual master file or from
+    // another data source.
+    // filename is the file name of the master file or empty if the zone is
+    // loaded from another data source.
+    result::Result load(const isc::dns::Name& zone_name,
+                        const std::string& filename,
+                        boost::function<void(LoadCallback)> rrset_installer);
+
+    util::MemorySegment& mem_sgmt_;
+    const isc::dns::RRClass rrclass_;
+    unsigned int zone_count_;
+    ZoneTable* zone_table_;
+    FileNameTree* file_name_tree_;
+
+    // A helper internal class used by the memory client, used for
+    // deleting filenames stored in an internal tree.
+    class FileNameDeleter;
 
     // A helper internal class used by load().  It maintains some intermediate
     // states while loading RRs of the zone.
