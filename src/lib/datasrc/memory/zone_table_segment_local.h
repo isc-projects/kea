@@ -45,14 +45,10 @@ public:
 
     /// \brief Return the ZoneTableHeader for the local zone table
     /// segment implementation.
-    ///
-    /// NOTE: This method will never return \c NULL.
-    virtual ZoneTableHeader* getHeader();
+    virtual ZoneTableHeader& getHeader();
 
     /// \brief const version of \c getHeader().
-    ///
-    /// NOTE: This method will never return \c NULL.
-    virtual const ZoneTableHeader* getHeader() const;
+    virtual const ZoneTableHeader& getHeader() const;
 
     /// \brief Return the MemorySegment for the local zone table segment
     /// implementation (a MemorySegmentLocal instance).
