@@ -34,6 +34,18 @@ namespace memory {
 /// implementation. It contains an offset pointer to the zone table (a
 /// map from domain names to zone locators) in memory.
 struct ZoneTableHeader {
+public:
+    /// \brief Returns a pointer to the underlying zone table.
+    ZoneTable* getTable() {
+        return (table.get());
+    }
+
+    /// \brief const version of getTable().
+    const ZoneTable* getTable() const {
+        return (getTable());
+    }
+
+private:
     boost::interprocess::offset_ptr<ZoneTable> table;
 };
 
