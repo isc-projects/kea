@@ -43,7 +43,7 @@ if test "$bind10_inc_path" = "no"; then
    done
 fi
 CPPFLAGS_SAVES="$CPPFLAGS"
-if test "${bind10_inc_path}" ; then
+if test "${bind10_inc_path}" != "no"; then
    BIND10_CPPFLAGS="-I${bind10_inc_path}"
    CPPFLAGS="$CPPFLAGS $BIND10_CPPFLAGS"
 fi
