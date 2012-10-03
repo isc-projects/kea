@@ -20,6 +20,9 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
+// After more methods' definitions are added here, it would be a good
+// idea to move getHeader() and getMemorySegment() definitions to the
+// header file.
 ZoneTableHeader&
 ZoneTableSegmentLocal::getHeader() {
      return (header_);
