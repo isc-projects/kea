@@ -229,12 +229,12 @@ ZoneDataUpdater::validate(const isc::dns::ConstRRsetPtr rrset) const {
     }
 }
 
+template <typename T>
 void
-ZoneDataUpdater::addNSEC3(const ConstRRsetPtr rrset,
-                          const ConstRRsetPtr rrsig) {
+ZoneDataUpdater::setupNSEC3(const ConstRRsetPtr rrset) {
     // We know rrset has exactly one RDATA
-    const generic::NSEC3& nsec3_rdata =
-        dynamic_cast<const generic::NSEC3&>(
+    const T& nsec3_rdata =
+        dynamic_cast<const T&>(
             rrset->getRdataIterator()->getCurrent());
 
     NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
@@ -251,17 +251,25 @@ ZoneDataUpdater::addNSEC3(const ConstRRsetPtr rrset,
             (nsec3_rdata.getIterations() != nsec3_data->iterations) ||
             (salt_data_2.size() != salt_len)) {
             isc_throw(AddError,
-                      "NSEC3 with inconsistent parameters: " <<
-                      rrset->toText());
+                      rrset->getType() << " with inconsistent parameters: "
+                      << rrset->toText());
         }
 
         if ((salt_len > 0) &&
             (std::memcmp(&salt_data_2[0], salt_data, salt_len) != 0)) {
             isc_throw(AddError,
-                      "NSEC3 with inconsistent parameters: " <<
-                      rrset->toText());
+                      rrset->getType() << " with inconsistent parameters: "
+                      << rrset->toText());
         }
     }
+}
+
+void
+ZoneDataUpdater::addNSEC3(const ConstRRsetPtr rrset,
+                          const ConstRRsetPtr rrsig) {
+    setupNSEC3<generic::NSEC3>(rrset);
+
+    NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
 
     ZoneNode* node;
     nsec3_data->insertName(mem_sgmt_, rrset->getName(), &node);
@@ -336,37 +344,7 @@ ZoneDataUpdater::addRdataSet(const ConstRRsetPtr rrset,
         // parameters.
         if (rrset->getType() == RRType::NSEC3PARAM() &&
             rrset->getName() == zone_name_) {
-            // We know rrset has exactly one RDATA
-            const generic::NSEC3PARAM& param =
-                dynamic_cast<const generic::NSEC3PARAM&>(
-                    rrset->getRdataIterator()->getCurrent());
-
-            NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
-            if (nsec3_data == NULL) {
-                nsec3_data = NSEC3Data::create(mem_sgmt_, param);
-                zone_data_.setNSEC3Data(nsec3_data);
-                zone_data_.setSigned(true);
-            } else {
-                size_t salt_len = nsec3_data->getSaltLen();
-                const uint8_t* salt_data = nsec3_data->getSaltData();
-                const std::vector<uint8_t>& salt_data_2 = param.getSalt();
-
-                if ((param.getHashalg() != nsec3_data->hashalg) ||
-                    (param.getIterations() != nsec3_data->iterations) ||
-                    (salt_data_2.size() != salt_len)) {
-                    isc_throw(AddError,
-                              "NSEC3PARAM with inconsistent parameters: "
-                              << rrset->toText());
-                }
-
-                if ((salt_len > 0) &&
-                    (std::memcmp(&salt_data_2[0],
-                                 salt_data, salt_len) != 0)) {
-                    isc_throw(AddError,
-                              "NSEC3PARAM with inconsistent parameters: "
-                              << rrset->toText());
-                }
-            }
+            setupNSEC3<generic::NSEC3PARAM>(rrset);
         } else if (rrset->getType() == RRType::NSEC()) {
             // If it is NSEC signed zone, we mark the zone as signed
             // (conceptually "signed" is a broader notion but our
