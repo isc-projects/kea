@@ -25,6 +25,11 @@ ZoneTableSegmentLocal::getHeader() {
      return (&header_);
 }
 
+const ZoneTableHeader*
+ZoneTableSegmentLocal::getHeader() const {
+     return (&header_);
+}
+
 MemorySegment&
 ZoneTableSegmentLocal::getMemorySegment() {
      return (mem_sgmt_);
