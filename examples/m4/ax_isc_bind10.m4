@@ -26,8 +26,6 @@ AC_REQUIRE([AX_BOOST_INCLUDE])
 AC_LANG_SAVE
 AC_LANG([C++])
 
-AX_BOOST_INCLUDE
-
 # Check for BIND10 common headers
 
 AC_ARG_WITH(bind10-include,
