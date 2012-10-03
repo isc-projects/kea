@@ -67,14 +67,14 @@ Mutex::Mutex() :
         case ENOMEM:
             throw std::bad_alloc();
         default:
-            isc_throw(isc::InvalidOperation, strerror(result));
+            isc_throw(isc::InvalidOperation, std::strerror(result));
     }
     Deinitializer deinitializer(attributes);
     // TODO: Distinguish if debug mode is enabled in compilation.
     // If so, it should be PTHREAD_MUTEX_NORMAL or NULL
     result = pthread_mutexattr_settype(&attributes, PTHREAD_MUTEX_ERRORCHECK);
     if (result != 0) {
-        isc_throw(isc::InvalidOperation, strerror(result));
+        isc_throw(isc::InvalidOperation, std::strerror(result));
     }
     auto_ptr<Impl> impl(new Impl);
     result = pthread_mutex_init(&impl->mutex, &attributes);
@@ -86,7 +86,7 @@ Mutex::Mutex() :
         case EAGAIN:
             throw std::bad_alloc();
         default:
-            isc_throw(isc::InvalidOperation, strerror(result));
+            isc_throw(isc::InvalidOperation, std::strerror(result));
     }
 }
 
@@ -114,7 +114,7 @@ Mutex::lock() {
     assert(impl_ != NULL);
     const int result = pthread_mutex_lock(&impl_->mutex);
     if (result != 0) {
-        isc_throw(isc::InvalidOperation, strerror(result));
+        isc_throw(isc::InvalidOperation, std::strerror(result));
     }
     ++impl_->locked_count; // Only in debug mode
 }

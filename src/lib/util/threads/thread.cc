@@ -115,7 +115,7 @@ Thread::Thread(const boost::function<void ()>& main) :
         case EAGAIN:
             throw std::bad_alloc();
         default: // Other errors. They should not happen.
-            isc_throw(isc::InvalidOperation, strerror(result));
+            isc_throw(isc::InvalidOperation, std::strerror(result));
     }
 }
 
@@ -139,7 +139,7 @@ Thread::wait() {
 
     const int result = pthread_join(impl_->tid_, NULL);
     if (result != 0) {
-        isc_throw(isc::InvalidOperation, strerror(result));
+        isc_throw(isc::InvalidOperation, std::strerror(result));
     }
 
     // Was there an exception in the thread?
