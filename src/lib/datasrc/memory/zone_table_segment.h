@@ -86,7 +86,7 @@ public:
 
     /// \brief Return the MemorySegment for the zone table segment.
     ///
-    /// \return Returns the ZoneTableHeader for this zone table segment.
+    /// \return Returns the MemorySegment for this zone table segment.
     virtual isc::util::MemorySegment& getMemorySegment() = 0;
 
     /// \brief Create an instance depending on the memory segment model
