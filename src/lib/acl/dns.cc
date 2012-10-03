@@ -106,10 +106,10 @@ internal::RequestCheckCreator::create(const string& name,
 
 RequestLoader&
 getRequestLoader() {
-    static RequestLoader* loader(NULL);
-    if (loader == NULL) {
+    static auto_ptr<RequestLoader> loader(NULL);
+    if (loader.get() == NULL) {
         // Creator registration may throw, so we first store the new loader
-        // in an auto pointer in order to provide the strong exception
+        // in a second auto pointer in order to provide the strong exception
         // guarantee.
         auto_ptr<RequestLoader> loader_ptr =
             auto_ptr<RequestLoader>(new RequestLoader(REJECT));
@@ -129,7 +129,7 @@ getRequestLoader() {
                 new LogicCreator<AllOfSpec, RequestContext>("ALL")));
 
         // From this point there shouldn't be any exception thrown
-        loader = loader_ptr.release();
+        loader.reset(loader_ptr.release());
     }
 
     return (*loader);
