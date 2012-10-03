@@ -23,6 +23,7 @@
 #include "../../tests/faked_nsec3.h"
 
 #include <datasrc/memory/zone_finder.h>
+#include <datasrc/memory/zone_data_updater.h>
 #include <datasrc/memory/rdata_serialization.h>
 #include <datasrc/data_source.h>
 #include <testutils/dnsmessage_test.h>
@@ -105,7 +106,8 @@ public:
         class_(RRClass::IN()),
         origin_("example.org"),
         zone_data_(ZoneData::create(mem_sgmt_, origin_)),
-        zone_finder_(*zone_data_, class_)
+        zone_finder_(*zone_data_, class_),
+        updater_(mem_sgmt_, class_, origin_, *zone_data_)
     {
         // Build test RRsets.  Below, we construct an RRset for
         // each textual RR(s) of zone_data, and assign it to the corresponding
@@ -190,130 +192,9 @@ public:
         ZoneData::destroy(mem_sgmt_, zone_data_, RRClass::IN());
     }
 
-    // NSEC3-specific call for 'loading' data
-    void addZoneDataNSEC3(const ConstRRsetPtr rrset) {
-        assert(rrset->getType() == RRType::NSEC3());
-
-        const generic::NSEC3& nsec3_rdata =
-             dynamic_cast<const generic::NSEC3&>(
-                  rrset->getRdataIterator()->getCurrent());
-
-        NSEC3Data* nsec3_data = zone_data_->getNSEC3Data();
-        if (nsec3_data == NULL) {
-             nsec3_data = NSEC3Data::create(mem_sgmt_, nsec3_rdata);
-             zone_data_->setNSEC3Data(nsec3_data);
-        } else {
-             const size_t salt_len = nsec3_data->getSaltLen();
-             const uint8_t* salt_data = nsec3_data->getSaltData();
-             const vector<uint8_t>& salt_data_2 = nsec3_rdata.getSalt();
-
-             if ((nsec3_rdata.getHashalg() != nsec3_data->hashalg) ||
-                 (nsec3_rdata.getIterations() != nsec3_data->iterations) ||
-                 (salt_data_2.size() != salt_len)) {
-                  isc_throw(isc::Unexpected,
-                            "NSEC3 with inconsistent parameters: " <<
-                            rrset->toText());
-             }
-
-             if ((salt_len > 0) &&
-                 (std::memcmp(&salt_data_2[0], salt_data, salt_len) != 0)) {
-                  isc_throw(isc::Unexpected,
-                            "NSEC3 with inconsistent parameters: " <<
-                            rrset->toText());
-             }
-        }
-
-        ZoneNode* node;
-        nsec3_data->insertName(mem_sgmt_, rrset->getName(), &node);
-
-        RdataSet* rdset = RdataSet::create(mem_sgmt_, encoder_,
-                                           rrset, ConstRRsetPtr());
-        RdataSet* old_rdset = node->setData(rdset);
-        if (old_rdset != NULL) {
-             RdataSet::destroy(mem_sgmt_, class_, old_rdset);
-        }
-        zone_data_->setSigned(true);
-    }
-
     // simplified version of 'loading' data
     void addZoneData(const ConstRRsetPtr rrset) {
-        ZoneNode* node = NULL;
-
-        if (rrset->getType() == RRType::NSEC3()) {
-            return (addZoneDataNSEC3(rrset));
-        } else if (rrset->getType() == RRType::NSEC()) {
-            zone_data_->setSigned(true);
-        }
-
-        zone_data_->insertName(mem_sgmt_, rrset->getName(), &node);
-
-        if (rrset->getType() == RRType::NS() &&
-            rrset->getName() != zone_data_->getOriginNode()->getName()) {
-            node->setFlag(DomainTreeNode<RdataSet>::FLAG_CALLBACK);
-        } else if (rrset->getType() == RRType::DNAME()) {
-            node->setFlag(DomainTreeNode<RdataSet>::FLAG_CALLBACK);
-        }
-
-        RdataSet* next_rds = node->getData();
-        RdataSet* rdataset =
-            RdataSet::create(mem_sgmt_, encoder_, rrset, rrset->getRRsig());
-        rdataset->next = next_rds;
-        node->setData(rdataset);
-
-        // find wildcard nodes in name (go through all of them in case there
-        // is a nonterminal one)
-        // Note that this method is pretty much equal to the 'real' loader;
-        // but less efficient
-        Name name(rrset->getName());
-        while (name.getLabelCount() > 1) {
-            if (name.isWildcard()) {
-                ZoneNode* wnode = NULL;
-                // add Wild node
-                zone_data_->insertName(mem_sgmt_, name.split(1), &wnode);
-                wnode->setFlag(ZoneData::WILDCARD_NODE);
-                // add wildcard name itself too
-                zone_data_->insertName(mem_sgmt_, name, &wnode);
-            }
-            name = name.split(1);
-        }
-
-        // If we've added NSEC3PARAM at zone origin, set up NSEC3
-        // specific data or check consistency with already set up
-        // parameters.
-        if (rrset->getType() == RRType::NSEC3PARAM() &&
-            rrset->getName() == origin_) {
-            // We know rrset has exactly one RDATA
-            const generic::NSEC3PARAM& param =
-                dynamic_cast<const generic::NSEC3PARAM&>
-                 (rrset->getRdataIterator()->getCurrent());
-
-            NSEC3Data* nsec3_data = zone_data_->getNSEC3Data();
-            if (nsec3_data == NULL) {
-                nsec3_data = NSEC3Data::create(mem_sgmt_, param);
-                zone_data_->setNSEC3Data(nsec3_data);
-                zone_data_->setSigned(true);
-            } else {
-                size_t salt_len = nsec3_data->getSaltLen();
-                const uint8_t* salt_data = nsec3_data->getSaltData();
-                const vector<uint8_t>& salt_data_2 = param.getSalt();
-
-                if ((param.getHashalg() != nsec3_data->hashalg) ||
-                    (param.getIterations() != nsec3_data->iterations) ||
-                    (salt_data_2.size() != salt_len)) {
-                     isc_throw(isc::Unexpected,
-                               "NSEC3PARAM with inconsistent parameters: "
-                               << rrset->toText());
-                }
-
-                if ((salt_len > 0) &&
-                    (std::memcmp(&salt_data_2[0],
-                                 salt_data, salt_len) != 0)) {
-                     isc_throw(isc::Unexpected,
-                               "NSEC3PARAM with inconsistent parameters: "
-                               << rrset->toText());
-                }
-            }
-        }
+        updater_.add(rrset, rrset->getRRsig());
     }
 
     // Some data to test with
@@ -323,7 +204,7 @@ public:
     MemorySegmentTest mem_sgmt_;
     memory::ZoneData* zone_data_;
     memory::InMemoryZoneFinder zone_finder_;
-    isc::datasrc::memory::RdataEncoder encoder_;
+    ZoneDataUpdater updater_;
 
     // Placeholder for storing RRsets to be checked with rrsetsCheck()
     vector<ConstRRsetPtr> actual_rrsets_;
