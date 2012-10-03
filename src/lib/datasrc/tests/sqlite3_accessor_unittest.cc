@@ -694,6 +694,8 @@ TEST_F(SQLite3Create, lockedtest) {
 
     // should work now that we closed it
     SQLite3Accessor accessor3(SQLITE_NEW_DBFILE, "IN");
+
+    ASSERT_EQ(SQLITE_OK, sqlite3_close(db));
 }
 
 TEST_F(SQLite3AccessorTest, clone) {
