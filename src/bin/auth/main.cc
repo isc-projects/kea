@@ -84,6 +84,16 @@ my_command_handler(const string& command, ConstElementPtr args) {
 }
 
 void
+datasrcConfigHandler(const std::string&,
+                     isc::data::ConstElementPtr config,
+                     const isc::config::ConfigData&)
+{
+    if (config->contains("classes")) {
+        DataSourceConfigurator::reconfigure(config->get("classes"));
+    }
+}
+
+void
 usage() {
     cerr << "Usage:  b10-auth [-v]"
          << endl;
@@ -192,7 +202,9 @@ main(int argc, char* argv[]) {
         auth_server->setTSIGKeyRing(&isc::server_common::keyring);
 
         // Start the data source configuration
-        DataSourceConfigurator::init(config_session, auth_server);
+        DataSourceConfigurator::init(auth_server);
+        config_session->addRemoteConfig("data_sources", datasrcConfigHandler,
+                                        false);
         // HACK: The default is not passed to the handler. This one will
         // get the default (or, current value). Further updates will work
         // the usual way.
@@ -221,7 +233,8 @@ main(int argc, char* argv[]) {
         xfrin_session->disconnect();
     }
 
-    DataSourceConfigurator::cleanup();
+    //DataSourceConfigurator::cleanup();
+    config_session->removeRemoteConfig("data_sources");
     delete xfrin_session;
     delete config_session;
     delete cc_session;
