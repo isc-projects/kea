@@ -109,6 +109,8 @@ private:
     // the strong exception guarantee.
     void validate(const isc::dns::ConstRRsetPtr rrset) const;
 
+    template <typename T>
+    void setupNSEC3(const isc::dns::ConstRRsetPtr rrset);
     void addNSEC3(const isc::dns::ConstRRsetPtr rrset,
                   const isc::dns::ConstRRsetPtr rrsig);
     void addRdataSet(const isc::dns::ConstRRsetPtr rrset,
