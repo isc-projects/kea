@@ -22,40 +22,52 @@ using namespace std;
 
 namespace {
 
-TEST(ZoneTableSegment, create) {
-    const ElementPtr config = Element::fromJSON("{}");
-    ZoneTableSegment* seg = ZoneTableSegment::create((*config.get()));
+class ZoneTableSegmentTest : public ::testing::Test {
+protected:
+    ZoneTableSegmentTest() :
+        config_(Element::fromJSON("{}")),
+        segment_(ZoneTableSegment::create((*config_.get())))
+    {}
 
+    ~ZoneTableSegmentTest() {
+        if (segment_ != NULL) {
+            ZoneTableSegment::destroy(segment_);
+        }
+    }
+
+    void TearDown() {
+        // Catch any future leaks here.
+        const MemorySegment& mem_sgmt = segment_->getMemorySegment();
+        EXPECT_TRUE(mem_sgmt.allMemoryDeallocated());
+
+        ZoneTableSegment::destroy(segment_);
+        segment_ = NULL;
+    }
+
+    const ElementPtr config_;
+    ZoneTableSegment* segment_;
+};
+
+
+TEST_F(ZoneTableSegmentTest, create) {
     // By default, a local zone table segment is created.
-    EXPECT_NE(static_cast<void*>(NULL), seg);
-
-    ZoneTableSegment::destroy(seg);
+    EXPECT_NE(static_cast<void*>(NULL), segment_);
 }
 
-TEST(ZoneTableSegment, getHeader) {
-    const ElementPtr config = Element::fromJSON("{}");
-    ZoneTableSegment* seg = ZoneTableSegment::create((*config.get()));
-
+TEST_F(ZoneTableSegmentTest, getHeader) {
     // getHeader() should never return NULL.
-    ZoneTableHeader* header = seg->getHeader();
+    ZoneTableHeader* header = segment_->getHeader();
     EXPECT_NE(static_cast<void*>(NULL), header);
 
     // The zone table is unset.
     ZoneTable* table = header->getTable();
     EXPECT_EQ(static_cast<void*>(NULL), table);
-
-    ZoneTableSegment::destroy(seg);
 }
 
-TEST(ZoneTableSegment, getMemorySegment) {
+TEST_F(ZoneTableSegmentTest, getMemorySegment) {
     // This doesn't do anything fun except test the API.
-    const ElementPtr config = Element::fromJSON("{}");
-    ZoneTableSegment* seg = ZoneTableSegment::create((*config.get()));
-
-    MemorySegment& mem_sgmt = seg->getMemorySegment();
+    MemorySegment& mem_sgmt = segment_->getMemorySegment();
     EXPECT_TRUE(mem_sgmt.allMemoryDeallocated());
-
-    ZoneTableSegment::destroy(seg);
 }
 
 } // anonymous namespace
