@@ -31,9 +31,9 @@ namespace memory {
 class ZoneDataUpdater : boost::noncopyable {
 public:
     ZoneDataUpdater(util::MemorySegment& mem_sgmt,
-		    isc::dns::RRClass rrclass,
-		    const isc::dns::Name& zone_name,
-		    ZoneData& zone_data) :
+                    isc::dns::RRClass rrclass,
+                    const isc::dns::Name& zone_name,
+                    ZoneData& zone_data) :
        mem_sgmt_(mem_sgmt),
        rrclass_(rrclass),
        zone_name_(zone_name),
@@ -79,7 +79,7 @@ public:
     };
 
     void add(const isc::dns::ConstRRsetPtr& rrset,
-	     const isc::dns::ConstRRsetPtr& sig_rrset);
+             const isc::dns::ConstRRsetPtr& sig_rrset);
 
 private:
     // Add the necessary magic for any wildcard contained in 'name'
@@ -102,7 +102,7 @@ private:
     // the same domain (CNAME+anything, DNAME+NS).  If such condition is
     // found, it throws AddError.
     void contextCheck(const isc::dns::AbstractRRset& rrset,
-		      const RdataSet* set) const;
+                      const RdataSet* set) const;
 
     // Validate rrset before adding it to the zone.  If something is wrong
     // it throws an exception.  It doesn't modify the zone, and provides
@@ -110,9 +110,9 @@ private:
     void validate(const isc::dns::ConstRRsetPtr rrset) const;
 
     void addNSEC3(const isc::dns::ConstRRsetPtr rrset,
-		  const isc::dns::ConstRRsetPtr rrsig);
+                  const isc::dns::ConstRRsetPtr rrsig);
     void addRdataSet(const isc::dns::ConstRRsetPtr rrset,
-		     const isc::dns::ConstRRsetPtr rrsig);
+                     const isc::dns::ConstRRsetPtr rrsig);
 
     util::MemorySegment& mem_sgmt_;
     const isc::dns::RRClass rrclass_;
