@@ -24,17 +24,17 @@ namespace {
 
 TEST(ZoneTableSegment, create) {
     const ElementPtr config = Element::fromJSON("{}");
-    auto_ptr<ZoneTableSegment>
-        seg(ZoneTableSegment::create((*config.get())));
+    ZoneTableSegment* seg = ZoneTableSegment::create((*config.get()));
 
     // By default, a local zone table segment is created.
-    EXPECT_NE(static_cast<void*>(NULL), seg.get());
+    EXPECT_NE(static_cast<void*>(NULL), seg);
+
+    ZoneTableSegment::destroy(seg);
 }
 
 TEST(ZoneTableSegment, getHeader) {
     const ElementPtr config = Element::fromJSON("{}");
-    auto_ptr<ZoneTableSegment>
-        seg(ZoneTableSegment::create((*config.get())));
+    ZoneTableSegment* seg = ZoneTableSegment::create((*config.get()));
 
     // getHeader() should never return NULL.
     ZoneTableHeader* header = seg->getHeader();
@@ -43,16 +43,19 @@ TEST(ZoneTableSegment, getHeader) {
     // The zone table is unset.
     ZoneTable* table = header->getTable();
     EXPECT_EQ(static_cast<void*>(NULL), table);
+
+    ZoneTableSegment::destroy(seg);
 }
 
 TEST(ZoneTableSegment, getMemorySegment) {
     // This doesn't do anything fun except test the API.
     const ElementPtr config = Element::fromJSON("{}");
-    auto_ptr<ZoneTableSegment>
-        seg(ZoneTableSegment::create((*config.get())));
+    ZoneTableSegment* seg = ZoneTableSegment::create((*config.get()));
 
     MemorySegment& mem_sgmt = seg->getMemorySegment();
     EXPECT_TRUE(mem_sgmt.allMemoryDeallocated());
+
+    ZoneTableSegment::destroy(seg);
 }
 
 } // anonymous namespace
