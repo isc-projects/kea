@@ -81,6 +81,7 @@ protected:
     QueryBenchMark(const BenchQueries& queries, Message& query_message,
                    OutputBuffer& buffer) :
         server_(new AuthSrv(xfrout_client, ddns_forwarder)),
+        datasrc_configurator_(server_.get()),
         queries_(queries),
         query_message_(query_message),
         buffer_(buffer),
@@ -109,6 +110,7 @@ private:
     MockSocketSessionForwarder ddns_forwarder;
 protected:
     AuthSrvPtr server_;
+    DataSourceConfigurator datasrc_configurator_;
 private:
     const BenchQueries& queries_;
     Message& query_message_;
@@ -125,8 +127,7 @@ public:
                           OutputBuffer& buffer) :
         QueryBenchMark(queries, query_message, buffer)
     {
-        DataSourceConfigurator::testReconfigure(
-            server_.get(),
+        datasrc_configurator_.reconfigure(
             Element::fromJSON("{\"IN\":"
                               "  [{\"type\": \"sqlite3\","
                               "    \"params\": {"
@@ -139,13 +140,12 @@ class MemoryQueryBenchMark  : public QueryBenchMark {
 public:
     MemoryQueryBenchMark(const char* const zone_file,
                          const char* const zone_origin,
-                          const BenchQueries& queries,
-                          Message& query_message,
-                          OutputBuffer& buffer) :
+                         const BenchQueries& queries,
+                         Message& query_message,
+                         OutputBuffer& buffer) :
         QueryBenchMark(queries, query_message, buffer)
     {
-        DataSourceConfigurator::testReconfigure(
-            server_.get(),
+        datasrc_configurator_.reconfigure(
             Element::fromJSON("{\"IN\":"
                               "  [{\"type\": \"MasterFiles\","
                               "    \"cache-enable\": true, "
