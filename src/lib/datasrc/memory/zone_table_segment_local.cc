@@ -20,14 +20,14 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
-ZoneTableHeader*
+ZoneTableHeader&
 ZoneTableSegmentLocal::getHeader() {
-     return (&header_);
+     return (header_);
 }
 
-const ZoneTableHeader*
+const ZoneTableHeader&
 ZoneTableSegmentLocal::getHeader() const {
-     return (&header_);
+     return (header_);
 }
 
 MemorySegment&

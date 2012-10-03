@@ -55,23 +55,20 @@ TEST_F(ZoneTableSegmentTest, create) {
 }
 
 TEST_F(ZoneTableSegmentTest, getHeader) {
-    // getHeader() should never return NULL.
-    ZoneTableHeader* header = segment_->getHeader();
-    EXPECT_NE(static_cast<void*>(NULL), header);
+    ZoneTableHeader& header = segment_->getHeader();
 
     // The zone table is unset.
-    ZoneTable* table = header->getTable();
+    ZoneTable* table = header.getTable();
     EXPECT_EQ(static_cast<void*>(NULL), table);
 }
 
 TEST_F(ZoneTableSegmentTest, getHeaderConst) {
-    // getHeader() should never return NULL.
-    const ZoneTableHeader* header =
+    // Test const methods
+    const ZoneTableHeader& header =
          static_cast<const ZoneTableSegment*>(segment_)->getHeader();
-    EXPECT_NE(static_cast<void*>(NULL), header);
 
     // The zone table is unset.
-    const ZoneTable* table = header->getTable();
+    const ZoneTable* table = header.getTable();
     EXPECT_EQ(static_cast<void*>(NULL), table);
 }
 
