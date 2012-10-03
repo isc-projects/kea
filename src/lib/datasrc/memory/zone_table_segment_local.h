@@ -28,6 +28,17 @@ namespace memory {
 /// MemorySegmentLocal based ZoneTableSegment. Please see the
 /// ZoneTableSegment class documentation for usage.
 class ZoneTableSegmentLocal : public ZoneTableSegment {
+    // This is so that ZoneTableSegmentLocal can be instantiated from
+    // ZoneTableSegment::create().
+    friend class ZoneTableSegment;
+protected:
+    /// \brief Protected constructor
+    ///
+    /// Instances are expected to be created by the factory method
+    /// (\c ZoneTableSegment::create()), so this constructor is
+    /// protected.
+    ZoneTableSegmentLocal()
+    {}
 public:
     /// \brief Destructor
     virtual ~ZoneTableSegmentLocal() {}
