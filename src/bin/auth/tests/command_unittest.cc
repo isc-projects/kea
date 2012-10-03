@@ -64,7 +64,6 @@ class AuthCommandTest : public ::testing::Test {
 protected:
     AuthCommandTest() :
         server_(xfrout_, ddns_forwarder_),
-        datasrc_configurator_(&server_),
         rcode_(-1),
         expect_rcode_(0),
         itimer_(server_.getIOService())
@@ -210,7 +209,7 @@ configureZones(AuthSrv& server, DataSourceConfigurator& datasrc_configurator) {
         "   \"cache-enable\": true"
         "}]}"));
 
-    datasrc_configurator.reconfigure(config);
+    datasrc_configurator.reconfigure(server, config);
 
     zoneChecks(server);
 }
@@ -273,7 +272,7 @@ TEST_F(AuthCommandTest,
         "    \"cache-enable\": true,"
         "    \"cache-zones\": [\"example.org\"]"
         "}]}"));
-    datasrc_configurator_.reconfigure(config);
+    datasrc_configurator_.reconfigure(server_, config);
 
     {
         isc::util::thread::Mutex::Locker locker(server_.getClientListMutex());
@@ -337,7 +336,7 @@ TEST_F(AuthCommandTest,
         "    \"cache-enable\": true,"
         "    \"cache-zones\": [\"example.com\"]"
         "}]}"));
-    EXPECT_THROW(datasrc_configurator_.reconfigure(config2),
+    EXPECT_THROW(datasrc_configurator_.reconfigure(server_, config2),
                  ConfigurableClientList::ConfigurationError);
 
     result_ = execAuthServerCommand(server_, "loadzone",
