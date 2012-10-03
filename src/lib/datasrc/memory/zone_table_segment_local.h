@@ -46,6 +46,8 @@ public:
     /// \brief Return the ZoneTableHeader for the local zone table
     /// segment implementation.
     ///
+    /// NOTE: This method will never return \c NULL.
+    ///
     /// \return Returns the ZoneTableHeader for this zone table segment.
     virtual ZoneTableHeader* getHeader();
 
