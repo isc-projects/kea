@@ -71,14 +71,10 @@ public:
     virtual ~ZoneTableSegment() {}
 
     /// \brief Return the ZoneTableHeader for the zone table segment.
-    ///
-    /// NOTE: This method should never return \c NULL.
-    virtual ZoneTableHeader* getHeader() = 0;
+    virtual ZoneTableHeader& getHeader() = 0;
 
     /// \brief const version of \c getHeader().
-    ///
-    /// NOTE: This method should never return \c NULL.
-    virtual const ZoneTableHeader* getHeader() const = 0;
+    virtual const ZoneTableHeader& getHeader() const = 0;
 
     /// \brief Return the MemorySegment for the zone table segment.
     virtual isc::util::MemorySegment& getMemorySegment() = 0;
