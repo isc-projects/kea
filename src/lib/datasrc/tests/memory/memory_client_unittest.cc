@@ -30,6 +30,7 @@
 #include <datasrc/data_source.h>
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/zone_table.h>
+#include <datasrc/memory/zone_data_updater.h>
 #include <datasrc/memory/memory_client.h>
 
 #include <testutils/dnsmessage_test.h>
@@ -188,7 +189,7 @@ TEST_F(MemoryClientTest, loadEmptyZoneFileThrows) {
 
     EXPECT_THROW(client_->load(Name("."),
                                TEST_DATA_DIR "/empty.zone"),
-                 InMemoryClient::EmptyZone);
+                 ZoneDataUpdater::EmptyZone);
 
     EXPECT_EQ(0, client_->getZoneCount());
 
@@ -242,13 +243,13 @@ TEST_F(MemoryClientTest, loadFromIterator) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                *MockIterator::makeIterator(
                                    rrset_data_separated)),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
 
     // Similar to the previous case, but with separated RRSIGs.
     EXPECT_THROW(client_->load(Name("example.org"),
                                *MockIterator::makeIterator(
                                    rrset_data_sigseparated)),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
 
     // Emulating bogus iterator implementation that passes empty RRSIGs.
     EXPECT_THROW(client_->load(Name("example.org"),
@@ -384,7 +385,7 @@ TEST_F(MemoryClientTest, loadDuplicateType) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-duplicate-type-bad.zone"),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
@@ -393,7 +394,7 @@ TEST_F(MemoryClientTest, loadMultipleCNAMEThrows) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-multiple-cname.zone"),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
@@ -402,7 +403,7 @@ TEST_F(MemoryClientTest, loadMultipleDNAMEThrows) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-multiple-dname.zone"),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
@@ -411,7 +412,7 @@ TEST_F(MemoryClientTest, loadMultipleNSEC3Throws) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-multiple-nsec3.zone"),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
@@ -420,7 +421,7 @@ TEST_F(MemoryClientTest, loadMultipleNSEC3PARAMThrows) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-multiple-nsec3param.zone"),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
@@ -438,7 +439,7 @@ TEST_F(MemoryClientTest, loadWildcardNSThrows) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-wildcard-ns.zone"),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
@@ -447,7 +448,7 @@ TEST_F(MemoryClientTest, loadWildcardDNAMEThrows) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-wildcard-dname.zone"),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
@@ -456,7 +457,7 @@ TEST_F(MemoryClientTest, loadWildcardNSEC3Throws) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-wildcard-nsec3.zone"),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
@@ -465,7 +466,7 @@ TEST_F(MemoryClientTest, loadNSEC3WithFewerLabelsThrows) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-nsec3-fewer-labels.zone"),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
@@ -474,7 +475,7 @@ TEST_F(MemoryClientTest, loadNSEC3WithMoreLabelsThrows) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-nsec3-more-labels.zone"),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
@@ -483,12 +484,12 @@ TEST_F(MemoryClientTest, loadCNAMEAndNotNSECThrows) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-cname-and-not-nsec-1.zone"),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
 
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-cname-and-not-nsec-2.zone"),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
 
     // Teardown checks for memory segment leaks
 }
@@ -514,7 +515,7 @@ TEST_F(MemoryClientTest, loadDNAMEAndNSNonApex1) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-dname-ns-nonapex-1.zone"),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
@@ -523,7 +524,7 @@ TEST_F(MemoryClientTest, loadDNAMEAndNSNonApex2) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-dname-ns-nonapex-2.zone"),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
@@ -533,7 +534,7 @@ TEST_F(MemoryClientTest, loadRRSIGFollowsNothing) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-rrsig-follows-nothing.zone"),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
@@ -561,7 +562,7 @@ TEST_F(MemoryClientTest, loadRRSIGsRdataMixedCoveredTypes) {
     rrset->addRRsig(rrsig);
 
     EXPECT_THROW(client_->add(Name("example.org"), rrset),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
 
     // Teardown checks for memory segment leaks
 }
@@ -683,7 +684,7 @@ TEST_F(MemoryClientTest, addNullRRsetThrows) {
                   TEST_DATA_DIR "/example.org-rrsigs.zone");
 
     EXPECT_THROW(client_->add(Name("example.org"), ConstRRsetPtr()),
-                 InMemoryClient::NullRRset);
+                 ZoneDataUpdater::NullRRset);
 
     // Teardown checks for memory segment leaks
 }
@@ -695,7 +696,7 @@ TEST_F(MemoryClientTest, addEmptyRRsetThrows) {
     RRsetPtr rrset_a(new RRset(Name("example.org"), RRClass::IN(), RRType::A(),
                                RRTTL(300)));
     EXPECT_THROW(client_->add(Name("example.org"), rrset_a),
-                 InMemoryClient::AddError);
+                 ZoneDataUpdater::AddError);
 
     // Teardown checks for memory segment leaks
 }

@@ -168,40 +168,6 @@ public:
     result::Result add(const isc::dns::Name& zone_name,
                        const isc::dns::ConstRRsetPtr& rrset);
 
-    /// \brief RRset is NULL exception.
-    ///
-    /// This is thrown if the provided RRset parameter is NULL.
-    struct NullRRset : public InvalidParameter {
-        NullRRset(const char* file, size_t line, const char* what) :
-            InvalidParameter(file, line, what)
-        { }
-    };
-
-    /// \brief Zone is empty exception.
-    ///
-    /// This is thrown if we have an empty zone created as a result of
-    /// load().
-    struct EmptyZone : public InvalidParameter {
-        EmptyZone(const char* file, size_t line, const char* what) :
-            InvalidParameter(file, line, what)
-        { }
-    };
-
-    /// \brief General failure exception for \c add().
-    ///
-    /// This is thrown against general error cases in adding an RRset
-    /// to the zone.
-    ///
-    /// Note: this exception would cover cases for \c OutOfZone or
-    /// \c NullRRset.  We'll need to clarify and unify the granularity
-    /// of exceptions eventually.  For now, exceptions are added as
-    /// developers see the need for it.
-    struct AddError : public InvalidParameter {
-        AddError(const char* file, size_t line, const char* what) :
-            InvalidParameter(file, line, what)
-        { }
-    };
-
     /// Returns a \c ZoneFinder result that best matches the given name.
     ///
     /// This derived version of the method never throws an exception.
