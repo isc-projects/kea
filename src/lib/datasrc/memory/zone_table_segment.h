@@ -74,17 +74,29 @@ public:
     /// \return Returns the ZoneTableHeader for this zone table segment.
     virtual isc::util::MemorySegment& getMemorySegment() = 0;
 
-    /// \brief Create a subclass depending on the memory segment model
+    /// \brief Create an instance depending on the memory segment model
     ///
     /// This is a factory method to create a derived ZoneTableSegment
-    /// object based on the \c config passed.
+    /// object based on the \c config passed. The method returns a
+    /// dynamically-allocated object. The caller is responsible for
+    /// destroying it with \c ZoneTableSegment::destroy().
     ///
-    /// FIXME: For now, we always return ZoneTableSegmentLocal.
+    /// FIXME: For now, we always return ZoneTableSegmentLocal
+    /// regardless of the passed \c config.
     ///
     /// \param config The configuration based on which a derived object
     ///               is returned.
     /// \return Returns a ZoneTableSegment object
     static ZoneTableSegment* create(const isc::data::Element& config);
+
+    /// \brief Destroy a ZoneTableSegment
+    ///
+    /// This method destroys the passed ZoneTableSegment. It must be
+    /// passed a segment previously created by \c
+    /// ZoneTableSegment::create().
+    ///
+    /// \param segment The segment to destroy.
+    static void destroy(ZoneTableSegment* segment);
 };
 
 } // namespace memory
