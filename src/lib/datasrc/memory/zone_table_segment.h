@@ -73,20 +73,14 @@ public:
     /// \brief Return the ZoneTableHeader for the zone table segment.
     ///
     /// NOTE: This method should never return \c NULL.
-    ///
-    /// \return Returns the ZoneTableHeader for this zone table segment.
     virtual ZoneTableHeader* getHeader() = 0;
 
     /// \brief const version of \c getHeader().
     ///
     /// NOTE: This method should never return \c NULL.
-    ///
-    /// \return Returns the ZoneTableHeader for this zone table segment.
     virtual const ZoneTableHeader* getHeader() const = 0;
 
     /// \brief Return the MemorySegment for the zone table segment.
-    ///
-    /// \return Returns the MemorySegment for this zone table segment.
     virtual isc::util::MemorySegment& getMemorySegment() = 0;
 
     /// \brief Create an instance depending on the memory segment model

@@ -47,22 +47,15 @@ public:
     /// segment implementation.
     ///
     /// NOTE: This method will never return \c NULL.
-    ///
-    /// \return Returns the ZoneTableHeader for this zone table segment.
     virtual ZoneTableHeader* getHeader();
 
     /// \brief const version of \c getHeader().
     ///
     /// NOTE: This method will never return \c NULL.
-    ///
-    /// \return Returns the ZoneTableHeader for this zone table segment.
     virtual const ZoneTableHeader* getHeader() const;
 
     /// \brief Return the MemorySegment for the local zone table segment
-    /// implementation.
-    ///
-    /// \return Returns the MemorySegment for this zone table segment (a
-    /// MemorySegmentLocal instance).
+    /// implementation (a MemorySegmentLocal instance).
     virtual isc::util::MemorySegment& getMemorySegment();
 
 private:
