@@ -332,10 +332,15 @@ public:
     protected:
         /// \brief Return the \c ZoneFinder that created this \c Context.
         ///
-        /// A derived class implementation can return NULL if it specializes
+        /// A derived class implementation can return NULL if it defines
         /// other protected methods that require a non NULL result from
         /// this method.  Otherwise it must return a valid, non NULL pointer
         /// to the \c ZoneFinder object.
+        ///
+        /// When returning non NULL, the ownership of the pointed object
+        /// was not transferred to the caller; it cannot be assumed to be
+        /// valid after the originating \c Context object is destroyed.
+        /// Also, the caller must not try to delete the returned object.
         virtual ZoneFinder* getFinder() = 0;
 
         /// \brief Return a vector of RRsets corresponding to findAll() result.
@@ -343,10 +348,15 @@ public:
         /// This method returns a set of RRsets that correspond to the
         /// returned RRsets to a prior \c findAll() call.
         ///
-        /// A derived class implementation can return NULL if it specializes
+        /// A derived class implementation can return NULL if it defines
         /// other protected methods that require a non NULL result from
         /// this method.  Otherwise it must return a valid, non NULL pointer
         /// to a vector that correspond to the expected set of RRsets.
+        ///
+        /// When returning non NULL, the ownership of the pointed object
+        /// was not transferred to the caller; it cannot be assumed to be
+        /// valid after the originating \c Context object is destroyed.
+        /// Also, the caller must not try to delete the returned object.
         virtual const std::vector<isc::dns::ConstRRsetPtr>*
         getAllRRsets() const = 0;
 
