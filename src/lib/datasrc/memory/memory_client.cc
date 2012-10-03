@@ -144,11 +144,9 @@ class InMemoryClient::Loader : boost::noncopyable {
     typedef std::map<RRType, ConstRRsetPtr> NodeRRsets;
     typedef NodeRRsets::value_type NodeRRsetsVal;
 public:
-    Loader(InMemoryClientImpl* client_impl, const Name& zone_name,
-           ZoneData& zone_data) :
-        client_impl_(client_impl), zone_name_(zone_name), zone_data_(zone_data),
-        updater_(client_impl->mem_sgmt_, client_impl->rrclass_,
-                 zone_name, zone_data)
+    Loader(util::MemorySegment& mem_sgmt, const RRClass rrclass,
+           const Name& zone_name, ZoneData& zone_data) :
+        updater_(mem_sgmt, rrclass, zone_name, zone_data)
     {}
     void addFromLoad(const ConstRRsetPtr& rrset) {
         // If we see a new name, flush the temporary holders, adding the
@@ -222,9 +220,6 @@ private:
     }
 
 private:
-    InMemoryClientImpl* client_impl_;
-    const Name& zone_name_;
-    ZoneData& zone_data_;
     NodeRRsets node_rrsets_;
     NodeRRsets node_rrsigsets_;
     ZoneDataUpdater updater_;
@@ -239,7 +234,7 @@ InMemoryClient::InMemoryClientImpl::load(
     SegmentObjectHolder<ZoneData, RRClass> holder(
         mem_sgmt_, ZoneData::create(mem_sgmt_, zone_name), rrclass_);
 
-    Loader loader(this, zone_name, *holder.get());
+    Loader loader(mem_sgmt_, rrclass_, zone_name, *holder.get());
     rrset_installer(boost::bind(&Loader::addFromLoad, &loader, _1));
     // Add any last RRsets that were left
     loader.flushNodeRRsets();
