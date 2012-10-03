@@ -62,6 +62,16 @@ typedef shared_ptr<FakeList> ListPtr;
 typedef DataSourceConfiguratorGeneric<DatasrcConfiguratorTest,
         FakeList> Configurator;
 
+void
+datasrcConfigHandler(const std::string&,
+                     isc::data::ConstElementPtr config,
+                     const isc::config::ConfigData&)
+{
+    if (config->contains("classes")) {
+        Configurator::reconfigure(config->get("classes"));
+    }
+}
+
 class DatasrcConfiguratorTest : public ::testing::Test {
 public:
     // These pretend to be the server
@@ -100,6 +110,7 @@ protected:
     }
     void TearDown() {
         // Make sure no matter what we did, it is cleaned up.
+        mccs->removeRemoteConfig("data_sources");
         Configurator::cleanup();
     }
     void init(const ElementPtr& config = ElementPtr()) {
@@ -114,7 +125,8 @@ protected:
             session.getMessages()->
                 add(createAnswer(0, ElementPtr(new MapElement)));
         }
-        Configurator::init(mccs.get(), this);
+        Configurator::init(this);
+        mccs->addRemoteConfig("data_sources", datasrcConfigHandler, false);
     }
     void SetUp() {
         init();
@@ -126,10 +138,10 @@ protected:
         return (external);
     }
     void initializeINList() {
-        const ElementPtr
+        const ConstElementPtr
             config(buildConfig("{\"IN\": [{\"type\": \"xxx\"}]}"));
-        session.addMessage(createCommand("config_update", config), "data_sources",
-                           "*");
+        session.addMessage(createCommand("config_update", config),
+                           "data_sources", "*");
         mccs->checkCommand();
         // Check it called the correct things (check that there's no IN yet and
         // set a new one.
@@ -150,15 +162,14 @@ TEST_F(DatasrcConfiguratorTest, initialization) {
     EXPECT_THROW(init(), InvalidOperation);
     EXPECT_TRUE(session.haveSubscription("data_sources", "*"));
     // Deinitialize to make the tests reasonable
+    mccs->removeRemoteConfig("data_sources");
     Configurator::cleanup();
     EXPECT_FALSE(session.haveSubscription("data_sources", "*"));
     // We can't reconfigure now (not even manually)
     EXPECT_THROW(Configurator::reconfigure(ElementPtr(new MapElement())),
                  InvalidOperation);
-    // If one of them is NULL, it does not work
-    EXPECT_THROW(Configurator::init(NULL, this), InvalidParameter);
-    EXPECT_FALSE(session.haveSubscription("data_sources", "*"));
-    EXPECT_THROW(Configurator::init(mccs.get(), NULL), InvalidParameter);
+    // If the server param is NULL, it does not work
+    EXPECT_THROW(Configurator::init(NULL), InvalidParameter);
     EXPECT_FALSE(session.haveSubscription("data_sources", "*"));
     // But we can initialize it again now
     EXPECT_NO_THROW(init());
