@@ -40,7 +40,7 @@ TEST(ZoneTableSegment, getHeader) {
     EXPECT_NE(static_cast<void*>(NULL), header);
 
     // The zone table is unset.
-    ZoneTable* table = header->table.get();
+    ZoneTable* table = header->getTable();
     EXPECT_EQ(static_cast<void*>(NULL), table);
 }
 
