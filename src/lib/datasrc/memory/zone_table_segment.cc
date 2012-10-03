@@ -21,7 +21,11 @@ namespace memory {
 
 ZoneTableSegment*
 ZoneTableSegment::create(const isc::data::Element&) {
-     return (new ZoneTableSegmentLocal);
+    /// FIXME: For now, we always return ZoneTableSegmentLocal. This
+    /// should be updated eventually to parse the passed Element
+    /// argument and construct a corresponding ZoneTableSegment
+    /// implementation.
+    return (new ZoneTableSegmentLocal);
 }
 
 } // namespace memory

@@ -22,7 +22,7 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
-/// \brief MemorySegmentLocal based Zone Table Segment class
+/// \brief Local implementation of ZoneTableSegment class
 ///
 /// This class specifies a concrete implementation for a
 /// MemorySegmentLocal based ZoneTableSegment. Please see the
@@ -32,19 +32,17 @@ public:
     /// \brief Destructor
     virtual ~ZoneTableSegmentLocal() {}
 
-    /// \brief Return a ZoneTableHeader for the zone table segment.
+    /// \brief Return the ZoneTableHeader for the local zone table
+    /// segment implementation.
     ///
-    /// Returns a ZoneTableHeader that contains a pointer to the zone
-    /// table data in memory.
-    ///
-    /// \return Returns a ZoneTableHeader for this zone table segment.
+    /// \return Returns the ZoneTableHeader for this zone table segment.
     virtual ZoneTableHeader* getHeader();
 
-    /// \brief Return the MemorySegment for the zone table segment.
+    /// \brief Return the MemorySegment for the local zone table segment
+    /// implementation.
     ///
-    /// Returns the MemorySegment used in this zone table segment.
-    ///
-    /// \return Returns a ZoneTableHeader for this zone table segment.
+    /// \return Returns the MemorySegment for this zone table segment (a
+    /// MemorySegmentLocal instance).
     virtual isc::util::MemorySegment& getMemorySegment();
 
 private:
