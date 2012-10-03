@@ -17,9 +17,7 @@
 #include <datasrc/memory/memory_client.h>
 #include <datasrc/memory/logger.h>
 #include <datasrc/memory/zone_data.h>
-#include <datasrc/memory/rdata_serialization.h>
 #include <datasrc/memory/rdataset.h>
-#include <datasrc/memory/domaintree.h>
 #include <datasrc/memory/segment_object_holder.h>
 #include <datasrc/memory/treenode_rrset.h>
 #include <datasrc/memory/zone_finder.h>
@@ -32,14 +30,11 @@
 #include <datasrc/result.h>
 
 #include <dns/name.h>
-#include <dns/nsec3hash.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrsetlist.h>
 #include <dns/masterload.h>
 
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/noncopyable.hpp>
@@ -54,7 +49,6 @@ using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc::memory;
-using boost::scoped_ptr;
 
 namespace isc {
 namespace datasrc {
