@@ -59,32 +59,32 @@
                 },
 
                 { "item_name": "renew-timer",
-                    "item_type": "integer",
-                    "item_optional": false,
-                    "item_default": 1000
+                  "item_type": "integer",
+                  "item_optional": false,
+                  "item_default": 1000
                 },
 
                 { "item_name": "rebind-timer",
-                    "item_type": "integer",
-                    "item_optional": false,
-                    "item_default": 2000
+                  "item_type": "integer",
+                  "item_optional": false,
+                  "item_default": 2000
                 },
 
                 { "item_name": "preferred-lifetime",
-                    "item_type": "integer",
-                    "item_optional": false,
-                    "item_default": 3000
+                  "item_type": "integer",
+                  "item_optional": false,
+                  "item_default": 3000
                 },
 
                 { "item_name": "valid-lifetime",
-                    "item_type": "integer",
-                    "item_optional": false,
-                    "item_default": 7200
+                  "item_type": "integer",
+                  "item_optional": false,
+                  "item_default": 7200
                 },
                 { "item_name": "pool",
-                    "item_type": "list",
-                    "item_optional": false,
-                    "item_default": [],
+                  "item_type": "list",
+                  "item_optional": false,
+                  "item_default": [],
                     "list_item_spec":
                     {
                         "item_name": "type",

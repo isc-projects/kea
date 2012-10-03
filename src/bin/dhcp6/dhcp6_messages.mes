@@ -102,21 +102,20 @@ is running.
 
 % DHCP6_CONFIG_LOAD_FAIL failed to load configuration: %1
 This critical error message indicates that the initial DHCPv6
-configuration has failed. The server will continue to run, but
-administrator's intervention is required. The server's configuration
-must be fixed before it can become usable.
+configuration has failed. The server will start, but nothing will be
+served until the configuration has been corrected.
 
 % DHCP6_CONFIG_START DHCPv6 server is processing the following configuration: %1
-This is a debug message that is issued every time the server receives
-configuration. That happens during every start up and also when server
-configuration change is committed by the administrator.
+This is a debug message that is issued every time the server receives a
+configuration. That happens start up and also when a server configuration
+change is committed by the administrator.
 
 % DHCP6_CONFIG_NEW_SUBNET A new subnet has been added to configuration: %1
-This is an informational message that the configuration has extended
-and specified new subnet is now supported.
+This is an informational message reporting that the configuration has
+been extended to include the specified subnet.
 
 % DHCP6_CONFIG_COMPLETE DHCPv6 server has completed configuration: %1
-This is an informational message that announces successful processing
-of a new configuration. That may happen as a result of one of two
-events: server startup or commit of configuration change, done by the
-administrator. Additional information may be provided.
+This is an informational message announcing the successful processing of a
+new configuration. it is output during server startup, and when an updated
+configuration is committed by the administrator.  Additional information
+may be provided.
