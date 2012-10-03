@@ -33,6 +33,7 @@ libdhcp___unittests_SOURCES += option6_ia_unittest.cc
 libdhcp___unittests_SOURCES += option6_addrlst_unittest.cc
 libdhcp___unittests_SOURCES += option4_addrlst_unittest.cc
 libdhcp___unittests_SOURCES += option_unittest.cc
+libdhcp___unittests_SOURCES += option_definition_unittest.cc
 libdhcp___unittests_SOURCES += pkt6_unittest.cc
 libdhcp___unittests_SOURCES += pkt4_unittest.cc
 
