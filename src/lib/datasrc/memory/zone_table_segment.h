@@ -40,7 +40,7 @@ public:
         return (table.get());
     }
 
-    /// \brief const version of getTable().
+    /// \brief const version of \c getTable().
     const ZoneTable* getTable() const {
         return (getTable());
     }
