@@ -14,17 +14,6 @@
 
 #include <config.h>
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <stdlib.h>
-#include <errno.h>
-
-#include <cassert>
-#include <iostream>
-
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
@@ -51,6 +40,20 @@
 #include <log/logger_support.h>
 #include <server_common/keyring.h>
 #include <server_common/socket_request.h>
+
+#include <boost/bind.hpp>
+#include <boost/scoped_ptr.hpp>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <stdlib.h>
+#include <errno.h>
+
+#include <cassert>
+#include <iostream>
 
 using namespace std;
 using namespace isc::asiodns;
@@ -84,12 +87,12 @@ my_command_handler(const string& command, ConstElementPtr args) {
 }
 
 void
-datasrcConfigHandler(const std::string&,
+datasrcConfigHandler(DataSourceConfigurator* configurator, const std::string&,
                      isc::data::ConstElementPtr config,
                      const isc::config::ConfigData&)
 {
     if (config->contains("classes")) {
-        DataSourceConfigurator::reconfigure(config->get("classes"));
+        configurator->reconfigure(config->get("classes"));
     }
 }
 
@@ -137,6 +140,7 @@ main(int argc, char* argv[]) {
     ModuleCCSession* config_session = NULL;
     XfroutClient xfrout_client(getXfroutSocketPath());
     SocketSessionForwarder ddns_forwarder(getDDNSSocketPath());
+    boost::scoped_ptr<DataSourceConfigurator> datasrc_configurator;
     try {
         string specfile;
         if (getenv("B10_FROM_BUILD")) {
@@ -202,13 +206,17 @@ main(int argc, char* argv[]) {
         auth_server->setTSIGKeyRing(&isc::server_common::keyring);
 
         // Start the data source configuration
-        DataSourceConfigurator::init(auth_server);
-        config_session->addRemoteConfig("data_sources", datasrcConfigHandler,
+        datasrc_configurator.reset(new DataSourceConfigurator(auth_server));
+        config_session->addRemoteConfig("data_sources",
+                                        boost::bind(datasrcConfigHandler,
+                                                    datasrc_configurator.get(),
+                                                    _1, _2, _3),
                                         false);
+
         // HACK: The default is not passed to the handler. This one will
         // get the default (or, current value). Further updates will work
         // the usual way.
-        DataSourceConfigurator::reconfigure(
+        datasrc_configurator->reconfigure(
             config_session->getRemoteConfigValue("data_sources", "classes"));
 
         // Now start asynchronous read.
@@ -233,8 +241,9 @@ main(int argc, char* argv[]) {
         xfrin_session->disconnect();
     }
 
-    //DataSourceConfigurator::cleanup();
-    config_session->removeRemoteConfig("data_sources");
+    if (datasrc_configurator) {
+        config_session->removeRemoteConfig("data_sources");
+    }
     delete xfrin_session;
     delete config_session;
     delete cc_session;

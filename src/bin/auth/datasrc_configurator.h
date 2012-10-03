@@ -30,32 +30,25 @@
 /// keep the local copy of data source clients in the list in the authoritative
 /// server.
 ///
-/// The class is slightly unusual. Due to some technical limitations, the hook
-/// needs to be static method. Therefore it is not possible to create instances
-/// of the class.
-///
 /// Also, the class is a template. This is simply because of easier testing.
 /// You don't need to pay attention to it, use the DataSourceConfigurator
 /// type alias instead.
 template<class Server, class List>
 class DataSourceConfiguratorGeneric {
 private:
-    /// \brief Disallow creation of instances
-    DataSourceConfiguratorGeneric();
-    /// \brief Internal method to hook into the ModuleCCSession
-    ///
-    /// It simply calls reconfigure.
-    static void reconfigureInternal(const std::string&,
-                                    isc::data::ConstElementPtr config,
-                                    const isc::config::ConfigData&)
-    {
-        if (config->contains("classes")) {
-            reconfigure(config->get("classes"));
-        }
-    }
-    static Server* server_;
+    Server* server_;
     typedef boost::shared_ptr<List> ListPtr;
 public:
+    /// \brief Constructor.
+    ///
+    /// \throw isc::InvalidParameter if server is NULL
+    /// \param server The server to configure.
+    DataSourceConfiguratorGeneric(Server* server) : server_(server) {
+        if (server == NULL) {
+            isc_throw(isc::InvalidParameter, "The server must not be NULL");
+        }
+    }
+
     /// \brief Initializes the class.
     ///
     /// This configures which session and server should be used.
@@ -66,22 +59,13 @@ public:
     /// session dies, otherwise it might access them after they
     /// are destroyed.
     ///
-    /// \param session The session to hook into and to access the configuration
-    ///     through.
     /// \param server It is the server to configure.
-    /// \throw isc::InvalidOperation if this is called when already initialized.
+    /// \throw isc::InvalidOperation if this is called when already
+    /// initialized.
     /// \throw isc::InvalidParameter if any of the parameters is NULL
     /// \throw isc::config::ModuleCCError if the remote configuration is not
     ///     available for some reason.
-    static void init(Server* server) {
-        if (server == NULL) {
-            isc_throw(isc::InvalidParameter, "The server must not be NULL");
-        }
-        if (server_ != NULL) {
-            isc_throw(isc::InvalidOperation,
-                      "The configurator is already initialized");
-        }
-        server_ = server;
+    void init() {
     }
 
     /// \brief Deinitializes the class.
@@ -91,7 +75,7 @@ public:
     ///
     /// This can be called even if it is not initialized currently. You
     /// can initialize it again after this.
-    static void cleanup() {
+    void cleanup() {
         server_ = NULL;
     }
 
@@ -105,7 +89,7 @@ public:
     /// \param config The configuration value to parse. It is in the form
     ///     as an update from the config manager.
     /// \throw InvalidOperation if it is called when not initialized.
-    static void reconfigure(const isc::data::ConstElementPtr& config) {
+    void reconfigure(const isc::data::ConstElementPtr& config) {
         if (server_ == NULL) {
             isc_throw(isc::InvalidOperation,
                       "Can't reconfigure while not initialized by init()");
@@ -171,37 +155,7 @@ public:
             throw;
         }
     }
-    /// \brief Version of reconfigure for easier testing.
-    ///
-    /// This method can be used to reconfigure a server without first
-    /// initializing the configurator. This does not need a session.
-    /// Otherwise, it acts the same as reconfigure.
-    ///
-    /// This is not meant for production code. Do not use there.
-    ///
-    /// \param server The server to configure.
-    /// \param config The config to use.
-    /// \throw isc::InvalidOperation if the configurator is initialized.
-    /// \throw anything that reconfigure does.
-    static void testReconfigure(Server* server,
-                                const isc::data::ConstElementPtr& config)
-    {
-        if (server_ != NULL) {
-            isc_throw(isc::InvalidOperation, "Currently initialized.");
-        }
-        try {
-            server_ = server;
-            reconfigure(config);
-            server_ = NULL;
-        } catch (...) {
-            server_ = NULL;
-            throw;
-        }
-    }
 };
-
-template<class Server, class List>
-Server* DataSourceConfiguratorGeneric<Server, List>::server_(NULL);
 
 /// \brief Concrete version of DataSourceConfiguratorGeneric for the
 ///     use in authoritative server.
