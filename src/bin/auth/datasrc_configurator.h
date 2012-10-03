@@ -54,7 +54,6 @@ private:
         }
     }
     static Server* server_;
-    static isc::config::ModuleCCSession* session_;
     typedef boost::shared_ptr<List> ListPtr;
 public:
     /// \brief Initializes the class.
@@ -74,12 +73,7 @@ public:
     /// \throw isc::InvalidParameter if any of the parameters is NULL
     /// \throw isc::config::ModuleCCError if the remote configuration is not
     ///     available for some reason.
-    static void init(isc::config::ModuleCCSession* session,
-                     Server* server)
-    {
-        if (session == NULL) {
-            isc_throw(isc::InvalidParameter, "The session must not be NULL");
-        }
+    static void init(Server* server) {
         if (server == NULL) {
             isc_throw(isc::InvalidParameter, "The server must not be NULL");
         }
@@ -88,9 +82,8 @@ public:
                       "The configurator is already initialized");
         }
         server_ = server;
-        session_ = session;
-        session->addRemoteConfig("data_sources", reconfigureInternal, false);
     }
+
     /// \brief Deinitializes the class.
     ///
     /// This detaches from the session and removes the server from internal
@@ -99,12 +92,9 @@ public:
     /// This can be called even if it is not initialized currently. You
     /// can initialize it again after this.
     static void cleanup() {
-        if (session_ != NULL) {
-            session_->removeRemoteConfig("data_sources");
-        }
-        session_ = NULL;
         server_ = NULL;
     }
+
     /// \brief Reads new configuration and replaces the old one.
     ///
     /// It instructs the server to replace the lists with new ones as needed.
@@ -211,10 +201,6 @@ public:
 };
 
 template<class Server, class List>
-isc::config::ModuleCCSession*
-DataSourceConfiguratorGeneric<Server, List>::session_(NULL);
-
-template<class Server, class List>
 Server* DataSourceConfiguratorGeneric<Server, List>::server_(NULL);
 
 /// \brief Concrete version of DataSourceConfiguratorGeneric for the
@@ -224,3 +210,7 @@ typedef DataSourceConfiguratorGeneric<AuthSrv,
     DataSourceConfigurator;
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:
