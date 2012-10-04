@@ -55,7 +55,7 @@ b10_auth_SOURCES += auth_config.cc auth_config.h
 b10_auth_SOURCES += command.cc command.h
 b10_auth_SOURCES += common.h common.cc
 b10_auth_SOURCES += statistics.cc statistics.h
-b10_auth_SOURCES += datasrc_configurator.h
+b10_auth_SOURCES += datasrc_configurator.h datasrc_configurator.cc
 b10_auth_SOURCES += main.cc
 
 nodist_b10_auth_SOURCES = auth_messages.h auth_messages.cc

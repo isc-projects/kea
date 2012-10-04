@@ -77,7 +77,6 @@ protected:
     MockXfroutClient xfrout_;
     MockSocketSessionForwarder ddns_forwarder_;
     AuthSrv server_;
-    DataSourceConfigurator datasrc_configurator_;
     ConstElementPtr result_;
     // The shutdown command parameter
     ConstElementPtr param_;
@@ -191,7 +190,7 @@ zoneChecks(AuthSrv& server) {
 }
 
 void
-configureZones(AuthSrv& server, DataSourceConfigurator& datasrc_configurator) {
+configureZones(AuthSrv& server) {
     ASSERT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR "/test1.zone.in "
                         TEST_DATA_BUILDDIR "/test1.zone.copied"));
     ASSERT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR "/test2.zone.in "
@@ -209,7 +208,7 @@ configureZones(AuthSrv& server, DataSourceConfigurator& datasrc_configurator) {
         "   \"cache-enable\": true"
         "}]}"));
 
-    datasrc_configurator.reconfigure(server, config);
+    configureDataSource(server, config);
 
     zoneChecks(server);
 }
@@ -235,7 +234,7 @@ newZoneChecks(AuthSrv& server) {
 }
 
 TEST_F(AuthCommandTest, loadZone) {
-    configureZones(server_, datasrc_configurator_);
+    configureZones(server_);
 
     ASSERT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR
                         "/test1-new.zone.in "
@@ -272,7 +271,7 @@ TEST_F(AuthCommandTest,
         "    \"cache-enable\": true,"
         "    \"cache-zones\": [\"example.org\"]"
         "}]}"));
-    datasrc_configurator_.reconfigure(server_, config);
+    configureDataSource(server_, config);
 
     {
         isc::util::thread::Mutex::Locker locker(server_.getClientListMutex());
@@ -336,7 +335,7 @@ TEST_F(AuthCommandTest,
         "    \"cache-enable\": true,"
         "    \"cache-zones\": [\"example.com\"]"
         "}]}"));
-    EXPECT_THROW(datasrc_configurator_.reconfigure(server_, config2),
+    EXPECT_THROW(configureDataSource(server_, config2),
                  ConfigurableClientList::ConfigurationError);
 
     result_ = execAuthServerCommand(server_, "loadzone",
@@ -351,7 +350,7 @@ TEST_F(AuthCommandTest,
 }
 
 TEST_F(AuthCommandTest, loadBrokenZone) {
-    configureZones(server_, datasrc_configurator_);
+    configureZones(server_);
 
     ASSERT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR
                         "/test1-broken.zone.in "
@@ -364,7 +363,7 @@ TEST_F(AuthCommandTest, loadBrokenZone) {
 }
 
 TEST_F(AuthCommandTest, loadUnreadableZone) {
-    configureZones(server_, datasrc_configurator_);
+    configureZones(server_);
 
     // install the zone file as unreadable
     ASSERT_EQ(0, system(INSTALL_PROG " -c -m 000 " TEST_DATA_DIR
@@ -387,7 +386,7 @@ TEST_F(AuthCommandTest, loadZoneWithoutDataSrc) {
 }
 
 TEST_F(AuthCommandTest, loadZoneInvalidParams) {
-    configureZones(server_, datasrc_configurator_);
+    configureZones(server_);
 
     // null arg
     result_ = execAuthServerCommand(server_, "loadzone", ElementPtr());
