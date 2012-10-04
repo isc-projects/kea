@@ -268,67 +268,6 @@ public:
             getAdditionalImpl(requested_types, result);
         }
 
-        /// \brief Find and return given type of RRset at the zone origin.
-        ///
-        /// DNS query processing often requires supplemental RRsets at the
-        /// zone origin; for example, for some negative answers we need to
-        /// provide the zone's SOA record; a full positive response normally
-        /// includes the zone's NS RRset.  The application can easily get
-        /// these using the generic \c ZoneFinder::find() interface, but
-        /// depending on the underlying data source implementation, the generic
-        /// version could be more expensive and/or it might be possible to
-        /// substantially improve this particular case.
-        ///
-        /// This method allows the underlying implementation to do such
-        /// optimization.  The interface is simplified; it just takes
-        /// an `RRType` and returns the corresponding RRset if found;
-        /// if not found it returns NULL.
-        ///
-        /// This method tries to find and return RRSIGs of the found RRset
-        /// if and only if the original lookup by \c ZoneFinder::find() has
-        /// the \c FIND_DNSSEC option.
-        ///
-        /// Type ANY must not be specified for this method.  It will result
-        /// in \c isc::InvalidParameter exception.  If the application
-        /// needs to get all types of RRsets at the origin, it should use
-        /// the \c ZoneFinder::findAll() method with the zone name.
-        ///
-        /// Note that the origin name should always exist, so there
-        /// shouldn't be the case where the name itself is not found
-        /// in the zone (i.e., the NXDOMAIN) case.  But in any event
-        /// it does not distinguish such a hypothetical case from the
-        /// case where the specified type isn't found at the origin.
-        /// It simply returns NULL when the required type isn't found.
-        /// This also means it doesn't provide a DNSSEC proof of the
-        /// non-existence.  If the application needs that proof, it must use
-        /// the generic \c find() method.
-        ///
-        /// A CNAME RR shouldn't exist at the zone origin at any sanely
-        /// configured zone (because there should be at least SOA there and
-        /// CNAME cannot coexist with it), and it's generally expected
-        /// the underlying implementation rejects the case where a CNAME
-        /// somehow exists at the zone origin.  Even if such a situation
-        /// happens, this method does not return the CNAME when the given
-        /// type of RRset isn't found; it will just return NULL like in the
-        /// normal case.
-        ///
-        /// \throw isc::InvalidParameter Type ANY is specified
-        /// \throw std::bad_alloc Internal resource allocation failure
-        ///
-        /// \param type The RR type for which an RRset at the origin is to be
-        /// found.
-        /// \return A shared pointer to the requested type of RRset or NULL
-        /// if not found.
-        dns::ConstRRsetPtr getAtOrigin(const dns::RRType& type) {
-            // Perform common check, then delegate the actual work to
-            // derived class implementation, if provided.
-            if (type == dns::RRType::ANY()) {
-                isc_throw(isc::InvalidParameter,
-                          "Type ANY isn't allowed for getAtOrigin");
-            }
-            return (getAtOriginImpl(type));
-        }
-
     protected:
         /// \brief Return the \c ZoneFinder that created this \c Context.
         ///
@@ -372,18 +311,7 @@ public:
             const std::vector<isc::dns::RRType>& requested_types,
             std::vector<isc::dns::ConstRRsetPtr>& result);
 
-        /// \brief Actual implementation of getAtOrigin().
-        ///
-        /// This base class defines a default implementation that can be
-        /// used for any type of data sources.  A data source implementation
-        /// can override it.
-        ///
-        /// The default version of this implementation requires
-        /// \c getFinder() return a valid result.
-        virtual dns::ConstRRsetPtr getAtOriginImpl(const dns::RRType& type);
-
     private:
-
         const FindResultFlags flags_;
     protected:
         const FindOptions options_;
