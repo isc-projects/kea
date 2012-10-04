@@ -34,8 +34,7 @@ namespace { // anonymous namespace
 // function is such that often-used types such as A, AAAA, NS, SOA, MX,
 // etc.  are less than other types. See the code for the ordering.
 int
-compareTypes(const RdataSet* a,
-             const RdataSet* b) {
+compareTypes(const RdataSet* a, const RdataSet* b) {
     // First RRType::A()
     if (a->type == RRType::A()) {
         return (-1);
