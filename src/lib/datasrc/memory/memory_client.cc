@@ -36,11 +36,8 @@
 #include <dns/masterload.h>
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
-#include <boost/noncopyable.hpp>
 
 #include <algorithm>
-#include <map>
 #include <utility>
 #include <cctype>
 #include <cassert>
@@ -65,109 +62,6 @@ public:
     }
 };
 
-// A helper internal class for load().  make it non-copyable to avoid
-// accidental copy.
-//
-// The current internal implementation expects that both a normal
-// (non RRSIG) RRset and (when signed) its RRSIG are added at once.
-// Also in the current implementation, the input sequence of RRsets
-// are grouped with their owner name (so once a new owner name is encountered,
-// no subsequent RRset has the previous owner name), but the ordering
-// in the same group is not fixed.  So we hold all RRsets of the same
-// owner name in node_rrsets_ and node_rrsigsets_, and add the matching
-// pairs of RRsets to the zone when we see a new owner name.
-//
-// The caller is responsible for adding the RRsets of the last group
-// in the input sequence by explicitly calling flushNodeRRsets() at the
-// end.  It's cleaner and more robust if we let the destructor of this class
-// do it, but since we cannot guarantee the adding operation is exception free,
-// we don't choose that option to maintain the common expectation for
-// destructors.
-class InMemoryClient::Loader : boost::noncopyable {
-    typedef std::map<RRType, ConstRRsetPtr> NodeRRsets;
-    typedef NodeRRsets::value_type NodeRRsetsVal;
-public:
-    Loader(util::MemorySegment& mem_sgmt, const RRClass rrclass,
-           const Name& zone_name, ZoneData& zone_data) :
-        updater_(mem_sgmt, rrclass, zone_name, zone_data)
-    {}
-    void addFromLoad(const ConstRRsetPtr& rrset) {
-        // If we see a new name, flush the temporary holders, adding the
-        // pairs of RRsets and RRSIGs of the previous name to the zone.
-        if ((!node_rrsets_.empty() || !node_rrsigsets_.empty()) &&
-            getCurrentName() != rrset->getName()) {
-            flushNodeRRsets();
-        }
-
-        // Store this RRset until it can be added to the zone.  The current
-        // implementation requires RRs of the same RRset should be added at
-        // once, so we check the "duplicate" here.
-        const bool is_rrsig = rrset->getType() == RRType::RRSIG();
-        NodeRRsets& node_rrsets = is_rrsig ? node_rrsigsets_ : node_rrsets_;
-        const RRType& rrtype = is_rrsig ?
-            getCoveredType(rrset) : rrset->getType();
-        if (!node_rrsets.insert(NodeRRsetsVal(rrtype, rrset)).second) {
-            isc_throw(ZoneDataUpdater::AddError,
-                      "Duplicate add of the same type of"
-                      << (is_rrsig ? " RRSIG" : "") << " RRset: "
-                      << rrset->getName() << "/" << rrtype);
-        }
-    }
-    void flushNodeRRsets() {
-        BOOST_FOREACH(NodeRRsetsVal val, node_rrsets_) {
-            // Identify the corresponding RRSIG for the RRset, if any.
-            // If found add both the RRset and its RRSIG at once.
-            ConstRRsetPtr sig_rrset;
-            NodeRRsets::iterator sig_it =
-                node_rrsigsets_.find(val.first);
-            if (sig_it != node_rrsigsets_.end()) {
-                sig_rrset = sig_it->second;
-                node_rrsigsets_.erase(sig_it);
-            }
-            updater_.add(val.second, sig_rrset);
-        }
-
-        // Right now, we don't accept RRSIG without covered RRsets (this
-        // should eventually allowed, but to do so we'll need to update the
-        // finder).
-        if (!node_rrsigsets_.empty()) {
-            isc_throw(ZoneDataUpdater::AddError,
-                      "RRSIG is added without covered RRset for "
-                      << getCurrentName());
-        }
-
-        node_rrsets_.clear();
-        node_rrsigsets_.clear();
-    }
-private:
-    // A helper to identify the covered type of an RRSIG.
-    static RRType getCoveredType(const ConstRRsetPtr& sig_rrset) {
-        RdataIteratorPtr it = sig_rrset->getRdataIterator();
-        // Empty RRSIG shouldn't be passed either via a master file or another
-        // data source iterator, but it could still happen if the iterator
-        // has a bug.  We catch and reject such cases.
-        if (it->isLast()) {
-            isc_throw(isc::Unexpected,
-                      "Empty RRset is passed in-memory loader, name: "
-                      << sig_rrset->getName());
-        }
-        return (dynamic_cast<const generic::RRSIG&>(it->getCurrent()).
-                typeCovered());
-    }
-    const Name& getCurrentName() const {
-        if (!node_rrsets_.empty()) {
-            return (node_rrsets_.begin()->second->getName());
-        }
-        assert(!node_rrsigsets_.empty());
-        return (node_rrsigsets_.begin()->second->getName());
-    }
-
-private:
-    NodeRRsets node_rrsets_;
-    NodeRRsets node_rrsigsets_;
-    ZoneDataUpdater updater_;
-};
-
 result::Result
 InMemoryClient::load(const Name& zone_name,
                      const string& filename,
@@ -176,8 +70,10 @@ InMemoryClient::load(const Name& zone_name,
     SegmentObjectHolder<ZoneData, RRClass> holder(
         mem_sgmt_, ZoneData::create(mem_sgmt_, zone_name), rrclass_);
 
-    Loader loader(mem_sgmt_, rrclass_, zone_name, *holder.get());
-    rrset_installer(boost::bind(&Loader::addFromLoad, &loader, _1));
+    ZoneDataUpdater::Loader loader(mem_sgmt_, rrclass_,
+                                   zone_name, *holder.get());
+    rrset_installer(boost::bind(&ZoneDataUpdater::Loader::addFromLoad,
+                                &loader, _1));
     // Add any last RRsets that were left
     loader.flushNodeRRsets();
 
