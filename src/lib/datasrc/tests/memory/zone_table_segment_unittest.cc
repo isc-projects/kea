@@ -55,24 +55,23 @@ TEST_F(ZoneTableSegmentTest, create) {
 }
 
 // Helper function to check const and non-const methods.
-template <typename TS, typename TH>
+template <typename TS, typename TH, typename TT>
 void
 testGetHeader(ZoneTableSegment* segment) {
     TH& header = static_cast<TS*>(segment)->getHeader();
 
     // The zone table is unset.
-    const ZoneTable* table = header.getTable();
+    TT* table = header.getTable();
     EXPECT_EQ(static_cast<void*>(NULL), table);
 }
 
 TEST_F(ZoneTableSegmentTest, getHeader) {
     // non-const version.
-    testGetHeader<ZoneTableSegment, ZoneTableHeader>(segment_);
-}
+    testGetHeader<ZoneTableSegment, ZoneTableHeader, ZoneTable>(segment_);
 
-TEST_F(ZoneTableSegmentTest, getHeaderConst) {
     // const version.
-    testGetHeader<const ZoneTableSegment, const ZoneTableHeader>(segment_);
+    testGetHeader<const ZoneTableSegment, const ZoneTableHeader,
+                  const ZoneTable>(segment_);
 }
 
 TEST_F(ZoneTableSegmentTest, getMemorySegment) {
