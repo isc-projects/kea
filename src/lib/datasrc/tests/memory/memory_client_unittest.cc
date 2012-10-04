@@ -222,13 +222,13 @@ TEST_F(MemoryClientTest, loadFromIterator) {
     // RRType::MX() RRset
     rrset = iterator->getNextRRset();
     EXPECT_TRUE(rrset);
-    EXPECT_EQ(RRType::A(), rrset->getType());
+    EXPECT_EQ(RRType::MX(), rrset->getType());
     EXPECT_EQ(1, rrset->getRRsigDataCount()); // this RRset is signed
 
     // RRType::A() RRset
     rrset = iterator->getNextRRset();
     EXPECT_TRUE(rrset);
-    EXPECT_EQ(RRType::MX(), rrset->getType());
+    EXPECT_EQ(RRType::A(), rrset->getType());
     EXPECT_EQ(1, rrset->getRRsigDataCount()); // also signed
 
     // There's nothing else in this iterator
@@ -364,11 +364,11 @@ TEST_F(MemoryClientTest, loadReloadZone) {
 
     set = node->getData();
     EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
-    EXPECT_EQ(RRType::A(), set->type);
+    EXPECT_EQ(RRType::AAAA(), set->type);
 
     set = set->getNext();
     EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
-    EXPECT_EQ(RRType::AAAA(), set->type);
+    EXPECT_EQ(RRType::A(), set->type);
 
     set = set->getNext();
     EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);
@@ -754,11 +754,11 @@ TEST_F(MemoryClientTest, findZoneData) {
 
     set = node->getData();
     EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
-    EXPECT_EQ(RRType::A(), set->type);
+    EXPECT_EQ(RRType::AAAA(), set->type);
 
     set = set->getNext();
     EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
-    EXPECT_EQ(RRType::AAAA(), set->type);
+    EXPECT_EQ(RRType::A(), set->type);
 
     set = set->getNext();
     EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);

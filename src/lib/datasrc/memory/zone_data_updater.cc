@@ -27,53 +27,6 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
-namespace { // unnamed namespace
-
-// Returns a value-less than, or greater-than zero if 'a' is less-than
-// or greater-than 'b'. If they are equal, it returns 0. The comparison
-// function is such that often-used types such as A, AAAA, NS, SOA, MX,
-// etc.  are less than other types. See the code for the ordering.
-int
-compareTypes(const RdataSet* a, const RdataSet* b) {
-    // First RRType::A()
-    if (a->type == RRType::A()) {
-        return (-1);
-    } else if (b->type == RRType::A()) {
-        return (1);
-    }
-
-    // Then, RRType::AAAA(), etc.
-    if (a->type == RRType::AAAA()) {
-        return (-1);
-    } else if (b->type == RRType::AAAA()) {
-        return (1);
-    }
-
-    if (a->type == RRType::NS()) {
-        return (-1);
-    } else if (b->type == RRType::NS()) {
-        return (1);
-    }
-
-    if (a->type == RRType::SOA()) {
-        return (-1);
-    } else if (b->type == RRType::SOA()) {
-        return (1);
-    }
-
-    if (a->type == RRType::MX()) {
-        return (-1);
-    } else if (b->type == RRType::MX()) {
-        return (1);
-    }
-
-    // Everything else comes in front of the rest of the list, so that
-    // we can insert quickly.
-    return (-1);
-}
-
-} // end of unnamed namespace
-
 void
 ZoneDataUpdater::addWildcards(const Name& name) {
     Name wname(name);
@@ -314,24 +267,8 @@ ZoneDataUpdater::addRdataSet(const ConstRRsetPtr rrset,
 
         RdataSet* rdataset_new = RdataSet::create(mem_sgmt_, encoder_,
                                                   rrset, rrsig);
-
-        // Insertion sort the new RdataSet into place in the list.
-        RdataSet* prev = NULL;
-        RdataSet* current = rdataset_head;
-        for (; current != NULL; current = current->getNext()) {
-            if (compareTypes(rdataset_new, current) < 0) {
-                break;
-            }
-
-            prev = current;
-        }
-
-        rdataset_new->next = current;
-        if (prev != NULL) {
-             prev->next = rdataset_new;
-        } else {
-             node->setData(rdataset_new);
-        }
+        rdataset_new->next = rdataset_head;
+        node->setData(rdataset_new);
 
         // Ok, we just put it in.
 
