@@ -101,13 +101,13 @@ ZoneDataUpdater::addWildcards(const Name& name) {
 
 void
 ZoneDataUpdater::contextCheck(const AbstractRRset& rrset,
-                              const RdataSet* set) const
+                              const RdataSet* rdataset) const
 {
     // Ensure CNAME and other type of RR don't coexist for the same
     // owner name except with NSEC, which is the only RR that can
     // coexist with CNAME (and also RRSIG, which is handled separately)
     if (rrset.getType() == RRType::CNAME()) {
-        for (const RdataSet* sp = set; sp != NULL; sp = sp->getNext()) {
+        for (const RdataSet* sp = rdataset; sp != NULL; sp = sp->getNext()) {
             if (sp->type != RRType::NSEC()) {
                 isc_throw(AddError,
                           "CNAME can't be added with " << sp->type
@@ -115,7 +115,7 @@ ZoneDataUpdater::contextCheck(const AbstractRRset& rrset,
             }
         }
     } else if ((rrset.getType() != RRType::NSEC()) &&
-               (RdataSet::find(set, RRType::CNAME()) != NULL))
+               (RdataSet::find(rdataset, RRType::CNAME()) != NULL))
     {
         isc_throw(AddError,
                   "CNAME and " << rrset.getType() <<
@@ -128,10 +128,10 @@ ZoneDataUpdater::contextCheck(const AbstractRRset& rrset,
     if (rrset.getName() != zone_name_ &&
         // Adding DNAME, NS already there
         ((rrset.getType() == RRType::DNAME() &&
-          RdataSet::find(set, RRType::NS()) != NULL) ||
+          RdataSet::find(rdataset, RRType::NS()) != NULL) ||
          // Adding NS, DNAME already there
          (rrset.getType() == RRType::NS() &&
-          RdataSet::find(set, RRType::DNAME()) != NULL)))
+          RdataSet::find(rdataset, RRType::DNAME()) != NULL)))
     {
         isc_throw(AddError, "DNAME can't coexist with NS in non-apex domain: "
                   << rrset.getName());
