@@ -1,3 +1,9 @@
+4XX.	[func]		tomek
+	libdhcpsrv: The DHCP Configuration Manager is now able to store
+	information about IPv4 subnets and pool. It is still not possible
+	to configure that information. This will be implemented in a near
+	future.
+
 484.	[func]		tomek
 	A new library (libb10-dhcpsrv) has been created. At present, it
 	only holds the code for the DHCP Configuration Manager. Currently

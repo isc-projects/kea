@@ -72,7 +72,7 @@ public:
     /// accessing it.
     static CfgMgr& instance();
 
-    /// @brief get subnet by address
+    /// @brief get IPv6 subnet by address
     ///
     /// Finds a matching subnet, based on an address. This can be used
     /// in two cases: when trying to find an appropriate lease based on
@@ -83,7 +83,7 @@ public:
     /// @param hint an address that belongs to a searched subnet
     Subnet6Ptr getSubnet6(const isc::asiolink::IOAddress& hint);
 
-    /// @brief get subnet by interface-id
+    /// @brief get IPv6 subnet by interface-id
     ///
     /// Another possibility to find a subnet is based on interface-id.
     ///
@@ -91,13 +91,30 @@ public:
     /// @todo This method is not currently supported.
     Subnet6Ptr getSubnet6(OptionPtr interface_id);
 
-    /// @brief adds a subnet6
+    /// @brief adds an IPv6 subnet
     void addSubnet6(const Subnet6Ptr& subnet);
 
     /// @todo: Add subnet6 removal routines. Currently it is not possible
     /// to remove subnets. The only case where subnet6 removal would be
     /// needed is a dynamic server reconfiguration - a use case that is not
     /// planned to be supported any time soon.
+
+    /// @brief get IPv4 subnet by address
+    ///
+    /// Finds a matching subnet, based on an address. This can be used
+    /// in two cases: when trying to find an appropriate lease based on
+    /// a) relay link address (that must be the address that is on link)
+    /// b) our global address on the interface the message was received on
+    ///    (for directly connected clients)
+    ///
+    /// @param hint an address that belongs to a searched subnet
+    Subnet4Ptr getSubnet4(const isc::asiolink::IOAddress& hint);
+
+    /// @brief adds a subnet4
+    void addSubnet4(const Subnet4Ptr& subnet);
+
+    /// @brief removes all IPv4 subnets
+    void removeSubnets4();
 protected:
 
     /// @brief Protected constructor.
@@ -111,13 +128,21 @@ protected:
     /// @brief virtual desctructor
     virtual ~CfgMgr();
 
-    /// @brief a container for Subnet6
+    /// @brief a container for IPv6 subnets.
     ///
     /// That is a simple vector of pointers. It does not make much sense to
     /// optimize access time (e.g. using a map), because typical search
     /// pattern will use calling inRange() method on each subnet until
     /// a match is found.
     Subnet6Collection subnets6_;
+
+    /// @brief a container for IPv4 subnets.
+    ///
+    /// That is a simple vector of pointers. It does not make much sense to
+    /// optimize access time (e.g. using a map), because typical search
+    /// pattern will use calling inRange() method on each subnet until
+    /// a match is found.
+    Subnet4Collection subnets4_;
 };
 
 } // namespace isc::dhcp
