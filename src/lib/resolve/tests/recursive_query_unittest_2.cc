@@ -79,10 +79,10 @@ using namespace std;
 namespace isc {
 namespace asiodns {
 
-const std::string TEST_ADDRESS = "127.0.0.1";   ///< Servers are on this address
-const uint16_t TEST_PORT = 5301;                ///< ... and this port
-const size_t BUFFER_SIZE = 1024;                ///< For all buffers
-const char* WWW_EXAMPLE_ORG = "192.0.2.254";    ///< Address of www.example.org
+const char* TEST_ADDRESS = "127.0.0.1";       ///< Servers are on this address
+const uint16_t TEST_PORT = 5301;              ///< ... and this port
+const size_t BUFFER_SIZE = 1024;              ///< For all buffers
+const char* WWW_EXAMPLE_ORG = "192.0.2.254";  ///< Address of www.example.org
 
 // As the test is fairly long and complex, debugging "print" statements have
 // been left in although they are disabled.  Set the following to "true" to
