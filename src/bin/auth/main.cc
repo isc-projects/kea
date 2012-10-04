@@ -87,13 +87,25 @@ my_command_handler(const string& command, ConstElementPtr args) {
 }
 
 void
-datasrcConfigHandler(AuthSrv* server, const std::string&,
+datasrcConfigHandler(AuthSrv* server, bool* first_time,
+                     ModuleCCSession* config_session, const std::string&,
                      isc::data::ConstElementPtr config,
                      const isc::config::ConfigData&)
 {
     assert(server != NULL);
     if (config->contains("classes")) {
-        configureDataSource(*server, config->get("classes"));
+        if (*first_time) {
+            // HACK: The default is not passed to the handler in the first
+            // callback. This one will get the default (or, current value).
+            // Further updates will work the usual way.
+            assert(config_session != NULL);
+            *first_time = false;
+            configureDataSource(*auth_server,
+                                config_session->getRemoteConfigValue(
+                                    "data_sources", "classes"));
+        } else {
+            configureDataSource(*server, config->get("classes"));
+        }
     }
 }
 
@@ -205,18 +217,15 @@ main(int argc, char* argv[]) {
         isc::server_common::initKeyring(*config_session);
         auth_server->setTSIGKeyRing(&isc::server_common::keyring);
 
-        // Start the data source configuration
+        // Start the data source configuration.  We pass first_time and
+        // config_session for the hack described in datasrcConfigHandler.
+        bool first_time = true;
         config_session->addRemoteConfig("data_sources",
                                         boost::bind(datasrcConfigHandler,
-                                                    auth_server,
+                                                    auth_server, &first_time,
+                                                    config_session,
                                                     _1, _2, _3),
                                         false);
-
-        // HACK: The default is not passed to the handler. This one will
-        // get the default (or, current value). Further updates will work
-        // the usual way.
-        configureDataSource(*auth_server,
-            config_session->getRemoteConfigValue("data_sources", "classes"));
 
         // Now start asynchronous read.
         config_session->start();
