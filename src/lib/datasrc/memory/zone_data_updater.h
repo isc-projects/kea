@@ -20,6 +20,7 @@
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrset.h>
+#include <dns/nsec3hash.h>
 #include <util/memory_segment.h>
 
 #include <boost/noncopyable.hpp>
@@ -37,12 +38,14 @@ public:
        mem_sgmt_(mem_sgmt),
        rrclass_(rrclass),
        zone_name_(zone_name),
-       zone_data_(zone_data)
+       zone_data_(zone_data),
+       hash_(NULL)
     {}
 
     /// The destructor.
-    ~ZoneDataUpdater()
-    {}
+    ~ZoneDataUpdater() {
+        delete hash_;
+    }
 
     //@}
 
@@ -109,6 +112,7 @@ private:
     // the strong exception guarantee.
     void validate(const isc::dns::ConstRRsetPtr rrset) const;
 
+    const isc::dns::NSEC3Hash* getNSEC3Hash();
     template <typename T>
     void setupNSEC3(const isc::dns::ConstRRsetPtr rrset);
     void addNSEC3(const isc::dns::ConstRRsetPtr rrset,
@@ -121,6 +125,7 @@ private:
     const isc::dns::Name& zone_name_;
     ZoneData& zone_data_;
     RdataEncoder encoder_;
+    isc::dns::NSEC3Hash* hash_;
 };
 
 } // namespace memory

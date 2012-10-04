@@ -16,7 +16,6 @@
 #include <datasrc/zone.h>
 
 #include <dns/rdataclass.h>
-#include <dns/nsec3hash.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -231,6 +230,22 @@ ZoneDataUpdater::validate(const isc::dns::ConstRRsetPtr rrset) const {
     }
 }
 
+const NSEC3Hash*
+ZoneDataUpdater::getNSEC3Hash() {
+    if (hash_ == NULL) {
+        NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
+        // This should never be NULL in this codepath.
+        assert(nsec3_data != NULL);
+
+        hash_ = NSEC3Hash::create(nsec3_data->hashalg,
+                                  nsec3_data->iterations,
+                                  nsec3_data->getSaltData(),
+                                  nsec3_data->getSaltLen());
+    }
+
+    return (hash_);
+}
+
 template <typename T>
 void
 ZoneDataUpdater::setupNSEC3(const ConstRRsetPtr rrset) {
@@ -245,12 +260,7 @@ ZoneDataUpdater::setupNSEC3(const ConstRRsetPtr rrset) {
         zone_data_.setNSEC3Data(nsec3_data);
         zone_data_.setSigned(true);
     } else {
-        const boost::scoped_ptr<NSEC3Hash> hash
-            (NSEC3Hash::create(nsec3_data->hashalg,
-                               nsec3_data->iterations,
-                               nsec3_data->getSaltData(),
-                               nsec3_data->getSaltLen()));
-
+        const NSEC3Hash* hash = getNSEC3Hash();
         if (!hash->match(nsec3_rdata)) {
             isc_throw(AddError,
                       rrset->getType() << " with inconsistent parameters: "
