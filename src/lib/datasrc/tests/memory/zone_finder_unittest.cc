@@ -192,7 +192,6 @@ public:
         ZoneData::destroy(mem_sgmt_, zone_data_, RRClass::IN());
     }
 
-    // simplified version of 'loading' data
     void addToZoneData(const ConstRRsetPtr rrset) {
         updater_.add(rrset, rrset->getRRsig());
     }
