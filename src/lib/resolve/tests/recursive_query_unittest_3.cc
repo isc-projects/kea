@@ -72,12 +72,11 @@ using namespace std;
 namespace isc {
 namespace asiodns {
 
-const std::string TEST_ADDRESS3 = "127.0.0.1"; 
-                                               ///< Servers are on this address
-const uint16_t TEST_PORT3 = 5303;              ///< ... and this port
+const char* TEST_ADDRESS3 = "127.0.0.1";      ///< Servers are on this address
+const uint16_t TEST_PORT3 = 5303;             ///< ... and this port
 const size_t BUFFER_SIZE = 1024;              ///< For all buffers
 
-const std::string DUMMY_ADDR3 = "1.2.3.4";     ///< address to return as A
+const char* DUMMY_ADDR3 = "1.2.3.4";          ///< address to return as A
 
 class MockResolver3 : public isc::resolve::ResolverInterface {
 public:
