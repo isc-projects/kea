@@ -410,6 +410,7 @@ private:
             isc_throw(Unexpected,
                       "mkstemp() created a filename too long for sun_path");
         }
+        memset(socket_address.sun_path, 0, sizeof(socket_address.sun_path));
         strncpy(socket_address.sun_path, path_, len);
 #ifdef HAVE_SA_LEN
         socket_address.sun_len = len;
@@ -542,7 +543,6 @@ TEST_F(SocketRequestorTest, testSocketPassing) {
         EXPECT_EQ("foo", socket_id.second);
         EXPECT_EQ(0, close(socket_id.first));
     }
-
     // Create a second socket server, to test that multiple different
     // domains sockets would work as well (even though we don't actually
     // use that feature)
