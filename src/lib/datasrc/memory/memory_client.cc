@@ -255,7 +255,8 @@ masterLoadWrapper(const char* const filename, const Name& origin,
 // The installer called from load() for the iterator version of load().
 void
 generateRRsetFromIterator(ZoneIterator* iterator,
-                          InMemoryClient::LoadCallback callback) {
+                          InMemoryClient::LoadCallback callback)
+{
     ConstRRsetPtr rrset;
     while ((rrset = iterator->getNextRRset()) != NULL) {
         callback(rrset);
