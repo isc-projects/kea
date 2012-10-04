@@ -416,37 +416,4 @@ TEST_P(ZoneFinderContextTest, getAdditionalForAny) {
                 result_sets_.begin(), result_sets_.end());
 }
 
-TEST_P(ZoneFinderContextTest, getAtOrigin) {
-    ConstRRsetPtr expected_ns_rrset =
-        textToRRset("example.org. 3600 IN NS ns1.example.org.\n"
-                    "example.org. 3600 IN NS ns2.example.org.\n");
-
-    // Try getAtOrigin for an existing type (NS) record at the origin that
-    // has RRSIG.  The RRSIG will be associated iff the original query
-    // has the FIND_DNSSEC option.
-    ZoneFinderContextPtr ctx = finder_->find(Name("ns1.example.org"),
-                                             RRType::A());
-    EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
-    ConstRRsetPtr ns_rrset = ctx->getAtOrigin(RRType::NS());
-    ASSERT_TRUE(ns_rrset);
-    rrsetCheck(expected_ns_rrset, ns_rrset);
-    EXPECT_FALSE(ns_rrset->getRRsig());
-
-    ctx = finder_->find(Name("ns1.example.org"), RRType::A(),
-                        ZoneFinder::FIND_DNSSEC);
-    ns_rrset = ctx->getAtOrigin(RRType::NS());
-    ASSERT_TRUE(ns_rrset);
-    rrsetCheck(expected_ns_rrset, ns_rrset);
-    ASSERT_TRUE(ns_rrset->getRRsig());
-    rrsetCheck(textToRRset("example.org. 3600 IN RRSIG NS 7 3 3600 "
-                           "20150420235959 20051021000000 40430 "
-                           "example.org. FAKEFAKEFAKE"), ns_rrset->getRRsig());
-
-    // For non-existing type we simply get NULL.
-    EXPECT_FALSE(ctx->getAtOrigin(RRType::TXT()));
-
-    // Type ANY query isn't allowed.
-    EXPECT_THROW(ctx->getAtOrigin(RRType::ANY()), isc::InvalidParameter);
-}
-
 }
