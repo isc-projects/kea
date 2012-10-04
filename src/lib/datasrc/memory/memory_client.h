@@ -36,6 +36,14 @@ class RRsetList;
 namespace datasrc {
 namespace memory {
 
+namespace internal {
+    // Please don't use anything from here outside the InMemoryClient
+    // implementation.
+
+    // A functor type used for loading.
+    typedef boost::function<void(isc::dns::ConstRRsetPtr)> LoadCallback;
+} // end of internal namespace
+
 /// \brief A data source client that holds all necessary data in memory.
 ///
 /// The \c InMemoryClient class provides an access to a conceptual data
@@ -206,9 +214,6 @@ public:
     getJournalReader(const isc::dns::Name& zone, uint32_t begin_serial,
                      uint32_t end_serial) const;
 
-    // A functor type used for loading.
-    typedef boost::function<void(isc::dns::ConstRRsetPtr)> LoadCallback;
-
 private:
     // Some type aliases
     typedef DomainTree<std::string> FileNameTree;
@@ -224,7 +229,8 @@ private:
     // loaded from another data source.
     result::Result load(const isc::dns::Name& zone_name,
                         const std::string& filename,
-                        boost::function<void(LoadCallback)> rrset_installer);
+                        boost::function<void(internal::LoadCallback)>
+                            rrset_installer);
 
     util::MemorySegment& mem_sgmt_;
     const isc::dns::RRClass rrclass_;
