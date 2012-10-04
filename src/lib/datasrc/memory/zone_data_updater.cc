@@ -101,7 +101,8 @@ ZoneDataUpdater::addWildcards(const Name& name) {
 
 void
 ZoneDataUpdater::contextCheck(const AbstractRRset& rrset,
-                              const RdataSet* set) const {
+                              const RdataSet* set) const
+{
     // Ensure CNAME and other type of RR don't coexist for the same
     // owner name except with NSEC, which is the only RR that can
     // coexist with CNAME (and also RRSIG, which is handled separately)
@@ -260,8 +261,8 @@ ZoneDataUpdater::setupNSEC3(const ConstRRsetPtr rrset) {
 }
 
 void
-ZoneDataUpdater::addNSEC3(const ConstRRsetPtr rrset,
-                          const ConstRRsetPtr rrsig) {
+ZoneDataUpdater::addNSEC3(const ConstRRsetPtr rrset, const ConstRRsetPtr rrsig)
+{
     setupNSEC3<generic::NSEC3>(rrset);
 
     NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
@@ -269,16 +270,17 @@ ZoneDataUpdater::addNSEC3(const ConstRRsetPtr rrset,
     ZoneNode* node;
     nsec3_data->insertName(mem_sgmt_, rrset->getName(), &node);
 
-    RdataSet* set = RdataSet::create(mem_sgmt_, encoder_, rrset, rrsig);
-    RdataSet* old_set = node->setData(set);
-    if (old_set != NULL) {
-        RdataSet::destroy(mem_sgmt_, rrclass_, old_set);
+    RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, rrset, rrsig);
+    RdataSet* old_rdataset = node->setData(rdataset);
+    if (old_rdataset != NULL) {
+        RdataSet::destroy(mem_sgmt_, rrclass_, old_rdataset);
     }
 }
 
 void
 ZoneDataUpdater::addRdataSet(const ConstRRsetPtr rrset,
-                             const ConstRRsetPtr rrsig) {
+                             const ConstRRsetPtr rrsig)
+{
     if (rrset->getType() == RRType::NSEC3()) {
         addNSEC3(rrset, rrsig);
     } else {
@@ -352,7 +354,8 @@ ZoneDataUpdater::addRdataSet(const ConstRRsetPtr rrset,
 
 void
 ZoneDataUpdater::add(const ConstRRsetPtr& rrset,
-                     const ConstRRsetPtr& sig_rrset) {
+                     const ConstRRsetPtr& sig_rrset)
+{
     // Validate input.  This will cause an exception to be thrown if the
     // input RRset is empty.
     validate(rrset);
