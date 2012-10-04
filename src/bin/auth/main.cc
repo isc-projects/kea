@@ -87,13 +87,13 @@ my_command_handler(const string& command, ConstElementPtr args) {
 }
 
 void
-datasrcConfigHandler(AuthSrv* server, DataSourceConfigurator* configurator,
-                     const std::string&, isc::data::ConstElementPtr config,
+datasrcConfigHandler(AuthSrv* server, const std::string&,
+                     isc::data::ConstElementPtr config,
                      const isc::config::ConfigData&)
 {
     assert(server != NULL);
     if (config->contains("classes")) {
-        configurator->reconfigure(*server, config->get("classes"));
+        configureDataSource(*server, config->get("classes"));
     }
 }
 
@@ -141,7 +141,6 @@ main(int argc, char* argv[]) {
     ModuleCCSession* config_session = NULL;
     XfroutClient xfrout_client(getXfroutSocketPath());
     SocketSessionForwarder ddns_forwarder(getDDNSSocketPath());
-    boost::scoped_ptr<DataSourceConfigurator> datasrc_configurator;
     try {
         string specfile;
         if (getenv("B10_FROM_BUILD")) {
@@ -207,19 +206,16 @@ main(int argc, char* argv[]) {
         auth_server->setTSIGKeyRing(&isc::server_common::keyring);
 
         // Start the data source configuration
-        datasrc_configurator.reset(new DataSourceConfigurator);
         config_session->addRemoteConfig("data_sources",
                                         boost::bind(datasrcConfigHandler,
                                                     auth_server,
-                                                    datasrc_configurator.get(),
                                                     _1, _2, _3),
                                         false);
 
         // HACK: The default is not passed to the handler. This one will
         // get the default (or, current value). Further updates will work
         // the usual way.
-        datasrc_configurator->reconfigure(
-            *auth_server,
+        configureDataSource(*auth_server,
             config_session->getRemoteConfigValue("data_sources", "classes"));
 
         // Now start asynchronous read.
@@ -244,9 +240,10 @@ main(int argc, char* argv[]) {
         xfrin_session->disconnect();
     }
 
-    if (datasrc_configurator) {
-        config_session->removeRemoteConfig("data_sources");
-    }
+    // If we haven't registered callback for data sources, this will be just
+    // no-op.
+    config_session->removeRemoteConfig("data_sources");
+
     delete xfrin_session;
     delete config_session;
     delete cc_session;

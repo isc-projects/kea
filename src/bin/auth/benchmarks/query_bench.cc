@@ -109,7 +109,6 @@ private:
     MockSocketSessionForwarder ddns_forwarder;
 protected:
     AuthSrvPtr server_;
-    DataSourceConfigurator datasrc_configurator_;
 private:
     const BenchQueries& queries_;
     Message& query_message_;
@@ -126,7 +125,7 @@ public:
                           OutputBuffer& buffer) :
         QueryBenchMark(queries, query_message, buffer)
     {
-        datasrc_configurator_.reconfigure(
+        configureDataSource(
             *server_,
             Element::fromJSON("{\"IN\":"
                               "  [{\"type\": \"sqlite3\","
@@ -145,7 +144,7 @@ public:
                          OutputBuffer& buffer) :
         QueryBenchMark(queries, query_message, buffer)
     {
-        datasrc_configurator_.reconfigure(
+        configureDataSource(
             *server_,
             Element::fromJSON("{\"IN\":"
                               "  [{\"type\": \"MasterFiles\","

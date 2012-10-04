@@ -17,6 +17,7 @@ query_bench_SOURCES += ../auth_srv.h ../auth_srv.cc
 query_bench_SOURCES += ../auth_config.h ../auth_config.cc
 query_bench_SOURCES += ../statistics.h ../statistics.cc
 query_bench_SOURCES += ../auth_log.h ../auth_log.cc
+query_bench_SOURCES += ../datasrc_configurator.h ../datasrc_configurator.cc
 
 nodist_query_bench_SOURCES = ../auth_messages.h ../auth_messages.cc
 
