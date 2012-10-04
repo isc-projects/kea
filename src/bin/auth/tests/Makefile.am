@@ -42,6 +42,7 @@ run_unittests_SOURCES += ../auth_config.h ../auth_config.cc
 run_unittests_SOURCES += ../command.h ../command.cc
 run_unittests_SOURCES += ../common.h ../common.cc
 run_unittests_SOURCES += ../statistics.h ../statistics.cc
+run_unittests_SOURCES += ../datasrc_configurator.h ../datasrc_configurator.cc
 run_unittests_SOURCES += datasrc_util.h datasrc_util.cc
 run_unittests_SOURCES += auth_srv_unittest.cc
 run_unittests_SOURCES += config_unittest.cc
