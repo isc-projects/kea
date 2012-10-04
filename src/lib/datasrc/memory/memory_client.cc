@@ -65,7 +65,8 @@ public:
 result::Result
 InMemoryClient::load(const Name& zone_name,
                      const string& filename,
-                     boost::function<void(LoadCallback)> rrset_installer)
+                     boost::function<void(internal::LoadCallback)>
+                         rrset_installer)
 {
     SegmentObjectHolder<ZoneData, RRClass> holder(
         mem_sgmt_, ZoneData::create(mem_sgmt_, zone_name), rrclass_);
@@ -143,7 +144,7 @@ namespace {
 void
 masterLoadWrapper(const char* const filename, const Name& origin,
                   const RRClass& zone_class,
-                  InMemoryClient::LoadCallback callback)
+                  internal::LoadCallback callback)
 {
     masterLoad(filename, origin, zone_class, boost::bind(callback, _1));
 }
@@ -151,7 +152,7 @@ masterLoadWrapper(const char* const filename, const Name& origin,
 // The installer called from load() for the iterator version of load().
 void
 generateRRsetFromIterator(ZoneIterator* iterator,
-                          InMemoryClient::LoadCallback callback)
+                          internal::LoadCallback callback)
 {
     ConstRRsetPtr rrset;
     while ((rrset = iterator->getNextRRset()) != NULL) {
