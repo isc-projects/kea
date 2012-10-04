@@ -538,14 +538,14 @@ public:
             const RRClass& rrclass, const ZoneFinderResultContext& result) :
         ZoneFinder::Context(options, ResultContext(result.code, result.rrset,
                                                    result.flags)),
-        finder_(finder),        // NOTE: when #2284 is done we won't need this
+        finder_(finder), // NOTE: when entire #2283 is done we won't need this
         rrclass_(rrclass), zone_data_(result.zone_data),
         found_node_(result.found_node),
         found_rdset_(result.found_rdset)
     {}
 
 protected:
-    // When #2284 is done this can simply return NULL.
+    // When all tickets in #2283 are done this can simply return NULL.
     virtual ZoneFinder* getFinder() { return (&finder_); }
 
     // We don't use the default protected methods that rely on this method,
