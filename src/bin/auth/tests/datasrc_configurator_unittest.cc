@@ -16,6 +16,7 @@
 
 #include <config/tests/fake_session.h>
 #include <config/ccsession.h>
+#include <util/threads/lock.h>
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -81,6 +82,9 @@ public:
         }
         return (result);
     }
+    isc::util::thread::Mutex& getClientListMutex() const {
+        return (mutex_);
+    }
 protected:
     DatasrcConfiguratorTest() :
         session(ElementPtr(new ListElement), ElementPtr(new ListElement),
@@ -137,6 +141,7 @@ protected:
     const string specfile;
     std::map<RRClass, ListPtr> lists_;
     string log_;
+    mutable isc::util::thread::Mutex mutex_;
 };
 
 // Check the initialization (and cleanup)

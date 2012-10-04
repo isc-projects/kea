@@ -42,16 +42,19 @@ def prepare_config_commands(tool):
     cmd = CommandInfo(name = "show", desc = "Show configuration.")
     param = ParamInfo(name = "argument", type = "string", optional=True, desc = "If you specify the argument 'all' (before the identifier), recursively show all child elements for the given identifier.")
     cmd.add_param(param)
-    param = ParamInfo(name = "identifier", type = "string", optional=True, desc = DEFAULT_IDENTIFIER_DESC)
+    param = ParamInfo(name=CFGITEM_IDENTIFIER_PARAM, type="string",
+                      optional=True, desc=DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "show_json", desc = "Show full configuration in JSON format.")
-    param = ParamInfo(name = "identifier", type = "string", optional=True, desc = DEFAULT_IDENTIFIER_DESC)
+    cmd = CommandInfo(name="show_json",
+                      desc="Show full configuration in JSON format.")
+    param = ParamInfo(name=CFGITEM_IDENTIFIER_PARAM, type="string",
+                      optional=True, desc=DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "add", desc =
+    cmd = CommandInfo(name="add", desc=
         "Add an entry to configuration list or a named set. "
         "When adding to a list, the command has one optional argument, "
         "a value to add to the list. The value must be in correct JSON "
@@ -60,45 +63,53 @@ def prepare_config_commands(tool):
         "parameter value, similar to when adding to a list. "
         "In either case, when no value is given, an entry will be "
         "constructed with default values.")
-    param = ParamInfo(name = "identifier", type = "string", optional=True, desc = DEFAULT_IDENTIFIER_DESC)
+    param = ParamInfo(name=CFGITEM_IDENTIFIER_PARAM, type="string",
+                      optional=True, desc=DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
-    param = ParamInfo(name = "value_or_name", type = "string", optional=True, desc = "Specifies a value to add to the list, or the name when adding to a named set. It must be in correct JSON format and complete.")
+    param = ParamInfo(name="value_or_name", type="string", optional=True,
+                      desc="Specifies a value to add to the list, or the name when adding to a named set. It must be in correct JSON format and complete.")
     cmd.add_param(param)
     module.add_command(cmd)
-    param = ParamInfo(name = "value_for_set", type = "string", optional=True, desc = "Specifies an optional value to add to the named map. It must be in correct JSON format and complete.")
+    param = ParamInfo(name="value_for_set", type="string", optional=True,
+                      desc="Specifies an optional value to add to the named map. It must be in correct JSON format and complete.")
     cmd.add_param(param)
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "remove", desc = "Remove entry from configuration list or named set.")
-    param = ParamInfo(name = "identifier", type = "string", optional=True, desc = DEFAULT_IDENTIFIER_DESC)
+    cmd = CommandInfo(name="remove", desc="Remove entry from configuration list or named set.")
+    param = ParamInfo(name=CFGITEM_IDENTIFIER_PARAM, type="string",
+                      optional=True, desc=DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
     param = ParamInfo(name = "value", type = "string", optional=True, desc = "When identifier is a list, specifies a value to remove from the list. It must be in correct JSON format and complete. When it is a named set, specifies the name to remove.")
     cmd.add_param(param)
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "set", desc = "Set a configuration value.")
-    param = ParamInfo(name = "identifier", type = "string", optional=True, desc = DEFAULT_IDENTIFIER_DESC)
+    cmd = CommandInfo(name="set", desc="Set a configuration value.")
+    param = ParamInfo(name=CFGITEM_IDENTIFIER_PARAM, type="string",
+                      optional=True, desc=DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
-    param = ParamInfo(name = "value", type = "string", optional=False, desc = "Specifies a value to set. It must be in correct JSON format and complete.")
-    cmd.add_param(param)
-    module.add_command(cmd)
-
-    cmd = CommandInfo(name = "unset", desc = "Unset a configuration value (i.e. revert to the default, if any).")
-    param = ParamInfo(name = "identifier", type = "string", optional=False, desc = DEFAULT_IDENTIFIER_DESC)
+    param = ParamInfo(name="value", type="string", optional=False,
+                      desc="Specifies a value to set. It must be in correct JSON format and complete.")
     cmd.add_param(param)
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "diff", desc = "Show all local changes that have not been committed.")
+    cmd = CommandInfo(name="unset", desc="Unset a configuration value (i.e. revert to the default, if any).")
+    param = ParamInfo(name=CFGITEM_IDENTIFIER_PARAM, type="string",
+                      optional=False, desc=DEFAULT_IDENTIFIER_DESC)
+    cmd.add_param(param)
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "revert", desc = "Revert all local changes.")
+    cmd = CommandInfo(name="diff", desc="Show all local changes that have not been committed.")
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "commit", desc = "Commit all local changes.")
+    cmd = CommandInfo(name="revert", desc="Revert all local changes.")
     module.add_command(cmd)
 
-    cmd = CommandInfo(name = "go", desc = "Go to a specific configuration part.")
-    param = ParamInfo(name = "identifier", type="string", optional=False, desc = DEFAULT_IDENTIFIER_DESC)
+    cmd = CommandInfo(name="commit", desc="Commit all local changes.")
+    module.add_command(cmd)
+
+    cmd = CommandInfo(name="go", desc="Go to a specific configuration part.")
+    param = ParamInfo(name=CFGITEM_IDENTIFIER_PARAM, type="string",
+                      optional=False, desc=DEFAULT_IDENTIFIER_DESC)
     cmd.add_param(param)
     module.add_command(cmd)
 

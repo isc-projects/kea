@@ -45,6 +45,13 @@ def spec_part_is_named_set(spec_part):
        named_set specification, and False otherwise."""
     return (type(spec_part) == dict and 'named_set_item_spec' in spec_part)
 
+def spec_part_is_any(spec_part):
+    """Returns true if the given spec_part specifies an element of type
+       any, and False otherwise.
+    """
+    return (type(spec_part) == dict and 'item_type' in spec_part and
+            spec_part['item_type'] == "any")
+
 def check_type(spec_part, value):
     """Does nothing if the value is of the correct type given the
        specification part relevant for the value. Raises an
@@ -237,7 +244,8 @@ def spec_name_list(spec, prefix="", recurse=False):
         elif 'named_set_item_spec' in spec:
             # we added a '/' above, but in this one case we don't want it
             result.append(prefix[:-1])
-        else:
+        # ignore any
+        elif not spec_part_is_any(spec):
             for name in spec:
                 result.append(prefix + name + "/")
                 if recurse:
@@ -392,14 +400,25 @@ class MultiConfigData:
            identifier, or None if not found. The first part of the
            identifier (up to the first /) is interpreted as the module
            name. Returns None if not found, or if identifier is not a
-           string."""
+           string.
+           If an index is given for a List-type element, it returns
+           the specification of the list elements, not of the list itself
+           """
         if type(identifier) != str or identifier == "":
             return None
         if identifier[0] == '/':
             identifier = identifier[1:]
         module, sep, id = identifier.partition("/")
+        if id != "":
+            id, indices = isc.cc.data.split_identifier_list_indices(id)
+        else:
+            indices = None
         try:
-            return find_spec_part(self._specifications[module].get_config_spec(), id)
+            spec_part = find_spec_part(self._specifications[module].get_config_spec(), id)
+            if indices is not None and spec_part_is_list(spec_part):
+                return spec_part['list_item_spec']
+            else:
+                return spec_part
         except isc.cc.data.DataNotFoundError as dnfe:
             return None
         except KeyError as ke:
@@ -780,17 +799,73 @@ class MultiConfigData:
            indices and named_set names to the completion list. If
            the given item_name is for a list or named_set, it'll
            return a list of those (appended to item_name), otherwise
-           the list will only contain the item_name itself."""
+           the list will only contain the item_name itself.
+
+           If the item is a named set, and it's contents are maps
+           or named_sets as well, a / is appended to the result
+           strings.
+
+           If the item is a list, this method is then called recursively
+           for each list entry.
+
+           This behaviour is slightly arbitrary, and currently reflects
+           the most probable way the resulting data should look like;
+           for lists, bindctl would always expect their contents to
+           be added as well. For named_sets, however, we do not
+           do recursion, since the resulting list may be too long.
+           This will probably change in a revision of the way this
+           data is handled; ideally, the result should always recurse,
+           but only up to a limited depth, and the resulting list
+           should probably be paginated clientside.
+
+           Parameters:
+           item_name (string): the (full) identifier for the list or
+                               named_set to enumerate.
+
+           Returns a list of strings with item names
+
+           Examples:
+           _get_list_items("Module/some_item")
+               where item is not a list of a named_set, or where
+               said list or named set is empty, returns
+               ["Module/some_item"]
+           _get_list_items("Module/named_set")
+               where the named_set contains items with names 'a'
+               and 'b', returns
+               [ "Module/named_set/a", "Module/named_set/b" ]
+           _get_list_items("Module/named_set_of_maps")
+               where the named_set contains items with names 'a'
+               and 'b', and those items are maps themselves
+               (or other named_sets), returns
+               [ "Module/named_set/a/", "Module/named_set/b/" ]
+           _get_list_items("Module/list")
+               where the list contains 2 elements, returns
+               [ "Module/list[0]", "Module/list[1]" ]
+        """
         spec_part = self.find_spec_part(item_name)
-        if 'item_type' in spec_part and \
-           spec_part['item_type'] == 'named_set':
-            subslash = ""
-            if spec_part['named_set_item_spec']['item_type'] == 'map' or\
-               spec_part['named_set_item_spec']['item_type'] == 'named_set':
-                subslash = "/"
-            values, status = self.get_value(item_name)
-            if len(values) > 0:
+        if spec_part_is_named_set(spec_part):
+            values, _ = self.get_value(item_name)
+            if values is not None and len(values) > 0:
+                subslash = ""
+                if spec_part['named_set_item_spec']['item_type'] == 'map' or\
+                   spec_part['named_set_item_spec']['item_type'] == 'named_set':
+                    subslash = "/"
+                # Don't recurse for named_sets (so as not to return too
+                # much data), but do add a / so the client so that
+                # the user can immediately tab-complete further if needed.
                 return [ item_name + "/" + v + subslash for v in values.keys() ]
+            else:
+                return [ item_name ]
+        elif spec_part_is_list(spec_part):
+            values, _ = self.get_value(item_name)
+            if values is not None and len(values) > 0:
+                result = []
+                for i in range(len(values)):
+                    name = item_name + '[%d]' % i
+                    # Recurse for list entries, so that its sub-contents
+                    # are also added to the result
+                    result.extend(self._get_list_items(name))
+                return result
             else:
                 return [ item_name ]
         else:

@@ -92,7 +92,7 @@ private:
     class Context;
 
     /// Actual implementation for both find() and findAll()
-    internal::ZoneFinderResultContext find_internal(
+    internal::ZoneFinderResultContext findInternal(
         const isc::dns::Name& name,
         const isc::dns::RRType& type,
         std::vector<isc::dns::ConstRRsetPtr>* target,
