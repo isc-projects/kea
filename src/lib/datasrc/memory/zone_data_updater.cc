@@ -26,7 +26,7 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
-namespace { // anonymous namespace
+namespace { // unnamed namespace
 
 // Returns a value-less than, or greater-than zero if 'a' is less-than
 // or greater-than 'b'. If they are equal, it returns 0. The comparison
@@ -71,7 +71,7 @@ compareTypes(const RdataSet* a, const RdataSet* b) {
     return (-1);
 }
 
-} // end of anonymous namespace
+} // end of unnamed namespace
 
 void
 ZoneDataUpdater::addWildcards(const Name& name) {
