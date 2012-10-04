@@ -42,7 +42,6 @@
 #include <server_common/socket_request.h>
 
 #include <boost/bind.hpp>
-#include <boost/scoped_ptr.hpp>
 
 #include <sys/types.h>
 #include <sys/socket.h>
