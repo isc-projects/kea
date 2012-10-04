@@ -40,6 +40,9 @@ namespace util {
 namespace io {
 class BaseSocketSessionForwarder;
 }
+namespace thread {
+class Mutex;
+}
 }
 namespace datasrc {
 class ConfigurableClientList;
@@ -318,6 +321,38 @@ public:
     /// \return List of classes for which a non-NULL client list
     ///     has been set by setClientList.
     std::vector<isc::dns::RRClass> getClientListClasses() const;
+
+    /// \brief Return a mutex for the client lists.
+    ///
+    /// Background loading of data uses threads. Therefore we need to protect
+    /// the client lists by a mutex, so they don't change (or get destroyed)
+    /// during query processing. Get (and lock) this mutex whenever you do
+    /// something with the lists and keep it locked until you finish. This
+    /// is correct:
+    /// \code
+    /// {
+    ///  Mutex::Locker locker(auth->getClientListMutex());
+    ///  boost::shared_ptr<isc::datasrc::ConfigurableClientList>
+    ///    list(auth->getClientList(RRClass::IN()));
+    ///  // Do some processing here
+    /// }
+    /// \endcode
+    ///
+    /// But this is not (it releases the mutex too soon):
+    /// \code
+    /// boost::shared_ptr<isc::datasrc::ConfigurableClientList> list;
+    /// {
+    ///     Mutex::Locker locker(auth->getClientListMutex());
+    ///     list = auth->getClientList(RRClass::IN()));
+    /// }
+    /// // Do some processing here
+    /// \endcode
+    ///
+    /// \note This method is const even if you are allowed to modify
+    ///    (lock) the mutex. It's because locking of the mutex is not really
+    ///    a modification of the server object and it is needed to protect the
+    ///    lists even on read-only operations.
+    isc::util::thread::Mutex& getClientListMutex() const;
 
     /// \brief Sets the timeout for incoming TCP connections
     ///
