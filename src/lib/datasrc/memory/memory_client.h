@@ -235,10 +235,6 @@ private:
     // A helper internal class used by the memory client, used for
     // deleting filenames stored in an internal tree.
     class FileNameDeleter;
-
-    // A helper internal class used by load().  It maintains some intermediate
-    // states while loading RRs of the zone.
-    class Loader;
 };
 
 } // namespace memory
