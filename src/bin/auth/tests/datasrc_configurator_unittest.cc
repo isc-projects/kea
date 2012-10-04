@@ -60,19 +60,23 @@ private:
 
 typedef shared_ptr<FakeList> ListPtr;
 
-// We use the test fixture as both parameters, this makes it possible
-// to easily fake all needed methods and look that they were called.
-typedef DataSourceConfiguratorGeneric<DatasrcConfiguratorTest,
-        FakeList> Configurator;
+void
+testConfigureDataSource(DatasrcConfiguratorTest& test,
+                        const isc::data::ConstElementPtr& config)
+{
+    // We use the test fixture for the Server type.  This makes it possible
+    // to easily fake all needed methods and look that they were called.
+    configureDataSourceGeneric<DatasrcConfiguratorTest, FakeList>(test,
+                                                                  config);
+}
 
 void
-datasrcConfigHandler(DatasrcConfiguratorTest* fake_server,
-                     Configurator* configurator, const std::string&,
+datasrcConfigHandler(DatasrcConfiguratorTest* fake_server, const std::string&,
                      isc::data::ConstElementPtr config,
                      const isc::config::ConfigData&)
 {
     if (config->contains("classes")) {
-        configurator->reconfigure(*fake_server, config->get("classes"));
+        testConfigureDataSource(*fake_server, config->get("classes"));
     }
 }
 
@@ -113,28 +117,24 @@ protected:
                                        false));
     }
     void TearDown() {
-        // Make sure no matter what we did, it is cleaned up.
+        // Make sure no matter what we did, it is cleaned up.  Also check
+        // we really have subscribed to the configuration, and after removing
+        // it we actually cancel it.
+        EXPECT_TRUE(session.haveSubscription("data_sources", "*"));
         mccs->removeRemoteConfig("data_sources");
+        EXPECT_FALSE(session.haveSubscription("data_sources", "*"));
     }
-    void init(const ElementPtr& config = ElementPtr()) {
+    void SetUp() {
         session.getMessages()->
             add(createAnswer(0,
                              moduleSpecFromFile(string(PLUGIN_DATA_PATH) +
                                                 "/datasrc.spec").
                              getFullSpec()));
-        if (config) {
-            session.getMessages()->add(createAnswer(0, config));
-        } else {
-            session.getMessages()->
-                add(createAnswer(0, ElementPtr(new MapElement)));
-        }
+        session.getMessages()->add(createAnswer(0,
+                                                ElementPtr(new MapElement)));
         mccs->addRemoteConfig("data_sources",
                               boost::bind(datasrcConfigHandler,
-                                          this, &configurator_,
-                                          _1, _2, _3), false);
-    }
-    void SetUp() {
-        init();
+                                          this, _1, _2, _3), false);
     }
     ElementPtr buildConfig(const string& config) const {
         const ElementPtr internal(Element::fromJSON(config));
@@ -155,30 +155,11 @@ protected:
     }
     FakeSession session;
     auto_ptr<ModuleCCSession> mccs;
-    Configurator configurator_;
     const string specfile;
     std::map<RRClass, ListPtr> lists_;
     string log_;
     mutable isc::util::thread::Mutex mutex_;
 };
-
-// Check the initialization (and cleanup)
-TEST_F(DatasrcConfiguratorTest, DISABLED_initialization) {
-    // It can't be initialized again
-    EXPECT_THROW(init(), InvalidOperation);
-    EXPECT_TRUE(session.haveSubscription("data_sources", "*"));
-    EXPECT_FALSE(session.haveSubscription("data_sources", "*"));
-    // We can't reconfigure now (not even manually)
-    EXPECT_THROW(configurator_.reconfigure(*this,
-                                           ElementPtr(new MapElement())),
-                 InvalidOperation);
-    // If the server param is NULL, it does not work
-    EXPECT_THROW(Configurator configurator, InvalidParameter);
-    EXPECT_FALSE(session.haveSubscription("data_sources", "*")); // TBD
-    // But we can initialize it again now
-    EXPECT_NO_THROW(init());
-    EXPECT_TRUE(session.haveSubscription("data_sources", "*"));
-}
 
 // Push there a configuration with a single list.
 TEST_F(DatasrcConfiguratorTest, createList) {
@@ -283,7 +264,7 @@ TEST_F(DatasrcConfiguratorTest, rollbackDeletion) {
     const ElementPtr
         config1(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}], "
                                   "\"CH\": [{\"type\": \"xxx\"}]}"));
-    configurator_.reconfigure(*this, config1);
+    testConfigureDataSource(*this, config1);
     const ElementPtr
         config2(Element::fromJSON("{\"IN\": [{\"type\": 13}]}"));
     // This would delete CH. However, the IN one fails.
@@ -291,7 +272,7 @@ TEST_F(DatasrcConfiguratorTest, rollbackDeletion) {
     // and there's no known way to cause an exception during the
     // deletions, it is not a true rollback, but the result should
     // be the same.
-    EXPECT_THROW(configurator_.reconfigure(*this, config2), TypeError);
+    EXPECT_THROW(testConfigureDataSource(*this, config2), TypeError);
     EXPECT_EQ("yyy", lists_[RRClass::IN()]->getConf());
     EXPECT_EQ("xxx", lists_[RRClass::CH()]->getConf());
 }
@@ -304,13 +285,13 @@ TEST_F(DatasrcConfiguratorTest, rollbackConfiguration) {
     const ElementPtr
         config1(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}], "
                                   "\"CH\": [{\"type\": \"xxx\"}]}"));
-    configurator_.reconfigure(*this, config1);
+    testConfigureDataSource(*this, config1);
     // Now, the CH happens first. But nevertheless, it should be
     // restored to the previoeus version.
     const ElementPtr
         config2(Element::fromJSON("{\"IN\": [{\"type\": 13}], "
                                   "\"CH\": [{\"type\": \"yyy\"}]}"));
-    EXPECT_THROW(configurator_.reconfigure(*this, config2), TypeError);
+    EXPECT_THROW(testConfigureDataSource(*this, config2), TypeError);
     EXPECT_EQ("yyy", lists_[RRClass::IN()]->getConf());
     EXPECT_EQ("xxx", lists_[RRClass::CH()]->getConf());
 }
