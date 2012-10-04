@@ -50,7 +50,7 @@ public:
     struct NullRRset : public InvalidParameter {
         NullRRset(const char* file, size_t line, const char* what) :
             InvalidParameter(file, line, what)
-        { }
+        {}
     };
 
     /// \brief Zone is empty exception.
@@ -60,7 +60,7 @@ public:
     struct EmptyZone : public InvalidParameter {
         EmptyZone(const char* file, size_t line, const char* what) :
             InvalidParameter(file, line, what)
-        { }
+        {}
     };
 
     /// \brief General failure exception for \c add().
@@ -75,7 +75,7 @@ public:
     struct AddError : public InvalidParameter {
         AddError(const char* file, size_t line, const char* what) :
             InvalidParameter(file, line, what)
-        { }
+        {}
     };
 
     void add(const isc::dns::ConstRRsetPtr& rrset,
