@@ -109,25 +109,5 @@ ZoneFinder::Context::getAdditionalImpl(const vector<RRType>& requested_types,
     }
 }
 
-ConstRRsetPtr
-ZoneFinder::Context::getAtOriginImpl(const dns::RRType& type) {
-    const ZoneFinder::FindOptions options =
-        (options_ & ZoneFinder::FIND_DNSSEC) != 0 ?
-        ZoneFinder::FIND_DNSSEC : ZoneFinder::FIND_DEFAULT;
-
-    ZoneFinder* finder = getFinder();
-    if (finder == NULL) {
-        // This is a bug of the derived class implementation.
-        isc_throw(isc::Unexpected, "NULL ZoneFinder in finder Context");
-    }
-
-    ConstZoneFinderContextPtr ctx = finder->find(finder->getOrigin(), type,
-                                                 options);
-    if (ctx->code == ZoneFinder::SUCCESS) {
-        return (ctx->rrset);
-    }
-    return (ConstRRsetPtr());
-}
-
 } // namespace datasrc
 } // datasrc isc
