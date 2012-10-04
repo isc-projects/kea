@@ -224,8 +224,7 @@ ZoneDataUpdater::validate(const isc::dns::ConstRRsetPtr rrset) const {
     // refuses NSEC3 at wildcard.
     if (rrset->getType() == RRType::NSEC3() &&
         (rrset->getName().isWildcard() ||
-         rrset->getName().getLabelCount() !=
-         zone_name_.getLabelCount() + 1))
+         rrset->getName().getLabelCount() != zone_name_.getLabelCount() + 1))
     {
         isc_throw(AddError, "Invalid NSEC3 owner name: " <<
                   rrset->getName() << "; zone: " << zone_name_);
@@ -308,8 +307,7 @@ ZoneDataUpdater::addRdataSet(const ConstRRsetPtr rrset,
         // Insertion sort the new RdataSet into place in the list.
         RdataSet* prev = NULL;
         RdataSet* current = rdataset_head;
-        for (; current != NULL; current = current->getNext())
-        {
+        for (; current != NULL; current = current->getNext()) {
             if (compareTypes(rdataset_new, current) < 0) {
                 break;
             }
