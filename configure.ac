@@ -1215,6 +1215,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/server_common/tests/Makefile
                  src/lib/util/Makefile
                  src/lib/util/io/Makefile
+                 src/lib/util/threads/Makefile
+                 src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
                  src/lib/util/python/Makefile
                  src/lib/util/pyunittests/Makefile

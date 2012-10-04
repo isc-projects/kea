@@ -70,3 +70,4 @@ EXTRA_DIST += spec38.spec
 EXTRA_DIST += spec39.spec
 EXTRA_DIST += spec40.spec
 EXTRA_DIST += spec41.spec
+EXTRA_DIST += spec42.spec

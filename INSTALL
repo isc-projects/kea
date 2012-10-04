@@ -7,3 +7,7 @@ To then build from source:
 
 For detailed installation directions, see the guide
 at doc/guide/bind10-guide.txt or doc/guide/bind10-guide.html.
+
+You can find user-contributed OS-specific build/installation
+instructions on the BIND 10 wiki:
+http://bind10.isc.org/wiki/SystemSpecificNotes
