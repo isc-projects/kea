@@ -218,7 +218,7 @@ configureZones(AuthSrv& server) {
         "   \"cache-enable\": true"
         "}]}"));
 
-    installDataSrcClientLists(server, configureDataSource(server, config));
+    installDataSrcClientLists(server, configureDataSource(config));
 
     zoneChecks(server);
 }
@@ -281,7 +281,7 @@ TEST_F(AuthCommandTest,
         "    \"cache-enable\": true,"
         "    \"cache-zones\": [\"example.org\"]"
         "}]}"));
-    installDataSrcClientLists(server_, configureDataSource(server_, config));
+    installDataSrcClientLists(server_, configureDataSource(config));
 
     {
         isc::util::thread::Mutex::Locker locker(server_.getClientListMutex());
@@ -345,7 +345,7 @@ TEST_F(AuthCommandTest,
         "    \"cache-enable\": true,"
         "    \"cache-zones\": [\"example.com\"]"
         "}]}"));
-    EXPECT_THROW(configureDataSource(server_, config2),
+    EXPECT_THROW(configureDataSource(config2),
                  ConfigurableClientList::ConfigurationError);
 
     result_ = execAuthServerCommand(server_, "loadzone",
