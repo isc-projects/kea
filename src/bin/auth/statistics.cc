@@ -42,16 +42,23 @@ using namespace isc::statistics;
 namespace {
 
 void
-fillNodes(const Counter& counter, const char* const nodename[],
-          const size_t size,
+fillNodes(const Counter& counter, const struct CounterTypeTree type_tree[],
           isc::auth::statistics::Counters::ItemTreeType& trees)
 {
     using namespace isc::data;
 
-    for (size_t i = 0; i < size; ++i) {
-        trees->set (nodename[i],
-                    Element::create(static_cast<long int>(counter.get(i)))
-                    );
+    for (int i = 0; type_tree[i].name != NULL; ++i) {
+        if (type_tree[i].sub_tree != NULL) {
+            isc::auth::statistics::Counters::ItemTreeType sub_tree =
+                Element::createMap();
+            trees->set(type_tree[i].name, sub_tree);
+            fillNodes(counter, type_tree[i].sub_tree, sub_tree);
+        } else {
+            trees->set(type_tree[i].name,
+                       Element::create(static_cast<long int>(
+                           counter.get(type_tree[i].counter_id)))
+                       );
+        }
     }
 }
 
@@ -63,9 +70,7 @@ namespace statistics {
 
 Counters::Counters() :
     // size of server_qr_counter_, zone_qr_counters_: QR_COUNTER_TYPES
-    // size of server_socket_counter_: SOCKET_COUNTER_TYPES
     server_qr_counter_(QR_COUNTER_TYPES),
-    socket_counter_(SOCKET_COUNTER_TYPES),
     zone_qr_counters_(QR_COUNTER_TYPES)
 {}
 
@@ -231,8 +236,7 @@ Counters::get() const {
     item_tree->set("zones", zones);
 
     Counters::ItemTreeType server = Element::createMap();
-    fillNodes(server_qr_counter_, QRCounterItemName, QR_COUNTER_TYPES,
-              server);
+    fillNodes(server_qr_counter_, QRCounterTree, server);
     zones->set("_SERVER_", server);
 
     return (item_tree);
