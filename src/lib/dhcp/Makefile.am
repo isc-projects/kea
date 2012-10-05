@@ -28,6 +28,7 @@ libb10_dhcp___la_SOURCES += option6_iaaddr.cc option6_iaaddr.h
 libb10_dhcp___la_SOURCES += option6_addrlst.cc option6_addrlst.h
 libb10_dhcp___la_SOURCES += option4_addrlst.cc option4_addrlst.h
 libb10_dhcp___la_SOURCES += option6_int.h
+libb10_dhcp___la_SOURCES += option6_int_array.h
 libb10_dhcp___la_SOURCES += dhcp6.h dhcp4.h
 libb10_dhcp___la_SOURCES += pkt6.cc pkt6.h
 libb10_dhcp___la_SOURCES += pkt4.cc pkt4.h

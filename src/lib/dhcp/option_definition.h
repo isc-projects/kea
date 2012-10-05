@@ -15,7 +15,9 @@
 #ifndef OPTION_DEFINITION_H_
 #define OPTION_DEFINITION_H_
 
+#include "dhcp/option_data_types.h"
 #include "dhcp/option6_int.h"
+#include "dhcp/option6_int_array.h"
 #include "dhcp/option.h"
 
 namespace isc {
@@ -258,7 +260,7 @@ public:
     ///
     /// @param u universe (V6 or V4).
     /// @param type option type.
-    /// @param buf option buffer (must be empty).
+    /// @param buf option buffer.
     /// @param T type of the data field (must be one of the uintX_t or intX_t).
     template<typename T>
     static OptionPtr factoryInteger(Option::Universe, uint16_t type, const OptionBuffer& buf) {
@@ -266,7 +268,25 @@ public:
             isc_throw(isc::OutOfRange, "provided option buffer is too large, expected: "
                       << sizeof(T) << " bytes");
         }
-        OptionPtr option(new Option6Int<T>(type, buf.begin(), buf.begin() + buf.size()));
+        OptionPtr option(new Option6Int<T>(type, buf.begin(), buf.end()));
+        return (option);
+    }
+
+    /// @brief Factory function to create option with array of integer values.
+    ///
+    /// @param u universe (V6 or V4).
+    /// @param type option type.
+    /// @param buf option buffer.
+    /// @param T type of the data field (must be one of the uintX_t or intX_t).
+    template<typename T>
+    static OptionPtr factoryIntegerArray(Option::Universe, uint16_t type, const OptionBuffer& buf) {
+        if (buf.size() == 0) {
+            isc_throw(isc::OutOfRange, "option buffer length must be greater than zero");
+        } else if (buf.size() % OptionDataTypes<T>::len != 0) {
+            isc_throw(isc::OutOfRange, "option buffer length must be multiple of "
+                      << OptionDataTypes<T>::len << " bytes");
+        }
+        OptionPtr option(new Option6IntArray<T>(type, buf.begin(), buf.end()));
         return (option);
     }
 
