@@ -206,8 +206,6 @@ class Counters : boost::noncopyable {
 private:
     // counter for query/response
     isc::statistics::Counter server_qr_counter_;
-    // counter for socket
-    isc::statistics::Counter socket_counter_;
     // set of counters for zones
     isc::statistics::CounterDictionary zone_qr_counters_;
     void incRequest(const QRAttributes& qrattrs,

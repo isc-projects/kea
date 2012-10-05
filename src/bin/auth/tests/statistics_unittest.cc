@@ -53,12 +53,35 @@ protected:
     Counters counters;
 };
 
+void
+flatten(std::map<std::string, int> &flat_map, const std::string &prefix,
+        const isc::data::ConstElementPtr map_element) {
+    std::map<std::string, ConstElementPtr> map = map_element->mapValue();
+    for (std::map<std::string, ConstElementPtr>::const_iterator
+            i = map.begin(), e = map.end();
+            i != e;
+            ++i)
+    {
+        switch (i->second->getType()) {
+            case isc::data::Element::map:
+                flatten(flat_map, i->first + ".", i->second);
+                break;
+            case isc::data::Element::integer:
+                flat_map[prefix + i->first] = i->second->intValue();
+                break;
+            default:
+                EXPECT_FALSE("Element Parse Error");
+        }
+    }
+}
+
 bool
 checkCountersAllZeroExcept(const isc::data::ConstElementPtr counters,
                            const std::set<std::string>& except_for) {
-    std::map<std::string, ConstElementPtr> stats_map = counters->mapValue();
+    std::map<std::string, int> stats_map;
+    flatten(stats_map, "", counters);
 
-    for (std::map<std::string, ConstElementPtr>::const_iterator
+    for (std::map<std::string, int>::const_iterator
             i = stats_map.begin(), e = stats_map.end();
             i != e;
             ++i)
@@ -67,9 +90,9 @@ checkCountersAllZeroExcept(const isc::data::ConstElementPtr counters,
         if (except_for.count(i->first) != 0) {
             expect = 1;
         }
-        EXPECT_EQ(expect, i->second->intValue()) << "Expected counter "
+        EXPECT_EQ(expect, i->second) << "Expected counter "
             << i->first << " = " << expect << ", actual: "
-            << i->second->intValue();
+            << i->second;
     }
 
     return false;
@@ -104,26 +127,12 @@ TEST_F(CountersTest, incrementNormalQuery) {
     expect_nonzero.insert("request.udp");
     expect_nonzero.insert("request.edns0");
     expect_nonzero.insert("request.dnssec_ok");
-    expect_nonzero.insert("response");
+    expect_nonzero.insert("responses");
     expect_nonzero.insert("qrynoauthans");
     expect_nonzero.insert("rcode.refused");
     expect_nonzero.insert("authqryrej");
     checkCountersAllZeroExcept(counters.get()->get("zones")->get("_SERVER_"),
                                expect_nonzero);
-}
-
-TEST_F(CountersTest, getStatistics) {
-    std::map<std::string, ConstElementPtr> stats_map =
-        counters.get()->get("zones")->get("_SERVER_")->mapValue();
-    for (std::map<std::string, ConstElementPtr>::const_iterator
-            i = stats_map.begin(), e = stats_map.end();
-            i != e;
-            ++i)
-    {
-        // item type check
-        EXPECT_NO_THROW(i->second->intValue())
-            << "Item " << i->first << " is not IntElement";
-    }
 }
 
 int
