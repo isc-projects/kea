@@ -192,6 +192,14 @@ zoneChecks(AuthSrv& server) {
 }
 
 void
+installDataSrcClientLists(AuthSrv& server,
+                          AuthSrv::DataSrcClientListsPtr lists)
+{
+    isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
+    server.swapDataSrcClientLists(lists);
+}
+
+void
 configureZones(AuthSrv& server) {
     ASSERT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR "/test1.zone.in "
                         TEST_DATA_BUILDDIR "/test1.zone.copied"));
@@ -210,7 +218,7 @@ configureZones(AuthSrv& server) {
         "   \"cache-enable\": true"
         "}]}"));
 
-    configureDataSource(server, config);
+    installDataSrcClientLists(server, configureDataSource(server, config));
 
     zoneChecks(server);
 }
@@ -273,7 +281,7 @@ TEST_F(AuthCommandTest,
         "    \"cache-enable\": true,"
         "    \"cache-zones\": [\"example.org\"]"
         "}]}"));
-    configureDataSource(server_, config);
+    installDataSrcClientLists(server_, configureDataSource(server_, config));
 
     {
         isc::util::thread::Mutex::Locker locker(server_.getClientListMutex());
