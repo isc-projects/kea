@@ -872,12 +872,13 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
             'priority': 6,
             'special': 'test',
             'process': 'additional',
-            'kind': 'needed'
+            'kind': 'dispensable' # need to be dispensable so it could restart
         }
         self.log = []
         plan = configurator._build_plan(self.__build_components(self.__core),
                                         bigger)
-        self.assertEqual([('additional', 'init'), ('additional', 'needed')],
+        self.assertEqual([('additional', 'init'),
+                          ('additional', 'dispensable')],
                          self.log)
         self.assertEqual(1, len(plan))
         self.assertTrue('component' in plan[0])
@@ -888,15 +889,27 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         # Now remove the one component again
         # We run the plan so the component is wired into internal structures
         configurator._run_plan(plan)
-        self.log = []
-        plan = configurator._build_plan(self.__build_components(bigger),
-                                        self.__core)
-        self.assertEqual([], self.log)
-        self.assertEqual([{
-            'command': 'stop',
-            'name': 'additional',
-            'component': component
-        }], plan)
+        # We should have the 'additional' component in the configurator.
+        self.assertTrue('additional' in configurator._components)
+        for count in [0, 1]:    # repeat two times, see below
+            self.log = []
+            plan = configurator._build_plan(self.__build_components(bigger),
+                                            self.__core)
+            self.assertEqual([], self.log)
+            self.assertEqual([{
+                        'command': 'stop',
+                        'name': 'additional',
+                        'component': component
+                        }], plan)
+
+            if count is 0:
+                # We then emulate unexpected failure of the component (but
+                # before it restarts).  It shouldn't confuse the
+                # configurator in the second phase of the test
+                component.failed(0)
+        # Run the plan, confirm the specified component is gone.
+        configurator._run_plan(plan)
+        self.assertFalse('additional' in configurator._components)
 
         # We want to switch a component. So, prepare the configurator so it
         # holds one
