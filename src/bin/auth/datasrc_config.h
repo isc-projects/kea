@@ -25,25 +25,23 @@
 #include <utility>
 #include <set>
 
-/// \brief Configure the authoritative server's data source lists
+/// \brief Configure data source client lists
 ///
-/// This will hook into the data_sources module configuration and it will
-/// keep the local copy of data source clients in the list in the authoritative
-/// server.
+/// This will hook into the data_sources module configuration and it return
+/// a new set (in the form of a shared pointer to map) of data source client
+/// lists corresponding to the configuration.
 ///
 /// This function is templated. This is simply because of easier testing.
 /// You don't need to pay attention to it, use the configureDataSource
 /// specialization instead.
 ///
-/// \param server It is the server to configure.
 /// \param config The configuration value to parse. It is in the form
 ///     as an update from the config manager.
-template<class Server, class List>
+/// \return A map from RR classes to configured lists.
+template<class List>
 boost::shared_ptr<std::map<isc::dns::RRClass,
                            boost::shared_ptr<List> > > // = ListMap below
-configureDataSourceGeneric(Server& /*server*/,
-                           const isc::data::ConstElementPtr& config)
-{
+configureDataSourceGeneric(const isc::data::ConstElementPtr& config) {
     typedef boost::shared_ptr<List> ListPtr;
     typedef std::map<std::string, isc::data::ConstElementPtr> Map;
     typedef std::map<isc::dns::RRClass, ListPtr> ListMap;
@@ -68,7 +66,7 @@ configureDataSourceGeneric(Server& /*server*/,
 /// \brief Concrete version of configureDataSource() for the
 ///     use with authoritative server implementation.
 AuthSrv::DataSrcClientListsPtr
-configureDataSource(AuthSrv& server, const isc::data::ConstElementPtr& config);
+configureDataSource(const isc::data::ConstElementPtr& config);
 
 #endif  // DATASRC_CONFIG_H
 

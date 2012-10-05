@@ -740,7 +740,7 @@ updateDatabase(AuthSrv& server, const char* params) {
         "    \"type\": \"sqlite3\","
         "    \"params\": " + string(params) +
         "}]}"));
-    installDataSrcClientLists(server, configureDataSource(server, config));
+    installDataSrcClientLists(server, configureDataSource(config));
 }
 
 void
@@ -757,7 +757,7 @@ updateInMemory(AuthSrv& server, const char* origin, const char* filename) {
         "   \"type\": \"static\","
         "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
         "}]}"));
-    installDataSrcClientLists(server, configureDataSource(server, config));
+    installDataSrcClientLists(server, configureDataSource(config));
 }
 
 void
@@ -767,7 +767,7 @@ updateBuiltin(AuthSrv& server) {
         "   \"type\": \"static\","
         "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
         "}]}"));
-    installDataSrcClientLists(server, configureDataSource(server, config));
+    installDataSrcClientLists(server, configureDataSource(config));
 }
 
 // Try giving the server a TSIG signed request and see it can anwer signed as
@@ -965,7 +965,7 @@ TEST_F(AuthSrvTest, updateWithInMemoryClient) {
         "   \"params\": {},"
         "   \"cache-enable\": true"
         "}]}"));
-    installDataSrcClientLists(server, configureDataSource(server, config));
+    installDataSrcClientLists(server, configureDataSource(config));
     // after successful configuration, we should have one (with empty zoneset).
 
     // The memory data source is empty, should return REFUSED rcode.
