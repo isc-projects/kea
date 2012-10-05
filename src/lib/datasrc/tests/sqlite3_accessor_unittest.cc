@@ -665,16 +665,16 @@ TEST_F(SQLite3Create, creationtest) {
 TEST_F(SQLite3Create, emptytest) {
     ASSERT_FALSE(isReadable(SQLITE_NEW_DBFILE));
 
-    // open one manualle
+    // open one manually
     sqlite3* db;
     ASSERT_EQ(SQLITE_OK, sqlite3_open(SQLITE_NEW_DBFILE, &db));
 
-    // empty, but not locked, so creating it now should work
+    // empty, but not locked, so creating another accessor should work
     SQLite3Accessor accessor2(SQLITE_NEW_DBFILE, "IN");
 
     sqlite3_close(db);
 
-    // should work now that we closed it
+    // should still work now that we closed it
     SQLite3Accessor accessor3(SQLITE_NEW_DBFILE, "IN");
 }
 
@@ -692,7 +692,7 @@ TEST_F(SQLite3Create, lockedtest) {
 
     sqlite3_exec(db, "ROLLBACK TRANSACTION", NULL, NULL, NULL);
 
-    // should work now that we closed it
+    // should work now that the transaction has been rolled back
     SQLite3Accessor accessor3(SQLITE_NEW_DBFILE, "IN");
 
     ASSERT_EQ(SQLITE_OK, sqlite3_close(db));
