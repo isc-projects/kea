@@ -36,7 +36,7 @@
 #include <auth/command.h>
 #include <auth/common.h>
 #include <auth/statistics.h>
-#include <auth/datasrc_configurator.h>
+#include <auth/datasrc_config.h>
 
 #include <util/unittests/mock_socketsession.h>
 #include <util/threads/lock.h>
