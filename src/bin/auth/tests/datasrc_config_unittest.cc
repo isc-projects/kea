@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <auth/datasrc_configurator.h>
+#include <auth/datasrc_config.h>
 
 #include <config/tests/fake_session.h>
 #include <config/ccsession.h>
@@ -35,7 +35,7 @@ using namespace boost;
 
 namespace {
 
-class DatasrcConfiguratorTest;
+class DatasrcConfigTest;
 
 class FakeList {
 public:
@@ -61,17 +61,16 @@ private:
 typedef shared_ptr<FakeList> ListPtr;
 
 void
-testConfigureDataSource(DatasrcConfiguratorTest& test,
+testConfigureDataSource(DatasrcConfigTest& test,
                         const isc::data::ConstElementPtr& config)
 {
     // We use the test fixture for the Server type.  This makes it possible
     // to easily fake all needed methods and look that they were called.
-    configureDataSourceGeneric<DatasrcConfiguratorTest, FakeList>(test,
-                                                                  config);
+    configureDataSourceGeneric<DatasrcConfigTest, FakeList>(test, config);
 }
 
 void
-datasrcConfigHandler(DatasrcConfiguratorTest* fake_server, const std::string&,
+datasrcConfigHandler(DatasrcConfigTest* fake_server, const std::string&,
                      isc::data::ConstElementPtr config,
                      const isc::config::ConfigData&)
 {
@@ -80,7 +79,7 @@ datasrcConfigHandler(DatasrcConfiguratorTest* fake_server, const std::string&,
     }
 }
 
-class DatasrcConfiguratorTest : public ::testing::Test {
+class DatasrcConfigTest : public ::testing::Test {
 public:
     // These pretend to be the server
     ListPtr getClientList(const RRClass& rrclass) {
@@ -104,7 +103,7 @@ public:
         return (mutex_);
     }
 protected:
-    DatasrcConfiguratorTest() :
+    DatasrcConfigTest() :
         session(ElementPtr(new ListElement), ElementPtr(new ListElement),
                 ElementPtr(new ListElement)),
         specfile(string(TEST_OWN_DATA_DIR) + "/spec.spec")
@@ -162,11 +161,11 @@ protected:
 };
 
 // Push there a configuration with a single list.
-TEST_F(DatasrcConfiguratorTest, createList) {
+TEST_F(DatasrcConfigTest, createList) {
     initializeINList();
 }
 
-TEST_F(DatasrcConfiguratorTest, modifyList) {
+TEST_F(DatasrcConfigTest, modifyList) {
     // First, initialize the list
     initializeINList();
     // And now change the configuration of the list
@@ -184,7 +183,7 @@ TEST_F(DatasrcConfiguratorTest, modifyList) {
 }
 
 // Check we can have multiple lists at once
-TEST_F(DatasrcConfiguratorTest, multiple) {
+TEST_F(DatasrcConfigTest, multiple) {
     const ElementPtr
         config(buildConfig("{\"IN\": [{\"type\": \"yyy\"}], "
                                  "\"CH\": [{\"type\": \"xxx\"}]}"));
@@ -204,7 +203,7 @@ TEST_F(DatasrcConfiguratorTest, multiple) {
 //
 // It's almost like above, but we initialize first with single-list
 // config.
-TEST_F(DatasrcConfiguratorTest, updateAdd) {
+TEST_F(DatasrcConfigTest, updateAdd) {
     initializeINList();
     const ElementPtr
         config(buildConfig("{\"IN\": [{\"type\": \"yyy\"}], "
@@ -222,7 +221,7 @@ TEST_F(DatasrcConfiguratorTest, updateAdd) {
 }
 
 // We delete a class list in this test.
-TEST_F(DatasrcConfiguratorTest, updateDelete) {
+TEST_F(DatasrcConfigTest, updateDelete) {
     initializeINList();
     const ElementPtr
         config(buildConfig("{}"));
@@ -239,7 +238,7 @@ TEST_F(DatasrcConfiguratorTest, updateDelete) {
 }
 
 // Check that we can rollback an addition if something else fails
-TEST_F(DatasrcConfiguratorTest, rollbackAddition) {
+TEST_F(DatasrcConfigTest, rollbackAddition) {
     initializeINList();
     // The configuration is wrong. However, the CH one will get done first.
     const ElementPtr
@@ -258,7 +257,7 @@ TEST_F(DatasrcConfiguratorTest, rollbackAddition) {
 }
 
 // Check that we can rollback a deletion if something else fails
-TEST_F(DatasrcConfiguratorTest, rollbackDeletion) {
+TEST_F(DatasrcConfigTest, rollbackDeletion) {
     initializeINList();
     // Put the CH there
     const ElementPtr
@@ -279,7 +278,7 @@ TEST_F(DatasrcConfiguratorTest, rollbackDeletion) {
 
 // Check that we can roll back configuration change if something
 // fails later on.
-TEST_F(DatasrcConfiguratorTest, rollbackConfiguration) {
+TEST_F(DatasrcConfigTest, rollbackConfiguration) {
     initializeINList();
     // Put the CH there
     const ElementPtr
