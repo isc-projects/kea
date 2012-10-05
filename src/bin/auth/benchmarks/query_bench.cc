@@ -30,7 +30,7 @@
 
 #include <auth/auth_srv.h>
 #include <auth/auth_config.h>
-#include <auth/datasrc_configurator.h>
+#include <auth/datasrc_config.h>
 #include <auth/query.h>
 
 #include <asiodns/asiodns.h>
@@ -125,8 +125,8 @@ public:
                           OutputBuffer& buffer) :
         QueryBenchMark(queries, query_message, buffer)
     {
-        DataSourceConfigurator::testReconfigure(
-            server_.get(),
+        configureDataSource(
+            *server_,
             Element::fromJSON("{\"IN\":"
                               "  [{\"type\": \"sqlite3\","
                               "    \"params\": {"
@@ -139,13 +139,13 @@ class MemoryQueryBenchMark  : public QueryBenchMark {
 public:
     MemoryQueryBenchMark(const char* const zone_file,
                          const char* const zone_origin,
-                          const BenchQueries& queries,
-                          Message& query_message,
-                          OutputBuffer& buffer) :
+                         const BenchQueries& queries,
+                         Message& query_message,
+                         OutputBuffer& buffer) :
         QueryBenchMark(queries, query_message, buffer)
     {
-        DataSourceConfigurator::testReconfigure(
-            server_.get(),
+        configureDataSource(
+            *server_,
             Element::fromJSON("{\"IN\":"
                               "  [{\"type\": \"MasterFiles\","
                               "    \"cache-enable\": true, "
