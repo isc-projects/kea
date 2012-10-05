@@ -63,6 +63,7 @@
 using namespace std;
 using namespace isc::cc;
 using namespace isc::dns;
+using namespace isc::datasrc;
 using namespace isc::util;
 using namespace isc::util::io::internal;
 using namespace isc::util::unittests;
@@ -89,6 +90,9 @@ const char* const STATIC_DSRC_FILE = DSRC_DIR "/static.zone";
 // This is a configuration that uses the in-memory data source containing
 // a signed example zone.
 const char* const CONFIG_INMEMORY_EXAMPLE = TEST_DATA_DIR "/rfc5155-example.zone.signed";
+
+// shortcut commonly used in tests
+typedef boost::shared_ptr<ConfigurableClientList> ListPtr;
 
 class AuthSrvTest : public SrvTestBase {
 protected:
@@ -1431,7 +1435,9 @@ TEST_F(AuthSrvTest,
         boost::shared_ptr<isc::datasrc::ConfigurableClientList>
             list(new FakeList(server.getClientList(RRClass::IN()), THROW_NEVER,
                               false));
-        server.setClientList(RRClass::IN(), list);
+        AuthSrv::DataSrcClientListsPtr lists(new std::map<RRClass, ListPtr>);
+        lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
+        server.swapDataSrcClientLists(lists);
     }
 
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
@@ -1459,7 +1465,9 @@ setupThrow(AuthSrv& server, ThrowWhen throw_when, bool isc_exception,
     boost::shared_ptr<isc::datasrc::ConfigurableClientList>
         list(new FakeList(server.getClientList(RRClass::IN()), throw_when,
                           isc_exception, rrset));
-    server.setClientList(RRClass::IN(), list);
+    AuthSrv::DataSrcClientListsPtr lists(new std::map<RRClass, ListPtr>);
+    lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
+    server.swapDataSrcClientLists(lists);
 }
 
 TEST_F(AuthSrvTest,
@@ -1772,34 +1780,37 @@ TEST_F(AuthSrvTest, clientList) {
     // There's a debug-build only check in them to make sure everything
     // locks them and we call them directly here.
     isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
+
+    AuthSrv::DataSrcClientListsPtr lists; // initially empty
+
     // The lists don't exist. Therefore, the list of RRClasses is empty.
-    // We also have no IN list.
-    EXPECT_TRUE(server.getClientListClasses().empty());
-    EXPECT_EQ(boost::shared_ptr<const isc::datasrc::ClientList>(),
-              server.getClientList(RRClass::IN()));
+    EXPECT_TRUE(server.swapDataSrcClientLists(lists)->empty());
+
     // Put something in.
-    const boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        list(new isc::datasrc::ConfigurableClientList(RRClass::IN()));
-    const boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        list2(new isc::datasrc::ConfigurableClientList(RRClass::CH()));
-    server.setClientList(RRClass::IN(), list);
-    server.setClientList(RRClass::CH(), list2);
-    // There are two things in the list and they are IN and CH
-    vector<RRClass> classes(server.getClientListClasses());
-    ASSERT_EQ(2, classes.size());
-    EXPECT_EQ(RRClass::IN(), classes[0]);
-    EXPECT_EQ(RRClass::CH(), classes[1]);
+    const ListPtr list(new ConfigurableClientList(RRClass::IN()));
+    const ListPtr list2(new ConfigurableClientList(RRClass::CH()));
+
+    lists.reset(new std::map<RRClass, ListPtr>);
+    lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
+    lists->insert(pair<RRClass, ListPtr>(RRClass::CH(), list2));
+    server.swapDataSrcClientLists(lists);
+
     // And the lists can be retrieved.
     EXPECT_EQ(list, server.getClientList(RRClass::IN()));
     EXPECT_EQ(list2, server.getClientList(RRClass::CH()));
-    // Remove one of them
-    server.setClientList(RRClass::CH(),
-        boost::shared_ptr<isc::datasrc::ConfigurableClientList>());
-    // This really got deleted, including the class.
-    classes = server.getClientListClasses();
-    ASSERT_EQ(1, classes.size());
-    EXPECT_EQ(RRClass::IN(), classes[0]);
+
+    // Replace the lists with new lists containing only one list.
+    lists.reset(new std::map<RRClass, ListPtr>);
+    lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
+    lists = server.swapDataSrcClientLists(lists);
+
+    // Old one had two lists.  That confirms our swap for IN and CH classes
+    // (i.e., no other entries were there).
+    EXPECT_EQ(2, lists->size());
+
+    // The CH list really got deleted.
     EXPECT_EQ(list, server.getClientList(RRClass::IN()));
+    EXPECT_FALSE(server.getClientList(RRClass::CH()));
 }
 
 // We just test the mutex can be locked (exactly once).

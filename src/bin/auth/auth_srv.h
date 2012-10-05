@@ -302,24 +302,36 @@ public:
     /// If there was no forwarder yet, this method does nothing.
     void destroyDDNSForwarder();
 
-    /// \brief Sets the currently used list for data sources of given
-    ///     class.
-    ///
-    /// Replaces the internally used client list with a new one. Other
-    /// classes are not changed.
-    ///
-    /// \param rrclass The class to modify.
-    /// \param list Shared pointer to the client list. If it is NULL,
-    ///     the list is removed instead.
-    void setClientList(const isc::dns::RRClass& rrclass, const
-                       boost::shared_ptr<isc::datasrc::ConfigurableClientList>&
-                       list);
-
     typedef boost::shared_ptr<std::map<
         isc::dns::RRClass, boost::shared_ptr<
                                isc::datasrc::ConfigurableClientList> > >
     DataSrcClientListsPtr;
 
+    /// \brief Swap the currently used set of data source client lists with
+    /// given one.
+    ///
+    /// The "set" of lists is actually given in the form of map from
+    /// RRClasses to shared pointers to isc::datasrc::ConfigurableClientList.
+    ///
+    /// This method returns the swapped set of lists, which was previously
+    /// used by the server.
+    ///
+    /// This method is intended to be used by a separate method to update
+    /// the data source configuration "at once".  The caller must hold
+    /// a lock for the mutex object returned by  \c getClientListMutex()
+    /// before calling this method.
+    ///
+    /// The ownership of the returned pointer is transferred to the caller.
+    /// The caller is generally expected to release the resources used in
+    /// the old lists.  Note that it could take longer time if some of the
+    /// data source clients contain a large size of in-memory data.
+    ///
+    /// The caller can pass a NULL pointer.  This effectively disables
+    /// any data source for the server.
+    ///
+    /// \param new_lists Shared pointer to a new set of data source client
+    /// lists.
+    /// \return The previous set of lists.  It can be NULL.
     DataSrcClientListsPtr swapDataSrcClientLists(DataSrcClientListsPtr
                                                  new_lists);
 
