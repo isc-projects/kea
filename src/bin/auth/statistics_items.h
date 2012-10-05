@@ -20,105 +20,10 @@
 
 namespace {
 
-// enum for socket statistics
-enum SocketCounterType {
-    // Socket statistics
-    SOCKET_IPV4_UDP_BINDFAIL,        ///< IPv4 UDP sockets bind failures
-    SOCKET_IPV4_UDP_CLOSE,           ///< IPv4 UDP sockets closed
-    SOCKET_IPV4_UDP_CONN,            ///< IPv4 UDP connections established successfully
-    SOCKET_IPV4_UDP_CONNFAIL,        ///< IPv4 UDP sockets connection failures
-    SOCKET_IPV4_UDP_OPEN,            ///< IPv4 UDP sockets opened successfully
-    SOCKET_IPV4_UDP_OPENFAIL,        ///< IPv4 UDP sockets open failures
-    SOCKET_IPV4_UDP_RECVERR,         ///< IPv4 UDP sockets receive errors
-    SOCKET_IPV4_UDP_SENDERR,         ///< IPv4 UDP sockets send errors
-    SOCKET_IPV4_TCP_ACCEPT,          ///< IPv4 TCP incoming connections successfully accepted
-    SOCKET_IPV4_TCP_ACCEPTFAIL,      ///< IPv4 TCP incoming accept failures
-    SOCKET_IPV4_TCP_BINDFAIL,        ///< IPv4 TCP sockets bind failures
-    SOCKET_IPV4_TCP_CLOSE,           ///< IPv4 TCP sockets closed
-    SOCKET_IPV4_TCP_CONN,            ///< IPv4 TCP connections established successfully
-    SOCKET_IPV4_TCP_CONNFAIL,        ///< IPv4 TCP sockets connection failures
-    SOCKET_IPV4_TCP_OPEN,            ///< IPv4 TCP sockets opened successfully
-    SOCKET_IPV4_TCP_OPENFAIL,        ///< IPv4 TCP sockets open failures
-    SOCKET_IPV4_TCP_RECVERR,         ///< IPv4 TCP sockets receive errors
-    SOCKET_IPV4_TCP_SENDERR,         ///< IPv4 TCP sockets send errors
-    SOCKET_IPV6_UDP_BINDFAIL,        ///< IPv6 UDP sockets bind failures
-    SOCKET_IPV6_UDP_CLOSE,           ///< IPv6 UDP sockets closed
-    SOCKET_IPV6_UDP_CONN,            ///< IPv6 UDP connections established successfully
-    SOCKET_IPV6_UDP_CONNFAIL,        ///< IPv6 UDP sockets connection failures
-    SOCKET_IPV6_UDP_OPEN,            ///< IPv6 UDP sockets opened successfully
-    SOCKET_IPV6_UDP_OPENFAIL,        ///< IPv6 UDP sockets open failures
-    SOCKET_IPV6_UDP_RECVERR,         ///< IPv6 UDP sockets receive errors
-    SOCKET_IPV6_UDP_SENDERR,         ///< IPv6 UDP sockets send errors
-    SOCKET_IPV6_TCP_ACCEPT,          ///< IPv6 TCP incoming connections successfully accepted
-    SOCKET_IPV6_TCP_ACCEPTFAIL,      ///< IPv6 TCP incoming accept failures
-    SOCKET_IPV6_TCP_BINDFAIL,        ///< IPv6 TCP sockets bind failures
-    SOCKET_IPV6_TCP_CLOSE,           ///< IPv6 TCP sockets closed
-    SOCKET_IPV6_TCP_CONN,            ///< IPv6 TCP connections established successfully
-    SOCKET_IPV6_TCP_CONNFAIL,        ///< IPv6 TCP sockets connection failures
-    SOCKET_IPV6_TCP_OPEN,            ///< IPv6 TCP sockets opened successfully
-    SOCKET_IPV6_TCP_OPENFAIL,        ///< IPv6 TCP sockets open failures
-    SOCKET_IPV6_TCP_RECVERR,         ///< IPv6 TCP sockets receive errors
-    SOCKET_IPV6_TCP_SENDERR,         ///< IPv6 TCP sockets send errors
-    SOCKET_UNIXDOMAIN_ACCEPT,        ///< Unix Domain sockets incoming connections successfully accepted
-    SOCKET_UNIXDOMAIN_ACCEPTFAIL,    ///< Unix Domain sockets incoming accept failures
-    SOCKET_UNIXDOMAIN_BINDFAIL,      ///< Unix Domain sockets bind failures
-    SOCKET_UNIXDOMAIN_CLOSE,         ///< Unix Domain sockets closed
-    SOCKET_UNIXDOMAIN_CONN,          ///< Unix Domain connections established successfully
-    SOCKET_UNIXDOMAIN_CONNFAIL,      ///< Unix Domain sockets connection failures
-    SOCKET_UNIXDOMAIN_OPEN,          ///< Unix Domain sockets opened successfully
-    SOCKET_UNIXDOMAIN_OPENFAIL,      ///< Unix Domain sockets open failures
-    SOCKET_UNIXDOMAIN_RECVERR,       ///< Unix Domain sockets receive errors
-    SOCKET_UNIXDOMAIN_SENDERR,       ///< Unix Domain sockets send errors
-    SOCKET_COUNTER_TYPES             ///< The number of defined counters
-};
-// item names for socket statistics
-const char* const SocketCounterItemName[SOCKET_COUNTER_TYPES] = {
-    "ipv4.udp.bindfail",
-    "ipv4.udp.close",
-    "ipv4.udp.conn",
-    "ipv4.udp.connfail",
-    "ipv4.udp.open",
-    "ipv4.udp.openfail",
-    "ipv4.udp.recverr",
-    "ipv4.udp.senderr",
-    "ipv4.tcp.accept",
-    "ipv4.tcp.acceptfail",
-    "ipv4.tcp.bindfail",
-    "ipv4.tcp.close",
-    "ipv4.tcp.conn",
-    "ipv4.tcp.connfail",
-    "ipv4.tcp.open",
-    "ipv4.tcp.openfail",
-    "ipv4.tcp.recverr",
-    "ipv4.tcp.senderr",
-    "ipv6.udp.bindfail",
-    "ipv6.udp.close",
-    "ipv6.udp.conn",
-    "ipv6.udp.connfail",
-    "ipv6.udp.open",
-    "ipv6.udp.openfail",
-    "ipv6.udp.recverr",
-    "ipv6.udp.senderr",
-    "ipv6.tcp.accept",
-    "ipv6.tcp.acceptfail",
-    "ipv6.tcp.bindfail",
-    "ipv6.tcp.close",
-    "ipv6.tcp.conn",
-    "ipv6.tcp.connfail",
-    "ipv6.tcp.open",
-    "ipv6.tcp.openfail",
-    "ipv6.tcp.recverr",
-    "ipv6.tcp.senderr",
-    "unixdomain.accept",
-    "unixdomain.acceptfail",
-    "unixdomain.bindfail",
-    "unixdomain.close",
-    "unixdomain.conn",
-    "unixdomain.connfail",
-    "unixdomain.open",
-    "unixdomain.openfail",
-    "unixdomain.recverr",
-    "unixdomain.senderr"
+struct CounterTypeTree {
+    const char* const name;
+    const struct CounterTypeTree* const sub_tree;
+    const int counter_id;
 };
 
 // enum for query/response counters
@@ -248,125 +153,147 @@ enum QRCounterType {
     // End of counter types
     QR_COUNTER_TYPES  ///< The number of defined counters
 };
+
 // item names for query/response counters
-const char* const QRCounterItemName[QR_COUNTER_TYPES] = {
-    "request.v4",
-    "request.v6",
-    "request.edns0",
-    "request.badednsver",
-    "request.tsig",
-    "request.sig0",
-    "request.badsig",
-    "request.udp",
-    "request.tcp",
-    "request.dnssec_ok",
-    "opcode.query",
-    "opcode.iquery",
-    "opcode.status",
-    "opcode.notify",
-    "opcode.update",
-    "opcode.other",
-    "qtype.a",
-    "qtype.ns",
-    "qtype.md",
-    "qtype.mf",
-    "qtype.cname",
-    "qtype.soa",
-    "qtype.mb",
-    "qtype.mg",
-    "qtype.mr",
-    "qtype.null",
-    "qtype.wks",
-    "qtype.ptr",
-    "qtype.hinfo",
-    "qtype.minfo",
-    "qtype.mx",
-    "qtype.txt",
-    "qtype.rp",
-    "qtype.afsdb",
-    "qtype.x25",
-    "qtype.isdn",
-    "qtype.rt",
-    "qtype.nsap",
-    "qtype.nsap-ptr",
-    "qtype.sig",
-    "qtype.key",
-    "qtype.px",
-    "qtype.gpos",
-    "qtype.aaaa",
-    "qtype.loc",
-    "qtype.nxt",
-    "qtype.eid",
-    "qtype.nimloc",
-    "qtype.srv",
-    "qtype.atma",
-    "qtype.naptr",
-    "qtype.kx",
-    "qtype.cert",
-    "qtype.a6",
-    "qtype.dname",
-    "qtype.sink",
-    "qtype.opt",
-    "qtype.apl",
-    "qtype.ds",
-    "qtype.sshfp",
-    "qtype.ipseckey",
-    "qtype.rrsig",
-    "qtype.nsec",
-    "qtype.dnskey",
-    "qtype.dhcid",
-    "qtype.nsec3",
-    "qtype.nsec3param",
-    "qtype.hip",
-    "qtype.ninfo",
-    "qtype.rkey",
-    "qtype.talink",
-    "qtype.spf",
-    "qtype.uinfo",
-    "qtype.uid",
-    "qtype.gid",
-    "qtype.unspec",
-    "qtype.tkey",
-    "qtype.tsig",
-    "qtype.ixfr",
-    "qtype.axfr",
-    "qtype.mailb",
-    "qtype.maila",
-    "qtype.uri",
-    "qtype.caa",
-    "qtype.ta",
-    "qtype.dlv",
-    "qtype.other",
-    "response",
-    "response.truncated",
-    "response.edns0",
-    "response.tsig",
-    "response.sig0",
-    "qrysuccess",
-    "qryauthans",
-    "qrynoauthans",
-    "qryreferral",
-    "qrynxrrset",
-    "authqryrej",
-    "rcode.noerror",
-    "rcode.formerr",
-    "rcode.servfail",
-    "rcode.nxdomain",
-    "rcode.notimp",
-    "rcode.refused",
-    "rcode.yxdomain",
-    "rcode.yxrrset",
-    "rcode.nxrrset",
-    "rcode.notauth",
-    "rcode.notzone",
-    "rcode.badsigvers",
-    "rcode.badkey",
-    "rcode.badtime",
-    "rcode.badmode",
-    "rcode.badname",
-    "rcode.badalg",
-    "rcode.badtrunc",
-    "rcode.other"
+const struct CounterTypeTree QRCounterRequest[] = {
+    { "v4",         NULL,   QR_REQUEST_IPV4       },
+    { "v6",         NULL,   QR_REQUEST_IPV6       },
+    { "edns0",      NULL,   QR_REQUEST_EDNS0      },
+    { "badednsver", NULL,   QR_REQUEST_BADEDNSVER },
+    { "tsig",       NULL,   QR_REQUEST_TSIG       },
+    { "sig0",       NULL,   QR_REQUEST_SIG0       },
+    { "badsig",     NULL,   QR_REQUEST_BADSIG     },
+    { "udp",        NULL,   QR_REQUEST_UDP        },
+    { "tcp",        NULL,   QR_REQUEST_TCP        },
+    { "dnssec_ok",  NULL,   QR_REQUEST_DNSSEC_OK  },
+    { NULL,         NULL,   -1                    }
+};
+const struct CounterTypeTree QRCounterOpcode[] = {
+    { "query",  NULL,   QR_OPCODE_QUERY  },
+    { "iquery", NULL,   QR_OPCODE_IQUERY },
+    { "status", NULL,   QR_OPCODE_STATUS },
+    { "notify", NULL,   QR_OPCODE_NOTIFY },
+    { "update", NULL,   QR_OPCODE_UPDATE },
+    { "other",  NULL,   QR_OPCODE_OTHER  },
+    { NULL,     NULL,   -1               }
+};
+const struct CounterTypeTree QRCounterQtype[] = {
+    { "a",          NULL,   QR_QTYPE_A,         },
+    { "ns",         NULL,   QR_QTYPE_NS         },
+    { "md",         NULL,   QR_QTYPE_MD         },
+    { "mf",         NULL,   QR_QTYPE_MF         },
+    { "cname",      NULL,   QR_QTYPE_CNAME      },
+    { "soa",        NULL,   QR_QTYPE_SOA        },
+    { "mb",         NULL,   QR_QTYPE_MB         },
+    { "mg",         NULL,   QR_QTYPE_MG         },
+    { "mr",         NULL,   QR_QTYPE_MR         },
+    { "null",       NULL,   QR_QTYPE_NULL       },
+    { "wks",        NULL,   QR_QTYPE_WKS        },
+    { "ptr",        NULL,   QR_QTYPE_PTR        },
+    { "hinfo",      NULL,   QR_QTYPE_HINFO      },
+    { "minfo",      NULL,   QR_QTYPE_MINFO      },
+    { "mx",         NULL,   QR_QTYPE_MX         },
+    { "txt",        NULL,   QR_QTYPE_TXT        },
+    { "rp",         NULL,   QR_QTYPE_RP         },
+    { "afsdb",      NULL,   QR_QTYPE_AFSDB      },
+    { "x25",        NULL,   QR_QTYPE_X25        },
+    { "isdn",       NULL,   QR_QTYPE_ISDN       },
+    { "rt",         NULL,   QR_QTYPE_RT         },
+    { "nsap",       NULL,   QR_QTYPE_NSAP       },
+    { "nsap-ptr",   NULL,   QR_QTYPE_NSAP_PTR   },
+    { "sig",        NULL,   QR_QTYPE_SIG        },
+    { "key",        NULL,   QR_QTYPE_KEY        },
+    { "px",         NULL,   QR_QTYPE_PX         },
+    { "gpos",       NULL,   QR_QTYPE_GPOS       },
+    { "aaaa",       NULL,   QR_QTYPE_AAAA       },
+    { "loc",        NULL,   QR_QTYPE_LOC        },
+    { "nxt",        NULL,   QR_QTYPE_NXT        },
+    { "eid",        NULL,   QR_QTYPE_EID        },
+    { "nimloc",     NULL,   QR_QTYPE_NIMLOC     },
+    { "srv",        NULL,   QR_QTYPE_SRV        },
+    { "atma",       NULL,   QR_QTYPE_ATMA       },
+    { "naptr",      NULL,   QR_QTYPE_NAPTR      },
+    { "kx",         NULL,   QR_QTYPE_KX         },
+    { "cert",       NULL,   QR_QTYPE_CERT       },
+    { "a6",         NULL,   QR_QTYPE_A6         },
+    { "dname",      NULL,   QR_QTYPE_DNAME      },
+    { "sink",       NULL,   QR_QTYPE_SINK       },
+    { "opt",        NULL,   QR_QTYPE_OPT        },
+    { "apl",        NULL,   QR_QTYPE_APL        },
+    { "ds",         NULL,   QR_QTYPE_DS         },
+    { "sshfp",      NULL,   QR_QTYPE_SSHFP      },
+    { "ipseckey",   NULL,   QR_QTYPE_IPSECKEY   },
+    { "rrsig",      NULL,   QR_QTYPE_RRSIG      },
+    { "nsec",       NULL,   QR_QTYPE_NSEC       },
+    { "dnskey",     NULL,   QR_QTYPE_DNSKEY     },
+    { "dhcid",      NULL,   QR_QTYPE_DHCID      },
+    { "nsec3",      NULL,   QR_QTYPE_NSEC3      },
+    { "nsec3param", NULL,   QR_QTYPE_NSEC3PARAM },
+    { "hip",        NULL,   QR_QTYPE_HIP        },
+    { "ninfo",      NULL,   QR_QTYPE_NINFO      },
+    { "rkey",       NULL,   QR_QTYPE_RKEY       },
+    { "talink",     NULL,   QR_QTYPE_TALINK     },
+    { "spf",        NULL,   QR_QTYPE_SPF        },
+    { "uinfo",      NULL,   QR_QTYPE_UINFO      },
+    { "uid",        NULL,   QR_QTYPE_UID        },
+    { "gid",        NULL,   QR_QTYPE_GID        },
+    { "unspec",     NULL,   QR_QTYPE_UNSPEC     },
+    { "tkey",       NULL,   QR_QTYPE_TKEY       },
+    { "tsig",       NULL,   QR_QTYPE_TSIG       },
+    { "ixfr",       NULL,   QR_QTYPE_IXFR       },
+    { "axfr",       NULL,   QR_QTYPE_AXFR       },
+    { "mailb",      NULL,   QR_QTYPE_MAILB      },
+    { "maila",      NULL,   QR_QTYPE_MAILA      },
+    { "uri",        NULL,   QR_QTYPE_URI        },
+    { "caa",        NULL,   QR_QTYPE_CAA        },
+    { "ta",         NULL,   QR_QTYPE_TA         },
+    { "dlv",        NULL,   QR_QTYPE_DLV        },
+    { "other",      NULL,   QR_QTYPE_OTHER      },
+    { NULL,         NULL,   -1                  }
+};
+const struct CounterTypeTree QRCounterResponse[] = {
+    { "truncated",  NULL,   QR_RESPONSE_TRUNCATED },
+    { "edns0",      NULL,   QR_RESPONSE_EDNS0     },
+    { "tsig",       NULL,   QR_RESPONSE_TSIG      },
+    { "sig0",       NULL,   QR_RESPONSE_SIG0      },
+    { NULL,         NULL,   -1                    }
+};
+const struct CounterTypeTree QRCounterRcode[] = {
+    { "noerror",    NULL,   QR_RCODE_NOERROR    },
+    { "formerr",    NULL,   QR_RCODE_FORMERR    },
+    { "servfail",   NULL,   QR_RCODE_SERVFAIL   },
+    { "nxdomain",   NULL,   QR_RCODE_NXDOMAIN   },
+    { "notimp",     NULL,   QR_RCODE_NOTIMP     },
+    { "refused",    NULL,   QR_RCODE_REFUSED    },
+    { "yxdomain",   NULL,   QR_RCODE_YXDOMAIN   },
+    { "yxrrset",    NULL,   QR_RCODE_YXRRSET    },
+    { "nxrrset",    NULL,   QR_RCODE_NXRRSET    },
+    { "notauth",    NULL,   QR_RCODE_NOTAUTH    },
+    { "notzone",    NULL,   QR_RCODE_NOTZONE    },
+    { "badsigvers", NULL,   QR_RCODE_BADSIGVERS },
+    { "badkey",     NULL,   QR_RCODE_BADKEY     },
+    { "badtime",    NULL,   QR_RCODE_BADTIME    },
+    { "badmode",    NULL,   QR_RCODE_BADMODE    },
+    { "badname",    NULL,   QR_RCODE_BADNAME    },
+    { "badalg",     NULL,   QR_RCODE_BADALG     },
+    { "badtrunc",   NULL,   QR_RCODE_BADTRUNC   },
+    { "other",      NULL,   QR_RCODE_OTHER      },
+    { NULL,         NULL,   -1 }
+};
+const struct CounterTypeTree QRCounterTree[] = {
+    { "request",        QRCounterRequest,   -1              },
+    { "opcode",         QRCounterOpcode,    -1              },
+    { "qtype",          QRCounterQtype,     -1              },
+    { "responses",      NULL,               QR_RESPONSE     },
+    { "response",       QRCounterResponse,  -1              },
+    { "qrysuccess",     NULL,               QR_QRYSUCCESS   },
+    { "qryauthans",     NULL,               QR_QRYAUTHANS   },
+    { "qrynoauthans",   NULL,               QR_QRYNOAUTHANS },
+    { "qryreferral",    NULL,               QR_QRYREFERRAL  },
+    { "qrynxrrset",     NULL,               QR_QRYNXRRSET   },
+    { "authqryrej",     NULL,               QR_QRYREJECT    },
+    { "rcode",          QRCounterRcode,     -1              },
+    { NULL,             NULL,               -1              }
 };
 
 const int QROpCodeToQRCounterType[16] = {
