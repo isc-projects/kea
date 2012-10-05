@@ -69,6 +69,8 @@
 
 using namespace std;
 
+using boost::shared_ptr;
+
 using namespace isc;
 using namespace isc::cc;
 using namespace isc::datasrc;
@@ -264,23 +266,21 @@ public:
     AddressList listen_addresses_;
 
     /// The TSIG keyring
-    const boost::shared_ptr<TSIGKeyRing>* keyring_;
+    const shared_ptr<TSIGKeyRing>* keyring_;
 
-    /// The client list
-    std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >
-        client_lists_;
+    /// The data source client list
+    shared_ptr<std::map<RRClass, shared_ptr<ConfigurableClientList> > >
+        datasrc_client_lists_;
 
-    boost::shared_ptr<ConfigurableClientList> getClientList(const RRClass&
-                                                            rrclass)
-    {
+    shared_ptr<ConfigurableClientList> getClientList(const RRClass& rrclass) {
         // TODO: Debug-build only check
         if (!mutex_.locked()) {
             isc_throw(isc::Unexpected, "Not locked!");
         }
-        const std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
-            const_iterator it(client_lists_.find(rrclass));
-        if (it == client_lists_.end()) {
-            return (boost::shared_ptr<ConfigurableClientList>());
+        const std::map<RRClass, shared_ptr<ConfigurableClientList> >::
+            const_iterator it(datasrc_client_lists_->find(rrclass));
+        if (it == datasrc_client_lists_->end()) {
+            return (shared_ptr<ConfigurableClientList>());
         } else {
             return (it->second);
         }
@@ -335,6 +335,8 @@ AuthSrvImpl::AuthSrvImpl(AbstractXfroutClient& xfrout_client,
     xfrin_session_(NULL),
     counters_(),
     keyring_(NULL),
+    datasrc_client_lists_(new std::map<RRClass,
+                          shared_ptr<ConfigurableClientList> >()),
     ddns_base_forwarder_(ddns_forwarder),
     ddns_forwarder_(NULL),
     xfrout_connected_(false),
@@ -650,7 +652,7 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
 
     try {
         const ConstQuestionPtr question = *message.beginQuestion();
-        const boost::shared_ptr<datasrc::ClientList>
+        const shared_ptr<datasrc::ClientList>
             list(getClientList(question->getClass()));
         if (list) {
             const RRType& qtype = question->getType();
@@ -911,7 +913,7 @@ AuthSrv::setDNSService(isc::asiodns::DNSServiceBase& dnss) {
 }
 
 void
-AuthSrv::setTSIGKeyRing(const boost::shared_ptr<TSIGKeyRing>* keyring) {
+AuthSrv::setTSIGKeyRing(const shared_ptr<TSIGKeyRing>* keyring) {
     impl_->keyring_ = keyring;
 }
 
@@ -932,19 +934,21 @@ AuthSrv::destroyDDNSForwarder() {
 
 void
 AuthSrv::setClientList(const RRClass& rrclass,
-                       const boost::shared_ptr<ConfigurableClientList>& list) {
+                       const shared_ptr<ConfigurableClientList>& list)
+{
     // TODO: Debug-build only check
     if (!impl_->mutex_.locked()) {
         isc_throw(isc::Unexpected, "Not locked");
     }
 
     if (list) {
-        impl_->client_lists_[rrclass] = list;
+        (*impl_->datasrc_client_lists_)[rrclass] = list;
     } else {
-        impl_->client_lists_.erase(rrclass);
+        impl_->datasrc_client_lists_->erase(rrclass);
     }
 }
-boost::shared_ptr<ConfigurableClientList>
+
+shared_ptr<ConfigurableClientList>
 AuthSrv::getClientList(const RRClass& rrclass) {
     return (impl_->getClientList(rrclass));
 }
@@ -957,9 +961,9 @@ AuthSrv::getClientListClasses() const {
     }
 
     vector<RRClass> result;
-    for (std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
-         const_iterator it(impl_->client_lists_.begin());
-         it != impl_->client_lists_.end(); ++it) {
+    for (std::map<RRClass, shared_ptr<ConfigurableClientList> >::
+             const_iterator it(impl_->datasrc_client_lists_->begin());
+         it != impl_->datasrc_client_lists_->end(); ++it) {
         result.push_back(it->first);
     }
     return (result);
