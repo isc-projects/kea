@@ -573,7 +573,7 @@ class Configurator:
 
     def has_component(self, component):
         '''Return if a specified component is configured.'''
-        # Values of self._components are tuples of (name, component).
+        # Values of self._components are tuples of (config, component).
         # Extract the components of the tuples and see if the given one
         # is included.
         return component in map(lambda x: x[1], self._components.values())
