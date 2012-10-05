@@ -103,11 +103,10 @@ datasrcConfigHandler(AuthSrv* server, bool* first_time,
             assert(config_session != NULL);
             *first_time = false;
             lists = configureDataSource(
-                *auth_server,
                 config_session->getRemoteConfigValue("data_sources",
                                                      "classes"));
         } else {
-            lists = configureDataSource(*server, config->get("classes"));
+            lists = configureDataSource(config->get("classes"));
         }
 
         // Replace the server's lists.  By ignoring the return value we let the
