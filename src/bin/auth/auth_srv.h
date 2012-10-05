@@ -15,10 +15,11 @@
 #ifndef __AUTH_SRV_H
 #define __AUTH_SRV_H 1
 
-#include <string>
-
 #include <config/ccsession.h>
+
 #include <datasrc/factory.h>
+#include <datasrc/client_list.h>
+
 #include <dns/message.h>
 #include <dns/opcode.h>
 #include <util/buffer.h>
@@ -34,6 +35,11 @@
 #include <asiolink/asiolink.h>
 #include <server_common/portconfig.h>
 #include <auth/statistics.h>
+
+#include <boost/shared_ptr.hpp>
+
+#include <map>
+#include <string>
 
 namespace isc {
 namespace util {
@@ -308,6 +314,14 @@ public:
     void setClientList(const isc::dns::RRClass& rrclass, const
                        boost::shared_ptr<isc::datasrc::ConfigurableClientList>&
                        list);
+
+    typedef boost::shared_ptr<std::map<
+        isc::dns::RRClass, boost::shared_ptr<
+                               isc::datasrc::ConfigurableClientList> > >
+    DataSrcClientListsPtr;
+
+    DataSrcClientListsPtr swapDataSrcClientLists(DataSrcClientListsPtr
+                                                 new_lists);
 
     /// \brief Returns the currently used client list for the class.
     ///
