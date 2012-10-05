@@ -29,6 +29,7 @@
 #include "dhcp/option6_ia.h"
 #include "dhcp/option6_iaaddr.h"
 #include "dhcp/option6_int.h"
+#include "dhcp/option6_int_array.h"
 #include "dhcp/option_definition.h"
 
 using namespace std;
@@ -319,7 +320,7 @@ TEST_F(OptionDefinitionTest, factoryIAAddr6) {
     EXPECT_EQ(0x04050607, option_cast_v6->getValid());
 }
 
-TEST_F(OptionDefinitionTest, factoryIntegerNegative) {
+TEST_F(OptionDefinitionTest, factoryIntegerInvalidType) {
     EXPECT_THROW(
         OptionDefinition::factoryInteger<bool>(Option::V6, D6O_PREFERENCE, OptionBuffer(1)),
         isc::dhcp::InvalidDataType
@@ -407,5 +408,85 @@ TEST_F(OptionDefinitionTest, factoryInteger32) {
 
     // @todo Add more cases for DHCPv4
 }
+
+TEST_F(OptionDefinitionTest, factoryInteger16Array) {
+    Option::Factory* f = OptionDefinition::factoryIntegerArray<uint16_t>;
+    OptionPtr option_v6;
+    // Provided buffer size must be greater than zero. Check if we
+    // get exception if we provide zero-length buffer.
+    EXPECT_THROW(
+        option_v6 = f(Option::V6, 79, OptionBuffer()),
+        isc::OutOfRange
+    );
+    // Buffer length must be multiple of data type size.
+    EXPECT_THROW(
+        option_v6 = f(Option::V6, 79, OptionBuffer(5)),
+        isc::OutOfRange
+    );
+    // Positive scenario, initiate the buffer with length being
+    // multiple of uint16_t size.
+    // buffer elements will be: 0x112233.
+    OptionBuffer buf(6);
+    for (int i = 0; i < 6; ++i) {
+        buf[i] = i / 2;
+    }
+    // Constructor should succeed because buffer has correct size.
+    EXPECT_NO_THROW(
+        option_v6 = f(Option::V6, 79, buf);
+    );
+    boost::shared_ptr<Option6IntArray<uint16_t> > option_cast_v6 =
+        boost::static_pointer_cast<Option6IntArray<uint16_t> >(option_v6);
+    // Get the values from the initiated options and validate.
+    Option6IntArray<uint16_t>::ValuesCollection values = 
+        option_cast_v6->getValues();
+    for (int i = 0; i < values.size(); ++i) {
+        // Expected value is calculated using on the same pattern
+        // as the one we used to initiate buffer:
+        // for i=0, expected = 0x00, for i = 1, expected == 0x11 etc.
+        uint16_t expected = (i << 8) | i;
+        EXPECT_EQ(expected, values[i]);
+    }
+}
+
+TEST_F(OptionDefinitionTest, factoryInteger32Array) {
+    Option::Factory* f = OptionDefinition::factoryIntegerArray<uint32_t>;
+    const uint16_t opt_code = 80;
+    OptionPtr option_v6;
+    // Provided buffer size must be greater than zero. Check if we
+    // get exception if we provide zero-length buffer.
+    EXPECT_THROW(
+        option_v6 = f(Option::V6, opt_code, OptionBuffer()),
+        isc::OutOfRange
+    );
+    // Buffer length must be multiple of data type size.
+    EXPECT_THROW(
+        option_v6 = f(Option::V6, opt_code, OptionBuffer(5)),
+        isc::OutOfRange
+    );
+    // Positive scenario, initiate the buffer with length being
+    // multiple of uint16_t size.
+    // buffer elements will be: 0x111122223333.
+    OptionBuffer buf(12);
+    for (int i = 0; i < buf.size(); ++i) {
+        buf[i] = i / 4;
+    }
+    // Constructor should succeed because buffer has correct size.
+    EXPECT_NO_THROW(
+        option_v6 = f(Option::V6, opt_code, buf);
+    );
+    boost::shared_ptr<Option6IntArray<uint32_t> > option_cast_v6 =
+        boost::static_pointer_cast<Option6IntArray<uint32_t> >(option_v6);
+    // Get the values from the initiated options and validate.
+    Option6IntArray<uint32_t>::ValuesCollection values = 
+        option_cast_v6->getValues();
+    for (int i = 0; i < values.size(); ++i) {
+        // Expected value is calculated using on the same pattern
+        // as the one we used to initiate buffer:
+        // for i=0, expected = 0x0000, for i = 1, expected == 0x1111 etc.
+        uint32_t expected = 0x01010101 * i;
+        EXPECT_EQ(expected, values[i]);
+    }
+}
+
 
 } // anonymous namespace

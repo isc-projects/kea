@@ -18,6 +18,7 @@
 #include "dhcp/option6_ia.h"
 #include "dhcp/option6_iaaddr.h"
 #include "dhcp/option6_int.h"
+#include "dhcp/option6_int_array.h"
 
 using namespace std;
 using namespace isc::util;
