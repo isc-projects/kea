@@ -896,7 +896,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         # We run the plan so the component is wired into internal structures
         configurator._run_plan(plan)
         # We should have the 'additional' component in the configurator.
-        self.assertTrue('additional' in configurator._components)
+        self.assertTrue(configurator.has_component(component))
         for count in [0, 1]:    # repeat two times, see below
             self.log = []
             plan = configurator._build_plan(self.__build_components(bigger),
@@ -915,6 +915,8 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
                 component.failed(0)
         # Run the plan, confirm the specified component is gone.
         configurator._run_plan(plan)
+        self.assertFalse(configurator.has_component(component))
+        # There shouldn't be any other object that has the same name
         self.assertFalse('additional' in configurator._components)
 
         # We want to switch a component. So, prepare the configurator so it
