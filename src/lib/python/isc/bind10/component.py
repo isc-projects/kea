@@ -571,6 +571,10 @@ class Configurator:
         self._running = False
         self.__reconfigure_internal(self._components, {})
 
+    def has_component(self, component):
+        '''Return if a specified component is configured.'''
+        return component in map(lambda x: x[1], self._components.values())
+
     def reconfigure(self, configuration):
         """
         Changes configuration from the current one to the provided. It
