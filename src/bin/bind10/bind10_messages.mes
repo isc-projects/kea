@@ -295,3 +295,13 @@ the configuration manager to start up.  The total length of time Boss
 will wait for the configuration manager before reporting an error is
 set with the command line --wait switch, which has a default value of
 ten seconds.
+
+% BIND10_RESTART_COMPONENT_SKIPPED Skipped restarting a component %1
+The boss module tried to restart a component after it failed (crashed)
+unexpectedly, but the boss then found that the component had been removed
+from its local configuration of components to run.  This is an unusal
+situation but can happen if the administrator removes the component from
+the configuration after the component's crash and before the restart time.
+The boss module simply skipped restarting that module, and the whole syste
+went back to the expected state (except that the crash itself is likely
+to be a bug).
