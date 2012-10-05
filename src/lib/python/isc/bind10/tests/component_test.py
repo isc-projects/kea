@@ -191,7 +191,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertFalse(self.__start_called)
         self.assertFalse(self.__stop_called)
         self.assertFalse(self.__failed_called)
-        self.assertFalse(component.running())
+        self.assertFalse(component.is_running())
         self.assertFalse(component.is_failed())
         # We can't stop or fail the component yet
         self.assertRaises(ValueError, component.stop)
@@ -205,7 +205,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertTrue(self.__start_called)
         self.assertFalse(self.__stop_called)
         self.assertFalse(self.__failed_called)
-        self.assertTrue(component.running())
+        self.assertTrue(component.is_running())
         self.assertFalse(component.is_failed())
 
     def __check_dead(self, component):
@@ -217,7 +217,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertFalse(self.__stop_called)
         self.assertTrue(self.__failed_called)
         self.assertEqual(1, self._exitcode)
-        self.assertFalse(component.running())
+        self.assertFalse(component.is_running())
         self.assertFalse(component.is_failed())
         # Surely it can't be stopped when already dead
         self.assertRaises(ValueError, component.stop)
@@ -237,7 +237,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertTrue(self.__start_called)
         self.assertFalse(self.__stop_called)
         self.assertTrue(self.__failed_called)
-        self.assertTrue(component.running())
+        self.assertTrue(component.is_running())
         self.assertFalse(component.is_failed())
         # Check it can't be started again
         self.assertRaises(ValueError, component.start)
@@ -250,7 +250,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertTrue(self.__start_called)
         self.assertFalse(self.__stop_called)
         self.assertTrue(self.__failed_called)
-        self.assertFalse(component.running())
+        self.assertFalse(component.is_running())
         self.assertTrue(component.is_failed())
 
     def __do_start_stop(self, kind):
@@ -275,7 +275,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertTrue(self.__start_called)
         self.assertTrue(self.__stop_called)
         self.assertFalse(self.__failed_called)
-        self.assertFalse(component.running())
+        self.assertFalse(component.is_running())
         self.assertFalse(component.is_failed())
         # Check it can't be stopped twice
         self.assertRaises(ValueError, component.stop)
@@ -559,10 +559,10 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertIsNone(component.pid())
         self.assertEqual(['hello'], component._params)
         self.assertEqual('Address', component._address)
-        self.assertFalse(component.running())
+        self.assertFalse(component.is_running())
         self.assertEqual({}, self.__registered_processes)
         component.start()
-        self.assertTrue(component.running())
+        self.assertTrue(component.is_running())
         # Some versions of unittest miss assertIsInstance
         self.assertTrue(isinstance(component._procinfo, TestProcInfo))
         self.assertEqual(42, component.pid())
@@ -586,11 +586,11 @@ class ComponentTests(BossUtils, unittest.TestCase):
         """
         component = Component('component', self, 'needed', 'Address')
         component.start()
-        self.assertTrue(component.running())
+        self.assertTrue(component.is_running())
         self.assertEqual('component', self.__start_simple_params)
         component.pid = lambda: 42
         component.stop()
-        self.assertFalse(component.running())
+        self.assertFalse(component.is_running())
         self.assertEqual(('component', 'Address', 42),
                          self.__stop_process_params)
 
@@ -615,7 +615,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         component = Component('component', self, 'needed', 'Address',
                               [], ProcInfo)
         component.start()
-        self.assertTrue(component.running())
+        self.assertTrue(component.is_running())
         component.kill()
         self.assertTrue(process.terminated)
         self.assertFalse(process.killed)
