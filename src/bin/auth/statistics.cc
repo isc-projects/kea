@@ -61,8 +61,6 @@ public:
 private:
     // counter for query/response
     Counter server_qr_counter_;
-    // counter for socket
-    Counter socket_counter_;
     // set of counters for zones
     CounterDictionary zone_qr_counters_;
     // validator
@@ -71,9 +69,7 @@ private:
 
 CountersImpl::CountersImpl() :
     // size of server_qr_counter_, zone_qr_counters_: QR_COUNTER_TYPES
-    // size of server_socket_counter_: SOCKET_COUNTER_TYPES
     server_qr_counter_(QR_COUNTER_TYPES),
-    socket_counter_(SOCKET_COUNTER_TYPES),
     zone_qr_counters_(QR_COUNTER_TYPES),
     validator_()
 {}
@@ -229,16 +225,18 @@ CountersImpl::getStatistics() const {
     for (int i = QR_OPCODE_QUERY; i <= QR_OPCODE_OTHER; ++i) {
         const Counter::Type counter = server_qr_counter_.get(i);
         if (counter != 0) {
-            statistics_string << ", \"" << QRCounterItemName[i] << "\": "
-                              << counter;
+            statistics_string << ", \"" << "opcode." <<
+                                 QRCounterOpcode[i - QR_OPCODE_QUERY].name <<
+                                 "\": " << counter;
         }
     }
     // Insert non 0 Rcode counters.
     for (int i = QR_RCODE_NOERROR; i <= QR_RCODE_OTHER; ++i) {
         const Counter::Type counter = server_qr_counter_.get(i);
         if (counter != 0) {
-            statistics_string << ", \"" << QRCounterItemName[i] << "\": "
-                              << counter;
+            statistics_string << ", \"" << "rcode." <<
+                                 QRCounterRcode[i - QR_RCODE_NOERROR].name <<
+                                 "\": " << counter;
         }
     }
     statistics_string << "}";
