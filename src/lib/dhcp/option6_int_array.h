@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef OPTION6_INT_H_
-#define OPTION6_INT_H_
+#ifndef OPTION6_INT_ARRAY_H_
+#define OPTION6_INT_ARRAY_H_
 
 #include <stdint.h>
 #include <limits>
@@ -25,8 +25,9 @@
 namespace isc {
 namespace dhcp {
 
-/// This template class represents DHCPv6 option with single value.
-/// This value is of integer type and can be any of the following:
+/// This template class represents DHCPv6 option with array of
+/// integer values. The type of the elements in the array can be
+/// any of the following:
 /// - uint8_t,
 /// - uint16_t,
 /// - uint32_t,
@@ -36,15 +37,18 @@ namespace dhcp {
 ///
 /// @param T data field type (see above).
 template<typename T>
-class Option6Int: public Option {
+class Option6IntArray: public Option {
 
 public:
+
+    typedef std::vector<T> ValuesCollection;
+
     /// @brief Constructor.
     ///
     /// @param type option type.
     /// @param value option value.
-    Option6Int(uint16_t type, T value)
-        : Option(Option::V6, type), value_(value) {
+    Option6IntArray(uint16_t type, const ValuesCollection& values)
+        : Option(Option::V6, type), values_(values) {
         if (!OptionDataTypes<T>::valid) {
             isc_throw(dhcp::InvalidDataType, "non-numeric type");
         }
@@ -61,8 +65,8 @@ public:
     /// @param end iterator to end of option data (first byte after option end).
     ///
     /// @todo mention here what it throws.
-    Option6Int(uint16_t type, OptionBufferConstIter begin,
-               OptionBufferConstIter end)
+    Option6IntArray(uint16_t type, OptionBufferConstIter begin,
+                    OptionBufferConstIter end)
         : Option(Option::V6, type) {
         if (!OptionDataTypes<T>::valid) {
             isc_throw(dhcp::InvalidDataType, "non-numeric type");
@@ -79,18 +83,20 @@ public:
     void pack(isc::util::OutputBuffer& buf) {
         buf.writeUint16(type_);
         buf.writeUint16(len() - OPTION6_HDR_LEN);
-        switch (OptionDataTypes<T>::len) {
-        case 1:
-            buf.writeUint8(value_);
-            break;
-        case 2:
-            buf.writeUint16(value_);
-            break;
-        case 4:
-            buf.writeUint32(value_);
-            break;
-        default:
-            isc_throw(dhcp::InvalidDataType, "non-numeric type");
+        for (int i = 0; i < values_.size(); ++i) {
+            switch (OptionDataTypes<T>::len) {
+            case 1:
+                buf.writeUint8(values_[i]);
+                break;
+            case 2:
+                buf.writeUint16(values_[i]);
+                break;
+            case 4:
+                buf.writeUint32(values_[i]);
+                break;
+            default:
+                isc_throw(dhcp::InvalidDataType, "non-numeric type");
+            }
         }
     }
 
@@ -102,29 +108,34 @@ public:
     /// @param begin iterator to first byte of option data
     /// @param end iterator to end of option data (first byte after option end)
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
-        if (distance(begin, end) < sizeof(T)) {
+        if (distance(begin, end) % sizeof(T) != 0) {
             isc_throw(OutOfRange, "Option " << type_ << " truncated");
         }
-        switch (OptionDataTypes<T>::len) {
-        case 1:
-            value_ = *begin;
-            break;
-        case 2:
-            value_ = isc::util::readUint16( &(*begin) );
-            break;
-        case 4:
-            value_ = isc::util::readUint32( &(*begin) );
-            break;
-        default:
-            isc_throw(dhcp::InvalidDataType, "non-numeric type");
+        values_.clear();
+        while (begin != end) {
+            switch (OptionDataTypes<T>::len) {
+            case 1:
+                values_.push_back(*begin);
+                break;
+            case 2:
+                values_.push_back(isc::util::readUint16(&(*begin)));
+                break;
+            case 4:
+                values_.push_back(isc::util::readUint32(&(*begin)));
+                break;
+            default:
+                isc_throw(dhcp::InvalidDataType, "non-numeric type");
+            }
+            begin += sizeof(T);
         }
 
         LibDHCP::unpackOptions6(OptionBuffer(begin, end), options_);
     }
 
-    void setValue(T value) { value_ = value; }
-
-    T getValue() const { return value_; }
+    /// @brief Returns collection of values.
+    ///
+    /// @return collection of values.
+    const ValuesCollection& getValues() const { return values_; }
 
     /// @brief returns complete length of option
     ///
@@ -132,7 +143,7 @@ public:
     ///
     /// @return length of this option
     virtual uint16_t len() {
-        uint16_t length = OPTION6_HDR_LEN + sizeof(T);
+        uint16_t length = OPTION6_HDR_LEN + values_.size() * sizeof(T);
         // length of all suboptions
         for (Option::OptionCollection::iterator it = options_.begin();
              it != options_.end();
@@ -144,10 +155,10 @@ public:
 
 private:
 
-    T value_; ///< Value cabveyed by the option.
+    ValuesCollection values_;
 };
 
 } // isc::dhcp namespace
 } // isc namespace
 
-#endif /* OPTION6_INT_H_ */
+#endif /* OPTION6_INT_ARRAY_H_ */

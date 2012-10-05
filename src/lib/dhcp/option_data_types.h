@@ -15,6 +15,7 @@
 #ifndef OPTION_DATA_TYPES_H_
 #define OPTION_DATA_TYPES_H_
 
+#include <stdint.h>
 #include <exceptions/exceptions.h>
 
 namespace isc {
