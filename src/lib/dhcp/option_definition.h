@@ -230,6 +230,30 @@ public:
     static OptionPtr factoryEmpty(Option::Universe u, uint16_t type,
                                   const OptionBuffer& buf);
 
+    /// @brief Factory for IA-type of option.
+    ///
+    /// @param u universe (must be V6).
+    /// @param type option type.
+    /// @param buf option buffer.
+    ///
+    /// @throw isc::OutOfRange if provided option buffer is too short or
+    /// too long. Expected size is 12 bytes.
+    /// @throw isc::BadValue if specified universe value is not V6.
+    static OptionPtr factoryIA6(Option::Universe u, uint16_t type,
+                                const OptionBuffer& buf);
+
+    /// @brief Factory for IAADDR-type of option.
+    ///
+    /// @param u universe (must be V6).
+    /// @param type option type.
+    /// @param buf option buffer.
+    ///
+    /// @throw isc::OutOfRange if provided option buffer is too short or
+    /// too long. Expected size is 24 bytes.
+    /// @throw isc::BadValue if specified universe value is not V6.
+    static OptionPtr factoryIAAddr6(Option::Universe u, uint16_t type,
+                                const OptionBuffer& buf);
+
     /// @brief Factory function to create option with integer value.
     ///
     /// @param u universe (V6 or V4).
@@ -242,7 +266,7 @@ public:
             isc_throw(isc::OutOfRange, "provided option buffer is too large, expected: "
                       << sizeof(T) << " bytes");
         }
-        OptionPtr option(new OptionInt6<T>(type, buf.begin(), buf.begin() + buf.size()));
+        OptionPtr option(new Option6Int<T>(type, buf.begin(), buf.begin() + buf.size()));
         return (option);
     }
 

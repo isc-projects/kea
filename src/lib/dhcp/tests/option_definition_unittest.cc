@@ -26,6 +26,8 @@
 #include "dhcp/dhcp6.h"
 #include "dhcp/option4_addrlst.h"
 #include "dhcp/option6_addrlst.h"
+#include "dhcp/option6_ia.h"
+#include "dhcp/option6_iaaddr.h"
 #include "dhcp/option6_int.h"
 #include "dhcp/option_definition.h"
 
@@ -235,6 +237,95 @@ TEST_F(OptionDefinitionTest, factoryEmpty) {
     EXPECT_EQ(0, option_v4->getData().size());
 }
 
+TEST_F(OptionDefinitionTest, factoryIA6) {
+    // This option consists of IAID, T1 and T2 fields (each 4 bytes long).
+    const int option6_ia_len = 12;
+    // This should work for DHCPv6 only, try passing invalid universe value.
+    EXPECT_THROW(
+        OptionDefinition::factoryIA6(Option::V4, D6O_IA_NA,
+                                     OptionBuffer(option6_ia_len)),
+        isc::BadValue
+    );
+    // The length of the buffer must be 12 bytes.
+    // Check too short buffer.
+    EXPECT_THROW(
+        OptionDefinition::factoryIA6(Option::V6, D6O_IA_NA,
+                                     OptionBuffer(option6_ia_len - 1)),
+        isc::OutOfRange
+     );
+    // Check too long buffer.
+    EXPECT_THROW(
+        OptionDefinition::factoryIA6(Option::V6, D6O_IA_NA,
+                                     OptionBuffer(option6_ia_len + 1)),
+        isc::OutOfRange
+    );
+    // Check the positive scenario.
+    OptionPtr option_v6;
+    OptionBuffer buf(12);
+    for (int i = 0; i < buf.size(); ++i) {
+        buf[i] = i;
+    }
+    EXPECT_NO_THROW(
+        option_v6 = OptionDefinition::factoryIA6(Option::V6, D6O_IA_NA, buf)
+    );
+    boost::shared_ptr<Option6IA> option_cast_v6 =
+        boost::static_pointer_cast<Option6IA>(option_v6);
+    EXPECT_EQ(0x00010203, option_cast_v6->getIAID());
+    EXPECT_EQ(0x04050607, option_cast_v6->getT1());
+    EXPECT_EQ(0x08090A0B, option_cast_v6->getT2());
+}
+
+TEST_F(OptionDefinitionTest, factoryIAAddr6) {
+    // This option consists of IPV6 Address (16 bytes) and preferred-lifetime and
+    // valid-lifetime fields (each 4 bytes long).
+    const int option6_iaaddr_len = 24;
+    // This should work for DHCPv6 only, try passing invalid universe value.
+    EXPECT_THROW(
+        OptionDefinition::factoryIAAddr6(Option::V4, D6O_IAADDR,
+                                         OptionBuffer(option6_iaaddr_len)),
+        isc::BadValue
+    );
+    // The length of the buffer must be 12 bytes.
+    // Check too short buffer.
+    EXPECT_THROW(
+        OptionDefinition::factoryIAAddr6(Option::V6, D6O_IAADDR,
+                                         OptionBuffer(option6_iaaddr_len - 1)),
+        isc::OutOfRange
+     );
+    // Check too long buffer.
+    EXPECT_THROW(
+        OptionDefinition::factoryIAAddr6(Option::V6, D6O_IAADDR,
+                                         OptionBuffer(option6_iaaddr_len + 1)),
+        isc::OutOfRange
+    );
+    // Check the positive scenario.
+    OptionPtr option_v6;
+    asiolink::IOAddress addr_v6("2001:0db8::ff00:0042:8329");
+    ASSERT_TRUE(addr_v6.getAddress().is_v6());
+    unsigned char* addr_bytes_v6 = addr_v6.getAddress().to_v6().to_bytes().data();
+    ASSERT_TRUE(addr_bytes_v6 != NULL);
+    OptionBuffer buf;
+    buf.insert(buf.end(), addr_bytes_v6, addr_bytes_v6 + asiolink::V6ADDRESS_LEN);
+    for (int i = 0; i < option6_iaaddr_len - asiolink::V6ADDRESS_LEN; ++i) {
+        buf.push_back(i);
+    }
+    EXPECT_NO_THROW(
+        option_v6 = OptionDefinition::factoryIAAddr6(Option::V6, D6O_IAADDR, buf);
+    );
+    boost::shared_ptr<Option6IAAddr> option_cast_v6 =
+        boost::static_pointer_cast<Option6IAAddr>(option_v6);
+    EXPECT_EQ(addr_v6, option_cast_v6->getAddress());
+    EXPECT_EQ(0x00010203, option_cast_v6->getPreferred());
+    EXPECT_EQ(0x04050607, option_cast_v6->getValid());
+}
+
+TEST_F(OptionDefinitionTest, factoryIntegerNegative) {
+    EXPECT_THROW(
+        OptionDefinition::factoryInteger<bool>(Option::V6, D6O_PREFERENCE, OptionBuffer(1)),
+        isc::dhcp::InvalidDataType
+    );
+}
+
 TEST_F(OptionDefinitionTest, factoryInteger8) {
     Option::Factory* f = OptionDefinition::factoryInteger<uint8_t>;
     OptionPtr option_v6;
@@ -253,8 +344,8 @@ TEST_F(OptionDefinitionTest, factoryInteger8) {
         option_v6 = f(Option::V6, D6O_PREFERENCE, OptionBuffer(1, 1));
     );
     // Validate the value.
-    boost::shared_ptr<OptionInt6<uint8_t> > option_cast_v6 =
-        boost::static_pointer_cast<OptionInt6<uint8_t> >(option_v6);
+    boost::shared_ptr<Option6Int<uint8_t> > option_cast_v6 =
+        boost::static_pointer_cast<Option6Int<uint8_t> >(option_v6);
     EXPECT_EQ(1, option_cast_v6->getValue());
 
     // @todo Add more cases for DHCPv4
@@ -281,8 +372,8 @@ TEST_F(OptionDefinitionTest, factoryInteger16) {
         option_v6 = f(Option::V6, D6O_ELAPSED_TIME, buf);
     );
     // Validate the value.
-    boost::shared_ptr<OptionInt6<uint16_t> > option_cast_v6 =
-        boost::static_pointer_cast<OptionInt6<uint16_t> >(option_v6);
+    boost::shared_ptr<Option6Int<uint16_t> > option_cast_v6 =
+        boost::static_pointer_cast<Option6Int<uint16_t> >(option_v6);
     EXPECT_EQ(0x0102, option_cast_v6->getValue());
 
     // @todo Add more cases for DHCPv4
@@ -310,8 +401,8 @@ TEST_F(OptionDefinitionTest, factoryInteger32) {
         option_v6 = f(Option::V6, D6O_CLT_TIME, buf);
     );
     // Validate the value.
-    boost::shared_ptr<OptionInt6<uint32_t> > option_cast_v6 =
-        boost::static_pointer_cast<OptionInt6<uint32_t> >(option_v6);
+    boost::shared_ptr<Option6Int<uint32_t> > option_cast_v6 =
+        boost::static_pointer_cast<Option6Int<uint32_t> >(option_v6);
     EXPECT_EQ(0x01020304, option_cast_v6->getValue());
 
     // @todo Add more cases for DHCPv4

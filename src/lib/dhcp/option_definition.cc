@@ -15,6 +15,8 @@
 #include "dhcp/option_definition.h"
 #include "dhcp/option4_addrlst.h"
 #include "dhcp/option6_addrlst.h"
+#include "dhcp/option6_ia.h"
+#include "dhcp/option6_iaaddr.h"
 #include "dhcp/option6_int.h"
 
 using namespace std;
@@ -141,6 +143,31 @@ OptionDefinition::factoryEmpty(Option::Universe u, uint16_t type, const OptionBu
     OptionPtr option(new Option(u, type));
     return (option);
 }
+
+OptionPtr
+OptionDefinition::factoryIA6(Option::Universe u, uint16_t type, const OptionBuffer& buf) {
+    sanityCheckUniverse(u, Option::V6);
+    if (buf.size() != Option6IA::OPTION6_IA_LEN) {
+        isc_throw(isc::OutOfRange, "input option buffer has invalid size, expeted "
+                  << Option6IA::OPTION6_IA_LEN << " bytes");
+    }
+    boost::shared_ptr<Option6IA> option(new Option6IA(type, buf.begin(),
+                                                      buf.begin() + buf.size()));
+    return (option);
+}
+
+OptionPtr
+OptionDefinition::factoryIAAddr6(Option::Universe u, uint16_t type, const OptionBuffer& buf) {
+    sanityCheckUniverse(u, Option::V6);
+    if (buf.size() != Option6IAAddr::OPTION6_IAADDR_LEN) {
+        isc_throw(isc::OutOfRange, "input option buffer has invalid size, expeted "
+                  << Option6IAAddr::OPTION6_IAADDR_LEN << " bytes");
+    }
+    boost::shared_ptr<Option6IAAddr> option(new Option6IAAddr(type, buf.begin(),
+                                                      buf.begin() + buf.size()));
+    return (option);
+}
+
 
 } // end of isc::dhcp namespace
 } // end of isc namespace
