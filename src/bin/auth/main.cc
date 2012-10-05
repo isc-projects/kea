@@ -14,17 +14,6 @@
 
 #include <config.h>
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <stdlib.h>
-#include <errno.h>
-
-#include <cassert>
-#include <iostream>
-
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
@@ -45,12 +34,25 @@
 #include <auth/command.h>
 #include <auth/auth_srv.h>
 #include <auth/auth_log.h>
-#include <auth/datasrc_configurator.h>
+#include <auth/datasrc_config.h>
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 #include <log/logger_support.h>
 #include <server_common/keyring.h>
 #include <server_common/socket_request.h>
+
+#include <boost/bind.hpp>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <stdlib.h>
+#include <errno.h>
+
+#include <cassert>
+#include <iostream>
 
 using namespace std;
 using namespace isc::asiodns;
@@ -70,7 +72,7 @@ namespace {
 /* need global var for config/command handlers.
  * todo: turn this around, and put handlers in the authserver
  * class itself? */
-AuthSrv *auth_server;
+AuthSrv* auth_server;
 
 ConstElementPtr
 my_config_handler(ConstElementPtr new_config) {
@@ -81,6 +83,29 @@ ConstElementPtr
 my_command_handler(const string& command, ConstElementPtr args) {
     assert(auth_server != NULL);
     return (execAuthServerCommand(*auth_server, command, args));
+}
+
+void
+datasrcConfigHandler(AuthSrv* server, bool* first_time,
+                     ModuleCCSession* config_session, const std::string&,
+                     isc::data::ConstElementPtr config,
+                     const isc::config::ConfigData&)
+{
+    assert(server != NULL);
+    if (config->contains("classes")) {
+        if (*first_time) {
+            // HACK: The default is not passed to the handler in the first
+            // callback. This one will get the default (or, current value).
+            // Further updates will work the usual way.
+            assert(config_session != NULL);
+            *first_time = false;
+            configureDataSource(*auth_server,
+                                config_session->getRemoteConfigValue(
+                                    "data_sources", "classes"));
+        } else {
+            configureDataSource(*server, config->get("classes"));
+        }
+    }
 }
 
 void
@@ -191,13 +216,15 @@ main(int argc, char* argv[]) {
         isc::server_common::initKeyring(*config_session);
         auth_server->setTSIGKeyRing(&isc::server_common::keyring);
 
-        // Start the data source configuration
-        DataSourceConfigurator::init(config_session, auth_server);
-        // HACK: The default is not passed to the handler. This one will
-        // get the default (or, current value). Further updates will work
-        // the usual way.
-        DataSourceConfigurator::reconfigure(
-            config_session->getRemoteConfigValue("data_sources", "classes"));
+        // Start the data source configuration.  We pass first_time and
+        // config_session for the hack described in datasrcConfigHandler.
+        bool first_time = true;
+        config_session->addRemoteConfig("data_sources",
+                                        boost::bind(datasrcConfigHandler,
+                                                    auth_server, &first_time,
+                                                    config_session,
+                                                    _1, _2, _3),
+                                        false);
 
         // Now start asynchronous read.
         config_session->start();
@@ -221,7 +248,10 @@ main(int argc, char* argv[]) {
         xfrin_session->disconnect();
     }
 
-    DataSourceConfigurator::cleanup();
+    // If we haven't registered callback for data sources, this will be just
+    // no-op.
+    config_session->removeRemoteConfig("data_sources");
+
     delete xfrin_session;
     delete config_session;
     delete cc_session;

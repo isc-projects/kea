@@ -36,7 +36,7 @@
 #include <auth/command.h>
 #include <auth/common.h>
 #include <auth/statistics.h>
-#include <auth/datasrc_configurator.h>
+#include <auth/datasrc_config.h>
 
 #include <util/unittests/mock_socketsession.h>
 #include <util/threads/lock.h>
@@ -722,17 +722,17 @@ TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
 }
 
 void
-updateDatabase(AuthSrv* server, const char* params) {
+updateDatabase(AuthSrv& server, const char* params) {
     const ConstElementPtr config(Element::fromJSON("{"
         "\"IN\": [{"
         "    \"type\": \"sqlite3\","
         "    \"params\": " + string(params) +
         "}]}"));
-    DataSourceConfigurator::testReconfigure(server, config);
+    configureDataSource(server, config);
 }
 
 void
-updateInMemory(AuthSrv* server, const char* origin, const char* filename) {
+updateInMemory(AuthSrv& server, const char* origin, const char* filename) {
     const ConstElementPtr config(Element::fromJSON("{"
         "\"IN\": [{"
         "   \"type\": \"MasterFiles\","
@@ -745,17 +745,17 @@ updateInMemory(AuthSrv* server, const char* origin, const char* filename) {
         "   \"type\": \"static\","
         "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
         "}]}"));
-    DataSourceConfigurator::testReconfigure(server, config);
+    configureDataSource(server, config);
 }
 
 void
-updateBuiltin(AuthSrv* server) {
+updateBuiltin(AuthSrv& server) {
     const ConstElementPtr config(Element::fromJSON("{"
         "\"CH\": [{"
         "   \"type\": \"static\","
         "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
         "}]}"));
-    DataSourceConfigurator::testReconfigure(server, config);
+    configureDataSource(server, config);
 }
 
 // Try giving the server a TSIG signed request and see it can anwer signed as
@@ -766,7 +766,7 @@ TEST_F(AuthSrvTest, DISABLED_TSIGSigned) { // Needs builtin
 TEST_F(AuthSrvTest, TSIGSigned) {
 #endif
     // Prepare key, the client message, etc
-    updateBuiltin(&server);
+    updateBuiltin(server);
     const TSIGKey key("key:c2VjcmV0Cg==:hmac-sha1");
     TSIGContext context(key);
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
@@ -814,7 +814,7 @@ TEST_F(AuthSrvTest, DISABLED_builtInQueryViaDNSServer) {
 #else
 TEST_F(AuthSrvTest, builtInQueryViaDNSServer) {
 #endif
-    updateBuiltin(&server);
+    updateBuiltin(server);
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
                                        default_qid, Name("VERSION.BIND."),
                                        RRClass::CH(), RRType::TXT());
@@ -846,7 +846,7 @@ TEST_F(AuthSrvTest, DISABLED_builtInQuery) {
 #else
 TEST_F(AuthSrvTest, builtInQuery) {
 #endif
-    updateBuiltin(&server);
+    updateBuiltin(server);
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
                                        default_qid, Name("VERSION.BIND."),
                                        RRClass::CH(), RRType::TXT());
@@ -867,7 +867,7 @@ TEST_F(AuthSrvTest, DISABLED_iqueryViaDNSServer) { // Needs builtin
 #else
 TEST_F(AuthSrvTest, iqueryViaDNSServer) { // Needs builtin
 #endif
-    updateBuiltin(&server);
+    updateBuiltin(server);
     createDataFromFile("iquery_fromWire.wire");
     (*server.getDNSLookupProvider())(*io_message, parse_message,
                                      response_message,
@@ -889,7 +889,7 @@ TEST_F(AuthSrvTest, DISABLED_updateConfig) {
 #else
 TEST_F(AuthSrvTest, updateConfig) {
 #endif
-    updateDatabase(&server, CONFIG_TESTDB);
+    updateDatabase(server, CONFIG_TESTDB);
 
     // query for existent data in the installed data source.  The resulting
     // response should have the AA flag on, and have an RR in each answer
@@ -907,7 +907,7 @@ TEST_F(AuthSrvTest, DISABLED_datasourceFail) {
 #else
 TEST_F(AuthSrvTest, datasourceFail) {
 #endif
-    updateDatabase(&server, CONFIG_TESTDB);
+    updateDatabase(server, CONFIG_TESTDB);
 
     // This query will hit a corrupted entry of the data source (the zoneload
     // tool and the data source itself naively accept it).  This will result
@@ -927,10 +927,10 @@ TEST_F(AuthSrvTest, DISABLED_updateConfigFail) {
 TEST_F(AuthSrvTest, updateConfigFail) {
 #endif
     // First, load a valid data source.
-    updateDatabase(&server, CONFIG_TESTDB);
+    updateDatabase(server, CONFIG_TESTDB);
 
     // Next, try to update it with a non-existent one.  This should fail.
-    EXPECT_THROW(updateDatabase(&server, BADCONFIG_TESTDB),
+    EXPECT_THROW(updateDatabase(server, BADCONFIG_TESTDB),
                  isc::datasrc::DataSourceError);
 
     // The original data source should still exist.
@@ -953,7 +953,7 @@ TEST_F(AuthSrvTest, updateWithInMemoryClient) {
         "   \"params\": {},"
         "   \"cache-enable\": true"
         "}]}"));
-    DataSourceConfigurator::testReconfigure(&server, config);
+    configureDataSource(server, config);
     // after successful configuration, we should have one (with empty zoneset).
 
     // The memory data source is empty, should return REFUSED rcode.
@@ -974,7 +974,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
     // query handler class, and confirm it returns no error and a non empty
     // answer section.  Detailed examination on the response content
     // for various types of queries are tested in the query tests.
-    updateInMemory(&server, "example.", CONFIG_INMEMORY_EXAMPLE);
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -993,7 +993,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
     // Similar to the previous test, but the query has the DO bit on.
     // The response should contain RRSIGs, and should have more RRs than
     // the previous case.
-    updateInMemory(&server, "example.", CONFIG_INMEMORY_EXAMPLE);
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
     createDataFromFile("nsec3query_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -1013,7 +1013,7 @@ TEST_F(AuthSrvTest,
     )
 {
     // Set up the in-memory
-    updateInMemory(&server, "example.", CONFIG_INMEMORY_EXAMPLE);
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
     // This shouldn't affect the result of class CH query
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
@@ -1425,7 +1425,7 @@ TEST_F(AuthSrvTest,
     )
 {
     // Set real inmem client to proxy
-    updateInMemory(&server, "example.", CONFIG_INMEMORY_EXAMPLE);
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
     {
         isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
         boost::shared_ptr<isc::datasrc::ConfigurableClientList>
@@ -1450,16 +1450,16 @@ TEST_F(AuthSrvTest,
 // If non null rrset is given, it will be passed to the proxy so it can
 // return some faked response.
 void
-setupThrow(AuthSrv* server, ThrowWhen throw_when, bool isc_exception,
+setupThrow(AuthSrv& server, ThrowWhen throw_when, bool isc_exception,
            ConstRRsetPtr rrset = ConstRRsetPtr())
 {
     updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
-    isc::util::thread::Mutex::Locker locker(server->getClientListMutex());
+    isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
     boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        list(new FakeList(server->getClientList(RRClass::IN()), throw_when,
+        list(new FakeList(server.getClientList(RRClass::IN()), throw_when,
                           isc_exception, rrset));
-    server->setClientList(RRClass::IN(), list);
+    server.setClientList(RRClass::IN(), list);
 }
 
 TEST_F(AuthSrvTest,
@@ -1482,11 +1482,11 @@ TEST_F(AuthSrvTest,
                                              RRClass::IN(), RRType::TXT());
     for (ThrowWhen* when(throws); *when != THROW_NEVER; ++when) {
         createRequestPacket(request_message, IPPROTO_UDP);
-        setupThrow(&server, *when, true);
+        setupThrow(server, *when, true);
         processAndCheckSERVFAIL();
         // To be sure, check same for non-isc-exceptions
         createRequestPacket(request_message, IPPROTO_UDP);
-        setupThrow(&server, *when, false);
+        setupThrow(server, *when, false);
         processAndCheckSERVFAIL();
     }
 }
@@ -1502,7 +1502,7 @@ TEST_F(AuthSrvTest,
     )
 {
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
-    setupThrow(&server, THROW_AT_GET_CLASS, true);
+    setupThrow(server, THROW_AT_GET_CLASS, true);
 
     // getClass is not called so it should just answer
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -1526,7 +1526,7 @@ TEST_F(AuthSrvTest,
     ConstRRsetPtr empty_rrset(new RRset(Name("foo.example"),
                                         RRClass::IN(), RRType::TXT(),
                                         RRTTL(0)));
-    setupThrow(&server, THROW_NEVER, true, empty_rrset);
+    setupThrow(server, THROW_NEVER, true, empty_rrset);
 
     // Repeat the query processing two times.  Due to the faked RRset,
     // toWire() should throw, and it should result in SERVFAIL.

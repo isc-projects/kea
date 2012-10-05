@@ -12,15 +12,18 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <auth/datasrc_configurator.h>
+#include <auth/datasrc_config.h>
 
 #include <config/tests/fake_session.h>
 #include <config/ccsession.h>
 #include <util/threads/lock.h>
 
 #include <gtest/gtest.h>
-#include <memory>
+
+#include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
+
+#include <memory>
 
 using namespace isc;
 using namespace isc::cc;
@@ -32,7 +35,7 @@ using namespace boost;
 
 namespace {
 
-class DatasrcConfiguratorTest;
+class DatasrcConfigTest;
 
 class FakeList {
 public:
@@ -57,12 +60,26 @@ private:
 
 typedef shared_ptr<FakeList> ListPtr;
 
-// We use the test fixture as both parameters, this makes it possible
-// to easily fake all needed methods and look that they were called.
-typedef DataSourceConfiguratorGeneric<DatasrcConfiguratorTest,
-        FakeList> Configurator;
+void
+testConfigureDataSource(DatasrcConfigTest& test,
+                        const isc::data::ConstElementPtr& config)
+{
+    // We use the test fixture for the Server type.  This makes it possible
+    // to easily fake all needed methods and look that they were called.
+    configureDataSourceGeneric<DatasrcConfigTest, FakeList>(test, config);
+}
 
-class DatasrcConfiguratorTest : public ::testing::Test {
+void
+datasrcConfigHandler(DatasrcConfigTest* fake_server, const std::string&,
+                     isc::data::ConstElementPtr config,
+                     const isc::config::ConfigData&)
+{
+    if (config->contains("classes")) {
+        testConfigureDataSource(*fake_server, config->get("classes"));
+    }
+}
+
+class DatasrcConfigTest : public ::testing::Test {
 public:
     // These pretend to be the server
     ListPtr getClientList(const RRClass& rrclass) {
@@ -86,7 +103,7 @@ public:
         return (mutex_);
     }
 protected:
-    DatasrcConfiguratorTest() :
+    DatasrcConfigTest() :
         session(ElementPtr(new ListElement), ElementPtr(new ListElement),
                 ElementPtr(new ListElement)),
         specfile(string(TEST_OWN_DATA_DIR) + "/spec.spec")
@@ -99,25 +116,24 @@ protected:
                                        false));
     }
     void TearDown() {
-        // Make sure no matter what we did, it is cleaned up.
-        Configurator::cleanup();
+        // Make sure no matter what we did, it is cleaned up.  Also check
+        // we really have subscribed to the configuration, and after removing
+        // it we actually cancel it.
+        EXPECT_TRUE(session.haveSubscription("data_sources", "*"));
+        mccs->removeRemoteConfig("data_sources");
+        EXPECT_FALSE(session.haveSubscription("data_sources", "*"));
     }
-    void init(const ElementPtr& config = ElementPtr()) {
+    void SetUp() {
         session.getMessages()->
             add(createAnswer(0,
                              moduleSpecFromFile(string(PLUGIN_DATA_PATH) +
                                                 "/datasrc.spec").
                              getFullSpec()));
-        if (config) {
-            session.getMessages()->add(createAnswer(0, config));
-        } else {
-            session.getMessages()->
-                add(createAnswer(0, ElementPtr(new MapElement)));
-        }
-        Configurator::init(mccs.get(), this);
-    }
-    void SetUp() {
-        init();
+        session.getMessages()->add(createAnswer(0,
+                                                ElementPtr(new MapElement)));
+        mccs->addRemoteConfig("data_sources",
+                              boost::bind(datasrcConfigHandler,
+                                          this, _1, _2, _3), false);
     }
     ElementPtr buildConfig(const string& config) const {
         const ElementPtr internal(Element::fromJSON(config));
@@ -126,10 +142,10 @@ protected:
         return (external);
     }
     void initializeINList() {
-        const ElementPtr
+        const ConstElementPtr
             config(buildConfig("{\"IN\": [{\"type\": \"xxx\"}]}"));
-        session.addMessage(createCommand("config_update", config), "data_sources",
-                           "*");
+        session.addMessage(createCommand("config_update", config),
+                           "data_sources", "*");
         mccs->checkCommand();
         // Check it called the correct things (check that there's no IN yet and
         // set a new one.
@@ -144,33 +160,12 @@ protected:
     mutable isc::util::thread::Mutex mutex_;
 };
 
-// Check the initialization (and cleanup)
-TEST_F(DatasrcConfiguratorTest, initialization) {
-    // It can't be initialized again
-    EXPECT_THROW(init(), InvalidOperation);
-    EXPECT_TRUE(session.haveSubscription("data_sources", "*"));
-    // Deinitialize to make the tests reasonable
-    Configurator::cleanup();
-    EXPECT_FALSE(session.haveSubscription("data_sources", "*"));
-    // We can't reconfigure now (not even manually)
-    EXPECT_THROW(Configurator::reconfigure(ElementPtr(new MapElement())),
-                 InvalidOperation);
-    // If one of them is NULL, it does not work
-    EXPECT_THROW(Configurator::init(NULL, this), InvalidParameter);
-    EXPECT_FALSE(session.haveSubscription("data_sources", "*"));
-    EXPECT_THROW(Configurator::init(mccs.get(), NULL), InvalidParameter);
-    EXPECT_FALSE(session.haveSubscription("data_sources", "*"));
-    // But we can initialize it again now
-    EXPECT_NO_THROW(init());
-    EXPECT_TRUE(session.haveSubscription("data_sources", "*"));
-}
-
 // Push there a configuration with a single list.
-TEST_F(DatasrcConfiguratorTest, createList) {
+TEST_F(DatasrcConfigTest, createList) {
     initializeINList();
 }
 
-TEST_F(DatasrcConfiguratorTest, modifyList) {
+TEST_F(DatasrcConfigTest, modifyList) {
     // First, initialize the list
     initializeINList();
     // And now change the configuration of the list
@@ -188,7 +183,7 @@ TEST_F(DatasrcConfiguratorTest, modifyList) {
 }
 
 // Check we can have multiple lists at once
-TEST_F(DatasrcConfiguratorTest, multiple) {
+TEST_F(DatasrcConfigTest, multiple) {
     const ElementPtr
         config(buildConfig("{\"IN\": [{\"type\": \"yyy\"}], "
                                  "\"CH\": [{\"type\": \"xxx\"}]}"));
@@ -208,7 +203,7 @@ TEST_F(DatasrcConfiguratorTest, multiple) {
 //
 // It's almost like above, but we initialize first with single-list
 // config.
-TEST_F(DatasrcConfiguratorTest, updateAdd) {
+TEST_F(DatasrcConfigTest, updateAdd) {
     initializeINList();
     const ElementPtr
         config(buildConfig("{\"IN\": [{\"type\": \"yyy\"}], "
@@ -226,7 +221,7 @@ TEST_F(DatasrcConfiguratorTest, updateAdd) {
 }
 
 // We delete a class list in this test.
-TEST_F(DatasrcConfiguratorTest, updateDelete) {
+TEST_F(DatasrcConfigTest, updateDelete) {
     initializeINList();
     const ElementPtr
         config(buildConfig("{}"));
@@ -243,7 +238,7 @@ TEST_F(DatasrcConfiguratorTest, updateDelete) {
 }
 
 // Check that we can rollback an addition if something else fails
-TEST_F(DatasrcConfiguratorTest, rollbackAddition) {
+TEST_F(DatasrcConfigTest, rollbackAddition) {
     initializeINList();
     // The configuration is wrong. However, the CH one will get done first.
     const ElementPtr
@@ -262,13 +257,13 @@ TEST_F(DatasrcConfiguratorTest, rollbackAddition) {
 }
 
 // Check that we can rollback a deletion if something else fails
-TEST_F(DatasrcConfiguratorTest, rollbackDeletion) {
+TEST_F(DatasrcConfigTest, rollbackDeletion) {
     initializeINList();
     // Put the CH there
     const ElementPtr
         config1(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}], "
                                   "\"CH\": [{\"type\": \"xxx\"}]}"));
-    Configurator::reconfigure(config1);
+    testConfigureDataSource(*this, config1);
     const ElementPtr
         config2(Element::fromJSON("{\"IN\": [{\"type\": 13}]}"));
     // This would delete CH. However, the IN one fails.
@@ -276,26 +271,26 @@ TEST_F(DatasrcConfiguratorTest, rollbackDeletion) {
     // and there's no known way to cause an exception during the
     // deletions, it is not a true rollback, but the result should
     // be the same.
-    EXPECT_THROW(Configurator::reconfigure(config2), TypeError);
+    EXPECT_THROW(testConfigureDataSource(*this, config2), TypeError);
     EXPECT_EQ("yyy", lists_[RRClass::IN()]->getConf());
     EXPECT_EQ("xxx", lists_[RRClass::CH()]->getConf());
 }
 
 // Check that we can roll back configuration change if something
 // fails later on.
-TEST_F(DatasrcConfiguratorTest, rollbackConfiguration) {
+TEST_F(DatasrcConfigTest, rollbackConfiguration) {
     initializeINList();
     // Put the CH there
     const ElementPtr
         config1(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}], "
                                   "\"CH\": [{\"type\": \"xxx\"}]}"));
-    Configurator::reconfigure(config1);
+    testConfigureDataSource(*this, config1);
     // Now, the CH happens first. But nevertheless, it should be
     // restored to the previoeus version.
     const ElementPtr
         config2(Element::fromJSON("{\"IN\": [{\"type\": 13}], "
                                   "\"CH\": [{\"type\": \"yyy\"}]}"));
-    EXPECT_THROW(Configurator::reconfigure(config2), TypeError);
+    EXPECT_THROW(testConfigureDataSource(*this, config2), TypeError);
     EXPECT_EQ("yyy", lists_[RRClass::IN()]->getConf());
     EXPECT_EQ("xxx", lists_[RRClass::CH()]->getConf());
 }

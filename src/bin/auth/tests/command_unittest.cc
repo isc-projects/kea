@@ -19,7 +19,7 @@
 #include <auth/auth_srv.h>
 #include <auth/auth_config.h>
 #include <auth/command.h>
-#include <auth/datasrc_configurator.h>
+#include <auth/datasrc_config.h>
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
@@ -208,7 +208,7 @@ configureZones(AuthSrv& server) {
         "   \"cache-enable\": true"
         "}]}"));
 
-    DataSourceConfigurator::testReconfigure(&server, config);
+    configureDataSource(server, config);
 
     zoneChecks(server);
 }
@@ -271,7 +271,7 @@ TEST_F(AuthCommandTest,
         "    \"cache-enable\": true,"
         "    \"cache-zones\": [\"example.org\"]"
         "}]}"));
-    DataSourceConfigurator::testReconfigure(&server_, config);
+    configureDataSource(server_, config);
 
     {
         isc::util::thread::Mutex::Locker locker(server_.getClientListMutex());
@@ -335,7 +335,7 @@ TEST_F(AuthCommandTest,
         "    \"cache-enable\": true,"
         "    \"cache-zones\": [\"example.com\"]"
         "}]}"));
-    EXPECT_THROW(DataSourceConfigurator::testReconfigure(&server_, config2),
+    EXPECT_THROW(configureDataSource(server_, config2),
                  ConfigurableClientList::ConfigurationError);
 
     result_ = execAuthServerCommand(server_, "loadzone",
