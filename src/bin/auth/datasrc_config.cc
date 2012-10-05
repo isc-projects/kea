@@ -18,7 +18,7 @@
 
 // This is a trivial specialization for the commonly used version.
 // Defined in .cc to avoid accidental creation of multiple copies.
-void
+AuthSrv::DataSrcClientListsPtr
 configureDataSource(AuthSrv& server, const isc::data::ConstElementPtr& config)
 {
     return (configureDataSourceGeneric<AuthSrv,

@@ -60,14 +60,11 @@ private:
 
 typedef shared_ptr<FakeList> ListPtr;
 
+// Forward declaration.  We need precise definition of DatasrcConfigTest
+// to complete this function.
 void
 testConfigureDataSource(DatasrcConfigTest& test,
-                        const isc::data::ConstElementPtr& config)
-{
-    // We use the test fixture for the Server type.  This makes it possible
-    // to easily fake all needed methods and look that they were called.
-    configureDataSourceGeneric<DatasrcConfigTest, FakeList>(test, config);
-}
+                        const isc::data::ConstElementPtr& config);
 
 void
 datasrcConfigHandler(DatasrcConfigTest* fake_server, const std::string&,
@@ -161,6 +158,17 @@ protected:
     string log_;
     mutable isc::util::thread::Mutex mutex_;
 };
+
+void
+testConfigureDataSource(DatasrcConfigTest& test,
+                        const isc::data::ConstElementPtr& config)
+{
+    // We use the test fixture for the Server type.  This makes it possible
+    // to easily fake all needed methods and look that they were called.
+    shared_ptr<std::map<dns::RRClass, ListPtr> > lists =
+        configureDataSourceGeneric<DatasrcConfigTest, FakeList>(test, config);
+    test.swapDataSrcClientLists(lists);
+}
 
 // Push there a configuration with a single list.
 TEST_F(DatasrcConfigTest, createList) {
