@@ -126,7 +126,6 @@ public:
         QueryBenchMark(queries, query_message, buffer)
     {
         configureDataSource(
-            *server_,
             Element::fromJSON("{\"IN\":"
                               "  [{\"type\": \"sqlite3\","
                               "    \"params\": {"
@@ -145,7 +144,6 @@ public:
         QueryBenchMark(queries, query_message, buffer)
     {
         configureDataSource(
-            *server_,
             Element::fromJSON("{\"IN\":"
                               "  [{\"type\": \"MasterFiles\","
                               "    \"cache-enable\": true, "
