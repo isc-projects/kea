@@ -17,6 +17,8 @@
 
 #include "auth_srv.h"
 
+#include <util/threads/lock.h>
+
 #include <cc/data.h>
 #include <datasrc/client_list.h>
 
@@ -62,8 +64,12 @@ configureDataSourceGeneric(Server& server,
     }
 
     // Replace the server's lists.  By ignoring the return value we let the
-    // old lists be destroyed.
-    server.swapDataSrcClientLists(new_lists);
+    // old lists be destroyed.  Lock will be released immediately after the
+    // swap.
+    {
+        isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
+        server.swapDataSrcClientLists(new_lists);
+    }
 }
 
 /// \brief Concrete version of configureDataSource() for the

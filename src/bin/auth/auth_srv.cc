@@ -931,29 +931,13 @@ AuthSrv::destroyDDNSForwarder() {
     }
 }
 
-void
-AuthSrv::setClientList(const RRClass& rrclass,
-                       const shared_ptr<ConfigurableClientList>& list)
-{
-    // TODO: Debug-build only check
-    if (!impl_->mutex_.locked()) {
-        isc_throw(isc::Unexpected, "Not locked");
-    }
-
-    if (list) {
-        (*impl_->datasrc_client_lists_)[rrclass] = list;
-    } else {
-        impl_->datasrc_client_lists_->erase(rrclass);
-    }
-}
-
 AuthSrv::DataSrcClientListsPtr
 AuthSrv::swapDataSrcClientLists(DataSrcClientListsPtr new_lists) {
-    {
-        thread::Mutex::Locker locker(impl_->mutex_);
-        std::swap(new_lists, impl_->datasrc_client_lists_);
+    // TODO: Debug-build only check
+    if (!impl_->mutex_.locked()) {
+        isc_throw(isc::Unexpected, "Not locked!");
     }
-
+    std::swap(new_lists, impl_->datasrc_client_lists_);
     return (new_lists);
 }
 
