@@ -269,8 +269,7 @@ public:
     const shared_ptr<TSIGKeyRing>* keyring_;
 
     /// The data source client list
-    shared_ptr<std::map<RRClass, shared_ptr<ConfigurableClientList> > >
-        datasrc_client_lists_;
+    AuthSrv::DataSrcClientListsPtr datasrc_client_lists_;
 
     shared_ptr<ConfigurableClientList> getClientList(const RRClass& rrclass) {
         // TODO: Debug-build only check
@@ -946,6 +945,16 @@ AuthSrv::setClientList(const RRClass& rrclass,
     } else {
         impl_->datasrc_client_lists_->erase(rrclass);
     }
+}
+
+AuthSrv::DataSrcClientListsPtr
+AuthSrv::swapDataSrcClientLists(DataSrcClientListsPtr new_lists) {
+    {
+        thread::Mutex::Locker locker(impl_->mutex_);
+        std::swap(new_lists, impl_->datasrc_client_lists_);
+    }
+
+    return (new_lists);
 }
 
 shared_ptr<ConfigurableClientList>

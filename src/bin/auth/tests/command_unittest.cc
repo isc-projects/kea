@@ -16,6 +16,8 @@
 
 #include "datasrc_util.h"
 
+#include <util/threads/lock.h>
+
 #include <auth/auth_srv.h>
 #include <auth/auth_config.h>
 #include <auth/command.h>
