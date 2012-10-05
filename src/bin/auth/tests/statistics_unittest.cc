@@ -126,26 +126,21 @@ TEST_F(CountersTest, getStatistics) {
     }
 }
 
-TEST(StatisticsItemsTest, QRItemNamesCheck) {
-    // check the number of elements in the array
-    EXPECT_EQ(sizeof(QRCounterItemName) / sizeof(QRCounterItemName[0]),
-              QR_COUNTER_TYPES);
-    // check the name of the first enum element
-    EXPECT_EQ(QRCounterItemName[QR_REQUEST_IPV4], "request.v4");
-    // check the name of the last enum element
-    EXPECT_EQ(QRCounterItemName[QR_RCODE_OTHER], "rcode.other");
+int
+countTreeElements(const struct CounterTypeTree* tree) {
+    int count = 0;
+    for (int i = 0; tree[i].name != NULL; ++i) {
+        if (tree[i].sub_tree == NULL) {
+            ++count;
+        } else {
+            count += countTreeElements(tree[i].sub_tree);
+        }
+    }
+    return count;
 }
 
-TEST(StatisticsItemsTest, SocketItemNamesCheck) {
-    // check the number of elements in the array
-    EXPECT_EQ(sizeof(SocketCounterItemName) / sizeof(SocketCounterItemName[0]),
-              SOCKET_COUNTER_TYPES);
-    // check the name of the first enum element
-    EXPECT_EQ(SocketCounterItemName[SOCKET_IPV4_UDP_BINDFAIL],
-              "ipv4.udp.bindfail");
-    // check the name of the last enum element
-    EXPECT_EQ(SocketCounterItemName[SOCKET_UNIXDOMAIN_SENDERR],
-              "unixdomain.senderr");
+TEST(StatisticsItemsTest, QRItemNamesCheck) {
+    EXPECT_EQ(QR_COUNTER_TYPES, countTreeElements(QRCounterTree));
 }
 
 }
