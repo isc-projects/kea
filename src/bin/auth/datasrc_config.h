@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef DATASRC_CONFIGURATOR_H
-#define DATASRC_CONFIGURATOR_H
+#ifndef DATASRC_CONFIG_H
+#define DATASRC_CONFIG_H
 
 #include "auth_srv.h"
 
@@ -108,12 +108,12 @@ configureDataSourceGeneric(Server& server,
     }
 }
 
-/// \brief Concrete version of DataSourceConfiguratorGeneric for the
+/// \brief Concrete version of configureDataSource() for the
 ///     use with authoritative server implementation.
 void
 configureDataSource(AuthSrv& server, const isc::data::ConstElementPtr& config);
 
-#endif
+#endif  // DATASRC_CONFIG_H
 
 // Local Variables:
 // mode: c++

@@ -19,7 +19,7 @@
 #include <auth/auth_srv.h>
 #include <auth/auth_config.h>
 #include <auth/command.h>
-#include <auth/datasrc_configurator.h>
+#include <auth/datasrc_config.h>
 
 #include <dns/name.h>
 #include <dns/rrclass.h>

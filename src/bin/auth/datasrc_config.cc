@@ -14,7 +14,7 @@
 
 #include <cc/data.h>
 #include "auth_srv.h"
-#include "datasrc_configurator.h"
+#include "datasrc_config.h"
 
 // This is a trivial specialization for the commonly used version.
 // Defined in .cc to avoid accidental creation of multiple copies.

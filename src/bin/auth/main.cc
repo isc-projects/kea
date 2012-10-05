@@ -34,7 +34,7 @@
 #include <auth/command.h>
 #include <auth/auth_srv.h>
 #include <auth/auth_log.h>
-#include <auth/datasrc_configurator.h>
+#include <auth/datasrc_config.h>
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 #include <log/logger_support.h>
