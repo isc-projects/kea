@@ -726,13 +726,21 @@ TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
 }
 
 void
+installDataSrcClientLists(AuthSrv& server,
+                          AuthSrv::DataSrcClientListsPtr lists)
+{
+    thread::Mutex::Locker locker(server.getClientListMutex());
+    server.swapDataSrcClientLists(lists);
+}
+
+void
 updateDatabase(AuthSrv& server, const char* params) {
     const ConstElementPtr config(Element::fromJSON("{"
         "\"IN\": [{"
         "    \"type\": \"sqlite3\","
         "    \"params\": " + string(params) +
         "}]}"));
-    configureDataSource(server, config);
+    installDataSrcClientLists(server, configureDataSource(server, config));
 }
 
 void
@@ -749,7 +757,7 @@ updateInMemory(AuthSrv& server, const char* origin, const char* filename) {
         "   \"type\": \"static\","
         "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
         "}]}"));
-    configureDataSource(server, config);
+    installDataSrcClientLists(server, configureDataSource(server, config));
 }
 
 void
@@ -759,7 +767,7 @@ updateBuiltin(AuthSrv& server) {
         "   \"type\": \"static\","
         "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
         "}]}"));
-    configureDataSource(server, config);
+    installDataSrcClientLists(server, configureDataSource(server, config));
 }
 
 // Try giving the server a TSIG signed request and see it can anwer signed as
@@ -957,7 +965,7 @@ TEST_F(AuthSrvTest, updateWithInMemoryClient) {
         "   \"params\": {},"
         "   \"cache-enable\": true"
         "}]}"));
-    configureDataSource(server, config);
+    installDataSrcClientLists(server, configureDataSource(server, config));
     // after successful configuration, we should have one (with empty zoneset).
 
     // The memory data source is empty, should return REFUSED rcode.
