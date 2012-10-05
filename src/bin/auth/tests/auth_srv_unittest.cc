@@ -1183,7 +1183,10 @@ TEST_F(AuthSrvTest, queryCounterOpcodes) {
     for (int i = 0; i < 6; ++i) {
         // The counter should be initialized to 0.
         expectCounterItem(server.getStatistics(),
-                          QRCounterItemName[QROpCodeToQRCounterType[i]], 0);
+                          std::string("opcode.") +
+                              QRCounterOpcode[QROpCodeToQRCounterType[i] -
+                                                  QR_OPCODE_QUERY].name,
+                          0);
 
         // For each possible opcode, create a request message and send it
         UnitTestUtil::createRequestMessage(request_message, Opcode(i),
@@ -1202,7 +1205,9 @@ TEST_F(AuthSrvTest, queryCounterOpcodes) {
 
         // Confirm the counter.
         expectCounterItem(server.getStatistics(),
-                          QRCounterItemName[QROpCodeToQRCounterType[i]],
+                          std::string("opcode.") +
+                              QRCounterOpcode[QROpCodeToQRCounterType[i] -
+                                                  QR_OPCODE_QUERY].name,
                           i + 1);
     }
     // Check for 6..15
@@ -1212,7 +1217,9 @@ TEST_F(AuthSrvTest, queryCounterOpcodes) {
     for (int i = 6; i < 16; ++i) {
         // The counter should be initialized to 0.
         expectCounterItem(server.getStatistics(),
-                          QRCounterItemName[QROpCodeToQRCounterType[i]],
+                          std::string("opcode.") +
+                              QRCounterOpcode[QROpCodeToQRCounterType[i] -
+                                              QR_OPCODE_QUERY].name,
                           expected);
 
         // For each possible opcode, create a request message and send it
@@ -1232,7 +1239,9 @@ TEST_F(AuthSrvTest, queryCounterOpcodes) {
 
         // Confirm the counter.
         expectCounterItem(server.getStatistics(),
-                          QRCounterItemName[QROpCodeToQRCounterType[i]],
+                          std::string("opcode.") +
+                              QRCounterOpcode[QROpCodeToQRCounterType[i] -
+                                              QR_OPCODE_QUERY].name,
                           expected);
     }
 }
