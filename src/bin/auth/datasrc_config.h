@@ -17,8 +17,6 @@
 
 #include "auth_srv.h"
 
-#include <util/threads/lock.h>
-
 #include <cc/data.h>
 #include <datasrc/client_list.h>
 
@@ -41,8 +39,9 @@
 /// \param config The configuration value to parse. It is in the form
 ///     as an update from the config manager.
 template<class Server, class List>
-void
-configureDataSourceGeneric(Server& server,
+boost::shared_ptr<std::map<isc::dns::RRClass,
+                           boost::shared_ptr<List> > > // = ListMap below
+configureDataSourceGeneric(Server& /*server*/,
                            const isc::data::ConstElementPtr& config)
 {
     typedef boost::shared_ptr<List> ListPtr;
@@ -63,18 +62,12 @@ configureDataSourceGeneric(Server& server,
                                                                 list));
     }
 
-    // Replace the server's lists.  By ignoring the return value we let the
-    // old lists be destroyed.  Lock will be released immediately after the
-    // swap.
-    {
-        isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
-        server.swapDataSrcClientLists(new_lists);
-    }
+    return (new_lists);
 }
 
 /// \brief Concrete version of configureDataSource() for the
 ///     use with authoritative server implementation.
-void
+AuthSrv::DataSrcClientListsPtr
 configureDataSource(AuthSrv& server, const isc::data::ConstElementPtr& config);
 
 #endif  // DATASRC_CONFIG_H
