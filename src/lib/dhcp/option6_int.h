@@ -18,36 +18,68 @@
 #include <stdint.h>
 #include <limits>
 #include <util/io_utilities.h>
+#include "dhcp/libdhcp++.h"
 #include "dhcp/option.h"
+#include "dhcp/option_data_types.h"
 
 namespace isc {
 namespace dhcp {
 
+/// This template class represents DHCPv6 option with single value.
+/// This value is of integer type and can be any of the following:
+/// - uint8_t,
+/// - uint16_t,
+/// - uint32_t,
+/// - int8_t,
+/// - int16_t,
+/// - int32_t.
+///
+/// @param T data field type (see above).
 template<typename T>
-class OptionInt6: public Option {
+class Option6Int: public Option {
 
 public:
-    OptionInt6(uint16_t type, T value)
+    /// @brief Constructor.
+    ///
+    /// @param type option type.
+    /// @param value option value.
+    Option6Int(uint16_t type, T value)
         : Option(Option::V6, type), value_(value) {
+        if (!OptionDataTypes<T>::valid) {
+            isc_throw(dhcp::InvalidDataType, "non-numeric type");
+        }
     }
 
-    OptionInt6(uint16_t type, OptionBufferConstIter begin,
+    /// @brief Constructor.
+    ///
+    /// This constructor creates option from a buffer. This construtor
+    /// may throw exception if \ref unpack function throws during buffer
+    /// parsing.
+    ///
+    /// @param type option type.
+    /// @param begin iterator to first byte of option data.
+    /// @param end iterator to end of option data (first byte after option end).
+    ///
+    /// @todo mention here what it throws.
+    Option6Int(uint16_t type, OptionBufferConstIter begin,
                OptionBufferConstIter end)
         : Option(Option::V6, type) {
+        if (!OptionDataTypes<T>::valid) {
+            isc_throw(dhcp::InvalidDataType, "non-numeric type");
+        }
         unpack(begin, end);
     }
 
     /// Writes option in wire-format to buf, returns pointer to first unused
     /// byte after stored option.
     ///
-    /// @param buf buffer (option will be stored here)
+    /// @param [out] buf buffer (option will be stored here)
+    ///
+    /// @throw isc::BadValue if invalid option type has been provided.
     void pack(isc::util::OutputBuffer& buf) {
-        if (!std::numeric_limits<T>::is_integer) {
-            isc_throw(isc::BadValue, "");
-        }
         buf.writeUint16(type_);
         buf.writeUint16(len() - OPTION6_HDR_LEN);
-        switch (sizeof(T)) {
+        switch (OptionDataTypes<T>::len) {
         case 1:
             buf.writeUint8(value_);
             break;
@@ -58,7 +90,7 @@ public:
             buf.writeUint32(value_);
             break;
         default:
-            isc_throw(isc::BadValue, "");
+            isc_throw(dhcp::InvalidDataType, "non-numeric type");
         }
     }
 
@@ -73,7 +105,7 @@ public:
         if (distance(begin, end) < sizeof(T)) {
             isc_throw(OutOfRange, "Option " << type_ << " truncated");
         }
-        switch (sizeof(T)) {
+        switch (OptionDataTypes<T>::len) {
         case 1:
             value_ = *begin;
             break;
@@ -84,7 +116,7 @@ public:
             value_ = isc::util::readUint32( &(*begin) );
             break;
         default:
-            isc_throw(isc::BadValue, "");
+            isc_throw(dhcp::InvalidDataType, "non-numeric type");
         }
 
         LibDHCP::unpackOptions6(OptionBuffer(begin, end), options_);
