@@ -117,26 +117,107 @@ TEST_F(CountersTest, getStatistics) {
     }
 }
 
-TEST(StatisticsItemsTest, QRItemNamesCheck) {
-    // check the number of elements in the array
-    EXPECT_EQ(sizeof(QRCounterItemName) / sizeof(QRCounterItemName[0]),
-              QR_COUNTER_TYPES);
-    // check the name of the first enum element
-    EXPECT_EQ(QRCounterItemName[QR_REQUEST_IPV4], "request.v4");
-    // check the name of the last enum element
-    EXPECT_EQ(QRCounterItemName[QR_RCODE_OTHER], "rcode.other");
+TEST_F(AuthCountersTest, getStatisticsWithOpcodeCounters) {
+    // Increment some of the opcode counters.  Then they should appear in the
+    // submitted data; others shouldn't
+    const int opcode_results[16] = { 1, 2, 3, 0, 4, 5, 0, 0,
+                                     0, 0, 0, 0, 0, 0, 0, 0 };
+    updateOpcodeCounters(counters, opcode_results);
+    ConstElementPtr statistics_data = counters.getStatistics();
+    opcodeDataCheck(statistics_data, opcode_results);
 }
 
-TEST(StatisticsItemsTest, SocketItemNamesCheck) {
-    // check the number of elements in the array
-    EXPECT_EQ(sizeof(SocketCounterItemName) / sizeof(SocketCounterItemName[0]),
-              SOCKET_COUNTER_TYPES);
-    // check the name of the first enum element
-    EXPECT_EQ(SocketCounterItemName[SOCKET_IPV4_UDP_BINDFAIL],
-              "ipv4.udp.bindfail");
-    // check the name of the last enum element
-    EXPECT_EQ(SocketCounterItemName[SOCKET_UNIXDOMAIN_SENDERR],
-              "unixdomain.senderr");
+TEST_F(AuthCountersTest, getStatisticsWithAllOpcodeCounters) {
+    // Increment all opcode counters.  Then they should appear in the
+    // submitted data.
+    const int opcode_results[16] = { 1, 1, 1, 1, 1, 1, 1, 1,
+                                     1, 1, 1, 1, 1, 1, 1, 1 };
+    updateOpcodeCounters(counters, opcode_results);
+    ConstElementPtr statistics_data = counters.getStatistics();
+    opcodeDataCheck(statistics_data, opcode_results);
+}
+
+TEST_F(AuthCountersTest, getStatisticsWithRcodeCounters) {
+    // Increment some of the rcode counters.  Then they should appear in the
+    // submitted data; others shouldn't
+    const int rcode_results[17] = { 1, 2, 3, 4, 5, 6, 7, 8, 9,
+                                    10, 0, 0, 0, 0, 0, 0, 11 };
+    updateRcodeCounters(counters, rcode_results);
+    ConstElementPtr statistics_data = counters.getStatistics();
+    rcodeDataCheck(statistics_data, rcode_results);
+}
+
+TEST_F(AuthCountersTest, getStatisticsWithAllRcodeCounters) {
+    // Increment all rcode counters.  Then they should appear in the
+    // submitted data.
+    const int rcode_results[17] = { 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                     1, 1, 1, 1, 1, 1, 1, 1 };
+    updateOpcodeCounters(counters, rcode_results);
+    ConstElementPtr statistics_data = counters.getStatistics();
+    opcodeDataCheck(statistics_data, rcode_results);
+}
+
+TEST_F(AuthCountersTest, getStatisticsWithValidator) {
+
+    //a validator for the unittest
+    AuthCounters::validator_type validator;
+    ConstElementPtr el;
+
+    // Get statistics data with correct statistics validator.
+    validator = boost::bind(
+        &AuthCountersTest::MockModuleSpec::validateStatistics,
+        &module_spec_, _1, true);
+
+    EXPECT_TRUE(validator(el));
+
+    // register validator to AuthCounters
+    counters.registerStatisticsValidator(validator);
+
+    // Counters should be initialized to 0.
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::SERVER_UDP_QUERY));
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::SERVER_TCP_QUERY));
+
+    // UDP query counter is set to 2.
+    counters.inc(AuthCounters::SERVER_UDP_QUERY);
+    counters.inc(AuthCounters::SERVER_UDP_QUERY);
+    // TCP query counter is set to 1.
+    counters.inc(AuthCounters::SERVER_TCP_QUERY);
+
+    // checks the value returned by getStatistics
+    ConstElementPtr statistics_data = counters.getStatistics();
+
+    // UDP query counter is 2 and TCP query counter is 1.
+    EXPECT_EQ(2, statistics_data->get("queries.udp")->intValue());
+    EXPECT_EQ(1, statistics_data->get("queries.tcp")->intValue());
+
+    // Get statistics data with incorrect statistics validator.
+    validator = boost::bind(
+        &AuthCountersTest::MockModuleSpec::validateStatistics,
+        &module_spec_, _1, false);
+
+    EXPECT_FALSE(validator(el));
+
+    counters.registerStatisticsValidator(validator);
+
+    // checks the value returned by getStatistics
+    EXPECT_FALSE(counters.getStatistics());
+}
+
+int
+countTreeElements(const struct CounterTypeTree* tree) {
+    int count = 0;
+    for (int i = 0; tree[i].name != NULL; ++i) {
+        if (tree[i].sub_tree == NULL) {
+            ++count;
+        } else {
+            count += countTreeElements(tree[i].sub_tree);
+        }
+    }
+    return count;
+}
+
+TEST(StatisticsItemsTest, QRItemNamesCheck) {
+    EXPECT_EQ(QR_COUNTER_TYPES, countTreeElements(QRCounterTree));
 }
 
 }
