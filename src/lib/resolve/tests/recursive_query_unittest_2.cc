@@ -76,13 +76,16 @@ using namespace std;
 /// directed to one or other of the "servers" in the RecursiveQueryTest2 class,
 /// regardless of the glue returned in referrals.
 
-namespace isc {
-namespace asiodns {
-
-const char* TEST_ADDRESS = "127.0.0.1";       ///< Servers are on this address
+namespace {
+const char* const TEST_ADDRESS = "127.0.0.1"; ///< Servers are on this address
 const uint16_t TEST_PORT = 5301;              ///< ... and this port
 const size_t BUFFER_SIZE = 1024;              ///< For all buffers
-const char* WWW_EXAMPLE_ORG = "192.0.2.254";  ///< Address of www.example.org
+const char* const WWW_EXAMPLE_ORG = "192.0.2.254";
+                                              ///< Address of www.example.org
+} //end anonymous namespace
+
+namespace isc {
+namespace asiodns {
 
 // As the test is fairly long and complex, debugging "print" statements have
 // been left in although they are disabled.  Set the following to "true" to
