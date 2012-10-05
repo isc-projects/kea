@@ -30,7 +30,7 @@
 
 #include <auth/auth_srv.h>
 #include <auth/auth_config.h>
-#include <auth/datasrc_configurator.h>
+#include <auth/datasrc_config.h>
 #include <auth/query.h>
 
 #include <asiodns/asiodns.h>
