@@ -163,10 +163,10 @@ void
 testConfigureDataSource(DatasrcConfigTest& test,
                         const isc::data::ConstElementPtr& config)
 {
-    // We use the test fixture for the Server type.  This makes it possible
-    // to easily fake all needed methods and look that they were called.
+    // We use customized (faked lists) for the List type.  This makes it
+    // possible to easily look that they were called.
     shared_ptr<std::map<dns::RRClass, ListPtr> > lists =
-        configureDataSourceGeneric<DatasrcConfigTest, FakeList>(test, config);
+        configureDataSourceGeneric<FakeList>(config);
     test.swapDataSrcClientLists(lists);
 }
 
