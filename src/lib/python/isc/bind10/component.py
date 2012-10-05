@@ -602,7 +602,7 @@ class Configurator:
         for cname in old.keys():
             if cname not in new:
                 component = self._components[cname][1]
-                if component.running():
+                if component.running() or component.is_failed():
                     plan.append({
                         'command': STOP_CMD,
                         'component': component,
