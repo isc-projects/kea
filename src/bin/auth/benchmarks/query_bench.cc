@@ -128,7 +128,7 @@ public:
         QueryBenchMark(queries, query_message, buffer)
     {
         isc::util::thread::Mutex::Locker locker(
-                server_->getClientListMutex());
+                server_->getDataSrcClientListMutex());
         server_->swapDataSrcClientLists(
             configureDataSource(
                 Element::fromJSON("{\"IN\":"
@@ -149,7 +149,7 @@ public:
         QueryBenchMark(queries, query_message, buffer)
     {
         isc::util::thread::Mutex::Locker locker(
-                server_->getClientListMutex());
+                server_->getDataSrcClientListMutex());
         server_->swapDataSrcClientLists(
             configureDataSource(
                 Element::fromJSON("{\"IN\":"
