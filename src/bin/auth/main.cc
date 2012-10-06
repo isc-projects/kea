@@ -114,7 +114,7 @@ datasrcConfigHandler(AuthSrv* server, bool* first_time,
         // swap.
         {
             isc::util::thread::Mutex::Locker locker(
-                server->getClientListMutex());
+                server->getDataSrcClientListMutex());
             lists = server->swapDataSrcClientLists(lists);
         }
         // The previous lists are destroyed here.  Note that it's outside

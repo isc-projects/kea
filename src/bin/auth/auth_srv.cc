@@ -271,7 +271,9 @@ public:
     /// The data source client list
     AuthSrv::DataSrcClientListsPtr datasrc_client_lists_;
 
-    shared_ptr<ConfigurableClientList> getClientList(const RRClass& rrclass) {
+    shared_ptr<ConfigurableClientList> getDataSrcClientList(
+        const RRClass& rrclass)
+    {
         // TODO: Debug-build only check
         if (!mutex_.locked()) {
             isc_throw(isc::Unexpected, "Not locked!");
@@ -646,13 +648,13 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     }
     // Lock the client lists and keep them under the lock until the processing
     // and rendering is done (this is the same mutex as from
-    // AuthSrv::getClientListMutex()).
+    // AuthSrv::getDataSrcClientListMutex()).
     isc::util::thread::Mutex::Locker locker(mutex_);
 
     try {
         const ConstQuestionPtr question = *message.beginQuestion();
         const shared_ptr<datasrc::ClientList>
-            list(getClientList(question->getClass()));
+            list(getDataSrcClientList(question->getClass()));
         if (list) {
             const RRType& qtype = question->getType();
             const Name& qname = question->getName();
@@ -942,28 +944,12 @@ AuthSrv::swapDataSrcClientLists(DataSrcClientListsPtr new_lists) {
 }
 
 shared_ptr<ConfigurableClientList>
-AuthSrv::getClientList(const RRClass& rrclass) {
-    return (impl_->getClientList(rrclass));
-}
-
-vector<RRClass>
-AuthSrv::getClientListClasses() const {
-    // TODO: Debug-build only check
-    if (!impl_->mutex_.locked()) {
-        isc_throw(isc::Unexpected, "Not locked");
-    }
-
-    vector<RRClass> result;
-    for (std::map<RRClass, shared_ptr<ConfigurableClientList> >::
-             const_iterator it(impl_->datasrc_client_lists_->begin());
-         it != impl_->datasrc_client_lists_->end(); ++it) {
-        result.push_back(it->first);
-    }
-    return (result);
+AuthSrv::getDataSrcClientList(const RRClass& rrclass) {
+    return (impl_->getDataSrcClientList(rrclass));
 }
 
 util::thread::Mutex&
-AuthSrv::getClientListMutex() const {
+AuthSrv::getDataSrcClientListMutex() const {
     return (impl_->mutex_);
 }
 

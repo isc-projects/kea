@@ -302,6 +302,7 @@ public:
     /// If there was no forwarder yet, this method does nothing.
     void destroyDDNSForwarder();
 
+    /// \brief Shortcut typedef used for swapDataSrcClientLists().
     typedef boost::shared_ptr<std::map<
         isc::dns::RRClass, boost::shared_ptr<
                                isc::datasrc::ConfigurableClientList> > >
@@ -318,7 +319,7 @@ public:
     ///
     /// This method is intended to be used by a separate method to update
     /// the data source configuration "at once".  The caller must hold
-    /// a lock for the mutex object returned by  \c getClientListMutex()
+    /// a lock for the mutex object returned by  \c getDataSrcClientListMutex()
     /// before calling this method.
     ///
     /// The ownership of the returned pointer is transferred to the caller.
@@ -340,13 +341,7 @@ public:
     /// \param rrclass The class for which to get the list.
     /// \return The list, or NULL if no list is set for the class.
     boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        getClientList(const isc::dns::RRClass& rrclass);
-
-    /// \brief Returns a list of classes that have a client list.
-    ///
-    /// \return List of classes for which a non-NULL client list
-    ///     has been set by setClientList.
-    std::vector<isc::dns::RRClass> getClientListClasses() const;
+        getDataSrcClientList(const isc::dns::RRClass& rrclass);
 
     /// \brief Return a mutex for the client lists.
     ///
@@ -357,9 +352,9 @@ public:
     /// is correct:
     /// \code
     /// {
-    ///  Mutex::Locker locker(auth->getClientListMutex());
+    ///  Mutex::Locker locker(auth->getDataSrcClientListMutex());
     ///  boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-    ///    list(auth->getClientList(RRClass::IN()));
+    ///    list(auth->getDataSrcClientList(RRClass::IN()));
     ///  // Do some processing here
     /// }
     /// \endcode
@@ -368,8 +363,8 @@ public:
     /// \code
     /// boost::shared_ptr<isc::datasrc::ConfigurableClientList> list;
     /// {
-    ///     Mutex::Locker locker(auth->getClientListMutex());
-    ///     list = auth->getClientList(RRClass::IN()));
+    ///     Mutex::Locker locker(auth->getDataSrcClientListMutex());
+    ///     list = auth->getDataSrcClientList(RRClass::IN()));
     /// }
     /// // Do some processing here
     /// \endcode
@@ -378,7 +373,7 @@ public:
     ///    (lock) the mutex. It's because locking of the mutex is not really
     ///    a modification of the server object and it is needed to protect the
     ///    lists even on read-only operations.
-    isc::util::thread::Mutex& getClientListMutex() const;
+    isc::util::thread::Mutex& getDataSrcClientListMutex() const;
 
     /// \brief Sets the timeout for incoming TCP connections
     ///
