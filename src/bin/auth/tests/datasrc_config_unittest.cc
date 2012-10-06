@@ -79,7 +79,7 @@ datasrcConfigHandler(DatasrcConfigTest* fake_server, const std::string&,
 class DatasrcConfigTest : public ::testing::Test {
 public:
     // These pretend to be the server
-    isc::util::thread::Mutex& getClientListMutex() const {
+    isc::util::thread::Mutex& getDataSrcClientListMutex() const {
         return (mutex_);
     }
     void swapDataSrcClientLists(shared_ptr<std::map<dns::RRClass, ListPtr> >

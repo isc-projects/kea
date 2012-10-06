@@ -729,7 +729,7 @@ void
 installDataSrcClientLists(AuthSrv& server,
                           AuthSrv::DataSrcClientListsPtr lists)
 {
-    thread::Mutex::Locker locker(server.getClientListMutex());
+    thread::Mutex::Locker locker(server.getDataSrcClientListMutex());
     server.swapDataSrcClientLists(lists);
 }
 
@@ -1439,10 +1439,11 @@ TEST_F(AuthSrvTest,
     // Set real inmem client to proxy
     updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
     {
-        isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
+        isc::util::thread::Mutex::Locker locker(
+            server.getDataSrcClientListMutex());
         boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-            list(new FakeList(server.getClientList(RRClass::IN()), THROW_NEVER,
-                              false));
+            list(new FakeList(server.getDataSrcClientList(RRClass::IN()),
+                              THROW_NEVER, false));
         AuthSrv::DataSrcClientListsPtr lists(new std::map<RRClass, ListPtr>);
         lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
         server.swapDataSrcClientLists(lists);
@@ -1469,10 +1470,11 @@ setupThrow(AuthSrv& server, ThrowWhen throw_when, bool isc_exception,
 {
     updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
-    isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
+    isc::util::thread::Mutex::Locker locker(
+        server.getDataSrcClientListMutex());
     boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        list(new FakeList(server.getClientList(RRClass::IN()), throw_when,
-                          isc_exception, rrset));
+        list(new FakeList(server.getDataSrcClientList(RRClass::IN()),
+                          throw_when, isc_exception, rrset));
     AuthSrv::DataSrcClientListsPtr lists(new std::map<RRClass, ListPtr>);
     lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
     server.swapDataSrcClientLists(lists);
@@ -1787,7 +1789,8 @@ TEST_F(AuthSrvTest, clientList) {
     // We need to lock the mutex to make the (get|set)ClientList happy.
     // There's a debug-build only check in them to make sure everything
     // locks them and we call them directly here.
-    isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
+    isc::util::thread::Mutex::Locker locker(
+        server.getDataSrcClientListMutex());
 
     AuthSrv::DataSrcClientListsPtr lists; // initially empty
 
@@ -1804,8 +1807,8 @@ TEST_F(AuthSrvTest, clientList) {
     server.swapDataSrcClientLists(lists);
 
     // And the lists can be retrieved.
-    EXPECT_EQ(list, server.getClientList(RRClass::IN()));
-    EXPECT_EQ(list2, server.getClientList(RRClass::CH()));
+    EXPECT_EQ(list, server.getDataSrcClientList(RRClass::IN()));
+    EXPECT_EQ(list2, server.getDataSrcClientList(RRClass::CH()));
 
     // Replace the lists with new lists containing only one list.
     lists.reset(new std::map<RRClass, ListPtr>);
@@ -1817,19 +1820,20 @@ TEST_F(AuthSrvTest, clientList) {
     EXPECT_EQ(2, lists->size());
 
     // The CH list really got deleted.
-    EXPECT_EQ(list, server.getClientList(RRClass::IN()));
-    EXPECT_FALSE(server.getClientList(RRClass::CH()));
+    EXPECT_EQ(list, server.getDataSrcClientList(RRClass::IN()));
+    EXPECT_FALSE(server.getDataSrcClientList(RRClass::CH()));
 }
 
 // We just test the mutex can be locked (exactly once).
 TEST_F(AuthSrvTest, mutex) {
-    isc::util::thread::Mutex::Locker l1(server.getClientListMutex());
+    isc::util::thread::Mutex::Locker l1(server.getDataSrcClientListMutex());
     // TODO: Once we have non-debug build, this one will not work, since
     // we currently use the fact that we can't lock twice from the same
     // thread. In the non-debug mode, this would deadlock.
     // Skip then.
     EXPECT_THROW({
-        isc::util::thread::Mutex::Locker l2(server.getClientListMutex());
+        isc::util::thread::Mutex::Locker l2(
+            server.getDataSrcClientListMutex());
     }, isc::InvalidOperation);
 }
 
