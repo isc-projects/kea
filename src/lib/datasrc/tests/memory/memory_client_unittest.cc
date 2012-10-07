@@ -543,29 +543,6 @@ TEST_F(MemoryClientTest, loadRRSIGs) {
     EXPECT_EQ(1, client_->getZoneCount());
 }
 
-TEST_F(MemoryClientTest, loadRRSIGsRdataMixedCoveredTypes) {
-    client_->load(Name("example.org"),
-                  TEST_DATA_DIR "/example.org-rrsigs.zone");
-
-    RRsetPtr rrset(new RRset(Name("example.org"),
-                             RRClass::IN(), RRType::A(), RRTTL(3600)));
-    rrset->addRdata(in::A("192.0.2.1"));
-    rrset->addRdata(in::A("192.0.2.2"));
-
-    RRsetPtr rrsig(new RRset(Name("example.org"), zclass_,
-                             RRType::RRSIG(), RRTTL(300)));
-    rrsig->addRdata(generic::RRSIG("A 5 3 3600 20000101000000 20000201000000 "
-                                   "12345 example.org. FAKEFAKEFAKE"));
-    rrsig->addRdata(generic::RRSIG("NS 5 3 3600 20000101000000 20000201000000 "
-                                   "54321 example.org. FAKEFAKEFAKEFAKE"));
-    rrset->addRRsig(rrsig);
-
-    EXPECT_THROW(client_->add(Name("example.org"), rrset),
-                 InMemoryClient::AddError);
-
-    // Teardown checks for memory segment leaks
-}
-
 TEST_F(MemoryClientTest, getZoneCount) {
     EXPECT_EQ(0, client_->getZoneCount());
     client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
@@ -653,75 +630,6 @@ TEST_F(MemoryClientTest, getIteratorGetSOAThrowsNotImplemented) {
 
     // This method is not implemented.
     EXPECT_THROW(iterator->getSOA(), isc::NotImplemented);
-}
-
-TEST_F(MemoryClientTest, addRRsetToNonExistentZoneThrows) {
-    // The zone "example.org" doesn't exist, so we can't add an RRset to
-    // it.
-    RRsetPtr rrset_a(new RRset(Name("example.org"), RRClass::IN(), RRType::A(),
-                               RRTTL(300)));
-    rrset_a->addRdata(rdata::in::A("192.0.2.1"));
-    EXPECT_THROW(client_->add(Name("example.org"), rrset_a), DataSourceError);
-}
-
-TEST_F(MemoryClientTest, addOutOfZoneThrows) {
-    // Out of zone names should throw.
-    client_->load(Name("example.org"),
-                  TEST_DATA_DIR "/example.org-empty.zone");
-
-    RRsetPtr rrset_a(new RRset(Name("a.example.com"),
-                               RRClass::IN(), RRType::A(), RRTTL(300)));
-    rrset_a->addRdata(rdata::in::A("192.0.2.1"));
-
-    EXPECT_THROW(client_->add(Name("example.org"), rrset_a),
-                 OutOfZone);
-    // Teardown checks for memory segment leaks
-}
-
-TEST_F(MemoryClientTest, addNullRRsetThrows) {
-    client_->load(Name("example.org"),
-                  TEST_DATA_DIR "/example.org-rrsigs.zone");
-
-    EXPECT_THROW(client_->add(Name("example.org"), ConstRRsetPtr()),
-                 InMemoryClient::NullRRset);
-
-    // Teardown checks for memory segment leaks
-}
-
-TEST_F(MemoryClientTest, addEmptyRRsetThrows) {
-    client_->load(Name("example.org"),
-                  TEST_DATA_DIR "/example.org-rrsigs.zone");
-
-    RRsetPtr rrset_a(new RRset(Name("example.org"), RRClass::IN(), RRType::A(),
-                               RRTTL(300)));
-    EXPECT_THROW(client_->add(Name("example.org"), rrset_a),
-                 InMemoryClient::AddError);
-
-    // Teardown checks for memory segment leaks
-}
-
-TEST_F(MemoryClientTest, add) {
-    client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
-
-    // Add another RRset
-    RRsetPtr rrset_a(new RRset(Name("example.org"), RRClass::IN(), RRType::A(),
-                               RRTTL(300)));
-    rrset_a->addRdata(rdata::in::A("192.0.2.1"));
-    client_->add(Name("example.org"), rrset_a);
-
-    ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
-
-    // First we have the SOA
-    ConstRRsetPtr rrset(iterator->getNextRRset());
-    EXPECT_TRUE(rrset);
-    EXPECT_EQ(RRType::A(), rrset->getType());
-
-    rrset = iterator->getNextRRset();
-    EXPECT_TRUE(rrset);
-    EXPECT_EQ(RRType::SOA(), rrset->getType());
-
-    // There's nothing else in this zone
-    EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
 }
 
 TEST_F(MemoryClientTest, findZoneData) {
