@@ -22,6 +22,7 @@
 #include <datasrc/result.h>
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/zone_table.h>
+#include <datasrc/memory/segment_object_holder.h>
 
 #include <gtest/gtest.h>
 
@@ -30,6 +31,7 @@
 using namespace isc::dns;
 using namespace isc::datasrc;
 using namespace isc::datasrc::memory;
+using namespace isc::datasrc::memory::detail;
 
 namespace {
 // Memory segment specified for tests.  It normally behaves like a "local"
@@ -87,46 +89,69 @@ TEST_F(ZoneTableTest, create) {
 }
 
 TEST_F(ZoneTableTest, addZone) {
+    SegmentObjectHolder<ZoneData, RRClass> holder1(
+        mem_sgmt_, ZoneData::create(mem_sgmt_, zname1), zclass_);
     // Normal successful case.
-    const ZoneTable::AddResult result1 =
-        zone_table->addZone(mem_sgmt_, zclass_, zname1);
-    EXPECT_EQ(result::SUCCESS, result1.code);
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zclass_,
+                                                   zname1, holder1));
+    // It got released by it
+    EXPECT_EQ(NULL, holder1.get());
 
     // Duplicate add doesn't replace the existing data.
+    SegmentObjectHolder<ZoneData, RRClass> holder2(
+        mem_sgmt_, ZoneData::create(mem_sgmt_, zname1), zclass_);
     EXPECT_EQ(result::EXIST, zone_table->addZone(mem_sgmt_, zclass_,
-                                                 zname1).code);
-    EXPECT_EQ(result1.zone_data,
-              zone_table->addZone(mem_sgmt_, zclass_, zname1).zone_data);
+                                                 zname1, holder2));
+    // It releases this one even when we replace the old zone
+    EXPECT_EQ(NULL, holder2.get());
+
+    SegmentObjectHolder<ZoneData, RRClass> holder3(
+        mem_sgmt_, ZoneData::create(mem_sgmt_, Name("EXAMPLE.COM")),
+                                    zclass_);
     // names are compared in a case insensitive manner.
     EXPECT_EQ(result::EXIST, zone_table->addZone(mem_sgmt_, zclass_,
-                                                 Name("EXAMPLE.COM")).code);
+                                                 Name("EXAMPLE.COM"),
+                                                 holder3));
     // Add some more different ones.  Should just succeed.
+    SegmentObjectHolder<ZoneData, RRClass> holder4(
+        mem_sgmt_, ZoneData::create(mem_sgmt_, zname2), zclass_);
     EXPECT_EQ(result::SUCCESS,
-              zone_table->addZone(mem_sgmt_, zclass_, zname2).code);
+              zone_table->addZone(mem_sgmt_, zclass_, zname2, holder4));
+    SegmentObjectHolder<ZoneData, RRClass> holder5(
+        mem_sgmt_, ZoneData::create(mem_sgmt_, zname3), zclass_);
     EXPECT_EQ(result::SUCCESS,
-              zone_table->addZone(mem_sgmt_, zclass_, zname3).code);
+              zone_table->addZone(mem_sgmt_, zclass_, zname3, holder5));
 
     // Have the memory segment throw an exception in extending the internal
     // tree.  It still shouldn't cause memory leak (which would be detected
     // in TearDown()).
-    mem_sgmt_.setThrowCount(2);
-    EXPECT_THROW(zone_table->addZone(mem_sgmt_, zclass_, Name("example.org")),
+    SegmentObjectHolder<ZoneData, RRClass> holder6(
+        mem_sgmt_, ZoneData::create(mem_sgmt_, Name("example.org")), zclass_);
+    mem_sgmt_.setThrowCount(1);
+    EXPECT_THROW(zone_table->addZone(mem_sgmt_, zclass_, Name("example.org"),
+                                     holder6),
                  std::bad_alloc);
 }
 
 TEST_F(ZoneTableTest, findZone) {
-    const ZoneTable::AddResult add_result1 =
-        zone_table->addZone(mem_sgmt_, zclass_, zname1);
-    EXPECT_EQ(result::SUCCESS, add_result1.code);
+    SegmentObjectHolder<ZoneData, RRClass> holder1(
+        mem_sgmt_, ZoneData::create(mem_sgmt_, zname1), zclass_);
+    ZoneData* zone_data = holder1.get();
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zclass_, zname1,
+                                                   holder1));
+    SegmentObjectHolder<ZoneData, RRClass> holder2(
+        mem_sgmt_, ZoneData::create(mem_sgmt_, zname2), zclass_);
     EXPECT_EQ(result::SUCCESS,
-              zone_table->addZone(mem_sgmt_, zclass_, zname2).code);
+              zone_table->addZone(mem_sgmt_, zclass_, zname2, holder2));
+    SegmentObjectHolder<ZoneData, RRClass> holder3(
+        mem_sgmt_, ZoneData::create(mem_sgmt_, zname3), zclass_);
     EXPECT_EQ(result::SUCCESS,
-              zone_table->addZone(mem_sgmt_, zclass_, zname3).code);
+              zone_table->addZone(mem_sgmt_, zclass_, zname3, holder3));
 
     const ZoneTable::FindResult find_result1 =
         zone_table->findZone(Name("example.com"));
     EXPECT_EQ(result::SUCCESS, find_result1.code);
-    EXPECT_EQ(add_result1.zone_data, find_result1.zone_data);
+    EXPECT_EQ(zone_data, find_result1.zone_data);
 
     EXPECT_EQ(result::NOTFOUND,
               zone_table->findZone(Name("example.org")).code);
@@ -137,14 +162,16 @@ TEST_F(ZoneTableTest, findZone) {
     // and the code should be PARTIALMATCH.
     EXPECT_EQ(result::PARTIALMATCH,
               zone_table->findZone(Name("www.example.com")).code);
-    EXPECT_EQ(add_result1.zone_data,
+    EXPECT_EQ(zone_data,
               zone_table->findZone(Name("www.example.com")).zone_data);
 
     // make sure the partial match is indeed the longest match by adding
     // a zone with a shorter origin and query again.
+    SegmentObjectHolder<ZoneData, RRClass> holder4(
+        mem_sgmt_, ZoneData::create(mem_sgmt_, Name("com")), zclass_);
     EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zclass_,
-                                                   Name("com")).code);
-    EXPECT_EQ(add_result1.zone_data,
+                                                   Name("com"), holder4));
+    EXPECT_EQ(zone_data,
               zone_table->findZone(Name("www.example.com")).zone_data);
 }
 }
