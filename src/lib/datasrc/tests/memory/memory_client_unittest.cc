@@ -261,10 +261,13 @@ TEST_F(MemoryClientTest, loadMemoryAllocationFailures) {
     // Just to check that things get cleaned up
 
     for (int i = 1; i < 16; i++) {
+        SCOPED_TRACE("For throw count = " + i);
         mem_sgmt_.setThrowCount(i);
-        EXPECT_THROW(client_->load(Name("example.org"),
-                                   TEST_DATA_DIR "/example.org.zone"),
-                     std::bad_alloc);
+        EXPECT_THROW({
+            InMemoryClient client2(mem_sgmt_, zclass_);
+            client2.load(Name("example.org"),
+                         TEST_DATA_DIR "/example.org.zone");
+        }, std::bad_alloc);
     }
     // Teardown checks for memory segment leaks
 }
