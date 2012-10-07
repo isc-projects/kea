@@ -92,7 +92,7 @@ InMemoryClient::load(const Name& zone_name,
     // an SOA RR. This condition should be avoided, and hence load()
     // should throw when an empty zone is loaded.
     if (RdataSet::find(set, RRType::SOA()) == NULL) {
-        isc_throw(ZoneDataUpdater::EmptyZone,
+        isc_throw(EmptyZone,
                   "Won't create an empty zone for: " << zone_name);
     }
 
