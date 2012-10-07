@@ -62,6 +62,22 @@ public:
     }
 };
 
+InMemoryClient::InMemoryClient(util::MemorySegment& mem_sgmt,
+                               RRClass rrclass) :
+    mem_sgmt_(mem_sgmt),
+    rrclass_(rrclass),
+    zone_count_(0),
+    zone_table_(ZoneTable::create(mem_sgmt_, rrclass)),
+    file_name_tree_(FileNameTree::create(mem_sgmt_, false))
+{}
+
+InMemoryClient::~InMemoryClient() {
+    FileNameDeleter deleter;
+    FileNameTree::destroy(mem_sgmt_, file_name_tree_, deleter);
+
+    ZoneTable::destroy(mem_sgmt_, zone_table_, rrclass_);
+}
+
 result::Result
 InMemoryClient::load(const Name& zone_name,
                      const string& filename,
@@ -159,22 +175,6 @@ generateRRsetFromIterator(ZoneIterator* iterator,
         callback(rrset);
     }
 }
-}
-
-InMemoryClient::InMemoryClient(util::MemorySegment& mem_sgmt,
-                               RRClass rrclass) :
-    mem_sgmt_(mem_sgmt),
-    rrclass_(rrclass),
-    zone_count_(0),
-    zone_table_(ZoneTable::create(mem_sgmt_, rrclass)),
-    file_name_tree_(FileNameTree::create(mem_sgmt_, false))
-{}
-
-InMemoryClient::~InMemoryClient() {
-    FileNameDeleter deleter;
-    FileNameTree::destroy(mem_sgmt_, file_name_tree_, deleter);
-
-    ZoneTable::destroy(mem_sgmt_, zone_table_, rrclass_);
 }
 
 RRClass
