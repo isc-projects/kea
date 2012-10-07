@@ -98,7 +98,7 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
 
 ZoneTable::FindResult
 ZoneTable::findZone(const Name& name) const {
-    ZoneTableNode* node(NULL);
+    const ZoneTableNode* node(NULL);
     result::Result my_result;
 
     // Translate the return codes
