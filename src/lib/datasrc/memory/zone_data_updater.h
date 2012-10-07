@@ -30,8 +30,38 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
+/// \brief A helper class to add records to a zone.
+///
+/// This class provides an \c add() method that can be used to add
+/// RRsets to a ZoneData instance. The RRsets are first validated for
+/// correctness and consistency, and their data is made into RdataSets
+/// which are added to the ZoneData for the zone.
+///
+/// The way to use this is to make a ZoneDataUpdater instance, and call
+/// add() on it as follows:
+///
+/// ZoneDataUpdater updater(mem_sgmt, rrclass, zone_origin_name, zone_data);
+/// ConstRRsetPtr rrset;
+/// updater.add(rrset, ConstRRsetPtr());
+///
+/// We enforce that instances are non-copyable as it's pointless to make
+/// copies.
 class ZoneDataUpdater : boost::noncopyable {
 public:
+    ///
+    /// \name Constructors and Destructor.
+    ///
+    //@{
+
+    /// The constructor.
+    ///
+    /// \throw none
+    ///
+    /// \param mem_sgmt The memory segment used for the zone data.
+    /// \param rrclass The RRclass of the zone data.
+    /// \param zone_name The Name of the zone under which records will be added.
+    //  \param zone_data The ZoneData object which is populated with
+    //                   record data.
     ZoneDataUpdater(util::MemorySegment& mem_sgmt,
                     isc::dns::RRClass rrclass,
                     const isc::dns::Name& zone_name,
@@ -50,7 +80,8 @@ public:
 
     //@}
 
-    /// This is thrown if the provided RRset parameter is NULL.
+    /// This is thrown if the provided RRset parameter passed to \c
+    /// add() is NULL.
     struct NullRRset : public InvalidParameter {
         NullRRset(const char* file, size_t line, const char* what) :
             InvalidParameter(file, line, what)
@@ -72,6 +103,23 @@ public:
         {}
     };
 
+    /// \brief Add an RRset to the zone.
+    ///
+    /// This is the core method of this class. It is used to add an
+    /// RRset to the ZoneData associated with this object. The RRset is
+    /// first validated for correctness and consistency with the rest of
+    /// the records in the zone, and then an RdataSet is created and
+    /// populated with the record data and added to the ZoneData for the
+    /// name in the RRset.
+    ///
+    /// This method throws an \c NullRRset exception (see above) if
+    /// \c rrset is empty. It throws \c AddError if any of a variety of
+    /// validation checks fail for the \c rrset and its associated
+    /// \c sig_rrset.
+    ///
+    /// \param rrset The RRset to be added.
+    /// \param sig_rrset An associated RRSIG RRset for the \c rrset. It
+    ///                  can be empty if there is no RRSIG for the \c rrset.
     void add(const isc::dns::ConstRRsetPtr& rrset,
              const isc::dns::ConstRRsetPtr& sig_rrset);
 
