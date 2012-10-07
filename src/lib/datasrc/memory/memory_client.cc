@@ -725,7 +725,7 @@ InMemoryClient::load(const isc::dns::Name& zone_name,
 
 const std::string
 InMemoryClient::getFileName(const isc::dns::Name& zone_name) const {
-    FileNameNode* node(NULL);
+    const FileNameNode* node(NULL);
     FileNameTree::Result result = impl_->file_name_tree_->find(zone_name,
                                                                &node);
     if (result == FileNameTree::EXACTMATCH) {
@@ -733,24 +733,6 @@ InMemoryClient::getFileName(const isc::dns::Name& zone_name) const {
     } else {
         return (std::string());
     }
-}
-
-result::Result
-InMemoryClient::add(const isc::dns::Name& zone_name,
-                    const ConstRRsetPtr& rrset)
-{
-    const ZoneTable::FindResult result =
-        impl_->zone_table_->findZone(zone_name);
-    if (result.code != result::SUCCESS) {
-        isc_throw(DataSourceError, "No such zone: " + zone_name.toText());
-    }
-
-    const ConstRRsetPtr sig_rrset =
-        rrset ? rrset->getRRsig() : ConstRRsetPtr();
-    impl_->add(rrset, sig_rrset, zone_name, *result.zone_data);
-
-    // add() doesn't allow duplicate add, so we always return SUCCESS.
-    return (result::SUCCESS);
 }
 
 namespace {
