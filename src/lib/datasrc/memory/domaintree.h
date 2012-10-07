@@ -1080,17 +1080,6 @@ public:
     ///    of it. In that case, node parameter is left intact.
     //@{
 
-    /// \brief Simple find.
-    ///
-    /// Acts as described in the \ref find section.
-    Result find(const isc::dns::Name& name,
-                DomainTreeNode<T>** node) const {
-        DomainTreeNodeChain<T, DomainTreeNode<T> > node_path;
-        const isc::dns::LabelSequence ls(name);
-        return (find<void*, DomainTreeNode<T> >(ls, node, node_path, NULL,
-                                                NULL));
-    }
-
     /// \brief Simple find returning immutable node.
     ///
     /// Acts as described in the \ref find section, but returns immutable node
@@ -1109,17 +1098,6 @@ public:
         return (ret);
     }
 
-    /// \brief Simple find, with node_path tracking
-    ///
-    /// Acts as described in the \ref find section.
-    Result find(const isc::dns::Name& name, DomainTreeNode<T>** node,
-                DomainTreeNodeChain<T>& node_path) const
-    {
-        const isc::dns::LabelSequence ls(name);
-        return (find<void*, const DomainTreeNode<T> >(ls, node, node_path,
-                                                      NULL, NULL));
-    }
-
     /// \brief Simple find returning immutable node, with node_path tracking
     ///
     /// Acts as described in the \ref find section, but returns immutable node
@@ -1132,27 +1110,6 @@ public:
         Result ret = (find<void*, const DomainTreeNode<T> >(ls, &target_node,
                                                             node_path, NULL,
                                                             NULL));
-        if (ret != NOTFOUND) {
-            *node = target_node;
-        }
-        return (ret);
-    }
-
-    /// \brief Simple find returning immutable node.
-    ///
-    /// Acts as described in the \ref find section, but returns immutable
-    /// node pointer.
-    template <typename CBARG>
-    Result find(const isc::dns::Name& name,
-                const DomainTreeNode<T>** node,
-                DomainTreeNodeChain<T>& node_path,
-                bool (*callback)(const DomainTreeNode<T>&, CBARG),
-                CBARG callback_arg) const
-    {
-        const DomainTreeNode<T>* target_node = NULL;
-        const isc::dns::LabelSequence ls(name);
-        Result ret = find(ls, &target_node, node_path, callback,
-                          callback_arg);
         if (ret != NOTFOUND) {
             *node = target_node;
         }
@@ -1235,7 +1192,7 @@ public:
     ///     \c true, it returns immediately with the current node.
     template <typename CBARG, typename NodeType>
     Result find(const isc::dns::LabelSequence& target_labels_orig,
-                NodeType** node,
+                const NodeType** node,
                 DomainTreeNodeChain<T, NodeType>& node_path,
                 bool (*callback)(const DomainTreeNode<T>&, CBARG),
                 CBARG callback_arg) const;
@@ -1523,7 +1480,7 @@ template <typename T>
 template <typename CBARG, typename NodeType>
 typename DomainTree<T>::Result
 DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
-                    NodeType** target,
+                    const NodeType** target,
                     DomainTreeNodeChain<T, NodeType>& node_path,
                     bool (*callback)(const DomainTreeNode<T>&, CBARG),
                     CBARG callback_arg) const

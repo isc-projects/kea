@@ -82,11 +82,11 @@ public:
     /// \brief Result data of findZone() method.
     struct FindResult {
         FindResult(result::Result param_code,
-                   ZoneData* param_zone_data) :
+                   const ZoneData* param_zone_data) :
             code(param_code), zone_data(param_zone_data)
         {}
         const result::Result code;
-        ZoneData* const zone_data;
+        const ZoneData* const zone_data;
     };
 
 private:
