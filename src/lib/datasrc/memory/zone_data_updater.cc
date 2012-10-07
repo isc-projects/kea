@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/memory/zone_data_updater.h>
+#include <datasrc/memory/logger.h>
 #include <datasrc/zone.h>
 
 #include <dns/rdataclass.h>
@@ -37,6 +38,9 @@ ZoneDataUpdater::addWildcards(const Name& name) {
          --l, wname = wname.split(1))
     {
         if (wname.isWildcard()) {
+            LOG_DEBUG(logger, DBG_TRACE_DATA,
+                      DATASRC_MEMORY_MEM_ADD_WILDCARD).arg(name);
+
             // Ensure a separate level exists for the "wildcarding"
             // name, and mark the node as "wild".
             ZoneNode* node;
@@ -62,6 +66,8 @@ ZoneDataUpdater::contextCheck(const AbstractRRset& rrset,
     if (rrset.getType() == RRType::CNAME()) {
         for (const RdataSet* sp = rdataset; sp != NULL; sp = sp->getNext()) {
             if (sp->type != RRType::NSEC()) {
+                LOG_ERROR(logger, DATASRC_MEMORY_MEM_CNAME_TO_NONEMPTY).
+                    arg(rrset.getName());
                 isc_throw(AddError,
                           "CNAME can't be added with " << sp->type
                           << " RRType for " << rrset.getName());
@@ -70,6 +76,8 @@ ZoneDataUpdater::contextCheck(const AbstractRRset& rrset,
     } else if ((rrset.getType() != RRType::NSEC()) &&
                (RdataSet::find(rdataset, RRType::CNAME()) != NULL))
     {
+        LOG_ERROR(logger,
+                  DATASRC_MEMORY_MEM_CNAME_COEXIST).arg(rrset.getName());
         isc_throw(AddError,
                   "CNAME and " << rrset.getType() <<
                   " can't coexist for " << rrset.getName());
@@ -86,6 +94,7 @@ ZoneDataUpdater::contextCheck(const AbstractRRset& rrset,
          (rrset.getType() == RRType::NS() &&
           RdataSet::find(rdataset, RRType::DNAME()) != NULL)))
     {
+        LOG_ERROR(logger, DATASRC_MEMORY_MEM_DNAME_NS).arg(rrset.getName());
         isc_throw(AddError, "DNAME can't coexist with NS in non-apex domain: "
                   << rrset.getName());
     }
@@ -112,6 +121,9 @@ ZoneDataUpdater::validate(const isc::dns::ConstRRsetPtr rrset) const {
         // XXX: this is not only for CNAME or DNAME. We should
         // generalize this code for all other "singleton RR types" (such
         // as SOA) in a separate task.
+        LOG_ERROR(logger,
+                  DATASRC_MEMORY_MEM_SINGLETON).arg(rrset->getName()).
+            arg(rrset->getType());
         isc_throw(AddError, "multiple RRs of singleton type for "
                   << rrset->getName());
     }
@@ -146,6 +158,9 @@ ZoneDataUpdater::validate(const isc::dns::ConstRRsetPtr rrset) const {
     if (compare.getRelation() != NameComparisonResult::SUPERDOMAIN &&
         compare.getRelation() != NameComparisonResult::EQUAL)
     {
+        LOG_ERROR(logger,
+                  DATASRC_MEMORY_MEM_OUT_OF_ZONE).arg(rrset->getName()).
+            arg(zone_name_);
         isc_throw(OutOfZone,
                   "The name " << rrset->getName() <<
                   " is not contained in zone " << zone_name_);
@@ -160,11 +175,15 @@ ZoneDataUpdater::validate(const isc::dns::ConstRRsetPtr rrset) const {
     // provide compatible behavior.
     if (rrset->getName().isWildcard()) {
         if (rrset->getType() == RRType::NS()) {
+            LOG_ERROR(logger, DATASRC_MEMORY_MEM_WILDCARD_NS).
+                arg(rrset->getName());
             isc_throw(AddError, "Invalid NS owner name (wildcard): "
                       << rrset->getName());
         }
 
         if (rrset->getType() == RRType::DNAME()) {
+            LOG_ERROR(logger, DATASRC_MEMORY_MEM_WILDCARD_DNAME).
+                arg(rrset->getName());
             isc_throw(AddError, "Invalid DNAME owner name (wildcard): "
                       << rrset->getName());
         }
@@ -179,6 +198,7 @@ ZoneDataUpdater::validate(const isc::dns::ConstRRsetPtr rrset) const {
         (rrset->getName().isWildcard() ||
          rrset->getName().getLabelCount() != zone_name_.getLabelCount() + 1))
     {
+        LOG_ERROR(logger, DATASRC_MEMORY_BAD_NSEC3_NAME).arg(rrset->getName());
         isc_throw(AddError, "Invalid NSEC3 owner name: " <<
                   rrset->getName() << "; zone: " << zone_name_);
     }
@@ -310,6 +330,8 @@ ZoneDataUpdater::add(const ConstRRsetPtr& rrset,
     }
 
     // OK, can add the RRset.
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEMORY_MEM_ADD_RRSET).
+        arg(rrset->getName()).arg(rrset->getType()).arg(zone_name_);
 
     // Add wildcards possibly contained in the owner name to the domain
     // tree.  This can only happen for the normal (non-NSEC3) tree.
