@@ -66,10 +66,15 @@ InMemoryClient::InMemoryClient(util::MemorySegment& mem_sgmt,
                                RRClass rrclass) :
     mem_sgmt_(mem_sgmt),
     rrclass_(rrclass),
-    zone_count_(0),
-    zone_table_(ZoneTable::create(mem_sgmt_, rrclass)),
-    file_name_tree_(FileNameTree::create(mem_sgmt_, false))
-{}
+    zone_count_(0)
+{
+    SegmentObjectHolder<ZoneTable, RRClass> holder(
+        mem_sgmt_, ZoneTable::create(mem_sgmt_, rrclass), rrclass_);
+
+    file_name_tree_ = FileNameTree::create(mem_sgmt_, false);
+
+    zone_table_ = holder.release();
+}
 
 InMemoryClient::~InMemoryClient() {
     FileNameDeleter deleter;
