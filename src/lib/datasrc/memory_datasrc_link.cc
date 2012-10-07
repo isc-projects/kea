@@ -129,7 +129,7 @@ checkConfig(ConstElementPtr config, ElementPtr errors) {
                 result = false;
             } else {
                 try {
-                    RRClass rrc(config->get("class")->stringValue());
+                    RRClass(config->get("class")->stringValue());
                 } catch (const isc::Exception& rrce) {
                     addError(errors,
                              "Error parsing class config for memory backend: " +
