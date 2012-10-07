@@ -42,13 +42,14 @@ class upgradable_mutex {
 template <typename T>
 class sharable_lock {
 public:
-    sharable_lock(T) { }
+    sharable_lock(T) {}
 };
 
 template <typename T>
 class scoped_lock {
 public:
-    scoped_lock(T) { }
+    scoped_lock(T) {}
+    ~scoped_lock() {}
 
     void lock() {}
     void unlock() {}
