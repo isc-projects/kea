@@ -189,7 +189,7 @@ TEST_F(MemoryClientTest, loadEmptyZoneFileThrows) {
 
     EXPECT_THROW(client_->load(Name("."),
                                TEST_DATA_DIR "/empty.zone"),
-                 ZoneDataUpdater::EmptyZone);
+                 InMemoryClient::EmptyZone);
 
     EXPECT_EQ(0, client_->getZoneCount());
 

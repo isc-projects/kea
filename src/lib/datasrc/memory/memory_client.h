@@ -87,6 +87,16 @@ public:
     /// \return The number of zones stored in the client.
     virtual unsigned int getZoneCount() const;
 
+    /// \brief Zone is empty exception.
+    ///
+    /// This is thrown if we have an empty zone created as a result of
+    /// load().
+    struct EmptyZone : public InvalidParameter {
+        EmptyZone(const char* file, size_t line, const char* what) :
+            InvalidParameter(file, line, what)
+        {}
+    };
+
     /// \brief Load zone from masterfile.
     ///
     /// This loads data from masterfile specified by filename. It replaces
