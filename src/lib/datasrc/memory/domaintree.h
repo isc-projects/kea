@@ -1102,6 +1102,23 @@ public:
         return (ret);
     }
 
+    /// \brief Simple find returning immutable node.
+    ///
+    /// Acts as described in the \ref find section, but returns immutable
+    /// node pointer.
+    template <typename CBARG>
+    Result find(const isc::dns::Name& name,
+                const DomainTreeNode<T>** node,
+                DomainTreeNodeChain<T>& node_path,
+                bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                CBARG callback_arg) const
+    {
+        const isc::dns::LabelSequence ls(name);
+        Result ret = find(ls, node, node_path, callback,
+                          callback_arg);
+        return (ret);
+    }
+
     /// \brief Find with callback and node chain
     /// \anchor callback
     ///
