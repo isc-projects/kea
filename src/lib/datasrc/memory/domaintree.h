@@ -684,7 +684,7 @@ DomainTreeNode<T>::predecessor() const {
 /// DomainTree.
 /// This is the reason why manipulation methods such as \c push() and \c pop()
 /// are private (and not shown in the doxygen document).
-template <typename T, typename NodeType = const DomainTreeNode<T> >
+template <typename T>
 class DomainTreeNodeChain {
     /// DomainTreeNodeChain is initialized by DomainTree, only DomainTree has
     /// knowledge to manipulate it.
@@ -817,7 +817,7 @@ private:
     /// root node of DomainTree
     ///
     /// \exception None
-    NodeType* top() const {
+    const DomainTreeNode<T>* top() const {
         assert(!isEmpty());
         return (nodes_[level_count_ - 1]);
     }
@@ -840,7 +840,7 @@ private:
     /// otherwise the node should be the root node of DomainTree.
     ///
     /// \exception None
-    void push(NodeType* node) {
+    void push(const DomainTreeNode<T>* node) {
         assert(level_count_ < RBT_MAX_LEVEL);
         nodes_[level_count_++] = node;
     }
@@ -852,7 +852,7 @@ private:
     const static int RBT_MAX_LEVEL = isc::dns::Name::MAX_LABELS;
 
     size_t level_count_;
-    NodeType* nodes_[RBT_MAX_LEVEL];
+    const DomainTreeNode<T>* nodes_[RBT_MAX_LEVEL];
     const DomainTreeNode<T>* last_compared_;
     isc::dns::NameComparisonResult last_comparison_;
 };
@@ -1080,39 +1080,25 @@ public:
     ///    of it. In that case, node parameter is left intact.
     //@{
 
-    /// \brief Simple find returning immutable node.
+    /// \brief Simple find
     ///
-    /// Acts as described in the \ref find section, but returns immutable node
-    /// pointer.
+    /// Acts as described in the \ref find section.
     Result find(const isc::dns::Name& name,
                 const DomainTreeNode<T>** node) const {
         DomainTreeNodeChain<T> node_path;
-        const DomainTreeNode<T> *target_node = NULL;
         const isc::dns::LabelSequence ls(name);
-        Result ret = (find<void*, const DomainTreeNode<T> >(ls, &target_node,
-                                                            node_path, NULL,
-                                                            NULL));
-        if (ret != NOTFOUND) {
-            *node = target_node;
-        }
+        Result ret = (find<void*>(ls, node, node_path, NULL, NULL));
         return (ret);
     }
 
-    /// \brief Simple find returning immutable node, with node_path tracking
+    /// \brief Simple find, with node_path tracking
     ///
-    /// Acts as described in the \ref find section, but returns immutable node
-    /// pointer.
+    /// Acts as described in the \ref find section.
     Result find(const isc::dns::Name& name, const DomainTreeNode<T>** node,
                 DomainTreeNodeChain<T>& node_path) const
     {
-        const DomainTreeNode<T> *target_node = NULL;
         const isc::dns::LabelSequence ls(name);
-        Result ret = (find<void*, const DomainTreeNode<T> >(ls, &target_node,
-                                                            node_path, NULL,
-                                                            NULL));
-        if (ret != NOTFOUND) {
-            *node = target_node;
-        }
+        Result ret = (find<void*>(ls, node, node_path, NULL, NULL));
         return (ret);
     }
 
@@ -1190,34 +1176,12 @@ public:
     ///
     /// \return As in the description, but in case of callback returning
     ///     \c true, it returns immediately with the current node.
-    template <typename CBARG, typename NodeType>
-    Result find(const isc::dns::LabelSequence& target_labels_orig,
-                const NodeType** node,
-                DomainTreeNodeChain<T, NodeType>& node_path,
-                bool (*callback)(const DomainTreeNode<T>&, CBARG),
-                CBARG callback_arg) const;
-
-    /// \brief Simple find returning immutable node.
-    ///
-    /// Acts as described in the \ref find section, but returns immutable
-    /// node pointer.
     template <typename CBARG>
-    Result find(const isc::dns::LabelSequence& target_labels,
+    Result find(const isc::dns::LabelSequence& target_labels_orig,
                 const DomainTreeNode<T>** node,
                 DomainTreeNodeChain<T>& node_path,
                 bool (*callback)(const DomainTreeNode<T>&, CBARG),
-                CBARG callback_arg) const
-    {
-        const DomainTreeNode<T>* target_node = NULL;
-        Result ret = find<CBARG, const DomainTreeNode<T> >(target_labels,
-                                                           &target_node,
-                                                           node_path, callback,
-                                                           callback_arg);
-        if (ret != NOTFOUND) {
-            *node = target_node;
-        }
-        return (ret);
-    }
+                CBARG callback_arg) const;
     //@}
 
     /// \brief return the next bigger node in DNSSEC order from a given node
@@ -1477,11 +1441,11 @@ DomainTree<T>::deleteHelper(util::MemorySegment& mem_sgmt,
 }
 
 template <typename T>
-template <typename CBARG, typename NodeType>
+template <typename CBARG>
 typename DomainTree<T>::Result
 DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
-                    const NodeType** target,
-                    DomainTreeNodeChain<T, NodeType>& node_path,
+                    const DomainTreeNode<T>** target,
+                    DomainTreeNodeChain<T>& node_path,
                     bool (*callback)(const DomainTreeNode<T>&, CBARG),
                     CBARG callback_arg) const
 {
@@ -1491,7 +1455,7 @@ DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
                   " and label sequence");
     }
 
-    NodeType* node;
+    const DomainTreeNode<T>* node;
 
     if (!node_path.isEmpty()) {
         // Get the top node in the node chain
