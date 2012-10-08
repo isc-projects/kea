@@ -192,7 +192,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertFalse(self.__stop_called)
         self.assertFalse(self.__failed_called)
         self.assertFalse(component.is_running())
-        self.assertFalse(component.is_failed())
+        self.assertFalse(component.is_restarting())
         # We can't stop or fail the component yet
         self.assertRaises(ValueError, component.stop)
         self.assertRaises(ValueError, component.failed, 1)
@@ -206,7 +206,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertFalse(self.__stop_called)
         self.assertFalse(self.__failed_called)
         self.assertTrue(component.is_running())
-        self.assertFalse(component.is_failed())
+        self.assertFalse(component.is_restarting())
 
     def __check_dead(self, component):
         """
@@ -218,7 +218,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertTrue(self.__failed_called)
         self.assertEqual(1, self._exitcode)
         self.assertFalse(component.is_running())
-        self.assertFalse(component.is_failed())
+        self.assertFalse(component.is_restarting())
         # Surely it can't be stopped when already dead
         self.assertRaises(ValueError, component.stop)
         # Nor started
@@ -238,7 +238,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertFalse(self.__stop_called)
         self.assertTrue(self.__failed_called)
         self.assertTrue(component.is_running())
-        self.assertFalse(component.is_failed())
+        self.assertFalse(component.is_restarting())
         # Check it can't be started again
         self.assertRaises(ValueError, component.start)
 
@@ -251,7 +251,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertFalse(self.__stop_called)
         self.assertTrue(self.__failed_called)
         self.assertFalse(component.is_running())
-        self.assertTrue(component.is_failed())
+        self.assertTrue(component.is_restarting())
 
     def __do_start_stop(self, kind):
         """
@@ -276,7 +276,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertTrue(self.__stop_called)
         self.assertFalse(self.__failed_called)
         self.assertFalse(component.is_running())
-        self.assertFalse(component.is_failed())
+        self.assertFalse(component.is_restarting())
         # Check it can't be stopped twice
         self.assertRaises(ValueError, component.stop)
         # Or failed
