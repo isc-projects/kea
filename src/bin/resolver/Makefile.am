@@ -62,7 +62,6 @@ b10_resolver_SOURCES += common.cc common.h
 
 nodist_b10_resolver_SOURCES = resolver_messages.cc resolver_messages.h
 
-b10_resolver_CXXFLAGS = $(AM_CPPFLAGS) $(MULTITHREADING_FLAG)
 
 b10_resolver_LDADD =  $(top_builddir)/src/lib/dns/libb10-dns++.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
@@ -78,6 +77,7 @@ b10_resolver_LDADD += $(top_builddir)/src/lib/server_common/libb10-server-common
 b10_resolver_LDADD += $(top_builddir)/src/lib/cache/libb10-cache.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/nsas/libb10-nsas.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/resolve/libb10-resolve.la
+b10_resolver_LDFLAGS = -pthread
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir
 # and can't use @datadir@ because doesn't expand default ${prefix}
