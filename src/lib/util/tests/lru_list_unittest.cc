@@ -168,7 +168,7 @@ protected:
         entry7_(new TestEntry("eta", 1))
     {}
 
-    virtual ~LruListTest() 
+    virtual ~LruListTest()
     {}
 
     boost::shared_ptr<TestEntry>    entry1_;
@@ -355,7 +355,7 @@ TEST_F(LruListTest, Dropped) {
     lru.add(entry5_);
     EXPECT_NE(0, (entry2_->getCode() & 0x8000));
 
-    // Delete an entry and check that the handler does not run. 
+    // Delete an entry and check that the handler does not run.
     EXPECT_EQ(0, (entry3_->getCode() & 0x8000));
     lru.remove(entry3_);
     EXPECT_EQ(0, (entry3_->getCode() & 0x8000));
@@ -386,7 +386,7 @@ TEST_F(LruListTest, Clear) {
     EXPECT_NE(0, (entry1_->getCode() & 0x8000));
     EXPECT_NE(0, (entry2_->getCode() & 0x8000));
     EXPECT_NE(0, (entry3_->getCode() & 0x8000));
- 
+
     EXPECT_EQ(0, lru.size());
 }
 
