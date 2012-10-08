@@ -42,6 +42,7 @@ run_unittests_SOURCES += ../auth_config.h ../auth_config.cc
 run_unittests_SOURCES += ../command.h ../command.cc
 run_unittests_SOURCES += ../common.h ../common.cc
 run_unittests_SOURCES += ../statistics.h ../statistics.cc
+run_unittests_SOURCES += ../datasrc_config.h ../datasrc_config.cc
 run_unittests_SOURCES += datasrc_util.h datasrc_util.cc
 run_unittests_SOURCES += auth_srv_unittest.cc
 run_unittests_SOURCES += config_unittest.cc
@@ -50,7 +51,7 @@ run_unittests_SOURCES += command_unittest.cc
 run_unittests_SOURCES += common_unittest.cc
 run_unittests_SOURCES += query_unittest.cc
 run_unittests_SOURCES += statistics_unittest.cc
-run_unittests_SOURCES += datasrc_configurator_unittest.cc
+run_unittests_SOURCES += datasrc_config_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 
 nodist_run_unittests_SOURCES = ../auth_messages.h ../auth_messages.cc
