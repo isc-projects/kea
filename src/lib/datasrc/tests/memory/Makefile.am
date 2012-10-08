@@ -39,6 +39,7 @@ run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 
 run_unittests_LDADD = $(top_builddir)/src/lib/datasrc/libb10-datasrc.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
+run_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 run_unittests_LDADD += $(top_builddir)/src/lib/testutils/libb10-testutils.la
