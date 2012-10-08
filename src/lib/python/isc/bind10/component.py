@@ -45,7 +45,7 @@ COMPONENT_RESTART_DELAY = 10
 
 STATE_DEAD = 'dead'
 STATE_STOPPED = 'stopped'
-STATE_FAILED = 'failed'
+STATE_RESTARTING = 'restarting'
 STATE_RUNNING = 'running'
 
 def get_signame(signal_number):
@@ -69,7 +69,7 @@ class BaseComponent:
       explicitly).
     - Running - after start() was called, it started successfully and is
       now running.
-    - Failed - the component failed (crashed) and is waiting for a restart
+    - Restarting - the component failed (crashed) and is waiting for a restart
     - Dead - it failed and can not be resurrected.
 
     Init
@@ -85,7 +85,7 @@ class BaseComponent:
                     +<-----------+                |
                     |                             |
                     |  kind == dispensable or kind|== needed and failed late
-                    +-----------------------> Failed
+                    +-----------------------> Restarting
                     |
                     | kind == core or kind == needed and it failed too soon
                     v
@@ -238,7 +238,7 @@ class BaseComponent:
                      exit_str)
         if not self.is_running():
             raise ValueError("Can't fail component that isn't running")
-        self.__state = STATE_FAILED
+        self.__state = STATE_RESTARTING # tentatively set, maybe changed to DEAD
         self._failed_internal()
         # If it is a core component or the needed component failed to start
         # (including it stopped really soon)
@@ -298,14 +298,14 @@ class BaseComponent:
         """
         return self.__state == STATE_RUNNING
 
-    def is_failed(self):
+    def is_restarting(self):
         """Informs if the component has failed and is waiting for a restart.
 
         Unlike the case of is_running(), if this returns True it always means
         the corresponding process has died and not yet restarted.
 
         """
-        return self.__state == STATE_FAILED
+        return self.__state == STATE_RESTARTING
 
     def _start_internal(self):
         """
@@ -609,7 +609,7 @@ class Configurator:
         for cname in old.keys():
             if cname not in new:
                 component = self._components[cname][1]
-                if component.is_running() or component.is_failed():
+                if component.is_running() or component.is_restarting():
                     plan.append({
                         'command': STOP_CMD,
                         'component': component,
