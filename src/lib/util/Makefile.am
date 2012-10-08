@@ -33,3 +33,6 @@ EXTRA_DIST = python/pycppwrapper_util.h
 
 libb10_util_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 CLEANFILES = *.gcno *.gcda
+
+libb10_util_includedir = $(includedir)/$(PACKAGE_NAME)/util
+libb10_util_include_HEADERS = buffer.h
