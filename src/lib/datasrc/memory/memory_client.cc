@@ -34,7 +34,6 @@
 #include <dns/nsec3hash.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
-#include <dns/rrsetlist.h>
 #include <dns/masterload.h>
 
 #include <boost/function.hpp>
