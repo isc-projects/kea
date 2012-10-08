@@ -410,8 +410,8 @@ private:
             isc_throw(Unexpected,
                       "mkstemp() created a filename too long for sun_path");
         }
-        memset(socket_address.sun_path, 0, sizeof(socket_address.sun_path));
-        strncpy(socket_address.sun_path, path_, len);
+        strncpy(socket_address.sun_path, path_,
+                sizeof(socket_address.sun_path));
 #ifdef HAVE_SA_LEN
         socket_address.sun_len = len;
 #endif
