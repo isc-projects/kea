@@ -81,9 +81,7 @@ def create(cur):
                     rdtype TEXT NOT NULL COLLATE NOCASE,
                     rdata TEXT NOT NULL)""")
         cur.execute("CREATE INDEX nsec3_byhash ON nsec3 (hash)")
-        # Enforce that only one NSEC3 RR exists for an owner name in the zone.
-        cur.execute("""CREATE UNIQUE INDEX nsec3_by_zoneid_and_owner ON nsec3
-                        (zone_id, owner)""");
+        cur.execute("CREATE INDEX nsec3_byhash_and_rdtype ON nsec3 (hash, rdtype)")
         cur.execute("""CREATE TABLE diffs (id INTEGER PRIMARY KEY,
                     zone_id INTEGER NOT NULL,
                     version INTEGER NOT NULL,
