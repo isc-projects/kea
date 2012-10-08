@@ -22,7 +22,6 @@
 #include <dns/nsec3hash.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
-#include <dns/rrsetlist.h>
 #include <dns/rrttl.h>
 #include <dns/masterload.h>
 
