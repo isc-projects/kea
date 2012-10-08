@@ -70,6 +70,104 @@ AC_TRY_LINK([],[],
     ])
 LDFLAGS=$LDFLAGS_SAVED
 
+# Compiler dependent settings: define some mandatory CXXFLAGS here.
+# We also use a separate variable B10_CXXFLAGS.  This will (and should) be
+# used as the default value for each specific AM_CXXFLAGS:
+# AM_CXXFLAGS = $(B10_CXXFLAGS)
+# AM_CXXFLAGS += ... # add module specific flags
+# We need this so that we can disable some specific compiler warnings per
+# module basis; since AM_CXXFLAGS are placed before CXXFLAGS, and since
+# gcc's -Wno-XXX option must be specified after -Wall or -Wextra, we cannot
+# specify the default warning flags in CXXFLAGS and let specific modules
+# "override" the default.
+
+# This may be used to try linker flags.
+AC_DEFUN([BIND10_CXX_TRY_FLAG], [
+  AC_MSG_CHECKING([whether $CXX supports $1])
+
+  bind10_save_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS $1"
+
+  AC_LINK_IFELSE([AC_LANG_SOURCE([int main(void){ return 0;}])],
+                 [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
+  CXXFLAGS="$bind10_save_CXXFLAGS"
+
+  if test "x$bind10_cxx_flag" = "xyes"; then
+    ifelse([$2], , :, [$2])
+  else
+    ifelse([$3], , :, [$3])
+  fi
+
+  AC_MSG_RESULT([$bind10_cxx_flag])
+])
+
+# SunStudio compiler requires special compiler options for boost
+# (http://blogs.sun.com/sga/entry/boost_mini_howto)
+if test "$SUNCXX" = "yes"; then
+CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
+MULTITHREADING_FLAG="-mt"
+fi
+
+# Newer versions of clang++ promotes "unused driver arguments" warnings to
+# a fatal error with -Werror, causing build failure.  Since we use multiple
+# compilers on multiple systems, this can easily happen due to settings for
+# non clang++ environments that could be just ignored otherwise.  It can also
+# happen if clang++ is used via ccache.  So, although probably suboptimal,
+# we suppress this particular warning.  Note that it doesn't weaken checks
+# on the source code.
+if test "$CLANGPP" = "yes"; then
+	B10_CXXFLAGS="$B10_CXXFLAGS -Qunused-arguments"
+fi
+
+BIND10_CXX_TRY_FLAG([-Wno-missing-field-initializers],
+	[WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG="-Wno-missing-field-initializers"])
+AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
+
+# gcc specific settings:
+if test "X$GXX" = "Xyes"; then
+B10_CXXFLAGS="$B10_CXXFLAGS -Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+case "$host" in
+*-solaris*)
+	MULTITHREADING_FLAG=-pthreads
+	# In Solaris, IN6ADDR_ANY_INIT and IN6ADDR_LOOPBACK_INIT need -Wno-missing-braces
+	B10_CXXFLAGS="$B10_CXXFLAGS -Wno-missing-braces"
+	;;
+*)
+	MULTITHREADING_FLAG=-pthread
+	;;
+esac
+
+# Don't use -Werror if configured not to
+AC_ARG_WITH(werror,
+    AC_HELP_STRING([--with-werror], [Compile using -Werror (default=yes)]),
+    [
+     case "${withval}" in
+         yes) with_werror=1 ;;
+         no)  with_werror=0 ;;
+         *)   AC_MSG_ERROR(bad value ${withval} for --with-werror) ;;
+     esac],
+     [with_werror=1])
+
+werror_ok=0
+
+# Certain versions of gcc (g++) have a bug that incorrectly warns about
+# the use of anonymous name spaces even if they're closed in a single
+# translation unit.  For these versions we have to disable -Werror.
+if test $with_werror = 1; then
+   CXXFLAGS_SAVED="$CXXFLAGS"
+   CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
+   AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
+   AC_TRY_COMPILE([namespace { class Foo {}; }
+   namespace isc {class Bar {Foo foo_;};} ],,
+	[AC_MSG_RESULT(no)
+	 werror_ok=1
+	 B10_CXXFLAGS="$B10_CXXFLAGS -Werror"],
+	[AC_MSG_RESULT(yes)])
+   CXXFLAGS="$CXXFLAGS_SAVED"
+fi
+
+AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
+
 # allow building programs with static link.  we need to make it selective
 # because loadable modules cannot be statically linked.
 AC_ARG_ENABLE([static-link],
@@ -256,91 +354,6 @@ fi
 
 # TODO: check for _sqlite3.py module
 
-# Compiler dependent settings: define some mandatory CXXFLAGS here.
-# We also use a separate variable B10_CXXFLAGS.  This will (and should) be
-# used as the default value for each specific AM_CXXFLAGS:
-# AM_CXXFLAGS = $(B10_CXXFLAGS)
-# AM_CXXFLAGS += ... # add module specific flags
-# We need this so that we can disable some specific compiler warnings per
-# module basis; since AM_CXXFLAGS are placed before CXXFLAGS, and since
-# gcc's -Wno-XXX option must be specified after -Wall or -Wextra, we cannot
-# specify the default warning flags in CXXFLAGS and let specific modules
-# "override" the default.
-
-# This may be used to try linker flags.
-AC_DEFUN([BIND10_CXX_TRY_FLAG], [
-  AC_MSG_CHECKING([whether $CXX supports $1])
-
-  bind10_save_CXXFLAGS="$CXXFLAGS"
-  CXXFLAGS="$CXXFLAGS $1"
-
-  AC_LINK_IFELSE([AC_LANG_SOURCE([int main(void){ return 0;}])],
-                 [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
-  CXXFLAGS="$bind10_save_CXXFLAGS"
-
-  if test "x$bind10_cxx_flag" = "xyes"; then
-    ifelse([$2], , :, [$2])
-  else
-    ifelse([$3], , :, [$3])
-  fi
-
-  AC_MSG_RESULT([$bind10_cxx_flag])
-])
-
-# SunStudio compiler requires special compiler options for boost
-# (http://blogs.sun.com/sga/entry/boost_mini_howto)
-if test "$SUNCXX" = "yes"; then
-CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
-MULTITHREADING_FLAG="-mt"
-fi
-
-BIND10_CXX_TRY_FLAG([-Wno-missing-field-initializers],
-	[WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG="-Wno-missing-field-initializers"])
-AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
-
-# gcc specific settings:
-if test "X$GXX" = "Xyes"; then
-B10_CXXFLAGS="-Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
-case "$host" in
-*-solaris*)
-	MULTITHREADING_FLAG=-pthreads
-	# In Solaris, IN6ADDR_ANY_INIT and IN6ADDR_LOOPBACK_INIT need -Wno-missing-braces
-	B10_CXXFLAGS="$B10_CXXFLAGS -Wno-missing-braces"
-	;;
-*)
-	MULTITHREADING_FLAG=-pthread
-	;;
-esac
-
-# Don't use -Werror if configured not to
-AC_ARG_WITH(werror,
-    AC_HELP_STRING([--with-werror], [Compile using -Werror (default=yes)]),
-    [
-     case "${withval}" in
-         yes) with_werror=1 ;;
-         no)  with_werror=0 ;;
-         *)   AC_MSG_ERROR(bad value ${withval} for --with-werror) ;;
-     esac],
-     [with_werror=1])
-
-werror_ok=0
-
-# Certain versions of gcc (g++) have a bug that incorrectly warns about
-# the use of anonymous name spaces even if they're closed in a single
-# translation unit.  For these versions we have to disable -Werror.
-if test $with_werror = 1; then
-   CXXFLAGS_SAVED="$CXXFLAGS"
-   CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
-   AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
-   AC_TRY_COMPILE([namespace { class Foo {}; }
-   namespace isc {class Bar {Foo foo_;};} ],,
-	[AC_MSG_RESULT(no)
-	 werror_ok=1
-	 B10_CXXFLAGS="$B10_CXXFLAGS -Werror"],
-	[AC_MSG_RESULT(yes)])
-   CXXFLAGS="$CXXFLAGS_SAVED"
-fi
-
 # Python 3.2 has an unused parameter in one of its headers. This
 # has been reported, but not fixed as of yet, so we check if we need
 # to set -Wno-unused-parameter.
@@ -371,8 +384,6 @@ if test $werror_ok = 1; then
 fi
 
 fi				dnl GXX = yes
-
-AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then
