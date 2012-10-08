@@ -193,6 +193,9 @@ TEST_F(SQLite3AccessorTest, iterator) {
     checkRR(context, "www.example.org.", "3600", "A", "192.0.2.1");
     checkRR(context, "ns3.example.org.", "3600", "NSEC3",
             "1 1 12 aabbccdd 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG");
+    checkRR(context, "ns3.example.org.", "3600", "RRSIG",
+            "NSEC3 5 3 3600 20000101000000 20000201000000 "
+            "12345 ns3.example.org. FAKEFAKEFAKE");
 
     // Check there's no other
     EXPECT_FALSE(context->getNext(data));
