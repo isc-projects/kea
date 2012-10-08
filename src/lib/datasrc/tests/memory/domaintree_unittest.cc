@@ -414,7 +414,7 @@ performCallbackTest(TestDomainTree& dtree,
     // "cdtnode" may be invalid due to the insertion, so we need to re-find
     // it.
     EXPECT_EQ(TestDomainTree::EXACTMATCH, dtree.find(Name("callback.example"),
-                                                   &cdtnode));
+                                                     &cdtnode));
     EXPECT_TRUE(cdtnode->getFlag(TestDomainTreeNode::FLAG_CALLBACK));
     EXPECT_FALSE(subdtnode->getFlag(TestDomainTreeNode::FLAG_CALLBACK));
     EXPECT_FALSE(parentdtnode->getFlag(TestDomainTreeNode::FLAG_CALLBACK));
