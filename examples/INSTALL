@@ -1,0 +1,9 @@
+If using git (not the tarball), build the "configure" file:
+    autoreconf --install
+
+To then build from source:
+    ./configure
+    make
+
+You may have to specify the location of BIND 10 header files and
+library objects.  See configure options by ./configure --help.

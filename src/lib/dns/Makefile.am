@@ -149,11 +149,11 @@ libdns___include_HEADERS = \
 	messagerenderer.h \
 	name.h \
 	question.h \
+	opcode.h \
 	rcode.h \
 	rdata.h \
 	rrparamregistry.h \
 	rrset.h \
-	rrsetlist.h \
 	rrttl.h \
 	tsigkey.h
 # Purposely not installing these headers:
