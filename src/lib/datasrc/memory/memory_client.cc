@@ -627,11 +627,11 @@ InMemoryClient::InMemoryClientImpl::load(
     // node must point to a valid node now
     assert(node != NULL);
 
-    std::string* tstr = node->setData(new std::string(filename));
+    const std::string* tstr = node->setData(new std::string(filename));
     delete tstr;
 
-    result::Result result(zone_table_->addZone(mem_sgmt_, rrclass_,
-                                               zone_name, holder));
+    const result::Result result(zone_table_->addZone(mem_sgmt_, rrclass_,
+                                                     zone_name, holder));
     if (result == result::SUCCESS) {
         // Only increment the zone count if the zone doesn't already
         // exist.
@@ -726,8 +726,8 @@ InMemoryClient::load(const isc::dns::Name& zone_name,
 const std::string
 InMemoryClient::getFileName(const isc::dns::Name& zone_name) const {
     const FileNameNode* node(NULL);
-    FileNameTree::Result result = impl_->file_name_tree_->find(zone_name,
-                                                               &node);
+    const FileNameTree::Result result = impl_->file_name_tree_->find(zone_name,
+                                                                     &node);
     if (result == FileNameTree::EXACTMATCH) {
         return (*node->getData());
     } else {
