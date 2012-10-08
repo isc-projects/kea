@@ -109,17 +109,16 @@ datasrcConfigHandler(AuthSrv* server, bool* first_time,
             lists = configureDataSource(config->get("classes"));
         }
 
-        // Replace the server's lists.  By ignoring the return value we let the
-        // old lists be destroyed.  Lock will be released immediately after the
-        // swap.
+        // Replace the server's lists.  The returned lists will be stored
+        // in a local variable 'lists', and will be destroyed outside of
+        // the temporary block for the lock scope.  That way we can minimize
+        // the range of the critical section.
         {
             isc::util::thread::Mutex::Locker locker(
                 server->getDataSrcClientListMutex());
             lists = server->swapDataSrcClientLists(lists);
         }
-        // The previous lists are destroyed here.  Note that it's outside
-        // of the critical section protected by the locker.  So this can
-        // take time if running on a separate thread.
+        // The previous lists are destroyed here.
     }
 }
 
