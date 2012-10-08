@@ -111,11 +111,9 @@ const char* const text_statements[NUM_STATEMENTS] = {
 
     // ITERATE_NSEC3:
     // The following iterates the whole zone in the nsec3 table. As the
-    // RRSIGs are for NSEC3s, we can hardcode the sigtype. As there is
-    // only one RR per-owner per-zone, there's no need to order these
-    // for the sake of any post-processing.
+    // RRSIGs are for NSEC3s, we can hardcode the sigtype.
     "SELECT rdtype, ttl, \"NSEC3\", rdata, owner FROM nsec3 "
-        "WHERE zone_id = ?1",
+        "WHERE zone_id = ?1 ORDER BY hash, rdtype",
     /*
      * This one looks for previous name with NSEC record. It is done by
      * using the reversed name. The NSEC is checked because we need to
@@ -359,8 +357,7 @@ const char* const SCHEMA_LIST[] = {
         "ttl INTEGER NOT NULL, rdtype TEXT NOT NULL COLLATE NOCASE, "
         "rdata TEXT NOT NULL)",
     "CREATE INDEX nsec3_byhash ON nsec3 (hash)",
-    // Enforce that only one NSEC3 RR exists for an owner name in the zone.
-    "CREATE UNIQUE INDEX nsec3_by_zoneid_and_owner ON nsec3 (zone_id, owner)",
+    "CREATE INDEX nsec3_byhash_and_rdtype ON nsec3 (hash, rdtype)",
     "CREATE TABLE diffs (id INTEGER PRIMARY KEY, "
         "zone_id INTEGER NOT NULL, "
         "version INTEGER NOT NULL, "
