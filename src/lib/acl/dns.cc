@@ -12,12 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <memory>
-#include <string>
-#include <vector>
-
-#include <boost/shared_ptr.hpp>
-
 #include <exceptions/exceptions.h>
 
 #include <dns/name.h>
@@ -30,6 +24,13 @@
 #include <acl/dnsname_check.h>
 #include <acl/loader.h>
 #include <acl/logic_check.h>
+
+#include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
+
+#include <memory>
+#include <string>
+#include <vector>
 
 using namespace std;
 using namespace isc::dns;
@@ -106,10 +107,12 @@ internal::RequestCheckCreator::create(const string& name,
 
 RequestLoader&
 getRequestLoader() {
-    static RequestLoader* loader(NULL);
-    if (loader == NULL) {
+    // To ensure that the singleton gets destroyed at the end of the
+    // program's lifetime, we put it in a static scoped_ptr.
+    static boost::scoped_ptr<RequestLoader> loader(NULL);
+    if (loader.get() == NULL) {
         // Creator registration may throw, so we first store the new loader
-        // in an auto pointer in order to provide the strong exception
+        // in a second auto pointer in order to provide the strong exception
         // guarantee.
         auto_ptr<RequestLoader> loader_ptr =
             auto_ptr<RequestLoader>(new RequestLoader(REJECT));
@@ -129,7 +132,7 @@ getRequestLoader() {
                 new LogicCreator<AllOfSpec, RequestContext>("ALL")));
 
         // From this point there shouldn't be any exception thrown
-        loader = loader_ptr.release();
+        loader.reset(loader_ptr.release());
     }
 
     return (*loader);
