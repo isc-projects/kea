@@ -107,7 +107,6 @@ libb10_dns___la_SOURCES += rdatafields.h rdatafields.cc
 libb10_dns___la_SOURCES += rrclass.cc
 libb10_dns___la_SOURCES += rrparamregistry.h
 libb10_dns___la_SOURCES += rrset.h rrset.cc
-libb10_dns___la_SOURCES += rrsetlist.h rrsetlist.cc
 libb10_dns___la_SOURCES += rrttl.h rrttl.cc
 libb10_dns___la_SOURCES += rrtype.cc
 libb10_dns___la_SOURCES += question.h question.cc
@@ -153,7 +152,6 @@ libdns___include_HEADERS = \
 	rdata.h \
 	rrparamregistry.h \
 	rrset.h \
-	rrsetlist.h \
 	rrttl.h \
 	tsigkey.h
 # Purposely not installing these headers:
