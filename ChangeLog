@@ -1,3 +1,11 @@
+486.	[bug]*		jinmei
+	All public header files for libb10-dns++ are now installed.
+	Template configure.ac and utility AC macros for external projects
+	using the library is provided under the "examples" directory.
+	The src/bin/host was moved as part of the examples (and not
+	installed with other BIND 10 programs any more).
+	(Trac #1870, git 4973e638d354d8b56dcadf71123ef23c15662021)
+
 485.	[bug]		jelte
 	Several bugs have been fixed in bindctl; tab-completion now works
 	within configuration lists, the problem where sometimes the
