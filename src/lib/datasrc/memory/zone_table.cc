@@ -67,7 +67,7 @@ ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable,
     mem_sgmt.deallocate(ztable, sizeof(ZoneTable));
 }
 
-result::Result
+ZoneTable::AddResult
 ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
                    const Name& zone_name, ZoneData* content)
 {
@@ -93,10 +93,9 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
     // We can release now, setData never throws
     ZoneData* old = node->setData(holder.release());
     if (old != NULL) {
-        ZoneData::destroy(mem_sgmt, old, zone_class);
-        return (result::EXIST);
+        return (AddResult(result::EXIST, old));
     } else {
-        return (result::SUCCESS);
+        return (AddResult(result::SUCCESS, NULL));
     }
 }
 
