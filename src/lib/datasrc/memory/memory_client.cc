@@ -631,7 +631,8 @@ InMemoryClient::InMemoryClientImpl::load(
     delete tstr;
 
     const result::Result result(zone_table_->addZone(mem_sgmt_, rrclass_,
-                                                     zone_name, holder));
+                                                     zone_name,
+                                                     holder.release()));
     if (result == result::SUCCESS) {
         // Only increment the zone count if the zone doesn't already
         // exist.
