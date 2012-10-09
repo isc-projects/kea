@@ -89,11 +89,15 @@ TEST_F(ZoneTableTest, create) {
 }
 
 TEST_F(ZoneTableTest, addZone) {
+    // It doesn't accept empty (NULL) zones
+    EXPECT_THROW(zone_table->addZone(mem_sgmt_, zclass_, zname1, NULL),
+                 isc::BadValue);
+
     SegmentObjectHolder<ZoneData, RRClass> holder1(
         mem_sgmt_, ZoneData::create(mem_sgmt_, zname1), zclass_);
     // Normal successful case.
     EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zclass_,
-                                                   zname1, holder1));
+                                                   zname1, holder1.release()));
     // It got released by it
     EXPECT_EQ(NULL, holder1.get());
 
@@ -101,7 +105,7 @@ TEST_F(ZoneTableTest, addZone) {
     SegmentObjectHolder<ZoneData, RRClass> holder2(
         mem_sgmt_, ZoneData::create(mem_sgmt_, zname1), zclass_);
     EXPECT_EQ(result::EXIST, zone_table->addZone(mem_sgmt_, zclass_,
-                                                 zname1, holder2));
+                                                 zname1, holder2.release()));
     // It releases this one even when we replace the old zone
     EXPECT_EQ(NULL, holder2.get());
 
@@ -111,16 +115,18 @@ TEST_F(ZoneTableTest, addZone) {
     // names are compared in a case insensitive manner.
     EXPECT_EQ(result::EXIST, zone_table->addZone(mem_sgmt_, zclass_,
                                                  Name("EXAMPLE.COM"),
-                                                 holder3));
+                                                 holder3.release()));
     // Add some more different ones.  Should just succeed.
     SegmentObjectHolder<ZoneData, RRClass> holder4(
         mem_sgmt_, ZoneData::create(mem_sgmt_, zname2), zclass_);
     EXPECT_EQ(result::SUCCESS,
-              zone_table->addZone(mem_sgmt_, zclass_, zname2, holder4));
+              zone_table->addZone(mem_sgmt_, zclass_, zname2,
+                                  holder4.release()));
     SegmentObjectHolder<ZoneData, RRClass> holder5(
         mem_sgmt_, ZoneData::create(mem_sgmt_, zname3), zclass_);
     EXPECT_EQ(result::SUCCESS,
-              zone_table->addZone(mem_sgmt_, zclass_, zname3, holder5));
+              zone_table->addZone(mem_sgmt_, zclass_, zname3,
+                                  holder5.release()));
 
     // Have the memory segment throw an exception in extending the internal
     // tree.  It still shouldn't cause memory leak (which would be detected
@@ -129,7 +135,7 @@ TEST_F(ZoneTableTest, addZone) {
         mem_sgmt_, ZoneData::create(mem_sgmt_, Name("example.org")), zclass_);
     mem_sgmt_.setThrowCount(1);
     EXPECT_THROW(zone_table->addZone(mem_sgmt_, zclass_, Name("example.org"),
-                                     holder6),
+                                     holder6.release()),
                  std::bad_alloc);
 }
 
@@ -138,15 +144,17 @@ TEST_F(ZoneTableTest, findZone) {
         mem_sgmt_, ZoneData::create(mem_sgmt_, zname1), zclass_);
     ZoneData* zone_data = holder1.get();
     EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zclass_, zname1,
-                                                   holder1));
+                                                   holder1.release()));
     SegmentObjectHolder<ZoneData, RRClass> holder2(
         mem_sgmt_, ZoneData::create(mem_sgmt_, zname2), zclass_);
     EXPECT_EQ(result::SUCCESS,
-              zone_table->addZone(mem_sgmt_, zclass_, zname2, holder2));
+              zone_table->addZone(mem_sgmt_, zclass_, zname2,
+                                  holder2.release()));
     SegmentObjectHolder<ZoneData, RRClass> holder3(
         mem_sgmt_, ZoneData::create(mem_sgmt_, zname3), zclass_);
     EXPECT_EQ(result::SUCCESS,
-              zone_table->addZone(mem_sgmt_, zclass_, zname3, holder3));
+              zone_table->addZone(mem_sgmt_, zclass_, zname3,
+                                  holder3.release()));
 
     const ZoneTable::FindResult find_result1 =
         zone_table->findZone(Name("example.com"));
@@ -170,7 +178,8 @@ TEST_F(ZoneTableTest, findZone) {
     SegmentObjectHolder<ZoneData, RRClass> holder4(
         mem_sgmt_, ZoneData::create(mem_sgmt_, Name("com")), zclass_);
     EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zclass_,
-                                                   Name("com"), holder4));
+                                                   Name("com"),
+                                                   holder4.release()));
     EXPECT_EQ(zone_data,
               zone_table->findZone(Name("www.example.com")).zone_data);
 }

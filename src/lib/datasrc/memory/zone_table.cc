@@ -69,9 +69,13 @@ ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable,
 
 result::Result
 ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
-                   const Name& zone_name,
-                   SegmentObjectHolder<ZoneData, RRClass>& content)
+                   const Name& zone_name, ZoneData* content)
 {
+    if (content == NULL) {
+        isc_throw(isc::BadValue, "Zone content must not be NULL");
+    }
+    SegmentObjectHolder<ZoneData, RRClass> holder(mem_sgmt, content,
+                                                  zone_class);
     // Get the node where we put the zone
     ZoneTableNode* node(NULL);
     switch (zones_->insert(mem_sgmt, zone_name, &node)) {
@@ -87,7 +91,7 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
     assert(node != NULL);
 
     // We can release now, setData never throws
-    ZoneData* old = node->setData(content.release());
+    ZoneData* old = node->setData(holder.release());
     if (old != NULL) {
         ZoneData::destroy(mem_sgmt, old, zone_class);
         return (result::EXIST);
