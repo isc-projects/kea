@@ -51,11 +51,16 @@ TEST(CfgMgrTest, subnet4) {
     // Now we have only one subnet, any request will be served from it
     EXPECT_EQ(subnet1, cfg_mgr.getSubnet4(IOAddress("192.0.2.63")));
 
+    // Now we add more subnets and check that both old and new subnets
+    // are accessible.
     cfg_mgr.addSubnet4(subnet2);
     cfg_mgr.addSubnet4(subnet3);
 
     EXPECT_EQ(subnet3, cfg_mgr.getSubnet4(IOAddress("192.0.2.191")));
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet4(IOAddress("192.0.2.15")));
     EXPECT_EQ(subnet2, cfg_mgr.getSubnet4(IOAddress("192.0.2.85")));
+
+    // Try to find an address that does not belong to any subnet
     EXPECT_EQ(Subnet4Ptr(), cfg_mgr.getSubnet4(IOAddress("192.0.2.192")));
 }
 
