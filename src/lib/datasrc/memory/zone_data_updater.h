@@ -126,10 +126,6 @@ public:
     void add(const isc::dns::ConstRRsetPtr& rrset,
              const isc::dns::ConstRRsetPtr& sig_rrset);
 
-    // A helper internal class used by InMemoryClient::load(). It
-    // maintains some intermediate states while loading RRs of the zone.
-    class Loader;
-
 private:
     // Add the necessary magic for any wildcard contained in 'name'
     // (including itself) to be found in the zone.
@@ -192,10 +188,11 @@ private:
 // do it, but since we cannot guarantee the adding operation is exception free,
 // we don't choose that option to maintain the common expectation for
 // destructors.
-class ZoneDataUpdater::Loader : boost::noncopyable {
+class ZoneDataLoader : boost::noncopyable {
 public:
-    Loader(util::MemorySegment& mem_sgmt, const isc::dns::RRClass rrclass,
-           const isc::dns::Name& zone_name, ZoneData& zone_data) :
+    ZoneDataLoader(util::MemorySegment& mem_sgmt,
+                   const isc::dns::RRClass rrclass,
+                   const isc::dns::Name& zone_name, ZoneData& zone_data) :
         updater_(mem_sgmt, rrclass, zone_name, zone_data)
     {}
 

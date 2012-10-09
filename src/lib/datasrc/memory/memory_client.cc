@@ -92,10 +92,8 @@ InMemoryClient::load(const Name& zone_name,
     SegmentObjectHolder<ZoneData, RRClass> holder(
         mem_sgmt_, ZoneData::create(mem_sgmt_, zone_name), rrclass_);
 
-    ZoneDataUpdater::Loader loader(mem_sgmt_, rrclass_,
-                                   zone_name, *holder.get());
-    rrset_installer(boost::bind(&ZoneDataUpdater::Loader::addFromLoad,
-                                &loader, _1));
+    ZoneDataLoader loader(mem_sgmt_, rrclass_, zone_name, *holder.get());
+    rrset_installer(boost::bind(&ZoneDataLoader::addFromLoad, &loader, _1));
     // Add any last RRsets that were left
     loader.flushNodeRRsets();
 
