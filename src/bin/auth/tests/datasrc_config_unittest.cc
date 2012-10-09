@@ -244,10 +244,11 @@ TEST_F(DatasrcConfigTest, updateDelete) {
     EXPECT_TRUE(lists_.empty());
 }
 
-// Check that we can rollback an addition if something else fails
-TEST_F(DatasrcConfigTest, rollbackAddition) {
+// Check that broken new configuration doesn't break the running configuration.
+TEST_F(DatasrcConfigTest, brokenConfigForAdd) {
     initializeINList();
-    // The configuration is wrong. However, the CH one will get done first.
+    // The configuration is wrong. However, the CH one will be handled
+    // without an error first.
     const ElementPtr
         config(buildConfig("{\"IN\": [{\"type\": 13}], "
                            "\"CH\": [{\"type\": \"xxx\"}]}"));
@@ -263,8 +264,9 @@ TEST_F(DatasrcConfigTest, rollbackAddition) {
     EXPECT_FALSE(lists_[RRClass::CH()]);
 }
 
-// Check that we can rollback a deletion if something else fails
-TEST_F(DatasrcConfigTest, rollbackDeletion) {
+// Similar to the previous one, but the broken config would delete part of
+// the running config.
+TEST_F(DatasrcConfigTest, brokenConfigForDelete) {
     initializeINList();
     // Put the CH there
     const ElementPtr
@@ -273,27 +275,25 @@ TEST_F(DatasrcConfigTest, rollbackDeletion) {
     testConfigureDataSource(*this, config1);
     const ElementPtr
         config2(Element::fromJSON("{\"IN\": [{\"type\": 13}]}"));
-    // This would delete CH. However, the IN one fails.
-    // As the deletions happen after the additions/settings
-    // and there's no known way to cause an exception during the
-    // deletions, it is not a true rollback, but the result should
-    // be the same.
+    // This would delete CH. However, the new config is broken, so it won't
+    // actually apply.
     EXPECT_THROW(testConfigureDataSource(*this, config2), TypeError);
     EXPECT_EQ("yyy", lists_[RRClass::IN()]->getConf());
     EXPECT_EQ("xxx", lists_[RRClass::CH()]->getConf());
 }
 
-// Check that we can roll back configuration change if something
-// fails later on.
-TEST_F(DatasrcConfigTest, rollbackConfiguration) {
+// Similar to the previous cases, but the broken config would modify the
+// running config of one of the classes.
+TEST_F(DatasrcConfigTest, brokenConfigForModify) {
     initializeINList();
     // Put the CH there
     const ElementPtr
         config1(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}], "
                                   "\"CH\": [{\"type\": \"xxx\"}]}"));
     testConfigureDataSource(*this, config1);
-    // Now, the CH happens first. But nevertheless, it should be
-    // restored to the previoeus version.
+    // Now, the CH change will be handled first without an error, then
+    // the change to the IN class will fail, and the none of the changes
+    // will apply.
     const ElementPtr
         config2(Element::fromJSON("{\"IN\": [{\"type\": 13}], "
                                   "\"CH\": [{\"type\": \"yyy\"}]}"));
