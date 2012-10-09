@@ -35,6 +35,16 @@
 /// You don't need to pay attention to it, use the configureDataSource
 /// specialization instead.
 ///
+/// \note In future we may want to make the reconfiguration more efficient
+/// by only creating newly configured data and just moving the rest from
+/// the running configuration if they are used in the new configuration
+/// without any parameter change.  We could probably do it by passing
+/// the old lists in addition to the new config, but further details are
+/// still to be defined yet.  It will surely require changes in the
+/// data source library, too.  So, right now, we don't introduce the
+/// possibility in the function interface.  If and when we decide to introduce
+/// the optimization, we'll extend the interface.
+///
 /// \param config The configuration value to parse. It is in the form
 ///     as an update from the config manager.
 /// \return A map from RR classes to configured lists.
