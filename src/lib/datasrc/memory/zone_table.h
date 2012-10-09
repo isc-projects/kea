@@ -36,10 +36,6 @@ namespace memory {
 // forward declaration: in this header it's mostly an opaque type.
 class ZoneData;
 
-namespace detail {
-template<class T, class C> class SegmentObjectHolder;
-}
-
 /// \brief A conceptual table of authoritative zones.
 ///
 /// This class is actually a simple wrapper for a \c DomainTree whose data is
@@ -147,7 +143,9 @@ public:
     /// \param zone_class The RR class of the zone.  It must be the RR class
     ///     that is supposed to be associated to the zone table.
     /// \param content This one should hold the zone content (the ZoneData).
-    ///     When it is added successfully, it is released from the holder.
+    ///     The ownership is passed onto the zone table. Must not be null.
+    ///     Must correspond to the name and class and must be allocated from
+    ///     mem_sgmt.
     /// \return \c result::SUCCESS If the zone is successfully
     ///     added to the zone table.
     /// \return \c result::EXIST The zone table already contained
@@ -156,8 +154,7 @@ public:
     result::Result addZone(util::MemorySegment& mem_sgmt,
                            dns::RRClass zone_class,
                            const dns::Name& zone_name,
-                           detail::SegmentObjectHolder<ZoneData,
-                           isc::dns::RRClass>& content);
+                           ZoneData* content);
 
     /// Find a zone that best matches the given name in the \c ZoneTable.
     ///
