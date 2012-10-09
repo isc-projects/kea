@@ -40,9 +40,11 @@ namespace memory {
 /// The way to use this is to make a ZoneDataUpdater instance, and call
 /// add() on it as follows:
 ///
+/// \code
 /// ZoneDataUpdater updater(mem_sgmt, rrclass, zone_origin_name, zone_data);
 /// ConstRRsetPtr rrset;
 /// updater.add(rrset, ConstRRsetPtr());
+/// \endcode
 ///
 /// We enforce that instances are non-copyable as it's pointless to make
 /// copies.
@@ -59,7 +61,8 @@ public:
     ///
     /// \param mem_sgmt The memory segment used for the zone data.
     /// \param rrclass The RRclass of the zone data.
-    /// \param zone_name The Name of the zone under which records will be added.
+    /// \param zone_name The Name of the zone under which records will be
+    ///                  added.
     //  \param zone_data The ZoneData object which is populated with
     //                   record data.
     ZoneDataUpdater(util::MemorySegment& mem_sgmt,
