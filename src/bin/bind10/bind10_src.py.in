@@ -739,7 +739,7 @@ class BoB:
                 component = self.components.pop(pid)
                 logger.info(BIND10_PROCESS_ENDED, component.name(), pid,
                             exit_status)
-                if component.running() and self.runnable:
+                if component.is_running() and self.runnable:
                     # Tell it it failed. But only if it matters (we are
                     # not shutting down and the component considers itself
                     # to be running.
