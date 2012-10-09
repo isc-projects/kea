@@ -346,7 +346,7 @@ ZoneDataUpdater::add(const ConstRRsetPtr& rrset,
 
 
 void
-ZoneDataUpdater::Loader::addFromLoad(const ConstRRsetPtr& rrset) {
+ZoneDataLoader::addFromLoad(const ConstRRsetPtr& rrset) {
     // If we see a new name, flush the temporary holders, adding the
     // pairs of RRsets and RRSIGs of the previous name to the zone.
     if ((!node_rrsets_.empty() || !node_rrsigsets_.empty()) &&
@@ -369,7 +369,7 @@ ZoneDataUpdater::Loader::addFromLoad(const ConstRRsetPtr& rrset) {
 }
 
 void
-ZoneDataUpdater::Loader::flushNodeRRsets() {
+ZoneDataLoader::flushNodeRRsets() {
     BOOST_FOREACH(NodeRRsetsVal val, node_rrsets_) {
         // Identify the corresponding RRSIG for the RRset, if any.  If
         // found add both the RRset and its RRSIG at once.
@@ -396,7 +396,7 @@ ZoneDataUpdater::Loader::flushNodeRRsets() {
 }
 
 RRType
-ZoneDataUpdater::Loader::getCoveredType(const ConstRRsetPtr& sig_rrset) {
+ZoneDataLoader::getCoveredType(const ConstRRsetPtr& sig_rrset) {
     RdataIteratorPtr it = sig_rrset->getRdataIterator();
     // Empty RRSIG shouldn't be passed either via a master file or
     // another data source iterator, but it could still happen if the
@@ -411,7 +411,7 @@ ZoneDataUpdater::Loader::getCoveredType(const ConstRRsetPtr& sig_rrset) {
 }
 
 const Name&
-ZoneDataUpdater::Loader::getCurrentName() const {
+ZoneDataLoader::getCurrentName() const {
     if (!node_rrsets_.empty()) {
         return (node_rrsets_.begin()->second->getName());
     }
