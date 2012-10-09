@@ -93,7 +93,7 @@ public:
     /// that corresponds to this derived class and prepares a new value to
     /// apply to the server.
     /// In the above example, the derived class for the identifier "param1"
-    /// would be passed an data \c Element storing an integer whose value
+    /// would be passed a data \c Element storing an integer whose value
     /// is 10, and would record that value internally;
     /// the derived class for the identifier "param2" would be passed a
     /// map element and (after parsing) convert it into some internal

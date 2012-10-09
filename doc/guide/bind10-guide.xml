@@ -2911,7 +2911,7 @@ Dhcp6/subnet6	         []     list    (default)</screen>
         <screen>
 &gt; <userinput>config add Dhcp6/subnet6</userinput>
 &gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:1::/64"</userinput>
-&gt; <userinput>config set Dhcp6/subnet6[0]/pool [ "2001:db8:1::1 - 2001:db8:1::ffff" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pool [ "2001:db8:1::0 - 2001:db8:1::ffff" ]</userinput>
 &gt; <userinput>config commit</userinput></screen>
         Note that subnet is defined as a simple string, but the pool parameter
         is actually a list of pools: for this reason, the pool definition is
@@ -2946,11 +2946,19 @@ Dhcp6/subnet6	         []     list    (default)</screen>
         very wasteful, it is certainly a valid configuration to dedicate the
         whole /48 subnet for that purpose.
       </para>
+      <para>
+        When configuring a DHCPv6 server using prefix/length notation, please pay
+        attention to the boundary values. When specifying that the server should use
+        a given pool, it will be able to allocate also first (typically network
+        address) address from that pool. For example for pool 2001:db8::/64 the
+        2001:db8:: address may be assigned as well. If you want to avoid this,
+        please use min-max notation.
+      </para>
 
       <para>
         Note: Although configuration is now accepted, it is not internally used
         by they server yet.  At this stage of development, the only way to alter
-        server configuration is to tweak its source code. To do so, please edit
+        server configuration is to modify its source code. To do so, please edit
         src/bin/dhcp6/dhcp6_srv.cc file, modify the following parameters and
         recompile:
         <screen>

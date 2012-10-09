@@ -43,7 +43,7 @@ namespace dhcp {
 typedef pair<string, ConstElementPtr> ConfigPair;
 
 /// @brief a factory method that will create a parser for a given element name
-typedef Dhcp6ConfigParser* ParserFactory(const std::string& config_id);
+typedef DhcpConfigParser* ParserFactory(const std::string& config_id);
 
 /// @brief a collection of factories that creates parsers for specified element names
 typedef std::map<std::string, ParserFactory*> FactoryMap;
@@ -72,21 +72,21 @@ StringStorage string_defaults;
 /// will accept any configuration and will just print it out
 /// on commit. Useful for debugging existing configurations and
 /// adding new ones.
-class DummyParser : public Dhcp6ConfigParser {
+class DebugParser : public DhcpConfigParser {
 public:
 
     /// @brief Constructor
     ///
-    /// See \ref Dhcp6ConfigParser class for details.
+    /// See \ref DhcpConfigParser class for details.
     ///
     /// @param param_name name of the parsed parameter
-    DummyParser(const std::string& param_name)
+    DebugParser(const std::string& param_name)
         :param_name_(param_name) {
     }
 
     /// @brief builds parameter value
     ///
-    /// See \ref Dhcp6ConfigParser class for details.
+    /// See \ref DhcpConfigParser class for details.
     ///
     /// @param new_config pointer to the new configuration
     virtual void build(ConstElementPtr new_config) {
@@ -100,20 +100,20 @@ public:
     /// This is a method required by base class. It pretends to apply the
     /// configuration, but in fact it only prints the parameter out.
     ///
-    /// See \ref Dhcp6ConfigParser class for details.
+    /// See \ref DhcpConfigParser class for details.
     virtual void commit() {
-        // Debug message. The whole DummyParser class is used only for parser
+        // Debug message. The whole DebugParser class is used only for parser
         // debugging, and is not used in production code. It is very convenient
         // to keep it around. Please do not turn this cout into logger calls.
         std::cout << "Commit for token: [" << param_name_ << "] = ["
                   << value_->str() << "]" << std::endl;
     }
 
-    /// @brief factory that constructs DummyParser objects
+    /// @brief factory that constructs DebugParser objects
     ///
     /// @param param_name name of the parameter to be parsed
-    static Dhcp6ConfigParser* Factory(const std::string& param_name) {
-        return (new DummyParser(param_name));
+    static DhcpConfigParser* Factory(const std::string& param_name) {
+        return (new DebugParser(param_name));
     }
 
 protected:
@@ -131,11 +131,11 @@ protected:
 /// (uint32_defaults). If used in smaller scopes (e.g. to parse parameters
 /// in subnet config), it can be pointed to a different storage, using
 /// setStorage() method. This class follows the parser interface, laid out
-/// in its base class, \ref Dhcp6ConfigParser.
+/// in its base class, \ref DhcpConfigParser.
 ///
 /// For overview of usability of this generic purpose parser, see
 /// \ref dhcpv6-config-inherit page.
-class Uint32Parser : public Dhcp6ConfigParser {
+class Uint32Parser : public DhcpConfigParser {
 public:
 
     /// @brief constructor for Uint32Parser
@@ -174,7 +174,7 @@ public:
     /// @brief factory that constructs Uint32Parser objects
     ///
     /// @param param_name name of the parameter to be parsed
-    static Dhcp6ConfigParser* Factory(const std::string& param_name) {
+    static DhcpConfigParser* Factory(const std::string& param_name) {
         return (new Uint32Parser(param_name));
     }
 
@@ -189,7 +189,7 @@ public:
 
 protected:
     /// pointer to the storage, where parsed value will be stored
-    Uint32Storage * storage_;
+    Uint32Storage* storage_;
 
     /// name of the parameter to be parsed
     std::string param_name_;
@@ -205,11 +205,11 @@ protected:
 /// (string_defaults). If used in smaller scopes (e.g. to parse parameters
 /// in subnet config), it can be pointed to a different storage, using
 /// setStorage() method. This class follows the parser interface, laid out
-/// in its base class, \ref Dhcp6ConfigParser.
+/// in its base class, \ref DhcpConfigParser.
 ///
 /// For overview of usability of this generic purpose parser, see
 /// \ref dhcpv6-config-inherit page.
-class StringParser : public Dhcp6ConfigParser {
+class StringParser : public DhcpConfigParser {
 public:
 
     /// @brief constructor for StringParser
@@ -244,7 +244,7 @@ public:
     /// @brief factory that constructs StringParser objects
     ///
     /// @param param_name name of the parameter to be parsed
-    static Dhcp6ConfigParser* Factory(const std::string& param_name) {
+    static DhcpConfigParser* Factory(const std::string& param_name) {
         return (new StringParser(param_name));
     }
 
@@ -253,13 +253,13 @@ public:
     /// See \ref dhcpv6-config-inherit for details.
     ///
     /// @param storage pointer to the storage container
-    void setStorage(StringStorage * storage) {
+    void setStorage(StringStorage* storage) {
         storage_ = storage;
     }
 
 protected:
     /// pointer to the storage, where parsed value will be stored
-    StringStorage * storage_;
+    StringStorage* storage_;
 
     /// name of the parameter to be parsed
     std::string param_name_;
@@ -277,7 +277,7 @@ protected:
 /// designates all interfaces.
 ///
 /// It is useful for parsing Dhcp6/interface parameter.
-class InterfaceListConfigParser : public Dhcp6ConfigParser {
+class InterfaceListConfigParser : public DhcpConfigParser {
 public:
 
     /// @brief constructor
@@ -314,7 +314,7 @@ public:
     /// @brief factory that constructs InterfaceListConfigParser objects
     ///
     /// @param param_name name of the parameter to be parsed
-    static Dhcp6ConfigParser* Factory(const std::string& param_name) {
+    static DhcpConfigParser* Factory(const std::string& param_name) {
         return (new InterfaceListConfigParser(param_name));
     }
 
@@ -333,7 +333,7 @@ protected:
 /// before build(). Otherwise exception will be thrown.
 ///
 /// It is useful for parsing Dhcp6/subnet6[X]/pool parameters.
-class PoolParser : public Dhcp6ConfigParser {
+class PoolParser : public DhcpConfigParser {
 public:
 
     /// @brief constructor.
@@ -350,8 +350,8 @@ public:
     void build(ConstElementPtr pools_list) {
         // setStorage() should have been called before build
         if (!pools_) {
-          isc_throw(NotImplemented, "Parser logic error. No pool storage set,"
-                    " but pool parser asked to parse pools");
+            isc_throw(NotImplemented, "Parser logic error. No pool storage set,"
+                      " but pool parser asked to parse pools");
         }
 
         BOOST_FOREACH(ConstElementPtr text_pool, pools_list->listValue()) {
@@ -372,14 +372,19 @@ public:
                 uint8_t len = 0;
                 try {
                     addr = IOAddress(txt.substr(0, pos));
-                    string num = txt.substr(pos+1);
 
-                    // it is lexical cast to int and then downcast to uint8_t
-                    // direct cast to uint8_t (which is really an unsigned char)
+                    // start with the first charater after /
+                    string prefix_len = txt.substr(pos + 1);
+
+                    // It is lexical cast to int and then downcast to uint8_t.
+                    // Direct cast to uint8_t (which is really an unsigned char)
                     // will result in interpreting the first digit as output
-                    // value and throwing exception if length written on two
-                    // digits (because there are extra characters left over)
-                    len = boost::lexical_cast<int>(num);
+                    // value and throwing exception if length is written on two
+                    // digits (because there are extra characters left over).
+
+                    // No checks for values over 128. Range correctness will
+                    // be checked in Pool6 constructor.
+                    len = boost::lexical_cast<int>(prefix_len);
                 } catch (...)  {
                     isc_throw(Dhcp6ConfigError, "Failed to parse pool "
                               "definition: " << text_pool->stringValue());
@@ -394,8 +399,8 @@ public:
             pos = txt.find("-");
             if (pos != string::npos) {
                 // using min-max notation
-                IOAddress min(txt.substr(0,pos-1));
-                IOAddress max(txt.substr(pos+1));
+                IOAddress min(txt.substr(0,pos - 1));
+                IOAddress max(txt.substr(pos + 1));
 
                 Pool6Ptr pool(new Pool6(Pool6::TYPE_IA, min, max));
 
@@ -422,13 +427,13 @@ public:
     ///
     /// This method is required for all parser. The value itself
     /// is not commited anywhere. Higher level parsers (for subnet) are expected
-    /// to use values stored in the storage,
+    /// to use values stored in the storage.
     virtual void commit() {}
 
     /// @brief factory that constructs PoolParser objects
     ///
     /// @param param_name name of the parameter to be parsed
-    static Dhcp6ConfigParser* Factory(const std::string& param_name) {
+    static DhcpConfigParser* Factory(const std::string& param_name) {
         return (new PoolParser(param_name));
     }
 
@@ -437,14 +442,14 @@ protected:
     ///
     /// That is typically a storage somewhere in Subnet parser
     /// (an upper level parser).
-    PoolStorage * pools_;
+    PoolStorage* pools_;
 };
 
 /// @brief this class parses a single subnet
 ///
 /// This class parses the whole subnet definition. It creates parsers
 /// for received configuration parameters as needed.
-class Subnet6ConfigParser : public Dhcp6ConfigParser {
+class Subnet6ConfigParser : public DhcpConfigParser {
 public:
 
     /// @brief constructor
@@ -468,18 +473,20 @@ public:
                 boost::dynamic_pointer_cast<Uint32Parser>(parser);
             if (uintParser) {
                 uintParser->setStorage(&uint32_values_);
-            }
+            } else {
 
-            boost::shared_ptr<StringParser> stringParser =
-                boost::dynamic_pointer_cast<StringParser>(parser);
-            if (stringParser) {
-                stringParser->setStorage(&string_values_);
-            }
+                boost::shared_ptr<StringParser> stringParser =
+                    boost::dynamic_pointer_cast<StringParser>(parser);
+                if (stringParser) {
+                    stringParser->setStorage(&string_values_);
+                } else {
 
-            boost::shared_ptr<PoolParser> poolParser =
-                boost::dynamic_pointer_cast<PoolParser>(parser);
-            if (poolParser) {
-                poolParser->setStorage(&pools_);
+                    boost::shared_ptr<PoolParser> poolParser =
+                        boost::dynamic_pointer_cast<PoolParser>(parser);
+                    if (poolParser) {
+                        poolParser->setStorage(&pools_);
+                    }
+                }
             }
 
             parser->build(param.second);
@@ -544,7 +551,7 @@ protected:
     ///
     /// @param config_id name od the entry
     /// @return parser object for specified entry name
-    Dhcp6ConfigParser* createSubnet6ConfigParser(const std::string& config_id) {
+    DhcpConfigParser* createSubnet6ConfigParser(const std::string& config_id) {
         FactoryMap factories;
 
         factories.insert(pair<string, ParserFactory*>(
@@ -565,7 +572,7 @@ protected:
         FactoryMap::iterator f = factories.find(config_id);
         if (f == factories.end()) {
             // Used for debugging only.
-            // return new DummyParser(config_id);
+            // return new DebugParser(config_id);
 
             isc_throw(NotImplemented,
                       "Parser error: Subnet6 parameter not supported: "
@@ -624,7 +631,7 @@ protected:
 /// This is a wrapper parser that handles the whole list of Subnet6
 /// definitions. It iterates over all entries and creates Subnet6ConfigParser
 /// for each entry.
-class Subnets6ListConfigParser : public Dhcp6ConfigParser {
+class Subnets6ListConfigParser : public DhcpConfigParser {
 public:
 
     /// @brief constructor
@@ -673,7 +680,7 @@ public:
     /// @brief Returns Subnet6ListConfigParser object
     /// @param param_name name of the parameter
     /// @return Subnets6ListConfigParser object
-    static Dhcp6ConfigParser* Factory(const std::string& param_name) {
+    static DhcpConfigParser* Factory(const std::string& param_name) {
         return (new Subnets6ListConfigParser(param_name));
     }
 
@@ -688,7 +695,7 @@ public:
 ///
 /// @param config_id pointer to received global configuration entry
 /// @return parser for specified global DHCPv6 parameter
-Dhcp6ConfigParser* createGlobalDhcp6ConfigParser(const std::string& config_id) {
+DhcpConfigParser* createGlobalDhcpConfigParser(const std::string& config_id) {
     FactoryMap factories;
 
     //
@@ -712,7 +719,7 @@ Dhcp6ConfigParser* createGlobalDhcp6ConfigParser(const std::string& config_id) {
     FactoryMap::iterator f = factories.find(config_id);
     if (f == factories.end()) {
         // Used for debugging only.
-        // return new DummyParser(config_id);
+        // return new DebugParser(config_id);
 
         isc_throw(NotImplemented,
                   "Parser error: Global configuration parameter not supported: "
@@ -751,7 +758,7 @@ configureDhcp6Server(Dhcpv6Srv& , ConstElementPtr config_set) {
     try {
         BOOST_FOREACH(ConfigPair config_pair, config_set->mapValue()) {
 
-            ParserPtr parser(createGlobalDhcp6ConfigParser(config_pair.first));
+            ParserPtr parser(createGlobalDhcpConfigParser(config_pair.first));
             parser->build(config_pair.second);
             parsers.push_back(parser);
         }
