@@ -92,6 +92,7 @@ public:
         default:
             isc_throw(dhcp::InvalidDataType, "non-numeric type");
         }
+        LibDHCP::packOptions6(buf, options_);
     }
 
     /// @brief Parses received buffer
@@ -110,20 +111,26 @@ public:
             value_ = *begin;
             break;
         case 2:
-            value_ = isc::util::readUint16( &(*begin) );
+            value_ = isc::util::readUint16(&(*begin));
             break;
         case 4:
-            value_ = isc::util::readUint32( &(*begin) );
+            value_ = isc::util::readUint32(&(*begin));
             break;
         default:
             isc_throw(dhcp::InvalidDataType, "non-numeric type");
         }
-
+        begin += OptionDataTypes<T>::len;
         LibDHCP::unpackOptions6(OptionBuffer(begin, end), options_);
     }
 
+    /// @brief Set option value.
+    ///
+    /// @param value new option value.
     void setValue(T value) { value_ = value; }
 
+    /// @brief Return option value.
+    ///
+    /// @return option value.
     T getValue() const { return value_; }
 
     /// @brief returns complete length of option
@@ -144,7 +151,7 @@ public:
 
 private:
 
-    T value_; ///< Value cabveyed by the option.
+    T value_;  ///< Value cabveyed by the option.
 };
 
 } // isc::dhcp namespace
