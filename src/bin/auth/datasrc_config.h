@@ -58,10 +58,8 @@ configureDataSourceGeneric(const isc::data::ConstElementPtr& config) {
 
     boost::shared_ptr<ListMap> new_lists(new ListMap);
 
-    // Get the configuration and current state.
-    const Map& map(config->mapValue());
-
     // Go through the configuration and create corresponding list.
+    const Map& map(config->mapValue());
     for (Map::const_iterator it(map.begin()); it != map.end(); ++it) {
         const isc::dns::RRClass rrclass(it->first);
         ListPtr list(new List(rrclass));
