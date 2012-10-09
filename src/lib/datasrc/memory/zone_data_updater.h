@@ -171,7 +171,7 @@ private:
     const isc::dns::Name& zone_name_;
     ZoneData& zone_data_;
     RdataEncoder encoder_;
-    isc::dns::NSEC3Hash* hash_;
+    const isc::dns::NSEC3Hash* hash_;
 };
 
 // A helper internal class for load().  make it non-copyable to avoid
