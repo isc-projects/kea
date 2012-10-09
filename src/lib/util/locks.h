@@ -49,6 +49,9 @@ template <typename T>
 class scoped_lock {
 public:
     scoped_lock(T) {}
+
+    // We need to define this explicitly.  Some versions of clang++ would
+    // complain about this otherwise.  See Trac ticket #2340
     ~scoped_lock() {}
 
     void lock() {}
