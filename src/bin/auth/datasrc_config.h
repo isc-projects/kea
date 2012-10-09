@@ -27,9 +27,9 @@
 
 /// \brief Configure data source client lists
 ///
-/// This will hook into the data_sources module configuration and it return
-/// a new set (in the form of a shared pointer to map) of data source client
-/// lists corresponding to the configuration.
+/// This will hook into the data_sources module configuration and it will
+/// return a new set (in the form of a shared pointer to map) of data source
+/// client lists corresponding to the configuration.
 ///
 /// This function is templated. This is simply because of easier testing.
 /// You don't need to pay attention to it, use the configureDataSource
