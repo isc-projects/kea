@@ -71,7 +71,7 @@ public:
 /// the type in question.
 ///
 class Element {
-    
+
 private:
     // technically the type could be omitted; is it useful?
     // should we remove it or replace it with a pure virtual
@@ -112,7 +112,7 @@ public:
     /// \returns true if the other ElementPtr has the same type and
     ///          value
     virtual bool equals(const Element& other) const = 0;
-    
+
     /// Converts the Element to JSON format and appends it to
     /// the given stringstream.
     virtual void toJSON(std::ostream& ss) const = 0;
@@ -209,7 +209,7 @@ public:
     virtual size_t size() const;
     //@}
 
-    
+
     /// \name MapElement functions
     ///
     /// \brief If the Element on which these functions are called are not
@@ -258,7 +258,7 @@ public:
 
 
     /// \name Factory functions
-    
+
     // TODO: should we move all factory functions to a different class
     // so as not to burden the Element base with too many functions?
     // and/or perhaps even to a separate header?
@@ -349,7 +349,7 @@ public:
     /// These function pparse the wireformat at the given stringstream
     /// (of the given length). If there is a parse error an exception
     /// of the type isc::cc::DecodeError is raised.
-    
+
     //@{
     /// Creates an Element from the wire format in the given
     /// stringstream of the given length.
@@ -495,7 +495,7 @@ public:
         return (m.find(s) != m.end());
     }
     void toJSON(std::ostream& ss) const;
-    
+
     // we should name the two finds better...
     // find the element at id; raises TypeError if one of the
     // elements at path except the one we're looking for is not a
@@ -569,6 +569,6 @@ bool operator!=(const Element& a, const Element& b);
 } }
 #endif // _ISC_DATA_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:
