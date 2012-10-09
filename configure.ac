@@ -232,7 +232,7 @@ AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
 AC_SUBST(SET_ENV_LIBRARY_PATH)
 AC_SUBST(ENV_LIBRARY_PATH)
 
-m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1 python3.2])
+m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3.2 python3.1 python3])
 AC_ARG_WITH([pythonpath],
 AC_HELP_STRING([--with-pythonpath=PATH],
   [specify an absolute path to python executable when automatic version check (incorrectly) fails]),
