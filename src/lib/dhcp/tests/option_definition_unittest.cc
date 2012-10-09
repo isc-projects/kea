@@ -38,8 +38,14 @@ using namespace isc::dhcp;
 using namespace isc::util;
 
 namespace {
+
+/// @brief OptionDefinition test class.
+///
+/// This class does not do anything useful but we keep
+/// it around for the future.
 class OptionDefinitionTest : public ::testing::Test {
 public:
+    // @brief Constructor.
     OptionDefinitionTest() { }
 };
 
@@ -115,7 +121,14 @@ TEST_F(OptionDefinitionTest, addRecordField) {
     EXPECT_THROW(opt_def.addRecordField(invalid_type), isc::BadValue);
 }
 
+
 TEST_F(OptionDefinitionTest, factoryAddrList6) {
+    OptionDefinition opt_def("OPTION_NIS_SERVERS", D6O_NIS_SERVERS,
+                             "ipv6-address", true);
+    Option::Factory* factory(NULL);
+    EXPECT_NO_THROW(factory = opt_def.getFactory());
+    ASSERT_TRUE(factory != NULL);
+
     // Create a list of some V6 addresses.
     std::vector<asiolink::IOAddress> addrs;
     addrs.push_back(asiolink::IOAddress("2001:0db8::ff00:0042:8329"));
@@ -134,13 +147,14 @@ TEST_F(OptionDefinitionTest, factoryAddrList6) {
     // supposed to have internal list of addresses that it parses out from
     // the provided buffer.
     OptionPtr option_v6;
-    EXPECT_NO_THROW(
-        option_v6 = OptionDefinition::factoryAddrList6(Option::V6,
-                                                       D6O_NIS_SERVERS, buf)
+    ASSERT_NO_THROW(
+        option_v6 = factory(Option::V6, D6O_NIS_SERVERS, buf);
     );
-    // Get the list of parsed addresses from the option object.
+    ASSERT_EQ(typeid(*option_v6), typeid(Option6AddrLst));
     boost::shared_ptr<Option6AddrLst> option_cast_v6 =
         boost::static_pointer_cast<Option6AddrLst>(option_v6);
+    ASSERT_TRUE(option_cast_v6);
+    // Get the list of parsed addresses from the option object.
     std::vector<asiolink::IOAddress> addrs_returned =
         option_cast_v6->getAddresses();
     // The list of addresses must exactly match addresses that we
@@ -153,12 +167,18 @@ TEST_F(OptionDefinitionTest, factoryAddrList6) {
     buf.insert(buf.end(), 1, 1);
     // It should throw exception then.
     EXPECT_THROW(
-        OptionDefinition::factoryAddrList6(Option::V6, D6O_NIS_SERVERS, buf),
+        factory(Option::V6, D6O_NIS_SERVERS, buf),
         isc::OutOfRange
     );
 }
 
 TEST_F(OptionDefinitionTest, factoryAddrList4) {
+    OptionDefinition opt_def("OPTION_NAME_SERVERS", D6O_NIS_SERVERS,
+                             "ipv4-address", true);
+    Option::Factory* factory(NULL);
+    EXPECT_NO_THROW(factory = opt_def.getFactory());
+    ASSERT_TRUE(factory != NULL);
+
     // Create a list of some V6 addresses.
     std::vector<asiolink::IOAddress> addrs;
     addrs.push_back(asiolink::IOAddress("192.168.0.1"));
@@ -177,10 +197,10 @@ TEST_F(OptionDefinitionTest, factoryAddrList4) {
     // supposed to have internal list of addresses that it parses out from
     // the provided buffer.
     OptionPtr option_v4;
-    EXPECT_NO_THROW(
-        option_v4 = OptionDefinition::factoryAddrList4(Option::V4,
-                                                       DHO_NAME_SERVERS, buf)
+    ASSERT_NO_THROW(
+        option_v4 = factory(Option::V4, DHO_NAME_SERVERS, buf)
     );
+    ASSERT_EQ(typeid(*option_v4), typeid(Option4AddrLst));
     // Get the list of parsed addresses from the option object.
     boost::shared_ptr<Option4AddrLst> option_cast_v4 =
         boost::static_pointer_cast<Option4AddrLst>(option_v4);
@@ -195,110 +215,101 @@ TEST_F(OptionDefinitionTest, factoryAddrList4) {
     // fulfilled anymore.
     buf.insert(buf.end(), 1, 1);
     // It should throw exception then.
-    EXPECT_THROW(
-        OptionDefinition::factoryAddrList4(Option::V4, DHO_NIS_SERVERS, buf),
-        isc::OutOfRange
-    );
+    EXPECT_THROW(factory(Option::V4, DHO_NIS_SERVERS, buf), isc::OutOfRange);
 }
 
 TEST_F(OptionDefinitionTest, factoryEmpty) {
-    // This factory produces empty option (consisting of option type
-    // and length). Attempt to provide some data in the buffer should
-    // result in exception.
-    EXPECT_THROW(
-        OptionDefinition::factoryEmpty(Option::V6, D6O_RAPID_COMMIT,
-                                       OptionBuffer(2)),
-        isc::BadValue
-    );
+    OptionDefinition opt_def("OPTION_RAPID_COMMIT", D6O_RAPID_COMMIT, "empty");
+    Option::Factory* factory(NULL);
+    EXPECT_NO_THROW(factory = opt_def.getFactory());
+    ASSERT_TRUE(factory != NULL);
 
     // Create option instance and provide empty buffer as expected.
     OptionPtr option_v6;
     ASSERT_NO_THROW(
-        option_v6 = OptionDefinition::factoryEmpty(Option::V6, D6O_RAPID_COMMIT,
-                                                   OptionBuffer())
+        option_v6 = factory(Option::V6, D6O_RAPID_COMMIT, OptionBuffer())
     );
+    ASSERT_EQ(typeid(*option_v6), typeid(Option));
     // Expect 'empty' DHCPv6 option.
     EXPECT_EQ(Option::V6, option_v6->getUniverse());
     EXPECT_EQ(4, option_v6->getHeaderLen());
     EXPECT_EQ(0, option_v6->getData().size());
 
     // Repeat the same test scenario for DHCPv4 option.
-    EXPECT_THROW(
-        OptionDefinition::factoryEmpty(Option::V4, 214, OptionBuffer(2)),
-        isc::BadValue
-    );
+    EXPECT_THROW(factory(Option::V4, 214, OptionBuffer(2)),isc::BadValue);
+
     OptionPtr option_v4;
-    ASSERT_NO_THROW(
-        option_v4 = OptionDefinition::factoryEmpty(Option::V4, 214,
-                                                   OptionBuffer())
-    );
+    ASSERT_NO_THROW(option_v4 = factory(Option::V4, 214, OptionBuffer()));
     // Expect 'empty' DHCPv4 option.
     EXPECT_EQ(Option::V4, option_v4->getUniverse());
     EXPECT_EQ(2, option_v4->getHeaderLen());
     EXPECT_EQ(0, option_v4->getData().size());
+
+    // This factory produces empty option (consisting of option type
+    // and length). Attempt to provide some data in the buffer should
+    // result in exception.
+    EXPECT_THROW(factory(Option::V6, D6O_RAPID_COMMIT,OptionBuffer(2)),isc::BadValue);
 }
 
 TEST_F(OptionDefinitionTest, factoryIA6) {
     // This option consists of IAID, T1 and T2 fields (each 4 bytes long).
     const int option6_ia_len = 12;
-    // This should work for DHCPv6 only, try passing invalid universe value.
-    EXPECT_THROW(
-        OptionDefinition::factoryIA6(Option::V4, D6O_IA_NA,
-                                     OptionBuffer(option6_ia_len)),
-        isc::BadValue
-    );
-    // The length of the buffer must be 12 bytes.
-    // Check too short buffer.
-    EXPECT_THROW(
-        OptionDefinition::factoryIA6(Option::V6, D6O_IA_NA,
-                                     OptionBuffer(option6_ia_len - 1)),
-        isc::OutOfRange
-     );
-    // Check too long buffer.
-    EXPECT_THROW(
-        OptionDefinition::factoryIA6(Option::V6, D6O_IA_NA,
-                                     OptionBuffer(option6_ia_len + 1)),
-        isc::OutOfRange
-    );
+
+    // Get the factory function pointer.
+    OptionDefinition opt_def("OPTION_IA_NA", D6O_IA_NA, "record", true);
+    // Each data field is uint32.
+    for (int i = 0; i < 3; ++i) {
+        EXPECT_NO_THROW(opt_def.addRecordField("uint32"));
+    }
+    Option::Factory* factory(NULL);
+    EXPECT_NO_THROW(factory = opt_def.getFactory());
+    ASSERT_TRUE(factory != NULL);
+
     // Check the positive scenario.
-    OptionPtr option_v6;
     OptionBuffer buf(12);
     for (int i = 0; i < buf.size(); ++i) {
         buf[i] = i;
     }
-    EXPECT_NO_THROW(
-        option_v6 = OptionDefinition::factoryIA6(Option::V6, D6O_IA_NA, buf)
-    );
+    OptionPtr option_v6;
+    ASSERT_NO_THROW(option_v6 = factory(Option::V6, D6O_IA_NA, buf));
+    ASSERT_EQ(typeid(*option_v6), typeid(Option6IA));
     boost::shared_ptr<Option6IA> option_cast_v6 =
         boost::static_pointer_cast<Option6IA>(option_v6);
     EXPECT_EQ(0x00010203, option_cast_v6->getIAID());
     EXPECT_EQ(0x04050607, option_cast_v6->getT1());
     EXPECT_EQ(0x08090A0B, option_cast_v6->getT2());
+
+    // This should work for DHCPv6 only, try passing invalid universe value.
+    EXPECT_THROW(
+        factory(Option::V4, D6O_IA_NA, OptionBuffer(option6_ia_len)),
+        isc::BadValue
+    );
+    // The length of the buffer must be 12 bytes.
+    // Check too short buffer.
+    EXPECT_THROW(
+        factory(Option::V6, D6O_IA_NA, OptionBuffer(option6_ia_len - 1)),
+        isc::OutOfRange
+     );
+    // Check too long buffer.
+    EXPECT_THROW(
+        factory(Option::V6, D6O_IA_NA, OptionBuffer(option6_ia_len + 1)),
+        isc::OutOfRange
+    );
 }
 
 TEST_F(OptionDefinitionTest, factoryIAAddr6) {
     // This option consists of IPV6 Address (16 bytes) and preferred-lifetime and
     // valid-lifetime fields (each 4 bytes long).
     const int option6_iaaddr_len = 24;
-    // This should work for DHCPv6 only, try passing invalid universe value.
-    EXPECT_THROW(
-        OptionDefinition::factoryIAAddr6(Option::V4, D6O_IAADDR,
-                                         OptionBuffer(option6_iaaddr_len)),
-        isc::BadValue
-    );
-    // The length of the buffer must be 12 bytes.
-    // Check too short buffer.
-    EXPECT_THROW(
-        OptionDefinition::factoryIAAddr6(Option::V6, D6O_IAADDR,
-                                         OptionBuffer(option6_iaaddr_len - 1)),
-        isc::OutOfRange
-     );
-    // Check too long buffer.
-    EXPECT_THROW(
-        OptionDefinition::factoryIAAddr6(Option::V6, D6O_IAADDR,
-                                         OptionBuffer(option6_iaaddr_len + 1)),
-        isc::OutOfRange
-    );
+
+    OptionDefinition opt_def("OPTION_IAADDR", D6O_IAADDR, "record");
+    ASSERT_NO_THROW(opt_def.addRecordField("ipv6-address"));
+    ASSERT_NO_THROW(opt_def.addRecordField("uint32"));
+    ASSERT_NO_THROW(opt_def.addRecordField("uint32"));
+    Option::Factory* factory(NULL);
+    EXPECT_NO_THROW(factory = opt_def.getFactory());
+    ASSERT_TRUE(factory != NULL);
+
     // Check the positive scenario.
     OptionPtr option_v6;
     asiolink::IOAddress addr_v6("2001:0db8::ff00:0042:8329");
@@ -310,119 +321,156 @@ TEST_F(OptionDefinitionTest, factoryIAAddr6) {
     for (int i = 0; i < option6_iaaddr_len - asiolink::V6ADDRESS_LEN; ++i) {
         buf.push_back(i);
     }
-    EXPECT_NO_THROW(
-        option_v6 = OptionDefinition::factoryIAAddr6(Option::V6, D6O_IAADDR, buf);
-    );
+    //    ASSERT_NO_THROW(option_v6 = factory(Option::V6, D6O_IAADDR, buf));
+    try {
+        option_v6 = factory(Option::V6, D6O_IAADDR, buf);
+    } catch (const Exception& e) {
+        std::cout << e.what() << std::endl;
+    }
+    ASSERT_EQ(typeid(*option_v6), typeid(Option6IAAddr));
     boost::shared_ptr<Option6IAAddr> option_cast_v6 =
         boost::static_pointer_cast<Option6IAAddr>(option_v6);
     EXPECT_EQ(addr_v6, option_cast_v6->getAddress());
     EXPECT_EQ(0x00010203, option_cast_v6->getPreferred());
     EXPECT_EQ(0x04050607, option_cast_v6->getValid());
+
+    // This should work for DHCPv6 only, try passing invalid universe value.
+    EXPECT_THROW(
+        factory(Option::V4, D6O_IAADDR, OptionBuffer(option6_iaaddr_len)),
+        isc::BadValue
+    );
+    // The length of the buffer must be 12 bytes.
+    // Check too short buffer.
+    EXPECT_THROW(
+        factory(Option::V6, D6O_IAADDR, OptionBuffer(option6_iaaddr_len - 1)),
+        isc::OutOfRange
+     );
+    // Check too long buffer.
+    EXPECT_THROW(
+        factory(Option::V6, D6O_IAADDR, OptionBuffer(option6_iaaddr_len + 1)),
+        isc::OutOfRange
+    );
 }
 
 TEST_F(OptionDefinitionTest, factoryIntegerInvalidType) {
+    // The template function factoryInteger<> accepts integer values only
+    // as template typename. Here we try passing different type and
+    // see if it rejects it.
     EXPECT_THROW(
         OptionDefinition::factoryInteger<bool>(Option::V6, D6O_PREFERENCE, OptionBuffer(1)),
         isc::dhcp::InvalidDataType
     );
 }
 
-TEST_F(OptionDefinitionTest, factoryInteger8) {
-    Option::Factory* f = OptionDefinition::factoryInteger<uint8_t>;
+TEST_F(OptionDefinitionTest, factoryUint8) {
+    OptionDefinition opt_def("OPTION_PREFERENCE", D6O_PREFERENCE, "uint8");
+    Option::Factory* factory(NULL);
+    EXPECT_NO_THROW(factory = opt_def.getFactory());
+    ASSERT_TRUE(factory != NULL);
+
     OptionPtr option_v6;
-    // Try to provide too large buffer. Expect exception.
-    EXPECT_THROW(
-        option_v6 = f(Option::V6, D6O_PREFERENCE, OptionBuffer(3)),
-        isc::OutOfRange
-    );
-    // Try to provide zero-length buffer. Expect exception.
-    EXPECT_THROW(
-        option_v6 = f(Option::V6, D6O_PREFERENCE, OptionBuffer()),
-        isc::OutOfRange
-    );
-    // Try to use correct buffer length - 1 byte.
+    // Try to use correct buffer length = 1 byte.
     ASSERT_NO_THROW(
-        option_v6 = f(Option::V6, D6O_PREFERENCE, OptionBuffer(1, 1));
+        option_v6 = factory(Option::V6, D6O_PREFERENCE, OptionBuffer(1, 1));
     );
-    // Validate the value.
+    ASSERT_EQ(typeid(*option_v6), typeid(Option6Int<uint8_t>));    // Validate the value.
     boost::shared_ptr<Option6Int<uint8_t> > option_cast_v6 =
         boost::static_pointer_cast<Option6Int<uint8_t> >(option_v6);
     EXPECT_EQ(1, option_cast_v6->getValue());
 
+    // Try to provide too large buffer. Expect exception.
+    EXPECT_THROW(
+        option_v6 = factory(Option::V6, D6O_PREFERENCE, OptionBuffer(3)),
+        isc::OutOfRange
+    );
+
+    // Try to provide zero-length buffer. Expect exception.
+    EXPECT_THROW(
+        option_v6 = factory(Option::V6, D6O_PREFERENCE, OptionBuffer()),
+        isc::OutOfRange
+    );
+
     // @todo Add more cases for DHCPv4
 }
 
-TEST_F(OptionDefinitionTest, factoryInteger16) {
-    Option::Factory* f = OptionDefinition::factoryInteger<uint16_t>;
+TEST_F(OptionDefinitionTest, factoryUint16) {
+    OptionDefinition opt_def("OPTION_ELAPSED_TIME", D6O_ELAPSED_TIME, "uint16");
+    Option::Factory* factory(NULL);
+    EXPECT_NO_THROW(factory = opt_def.getFactory());
+    ASSERT_TRUE(factory != NULL);
+
     OptionPtr option_v6;
-    // Try to provide too large buffer. Expect exception.
-    EXPECT_THROW(
-        option_v6 = f(Option::V6, D6O_ELAPSED_TIME, OptionBuffer(3)),
-        isc::OutOfRange
-    );
-    // Try to provide zero-length buffer. Expect exception.
-    EXPECT_THROW(
-        option_v6 = f(Option::V6, D6O_ELAPSED_TIME, OptionBuffer(1)),
-        isc::OutOfRange
-    );
-    // Try to use correct buffer length - 2 bytes.
+    // Try to use correct buffer length = 2 bytes.
     OptionBuffer buf;
     buf.push_back(1);
     buf.push_back(2);
     ASSERT_NO_THROW(
-        option_v6 = f(Option::V6, D6O_ELAPSED_TIME, buf);
+        option_v6 = factory(Option::V6, D6O_ELAPSED_TIME, buf);
     );
+    ASSERT_EQ(typeid(*option_v6), typeid(Option6Int<uint16_t>));
     // Validate the value.
     boost::shared_ptr<Option6Int<uint16_t> > option_cast_v6 =
         boost::static_pointer_cast<Option6Int<uint16_t> >(option_v6);
     EXPECT_EQ(0x0102, option_cast_v6->getValue());
 
-    // @todo Add more cases for DHCPv4
-}
-
-TEST_F(OptionDefinitionTest, factoryInteger32) {
-    Option::Factory* f = OptionDefinition::factoryInteger<uint32_t>;
-    OptionPtr option_v6;
     // Try to provide too large buffer. Expect exception.
     EXPECT_THROW(
-        option_v6 = f(Option::V6, D6O_CLT_TIME, OptionBuffer(5)),
+        option_v6 = factory(Option::V6, D6O_ELAPSED_TIME, OptionBuffer(3)),
         isc::OutOfRange
     );
     // Try to provide zero-length buffer. Expect exception.
     EXPECT_THROW(
-        option_v6 = f(Option::V6, D6O_CLT_TIME, OptionBuffer(2)),
+        option_v6 = factory(Option::V6, D6O_ELAPSED_TIME, OptionBuffer(1)),
         isc::OutOfRange
     );
+
+    // @todo Add more cases for DHCPv4
+}
+
+TEST_F(OptionDefinitionTest, factoryUint32) {
+    OptionDefinition opt_def("OPTION_CLT_TIME", D6O_CLT_TIME, "uint32");
+    Option::Factory* factory(NULL);
+    EXPECT_NO_THROW(factory = opt_def.getFactory());
+    ASSERT_TRUE(factory != NULL);
+
+    OptionPtr option_v6;
     OptionBuffer buf;
     buf.push_back(1);
     buf.push_back(2);
     buf.push_back(3);
     buf.push_back(4);
     ASSERT_NO_THROW(
-        option_v6 = f(Option::V6, D6O_CLT_TIME, buf);
+        option_v6 = factory(Option::V6, D6O_CLT_TIME, buf);
     );
+    ASSERT_EQ(typeid(*option_v6), typeid(Option6Int<uint32_t>));
     // Validate the value.
     boost::shared_ptr<Option6Int<uint32_t> > option_cast_v6 =
         boost::static_pointer_cast<Option6Int<uint32_t> >(option_v6);
     EXPECT_EQ(0x01020304, option_cast_v6->getValue());
 
+    // Try to provide too large buffer. Expect exception.
+    EXPECT_THROW(
+        option_v6 = factory(Option::V6, D6O_CLT_TIME, OptionBuffer(5)),
+        isc::OutOfRange
+    );
+    // Try to provide zero-length buffer. Expect exception.
+    EXPECT_THROW(
+        option_v6 = factory(Option::V6, D6O_CLT_TIME, OptionBuffer(2)),
+        isc::OutOfRange
+    );
+
     // @todo Add more cases for DHCPv4
 }
 
-TEST_F(OptionDefinitionTest, factoryInteger16Array) {
-    Option::Factory* f = OptionDefinition::factoryIntegerArray<uint16_t>;
+TEST_F(OptionDefinitionTest, factoryUint16Array) {
+    // Let's define some dummy option.
+    const uint16_t opt_code = 79;
+    OptionDefinition opt_def("OPTION_UINT16_ARRAY", opt_code, "uint16", true);
+    Option::Factory* factory(NULL);
+    EXPECT_NO_THROW(factory = opt_def.getFactory());
+    ASSERT_TRUE(factory != NULL);
+
     OptionPtr option_v6;
-    // Provided buffer size must be greater than zero. Check if we
-    // get exception if we provide zero-length buffer.
-    EXPECT_THROW(
-        option_v6 = f(Option::V6, 79, OptionBuffer()),
-        isc::OutOfRange
-    );
-    // Buffer length must be multiple of data type size.
-    EXPECT_THROW(
-        option_v6 = f(Option::V6, 79, OptionBuffer(5)),
-        isc::OutOfRange
-    );
     // Positive scenario, initiate the buffer with length being
     // multiple of uint16_t size.
     // buffer elements will be: 0x112233.
@@ -432,12 +480,13 @@ TEST_F(OptionDefinitionTest, factoryInteger16Array) {
     }
     // Constructor should succeed because buffer has correct size.
     EXPECT_NO_THROW(
-        option_v6 = f(Option::V6, 79, buf);
+        option_v6 = factory(Option::V6, opt_code, buf);
     );
+    ASSERT_EQ(typeid(*option_v6), typeid(Option6IntArray<uint16_t>));
     boost::shared_ptr<Option6IntArray<uint16_t> > option_cast_v6 =
         boost::static_pointer_cast<Option6IntArray<uint16_t> >(option_v6);
     // Get the values from the initiated options and validate.
-    Option6IntArray<uint16_t>::ValuesCollection values = 
+    Option6IntArray<uint16_t>::ValuesCollection values =
         option_cast_v6->getValues();
     for (int i = 0; i < values.size(); ++i) {
         // Expected value is calculated using on the same pattern
@@ -446,23 +495,30 @@ TEST_F(OptionDefinitionTest, factoryInteger16Array) {
         uint16_t expected = (i << 8) | i;
         EXPECT_EQ(expected, values[i]);
     }
-}
 
-TEST_F(OptionDefinitionTest, factoryInteger32Array) {
-    Option::Factory* f = OptionDefinition::factoryIntegerArray<uint32_t>;
-    const uint16_t opt_code = 80;
-    OptionPtr option_v6;
     // Provided buffer size must be greater than zero. Check if we
     // get exception if we provide zero-length buffer.
     EXPECT_THROW(
-        option_v6 = f(Option::V6, opt_code, OptionBuffer()),
+        option_v6 = factory(Option::V6, opt_code, OptionBuffer()),
         isc::OutOfRange
     );
     // Buffer length must be multiple of data type size.
     EXPECT_THROW(
-        option_v6 = f(Option::V6, opt_code, OptionBuffer(5)),
+        option_v6 = factory(Option::V6, opt_code, OptionBuffer(5)),
         isc::OutOfRange
     );
+}
+
+TEST_F(OptionDefinitionTest, factoryUint32Array) {
+    // Let's define some dummy option.
+    const uint16_t opt_code = 80;
+
+    OptionDefinition opt_def("OPTION_UINT32_ARRAY", opt_code, "uint32", true);
+    Option::Factory* factory(NULL);
+    EXPECT_NO_THROW(factory = opt_def.getFactory());
+    ASSERT_TRUE(factory != NULL);
+
+    OptionPtr option_v6;
     // Positive scenario, initiate the buffer with length being
     // multiple of uint16_t size.
     // buffer elements will be: 0x111122223333.
@@ -472,12 +528,13 @@ TEST_F(OptionDefinitionTest, factoryInteger32Array) {
     }
     // Constructor should succeed because buffer has correct size.
     EXPECT_NO_THROW(
-        option_v6 = f(Option::V6, opt_code, buf);
+        option_v6 = factory(Option::V6, opt_code, buf);
     );
+    ASSERT_EQ(typeid(*option_v6), typeid(Option6IntArray<uint32_t>));
     boost::shared_ptr<Option6IntArray<uint32_t> > option_cast_v6 =
         boost::static_pointer_cast<Option6IntArray<uint32_t> >(option_v6);
     // Get the values from the initiated options and validate.
-    Option6IntArray<uint32_t>::ValuesCollection values = 
+    Option6IntArray<uint32_t>::ValuesCollection values =
         option_cast_v6->getValues();
     for (int i = 0; i < values.size(); ++i) {
         // Expected value is calculated using on the same pattern
@@ -486,6 +543,18 @@ TEST_F(OptionDefinitionTest, factoryInteger32Array) {
         uint32_t expected = 0x01010101 * i;
         EXPECT_EQ(expected, values[i]);
     }
+
+    // Provided buffer size must be greater than zero. Check if we
+    // get exception if we provide zero-length buffer.
+    EXPECT_THROW(
+        option_v6 = factory(Option::V6, opt_code, OptionBuffer()),
+        isc::OutOfRange
+    );
+    // Buffer length must be multiple of data type size.
+    EXPECT_THROW(
+        option_v6 = factory(Option::V6, opt_code, OptionBuffer(5)),
+        isc::OutOfRange
+    );
 }
 
 

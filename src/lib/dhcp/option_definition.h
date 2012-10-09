@@ -99,8 +99,8 @@ public:
 
     /// List of fields within the record.
     typedef std::vector<DataType> RecordFieldsCollection;
-    /// Iterator for record data fields.
-    typedef std::vector<DataType>::iterator RecordFieldsCollectionIter;
+    /// Const iterator for record data fields.
+    typedef std::vector<DataType>::const_iterator RecordFieldsConstIter;
 
 private:
 
@@ -208,6 +208,16 @@ public:
     /// @return option data type.
     DataType getType() const { return (type_); };
 
+    /// @brief Check if specified format is IA_NA option format.
+    ///
+    /// @return true if specified format is IA_NA option format.
+    bool haveIA6Format() const;
+
+    /// @brief Check if specified format is IAADDR option format.
+    ///
+    /// @return true if specified format is IAADDR option format.
+    bool haveIAAddr6Format() const;
+
     /// @brief Factory to create option with address list.
     ///
     /// @param u universe (must be V4).
@@ -231,6 +241,14 @@ public:
     /// @param buf option buffer (must be empty).
     static OptionPtr factoryEmpty(Option::Universe u, uint16_t type,
                                   const OptionBuffer& buf);
+
+    /// @brief Factory to create generic option..
+    ///
+    /// @param u universe (V6 or V4).
+    /// @param type option type.
+    /// @param buf option buffer.
+    static OptionPtr factoryGeneric(Option::Universe u, uint16_t type,
+                                    const OptionBuffer& buf);
 
     /// @brief Factory for IA-type of option.
     ///
@@ -291,6 +309,13 @@ public:
     }
 
 private:
+
+    /// @brief Check if specified type matches option definition type.
+    ///
+    /// @return true if specified type matches option definition type.
+    inline bool haveType(const DataType type) const {
+        return (type == type_);
+    }
 
     /// @brief Sanity check universe value.
     ///
