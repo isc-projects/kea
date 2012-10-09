@@ -74,6 +74,14 @@ private:
     typedef DomainTreeNode<ZoneData> ZoneTableNode;
 
 public:
+     /// \brief Result data of addZone() method.
+     struct AddResult {
+         AddResult(result::Result param_code, ZoneData* param_zone_data) :
+             code(param_code), zone_data(param_zone_data)
+         {}
+         const result::Result code;
+         ZoneData* const zone_data;
+     };
 
     /// \brief Result data of findZone() method.
     struct FindResult {
@@ -149,12 +157,12 @@ public:
     /// \return \c result::SUCCESS If the zone is successfully
     ///     added to the zone table.
     /// \return \c result::EXIST The zone table already contained
-    ///     zone of the same origin. The old data is released and replaced
-    ///     by the new one.
-    result::Result addZone(util::MemorySegment& mem_sgmt,
-                           dns::RRClass zone_class,
-                           const dns::Name& zone_name,
-                           ZoneData* content);
+    ///     zone of the same origin. The old data is replaced and returned
+    ///     inside the result.
+    AddResult addZone(util::MemorySegment& mem_sgmt,
+                      dns::RRClass zone_class,
+                      const dns::Name& zone_name,
+                      ZoneData* content);
 
     /// Find a zone that best matches the given name in the \c ZoneTable.
     ///
