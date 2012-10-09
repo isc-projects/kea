@@ -105,6 +105,7 @@ public:
     private:
         Mutex* mutex_;
     };
+
     /// \brief If the mutex is currently locked
     ///
     /// This is debug aiding method only. And it might be unavailable in
@@ -113,11 +114,35 @@ public:
     ///
     /// \todo Disable in non-debug build
     bool locked() const;
+
+    /// \brief Lock the mutex
+    ///
+    /// This method blocks until the mutex can be locked.
+    ///
+    /// Please consider not using this method directly and instead using
+    /// a Mutex::Locker object instead.
+    void lock();
+
+    /// \brief Try to lock the mutex
+    ///
+    /// This method doesn't block and returns immediately with a status
+    /// on whether the lock operation was successful.
+    ///
+    /// Please consider not using this method directly and instead using
+    /// a Mutex::Locker object instead.
+    ///
+    /// \return true if the lock was successful, false otherwise.
+    bool tryLock();
+
+    /// \brief Unlock the mutex
+    ///
+    /// Please consider not using this method directly and instead using
+    /// a Mutex::Locker object instead.
+    void unlock();
+
 private:
     class Impl;
     Impl* impl_;
-    void lock();
-    void unlock();
 };
 
 
