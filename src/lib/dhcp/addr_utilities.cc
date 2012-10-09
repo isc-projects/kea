@@ -40,6 +40,13 @@ const uint8_t bitMask6[]= { 0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
 namespace isc {
 namespace dhcp {
 
+/// @brief calculates the first IPv6 address in a IPv6 prefix
+///
+/// Note: This is a private function. Do not use it directly.
+/// Please use firstAddrInPrefix() instead.
+///
+/// @param prefix IPv6 prefix
+/// @param len prefix length
 isc::asiolink::IOAddress firstAddrInPrefix6(const isc::asiolink::IOAddress& prefix,
                                             uint8_t len) {
 
@@ -74,9 +81,12 @@ isc::asiolink::IOAddress firstAddrInPrefix6(const isc::asiolink::IOAddress& pref
     return (isc::asiolink::IOAddress::from_bytes(AF_INET6, packed));
 }
 
-/// @brief IPv4 version of firstAddrInPrefix4
+/// @brief calculates the first IPv4 address in a IPv4 prefix
 ///
-/// @param prefix IPv4 prefix that we calculate first address for
+/// Note: This is a private function. Do not use it directly.
+/// Please use firstAddrInPrefix() instead.
+///
+/// @param prefix IPv4 prefix
 /// @param len netmask length (0-32)
 isc::asiolink::IOAddress firstAddrInPrefix4(const isc::asiolink::IOAddress& prefix,
                                             uint8_t len) {
@@ -97,6 +107,13 @@ isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefi
     }
 }
 
+/// @brief calculates the last IPv4 address in a IPv4 prefix
+///
+/// Note: This is a private function. Do not use it directly.
+/// Please use firstAddrInPrefix() instead.
+///
+/// @param prefix IPv4 prefix that we calculate first address for
+/// @param len netmask length (0-32)
 isc::asiolink::IOAddress lastAddrInPrefix4(const isc::asiolink::IOAddress& prefix,
                                            uint8_t len) {
     uint32_t addr = prefix;
@@ -107,6 +124,13 @@ isc::asiolink::IOAddress lastAddrInPrefix4(const isc::asiolink::IOAddress& prefi
     return (IOAddress(addr | bitMask4[len]));
 }
 
+/// @brief calculates the last IPv6 address in a IPv6 prefix
+///
+/// Note: This is a private function. Do not use it directly.
+/// Please use lastAddrInPrefix() instead.
+///
+/// @param prefix IPv6 prefix that we calculate first address for
+/// @param len netmask length (0-128)
 isc::asiolink::IOAddress lastAddrInPrefix6(const isc::asiolink::IOAddress& prefix,
                                            uint8_t len) {
 
