@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include "dhcp/dhcp6.h"
 #include "dhcp/option_definition.h"
 #include "dhcp/option4_addrlst.h"
 #include "dhcp/option6_addrlst.h"
@@ -96,7 +97,36 @@ OptionDefinition::addRecordField(const DataType data_type) {
 
 Option::Factory*
 OptionDefinition::getFactory() const {
-    return (OptionDefinition::factoryEmpty);
+    if (type_ == IPV6_ADDRESS_TYPE && array_type_) {
+        return (factoryAddrList6);
+    } else if (type_ == IPV4_ADDRESS_TYPE && array_type_) {
+        return (factoryAddrList4);
+    } else if (type_ == EMPTY_TYPE) {
+        return (factoryEmpty);
+    } else if (code_ == D6O_IA_NA && haveIA6Format()) {
+        return (factoryIA6);
+    } else if (code_ == D6O_IAADDR && haveIAAddr6Format()) {
+        return (factoryIAAddr6);
+    } else if (type_ == UINT8_TYPE) {
+        if (array_type_) {
+            return (factoryGeneric);
+        } else {
+            return (factoryInteger<uint8_t>);
+        }
+    } else if (type_ == UINT16_TYPE) {
+        if (array_type_) {
+            return (factoryIntegerArray<uint16_t>);
+        } else {
+            return (factoryInteger<uint16_t>);
+        }
+    } else if (type_ == UINT32_TYPE) {
+        if (array_type_) {
+            return (factoryIntegerArray<uint32_t>);
+        } else {
+            return (factoryInteger<uint32_t>);
+        }
+    }
+    return (factoryGeneric);
 }
 
 void
@@ -107,13 +137,48 @@ OptionDefinition::sanityCheckUniverse(const Option::Universe expected_universe,
     }
 }
 
-
 void
 OptionDefinition::validate() const {
     if (type_ >= UNKNOWN_TYPE) {
         isc_throw(isc::OutOfRange, "option type value " << type_
                   << " is out of range");
     }
+}
+
+bool
+OptionDefinition::haveIA6Format() const {
+    // Expect that IA_NA option format is defined as record.
+    // Although it consists of 3 elements of the same (uint32)
+    // type it can't be defined as array of uint32 elements because
+    // arrays do not impose limitations on number of elements in
+    // the array while this limitation is needed for IA_NA - need
+    // exactly 3 elements.
+    if (haveType(RECORD_TYPE)) {
+        if (record_fields_.size() == 3) {
+            for (RecordFieldsConstIter it = record_fields_.begin();
+                 it != record_fields_.end(); ++it) {
+                if (*it != UINT32_TYPE) {
+                    return (false);
+                }
+            }
+            return (true);
+        }
+    }
+    return (false);
+}
+
+bool
+OptionDefinition::haveIAAddr6Format() const {
+    if (haveType(RECORD_TYPE)) {
+        if (record_fields_.size() == 3) {
+            if (record_fields_[0] == IPV6_ADDRESS_TYPE &&
+                record_fields_[1] == UINT32_TYPE &&
+                record_fields_[2] == UINT32_TYPE) {
+                return (true);
+            }
+        }
+    }
+    return (false);
 }
 
 OptionPtr
@@ -142,6 +207,12 @@ OptionDefinition::factoryEmpty(Option::Universe u, uint16_t type, const OptionBu
                   " when creating empty option instance");
     }
     OptionPtr option(new Option(u, type));
+    return (option);
+}
+
+OptionPtr
+OptionDefinition::factoryGeneric(Option::Universe u, uint16_t type, const OptionBuffer& buf) {
+    OptionPtr option(new Option(u, type, buf));
     return (option);
 }
 
