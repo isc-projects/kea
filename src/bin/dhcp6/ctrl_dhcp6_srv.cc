@@ -53,7 +53,8 @@ ControlledDhcpv6Srv::dhcp6ConfigHandler(ConstElementPtr new_config) {
         return (configureDhcp6Server(*server_, new_config));
     }
 
-    // that should never happen as we install config_handler after we
+    // That should never happen as we install config_handler after we instantiate
+    // the server.
     ConstElementPtr answer = isc::config::createAnswer(1,
            "Configuration rejected, server is during startup/shutdown phase.");
     return (answer);

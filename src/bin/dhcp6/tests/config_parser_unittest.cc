@@ -39,7 +39,9 @@ class Dhcp6ParserTest : public ::testing::Test {
 public:
     Dhcp6ParserTest()
     :rcode_(-1) {
-        // open port 0 means to not do anything at all
+        // Open port 0 means to not do anything at all. We don't want to
+        // deal with sockets here, just check if configuration handling
+        // is sane.
         srv_ = new Dhcpv6Srv(0);
     }
 
@@ -47,13 +49,15 @@ public:
         delete srv_;
     };
 
-    Dhcpv6Srv * srv_;
+    Dhcpv6Srv* srv_;
 
     int rcode_;
     ConstElementPtr comment_;
 };
 
-
+// Goal of this test is a verification if a very simple config update
+// with just a bumped version number. That's the simplest possible
+// config update.
 TEST_F(Dhcp6ParserTest, version) {
 
     ConstElementPtr x;
@@ -67,6 +71,8 @@ TEST_F(Dhcp6ParserTest, version) {
     EXPECT_EQ(0, rcode_);
 }
 
+/// The goal of this test is to verify that the code accepts only
+/// valid commands and malformed or unsupported parameters are rejected.
 TEST_F(Dhcp6ParserTest, bogus_command) {
 
     ConstElementPtr x;
@@ -80,11 +86,14 @@ TEST_F(Dhcp6ParserTest, bogus_command) {
     EXPECT_EQ(1, rcode_);
 }
 
+/// The goal of this test is to verify if wrongly defined subnet will
+/// be rejected. Properly defined subnet must include at least one
+/// pool definition.
 TEST_F(Dhcp6ParserTest, empty_subnet) {
 
-    ConstElementPtr x;
+    ConstElementPtr status;
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_,
+    EXPECT_NO_THROW(status = configureDhcp6Server(*srv_,
                     Element::fromJSON("{ \"interface\": [ \"all\" ],"
                                       "\"preferred-lifetime\": 3000,"
                                       "\"rebind-timer\": 2000, "
@@ -92,15 +101,17 @@ TEST_F(Dhcp6ParserTest, empty_subnet) {
                                       "\"subnet6\": [  ], "
                                       "\"valid-lifetime\": 4000 }")));
 
-    // returned value must be 1 (configuration parse error)
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
+    // returned value should be 0 (success)
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
     EXPECT_EQ(0, rcode_);
 }
 
+/// The goal of this test is to verify if defined subnet uses global
+/// parameter timer definitions.
 TEST_F(Dhcp6ParserTest, subnet_global_defaults) {
 
-    ConstElementPtr x;
+    ConstElementPtr status;
 
     string config = "{ \"interface\": [ \"all\" ],"
         "\"preferred-lifetime\": 3000,"
@@ -114,13 +125,15 @@ TEST_F(Dhcp6ParserTest, subnet_global_defaults) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(status = configureDhcp6Server(*srv_, json));
 
-    // returned value must be 1 (configuration parse error)
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
+    // check if returned status is OK
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
     EXPECT_EQ(0, rcode_);
 
+    // Now check if the configuration was indeed handled and we have
+    // expected pool configured.
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
     ASSERT_TRUE(subnet);
     EXPECT_EQ(1000, subnet->getT1());
@@ -129,10 +142,11 @@ TEST_F(Dhcp6ParserTest, subnet_global_defaults) {
     EXPECT_EQ(4000, subnet->getValid());
 }
 
-//
+// This test checks if it is possible to override global values
+// on a per subnet basis.
 TEST_F(Dhcp6ParserTest, subnet_local) {
 
-    ConstElementPtr x;
+    ConstElementPtr status;
 
     string config = "{ \"interface\": [ \"all\" ],"
         "\"preferred-lifetime\": 3000,"
@@ -150,11 +164,11 @@ TEST_F(Dhcp6ParserTest, subnet_local) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(status = configureDhcp6Server(*srv_, json));
 
-    // returned value must be 1 (configuration parse error)
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
+    // returned value should be 0 (configuration success)
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
     EXPECT_EQ(0, rcode_);
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
@@ -165,9 +179,11 @@ TEST_F(Dhcp6ParserTest, subnet_local) {
     EXPECT_EQ(4, subnet->getValid());
 }
 
+// Test verifies that a subnet with pool values that do not belong to that
+// pool are rejected.
 TEST_F(Dhcp6ParserTest, pool_out_of_subnet) {
 
-    ConstElementPtr x;
+    ConstElementPtr status;
 
     string config = "{ \"interface\": [ \"all\" ],"
         "\"preferred-lifetime\": 3000,"
@@ -181,17 +197,19 @@ TEST_F(Dhcp6ParserTest, pool_out_of_subnet) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(status = configureDhcp6Server(*srv_, json));
 
     // returned value must be 2 (values error)
     // as the pool does not belong to that subnet
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
     EXPECT_EQ(2, rcode_);
-
 }
 
-TEST_F(Dhcp6ParserTest, subnet_prefix_len) {
+// Goal of this test is to verify if pools can be defined
+// using prefix/length notation. There is no separate test for min-max
+// notation as it was tested in several previous tests.
+TEST_F(Dhcp6ParserTest, pool_prefix_len) {
 
     ConstElementPtr x;
 
