@@ -18,18 +18,24 @@
 
 using namespace isc::asiolink;
 
-const static uint32_t masks[] = { 0x00000000, 0x00000001, 0x00000003, 0x00000007,
-                                  0x0000000f, 0x0000001f, 0x0000003f, 0x0000007f,
-                                  0x000000ff, 0x000001ff, 0x000003ff, 0x000007ff,
-                                  0x00000fff, 0x00001fff, 0x00003fff, 0x00007fff,
-                                  0x0000ffff, 0x0001ffff, 0x0003ffff, 0x0007ffff,
-                                  0x000fffff, 0x001fffff, 0x003fffff, 0x007fffff,
-                                  0x00ffffff, 0x01ffffff, 0x03ffffff, 0x07ffffff,
-                                  0x0fffffff, 0x1fffffff, 0x3fffffff, 0x7fffffff,
-                                  0xffffffff };
+namespace {
 
-const static uint8_t bitMask[]= { 0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
+/// @brief mask used for first/last address calculation in a IPv4 prefix
+///
+/// Using a static mask is faster than calculating it dynamically every time.
+const uint32_t bitMask4[] = { 0xffffffff, 0x7fffffff, 0x3fffffff, 0x1fffffff,
+                              0x0fffffff, 0x07ffffff, 0x03ffffff, 0x01ffffff,
+                              0x00ffffff, 0x007fffff, 0x003fffff, 0x001fffff,
+                              0x000fffff, 0x0007ffff, 0x0003ffff, 0x0001ffff,
+                              0x0000ffff, 0x00007fff, 0x00003fff, 0x00001fff,
+                              0x00000fff, 0x000007ff, 0x000003ff, 0x000001ff,
+                              0x000000ff, 0x0000007f, 0x0000003f, 0x0000001f,
+                              0x0000000f, 0x00000007, 0x00000003, 0x00000001,
+                              0x00000000 };
 
+/// @brief mask used for first/last address calculation in a IPv6 prefix
+const uint8_t bitMask6[]= { 0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
+}
 
 namespace isc {
 namespace dhcp {
@@ -49,7 +55,7 @@ isc::asiolink::IOAddress firstAddrInPrefix6(const isc::asiolink::IOAddress& pref
 
         // Get the appropriate mask. It has relevant bits (those that should
         // stay) set and irrelevant (those that should be wiped) cleared.
-        uint8_t mask = bitMask[len % 8];
+        uint8_t mask = bitMask6[len % 8];
 
         // Let's leave only whatever the mask says should not be cleared.
         packed[len / 8] = packed[len / 8] & mask;
@@ -68,14 +74,18 @@ isc::asiolink::IOAddress firstAddrInPrefix6(const isc::asiolink::IOAddress& pref
     return (isc::asiolink::IOAddress::from_bytes(AF_INET6, packed));
 }
 
+/// @brief IPv4 version of firstAddrInPrefix4
+///
+/// @param prefix IPv4 prefix that we calculate first address for
+/// @param len netmask length (0-32)
 isc::asiolink::IOAddress firstAddrInPrefix4(const isc::asiolink::IOAddress& prefix,
                                             uint8_t len) {
     uint32_t addr = prefix;
-    if (len>32) {
+    if (len > 32) {
         isc_throw(BadValue, "Too large netmask. 0..32 is allowed in IPv4");
     }
 
-    return (IOAddress(addr & (~masks[32-len])));
+    return (IOAddress(addr & (~bitMask4[len])));
 }
 
 isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefix,
@@ -94,13 +104,12 @@ isc::asiolink::IOAddress lastAddrInPrefix4(const isc::asiolink::IOAddress& prefi
         isc_throw(BadValue, "Too large netmask. 0..32 is allowed in IPv4");
     }
 
-    return (IOAddress(addr | masks[32-len]));
+    return (IOAddress(addr | bitMask4[len]));
 }
 
 isc::asiolink::IOAddress lastAddrInPrefix6(const isc::asiolink::IOAddress& prefix,
                                            uint8_t len) {
 
-    const static uint8_t bitMask[]= { 0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
     uint8_t packed[V6ADDRESS_LEN];
 
     // First we copy the whole address as 16 bytes.
@@ -112,10 +121,10 @@ isc::asiolink::IOAddress lastAddrInPrefix6(const isc::asiolink::IOAddress& prefi
     if (len % 8 != 0) {
         // Get the appropriate mask. It has relevant bits (those that should
         // stay) set and irrelevant (those that should be set to 1) cleared.
-        uint8_t mask = bitMask[len % 8];
+        uint8_t mask = bitMask6[len % 8];
 
         // Let's set those irrelevant bits with 1. It would be perhaps
-        // easier to not use negation here and invert bitMask content. However,
+        // easier to not use negation here and invert bitMask6 content. However,
         // with this approach, we can use the same mask in first and last
         // address calculations.
         packed[len / 8] = packed[len / 8] | ~mask;
