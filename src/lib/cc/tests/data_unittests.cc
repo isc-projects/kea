@@ -112,7 +112,7 @@ TEST(Element, from_and_to_json) {
         std::string s = std::string(pe.what());
         EXPECT_EQ("String expected in <string>:1:3", s);
     }
-    
+
     sv.clear();
     sv.push_back("{1}");
     //ElementPtr ep = Element::fromJSON("\"aaa\nbbb\"err");
@@ -233,7 +233,7 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->contains("foo"), TypeError);
     ConstElementPtr tmp;
     EXPECT_FALSE(el->find("foo", tmp));
-    
+
 
     el = Element::create(1.1);
     EXPECT_THROW(el->intValue(), TypeError);
@@ -399,7 +399,7 @@ TEST(Element, MapElement) {
     // this function checks the specific functions for ListElements
     ElementPtr el = Element::fromJSON("{ \"name\": \"foo\", \"value1\": \"bar\", \"value2\": { \"number\": 42 } }");
     ConstElementPtr el2;
-    
+
     EXPECT_EQ(el->get("name")->stringValue(), "foo");
     EXPECT_EQ(el->get("value2")->getType(), Element::map);
 
@@ -413,10 +413,10 @@ TEST(Element, MapElement) {
 
     EXPECT_EQ(el->find("value2/number")->intValue(), 42);
     EXPECT_TRUE(isNull(el->find("value2/nothing/")));
-   
+
     EXPECT_EQ(el->find("value1")->stringValue(), "bar");
     EXPECT_EQ(el->find("value1/")->stringValue(), "bar");
-    
+
     EXPECT_TRUE(el->find("value1", el2));
     EXPECT_EQ("bar", el2->stringValue());
     EXPECT_FALSE(el->find("name/error", el2));
@@ -428,7 +428,7 @@ TEST(Element, MapElement) {
                        "9123456789abcdefa123456789abcdefb123456789abcdef"
                        "c123456789abcdefd123456789abcdefe123456789abcdef"
                        "f123456789abcde");
-    
+
     EXPECT_EQ(255, long_maptag.length()); // check prerequisite
     el = Element::fromJSON("{ \"" + long_maptag + "\": \"bar\"}");
     EXPECT_EQ("bar", el->find(long_maptag)->stringValue());
@@ -707,7 +707,7 @@ TEST(Element, merge) {
     c = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     merge(b, a);
     EXPECT_EQ(*b, *c);
-    
+
     // And some tests with multiple values
     a = Element::fromJSON("{ \"a\": 1, \"b\": true, \"c\": null }");
     b = Element::fromJSON("{ \"a\": 1, \"b\": null, \"c\": \"a string\" }");
