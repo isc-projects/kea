@@ -411,10 +411,11 @@ performCallbackTest(TestDomainTree& dtree,
                                                         Name("example"),
                                                         &parentdtnode));
     // the child/parent nodes shouldn't "inherit" the callback flag.
-    // "cdtnode" may be invalid due to the insertion, so we need to re-find
-    // it.
+    // "dtnode" should still validly point to "callback.example", but we
+    // explicitly confirm it.
     EXPECT_EQ(TestDomainTree::EXACTMATCH, dtree.find(Name("callback.example"),
                                                      &cdtnode));
+    ASSERT_EQ(dtnode, cdtnode);
     EXPECT_TRUE(cdtnode->getFlag(TestDomainTreeNode::FLAG_CALLBACK));
     EXPECT_FALSE(subdtnode->getFlag(TestDomainTreeNode::FLAG_CALLBACK));
     EXPECT_FALSE(parentdtnode->getFlag(TestDomainTreeNode::FLAG_CALLBACK));
