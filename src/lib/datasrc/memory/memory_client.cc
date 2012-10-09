@@ -630,16 +630,20 @@ InMemoryClient::InMemoryClientImpl::load(
     const std::string* tstr = node->setData(new std::string(filename));
     delete tstr;
 
-    const result::Result result(zone_table_->addZone(mem_sgmt_, rrclass_,
-                                                     zone_name,
-                                                     holder.release()));
-    if (result == result::SUCCESS) {
+    const ZoneTable::AddResult result(zone_table_->addZone(mem_sgmt_, rrclass_,
+                                                           zone_name,
+                                                           holder.release()));
+    if (result.code == result::SUCCESS) {
         // Only increment the zone count if the zone doesn't already
         // exist.
         ++zone_count_;
     }
+    // Destroy the old instance of the zone if there was any
+    if (result.zone_data != NULL) {
+        ZoneData::destroy(mem_sgmt_, result.zone_data, rrclass_);
+    }
 
-    return (result);
+    return (result.code);
 }
 
 namespace {
