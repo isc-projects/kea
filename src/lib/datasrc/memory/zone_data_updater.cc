@@ -18,7 +18,6 @@
 
 #include <dns/rdataclass.h>
 
-#include <boost/scoped_ptr.hpp>
 #include <boost/foreach.hpp>
 
 using namespace isc::dns;
