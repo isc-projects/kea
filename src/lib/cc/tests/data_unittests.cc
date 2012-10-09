@@ -176,6 +176,7 @@ TEST(Element, create_and_value_throws) {
     // this test checks whether elements throw exceptions if the
     // incorrect type is requested
     ElementPtr el;
+    ConstElementPtr cel;
     long int i;
     double d;
     bool b;
@@ -197,6 +198,22 @@ TEST(Element, create_and_value_throws) {
     EXPECT_FALSE(el->getValue(v));
     EXPECT_FALSE(el->getValue(m));
     EXPECT_EQ(i, 1);
+
+    cel = Element::create(1);
+    EXPECT_NO_THROW(cel->intValue());
+    EXPECT_THROW(cel->doubleValue(), TypeError);
+    EXPECT_THROW(cel->boolValue(), TypeError);
+    EXPECT_THROW(cel->stringValue(), TypeError);
+    EXPECT_THROW(cel->listValue(), TypeError);
+    EXPECT_THROW(cel->mapValue(), TypeError);
+    EXPECT_TRUE(cel->getValue(i));
+    EXPECT_FALSE(cel->getValue(d));
+    EXPECT_FALSE(cel->getValue(b));
+    EXPECT_FALSE(cel->getValue(s));
+    EXPECT_FALSE(cel->getValue(v));
+    EXPECT_FALSE(cel->getValue(m));
+    EXPECT_EQ(i, 1);
+
     i = 2;
     EXPECT_TRUE(el->setValue(i));
     EXPECT_EQ(2, el->intValue());
@@ -401,6 +418,7 @@ TEST(Element, MapElement) {
     EXPECT_EQ(el->find("value1/")->stringValue(), "bar");
     
     EXPECT_TRUE(el->find("value1", el2));
+    EXPECT_EQ("bar", el2->stringValue());
     EXPECT_FALSE(el->find("name/error", el2));
 
     // A map element whose (only) element has the maximum length of tag.
