@@ -121,24 +121,21 @@ CountersImpl::inc(const QRAttributes& qrattrs, const Message& response) {
     unsigned int qtype_type = QR_QTYPE_OTHER;
     const QuestionIterator qiter = response.beginQuestion();
     if (qiter != response.endQuestion()) {
-        // get the first and only question section
-        const QuestionPtr qptr = *qiter;
-        if (qptr != NULL) {
-            // get the qtype code
-            const unsigned int qtype = qptr->getType().getCode();
-            if (qtype < 258) {
-                // qtype 0..257
-                qtype_type = QRQTypeToQRCounterType[qtype];
-            } else if (qtype < 32768) {
-                // qtype 258..32767
-                qtype_type = QR_QTYPE_OTHER;
-            } else if (qtype < 32770) {
-                // qtype 32768..32769
-                qtype_type = QR_QTYPE_TA + (qtype - 32768);
-            } else {
-                // qtype 32770..65535
-                qtype_type = QR_QTYPE_OTHER;
-            }
+        // get the first and only question section and
+        // get the qtype code
+        const unsigned int qtype = (*qiter)->getType().getCode();
+        if (qtype < 258) {
+            // qtype 0..257
+            qtype_type = QRQTypeToQRCounterType[qtype];
+        } else if (qtype < 32768) {
+            // qtype 258..32767
+            qtype_type = QR_QTYPE_OTHER;
+        } else if (qtype < 32770) {
+            // qtype 32768..32769
+            qtype_type = QR_QTYPE_TA + (qtype - 32768);
+        } else {
+            // qtype 32770..65535
+            qtype_type = QR_QTYPE_OTHER;
         }
     }
     server_qr_counter_.inc(qtype_type);
