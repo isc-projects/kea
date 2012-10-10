@@ -46,54 +46,44 @@ public:
     /// \param items A number of counter items to hold (greater than 0)
     ///
     /// \throw isc::InvalidParameter \a items is 0
-    explicit inline Counter(const size_t items);
+    explicit inline Counter(const size_t items) :
+        counters_(items, InitialValue)
+    {
+        if (items == 0) {
+            isc_throw(isc::InvalidParameter, "Items must not be 0");
+        }
+    };
 
     /// The destructor.
     ///
     /// This method never throws an exception.
-    inline ~Counter();
+    inline ~Counter() {};
 
     /// \brief Increment a counter item specified with \a type.
     ///
     /// \param type %Counter item to increment
     ///
     /// \throw isc::OutOfRange \a type is invalid
-    inline void inc(const Counter::Type);
+    inline void inc(const Counter::Type type) {
+        if (type >= counters_.size()) {
+            isc_throw(isc::OutOfRange, "Counter type is out of range");
+        }
+        ++counters_.at(type);
+        return;
+    };
 
     /// \brief Get the value of a counter item specified with \a type.
     ///
     /// \param type %Counter item to get the value of
     ///
     /// \throw isc::OutOfRange \a type is invalid
-    inline const Counter::Value& get(const Counter::Type) const;
+    inline const Counter::Value& get(const Counter::Type type) const {
+        if (type >= counters_.size()) {
+            isc_throw(isc::OutOfRange, "Counter type is out of range");
+        }
+        return (counters_.at(type));
+    };
 };
-
-inline Counter::Counter(const size_t items) :
-    counters_(items, InitialValue)
-{
-    if (items == 0) {
-        isc_throw(isc::InvalidParameter, "Items must not be 0");
-    }
-}
-
-inline Counter::~Counter() {}
-
-inline void
-Counter::inc(const Counter::Type type) {
-    if(type >= counters_.size()) {
-        isc_throw(isc::OutOfRange, "Counter type is out of range");
-    }
-    ++counters_.at(type);
-    return;
-}
-
-inline const Counter::Value&
-Counter::get(const Counter::Type type) const {
-    if(type >= counters_.size()) {
-        isc_throw(isc::OutOfRange, "Counter type is out of range");
-    }
-    return (counters_.at(type));
-}
 
 }   // namespace statistics
 }   // namespace isc
