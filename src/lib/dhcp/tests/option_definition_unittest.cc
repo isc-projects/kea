@@ -486,8 +486,7 @@ TEST_F(OptionDefinitionTest, factoryUint16Array) {
     boost::shared_ptr<Option6IntArray<uint16_t> > option_cast_v6 =
         boost::static_pointer_cast<Option6IntArray<uint16_t> >(option_v6);
     // Get the values from the initiated options and validate.
-    Option6IntArray<uint16_t>::ValuesCollection values =
-        option_cast_v6->getValues();
+    std::vector<uint16_t> values = option_cast_v6->getValues();
     for (int i = 0; i < values.size(); ++i) {
         // Expected value is calculated using on the same pattern
         // as the one we used to initiate buffer:
@@ -534,8 +533,7 @@ TEST_F(OptionDefinitionTest, factoryUint32Array) {
     boost::shared_ptr<Option6IntArray<uint32_t> > option_cast_v6 =
         boost::static_pointer_cast<Option6IntArray<uint32_t> >(option_v6);
     // Get the values from the initiated options and validate.
-    Option6IntArray<uint32_t>::ValuesCollection values =
-        option_cast_v6->getValues();
+    std::vector<uint32_t> values = option_cast_v6->getValues();
     for (int i = 0; i < values.size(); ++i) {
         // Expected value is calculated using on the same pattern
         // as the one we used to initiate buffer:

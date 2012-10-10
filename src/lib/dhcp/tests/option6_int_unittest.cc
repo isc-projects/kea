@@ -182,7 +182,7 @@ TEST_F(Option6IntTest, basicUint32) {
 }
 
 
-TEST_F(Option6IntTest, simpleUint8) {
+TEST_F(Option6IntTest, setValueUint8) {
     boost::shared_ptr<Option6Int<uint8_t> > opt(new Option6Int<uint8_t>(D6O_PREFERENCE, 123));
     // Check if constructor intitialized the option value correctly.
     EXPECT_EQ(123, opt->getValue());
@@ -195,7 +195,7 @@ TEST_F(Option6IntTest, simpleUint8) {
     EXPECT_EQ(111, opt->getValue());
 }
 
-TEST_F(Option6IntTest, simpleUint16) {
+TEST_F(Option6IntTest, setValueUint16) {
     boost::shared_ptr<Option6Int<uint16_t> > opt(new Option6Int<uint16_t>(D6O_ELAPSED_TIME, 123));
     // Check if constructor intitialized the option value correctly.
     EXPECT_EQ(123, opt->getValue());
@@ -208,7 +208,7 @@ TEST_F(Option6IntTest, simpleUint16) {
     EXPECT_EQ(0x0102, opt->getValue());
 }
 
-TEST_F(Option6IntTest, simpleUint32) {
+TEST_F(Option6IntTest, setValueUint32) {
     boost::shared_ptr<Option6Int<uint32_t> > opt(new Option6Int<uint32_t>(D6O_CLT_TIME, 123));
     // Check if constructor intitialized the option value correctly.
     EXPECT_EQ(123, opt->getValue());
