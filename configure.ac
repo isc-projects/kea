@@ -166,6 +166,8 @@ if test $with_werror = 1; then
    CXXFLAGS="$CXXFLAGS_SAVED"
 fi
 
+fi				dnl GXX = yes
+
 AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
 
 # allow building programs with static link.  we need to make it selective
@@ -354,10 +356,11 @@ fi
 
 # TODO: check for _sqlite3.py module
 
+# (g++ only check)
 # Python 3.2 has an unused parameter in one of its headers. This
 # has been reported, but not fixed as of yet, so we check if we need
 # to set -Wno-unused-parameter.
-if test $werror_ok = 1; then
+if test "X$GXX" = "Xyes" -a test $werror_ok = 1; then
 	CPPFLAGS_SAVED="$CPPFLAGS"
 	CPPFLAGS=${PYTHON_INCLUDES}
 	CXXFLAGS_SAVED="$CXXFLAGS"
@@ -382,8 +385,6 @@ if test $werror_ok = 1; then
 	CXXFLAGS="$CXXFLAGS_SAVED"
 	CPPFLAGS="$CPPFLAGS_SAVED"
 fi
-
-fi				dnl GXX = yes
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then
