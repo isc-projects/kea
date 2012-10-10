@@ -15,12 +15,13 @@
 #ifndef OPTION6_INT_ARRAY_H_
 #define OPTION6_INT_ARRAY_H_
 
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option.h>
+#include <dhcp/option_data_types.h>
+#include <util/io_utilities.h>
+
 #include <stdint.h>
 #include <limits>
-#include <util/io_utilities.h>
-#include "dhcp/libdhcp++.h"
-#include "dhcp/option.h"
-#include "dhcp/option_data_types.h"
 
 namespace isc {
 namespace dhcp {
@@ -149,7 +150,7 @@ public:
 
     /// @brief Set option values.
     ///
-    /// @param collection of values to be set.
+    /// @param values collection of values to be set for option.
     void setValues(const std::vector<T>& values) { values_ = values; }
 
     /// @brief returns complete length of option

@@ -12,14 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "dhcp/dhcp6.h"
-#include "dhcp/option_definition.h"
-#include "dhcp/option4_addrlst.h"
-#include "dhcp/option6_addrlst.h"
-#include "dhcp/option6_ia.h"
-#include "dhcp/option6_iaaddr.h"
-#include "dhcp/option6_int.h"
-#include "dhcp/option6_int_array.h"
+#include <dhcp/dhcp6.h>
+#include <dhcp/option_definition.h>
+#include <dhcp/option4_addrlst.h>
+#include <dhcp/option6_addrlst.h>
+#include <dhcp/option6_ia.h>
+#include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_int.h>
+#include <dhcp/option6_int_array.h>
 
 using namespace std;
 using namespace isc::util;
@@ -97,6 +97,10 @@ OptionDefinition::addRecordField(const DataType data_type) {
 
 Option::Factory*
 OptionDefinition::getFactory() const {
+    // @todo This function must be extended to return more factory
+    // functions that create instances of more specialized options.
+    // This requires us to first implement those more specialized
+    // options that will be derived from Option class.
     if (type_ == IPV6_ADDRESS_TYPE && array_type_) {
         return (factoryAddrList6);
     } else if (type_ == IPV4_ADDRESS_TYPE && array_type_) {
@@ -126,6 +130,11 @@ OptionDefinition::getFactory() const {
             return (factoryInteger<uint32_t>);
         }
     }
+    // Factory generic returns instance of Option class. However, once we
+    // implement CustomOption class we may want to return factory function
+    // that will create instance of CustomOption rather than Option.
+    // CustomOption will allow to access particular data fields within the
+    // option rather than raw data buffer.
     return (factoryGeneric);
 }
 
@@ -139,6 +148,15 @@ OptionDefinition::sanityCheckUniverse(const Option::Universe expected_universe,
 
 void
 OptionDefinition::validate() const {
+    // Option name must not be empty.
+    if (name_.empty()) {
+        isc_throw(isc::BadValue, "option name must not be empty");
+    }
+    // Option name must not contain spaces.
+    if (name_.find(" ") != string::npos) {
+        isc_throw(isc::BadValue, "option name must not contain spaces");
+    }
+    // Unsupported option types are not allowed.
     if (type_ >= UNKNOWN_TYPE) {
         isc_throw(isc::OutOfRange, "option type value " << type_
                   << " is out of range");
