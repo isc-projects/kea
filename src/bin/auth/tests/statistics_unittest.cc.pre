@@ -76,7 +76,9 @@ flatten(std::map<std::string, int>& flat_map, const std::string& prefix,
     }
 }
 
-bool
+// Test if the values of the counters are all zero except for the items
+// specified in except_for.
+void
 checkCountersAllZeroExcept(const isc::data::ConstElementPtr counters,
                            const std::set<std::string>& except_for) {
     std::map<std::string, int> stats_map;
@@ -95,8 +97,6 @@ checkCountersAllZeroExcept(const isc::data::ConstElementPtr counters,
             << i->first << " = " << expect << ", actual: "
             << i->second;
     }
-
-    return false;
 }
 
 TEST_F(CountersTest, incrementNormalQuery) {
