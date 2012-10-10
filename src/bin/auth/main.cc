@@ -18,6 +18,7 @@
 
 #include <util/buffer.h>
 #include <util/io/socketsession.h>
+#include <util/threads/lock.h>
 
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -93,18 +94,31 @@ datasrcConfigHandler(AuthSrv* server, bool* first_time,
 {
     assert(server != NULL);
     if (config->contains("classes")) {
+        AuthSrv::DataSrcClientListsPtr lists;
+
         if (*first_time) {
             // HACK: The default is not passed to the handler in the first
             // callback. This one will get the default (or, current value).
             // Further updates will work the usual way.
             assert(config_session != NULL);
             *first_time = false;
-            configureDataSource(*auth_server,
-                                config_session->getRemoteConfigValue(
-                                    "data_sources", "classes"));
+            lists = configureDataSource(
+                config_session->getRemoteConfigValue("data_sources",
+                                                     "classes"));
         } else {
-            configureDataSource(*server, config->get("classes"));
+            lists = configureDataSource(config->get("classes"));
         }
+
+        // Replace the server's lists.  The returned lists will be stored
+        // in a local variable 'lists', and will be destroyed outside of
+        // the temporary block for the lock scope.  That way we can minimize
+        // the range of the critical section.
+        {
+            isc::util::thread::Mutex::Locker locker(
+                server->getDataSrcClientListMutex());
+            lists = server->swapDataSrcClientLists(lists);
+        }
+        // The previous lists are destroyed here.
     }
 }
 

@@ -60,14 +60,11 @@ private:
 
 typedef shared_ptr<FakeList> ListPtr;
 
+// Forward declaration.  We need precise definition of DatasrcConfigTest
+// to complete this function.
 void
 testConfigureDataSource(DatasrcConfigTest& test,
-                        const isc::data::ConstElementPtr& config)
-{
-    // We use the test fixture for the Server type.  This makes it possible
-    // to easily fake all needed methods and look that they were called.
-    configureDataSourceGeneric<DatasrcConfigTest, FakeList>(test, config);
-}
+                        const isc::data::ConstElementPtr& config);
 
 void
 datasrcConfigHandler(DatasrcConfigTest* fake_server, const std::string&,
@@ -82,26 +79,29 @@ datasrcConfigHandler(DatasrcConfigTest* fake_server, const std::string&,
 class DatasrcConfigTest : public ::testing::Test {
 public:
     // These pretend to be the server
-    ListPtr getClientList(const RRClass& rrclass) {
-        log_ += "get " + rrclass.toText() + "\n";
-        return (lists_[rrclass]);
-    }
-    void setClientList(const RRClass& rrclass, const ListPtr& list) {
-        log_ += "set " + rrclass.toText() + " " +
-            (list ? list->getConf() : "") + "\n";
-        lists_[rrclass] = list;
-    }
-    vector<RRClass> getClientListClasses() const {
-        vector<RRClass> result;
-        for (std::map<RRClass, ListPtr>::const_iterator it(lists_.begin());
-             it != lists_.end(); ++it) {
-            result.push_back(it->first);
-        }
-        return (result);
-    }
-    isc::util::thread::Mutex& getClientListMutex() const {
+    isc::util::thread::Mutex& getDataSrcClientListMutex() const {
         return (mutex_);
     }
+    void swapDataSrcClientLists(shared_ptr<std::map<dns::RRClass, ListPtr> >
+                                new_lists)
+    {
+        lists_.clear();         // first empty it
+
+        // Record the operation and results.  Note that map elements are
+        // sorted by RRClass, so the ordering should be predictable.
+        for (std::map<dns::RRClass, ListPtr>::const_iterator it =
+                 new_lists->begin();
+             it != new_lists->end();
+             ++it)
+        {
+            const RRClass rrclass = it->first;
+            ListPtr list = it->second;
+            log_ += "set " + rrclass.toText() + " " +
+                (list ? list->getConf() : "") + "\n";
+            lists_[rrclass] = list;
+        }
+    }
+
 protected:
     DatasrcConfigTest() :
         session(ElementPtr(new ListElement), ElementPtr(new ListElement),
@@ -147,9 +147,8 @@ protected:
         session.addMessage(createCommand("config_update", config),
                            "data_sources", "*");
         mccs->checkCommand();
-        // Check it called the correct things (check that there's no IN yet and
-        // set a new one.
-        EXPECT_EQ("get IN\nset IN xxx\n", log_);
+        // Check that the passed config is stored.
+        EXPECT_EQ("set IN xxx\n", log_);
         EXPECT_EQ(1, lists_.size());
     }
     FakeSession session;
@@ -160,14 +159,27 @@ protected:
     mutable isc::util::thread::Mutex mutex_;
 };
 
+void
+testConfigureDataSource(DatasrcConfigTest& test,
+                        const isc::data::ConstElementPtr& config)
+{
+    // We use customized (faked lists) for the List type.  This makes it
+    // possible to easily look that they were called.
+    shared_ptr<std::map<dns::RRClass, ListPtr> > lists =
+        configureDataSourceGeneric<FakeList>(config);
+    test.swapDataSrcClientLists(lists);
+}
+
 // Push there a configuration with a single list.
 TEST_F(DatasrcConfigTest, createList) {
     initializeINList();
 }
 
 TEST_F(DatasrcConfigTest, modifyList) {
-    // First, initialize the list
+    // First, initialize the list, and confirm the current config
     initializeINList();
+    EXPECT_EQ("xxx", lists_[RRClass::IN()]->getConf());
+
     // And now change the configuration of the list
     const ElementPtr
         config(buildConfig("{\"IN\": [{\"type\": \"yyy\"}]}"));
@@ -175,9 +187,7 @@ TEST_F(DatasrcConfigTest, modifyList) {
                        "*");
     log_ = "";
     mccs->checkCommand();
-    // This one does not set
-    EXPECT_EQ("get IN\n", log_);
-    // But this should contain the yyy configuration
+    // Now the new one should be installed.
     EXPECT_EQ("yyy", lists_[RRClass::IN()]->getConf());
     EXPECT_EQ(1, lists_.size());
 }
@@ -191,7 +201,7 @@ TEST_F(DatasrcConfigTest, multiple) {
                        "*");
     mccs->checkCommand();
     // We have set commands for both classes.
-    EXPECT_EQ("get CH\nset CH xxx\nget IN\nset IN yyy\n", log_);
+    EXPECT_EQ("set IN yyy\nset CH xxx\n", log_);
     // We should have both there
     EXPECT_EQ("yyy", lists_[RRClass::IN()]->getConf());
     EXPECT_EQ("xxx", lists_[RRClass::CH()]->getConf());
@@ -212,9 +222,7 @@ TEST_F(DatasrcConfigTest, updateAdd) {
                        "*");
     log_ = "";
     mccs->checkCommand();
-    // The CH is set, IN not
-    EXPECT_EQ("get CH\nset CH xxx\nget IN\n", log_);
-    // But this should contain the yyy configuration
+    EXPECT_EQ("set IN yyy\nset CH xxx\n", log_);
     EXPECT_EQ("xxx", lists_[RRClass::CH()]->getConf());
     EXPECT_EQ("yyy", lists_[RRClass::IN()]->getConf());
     EXPECT_EQ(2, lists_.size());
@@ -229,18 +237,18 @@ TEST_F(DatasrcConfigTest, updateDelete) {
                        "*");
     log_ = "";
     mccs->checkCommand();
-    EXPECT_EQ("get IN\nset IN \n", log_);
-    EXPECT_FALSE(lists_[RRClass::IN()]);
-    // In real auth server, the NULL one would be removed. However, we just
-    // store it, so the IN bucket is still in there. This checks there's nothing
-    // else.
-    EXPECT_EQ(1, lists_.size());
+
+    // No operation takes place in the configuration, and the old one is
+    // just dropped
+    EXPECT_EQ("", log_);
+    EXPECT_TRUE(lists_.empty());
 }
 
-// Check that we can rollback an addition if something else fails
-TEST_F(DatasrcConfigTest, rollbackAddition) {
+// Check that broken new configuration doesn't break the running configuration.
+TEST_F(DatasrcConfigTest, brokenConfigForAdd) {
     initializeINList();
-    // The configuration is wrong. However, the CH one will get done first.
+    // The configuration is wrong. However, the CH one will be handled
+    // without an error first.
     const ElementPtr
         config(buildConfig("{\"IN\": [{\"type\": 13}], "
                            "\"CH\": [{\"type\": \"xxx\"}]}"));
@@ -256,8 +264,9 @@ TEST_F(DatasrcConfigTest, rollbackAddition) {
     EXPECT_FALSE(lists_[RRClass::CH()]);
 }
 
-// Check that we can rollback a deletion if something else fails
-TEST_F(DatasrcConfigTest, rollbackDeletion) {
+// Similar to the previous one, but the broken config would delete part of
+// the running config.
+TEST_F(DatasrcConfigTest, brokenConfigForDelete) {
     initializeINList();
     // Put the CH there
     const ElementPtr
@@ -266,27 +275,25 @@ TEST_F(DatasrcConfigTest, rollbackDeletion) {
     testConfigureDataSource(*this, config1);
     const ElementPtr
         config2(Element::fromJSON("{\"IN\": [{\"type\": 13}]}"));
-    // This would delete CH. However, the IN one fails.
-    // As the deletions happen after the additions/settings
-    // and there's no known way to cause an exception during the
-    // deletions, it is not a true rollback, but the result should
-    // be the same.
+    // This would delete CH. However, the new config is broken, so it won't
+    // actually apply.
     EXPECT_THROW(testConfigureDataSource(*this, config2), TypeError);
     EXPECT_EQ("yyy", lists_[RRClass::IN()]->getConf());
     EXPECT_EQ("xxx", lists_[RRClass::CH()]->getConf());
 }
 
-// Check that we can roll back configuration change if something
-// fails later on.
-TEST_F(DatasrcConfigTest, rollbackConfiguration) {
+// Similar to the previous cases, but the broken config would modify the
+// running config of one of the classes.
+TEST_F(DatasrcConfigTest, brokenConfigForModify) {
     initializeINList();
     // Put the CH there
     const ElementPtr
         config1(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}], "
                                   "\"CH\": [{\"type\": \"xxx\"}]}"));
     testConfigureDataSource(*this, config1);
-    // Now, the CH happens first. But nevertheless, it should be
-    // restored to the previoeus version.
+    // Now, the CH change will be handled first without an error, then
+    // the change to the IN class will fail, and the none of the changes
+    // will apply.
     const ElementPtr
         config2(Element::fromJSON("{\"IN\": [{\"type\": 13}], "
                                   "\"CH\": [{\"type\": \"yyy\"}]}"));
