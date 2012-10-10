@@ -1,3 +1,15 @@
+487.	[bug]		jinmei
+	The bind10 process now terminates a component (subprocess) by the
+	"config remove Boss/components" bindctl command even if the
+	process crashes immediately before the command is sent to bind10.
+	Previously this led to an inconsistent state between the
+	configuration and an internal component list of bind10, and bind10
+	kept trying to restart the component.  A known specific case of
+	this problem is that b10-ddns could keep failing (due to lack of
+	dependency modules) and the administrator couldn't stop the
+	restart via bindctl.
+	(Trac #2244, git 7565788d06f216ab254008ffdfae16678bcd00e5)
+
 486.	[bug]*		jinmei
 	All public header files for libb10-dns++ are now installed.
 	Template configure.ac and utility AC macros for external projects
