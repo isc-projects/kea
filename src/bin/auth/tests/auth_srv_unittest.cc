@@ -1079,7 +1079,7 @@ TEST_F(AuthSrvTest, queryCounterUDPNormal) {
     server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
     // After processing the UDP query, these counters should be incremented:
-    //   request.tcp, opcode.query, rcode.refused, response
+    //   request.udp, opcode.query, rcode.refused
     // and these counters should not be incremented:
     //   request.tcp
     ConstElementPtr stats_after = server.getStatistics()->
