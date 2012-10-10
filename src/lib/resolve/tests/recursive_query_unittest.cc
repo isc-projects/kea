@@ -218,7 +218,7 @@ protected:
     }
 
     // Receive a UDP packet from a mock server; used for testing
-    // recursive lookup.  The caller must place a RecursiveQuery 
+    // recursive lookup.  The caller must place a RecursiveQuery
     // on the IO Service queue before running this routine.
     void recvUDP(const int family, void* buffer, size_t& size) {
         ScopedAddrInfo sai(resolveAddress(family, IPPROTO_UDP, true));
@@ -267,7 +267,7 @@ protected:
         if (ret < 0) {
             isc_throw(IOError, "recvfrom failed: " << strerror(errno));
         }
-        
+
         // Pass the message size back via the size parameter
         size = ret;
     }
@@ -693,37 +693,6 @@ createTestSocket() {
     return (sock.release());
 }
 
-int
-setSocketTimeout(int sock, size_t tv_sec, size_t tv_usec) {
-    const struct timeval timeo = { tv_sec, tv_usec };
-    int recv_options = 0;
-    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeo, sizeof(timeo))) {
-        if (errno == ENOPROTOOPT) { // see RecursiveQueryTest::recvUDP()
-            recv_options = MSG_DONTWAIT;
-        } else {
-            isc_throw(IOError, "set RCVTIMEO failed: " << strerror(errno));
-        }
-    }
-    return (recv_options);
-}
-
-// try to read from the socket max time
-// *num is incremented for every succesfull read
-// returns true if it can read max times, false otherwise
-bool tryRead(int sock, int recv_options, size_t max, int* num) {
-    size_t i = 0;
-    do {
-        char inbuff[512];
-        if (recv(sock, inbuff, sizeof(inbuff), recv_options) < 0) {
-            return false;
-        } else {
-            ++i;
-            ++*num;
-        }
-    } while (i < max);
-    return true;
-}
-
 // Mock resolver callback for testing forward query.
 class MockResolverCallback : public isc::resolve::ResolverInterface::Callback {
 public:
@@ -904,7 +873,7 @@ TEST_F(RecursiveQueryTest, lowtimeouts) {
 TEST_F(RecursiveQueryTest, DISABLED_recursiveSendOk) {
     setDNSService(true, false);
     bool done;
-    
+
     MockServerStop server(io_service_, &done);
     vector<pair<string, uint16_t> > empty_vector;
     RecursiveQuery rq(*dns_service_, *nsas_, cache_, empty_vector,
@@ -930,7 +899,7 @@ TEST_F(RecursiveQueryTest, DISABLED_recursiveSendOk) {
 TEST_F(RecursiveQueryTest, DISABLED_recursiveSendNXDOMAIN) {
     setDNSService(true, false);
     bool done;
-    
+
     MockServerStop server(io_service_, &done);
     vector<pair<string, uint16_t> > empty_vector;
     RecursiveQuery rq(*dns_service_, *nsas_, cache_, empty_vector,
