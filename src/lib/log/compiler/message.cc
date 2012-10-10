@@ -109,11 +109,13 @@ currentTime() {
     // Get a text representation of the current time.
     time_t curtime;
     time(&curtime);
-    char* buffer = ctime(&curtime);
+    struct tm* timeinfo;
+    timeinfo = localtime(&curtime);
 
-    // Convert to string and strip out the trailing newline
-    string current_time = buffer;
-    return (isc::util::str::trim(current_time));
+    char buffer[80];
+    strftime(buffer, 80, "%a %b %d %Y %H:%M", timeinfo);
+
+    return (std::string(buffer));
 }
 
 

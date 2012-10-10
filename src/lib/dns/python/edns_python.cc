@@ -269,7 +269,6 @@ EDNS_createFromRR(const s_EDNS* null_self, PyObject* args) {
     const PyObject* rrtype;
     const PyObject* rrttl;
     const PyObject* rdata;
-    s_EDNS* edns_obj = NULL;
 
     assert(null_self == NULL);
 
@@ -277,7 +276,7 @@ EDNS_createFromRR(const s_EDNS* null_self, PyObject* args) {
                          &rrclass_type, &rrclass, &rrtype_type, &rrtype,
                          &rrttl_type, &rrttl, &rdata_type, &rdata)) {
         uint8_t extended_rcode;
-        edns_obj = PyObject_New(s_EDNS, &edns_type);
+        s_EDNS* edns_obj = PyObject_New(s_EDNS, &edns_type);
         if (edns_obj == NULL) {
             return (NULL);
         }

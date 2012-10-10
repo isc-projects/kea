@@ -338,7 +338,7 @@ getRelatedLoggers(ConstElementPtr loggers) {
 
     // Now find the wildcard names (the one that start with "*").
     BOOST_FOREACH(ConstElementPtr cur_logger, loggers->listValue()) {
-        std::string cur_name = cur_logger->get("name")->stringValue();
+        const std::string cur_name = cur_logger->get("name")->stringValue();
         // If name is '*', or starts with '*.', replace * with root
         // logger name.
         if (cur_name == "*" || cur_name.length() > 1 &&
@@ -671,9 +671,7 @@ ModuleCCSession::fetchRemoteSpec(const std::string& module, bool is_filename) {
 
 std::string
 ModuleCCSession::addRemoteConfig(const std::string& spec_name,
-                                 void (*handler)(const std::string& module,
-                                                 ConstElementPtr,
-                                                 const ConfigData&),
+                                 RemoteHandler handler,
                                  bool spec_is_filename)
 {
     // First get the module name, specification and default config

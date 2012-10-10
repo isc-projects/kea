@@ -50,9 +50,6 @@ class DerivedRRsetEntry: public RRsetEntry {
 public:
     DerivedRRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& level) : RRsetEntry(rrset, level) {};
 
-    void updateTTLForTest() {
-
-    }
 };
 
 #define TEST_TTL 100

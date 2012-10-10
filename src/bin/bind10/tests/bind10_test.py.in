@@ -929,7 +929,14 @@ class MockComponent:
         self.name = lambda: name
         self.pid = lambda: pid
         self.address = lambda: address
+        self.restarted = False
 
+    def get_restart_time(self):
+        return 0                # arbitrary dummy value
+
+    def restart(self, now):
+        self.restarted = True
+        return True
 
 class TestBossCmd(unittest.TestCase):
     def test_ping(self):
@@ -1265,6 +1272,34 @@ class TestBossComponents(unittest.TestCase):
         bob.ccs.get_full_config = lambda: {'components': self.__compconfig}
         bob.start_all_components()
         self.__check_extended(self.__param)
+
+    def __setup_restart(self, bob, component):
+        '''Common procedure for restarting a component used below.'''
+        bob.components_to_restart = { component }
+        component.restarted = False
+        bob.restart_processes()
+
+    def test_restart_processes(self):
+        '''Check some behavior on restarting processes.'''
+        bob = MockBob()
+        bob.runnable = True
+        component = MockComponent('test', 53)
+
+        # A component to be restarted will actually be restarted iff it's
+        # in the configurator's configuration.
+        # We bruteforce the configurator internal below; ugly, but the easiest
+        # way for the test.
+        bob._component_configurator._components['test'] = (None, component)
+        self.__setup_restart(bob, component)
+        self.assertTrue(component.restarted)
+        self.assertFalse(component in bob.components_to_restart)
+
+        # Remove the component from the configuration.  It won't be restarted
+        # even if scheduled, nor will remain in the to-be-restarted list.
+        del bob._component_configurator._components['test']
+        self.__setup_restart(bob, component)
+        self.assertFalse(component.restarted)
+        self.assertFalse(component in bob.components_to_restart)
 
 class SocketSrvTest(unittest.TestCase):
     """

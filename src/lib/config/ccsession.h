@@ -283,7 +283,7 @@ public:
      *                  the configuration manager must know it). If
      *                  spec_is_filename is true (the default), then a
      *                  filename is assumed, otherwise a module name.
-     * \param handler The handler function called whenever there's a change.
+     * \param handler The handler functor called whenever there's a change.
      *                Called once initally from this function. May be NULL
      *                if you don't want any handler to be called and you're
      *                fine with requesting the data through
@@ -296,11 +296,11 @@ public:
      * \return The name of the module specified in the given specification
      *         file
      */
+    typedef boost::function<void(const std::string&,
+                                 isc::data::ConstElementPtr,
+                                 const ConfigData&)> RemoteHandler;
     std::string addRemoteConfig(const std::string& spec_name,
-                                void (*handler)(const std::string& module_name,
-                                                isc::data::ConstElementPtr
-                                                update,
-                                                const ConfigData& config_data) = NULL,
+                                RemoteHandler handler = RemoteHandler(),
                                 bool spec_is_filename = true);
 
     /**
@@ -513,9 +513,6 @@ private:
         const std::string& command,
         isc::data::ConstElementPtr args);
 
-    typedef void (*RemoteHandler)(const std::string&,
-                                  isc::data::ConstElementPtr,
-                                  const ConfigData&);
     std::map<std::string, ConfigData> remote_module_configs_;
     std::map<std::string, RemoteHandler> remote_module_handlers_;
 
