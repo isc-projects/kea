@@ -12,9 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <boost/function.hpp>
+
 namespace isc {
 namespace datasrc {
 namespace memory {
+
+// Forward declarations
+class ZoneData;
+class ZoneTableSegment;
 
 /// \brief Does an update to a zone.
 ///
@@ -68,6 +74,26 @@ public:
     ///
     /// Generally, this should never throw.
     virtual void cleanup() = 0;
+};
+
+// TODO: Fully define this. It is supposed to be passed to the install_action
+// callback, but what does it actually represent? Is it the actuall zone data
+// there?
+class ZoneSegment {};
+// TODO: Somehow specify what the ID is
+class ZoneSegmentID {};
+
+typedef boost::function<void(ZoneData*)> LoadAction;
+typedef boost::function<ZoneData* (ZoneSegmentID, ZoneSegment*)> InstallAction;
+
+class ZoneUpdaterLocal : public ZoneUpdater {
+public:
+    ZoneUpdaterLocal(ZoneTableSegment* segment, const LoadAction& load_action,
+                     const InstallAction& install_action);
+    ~ ZoneUpdaterLocal();
+    virtual void load();
+    virtual void install();
+    virtual void cleanup();
 };
 
 }
