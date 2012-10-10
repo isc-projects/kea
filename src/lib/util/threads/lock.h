@@ -41,7 +41,7 @@ namespace thread {
 ///
 /// The current interface is somewhat minimalistic. If we ever need more, we
 /// can add it later.
-class Mutex : public boost::noncopyable {
+class Mutex : boost::noncopyable {
 public:
     /// \brief Constructor.
     ///
@@ -74,7 +74,7 @@ public:
     /// collecting" mechanism (auto_ptr, for example), it ensures exception
     /// safety with regards to the mutex - it'll get released on the exit
     /// of function no matter by what means.
-    class Locker : public boost::noncopyable {
+    class Locker : boost::noncopyable {
     public:
         /// \brief Constructor.
         ///
