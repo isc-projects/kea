@@ -24,6 +24,10 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief specifies unique subnet identifier
+/// @todo: Move this to subnet.h once ticket #2237 is merged
+typedef uint32_t SubnetID;
+
 /// @brief Structure that holds a lease for IPv4 address
 ///
 /// For performance reasons it is a simple structure, not a class. If we chose
@@ -67,10 +71,10 @@ struct Lease4 {
     /// Specifies a timestamp, when last transmission from a client was received.
     time_t cltt_;
 
-    /// @brief Pool identifier
+    /// @brief Subnet identifier
     ///
-    /// Specifies pool-id of the pool that the lease belongs to
-    uint32_t pool_id_;
+    /// Specifies subnet-id of the subnet that the lease belongs to
+    SubnetID subnet_id_;
 
     /// @brief Is this a fixed lease?
     ///
@@ -104,6 +108,8 @@ struct Lease4 {
 /// @brief Pointer to a Lease4 structure.
 typedef boost::shared_ptr<Lease4> Lease4Ptr;
 
+/// @brief A collection of IPv4 leases.
+typedef std::vector< boost::shared_ptr<Lease4Ptr> > Lease4Collection;
 
 /// @brief Structure that holds a lease for IPv6 address and/or prefix
 ///
@@ -189,10 +195,10 @@ struct Lease6 {
     /// Specifies a timestamp, when last transmission from a client was received.
     time_t cltt_;
 
-    /// @brief Pool identifier
+    /// @brief Subnet identifier
     ///
-    /// Specifies pool-id of the pool that the lease belongs to
-    uint32_t pool_id_;
+    /// Specifies subnet-id of the subnet that the lease belongs to
+    SubnetID subnet_id_;
 
     /// @brief Is this a fixed lease?
     ///
@@ -229,6 +235,8 @@ typedef boost::shared_ptr<Lease6> Lease6Ptr;
 /// @brief Const pointer to a Lease6 structure.
 typedef boost::shared_ptr<const Lease6> ConstLease6Ptr;
 
+/// @brief A collection of IPv6 leases.
+typedef std::vector< boost::shared_ptr<Lease6Ptr> > Lease6Collection;
 
 /// @brief Abstract Lease Manager
 ///
@@ -264,39 +272,117 @@ public:
     /// @param lease lease to be added
     virtual bool addLease(Lease6Ptr lease) = 0;
 
-    /// @brief Returns existing IPv4 lease for specified IPv4 address.
+    /// @brief Returns existing IPv4 lease for specified IPv4 address and subnet_id
+    ///
+    /// This method is used to get a lease for specific subnet_id. There can be
+    /// at most one lease for any given subnet, so this method returns a single
+    /// pointer.
     ///
     /// @param addr address of the searched lease
+    /// @param subnet_id ID of the subnet the lease must belong to
+    ///
+    /// @return smart pointer to the lease (or NULL if a lease is not found)
+    virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr,
+                                SubnetID subnet_id) const = 0;
+
+    /// @brief Returns an IPv4 lease for specified IPv4 address
+    ///
+    /// This method return a lease that is associated with a given address.
+    /// For other query types (by hardware addr, by client-id) there can be
+    /// several leases in different subnets (e.g. for mobile clients that
+    /// got address in different subnets). However, for a single address
+    /// there can be only one lease, so this method returns a pointer to
+    /// a single lease, not a container of leases.
+    ///
+    /// @param addr address of the searched lease
+    /// @param subnet_id ID of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
     virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr) const = 0;
 
-    /// @brief Returns existing IPv4 lease for specified hardware address.
+    /// @brief Returns existing IPv4 leases for specified hardware address.
+    ///
+    /// Although in the usual case there will be only one lease, for mobile
+    /// clients or clients with multiple static/fixed/reserved leases there
+    /// can be more than one. Thus return type is a container, not a single
+    /// pointer.
     ///
     /// @param hwaddr hardware address of the client
     ///
-    /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(const HWAddr& hwaddr) const = 0;
+    /// @return lease collection
+    virtual Lease4Collection getLease4(const HWAddr& hwaddr) const = 0;
+
+    /// @brief Returns existing IPv4 leases for specified hardware address
+    ///        and a subnet
+    ///
+    /// There can be at most one lease for a given HW address in a single
+    /// pool, so this method with either return a single lease or NULL.
+    ///
+    /// @param hwaddr hardware address of the client
+    /// @param subnet_id identifier of the subnet that lease must belong to
+    ///
+    /// @return a pointer to the lease (or NULL if a lease is not found)
+    virtual Lease4Ptr getLease4(const HWAddr& hwaddr, 
+                                SubnetID subnet_id) const = 0;
 
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
+    /// Although in the usual case there will be only one lease, for mobile
+    /// clients or clients with multiple static/fixed/reserved leases there
+    /// can be more than one. Thus return type is a container, not a single
+    /// pointer.
+    ///
     /// @param clientid client identifier
-    virtual Lease4Ptr getLease4(const ClientId& clientid) const = 0;
+    ///
+    /// @return lease collection
+    virtual Lease4Collection getLease4(const ClientId& clientid) const = 0;
+
+    /// @brief Returns existing IPv4 lease for specified client-id
+    ///
+    /// There can be at most one lease for a given HW address in a single
+    /// pool, so this method with either return a single lease or NULL.
+    ///
+    /// @param clientid client identifier
+    /// @param subnet_id identifier of the subnet that lease must belong to
+    ///
+    /// @return a pointer to the lease (or NULL if a lease is not found)
+    virtual Lease4Ptr getLease4(const ClientId& clientid,
+                                SubnetID subnet_id) const = 0;
 
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
+    ///
+    /// For a given address, we assume that there will be only one lease.
+    /// The assumtion here is that there will not be site or link-local
+    /// addresses used, so there is no way of having address duplication.
     ///
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
     virtual Lease6Ptr getLease6(isc::asiolink::IOAddress addr) const = 0;
 
-    /// @brief Returns existing IPv6 lease for a given DUID+IA combination
+    /// @brief Returns existing IPv6 leases for a given DUID+IA combination
+    ///
+    /// Although in the usual case there will be only one lease, for mobile
+    /// clients or clients with multiple static/fixed/reserved leases there
+    /// can be more than one. Thus return type is a container, not a single
+    /// pointer.
     ///
     /// @param duid client DUID
     /// @param iaid IA identifier
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(const DUID& duid, uint32_t iaid) const = 0;
+    virtual Lease6Collection getLease6(const DUID& duid, 
+                                       uint32_t iaid) const = 0;
+
+    /// @brief Returns existing IPv6 lease for a given DUID+IA combination
+    ///
+    /// @param duid client DUID
+    /// @param iaid IA identifier
+    /// @param subnet_id subnet id of the subnet the lease belongs to
+    ///
+    /// @return smart pointer to the lease (or NULL if a lease is not found)
+    virtual Lease6Ptr getLease6(const DUID& duid, uint32_t iaid,
+                                SubnetID subnet_id) const = 0;
 
     /// @brief Updates IPv4 lease.
     ///
@@ -346,7 +432,7 @@ public:
     /// and then check that:
     /// B>=A and B=C (it is ok to have newer backend, as it should be backward
     /// compatible)
-    /// Also if B>C, some database upgrade procedure may happen
+    /// Also if B>C, some database upgrade procedure may be triggered
     virtual std::string getVersion() const = 0;
 
     /// @todo: Add host management here
