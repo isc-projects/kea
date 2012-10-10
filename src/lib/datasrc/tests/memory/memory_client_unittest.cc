@@ -682,4 +682,16 @@ TEST_F(MemoryClientTest, getJournalReaderNotImplemented) {
     EXPECT_THROW(client_->getJournalReader(Name("."), 0, 0),
                  isc::NotImplemented);
 }
+
+// TODO (upon merge of #2268): Re-add (and modify not to need
+// InMemoryClient::add) the tests removed in
+// 7a628baa1a158b5837d6f383e10b30542d2ac59b. Maybe some of them
+// are really not needed.
+//
+// * MemoryClientTest::loadRRSIGsRdataMixedCoveredTypes
+// * MemoryClientTest::addRRsetToNonExistentZoneThrows
+// * MemoryClientTest::addOutOfZoneThrows
+// * MemoryClientTest::addNullRRsetThrows
+// * MemoryClientTest::addEmptyRRsetThrows
+// * MemoryClientTest::add
 }
