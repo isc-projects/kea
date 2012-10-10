@@ -178,6 +178,40 @@ private:
 };
 }
 
+namespace {
+/// \brief Add the string representation of RRsets to a vector
+///
+/// This is a helper function for checkRRsets, to compare the
+/// contents of two sets of RRsets
+///
+/// It adds the string representations of the RRsets in the given
+/// iterator to the given vector.
+///
+/// If an RRset has signatures, those are added to the
+/// vector as a separate string
+template<typename ITERATOR_TYPE>
+void
+addRRsetsToStringVector(std::vector<std::string>& strings,
+                        ITERATOR_TYPE begin,
+                        ITERATOR_TYPE end)
+{
+    for (ITERATOR_TYPE it = begin; it != end; ++it) {
+        if ((*it)->getRRsig()) {
+            // no 'sigless' toText(), but since we need to get both,
+            // it's easier to remove the sigs after toText than to
+            // reimplement toText here
+            std::string rrset_string = (*it)->toText();
+            std::string rrsig_string = (*it)->getRRsig()->toText();
+            strings.push_back(
+                rrset_string.substr(0, rrset_string.find(rrsig_string)));
+            strings.push_back(rrsig_string);
+        } else {
+            strings.push_back((*it)->toText());
+        }
+    }
+}
+}
+
 /// \brief A converter from a string to RRset.
 ///
 /// This is a convenient shortcut for tests that need to create an RRset
@@ -271,19 +305,26 @@ rrsetsCheck(EXPECTED_ITERATOR expected_begin, EXPECTED_ITERATOR expected_end,
         // make sure all expected RRsets are in actual sets
         EXPECT_EQ(std::distance(expected_begin, expected_end), rrset_matched);
 
-#if (0)
-        // TODO: see bug #2223. The following code was
-        // disabled by #2165. The RRSIG RRsets are no longer directly
-        // stored in the Message's rrsets, so the iterator will not find
-        // them. The expected text used in many tests are flattened,
-        // where the RRSIGs are inline. In other words, RRSIGs may occur
-        // between (expected_begin, expected_end) but not between
-        // (actual_begin, actual_end).
-
         // make sure rrsets only contains expected RRsets
-        EXPECT_EQ(std::distance(expected_begin, expected_end),
-                  std::distance(actual_begin, actual_end));
-#endif
+        //
+        // In order to compare two lists of RRsets, we first convert
+        // them to vectors of strings, sort those vectors, and compare
+        // the result.
+        //
+        // Since some of the RRsets may have their signatures in-line,
+        // and some vectors has them as separate RRsets, we perform one
+        // additional step; If an RRset has signatures, those signatures
+        // are stripped from the original toText() result, and added
+        // as a separate RRset in the string vector.
+        std::vector<std::string> expected_strings;
+        addRRsetsToStringVector(expected_strings, expected_begin, expected_end);
+        std::sort(expected_strings.begin(), expected_strings.end());
+
+        std::vector<std::string> actual_strings;
+        addRRsetsToStringVector(actual_strings, actual_begin, actual_end);
+        std::sort(actual_strings.begin(), actual_strings.end());
+
+        EXPECT_EQ(expected_strings, actual_strings);
     }
 }
 
