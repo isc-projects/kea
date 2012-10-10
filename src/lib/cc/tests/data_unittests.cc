@@ -451,6 +451,8 @@ TEST(Element, create_and_value_throws) {
     testGetValueMap<ConstElementPtr>();
 
     el = Element::createMap();
+    EXPECT_NO_THROW(el->set("foo", Element::create("bar")));
+    EXPECT_EQ("{ \"foo\": \"bar\" }", el->str());
 }
 
 // Helper for escape check; it puts the given string in a StringElement,
