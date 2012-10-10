@@ -33,6 +33,8 @@ using boost::scoped_ptr;
 
 namespace {
 
+// This test verifies if the constructors are working as expected
+// and process passed parameters.
 TEST(DuidTest, constructor) {
 
     uint8_t data1[] = {0, 1, 2, 3, 4, 5, 6};
@@ -52,6 +54,8 @@ TEST(DuidTest, constructor) {
     EXPECT_EQ(DUID::DUID_LLT, duid2->getType());
 }
 
+// This test verifies if DUID size restrictions are implemented
+// properly.
 TEST(DuidTest, size) {
     const int MAX_DUID_SIZE = 128;
     uint8_t data[MAX_DUID_SIZE + 1];
@@ -78,6 +82,8 @@ TEST(DuidTest, size) {
         OutOfRange);
 }
 
+// This test verifies if the implementation supports all defined
+// DUID types.
 TEST(DuidTest, getType) {
     uint8_t llt[] =     {0, 1, 2, 3, 4, 5, 6};
     uint8_t en[] =      {0, 2, 2, 3, 4, 5, 6};
@@ -98,6 +104,7 @@ TEST(DuidTest, getType) {
     EXPECT_EQ(DUID::DUID_UNKNOWN, duid_invalid->getType());
 }
 
+// This test checks if the comparison operators are sane.
 TEST(DuidTest, operators) {
     uint8_t data1[] = {0, 1, 2, 3, 4, 5, 6};
     uint8_t data2[] = {0, 1, 2, 3, 4};
@@ -118,38 +125,27 @@ TEST(DuidTest, operators) {
     EXPECT_TRUE(*duid1 != *duid3);
 }
 
+// This test verifies if the ClientId constructors are working properly
+// and passed parameters are used
 TEST(ClientIdTest, constructor) {
     IOAddress addr2("192.0.2.1");
     IOAddress addr3("2001:db8:1::1");
 
     uint8_t data1[] = {0, 1, 2, 3, 4, 5, 6};
     vector<uint8_t> data2(data1, data1 + sizeof(data1));
-    uint8_t data3[] = {192, 0 , 2, 1 };
 
     // checks for C-style construtor (uint8_t * + len)
     scoped_ptr<ClientId> id1(new ClientId(data1, sizeof(data1)));
     vector<uint8_t> vecdata = id1->getClientId();
     EXPECT_EQ(data2, vecdata);
-    EXPECT_FALSE(id1->isAddress());
-    EXPECT_THROW(id1->getAddress(), BadValue);
 
     // checks for vector-based constructor
     scoped_ptr<ClientId> id2(new ClientId(data2));
     vecdata = id2->getClientId();
     EXPECT_EQ(data2, vecdata);
-    EXPECT_FALSE(id1->isAddress());
-    EXPECT_THROW(id1->getAddress(), BadValue);
-
-    // checks for IOAddress based constructor
-    scoped_ptr<ClientId> id3(new ClientId(addr2));
-    vecdata = id3->getClientId();
-    EXPECT_TRUE(vecdata == vector<uint8_t>(data3, data3 + 4));
-    EXPECT_EQ("192.0.2.1", id3->getAddress().toText());
-
-    // should support v4 address only, v6 is a wrong address here
-    EXPECT_THROW(new ClientId(addr3), BadValue);
 }
 
+// This test checks if the comparison operators are sane.
 TEST(ClientIdTest, operators) {
     uint8_t data1[] = {0, 1, 2, 3, 4, 5, 6};
     uint8_t data2[] = {0, 1, 2, 3, 4};
