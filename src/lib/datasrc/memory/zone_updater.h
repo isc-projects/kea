@@ -64,7 +64,7 @@ public:
     /// If it throws, you still need to call cleanup().
     ///
     /// \throw isc::Unexpected if called without previous load() or for the
-    ///     second time.
+    ///     second time or cleanup() was called already.
     virtual void install() = 0;
     /// \brief Clean up resources.
     ///
@@ -83,16 +83,63 @@ class ZoneSegment {};
 // TODO: Somehow specify what the ID is
 class ZoneSegmentID {};
 
+/// \brief Callback to load data into the memory
+///
+/// This is called with a clean (empty) zone data. The goal of the
+/// callback is to get the data for the zone from somewhere and put
+/// them into the passed ZoneData parameter.
 typedef boost::function<void(ZoneData*)> LoadAction;
+/// \brief Install the zone somewhere.
+///
+/// The goal of the callback is to take the zone data (contained in the
+/// ZoneSegment and identified by ZoneSegmentID) and put it somewhere
+/// to use. The return value should contain the old copy of the zone, if
+/// there was any (it may be NULL). The updater will then destroy it.
+///
+/// Upon successful completion, the ownership of the new zone is passed
+/// to the callback and the old to the updater.
 typedef boost::function<ZoneData* (ZoneSegmentID, ZoneSegment*)> InstallAction;
 
+/// \brief Updater implementation which loads data locally.
+///
+/// This implementation prepares a clean zone data and lets one callback
+/// to fill it and another to install it somewhere. The class does mostly
+/// nothing (and delegates the work to the callbacks), just stores little bit
+/// of state between the calls.
 class ZoneUpdaterLocal : public ZoneUpdater {
 public:
+    /// \brief Constructor
+    ///
+    /// \param segment The zone table segment to store the zone into.
+    /// \param load_action The callback used to load data.
+    /// \param install_action The callback used to install the loaded zone.
     ZoneUpdaterLocal(ZoneTableSegment* segment, const LoadAction& load_action,
                      const InstallAction& install_action);
-    ~ ZoneUpdaterLocal();
+    /// \brief Destructor
+    ~ZoneUpdaterLocal();
+    /// \brief Loads the data.
+    ///
+    /// This prepares an empty ZoneData and calls load_action (passed to
+    /// constructor) to fill it with data.
+    ///
+    /// \throw std::bad_alloc If there's a problem allocating the ZoneData.
+    /// \throw isc::Unexpected if it is called the second time in lifetime
+    ///     of the object.
+    /// \throw Whatever the load_action throws, it is propagated up.
     virtual void load();
+    /// \brief Installs the zone.
+    ///
+    /// This simply calls the install_action.
+    ///
+    /// \throw isc::Unexpected if it is called the second time in lifetime
+    ///     of the object or if load() was not called previously or if
+    ///     cleanup() was already called.
+    /// \throw Whatever the install_action throws, it is propagated up.
     virtual void install();
+    /// \brief Clean up memory.
+    ///
+    /// Cleans up the memory used by load()ed zone if not yet installed, or
+    /// the old zone replaced by install().
     virtual void cleanup();
 };
 
