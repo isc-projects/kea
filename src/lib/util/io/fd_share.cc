@@ -142,6 +142,7 @@ send_fd(const int sock, const int fd) {
     if (msghdr.msg_control == NULL) {
         return (FD_OTHER_ERROR);
     }
+    std::memset(msghdr.msg_control, 0, msghdr.msg_controllen);
 
     struct cmsghdr* cmsg = CMSG_FIRSTHDR(&msghdr);
     cmsg->cmsg_len = cmsg_len(sizeof(int));

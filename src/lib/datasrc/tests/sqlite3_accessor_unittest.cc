@@ -191,6 +191,11 @@ TEST_F(SQLite3AccessorTest, iterator) {
     checkRR(context, "sub.example.org.", "3600", "NS", "ns.sub.example.org.");
     checkRR(context, "ns.sub.example.org.", "3600", "A", "192.0.2.101");
     checkRR(context, "www.example.org.", "3600", "A", "192.0.2.1");
+    checkRR(context, "ns3.example.org.", "3600", "NSEC3",
+            "1 1 12 aabbccdd 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG");
+    checkRR(context, "ns3.example.org.", "3600", "RRSIG",
+            "NSEC3 5 3 3600 20000101000000 20000201000000 "
+            "12345 ns3.example.org. FAKEFAKEFAKE");
 
     // Check there's no other
     EXPECT_FALSE(context->getNext(data));
@@ -665,16 +670,16 @@ TEST_F(SQLite3Create, creationtest) {
 TEST_F(SQLite3Create, emptytest) {
     ASSERT_FALSE(isReadable(SQLITE_NEW_DBFILE));
 
-    // open one manualle
+    // open one manually
     sqlite3* db;
     ASSERT_EQ(SQLITE_OK, sqlite3_open(SQLITE_NEW_DBFILE, &db));
 
-    // empty, but not locked, so creating it now should work
+    // empty, but not locked, so creating another accessor should work
     SQLite3Accessor accessor2(SQLITE_NEW_DBFILE, "IN");
 
     sqlite3_close(db);
 
-    // should work now that we closed it
+    // should still work now that we closed it
     SQLite3Accessor accessor3(SQLITE_NEW_DBFILE, "IN");
 }
 
@@ -692,8 +697,10 @@ TEST_F(SQLite3Create, lockedtest) {
 
     sqlite3_exec(db, "ROLLBACK TRANSACTION", NULL, NULL, NULL);
 
-    // should work now that we closed it
+    // should work now that the transaction has been rolled back
     SQLite3Accessor accessor3(SQLITE_NEW_DBFILE, "IN");
+
+    ASSERT_EQ(SQLITE_OK, sqlite3_close(db));
 }
 
 TEST_F(SQLite3AccessorTest, clone) {

@@ -191,7 +191,8 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertFalse(self.__start_called)
         self.assertFalse(self.__stop_called)
         self.assertFalse(self.__failed_called)
-        self.assertFalse(component.running())
+        self.assertFalse(component.is_running())
+        self.assertFalse(component.is_restarting())
         # We can't stop or fail the component yet
         self.assertRaises(ValueError, component.stop)
         self.assertRaises(ValueError, component.failed, 1)
@@ -204,7 +205,8 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertTrue(self.__start_called)
         self.assertFalse(self.__stop_called)
         self.assertFalse(self.__failed_called)
-        self.assertTrue(component.running())
+        self.assertTrue(component.is_running())
+        self.assertFalse(component.is_restarting())
 
     def __check_dead(self, component):
         """
@@ -215,7 +217,8 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertFalse(self.__stop_called)
         self.assertTrue(self.__failed_called)
         self.assertEqual(1, self._exitcode)
-        self.assertFalse(component.running())
+        self.assertFalse(component.is_running())
+        self.assertFalse(component.is_restarting())
         # Surely it can't be stopped when already dead
         self.assertRaises(ValueError, component.stop)
         # Nor started
@@ -234,7 +237,8 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertTrue(self.__start_called)
         self.assertFalse(self.__stop_called)
         self.assertTrue(self.__failed_called)
-        self.assertTrue(component.running())
+        self.assertTrue(component.is_running())
+        self.assertFalse(component.is_restarting())
         # Check it can't be started again
         self.assertRaises(ValueError, component.start)
 
@@ -246,7 +250,8 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertTrue(self.__start_called)
         self.assertFalse(self.__stop_called)
         self.assertTrue(self.__failed_called)
-        self.assertFalse(component.running())
+        self.assertFalse(component.is_running())
+        self.assertTrue(component.is_restarting())
 
     def __do_start_stop(self, kind):
         """
@@ -270,7 +275,8 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertTrue(self.__start_called)
         self.assertTrue(self.__stop_called)
         self.assertFalse(self.__failed_called)
-        self.assertFalse(component.running())
+        self.assertFalse(component.is_running())
+        self.assertFalse(component.is_restarting())
         # Check it can't be stopped twice
         self.assertRaises(ValueError, component.stop)
         # Or failed
@@ -553,10 +559,10 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertIsNone(component.pid())
         self.assertEqual(['hello'], component._params)
         self.assertEqual('Address', component._address)
-        self.assertFalse(component.running())
+        self.assertFalse(component.is_running())
         self.assertEqual({}, self.__registered_processes)
         component.start()
-        self.assertTrue(component.running())
+        self.assertTrue(component.is_running())
         # Some versions of unittest miss assertIsInstance
         self.assertTrue(isinstance(component._procinfo, TestProcInfo))
         self.assertEqual(42, component.pid())
@@ -580,11 +586,11 @@ class ComponentTests(BossUtils, unittest.TestCase):
         """
         component = Component('component', self, 'needed', 'Address')
         component.start()
-        self.assertTrue(component.running())
+        self.assertTrue(component.is_running())
         self.assertEqual('component', self.__start_simple_params)
         component.pid = lambda: 42
         component.stop()
-        self.assertFalse(component.running())
+        self.assertFalse(component.is_running())
         self.assertEqual(('component', 'Address', 42),
                          self.__stop_process_params)
 
@@ -609,7 +615,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         component = Component('component', self, 'needed', 'Address',
                               [], ProcInfo)
         component.start()
-        self.assertTrue(component.running())
+        self.assertTrue(component.is_running())
         component.kill()
         self.assertTrue(process.terminated)
         self.assertFalse(process.killed)
@@ -872,12 +878,13 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
             'priority': 6,
             'special': 'test',
             'process': 'additional',
-            'kind': 'needed'
+            'kind': 'dispensable' # need to be dispensable so it could restart
         }
         self.log = []
         plan = configurator._build_plan(self.__build_components(self.__core),
                                         bigger)
-        self.assertEqual([('additional', 'init'), ('additional', 'needed')],
+        self.assertEqual([('additional', 'init'),
+                          ('additional', 'dispensable')],
                          self.log)
         self.assertEqual(1, len(plan))
         self.assertTrue('component' in plan[0])
@@ -888,15 +895,29 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         # Now remove the one component again
         # We run the plan so the component is wired into internal structures
         configurator._run_plan(plan)
-        self.log = []
-        plan = configurator._build_plan(self.__build_components(bigger),
-                                        self.__core)
-        self.assertEqual([], self.log)
-        self.assertEqual([{
-            'command': 'stop',
-            'name': 'additional',
-            'component': component
-        }], plan)
+        # We should have the 'additional' component in the configurator.
+        self.assertTrue(configurator.has_component(component))
+        for count in [0, 1]:    # repeat two times, see below
+            self.log = []
+            plan = configurator._build_plan(self.__build_components(bigger),
+                                            self.__core)
+            self.assertEqual([], self.log)
+            self.assertEqual([{
+                        'command': 'stop',
+                        'name': 'additional',
+                        'component': component
+                        }], plan)
+
+            if count is 0:
+                # We then emulate unexpected failure of the component (but
+                # before it restarts).  It shouldn't confuse the
+                # configurator in the second phase of the test
+                component.failed(0)
+        # Run the plan, confirm the specified component is gone.
+        configurator._run_plan(plan)
+        self.assertFalse(configurator.has_component(component))
+        # There shouldn't be any other object that has the same name
+        self.assertFalse('additional' in configurator._components)
 
         # We want to switch a component. So, prepare the configurator so it
         # holds one
