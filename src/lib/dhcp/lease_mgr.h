@@ -53,18 +53,28 @@ struct Lease4 {
     /// @brief client identifier
     boost::shared_ptr<ClientId> client_id_;
 
+    /// @brief renewal timer
+    ///
+    /// Specifies renewal time. Although technically it is a property of IA container,
+    /// not the address itself, since our data model does not define separate IA
+    /// entity, we are keeping it in the lease. In case of multiple addresses/prefixes
+    /// for the same IA, each must have consistent T1 and T2 values. Specified in
+    /// seconds since cltt.
+    uint32_t t1_;
+
+    /// @brief rebinding timer
+    ///
+    /// Specifies rebinding time. Although technically it is a property of IA container,
+    /// not the address itself, since our data model does not define separate IA
+    /// entity, we are keeping it in the lease. In case of multiple addresses/prefixes
+    /// for the same IA, each must have consistent T1 and T2 values. Specified in
+    /// seconds since cltt.
+    uint32_t t2_;
+
     /// @brief valid lifetime
     ///
     /// Expressed as number of seconds since cltt
     uint32_t valid_lft_;
-
-    /// @brief Recycle timer
-    ///
-    /// Typically, the lease return to free pool immediately after it is released
-    /// or expired. This timer specifies number of seconds that it should be kept
-    /// after release or expiration, in case the client returns. This feature is not
-    /// currently used and this value is set to 0.
-    uint32_t recycle_time_;
 
     /// @brief client last transmission time
     ///
@@ -103,6 +113,8 @@ struct Lease4 {
     /// Currently not used. It may be used for keeping comments made by the
     /// system administrator.
     std::string comments_;
+
+    /// @todo: Add DHCPv4 failover related fields here
 };
 
 /// @brief Pointer to a Lease4 structure.
@@ -182,14 +194,6 @@ struct Lease6 {
     /// seconds since cltt.
     uint32_t t2_;
 
-    /// @brief Recycle timer
-    ///
-    /// Typically, the lease return to free pool immediately after it is released
-    /// or expired. This timer specifies number of seconds that it should be kept
-    /// after release or expiration, in case the client returns. This feature is not
-    /// currently used and this value is set to 0.
-    uint32_t recycle_time_;
-
     /// @brief client last transmission time
     ///
     /// Specifies a timestamp, when last transmission from a client was received.
@@ -227,6 +231,8 @@ struct Lease6 {
     ///
     /// This field is currently not used.
     std::string comments_;
+
+    /// @todo: Add DHCPv6 failover related fields here
 };
 
 /// @brief Pointer to a Lease6 structure.
