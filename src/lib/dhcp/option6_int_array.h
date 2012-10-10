@@ -41,17 +41,29 @@ class Option6IntArray: public Option {
 
 public:
 
-    typedef std::vector<T> ValuesCollection;
+    /// @brief Constructor.
+    ///
+    /// Creates option with empty values vector.
+    ///
+    /// @param type option type.
+    Option6IntArray(uint16_t type)
+        : Option(Option::V6, type),
+          values_(0) {
+        if (!OptionDataTypes<T>::valid) {
+            isc_throw(dhcp::InvalidDataType, "non-numeric type");
+        }
+    }
 
     /// @brief Constructor.
     ///
     /// @param type option type.
-    /// @param value option value.
-    Option6IntArray(uint16_t type, const ValuesCollection& values)
-        : Option(Option::V6, type), values_(values) {
+    /// @param buf buffer with option data.
+    Option6IntArray(uint16_t type, const OptionBuffer& buf)
+        : Option(Option::V6, type) {
         if (!OptionDataTypes<T>::valid) {
             isc_throw(dhcp::InvalidDataType, "non-numeric type");
         }
+        unpack(buf.begin(), buf.end());
     }
 
     /// @brief Constructor.
@@ -128,14 +140,17 @@ public:
             }
             begin += sizeof(T);
         }
-
-        LibDHCP::unpackOptions6(OptionBuffer(begin, end), options_);
     }
 
-    /// @brief Returns collection of values.
+    /// @brief Return collection of option values.
     ///
     /// @return collection of values.
-    const ValuesCollection& getValues() const { return values_; }
+    const std::vector<T>& getValues() const { return (values_); }
+
+    /// @brief Set option values.
+    ///
+    /// @param collection of values to be set.
+    void setValues(const std::vector<T>& values) { values_ = values; }
 
     /// @brief returns complete length of option
     ///
@@ -155,7 +170,7 @@ public:
 
 private:
 
-    ValuesCollection values_;
+    std::vector<T> values_;
 };
 
 } // isc::dhcp namespace
