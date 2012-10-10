@@ -947,7 +947,7 @@ public:
         PARTIALMATCH, ///< A superdomain node was found
         NOTFOUND,   ///< Not even any superdomain was found
         /// \brief Returned by insert() if a node of the name already exists
-        ALREADYEXISTS,
+        ALREADYEXISTS
     };
 
     /// \brief Allocate and construct \c DomainTree
