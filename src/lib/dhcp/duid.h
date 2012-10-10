@@ -49,9 +49,12 @@ class DUID {
 
     /// @brief returns a const reference to the actual DUID value
     ///
-    /// Note: This reference is only valid as long as the DUID
-    /// that returned it.
-    const std::vector<uint8_t>& getDuid() const;
+    /// Note: For safety reasons, this method returns a copy of data as
+    /// otherwise the reference would be only valid as long as the object that
+    /// returned it. In any case, this method should be used only sporadically.
+    /// If there are frequent uses, we must implement some other method
+    /// (e.g. storeSelf()) that will avoid data copying.
+    const std::vector<uint8_t> getDuid() const;
 
     /// @brief returns DUID type
     DUIDType getType() const;
@@ -80,24 +83,9 @@ class ClientId : DUID {
     /// constructor based on C-style data
     ClientId(const uint8_t *clientid, size_t len);
 
-    /// constructor based on IOAddress
-    ///
-    /// @throw BadValue if specified address is not IPv4
-    ClientId(const isc::asiolink::IOAddress& addr);
-
     /// @brief returns reference to the client-id data
     ///
-    /// This reference is only valid as long as the object
-    /// that returned it.
     const std::vector<uint8_t> getClientId() const;
-
-    /// @brief return an IPv4 address represented by this client-id
-    ///
-    /// @throw BadValue if this client-id is not an IPv4 address
-    isc::asiolink::IOAddress getAddress() const;
-
-    /// @brief returns if client-id is an address
-    bool isAddress() const;
 
     // compares two client-ids
     bool operator == (const ClientId& other) const;
