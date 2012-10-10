@@ -13,24 +13,22 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <iostream>
-#include <sstream>
+
+#include <exceptions/exceptions.h>
+#include <asiolink/io_address.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/option4_addrlst.h>
+#include <dhcp/option6_addrlst.h>
+#include <dhcp/option6_ia.h>
+#include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_int.h>
+#include <dhcp/option6_int_array.h>
+#include <dhcp/option_definition.h>
 
 #include <gtest/gtest.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/pointer_cast.hpp>
-
-#include <exceptions/exceptions.h>
-#include <asiolink/io_address.h>
-#include "dhcp/dhcp4.h"
-#include "dhcp/dhcp6.h"
-#include "dhcp/option4_addrlst.h"
-#include "dhcp/option6_addrlst.h"
-#include "dhcp/option6_ia.h"
-#include "dhcp/option6_iaaddr.h"
-#include "dhcp/option6_int.h"
-#include "dhcp/option6_int_array.h"
-#include "dhcp/option_definition.h"
 
 using namespace std;
 using namespace isc;
@@ -57,6 +55,7 @@ TEST_F(OptionDefinitionTest, constructor) {
     EXPECT_EQ(1, opt_def1.getCode());
     EXPECT_EQ(OptionDefinition::STRING_TYPE,  opt_def1.getType());
     EXPECT_FALSE(opt_def1.getArrayType());
+    EXPECT_NO_THROW(opt_def1.validate());
 
     // Specify the option data type as an enum value.
     OptionDefinition opt_def2("OPTION_RAPID_COMMIT", 14,
@@ -65,6 +64,7 @@ TEST_F(OptionDefinitionTest, constructor) {
     EXPECT_EQ(14, opt_def2.getCode());
     EXPECT_EQ(OptionDefinition::EMPTY_TYPE, opt_def2.getType());
     EXPECT_FALSE(opt_def2.getArrayType());
+    EXPECT_NO_THROW(opt_def1.validate());
 
     // Check if it is possible to set that option is an array.
     OptionDefinition opt_def3("OPTION_NIS_SERVERS", 27,
@@ -74,6 +74,7 @@ TEST_F(OptionDefinitionTest, constructor) {
     EXPECT_EQ(27, opt_def3.getCode());
     EXPECT_EQ(OptionDefinition::IPV6_ADDRESS_TYPE, opt_def3.getType());
     EXPECT_TRUE(opt_def3.getArrayType());
+    EXPECT_NO_THROW(opt_def3.validate());
 
     // The created object is invalid if invalid data type is specified but
     // constructor shouldn't throw exception. The object is validated after
@@ -121,6 +122,31 @@ TEST_F(OptionDefinitionTest, addRecordField) {
     EXPECT_THROW(opt_def.addRecordField(invalid_type), isc::BadValue);
 }
 
+TEST_F(OptionDefinitionTest, validate) {
+    // Not supported option type string is not allowed.
+    OptionDefinition opt_def1("OPTION_CLIENTID", D6O_CLIENTID, "non-existent-type");
+    EXPECT_THROW(opt_def1.validate(), isc::OutOfRange);
+
+    // Not supported option type enum value is not allowed.
+    OptionDefinition opt_def2("OPTION_CLIENTID", D6O_CLIENTID, OptionDefinition::UNKNOWN_TYPE);
+    EXPECT_THROW(opt_def2.validate(), isc::OutOfRange);
+
+    OptionDefinition opt_def3("OPTION_CLIENTID", D6O_CLIENTID,
+                              static_cast<OptionDefinition::DataType>(OptionDefinition::UNKNOWN_TYPE
+                                                                      + 2));
+    EXPECT_THROW(opt_def3.validate(), isc::OutOfRange);
+    
+    // Empty option name is not allowed.
+    OptionDefinition opt_def4("", D6O_CLIENTID, "string");
+    EXPECT_THROW(opt_def4.validate(), isc::BadValue);
+
+    // Option name must not contain spaces.
+    OptionDefinition opt_def5(" OPTION_CLIENTID", D6O_CLIENTID, "string");
+    EXPECT_THROW(opt_def5.validate(), isc::BadValue);
+
+    OptionDefinition opt_def6("OPTION CLIENTID", D6O_CLIENTID, "string");
+    EXPECT_THROW(opt_def6.validate(), isc::BadValue);
+}
 
 TEST_F(OptionDefinitionTest, factoryAddrList6) {
     OptionDefinition opt_def("OPTION_NIS_SERVERS", D6O_NIS_SERVERS,
