@@ -1,5 +1,5 @@
 # InterprocessSyncFile has a dependency on isc::util::thread::Mutex
-SUBDIRS = threads . io unittests tests pyunittests python
+SUBDIRS = io unittests threads . tests pyunittests python
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
