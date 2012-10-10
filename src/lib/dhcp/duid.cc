@@ -37,8 +37,8 @@ DUID::DUID(const uint8_t * data, size_t len) {
     duid_ = std::vector<uint8_t>(data, data + len);
 }
 
-const std::vector<uint8_t>& DUID::getDuid() const {
-    return duid_;
+const std::vector<uint8_t> DUID::getDuid() const {
+    return (duid_);
 }
 
 DUID::DUIDType DUID::getType() const {
@@ -71,30 +71,9 @@ ClientId::ClientId(const uint8_t *clientid, size_t len)
     :DUID(clientid, len) {
 }
 
-/// constructor based on IOAddress
-ClientId::ClientId(const isc::asiolink::IOAddress& addr)
-    :DUID(std::vector<uint8_t>(4, 0)) {
-    if (addr.getFamily() != AF_INET) {
-        isc_throw(BadValue, "Client-id supports only IPv4 addresses");
-    }
-    isc::util::writeUint32(addr, &duid_[0]);
-}
-
-/// @brief returns reference to the client-id data
+/// @brief returns a copy of client-id data
 const std::vector<uint8_t> ClientId::getClientId() const {
-    return duid_;
-}
-
-isc::asiolink::IOAddress ClientId::getAddress() const {
-    if (duid_.size() != sizeof(uint32_t)) {
-        isc_throw(BadValue, "This client-id is not an IPv4 address");
-    }
-
-    return isc::asiolink::IOAddress( isc::util::readUint32(&duid_[0]) );
-}
-
-bool ClientId::isAddress() const {
-    return (duid_.size() == sizeof(uint32_t));
+    return (duid_);
 }
 
 // compares two client-ids
