@@ -101,9 +101,9 @@ TEST_F(ZoneTableTest, addZone) {
                                                            zname1,
                                                            holder1.release()));
     EXPECT_EQ(result::SUCCESS, result1.code);
-    EXPECT_EQ(NULL, result1.zone_data);
+    EXPECT_EQ(static_cast<const ZoneData*>(NULL), result1.zone_data);
     // It got released by it
-    EXPECT_EQ(NULL, holder1.get());
+    EXPECT_EQ(static_cast<const ZoneData*>(NULL), holder1.get());
 
     // Duplicate add doesn't replace the existing data.
     SegmentObjectHolder<ZoneData, RRClass> holder2(
@@ -115,7 +115,7 @@ TEST_F(ZoneTableTest, addZone) {
     // The old one gets out
     EXPECT_EQ(data1, result2.zone_data);
     // It releases this one even when we replace the old zone
-    EXPECT_EQ(NULL, holder2.get());
+    EXPECT_EQ(static_cast<const ZoneData*>(NULL), holder2.get());
     // We need to release the old one manually
     ZoneData::destroy(mem_sgmt_, result2.zone_data, zclass_);
 
