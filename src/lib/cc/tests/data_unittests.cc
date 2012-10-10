@@ -331,6 +331,7 @@ testGetValueMap() {
     EXPECT_FALSE(el->getValue(s));
     EXPECT_FALSE(el->getValue(v));
     EXPECT_TRUE(el->getValue(m));
+    EXPECT_EQ("{  }", el->str());
 }
 
 TEST(Element, create_and_value_throws) {
