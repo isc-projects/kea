@@ -79,26 +79,7 @@ public:
             ///
             /// This method never throws an exception.
             inline ~ConstIterator() {}
-            /// The assignment operator.
-            ///
-            /// This method is mostly exception free. But it may still
-            /// throw a standard exception if memory allocation fails
-            /// inside the method.
-            inline ConstIterator& operator=(const ConstIterator& source) {
-                iterator_ = source.iterator_;
-                return (*this);
-            }
-
-            /// The copy constructor.
-            ///
-            /// This constructor is mostly exception free. But it may still
-            /// throw a standard exception if memory allocation fails
-            /// inside the method.
-            inline ConstIterator(const ConstIterator& source) :
-                iterator_(source.iterator_)
-            {}
-            //
-            // Constructor from implementation detail DictionaryMap::const_iterator
+            /// Constructor from implementation detail DictionaryMap::const_iterator
             inline ConstIterator(
                 DictionaryMap::const_iterator iterator) :
                 iterator_(iterator)
