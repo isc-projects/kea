@@ -19,9 +19,6 @@
 #include <dhcp/option6_iaaddr.h>
 #include <util/buffer.h>
 
-#include <iostream>
-#include <sstream>
-#include <arpa/inet.h>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 

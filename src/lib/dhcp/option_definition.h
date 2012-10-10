@@ -15,10 +15,10 @@
 #ifndef OPTION_DEFINITION_H_
 #define OPTION_DEFINITION_H_
 
-#include "dhcp/option_data_types.h"
-#include "dhcp/option6_int.h"
-#include "dhcp/option6_int_array.h"
-#include "dhcp/option.h"
+#include <dhcp/option_data_types.h>
+#include <dhcp/option6_int.h>
+#include <dhcp/option6_int_array.h>
+#include <dhcp/option.h>
 
 namespace isc {
 namespace dhcp {
@@ -51,7 +51,7 @@ namespace dhcp {
 /// limited by the maximal DHCPv6 option length).
 /// Should option comprise data fields of different types the "record"
 /// option type is used. In such cases the data field types within the
-/// record are specified using \ref OptionDefinition::AddRecordField.
+/// record are specified using \ref OptionDefinition::addRecordField.
 /// When OptionDefinition object has been sucessfully created it
 /// can be queried to return the appropriate option factory function
 /// for the specified option format. There is a number of "standard"
@@ -76,6 +76,7 @@ namespace dhcp {
 ///
 /// @todo Extend the comment to describe "generic factories".
 /// @todo Extend this class to use custom namespaces.
+/// @todo Extend this class with more factory functions.
 class OptionDefinition {
 public:
 
@@ -105,6 +106,13 @@ public:
 private:
 
     /// @brief Utility class for operations on DataTypes.
+    ///
+    /// This class is implemented as the singleton because the list of
+    /// supported data types is in this case loaded only once
+    /// into the memory and persists for all option definitions.
+    ///
+    /// @todo This class can be extended to return the string value
+    /// representing the data type from the enum value.
     class DataTypeUtil {
     public:
 
@@ -208,6 +216,13 @@ public:
     /// @return option data type.
     DataType getType() const { return (type_); };
 
+    /// @brief Check if the option definition is valid.
+    ///
+    /// @throw isc::OutOfRange if invalid option type was specified.
+    /// @throw isc::BadValue if invalid option name was specified,
+    /// e.g. empty or containing spaces.
+    void validate() const;
+
     /// @brief Check if specified format is IA_NA option format.
     ///
     /// @return true if specified format is IA_NA option format.
@@ -223,6 +238,9 @@ public:
     /// @param u universe (must be V4).
     /// @param type option type.
     /// @param buf option buffer with a list of IPv4 addresses.
+    ///
+    /// @throw isc::OutOfRange if length of the provided option buffer
+    /// is not multiple of IPV4 address length.
     static OptionPtr factoryAddrList4(Option::Universe u, uint16_t type,
                                       const OptionBuffer& buf);
 
@@ -231,6 +249,9 @@ public:
     /// @param u universe (must be V6).
     /// @param type option type.
     /// @param buf option buffer with a list of IPv6 addresses.
+    ///
+    /// @throw isc::OutOfaRange if length of provided option buffer
+    /// is not multiple of IPV6 address length.
     static OptionPtr factoryAddrList6(Option::Universe u, uint16_t type,
                                       const OptionBuffer& buf);
 
@@ -242,7 +263,7 @@ public:
     static OptionPtr factoryEmpty(Option::Universe u, uint16_t type,
                                   const OptionBuffer& buf);
 
-    /// @brief Factory to create generic option..
+    /// @brief Factory to create generic option.
     ///
     /// @param u universe (V6 or V4).
     /// @param type option type.
@@ -276,10 +297,11 @@ public:
 
     /// @brief Factory function to create option with integer value.
     ///
-    /// @param u universe (V6 or V4).
     /// @param type option type.
     /// @param buf option buffer.
-    /// @param T type of the data field (must be one of the uintX_t or intX_t).
+    /// @tparam T type of the data field (must be one of the uintX_t or intX_t).
+    ///
+    /// @throw isc::OutOfRange if provided option buffer length is invalid.
     template<typename T>
     static OptionPtr factoryInteger(Option::Universe, uint16_t type, const OptionBuffer& buf) {
         if (buf.size() > sizeof(T)) {
@@ -292,10 +314,11 @@ public:
 
     /// @brief Factory function to create option with array of integer values.
     ///
-    /// @param u universe (V6 or V4).
     /// @param type option type.
     /// @param buf option buffer.
-    /// @param T type of the data field (must be one of the uintX_t or intX_t).
+    /// @tparam T type of the data field (must be one of the uintX_t or intX_t).
+    ///
+    /// @throw isc::OutOfRange if provided option buffer length is invalid.
     template<typename T>
     static OptionPtr factoryIntegerArray(Option::Universe, uint16_t type, const OptionBuffer& buf) {
         if (buf.size() == 0) {
@@ -323,13 +346,8 @@ private:
     /// @param actual_universe actual universe value.
     ///
     /// @throw isc::BadValue if expected universe and actual universe don't match.
-    static inline void sanityCheckUniverse(const Option::Universe expected_universe,
-                                           const Option::Universe actual_universe); 
-
-    /// @brief Check if the option definition is valid.
-    ///
-    /// @todo: list exceptions it throws.
-    void validate() const;
+   static inline void sanityCheckUniverse(const Option::Universe expected_universe,
+                                          const Option::Universe actual_universe); 
 
     /// Option name.
     std::string name_;
