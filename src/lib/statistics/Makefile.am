@@ -19,5 +19,7 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
-# These header files should be in the distribution.
+# These are header-only shared classes and required to build BIND 10.
+# Include them in the distributed tarball with EXTRA_DIST (like as
+# external sources in ext/).
 EXTRA_DIST = counter.h counter_dict.h
