@@ -48,12 +48,50 @@ private:
     // specified at the construction of this class.
     CounterDictionary();
 public:
-    explicit inline CounterDictionary(const size_t items);
-    inline ~CounterDictionary();
-    inline void addElement(const std::string& name);
-    inline void deleteElement(const std::string& name);
-    inline Counter& getElement(const std::string& name);
-    inline Counter& operator[](const std::string& name);
+    explicit inline CounterDictionary(const size_t items) :
+        items_(items)
+    {
+        // The number of items must not be 0
+        if (items == 0) {
+            isc_throw(isc::InvalidParameter, "Items must not be 0");
+        }
+    };
+    inline ~CounterDictionary() {};
+    inline void addElement(const std::string& name) {
+        // throw if the element already exists
+        if (dictionary_.count(name) != 0) {
+            isc_throw(isc::InvalidParameter,
+                      "Element " << name << " already exists");
+        }
+        assert(items_ != 0);
+        // Create a new Counter and add to the map
+        dictionary_.insert(
+            DictionaryMap::value_type(name, CounterPtr(new Counter(items_))));
+    };
+    inline void deleteElement(const std::string& name) {
+        size_t result = dictionary_.erase(name);
+        if (result != 1) {
+            // If an element with specified name does not exist, throw
+            // isc::OutOfRange.
+            isc_throw(isc::OutOfRange,
+                      "Element " << name << " does not exist");
+        }
+    };
+    inline Counter& getElement(const std::string& name) {
+        DictionaryMap::const_iterator i = dictionary_.find(name);
+        if (i != dictionary_.end()) {
+            // the key was found. return the element.
+            return (*(i->second));
+        } else {
+            // If an element with specified name does not exist, throw
+            // isc::OutOfRange.
+            isc_throw(isc::OutOfRange,
+                      "Element " << name << " does not exist");
+        }
+    };
+    inline Counter& operator[](const std::string& name) {
+        return (getElement(name));
+    };
     /// \brief \c ConstIterator is a constant iterator that provides an
     /// interface for enumerating name of zones stored in CounterDictionary.
     ///
@@ -107,76 +145,15 @@ public:
             DictionaryMap::const_iterator iterator_;
     };
 
-    inline ConstIterator begin() const;
-    inline ConstIterator end() const;
+    inline ConstIterator begin() const {
+        return (CounterDictionary::ConstIterator(dictionary_.begin()));
+    };
+    inline ConstIterator end() const {
+        return (CounterDictionary::ConstIterator(dictionary_.end()));
+    };
 
     typedef ConstIterator const_iterator;
 };
-
-
-inline CounterDictionary::ConstIterator
-CounterDictionary::begin() const {
-    return (CounterDictionary::ConstIterator(dictionary_.begin()));
-}
-
-inline CounterDictionary::ConstIterator
-CounterDictionary::end() const {
-    return (CounterDictionary::ConstIterator(dictionary_.end()));
-}
-
-// Constructor with number of items
-inline CounterDictionary::CounterDictionary(const size_t items) :
-    items_(items)
-{
-    // The number of items must not be 0
-    if (items == 0) {
-        isc_throw(isc::InvalidParameter, "Items must not be 0");
-    }
-}
-
-// Destructor
-inline CounterDictionary::~CounterDictionary() {}
-
-inline void
-CounterDictionary::addElement(const std::string& name) {
-    // throw if the element already exists
-    if (dictionary_.count(name) != 0) {
-        isc_throw(isc::InvalidParameter,
-                  "Element " << name << " already exists");
-    }
-    assert(items_ != 0);
-    // Create a new Counter and add to the map
-    dictionary_.insert(
-        DictionaryMap::value_type(name, CounterPtr(new Counter(items_))));
-}
-
-inline void
-CounterDictionary::deleteElement(const std::string& name) {
-    size_t result = dictionary_.erase(name);
-    if (result != 1) {
-        // If an element with specified name does not exist, throw
-        // isc::OutOfRange.
-        isc_throw(isc::OutOfRange, "Element " << name << " does not exist");
-    }
-}
-
-inline Counter&
-CounterDictionary::getElement(const std::string& name) {
-    DictionaryMap::const_iterator i = dictionary_.find(name);
-    if (i != dictionary_.end()) {
-        // the key was found. return the element.
-        return (*(i->second));
-    } else {
-        // If an element with specified name does not exist, throw
-        // isc::OutOfRange.
-        isc_throw(isc::OutOfRange, "Element " << name << " does not exist");
-    }
-}
-
-inline Counter&
-CounterDictionary::operator[](const std::string& name) {
-    return (getElement(name));
-}
 
 }   // namespace statistics
 }   // namespace isc
