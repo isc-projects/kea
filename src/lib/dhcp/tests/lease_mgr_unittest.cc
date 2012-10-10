@@ -59,20 +59,58 @@ public:
     ///
     /// @param addr address of the searched lease
     ///
-    /// @return smart pointer to the lease (or NULL if a lease is not found)
+    /// @return a collection of leases
     virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr) const;
 
-    /// @brief Returns existing IPv4 lease for specified hardware address.
+    /// @brief Returns existing IPv4 lease for specific address and subnet
+    /// @param addr address of the searched lease
+    /// @param subnet_id ID of the subnet the lease must belong to
+    ///
+    /// @return smart pointer to the lease (or NULL if a lease is not found)
+    virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr,
+                                SubnetID subnet_id) const;
+
+    /// @brief Returns existing IPv4 leases for specified hardware address.
+    ///
+    /// Although in the usual case there will be only one lease, for mobile
+    /// clients or clients with multiple static/fixed/reserved leases there
+    /// can be more than one. Thus return type is a container, not a single
+    /// pointer.
     ///
     /// @param hwaddr hardware address of the client
     ///
-    /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(const HWAddr& hwaddr) const;
+    /// @return lease collection
+    virtual Lease4Collection getLease4(const HWAddr& hwaddr) const;
+
+    /// @brief Returns existing IPv4 leases for specified hardware address
+    ///        and a subnet
+    ///
+    /// There can be at most one lease for a given HW address in a single
+    /// pool, so this method with either return a single lease or NULL.
+    ///
+    /// @param hwaddr hardware address of the client
+    /// @param subnet_id identifier of the subnet that lease must belong to
+    ///
+    /// @return a pointer to the lease (or NULL if a lease is not found)
+    virtual Lease4Ptr getLease4(const HWAddr& hwaddr,
+                                SubnetID subnet_id) const;
 
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
     /// @param clientid client identifier
-    virtual Lease4Ptr getLease4(const ClientId& clientid) const;
+    virtual Lease4Collection getLease4(const ClientId& clientid) const;
+
+    /// @brief Returns existing IPv4 lease for specified client-id
+    ///
+    /// There can be at most one lease for a given HW address in a single
+    /// pool, so this method with either return a single lease or NULL.
+    ///
+    /// @param clientid client identifier
+    /// @param subnet_id identifier of the subnet that lease must belong to
+    ///
+    /// @return a pointer to the lease (or NULL if a lease is not found)
+    virtual Lease4Ptr getLease4(const ClientId& clientid,
+                                SubnetID subnet_id) const;
 
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
@@ -86,8 +124,17 @@ public:
     /// @param duid client DUID
     /// @param iaid IA identifier
     ///
+    /// @return collection of IPv6 leases
+    Lease6Collection getLease6(const DUID& duid, uint32_t iaid) const;
+
+    /// @brief Returns existing IPv6 lease for a given DUID+IA combination
+    ///
+    /// @param duid client DUID
+    /// @param iaid IA identifier
+    /// @param subnet_id identifier of the subnet the lease must belong to
+    ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    Lease6Ptr getLease6(const DUID& duid, uint32_t iaid) const;
+    Lease6Ptr getLease6(const DUID& duid, uint32_t iaid, SubnetID subnet_id) const;
 
     /// @brief Updates IPv4 lease.
     ///
@@ -156,19 +203,40 @@ Lease4Ptr Memfile_LeaseMgr::getLease4(isc::asiolink::IOAddress) const {
     return (Lease4Ptr());
 }
 
-Lease4Ptr Memfile_LeaseMgr::getLease4(const HWAddr& ) const {
+Lease4Collection Memfile_LeaseMgr::getLease4(const HWAddr& ) const {
+    return (Lease4Collection());
+}
+
+Lease4Ptr Memfile_LeaseMgr::getLease4(isc::asiolink::IOAddress ,
+                                      SubnetID) const {
     return (Lease4Ptr());
 }
 
-Lease4Ptr Memfile_LeaseMgr::getLease4(const ClientId& ) const {
+Lease4Ptr Memfile_LeaseMgr::getLease4(const HWAddr&,
+                                      SubnetID) const {
     return (Lease4Ptr());
+}
+
+
+Lease4Ptr Memfile_LeaseMgr::getLease4(const ClientId&,
+                                      SubnetID) const {
+    return (Lease4Ptr());
+}
+
+Lease4Collection Memfile_LeaseMgr::getLease4(const ClientId& ) const {
+    return (Lease4Collection());
 }
 
 Lease6Ptr Memfile_LeaseMgr::getLease6(isc::asiolink::IOAddress) const {
     return (Lease6Ptr());
 }
 
-Lease6Ptr Memfile_LeaseMgr::getLease6(const DUID& , uint32_t ) const {
+Lease6Collection Memfile_LeaseMgr::getLease6(const DUID& , uint32_t ) const {
+    return (Lease6Collection());
+}
+
+Lease6Ptr Memfile_LeaseMgr::getLease6(const DUID&, uint32_t,
+                                      SubnetID) const {
     return (Lease6Ptr());
 }
 
@@ -201,6 +269,8 @@ public:
     }
 };
 
+// This test checks if the LeaseMgr can be instantiated and that it
+// parses parameters string properly.
 TEST_F(LeaseMgrTest, constructor) {
 
     // should not throw any exceptions here
@@ -218,5 +288,9 @@ TEST_F(LeaseMgrTest, constructor) {
 
 // There's no point in calling any other methods in LeaseMgr, as they
 // are purely virtual, so we would only call Memfile_LeaseMgr methods.
+// Those methods are just stubs that does not return anything.
+// It seems likely that we will need to extend the memfile code for
+// allocation engine tests, so we may implement tests that call
+// Memfile_LeaseMgr methods then.
 
 }; // end of anonymous namespace
