@@ -12,12 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
+
 #include <util/threads/lock.h>
 #include <util/threads/thread.h>
 
 #include <gtest/gtest.h>
 
 #include <boost/bind.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <cstring>
 
@@ -27,7 +30,42 @@
 using namespace isc::util::thread;
 
 namespace {
-TEST(CondVarTest, create) {
+// Used as a signal handler below.
+volatile bool do_exit;          // use for emergency escape
+void
+alarmHandler(int) {
+    do_exit = true;
+}
+
+class CondVarTest : public ::testing::Test {
+protected:
+    // We use a signal in case some of the thread synchronization tests
+    // unexpectedly cause a deadlock.
+    void SetUp() {
+        do_exit = false;
+
+        std::memset(&handler_, 0, sizeof(handler_));
+        handler_.sa_handler = alarmHandler;
+        if (sigaction(SIGALRM, &handler_, &original_) != 0) {
+            FAIL() << "Couldn't set alarm";
+        }
+        alarm(10);                  // 10sec duration: arbitrary choice
+    }
+    void TearDown() {
+        // Cancel the alarm and return the original handler
+        alarm(0);
+        if (sigaction(SIGALRM, &original_, NULL)) {
+            FAIL() << "Couldn't restore alarm";
+        }
+    }
+
+    CondVar condvar_;
+    Mutex mutex_;
+private:
+    struct sigaction handler_, original_;
+};
+
+TEST(CondVarTest0, create) {
     // Just construct and destruct it.  Nothing unusual should happen.
     EXPECT_NO_THROW(CondVar condvar);
 }
@@ -35,41 +73,97 @@ TEST(CondVarTest, create) {
 // Running on a separate thread, just updating the argument and waking up
 // the other thread via the condition variable passed.
 void
-ringSignal(CondVar* condvar, Mutex* mutex, bool* arg) {
-    assert(*arg == false);
+ringSignal(CondVar* condvar, Mutex* mutex, int* arg) {
+    assert(*arg == 0);
     Mutex::Locker locker(*mutex);
-    *arg = true;
+    ++*arg;
     condvar->signal();
 }
 
-void
-no_handler(int) {}
-
 // A simple wait-signal operation on a condition variable.
-TEST(CondVarTest, waitAndSignal) {
-    CondVar condvar;
-    Mutex mutex;
-
-    struct sigaction ignored, original;
-    std::memset(&ignored, 0, sizeof(ignored));
-    ignored.sa_handler = no_handler;
-    if (sigaction(SIGALRM, &ignored, &original) != 0) {
-        FAIL() << "Couldn't set alarm";
-    }
-    alarm(10);                  // 10sec duration: arbitrary choice
-
-    Mutex::Locker locker(mutex);
-    bool must_become_true = false; // let the other thread reset it to true
-    Thread t(boost::bind(&ringSignal, &condvar, &mutex, &must_become_true));
-    condvar.wait(mutex);
+TEST_F(CondVarTest, waitAndSignal) {
+    Mutex::Locker locker(mutex_);
+    int shared_var = 0; // let the other thread increment this
+    Thread t(boost::bind(&ringSignal, &condvar_, &mutex_, &shared_var));
+    condvar_.wait(mutex_);
     t.wait();
-    EXPECT_TRUE(must_become_true);
+    EXPECT_EQ(1, shared_var);
+}
 
-    // Cancel the alarm and return the original handler
-    alarm(0);
-    if (sigaction(SIGALRM, &original, NULL)) {
-        FAIL() << "Couldn't restore alarm";
+// Thread's main code for the next test
+void
+signalAndWait(CondVar* condvar1, CondVar* condvar2, Mutex* mutex, int* arg) {
+    Mutex::Locker locker(*mutex);
+    ++*arg;
+    condvar2->signal();  // let the main thread know this one is ready
+    condvar1->wait(*mutex);
+    ++*arg;
+}
+
+// Similar to the previous test, but having two threads wait for a condvar.
+TEST_F(CondVarTest, multiWaits) {
+    boost::scoped_ptr<Mutex::Locker> locker(new Mutex::Locker(mutex_));
+    CondVar condvar2; // separate cond var for initial synchronization
+    int shared_var = 0; // let the other thread increment this
+    Thread t1(boost::bind(&signalAndWait, &condvar_, &condvar2, &mutex_,
+                          &shared_var));
+    Thread t2(boost::bind(&signalAndWait, &condvar_, &condvar2, &mutex_,
+                          &shared_var));
+
+    // Wait until both threads are waiting on condvar_.
+    while (shared_var < 2 && !do_exit) {
+        condvar2.wait(mutex_);
     }
+    // Check we exited from the loop successfully.
+    ASSERT_FALSE(do_exit);
+    ASSERT_EQ(2, shared_var);
+
+    // release the lock, wake up both threads, wait for them to die, and
+    // confirm they successfully woke up.
+    locker.reset();
+    condvar_.signal();
+    condvar_.signal();
+    t1.wait();
+    t2.wait();
+    EXPECT_EQ(4, shared_var);
+}
+
+void
+waiter(CondVar* condver, Mutex* mutex) {
+    Mutex::Locker locker(*mutex);
+    condver->wait(*mutex);
+}
+
+// Similar to the previous version of the same function, but just do
+// condvar operations.  It will never wake up.
+void
+signalAndWait(CondVar* condvar, Mutex* mutex) {
+    Mutex::Locker locker(*mutex);
+    condvar->signal();
+    condvar->wait(*mutex);
+}
+
+#ifdef EXPECT_DEATH
+TEST_F(CondVarTest, bad) {
+    // We'll destroy a CondVar object while the thread is still waiting
+    // on it.  This will trigger an assertion failure.
+    EXPECT_DEATH({
+            CondVar cond;
+            Mutex::Locker locker(mutex_);
+            Thread t(boost::bind(&signalAndWait, &cond, &mutex_));
+            cond.wait(mutex_);
+        }, "");
+}
+#endif
+
+TEST_F(CondVarTest, badWait) {
+    // In our implementation, wait() requires acquiring the lock beforehand.
+    EXPECT_THROW(condvar_.wait(mutex_), isc::InvalidOperation);
+}
+
+TEST_F(CondVarTest, emptySignal) {
+    // It's okay to call signal when no one waits.
+    EXPECT_NO_THROW(condvar_.signal());
 }
 
 }

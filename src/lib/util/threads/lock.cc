@@ -160,6 +160,11 @@ public:
     }
     ~Impl() {
         const int result = pthread_cond_destroy(&cond_);
+
+        // This can happen if we try to destroy cond_ while some other thread
+        // is waiting on it.  assert() may be too strong for such a case,
+        // but we cannot safely destroy cond_ anyway.  In order to avoid
+        // throwing from a destructor we simply let the process die.
         assert(result == 0);
     }
 
@@ -179,7 +184,13 @@ CondVar::wait(Mutex& mutex) {
     mutex.preUnlockAction();    // Only in debug mode
     const int result = pthread_cond_wait(&impl_->cond_, &mutex.impl_->mutex);
     mutex.postLockAction();     // Only in debug mode
-    assert(result == 0);
+
+    // pthread_cond_wait should normally succeed unless mutex is completely
+    // broken.
+    if (result != 0) {
+        isc_throw(isc::BadValue, "pthread_cond_wait failed unexpectedly: " <<
+                  std::strerror(result));
+    }
 }
 
 void
