@@ -98,6 +98,21 @@ public:
     /// to remove subnets. The only case where subnet6 removal would be
     /// needed is a dynamic server reconfiguration - a use case that is not
     /// planned to be supported any time soon.
+
+    /// @brief removes all subnets
+    ///
+    /// This method removes all existing subnets. It is used during
+    /// reconfiguration - old configuration is wiped and new definitions
+    /// are used to recreate subnets.
+    ///
+    /// @todo Implement more intelligent approach. Note that comparison
+    /// between old and new configuration is tricky. For example: is
+    /// 2000::/64 and 2000::/48 the same subnet or is it something
+    /// completely new?
+    void deleteSubnets6() {
+        subnets6_.clear();
+    }
+
 protected:
 
     /// @brief Protected constructor.
