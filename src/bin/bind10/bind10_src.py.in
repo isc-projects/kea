@@ -693,17 +693,17 @@ class BoB:
         # from doing so
         if not self.nokill:
             # next try sending a SIGTERM
-            self.__terminate_children(False)
+            self.__kill_children(False)
             # finally, send SIGKILL (unmaskable termination) until everybody
             # dies
             while self.components:
                 # XXX: some delay probably useful... how much is uncertain
                 time.sleep(0.1)
                 self.reap_children()
-                self.__terminate_children(True)
+                self.__kill_children(True)
             logger.info(BIND10_SHUTDOWN_COMPLETE)
 
-    def __terminate_children(self, forceful):
+    def __kill_children(self, forceful):
         '''Terminate remaining subprocesses by sending a signal.
 
         The forceful paramter will be passed Component.kill().
