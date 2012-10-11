@@ -27,6 +27,79 @@ using namespace isc::asiolink;
 
 namespace {
 
+TEST(Pool4Test, constructor_first_last) {
+
+    // let's construct 192.0.2.1-192.0.2.255 pool
+    Pool4 pool1(IOAddress("192.0.2.1"), IOAddress("192.0.2.255"));
+
+    EXPECT_EQ(IOAddress("192.0.2.1"), pool1.getFirstAddress());
+    EXPECT_EQ(IOAddress("192.0.2.255"), pool1.getLastAddress());
+
+    // This is Pool4, IPv6 addresses do not belong here
+    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::1"),
+                       IOAddress("192.168.0.5")), BadValue);
+    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("192.168.0.2"),
+                       IOAddress("2001:db8::1")), BadValue);
+
+    // Should throw. Range should be 192.0.2.1-192.0.2.2, not
+    // the other way around.
+    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("192.0.2.2"),
+                       IOAddress("192.0.2.1")), BadValue);
+}
+
+TEST(Pool4Test, constructor_prefix_len) {
+
+    // let's construct 2001:db8:1::/96 pool
+    Pool4 pool1(IOAddress("192.0.2.0"), 25);
+
+    EXPECT_EQ("192.0.2.0", pool1.getFirstAddress().toText());
+    EXPECT_EQ("192.0.2.127", pool1.getLastAddress().toText());
+
+    // No such thing as /33 prefix
+    EXPECT_THROW(Pool4(IOAddress("192.0.2.1"), 33), BadValue);
+
+    // /0 prefix does not make sense
+    EXPECT_THROW(Pool4(IOAddress("192.0.2.0"), 0), BadValue);
+
+    // This is Pool6, IPv4 addresses do not belong here
+    EXPECT_THROW(Pool4(IOAddress("2001:db8::1"), 20), BadValue);
+}
+
+TEST(Pool4Test, in_range) {
+   Pool4 pool1(IOAddress("192.0.2.10"), IOAddress("192.0.2.20"));
+
+   EXPECT_FALSE(pool1.inRange(IOAddress("192.0.2.0")));
+   EXPECT_TRUE(pool1.inRange(IOAddress("192.0.2.10")));
+   EXPECT_TRUE(pool1.inRange(IOAddress("192.0.2.17")));
+   EXPECT_TRUE(pool1.inRange(IOAddress("192.0.2.20")));
+   EXPECT_FALSE(pool1.inRange(IOAddress("192.0.2.21")));
+   EXPECT_FALSE(pool1.inRange(IOAddress("192.0.2.255")));
+   EXPECT_FALSE(pool1.inRange(IOAddress("255.255.255.255")));
+   EXPECT_FALSE(pool1.inRange(IOAddress("0.0.0.0")));
+}
+
+// This test creates 100 pools and verifies that their IDs are unique.
+TEST(Pool4Test, unique_id) {
+
+    const int num_pools = 100;
+    std::vector<Pool4Ptr> pools;
+
+    for (int i = 0; i < num_pools; ++i) {
+        pools.push_back(Pool4Ptr(new Pool4(IOAddress("192.0.2.0"),
+                                           IOAddress("192.0.2.255"))));
+    }
+
+    for (int i = 0; i < num_pools; ++i) {
+        for (int j = i + 1; j < num_pools; ++j) {
+            if (pools[i]->getId() == pools[j]->getId()) {
+                FAIL() << "Pool-ids must be unique";
+            }
+        }
+    }
+
+}
+
+
 TEST(Pool6Test, constructor_first_last) {
 
     // let's construct 2001:db8:1:: - 2001:db8:1::ffff:ffff:ffff:ffff pool
