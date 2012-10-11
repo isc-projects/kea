@@ -1,3 +1,11 @@
+491.	[func]		tomek
+	b10-dhcp6: Configuration for DHCPv6 has been implemented.
+	Currently it is possible to configure IPv6 subnets and pools
+	within those subnets, global and per subnet values of renew,
+	rebind, preferred and valid lifetimes. Configured parameters
+	are accepted, but are not used yet by the allocation engine yet.
+	(Trac #2269, git 028bed9014b15facf1a29d3d4a822c9d14fc6411)
+
 490.	[func]		tomek
 	libdhcp++: An abstract API for lease database has been
 	implemented. It offers a common interface to all concrete

@@ -46,6 +46,7 @@ pkglibexec_PROGRAMS = b10-dhcp6
 
 b10_dhcp6_SOURCES  = main.cc
 b10_dhcp6_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
+b10_dhcp6_SOURCES += config_parser.cc config_parser.h
 b10_dhcp6_SOURCES += dhcp6_log.cc dhcp6_log.h
 b10_dhcp6_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 
@@ -62,6 +63,7 @@ b10_dhcp6_LDADD  = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcpsrv.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 
