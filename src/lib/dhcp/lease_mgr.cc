@@ -37,8 +37,10 @@ LeaseMgr::LeaseMgr(const std::string& dbconfig) {
 
     vector<string> tokens;
 
-    boost::split(tokens, dbconfig, boost::is_any_of("\t "));
-
+    // we need to pass a string to is_any_of, not just char *. Otherwise there
+    // are cryptic warnings on Debian6 running g++ 4.4 in /usr/include/c++/4.4
+    // /bits/stl_algo.h:2178 "array subscript is above array bounds"
+    boost::split(tokens, dbconfig, boost::is_any_of( string("\t ") ));
     BOOST_FOREACH(std::string token, tokens) {
         size_t pos = token.find("=");
         if (pos != string::npos) {
