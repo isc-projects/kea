@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
+
 #include <dns/rdata.h>
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
@@ -87,13 +89,22 @@ ZoneFinder::Context::getAdditionalImpl(const vector<RRType>& requested_types,
 {
     // If rrset is non NULL, it should have been SUCCESS/DELEGATION; otherwise
     // we should have responded to type ANY query.
+    ZoneFinder* finder = getFinder();
+    if (finder == NULL) {
+        // This is a bug of the derived class implementation.
+        isc_throw(isc::Unexpected, "NULL ZoneFinder in finder Context");
+    }
     if (rrset) {
-        getAdditionalForRRset(finder_, *rrset, requested_types, result,
+        getAdditionalForRRset(*finder, *rrset, requested_types, result,
                               options_);
         return;
     }
-    BOOST_FOREACH(ConstRRsetPtr rrset_in_set, all_set_) {
-        getAdditionalForRRset(finder_, *rrset_in_set, requested_types, result,
+    const vector<ConstRRsetPtr>* all_sets = getAllRRsets();
+    if (all_sets == NULL) {     // bug of the derived class implementation.
+        isc_throw(isc::Unexpected, "All RRsets is NULL in finder Context");
+    }
+    BOOST_FOREACH(ConstRRsetPtr rrset_in_set, *getAllRRsets()) {
+        getAdditionalForRRset(*finder, *rrset_in_set, requested_types, result,
                               options_);
     }
 }

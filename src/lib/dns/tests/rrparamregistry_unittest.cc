@@ -37,6 +37,7 @@ protected:
     {
         ostringstream oss1;
         oss1 << test_class_code;
+        // cppcheck-suppress useInitializationList
         test_class_unknown_str = "CLASS" + oss1.str();
 
         ostringstream oss2;
@@ -60,7 +61,7 @@ protected:
 
     // we assume class/type numbers are officially unassigned.  If not we'll
     // need to update the test cases.
-    static const uint16_t test_class_code = 65533; 
+    static const uint16_t test_class_code = 65533;
     static const uint16_t test_type_code = 65534;
     static const string test_class_str;
     static const string test_type_str;
@@ -77,7 +78,7 @@ TEST_F(RRParamRegistryTest, addRemove) {
 
     // the first removal attempt should succeed
     EXPECT_TRUE(RRParamRegistry::getRegistry().removeType(test_type_code));
-    // then toText() should treat it as an "unknown" 
+    // then toText() should treat it as an "unknown"
     EXPECT_EQ(test_type_unknown_str, RRType(test_type_code).toText());
     // attempt of removing non-existent mapping should result in 'false'
     EXPECT_FALSE(RRParamRegistry::getRegistry().removeType(test_type_code));
