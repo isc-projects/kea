@@ -185,8 +185,9 @@ namespace {
 /// \param begin end of iterator (of any RRset type)
 ///
 /// \return the number of RRsets in the given iterator, plus
-/// the number of Signature sets (each RRset with signatures
-/// is counted as 2 'rrsets')
+/// the number of signature RRsets (each RRset with signatures
+/// is counted as 2 'rrsets', as if the signatures over an RRset
+/// are a separate RRset in the original iterator)
 template<typename ITERATOR_TYPE>
 size_t
 countRRsetsAndSigs(ITERATOR_TYPE begin, ITERATOR_TYPE end) {
