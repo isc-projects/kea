@@ -79,7 +79,23 @@ public:
 // TODO: Fully define this. It is supposed to be passed to the install_action
 // callback, but what does it actually represent? Is it the actuall zone data
 // there?
-class ZoneSegment {};
+//
+// The current interface is temporary, so the tests work. It will probably
+// change (and we may even fold this class to some other, because there
+// seem to be too many classes around holding zone already).
+//
+// FIXME: Who is responsible for releasing of the segment itself?
+class ZoneSegment {
+public:
+    explicit ZoneSegment(ZoneData* data) :
+        data_(data)
+    {}
+    ZoneData* getZoneData() {
+        return (data_);
+    }
+private:
+    ZoneData* data_;
+};
 // TODO: Somehow specify what the ID is
 class ZoneSegmentID {};
 
@@ -98,7 +114,8 @@ typedef boost::function<void(ZoneData*)> LoadAction;
 ///
 /// Upon successful completion, the ownership of the new zone is passed
 /// to the callback and the old to the updater.
-typedef boost::function<ZoneData* (ZoneSegmentID, ZoneSegment*)> InstallAction;
+typedef boost::function<ZoneData* (const ZoneSegmentID&,
+                                   ZoneSegment*)> InstallAction;
 
 /// \brief Updater implementation which loads data locally.
 ///
