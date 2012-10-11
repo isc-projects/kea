@@ -45,11 +45,11 @@ TEST(DuidTest, constructor) {
     scoped_ptr<DUID> duid2(new DUID(data2));
 
     vector<uint8_t> vecdata = duid1->getDuid();
-    EXPECT_EQ(data2, vecdata);
+    EXPECT_TRUE(data2 == vecdata);
     EXPECT_EQ(DUID::DUID_LLT, duid1->getType());
 
     vecdata = duid2->getDuid();
-    EXPECT_EQ(data2, vecdata);
+    EXPECT_TRUE(data2 == vecdata);
 
     EXPECT_EQ(DUID::DUID_LLT, duid2->getType());
 }
@@ -137,12 +137,12 @@ TEST(ClientIdTest, constructor) {
     // checks for C-style construtor (uint8_t * + len)
     scoped_ptr<ClientId> id1(new ClientId(data1, sizeof(data1)));
     vector<uint8_t> vecdata = id1->getClientId();
-    EXPECT_EQ(data2, vecdata);
+    EXPECT_TRUE(data2 == vecdata);
 
     // checks for vector-based constructor
     scoped_ptr<ClientId> id2(new ClientId(data2));
     vecdata = id2->getClientId();
-    EXPECT_EQ(data2, vecdata);
+    EXPECT_TRUE(data2 == vecdata);
 }
 
 // This test checks if the comparison operators are sane.
