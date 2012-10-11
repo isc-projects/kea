@@ -22,6 +22,7 @@
 namespace isc {
 namespace util {
 namespace thread {
+class CondVar;
 
 /// \brief Mutex with very simple interface
 ///
@@ -114,15 +115,39 @@ public:
     /// \todo Disable in non-debug build
     bool locked() const;
 private:
+    friend class CondVar;
+
+    // Commonly called after acquiring the lock, checking and updating
+    // internal state for debug.
+    void postLockAction();
+
+    // Commonly called before releasing the lock, checking and updating
+    // internal state for debug.
+    void preUnlockAction();
+
     class Impl;
     Impl* impl_;
     void lock();
     void unlock();
 };
 
+class CondVar : boost::noncopyable {
+public:
+    CondVar();
+    ~CondVar();
+    void wait(Mutex& mutex);
+    void signal();
+private:
+    class Impl;
+    Impl* impl_;
+};
 
-}
-}
-}
+} // namespace thread
+} // namespace util
+} // namespace isc
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:
