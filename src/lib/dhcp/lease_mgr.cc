@@ -54,7 +54,8 @@ LeaseMgr::LeaseMgr(const std::string& dbconfig) {
 }
 
 std::string LeaseMgr::getParameter(const std::string& name) const {
-    map<string, string>::const_iterator param = parameters_.find(name);
+    std::map<std::string, std::string>::const_iterator param
+        = parameters_.find(name);
     if (param == parameters_.end()) {
         isc_throw(BadValue, "Parameter not found");
     }
