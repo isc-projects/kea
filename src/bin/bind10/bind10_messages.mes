@@ -305,3 +305,27 @@ the configuration manager to start up.  The total length of time Boss
 will wait for the configuration manager before reporting an error is
 set with the command line --wait switch, which has a default value of
 ten seconds.
+
+% BIND10_SEND_SIGNAL_FAIL sending %1 to %2 (PID %3) failed: %4
+The boss module sent a single (either SIGTERM or SIGKILL) to a process,
+but it failed due to some system level error.  There are two major cases:
+the target process has already terminated but the boss module had sent
+the signal before it noticed the termination.  In this case an error
+message should indicate something like "no such process".  This can be
+safely ignored.  The other case is that the boss module doesn't have
+the privilege to send a signal to the process.  It can typically
+happen when the boss module started as a privileged process, spawned a
+subprocess, and then dropped the privilege.  It includes the case for
+the socket creator when the boss process runs with the -u command line
+option.  In this case, the boss module simply gives up to terminate
+the process explicitly because it's unlikely to succeed by keeping
+sending the signal.  Although the socket creator is implemented so
+that it will terminate automatically when the boss process exits
+(and that should be the case for any other future process running with
+a higher privilege), but it's recommended to check if there's any
+remaining BIND 10 process if this message is logged.  For all other
+cases, the boss module will keep sending the signal until it confirms
+all child processes terminate.  Although unlikely, this could prevent
+the boss module from exiting, just keeping sending the signals.  So,
+again, it's advisable to check if it really terminates when this
+message is logged.
