@@ -361,9 +361,9 @@ public:
             // are allowed
             string txt = text_pool->stringValue();
 
-            // first let's remove any spaces or tabs
-            boost::erase_all(txt, " ");
-            boost::erase_all(txt, "\t");
+            // first let's remove any whitespaces
+            boost::erase_all(txt, " "); // space
+            boost::erase_all(txt, "\t"); // tabulation
 
             // Is this prefix/len notation?
             size_t pos = txt.find("/");
@@ -373,7 +373,7 @@ public:
                 try {
                     addr = IOAddress(txt.substr(0, pos));
 
-                    // start with the first charater after /
+                    // start with the first character after /
                     string prefix_len = txt.substr(pos + 1);
 
                     // It is lexical cast to int and then downcast to uint8_t.
