@@ -101,6 +101,14 @@ void CfgMgr::addSubnet4(const Subnet4Ptr& subnet) {
     subnets4_.push_back(subnet);
 }
 
+void CfgMgr::deleteSubnets4() {
+    subnets4_.clear();
+}
+
+void CfgMgr::deleteSubnets6() {
+    subnets6_.clear();
+}
+
 CfgMgr::CfgMgr() {
 }
 
