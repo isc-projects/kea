@@ -93,6 +93,57 @@ protected:
     Triplet<uint32_t> valid_;
 };
 
+/// @brief A configuration holder for IPv4 subnet.
+///
+/// This class represents an IPv4 subnet.
+class Subnet4 : public Subnet {
+public:
+
+    /// @brief Constructor with all parameters
+    ///
+    /// @param prefix Subnet4 prefix
+    /// @param length prefix length
+    /// @param t1 renewal timer (in seconds)
+    /// @param t2 rebind timer (in seconds)
+    /// @param valid_lifetime preferred lifetime of leases (in seconds)
+    Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
+            const Triplet<uint32_t>& t1,
+            const Triplet<uint32_t>& t2,
+            const Triplet<uint32_t>& valid_lifetime);
+
+    /// @brief Returns a pool that specified address belongs to
+    ///
+    /// @param hint address that the returned pool should cover (optional)
+    /// @return Pointer to found pool4 (or NULL)
+    Pool4Ptr getPool4(const isc::asiolink::IOAddress& hint =
+                      isc::asiolink::IOAddress("0.0.0.0"));
+
+    /// @brief Adds a new pool.
+    /// @param pool pool to be added
+    void addPool4(const Pool4Ptr& pool);
+
+    /// @brief returns all pools
+    ///
+    /// The reference is only valid as long as the object that
+    /// returned it.
+    ///
+    /// @return a collection of all pools
+    const Pool4Collection& getPools() const {
+        return pools_;
+    }
+
+protected:
+    /// @brief collection of pools in that list
+    Pool4Collection pools_;
+};
+
+/// @brief A pointer to a Subnet4 object
+typedef boost::shared_ptr<Subnet4> Subnet4Ptr;
+
+/// @brief A collection of Subnet6 objects
+typedef std::vector<Subnet4Ptr> Subnet4Collection;
+
+
 /// @brief A configuration holder for IPv6 subnet.
 ///
 /// This class represents an IPv6 subnet.
