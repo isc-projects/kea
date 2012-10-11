@@ -1181,7 +1181,7 @@ class TestBossComponents(unittest.TestCase):
         # We check somewhere else that the shutdown is actually called
         # from there (the test_kills).
 
-    def __real_test_kill(self, nokill = False):
+    def __real_test_kill(self, nokill=False, ex_on_kill=None):
         """
         Helper function that does the actual kill functionality testing.
         """
@@ -1197,6 +1197,13 @@ class TestBossComponents(unittest.TestCase):
             """
             def kill(self, forceful=False):
                 killed.append(forceful)
+                if ex_on_kill is not None:
+                    # If exception is given by the test, raise it here.
+                    # In the case of ESRCH, the process should have gone
+                    # somehow, so we clear the components.
+                    if ex_on_kill.errno == errno.ESRCH:
+                        bob.components = {}
+                    raise ex_on_kill
                 if forceful:
                     bob.components = {}
             def pid(self):
@@ -1224,7 +1231,10 @@ class TestBossComponents(unittest.TestCase):
         if nokill:
             self.assertEqual([], killed)
         else:
-            self.assertEqual([False, True], killed)
+            if ex_on_kill is not None:
+                self.assertEqual([False], killed)
+            else:
+                self.assertEqual([False, True], killed)
 
         self.assertTrue(self.__called)
 
@@ -1235,6 +1245,13 @@ class TestBossComponents(unittest.TestCase):
         Test that the boss kills components which don't want to stop.
         """
         self.__real_test_kill()
+
+    def test_kill_fail(self):
+        """Test cases where kill() results in an exception due to OS error."""
+
+        ex = OSError()
+        ex.errno = errno.ESRCH
+        self.__real_test_kill(ex_on_kill=ex)
 
     def test_nokill(self):
         """
