@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <dns/name.h>
+#include <dns/rrclass.h>
+
 #include <boost/function.hpp>
 
 namespace isc {
@@ -130,8 +133,12 @@ public:
     /// \param segment The zone table segment to store the zone into.
     /// \param load_action The callback used to load data.
     /// \param install_action The callback used to install the loaded zone.
+    /// \param origin The origin name of the zone.
+    /// \param rrclass The class of the zone.
     ZoneUpdaterLocal(ZoneTableSegment* segment, const LoadAction& load_action,
-                     const InstallAction& install_action);
+                     const InstallAction& install_action,
+                     const dns::Name& origin,
+                     const dns::RRClass& rrclass);
     /// \brief Destructor
     ~ZoneUpdaterLocal();
     /// \brief Loads the data.
@@ -158,6 +165,17 @@ public:
     /// Cleans up the memory used by load()ed zone if not yet installed, or
     /// the old zone replaced by install().
     virtual void cleanup();
+private:
+    ZoneTableSegment* segment_;
+    LoadAction load_action_;
+    InstallAction install_action_;
+    dns::Name origin_;
+    dns::RRClass rrclass_;
+    ZoneData* zone_data_;
+    // The load was performed
+    bool loaded_;
+    // The data are ready to be installed
+    bool data_ready_;
 };
 
 }
