@@ -85,26 +85,19 @@ public:
         ///     means an attempt to use the mutex in a wrong way (locking
         ///     a mutex second time from the same thread, for example).
         Locker(Mutex& mutex) :
-            mutex_(NULL)
+            mutex_(&mutex)
         {
-            // Set the mutex_ after we acquire the lock. This is because of
-            // exception safety. If lock() throws, it didn't work, so we must
-            // not unlock when we are destroyed. In such case, mutex_ is
-            // NULL and checked in the destructor.
             mutex.lock();
-            mutex_ = &mutex;
         }
 
         /// \brief Destructor.
         ///
         /// Unlocks the mutex.
         ~Locker() {
-            if (mutex_ != NULL) {
-                mutex_->unlock();
-            }
+            mutex_->unlock();
         }
     private:
-        Mutex* mutex_;
+        Mutex* const mutex_;
     };
     /// \brief If the mutex is currently locked
     ///
