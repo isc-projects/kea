@@ -1,6 +1,6 @@
 4XX.	[func]		tomek
 	libdhcpsrv: The DHCP Configuration Manager is now able to store
-	information about IPv4 subnets and pool. It is still not possible
+	information about IPv4 subnets and pools. It is still not possible
 	to configure that information. This will be implemented in a near
 	future.
 
