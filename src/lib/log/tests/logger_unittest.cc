@@ -11,13 +11,10 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
-
-#include <iostream>
-#include <string>
-
 #include <gtest/gtest.h>
 
 #include <util/unittests/resource.h>
+#include <util/unittests/check_valgrind.h>
 
 #include <log/logger.h>
 #include <log/logger_manager.h>
@@ -26,6 +23,9 @@
 #include "log/tests/log_test_messages.h"
 
 #include <util/interprocess_sync_file.h>
+
+#include <iostream>
+#include <string>
 
 using namespace isc;
 using namespace isc::log;
@@ -356,7 +356,6 @@ TEST_F(LoggerTest, IsDebugEnabledLevel) {
 
 // Check that if a logger name is too long, it triggers the appropriate
 // assertion.
-
 TEST_F(LoggerTest, LoggerNameLength) {
     // The following statements should just declare a logger and nothing
     // should happen.
@@ -374,12 +373,14 @@ TEST_F(LoggerTest, LoggerNameLength) {
     // Too long a logger name should trigger an assertion failure.
     // Note that we just check that it dies - we don't check what message is
     // output.
-    EXPECT_DEATH({
-        isc::util::unittests::dontCreateCoreDumps();
+    if (!isc::util::unittests::runningOnValgrind()) {
+        EXPECT_DEATH({
+            isc::util::unittests::dontCreateCoreDumps();
 
-        string ok3(Logger::MAX_LOGGER_NAME_SIZE + 1, 'x');
-        Logger l3(ok3.c_str());
-    }, ".*");
+            string ok3(Logger::MAX_LOGGER_NAME_SIZE + 1, 'x');
+            Logger l3(ok3.c_str());
+        }, ".*");
+    }
 #endif
 }
 

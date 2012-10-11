@@ -1055,6 +1055,13 @@ AM_COND_IF([ENABLE_LOGGER_CHECKS], [AC_DEFINE([ENABLE_LOGGER_CHECKS], [1], [Chec
 AC_PATH_PROG(VALGRIND, valgrind, no)
 AM_CONDITIONAL(HAVE_VALGRIND, test "x$VALGRIND" != "xno")
 
+# Also check for valgrind headers
+# We could consider adding them to the source code tree, as this
+# is the encouraged method of using them; they are BSD-licensed.
+# However, until we find that this is a problem, we just use
+# the system-provided ones, if available
+AC_CHECK_HEADERS(valgrind/valgrind.h, [AC_DEFINE([HAVE_VALGRIND_HEADERS], [1], [Check valgrind headers])])
+
 found_valgrind="not found"
 if test "x$VALGRIND" != "xno"; then
    found_valgrind="found"
@@ -1206,6 +1213,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/resolve/tests/Makefile
                  src/lib/testutils/Makefile
                  src/lib/testutils/testdata/Makefile
+                 src/lib/testutils/valgrind/Makefile
                  src/lib/nsas/Makefile
                  src/lib/nsas/tests/Makefile
                  src/lib/cache/Makefile
