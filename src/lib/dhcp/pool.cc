@@ -30,6 +30,38 @@ bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
     return (first_.smallerEqual(addr) && addr.smallerEqual(last_));
 }
 
+Pool4::Pool4(const isc::asiolink::IOAddress& first,
+             const isc::asiolink::IOAddress& last)
+    :Pool(first, last) {
+    // check if specified address boundaries are sane
+    if (first.getFamily() != AF_INET || last.getFamily() != AF_INET) {
+        isc_throw(BadValue, "Invalid Pool4 address boundaries: not IPv4");
+    }
+
+    if (last < first) {
+        isc_throw(BadValue, "Upper boundary is smaller than lower boundary.");
+    }
+}
+
+Pool4::Pool4(const isc::asiolink::IOAddress& prefix,
+             uint8_t prefix_len)
+    :Pool(prefix, IOAddress("0.0.0.0")) {
+
+    // check if the prefix is sane
+    if (prefix.getFamily() != AF_INET) {
+        isc_throw(BadValue, "Invalid Pool4 address boundaries: not IPv4");
+    }
+
+    // check if the prefix length is sane
+    if (prefix_len == 0 || prefix_len > 32) {
+        isc_throw(BadValue, "Invalid prefix length");
+    }
+
+    // Let's now calculate the last address in defined pool
+    last_ = lastAddrInPrefix(prefix, prefix_len);
+}
+
+
 Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
              const isc::asiolink::IOAddress& last)
     :Pool(first, last), type_(type), prefix_len_(0) {
@@ -51,7 +83,6 @@ Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
         // first_  = last;
         // last_ = first;
     }
-
 
     // TYPE_PD is not supported by this constructor. first-last style
     // parameters are for IA and TA only. There is another dedicated

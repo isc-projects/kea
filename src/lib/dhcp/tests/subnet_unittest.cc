@@ -29,6 +29,83 @@ using namespace isc::asiolink;
 
 namespace {
 
+TEST(Subnet4Test, constructor) {
+    EXPECT_NO_THROW(Subnet4 subnet1(IOAddress("192.0.2.2"), 16,
+                                    1, 2, 3));
+
+    EXPECT_THROW(Subnet4 subnet2(IOAddress("192.0.2.0"), 33, 1, 2, 3),
+                BadValue); // invalid prefix length
+    EXPECT_THROW(Subnet4 subnet3(IOAddress("2001:db8::1"), 24, 1, 2, 3),
+                BadValue); // IPv6 addresses are not allowed in Subnet4
+}
+
+TEST(Subnet4Test, in_range) {
+    Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);
+
+    EXPECT_EQ(1000, subnet.getT1());
+    EXPECT_EQ(2000, subnet.getT2());
+    EXPECT_EQ(3000, subnet.getValid());
+
+    EXPECT_FALSE(subnet.inRange(IOAddress("192.0.0.0")));
+    EXPECT_TRUE(subnet.inRange(IOAddress("192.0.2.0")));
+    EXPECT_TRUE(subnet.inRange(IOAddress("192.0.2.1")));
+    EXPECT_TRUE(subnet.inRange(IOAddress("192.0.2.255")));
+    EXPECT_FALSE(subnet.inRange(IOAddress("192.0.3.0")));
+    EXPECT_FALSE(subnet.inRange(IOAddress("0.0.0.0")));
+    EXPECT_FALSE(subnet.inRange(IOAddress("255.255.255.255")));
+}
+
+TEST(Subnet4Test, Pool4InSubnet4) {
+
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3));
+
+    Pool4Ptr pool1(new Pool4(IOAddress("192.1.2.0"), 25));
+    Pool4Ptr pool2(new Pool4(IOAddress("192.1.2.128"), 26));
+    Pool4Ptr pool3(new Pool4(IOAddress("192.1.2.192"), 30));
+
+    subnet->addPool4(pool1);
+
+    // If there's only one pool, get that pool
+    Pool4Ptr mypool = subnet->getPool4();
+    EXPECT_EQ(mypool, pool1);
+
+
+    subnet->addPool4(pool2);
+    subnet->addPool4(pool3);
+
+    // If there are more than one pool and we didn't provide hint, we
+    // should get the first pool
+    mypool = subnet->getPool4();
+
+    EXPECT_EQ(mypool, pool1);
+
+    // If we provide a hint, we should get a pool that this hint belongs to
+    mypool = subnet->getPool4(IOAddress("192.1.2.195"));
+
+    EXPECT_EQ(mypool, pool3);
+
+}
+
+TEST(Subnet4Test, Subnet4_Pool4_checks) {
+
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 8, 1, 2, 3));
+
+    // this one is in subnet
+    Pool4Ptr pool1(new Pool4(IOAddress("192.255.0.0"), 16));
+    subnet->addPool4(pool1);
+
+    // this one is larger than the subnet!
+    Pool4Ptr pool2(new Pool4(IOAddress("193.0.0.0"), 24));
+
+    EXPECT_THROW(subnet->addPool4(pool2), BadValue);
+
+    // this one is totally out of blue
+    Pool4Ptr pool3(new Pool4(IOAddress("1.2.3.4"), 16));
+    EXPECT_THROW(subnet->addPool4(pool3), BadValue);
+}
+
+// Tests for Subnet6
+
 TEST(Subnet6Test, constructor) {
 
     EXPECT_NO_THROW(Subnet6 subnet1(IOAddress("2001:db8:1::"), 64,
@@ -47,7 +124,6 @@ TEST(Subnet6Test, in_range) {
     EXPECT_EQ(2000, subnet.getT2());
     EXPECT_EQ(3000, subnet.getPreferred());
     EXPECT_EQ(4000, subnet.getValid());
-
 
     EXPECT_FALSE(subnet.inRange(IOAddress("2001:db8:0:ffff:ffff:ffff:ffff:ffff")));
     EXPECT_TRUE(subnet.inRange(IOAddress("2001:db8:1::0")));
