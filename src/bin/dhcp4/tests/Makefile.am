@@ -49,9 +49,11 @@ TESTS += dhcp4_unittests
 
 dhcp4_unittests_SOURCES = ../dhcp4_srv.h ../dhcp4_srv.cc ../ctrl_dhcp4_srv.cc
 dhcp4_unittests_SOURCES += ../dhcp4_log.h ../dhcp4_log.cc
+dhcp4_unittests_SOURCES += ../config_parser.cc ../config_parser.h
 dhcp4_unittests_SOURCES += dhcp4_unittests.cc
 dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += ctrl_dhcp4_srv_unittest.cc
+dhcp4_unittests_SOURCES += config_parser_unittest.cc
 nodist_dhcp4_unittests_SOURCES = ../dhcp4_messages.h ../dhcp4_messages.cc
 
 if USE_CLANGPP
@@ -65,6 +67,7 @@ dhcp4_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 dhcp4_unittests_LDADD = $(GTEST_LDADD)
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcpsrv.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
