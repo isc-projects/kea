@@ -80,13 +80,13 @@ performIncrement(volatile double* canary, volatile bool* ready_me,
 }
 
 void
-no_handler(int) {}
+noHandler(int) {}
 
 TEST(MutexTest, swarm) {
     // Create a timeout in case something got stuck here
     struct sigaction ignored, original;
-    memset(&ignored, 0, sizeof ignored);
-    ignored.sa_handler = no_handler;
+    memset(&ignored, 0, sizeof(ignored));
+    ignored.sa_handler = noHandler;
     if (sigaction(SIGALRM, &ignored, &original)) {
         FAIL() << "Couldn't set alarm";
     }
