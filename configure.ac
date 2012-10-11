@@ -360,7 +360,7 @@ fi
 # Python 3.2 has an unused parameter in one of its headers. This
 # has been reported, but not fixed as of yet, so we check if we need
 # to set -Wno-unused-parameter.
-if test "X$GXX" = "Xyes" -a test $werror_ok = 1; then
+if test "X$GXX" = "Xyes" -a $werror_ok = 1; then
 	CPPFLAGS_SAVED="$CPPFLAGS"
 	CPPFLAGS=${PYTHON_INCLUDES}
 	CXXFLAGS_SAVED="$CXXFLAGS"
