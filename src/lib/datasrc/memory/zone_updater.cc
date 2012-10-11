@@ -13,3 +13,78 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "zone_updater.h"
+#include "zone_data.h"
+#include "zone_table_segment.h"
+
+#include <memory>
+
+using std::auto_ptr;
+
+namespace isc {
+namespace datasrc {
+namespace memory {
+
+ZoneUpdaterLocal::ZoneUpdaterLocal(ZoneTableSegment* segment,
+                                   const LoadAction& load_action,
+                                   const InstallAction& install_action,
+                                   const dns::Name& origin,
+                                   const dns::RRClass& rrclass) :
+    segment_(segment),
+    load_action_(load_action),
+    install_action_(install_action),
+    origin_(origin),
+    rrclass_(rrclass),
+    zone_data_(NULL),
+    loaded_(false),
+    data_ready_(false)
+{}
+
+ZoneUpdaterLocal::~ZoneUpdaterLocal() {
+    // Clean up everything there might be left if someone forgot, just
+    // in case. Or should we assert instead?
+    cleanup();
+}
+
+void
+ZoneUpdaterLocal::load() {
+    if (loaded_) {
+        isc_throw(isc::Unexpected, "Trying to load twice");
+    }
+    loaded_ = true;
+
+    zone_data_ = ZoneData::create(segment_->getMemorySegment(), origin_);
+
+    load_action_(zone_data_);
+
+    data_ready_ = true;
+}
+
+void
+ZoneUpdaterLocal::install() {
+    if (!data_ready_) {
+        isc_throw(isc::Unexpected, "No data to install");
+    }
+
+    data_ready_ = false;
+    auto_ptr<ZoneSegment> zone_segment(new ZoneSegment(zone_data_));
+
+    zone_data_ = install_action_(ZoneSegmentID(), zone_segment.get());
+
+    // The ownership was passed to the callback, no need to clear it now.
+    zone_segment.release();
+}
+
+void
+ZoneUpdaterLocal::cleanup() {
+    // We eat the data (if any) now.
+    data_ready_ = false;
+
+    if (zone_data_ != NULL) {
+        ZoneData::destroy(segment_->getMemorySegment(), zone_data_, rrclass_);
+        zone_data_ = NULL;
+    }
+}
+
+}
+}
+}
