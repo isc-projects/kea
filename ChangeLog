@@ -1,3 +1,9 @@
+490.	[func]		tomek
+	libdhcp++: An abstract API for lease database has been
+	implemented. It offers a common interface to all concrete
+	database backends.
+	(Trac #2140, git df196f7609757253c4f2f918cd91012bb3af1163)
+
 489.	[func]		muks
 	The isc::dns::RRsetList class has been removed. It was now unused
 	inside the BIND 10 codebase, and the interface was considered
