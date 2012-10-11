@@ -1,3 +1,9 @@
+489.	[func]		muks
+	The isc::dns::RRsetList class has been removed. It was now unused
+	inside the BIND 10 codebase, and the interface was considered
+	prone to misuse.
+	(Trac #2266, git 532ac3d0054f6a11b91ee369964f3a84dabc6040)
+
 488.	[build]		jinmei
 	On configure, changed the search order for Python executable.
 	It first ties more specific file names such as "python3.2" before
