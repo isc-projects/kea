@@ -1,3 +1,15 @@
+493.	[build]		jinmei
+	Fixed build failure with newer versions of clang++.  These
+	versions are stricter regarding "unused variable" and "unused
+	(driver) arguments" warnings, and cause fatal build error
+	with -Werror.  The affected versions of clang++ include Apple's
+	customized version 4.1 included in Xcode 4.5.1.  So this fix
+	will solve build errors for Mac OS X that uses newer versions of
+	Xcode.
+	(Trac #2340, git 55be177fc4f7537143ab6ef5a728bd44bdf9d783,
+	3e2a372012e633d017a97029d13894e743199741 and commits before it
+	with [2340] in the commit log)
+
 492.	[func]		tomek
 	libdhcpsrv: The DHCP Configuration Manager is now able to store
 	information about IPv4 subnets and pools. It is still not possible
