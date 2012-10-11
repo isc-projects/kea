@@ -39,7 +39,7 @@ public:
         renderer_(NULL),
         names_(names)
     {}
-    MessageRendererBenchMark() {
+    ~MessageRendererBenchMark() {
         delete renderer_;
     }
     unsigned int run() {

@@ -32,7 +32,6 @@
 #include <dns/name.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
-#include <dns/rrsetlist.h>
 #include <dns/masterload.h>
 
 #include <boost/bind.hpp>
@@ -133,22 +132,20 @@ InMemoryClient::load(const Name& zone_name,
     // node must point to a valid node now
     assert(node != NULL);
 
-    std::string* tstr = node->setData(new std::string(filename));
+    const std::string* tstr = node->setData(new std::string(filename));
     delete tstr;
 
-    ZoneTable::AddResult result(zone_table_->addZone(mem_sgmt_, rrclass_,
-                                                     zone_name));
+    const ZoneTable::AddResult result(zone_table_->addZone(mem_sgmt_, rrclass_,
+                                                           zone_name,
+                                                           holder.release()));
     if (result.code == result::SUCCESS) {
         // Only increment the zone count if the zone doesn't already
         // exist.
         ++zone_count_;
     }
-
-    ZoneTable::FindResult fr(zone_table_->setZoneData(zone_name,
-                                                      holder.release()));
-    assert(fr.code == result::SUCCESS);
-    if (fr.zone_data != NULL) {
-        ZoneData::destroy(mem_sgmt_, fr.zone_data, rrclass_);
+    // Destroy the old instance of the zone if there was any
+    if (result.zone_data != NULL) {
+        ZoneData::destroy(mem_sgmt_, result.zone_data, rrclass_);
     }
 
     return (result.code);
@@ -232,32 +229,13 @@ InMemoryClient::load(const isc::dns::Name& zone_name,
 
 const std::string
 InMemoryClient::getFileName(const isc::dns::Name& zone_name) const {
-    FileNameNode* node(NULL);
-    FileNameTree::Result result = file_name_tree_->find(zone_name, &node);
+    const FileNameNode* node(NULL);
+    const FileNameTree::Result result = file_name_tree_->find(zone_name, &node);
     if (result == FileNameTree::EXACTMATCH) {
         return (*node->getData());
     } else {
         return (std::string());
     }
-}
-
-result::Result
-InMemoryClient::add(const isc::dns::Name& zone_name,
-                    const ConstRRsetPtr& rrset)
-{
-    const ZoneTable::FindResult result = zone_table_->findZone(zone_name);
-    if (result.code != result::SUCCESS) {
-        isc_throw(DataSourceError, "No such zone: " + zone_name.toText());
-    }
-
-    const ConstRRsetPtr sig_rrset =
-        rrset ? rrset->getRRsig() : ConstRRsetPtr();
-
-    ZoneDataUpdater updater(mem_sgmt_, rrclass_, zone_name, *result.zone_data);
-    updater.add(rrset, sig_rrset);
-
-    // add() doesn't allow duplicate add, so we always return SUCCESS.
-    return (result::SUCCESS);
 }
 
 namespace {

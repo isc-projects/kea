@@ -442,10 +442,9 @@ public:
                        ConstRRsetPtr rrset)
     {
         nsec_name_ = nsec_name;
-        nsec_context_.reset(new Context(*this,
-                                        FIND_DEFAULT, // a fake value
-                                        ResultContext(code, rrset,
-                                                      RESULT_NSEC_SIGNED)));
+        nsec_context_.reset(
+            new GenericContext(*this, FIND_DEFAULT, // a fake value
+                               ResultContext(code, rrset, RESULT_NSEC_SIGNED)));
     }
 
     // Once called, the findNSEC3 will return the provided result for the next
@@ -487,8 +486,8 @@ protected:
     {
         ConstRRsetPtr rp = stripRRsigs(rrset, options);
         return (ZoneFinderContextPtr(
-                    new Context(*this, options,
-                                ResultContext(code, rp, flags))));
+                    new GenericContext(*this, options,
+                                       ResultContext(code, rp, flags))));
     }
 
 private:
@@ -604,9 +603,9 @@ MockZoneFinder::findAll(const Name& name, std::vector<ConstRRsetPtr>& target,
                 target.push_back(stripRRsigs(found_rrset->second, options));
             }
             return (ZoneFinderContextPtr(
-                        new Context(*this, options,
-                                    ResultContext(SUCCESS, RRsetPtr()),
-                                    target)));
+                        new GenericContext(*this, options,
+                                           ResultContext(SUCCESS, RRsetPtr()),
+                                           target)));
         }
     }
 

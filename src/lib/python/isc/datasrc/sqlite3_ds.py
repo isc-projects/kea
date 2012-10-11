@@ -25,7 +25,7 @@ RR_RDATA_INDEX = 7
 
 # Current major and minor versions of schema
 SCHEMA_MAJOR_VERSION = 2
-SCHEMA_MINOR_VERSION = 0
+SCHEMA_MINOR_VERSION = 1
 
 class Sqlite3DSError(Exception):
     """ Define exceptions."""
@@ -81,6 +81,7 @@ def create(cur):
                     rdtype TEXT NOT NULL COLLATE NOCASE,
                     rdata TEXT NOT NULL)""")
         cur.execute("CREATE INDEX nsec3_byhash ON nsec3 (hash)")
+        cur.execute("CREATE INDEX nsec3_byhash_and_rdtype ON nsec3 (hash, rdtype)")
         cur.execute("""CREATE TABLE diffs (id INTEGER PRIMARY KEY,
                     zone_id INTEGER NOT NULL,
                     version INTEGER NOT NULL,

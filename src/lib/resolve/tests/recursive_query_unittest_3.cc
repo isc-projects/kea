@@ -69,15 +69,16 @@ using namespace std;
 /// By using the "test_server_" element of RecursiveQuery, all queries are
 /// directed to one or other of the "servers" in the RecursiveQueryTest3 class.
 
+namespace {
+const char* const TEST_ADDRESS3 = "127.0.0.1"; ///< Servers are on this address
+const uint16_t TEST_PORT3 = 5303;              ///< ... and this port
+const size_t BUFFER_SIZE = 1024;               ///< For all buffers
+
+const char* const DUMMY_ADDR3 = "1.2.3.4";     ///< address to return as A
+} // end anonymous namespace
+
 namespace isc {
 namespace asiodns {
-
-const std::string TEST_ADDRESS3 = "127.0.0.1"; 
-                                               ///< Servers are on this address
-const uint16_t TEST_PORT3 = 5303;              ///< ... and this port
-const size_t BUFFER_SIZE = 1024;              ///< For all buffers
-
-const std::string DUMMY_ADDR3 = "1.2.3.4";     ///< address to return as A
 
 class MockResolver3 : public isc::resolve::ResolverInterface {
 public:
