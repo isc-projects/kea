@@ -21,6 +21,37 @@
 #include <dhcp/option.h>
 #include <dhcp/duid.h>
 
+/// @file dhcp/lease_mgr.h
+/// @brief An abstract API for lease database
+///
+/// This file contains declarations of Lease4, Lease6 and LeaseMgr classes.
+/// They are essential components of the interface to any database backend.
+/// Each concrete database backend (e.g. MySQL) will define a class derived
+/// from LeaseMgr class.
+///
+/// Failover considerations:
+/// There are no intermediate plans to implement DHCPv4 failover
+/// (draft-ietf-dhc-failover-12.txt). Currently (Oct. 2012) the DHCPv6 failover
+/// is being defined in DHC WG in IETF (draft-ietf-dhcpv6-failover-requirements,
+/// draft-ietf-dhcpv6-dailover-design), but the work is not advanced enough
+/// for implementation plans yet. v4 failover requires additional parameters
+/// to be kept with a lease. It is likely that v6 failover will require similar
+/// fields. Such implementation will require database schema extension.
+/// We have designed a way to expand/upgrade schemas during upgrades: a database
+/// schema is versioned and sanity checks about required version will be done
+/// upon start and/or upgrade. With this mechanism in place, we can add new
+/// fields to the database. In particular we can use that capability to
+/// introduce failover related fields.
+///
+/// However, there is another approach that can be reliably used to provide
+/// failover, even without the actual failover protocol implemented. As the
+/// first backend will use MySQL, we will be able to use Multi-Master capability
+/// offered by MySQL and use two separatate Kea instances connecting to the
+/// same database.
+///
+/// Nevertheless, we hope to have failover protocol eventually implemented in
+/// the Kea.
+
 namespace isc {
 namespace dhcp {
 
@@ -101,12 +132,6 @@ struct Lease4 {
 
     /// @brief did we update PTR record for this lease?
     bool fqdn_rev_;
-
-    /// @brief additional options stored with this lease
-    ///
-    /// This field is currently not used.
-    /// @todo We need a way to store options in the databased.
-    Option::OptionCollection options_;
 
     /// @brief Lease comments.
     ///
@@ -220,13 +245,6 @@ struct Lease6 {
     /// @brief did we update PTR record for this lease?
     bool fqdn_rev_;
 
-    /// @brief additional options stored with this lease
-    ///
-    /// That field is currently not used. We may keep extra options assigned
-    /// for leasequery and possibly other purposes.
-    /// @todo We need a way to store options in the databased.
-    Option::OptionCollection options_;
-
     /// @brief Lease comments
     ///
     /// This field is currently not used.
@@ -328,7 +346,7 @@ public:
     /// @param subnet_id identifier of the subnet that lease must belong to
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(const HWAddr& hwaddr, 
+    virtual Lease4Ptr getLease4(const HWAddr& hwaddr,
                                 SubnetID subnet_id) const = 0;
 
     /// @brief Returns existing IPv4 lease for specified client-id
@@ -377,7 +395,7 @@ public:
     /// @param iaid IA identifier
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Collection getLease6(const DUID& duid, 
+    virtual Lease6Collection getLease6(const DUID& duid,
                                        uint32_t iaid) const = 0;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
@@ -456,7 +474,6 @@ protected:
     /// intended to keep any DHCP-related parameters.
     std::map<std::string, std::string> parameters_;
 };
-
 
 }; // end of isc::dhcp namespace
 

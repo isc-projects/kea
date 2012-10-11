@@ -1,3 +1,9 @@
+4XX.	[func]		tomek
+	libdhcp++: An abstract API for lease database has been
+	implemented. It offers a common interface to all concrete
+	database backends.
+	(Trac #2140, git TBD)
+
 bind10-devel-20120816 released on August 16, 2012
 
 467.	[bug]		jelte
