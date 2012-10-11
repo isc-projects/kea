@@ -25,6 +25,7 @@
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/spec_config.h>
+#include <dhcp4/config_parser.h>
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
@@ -47,8 +48,14 @@ ConstElementPtr
 ControlledDhcpv4Srv::dhcp4ConfigHandler(ConstElementPtr new_config) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_UPDATE)
               .arg(new_config->str());
-    ConstElementPtr answer = isc::config::createAnswer(0,
-                             "Thank you for sending config.");
+    if (server_) {
+        return (configureDhcp4Server(*server_, new_config));
+    }
+
+    // That should never happen as we install config_handler after we instantiate
+    // the server.
+    ConstElementPtr answer = isc::config::createAnswer(1,
+           "Configuration rejected, server is during startup/shutdown phase.");
     return (answer);
 }
 
@@ -101,9 +108,21 @@ void ControlledDhcpv4Srv::establishSession() {
               .arg(specfile);
     cc_session_ = new Session(io_service_.get_io_service());
     config_session_ = new ModuleCCSession(specfile, *cc_session_,
-                                          dhcp4ConfigHandler,
+                                          NULL,
                                           dhcp4CommandHandler, false);
     config_session_->start();
+
+    // We initially create ModuleCCSession() without configHandler, as
+    // the session module is too eager to send partial configuration.
+    // We want to get the full configuration, so we explicitly call
+    // getFullConfig() and then pass it to our configHandler.
+    config_session_->setConfigHandler(dhcp4ConfigHandler);
+
+    try {
+        configureDhcp4Server(*this, config_session_->getFullConfig());
+    } catch (const Dhcp4ConfigError& ex) {
+        LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL).arg(ex.what());
+    }
 
     /// Integrate the asynchronous I/O model of BIND 10 configuration
     /// control with the "select" model of the DHCP server.  This is
