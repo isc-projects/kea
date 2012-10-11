@@ -131,11 +131,78 @@ private:
     void unlock();
 };
 
+/// \brief Encapsulation for a condition variable.
+///
+/// This class provides a simple encapsulation of condition variable for
+/// inter-thread synchronization.  It has similar but simplified interface as
+/// that for \c pthread_bond_ variants.
+///
+/// It uses the \c Mutex class object for the mutex used with the condition
+/// variable.  Since for normal applications the internal \c Mutex::Locker
+/// class is the only available interface to acquire a lock, sample code
+/// for waiting on a condition variable would look like this:
+/// \code
+/// CondVar cond;
+/// Mutex mutex;
+/// {
+///     Mutex::Locker locker(mutex);
+///     while (some_condition) {
+///         cond.wait(mutex);
+///     }
+///     // do something under the protection of locker
+/// }   // lock is released here
+/// \endcode
+/// Note that \c mutex passed to the \c wait() method must be the same one
+/// used to construct the \c locker.
+///
+/// \note This class is defined as a friend class of \c Mutex and directly
+/// refers to and modifies private internals of the \c Mutex class.  It breaks
+/// the assumption that the lock is only acquired or released via the
+/// \c Locker class and breaks other integrity assumption on \c Mutex,
+/// thereby making it more fragile, but we couldn't find other way to
+/// implement a safe and still simple realization of condition variables.
+/// So, this is a kind of compromise.  If this class is needed to be
+/// extended, first consider a way to use public interfaces of \c Mutex;
+/// do not easily rely on the fact that this class is a friend of it.
 class CondVar : boost::noncopyable {
 public:
+    /// \brief Constructor.
+    ///
+    /// \throw std::bad_alloc memory allocation failure
+    /// \throw isc::Unexpected other unexpected shortage of system resource
     CondVar();
+
+    /// \brief Destructor.
+    ///
+    /// An object of this class must not be destructed while some thread
+    /// is waiting on it.  If this condition isn't met the destructor will
+    /// terminate the program.
     ~CondVar();
+
+    /// \brief Wait on the condition variable.
+    ///
+    /// This method works like \c pthread_cond_wait().  For mutex it takes
+    /// an \c Mutex class object.  Unlike \c pthread_cond_wait(), however,
+    /// this method requires a lock for the mutex has been acquired.
+    /// If this condition isn't met, it can throw an exception (in the
+    /// debug mode build) or result in undefined behavior.
+    ///
+    /// The lock will be automatically released within this method, and
+    /// will be re-acquired on the exit of this method.
+    ///
+    /// \throw isc::InvalidOperation mutex isn't locked
+    /// \throw isc::BadValue mutex is not a valid \c Mutex object
+    ///
+    /// \param mutex A \c Mutex object to be released on wait().
     void wait(Mutex& mutex);
+
+    /// \brief Unblock a thread waiting for the condition variable.
+    ///
+    /// This method waits one of other threads (if any) waiting on this object
+    /// via the \c wait() call.
+    ///
+    /// This method never throws; if some unexpected low level error happens
+    /// it terminates the program.
     void signal();
 private:
     class Impl;
