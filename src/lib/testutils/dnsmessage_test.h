@@ -179,38 +179,27 @@ private:
 }
 
 namespace {
-/// \brief Add the string representation of RRsets to a vector
+/// \brief Specialized counter for both RRsets and signatures
 ///
-/// This is a helper function for checkRRsets, to compare the
-/// contents of two sets of RRsets
+/// \param begin start of iterator (of any RRset type)
+/// \param begin end of iterator (of any RRset type)
 ///
-/// It adds the string representations of the RRsets in the given
-/// iterator to the given vector.
-///
-/// If an RRset has signatures, those are added to the
-/// vector as a separate string
+/// \return the number of RRsets in the given iterator, plus
+/// the number of Signature sets (each RRset with signatures
+/// is counted as 2 'rrsets')
 template<typename ITERATOR_TYPE>
-void
-addRRsetsToStringVector(std::vector<std::string>& strings,
-                        ITERATOR_TYPE begin,
-                        ITERATOR_TYPE end)
-{
+size_t
+countRRsetsAndSigs(ITERATOR_TYPE begin, ITERATOR_TYPE end) {
+    size_t count = 0;
     for (ITERATOR_TYPE it = begin; it != end; ++it) {
         if ((*it)->getRRsig()) {
-            // no 'sigless' toText(), but since we need to get both,
-            // it's easier to remove the sigs after toText than to
-            // reimplement toText here
-            std::string rrset_string = (*it)->toText();
-            std::string rrsig_string = (*it)->getRRsig()->toText();
-            strings.push_back(
-                rrset_string.substr(0, rrset_string.find(rrsig_string)));
-            strings.push_back(rrsig_string);
-        } else {
-            strings.push_back((*it)->toText());
+            ++count;
         }
+        ++count;
     }
+    return count;
 }
-}
+} // end anonymous namespace
 
 /// \brief A converter from a string to RRset.
 ///
@@ -307,24 +296,14 @@ rrsetsCheck(EXPECTED_ITERATOR expected_begin, EXPECTED_ITERATOR expected_end,
 
         // make sure rrsets only contains expected RRsets
         //
-        // In order to compare two lists of RRsets, we first convert
-        // them to vectors of strings, sort those vectors, and compare
-        // the result.
-        //
-        // Since some of the RRsets may have their signatures in-line,
-        // and some vectors has them as separate RRsets, we perform one
-        // additional step; If an RRset has signatures, those signatures
-        // are stripped from the original toText() result, and added
-        // as a separate RRset in the string vector.
-        std::vector<std::string> expected_strings;
-        addRRsetsToStringVector(expected_strings, expected_begin, expected_end);
-        std::sort(expected_strings.begin(), expected_strings.end());
-
-        std::vector<std::string> actual_strings;
-        addRRsetsToStringVector(actual_strings, actual_begin, actual_end);
-        std::sort(actual_strings.begin(), actual_strings.end());
-
-        EXPECT_EQ(expected_strings, actual_strings);
+        // Any rrset in actual has been found in expected by the code above,
+        // so to determine whether there are no other rrsets present, we
+        // simply need to compare their sizes. However, signatures can be
+        // in-lined (as part of an RRset), or added as separate RRsets.
+        // So we count the number of rrsets + the number of rrsets that
+        // have signatures.
+        EXPECT_EQ(countRRsetsAndSigs(expected_begin, expected_end),
+                  countRRsetsAndSigs(actual_begin, actual_end));
     }
 }
 
