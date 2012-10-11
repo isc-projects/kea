@@ -148,6 +148,7 @@ libdns___include_HEADERS = \
 	messagerenderer.h \
 	name.h \
 	question.h \
+	opcode.h \
 	rcode.h \
 	rdata.h \
 	rrparamregistry.h \

@@ -1,0 +1,32 @@
+This is the top directory for sample programs that can be developed
+using public BIND 10 libraries outside of the BIND 10 project.  It's
+intended to be built with installed BIND 10 header files and library
+objects, so it's not a target of the main build tree, and does not
+refer to any other part of the BIND 10 source tree that contains
+this directory.
+
+On the top (sub) directory (where this README file is stored), we
+provide a sample configure.ac and Makefile.am files for GNU automake
+environments with helper autoconf macros to detect the availability and
+location of BIND 10 header files and library objects.
+
+You can use the configure.ac and Makefile.am files with macros under
+the "m4" subdirectory as a template for your own project.  The key is
+to call the AX_ISC_BIND10 function (as the sample configure.ac does)
+from your configure.ac.  Then it will check the availability of
+necessary stuff and set some corresponding AC variables.  You can then
+use the resulting variables in your Makefile.in or Makefile.ac.
+
+If you use automake, don't forget adding the following line to the top
+level Makefile.am:
+
+ACLOCAL_AMFLAGS = -I m4
+
+This is necessary to incorporate the helper macro definitions.
+
+If you don't use automake but autoconf, make sure to add the following
+to the configure.ac file:
+
+sinclude(m4/ax_boost_include.m4)
+sinclude(m4/ax_isc_bind10.m4)
+(and same for other m4 files as they are added under m4/)
