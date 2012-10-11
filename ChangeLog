@@ -1,3 +1,36 @@
+489.	[func]		muks
+	The isc::dns::RRsetList class has been removed. It was now unused
+	inside the BIND 10 codebase, and the interface was considered
+	prone to misuse.
+	(Trac #2266, git 532ac3d0054f6a11b91ee369964f3a84dabc6040)
+
+488.	[build]		jinmei
+	On configure, changed the search order for Python executable.
+	It first ties more specific file names such as "python3.2" before
+	more generic "python3".  This will prevent configure failure on
+	Mac OS X that installs Python3 via recent versions of Homebrew.
+	(Trac #2339, git 88db890d8d1c64de49be87f03c24a2021bcf63da)
+
+487.	[bug]		jinmei
+	The bind10 process now terminates a component (subprocess) by the
+	"config remove Boss/components" bindctl command even if the
+	process crashes immediately before the command is sent to bind10.
+	Previously this led to an inconsistent state between the
+	configuration and an internal component list of bind10, and bind10
+	kept trying to restart the component.  A known specific case of
+	this problem is that b10-ddns could keep failing (due to lack of
+	dependency modules) and the administrator couldn't stop the
+	restart via bindctl.
+	(Trac #2244, git 7565788d06f216ab254008ffdfae16678bcd00e5)
+
+486.	[bug]*		jinmei
+	All public header files for libb10-dns++ are now installed.
+	Template configure.ac and utility AC macros for external projects
+	using the library are provided under the "examples" directory.
+	The src/bin/host was moved as part of the examples (and not
+	installed with other BIND 10 programs any more).
+	(Trac #1870, git 4973e638d354d8b56dcadf71123ef23c15662021)
+
 485.	[bug]		jelte
 	Several bugs have been fixed in bindctl; tab-completion now works
 	within configuration lists, the problem where sometimes the

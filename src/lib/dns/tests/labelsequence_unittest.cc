@@ -860,8 +860,12 @@ TEST_F(LabelSequenceTest, badDeserialize) {
     const uint8_t toomany_offsets[] = { Name::MAX_LABELS + 1 };
     EXPECT_THROW(LabelSequence ls(toomany_offsets), isc::BadValue);
 
-    // exceed MAX_LABEL_LEN
-    const uint8_t offsets_toolonglabel[] = { 2, 0, 64 };
+    // (second) offset does not match actual label length
+    const uint8_t offsets_wrongoffset[] = { 2, 0, 64, 1 };
+    EXPECT_THROW(LabelSequence ls(offsets_wrongoffset), isc::BadValue);
+
+    // offset matches, but exceeds MAX_LABEL_LEN
+    const uint8_t offsets_toolonglabel[] = { 2, 0, 64, 64 };
     EXPECT_THROW(LabelSequence ls(offsets_toolonglabel), isc::BadValue);
 
     // Inconsistent data: an offset is lower than the previous offset

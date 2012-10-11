@@ -69,17 +69,13 @@ ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable,
 
 ZoneTable::AddResult
 ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
-                   const Name& zone_name)
+                   const Name& zone_name, ZoneData* content)
 {
-    // Create a new ZoneData instance first.  If the specified name already
-    // exists in the table, the new data will soon be destroyed, but we want
-    // to make sure if this allocation fails the tree won't be changed to
-    // provide as strong guarantee as possible.  In practice, we generally
-    // expect the caller tries to add a zone only when it's a new one, so
-    // this should be a minor concern.
-    SegmentObjectHolder<ZoneData, RRClass> holder(
-        mem_sgmt, ZoneData::create(mem_sgmt, zone_name), zone_class);
-
+    if (content == NULL) {
+        isc_throw(isc::BadValue, "Zone content must not be NULL");
+    }
+    SegmentObjectHolder<ZoneData, RRClass> holder(mem_sgmt, content,
+                                                  zone_class);
     // Get the node where we put the zone
     ZoneTableNode* node(NULL);
     switch (zones_->insert(mem_sgmt, zone_name, &node)) {
@@ -94,18 +90,18 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
     // Can Not Happen
     assert(node != NULL);
 
-    // Is it empty? We either just created it or it might be nonterminal
-    if (node->isEmpty()) {
-        node->setData(holder.get());
-        return (AddResult(result::SUCCESS, holder.release()));
-    } else { // There's something there already
-        return (AddResult(result::EXIST, node->getData()));
+    // We can release now, setData never throws
+    ZoneData* old = node->setData(holder.release());
+    if (old != NULL) {
+        return (AddResult(result::EXIST, old));
+    } else {
+        return (AddResult(result::SUCCESS, NULL));
     }
 }
 
 ZoneTable::FindResult
 ZoneTable::findZone(const Name& name) const {
-    ZoneTableNode* node(NULL);
+    const ZoneTableNode* node(NULL);
     result::Result my_result;
 
     // Translate the return codes
@@ -130,20 +126,6 @@ ZoneTable::findZone(const Name& name) const {
     assert(node != NULL);
 
     return (FindResult(my_result, node->getData()));
-}
-
-ZoneTable::FindResult
-ZoneTable::setZoneData(const Name& name, ZoneData* data)
-{
-    ZoneTableNode* node(NULL);
-
-    ZoneTableTree::Result result(zones_->find(name, &node));
-
-    if (result != ZoneTableTree::EXACTMATCH) {
-        return (FindResult(result::NOTFOUND, NULL));
-    } else {
-        return (FindResult(result::SUCCESS, node->setData(data)));
-    }
 }
 
 } // end of namespace memory

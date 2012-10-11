@@ -4,7 +4,7 @@
 AC_PREREQ([2.59])
 AC_INIT(bind10-devel, 20120817, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([foreign])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])dnl be backward compatible
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4macros])
@@ -132,7 +132,7 @@ AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
 AC_SUBST(SET_ENV_LIBRARY_PATH)
 AC_SUBST(ENV_LIBRARY_PATH)
 
-m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1 python3.2])
+m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3.2 python3.1 python3])
 AC_ARG_WITH([pythonpath],
 AC_HELP_STRING([--with-pythonpath=PATH],
   [specify an absolute path to python executable when automatic version check (incorrectly) fails]),
@@ -1099,7 +1099,6 @@ AC_CONFIG_FILES([Makefile
                  src/bin/dbutil/Makefile
                  src/bin/dbutil/tests/Makefile
                  src/bin/dbutil/tests/testdata/Makefile
-                 src/bin/host/Makefile
                  src/bin/loadzone/Makefile
                  src/bin/loadzone/tests/correct/Makefile
                  src/bin/loadzone/tests/error/Makefile
