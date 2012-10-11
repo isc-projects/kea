@@ -23,44 +23,45 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Base class representing DHCP option definitions.
+/// @brief Base class representing a DHCP option definition.
 ///
-/// This is a base class representing DHCP options definitions.
-/// The definition describes the format of the option. In particular
-/// it defines:
+/// This is a base class representing a DHCP option definition, which describes
+/// the format of the option. In particular, it defines:
 /// - option name,
 /// - option code,
 /// - data fields order and their types,
 /// - sub options space that the particular option encapsulates.
 ///
-/// The option type specifies the data type(s) which option conveys.
-/// If it is to convey single value the option type points to the
-/// data type of this value. For example, DHCPv6 option 8 comprises
-/// 2-byte option code, 2-byte option length and 2-byte field that
-/// carries uint16 value (http://ietf.org/rfc/rfc3315.txt).
-/// In such case option type is defined as "uint16". In case when
-/// the particular option has more complex structure the option type
-/// may be defined as "array", "record" or even "array of records".
-/// Array types should be used when the option contains multiple
-/// data fields of the same type laid successively. For example,
-/// DHCPv6 option 6 includes multiple fields holding uint16 codes
-/// of requested DHCPv6 options (http://ietf.org/rfc/rfc3315.txt).
-/// Such option can be represented with this class by setting
-/// option type to "uint16" and array indicator (array_type) to true.
-/// The number of elements in the array is unlimited (actually it is
+/// The option type specifies the data type(s) which an option conveys.  If
+/// this is a single value the option type points to the data type of the
+/// value. For example, DHCPv6 option 8 comprises a two-byte option code, a
+/// two-byte option length and two-byte field that carries a uint16 value
+/// (RFC 3315 - http://ietf.org/rfc/rfc3315.txt).  In such a case, the option
+/// type is defined as "uint16".
+///
+/// When the option has a more complex structure, the option type may be
+/// defined as "array", "record" or even "array of records".
+///
+/// Array types should be used when the option contains multiple contiguous
+/// data values of the same type laid. For example, DHCPv6 option 6 includes
+/// multiple fields holding uint16 codes of requested DHCPv6 options (RFC 3315).
+/// Such an option can be represented with this class by setting the option
+/// type to "uint16" and the array indicator (array_type) to true.  The number
+/// of elements in the array is effectively unlimited (although it is actually
 /// limited by the maximal DHCPv6 option length).
-/// Should option comprise data fields of different types the "record"
-/// option type is used. In such cases the data field types within the
-/// record are specified using \ref OptionDefinition::addRecordField.
-/// When OptionDefinition object has been sucessfully created it
-/// can be queried to return the appropriate option factory function
-/// for the specified option format. There is a number of "standard"
-/// factory functions that cover well known (common) formats.
-/// If the particular format does not match any common format the generic
-/// factory function is returned.
+///
+/// Should the option comprise data fields of different types, the "record"
+/// option type is used. In such cases the data field types within the record
+/// are specified using \ref OptionDefinition::addRecordField.
+///
+/// When the OptionDefinition object has been sucessfully created, it can be
+/// queried to return the appropriate option factory function for the specified
+/// specified option format. There are a number of "standard" factory functions
+/// that cover well known (common) formats.  If the particular format does not
+/// match any common format the generic factory function is returned.
 ///
 /// The following data type strings are supported:
-/// - "empty" - option does not contain data fields
+/// - "empty" (option does not contain data fields)
 /// - "boolean"
 /// - "int8"
 /// - "int16"
@@ -68,11 +69,11 @@ namespace dhcp {
 /// - "uint8"
 /// - "uint16"
 /// - "uint32"
-/// - "ipv4-address" - IPv4 Address
-/// - "ipv6-address" - IPV6 Address
+/// - "ipv4-address" (IPv4 Address)
+/// - "ipv6-address" (IPV6 Address)
 /// - "string"
-/// - "fqdn" - fully qualified name
-/// - "record" - set of data fields of different types
+/// - "fqdn" (fully qualified name)
+/// - "record" (set of data fields of different types)
 ///
 /// @todo Extend the comment to describe "generic factories".
 /// @todo Extend this class to use custom namespaces.
@@ -108,15 +109,15 @@ private:
     /// @brief Utility class for operations on DataTypes.
     ///
     /// This class is implemented as the singleton because the list of
-    /// supported data types is in this case loaded only once
-    /// into the memory and persists for all option definitions.
+    /// supported data types need only be loaded only once into memory as it
+    /// can persist for all option definitions.
     ///
     /// @todo This class can be extended to return the string value
     /// representing the data type from the enum value.
     class DataTypeUtil {
     public:
 
-        /// @brief Return sole instance of this class.
+        /// @brief Return the sole instance of this class.
         ///
         /// @return instance of this class.
         static DataTypeUtil& instance() {
@@ -148,7 +149,7 @@ public:
     /// @param name option name.
     /// @param code option code.
     /// @param type option data type as string.
-    /// @param array_type array indicator, if true it indicates that
+    /// @param array_type array indicator, if true it indicates that the
     /// option fields are the array.
     OptionDefinition(const std::string& name,
                      const uint16_t code,
@@ -160,7 +161,7 @@ public:
     /// @param name option name.
     /// @param code option code.
     /// @param type option data type.
-    /// @param array_type array indicator, if true it indicates that
+    /// @param array_type array indicator, if true it indicates that the
     /// option fields are the array.
     OptionDefinition(const std::string& name,
                      const uint16_t code,
@@ -185,8 +186,8 @@ public:
 
     /// @brief Return array type indicator.
     ///
-    /// The method returns the bool value to indicate wheter
-    /// option is single value or array of values.
+    /// The method returns the bool value to indicate whether the option is a
+    /// a single value or an array of values.
     ///
     /// @return true if option comprises an array of values.
     bool getArrayType() const { return (array_type_); }
