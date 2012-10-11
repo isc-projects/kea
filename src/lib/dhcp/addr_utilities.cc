@@ -35,10 +35,6 @@ const uint32_t bitMask4[] = { 0xffffffff, 0x7fffffff, 0x3fffffff, 0x1fffffff,
 
 /// @brief mask used for first/last address calculation in a IPv6 prefix
 const uint8_t bitMask6[]= { 0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
-}
-
-namespace isc {
-namespace dhcp {
 
 /// @brief calculates the first IPv6 address in a IPv6 prefix
 ///
@@ -92,19 +88,10 @@ isc::asiolink::IOAddress firstAddrInPrefix4(const isc::asiolink::IOAddress& pref
                                             uint8_t len) {
     uint32_t addr = prefix;
     if (len > 32) {
-        isc_throw(BadValue, "Too large netmask. 0..32 is allowed in IPv4");
+        isc_throw(isc::BadValue, "Too large netmask. 0..32 is allowed in IPv4");
     }
 
     return (IOAddress(addr & (~bitMask4[len])));
-}
-
-isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefix,
-                                            uint8_t len) {
-    if (prefix.getFamily() == AF_INET) {
-        return firstAddrInPrefix4(prefix, len);
-    } else {
-        return firstAddrInPrefix6(prefix, len);
-    }
 }
 
 /// @brief calculates the last IPv4 address in a IPv4 prefix
@@ -118,7 +105,7 @@ isc::asiolink::IOAddress lastAddrInPrefix4(const isc::asiolink::IOAddress& prefi
                                            uint8_t len) {
     uint32_t addr = prefix;
     if (len>32) {
-        isc_throw(BadValue, "Too large netmask. 0..32 is allowed in IPv4");
+        isc_throw(isc::BadValue, "Too large netmask. 0..32 is allowed in IPv4");
     }
 
     return (IOAddress(addr | bitMask4[len]));
@@ -165,6 +152,20 @@ isc::asiolink::IOAddress lastAddrInPrefix6(const isc::asiolink::IOAddress& prefi
 
     // Finally, let's wrap this into nice and easy IOAddress object.
     return (isc::asiolink::IOAddress::from_bytes(AF_INET6, packed));
+}
+
+}; // end of anonymous namespace
+
+namespace isc {
+namespace dhcp {
+
+isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefix,
+                                            uint8_t len) {
+    if (prefix.getFamily() == AF_INET) {
+        return firstAddrInPrefix4(prefix, len);
+    } else {
+        return firstAddrInPrefix6(prefix, len);
+    }
 }
 
 isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix,
