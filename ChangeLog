@@ -1,3 +1,10 @@
+492.	[func]		tomek
+	libdhcpsrv: The DHCP Configuration Manager is now able to store
+	information about IPv4 subnets and pools. It is still not possible
+	to configure that information. Such capability will be implemented
+	in a near future.
+	(Trac #2237, git a78e560343b41f0f692c7903c938b2b2b24bf56b)
+
 491.	[func]		tomek
 	b10-dhcp6: Configuration for DHCPv6 has been implemented.
 	Currently it is possible to configure IPv6 subnets and pools
@@ -7,7 +14,7 @@
 	(Trac #2269, git 028bed9014b15facf1a29d3d4a822c9d14fc6411)
 
 490.	[func]		tomek
-	libdhcp++: An abstract API for lease database has been
+	libdhcpsrv: An abstract API for lease database has been
 	implemented. It offers a common interface to all concrete
 	database backends.
 	(Trac #2140, git df196f7609757253c4f2f918cd91012bb3af1163)
