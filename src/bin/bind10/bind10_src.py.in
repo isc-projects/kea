@@ -693,31 +693,34 @@ class BoB:
         # from doing so
         if not self.nokill:
             # next try sending a SIGTERM
-            components_to_stop = list(self.components.values())
-            for component in components_to_stop:
-                logger.info(BIND10_SEND_SIGTERM, component.name(), component.pid())
-                try:
-                    component.kill()
-                except OSError:
-                    # ignore these (usually ESRCH because the child
-                    # finally exited)
-                    pass
-            # finally, send SIGKILL (unmaskable termination) until everybody dies
+            self.__terminate_children(False)
+            # finally, send SIGKILL (unmaskable termination) until everybody
+            # dies
             while self.components:
                 # XXX: some delay probably useful... how much is uncertain
                 time.sleep(0.1)
                 self.reap_children()
-                components_to_stop = list(self.components.values())
-                for component in components_to_stop:
-                    logger.info(BIND10_SEND_SIGKILL, component.name(),
-                                component.pid())
-                    try:
-                        component.kill(True)
-                    except OSError:
-                        # ignore these (usually ESRCH because the child
-                        # finally exited)
-                        pass
+                self.__terminate_children(True)
             logger.info(BIND10_SHUTDOWN_COMPLETE)
+
+    def __terminate_children(self, forceful):
+        '''Terminate remaining subprocesses by sending a signal.
+
+        The forceful paramter will be passed Component.kill().
+        This is a dedicated subroutine of shutdown(), just to unify two
+        similar cases.
+
+        '''
+        logmsg = BIND10_SEND_SIGKILL if forceful else BIND10_SEND_SIGTERM
+        # TODO: we should be able to skip list()
+        for component in list(self.components.values()):
+            logger.info(logmsg, component.name(), component.pid())
+            try:
+                component.kill(forceful)
+            except OSError:
+                # ignore these (usually ESRCH because the child
+                # finally exited)
+                pass
 
     def _get_process_exit_status(self):
         return os.waitpid(-1, os.WNOHANG)
