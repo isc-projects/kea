@@ -712,14 +712,22 @@ class BoB:
 
         '''
         logmsg = BIND10_SEND_SIGKILL if forceful else BIND10_SEND_SIGTERM
-        for component in self.components.values():
+        # We need to make a copy of values as the components may be modified
+        # in the loop.
+        for component in list(self.components.values()):
             logger.info(logmsg, component.name(), component.pid())
             try:
                 component.kill(forceful)
-            except OSError:
-                # ignore these (usually ESRCH because the child
-                # finally exited)
-                pass
+            except OSError as ex:
+                # If kill() failed due to EPERM, it doesn't make sense to
+                # keep trying, so we just log the fact and forget that
+                # component.  Ignore other OSErrors (usually ESRCH because
+                # the child finally exited)
+                signame = "SIGKILL" if forceful else "SIGTERM"
+                logger.info(BIND10_SEND_SIGNAL_FAIL, signame,
+                            component.name(), component.pid(), ex)
+                if ex.errno == errno.EPERM:
+                    del self.components[component.pid()]
 
     def _get_process_exit_status(self):
         return os.waitpid(-1, os.WNOHANG)
