@@ -712,8 +712,7 @@ class BoB:
 
         '''
         logmsg = BIND10_SEND_SIGKILL if forceful else BIND10_SEND_SIGTERM
-        # TODO: we should be able to skip list()
-        for component in list(self.components.values()):
+        for component in self.components.values():
             logger.info(logmsg, component.name(), component.pid())
             try:
                 component.kill(forceful)
