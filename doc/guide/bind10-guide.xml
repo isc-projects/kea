@@ -2750,16 +2750,94 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
     <section id="dhcp4-config">
       <title>DHCPv4 Server Configuration</title>
       <para>
-        The DHCPv4 server does not have a lease database implemented yet
-        nor any support for configuration, so the same set
-        of configuration options (including the same fixed address)
-        will be assigned every time.
+        Once the server is started, it can be configured. To view the
+        current configuration, use the following command in <command>bindctl</command>:
+        <screen>
+&gt; <userinput>config show Dhcp4</userinput></screen>
+        When starting Dhcp4 daemon for the first time, the default configuration
+        will be available. It will look similar to this:
+        <screen>
+&gt; <userinput>config show Dhcp4</userinput>
+Dhcp4/interface/                list    (default)
+Dhcp4/renew-timer        1000   integer	(default)
+Dhcp4/rebind-timer       2000   integer	(default)
+Dhcp4/preferred-lifetime 3000   integer	(default)
+Dhcp4/valid-lifetime	 4000   integer	(default)
+Dhcp4/subnet4	         []     list    (default)</screen>
+      </para>
+
+      <para>
+        To change one of the parameters, simply follow
+        the usual <command>bindctl</command> procedure. For example, to make the
+        leases longer, change their valid-lifetime parameter:
+        <screen>
+&gt; <userinput>config set Dhcp4/valid-lifetime 7200</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Please note that most Dhcp4 parameters are of global scope
+        and apply to all defined subnets, unless they are overridden on a
+        per-subnet basis.
+      </para>
+
+      <para>
+        The essential role of DHCPv4 server is address assignment. The server
+        has to be configured with at least one subnet and one pool of dynamic
+        addresses to be managed. For example, assume that the server
+        is connected to a network segment that uses the 192.0.2.0/24
+        prefix. The Administrator of that network has decided that addresses from range
+        192.0.2.10 to 192.0.2.20 are going to be managed by the Dhcp4
+        server. Such a configuration can be achieved in the following way:
+        <screen>
+&gt; <userinput>config add Dhcp4/subnet4</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/subnet "192.0.2.0/24"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/pool [ "192.0.2.10 - 192.0.2.20" ]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Note that subnet is defined as a simple string, but the pool parameter
+        is actually a list of pools: for this reason, the pool definition is
+        enclosed in square brackets, even though only one range of addresses
+        is specified.</para>
+        <para>It is possible to define more than one pool in a
+        subnet: continuing the previous example, further assume that
+        192.0.2.64/26 should be also be managed by the server. It could be written as
+        192.0.2.64 to 192.0.2.127. Alternatively, it can be expressed more simply as
+        192.0.2.64/26. Both formats are supported by Dhcp4 and can be mixed in the pool list.
+        For example, one could define the following pools:
+        <screen>
+&gt; <userinput>config set Dhcp4/subnet4[0]/pool [ "192.0.2.10-192.0.2.20", "192.0.2.64/26" ]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        The number of pools is not limited, but for performance reasons it is recommended to
+        use as few as possible. Space and tabulations in pool definitions are ignored, so
+        spaces before and after hyphen are optional. They can be used to improve readability.
       </para>
       <para>
-        At this stage of development, the only way to alter the server
-        configuration is to modify its source code. To do so, please
-        edit src/bin/dhcp4/dhcp4_srv.cc file and modify following
-        parameters and recompile:
+         The server may be configured to serve more than one subnet. To add a second subnet,
+         use a command similar to the following:
+        <screen>
+&gt; <userinput>config add Dhcp4/subnet4</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[1]/subnet "192.0.3.0/24"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[1]/pool [ "192.0.3.0/24" ]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Arrays are counted from 0. subnet[0] refers to the subnet defined in the
+        previous example.  The <command>config add Dhcp4/subnet4</command> adds
+        another (second) subnet. It can be referred to as
+        <command>Dhcp4/subnet4[1]</command>. In this example, we allow server to
+        dynamically assign all addresses available in the whole subnet.
+      </para>
+      <para>
+        When configuring a DHCPv4 server using prefix/length notation, please pay
+        attention to the boundary values. When specifying that the server should use
+        a given pool, it will be able to allocate also first (typically network
+        address) and the last (typically broadcast address) address from that pool.
+        In the aforementioned example of pool 192.0.3.0/24, both 192.0.3.0 and
+        192.0.3.255 addresses may be assigned as well. This may be invalid in some
+        network configurations. If you want to avoid this, please use min-max notation.
+      </para>
+
+      <para>
+        Note: Although configuration is now accepted, it is not internally used
+        by they server yet.  At this stage of development, the only way to alter
+        server configuration is to modify its source code. To do so, please edit
+        src/bin/dhcp6/dhcp4_srv.cc file, modify the following parameters and
+        recompile:
         <screen>
 const std::string HARDCODED_LEASE = "192.0.2.222"; // assigned lease
 const std::string HARDCODED_NETMASK = "255.255.255.0";
@@ -2769,7 +2847,7 @@ const std::string HARDCODED_DNS_SERVER = "192.0.2.2";
 const std::string HARDCODED_DOMAIN_NAME = "isc.example.com";
 const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
 
-        Lease database and configuration support is planned for 2012.
+        Lease database and configuration support is planned for end of 2012.
       </para>
     </section>
 

@@ -20,12 +20,14 @@
  * - @subpage DataScrubbing
  *
  * @section DHCP
- * - @subpage dhcpv4
- *   - @subpage dhcpv4Session
- * - @subpage dhcpv6
- *   - @subpage dhcpv6-session
- *   - @subpage dhcpv6-config-parser
- *   - @subpage dhcpv6-config-inherit
+ * - @subpage dhcp4
+ *   - @subpage dhcp4-session
+ *   - @subpage dhcp4-config-parser
+ *   - @subpage dhcp4-config-inherit
+ * - @subpage dhcp6
+ *   - @subpage dhcp6-session
+ *   - @subpage dhcp6-config-parser
+ *   - @subpage dhcp6-config-inherit
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpIfaceMgr
