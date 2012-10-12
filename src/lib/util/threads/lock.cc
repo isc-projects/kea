@@ -110,19 +110,35 @@ Mutex::~Mutex() {
 }
 
 void
+Mutex::postLockAction() {
+    if (impl_->locked_count != 0) {
+        isc_throw(isc::InvalidOperation, "Lock attempt for locked mutex");
+    }
+    ++impl_->locked_count;
+}
+
+void
 Mutex::lock() {
     assert(impl_ != NULL);
     const int result = pthread_mutex_lock(&impl_->mutex);
     if (result != 0) {
         isc_throw(isc::InvalidOperation, std::strerror(result));
     }
-    ++impl_->locked_count; // Only in debug mode
+    postLockAction();           // Only in debug mode
+}
+
+void
+Mutex::preUnlockAction() {
+    if (impl_->locked_count == 0) {
+        isc_throw(isc::InvalidOperation, "Unlock attempt for unlocked mutex");
+    }
+    --impl_->locked_count;
 }
 
 void
 Mutex::unlock() {
     assert(impl_ != NULL);
-    --impl_->locked_count; // Only in debug mode
+    preUnlockAction();          // Only in debug mode
     const int result = pthread_mutex_unlock(&impl_->mutex);
     assert(result == 0); // This should never be possible
 }
@@ -131,6 +147,59 @@ Mutex::unlock() {
 bool
 Mutex::locked() const {
     return (impl_->locked_count != 0);
+}
+
+class CondVar::Impl {
+public:
+    Impl() {
+        const int result = pthread_cond_init(&cond_, NULL);
+        if (result != 0) {
+            isc_throw(isc::Unexpected, "pthread_cond_init failed: "
+                      << std::strerror(result));
+        }
+    }
+    ~Impl() {
+        const int result = pthread_cond_destroy(&cond_);
+
+        // This can happen if we try to destroy cond_ while some other thread
+        // is waiting on it.  assert() may be too strong for such a case,
+        // but we cannot safely destroy cond_ anyway.  In order to avoid
+        // throwing from a destructor we simply let the process die.
+        assert(result == 0);
+    }
+
+    // For convenience allow the main class to access this directly.
+    pthread_cond_t cond_;
+};
+
+CondVar::CondVar() : impl_(new Impl)
+{}
+
+CondVar::~CondVar() {
+    delete impl_;
+}
+
+void
+CondVar::wait(Mutex& mutex) {
+    mutex.preUnlockAction();    // Only in debug mode
+    const int result = pthread_cond_wait(&impl_->cond_, &mutex.impl_->mutex);
+    mutex.postLockAction();     // Only in debug mode
+
+    // pthread_cond_wait should normally succeed unless mutex is completely
+    // broken.
+    if (result != 0) {
+        isc_throw(isc::BadValue, "pthread_cond_wait failed unexpectedly: " <<
+                  std::strerror(result));
+    }
+}
+
+void
+CondVar::signal() {
+    const int result = pthread_cond_signal(&impl_->cond_);
+
+    // pthread_cond_signal() can only fail when if cond_ is invalid.  It
+    //should be impossible as long as this is a valid CondVar object.
+    assert(result == 0);
 }
 
 }
