@@ -52,6 +52,22 @@ private:
     std::vector<uint32_t>   rtt_;   ///< Stored round-trip times
 };
 
+typedef std::vector<std::pair<std::string, uint16_t> > AddressVector;
+
+class ForwardQuery {
+private:
+    class ForwardQueryImpl;
+    ForwardQueryImpl* fqi_;
+public:
+    ForwardQuery(isc::asiolink::IOService& io,
+                 isc::dns::ConstMessagePtr query_message,
+                 isc::dns::MessagePtr answer_message,
+                 boost::shared_ptr<AddressVector> upstream,
+                 isc::util::OutputBufferPtr buffer,
+                 isc::resolve::ResolverInterface::CallbackPtr cb,
+                 int query_timeout, int client_timeout, int lookup_timeout);
+    ~ForwardQuery();
+};
 
 /// \brief Recursive Query
 ///
@@ -158,7 +174,7 @@ public:
     /// \param server Server object that handles receipt and processing of the
     ///               received messages.
     /// \param callback callback object
-    void forward(isc::dns::ConstMessagePtr query_message,
+    ForwardQuery* forward(isc::dns::ConstMessagePtr query_message,
                  isc::dns::MessagePtr answer_message,
                  isc::util::OutputBufferPtr buffer,
                  DNSServer* server,

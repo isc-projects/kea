@@ -652,12 +652,12 @@ TEST_F(RecursiveQueryTest, forwarderSend) {
                       singleAddress(TEST_IPV4_ADDR, port));
 
     Question q(Name("example.com"), RRClass::IN(), RRType::TXT());
-    Message query_message(Message::RENDER);
-    isc::resolve::initResponseMessage(q, query_message);
+    MessagePtr query_message(new Message(Message::RENDER));
+    isc::resolve::initResponseMessage(q, *query_message);
 
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
-    rq.forward(ConstMessagePtr(&query_message), answer, buffer, &server);
+    ForwardQuery* fq = rq.forward(query_message, answer, buffer, &server);
 
     char data[4096];
     size_t size = sizeof(data);
@@ -675,6 +675,8 @@ TEST_F(RecursiveQueryTest, forwarderSend) {
     EXPECT_EQ(q.getName(), q2->getName());
     EXPECT_EQ(q.getType(), q2->getType());
     EXPECT_EQ(q.getClass(), q2->getClass());
+
+    delete fq;
 }
 
 int
@@ -749,14 +751,15 @@ TEST_F(RecursiveQueryTest, forwardQueryTimeout) {
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
-    Message query_message(Message::RENDER);
-    isc::resolve::initResponseMessage(question, query_message);
+    MessagePtr query_message(new Message(Message::RENDER));
+    isc::resolve::initResponseMessage(question, *query_message);
 
     boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
-    query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
+    ForwardQuery* fq = query.forward(query_message, answer, buffer, &server, callback);
     // Run the test
     io_service_.run();
     EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
+    delete fq;
 }
 
 // If we set client timeout to lower than querytimeout, we should
@@ -784,14 +787,15 @@ TEST_F(RecursiveQueryTest, forwardClientTimeout) {
                          1000, 10, 4000, 4);
     Question q(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
-    Message query_message(Message::RENDER);
-    isc::resolve::initResponseMessage(q, query_message);
+    MessagePtr query_message(new Message(Message::RENDER));
+    isc::resolve::initResponseMessage(q, *query_message);
 
     boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
-    query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
+    ForwardQuery* fq = query.forward(query_message, answer, buffer, &server, callback);
     // Run the test
     io_service_.run();
     EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
+    delete fq;
 }
 
 // If we set lookup timeout to lower than querytimeout, the lookup
@@ -819,14 +823,17 @@ TEST_F(RecursiveQueryTest, forwardLookupTimeout) {
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
 
-    Message query_message(Message::RENDER);
-    isc::resolve::initResponseMessage(question, query_message);
+    //Message query_message(Message::RENDER);
+    MessagePtr query_message(new Message(Message::RENDER));
+    isc::resolve::initResponseMessage(question, *query_message);
 
     boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
-    query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
+    ForwardQuery* fq = query.forward(query_message, answer, buffer, &server, callback);
     // Run the test
     io_service_.run();
     EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
+    delete fq;
+    std::cout << "[XX] DONE" << std::endl;
 }
 
 // Set everything very low and see if this doesn't cause weird
@@ -854,14 +861,15 @@ TEST_F(RecursiveQueryTest, lowtimeouts) {
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
 
-    Message query_message(Message::RENDER);
-    isc::resolve::initResponseMessage(question, query_message);
+    MessagePtr query_message(new Message(Message::RENDER));
+    isc::resolve::initResponseMessage(question, *query_message);
 
     boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
-    query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
+    ForwardQuery* fq = query.forward(query_message, answer, buffer, &server, callback);
     // Run the test
     io_service_.run();
     EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
+    delete fq;
 }
 
 // as mentioned above, we need a more better framework for this,
