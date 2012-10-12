@@ -30,6 +30,7 @@
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/zone_table.h>
 #include <datasrc/memory/zone_data_updater.h>
+#include <datasrc/memory/zone_data_loader.h>
 #include <datasrc/memory/memory_client.h>
 
 #include <testutils/dnsmessage_test.h>
@@ -298,7 +299,7 @@ TEST_F(MemoryClientTest, loadEmptyZoneFileThrows) {
 
     EXPECT_THROW(client_->load(Name("."),
                                TEST_DATA_DIR "/empty.zone"),
-                 InMemoryClient::EmptyZone);
+                 EmptyZone);
 
     EXPECT_EQ(0, client_->getZoneCount());
 
