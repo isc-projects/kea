@@ -69,6 +69,25 @@ public:
     ~ForwardQuery();
 };
 
+class RunningQuery {
+private:
+    class RunningQueryImpl;
+    RunningQueryImpl* rqi_;
+public:
+    RunningQuery(isc::asiolink::IOService& io,
+        const isc::dns::Question question,
+        isc::dns::MessagePtr answer_message,
+        std::pair<std::string, uint16_t>& test_server,
+        isc::util::OutputBufferPtr buffer,
+        isc::resolve::ResolverInterface::CallbackPtr cb,
+        int query_timeout, int client_timeout, int lookup_timeout,
+        unsigned retries,
+        isc::nsas::NameserverAddressStore& nsas,
+        isc::cache::ResolverCache& cache,
+        boost::shared_ptr<RttRecorder>& recorder);
+    ~RunningQuery();
+};
+
 /// \brief Recursive Query
 ///
 /// The \c RecursiveQuery class provides a layer of abstraction around
@@ -142,8 +161,8 @@ public:
     /// \param question The question being answered <qname/qclass/qtype>
     /// \param callback Callback object. See
     ///        \c ResolverInterface::Callback for more information
-    void resolve(const isc::dns::QuestionPtr& question,
-                 const isc::resolve::ResolverInterface::CallbackPtr callback);
+    RunningQuery* resolve(const isc::dns::QuestionPtr& question,
+        const isc::resolve::ResolverInterface::CallbackPtr callback);
 
 
     /// \brief Initiates resolving for the given question.
@@ -158,10 +177,10 @@ public:
     /// \param buffer An output buffer into which the intermediate responses will
     ///        be copied.
     /// \param server A pointer to the \c DNSServer object handling the client
-    void resolve(const isc::dns::Question& question,
-                 isc::dns::MessagePtr answer_message,
-                 isc::util::OutputBufferPtr buffer,
-                 DNSServer* server);
+    RunningQuery* resolve(const isc::dns::Question& question,
+                          isc::dns::MessagePtr answer_message,
+                          isc::util::OutputBufferPtr buffer,
+                          DNSServer* server);
 
     /// \brief Initiates forwarding for the given query.
     ///

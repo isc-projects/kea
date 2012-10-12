@@ -173,6 +173,9 @@ protected:
         // It would delete itself, but after the io_service_, which could
         // segfailt in case there were unhandled requests
         resolver_.reset();
+        // In a similar note, we wait until the resolver has been cleaned up
+        // until deleting and active test running_query_
+        delete running_query_;
     }
 
     void SetUp() {
@@ -507,11 +510,12 @@ protected:
     vector<uint8_t> callback_data_;
     ScopedSocket sock_;
     boost::shared_ptr<isc::util::unittests::TestResolver> resolver_;
+    RunningQuery* running_query_;
 };
 
 RecursiveQueryTest::RecursiveQueryTest() :
     dns_service_(NULL), callback_(NULL), callback_protocol_(0),
-    callback_native_(-1), resolver_(new isc::util::unittests::TestResolver())
+    callback_native_(-1), resolver_(new isc::util::unittests::TestResolver()), running_query_(NULL)
 {
     nsas_.reset(new isc::nsas::NameserverAddressStore(resolver_));
 }
@@ -833,7 +837,6 @@ TEST_F(RecursiveQueryTest, forwardLookupTimeout) {
     io_service_.run();
     EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
     delete fq;
-    std::cout << "[XX] DONE" << std::endl;
 }
 
 // Set everything very low and see if this doesn't cause weird
@@ -890,7 +893,7 @@ TEST_F(RecursiveQueryTest, DISABLED_recursiveSendOk) {
     Question q(Name("www.isc.org"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
-    rq.resolve(q, answer, buffer, &server);
+    running_query_ = rq.resolve(q, answer, buffer, &server);
     io_service_.run();
 
     // Check that the answer we got matches the one we wanted
@@ -916,7 +919,7 @@ TEST_F(RecursiveQueryTest, DISABLED_recursiveSendNXDOMAIN) {
     Question q(Name("wwwdoesnotexist.isc.org"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
-    rq.resolve(q, answer, buffer, &server);
+    running_query_ = rq.resolve(q, answer, buffer, &server);
     io_service_.run();
 
     // Check that the answer we got matches the one we wanted
@@ -980,9 +983,9 @@ TEST_F(RecursiveQueryTest, CachedNS) {
     // Prepare the recursive query
     vector<pair<string, uint16_t> > roots;
     roots.push_back(pair<string, uint16_t>("192.0.2.2", 53));
-
+    vector<pair<string, uint16_t> > upstream;
     RecursiveQuery rq(*dns_service_, *nsas_, cache_,
-                      vector<pair<string, uint16_t> >(), roots);
+                      upstream, roots);
     // Ask a question at the bottom. It should not use the lower NS, because
     // it would lead to a loop in NS. But it can use the nsUpper one, it has
     // an IP address and we can avoid asking root.
@@ -992,7 +995,7 @@ TEST_F(RecursiveQueryTest, CachedNS) {
     MessagePtr answer(new Message(Message::RENDER));
     // The server is here so we have something to pass there
     MockServer server(io_service_);
-    rq.resolve(q, answer, buffer, &server);
+    running_query_ = rq.resolve(q, answer, buffer, &server);
     // We don't need to run the service in this test. We are interested only
     // in the place it starts resolving at
 

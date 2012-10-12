@@ -132,6 +132,9 @@ public:
     OutputBufferPtr udp_send_buffer_;           ///< Send buffer for UDP I/O
     udp::socket     udp_socket_;                ///< Socket used by UDP server
 
+    /// TODO
+    RunningQuery* running_query_;
+
     /// \brief Constructor
     RecursiveQueryTest3() :
         service_(),
@@ -154,8 +157,19 @@ public:
         udp_length_(0),
         udp_receive_buffer_(),
         udp_send_buffer_(new OutputBuffer(BUFFER_SIZE)),
-        udp_socket_(service_.get_io_service(), udp::v4())
+        udp_socket_(service_.get_io_service(), udp::v4()),
+        running_query_(NULL)
     {
+    }
+
+    ~RecursiveQueryTest3() {
+        delete nsas_;
+        // It would delete itself, but after the io_service_, which could
+        // segfailt in case there were unhandled requests
+        resolver_.reset();
+        // In a similar note, we wait until the resolver has been cleaned up
+        // until deleting and active test running_query_
+        delete running_query_;
     }
 
     /// \brief Set Common Message Bits
@@ -542,7 +556,7 @@ TEST_F(RecursiveQueryTest3, Resolve) {
 
     // Kick off the resolution process.
     expected_ = EDNS_UDP;
-    query.resolve(question_, resolver_callback);
+    running_query_ = query.resolve(question_, resolver_callback);
     service_.run();
 
     // Check what ran. (We have to cast the callback to ResolverCallback3 as we
