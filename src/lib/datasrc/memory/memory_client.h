@@ -208,10 +208,10 @@ private:
     // another data source.
     // filename is the file name of the master file or empty if the zone is
     // loaded from another data source.
-    result::Result load(const isc::dns::Name& zone_name,
-                        const std::string& filename,
-                        boost::function<void(internal::LoadCallback)>
-                            rrset_installer);
+    result::Result loadInternal(const isc::dns::Name& zone_name,
+				const std::string& filename,
+				boost::function<void(internal::LoadCallback)>
+				rrset_installer);
 
     util::MemorySegment& mem_sgmt_;
     const isc::dns::RRClass rrclass_;
