@@ -144,7 +144,8 @@ public:
                                   RRClass::IN(), RRType::SOA(), RRTTL(3600)));
             rrset->addRdata(generic::SOA(Name("ns1.example.org"),
                                          Name("bugs.x.w.example.org"),
-                                         2010012601, 3600, 300, 3600000, 1200));
+                                         2010012601, 3600, 300, 3600000,
+                                         1200));
             break;
 
         case 1: {
@@ -155,11 +156,11 @@ public:
 
             RRsetPtr rrsig(new RRset(Name("example.org"), rrclass_,
                                      RRType::RRSIG(), RRTTL(300)));
-            rrsig->addRdata(generic::RRSIG("A 5 3 "
-                                           "3600 20000101000000 20000201000000 "
+            rrsig->addRdata(generic::RRSIG("A 5 3 3600 "
+                                           "20000101000000 20000201000000 "
                                            "12345 example.org. FAKEFAKEFAKE"));
-            rrsig->addRdata(generic::RRSIG("NS 5 3 "
-                                           "3600 20000101000000 20000201000000 "
+            rrsig->addRdata(generic::RRSIG("NS 5 3 3600 "
+                                           "20000101000000 20000201000000 "
                                            "54321 example.org. "
                                            "FAKEFAKEFAKEFAKE"));
             rrset->addRRsig(rrsig);
@@ -206,7 +207,8 @@ public:
                                   RRClass::IN(), RRType::SOA(), RRTTL(3600)));
             rrset->addRdata(generic::SOA(Name("ns1.example.org"),
                                          Name("bugs.x.w.example.org"),
-                                         2010012601, 3600, 300, 3600000, 1200));
+                                         2010012601, 3600, 300, 3600000,
+                                         1200));
             break;
 
         case 1: {
