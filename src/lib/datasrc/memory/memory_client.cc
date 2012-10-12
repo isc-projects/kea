@@ -49,7 +49,11 @@ namespace memory {
 
 using detail::SegmentObjectHolder;
 
-class InMemoryClient::FileNameDeleter {
+namespace { // unnamed namespace
+
+// A helper internal class used by the memory client, used for deleting
+// filenames stored in an internal tree.
+class FileNameDeleter {
 public:
     FileNameDeleter() {}
 
@@ -57,6 +61,8 @@ public:
         delete filename;
     }
 };
+
+} // end of unnamed namespace
 
 InMemoryClient::InMemoryClient(util::MemorySegment& mem_sgmt,
                                RRClass rrclass) :

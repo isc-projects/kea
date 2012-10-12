@@ -191,10 +191,6 @@ private:
     unsigned int zone_count_;
     ZoneTable* zone_table_;
     FileNameTree* file_name_tree_;
-
-    // A helper internal class used by the memory client, used for
-    // deleting filenames stored in an internal tree.
-    class FileNameDeleter;
 };
 
 } // namespace memory
