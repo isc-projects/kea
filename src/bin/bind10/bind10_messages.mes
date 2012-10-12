@@ -298,13 +298,6 @@ During the startup process, a number of messages are exchanged between the
 Boss process and the processes it starts.  This error is output when a
 message received by the Boss process is not recognised.
 
-% BIND10_START_AS_NON_ROOT_AUTH starting b10-auth as a user, not root. This might fail.
-The authoritative server is being started or restarted without root privileges.
-If the module needs these privileges, it may have problems starting.
-Note that this issue should be resolved by the pending 'socket-creator'
-process; once that has been implemented, modules should not need root
-privileges anymore. See tickets #800 and #801 for more information.
-
 % BIND10_START_AS_NON_ROOT_RESOLVER starting b10-resolver as a user, not root. This might fail.
 The resolver is being started or restarted without root privileges.
 If the module needs these privileges, it may have problems starting.
