@@ -163,7 +163,8 @@ InMemoryClient::findZoneData(const isc::dns::Name& zone_name) {
 
 result::Result
 InMemoryClient::load(const isc::dns::Name& zone_name,
-                     const std::string& filename) {
+                     const std::string& filename)
+{
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_LOAD).arg(zone_name).
         arg(filename);
 
@@ -173,8 +174,7 @@ InMemoryClient::load(const isc::dns::Name& zone_name,
 }
 
 result::Result
-InMemoryClient::load(const isc::dns::Name& zone_name,
-                     ZoneIterator& iterator) {
+InMemoryClient::load(const isc::dns::Name& zone_name, ZoneIterator& iterator) {
     ZoneData* zone_data = loadZoneData(mem_sgmt_, rrclass_, zone_name,
                                        iterator);
     return (loadInternal(zone_name, string(), zone_data));
@@ -183,7 +183,8 @@ InMemoryClient::load(const isc::dns::Name& zone_name,
 const std::string
 InMemoryClient::getFileName(const isc::dns::Name& zone_name) const {
     const FileNameNode* node(NULL);
-    const FileNameTree::Result result = file_name_tree_->find(zone_name, &node);
+    const FileNameTree::Result result = file_name_tree_->find(zone_name,
+                                                              &node);
     if (result == FileNameTree::EXACTMATCH) {
         return (*node->getData());
     } else {

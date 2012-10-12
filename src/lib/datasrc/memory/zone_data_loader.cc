@@ -198,24 +198,21 @@ loadZoneDataInternal(util::MemorySegment& mem_sgmt,
     return (holder.release());
 }
 
-// A wrapper for dns::masterLoad used by load() below.  Essentially it
+// A wrapper for dns::masterLoad used by loadZoneData() below.  Essentially it
 // converts the two callback types.  Note the mostly redundant wrapper of
 // boost::bind.  It converts function<void(ConstRRsetPtr)> to
 // function<void(RRsetPtr)> (masterLoad() expects the latter).  SunStudio
 // doesn't seem to do this conversion if we just pass 'callback'.
 void
 masterLoadWrapper(const char* const filename, const Name& origin,
-                  const RRClass& zone_class,
-                  LoadCallback callback)
+                  const RRClass& zone_class, LoadCallback callback)
 {
     masterLoad(filename, origin, zone_class, boost::bind(callback, _1));
 }
 
-// The installer called from load() for the iterator version of load().
+// The installer called from the iterator version of loadZoneData().
 void
-generateRRsetFromIterator(ZoneIterator* iterator,
-                          LoadCallback callback)
-{
+generateRRsetFromIterator(ZoneIterator* iterator, LoadCallback callback) {
     ConstRRsetPtr rrset;
     while ((rrset = iterator->getNextRRset()) != NULL) {
         callback(rrset);
