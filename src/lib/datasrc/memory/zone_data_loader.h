@@ -18,6 +18,7 @@
 #include <datasrc/memory/zone_data_updater.h>
 
 #include <datasrc/memory/zone_data.h>
+#include <datasrc/iterator.h>
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrset.h>
@@ -73,6 +74,26 @@ private:
     NodeRRsets node_rrsigsets_;
     ZoneDataUpdater updater_;
 };
+
+/// \brief Zone is empty exception.
+///
+/// This is thrown if we have an empty zone created as a result of
+/// load().
+struct EmptyZone : public InvalidParameter {
+    EmptyZone(const char* file, size_t line, const char* what) :
+        InvalidParameter(file, line, what)
+    {}
+};
+
+ZoneData* loadZoneData(util::MemorySegment& mem_sgmt,
+		       const isc::dns::RRClass rrclass,
+		       const isc::dns::Name& zone_name,
+		       const std::string& zone_file);
+
+ZoneData* loadZoneData(util::MemorySegment& mem_sgmt,
+		       const isc::dns::RRClass rrclass,
+		       const isc::dns::Name& zone_name,
+		       ZoneIterator& iterator);
 
 } // namespace memory
 } // namespace datasrc
