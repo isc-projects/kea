@@ -22,6 +22,7 @@ libdatasrc_memory_la_SOURCES += zone_finder.h zone_finder.cc
 libdatasrc_memory_la_SOURCES += zone_table_segment.h zone_table_segment.cc
 libdatasrc_memory_la_SOURCES += zone_table_segment_local.h zone_table_segment_local.cc
 libdatasrc_memory_la_SOURCES += zone_data_updater.h zone_data_updater.cc
+libdatasrc_memory_la_SOURCES += zone_data_loader.h zone_data_loader.cc
 libdatasrc_memory_la_SOURCES += memory_client.h memory_client.cc
 
 nodist_libdatasrc_memory_la_SOURCES = memory_messages.h memory_messages.cc

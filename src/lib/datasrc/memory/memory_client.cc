@@ -22,6 +22,7 @@
 #include <datasrc/memory/treenode_rrset.h>
 #include <datasrc/memory/zone_finder.h>
 #include <datasrc/memory/zone_data_updater.h>
+#include <datasrc/memory/zone_data_loader.h>
 
 #include <util/memory_segment_local.h>
 
