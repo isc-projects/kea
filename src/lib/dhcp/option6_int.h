@@ -61,7 +61,7 @@ public:
     /// @param begin iterator to first byte of option data.
     /// @param end iterator to end of option data (first byte after option end).
     ///
-    /// @todo mention here what it throws.
+    /// @throw isc::OutOfRange if provided buffer is shorter than data size.
     Option6Int(uint16_t type, OptionBufferConstIter begin,
                OptionBufferConstIter end)
         : Option(Option::V6, type) {
@@ -108,10 +108,14 @@ public:
     ///
     /// @param begin iterator to first byte of option data
     /// @param end iterator to end of option data (first byte after option end)
+    ///
+    /// @throw isc::OutOfRange if provided buffer is shorter than data size.
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
         if (distance(begin, end) < sizeof(T)) {
             isc_throw(OutOfRange, "Option " << getType() << " truncated");
         }
+        // @todo consider what to do if buffer is longer than data type.
+
         // Depending on the data type length we use different utility functions
         // readUint16 or readUint32 which read the data laid in the network byte
         // order from the provided buffer. The same functions can be safely used
