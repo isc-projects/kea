@@ -366,6 +366,10 @@ ZoneDataLoader::addFromLoad(const ConstRRsetPtr& rrset) {
                   << (is_rrsig ? " RRSIG" : "") << " RRset: "
                   << rrset->getName() << "/" << rrtype);
     }
+
+    if (rrset->getRRsig()) {
+        addFromLoad(rrset->getRRsig());
+    }
 }
 
 void
