@@ -373,6 +373,10 @@ TEST_F(MemoryClientTest, loadMemoryAllocationFailures) {
         SCOPED_TRACE("For throw count = " + i);
         mem_sgmt_.setThrowCount(i);
         EXPECT_THROW({
+            // Include the InMemoryClient construction too here. Now,
+            // even allocations done from InMemoryClient constructor
+            // fail (due to MemorySegmentTest throwing) and we check for
+            // leaks when this happens.
             InMemoryClient client2(mem_sgmt_, zclass_);
             client2.load(Name("example.org"),
                          TEST_DATA_DIR "/example.org.zone");
