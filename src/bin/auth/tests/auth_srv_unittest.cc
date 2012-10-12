@@ -131,19 +131,8 @@ protected:
 
     // Checks whether all Rcode counters are set to zero
     void checkAllRcodeCountersZero() const {
-        const std::map<std::string, ConstElementPtr>
-            stats_map(server.getStatistics()->mapValue());
-
-        const std::string rcode_prefix("rcode.");
-        for (std::map<std::string, ConstElementPtr>::const_iterator
-                 i = stats_map.begin(), e = stats_map.end();
-             i != e;
-             ++i)
-        {
-            if (i->first.compare(0, rcode_prefix.size(), rcode_prefix) == 0) {
-                checkRcodeCounter(i->first, i->second->intValue(), 0);
-            }
-        }
+        // with checking NOERROR == 0 and the others are 0
+        checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 0);
     }
 
     // Checks whether all Rcode counters are set to zero except the given
@@ -248,15 +237,24 @@ createBuiltinVersionResponse(const qid_t qid, vector<uint8_t>& data) {
                 renderer.getLength());
 }
 
+// Check if the item has expected value.
+// Before reading the item, check the item exists.
 void
 expectCounterItem(ConstElementPtr stats,
                   const std::string& item, const int expected) {
     ConstElementPtr value(Element::create(0));
     if (item == "queries.udp" || item == "queries.tcp" || expected != 0) {
+        // if the value of the item is not zero, the item exists and has
+        // expected value
+        // item "queries.udp" and "queries.tcp" exists whether the value
+        // is zero or nonzero
         ASSERT_TRUE(stats->find(item, value)) << "    Item: " << item;
+        // Get the value of the item with another method because of API bug
+        // (ticket #2302)
         value = stats->find(item);
         EXPECT_EQ(expected, value->intValue()) << "    Item: " << item;
     } else {
+        // otherwise the item does not exist
         ASSERT_FALSE(stats->find(item, value)) << "    Item: " << item <<
             std::endl << "   Value: " << value->intValue();
     }
