@@ -19,6 +19,9 @@
 #ifndef DHCP6_CONFIG_PARSER_H
 #define DHCP6_CONFIG_PARSER_H
 
+/// @todo: This header file and its .cc counterpart are very similar between
+/// DHCPv4 and DHCPv6. They should be merged. A ticket #2355.
+
 namespace isc {
 namespace dhcp {
 
