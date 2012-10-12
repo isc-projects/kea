@@ -662,7 +662,6 @@ TEST_F(MemoryClientTest, loadRRSIGs) {
 }
 
 TEST_F(MemoryClientTest, loadRRSIGsRdataMixedCoveredTypes) {
-    // FIXME: This should throw, but it doesn't now.
     EXPECT_THROW(
         client_->load(Name("example.org"),
                       *MockIteratorRRSIGMixedCovered::makeIterator(zclass_)),
