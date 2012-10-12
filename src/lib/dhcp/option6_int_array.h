@@ -145,6 +145,8 @@ public:
         if (distance(begin, end) % sizeof(T) != 0) {
             isc_throw(OutOfRange, "option " << getType() << " truncated");
         }
+        // @todo consider what to do if buffer is longer than data type.
+
         values_.clear();
         while (begin != end) {
             // Depending on the data type length we use different utility functions
