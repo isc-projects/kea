@@ -24,7 +24,6 @@
 #include <util/memory_segment.h>
 
 #include <boost/noncopyable.hpp>
-#include <map>
 
 namespace isc {
 namespace datasrc {
@@ -168,50 +167,6 @@ private:
     ZoneData& zone_data_;
     RdataEncoder encoder_;
     const isc::dns::NSEC3Hash* hash_;
-};
-
-// A helper internal class for load().  make it non-copyable to avoid
-// accidental copy.
-//
-// The current internal implementation expects that both a normal
-// (non RRSIG) RRset and (when signed) its RRSIG are added at once.
-// Also in the current implementation, the input sequence of RRsets
-// are grouped with their owner name (so once a new owner name is encountered,
-// no subsequent RRset has the previous owner name), but the ordering
-// in the same group is not fixed.  So we hold all RRsets of the same
-// owner name in node_rrsets_ and node_rrsigsets_, and add the matching
-// pairs of RRsets to the zone when we see a new owner name.
-//
-// The caller is responsible for adding the RRsets of the last group
-// in the input sequence by explicitly calling flushNodeRRsets() at the
-// end.  It's cleaner and more robust if we let the destructor of this class
-// do it, but since we cannot guarantee the adding operation is exception free,
-// we don't choose that option to maintain the common expectation for
-// destructors.
-class ZoneDataLoader : boost::noncopyable {
-public:
-    ZoneDataLoader(util::MemorySegment& mem_sgmt,
-                   const isc::dns::RRClass rrclass,
-                   const isc::dns::Name& zone_name, ZoneData& zone_data) :
-        updater_(mem_sgmt, rrclass, zone_name, zone_data)
-    {}
-
-    void addFromLoad(const isc::dns::ConstRRsetPtr& rrset);
-    void flushNodeRRsets();
-
-private:
-    typedef std::map<isc::dns::RRType, isc::dns::ConstRRsetPtr> NodeRRsets;
-    typedef NodeRRsets::value_type NodeRRsetsVal;
-
-    // A helper to identify the covered type of an RRSIG.
-    static isc::dns::RRType getCoveredType
-        (const isc::dns::ConstRRsetPtr& sig_rrset);
-    const isc::dns::Name& getCurrentName() const;
-
-private:
-    NodeRRsets node_rrsets_;
-    NodeRRsets node_rrsigsets_;
-    ZoneDataUpdater updater_;
 };
 
 } // namespace memory
