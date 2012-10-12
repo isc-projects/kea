@@ -36,6 +36,11 @@ namespace memory {
 
 using detail::SegmentObjectHolder;
 
+namespace { // unnamed namespace
+
+// A functor type used for loading.
+typedef boost::function<void(isc::dns::ConstRRsetPtr)> LoadCallback;
+
 // A helper internal class for \c loadZoneData().  make it non-copyable
 // to avoid accidental copy.
 //
@@ -157,11 +162,6 @@ ZoneDataLoader::getCurrentName() const {
     assert(!node_rrsigsets_.empty());
     return (node_rrsigsets_.begin()->second->getName());
 }
-
-namespace { // unnamed namespace
-
-// A functor type used for loading.
-typedef boost::function<void(isc::dns::ConstRRsetPtr)> LoadCallback;
 
 ZoneData*
 loadZoneDataInternal(util::MemorySegment& mem_sgmt,
