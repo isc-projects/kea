@@ -83,10 +83,10 @@ InMemoryClient::~InMemoryClient() {
 }
 
 result::Result
-InMemoryClient::load(const Name& zone_name,
-                     const string& filename,
-                     boost::function<void(internal::LoadCallback)>
-                         rrset_installer)
+InMemoryClient::loadInternal(const Name& zone_name,
+                             const string& filename,
+                             boost::function<void(internal::LoadCallback)>
+                             rrset_installer)
 {
     SegmentObjectHolder<ZoneData, RRClass> holder(
         mem_sgmt_, ZoneData::create(mem_sgmt_, zone_name), rrclass_);
@@ -214,17 +214,17 @@ InMemoryClient::load(const isc::dns::Name& zone_name,
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_LOAD).arg(zone_name).
         arg(filename);
 
-    return (load(zone_name, filename,
-                 boost::bind(masterLoadWrapper, filename.c_str(),
-                             zone_name, getClass(), _1)));
+    return (loadInternal(zone_name, filename,
+                         boost::bind(masterLoadWrapper, filename.c_str(),
+                                     zone_name, getClass(), _1)));
 }
 
 result::Result
 InMemoryClient::load(const isc::dns::Name& zone_name,
                      ZoneIterator& iterator) {
-    return (load(zone_name, string(),
-                 boost::bind(generateRRsetFromIterator,
-                             &iterator, _1)));
+    return (loadInternal(zone_name, string(),
+                         boost::bind(generateRRsetFromIterator,
+                                     &iterator, _1)));
 }
 
 const std::string
