@@ -36,6 +36,12 @@ namespace dhcp {
 /// - int16_t,
 /// - int32_t.
 ///
+/// @warning Since this option may convey variable number of integer
+/// values, sub-options are should not be added in this option as
+/// there is no way to distinguish them from other data. The API will
+/// allow addition of sub-options but they will be ignored during
+/// packing and unpacking option data.
+///
 /// @param T data field type (see above).
 template<typename T>
 class Option6IntArray: public Option {
@@ -51,18 +57,21 @@ public:
         : Option(Option::V6, type),
           values_(0) {
         if (!OptionDataTypes<T>::valid) {
-            isc_throw(dhcp::InvalidDataType, "non-numeric type");
+            isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
     }
 
     /// @brief Constructor.
     ///
     /// @param type option type.
-    /// @param buf buffer with option data.
+    /// @param buf buffer with option data (must not be empty).
+    ///
+    /// @throw isc::OutOfRange if provided buffer is empty or its length
+    /// is not multiple of size of the data type in bytes.
     Option6IntArray(uint16_t type, const OptionBuffer& buf)
         : Option(Option::V6, type) {
         if (!OptionDataTypes<T>::valid) {
-            isc_throw(dhcp::InvalidDataType, "non-numeric type");
+            isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
         unpack(buf.begin(), buf.end());
     }
@@ -77,12 +86,13 @@ public:
     /// @param begin iterator to first byte of option data.
     /// @param end iterator to end of option data (first byte after option end).
     ///
-    /// @todo mention here what it throws.
+    /// @throw isc::OutOfRange if provided buffer is empty or its length
+    /// is not multiple of size of the data type in bytes.
     Option6IntArray(uint16_t type, OptionBufferConstIter begin,
                     OptionBufferConstIter end)
         : Option(Option::V6, type) {
         if (!OptionDataTypes<T>::valid) {
-            isc_throw(dhcp::InvalidDataType, "non-numeric type");
+            isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
         unpack(begin, end);
     }
@@ -97,6 +107,11 @@ public:
         buf.writeUint16(type_);
         buf.writeUint16(len() - OPTION6_HDR_LEN);
         for (int i = 0; i < values_.size(); ++i) {
+            // Depending on the data type length we use different utility functions
+            // writeUint16 or writeUint32 which write the data in the network byte
+            // order to the provided buffer. The same functions can be safely used
+            // for either unsiged or signed integers so there is not need to create
+            // special cases for intX_t types.
             switch (OptionDataTypes<T>::len) {
             case 1:
                 buf.writeUint8(values_[i]);
@@ -108,9 +123,12 @@ public:
                 buf.writeUint32(values_[i]);
                 break;
             default:
-                isc_throw(dhcp::InvalidDataType, "non-numeric type");
+                isc_throw(dhcp::InvalidDataType, "non-integer type");
             }
         }
+        // We don't pack sub-options here because we have array-type option.
+        // We don't allow sub-options in array-type options as there is no
+        // way to distinguish them from the data fields on option reception.
     }
 
     /// @brief Parses received buffer
@@ -121,11 +139,19 @@ public:
     /// @param begin iterator to first byte of option data
     /// @param end iterator to end of option data (first byte after option end)
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
+        if (distance(begin, end) == 0) {
+            isc_throw(OutOfRange, "option " << getType() << " empty");
+        }
         if (distance(begin, end) % sizeof(T) != 0) {
-            isc_throw(OutOfRange, "Option " << type_ << " truncated");
+            isc_throw(OutOfRange, "option " << getType() << " truncated");
         }
         values_.clear();
         while (begin != end) {
+            // Depending on the data type length we use different utility functions
+            // readUint16 or readUint32 which read the data laid in the network byte
+            // order from the provided buffer. The same functions can be safely used
+            // for either unsiged or signed integers so there is not need to create
+            // special cases for intX_t types.
             switch (OptionDataTypes<T>::len) {
             case 1:
                 values_.push_back(*begin);
@@ -137,10 +163,13 @@ public:
                 values_.push_back(isc::util::readUint32(&(*begin)));
                 break;
             default:
-                isc_throw(dhcp::InvalidDataType, "non-numeric type");
+                isc_throw(dhcp::InvalidDataType, "non-integer type");
             }
             begin += sizeof(T);
         }
+        // We do not unpack sub-options here because we have array-type option.
+        // Such option have variable number of data fields, thus there is no
+        // way to assess where sub-options start.
     }
 
     /// @brief Return collection of option values.

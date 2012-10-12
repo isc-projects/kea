@@ -581,5 +581,28 @@ TEST_F(OptionDefinitionTest, factoryUint32Array) {
     );
 }
 
+TEST_F(OptionDefinitionTest, recognizeFormat) {
+    // IA_NA option format.
+    OptionDefinition opt_def1("OPTION_IA_NA", D6O_IA_NA, "record");
+    for (int i = 0; i < 3; ++i) {
+        opt_def1.addRecordField("uint32");
+    }
+    EXPECT_TRUE(opt_def1.haveIA6Format());
+    // Create non-matching format to check that this function does not
+    // return 'true' all the time.
+    OptionDefinition opt_def2("OPTION_IA_NA", D6O_IA_NA, "uint16");
+    EXPECT_FALSE(opt_def2.haveIA6Format());
+
+    // IAADDR option format.
+    OptionDefinition opt_def3("OPTION_IAADDR", D6O_IAADDR, "record");
+    opt_def3.addRecordField("ipv6-address");
+    opt_def3.addRecordField("uint32");
+    opt_def3.addRecordField("uint32");
+    EXPECT_TRUE(opt_def3.haveIAAddr6Format());
+    // Create non-matching format to check that this function does not
+    // return 'true' all the time.
+    OptionDefinition opt_def4("OPTION_IAADDR", D6O_IAADDR, "uint32", true);
+    EXPECT_FALSE(opt_def4.haveIAAddr6Format());
+}
 
 } // anonymous namespace
