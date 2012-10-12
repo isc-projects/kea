@@ -122,8 +122,6 @@ deepestDelegation(Name name, RRClass rrclass,
     return (".");
 }
 
-typedef std::vector<std::pair<std::string, uint16_t> > AddressVector;
-
 // Here we do not use the typedef above, as the SunStudio compiler
 // mishandles this in its name mangling, and wouldn't compile.
 // We can probably use a typedef, but need to move it to a central
@@ -898,7 +896,9 @@ public:
     }
 };
 
-class ForwardQuery : public IOFetch::Callback {
+}
+
+class ForwardQuery::ForwardQueryImpl : public IOFetch::Callback {
 private:
     // The io service to handle async calls
     IOService& io_;
@@ -961,7 +961,7 @@ private:
     }
 
 public:
-    ForwardQuery(IOService& io,
+    ForwardQueryImpl(IOService& io,
         ConstMessagePtr query_message,
         MessagePtr answer_message,
         boost::shared_ptr<AddressVector> upstream,
@@ -985,7 +985,7 @@ public:
             lookup_timer.expires_from_now(
                 boost::posix_time::milliseconds(lookup_timeout));
             ++outstanding_events_;
-            lookup_timer.async_wait(boost::bind(&ForwardQuery::lookupTimeout, this));
+            lookup_timer.async_wait(boost::bind(&ForwardQueryImpl::lookupTimeout, this));
         }
 
         // Setup the timer to send an answer (client_timeout)
@@ -993,7 +993,7 @@ public:
             client_timer.expires_from_now(
                 boost::posix_time::milliseconds(client_timeout));
             ++outstanding_events_;
-            client_timer.async_wait(boost::bind(&ForwardQuery::clientTimeout, this));
+            client_timer.async_wait(boost::bind(&ForwardQueryImpl::clientTimeout, this));
         }
 
         send();
@@ -1073,8 +1073,6 @@ public:
         isc::resolve::makeErrorMessage(answer_message_, Rcode::SERVFAIL());
     }
 };
-
-}
 
 void
 RecursiveQuery::resolve(const QuestionPtr& question,
@@ -1189,7 +1187,7 @@ RecursiveQuery::resolve(const Question& question,
     }
 }
 
-void
+ForwardQuery*
 RecursiveQuery::forward(ConstMessagePtr query_message,
     MessagePtr answer_message,
     OutputBufferPtr buffer,
@@ -1215,9 +1213,23 @@ RecursiveQuery::forward(ConstMessagePtr query_message,
     // everything throught without interpretation, except
     // QID, port number. The response will not be cached.
     // It will delete itself when it is done
-    new ForwardQuery(io, query_message, answer_message,
-                      upstream_, buffer, callback, query_timeout_,
-                      client_timeout_, lookup_timeout_);
+    return new ForwardQuery(io, query_message, answer_message,
+                            upstream_, buffer, callback, query_timeout_,
+                            client_timeout_, lookup_timeout_);
+}
+
+ForwardQuery::ForwardQuery(IOService& io,
+        ConstMessagePtr query_message,
+        MessagePtr answer_message,
+        boost::shared_ptr<AddressVector> upstream,
+        OutputBufferPtr buffer,
+        isc::resolve::ResolverInterface::CallbackPtr cb,
+        int query_timeout, int client_timeout, int lookup_timeout) {
+    fqi_ = new ForwardQueryImpl(io, query_message, answer_message, upstream, buffer, cb, query_timeout, client_timeout, lookup_timeout);
+}
+
+ForwardQuery::~ForwardQuery() {
+    delete fqi_;
 }
 
 } // namespace asiodns
