@@ -297,307 +297,307 @@ const struct CounterTypeTree QRCounterTree[] = {
 };
 
 const int QROpCodeToQRCounterType[16] = {
-    QR_OPCODE_QUERY,
-    QR_OPCODE_IQUERY,
-    QR_OPCODE_STATUS,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_NOTIFY,
-    QR_OPCODE_UPDATE,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER
+    QR_OPCODE_QUERY,    // Opcode =  0: Query
+    QR_OPCODE_IQUERY,   // Opcode =  1: Iquery
+    QR_OPCODE_STATUS,   // Opcode =  2: STATUS
+    QR_OPCODE_OTHER,    // Opcode =  3: (Unassigned)
+    QR_OPCODE_NOTIFY,   // Opcode =  4: Notify
+    QR_OPCODE_UPDATE,   // Opcode =  5: Update
+    QR_OPCODE_OTHER,    // Opcode =  6: (Unassigned)
+    QR_OPCODE_OTHER,    // Opcode =  7: (Unassigned)
+    QR_OPCODE_OTHER,    // Opcode =  8: (Unassigned)
+    QR_OPCODE_OTHER,    // Opcode =  9: (Unassigned)
+    QR_OPCODE_OTHER,    // Opcode = 10: (Unassigned)
+    QR_OPCODE_OTHER,    // Opcode = 11: (Unassigned)
+    QR_OPCODE_OTHER,    // Opcode = 12: (Unassigned)
+    QR_OPCODE_OTHER,    // Opcode = 13: (Unassigned)
+    QR_OPCODE_OTHER,    // Opcode = 14: (Unassigned)
+    QR_OPCODE_OTHER     // Opcode = 15: (Unassigned)
 };
 const int QRQTypeToQRCounterType[258] = {
-    QR_QTYPE_OTHER,
-    QR_QTYPE_A,
-    QR_QTYPE_NS,
-    QR_QTYPE_MD,
-    QR_QTYPE_MF,
-    QR_QTYPE_CNAME,
-    QR_QTYPE_SOA,
-    QR_QTYPE_MB,
-    QR_QTYPE_MG,
-    QR_QTYPE_MR,
-    QR_QTYPE_NULL,
-    QR_QTYPE_WKS,
-    QR_QTYPE_PTR,
-    QR_QTYPE_HINFO,
-    QR_QTYPE_MINFO,
-    QR_QTYPE_MX,
-    QR_QTYPE_TXT,
-    QR_QTYPE_RP,
-    QR_QTYPE_AFSDB,
-    QR_QTYPE_X25,
-    QR_QTYPE_ISDN,
-    QR_QTYPE_RT,
-    QR_QTYPE_NSAP,
-    QR_QTYPE_NSAP_PTR,
-    QR_QTYPE_SIG,
-    QR_QTYPE_KEY,
-    QR_QTYPE_PX,
-    QR_QTYPE_GPOS,
-    QR_QTYPE_AAAA,
-    QR_QTYPE_LOC,
-    QR_QTYPE_NXT,
-    QR_QTYPE_EID,
-    QR_QTYPE_NIMLOC,
-    QR_QTYPE_SRV,
-    QR_QTYPE_ATMA,
-    QR_QTYPE_NAPTR,
-    QR_QTYPE_KX,
-    QR_QTYPE_CERT,
-    QR_QTYPE_A6,
-    QR_QTYPE_DNAME,
-    QR_QTYPE_SINK,
-    QR_QTYPE_OPT,
-    QR_QTYPE_APL,
-    QR_QTYPE_DS,
-    QR_QTYPE_SSHFP,
-    QR_QTYPE_IPSECKEY,
-    QR_QTYPE_RRSIG,
-    QR_QTYPE_NSEC,
-    QR_QTYPE_DNSKEY,
-    QR_QTYPE_DHCID,
-    QR_QTYPE_NSEC3,
-    QR_QTYPE_NSEC3PARAM,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_HIP,
-    QR_QTYPE_NINFO,
-    QR_QTYPE_RKEY,
-    QR_QTYPE_TALINK,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_SPF,
-    QR_QTYPE_UINFO,
-    QR_QTYPE_UID,
-    QR_QTYPE_GID,
-    QR_QTYPE_UNSPEC,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_TKEY,
-    QR_QTYPE_TSIG,
-    QR_QTYPE_IXFR,
-    QR_QTYPE_AXFR,
-    QR_QTYPE_MAILB,
-    QR_QTYPE_MAILA,
-    QR_QTYPE_OTHER,
-    QR_QTYPE_URI,
-    QR_QTYPE_CAA
+    QR_QTYPE_OTHER,         // RRtype =   0: special use
+    QR_QTYPE_A,             // RRtype =   1: A
+    QR_QTYPE_NS,            // RRtype =   2: NS
+    QR_QTYPE_MD,            // RRtype =   3: MD
+    QR_QTYPE_MF,            // RRtype =   4: MF
+    QR_QTYPE_CNAME,         // RRtype =   5: CNAME
+    QR_QTYPE_SOA,           // RRtype =   6: SOA
+    QR_QTYPE_MB,            // RRtype =   7: MB
+    QR_QTYPE_MG,            // RRtype =   8: MG
+    QR_QTYPE_MR,            // RRtype =   9: MR
+    QR_QTYPE_NULL,          // RRtype =  10: NULL
+    QR_QTYPE_WKS,           // RRtype =  11: WKS
+    QR_QTYPE_PTR,           // RRtype =  12: PTR
+    QR_QTYPE_HINFO,         // RRtype =  13: HINFO
+    QR_QTYPE_MINFO,         // RRtype =  14: MINFO
+    QR_QTYPE_MX,            // RRtype =  15: MX
+    QR_QTYPE_TXT,           // RRtype =  16: TXT
+    QR_QTYPE_RP,            // RRtype =  17: RP
+    QR_QTYPE_AFSDB,         // RRtype =  18: AFSDB
+    QR_QTYPE_X25,           // RRtype =  19: X25
+    QR_QTYPE_ISDN,          // RRtype =  20: ISDN
+    QR_QTYPE_RT,            // RRtype =  21: RT
+    QR_QTYPE_NSAP,          // RRtype =  22: NSAP
+    QR_QTYPE_NSAP_PTR,      // RRtype =  23: NSAP-PTR
+    QR_QTYPE_SIG,           // RRtype =  24: SIG
+    QR_QTYPE_KEY,           // RRtype =  25: KEY
+    QR_QTYPE_PX,            // RRtype =  26: PX
+    QR_QTYPE_GPOS,          // RRtype =  27: GPOS
+    QR_QTYPE_AAAA,          // RRtype =  28: AAAA
+    QR_QTYPE_LOC,           // RRtype =  29: LOC
+    QR_QTYPE_NXT,           // RRtype =  30: NXT
+    QR_QTYPE_EID,           // RRtype =  31: EID        
+    QR_QTYPE_NIMLOC,        // RRtype =  32: NIMLOC     
+    QR_QTYPE_SRV,           // RRtype =  33: SRV        
+    QR_QTYPE_ATMA,          // RRtype =  34: ATMA       
+    QR_QTYPE_NAPTR,         // RRtype =  35: NAPTR      
+    QR_QTYPE_KX,            // RRtype =  36: KX         
+    QR_QTYPE_CERT,          // RRtype =  37: CERT       
+    QR_QTYPE_A6,            // RRtype =  38: A6         
+    QR_QTYPE_DNAME,         // RRtype =  39: DNAME      
+    QR_QTYPE_SINK,          // RRtype =  40: SINK       
+    QR_QTYPE_OPT,           // RRtype =  41: OPT        
+    QR_QTYPE_APL,           // RRtype =  42: APL        
+    QR_QTYPE_DS,            // RRtype =  43: DS         
+    QR_QTYPE_SSHFP,         // RRtype =  44: SSHFP      
+    QR_QTYPE_IPSECKEY,      // RRtype =  45: IPSECKEY   
+    QR_QTYPE_RRSIG,         // RRtype =  46: RRSIG      
+    QR_QTYPE_NSEC,          // RRtype =  47: NSEC       
+    QR_QTYPE_DNSKEY,        // RRtype =  48: DNSKEY     
+    QR_QTYPE_DHCID,         // RRtype =  49: DHCID      
+    QR_QTYPE_NSEC3,         // RRtype =  50: NSEC3      
+    QR_QTYPE_NSEC3PARAM,    // RRtype =  51: NSEC3PARAM 
+    QR_QTYPE_OTHER,         // RRtype =  52: TLSA
+    QR_QTYPE_OTHER,         // RRtype =  53: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  54: (Unassigned)
+    QR_QTYPE_HIP,           // RRtype =  55: HIP
+    QR_QTYPE_NINFO,         // RRtype =  56: NINFO
+    QR_QTYPE_RKEY,          // RRtype =  57: RKEY
+    QR_QTYPE_TALINK,        // RRtype =  58: TALINK
+    QR_QTYPE_OTHER,         // RRtype =  59: CDS
+    QR_QTYPE_OTHER,         // RRtype =  60: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  61: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  62: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  63: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  64: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  65: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  66: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  67: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  68: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  69: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  70: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  71: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  72: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  73: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  74: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  75: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  76: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  77: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  78: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  79: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  80: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  81: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  82: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  83: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  84: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  85: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  86: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  87: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  88: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  89: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  90: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  91: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  92: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  93: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  94: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  95: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  96: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  97: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype =  98: (Unassigned)
+    QR_QTYPE_SPF,           // RRtype =  99: SPF
+    QR_QTYPE_UINFO,         // RRtype = 100: UINFO
+    QR_QTYPE_UID,           // RRtype = 101: UID
+    QR_QTYPE_GID,           // RRtype = 102: GID
+    QR_QTYPE_UNSPEC,        // RRtype = 103: UNSPEC
+    QR_QTYPE_OTHER,         // RRtype = 104: NID
+    QR_QTYPE_OTHER,         // RRtype = 105: L32
+    QR_QTYPE_OTHER,         // RRtype = 106: L64
+    QR_QTYPE_OTHER,         // RRtype = 107: LP 
+    QR_QTYPE_OTHER,         // RRtype = 108: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 109: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 110: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 111: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 112: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 113: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 114: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 115: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 116: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 117: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 118: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 119: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 120: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 121: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 122: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 123: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 124: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 125: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 126: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 127: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 128: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 129: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 130: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 131: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 132: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 133: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 134: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 135: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 136: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 137: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 138: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 139: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 140: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 141: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 142: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 143: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 144: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 145: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 146: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 147: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 148: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 149: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 150: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 151: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 152: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 153: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 154: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 155: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 156: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 157: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 158: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 159: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 160: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 161: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 162: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 163: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 164: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 165: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 166: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 167: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 168: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 169: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 170: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 171: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 172: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 173: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 174: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 175: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 176: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 177: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 178: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 179: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 180: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 181: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 182: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 183: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 184: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 185: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 186: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 187: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 188: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 189: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 190: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 191: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 192: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 193: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 194: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 195: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 196: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 197: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 198: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 199: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 200: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 201: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 202: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 203: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 204: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 205: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 206: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 207: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 208: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 209: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 210: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 211: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 212: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 213: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 214: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 215: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 216: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 217: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 218: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 219: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 220: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 221: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 222: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 223: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 224: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 225: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 226: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 227: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 228: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 229: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 230: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 231: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 232: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 233: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 234: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 235: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 236: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 237: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 238: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 239: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 240: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 241: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 242: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 243: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 244: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 245: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 246: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 247: (Unassigned)
+    QR_QTYPE_OTHER,         // RRtype = 248: (Unassigned)
+    QR_QTYPE_TKEY,          // RRtype = 249: TKEY
+    QR_QTYPE_TSIG,          // RRtype = 250: TSIG
+    QR_QTYPE_IXFR,          // RRtype = 251: IXFR
+    QR_QTYPE_AXFR,          // RRtype = 252: AXFR
+    QR_QTYPE_MAILB,         // RRtype = 253: MAILB
+    QR_QTYPE_MAILA,         // RRtype = 254: MAILA
+    QR_QTYPE_OTHER,         // RRtype = 255: for All records
+    QR_QTYPE_URI,           // RRtype = 256: URI
+    QR_QTYPE_CAA            // RRtype = 257: CAA
 };
 const int QRRCodeToQRCounterType[23] = {
-    QR_RCODE_NOERROR,
-    QR_RCODE_FORMERR,
-    QR_RCODE_SERVFAIL,
-    QR_RCODE_NXDOMAIN,
-    QR_RCODE_NOTIMP,
-    QR_RCODE_REFUSED,
-    QR_RCODE_YXDOMAIN,
-    QR_RCODE_YXRRSET,
-    QR_RCODE_NXRRSET,
-    QR_RCODE_NOTAUTH,
-    QR_RCODE_NOTZONE,
-    QR_RCODE_OTHER,
-    QR_RCODE_OTHER,
-    QR_RCODE_OTHER,
-    QR_RCODE_OTHER,
-    QR_RCODE_OTHER,
-    QR_RCODE_BADSIGVERS,
-    QR_RCODE_BADKEY,
-    QR_RCODE_BADTIME,
-    QR_RCODE_BADMODE,
-    QR_RCODE_BADNAME,
-    QR_RCODE_BADALG,
-    QR_RCODE_BADTRUNC
+    QR_RCODE_NOERROR,       // Rcode =  0: NoError
+    QR_RCODE_FORMERR,       // Rcode =  1: FormErr
+    QR_RCODE_SERVFAIL,      // Rcode =  2: ServFail
+    QR_RCODE_NXDOMAIN,      // Rcode =  3: NXDomain
+    QR_RCODE_NOTIMP,        // Rcode =  4: NotImp
+    QR_RCODE_REFUSED,       // Rcode =  5: Refused
+    QR_RCODE_YXDOMAIN,      // Rcode =  6: YXDomain
+    QR_RCODE_YXRRSET,       // Rcode =  7: YXRRSet
+    QR_RCODE_NXRRSET,       // Rcode =  8: NXRRSet
+    QR_RCODE_NOTAUTH,       // Rcode =  9: NotAuth
+    QR_RCODE_NOTZONE,       // Rcode = 10: NotZone
+    QR_RCODE_OTHER,         // Rcode = 11: (Unassigned)
+    QR_RCODE_OTHER,         // Rcode = 12: (Unassigned)
+    QR_RCODE_OTHER,         // Rcode = 13: (Unassigned)
+    QR_RCODE_OTHER,         // Rcode = 14: (Unassigned)
+    QR_RCODE_OTHER,         // Rcode = 15: (Unassigned)
+    QR_RCODE_BADSIGVERS,    // Rcode = 16: BADVERS, BADSIG
+    QR_RCODE_BADKEY,        // Rcode = 17: BADKEY
+    QR_RCODE_BADTIME,       // Rcode = 18: BADTIME
+    QR_RCODE_BADMODE,       // Rcode = 19: BADMODE
+    QR_RCODE_BADNAME,       // Rcode = 20: BADNAME
+    QR_RCODE_BADALG,        // Rcode = 21: BADALG
+    QR_RCODE_BADTRUNC       // Rcode = 22: BADTRUNC
 };
 
 } // anonymous namespace

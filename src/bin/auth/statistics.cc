@@ -125,16 +125,16 @@ CountersImpl::inc(const QRAttributes& qrattrs, const Message& response) {
         // get the qtype code
         const unsigned int qtype = (*qiter)->getType().getCode();
         if (qtype < 258) {
-            // qtype 0..257
+            // qtype 0..257: lookup qtype-countertype table
             qtype_type = QRQTypeToQRCounterType[qtype];
         } else if (qtype < 32768) {
-            // qtype 258..32767
+            // qtype 258..32767: (Unassigned)
             qtype_type = QR_QTYPE_OTHER;
         } else if (qtype < 32770) {
-            // qtype 32768..32769
+            // qtype 32768..32769: TA and DLV
             qtype_type = QR_QTYPE_TA + (qtype - 32768);
         } else {
-            // qtype 32770..65535
+            // qtype 32770..65535: (Unassigned, Private use, Reserved)
             qtype_type = QR_QTYPE_OTHER;
         }
     }
@@ -170,7 +170,7 @@ CountersImpl::inc(const QRAttributes& qrattrs, const Message& response) {
         const unsigned int rcode = response.getRcode().getCode();
         unsigned int rcode_type = QR_RCODE_OTHER;
         if (rcode < 23) {
-            // rcode 0..22
+            // rcode 0..22: lookup rcode-countertype table
             rcode_type = QRRCodeToQRCounterType[rcode];
         } else {
             // opcode larger than 22 is reserved or unassigned
