@@ -96,7 +96,7 @@ public:
         STRING_TYPE = 10,
         FQDN_TYPE = 11,
         RECORD_TYPE = 12,
-        UNKNOWN_TYPE = RECORD_TYPE + 1
+        UNKNOWN_TYPE = 13
     };
 
     /// List of fields within the record.
@@ -133,10 +133,13 @@ private:
         DataType getDataType(const std::string& data_type_name);
 
     private:
-        /// @brief Constructor.
+        /// @brief Private constructor.
         ///
         /// Constructor initializes the internal data structures, e.g.
         /// mapping between data type name and the corresponding enum.
+        /// This constructor is private to ensure that exactly one
+        /// instance of this class can be created using \ref instance
+        /// function.
         DataTypeUtil();
 
         /// Map of data types, maps name of the type to enum value.
@@ -333,6 +336,17 @@ public:
     }
 
 private:
+
+    /// @brief Check if specified option format is a record with 3 fields
+    /// where first one is custom, and two others are uint32.
+    ///
+    /// This is a helper function for functions that detect IA_NA and IAAddr
+    /// option formats.
+    ///
+    /// @param first_type type of the first data field.
+    ///
+    /// @return true if actual option format matches expected format.
+    bool haveIAx6Format(const OptionDefinition::DataType first_type) const;
 
     /// @brief Check if specified type matches option definition type.
     ///

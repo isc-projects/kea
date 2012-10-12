@@ -164,39 +164,28 @@ OptionDefinition::validate() const {
 }
 
 bool
-OptionDefinition::haveIA6Format() const {
+OptionDefinition::haveIAx6Format(OptionDefinition::DataType first_type) const {
     // Expect that IA_NA option format is defined as record.
     // Although it consists of 3 elements of the same (uint32)
     // type it can't be defined as array of uint32 elements because
     // arrays do not impose limitations on number of elements in
     // the array while this limitation is needed for IA_NA - need
     // exactly 3 elements.
-    if (haveType(RECORD_TYPE)) {
-        if (record_fields_.size() == 3) {
-            for (RecordFieldsConstIter it = record_fields_.begin();
-                 it != record_fields_.end(); ++it) {
-                if (*it != UINT32_TYPE) {
-                    return (false);
-                }
-            }
-            return (true);
-        }
-    }
-    return (false);
+   return (haveType(RECORD_TYPE) &&
+           record_fields_.size() == 3 &&
+           record_fields_[0] == first_type &&
+           record_fields_[1] == UINT32_TYPE &&
+           record_fields_[2] == UINT32_TYPE);
+}
+
+bool
+OptionDefinition::haveIA6Format() const {
+    return (haveIAx6Format(UINT32_TYPE));
 }
 
 bool
 OptionDefinition::haveIAAddr6Format() const {
-    if (haveType(RECORD_TYPE)) {
-        if (record_fields_.size() == 3) {
-            if (record_fields_[0] == IPV6_ADDRESS_TYPE &&
-                record_fields_[1] == UINT32_TYPE &&
-                record_fields_[2] == UINT32_TYPE) {
-                return (true);
-            }
-        }
-    }
-    return (false);
+    return (haveIAx6Format(IPV6_ADDRESS_TYPE));
 }
 
 OptionPtr

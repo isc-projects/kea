@@ -42,6 +42,142 @@ public:
         }
     }
 
+    /// @brief Basic test for int8 and uint8 types.
+    ///
+    /// @note this function does not perform type check. Make
+    /// sure that only int8_t or uint8_t type is used.
+    ///
+    /// @tparam T int8_t or uint8_t.
+    template<typename T>
+    void basicTest8() {
+        // Create option that conveys single 8 bit integer value.
+        boost::shared_ptr<Option6Int<T> > opt;
+        // Initialize buffer with this value.
+        buf_[0] = 0xa1;
+        // Constructor may throw in case provided buffer is too short.
+        ASSERT_NO_THROW(
+            opt = boost::shared_ptr<Option6Int<T> >(new Option6Int<T>(D6O_PREFERENCE,
+                                                                      buf_.begin(),
+                                                                      buf_.end()))
+        );
+
+        EXPECT_EQ(Option::V6, opt->getUniverse());
+        EXPECT_EQ(D6O_PREFERENCE, opt->getType());
+        // Option should return the same value that we initialized the first
+        // byte of the buffer with.
+        EXPECT_EQ(static_cast<T>(0xa1), opt->getValue());
+
+        // test for pack()
+        opt->pack(out_buf_);
+
+        // Data length is 1 byte.
+        EXPECT_EQ(1, opt->len() - opt->getHeaderLen());
+        EXPECT_EQ(D6O_PREFERENCE, opt->getType());
+        // The total length is 1 byte for data and 4 bytes for header.
+        EXPECT_EQ(5, out_buf_.getLength());
+
+        // Check if pack worked properly:
+        InputBuffer out(out_buf_.getData(), out_buf_.getLength());
+        // if option type is correct
+        EXPECT_EQ(D6O_PREFERENCE, out.readUint16());
+        // if option length is correct
+        EXPECT_EQ(1, out.readUint16());
+        // if data is correct
+        EXPECT_EQ(0xa1, out.readUint8() );
+    }
+
+    /// @brief Basic test for int16 and uint16 types.
+    ///
+    /// @note this function does not perform type check. Make
+    /// sure that only int16_t or uint16_t type is used.
+    ///
+    /// @tparam T int16_t or uint16_t.
+    template<typename T>
+    void basicTest16() {
+        // Create option that conveys single 16-bit integer value.
+        boost::shared_ptr<Option6Int<T> > opt;
+        // Initialize buffer with uint16_t value.
+        buf_[0] = 0xa1;
+        buf_[1] = 0xa2;
+        // Constructor may throw in case provided buffer is too short.
+        ASSERT_NO_THROW(
+            opt = boost::shared_ptr<Option6Int<T> >(new Option6Int<T>(D6O_ELAPSED_TIME,
+                                                                      buf_.begin(),
+                                                                      buf_.end()))
+        );
+
+        EXPECT_EQ(Option::V6, opt->getUniverse());
+        EXPECT_EQ(D6O_ELAPSED_TIME, opt->getType());
+        // Option should return the value equal to the contents of first
+        // and second byte of the buffer.
+        EXPECT_EQ(static_cast<T>(0xa1a2), opt->getValue());
+
+        // Test for pack()
+        opt->pack(out_buf_);
+
+        // Data length is 2 bytes.
+        EXPECT_EQ(2, opt->len() - opt->getHeaderLen());
+        EXPECT_EQ(D6O_ELAPSED_TIME, opt->getType());
+        // The total length is 2 byte for data and 4 bytes for header.
+        EXPECT_EQ(6, out_buf_.getLength());
+
+        // Check if pack worked properly:
+        InputBuffer out(out_buf_.getData(), out_buf_.getLength());
+        // if option type is correct
+        EXPECT_EQ(D6O_ELAPSED_TIME, out.readUint16());
+        // if option length is correct
+        EXPECT_EQ(2, out.readUint16());
+        // if data is correct
+        EXPECT_EQ(0xa1a2, out.readUint16() );
+    }
+
+    /// @brief Basic test for int32 and uint32 types.
+    ///
+    /// @note this function does not perform type check. Make
+    /// sure that only int32_t or uint32_t type is used.
+    ///
+    /// @tparam T int32_t or uint32_t.
+    template<typename T>
+    void basicTest32() {
+        // Create option that conveys single 32-bit integer value.
+        boost::shared_ptr<Option6Int<T> > opt;
+        // Initialize buffer with 32-bit integer value.
+        buf_[0] = 0xa1;
+        buf_[1] = 0xa2;
+        buf_[2] = 0xa3;
+        buf_[3] = 0xa4;
+        // Constructor may throw in case provided buffer is too short.
+        ASSERT_NO_THROW(
+                        opt = boost::shared_ptr<Option6Int<T> >(new Option6Int<T>(D6O_CLT_TIME,
+                                                                                  buf_.begin(),
+                                                                                  buf_.end()))
+                        );
+
+        EXPECT_EQ(Option::V6, opt->getUniverse());
+        EXPECT_EQ(D6O_CLT_TIME, opt->getType());
+        // Option should return the value equal to the value made of
+        // first 4 bytes of the buffer.
+        EXPECT_EQ(static_cast<T>(0xa1a2a3a4), opt->getValue());
+
+        // Test for pack()
+        opt->pack(out_buf_);
+
+        // Data length is 4 bytes.
+        EXPECT_EQ(4, opt->len() - opt->getHeaderLen());
+        EXPECT_EQ(D6O_CLT_TIME, opt->getType());
+        // The total length is 4 bytes for data and 4 bytes for header.
+        EXPECT_EQ(8, out_buf_.getLength());
+
+        // Check if pack worked properly:
+        InputBuffer out(out_buf_.getData(), out_buf_.getLength());
+        // if option type is correct
+        EXPECT_EQ(D6O_CLT_TIME, out.readUint16());
+        // if option length is correct
+        EXPECT_EQ(4, out.readUint16());
+        // if data is correct
+        EXPECT_EQ(0xa1a2a3a4, out.readUint32());
+    }
+
     OptionBuffer buf_;     ///< Option buffer
     OutputBuffer out_buf_; ///< Output buffer
 };
@@ -64,120 +200,28 @@ TEST_F(Option6IntTest, useInvalidType) {
 }
 
 TEST_F(Option6IntTest, basicUint8) {
-    // Create option that conveys single uint8_t value.
-    boost::shared_ptr<Option6Int<uint8_t> > opt;
-    // Initialize buffer with this value.
-    buf_[0] = 0xa1;
-    // Constructor may throw in case provided buffer is too short.
-    ASSERT_NO_THROW(
-        opt = boost::shared_ptr<Option6Int<uint8_t> >(new Option6Int<uint8_t>(D6O_PREFERENCE,
-                                                                              buf_.begin(),
-                                                                              buf_.end()))
-    );
-
-    EXPECT_EQ(Option::V6, opt->getUniverse());
-    EXPECT_EQ(D6O_PREFERENCE, opt->getType());
-    // Option should return the same value that we initialized the first
-    // byte of the buffer with.
-    EXPECT_EQ(buf_[0], opt->getValue());
-
-    // test for pack()
-    opt->pack(out_buf_);
-
-    // Data length is 1 byte.
-    EXPECT_EQ(1, opt->len() - opt->getHeaderLen());
-    EXPECT_EQ(D6O_PREFERENCE, opt->getType());
-    // The total length is 1 byte for data and 4 bytes for header.
-    EXPECT_EQ(5, out_buf_.getLength());
-
-    // Check if pack worked properly:
-    InputBuffer out(out_buf_.getData(), out_buf_.getLength());
-    // if option type is correct
-    EXPECT_EQ(D6O_PREFERENCE, out.readUint16());
-    // if option length is correct
-    EXPECT_EQ(1, out.readUint16());
-    // if data is correct
-    EXPECT_EQ(0xa1, out.readUint8() );
+    basicTest8<uint8_t>();
 }
 
 TEST_F(Option6IntTest, basicUint16) {
-    // Create option that conveys single uint16_t value.
-    boost::shared_ptr<Option6Int<uint16_t> > opt;
-    // Initialize buffer with uint16_t value.
-    buf_[0] = 0xa1;
-    buf_[1] = 0xa2;
-    // Constructor may throw in case provided buffer is too short.
-    ASSERT_NO_THROW(
-        opt = boost::shared_ptr<Option6Int<uint16_t> >(new Option6Int<uint16_t>(D6O_ELAPSED_TIME,
-                                                                                buf_.begin(),
-                                                                                buf_.end()))
-    );
-
-    EXPECT_EQ(Option::V6, opt->getUniverse());
-    EXPECT_EQ(D6O_ELAPSED_TIME, opt->getType());
-    // Option should return the value equal to the contents of first
-    // and second byte of the buffer.
-    EXPECT_EQ(0xa1a2, opt->getValue());
-
-    // Test for pack()
-    opt->pack(out_buf_);
-
-    // Data length is 2 bytes.
-    EXPECT_EQ(2, opt->len() - opt->getHeaderLen());
-    EXPECT_EQ(D6O_ELAPSED_TIME, opt->getType());
-    // The total length is 2 byte for data and 4 bytes for header.
-    EXPECT_EQ(6, out_buf_.getLength());
-
-    // Check if pack worked properly:
-    InputBuffer out(out_buf_.getData(), out_buf_.getLength());
-    // if option type is correct
-    EXPECT_EQ(D6O_ELAPSED_TIME, out.readUint16());
-    // if option length is correct
-    EXPECT_EQ(2, out.readUint16());
-    // if data is correct
-    EXPECT_EQ(0xa1a2, out.readUint16() );
+    basicTest16<uint16_t>();
 }
 
 TEST_F(Option6IntTest, basicUint32) {
-    // Create option that conveys single uint32_t value.
-    boost::shared_ptr<Option6Int<uint32_t> > opt;
-    // Initialize buffer with uint32_t value.
-    buf_[0] = 0xa1;
-    buf_[1] = 0xa2;
-    buf_[2] = 0xa3;
-    buf_[3] = 0xa4;
-    // Constructor may throw in case provided buffer is too short.
-    ASSERT_NO_THROW(
-        opt = boost::shared_ptr<Option6Int<uint32_t> >(new Option6Int<uint32_t>(D6O_CLT_TIME,
-                                                                                buf_.begin(),
-                                                                                buf_.end()))
-    );
-
-    EXPECT_EQ(Option::V6, opt->getUniverse());
-    EXPECT_EQ(D6O_CLT_TIME, opt->getType());
-    // Option should return the value equal to the value made of
-    // first 4 bytes of the buffer.
-    EXPECT_EQ(0xa1a2a3a4, opt->getValue());
-
-    // Test for pack()
-    opt->pack(out_buf_);
-
-    // Data length is 4 bytes.
-    EXPECT_EQ(4, opt->len() - opt->getHeaderLen());
-    EXPECT_EQ(D6O_CLT_TIME, opt->getType());
-    // The total length is 4 bytes for data and 4 bytes for header.
-    EXPECT_EQ(8, out_buf_.getLength());
-
-    // Check if pack worked properly:
-    InputBuffer out(out_buf_.getData(), out_buf_.getLength());
-    // if option type is correct
-    EXPECT_EQ(D6O_CLT_TIME, out.readUint16());
-    // if option length is correct
-    EXPECT_EQ(4, out.readUint16());
-    // if data is correct
-    EXPECT_EQ(0xa1a2a3a4, out.readUint32());
+    basicTest32<uint32_t>();
 }
 
+TEST_F(Option6IntTest, basicInt8) {
+    basicTest8<int8_t>();
+}
+
+TEST_F(Option6IntTest, basicInt16) {
+    basicTest16<int16_t>();
+}
+
+TEST_F(Option6IntTest, basicInt32) {
+    basicTest32<int32_t>();
+}
 
 TEST_F(Option6IntTest, setValueUint8) {
     boost::shared_ptr<Option6Int<uint8_t> > opt(new Option6Int<uint8_t>(D6O_PREFERENCE, 123));
@@ -192,6 +236,20 @@ TEST_F(Option6IntTest, setValueUint8) {
     EXPECT_EQ(111, opt->getValue());
 }
 
+TEST_F(Option6IntTest, setValueInt8) {
+    boost::shared_ptr<Option6Int<int8_t> > opt(new Option6Int<int8_t>(D6O_PREFERENCE, -123));
+    // Check if constructor intitialized the option value correctly.
+    EXPECT_EQ(-123, opt->getValue());
+    // Override the value.
+    opt->setValue(-111);
+
+    EXPECT_EQ(Option::V6, opt->getUniverse());
+    EXPECT_EQ(D6O_PREFERENCE, opt->getType());
+    // Check if the value has been overriden.
+    EXPECT_EQ(-111, opt->getValue());
+}
+
+
 TEST_F(Option6IntTest, setValueUint16) {
     boost::shared_ptr<Option6Int<uint16_t> > opt(new Option6Int<uint16_t>(D6O_ELAPSED_TIME, 123));
     // Check if constructor intitialized the option value correctly.
@@ -205,6 +263,19 @@ TEST_F(Option6IntTest, setValueUint16) {
     EXPECT_EQ(0x0102, opt->getValue());
 }
 
+TEST_F(Option6IntTest, setValueInt16) {
+    boost::shared_ptr<Option6Int<int16_t> > opt(new Option6Int<int16_t>(D6O_ELAPSED_TIME, -16500));
+    // Check if constructor intitialized the option value correctly.
+    EXPECT_EQ(-16500, opt->getValue());
+    // Override the value.
+    opt->setValue(-20100);
+
+    EXPECT_EQ(Option::V6, opt->getUniverse());
+    EXPECT_EQ(D6O_ELAPSED_TIME, opt->getType());
+    // Check if the value has been overriden.
+    EXPECT_EQ(-20100, opt->getValue());
+}
+
 TEST_F(Option6IntTest, setValueUint32) {
     boost::shared_ptr<Option6Int<uint32_t> > opt(new Option6Int<uint32_t>(D6O_CLT_TIME, 123));
     // Check if constructor intitialized the option value correctly.
@@ -216,6 +287,19 @@ TEST_F(Option6IntTest, setValueUint32) {
     EXPECT_EQ(D6O_CLT_TIME, opt->getType());
     // Check if the value has been overriden.
     EXPECT_EQ(0x01020304, opt->getValue());
+}
+
+TEST_F(Option6IntTest, setValueint32) {
+    boost::shared_ptr<Option6Int<int32_t> > opt(new Option6Int<int32_t>(D6O_CLT_TIME, -120100));
+    // Check if constructor intitialized the option value correctly.
+    EXPECT_EQ(-120100, opt->getValue());
+    // Override the value.
+    opt->setValue(-125000);
+
+    EXPECT_EQ(Option::V6, opt->getUniverse());
+    EXPECT_EQ(D6O_CLT_TIME, opt->getType());
+    // Check if the value has been overriden.
+    EXPECT_EQ(-125000, opt->getValue());
 }
 
 TEST_F(Option6IntTest, packSuboptions) {
@@ -321,6 +405,6 @@ TEST_F(Option6IntTest, unpackSuboptions) {
     subopt = opt->getOption(1);
     // Expecting NULL which means that option does not exist.
     ASSERT_FALSE(subopt);
-} 
+}
 
 } // anonymous namespace

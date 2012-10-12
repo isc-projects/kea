@@ -47,7 +47,7 @@ public:
     Option6Int(uint16_t type, T value)
         : Option(Option::V6, type), value_(value) {
         if (!OptionDataTypes<T>::valid) {
-            isc_throw(dhcp::InvalidDataType, "non-numeric type");
+            isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
     }
 
@@ -66,7 +66,7 @@ public:
                OptionBufferConstIter end)
         : Option(Option::V6, type) {
         if (!OptionDataTypes<T>::valid) {
-            isc_throw(dhcp::InvalidDataType, "non-numeric type");
+            isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
         unpack(begin, end);
     }
@@ -80,6 +80,11 @@ public:
     void pack(isc::util::OutputBuffer& buf) {
         buf.writeUint16(type_);
         buf.writeUint16(len() - OPTION6_HDR_LEN);
+        // Depending on the data type length we use different utility functions
+        // writeUint16 or writeUint32 which write the data in the network byte
+        // order to the provided buffer. The same functions can be safely used
+        // for either unsiged or signed integers so there is not need to create
+        // special cases for intX_t types.
         switch (OptionDataTypes<T>::len) {
         case 1:
             buf.writeUint8(value_);
@@ -91,7 +96,7 @@ public:
             buf.writeUint32(value_);
             break;
         default:
-            isc_throw(dhcp::InvalidDataType, "non-numeric type");
+            isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
         LibDHCP::packOptions6(buf, options_);
     }
@@ -105,8 +110,13 @@ public:
     /// @param end iterator to end of option data (first byte after option end)
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
         if (distance(begin, end) < sizeof(T)) {
-            isc_throw(OutOfRange, "Option " << type_ << " truncated");
+            isc_throw(OutOfRange, "Option " << getType() << " truncated");
         }
+        // Depending on the data type length we use different utility functions
+        // readUint16 or readUint32 which read the data laid in the network byte
+        // order from the provided buffer. The same functions can be safely used
+        // for either unsiged or signed integers so there is not need to create
+        // special cases for intX_t types.
         switch (OptionDataTypes<T>::len) {
         case 1:
             value_ = *begin;
@@ -118,7 +128,7 @@ public:
             value_ = isc::util::readUint32(&(*begin));
             break;
         default:
-            isc_throw(dhcp::InvalidDataType, "non-numeric type");
+            isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
         begin += OptionDataTypes<T>::len;
         LibDHCP::unpackOptions6(OptionBuffer(begin, end), options_);
@@ -152,7 +162,7 @@ public:
 
 private:
 
-    T value_;  ///< Value cabveyed by the option.
+    T value_;  ///< Value conveyed by the option.
 };
 
 } // isc::dhcp namespace
