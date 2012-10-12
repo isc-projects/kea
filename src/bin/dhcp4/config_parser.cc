@@ -399,7 +399,7 @@ public:
             pos = txt.find("-");
             if (pos != string::npos) {
                 // using min-max notation
-                IOAddress min(txt.substr(0,pos - 1));
+                IOAddress min(txt.substr(0,pos));
                 IOAddress max(txt.substr(pos + 1));
 
                 Pool4Ptr pool(new Pool4(min, max));

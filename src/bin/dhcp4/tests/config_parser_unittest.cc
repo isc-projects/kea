@@ -95,7 +95,6 @@ TEST_F(Dhcp4ParserTest, empty_subnet) {
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_,
                     Element::fromJSON("{ \"interface\": [ \"all\" ],"
-                                      "\"preferred-lifetime\": 3000,"
                                       "\"rebind-timer\": 2000, "
                                       "\"renew-timer\": 1000, "
                                       "\"subnet4\": [  ], "
@@ -181,7 +180,6 @@ TEST_F(Dhcp4ParserTest, pool_out_of_subnet) {
     ConstElementPtr status;
 
     string config = "{ \"interface\": [ \"all\" ],"
-        "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
