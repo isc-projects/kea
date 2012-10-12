@@ -131,17 +131,8 @@ protected:
 
     // Checks whether all Rcode counters are set to zero
     void checkAllRcodeCountersZero() const {
-        const std::map<std::string, ConstElementPtr>
-            stats_map(server.getStatistics()->get("zones")->get("_SERVER_")->
-                      get("rcode")->mapValue());
-
-        for (std::map<std::string, ConstElementPtr>::const_iterator
-                 i = stats_map.begin(), e = stats_map.end();
-             i != e;
-             ++i)
-        {
-            checkRcodeCounter(i->first, i->second->intValue(), 0);
-        }
+        // with checking NOERROR == 0 and the others are 0
+        checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 0);
     }
 
     // Checks whether all Rcode counters are set to zero except the given
@@ -242,6 +233,8 @@ createBuiltinVersionResponse(const qid_t qid, vector<uint8_t>& data) {
                 renderer.getLength());
 }
 
+// Check if the item has expected value.
+// Before reading the item, check the item exists.
 void
 expectCounterItem(ConstElementPtr stats,
                   const std::string& item, const int expected) {
