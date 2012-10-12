@@ -1,5 +1,5 @@
 /**
- @page dhcpv6 DHCPv6 Server Component
+ @page dhcp6 DHCPv6 Server Component
 
  BIND10 offers DHCPv6 server implementation. It is implemented as
  b10-dhcp6 component. Its primary code is located in
@@ -16,13 +16,13 @@
 
  DHCPv6 server component does not use BIND10 logging yet.
 
- @section dhcpv6-session BIND10 message queue integration
+ @section dhcp6-session BIND10 message queue integration
 
  DHCPv4 server component is now integrated with BIND10 message queue.
  It follows the same principle as DHCPv4. See \ref dhcpv4Session for
  details.
 
- @section dhcpv6-config-parser Configuration Parser in DHCPv6
+ @section dhcp6-config-parser Configuration Parser in DHCPv6
 
  b10-dhcp6 component uses BIND10 cfgmgr for commands and configuration. During
  initial configuration (See \ref
@@ -49,7 +49,7 @@
  elements and creates parsers for a given scope. This process may be repeated
  (sort of) recursively.
 
- @section dhcpv6-config-inherit DHCPv6 Configuration Inheritance
+ @section dhcp6-config-inherit DHCPv6 Configuration Inheritance
 
  One notable useful features of DHCP configuration is its parameter inheritance.
  For example, renew-timer value may be specified at a global scope and it then
@@ -64,7 +64,7 @@
  phase (commit() method), appropriate parsers can use apply parameter inheritance.
 
  Debugging configuration parser may be confusing. Therefore there is a special
- class called \ref isc::dhcp::DummyParser. It does not configure anything, but just
+ class called \ref isc::dhcp::DebugParser. It does not configure anything, but just
  accepts any parameter of any type. If requested to commit configuration, it will
  print out received parameter name and its value. This class is not currently used,
  but it is convenient to have it every time a new parameter is added to DHCP
