@@ -546,8 +546,6 @@ class BoB:
         """
             Start the Authoritative server
         """
-        if self.uid is not None and self.__started:
-            logger.warn(BIND10_START_AS_NON_ROOT_AUTH)
         authargs = ['b10-auth']
         if self.verbose:
             authargs += ['-v']
