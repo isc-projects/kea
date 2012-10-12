@@ -21,7 +21,6 @@
 #include <datasrc/memory/segment_object_holder.h>
 #include <datasrc/memory/treenode_rrset.h>
 #include <datasrc/memory/zone_finder.h>
-#include <datasrc/memory/zone_data_updater.h>
 #include <datasrc/memory/zone_data_loader.h>
 
 #include <util/memory_segment_local.h>
@@ -33,9 +32,6 @@
 #include <dns/name.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
-#include <dns/masterload.h>
-
-#include <boost/bind.hpp>
 
 #include <algorithm>
 #include <utility>
@@ -84,36 +80,12 @@ InMemoryClient::~InMemoryClient() {
 }
 
 result::Result
-InMemoryClient::loadInternal(const Name& zone_name,
-                             const string& filename,
-                             boost::function<void(internal::LoadCallback)>
-                             rrset_installer)
+InMemoryClient::loadInternal(const isc::dns::Name& zone_name,
+                             const std::string& filename,
+                             ZoneData* zone_data)
 {
     SegmentObjectHolder<ZoneData, RRClass> holder(
-        mem_sgmt_, ZoneData::create(mem_sgmt_, zone_name), rrclass_);
-
-    ZoneDataLoader loader(mem_sgmt_, rrclass_, zone_name, *holder.get());
-    rrset_installer(boost::bind(&ZoneDataLoader::addFromLoad, &loader, _1));
-    // Add any last RRsets that were left
-    loader.flushNodeRRsets();
-
-    const ZoneNode* origin_node = holder.get()->getOriginNode();
-    const RdataSet* set = origin_node->getData();
-    // If the zone is NSEC3-signed, check if it has NSEC3PARAM
-    if (holder.get()->isNSEC3Signed()) {
-        if (RdataSet::find(set, RRType::NSEC3PARAM()) == NULL) {
-            LOG_WARN(logger, DATASRC_MEMORY_MEM_NO_NSEC3PARAM).
-                arg(zone_name).arg(rrclass_);
-        }
-    }
-
-    // When an empty zone file is loaded, the origin doesn't even have
-    // an SOA RR. This condition should be avoided, and hence load()
-    // should throw when an empty zone is loaded.
-    if (RdataSet::find(set, RRType::SOA()) == NULL) {
-        isc_throw(EmptyZone,
-                  "Won't create an empty zone for: " << zone_name);
-    }
+        mem_sgmt_, zone_data, rrclass_);
 
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_ADD_ZONE).
         arg(zone_name).arg(rrclass_);
@@ -150,32 +122,6 @@ InMemoryClient::loadInternal(const Name& zone_name,
     }
 
     return (result.code);
-}
-
-namespace {
-// A wrapper for dns::masterLoad used by load() below.  Essentially it
-// converts the two callback types.  Note the mostly redundant wrapper of
-// boost::bind.  It converts function<void(ConstRRsetPtr)> to
-// function<void(RRsetPtr)> (masterLoad() expects the latter).  SunStudio
-// doesn't seem to do this conversion if we just pass 'callback'.
-void
-masterLoadWrapper(const char* const filename, const Name& origin,
-                  const RRClass& zone_class,
-                  internal::LoadCallback callback)
-{
-    masterLoad(filename, origin, zone_class, boost::bind(callback, _1));
-}
-
-// The installer called from load() for the iterator version of load().
-void
-generateRRsetFromIterator(ZoneIterator* iterator,
-                          internal::LoadCallback callback)
-{
-    ConstRRsetPtr rrset;
-    while ((rrset = iterator->getNextRRset()) != NULL) {
-        callback(rrset);
-    }
-}
 }
 
 RRClass
@@ -215,17 +161,17 @@ InMemoryClient::load(const isc::dns::Name& zone_name,
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_LOAD).arg(zone_name).
         arg(filename);
 
-    return (loadInternal(zone_name, filename,
-                         boost::bind(masterLoadWrapper, filename.c_str(),
-                                     zone_name, getClass(), _1)));
+    ZoneData* zone_data = loadZoneData(mem_sgmt_, rrclass_, zone_name,
+                                       filename);
+    return (loadInternal(zone_name, filename, zone_data));
 }
 
 result::Result
 InMemoryClient::load(const isc::dns::Name& zone_name,
                      ZoneIterator& iterator) {
-    return (loadInternal(zone_name, string(),
-                         boost::bind(generateRRsetFromIterator,
-                                     &iterator, _1)));
+    ZoneData* zone_data = loadZoneData(mem_sgmt_, rrclass_, zone_name,
+                                       iterator);
+    return (loadInternal(zone_name, string(), zone_data));
 }
 
 const std::string

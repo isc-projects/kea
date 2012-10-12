@@ -22,8 +22,6 @@
 #include <datasrc/memory/zone_table.h>
 #include <datasrc/memory/zone_data.h>
 
-#include <boost/function.hpp>
-
 #include <string>
 
 namespace isc {
@@ -35,14 +33,6 @@ class RRsetList;
 
 namespace datasrc {
 namespace memory {
-
-namespace internal {
-    // Please don't use anything from here outside the InMemoryClient
-    // implementation.
-
-    // A functor type used for loading.
-    typedef boost::function<void(isc::dns::ConstRRsetPtr)> LoadCallback;
-} // end of internal namespace
 
 /// \brief A data source client that holds all necessary data in memory.
 ///
@@ -86,16 +76,6 @@ public:
     ///
     /// \return The number of zones stored in the client.
     virtual unsigned int getZoneCount() const;
-
-    /// \brief Zone is empty exception.
-    ///
-    /// This is thrown if we have an empty zone created as a result of
-    /// load().
-    struct EmptyZone : public InvalidParameter {
-        EmptyZone(const char* file, size_t line, const char* what) :
-            InvalidParameter(file, line, what)
-        {}
-    };
 
     /// \brief Load zone from masterfile.
     ///
@@ -200,18 +180,11 @@ private:
     typedef DomainTree<std::string> FileNameTree;
     typedef DomainTreeNode<std::string> FileNameNode;
 
-    // Common process for zone load.
-    // rrset_installer is a functor that takes another functor as an argument,
-    // and expected to call the latter for each RRset of the zone.  How the
-    // sequence of the RRsets is generated depends on the internal
-    // details  of the loader: either from a textual master file or from
-    // another data source.
-    // filename is the file name of the master file or empty if the zone is
-    // loaded from another data source.
+    // Common process for zone load. Registers filename internally and
+    // adds the ZoneData to the ZoneTable.
     result::Result loadInternal(const isc::dns::Name& zone_name,
 				const std::string& filename,
-				boost::function<void(internal::LoadCallback)>
-				rrset_installer);
+				ZoneData* zone_data);
 
     util::MemorySegment& mem_sgmt_;
     const isc::dns::RRClass rrclass_;
