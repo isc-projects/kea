@@ -128,12 +128,6 @@ TEST_F(CondVarTest, multiWaits) {
     EXPECT_EQ(4, shared_var);
 }
 
-void
-waiter(CondVar* condver, Mutex* mutex) {
-    Mutex::Locker locker(*mutex);
-    condver->wait(*mutex);
-}
-
 // Similar to the previous version of the same function, but just do
 // condvar operations.  It will never wake up.
 void
