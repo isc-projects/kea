@@ -108,6 +108,8 @@ class ZoneSegmentID {};
 /// This callback should create new ZoneData (allocated from the passed
 /// memory segment) and fill it with relevant loaded data. The caller
 /// of the callback takes ownership of the ZoneData.
+///
+/// It must not return NULL.
 typedef boost::function<ZoneData*(util::MemorySegment&)> LoadAction;
 /// \brief Install the zone somewhere.
 ///
