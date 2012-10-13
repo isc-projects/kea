@@ -51,6 +51,8 @@ run_unittests_SOURCES += command_unittest.cc
 run_unittests_SOURCES += common_unittest.cc
 run_unittests_SOURCES += query_unittest.cc
 run_unittests_SOURCES += statistics_unittest.cc
+run_unittests_SOURCES += test_datasrc_clients_mgr.h test_datasrc_clients_mgr.cc
+run_unittests_SOURCES += datasrc_clients_builder_unittest.cc
 run_unittests_SOURCES += datasrc_config_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 
