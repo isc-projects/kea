@@ -34,7 +34,7 @@ class ZoneTableSegment;
 /// We divide them so the update of zone data can be done asynchronously,
 /// in a different thread. The install() operation is the only one that needs
 /// to be done in a critical section.
-class ZoneUpdater {
+class ZoneReloader {
 public:
     /// \brief Get the zone data into memory.
     ///
@@ -120,13 +120,13 @@ typedef boost::function<void(ZoneData*)> LoadAction;
 typedef boost::function<ZoneData* (const ZoneSegmentID&,
                                    ZoneSegment*)> InstallAction;
 
-/// \brief Updater implementation which loads data locally.
+/// \brief Reloader implementation which loads data locally.
 ///
 /// This implementation prepares a clean zone data and lets one callback
 /// to fill it and another to install it somewhere. The class does mostly
 /// nothing (and delegates the work to the callbacks), just stores little bit
 /// of state between the calls.
-class ZoneUpdaterLocal : public ZoneUpdater {
+class ZoneReloaderLocal : public ZoneReloader {
 public:
     /// \brief Constructor
     ///
@@ -135,12 +135,12 @@ public:
     /// \param install_action The callback used to install the loaded zone.
     /// \param origin The origin name of the zone.
     /// \param rrclass The class of the zone.
-    ZoneUpdaterLocal(ZoneTableSegment* segment, const LoadAction& load_action,
-                     const InstallAction& install_action,
-                     const dns::Name& origin,
-                     const dns::RRClass& rrclass);
+    ZoneReloaderLocal(ZoneTableSegment* segment, const LoadAction& load_action,
+                      const InstallAction& install_action,
+                      const dns::Name& origin,
+                      const dns::RRClass& rrclass);
     /// \brief Destructor
-    ~ZoneUpdaterLocal();
+    ~ZoneReloaderLocal();
     /// \brief Loads the data.
     ///
     /// This prepares an empty ZoneData and calls load_action (passed to
