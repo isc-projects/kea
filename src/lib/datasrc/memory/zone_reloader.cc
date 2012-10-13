@@ -27,12 +27,10 @@ namespace memory {
 ZoneReloaderLocal::ZoneReloaderLocal(ZoneTableSegment* segment,
                                      const LoadAction& load_action,
                                      const InstallAction& install_action,
-                                     const dns::Name& origin,
                                      const dns::RRClass& rrclass) :
     segment_(segment),
     load_action_(load_action),
     install_action_(install_action),
-    origin_(origin),
     rrclass_(rrclass),
     zone_data_(NULL),
     loaded_(false),
@@ -52,9 +50,7 @@ ZoneReloaderLocal::load() {
     }
     loaded_ = true;
 
-    zone_data_ = ZoneData::create(segment_->getMemorySegment(), origin_);
-
-    load_action_(zone_data_);
+    zone_data_ = load_action_(segment_->getMemorySegment());
 
     data_ready_ = true;
 }

@@ -12,16 +12,17 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <dns/name.h>
 #include <dns/rrclass.h>
 
 #include <boost/function.hpp>
 
 namespace isc {
+// Forward declarations
+namespace util{
+class MemorySegment;
+}
 namespace datasrc {
 namespace memory {
-
-// Forward declarations
 class ZoneData;
 class ZoneTableSegment;
 
@@ -104,10 +105,10 @@ class ZoneSegmentID {};
 
 /// \brief Callback to load data into the memory
 ///
-/// This is called with a clean (empty) zone data. The goal of the
-/// callback is to get the data for the zone from somewhere and put
-/// them into the passed ZoneData parameter.
-typedef boost::function<void(ZoneData*)> LoadAction;
+/// This callback should create new ZoneData (allocated from the passed
+/// memory segment) and fill it with relevant loaded data. The caller
+/// of the callback takes ownership of the ZoneData.
+typedef boost::function<ZoneData*(util::MemorySegment&)> LoadAction;
 /// \brief Install the zone somewhere.
 ///
 /// The goal of the callback is to take the zone data (contained in the
@@ -133,11 +134,9 @@ public:
     /// \param segment The zone table segment to store the zone into.
     /// \param load_action The callback used to load data.
     /// \param install_action The callback used to install the loaded zone.
-    /// \param origin The origin name of the zone.
     /// \param rrclass The class of the zone.
     ZoneReloaderLocal(ZoneTableSegment* segment, const LoadAction& load_action,
                       const InstallAction& install_action,
-                      const dns::Name& origin,
                       const dns::RRClass& rrclass);
     /// \brief Destructor
     ~ZoneReloaderLocal();
@@ -169,7 +168,6 @@ private:
     ZoneTableSegment* segment_;
     LoadAction load_action_;
     InstallAction install_action_;
-    dns::Name origin_;
     dns::RRClass rrclass_;
     ZoneData* zone_data_;
     // The load was performed

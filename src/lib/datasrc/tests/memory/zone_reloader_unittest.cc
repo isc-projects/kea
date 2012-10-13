@@ -48,7 +48,7 @@ public:
                                    _1),
                               bind(&ZoneReloaderLocalTest::installAction, this,
                                    _1, _2),
-                              Name("example.org"), RRClass::IN())),
+                              RRClass::IN())),
         load_called_(false),
         install_called_(false),
         load_throw_(false),
@@ -68,14 +68,19 @@ protected:
     bool load_throw_;
     bool install_throw_;
 private:
-    void loadAction(ZoneData* data) {
-        // Make sure we get something.
-        EXPECT_NE(static_cast<const ZoneData*>(NULL), data);
+    ZoneData* loadAction(isc::util::MemorySegment& segment) {
+        // Make sure it is the correct segment passed. We know the
+        // exact instance, can compare pointers to them.
+        EXPECT_EQ(&segment_->getMemorySegment(), &segment);
         // We got called
         load_called_ = true;
         if (load_throw_) {
             throw TestException();
         }
+
+        // Create a new zone data. It may be empty for our tests, nothing
+        // goes inside.
+        return (ZoneData::create(segment, Name("example.org")));
     }
     ZoneData* installAction(const ZoneSegmentID&, ZoneSegment* segment) {
         install_called_ = true;
