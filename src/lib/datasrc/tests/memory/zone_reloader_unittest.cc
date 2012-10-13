@@ -52,7 +52,8 @@ public:
         load_called_(false),
         install_called_(false),
         load_throw_(false),
-        install_throw_(false)
+        install_throw_(false),
+        load_null_(false)
     {}
     void TearDown() {
         // Release the reloader
@@ -67,6 +68,7 @@ protected:
     bool install_called_;
     bool load_throw_;
     bool install_throw_;
+    bool load_null_;
 private:
     ZoneData* loadAction(isc::util::MemorySegment& segment) {
         // Make sure it is the correct segment passed. We know the
@@ -78,6 +80,10 @@ private:
             throw TestException();
         }
 
+        if (load_null_) {
+            // Be nasty to the caller and return NULL, which is forbidden
+            return (NULL);
+        }
         // Create a new zone data. It may be empty for our tests, nothing
         // goes inside.
         return (ZoneData::create(segment, Name("example.org")));
@@ -236,6 +242,18 @@ TEST_F(ZoneReloaderLocalTest, installThrows) {
     EXPECT_THROW(reloader_->install(), isc::Unexpected);
 
     // But it is not completely broken
+    EXPECT_NO_THROW(reloader_->cleanup());
+}
+
+// Check the reloader defends itsefl when load action returns NULL
+TEST_F(ZoneReloaderLocalTest, loadNull) {
+    load_null_ = true;
+    EXPECT_THROW(reloader_->load(), isc::Unexpected);
+
+    // We can't install that
+    EXPECT_THROW(reloader_->install(), isc::Unexpected);
+
+    // It should be possible to clean up safely
     EXPECT_NO_THROW(reloader_->cleanup());
 }
 

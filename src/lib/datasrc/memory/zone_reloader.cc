@@ -52,6 +52,11 @@ ZoneReloaderLocal::load() {
 
     zone_data_ = load_action_(segment_->getMemorySegment());
 
+    if (zone_data_ == NULL) {
+        // Bug inside load_action_.
+        isc_throw(isc::Unexpected, "No data returned from load action");
+    }
+
     data_ready_ = true;
 }
 
