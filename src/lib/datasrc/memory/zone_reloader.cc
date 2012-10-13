@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "zone_updater.h"
+#include "zone_reloader.h"
 #include "zone_data.h"
 #include "zone_table_segment.h"
 
@@ -24,11 +24,11 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
-ZoneUpdaterLocal::ZoneUpdaterLocal(ZoneTableSegment* segment,
-                                   const LoadAction& load_action,
-                                   const InstallAction& install_action,
-                                   const dns::Name& origin,
-                                   const dns::RRClass& rrclass) :
+ZoneReloaderLocal::ZoneReloaderLocal(ZoneTableSegment* segment,
+                                     const LoadAction& load_action,
+                                     const InstallAction& install_action,
+                                     const dns::Name& origin,
+                                     const dns::RRClass& rrclass) :
     segment_(segment),
     load_action_(load_action),
     install_action_(install_action),
@@ -39,14 +39,14 @@ ZoneUpdaterLocal::ZoneUpdaterLocal(ZoneTableSegment* segment,
     data_ready_(false)
 {}
 
-ZoneUpdaterLocal::~ZoneUpdaterLocal() {
+ZoneReloaderLocal::~ZoneReloaderLocal() {
     // Clean up everything there might be left if someone forgot, just
     // in case. Or should we assert instead?
     cleanup();
 }
 
 void
-ZoneUpdaterLocal::load() {
+ZoneReloaderLocal::load() {
     if (loaded_) {
         isc_throw(isc::Unexpected, "Trying to load twice");
     }
@@ -60,7 +60,7 @@ ZoneUpdaterLocal::load() {
 }
 
 void
-ZoneUpdaterLocal::install() {
+ZoneReloaderLocal::install() {
     if (!data_ready_) {
         isc_throw(isc::Unexpected, "No data to install");
     }
@@ -75,7 +75,7 @@ ZoneUpdaterLocal::install() {
 }
 
 void
-ZoneUpdaterLocal::cleanup() {
+ZoneReloaderLocal::cleanup() {
     // We eat the data (if any) now.
     data_ready_ = false;
 
