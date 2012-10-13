@@ -26,11 +26,11 @@ namespace memory {
 
 ZoneReloaderLocal::ZoneReloaderLocal(ZoneTableSegment* segment,
                                      const LoadAction& load_action,
-                                     const InstallAction& install_action,
+                                     const dns::Name& origin,
                                      const dns::RRClass& rrclass) :
     segment_(segment),
     load_action_(load_action),
-    install_action_(install_action),
+    origin_(origin),
     rrclass_(rrclass),
     zone_data_(NULL),
     loaded_(false),
@@ -67,12 +67,15 @@ ZoneReloaderLocal::install() {
     }
 
     data_ready_ = false;
-    auto_ptr<ZoneSegment> zone_segment(new ZoneSegment(zone_data_));
 
-    zone_data_ = install_action_(ZoneSegmentID(), zone_segment.get());
+    ZoneTable* table(segment_->getHeader().getTable());
+    if (table == NULL) {
+        isc_throw(isc::Unexpected, "No zone table present");
+    }
+    ZoneTable::AddResult result(table->addZone(segment_->getMemorySegment(),
+                                               rrclass_, origin_, zone_data_));
 
-    // The ownership was passed to the callback, no need to clear it now.
-    zone_segment.release();
+    zone_data_ = result.zone_data;
 }
 
 void

@@ -46,18 +46,22 @@ public:
             ZoneReloaderLocal(segment_.get(),
                               bind(&ZoneReloaderLocalTest::loadAction, this,
                                    _1),
-                              bind(&ZoneReloaderLocalTest::installAction, this,
-                                   _1, _2),
-                              RRClass::IN())),
+                              Name("example.org"), RRClass::IN())),
         load_called_(false),
-        install_called_(false),
         load_throw_(false),
-        install_throw_(false),
         load_null_(false)
-    {}
+    {
+        // TODO: The setTable is only a temporary interface
+        segment_->getHeader().
+            setTable(ZoneTable::create(segment_->getMemorySegment(),
+                                       RRClass::IN()));
+    }
     void TearDown() {
         // Release the reloader
         reloader_.reset();
+        // Release the table we used
+        ZoneTable::destroy(segment_->getMemorySegment(),
+                           segment_->getHeader().getTable(), RRClass::IN());
         // And check we freed all memory
         EXPECT_TRUE(segment_->getMemorySegment().allMemoryDeallocated());
     }
@@ -65,9 +69,7 @@ protected:
     scoped_ptr<ZoneTableSegment> segment_;
     scoped_ptr<ZoneReloaderLocal> reloader_;
     bool load_called_;
-    bool install_called_;
     bool load_throw_;
-    bool install_throw_;
     bool load_null_;
 private:
     ZoneData* loadAction(isc::util::MemorySegment& segment) {
@@ -88,32 +90,6 @@ private:
         // goes inside.
         return (ZoneData::create(segment, Name("example.org")));
     }
-    ZoneData* installAction(const ZoneSegmentID&, ZoneSegment* segment) {
-        install_called_ = true;
-
-        // Check we got something
-        if (segment == NULL) {
-            ADD_FAILURE() << "Zone segment is NULL in install action";
-            return (NULL);
-        }
-        EXPECT_NE(static_cast<const ZoneData*>(NULL), segment->getZoneData());
-
-        if (install_throw_) {
-            // In case we throw, we do so before releasing the memory there,
-            // as in that case we don't claim the ownership of the data.
-            throw TestException();
-        }
-
-        // We received ownership of the parameters here. And we don't really need
-        // them in the tests, so we just release them.
-        ZoneData::destroy(segment_->getMemorySegment(), segment->getZoneData(),
-                          RRClass::IN());
-        delete segment;
-
-        // And we are supposed to pass the old version back. So we create
-        // new zone data and pass it.
-        return (ZoneData::create(segment_->getMemorySegment(), Name("exmaple.org")));
-    }
 };
 
 // We call it the way we are supposed to, check every callback is called in the
@@ -121,17 +97,14 @@ private:
 TEST_F(ZoneReloaderLocalTest, correctCall) {
     // Nothing called before we call it
     EXPECT_FALSE(load_called_);
-    EXPECT_FALSE(install_called_);
 
     // Just the load gets called now
     EXPECT_NO_THROW(reloader_->load());
     EXPECT_TRUE(load_called_);
-    EXPECT_FALSE(install_called_);
     load_called_ = false;
 
     EXPECT_NO_THROW(reloader_->install());
     EXPECT_FALSE(load_called_);
-    EXPECT_TRUE(install_called_);
 
     // We don't check explicitly how this works, but call it to free memory. If
     // everything is freed should be checked inside the TearDown.
@@ -142,18 +115,15 @@ TEST_F(ZoneReloaderLocalTest, loadTwice) {
     // Load it the first time
     EXPECT_NO_THROW(reloader_->load());
     EXPECT_TRUE(load_called_);
-    EXPECT_FALSE(install_called_);
     load_called_ = false;
 
     // The second time, it should not be possible
     EXPECT_THROW(reloader_->load(), isc::Unexpected);
     EXPECT_FALSE(load_called_);
-    EXPECT_FALSE(install_called_);
 
     // The object should not be damaged, try installing and clearing now
     EXPECT_NO_THROW(reloader_->install());
     EXPECT_FALSE(load_called_);
-    EXPECT_TRUE(install_called_);
 
     // We don't check explicitly how this works, but call it to free memory. If
     // everything is freed should be checked inside the TearDown.
@@ -167,18 +137,16 @@ TEST_F(ZoneReloaderLocalTest, loadLater) {
     EXPECT_NO_THROW(reloader_->load());
     EXPECT_NO_THROW(reloader_->install());
     // Reset so we see nothing is called now
-    install_called_ = load_called_ = false;
+    load_called_ = false;
 
     EXPECT_THROW(reloader_->load(), isc::Unexpected);
     EXPECT_FALSE(load_called_);
-    EXPECT_FALSE(install_called_);
 
     // Cleanup and try loading again. Still shouldn't work.
     EXPECT_NO_THROW(reloader_->cleanup());
 
     EXPECT_THROW(reloader_->load(), isc::Unexpected);
     EXPECT_FALSE(load_called_);
-    EXPECT_FALSE(install_called_);
 }
 
 // Try calling install at various bad times
@@ -186,17 +154,14 @@ TEST_F(ZoneReloaderLocalTest, invalidInstall) {
     // Nothing loaded yet
     EXPECT_THROW(reloader_->install(), isc::Unexpected);
     EXPECT_FALSE(load_called_);
-    EXPECT_FALSE(install_called_);
 
     EXPECT_NO_THROW(reloader_->load());
     load_called_ = false;
     // This install is OK
     EXPECT_NO_THROW(reloader_->install());
-    install_called_ = false;
     // But we can't call it second time now
     EXPECT_THROW(reloader_->install(), isc::Unexpected);
     EXPECT_FALSE(load_called_);
-    EXPECT_FALSE(install_called_);
 }
 
 // We check we can clean without installing first and nothing bad
@@ -207,11 +172,9 @@ TEST_F(ZoneReloaderLocalTest, cleanWithoutInstall) {
     EXPECT_NO_THROW(reloader_->cleanup());
 
     EXPECT_TRUE(load_called_);
-    EXPECT_FALSE(install_called_);
 
     // We cleaned up, no way to install now
     EXPECT_THROW(reloader_->install(), isc::Unexpected);
-    EXPECT_FALSE(install_called_);
 }
 
 // Test the case when load callback throws
@@ -222,26 +185,8 @@ TEST_F(ZoneReloaderLocalTest, loadThrows) {
     // We can't install now
     EXPECT_THROW(reloader_->install(), isc::Unexpected);
     EXPECT_TRUE(load_called_);
-    EXPECT_FALSE(install_called_);
 
     // But we can cleanup
-    EXPECT_NO_THROW(reloader_->cleanup());
-}
-
-// Test we free all our memory even when we throw from install
-TEST_F(ZoneReloaderLocalTest, installThrows) {
-    install_throw_ = true;
-    EXPECT_NO_THROW(reloader_->load());
-
-    EXPECT_THROW(reloader_->install(), TestException);
-    EXPECT_TRUE(load_called_);
-    EXPECT_TRUE(install_called_);
-
-    // We can't try again
-    install_throw_ = false;
-    EXPECT_THROW(reloader_->install(), isc::Unexpected);
-
-    // But it is not completely broken
     EXPECT_NO_THROW(reloader_->cleanup());
 }
 
