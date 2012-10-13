@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dns/rrclass.h>
+#include <dns/name.h>
 
 #include <boost/function.hpp>
 
@@ -80,29 +81,6 @@ public:
     virtual void cleanup() = 0;
 };
 
-// TODO: Fully define this. It is supposed to be passed to the install_action
-// callback, but what does it actually represent? Is it the actuall zone data
-// there?
-//
-// The current interface is temporary, so the tests work. It will probably
-// change (and we may even fold this class to some other, because there
-// seem to be too many classes around holding zone already).
-//
-// FIXME: Who is responsible for releasing of the segment itself?
-class ZoneSegment {
-public:
-    explicit ZoneSegment(ZoneData* data) :
-        data_(data)
-    {}
-    ZoneData* getZoneData() {
-        return (data_);
-    }
-private:
-    ZoneData* data_;
-};
-// TODO: Somehow specify what the ID is
-class ZoneSegmentID {};
-
 /// \brief Callback to load data into the memory
 ///
 /// This callback should create new ZoneData (allocated from the passed
@@ -111,17 +89,6 @@ class ZoneSegmentID {};
 ///
 /// It must not return NULL.
 typedef boost::function<ZoneData*(util::MemorySegment&)> LoadAction;
-/// \brief Install the zone somewhere.
-///
-/// The goal of the callback is to take the zone data (contained in the
-/// ZoneSegment and identified by ZoneSegmentID) and put it somewhere
-/// to use. The return value should contain the old copy of the zone, if
-/// there was any (it may be NULL). The updater will then destroy it.
-///
-/// Upon successful completion, the ownership of the new zone is passed
-/// to the callback and the old to the updater.
-typedef boost::function<ZoneData* (const ZoneSegmentID&,
-                                   ZoneSegment*)> InstallAction;
 
 /// \brief Reloader implementation which loads data locally.
 ///
@@ -138,8 +105,7 @@ public:
     /// \param install_action The callback used to install the loaded zone.
     /// \param rrclass The class of the zone.
     ZoneReloaderLocal(ZoneTableSegment* segment, const LoadAction& load_action,
-                      const InstallAction& install_action,
-                      const dns::RRClass& rrclass);
+                      const dns::Name& name, const dns::RRClass& rrclass);
     /// \brief Destructor
     ~ZoneReloaderLocal();
     /// \brief Loads the data.
@@ -169,7 +135,7 @@ public:
 private:
     ZoneTableSegment* segment_;
     LoadAction load_action_;
-    InstallAction install_action_;
+    dns::Name origin_;
     dns::RRClass rrclass_;
     ZoneData* zone_data_;
     // The load was performed
