@@ -134,6 +134,7 @@ public:
     /// \todo Disable in non-debug build
     bool locked() const;
 
+private:
     /// \brief Lock the mutex
     ///
     /// This method blocks until the mutex can be locked.
