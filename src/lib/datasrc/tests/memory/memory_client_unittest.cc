@@ -596,13 +596,10 @@ TEST_F(MemoryClientTest, loadRRSIGsRdataMixedCoveredTypes) {
 
     RRsetPtr rrsig(new RRset(Name("example.org"), zclass_,
                              RRType::RRSIG(), RRTTL(300)));
-    rrsig->addRdata(generic::RRSIG("A 5 3 "
-                                   "3600 20000101000000 20000201000000 "
+    rrsig->addRdata(generic::RRSIG("A 5 3 3600 20000101000000 20000201000000 "
                                    "12345 example.org. FAKEFAKEFAKE"));
-    rrsig->addRdata(generic::RRSIG("NS 5 3 "
-                                   "3600 20000101000000 20000201000000 "
-                                   "54321 example.org. "
-                                   "FAKEFAKEFAKEFAKE"));
+    rrsig->addRdata(generic::RRSIG("NS 5 3 3600 20000101000000 20000201000000 "
+                                   "54321 example.org. FAKEFAKEFAKEFAKE"));
     rrset->addRRsig(rrsig);
 
     rrsets_vec.push_back(rrset);
