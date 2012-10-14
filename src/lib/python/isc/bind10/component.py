@@ -45,6 +45,7 @@ COMPONENT_RESTART_DELAY = 10
 
 STATE_DEAD = 'dead'
 STATE_STOPPED = 'stopped'
+STATE_RESTARTING = 'restarting'
 STATE_RUNNING = 'running'
 
 def get_signame(signal_number):
@@ -68,6 +69,7 @@ class BaseComponent:
       explicitly).
     - Running - after start() was called, it started successfully and is
       now running.
+    - Restarting - the component failed (crashed) and is waiting for a restart
     - Dead - it failed and can not be resurrected.
 
     Init
@@ -79,11 +81,11 @@ class BaseComponent:
                     |            |                |
                     |failure     | failed()       |
                     |            |                |
-                    v            |                |
+                    v            |                | start()/restart()
                     +<-----------+                |
                     |                             |
                     |  kind == dispensable or kind|== needed and failed late
-                    +-----------------------------+
+                    +-----------------------> Restarting
                     |
                     | kind == core or kind == needed and it failed too soon
                     v
@@ -163,7 +165,7 @@ class BaseComponent:
         """
         if self.__state == STATE_DEAD:
             raise ValueError("Can't resurrect already dead component")
-        if self.running():
+        if self.is_running():
             raise ValueError("Can't start already running component")
         logger.info(BIND10_COMPONENT_START, self.name())
         self.__state = STATE_RUNNING
@@ -188,7 +190,7 @@ class BaseComponent:
         """
         # This is not tested. It talks with the outher world, which is out
         # of scope of unittests.
-        if not self.running():
+        if not self.is_running():
             raise ValueError("Can't stop a component which is not running")
         logger.info(BIND10_COMPONENT_STOP, self.name())
         self.__state = STATE_STOPPED
@@ -234,9 +236,9 @@ class BaseComponent:
 
         logger.error(BIND10_COMPONENT_FAILED, self.name(), self.pid(),
                      exit_str)
-        if not self.running():
+        if not self.is_running():
             raise ValueError("Can't fail component that isn't running")
-        self.__state = STATE_STOPPED
+        self.__state = STATE_RESTARTING # tentatively set, maybe changed to DEAD
         self._failed_internal()
         # If it is a core component or the needed component failed to start
         # (including it stopped really soon)
@@ -284,7 +286,7 @@ class BaseComponent:
         else:
             return False
 
-    def running(self):
+    def is_running(self):
         """
         Informs if the component is currently running. It assumes the failed
         is called whenever the component really fails and there might be some
@@ -295,6 +297,15 @@ class BaseComponent:
         It is not expected for this method to be overriden.
         """
         return self.__state == STATE_RUNNING
+
+    def is_restarting(self):
+        """Informs if the component has failed and is waiting for a restart.
+
+        Unlike the case of is_running(), if this returns True it always means
+        the corresponding process has died and not yet restarted.
+
+        """
+        return self.__state == STATE_RESTARTING
 
     def _start_internal(self):
         """
@@ -560,6 +571,13 @@ class Configurator:
         self._running = False
         self.__reconfigure_internal(self._components, {})
 
+    def has_component(self, component):
+        '''Return if a specified component is configured.'''
+        # Values of self._components are tuples of (config, component).
+        # Extract the components of the tuples and see if the given one
+        # is included.
+        return component in map(lambda x: x[1], self._components.values())
+
     def reconfigure(self, configuration):
         """
         Changes configuration from the current one to the provided. It
@@ -591,7 +609,7 @@ class Configurator:
         for cname in old.keys():
             if cname not in new:
                 component = self._components[cname][1]
-                if component.running():
+                if component.is_running() or component.is_restarting():
                     plan.append({
                         'command': STOP_CMD,
                         'component': component,
@@ -674,7 +692,7 @@ class Configurator:
                     self._components[task['name']] = (task['config'],
                                                       component)
                 elif command == STOP_CMD:
-                    if component.running():
+                    if component.is_running():
                         component.stop()
                     del self._components[task['name']]
                 else:

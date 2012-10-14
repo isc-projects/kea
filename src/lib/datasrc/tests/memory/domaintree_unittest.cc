@@ -256,8 +256,8 @@ TEST_F(DomainTreeTest, subTreeRoot) {
 
     // "g.h" is not a subtree root
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
-              dtree_expose_empty_node.find(Name("g.h"), &dtnode));
-    EXPECT_FALSE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
+              dtree_expose_empty_node.find(Name("g.h"), &cdtnode));
+    EXPECT_FALSE(cdtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
 
     // fission the node "g.h"
     EXPECT_EQ(TestDomainTree::ALREADYEXISTS,
@@ -270,8 +270,8 @@ TEST_F(DomainTreeTest, subTreeRoot) {
 
     // "g.h" should be a subtree root now.
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
-              dtree_expose_empty_node.find(Name("g.h"), &dtnode));
-    EXPECT_TRUE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
+              dtree_expose_empty_node.find(Name("g.h"), &cdtnode));
+    EXPECT_TRUE(cdtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
 }
 
 TEST_F(DomainTreeTest, additionalNodeFission) {
@@ -286,8 +286,8 @@ TEST_F(DomainTreeTest, additionalNodeFission) {
 
     // "t.0" is not a subtree root
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
-              dtree_expose_empty_node.find(Name("t.0"), &dtnode));
-    EXPECT_FALSE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
+              dtree_expose_empty_node.find(Name("t.0"), &cdtnode));
+    EXPECT_FALSE(cdtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
 
     // fission the node "t.0"
     EXPECT_EQ(TestDomainTree::ALREADYEXISTS,
@@ -300,8 +300,8 @@ TEST_F(DomainTreeTest, additionalNodeFission) {
 
     // "t.0" should be a subtree root now.
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
-              dtree_expose_empty_node.find(Name("t.0"), &dtnode));
-    EXPECT_TRUE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
+              dtree_expose_empty_node.find(Name("t.0"), &cdtnode));
+    EXPECT_TRUE(cdtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
 }
 
 TEST_F(DomainTreeTest, findName) {
@@ -328,10 +328,10 @@ TEST_F(DomainTreeTest, findName) {
     EXPECT_EQ(TestDomainTree::PARTIALMATCH,
               dtree_expose_empty_node.find(Name("m.d.e.f"), &cdtnode));
 
-    // find dtnode
+    // find cdtnode
     EXPECT_EQ(TestDomainTree::EXACTMATCH, dtree.find(Name("q.w.y.d.e.f"),
-                                                   &dtnode));
-    EXPECT_EQ(Name("q"), dtnode->getName());
+                                                   &cdtnode));
+    EXPECT_EQ(Name("q"), cdtnode->getName());
 }
 
 TEST_F(DomainTreeTest, findError) {
@@ -411,11 +411,12 @@ performCallbackTest(TestDomainTree& dtree,
                                                         Name("example"),
                                                         &parentdtnode));
     // the child/parent nodes shouldn't "inherit" the callback flag.
-    // "dtnode" may be invalid due to the insertion, so we need to re-find
-    // it.
+    // "dtnode" should still validly point to "callback.example", but we
+    // explicitly confirm it.
     EXPECT_EQ(TestDomainTree::EXACTMATCH, dtree.find(Name("callback.example"),
-                                                   &dtnode));
-    EXPECT_TRUE(dtnode->getFlag(TestDomainTreeNode::FLAG_CALLBACK));
+                                                     &cdtnode));
+    ASSERT_EQ(dtnode, cdtnode);
+    EXPECT_TRUE(cdtnode->getFlag(TestDomainTreeNode::FLAG_CALLBACK));
     EXPECT_FALSE(subdtnode->getFlag(TestDomainTreeNode::FLAG_CALLBACK));
     EXPECT_FALSE(parentdtnode->getFlag(TestDomainTreeNode::FLAG_CALLBACK));
 
