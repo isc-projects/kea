@@ -46,6 +46,7 @@ using namespace isc::dns::rdata;
 using namespace isc::datasrc;
 using namespace isc::datasrc::memory;
 using namespace isc::testutils;
+using std::vector;
 
 namespace {
 
@@ -121,6 +122,34 @@ public:
     {
         return (ZoneIteratorPtr(new MockIterator(rrset_data_ptr,
                                                  pass_empty_rrsig)));
+    }
+};
+
+class MockVectorIterator : public ZoneIterator {
+private:
+    MockVectorIterator(const vector<ConstRRsetPtr>& rrsets) :
+        rrsets_(rrsets),
+        counter_(0)
+    {}
+
+    const vector<ConstRRsetPtr> rrsets_;
+    int counter_;
+
+public:
+    virtual ConstRRsetPtr getNextRRset() {
+        if (counter_ >= rrsets_.size()) {
+             return (ConstRRsetPtr());
+        }
+
+        return (rrsets_[counter_++]);
+    }
+
+    virtual ConstRRsetPtr getSOA() const {
+        isc_throw(isc::NotImplemented, "Not implemented");
+    }
+
+    static ZoneIteratorPtr makeIterator(const vector<ConstRRsetPtr>& rrsets) {
+        return (ZoneIteratorPtr(new MockVectorIterator(rrsets)));
     }
 };
 
