@@ -48,9 +48,9 @@ struct EmptyZone : public InvalidParameter {
 /// \param zone_name The name of the zone that is being loaded.
 /// \param zone_file Filename which contains the zone data for \c zone_name.
 ZoneData* loadZoneData(util::MemorySegment& mem_sgmt,
-		       const isc::dns::RRClass rrclass,
-		       const isc::dns::Name& zone_name,
-		       const std::string& zone_file);
+                       const isc::dns::RRClass rrclass,
+                       const isc::dns::Name& zone_name,
+                       const std::string& zone_file);
 
 /// \brief Create and return a ZoneData instance populated from the
 /// \c iterator.
@@ -65,9 +65,9 @@ ZoneData* loadZoneData(util::MemorySegment& mem_sgmt,
 /// \param zone_name The name of the zone that is being loaded.
 /// \param iterator Iterator that returns RRsets to load into the zone.
 ZoneData* loadZoneData(util::MemorySegment& mem_sgmt,
-		       const isc::dns::RRClass rrclass,
-		       const isc::dns::Name& zone_name,
-		       ZoneIterator& iterator);
+                       const isc::dns::RRClass rrclass,
+                       const isc::dns::Name& zone_name,
+                       ZoneIterator& iterator);
 
 } // namespace memory
 } // namespace datasrc
