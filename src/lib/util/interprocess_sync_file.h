@@ -86,7 +86,9 @@ private:
     int fd_; ///< The descriptor for the open file
 
     typedef boost::shared_ptr<isc::util::thread::Mutex> MutexPtr;
-    MutexPtr mutex_; ///< A mutex for mutual exclusion among threads
+    typedef boost::shared_ptr<isc::util::thread::Mutex::Locker> LockerPtr;
+    MutexPtr mutex_;   ///< A mutex for mutual exclusion among threads
+    LockerPtr locker_; ///< A locker on mutex_
 };
 
 } // namespace util
