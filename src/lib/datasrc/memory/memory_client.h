@@ -183,8 +183,8 @@ private:
     // Common process for zone load. Registers filename internally and
     // adds the ZoneData to the ZoneTable.
     result::Result loadInternal(const isc::dns::Name& zone_name,
-				const std::string& filename,
-				ZoneData* zone_data);
+                                const std::string& filename,
+                                ZoneData* zone_data);
 
     util::MemorySegment& mem_sgmt_;
     const isc::dns::RRClass rrclass_;
