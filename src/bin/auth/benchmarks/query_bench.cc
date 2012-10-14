@@ -18,6 +18,8 @@
 #include <bench/benchmark_util.h>
 
 #include <util/buffer.h>
+#include <util/threads/lock.h>
+
 #include <dns/message.h>
 #include <dns/name.h>
 #include <dns/question.h>
@@ -125,13 +127,15 @@ public:
                           OutputBuffer& buffer) :
         QueryBenchMark(queries, query_message, buffer)
     {
-        configureDataSource(
-            *server_,
-            Element::fromJSON("{\"IN\":"
-                              "  [{\"type\": \"sqlite3\","
-                              "    \"params\": {"
-                              "      \"database_file\": \"" +
-                              string(datasrc_file) + "\"}}]}"));
+        isc::util::thread::Mutex::Locker locker(
+                server_->getDataSrcClientListMutex());
+        server_->swapDataSrcClientLists(
+            configureDataSource(
+                Element::fromJSON("{\"IN\":"
+                                  "  [{\"type\": \"sqlite3\","
+                                  "    \"params\": {"
+                                  "      \"database_file\": \"" +
+                                  string(datasrc_file) + "\"}}]}")));
     }
 };
 
@@ -144,14 +148,16 @@ public:
                          OutputBuffer& buffer) :
         QueryBenchMark(queries, query_message, buffer)
     {
-        configureDataSource(
-            *server_,
-            Element::fromJSON("{\"IN\":"
-                              "  [{\"type\": \"MasterFiles\","
-                              "    \"cache-enable\": true, "
-                              "    \"params\": {\"" +
-                              string(zone_origin) + "\": \"" +
-                              string(zone_file) + "\"}}]}"));
+        isc::util::thread::Mutex::Locker locker(
+                server_->getDataSrcClientListMutex());
+        server_->swapDataSrcClientLists(
+            configureDataSource(
+                Element::fromJSON("{\"IN\":"
+                                  "  [{\"type\": \"MasterFiles\","
+                                  "    \"cache-enable\": true, "
+                                  "    \"params\": {\"" +
+                                  string(zone_origin) + "\": \"" +
+                                  string(zone_file) + "\"}}]}")));
     }
 };
 

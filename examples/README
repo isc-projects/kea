@@ -7,7 +7,7 @@ this directory.
 
 On the top (sub) directory (where this README file is stored), we
 provide a sample configure.ac and Makefile.am files for GNU automake
-environments with helper autoconf macros to detect the available and
+environments with helper autoconf macros to detect the availability and
 location of BIND 10 header files and library objects.
 
 You can use the configure.ac and Makefile.am files with macros under

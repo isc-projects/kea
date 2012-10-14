@@ -41,6 +41,50 @@ bool Subnet::inRange(const isc::asiolink::IOAddress& addr) const {
     return ((first <= addr) && (addr <= last));
 }
 
+Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
+                 const Triplet<uint32_t>& t1,
+                 const Triplet<uint32_t>& t2,
+                 const Triplet<uint32_t>& valid_lifetime)
+    :Subnet(prefix, length, t1, t2, valid_lifetime) {
+    if (prefix.getFamily() != AF_INET) {
+        isc_throw(BadValue, "Non IPv4 prefix " << prefix.toText()
+                  << " specified in subnet4");
+    }
+}
+
+void Subnet4::addPool4(const Pool4Ptr& pool) {
+    IOAddress first_addr = pool->getFirstAddress();
+    IOAddress last_addr = pool->getLastAddress();
+
+    if (!inRange(first_addr) || !inRange(last_addr)) {
+        isc_throw(BadValue, "Pool4 (" << first_addr.toText() << "-" << last_addr.toText()
+                  << " does not belong in this (" << prefix_ << "/" << prefix_len_
+                  << ") subnet4");
+    }
+
+    /// @todo: Check that pools do not overlap
+
+    pools_.push_back(pool);
+}
+
+Pool4Ptr Subnet4::getPool4(const isc::asiolink::IOAddress& hint /* = IOAddress("::")*/ ) {
+    Pool4Ptr candidate;
+    for (Pool4Collection::iterator pool = pools_.begin(); pool != pools_.end(); ++pool) {
+
+        // if we won't find anything better, then let's just use the first pool
+        if (!candidate) {
+            candidate = *pool;
+        }
+
+        // if the client provided a pool and there's a pool that hint is valid in,
+        // then let's use that pool
+        if ((*pool)->inRange(hint)) {
+            return (*pool);
+        }
+    }
+    return (candidate);
+}
+
 Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t1,
                  const Triplet<uint32_t>& t2,

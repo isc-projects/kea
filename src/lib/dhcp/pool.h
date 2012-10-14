@@ -91,6 +91,33 @@ protected:
     std::string comments_;
 };
 
+/// @brief Pool information for IPv4 addresses
+///
+/// It holds information about pool4, i.e. a range of IPv4 address space that
+/// is configured for DHCP allocation.
+class Pool4 : public Pool {
+public:
+    /// @brief the constructor for Pool4 "min-max" style definition
+    ///
+    /// @param first the first address in a pool
+    /// @param last the last address in a pool
+    Pool4(const isc::asiolink::IOAddress& first,
+          const isc::asiolink::IOAddress& last);
+
+    /// @brief the constructor for Pool4 "prefix/len" style definition
+    ///
+    /// @param prefix specifies prefix of the pool
+    /// @param prefix_len specifies length of the prefix of the pool
+    Pool4(const isc::asiolink::IOAddress& prefix,
+          uint8_t prefix_len);
+};
+
+/// @brief a pointer an IPv4 Pool
+typedef boost::shared_ptr<Pool4> Pool4Ptr;
+
+/// @brief a container for IPv4 Pools
+typedef std::vector<Pool4Ptr> Pool4Collection;
+
 /// @brief Pool information for IPv6 addresses and prefixes
 ///
 /// It holds information about pool6, i.e. a range of IPv6 address space that
