@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/interprocess_sync_file.h>
+#include "interprocess_sync_file.h"
 
 #include <boost/weak_ptr.hpp>
 
