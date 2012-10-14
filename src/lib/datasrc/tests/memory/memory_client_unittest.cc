@@ -153,119 +153,6 @@ public:
     }
 };
 
-class MockIteratorRRSIGMixedCovered : public ZoneIterator {
-private:
-    MockIteratorRRSIGMixedCovered(RRClass rrclass) :
-        rrclass_(rrclass),
-        counter_(0)
-    {}
-
-    RRClass rrclass_;
-    int counter_;
-
-public:
-    virtual ConstRRsetPtr getNextRRset() {
-        RRsetPtr rrset;
-
-        switch (counter_) {
-        case 0:
-            rrset.reset(new RRset(Name("example.org"),
-                                  RRClass::IN(), RRType::SOA(), RRTTL(3600)));
-            rrset->addRdata(generic::SOA(Name("ns1.example.org"),
-                                         Name("bugs.x.w.example.org"),
-                                         2010012601, 3600, 300, 3600000,
-                                         1200));
-            break;
-
-        case 1: {
-            rrset.reset(new RRset(Name("example.org"),
-                                  RRClass::IN(), RRType::A(), RRTTL(3600)));
-            rrset->addRdata(in::A("192.0.2.1"));
-            rrset->addRdata(in::A("192.0.2.2"));
-
-            RRsetPtr rrsig(new RRset(Name("example.org"), rrclass_,
-                                     RRType::RRSIG(), RRTTL(300)));
-            rrsig->addRdata(generic::RRSIG("A 5 3 3600 "
-                                           "20000101000000 20000201000000 "
-                                           "12345 example.org. FAKEFAKEFAKE"));
-            rrsig->addRdata(generic::RRSIG("NS 5 3 3600 "
-                                           "20000101000000 20000201000000 "
-                                           "54321 example.org. "
-                                           "FAKEFAKEFAKEFAKE"));
-            rrset->addRRsig(rrsig);
-            break;
-        }
-
-        default:
-            rrset.reset();
-        }
-
-        if (counter_ < 2) {
-            counter_++;
-        }
-
-        return (rrset);
-    }
-
-    virtual ConstRRsetPtr getSOA() const {
-        isc_throw(isc::NotImplemented, "Not implemented");
-    }
-
-    static ZoneIteratorPtr makeIterator(RRClass rrclass) {
-        return (ZoneIteratorPtr(new MockIteratorRRSIGMixedCovered(rrclass)));
-    }
-};
-
-class MockIteratorEmptyRRset : public ZoneIterator {
-private:
-    MockIteratorEmptyRRset(RRClass rrclass) :
-        rrclass_(rrclass),
-        counter_(0)
-    {}
-
-    RRClass rrclass_;
-    int counter_;
-
-public:
-    virtual ConstRRsetPtr getNextRRset() {
-        RRsetPtr rrset;
-
-        switch (counter_) {
-        case 0:
-            rrset.reset(new RRset(Name("example.org"),
-                                  RRClass::IN(), RRType::SOA(), RRTTL(3600)));
-            rrset->addRdata(generic::SOA(Name("ns1.example.org"),
-                                         Name("bugs.x.w.example.org"),
-                                         2010012601, 3600, 300, 3600000,
-                                         1200));
-            break;
-
-        case 1: {
-            rrset.reset(new RRset(Name("example.org"),
-                                  RRClass::IN(), RRType::A(), RRTTL(3600)));
-            break;
-        }
-
-        default:
-            rrset.reset();
-        }
-
-        if (counter_ < 2) {
-            counter_++;
-        }
-
-        return (rrset);
-    }
-
-    virtual ConstRRsetPtr getSOA() const {
-        isc_throw(isc::NotImplemented, "Not implemented");
-    }
-
-    static ZoneIteratorPtr makeIterator(RRClass rrclass) {
-        return (ZoneIteratorPtr(new MockIteratorEmptyRRset(rrclass)));
-    }
-};
-
 class MemoryClientTest : public ::testing::Test {
 protected:
     MemoryClientTest() : zclass_(RRClass::IN()),
@@ -693,9 +580,36 @@ TEST_F(MemoryClientTest, loadRRSIGs) {
 }
 
 TEST_F(MemoryClientTest, loadRRSIGsRdataMixedCoveredTypes) {
+    vector<ConstRRsetPtr> rrsets_vec;
+
+    RRsetPtr rrset(new RRset(Name("example.org"),
+                             zclass_, RRType::SOA(), RRTTL(3600)));
+    rrset->addRdata(generic::SOA(Name("ns1.example.org"),
+                                 Name("bugs.x.w.example.org"),
+                                 2010012601, 3600, 300, 3600000, 1200));
+    rrsets_vec.push_back(rrset);
+
+    rrset.reset(new RRset(Name("example.org"),
+                          zclass_, RRType::A(), RRTTL(3600)));
+    rrset->addRdata(in::A("192.0.2.1"));
+    rrset->addRdata(in::A("192.0.2.2"));
+
+    RRsetPtr rrsig(new RRset(Name("example.org"), zclass_,
+                             RRType::RRSIG(), RRTTL(300)));
+    rrsig->addRdata(generic::RRSIG("A 5 3 "
+                                   "3600 20000101000000 20000201000000 "
+                                   "12345 example.org. FAKEFAKEFAKE"));
+    rrsig->addRdata(generic::RRSIG("NS 5 3 "
+                                   "3600 20000101000000 20000201000000 "
+                                   "54321 example.org. "
+                                   "FAKEFAKEFAKEFAKE"));
+    rrset->addRRsig(rrsig);
+
+    rrsets_vec.push_back(rrset);
+
     EXPECT_THROW(
         client_->load(Name("example.org"),
-                      *MockIteratorRRSIGMixedCovered::makeIterator(zclass_)),
+                      *MockVectorIterator::makeIterator(rrsets_vec)),
         ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
@@ -790,9 +704,22 @@ TEST_F(MemoryClientTest, getIteratorGetSOAThrowsNotImplemented) {
 }
 
 TEST_F(MemoryClientTest, addEmptyRRsetThrows) {
+    vector<ConstRRsetPtr> rrsets_vec;
+
+    RRsetPtr rrset(new RRset(Name("example.org"),
+                             zclass_, RRType::SOA(), RRTTL(3600)));
+    rrset->addRdata(generic::SOA(Name("ns1.example.org"),
+                                 Name("bugs.x.w.example.org"),
+                                 2010012601, 3600, 300, 3600000, 1200));
+    rrsets_vec.push_back(rrset);
+
+    rrset.reset(new RRset(Name("example.org"),
+                          zclass_, RRType::A(), RRTTL(3600)));
+    rrsets_vec.push_back(rrset);
+
     EXPECT_THROW(
         client_->load(Name("example.org"),
-                      *MockIteratorEmptyRRset::makeIterator(zclass_)),
+                      *MockVectorIterator::makeIterator(rrsets_vec)),
         ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
