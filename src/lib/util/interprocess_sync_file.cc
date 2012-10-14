@@ -34,7 +34,6 @@ namespace util {
 namespace { // unnamed namespace
 
 typedef std::map<std::string, boost::weak_ptr<Mutex> > SyncMap;
-typedef boost::shared_ptr<Mutex> MutexPtr;
 
 Mutex sync_map_mutex;
 SyncMap sync_map;
@@ -69,9 +68,11 @@ InterprocessSyncFile::~InterprocessSyncFile() {
 
     Mutex::Locker locker(sync_map_mutex);
 
-    // Unref the shared mutex first.
+    // Unref the shared mutex.
+    locker_.reset();
     mutex_.reset();
 
+    // Remove name from the map if it is unused anymore.
     SyncMap::iterator it = sync_map.find(task_name_);
     assert(it != sync_map.end());
 
@@ -139,20 +140,15 @@ InterprocessSyncFile::lock() {
     }
 
     // First grab the thread lock...
-    mutex_->lock();
+    LockerPtr locker(new Mutex::Locker(*mutex_));
 
     // ... then the file lock.
-    try {
-        if (do_lock(F_SETLKW, F_WRLCK)) {
-            is_locked_ = true;
-            return (true);
-        }
-    } catch (...) {
-        mutex_->unlock();
-        throw;
+    if (do_lock(F_SETLKW, F_WRLCK)) {
+        is_locked_ = true;
+        locker_ = locker;
+        return (true);
     }
 
-    mutex_->unlock();
     return (false);
 }
 
@@ -163,23 +159,20 @@ InterprocessSyncFile::tryLock() {
     }
 
     // First grab the thread lock...
-    if (!mutex_->tryLock()) {
+    LockerPtr locker;
+    try {
+        locker.reset(new Mutex::Locker(*mutex_, false));
+    } catch (const Mutex::Locker::AlreadyLocked&) {
         return (false);
     }
 
     // ... then the file lock.
-    try {
-        // ... then the file lock.
-        if (do_lock(F_SETLK, F_WRLCK)) {
-            is_locked_ = true;
-            return (true);
-        }
-    } catch (...) {
-        mutex_->unlock();
-        throw;
+    if (do_lock(F_SETLK, F_WRLCK)) {
+        is_locked_ = true;
+        locker_ = locker;
+        return (true);
     }
 
-    mutex_->unlock();
     return (false);
 }
 
@@ -194,7 +187,7 @@ InterprocessSyncFile::unlock() {
         return (false);
     }
 
-    mutex_->unlock();
+    locker_.reset();
     is_locked_ = false;
     return (true);
 }
