@@ -16,6 +16,7 @@ CLEANFILES = *.gcno *.gcda
 lib_LTLIBRARIES = libb10-dhcp++.la libb10-dhcpsrv.la
 libb10_dhcp___la_SOURCES  =
 libb10_dhcp___la_SOURCES += libdhcp++.cc libdhcp++.h
+libb10_dhcp___la_SOURCES += lease_mgr.cc lease_mgr.h
 libb10_dhcp___la_SOURCES += iface_mgr.cc iface_mgr.h
 libb10_dhcp___la_SOURCES += iface_mgr_linux.cc
 libb10_dhcp___la_SOURCES += iface_mgr_bsd.cc
@@ -28,6 +29,7 @@ libb10_dhcp___la_SOURCES += option4_addrlst.cc option4_addrlst.h
 libb10_dhcp___la_SOURCES += dhcp6.h dhcp4.h
 libb10_dhcp___la_SOURCES += pkt6.cc pkt6.h
 libb10_dhcp___la_SOURCES += pkt4.cc pkt4.h
+libb10_dhcp___la_SOURCES += duid.cc duid.h
 
 libb10_dhcpsrv_la_SOURCES  = cfgmgr.cc cfgmgr.h
 libb10_dhcpsrv_la_SOURCES += pool.cc pool.h

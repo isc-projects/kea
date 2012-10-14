@@ -34,6 +34,38 @@ namespace {
 
 // This test verifies if the configuration manager is able to hold and return
 // valid leases
+TEST(CfgMgrTest, subnet4) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    ASSERT_TRUE(&cfg_mgr != 0);
+
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+
+    // there shouldn't be any subnet configured at this stage
+    EXPECT_EQ( Subnet4Ptr(), cfg_mgr.getSubnet4(IOAddress("192.0.2.0")));
+
+    cfg_mgr.addSubnet4(subnet1);
+
+    // Now we have only one subnet, any request will be served from it
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet4(IOAddress("192.0.2.63")));
+
+    // Now we add more subnets and check that both old and new subnets
+    // are accessible.
+    cfg_mgr.addSubnet4(subnet2);
+    cfg_mgr.addSubnet4(subnet3);
+
+    EXPECT_EQ(subnet3, cfg_mgr.getSubnet4(IOAddress("192.0.2.191")));
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet4(IOAddress("192.0.2.15")));
+    EXPECT_EQ(subnet2, cfg_mgr.getSubnet4(IOAddress("192.0.2.85")));
+
+    // Try to find an address that does not belong to any subnet
+    EXPECT_EQ(Subnet4Ptr(), cfg_mgr.getSubnet4(IOAddress("192.0.2.192")));
+}
+
+// This test verifies if the configuration manager is able to hold and return
+// valid leases
 TEST(CfgMgrTest, subnet6) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
 
@@ -58,6 +90,10 @@ TEST(CfgMgrTest, subnet6) {
     EXPECT_EQ(subnet2, cfg_mgr.getSubnet6(IOAddress("3000::dead:beef")));
     EXPECT_EQ(Subnet6Ptr(), cfg_mgr.getSubnet6(IOAddress("5000::1")));
 
+    cfg_mgr.deleteSubnets6();
+    EXPECT_EQ(Subnet6Ptr(), cfg_mgr.getSubnet6(IOAddress("200::123")));
+    EXPECT_EQ(Subnet6Ptr(), cfg_mgr.getSubnet6(IOAddress("3000::123")));
+    EXPECT_EQ(Subnet6Ptr(), cfg_mgr.getSubnet6(IOAddress("4000::123")));
 }
 
 } // end of anonymous namespace
