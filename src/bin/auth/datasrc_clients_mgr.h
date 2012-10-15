@@ -89,17 +89,19 @@ public:
     {}
     ~DataSrcClientsMgrBase() {}
     void shutdown() {
-        {
-            using namespace internal;
-            typename MutexType::Locker locker(queue_mutex_);
-            command_queue_.push_back(Command(SHUTDOWN,
-                                             data::ConstElementPtr()));
-        }
-        cond_.signal();
+        sendCommand(internal::SHUTDOWN, data::ConstElementPtr());
         builder_thread_.wait();
     }
 
 private:
+    void sendCommand(internal::CommandID command, data::ConstElementPtr arg) {
+        {
+            typename MutexType::Locker locker(queue_mutex_);
+            command_queue_.push_back(internal::Command(command, arg));
+        }
+        cond_.signal();
+    }
+
     std::list<internal::Command> command_queue_;
     CondVarType cond_;
     MutexType queue_mutex_;
