@@ -137,7 +137,7 @@ signalAndWait(CondVar* condvar, Mutex* mutex) {
     condvar->wait(*mutex);
 }
 
-TEST_F(CondVarTest, bad) {
+TEST_F(CondVarTest, destroyWhileWait) {
     // We'll destroy a CondVar object while the thread is still waiting
     // on it.  This will trigger an assertion failure.
     EXPECT_DEATH_IF_SUPPORTED({
