@@ -152,7 +152,7 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
             self.send_error(404)
             logger.error(STATHTTPD_SERVER_DATAERROR, err)
             return None
-        except StatsHttpdError as err:
+        except Exception as err:
             self.send_error(500)
             logger.error(STATHTTPD_SERVER_ERROR, err)
             return None
