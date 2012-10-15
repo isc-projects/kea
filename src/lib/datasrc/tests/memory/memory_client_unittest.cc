@@ -582,22 +582,17 @@ TEST_F(MemoryClientTest, loadRRSIGs) {
 TEST_F(MemoryClientTest, loadRRSIGsRdataMixedCoveredTypes) {
     vector<ConstRRsetPtr> rrsets_vec;
 
-    RRsetPtr rrset(new RRset(Name("example.org"),
-                             zclass_, RRType::SOA(), RRTTL(3600)));
-    rrset->addRdata(generic::SOA(Name("ns1.example.org"),
-                                 Name("bugs.x.w.example.org"),
-                                 2010012601, 3600, 300, 3600000, 1200));
-    rrsets_vec.push_back(rrset);
-
-    rrset.reset(new RRset(Name("example.org"),
-                          zclass_, RRType::A(), RRTTL(3600)));
-    rrset->addRdata(in::A("192.0.2.1"));
-    rrset->addRdata(in::A("192.0.2.2"));
-
-    RRsetPtr rrsig(new RRset(Name("example.org"), zclass_,
-                             RRType::RRSIG(), RRTTL(300)));
-    rrsig->addRdata(generic::RRSIG("A 5 3 3600 20000101000000 20000201000000 "
-                                   "12345 example.org. FAKEFAKEFAKE"));
+    rrsets_vec.push_back(textToRRset("example.org. 3600 IN SOA "
+                                     "ns1.example.org. bugs.x.w.example.org. "
+                                     "2010012601 3600 300 3600000 1200",
+                                     zclass_, Name("example.org")));
+    RRsetPtr rrset(textToRRset("example.org. 3600 IN A 192.0.2.1\n"
+                               "example.org. 3600 IN A 192.0.2.2\n"));
+    RRsetPtr rrsig(textToRRset("example.org. 300 IN RRSIG "
+                               "A 5 3 3600 20000101000000 20000201000000 "
+                               "12345 example.org. FAKEFAKEFAKE"));
+    // textToRRset (correctly) consider this RDATA belongs to a different
+    // RRSIG, so we need to manually add it.
     rrsig->addRdata(generic::RRSIG("NS 5 3 3600 20000101000000 20000201000000 "
                                    "54321 example.org. FAKEFAKEFAKEFAKE"));
     rrset->addRRsig(rrsig);
@@ -702,17 +697,12 @@ TEST_F(MemoryClientTest, getIteratorGetSOAThrowsNotImplemented) {
 
 TEST_F(MemoryClientTest, addEmptyRRsetThrows) {
     vector<ConstRRsetPtr> rrsets_vec;
-
-    RRsetPtr rrset(new RRset(Name("example.org"),
-                             zclass_, RRType::SOA(), RRTTL(3600)));
-    rrset->addRdata(generic::SOA(Name("ns1.example.org"),
-                                 Name("bugs.x.w.example.org"),
-                                 2010012601, 3600, 300, 3600000, 1200));
-    rrsets_vec.push_back(rrset);
-
-    rrset.reset(new RRset(Name("example.org"),
-                          zclass_, RRType::A(), RRTTL(3600)));
-    rrsets_vec.push_back(rrset);
+    rrsets_vec.push_back(textToRRset("example.org. 3600 IN SOA "
+                                     "ns1.example.org. bugs.x.w.example.org. "
+                                     "2010012601 3600 300 3600000 1200",
+                                     zclass_, Name("example.org")));
+    rrsets_vec.push_back(RRsetPtr(new RRset(Name("example.org"), zclass_,
+                                            RRType::A(), RRTTL(3600))));
 
     EXPECT_THROW(
         client_->load(Name("example.org"),
