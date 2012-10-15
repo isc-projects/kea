@@ -1225,7 +1225,9 @@ ForwardQuery::ForwardQuery(IOService& io,
         OutputBufferPtr buffer,
         isc::resolve::ResolverInterface::CallbackPtr cb,
         int query_timeout, int client_timeout, int lookup_timeout) {
-    fqi_ = new ForwardQueryImpl(io, query_message, answer_message, upstream, buffer, cb, query_timeout, client_timeout, lookup_timeout);
+    fqi_ = new ForwardQueryImpl(io, query_message, answer_message,
+                                upstream, buffer, cb, query_timeout,
+                                client_timeout, lookup_timeout);
 }
 
 ForwardQuery::~ForwardQuery() {
@@ -1244,7 +1246,10 @@ RunningQuery::RunningQuery(isc::asiolink::IOService& io,
         isc::cache::ResolverCache& cache,
         boost::shared_ptr<RttRecorder>& recorder)
 {
-    rqi_ = new RunningQueryImpl(io, question, answer_message, test_server, buffer, cb, query_timeout, client_timeout, lookup_timeout, retries, nsas, cache, recorder);
+    rqi_ = new RunningQueryImpl(io, question, answer_message, test_server,
+                                buffer, cb, query_timeout, client_timeout,
+                                lookup_timeout, retries, nsas, cache,
+                                recorder);
 }
 
 RunningQuery::~RunningQuery() {
