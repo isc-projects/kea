@@ -133,7 +133,7 @@ private:
 ///
 /// This class provides a simple encapsulation of condition variable for
 /// inter-thread synchronization.  It has similar but simplified interface as
-/// that for \c pthread_bond_ variants.
+/// that for \c pthread_cond_ variants.
 ///
 /// It uses the \c Mutex class object for the mutex used with the condition
 /// variable.  Since for normal applications the internal \c Mutex::Locker
@@ -172,7 +172,7 @@ public:
 
     /// \brief Destructor.
     ///
-    /// An object of this class must not be destructed while some thread
+    /// An object of this class must not be destroyed while some thread
     /// is waiting on it.  If this condition isn't met the destructor will
     /// terminate the program.
     ~CondVar();
@@ -195,7 +195,7 @@ public:
 
     /// \brief Unblock a thread waiting for the condition variable.
     ///
-    /// This method waits one of other threads (if any) waiting on this object
+    /// This method wakes one of other threads (if any) waiting on this object
     /// via the \c wait() call.
     ///
     /// This method never throws; if some unexpected low level error happens
