@@ -128,9 +128,14 @@ Mutex::lock() {
 }
 
 void
-Mutex::preUnlockAction() {
+Mutex::preUnlockAction(bool throw_ok) {
     if (impl_->locked_count == 0) {
-        isc_throw(isc::InvalidOperation, "Unlock attempt for unlocked mutex");
+        if (throw_ok) {
+            isc_throw(isc::InvalidOperation,
+                      "Unlock attempt for unlocked mutex");
+        } else {
+            assert(false);
+        }
     }
     --impl_->locked_count;
 }
@@ -138,7 +143,7 @@ Mutex::preUnlockAction() {
 void
 Mutex::unlock() {
     assert(impl_ != NULL);
-    preUnlockAction();          // Only in debug mode
+    preUnlockAction(false);     // Only in debug mode.  Ensure no throw.
     const int result = pthread_mutex_unlock(&impl_->mutex);
     assert(result == 0); // This should never be possible
 }
@@ -181,7 +186,7 @@ CondVar::~CondVar() {
 
 void
 CondVar::wait(Mutex& mutex) {
-    mutex.preUnlockAction();    // Only in debug mode
+    mutex.preUnlockAction(true);    // Only in debug mode
     const int result = pthread_cond_wait(&impl_->cond_, &mutex.impl_->mutex);
     mutex.postLockAction();     // Only in debug mode
 

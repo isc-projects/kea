@@ -116,7 +116,12 @@ private:
 
     // Commonly called before releasing the lock, checking and updating
     // internal state for debug.
-    void preUnlockAction();
+    //
+    // If throw_ok is true, it throws \c isc::InvalidOperation when the check
+    // fails; otherwise it aborts the process.  This parameter must be set
+    // to false if the call to this shouldn't result in an exception (e.g.
+    // when called from a destructor).
+    void preUnlockAction(bool throw_ok);
 
     class Impl;
     Impl* impl_;
