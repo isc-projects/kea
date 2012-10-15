@@ -25,10 +25,7 @@ using namespace isc::auth;
 using namespace isc::auth::internal;
 
 namespace {
-class DataSrcClientsMgrTest : public ::testing::Test {
-};
-
-TEST_F(DataSrcClientsMgrTest, start) {
+TEST(DataSrcClientsMgrTest, start) {
     // When we create a manager, builder's run() method should be called.
     FakeDataSrcClientsBuilder::started = false;
     TestDataSrcClientsMgr mgr;
@@ -36,7 +33,7 @@ TEST_F(DataSrcClientsMgrTest, start) {
     EXPECT_TRUE(FakeDataSrcClientsBuilder::command_queue->empty());
 }
 
-TEST_F(DataSrcClientsMgrTest, shutdown) {
+TEST(DataSrcClientsMgrTest, shutdown) {
     // Invoke shutdown on the manager.
     TestDataSrcClientsMgr mgr;
     EXPECT_TRUE(FakeDataSrcClientsBuilder::started);
@@ -56,6 +53,13 @@ TEST_F(DataSrcClientsMgrTest, shutdown) {
     EXPECT_EQ(SHUTDOWN, cmd.first);
     EXPECT_FALSE(cmd.second);
     EXPECT_TRUE(FakeDataSrcClientsBuilder::thread_waited);
+}
+
+TEST(DataSrcClientsMgrTest, realThread) {
+    // Using the non-test definition with a real thread.  Just checking
+    // no disruption happens.
+    DataSrcClientsMgr mgr;
+    mgr.shutdown();
 }
 
 } // unnamed namespace

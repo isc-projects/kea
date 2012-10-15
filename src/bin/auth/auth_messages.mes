@@ -268,3 +268,9 @@ This is a debug message output during the processing of a NOTIFY
 request. The zone manager component has been informed of the request,
 but has returned an error response (which is included in the message). The
 NOTIFY request will not be honored.
+
+% AUTH_DATASRC_CLIENT_BUILDER_STARTED data source builder thread started
+
+% AUTH_DATASRC_CLIENT_BUILDER_STOPPED data source builder thread stopped
+
+% AUTH_DATASRC_CLIENT_BUILDER_COMMAND data source builder received command, ID: %1
