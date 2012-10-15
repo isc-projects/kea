@@ -274,14 +274,14 @@ public:
     /// Client Hardware address
     typedef std::vector<uint8_t> HWAddr;
 
+    /// Database configuration parameter map
+    typedef std::map<std::string, std::string> ParameterMap;
+
     /// @brief The sole lease manager constructor
     ///
-    /// dbconfig is a generic way of passing parameters. Parameters
-    /// are passed in the "name=value" format, separated by spaces.
-    /// Values may be enclosed in double quotes, if needed.
-    ///
-    /// @param dbconfig database configuration
-    LeaseMgr(const std::string& dbconfig);
+    /// @param parameters A data structure relating keywords and values
+    ///        concerned with the database.
+    LeaseMgr(const ParameterMap& parameters);
 
     /// @brief Destructor (closes file)
     virtual ~LeaseMgr();
@@ -472,8 +472,11 @@ protected:
     /// That will be mostly used for storing database name, username,
     /// password and other parameters required for DB access. It is not
     /// intended to keep any DHCP-related parameters.
-    std::map<std::string, std::string> parameters_;
+    ParameterMap parameters_;
 };
+
+/// @brief Pointer to a Lease Manager
+typedef boost::shared_ptr<LeaseMgr> LeaseMgrPtr;
 
 }; // end of isc::dhcp namespace
 
