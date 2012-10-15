@@ -269,8 +269,10 @@ request. The zone manager component has been informed of the request,
 but has returned an error response (which is included in the message). The
 NOTIFY request will not be honored.
 
-% AUTH_DATASRC_CLIENT_BUILDER_STARTED data source builder thread started
+% AUTH_DATASRC_CLIENTS_BUILDER_STARTED data source builder thread started
 
-% AUTH_DATASRC_CLIENT_BUILDER_STOPPED data source builder thread stopped
+% AUTH_DATASRC_CLIENTS_BUILDER_STOPPED data source builder thread stopped
 
-% AUTH_DATASRC_CLIENT_BUILDER_COMMAND data source builder received command, ID: %1
+% AUTH_DATASRC_CLIENTS_BUILDER_COMMAND data source builder received command, ID: %1
+
+% AUTH_DATASRC_CLIENTS_MANAGER_UNEXPECTED_STOP data source clients manager stopped unexpectedly, leaving the builder thread
