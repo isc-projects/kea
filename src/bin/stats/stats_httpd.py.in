@@ -65,8 +65,8 @@ XSL_TEMPLATE_LOCATION = BASE_LOCATION + os.sep + "stats-httpd-xsl.tpl"
 # These variables are paths part of URL.
 # eg. "http://${address}" + XXX_URL_PATH
 XML_URL_PATH = '/bind10/statistics/xml'
-XSD_URL_PATH = '/bind10/statistics/xsd'
-XSL_URL_PATH = '/bind10/statistics/xsl'
+XSD_URL_PATH = '/bind10/statistics.xsd'
+XSL_URL_PATH = '/bind10/statistics.xsl'
 # TODO: This should be considered later.
 XSD_NAMESPACE = 'http://bind10.isc.org/bind10'
 XMLNS_XSI = "http://www.w3.org/2001/XMLSchema-instance"
