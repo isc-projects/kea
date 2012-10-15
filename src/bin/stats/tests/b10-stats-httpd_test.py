@@ -941,89 +941,22 @@ class TestStatsHttpd(unittest.TestCase):
 
     def test_xsl_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
-        self.stats_httpd.get_stats_spec = lambda x,y: \
-            { "Dummy" :
-                  [{
-                        "item_name": "foo",
-                        "item_type": "string",
-                        "item_optional": False,
-                        "item_default": "bar",
-                        "item_description": "foo bar",
-                        "item_title": "Foo"
-                        },
-                   {
-                        "item_name": "foo2",
-                        "item_type": "list",
-                        "item_optional": False,
-                        "item_default": [
-                            {
-                                "zonename" : "test1",
-                                "queries.udp" : 1,
-                                "queries.tcp" : 2
-                                },
-                            {
-                                "zonename" : "test2",
-                                "queries.udp" : 3,
-                                "queries.tcp" : 4
-                                }
-                        ],
-                        "item_title": "Foo bar",
-                        "item_description": "Foo bar",
-                        "list_item_spec": {
-                            "item_name": "foo2-1",
-                            "item_type": "map",
-                            "item_optional": False,
-                            "item_default": {},
-                            "map_item_spec": [
-                                {
-                                    "item_name": "foo2-1-1",
-                                    "item_type": "string",
-                                    "item_optional": False,
-                                    "item_default": "",
-                                    "item_title": "Foo2 1 1",
-                                    "item_description": "Foo bar"
-                                    },
-                                {
-                                    "item_name": "foo2-1-2",
-                                    "item_type": "integer",
-                                    "item_optional": False,
-                                    "item_default": 0,
-                                    "item_title": "Foo2 1 2",
-                                    "item_description": "Foo bar"
-                                    },
-                                {
-                                    "item_name": "foo2-1-3",
-                                    "item_type": "integer",
-                                    "item_optional": False,
-                                    "item_default": 0,
-                                    "item_title": "Foo2 1 3",
-                                    "item_description": "Foo bar"
-                                    }
-                                ]
-                            }
-                        }]
-              }
-        xsl_body1 = self.stats_httpd.open_template(
-            stats_httpd.XSL_TEMPLATE_LOCATION).substitute(
-            xsl_string='<xsl:template match="bind10:statistics"><table><tr><th>Module Name</th><th>Module Item</th></tr><xsl:for-each select="Dummy"><tr><td><a href="' + stats_httpd.XML_URL_PATH + '/Dummy">Dummy</a></td><td><table><tr><th>Item Name</th><th>Item Value</th></tr><tr><td class="title" title="foo bar"><a href="' + stats_httpd.XML_URL_PATH + '/Dummy/foo">Foo</a></td><td><xsl:value-of select="foo" /></td></tr><xsl:for-each select="foo2"><tr><td class="title" title="Foo bar"><a href="' + stats_httpd.XML_URL_PATH + '/Dummy/foo2">Foo bar</a></td><td><table><tr><th>Item Name</th><th>Item Value</th></tr><xsl:for-each select="foo2-1"><tr><td class="title" title="">foo2-1</td><td><table><tr><th>Item Name</th><th>Item Value</th></tr><tr><td class="title" title="Foo bar">Foo2 1 1</td><td><xsl:value-of select="foo2-1-1" /></td></tr><tr><td class="title" title="Foo bar">Foo2 1 2</td><td><xsl:value-of select="foo2-1-2" /></td></tr><tr><td class="title" title="Foo bar">Foo2 1 3</td><td><xsl:value-of select="foo2-1-3" /></td></tr></table></td></tr></xsl:for-each></table></td></tr></xsl:for-each></table></td></tr></xsl:for-each></table></xsl:template>',
-            xsd_namespace=stats_httpd.XSD_NAMESPACE)
-        xsl_body2 = self.stats_httpd.xsl_handler()
-        self.assertEqual(type(xsl_body1), str)
-        self.assertEqual(type(xsl_body2), str)
-        self.assertEqual(xsl_body1, xsl_body2)
-        self.stats_httpd.get_stats_spec = lambda x,y: \
-            { "Dummy" :
-                  [{
-                        "item_name": "bar",
-                        "item_type": "string",
-                        "item_optional": False,
-                        "item_default": "foo",
-                        "item_description": "bar is foo",
-                        "item_title": "bar"
-                        }]
-              }
-        xsl_body2 = self.stats_httpd.xsl_handler()
-        self.assertNotEqual(xsl_body1, xsl_body2)
+        xsl_string = self.stats_httpd.xsl_handler()
+        stats_xsl = xml.etree.ElementTree.fromstring(xsl_string)
+        nst = '{%s}' % XMLNS_XSL
+        nsx = '{%s}' % XMLNS_XHTML
+        self.assertEqual("bind10:statistics", stats_xsl[2].attrib['match'])
+        stats_xsl = stats_xsl[2].find('%stable' % nsx)
+        self.assertEqual('item', stats_xsl[1].attrib['select'])
+        stats_xsl = stats_xsl[1].find('%str' % nsx)
+        self.assertEqual('@uri', stats_xsl[0].find(
+                '%selement/%sattribute/%svalue-of' % ((nst,)*3)).attrib['select'])
+        self.assertEqual('@identifier', stats_xsl[0].find(
+                '%selement/%svalue-of' % ((nst,)*2)).attrib['select'])
+        self.assertEqual('@value', stats_xsl[1].find('%sif' % nst).attrib['test'])
+        self.assertEqual('@value', stats_xsl[1].find('%sif/%svalue-of' % ((nst,)*2)).attrib['select'])
+        self.assertEqual('@description', stats_xsl[2].find('%sif' % nst).attrib['test'])
+        self.assertEqual('@description', stats_xsl[2].find('%sif/%svalue-of' % ((nst,)*2)).attrib['select'])
 
     def test_for_without_B10_FROM_SOURCE(self):
         # just lets it go through the code without B10_FROM_SOURCE env
