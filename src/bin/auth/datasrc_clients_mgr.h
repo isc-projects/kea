@@ -78,11 +78,16 @@ public:
         builder_thread_(boost::bind(&BuilderType::run, &builder_))
     {}
     ~DataSrcClientsMgrBase() {}
-#ifdef notyet
     void shutdown() {
+        {
+            using namespace internal;
+            typename MutexType::Locker locker(queue_mutex_);
+            command_queue_.push_back(Command(SHUTDOWN,
+                                             data::ConstElementPtr()));
+        }
+        cond_.signal();
         builder_thread_.wait();
     }
-#endif
 
 private:
     std::list<internal::Command> command_queue_;

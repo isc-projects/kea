@@ -47,7 +47,7 @@ public:
 
 class TestCondVar {
 public:
-    TestCondVar() : wait_count(0), command_queue_(NULL),
+    TestCondVar() : wait_count(0), signal_count(0), command_queue_(NULL),
                     delayed_command_queue_(NULL)
     {}
     TestCondVar(std::list<Command>& command_queue,
@@ -66,7 +66,11 @@ public:
         // make the delayed commands available
         command_queue_->splice(command_queue_->end(), *delayed_command_queue_);
     }
+    void signal() {
+        ++signal_count;
+    }
     size_t wait_count;
+    size_t signal_count;
 private:
     std::list<Command>* command_queue_;
     std::list<Command>* delayed_command_queue_;
@@ -98,21 +102,31 @@ public:
         FakeDataSrcClientsBuilder::command_queue = command_queue;
         FakeDataSrcClientsBuilder::cond = cond;
         FakeDataSrcClientsBuilder::queue_mutex = queue_mutex;
+        FakeDataSrcClientsBuilder::thread_waited = false;
     }
     void run() {
         FakeDataSrcClientsBuilder::started = true;
     }
 
+    // true iff a builder has started.
     static bool started;
+
+    // These three correspond to the resource shared with the manager.
     static std::list<internal::Command>* command_queue;
     static internal::TestCondVar* cond;
     static internal::TestMutex* queue_mutex;
+
+    // true iff the manager waited on the thread running the builder.
+    static bool thread_waited;
 };
 
 class TestThread {
 public:
     TestThread(const boost::function<void()>& main) {
         main();
+    }
+    void wait() {
+        FakeDataSrcClientsBuilder::thread_waited = true;
     }
 };
 
