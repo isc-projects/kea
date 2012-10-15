@@ -16,6 +16,7 @@
 #define __ZONE_TABLE_SEGMENT_H__
 
 #include <datasrc/memory/zone_table.h>
+#include "load_action.h"
 #include <cc/data.h>
 #include <util/memory_segment.h>
 
@@ -24,8 +25,14 @@
 #include <stdlib.h>
 
 namespace isc {
+// Some forward declarations
+namespace dns {
+class Name;
+class RRClass;
+}
 namespace datasrc {
 namespace memory {
+class ZoneReloader;
 
 /// \brief Memory-management independent entry point that contains a
 /// pointer to a zone table in memory.
@@ -121,6 +128,18 @@ public:
     ///
     /// \param segment The segment to destroy.
     static void destroy(ZoneTableSegment* segment);
+
+    /// \brief Create a reloader corresponding to this segment
+    ///
+    /// This creates a new reloader that can be used to reload zones
+    /// inside this zone table segment.
+    ///
+    /// \param loadAction Callback to provide the actual data.
+    /// \param origin The origin of the zone to reload.
+    /// \param rrclass The class of the zone to reload.
+    virtual ZoneReloader* getZoneReloader(const LoadAction& loadAction,
+                                          const dns::Name& origin,
+                                          const dns::RRClass& rrclass) = 0;
 };
 
 } // namespace memory

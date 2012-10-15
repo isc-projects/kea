@@ -12,16 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef ZONE_RELOADER_H
+#define ZONE_RELOADER_H
+
+#include "load_action.h"
+
 #include <dns/rrclass.h>
 #include <dns/name.h>
 
-#include <boost/function.hpp>
-
 namespace isc {
-// Forward declarations
-namespace util{
-class MemorySegment;
-}
 namespace datasrc {
 namespace memory {
 class ZoneData;
@@ -81,15 +80,6 @@ public:
     virtual void cleanup() = 0;
 };
 
-/// \brief Callback to load data into the memory
-///
-/// This callback should create new ZoneData (allocated from the passed
-/// memory segment) and fill it with relevant loaded data. The caller
-/// of the callback takes ownership of the ZoneData.
-///
-/// It must not return NULL.
-typedef boost::function<ZoneData*(util::MemorySegment&)> LoadAction;
-
 /// \brief Reloader implementation which loads data locally.
 ///
 /// This implementation prepares a clean zone data and lets one callback
@@ -147,3 +137,5 @@ private:
 }
 }
 }
+
+#endif
