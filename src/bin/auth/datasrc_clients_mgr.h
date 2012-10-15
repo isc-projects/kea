@@ -15,9 +15,15 @@
 #ifndef DATASRC_CLIENTS_MGR_H
 #define DATASRC_CLIENTS_MGR_H 1
 
+#include <util/threads/thread.h>
 #include <util/threads/lock.h>
 
+#include <log/logger_support.h>
+#include <log/log_dbglevels.h>
+
 #include <cc/data.h>
+
+#include <auth/auth_log.h>
 
 #include <boost/bind.hpp>
 
@@ -67,6 +73,10 @@ private:
     //boost::shared_ptr<DataSrcClientListMap>* map;
     //MutexType* data_mutex_;
 };
+
+// Shortcut typedef for normal use
+typedef DataSrcClientsBuilderBase<util::thread::Mutex, util::thread::CondVar>
+DataSrcClientsBuilder;
 }
 
 template <typename ThreadType, typename BuilderType, typename MutexType,
@@ -101,6 +111,8 @@ namespace internal {
 template <typename MutexType, typename CondVarType>
 void
 DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
+    LOG_INFO(auth_logger, AUTH_DATASRC_CLIENT_BUILDER_STARTED);
+
     bool keep_running = true;
     while (keep_running) {
         std::list<Command> current_commands;
@@ -119,6 +131,8 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
             current_commands.pop_front();
         }
     }
+
+    LOG_INFO(auth_logger, AUTH_DATASRC_CLIENT_BUILDER_STOPPED);
 }
 
 template <typename MutexType, typename CondVarType>
@@ -126,6 +140,9 @@ bool
 DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
     const Command& command)
 {
+    LOG_DEBUG(auth_logger, DBGLVL_TRACE_BASIC,
+              AUTH_DATASRC_CLIENT_BUILDER_COMMAND).arg(command.first);
+
     switch (command.first) {
     case SHUTDOWN:
         return (false);
@@ -134,8 +151,16 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
     }
     return (true);
 }
-}
+} // namespace internal
 
+/// \brief Shortcut type for normal data source clients manager.
+///
+/// In fact, for non test applications this is the only type of this kind
+/// to be considered.
+typedef DataSrcClientsMgrBase<util::thread::Thread,
+                              internal::DataSrcClientsBuilder,
+                              util::thread::Mutex, util::thread::CondVar>
+DataSrcClientsMgr;
 } // namespace auth
 } // namespace isc
 
