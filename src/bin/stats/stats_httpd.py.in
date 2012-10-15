@@ -121,31 +121,25 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
             req_path = self.path
             req_path = urllib.parse.urlsplit(req_path).path
             req_path = urllib.parse.unquote(req_path)
-            req_path = os.path.normpath(req_path)
-            path_dirs = req_path.split('/')
-            path_dirs = [ d for d in filter(None, path_dirs) ]
-            req_path = '/'+"/".join(path_dirs)
-            module_name = None
-            item_name = None
-            # in case of /bind10/statistics/xxx/YYY/zzz
-            if len(path_dirs) >= 5:
-                item_name = path_dirs[4]
-            # in case of /bind10/statistics/xxx/YYY ...
-            if len(path_dirs) >= 4:
-                module_name = path_dirs[3]
-            if req_path == '/'.join([XML_URL_PATH] + path_dirs[3:5]):
-                body = self.server.xml_handler(module_name, item_name)
-            elif req_path == '/'.join([XSD_URL_PATH] + path_dirs[3:5]):
-                body = self.server.xsd_handler(module_name, item_name)
-            elif req_path == '/'.join([XSL_URL_PATH] + path_dirs[3:5]):
-                body = self.server.xsl_handler(module_name, item_name)
+            body = None
+            if req_path.find('%s/' % XML_URL_PATH) == 0:
+                req_path = os.path.normpath(req_path)
+                req_path = req_path.lstrip('%s/' % XML_URL_PATH)
+                path_dirs = req_path.split('/')
+                path_dirs = [ d for d in filter(None, path_dirs) ]
+                req_path = '/'.join(path_dirs)
+                body = self.server.xml_handler(req_path)
+            elif req_path == XSD_URL_PATH:
+                body = self.server.xsd_handler()
+            elif req_path == XSL_URL_PATH:
+                body = self.server.xsl_handler()
             else:
-                if req_path == '/' and 'Host' in self.headers.keys():
-                    # redirect to XML URL only when requested with '/'
+                if 'Host' in self.headers.keys() and \
+                        ( req_path == '/' or req_path == XML_URL_PATH ):
+                    # redirect to XML URL only when requested with '/' or XML_URL_PATH
+                    toloc = "http://%s%s/" % (self.headers.get('Host'), XML_URL_PATH)
                     self.send_response(302)
-                    self.send_header(
-                        "Location",
-                        "http://" + self.headers.get('Host') + XML_URL_PATH)
+                    self.send_header("Location", toloc)
                     self.end_headers()
                     return None
                 else:
