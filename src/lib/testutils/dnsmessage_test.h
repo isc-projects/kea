@@ -204,7 +204,8 @@ isc::dns::RRsetPtr textToRRset(const std::string& text_rrset,
 template <typename ITERATOR>
 void
 pullSigs(std::vector<isc::dns::ConstRRsetPtr>& rrsets,
-         std::string& text, ITERATOR begin, ITERATOR end) {
+         std::string& text, ITERATOR begin, ITERATOR end)
+{
     for (ITERATOR it = begin; it != end; ++it) {
         rrsets.push_back(*it);
         text += (*it)->toText();
