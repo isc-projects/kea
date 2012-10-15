@@ -15,10 +15,11 @@
 #ifndef DATASRC_CLIENTS_MGR_H
 #define DATASRC_CLIENTS_MGR_H 1
 
-//#include <util/threads/thread.h>
 #include <util/threads/lock.h>
 
 #include <cc/data.h>
+
+#include <boost/bind.hpp>
 
 #include <list>
 #include <utility>
@@ -68,18 +69,27 @@ private:
 };
 }
 
-template <typename ThreadType, typename MutexType, typename CondVarType>
+template <typename ThreadType, typename BuilderType, typename MutexType,
+          typename CondVarType>
 class DataSrcClientsMgrBase {
 public:
-    DataSrcClientsMgrBase() : builder_(&command_queue_, &cond_, &queue_mutex_)
+    DataSrcClientsMgrBase() :
+        builder_(&command_queue_, &cond_, &queue_mutex_),
+        builder_thread_(boost::bind(&BuilderType::run, &builder_))
     {}
     ~DataSrcClientsMgrBase() {}
+#ifdef notyet
+    void shutdown() {
+        builder_thread_.wait();
+    }
+#endif
 
 private:
     std::list<internal::Command> command_queue_;
     CondVarType cond_;
     MutexType queue_mutex_;
-    internal::DataSrcClientsBuilderBase<MutexType, CondVarType> builder_;
+    BuilderType builder_;
+    ThreadType builder_thread_;
 };
 
 namespace internal {
