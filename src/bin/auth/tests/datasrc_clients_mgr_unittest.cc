@@ -12,26 +12,28 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <cc/data.h>
+
+#include <auth/datasrc_clients_mgr.h>
 #include "test_datasrc_clients_mgr.h"
 
-namespace isc {
-namespace auth {
-// Define static DataSrcClientsBuilder member variables.
-bool FakeDataSrcClientsBuilder::started = false;
-std::list<internal::Command>* FakeDataSrcClientsBuilder::command_queue = NULL;
-internal::TestCondVar* FakeDataSrcClientsBuilder::cond = NULL;
-internal::TestMutex* FakeDataSrcClientsBuilder::queue_mutex = NULL;
+#include <gtest/gtest.h>
 
-namespace internal {
-template<>
-void
-TestDataSrcClientsBuilder::doNoop() {
-    ++queue_mutex_->noop_count;
-}
-}
-}
+#include <boost/function.hpp>
+
+using namespace isc::auth;
+using namespace isc::auth::internal;
+
+namespace {
+class DataSrcClientsMgrTest : public ::testing::Test {
+};
+
+TEST_F(DataSrcClientsMgrTest, start) {
+    // When we create a manager, builder's run() method should be called.
+    FakeDataSrcClientsBuilder::started = false;
+    TestDataSrcClientsMgr mgr;
+    EXPECT_TRUE(FakeDataSrcClientsBuilder::started);
+    EXPECT_TRUE(FakeDataSrcClientsBuilder::command_queue->empty());
 }
 
-// Local Variables:
-// mode: c++
-// End:
+} // unnamed namespace
