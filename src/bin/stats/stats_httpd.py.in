@@ -160,6 +160,7 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-type", "text/xml")
             self.send_header("Content-Length", len(body))
+            self.send_header("Last-Modified", self.date_time_string(time.time()))
             self.end_headers()
             return body
 
