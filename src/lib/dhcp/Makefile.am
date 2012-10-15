@@ -17,6 +17,7 @@ lib_LTLIBRARIES = libb10-dhcp++.la libb10-dhcpsrv.la
 libb10_dhcp___la_SOURCES  =
 libb10_dhcp___la_SOURCES += libdhcp++.cc libdhcp++.h
 libb10_dhcp___la_SOURCES += lease_mgr.cc lease_mgr.h
+libb10_dhcp___la_SOURCES += lease_mgr_factory.cc lease_mgr_factory.h
 libb10_dhcp___la_SOURCES += iface_mgr.cc iface_mgr.h
 libb10_dhcp___la_SOURCES += iface_mgr_linux.cc
 libb10_dhcp___la_SOURCES += iface_mgr_bsd.cc

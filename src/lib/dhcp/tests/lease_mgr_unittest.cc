@@ -39,8 +39,9 @@ public:
     /// are passed in the "name=value" format, separated by spaces.
     /// Values may be enclosed in double quotes, if needed.
     ///
-    /// @param dbconfig database configuration
-    Memfile_LeaseMgr(const std::string& dbconfig);
+    /// @param parameters A data structure relating keywords and values
+    ///        concerned with the database.
+    Memfile_LeaseMgr(const LeaseMgr::ParameterMap& parameters);
 
     /// @brief Destructor (closes file)
     virtual ~Memfile_LeaseMgr();
@@ -184,8 +185,8 @@ protected:
 
 };
 
-Memfile_LeaseMgr::Memfile_LeaseMgr(const std::string& dbconfig)
-    : LeaseMgr(dbconfig) {
+Memfile_LeaseMgr::Memfile_LeaseMgr(const LeaseMgr::ParameterMap& parameters)
+    : LeaseMgr(parameters) {
 }
 
 Memfile_LeaseMgr::~Memfile_LeaseMgr() {
@@ -271,19 +272,16 @@ public:
 
 // This test checks if the LeaseMgr can be instantiated and that it
 // parses parameters string properly.
-TEST_F(LeaseMgrTest, constructor) {
+TEST_F(LeaseMgrTest, getParameter) {
 
-    // should not throw any exceptions here
-    Memfile_LeaseMgr * leaseMgr = new Memfile_LeaseMgr("");
-    delete leaseMgr;
+    LeaseMgr::ParameterMap pmap;
+    pmap[std::string("param1")] = std::string("value1");
+    pmap[std::string("param2")] = std::string("value2");
+    Memfile_LeaseMgr leasemgr(pmap);
 
-    leaseMgr = new Memfile_LeaseMgr("param1=value1 param2=value2");
-
-    EXPECT_EQ("value1", leaseMgr->getParameter("param1"));
-    EXPECT_EQ("value2", leaseMgr->getParameter("param2"));
-    EXPECT_THROW(leaseMgr->getParameter("param3"), BadValue);
-
-    delete leaseMgr;
+    EXPECT_EQ("value1", leasemgr.getParameter("param1"));
+    EXPECT_EQ("value2", leasemgr.getParameter("param2"));
+    EXPECT_THROW(leasemgr.getParameter("param3"), BadValue);
 }
 
 // There's no point in calling any other methods in LeaseMgr, as they
