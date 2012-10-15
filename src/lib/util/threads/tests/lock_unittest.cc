@@ -49,8 +49,9 @@ TEST(MutexTest, lockMultiple) {
 void*
 testThread(Mutex* mutex)
 {
-    // This should not block indefinitely, but throw AlreadyLocked.
-    // block=false (tryLock).
+    // block=false (tryLock).  This should not block indefinitely, but
+    // throw AlreadyLocked. If block were true, this would block
+    // indefinitely here.
     EXPECT_THROW({
         Mutex::Locker l3(*mutex, false);
     }, Mutex::Locker::AlreadyLocked);
