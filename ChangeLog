@@ -1,3 +1,18 @@
+494.	[bug]		jinmei
+	Fixed a problem that shutting down BIND 10 kept some of the
+	processes alive.  It was two-fold: when the main bind10 process
+	started as a root, started b10-sockcreator with the privilege, and
+	then dropped the privilege, the bind10 process cannot kill the
+	sockcreator via signal any more (when it has to), but it kept
+	sending the signal and didn't stop.  Also, when running on Python
+	3.1 (or older), the sockcreator had some additional file
+	descriptor open, which prevented it from exiting even after the
+	bind10 process terminated.  Now the bind10 process simply gives up
+	killing a subprocess if it fails due to lack of permission, and it
+	makes sure the socket creator is spawned without any unnecessary
+	FDs open.
+	(Trac #1858, git 405d85c8a0042ba807a3a123611ff383c4081ee1)
+
 493.	[build]		jinmei
 	Fixed build failure with newer versions of clang++.  These
 	versions are stricter regarding "unused variable" and "unused
