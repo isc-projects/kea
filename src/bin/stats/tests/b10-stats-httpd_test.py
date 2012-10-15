@@ -113,6 +113,57 @@ def is_ipv6_enabled(address='::1', port=8001):
             if sock: sock.close()
     return False
 
+class TestItemNameList(unittest.TestCase):
+
+    def test_item_name_list(self):
+        self.assertEqual(['a'],
+                         stats_httpd.item_name_list({'a':1}, 'a'))
+        self.assertEqual(['a','a/b'],
+                         stats_httpd.item_name_list({'a':{'b':1}}, 'a'))
+        self.assertEqual(['a/b'],
+                         stats_httpd.item_name_list({'a':{'b':1}}, 'a/b'))
+        self.assertEqual(['a','a/b','a/b/c'],
+                         stats_httpd.item_name_list({'a':{'b':{'c':1}}}, 'a'))
+        self.assertEqual(['a/b','a/b/c'],
+                         stats_httpd.item_name_list({'a':{'b':{'c':1}}}, 'a/b'))
+        self.assertEqual(['a/b/c'],
+                         stats_httpd.item_name_list({'a':{'b':{'c':1}}}, 'a/b/c'))
+        self.assertEqual(['a[2]'],
+                         stats_httpd.item_name_list({'a':[1,2,3]}, 'a[2]'))
+        self.assertEqual(['a', 'a[0]', 'a[1]', 'a[2]'],
+                         stats_httpd.item_name_list({'a':[1,2,3]}, 'a'))
+        self.assertEqual(['a', 'a[0]', 'a[1]', 'a[2]'],
+                         stats_httpd.item_name_list({'a':[1,2,3]}, ''))
+        self.assertEqual(['a', 'a/b', 'a/b[0]', 'a/b[1]', 'a/b[2]'],
+                         stats_httpd.item_name_list({'a':{'b':[1,2,3]}}, 'a'))
+        self.assertEqual(['a', 'a/b', 'a/b[0]', 'a/b[1]', 'a/b[2]'],
+                         stats_httpd.item_name_list({'a':{'b':[1,2,3]}}, ''))
+        self.assertEqual(['a/b', 'a/b[0]', 'a/b[1]', 'a/b[2]'],
+                         stats_httpd.item_name_list({'a':{'b':[1,2,3]}}, 'a/b'))
+        self.assertEqual(['a', 'a/b', 'a/b[0]', 'a/b[1]', 'a/b[2]', 'a/c'],
+                         stats_httpd.item_name_list(
+                {'a':{'b':[1,2,3], 'c':1}}, 'a'))
+        self.assertEqual(['a/b', 'a/b[0]', 'a/b[1]', 'a/b[2]'],
+                         stats_httpd.item_name_list(
+                {'a':{'b':[1,2,3], 'c':1}}, 'a/b'))
+        self.assertEqual(['a/c'],
+                         stats_httpd.item_name_list(
+                {'a':{'b':[1,2,3], 'c':1}}, 'a/c'))
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                         stats_httpd.item_name_list, {'x':1}, 'a')
+        self.assertEqual([],
+                         stats_httpd.item_name_list('a', ''))
+        self.assertEqual([],
+                         stats_httpd.item_name_list('', ''))
+        self.assertRaises(isc.cc.data.DataTypeError,
+                         stats_httpd.item_name_list, 'a', 'a')
+        self.assertRaises(isc.cc.data.DataTypeError,
+                         stats_httpd.item_name_list, None, None)
+        self.assertRaises(isc.cc.data.DataTypeError,
+                         stats_httpd.item_name_list, [1,2,3], 'a')
+        self.assertRaises(isc.cc.data.DataTypeError,
+                         stats_httpd.item_name_list, [1,2,3], '')
+
 class TestHttpHandler(unittest.TestCase):
     """Tests for HttpHandler class"""
     def setUp(self):
