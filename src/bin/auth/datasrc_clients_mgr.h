@@ -26,6 +26,7 @@
 #include <auth/auth_log.h>
 
 #include <boost/bind.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <list>
 #include <utility>
@@ -85,12 +86,22 @@ class DataSrcClientsMgrBase {
 public:
     DataSrcClientsMgrBase() :
         builder_(&command_queue_, &cond_, &queue_mutex_),
-        builder_thread_(boost::bind(&BuilderType::run, &builder_))
+        builder_thread_(new ThreadType(boost::bind(&BuilderType::run,
+                                                   &builder_)))
     {}
-    ~DataSrcClientsMgrBase() {}
+    ~DataSrcClientsMgrBase() {
+        if (builder_thread_) {
+            // An unexpected case.  The manager is being destroyed without
+            // a prior shutdown().  We notify the builder to minimize the risk
+            // of leaving it as a zombie, but doesn't wait to avoid hangup.
+            LOG_INFO(auth_logger, AUTH_DATASRC_CLIENTS_MANAGER_UNEXPECTED_STOP);
+            sendCommand(internal::SHUTDOWN, data::ConstElementPtr());
+        }
+    }
     void shutdown() {
         sendCommand(internal::SHUTDOWN, data::ConstElementPtr());
-        builder_thread_.wait();
+        builder_thread_->wait();
+        builder_thread_.reset();
     }
 
 private:
@@ -106,14 +117,14 @@ private:
     CondVarType cond_;
     MutexType queue_mutex_;
     BuilderType builder_;
-    ThreadType builder_thread_;
+    boost::scoped_ptr<ThreadType> builder_thread_;
 };
 
 namespace internal {
 template <typename MutexType, typename CondVarType>
 void
 DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
-    LOG_INFO(auth_logger, AUTH_DATASRC_CLIENT_BUILDER_STARTED);
+    LOG_INFO(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_STARTED);
 
     bool keep_running = true;
     while (keep_running) {
@@ -134,7 +145,7 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
         }
     }
 
-    LOG_INFO(auth_logger, AUTH_DATASRC_CLIENT_BUILDER_STOPPED);
+    LOG_INFO(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_STOPPED);
 }
 
 template <typename MutexType, typename CondVarType>
@@ -143,7 +154,7 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
     const Command& command)
 {
     LOG_DEBUG(auth_logger, DBGLVL_TRACE_BASIC,
-              AUTH_DATASRC_CLIENT_BUILDER_COMMAND).arg(command.first);
+              AUTH_DATASRC_CLIENTS_BUILDER_COMMAND).arg(command.first);
 
     switch (command.first) {
     case SHUTDOWN:
