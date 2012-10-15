@@ -553,11 +553,17 @@ class StatsHttpd:
     def open_template(self, file_name):
         """It opens a template file, and it loads all lines to a
         string variable and returns string. Template object includes
-        the variable. Limitation of a file size isn't needed there."""
-        f = open(file_name, 'r')
-        lines = "".join(f.readlines())
-        f.close()
-        assert lines is not None
+        the variable. Limitation of a file size isn't needed there. XXXX"""
+        lines = None
+        f = None
+        try:
+            f = open(file_name, 'r')
+            lines = "".join(f.readlines())
+        except IOError as err:
+            raise StatsHttpdDataError(
+                "%s: %s" % (err.__class__.__name__, err))
+        finally:
+            if f: f.close()
         return string.Template(lines)
 
 if __name__ == "__main__":
