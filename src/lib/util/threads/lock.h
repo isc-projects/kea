@@ -153,6 +153,12 @@ private:
 /// Note that \c mutex passed to the \c wait() method must be the same one
 /// used to construct the \c locker.
 ///
+/// Right now there is no equivalent to pthread_cond_broadcast() or
+/// pthread_cond_timedwait() in this class, because this class is meant
+/// for internal development of BIND 10 and we don't need these at the
+/// moment.  If and when we need these interfaces they can be added at that
+/// point.
+///
 /// \note This class is defined as a friend class of \c Mutex and directly
 /// refers to and modifies private internals of the \c Mutex class.  It breaks
 /// the assumption that the lock is only acquired or released via the
