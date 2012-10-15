@@ -54,11 +54,23 @@ private:
 
 typedef std::vector<std::pair<std::string, uint16_t> > AddressVector;
 
+/// \brief A forwarded query
+///
+/// This class represents an active forwarded query object;
+/// i.e. an outstanding query to a different server when operating
+/// in forwarder mode.
+///
+/// It can not be instantiated directly, but is created by
+/// RecursiveQuery::forward().
+///
+/// Its only public method is its destructor, and that should in theory
+/// not be called either except in some unit tests. Instances should
+/// delete themselves when the query is finished.
 class ForwardQuery {
+    friend class RecursiveQuery;
 private:
     class ForwardQueryImpl;
     ForwardQueryImpl* fqi_;
-public:
     ForwardQuery(isc::asiolink::IOService& io,
                  isc::dns::ConstMessagePtr query_message,
                  isc::dns::MessagePtr answer_message,
@@ -66,14 +78,26 @@ public:
                  isc::util::OutputBufferPtr buffer,
                  isc::resolve::ResolverInterface::CallbackPtr cb,
                  int query_timeout, int client_timeout, int lookup_timeout);
+public:
     ~ForwardQuery();
 };
 
+/// \brief A Running query
+///
+/// This class represents an active running query object;
+/// i.e. an outstanding query to an authoritative name server.
+///
+/// It can not be instantiated directly, but is created by
+/// RecursiveQuery::resolve().
+///
+/// Its only public method is its destructor, and that should in theory
+/// not be called either except in some unit tests. Instances should
+/// delete themselves when the query is finished.
 class RunningQuery {
+    friend class RecursiveQuery;
 private:
     class RunningQueryImpl;
     RunningQueryImpl* rqi_;
-public:
     RunningQuery(isc::asiolink::IOService& io,
         const isc::dns::Question question,
         isc::dns::MessagePtr answer_message,
@@ -85,6 +109,7 @@ public:
         isc::nsas::NameserverAddressStore& nsas,
         isc::cache::ResolverCache& cache,
         boost::shared_ptr<RttRecorder>& recorder);
+public:
     ~RunningQuery();
 };
 
@@ -177,6 +202,12 @@ public:
     /// \param buffer An output buffer into which the intermediate responses will
     ///        be copied.
     /// \param server A pointer to the \c DNSServer object handling the client
+    /// \return A pointer to the active RunningQuery object created by this
+    ///         call (if any); this object should delete itself in normal
+    ///         circumstances, and can normally be ignored by the caller,
+    ///         but a pointer is returned for use-cases such as unit tests.
+    ///         Returns NULL if the data was found internally and no actual
+    ///         query was sent.
     RunningQuery* resolve(const isc::dns::Question& question,
                           isc::dns::MessagePtr answer_message,
                           isc::util::OutputBufferPtr buffer,
@@ -193,6 +224,10 @@ public:
     /// \param server Server object that handles receipt and processing of the
     ///               received messages.
     /// \param callback callback object
+    /// \return A pointer to the active ForwardQuery created by this call;
+    ///         this object should delete itself in normal circumstances,
+    ///         and can normally be ignored by the caller, but a pointer
+    ///         is returned for use-cases such as unit tests.
     ForwardQuery* forward(isc::dns::ConstMessagePtr query_message,
                  isc::dns::MessagePtr answer_message,
                  isc::util::OutputBufferPtr buffer,
