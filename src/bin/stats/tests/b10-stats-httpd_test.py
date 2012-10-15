@@ -294,7 +294,7 @@ class TestHttpHandler(unittest.TestCase):
         response = self.client.getresponse()
         self.assertEqual(response.status, 302)
         self.assertEqual(response.getheader('Location'),
-                         "http://%s:%d%s" % (self.address, self.port, stats_httpd.XML_URL_PATH))
+                         "http://%s:%d%s/" % (self.address, self.port, stats_httpd.XML_URL_PATH))
 
         # 404 NotFound (random path)
         self.client._http_vsn_str = 'HTTP/1.0'
@@ -325,12 +325,12 @@ class TestHttpHandler(unittest.TestCase):
         response = self.client.getresponse()
         self.assertEqual(response.status, 200)
         self.client._http_vsn_str = 'HTTP/1.0'
-        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '#foo')
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/#foo')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 200)
         self.client._http_vsn_str = 'HTTP/1.0'
-        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '?foo=bar')
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/?foo=bar')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 200)
@@ -404,7 +404,7 @@ class TestHttpHandler(unittest.TestCase):
         self.stats_httpd.cc_session.set_timeout(milliseconds=100)
 
         # request XML
-        self.client.putrequest('GET', stats_httpd.XML_URL_PATH)
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 500)
@@ -429,7 +429,7 @@ class TestHttpHandler(unittest.TestCase):
             )
 
         # request XML
-        self.client.putrequest('GET', stats_httpd.XML_URL_PATH)
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
@@ -447,7 +447,7 @@ class TestHttpHandler(unittest.TestCase):
         self.assertEqual(response.status, 200)
 
     def test_do_HEAD(self):
-        self.client.putrequest('HEAD', stats_httpd.XML_URL_PATH)
+        self.client.putrequest('HEAD', stats_httpd.XML_URL_PATH + '/')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 200)
