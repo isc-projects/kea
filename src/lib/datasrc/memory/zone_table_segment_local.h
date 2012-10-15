@@ -55,7 +55,7 @@ public:
     virtual isc::util::MemorySegment& getMemorySegment();
 
     /// \brief Concrete implementation of ZoneTableSegment::getZoneReloader
-    virtual ZoneReloader* getZoneReloader(const LoadAction& loadAction,
+    virtual ZoneReloader* getZoneReloader(const LoadAction& load_action,
                                           const dns::Name& origin,
                                           const dns::RRClass& rrclass);
 private:
