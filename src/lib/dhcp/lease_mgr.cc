@@ -45,7 +45,7 @@ LeaseMgr::LeaseMgr(const std::string& dbconfig) {
         size_t pos = token.find("=");
         if (pos != string::npos) {
             string name = token.substr(0, pos);
-            string value = token.substr(pos + 1, -1);
+            string value = token.substr(pos + 1);
             parameters_.insert(pair<string,string>(name, value));
         } else {
             isc_throw(InvalidParameter, "Cannot parse " << token
