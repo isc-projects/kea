@@ -29,6 +29,7 @@ libdhcp___unittests_SOURCES  = run_unittests.cc
 libdhcp___unittests_SOURCES += libdhcp++_unittest.cc
 libdhcp___unittests_SOURCES += iface_mgr_unittest.cc
 libdhcp___unittests_SOURCES += lease_mgr_unittest.cc
+libdhcp___unittests_SOURCES += lease_mgr_factory_unittest.cc
 libdhcp___unittests_SOURCES += option6_iaaddr_unittest.cc
 libdhcp___unittests_SOURCES += option6_ia_unittest.cc
 libdhcp___unittests_SOURCES += option6_addrlst_unittest.cc
