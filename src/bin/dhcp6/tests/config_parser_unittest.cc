@@ -240,4 +240,28 @@ TEST_F(Dhcp6ParserTest, pool_prefix_len) {
     EXPECT_EQ(4000, subnet->getValid());
 }
 
+TEST_F(Dhcp6ParserTest, globalOptionValues) {
+    ConstElementPtr x;
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\", "
+        "    \"option-value\": [ { "
+        "        \"name\": \"option_foo\","
+        "        \"code\": 100,"
+        "        \"data\": \"XYZ, 1, 5\" } ]"
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+    cout << config << endl;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+
+    ASSERT_TRUE(x);
+}
+
 };

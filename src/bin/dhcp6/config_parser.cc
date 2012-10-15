@@ -445,6 +445,116 @@ protected:
     PoolStorage* pools_;
 };
 
+class OptionDataParser : public DhcpConfigParser {
+public:
+
+    OptionDataParser(const std::string&) {
+    }
+
+    void build(ConstElementPtr option_value) {
+        BOOST_FOREACH(ConfigPair param, option_value->mapValue()) {
+            ParserPtr parser;
+            if (param.first == "name") {
+                boost::shared_ptr<StringParser>
+                    name_parser(dynamic_cast<StringParser*>(StringParser::Factory(param.first)));
+                if (name_parser) {
+                    name_parser->setStorage(&string_values_);
+                    parser = name_parser;
+                }
+                // @todo: what if this is NULL pointer. Shouldn't we throw exception?
+            } else if (param.first == "code") {
+                boost::shared_ptr<Uint32Parser>
+                    code_parser(dynamic_cast<Uint32Parser*>(Uint32Parser::Factory(param.first)));
+                if (code_parser) {
+                    code_parser->setStorage(&uint32_values_);
+                    parser = code_parser;
+                }
+            } else if (param.first == "data") {
+                boost::shared_ptr<StringParser>
+                    value_parser(dynamic_cast<StringParser*>(StringParser::Factory(param.first)));
+                if (value_parser) {
+                    value_parser->setStorage(&string_values_);
+                    parser = value_parser;
+                }
+            } else {
+                isc_throw(NotImplemented,
+                          "Parser error: option-data parameter not supported: "
+                          << param.first);
+            }
+            parser->build(param.second);
+            parsers_.push_back(parser);
+        }
+    }
+
+    void commit() {
+    }
+
+private:
+
+    Uint32Storage uint32_values_;
+    StringStorage string_values_;
+
+    ParserCollection parsers_;
+};
+
+class OptionDataListParser : public DhcpConfigParser {
+public:
+
+    /// @brief parses contents of the list
+    ///
+    /// Iterates over all entries on the list and creates Subnet6ConfigParser
+    /// for each entry.
+    ///
+    /// @param subnets_list pointer to a list of IPv6 subnets
+    OptionDataListParser(const std::string&) {
+    }
+
+    /// @brief parses contents of the list
+    ///
+    /// Iterates over all entries on the list and creates Subnet6ConfigParser
+    /// for each entry.
+    ///
+    /// @param subnets_list pointer to a list of IPv6 subnets
+    void build(ConstElementPtr option_value_list) {
+
+        // No need to define FactoryMap here. There's only one type
+        // used: Subnet6ConfigParser
+
+        BOOST_FOREACH(ConstElementPtr option_value, option_value_list->listValue()) {
+
+            ParserPtr parser(new OptionDataParser("option-data"));
+            parser->build(option_value);
+            option_values_.push_back(parser);
+        }
+    }
+
+    /// @brief commits subnets definitions.
+    ///
+    /// Iterates over all Subnet6 parsers. Each parser contains definitions
+    /// of a single subnet and its parameters and commits each subnet separately.
+    void commit() {
+        // @todo: Implement more subtle reconfiguration than toss
+        // the old one and replace with the new one.
+
+        // remove old subnets
+        //        CfgMgr::instance().deleteSubnets6();
+
+        BOOST_FOREACH(ParserPtr option_value, option_values_) {
+            option_value->commit();
+        }
+
+    }
+
+    /// @brief Returns Subnet6ListConfigParser object
+    /// @param param_name name of the parameter
+    /// @return Subnets6ListConfigParser object
+    static DhcpConfigParser* Factory(const std::string& param_name) {
+        return (new OptionDataListParser(param_name));
+    }
+
+    ParserCollection option_values_;
+};
+
 /// @brief this class parses a single subnet
 ///
 /// This class parses the whole subnet definition. It creates parsers
@@ -485,6 +595,9 @@ public:
                         boost::dynamic_pointer_cast<PoolParser>(parser);
                     if (poolParser) {
                         poolParser->setStorage(&pools_);
+                    } else {
+                        boost::shared_ptr<OptionDataParser> option_data_parser =
+                            boost::dynamic_pointer_cast<OptionDataParser>(parser);
                     }
                 }
             }
@@ -568,6 +681,10 @@ protected:
 
         factories.insert(pair<string, ParserFactory*>(
                              "pool", PoolParser::Factory));
+
+        factories.insert(pair<string, ParserFactory*>(
+                             "option-data", OptionDataListParser::Factory));
+
 
         FactoryMap::iterator f = factories.find(config_id);
         if (f == factories.end()) {
