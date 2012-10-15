@@ -960,8 +960,9 @@ class TestStatsHttpd(unittest.TestCase):
 
     def test_xml_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
-        self.stats_httpd.get_stats_spec = lambda x,y: \
-            { "Dummy" :
+        module_name = 'Dummy'
+        stats_spec = \
+            { module_name :
                   [{
                         "item_name": "foo",
                         "item_type": "string",
@@ -1022,8 +1023,8 @@ class TestStatsHttpd(unittest.TestCase):
                             }
                         }]
               }
-        self.stats_httpd.get_stats_data = lambda x,y: \
-            { 'Dummy' : { 'foo':'bar',
+        stats_data = \
+            { module_name : { 'foo':'bar',
                           'foo2': [
                             {
                                 "foo2-1-1" : "bar1",
@@ -1036,92 +1037,44 @@ class TestStatsHttpd(unittest.TestCase):
                                 "foo2-1-3" : 7
                                 }
                             ] } }
-        xml_body1 = self.stats_httpd.open_template(
-            stats_httpd.XML_TEMPLATE_LOCATION).substitute(
-            xml_string='<bind10:statistics xmlns:bind10="http://bind10.isc.org/bind10" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://bind10.isc.org/bind10 ' + stats_httpd.XSD_URL_PATH + '"><Dummy><foo>bar</foo><foo2><foo2-1><foo2-1-1>bar1</foo2-1-1><foo2-1-2>10</foo2-1-2><foo2-1-3>9</foo2-1-3></foo2-1><foo2-1><foo2-1-1>bar2</foo2-1-1><foo2-1-2>8</foo2-1-2><foo2-1-3>7</foo2-1-3></foo2-1></foo2></Dummy></bind10:statistics>',
-            xsl_url_path=stats_httpd.XSL_URL_PATH)
-        xml_body2 = self.stats_httpd.xml_handler()
-        self.assertEqual(type(xml_body1), str)
-        self.assertEqual(type(xml_body2), str)
-        self.assertEqual(xml_body1, xml_body2)
-        self.stats_httpd.get_stats_spec = lambda x,y: \
-            { "Dummy" :
-                  [{
-                        "item_name": "bar",
-                        "item_type": "string",
-                        "item_optional": False,
-                        "item_default": "foo",
-                        "item_description": "bar foo",
-                        "item_title": "Bar"
-                        },
-                   {
-                        "item_name": "bar2",
-                        "item_type": "list",
-                        "item_optional": False,
-                        "item_default": [
-                            {
-                                "zonename" : "test1",
-                                "queries.udp" : 1,
-                                "queries.tcp" : 2
-                                },
-                            {
-                                "zonename" : "test2",
-                                "queries.udp" : 3,
-                                "queries.tcp" : 4
-                                }
-                        ],
-                        "item_title": "Bar foo",
-                        "item_description": "Bar foo",
-                        "list_item_spec": {
-                            "item_name": "bar2-1",
-                            "item_type": "map",
-                            "item_optional": False,
-                            "item_default": {},
-                            "map_item_spec": [
-                                {
-                                    "item_name": "bar2-1-1",
-                                    "item_type": "string",
-                                    "item_optional": False,
-                                    "item_default": "",
-                                    "item_title": "Bar2 1 1",
-                                    "item_description": "Bar foo"
-                                    },
-                                {
-                                    "item_name": "bar2-1-2",
-                                    "item_type": "integer",
-                                    "item_optional": False,
-                                    "item_default": 0,
-                                    "item_title": "Bar2 1 2",
-                                    "item_description": "Bar foo"
-                                    },
-                                {
-                                    "item_name": "bar2-1-3",
-                                    "item_type": "integer",
-                                    "item_optional": False,
-                                    "item_default": 0,
-                                    "item_title": "Bar2 1 3",
-                                    "item_description": "Bar foo"
-                                    }
-                                ]
-                            }
-                        }]
-              }
-        self.stats_httpd.get_stats_data = lambda x,y: \
-            { 'Dummy' : { 'bar':'foo',
-                          'bar2': [
-                            {
-                                "bar2-1-1" : "foo1",
-                                "bar2-1-2" : 10,
-                                "bar2-1-3" : 9
-                                },
-                            {
-                                "bar2-1-1" : "foo2",
-                                "bar2-1-2" : 8,
-                                "bar2-1-3" : 7
-                                }
-                            ] } }
-        xml_body2 = self.stats_httpd.xml_handler()
-        self.assertNotEqual(xml_body1, xml_body2)
+        self.stats_httpd.get_stats_spec = lambda x,y: stats_spec
+        self.stats_httpd.get_stats_data = lambda x,y: stats_data
+        xml_string = self.stats_httpd.xml_handler()
+        stats_xml = xml.etree.ElementTree.fromstring(xml_string)
+        schema_loc = '{%s}schemaLocation' % XMLNS_XSI
+        self.assertEqual(stats_xml.attrib[schema_loc],
+                         stats_httpd.XML_ROOT_ATTRIB['xsi:schemaLocation'])
+        stats_data = stats_data[module_name]
+        stats_spec = stats_spec[module_name]
+        names = stats_httpd.item_name_list(stats_data, '')
+        for i in range(0, len(names)):
+            self.assertEqual('%s/%s' % (module_name, names[i]), stats_xml[i].attrib['identifier'])
+            value = isc.cc.data.find(stats_data, names[i])
+            if type(value) is int:
+                value = str(value)
+            if type(value) is dict or type(value) is list:
+                self.assertFalse('value' in stats_xml[i].attrib)
+            else:
+                self.assertEqual(value, stats_xml[i].attrib['value'])
+            self.assertEqual(module_name, stats_xml[i].attrib['owner'])
+            self.assertEqual(urllib.parse.quote('%s/%s/%s' % (stats_httpd.XML_URL_PATH,
+                                                              module_name, names[i])),
+                             stats_xml[i].attrib['uri'])
+            spec = isc.config.find_spec_part(stats_spec, names[i])
+            self.assertEqual(spec['item_name'], stats_xml[i].attrib['name'])
+            self.assertEqual(spec['item_type'], stats_xml[i].attrib['type'])
+            self.assertEqual(spec['item_description'], stats_xml[i].attrib['description'])
+            self.assertEqual(spec['item_title'], stats_xml[i].attrib['title'])
+            self.assertEqual(str(spec['item_optional']).lower(), stats_xml[i].attrib['optional'])
+            default = spec['item_default']
+            if type(default) is int:
+                default = str(default)
+            if type(default) is dict or type(default) is list:
+                self.assertFalse('default' in stats_xml[i].attrib)
+            else:
+                self.assertEqual(default, stats_xml[i].attrib['default'])
+            self.assertFalse('item_format' in spec)
+            self.assertFalse('format' in stats_xml[i].attrib)
 
     def test_xsd_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
