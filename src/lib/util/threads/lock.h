@@ -180,10 +180,9 @@ public:
     /// \brief Wait on the condition variable.
     ///
     /// This method works like \c pthread_cond_wait().  For mutex it takes
-    /// an \c Mutex class object.  Unlike \c pthread_cond_wait(), however,
-    /// this method requires a lock for the mutex has been acquired.
-    /// If this condition isn't met, it can throw an exception (in the
-    /// debug mode build) or result in undefined behavior.
+    /// an \c Mutex class object.  A lock for the mutex must have been
+    /// acquired.  If this condition isn't met, it can throw an exception
+    /// (in the debug mode build) or result in undefined behavior.
     ///
     /// The lock will be automatically released within this method, and
     /// will be re-acquired on the exit of this method.
