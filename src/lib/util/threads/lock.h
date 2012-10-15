@@ -85,7 +85,7 @@ public:
         ///     means an attempt to use the mutex in a wrong way (locking
         ///     a mutex second time from the same thread, for example).
         Locker(Mutex& mutex) :
-            mutex_(&mutex)
+            mutex_(mutex)
         {
             mutex.lock();
         }
@@ -94,10 +94,10 @@ public:
         ///
         /// Unlocks the mutex.
         ~Locker() {
-            mutex_->unlock();
+            mutex_.unlock();
         }
     private:
-        Mutex* const mutex_;
+        Mutex& mutex_;
     };
     /// \brief If the mutex is currently locked
     ///
