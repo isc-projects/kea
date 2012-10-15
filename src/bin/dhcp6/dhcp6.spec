@@ -92,10 +92,37 @@
                         "item_optional": false,
                         "item_default": ""
                     }
-                }
-            ]
-        }
-      }
+                },
+                { "item_name": "option-data",
+                  "item_type": "list",
+                  "item_optional": false,
+                  "item_default": [],
+                  "list_item_spec":
+                  {
+                      "item_name": "single-option-data",
+                      "item_type": "map",
+                      "item_optional": false,
+                      "item_default": {},
+                      "map_item_spec": [
+                      { "item_name": "name",
+                        "item_type": "string",
+                        "item_optional": false,
+                        "item_default": ""
+                      },
+                      { "item_name": "code",
+                        "item_type": "integer",
+                        "item_optional": false,
+                        "item_default": 0
+                      },
+                      { "item_name": "data",
+                        "item_type": "string",
+                        "item_optional": false,
+                        "item_default": ""
+                      } ]
+                  },
+              } ]
+          }
+       }
     ],
     "commands": [
         {
