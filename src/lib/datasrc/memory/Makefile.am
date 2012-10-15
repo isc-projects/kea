@@ -23,6 +23,7 @@ libdatasrc_memory_la_SOURCES += zone_finder.h zone_finder.cc
 libdatasrc_memory_la_SOURCES += zone_table_segment.h zone_table_segment.cc
 libdatasrc_memory_la_SOURCES += zone_table_segment_local.h zone_table_segment_local.cc
 libdatasrc_memory_la_SOURCES += zone_reloader.h zone_reloader.cc
+libdatasrc_memory_la_SOURCES += load_action.h
 nodist_libdatasrc_memory_la_SOURCES = memory_messages.h memory_messages.cc
 
 EXTRA_DIST  = rdata_serialization_priv.cc
