@@ -137,18 +137,16 @@ signalAndWait(CondVar* condvar, Mutex* mutex) {
     condvar->wait(*mutex);
 }
 
-#ifdef EXPECT_DEATH
 TEST_F(CondVarTest, bad) {
     // We'll destroy a CondVar object while the thread is still waiting
     // on it.  This will trigger an assertion failure.
-    EXPECT_DEATH({
+    EXPECT_DEATH_IF_SUPPORTED({
             CondVar cond;
             Mutex::Locker locker(mutex_);
             Thread t(boost::bind(&signalAndWait, &cond, &mutex_));
             cond.wait(mutex_);
         }, "");
 }
-#endif
 
 TEST_F(CondVarTest, badWait) {
     // In our implementation, wait() requires acquiring the lock beforehand.
