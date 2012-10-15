@@ -47,11 +47,14 @@ public:
 
 class TestCondVar {
 public:
+    TestCondVar() : wait_count(0), command_queue_(NULL),
+                    delayed_command_queue_(NULL)
+    {}
     TestCondVar(std::list<Command>& command_queue,
                 std::list<Command>& delayed_command_queue) :
         wait_count(0),
-        command_queue_(command_queue),
-        delayed_command_queue_(delayed_command_queue)
+        command_queue_(&command_queue),
+        delayed_command_queue_(&delayed_command_queue)
     {
     }
     void wait(TestMutex& mutex) {
@@ -61,17 +64,12 @@ public:
         ++mutex.lock_count;
 
         // make the delayed commands available
-        command_queue_.splice(command_queue_.end(), delayed_command_queue_);
+        command_queue_->splice(command_queue_->end(), *delayed_command_queue_);
     }
     size_t wait_count;
 private:
-    std::list<Command>& command_queue_;
-    std::list<Command>& delayed_command_queue_;
-};
-
-class TestThread {
-public:
-    TestThread(const boost::function<void()>& /*main*/);
+    std::list<Command>* command_queue_;
+    std::list<Command>* delayed_command_queue_;
 };
 
 // Convenient shortcut
@@ -85,8 +83,46 @@ void
 TestDataSrcClientsBuilder::doNoop();
 
 } // namespace internal
-}
-}
+
+// A specialization of DataSrcClientsBuilder that allows tests to inspect
+// its internal states via static class variables.  Using static is suboptimal,
+// but DataSrcClientsMgr is highly encapsulated, this seems to be the best
+// possible compromise.
+class FakeDataSrcClientsBuilder {
+public:
+    FakeDataSrcClientsBuilder(std::list<internal::Command>* command_queue,
+                              internal::TestCondVar* cond,
+                              internal::TestMutex* queue_mutex)
+    {
+        FakeDataSrcClientsBuilder::started = false;
+        FakeDataSrcClientsBuilder::command_queue = command_queue;
+        FakeDataSrcClientsBuilder::cond = cond;
+        FakeDataSrcClientsBuilder::queue_mutex = queue_mutex;
+    }
+    void run() {
+        FakeDataSrcClientsBuilder::started = true;
+    }
+
+    static bool started;
+    static std::list<internal::Command>* command_queue;
+    static internal::TestCondVar* cond;
+    static internal::TestMutex* queue_mutex;
+};
+
+class TestThread {
+public:
+    TestThread(const boost::function<void()>& main) {
+        main();
+    }
+};
+
+// Convenient shortcut
+typedef DataSrcClientsMgrBase<TestThread, FakeDataSrcClientsBuilder,
+                              internal::TestMutex, internal::TestCondVar>
+TestDataSrcClientsMgr;
+
+} // namespace auth
+} // namespace isc
 
 #endif  // TEST_DATASRC_CLIENTS_MGR_H
 
