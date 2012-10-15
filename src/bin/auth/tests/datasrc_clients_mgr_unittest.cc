@@ -36,4 +36,26 @@ TEST_F(DataSrcClientsMgrTest, start) {
     EXPECT_TRUE(FakeDataSrcClientsBuilder::command_queue->empty());
 }
 
+TEST_F(DataSrcClientsMgrTest, shutdown) {
+    // Invoke shutdown on the manager.
+    TestDataSrcClientsMgr mgr;
+    EXPECT_TRUE(FakeDataSrcClientsBuilder::started);
+
+    // Check pre-command conditions
+    EXPECT_EQ(0, FakeDataSrcClientsBuilder::cond->signal_count);
+    EXPECT_FALSE(FakeDataSrcClientsBuilder::thread_waited);
+
+    mgr.shutdown();
+
+    // The manager should have acquired the lock, put a SHUTDOWN command
+    // to the queue, and should have signaled the builder.
+    EXPECT_EQ(1, FakeDataSrcClientsBuilder::queue_mutex->lock_count);
+    EXPECT_EQ(1, FakeDataSrcClientsBuilder::cond->signal_count);
+    EXPECT_EQ(1, FakeDataSrcClientsBuilder::command_queue->size());
+    const Command& cmd = FakeDataSrcClientsBuilder::command_queue->front();
+    EXPECT_EQ(SHUTDOWN, cmd.first);
+    EXPECT_FALSE(cmd.second);
+    EXPECT_TRUE(FakeDataSrcClientsBuilder::thread_waited);
+}
+
 } // unnamed namespace
