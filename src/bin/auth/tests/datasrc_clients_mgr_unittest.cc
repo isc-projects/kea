@@ -67,9 +67,18 @@ TEST(DataSrcClientsMgrTest, shutdown) {
     EXPECT_TRUE(FakeDataSrcClientsBuilder::thread_waited);
 }
 
+TEST(DataSrcClientsMgrTest, shutdownWithUncaughtException) {
+    // Emulating the case when the builder exists on exception.  shutdown()
+    // will encounter UncaughtException exception and catch it.
+    TestDataSrcClientsMgr mgr;
+    FakeDataSrcClientsBuilder::thread_throw_on_wait =
+        FakeDataSrcClientsBuilder::THROW_UNCAUGHT_EX;
+    EXPECT_NO_THROW(mgr.shutdown());
+}
 TEST(DataSrcClientsMgrTest, shutdownWithException) {
     TestDataSrcClientsMgr mgr;
-    FakeDataSrcClientsBuilder::thread_throw_on_wait = true;
+    FakeDataSrcClientsBuilder::thread_throw_on_wait =
+        FakeDataSrcClientsBuilder::THROW_OTHER;
     EXPECT_THROW(mgr.shutdown(), isc::Unexpected);
 }
 
