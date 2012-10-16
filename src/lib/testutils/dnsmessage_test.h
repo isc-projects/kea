@@ -279,7 +279,7 @@ rrsetsCheck(EXPECTED_ITERATOR expected_begin, EXPECTED_ITERATOR expected_end,
         // Make sure there's no duplicate RRset in actual (using a naive
         // search).  By guaranteeing the actual set is unique, and the
         // size of both vectors is the same, we can conclude that
-        // the two sets are identical after this loop
+        // the two sets are identical after this loop.
         // Note: we cannot use EXPECT_EQ for iterators
         EXPECT_TRUE(checked_rrsets.end() ==
                     std::find_if(checked_rrsets.begin(), checked_rrsets.end(),
