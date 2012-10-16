@@ -15,6 +15,8 @@
 #ifndef TEST_DATASRC_CLIENTS_MGR_H
 #define TEST_DATASRC_CLIENTS_MGR_H 1
 
+#include <exceptions/exceptions.h>
+
 #include <auth/datasrc_clients_mgr.h>
 
 #include <boost/function.hpp>
@@ -28,11 +30,23 @@ namespace auth {
 namespace internal {
 class TestMutex {
 public:
-    TestMutex() : lock_count(0), unlock_count(0), noop_count(0) {}
+    // for throw_from_noop.
+    // None: no throw from specialized doNoop()
+    // EXCLASS: throw some exception class object
+    // INTEGER: throw an integer
+    enum ExceptionFromNoop { NONE, EXCLASS, INTEGER };
+
+    TestMutex() : lock_count(0), unlock_count(0), noop_count(0),
+                  throw_from_noop(NONE)
+    {}
     class Locker {
     public:
         Locker(TestMutex& mutex) : mutex_(mutex) {
             ++mutex.lock_count;
+            if (mutex.lock_count > 100) { // 100 is an arbitrary choice
+                isc_throw(Unexpected,
+                          "too many test mutex count, likely a bug in test");
+            }
         }
         ~Locker() {
             ++mutex_.unlock_count;
@@ -43,6 +57,7 @@ public:
     size_t lock_count;
     size_t unlock_count;
     size_t noop_count;          // allow doNoop() to modify this
+    ExceptionFromNoop throw_from_noop; // test can set this to control doNoop
 };
 
 class TestCondVar {
@@ -62,6 +77,11 @@ public:
         ++mutex.unlock_count;
         ++wait_count;
         ++mutex.lock_count;
+
+        if (wait_count > 100) { // 100 is an arbitrary choice
+            isc_throw(Unexpected,
+                      "too many cond wait count, likely a bug in test");
+        }
 
         // make the delayed commands available
         command_queue_->splice(command_queue_->end(), *delayed_command_queue_);
@@ -103,6 +123,7 @@ public:
         FakeDataSrcClientsBuilder::cond = cond;
         FakeDataSrcClientsBuilder::queue_mutex = queue_mutex;
         FakeDataSrcClientsBuilder::thread_waited = false;
+        FakeDataSrcClientsBuilder::thread_throw_on_wait = false;
     }
     void run() {
         FakeDataSrcClientsBuilder::started = true;
@@ -118,6 +139,10 @@ public:
 
     // true iff the manager waited on the thread running the builder.
     static bool thread_waited;
+
+    // If set to true by a test, TestThread::wait() throws an exception
+    // exception.
+    static bool thread_throw_on_wait;
 };
 
 class TestThread {
@@ -127,6 +152,9 @@ public:
     }
     void wait() {
         FakeDataSrcClientsBuilder::thread_waited = true;
+        if (FakeDataSrcClientsBuilder::thread_throw_on_wait) {
+            isc_throw(Unexpected, "for test");
+        }
     }
 };
 

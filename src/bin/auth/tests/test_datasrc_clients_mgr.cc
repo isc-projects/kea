@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
+
 #include "test_datasrc_clients_mgr.h"
 
 namespace isc {
@@ -22,12 +24,21 @@ std::list<internal::Command>* FakeDataSrcClientsBuilder::command_queue = NULL;
 internal::TestCondVar* FakeDataSrcClientsBuilder::cond = NULL;
 internal::TestMutex* FakeDataSrcClientsBuilder::queue_mutex = NULL;
 bool FakeDataSrcClientsBuilder::thread_waited = false;
+bool FakeDataSrcClientsBuilder::thread_throw_on_wait = false;
 
 namespace internal {
 template<>
 void
 TestDataSrcClientsBuilder::doNoop() {
     ++queue_mutex_->noop_count;
+    switch (queue_mutex_->throw_from_noop) {
+    case TestMutex::NONE:
+        break;                  // no throw
+    case TestMutex::EXCLASS:
+        isc_throw(Exception, "test exception");
+    case TestMutex::INTEGER:
+        throw 42;
+    }
 }
 }
 }

@@ -67,6 +67,12 @@ TEST(DataSrcClientsMgrTest, shutdown) {
     EXPECT_TRUE(FakeDataSrcClientsBuilder::thread_waited);
 }
 
+TEST(DataSrcClientsMgrTest, shutdownWithException) {
+    TestDataSrcClientsMgr mgr;
+    FakeDataSrcClientsBuilder::thread_throw_on_wait = true;
+    EXPECT_THROW(mgr.shutdown(), isc::Unexpected);
+}
+
 TEST(DataSrcClientsMgrTest, realThread) {
     // Using the non-test definition with a real thread.  Just checking
     // no disruption happens.
