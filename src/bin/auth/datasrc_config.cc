@@ -18,9 +18,8 @@
 
 // This is a trivial specialization for the commonly used version.
 // Defined in .cc to avoid accidental creation of multiple copies.
-void
-configureDataSource(AuthSrv& server, const isc::data::ConstElementPtr& config)
-{
-    return (configureDataSourceGeneric<AuthSrv,
-            isc::datasrc::ConfigurableClientList>(server, config));
+AuthSrv::DataSrcClientListsPtr
+configureDataSource(const isc::data::ConstElementPtr& config) {
+    return (configureDataSourceGeneric<
+            isc::datasrc::ConfigurableClientList>(config));
 }
