@@ -26,7 +26,6 @@
 #include <auth/auth_log.h>
 
 #include <boost/bind.hpp>
-#include <boost/scoped_ptr.hpp>
 
 #include <list>
 #include <utility>
@@ -86,27 +85,25 @@ class DataSrcClientsMgrBase {
 public:
     DataSrcClientsMgrBase() :
         builder_(&command_queue_, &cond_, &queue_mutex_),
-        builder_thread_(new ThreadType(boost::bind(&BuilderType::run,
-                                                   &builder_)))
+        builder_thread_(boost::bind(&BuilderType::run, &builder_))
     {}
     ~DataSrcClientsMgrBase() {
-        if (builder_thread_) {
-            // An unexpected case.  The manager is being destroyed without
-            // a prior shutdown().  We notify the builder to minimize the risk
-            // of leaving it as a zombie, but doesn't wait to avoid hangup.
-            LOG_INFO(auth_logger, AUTH_DATASRC_CLIENTS_MANAGER_UNEXPECTED_STOP);
-            sendCommand(internal::SHUTDOWN, data::ConstElementPtr());
-        }
-    }
-    void shutdown() {
-        sendCommand(internal::SHUTDOWN, data::ConstElementPtr());
+        // We share class member variables with the builder, which will be
+        // invalidated after the call to the destructor, so we need to make
+        // sure the builder thread is terminated.  Depending on the timing
+        // this could time; if we don't want that to happen in this context,
+        // we may want to introduce a separate 'shutdown()' method.
+        // Also, since we don't want to propagate exceptions from a destructor,
+        // we catch any possible ones.  In fact the only really expected one
+        // is Thread::UncaughtException when the builder thread died due to
+        // an exception.  We specifically log it and just ignore others.
         try {
-            builder_thread_->wait();
+            sendCommand(internal::SHUTDOWN, data::ConstElementPtr());
+            builder_thread_.wait();
         } catch (const util::thread::Thread::UncaughtException& ex) {
             LOG_ERROR(auth_logger, AUTH_DATASRC_CLIENTS_SHUTDOWN_ERROR).
                 arg(ex.what());
-        }
-        builder_thread_.reset();
+        } catch (...) {}
     }
 
 private:
@@ -122,7 +119,7 @@ private:
     CondVarType cond_;
     MutexType queue_mutex_;
     BuilderType builder_;
-    boost::scoped_ptr<ThreadType> builder_thread_;
+    ThreadType builder_thread_;
 };
 
 namespace internal {
