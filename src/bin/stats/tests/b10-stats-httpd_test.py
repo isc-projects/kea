@@ -1024,157 +1024,37 @@ class TestStatsHttpd(unittest.TestCase):
 
     def test_xsd_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
-        self.stats_httpd.get_stats_spec = lambda x,y: \
-            { "Dummy" :
-                  [{
-                        "item_name": "foo",
-                        "item_type": "string",
-                        "item_optional": False,
-                        "item_default": "bar",
-                        "item_description": "foo is bar",
-                        "item_title": "Foo"
-                        },
-                   {
-                        "item_name": "hoo_time",
-                        "item_type": "string",
-                        "item_optional": False,
-                        "item_default": "2011-01-01T01:01:01Z",
-                        "item_description": "hoo time",
-                        "item_title": "Hoo Time",
-                        "item_format": "date-time"
-                        },
-                   {
-                        "item_name": "foo2",
-                        "item_type": "list",
-                        "item_optional": False,
-                        "item_default": [
-                            {
-                                "zonename" : "test1",
-                                "queries.udp" : 1,
-                                "queries.tcp" : 2
-                                },
-                            {
-                                "zonename" : "test2",
-                                "queries.udp" : 3,
-                                "queries.tcp" : 4
-                                }
-                        ],
-                        "item_title": "Foo bar",
-                        "item_description": "Foo bar",
-                        "list_item_spec": {
-                            "item_name": "foo2-1",
-                            "item_type": "map",
-                            "item_optional": False,
-                            "item_default": {},
-                            "map_item_spec": [
-                                {
-                                    "item_name": "foo2-1-1",
-                                    "item_type": "string",
-                                    "item_optional": False,
-                                    "item_default": "",
-                                    "item_title": "Foo2 1 1",
-                                    "item_description": "Foo bar"
-                                    },
-                                {
-                                    "item_name": "foo2-1-2",
-                                    "item_type": "integer",
-                                    "item_optional": False,
-                                    "item_default": 0,
-                                    "item_title": "Foo2 1 2",
-                                    "item_description": "Foo bar"
-                                    },
-                                {
-                                    "item_name": "foo2-1-3",
-                                    "item_type": "integer",
-                                    "item_optional": False,
-                                    "item_default": 0,
-                                    "item_title": "Foo2 1 3",
-                                    "item_description": "Foo bar"
-                                    }
-                                ]
-                            }
-                        }]
-              }
-        xsd_body1 = self.stats_httpd.open_template(
-            stats_httpd.XSD_TEMPLATE_LOCATION).substitute(
-            xsd_string='<schema targetNamespace="' + stats_httpd.XSD_NAMESPACE + '" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:bind10="' + stats_httpd.XSD_NAMESPACE + '"><annotation><documentation>XML schema of the statistics data in BIND 10</documentation></annotation><element name="statistics"><annotation><documentation>A set of statistics data</documentation></annotation><complexType><all><element name="Dummy"><complexType><all><element maxOccurs="1" minOccurs="1" name="foo" type="string"><annotation><appinfo>Foo</appinfo><documentation>foo is bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="hoo_time" type="dateTime"><annotation><appinfo>Hoo Time</appinfo><documentation>hoo time</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2"><complexType><sequence><element maxOccurs="unbounded" minOccurs="1" name="foo2-1"><complexType><all><element maxOccurs="1" minOccurs="1" name="foo2-1-1" type="string"><annotation><appinfo>Foo2 1 1</appinfo><documentation>Foo bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2-1-2" type="integer"><annotation><appinfo>Foo2 1 2</appinfo><documentation>Foo bar</documentation></annotation></element><element maxOccurs="1" minOccurs="1" name="foo2-1-3" type="integer"><annotation><appinfo>Foo2 1 3</appinfo><documentation>Foo bar</documentation></annotation></element></all></complexType></element></sequence></complexType></element></all></complexType></element></all></complexType></element></schema>')
-        xsd_body2 = self.stats_httpd.xsd_handler()
-        self.assertEqual(type(xsd_body1), str)
-        self.assertEqual(type(xsd_body2), str)
-        self.assertEqual(xsd_body1, xsd_body2)
-        self.stats_httpd.get_stats_spec = lambda x,y: \
-            { "Dummy" :
-                  [{
-                        "item_name": "bar",
-                        "item_type": "string",
-                        "item_optional": False,
-                        "item_default": "foo",
-                        "item_description": "bar is foo",
-                        "item_title": "bar"
-                        },
-                   {
-                        "item_name": "boo_time",
-                        "item_type": "string",
-                        "item_optional": False,
-                        "item_default": "2012-02-02T02:02:02Z",
-                        "item_description": "boo time",
-                        "item_title": "Boo Time",
-                        "item_format": "date-time"
-                        },
-                   {
-                        "item_name": "foo2",
-                        "item_type": "list",
-                        "item_optional": False,
-                        "item_default": [
-                            {
-                                "zonename" : "test1",
-                                "queries.udp" : 1,
-                                "queries.tcp" : 2
-                                },
-                            {
-                                "zonename" : "test2",
-                                "queries.udp" : 3,
-                                "queries.tcp" : 4
-                                }
-                        ],
-                        "item_title": "Foo bar",
-                        "item_description": "Foo bar",
-                        "list_item_spec": {
-                            "item_name": "foo2-1",
-                            "item_type": "map",
-                            "item_optional": False,
-                            "item_default": {},
-                            "map_item_spec": [
-                                {
-                                    "item_name": "foo2-1-1",
-                                    "item_type": "string",
-                                    "item_optional": False,
-                                    "item_default": "",
-                                    "item_title": "Foo2 1 1",
-                                    "item_description": "Foo bar"
-                                    },
-                                {
-                                    "item_name": "foo2-1-2",
-                                    "item_type": "integer",
-                                    "item_optional": False,
-                                    "item_default": 0,
-                                    "item_title": "Foo2 1 2",
-                                    "item_description": "Foo bar"
-                                    },
-                                {
-                                    "item_name": "foo2-1-3",
-                                    "item_type": "integer",
-                                    "item_optional": False,
-                                    "item_default": 0,
-                                    "item_title": "Foo2 1 3",
-                                    "item_description": "Foo bar"
-                                    }
-                                ]
-                            }
-                        }]
-              }
-        xsd_body2 = self.stats_httpd.xsd_handler()
-        self.assertNotEqual(xsd_body1, xsd_body2)
+        xsd_string = self.stats_httpd.xsd_handler()
+        stats_xsd = xml.etree.ElementTree.fromstring(xsd_string)
+        ns = '{%s}' % XMLNS_XSD
+        stats_xsd = stats_xsd[1].find('%scomplexType/%ssequence/%selement' % ((ns,)*3))
+        self.assertEqual('item', stats_xsd.attrib['name'])
+        stats_xsd = stats_xsd.find('%scomplexType' % ns)
+        type_types = ('boolean', 'integer', 'real', 'string', 'map', \
+                          'list', 'named_set', 'any')
+        attribs = [('identifier', 'string', 'required'),
+                   ('value', 'string', 'optional'),
+                   ('owner', 'string', 'required'),
+                   ('uri', 'anyURI', 'required'),
+                   ('name', 'string', 'required'),
+                   ('type', type_types, 'required'),
+                   ('description', 'string', 'optional'),
+                   ('title', 'string', 'optional'),
+                   ('optional', 'boolean', 'optional'),
+                   ('default', 'string', 'optional'),
+                   ('format', 'string', 'optional')]
+        for i in range(0, len(attribs)):
+            self.assertEqual(attribs[i][0], stats_xsd[i].attrib['name'])
+            if attribs[i][0] == 'type':
+                stats_xsd_types = \
+                    stats_xsd[i].find('%ssimpleType/%srestriction' % \
+                                          ((ns,)*2))
+                for j in range(0, len(attribs[i][1])):
+                    self.assertEqual(attribs[i][1][j], \
+                                         stats_xsd_types[j].attrib['value'])
+            else:
+                self.assertEqual(attribs[i][1], stats_xsd[i].attrib['type'])
+            self.assertEqual(attribs[i][2], stats_xsd[i].attrib['use'])
 
     def test_xsl_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
