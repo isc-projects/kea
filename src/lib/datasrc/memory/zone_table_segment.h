@@ -57,7 +57,7 @@ public:
     /// The interface is tentative, we don't know if this is the correct place
     /// and way to set the data. But for now, we need something to be there
     /// at least for the tests. So we have this. For this reason, there are
-    /// no tests for this method directly. Do not use in actuall
+    /// no tests for this method directly. Do not use in actual
     /// implementation.
     ///
     /// It can be used only once, to initially set it. It can't replace the
