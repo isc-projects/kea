@@ -34,6 +34,12 @@ import http.client
 import xml.etree.ElementTree
 import random
 import urllib.parse
+# load this module for xml validation with xsd. For this test, an
+# installation of lxml is required in advance. See http://lxml.de/.
+try:
+    from lxml import etree as lxml_etree
+except ImportError:
+    lxml_etree = None
 
 import isc
 import stats_httpd
@@ -457,6 +463,40 @@ class TestHttpHandler(unittest.TestCase):
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
+
+    @unittest.skipUnless(lxml_etree, "skipping XML validation with XSD")
+    def test_xml_validation_with_xsd(self):
+        """Tests for XML validation with XSD. If lxml is not
+        installed, this tests would be skipped."""
+        def request_xsd():
+            url_path = stats_httpd.XSD_URL_PATH
+            url_path = urllib.parse.quote(url_path)
+            self.client.putrequest('GET', url_path)
+            self.client.endheaders()
+            xsd_doc = self.client.getresponse()
+            xsd_doc = lxml_etree.parse(xsd_doc)
+            return lxml_etree.XMLSchema(xsd_doc)
+
+        def request_xmldoc(path=''):
+            url_path = '%s/%s' % (stats_httpd.XML_URL_PATH, path)
+            url_path = urllib.parse.quote(url_path)
+            self.client.putrequest('GET', url_path)
+            self.client.endheaders()
+            xml_doc = self.client.getresponse()
+            return lxml_etree.parse(xml_doc)
+
+        # request XSD and XML
+        xsd = request_xsd()
+        xml_doc = request_xmldoc()
+        # do validation
+        self.assertTrue(xsd.validate(xml_doc))
+
+        # validate each paths in DUMMY_DATA
+        for path in stats_httpd.item_name_list(DUMMY_DATA, ''):
+            # request XML
+            xml_doc = request_xmldoc(path)
+            # do validation
+            self.assertTrue(xsd.validate(xml_doc))
 
 class TestHttpServerError(unittest.TestCase):
     """Tests for HttpServerError exception"""
