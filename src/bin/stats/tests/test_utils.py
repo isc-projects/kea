@@ -31,6 +31,8 @@ import isc.config.cfgmgr
 import stats
 import stats_httpd
 
+CONST_BASETIME = (2011, 6, 22, 8, 14, 8, 2, 173, 0)
+
 class SignalHandler():
     """A signal handler class for deadlock in unittest"""
     def __init__(self, fail_handler, timeout=20):
@@ -237,7 +239,7 @@ class MockBoss:
   }
 }
 """
-    _BASETIME = (2011, 6, 22, 8, 14, 8, 2, 173, 0)
+    _BASETIME = CONST_BASETIME
 
     def __init__(self):
         self._started = threading.Event()
@@ -472,6 +474,11 @@ class MockAuth:
         return isc.config.create_answer(1, "Unknown Command")
 
 class MyStats(stats.Stats):
+
+    stats._BASETIME = CONST_BASETIME
+    stats.get_timestamp = lambda: time.mktime(CONST_BASETIME)
+    stats.get_datetime = lambda x=None: time.strftime("%Y-%m-%dT%H:%M:%SZ", CONST_BASETIME)
+
     def __init__(self):
         self._started = threading.Event()
         stats.Stats.__init__(self)
