@@ -33,13 +33,61 @@
 namespace isc {
 namespace auth {
 
-namespace internal {
+namespace datasrc_clientmgr_internal {
 enum CommandID {
     NOOP,                       ///< Do nothing.  Only useful for tests
     SHUTDOWN                    ///< Shutdown the builder.
 };
 typedef std::pair<CommandID, data::ConstElementPtr> Command;
+} // namespace datasrc_clientmgr_internal
 
+template <typename ThreadType, typename BuilderType, typename MutexType,
+          typename CondVarType>
+class DataSrcClientsMgrBase {
+public:
+    DataSrcClientsMgrBase() :
+        builder_(&command_queue_, &cond_, &queue_mutex_),
+        builder_thread_(boost::bind(&BuilderType::run, &builder_))
+    {}
+    ~DataSrcClientsMgrBase() {
+        // We share class member variables with the builder, which will be
+        // invalidated after the call to the destructor, so we need to make
+        // sure the builder thread is terminated.  Depending on the timing
+        // this could time; if we don't want that to happen in this context,
+        // we may want to introduce a separate 'shutdown()' method.
+        // Also, since we don't want to propagate exceptions from a destructor,
+        // we catch any possible ones.  In fact the only really expected one
+        // is Thread::UncaughtException when the builder thread died due to
+        // an exception.  We specifically log it and just ignore others.
+        try {
+            sendCommand(datasrc_clientmgr_internal::SHUTDOWN,
+                        data::ConstElementPtr());
+            builder_thread_.wait();
+        } catch (const util::thread::Thread::UncaughtException& ex) {
+            LOG_ERROR(auth_logger, AUTH_DATASRC_CLIENTS_SHUTDOWN_ERROR).
+                arg(ex.what());
+        } catch (...) {}
+    }
+
+private:
+    void sendCommand(datasrc_clientmgr_internal::CommandID command,
+                     data::ConstElementPtr arg) {
+        {
+            typename MutexType::Locker locker(queue_mutex_);
+            command_queue_.push_back(
+                datasrc_clientmgr_internal::Command(command, arg));
+        }
+        cond_.signal();
+    }
+
+    std::list<datasrc_clientmgr_internal::Command> command_queue_;
+    CondVarType cond_;
+    MutexType queue_mutex_;
+    BuilderType builder_;
+    ThreadType builder_thread_;
+};
+
+namespace datasrc_clientmgr_internal {
 template <typename MutexType, typename CondVarType>
 class DataSrcClientsBuilderBase {
 public:
@@ -77,52 +125,7 @@ private:
 // Shortcut typedef for normal use
 typedef DataSrcClientsBuilderBase<util::thread::Mutex, util::thread::CondVar>
 DataSrcClientsBuilder;
-}
 
-template <typename ThreadType, typename BuilderType, typename MutexType,
-          typename CondVarType>
-class DataSrcClientsMgrBase {
-public:
-    DataSrcClientsMgrBase() :
-        builder_(&command_queue_, &cond_, &queue_mutex_),
-        builder_thread_(boost::bind(&BuilderType::run, &builder_))
-    {}
-    ~DataSrcClientsMgrBase() {
-        // We share class member variables with the builder, which will be
-        // invalidated after the call to the destructor, so we need to make
-        // sure the builder thread is terminated.  Depending on the timing
-        // this could time; if we don't want that to happen in this context,
-        // we may want to introduce a separate 'shutdown()' method.
-        // Also, since we don't want to propagate exceptions from a destructor,
-        // we catch any possible ones.  In fact the only really expected one
-        // is Thread::UncaughtException when the builder thread died due to
-        // an exception.  We specifically log it and just ignore others.
-        try {
-            sendCommand(internal::SHUTDOWN, data::ConstElementPtr());
-            builder_thread_.wait();
-        } catch (const util::thread::Thread::UncaughtException& ex) {
-            LOG_ERROR(auth_logger, AUTH_DATASRC_CLIENTS_SHUTDOWN_ERROR).
-                arg(ex.what());
-        } catch (...) {}
-    }
-
-private:
-    void sendCommand(internal::CommandID command, data::ConstElementPtr arg) {
-        {
-            typename MutexType::Locker locker(queue_mutex_);
-            command_queue_.push_back(internal::Command(command, arg));
-        }
-        cond_.signal();
-    }
-
-    std::list<internal::Command> command_queue_;
-    CondVarType cond_;
-    MutexType queue_mutex_;
-    BuilderType builder_;
-    ThreadType builder_thread_;
-};
-
-namespace internal {
 template <typename MutexType, typename CondVarType>
 void
 DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
@@ -177,16 +180,16 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
     }
     return (true);
 }
-} // namespace internal
+} // namespace datasrc_clientmgr_internal
 
 /// \brief Shortcut type for normal data source clients manager.
 ///
 /// In fact, for non test applications this is the only type of this kind
 /// to be considered.
-typedef DataSrcClientsMgrBase<util::thread::Thread,
-                              internal::DataSrcClientsBuilder,
-                              util::thread::Mutex, util::thread::CondVar>
-DataSrcClientsMgr;
+typedef DataSrcClientsMgrBase<
+    util::thread::Thread,
+    datasrc_clientmgr_internal::DataSrcClientsBuilder,
+    util::thread::Mutex, util::thread::CondVar> DataSrcClientsMgr;
 } // namespace auth
 } // namespace isc
 

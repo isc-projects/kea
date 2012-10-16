@@ -23,11 +23,11 @@
 
 #include <list>
 
-// Below we extend the isc::auth::internal namespace to specialize
-// the doNoop() method.
+// Below we extend the isc::auth::datasrc_clientmgr_internal namespace to
+// specialize the doNoop() method.
 namespace isc {
 namespace auth {
-namespace internal {
+namespace datasrc_clientmgr_internal {
 class TestMutex {
 public:
     // for throw_from_noop.
@@ -106,8 +106,6 @@ template<>
 void
 TestDataSrcClientsBuilder::doNoop();
 
-} // namespace internal
-
 // A specialization of DataSrcClientsBuilder that allows tests to inspect
 // its internal states via static class variables.  Using static is suboptimal,
 // but DataSrcClientsMgr is highly encapsulated, this seems to be the best
@@ -118,9 +116,9 @@ public:
     static bool started;
 
     // These three correspond to the resource shared with the manager.
-    static std::list<internal::Command>* command_queue;
-    static internal::TestCondVar* cond;
-    static internal::TestMutex* queue_mutex;
+    static std::list<Command>* command_queue;
+    static TestCondVar* cond;
+    static TestMutex* queue_mutex;
 
     // true iff the manager waited on the thread running the builder.
     static bool thread_waited;
@@ -130,9 +128,10 @@ public:
     enum ExceptionFromWait { NOTHROW, THROW_UNCAUGHT_EX, THROW_OTHER };
     static ExceptionFromWait thread_throw_on_wait;
 
-    FakeDataSrcClientsBuilder(std::list<internal::Command>* command_queue,
-                              internal::TestCondVar* cond,
-                              internal::TestMutex* queue_mutex)
+    FakeDataSrcClientsBuilder(
+        std::list<Command>* command_queue,
+        TestCondVar* cond,
+        TestMutex* queue_mutex)
     {
         FakeDataSrcClientsBuilder::started = false;
         FakeDataSrcClientsBuilder::command_queue = command_queue;
@@ -163,11 +162,14 @@ public:
         }
     }
 };
+} // namespace datasrc_clientmgr_internal
 
 // Convenient shortcut
-typedef DataSrcClientsMgrBase<TestThread, FakeDataSrcClientsBuilder,
-                              internal::TestMutex, internal::TestCondVar>
-TestDataSrcClientsMgr;
+typedef DataSrcClientsMgrBase<
+    datasrc_clientmgr_internal::TestThread,
+    datasrc_clientmgr_internal::FakeDataSrcClientsBuilder,
+    datasrc_clientmgr_internal::TestMutex,
+    datasrc_clientmgr_internal::TestCondVar> TestDataSrcClientsMgr;
 
 } // namespace auth
 } // namespace isc

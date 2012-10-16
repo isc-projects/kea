@@ -22,7 +22,7 @@
 #include <boost/function.hpp>
 
 using isc::data::ConstElementPtr;
-using namespace isc::auth::internal;
+using namespace isc::auth::datasrc_clientmgr_internal;
 
 namespace {
 class DataSrcClientsBuilderTest : public ::testing::Test {
