@@ -255,9 +255,9 @@ rrsetsCheck(EXPECTED_ITERATOR expected_begin, EXPECTED_ITERATOR expected_end,
     // or they can have them attached to the RRset they cover.
     // For ease of use of this method, we first flatten out both
     // iterators, and pull out the signature sets, and add them as
-    // separate RRsets (checkRRset() later does not check signatures
+    // separate RRsets (rrsetCheck() later does not check signatures
     // attached to rrsets)
-    std::vector<isc::dns::ConstRRsetPtr> actual_rrsets, expected_rrsets;
+    std::vector<isc::dns::ConstRRsetPtr> expected_rrsets, actual_rrsets;
     std::string expected_text, actual_text;
 
     pullSigs(expected_rrsets, expected_text, expected_begin, expected_end);
@@ -277,9 +277,9 @@ rrsetsCheck(EXPECTED_ITERATOR expected_begin, EXPECTED_ITERATOR expected_end,
     std::vector<isc::dns::ConstRRsetPtr>::const_iterator it;
     for (it = actual_rrsets.begin(); it != actual_rrsets.end(); ++it) {
         // Make sure there's no duplicate RRset in actual (using a naive
-        // search).  Since the actual set is guaranteed to be unique, we can
-        // detect it if the expected data has a duplicate by the match/size
-        // checks at the end of the function.
+        // search).  By guaranteeing the actual set is unique, and the
+        // size of both vectors is the same, we can conclude that
+        // the two sets are identical after this loop
         // Note: we cannot use EXPECT_EQ for iterators
         EXPECT_TRUE(checked_rrsets.end() ==
                     std::find_if(checked_rrsets.begin(), checked_rrsets.end(),
