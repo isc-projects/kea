@@ -36,6 +36,9 @@ shutdownCheck() {
     const Command& cmd = FakeDataSrcClientsBuilder::command_queue->front();
     EXPECT_EQ(SHUTDOWN, cmd.first);
     EXPECT_FALSE(cmd.second);   // no argument
+
+    // Finally, the manager should wait for the thread to terminate.
+    EXPECT_TRUE(FakeDataSrcClientsBuilder::thread_waited);
 }
 
 TEST(DataSrcClientsMgrTest, start) {
@@ -45,48 +48,39 @@ TEST(DataSrcClientsMgrTest, start) {
         TestDataSrcClientsMgr mgr;
         EXPECT_TRUE(FakeDataSrcClientsBuilder::started);
         EXPECT_TRUE(FakeDataSrcClientsBuilder::command_queue->empty());
-    }
 
-    // We stopped the manager implicitly (without shutdown()).  In this case
-    // the builder should be notified but the manager didn't wait.
+        // Check pre-destroy conditions
+        EXPECT_EQ(0, FakeDataSrcClientsBuilder::cond->signal_count);
+        EXPECT_FALSE(FakeDataSrcClientsBuilder::thread_waited);
+    } // mgr and builder have been destroyed by this point.
+
+    // We stopped the manager implicitly (without shutdown()).  The manager
+    // will internally notify it
     shutdownCheck();
-    EXPECT_FALSE(FakeDataSrcClientsBuilder::thread_waited);
-}
-
-TEST(DataSrcClientsMgrTest, shutdown) {
-    // Invoke shutdown on the manager.
-    TestDataSrcClientsMgr mgr;
-    EXPECT_TRUE(FakeDataSrcClientsBuilder::started);
-
-    // Check pre-command conditions
-    EXPECT_EQ(0, FakeDataSrcClientsBuilder::cond->signal_count);
-    EXPECT_FALSE(FakeDataSrcClientsBuilder::thread_waited);
-
-    mgr.shutdown();
-    shutdownCheck();
-    EXPECT_TRUE(FakeDataSrcClientsBuilder::thread_waited);
 }
 
 TEST(DataSrcClientsMgrTest, shutdownWithUncaughtException) {
     // Emulating the case when the builder exists on exception.  shutdown()
     // will encounter UncaughtException exception and catch it.
-    TestDataSrcClientsMgr mgr;
-    FakeDataSrcClientsBuilder::thread_throw_on_wait =
-        FakeDataSrcClientsBuilder::THROW_UNCAUGHT_EX;
-    EXPECT_NO_THROW(mgr.shutdown());
+    EXPECT_NO_THROW({
+            TestDataSrcClientsMgr mgr;
+            FakeDataSrcClientsBuilder::thread_throw_on_wait =
+                FakeDataSrcClientsBuilder::THROW_UNCAUGHT_EX;
+        });
 }
+
 TEST(DataSrcClientsMgrTest, shutdownWithException) {
-    TestDataSrcClientsMgr mgr;
-    FakeDataSrcClientsBuilder::thread_throw_on_wait =
-        FakeDataSrcClientsBuilder::THROW_OTHER;
-    EXPECT_THROW(mgr.shutdown(), isc::Unexpected);
+    EXPECT_NO_THROW({
+            TestDataSrcClientsMgr mgr;
+            FakeDataSrcClientsBuilder::thread_throw_on_wait =
+                FakeDataSrcClientsBuilder::THROW_OTHER;
+        });
 }
 
 TEST(DataSrcClientsMgrTest, realThread) {
     // Using the non-test definition with a real thread.  Just checking
     // no disruption happens.
     DataSrcClientsMgr mgr;
-    mgr.shutdown();
 }
 
 } // unnamed namespace
