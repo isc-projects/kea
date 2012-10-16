@@ -15,6 +15,7 @@
 #ifndef B10_THREAD_LOCK_H
 #define B10_THREAD_LOCK_H
 
+#include <exceptions/exceptions.h>
 #include <boost/noncopyable.hpp>
 
 #include <cstdlib> // for NULL.
@@ -76,21 +77,39 @@ public:
     /// of function no matter by what means.
     class Locker : public boost::noncopyable {
     public:
+        /// \brief Exception thrown when the mutex is already locked and
+        ///     a non-blocking locker is attempted around it.
+        struct AlreadyLocked : public isc::InvalidParameter {
+            AlreadyLocked(const char* file, size_t line, const char* what) :
+                isc::InvalidParameter(file, line, what)
+            {}
+        };
+
         /// \brief Constructor.
         ///
-        /// Locks the mutex. May block for extended period of time.
+        /// Locks the mutex. May block for extended period of time if
+        /// \c block is true.
         ///
         /// \throw isc::InvalidOperation when OS reports error. This usually
         ///     means an attempt to use the mutex in a wrong way (locking
         ///     a mutex second time from the same thread, for example).
-        Locker(Mutex& mutex) :
+        /// \throw AlreadyLocked if \c block is false and the mutex is
+        ///     already locked.
+        Locker(Mutex& mutex, bool block = true) :
             mutex_(NULL)
         {
             // Set the mutex_ after we acquire the lock. This is because of
             // exception safety. If lock() throws, it didn't work, so we must
             // not unlock when we are destroyed. In such case, mutex_ is
             // NULL and checked in the destructor.
-            mutex.lock();
+            if (block) {
+                mutex.lock();
+            } else {
+                if (!mutex.tryLock()) {
+                    isc_throw(AlreadyLocked, "The mutex is already locked");
+                }
+            }
+
             mutex_ = &mutex;
         }
 
@@ -105,6 +124,7 @@ public:
     private:
         Mutex* mutex_;
     };
+
     /// \brief If the mutex is currently locked
     ///
     /// This is debug aiding method only. And it might be unavailable in
@@ -113,11 +133,36 @@ public:
     ///
     /// \todo Disable in non-debug build
     bool locked() const;
+
+private:
+    /// \brief Lock the mutex
+    ///
+    /// This method blocks until the mutex can be locked.
+    ///
+    /// Please consider not using this method directly and instead using
+    /// a Mutex::Locker object instead.
+    void lock();
+
+    /// \brief Try to lock the mutex
+    ///
+    /// This method doesn't block and returns immediately with a status
+    /// on whether the lock operation was successful.
+    ///
+    /// Please consider not using this method directly and instead using
+    /// a Mutex::Locker object instead.
+    ///
+    /// \return true if the lock was successful, false otherwise.
+    bool tryLock();
+
+    /// \brief Unlock the mutex
+    ///
+    /// Please consider not using this method directly and instead using
+    /// a Mutex::Locker object instead.
+    void unlock();
+
 private:
     class Impl;
     Impl* impl_;
-    void lock();
-    void unlock();
 };
 
 

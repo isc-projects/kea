@@ -214,9 +214,14 @@ class Creator(Parser):
                                 socket.SOCK_STREAM)
         env = copy.deepcopy(os.environ)
         env['PATH'] = path
+        # We explicitly set close_fs to True; it's False by default before
+        # Python 3.2.  If we don't close the remaining FDs, the copy of
+        # 'local' will prevent the child process from terminating when
+        # the parent process died abruptly.
         self.__process = subprocess.Popen(['b10-sockcreator'], env=env,
                                           stdin=remote.fileno(),
                                           stdout=remote2.fileno(),
+                                          close_fds=True,
                                           preexec_fn=self.__preexec_work)
         remote.close()
         remote2.close()

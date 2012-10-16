@@ -28,6 +28,7 @@ TESTS += libdhcp++_unittests libdhcpsrv_unittests
 libdhcp___unittests_SOURCES  = run_unittests.cc
 libdhcp___unittests_SOURCES += libdhcp++_unittest.cc
 libdhcp___unittests_SOURCES += iface_mgr_unittest.cc
+libdhcp___unittests_SOURCES += lease_mgr_unittest.cc
 libdhcp___unittests_SOURCES += option6_iaaddr_unittest.cc
 libdhcp___unittests_SOURCES += option6_ia_unittest.cc
 libdhcp___unittests_SOURCES += option6_addrlst_unittest.cc
@@ -35,6 +36,7 @@ libdhcp___unittests_SOURCES += option4_addrlst_unittest.cc
 libdhcp___unittests_SOURCES += option_unittest.cc
 libdhcp___unittests_SOURCES += pkt6_unittest.cc
 libdhcp___unittests_SOURCES += pkt4_unittest.cc
+libdhcp___unittests_SOURCES += duid_unittest.cc
 
 libdhcp___unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 libdhcp___unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
