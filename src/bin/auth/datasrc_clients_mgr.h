@@ -100,7 +100,12 @@ public:
     }
     void shutdown() {
         sendCommand(internal::SHUTDOWN, data::ConstElementPtr());
-        builder_thread_->wait();
+        try {
+            builder_thread_->wait();
+        } catch (const util::thread::Thread::UncaughtException& ex) {
+            LOG_ERROR(auth_logger, AUTH_DATASRC_CLIENTS_SHUTDOWN_ERROR).
+                arg(ex.what());
+        }
         builder_thread_.reset();
     }
 
