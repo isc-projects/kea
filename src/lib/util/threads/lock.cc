@@ -119,19 +119,6 @@ Mutex::lock() {
     ++impl_->locked_count; // Only in debug mode
 }
 
-bool
-Mutex::tryLock() {
-    assert(impl_ != NULL);
-    const int result = pthread_mutex_trylock(&impl_->mutex);
-    if (result == EBUSY) {
-        return (false);
-    } else if (result != 0) {
-        isc_throw(isc::InvalidOperation, std::strerror(result));
-    }
-    ++impl_->locked_count; // Only in debug mode
-    return (true);
-}
-
 void
 Mutex::unlock() {
     assert(impl_ != NULL);
