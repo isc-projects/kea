@@ -7,6 +7,7 @@ AM_CPPFLAGS += $(BOOST_INCLUDES) $(MULTITHREADING_FLAG)
 lib_LTLIBRARIES = libb10-threads.la
 libb10_threads_la_SOURCES  = lock.h lock.cc
 libb10_threads_la_SOURCES += thread.h thread.cc
-libb10_threads_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+libb10_threads_la_LIBADD  = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+libb10_threads_la_LIBADD += $(PTHREAD_LDFLAGS)
 
 CLEANFILES = *.gcno *.gcda
