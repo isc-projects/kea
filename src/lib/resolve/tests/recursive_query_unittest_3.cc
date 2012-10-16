@@ -133,7 +133,7 @@ public:
     udp::socket     udp_socket_;                ///< Socket used by UDP server
 
     /// TODO
-    RunningQuery* running_query_;
+    AbstractRunningQuery* running_query_;
 
     /// \brief Constructor
     RecursiveQueryTest3() :
