@@ -15,12 +15,17 @@
  * <a href="http://bind10.isc.org/">BIND10 webpage (http://bind10.isc.org)</a>
  *
  * @section DNS
+ * - Authoritative DNS (todo)
+ * - Recursive resolver (todo)
  * - @subpage DataScrubbing
  *
  * @section DHCP
  * - @subpage dhcpv4
  *   - @subpage dhcpv4Session
  * - @subpage dhcpv6
+ *   - @subpage dhcpv6-session
+ *   - @subpage dhcpv6-config-parser
+ *   - @subpage dhcpv6-config-inherit
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpIfaceMgr

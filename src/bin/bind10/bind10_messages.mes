@@ -167,6 +167,30 @@ so BIND 10 will now shut down. The specific error is printed.
 % BIND10_SEND_SIGKILL sending SIGKILL to %1 (PID %2)
 The boss module is sending a SIGKILL signal to the given process.
 
+% BIND10_SEND_SIGNAL_FAIL sending %1 to %2 (PID %3) failed: %4
+The boss module sent a single (either SIGTERM or SIGKILL) to a process,
+but it failed due to some system level error.  There are two major cases:
+the target process has already terminated but the boss module had sent
+the signal before it noticed the termination.  In this case an error
+message should indicate something like "no such process".  This can be
+safely ignored.  The other case is that the boss module doesn't have
+the privilege to send a signal to the process.  It can typically
+happen when the boss module started as a privileged process, spawned a
+subprocess, and then dropped the privilege.  It includes the case for
+the socket creator when the boss process runs with the -u command line
+option.  In this case, the boss module simply gives up to terminate
+the process explicitly because it's unlikely to succeed by keeping
+sending the signal.  Although the socket creator is implemented so
+that it will terminate automatically when the boss process exits
+(and that should be the case for any other future process running with
+a higher privilege), but it's recommended to check if there's any
+remaining BIND 10 process if this message is logged.  For all other
+cases, the boss module will keep sending the signal until it confirms
+all child processes terminate.  Although unlikely, this could prevent
+the boss module from exiting, just keeping sending the signals.  So,
+again, it's advisable to check if it really terminates when this
+message is logged.
+
 % BIND10_SEND_SIGTERM sending SIGTERM to %1 (PID %2)
 The boss module is sending a SIGTERM signal to the given process.
 
@@ -273,13 +297,6 @@ of sequence.
 During the startup process, a number of messages are exchanged between the
 Boss process and the processes it starts.  This error is output when a
 message received by the Boss process is not recognised.
-
-% BIND10_START_AS_NON_ROOT_AUTH starting b10-auth as a user, not root. This might fail.
-The authoritative server is being started or restarted without root privileges.
-If the module needs these privileges, it may have problems starting.
-Note that this issue should be resolved by the pending 'socket-creator'
-process; once that has been implemented, modules should not need root
-privileges anymore. See tickets #800 and #801 for more information.
 
 % BIND10_START_AS_NON_ROOT_RESOLVER starting b10-resolver as a user, not root. This might fail.
 The resolver is being started or restarted without root privileges.
