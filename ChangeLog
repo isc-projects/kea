@@ -1,7 +1,80 @@
+494.	[bug]		jinmei
+	Fixed a problem that shutting down BIND 10 kept some of the
+	processes alive.  It was two-fold: when the main bind10 process
+	started as a root, started b10-sockcreator with the privilege, and
+	then dropped the privilege, the bind10 process cannot kill the
+	sockcreator via signal any more (when it has to), but it kept
+	sending the signal and didn't stop.  Also, when running on Python
+	3.1 (or older), the sockcreator had some additional file
+	descriptor open, which prevented it from exiting even after the
+	bind10 process terminated.  Now the bind10 process simply gives up
+	killing a subprocess if it fails due to lack of permission, and it
+	makes sure the socket creator is spawned without any unnecessary
+	FDs open.
+	(Trac #1858, git 405d85c8a0042ba807a3a123611ff383c4081ee1)
+
+493.	[build]		jinmei
+	Fixed build failure with newer versions of clang++.  These
+	versions are stricter regarding "unused variable" and "unused
+	(driver) arguments" warnings, and cause fatal build error
+	with -Werror.  The affected versions of clang++ include Apple's
+	customized version 4.1 included in Xcode 4.5.1.  So this fix
+	will solve build errors for Mac OS X that uses newer versions of
+	Xcode.
+	(Trac #2340, git 55be177fc4f7537143ab6ef5a728bd44bdf9d783,
+	3e2a372012e633d017a97029d13894e743199741 and commits before it
+	with [2340] in the commit log)
+
+492.	[func]		tomek
+	libdhcpsrv: The DHCP Configuration Manager is now able to store
+	information about IPv4 subnets and pools. It is still not possible
+	to configure that information. Such capability will be implemented
+	in a near future.
+	(Trac #2237, git a78e560343b41f0f692c7903c938b2b2b24bf56b)
+
+491.	[func]		tomek
+	b10-dhcp6: Configuration for DHCPv6 has been implemented.
+	Currently it is possible to configure IPv6 subnets and pools
+	within those subnets, global and per subnet values of renew,
+	rebind, preferred and valid lifetimes. Configured parameters
+	are accepted, but are not used yet by the allocation engine yet.
+	(Trac #2269, git 028bed9014b15facf1a29d3d4a822c9d14fc6411)
+
+490.	[func]		tomek
+	libdhcpsrv: An abstract API for lease database has been
+	implemented. It offers a common interface to all concrete
+	database backends.
+	(Trac #2140, git df196f7609757253c4f2f918cd91012bb3af1163)
+
+489.	[func]		muks
+	The isc::dns::RRsetList class has been removed. It was now unused
+	inside the BIND 10 codebase, and the interface was considered
+	prone to misuse.
+	(Trac #2266, git 532ac3d0054f6a11b91ee369964f3a84dabc6040)
+
+488.	[build]		jinmei
+	On configure, changed the search order for Python executable.
+	It first ties more specific file names such as "python3.2" before
+	more generic "python3".  This will prevent configure failure on
+	Mac OS X that installs Python3 via recent versions of Homebrew.
+	(Trac #2339, git 88db890d8d1c64de49be87f03c24a2021bcf63da)
+
+487.	[bug]		jinmei
+	The bind10 process now terminates a component (subprocess) by the
+	"config remove Boss/components" bindctl command even if the
+	process crashes immediately before the command is sent to bind10.
+	Previously this led to an inconsistent state between the
+	configuration and an internal component list of bind10, and bind10
+	kept trying to restart the component.  A known specific case of
+	this problem is that b10-ddns could keep failing (due to lack of
+	dependency modules) and the administrator couldn't stop the
+	restart via bindctl.
+	(Trac #2244, git 7565788d06f216ab254008ffdfae16678bcd00e5)
+
 486.	[bug]*		jinmei
 	All public header files for libb10-dns++ are now installed.
 	Template configure.ac and utility AC macros for external projects
-	using the library is provided under the "examples" directory.
+	using the library are provided under the "examples" directory.
 	The src/bin/host was moved as part of the examples (and not
 	installed with other BIND 10 programs any more).
 	(Trac #1870, git 4973e638d354d8b56dcadf71123ef23c15662021)

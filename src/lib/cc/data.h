@@ -71,7 +71,7 @@ public:
 /// the type in question.
 ///
 class Element {
-    
+
 private:
     // technically the type could be omitted; is it useful?
     // should we remove it or replace it with a pure virtual
@@ -112,7 +112,7 @@ public:
     /// \returns true if the other ElementPtr has the same type and
     ///          value
     virtual bool equals(const Element& other) const = 0;
-    
+
     /// Converts the Element to JSON format and appends it to
     /// the given stringstream.
     virtual void toJSON(std::ostream& ss) const = 0;
@@ -152,12 +152,12 @@ public:
     /// data to the given reference and returning true
     ///
     //@{
-    virtual bool getValue(long int& t);
-    virtual bool getValue(double& t);
-    virtual bool getValue(bool& t);
-    virtual bool getValue(std::string& t);
-    virtual bool getValue(std::vector<ConstElementPtr>& t);
-    virtual bool getValue(std::map<std::string, ConstElementPtr>& t);
+    virtual bool getValue(long int& t) const;
+    virtual bool getValue(double& t) const;
+    virtual bool getValue(bool& t) const;
+    virtual bool getValue(std::string& t) const;
+    virtual bool getValue(std::vector<ConstElementPtr>& t) const;
+    virtual bool getValue(std::map<std::string, ConstElementPtr>& t) const;
     //@}
 
     ///
@@ -209,7 +209,7 @@ public:
     virtual size_t size() const;
     //@}
 
-    
+
     /// \name MapElement functions
     ///
     /// \brief If the Element on which these functions are called are not
@@ -253,12 +253,12 @@ public:
     /// \param identifier The identifier of the element to find
     /// \param t Reference to store the resulting ElementPtr, if found.
     /// \return true if the element was found, false if not.
-    virtual bool find(const std::string& identifier, ConstElementPtr t) const;
+    virtual bool find(const std::string& identifier, ConstElementPtr& t) const;
     //@}
 
 
     /// \name Factory functions
-    
+
     // TODO: should we move all factory functions to a different class
     // so as not to burden the Element base with too many functions?
     // and/or perhaps even to a separate header?
@@ -349,7 +349,7 @@ public:
     /// These function pparse the wireformat at the given stringstream
     /// (of the given length). If there is a parse error an exception
     /// of the type isc::cc::DecodeError is raised.
-    
+
     //@{
     /// Creates an Element from the wire format in the given
     /// stringstream of the given length.
@@ -378,7 +378,7 @@ public:
     IntElement(long int v) : Element(integer), i(v) { }
     long int intValue() const { return (i); }
     using Element::getValue;
-    bool getValue(long int& t) { t = i; return (true); }
+    bool getValue(long int& t) const { t = i; return (true); }
     using Element::setValue;
     bool setValue(const long int v) { i = v; return (true); }
     void toJSON(std::ostream& ss) const;
@@ -392,7 +392,7 @@ public:
     DoubleElement(double v) : Element(real), d(v) {};
     double doubleValue() const { return (d); }
     using Element::getValue;
-    bool getValue(double& t) { t = d; return (true); }
+    bool getValue(double& t) const { t = d; return (true); }
     using Element::setValue;
     bool setValue(const double v) { d = v; return (true); }
     void toJSON(std::ostream& ss) const;
@@ -406,7 +406,7 @@ public:
     BoolElement(const bool v) : Element(boolean), b(v) {};
     bool boolValue() const { return (b); }
     using Element::getValue;
-    bool getValue(bool& t) { t = b; return (true); }
+    bool getValue(bool& t) const { t = b; return (true); }
     using Element::setValue;
     bool setValue(const bool v) { b = v; return (true); }
     void toJSON(std::ostream& ss) const;
@@ -427,7 +427,7 @@ public:
     StringElement(std::string v) : Element(string), s(v) {};
     std::string stringValue() const { return (s); }
     using Element::getValue;
-    bool getValue(std::string& t) { t = s; return (true); }
+    bool getValue(std::string& t) const { t = s; return (true); }
     using Element::setValue;
     bool setValue(const std::string& v) { s = v; return (true); }
     void toJSON(std::ostream& ss) const;
@@ -441,7 +441,7 @@ public:
     ListElement() : Element(list) {}
     const std::vector<ConstElementPtr>& listValue() const { return (l); }
     using Element::getValue;
-    bool getValue(std::vector<ConstElementPtr>& t) {
+    bool getValue(std::vector<ConstElementPtr>& t) const {
         t = l;
         return (true);
     }
@@ -474,7 +474,7 @@ public:
         return (m);
     }
     using Element::getValue;
-    bool getValue(std::map<std::string, ConstElementPtr>& t) {
+    bool getValue(std::map<std::string, ConstElementPtr>& t) const {
         t = m;
         return (true);
     }
@@ -495,7 +495,7 @@ public:
         return (m.find(s) != m.end());
     }
     void toJSON(std::ostream& ss) const;
-    
+
     // we should name the two finds better...
     // find the element at id; raises TypeError if one of the
     // elements at path except the one we're looking for is not a
@@ -507,7 +507,7 @@ public:
     // returns true if found, or false if not found (either because
     // it doesnt exist or one of the elements in the path is not
     // a MapElement)
-    bool find(const std::string& id, ConstElementPtr t) const;
+    bool find(const std::string& id, ConstElementPtr& t) const;
 
     bool equals(const Element& other) const;
 };
@@ -569,6 +569,6 @@ bool operator!=(const Element& a, const Element& b);
 } }
 #endif // _ISC_DATA_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:
