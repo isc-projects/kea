@@ -49,6 +49,17 @@ from test_utils import BaseModules, ThreadingServerManager, MyStats,\
                        send_command, send_shutdown, CONST_BASETIME
 from isc.testutils.ccsession_mock import MockModuleCCSession
 
+# This test suite uses xml.etree.ElementTree.XMLParser via
+# xml.etree.ElementTree.parse. On the platform where expat isn't
+# installed, ImportError is raised and it's failed. Check expat is
+# available before the test invocation. Skip this test if it's
+# unavailable.
+try:
+    # ImportError raised if xpat is unavailable
+    xml_parser = xml.etree.ElementTree.XMLParser()
+except ImportError:
+    xml_parser = None
+
 # set XML Namespaces for testing
 XMLNS_XSL = "http://www.w3.org/1999/XSL/Transform"
 XMLNS_XHTML = "http://www.w3.org/1999/xhtml"
@@ -211,6 +222,7 @@ class TestHttpHandler(unittest.TestCase):
         # reset the signal handler
         self.sig_handler.reset()
 
+    @unittest.skipUnless(xml_parser, "skipping the test using XMLParser")
     def test_do_GET(self):
         self.assertTrue(type(self.stats_httpd.httpd) is list)
         self.assertEqual(len(self.stats_httpd.httpd), 1)
@@ -826,6 +838,7 @@ class TestStatsHttpd(unittest.TestCase):
             )
         self.assertEqual(ret, 1)
 
+    @unittest.skipUnless(xml_parser, "skipping the test using XMLParser")
     def test_xml_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
         module_name = 'Dummy'
@@ -944,6 +957,7 @@ class TestStatsHttpd(unittest.TestCase):
             self.assertFalse('item_format' in spec)
             self.assertFalse('format' in stats_xml[i].attrib)
 
+    @unittest.skipUnless(xml_parser, "skipping the test using XMLParser") 
     def test_xsd_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
         xsd_string = self.stats_httpd.xsd_handler()
@@ -978,6 +992,7 @@ class TestStatsHttpd(unittest.TestCase):
                 self.assertEqual(attribs[i][1], stats_xsd[i].attrib['type'])
             self.assertEqual(attribs[i][2], stats_xsd[i].attrib['use'])
 
+    @unittest.skipUnless(xml_parser, "skipping the test using XMLParser") 
     def test_xsl_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
         xsl_string = self.stats_httpd.xsl_handler()
