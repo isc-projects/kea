@@ -21,9 +21,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <map>
-#include <string>
-
 namespace isc {
 namespace util {
 
@@ -84,16 +81,12 @@ protected:
     bool unlock();
 
 private:
-    typedef boost::shared_ptr<isc::util::thread::Mutex> MutexPtr;
-    typedef boost::shared_ptr<isc::util::thread::Mutex::Locker> LockerPtr;
-    typedef std::map<std::string, boost::weak_ptr<isc::util::thread::Mutex> >
-        SyncMap;
-
-    SyncMap& getSyncMap();
-    isc::util::thread::Mutex& getSyncMapMutex();
     bool do_lock(int cmd, short l_type);
 
     int fd_; ///< The descriptor for the open file
+
+    typedef boost::shared_ptr<isc::util::thread::Mutex> MutexPtr;
+    typedef boost::shared_ptr<isc::util::thread::Mutex::Locker> LockerPtr;
     MutexPtr mutex_;   ///< A mutex for mutual exclusion among threads
     LockerPtr locker_; ///< A locker on mutex_
 };
