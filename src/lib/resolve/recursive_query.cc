@@ -158,6 +158,7 @@ RecursiveQuery::setRttRecorder(boost::shared_ptr<RttRecorder>& recorder) {
     rtt_recorder_ = recorder;
 }
 
+namespace {
 typedef std::pair<std::string, uint16_t> addr_t;
 
 /*
@@ -167,11 +168,11 @@ typedef std::pair<std::string, uint16_t> addr_t;
  *
  * Used by RecursiveQuery::sendQuery.
  */
-class RunningQuery::RunningQueryImpl : public IOFetch::Callback {
+class RunningQuery : public IOFetch::Callback, public AbstractRunningQuery {
 
 class ResolverNSASCallback : public isc::nsas::AddressRequestCallback {
 public:
-    ResolverNSASCallback(RunningQueryImpl* rq) : rq_(rq) {}
+    ResolverNSASCallback(RunningQuery* rq) : rq_(rq) {}
 
     void success(const isc::nsas::NameserverAddress& address) {
         // Success callback, send query to found namesever
@@ -191,7 +192,7 @@ public:
     }
 
 private:
-    RunningQueryImpl* rq_;
+    RunningQuery* rq_;
 };
 
 
@@ -292,7 +293,7 @@ private:
     // The moment in time we sent a query to the nameserver above.
     struct timeval current_ns_qsent_time;
 
-    // RunningQueryImpl deletes itself when it is done. In order for us
+    // RunningQuery deletes itself when it is done. In order for us
     // to do this safely, we must make sure that there are no events
     // that might call back to it. There are two types of events in
     // this sense; the timers we set ourselves (lookup and client),
@@ -669,7 +670,7 @@ SERVFAIL:
     }
 
 public:
-    RunningQueryImpl(IOService& io,
+    RunningQuery(IOService& io,
         const Question& question,
         MessagePtr answer_message,
         std::pair<std::string, uint16_t>& test_server,
@@ -712,7 +713,7 @@ public:
             lookup_timer.expires_from_now(
                 boost::posix_time::milliseconds(lookup_timeout));
             ++outstanding_events_;
-            lookup_timer.async_wait(boost::bind(&RunningQueryImpl::lookupTimeout, this));
+            lookup_timer.async_wait(boost::bind(&RunningQuery::lookupTimeout, this));
         }
 
         // Setup the timer to send an answer (client_timeout)
@@ -720,11 +721,13 @@ public:
             client_timer.expires_from_now(
                 boost::posix_time::milliseconds(client_timeout));
             ++outstanding_events_;
-            client_timer.async_wait(boost::bind(&RunningQueryImpl::clientTimeout, this));
+            client_timer.async_wait(boost::bind(&RunningQuery::clientTimeout, this));
         }
 
         doLookup();
     }
+
+    virtual ~RunningQuery() {};
 
     // called if we have a lookup timeout; if our callback has
     // not been called, call it now. Then stop.
@@ -896,7 +899,7 @@ public:
     }
 };
 
-class ForwardQuery::ForwardQueryImpl : public IOFetch::Callback {
+class ForwardQuery : public IOFetch::Callback, public AbstractRunningQuery {
 private:
     // The io service to handle async calls
     IOService& io_;
@@ -928,7 +931,7 @@ private:
     asio::deadline_timer lookup_timer;
 
     // Make FowardQuery deletes itself safely. for more information see
-    // the comments of outstanding_events in RunningQueryImpl.
+    // the comments of outstanding_events in RunningQuery.
     size_t outstanding_events_;
 
     // If we have a client timeout, we call back with a failure message,
@@ -959,7 +962,7 @@ private:
     }
 
 public:
-    ForwardQueryImpl(IOService& io,
+    ForwardQuery(IOService& io,
         ConstMessagePtr query_message,
         MessagePtr answer_message,
         boost::shared_ptr<AddressVector> upstream,
@@ -983,7 +986,7 @@ public:
             lookup_timer.expires_from_now(
                 boost::posix_time::milliseconds(lookup_timeout));
             ++outstanding_events_;
-            lookup_timer.async_wait(boost::bind(&ForwardQueryImpl::lookupTimeout, this));
+            lookup_timer.async_wait(boost::bind(&ForwardQuery::lookupTimeout, this));
         }
 
         // Setup the timer to send an answer (client_timeout)
@@ -991,11 +994,13 @@ public:
             client_timer.expires_from_now(
                 boost::posix_time::milliseconds(client_timeout));
             ++outstanding_events_;
-            client_timer.async_wait(boost::bind(&ForwardQueryImpl::clientTimeout, this));
+            client_timer.async_wait(boost::bind(&ForwardQuery::clientTimeout, this));
         }
 
         send();
     }
+
+    virtual ~ForwardQuery() {};
 
     virtual void lookupTimeout() {
         if (!callback_called_) {
@@ -1072,7 +1077,9 @@ public:
     }
 };
 
-RunningQuery*
+}
+
+AbstractRunningQuery*
 RecursiveQuery::resolve(const QuestionPtr& question,
     const isc::resolve::ResolverInterface::CallbackPtr callback)
 {
@@ -1125,7 +1132,7 @@ RecursiveQuery::resolve(const QuestionPtr& question,
     return (NULL);
 }
 
-RunningQuery*
+AbstractRunningQuery*
 RecursiveQuery::resolve(const Question& question,
                         MessagePtr answer_message,
                         OutputBufferPtr buffer,
@@ -1187,7 +1194,7 @@ RecursiveQuery::resolve(const Question& question,
     return (NULL);
 }
 
-ForwardQuery*
+AbstractRunningQuery*
 RecursiveQuery::forward(ConstMessagePtr query_message,
     MessagePtr answer_message,
     OutputBufferPtr buffer,
@@ -1213,47 +1220,9 @@ RecursiveQuery::forward(ConstMessagePtr query_message,
     // everything throught without interpretation, except
     // QID, port number. The response will not be cached.
     // It will delete itself when it is done
-    return new ForwardQuery(io, query_message, answer_message,
-                            upstream_, buffer, callback, query_timeout_,
-                            client_timeout_, lookup_timeout_);
-}
-
-ForwardQuery::ForwardQuery(IOService& io,
-        ConstMessagePtr query_message,
-        MessagePtr answer_message,
-        boost::shared_ptr<AddressVector> upstream,
-        OutputBufferPtr buffer,
-        isc::resolve::ResolverInterface::CallbackPtr cb,
-        int query_timeout, int client_timeout, int lookup_timeout) {
-    fqi_ = new ForwardQueryImpl(io, query_message, answer_message,
-                                upstream, buffer, cb, query_timeout,
-                                client_timeout, lookup_timeout);
-}
-
-ForwardQuery::~ForwardQuery() {
-    delete fqi_;
-}
-
-RunningQuery::RunningQuery(isc::asiolink::IOService& io,
-        const isc::dns::Question question,
-        isc::dns::MessagePtr answer_message,
-        std::pair<std::string, uint16_t>& test_server,
-        isc::util::OutputBufferPtr buffer,
-        isc::resolve::ResolverInterface::CallbackPtr cb,
-        int query_timeout, int client_timeout, int lookup_timeout,
-        unsigned retries,
-        isc::nsas::NameserverAddressStore& nsas,
-        isc::cache::ResolverCache& cache,
-        boost::shared_ptr<RttRecorder>& recorder)
-{
-    rqi_ = new RunningQueryImpl(io, question, answer_message, test_server,
-                                buffer, cb, query_timeout, client_timeout,
-                                lookup_timeout, retries, nsas, cache,
-                                recorder);
-}
-
-RunningQuery::~RunningQuery() {
-        delete rqi_;
+    return (new ForwardQuery(io, query_message, answer_message,
+                             upstream_, buffer, callback, query_timeout_,
+                             client_timeout_, lookup_timeout_));
 }
 
 } // namespace asiodns

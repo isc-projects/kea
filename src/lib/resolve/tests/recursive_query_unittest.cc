@@ -510,12 +510,13 @@ protected:
     vector<uint8_t> callback_data_;
     ScopedSocket sock_;
     boost::shared_ptr<isc::util::unittests::TestResolver> resolver_;
-    RunningQuery* running_query_;
+    AbstractRunningQuery* running_query_;
 };
 
 RecursiveQueryTest::RecursiveQueryTest() :
     dns_service_(NULL), callback_(NULL), callback_protocol_(0),
-    callback_native_(-1), resolver_(new isc::util::unittests::TestResolver()), running_query_(NULL)
+    callback_native_(-1), resolver_(new isc::util::unittests::TestResolver()),
+    running_query_(NULL)
 {
     nsas_.reset(new isc::nsas::NameserverAddressStore(resolver_));
 }
@@ -661,7 +662,7 @@ TEST_F(RecursiveQueryTest, forwarderSend) {
 
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
-    ForwardQuery* fq = rq.forward(query_message, answer, buffer, &server);
+    AbstractRunningQuery* fq = rq.forward(query_message, answer, buffer, &server);
 
     char data[4096];
     size_t size = sizeof(data);
@@ -759,7 +760,7 @@ TEST_F(RecursiveQueryTest, forwardQueryTimeout) {
     isc::resolve::initResponseMessage(question, *query_message);
 
     boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
-    ForwardQuery* fq = query.forward(query_message, answer, buffer, &server, callback);
+    AbstractRunningQuery* fq = query.forward(query_message, answer, buffer, &server, callback);
     // Run the test
     io_service_.run();
     EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
@@ -795,7 +796,7 @@ TEST_F(RecursiveQueryTest, forwardClientTimeout) {
     isc::resolve::initResponseMessage(q, *query_message);
 
     boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
-    ForwardQuery* fq = query.forward(query_message, answer, buffer, &server, callback);
+    AbstractRunningQuery* fq = query.forward(query_message, answer, buffer, &server, callback);
     // Run the test
     io_service_.run();
     EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
@@ -832,7 +833,7 @@ TEST_F(RecursiveQueryTest, forwardLookupTimeout) {
     isc::resolve::initResponseMessage(question, *query_message);
 
     boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
-    ForwardQuery* fq = query.forward(query_message, answer, buffer, &server, callback);
+    AbstractRunningQuery* fq = query.forward(query_message, answer, buffer, &server, callback);
     // Run the test
     io_service_.run();
     EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
@@ -868,7 +869,7 @@ TEST_F(RecursiveQueryTest, lowtimeouts) {
     isc::resolve::initResponseMessage(question, *query_message);
 
     boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
-    ForwardQuery* fq = query.forward(query_message, answer, buffer, &server, callback);
+    AbstractRunningQuery* fq = query.forward(query_message, answer, buffer, &server, callback);
     // Run the test
     io_service_.run();
     EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
