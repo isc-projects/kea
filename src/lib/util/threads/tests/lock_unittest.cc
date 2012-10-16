@@ -45,7 +45,7 @@ TEST(MutexTest, lockMultiple) {
     EXPECT_TRUE(mutex2.locked()); // Debug-only build
 }
 
-void*
+void
 testThread(Mutex* mutex)
 {
     // block=false (tryLock).  This should not block indefinitely, but
@@ -56,8 +56,6 @@ testThread(Mutex* mutex)
     }, Mutex::Locker::AlreadyLocked);
 
     EXPECT_TRUE(mutex->locked()); // Debug-only build
-
-    return NULL;
 }
 
 // Test the non-blocking variant using a second thread.
