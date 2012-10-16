@@ -16,9 +16,6 @@
 
 #include <boost/weak_ptr.hpp>
 
-#include <map>
-#include <string>
-
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -31,21 +28,13 @@ using namespace isc::util::thread;
 namespace isc {
 namespace util {
 
-namespace { // unnamed namespace
-
-typedef std::map<std::string, boost::weak_ptr<Mutex> > SyncMap;
-
-Mutex sync_map_mutex;
-SyncMap sync_map;
-
-} // end of unnamed namespace
-
 InterprocessSyncFile::InterprocessSyncFile(const std::string& task_name) :
     InterprocessSync(task_name),
     fd_(-1)
 {
-    Mutex::Locker locker(sync_map_mutex);
+    Mutex::Locker locker(getSyncMapMutex());
 
+    SyncMap& sync_map = getSyncMap();
     SyncMap::iterator it = sync_map.find(task_name);
     if (it != sync_map.end()) {
         mutex_ = it->second.lock();
@@ -66,13 +55,14 @@ InterprocessSyncFile::~InterprocessSyncFile() {
         // it.
     }
 
-    Mutex::Locker locker(sync_map_mutex);
+    Mutex::Locker locker(getSyncMapMutex());
 
     // Unref the shared mutex.
     locker_.reset();
     mutex_.reset();
 
     // Remove name from the map if it is unused anymore.
+    SyncMap& sync_map = getSyncMap();
     SyncMap::iterator it = sync_map.find(task_name_);
     assert(it != sync_map.end());
 
@@ -82,6 +72,26 @@ InterprocessSyncFile::~InterprocessSyncFile() {
 
     // Lock on sync_map_mutex is automatically unlocked during
     // destruction when basic block is exited.
+}
+
+InterprocessSyncFile::SyncMap&
+InterprocessSyncFile::getSyncMap() {
+    // avoid static destruction fiasco when the SyncMap is destroyed
+    // before clients which use it such as logger objects. This leaks,
+    // but isn't a growing leak.
+    static SyncMap* sync_map = new SyncMap;
+
+    return (*sync_map);
+}
+
+Mutex&
+InterprocessSyncFile::getSyncMapMutex() {
+    // avoid static destruction fiasco when the Mutex is destroyed
+    // before clients which use it such as logger objects. This leaks,
+    // but isn't a growing leak.
+    static Mutex* sync_map_mutex = new Mutex;
+
+    return (*sync_map_mutex);
 }
 
 bool
