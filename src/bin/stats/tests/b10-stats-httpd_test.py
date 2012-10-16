@@ -40,7 +40,7 @@ import stats_httpd
 import stats
 from test_utils import BaseModules, ThreadingServerManager, MyStats,\
                        MyStatsHttpd, SignalHandler,\
-                       send_command, send_shutdown
+                       send_command, send_shutdown, CONST_BASETIME
 from isc.testutils.ccsession_mock import MockModuleCCSession
 
 # set XML Namespaces for testing
@@ -51,29 +51,37 @@ XMLNS_XSI = stats_httpd.XMLNS_XSI
 
 DUMMY_DATA = {
     'Boss' : {
-        "boot_time": "2011-03-04T11:59:06Z"
+        "boot_time": time.strftime('%Y-%m-%dT%H:%M:%SZ', CONST_BASETIME)
         },
     'Auth' : {
-        "queries.tcp": 2,
-        "queries.udp": 3,
+        "queries.tcp": 6,
+        "queries.udp": 4,
         "queries.perzone": [{
-                "zonename": "test.example",
-                "queries.tcp": 2,
-                "queries.udp": 3
+                "zonename": "test1.example",
+                "queries.tcp": 10,
+                "queries.udp": 8
+                }, {
+                "zonename": "test2.example",
+                "queries.tcp": 8,
+                "queries.udp": 6
                 }],
         "nds_queries.perzone": {
-                "test.example": {
-                    "queries.tcp": 2,
-                    "queries.udp": 3
+                "test10.example": {
+                    "queries.tcp": 10,
+                    "queries.udp": 8
+                  },
+                "test20.example": {
+                    "queries.tcp": 8,
+                    "queries.udp": 6
                   }
                 }
         },
     'Stats' : {
-        "report_time": "2011-03-04T11:59:19Z",
-        "boot_time": "2011-03-04T11:59:06Z",
-        "last_update_time": "2011-03-04T11:59:07Z",
+        "report_time": time.strftime('%Y-%m-%dT%H:%M:%SZ', CONST_BASETIME),
+        "boot_time": time.strftime('%Y-%m-%dT%H:%M:%SZ', CONST_BASETIME),
+        "last_update_time": time.strftime('%Y-%m-%dT%H:%M:%SZ', CONST_BASETIME),
         "lname": "4d70d40a_c@host",
-        "timestamp": 1299239959.560846
+        "timestamp": time.mktime(CONST_BASETIME)
         }
     }
 
