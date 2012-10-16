@@ -72,6 +72,30 @@ XSD_NAMESPACE = 'http://bind10.isc.org/bind10'
 # Assign this process name
 isc.util.process.rename()
 
+def item_name_list(element, identifier):
+    """Returns list of items. The first argument elemet is dict-type
+    value to traverse, the second argument is a string separated
+    '/'. This is a start porint to traverse. At the end in the
+    method. The list to be returned is sorted. """
+    elem = isc.cc.data.find(element, identifier)
+    ret = []
+    ident = ''
+    if identifier and len(str(identifier)) > 0:
+        ident = str(identifier)
+        ret.append(ident)
+    if type(elem) is dict:
+        if len(ident) > 0:
+            ident = '%s/' % ident
+        for (key, value) in elem.items():
+            idstr = '%s%s' % (ident, key)
+            ret += item_name_list(element, idstr)
+    elif type(elem) is list:
+        for i in range(0, len(elem)):
+            idstr = '%s[%s]' % (ident, i)
+            ret += item_name_list(element, idstr)
+    ret.sort()
+    return ret
+
 class HttpHandler(http.server.BaseHTTPRequestHandler):
     """HTTP handler class for HttpServer class. The class inhrits the super
     class http.server.BaseHTTPRequestHandler. It implemets do_GET()
