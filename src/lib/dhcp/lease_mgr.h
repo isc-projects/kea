@@ -12,14 +12,20 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <string>
+#ifndef __LEASE_MGR_H
+#define __LEASE_MGR_H
+
 #include <fstream>
-#include <vector>
 #include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include <asiolink/io_address.h>
 #include <boost/shared_ptr.hpp>
-#include <dhcp/option.h>
 #include <dhcp/duid.h>
+#include <dhcp/option.h>
+#include <exceptions/exceptions.h>
 
 /// @file dhcp/lease_mgr.h
 /// @brief An abstract API for lease database
@@ -54,6 +60,12 @@
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Exception thrown on failure to open database
+class DbOpenError : public Exception {
+    DbOpenError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
 
 /// @brief specifies unique subnet identifier
 /// @todo: Move this to subnet.h once ticket #2237 is merged
@@ -448,6 +460,9 @@ public:
 
     /// @brief Returns backend version.
     ///
+    /// @return Version number as a pair of unsigned integers.  "first" is the
+    ///         major version number, "second" the minor number.
+    ///
     /// @todo: We will need to implement 3 version functions eventually:
     /// A. abstract API version
     /// B. backend version
@@ -457,7 +472,7 @@ public:
     /// B>=A and B=C (it is ok to have newer backend, as it should be backward
     /// compatible)
     /// Also if B>C, some database upgrade procedure may be triggered
-    virtual std::string getVersion() const = 0;
+    virtual std::pair<uint32_t, uint32_t> getVersion() const = 0;
 
     /// @todo: Add host management here
     /// As host reservation is outside of scope for 2012, support for hosts
@@ -479,5 +494,6 @@ protected:
 typedef boost::shared_ptr<LeaseMgr> LeaseMgrPtr;
 
 }; // end of isc::dhcp namespace
-
 }; // end of isc namespace
+
+#endif // __LEASE_MGR_H

@@ -12,12 +12,23 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef __LEASE_MGR_FACTORY_H
+#define __LEASE_MGR_FACTORY_H
+
 #include <string>
 #include <dhcp/lease_mgr.h>
-
+#include <exceptions/exceptions.h>
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Invalid Type Exception
+///
+/// Thrown when the factory doesn't recognise the type of the backend.
+class InvalidType : public Exception {
+    InvalidType(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
 
 /// @brief Lease Manager Factory
 ///
@@ -61,5 +72,6 @@ public:
 };
 
 }; // end of isc::dhcp namespace
-
 }; // end of isc namespace
+
+#endif // __LEASE_MGR_FACTORY_H

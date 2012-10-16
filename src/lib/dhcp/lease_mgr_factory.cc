@@ -26,6 +26,7 @@
 #include <boost/algorithm/string.hpp>
 #include <exceptions/exceptions.h>
 #include <dhcp/lease_mgr_factory.h>
+#include <dhcp/mysql_lease_mgr.h>
 
 using namespace std;
 
@@ -48,7 +49,7 @@ LeaseMgrFactory::parse(const std::string& dbconfig) {
             size_t pos = token.find("=");
             if (pos != string::npos) {
                 string name = token.substr(0, pos);
-                string value = token.substr(pos + 1, -1);
+                string value = token.substr(pos + 1);
                 mapped_tokens.insert(make_pair(name, value));
             } else {
                 isc_throw(InvalidParameter, "Cannot parse " << token
@@ -74,7 +75,7 @@ LeaseMgrFactory::create(const std::string& dbconfig) {
     // Yes, check what it is.
 #ifdef HAVE_MYSQL
     if (parameters[type] == string("mysql")) {
-        return LeaseMgrPtr(new LeaseMgr(parameters));
+        return LeaseMgrPtr(new MySqlLeaseMgr(parameters));
     }
 #endif
 
