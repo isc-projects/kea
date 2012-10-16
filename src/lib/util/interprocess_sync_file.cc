@@ -14,9 +14,6 @@
 
 #include "interprocess_sync_file.h"
 
-#include <boost/weak_ptr.hpp>
-
-#include <map>
 #include <string>
 
 #include <stdlib.h>
@@ -26,37 +23,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-using namespace isc::util::thread;
-
 namespace isc {
 namespace util {
-
-namespace { // unnamed namespace
-
-typedef std::map<std::string, boost::weak_ptr<Mutex> > SyncMap;
-
-Mutex sync_map_mutex;
-SyncMap sync_map;
-
-} // end of unnamed namespace
-
-InterprocessSyncFile::InterprocessSyncFile(const std::string& task_name) :
-    InterprocessSync(task_name),
-    fd_(-1)
-{
-    Mutex::Locker locker(sync_map_mutex);
-
-    SyncMap::iterator it = sync_map.find(task_name);
-    if (it != sync_map.end()) {
-        mutex_ = it->second.lock();
-    } else {
-        mutex_.reset(new Mutex());
-        sync_map[task_name] = mutex_;
-    }
-
-    // Lock on sync_map_mutex is automatically unlocked during
-    // destruction when basic block is exited.
-}
 
 InterprocessSyncFile::~InterprocessSyncFile() {
     if (fd_ != -1) {
@@ -65,23 +33,6 @@ InterprocessSyncFile::~InterprocessSyncFile() {
         // The lockfile will continue to exist, and we must not delete
         // it.
     }
-
-    Mutex::Locker locker(sync_map_mutex);
-
-    // Unref the shared mutex.
-    locker_.reset();
-    mutex_.reset();
-
-    // Remove name from the map if it is unused anymore.
-    SyncMap::iterator it = sync_map.find(task_name_);
-    assert(it != sync_map.end());
-
-    if (it->second.expired()) {
-        sync_map.erase(it);
-    }
-
-    // Lock on sync_map_mutex is automatically unlocked during
-    // destruction when basic block is exited.
 }
 
 bool
@@ -139,13 +90,8 @@ InterprocessSyncFile::lock() {
         return (true);
     }
 
-    // First grab the thread lock...
-    LockerPtr locker(new Mutex::Locker(*mutex_));
-
-    // ... then the file lock.
     if (do_lock(F_SETLKW, F_WRLCK)) {
         is_locked_ = true;
-        locker_ = locker;
         return (true);
     }
 
@@ -158,18 +104,8 @@ InterprocessSyncFile::tryLock() {
         return (true);
     }
 
-    // First grab the thread lock...
-    LockerPtr locker;
-    try {
-        locker.reset(new Mutex::Locker(*mutex_, false));
-    } catch (const Mutex::Locker::AlreadyLocked&) {
-        return (false);
-    }
-
-    // ... then the file lock.
     if (do_lock(F_SETLK, F_WRLCK)) {
         is_locked_ = true;
-        locker_ = locker;
         return (true);
     }
 
@@ -182,14 +118,12 @@ InterprocessSyncFile::unlock() {
         return (true);
     }
 
-    // First release the file lock...
-    if (do_lock(F_SETLKW, F_UNLCK) == 0) {
-        return (false);
+    if (do_lock(F_SETLKW, F_UNLCK)) {
+        is_locked_ = false;
+        return (true);
     }
 
-    locker_.reset();
-    is_locked_ = false;
-    return (true);
+    return (false);
 }
 
 } // namespace util

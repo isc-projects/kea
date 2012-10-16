@@ -16,10 +16,7 @@
 #define __INTERPROCESS_SYNC_FILE_H__
 
 #include <util/interprocess_sync.h>
-#include <util/threads/lock.h>
 #include <exceptions/exceptions.h>
-
-#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace util {
@@ -58,7 +55,9 @@ public:
     /// \param name Name of the synchronization task. This has to be
     /// identical among the various processes that need to be
     /// synchronized for the same task.
-    InterprocessSyncFile(const std::string& task_name);
+    InterprocessSyncFile(const std::string& task_name) :
+        InterprocessSync(task_name), fd_(-1)
+    {}
 
     /// \brief Destructor
     virtual ~InterprocessSyncFile();
@@ -84,11 +83,6 @@ private:
     bool do_lock(int cmd, short l_type);
 
     int fd_; ///< The descriptor for the open file
-
-    typedef boost::shared_ptr<isc::util::thread::Mutex> MutexPtr;
-    typedef boost::shared_ptr<isc::util::thread::Mutex::Locker> LockerPtr;
-    MutexPtr mutex_;   ///< A mutex for mutual exclusion among threads
-    LockerPtr locker_; ///< A locker on mutex_
 };
 
 } // namespace util

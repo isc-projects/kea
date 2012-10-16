@@ -46,7 +46,6 @@ run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
 run_unittests_LDADD = $(top_builddir)/src/lib/util/libb10-util.la
-run_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/io/libb10-util-io.la
 run_unittests_LDADD += \
 	$(top_builddir)/src/lib/util/unittests/libutil_unittests.la
