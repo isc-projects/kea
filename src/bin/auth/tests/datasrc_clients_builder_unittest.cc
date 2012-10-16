@@ -66,6 +66,18 @@ TEST_F(DataSrcClientsBuilderTest, runMultiCommands) {
     EXPECT_EQ(2, queue_mutex.noop_count);
 }
 
+TEST_F(DataSrcClientsBuilderTest, exception) {
+    // Let the noop command handler throw exceptions and see if we can see
+    // them.
+    command_queue.push_back(noop_cmd);
+    queue_mutex.throw_from_noop = TestMutex::EXCLASS;
+    EXPECT_THROW(builder.run(), isc::Exception);
+
+    command_queue.push_back(noop_cmd);
+    queue_mutex.throw_from_noop = TestMutex::INTEGER;
+    EXPECT_THROW(builder.run(), int);
+}
+
 TEST_F(DataSrcClientsBuilderTest, condWait) {
     // command_queue is originally empty, so it will require waiting on
     // condvar.  specialized wait() will make the delayed command available.

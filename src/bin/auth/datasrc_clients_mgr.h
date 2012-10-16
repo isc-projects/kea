@@ -126,26 +126,37 @@ void
 DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
     LOG_INFO(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_STARTED);
 
-    bool keep_running = true;
-    while (keep_running) {
-        std::list<Command> current_commands;
-        {
-            // Move all new commands to local queue under the protection of
-            // queue_mutex_.  Note that list::splice() should never throw.
-            typename MutexType::Locker locker(*queue_mutex_);
-            while (command_queue_->empty()) {
-                cond_->wait(*queue_mutex_);
+    try {
+        bool keep_running = true;
+        while (keep_running) {
+            std::list<Command> current_commands;
+            {
+                // Move all new commands to local queue under the protection of
+                // queue_mutex_.  Note that list::splice() should never throw.
+                typename MutexType::Locker locker(*queue_mutex_);
+                while (command_queue_->empty()) {
+                    cond_->wait(*queue_mutex_);
+                }
+                current_commands.splice(current_commands.end(),
+                                        *command_queue_);
+            } // the lock is release here.
+
+            while (keep_running && !current_commands.empty()) {
+                keep_running = handleCommand(current_commands.front());
+                current_commands.pop_front();
             }
-            current_commands.splice(current_commands.end(), *command_queue_);
-        } // the lock is release here.
-
-        while (keep_running && !current_commands.empty()) {
-            keep_running = handleCommand(current_commands.front());
-            current_commands.pop_front();
         }
-    }
 
-    LOG_INFO(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_STOPPED);
+        LOG_INFO(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_STOPPED);
+    } catch (const std::exception& ex) {
+        // We explicitly catch exceptions so we can log it as soon as possible.
+        LOG_ERROR(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_FAILED).
+            arg(ex.what());
+        throw;
+    } catch (...) {
+        LOG_ERROR(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_FAILED_UNEXPECTED);
+        throw;
+    }
 }
 
 template <typename MutexType, typename CondVarType>

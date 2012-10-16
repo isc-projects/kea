@@ -276,3 +276,7 @@ NOTIFY request will not be honored.
 % AUTH_DATASRC_CLIENTS_BUILDER_COMMAND data source builder received command, ID: %1
 
 % AUTH_DATASRC_CLIENTS_MANAGER_UNEXPECTED_STOP data source clients manager stopped unexpectedly, leaving the builder thread
+
+% AUTH_DATASRC_CLIENTS_BUILDER_FAILED data source builder thread stopped due to an exception: %1
+
+% AUTH_DATASRC_CLIENTS_BUILDER_FAILED_UNEXPECTED data source builder thread stopped due to an unexpected exception
