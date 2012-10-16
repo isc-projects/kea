@@ -176,7 +176,9 @@ public:
     std::string getDescription() const;
 
     /// @brief Returns backend version.
-    std::string getVersion() const { return "test-version"; }
+    std::pair<uint32_t, uint32_t> getVersion() const {
+        return (make_pair(uint32_t(0), uint32_t(0)));
+    }
 
     using LeaseMgr::getParameter;
 
