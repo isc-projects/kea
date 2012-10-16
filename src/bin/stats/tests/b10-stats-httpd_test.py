@@ -43,6 +43,12 @@ from test_utils import BaseModules, ThreadingServerManager, MyStats,\
                        send_command, send_shutdown
 from isc.testutils.ccsession_mock import MockModuleCCSession
 
+# set XML Namespaces for testing
+XMLNS_XSL = "http://www.w3.org/1999/XSL/Transform"
+XMLNS_XHTML = "http://www.w3.org/1999/xhtml"
+XMLNS_XSD = "http://www.w3.org/2001/XMLSchema"
+XMLNS_XSI = stats_httpd.XMLNS_XSI
+
 DUMMY_DATA = {
     'Boss' : {
         "boot_time": "2011-03-04T11:59:06Z"
