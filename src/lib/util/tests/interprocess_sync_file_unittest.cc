@@ -113,15 +113,13 @@ TEST(InterprocessSyncFileTest, TestLock) {
   EXPECT_EQ (0, unlink(TEST_DATA_TOPBUILDDIR "/test_lockfile"));
 }
 
-void*
+void
 threadTest(bool* locked)
 {
     InterprocessSyncFile sync2("test");
     InterprocessSyncLocker locker2(sync2);
 
     *locked = !locker2.tryLock();
-
-    return NULL;
 }
 
 TEST(InterprocessSyncFileTest, TestLockThreaded) {
