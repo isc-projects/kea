@@ -149,7 +149,10 @@ public:
     OutputBufferPtr udp_send_buffer_;           ///< Send buffer for UDP I/O
     udp::socket     udp_socket_;                ///< Socket used by UDP server
 
-    /// TODO: doc
+    /// Some of the tests cause an 'active' running query to be created, but
+    /// don't complete the framework that makes that query delete itself.
+    /// This member can be used to store it so that it is deleted automatically
+    /// when the test is finished.
     AbstractRunningQuery* running_query_;
 
     /// \brief Constructor
