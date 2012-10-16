@@ -18,17 +18,18 @@
 
 namespace isc {
 namespace auth {
+namespace datasrc_clientmgr_internal {
+
 // Define static DataSrcClientsBuilder member variables.
 bool FakeDataSrcClientsBuilder::started = false;
-std::list<internal::Command>* FakeDataSrcClientsBuilder::command_queue = NULL;
-internal::TestCondVar* FakeDataSrcClientsBuilder::cond = NULL;
-internal::TestMutex* FakeDataSrcClientsBuilder::queue_mutex = NULL;
+std::list<Command>* FakeDataSrcClientsBuilder::command_queue = NULL;
+TestCondVar* FakeDataSrcClientsBuilder::cond = NULL;
+TestMutex* FakeDataSrcClientsBuilder::queue_mutex = NULL;
 bool FakeDataSrcClientsBuilder::thread_waited = false;
 FakeDataSrcClientsBuilder::ExceptionFromWait
 FakeDataSrcClientsBuilder::thread_throw_on_wait =
     FakeDataSrcClientsBuilder::NOTHROW;
 
-namespace internal {
 template<>
 void
 TestDataSrcClientsBuilder::doNoop() {

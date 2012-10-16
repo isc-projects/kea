@@ -22,7 +22,7 @@
 #include <boost/function.hpp>
 
 using namespace isc::auth;
-using namespace isc::auth::internal;
+using namespace isc::auth::datasrc_clientmgr_internal;
 
 namespace {
 void
