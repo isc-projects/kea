@@ -24,7 +24,9 @@ std::list<internal::Command>* FakeDataSrcClientsBuilder::command_queue = NULL;
 internal::TestCondVar* FakeDataSrcClientsBuilder::cond = NULL;
 internal::TestMutex* FakeDataSrcClientsBuilder::queue_mutex = NULL;
 bool FakeDataSrcClientsBuilder::thread_waited = false;
-bool FakeDataSrcClientsBuilder::thread_throw_on_wait = false;
+FakeDataSrcClientsBuilder::ExceptionFromWait
+FakeDataSrcClientsBuilder::thread_throw_on_wait =
+    FakeDataSrcClientsBuilder::NOTHROW;
 
 namespace internal {
 template<>

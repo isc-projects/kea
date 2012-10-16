@@ -114,21 +114,6 @@ TestDataSrcClientsBuilder::doNoop();
 // possible compromise.
 class FakeDataSrcClientsBuilder {
 public:
-    FakeDataSrcClientsBuilder(std::list<internal::Command>* command_queue,
-                              internal::TestCondVar* cond,
-                              internal::TestMutex* queue_mutex)
-    {
-        FakeDataSrcClientsBuilder::started = false;
-        FakeDataSrcClientsBuilder::command_queue = command_queue;
-        FakeDataSrcClientsBuilder::cond = cond;
-        FakeDataSrcClientsBuilder::queue_mutex = queue_mutex;
-        FakeDataSrcClientsBuilder::thread_waited = false;
-        FakeDataSrcClientsBuilder::thread_throw_on_wait = false;
-    }
-    void run() {
-        FakeDataSrcClientsBuilder::started = true;
-    }
-
     // true iff a builder has started.
     static bool started;
 
@@ -142,7 +127,23 @@ public:
 
     // If set to true by a test, TestThread::wait() throws an exception
     // exception.
-    static bool thread_throw_on_wait;
+    enum ExceptionFromWait { NOTHROW, THROW_UNCAUGHT_EX, THROW_OTHER };
+    static ExceptionFromWait thread_throw_on_wait;
+
+    FakeDataSrcClientsBuilder(std::list<internal::Command>* command_queue,
+                              internal::TestCondVar* cond,
+                              internal::TestMutex* queue_mutex)
+    {
+        FakeDataSrcClientsBuilder::started = false;
+        FakeDataSrcClientsBuilder::command_queue = command_queue;
+        FakeDataSrcClientsBuilder::cond = cond;
+        FakeDataSrcClientsBuilder::queue_mutex = queue_mutex;
+        FakeDataSrcClientsBuilder::thread_waited = false;
+        FakeDataSrcClientsBuilder::thread_throw_on_wait = NOTHROW;
+    }
+    void run() {
+        FakeDataSrcClientsBuilder::started = true;
+    }
 };
 
 class TestThread {
@@ -152,7 +153,12 @@ public:
     }
     void wait() {
         FakeDataSrcClientsBuilder::thread_waited = true;
-        if (FakeDataSrcClientsBuilder::thread_throw_on_wait) {
+        switch (FakeDataSrcClientsBuilder::thread_throw_on_wait) {
+        case FakeDataSrcClientsBuilder::NOTHROW:
+            break;
+        case FakeDataSrcClientsBuilder::THROW_UNCAUGHT_EX:
+            isc_throw(util::thread::Thread::UncaughtException, "for test");
+        case FakeDataSrcClientsBuilder::THROW_OTHER:
             isc_throw(Unexpected, "for test");
         }
     }
