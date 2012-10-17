@@ -310,10 +310,15 @@ TEST(Subnet6Test, addPersistentOption) {
     // Add 10 options to the subnet with option codes 100 - 109.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        // Options with even codes will be flagged persistent. Persistent
-        // options are those that server sends to clients regardless if
-        // they ask for them or not.
-        bool persistent = (code % 2) ? true : false;
+        // We create 10 options and want some of them to be flagged
+        // persistent and some non-persistent. Persistent options are
+        // those that server sends to clients regardless if they ask
+        // for them or not. We pick 3 out of 10 options and mark them
+        // non-persistent and 7 other options persistent.
+        // Code values: 102, 105 and 108 are divisable by 3
+        // and options with these codes will be flagged non-persistent.
+        // Options with other codes will be flagged persistent.
+        bool persistent = (code % 3) ? true : false;
         ASSERT_NO_THROW(subnet->addOption(option, persistent));
     }
 
@@ -328,15 +333,15 @@ TEST(Subnet6Test, addPersistentOption) {
     std::pair<Subnet::OptionContainerPersistIndex::const_iterator,
               Subnet::OptionContainerPersistIndex::const_iterator> range_persistent =
         idx.equal_range(true);
-    // 5 out of 10 options have been flagged persistent.
-    ASSERT_EQ(5, distance(range_persistent.first, range_persistent.second));
+    // 3 out of 10 options have been flagged persistent.
+    ASSERT_EQ(7, distance(range_persistent.first, range_persistent.second));
 
     // Get all non-persistent options.
     std::pair<Subnet::OptionContainerPersistIndex::const_iterator,
               Subnet::OptionContainerPersistIndex::const_iterator> range_non_persistent =
         idx.equal_range(false);
-    // 5 out of 10 options have been flagged persistent.
-    ASSERT_EQ(5, distance(range_non_persistent.first, range_non_persistent.second));
+    // 7 out of 10 options have been flagged persistent.
+    ASSERT_EQ(3, distance(range_non_persistent.first, range_non_persistent.second));
 
     subnet->delOptions();
 
