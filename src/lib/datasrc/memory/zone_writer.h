@@ -63,8 +63,8 @@ public:
     /// This may throw in rare cases, depending on the concrete implementation.
     /// If it throws, you still need to call cleanup().
     ///
-    /// \throw isc::InvalidOperation if called without previous load() or for the
-    ///     second time or cleanup() was called already.
+    /// \throw isc::InvalidOperation if called without previous load() or for
+    ///     the second time or cleanup() was called already.
     virtual void install() = 0;
 
     /// \brief Clean up resources.
