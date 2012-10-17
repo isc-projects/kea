@@ -21,7 +21,7 @@
 #include <config/ccsession.h>
 #include <exceptions/exceptions.h>
 #include <dns/rrclass.h>
-#include <util/threads/lock.h>
+#include <util/threads/sync.h>
 
 #include <string>
 
