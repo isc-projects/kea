@@ -12,11 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef DUID_H
+#define DUID_H
+
+#include <asiolink/io_address.h>
+#include <vector>
 #include <stdint.h>
 #include <unistd.h>
-#include <vector>
-#include <asiolink/io_address.h>
-
 
 namespace isc {
 namespace dhcp {
@@ -70,6 +72,8 @@ class DUID {
     std::vector<uint8_t> duid_;
 };
 
+typedef boost::shared_ptr<DUID> DuidPtr;
+
 /// @brief Holds Client identifier or client IPv4 address
 ///
 /// This class is intended to be a generic IPv4 client identifier. It can hold
@@ -96,3 +100,5 @@ class ClientId : DUID {
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
+
+#endif /* DUID_H */
