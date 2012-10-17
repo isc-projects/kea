@@ -96,4 +96,11 @@ TEST_F(DataSrcClientsBuilderTest, shutdown) {
     EXPECT_FALSE(builder.handleCommand(shutdown_cmd));
 }
 
+TEST_F(DataSrcClientsBuilderTest, badCommand) {
+    // out-of-range command ID
+    EXPECT_THROW(builder.handleCommand(Command(NUM_COMMANDS,
+                                               ConstElementPtr())),
+                 isc::Unexpected);
+}
+
 } // unnamed namespace

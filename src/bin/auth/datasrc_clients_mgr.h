@@ -25,6 +25,7 @@
 
 #include <auth/auth_log.h>
 
+#include <boost/array.hpp>
 #include <boost/bind.hpp>
 
 #include <list>
@@ -42,7 +43,8 @@ namespace datasrc_clientmgr_internal {
 /// \brief ID of commands from the DataSrcClientsMgr to DataSrcClientsBuilder.
 enum CommandID {
     NOOP,         ///< Do nothing.  Only useful for tests; no argument
-    SHUTDOWN      ///< Shutdown the builder; no argument
+    SHUTDOWN,     ///< Shutdown the builder; no argument
+    NUM_COMMANDS
 };
 
 /// \brief The data type passed from DataSrcClientsMgr to
@@ -262,14 +264,25 @@ bool
 DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
     const Command& command)
 {
-    LOG_DEBUG(auth_logger, DBGLVL_TRACE_BASIC,
-              AUTH_DATASRC_CLIENTS_BUILDER_COMMAND).arg(command.first);
+    const CommandID cid = command.first;
+    if (cid >= NUM_COMMANDS) {
+        // This shouldn't happen except for a bug within this file.
+        isc_throw(Unexpected, "internal bug: invalid command, ID: " << cid);
+    }
 
+    const boost::array<const char*, NUM_COMMANDS> command_desc = {
+        {"NOOP", "SHUTDOWN"}
+    };
+    LOG_DEBUG(auth_logger, DBGLVL_TRACE_BASIC,
+              AUTH_DATASRC_CLIENTS_BUILDER_COMMAND).arg(command_desc.at(cid));
     switch (command.first) {
     case SHUTDOWN:
         return (false);
     case NOOP:
         doNoop();
+        break;
+    case NUM_COMMANDS:
+        assert(false);          // we rejected this case above
     }
     return (true);
 }
