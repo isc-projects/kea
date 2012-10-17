@@ -128,7 +128,10 @@ public:
             // simply let it go through.
             LOG_ERROR(auth_logger, AUTH_DATASRC_CLIENTS_SHUTDOWN_ERROR).
                 arg(ex.what());
-        } catch (...) {}
+        } catch (...) {
+            LOG_ERROR(auth_logger,
+                      AUTH_DATASRC_CLIENTS_SHUTDOWN_UNEXPECTED_ERROR);
+        }
 
         cleanup();              // see below
     }
