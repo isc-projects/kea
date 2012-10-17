@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "zone_writer.h"
+#include "zone_writer_local.h"
 #include "zone_data.h"
 #include "zone_table_segment.h"
 

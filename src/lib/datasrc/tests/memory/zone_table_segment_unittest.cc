@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/memory/zone_table_segment.h>
-#include <datasrc/memory/zone_writer.h>
+#include <datasrc/memory/zone_writer_local.h>
 #include <gtest/gtest.h>
 
 #include <boost/scoped_ptr.hpp>

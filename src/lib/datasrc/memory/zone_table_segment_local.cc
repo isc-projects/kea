@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/memory/zone_table_segment_local.h>
-#include "zone_writer.h"
+#include "zone_writer_local.h"
 
 using namespace isc::util;
 
