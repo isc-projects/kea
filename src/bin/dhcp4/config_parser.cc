@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -162,7 +162,7 @@ public:
 
     /// @brief does nothing
     ///
-    /// This method is required for all parser. The value itself
+    /// This method is required for all parsers. The value itself
     /// is not commited anywhere. Higher level parsers are expected to
     /// use values stored in the storage, e.g. renew-timer for a given
     /// subnet is stored in subnet-specific storage. It is not commited
@@ -220,7 +220,7 @@ public:
 
     /// @brief parses parameter value
     ///
-    /// Parses configuration entry and stored it in storage. See
+    /// Parses configuration entry and stores it in storage. See
     /// \ref setStorage() for details.
     ///
     /// @param value pointer to the content of parsed values
@@ -425,7 +425,7 @@ public:
 
     /// @brief does nothing.
     ///
-    /// This method is required for all parser. The value itself
+    /// This method is required for all parsers. The value itself
     /// is not commited anywhere. Higher level parsers (for subnet) are expected
     /// to use values stored in the storage.
     virtual void commit() {}
@@ -455,7 +455,7 @@ public:
     /// @brief constructor
     Subnet4ConfigParser(const std::string& ) {
         // The parameter should always be "subnet", but we don't check here
-        // against it in case some wants to reuse this parser somewhere.
+        // against it in case someone wants to reuse this parser somewhere.
     }
 
     /// @brief parses parameter value
