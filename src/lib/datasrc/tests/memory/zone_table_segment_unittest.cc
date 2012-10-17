@@ -87,7 +87,7 @@ TEST_F(ZoneTableSegmentTest, getMemorySegment) {
 }
 
 ZoneData*
-load_action(MemorySegment&) {
+loadAction(MemorySegment&) {
     // The function won't be called, so this is OK
     return (NULL);
 }
@@ -95,7 +95,7 @@ load_action(MemorySegment&) {
 // Test we can get a writer.
 TEST_F(ZoneTableSegmentTest, getZoneWriter) {
     scoped_ptr<ZoneWriter>
-        writer(segment_->getZoneWriter(load_action, Name("example.org"),
+        writer(segment_->getZoneWriter(loadAction, Name("example.org"),
                                        RRClass::IN()));
     // We have to get something
     EXPECT_NE(static_cast<void*>(NULL), writer.get());
