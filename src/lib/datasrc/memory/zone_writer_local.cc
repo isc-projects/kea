@@ -71,8 +71,9 @@ ZoneWriterLocal::install() {
     if (table == NULL) {
         isc_throw(isc::InvalidOperation, "No zone table present");
     }
-    ZoneTable::AddResult result(table->addZone(segment_->getMemorySegment(),
-                                               rrclass_, origin_, zone_data_));
+    const ZoneTable::AddResult result(table->addZone(
+                                          segment_->getMemorySegment(),
+                                          rrclass_, origin_, zone_data_));
 
     data_ready_ = false;
     zone_data_ = result.zone_data;
