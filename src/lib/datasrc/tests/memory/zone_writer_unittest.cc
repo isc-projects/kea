@@ -118,7 +118,7 @@ TEST_F(ZoneWriterLocalTest, loadTwice) {
     load_called_ = false;
 
     // The second time, it should not be possible
-    EXPECT_THROW(writer_->load(), isc::Unexpected);
+    EXPECT_THROW(writer_->load(), isc::InvalidOperation);
     EXPECT_FALSE(load_called_);
 
     // The object should not be damaged, try installing and clearing now
@@ -139,20 +139,20 @@ TEST_F(ZoneWriterLocalTest, loadLater) {
     // Reset so we see nothing is called now
     load_called_ = false;
 
-    EXPECT_THROW(writer_->load(), isc::Unexpected);
+    EXPECT_THROW(writer_->load(), isc::InvalidOperation);
     EXPECT_FALSE(load_called_);
 
     // Cleanup and try loading again. Still shouldn't work.
     EXPECT_NO_THROW(writer_->cleanup());
 
-    EXPECT_THROW(writer_->load(), isc::Unexpected);
+    EXPECT_THROW(writer_->load(), isc::InvalidOperation);
     EXPECT_FALSE(load_called_);
 }
 
 // Try calling install at various bad times
 TEST_F(ZoneWriterLocalTest, invalidInstall) {
     // Nothing loaded yet
-    EXPECT_THROW(writer_->install(), isc::Unexpected);
+    EXPECT_THROW(writer_->install(), isc::InvalidOperation);
     EXPECT_FALSE(load_called_);
 
     EXPECT_NO_THROW(writer_->load());
@@ -160,7 +160,7 @@ TEST_F(ZoneWriterLocalTest, invalidInstall) {
     // This install is OK
     EXPECT_NO_THROW(writer_->install());
     // But we can't call it second time now
-    EXPECT_THROW(writer_->install(), isc::Unexpected);
+    EXPECT_THROW(writer_->install(), isc::InvalidOperation);
     EXPECT_FALSE(load_called_);
 }
 
@@ -174,7 +174,7 @@ TEST_F(ZoneWriterLocalTest, cleanWithoutInstall) {
     EXPECT_TRUE(load_called_);
 
     // We cleaned up, no way to install now
-    EXPECT_THROW(writer_->install(), isc::Unexpected);
+    EXPECT_THROW(writer_->install(), isc::InvalidOperation);
 }
 
 // Test the case when load callback throws
@@ -183,7 +183,7 @@ TEST_F(ZoneWriterLocalTest, loadThrows) {
     EXPECT_THROW(writer_->load(), TestException);
 
     // We can't install now
-    EXPECT_THROW(writer_->install(), isc::Unexpected);
+    EXPECT_THROW(writer_->install(), isc::InvalidOperation);
     EXPECT_TRUE(load_called_);
 
     // But we can cleanup
@@ -208,10 +208,10 @@ TEST_F(ZoneWriterLocalTest, retry) {
 // Check the writer defends itsefl when load action returns NULL
 TEST_F(ZoneWriterLocalTest, loadNull) {
     load_null_ = true;
-    EXPECT_THROW(writer_->load(), isc::Unexpected);
+    EXPECT_THROW(writer_->load(), isc::InvalidOperation);
 
     // We can't install that
-    EXPECT_THROW(writer_->install(), isc::Unexpected);
+    EXPECT_THROW(writer_->install(), isc::InvalidOperation);
 
     // It should be possible to clean up safely
     EXPECT_NO_THROW(writer_->cleanup());
