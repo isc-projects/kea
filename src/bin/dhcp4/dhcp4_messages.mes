@@ -37,7 +37,7 @@ updated configuration from the BIND 10 configuration system.
 
 % DHCP4_CONFIG_START DHCPv4 server is processing the following configuration: %1
 This is a debug message that is issued every time the server receives a
-configuration. That happens start up and also when a server configuration
+configuration. That happens at start up and also when a server configuration
 change is committed by the administrator.
 
 % DHCP4_CONFIG_NEW_SUBNET A new subnet has been added to configuration: %1
