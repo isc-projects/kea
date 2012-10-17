@@ -217,4 +217,11 @@ TEST_F(ZoneWriterLocalTest, loadNull) {
     EXPECT_NO_THROW(writer_->cleanup());
 }
 
+// Check the object cleans up in case we forget it.
+TEST_F(ZoneWriterLocalTest, autoCleanUp) {
+    // Load data and forget about it. It should get released
+    // when the writer itself is destroyed.
+    EXPECT_NO_THROW(writer_->load());
+}
+
 }
