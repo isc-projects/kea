@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/memory/zone_table_segment.h>
-#include <datasrc/memory/zone_reloader.h>
+#include <datasrc/memory/zone_writer.h>
 #include <gtest/gtest.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -92,16 +92,16 @@ load_action(MemorySegment&) {
     return (NULL);
 }
 
-// Test we can get a reloader.
-TEST_F(ZoneTableSegmentTest, getZoneReloader) {
-    scoped_ptr<ZoneReloader>
-        reloader(segment_->getZoneReloader(load_action, Name("example.org"),
-                                           RRClass::IN()));
+// Test we can get a writer.
+TEST_F(ZoneTableSegmentTest, getZoneWriter) {
+    scoped_ptr<ZoneWriter>
+        writer(segment_->getZoneWriter(load_action, Name("example.org"),
+                                       RRClass::IN()));
     // We have to get something
-    EXPECT_NE(static_cast<void*>(NULL), reloader.get());
-    // And for now, it should be the local reloader
+    EXPECT_NE(static_cast<void*>(NULL), writer.get());
+    // And for now, it should be the local writer
     EXPECT_NE(static_cast<void*>(NULL),
-              dynamic_cast<ZoneReloaderLocal*>(reloader.get()));
+              dynamic_cast<ZoneWriterLocal*>(writer.get()));
 }
 
 } // anonymous namespace

@@ -54,10 +54,10 @@ public:
     /// implementation (a MemorySegmentLocal instance).
     virtual isc::util::MemorySegment& getMemorySegment();
 
-    /// \brief Concrete implementation of ZoneTableSegment::getZoneReloader
-    virtual ZoneReloader* getZoneReloader(const LoadAction& load_action,
-                                          const dns::Name& origin,
-                                          const dns::RRClass& rrclass);
+    /// \brief Concrete implementation of ZoneTableSegment::getZoneWriter
+    virtual ZoneWriter* getZoneWriter(const LoadAction& load_action,
+                                      const dns::Name& origin,
+                                      const dns::RRClass& rrclass);
 private:
     ZoneTableHeader header_;
     isc::util::MemorySegmentLocal mem_sgmt_;
