@@ -42,7 +42,7 @@ public:
     /// \param install_action The callback used to install the loaded zone.
     /// \param rrclass The class of the zone.
     ZoneWriterLocal(ZoneTableSegment* segment, const LoadAction& load_action,
-                      const dns::Name& name, const dns::RRClass& rrclass);
+                    const dns::Name& name, const dns::RRClass& rrclass);
 
     /// \brief Destructor
     ~ZoneWriterLocal();
@@ -65,7 +65,6 @@ public:
     /// \throw isc::Unexpected if it is called the second time in lifetime
     ///     of the object or if load() was not called previously or if
     ///     cleanup() was already called.
-    /// \throw Whatever the install_action throws, it is propagated up.
     virtual void install();
 
     /// \brief Clean up memory.

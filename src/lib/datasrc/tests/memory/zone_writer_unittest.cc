@@ -190,6 +190,21 @@ TEST_F(ZoneWriterLocalTest, loadThrows) {
     EXPECT_NO_THROW(writer_->cleanup());
 }
 
+// Check the strong exception guarantee - if it throws, nothing happened
+// to the content.
+TEST_F(ZoneWriterLocalTest, retry) {
+    load_throw_ = true;
+    EXPECT_THROW(writer_->load(), TestException);
+
+    load_called_ = load_throw_ = false;
+    EXPECT_NO_THROW(writer_->load());
+    EXPECT_TRUE(load_called_);
+
+    // The rest still works correctly
+    EXPECT_NO_THROW(writer_->install());
+    EXPECT_NO_THROW(writer_->cleanup());
+}
+
 // Check the writer defends itsefl when load action returns NULL
 TEST_F(ZoneWriterLocalTest, loadNull) {
     load_null_ = true;
