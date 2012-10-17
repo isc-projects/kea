@@ -111,9 +111,10 @@ Mutex::~Mutex() {
 
 void
 Mutex::postLockAction() {
-    if (impl_->locked_count != 0) {
-        isc_throw(isc::InvalidOperation, "Lock attempt for locked mutex");
-    }
+    // This assertion would fail only in non-debugging mode, in which case
+    // this method wouldn't be called either, so we simply assert the
+    // condition.
+    assert(impl_->locked_count == 0);
     ++impl_->locked_count;
 }
 
