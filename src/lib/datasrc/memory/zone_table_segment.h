@@ -129,9 +129,9 @@ public:
     /// \param segment The segment to destroy.
     static void destroy(ZoneTableSegment* segment);
 
-    /// \brief Create a reloader corresponding to this segment
+    /// \brief Create a zone write corresponding to this segment
     ///
-    /// This creates a new reloader that can be used to reload zones
+    /// This creates a new write that can be used to update zones
     /// inside this zone table segment.
     ///
     /// \param loadAction Callback to provide the actual data.
