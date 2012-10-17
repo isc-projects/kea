@@ -111,8 +111,9 @@ public:
         // We share class member variables with the builder, which will be
         // invalidated after the call to the destructor, so we need to make
         // sure the builder thread is terminated.  Depending on the timing
-        // this could time; if we don't want that to happen in this context,
-        // we may want to introduce a separate 'shutdown()' method.
+        // this could take a long time; if we don't want that to happen in
+        // this context, we may want to introduce a separate 'shutdown()'
+        // method.
         // Also, since we don't want to propagate exceptions from a destructor,
         // we catch any possible ones.  In fact the only really expected one
         // is Thread::UncaughtException when the builder thread died due to
@@ -171,9 +172,9 @@ namespace datasrc_clientmgr_internal {
 ///
 /// An object of this class is supposed to run on a dedicated thread, whose
 /// main function is a call to its \c run() method.  It runs in a loop
-/// waiting for commands from the manager and handle each command (including
+/// waiting for commands from the manager and handles each command (including
 /// reloading a new version of zone data into memory or fully reconfiguration
-/// of specific set of data source clients.  When it receives a SHUTDOWN
+/// of specific set of data source clients).  When it receives a SHUTDOWN
 /// command, it exits from the loop, which will terminate the thread.
 ///
 /// This class is a server of \c DataSrcClientsMgr.  Except for tests,
