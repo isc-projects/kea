@@ -47,7 +47,7 @@ public:
     ///     discard it.
     /// \note After successful load(), you have to call cleanup() some time
     ///     later.
-    /// \throw isc::Unexpected if called second time.
+    /// \throw isc::InvalidOperation if called second time.
     virtual void load() = 0;
 
     /// \brief Put the changes to effect.
@@ -63,7 +63,7 @@ public:
     /// This may throw in rare cases, depending on the concrete implementation.
     /// If it throws, you still need to call cleanup().
     ///
-    /// \throw isc::Unexpected if called without previous load() or for the
+    /// \throw isc::InvalidOperation if called without previous load() or for the
     ///     second time or cleanup() was called already.
     virtual void install() = 0;
 
