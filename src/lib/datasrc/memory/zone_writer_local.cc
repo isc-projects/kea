@@ -48,7 +48,6 @@ ZoneWriterLocal::load() {
     if (loaded_) {
         isc_throw(isc::Unexpected, "Trying to load twice");
     }
-    loaded_ = true;
 
     zone_data_ = load_action_(segment_->getMemorySegment());
 
@@ -57,6 +56,7 @@ ZoneWriterLocal::load() {
         isc_throw(isc::Unexpected, "No data returned from load action");
     }
 
+    loaded_ = true;
     data_ready_ = true;
 }
 
@@ -66,7 +66,6 @@ ZoneWriterLocal::install() {
         isc_throw(isc::Unexpected, "No data to install");
     }
 
-    data_ready_ = false;
 
     ZoneTable* table(segment_->getHeader().getTable());
     if (table == NULL) {
@@ -75,17 +74,18 @@ ZoneWriterLocal::install() {
     ZoneTable::AddResult result(table->addZone(segment_->getMemorySegment(),
                                                rrclass_, origin_, zone_data_));
 
+    data_ready_ = false;
     zone_data_ = result.zone_data;
 }
 
 void
 ZoneWriterLocal::cleanup() {
     // We eat the data (if any) now.
-    data_ready_ = false;
 
     if (zone_data_ != NULL) {
         ZoneData::destroy(segment_->getMemorySegment(), zone_data_, rrclass_);
         zone_data_ = NULL;
+        data_ready_ = false;
     }
 }
 
