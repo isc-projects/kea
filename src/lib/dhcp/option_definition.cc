@@ -165,12 +165,6 @@ OptionDefinition::validate() const {
 
 bool
 OptionDefinition::haveIAx6Format(OptionDefinition::DataType first_type) const {
-    // Expect that IA_NA option format is defined as record.
-    // Although it consists of 3 elements of the same (uint32)
-    // type it can't be defined as array of uint32 elements because
-    // arrays do not impose limitations on number of elements in
-    // the array while this limitation is needed for IA_NA - need
-    // exactly 3 elements.
    return (haveType(RECORD_TYPE) &&
            record_fields_.size() == 3 &&
            record_fields_[0] == first_type &&
@@ -180,6 +174,12 @@ OptionDefinition::haveIAx6Format(OptionDefinition::DataType first_type) const {
 
 bool
 OptionDefinition::haveIA6Format() const {
+    // Expect that IA_NA option format is defined as record.
+    // Although it consists of 3 elements of the same (uint32)
+    // type it can't be defined as array of uint32 elements because
+    // arrays do not impose limitations on number of elements in
+    // the array while this limitation is needed for IA_NA - need
+    // exactly 3 elements.
     return (haveIAx6Format(UINT32_TYPE));
 }
 
