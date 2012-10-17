@@ -172,9 +172,11 @@ public:
         case FakeDataSrcClientsBuilder::NOTHROW:
             break;
         case FakeDataSrcClientsBuilder::THROW_UNCAUGHT_EX:
-            isc_throw(util::thread::Thread::UncaughtException, "for test");
+            isc_throw(util::thread::Thread::UncaughtException,
+                      "TestThread wait() saw an exception");
         case FakeDataSrcClientsBuilder::THROW_OTHER:
-            isc_throw(Unexpected, "for test");
+            isc_throw(Unexpected,
+                      "General emulated failure in TestThread wait()");
         }
     }
 };
