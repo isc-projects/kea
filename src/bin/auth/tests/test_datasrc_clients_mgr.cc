@@ -23,8 +23,11 @@ namespace datasrc_clientmgr_internal {
 // Define static DataSrcClientsBuilder member variables.
 bool FakeDataSrcClientsBuilder::started = false;
 std::list<Command>* FakeDataSrcClientsBuilder::command_queue = NULL;
+std::list<Command> FakeDataSrcClientsBuilder::command_queue_copy;
 TestCondVar* FakeDataSrcClientsBuilder::cond = NULL;
+TestCondVar FakeDataSrcClientsBuilder::cond_copy;
 TestMutex* FakeDataSrcClientsBuilder::queue_mutex = NULL;
+TestMutex FakeDataSrcClientsBuilder::queue_mutex_copy;
 bool FakeDataSrcClientsBuilder::thread_waited = false;
 FakeDataSrcClientsBuilder::ExceptionFromWait
 FakeDataSrcClientsBuilder::thread_throw_on_wait =
@@ -43,9 +46,29 @@ TestDataSrcClientsBuilder::doNoop() {
         throw 42;
     }
 }
+} // namespace datasrc_clientmgr_internal
+
+template<>
+void
+TestDataSrcClientsMgr::cleanup() {
+    using namespace datasrc_clientmgr_internal;
+    // Make copy of some of the manager's member variables and reset the
+    // corresponding pointers.  The currently pointed objects are in the
+    // manager object, which are going to be invalidated.
+
+    FakeDataSrcClientsBuilder::command_queue_copy = command_queue_;
+    FakeDataSrcClientsBuilder::command_queue =
+        &FakeDataSrcClientsBuilder::command_queue_copy;
+    FakeDataSrcClientsBuilder::queue_mutex_copy = queue_mutex_;
+    FakeDataSrcClientsBuilder::queue_mutex =
+        &FakeDataSrcClientsBuilder::queue_mutex_copy;
+    FakeDataSrcClientsBuilder::cond_copy = cond_;
+    FakeDataSrcClientsBuilder::cond =
+        &FakeDataSrcClientsBuilder::cond_copy;
 }
-}
-}
+
+} // namespace auth
+} // namespace isc
 
 // Local Variables:
 // mode: c++

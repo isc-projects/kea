@@ -124,9 +124,14 @@ public:
     static bool started;
 
     // These three correspond to the resource shared with the manager.
+    // xxx_copy will be set in the manager's destructor to record the
+    // final state of the manager.
     static std::list<Command>* command_queue;
     static TestCondVar* cond;
     static TestMutex* queue_mutex;
+    static std::list<Command> command_queue_copy;
+    static TestCondVar cond_copy;
+    static TestMutex queue_mutex_copy;
 
     // true iff the manager waited on the thread running the builder.
     static bool thread_waited;
@@ -181,6 +186,13 @@ typedef DataSrcClientsMgrBase<
     datasrc_clientmgr_internal::FakeDataSrcClientsBuilder,
     datasrc_clientmgr_internal::TestMutex,
     datasrc_clientmgr_internal::TestCondVar> TestDataSrcClientsMgr;
+
+// A specialization of manager's "cleanup" called at the end of the
+// destructor.  We use this to record the final values of some of the class
+// member variables.
+template<>
+void
+TestDataSrcClientsMgr::cleanup();
 
 } // namespace auth
 } // namespace isc
