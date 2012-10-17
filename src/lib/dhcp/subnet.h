@@ -33,6 +33,11 @@ namespace dhcp {
 /// leased addresses lifetime (valid-lifetime).
 ///
 /// @todo: Implement support for options here
+
+
+/// @brief Unique indentifier for a subnet (both v4 and v6)
+typedef uint32_t SubnetID;
+
 class Subnet {
 public:
     /// @brief checks if specified address is in range
@@ -53,6 +58,16 @@ public:
         return (t2_);
     }
 
+    isc::asiolink::IOAddress getLastAllocated() {
+        return (last_allocated_);
+    }
+
+    void setLastAllocated(const isc::asiolink::IOAddress& addr) {
+        last_allocated_ = addr;
+    }
+
+    SubnetID getID() { return id_; }
+
 protected:
     /// @brief protected constructor
     //
@@ -66,8 +81,8 @@ protected:
     /// @brief returns the next unique Subnet-ID
     ///
     /// @return the next unique Subnet-ID
-    static uint32_t getNextID() {
-        static uint32_t id = 0;
+    static SubnetID getNextID() {
+        static SubnetID id = 0;
         return (id++);
     }
 
@@ -75,7 +90,7 @@ protected:
     ///
     /// Subnet-id is a unique value that can be used to find or identify
     /// a Subnet4 or Subnet6.
-    uint32_t id_;
+    SubnetID id_;
 
     /// @brief a prefix of the subnet
     isc::asiolink::IOAddress prefix_;
@@ -91,6 +106,17 @@ protected:
 
     /// @brief a tripet (min/default/max) holding allowed valid lifetime values
     Triplet<uint32_t> valid_;
+
+    /// @brief last allocated address
+    ///
+    /// This is the last allocated address that was previously allocated from
+    /// this particular subnet. Some allocation algorithms (e.g. iterative) use
+    /// that value, others do not. It should be noted that although the value
+    /// is usually correct, there are cases when it is invalid, e.g. after
+    /// removing a pool, restarting or changing allocation algorithms. For
+    /// that purpose it should be only considered a help that should not be
+    /// fully trusted.
+    isc::asiolink::IOAddress last_allocated_;
 };
 
 /// @brief A configuration holder for IPv4 subnet.
@@ -124,8 +150,7 @@ public:
 
     /// @brief returns all pools
     ///
-    /// The reference is only valid as long as the object that
-    /// returned it.
+    /// The reference is only valid as long as the object that returned it.
     ///
     /// @return a collection of all pools
     const Pool4Collection& getPools() const {
