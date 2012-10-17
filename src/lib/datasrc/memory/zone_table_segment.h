@@ -137,7 +137,7 @@ public:
     /// \param loadAction Callback to provide the actual data.
     /// \param origin The origin of the zone to reload.
     /// \param rrclass The class of the zone to reload.
-    /// \return New instance of a zone reloader. The ownership is passed
+    /// \return New instance of a zone writer. The ownership is passed
     ///     onto the caller.
     virtual ZoneWriter* getZoneWriter(const LoadAction& load_action,
                                       const dns::Name& origin,
