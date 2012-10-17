@@ -14,7 +14,7 @@
 
 #include "zone_writer_local.h"
 #include "zone_data.h"
-#include "zone_table_segment.h"
+#include "zone_table_segment_local.h"
 
 #include <memory>
 
@@ -24,7 +24,7 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
-ZoneWriterLocal::ZoneWriterLocal(ZoneTableSegment* segment,
+ZoneWriterLocal::ZoneWriterLocal(ZoneTableSegmentLocal* segment,
                                  const LoadAction& load_action,
                                  const dns::Name& origin,
                                  const dns::RRClass& rrclass) :
