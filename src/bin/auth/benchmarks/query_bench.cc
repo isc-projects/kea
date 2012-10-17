@@ -18,7 +18,7 @@
 #include <bench/benchmark_util.h>
 
 #include <util/buffer.h>
-#include <util/threads/lock.h>
+#include <util/threads/sync.h>
 
 #include <dns/message.h>
 #include <dns/name.h>

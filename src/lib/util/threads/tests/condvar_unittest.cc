@@ -14,7 +14,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/threads/lock.h>
+#include <util/threads/sync.h>
 #include <util/threads/thread.h>
 
 #include <gtest/gtest.h>
