@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/memory/zone_writer_local.h>
-#include <datasrc/memory/zone_table_segment.h>
+#include <datasrc/memory/zone_table_segment_local.h>
 #include <datasrc/memory/zone_data.h>
 
 #include <cc/data.h>
@@ -43,10 +43,10 @@ public:
         // (which is currently ignored)
         segment_(ZoneTableSegment::create(isc::data::NullElement())),
         writer_(new
-            ZoneWriterLocal(segment_.get(),
-                              bind(&ZoneWriterLocalTest::loadAction, this,
-                                   _1),
-                              Name("example.org"), RRClass::IN())),
+            ZoneWriterLocal(dynamic_cast<ZoneTableSegmentLocal*>(segment_.
+                                                                 get()),
+                            bind(&ZoneWriterLocalTest::loadAction, this, _1),
+                            Name("example.org"), RRClass::IN())),
         load_called_(false),
         load_throw_(false),
         load_null_(false)
