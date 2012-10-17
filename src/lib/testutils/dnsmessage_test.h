@@ -160,22 +160,6 @@ public:
 private:
     std::vector<isc::dns::ConstRRsetPtr>& rrsets_;
 };
-
-class RRsetDumper {
-public:
-    RRsetDumper(std::string& output) :
-        output_(output)
-    {}
-    void operator()(isc::dns::ConstRRsetPtr rrset) {
-        output_ += "  " + rrset->toText();
-
-        if (rrset->getRRsig()) {
-            output_ += "  " + rrset->getRRsig()->toText();
-        }
-    }
-private:
-    std::string& output_;
-};
 }
 
 /// \brief A converter from a string to RRset.
@@ -200,6 +184,37 @@ isc::dns::RRsetPtr textToRRset(const std::string& text_rrset,
                                isc::dns::RRClass::IN(),
                                const isc::dns::Name& origin =
                                isc::dns::Name::ROOT_NAME());
+
+/// \brief Pull out signatures and convert to text
+///
+/// This is a helper function for rrsetsCheck.
+///
+/// It adds all the rrsets to the given vector. It also adds the
+/// signatures of those rrsets as separate rrsets into the vector
+/// (but does not modify the original rrset; i.e. technically the
+/// signatures are in the resulting vector twice).
+///
+/// Additionally, it adds the string representation of all rrsets
+/// and their signatures to the given string (for use in scoped_trace).
+///
+/// \param rrsets A vector to add the rrsets and signatures to
+/// \param text A string to add the rrsets string representations to
+/// \param begin The beginning of the rrsets iterator
+/// \param end The end of the rrsets iterator
+template <typename ITERATOR>
+void
+pullSigs(std::vector<isc::dns::ConstRRsetPtr>& rrsets,
+         std::string& text, ITERATOR begin, ITERATOR end)
+{
+    for (ITERATOR it = begin; it != end; ++it) {
+        rrsets.push_back(*it);
+        text += (*it)->toText();
+        if ((*it)->getRRsig()) {
+            rrsets.push_back((*it)->getRRsig());
+            text += (*it)->getRRsig()->toText();
+        }
+    }
+}
 
 /// Set of unit tests to check if two sets of RRsets are identical.
 ///
@@ -236,54 +251,49 @@ void
 rrsetsCheck(EXPECTED_ITERATOR expected_begin, EXPECTED_ITERATOR expected_end,
             ACTUAL_ITERATOR actual_begin, ACTUAL_ITERATOR actual_end)
 {
-    std::vector<isc::dns::ConstRRsetPtr> checked_rrsets; // for duplicate check
+    // Iterators can have their RRsig sets as separate RRsets,
+    // or they can have them attached to the RRset they cover.
+    // For ease of use of this method, we first flatten out both
+    // iterators, and pull out the signature sets, and add them as
+    // separate RRsets (rrsetCheck() later does not check signatures
+    // attached to rrsets)
+    std::vector<isc::dns::ConstRRsetPtr> expected_rrsets, actual_rrsets;
     std::string expected_text, actual_text;
-    std::for_each(expected_begin, expected_end,
-                  detail::RRsetDumper(expected_text));
-    std::for_each(actual_begin, actual_end, detail::RRsetDumper(actual_text));
-    unsigned int rrset_matched = 0;
-    ACTUAL_ITERATOR it;
-    for (it = actual_begin; it != actual_end; ++it) {
+
+    pullSigs(expected_rrsets, expected_text, expected_begin, expected_end);
+    pullSigs(actual_rrsets, actual_text, actual_begin, actual_end);
+
+    SCOPED_TRACE(std::string("Comparing two RRset lists:\n") +
+                 "Actual:\n" + actual_text +
+                 "Expected:\n" + expected_text);
+
+    // The vectors should have the same number of sets
+    ASSERT_EQ(expected_rrsets.size(), actual_rrsets.size());
+
+    // Now we check if all RRsets from the actual_rrsets are in
+    // expected_rrsets, and that actual_rrsets has no duplicates.
+    std::vector<isc::dns::ConstRRsetPtr> checked_rrsets; // for duplicate check
+
+    std::vector<isc::dns::ConstRRsetPtr>::const_iterator it;
+    for (it = actual_rrsets.begin(); it != actual_rrsets.end(); ++it) {
         // Make sure there's no duplicate RRset in actual (using a naive
-        // search).  Since the actual set is guaranteed to be unique, we can
-        // detect it if the expected data has a duplicate by the match/size
-        // checks at the end of the function.
+        // search).  By guaranteeing the actual set is unique, and the
+        // size of both vectors is the same, we can conclude that
+        // the two sets are identical after this loop.
         // Note: we cannot use EXPECT_EQ for iterators
         EXPECT_TRUE(checked_rrsets.end() ==
                     std::find_if(checked_rrsets.begin(), checked_rrsets.end(),
                                  detail::RRsetMatch(*it)));
         checked_rrsets.push_back(*it);
 
-        EXPECTED_ITERATOR found_rrset_it =
-            std::find_if(expected_begin, expected_end,
+        std::vector<isc::dns::ConstRRsetPtr>::const_iterator found_rrset_it =
+            std::find_if(expected_rrsets.begin(), expected_rrsets.end(),
                          detail::RRsetMatch(*it));
-        if (found_rrset_it != expected_end) {
+        if (found_rrset_it != expected_rrsets.end()) {
             rrsetCheck(*found_rrset_it, *it);
-            ++rrset_matched;
-            rrset_matched += (*it)->getRRsigDataCount();
+        } else {
+            FAIL() << (*it)->toText() << " not found in expected rrsets";
         }
-    }
-
-    {
-        SCOPED_TRACE(std::string("Comparing two RRsets:\n") +
-                     "Actual:\n" + actual_text +
-                     "Expected:\n" + expected_text);
-        // make sure all expected RRsets are in actual sets
-        EXPECT_EQ(std::distance(expected_begin, expected_end), rrset_matched);
-
-#if (0)
-        // TODO: see bug #2223. The following code was
-        // disabled by #2165. The RRSIG RRsets are no longer directly
-        // stored in the Message's rrsets, so the iterator will not find
-        // them. The expected text used in many tests are flattened,
-        // where the RRSIGs are inline. In other words, RRSIGs may occur
-        // between (expected_begin, expected_end) but not between
-        // (actual_begin, actual_end).
-
-        // make sure rrsets only contains expected RRsets
-        EXPECT_EQ(std::distance(expected_begin, expected_end),
-                  std::distance(actual_begin, actual_end));
-#endif
     }
 }
 
