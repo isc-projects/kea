@@ -275,7 +275,7 @@ A separate thread for maintaining data source clients has been started.
 % AUTH_DATASRC_CLIENTS_BUILDER_STOPPED data source builder thread stopped
 The separate thread for maintaining data source clients has been stopped.
 
-% AUTH_DATASRC_CLIENTS_BUILDER_COMMAND data source builder received command, ID: %1
+% AUTH_DATASRC_CLIENTS_BUILDER_COMMAND data source builder received command: %1
 A debug message, showing when the separate thread for maintaining data
 source clients receives a command from the manager.
 
