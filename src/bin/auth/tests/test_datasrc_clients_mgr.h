@@ -23,6 +23,14 @@
 
 #include <list>
 
+// In this file we provide specialization of thread, mutex, condition variable,
+// and DataSrcClientsBuilder for convenience of tests.  They don't use
+// actual threads or mutex, and allow tests to inspect some internal states
+// of the corresponding objects.
+//
+// In many cases, tests can use TestDataSrcClientsMgr (defined below) where
+// DataSrcClientsMgr is needed.
+
 // Below we extend the isc::auth::datasrc_clientmgr_internal namespace to
 // specialize the doNoop() method.
 namespace isc {
@@ -54,10 +62,10 @@ public:
     private:
         TestMutex& mutex_;
     };
-    size_t lock_count;
-    size_t unlock_count;
+    size_t lock_count; // number of lock acquisitions; tests can check this
+    size_t unlock_count; // number of lock releases; tests can check this
     size_t noop_count;          // allow doNoop() to modify this
-    ExceptionFromNoop throw_from_noop; // test can set this to control doNoop
+    ExceptionFromNoop throw_from_noop; // tests can set this to control doNoop
 };
 
 class TestCondVar {
@@ -89,8 +97,8 @@ public:
     void signal() {
         ++signal_count;
     }
-    size_t wait_count;
-    size_t signal_count;
+    size_t wait_count; // number of calls to wait(); tests can check this
+    size_t signal_count; // number of calls to signal(); tests can check this
 private:
     std::list<Command>* command_queue_;
     std::list<Command>* delayed_command_queue_;
@@ -145,6 +153,9 @@ public:
     }
 };
 
+// A fake thread class that doesn't really invoke thread but simply calls
+// the given main function (synchronously).  Tests can tweak the wait()
+// behavior via some static variables so it will throw some exceptions.
 class TestThread {
 public:
     TestThread(const boost::function<void()>& main) {

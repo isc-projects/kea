@@ -270,13 +270,34 @@ but has returned an error response (which is included in the message). The
 NOTIFY request will not be honored.
 
 % AUTH_DATASRC_CLIENTS_BUILDER_STARTED data source builder thread started
+A separate thread for maintaining data source clients has been started.
 
 % AUTH_DATASRC_CLIENTS_BUILDER_STOPPED data source builder thread stopped
+The separate thread for maintaining data source clients has been stopped.
 
 % AUTH_DATASRC_CLIENTS_BUILDER_COMMAND data source builder received command, ID: %1
+A debug message, showing when the separate thread for maintaining data
+source clients receives a command from the manager.
 
 % AUTH_DATASRC_CLIENTS_BUILDER_FAILED data source builder thread stopped due to an exception: %1
+The separate thread for maintaining data source clients has been
+terminated due to some uncaught exception.  The manager cannot always
+catch this condition in timely fashion, and there is no way to recover
+from this situation except for restarting the entire server.  So this
+message needs to be carefully watched, and should it occur the auth
+server needs to be restarted by hand.
 
 % AUTH_DATASRC_CLIENTS_BUILDER_FAILED_UNEXPECTED data source builder thread stopped due to an unexpected exception
+This is similar to AUTH_DATASRC_CLIENTS_BUILDER_FAILED, but the
+exception type is even more unexpected.  This may rather indicate some
+run time failure than program errors, but in any case the server needs
+to be restarted by hand.
 
 % AUTH_DATASRC_CLIENTS_SHUTDOWN_ERROR error on waiting for data source builder thread: %1
+This indicates that the separate thread for maintaining data source
+clients had been terminated due to an uncaught exception, and the
+manager notices that at its own termination.  There should have been
+AUTH_DATASRC_CLIENTS_BUILDER_FAILED or
+AUTH_DATASRC_CLIENTS_BUILDER_FAILED_UNEXPECTED error messages in past
+logs.  If this message appears, the maintenance of the data source
+clients hasn't been working properly for some time.
