@@ -25,7 +25,7 @@ namespace datasrc {
 namespace memory {
 
 class ZoneData;
-class ZoneTableSegment;
+class ZoneTableSegmentLocal;
 
 /// \brief Writer implementation which loads data locally.
 ///
@@ -41,8 +41,9 @@ public:
     /// \param load_action The callback used to load data.
     /// \param install_action The callback used to install the loaded zone.
     /// \param rrclass The class of the zone.
-    ZoneWriterLocal(ZoneTableSegment* segment, const LoadAction& load_action,
-                    const dns::Name& name, const dns::RRClass& rrclass);
+    ZoneWriterLocal(ZoneTableSegmentLocal* segment,
+                    const LoadAction& load_action, const dns::Name& name,
+                    const dns::RRClass& rrclass);
 
     /// \brief Destructor
     ~ZoneWriterLocal();
@@ -73,7 +74,7 @@ public:
     /// the old zone replaced by install().
     virtual void cleanup();
 private:
-    ZoneTableSegment* segment_;
+    ZoneTableSegmentLocal* segment_;
     LoadAction load_action_;
     dns::Name origin_;
     dns::RRClass rrclass_;
