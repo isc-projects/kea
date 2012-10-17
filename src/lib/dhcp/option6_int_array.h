@@ -53,6 +53,9 @@ public:
     /// Creates option with empty values vector.
     ///
     /// @param type option type.
+    ///
+    /// @throw isc::dhcp::InvalidDataType if data field type provided
+    /// as template parameter is not a supported integer type.
     Option6IntArray(uint16_t type)
         : Option(Option::V6, type),
           values_(0) {
@@ -68,6 +71,8 @@ public:
     ///
     /// @throw isc::OutOfRange if provided buffer is empty or its length
     /// is not multiple of size of the data type in bytes.
+    /// @throw isc::dhcp::InvalidDataType if data field type provided
+    /// as template parameter is not a supported integer type.
     Option6IntArray(uint16_t type, const OptionBuffer& buf)
         : Option(Option::V6, type) {
         if (!OptionDataTypes<T>::valid) {
@@ -88,6 +93,8 @@ public:
     ///
     /// @throw isc::OutOfRange if provided buffer is empty or its length
     /// is not multiple of size of the data type in bytes.
+    /// @throw isc::dhcp::InvalidDataType if data field type provided
+    /// as template parameter is not a supported integer type.
     Option6IntArray(uint16_t type, OptionBufferConstIter begin,
                     OptionBufferConstIter end)
         : Option(Option::V6, type) {
@@ -102,7 +109,9 @@ public:
     ///
     /// @param [out] buf buffer (option will be stored here)
     ///
-    /// @throw isc::BadValue if invalid option type has been provided.
+    /// @throw isc::dhcp::InvalidDataType if size of a data fields type is not
+    /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
+    /// because it is checked in a constructor.
     void pack(isc::util::OutputBuffer& buf) {
         buf.writeUint16(type_);
         buf.writeUint16(len() - OPTION6_HDR_LEN);
@@ -138,6 +147,10 @@ public:
     ///
     /// @param begin iterator to first byte of option data
     /// @param end iterator to end of option data (first byte after option end)
+    ///
+    /// @throw isc::dhcp::InvalidDataType if size of a data fields type is not
+    /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
+    /// because it is checked in a constructor.
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
         if (distance(begin, end) == 0) {
             isc_throw(OutOfRange, "option " << getType() << " empty");

@@ -44,6 +44,9 @@ public:
     ///
     /// @param type option type.
     /// @param value option value.
+    ///
+    /// @throw isc::dhcp::InvalidDataType if data field type provided
+    /// as template parameter is not a supported integer type.
     Option6Int(uint16_t type, T value)
         : Option(Option::V6, type), value_(value) {
         if (!OptionDataTypes<T>::valid) {
@@ -62,6 +65,8 @@ public:
     /// @param end iterator to end of option data (first byte after option end).
     ///
     /// @throw isc::OutOfRange if provided buffer is shorter than data size.
+    /// @throw isc::dhcp::InvalidDataType if data field type provided
+    /// as template parameter is not a supported integer type.
     Option6Int(uint16_t type, OptionBufferConstIter begin,
                OptionBufferConstIter end)
         : Option(Option::V6, type) {
@@ -76,7 +81,9 @@ public:
     ///
     /// @param [out] buf buffer (option will be stored here)
     ///
-    /// @throw isc::BadValue if invalid option type has been provided.
+    /// @throw isc::dhcp::InvalidDataType if size of a data field type is not
+    /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
+    /// because it is checked in a constructor.
     void pack(isc::util::OutputBuffer& buf) {
         buf.writeUint16(type_);
         buf.writeUint16(len() - OPTION6_HDR_LEN);
@@ -110,6 +117,9 @@ public:
     /// @param end iterator to end of option data (first byte after option end)
     ///
     /// @throw isc::OutOfRange if provided buffer is shorter than data size.
+    /// @throw isc::dhcp::InvalidDataType if size of a data field type is not
+    /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
+    /// because it is checked in a constructor.
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
         if (distance(begin, end) < sizeof(T)) {
             isc_throw(OutOfRange, "Option " << getType() << " truncated");
