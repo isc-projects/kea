@@ -58,30 +58,47 @@ public:
 
         /// @brief Constructor.
         ///
-        /// @opt option
-        /// persist if true option is always sent.
+        /// @param opt option
+        /// @param persist if true option is always sent.
         OptionDescriptor(OptionPtr& opt, bool persist)
             : option(opt), persistent(persist) {};
     };
 
     /// @brief Extractor class to extract key with another key.
     ///
-    /// This class extracts one multi_index_container key with
-    /// another key. Within Subnet class it is used to access
-    /// data inside the OptionDescriptor::option object and use
-    /// this data as a index key. The standard key extractor such
-    /// as mem_fun is not sufficient because it can't operate on
-    /// objects wrapped with structure.
+    /// This class solves the problem of accessing index key values
+    /// that are stored in objects nested in other objects.
+    /// Each OptionDescriptor structure contains the OptionPtr object.
+    /// The value retured by one of its accessors (getType) is used
+    /// as an indexing value in the multi_index_container defined below.
+    /// There is no easy way to mark that value returned by Option::getType
+    /// should be an index of this multi_index_container. There are standard
+    /// key extractors such as 'member' or 'mem_fun' but they are not
+    /// sufficient here. The former can be used to mark that member of
+    /// the structure that is held in the container should be used as an
+    /// indexing value. The latter can be used if the indexing value is
+    /// a product of the class being held in the container. In this complex
+    /// scenario when the indexing value is a product of the function that
+    /// is wrapped by the structure, this new extractor template has to be
+    /// defined. The template class provides a 'chain' of two extractors
+    /// to access the value returned by nested object and to use it as
+    /// indexing value.
+    /// For some more examples of complex keys see:
+    /// http://www.cs.brown.edu/~jwicks/boost/libs/multi_index/doc/index.html
     ///
     /// @tparam KeyExtractor1 extractor used to access data in
     /// OptionDescriptor::option
     /// @tparam KeyExtractor2 extractor used to access
     /// OptionDescriptor::option member.
     template<typename KeyExtractor1, typename KeyExtractor2>
-    struct KeyFromKey {
+    class KeyFromKey {
+    public:
         typedef typename KeyExtractor1::result_type result_type;
 
         /// @brief Constructor.
+        ///
+        /// @param key1 first key extractor
+        /// @param key2 second key extractor
         KeyFromKey(const KeyExtractor1 key1 = KeyExtractor1(),
                    const KeyExtractor2 key2 = KeyExtractor2())
             : key1_(key1), key2_(key2) { };
@@ -134,6 +151,7 @@ public:
         boost::multi_index::indexed_by<
             // Sequenced index allows accessing elements in the same way
             // as elements in std::list.
+            // Sequenced is an index #0.
             boost::multi_index::sequenced<>,
             // Start definition of index #1.
             boost::multi_index::hashed_non_unique<
@@ -185,7 +203,7 @@ public:
     /// requested it or not.
     ///
     /// @throw isc::BadValue if invalid option provided.
-    void addOption(OptionPtr option, bool persistent = false);
+    void addOption(OptionPtr& option, bool persistent = false);
 
     /// @brief Delete all options configured for the subnet.
     void delOptions();
@@ -207,7 +225,9 @@ public:
 
     /// @brief Return a collection of options.
     ///
-    /// @return collection of options configured for a subnet.
+    /// @return reference to collection of options configured for a subnet.
+    /// The returned reference is valid as long as the Subnet object which
+    /// returned it still exists.
     const OptionContainer& getOptions() {
         return (options_);
     }
@@ -239,7 +259,7 @@ protected:
     /// @brief Check if option is valid and can be added to a subnet.
     ///
     /// @param option option to be validated.
-    virtual void validateOption(OptionPtr option) = 0;
+    virtual void validateOption(OptionPtr option) const = 0;
 
     /// @brief subnet-id
     ///
@@ -312,7 +332,7 @@ protected:
     /// @param option option to be validated.
     ///
     /// @throw isc::BadValue if provided option is invalid.
-    virtual void validateOption(OptionPtr option);
+    virtual void validateOption(OptionPtr option) const;
 
     /// @brief collection of pools in that list
     Pool4Collection pools_;
@@ -380,7 +400,7 @@ protected:
     /// @param option option to be validated.
     ///
     /// @throw isc::BadValue if provided option is invalid.
-    virtual void validateOption(OptionPtr option);
+    virtual void validateOption(OptionPtr option) const;
 
     /// @brief collection of pools in that list
     Pool6Collection pools_;
