@@ -15,6 +15,7 @@
 #ifndef __MYSQL_LEASE_MGR_H
 #define __MYSQL_LEASE_MGR_H
 
+#include <mysql.h>
 #include <dhcp/lease_mgr.h>
 
 namespace isc {
@@ -50,12 +51,12 @@ public:
     /// @brief Adds an IPv4 lease.
     ///
     /// @param lease lease to be added
-    virtual bool addLease(Lease4Ptr lease) = 0;
+    virtual bool addLease(Lease4Ptr lease);
 
     /// @brief Adds an IPv6 lease.
     ///
     /// @param lease lease to be added
-    virtual bool addLease(Lease6Ptr lease) = 0;
+    virtual bool addLease(Lease6Ptr lease);
 
     /// @brief Returns existing IPv4 lease for specified IPv4 address and subnet_id
     ///
@@ -68,7 +69,7 @@ public:
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
     virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr,
-                                SubnetID subnet_id) const = 0;
+                                SubnetID subnet_id) const;
 
     /// @brief Returns an IPv4 lease for specified IPv4 address
     ///
@@ -83,7 +84,7 @@ public:
     /// @param subnet_id ID of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr) const = 0;
+    virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr) const;
 
     /// @brief Returns existing IPv4 leases for specified hardware address.
     ///
@@ -95,7 +96,7 @@ public:
     /// @param hwaddr hardware address of the client
     ///
     /// @return lease collection
-    virtual Lease4Collection getLease4(const HWAddr& hwaddr) const = 0;
+    virtual Lease4Collection getLease4(const HWAddr& hwaddr) const;
 
     /// @brief Returns existing IPv4 leases for specified hardware address
     ///        and a subnet
@@ -108,7 +109,7 @@ public:
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
     virtual Lease4Ptr getLease4(const HWAddr& hwaddr,
-                                SubnetID subnet_id) const = 0;
+                                SubnetID subnet_id) const;
 
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
@@ -120,7 +121,7 @@ public:
     /// @param clientid client identifier
     ///
     /// @return lease collection
-    virtual Lease4Collection getLease4(const ClientId& clientid) const = 0;
+    virtual Lease4Collection getLease4(const ClientId& clientid) const;
 
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
@@ -132,7 +133,7 @@ public:
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
     virtual Lease4Ptr getLease4(const ClientId& clientid,
-                                SubnetID subnet_id) const = 0;
+                                SubnetID subnet_id) const;
 
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
@@ -143,7 +144,7 @@ public:
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(isc::asiolink::IOAddress addr) const = 0;
+    virtual Lease6Ptr getLease6(isc::asiolink::IOAddress addr) const;
 
     /// @brief Returns existing IPv6 leases for a given DUID+IA combination
     ///
@@ -157,7 +158,7 @@ public:
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
     virtual Lease6Collection getLease6(const DUID& duid,
-                                       uint32_t iaid) const = 0;
+                                       uint32_t iaid) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
@@ -167,45 +168,45 @@ public:
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
     virtual Lease6Ptr getLease6(const DUID& duid, uint32_t iaid,
-                                SubnetID subnet_id) const = 0;
+                                SubnetID subnet_id) const;
 
     /// @brief Updates IPv4 lease.
     ///
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    virtual void updateLease4(Lease4Ptr lease4) = 0;
+    virtual void updateLease4(Lease4Ptr lease4);
 
     /// @brief Updates IPv4 lease.
     ///
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    virtual void updateLease6(Lease6Ptr lease6) = 0;
+    virtual void updateLease6(Lease6Ptr lease6);
 
     /// @brief Deletes a lease.
     ///
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    virtual bool deleteLease4(uint32_t addr) = 0;
+    virtual bool deleteLease4(uint32_t addr);
 
     /// @brief Deletes a lease.
     ///
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    virtual bool deleteLease6(isc::asiolink::IOAddress addr) = 0;
+    virtual bool deleteLease6(isc::asiolink::IOAddress addr);
 
     /// @brief Returns backend name.
     ///
     /// Each backend have specific name, e.g. "mysql" or "sqlite".
-    virtual std::string getName() const = 0;
+    virtual std::string getName() const;
 
     /// @brief Returns description of the backend.
     ///
     /// This description may be multiline text that describes the backend.
-    virtual std::string getDescription() const = 0;
+    virtual std::string getDescription() const;
 
     /// @brief Returns backend version.
     ///
@@ -224,6 +225,16 @@ public:
     virtual std::pair<uint32_t, uint32_t> getVersion() const;
 
 private:
+    /// @brief Open Database
+    ///
+    /// Opens the database using the information supplied in the parameters
+    /// passed to the constructor.
+    ///
+    /// @exception DbOpenError Error opening the database
+    void openDatabase();
+
+    // Members
+    MYSQL*      mysql_;     ///< MySQL context object
     uint32_t    major_;     ///< Major version number
     uint32_t    minor_;     ///< Minor version number
 };
