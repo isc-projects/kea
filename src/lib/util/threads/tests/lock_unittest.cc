@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/threads/lock.h>
+#include <util/threads/sync.h>
 #include <util/threads/thread.h>
 
 #include <gtest/gtest.h>
