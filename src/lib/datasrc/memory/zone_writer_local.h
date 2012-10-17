@@ -49,10 +49,9 @@ public:
 
     /// \brief Loads the data.
     ///
-    /// This prepares an empty ZoneData and calls load_action (passed to
-    /// constructor) to fill it with data.
+    /// This calls the load_action (passed to constructor) and stores the
+    /// data for future use.
     ///
-    /// \throw std::bad_alloc If there's a problem allocating the ZoneData.
     /// \throw isc::Unexpected if it is called the second time in lifetime
     ///     of the object.
     /// \throw Whatever the load_action throws, it is propagated up.
@@ -60,7 +59,8 @@ public:
 
     /// \brief Installs the zone.
     ///
-    /// This simply calls the install_action.
+    /// It modifies the zone table accessible through the segment (passed to
+    /// constructor).
     ///
     /// \throw isc::Unexpected if it is called the second time in lifetime
     ///     of the object or if load() was not called previously or if
