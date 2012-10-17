@@ -180,8 +180,9 @@ namespace datasrc_clientmgr_internal {
 /// of specific set of data source clients).  When it receives a SHUTDOWN
 /// command, it exits from the loop, which will terminate the thread.
 ///
-/// This class is a server of \c DataSrcClientsMgr.  Except for tests,
-/// applications should not directly access to this class.
+/// While this class is defined in a publicly visible namespace, it's
+/// essentially private to \c DataSrcClientsMgr.  Except for tests,
+/// applications should not directly access this class.
 ///
 /// This class is templated so that we can test it without involving actual
 /// threads or locks.
