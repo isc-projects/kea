@@ -54,6 +54,7 @@ public:
     ///     later.
     /// \throw isc::Unexpected if called second time.
     virtual void load() = 0;
+
     /// \brief Put the changes to effect.
     ///
     /// This replaces the old version of zone with the one previously prepared
@@ -70,6 +71,7 @@ public:
     /// \throw isc::Unexpected if called without previous load() or for the
     ///     second time or cleanup() was called already.
     virtual void install() = 0;
+
     /// \brief Clean up resources.
     ///
     /// This releases all resources held by owned zone data. That means the
@@ -96,8 +98,10 @@ public:
     /// \param rrclass The class of the zone.
     ZoneWriterLocal(ZoneTableSegment* segment, const LoadAction& load_action,
                       const dns::Name& name, const dns::RRClass& rrclass);
+
     /// \brief Destructor
     ~ZoneWriterLocal();
+
     /// \brief Loads the data.
     ///
     /// This prepares an empty ZoneData and calls load_action (passed to
@@ -108,6 +112,7 @@ public:
     ///     of the object.
     /// \throw Whatever the load_action throws, it is propagated up.
     virtual void load();
+
     /// \brief Installs the zone.
     ///
     /// This simply calls the install_action.
@@ -117,6 +122,7 @@ public:
     ///     cleanup() was already called.
     /// \throw Whatever the install_action throws, it is propagated up.
     virtual void install();
+
     /// \brief Clean up memory.
     ///
     /// Cleans up the memory used by load()ed zone if not yet installed, or
