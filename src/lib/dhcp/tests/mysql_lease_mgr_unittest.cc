@@ -38,7 +38,7 @@ public:
 // Connection strings
 const char* VALID_TYPE = "type=mysql";
 const char* INVALID_TYPE = "type=unknown";
-const char* VALID_NAME = "name=keattest";
+const char* VALID_NAME = "name=keatest";
 const char* INVALID_NAME = "name=invalidname";
 const char* VALID_HOST = "host=localhost";
 const char* INVALID_HOST = "host=invalidhost";
@@ -70,10 +70,14 @@ string validConnectionString() {
 TEST_F(MySqlLeaseMgrTest, OpenDatabase) {
     LeaseMgrPtr lmptr;
 
-    // Check that failure to open the database generates an exception
+    // Check that wrong specification of backend throws an exception.
+    // (This is really a check on LeaseMgrFactory, but is convenient to
+    // perform here.)
     EXPECT_THROW(lmptr = LeaseMgrFactory::create(connectionString(
         INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
-        InvalidType);
+        InvalidParameter);
+
+    // Check that invalid login data causes an exception.
     EXPECT_THROW(lmptr = LeaseMgrFactory::create(connectionString(
         VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
@@ -92,9 +96,11 @@ TEST_F(MySqlLeaseMgrTest, OpenDatabase) {
         VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)));
     ASSERT_TRUE(lmptr);
 
+/*
     pair<uint32_t, uint32_t> version = lmptr->getVersion();
     EXPECT_EQ(0, version.first);
     EXPECT_EQ(1, version.second);
+*/
 }
 
 }; // end of anonymous namespace

@@ -63,6 +63,7 @@ namespace dhcp {
 
 /// @brief Exception thrown on failure to open database
 class DbOpenError : public Exception {
+public:
     DbOpenError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };

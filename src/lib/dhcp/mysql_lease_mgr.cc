@@ -12,27 +12,96 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <iostream>
+#include <iomanip>
+#include <string>
 #include <config.h>
 
 #include <dhcp/mysql_lease_mgr.h>
 
+using namespace std;
+
 namespace isc {
 namespace dhcp {
 
+void
+MySqlLeaseMgr::openDatabase() {
+
+    // Set up the values of the parameters
+    const char* host = NULL;
+    string shost;
+    try {
+        shost = getParameter("host");
+        host = shost.c_str();
+    } catch (...) {
+        // No host.  Fine, we'll use NULL
+        ;
+    }
+
+    const char* user = NULL;
+    string suser;
+    try {
+        suser = getParameter("user");
+        user = suser.c_str();
+    } catch (...) {
+        // No user.  Fine, we'll use NULL
+        ;
+    }
+
+    const char* password = NULL;
+    string spassword;
+    try {
+        spassword = getParameter("password");
+        password = spassword.c_str();
+    } catch (...) {
+        // No password.  Fine, we'll use NULL
+        ;
+    }
+
+    const char* name = NULL;
+    string sname;
+    try {
+        sname = getParameter("name");
+        name = sname.c_str();
+    } catch (...) {
+        // No database name.  Fine, we'll use NULL
+        ;
+    }
+
+    // Open the database.  Use defaults for non-specified options.
+    MYSQL* status = mysql_real_connect(mysql_, host, user, password, name,
+                                       0, NULL, 0);
+    if (status != mysql_) {
+        isc_throw(DbOpenError, mysql_error(mysql_));
+    }
+}
+
+
 MySqlLeaseMgr::MySqlLeaseMgr(const LeaseMgr::ParameterMap& parameters) 
-    : LeaseMgr(parameters), major_(0), minor_(0) {
+    : LeaseMgr(parameters), mysql_(NULL), major_(0), minor_(0) {
+
+    // Allocate context for MySQL - it is destroyed in the destructor.
+    mysql_ = mysql_init(NULL);
+    std::cerr << "cerr: mysql_ is " << long(mysql_) << std::endl;
+    std::cout << "cout: mysql_ is " << long(mysql_) << std::endl;
+
+    // Open the database
+    openDatabase();
+    
 }
 
 MySqlLeaseMgr::~MySqlLeaseMgr() {
+    mysql_close(mysql_);
+    mysql_ = NULL;
 }
 
 bool
-MySqlLeaseMgr::addLease(Lease4Ptr /* lease */) {
+MySqlLeaseMgr::addLease(isc::dhcp::Lease4Ptr /* lease */) {
     return (false);
 }
 
 bool
-MySqlLeaseMgr::addLease(Lease6Ptr /* lease */) {
+MySqlLeaseMgr::addLease(isc::dhcp::Lease6Ptr /* lease */) {
     return (false);
 }
 

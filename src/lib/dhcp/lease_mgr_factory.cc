@@ -14,6 +14,10 @@
 
 #include "config.h"
 
+// TEMP
+#define HAVE_MYSQL 1
+
+
 #include <algorithm>
 #include <iostream>
 #include <iterator>
