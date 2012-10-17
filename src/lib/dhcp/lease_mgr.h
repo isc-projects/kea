@@ -17,9 +17,11 @@
 #include <vector>
 #include <map>
 #include <asiolink/io_address.h>
+#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <dhcp/option.h>
 #include <dhcp/duid.h>
+#include <dhcp/subnet.h>
 
 /// @file dhcp/lease_mgr.h
 /// @brief An abstract API for lease database
@@ -54,10 +56,6 @@
 
 namespace isc {
 namespace dhcp {
-
-/// @brief specifies unique subnet identifier
-/// @todo: Move this to subnet.h once ticket #2237 is merged
-typedef uint32_t SubnetID;
 
 /// @brief Structure that holds a lease for IPv4 address
 ///
@@ -161,6 +159,10 @@ struct Lease6 {
         LEASE_IA_PD  /// the lease contains IPv6 prefix (for prefix delegation)
     } LeaseType;
 
+    Lease6(LeaseType type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
+           uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
+           uint32_t t2, SubnetID subnet_id);
+
     /// @brief specifies lease type (normal addr, temporary addr, prefix)
     LeaseType type_;
 
@@ -208,6 +210,8 @@ struct Lease6 {
     /// entity, we are keeping it in the lease. In case of multiple addresses/prefixes
     /// for the same IA, each must have consistent T1 and T2 values. Specified in
     /// seconds since cltt.
+    /// This value will also be useful for failover to calculate the next expected
+    /// client transmission time.
     uint32_t t1_;
 
     /// @brief T2 timer
@@ -268,22 +272,23 @@ typedef std::vector< boost::shared_ptr<Lease6Ptr> > Lease6Collection;
 /// interface to all backends. As this is an abstract class, it should not
 /// be used directly, but rather specialized derived class should be used
 /// instead.
-class LeaseMgr {
+class LeaseMgr : public boost::noncopyable {
 public:
-
     /// Client Hardware address
     typedef std::vector<uint8_t> HWAddr;
 
-    /// @brief The sole lease manager constructor
+    /// @brief returns a single instance of LeaseMgr
     ///
-    /// dbconfig is a generic way of passing parameters. Parameters
-    /// are passed in the "name=value" format, separated by spaces.
-    /// Values may be enclosed in double quotes, if needed.
-    ///
-    /// @param dbconfig database configuration
-    LeaseMgr(const std::string& dbconfig);
+    /// LeaseMgr is a singleton and this method is the only way of
+    /// accessing it. LeaseMgr must be create first using
+    /// instantiate() method, otherwise instance() will throw
+    /// InvalidOperation exception.
+    /// @throw InvalidOperation if LeaseMgr not instantiated
+    static LeaseMgr& instance();
 
-    /// @brief Destructor (closes file)
+    void instantiate(const std::string& config);
+
+    /// @brief Destructor
     virtual ~LeaseMgr();
 
     /// @brief Adds an IPv4 lease.
@@ -464,6 +469,15 @@ public:
     /// is currently postponed.
 
 protected:
+    /// @brief The sole lease manager constructor
+    ///
+    /// dbconfig is a generic way of passing parameters. Parameters
+    /// are passed in the "name=value" format, separated by spaces.
+    /// Values may be enclosed in double quotes, if needed.
+    ///
+    /// @param dbconfig database configuration
+    LeaseMgr(const std::string& dbconfig);
+
     /// @brief returns value of the parameter
     std::string getParameter(const std::string& name) const;
 
@@ -473,6 +487,8 @@ protected:
     /// password and other parameters required for DB access. It is not
     /// intended to keep any DHCP-related parameters.
     std::map<std::string, std::string> parameters_;
+
+    static LeaseMgr* instance_;
 };
 
 }; // end of isc::dhcp namespace
