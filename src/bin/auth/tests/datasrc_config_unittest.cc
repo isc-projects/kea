@@ -16,7 +16,7 @@
 
 #include <config/tests/fake_session.h>
 #include <config/ccsession.h>
-#include <util/threads/lock.h>
+#include <util/threads/sync.h>
 
 #include <gtest/gtest.h>
 

@@ -18,7 +18,7 @@
 
 #include <util/buffer.h>
 #include <util/io/socketsession.h>
-#include <util/threads/lock.h>
+#include <util/threads/sync.h>
 
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
