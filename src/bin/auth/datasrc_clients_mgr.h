@@ -128,9 +128,17 @@ public:
             LOG_ERROR(auth_logger, AUTH_DATASRC_CLIENTS_SHUTDOWN_ERROR).
                 arg(ex.what());
         } catch (...) {}
+
+        cleanup();              // see below
     }
 
 private:
+    // This is expected to be called at the end of the destructor.  It
+    // actually does nothing, but provides a customization point for
+    // specialized class for tests so that the tests can inspect the last
+    // state of the class.
+    void cleanup() {}
+
     void sendCommand(datasrc_clientmgr_internal::CommandID command,
                      data::ConstElementPtr arg) {
         {
