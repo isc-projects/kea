@@ -35,7 +35,7 @@ class ZoneTableSegment;
 /// We divide them so the update of zone data can be done asynchronously,
 /// in a different thread. The install() operation is the only one that needs
 /// to be done in a critical section.
-class ZoneReloader {
+class ZoneWriter {
 public:
     /// \brief Get the zone data into memory.
     ///
@@ -80,13 +80,13 @@ public:
     virtual void cleanup() = 0;
 };
 
-/// \brief Reloader implementation which loads data locally.
+/// \brief Writer implementation which loads data locally.
 ///
 /// This implementation prepares a clean zone data and lets one callback
 /// to fill it and another to install it somewhere. The class does mostly
 /// nothing (and delegates the work to the callbacks), just stores little bit
 /// of state between the calls.
-class ZoneReloaderLocal : public ZoneReloader {
+class ZoneWriterLocal : public ZoneWriter {
 public:
     /// \brief Constructor
     ///
@@ -94,10 +94,10 @@ public:
     /// \param load_action The callback used to load data.
     /// \param install_action The callback used to install the loaded zone.
     /// \param rrclass The class of the zone.
-    ZoneReloaderLocal(ZoneTableSegment* segment, const LoadAction& load_action,
+    ZoneWriterLocal(ZoneTableSegment* segment, const LoadAction& load_action,
                       const dns::Name& name, const dns::RRClass& rrclass);
     /// \brief Destructor
-    ~ZoneReloaderLocal();
+    ~ZoneWriterLocal();
     /// \brief Loads the data.
     ///
     /// This prepares an empty ZoneData and calls load_action (passed to

@@ -32,7 +32,7 @@ class RRClass;
 }
 namespace datasrc {
 namespace memory {
-class ZoneReloader;
+class ZoneWriter;
 
 /// \brief Memory-management independent entry point that contains a
 /// pointer to a zone table in memory.
@@ -139,9 +139,9 @@ public:
     /// \param rrclass The class of the zone to reload.
     /// \return New instance of a zone reloader. The ownership is passed
     ///     onto the caller.
-    virtual ZoneReloader* getZoneReloader(const LoadAction& load_action,
-                                          const dns::Name& origin,
-                                          const dns::RRClass& rrclass) = 0;
+    virtual ZoneWriter* getZoneWriter(const LoadAction& load_action,
+                                      const dns::Name& origin,
+                                      const dns::RRClass& rrclass) = 0;
 };
 
 } // namespace memory
