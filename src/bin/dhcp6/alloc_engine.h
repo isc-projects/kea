@@ -67,7 +67,7 @@ protected:
                         const DuidPtr& duid,
                         const isc::asiolink::IOAddress& hint);
     private:
-        isc::asiolink::IOAddress increaseAddress(isc::asiolink::IOAddress& addr);
+        isc::asiolink::IOAddress increaseAddress(const isc::asiolink::IOAddress& addr);
 
     };
 
