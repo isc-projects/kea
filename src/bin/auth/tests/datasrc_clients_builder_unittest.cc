@@ -22,6 +22,7 @@
 #include <boost/function.hpp>
 
 using isc::data::ConstElementPtr;
+using namespace isc::datasrc;
 using namespace isc::auth::datasrc_clientmgr_internal;
 
 namespace {
@@ -37,7 +38,7 @@ protected:
     TestDataSrcClientsBuilder builder;
     std::list<Command> command_queue; // test command queue
     std::list<Command> delayed_command_queue; // commands available after wait
-    AuthSrv::DataSrcClientListsPtr clients_map; // 'configured' clients
+    DataSrcClientListsPtr clients_map; // configured clients
     TestCondVar cond;
     TestMutex queue_mutex;
     TestMutex map_mutex;
@@ -103,7 +104,7 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
     Command reconfig_cmd(RECONFIGURE, ConstElementPtr());
 
     // Initially, no clients should be there
-    EXPECT_EQ(AuthSrv::DataSrcClientListsPtr(), clients_map);
+    EXPECT_EQ(DataSrcClientListsPtr(), clients_map);
 
     // A config that doesn't do much except be accepted
     ConstElementPtr good_config = isc::data::Element::fromJSON(
@@ -121,7 +122,7 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
     EXPECT_EQ(1, clients_map->size());
 
     // Store the nonempty clients map we now have
-    AuthSrv::DataSrcClientListsPtr working_config_clients(clients_map);
+    DataSrcClientListsPtr working_config_clients(clients_map);
 
     // If a 'bad' command argument got here, the config validation should
     // have failed already, but still, the handler should return true,
