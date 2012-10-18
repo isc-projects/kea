@@ -25,6 +25,33 @@ AllocEngine::IterativeAllocator::IterativeAllocator()
 }
 
 isc::asiolink::IOAddress
+AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress& addr) {
+    uint8_t packed[V6ADDRESS_LEN];
+    int len;
+    if (addr.getFamily()==AF_INET) {
+        // IPv4
+        memcpy(packed, addr.getAddress().to_v4().to_bytes().data(), 4);
+        len = 4;
+    } else {
+        // IPv6
+        memcpy(packed, addr.getAddress().to_v6().to_bytes().data(), 16);
+        len = 16;
+    }
+
+    // First we copy the whole address as 16 bytes.
+    bool carry = false;
+    for (int i = len; i >=0; --i) {
+        packed[i]++;
+        if (packed[i] != 0) {
+            break;
+        }
+    }
+
+    return (IOAddress::from_bytes(addr.getFamily(), packed));
+}
+
+
+isc::asiolink::IOAddress
 AllocEngine::IterativeAllocator::pickAddress(const Subnet6Ptr& subnet,
                                              const DuidPtr& duid,
                                              const IOAddress& hint) {
@@ -118,6 +145,14 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
         isc_throw(InvalidOperation, "No allocator selected");
     }
 
+    // check if there's existing lease for that subnet/duid/iaid combination.
+    Lease6Ptr existing = LeaseMgr::instance().getLease6(*duid, iaid, subnet->getID());
+    if (existing) {
+        // we have a lease already. This is a returning client, probably after
+        // his reboot.
+        return (existing);
+    }
+
     unsigned int i = attempts_;
     do {
         IOAddress candidate = allocator_->pickAddress(subnet, duid, hint);
@@ -153,12 +188,9 @@ Lease6Ptr AllocEngine::createLease(const Subnet6Ptr& subnet,
                                    uint32_t iaid,
                                    const IOAddress& addr) {
 
-    Lease6Ptr lease = new Lease6(Lease6::LEASE_IA_NA, addr, iaid,
-                                 duid, subnet->getPreferred(),
-                                 subnet->getValid(),
-                                 subnet->getT1(),
-                                 subnet->getT2(),
-                                 subnet->getID());
+    Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, duid, iaid,
+                               subnet->getPreferred(), subnet->getValid(),
+                               subnet->getT1(), subnet->getT2(), subnet->getID()));
 
     bool status = LeaseMgr::instance().addLease(lease);
 
