@@ -33,9 +33,9 @@ namespace log {
 /// \page LoggingApi Logging API
 /// \section LoggingApiOverview Overview
 /// BIND 10 logging uses the concepts of the widely-used Java logging
-/// package log4j (http://logging.apache.log/log4j), albeit implemented 
+/// package log4j (http://logging.apache.log/log4j), albeit implemented
 /// in C++ using an open-source port.  Features of the system are:
-/// 
+///
 /// - Within the code objects - known as loggers - can be created and
 /// used to log messages.  These loggers have names; those with the
 /// same name share characteristics (such as output destination).
@@ -50,7 +50,7 @@ namespace log {
 /// message is logged, it is output only if it is logged at a level equal
 /// to the logger severity level or greater, e.g. if the logger's severity
 /// is WARN, only messages logged at WARN, ERROR or FATAL will be output.
-/// 
+///
 /// \section LoggingApiLoggerNames BIND 10 Logger Names
 /// Within BIND 10, the root logger root logger is given the name of the
 /// program (via the stand-alone function setRootLoggerName()). Other loggers
@@ -58,7 +58,7 @@ namespace log {
 /// This name appears in logging output, allowing users to identify both
 /// the BIND 10 program and the component within the program that generated
 /// the message.
-/// 
+///
 /// When creating a logger, the abbreviated name "<sublogger>" can be used;
 /// the program name will be prepended to it when the logger is created.
 /// In this way, individual libraries can have their own loggers without
@@ -66,7 +66,7 @@ namespace log {
 /// - The origin of the message will be clearly identified.
 /// - The same component can have different options (e.g. logging severity)
 /// in different programs at the same time.
-/// 
+///
 /// \section LoggingApiLoggingMessages Logging Messages
 /// Instead of embedding the text of messages within the code, each message
 /// is referred to using a symbolic name.  The logging code uses this name as
