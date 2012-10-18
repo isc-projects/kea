@@ -36,16 +36,21 @@
 #include <testutils/dnsmessage_test.h>
 
 #include "memory_segment_test.h"
+#include "zone_table_segment_test.h"
 
 #include <gtest/gtest.h>
 
+#include <boost/shared_ptr.hpp>
+
 #include <new>                  // for bad_alloc
 
+using namespace isc::data;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc;
 using namespace isc::datasrc::memory;
 using namespace isc::testutils;
+using boost::shared_ptr;
 using std::vector;
 
 namespace {
@@ -156,20 +161,22 @@ public:
 class MemoryClientTest : public ::testing::Test {
 protected:
     MemoryClientTest() : zclass_(RRClass::IN()),
-                         client_(new InMemoryClient(mem_sgmt_, zclass_))
+                         segment_(new test::ZoneTableSegmentTest(
+                             zclass_, mem_sgmt_)),
+                         client_(new InMemoryClient(segment_, zclass_))
     {}
     ~MemoryClientTest() {
-        if (client_ != NULL) {
-            delete client_;
-        }
+        delete client_;
     }
     void TearDown() {
         delete client_;
         client_ = NULL;
+        segment_.reset();
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated()); // catch any leak here.
     }
     const RRClass zclass_;
     test::MemorySegmentTest mem_sgmt_;
+    shared_ptr<ZoneTableSegment> segment_;
     InMemoryClient* client_;
 };
 
@@ -292,11 +299,15 @@ TEST_F(MemoryClientTest, loadMemoryAllocationFailures) {
         SCOPED_TRACE("For throw count = " + i);
         mem_sgmt_.setThrowCount(i);
         EXPECT_THROW({
+            shared_ptr<ZoneTableSegment> ztable_segment(
+                new test::ZoneTableSegmentTest(
+                    zclass_, mem_sgmt_));
+
             // Include the InMemoryClient construction too here. Now,
             // even allocations done from InMemoryClient constructor
             // fail (due to MemorySegmentTest throwing) and we check for
             // leaks when this happens.
-            InMemoryClient client2(mem_sgmt_, zclass_);
+            InMemoryClient client2(ztable_segment, zclass_);
             client2.load(Name("example.org"),
                          TEST_DATA_DIR "/example.org.zone");
         }, std::bad_alloc);
