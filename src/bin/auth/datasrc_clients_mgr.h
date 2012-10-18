@@ -61,10 +61,6 @@ enum CommandID {
 typedef std::pair<CommandID, data::ConstElementPtr> Command;
 } // namespace datasrc_clientmgr_internal
 
-typedef std::map<isc::dns::RRClass,
-                 boost::shared_ptr<isc::datasrc::ConfigurableClientList> >
-                    DataSrcClientListMap;
-
 /// \brief Frontend to the manager object for data source clients.
 ///
 /// This class provides interfaces for configuring and updating a set of
@@ -101,7 +97,8 @@ public:
     /// \throw std::bad_alloc internal memory allocation failure.
     /// \throw isc::Unexpected general unexpected system errors.
     DataSrcClientsMgrBase() :
-        builder_(&command_queue_, &cond_, &queue_mutex_, &clients_map_, &map_mutex_),
+        builder_(&command_queue_, &cond_, &queue_mutex_, &clients_map_,
+                 &map_mutex_),
         builder_thread_(boost::bind(&BuilderType::run, &builder_))
     {}
 
@@ -239,18 +236,20 @@ private:
                     configureDataSource(config);
                 typename MutexType::Locker locker(*map_mutex_);
                 std::swap(new_clients_map, *clients_map_);
-            } catch (isc::data::TypeError) {
-                // TODO: log
-                std::cout << "[XX] type error" << std::endl;
-            } catch (std::exception stde) {
-                // TODO: log
-                std::cout << "[XX] bug error" << std::endl;
+                // lock is released by leaving scope
+            } catch (isc::data::TypeError type_error) {
+                LOG_ERROR(auth_logger,
+                    AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_CONFIG_ERROR).
+                    arg(type_error.what());
+            } catch (std::exception exc) {
+                LOG_ERROR(auth_logger,
+                    AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_ERROR).
+                    arg(exc.what());
             } catch (...) {
-                // TODO: log
-                std::cout << "[XX] unknown error" << std::endl;
+                LOG_ERROR(auth_logger,
+                    AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_UNKNOWN_ERROR);
             }
         }
-        // lock
     }
 
     // The following are shared with the manager
