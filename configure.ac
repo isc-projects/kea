@@ -12,6 +12,18 @@ AC_CONFIG_MACRO_DIR([m4macros])
 # Checks for programs.
 AC_PROG_CXX
 
+# Enable debugging facilities?
+AC_ARG_ENABLE([debug],
+  AS_HELP_STRING([--enable-debug],
+    [enable debugging (default is no)]),
+  [case "${enableval}" in
+    yes) debug_enabled=true ;;
+    no)  debug_enabled=false ;;
+    *)   AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+  esac],[debug_enabled=false])
+AM_CONDITIONAL([DEBUG_ENABLED], [test x$debug = xtrue])
+AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable debugging facilities?])])
+
 # Libtool configuration
 #
 
