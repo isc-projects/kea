@@ -24,6 +24,7 @@
 
 #include <utility>
 #include <set>
+#include <map>
 
 /// \brief Configure data source client lists
 ///
@@ -73,7 +74,7 @@ configureDataSourceGeneric(const isc::data::ConstElementPtr& config) {
 
 /// \brief Concrete version of configureDataSource() for the
 ///     use with authoritative server implementation.
-AuthSrv::DataSrcClientListsPtr
+isc::datasrc::DataSrcClientListsPtr
 configureDataSource(const isc::data::ConstElementPtr& config);
 
 #endif  // DATASRC_CONFIG_H

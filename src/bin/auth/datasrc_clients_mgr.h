@@ -21,7 +21,6 @@
 #include <log/logger_support.h>
 #include <log/log_dbglevels.h>
 
-#include <auth/auth_srv.h>
 #include <auth/datasrc_config.h>
 #include <cc/data.h>
 #include <datasrc/client_list.h>
@@ -171,7 +170,7 @@ private:
     std::list<datasrc_clientmgr_internal::Command> command_queue_;
     CondVarType cond_;          // condition variable for queue operations
     MutexType queue_mutex_;     // mutex to protect the queue
-    AuthSrv::DataSrcClientListsPtr clients_map_;
+    isc::datasrc::DataSrcClientListsPtr clients_map_;
     MutexType map_mutex_;
 
     BuilderType builder_;
@@ -208,7 +207,7 @@ public:
     /// \throw None
     DataSrcClientsBuilderBase(std::list<Command>* command_queue,
                               CondVarType* cond, MutexType* queue_mutex,
-                              AuthSrv::DataSrcClientListsPtr* clients_map,
+                              isc::datasrc::DataSrcClientListsPtr* clients_map,
                               MutexType* map_mutex
         ) :
         command_queue_(command_queue), cond_(cond), queue_mutex_(queue_mutex),
@@ -236,7 +235,7 @@ private:
     void doReconfigure(const isc::data::ConstElementPtr& config) {
         if (config) {
             try {
-                AuthSrv::DataSrcClientListsPtr new_clients_map =
+                isc::datasrc::DataSrcClientListsPtr new_clients_map =
                     configureDataSource(config);
                 typename MutexType::Locker locker(*map_mutex_);
                 std::swap(new_clients_map, *clients_map_);
@@ -258,7 +257,7 @@ private:
     std::list<Command>* command_queue_;
     CondVarType* cond_;
     MutexType* queue_mutex_;
-    AuthSrv::DataSrcClientListsPtr* clients_map_;
+    isc::datasrc::DataSrcClientListsPtr* clients_map_;
     MutexType* map_mutex_;
 };
 

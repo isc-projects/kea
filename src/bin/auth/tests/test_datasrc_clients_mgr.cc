@@ -28,7 +28,8 @@ std::list<Command> FakeDataSrcClientsBuilder::command_queue_copy;
 TestCondVar* FakeDataSrcClientsBuilder::cond = NULL;
 TestCondVar FakeDataSrcClientsBuilder::cond_copy;
 TestMutex* FakeDataSrcClientsBuilder::queue_mutex = NULL;
-AuthSrv::DataSrcClientListsPtr* FakeDataSrcClientsBuilder::clients_map = NULL;
+isc::datasrc::DataSrcClientListsPtr*
+    FakeDataSrcClientsBuilder::clients_map = NULL;
 TestMutex* FakeDataSrcClientsBuilder::map_mutex = NULL;
 TestMutex FakeDataSrcClientsBuilder::queue_mutex_copy;
 bool FakeDataSrcClientsBuilder::thread_waited = false;
