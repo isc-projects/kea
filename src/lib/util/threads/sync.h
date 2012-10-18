@@ -15,6 +15,8 @@
 #ifndef B10_THREAD_SYNC_H
 #define B10_THREAD_SYNC_H
 
+#include "config.h"
+
 #include <boost/noncopyable.hpp>
 
 #include <cstdlib> // for NULL.
