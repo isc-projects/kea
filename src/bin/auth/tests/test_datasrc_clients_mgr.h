@@ -76,6 +76,7 @@ public:
     TestCondVar(std::list<Command>& command_queue,
                 std::list<Command>& delayed_command_queue) :
         wait_count(0),
+        signal_count(0),
         command_queue_(&command_queue),
         delayed_command_queue_(&delayed_command_queue)
     {
