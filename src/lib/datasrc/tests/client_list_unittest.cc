@@ -12,13 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/memory_segment_local.h>
-
 #include <datasrc/client_list.h>
 #include <datasrc/client.h>
 #include <datasrc/iterator.h>
 #include <datasrc/data_source.h>
 #include <datasrc/memory/memory_client.h>
+#include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/zone_finder.h>
 
 #include <dns/rrclass.h>
@@ -32,6 +31,7 @@
 
 using namespace isc::datasrc;
 using isc::datasrc::memory::InMemoryClient;
+using isc::datasrc::memory::ZoneTableSegment;
 using isc::datasrc::memory::InMemoryZoneFinder;
 using namespace isc::data;
 using namespace isc::dns;
@@ -255,7 +255,9 @@ public:
             "   \"type\": \"test_type\","
             "   \"params\": [\"example.org\", \"example.com\", "
             "                \"noiter.org\", \"null.org\"]"
-            "}]"))
+            "}]")),
+        config_(Element::fromJSON("{}")),
+        segment_(ZoneTableSegment::create((*config_.get())))
     {
         for (size_t i(0); i < ds_count; ++ i) {
             shared_ptr<MockDataSourceClient>
@@ -263,7 +265,7 @@ public:
             ds_.push_back(ds);
             ds_info_.push_back(ConfigurableClientList::DataSourceInfo(
                                    ds.get(), DataSourceClientContainerPtr(),
-                                   false, rrclass_, mem_sgmt_));
+                                   false, rrclass_, segment_));
         }
     }
 
@@ -283,7 +285,7 @@ public:
 
         // Create cache from the temporary data source, and push it to the
         // client list.
-        const shared_ptr<InMemoryClient> cache(new InMemoryClient(mem_sgmt_,
+        const shared_ptr<InMemoryClient> cache(new InMemoryClient(segment_,
                                                                   rrclass_));
         cache->load(zone, *mock_client.getIterator(zone, false));
 
@@ -362,12 +364,12 @@ public:
                   shared_ptr<InMemoryClient>());
     }
     const RRClass rrclass_;
-    isc::util::MemorySegmentLocal mem_sgmt_;
     shared_ptr<TestedList> list_;
     const ClientList::FindResult negative_result_;
     vector<shared_ptr<MockDataSourceClient> > ds_;
     vector<ConfigurableClientList::DataSourceInfo> ds_info_;
-    const ConstElementPtr config_elem_, config_elem_zones_;
+    const ConstElementPtr config_elem_, config_elem_zones_, config_;
+    shared_ptr<ZoneTableSegment> segment_;
 };
 
 // Test the test itself
