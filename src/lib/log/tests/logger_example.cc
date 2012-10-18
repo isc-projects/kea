@@ -118,7 +118,6 @@ int main(int argc, char** argv) {
     LoggerSpecification cur_spec(ROOT_NAME);// Current specification
     OutputOption        cur_opt;            // Current output option
     vector<LoggerSpecification> loggers;    // Set of logger specifications
-    vector<OutputOption>        options;    // Output options for logger
     std::string                 severity;   // Severity set for logger
 
     // Initialize logging system - set the root logger name.

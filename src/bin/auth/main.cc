@@ -18,6 +18,7 @@
 
 #include <util/buffer.h>
 #include <util/io/socketsession.h>
+#include <util/threads/sync.h>
 
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -34,7 +35,7 @@
 #include <auth/command.h>
 #include <auth/auth_srv.h>
 #include <auth/auth_log.h>
-#include <auth/datasrc_configurator.h>
+#include <auth/datasrc_config.h>
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 #include <log/logger_support.h>
@@ -42,7 +43,6 @@
 #include <server_common/socket_request.h>
 
 #include <boost/bind.hpp>
-#include <boost/scoped_ptr.hpp>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -87,13 +87,38 @@ my_command_handler(const string& command, ConstElementPtr args) {
 }
 
 void
-datasrcConfigHandler(AuthSrv* server, const std::string&,
+datasrcConfigHandler(AuthSrv* server, bool* first_time,
+                     ModuleCCSession* config_session, const std::string&,
                      isc::data::ConstElementPtr config,
                      const isc::config::ConfigData&)
 {
     assert(server != NULL);
     if (config->contains("classes")) {
-        configureDataSource(*server, config->get("classes"));
+        AuthSrv::DataSrcClientListsPtr lists;
+
+        if (*first_time) {
+            // HACK: The default is not passed to the handler in the first
+            // callback. This one will get the default (or, current value).
+            // Further updates will work the usual way.
+            assert(config_session != NULL);
+            *first_time = false;
+            lists = configureDataSource(
+                config_session->getRemoteConfigValue("data_sources",
+                                                     "classes"));
+        } else {
+            lists = configureDataSource(config->get("classes"));
+        }
+
+        // Replace the server's lists.  The returned lists will be stored
+        // in a local variable 'lists', and will be destroyed outside of
+        // the temporary block for the lock scope.  That way we can minimize
+        // the range of the critical section.
+        {
+            isc::util::thread::Mutex::Locker locker(
+                server->getDataSrcClientListMutex());
+            lists = server->swapDataSrcClientLists(lists);
+        }
+        // The previous lists are destroyed here.
     }
 }
 
@@ -205,18 +230,15 @@ main(int argc, char* argv[]) {
         isc::server_common::initKeyring(*config_session);
         auth_server->setTSIGKeyRing(&isc::server_common::keyring);
 
-        // Start the data source configuration
+        // Start the data source configuration.  We pass first_time and
+        // config_session for the hack described in datasrcConfigHandler.
+        bool first_time = true;
         config_session->addRemoteConfig("data_sources",
                                         boost::bind(datasrcConfigHandler,
-                                                    auth_server,
+                                                    auth_server, &first_time,
+                                                    config_session,
                                                     _1, _2, _3),
                                         false);
-
-        // HACK: The default is not passed to the handler. This one will
-        // get the default (or, current value). Further updates will work
-        // the usual way.
-        configureDataSource(*auth_server,
-            config_session->getRemoteConfigValue("data_sources", "classes"));
 
         // Now start asynchronous read.
         config_session->start();

@@ -36,10 +36,10 @@
 #include <auth/command.h>
 #include <auth/common.h>
 #include <auth/statistics.h>
-#include <auth/datasrc_configurator.h>
+#include <auth/datasrc_config.h>
 
 #include <util/unittests/mock_socketsession.h>
-#include <util/threads/lock.h>
+#include <util/threads/sync.h>
 #include <dns/tests/unittest_util.h>
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
@@ -63,6 +63,7 @@
 using namespace std;
 using namespace isc::cc;
 using namespace isc::dns;
+using namespace isc::datasrc;
 using namespace isc::util;
 using namespace isc::util::io::internal;
 using namespace isc::util::unittests;
@@ -89,6 +90,9 @@ const char* const STATIC_DSRC_FILE = DSRC_DIR "/static.zone";
 // This is a configuration that uses the in-memory data source containing
 // a signed example zone.
 const char* const CONFIG_INMEMORY_EXAMPLE = TEST_DATA_DIR "/rfc5155-example.zone.signed";
+
+// shortcut commonly used in tests
+typedef boost::shared_ptr<ConfigurableClientList> ListPtr;
 
 class AuthSrvTest : public SrvTestBase {
 protected:
@@ -722,13 +726,21 @@ TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
 }
 
 void
+installDataSrcClientLists(AuthSrv& server,
+                          AuthSrv::DataSrcClientListsPtr lists)
+{
+    thread::Mutex::Locker locker(server.getDataSrcClientListMutex());
+    server.swapDataSrcClientLists(lists);
+}
+
+void
 updateDatabase(AuthSrv& server, const char* params) {
     const ConstElementPtr config(Element::fromJSON("{"
         "\"IN\": [{"
         "    \"type\": \"sqlite3\","
         "    \"params\": " + string(params) +
         "}]}"));
-    configureDataSource(server, config);
+    installDataSrcClientLists(server, configureDataSource(config));
 }
 
 void
@@ -745,7 +757,7 @@ updateInMemory(AuthSrv& server, const char* origin, const char* filename) {
         "   \"type\": \"static\","
         "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
         "}]}"));
-    configureDataSource(server, config);
+    installDataSrcClientLists(server, configureDataSource(config));
 }
 
 void
@@ -755,7 +767,7 @@ updateBuiltin(AuthSrv& server) {
         "   \"type\": \"static\","
         "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
         "}]}"));
-    configureDataSource(server, config);
+    installDataSrcClientLists(server, configureDataSource(config));
 }
 
 // Try giving the server a TSIG signed request and see it can anwer signed as
@@ -953,7 +965,7 @@ TEST_F(AuthSrvTest, updateWithInMemoryClient) {
         "   \"params\": {},"
         "   \"cache-enable\": true"
         "}]}"));
-    configureDataSource(server, config);
+    installDataSrcClientLists(server, configureDataSource(config));
     // after successful configuration, we should have one (with empty zoneset).
 
     // The memory data source is empty, should return REFUSED rcode.
@@ -1287,7 +1299,7 @@ public:
         if (fake_rrset_ && fake_rrset_->getName() == name &&
             fake_rrset_->getType() == type)
         {
-            return (ZoneFinderContextPtr(new ZoneFinder::Context(
+            return (ZoneFinderContextPtr(new ZoneFinder::GenericContext(
                                              *this, options,
                                              ResultContext(SUCCESS,
                                                            fake_rrset_))));
@@ -1427,11 +1439,14 @@ TEST_F(AuthSrvTest,
     // Set real inmem client to proxy
     updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
     {
-        isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
+        isc::util::thread::Mutex::Locker locker(
+            server.getDataSrcClientListMutex());
         boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-            list(new FakeList(server.getClientList(RRClass::IN()), THROW_NEVER,
-                              false));
-        server.setClientList(RRClass::IN(), list);
+            list(new FakeList(server.getDataSrcClientList(RRClass::IN()),
+                              THROW_NEVER, false));
+        AuthSrv::DataSrcClientListsPtr lists(new std::map<RRClass, ListPtr>);
+        lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
+        server.swapDataSrcClientLists(lists);
     }
 
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
@@ -1455,11 +1470,14 @@ setupThrow(AuthSrv& server, ThrowWhen throw_when, bool isc_exception,
 {
     updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
-    isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
+    isc::util::thread::Mutex::Locker locker(
+        server.getDataSrcClientListMutex());
     boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        list(new FakeList(server.getClientList(RRClass::IN()), throw_when,
-                          isc_exception, rrset));
-    server.setClientList(RRClass::IN(), list);
+        list(new FakeList(server.getDataSrcClientList(RRClass::IN()),
+                          throw_when, isc_exception, rrset));
+    AuthSrv::DataSrcClientListsPtr lists(new std::map<RRClass, ListPtr>);
+    lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
+    server.swapDataSrcClientLists(lists);
 }
 
 TEST_F(AuthSrvTest,
@@ -1771,46 +1789,51 @@ TEST_F(AuthSrvTest, clientList) {
     // We need to lock the mutex to make the (get|set)ClientList happy.
     // There's a debug-build only check in them to make sure everything
     // locks them and we call them directly here.
-    isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
+    isc::util::thread::Mutex::Locker locker(
+        server.getDataSrcClientListMutex());
+
+    AuthSrv::DataSrcClientListsPtr lists; // initially empty
+
     // The lists don't exist. Therefore, the list of RRClasses is empty.
-    // We also have no IN list.
-    EXPECT_TRUE(server.getClientListClasses().empty());
-    EXPECT_EQ(boost::shared_ptr<const isc::datasrc::ClientList>(),
-              server.getClientList(RRClass::IN()));
+    EXPECT_TRUE(server.swapDataSrcClientLists(lists)->empty());
+
     // Put something in.
-    const boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        list(new isc::datasrc::ConfigurableClientList(RRClass::IN()));
-    const boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        list2(new isc::datasrc::ConfigurableClientList(RRClass::CH()));
-    server.setClientList(RRClass::IN(), list);
-    server.setClientList(RRClass::CH(), list2);
-    // There are two things in the list and they are IN and CH
-    vector<RRClass> classes(server.getClientListClasses());
-    ASSERT_EQ(2, classes.size());
-    EXPECT_EQ(RRClass::IN(), classes[0]);
-    EXPECT_EQ(RRClass::CH(), classes[1]);
+    const ListPtr list(new ConfigurableClientList(RRClass::IN()));
+    const ListPtr list2(new ConfigurableClientList(RRClass::CH()));
+
+    lists.reset(new std::map<RRClass, ListPtr>);
+    lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
+    lists->insert(pair<RRClass, ListPtr>(RRClass::CH(), list2));
+    server.swapDataSrcClientLists(lists);
+
     // And the lists can be retrieved.
-    EXPECT_EQ(list, server.getClientList(RRClass::IN()));
-    EXPECT_EQ(list2, server.getClientList(RRClass::CH()));
-    // Remove one of them
-    server.setClientList(RRClass::CH(),
-        boost::shared_ptr<isc::datasrc::ConfigurableClientList>());
-    // This really got deleted, including the class.
-    classes = server.getClientListClasses();
-    ASSERT_EQ(1, classes.size());
-    EXPECT_EQ(RRClass::IN(), classes[0]);
-    EXPECT_EQ(list, server.getClientList(RRClass::IN()));
+    EXPECT_EQ(list, server.getDataSrcClientList(RRClass::IN()));
+    EXPECT_EQ(list2, server.getDataSrcClientList(RRClass::CH()));
+
+    // Replace the lists with new lists containing only one list.
+    lists.reset(new std::map<RRClass, ListPtr>);
+    lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
+    lists = server.swapDataSrcClientLists(lists);
+
+    // Old one had two lists.  That confirms our swap for IN and CH classes
+    // (i.e., no other entries were there).
+    EXPECT_EQ(2, lists->size());
+
+    // The CH list really got deleted.
+    EXPECT_EQ(list, server.getDataSrcClientList(RRClass::IN()));
+    EXPECT_FALSE(server.getDataSrcClientList(RRClass::CH()));
 }
 
 // We just test the mutex can be locked (exactly once).
 TEST_F(AuthSrvTest, mutex) {
-    isc::util::thread::Mutex::Locker l1(server.getClientListMutex());
+    isc::util::thread::Mutex::Locker l1(server.getDataSrcClientListMutex());
     // TODO: Once we have non-debug build, this one will not work, since
     // we currently use the fact that we can't lock twice from the same
     // thread. In the non-debug mode, this would deadlock.
     // Skip then.
     EXPECT_THROW({
-        isc::util::thread::Mutex::Locker l2(server.getClientListMutex());
+        isc::util::thread::Mutex::Locker l2(
+            server.getDataSrcClientListMutex());
     }, isc::InvalidOperation);
 }
 

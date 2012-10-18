@@ -139,69 +139,6 @@ public:
     /// zone from a file before.
     const std::string getFileName(const isc::dns::Name& zone_name) const;
 
-    /// \brief Inserts an rrset into the zone.
-    ///
-    /// It puts another RRset into the zone.
-    ///
-    /// In the current implementation, this method doesn't allow an existing
-    /// RRset to be updated or overridden.  So the caller must make sure that
-    /// all RRs of the same type and name must be given in the form of a
-    /// single RRset.  The current implementation will also require that
-    /// when an RRSIG is added, the RRset to be covered has already been
-    /// added.  These restrictions are probably too strict when this data
-    /// source accepts various forms of input, so they should be revisited
-    /// later.
-    ///
-    /// Except for NullRRset and OutOfZone, this method does not guarantee
-    /// strong exception safety (it is currently not needed, if it is needed
-    /// in future, it should be implemented).
-    ///
-    /// \throw NullRRset \c rrset is a NULL pointer.
-    /// \throw OutOfZone The owner name of \c rrset is outside of the
-    /// origin of the zone.
-    /// \throw AddError Other general errors.
-    /// \throw Others This method might throw standard allocation exceptions.
-    ///
-    /// \param rrset The set to add.
-    /// \return SUCCESS or EXIST (if an rrset for given name and type already
-    ///    exists).
-    result::Result add(const isc::dns::Name& zone_name,
-                       const isc::dns::ConstRRsetPtr& rrset);
-
-    /// \brief RRset is NULL exception.
-    ///
-    /// This is thrown if the provided RRset parameter is NULL.
-    struct NullRRset : public InvalidParameter {
-        NullRRset(const char* file, size_t line, const char* what) :
-            InvalidParameter(file, line, what)
-        { }
-    };
-
-    /// \brief Zone is empty exception.
-    ///
-    /// This is thrown if we have an empty zone created as a result of
-    /// load().
-    struct EmptyZone : public InvalidParameter {
-        EmptyZone(const char* file, size_t line, const char* what) :
-            InvalidParameter(file, line, what)
-        { }
-    };
-
-    /// \brief General failure exception for \c add().
-    ///
-    /// This is thrown against general error cases in adding an RRset
-    /// to the zone.
-    ///
-    /// Note: this exception would cover cases for \c OutOfZone or
-    /// \c NullRRset.  We'll need to clarify and unify the granularity
-    /// of exceptions eventually.  For now, exceptions are added as
-    /// developers see the need for it.
-    struct AddError : public InvalidParameter {
-        AddError(const char* file, size_t line, const char* what) :
-            InvalidParameter(file, line, what)
-        { }
-    };
-
     /// Returns a \c ZoneFinder result that best matches the given name.
     ///
     /// This derived version of the method never throws an exception.
@@ -239,14 +176,21 @@ public:
                      uint32_t end_serial) const;
 
 private:
-    // TODO: Do we still need the PImpl if nobody should manipulate this class
-    // directly any more (it should be handled through DataSourceClient)?
-    class InMemoryClientImpl;
-    InMemoryClientImpl* impl_;
+    // Some type aliases
+    typedef DomainTree<std::string> FileNameTree;
+    typedef DomainTreeNode<std::string> FileNameNode;
 
-    // A helper internal class used by load().  It maintains some intermediate
-    // states while loading RRs of the zone.
-    class Loader;
+    // Common process for zone load. Registers filename internally and
+    // adds the ZoneData to the ZoneTable.
+    result::Result loadInternal(const isc::dns::Name& zone_name,
+                                const std::string& filename,
+                                ZoneData* zone_data);
+
+    util::MemorySegment& mem_sgmt_;
+    const isc::dns::RRClass rrclass_;
+    unsigned int zone_count_;
+    ZoneTable* zone_table_;
+    FileNameTree* file_name_tree_;
 };
 
 } // namespace memory

@@ -34,7 +34,9 @@ class FDTest : public ::testing::Test {
             // We do not care what is inside, we just need it to be the same
             data(new unsigned char[TEST_DATA_SIZE]),
             buffer(NULL)
-        { }
+        {
+            memset(data, 0, TEST_DATA_SIZE);
+        }
         ~ FDTest() {
             delete[] data;
             delete[] buffer;

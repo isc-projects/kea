@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef TRIPLET_H
+#define TRIPLET_H
+
 #include <exceptions/exceptions.h>
 
 namespace isc {
@@ -108,3 +111,5 @@ protected:
 
 } // namespace isc::dhcp
 } // namespace isc
+
+#endif // ifdef TRIPLET_H
