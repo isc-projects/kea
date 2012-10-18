@@ -16,14 +16,24 @@
 #include <iostream>
 #include <sstream>
 #include <gtest/gtest.h>
-
 #include <asiolink/io_address.h>
 #include <dhcp/lease_mgr.h>
+#include <dhcp/duid.h>
+
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/identity.hpp>
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index/indexed_by.hpp>
+#include <boost/multi_index/mem_fun.hpp>
 
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+
+using namespace boost;
+using namespace boost::multi_index;
 
 // This is a concrete implementation of a Lease database.
 // It does not do anything useful now, and is used for abstract LeaseMgr
@@ -181,7 +191,18 @@ public:
 
 protected:
 
+    typedef multi_index_container< // this is a multi-index container...
+    Lease6Ptr, // it will hold shared_ptr to leases6
+    indexed_by< // and will be sorted by
 
+        // IPv6 address that are unique. That particular key is a member
+        // of the Lease6 structure, is of type IOAddress and can be accessed
+        // by doing &Lease6::addr_
+        ordered_unique< member<Lease6, IOAddress, &Lease6::addr_> >
+        >
+    > Lease6Storage; // Let the whole contraption be called Lease6Storage.
+
+    Lease6Storage storage6_;
 };
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const std::string& dbconfig)
@@ -191,12 +212,17 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const std::string& dbconfig)
 Memfile_LeaseMgr::~Memfile_LeaseMgr() {
 }
 
-bool Memfile_LeaseMgr::addLease(boost::shared_ptr<isc::dhcp::Lease4>) {
+bool Memfile_LeaseMgr::addLease(Lease4Ptr) {
     return (false);
 }
 
-bool Memfile_LeaseMgr::addLease(boost::shared_ptr<isc::dhcp::Lease6>) {
-    return (false);
+bool Memfile_LeaseMgr::addLease(Lease6Ptr lease) {
+    if (getLease6(lease->addr_)) {
+        // there is a lease with specified address already
+        return (false);
+    }
+    storage6_.insert(lease);
+    return (true);
 }
 
 Lease4Ptr Memfile_LeaseMgr::getLease4(isc::asiolink::IOAddress) const {
@@ -227,8 +253,13 @@ Lease4Collection Memfile_LeaseMgr::getLease4(const ClientId& ) const {
     return (Lease4Collection());
 }
 
-Lease6Ptr Memfile_LeaseMgr::getLease6(isc::asiolink::IOAddress) const {
-    return (Lease6Ptr());
+Lease6Ptr Memfile_LeaseMgr::getLease6(isc::asiolink::IOAddress addr) const {
+    Lease6Storage::iterator l = storage6_.find(addr);
+    if (l == storage6_.end()) {
+        return (Lease6Ptr());
+    } else {
+        return (*l);
+    }
 }
 
 Lease6Collection Memfile_LeaseMgr::getLease6(const DUID& , uint32_t ) const {
@@ -237,6 +268,7 @@ Lease6Collection Memfile_LeaseMgr::getLease6(const DUID& , uint32_t ) const {
 
 Lease6Ptr Memfile_LeaseMgr::getLease6(const DUID&, uint32_t,
                                       SubnetID) const {
+
     return (Lease6Ptr());
 }
 
@@ -251,8 +283,15 @@ bool Memfile_LeaseMgr::deleteLease4(uint32_t ) {
     return (false);
 }
 
-bool Memfile_LeaseMgr::deleteLease6(isc::asiolink::IOAddress ) {
-    return (false);
+bool Memfile_LeaseMgr::deleteLease6(isc::asiolink::IOAddress addr) {
+    Lease6Storage::iterator l = storage6_.find(addr);
+    if (l == storage6_.end()) {
+        // no such lease
+        return (false);
+    } else {
+        storage6_.erase(l);
+        return (true);
+    }
 }
 
 std::string Memfile_LeaseMgr::getDescription() const {
@@ -292,5 +331,58 @@ TEST_F(LeaseMgrTest, constructor) {
 // It seems likely that we will need to extend the memfile code for
 // allocation engine tests, so we may implement tests that call
 // Memfile_LeaseMgr methods then.
+
+TEST_F(LeaseMgrTest, addGetDelete) {
+    Memfile_LeaseMgr * leaseMgr = new Memfile_LeaseMgr("");
+
+    IOAddress addr("2001:db8:1::456");
+
+    uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
+    DuidPtr duid(new DUID(llt, sizeof(llt)));
+
+    uint32_t iaid = 7; // just a number
+
+    SubnetID subnet_id = 8; // just another number
+
+    Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr,
+                               duid, iaid, 100, 200, 50, 80,
+                               subnet_id));
+
+    EXPECT_TRUE(leaseMgr->addLease(lease));
+
+    // should not be allowed to add a second lease with the same address
+    EXPECT_FALSE(leaseMgr->addLease(lease));
+
+    Lease6Ptr x = leaseMgr->getLease6(IOAddress("2001:db8:1::234"));
+    EXPECT_EQ(Lease6Ptr(), x);
+
+    x = leaseMgr->getLease6(IOAddress("2001:db8:1::456"));
+    ASSERT_TRUE(x);
+
+    EXPECT_TRUE(x->addr_ == addr);
+    EXPECT_TRUE(*x->duid_ == *duid);
+    EXPECT_TRUE(x->iaid_ == iaid);
+    EXPECT_TRUE(x->subnet_id_ == subnet_id);
+
+    // These are not important from lease management perspective, but
+    // let's check them anyway.
+    EXPECT_TRUE(x->type_ == Lease6::LEASE_IA_NA);
+    EXPECT_TRUE(x->preferred_lft_ == 100);
+    EXPECT_TRUE(x->valid_lft_ == 200);
+    EXPECT_TRUE(x->t1_ == 50);
+    EXPECT_TRUE(x->t2_ == 80);
+
+    // should return false - there's no such address
+    EXPECT_FALSE(leaseMgr->deleteLease6(IOAddress("2001:db8:1::789")));
+
+    // this one should succeed
+    EXPECT_TRUE(leaseMgr->deleteLease6(IOAddress("2001:db8:1::456")));
+
+    // after the lease is deleted, it should really be gone
+    x = leaseMgr->getLease6(IOAddress("2001:db8:1::456"));
+    EXPECT_EQ(Lease6Ptr(), x);
+
+    delete leaseMgr;
+}
 
 }; // end of anonymous namespace
