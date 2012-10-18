@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <exceptions/exceptions.h>
+#include <auth/datasrc_config.h>
 
 #include "test_datasrc_clients_mgr.h"
 
@@ -27,6 +28,8 @@ std::list<Command> FakeDataSrcClientsBuilder::command_queue_copy;
 TestCondVar* FakeDataSrcClientsBuilder::cond = NULL;
 TestCondVar FakeDataSrcClientsBuilder::cond_copy;
 TestMutex* FakeDataSrcClientsBuilder::queue_mutex = NULL;
+AuthSrv::DataSrcClientListsPtr* FakeDataSrcClientsBuilder::clients_map = NULL;
+TestMutex* FakeDataSrcClientsBuilder::map_mutex = NULL;
 TestMutex FakeDataSrcClientsBuilder::queue_mutex_copy;
 bool FakeDataSrcClientsBuilder::thread_waited = false;
 FakeDataSrcClientsBuilder::ExceptionFromWait
