@@ -15,7 +15,6 @@
 #include <config.h>
 
 #include <util/io/sockaddr_util.h>
-#include <util/memory_segment_local.h>
 
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -1401,7 +1400,10 @@ public:
              real_list, ThrowWhen throw_when, bool isc_exception,
              ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
         ConfigurableClientList(RRClass::IN()),
-        real_(real_list)
+        real_(real_list),
+        config_(Element::fromJSON("{}")),
+        segment_(isc::datasrc::memory::ZoneTableSegment::create(
+            (*config_.get())))
     {
         BOOST_FOREACH(const DataSourceInfo& info, real_->getDataSources()) {
              const isc::datasrc::DataSourceClientPtr
@@ -1413,13 +1415,14 @@ public:
              data_sources_.push_back(
                  DataSourceInfo(client.get(),
                                 isc::datasrc::DataSourceClientContainerPtr(),
-                                false, RRClass::IN(), mem_sgmt_));
+                                false, RRClass::IN(), segment_));
         }
     }
 private:
     const boost::shared_ptr<isc::datasrc::ConfigurableClientList> real_;
+    const ConstElementPtr config_;
+    boost::shared_ptr<isc::datasrc::memory::ZoneTableSegment> segment_;
     vector<isc::datasrc::DataSourceClientPtr> clients_;
-    MemorySegmentLocal mem_sgmt_;
 };
 
 } // end anonymous namespace for throwing proxy classes
