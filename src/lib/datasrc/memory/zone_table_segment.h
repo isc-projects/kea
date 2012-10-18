@@ -15,6 +15,7 @@
 #ifndef __ZONE_TABLE_SEGMENT_H__
 #define __ZONE_TABLE_SEGMENT_H__
 
+#include <dns/rrclass.h>
 #include <datasrc/memory/zone_table.h>
 #include <cc/data.h>
 #include <util/memory_segment.h>
@@ -35,18 +36,22 @@ namespace memory {
 /// map from domain names to zone locators) in memory.
 struct ZoneTableHeader {
 public:
+    ZoneTableHeader(ZoneTable* zone_table) :
+        table_(zone_table)
+    {}
+
     /// \brief Returns a pointer to the underlying zone table.
     ZoneTable* getTable() {
-        return (table.get());
+        return (table_.get());
     }
 
     /// \brief const version of \c getTable().
     const ZoneTable* getTable() const {
-        return (table.get());
+        return (table_.get());
     }
 
 private:
-    boost::interprocess::offset_ptr<ZoneTable> table;
+    boost::interprocess::offset_ptr<ZoneTable> table_;
 };
 
 /// \brief Manages a ZoneTableHeader, an entry point into a table of
@@ -64,7 +69,7 @@ protected:
     /// An instance implementing this interface is expected to be
     /// created by the factory method (\c create()), so this constructor
     /// is protected.
-    ZoneTableSegment()
+    ZoneTableSegment(isc::dns::RRClass)
     {}
 public:
     /// \brief Destructor
