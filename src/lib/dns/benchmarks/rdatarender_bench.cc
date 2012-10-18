@@ -42,9 +42,10 @@ template <typename T>
 class RdataRenderBenchMark {
 public:
     RdataRenderBenchMark(const vector<T>& dataset) :
-        dataset_(dataset)
+        dataset_(dataset),
+        renderer_(NULL)
     {}
-    RdataRenderBenchMark() {
+    ~RdataRenderBenchMark() {
         delete renderer_;
     }
     unsigned int run() {

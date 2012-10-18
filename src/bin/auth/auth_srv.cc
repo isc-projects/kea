@@ -26,7 +26,7 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
-#include <util/threads/lock.h>
+#include <util/threads/sync.h>
 
 #include <dns/edns.h>
 #include <dns/exceptions.h>
@@ -68,6 +68,8 @@
 #include <netinet/in.h>
 
 using namespace std;
+
+using boost::shared_ptr;
 
 using namespace isc;
 using namespace isc::cc;
@@ -264,23 +266,22 @@ public:
     AddressList listen_addresses_;
 
     /// The TSIG keyring
-    const boost::shared_ptr<TSIGKeyRing>* keyring_;
+    const shared_ptr<TSIGKeyRing>* keyring_;
 
-    /// The client list
-    std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >
-        client_lists_;
+    /// The data source client list
+    AuthSrv::DataSrcClientListsPtr datasrc_client_lists_;
 
-    boost::shared_ptr<ConfigurableClientList> getClientList(const RRClass&
-                                                            rrclass)
+    shared_ptr<ConfigurableClientList> getDataSrcClientList(
+        const RRClass& rrclass)
     {
         // TODO: Debug-build only check
         if (!mutex_.locked()) {
             isc_throw(isc::Unexpected, "Not locked!");
         }
-        const std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
-            const_iterator it(client_lists_.find(rrclass));
-        if (it == client_lists_.end()) {
-            return (boost::shared_ptr<ConfigurableClientList>());
+        const std::map<RRClass, shared_ptr<ConfigurableClientList> >::
+            const_iterator it(datasrc_client_lists_->find(rrclass));
+        if (it == datasrc_client_lists_->end()) {
+            return (shared_ptr<ConfigurableClientList>());
         } else {
             return (it->second);
         }
@@ -335,6 +336,8 @@ AuthSrvImpl::AuthSrvImpl(AbstractXfroutClient& xfrout_client,
     xfrin_session_(NULL),
     counters_(),
     keyring_(NULL),
+    datasrc_client_lists_(new std::map<RRClass,
+                          shared_ptr<ConfigurableClientList> >()),
     ddns_base_forwarder_(ddns_forwarder),
     ddns_forwarder_(NULL),
     xfrout_connected_(false),
@@ -645,13 +648,13 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     }
     // Lock the client lists and keep them under the lock until the processing
     // and rendering is done (this is the same mutex as from
-    // AuthSrv::getClientListMutex()).
+    // AuthSrv::getDataSrcClientListMutex()).
     isc::util::thread::Mutex::Locker locker(mutex_);
 
     try {
         const ConstQuestionPtr question = *message.beginQuestion();
-        const boost::shared_ptr<datasrc::ClientList>
-            list(getClientList(question->getClass()));
+        const shared_ptr<datasrc::ClientList>
+            list(getDataSrcClientList(question->getClass()));
         if (list) {
             const RRType& qtype = question->getType();
             const Name& qname = question->getName();
@@ -911,7 +914,7 @@ AuthSrv::setDNSService(isc::asiodns::DNSServiceBase& dnss) {
 }
 
 void
-AuthSrv::setTSIGKeyRing(const boost::shared_ptr<TSIGKeyRing>* keyring) {
+AuthSrv::setTSIGKeyRing(const shared_ptr<TSIGKeyRing>* keyring) {
     impl_->keyring_ = keyring;
 }
 
@@ -930,43 +933,23 @@ AuthSrv::destroyDDNSForwarder() {
     }
 }
 
-void
-AuthSrv::setClientList(const RRClass& rrclass,
-                       const boost::shared_ptr<ConfigurableClientList>& list) {
+AuthSrv::DataSrcClientListsPtr
+AuthSrv::swapDataSrcClientLists(DataSrcClientListsPtr new_lists) {
     // TODO: Debug-build only check
     if (!impl_->mutex_.locked()) {
-        isc_throw(isc::Unexpected, "Not locked");
+        isc_throw(isc::Unexpected, "Not locked!");
     }
-
-    if (list) {
-        impl_->client_lists_[rrclass] = list;
-    } else {
-        impl_->client_lists_.erase(rrclass);
-    }
-}
-boost::shared_ptr<ConfigurableClientList>
-AuthSrv::getClientList(const RRClass& rrclass) {
-    return (impl_->getClientList(rrclass));
+    std::swap(new_lists, impl_->datasrc_client_lists_);
+    return (new_lists);
 }
 
-vector<RRClass>
-AuthSrv::getClientListClasses() const {
-    // TODO: Debug-build only check
-    if (!impl_->mutex_.locked()) {
-        isc_throw(isc::Unexpected, "Not locked");
-    }
-
-    vector<RRClass> result;
-    for (std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
-         const_iterator it(impl_->client_lists_.begin());
-         it != impl_->client_lists_.end(); ++it) {
-        result.push_back(it->first);
-    }
-    return (result);
+shared_ptr<ConfigurableClientList>
+AuthSrv::getDataSrcClientList(const RRClass& rrclass) {
+    return (impl_->getDataSrcClientList(rrclass));
 }
 
 util::thread::Mutex&
-AuthSrv::getClientListMutex() const {
+AuthSrv::getDataSrcClientListMutex() const {
     return (impl_->mutex_);
 }
 

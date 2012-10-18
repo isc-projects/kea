@@ -68,6 +68,39 @@ void CfgMgr::addSubnet6(const Subnet6Ptr& subnet) {
     subnets6_.push_back(subnet);
 }
 
+Subnet4Ptr
+CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint) {
+
+    // If there's only one subnet configured, let's just use it
+    // The idea is to keep small deployments easy. In a small network - one
+    // router that also runs DHCPv6 server. Users specifies a single pool and
+    // expects it to just work. Without this, the server would complain that it
+    // doesn't have IP address on its interfaces that matches that
+    // configuration. Such requirement makes sense in IPv4, but not in IPv6.
+    // The server does not need to have a global address (using just link-local
+    // is ok for DHCPv6 server) from the pool it serves.
+    if (subnets4_.size() == 1) {
+        return (subnets4_[0]);
+    }
+
+    // If there is more than one, we need to choose the proper one
+    for (Subnet4Collection::iterator subnet = subnets4_.begin();
+         subnet != subnets4_.end(); ++subnet) {
+        if ((*subnet)->inRange(hint)) {
+            return (*subnet);
+        }
+    }
+
+    // sorry, we don't support that subnet
+    return (Subnet4Ptr());
+}
+
+void CfgMgr::addSubnet4(const Subnet4Ptr& subnet) {
+    /// @todo: Check that this new subnet does not cross boundaries of any
+    /// other already defined subnet.
+    subnets4_.push_back(subnet);
+}
+
 CfgMgr::CfgMgr() {
 }
 
