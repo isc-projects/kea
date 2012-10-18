@@ -151,7 +151,11 @@ TEST_F(CondVarTest, DISABLED_destroyWhileWait) {
 
 TEST_F(CondVarTest, badWait) {
     // In our implementation, wait() requires acquiring the lock beforehand.
+#ifdef ENABLE_DEBUG
     EXPECT_THROW(condvar_.wait(mutex_), isc::InvalidOperation);
+#else
+    EXPECT_THROW(condvar_.wait(mutex_), isc::BadValue);
+#endif // ENABLE_DEBUG
 }
 
 TEST_F(CondVarTest, emptySignal) {
