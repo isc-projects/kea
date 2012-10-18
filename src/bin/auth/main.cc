@@ -96,7 +96,7 @@ datasrcConfigHandler(AuthSrv* server, bool* first_time,
 {
     assert(server != NULL);
     if (config->contains("classes")) {
-        AuthSrv::DataSrcClientListsPtr lists;
+        isc::datasrc::DataSrcClientListsPtr lists;
 
         if (*first_time) {
             // HACK: The default is not passed to the handler in the first

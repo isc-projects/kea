@@ -727,7 +727,7 @@ TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
 
 void
 installDataSrcClientLists(AuthSrv& server,
-                          AuthSrv::DataSrcClientListsPtr lists)
+                          DataSrcClientListsPtr lists)
 {
     thread::Mutex::Locker locker(server.getDataSrcClientListMutex());
     server.swapDataSrcClientLists(lists);
@@ -1444,7 +1444,7 @@ TEST_F(AuthSrvTest,
         boost::shared_ptr<isc::datasrc::ConfigurableClientList>
             list(new FakeList(server.getDataSrcClientList(RRClass::IN()),
                               THROW_NEVER, false));
-        AuthSrv::DataSrcClientListsPtr lists(new std::map<RRClass, ListPtr>);
+        DataSrcClientListsPtr lists(new std::map<RRClass, ListPtr>);
         lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
         server.swapDataSrcClientLists(lists);
     }
@@ -1475,7 +1475,7 @@ setupThrow(AuthSrv& server, ThrowWhen throw_when, bool isc_exception,
     boost::shared_ptr<isc::datasrc::ConfigurableClientList>
         list(new FakeList(server.getDataSrcClientList(RRClass::IN()),
                           throw_when, isc_exception, rrset));
-    AuthSrv::DataSrcClientListsPtr lists(new std::map<RRClass, ListPtr>);
+    DataSrcClientListsPtr lists(new std::map<RRClass, ListPtr>);
     lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
     server.swapDataSrcClientLists(lists);
 }
@@ -1792,7 +1792,7 @@ TEST_F(AuthSrvTest, clientList) {
     isc::util::thread::Mutex::Locker locker(
         server.getDataSrcClientListMutex());
 
-    AuthSrv::DataSrcClientListsPtr lists; // initially empty
+    DataSrcClientListsPtr lists; // initially empty
 
     // The lists don't exist. Therefore, the list of RRClasses is empty.
     EXPECT_TRUE(server.swapDataSrcClientLists(lists)->empty());

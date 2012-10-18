@@ -131,7 +131,7 @@ public:
     static std::list<Command>* command_queue;
     static TestCondVar* cond;
     static TestMutex* queue_mutex;
-    static AuthSrv::DataSrcClientListsPtr* clients_map;
+    static isc::datasrc::DataSrcClientListsPtr* clients_map;
     static TestMutex* map_mutex;
     static std::list<Command> command_queue_copy;
     static TestCondVar cond_copy;
@@ -149,7 +149,7 @@ public:
         std::list<Command>* command_queue,
         TestCondVar* cond,
         TestMutex* queue_mutex,
-        AuthSrv::DataSrcClientListsPtr* clients_map,
+        isc::datasrc::DataSrcClientListsPtr* clients_map,
         TestMutex* map_mutex)
     {
         FakeDataSrcClientsBuilder::started = false;
