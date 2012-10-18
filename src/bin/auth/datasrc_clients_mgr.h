@@ -144,7 +144,8 @@ private:
     void cleanup() {}
 
     void sendCommand(datasrc_clientmgr_internal::CommandID command,
-                     data::ConstElementPtr arg) {
+                     data::ConstElementPtr arg)
+    {
         {
             typename MutexType::Locker locker(queue_mutex_);
             command_queue_.push_back(
