@@ -25,7 +25,12 @@ ZoneTableSegment::create(const isc::data::Element&) {
     /// should be updated eventually to parse the passed Element
     /// argument and construct a corresponding ZoneTableSegment
     /// implementation.
-    return (new ZoneTableSegmentLocal);
+
+    /// FIXME: For now, we always use RRClass::IN(). This
+    /// should be updated eventually to parse the passed Element
+    /// argument and pick the appropriate RRClass.
+
+    return (new ZoneTableSegmentLocal(isc::dns::RRClass::IN()));
 }
 
 void
