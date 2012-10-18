@@ -21,7 +21,7 @@
 #include <config/ccsession.h>
 #include <exceptions/exceptions.h>
 #include <dns/rrclass.h>
-#include <util/threads/lock.h>
+#include <util/threads/sync.h>
 
 #include <string>
 
@@ -192,9 +192,10 @@ public:
 
         // We're going to work with the client lists. They may be used
         // from a different thread too, protect them.
-        isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
+        isc::util::thread::Mutex::Locker locker(
+            server.getDataSrcClientListMutex());
         const boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-            list(server.getClientList(zone_class));
+            list(server.getDataSrcClientList(zone_class));
 
         if (!list) {
             isc_throw(AuthCommandError, "There's no client list for "

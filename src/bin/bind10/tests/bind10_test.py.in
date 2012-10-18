@@ -929,7 +929,14 @@ class MockComponent:
         self.name = lambda: name
         self.pid = lambda: pid
         self.address = lambda: address
+        self.restarted = False
 
+    def get_restart_time(self):
+        return 0                # arbitrary dummy value
+
+    def restart(self, now):
+        self.restarted = True
+        return True
 
 class TestBossCmd(unittest.TestCase):
     def test_ping(self):
@@ -1174,7 +1181,7 @@ class TestBossComponents(unittest.TestCase):
         # We check somewhere else that the shutdown is actually called
         # from there (the test_kills).
 
-    def __real_test_kill(self, nokill = False):
+    def __real_test_kill(self, nokill=False, ex_on_kill=None):
         """
         Helper function that does the actual kill functionality testing.
         """
@@ -1188,8 +1195,23 @@ class TestBossComponents(unittest.TestCase):
             (anyway it is not told so). It does not die if it is killed
             the first time. It dies only when killed forcefully.
             """
+            def __init__(self):
+                # number of kill() calls, preventing infinite loop.
+                self.__call_count = 0
+
             def kill(self, forceful=False):
+                self.__call_count += 1
+                if self.__call_count > 2:
+                    raise Exception('Too many calls to ImmortalComponent.kill')
+
                 killed.append(forceful)
+                if ex_on_kill is not None:
+                    # If exception is given by the test, raise it here.
+                    # In the case of ESRCH, the process should have gone
+                    # somehow, so we clear the components.
+                    if ex_on_kill.errno == errno.ESRCH:
+                        bob.components = {}
+                    raise ex_on_kill
                 if forceful:
                     bob.components = {}
             def pid(self):
@@ -1217,7 +1239,10 @@ class TestBossComponents(unittest.TestCase):
         if nokill:
             self.assertEqual([], killed)
         else:
-            self.assertEqual([False, True], killed)
+            if ex_on_kill is not None:
+                self.assertEqual([False], killed)
+            else:
+                self.assertEqual([False, True], killed)
 
         self.assertTrue(self.__called)
 
@@ -1228,6 +1253,20 @@ class TestBossComponents(unittest.TestCase):
         Test that the boss kills components which don't want to stop.
         """
         self.__real_test_kill()
+
+    def test_kill_fail(self):
+        """Test cases where kill() results in an exception due to OS error.
+
+        The behavior should be different for EPERM, so we test two cases.
+
+        """
+
+        ex = OSError()
+        ex.errno, ex.strerror = errno.ESRCH, 'No such process'
+        self.__real_test_kill(ex_on_kill=ex)
+
+        ex.errno, ex.strerror = errno.EPERM, 'Operation not permitted'
+        self.__real_test_kill(ex_on_kill=ex)
 
     def test_nokill(self):
         """
@@ -1265,6 +1304,34 @@ class TestBossComponents(unittest.TestCase):
         bob.ccs.get_full_config = lambda: {'components': self.__compconfig}
         bob.start_all_components()
         self.__check_extended(self.__param)
+
+    def __setup_restart(self, bob, component):
+        '''Common procedure for restarting a component used below.'''
+        bob.components_to_restart = { component }
+        component.restarted = False
+        bob.restart_processes()
+
+    def test_restart_processes(self):
+        '''Check some behavior on restarting processes.'''
+        bob = MockBob()
+        bob.runnable = True
+        component = MockComponent('test', 53)
+
+        # A component to be restarted will actually be restarted iff it's
+        # in the configurator's configuration.
+        # We bruteforce the configurator internal below; ugly, but the easiest
+        # way for the test.
+        bob._component_configurator._components['test'] = (None, component)
+        self.__setup_restart(bob, component)
+        self.assertTrue(component.restarted)
+        self.assertFalse(component in bob.components_to_restart)
+
+        # Remove the component from the configuration.  It won't be restarted
+        # even if scheduled, nor will remain in the to-be-restarted list.
+        del bob._component_configurator._components['test']
+        self.__setup_restart(bob, component)
+        self.assertFalse(component.restarted)
+        self.assertFalse(component in bob.components_to_restart)
 
 class SocketSrvTest(unittest.TestCase):
     """

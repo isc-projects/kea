@@ -122,8 +122,6 @@ deepestDelegation(Name name, RRClass rrclass,
     return (".");
 }
 
-typedef std::vector<std::pair<std::string, uint16_t> > AddressVector;
-
 // Here we do not use the typedef above, as the SunStudio compiler
 // mishandles this in its name mangling, and wouldn't compile.
 // We can probably use a typedef, but need to move it to a central
@@ -161,7 +159,6 @@ RecursiveQuery::setRttRecorder(boost::shared_ptr<RttRecorder>& recorder) {
 }
 
 namespace {
-
 typedef std::pair<std::string, uint16_t> addr_t;
 
 /*
@@ -171,12 +168,12 @@ typedef std::pair<std::string, uint16_t> addr_t;
  *
  * Used by RecursiveQuery::sendQuery.
  */
-class RunningQuery : public IOFetch::Callback {
+class RunningQuery : public IOFetch::Callback, public AbstractRunningQuery {
 
 class ResolverNSASCallback : public isc::nsas::AddressRequestCallback {
 public:
     ResolverNSASCallback(RunningQuery* rq) : rq_(rq) {}
-    
+
     void success(const isc::nsas::NameserverAddress& address) {
         // Success callback, send query to found namesever
         LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_CB, RESLIB_RUNQ_SUCCESS)
@@ -184,7 +181,7 @@ public:
         rq_->nsasCallbackCalled();
         rq_->sendTo(address);
     }
-    
+
     void unreachable() {
         // Nameservers unreachable: drop query or send servfail?
         LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_CB, RESLIB_RUNQ_FAIL);
@@ -261,7 +258,7 @@ private:
     bool done_;
 
     // If we have a client timeout, we call back with a failure message,
-    // but we do not stop yet. We use this variable to make sure we 
+    // but we do not stop yet. We use this variable to make sure we
     // don't call back a second time later
     bool callback_called_;
 
@@ -270,7 +267,7 @@ private:
 
     // Reference to our cache
     isc::cache::ResolverCache& cache_;
-    
+
     // the 'current' zone we are in (i.e.) we start out at the root,
     // and for each delegation this gets updated with the zone the
     // delegation points to.
@@ -278,7 +275,7 @@ private:
     // of the call we use it in take a string, we need update those
     // too).
     std::string cur_zone_;
-    
+
     // This is the handler we pass on to the NSAS; it is called when
     // the NSAS has an address for us to query
     boost::shared_ptr<ResolverNSASCallback> nsas_callback_;
@@ -295,7 +292,7 @@ private:
 
     // The moment in time we sent a query to the nameserver above.
     struct timeval current_ns_qsent_time;
-    
+
     // RunningQuery deletes itself when it is done. In order for us
     // to do this safely, we must make sure that there are no events
     // that might call back to it. There are two types of events in
@@ -365,7 +362,7 @@ private:
             io_.get_io_service().post(query);
         }
     }
-    
+
     // 'general' send, ask the NSAS to give us an address.
     void send(IOFetch::Protocol protocol = IOFetch::UDP, bool edns = true) {
         protocol_ = protocol;   // Store protocol being used for this
@@ -397,7 +394,7 @@ private:
             nsas_.lookup(cur_zone_, question_.getClass(), nsas_callback_);
         }
     }
-    
+
     // Called by our NSAS callback handler so we know we do not have
     // an outstanding NSAS call anymore.
     void nsasCallbackCalled() {
@@ -422,13 +419,13 @@ private:
         // here (classify() will set it when it walks through
         // the cname chain to verify it).
         Name cname_target(question_.getName());
-        
+
         isc::resolve::ResponseClassifier::Category category =
             isc::resolve::ResponseClassifier::classify(
                 question_, incoming, cname_target, cname_count_);
 
         bool found_ns = false;
-            
+
         switch (category) {
         case isc::resolve::ResponseClassifier::ANSWER:
         case isc::resolve::ResponseClassifier::ANSWERCNAME:
@@ -569,7 +566,7 @@ private:
                 // SERVFAIL if we get FORMERR instead
             }
             goto SERVFAIL;
-            
+
         default:
 SERVFAIL:
             // Some error in received packet it.  Report it and return SERVFAIL
@@ -718,7 +715,7 @@ public:
             ++outstanding_events_;
             lookup_timer.async_wait(boost::bind(&RunningQuery::lookupTimeout, this));
         }
-        
+
         // Setup the timer to send an answer (client_timeout)
         if (client_timeout >= 0) {
             client_timer.expires_from_now(
@@ -726,9 +723,11 @@ public:
             ++outstanding_events_;
             client_timer.async_wait(boost::bind(&RunningQuery::clientTimeout, this));
         }
-        
+
         doLookup();
     }
+
+    virtual ~RunningQuery() {};
 
     // called if we have a lookup timeout; if our callback has
     // not been called, call it now. Then stop.
@@ -741,7 +740,7 @@ public:
         --outstanding_events_;
         stop();
     }
-    
+
     // called if we have a client timeout; if our callback has
     // not been called, call it now. But do not stop.
     void clientTimeout() {
@@ -810,7 +809,7 @@ public:
         // XXX is this the place for TCP retry?
         assert(outstanding_events_ > 0);
         --outstanding_events_;
-        
+
         if (!done_ && result != IOFetch::TIME_OUT) {
             // we got an answer
 
@@ -890,15 +889,17 @@ public:
             stop();
         }
     }
-    
+
     // Clear the answer parts of answer_message, and set the rcode
     // to servfail
     void makeSERVFAIL() {
-        isc::resolve::makeErrorMessage(answer_message_, Rcode::SERVFAIL());
+        if (answer_message_) {
+            isc::resolve::makeErrorMessage(answer_message_, Rcode::SERVFAIL());
+        }
     }
 };
 
-class ForwardQuery : public IOFetch::Callback {
+class ForwardQuery : public IOFetch::Callback, public AbstractRunningQuery {
 private:
     // The io service to handle async calls
     IOService& io_;
@@ -999,6 +1000,8 @@ public:
         send();
     }
 
+    virtual ~ForwardQuery() {};
+
     virtual void lookupTimeout() {
         if (!callback_called_) {
             makeSERVFAIL();
@@ -1076,7 +1079,7 @@ public:
 
 }
 
-void
+AbstractRunningQuery*
 RecursiveQuery::resolve(const QuestionPtr& question,
     const isc::resolve::ResolverInterface::CallbackPtr callback)
 {
@@ -1096,7 +1099,7 @@ RecursiveQuery::resolve(const QuestionPtr& question,
         // Message found, return that
         LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_CACHE, RESLIB_RECQ_CACHE_FIND)
                   .arg(questionText(*question)).arg(1);
-        
+
         // TODO: err, should cache set rcode as well?
         answer_message->setRcode(Rcode::NOERROR());
         callback->success(answer_message);
@@ -1119,16 +1122,17 @@ RecursiveQuery::resolve(const QuestionPtr& question,
             // delete itself when it is done
             LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_TRACE, RESLIB_RECQ_CACHE_NO_FIND)
                       .arg(questionText(*question)).arg(1);
-            new RunningQuery(io, *question, answer_message,
-                             test_server_, buffer, callback,
-                             query_timeout_, client_timeout_,
-                             lookup_timeout_, retries_, nsas_,
-                             cache_, rtt_recorder_);
+            return (new RunningQuery(io, *question, answer_message,
+                                     test_server_, buffer, callback,
+                                     query_timeout_, client_timeout_,
+                                     lookup_timeout_, retries_, nsas_,
+                                     cache_, rtt_recorder_));
         }
     }
+    return (NULL);
 }
 
-void
+AbstractRunningQuery*
 RecursiveQuery::resolve(const Question& question,
                         MessagePtr answer_message,
                         OutputBufferPtr buffer,
@@ -1146,11 +1150,11 @@ RecursiveQuery::resolve(const Question& question,
     // TODO: general 'prepareinitialanswer'
     answer_message->setOpcode(isc::dns::Opcode::QUERY());
     answer_message->addQuestion(question);
-    
+
     // First try to see if we have something cached in the messagecache
     LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_TRACE, RESLIB_RESOLVE)
               .arg(questionText(question)).arg(2);
-    
+
     if (cache_.lookup(question.getName(), question.getType(),
                       question.getClass(), *answer_message) &&
         answer_message->getRRCount(Message::SECTION_ANSWER) > 0) {
@@ -1181,15 +1185,16 @@ RecursiveQuery::resolve(const Question& question,
             // delete itself when it is done
             LOG_DEBUG(isc::resolve::logger, RESLIB_DBG_TRACE, RESLIB_RECQ_CACHE_NO_FIND)
                       .arg(questionText(question)).arg(2);
-            new RunningQuery(io, question, answer_message, 
-                             test_server_, buffer, crs, query_timeout_,
-                             client_timeout_, lookup_timeout_, retries_,
-                             nsas_, cache_, rtt_recorder_);
+            return (new RunningQuery(io, question, answer_message,
+                                     test_server_, buffer, crs, query_timeout_,
+                                     client_timeout_, lookup_timeout_, retries_,
+                                     nsas_, cache_, rtt_recorder_));
         }
     }
+    return (NULL);
 }
 
-void
+AbstractRunningQuery*
 RecursiveQuery::forward(ConstMessagePtr query_message,
     MessagePtr answer_message,
     OutputBufferPtr buffer,
@@ -1215,9 +1220,9 @@ RecursiveQuery::forward(ConstMessagePtr query_message,
     // everything throught without interpretation, except
     // QID, port number. The response will not be cached.
     // It will delete itself when it is done
-    new ForwardQuery(io, query_message, answer_message,
-                      upstream_, buffer, callback, query_timeout_,
-                      client_timeout_, lookup_timeout_);
+    return (new ForwardQuery(io, query_message, answer_message,
+                             upstream_, buffer, callback, query_timeout_,
+                             client_timeout_, lookup_timeout_));
 }
 
 } // namespace asiodns

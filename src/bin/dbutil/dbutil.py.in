@@ -193,10 +193,17 @@ UPGRADES = [
             "ALTER TABLE schema_version " +
                 "ADD COLUMN minor INTEGER NOT NULL DEFAULT 0"
         ]
+     },
+
+    {'from': (2, 0), 'to': (2, 1),
+     'statements': [
+            "CREATE INDEX nsec3_byhash_and_rdtype ON nsec3 " +
+                "(hash, rdtype)"
+        ]
     }
 
 # To extend this, leave the above statements in place and add another
-# dictionary to the list.  The "from" version should be (2, 0), the "to"
+# dictionary to the list.  The "from" version should be (2, 1), the "to"
 # version whatever the version the update is to, and the SQL statements are
 # the statements required to perform the upgrade.  This way, the upgrade
 # program will be able to upgrade both a V1.0 and a V2.0 database.

@@ -12,15 +12,30 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <cc/data.h>
-#include "auth_srv.h"
-#include "datasrc_configurator.h"
+#include <config.h>
 
-// This is a trivial specialization for the commonly used version.
-// Defined in .cc to avoid accidental creation of multiple copies.
-void
-configureDataSource(AuthSrv& server, const isc::data::ConstElementPtr& config)
-{
-    return (configureDataSourceGeneric<AuthSrv,
-            isc::datasrc::ConfigurableClientList>(server, config));
+namespace isc {
+namespace util {
+namespace unittests {
+
+#if HAVE_VALGRIND_HEADERS
+#include <valgrind/valgrind.h>
+/// \brief Check if the program is run in valgrind
+///
+/// \return true if valgrind headers are available, and valgrind is running,
+///         false if the headers are not available, or if valgrind is not
+///         running
+bool
+runningOnValgrind() {
+    return (RUNNING_ON_VALGRIND != 0);
 }
+#else
+bool
+runningOnValgrind() {
+    return (false);
+}
+#endif // HAVE_VALGRIND_HEADERS
+
+} // end of namespace unittests
+} // end of namespace util
+} // end of namespace isc

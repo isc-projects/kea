@@ -12,10 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/threads/lock.h>
-#include <util/threads/thread.h>
-
 #include <gtest/gtest.h>
+
+#include <util/threads/sync.h>
+#include <util/threads/thread.h>
+#include <util/unittests/check_valgrind.h>
 
 #include <boost/bind.hpp>
 #include <unistd.h>
@@ -42,13 +43,15 @@ TEST(MutexTest, lockMultiple) {
 // Destroying a locked mutex is a bad idea as well
 #ifdef EXPECT_DEATH
 TEST(MutexTest, destroyLocked) {
-    EXPECT_DEATH({
-        Mutex* mutex = new Mutex;
-        new Mutex::Locker(*mutex);
-        delete mutex;
-        // This'll leak the locker, but inside the slave process, it should
-        // not be an issue.
-    }, "");
+    if (!isc::util::unittests::runningOnValgrind()) {
+        EXPECT_DEATH({
+            Mutex* mutex = new Mutex;
+            new Mutex::Locker(*mutex);
+            delete mutex;
+            // This'll leak the locker, but inside the slave process, it should
+            // not be an issue.
+        }, "");
+    }
 }
 #endif
 
@@ -80,13 +83,13 @@ performIncrement(volatile double* canary, volatile bool* ready_me,
 }
 
 void
-no_handler(int) {}
+noHandler(int) {}
 
 TEST(MutexTest, swarm) {
     // Create a timeout in case something got stuck here
     struct sigaction ignored, original;
-    memset(&ignored, 0, sizeof ignored);
-    ignored.sa_handler = no_handler;
+    memset(&ignored, 0, sizeof(ignored));
+    ignored.sa_handler = noHandler;
     if (sigaction(SIGALRM, &ignored, &original)) {
         FAIL() << "Couldn't set alarm";
     }
