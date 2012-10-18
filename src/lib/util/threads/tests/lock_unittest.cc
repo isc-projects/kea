@@ -14,7 +14,6 @@
 
 #include <gtest/gtest.h>
 
-#include <util/threads/lock.h>
 #include <util/threads/sync.h>
 #include <util/threads/thread.h>
 #include <util/unittests/check_valgrind.h>
