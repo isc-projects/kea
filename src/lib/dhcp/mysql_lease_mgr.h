@@ -225,6 +225,35 @@ public:
     virtual std::pair<uint32_t, uint32_t> getVersion() const;
 
 private:
+    /// @brief Enum of Statements
+    ///
+    /// This is provided to set indexes into a list of prepared statements.
+    enum StatementIndex {
+        SELECT_VERSION,                 // Obtain version number
+        NUM_STATEMENTS                  // Number of statements
+    };
+
+    /// @brief Prepare Single Statement
+    ///
+    /// Creates a prepared statement from the text given and adds it to the
+    /// statements_ vector at the given index.
+    ///
+    /// @param index Index into the statements_ vector into which the text
+    ///        should be placed.  The vector must be big enough for the index
+    ///        to be valid, else an exception will be thrown.
+    /// @param text Text of the SQL statement to be prepared.
+    ///
+    /// @exception DbOperationError MySQL operation failed, exception will give
+    ///            text indicating the reason.
+    /// @exception InvalidParameter 'index' is not valid for the vector.
+    void prepareStatement(StatementIndex index, const char* text);
+
+    /// @brief Prepare statements
+    ///
+    /// Creates the prepared statements for all of the SQL statements used
+    /// by the MySQL backend.
+    void prepareStatements();
+
     /// @brief Open Database
     ///
     /// Opens the database using the information supplied in the parameters
@@ -234,9 +263,9 @@ private:
     void openDatabase();
 
     // Members
-    MYSQL*      mysql_;     ///< MySQL context object
-    uint32_t    major_;     ///< Major version number
-    uint32_t    minor_;     ///< Minor version number
+    MYSQL*              mysql_;                 ///< MySQL context object
+    std::vector<std::string> raw_statements_;   ///< Raw text of statements
+    std::vector<MYSQL_STMT*> statements_;       ///< Prepared statements
 };
 
 }; // end of isc::dhcp namespace

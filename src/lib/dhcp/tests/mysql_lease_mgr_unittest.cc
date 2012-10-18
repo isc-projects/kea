@@ -95,12 +95,19 @@ TEST_F(MySqlLeaseMgrTest, OpenDatabase) {
     ASSERT_NO_THROW(lmptr = LeaseMgrFactory::create(connectionString(
         VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)));
     ASSERT_TRUE(lmptr);
+}
 
-/*
+TEST_F(MySqlLeaseMgrTest, CheckVersion) {
+    // Open database
+    LeaseMgrPtr lmptr;
+    ASSERT_NO_THROW(lmptr = LeaseMgrFactory::create(connectionString(
+        VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)));
+    ASSERT_TRUE(lmptr);
+
+    // Check version
     pair<uint32_t, uint32_t> version = lmptr->getVersion();
     EXPECT_EQ(0, version.first);
     EXPECT_EQ(1, version.second);
-*/
 }
 
 }; // end of anonymous namespace

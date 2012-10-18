@@ -68,6 +68,13 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Exception thrown on failure to execute a database function
+class DbOperationError : public Exception {
+public:
+    DbOperationError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 /// @brief specifies unique subnet identifier
 /// @todo: Move this to subnet.h once ticket #2237 is merged
 typedef uint32_t SubnetID;
