@@ -110,6 +110,8 @@ public:
 private:
     friend class CondVar;
 
+#ifdef ENABLE_DEBUG
+
     // Commonly called after acquiring the lock, checking and updating
     // internal state for debug.
     void postLockAction();
@@ -122,6 +124,8 @@ private:
     // to false if the call to this shouldn't result in an exception (e.g.
     // when called from a destructor).
     void preUnlockAction(bool throw_ok);
+
+#endif // ENABLE_DEBUG
 
     class Impl;
     Impl* impl_;
