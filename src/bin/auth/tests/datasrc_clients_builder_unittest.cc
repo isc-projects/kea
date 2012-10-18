@@ -120,6 +120,7 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
     reconfig_cmd.second = good_config;
     EXPECT_TRUE(builder.handleCommand(reconfig_cmd));
     EXPECT_EQ(1, clients_map->size());
+    EXPECT_EQ(1, map_mutex.lock_count);
 
     // Store the nonempty clients map we now have
     DataSrcClientListsPtr working_config_clients(clients_map);
@@ -130,12 +131,15 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
     reconfig_cmd.second = isc::data::Element::create("{ \"foo\": \"bar\" }");
     EXPECT_TRUE(builder.handleCommand(reconfig_cmd));
     EXPECT_EQ(working_config_clients, clients_map);
+    // Building failed, so map mutex should not have been locked again
+    EXPECT_EQ(1, map_mutex.lock_count);
 
     // The same goes for an empty parameter (it should at least be
     // an empty map)
     reconfig_cmd.second = ConstElementPtr();
     EXPECT_TRUE(builder.handleCommand(reconfig_cmd));
     EXPECT_EQ(working_config_clients, clients_map);
+    EXPECT_EQ(1, map_mutex.lock_count);
 
     // Reconfigure again with the same good clients, the result should
     // be a different map than the original, but not an empty one.
@@ -143,11 +147,16 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
     EXPECT_TRUE(builder.handleCommand(reconfig_cmd));
     EXPECT_NE(working_config_clients, clients_map);
     EXPECT_EQ(1, clients_map->size());
+    EXPECT_EQ(2, map_mutex.lock_count);
 
     // And finally, try an empty config to disable all datasource clients
     reconfig_cmd.second = isc::data::Element::createMap();
     EXPECT_TRUE(builder.handleCommand(reconfig_cmd));
     EXPECT_EQ(0, clients_map->size());
+    EXPECT_EQ(3, map_mutex.lock_count);
+
+    // Also check if it has been cleanly unlocked every time
+    EXPECT_EQ(3, map_mutex.unlock_count);
 }
 
 TEST_F(DataSrcClientsBuilderTest, shutdown) {

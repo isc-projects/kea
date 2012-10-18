@@ -18,7 +18,6 @@
 
 #include <util/threads/sync.h>
 
-#include <auth/auth_config.h>
 #include <auth/command.h>
 #include <auth/datasrc_config.h>
 

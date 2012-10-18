@@ -75,6 +75,29 @@ exception type is even more unexpected.  This may rather indicate some
 run time failure than program errors, but in any case the server needs
 to be restarted by hand.
 
+% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_CONFIG_ERROR Error in configuration: %1
+The thread for maintaining data source clients has received a command to
+reconfigure, but the parameter data is not in the expected format, or contains
+another error. This data should have been validated, but may still contain
+an error. The system is still running with the data sources from before
+the reconfigure command, and the configuration data needs to be checked.
+The specific problem is printed in the log message.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_ERROR Error in configuration: %1
+The thread for maintaining data source clients has received a command to
+reconfigure, but raised an exception while reconfiguring. This is most
+likely a bug in the data source, but it is probably a good idea to verify
+the configuration itself. The system is still running with the data sources
+from before the reconfigure command, and the configuration data needs to be
+checked. The specific problem is printed in the log message.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_UNKNOWN_ERROR Unknown uncaught exception in reconfigure
+The thread for maintaining data source clients has received a command to
+reconfigure, but raised an unknown exception while reconfiguring. This is a
+bug in the data source. The system is still running with the data sources
+from before the reconfigure command, and the configuration data needs to be
+checked.
+
 % AUTH_DATASRC_CLIENTS_BUILDER_STARTED data source builder thread started
 A separate thread for maintaining data source clients has been started.
 
