@@ -16,7 +16,7 @@
 #define DATASRC_CLIENTS_MGR_H 1
 
 #include <util/threads/thread.h>
-#include <util/threads/lock.h>
+#include <util/threads/sync.h>
 
 #include <log/logger_support.h>
 #include <log/log_dbglevels.h>
