@@ -46,11 +46,11 @@ protected:
     {}
     ~ZoneTableTest() {
         if (zone_table != NULL) {
-            ZoneTable::destroy(mem_sgmt_, zone_table, zclass_);
+            ZoneTable::destroy(mem_sgmt_, zone_table);
         }
     }
     void TearDown() {
-        ZoneTable::destroy(mem_sgmt_, zone_table, zclass_);
+        ZoneTable::destroy(mem_sgmt_, zone_table);
         zone_table = NULL;
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated()); // catch any leak here.
     }
