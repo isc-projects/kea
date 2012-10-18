@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 
 #include <util/unittests/resource.h>
+#include <util/unittests/check_valgrind.h>
 
 #include <log/log_formatter.h>
 #include <log/logger_level.h>
@@ -119,12 +120,13 @@ TEST_F(FormatterTest, mismatchedPlaceholders) {
     // Likewise, if there's a redundant placeholder (or missing argument), the
     // check detects it and aborts the program.  Due to the restriction of the
     // current implementation, it doesn't throw.
-    EXPECT_DEATH({
-        isc::util::unittests::dontCreateCoreDumps();
-        Formatter(isc::log::INFO, s("Too many arguments in %1 %2"), this).
-            arg("only one");
-    }, ".*");
-
+    if (!isc::util::unittests::runningOnValgrind()) {
+        EXPECT_DEATH({
+            isc::util::unittests::dontCreateCoreDumps();
+            Formatter(isc::log::INFO, s("Too many arguments in %1 %2"), this).
+                arg("only one");
+        }, ".*");
+    }
 #endif /* EXPECT_DEATH */
     // Mixed case of above two: the exception will be thrown due to the missing
     // placeholder. The other check is disabled due to that.

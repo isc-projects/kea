@@ -12,10 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <gtest/gtest.h>
+
+#include <util/threads/lock.h>
 #include <util/threads/sync.h>
 #include <util/threads/thread.h>
-
-#include <gtest/gtest.h>
+#include <util/unittests/check_valgrind.h>
 
 #include <boost/bind.hpp>
 #include <unistd.h>
@@ -42,13 +44,15 @@ TEST(MutexTest, lockMultiple) {
 // Destroying a locked mutex is a bad idea as well
 #ifdef EXPECT_DEATH
 TEST(MutexTest, destroyLocked) {
-    EXPECT_DEATH({
-        Mutex* mutex = new Mutex;
-        new Mutex::Locker(*mutex);
-        delete mutex;
-        // This'll leak the locker, but inside the slave process, it should
-        // not be an issue.
-    }, "");
+    if (!isc::util::unittests::runningOnValgrind()) {
+        EXPECT_DEATH({
+            Mutex* mutex = new Mutex;
+            new Mutex::Locker(*mutex);
+            delete mutex;
+            // This'll leak the locker, but inside the slave process, it should
+            // not be an issue.
+        }, "");
+    }
 }
 #endif
 

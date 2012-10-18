@@ -18,6 +18,7 @@
 
 #ifdef EXPECT_DEATH
 #include <util/unittests/resource.h>
+#include <util/unittests/check_valgrind.h>
 #endif /* EXPECT_DEATH */
 
 #include <util/buffer.h>
@@ -188,16 +189,18 @@ TEST_F(BufferTest, outputBufferReadat) {
     }
 #ifdef EXPECT_DEATH
     // We use assert now, so we check it dies
-    EXPECT_DEATH({
-        isc::util::unittests::dontCreateCoreDumps();
+    if (!isc::util::unittests::runningOnValgrind()) {
+        EXPECT_DEATH({
+            isc::util::unittests::dontCreateCoreDumps();
 
-        try {
-            obuffer[sizeof(testdata)];
-        } catch (...) {
-            // Prevent exceptions killing the application, we need
-            // to make sure it dies the real hard way
-        }
-        }, "");
+            try {
+                obuffer[sizeof(testdata)];
+            } catch (...) {
+                // Prevent exceptions killing the application, we need
+                // to make sure it dies the real hard way
+            }
+            }, "");
+    }
 #endif
 }
 
