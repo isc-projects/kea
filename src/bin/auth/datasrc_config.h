@@ -23,7 +23,6 @@
 #include <boost/shared_ptr.hpp>
 
 #include <utility>
-#include <set>
 #include <map>
 
 /// \brief Configure data source client lists
