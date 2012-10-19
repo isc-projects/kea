@@ -13,10 +13,8 @@ Feature: Basic Authoritative DNS server
         And bind10 module Resolver should not be running
 
         A query for example.com should have rcode REFUSED
-
         A query for version.bind type TXT class CH should have rcode NOERROR
-
         A query for authors.bind type TXT class CH should have rcode NOERROR
 
-# TODO: to be compatible with BIND 9
-#        A query for nonexistent.bind type TXT class CH should have rcode REFUSED
+        # TODO: to be compatible with BIND 9
+        # A query for nonexistent.bind type TXT class CH should have rcode REFUSED
