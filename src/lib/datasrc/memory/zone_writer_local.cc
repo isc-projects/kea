@@ -38,7 +38,7 @@ ZoneWriterLocal::ZoneWriterLocal(ZoneTableSegmentLocal* segment,
 
 ZoneWriterLocal::~ZoneWriterLocal() {
     // Clean up everything there might be left if someone forgot, just
-    // in case. Or should we assert instead?
+    // in case.
     cleanup();
 }
 
@@ -67,7 +67,7 @@ ZoneWriterLocal::install() {
 
     ZoneTable* table(segment_->getHeader().getTable());
     if (table == NULL) {
-        isc_throw(isc::InvalidOperation, "No zone table present");
+        isc_throw(isc::Unexpected, "No zone table present");
     }
     const ZoneTable::AddResult result(table->addZone(
                                           segment_->getMemorySegment(),
