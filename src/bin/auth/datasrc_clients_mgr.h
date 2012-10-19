@@ -84,6 +84,11 @@ typedef std::pair<CommandID, data::ConstElementPtr> Command;
 template <typename ThreadType, typename BuilderType, typename MutexType,
           typename CondVarType>
 class DataSrcClientsMgrBase {
+private:
+    typedef std::map<dns::RRClass,
+                     boost::shared_ptr<datasrc::ConfigurableClientList> >
+    ClientListsMap;
+
 public:
     /// \brief Constructor.
     ///
@@ -98,6 +103,7 @@ public:
     /// \throw std::bad_alloc internal memory allocation failure.
     /// \throw isc::Unexpected general unexpected system errors.
     DataSrcClientsMgrBase() :
+        clients_map_(new ClientListsMap),
         builder_(&command_queue_, &cond_, &queue_mutex_, &clients_map_,
                  &map_mutex_),
         builder_thread_(boost::bind(&BuilderType::run, &builder_))
