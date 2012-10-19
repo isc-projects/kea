@@ -79,10 +79,13 @@ private:
     dns::Name origin_;
     dns::RRClass rrclass_;
     ZoneData* zone_data_;
-    // The load was performed
-    bool loaded_;
-    // The data are ready to be installed
-    bool data_ready_;
+    enum State {
+        ZW_UNUSED,
+        ZW_LOADED,
+        ZW_INSTALLED,
+        ZW_CLEANED
+    };
+    State state_;
 };
 
 }
