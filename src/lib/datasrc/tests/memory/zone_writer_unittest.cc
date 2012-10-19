@@ -49,7 +49,8 @@ public:
                             Name("example.org"), RRClass::IN())),
         load_called_(false),
         load_throw_(false),
-        load_null_(false)
+        load_null_(false),
+        load_data_(false)
     {
         // TODO: The setTable is only a temporary interface
         segment_->getHeader().
@@ -71,6 +72,7 @@ protected:
     bool load_called_;
     bool load_throw_;
     bool load_null_;
+    bool load_data_;
 private:
     ZoneData* loadAction(isc::util::MemorySegment& segment) {
         // Make sure it is the correct segment passed. We know the
@@ -86,9 +88,15 @@ private:
             // Be nasty to the caller and return NULL, which is forbidden
             return (NULL);
         }
-        // Create a new zone data. It may be empty for our tests, nothing
-        // goes inside.
-        return (ZoneData::create(segment, Name("example.org")));
+        ZoneData* data = ZoneData::create(segment, Name("example.org"));
+        if (load_data_) {
+            // Put something inside. The node itself should be enough for
+            // the tests.
+            ZoneNode* node(NULL);
+            data->insertName(segment, Name("subdomain.example.org"), &node);
+            EXPECT_NE(static_cast<ZoneNode*>(NULL), node);
+        }
+        return (data);
     }
 };
 
@@ -193,15 +201,29 @@ TEST_F(ZoneWriterLocalTest, loadThrows) {
 // Check the strong exception guarantee - if it throws, nothing happened
 // to the content.
 TEST_F(ZoneWriterLocalTest, retry) {
+    // First attempt fails due to some exception.
     load_throw_ = true;
     EXPECT_THROW(writer_->load(), TestException);
-
+    // This one shall succeed.
     load_called_ = load_throw_ = false;
+    // We want some data inside.
+    load_data_ = true;
     EXPECT_NO_THROW(writer_->load());
-    EXPECT_TRUE(load_called_);
+    // And this one will fail again. But the old data will survive.
+    load_data_ = false;
+    EXPECT_THROW(writer_->load(), isc::InvalidOperation);
 
     // The rest still works correctly
     EXPECT_NO_THROW(writer_->install());
+    ZoneTable* const table(segment_->getHeader().getTable());
+    const ZoneTable::FindResult found(table->findZone(Name("example.org")));
+    ASSERT_EQ(isc::datasrc::result::SUCCESS, found.code);
+    // For some reason it doesn't seem to work by the ZoneNode typedef, using the
+    // full definition instead.
+    const isc::datasrc::memory::DomainTreeNode<RdataSet>* node;
+    EXPECT_EQ(isc::datasrc::memory::DomainTree<RdataSet>::EXACTMATCH,
+              found.zone_data->getZoneTree().
+              find(Name("subdomain.example.org"), &node));
     EXPECT_NO_THROW(writer_->cleanup());
 }
 
