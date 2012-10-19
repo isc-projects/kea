@@ -191,8 +191,7 @@ zoneChecks(AuthSrv& server) {
 }
 
 void
-installDataSrcClientLists(AuthSrv& server, DataSrcClientListsPtr lists)
-{
+installDataSrcClientLists(AuthSrv& server, DataSrcClientListsPtr lists) {
     isc::util::thread::Mutex::Locker locker(
         server.getDataSrcClientListMutex());
     server.swapDataSrcClientLists(lists);
