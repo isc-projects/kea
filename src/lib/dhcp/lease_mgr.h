@@ -272,6 +272,12 @@ typedef std::vector< boost::shared_ptr<Lease6Ptr> > Lease6Collection;
 /// interface to all backends. As this is an abstract class, it should not
 /// be used directly, but rather specialized derived class should be used
 /// instead.
+///
+/// This class is a meta-singleton. At any given time, there is only one
+/// instance of any classes derived from that class. That is achieved with
+/// defining only a single protected constructor, so every derived class has
+/// to use it. Furthermore, this sole constructor registers the first instance
+/// (and throws InvalidOperation if there is an attempt to create a second one).
 class LeaseMgr : public boost::noncopyable {
 public:
     /// Client Hardware address
@@ -285,8 +291,6 @@ public:
     /// InvalidOperation exception.
     /// @throw InvalidOperation if LeaseMgr not instantiated
     static LeaseMgr& instance();
-
-    void instantiate(const std::string& config);
 
     /// @brief Destructor
     virtual ~LeaseMgr();
@@ -471,11 +475,15 @@ public:
 protected:
     /// @brief The sole lease manager constructor
     ///
-    /// dbconfig is a generic way of passing parameters. Parameters
-    /// are passed in the "name=value" format, separated by spaces.
-    /// Values may be enclosed in double quotes, if needed.
+    /// dbconfig is a generic way of passing parameters. Parameters are passed
+    /// in the "name=value" format, separated by spaces. Values may be enclosed
+    /// in double quotes, if needed. This ctor guarantees that there will be
+    /// only one instance of any derived classes. If there is a second instance
+    /// being created with the first one still around, it will throw
+    /// InvalidOperation.
     ///
     /// @param dbconfig database configuration
+    /// @throw InvalidOperation when trying to create second LeaseMgr
     LeaseMgr(const std::string& dbconfig);
 
     /// @brief returns value of the parameter

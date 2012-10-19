@@ -39,6 +39,10 @@ Lease6::Lease6(LeaseType type, const isc::asiolink::IOAddress& addr, DuidPtr dui
      preferred_lft_(preferred), valid_lft_(valid), t1_(t1), t2_(t2),
      subnet_id_(subnet_id), fixed_(false), fqdn_fwd_(false),
      fqdn_rev_(false) {
+    if (duid == DuidPtr()) {
+        isc_throw(InvalidOperation, "DUID must be specified for a lease");
+    }
+
     cltt_ = time(NULL);
 }
 
