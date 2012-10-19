@@ -138,7 +138,8 @@ public:
     /// \param origin The origin of the zone to reload.
     /// \param rrclass The class of the zone to reload.
     /// \return New instance of a zone writer. The ownership is passed
-    ///     onto the caller.
+    ///     onto the caller and the caller needs to \c delete it when
+    ///     it's done with the writer.
     virtual ZoneWriter* getZoneWriter(const LoadAction& load_action,
                                       const dns::Name& origin,
                                       const dns::RRClass& rrclass) = 0;
