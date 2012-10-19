@@ -28,6 +28,8 @@ isc::asiolink::IOAddress
 AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress& addr) {
     uint8_t packed[V6ADDRESS_LEN];
     int len;
+
+    // First we copy the whole address as 16 bytes.
     if (addr.getFamily()==AF_INET) {
         // IPv4
         memcpy(packed, addr.getAddress().to_v4().to_bytes().data(), 4);
@@ -38,8 +40,6 @@ AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress&
         len = 16;
     }
 
-    // First we copy the whole address as 16 bytes.
-    bool carry = false;
     for (int i = len; i >=0; --i) {
         packed[i]++;
         if (packed[i] != 0) {
@@ -53,8 +53,8 @@ AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress&
 
 isc::asiolink::IOAddress
 AllocEngine::IterativeAllocator::pickAddress(const Subnet6Ptr& subnet,
-                                             const DuidPtr& duid,
-                                             const IOAddress& hint) {
+                                             const DuidPtr&,
+                                             const IOAddress&) {
 
     // Let's get the last allocated address. It is usually be set correctly,
     // but there are times when it won't be (like after removing a pool or
@@ -138,7 +138,8 @@ Lease6Ptr
 AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
                               const DuidPtr& duid,
                               uint32_t iaid,
-                              const IOAddress& hint) {
+                              const IOAddress& hint,
+                              bool fake /* = false */ ) {
     // That check is not necessary. We create allocator in AllocEngine
     // constructor
     if (!allocator_) {
@@ -153,6 +154,12 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
         return (existing);
     }
 
+    // check if the hint is available
+    existing = LeaseMgr::instance().getLease6(hint);
+    if (!existing) {
+        // the hint is good, let's create a lease for it
+    }
+
     unsigned int i = attempts_;
     do {
         IOAddress candidate = allocator_->pickAddress(subnet, duid, hint);
@@ -164,7 +171,7 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
         // there's no existing lease for selected candidate, so it is
         // free. Let's allocate it.
         if (!existing) {
-            Lease6Ptr lease = createLease(subnet, duid, iaid, candidate);
+            Lease6Ptr lease = createLease(subnet, duid, iaid, candidate, fake);
             if (lease) {
                 return (lease);
             }
@@ -186,22 +193,38 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
 Lease6Ptr AllocEngine::createLease(const Subnet6Ptr& subnet,
                                    const DuidPtr& duid,
                                    uint32_t iaid,
-                                   const IOAddress& addr) {
+                                   const IOAddress& addr,
+                                   bool fake /*= false */ ) {
 
     Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, duid, iaid,
                                subnet->getPreferred(), subnet->getValid(),
                                subnet->getT1(), subnet->getT2(), subnet->getID()));
 
-    bool status = LeaseMgr::instance().addLease(lease);
+    if (!fake) {
+        // That is a real (REQUEST) allocation
+        bool status = LeaseMgr::instance().addLease(lease);
 
-    if (status) {
-        return (lease);
+        if (status) {
+
+            return (lease);
+        } else {
+            // One of many failures with LeaseMgr (e.g. lost connection to the
+            // database, database failed etc.). One notable case for that
+            // is that we are working in multi-process mode and we lost a race
+            // (some other process got that address first)
+            return (Lease6Ptr());
+        }
     } else {
-        // One of many failures with LeaseMgr (e.g. lost connection to the
-        // database, database failed etc.). One notable case for that
-        // is that we are working in multi-process mode and we lost a race
-        // (some other process got that address first)
-        return (Lease6Ptr());
+        // That is only fake (SOLICIT without rapid-commit) allocation
+
+        // It is for advertise only. We should not insert the lease into LeaseMgr,
+        // but rather check that we could have inserted it.
+        Lease6Ptr existing = LeaseMgr::instance().getLease6(addr);
+        if (!existing) {
+            return (lease);
+        } else {
+            return (Lease6Ptr());
+        }
     }
 }
 

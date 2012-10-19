@@ -114,7 +114,8 @@ protected:
     allocateAddress6(const Subnet6Ptr& subnet,
                      const DuidPtr& duid,
                      uint32_t iaid,
-                     const isc::asiolink::IOAddress& hint);
+                     const isc::asiolink::IOAddress& hint,
+                     bool fake);
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~AllocEngine();
@@ -127,7 +128,8 @@ private:
     Lease6Ptr createLease(const Subnet6Ptr& subnet,
                           const DuidPtr& duid,
                           uint32_t iaid,
-                          const isc::asiolink::IOAddress& addr);
+                          const isc::asiolink::IOAddress& addr,
+                          bool fake = false);
 
     Allocator* allocator_;
 
