@@ -142,6 +142,24 @@ public:
         cleanup();              // see below
     }
 
+    /// \brief Handle new full configuration for data source clients.
+    ///
+    /// This method simply passes the new configuration to the builder
+    /// and immediately returns.  This method is basically exception free
+    /// as long as the caller a non NULL value for \c config_arg; it doesn't
+    /// validate the argument further.
+    ///
+    /// \brief isc::InvalidParameter config_arg is NULL.
+    /// \brief std::bad_alloc
+    ///
+    /// \param config_arg The new data source configuration.  Must not be NULL.
+    void reconfigure(data::ConstElementPtr config_arg) {
+        if (!config_arg) {
+            isc_throw(InvalidParameter, "Invalid null config argument");
+        }
+        sendCommand(datasrc_clientmgr_internal::RECONFIGURE, config_arg);
+    }
+
 private:
     // This is expected to be called at the end of the destructor.  It
     // actually does nothing, but provides a customization point for
