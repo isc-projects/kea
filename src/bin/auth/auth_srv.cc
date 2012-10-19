@@ -53,6 +53,7 @@
 #include <auth/query.h>
 #include <auth/statistics.h>
 #include <auth/auth_log.h>
+#include <auth/datasrc_clients_mgr.h>
 
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
@@ -328,6 +329,8 @@ private:
     bool validateStatistics(isc::data::ConstElementPtr data) const;
 
     auth::Query query_;
+
+    auth::DataSrcClientsMgr datasrc_clients_mgr_;
 };
 
 AuthSrvImpl::AuthSrvImpl(AbstractXfroutClient& xfrout_client,

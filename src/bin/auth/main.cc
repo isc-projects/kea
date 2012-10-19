@@ -232,10 +232,6 @@ main(int argc, char* argv[]) {
         isc::server_common::initKeyring(*config_session);
         auth_server->setTSIGKeyRing(&isc::server_common::keyring);
 
-        // Instantiate the data source clients manager.  At the moment
-        // just so we actually create it in system tests.
-        DataSrcClientsMgr datasrc_clients_mgr;
-
         // Start the data source configuration.  We pass first_time and
         // config_session for the hack described in datasrcConfigHandler.
         bool first_time = true;
