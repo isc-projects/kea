@@ -35,7 +35,9 @@
 
 #include <asiolink/asiolink.h>
 #include <server_common/portconfig.h>
+
 #include <auth/statistics.h>
+#include <auth/datasrc_clients_mgr.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -193,6 +195,11 @@ public:
 
     /// \brief Return pointer to the Checkin callback function
     isc::asiolink::SimpleCallback* getCheckinProvider() const { return (checkin_); }
+
+    /// \brief Return data source clients manager.
+    ///
+    /// \throw None
+    isc::auth::DataSrcClientsMgr& getDataSrcClientsMgr();
 
     /// \brief Set the communication session with a separate process for
     /// outgoing zone transfers.
