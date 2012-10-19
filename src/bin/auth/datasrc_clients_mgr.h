@@ -237,11 +237,11 @@ private:
                 typename MutexType::Locker locker(*map_mutex_);
                 std::swap(new_clients_map, *clients_map_);
                 // lock is released by leaving scope
-            } catch (isc::data::TypeError type_error) {
+            } catch (const isc::data::TypeError& type_error) {
                 LOG_ERROR(auth_logger,
                     AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_CONFIG_ERROR).
                     arg(type_error.what());
-            } catch (std::exception exc) {
+            } catch (const std::exception& exc) {
                 LOG_ERROR(auth_logger,
                     AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_ERROR).
                     arg(exc.what());
