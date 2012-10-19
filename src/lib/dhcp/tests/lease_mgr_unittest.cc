@@ -385,4 +385,59 @@ TEST_F(LeaseMgrTest, addGetDelete) {
     delete leaseMgr;
 }
 
+// This test checks there that leaseMgr is really a singleton and that
+// no more than one can be created.
+TEST_F(LeaseMgrTest, singleton) {
+    Memfile_LeaseMgr* leaseMgr1 = NULL;
+    Memfile_LeaseMgr* leaseMgr2 = NULL;
+
+    EXPECT_THROW(LeaseMgr::instance(), InvalidOperation);
+
+    EXPECT_NO_THROW( leaseMgr1 = new Memfile_LeaseMgr("") );
+
+    EXPECT_NO_THROW(LeaseMgr::instance());
+
+    // There can be only one instance of any LeaseMgr derived
+    // objects instantiated at any time.
+    ASSERT_THROW(leaseMgr2 = new Memfile_LeaseMgr(""), InvalidOperation);
+
+    delete leaseMgr1;
+
+    ASSERT_NO_THROW(leaseMgr2 = new Memfile_LeaseMgr("") );
+
+    delete leaseMgr2;
+}
+
+// This test checks if the Lease6 structure can be instantiated correctly
+TEST(Lease6, ctor) {
+
+    IOAddress addr("2001:db8:1::456");
+
+    uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
+    DuidPtr duid(new DUID(llt, sizeof(llt)));
+
+    uint32_t iaid = 7; // just a number
+
+    SubnetID subnet_id = 8; // just another number
+
+    Lease6Ptr x(new Lease6(Lease6::LEASE_IA_NA, addr,
+                           duid, iaid, 100, 200, 50, 80,
+                           subnet_id));
+
+    EXPECT_TRUE(x->addr_ == addr);
+    EXPECT_TRUE(*x->duid_ == *duid);
+    EXPECT_TRUE(x->iaid_ == iaid);
+    EXPECT_TRUE(x->subnet_id_ == subnet_id);
+    EXPECT_TRUE(x->type_ == Lease6::LEASE_IA_NA);
+    EXPECT_TRUE(x->preferred_lft_ == 100);
+    EXPECT_TRUE(x->valid_lft_ == 200);
+    EXPECT_TRUE(x->t1_ == 50);
+    EXPECT_TRUE(x->t2_ == 80);
+
+    // Lease6 must be instantiated with a DUID, not with NULL pointer
+    EXPECT_THROW(new Lease6(Lease6::LEASE_IA_NA, addr,
+                            DuidPtr(), iaid, 100, 200, 50, 80,
+                            subnet_id), InvalidOperation);
+}
+
 }; // end of anonymous namespace
