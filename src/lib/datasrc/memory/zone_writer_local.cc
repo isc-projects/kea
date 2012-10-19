@@ -33,8 +33,7 @@ ZoneWriterLocal::ZoneWriterLocal(ZoneTableSegmentLocal* segment,
     origin_(origin),
     rrclass_(rrclass),
     zone_data_(NULL),
-    loaded_(false),
-    data_ready_(false)
+    state_(ZW_UNUSED)
 {}
 
 ZoneWriterLocal::~ZoneWriterLocal() {
@@ -45,7 +44,7 @@ ZoneWriterLocal::~ZoneWriterLocal() {
 
 void
 ZoneWriterLocal::load() {
-    if (loaded_) {
+    if (state_ != ZW_UNUSED) {
         isc_throw(isc::InvalidOperation, "Trying to load twice");
     }
 
@@ -56,13 +55,12 @@ ZoneWriterLocal::load() {
         isc_throw(isc::InvalidOperation, "No data returned from load action");
     }
 
-    loaded_ = true;
-    data_ready_ = true;
+    state_ = ZW_LOADED;
 }
 
 void
 ZoneWriterLocal::install() {
-    if (!data_ready_) {
+    if (state_ != ZW_LOADED) {
         isc_throw(isc::InvalidOperation, "No data to install");
     }
 
@@ -75,7 +73,7 @@ ZoneWriterLocal::install() {
                                           segment_->getMemorySegment(),
                                           rrclass_, origin_, zone_data_));
 
-    data_ready_ = false;
+    state_ = ZW_INSTALLED;
     zone_data_ = result.zone_data;
 }
 
@@ -86,7 +84,7 @@ ZoneWriterLocal::cleanup() {
     if (zone_data_ != NULL) {
         ZoneData::destroy(segment_->getMemorySegment(), zone_data_, rrclass_);
         zone_data_ = NULL;
-        data_ready_ = false;
+        state_ = ZW_CLEANED;
     }
 }
 
