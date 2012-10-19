@@ -16,6 +16,8 @@
 
 #include <boost/weak_ptr.hpp>
 
+#include <map>
+
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -27,6 +29,33 @@ using namespace isc::util::thread;
 
 namespace isc {
 namespace util {
+
+namespace { // unnamed namespace
+
+typedef std::map<std::string, boost::weak_ptr<isc::util::thread::Mutex> >
+    SyncMap;
+
+SyncMap&
+getSyncMap() {
+    // avoid static destruction fiasco when the SyncMap is destroyed
+    // before clients which use it such as logger objects. This leaks,
+    // but isn't a growing leak.
+    static SyncMap* sync_map = new SyncMap;
+
+    return (*sync_map);
+}
+
+Mutex&
+getSyncMapMutex() {
+    // avoid static destruction fiasco when the Mutex is destroyed
+    // before clients which use it such as logger objects. This leaks,
+    // but isn't a growing leak.
+    static Mutex* sync_map_mutex = new Mutex;
+
+    return (*sync_map_mutex);
+}
+
+} // end of unnamed namespace
 
 InterprocessSyncFile::InterprocessSyncFile(const std::string& task_name) :
     InterprocessSync(task_name),
@@ -72,26 +101,6 @@ InterprocessSyncFile::~InterprocessSyncFile() {
 
     // Lock on sync_map_mutex is automatically unlocked during
     // destruction when basic block is exited.
-}
-
-InterprocessSyncFile::SyncMap&
-InterprocessSyncFile::getSyncMap() {
-    // avoid static destruction fiasco when the SyncMap is destroyed
-    // before clients which use it such as logger objects. This leaks,
-    // but isn't a growing leak.
-    static SyncMap* sync_map = new SyncMap;
-
-    return (*sync_map);
-}
-
-Mutex&
-InterprocessSyncFile::getSyncMapMutex() {
-    // avoid static destruction fiasco when the Mutex is destroyed
-    // before clients which use it such as logger objects. This leaks,
-    // but isn't a growing leak.
-    static Mutex* sync_map_mutex = new Mutex;
-
-    return (*sync_map_mutex);
 }
 
 bool
