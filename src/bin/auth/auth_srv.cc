@@ -272,6 +272,8 @@ public:
     /// The data source client list
     DataSrcClientListsPtr datasrc_client_lists_;
 
+    auth::DataSrcClientsMgr datasrc_clients_mgr_;
+
     shared_ptr<ConfigurableClientList> getDataSrcClientList(
         const RRClass& rrclass)
     {
@@ -329,8 +331,6 @@ private:
     bool validateStatistics(isc::data::ConstElementPtr data) const;
 
     auth::Query query_;
-
-    auth::DataSrcClientsMgr datasrc_clients_mgr_;
 };
 
 AuthSrvImpl::AuthSrvImpl(AbstractXfroutClient& xfrout_client,
@@ -489,6 +489,11 @@ makeErrorMessage(MessageRenderer& renderer, Message& message,
 IOService&
 AuthSrv::getIOService() {
     return (impl_->io_service_);
+}
+
+isc::auth::DataSrcClientsMgr&
+AuthSrv::getDataSrcClientsMgr() {
+    return (impl_->datasrc_clients_mgr_);
 }
 
 void

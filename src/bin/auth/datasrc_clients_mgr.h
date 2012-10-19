@@ -27,6 +27,7 @@
 #include <dns/rrclass.h>
 
 #include <auth/auth_log.h>
+#include <auth/datasrc_config.h>
 
 #include <boost/array.hpp>
 #include <boost/bind.hpp>
