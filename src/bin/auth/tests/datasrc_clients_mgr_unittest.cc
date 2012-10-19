@@ -14,7 +14,11 @@
 
 #include <exceptions/exceptions.h>
 
+#include <dns/rrclass.h>
+
 #include <cc/data.h>
+
+#include <datasrc/client_list.h>
 
 #include <auth/datasrc_clients_mgr.h>
 #include "test_datasrc_clients_mgr.h"
@@ -23,7 +27,9 @@
 
 #include <boost/function.hpp>
 
+using namespace isc::dns;
 using namespace isc::data;
+using namespace isc::datasrc;
 using namespace isc::auth;
 using namespace isc::auth::datasrc_clientmgr_internal;
 
@@ -141,6 +147,56 @@ TEST(DataSrcClientsMgrTest, reconfigure) {
     EXPECT_THROW(mgr.reconfigure(ConstElementPtr()), isc::InvalidParameter);
     checkSharedMembers(2, 2, 0, 0, 2, 1); // no state change
 }
+
+TEST(DataSrcClientsMgrTest, holder) {
+    TestDataSrcClientsMgr mgr;
+
+    {
+        // Initially it's empty, so findClientList() will always return NULL
+        TestDataSrcClientsMgr::Holder holder(mgr);
+        EXPECT_EQ(static_cast<ConfigurableClientList*>(NULL),
+                  holder.findClientList(RRClass::IN()));
+        EXPECT_EQ(static_cast<ConfigurableClientList*>(NULL),
+                  holder.findClientList(RRClass::CH()));
+        // map should be protected here
+        EXPECT_EQ(1, FakeDataSrcClientsBuilder::map_mutex->lock_count);
+        EXPECT_EQ(0, FakeDataSrcClientsBuilder::map_mutex->unlock_count);
+    }
+    // map lock has been released
+    EXPECT_EQ(1, FakeDataSrcClientsBuilder::map_mutex->unlock_count);
+
+    // Put something in, that should become visible.
+    ConstElementPtr reconfigure_arg = Element::fromJSON(
+        "{" "\"IN\": [{\"type\": \"MasterFiles\", \"params\": {},"
+        "              \"cache-enable\": true}],"
+        "\"CH\": [{\"type\": \"MasterFiles\", \"params\": {},"
+        "              \"cache-enable\": true}]}");
+    mgr.reconfigure(reconfigure_arg);
+    {
+        TestDataSrcClientsMgr::Holder holder(mgr);
+        EXPECT_NE(static_cast<ConfigurableClientList*>(NULL),
+                  holder.findClientList(RRClass::IN()));
+        EXPECT_NE(static_cast<ConfigurableClientList*>(NULL),
+                  holder.findClientList(RRClass::CH()));
+    }
+    // We need to clear command queue by hand
+    FakeDataSrcClientsBuilder::command_queue->clear();
+
+    // Replace the lists with new lists containing only one list.
+    // The CH will disappear again.
+    reconfigure_arg = Element::fromJSON(
+        "{" "\"IN\": [{\"type\": \"MasterFiles\", \"params\": {},"
+        "              \"cache-enable\": true}]}");
+    mgr.reconfigure(reconfigure_arg);
+    {
+        TestDataSrcClientsMgr::Holder holder(mgr);
+        EXPECT_NE(static_cast<ConfigurableClientList*>(NULL),
+                  holder.findClientList(RRClass::IN()));
+        EXPECT_EQ(static_cast<ConfigurableClientList*>(NULL),
+                  holder.findClientList(RRClass::CH()));
+    }
+}
+
 
 TEST(DataSrcClientsMgrTest, realThread) {
     // Using the non-test definition with a real thread.  Just checking

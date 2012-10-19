@@ -204,6 +204,9 @@ template<>
 void
 TestDataSrcClientsMgr::cleanup();
 
+template<>
+void
+TestDataSrcClientsMgr::reconfigureHook();
 } // namespace auth
 } // namespace isc
 
