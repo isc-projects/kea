@@ -1784,46 +1784,6 @@ TEST_F(AuthSrvTest, DDNSForwardCreateDestroy) {
                 Opcode::UPDATE().getCode(), QR_FLAG, 0, 0, 0, 0);
 }
 
-// Check the client list accessors
-TEST_F(AuthSrvTest, clientList) {
-    // We need to lock the mutex to make the (get|set)ClientList happy.
-    // There's a debug-build only check in them to make sure everything
-    // locks them and we call them directly here.
-    isc::util::thread::Mutex::Locker locker(
-        server.getDataSrcClientListMutex());
-
-    DataSrcClientListsPtr lists; // initially empty
-
-    // The lists don't exist. Therefore, the list of RRClasses is empty.
-    EXPECT_TRUE(server.swapDataSrcClientLists(lists)->empty());
-
-    // Put something in.
-    const ListPtr list(new ConfigurableClientList(RRClass::IN()));
-    const ListPtr list2(new ConfigurableClientList(RRClass::CH()));
-
-    lists.reset(new std::map<RRClass, ListPtr>);
-    lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
-    lists->insert(pair<RRClass, ListPtr>(RRClass::CH(), list2));
-    server.swapDataSrcClientLists(lists);
-
-    // And the lists can be retrieved.
-    EXPECT_EQ(list, server.getDataSrcClientList(RRClass::IN()));
-    EXPECT_EQ(list2, server.getDataSrcClientList(RRClass::CH()));
-
-    // Replace the lists with new lists containing only one list.
-    lists.reset(new std::map<RRClass, ListPtr>);
-    lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
-    lists = server.swapDataSrcClientLists(lists);
-
-    // Old one had two lists.  That confirms our swap for IN and CH classes
-    // (i.e., no other entries were there).
-    EXPECT_EQ(2, lists->size());
-
-    // The CH list really got deleted.
-    EXPECT_EQ(list, server.getDataSrcClientList(RRClass::IN()));
-    EXPECT_FALSE(server.getDataSrcClientList(RRClass::CH()));
-}
-
 // We just test the mutex can be locked (exactly once).
 TEST_F(AuthSrvTest, mutex) {
     isc::util::thread::Mutex::Locker l1(server.getDataSrcClientListMutex());

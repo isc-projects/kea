@@ -90,6 +90,47 @@ private:
     ClientListsMap;
 
 public:
+    /// \brief Thread-safe accessor to the data source client lists.
+    ///
+    /// This class provides a simple wrapper for searching the client lists
+    /// stored in the DataSrcClientsMgr in a thread-safe manner.
+    /// It ensures the result of \c getClientList() can be used without
+    /// causing a race condition with other threads that can possibly use
+    /// the same manager throughout the lifetime of the holder object.
+    ///
+    /// This also means the holder object is expected to have a short lifetime.
+    /// The application shouldn't try to keep it unnecessarily long.
+    /// It's normally expected to create the holder object on the stack
+    /// of a small scope and automatically let it be destroyed at the end
+    /// of the scope.
+    class Holder {
+    public:
+        Holder(DataSrcClientsMgrBase& mgr) :
+            mgr_(mgr), locker_(mgr_.map_mutex_)
+        {}
+
+        /// \brief Find a data source client list of a specified RR class.
+        ///
+        /// It returns a pointer to the list stored in the manager if found,
+        /// otherwise it returns NULL.  The manager keeps the ownership of
+        /// the pointed object.  Also, it's not safe to get access to the
+        /// object beyond the scope of the holder object.
+        datasrc::ConfigurableClientList* findClientList(
+            const dns::RRClass& rrclass)
+        {
+            const ClientListsMap::const_iterator
+                it = mgr_.clients_map_->find(rrclass);
+            if (it == mgr_.clients_map_->end()) {
+                return (NULL);
+            } else {
+                return (it->second.get());
+            }
+        }
+    private:
+        DataSrcClientsMgrBase& mgr_;
+        typename MutexType::Locker locker_;
+    };
+
     /// \brief Constructor.
     ///
     /// It internally invokes a separate thread and waits for further
@@ -165,6 +206,7 @@ public:
             isc_throw(InvalidParameter, "Invalid null config argument");
         }
         sendCommand(datasrc_clientmgr_internal::RECONFIGURE, config_arg);
+        reconfigureHook();      // for test's customization
     }
 
 private:
@@ -173,6 +215,9 @@ private:
     // specialized class for tests so that the tests can inspect the last
     // state of the class.
     void cleanup() {}
+
+    // same as cleanup(), for reconfigure().
+    void reconfigureHook() {}
 
     void sendCommand(datasrc_clientmgr_internal::CommandID command,
                      data::ConstElementPtr arg)
