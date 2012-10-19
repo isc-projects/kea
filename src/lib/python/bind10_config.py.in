@@ -60,6 +60,8 @@ def reload():
         else:
             DATA_PATH = os.environ["B10_FROM_SOURCE"]
         PLUGIN_PATHS = [os.environ["B10_FROM_SOURCE"] +
+                            '/src/bin/cfgmgr/local_plugins',
+                             os.environ["B10_FROM_SOURCE"] +
                             '/src/bin/cfgmgr/plugins']
         programdirs = ['auth', 'cfgmgr', 'cmdctl', 'ddns', 'dhcp6', 'msgq',
                        'resolver', 'sockcreator', 'stats', 'xfrin', 'xfrout',
