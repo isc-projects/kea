@@ -30,6 +30,11 @@ namespace memory {
 /// We divide them so the update of zone data can be done asynchronously,
 /// in a different thread. The install() operation is the only one that needs
 /// to be done in a critical section.
+///
+/// Each derived class implementation must provide the strong exception
+/// guarantee for each public method. That is, when any of the methods
+/// throws, the entire state should stay the same as before the call
+/// (how to achieve that may be implementation dependant).
 class ZoneWriter {
 public:
     /// \brief Get the zone data into memory.
