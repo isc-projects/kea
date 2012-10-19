@@ -218,8 +218,8 @@ TEST_F(ZoneWriterLocalTest, retry) {
     ZoneTable* const table(segment_->getHeader().getTable());
     const ZoneTable::FindResult found(table->findZone(Name("example.org")));
     ASSERT_EQ(isc::datasrc::result::SUCCESS, found.code);
-    // For some reason it doesn't seem to work by the ZoneNode typedef, using the
-    // full definition instead.
+    // For some reason it doesn't seem to work by the ZoneNode typedef, using
+    // the full definition instead.
     const isc::datasrc::memory::DomainTreeNode<RdataSet>* node;
     EXPECT_EQ(isc::datasrc::memory::DomainTree<RdataSet>::EXACTMATCH,
               found.zone_data->getZoneTree().
