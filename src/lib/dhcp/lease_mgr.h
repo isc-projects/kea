@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef LEASE_MGR_H
+#define LEASE_MGR_H
+
 #include <string>
 #include <fstream>
 #include <vector>
@@ -502,3 +505,5 @@ protected:
 }; // end of isc::dhcp namespace
 
 }; // end of isc namespace
+
+#endif // LEASE_MGR_H
