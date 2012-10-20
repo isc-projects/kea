@@ -39,7 +39,6 @@
 #include <auth/datasrc_config.h>
 
 #include <util/unittests/mock_socketsession.h>
-#include <util/threads/sync.h>
 #include <dns/tests/unittest_util.h>
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
