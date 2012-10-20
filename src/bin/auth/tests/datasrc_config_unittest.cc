@@ -16,7 +16,6 @@
 
 #include <config/tests/fake_session.h>
 #include <config/ccsession.h>
-#include <util/threads/sync.h>
 
 #include <gtest/gtest.h>
 
@@ -78,10 +77,6 @@ datasrcConfigHandler(DatasrcConfigTest* fake_server, const std::string&,
 
 class DatasrcConfigTest : public ::testing::Test {
 public:
-    // These pretend to be the server
-    isc::util::thread::Mutex& getDataSrcClientListMutex() const {
-        return (mutex_);
-    }
     void swapDataSrcClientLists(shared_ptr<std::map<dns::RRClass, ListPtr> >
                                 new_lists)
     {
@@ -156,7 +151,6 @@ protected:
     const string specfile;
     std::map<RRClass, ListPtr> lists_;
     string log_;
-    mutable isc::util::thread::Mutex mutex_;
 };
 
 void

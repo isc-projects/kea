@@ -268,26 +268,8 @@ public:
     /// The TSIG keyring
     const shared_ptr<TSIGKeyRing>* keyring_;
 
-    /// The data source client list
-    DataSrcClientListsPtr datasrc_client_lists_;
-
+    /// The data source client list manager
     auth::DataSrcClientsMgr datasrc_clients_mgr_;
-
-    shared_ptr<ConfigurableClientList> getDataSrcClientList(
-        const RRClass& rrclass)
-    {
-        // TODO: Debug-build only check
-        if (!mutex_.locked()) {
-            isc_throw(isc::Unexpected, "Not locked!");
-        }
-        const std::map<RRClass, shared_ptr<ConfigurableClientList> >::
-            const_iterator it(datasrc_client_lists_->find(rrclass));
-        if (it == datasrc_client_lists_->end()) {
-            return (shared_ptr<ConfigurableClientList>());
-        } else {
-            return (it->second);
-        }
-    }
 
     /// Bind the ModuleSpec object in config_session_ with
     /// isc:config::ModuleSpec::validateStatistics.
@@ -317,8 +299,6 @@ public:
                       isc::dns::Message& message,
                       bool done);
 
-    mutable util::thread::Mutex mutex_;
-
 private:
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
@@ -338,8 +318,6 @@ AuthSrvImpl::AuthSrvImpl(AbstractXfroutClient& xfrout_client,
     xfrin_session_(NULL),
     counters_(),
     keyring_(NULL),
-    datasrc_client_lists_(new std::map<RRClass,
-                          shared_ptr<ConfigurableClientList> >()),
     ddns_base_forwarder_(ddns_forwarder),
     ddns_forwarder_(NULL),
     xfrout_connected_(false),
@@ -938,26 +916,6 @@ AuthSrv::destroyDDNSForwarder() {
         LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_STOP_DDNS_FORWARDER);
         impl_->ddns_forwarder_.reset();
     }
-}
-
-DataSrcClientListsPtr
-AuthSrv::swapDataSrcClientLists(DataSrcClientListsPtr new_lists) {
-    // TODO: Debug-build only check
-    if (!impl_->mutex_.locked()) {
-        isc_throw(isc::Unexpected, "Not locked!");
-    }
-    std::swap(new_lists, impl_->datasrc_client_lists_);
-    return (new_lists);
-}
-
-shared_ptr<ConfigurableClientList>
-AuthSrv::getDataSrcClientList(const RRClass& rrclass) {
-    return (impl_->getDataSrcClientList(rrclass));
-}
-
-util::thread::Mutex&
-AuthSrv::getDataSrcClientListMutex() const {
-    return (impl_->mutex_);
 }
 
 void
