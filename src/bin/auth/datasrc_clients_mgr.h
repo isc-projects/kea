@@ -209,6 +209,16 @@ public:
         reconfigureHook();      // for test's customization
     }
 
+    /// \brief Swap the underlying data source client lists.
+    ///
+    /// This is provided only for some existing tests until we support a
+    /// cleaner way to use faked data source clients.  Non test code or
+    /// newer tests must not use this.
+    void swapDataSrcClientLists(datasrc::DataSrcClientListsPtr new_lists) {
+        typename MutexType::Locker locker(map_mutex_);
+        clients_map_.swap(new_lists);
+    }
+
 private:
     // This is expected to be called at the end of the destructor.  It
     // actually does nothing, but provides a customization point for
