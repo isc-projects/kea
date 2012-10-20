@@ -37,6 +37,9 @@ namespace memory {
 /// (how to achieve that may be implementation dependant).
 class ZoneWriter {
 public:
+    /// \brief Virtual destructor.
+    virtual ~ZoneWriter() {};
+
     /// \brief Get the zone data into memory.
     ///
     /// This is the part that does the time-consuming loading into the memory.
