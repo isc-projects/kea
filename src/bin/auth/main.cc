@@ -18,7 +18,6 @@
 
 #include <util/buffer.h>
 #include <util/io/socketsession.h>
-#include <util/threads/sync.h>
 
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -104,23 +103,12 @@ datasrcConfigHandler(AuthSrv* server, bool* first_time,
             // Further updates will work the usual way.
             assert(config_session != NULL);
             *first_time = false;
-            lists = configureDataSource(
+            server->getDataSrcClientsMgr().reconfigure(
                 config_session->getRemoteConfigValue("data_sources",
                                                      "classes"));
         } else {
-            lists = configureDataSource(config->get("classes"));
+            server->getDataSrcClientsMgr().reconfigure(config->get("classes"));
         }
-
-        // Replace the server's lists.  The returned lists will be stored
-        // in a local variable 'lists', and will be destroyed outside of
-        // the temporary block for the lock scope.  That way we can minimize
-        // the range of the critical section.
-        {
-            isc::util::thread::Mutex::Locker locker(
-                server->getDataSrcClientListMutex());
-            lists = server->swapDataSrcClientLists(lists);
-        }
-        // The previous lists are destroyed here.
     }
 }
 

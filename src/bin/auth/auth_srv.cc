@@ -26,7 +26,6 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
-#include <util/threads/sync.h>
 
 #include <dns/edns.h>
 #include <dns/exceptions.h>
