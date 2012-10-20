@@ -70,6 +70,7 @@ using namespace isc::util::unittests;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::xfr;
+using namespace isc::auth;
 using namespace isc::asiodns;
 using namespace isc::asiolink;
 using namespace isc::testutils;
@@ -726,11 +727,11 @@ TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
 }
 
 void
-installDataSrcClientLists(AuthSrv& server,
-                          DataSrcClientListsPtr lists)
-{
-    thread::Mutex::Locker locker(server.getDataSrcClientListMutex());
-    server.swapDataSrcClientLists(lists);
+installDataSrcClientLists(AuthSrv& server, DataSrcClientListsPtr lists) {
+    // For now, we use explicit swap than reconfigure() because the latter
+    // involves a separate thread and cannot guarantee the new config is
+    // available for the subsequent test.
+    server.getDataSrcClientsMgr().swapDataSrcClientLists(lists);
 }
 
 void
@@ -1438,16 +1439,16 @@ TEST_F(AuthSrvTest,
 {
     // Set real inmem client to proxy
     updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
+    boost::shared_ptr<isc::datasrc::ConfigurableClientList> list;
+    DataSrcClientsMgr& mgr = server.getDataSrcClientsMgr();
     {
-        isc::util::thread::Mutex::Locker locker(
-            server.getDataSrcClientListMutex());
-        boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-            list(new FakeList(server.getDataSrcClientList(RRClass::IN()),
-                              THROW_NEVER, false));
-        DataSrcClientListsPtr lists(new std::map<RRClass, ListPtr>);
-        lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
-        server.swapDataSrcClientLists(lists);
+        DataSrcClientsMgr::Holder holder(mgr);
+        list.reset(new FakeList(holder.findClientList(RRClass::IN()),
+                                THROW_NEVER, false));
     }
+    DataSrcClientListsPtr lists(new std::map<RRClass, ListPtr>);
+    lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
+    server.getDataSrcClientsMgr().swapDataSrcClientLists(lists);
 
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -1470,14 +1471,16 @@ setupThrow(AuthSrv& server, ThrowWhen throw_when, bool isc_exception,
 {
     updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
-    isc::util::thread::Mutex::Locker locker(
-        server.getDataSrcClientListMutex());
-    boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        list(new FakeList(server.getDataSrcClientList(RRClass::IN()),
-                          throw_when, isc_exception, rrset));
+    boost::shared_ptr<isc::datasrc::ConfigurableClientList> list;
+    DataSrcClientsMgr& mgr = server.getDataSrcClientsMgr();
+    {           // we need to limit the scope so swap is outside of it
+        DataSrcClientsMgr::Holder holder(mgr);
+        list.reset(new FakeList(holder.findClientList(RRClass::IN()),
+                                throw_when, isc_exception, rrset));
+    }
     DataSrcClientListsPtr lists(new std::map<RRClass, ListPtr>);
     lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
-    server.swapDataSrcClientLists(lists);
+    mgr.swapDataSrcClientLists(lists);
 }
 
 TEST_F(AuthSrvTest,
