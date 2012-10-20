@@ -101,21 +101,16 @@ datasrcConfigHandler(AuthSrv* server, bool* first_time,
     // bother to catch them; the exception would be propagated to the
     // top level of the server and terminate it.
 
-    if (config->contains("classes")) {
-        isc::datasrc::DataSrcClientListsPtr lists;
-
-        if (*first_time) {
-            // HACK: The default is not passed to the handler in the first
-            // callback. This one will get the default (or, current value).
-            // Further updates will work the usual way.
-            assert(config_session != NULL);
-            *first_time = false;
-            server->getDataSrcClientsMgr().reconfigure(
-                config_session->getRemoteConfigValue("data_sources",
-                                                     "classes"));
-        } else {
-            server->getDataSrcClientsMgr().reconfigure(config->get("classes"));
-        }
+    if (*first_time) {
+        // HACK: The default is not passed to the handler in the first
+        // callback. This one will get the default (or, current value).
+        // Further updates will work the usual way.
+        assert(config_session != NULL);
+        *first_time = false;
+        server->getDataSrcClientsMgr().reconfigure(
+            config_session->getRemoteConfigValue("data_sources", "classes"));
+    } else if (config->contains("classes")) {
+        server->getDataSrcClientsMgr().reconfigure(config->get("classes"));
     }
 }
 
