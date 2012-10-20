@@ -189,8 +189,12 @@ TEST(DataSrcClientsMgrTest, holder) {
         EXPECT_TRUE(holder.findClientList(RRClass::IN()));
         EXPECT_FALSE(holder.findClientList(RRClass::CH()));
     }
-}
 
+    // Duplicate lock acquisition is prohibited (only test mgr can detect
+    // this reliably, so this test may not be that useful)
+    TestDataSrcClientsMgr::Holder holder1(mgr);
+    EXPECT_THROW(TestDataSrcClientsMgr::Holder holder2(mgr), isc::Unexpected);
+}
 
 TEST(DataSrcClientsMgrTest, realThread) {
     // Using the non-test definition with a real thread.  Just checking
