@@ -1787,17 +1787,4 @@ TEST_F(AuthSrvTest, DDNSForwardCreateDestroy) {
                 Opcode::UPDATE().getCode(), QR_FLAG, 0, 0, 0, 0);
 }
 
-// We just test the mutex can be locked (exactly once).
-TEST_F(AuthSrvTest, mutex) {
-    isc::util::thread::Mutex::Locker l1(server.getDataSrcClientListMutex());
-    // TODO: Once we have non-debug build, this one will not work, since
-    // we currently use the fact that we can't lock twice from the same
-    // thread. In the non-debug mode, this would deadlock.
-    // Skip then.
-    EXPECT_THROW({
-        isc::util::thread::Mutex::Locker l2(
-            server.getDataSrcClientListMutex());
-    }, isc::InvalidOperation);
-}
-
 }
