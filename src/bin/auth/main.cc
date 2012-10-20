@@ -94,6 +94,13 @@ datasrcConfigHandler(AuthSrv* server, bool* first_time,
                      const isc::config::ConfigData&)
 {
     assert(server != NULL);
+
+    // Note: remote config handler is requested to be exception free.
+    // While the code below is not 100% exception free, such an exception
+    // is really fatal and the server should actually stop.  So we don't
+    // bother to catch them; the exception would be propagated to the
+    // top level of the server and terminate it.
+
     if (config->contains("classes")) {
         isc::datasrc::DataSrcClientListsPtr lists;
 
