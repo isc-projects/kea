@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/memory/zone_table_segment_local.h>
+#include "zone_writer_local.h"
 
 using namespace isc::util;
 
@@ -36,6 +37,14 @@ ZoneTableSegmentLocal::getHeader() const {
 MemorySegment&
 ZoneTableSegmentLocal::getMemorySegment() {
      return (mem_sgmt_);
+}
+
+ZoneWriter*
+ZoneTableSegmentLocal::getZoneWriter(const LoadAction& load_action,
+                                     const dns::Name& name,
+                                     const dns::RRClass& rrclass)
+{
+    return (new ZoneWriterLocal(this, load_action, name, rrclass));
 }
 
 } // namespace memory
