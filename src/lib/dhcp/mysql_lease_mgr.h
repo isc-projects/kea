@@ -15,6 +15,7 @@
 #ifndef __MYSQL_LEASE_MGR_H
 #define __MYSQL_LEASE_MGR_H
 
+#include <time.h>
 #include <mysql.h>
 #include <dhcp/lease_mgr.h>
 
@@ -51,12 +52,22 @@ public:
     /// @brief Adds an IPv4 lease.
     ///
     /// @param lease lease to be added
-    virtual bool addLease(Lease4Ptr lease);
+    ///
+    /// @result true if the lease was added, false if not (because a lease
+    ///         with the same address was already there).
+    ///
+    /// @exception DbOperationError Database function failed
+    virtual bool addLease(const Lease4Ptr& lease);
 
     /// @brief Adds an IPv6 lease.
     ///
     /// @param lease lease to be added
-    virtual bool addLease(Lease6Ptr lease);
+    ///
+    /// @result true if the lease was added, false if not (because a lease
+    ///         with the same address was already there).
+    ///
+    /// @exception DbOperationError Database function failed
+    virtual bool addLease(const Lease6Ptr& lease);
 
     /// @brief Returns existing IPv4 lease for specified IPv4 address and subnet_id
     ///
@@ -68,7 +79,7 @@ public:
     /// @param subnet_id ID of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr,
+    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr,
                                 SubnetID subnet_id) const;
 
     /// @brief Returns an IPv4 lease for specified IPv4 address
@@ -84,7 +95,7 @@ public:
     /// @param subnet_id ID of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr) const;
+    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns existing IPv4 leases for specified hardware address.
     ///
@@ -144,7 +155,7 @@ public:
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(isc::asiolink::IOAddress addr) const;
+    virtual Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns existing IPv6 leases for a given DUID+IA combination
     ///
@@ -175,28 +186,28 @@ public:
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    virtual void updateLease4(Lease4Ptr lease4);
+    virtual void updateLease4(const Lease4Ptr& lease4);
 
     /// @brief Updates IPv4 lease.
     ///
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    virtual void updateLease6(Lease6Ptr lease6);
+    virtual void updateLease6(const Lease6Ptr& lease6);
 
     /// @brief Deletes a lease.
     ///
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    virtual bool deleteLease4(uint32_t addr);
+    virtual bool deleteLease4(const isc::asiolink::IOAddress& addr);
 
     /// @brief Deletes a lease.
     ///
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    virtual bool deleteLease6(isc::asiolink::IOAddress addr);
+    virtual bool deleteLease6(const isc::asiolink::IOAddress& addr);
 
     /// @brief Returns backend name.
     ///
@@ -224,13 +235,89 @@ public:
     /// Also if B>C, some database upgrade procedure may be triggered
     virtual std::pair<uint32_t, uint32_t> getVersion() const;
 
+    /// @brief Commit Transactions
+    ///
+    /// Commits all pending database operations.  On databases that don't
+    /// support transactions, this is a no-op.
+    ///
+    /// @exception DbOperationError if the commit failed.
+    virtual void commit();
+
+
+    /// @brief Rollback Transactions
+    ///
+    /// Rolls back all pending database operations.  On databases that don't
+    /// support transactions, this is a no-op.
+    ///
+    /// @exception DbOperationError if the rollback failed.
+    virtual void rollback();
+
+    ///@{
+    /// The following methods are used to convert between times and time
+    /// intervals stored in the server in the Lease object, and the times
+    /// stored in the database.  The reason for the difference is because
+    /// in the DHCP server, the cltt (Client Time Since Last Transmission)
+    /// is the natural data: in the lease file - which may be read by the
+    /// user - it is the expiry time of the lease.
+
+    /// @brief Convert Lease Time to Database Times
+    ///
+    /// Within the DHCP servers, times are stored as cltt (client last transmit
+    /// time) and valid_lft (valid lifetime).  In the database, the information
+    /// is stored as lease_time (lease time) and expire (time of expiry of the
+    /// lease).  They are related by the equations:
+    ///
+    /// lease_time = valid_lft
+    /// expire = cltt + valid_lft
+    ///
+    /// This method converts from the times in the lease object into times
+    /// able to be added to the database.
+    ///
+    /// @param cltt Client last transmit time
+    /// @param valid_lft Valid lifetime
+    /// @param expire Reference to MYSQL_TIME object where the expiry time of
+    ///        the lease will be put.
+    /// @param lease_time Reference to the time_t object where the lease time
+    ///         will be put.
+    static
+    void convertFromLeaseTime(time_t cltt, uint32_t valid_lft,
+                               MYSQL_TIME& expire, uint32_t& lease_time);
+
+    /// @brief Convert Database Time to Lease Times
+    ///
+    /// Within the database, time is stored as lease_time (lease time) and
+    /// expire (time of expiry of the lease).  In the DHCP server, the
+    /// information is stored as cltt (client last transmit time) and
+    /// valid_lft (valid lifetime).  These arr related by the equations:
+    ///
+    /// valid_lft = lease_time
+    /// cltt = expire - lease_time
+    ///
+    /// This method converts from the times in the database into times
+    /// able to be inserted into the lease object.
+    ///
+    /// @param expire Reference to MYSQL_TIME object from where the expiry
+    ///        time of the lease is taken.
+    /// @param lease_time lifetime of the lease.
+    /// @param cltt Reference to location where client last transmit time
+    ///        is put.
+    /// @param valid_lft Reference to location where valid lifetime is put.
+    static
+    void convertToLeaseTime(const MYSQL_TIME& expire, uint32_t lease_time,
+                            time_t& cltt, uint32_t& valid_lft);
+
+    ///@}
+
+
 private:
     /// @brief Enum of Statements
     ///
     /// This is provided to set indexes into a list of prepared statements.
     enum StatementIndex {
-        SELECT_VERSION,                 // Obtain version number
-        NUM_STATEMENTS                  // Number of statements
+        GET_LEASE6,
+        GET_VERSION,        // Obtain version number
+        INSERT_LEASE6,      // Add entry to lease6 table
+        NUM_STATEMENTS      // Number of statements
     };
 
     /// @brief Prepare Single Statement
@@ -261,6 +348,26 @@ private:
     ///
     /// @exception DbOpenError Error opening the database
     void openDatabase();
+
+    /// @brief Check Error and Throw Exception
+    ///
+    /// Virtually all MySQL functions return a status which, if non-zero,
+    /// indicates an error.  This inline function conceals a lot of error
+    /// checking/exception-throwing code.
+    ///
+    /// @param status Status code: non-zero implies an error
+    /// @param index Index of statement that caused the error
+    /// @param what High-level description of the error
+    ///
+    /// @exception DbOperationError Error doing a database operation
+    inline void checkError(my_bool status, StatementIndex index,
+                           const char* what) const {
+        if (status != 0) {
+            isc_throw(DbOperationError, what << " for <" <<
+                      raw_statements_[index] << ">, reason: " <<
+                      mysql_error(mysql_));
+        }
+    }
 
     // Members
     MYSQL*              mysql_;                 ///< MySQL context object

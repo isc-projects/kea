@@ -160,6 +160,11 @@ struct Lease4 {
     std::string comments_;
 
     /// @todo: Add DHCPv4 failover related fields here
+
+    /// @brief Constructor
+    ///
+    /// Initialize fields that don't have a default constructor.
+    Lease4() : addr_(0) {}
 };
 
 /// @brief Pointer to a Lease4 structure.
@@ -271,6 +276,11 @@ struct Lease6 {
     std::string comments_;
 
     /// @todo: Add DHCPv6 failover related fields here
+
+    /// @brief Constructor
+    ///
+    /// Initialize fields that don't have a default constructor.
+    Lease6() : addr_(0) {}
 };
 
 /// @brief Pointer to a Lease6 structure.
@@ -309,12 +319,22 @@ public:
     /// @brief Adds an IPv4 lease.
     ///
     /// @param lease lease to be added
-    virtual bool addLease(Lease4Ptr lease) = 0;
+    ///
+    /// @result true if the lease was added, false if not (because a lease
+    ///         with the same address was already there).
+    ///
+    /// @exception DbOperationError Database function failed
+    virtual bool addLease(const Lease4Ptr& lease) = 0;
 
     /// @brief Adds an IPv6 lease.
     ///
     /// @param lease lease to be added
-    virtual bool addLease(Lease6Ptr lease) = 0;
+    ///
+    /// @result true if the lease was added, false if not (because a lease
+    ///         with the same address was already there).
+    ///
+    /// @exception DbOperationError Database function failed
+    virtual bool addLease(const Lease6Ptr& lease) = 0;
 
     /// @brief Returns existing IPv4 lease for specified IPv4 address and subnet_id
     ///
@@ -326,7 +346,7 @@ public:
     /// @param subnet_id ID of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr,
+    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr,
                                 SubnetID subnet_id) const = 0;
 
     /// @brief Returns an IPv4 lease for specified IPv4 address
@@ -342,7 +362,7 @@ public:
     /// @param subnet_id ID of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr) const = 0;
+    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const = 0;
 
     /// @brief Returns existing IPv4 leases for specified hardware address.
     ///
@@ -402,7 +422,7 @@ public:
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(isc::asiolink::IOAddress addr) const = 0;
+    virtual Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const = 0;
 
     /// @brief Returns existing IPv6 leases for a given DUID+IA combination
     ///
@@ -433,28 +453,28 @@ public:
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    virtual void updateLease4(Lease4Ptr lease4) = 0;
+    virtual void updateLease4(const Lease4Ptr& lease4) = 0;
 
     /// @brief Updates IPv4 lease.
     ///
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    virtual void updateLease6(Lease6Ptr lease6) = 0;
+    virtual void updateLease6(const Lease6Ptr& lease6) = 0;
 
     /// @brief Deletes a lease.
     ///
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    virtual bool deleteLease4(uint32_t addr) = 0;
+    virtual bool deleteLease4(const isc::asiolink::IOAddress& addr) = 0;
 
     /// @brief Deletes a lease.
     ///
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    virtual bool deleteLease6(isc::asiolink::IOAddress addr) = 0;
+    virtual bool deleteLease6(const isc::asiolink::IOAddress& addr) = 0;
 
     /// @brief Returns backend name.
     ///
@@ -482,9 +502,26 @@ public:
     /// Also if B>C, some database upgrade procedure may be triggered
     virtual std::pair<uint32_t, uint32_t> getVersion() const = 0;
 
+    /// @brief Commit Transactions
+    ///
+    /// Commits all pending database operations.  On databases that don't
+    /// support transactions, this is a no-op.
+    ///
+    /// @exception DbOperationError if the commit failed.
+    virtual void commit() = 0;
+
+    /// @brief Rollback Transactions
+    ///
+    /// Rolls back all pending database operations.  On databases that don't
+    /// support transactions, this is a no-op.
+    ///
+    /// @exception DbOperationError if the rollback failed.
+    virtual void rollback() = 0;
+
     /// @todo: Add host management here
     /// As host reservation is outside of scope for 2012, support for hosts
     /// is currently postponed.
+
 
 protected:
     /// @brief returns value of the parameter
