@@ -49,26 +49,26 @@ public:
     /// @brief Adds an IPv4 lease.
     ///
     /// @param lease lease to be added
-    virtual bool addLease(Lease4Ptr lease);
+    virtual bool addLease(const Lease4Ptr& lease);
 
     /// @brief Adds an IPv6 lease.
     ///
     /// @param lease lease to be added
-    virtual bool addLease(Lease6Ptr lease);
+    virtual bool addLease(const Lease6Ptr& lease);
 
     /// @brief Returns existing IPv4 lease for specified IPv4 address.
     ///
     /// @param addr address of the searched lease
     ///
     /// @return a collection of leases
-    virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr) const;
+    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns existing IPv4 lease for specific address and subnet
     /// @param addr address of the searched lease
     /// @param subnet_id ID of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr,
+    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr,
                                 SubnetID subnet_id) const;
 
     /// @brief Returns existing IPv4 leases for specified hardware address.
@@ -118,7 +118,7 @@ public:
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    Lease6Ptr getLease6(isc::asiolink::IOAddress addr) const;
+    Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
@@ -142,28 +142,28 @@ public:
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    void updateLease4(Lease4Ptr lease4);
+    void updateLease4(const Lease4Ptr& lease4);
 
     /// @brief Updates IPv4 lease.
     ///
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    void updateLease6(Lease6Ptr lease6);
+    void updateLease6(const Lease6Ptr& lease6);
 
     /// @brief Deletes a lease.
     ///
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    bool deleteLease4(uint32_t addr);
+    bool deleteLease4(const isc::asiolink::IOAddress& addr);
 
     /// @brief Deletes a lease.
     ///
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    bool deleteLease6(isc::asiolink::IOAddress addr);
+    bool deleteLease6(const isc::asiolink::IOAddress& addr);
 
     /// @brief Returns backend name.
     ///
@@ -180,6 +180,14 @@ public:
         return (make_pair(uint32_t(0), uint32_t(0)));
     }
 
+    /// @brief Commit transactions
+    void commit() {
+    }
+
+    /// @brief Rollback transactions
+    void rollback() {
+    }
+
     using LeaseMgr::getParameter;
 
 protected:
@@ -194,15 +202,15 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const LeaseMgr::ParameterMap& parameters)
 Memfile_LeaseMgr::~Memfile_LeaseMgr() {
 }
 
-bool Memfile_LeaseMgr::addLease(boost::shared_ptr<isc::dhcp::Lease4>) {
+bool Memfile_LeaseMgr::addLease(const boost::shared_ptr<isc::dhcp::Lease4>&) {
     return (false);
 }
 
-bool Memfile_LeaseMgr::addLease(boost::shared_ptr<isc::dhcp::Lease6>) {
+bool Memfile_LeaseMgr::addLease(const boost::shared_ptr<isc::dhcp::Lease6>&) {
     return (false);
 }
 
-Lease4Ptr Memfile_LeaseMgr::getLease4(isc::asiolink::IOAddress) const {
+Lease4Ptr Memfile_LeaseMgr::getLease4(const isc::asiolink::IOAddress&) const {
     return (Lease4Ptr());
 }
 
@@ -210,7 +218,7 @@ Lease4Collection Memfile_LeaseMgr::getLease4(const HWAddr& ) const {
     return (Lease4Collection());
 }
 
-Lease4Ptr Memfile_LeaseMgr::getLease4(isc::asiolink::IOAddress ,
+Lease4Ptr Memfile_LeaseMgr::getLease4(const isc::asiolink::IOAddress & ,
                                       SubnetID) const {
     return (Lease4Ptr());
 }
@@ -230,7 +238,7 @@ Lease4Collection Memfile_LeaseMgr::getLease4(const ClientId& ) const {
     return (Lease4Collection());
 }
 
-Lease6Ptr Memfile_LeaseMgr::getLease6(isc::asiolink::IOAddress) const {
+Lease6Ptr Memfile_LeaseMgr::getLease6(const isc::asiolink::IOAddress&) const {
     return (Lease6Ptr());
 }
 
@@ -243,18 +251,18 @@ Lease6Ptr Memfile_LeaseMgr::getLease6(const DUID&, uint32_t,
     return (Lease6Ptr());
 }
 
-void Memfile_LeaseMgr::updateLease4(Lease4Ptr ) {
+void Memfile_LeaseMgr::updateLease4(const Lease4Ptr&) {
 }
 
-void Memfile_LeaseMgr::updateLease6(Lease6Ptr ) {
+void Memfile_LeaseMgr::updateLease6(const Lease6Ptr&) {
 
 }
 
-bool Memfile_LeaseMgr::deleteLease4(uint32_t ) {
+bool Memfile_LeaseMgr::deleteLease4(const isc::asiolink::IOAddress&) {
     return (false);
 }
 
-bool Memfile_LeaseMgr::deleteLease6(isc::asiolink::IOAddress ) {
+bool Memfile_LeaseMgr::deleteLease6(const isc::asiolink::IOAddress&) {
     return (false);
 }
 
