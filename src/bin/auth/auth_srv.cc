@@ -654,15 +654,15 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
         local_edns->setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
         message.setEDNS(local_edns);
     }
-    // Lock the client lists and keep them under the lock until the processing
-    // and rendering is done (this is the same mutex as from
-    // AuthSrv::getDataSrcClientListMutex()).
-    isc::util::thread::Mutex::Locker locker(mutex_);
+    // Get access to data source client list through the holder and keep thek
+    // holder until the processing and rendering is done to avoid inter-thread
+    // race.
+    auth::DataSrcClientsMgr::Holder datasrc_holder(datasrc_clients_mgr_);
 
     try {
         const ConstQuestionPtr question = *message.beginQuestion();
         const shared_ptr<datasrc::ClientList>
-            list(getDataSrcClientList(question->getClass()));
+            list(datasrc_holder.findClientList(question->getClass()));
         if (list) {
             const RRType& qtype = question->getType();
             const Name& qname = question->getName();

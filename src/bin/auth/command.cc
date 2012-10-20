@@ -192,9 +192,10 @@ public:
         const Name origin(origin_elem->stringValue());
 
         DataSrcClientsMgr::Holder holder(server.getDataSrcClientsMgr());
-        ConfigurableClientList* list = holder.findClientList(zone_class);
+        boost::shared_ptr<ConfigurableClientList> list =
+            holder.findClientList(zone_class);
 
-        if (list == NULL) {
+        if (!list) {
             isc_throw(AuthCommandError, "There's no client list for "
                       "class " << zone_class);
         }
