@@ -116,15 +116,15 @@ public:
         /// otherwise it returns NULL.  The manager keeps the ownership of
         /// the pointed object.  Also, it's not safe to get access to the
         /// object beyond the scope of the holder object.
-        datasrc::ConfigurableClientList* findClientList(
+        boost::shared_ptr<datasrc::ConfigurableClientList> findClientList(
             const dns::RRClass& rrclass)
         {
             const ClientListsMap::const_iterator
                 it = mgr_.clients_map_->find(rrclass);
             if (it == mgr_.clients_map_->end()) {
-                return (NULL);
+                return (boost::shared_ptr<datasrc::ConfigurableClientList>());
             } else {
-                return (it->second.get());
+                return (it->second);
             }
         }
     private:

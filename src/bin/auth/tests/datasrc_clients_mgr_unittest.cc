@@ -154,10 +154,8 @@ TEST(DataSrcClientsMgrTest, holder) {
     {
         // Initially it's empty, so findClientList() will always return NULL
         TestDataSrcClientsMgr::Holder holder(mgr);
-        EXPECT_EQ(static_cast<ConfigurableClientList*>(NULL),
-                  holder.findClientList(RRClass::IN()));
-        EXPECT_EQ(static_cast<ConfigurableClientList*>(NULL),
-                  holder.findClientList(RRClass::CH()));
+        EXPECT_FALSE(holder.findClientList(RRClass::IN()));
+        EXPECT_FALSE(holder.findClientList(RRClass::CH()));
         // map should be protected here
         EXPECT_EQ(1, FakeDataSrcClientsBuilder::map_mutex->lock_count);
         EXPECT_EQ(0, FakeDataSrcClientsBuilder::map_mutex->unlock_count);
@@ -174,10 +172,8 @@ TEST(DataSrcClientsMgrTest, holder) {
     mgr.reconfigure(reconfigure_arg);
     {
         TestDataSrcClientsMgr::Holder holder(mgr);
-        EXPECT_NE(static_cast<ConfigurableClientList*>(NULL),
-                  holder.findClientList(RRClass::IN()));
-        EXPECT_NE(static_cast<ConfigurableClientList*>(NULL),
-                  holder.findClientList(RRClass::CH()));
+        EXPECT_TRUE(holder.findClientList(RRClass::IN()));
+        EXPECT_TRUE(holder.findClientList(RRClass::CH()));
     }
     // We need to clear command queue by hand
     FakeDataSrcClientsBuilder::command_queue->clear();
@@ -190,10 +186,8 @@ TEST(DataSrcClientsMgrTest, holder) {
     mgr.reconfigure(reconfigure_arg);
     {
         TestDataSrcClientsMgr::Holder holder(mgr);
-        EXPECT_NE(static_cast<ConfigurableClientList*>(NULL),
-                  holder.findClientList(RRClass::IN()));
-        EXPECT_EQ(static_cast<ConfigurableClientList*>(NULL),
-                  holder.findClientList(RRClass::CH()));
+        EXPECT_TRUE(holder.findClientList(RRClass::IN()));
+        EXPECT_FALSE(holder.findClientList(RRClass::CH()));
     }
 }
 
