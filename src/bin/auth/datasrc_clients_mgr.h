@@ -32,6 +32,7 @@
 #include <boost/array.hpp>
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <list>
 #include <utility>
@@ -83,7 +84,7 @@ typedef std::pair<CommandID, data::ConstElementPtr> Command;
 /// \c DataSrcClientsMgr.
 template <typename ThreadType, typename BuilderType, typename MutexType,
           typename CondVarType>
-class DataSrcClientsMgrBase {
+class DataSrcClientsMgrBase : boost::noncopyable {
 private:
     typedef std::map<dns::RRClass,
                      boost::shared_ptr<datasrc::ConfigurableClientList> >
@@ -272,7 +273,7 @@ namespace datasrc_clientmgr_internal {
 /// This class is templated so that we can test it without involving actual
 /// threads or locks.
 template <typename MutexType, typename CondVarType>
-class DataSrcClientsBuilderBase {
+class DataSrcClientsBuilderBase : boost::noncopyable {
 public:
     /// \brief Constructor.
     ///
