@@ -57,6 +57,7 @@ using namespace isc::datasrc;
 using namespace isc::config;
 using namespace isc::util::unittests;
 using namespace isc::testutils;
+using namespace isc::auth;
 using namespace isc::auth::unittest;
 
 namespace {
@@ -175,27 +176,26 @@ TEST_F(AuthCommandTest, shutdownIncorrectPID) {
 // zones, and checks the zones are correctly loaded.
 void
 zoneChecks(AuthSrv& server) {
-    isc::util::thread::Mutex::Locker locker(
-        server.getDataSrcClientListMutex());
-    EXPECT_EQ(ZoneFinder::SUCCESS, server.getDataSrcClientList(RRClass::IN())->
-              find(Name("ns.test1.example")).finder_->
-              find(Name("ns.test1.example"), RRType::A())->code);
-    EXPECT_EQ(ZoneFinder::NXRRSET, server.getDataSrcClientList(RRClass::IN())->
-              find(Name("ns.test1.example")).finder_->
-              find(Name("ns.test1.example"), RRType::AAAA())->code);
-    EXPECT_EQ(ZoneFinder::SUCCESS, server.getDataSrcClientList(RRClass::IN())->
-              find(Name("ns.test2.example")).finder_->
-              find(Name("ns.test2.example"), RRType::A())->code);
-    EXPECT_EQ(ZoneFinder::NXRRSET, server.getDataSrcClientList(RRClass::IN())->
-              find(Name("ns.test2.example")).finder_->
-              find(Name("ns.test2.example"), RRType::AAAA())->code);
+    const RRClass rrclass(RRClass::IN());
+
+    DataSrcClientsMgr::Holder holder(server.getDataSrcClientsMgr());
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              holder.findClientList(rrclass)->find(Name("ns.test1.example"))
+              .finder_->find(Name("ns.test1.example"), RRType::A())->code);
+    EXPECT_EQ(ZoneFinder::NXRRSET,
+              holder.findClientList(rrclass)->find(Name("ns.test1.example")).
+              finder_->find(Name("ns.test1.example"), RRType::AAAA())->code);
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              holder.findClientList(rrclass)->find(Name("ns.test2.example")).
+              finder_->find(Name("ns.test2.example"), RRType::A())->code);
+    EXPECT_EQ(ZoneFinder::NXRRSET,
+              holder.findClientList(rrclass)->find(Name("ns.test2.example")).
+              finder_->find(Name("ns.test2.example"), RRType::AAAA())->code);
 }
 
 void
 installDataSrcClientLists(AuthSrv& server, DataSrcClientListsPtr lists) {
-    isc::util::thread::Mutex::Locker locker(
-        server.getDataSrcClientListMutex());
-    server.swapDataSrcClientLists(lists);
+    server.getDataSrcClientsMgr().swapDataSrcClientLists(lists);
 }
 
 void
@@ -224,22 +224,24 @@ configureZones(AuthSrv& server) {
 
 void
 newZoneChecks(AuthSrv& server) {
-    isc::util::thread::Mutex::Locker locker(
-        server.getDataSrcClientListMutex());
-    EXPECT_EQ(ZoneFinder::SUCCESS, server.getDataSrcClientList(RRClass::IN())->
+    const RRClass rrclass(RRClass::IN());
+
+    DataSrcClientsMgr::Holder holder(server.getDataSrcClientsMgr());
+    EXPECT_EQ(ZoneFinder::SUCCESS, holder.findClientList(rrclass)->
               find(Name("ns.test1.example")).finder_->
               find(Name("ns.test1.example"), RRType::A())->code);
+
     // now test1.example should have ns/AAAA
-    EXPECT_EQ(ZoneFinder::SUCCESS, server.getDataSrcClientList(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::SUCCESS, holder.findClientList(rrclass)->
               find(Name("ns.test1.example")).finder_->
               find(Name("ns.test1.example"), RRType::AAAA())->code);
 
     // test2.example shouldn't change
-    EXPECT_EQ(ZoneFinder::SUCCESS, server.getDataSrcClientList(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::SUCCESS, holder.findClientList(rrclass)->
               find(Name("ns.test2.example")).finder_->
               find(Name("ns.test2.example"), RRType::A())->code);
     EXPECT_EQ(ZoneFinder::NXRRSET,
-              server.getDataSrcClientList(RRClass::IN())->
+              holder.findClientList(rrclass)->
               find(Name("ns.test2.example")).finder_->
               find(Name("ns.test2.example"), RRType::AAAA())->code);
 }
@@ -285,11 +287,11 @@ TEST_F(AuthCommandTest,
     installDataSrcClientLists(server_, configureDataSource(config));
 
     {
-        isc::util::thread::Mutex::Locker locker(
-            server_.getDataSrcClientListMutex());
+        DataSrcClientsMgr::Holder holder(server_.getDataSrcClientsMgr());
+
         // Check that the A record at www.example.org does not exist
         EXPECT_EQ(ZoneFinder::NXDOMAIN,
-                  server_.getDataSrcClientList(RRClass::IN())->
+                  holder.findClientList(RRClass::IN())->
                   find(Name("example.org")).finder_->
                   find(Name("www.example.org"), RRType::A())->code);
 
@@ -310,7 +312,7 @@ TEST_F(AuthCommandTest,
         sql_updater->commit();
 
         EXPECT_EQ(ZoneFinder::NXDOMAIN,
-                  server_.getDataSrcClientList(RRClass::IN())->
+                  holder.findClientList(RRClass::IN())->
                   find(Name("example.org")).finder_->
                   find(Name("www.example.org"), RRType::A())->code);
     }
@@ -322,11 +324,10 @@ TEST_F(AuthCommandTest,
     checkAnswer(0, "Successful load");
 
     {
-        isc::util::thread::Mutex::Locker locker(
-            server_.getDataSrcClientListMutex());
+        DataSrcClientsMgr::Holder holder(server_.getDataSrcClientsMgr());
         // And now it should be present too.
         EXPECT_EQ(ZoneFinder::SUCCESS,
-                  server_.getDataSrcClientList(RRClass::IN())->
+                  holder.findClientList(RRClass::IN())->
                   find(Name("example.org")).finder_->
                   find(Name("www.example.org"), RRType::A())->code);
     }
@@ -337,11 +338,10 @@ TEST_F(AuthCommandTest,
     checkAnswer(1, "example.com");
 
     {
-        isc::util::thread::Mutex::Locker locker(
-            server_.getDataSrcClientListMutex());
+        DataSrcClientsMgr::Holder holder(server_.getDataSrcClientsMgr());
         // The previous zone is not hurt in any way
         EXPECT_EQ(ZoneFinder::SUCCESS,
-                  server_.getDataSrcClientList(RRClass::IN())->
+                  holder.findClientList(RRClass::IN())->
                   find(Name("example.org")).finder_->
                   find(Name("example.org"), RRType::SOA())->code);
     }
@@ -360,11 +360,10 @@ TEST_F(AuthCommandTest,
         Element::fromJSON("{\"origin\": \"example.com\"}"));
     checkAnswer(1, "Unreadable");
 
-    isc::util::thread::Mutex::Locker locker(
-        server_.getDataSrcClientListMutex());
+    DataSrcClientsMgr::Holder holder(server_.getDataSrcClientsMgr());
     // The previous zone is not hurt in any way
     EXPECT_EQ(ZoneFinder::SUCCESS,
-              server_.getDataSrcClientList(RRClass::IN())->
+              holder.findClientList(RRClass::IN())->
               find(Name("example.org")).finder_->
               find(Name("example.org"), RRType::SOA())->code);
 }
