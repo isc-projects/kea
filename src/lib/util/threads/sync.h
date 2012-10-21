@@ -89,15 +89,24 @@ public:
 
         /// \brief Constructor.
         ///
-        /// Locks the mutex. May block for extended period of time.
+        /// Locks the mutex. May block for extended period of time if
+        /// \c block is true.
         ///
         /// \throw isc::InvalidOperation when OS reports error. This usually
         ///     means an attempt to use the mutex in a wrong way (locking
         ///     a mutex second time from the same thread, for example).
-        Locker(Mutex& mutex) :
+        /// \throw AlreadyLocked if \c block is false and the mutex is
+        ///     already locked.
+        Locker(Mutex& mutex, bool block = true) :
             mutex_(mutex)
         {
-            mutex.lock();
+            if (block) {
+                mutex.lock();
+            } else {
+                if (!mutex.tryLock()) {
+                    isc_throw(AlreadyLocked, "The mutex is already locked");
+                }
+            }
         }
 
         /// \brief Destructor.
