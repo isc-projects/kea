@@ -26,24 +26,6 @@ using namespace isc::util::thread;
 
 namespace {
 
-TEST(MutexTest, direct) {
-    Mutex mutex;
-    EXPECT_FALSE(mutex.locked()); // Debug-only build
-
-    mutex.lock();
-    EXPECT_TRUE(mutex.locked()); // Debug-only build
-
-    EXPECT_FALSE(mutex.tryLock());
-
-    mutex.unlock();
-    EXPECT_FALSE(mutex.locked()); // Debug-only build
-
-    EXPECT_TRUE(mutex.tryLock());
-
-    mutex.unlock();
-    EXPECT_FALSE(mutex.locked()); // Debug-only build
-}
-
 // If we try to lock the debug mutex multiple times, it should throw.
 TEST(MutexTest, lockMultiple) {
     // TODO: Once we support non-debug mutexes, disable the test if we compile
