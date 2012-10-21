@@ -15,6 +15,8 @@
 #ifndef B10_THREAD_SYNC_H
 #define B10_THREAD_SYNC_H
 
+#include <exceptions/exceptions.h>
+
 #include <boost/noncopyable.hpp>
 
 #include <cstdlib> // for NULL.
@@ -77,6 +79,14 @@ public:
     /// of function no matter by what means.
     class Locker : boost::noncopyable {
     public:
+        /// \brief Exception thrown when the mutex is already locked and
+        ///     a non-blocking locker is attempted around it.
+        struct AlreadyLocked : public isc::InvalidParameter {
+            AlreadyLocked(const char* file, size_t line, const char* what) :
+                isc::InvalidParameter(file, line, what)
+            {}
+        };
+
         /// \brief Constructor.
         ///
         /// Locks the mutex. May block for extended period of time.
