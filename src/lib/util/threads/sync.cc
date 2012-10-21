@@ -128,6 +128,17 @@ Mutex::lock() {
     postLockAction();           // Only in debug mode
 }
 
+bool
+Mutex::tryLock() {
+    assert(impl_ != NULL);
+    const int result = pthread_mutex_trylock(&impl_->mutex);
+    if (result != 0) {
+        return (false);
+    }
+    postLockAction();           // Only in debug mode
+    return (true);
+}
+
 void
 Mutex::preUnlockAction(bool throw_ok) {
     if (impl_->locked_count == 0) {
