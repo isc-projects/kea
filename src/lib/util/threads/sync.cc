@@ -132,8 +132,10 @@ bool
 Mutex::tryLock() {
     assert(impl_ != NULL);
     const int result = pthread_mutex_trylock(&impl_->mutex);
-    if (result != 0) {
+    if (result == EBUSY) {
         return (false);
+    } else if (result != 0) {
+        isc_throw(isc::InvalidOperation, std::strerror(result));
     }
     postLockAction();           // Only in debug mode
     return (true);
