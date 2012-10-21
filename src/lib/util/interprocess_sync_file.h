@@ -16,7 +16,7 @@
 #define __INTERPROCESS_SYNC_FILE_H__
 
 #include <util/interprocess_sync.h>
-#include <util/threads/lock.h>
+#include <util/threads/sync.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/shared_ptr.hpp>
