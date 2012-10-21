@@ -132,7 +132,13 @@ bool
 Mutex::tryLock() {
     assert(impl_ != NULL);
     const int result = pthread_mutex_trylock(&impl_->mutex);
-    if (result == EBUSY) {
+
+    // In the case of pthread_mutex_trylock(), if it is called on a
+    // locked mutex from the same thread, some platforms (such as fedora
+    // and debian) return EBUSY whereas others (such as centos 5) return
+    // EDEADLK. We return false and don't pass the lock attempt in both
+    // cases.
+    if (result == EBUSY || result == EDEADLK) {
         return (false);
     } else if (result != 0) {
         isc_throw(isc::InvalidOperation, std::strerror(result));
