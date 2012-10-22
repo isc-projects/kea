@@ -176,7 +176,7 @@ TEST_F(OptionDefinitionTest, factoryAddrList6) {
     ASSERT_NO_THROW(
         option_v6 = factory(Option::V6, D6O_NIS_SERVERS, buf);
     );
-    ASSERT_EQ(typeid(*option_v6), typeid(Option6AddrLst));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6AddrLst));
     boost::shared_ptr<Option6AddrLst> option_cast_v6 =
         boost::static_pointer_cast<Option6AddrLst>(option_v6);
     ASSERT_TRUE(option_cast_v6);
@@ -185,7 +185,7 @@ TEST_F(OptionDefinitionTest, factoryAddrList6) {
         option_cast_v6->getAddresses();
     // The list of addresses must exactly match addresses that we
     // stored in the buffer to create the option from it.
-    EXPECT_EQ(addrs, addrs_returned);
+    EXPECT_TRUE(std::equal(addrs.begin(), addrs.end(), addrs_returned.begin()));
 
     // The provided buffer's length must be a multiple of V6 address length.
     // Let's extend the buffer by one byte so as this condition is not
@@ -226,7 +226,7 @@ TEST_F(OptionDefinitionTest, factoryAddrList4) {
     ASSERT_NO_THROW(
         option_v4 = factory(Option::V4, DHO_NAME_SERVERS, buf)
     );
-    ASSERT_EQ(typeid(*option_v4), typeid(Option4AddrLst));
+    ASSERT_TRUE(typeid(*option_v4) == typeid(Option4AddrLst));
     // Get the list of parsed addresses from the option object.
     boost::shared_ptr<Option4AddrLst> option_cast_v4 =
         boost::static_pointer_cast<Option4AddrLst>(option_v4);
@@ -234,7 +234,7 @@ TEST_F(OptionDefinitionTest, factoryAddrList4) {
         option_cast_v4->getAddresses();
     // The list of addresses must exactly match addresses that we
     // stored in the buffer to create the option from it.
-    EXPECT_EQ(addrs, addrs_returned);
+    EXPECT_TRUE(std::equal(addrs.begin(), addrs.end(), addrs_returned.begin()));
 
     // The provided buffer's length must be a multiple of V4 address length.
     // Let's extend the buffer by one byte so as this condition is not
@@ -255,7 +255,7 @@ TEST_F(OptionDefinitionTest, factoryEmpty) {
     ASSERT_NO_THROW(
         option_v6 = factory(Option::V6, D6O_RAPID_COMMIT, OptionBuffer())
     );
-    ASSERT_EQ(typeid(*option_v6), typeid(Option));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option));
     // Expect 'empty' DHCPv6 option.
     EXPECT_EQ(Option::V6, option_v6->getUniverse());
     EXPECT_EQ(4, option_v6->getHeaderLen());
@@ -298,7 +298,7 @@ TEST_F(OptionDefinitionTest, factoryIA6) {
     }
     OptionPtr option_v6;
     ASSERT_NO_THROW(option_v6 = factory(Option::V6, D6O_IA_NA, buf));
-    ASSERT_EQ(typeid(*option_v6), typeid(Option6IA));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6IA));
     boost::shared_ptr<Option6IA> option_cast_v6 =
         boost::static_pointer_cast<Option6IA>(option_v6);
     EXPECT_EQ(0x00010203, option_cast_v6->getIAID());
@@ -353,7 +353,7 @@ TEST_F(OptionDefinitionTest, factoryIAAddr6) {
     } catch (const Exception& e) {
         std::cout << e.what() << std::endl;
     }
-    ASSERT_EQ(typeid(*option_v6), typeid(Option6IAAddr));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6IAAddr));
     boost::shared_ptr<Option6IAAddr> option_cast_v6 =
         boost::static_pointer_cast<Option6IAAddr>(option_v6);
     EXPECT_EQ(addr_v6, option_cast_v6->getAddress());
@@ -399,7 +399,8 @@ TEST_F(OptionDefinitionTest, factoryUint8) {
     ASSERT_NO_THROW(
         option_v6 = factory(Option::V6, D6O_PREFERENCE, OptionBuffer(1, 1));
     );
-    ASSERT_EQ(typeid(*option_v6), typeid(Option6Int<uint8_t>));    // Validate the value.
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6Int<uint8_t>));
+    // Validate the value.
     boost::shared_ptr<Option6Int<uint8_t> > option_cast_v6 =
         boost::static_pointer_cast<Option6Int<uint8_t> >(option_v6);
     EXPECT_EQ(1, option_cast_v6->getValue());
@@ -433,7 +434,7 @@ TEST_F(OptionDefinitionTest, factoryUint16) {
     ASSERT_NO_THROW(
         option_v6 = factory(Option::V6, D6O_ELAPSED_TIME, buf);
     );
-    ASSERT_EQ(typeid(*option_v6), typeid(Option6Int<uint16_t>));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6Int<uint16_t>));
     // Validate the value.
     boost::shared_ptr<Option6Int<uint16_t> > option_cast_v6 =
         boost::static_pointer_cast<Option6Int<uint16_t> >(option_v6);
@@ -468,7 +469,7 @@ TEST_F(OptionDefinitionTest, factoryUint32) {
     ASSERT_NO_THROW(
         option_v6 = factory(Option::V6, D6O_CLT_TIME, buf);
     );
-    ASSERT_EQ(typeid(*option_v6), typeid(Option6Int<uint32_t>));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6Int<uint32_t>));
     // Validate the value.
     boost::shared_ptr<Option6Int<uint32_t> > option_cast_v6 =
         boost::static_pointer_cast<Option6Int<uint32_t> >(option_v6);
@@ -508,7 +509,7 @@ TEST_F(OptionDefinitionTest, factoryUint16Array) {
     EXPECT_NO_THROW(
         option_v6 = factory(Option::V6, opt_code, buf);
     );
-    ASSERT_EQ(typeid(*option_v6), typeid(Option6IntArray<uint16_t>));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6IntArray<uint16_t>));
     boost::shared_ptr<Option6IntArray<uint16_t> > option_cast_v6 =
         boost::static_pointer_cast<Option6IntArray<uint16_t> >(option_v6);
     // Get the values from the initiated options and validate.
@@ -555,7 +556,7 @@ TEST_F(OptionDefinitionTest, factoryUint32Array) {
     EXPECT_NO_THROW(
         option_v6 = factory(Option::V6, opt_code, buf);
     );
-    ASSERT_EQ(typeid(*option_v6), typeid(Option6IntArray<uint32_t>));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6IntArray<uint32_t>));
     boost::shared_ptr<Option6IntArray<uint32_t> > option_cast_v6 =
         boost::static_pointer_cast<Option6IntArray<uint32_t> >(option_v6);
     // Get the values from the initiated options and validate.
