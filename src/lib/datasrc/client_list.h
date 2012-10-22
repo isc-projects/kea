@@ -43,6 +43,7 @@ typedef boost::shared_ptr<DataSourceClientContainer>
 // and hide real definitions except for itself and tests.
 namespace memory {
 class InMemoryClient;
+class ZoneWriter;
 }
 
 /// \brief The list of data source clients.
@@ -288,6 +289,31 @@ public:
     /// \throw DataSourceError if something unexpected happens, like when
     ///      the original data source no longer contains the cached zone.
     ReloadResult reload(const dns::Name& zone);
+
+    /// \brief Return value of getCachedZoneWriter()
+    ///
+    /// A pair containing status and the zone writer, for the
+    /// getCachedZoneWriter() method.
+    typedef std::pair<ReloadResult, boost::shared_ptr<memory::ZoneWriter> >
+        ZoneWriterPair;
+
+    /// \brief Return a zone writer that can be used to reload a zone.
+    ///
+    /// This looks up a cached copy of zone and returns the ZoneWriter
+    /// that can be used to reload the content of the zone. This can
+    /// be used instead of reload() -- reload() works synchronously, which
+    /// is not what is needed every time.
+    ///
+    /// \param zone The origin of the zone to reload.
+    /// \return The result has two parts. The first one is a status describing
+    ///     if it worked or not (and in case it didn't, also why). If the status
+    ///     is ZONE_RELOADED, the second part contains a shared pointer to the
+    ///     writer. If the status is anything else, the second part is NULL.
+    /// \throw DataSourceError or anything else that the data source
+    ///      containing the zone might throw is propagated.
+    /// \throw DataSourceError if something unexpected happens, like when
+    ///      the original data source no longer contains the cached zone.
+    ZoneWriterPair getCachedZoneWriter(const dns::Name& zone);
 
     /// \brief Implementation of the ClientList::find.
     virtual FindResult find(const dns::Name& zone,
