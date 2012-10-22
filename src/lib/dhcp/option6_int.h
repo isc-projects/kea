@@ -21,7 +21,6 @@
 #include <util/io_utilities.h>
 
 #include <stdint.h>
-#include <limits>
 
 namespace isc {
 namespace dhcp {
@@ -131,7 +130,8 @@ public:
         // order from the provided buffer. The same functions can be safely used
         // for either unsiged or signed integers so there is not need to create
         // special cases for intX_t types.
-        switch (OptionDataTypes<T>::len) {
+        int data_size_len = OptionDataTypes<T>::len;
+        switch (data_size_len) {
         case 1:
             value_ = *begin;
             break;
@@ -144,7 +144,11 @@ public:
         default:
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
-        begin += OptionDataTypes<T>::len;
+        // Use local variable to set a new value for this iterator.
+        // When using OptionDataTypes<T>::len directly some versions
+        // of clang complain about unresolved reference to
+        // OptionDataTypes structure during linking.
+        begin += data_size_len;
         LibDHCP::unpackOptions6(OptionBuffer(begin, end), options_);
     }
 
