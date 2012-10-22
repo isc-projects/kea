@@ -4,6 +4,9 @@ AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/dhcp/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
+# Temp
+AM_CPPFLAGS += -I/usr/include/mysql -DBIG_JOINS=1 -fno-strict-aliasing
+AM_CPPFLAGS += -DUNIV_LINUX
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
@@ -30,7 +33,9 @@ libdhcp___unittests_SOURCES += duid_unittest.cc
 libdhcp___unittests_SOURCES += iface_mgr_unittest.cc
 libdhcp___unittests_SOURCES += lease_mgr_factory_unittest.cc
 libdhcp___unittests_SOURCES += lease_mgr_unittest.cc
+if HAVE_MYSQL
 libdhcp___unittests_SOURCES += mysql_lease_mgr_unittest.cc
+endif
 libdhcp___unittests_SOURCES += libdhcp++_unittest.cc
 libdhcp___unittests_SOURCES += option4_addrlst_unittest.cc
 libdhcp___unittests_SOURCES += option6_addrlst_unittest.cc
@@ -43,6 +48,10 @@ libdhcp___unittests_SOURCES += pkt6_unittest.cc
 libdhcp___unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 libdhcp___unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 libdhcp___unittests_CXXFLAGS = $(AM_CXXFLAGS)
+if HAVE_MYSQL
+libdhcp___unittests_CPPFLAGS += $(MYSQL_CPPFLAGS)
+libdhcp___unittests_LDFLAGS  += $(MYSQL_LIBS)
+endif
 
 libdhcpsrv_unittests_SOURCES  = run_unittests.cc
 libdhcpsrv_unittests_SOURCES += addr_utilities_unittest.cc

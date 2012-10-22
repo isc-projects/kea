@@ -14,10 +14,6 @@
 
 #include "config.h"
 
-// TEMP
-#define HAVE_MYSQL 1
-
-
 #include <algorithm>
 #include <iostream>
 #include <iterator>
@@ -30,7 +26,10 @@
 #include <boost/algorithm/string.hpp>
 #include <exceptions/exceptions.h>
 #include <dhcp/lease_mgr_factory.h>
+
+#ifdef HAVE_MYSQL
 #include <dhcp/mysql_lease_mgr.h>
+#endif
 
 using namespace std;
 
