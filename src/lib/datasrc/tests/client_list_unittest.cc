@@ -257,7 +257,7 @@ public:
             "                \"noiter.org\", \"null.org\"]"
             "}]")),
         config_(Element::fromJSON("{}")),
-        segment_(ZoneTableSegment::create(*config_))
+        ztable_segment_(ZoneTableSegment::create(*config_))
     {
         for (size_t i(0); i < ds_count; ++ i) {
             shared_ptr<MockDataSourceClient>
@@ -265,7 +265,7 @@ public:
             ds_.push_back(ds);
             ds_info_.push_back(ConfigurableClientList::DataSourceInfo(
                                    ds.get(), DataSourceClientContainerPtr(),
-                                   false, rrclass_, segment_));
+                                   false, rrclass_, ztable_segment_));
         }
     }
 
@@ -285,8 +285,8 @@ public:
 
         // Create cache from the temporary data source, and push it to the
         // client list.
-        const shared_ptr<InMemoryClient> cache(new InMemoryClient(segment_,
-                                                                  rrclass_));
+        const shared_ptr<InMemoryClient> cache(
+            new InMemoryClient(ztable_segment_, rrclass_));
         cache->load(zone, *mock_client.getIterator(zone, false));
 
         ConfigurableClientList::DataSourceInfo& dsrc_info =
@@ -369,7 +369,7 @@ public:
     vector<shared_ptr<MockDataSourceClient> > ds_;
     vector<ConfigurableClientList::DataSourceInfo> ds_info_;
     const ConstElementPtr config_elem_, config_elem_zones_, config_;
-    shared_ptr<ZoneTableSegment> segment_;
+    shared_ptr<ZoneTableSegment> ztable_segment_;
 };
 
 // Test the test itself

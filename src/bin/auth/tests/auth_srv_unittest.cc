@@ -73,6 +73,7 @@ using namespace isc::asiodns;
 using namespace isc::asiolink;
 using namespace isc::testutils;
 using namespace isc::server_common::portconfig;
+using isc::datasrc::memory::ZoneTableSegment;
 using isc::UnitTestUtil;
 using boost::scoped_ptr;
 
@@ -1402,7 +1403,7 @@ public:
         ConfigurableClientList(RRClass::IN()),
         real_(real_list),
         config_(Element::fromJSON("{}")),
-        segment_(isc::datasrc::memory::ZoneTableSegment::create(*config_))
+        ztable_segment_(ZoneTableSegment::create(*config_))
     {
         BOOST_FOREACH(const DataSourceInfo& info, real_->getDataSources()) {
              const isc::datasrc::DataSourceClientPtr
@@ -1414,13 +1415,13 @@ public:
              data_sources_.push_back(
                  DataSourceInfo(client.get(),
                                 isc::datasrc::DataSourceClientContainerPtr(),
-                                false, RRClass::IN(), segment_));
+                                false, RRClass::IN(), ztable_segment_));
         }
     }
 private:
     const boost::shared_ptr<isc::datasrc::ConfigurableClientList> real_;
     const ConstElementPtr config_;
-    boost::shared_ptr<isc::datasrc::memory::ZoneTableSegment> segment_;
+    boost::shared_ptr<ZoneTableSegment> ztable_segment_;
     vector<isc::datasrc::DataSourceClientPtr> clients_;
 };
 

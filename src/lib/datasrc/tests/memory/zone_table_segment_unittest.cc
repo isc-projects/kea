@@ -30,36 +30,37 @@ namespace {
 class ZoneTableSegmentTest : public ::testing::Test {
 protected:
     ZoneTableSegmentTest() :
-        segment_(new test::ZoneTableSegmentTest(RRClass::IN(), mem_sgmt_))
+        ztable_segment_(new test::ZoneTableSegmentTest(RRClass::IN(),
+                                                       mem_sgmt_))
     {}
 
     ~ZoneTableSegmentTest() {
-        delete segment_;
+        delete ztable_segment_;
     }
 
     void TearDown() {
-        ZoneTableSegment::destroy(segment_);
-        segment_ = NULL;
+        ZoneTableSegment::destroy(ztable_segment_);
+        ztable_segment_ = NULL;
 
         // Catch any future leaks here.
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated());
     }
 
     MemorySegmentLocal mem_sgmt_;
-    ZoneTableSegment* segment_;
+    ZoneTableSegment* ztable_segment_;
 };
 
 
 TEST_F(ZoneTableSegmentTest, create) {
     // By default, a local zone table segment is created.
-    EXPECT_NE(static_cast<void*>(NULL), segment_);
+    EXPECT_NE(static_cast<void*>(NULL), ztable_segment_);
 }
 
 // Helper function to check const and non-const methods.
 template <typename TS, typename TH, typename TT>
 void
-testGetHeader(ZoneTableSegment* segment) {
-    TH& header = static_cast<TS*>(segment)->getHeader();
+testGetHeader(ZoneTableSegment* ztable_segment) {
+    TH& header = static_cast<TS*>(ztable_segment)->getHeader();
 
     // The zone table must be set.
     TT* table = header.getTable();
@@ -68,16 +69,17 @@ testGetHeader(ZoneTableSegment* segment) {
 
 TEST_F(ZoneTableSegmentTest, getHeader) {
     // non-const version.
-    testGetHeader<ZoneTableSegment, ZoneTableHeader, ZoneTable>(segment_);
+    testGetHeader<ZoneTableSegment, ZoneTableHeader, ZoneTable>
+        (ztable_segment_);
 
     // const version.
     testGetHeader<const ZoneTableSegment, const ZoneTableHeader,
-                  const ZoneTable>(segment_);
+                  const ZoneTable>(ztable_segment_);
 }
 
 TEST_F(ZoneTableSegmentTest, getMemorySegment) {
     // This doesn't do anything fun except test the API.
-    MemorySegment& mem_sgmt = segment_->getMemorySegment();
+    MemorySegment& mem_sgmt = ztable_segment_->getMemorySegment();
     mem_sgmt.allMemoryDeallocated(); // use mem_sgmt
 }
 
