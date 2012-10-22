@@ -29,10 +29,10 @@ namespace test {
 class ZoneTableSegmentTest : public ZoneTableSegment {
 public:
     ZoneTableSegmentTest(isc::dns::RRClass rrclass,
-			 isc::util::MemorySegment& mem_sgmt) :
+                         isc::util::MemorySegment& mem_sgmt) :
         ZoneTableSegment(rrclass),
         mem_sgmt_(mem_sgmt),
-	header_(ZoneTable::create(mem_sgmt_, rrclass))
+        header_(ZoneTable::create(mem_sgmt_, rrclass))
     {}
 
     virtual ~ZoneTableSegmentTest() {
