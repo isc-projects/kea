@@ -63,7 +63,7 @@ public:
     /// This constructor internally involves resource allocation, and if
     /// it fails, a corresponding standard exception will be thrown.
     /// It never throws an exception otherwise.
-    InMemoryClient(boost::shared_ptr<ZoneTableSegment> zone_table_segment,
+    InMemoryClient(boost::shared_ptr<ZoneTableSegment> ztable_segment,
                    isc::dns::RRClass rrclass);
 
     /// The destructor.
@@ -189,7 +189,7 @@ private:
                                 const std::string& filename,
                                 ZoneData* zone_data);
 
-    boost::shared_ptr<ZoneTableSegment> zone_table_segment_;
+    boost::shared_ptr<ZoneTableSegment> ztable_segment_;
     const isc::dns::RRClass rrclass_;
     unsigned int zone_count_;
     FileNameTree* file_name_tree_;
