@@ -116,6 +116,15 @@ public:
         /// otherwise it returns NULL.  The manager keeps the ownership of
         /// the pointed object.  Also, it's not safe to get access to the
         /// object beyond the scope of the holder object.
+        ///
+        /// \note Since the ownership isn't transferred the return value
+        /// could be a bare pointer (and it's probably better in several
+        /// points).  Unfortunately, some unit tests currently don't work
+        /// unless this method effectively shares the ownership with the
+        /// tests.  That's the only reason why we return a shared pointer
+        /// for now.  We should eventually fix it and change the return value
+        /// type (see Trac ticket #2395).  Other applications must not
+        /// assume the ownership is actually shared.
         boost::shared_ptr<datasrc::ConfigurableClientList> findClientList(
             const dns::RRClass& rrclass)
         {
