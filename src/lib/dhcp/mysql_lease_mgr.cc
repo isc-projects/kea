@@ -25,13 +25,13 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-/// @brief Exchange MySQL Structure for Lease6
+/// @brief Exchange MySQL and Lease6 Data
 ///
 /// On the INSERT, SELECT and UPDATE statements, an array of MYSQL_BIND
 /// structures must be built to reflect the data being inserted or retrieved
 /// from the database.
 ///
-/// Owing to the MySQL API, this process requires some intermediate variables
+/// Owing to the MySQL API, the process requires some intermediate variables
 /// to hold things like length etc.  This object holds the intermediate
 /// variables and can:
 /// 1. Build the MYSQL_BIND structures for a Lease6 object ready for passing
@@ -57,7 +57,7 @@ public:
     ///         valid only for as long as (1) this object is in existence and
     ///         (2) the lease object passed to it is in existence.  The
     ///         caller should NOT delete it.
-    MYSQL_BIND* createBindFromLease(const Lease6Ptr& lease) {
+    MYSQL_BIND* CreateBindForSend(const Lease6Ptr& lease) {
         // Store lease object to ensure it remains valid.
         lease_ = lease;
 
@@ -145,24 +145,172 @@ public:
         return(bind_);
     }
 
+    /// @brief Create BIND array to receive data
+    ///
+    /// Creates a MYSQL_BIND array to receive Lease6 data from the database.
+    /// After data is successfully received, getLeaseData() is used to copy
+    /// it to a Lease6 object.
+    ///
+    /// @return Pointer to MYSQL_BIND array for data reception.  This array is
+    ///         valid only for as long as this MySqlLease6Exchange object is
+    ///         in existence.
+    MYSQL_BIND* createBindForReceive() {
+        std::cout << "createBindForReceive\n";
+        // Ensure bind array clear.
+        memset(bind_, 0, sizeof(bind_));
+        memset(error_, 0, sizeof(error_));
+
+        // address:  varchar
+        // A Lease6_ address has a maximum of 39 characters.  The array is
+        // a few bites longer than this to guarantee that we can always null
+        // terminate it.
+        addr6_length_ = sizeof(addr6_buffer_) - 1;
+        bind_[0].buffer_type = MYSQL_TYPE_STRING;
+        bind_[0].buffer = addr6_buffer_;
+        bind_[0].buffer_length = addr6_length_;
+        bind_[0].length = &addr6_length_;
+        bind_[0].error = &error_[0];
+        
+        // hwaddr: varbinary(20)
+        hwaddr_length_ = sizeof(hwaddr_buffer_);
+        bind_[1].buffer_type = MYSQL_TYPE_BLOB;
+        bind_[1].buffer = reinterpret_cast<char*>(hwaddr_buffer_);
+        bind_[1].buffer_length = hwaddr_length_;
+        bind_[1].length = &hwaddr_length_;
+        bind_[2].error = &error_[1];
+
+        // client_id: varbinary(128)
+        clientid_length_ = sizeof(clientid_buffer_);
+        bind_[2].buffer_type = MYSQL_TYPE_BLOB;
+        bind_[2].buffer = reinterpret_cast<char*>(clientid_buffer_);
+        bind_[2].buffer_length = clientid_length_;
+        bind_[2].length = &clientid_length_;
+        bind_[2].error = &error_[2];
+
+        // lease_time: unsigned int
+        unsigned lease_time;
+        bind_[3].buffer_type = MYSQL_TYPE_LONG;
+        bind_[3].buffer = reinterpret_cast<char*>(&lease_time);
+        bind_[3].is_unsigned = true_;
+        bind_[3].error = &error_[3];
+
+        // expire: timestamp
+        bind_[4].buffer_type = MYSQL_TYPE_TIMESTAMP;
+        bind_[4].buffer = reinterpret_cast<char*>(&expire_);
+        bind_[4].buffer_length = sizeof(expire_);
+        bind_[4].error = &error_[4];
+
+        // subnet_id: unsigned int
+        bind_[5].buffer_type = MYSQL_TYPE_LONG;
+        bind_[5].buffer = reinterpret_cast<char*>(&subnet_id_);
+        bind_[5].is_unsigned = true_;
+        bind_[5].error = &error_[5];
+
+        // pref_lifetime: unsigned int
+        bind_[6].buffer_type = MYSQL_TYPE_LONG;
+        bind_[6].buffer = reinterpret_cast<char*>(&pref_lifetime_);
+        bind_[6].is_unsigned = true_;
+        bind_[6].error = &error_[6];
+
+        // lease_type: tinyint
+        bind_[7].buffer_type = MYSQL_TYPE_TINY;
+        bind_[7].buffer = reinterpret_cast<char*>(&lease_type_);
+        bind_[7].is_unsigned = true_;
+        bind_[7].error = &error_[7];
+
+        // iaid: unsigned int
+        bind_[8].buffer_type = MYSQL_TYPE_LONG;
+        bind_[8].buffer = reinterpret_cast<char*>(&iaid_);
+        bind_[8].is_unsigned = true_;
+        bind_[8].error = &error_[8];
+
+        // prefix_len: unsigned tinyint
+        bind_[9].buffer_type = MYSQL_TYPE_TINY;
+        bind_[9].buffer = reinterpret_cast<char*>(&prefixlen_);
+        bind_[9].is_unsigned = true_;
+        bind_[9].error = &error_[9];
+
+        return (bind_);
+    }
+
+    /// @brief Copy Received Data into Lease6 Object
+    ///
+    /// Called after the MYSQL_BIND array created by createBindForReceive()
+    /// has been used, this copies data from the internal member vairables
+    /// into a Lease6 object.
+    ///
+    /// @return Lease6Ptr Pointer to a Lease6 object holding the relevant
+    ///         data.
+    ///
+    /// @exception BadValue Unable to convert Lease Type value in database
+    Lease6Ptr getLeaseData() {
+
+        // Create the object to be returned.
+        Lease6Ptr result(new Lease6());
+
+        // Success - put the data in the lease object
+        addr6_buffer_[addr6_length_] = '\0';
+        std::string address = addr6_buffer_;
+        result->addr_ = isc::asiolink::IOAddress(address);
+
+        result->hwaddr_ = vector<uint8_t>(&hwaddr_buffer_[0],
+                                          &hwaddr_buffer_[hwaddr_length_]);
+        result->duid_.reset(new DUID(clientid_buffer_, clientid_length_));
+        MySqlLeaseMgr::convertFromDatabaseTime(expire_, lease_time_,
+                                               result->cltt_,
+                                               result->valid_lft_);
+        result->subnet_id_ = subnet_id_;
+        result->preferred_lft_ = pref_lifetime_;
+
+        // We can't convert from a numeric value to an enum, hence:
+        switch (lease_type_) {
+            case Lease6::LEASE_IA_NA:
+                result->type_ = Lease6::LEASE_IA_NA;
+                break;
+
+            case Lease6::LEASE_IA_TA:
+                result->type_ = Lease6::LEASE_IA_TA;
+                break;
+
+            case Lease6::LEASE_IA_PD:
+                result->type_ = Lease6::LEASE_IA_PD;
+                break;
+
+            default:
+                isc_throw(BadValue, "invalid lease type returned");
+        }
+        result->iaid_ = iaid_;
+        result->prefixlen_ = prefixlen_;
+
+        return (result);
+    }
+
 private:
+    // Note: All array legths are equal to the corresponding variable in the
+    // schema.
     std::string     addr6_;             ///< String form of address
+    char            addr6_buffer_[42];  ///< Character array form of V6 address
     unsigned long   addr6_length_;      ///< Length of the address
     MYSQL_BIND      bind_[10];          ///< Static array for speed of access
     std::vector<uint8_t> clientid_;     ///< Client identification
+    uint8_t         clientid_buffer_[128]; ///< Buffer form of client ID
     unsigned long   clientid_length_;   ///< Length of client ID
+    my_bool         error_[10];         ///< For error reporting
     MYSQL_TIME      expire_;            ///< Lease expiry time
     const my_bool   false_;             ///< "false" for MySql
+    uint8_t         hwaddr_buffer_[20]; ///< Hardware address buffer
     unsigned long   hwaddr_length_;     ///< Length of hardware address
+    uint32_t        iaid_;              ///< Identity association ID
     Lease6Ptr       lease_;             ///< Pointer to lease object
     uint32_t        lease_time_;        ///< Lease time
     uint8_t         lease_type_;        ///< Lease type
+    uint8_t         prefixlen_;         ///< Prefix length
+    uint32_t        pref_lifetime_;     ///< Preferred lifetime
+    uint32_t        subnet_id_;         ///< Subnet identification
     const my_bool   true_;              ///< "true_" for MySql
 };
 
 
-
-///
 
 // Time conversion methods.
 //
@@ -300,8 +448,10 @@ MySqlLeaseMgr::prepareStatements() {
     raw_statements_.resize(NUM_STATEMENTS, std::string(""));
 
     // Now allocate the statements
+    prepareStatement(DELETE_LEASE6,
+                     "DELETE FROM lease6 WHERE address = ?");
     prepareStatement(GET_LEASE6,
-                     "SELECT hwaddr, client_id, "
+                     "SELECT address, hwaddr, client_id, "
                          "lease_time, expire, subnet_id, pref_lifetime, "
                          "lease_type, iaid, prefix_len "
                          "FROM lease6 WHERE address = ?");
@@ -360,7 +510,7 @@ bool
 MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     // Create the MYSQL_BIND array for the lease
     MySqlLease6Exchange exchange;
-    MYSQL_BIND* bind = exchange.createBindFromLease(lease);
+    MYSQL_BIND* bind = exchange.CreateBindForSend(lease);
 
     // Bind the parameters to the statement
     my_bool status = mysql_stmt_bind_param(statements_[INSERT_LEASE6], bind);
@@ -409,9 +559,6 @@ MySqlLeaseMgr::getLease4(const ClientId& /* clientid */,
 
 Lease6Ptr
 MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
-    my_bool MLM_FALSE = 0;    // MySqlLeaseMgr false
-    my_bool MLM_TRUE = 1;     // MySqlLeaseMgr true
-
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
@@ -423,80 +570,16 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
     inbind[0].buffer = const_cast<char*>(addr6.c_str());
     inbind[0].buffer_length = addr6_length;
     inbind[0].length = &addr6_length;
-    inbind[0].is_null = &MLM_FALSE;
 
-    // Bind the parameters to the statement
+    // Set up the SELECT clause
+    MySqlLease6Exchange exchange;
+    MYSQL_BIND* outbind = exchange.createBindForReceive();
+
+    // Bind the input parameters to the statement
     my_bool status = mysql_stmt_bind_param(statements_[GET_LEASE6], inbind);
     checkError(status, GET_LEASE6, "unable to bind WHERE clause parameter");
 
-    // Output values
-    MYSQL_BIND outbind[9];
-    memset(outbind, 0, sizeof(outbind));
-
-    // address:  Not obtained - because of the WHERE clause, it will always be
-    // the same as the input parameter.
-
-    // hwaddr: varbinary(20)
-    uint8_t hwaddr[20];
-    unsigned long hwaddr_length;
-
-    outbind[0].buffer_type = MYSQL_TYPE_BLOB;
-    outbind[0].buffer = reinterpret_cast<char*>(hwaddr);
-    outbind[0].buffer_length = sizeof(hwaddr);
-    outbind[0].length = &hwaddr_length;
-
-    // client_id: varbinary(128)
-    uint8_t clientid[128];
-    unsigned long clientid_length;
-
-    outbind[1].buffer_type = MYSQL_TYPE_BLOB;
-    outbind[1].buffer = reinterpret_cast<char*>(clientid);
-    outbind[1].buffer_length = sizeof(clientid);
-    outbind[1].length = &clientid_length;
-
-    // lease_time: unsigned int
-    unsigned lease_time;
-    outbind[2].buffer_type = MYSQL_TYPE_LONG;
-    outbind[2].buffer = reinterpret_cast<char*>(&lease_time);
-    outbind[2].is_unsigned = MLM_TRUE;
-
-    // expire: timestamp
-    MYSQL_TIME mysql_expire;
-    outbind[3].buffer_type = MYSQL_TYPE_TIMESTAMP;
-    outbind[3].buffer = reinterpret_cast<char*>(&mysql_expire);
-    outbind[3].buffer_length = sizeof(mysql_expire);
-
-    // subnet_id: unsigned int
-    unsigned subnet_id;
-    outbind[4].buffer_type = MYSQL_TYPE_LONG;
-    outbind[4].buffer = reinterpret_cast<char*>(&subnet_id);
-    outbind[4].is_unsigned = MLM_TRUE;
-
-    // pref_lifetime: unsigned int
-    unsigned pref_lifetime;
-    outbind[5].buffer_type = MYSQL_TYPE_LONG;
-    outbind[5].buffer = reinterpret_cast<char*>(&pref_lifetime);
-    outbind[5].is_unsigned = MLM_TRUE;
-
-    // lease_type: tinyint
-    uint8_t lease_type;
-    outbind[6].buffer_type = MYSQL_TYPE_TINY;
-    outbind[6].buffer = reinterpret_cast<char*>(&lease_type);
-    outbind[6].is_unsigned = MLM_TRUE;
-
-    // iaid: unsigned int
-    unsigned iaid;
-    outbind[7].buffer_type = MYSQL_TYPE_LONG;
-    outbind[7].buffer = reinterpret_cast<char*>(&iaid);
-    outbind[7].is_unsigned = MLM_TRUE;
-
-    // prefix_len: unsigned tinyint
-    uint8_t prefixlen;
-    outbind[8].buffer_type = MYSQL_TYPE_TINY;
-    outbind[8].buffer = reinterpret_cast<char*>(&prefixlen);
-    outbind[8].is_unsigned = MLM_TRUE;
-
-    // Bind the parameters to the statement
+    // Bind the output parameters to the statement
     status = mysql_stmt_bind_result(statements_[GET_LEASE6], outbind);
     checkError(status, GET_LEASE6, "unable to bind SELECT caluse parameters");
 
@@ -505,49 +588,38 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
     checkError(status, GET_LEASE6, "unable to execute");
 
     // Fetch the data.
-    Lease6Ptr result(new Lease6());
     status = mysql_stmt_fetch(statements_[GET_LEASE6]);
+
+    Lease6Ptr result;
     if (status == 0) {
-        // Success - put the data in the lease object
-        result->addr_ = addr;
-        result->hwaddr_ = vector<uint8_t>(&hwaddr[0], &hwaddr[hwaddr_length]);
-        result->duid_.reset(new DUID(clientid, clientid_length));
-        convertFromDatabaseTime(mysql_expire, lease_time,
-                                result->cltt_, result->valid_lft_);
-        result->subnet_id_ = subnet_id;
-        result->preferred_lft_ = pref_lifetime;
-        switch (lease_type) {
-            case Lease6::LEASE_IA_NA:
-                result->type_ = Lease6::LEASE_IA_NA;
-                break;
+        try {
+            result = exchange.getLeaseData();
+        } catch (isc::BadValue) {
+            // Free up result set.
 
-            case Lease6::LEASE_IA_TA:
-                result->type_ = Lease6::LEASE_IA_TA;
-                break;
-
-            case Lease6::LEASE_IA_PD:
-                result->type_ = Lease6::LEASE_IA_PD;
-                break;
-
-            default:
-                isc_throw(BadValue, "invalid lease type returned for <" <<
-                          raw_statements_[GET_LEASE6] << ">");
+            (void) mysql_stmt_free_result(statements_[GET_LEASE6]);
+            // Lease type is returned, to rethrow the exception with a bit
+            // more data.
+            isc_throw(BadValue, "invalid lease type returned for <" <<
+                      raw_statements_[GET_LEASE6] << ">");
         }
-        result->iaid_ = iaid;
-        result->prefixlen_ = prefixlen;
 
         // As the address is the primary key in the table, we can't return
-        // two rows, so we don't bother checking.
+        // two rows, so we don't bother checking whether multiple rows have
+        // been returned.
 
     } else if (status == 1) {
         checkError(status, GET_LEASE6, "unable to fetch results");
 
     } else {
+        std::cout << "In the truncation clause\n";
+
     //     We are ignoring truncation for now, so the only other result is
-    //     no data was found.  In that case, we returrn a null Lease6 structure.
+    //     no data was found.  In that case, we return a null Lease6 structure.
     //     This has already been set, so ther action is a no-op.
     }
 
+    (void) mysql_stmt_free_result(statements_[GET_LEASE6]);
     return (result);
 }
 
@@ -626,10 +698,12 @@ MySqlLeaseMgr::getVersion() const {
     // Get the result
     status = mysql_stmt_fetch(statements_[GET_VERSION]);
     if (status != 0) {
+        (void) mysql_stmt_free_result(statements_[GET_VERSION]);
         isc_throw(DbOperationError, "unable to obtain result set: " <<
                   mysql_error(mysql_));
     }
 
+    (void) mysql_stmt_free_result(statements_[GET_VERSION]);
     return (std::make_pair(major, minor));
 }
 

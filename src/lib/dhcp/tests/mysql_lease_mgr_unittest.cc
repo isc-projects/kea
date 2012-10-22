@@ -77,7 +77,7 @@ public:
     /// lmptr_ member variable will close the database.
 
     virtual ~MySqlLeaseMgrTest() {
-        //lmptr_->rollback();
+        lmptr_->rollback();
     }
 
     LeaseMgrPtr lmptr_;     // Pointer to the lease manager
@@ -246,9 +246,11 @@ TEST_F(MySqlLeaseMgrTest, BasicLease6) {
     Lease6Ptr l_returned;
 
     ASSERT_TRUE(lmptr_->addLease(l1));
+    lmptr_->commit();
     l_returned = lmptr_->getLease6(L1_ADDRESS);
     EXPECT_TRUE(l_returned);
     detailCompareLease6(l1, l_returned);
+    lmptr_->rollback();
 /*
     // Delete the lease and check that it has been deleted.
     EXPECT_TRUE(lmptr_->deleteLease6(L1_ADDRESS));
