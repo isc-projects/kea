@@ -631,7 +631,7 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
         local_edns->setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
         message.setEDNS(local_edns);
     }
-    // Get access to data source client list through the holder and keep thek
+    // Get access to data source client list through the holder and keep the
     // holder until the processing and rendering is done to avoid inter-thread
     // race.
     auth::DataSrcClientsMgr::Holder datasrc_holder(datasrc_clients_mgr_);
