@@ -356,13 +356,12 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
             std::list<Command> current_commands;
             {
                 // Move all new commands to local queue under the protection of
-                // queue_mutex_.  Note that list::splice() should never throw.
+                // queue_mutex_.
                 typename MutexType::Locker locker(*queue_mutex_);
                 while (command_queue_->empty()) {
                     cond_->wait(*queue_mutex_);
                 }
-                current_commands.splice(current_commands.end(),
-                                        *command_queue_);
+                current_commands.swap(*command_queue_);
             } // the lock is release here.
 
             while (keep_running && !current_commands.empty()) {
