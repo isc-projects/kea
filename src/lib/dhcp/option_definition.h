@@ -83,20 +83,20 @@ public:
 
     /// Data types of DHCP option fields.
     enum DataType {
-        EMPTY_TYPE = 0,
-        BOOLEAN_TYPE = 1,
-        INT8_TYPE = 2,
-        INT16_TYPE = 3,
-        INT32_TYPE = 4,
-        UINT8_TYPE = 5,
-        UINT16_TYPE = 6,
-        UINT32_TYPE = 7,
-        IPV4_ADDRESS_TYPE = 8,
-        IPV6_ADDRESS_TYPE = 9,
-        STRING_TYPE = 10,
-        FQDN_TYPE = 11,
-        RECORD_TYPE = 12,
-        UNKNOWN_TYPE = 13
+        EMPTY_TYPE,
+        BOOLEAN_TYPE,
+        INT8_TYPE,
+        INT16_TYPE,
+        INT32_TYPE,
+        UINT8_TYPE,
+        UINT16_TYPE,
+        UINT32_TYPE,
+        IPV4_ADDRESS_TYPE,
+        IPV6_ADDRESS_TYPE,
+        STRING_TYPE,
+        FQDN_TYPE,
+        RECORD_TYPE,
+        UNKNOWN_TYPE
     };
 
     /// List of fields within the record.
