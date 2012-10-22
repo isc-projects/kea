@@ -25,6 +25,145 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
+/// @brief Exchange MySQL Structure for Lease6
+///
+/// On the INSERT, SELECT and UPDATE statements, an array of MYSQL_BIND
+/// structures must be built to reflect the data being inserted or retrieved
+/// from the database.
+///
+/// Owing to the MySQL API, this process requires some intermediate variables
+/// to hold things like length etc.  This object holds the intermediate
+/// variables and can:
+/// 1. Build the MYSQL_BIND structures for a Lease6 object ready for passing
+///    in to the MYSQL code.
+/// 1. Copy information from the MYSQL_BIND structures into a Lease6 object.
+
+class MySqlLease6Exchange {
+public:
+    /// @brief Constructor
+    MySqlLease6Exchange() : false_(0), true_(1) {
+    }
+
+    /// @brief Create MYSQL_BIND objects for Lease6 Pointer
+    ///
+    /// Fills in the bind_ objects for the Lease6 passed to it.
+    ///
+    /// The MySQL documentation 
+    ///
+    /// @param lease Lease object to be added to the database
+    ///
+    /// @return Pointer to MYSQL_BIND array holding the bind information.
+    ///         This is a pointer to data internal to this object, and remains
+    ///         valid only for as long as (1) this object is in existence and
+    ///         (2) the lease object passed to it is in existence.  The
+    ///         caller should NOT delete it.
+    MYSQL_BIND* createBindFromLease(const Lease6Ptr& lease) {
+        // Store lease object to ensure it remains valid.
+        lease_ = lease;
+
+        // Ensure bind array clear.
+        memset(bind_, 0, sizeof(bind_));
+
+        // address: varchar(40)
+        addr6_ = lease_->addr_.toText();
+        addr6_length_ = addr6_.size();
+
+        bind_[0].buffer_type = MYSQL_TYPE_STRING;
+        bind_[0].buffer = const_cast<char*>(addr6_.c_str());
+        bind_[0].buffer_length = addr6_length_;
+        bind_[0].length = &addr6_length_;
+
+        // hwaddr: binary(20)
+        hwaddr_length_ = lease_->hwaddr_.size();
+
+        bind_[1].buffer_type = MYSQL_TYPE_BLOB;
+        bind_[1].buffer = reinterpret_cast<char*>(&(lease_->hwaddr_[0]));
+        bind_[1].buffer_length = hwaddr_length_;
+        bind_[1].length = &hwaddr_length_;
+
+        // client_id: varchar(128)
+        clientid_ = lease_->duid_->getDuid();
+        clientid_length_ = clientid_.size();
+
+        bind_[2].buffer_type = MYSQL_TYPE_BLOB;
+        bind_[2].buffer = reinterpret_cast<char*>(&(clientid_[0]));
+        bind_[2].buffer_length = clientid_length_;
+        bind_[2].length = &clientid_length_;
+
+        // The lease structure holds the client last transmission time (cltt_)
+        // and the valid lifetime (valid_lft_).  For convenience for external
+        // tools, the data stored in the database is expiry time (expire) and
+        // lease time (lease+time).  The relationship is given by:
+        //
+        // lease_time - valid_lft_
+        // expire = cltt_ + valid_lft_
+        //
+        MySqlLeaseMgr::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
+                                             expire_, lease_time_);
+
+        // lease_time: unsigned int
+        bind_[3].buffer_type = MYSQL_TYPE_LONG;
+        bind_[3].buffer = reinterpret_cast<char*>(&lease_time_);
+        bind_[3].is_unsigned = true_;
+
+        // expire: timestamp
+        bind_[4].buffer_type = MYSQL_TYPE_TIMESTAMP;
+        bind_[4].buffer = reinterpret_cast<char*>(&expire_);
+        bind_[4].buffer_length = sizeof(expire_);
+
+        // subnet_id: unsigned int
+        // Can use lease_->subnet_id_ directly as it is of type uint32_t.
+        bind_[5].buffer_type = MYSQL_TYPE_LONG;
+        bind_[5].buffer = reinterpret_cast<char*>(&lease_->subnet_id_);
+        bind_[5].is_unsigned = true_;
+
+        // pref_lifetime: unsigned int
+        // Can use lease_->preferred_lft_ directly as it is of type uint32_t.
+        bind_[6].buffer_type = MYSQL_TYPE_LONG;
+        bind_[6].buffer = reinterpret_cast<char*>(&lease_->preferred_lft_);
+        bind_[6].is_unsigned = true_;
+
+        // lease_type: tinyint
+        // Must convert to uint8_t as lease_->type_ is a LeaseType variable
+        lease_type_ = lease_->type_;
+        bind_[7].buffer_type = MYSQL_TYPE_TINY;
+        bind_[7].buffer = reinterpret_cast<char*>(&lease_type_);
+        bind_[7].is_unsigned = static_cast<my_bool>(1);
+
+        // iaid: unsigned int
+        // Can use lease_->iaid_ directly as it is of type uint32_t.
+        bind_[8].buffer_type = MYSQL_TYPE_LONG;
+        bind_[8].buffer = reinterpret_cast<char*>(&lease_->iaid_);
+        bind_[8].is_unsigned = true_;
+
+        // prefix_len: unsigned tinyint
+        // Can use lease_->prefixlen_ directly as it is uint32_t.
+        bind_[9].buffer_type = MYSQL_TYPE_TINY;
+        bind_[9].buffer = reinterpret_cast<char*>(&lease_->prefixlen_);
+        bind_[9].is_unsigned = true_;
+
+        return(bind_);
+    }
+
+private:
+    std::string     addr6_;             ///< String form of address
+    unsigned long   addr6_length_;      ///< Length of the address
+    MYSQL_BIND      bind_[10];          ///< Static array for speed of access
+    std::vector<uint8_t> clientid_;     ///< Client identification
+    unsigned long   clientid_length_;   ///< Length of client ID
+    MYSQL_TIME      expire_;            ///< Lease expiry time
+    const my_bool   false_;             ///< "false" for MySql
+    unsigned long   hwaddr_length_;     ///< Length of hardware address
+    Lease6Ptr       lease_;             ///< Pointer to lease object
+    uint32_t        lease_time_;        ///< Lease time
+    uint8_t         lease_type_;        ///< Lease type
+    const my_bool   true_;              ///< "true_" for MySql
+};
+
+
+
+///
+
 // Time conversion methods.
 //
 // Note that the MySQL TIMESTAMP data type (used for "expire") converts data
@@ -33,7 +172,7 @@ namespace dhcp {
 // must be local time.
 
 void
-MySqlLeaseMgr::convertFromLeaseTime(time_t cltt, uint32_t valid_lft,
+MySqlLeaseMgr::convertToDatabaseTime(time_t cltt, uint32_t valid_lft,
                                     MYSQL_TIME& expire, uint32_t& lease_time) {
 
     // Calculate expiry time and convert to various date/time fields.
@@ -56,7 +195,7 @@ MySqlLeaseMgr::convertFromLeaseTime(time_t cltt, uint32_t valid_lft,
 }
 
 void
-MySqlLeaseMgr::convertToLeaseTime(const MYSQL_TIME& expire, uint32_t lease_time,
+MySqlLeaseMgr::convertFromDatabaseTime(const MYSQL_TIME& expire, uint32_t lease_time,
                                   time_t& cltt, uint32_t& valid_lft) {
     valid_lft = lease_time;
 
@@ -219,94 +358,9 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& /* lease */) {
 
 bool
 MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
-    my_bool MLM_FALSE = 0;
-    MYSQL_BIND bind[10];
-    memset(bind, 0, sizeof(bind));
-
-    // address: varchar(40)
-    std::string addr6 = lease->addr_.toText();
-    unsigned long addr6_length = addr6.size();
-
-    bind[0].buffer_type = MYSQL_TYPE_STRING;
-    bind[0].buffer = const_cast<char*>(addr6.c_str());
-    bind[0].buffer_length = addr6_length;
-    bind[0].length = &addr6_length;
-    bind[0].is_null = &MLM_FALSE;
-
-    // hwaddr: binary(20)
-    unsigned long hwaddr_length = lease->hwaddr_.size();
-
-    bind[1].buffer_type = MYSQL_TYPE_BLOB;
-
-    bind[1].buffer = reinterpret_cast<char*>(&(lease->hwaddr_[0]));
-    bind[1].buffer_length = hwaddr_length;
-    bind[1].length = &hwaddr_length;
-    bind[1].is_null = &MLM_FALSE;
-
-    // client_id: varchar(128)
-    vector<uint8_t> clientid = lease->duid_->getDuid();
-    unsigned long clientid_length = clientid.size();
-
-    bind[2].buffer_type = MYSQL_TYPE_BLOB;
-    bind[2].buffer = reinterpret_cast<char*>(&(clientid[0]));
-    bind[2].buffer_length = clientid_length;
-    bind[2].length = &clientid_length;
-    bind[2].is_null = &MLM_FALSE;
-
-    // The lease structure holds the client last transmission time (cltt_)
-    // and the valid lifetime (valid_lft_).  For convenience, the data stored
-    // in the database is expiry time (expire) and lease time (lease+time).
-    // The relationship is given by:
-    //
-    // lease_time - valid_lft_
-    // expire = cltt_ + valid_lft_
-    MYSQL_TIME mysql_expire;
-    uint32_t lease_time;
-    convertFromLeaseTime(lease->cltt_, lease->valid_lft_,
-                         mysql_expire, lease_time);
-
-    // lease_time: unsigned int
-    bind[3].buffer_type = MYSQL_TYPE_LONG;
-    bind[3].buffer = reinterpret_cast<char*>(&lease_time);
-    bind[3].is_unsigned = 1;
-    bind[3].is_null = &MLM_FALSE;
-
-    // expire: timestamp
-    bind[4].buffer_type = MYSQL_TYPE_TIMESTAMP;
-    bind[4].buffer = reinterpret_cast<char*>(&mysql_expire);
-    bind[4].buffer_length = sizeof(mysql_expire);
-    bind[4].is_null = &MLM_FALSE;
-
-    // subnet_id: unsigned int
-    bind[5].buffer_type = MYSQL_TYPE_LONG;
-    bind[5].buffer = reinterpret_cast<char*>(&(lease->subnet_id_));
-    bind[5].is_unsigned = static_cast<my_bool>(1);
-    bind[5].is_null = &MLM_FALSE;
-
-    // pref_lifetime: unsigned int
-    bind[6].buffer_type = MYSQL_TYPE_LONG;
-    bind[6].buffer = reinterpret_cast<char*>(&(lease->preferred_lft_));
-    bind[6].is_unsigned = static_cast<my_bool>(1);
-    bind[6].is_null = &MLM_FALSE;
-
-    // lease_type: tinyint
-    uint8_t lease_type = lease->type_;  // Needed for int -> uint8_t conversion
-    bind[7].buffer_type = MYSQL_TYPE_TINY;
-    bind[7].buffer = reinterpret_cast<char*>(&lease_type);
-    bind[7].is_unsigned = static_cast<my_bool>(1);
-    bind[7].is_null = &MLM_FALSE;
-
-    // iaid: unsigned int
-    bind[8].buffer_type = MYSQL_TYPE_LONG;
-    bind[8].buffer = reinterpret_cast<char*>(&(lease->iaid_));
-    bind[8].is_unsigned = static_cast<my_bool>(1);
-    bind[8].is_null = &MLM_FALSE;
-
-    // prefix_len: unsigned tinyint
-    bind[9].buffer_type = MYSQL_TYPE_TINY;
-    bind[9].buffer = reinterpret_cast<char*>(&(lease->prefixlen_));
-    bind[9].is_unsigned = static_cast<my_bool>(1);
-    bind[9].is_null = &MLM_FALSE;
+    // Create the MYSQL_BIND array for the lease
+    MySqlLease6Exchange exchange;
+    MYSQL_BIND* bind = exchange.createBindFromLease(lease);
 
     // Bind the parameters to the statement
     my_bool status = mysql_stmt_bind_param(statements_[INSERT_LEASE6], bind);
@@ -458,8 +512,8 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
         result->addr_ = addr;
         result->hwaddr_ = vector<uint8_t>(&hwaddr[0], &hwaddr[hwaddr_length]);
         result->duid_.reset(new DUID(clientid, clientid_length));
-        convertToLeaseTime(mysql_expire, lease_time,
-                           result->cltt_, result->valid_lft_);
+        convertFromDatabaseTime(mysql_expire, lease_time,
+                                result->cltt_, result->valid_lft_);
         result->subnet_id_ = subnet_id;
         result->preferred_lft_ = pref_lifetime;
         switch (lease_type) {

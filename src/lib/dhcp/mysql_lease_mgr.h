@@ -69,13 +69,13 @@ public:
     /// @exception DbOperationError Database function failed
     virtual bool addLease(const Lease6Ptr& lease);
 
-    /// @brief Returns existing IPv4 lease for specified IPv4 address and subnet_id
+    /// @brief Return IPv4 lease for specified IPv4 address and subnet_id
     ///
     /// This method is used to get a lease for specific subnet_id. There can be
     /// at most one lease for any given subnet, so this method returns a single
     /// pointer.
     ///
-    /// @param addr address of the searched lease
+    /// @param addr address of the sought lease
     /// @param subnet_id ID of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
@@ -254,11 +254,11 @@ public:
 
     ///@{
     /// The following methods are used to convert between times and time
-    /// intervals stored in the server in the Lease object, and the times
-    /// stored in the database.  The reason for the difference is because
-    /// in the DHCP server, the cltt (Client Time Since Last Transmission)
-    /// is the natural data: in the lease file - which may be read by the
-    /// user - it is the expiry time of the lease.
+    /// intervals stored in the Lease object, and the times stored in the
+    /// database.  The reason for the difference is because in the DHCP server,
+    /// the cltt (Client Time Since Last Transmission) is the natural data; in
+    /// the lease file - which may be read by the user - it is the expiry time
+    /// of the lease.
 
     /// @brief Convert Lease Time to Database Times
     ///
@@ -267,8 +267,8 @@ public:
     /// is stored as lease_time (lease time) and expire (time of expiry of the
     /// lease).  They are related by the equations:
     ///
-    /// lease_time = valid_lft
-    /// expire = cltt + valid_lft
+    /// - lease_time = valid_lft
+    /// - expire = cltt + valid_lft
     ///
     /// This method converts from the times in the lease object into times
     /// able to be added to the database.
@@ -280,7 +280,7 @@ public:
     /// @param lease_time Reference to the time_t object where the lease time
     ///         will be put.
     static
-    void convertFromLeaseTime(time_t cltt, uint32_t valid_lft,
+    void convertToDatabaseTime(time_t cltt, uint32_t valid_lft,
                                MYSQL_TIME& expire, uint32_t& lease_time);
 
     /// @brief Convert Database Time to Lease Times
@@ -288,10 +288,10 @@ public:
     /// Within the database, time is stored as lease_time (lease time) and
     /// expire (time of expiry of the lease).  In the DHCP server, the
     /// information is stored as cltt (client last transmit time) and
-    /// valid_lft (valid lifetime).  These arr related by the equations:
+    /// valid_lft (valid lifetime).  These are related by the equations:
     ///
-    /// valid_lft = lease_time
-    /// cltt = expire - lease_time
+    /// - valid_lft = lease_time
+    /// - cltt = expire - lease_time
     ///
     /// This method converts from the times in the database into times
     /// able to be inserted into the lease object.
@@ -303,16 +303,16 @@ public:
     ///        is put.
     /// @param valid_lft Reference to location where valid lifetime is put.
     static
-    void convertToLeaseTime(const MYSQL_TIME& expire, uint32_t lease_time,
-                            time_t& cltt, uint32_t& valid_lft);
+    void convertFromDatabaseTime(const MYSQL_TIME& expire, uint32_t lease_time,
+                                 time_t& cltt, uint32_t& valid_lft);
 
     ///@}
 
 
 private:
-    /// @brief Enum of Statements
+    /// @brief Statement Tags
     ///
-    /// This is provided to set indexes into a list of prepared statements.
+    /// The contents of the enum are indexes into the list of SQL statements
     enum StatementIndex {
         GET_LEASE6,
         GET_VERSION,        // Obtain version number
