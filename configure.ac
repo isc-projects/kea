@@ -1,5 +1,4 @@
-#                                               -*- Autoconf -*-
-# Process this file with autoconf to produce a configure script.
+CXXFLAGS Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
 AC_INIT(bind10-devel, 20120817, bind10-dev@isc.org)
@@ -730,6 +729,64 @@ AC_LINK_IFELSE(
 )
 CPPFLAGS=$CPPFLAGS_SAVED
 LIBS=$LIBS_SAVED
+#===
+
+# Check for MySql.  The path to the mysql_config program is given with
+# the --with-mysql-config (default to /usr/bin/mysql-config).
+
+mysql_config="no"
+AC_ARG_WITH([mysql-config],
+  AC_HELP_STRING([--with-mysql-config=PATH],
+    [specify the path to the mysql_config script]),
+    [mysql_config="$withval"])
+
+if test "${mysql_config}" = "yes" ; then
+    MYSQL_CONFIG="/usr/bin/mysql_config"
+elif test "${mysql_config}" != "no" ; then
+    MYSQL_CONFIG="${withval}"
+fi
+
+if test "$MYSQL_CONFIG" != "" ; then
+    if test -d "$MYSQL_CONFIG" ; then
+        AC_MSG_ERROR([Specified mysql_config program ${MYSQL_CONFIG} is a directory])
+    fi
+    if ! test -x "$MYSQL_CONFIG" ; then
+        AC_MSG_ERROR([--with-mysql-config should point to a mysql_config program])
+    fi
+
+    MYSQL_CPPFLAGS=`$MYSQL_CONFIG --cflags`
+    MYSQL_LIBS=`$MYSQL_CONFIG --libs`
+
+    AC_SUBST(MYSQL_CPPFLAGS)
+    AC_SUBST(MYSQL_LIBS)
+
+    # Check that a simple program using MySQL functions can compile and link.
+    CPPFLAGS_SAVED="$CPPFLAGS"
+    LIBS_SAVED="$LIBS"
+
+    CPPFLAGS="$MYSQL_CPPFLAGS $CPPFLAGS"
+    LIBS="$MYSQL_LIBS $LIBS"
+
+    AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM([#include <mysql/mysql.h>],
+                             [MYSQL mysql_handle;
+                              (void) mysql_init(&mysql_handle);
+                             ])],
+            [AC_MSG_RESULT([checking for MySQL headers and library... yes])],
+            [AC_MSG_RESULT([checking for MySQL headers and library... no])
+             AC_MSG_ERROR([Needs MySQL library])]
+    )
+
+    CPPFLAGS=$CPPFLAGS_SAVED
+    LIBS=$LIBS_SAVED
+
+    # Note that MYSQL is present in the config.h file
+    AC_DEFINE([HAVE_MYSQL], [1], [MySQL is present])
+fi
+
+# ... and at the shell level, so Makefile.am can take action depending on this.
+AM_CONDITIONAL(HAVE_MYSQL, test "$MYSQL_CONFIG" != "")
+
 
 # Check for log4cplus
 log4cplus_path="yes"
@@ -1409,6 +1466,8 @@ dnl includes too
                  ${LOG4CPLUS_LIBS}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
+  MySQL:         $MYSQL_CPPFLAGS
+                 $MYSQL_LIBS
 
 Features:
   $enable_features
