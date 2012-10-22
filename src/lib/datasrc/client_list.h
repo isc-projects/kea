@@ -290,12 +290,14 @@ public:
     ///      the original data source no longer contains the cached zone.
     ReloadResult reload(const dns::Name& zone);
 
+    /// \brief Convenience type shortcut
+    typedef boost::shared_ptr<memory::ZoneWriter> ZoneWriterPtr;
+
     /// \brief Return value of getCachedZoneWriter()
     ///
     /// A pair containing status and the zone writer, for the
     /// getCachedZoneWriter() method.
-    typedef std::pair<ReloadResult, boost::shared_ptr<memory::ZoneWriter> >
-        ZoneWriterPair;
+    typedef std::pair<ReloadResult, ZoneWriterPtr> ZoneWriterPair;
 
     /// \brief Return a zone writer that can be used to reload a zone.
     ///
