@@ -393,7 +393,7 @@ protected:
 /// \brief Shortcut typedef for maps of client_lists.
 typedef boost::shared_ptr<std::map<
     isc::dns::RRClass, boost::shared_ptr<ConfigurableClientList> > >
-        DataSrcClientListsPtr;
+        ClientListMapPtr;
 
 } // namespace datasrc
 } // namespace isc

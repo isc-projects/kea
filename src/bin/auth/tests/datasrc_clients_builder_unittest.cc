@@ -38,7 +38,7 @@ protected:
     TestDataSrcClientsBuilder builder;
     std::list<Command> command_queue; // test command queue
     std::list<Command> delayed_command_queue; // commands available after wait
-    DataSrcClientListsPtr clients_map; // configured clients
+    ClientListMapPtr clients_map; // configured clients
     TestCondVar cond;
     TestMutex queue_mutex;
     TestMutex map_mutex;
@@ -104,7 +104,7 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
     Command reconfig_cmd(RECONFIGURE, ConstElementPtr());
 
     // Initially, no clients should be there
-    EXPECT_EQ(DataSrcClientListsPtr(), clients_map);
+    EXPECT_EQ(ClientListMapPtr(), clients_map);
 
     // A config that doesn't do much except be accepted
     ConstElementPtr good_config = isc::data::Element::fromJSON(
@@ -135,7 +135,7 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
     EXPECT_EQ(1, map_mutex.lock_count);
 
     // Store the nonempty clients map we now have
-    DataSrcClientListsPtr working_config_clients(clients_map);
+    ClientListMapPtr working_config_clients(clients_map);
 
     // If a 'bad' command argument got here, the config validation should
     // have failed already, but still, the handler should return true,
