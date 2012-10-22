@@ -1,4 +1,5 @@
-CXXFLAGS Process this file with autoconf to produce a configure script.
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
 AC_INIT(bind10-devel, 20120817, bind10-dev@isc.org)
@@ -729,11 +730,10 @@ AC_LINK_IFELSE(
 )
 CPPFLAGS=$CPPFLAGS_SAVED
 LIBS=$LIBS_SAVED
-#===
 
 # Check for MySql.  The path to the mysql_config program is given with
-# the --with-mysql-config (default to /usr/bin/mysql-config).
-
+# the --with-mysql-config (default to /usr/bin/mysql-config).  By default,
+# the software is not built with MySQL support enabled.
 mysql_config="no"
 AC_ARG_WITH([mysql-config],
   AC_HELP_STRING([--with-mysql-config=PATH],
