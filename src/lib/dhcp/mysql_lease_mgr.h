@@ -97,6 +97,7 @@ public:
     /// @return smart pointer to the lease (or NULL if a lease is not found)
     virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
 
+
     /// @brief Returns existing IPv4 leases for specified hardware address.
     ///
     /// Although in the usual case there will be only one lease, for mobile
@@ -314,6 +315,7 @@ private:
     ///
     /// The contents of the enum are indexes into the list of SQL statements
     enum StatementIndex {
+        DELETE_LEASE6,      // Delete from lease6 by address
         GET_LEASE6,         // Get lease 6 by address
         GET_VERSION,        // Obtain version number
         INSERT_LEASE6,      // Add entry to lease6 table
@@ -360,12 +362,13 @@ private:
     /// @param what High-level description of the error
     ///
     /// @exception DbOperationError Error doing a database operation
-    inline void checkError(my_bool status, StatementIndex index,
+    inline void checkError(int status, StatementIndex index,
                            const char* what) const {
         if (status != 0) {
             isc_throw(DbOperationError, what << " for <" <<
                       raw_statements_[index] << ">, reason: " <<
-                      mysql_error(mysql_));
+                      mysql_error(mysql_) << " (error code " <<
+                      mysql_errno(mysql_) << ")");
         }
     }
 

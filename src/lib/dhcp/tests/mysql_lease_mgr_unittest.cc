@@ -151,36 +151,72 @@ TEST_F(MySqlLeaseMgrTest, CheckVersion) {
     EXPECT_EQ(1, version.second);
 }
 
+/// @brief Print Elements of Lease6 Structure
+///
+/// @param lease Pointer to lease to print
+/// @param title Title to print before the lease information
+void
+printLease6(const Lease6Ptr& lease, const char* title = NULL) {
+    if (title != NULL) {
+        cout << title << "\n";
+    }
+
+    cout << "   Type:          ";
+    switch (lease->type_) {
+        case Lease6::LEASE_IA_NA:
+            cout << "IA_NA\n";
+            break;
+        case Lease6::LEASE_IA_TA:
+            cout << "IA_TA\n";
+            break;
+        case Lease6::LEASE_IA_PD:
+            cout << "IA_PD\n";
+            break;
+        default:
+            cout << "unknown (" << static_cast<int>(lease->type_) << ")\n";
+    }
+    cout << "   Address:       " << lease->addr_.toText() << "\n";
+    cout << "   Prefix length: " << static_cast<int>(lease->prefixlen_) << "\n";
+    cout << "   IAID:          " << lease->iaid_ << "\n";
+    cout << "   Pref life:     " << lease->preferred_lft_ << "\n";
+    cout << "   Valid life:    " << lease->valid_lft_ << "\n";
+    cout << "   Cltt:          " << lease->cltt_ << "\n";
+    cout << "   Subnet ID:     " << lease->subnet_id_ << "\n";
+}
 
 /// @brief Compare Lease4 Structure
 bool
-compareLease6(const Lease6Ptr& l1, const Lease6Ptr& l2) {
+compareLease6(const Lease6Ptr& first, const Lease6Ptr& second) {
     return (
-        l1->type_ == l2->type_ &&
-        l1->addr_ == l2->addr_ &&
-        l1->prefixlen_ == l2->prefixlen_ &&
-        l1->iaid_ == l2->iaid_ &&
-        l1->hwaddr_ == l2->hwaddr_ &&
-        *l1->duid_ == *l2->duid_ &&
-        l1->preferred_lft_ == l2->preferred_lft_ &&
-        l1->valid_lft_ == l2->valid_lft_ &&
-        l1->cltt_ == l2->cltt_ &&
-        l1->subnet_id_ == l2->subnet_id_
+        first->type_ == second->type_ &&
+        first->addr_ == second->addr_ &&
+        first->prefixlen_ == second->prefixlen_ &&
+        first->iaid_ == second->iaid_ &&
+        first->hwaddr_ == second->hwaddr_ &&
+        *first->duid_ == *second->duid_ &&
+        first->preferred_lft_ == second->preferred_lft_ &&
+        first->valid_lft_ == second->valid_lft_ &&
+        first->cltt_ == second->cltt_ &&
+        first->subnet_id_ == second->subnet_id_
         );
 }
 
 void
-detailCompareLease6(const Lease6Ptr& l1, const Lease6Ptr& l2) {
-    EXPECT_EQ(l1->type_, l2->type_);
-    EXPECT_EQ(l1->addr_, l2->addr_);
-    EXPECT_EQ(l1->prefixlen_, l2->prefixlen_);
-    EXPECT_EQ(l1->iaid_, l2->iaid_);
-    EXPECT_TRUE(l1->hwaddr_ == l2->hwaddr_);
-    EXPECT_TRUE(*l1->duid_ == *l2->duid_);
-    EXPECT_EQ(l1->preferred_lft_, l2->preferred_lft_);
-    EXPECT_EQ(l1->valid_lft_, l2->valid_lft_);
-    EXPECT_EQ(l1->cltt_, l2->cltt_);
-    EXPECT_EQ(l1->subnet_id_, l2->subnet_id_);
+detailCompareLease6(const Lease6Ptr& first, const Lease6Ptr& second) {
+    EXPECT_EQ(first->type_, second->type_);
+
+    // Compare address strings - odd things happen when they are different
+    // as the EXPECT_EQ appears to call the operator uint32_t() function,
+    // which causes an exception to be thrown for IPv6 addresses.
+    EXPECT_EQ(first->addr_.toText(), second->addr_.toText());
+    EXPECT_EQ(first->prefixlen_, second->prefixlen_);
+    EXPECT_EQ(first->iaid_, second->iaid_);
+    EXPECT_TRUE(first->hwaddr_ == second->hwaddr_);
+    EXPECT_TRUE(*first->duid_ == *second->duid_);
+    EXPECT_EQ(first->preferred_lft_, second->preferred_lft_);
+    EXPECT_EQ(first->valid_lft_, second->valid_lft_);
+    EXPECT_EQ(first->cltt_, second->cltt_);
+    EXPECT_EQ(first->subnet_id_, second->subnet_id_);
 }
 
 /// @brief Initialize Lease
@@ -219,7 +255,7 @@ TEST_F(MySqlLeaseMgrTest, BasicLease6) {
     l1->hwaddr_ = std::vector<uint8_t>(6, 0x42);     // Six hex 42's
     l1->duid_ = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0x42)));
     l1->preferred_lft_ = 3600;  // Preferred lifetime
-    l1->valid_lft_ = 3600;      // Actual lifetime
+    l1->valid_lft_ = 3677;      // Actual lifetime
     l1->cltt_ = 123456;         // Current time of day
     l1->subnet_id_ = 73;        // Arbitrary number
 
@@ -227,47 +263,49 @@ TEST_F(MySqlLeaseMgrTest, BasicLease6) {
     Lease6Ptr l2(new Lease6());
     initializeUnusedLease6(l2);
 
-    l2->type_ = Lease6::LEASE_IA_TA;
-    l2->addr_ = L1_ADDRESS;
-    l2->prefixlen_ = 0;
+    l2->type_ = Lease6::LEASE_IA_PD;
+    l2->addr_ = L2_ADDRESS;
+    l2->prefixlen_ = 7;
     l2->iaid_ = 89;
     l2->hwaddr_ = std::vector<uint8_t>(6, 0xf43);     // Six hex 42's
     l2->duid_ = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0x3a)));
     l2->preferred_lft_ = 1800;  // Preferred lifetime
-    l2->valid_lft_ = 5400;      // Actual lifetime
+    l2->valid_lft_ = 5412;      // Actual lifetime
     l2->cltt_ = 234567;         // Current time of day
     l2->subnet_id_ = l1->subnet_id_;    // Same as l1
 
     // Sanity check that the leases are different
     ASSERT_FALSE(compareLease6(l1, l2));
 
-    // Start the tests.  Add the first lease to the database.  Then read it
-    // back to see whether it is what we think it is.
+    // Start the tests.  Add two leases to the database, read them back and
+    // check they are what we think they are.
     Lease6Ptr l_returned;
 
-    ASSERT_TRUE(lmptr_->addLease(l1));
-    lmptr_->commit();
+    EXPECT_TRUE(lmptr_->addLease(l1));
+    EXPECT_TRUE(lmptr_->addLease(l2));
+
     l_returned = lmptr_->getLease6(L1_ADDRESS);
     EXPECT_TRUE(l_returned);
     detailCompareLease6(l1, l_returned);
-    lmptr_->rollback();
-/*
-    // Delete the lease and check that it has been deleted.
+
+    l_returned = lmptr_->getLease6(L2_ADDRESS);
+    EXPECT_TRUE(l_returned);
+    detailCompareLease6(l2, l_returned);
+
+    // Check that we can't add a second lease with the same address
+    EXPECT_FALSE(lmptr_->addLease(l1));
+
+    // Delete a lease, check that it's gone, and that we can't delete it
+    // a second time.
     EXPECT_TRUE(lmptr_->deleteLease6(L1_ADDRESS));
     l_returned = lmptr_->getLease6(L1_ADDRESS);
     EXPECT_FALSE(l_returned);
-
-    // Add the address again and check that we can't add it a second time
-    ASSERT_TRUE(lmptr_->addLease(l1));
-    ASSERT_FALSE(lmptr_->addLease(l1));
-
-    // Add the second lease
-    ASSERT_TRUE(lmptr_->addLease(l2));
-
-    // Finally, delete the lease and check we can't delete it again.
-    EXPECT_TRUE(lmptr_->deleteLease6(L1_ADDRESS));
     EXPECT_FALSE(lmptr_->deleteLease6(L1_ADDRESS));
-    */
+
+    // Check that the second address is still there.
+    l_returned = lmptr_->getLease6(L2_ADDRESS);
+    EXPECT_TRUE(l_returned);
+    detailCompareLease6(l2, l_returned);
 }
 
 }; // end of anonymous namespace
