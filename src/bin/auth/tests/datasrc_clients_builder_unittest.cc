@@ -117,6 +117,18 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
         "}"
     );
 
+    // A configuration that is 'correct' in the top-level, but contains
+    // bad data for the type it specifies
+    ConstElementPtr bad_config = isc::data::Element::fromJSON(
+        "{"
+        "\"IN\": [{"
+        "   \"type\": \"MasterFiles\","
+        "   \"params\": { \"foo\": [ 1, 2, 3, 4  ]},"
+        "   \"cache-enable\": true"
+        "}]"
+        "}"
+    );
+
     reconfig_cmd.second = good_config;
     EXPECT_TRUE(builder.handleCommand(reconfig_cmd));
     EXPECT_EQ(1, clients_map->size());
@@ -129,6 +141,15 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
     // have failed already, but still, the handler should return true,
     // and the clients_map should not be updated.
     reconfig_cmd.second = isc::data::Element::create("{ \"foo\": \"bar\" }");
+    EXPECT_TRUE(builder.handleCommand(reconfig_cmd));
+    EXPECT_EQ(working_config_clients, clients_map);
+    // Building failed, so map mutex should not have been locked again
+    EXPECT_EQ(1, map_mutex.lock_count);
+
+    // The same for a configuration that has bad data for the type it
+    // specifies
+    reconfig_cmd.second = bad_config;
+    builder.handleCommand(reconfig_cmd);
     EXPECT_TRUE(builder.handleCommand(reconfig_cmd));
     EXPECT_EQ(working_config_clients, clients_map);
     // Building failed, so map mutex should not have been locked again

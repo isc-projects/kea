@@ -48,6 +48,8 @@
 /// \param config The configuration value to parse. It is in the form
 ///     as an update from the config manager.
 /// \return A map from RR classes to configured lists.
+/// \throw ConfigurationError if the config element is not in the expected
+///        format (A map of lists)
 template<class List>
 boost::shared_ptr<std::map<isc::dns::RRClass,
                            boost::shared_ptr<List> > > // = ListMap below
@@ -58,7 +60,6 @@ configureDataSourceGeneric(const isc::data::ConstElementPtr& config) {
 
     boost::shared_ptr<ListMap> new_lists(new ListMap);
 
-    // Go through the configuration and create corresponding list.
     const Map& map(config->mapValue());
     for (Map::const_iterator it(map.begin()); it != map.end(); ++it) {
         const isc::dns::RRClass rrclass(it->first);

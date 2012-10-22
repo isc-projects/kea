@@ -47,7 +47,9 @@ namespace datasrc_clientmgr_internal {
 /// \brief ID of commands from the DataSrcClientsMgr to DataSrcClientsBuilder.
 enum CommandID {
     NOOP,         ///< Do nothing.  Only useful for tests; no argument
-    RECONFIGURE,  ///< Reconfigure the datasource client lists, configuration argument (TODO: describe here?)
+    RECONFIGURE,  ///< Reconfigure the datasource client lists,
+                  ///  the argument to the command is the full new
+                  ///  datasources configuration.
     SHUTDOWN,     ///< Shutdown the builder; no argument
     NUM_COMMANDS
 };
@@ -167,8 +169,9 @@ private:
     std::list<datasrc_clientmgr_internal::Command> command_queue_;
     CondVarType cond_;          // condition variable for queue operations
     MutexType queue_mutex_;     // mutex to protect the queue
-    isc::datasrc::DataSrcClientListsPtr clients_map_;
-    MutexType map_mutex_;
+    datasrc::DataSrcClientListsPtr clients_map_;
+                                // map of actual data source client objects
+    MutexType map_mutex_;       // mutex to protect the clients map
 
     BuilderType builder_;
     ThreadType builder_thread_; // for safety this should be placed last
@@ -204,7 +207,7 @@ public:
     /// \throw None
     DataSrcClientsBuilderBase(std::list<Command>* command_queue,
                               CondVarType* cond, MutexType* queue_mutex,
-                              isc::datasrc::DataSrcClientListsPtr* clients_map,
+                              datasrc::DataSrcClientListsPtr* clients_map,
                               MutexType* map_mutex
         ) :
         command_queue_(command_queue), cond_(cond), queue_mutex_(queue_mutex),
@@ -229,17 +232,32 @@ private:
     // implementation really does nothing.
     void doNoop() {}
 
-    void doReconfigure(const isc::data::ConstElementPtr& config) {
+    void doReconfigure(const data::ConstElementPtr& config) {
         if (config) {
+            LOG_INFO(auth_logger,
+                     AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_STARTED);
             try {
-                isc::datasrc::DataSrcClientListsPtr new_clients_map =
+                // Define new_clients_map outside of the block that
+                // has the lock scope; this way, after the swap,
+                // the lock is guaranteed to be released before
+                // the old data is destroyed, minimizing the lock
+                // duration.
+                datasrc::DataSrcClientListsPtr new_clients_map =
                     configureDataSource(config);
-                typename MutexType::Locker locker(*map_mutex_);
-                std::swap(new_clients_map, *clients_map_);
-                // lock is released by leaving scope
-            } catch (const isc::data::TypeError& type_error) {
+                {
+                    typename MutexType::Locker locker(*map_mutex_);
+                    new_clients_map.swap(*clients_map_);
+                } // lock is released by leaving scope
+                LOG_INFO(auth_logger,
+                         AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_SUCCESS);
+            } catch (const datasrc::ConfigurableClientList::ConfigurationError&
+                     config_error) {
                 LOG_ERROR(auth_logger,
                     AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_CONFIG_ERROR).
+                    arg(config_error.what());
+            } catch (const data::TypeError& type_error) {
+                LOG_ERROR(auth_logger,
+                    AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_FORMAT_ERROR).
                     arg(type_error.what());
             } catch (const std::exception& exc) {
                 LOG_ERROR(auth_logger,
@@ -249,6 +267,7 @@ private:
                 LOG_ERROR(auth_logger,
                     AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_UNKNOWN_ERROR);
             }
+            // old clients_map_ data is released by leaving scope
         }
     }
 
@@ -256,7 +275,7 @@ private:
     std::list<Command>* command_queue_;
     CondVarType* cond_;
     MutexType* queue_mutex_;
-    isc::datasrc::DataSrcClientListsPtr* clients_map_;
+    datasrc::DataSrcClientListsPtr* clients_map_;
     MutexType* map_mutex_;
 };
 
@@ -282,7 +301,7 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
                 }
                 current_commands.splice(current_commands.end(),
                                         *command_queue_);
-            } // the lock is release here.
+            } // the lock is released here.
 
             while (keep_running && !current_commands.empty()) {
                 keep_running = handleCommand(current_commands.front());
