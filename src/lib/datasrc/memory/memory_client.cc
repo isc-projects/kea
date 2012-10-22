@@ -66,18 +66,18 @@ public:
 
 } // end of unnamed namespace
 
-InMemoryClient::InMemoryClient(shared_ptr<ZoneTableSegment> zone_table_segment,
+InMemoryClient::InMemoryClient(shared_ptr<ZoneTableSegment> ztable_segment,
                                RRClass rrclass) :
-    zone_table_segment_(zone_table_segment),
+    ztable_segment_(ztable_segment),
     rrclass_(rrclass),
     zone_count_(0),
     file_name_tree_(FileNameTree::create(
-        zone_table_segment_->getMemorySegment(), false))
+        ztable_segment_->getMemorySegment(), false))
 {
 }
 
 InMemoryClient::~InMemoryClient() {
-    MemorySegment& mem_sgmt = zone_table_segment_->getMemorySegment();
+    MemorySegment& mem_sgmt = ztable_segment_->getMemorySegment();
     FileNameDeleter deleter;
     FileNameTree::destroy(mem_sgmt, file_name_tree_, deleter);
 }
@@ -87,7 +87,7 @@ InMemoryClient::loadInternal(const isc::dns::Name& zone_name,
                              const std::string& filename,
                              ZoneData* zone_data)
 {
-    MemorySegment& mem_sgmt = zone_table_segment_->getMemorySegment();
+    MemorySegment& mem_sgmt = ztable_segment_->getMemorySegment();
     SegmentObjectHolder<ZoneData, RRClass> holder(
         mem_sgmt, zone_data, rrclass_);
 
@@ -112,7 +112,7 @@ InMemoryClient::loadInternal(const isc::dns::Name& zone_name,
     const std::string* tstr = node->setData(new std::string(filename));
     delete tstr;
 
-    ZoneTable* zone_table = zone_table_segment_->getHeader().getTable();
+    ZoneTable* zone_table = ztable_segment_->getHeader().getTable();
     const ZoneTable::AddResult result(zone_table->addZone(mem_sgmt, rrclass_,
                                                           zone_name,
                                                           holder.release()));
@@ -144,7 +144,7 @@ InMemoryClient::findZone(const isc::dns::Name& zone_name) const {
     LOG_DEBUG(logger, DBG_TRACE_DATA,
               DATASRC_MEMORY_MEM_FIND_ZONE).arg(zone_name);
 
-    const ZoneTable* zone_table = zone_table_segment_->getHeader().getTable();
+    const ZoneTable* zone_table = ztable_segment_->getHeader().getTable();
     ZoneTable::FindResult result(zone_table->findZone(zone_name));
 
     ZoneFinderPtr finder;
@@ -157,7 +157,7 @@ InMemoryClient::findZone(const isc::dns::Name& zone_name) const {
 
 const ZoneData*
 InMemoryClient::findZoneData(const isc::dns::Name& zone_name) {
-    const ZoneTable* zone_table = zone_table_segment_->getHeader().getTable();
+    const ZoneTable* zone_table = ztable_segment_->getHeader().getTable();
     ZoneTable::FindResult result(zone_table->findZone(zone_name));
     return (result.zone_data);
 }
@@ -169,7 +169,7 @@ InMemoryClient::load(const isc::dns::Name& zone_name,
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_LOAD).arg(zone_name).
         arg(filename);
 
-    MemorySegment& mem_sgmt = zone_table_segment_->getMemorySegment();
+    MemorySegment& mem_sgmt = ztable_segment_->getMemorySegment();
     ZoneData* zone_data = loadZoneData(mem_sgmt, rrclass_, zone_name,
                                        filename);
     return (loadInternal(zone_name, filename, zone_data));
@@ -177,7 +177,7 @@ InMemoryClient::load(const isc::dns::Name& zone_name,
 
 result::Result
 InMemoryClient::load(const isc::dns::Name& zone_name, ZoneIterator& iterator) {
-    MemorySegment& mem_sgmt = zone_table_segment_->getMemorySegment();
+    MemorySegment& mem_sgmt = ztable_segment_->getMemorySegment();
     ZoneData* zone_data = loadZoneData(mem_sgmt, rrclass_, zone_name,
                                        iterator);
     return (loadInternal(zone_name, string(), zone_data));
@@ -309,7 +309,7 @@ public:
 
 ZoneIteratorPtr
 InMemoryClient::getIterator(const Name& name, bool separate_rrs) const {
-    const ZoneTable* zone_table = zone_table_segment_->getHeader().getTable();
+    const ZoneTable* zone_table = ztable_segment_->getHeader().getTable();
     ZoneTable::FindResult result(zone_table->findZone(name));
     if (result.code != result::SUCCESS) {
         isc_throw(DataSourceError, "No such zone: " + name.toText());

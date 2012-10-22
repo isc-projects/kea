@@ -300,14 +300,17 @@ public:
     /// \todo The content yet to be defined.
     struct DataSourceInfo {
         // Plays a role of default constructor too (for vector)
-        DataSourceInfo(const dns::RRClass& rrclass, boost::shared_ptr
-                           <isc::datasrc::memory::ZoneTableSegment>& segment,
+        DataSourceInfo(const dns::RRClass& rrclass,
+                       boost::shared_ptr
+                           <isc::datasrc::memory::ZoneTableSegment>&
+                               ztable_segment,
                        bool has_cache = false);
         DataSourceInfo(DataSourceClient* data_src_client,
                        const DataSourceClientContainerPtr& container,
                        bool has_cache, const dns::RRClass& rrclass,
                        boost::shared_ptr
-                           <isc::datasrc::memory::ZoneTableSegment>& segment);
+                           <isc::datasrc::memory::ZoneTableSegment>&
+                               ztable_segment);
         DataSourceClient* data_src_client_;
         DataSourceClientContainerPtr container_;
 

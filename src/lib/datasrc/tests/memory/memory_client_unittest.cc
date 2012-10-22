@@ -161,9 +161,9 @@ public:
 class MemoryClientTest : public ::testing::Test {
 protected:
     MemoryClientTest() : zclass_(RRClass::IN()),
-                         segment_(new test::ZoneTableSegmentTest(
+                         ztable_segment_(new test::ZoneTableSegmentTest(
                              zclass_, mem_sgmt_)),
-                         client_(new InMemoryClient(segment_, zclass_))
+                         client_(new InMemoryClient(ztable_segment_, zclass_))
     {}
     ~MemoryClientTest() {
         delete client_;
@@ -171,12 +171,12 @@ protected:
     void TearDown() {
         delete client_;
         client_ = NULL;
-        segment_.reset();
+        ztable_segment_.reset();
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated()); // catch any leak here.
     }
     const RRClass zclass_;
     test::MemorySegmentTest mem_sgmt_;
-    shared_ptr<ZoneTableSegment> segment_;
+    shared_ptr<ZoneTableSegment> ztable_segment_;
     InMemoryClient* client_;
 };
 
