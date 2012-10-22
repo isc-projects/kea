@@ -1402,8 +1402,7 @@ public:
         ConfigurableClientList(RRClass::IN()),
         real_(real_list),
         config_(Element::fromJSON("{}")),
-        segment_(isc::datasrc::memory::ZoneTableSegment::create(
-            (*config_.get())))
+        segment_(isc::datasrc::memory::ZoneTableSegment::create(*config_))
     {
         BOOST_FOREACH(const DataSourceInfo& info, real_->getDataSources()) {
              const isc::datasrc::DataSourceClientPtr

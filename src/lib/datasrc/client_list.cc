@@ -93,7 +93,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
     try {
         vector<DataSourceInfo> new_data_sources;
         shared_ptr<ZoneTableSegment> ztable_segment(
-             ZoneTableSegment::create(*config.get()));
+             ZoneTableSegment::create(*config));
         for (; i < config->size(); ++i) {
             // Extract the parameters
             const ConstElementPtr dconf(config->get(i));
