@@ -195,8 +195,8 @@ public:
     ///
     /// This method simply passes the new configuration to the builder
     /// and immediately returns.  This method is basically exception free
-    /// as long as the caller a non NULL value for \c config_arg; it doesn't
-    /// validate the argument further.
+    /// as long as the caller passes a non NULL value for \c config_arg;
+    /// it doesn't validate the argument further.
     ///
     /// \brief isc::InvalidParameter config_arg is NULL.
     /// \brief std::bad_alloc

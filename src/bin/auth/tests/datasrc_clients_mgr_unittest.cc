@@ -50,7 +50,7 @@ shutdownCheck() {
     EXPECT_TRUE(FakeDataSrcClientsBuilder::thread_waited);
 }
 
-// Commonly used patter of checking member variables shared between the
+// Commonly used pattern of checking member variables shared between the
 // manager and builder.
 void
 checkSharedMembers(size_t expected_queue_lock_count,
