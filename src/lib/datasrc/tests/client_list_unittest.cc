@@ -20,6 +20,7 @@
 #include <datasrc/data_source.h>
 #include <datasrc/memory/memory_client.h>
 #include <datasrc/memory/zone_finder.h>
+#include <datasrc/memory/zone_writer.h>
 
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
@@ -862,10 +863,34 @@ ReloadTest<ReloadUpdateType>::doReload(const Name& origin) {
     return (list_->reload(origin));
 };
 
-// TODO: Version with ZoneWriter
+// Version with the ZoneWriter
+class WriterUpdateType {};
+template<>
+ConfigurableClientList::ReloadResult
+ReloadTest<WriterUpdateType>::doReload(const Name& origin) {
+    ConfigurableClientList::ZoneWriterPair
+        result(list_->getCachedZoneWriter(origin));
+    if (result.first == ConfigurableClientList::ZONE_RELOADED) {
+        // Can't use ASSERT_NE here, it would wan't to return(), which
+        // it can't in non-void function.
+        if (result.second) {
+            result.second->load();
+            result.second->install();
+            result.second->cleanup();
+        } else {
+            ADD_FAILURE() << "getCachedZoneWriter returned ZONE_RELOADED, "
+                "but the writer is NULL";
+        }
+    } else {
+        EXPECT_EQ(static_cast<memory::ZoneWriter*>(NULL),
+                  result.second.get());
+    }
+    return (result.first);
+}
 
-typedef ::testing::Types<ReloadUpdateType> UpdateTypes;
-TYPED_TEST_CASE(ReloadTest, ReloadUpdateType);
+// Typedefs for the GTEST guts to make it work
+typedef ::testing::Types<ReloadUpdateType, WriterUpdateType> UpdateTypes;
+TYPED_TEST_CASE(ReloadTest, UpdateTypes);
 
 // Test we can reload a zone
 TYPED_TEST(ReloadTest, reloadSuccess) {

@@ -376,6 +376,12 @@ ConfigurableClientList::reload(const Name& name) {
     return (ZONE_RELOADED);
 }
 
+ConfigurableClientList::ZoneWriterPair
+ConfigurableClientList::getCachedZoneWriter(const Name& ) {
+    // TODO: Just for now.
+    return (ZoneWriterPair(CACHE_DISABLED, ZoneWriterPtr()));
+}
+
 // NOTE: This function is not tested, it would be complicated. However, the
 // purpose of the function is to provide a very thin wrapper to be able to
 // replace the call to DataSourceClientContainer constructor in tests.
