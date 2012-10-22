@@ -17,6 +17,8 @@
 #include <string>
 #include <config.h>
 #include <time.h>
+#include <mysql/mysqld_error.h>
+
 #include <dhcp/mysql_lease_mgr.h>
 #include <asiolink/io_address.h>
 
@@ -155,7 +157,7 @@ public:
     ///         valid only for as long as this MySqlLease6Exchange object is
     ///         in existence.
     MYSQL_BIND* createBindForReceive() {
-        std::cout << "createBindForReceive\n";
+
         // Ensure bind array clear.
         memset(bind_, 0, sizeof(bind_));
         memset(error_, 0, sizeof(error_));
@@ -188,9 +190,8 @@ public:
         bind_[2].error = &error_[2];
 
         // lease_time: unsigned int
-        unsigned lease_time;
         bind_[3].buffer_type = MYSQL_TYPE_LONG;
-        bind_[3].buffer = reinterpret_cast<char*>(&lease_time);
+        bind_[3].buffer = reinterpret_cast<char*>(&lease_time_);
         bind_[3].is_unsigned = true_;
         bind_[3].error = &error_[3];
 
@@ -343,8 +344,9 @@ MySqlLeaseMgr::convertToDatabaseTime(time_t cltt, uint32_t valid_lft,
 }
 
 void
-MySqlLeaseMgr::convertFromDatabaseTime(const MYSQL_TIME& expire, uint32_t lease_time,
-                                  time_t& cltt, uint32_t& valid_lft) {
+MySqlLeaseMgr::convertFromDatabaseTime(const MYSQL_TIME& expire,
+                                       uint32_t lease_time, time_t& cltt,
+                                       uint32_t& valid_lft) {
     valid_lft = lease_time;
 
     // Copy across fields from MYSQL_TIME structure.
@@ -508,20 +510,30 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& /* lease */) {
 
 bool
 MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
+
     // Create the MYSQL_BIND array for the lease
     MySqlLease6Exchange exchange;
     MYSQL_BIND* bind = exchange.CreateBindForSend(lease);
 
     // Bind the parameters to the statement
-    my_bool status = mysql_stmt_bind_param(statements_[INSERT_LEASE6], bind);
+    int status = mysql_stmt_bind_param(statements_[INSERT_LEASE6], bind);
     checkError(status, INSERT_LEASE6, "unable to bind parameters");
 
     // Execute the statement
     status = mysql_stmt_execute(statements_[INSERT_LEASE6]);
-    checkError(status, INSERT_LEASE6, "unable to execute");
+    if (status != 0) {
 
-    // ... and find out whether a row as inserted.
-    return (mysql_stmt_affected_rows(statements_[INSERT_LEASE6]) == 1);
+        // Failure: check for the special case of duplicate entry.  If this is
+        // the case, we return false to indicate that the row was not added.
+        // Otherwise we throw an exception.
+        if (mysql_errno(mysql_) == ER_DUP_ENTRY) {
+            return (false);
+        }
+        checkError(status, INSERT_LEASE6, "unable to execute");
+    }
+
+    // Insert succeeded
+    return (true);
 }
 
 Lease4Ptr
@@ -576,7 +588,7 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
     MYSQL_BIND* outbind = exchange.createBindForReceive();
 
     // Bind the input parameters to the statement
-    my_bool status = mysql_stmt_bind_param(statements_[GET_LEASE6], inbind);
+    int status = mysql_stmt_bind_param(statements_[GET_LEASE6], inbind);
     checkError(status, GET_LEASE6, "unable to bind WHERE clause parameter");
 
     // Bind the output parameters to the statement
@@ -612,8 +624,6 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
         checkError(status, GET_LEASE6, "unable to fetch results");
 
     } else {
-        std::cout << "In the truncation clause\n";
-
     //     We are ignoring truncation for now, so the only other result is
     //     no data was found.  In that case, we return a null Lease6 structure.
     //     This has already been set, so ther action is a no-op.
@@ -648,8 +658,33 @@ MySqlLeaseMgr::deleteLease4(const isc::asiolink::IOAddress& /* addr */) {
 }
 
 bool
-MySqlLeaseMgr::deleteLease6(const isc::asiolink::IOAddress& /* addr */) {
-    return (false);
+MySqlLeaseMgr::deleteLease6(const isc::asiolink::IOAddress& addr) {
+
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+
+    std::string addr6 = addr.toText();
+    unsigned long addr6_length = addr6.size();
+
+    inbind[0].buffer_type = MYSQL_TYPE_STRING;
+    inbind[0].buffer = const_cast<char*>(addr6.c_str());
+    inbind[0].buffer_length = addr6_length;
+    inbind[0].length = &addr6_length;
+
+    // Bind the input parameters to the statement
+    int status = mysql_stmt_bind_param(statements_[DELETE_LEASE6], inbind);
+    checkError(status, DELETE_LEASE6, "unable to bind WHERE clause parameter");
+
+    // Execute
+    status = mysql_stmt_execute(statements_[DELETE_LEASE6]);
+    checkError(status, DELETE_LEASE6, "unable to execute");
+
+    // See how many rows were affected.  Note that the statement may delete
+    // multiple rows.
+    return (mysql_stmt_affected_rows(statements_[DELETE_LEASE6]) > 0);
+
+    return false;
 }
 
 std::string
