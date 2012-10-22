@@ -1,0 +1,92 @@
+# Copyright (C) 2012  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+# This is the BIND 10 DHCP schema specification for MySQL.
+#
+# The schema is reasonably portable (with the exception of the engine
+# specification, which is MySQL-specific).  Minor changes might be needed for
+# other databases.
+
+# To create the schema, either type the command:
+#
+# mysql -u <user> -p <password> <database> < dhcpdb_create.mysql
+#
+# ... at the command prompt, or log in to the MySQL database and at the "mysql>"
+# prompt, issue the command:
+#
+# source dhcpdb_create.mysql
+
+# Holds the IPv4 leases.
+CREATE TABLE lease4 (
+    address INT UNSIGNED UNIQUE NOT NULL,   # IPv4 address
+    hwaddr VARBINARY(20),                   # Hardware address
+    client_id VARBINARY(128),                 # Client ID
+    lease_time INT UNSIGNED,                # Length of the lease (seconds)
+    expire TIMESTAMP,                       # Expiration time of the lease
+    subnet_id INT UNSIGNED                  # Subnet identification
+    ) ENGINE = INNODB;
+
+# Holds the IPv6 leases
+CREATE TABLE lease6 (
+    address VARCHAR(40) UNIQUE NOT NULL,    # IPv6 address (actually 39 is max)
+    hwaddr VARBINARY(20),                   # Hardware address
+    client_id VARBINARY(128),               # Client ID
+    lease_time INT UNSIGNED,                # Length of the lease (seconds)
+    expire TIMESTAMP,                       # Expiration time of the lease
+    subnet_id INT UNSIGNED,                 # Subnet identification
+    pref_lifetime INT UNSIGNED,             # Preferred lifetime
+    lease_type TINYINT,                     # Lease type
+    iaid INT UNSIGNED,                      # IA ID
+    prefix_len TINYINT UNSIGNED             # For IA_PD only
+    ) ENGINE = INNODB;
+
+# ... and a definition of lease6 types.  This table is a convenience for
+# users of the database - if they want to view the lease table and use the
+# type names, they can join this table with the lease6 table
+CREATE TABLE lease6_types (
+    lease_type TINYINT UNIQUE NOT NULL,     # Lease type code
+    name VARCHAR(5)                         # Name of the lease type
+    );
+INSERT INTO lease6_types VALUES (0, "IA_NA");   # Non-temporary v6 addresses
+INSERT INTO lease6_types VALUES (1, "IA_TA");   # Temporary v6 addresses
+INSERT INTO lease6_types VALUES (2, "IA_PD");   # Prefix delegations
+
+# Finally, the version of the schema.  We start at 0.1 during development.
+# This table is only modified during schema upgrades.  For historical reasons
+# (related to the names of the columns in the BIND 10 DNS database file), the
+# first column is called "version" and not "major".
+CREATE TABLE schema_version (
+    version INT NOT NULL,                   # Major version number
+    minor INT NOT NULL                      # Minor version number
+    );
+INSERT INTO schema_version VALUES (0, 1);
+
+COMMIT;
+
+# It is likely that additional indexes will be needed.  However, the
+# increase in lookup performance from these will come at the expense
+# of a decrease in performance during insert operations due to the need
+# to update the indexes.  For this reason, the need for additional indexes
+# will be determined by experiment during performance tests.
+#
+# The most likely additional indexes will cover the following columns:
+#
+# expire
+# To speed up the deletion of expired leases from the database.
+#
+# hwaddr and client_id
+# For lease stability: if a client requests a new lease, try to find an
+# existing or recently expired lease for it so that it can keep using the
+# same IP address.
