@@ -257,7 +257,7 @@ public:
             "                \"noiter.org\", \"null.org\"]"
             "}]")),
         config_(Element::fromJSON("{}")),
-        segment_(ZoneTableSegment::create((*config_.get())))
+        segment_(ZoneTableSegment::create(*config_))
     {
         for (size_t i(0); i < ds_count; ++ i) {
             shared_ptr<MockDataSourceClient>
