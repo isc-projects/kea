@@ -314,7 +314,7 @@ private:
     ///
     /// The contents of the enum are indexes into the list of SQL statements
     enum StatementIndex {
-        GET_LEASE6,
+        GET_LEASE6,         // Get lease 6 by address
         GET_VERSION,        // Obtain version number
         INSERT_LEASE6,      // Add entry to lease6 table
         NUM_STATEMENTS      // Number of statements
