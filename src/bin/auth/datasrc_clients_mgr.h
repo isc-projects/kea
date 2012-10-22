@@ -169,7 +169,7 @@ private:
     std::list<datasrc_clientmgr_internal::Command> command_queue_;
     CondVarType cond_;          // condition variable for queue operations
     MutexType queue_mutex_;     // mutex to protect the queue
-    datasrc::DataSrcClientListsPtr clients_map_;
+    datasrc::ClientListMapPtr clients_map_;
                                 // map of actual data source client objects
     MutexType map_mutex_;       // mutex to protect the clients map
 
@@ -207,7 +207,7 @@ public:
     /// \throw None
     DataSrcClientsBuilderBase(std::list<Command>* command_queue,
                               CondVarType* cond, MutexType* queue_mutex,
-                              datasrc::DataSrcClientListsPtr* clients_map,
+                              datasrc::ClientListMapPtr* clients_map,
                               MutexType* map_mutex
         ) :
         command_queue_(command_queue), cond_(cond), queue_mutex_(queue_mutex),
@@ -242,7 +242,7 @@ private:
                 // the lock is guaranteed to be released before
                 // the old data is destroyed, minimizing the lock
                 // duration.
-                datasrc::DataSrcClientListsPtr new_clients_map =
+                datasrc::ClientListMapPtr new_clients_map =
                     configureDataSource(config);
                 {
                     typename MutexType::Locker locker(*map_mutex_);
@@ -275,7 +275,7 @@ private:
     std::list<Command>* command_queue_;
     CondVarType* cond_;
     MutexType* queue_mutex_;
-    datasrc::DataSrcClientListsPtr* clients_map_;
+    datasrc::ClientListMapPtr* clients_map_;
     MutexType* map_mutex_;
 };
 

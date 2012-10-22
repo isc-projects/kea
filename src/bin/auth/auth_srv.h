@@ -328,8 +328,8 @@ public:
     /// \param new_lists Shared pointer to a new set of data source client
     /// lists.
     /// \return The previous set of lists.  It can be NULL.
-    isc::datasrc::DataSrcClientListsPtr
-        swapDataSrcClientLists(isc::datasrc::DataSrcClientListsPtr new_lists);
+    isc::datasrc::ClientListMapPtr
+        swapDataSrcClientLists(isc::datasrc::ClientListMapPtr new_lists);
 
     /// \brief Returns the currently used client list for the class.
     ///

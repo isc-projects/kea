@@ -74,7 +74,7 @@ configureDataSourceGeneric(const isc::data::ConstElementPtr& config) {
 
 /// \brief Concrete version of configureDataSource() for the
 ///     use with authoritative server implementation.
-isc::datasrc::DataSrcClientListsPtr
+isc::datasrc::ClientListMapPtr
 configureDataSource(const isc::data::ConstElementPtr& config);
 
 #endif  // DATASRC_CONFIG_H

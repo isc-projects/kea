@@ -269,7 +269,7 @@ public:
     const shared_ptr<TSIGKeyRing>* keyring_;
 
     /// The data source client list
-    DataSrcClientListsPtr datasrc_client_lists_;
+    ClientListMapPtr datasrc_client_lists_;
 
     shared_ptr<ConfigurableClientList> getDataSrcClientList(
         const RRClass& rrclass)
@@ -933,8 +933,8 @@ AuthSrv::destroyDDNSForwarder() {
     }
 }
 
-DataSrcClientListsPtr
-AuthSrv::swapDataSrcClientLists(DataSrcClientListsPtr new_lists) {
+ClientListMapPtr
+AuthSrv::swapDataSrcClientLists(ClientListMapPtr new_lists) {
     // TODO: Debug-build only check
     if (!impl_->mutex_.locked()) {
         isc_throw(isc::Unexpected, "Not locked!");
