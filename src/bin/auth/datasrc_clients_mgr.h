@@ -37,6 +37,7 @@
 #include <boost/noncopyable.hpp>
 
 #include <exception>
+#include <cassert>
 #include <list>
 #include <utility>
 
@@ -55,6 +56,9 @@ enum CommandID {
     RECONFIGURE,  ///< Reconfigure the datasource client lists,
                   ///  the argument to the command is the full new
                   ///  datasources configuration.
+    LOADZONE,     ///< Load a new version of zone into a memory,
+                  ///  the argument to the command is a map containing 'class'
+                  ///  and 'origin' elements, both should have been validated.
     SHUTDOWN,     ///< Shutdown the builder; no argument
     NUM_COMMANDS
 };
@@ -290,7 +294,23 @@ namespace datasrc_clientmgr_internal {
 /// threads or locks.
 template <typename MutexType, typename CondVarType>
 class DataSrcClientsBuilderBase : boost::noncopyable {
+private:
+    typedef std::map<dns::RRClass,
+                     boost::shared_ptr<datasrc::ConfigurableClientList> >
+    ClientListsMap;
+
 public:
+    /// \brief Errors in handling the loadzone command.
+    ///
+    /// This exception is expected to be caught within the
+    /// \c DataSrcClientsBuilder implementation, but is defined as public
+    /// so tests can be checked it.
+    class LoadZoneError : public isc::Exception {
+    public:
+        LoadZoneError(const char* file, size_t line, const char* what) :
+            isc::Exception(file, line, what) {}
+    };
+
     /// \brief Constructor.
     ///
     /// It simply sets up a local copy of shared data with the manager.
@@ -365,6 +385,8 @@ private:
         }
     }
 
+    void doLoadZone(const isc::data::ConstElementPtr& arg);
+
     // The following are shared with the manager
     std::list<Command>* command_queue_;
     CondVarType* cond_;
@@ -426,13 +448,16 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
     }
 
     const boost::array<const char*, NUM_COMMANDS> command_desc = {
-        {"NOOP", "RECONFIGURE", "SHUTDOWN"}
+        {"NOOP", "RECONFIGURE", "LOADZONE", "SHUTDOWN"}
     };
     LOG_DEBUG(auth_logger, DBGLVL_TRACE_BASIC,
               AUTH_DATASRC_CLIENTS_BUILDER_COMMAND).arg(command_desc.at(cid));
     switch (command.first) {
     case RECONFIGURE:
         doReconfigure(command.second);
+        break;
+    case LOADZONE:
+        doLoadZone(command.second);
         break;
     case SHUTDOWN:
         return (false);
@@ -443,6 +468,33 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
         assert(false);          // we rejected this case above
     }
     return (true);
+}
+
+template <typename MutexType, typename CondVarType>
+void
+DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
+    const isc::data::ConstElementPtr& arg)
+{
+    // TODO: test bogus class and name
+    const dns::RRClass rrclass(arg->get("class")->stringValue());
+    const dns::Name origin(arg->get("origin")->stringValue());
+    ClientListsMap::iterator found = (*clients_map_)->find(rrclass);
+    if (found == (*clients_map_)->end()) {
+        isc_throw(LoadZoneError, "failed to load a zone " << origin << "/"
+                  << rrclass << ": not configured for the class");
+        return;
+    }
+
+    boost::shared_ptr<datasrc::ConfigurableClientList> client_list =
+        found->second;
+    assert(client_list);
+
+    datasrc::ConfigurableClientList::ReloadResult result;
+    {
+        typename MutexType::Locker locker(*map_mutex_);
+        result = client_list->reload(origin);
+    }
+    assert(result == datasrc::ConfigurableClientList::ZONE_RELOADED);
 }
 } // namespace datasrc_clientmgr_internal
 
