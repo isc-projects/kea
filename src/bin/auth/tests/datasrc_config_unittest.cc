@@ -77,8 +77,8 @@ datasrcConfigHandler(DatasrcConfigTest* fake_server, const std::string&,
 
 class DatasrcConfigTest : public ::testing::Test {
 public:
-    void swapDataSrcClientLists(shared_ptr<std::map<dns::RRClass, ListPtr> >
-                                new_lists)
+    void setDataSrcClientLists(shared_ptr<std::map<dns::RRClass, ListPtr> >
+                               new_lists)
     {
         lists_.clear();         // first empty it
 
@@ -161,7 +161,7 @@ testConfigureDataSource(DatasrcConfigTest& test,
     // possible to easily look that they were called.
     shared_ptr<std::map<dns::RRClass, ListPtr> > lists =
         configureDataSourceGeneric<FakeList>(config);
-    test.swapDataSrcClientLists(lists);
+    test.setDataSrcClientLists(lists);
 }
 
 // Push there a configuration with a single list.
