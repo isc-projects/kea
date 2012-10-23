@@ -475,6 +475,8 @@ void
 DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
     const isc::data::ConstElementPtr& arg)
 {
+    assert(arg);
+
     // TODO: test bogus class and name
     const dns::RRClass rrclass(arg->get("class")->stringValue());
     const dns::Name origin(arg->get("origin")->stringValue());

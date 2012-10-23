@@ -379,7 +379,7 @@ TEST_F(DataSrcClientsBuilderTest, loadBrokenZone) {
                              "/test1-broken.zone.in "
                              TEST_DATA_BUILDDIR "/test1.zone.copied"));
     // there's an error in the new zone file.  reload will be rejected.
-    const Command loadzone_cmd(LOADZONE, isc::data::Element::fromJSON(
+    const Command loadzone_cmd(LOADZONE, Element::fromJSON(
                                    "{\"class\": \"IN\","
                                    " \"origin\": \"test1.example\"}"));
     EXPECT_THROW(builder.handleCommand(loadzone_cmd),
@@ -387,5 +387,76 @@ TEST_F(DataSrcClientsBuilderTest, loadBrokenZone) {
     zoneChecks(clients_map, rrclass);     // zone shouldn't be replaced
 }
 
+TEST_F(DataSrcClientsBuilderTest, loadUnreadableZone) {
+    configureZones();
+
+    // install the zone file as unreadable
+    ASSERT_EQ(0, std::system(INSTALL_PROG " -c -m 000 " TEST_DATA_DIR
+                             "/test1.zone.in "
+                             TEST_DATA_BUILDDIR "/test1.zone.copied"));
+    const Command loadzone_cmd(LOADZONE, Element::fromJSON(
+                                   "{\"class\": \"IN\","
+                                   " \"origin\": \"test1.example\"}"));
+    EXPECT_THROW(builder.handleCommand(loadzone_cmd),
+                 TestDataSrcClientsBuilder::InternalCommandError);
+    zoneChecks(clients_map, rrclass);     // zone shouldn't be replaced
+}
+
+TEST_F(DataSrcClientsBuilderTest, loadZoneInvalidParams) {
+    configureZones();
+
+    // null arg: this causes assertion failure
+    EXPECT_DEATH_IF_SUPPORTED({
+            builder.handleCommand(Command(LOADZONE, ElementPtr()));
+        }, "");
+
+    // zone class is bogus (note that this shouldn't happen except in tests)
+    EXPECT_THROW(builder.handleCommand(
+                     Command(LOADZONE,
+                             Element::fromJSON(
+                                 "{\"origin\": \"test1.example\","
+                                 " \"class\": \"no_such_class\"}"))),
+                 InvalidRRClass);
+
+    // not a string
+    EXPECT_THROW(builder.handleCommand(
+                     Command(LOADZONE,
+                             Element::fromJSON(
+                                 "{\"origin\": \"test1.example\","
+                                 " \"class\": 1}"))),
+                 isc::data::TypeError);
+
+    // class or origin is missing: result in assertion failure
+    EXPECT_DEATH_IF_SUPPORTED({
+            builder.handleCommand(
+                Command(LOADZONE,
+                        Element::fromJSON("{\"origin\": \"test1.example\"}")));
+        }, "");
+    EXPECT_DEATH_IF_SUPPORTED({
+            builder.handleCommand(Command(LOADZONE,
+                                          Element::fromJSON(
+                                              "{\"class\": \"IN\"}")));
+        }, "");
+
+    // zone doesn't exist in the data source
+    EXPECT_THROW(
+        builder.handleCommand(
+            Command(LOADZONE,
+                    Element::fromJSON(
+                        "{\"class\": \"IN\", \"origin\": \"xx\"}"))),
+        TestDataSrcClientsBuilder::InternalCommandError);
+
+    // origin is bogus
+    EXPECT_THROW(builder.handleCommand(
+                     Command(LOADZONE,
+                             Element::fromJSON(
+                                 "{\"class\": \"IN\", \"origin\": \"...\"}"))),
+                 EmptyLabel);
+    EXPECT_THROW(builder.handleCommand(
+                     Command(LOADZONE,
+                             Element::fromJSON(
+                                 "{\"origin\": 10, \"class\": 1}"))),
+                 isc::data::TypeError);
+}
 
 } // unnamed namespace
