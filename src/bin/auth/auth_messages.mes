@@ -77,30 +77,31 @@ to be restarted by hand.
 
 % AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_CONFIG_ERROR Error in data source configuration: %1
 The thread for maintaining data source clients has received a command to
-reconfigure, but the parameter data contains an error. This data should have
-been validated, but may still contain an error. The system is still running
-with the data sources that were previously configured (i.e. as if the
+reconfigure, but the parameter data (the new configuration) contains an
+error. The most likely cause is that the datasource-specific configuration
+data is not what the data source expects. The system is still running with
+the data sources that were previously configured (i.e. as if the
 configuration has not changed), and the configuration data needs to be
 checked.
 The specific problem is printed in the log message.
 
-% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_ERROR Error in data source configuration: %1
+% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_DATASRC_ERROR Error setting up data source: %1
 The thread for maintaining data source clients has received a command to
-reconfigure, but raised an exception while reconfiguring. This is most
-likely a bug in the data source, but it is probably a good idea to verify
-the configuration itself. The system is still running with the data sources
-that were previously configured (i.e. as if the configuration has not
-changed), and the configuration data needs to be checked.
+reconfigure, but a data source failed to set up. This may be a problem with
+the data that is configured (e.g. unreadable files, inconsistent data,
+parser problems, database connection problems, etc.), but it could be a bug
+in the data source implementation as well. The system is still running with
+the data sources that were previously configured (i.e. as if the
+configuration has not changed).
 The specific problem is printed in the log message.
 
-% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_FORMAT_ERROR Error in data source configuration format: %1
+% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_ERROR Internal error setting up data source: %1
 The thread for maintaining data source clients has received a command to
-reconfigure, but the parameter data is not in the expected format (a list of
-maps). This should have been validated, and this error is most likely to be
-a bug in the system, but it is probably a good idea to verify the
-configuration itself. The system is still running with the data sources that
-were previously configured (i.e. as if the configuration has not changed),
-and the configuration data needs to be checked.
+reconfigure, but raised an exception while setting up data sources. This is
+most likely an internal error in a data source, or a bug in the data source
+or the system itself, but it is probably a good idea to verify the
+configuration first. The system is still running with the data sources that
+were previously configured (i.e. as if the configuration has not changed).
 The specific problem is printed in the log message.
 
 % AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_STARTED data source reconfiguration started
@@ -110,13 +111,6 @@ reconfigure, and has now started this process.
 % AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_SUCCESS data source reconfiguration completed succesfully
 The thread for maintaining data source clients has finished reconfiguring
 the data source clients, and is now running with the new configuration.
-
-% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_UNKNOWN_ERROR unknown uncaught exception in data source reconfigure
-The thread for maintaining data source clients has received a command to
-reconfigure, but raised an unknown exception while reconfiguring. This is a
-bug in the data source. The system is still running with the data sources
-that were previously configured (i.e. as if the configuration has not
-changed), and the configuration data needs to be checked.
 
 % AUTH_DATASRC_CLIENTS_BUILDER_STARTED data source builder thread started
 A separate thread for maintaining data source clients has been started.
