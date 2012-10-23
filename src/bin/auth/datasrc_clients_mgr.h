@@ -517,8 +517,15 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
         isc_throw(InternalCommandError, "failed to load zone " << origin
                   << "/" << rrclass << ": not found in any configured "
                   "data source.");
-    default:
-        assert(false);
+    case datasrc::ConfigurableClientList::ZONE_NOT_CACHED:
+        isc_throw(InternalCommandError, "failed to load zone " << origin
+                  << "/" << rrclass << ": not served from memory");
+    case datasrc::ConfigurableClientList::CACHE_DISABLED:
+        // This is an internal error. Auth server must have the cache
+        // enabled.
+        isc_throw(InternalCommandError, "failed to load zone " << origin
+                  << "/" << rrclass << ": internal failure, in-memory cache "
+                  "is somehow disabled");
     }
 }
 } // namespace datasrc_clientmgr_internal
