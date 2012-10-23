@@ -17,9 +17,15 @@
 
 #include <cc/data.h>
 
+#include <datasrc/client.h>
+
 #include <auth/datasrc_clients_mgr.h>
 #include <auth/datasrc_config.h>
+
+#include <testutils/dnsmessage_test.h>
+
 #include "test_datasrc_clients_mgr.h"
+#include "datasrc_util.h"
 
 #include <gtest/gtest.h>
 
@@ -27,12 +33,15 @@
 
 #include <cstdlib>
 #include <string>
+#include <sstream>
 
 using isc::data::ConstElementPtr;
 using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::datasrc;
 using namespace isc::auth::datasrc_clientmgr_internal;
+using namespace isc::auth::unittest;
+using namespace isc::testutils;
 
 namespace {
 class DataSrcClientsBuilderTest : public ::testing::Test {
@@ -41,7 +50,7 @@ protected:
         clients_map(new std::map<RRClass,
                     boost::shared_ptr<ConfigurableClientList> >),
         builder(&command_queue, &cond, &queue_mutex, &clients_map, &map_mutex),
-        cond(command_queue, delayed_command_queue),
+        cond(command_queue, delayed_command_queue), rrclass(RRClass::IN()),
         shutdown_cmd(SHUTDOWN, ConstElementPtr()),
         noop_cmd(NOOP, ConstElementPtr())
     {}
@@ -55,6 +64,7 @@ protected:
     TestCondVar cond;
     TestMutex queue_mutex;
     TestMutex map_mutex;
+    const RRClass rrclass;
     const Command shutdown_cmd;
     const Command noop_cmd;
 };
@@ -210,38 +220,38 @@ TEST_F(DataSrcClientsBuilderTest, badCommand) {
 // It configures the given data source client lists with a memory data source
 // containing two zones, and checks the zones are correctly loaded.
 void
-zoneChecks(ClientListMapPtr clients_map) {
-    EXPECT_EQ(ZoneFinder::SUCCESS, clients_map->find(RRClass::IN())->second->
+zoneChecks(ClientListMapPtr clients_map, RRClass rrclass) {
+    EXPECT_EQ(ZoneFinder::SUCCESS, clients_map->find(rrclass)->second->
               find(Name("ns.test1.example")).finder_->
               find(Name("ns.test1.example"), RRType::A())->code);
-    EXPECT_EQ(ZoneFinder::NXRRSET, clients_map->find(RRClass::IN())->second->
+    EXPECT_EQ(ZoneFinder::NXRRSET, clients_map->find(rrclass)->second->
               find(Name("ns.test1.example")).finder_->
               find(Name("ns.test1.example"), RRType::AAAA())->code);
-    EXPECT_EQ(ZoneFinder::SUCCESS, clients_map->find(RRClass::IN())->second->
+    EXPECT_EQ(ZoneFinder::SUCCESS, clients_map->find(rrclass)->second->
               find(Name("ns.test2.example")).finder_->
               find(Name("ns.test2.example"), RRType::A())->code);
-    EXPECT_EQ(ZoneFinder::NXRRSET, clients_map->find(RRClass::IN())->second->
+    EXPECT_EQ(ZoneFinder::NXRRSET, clients_map->find(rrclass)->second->
               find(Name("ns.test2.example")).finder_->
               find(Name("ns.test2.example"), RRType::AAAA())->code);
 }
 
 // Another helper that checks after completing loadzone command.
 void
-newZoneChecks(ClientListMapPtr clients_map) {
-    EXPECT_EQ(ZoneFinder::SUCCESS, clients_map->find(RRClass::IN())->second->
+newZoneChecks(ClientListMapPtr clients_map, RRClass rrclass) {
+    EXPECT_EQ(ZoneFinder::SUCCESS, clients_map->find(rrclass)->second->
               find(Name("ns.test1.example")).finder_->
               find(Name("ns.test1.example"), RRType::A())->code);
     // now test1.example should have ns/AAAA
-    EXPECT_EQ(ZoneFinder::SUCCESS, clients_map->find(RRClass::IN())->second->
+    EXPECT_EQ(ZoneFinder::SUCCESS, clients_map->find(rrclass)->second->
               find(Name("ns.test1.example")).finder_->
               find(Name("ns.test1.example"), RRType::AAAA())->code);
 
     // test2.example shouldn't change
-    EXPECT_EQ(ZoneFinder::SUCCESS, clients_map->find(RRClass::IN())->second->
+    EXPECT_EQ(ZoneFinder::SUCCESS, clients_map->find(rrclass)->second->
               find(Name("ns.test2.example")).finder_->
               find(Name("ns.test2.example"), RRType::A())->code);
     EXPECT_EQ(ZoneFinder::NXRRSET,
-              clients_map->find(RRClass::IN())->second->
+              clients_map->find(rrclass)->second->
               find(Name("ns.test2.example")).finder_->
               find(Name("ns.test2.example"), RRType::AAAA())->code);
 }
@@ -267,10 +277,14 @@ DataSrcClientsBuilderTest::configureZones() {
             "   \"cache-enable\": true"
             "}]}"));
     clients_map = configureDataSource(config);
-    zoneChecks(clients_map);
+    zoneChecks(clients_map, rrclass);
 }
 
 TEST_F(DataSrcClientsBuilderTest, loadzone) {
+    // pre test condition checks
+    EXPECT_EQ(0, map_mutex.lock_count);
+    EXPECT_EQ(0, map_mutex.unlock_count);
+
     configureZones();
 
     EXPECT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR
@@ -284,8 +298,78 @@ TEST_F(DataSrcClientsBuilderTest, loadzone) {
                                    "{\"class\": \"IN\","
                                    " \"origin\": \"test1.example\"}"));
     EXPECT_TRUE(builder.handleCommand(loadzone_cmd));
+    EXPECT_EQ(1, map_mutex.lock_count); // we should have acquired the lock
+    EXPECT_EQ(1, map_mutex.unlock_count); // and released it.
 
-    newZoneChecks(clients_map);
+    newZoneChecks(clients_map, rrclass);
+}
+
+TEST_F(DataSrcClientsBuilderTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_loadZoneSQLite3
+#else
+       loadZoneSQLite3
+#endif
+    )
+{
+    // Prepare the database first
+    const std::string test_db = TEST_DATA_BUILDDIR "/auth_test.sqlite3.copied";
+    std::stringstream ss("example.org. 3600 IN SOA . . 0 0 0 0 0\n");
+    createSQLite3DB(rrclass, Name("example.org"), test_db.c_str(), ss);
+    // This describes the data source in the configuration
+    const ConstElementPtr config(Element::fromJSON("{"
+        "\"IN\": [{"
+        "    \"type\": \"sqlite3\","
+        "    \"params\": {\"database_file\": \"" + test_db + "\"},"
+        "    \"cache-enable\": true,"
+        "    \"cache-zones\": [\"example.org\"]"
+        "}]}"));
+    clients_map = configureDataSource(config);
+
+    // Check that the A record at www.example.org does not exist
+    EXPECT_EQ(ZoneFinder::NXDOMAIN,
+              clients_map->find(rrclass)->second->
+              find(Name("example.org")).finder_->
+              find(Name("www.example.org"), RRType::A())->code);
+
+    // Add the record to the underlying sqlite database, by loading
+    // it as a separate datasource, and updating it
+    ConstElementPtr sql_cfg = Element::fromJSON("{ \"type\": \"sqlite3\","
+                                                "\"database_file\": \""
+                                                + test_db + "\"}");
+    DataSourceClientContainer sql_ds("sqlite3", sql_cfg);
+    ZoneUpdaterPtr sql_updater =
+        sql_ds.getInstance().getUpdater(Name("example.org"), false);
+    sql_updater->addRRset(
+        *textToRRset("www.example.org. 60 IN A 192.0.2.1"));
+    sql_updater->commit();
+
+    EXPECT_EQ(ZoneFinder::NXDOMAIN,
+              clients_map->find(rrclass)->second->
+              find(Name("example.org")).finder_->
+              find(Name("www.example.org"), RRType::A())->code);
+
+    // Now send the command to reload it
+    const Command loadzone_cmd(LOADZONE, isc::data::Element::fromJSON(
+                                   "{\"class\": \"IN\","
+                                   " \"origin\": \"example.org\"}"));
+    EXPECT_TRUE(builder.handleCommand(loadzone_cmd));
+    // And now it should be present too.
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              clients_map->find(rrclass)->second->
+              find(Name("example.org")).finder_->
+              find(Name("www.example.org"), RRType::A())->code);
+
+    // An error case: the zone has no configuration. (note .com here)
+    const Command nozone_cmd(LOADZONE, isc::data::Element::fromJSON(
+                                 "{\"class\": \"IN\","
+                                 " \"origin\": \"example.com\"}"));
+    EXPECT_THROW(builder.handleCommand(nozone_cmd),
+                 TestDataSrcClientsBuilder::InternalCommandError);
+    // The previous zone is not hurt in any way
+    EXPECT_EQ(ZoneFinder::SUCCESS, clients_map->find(rrclass)->second->
+              find(Name("example.org")).finder_->
+              find(Name("example.org"), RRType::SOA())->code);
 }
 
 } // unnamed namespace
