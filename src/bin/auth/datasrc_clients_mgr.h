@@ -255,18 +255,18 @@ private:
                 LOG_ERROR(auth_logger,
                     AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_CONFIG_ERROR).
                     arg(config_error.what());
-            } catch (const data::TypeError& type_error) {
+            } catch (const datasrc::DataSourceError& ds_error) {
                 LOG_ERROR(auth_logger,
-                    AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_FORMAT_ERROR).
-                    arg(type_error.what());
-            } catch (const std::exception& exc) {
+                    AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_DATASRC_ERROR).
+                    arg(ds_error.what());
+            } catch (const isc::Exception& isc_error) {
                 LOG_ERROR(auth_logger,
                     AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_ERROR).
-                    arg(exc.what());
-            } catch (...) {
-                LOG_ERROR(auth_logger,
-                    AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_UNKNOWN_ERROR);
+                    arg(isc_error.what());
             }
+            // other exceptions are propagated, see
+            // http://bind10.isc.org/ticket/2210#comment:13
+
             // old clients_map_ data is released by leaving scope
         }
     }
