@@ -516,8 +516,9 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
     switch (result) {
     case datasrc::ConfigurableClientList::ZONE_RELOADED:
         // Everything worked fine.
-        //LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_LOAD_ZONE)
-        //  .arg(zone_class).arg(origin);
+        LOG_DEBUG(auth_logger, DBG_AUTH_OPS,
+                  AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE)
+            .arg(origin).arg(rrclass);
         break;
     case datasrc::ConfigurableClientList::ZONE_NOT_FOUND:
         isc_throw(InternalCommandError, "failed to load zone " << origin
