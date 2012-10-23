@@ -419,7 +419,13 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
             } // the lock is released here.
 
             while (keep_running && !current_commands.empty()) {
-                keep_running = handleCommand(current_commands.front());
+                try {
+                    keep_running = handleCommand(current_commands.front());;
+                } catch (const InternalCommandError& e) {
+                    LOG_ERROR(auth_logger,
+                              AUTH_DATASRC_CLIENTS_BUILDER_COMMAND_ERROR).
+                        arg(e.what());
+                }
                 current_commands.pop_front();
             }
         }

@@ -104,6 +104,11 @@ TEST_F(DataSrcClientsBuilderTest, exception) {
     command_queue.push_back(noop_cmd);
     queue_mutex.throw_from_noop = TestMutex::INTEGER;
     EXPECT_DEATH_IF_SUPPORTED({builder.run();}, "");
+
+    command_queue.push_back(noop_cmd);
+    command_queue.push_back(shutdown_cmd); // we need to stop the loop
+    queue_mutex.throw_from_noop = TestMutex::INTERNAL;
+    builder.run();
 }
 
 TEST_F(DataSrcClientsBuilderTest, condWait) {
