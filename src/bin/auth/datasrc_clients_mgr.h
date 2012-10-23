@@ -21,12 +21,16 @@
 #include <log/logger_support.h>
 #include <log/log_dbglevels.h>
 
+#include <auth/datasrc_config.h>
 #include <cc/data.h>
+#include <datasrc/client_list.h>
+#include <dns/rrclass.h>
 
 #include <auth/auth_log.h>
 
 #include <boost/array.hpp>
 #include <boost/bind.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <list>
 #include <utility>
@@ -43,6 +47,9 @@ namespace datasrc_clientmgr_internal {
 /// \brief ID of commands from the DataSrcClientsMgr to DataSrcClientsBuilder.
 enum CommandID {
     NOOP,         ///< Do nothing.  Only useful for tests; no argument
+    RECONFIGURE,  ///< Reconfigure the datasource client lists,
+                  ///  the argument to the command is the full new
+                  ///  datasources configuration.
     SHUTDOWN,     ///< Shutdown the builder; no argument
     NUM_COMMANDS
 };
@@ -92,7 +99,8 @@ public:
     /// \throw std::bad_alloc internal memory allocation failure.
     /// \throw isc::Unexpected general unexpected system errors.
     DataSrcClientsMgrBase() :
-        builder_(&command_queue_, &cond_, &queue_mutex_),
+        builder_(&command_queue_, &cond_, &queue_mutex_, &clients_map_,
+                 &map_mutex_),
         builder_thread_(boost::bind(&BuilderType::run, &builder_))
     {}
 
@@ -161,10 +169,9 @@ private:
     std::list<datasrc_clientmgr_internal::Command> command_queue_;
     CondVarType cond_;          // condition variable for queue operations
     MutexType queue_mutex_;     // mutex to protect the queue
-#ifdef notyet                   // until #2210 or #2212
-    boost::shared_ptr<DataSrcClientListMap> clients_map_;
-    MutexType map_mutex_;
-#endif
+    datasrc::ClientListMapPtr clients_map_;
+                                // map of actual data source client objects
+    MutexType map_mutex_;       // mutex to protect the clients map
 
     BuilderType builder_;
     ThreadType builder_thread_; // for safety this should be placed last
@@ -199,12 +206,12 @@ public:
     ///
     /// \throw None
     DataSrcClientsBuilderBase(std::list<Command>* command_queue,
-                              CondVarType* cond, MutexType* queue_mutex
-#ifdef notyet
-                              // In #2210 or #2212 we pass other data
-#endif
+                              CondVarType* cond, MutexType* queue_mutex,
+                              datasrc::ClientListMapPtr* clients_map,
+                              MutexType* map_mutex
         ) :
-        command_queue_(command_queue), cond_(cond), queue_mutex_(queue_mutex)
+        command_queue_(command_queue), cond_(cond), queue_mutex_(queue_mutex),
+        clients_map_(clients_map), map_mutex_(map_mutex)
     {}
 
     /// \brief The main loop.
@@ -225,10 +232,51 @@ private:
     // implementation really does nothing.
     void doNoop() {}
 
+    void doReconfigure(const data::ConstElementPtr& config) {
+        if (config) {
+            LOG_INFO(auth_logger,
+                     AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_STARTED);
+            try {
+                // Define new_clients_map outside of the block that
+                // has the lock scope; this way, after the swap,
+                // the lock is guaranteed to be released before
+                // the old data is destroyed, minimizing the lock
+                // duration.
+                datasrc::ClientListMapPtr new_clients_map =
+                    configureDataSource(config);
+                {
+                    typename MutexType::Locker locker(*map_mutex_);
+                    new_clients_map.swap(*clients_map_);
+                } // lock is released by leaving scope
+                LOG_INFO(auth_logger,
+                         AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_SUCCESS);
+            } catch (const datasrc::ConfigurableClientList::ConfigurationError&
+                     config_error) {
+                LOG_ERROR(auth_logger,
+                    AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_CONFIG_ERROR).
+                    arg(config_error.what());
+            } catch (const datasrc::DataSourceError& ds_error) {
+                LOG_ERROR(auth_logger,
+                    AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_DATASRC_ERROR).
+                    arg(ds_error.what());
+            } catch (const isc::Exception& isc_error) {
+                LOG_ERROR(auth_logger,
+                    AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_ERROR).
+                    arg(isc_error.what());
+            }
+            // other exceptions are propagated, see
+            // http://bind10.isc.org/ticket/2210#comment:13
+
+            // old clients_map_ data is released by leaving scope
+        }
+    }
+
     // The following are shared with the manager
     std::list<Command>* command_queue_;
     CondVarType* cond_;
     MutexType* queue_mutex_;
+    datasrc::ClientListMapPtr* clients_map_;
+    MutexType* map_mutex_;
 };
 
 // Shortcut typedef for normal use
@@ -253,7 +301,7 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
                 }
                 current_commands.splice(current_commands.end(),
                                         *command_queue_);
-            } // the lock is release here.
+            } // the lock is released here.
 
             while (keep_running && !current_commands.empty()) {
                 keep_running = handleCommand(current_commands.front());
@@ -285,11 +333,14 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
     }
 
     const boost::array<const char*, NUM_COMMANDS> command_desc = {
-        {"NOOP", "SHUTDOWN"}
+        {"NOOP", "RECONFIGURE", "SHUTDOWN"}
     };
     LOG_DEBUG(auth_logger, DBGLVL_TRACE_BASIC,
               AUTH_DATASRC_CLIENTS_BUILDER_COMMAND).arg(command_desc.at(cid));
     switch (command.first) {
+    case RECONFIGURE:
+        doReconfigure(command.second);
+        break;
     case SHUTDOWN:
         return (false);
     case NOOP:

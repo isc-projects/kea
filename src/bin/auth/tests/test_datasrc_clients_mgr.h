@@ -18,6 +18,7 @@
 #include <exceptions/exceptions.h>
 
 #include <auth/datasrc_clients_mgr.h>
+#include <datasrc/datasrc_config.h>
 
 #include <boost/function.hpp>
 
@@ -130,6 +131,8 @@ public:
     static std::list<Command>* command_queue;
     static TestCondVar* cond;
     static TestMutex* queue_mutex;
+    static isc::datasrc::ClientListMapPtr* clients_map;
+    static TestMutex* map_mutex;
     static std::list<Command> command_queue_copy;
     static TestCondVar cond_copy;
     static TestMutex queue_mutex_copy;
@@ -145,12 +148,16 @@ public:
     FakeDataSrcClientsBuilder(
         std::list<Command>* command_queue,
         TestCondVar* cond,
-        TestMutex* queue_mutex)
+        TestMutex* queue_mutex,
+        isc::datasrc::ClientListMapPtr* clients_map,
+        TestMutex* map_mutex)
     {
         FakeDataSrcClientsBuilder::started = false;
         FakeDataSrcClientsBuilder::command_queue = command_queue;
         FakeDataSrcClientsBuilder::cond = cond;
         FakeDataSrcClientsBuilder::queue_mutex = queue_mutex;
+        FakeDataSrcClientsBuilder::clients_map = clients_map;
+        FakeDataSrcClientsBuilder::map_mutex = map_mutex;
         FakeDataSrcClientsBuilder::thread_waited = false;
         FakeDataSrcClientsBuilder::thread_throw_on_wait = NOTHROW;
     }

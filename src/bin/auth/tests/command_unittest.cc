@@ -18,8 +18,6 @@
 
 #include <util/threads/sync.h>
 
-#include <auth/auth_srv.h>
-#include <auth/auth_config.h>
 #include <auth/command.h>
 #include <auth/datasrc_config.h>
 
@@ -193,9 +191,7 @@ zoneChecks(AuthSrv& server) {
 }
 
 void
-installDataSrcClientLists(AuthSrv& server,
-                          AuthSrv::DataSrcClientListsPtr lists)
-{
+installDataSrcClientLists(AuthSrv& server, ClientListMapPtr lists) {
     isc::util::thread::Mutex::Locker locker(
         server.getDataSrcClientListMutex());
     server.swapDataSrcClientLists(lists);

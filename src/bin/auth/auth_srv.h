@@ -19,6 +19,7 @@
 
 #include <datasrc/factory.h>
 #include <datasrc/client_list.h>
+#include <datasrc/datasrc_config.h>
 
 #include <dns/message.h>
 #include <dns/opcode.h>
@@ -302,12 +303,6 @@ public:
     /// If there was no forwarder yet, this method does nothing.
     void destroyDDNSForwarder();
 
-    /// \brief Shortcut typedef used for swapDataSrcClientLists().
-    typedef boost::shared_ptr<std::map<
-        isc::dns::RRClass, boost::shared_ptr<
-                               isc::datasrc::ConfigurableClientList> > >
-    DataSrcClientListsPtr;
-
     /// \brief Swap the currently used set of data source client lists with
     /// given one.
     ///
@@ -333,8 +328,8 @@ public:
     /// \param new_lists Shared pointer to a new set of data source client
     /// lists.
     /// \return The previous set of lists.  It can be NULL.
-    DataSrcClientListsPtr swapDataSrcClientLists(DataSrcClientListsPtr
-                                                 new_lists);
+    isc::datasrc::ClientListMapPtr
+        swapDataSrcClientLists(isc::datasrc::ClientListMapPtr new_lists);
 
     /// \brief Returns the currently used client list for the class.
     ///

@@ -75,6 +75,43 @@ exception type is even more unexpected.  This may rather indicate some
 run time failure than program errors, but in any case the server needs
 to be restarted by hand.
 
+% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_CONFIG_ERROR Error in data source configuration: %1
+The thread for maintaining data source clients has received a command to
+reconfigure, but the parameter data (the new configuration) contains an
+error. The most likely cause is that the datasource-specific configuration
+data is not what the data source expects. The system is still running with
+the data sources that were previously configured (i.e. as if the
+configuration has not changed), and the configuration data needs to be
+checked.
+The specific problem is printed in the log message.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_DATASRC_ERROR Error setting up data source: %1
+The thread for maintaining data source clients has received a command to
+reconfigure, but a data source failed to set up. This may be a problem with
+the data that is configured (e.g. unreadable files, inconsistent data,
+parser problems, database connection problems, etc.), but it could be a bug
+in the data source implementation as well. The system is still running with
+the data sources that were previously configured (i.e. as if the
+configuration has not changed).
+The specific problem is printed in the log message.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_ERROR Internal error setting up data source: %1
+The thread for maintaining data source clients has received a command to
+reconfigure, but raised an exception while setting up data sources. This is
+most likely an internal error in a data source, or a bug in the data source
+or the system itself, but it is probably a good idea to verify the
+configuration first. The system is still running with the data sources that
+were previously configured (i.e. as if the configuration has not changed).
+The specific problem is printed in the log message.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_STARTED data source reconfiguration started
+The thread for maintaining data source clients has received a command to
+reconfigure, and has now started this process.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_SUCCESS data source reconfiguration completed succesfully
+The thread for maintaining data source clients has finished reconfiguring
+the data source clients, and is now running with the new configuration.
+
 % AUTH_DATASRC_CLIENTS_BUILDER_STARTED data source builder thread started
 A separate thread for maintaining data source clients has been started.
 
