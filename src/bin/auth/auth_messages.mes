@@ -358,3 +358,8 @@ or temporary DB connection failure.  So the event is just logged and the
 thread keeps running.  In some rare cases, however, this may indicate
 an internal bug and it may be better to restart the entire program.
 So the log message should be carefully examined.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE loaded zone %1/%2
+This debug message is issued when the separate thread for maintaining data
+source clients successfully loaded the named zone of the named class as a
+result of the 'loadzone' command.
