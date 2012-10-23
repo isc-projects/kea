@@ -1824,6 +1824,8 @@ TEST_F(AuthSrvTest, clientList) {
     EXPECT_FALSE(server.getDataSrcClientList(RRClass::CH()));
 }
 
+#ifdef ENABLE_DEBUG
+
 // We just test the mutex can be locked (exactly once).
 TEST_F(AuthSrvTest, mutex) {
     isc::util::thread::Mutex::Locker l1(server.getDataSrcClientListMutex());
@@ -1836,5 +1838,7 @@ TEST_F(AuthSrvTest, mutex) {
             server.getDataSrcClientListMutex());
     }, isc::InvalidOperation);
 }
+
+#endif // ENABLE_DEBUG
 
 }

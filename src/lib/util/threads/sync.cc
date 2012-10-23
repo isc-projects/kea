@@ -76,12 +76,15 @@ Mutex::Mutex() :
             isc_throw(isc::InvalidOperation, std::strerror(result));
     }
     Deinitializer deinitializer(attributes);
+
+#ifdef ENABLE_DEBUG
     // TODO: Distinguish if debug mode is enabled in compilation.
-    // If so, it should be PTHREAD_MUTEX_NORMAL or NULL
     result = pthread_mutexattr_settype(&attributes, PTHREAD_MUTEX_ERRORCHECK);
     if (result != 0) {
         isc_throw(isc::InvalidOperation, std::strerror(result));
     }
+#endif // ENABLE_DEBUG
+
     auto_ptr<Impl> impl(new Impl);
     result = pthread_mutex_init(&impl->mutex, &attributes);
     switch (result) {
