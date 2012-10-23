@@ -1,3 +1,11 @@
+495.	[func]		team
+	b10-auth now handles reconfiguration of data sources in
+	background using a separate thread.  This means even if the new
+	configuration includes a large amount of data to be loaded into
+	memory (very large zones and/or a very large number of zones),
+	the reconfiguration doesn't block query handling.
+	(Multiple Trac tickets up to #2211)
+
 494.	[bug]		jinmei
 	Fixed a problem that shutting down BIND 10 kept some of the
 	processes alive.  It was two-fold: when the main bind10 process
