@@ -12,7 +12,9 @@ AC_CONFIG_MACRO_DIR([m4macros])
 # Checks for programs.
 AC_PROG_CXX
 
-# Enable debugging facilities?
+# Enable low-performing debugging facilities? This option optionally
+# enables some debugging aids that perform slowly and hence aren't built
+# by default.
 AC_ARG_ENABLE([debug],
   AS_HELP_STRING([--enable-debug],
     [enable debugging (default is no)]),
@@ -22,7 +24,7 @@ AC_ARG_ENABLE([debug],
     *)   AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
   esac],[debug_enabled=no])
 AM_CONDITIONAL([DEBUG_ENABLED], [test x$debug_enabled = xyes])
-AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable debugging facilities?])])
+AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable low-performing debugging facilities?])])
 
 # Libtool configuration
 #
