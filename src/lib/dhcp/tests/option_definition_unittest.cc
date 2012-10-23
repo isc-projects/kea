@@ -163,11 +163,13 @@ TEST_F(OptionDefinitionTest, factoryAddrList6) {
     addrs.push_back(asiolink::IOAddress("::2"));
 
     // Write addresses to the buffer.
-    OptionBuffer buf;
+    OptionBuffer buf(addrs.size() * asiolink::V6ADDRESS_LEN);
     for (int i = 0; i < addrs.size(); ++i) {
-        unsigned char* data = addrs[i].getAddress().to_v6().to_bytes().data();
-        // @todo Are there any sanity checks needed here on this raw pointer?
-        buf.insert(buf.end(), data, data + asiolink::V6ADDRESS_LEN);
+        asio::ip::address_v6::bytes_type addr_bytes =
+            addrs[i].getAddress().to_v6().to_bytes();
+        ASSERT_EQ(asiolink::V6ADDRESS_LEN, addr_bytes.size());
+        std::copy(addr_bytes.begin(), addr_bytes.end(),
+                  buf.begin() + i * asiolink::V6ADDRESS_LEN);
     }
     // Create DHCPv6 option from this buffer. Once option is created it is
     // supposed to have internal list of addresses that it parses out from
@@ -213,11 +215,13 @@ TEST_F(OptionDefinitionTest, factoryAddrList4) {
     addrs.push_back(asiolink::IOAddress("213.41.23.12"));
 
     // Write addresses to the buffer.
-    OptionBuffer buf;
+    OptionBuffer buf(addrs.size() * asiolink::V4ADDRESS_LEN);
     for (int i = 0; i < addrs.size(); ++i) {
-        unsigned char* data = addrs[i].getAddress().to_v4().to_bytes().data();
-        // @todo Are there any sanity checks needed here on this raw pointer?
-        buf.insert(buf.end(), data, data + asiolink::V4ADDRESS_LEN);
+        asio::ip::address_v4::bytes_type addr_bytes =
+            addrs[i].getAddress().to_v4().to_bytes();
+        ASSERT_EQ(asiolink::V4ADDRESS_LEN, addr_bytes.size());
+        std::copy(addr_bytes.begin(), addr_bytes.end(),
+                  buf.begin() + i * asiolink::V4ADDRESS_LEN);
     }
     // Create DHCPv6 option from this buffer. Once option is created it is
     // supposed to have internal list of addresses that it parses out from
@@ -339,20 +343,17 @@ TEST_F(OptionDefinitionTest, factoryIAAddr6) {
     // Check the positive scenario.
     OptionPtr option_v6;
     asiolink::IOAddress addr_v6("2001:0db8::ff00:0042:8329");
+    OptionBuffer buf(asiolink::V6ADDRESS_LEN);
     ASSERT_TRUE(addr_v6.getAddress().is_v6());
-    unsigned char* addr_bytes_v6 = addr_v6.getAddress().to_v6().to_bytes().data();
-    ASSERT_TRUE(addr_bytes_v6 != NULL);
-    OptionBuffer buf;
-    buf.insert(buf.end(), addr_bytes_v6, addr_bytes_v6 + asiolink::V6ADDRESS_LEN);
+    asio::ip::address_v6::bytes_type addr_bytes =
+        addr_v6.getAddress().to_v6().to_bytes();
+    ASSERT_EQ(asiolink::V6ADDRESS_LEN, addr_bytes.size());
+    std::copy(addr_bytes.begin(), addr_bytes.end(), buf.begin());
+
     for (int i = 0; i < option6_iaaddr_len - asiolink::V6ADDRESS_LEN; ++i) {
         buf.push_back(i);
     }
-    //    ASSERT_NO_THROW(option_v6 = factory(Option::V6, D6O_IAADDR, buf));
-    try {
-        option_v6 = factory(Option::V6, D6O_IAADDR, buf);
-    } catch (const Exception& e) {
-        std::cout << e.what() << std::endl;
-    }
+    ASSERT_NO_THROW(option_v6 = factory(Option::V6, D6O_IAADDR, buf));
     ASSERT_TRUE(typeid(*option_v6) == typeid(Option6IAAddr));
     boost::shared_ptr<Option6IAAddr> option_cast_v6 =
         boost::static_pointer_cast<Option6IAAddr>(option_v6);
