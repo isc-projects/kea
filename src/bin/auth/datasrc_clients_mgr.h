@@ -383,11 +383,11 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
         LOG_INFO(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_STOPPED);
     } catch (const std::exception& ex) {
         // We explicitly catch exceptions so we can log it as soon as possible.
-        LOG_ERROR(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_FAILED).
+        LOG_FATAL(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_FAILED).
             arg(ex.what());
         assert(false);
     } catch (...) {
-        LOG_ERROR(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_FAILED_UNEXPECTED);
+        LOG_FATAL(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_FAILED_UNEXPECTED);
         assert(false);
     }
 }
