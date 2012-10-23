@@ -28,6 +28,11 @@ ZoneTableSegment::create(const isc::data::Element&) {
     return (new ZoneTableSegmentLocal);
 }
 
+ZoneTableSegment*
+ZoneTableSegment::create(isc::util::MemorySegment& segment) {
+    return (new ZoneTableSegmentLocal(segment));
+}
+
 void
 ZoneTableSegment::destroy(ZoneTableSegment *segment) {
     delete segment;

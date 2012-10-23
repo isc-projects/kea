@@ -22,6 +22,7 @@
 #include <datasrc/memory/treenode_rrset.h>
 #include <datasrc/memory/zone_finder.h>
 #include <datasrc/memory/zone_data_loader.h>
+#include <datasrc/memory/zone_table_segment.h>
 
 #include <util/memory_segment_local.h>
 
@@ -66,7 +67,14 @@ public:
 
 InMemoryClient::InMemoryClient(util::MemorySegment& mem_sgmt,
                                RRClass rrclass) :
-    mem_sgmt_(mem_sgmt),
+    // FIXME: We currently use the temporary and "unsupported"
+    // constructor of the zone table segment. Once we clarify
+    // how the config thing, we want to change it.
+    zone_table_segment_(ZoneTableSegment::create(mem_sgmt)),
+    // Use the memory segment from the zone table segment. Currently,
+    // it is the same one as the one in parameter, but that will
+    // probably change.
+    mem_sgmt_(zone_table_segment_->getMemorySegment()),
     rrclass_(rrclass),
     zone_count_(0)
 {
@@ -76,13 +84,19 @@ InMemoryClient::InMemoryClient(util::MemorySegment& mem_sgmt,
     file_name_tree_ = FileNameTree::create(mem_sgmt_, false);
 
     zone_table_ = holder.release();
+    // TODO: Once the table is created inside the zone table segment, use that
+    // one.
+    zone_table_segment_->getHeader().setTable(zone_table_);
 }
 
 InMemoryClient::~InMemoryClient() {
     FileNameDeleter deleter;
     FileNameTree::destroy(mem_sgmt_, file_name_tree_, deleter);
 
+    // TODO: Once the table is created inside the zone table segment, do not
+    // destroy it here.
     ZoneTable::destroy(mem_sgmt_, zone_table_, rrclass_);
+    ZoneTableSegment::destroy(zone_table_segment_);
 }
 
 result::Result
