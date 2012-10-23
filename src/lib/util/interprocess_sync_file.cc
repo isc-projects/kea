@@ -14,9 +14,7 @@
 
 #include "interprocess_sync_file.h"
 
-#include <boost/weak_ptr.hpp>
-
-#include <map>
+#include <string>
 
 #include <stdlib.h>
 #include <string.h>
@@ -25,56 +23,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-using namespace isc::util::thread;
-
 namespace isc {
 namespace util {
-
-namespace { // unnamed namespace
-
-typedef std::map<std::string, boost::weak_ptr<isc::util::thread::Mutex> >
-    SyncMap;
-
-SyncMap&
-getSyncMap() {
-    // avoid static destruction fiasco when the SyncMap is destroyed
-    // before clients which use it such as logger objects. This leaks,
-    // but isn't a growing leak.
-    static SyncMap* sync_map = new SyncMap;
-
-    return (*sync_map);
-}
-
-Mutex&
-getSyncMapMutex() {
-    // avoid static destruction fiasco when the Mutex is destroyed
-    // before clients which use it such as logger objects. This leaks,
-    // but isn't a growing leak.
-    static Mutex* sync_map_mutex = new Mutex;
-
-    return (*sync_map_mutex);
-}
-
-} // end of unnamed namespace
-
-InterprocessSyncFile::InterprocessSyncFile(const std::string& task_name) :
-    InterprocessSync(task_name),
-    fd_(-1)
-{
-    Mutex::Locker locker(getSyncMapMutex());
-
-    SyncMap& sync_map = getSyncMap();
-    SyncMap::iterator it = sync_map.find(task_name);
-    if (it != sync_map.end()) {
-        mutex_ = it->second.lock();
-    } else {
-        mutex_.reset(new Mutex());
-        sync_map[task_name] = mutex_;
-    }
-
-    // Lock on sync_map_mutex is automatically unlocked during
-    // destruction when basic block is exited.
-}
 
 InterprocessSyncFile::~InterprocessSyncFile() {
     if (fd_ != -1) {
@@ -83,24 +33,6 @@ InterprocessSyncFile::~InterprocessSyncFile() {
         // The lockfile will continue to exist, and we must not delete
         // it.
     }
-
-    Mutex::Locker locker(getSyncMapMutex());
-
-    // Unref the shared mutex.
-    locker_.reset();
-    mutex_.reset();
-
-    // Remove name from the map if it is unused anymore.
-    SyncMap& sync_map = getSyncMap();
-    SyncMap::iterator it = sync_map.find(task_name_);
-    assert(it != sync_map.end());
-
-    if (it->second.expired()) {
-        sync_map.erase(it);
-    }
-
-    // Lock on sync_map_mutex is automatically unlocked during
-    // destruction when basic block is exited.
 }
 
 bool
@@ -158,13 +90,8 @@ InterprocessSyncFile::lock() {
         return (true);
     }
 
-    // First grab the thread lock...
-    LockerPtr locker(new Mutex::Locker(*mutex_));
-
-    // ... then the file lock.
     if (do_lock(F_SETLKW, F_WRLCK)) {
         is_locked_ = true;
-        locker_ = locker;
         return (true);
     }
 
@@ -177,18 +104,8 @@ InterprocessSyncFile::tryLock() {
         return (true);
     }
 
-    // First grab the thread lock...
-    LockerPtr locker;
-    try {
-        locker.reset(new Mutex::Locker(*mutex_, false));
-    } catch (const Mutex::Locker::AlreadyLocked&) {
-        return (false);
-    }
-
-    // ... then the file lock.
     if (do_lock(F_SETLK, F_WRLCK)) {
         is_locked_ = true;
-        locker_ = locker;
         return (true);
     }
 
@@ -201,14 +118,12 @@ InterprocessSyncFile::unlock() {
         return (true);
     }
 
-    // First release the file lock...
-    if (do_lock(F_SETLKW, F_UNLCK) == 0) {
-        return (false);
+    if (do_lock(F_SETLKW, F_UNLCK)) {
+        is_locked_ = false;
+        return (true);
     }
 
-    locker_.reset();
-    is_locked_ = false;
-    return (true);
+    return (false);
 }
 
 } // namespace util

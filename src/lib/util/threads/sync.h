@@ -15,8 +15,6 @@
 #ifndef B10_THREAD_SYNC_H
 #define B10_THREAD_SYNC_H
 
-#include <exceptions/exceptions.h>
-
 #include <boost/noncopyable.hpp>
 
 #include <cstdlib> // for NULL.
@@ -79,34 +77,17 @@ public:
     /// of function no matter by what means.
     class Locker : boost::noncopyable {
     public:
-        /// \brief Exception thrown when the mutex is already locked and
-        ///     a non-blocking locker is attempted around it.
-        struct AlreadyLocked : public isc::InvalidParameter {
-            AlreadyLocked(const char* file, size_t line, const char* what) :
-                isc::InvalidParameter(file, line, what)
-            {}
-        };
-
         /// \brief Constructor.
         ///
-        /// Locks the mutex. May block for extended period of time if
-        /// \c block is true.
+        /// Locks the mutex. May block for extended period of time.
         ///
         /// \throw isc::InvalidOperation when OS reports error. This usually
         ///     means an attempt to use the mutex in a wrong way (locking
         ///     a mutex second time from the same thread, for example).
-        /// \throw AlreadyLocked if \c block is false and the mutex is
-        ///     already locked.
-        Locker(Mutex& mutex, bool block = true) :
+        Locker(Mutex& mutex) :
             mutex_(mutex)
         {
-            if (block) {
-                mutex.lock();
-            } else {
-                if (!mutex.tryLock()) {
-                    isc_throw(AlreadyLocked, "The mutex is already locked");
-                }
-            }
+            mutex.lock();
         }
 
         /// \brief Destructor.
@@ -126,33 +107,6 @@ public:
     ///
     /// \todo Disable in non-debug build
     bool locked() const;
-
-private:
-    /// \brief Lock the mutex
-    ///
-    /// This method blocks until the mutex can be locked.
-    ///
-    /// Please consider not using this method directly and instead using
-    /// a Mutex::Locker object instead.
-    void lock();
-
-    /// \brief Try to lock the mutex
-    ///
-    /// This method doesn't block and returns immediately with a status
-    /// on whether the lock operation was successful.
-    ///
-    /// Please consider not using this method directly and instead using
-    /// a Mutex::Locker object instead.
-    ///
-    /// \return true if the lock was successful, false otherwise.
-    bool tryLock();
-
-    /// \brief Unlock the mutex
-    ///
-    /// Please consider not using this method directly and instead using
-    /// a Mutex::Locker object instead.
-    void unlock();
-
 private:
     friend class CondVar;
 
@@ -171,6 +125,8 @@ private:
 
     class Impl;
     Impl* impl_;
+    void lock();
+    void unlock();
 };
 
 /// \brief Encapsulation for a condition variable.
