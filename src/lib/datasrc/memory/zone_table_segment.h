@@ -97,7 +97,8 @@ public:
     /// \param config The configuration based on which a derived object
     ///               is returned.
     /// \return Returns a ZoneTableSegment object
-    static ZoneTableSegment* create(const isc::data::Element& config);
+    static ZoneTableSegment* create(const isc::data::Element& config,
+                                    isc::dns::RRClass rrclass);
 
     /// \brief Destroy a ZoneTableSegment
     ///
