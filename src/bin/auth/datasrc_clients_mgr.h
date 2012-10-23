@@ -490,9 +490,16 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
     assert(client_list);
 
     datasrc::ConfigurableClientList::ReloadResult result;
-    {
+    try {
         typename MutexType::Locker locker(*map_mutex_);
         result = client_list->reload(origin);
+    } catch (const isc::Exception& ex) {
+        // We catch our internal exceptions (which will be just ignored) and
+        // propagated others (which should generally be considered fatal and
+        // will make the thread terminate)
+        isc_throw(InternalCommandError, "failed to load a zone " << origin <<
+                  "/" << rrclass << ": error occurred in reload: " <<
+                  ex.what());
     }
     switch (result) {
     case datasrc::ConfigurableClientList::ZONE_RELOADED:

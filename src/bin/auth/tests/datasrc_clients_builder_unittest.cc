@@ -372,4 +372,20 @@ TEST_F(DataSrcClientsBuilderTest,
               find(Name("example.org"), RRType::SOA())->code);
 }
 
+TEST_F(DataSrcClientsBuilderTest, loadBrokenZone) {
+    configureZones();
+
+    ASSERT_EQ(0, std::system(INSTALL_PROG " -c " TEST_DATA_DIR
+                             "/test1-broken.zone.in "
+                             TEST_DATA_BUILDDIR "/test1.zone.copied"));
+    // there's an error in the new zone file.  reload will be rejected.
+    const Command loadzone_cmd(LOADZONE, isc::data::Element::fromJSON(
+                                   "{\"class\": \"IN\","
+                                   " \"origin\": \"test1.example\"}"));
+    EXPECT_THROW(builder.handleCommand(loadzone_cmd),
+                 TestDataSrcClientsBuilder::InternalCommandError);
+    zoneChecks(clients_map, rrclass);     // zone shouldn't be replaced
+}
+
+
 } // unnamed namespace
