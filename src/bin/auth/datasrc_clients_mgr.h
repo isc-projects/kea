@@ -384,10 +384,10 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
         // We explicitly catch exceptions so we can log it as soon as possible.
         LOG_ERROR(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_FAILED).
             arg(ex.what());
-        throw;
+        assert(false);
     } catch (...) {
         LOG_ERROR(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_FAILED_UNEXPECTED);
-        throw;
+        assert(false);
     }
 }
 
