@@ -96,12 +96,8 @@ public:
         typedef typename KeyExtractor1::result_type result_type;
 
         /// @brief Constructor.
-        ///
-        /// @param key1 first key extractor
-        /// @param key2 second key extractor
-        KeyFromKey(const KeyExtractor1 key1 = KeyExtractor1(),
-                   const KeyExtractor2 key2 = KeyExtractor2())
-            : key1_(key1), key2_(key2) { };
+        KeyFromKey()
+            : key1_(KeyExtractor1()), key2_(KeyExtractor2()) { };
 
         /// @brief Extract key with another key.
         ///
