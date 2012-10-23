@@ -39,6 +39,8 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/lexical_cast.hpp>
+
 #include <new>                  // for bad_alloc
 
 using namespace isc::dns;
@@ -289,7 +291,8 @@ TEST_F(MemoryClientTest, loadMemoryAllocationFailures) {
     // Just to check that things get cleaned up
 
     for (int i = 1; i < 16; i++) {
-        SCOPED_TRACE("For throw count = " + i);
+        SCOPED_TRACE("For throw count = " +
+                     boost::lexical_cast<std::string>(i));
         mem_sgmt_.setThrowCount(i);
         EXPECT_THROW({
             // Include the InMemoryClient construction too here. Now,
