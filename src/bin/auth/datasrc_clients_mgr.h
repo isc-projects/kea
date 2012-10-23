@@ -21,16 +21,20 @@
 #include <log/logger_support.h>
 #include <log/log_dbglevels.h>
 
-#include <auth/datasrc_config.h>
-#include <cc/data.h>
-#include <datasrc/client_list.h>
 #include <dns/rrclass.h>
 
+#include <cc/data.h>
+
+#include <datasrc/data_source.h>
+#include <datasrc/client_list.h>
+
 #include <auth/auth_log.h>
+#include <auth/datasrc_config.h>
 
 #include <boost/array.hpp>
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <list>
 #include <utility>
@@ -84,8 +88,63 @@ typedef std::pair<CommandID, data::ConstElementPtr> Command;
 /// \c DataSrcClientsMgr.
 template <typename ThreadType, typename BuilderType, typename MutexType,
           typename CondVarType>
-class DataSrcClientsMgrBase {
+class DataSrcClientsMgrBase : boost::noncopyable {
+private:
+    typedef std::map<dns::RRClass,
+                     boost::shared_ptr<datasrc::ConfigurableClientList> >
+    ClientListsMap;
+
 public:
+    /// \brief Thread-safe accessor to the data source client lists.
+    ///
+    /// This class provides a simple wrapper for searching the client lists
+    /// stored in the DataSrcClientsMgr in a thread-safe manner.
+    /// It ensures the result of \c getClientList() can be used without
+    /// causing a race condition with other threads that can possibly use
+    /// the same manager throughout the lifetime of the holder object.
+    ///
+    /// This also means the holder object is expected to have a short lifetime.
+    /// The application shouldn't try to keep it unnecessarily long.
+    /// It's normally expected to create the holder object on the stack
+    /// of a small scope and automatically let it be destroyed at the end
+    /// of the scope.
+    class Holder {
+    public:
+        Holder(DataSrcClientsMgrBase& mgr) :
+            mgr_(mgr), locker_(mgr_.map_mutex_)
+        {}
+
+        /// \brief Find a data source client list of a specified RR class.
+        ///
+        /// It returns a pointer to the list stored in the manager if found,
+        /// otherwise it returns NULL.  The manager keeps the ownership of
+        /// the pointed object.  Also, it's not safe to get access to the
+        /// object beyond the scope of the holder object.
+        ///
+        /// \note Since the ownership isn't transferred the return value
+        /// could be a bare pointer (and it's probably better in several
+        /// points).  Unfortunately, some unit tests currently don't work
+        /// unless this method effectively shares the ownership with the
+        /// tests.  That's the only reason why we return a shared pointer
+        /// for now.  We should eventually fix it and change the return value
+        /// type (see Trac ticket #2395).  Other applications must not
+        /// assume the ownership is actually shared.
+        boost::shared_ptr<datasrc::ConfigurableClientList> findClientList(
+            const dns::RRClass& rrclass)
+        {
+            const ClientListsMap::const_iterator
+                it = mgr_.clients_map_->find(rrclass);
+            if (it == mgr_.clients_map_->end()) {
+                return (boost::shared_ptr<datasrc::ConfigurableClientList>());
+            } else {
+                return (it->second);
+            }
+        }
+    private:
+        DataSrcClientsMgrBase& mgr_;
+        typename MutexType::Locker locker_;
+    };
+
     /// \brief Constructor.
     ///
     /// It internally invokes a separate thread and waits for further
@@ -99,6 +158,7 @@ public:
     /// \throw std::bad_alloc internal memory allocation failure.
     /// \throw isc::Unexpected general unexpected system errors.
     DataSrcClientsMgrBase() :
+        clients_map_(new ClientListsMap),
         builder_(&command_queue_, &cond_, &queue_mutex_, &clients_map_,
                  &map_mutex_),
         builder_thread_(boost::bind(&BuilderType::run, &builder_))
@@ -144,6 +204,35 @@ public:
         cleanup();              // see below
     }
 
+    /// \brief Handle new full configuration for data source clients.
+    ///
+    /// This method simply passes the new configuration to the builder
+    /// and immediately returns.  This method is basically exception free
+    /// as long as the caller passes a non NULL value for \c config_arg;
+    /// it doesn't validate the argument further.
+    ///
+    /// \brief isc::InvalidParameter config_arg is NULL.
+    /// \brief std::bad_alloc
+    ///
+    /// \param config_arg The new data source configuration.  Must not be NULL.
+    void reconfigure(data::ConstElementPtr config_arg) {
+        if (!config_arg) {
+            isc_throw(InvalidParameter, "Invalid null config argument");
+        }
+        sendCommand(datasrc_clientmgr_internal::RECONFIGURE, config_arg);
+        reconfigureHook();      // for test's customization
+    }
+
+    /// \brief Set the underlying data source client lists to new lists.
+    ///
+    /// This is provided only for some existing tests until we support a
+    /// cleaner way to use faked data source clients.  Non test code or
+    /// newer tests must not use this.
+    void setDataSrcClientLists(datasrc::ClientListMapPtr new_lists) {
+        typename MutexType::Locker locker(map_mutex_);
+        clients_map_ = new_lists;
+    }
+
 private:
     // This is expected to be called at the end of the destructor.  It
     // actually does nothing, but provides a customization point for
@@ -151,14 +240,18 @@ private:
     // state of the class.
     void cleanup() {}
 
+    // same as cleanup(), for reconfigure().
+    void reconfigureHook() {}
+
     void sendCommand(datasrc_clientmgr_internal::CommandID command,
                      data::ConstElementPtr arg)
     {
-        {
-            typename MutexType::Locker locker(queue_mutex_);
-            command_queue_.push_back(
-                datasrc_clientmgr_internal::Command(command, arg));
-        }
+        // The lock will be held until the end of this method.  Only
+        // push_back has to be protected, but we can avoid having an extra
+        // block this way.
+        typename MutexType::Locker locker(queue_mutex_);
+        command_queue_.push_back(
+            datasrc_clientmgr_internal::Command(command, arg));
         cond_.signal();
     }
 
@@ -195,7 +288,7 @@ namespace datasrc_clientmgr_internal {
 /// This class is templated so that we can test it without involving actual
 /// threads or locks.
 template <typename MutexType, typename CondVarType>
-class DataSrcClientsBuilderBase {
+class DataSrcClientsBuilderBase : boost::noncopyable {
 public:
     /// \brief Constructor.
     ///
@@ -294,13 +387,12 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
             std::list<Command> current_commands;
             {
                 // Move all new commands to local queue under the protection of
-                // queue_mutex_.  Note that list::splice() should never throw.
+                // queue_mutex_.
                 typename MutexType::Locker locker(*queue_mutex_);
                 while (command_queue_->empty()) {
                     cond_->wait(*queue_mutex_);
                 }
-                current_commands.splice(current_commands.end(),
-                                        *command_queue_);
+                current_commands.swap(*command_queue_);
             } // the lock is released here.
 
             while (keep_running && !current_commands.empty()) {
@@ -312,12 +404,12 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
         LOG_INFO(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_STOPPED);
     } catch (const std::exception& ex) {
         // We explicitly catch exceptions so we can log it as soon as possible.
-        LOG_ERROR(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_FAILED).
+        LOG_FATAL(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_FAILED).
             arg(ex.what());
-        throw;
+        assert(false);
     } catch (...) {
-        LOG_ERROR(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_FAILED_UNEXPECTED);
-        throw;
+        LOG_FATAL(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_FAILED_UNEXPECTED);
+        assert(false);
     }
 }
 

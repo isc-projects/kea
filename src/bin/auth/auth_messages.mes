@@ -121,11 +121,10 @@ The separate thread for maintaining data source clients has been stopped.
 % AUTH_DATASRC_CLIENTS_SHUTDOWN_ERROR error on waiting for data source builder thread: %1
 This indicates that the separate thread for maintaining data source
 clients had been terminated due to an uncaught exception, and the
-manager notices that at its own termination.  There should have been
-AUTH_DATASRC_CLIENTS_BUILDER_FAILED or
-AUTH_DATASRC_CLIENTS_BUILDER_FAILED_UNEXPECTED error messages in past
-logs.  If this message appears, the maintenance of the data source
-clients hasn't been working properly for some time.
+manager notices that at its own termination.  This is not an expected
+event, because the thread is implemented so it catches all exceptions
+internally.  So, if this message is logged it's most likely some internal
+bug, and it would be nice to file a bug report.
 
 % AUTH_DATASRC_CLIENTS_SHUTDOWN_UNEXPECTED_ERROR Unexpected error on waiting for data source builder thread
 Some exception happens while waiting for the termination of the
