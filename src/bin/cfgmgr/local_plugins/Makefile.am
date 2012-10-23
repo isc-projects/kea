@@ -1,6 +1,7 @@
-# Nothing is installed from this directory.
-# This local_plugins directory is to override plugins when used from running
-# within source tree for testing (instead of installation prefix).
+# Nothing is installed from this directory.  This local_plugins
+# directory overrides the plugins directory when lettuce is run, and the
+# spec file here is used to serve the static zone from the source tree
+# for testing (instead of installation prefix).
 
 noinst_DATA = datasrc.spec
 
