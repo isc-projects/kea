@@ -118,8 +118,8 @@ TEST(DataSrcClientsMgrTest, reconfigure) {
 
     // A valid reconfigure argument
     ConstElementPtr reconfigure_arg = Element::fromJSON(
-        "{" "\"IN\": [{\"type\": \"MasterFiles\", \"params\": {},"
-        "              \"cache-enable\": true}]}");
+        "{""\"IN\": [{\"type\": \"MasterFiles\", \"params\": {},"
+        "             \"cache-enable\": true}]}");
 
     // On reconfigure(), it just send the RECONFIGURE command to the builder
     // thread with the given argument intact.
@@ -165,10 +165,10 @@ TEST(DataSrcClientsMgrTest, holder) {
 
     // Put something in, that should become visible.
     ConstElementPtr reconfigure_arg = Element::fromJSON(
-        "{" "\"IN\": [{\"type\": \"MasterFiles\", \"params\": {},"
-        "              \"cache-enable\": true}],"
-        "\"CH\": [{\"type\": \"MasterFiles\", \"params\": {},"
-        "              \"cache-enable\": true}]}");
+        "{\"IN\": [{\"type\": \"MasterFiles\", \"params\": {},"
+        "           \"cache-enable\": true}],"
+        " \"CH\": [{\"type\": \"MasterFiles\", \"params\": {},"
+        "           \"cache-enable\": true}]}");
     mgr.reconfigure(reconfigure_arg);
     {
         TestDataSrcClientsMgr::Holder holder(mgr);
@@ -181,8 +181,8 @@ TEST(DataSrcClientsMgrTest, holder) {
     // Replace the lists with new lists containing only one list.
     // The CH will disappear again.
     reconfigure_arg = Element::fromJSON(
-        "{" "\"IN\": [{\"type\": \"MasterFiles\", \"params\": {},"
-        "              \"cache-enable\": true}]}");
+        "{\"IN\": [{\"type\": \"MasterFiles\", \"params\": {},"
+        "           \"cache-enable\": true}]}");
     mgr.reconfigure(reconfigure_arg);
     {
         TestDataSrcClientsMgr::Holder holder(mgr);
