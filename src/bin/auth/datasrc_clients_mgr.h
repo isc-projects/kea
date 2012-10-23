@@ -242,11 +242,12 @@ private:
     void sendCommand(datasrc_clientmgr_internal::CommandID command,
                      data::ConstElementPtr arg)
     {
-        {
-            typename MutexType::Locker locker(queue_mutex_);
-            command_queue_.push_back(
-                datasrc_clientmgr_internal::Command(command, arg));
-        }
+        // The lock will be held until the end of this method.  Only
+        // push_back has to be protected, but we can avoid having an extra
+        // block this way.
+        typename MutexType::Locker locker(queue_mutex_);
+        command_queue_.push_back(
+            datasrc_clientmgr_internal::Command(command, arg));
         cond_.signal();
     }
 
