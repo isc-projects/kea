@@ -12,16 +12,25 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <dns/name.h>
+#include <dns/rrclass.h>
+
 #include <cc/data.h>
 
 #include <auth/datasrc_clients_mgr.h>
+#include <auth/datasrc_config.h>
 #include "test_datasrc_clients_mgr.h"
 
 #include <gtest/gtest.h>
 
 #include <boost/function.hpp>
 
+#include <cstdlib>
+#include <string>
+
 using isc::data::ConstElementPtr;
+using namespace isc::dns;
+using namespace isc::data;
 using namespace isc::datasrc;
 using namespace isc::auth::datasrc_clientmgr_internal;
 
@@ -29,16 +38,20 @@ namespace {
 class DataSrcClientsBuilderTest : public ::testing::Test {
 protected:
     DataSrcClientsBuilderTest() :
+        clients_map(new std::map<RRClass,
+                    boost::shared_ptr<ConfigurableClientList> >),
         builder(&command_queue, &cond, &queue_mutex, &clients_map, &map_mutex),
         cond(command_queue, delayed_command_queue),
         shutdown_cmd(SHUTDOWN, ConstElementPtr()),
         noop_cmd(NOOP, ConstElementPtr())
     {}
 
-    TestDataSrcClientsBuilder builder;
+    void configureZones();      // used for loadzone related tests
+
+    ClientListMapPtr clients_map; // configured clients
     std::list<Command> command_queue; // test command queue
     std::list<Command> delayed_command_queue; // commands available after wait
-    ClientListMapPtr clients_map; // configured clients
+    TestDataSrcClientsBuilder builder;
     TestCondVar cond;
     TestMutex queue_mutex;
     TestMutex map_mutex;
@@ -106,7 +119,7 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
     Command reconfig_cmd(RECONFIGURE, ConstElementPtr());
 
     // Initially, no clients should be there
-    EXPECT_EQ(ClientListMapPtr(), clients_map);
+    EXPECT_TRUE(clients_map->empty());
 
     // A config that doesn't do much except be accepted
     ConstElementPtr good_config = isc::data::Element::fromJSON(
@@ -191,6 +204,88 @@ TEST_F(DataSrcClientsBuilderTest, badCommand) {
     EXPECT_THROW(builder.handleCommand(Command(NUM_COMMANDS,
                                                ConstElementPtr())),
                  isc::Unexpected);
+}
+
+// A helper function commonly used for the "loadzone" command tests.
+// It configures the given data source client lists with a memory data source
+// containing two zones, and checks the zones are correctly loaded.
+void
+zoneChecks(ClientListMapPtr clients_map) {
+    EXPECT_EQ(ZoneFinder::SUCCESS, clients_map->find(RRClass::IN())->second->
+              find(Name("ns.test1.example")).finder_->
+              find(Name("ns.test1.example"), RRType::A())->code);
+    EXPECT_EQ(ZoneFinder::NXRRSET, clients_map->find(RRClass::IN())->second->
+              find(Name("ns.test1.example")).finder_->
+              find(Name("ns.test1.example"), RRType::AAAA())->code);
+    EXPECT_EQ(ZoneFinder::SUCCESS, clients_map->find(RRClass::IN())->second->
+              find(Name("ns.test2.example")).finder_->
+              find(Name("ns.test2.example"), RRType::A())->code);
+    EXPECT_EQ(ZoneFinder::NXRRSET, clients_map->find(RRClass::IN())->second->
+              find(Name("ns.test2.example")).finder_->
+              find(Name("ns.test2.example"), RRType::AAAA())->code);
+}
+
+// Another helper that checks after completing loadzone command.
+void
+newZoneChecks(ClientListMapPtr clients_map) {
+    EXPECT_EQ(ZoneFinder::SUCCESS, clients_map->find(RRClass::IN())->second->
+              find(Name("ns.test1.example")).finder_->
+              find(Name("ns.test1.example"), RRType::A())->code);
+    // now test1.example should have ns/AAAA
+    EXPECT_EQ(ZoneFinder::SUCCESS, clients_map->find(RRClass::IN())->second->
+              find(Name("ns.test1.example")).finder_->
+              find(Name("ns.test1.example"), RRType::AAAA())->code);
+
+    // test2.example shouldn't change
+    EXPECT_EQ(ZoneFinder::SUCCESS, clients_map->find(RRClass::IN())->second->
+              find(Name("ns.test2.example")).finder_->
+              find(Name("ns.test2.example"), RRType::A())->code);
+    EXPECT_EQ(ZoneFinder::NXRRSET,
+              clients_map->find(RRClass::IN())->second->
+              find(Name("ns.test2.example")).finder_->
+              find(Name("ns.test2.example"), RRType::AAAA())->code);
+}
+
+void
+DataSrcClientsBuilderTest::configureZones() {
+    ASSERT_EQ(0, std::system(INSTALL_PROG " -c " TEST_DATA_DIR "/test1.zone.in "
+                             TEST_DATA_BUILDDIR "/test1.zone.copied"));
+    ASSERT_EQ(0, std::system(INSTALL_PROG " -c " TEST_DATA_DIR "/test2.zone.in "
+                             TEST_DATA_BUILDDIR "/test2.zone.copied"));
+
+    const ConstElementPtr config(
+        Element::fromJSON(
+            "{"
+            "\"IN\": [{"
+            "   \"type\": \"MasterFiles\","
+            "   \"params\": {"
+            "       \"test1.example\": \"" +
+            std::string(TEST_DATA_BUILDDIR "/test1.zone.copied") + "\","
+            "       \"test2.example\": \"" +
+            std::string(TEST_DATA_BUILDDIR "/test2.zone.copied") + "\""
+            "   },"
+            "   \"cache-enable\": true"
+            "}]}"));
+    clients_map = configureDataSource(config);
+    zoneChecks(clients_map);
+}
+
+TEST_F(DataSrcClientsBuilderTest, loadzone) {
+    configureZones();
+
+    EXPECT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR
+                        "/test1-new.zone.in "
+                        TEST_DATA_BUILDDIR "/test1.zone.copied"));
+    EXPECT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR
+                        "/test2-new.zone.in "
+                        TEST_DATA_BUILDDIR "/test2.zone.copied"));
+
+    const Command loadzone_cmd(LOADZONE, isc::data::Element::fromJSON(
+                                   "{\"class\": \"IN\","
+                                   " \"origin\": \"test1.example\"}"));
+    EXPECT_TRUE(builder.handleCommand(loadzone_cmd));
+
+    newZoneChecks(clients_map);
 }
 
 } // unnamed namespace
