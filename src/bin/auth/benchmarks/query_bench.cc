@@ -127,9 +127,9 @@ public:
                           OutputBuffer& buffer) :
         QueryBenchMark(queries, query_message, buffer)
     {
-        // Note: swapDataSrcClientLists() may be deprecated, but until then
+        // Note: setDataSrcClientLists() may be deprecated, but until then
         // we use it because we want to be synchronized with the server.
-        server_->getDataSrcClientsMgr().swapDataSrcClientLists(
+        server_->getDataSrcClientsMgr().setDataSrcClientLists(
             configureDataSource(
                 Element::fromJSON("{\"IN\":"
                                   "  [{\"type\": \"sqlite3\","
@@ -148,7 +148,7 @@ public:
                          OutputBuffer& buffer) :
         QueryBenchMark(queries, query_message, buffer)
     {
-        server_->getDataSrcClientsMgr().swapDataSrcClientLists(
+        server_->getDataSrcClientsMgr().setDataSrcClientLists(
             configureDataSource(
                 Element::fromJSON("{\"IN\":"
                                   "  [{\"type\": \"MasterFiles\","
