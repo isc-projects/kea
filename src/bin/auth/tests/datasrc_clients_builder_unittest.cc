@@ -442,6 +442,17 @@ TEST_F(DataSrcClientsBuilderTest, loadUnreadableZone) {
     zoneChecks(clients_map, rrclass);     // zone shouldn't be replaced
 }
 
+TEST_F(DataSrcClientsBuilderTest, loadZoneWithoutDataSrc) {
+    // try to execute load command without configuring the zone beforehand.
+    // it should fail.
+    EXPECT_THROW(builder.handleCommand(
+                     Command(LOADZONE,
+                             Element::fromJSON(
+                                 "{\"class\": \"IN\", "
+                                 " \"origin\": \"test1.example\"}"))),
+                 TestDataSrcClientsBuilder::InternalCommandError);
+}
+
 TEST_F(DataSrcClientsBuilderTest, loadZoneInvalidParams) {
     configureZones();
 
