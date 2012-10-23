@@ -15,8 +15,6 @@
 #ifndef B10_THREAD_SYNC_H
 #define B10_THREAD_SYNC_H
 
-#include "config.h"
-
 #include <boost/noncopyable.hpp>
 
 #include <cstdlib> // for NULL.
@@ -112,10 +110,11 @@ public:
 private:
     friend class CondVar;
 
-#ifdef ENABLE_DEBUG
-
     // Commonly called after acquiring the lock, checking and updating
     // internal state for debug.
+    //
+    // Note that this method is only available when the build is
+    // configured with debugging support.
     void postLockAction();
 
     // Commonly called before releasing the lock, checking and updating
@@ -125,9 +124,10 @@ private:
     // fails; otherwise it aborts the process.  This parameter must be set
     // to false if the call to this shouldn't result in an exception (e.g.
     // when called from a destructor).
+    //
+    // Note that this method is only available when the build is
+    // configured with debugging support.
     void preUnlockAction(bool throw_ok);
-
-#endif // ENABLE_DEBUG
 
     class Impl;
     Impl* impl_;
