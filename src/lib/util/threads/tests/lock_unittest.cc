@@ -26,27 +26,27 @@ using namespace isc::util::thread;
 
 namespace {
 
-// If we try to lock the debug mutex multiple times, it should throw.
+#ifdef ENABLE_DEBUG
+
+// If we try to lock the debug mutex multiple times, it should
+// throw. This test will complete properly only when pthread debugging
+// facilities are enabled by configuring the code for debug build.
 TEST(MutexTest, lockMultiple) {
     // TODO: Once we support non-debug mutexes, disable the test if we compile
     // with them.
     Mutex mutex;
-#ifdef ENABLE_DEBUG
     EXPECT_FALSE(mutex.locked()); // Debug-only build
-#endif // ENABLE_DEBUG
 
     Mutex::Locker l1(mutex);
-#ifdef ENABLE_DEBUG
     EXPECT_TRUE(mutex.locked()); // Debug-only build
-#endif // ENABLE_DEBUG
 
     EXPECT_THROW({
         Mutex::Locker l2(mutex); // Attempt to lock again.
     }, isc::InvalidOperation);
-#ifdef ENABLE_DEBUG
     EXPECT_TRUE(mutex.locked()); // Debug-only build
-#endif // ENABLE_DEBUG
 }
+
+#endif // ENABLE_DEBUG
 
 // Destroying a locked mutex is a bad idea as well
 #ifdef EXPECT_DEATH
