@@ -303,7 +303,9 @@ TEST_F(Option6IntTest, setValueint32) {
 }
 
 TEST_F(Option6IntTest, packSuboptions) {
-    uint16_t opt_code = 80;
+    // option code is really uint16_t, but using uint8_t
+    // for easier conversion to uint8_t array.
+    uint8_t opt_code = 80;
 
     boost::shared_ptr<Option6Int<uint32_t> > opt(new Option6Int<uint32_t>(opt_code, 0x01020304));
     OptionPtr sub1(new Option(Option::V6, 0xcafe));
@@ -319,7 +321,7 @@ TEST_F(Option6IntTest, packSuboptions) {
     ASSERT_EQ(40, opt->len());
 
     uint8_t expected[] = {
-        opt_code / 256, opt_code % 256, // type
+        0, opt_code, // type
         0, 36, // length
         0x01, 0x02, 0x03, 0x04, // uint32_t value
 
@@ -345,11 +347,12 @@ TEST_F(Option6IntTest, packSuboptions) {
 
 
 TEST_F(Option6IntTest, unpackSuboptions) {
-    // Create some dummy option.
-    const uint16_t opt_code = 80;
+    // option code is really uint16_t, but using uint8_t
+    // for easier conversion to uint8_t array.
+    const uint8_t opt_code = 80;
     // Prepare reference data.
     uint8_t expected[] = {
-        opt_code / 256, opt_code % 256, // type
+        0, opt_code, // type
         0, 34, // length
         0x01, 0x02, // uint16_t value
 
