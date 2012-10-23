@@ -300,14 +300,14 @@ private:
     ClientListsMap;
 
 public:
-    /// \brief Errors in handling the loadzone command.
+    /// \brief Internal errors in handling commands.
     ///
     /// This exception is expected to be caught within the
     /// \c DataSrcClientsBuilder implementation, but is defined as public
     /// so tests can be checked it.
-    class LoadZoneError : public isc::Exception {
+    class InternalCommandError : public isc::Exception {
     public:
-        LoadZoneError(const char* file, size_t line, const char* what) :
+        InternalCommandError(const char* file, size_t line, const char* what) :
             isc::Exception(file, line, what) {}
     };
 
@@ -480,8 +480,8 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
     const dns::Name origin(arg->get("origin")->stringValue());
     ClientListsMap::iterator found = (*clients_map_)->find(rrclass);
     if (found == (*clients_map_)->end()) {
-        isc_throw(LoadZoneError, "failed to load a zone " << origin << "/"
-                  << rrclass << ": not configured for the class");
+        isc_throw(InternalCommandError, "failed to load a zone " << origin <<
+                  "/" << rrclass << ": not configured for the class");
         return;
     }
 
@@ -494,7 +494,19 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
         typename MutexType::Locker locker(*map_mutex_);
         result = client_list->reload(origin);
     }
-    assert(result == datasrc::ConfigurableClientList::ZONE_RELOADED);
+    switch (result) {
+    case datasrc::ConfigurableClientList::ZONE_RELOADED:
+        // Everything worked fine.
+        //LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_LOAD_ZONE)
+        //  .arg(zone_class).arg(origin);
+        break;
+    case datasrc::ConfigurableClientList::ZONE_NOT_FOUND:
+        isc_throw(InternalCommandError, "failed to load zone " << origin
+                  << "/" << rrclass << ": not found in any configured "
+                  "data source.");
+    default:
+        assert(false);
+    }
 }
 } // namespace datasrc_clientmgr_internal
 
