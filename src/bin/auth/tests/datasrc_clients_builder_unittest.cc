@@ -132,7 +132,7 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
     EXPECT_TRUE(clients_map->empty());
 
     // A config that doesn't do much except be accepted
-    ConstElementPtr good_config = isc::data::Element::fromJSON(
+    ConstElementPtr good_config = Element::fromJSON(
         "{"
         "\"IN\": [{"
         "   \"type\": \"MasterFiles\","
@@ -144,7 +144,7 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
 
     // A configuration that is 'correct' in the top-level, but contains
     // bad data for the type it specifies
-    ConstElementPtr bad_config = isc::data::Element::fromJSON(
+    ConstElementPtr bad_config = Element::fromJSON(
         "{"
         "\"IN\": [{"
         "   \"type\": \"MasterFiles\","
@@ -165,7 +165,7 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
     // If a 'bad' command argument got here, the config validation should
     // have failed already, but still, the handler should return true,
     // and the clients_map should not be updated.
-    reconfig_cmd.second = isc::data::Element::create("{ \"foo\": \"bar\" }");
+    reconfig_cmd.second = Element::create("{ \"foo\": \"bar\" }");
     EXPECT_TRUE(builder.handleCommand(reconfig_cmd));
     EXPECT_EQ(working_config_clients, clients_map);
     // Building failed, so map mutex should not have been locked again
@@ -196,7 +196,7 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
     EXPECT_EQ(2, map_mutex.lock_count);
 
     // And finally, try an empty config to disable all datasource clients
-    reconfig_cmd.second = isc::data::Element::createMap();
+    reconfig_cmd.second = Element::createMap();
     EXPECT_TRUE(builder.handleCommand(reconfig_cmd));
     EXPECT_EQ(0, clients_map->size());
     EXPECT_EQ(3, map_mutex.lock_count);
@@ -280,7 +280,7 @@ DataSrcClientsBuilderTest::configureZones() {
     zoneChecks(clients_map, rrclass);
 }
 
-TEST_F(DataSrcClientsBuilderTest, loadzone) {
+TEST_F(DataSrcClientsBuilderTest, loadZone) {
     // pre test condition checks
     EXPECT_EQ(0, map_mutex.lock_count);
     EXPECT_EQ(0, map_mutex.unlock_count);
@@ -294,7 +294,7 @@ TEST_F(DataSrcClientsBuilderTest, loadzone) {
                         "/test2-new.zone.in "
                         TEST_DATA_BUILDDIR "/test2.zone.copied"));
 
-    const Command loadzone_cmd(LOADZONE, isc::data::Element::fromJSON(
+    const Command loadzone_cmd(LOADZONE, Element::fromJSON(
                                    "{\"class\": \"IN\","
                                    " \"origin\": \"test1.example\"}"));
     EXPECT_TRUE(builder.handleCommand(loadzone_cmd));
@@ -350,7 +350,7 @@ TEST_F(DataSrcClientsBuilderTest,
               find(Name("www.example.org"), RRType::A())->code);
 
     // Now send the command to reload it
-    const Command loadzone_cmd(LOADZONE, isc::data::Element::fromJSON(
+    const Command loadzone_cmd(LOADZONE, Element::fromJSON(
                                    "{\"class\": \"IN\","
                                    " \"origin\": \"example.org\"}"));
     EXPECT_TRUE(builder.handleCommand(loadzone_cmd));
@@ -361,7 +361,7 @@ TEST_F(DataSrcClientsBuilderTest,
               find(Name("www.example.org"), RRType::A())->code);
 
     // An error case: the zone has no configuration. (note .com here)
-    const Command nozone_cmd(LOADZONE, isc::data::Element::fromJSON(
+    const Command nozone_cmd(LOADZONE, Element::fromJSON(
                                  "{\"class\": \"IN\","
                                  " \"origin\": \"example.com\"}"));
     EXPECT_THROW(builder.handleCommand(nozone_cmd),
@@ -370,6 +370,41 @@ TEST_F(DataSrcClientsBuilderTest,
     EXPECT_EQ(ZoneFinder::SUCCESS, clients_map->find(rrclass)->second->
               find(Name("example.org")).finder_->
               find(Name("example.org"), RRType::SOA())->code);
+
+    // attempt of reloading a zone but in-memory cache is disabled.
+    const ConstElementPtr config2(Element::fromJSON("{"
+        "\"IN\": [{"
+        "    \"type\": \"sqlite3\","
+        "    \"params\": {\"database_file\": \"" + test_db + "\"},"
+        "    \"cache-enable\": false,"
+        "    \"cache-zones\": [\"example.org\"]"
+        "}]}"));
+    clients_map = configureDataSource(config2);
+    EXPECT_THROW(builder.handleCommand(
+                     Command(LOADZONE, Element::fromJSON(
+                                 "{\"class\": \"IN\","
+                                 " \"origin\": \"example.org\"}"))),
+                 TestDataSrcClientsBuilder::InternalCommandError);
+
+    // basically impossible case: in-memory cache is completely disabled.
+    // In this implementation of manager-builder, this should never happen,
+    // but it catches it like other configuration error and keeps going.
+    clients_map->clear();
+    boost::shared_ptr<ConfigurableClientList> nocache_list(
+        new ConfigurableClientList(rrclass));
+    nocache_list->configure(
+        Element::fromJSON(
+            "[{\"type\": \"sqlite3\","
+            "  \"params\": {\"database_file\": \"" + test_db + "\"},"
+            "  \"cache-enable\": true,"
+            "  \"cache-zones\": [\"example.org\"]"
+            "}]"), false);           // false = disable cache
+    (*clients_map)[rrclass] = nocache_list;
+    EXPECT_THROW(builder.handleCommand(
+                     Command(LOADZONE, Element::fromJSON(
+                                 "{\"class\": \"IN\","
+                                 " \"origin\": \"example.org\"}"))),
+                 TestDataSrcClientsBuilder::InternalCommandError);
 }
 
 TEST_F(DataSrcClientsBuilderTest, loadBrokenZone) {
