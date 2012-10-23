@@ -51,6 +51,11 @@ public:
     class Locker {
     public:
         Locker(TestMutex& mutex) : mutex_(mutex) {
+            if (mutex.lock_count != mutex.unlock_count) {
+                isc_throw(Unexpected,
+                          "attempt of duplicate lock acquisition");
+            }
+
             ++mutex.lock_count;
             if (mutex.lock_count > 100) { // 100 is an arbitrary choice
                 isc_throw(Unexpected,
@@ -204,6 +209,9 @@ template<>
 void
 TestDataSrcClientsMgr::cleanup();
 
+template<>
+void
+TestDataSrcClientsMgr::reconfigureHook();
 } // namespace auth
 } // namespace isc
 

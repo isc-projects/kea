@@ -15,8 +15,6 @@
 #ifndef DATASRC_CONFIG_H
 #define DATASRC_CONFIG_H
 
-#include "auth_srv.h"
-
 #include <cc/data.h>
 #include <datasrc/client_list.h>
 
