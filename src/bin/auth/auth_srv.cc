@@ -274,10 +274,12 @@ public:
     shared_ptr<ConfigurableClientList> getDataSrcClientList(
         const RRClass& rrclass)
     {
-        // TODO: Debug-build only check
+#ifdef ENABLE_DEBUG
+        // Debug-build only check
         if (!mutex_.locked()) {
             isc_throw(isc::Unexpected, "Not locked!");
         }
+#endif
         const std::map<RRClass, shared_ptr<ConfigurableClientList> >::
             const_iterator it(datasrc_client_lists_->find(rrclass));
         if (it == datasrc_client_lists_->end()) {
@@ -935,10 +937,12 @@ AuthSrv::destroyDDNSForwarder() {
 
 AuthSrv::DataSrcClientListsPtr
 AuthSrv::swapDataSrcClientLists(DataSrcClientListsPtr new_lists) {
-    // TODO: Debug-build only check
+#ifdef ENABLE_DEBUG
+    // Debug-build only check
     if (!impl_->mutex_.locked()) {
         isc_throw(isc::Unexpected, "Not locked!");
     }
+#endif
     std::swap(new_lists, impl_->datasrc_client_lists_);
     return (new_lists);
 }
