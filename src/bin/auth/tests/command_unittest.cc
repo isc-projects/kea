@@ -193,7 +193,7 @@ zoneChecks(AuthSrv& server) {
 
 void
 installDataSrcClientLists(AuthSrv& server, DataSrcClientListsPtr lists) {
-    server.getDataSrcClientsMgr().swapDataSrcClientLists(lists);
+    server.getDataSrcClientsMgr().setDataSrcClientLists(lists);
 }
 
 void
