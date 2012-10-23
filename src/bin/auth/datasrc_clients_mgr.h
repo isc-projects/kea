@@ -475,9 +475,13 @@ void
 DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
     const isc::data::ConstElementPtr& arg)
 {
+    // We assume same basic level validation as this method can only be
+    // called via the manager in practice.  manager is expected to do the
+    // minimal validation.
     assert(arg);
+    assert(arg->get("class"));
+    assert(arg->get("origin"));
 
-    // TODO: test bogus class and name
     const dns::RRClass rrclass(arg->get("class")->stringValue());
     const dns::Name origin(arg->get("origin")->stringValue());
     ClientListsMap::iterator found = (*clients_map_)->find(rrclass);
