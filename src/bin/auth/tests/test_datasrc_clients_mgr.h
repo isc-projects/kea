@@ -43,7 +43,8 @@ public:
     // None: no throw from specialized doNoop()
     // EXCLASS: throw some exception class object
     // INTEGER: throw an integer
-    enum ExceptionFromNoop { NONE, EXCLASS, INTEGER };
+    // INTERNAL: internal error (shouldn't terminate the thread)
+    enum ExceptionFromNoop { NONE, EXCLASS, INTEGER, INTERNAL };
 
     TestMutex() : lock_count(0), unlock_count(0), noop_count(0),
                   throw_from_noop(NONE)
