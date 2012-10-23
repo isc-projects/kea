@@ -67,7 +67,7 @@ createInMemoryClient(RRClass zclass, const Name& zname)
 {
     const ElementPtr config(Element::fromJSON("{}"));
     shared_ptr<ZoneTableSegment> ztable_segment(
-        ZoneTableSegment::create(*config));
+        ZoneTableSegment::create(*config, zclass));
     shared_ptr<InMemoryClient> client(new InMemoryClient(ztable_segment,
                                                          zclass));
     client->load(zname, TEST_ZONE_FILE);
