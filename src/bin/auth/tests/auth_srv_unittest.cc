@@ -39,7 +39,6 @@
 #include <auth/datasrc_config.h>
 
 #include <util/unittests/mock_socketsession.h>
-#include <util/threads/sync.h>
 #include <dns/tests/unittest_util.h>
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
@@ -70,6 +69,7 @@ using namespace isc::util::unittests;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::xfr;
+using namespace isc::auth;
 using namespace isc::asiodns;
 using namespace isc::asiolink;
 using namespace isc::testutils;
@@ -726,11 +726,11 @@ TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
 }
 
 void
-installDataSrcClientLists(AuthSrv& server,
-                          ClientListMapPtr lists)
-{
-    thread::Mutex::Locker locker(server.getDataSrcClientListMutex());
-    server.swapDataSrcClientLists(lists);
+installDataSrcClientLists(AuthSrv& server, ClientListMapPtr lists) {
+    // For now, we use explicit swap than reconfigure() because the latter
+    // involves a separate thread and cannot guarantee the new config is
+    // available for the subsequent test.
+    server.getDataSrcClientsMgr().setDataSrcClientLists(lists);
 }
 
 void
@@ -1438,16 +1438,16 @@ TEST_F(AuthSrvTest,
 {
     // Set real inmem client to proxy
     updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
+    boost::shared_ptr<isc::datasrc::ConfigurableClientList> list;
+    DataSrcClientsMgr& mgr = server.getDataSrcClientsMgr();
     {
-        isc::util::thread::Mutex::Locker locker(
-            server.getDataSrcClientListMutex());
-        boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-            list(new FakeList(server.getDataSrcClientList(RRClass::IN()),
-                              THROW_NEVER, false));
-        ClientListMapPtr lists(new std::map<RRClass, ListPtr>);
-        lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
-        server.swapDataSrcClientLists(lists);
+        DataSrcClientsMgr::Holder holder(mgr);
+        list.reset(new FakeList(holder.findClientList(RRClass::IN()),
+                                THROW_NEVER, false));
     }
+    ClientListMapPtr lists(new std::map<RRClass, ListPtr>);
+    lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
+    server.getDataSrcClientsMgr().setDataSrcClientLists(lists);
 
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -1470,14 +1470,16 @@ setupThrow(AuthSrv& server, ThrowWhen throw_when, bool isc_exception,
 {
     updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
-    isc::util::thread::Mutex::Locker locker(
-        server.getDataSrcClientListMutex());
-    boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        list(new FakeList(server.getDataSrcClientList(RRClass::IN()),
-                          throw_when, isc_exception, rrset));
+    boost::shared_ptr<isc::datasrc::ConfigurableClientList> list;
+    DataSrcClientsMgr& mgr = server.getDataSrcClientsMgr();
+    {           // we need to limit the scope so swap is outside of it
+        DataSrcClientsMgr::Holder holder(mgr);
+        list.reset(new FakeList(holder.findClientList(RRClass::IN()),
+                                throw_when, isc_exception, rrset));
+    }
     ClientListMapPtr lists(new std::map<RRClass, ListPtr>);
     lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
-    server.swapDataSrcClientLists(lists);
+    mgr.setDataSrcClientLists(lists);
 }
 
 TEST_F(AuthSrvTest,
@@ -1782,59 +1784,6 @@ TEST_F(AuthSrvTest, DDNSForwardCreateDestroy) {
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOTIMP(),
                 Opcode::UPDATE().getCode(), QR_FLAG, 0, 0, 0, 0);
-}
-
-// Check the client list accessors
-TEST_F(AuthSrvTest, clientList) {
-    // We need to lock the mutex to make the (get|set)ClientList happy.
-    // There's a debug-build only check in them to make sure everything
-    // locks them and we call them directly here.
-    isc::util::thread::Mutex::Locker locker(
-        server.getDataSrcClientListMutex());
-
-    ClientListMapPtr lists; // initially empty
-
-    // The lists don't exist. Therefore, the list of RRClasses is empty.
-    EXPECT_TRUE(server.swapDataSrcClientLists(lists)->empty());
-
-    // Put something in.
-    const ListPtr list(new ConfigurableClientList(RRClass::IN()));
-    const ListPtr list2(new ConfigurableClientList(RRClass::CH()));
-
-    lists.reset(new std::map<RRClass, ListPtr>);
-    lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
-    lists->insert(pair<RRClass, ListPtr>(RRClass::CH(), list2));
-    server.swapDataSrcClientLists(lists);
-
-    // And the lists can be retrieved.
-    EXPECT_EQ(list, server.getDataSrcClientList(RRClass::IN()));
-    EXPECT_EQ(list2, server.getDataSrcClientList(RRClass::CH()));
-
-    // Replace the lists with new lists containing only one list.
-    lists.reset(new std::map<RRClass, ListPtr>);
-    lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
-    lists = server.swapDataSrcClientLists(lists);
-
-    // Old one had two lists.  That confirms our swap for IN and CH classes
-    // (i.e., no other entries were there).
-    EXPECT_EQ(2, lists->size());
-
-    // The CH list really got deleted.
-    EXPECT_EQ(list, server.getDataSrcClientList(RRClass::IN()));
-    EXPECT_FALSE(server.getDataSrcClientList(RRClass::CH()));
-}
-
-// We just test the mutex can be locked (exactly once).
-TEST_F(AuthSrvTest, mutex) {
-    isc::util::thread::Mutex::Locker l1(server.getDataSrcClientListMutex());
-    // TODO: Once we have non-debug build, this one will not work, since
-    // we currently use the fact that we can't lock twice from the same
-    // thread. In the non-debug mode, this would deadlock.
-    // Skip then.
-    EXPECT_THROW({
-        isc::util::thread::Mutex::Locker l2(
-            server.getDataSrcClientListMutex());
-    }, isc::InvalidOperation);
 }
 
 }

@@ -71,14 +71,16 @@ TEST_F(DataSrcClientsBuilderTest, runMultiCommands) {
 
 TEST_F(DataSrcClientsBuilderTest, exception) {
     // Let the noop command handler throw exceptions and see if we can see
-    // them.
+    // them.  Right now, we simply abort to prevent the system from running
+    // with half-broken state.  Eventually we should introduce a better
+    // error handling.
     command_queue.push_back(noop_cmd);
     queue_mutex.throw_from_noop = TestMutex::EXCLASS;
-    EXPECT_THROW(builder.run(), isc::Exception);
+    EXPECT_DEATH_IF_SUPPORTED({builder.run();}, "");
 
     command_queue.push_back(noop_cmd);
     queue_mutex.throw_from_noop = TestMutex::INTEGER;
-    EXPECT_THROW(builder.run(), int);
+    EXPECT_DEATH_IF_SUPPORTED({builder.run();}, "");
 }
 
 TEST_F(DataSrcClientsBuilderTest, condWait) {

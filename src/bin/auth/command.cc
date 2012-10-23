@@ -15,13 +15,13 @@
 #include <auth/command.h>
 #include <auth/auth_log.h>
 #include <auth/auth_srv.h>
+#include <auth/datasrc_clients_mgr.h>
 
 #include <cc/data.h>
 #include <datasrc/client_list.h>
 #include <config/ccsession.h>
 #include <exceptions/exceptions.h>
 #include <dns/rrclass.h>
-#include <util/threads/sync.h>
 
 #include <string>
 
@@ -188,14 +188,11 @@ public:
         if (!origin_elem) {
             isc_throw(AuthCommandError, "Zone origin is missing");
         }
-        Name origin(origin_elem->stringValue());
+        const Name origin(origin_elem->stringValue());
 
-        // We're going to work with the client lists. They may be used
-        // from a different thread too, protect them.
-        isc::util::thread::Mutex::Locker locker(
-            server.getDataSrcClientListMutex());
-        const boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-            list(server.getDataSrcClientList(zone_class));
+        DataSrcClientsMgr::Holder holder(server.getDataSrcClientsMgr());
+        boost::shared_ptr<ConfigurableClientList> list =
+            holder.findClientList(zone_class);
 
         if (!list) {
             isc_throw(AuthCommandError, "There's no client list for "

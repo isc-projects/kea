@@ -17,6 +17,8 @@
 
 #include "test_datasrc_clients_mgr.h"
 
+#include <cassert>
+
 namespace isc {
 namespace auth {
 namespace datasrc_clientmgr_internal {
@@ -69,6 +71,18 @@ TestDataSrcClientsMgr::cleanup() {
     FakeDataSrcClientsBuilder::cond_copy = cond_;
     FakeDataSrcClientsBuilder::cond =
         &FakeDataSrcClientsBuilder::cond_copy;
+}
+
+template<>
+void
+TestDataSrcClientsMgr::reconfigureHook() {
+    using namespace datasrc_clientmgr_internal;
+
+    // Simply replace the local map, ignoring bogus config value.
+    assert(command_queue_.front().first == RECONFIGURE);
+    try {
+        clients_map_ = configureDataSource(command_queue_.front().second);
+    } catch (...) {}
 }
 
 } // namespace auth

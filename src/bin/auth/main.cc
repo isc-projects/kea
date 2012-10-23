@@ -18,7 +18,6 @@
 
 #include <util/buffer.h>
 #include <util/io/socketsession.h>
-#include <util/threads/sync.h>
 
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -95,32 +94,23 @@ datasrcConfigHandler(AuthSrv* server, bool* first_time,
                      const isc::config::ConfigData&)
 {
     assert(server != NULL);
-    if (config->contains("classes")) {
-        isc::datasrc::ClientListMapPtr lists;
 
-        if (*first_time) {
-            // HACK: The default is not passed to the handler in the first
-            // callback. This one will get the default (or, current value).
-            // Further updates will work the usual way.
-            assert(config_session != NULL);
-            *first_time = false;
-            lists = configureDataSource(
-                config_session->getRemoteConfigValue("data_sources",
-                                                     "classes"));
-        } else {
-            lists = configureDataSource(config->get("classes"));
-        }
+    // Note: remote config handler is requested to be exception free.
+    // While the code below is not 100% exception free, such an exception
+    // is really fatal and the server should actually stop.  So we don't
+    // bother to catch them; the exception would be propagated to the
+    // top level of the server and terminate it.
 
-        // Replace the server's lists.  The returned lists will be stored
-        // in a local variable 'lists', and will be destroyed outside of
-        // the temporary block for the lock scope.  That way we can minimize
-        // the range of the critical section.
-        {
-            isc::util::thread::Mutex::Locker locker(
-                server->getDataSrcClientListMutex());
-            lists = server->swapDataSrcClientLists(lists);
-        }
-        // The previous lists are destroyed here.
+    if (*first_time) {
+        // HACK: The default is not passed to the handler in the first
+        // callback. This one will get the default (or, current value).
+        // Further updates will work the usual way.
+        assert(config_session != NULL);
+        *first_time = false;
+        server->getDataSrcClientsMgr().reconfigure(
+            config_session->getRemoteConfigValue("data_sources", "classes"));
+    } else if (config->contains("classes")) {
+        server->getDataSrcClientsMgr().reconfigure(config->get("classes"));
     }
 }
 
@@ -231,10 +221,6 @@ main(int argc, char* argv[]) {
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_LOAD_TSIG);
         isc::server_common::initKeyring(*config_session);
         auth_server->setTSIGKeyRing(&isc::server_common::keyring);
-
-        // Instantiate the data source clients manager.  At the moment
-        // just so we actually create it in system tests.
-        DataSrcClientsMgr datasrc_clients_mgr;
 
         // Start the data source configuration.  We pass first_time and
         // config_session for the hack described in datasrcConfigHandler.
