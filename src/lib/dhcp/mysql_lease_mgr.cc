@@ -90,6 +90,7 @@ public:
         memset(bind_, 0, sizeof(bind_));
 
         // address: varchar(40)
+
         addr6_ = lease_->addr_.toText();
         addr6_length_ = addr6_.size();
 
