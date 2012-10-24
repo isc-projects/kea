@@ -22,6 +22,7 @@
 #include <dhcp/mysql_lease_mgr.h>
 #include <asiolink/io_address.h>
 
+using namespace isc;
 using namespace std;
 
 namespace {
@@ -48,9 +49,15 @@ namespace dhcp {
 
 /// @brief Exchange MySQL and Lease6 Data
 ///
-/// On the INSERT, SELECT and UPDATE statements, an array of MYSQL_BIND
-/// structures must be built to reflect the data being inserted or retrieved
-/// from the database.
+/// On any MySQL operation, arrays of MYSQL_BIND structures must be built to
+/// describe the parameters in the prepared statements.  Where information is
+/// inserted or retrieved - INSERT, UPDATE, SELECT - one array describes the
+/// data being exchanged with the database.  The other array describes the
+/// WHERE clause of the statement.
+///
+/// The array describing the information exchanged is common between the
+/// INSERT, UPDATE and SELECT statements, and this class handles the creation
+/// of that array and the insertion/extraction of data into/from it.
 ///
 /// Owing to the MySQL API, the process requires some intermediate variables
 /// to hold things like length etc.  This object holds the intermediate
@@ -67,9 +74,7 @@ public:
 
     /// @brief Create MYSQL_BIND objects for Lease6 Pointer
     ///
-    /// Fills in the bind_ objects for the Lease6 passed to it.
-    ///
-    /// The MySQL documentation 
+    /// Fills in the MYSQL_BIND objects for the Lease6 passed to it.
     ///
     /// @param lease Lease object to be added to the database
     ///
@@ -78,7 +83,7 @@ public:
     ///         valid only for as long as (1) this object is in existence and
     ///         (2) the lease object passed to it is in existence.  The
     ///         caller should NOT delete it.
-    MYSQL_BIND* CreateBindForSend(const Lease6Ptr& lease) {
+    MYSQL_BIND* createBindForSend(const Lease6Ptr& lease) {
         // Store lease object to ensure it remains valid.
         lease_ = lease;
 
@@ -145,7 +150,7 @@ public:
         lease_type_ = lease_->type_;
         bind_[7].buffer_type = MYSQL_TYPE_TINY;
         bind_[7].buffer = reinterpret_cast<char*>(&lease_type_);
-        bind_[7].is_unsigned = static_cast<my_bool>(1);
+        bind_[7].is_unsigned = true_;
 
         // iaid: unsigned int
         // Can use lease_->iaid_ directly as it is of type uint32_t.
@@ -239,7 +244,7 @@ public:
         bind_[8].buffer = reinterpret_cast<char*>(&iaid_);
         bind_[8].is_unsigned = true_;
         bind_[8].error = &error_[8];
-
+ 
         // prefix_len: unsigned tinyint
         bind_[9].buffer_type = MYSQL_TYPE_TINY;
         bind_[9].buffer = reinterpret_cast<char*>(&prefixlen_);
@@ -297,7 +302,10 @@ public:
                 break;
 
             default:
-                isc_throw(BadValue, "invalid lease type returned");
+                isc_throw(BadValue, "invalid lease type returned (" <<
+                          lease_type_ << ") for lease with address " <<
+                          result->addr_.toText() << ". Only 0, 1, or 2 "
+                          "are allowed.");
         }
         result->iaid_ = iaid_;
         result->prefixlen_ = prefixlen_;
@@ -331,6 +339,44 @@ private:
     const my_bool   true_;              ///< "true_" for MySql
 };
 
+
+MySqlLeaseMgr::MySqlLeaseMgr(const LeaseMgr::ParameterMap& parameters) 
+    : LeaseMgr(parameters), mysql_(NULL) {
+
+    // Allocate context for MySQL - it is destroyed in the destructor.
+    mysql_ = mysql_init(NULL);
+    if (mysql_ == NULL) {
+        isc_throw(DbOpenError, "unable to initialize MySQL");
+    }
+
+    // Open the database
+    openDatabase();
+
+    // Disable autocommit
+    my_bool result = mysql_autocommit(mysql_, 0);
+    if (result != 0) {
+        isc_throw(DbOperationError, mysql_error(mysql_));
+    }
+
+    // Prepare all statements likely to be used.
+    prepareStatements();
+}
+
+MySqlLeaseMgr::~MySqlLeaseMgr() {
+    // Free up the prepared statements, ignoring errors. (What would we do
+    // about them - we're destroying this object and are not really concerned
+    // with errors on a database connection that it about to go away.)
+    for (int i = 0; i < statements_.size(); ++i) {
+        if (statements_[i] != NULL) {
+            (void) mysql_stmt_close(statements_[i]);
+            statements_[i] = NULL;
+        }
+    }
+
+    // Close the database
+    mysql_close(mysql_);
+    mysql_ = NULL;
+}
 
 
 // Time conversion methods.
@@ -390,14 +436,13 @@ void
 MySqlLeaseMgr::openDatabase() {
 
     // Set up the values of the parameters
-    const char* host = NULL;
+    const char* host = "localhost";
     string shost;
     try {
         shost = getParameter("host");
         host = shost.c_str();
     } catch (...) {
-        // No host.  Fine, we'll use NULL
-        ;
+        // No host.  Fine, we'll use "localhost"
     }
 
     const char* user = NULL;
@@ -443,12 +488,13 @@ MySqlLeaseMgr::prepareStatement(StatementIndex index, const char* text) {
     // Validate that there is space for the statement in the statements array
     // and that nothing has been placed there before.
     if ((index >= statements_.size()) || (statements_[index] != NULL)) {
-        isc_throw(InvalidParameter, "invalid prepared statement index or "
-                  "statement index not null");
+        isc_throw(InvalidParameter, "invalid prepared statement index (" <<
+                  static_cast<int>(index) << ") or indexed prepared " <<
+                  "statement is not null");
     }
 
     // All OK, so prepare the statement
-    raw_statements_[index] = std::string(text);
+    text_statements_[index] = std::string(text);
 
     statements_[index] = mysql_stmt_init(mysql_);
     if (statements_[index] == NULL) {
@@ -469,8 +515,8 @@ MySqlLeaseMgr::prepareStatements() {
     statements_.clear();
     statements_.resize(NUM_STATEMENTS, NULL);
     
-    raw_statements_.clear();
-    raw_statements_.resize(NUM_STATEMENTS, std::string(""));
+    text_statements_.clear();
+    text_statements_.resize(NUM_STATEMENTS, std::string(""));
 
     // Now allocate the statements
     prepareStatement(DELETE_LEASE6,
@@ -489,45 +535,10 @@ MySqlLeaseMgr::prepareStatements() {
                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 }
 
-
-MySqlLeaseMgr::MySqlLeaseMgr(const LeaseMgr::ParameterMap& parameters) 
-    : LeaseMgr(parameters), mysql_(NULL) {
-
-    // Allocate context for MySQL - it is destroyed in the destructor.
-    mysql_ = mysql_init(NULL);
-
-    // Open the database
-    openDatabase();
-
-    // Disable autocommit
-    my_bool result = mysql_autocommit(mysql_, 0);
-    if (result != 0) {
-        isc_throw(DbOperationError, mysql_error(mysql_));
-    }
-
-    // Prepare all statements likely to be used.
-    prepareStatements();
-}
-
-MySqlLeaseMgr::~MySqlLeaseMgr() {
-    // Free up the prepared statements, ignoring errors. (What would we do
-    // about them - we're destroying this object and are not really concerned
-    // with errors on a database connection that it about to go away.)
-    for (int i = 0; i < statements_.size(); ++i) {
-        if (statements_[i] != NULL) {
-            (void) mysql_stmt_close(statements_[i]);
-            statements_[i] = NULL;
-        }
-    }
-
-    // Close the database
-    mysql_close(mysql_);
-    mysql_ = NULL;
-}
-
 bool
 MySqlLeaseMgr::addLease(const Lease4Ptr& /* lease */) {
-
+    isc_throw(NotImplemented, "MySqlLeaseMgr::addLease(const Lease4Ptr&) "
+              "not implemented yet");
     return (false);
 }
 
@@ -536,7 +547,7 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
 
     // Create the MYSQL_BIND array for the lease
     MySqlLease6Exchange exchange;
-    MYSQL_BIND* bind = exchange.CreateBindForSend(lease);
+    MYSQL_BIND* bind = exchange.createBindForSend(lease);
 
     // Bind the parameters to the statement
     int status = mysql_stmt_bind_param(statements_[INSERT_LEASE6], bind);
@@ -562,33 +573,45 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
 Lease4Ptr
 MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& /* addr */,
                          SubnetID /* subnet_id */) const {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::getLease4(const IOAddress&, SubnetID) "
+              "not implemented yet");
     return (Lease4Ptr());
 }
 
 Lease4Ptr
 MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& /* addr */) const {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::getLease4(const IOAddress&) "
+              "not implemented yet");
     return (Lease4Ptr());
 }
 
 Lease4Collection
 MySqlLeaseMgr::getLease4(const HWAddr& /* hwaddr */) const {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::getLease4(const HWAddr&) "
+              "not implemented yet");
     return (Lease4Collection());
 }
 
 Lease4Ptr
 MySqlLeaseMgr::getLease4(const HWAddr& /* hwaddr */,
                          SubnetID /* subnet_id */) const {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::getLease4(const HWAddr&, SubnetID) "
+              "not implemented yet");
     return (Lease4Ptr());
 }
 
 Lease4Collection
 MySqlLeaseMgr::getLease4(const ClientId& /* clientid */) const {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::getLease4(const ClientID&) "
+              "not implemented yet");
     return (Lease4Collection());
 }
 
 Lease4Ptr
 MySqlLeaseMgr::getLease4(const ClientId& /* clientid */,
                          SubnetID /* subnet_id */) const {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::getLease4(const ClientID&, SubnetID) "
+              "not implemented yet");
     return (Lease4Ptr());
 }
 
@@ -629,14 +652,14 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
     if (status == 0) {
         try {
             result = exchange.getLeaseData();
-        } catch (isc::BadValue) {
+        } catch (const isc::BadValue& ex) {
             // Free up result set.
 
             (void) mysql_stmt_free_result(statements_[GET_LEASE6]);
             // Lease type is returned, to rethrow the exception with a bit
             // more data.
-            isc_throw(BadValue, "invalid lease type returned for <" <<
-                      raw_statements_[GET_LEASE6] << ">");
+            isc_throw(BadValue, ex.what() << ". Statement is <" <<
+                      text_statements_[GET_LEASE6] << ">");
         }
 
         // As the address is the primary key in the table, we can't return
@@ -658,25 +681,35 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
 
 Lease6Collection
 MySqlLeaseMgr::getLease6(const DUID& /* duid */, uint32_t /* iaid */) const {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::getLease6(const DUID&) "
+              "not implemented yet");
     return (Lease6Collection());
 }
 
 Lease6Ptr
 MySqlLeaseMgr::getLease6(const DUID& /* duid */, uint32_t /* iaid */,
                          SubnetID /* subnet_id */) const {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::getLease4(const DUID&, SubnetID) "
+              "not implemented yet");
     return (Lease6Ptr());
 }
 
 void
 MySqlLeaseMgr::updateLease4(const Lease4Ptr& /* lease4 */) {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::updateLease4(const Lease4Ptr&) "
+              "not implemented yet");
 }
 
 void
 MySqlLeaseMgr::updateLease6(const Lease6Ptr& /* lease6 */) {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::updateLease6(const Lease6Ptr&) "
+              "not implemented yet");
 }
 
 bool
 MySqlLeaseMgr::deleteLease4(const isc::asiolink::IOAddress& /* addr */) {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::deleteLease4(const IOAddress&) "
+              "not implemented yet");
     return (false);
 }
 
@@ -712,7 +745,13 @@ MySqlLeaseMgr::deleteLease6(const isc::asiolink::IOAddress& addr) {
 
 std::string
 MySqlLeaseMgr::getName() const {
-    return (std::string(""));
+    std::string name = "";
+    try {
+        name = getParameter("name");
+    } catch (...) {
+        ;
+    }
+    return (name);
 }
 
 std::string
@@ -729,7 +768,7 @@ MySqlLeaseMgr::getVersion() const {
     int status = mysql_stmt_execute(statements_[GET_VERSION]);
     if (status != 0) {
         isc_throw(DbOperationError, "unable to execute <"
-                  << raw_statements_[GET_VERSION] << "> - reason: " <<
+                  << text_statements_[GET_VERSION] << "> - reason: " <<
                   mysql_error(mysql_));
     }
 
