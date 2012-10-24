@@ -45,6 +45,7 @@ public:
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
     ///
+    /// @exception NoDatabaseName Mandatory database name not given
     /// @exception DbOpenError Error opening the database
     /// @exception DbOperationError An operation on the open database has
     ///            failed.
@@ -362,6 +363,7 @@ private:
     /// Opens the database using the information supplied in the parameters
     /// passed to the constructor.
     ///
+    /// @exception NoDatabaseName Mandatory database name not given
     /// @exception DbOpenError Error opening the database
     void openDatabase();
 

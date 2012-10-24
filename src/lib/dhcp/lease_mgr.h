@@ -61,6 +61,13 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief Exception thrown if name of database is not specified
+class NoDatabaseName : public Exception {
+public:
+    NoDatabaseName(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 /// @brief Exception thrown on failure to open database
 class DbOpenError : public Exception {
 public:

@@ -471,8 +471,8 @@ MySqlLeaseMgr::openDatabase() {
         sname = getParameter("name");
         name = sname.c_str();
     } catch (...) {
-        // No database name.  Fine, we'll use NULL
-        ;
+        // No database name.  Throw a "NoName" exception
+        isc_throw(NoDatabaseName, "must specified a name for the database");
     }
 
     // Open the database.  Use defaults for non-specified options.

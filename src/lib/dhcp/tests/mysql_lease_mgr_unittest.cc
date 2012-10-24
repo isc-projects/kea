@@ -46,8 +46,41 @@ const char* INVALID_PASSWORD = "password=invalid";
 string connectionString(const char* type, const char* name, const char* host,
                         const char* user, const char* password) {
     const string space = " ";
-    return (string(type) + space + string(name) + space + string(host) + space +
-            string(user) + space + string(password));
+    string result = "";
+
+    if (type != NULL) {
+        result += string(type);
+    }
+
+    if (name != NULL) {
+        if (! result.empty()) {
+            result += space;
+        }
+        result += string(name);
+    }
+
+    if (host != NULL) {
+        if (! result.empty()) {
+            result += space;
+        }
+        result += string(host);
+    }
+
+    if (user != NULL) {
+        if (! result.empty()) {
+            result += space;
+        }
+        result += string(user);
+    }
+
+    if (password != NULL) {
+        if (! result.empty()) {
+            result += space;
+        }
+        result += string(password);
+    }
+
+    return (result);
 }
 
 // Return valid connection string
@@ -102,6 +135,9 @@ TEST(MySqlOpenTest, OpenDatabase) {
     // (This is really a check on LeaseMgrFactory, but is convenient to
     // perform here.)
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        InvalidParameter);
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         InvalidType);
 
@@ -118,6 +154,11 @@ TEST(MySqlOpenTest, OpenDatabase) {
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
+
+    // Check for missing parameters
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        NoDatabaseName);
 
     // Check that database opens correctly.
     ASSERT_NO_THROW(LeaseMgrFactory::create(validConnectionString()));
