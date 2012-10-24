@@ -32,6 +32,13 @@ using namespace isc::dhcp::test; // Memfile_LeaseMgr
 using namespace boost;
 
 namespace {
+
+class NakedAllocEngine : public AllocEngine {
+public:
+    using AllocEngine::Allocator;
+    using AllocEngine::IterativeAllocator;
+};
+
 // empty class for now, but may be extended once Addr6 becomes bigger
 class AllocEngineTest : public ::testing::Test {
 public:
@@ -142,6 +149,27 @@ TEST_F(AllocEngineTest, simpleAlloc) {
     detailCompareLease6(lease, from_mgr);
 }
 
+// This test checks if the fake allocation (for SOLICIT) can succeed
+TEST_F(AllocEngineTest, fakeAlloc) {
+
+    AllocEngine* engine = NULL;
+    ASSERT_NO_THROW(engine = new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
+    ASSERT_TRUE(engine);
+
+    Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
+                                               true);
+
+    // check that we got a lease
+    ASSERT_TRUE(lease);
+
+    // do all checks on the lease
+    checkLease6(lease);
+
+    // Check that the lease is NOT in LeaseMgr
+    Lease6Ptr from_mgr = LeaseMgr::instance().getLease6(lease->addr_);
+    ASSERT_FALSE(from_mgr);
+}
+
 // This test checks if the allocation with a hint that is valid (in range,
 // in pool and free) can succeed
 TEST_F(AllocEngineTest, allocWithValidHint) {
@@ -242,5 +270,76 @@ TEST_F(AllocEngineTest, allocBogusHint) {
     detailCompareLease6(lease, from_mgr);
 }
 
+// This test verifies that the allocator picks addresses that belong to the
+// pool
+TEST_F(AllocEngineTest, IterativeAllocator) {
+    NakedAllocEngine::Allocator* alloc = new NakedAllocEngine::IterativeAllocator();
+
+    for (int i = 0; i < 1000; ++i) {
+        IOAddress candidate = alloc->pickAddress(subnet_, duid_, IOAddress("::"));
+
+        EXPECT_TRUE(subnet_->inPool(candidate));
+    }
+
+    delete alloc;
+}
+
+
+// This test verifies that the iterative allocator really walks over all addresses
+// in all pools in specified subnet. It also must not pick the same address twice
+// unless it runs out of pool space and must start over.
+TEST_F(AllocEngineTest, IterativeAllocator_manyPools) {
+    NakedAllocEngine::IterativeAllocator* alloc = new NakedAllocEngine::IterativeAllocator();
+
+    // let's start from 2, as there is 2001:db8:1::10 - 2001:db8:1::20 pool already.
+    for (int i = 2; i < 10; ++i) {
+        stringstream min, max;
+
+        min << "2001:db8:1::" << hex << i*16 + 1;
+        max << "2001:db8:1::" << hex << i*16 + 9;
+
+        Pool6Ptr pool(new Pool6(Pool6::TYPE_IA, IOAddress(min.str()),
+                                IOAddress(max.str())));
+        // cout << "Adding pool: " << min.str() << "-" << max.str() << endl;
+        subnet_->addPool6(pool);
+    }
+
+    int total = 17 + 8*9; // first pool (::10 - ::20) has 17 addresses in it,
+                          // there are 8 extra pools with 9 addresses in each.
+
+    // Let's keep picked addresses here and check their uniqueness.
+    map<IOAddress, int> generated_addrs;
+    int cnt = 0;
+    while (++cnt) {
+        IOAddress candidate = alloc->pickAddress(subnet_, duid_, IOAddress("::"));
+        EXPECT_TRUE(subnet_->inPool(candidate));
+
+        // One way to easily verify that the iterative allocator really works is
+        // to uncomment the following line and observe its output that it
+        // covers all defined subnets.
+        // cout << candidate.toText() << endl;
+
+        if (generated_addrs.find(candidate) == generated_addrs.end()) {
+            // we haven't had this
+            generated_addrs[candidate] = 0;
+        } else {
+            // we have seen this address before. That should mean that we
+            // iterated over all addresses.
+            if (generated_addrs.size() == total) {
+                // we have exactly the number of address in all pools
+                break;
+            }
+            ADD_FAILURE() << "Too many or not enough unique addresses generated.";
+            break;
+        }
+
+        if ( cnt>total ) {
+            ADD_FAILURE() << "Too many unique addresses generated.";
+            break;
+        }
+    }
+
+    delete alloc;
+}
 
 }; // end of anonymous namespace
