@@ -132,21 +132,16 @@ TEST_F(MySqlLeaseMgrTest, CheckTimeConversion) {
     const time_t cltt = time(NULL);
     const uint32_t valid_lft = 86400;       // 1 day
     MYSQL_TIME expire;
-    uint32_t lease_time;
 
-    MySqlLeaseMgr::convertToDatabaseTime(cltt, valid_lft, expire, lease_time);
-    EXPECT_EQ(valid_lft, lease_time);
+    MySqlLeaseMgr::convertToDatabaseTime(cltt, valid_lft, expire);
     EXPECT_LE(2012, expire.year);       // Code was written in 2012
     EXPECT_EQ(0, expire.second_part);
     EXPECT_EQ(0, expire.neg);
 
     // Convert back
     time_t converted_cltt = 0;
-    uint32_t converted_valid_lft = 0;
-    MySqlLeaseMgr::convertFromDatabaseTime(expire, lease_time, converted_cltt,
-                                      converted_valid_lft);
+    MySqlLeaseMgr::convertFromDatabaseTime(expire, valid_lft, converted_cltt);
     EXPECT_EQ(cltt, converted_cltt);
-    EXPECT_EQ(valid_lft, converted_valid_lft);
 }
 
 /// @brief Check that getVersion() works
