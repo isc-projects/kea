@@ -262,36 +262,32 @@ public:
 
     /// @brief Convert Lease Time to Database Times
     ///
-    /// Within the DHCP servers, times are stored as cltt (client last transmit
-    /// time) and valid_lft (valid lifetime).  In the database, the information
-    /// is stored as lease_time (lease time) and expire (time of expiry of the
-    /// lease).  They are related by the equations:
+    /// Within the DHCP servers, times are stored as client last transmit time
+    /// and valid lifetime.  In the database, the information is stored as
+    /// valid lifetime and "expire" (time of expiry of the lease).  They are
+    /// related by the equation:
     ///
-    /// - lease_time = valid_lft
-    /// - expire = cltt + valid_lft
+    /// - expire = client last transmit time + valid lifetime
     ///
     /// This method converts from the times in the lease object into times
     /// able to be added to the database.
     ///
     /// @param cltt Client last transmit time
-    /// @param valid_lft Valid lifetime
+    /// @param valid_lifetime Valid lifetime
     /// @param expire Reference to MYSQL_TIME object where the expiry time of
     ///        the lease will be put.
-    /// @param lease_time Reference to the time_t object where the lease time
-    ///         will be put.
     static
-    void convertToDatabaseTime(time_t cltt, uint32_t valid_lft,
-                               MYSQL_TIME& expire, uint32_t& lease_time);
+    void convertToDatabaseTime(time_t cltt, uint32_t valid_lifetime,
+                               MYSQL_TIME& expire);
 
     /// @brief Convert Database Time to Lease Times
     ///
-    /// Within the database, time is stored as lease_time (lease time) and
-    /// expire (time of expiry of the lease).  In the DHCP server, the
-    /// information is stored as cltt (client last transmit time) and
-    /// valid_lft (valid lifetime).  These are related by the equations:
+    /// Within the database, time is stored as "expire" (time of expiry of the
+    /// lease) and valid lifetime.  In the DHCP server, the information is
+    /// stored client last transmit time and valid lifetime.  These are related
+    /// by the equation:
     ///
-    /// - valid_lft = lease_time
-    /// - cltt = expire - lease_time
+    /// - client last transmit time = expire - valid_lifetime
     ///
     /// This method converts from the times in the database into times
     /// able to be inserted into the lease object.
@@ -301,10 +297,9 @@ public:
     /// @param lease_time lifetime of the lease.
     /// @param cltt Reference to location where client last transmit time
     ///        is put.
-    /// @param valid_lft Reference to location where valid lifetime is put.
     static
-    void convertFromDatabaseTime(const MYSQL_TIME& expire, uint32_t lease_time,
-                                 time_t& cltt, uint32_t& valid_lft);
+    void convertFromDatabaseTime(const MYSQL_TIME& expire, 
+                                 uint32_t valid_lifetime, time_t& cltt);
 
     ///@}
 

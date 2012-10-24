@@ -111,23 +111,19 @@ public:
         bind_[2].buffer_length = duid_length_;
         bind_[2].length = &duid_length_;
 
-        // The lease structure holds the client last transmission time (cltt_)
-        // and the valid lifetime (valid_lft_).  For convenience for external
-        // tools, the data stored in the database is expiry time (expire) and
-        // lease time (lease+time).  The relationship is given by:
-        //
-        // lease_time - valid_lft_
-        // expire = cltt_ + valid_lft_
-        //
-        MySqlLeaseMgr::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
-                                             expire_, lease_time_);
-
         // lease_time: unsigned int
         bind_[3].buffer_type = MYSQL_TYPE_LONG;
-        bind_[3].buffer = reinterpret_cast<char*>(&lease_time_);
+        bind_[3].buffer = reinterpret_cast<char*>(&lease->valid_lft_);
         bind_[3].is_unsigned = true_;
 
         // expire: timestamp
+        // The lease structure holds the client last transmission time (cltt_)
+        // For convenience for external tools, this is converted to lease
+        /// expiry time (expire).  The relationship is given by:
+        //
+        // expire = cltt_ + valid_lft_
+        MySqlLeaseMgr::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
+                                             expire_);
         bind_[4].buffer_type = MYSQL_TYPE_TIMESTAMP;
         bind_[4].buffer = reinterpret_cast<char*>(&expire_);
         bind_[4].buffer_length = sizeof(expire_);
@@ -210,7 +206,7 @@ public:
 
         // lease_time: unsigned int
         bind_[3].buffer_type = MYSQL_TYPE_LONG;
-        bind_[3].buffer = reinterpret_cast<char*>(&lease_time_);
+        bind_[3].buffer = reinterpret_cast<char*>(&valid_lifetime_);
         bind_[3].is_unsigned = true_;
         bind_[3].error = &error_[3];
 
@@ -269,16 +265,20 @@ public:
         Lease6Ptr result(new Lease6());
 
         // Success - put the data in the lease object
+
+        // The address buffer is declared larger than the buffer size passed
+        // to the access function so that we can always append a null byte.
         addr6_buffer_[addr6_length_] = '\0';
         std::string address = addr6_buffer_;
-        result->addr_ = isc::asiolink::IOAddress(address);
 
+        // Set the other data, converting time as needed.
+        result->addr_ = isc::asiolink::IOAddress(address);
         result->hwaddr_ = vector<uint8_t>(&hwaddr_buffer_[0],
                                           &hwaddr_buffer_[hwaddr_length_]);
         result->duid_.reset(new DUID(duid_buffer_, duid_length_));
-        MySqlLeaseMgr::convertFromDatabaseTime(expire_, lease_time_,
-                                               result->cltt_,
-                                               result->valid_lft_);
+        MySqlLeaseMgr::convertFromDatabaseTime(expire_, valid_lifetime_,
+                                               result->cltt_);
+        result->valid_lft_ = valid_lifetime_;
         result->subnet_id_ = subnet_id_;
         result->preferred_lft_ = pref_lifetime_;
 
@@ -323,7 +323,7 @@ private:
     unsigned long   hwaddr_length_;     ///< Length of hardware address
     uint32_t        iaid_;              ///< Identity association ID
     Lease6Ptr       lease_;             ///< Pointer to lease object
-    uint32_t        lease_time_;        ///< Lease time
+    uint32_t        valid_lifetime_;    ///< Lease time
     uint8_t         lease_type_;        ///< Lease type
     uint8_t         prefixlen_;         ///< Prefix length
     uint32_t        pref_lifetime_;     ///< Preferred lifetime
@@ -337,15 +337,21 @@ private:
 //
 // Note that the MySQL TIMESTAMP data type (used for "expire") converts data
 // from the current timezone to UTC for storage, and from UTC to the current
-// timezone for retrieval.  This means that the external interface - cltt -
-// must be local time.
+// timezone for retrieval.
+//
+// This causes no problems providing that:
+// a) cltt is given in local time
+// b) We let the system take care of timezone conversion when converting
+//    from a time read from the database into a local time.
 
 void
-MySqlLeaseMgr::convertToDatabaseTime(time_t cltt, uint32_t valid_lft,
-                                    MYSQL_TIME& expire, uint32_t& lease_time) {
+MySqlLeaseMgr::convertToDatabaseTime(time_t cltt, uint32_t valid_lifetime,
+                                    MYSQL_TIME& expire) {
 
     // Calculate expiry time and convert to various date/time fields.
-    time_t expire_time = cltt + valid_lft;
+    time_t expire_time = cltt + valid_lifetime;
+
+    // Convert to broken-out time
     struct tm expire_tm;
     (void) localtime_r(&expire_time, &expire_tm);
 
@@ -358,19 +364,15 @@ MySqlLeaseMgr::convertToDatabaseTime(time_t cltt, uint32_t valid_lft,
     expire.second = expire_tm.tm_sec;
     expire.second_part = 0;                    // No fractional seconds
     expire.neg = static_cast<my_bool>(0);      // Not negative
-
-    // Set the lease time.
-    lease_time = valid_lft;
 }
 
 void
 MySqlLeaseMgr::convertFromDatabaseTime(const MYSQL_TIME& expire,
-                                       uint32_t lease_time, time_t& cltt,
-                                       uint32_t& valid_lft) {
-    valid_lft = lease_time;
+                                       uint32_t valid_lifetime, time_t& cltt) {
 
     // Copy across fields from MYSQL_TIME structure.
     struct tm expire_tm;
+    memset(&expire_tm, 0, sizeof(expire_tm));
 
     expire_tm.tm_year = expire.year - 1900;
     expire_tm.tm_mon = expire.month - 1;
@@ -378,9 +380,10 @@ MySqlLeaseMgr::convertFromDatabaseTime(const MYSQL_TIME& expire,
     expire_tm.tm_hour = expire.hour;
     expire_tm.tm_min = expire.minute;
     expire_tm.tm_sec = expire.second;
+    expire_tm.tm_isdst = -1;    // Let the system work out about DST 
 
     // Convert to local time
-    cltt = mktime(&expire_tm) - valid_lft;
+    cltt = mktime(&expire_tm) - valid_lifetime;
 }
 
 void
@@ -474,14 +477,14 @@ MySqlLeaseMgr::prepareStatements() {
                      "DELETE FROM lease6 WHERE address = ?");
     prepareStatement(GET_LEASE6,
                      "SELECT address, hwaddr, duid, "
-                         "lease_time, expire, subnet_id, pref_lifetime, "
+                         "valid_lifetime, expire, subnet_id, pref_lifetime, "
                          "lease_type, iaid, prefix_len "
                          "FROM lease6 WHERE address = ?");
     prepareStatement(GET_VERSION,
                      "SELECT version, minor FROM schema_version");
     prepareStatement(INSERT_LEASE6,
                      "INSERT INTO lease6(address, hwaddr, duid, "
-                         "lease_time, expire, subnet_id, pref_lifetime, "
+                         "valid_lifetime, expire, subnet_id, pref_lifetime, "
                          "lease_type, iaid, prefix_len) "
                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 }
