@@ -24,12 +24,7 @@ libb10_dhcp___la_SOURCES += iface_mgr.cc iface_mgr.h
 libb10_dhcp___la_SOURCES += iface_mgr_bsd.cc
 libb10_dhcp___la_SOURCES += iface_mgr_linux.cc
 libb10_dhcp___la_SOURCES += iface_mgr_sun.cc
-libb10_dhcp___la_SOURCES += lease_mgr.cc lease_mgr.h
-libb10_dhcp___la_SOURCES += lease_mgr_factory.cc lease_mgr_factory.h
 libb10_dhcp___la_SOURCES += libdhcp++.cc libdhcp++.h
-if HAVE_MYSQL
-libb10_dhcp___la_SOURCES += mysql_lease_mgr.cc mysql_lease_mgr.h
-endif
 libb10_dhcp___la_SOURCES += option4_addrlst.cc option4_addrlst.h
 libb10_dhcp___la_SOURCES += option6_addrlst.cc option6_addrlst.h
 libb10_dhcp___la_SOURCES += option6_iaaddr.cc option6_iaaddr.h
@@ -43,21 +38,26 @@ libb10_dhcp___la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libb10_dhcp___la_LIBADD   = $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 libb10_dhcp___la_LIBADD  += $(top_builddir)/src/lib/util/libb10-util.la
 libb10_dhcp___la_LDFLAGS  = -no-undefined -version-info 2:0:0
-if HAVE_MYSQL
-libb10_dhcp___la_LDFLAGS += $(MYSQL_LIBS)
-endif
 
 libb10_dhcpsrv_la_SOURCES  = cfgmgr.cc cfgmgr.h
+libb10_dhcpsrv_la_SOURCES += addr_utilities.cc addr_utilities.h
+libb10_dhcpsrv_la_SOURCES += lease_mgr.cc lease_mgr.h
+libb10_dhcpsrv_la_SOURCES += lease_mgr_factory.cc lease_mgr_factory.h
+if HAVE_MYSQL
+libb10_dhcpsrv_la_SOURCES += mysql_lease_mgr.cc mysql_lease_mgr.h
+endif
 libb10_dhcpsrv_la_SOURCES += pool.cc pool.h
 libb10_dhcpsrv_la_SOURCES += subnet.cc subnet.h
 libb10_dhcpsrv_la_SOURCES += triplet.h
-libb10_dhcpsrv_la_SOURCES += addr_utilities.cc addr_utilities.h
 
 libb10_dhcpsrv_la_CXXFLAGS = $(AM_CXXFLAGS)
 libb10_dhcpsrv_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libb10_dhcpsrv_la_LIBADD   = $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 libb10_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/util/libb10-util.la
 libb10_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 2:0:0
+if HAVE_MYSQL
+libb10_dhcpsrv_la_LDFLAGS += $(MYSQL_LIBS)
+endif
 
 EXTRA_DIST  = README
 
