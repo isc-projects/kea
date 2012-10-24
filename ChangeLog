@@ -62,7 +62,7 @@
 
 488.	[build]		jinmei
 	On configure, changed the search order for Python executable.
-	It first ties more specific file names such as "python3.2" before
+	It first tries more specific file names such as "python3.2" before
 	more generic "python3".  This will prevent configure failure on
 	Mac OS X that installs Python3 via recent versions of Homebrew.
 	(Trac #2339, git 88db890d8d1c64de49be87f03c24a2021bcf63da)
