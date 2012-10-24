@@ -417,7 +417,7 @@ class SysInfoTest(unittest.TestCase):
 
         self.assertEqual((0.2, 0.4, 0.6), s.get_loadavg())
         self.assertEqual(543214321, s.get_mem_total())
-        self.assertEqual(543214321 - (343434 * 1024), s.get_mem_free())
+        self.assertEqual(123456 * 1024, s.get_mem_free())
         self.assertEqual(1037533184, s.get_mem_swap_total())
         self.assertEqual(1037533184, s.get_mem_swap_free())
 
