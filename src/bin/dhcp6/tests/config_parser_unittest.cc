@@ -240,7 +240,7 @@ TEST_F(Dhcp6ParserTest, pool_prefix_len) {
     EXPECT_EQ(4000, subnet->getValid());
 }
 
-TEST_F(Dhcp6ParserTest, globalOptionValues) {
+TEST_F(Dhcp6ParserTest, multipleOptionValues) {
     ConstElementPtr x;
     string config = "{ \"interface\": [ \"all\" ],"
         "\"preferred-lifetime\": 3000,"
@@ -249,10 +249,16 @@ TEST_F(Dhcp6ParserTest, globalOptionValues) {
         "\"subnet6\": [ { "
         "    \"pool\": [ \"2001:db8:1::/80\" ],"
         "    \"subnet\": \"2001:db8:1::/64\", "
-        "    \"option-value\": [ { "
-        "        \"name\": \"option_foo\","
-        "        \"code\": 100,"
-        "        \"data\": \"XYZ, 1, 5\" } ]"
+        "    \"option-data\": [ { "
+        "          \"name\": \"option_foo\","
+        "          \"code\": 100,"
+        "          \"data\": \"ABCDEF 01 05\""
+        "        },"
+        "        {"
+        "          \"name\": \"option_foo2\","
+        "          \"code\": 101,"
+        "          \"data\": \"1\""
+        "        } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }";
     cout << config << endl;
@@ -262,6 +268,11 @@ TEST_F(Dhcp6ParserTest, globalOptionValues) {
     EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
 
     ASSERT_TRUE(x);
+
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet);
+    const Subnet::OptionContainer& options = subnet->getOptions();
+    ASSERT_EQ(2, options.size());
 }
 
 };
