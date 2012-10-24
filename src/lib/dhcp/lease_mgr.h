@@ -295,8 +295,12 @@ public:
     /// @throw InvalidOperation if LeaseMgr not instantiated
     static LeaseMgr& instance();
 
-    /// @brief Destructor
-    virtual ~LeaseMgr();
+    /// @brief destroys the only instance of LeaseMgr
+    ///
+    /// This method is used mostly in tests, where LeaseMgr is destroyed
+    /// at the end of each test, just to be created at the beginning of
+    /// the next one.
+    static void destroy_instance();
 
     /// @brief Adds an IPv4 lease.
     ///
@@ -488,6 +492,9 @@ protected:
     /// @param dbconfig database configuration
     /// @throw InvalidOperation when trying to create second LeaseMgr
     LeaseMgr(const std::string& dbconfig);
+
+    /// @brief Destructor
+    virtual ~LeaseMgr();
 
     /// @brief returns value of the parameter
     std::string getParameter(const std::string& name) const;
