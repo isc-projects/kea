@@ -127,6 +127,19 @@ public:
 /// opened: the fixtures assume that and check basic operations.
 
 TEST(MySqlOpenTest, OpenDatabase) {
+    // Check that database opens correctly and tidy up.  If it fails, print
+    // the error message.
+    try {
+        LeaseMgrFactory::create(validConnectionString());
+        EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
+        LeaseMgrFactory::destroy();
+    } catch (const isc::Exception& ex) {
+        FAIL() << "*** ERROR: unable to open database, reason:\n"
+               << "    " << ex.what()
+               << "*** The test environment is broken and must be fixed\n"
+               << "*** before the MySQL tests will run correctly.\n";
+    }
+
     // Check that attempting to get an instance of the lease manager when
     // none is set throws an exception.
     EXPECT_THROW(LeaseMgrFactory::instance(), NoLeaseManager);
@@ -159,29 +172,36 @@ TEST(MySqlOpenTest, OpenDatabase) {
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
-
-    // Check that database opens correctly.
-    ASSERT_NO_THROW(LeaseMgrFactory::create(validConnectionString()));
-    EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
-
-    // ... and tidy up.
-    LeaseMgrFactory::destroy();
 }
 
 /// @brief Check conversion functions
 TEST_F(MySqlLeaseMgrTest, CheckTimeConversion) {
     const time_t cltt = time(NULL);
     const uint32_t valid_lft = 86400;       // 1 day
-    MYSQL_TIME expire;
+    struct tm tm_expire;
+    MYSQL_TIME mysql_expire;
 
-    MySqlLeaseMgr::convertToDatabaseTime(cltt, valid_lft, expire);
-    EXPECT_LE(2012, expire.year);       // Code was written in 2012
-    EXPECT_EQ(0, expire.second_part);
-    EXPECT_EQ(0, expire.neg);
+    // Work out what the broken-down time will be for one day
+    // after the current time.
+    time_t expire_time = cltt + valid_lft;
+    (void) localtime_r(&expire_time, &tm_expire);
+
+    // Convert to the database time
+    MySqlLeaseMgr::convertToDatabaseTime(cltt, valid_lft, mysql_expire);
+
+    // Are the times the same?
+    EXPECT_EQ(tm_expire.tm_year + 1900, mysql_expire.year);
+    EXPECT_EQ(tm_expire.tm_mon + 1,  mysql_expire.month);
+    EXPECT_EQ(tm_expire.tm_mday, mysql_expire.day);
+    EXPECT_EQ(tm_expire.tm_hour, mysql_expire.hour);
+    EXPECT_EQ(tm_expire.tm_min, mysql_expire.minute);
+    EXPECT_EQ(tm_expire.tm_sec, mysql_expire.second);
+    EXPECT_EQ(0, mysql_expire.second_part);
+    EXPECT_EQ(0, mysql_expire.neg);
 
     // Convert back
     time_t converted_cltt = 0;
-    MySqlLeaseMgr::convertFromDatabaseTime(expire, valid_lft, converted_cltt);
+    MySqlLeaseMgr::convertFromDatabaseTime(mysql_expire, valid_lft, converted_cltt);
     EXPECT_EQ(cltt, converted_cltt);
 }
 
@@ -190,58 +210,8 @@ TEST_F(MySqlLeaseMgrTest, CheckVersion) {
     // Check version
     pair<uint32_t, uint32_t> version;
     ASSERT_NO_THROW(version = lmptr_->getVersion());
-    EXPECT_EQ(0, version.first);
-    EXPECT_EQ(1, version.second);
-}
-
-/// @brief Print Elements of Lease6 Structure
-///
-/// @param lease Pointer to lease to print
-/// @param title Title to print before the lease information
-void
-printLease6(const Lease6Ptr& lease, const char* title = NULL) {
-    if (title != NULL) {
-        cout << title << "\n";
-    }
-
-    cout << "   Type:          ";
-    switch (lease->type_) {
-        case Lease6::LEASE_IA_NA:
-            cout << "IA_NA\n";
-            break;
-        case Lease6::LEASE_IA_TA:
-            cout << "IA_TA\n";
-            break;
-        case Lease6::LEASE_IA_PD:
-            cout << "IA_PD\n";
-            break;
-        default:
-            cout << "unknown (" << static_cast<int>(lease->type_) << ")\n";
-    }
-    cout << "   Address:       " << lease->addr_.toText() << "\n";
-    cout << "   Prefix length: " << static_cast<int>(lease->prefixlen_) << "\n";
-    cout << "   IAID:          " << lease->iaid_ << "\n";
-    cout << "   Pref life:     " << lease->preferred_lft_ << "\n";
-    cout << "   Valid life:    " << lease->valid_lft_ << "\n";
-    cout << "   Cltt:          " << lease->cltt_ << "\n";
-    cout << "   Subnet ID:     " << lease->subnet_id_ << "\n";
-}
-
-/// @brief Compare Lease4 Structure
-bool
-compareLease6(const Lease6Ptr& first, const Lease6Ptr& second) {
-    return (
-        first->type_ == second->type_ &&
-        first->addr_ == second->addr_ &&
-        first->prefixlen_ == second->prefixlen_ &&
-        first->iaid_ == second->iaid_ &&
-        first->hwaddr_ == second->hwaddr_ &&
-        *first->duid_ == *second->duid_ &&
-        first->preferred_lft_ == second->preferred_lft_ &&
-        first->valid_lft_ == second->valid_lft_ &&
-        first->cltt_ == second->cltt_ &&
-        first->subnet_id_ == second->subnet_id_
-        );
+    EXPECT_EQ(CURRENT_VERSION_VERSION, version.first);
+    EXPECT_EQ(CURRENT_VERSION_MINOR, version.second);
 }
 
 void
@@ -318,7 +288,7 @@ TEST_F(MySqlLeaseMgrTest, BasicLease6) {
     l2->subnet_id_ = l1->subnet_id_;    // Same as l1
 
     // Sanity check that the leases are different
-    ASSERT_FALSE(compareLease6(l1, l2));
+    ASSERT_TRUE(*l1 != *l2);
 
     // Start the tests.  Add two leases to the database, read them back and
     // check they are what we think they are.

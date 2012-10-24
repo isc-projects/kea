@@ -34,6 +34,9 @@ LeaseMgr::LeaseMgr(const LeaseMgr::ParameterMap& parameters)
     : parameters_(parameters) {
 }
 
+LeaseMgr::~LeaseMgr() {
+}
+
 std::string LeaseMgr::getParameter(const std::string& name) const {
     ParameterMap::const_iterator param = parameters_.find(name);
     if (param == parameters_.end()) {
@@ -42,5 +45,47 @@ std::string LeaseMgr::getParameter(const std::string& name) const {
     return (param->second);
 }
 
-LeaseMgr::~LeaseMgr() {
+std::string
+Lease6::toText() {
+    ostringstream stream;
+
+    stream << "Type:          " << static_cast<int>(type_) << " (";
+    switch (type_) {
+        case Lease6::LEASE_IA_NA:
+            stream << "IA_NA)\n";
+            break;
+        case Lease6::LEASE_IA_TA:
+            stream << "IA_TA)\n";
+            break;
+        case Lease6::LEASE_IA_PD:
+            stream << "IA_PD)\n";
+            break;
+        default:
+            stream << "unknown)\n";
+    }
+    stream << "Address:       " << addr_.toText() << "\n"
+           << "Prefix length: " << static_cast<int>(prefixlen_) << "\n"
+           << "IAID:          " << iaid_ << "\n"
+           << "Pref life:     " << preferred_lft_ << "\n"
+           << "Valid life:    " << valid_lft_ << "\n"
+           << "Cltt:          " << cltt_ << "\n"
+           << "Subnet ID:     " << subnet_id_ << "\n";
+
+    return (stream.str());
+}
+
+bool
+Lease6::operator==(const Lease6& other) const {
+    return (
+        type_ == other.type_ &&
+        addr_ == other.addr_ &&
+        prefixlen_ == other.prefixlen_ &&
+        iaid_ == other.iaid_ &&
+        hwaddr_ == other.hwaddr_ &&
+        *duid_ == *other.duid_ &&
+        preferred_lft_ == other.preferred_lft_ &&
+        valid_lft_ == other.valid_lft_ &&
+        cltt_ == other.cltt_ &&
+        subnet_id_ == other.subnet_id_
+        );
 }

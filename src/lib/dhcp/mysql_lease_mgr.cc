@@ -475,6 +475,15 @@ MySqlLeaseMgr::openDatabase() {
         isc_throw(NoDatabaseName, "must specified a name for the database");
     }
 
+    // Set options for the connection:
+    // - automatic reconnection
+    my_bool auto_reconnect = 1;
+    int result = mysql_options(mysql_, MYSQL_OPT_RECONNECT, &auto_reconnect);
+    if (result != 0) {
+        isc_throw(DbOpenError, "unable to set auto-reconnect option: " <<
+                  mysql_error(mysql_));
+    }
+
     // Open the database.  Use defaults for non-specified options.
     MYSQL* status = mysql_real_connect(mysql_, host, user, password, name,
                                        0, NULL, 0);
