@@ -40,7 +40,7 @@ AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress&
         len = 16;
     }
 
-    for (int i = len; i >=0; --i) {
+    for (int i = len -1; i >=0; --i) {
         packed[i]++;
         if (packed[i] != 0) {
             break;
