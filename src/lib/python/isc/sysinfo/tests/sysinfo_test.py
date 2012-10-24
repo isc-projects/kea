@@ -181,10 +181,13 @@ def _my_freebsd_osx_subprocess_check_output(command):
     else:
         return _my_bsd_subprocess_check_output(command)
 
-def _my_freebsd_subprocess_check_output(command):
+def _my_freebsd_subprocess_check_output(command, faked_output):
     assert type(command) == list, 'command argument is not a list'
-    if command == ['sysctl', '-n', 'kern.smp.active']:
-        return b'1\n'
+    if command == ['sysctl', '-n', 'kern.smp.forward_signal_enabled']:
+        output = faked_output['smp-sysctl']
+        if isinstance(output, Exception):
+            raise output
+        return faked_output['smp-sysctl']
     elif command == ['vmstat', '-H']:
         return b' procs    memory       page                    disks    traps          cpu\n r b w    avm     fre  flt  re  pi  po  fr  sr wd0 cd0  int   sys   cs us sy id\n 0 0 0   343434  123456   47   0   0   0   0   0   2   0    2    80   14  0  1 99\n'
     elif command == ['swapctl', '-s', '-k']:
@@ -379,12 +382,36 @@ class SysInfoTest(unittest.TestCase):
         # with mock ones for testing.
         platform.system = _my_freebsd_platform_system
         os.sysconf = _my_freebsd_os_sysconf
-        subprocess.check_output = _my_freebsd_subprocess_check_output
+
+        # We use a lambda object so we can tweak the subprocess output during
+        # the tests later.
+        faked_process_output = { 'smp-sysctl': b'1\n' }
+        subprocess.check_output = lambda command : \
+            _my_freebsd_subprocess_check_output(command, faked_process_output)
+
         os.uname = _my_freebsd_platform_uname
 
         s = SysInfoFromFactory()
         self.assertEqual(NPROCESSORS_FREEBSD, s.get_num_processors())
         self.assertTrue(s.get_platform_is_smp())
+
+        # We check the kernel SMP support by the availability of an sysctl
+        # variable.  The value (especiall a 0 value) shouldn't matter.
+        faked_process_output['smp-sysctl'] = b'0\n'
+        s = SysInfoFromFactory()
+        self.assertTrue(s.get_platform_is_smp())
+
+        # if the sysctl raises CalledProcessError, we treat it as non-SMP
+        # kernel.
+        faked_process_output['smp-sysctl'] = \
+            subprocess.CalledProcessError(1, 'sysctl')
+        s = SysInfoFromFactory()
+        self.assertFalse(s.get_platform_is_smp())
+
+        # if it results in OSError, no SMP information will be provided.
+        faked_process_output['smp-sysctl'] = OSError()
+        s = SysInfoFromFactory()
+        self.assertIsNone(s.get_platform_is_smp())
 
         self.check_bsd_values(s)
 

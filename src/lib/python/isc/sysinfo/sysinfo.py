@@ -389,9 +389,19 @@ class SysInfoFreeBSD(SysInfoFreeBSDOSX):
         super().__init__()
 
         try:
-            s = subprocess.check_output(['sysctl', '-n', 'kern.smp.active'])
-            self._platform_is_smp = int(s.decode('utf-8').strip()) > 0
-        except (subprocess.CalledProcessError, OSError):
+            # There doesn't seem to be an easy way to reliably detect whether
+            # the kernel was built with SMP support on FreeBSD.  We use
+            # a sysctl variable that is only defined in SMP kernels.
+            # This assumption seems to hold for recent several versions of
+            # FreeBSD, but it may not always be so for future versions.
+            s = subprocess.check_output(['sysctl', '-n',
+                                         'kern.smp.forward_signal_enabled'])
+            self._platform_is_smp = True # the value doesn't matter
+        except subprocess.CalledProcessError:
+            # if this variable isn't defined we should see this exception.
+            # intepret it as an indication of non-SMP kernel.
+            self._platform_is_smp = False
+        except OSError:
             pass
 
         try:
