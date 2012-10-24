@@ -164,7 +164,7 @@ struct Lease6 {
 
     Lease6(LeaseType type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
            uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
-           uint32_t t2, SubnetID subnet_id);
+           uint32_t t2, SubnetID subnet_id, uint8_t prefixlen_ = 0);
 
     /// @brief specifies lease type (normal addr, temporary addr, prefix)
     LeaseType type_;

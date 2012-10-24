@@ -154,10 +154,23 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
         return (existing);
     }
 
-    // check if the hint is available
-    existing = LeaseMgr::instance().getLease6(hint);
-    if (!existing) {
-        // the hint is good, let's create a lease for it
+    // check if the hint is in pool and is available
+    if (subnet->inPool(hint)) {
+        existing = LeaseMgr::instance().getLease6(hint);
+        if (!existing) {
+            /// @todo: check if the hint is reserved once we have host support
+            /// implemented
+
+            // the hint is valid and not currently used, let's create a lease for it
+            Lease6Ptr lease = createLease(subnet, duid, iaid, hint, fake);
+
+            // It can happen that the lease allocation failed (we could have lost
+            // the race condition. That means that the hint is lo longer usable and
+            // we need to continue the regular allocation path.
+            if (lease) {
+                return (lease);
+            }
+        }
     }
 
     unsigned int i = attempts_;
