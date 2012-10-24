@@ -86,6 +86,23 @@ Pool4Ptr Subnet4::getPool4(const isc::asiolink::IOAddress& hint /* = IOAddress("
     return (candidate);
 }
 
+bool Subnet4::inPool(const isc::asiolink::IOAddress& addr) const {
+
+    // Let's start with checking if it even belongs to that subnet.
+    if (!inRange(addr)) {
+        return (false);
+    }
+
+    for (Pool4Collection::const_iterator pool = pools_.begin(); pool != pools_.end(); ++pool) {
+        if ((*pool)->inRange(addr)) {
+            return (true);
+        }
+    }
+    // there's no pool that address belongs to
+    return (false);
+}
+
+
 Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t1,
                  const Triplet<uint32_t>& t2,
@@ -130,6 +147,22 @@ Pool6Ptr Subnet6::getPool6(const isc::asiolink::IOAddress& hint /* = IOAddress("
         }
     }
     return (candidate);
+}
+
+bool Subnet6::inPool(const isc::asiolink::IOAddress& addr) const {
+
+    // Let's start with checking if it even belongs to that subnet.
+    if (!inRange(addr)) {
+        return (false);
+    }
+
+    for (Pool6Collection::const_iterator pool = pools_.begin(); pool != pools_.end(); ++pool) {
+        if ((*pool)->inRange(addr)) {
+            return (true);
+        }
+    }
+    // there's no pool that address belongs to
+    return (false);
 }
 
 } // end of isc::dhcp namespace
