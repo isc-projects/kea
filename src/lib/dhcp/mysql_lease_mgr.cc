@@ -102,14 +102,14 @@ public:
         bind_[1].buffer_length = hwaddr_length_;
         bind_[1].length = &hwaddr_length_;
 
-        // client_id: varchar(128)
-        clientid_ = lease_->duid_->getDuid();
-        clientid_length_ = clientid_.size();
+        // duid: varchar(128)
+        duid_ = lease_->duid_->getDuid();
+        duid_length_ = duid_.size();
 
         bind_[2].buffer_type = MYSQL_TYPE_BLOB;
-        bind_[2].buffer = reinterpret_cast<char*>(&(clientid_[0]));
-        bind_[2].buffer_length = clientid_length_;
-        bind_[2].length = &clientid_length_;
+        bind_[2].buffer = reinterpret_cast<char*>(&(duid_[0]));
+        bind_[2].buffer_length = duid_length_;
+        bind_[2].length = &duid_length_;
 
         // The lease structure holds the client last transmission time (cltt_)
         // and the valid lifetime (valid_lft_).  For convenience for external
@@ -201,11 +201,11 @@ public:
         bind_[2].error = &error_[1];
 
         // client_id: varbinary(128)
-        clientid_length_ = sizeof(clientid_buffer_);
+        duid_length_ = sizeof(duid_buffer_);
         bind_[2].buffer_type = MYSQL_TYPE_BLOB;
-        bind_[2].buffer = reinterpret_cast<char*>(clientid_buffer_);
-        bind_[2].buffer_length = clientid_length_;
-        bind_[2].length = &clientid_length_;
+        bind_[2].buffer = reinterpret_cast<char*>(duid_buffer_);
+        bind_[2].buffer_length = duid_length_;
+        bind_[2].length = &duid_length_;
         bind_[2].error = &error_[2];
 
         // lease_time: unsigned int
@@ -275,7 +275,7 @@ public:
 
         result->hwaddr_ = vector<uint8_t>(&hwaddr_buffer_[0],
                                           &hwaddr_buffer_[hwaddr_length_]);
-        result->duid_.reset(new DUID(clientid_buffer_, clientid_length_));
+        result->duid_.reset(new DUID(duid_buffer_, duid_length_));
         MySqlLeaseMgr::convertFromDatabaseTime(expire_, lease_time_,
                                                result->cltt_,
                                                result->valid_lft_);
@@ -313,9 +313,9 @@ private:
                                         ///< array form of V6 address
     unsigned long   addr6_length_;      ///< Length of the address
     MYSQL_BIND      bind_[10];          ///< Static array for speed of access
-    std::vector<uint8_t> clientid_;     ///< Client identification
-    uint8_t         clientid_buffer_[DUID_MAX_LEN]; ///< Buffer form of DUID
-    unsigned long   clientid_length_;   ///< Length of client ID
+    std::vector<uint8_t> duid_;         ///< Client identification
+    uint8_t         duid_buffer_[DUID_MAX_LEN]; ///< Buffer form of DUID
+    unsigned long   duid_length_;       ///< Length of the DUID
     my_bool         error_[10];         ///< For error reporting
     MYSQL_TIME      expire_;            ///< Lease expiry time
     const my_bool   false_;             ///< "false" for MySql
@@ -473,14 +473,14 @@ MySqlLeaseMgr::prepareStatements() {
     prepareStatement(DELETE_LEASE6,
                      "DELETE FROM lease6 WHERE address = ?");
     prepareStatement(GET_LEASE6,
-                     "SELECT address, hwaddr, client_id, "
+                     "SELECT address, hwaddr, duid, "
                          "lease_time, expire, subnet_id, pref_lifetime, "
                          "lease_type, iaid, prefix_len "
                          "FROM lease6 WHERE address = ?");
     prepareStatement(GET_VERSION,
                      "SELECT version, minor FROM schema_version");
     prepareStatement(INSERT_LEASE6,
-                     "INSERT INTO lease6(address, hwaddr, client_id, "
+                     "INSERT INTO lease6(address, hwaddr, duid, "
                          "lease_time, expire, subnet_id, pref_lifetime, "
                          "lease_type, iaid, prefix_len) "
                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
