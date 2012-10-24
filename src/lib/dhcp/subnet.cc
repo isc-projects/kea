@@ -97,7 +97,7 @@ Pool4Ptr Subnet4::getPool4(const isc::asiolink::IOAddress& hint /* = IOAddress("
 }
 
 void
-Subnet4::validateOption(OptionPtr option) const {
+Subnet4::validateOption(const OptionPtr& option) const {
     if (!option) {
         isc_throw(isc::BadValue, "option configured for subnet must not be NULL");
     } else if (option->getUniverse() != Option::V4) {
@@ -152,7 +152,7 @@ Pool6Ptr Subnet6::getPool6(const isc::asiolink::IOAddress& hint /* = IOAddress("
 }
 
 void
-Subnet6::validateOption(OptionPtr option) const {
+Subnet6::validateOption(const OptionPtr& option) const {
     if (!option) {
         isc_throw(isc::BadValue, "option configured for subnet must not be NULL");
     } else if (option->getUniverse() != Option::V6) {
