@@ -12,14 +12,16 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/memory_segment_local.h>
 
 #include "client_list.h"
 #include "client.h"
 #include "factory.h"
 #include "memory/memory_client.h"
+#include "memory/zone_table_segment.h"
+#include "memory/zone_writer.h"
 #include "logger.h"
 #include <dns/masterload.h>
+#include <util/memory_segment_local.h>
 
 #include <memory>
 #include <boost/foreach.hpp>
@@ -377,9 +379,45 @@ ConfigurableClientList::reload(const Name& name) {
 }
 
 ConfigurableClientList::ZoneWriterPair
-ConfigurableClientList::getCachedZoneWriter(const Name& ) {
-    // TODO: Just for now.
-    return (ZoneWriterPair(CACHE_DISABLED, ZoneWriterPtr()));
+ConfigurableClientList::getCachedZoneWriter(const Name& name) {
+    if (!allow_cache_) {
+        return (ZoneWriterPair(CACHE_DISABLED, ZoneWriterPtr()));
+    }
+    // Try to find the correct zone.
+    MutableResult result;
+    findInternal(result, name, true, true);
+    if (!result.finder) {
+        return (ZoneWriterPair(ZONE_NOT_FOUND, ZoneWriterPtr()));
+    }
+    // Try to get the in-memory cache for the zone. If there's none,
+    // we can't provide the result.
+    if (!result.info->cache_) {
+        return (ZoneWriterPair(ZONE_NOT_CACHED, ZoneWriterPtr()));
+    }
+    memory::LoadAction load_action;
+    DataSourceClient* client(result.info->data_src_client_);
+    if (client) {
+        // Now finally provide the writer.
+        // If it does not exist in client,
+        // DataSourceError is thrown, which is exactly the result what we
+        // want, so no need to handle it.
+        ZoneIteratorPtr iterator(client->getIterator(name));
+        if (!iterator) {
+            isc_throw(isc::Unexpected, "Null iterator from " << name);
+        }
+        // TODO
+    } else {
+        // The MasterFiles special case
+        const string filename(result.info->cache_->getFileName(name));
+        if (filename.empty()) {
+            isc_throw(isc::Unexpected, "Confused about missing both filename "
+                      "and data source");
+        }
+        // TODO
+    }
+    return (ZoneWriterPair(ZONE_RELOADED,
+                           ZoneWriterPtr(result.info->cache_->getZoneTableSegment().
+                                         getZoneWriter(load_action, name, rrclass_))));
 }
 
 // NOTE: This function is not tested, it would be complicated. However, the
