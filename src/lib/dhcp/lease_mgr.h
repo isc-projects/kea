@@ -164,6 +164,7 @@ struct Lease4 {
     /// @brief Constructor
     ///
     /// Initialize fields that don't have a default constructor.
+    /// @TODO Remove this
     Lease4() : addr_(0) {}
 };
 
@@ -280,7 +281,7 @@ struct Lease6 {
     /// @brief Constructor
     ///
     /// Initialize fields that don't have a default constructor.
-    Lease6() : addr_(0) {}
+    Lease6() : addr_("::") {}
 };
 
 /// @brief Pointer to a Lease6 structure.
@@ -336,7 +337,7 @@ public:
     /// @exception DbOperationError Database function failed
     virtual bool addLease(const Lease6Ptr& lease) = 0;
 
-    /// @brief Returns existing IPv4 lease for specified IPv4 address and subnet_id
+    /// @brief Returns IPv4 lease for specified IPv4 address and subnet_id
     ///
     /// This method is used to get a lease for specific subnet_id. There can be
     /// at most one lease for any given subnet, so this method returns a single
@@ -522,7 +523,6 @@ public:
     /// As host reservation is outside of scope for 2012, support for hosts
     /// is currently postponed.
 
-
 protected:
     /// @brief returns value of the parameter
     std::string getParameter(const std::string& name) const;
@@ -534,9 +534,6 @@ protected:
     /// intended to keep any DHCP-related parameters.
     ParameterMap parameters_;
 };
-
-/// @brief Pointer to a Lease Manager
-typedef boost::shared_ptr<LeaseMgr> LeaseMgrPtr;
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
