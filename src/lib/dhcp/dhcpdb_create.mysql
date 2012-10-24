@@ -45,7 +45,7 @@ CREATE TABLE lease4 (
 CREATE TABLE lease6 (
     address VARCHAR(40) PRIMARY KEY NOT NULL,   # IPv6 address
     hwaddr VARBINARY(20),                       # Hardware address
-    client_id VARBINARY(128),                   # Client ID
+    duid VARBINARY(128),                        # DUID
     lease_time INT UNSIGNED,                    # Length of the lease (seconds)
     expire TIMESTAMP,                           # Expiration time of the lease
     subnet_id INT UNSIGNED,                     # Subnet identification
