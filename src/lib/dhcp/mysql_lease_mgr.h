@@ -22,6 +22,11 @@
 namespace isc {
 namespace dhcp {
 
+// Define the current database schema values
+
+const uint32_t CURRENT_VERSION_VERSION = 0;
+const uint32_t CURRENT_VERSION_MINOR = 1;
+
 /// @brief MySQL Lease Manager
 ///
 /// This is a concrete API for the backend for the MySQL database.

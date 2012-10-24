@@ -58,6 +58,8 @@
 /// Nevertheless, we hope to have failover protocol eventually implemented in
 /// the Kea.
 
+#include <iostream>
+
 namespace isc {
 namespace dhcp {
 
@@ -289,6 +291,24 @@ struct Lease6 {
     ///
     /// Initialize fields that don't have a default constructor.
     Lease6() : addr_("::") {}
+
+    /// @brief Convert Lease6 to Printable Form
+    ///
+    /// @return String form of the lease
+    std::string toText();
+
+    /// @brief Compare two leases for equality
+    ///
+    /// @param other lease6 object with which to compare
+    bool operator==(const Lease6& other) const;
+
+    /// @brief Compare two leases for inequality
+    ///
+    /// @param other lease6 object with which to compare
+    bool operator!=(const Lease6& other) const {
+        return (!operator==(other));
+    }
+
 };
 
 /// @brief Pointer to a Lease6 structure.
