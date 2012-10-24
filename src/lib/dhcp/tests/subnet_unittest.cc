@@ -104,6 +104,41 @@ TEST(Subnet4Test, Subnet4_Pool4_checks) {
     EXPECT_THROW(subnet->addPool4(pool3), BadValue);
 }
 
+// This test verifies that inRange() and inPool() methods work properly.
+TEST(Subnet4Test, inRangeinPool) {
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.0.0"), 8, 1, 2, 3));
+
+    // this one is in subnet
+    Pool4Ptr pool1(new Pool4(IOAddress("192.2.0.0"), 16));
+    subnet->addPool4(pool1);
+
+    // 192.1.1.1 belongs to the subnet...
+    EXPECT_TRUE(subnet->inRange(IOAddress("192.1.1.1")));
+
+    // ... but it does not belong to any pool within
+    EXPECT_FALSE(subnet->inPool(IOAddress("192.1.1.1")));
+
+    // the last address that is in range, but out of pool
+    EXPECT_TRUE(subnet->inRange(IOAddress("192.1.255.255")));
+    EXPECT_FALSE(subnet->inPool(IOAddress("192.1.255.255")));
+
+    // the first address that is in range, in pool
+    EXPECT_TRUE(subnet->inRange(IOAddress("192.2.0.0")));
+    EXPECT_TRUE (subnet->inPool(IOAddress("192.2.0.0")));
+
+    // let's try something in the middle as well
+    EXPECT_TRUE(subnet->inRange(IOAddress("192.2.3.4")));
+    EXPECT_TRUE (subnet->inPool(IOAddress("192.2.3.4")));
+
+    // the last address that is in range, in pool
+    EXPECT_TRUE(subnet->inRange(IOAddress("192.2.255.255")));
+    EXPECT_TRUE (subnet->inPool(IOAddress("192.2.255.255")));
+
+    // the first address that is in range, but out of pool
+    EXPECT_TRUE(subnet->inRange(IOAddress("192.3.0.0")));
+    EXPECT_FALSE(subnet->inPool(IOAddress("192.3.0.0")));
+}
+
 // Tests for Subnet6
 
 TEST(Subnet6Test, constructor) {
@@ -161,7 +196,6 @@ TEST(Subnet6Test, Pool6InSubnet6) {
     mypool = subnet->getPool6(IOAddress("2001:db8:1:3::dead:beef"));
 
     EXPECT_EQ(mypool, pool3);
-
 }
 
 TEST(Subnet6Test, Subnet6_Pool6_checks) {
@@ -186,5 +220,41 @@ TEST(Subnet6Test, Subnet6_Pool6_checks) {
     Pool6Ptr pool4(new Pool6(Pool6::TYPE_IA, IOAddress("4001:db8:1::"), 80));
     EXPECT_THROW(subnet->addPool6(pool4), BadValue);
 }
+
+// This test verifies that inRange() and inPool() methods work properly.
+TEST(Subnet6Test, inRangeinPool) {
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
+
+    // this one is in subnet
+    Pool6Ptr pool1(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::10"),
+                             IOAddress("2001:db8::20")));
+    subnet->addPool6(pool1);
+
+    // 192.1.1.1 belongs to the subnet...
+    EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::1")));
+    // ... but it does not belong to any pool within
+    EXPECT_FALSE(subnet->inPool(IOAddress("2001:db8::1")));
+
+    // the last address that is in range, but out of pool
+    EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::f")));
+    EXPECT_FALSE(subnet->inPool(IOAddress("2001:db8::f")));
+
+    // the first address that is in range, in pool
+    EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::10")));
+    EXPECT_TRUE (subnet->inPool(IOAddress("2001:db8::10")));
+
+    // let's try something in the middle as well
+    EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::18")));
+    EXPECT_TRUE (subnet->inPool(IOAddress("2001:db8::18")));
+
+    // the last address that is in range, in pool
+    EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::20")));
+    EXPECT_TRUE (subnet->inPool(IOAddress("2001:db8::20")));
+
+    // the first address that is in range, but out of pool
+    EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::21")));
+    EXPECT_FALSE(subnet->inPool(IOAddress("2001:db8::21")));
+}
+
 
 };

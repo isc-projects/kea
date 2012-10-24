@@ -43,6 +43,19 @@ public:
     /// @brief checks if specified address is in range
     bool inRange(const isc::asiolink::IOAddress& addr) const;
 
+    /// @brief checks if the specified address is in pools
+    ///
+    /// Note the difference between inSubnet() and inPool(). For a given
+    /// subnet (e.g. 2001::/64) there may be one or more pools defined
+    /// that may or may not cover entire subnet, e.g. pool 2001::1-2001::10).
+    /// inPool() returning true implies inSubnet(), but the reverse implication
+    /// is not always true. For the given example, 2001::abc would return
+    /// true for inSubnet(), but false for inPool() check.
+    ///
+    /// @param addr this address will be checked if it belongs to any pools in that subnet
+    /// @return true if the address is in any of the pools
+    virtual bool inPool(const isc::asiolink::IOAddress& addr) const = 0;
+
     /// @brief return valid-lifetime for addresses in that prefix
     Triplet<uint32_t> getValid() const {
         return (valid_);
@@ -157,6 +170,14 @@ public:
         return pools_;
     }
 
+    /// @brief checks if the specified address is in pools
+    ///
+    /// See the description in \ref Subnet::inPool().
+    ///
+    /// @param addr this address will be checked if it belongs to any pools in that subnet
+    /// @return true if the address is in any of the pools
+    bool inPool(const isc::asiolink::IOAddress& addr) const;
+
 protected:
     /// @brief collection of pools in that list
     Pool4Collection pools_;
@@ -216,6 +237,14 @@ public:
     const Pool6Collection& getPools() const {
         return pools_;
     }
+
+    /// @brief checks if the specified address is in pools
+    ///
+    /// See the description in \ref Subnet::inPool().
+    ///
+    /// @param addr this address will be checked if it belongs to any pools in that subnet
+    /// @return true if the address is in any of the pools
+    bool inPool(const isc::asiolink::IOAddress& addr) const;
 
 protected:
     /// @brief collection of pools in that list
