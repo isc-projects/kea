@@ -255,7 +255,7 @@ protected:
     /// @brief Check if option is valid and can be added to a subnet.
     ///
     /// @param option option to be validated.
-    virtual void validateOption(OptionPtr option) const = 0;
+    virtual void validateOption(const OptionPtr& option) const = 0;
 
     /// @brief subnet-id
     ///
@@ -328,7 +328,7 @@ protected:
     /// @param option option to be validated.
     ///
     /// @throw isc::BadValue if provided option is invalid.
-    virtual void validateOption(OptionPtr option) const;
+    virtual void validateOption(const OptionPtr& option) const;
 
     /// @brief collection of pools in that list
     Pool4Collection pools_;
@@ -396,7 +396,7 @@ protected:
     /// @param option option to be validated.
     ///
     /// @throw isc::BadValue if provided option is invalid.
-    virtual void validateOption(OptionPtr option) const;
+    virtual void validateOption(const OptionPtr& option) const;
 
     /// @brief collection of pools in that list
     Pool6Collection pools_;
