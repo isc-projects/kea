@@ -310,4 +310,11 @@ TEST_F(MySqlLeaseMgrTest, BasicLease6) {
     detailCompareLease6(l2, l_returned);
 }
 
+/// @brief Check getName() returns correct database name
+TEST_F(MySqlLeaseMgrTest, getName) {
+    EXPECT_EQ(std::string("keatest"), lmptr_->getName());
+
+    // @TODO: check for the negative
+}
+
 }; // end of anonymous namespace

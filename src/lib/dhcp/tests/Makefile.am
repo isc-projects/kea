@@ -31,11 +31,6 @@ TESTS += libdhcp++_unittests libdhcpsrv_unittests
 libdhcp___unittests_SOURCES  = run_unittests.cc
 libdhcp___unittests_SOURCES += duid_unittest.cc
 libdhcp___unittests_SOURCES += iface_mgr_unittest.cc
-libdhcp___unittests_SOURCES += lease_mgr_factory_unittest.cc
-libdhcp___unittests_SOURCES += lease_mgr_unittest.cc
-if HAVE_MYSQL
-libdhcp___unittests_SOURCES += mysql_lease_mgr_unittest.cc
-endif
 libdhcp___unittests_SOURCES += libdhcp++_unittest.cc
 libdhcp___unittests_SOURCES += option4_addrlst_unittest.cc
 libdhcp___unittests_SOURCES += option6_addrlst_unittest.cc
@@ -48,14 +43,15 @@ libdhcp___unittests_SOURCES += pkt6_unittest.cc
 libdhcp___unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 libdhcp___unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 libdhcp___unittests_CXXFLAGS = $(AM_CXXFLAGS)
-if HAVE_MYSQL
-libdhcp___unittests_CPPFLAGS += $(MYSQL_CPPFLAGS)
-libdhcp___unittests_LDFLAGS  += $(MYSQL_LIBS)
-endif
 
 libdhcpsrv_unittests_SOURCES  = run_unittests.cc
 libdhcpsrv_unittests_SOURCES += addr_utilities_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfgmgr_unittest.cc
+libdhcpsrv_unittests_SOURCES += lease_mgr_factory_unittest.cc
+libdhcpsrv_unittests_SOURCES += lease_mgr_unittest.cc
+if HAVE_MYSQL
+libdhcpsrv_unittests_SOURCES += mysql_lease_mgr_unittest.cc
+endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
 libdhcpsrv_unittests_SOURCES += subnet_unittest.cc
 libdhcpsrv_unittests_SOURCES += triplet_unittest.cc
@@ -67,7 +63,12 @@ libdhcpsrv_unittests_LDADD  = $(GTEST_LDADD)
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcpsrv.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
+if HAVE_MYSQL
+libdhcpsrv_unittests_CPPFLAGS += $(MYSQL_CPPFLAGS)
+libdhcpsrv_unittests_LDFLAGS  += $(MYSQL_LIBS)
+endif
 
 
 if USE_CLANGPP

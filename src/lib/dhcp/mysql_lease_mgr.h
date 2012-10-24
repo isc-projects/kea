@@ -22,7 +22,7 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Abstract Lease Manager
+/// @brief MySQL Lease Manager
 ///
 /// This is a concrete API for the backend for the MySQL database.
 class MySqlLeaseMgr : public LeaseMgr {
@@ -31,10 +31,10 @@ public:
     ///
     /// Uses the following keywords in the parameters passed to it to
     /// connect to the database:
-    /// - name - Name of the database to which to connect
-    /// - host - Host name to which to connect
-    /// - user - Username under which to connect.
-    /// - password - Password for "user" on the database.
+    /// - name - Name of the database to which to connect (mandatory)
+    /// - host - Host to which to connect (optional, defaults to "localhost")
+    /// - user - Username under which to connect (optional)
+    /// - password - Password for "user" on the database (optional)
     ///
     /// If the database is successfully opened, the version number in the
     /// schema_version table will be checked against hard-coded value in
@@ -44,6 +44,10 @@ public:
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
+    ///
+    /// @exception DbOpenError Error opening the database
+    /// @exception DbOperationError An operation on the open database has
+    ///            failed.
     MySqlLeaseMgr(const ParameterMap& parameters);
 
     /// @brief Destructor (closes database)
@@ -156,6 +160,11 @@ public:
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
+    ///
+    /// @exception BadValue record retrieved from database had an invalid
+    ///            lease type field.
+    /// @exception DbOperationError MySQL operation failed, exception will give
+    ///            text indicating the reason.
     virtual Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns existing IPv6 leases for a given DUID+IA combination
@@ -208,6 +217,9 @@ public:
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
+    ///
+    /// @exception DbOperationError MySQL operation failed, exception will give
+    ///            text indicating the reason.
     virtual bool deleteLease6(const isc::asiolink::IOAddress& addr);
 
     /// @brief Returns backend name.
@@ -234,6 +246,9 @@ public:
     /// B>=A and B=C (it is ok to have newer backend, as it should be backward
     /// compatible)
     /// Also if B>C, some database upgrade procedure may be triggered
+    ///
+    /// @exception DbOperationError MySQL operation failed, exception will give
+    ///            text indicating the reason.
     virtual std::pair<uint32_t, uint32_t> getVersion() const;
 
     /// @brief Commit Transactions
@@ -335,6 +350,11 @@ private:
     ///
     /// Creates the prepared statements for all of the SQL statements used
     /// by the MySQL backend.
+    ///
+    /// @exception DbOperationError MySQL operation failed, exception will give
+    ///            text indicating the reason.
+    /// @exception InvalidParameter 'index' is not valid for the vector.  This
+    ///            represents an internal error within the code.
     void prepareStatements();
 
     /// @brief Open Database
@@ -360,7 +380,7 @@ private:
                            const char* what) const {
         if (status != 0) {
             isc_throw(DbOperationError, what << " for <" <<
-                      raw_statements_[index] << ">, reason: " <<
+                      text_statements_[index] << ">, reason: " <<
                       mysql_error(mysql_) << " (error code " <<
                       mysql_errno(mysql_) << ")");
         }
@@ -368,7 +388,7 @@ private:
 
     // Members
     MYSQL*              mysql_;                 ///< MySQL context object
-    std::vector<std::string> raw_statements_;   ///< Raw text of statements
+    std::vector<std::string> text_statements_;  ///< Raw text of statements
     std::vector<MYSQL_STMT*> statements_;       ///< Prepared statements
 };
 
