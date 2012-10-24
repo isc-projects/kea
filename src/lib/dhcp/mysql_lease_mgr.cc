@@ -40,7 +40,6 @@ namespace {
 
 const size_t ADDRESS6_TEXT_MAX_LEN = 42;    // Max size of a IPv6 text buffer
 const size_t DUID_MAX_LEN = 128;            // Max size of a DUID
-const size_t HWADDR_MAX_LEN = 20;           // Max size of a hardware address
 ///@}
 };
 
@@ -99,27 +98,19 @@ public:
         bind_[0].buffer_length = addr6_length_;
         bind_[0].length = &addr6_length_;
 
-        // hwaddr: binary(20)
-        hwaddr_length_ = lease_->hwaddr_.size();
-
-        bind_[1].buffer_type = MYSQL_TYPE_BLOB;
-        bind_[1].buffer = reinterpret_cast<char*>(&(lease_->hwaddr_[0]));
-        bind_[1].buffer_length = hwaddr_length_;
-        bind_[1].length = &hwaddr_length_;
-
         // duid: varchar(128)
         duid_ = lease_->duid_->getDuid();
         duid_length_ = duid_.size();
 
-        bind_[2].buffer_type = MYSQL_TYPE_BLOB;
-        bind_[2].buffer = reinterpret_cast<char*>(&(duid_[0]));
-        bind_[2].buffer_length = duid_length_;
-        bind_[2].length = &duid_length_;
+        bind_[1].buffer_type = MYSQL_TYPE_BLOB;
+        bind_[1].buffer = reinterpret_cast<char*>(&(duid_[0]));
+        bind_[1].buffer_length = duid_length_;
+        bind_[1].length = &duid_length_;
 
         // lease_time: unsigned int
-        bind_[3].buffer_type = MYSQL_TYPE_LONG;
-        bind_[3].buffer = reinterpret_cast<char*>(&lease->valid_lft_);
-        bind_[3].is_unsigned = true_;
+        bind_[2].buffer_type = MYSQL_TYPE_LONG;
+        bind_[2].buffer = reinterpret_cast<char*>(&lease->valid_lft_);
+        bind_[2].is_unsigned = true_;
 
         // expire: timestamp
         // The lease structure holds the client last transmission time (cltt_)
@@ -129,40 +120,40 @@ public:
         // expire = cltt_ + valid_lft_
         MySqlLeaseMgr::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
                                              expire_);
-        bind_[4].buffer_type = MYSQL_TYPE_TIMESTAMP;
-        bind_[4].buffer = reinterpret_cast<char*>(&expire_);
-        bind_[4].buffer_length = sizeof(expire_);
+        bind_[3].buffer_type = MYSQL_TYPE_TIMESTAMP;
+        bind_[3].buffer = reinterpret_cast<char*>(&expire_);
+        bind_[3].buffer_length = sizeof(expire_);
 
         // subnet_id: unsigned int
         // Can use lease_->subnet_id_ directly as it is of type uint32_t.
-        bind_[5].buffer_type = MYSQL_TYPE_LONG;
-        bind_[5].buffer = reinterpret_cast<char*>(&lease_->subnet_id_);
-        bind_[5].is_unsigned = true_;
+        bind_[4].buffer_type = MYSQL_TYPE_LONG;
+        bind_[4].buffer = reinterpret_cast<char*>(&lease_->subnet_id_);
+        bind_[4].is_unsigned = true_;
 
         // pref_lifetime: unsigned int
         // Can use lease_->preferred_lft_ directly as it is of type uint32_t.
-        bind_[6].buffer_type = MYSQL_TYPE_LONG;
-        bind_[6].buffer = reinterpret_cast<char*>(&lease_->preferred_lft_);
-        bind_[6].is_unsigned = true_;
+        bind_[5].buffer_type = MYSQL_TYPE_LONG;
+        bind_[5].buffer = reinterpret_cast<char*>(&lease_->preferred_lft_);
+        bind_[5].is_unsigned = true_;
 
         // lease_type: tinyint
         // Must convert to uint8_t as lease_->type_ is a LeaseType variable
         lease_type_ = lease_->type_;
-        bind_[7].buffer_type = MYSQL_TYPE_TINY;
-        bind_[7].buffer = reinterpret_cast<char*>(&lease_type_);
-        bind_[7].is_unsigned = true_;
+        bind_[6].buffer_type = MYSQL_TYPE_TINY;
+        bind_[6].buffer = reinterpret_cast<char*>(&lease_type_);
+        bind_[6].is_unsigned = true_;
 
         // iaid: unsigned int
         // Can use lease_->iaid_ directly as it is of type uint32_t.
-        bind_[8].buffer_type = MYSQL_TYPE_LONG;
-        bind_[8].buffer = reinterpret_cast<char*>(&lease_->iaid_);
-        bind_[8].is_unsigned = true_;
+        bind_[7].buffer_type = MYSQL_TYPE_LONG;
+        bind_[7].buffer = reinterpret_cast<char*>(&lease_->iaid_);
+        bind_[7].is_unsigned = true_;
 
         // prefix_len: unsigned tinyint
         // Can use lease_->prefixlen_ directly as it is uint32_t.
-        bind_[9].buffer_type = MYSQL_TYPE_TINY;
-        bind_[9].buffer = reinterpret_cast<char*>(&lease_->prefixlen_);
-        bind_[9].is_unsigned = true_;
+        bind_[8].buffer_type = MYSQL_TYPE_TINY;
+        bind_[8].buffer = reinterpret_cast<char*>(&lease_->prefixlen_);
+        bind_[8].is_unsigned = true_;
 
         return(bind_);
     }
@@ -192,64 +183,56 @@ public:
         bind_[0].buffer_length = addr6_length_;
         bind_[0].length = &addr6_length_;
         bind_[0].error = &error_[0];
-        
-        // hwaddr: varbinary(20)
-        hwaddr_length_ = sizeof(hwaddr_buffer_);
-        bind_[1].buffer_type = MYSQL_TYPE_BLOB;
-        bind_[1].buffer = reinterpret_cast<char*>(hwaddr_buffer_);
-        bind_[1].buffer_length = hwaddr_length_;
-        bind_[1].length = &hwaddr_length_;
-        bind_[2].error = &error_[1];
 
         // client_id: varbinary(128)
         duid_length_ = sizeof(duid_buffer_);
-        bind_[2].buffer_type = MYSQL_TYPE_BLOB;
-        bind_[2].buffer = reinterpret_cast<char*>(duid_buffer_);
-        bind_[2].buffer_length = duid_length_;
-        bind_[2].length = &duid_length_;
-        bind_[2].error = &error_[2];
+        bind_[1].buffer_type = MYSQL_TYPE_BLOB;
+        bind_[1].buffer = reinterpret_cast<char*>(duid_buffer_);
+        bind_[1].buffer_length = duid_length_;
+        bind_[1].length = &duid_length_;
+        bind_[1].error = &error_[1];
 
         // lease_time: unsigned int
-        bind_[3].buffer_type = MYSQL_TYPE_LONG;
-        bind_[3].buffer = reinterpret_cast<char*>(&valid_lifetime_);
-        bind_[3].is_unsigned = true_;
-        bind_[3].error = &error_[3];
+        bind_[2].buffer_type = MYSQL_TYPE_LONG;
+        bind_[2].buffer = reinterpret_cast<char*>(&valid_lifetime_);
+        bind_[2].is_unsigned = true_;
+        bind_[2].error = &error_[2];
 
         // expire: timestamp
-        bind_[4].buffer_type = MYSQL_TYPE_TIMESTAMP;
-        bind_[4].buffer = reinterpret_cast<char*>(&expire_);
-        bind_[4].buffer_length = sizeof(expire_);
-        bind_[4].error = &error_[4];
+        bind_[3].buffer_type = MYSQL_TYPE_TIMESTAMP;
+        bind_[3].buffer = reinterpret_cast<char*>(&expire_);
+        bind_[3].buffer_length = sizeof(expire_);
+        bind_[3].error = &error_[3];
 
         // subnet_id: unsigned int
+        bind_[4].buffer_type = MYSQL_TYPE_LONG;
+        bind_[4].buffer = reinterpret_cast<char*>(&subnet_id_);
+        bind_[4].is_unsigned = true_;
+        bind_[4].error = &error_[4];
+
+        // pref_lifetime: unsigned int
         bind_[5].buffer_type = MYSQL_TYPE_LONG;
-        bind_[5].buffer = reinterpret_cast<char*>(&subnet_id_);
+        bind_[5].buffer = reinterpret_cast<char*>(&pref_lifetime_);
         bind_[5].is_unsigned = true_;
         bind_[5].error = &error_[5];
 
-        // pref_lifetime: unsigned int
-        bind_[6].buffer_type = MYSQL_TYPE_LONG;
-        bind_[6].buffer = reinterpret_cast<char*>(&pref_lifetime_);
+        // lease_type: tinyint
+        bind_[6].buffer_type = MYSQL_TYPE_TINY;
+        bind_[6].buffer = reinterpret_cast<char*>(&lease_type_);
         bind_[6].is_unsigned = true_;
         bind_[6].error = &error_[6];
 
-        // lease_type: tinyint
-        bind_[7].buffer_type = MYSQL_TYPE_TINY;
-        bind_[7].buffer = reinterpret_cast<char*>(&lease_type_);
+        // iaid: unsigned int
+        bind_[7].buffer_type = MYSQL_TYPE_LONG;
+        bind_[7].buffer = reinterpret_cast<char*>(&iaid_);
         bind_[7].is_unsigned = true_;
         bind_[7].error = &error_[7];
-
-        // iaid: unsigned int
-        bind_[8].buffer_type = MYSQL_TYPE_LONG;
-        bind_[8].buffer = reinterpret_cast<char*>(&iaid_);
-        bind_[8].is_unsigned = true_;
-        bind_[8].error = &error_[8];
  
         // prefix_len: unsigned tinyint
-        bind_[9].buffer_type = MYSQL_TYPE_TINY;
-        bind_[9].buffer = reinterpret_cast<char*>(&prefixlen_);
-        bind_[9].is_unsigned = true_;
-        bind_[9].error = &error_[9];
+        bind_[8].buffer_type = MYSQL_TYPE_TINY;
+        bind_[8].buffer = reinterpret_cast<char*>(&prefixlen_);
+        bind_[8].is_unsigned = true_;
+        bind_[8].error = &error_[8];
 
         return (bind_);
     }
@@ -278,8 +261,6 @@ public:
 
         // Set the other data, converting time as needed.
         result->addr_ = isc::asiolink::IOAddress(address);
-        result->hwaddr_ = vector<uint8_t>(&hwaddr_buffer_[0],
-                                          &hwaddr_buffer_[hwaddr_length_]);
         result->duid_.reset(new DUID(duid_buffer_, duid_length_));
         MySqlLeaseMgr::convertFromDatabaseTime(expire_, valid_lifetime_,
                                                result->cltt_);
@@ -320,15 +301,13 @@ private:
     char            addr6_buffer_[ADDRESS6_TEXT_MAX_LEN];  ///< Character 
                                         ///< array form of V6 address
     unsigned long   addr6_length_;      ///< Length of the address
-    MYSQL_BIND      bind_[10];          ///< Static array for speed of access
+    MYSQL_BIND      bind_[9];           ///< Static array for speed of access
     std::vector<uint8_t> duid_;         ///< Client identification
     uint8_t         duid_buffer_[DUID_MAX_LEN]; ///< Buffer form of DUID
     unsigned long   duid_length_;       ///< Length of the DUID
-    my_bool         error_[10];         ///< For error reporting
+    my_bool         error_[9];          ///< For error reporting
     MYSQL_TIME      expire_;            ///< Lease expiry time
     const my_bool   false_;             ///< "false" for MySql
-    uint8_t         hwaddr_buffer_[HWADDR_MAX_LEN]; ///< Hardware address buffer
-    unsigned long   hwaddr_length_;     ///< Length of hardware address
     uint32_t        iaid_;              ///< Identity association ID
     Lease6Ptr       lease_;             ///< Pointer to lease object
     uint32_t        valid_lifetime_;    ///< Lease time
@@ -531,17 +510,17 @@ MySqlLeaseMgr::prepareStatements() {
     prepareStatement(DELETE_LEASE6,
                      "DELETE FROM lease6 WHERE address = ?");
     prepareStatement(GET_LEASE6,
-                     "SELECT address, hwaddr, duid, "
-                         "valid_lifetime, expire, subnet_id, pref_lifetime, "
+                     "SELECT address, duid, valid_lifetime, "
+                         "expire, subnet_id, pref_lifetime, "
                          "lease_type, iaid, prefix_len "
                          "FROM lease6 WHERE address = ?");
     prepareStatement(GET_VERSION,
                      "SELECT version, minor FROM schema_version");
     prepareStatement(INSERT_LEASE6,
-                     "INSERT INTO lease6(address, hwaddr, duid, "
-                         "valid_lifetime, expire, subnet_id, pref_lifetime, "
+                     "INSERT INTO lease6(address, duid, valid_lifetime, "
+                         "expire, subnet_id, pref_lifetime, "
                          "lease_type, iaid, prefix_len) "
-                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 }
 
 bool

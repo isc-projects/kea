@@ -81,7 +81,6 @@ Lease6::operator==(const Lease6& other) const {
         addr_ == other.addr_ &&
         prefixlen_ == other.prefixlen_ &&
         iaid_ == other.iaid_ &&
-        hwaddr_ == other.hwaddr_ &&
         *duid_ == *other.duid_ &&
         preferred_lft_ == other.preferred_lft_ &&
         valid_lft_ == other.valid_lft_ &&
