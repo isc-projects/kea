@@ -212,15 +212,6 @@ struct Lease6 {
     /// than once in a message. To differentiate between them, IAID field is present
     uint32_t iaid_;
 
-    /// @brief hardware address
-    ///
-    /// This field is not really used and is optional at best. The concept of identifying
-    /// clients by their hardware address was replaced in DHCPv6 by DUID concept. Each
-    /// client has its own unique DUID (DHCP Unique IDentifier). Furthermore, client's
-    /// HW address is not always available, because client may be behind a relay (relay
-    /// stores only link-local address).
-    std::vector<uint8_t> hwaddr_;
-
     /// @brief client identifier
     boost::shared_ptr<DUID> duid_;
 

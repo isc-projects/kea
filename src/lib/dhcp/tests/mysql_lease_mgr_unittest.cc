@@ -224,7 +224,6 @@ detailCompareLease6(const Lease6Ptr& first, const Lease6Ptr& second) {
     EXPECT_EQ(first->addr_.toText(), second->addr_.toText());
     EXPECT_EQ(first->prefixlen_, second->prefixlen_);
     EXPECT_EQ(first->iaid_, second->iaid_);
-    EXPECT_TRUE(first->hwaddr_ == second->hwaddr_);
     EXPECT_TRUE(*first->duid_ == *second->duid_);
     EXPECT_EQ(first->preferred_lft_, second->preferred_lft_);
     EXPECT_EQ(first->valid_lft_, second->valid_lft_);
@@ -265,7 +264,6 @@ TEST_F(MySqlLeaseMgrTest, BasicLease6) {
     l1->addr_ = L1_ADDRESS;
     l1->prefixlen_ = 0;
     l1->iaid_ = 42;
-    l1->hwaddr_ = std::vector<uint8_t>(6, 0x42);     // Six hex 42's
     l1->duid_ = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0x42)));
     l1->preferred_lft_ = 3600;  // Preferred lifetime
     l1->valid_lft_ = 3677;      // Actual lifetime
@@ -280,7 +278,6 @@ TEST_F(MySqlLeaseMgrTest, BasicLease6) {
     l2->addr_ = L2_ADDRESS;
     l2->prefixlen_ = 7;
     l2->iaid_ = 89;
-    l2->hwaddr_ = std::vector<uint8_t>(6, 0xf43);     // Six hex 42's
     l2->duid_ = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0x3a)));
     l2->preferred_lft_ = 1800;  // Preferred lifetime
     l2->valid_lft_ = 5412;      // Actual lifetime

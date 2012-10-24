@@ -44,7 +44,6 @@ CREATE TABLE lease4 (
 # it will eventually be replaced by BINARY(16).
 CREATE TABLE lease6 (
     address VARCHAR(40) PRIMARY KEY NOT NULL,   # IPv6 address
-    hwaddr VARBINARY(20),                       # Hardware address
     duid VARBINARY(128),                        # DUID
     valid_lifetime INT UNSIGNED,                # Length of the lease (seconds)
     expire TIMESTAMP,                           # Expiration time of the lease
