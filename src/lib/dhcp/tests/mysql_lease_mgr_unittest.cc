@@ -68,7 +68,8 @@ public:
     /// Open the database.
 
     MySqlLeaseMgrTest() {
-        lmptr_ = LeaseMgrFactory::create(validConnectionString());
+        LeaseMgrFactory::create(validConnectionString());
+        lmptr_ = &(LeaseMgrFactory::instance());
     }
 
     /// @brief Destructor
@@ -78,9 +79,10 @@ public:
 
     virtual ~MySqlLeaseMgrTest() {
         lmptr_->rollback();
+        LeaseMgrFactory::destroy();
     }
 
-    LeaseMgrPtr lmptr_;     // Pointer to the lease manager
+    LeaseMgr*   lmptr_;         // Pointer to the lease manager
 };
 
 
@@ -92,32 +94,37 @@ public:
 /// opened: the fixtures assume that and check basic operations.
 
 TEST(MySqlOpenTest, OpenDatabase) {
-    LeaseMgrPtr lmptr;
+    // Check that attempting to get an instance of the lease manager when
+    // none is set throws an exception.
+    EXPECT_THROW(LeaseMgrFactory::instance(), NoLeaseManager);
 
     // Check that wrong specification of backend throws an exception.
     // (This is really a check on LeaseMgrFactory, but is convenient to
     // perform here.)
-    EXPECT_THROW(lmptr = LeaseMgrFactory::create(connectionString(
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
-        InvalidParameter);
+        InvalidType);
 
     // Check that invalid login data causes an exception.
-    EXPECT_THROW(lmptr = LeaseMgrFactory::create(connectionString(
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(lmptr = LeaseMgrFactory::create(connectionString(
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(lmptr = LeaseMgrFactory::create(connectionString(
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(lmptr = LeaseMgrFactory::create(connectionString(
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
 
-    // Check that database opens correctly and that version is as expected
-    ASSERT_NO_THROW(lmptr = LeaseMgrFactory::create(validConnectionString()));
-    ASSERT_TRUE(lmptr);
+    // Check that database opens correctly.
+    ASSERT_NO_THROW(LeaseMgrFactory::create(validConnectionString()));
+    EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
+
+    // ... and tidy up.
+    LeaseMgrFactory::destroy();
 }
 
 /// @brief Check conversion functions

@@ -22,11 +22,22 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Invalid Type Exception
+/// @brief Invalid type exception
 ///
 /// Thrown when the factory doesn't recognise the type of the backend.
 class InvalidType : public Exception {
+public:
     InvalidType(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/// @brief No lease manager exception
+///
+/// Thrown if an attempt is made to get a reference to the current lease
+/// manager and none is currently available.
+class NoLeaseManager : public Exception {
+public:
+    NoLeaseManager(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
@@ -44,8 +55,12 @@ public:
     /// @brief Create an instance of a lease manager.
     ///
     /// Each database backend has its own lease manager type.  This static
-    /// method returns a lease manager of the appropriate type, based on the
-    /// the data in the input argument.
+    /// method sets the "current" lease manager to be a manager of the
+    /// appropriate type.  The actual lease manager is returned by the
+    /// "instance" method.
+    ///
+    /// Note: when called, the current lease manager is *always* destroyed
+    /// and a new one created - even if the parameters are the same.
     ///
     /// dbconfig is a generic way of passing parameters. Parameters are passed
     /// in the "name=value" format, separated by spaces.  The data MUST include
@@ -57,8 +72,27 @@ public:
     ///        are back-end specific, although must include the "type" keyword
     ///        which gives the backend in use.
     ///
-    /// @return Implementation of lease manager for the specified database.
-    static LeaseMgrPtr create(const std::string& dbconfig);
+    /// @exception InvalidParameter dbconfig string does not contain the
+    ///            "type" keyword.
+    /// @exception InvalidType The "type" keyword in dbconfig does not identify
+    ///            a supported backend.
+    static void create(const std::string& dbconfig);
+
+    /// @brief Destroy lease manager
+    ///
+    /// Destroys the current lease manager object.  This should have the effect
+    /// of closing the database connection.  The method is a no-op if no
+    /// lease manager is available.
+    static void destroy();
+
+    /// @brief Return Current Lease Manager
+    ///
+    /// Returns an instance of the "current" lease manager.  An exception
+    /// will be thrown if none is available.
+    ///
+    /// @exception NoLeaseManager No lease manager is available: use create()
+    ///            to create one before calling this method.
+    static LeaseMgr& instance();
 
     /// @brief Parse Database Parameters
     ///
@@ -69,6 +103,15 @@ public:
     ///
     /// @return std::map<>std::string, std::string> Map of keyword/value pairs.
     static LeaseMgr::ParameterMap parse(const std::string& dbconfig);
+
+private:
+    /// @brief Hold pointer to lease manager
+    ///
+    /// Holds a pointer to the singleton lease manager.  The singleton
+    /// is encapsulated in this method to avoid a "static initialization
+    /// fiasco" if defined in an external static variable.
+    static boost::scoped_ptr<LeaseMgr>& getLeaseMgrPtr();
+
 };
 
 }; // end of isc::dhcp namespace

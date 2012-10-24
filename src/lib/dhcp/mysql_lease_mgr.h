@@ -244,7 +244,6 @@ public:
     /// @exception DbOperationError if the commit failed.
     virtual void commit();
 
-
     /// @brief Rollback Transactions
     ///
     /// Rolls back all pending database operations.  On databases that don't

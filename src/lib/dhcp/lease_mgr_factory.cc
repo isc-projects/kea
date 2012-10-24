@@ -23,6 +23,7 @@
 #include <utility>
 
 #include <boost/foreach.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/algorithm/string.hpp>
 #include <exceptions/exceptions.h>
 #include <dhcp/lease_mgr_factory.h>
@@ -35,6 +36,12 @@ using namespace std;
 
 namespace isc {
 namespace dhcp {
+
+boost::scoped_ptr<LeaseMgr>&
+LeaseMgrFactory::getLeaseMgrPtr() {
+    static boost::scoped_ptr<LeaseMgr> leaseMgrPtr;
+    return (leaseMgrPtr);
+}
 
 LeaseMgr::ParameterMap
 LeaseMgrFactory::parse(const std::string& dbconfig) {
@@ -64,7 +71,7 @@ LeaseMgrFactory::parse(const std::string& dbconfig) {
     return (mapped_tokens);
 }
 
-LeaseMgrPtr
+void
 LeaseMgrFactory::create(const std::string& dbconfig) {
     const std::string type = "type";
 
@@ -78,14 +85,30 @@ LeaseMgrFactory::create(const std::string& dbconfig) {
     // Yes, check what it is.
 #ifdef HAVE_MYSQL
     if (parameters[type] == string("mysql")) {
-        return LeaseMgrPtr(new MySqlLeaseMgr(parameters));
+        getLeaseMgrPtr().reset(new MySqlLeaseMgr(parameters));
+        return;
     }
 #endif
 
     // Get here on no match
-    isc_throw(InvalidParameter, "Database configuration parameter 'type' does "
+    isc_throw(InvalidType, "Database configuration parameter 'type' does "
               "not specify a supported database backend");
 }
+
+void
+LeaseMgrFactory::destroy() {
+    getLeaseMgrPtr().reset();
+}
+
+LeaseMgr&
+LeaseMgrFactory::instance() {
+    LeaseMgr* lmptr = getLeaseMgrPtr().get();
+    if (lmptr == NULL) {
+        isc_throw(NoLeaseManager, "no current lease manager is available");
+    }
+    return (*lmptr);
+}
+
 
 }; // namespace dhcp
 }; // namespace isc

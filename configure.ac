@@ -735,9 +735,9 @@ LIBS=$LIBS_SAVED
 # the --with-mysql-config (default to /usr/bin/mysql-config).  By default,
 # the software is not built with MySQL support enabled.
 mysql_config="no"
-AC_ARG_WITH([mysql-config],
-  AC_HELP_STRING([--with-mysql-config=PATH],
-    [specify the path to the mysql_config script]),
+AC_ARG_WITH([dhcp-mysql],
+  AC_HELP_STRING([--with-dhcp-mysql=PATH],
+    [path to the MySQL 'mysql_config' script (MySQL is used for the DHCP database)]),
     [mysql_config="$withval"])
 
 if test "${mysql_config}" = "yes" ; then
@@ -747,11 +747,8 @@ elif test "${mysql_config}" != "no" ; then
 fi
 
 if test "$MYSQL_CONFIG" != "" ; then
-    if test -d "$MYSQL_CONFIG" ; then
-        AC_MSG_ERROR([Specified mysql_config program ${MYSQL_CONFIG} is a directory])
-    fi
-    if ! test -x "$MYSQL_CONFIG" ; then
-        AC_MSG_ERROR([--with-mysql-config should point to a mysql_config program])
+    if test -d "$MYSQL_CONFIG" -o ! -x "$MYSQL_CONFIG" ; then
+        AC_MSG_ERROR([--with-dhcp-mysql should point to a mysql_config program])
     fi
 
     MYSQL_CPPFLAGS=`$MYSQL_CONFIG --cflags`
@@ -1466,8 +1463,6 @@ dnl includes too
                  ${LOG4CPLUS_LIBS}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
-  MySQL:         $MYSQL_CPPFLAGS
-                 $MYSQL_LIBS
 
 Features:
   $enable_features
