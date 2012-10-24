@@ -24,6 +24,25 @@
 
 using namespace std;
 
+namespace {
+///@{
+/// @brief Maximum Size of Database Fields
+///
+/// The following constants define buffer sizes for variable length database
+/// fields.  The values should be greater than or equal to the length set in
+/// the schema definition.
+///
+/// The exception is the length of any VARCHAR fields: these should be set
+/// greater than or equal to the length of the field plus 2: this allows for
+/// the insertion of a trailing null regardless of whether the data returned
+/// contains a trailing null (the documentation is not clear on this point).
+
+const size_t ADDRESS6_TEXT_MAX_LEN = 42;    // Max size of a IPv6 text buffer
+const size_t DUID_MAX_LEN = 128;            // Max size of a DUID
+const size_t HWADDR_MAX_LEN = 20;           // Max size of a hardware address
+///@}
+};
+
 namespace isc {
 namespace dhcp {
 
@@ -290,16 +309,17 @@ private:
     // Note: All array legths are equal to the corresponding variable in the
     // schema.
     std::string     addr6_;             ///< String form of address
-    char            addr6_buffer_[42];  ///< Character array form of V6 address
+    char            addr6_buffer_[ADDRESS6_TEXT_MAX_LEN];  ///< Character 
+                                        ///< array form of V6 address
     unsigned long   addr6_length_;      ///< Length of the address
     MYSQL_BIND      bind_[10];          ///< Static array for speed of access
     std::vector<uint8_t> clientid_;     ///< Client identification
-    uint8_t         clientid_buffer_[128]; ///< Buffer form of client ID
+    uint8_t         clientid_buffer_[DUID_MAX_LEN]; ///< Buffer form of DUID
     unsigned long   clientid_length_;   ///< Length of client ID
     my_bool         error_[10];         ///< For error reporting
     MYSQL_TIME      expire_;            ///< Lease expiry time
     const my_bool   false_;             ///< "false" for MySql
-    uint8_t         hwaddr_buffer_[20]; ///< Hardware address buffer
+    uint8_t         hwaddr_buffer_[HWADDR_MAX_LEN]; ///< Hardware address buffer
     unsigned long   hwaddr_length_;     ///< Length of hardware address
     uint32_t        iaid_;              ///< Identity association ID
     Lease6Ptr       lease_;             ///< Pointer to lease object
