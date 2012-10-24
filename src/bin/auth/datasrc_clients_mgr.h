@@ -36,6 +36,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
+#include <exception>
 #include <list>
 #include <utility>
 
@@ -406,10 +407,10 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
         // We explicitly catch exceptions so we can log it as soon as possible.
         LOG_FATAL(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_FAILED).
             arg(ex.what());
-        assert(false);
+        std::terminate();
     } catch (...) {
         LOG_FATAL(auth_logger, AUTH_DATASRC_CLIENTS_BUILDER_FAILED_UNEXPECTED);
-        assert(false);
+        std::terminate();
     }
 }
 
