@@ -53,6 +53,14 @@ LeaseMgr& LeaseMgr::instance() {
     return (*instance_);
 }
 
+void LeaseMgr::destroy_instance() {
+    if (!instance_) {
+        isc_throw(InvalidOperation, "LeaseManager not instantiated yet");
+    }
+    delete instance_;
+    instance_ = NULL;
+}
+
 LeaseMgr::LeaseMgr(const std::string& dbconfig) {
     if (instance_) {
         isc_throw(InvalidOperation, "LeaseManager already instantiated");
