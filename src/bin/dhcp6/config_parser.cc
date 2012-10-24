@@ -60,6 +60,8 @@ typedef std::map<string, string> StringStorage;
 /// no subnet object created yet to store them.
 typedef std::vector<Pool6Ptr> PoolStorage;
 
+typedef std::vector<OptionPtr> OptionStorage;
+
 /// @brief Global uint32 parameters that will be used as defaults.
 Uint32Storage uint32_defaults;
 
@@ -451,6 +453,10 @@ public:
     OptionDataParser(const std::string&) {
     }
 
+    void setStorage(OptionStorage* storage) {
+        options_ = storage;
+    }
+
     void build(ConstElementPtr option_value) {
         BOOST_FOREACH(ConfigPair param, option_value->mapValue()) {
             ParserPtr parser;
@@ -461,7 +467,6 @@ public:
                     name_parser->setStorage(&string_values_);
                     parser = name_parser;
                 }
-                // @todo: what if this is NULL pointer. Shouldn't we throw exception?
             } else if (param.first == "code") {
                 boost::shared_ptr<Uint32Parser>
                     code_parser(dynamic_cast<Uint32Parser*>(Uint32Parser::Factory(param.first)));
@@ -484,6 +489,7 @@ public:
             parser->build(param.second);
             parsers_.push_back(parser);
         }
+        createOption();
     }
 
     void commit() {
@@ -491,8 +497,48 @@ public:
 
 private:
 
+    void createOption() {
+        uint32_t option_code = getUint32Param("code");
+        if (option_code > std::numeric_limits<uint16_t>::max()) {
+            isc_throw(Dhcp6ConfigError, "Parser error: value of 'code' must not"
+                      << " exceed " << std::numeric_limits<uint16_t>::max());
+        }
+        std::string option_name = getStringParam("name");
+        if (option_name.empty()) {
+            isc_throw(Dhcp6ConfigError, "Parser error: option name must not be"
+                      << " empty");
+        } else if (option_name.find(" ") != std::string::npos) {
+            isc_throw(Dhcp6ConfigError, "Parser error: option name must not contain"
+                      << " spaces");
+        }
+        /// @todo more sanity checks on option name are needed.
+        OptionPtr option(new Option(Option::V6, static_cast<uint16_t>(option_code),
+                                    OptionBuffer()));
+        options_->push_back(option);
+    }
+
+    std::string getStringParam(const std::string& param_id) const {
+        StringStorage::const_iterator param = string_values_.find(param_id);
+        if (param == string_values_.end()) {
+            isc_throw(Dhcp6ConfigError, "Parser error: option-data parameter"
+                      << " '" << param_id << "' not specified");
+        }
+        return (param->second);
+    }
+
+    uint32_t getUint32Param(const std::string& param_id) const {
+        Uint32Storage::const_iterator param = uint32_values_.find(param_id);
+        if (param == uint32_values_.end()) {
+            isc_throw(Dhcp6ConfigError, "Parser error: option-data parameter"
+                      << " '" << param_id << "' not specified");
+        }
+        return (param->second);
+    }
+
     Uint32Storage uint32_values_;
     StringStorage string_values_;
+
+    OptionStorage* options_;
 
     ParserCollection parsers_;
 };
@@ -519,14 +565,19 @@ public:
 
         // No need to define FactoryMap here. There's only one type
         // used: Subnet6ConfigParser
-
         BOOST_FOREACH(ConstElementPtr option_value, option_value_list->listValue()) {
 
-            ParserPtr parser(new OptionDataParser("option-data"));
+            boost::shared_ptr<OptionDataParser> parser(new OptionDataParser("option-data"));
+            parser->setStorage(options_);
             parser->build(option_value);
             option_values_.push_back(parser);
         }
     }
+
+    void setStorage(OptionStorage* storage) {
+        options_ = storage;
+    }
+
 
     /// @brief commits subnets definitions.
     ///
@@ -551,6 +602,8 @@ public:
     static DhcpConfigParser* Factory(const std::string& param_name) {
         return (new OptionDataListParser(param_name));
     }
+
+    OptionStorage* options_;
 
     ParserCollection option_values_;
 };
@@ -596,8 +649,9 @@ public:
                     if (poolParser) {
                         poolParser->setStorage(&pools_);
                     } else {
-                        boost::shared_ptr<OptionDataParser> option_data_parser =
-                            boost::dynamic_pointer_cast<OptionDataParser>(parser);
+                        boost::shared_ptr<OptionDataListParser> option_data_list_parser =
+                            boost::dynamic_pointer_cast<OptionDataListParser>(parser);
+                        option_data_list_parser->setStorage(&options_);
                     }
                 }
             }
@@ -651,6 +705,10 @@ public:
 
         for (PoolStorage::iterator it = pools_.begin(); it != pools_.end(); ++it) {
             subnet->addPool6(*it);
+        }
+
+        BOOST_FOREACH(OptionPtr option, options_) {
+            subnet->addOption(option);
         }
 
         CfgMgr::instance().addSubnet6(subnet);
@@ -738,6 +796,9 @@ protected:
 
     /// storage for pools belonging to this subnet
     PoolStorage pools_;
+
+    /// storage for options belonging to this subnet
+    OptionStorage options_;
 
     /// parsers are stored here
     ParserCollection parsers_;
