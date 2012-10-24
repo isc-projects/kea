@@ -22,10 +22,7 @@ ISC sysinfo program.
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import getopt
-import isc.util.process
 from isc.sysinfo import *
-
-isc.util.process.rename()
 
 def usage():
     print("Usage: %s [-h] [-o <output-file>]" % sys.argv[0], \
