@@ -30,7 +30,10 @@ using namespace std;
 
 namespace {
 
-// Connection strings
+// Connection strings.  Assume:
+// Database: keatest
+// Username: keatest
+// Password: keatest
 const char* VALID_TYPE = "type=mysql";
 const char* INVALID_TYPE = "type=unknown";
 const char* VALID_NAME = "name=keatest";
@@ -84,9 +87,29 @@ string connectionString(const char* type, const char* name, const char* host,
 }
 
 // Return valid connection string
-string validConnectionString() {
+string
+validConnectionString() {
     return (connectionString(VALID_TYPE, VALID_NAME, VALID_HOST,
                              VALID_USER, VALID_PASSWORD));
+}
+
+// Clear everything from the database tables
+void
+clearAll() {
+        // Initialise
+        MYSQL handle;
+        (void) mysql_init(&handle);
+
+        // Open database
+        (void) mysql_real_connect(&handle, "localhost", "keatest", "keatest",
+                                  "keatest", 0, NULL, 0);
+
+        // Clear the database
+        (void) mysql_query(&handle, "DELETE FROM lease4");
+        (void) mysql_query(&handle, "DELETE FROM lease6");
+
+        // ... and close
+        (void) mysql_close(&handle);
 }
 
 /// @brief Test Fixture Class
@@ -98,9 +121,19 @@ class MySqlLeaseMgrTest : public ::testing::Test {
 public:
     /// @brief Constructor
     ///
-    /// Open the database.
-
+    /// Deletes everything from the database and opens it.
     MySqlLeaseMgrTest() {
+        clearAll();
+        LeaseMgrFactory::create(validConnectionString());
+        lmptr_ = &(LeaseMgrFactory::instance());
+    }
+
+    /// @brief Reopen the database
+    ///
+    /// Closes the database and re-open it.  Anything committed should be
+    /// visible.
+    void reopen() {
+        LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(validConnectionString());
         lmptr_ = &(LeaseMgrFactory::instance());
     }
@@ -108,11 +141,12 @@ public:
     /// @brief Destructor
     ///
     /// Rolls back all pending transactions.  The deletion of the
-    /// lmptr_ member variable will close the database.
-
+    /// lmptr_ member variable will close the database.  Then
+    /// reopen it and delete everything created by the test.
     virtual ~MySqlLeaseMgrTest() {
         lmptr_->rollback();
         LeaseMgrFactory::destroy();
+        clearAll();
     }
 
     LeaseMgr*   lmptr_;         // Pointer to the lease manager
@@ -284,16 +318,42 @@ TEST_F(MySqlLeaseMgrTest, BasicLease6) {
     l2->cltt_ = 234567;         // Current time of day
     l2->subnet_id_ = l1->subnet_id_;    // Same as l1
 
+    const IOAddress L3_ADDRESS(std::string("2001:db8::3"));
+    Lease6Ptr l3(new Lease6());
+    initializeUnusedLease6(l3);
+
+    l3->type_ = Lease6::LEASE_IA_NA;
+    l3->addr_ = L3_ADDRESS;
+    l3->prefixlen_ = 28;
+    l3->iaid_ = 0xfffffffe;
+    vector<uint8_t> duid;
+    for (uint8_t i = 0; i < 128; ++i) {
+        duid.push_back(i + 5);
+    }
+    l3->duid_ = boost::shared_ptr<DUID>(new DUID(duid));
+    l3->preferred_lft_ = 0xfffffffc;    // Preferred lifetime
+    l3->valid_lft_ = 0xfffffffd;        // Actual lifetime
+    l3->cltt_ = 234567;                 // Current time of day
+    l3->subnet_id_ = l1->subnet_id_;    // Same as l1
+
     // Sanity check that the leases are different
     ASSERT_TRUE(*l1 != *l2);
+    ASSERT_TRUE(*l1 != *l3);
+    ASSERT_TRUE(*l2 != *l3);
 
-    // Start the tests.  Add two leases to the database, read them back and
+    // Start the tests.  Add three leases to the database, read them back and
     // check they are what we think they are.
     Lease6Ptr l_returned;
 
     EXPECT_TRUE(lmptr_->addLease(l1));
     EXPECT_TRUE(lmptr_->addLease(l2));
+    EXPECT_TRUE(lmptr_->addLease(l3));
+    lmptr_->commit();
 
+    // Reopen the database to ensure that they actually got stored.
+    reopen();
+
+    // check that the values returned are as expected.
     l_returned = lmptr_->getLease6(L1_ADDRESS);
     EXPECT_TRUE(l_returned);
     detailCompareLease6(l1, l_returned);
@@ -301,6 +361,10 @@ TEST_F(MySqlLeaseMgrTest, BasicLease6) {
     l_returned = lmptr_->getLease6(L2_ADDRESS);
     EXPECT_TRUE(l_returned);
     detailCompareLease6(l2, l_returned);
+
+    l_returned = lmptr_->getLease6(L3_ADDRESS);
+    EXPECT_TRUE(l_returned);
+    detailCompareLease6(l3, l_returned);
 
     // Check that we can't add a second lease with the same address
     EXPECT_FALSE(lmptr_->addLease(l1));
