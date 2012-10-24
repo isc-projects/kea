@@ -34,8 +34,8 @@ LeaseMgr* LeaseMgr::instance_ = NULL;
 
 Lease6::Lease6(LeaseType type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
                uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
-               uint32_t t2, SubnetID subnet_id)
-    :type_(type), addr_(addr), iaid_(iaid), duid_(duid),
+               uint32_t t2, SubnetID subnet_id, uint8_t prefixlen)
+    :type_(type), addr_(addr), prefixlen_(prefixlen), iaid_(iaid), duid_(duid),
      preferred_lft_(preferred), valid_lft_(valid), t1_(t1), t2_(t2),
      subnet_id_(subnet_id), fixed_(false), fqdn_fwd_(false),
      fqdn_rev_(false) {
