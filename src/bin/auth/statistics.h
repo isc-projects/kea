@@ -61,14 +61,9 @@ public:
     /// This constructor is mostly exception free. But it may still throw
     /// a standard exception if memory allocation fails inside the method.
     ///
-    QRAttributes() :
-    req_ip_version_(0), req_transport_protocol_(0),
-    req_opcode_(0),
-    req_is_edns_0_(false), req_is_edns_badver_(false),
-    req_is_dnssec_ok_(false),
-    req_is_tsig_(false), req_is_sig0_(false), req_is_badsig_(false),
-    res_is_truncated_(false)
-    {};
+    QRAttributes() {
+        reset();
+    };
 
     /// \brief The destructor.
     ///
