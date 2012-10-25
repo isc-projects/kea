@@ -122,7 +122,7 @@ currentTime() {
 /// \brief Create Header Sentinel
 ///
 /// Given the name of a file, create an \#ifdef sentinel name.  The name is
-/// __<name>_<ext>, where &lt;name&gt; is the name of the file, and &lt;ext&gt;
+/// <name>_<ext>, where &lt;name&gt; is the name of the file, and &lt;ext&gt;
 /// is the extension less the leading period.  The sentinel will be upper-case.
 ///
 /// \param file Filename object representing the file.
