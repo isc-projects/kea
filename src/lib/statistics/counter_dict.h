@@ -48,7 +48,7 @@ private:
     // specified at the construction of this class.
     CounterDictionary();
 public:
-    explicit inline CounterDictionary(const size_t items) :
+    explicit CounterDictionary(const size_t items) :
         items_(items)
     {
         // The number of items must not be 0
@@ -56,8 +56,8 @@ public:
             isc_throw(isc::InvalidParameter, "Items must not be 0");
         }
     };
-    inline ~CounterDictionary() {};
-    inline void addElement(const std::string& name) {
+    ~CounterDictionary() {};
+    void addElement(const std::string& name) {
         // throw if the element already exists
         if (dictionary_.count(name) != 0) {
             isc_throw(isc::InvalidParameter,
@@ -68,7 +68,7 @@ public:
         dictionary_.insert(
             DictionaryMap::value_type(name, CounterPtr(new Counter(items_))));
     };
-    inline void deleteElement(const std::string& name) {
+    void deleteElement(const std::string& name) {
         size_t result = dictionary_.erase(name);
         if (result != 1) {
             // If an element with specified name does not exist, throw
@@ -77,7 +77,7 @@ public:
                       "Element " << name << " does not exist");
         }
     };
-    inline Counter& getElement(const std::string& name) {
+    Counter& getElement(const std::string& name) {
         DictionaryMap::const_iterator i = dictionary_.find(name);
         if (i != dictionary_.end()) {
             // the key was found. return the element.
@@ -89,7 +89,7 @@ public:
                       "Element " << name << " does not exist");
         }
     };
-    inline Counter& operator[](const std::string& name) {
+    Counter& operator[](const std::string& name) {
         return (getElement(name));
     };
     /// \brief \c ConstIterator is a constant iterator that provides an
@@ -112,31 +112,31 @@ public:
             /// This constructor is mostly exception free. But it may still
             /// throw a standard exception if memory allocation fails
             /// inside the method.
-            inline ConstIterator() {}
+            ConstIterator() {}
             /// The destructor.
             ///
             /// This method never throws an exception.
-            inline ~ConstIterator() {}
+            ~ConstIterator() {}
             /// Constructor from implementation detail DictionaryMap::const_iterator
-            inline ConstIterator(
+            ConstIterator(
                 DictionaryMap::const_iterator iterator) :
                 iterator_(iterator)
             {}
 
         private:
             /// \brief An internal method to increment this iterator.
-            inline void increment() {
+            void increment() {
                 ++iterator_;
                 return;
             }
 
             /// \brief An internal method to check equality.
-            inline bool equal(const ConstIterator& other) const {
+            bool equal(const ConstIterator& other) const {
                 return (iterator_ == other.iterator_);
             }
 
             /// \brief An internal method to dereference this iterator.
-            inline const value_type& dereference() const {
+            const value_type& dereference() const {
                 return (iterator_->first);
             }
 
@@ -145,10 +145,10 @@ public:
             DictionaryMap::const_iterator iterator_;
     };
 
-    inline ConstIterator begin() const {
+    ConstIterator begin() const {
         return (CounterDictionary::ConstIterator(dictionary_.begin()));
     };
-    inline ConstIterator end() const {
+    ConstIterator end() const {
         return (CounterDictionary::ConstIterator(dictionary_.end()));
     };
 
