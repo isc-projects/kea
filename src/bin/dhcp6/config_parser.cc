@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -154,12 +154,37 @@ public:
     ///
     /// @param value pointer to the content of parsed values
     virtual void build(ConstElementPtr value) {
+        bool parse_error = false;
+        // Cast the provided value to int64 value to check.
+        int64_t int64value = 0;
         try {
-            value_ = boost::lexical_cast<uint32_t>(value->str());
-        } catch (const boost::bad_lexical_cast &) {
+            // Parsing the value as a int64 value allows to
+            // check if the provided value is within the range
+            // of uint32_t (is not negative or greater than
+            // maximal uint32_t value.
+            int64value = boost::lexical_cast<int64_t>(value->str());
+        } catch (const boost::bad_lexical_cast&) {
+            parse_error = true;
+        }
+        if (!parse_error) {
+            if ((int64value < 0) ||
+                (int64value > std::numeric_limits<uint32_t>::max())) {
+                parse_error = true;
+            } else {
+                try {
+                    value_ = boost::lexical_cast<uint32_t>(value->str());
+                } catch (const boost::bad_lexical_cast &) {
+                    parse_error = true;
+                }
+            }
+
+        }
+
+        if (parse_error) {
             isc_throw(BadValue, "Failed to parse value " << value->str()
                       << " as unsigned 32-bit integer.");
         }
+
         storage_->insert(pair<string, uint32_t>(param_name_, value_));
     }
 
@@ -541,9 +566,13 @@ private:
     void createOption() {
         // Option code is held in the uint32_t storage but is supposed to
         // be uint16_t value. We need to check that value in the configuration
-        // does not exceed range of uint16_t.
+        // does not exceed range of uint16_t and is not zero.
         uint32_t option_code = getUint32Param("code");
-        if (option_code > std::numeric_limits<uint16_t>::max()) {
+        if (option_code == 0) {
+            isc_throw(Dhcp6ConfigError, "Parser error: value of 'code' must not"
+                      << " be equal to zero. Option code '0' is reserved in"
+                      << " DHCPv6.");
+        } else if (option_code > std::numeric_limits<uint16_t>::max()) {
             isc_throw(Dhcp6ConfigError, "Parser error: value of 'code' must not"
                       << " exceed " << std::numeric_limits<uint16_t>::max());
         }
