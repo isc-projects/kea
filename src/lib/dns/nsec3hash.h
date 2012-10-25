@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __NSEC3HASH_H
-#define __NSEC3HASH_H 1
+#ifndef NSEC3HASH_H
+#define NSEC3HASH_H 1
 
 #include <string>
 #include <vector>
@@ -276,7 +276,7 @@ void setNSEC3HashCreator(const NSEC3HashCreator* new_creator);
 
 }
 }
-#endif  // __NSEC3HASH_H
+#endif  // NSEC3HASH_H
 
 // Local Variables:
 // mode: c++

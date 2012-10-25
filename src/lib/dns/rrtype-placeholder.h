@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RRTYPE_H
-#define __RRTYPE_H 1
+#ifndef RRTYPE_H
+#define RRTYPE_H 1
 
 #include <stdint.h>
 
@@ -317,7 +317,7 @@ std::ostream&
 operator<<(std::ostream& os, const RRType& rrtype);
 }
 }
-#endif  // __RRTYPE_H
+#endif  // RRTYPE_H
 
 // Local Variables: 
 // mode: c++

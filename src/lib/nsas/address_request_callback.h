@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ADDRESS_REQUEST_CALLBACK_H
-#define __ADDRESS_REQUEST_CALLBACK_H
+#ifndef ADDRESS_REQUEST_CALLBACK_H
+#define ADDRESS_REQUEST_CALLBACK_H
 
 #include "asiolink.h"
 #include "nameserver_address.h"
@@ -69,4 +69,4 @@ public:
 } // namespace nsas
 } // namespace isc
 
-#endif // __ADDRESS_REQUEST_CALLBACK_H
+#endif // ADDRESS_REQUEST_CALLBACK_H

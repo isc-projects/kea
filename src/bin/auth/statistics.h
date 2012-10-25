@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __STATISTICS_H
-#define __STATISTICS_H 1
+#ifndef STATISTICS_H
+#define STATISTICS_H 1
 
 #include <dns/opcode.h>
 #include <dns/rcode.h>
@@ -178,7 +178,7 @@ public:
     void registerStatisticsValidator(AuthCounters::validator_type validator) const;
 };
 
-#endif // __STATISTICS_H
+#endif // STATISTICS_H
 
 // Local Variables:
 // mode: c++

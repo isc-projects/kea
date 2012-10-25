@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef _DOMAINTREE_H
-#define _DOMAINTREE_H 1
+#ifndef DOMAINTREE_H
+#define DOMAINTREE_H 1
 
 //! \file datasrc/memory/domaintree.h
 ///
@@ -2126,7 +2126,7 @@ DomainTree<T>::dumpDotHelper(std::ostream& os,
 } // namespace datasrc
 } // namespace isc
 
-#endif  // _DOMAINTREE_H
+#endif  // DOMAINTREE_H
 
 // Local Variables:
 // mode: c++

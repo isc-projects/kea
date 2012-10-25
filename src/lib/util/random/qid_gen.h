@@ -18,8 +18,8 @@
 // (and other parts where we need randomness, perhaps another thing
 // for a general libutil?)
 
-#ifndef __QID_GEN_H
-#define __QID_GEN_H
+#ifndef QID_GEN_H
+#define QID_GEN_H
 
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int.hpp>
@@ -84,4 +84,4 @@ private:
 } // namespace util
 } // namespace isc
 
-#endif // __QID_GEN_H
+#endif // QID_GEN_H

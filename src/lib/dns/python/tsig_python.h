@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_TSIGCONTEXT_H
-#define __PYTHON_TSIGCONTEXT_H 1
+#ifndef PYTHON_TSIGCONTEXT_H
+#define PYTHON_TSIGCONTEXT_H 1
 
 #include <Python.h>
 
@@ -52,7 +52,7 @@ TSIGContext& PyTSIGContext_ToTSIGContext(PyObject* tsigcontext_obj);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_TSIGCONTEXT_H
+#endif // PYTHON_TSIGCONTEXT_H
 
 // Local Variables:
 // mode: c++

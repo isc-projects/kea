@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RANGE_UTIL_H_
-#define __RANGE_UTIL_H_ 1
+#ifndef RANGE_UTIL_H
+#define RANGE_UTIL_H 1
 
 #include <stdlib.h>
 #include <algorithm>

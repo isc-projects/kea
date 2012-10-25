@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __TCP_SOCKET_H
-#define __TCP_SOCKET_H 1
+#ifndef TCP_SOCKET_H
+#define TCP_SOCKET_H 1
 
 #ifndef ASIO_HPP
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
@@ -415,4 +415,4 @@ TCPSocket<C>::close() {
 } // namespace asiolink
 } // namespace isc
 
-#endif // __TCP_SOCKET_H
+#endif // TCP_SOCKET_H

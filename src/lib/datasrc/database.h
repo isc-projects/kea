@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __DATABASE_DATASRC_H
-#define __DATABASE_DATASRC_H
+#ifndef DATABASE_DATASRC_H
+#define DATABASE_DATASRC_H
 
 #include <string>
 
@@ -1425,7 +1425,7 @@ private:
 }
 }
 
-#endif  // __DATABASE_DATASRC_H
+#endif  // DATABASE_DATASRC_H
 
 // Local Variables:
 // mode: c++

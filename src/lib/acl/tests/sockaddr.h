@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ACL_TEST_SOCKADDR_H
-#define __ACL_TEST_SOCKADDR_H 1
+#ifndef ACL_TEST_SOCKADDR_H
+#define ACL_TEST_SOCKADDR_H 1
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -62,7 +62,7 @@ getSockAddr(const char* const addr) {
 } // end of namespace "acl"
 } // end of namespace "isc"
 
-#endif  // __ACL_TEST_SOCKADDR_H
+#endif  // ACL_TEST_SOCKADDR_H
 
 // Local Variables:
 // mode: c++

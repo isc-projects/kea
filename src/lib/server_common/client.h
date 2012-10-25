@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __CLIENT_H
-#define __CLIENT_H 1
+#ifndef CLIENT_H
+#define CLIENT_H 1
 
 #include <string>
 #include <ostream>
@@ -147,7 +147,7 @@ std::ostream& operator<<(std::ostream& os, const Client& client);
 }
 }
 
-#endif  // __CLIENT_H
+#endif  // CLIENT_H
 
 // Local Variables:
 // mode: c++

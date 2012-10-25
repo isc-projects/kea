@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ISC_TESTUTILS_MOCKUPS_H
-#define __ISC_TESTUTILS_MOCKUPS_H 1
+#ifndef ISC_TESTUTILS_MOCKUPS_H
+#define ISC_TESTUTILS_MOCKUPS_H 1
 
 #include <config.h>
 
@@ -210,7 +210,7 @@ private:
 
 } // end of testutils
 } // end of isc
-#endif  // __ISC_TESTUTILS_MOCKUPS_H
+#endif  // ISC_TESTUTILS_MOCKUPS_H
 
 // Local Variables:
 // mode: c++

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __OLDMESSAGERENDERER_H
-#define __OLDMESSAGERENDERER_H 1
+#ifndef OLDMESSAGERENDERER_H
+#define OLDMESSAGERENDERER_H 1
 
 //
 // This is a copy of an older version of MessageRenderer class.  It is kept
@@ -49,7 +49,7 @@ private:
 };
 }
 }
-#endif // __OLDMESSAGERENDERER_H
+#endif // OLDMESSAGERENDERER_H
 
 // Local Variables:
 // mode: c++

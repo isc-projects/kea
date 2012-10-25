@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __NSECBITMAP_H
-#define __NSECBITMAP_H 1
+#ifndef NSECBITMAP_H
+#define NSECBITMAP_H 1
 
 #include <stdint.h>
 
@@ -100,7 +100,7 @@ void bitmapsToText(const std::vector<uint8_t>& typebits,
 }
 }
 
-#endif  // __NSECBITMAP_H
+#endif  // NSECBITMAP_H
 
 // Local Variables:
 // mode: c++
