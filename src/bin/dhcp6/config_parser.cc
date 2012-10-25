@@ -21,6 +21,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#include <util/encode/hex.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <config/ccsession.h>
@@ -557,12 +558,22 @@ private:
             isc_throw(Dhcp6ConfigError, "Parser error: option name must not contain"
                       << " spaces");
         }
+
+        std::string option_data = getStringParam("data");
+        std::vector<uint8_t> binary;
+        try {
+            util::encode::decodeHex(option_data, binary);
+        } catch (...) {
+            isc_throw(Dhcp6ConfigError, "Parser error: option data is not a valid"
+                      << " string of hexadecimal digits: " << option_data);
+        }
+
         // Create the actual option.
         // @todo Currently we simply create dhcp::Option instance here but we will
         // need to use dedicated factory functions once the option definitions are
         // created for all options.
         OptionPtr option(new Option(Option::V6, static_cast<uint16_t>(option_code),
-                                    OptionBuffer()));
+                                    binary));
         // If option is created succesfully, add it to the storage.
         options_->push_back(option);
     }
@@ -647,7 +658,7 @@ public:
     void commit() { }
 
     /// @brief Create DhcpDataListParser object
-    /// 
+    ///
     /// @param param_name param name.
     ///
     /// @return DhcpConfigParser object.
@@ -762,6 +773,7 @@ public:
             subnet->addOption(option);
         }
 
+        std::cout << "ADDING SUBNET" << std::endl;
         CfgMgr::instance().addSubnet6(subnet);
     }
 
@@ -927,7 +939,6 @@ public:
 DhcpConfigParser* createGlobalDhcpConfigParser(const std::string& config_id) {
     FactoryMap factories;
 
-    //
     factories.insert(pair<string, ParserFactory*>(
                          "preferred-lifetime", Uint32Parser::Factory));
     factories.insert(pair<string, ParserFactory*>(
