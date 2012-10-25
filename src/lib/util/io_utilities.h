@@ -101,4 +101,4 @@ writeUint32(uint32_t value, uint8_t* buffer) {
 } // namespace util
 } // namespace isc
 
-#endif // __ASIOLINK_UTILITIES_H
+#endif // IO_UTILITIES_H

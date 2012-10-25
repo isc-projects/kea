@@ -205,5 +205,5 @@ void deleteHMAC(HMAC* hmac);
 } // namespace cryptolink
 } // namespace isc
 
-#endif // __ISC_CRYPTO_HMAC
+#endif // ISC_CRYPTO_HMAC_H
 

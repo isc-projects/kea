@@ -146,11 +146,11 @@ private:
     std::string                 name_;          ///< Logger name
     isc::log::Severity          severity_;      ///< Severity for this logger
     int                         dbglevel_;      ///< Debug level
-    bool                        additive_;      ///< Chaining output 
+    bool                        additive_;      ///< Chaining output
     std::vector<OutputOption>   options_;       ///< Logger options
 };
 
 } // namespace log
 } // namespace isc
 
-#endif // __LOGGER_SPEC_IFICATIONH
+#endif // LOGGER_SPECIFICATION_H
