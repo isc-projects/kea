@@ -19,12 +19,14 @@
 #include "memory/memory_client.h"
 #include "memory/zone_table_segment.h"
 #include "memory/zone_writer.h"
+#include "memory/zone_data_loader.h"
 #include "logger.h"
 #include <dns/masterload.h>
 #include <util/memory_segment_local.h>
 
 #include <memory>
 #include <boost/foreach.hpp>
+#include <boost/bind.hpp>
 
 using namespace isc::data;
 using namespace isc::dns;
@@ -378,6 +380,46 @@ ConfigurableClientList::reload(const Name& name) {
     return (ZONE_RELOADED);
 }
 
+namespace {
+
+// We would like to use boost::bind for this. However, the loadZoneData takes
+// a reference, while we have a shared pointer to the iterator -- and we need
+// to keep it alive as long as the ZoneWriter is alive. Therefore we can't
+// really just dereference it and pass it, since it would get destroyed once
+// the getCachedZoneWriter would end. This class holds the shared pointer
+// alive, otherwise is mostly simple.
+//
+// It might be doable with nested boost::bind, but it would probably look
+// more awkward and complicated than this.
+class IteratorLoader {
+public:
+    IteratorLoader(const RRClass& rrclass, const Name& name,
+                   const ZoneIteratorPtr& iterator) :
+        rrclass_(rrclass),
+        name_(name),
+        iterator_(iterator)
+    {}
+    memory::ZoneData* operator()(util::MemorySegment& segment) {
+        return (memory::loadZoneData(segment, rrclass_, name_, *iterator_));
+    }
+private:
+    const RRClass rrclass_;
+    const Name name_;
+    ZoneIteratorPtr iterator_;
+};
+
+// We can't use the loadZoneData function directly in boost::bind, since
+// it is overloaded and the compiler can't choose the correct version
+// reliably and fails. So we simply wrap it into an unique name.
+memory::ZoneData*
+loadZoneDataFromFile(util::MemorySegment& segment, const RRClass& rrclass,
+                     const Name& name, const string& filename)
+{
+    return (memory::loadZoneData(segment, rrclass, name, filename));
+}
+
+}
+
 ConfigurableClientList::ZoneWriterPair
 ConfigurableClientList::getCachedZoneWriter(const Name& name) {
     if (!allow_cache_) {
@@ -405,7 +447,9 @@ ConfigurableClientList::getCachedZoneWriter(const Name& name) {
         if (!iterator) {
             isc_throw(isc::Unexpected, "Null iterator from " << name);
         }
-        // TODO
+        // And wrap the iterator into the correct functor (which
+        // keeps it alive as long as it is needed).
+        load_action = IteratorLoader(rrclass_, name, iterator);
     } else {
         // The MasterFiles special case
         const string filename(result.info->cache_->getFileName(name));
@@ -413,7 +457,9 @@ ConfigurableClientList::getCachedZoneWriter(const Name& name) {
             isc_throw(isc::Unexpected, "Confused about missing both filename "
                       "and data source");
         }
-        // TODO
+        // boost::bind is enough here.
+        load_action = boost::bind(loadZoneDataFromFile, _1, rrclass_, name,
+                                  filename);
     }
     return (ZoneWriterPair(ZONE_RELOADED,
                            ZoneWriterPtr(result.info->cache_->getZoneTableSegment().
