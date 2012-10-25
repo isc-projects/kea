@@ -564,7 +564,9 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         tsig_error = tsig_context->verify(tsig_record, io_message.getData(),
                                           io_message.getDataSize());
         // statistics: check TSIG attributes
-        // SIG(0) is currently not implemented in Auth
+        // SIG(0) is currently not implemented in Auth, but it is implemented
+        // in BIND 9. At the point we support it, the code to check if the
+        // signature is valid would be around here.
         stats_attrs.setQuerySig(true, false,
                                 tsig_error == TSIGError::NOERROR());
     }
