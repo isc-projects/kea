@@ -49,6 +49,38 @@ public:
         delete srv_;
     };
 
+    /// @brief Test option against given code and data.
+    ///
+    /// @param option_desc option descriptor that carries the option to
+    /// be tested.
+    /// @param expected_code expected code of the option.
+    /// @param expected_data expected data in the option.
+    /// @param expected_data_len length of the reference data.
+    void testOption(const Subnet::OptionDescriptor& option_desc,
+                    uint16_t expected_code, const uint8_t* expected_data,
+                    size_t expected_data_len) {
+        // Check if option descriptor contains valid option pointer.
+        ASSERT_TRUE(option_desc.option);
+        // Verify option type.
+        EXPECT_EQ(expected_code, option_desc.option->getType());
+        // We may have many different option types being created. Some of them
+        // have dedicated classes derived from Option class. In such case if
+        // we want to verify the option contents against expected_data we have
+        // to prepare raw buffer with the contents of the option. The easiest
+        // way is to call pack() which will prepare on-wire data.
+        util::OutputBuffer buf(option_desc.option->getData().size());
+        option_desc.option->pack(buf);
+        // The length of the buffer must be at least equal to size of the
+        // reference data but it can sometimes be greater than that. This is
+        // because some options carry suboptions that increase the overall
+        // length.
+        ASSERT_GE(buf.getLength() - option_desc.option->getHeaderLen(),
+                  expected_data_len);
+        // Verify that the data is correct. However do not verify suboptions.
+        const uint8_t* data = static_cast<const uint8_t*>(buf.getData());
+        EXPECT_TRUE(memcmp(expected_data, data, expected_data_len));
+    }
+
     Dhcpv6Srv* srv_;
 
     int rcode_;
@@ -249,7 +281,7 @@ TEST_F(Dhcp6ParserTest, multipleOptionValues) {
         "\"subnet6\": [ { "
         "    \"pool\": [ \"2001:db8:1::/80\" ],"
         "    \"subnet\": \"2001:db8:1::/64\", "
-        "    \"option-data\": [ { "
+        "    \"option-data\": [ {"
         "          \"name\": \"option_foo\","
         "          \"code\": 100,"
         "          \"data\": \"ABCDEF 01 05\""
@@ -266,13 +298,39 @@ TEST_F(Dhcp6ParserTest, multipleOptionValues) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
-
     ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    EXPECT_EQ(0, rcode_);
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
     ASSERT_TRUE(subnet);
     const Subnet::OptionContainer& options = subnet->getOptions();
     ASSERT_EQ(2, options.size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+              Subnet::OptionContainerTypeIndex::const_iterator> range =
+        idx.equal_range(100);
+    // Expect single option with the code equal to 100.
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    const uint8_t foo_expected[] = {
+        0xAB, 0xCD, 0xEF, 0x01, 0x05
+    };
+    // Check if option is valid in terms of code and carried data.
+    testOption(*range.first, 100, foo_expected, sizeof(foo_expected));
+
+    range = idx.equal_range(101);
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    // Do another round of testing with second option.
+    const uint8_t foo2_expected[] = {
+        0x01
+    };
+    testOption(*range.first, 101, foo2_expected, sizeof(foo2_expected));
 }
 
 };
