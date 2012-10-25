@@ -26,5 +26,13 @@ SYSINFO_PATH=@abs_top_builddir@/src/bin/sysinfo
 PYTHONPATH=@abs_top_builddir@/src/lib/python:@abs_top_srcdir@/src/lib/python:@abs_top_builddir@/src/lib/python/isc/log_messages
 export PYTHONPATH
 
+# Likewise, we need only because isc.log requires some loadable modules.
+# sysinfo itself shouldn't need any of them.
+SET_ENV_LIBRARY_PATH=@SET_ENV_LIBRARY_PATH@
+if test $SET_ENV_LIBRARY_PATH = yes; then
+	@ENV_LIBRARY_PATH@=@abs_top_builddir@/src/lib/dns/.libs:@abs_top_builddir@/src/lib/dns/python/.libs:@abs_top_builddir@/src/lib/cryptolink/.libs:@abs_top_builddir@/src/lib/cc/.libs:@abs_top_builddir@/src/lib/config/.libs:@abs_top_builddir@/src/lib/log/.libs:@abs_top_builddir@/src/lib/acl/.libs:@abs_top_builddir@/src/lib/util/.libs:@abs_top_builddir@/src/lib/util/io/.libs:@abs_top_builddir@/src/lib/exceptions/.libs:@abs_top_builddir@/src/lib/datasrc/.libs:$@ENV_LIBRARY_PATH@
+	export @ENV_LIBRARY_PATH@
+fi
+
 cd ${SYSINFO_PATH}
 exec ${PYTHON_EXEC} -O sysinfo.py "$@"
