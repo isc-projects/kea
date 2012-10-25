@@ -272,7 +272,7 @@ TEST_F(Dhcp6ParserTest, pool_prefix_len) {
     EXPECT_EQ(4000, subnet->getValid());
 }
 
-TEST_F(Dhcp6ParserTest, multipleOptionValues) {
+TEST_F(Dhcp6ParserTest, optionValuesInSingleSubnet) {
     ConstElementPtr x;
     string config = "{ \"interface\": [ \"all\" ],"
         "\"preferred-lifetime\": 3000,"
@@ -284,23 +284,22 @@ TEST_F(Dhcp6ParserTest, multipleOptionValues) {
         "    \"option-data\": [ {"
         "          \"name\": \"option_foo\","
         "          \"code\": 100,"
-        "          \"data\": \"ABCDEF 01 05\""
+        "          \"data\": \"AB CDEF0105\""
         "        },"
         "        {"
         "          \"name\": \"option_foo2\","
         "          \"code\": 101,"
-        "          \"data\": \"1\""
+        "          \"data\": \"01\""
         "        } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }";
-    cout << config << endl;
 
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
-    EXPECT_EQ(0, rcode_);
+    ASSERT_EQ(0, rcode_);
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
     ASSERT_TRUE(subnet);
@@ -332,5 +331,85 @@ TEST_F(Dhcp6ParserTest, multipleOptionValues) {
     };
     testOption(*range.first, 101, foo2_expected, sizeof(foo2_expected));
 }
+
+TEST_F(Dhcp6ParserTest, optionValuesInMultipleSubnets) {
+    ConstElementPtr x;
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\", "
+        "    \"option-data\": [ {"
+        "          \"name\": \"option_foo\","
+        "          \"code\": 100,"
+        "          \"data\": \"0102030405060708090A\""
+        "        } ]"
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:2::/80\" ],"
+        "    \"subnet\": \"2001:db8:2::/64\", "
+        "    \"option-data\": [ {"
+        "          \"name\": \"option_foo2\","
+        "          \"code\": 101,"
+        "          \"data\": \"FFFEFDFCFB\""
+        "        } ]"
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    Subnet6Ptr subnet1 = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet1);
+    const Subnet::OptionContainer& options1 = subnet1->getOptions();
+    ASSERT_EQ(1, options1.size());
+
+    for (Subnet::OptionContainer::iterator it = options1.begin();
+         it != options1.end(); ++it) {
+        std::cout << it->option->getType() << std::endl;
+    }
+
+    // Get the search index. Index #1 is to search using option code.
+    const Subnet::OptionContainerTypeIndex& idx1 = options1.get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+              Subnet::OptionContainerTypeIndex::const_iterator> range1 =
+        idx1.equal_range(100);
+    // Expect single option with the code equal to 100.
+    ASSERT_EQ(1, std::distance(range1.first, range1.second));
+    const uint8_t foo_expected[] = {
+        0x01, 0x02, 0x03, 0x04, 0x05,
+        0x06, 0x07, 0x08, 0x09, 0x0A
+    };
+    // Check if option is valid in terms of code and carried data.
+    testOption(*range1.first, 100, foo_expected, sizeof(foo_expected));
+
+    // Test another subnet in the same way.
+    Subnet6Ptr subnet2 = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:2::4"));
+    ASSERT_TRUE(subnet2);
+    const Subnet::OptionContainer& options2 = subnet2->getOptions();
+    ASSERT_EQ(1, options2.size());
+
+    const Subnet::OptionContainerTypeIndex& idx2 = options2.get<1>();
+    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+              Subnet::OptionContainerTypeIndex::const_iterator> range2 =
+        idx2.equal_range(101);
+    ASSERT_EQ(1, std::distance(range2.first, range2.second));
+
+    const uint8_t foo2_expected[] = {
+        0xFF, 0xFE, 0xFD, 0xFC, 0xFB
+    };
+    testOption(*range2.first, 101, foo2_expected, sizeof(foo2_expected));
+}
+
 
 };
