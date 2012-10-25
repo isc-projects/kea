@@ -1087,9 +1087,9 @@ TEST_F(AuthSrvTest, queryCounterUDPNormal) {
     server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
     // After processing the UDP query, these counters should be incremented:
-    //   request.udp, opcode.query, qtype.ns, rcode.refused, response
+    //   queries.udp, opcode.query, rcode.refused
     // and these counters should not be incremented:
-    //   request.tcp
+    //   queries.tcp
     ConstElementPtr stats_after = server.getStatistics();
     expectCounterItem(stats_after, "queries.udp", 1);
     expectCounterItem(stats_after, "queries.tcp", 0);
@@ -1113,9 +1113,9 @@ TEST_F(AuthSrvTest, queryCounterTCPNormal) {
     server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
     // After processing the TCP query, these counters should be incremented:
-    //   request.tcp, opcode.query, qtype.ns, rcode.refused, response
+    //   queries.tcp, opcode.query, rcode.refused
     // and these counters should not be incremented:
-    //   request.udp
+    //   queries.udp
     ConstElementPtr stats_after = server.getStatistics();
     expectCounterItem(stats_after, "queries.udp", 0);
     expectCounterItem(stats_after, "queries.tcp", 1);
@@ -1140,9 +1140,9 @@ TEST_F(AuthSrvTest, queryCounterTCPAXFR) {
     EXPECT_FALSE(dnsserv.hasAnswer());
     // After processing the TCP AXFR query, these counters should be
     // incremented:
-    //   request.tcp, opcode.query, qtype.axfr
+    //   queries.tcp, opcode.query
     // and these counters should not be incremented:
-    //   request.udp, response
+    //   queries.udp
     ConstElementPtr stats_after = server.getStatistics();
     expectCounterItem(stats_after, "queries.udp", 0);
     expectCounterItem(stats_after, "queries.tcp", 1);
@@ -1166,9 +1166,9 @@ TEST_F(AuthSrvTest, queryCounterTCPIXFR) {
     EXPECT_FALSE(dnsserv.hasAnswer());
     // After processing the TCP IXFR query, these counters should be
     // incremented:
-    //   request.tcp, opcode.query, qtype.ixfr
+    //   queries.tcp, opcode.query
     // and these counters should not be incremented:
-    //   request.udp, response
+    //   queries.udp
     ConstElementPtr stats_after = server.getStatistics();
     expectCounterItem(stats_after, "queries.udp", 0);
     expectCounterItem(stats_after, "queries.tcp", 1);
