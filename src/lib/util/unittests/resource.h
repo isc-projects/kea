@@ -32,7 +32,7 @@ void dontCreateCoreDumps();
 } // end of namespace util
 } // end of namespace isc
 
-#endif /* __UTIL_UNITTESTS_RESOURCE_H */
+#endif // UTIL_UNITTESTS_RESOURCE_H
 
 // Local Variables:
 // mode: c++

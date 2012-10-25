@@ -43,7 +43,7 @@ extern PyObject* getDataSourceException(const char* ex_name);
 } // namespace datasrc
 } // namespace isc
 
-#endif // __PYTHON_ACL_DNS_H
+#endif // PYTHON_DATASRC_H
 
 // Local Variables:
 // mode: c++
