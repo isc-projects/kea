@@ -41,6 +41,17 @@ bool Subnet::inRange(const isc::asiolink::IOAddress& addr) const {
     return ((first <= addr) && (addr <= last));
 }
 
+void
+Subnet::addOption(OptionPtr& option, bool persistent /* = false */) {
+    validateOption(option);
+    options_.push_back(OptionDescriptor(option, persistent));
+}
+
+void
+Subnet::delOptions() {
+    options_.clear();
+}
+
 Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t1,
                  const Triplet<uint32_t>& t2,
@@ -83,6 +94,15 @@ Pool4Ptr Subnet4::getPool4(const isc::asiolink::IOAddress& hint /* = IOAddress("
         }
     }
     return (candidate);
+}
+
+void
+Subnet4::validateOption(const OptionPtr& option) const {
+    if (!option) {
+        isc_throw(isc::BadValue, "option configured for subnet must not be NULL");
+    } else if (option->getUniverse() != Option::V4) {
+        isc_throw(isc::BadValue, "expected V4 option to be added to the subnet");
+    }
 }
 
 Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
@@ -131,5 +151,13 @@ Pool6Ptr Subnet6::getPool6(const isc::asiolink::IOAddress& hint /* = IOAddress("
     return (candidate);
 }
 
+void
+Subnet6::validateOption(const OptionPtr& option) const {
+    if (!option) {
+        isc_throw(isc::BadValue, "option configured for subnet must not be NULL");
+    } else if (option->getUniverse() != Option::V6) {
+        isc_throw(isc::BadValue, "expected V6 option to be added to the subnet");
+    }
+}
 } // end of isc::dhcp namespace
 } // end of isc namespace

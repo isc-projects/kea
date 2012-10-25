@@ -33,7 +33,10 @@ libdhcp___unittests_SOURCES += option6_iaaddr_unittest.cc
 libdhcp___unittests_SOURCES += option6_ia_unittest.cc
 libdhcp___unittests_SOURCES += option6_addrlst_unittest.cc
 libdhcp___unittests_SOURCES += option4_addrlst_unittest.cc
+libdhcp___unittests_SOURCES += option6_int_unittest.cc
+libdhcp___unittests_SOURCES += option6_int_array_unittest.cc
 libdhcp___unittests_SOURCES += option_unittest.cc
+libdhcp___unittests_SOURCES += option_definition_unittest.cc
 libdhcp___unittests_SOURCES += pkt6_unittest.cc
 libdhcp___unittests_SOURCES += pkt4_unittest.cc
 libdhcp___unittests_SOURCES += duid_unittest.cc
@@ -54,6 +57,7 @@ libdhcpsrv_unittests_LDADD  = $(GTEST_LDADD)
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcpsrv.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 
 
