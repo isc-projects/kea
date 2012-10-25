@@ -49,6 +49,70 @@ public:
         delete srv_;
     };
 
+    /// @brief Create the simple configuration with single option.
+    ///
+    /// This function allows to set one of the parameters that configure
+    /// option value. These parameters are: "name", "code" and "data".
+    ///
+    /// @param param_value string holiding option parameter value to be
+    /// injected into the configuration string.
+    /// @param parameter name of the parameter to be configured with
+    /// param value.
+    std::string createConfigWithOption(const std::string& param_value,
+                                       const std::string& parameter) {
+        std::ostringstream stream;
+        stream << "{ \"interface\": [ \"all\" ],"
+            "\"preferred-lifetime\": 3000,"
+            "\"rebind-timer\": 2000, "
+            "\"renew-timer\": 1000, "
+            "\"subnet6\": [ { "
+            "    \"pool\": [ \"2001:db8:1::/80\" ],"
+            "    \"subnet\": \"2001:db8:1::/64\", "
+            "    \"option-data\": [ {";
+        if (parameter == "name") {
+            stream <<
+                "          \"name\": \"" << param_value << "\","
+                "          \"code\": 80,"
+                "          \"data\": \"AB CDEF0105\"";
+        } else if (parameter == "code") {
+            stream <<
+                "          \"name\": \"option_foo\","
+                "          \"code\": " << param_value << ","
+                "          \"data\": \"AB CDEF0105\"";
+        } else if (parameter == "data") {
+            stream <<
+                "          \"name\": \"option_foo\","
+                "          \"code\": 80,"
+                "          \"data\": \"" << param_value << "\"";
+        }
+        stream <<
+            "        } ]"
+            " } ],"
+            "\"valid-lifetime\": 4000 }";
+        return (stream.str());
+    }
+
+    /// @brief Test invalid option parameter value.
+    ///
+    /// This test function constructs the simple configuration
+    /// string and injects invalid option configuration into it.
+    /// It expects that parser will fail with provided option code.
+    ///
+    /// @param param_value string holding invalid option parameter value
+    /// to be injected into configuration string.
+    /// @param parameter name of the parameter to be configured with
+    /// param_value (can be any of "name", "code", "data")
+    void testInvalidOptionParam(const std::string& param_value,
+                                const std::string& parameter) {
+        ConstElementPtr x;
+        std::string config = createConfigWithOption(param_value, parameter);
+        ElementPtr json = Element::fromJSON(config);
+        EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+        ASSERT_TRUE(x);
+        comment_ = parseAnswer(rcode_, x);
+        ASSERT_EQ(1, rcode_);
+    }
+
     /// @brief Test option against given code and data.
     ///
     /// @param option_desc option descriptor that carries the option to
@@ -272,7 +336,7 @@ TEST_F(Dhcp6ParserTest, pool_prefix_len) {
     EXPECT_EQ(4000, subnet->getValid());
 }
 
-TEST_F(Dhcp6ParserTest, optionValuesInSingleSubnet) {
+TEST_F(Dhcp6ParserTest, optionDataInSingleSubnet) {
     ConstElementPtr x;
     string config = "{ \"interface\": [ \"all\" ],"
         "\"preferred-lifetime\": 3000,"
@@ -332,7 +396,7 @@ TEST_F(Dhcp6ParserTest, optionValuesInSingleSubnet) {
     testOption(*range.first, 101, foo2_expected, sizeof(foo2_expected));
 }
 
-TEST_F(Dhcp6ParserTest, optionValuesInMultipleSubnets) {
+TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     ConstElementPtr x;
     string config = "{ \"interface\": [ \"all\" ],"
         "\"preferred-lifetime\": 3000,"
@@ -411,5 +475,98 @@ TEST_F(Dhcp6ParserTest, optionValuesInMultipleSubnets) {
     testOption(*range2.first, 101, foo2_expected, sizeof(foo2_expected));
 }
 
+TEST_F(Dhcp6ParserTest, optionNameEmpty) {
+    // Empty option names not allowed.
+    testInvalidOptionParam("", "name");
+}
+
+TEST_F(Dhcp6ParserTest, optionNameSpaces) {
+    // Spaces in option names not allowed.
+    testInvalidOptionParam("option foo", "name");
+}
+
+TEST_F(Dhcp6ParserTest, optionCodeNegativeOverflow) {
+    // Using negative code. If range checking is not applied on the
+    // value then it may be successfully cast to uint16_t resulting
+    // in a value of 65531 (which will be accepted). The code should however
+    // detect that it is actually very low negative value and parsing should
+    // fail.
+    testInvalidOptionParam("-4294901765", "code");
+}
+
+TEST_F(Dhcp6ParserTest, optionCodeNegative) {
+    // Check negative option code -4. This should fail too.
+    testInvalidOptionParam("-4", "code");
+}
+
+TEST_F(Dhcp6ParserTest, optionCodeNonUint16) {
+    // The valid option codes are uint16_t values so passing
+    // uint16_t maximum value incremented by 1 should result
+    // in failure.
+    testInvalidOptionParam("65536", "code");
+}
+
+TEST_F(Dhcp6ParserTest, optionCodeHighNonUint16) {
+    // Another check for uint16_t overflow but this time
+    // let's pass even greater option code value.
+    testInvalidOptionParam("70000", "code");
+}
+
+TEST_F(Dhcp6ParserTest, optionCodeZero) {
+    // Option code 0 is reserved and should not be accepted
+    // by configuration parser.
+    testInvalidOptionParam("0", "code");
+}
+
+TEST_F(Dhcp6ParserTest, optionDataInvalidChar) {
+    // Option code 0 is reserved and should not be accepted
+    // by configuration parser.
+    testInvalidOptionParam("01020R", "data");
+}
+
+TEST_F(Dhcp6ParserTest, optionDataUnexpectedPrefix) {
+    // Option code 0 is reserved and should not be accepted
+    // by configuration parser.
+    testInvalidOptionParam("0x0102", "data");
+}
+
+TEST_F(Dhcp6ParserTest, optionDataOddLength) {
+    // Option code 0 is reserved and should not be accepted
+    // by configuration parser.
+    testInvalidOptionParam("123", "data");
+}
+
+TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
+    ConstElementPtr x;
+    std::string config = createConfigWithOption("0a0b0C0D", "data");
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet);
+    const Subnet::OptionContainer& options = subnet->getOptions();
+    ASSERT_EQ(1, options.size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+              Subnet::OptionContainerTypeIndex::const_iterator> range =
+        idx.equal_range(80);
+    // Expect single option with the code equal to 100.
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    const uint8_t foo_expected[] = {
+        0x0A, 0x0B, 0x0C, 0x0D
+    };
+    // Check if option is valid in terms of code and carried data.
+    testOption(*range.first, 80, foo_expected, sizeof(foo_expected));
+}
 
 };
