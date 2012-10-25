@@ -77,13 +77,18 @@ Mutex::Mutex() :
     }
     Deinitializer deinitializer(attributes);
 
+    // If debug mode is enabled in compilation, use the slower
+    // error-checking mutexes that detect deadlocks. Otherwise, use fast
+    // mutexes which don't. See the pthread_mutexattr_settype() POSIX
+    // documentation which describes these type attributes.
 #ifdef ENABLE_DEBUG
-    // TODO: Distinguish if debug mode is enabled in compilation.
     result = pthread_mutexattr_settype(&attributes, PTHREAD_MUTEX_ERRORCHECK);
+#else
+    result = pthread_mutexattr_settype(&attributes, PTHREAD_MUTEX_NORMAL);
+#endif // ENABLE_DEBUG
     if (result != 0) {
         isc_throw(isc::InvalidOperation, std::strerror(result));
     }
-#endif // ENABLE_DEBUG
 
     auto_ptr<Impl> impl(new Impl);
     result = pthread_mutex_init(&impl->mutex, &attributes);
