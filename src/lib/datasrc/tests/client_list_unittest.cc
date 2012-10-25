@@ -1035,8 +1035,7 @@ TYPED_TEST(ReloadTest, reloadMasterFile) {
     f << "nosuchdomain.\t\t3600\tIN\tTXT\ttest" << std::endl;
     f.close();
     // Do the reload.
-    EXPECT_EQ(ConfigurableClientList::ZONE_RELOADED,
-              this->doReload(Name(".")));
+    EXPECT_EQ(ConfigurableClientList::ZONE_RELOADED, this->doReload(Name(".")));
     // It is here now.
     EXPECT_EQ(ZoneFinder::SUCCESS,
               this->list_->find(Name(".")).finder_->find(Name("nosuchdomain"),
