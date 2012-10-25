@@ -85,7 +85,8 @@ def main():
 
     write_value(f, ' + Machine name: %s\n', s.get_platform_machine)
     write_value(f, ' + Hostname: %s\n', s.get_platform_hostname)
-    write_value(f, ' + Uptime: %d seconds\n', s.get_uptime)
+    write_value(f, ' + Uptime: %d seconds', s.get_uptime)
+    write_value(f, ' (%s)\n', s.get_uptime_desc)
 
     write_value(f, ' + Loadavg: %f %f %f\n', s.get_loadavg)
 
