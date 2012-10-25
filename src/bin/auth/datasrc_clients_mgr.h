@@ -27,6 +27,7 @@
 
 #include <datasrc/data_source.h>
 #include <datasrc/client_list.h>
+#include <datasrc/memory/zone_writer.h>
 
 #include <auth/auth_log.h>
 #include <auth/datasrc_config.h>
@@ -501,10 +502,41 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
         found->second;
     assert(client_list);
 
-    datasrc::ConfigurableClientList::ReloadResult result;
     try {
-        typename MutexType::Locker locker(*map_mutex_);
-        result = client_list->reload(origin);
+        const datasrc::ConfigurableClientList::ZoneWriterPair writerpair =
+            client_list->getCachedZoneWriter(origin);
+        switch (writerpair.first) {
+        case datasrc::ConfigurableClientList::ZONE_NOT_FOUND:
+            isc_throw(InternalCommandError, "failed to load zone " << origin
+                      << "/" << rrclass << ": not found in any configured "
+                      "data source.");
+        case datasrc::ConfigurableClientList::ZONE_NOT_CACHED:
+            isc_throw(InternalCommandError, "failed to load zone " << origin
+                      << "/" << rrclass << ": not served from memory");
+        case datasrc::ConfigurableClientList::CACHE_DISABLED:
+            // This is an internal error. Auth server must have the cache
+            // enabled.
+            isc_throw(InternalCommandError, "failed to load zone " << origin
+                      << "/" << rrclass << ": internal failure, in-memory cache "
+                      "is somehow disabled");
+        default:
+            break;
+        }
+
+        boost::shared_ptr<datasrc::memory::ZoneWriter> zwriter =
+            writerpair.second;
+        zwriter->load(); // this can take time but doesn't cause a race
+        {   // install() can cause a race and must be in a critical section
+            typename MutexType::Locker locker(*map_mutex_);
+            zwriter->install();
+        }
+        LOG_DEBUG(auth_logger, DBG_AUTH_OPS,
+                  AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE)
+            .arg(origin).arg(rrclass);
+
+        zwriter->cleanup();
+    } catch (const InternalCommandError& ex) {
+        throw;
     } catch (const isc::Exception& ex) {
         // We catch our internal exceptions (which will be just ignored) and
         // propagated others (which should generally be considered fatal and
@@ -512,27 +544,6 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
         isc_throw(InternalCommandError, "failed to load a zone " << origin <<
                   "/" << rrclass << ": error occurred in reload: " <<
                   ex.what());
-    }
-    switch (result) {
-    case datasrc::ConfigurableClientList::ZONE_RELOADED:
-        // Everything worked fine.
-        LOG_DEBUG(auth_logger, DBG_AUTH_OPS,
-                  AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE)
-            .arg(origin).arg(rrclass);
-        break;
-    case datasrc::ConfigurableClientList::ZONE_NOT_FOUND:
-        isc_throw(InternalCommandError, "failed to load zone " << origin
-                  << "/" << rrclass << ": not found in any configured "
-                  "data source.");
-    case datasrc::ConfigurableClientList::ZONE_NOT_CACHED:
-        isc_throw(InternalCommandError, "failed to load zone " << origin
-                  << "/" << rrclass << ": not served from memory");
-    case datasrc::ConfigurableClientList::CACHE_DISABLED:
-        // This is an internal error. Auth server must have the cache
-        // enabled.
-        isc_throw(InternalCommandError, "failed to load zone " << origin
-                  << "/" << rrclass << ": internal failure, in-memory cache "
-                  "is somehow disabled");
     }
 }
 } // namespace datasrc_clientmgr_internal
