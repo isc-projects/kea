@@ -57,6 +57,87 @@ At attempt to update the configuration the server with information
 from the configuration database has failed, the reason being given in
 the message.
 
+% AUTH_DATASRC_CLIENTS_BUILDER_COMMAND data source builder received command: %1
+A debug message, showing when the separate thread for maintaining data
+source clients receives a command from the manager.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_FAILED data source builder thread stopped due to an exception: %1
+The separate thread for maintaining data source clients has been
+terminated due to some uncaught exception.  When this happens, the
+thread immediately terminates the entire process because the manager
+cannot always catch this condition in a timely fashion and it would be
+worse to keep running with such a half-broken state.  This is really
+an unexpected event and should generally indicate an internal bug.
+It's advisable to file a bug report when this message is logged (and
+b10-auth subsequently stops).
+
+% AUTH_DATASRC_CLIENTS_BUILDER_FAILED_UNEXPECTED data source builder thread stopped due to an unexpected exception
+This is similar to AUTH_DATASRC_CLIENTS_BUILDER_FAILED, but the
+exception type indicates it's not thrown either within the BIND 10
+implementation or other standard-compliant libraries.  This may rather
+indicate some run time failure than program errors.  As in the other
+failure case, the thread terminates the entire process immediately
+after logging this message.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_CONFIG_ERROR Error in data source configuration: %1
+The thread for maintaining data source clients has received a command to
+reconfigure, but the parameter data (the new configuration) contains an
+error. The most likely cause is that the datasource-specific configuration
+data is not what the data source expects. The system is still running with
+the data sources that were previously configured (i.e. as if the
+configuration has not changed), and the configuration data needs to be
+checked.
+The specific problem is printed in the log message.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_DATASRC_ERROR Error setting up data source: %1
+The thread for maintaining data source clients has received a command to
+reconfigure, but a data source failed to set up. This may be a problem with
+the data that is configured (e.g. unreadable files, inconsistent data,
+parser problems, database connection problems, etc.), but it could be a bug
+in the data source implementation as well. The system is still running with
+the data sources that were previously configured (i.e. as if the
+configuration has not changed).
+The specific problem is printed in the log message.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_ERROR Internal error setting up data source: %1
+The thread for maintaining data source clients has received a command to
+reconfigure, but raised an exception while setting up data sources. This is
+most likely an internal error in a data source, or a bug in the data source
+or the system itself, but it is probably a good idea to verify the
+configuration first. The system is still running with the data sources that
+were previously configured (i.e. as if the configuration has not changed).
+The specific problem is printed in the log message.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_STARTED data source reconfiguration started
+The thread for maintaining data source clients has received a command to
+reconfigure, and has now started this process.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_SUCCESS data source reconfiguration completed succesfully
+The thread for maintaining data source clients has finished reconfiguring
+the data source clients, and is now running with the new configuration.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_STARTED data source builder thread started
+A separate thread for maintaining data source clients has been started.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_STOPPED data source builder thread stopped
+The separate thread for maintaining data source clients has been stopped.
+
+% AUTH_DATASRC_CLIENTS_SHUTDOWN_ERROR error on waiting for data source builder thread: %1
+This indicates that the separate thread for maintaining data source
+clients had been terminated due to an uncaught exception, and the
+manager notices that at its own termination.  This is not an expected
+event, because the thread is implemented so it catches all exceptions
+internally.  So, if this message is logged it's most likely some internal
+bug, and it would be nice to file a bug report.
+
+% AUTH_DATASRC_CLIENTS_SHUTDOWN_UNEXPECTED_ERROR Unexpected error on waiting for data source builder thread
+Some exception happens while waiting for the termination of the
+separate thread for maintaining data source clients.  This shouldn't
+happen in normal conditions; it should be either fatal system level
+errors such as severe memory shortage or some internal bug.  If that
+happens, and if it's not in the middle of terminating b10-auth, it's
+probably better to stop and restart it.
+
 % AUTH_DATA_SOURCE data source database file: %1
 This is a debug message produced by the authoritative server when it accesses a
 datebase data source, listing the file that is being accessed.

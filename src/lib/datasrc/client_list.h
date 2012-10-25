@@ -37,7 +37,6 @@ typedef boost::shared_ptr<DataSourceClient> DataSourceClientPtr;
 class DataSourceClientContainer;
 typedef boost::shared_ptr<DataSourceClientContainer>
     DataSourceClientContainerPtr;
-
 // XXX: it's better to even hide the existence of the "memory" namespace.
 // We should probably consider pimpl for details of ConfigurableClientList
 // and hide real definitions except for itself and tests.
@@ -390,6 +389,11 @@ protected:
     /// derive this class (which is not really recommended anyway).
     DataSources data_sources_;
 };
+
+/// \brief Shortcut typedef for maps of client_lists.
+typedef boost::shared_ptr<std::map<
+    isc::dns::RRClass, boost::shared_ptr<ConfigurableClientList> > >
+        ClientListMapPtr;
 
 } // namespace datasrc
 } // namespace isc

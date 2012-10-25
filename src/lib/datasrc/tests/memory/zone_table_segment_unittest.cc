@@ -13,8 +13,14 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/memory/zone_table_segment.h>
+#include <datasrc/memory/zone_writer_local.h>
 #include <gtest/gtest.h>
 
+#include <boost/scoped_ptr.hpp>
+
+using boost::scoped_ptr;
+using isc::dns::Name;
+using isc::dns::RRClass;
 using namespace isc::datasrc::memory;
 using namespace isc::data;
 using namespace isc::util;
@@ -78,6 +84,24 @@ TEST_F(ZoneTableSegmentTest, getMemorySegment) {
     // This doesn't do anything fun except test the API.
     MemorySegment& mem_sgmt = segment_->getMemorySegment();
     EXPECT_TRUE(mem_sgmt.allMemoryDeallocated());
+}
+
+ZoneData*
+loadAction(MemorySegment&) {
+    // The function won't be called, so this is OK
+    return (NULL);
+}
+
+// Test we can get a writer.
+TEST_F(ZoneTableSegmentTest, getZoneWriter) {
+    scoped_ptr<ZoneWriter>
+        writer(segment_->getZoneWriter(loadAction, Name("example.org"),
+                                       RRClass::IN()));
+    // We have to get something
+    EXPECT_NE(static_cast<void*>(NULL), writer.get());
+    // And for now, it should be the local writer
+    EXPECT_NE(static_cast<void*>(NULL),
+              dynamic_cast<ZoneWriterLocal*>(writer.get()));
 }
 
 } // anonymous namespace
