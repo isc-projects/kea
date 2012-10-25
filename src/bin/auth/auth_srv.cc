@@ -583,12 +583,10 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
     try {
         // statistics: check EDNS
         //     note: This can only be reliable after TSIG check succeeds.
-        {
-            ConstEDNSPtr edns = message.getEDNS();
-            if (edns != NULL) {
-                stats_attrs.setQueryEDNS(true, edns->getVersion() == 0);
-                stats_attrs.setQueryDO(edns->getDNSSECAwareness());
-            }
+        ConstEDNSPtr edns = message.getEDNS();
+        if (edns != NULL) {
+            stats_attrs.setQueryEDNS(true, edns->getVersion() == 0);
+            stats_attrs.setQueryDO(edns->getDNSSECAwareness());
         }
 
         // statistics: check OpCode
