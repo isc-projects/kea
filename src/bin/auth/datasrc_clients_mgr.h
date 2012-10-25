@@ -485,7 +485,7 @@ void
 DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
     const isc::data::ConstElementPtr& arg)
 {
-    // We assume same basic level validation as this method can only be
+    // We assume some basic level validation as this method can only be
     // called via the manager in practice.  manager is expected to do the
     // minimal validation.
     assert(arg);
@@ -498,7 +498,6 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
     if (found == (*clients_map_)->end()) {
         isc_throw(InternalCommandError, "failed to load a zone " << origin <<
                   "/" << rrclass << ": not configured for the class");
-        return;
     }
 
     boost::shared_ptr<datasrc::ConfigurableClientList> client_list =
@@ -508,6 +507,7 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
     try {
         boost::shared_ptr<datasrc::memory::ZoneWriter> zwriter =
             getZoneWriter(*client_list, rrclass, origin);
+
         zwriter->load(); // this can take time but doesn't cause a race
         {   // install() can cause a race and must be in a critical section
             typename MutexType::Locker locker(*map_mutex_);
