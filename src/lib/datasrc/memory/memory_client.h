@@ -34,6 +34,8 @@ class RRsetList;
 namespace datasrc {
 namespace memory {
 
+class ZoneTableSegment;
+
 /// \brief A data source client that holds all necessary data in memory.
 ///
 /// The \c InMemoryClient class provides an access to a conceptual data
@@ -175,6 +177,18 @@ public:
     getJournalReader(const isc::dns::Name& zone, uint32_t begin_serial,
                      uint32_t end_serial) const;
 
+    /// \brief Get the zone table segment used
+    ///
+    /// This is a low-level function, used to some internal handling when,
+    /// for example, reloading the data inside the in-memory data source.
+    /// It should not be generally used.
+    ///
+    /// \todo Consider making this private and add a friend declaration
+    ///     for the ClientList.
+    ZoneTableSegment& getZoneTableSegment() {
+        return (*zone_table_segment_);
+    }
+
 private:
     // Some type aliases
     typedef DomainTree<std::string> FileNameTree;
@@ -186,6 +200,7 @@ private:
                                 const std::string& filename,
                                 ZoneData* zone_data);
 
+    ZoneTableSegment* zone_table_segment_;
     util::MemorySegment& mem_sgmt_;
     const isc::dns::RRClass rrclass_;
     unsigned int zone_count_;
