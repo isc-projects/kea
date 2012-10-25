@@ -1,0 +1,86 @@
+/**
+ @page libdhcpsrv libdhcpsrv - Server DHCP library
+
+This library contains code useful for DHCPv4 and DHCPv6 server operations, like
+Lease Manager that stores leases information, configuration manager that stores
+configuration etc. The code here is server specific. For generic (useful in
+server, client, relay and other tools like perfdhcp) code, please see
+\ref libdhcp.
+
+This library contains several crucial elements of the DHCP server operation:
+
+- isc::dhcp::LeaseMgr - Lease Manager is a name for database backend that stores
+  leases.
+- isc::dhcp::CfgMgr - Configuration Manager that holds DHCP specific
+  configuration information (subnets, pools, options, timer values etc.) in
+  easy to use format.
+- AllocEngine - allocation engine that handles new requestes and allocates new
+  leases.
+
+@section leasemgr Lease Manager
+
+LeaseMgr provides a common, unified abstract API for all database backends. All
+backends are derived from the base class isc::dhcp::LeaseMgr. Currently the
+only available backend is MySQL (see \ref isc::dhcp::MySqlLeaseMgr).
+
+@section cfgmgr Configuration Manager
+
+Configuration Manager (\ref isc::dhcp::CfgMgr) stores configuration information
+necessary for DHCPv4 and DHCPv6 server operation. In particular, it stores
+subnets (\ref isc::dhcp::Subnet4 and \ref isc::dhcp::Subnet6) together with
+their pools (\ref isc::dhcp::Pool4 and \ref isc::dhcp::Pool6), options and
+other information specified by the used in BIND10 configuration.
+
+@section allocengine Allocation Engine
+
+Allocation Engine (\ref isc::dhcp::AllocEngine) is what its name say - an engine
+that handles allocation of new leases. It takes parameters that the client
+provided (client-id, DUID, subnet, a hint if the user provided one, etc.) and
+then attempts to allocate a lease.
+
+There is no single best soluction to the address assignment problem. Server
+is expected to pick an address from its available pools is currently not used.
+There are many possible algorithms that can do that, each with its own advantages
+and drawbacks. This allocation engine must provide robust operation is radically
+different scenarios, so there address selection problem was abstracted into
+separate module, called allocator. Its sole purpose is to pick an address from
+a pool. Allocation engine will then check if the picked address is free and if
+it is not, then will ask allocator to pick again.
+
+At lease 3 allocators will be implemented:
+
+- Iterative - it iterates over all addresses in available pools, one
+by one. The advantages of this approach are speed (typically it only needs to
+increase last address), the guarantee to cover all addresses and predictability.
+This allocator behaves very good in case of nearing depletion. Even when pools
+are almost completely allocated, it still will be able to allocate outstanding
+leases efficiently. Predictability can also be considered a serious flaw in
+some environments, as prediction of the next address is trivial and can be
+leveraged by an attacker. Another drawback of this allocator is that it does
+not attempt to give the same address to returning clients (clients that released
+or expired their leases and are requesting a new lease will likely to get a 
+different lease). This allocator is implemented in \ref isc::dhcp::AllocEngine::IterativeAllocator.
+
+- Hashed - ISC-DHCP uses hash of the client-id or DUID to determine, which
+address is tried first. If that address is not available, the result is hashed
+again. That procedure is repeated until available address is found or there
+are no more addresses left. The benefit of that approach is that it provides
+a relative lease stability, so returning old clients are likely to get the same
+address again. The drawbacks are increased computation cost, as each iteration
+requires use of a hashing function. That is especially difficult when the 
+pools are almost depleted. It also may be difficult to guarantee that the
+repeated hashing will iterate over all available addresses in all pools. Flawed
+hash algorithm can go into cycles that iterate over only part of the addresses.
+It is difficult to detect such issues as only some initial seed (client-id
+or DUID) values may trigger short cycles. This allocator is currently not
+implemented.
+
+- Random - Another possible approach to address selection is randomization. This
+allocator can pick an address randomly from the configured pool. The benefit
+of this approach is that it is easy to implement and makes attacks based on
+address prediction more difficult. The drawback of this approach is that
+returning clients are almost guaranteed to get a different address. Another
+drawback is that with almost depleted pools it is increasingly difficult to
+"guess" an address that is free. This allocator is currently not implemented.
+
+*/
