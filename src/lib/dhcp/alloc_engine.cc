@@ -113,6 +113,32 @@ AllocEngine::IterativeAllocator::pickAddress(const Subnet6Ptr& subnet,
     return (next);
 }
 
+AllocEngine::HashedAllocator::HashedAllocator()
+    :Allocator() {
+    isc_throw(NotImplemented, "Hashed allocator is not implemented");
+}
+
+
+isc::asiolink::IOAddress
+AllocEngine::HashedAllocator::pickAddress(const Subnet6Ptr&,
+                                             const DuidPtr&,
+                                             const IOAddress&) {
+    isc_throw(NotImplemented, "Hashed allocator is not implemented");
+}
+
+AllocEngine::RandomAllocator::RandomAllocator()
+    :Allocator() {
+    isc_throw(NotImplemented, "Random allocator is not implemented");
+}
+
+
+isc::asiolink::IOAddress
+AllocEngine::RandomAllocator::pickAddress(const Subnet6Ptr&,
+                                             const DuidPtr&,
+                                             const IOAddress&) {
+    isc_throw(NotImplemented, "Random allocator is not implemented");
+}
+
 
 AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts)
     :attempts_(attempts) {
@@ -120,14 +146,12 @@ AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts)
     case ALLOC_ITERATIVE:
         allocator_ = new IterativeAllocator();
         break;
-#if 0
     case ALLOC_HASHED:
         allocator_ = new HashedAllocator();
         break;
     case ALLOC_RANDOM:
         allocator_ = new RandomAllocator();
         break;
-#endif
 
     default:
         isc_throw(BadValue, "Invalid/unsupported allocation algorithm");
