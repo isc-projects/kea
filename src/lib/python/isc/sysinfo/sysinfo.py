@@ -97,7 +97,7 @@ class SysInfo:
     def get_uptime_desc(self):
         """Returns the uptime in human readable form.
 
-        Specifically, the format is '[DD day[s],] hh:mm'.
+        Specifically, the format is '[DD day[s], ]hh:mm'.
         It returns None if _uptime is None.
 
         """
