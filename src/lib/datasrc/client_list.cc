@@ -345,7 +345,7 @@ ConfigurableClientList::findInternal(MutableResult& candidate,
 // duplicate code, it is a thin wrapper around getCachedZoneWriter only.
 ConfigurableClientList::ReloadResult
 ConfigurableClientList::reload(const Name& name) {
-    ZoneWriterPair result(getCachedZoneWriter(name));
+    const ZoneWriterPair result(getCachedZoneWriter(name));
     if (result.second) {
         result.second->load();
         result.second->install();
@@ -412,7 +412,7 @@ ConfigurableClientList::getCachedZoneWriter(const Name& name) {
     }
     memory::LoadAction load_action;
     DataSourceClient* client(result.info->data_src_client_);
-    if (client) {
+    if (client != NULL) {
         // Now finally provide the writer.
         // If it does not exist in client,
         // DataSourceError is thrown, which is exactly the result what we
@@ -436,8 +436,9 @@ ConfigurableClientList::getCachedZoneWriter(const Name& name) {
                                   filename);
     }
     return (ZoneWriterPair(ZONE_RELOADED,
-                           ZoneWriterPtr(result.info->cache_->getZoneTableSegment().
-                                         getZoneWriter(load_action, name, rrclass_))));
+                           ZoneWriterPtr(
+                               result.info->cache_->getZoneTableSegment().
+                               getZoneWriter(load_action, name, rrclass_))));
 }
 
 // NOTE: This function is not tested, it would be complicated. However, the

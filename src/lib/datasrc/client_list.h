@@ -308,9 +308,10 @@ public:
     ///
     /// \param zone The origin of the zone to reload.
     /// \return The result has two parts. The first one is a status describing
-    ///     if it worked or not (and in case it didn't, also why). If the status
-    ///     is ZONE_RELOADED, the second part contains a shared pointer to the
-    ///     writer. If the status is anything else, the second part is NULL.
+    ///     if it worked or not (and in case it didn't, also why). If the
+    ///     status is ZONE_RELOADED, the second part contains a shared pointer
+    ///     to the writer. If the status is anything else, the second part is
+    ///     NULL.
     /// \throw DataSourceError or anything else that the data source
     ///      containing the zone might throw is propagated.
     /// \throw DataSourceError if something unexpected happens, like when
