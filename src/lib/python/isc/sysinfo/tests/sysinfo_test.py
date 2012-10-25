@@ -171,11 +171,14 @@ def _my_freebsd_os_sysconf(key):
 def _my_freebsd_platform_uname():
     return ('FreeBSD', 'freebsd', '8.2-RELEASE', '', 'i386')
 
-def _my_freebsd_osx_subprocess_check_output(command):
+def _my_freebsd_osx_subprocess_check_output(command, faked_output={}):
     '''subprocess output shared for freebsd and osx'''
     assert type(command) == list, 'command argument is not a list'
     if command == ['sysctl', '-n', 'kern.boottime']:
-        return bytes('{ sec = ' + str(int(time.time() - 76632)) + ', usec = 0 }\n', 'utf-8')
+        if 'boottime-sysctl' in faked_output:
+            return faked_output['boottime-sysctl']
+        return bytes('{ sec = ' + str(int(time.time() - 76632)) +
+                     ', usec = 0 }\n', 'utf-8')
     elif command == ['sysctl', '-n', 'vm.loadavg']:
         return b'{ 0.2 0.4 0.6 }\n'
     else:
@@ -193,7 +196,8 @@ def _my_freebsd_subprocess_check_output(command, faked_output):
     elif command == ['swapctl', '-s', '-k']:
         return b'Total:         1013216    0\n'
     else:
-        freebsd_osx_output = _my_freebsd_osx_subprocess_check_output(command)
+        freebsd_osx_output = \
+            _my_freebsd_osx_subprocess_check_output(command, faked_output)
         if freebsd_osx_output is not None:
             return freebsd_osx_output
         else:
@@ -430,6 +434,14 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual(123456 * 1024, s.get_mem_free())
         self.assertEqual(1037533184, s.get_mem_swap_total())
         self.assertEqual(1037533184, s.get_mem_swap_free())
+
+        # One more untested case so far: get_uptime_desc() should omit the
+        # "days" field.
+        faked_process_output['boottime-sysctl'] = bytes(
+            '{ sec = ' + str(int(time.time() - 4200)) +
+                     ', usec = 0 }\n', 'utf-8')
+        s = SysInfoFromFactory()
+        self.assertEqual('1:10', s.get_uptime_desc())
 
     def test_sysinfo_osx(self):
         """Tests the OS X implementation of SysInfo. Note that this
