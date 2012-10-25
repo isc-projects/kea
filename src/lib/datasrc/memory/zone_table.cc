@@ -47,7 +47,7 @@ typedef boost::function<void(ZoneData*)> ZoneDataDeleterType;
 }
 
 ZoneTable*
-ZoneTable::create(util::MemorySegment& mem_sgmt, RRClass zone_class) {
+ZoneTable::create(util::MemorySegment& mem_sgmt, const RRClass& zone_class) {
     SegmentObjectHolder<ZoneTableTree, ZoneDataDeleterType> holder(
         mem_sgmt, ZoneTableTree::create(mem_sgmt),
         boost::bind(deleteZoneData, &mem_sgmt, _1, zone_class));

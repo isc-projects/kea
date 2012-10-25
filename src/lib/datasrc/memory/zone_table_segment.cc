@@ -22,7 +22,7 @@ namespace datasrc {
 namespace memory {
 
 ZoneTableSegment*
-ZoneTableSegment::create(const isc::data::Element&, RRClass rrclass) {
+ZoneTableSegment::create(const isc::data::Element&, const RRClass& rrclass) {
     /// FIXME: For now, we always return ZoneTableSegmentLocal. This
     /// should be updated eventually to parse the passed Element
     /// argument and construct a corresponding ZoneTableSegment
