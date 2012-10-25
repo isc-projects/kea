@@ -22,6 +22,7 @@ import subprocess
 import os.path
 import platform
 import time
+from datetime import timedelta
 
 class SysInfo:
     def __init__(self):
@@ -92,6 +93,26 @@ class SysInfo:
     def get_uptime(self):
         """Returns the uptime in seconds."""
         return self._uptime
+
+    def get_uptime_desc(self):
+        """Returns the uptime in human readable form.
+
+        Specifically, the format is '[DD day[s],] hh:mm'.
+        It returns None if _uptime is None.
+
+        """
+        if self._uptime is None:
+            return None
+
+        uptime_desc = ''
+        time_delta = timedelta(seconds=self._uptime)
+        days = time_delta.days
+        if days > 0:
+            uptime_desc += ('%d day%s, ' % (days, 's' if days > 1 else ''))
+        hours = int(time_delta.seconds / 3600)
+        minutes = int((time_delta.seconds - hours * 3600) / 60)
+        uptime_desc += ('%d:%02d' % (hours, minutes))
+        return uptime_desc
 
     def get_loadavg(self):
         """Returns the load average as 3 floating point values in an array."""

@@ -49,7 +49,7 @@ class MyLinuxFile:
         elif self._filename == '/proc/version':
             return 'An SMP version string'
         elif self._filename == '/proc/uptime':
-            return '86400.75 139993.71'
+            return '172800.75 139993.71'
         elif self._filename == '/proc/loadavg':
             return '0.1 0.2 0.3 0.4'
         else:
@@ -255,6 +255,7 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual('Unknown', s.get_platform_machine())
         self.assertFalse(s.get_platform_is_smp())
         self.assertEqual(None, s.get_uptime())
+        self.assertEqual(None, s.get_uptime_desc())
         self.assertEqual(None, s.get_loadavg())
         self.assertEqual(None, s.get_mem_total())
         self.assertEqual(None, s.get_mem_free())
@@ -270,7 +271,11 @@ class SysInfoTest(unittest.TestCase):
 
     def test_sysinfo_factory(self):
         """Test that SysInfoFromFactory returns a valid system-specific
-        SysInfo implementation."""
+        SysInfo implementation.
+
+        See sysinfo.SysInfoTestcase() for some ofthe parameters.
+
+        """
 
         old_platform_system = platform.system
         platform.system = _my_testcase_platform_system
@@ -284,6 +289,8 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual('Unknown', s.get_platform_machine())
         self.assertFalse(s.get_platform_is_smp())
         self.assertEqual(131072, s.get_uptime())
+        # We check we do NOT add 's' to 'day' (because it's singular):
+        self.assertEqual('1 day, 12:24', s.get_uptime_desc())
         self.assertEqual(None, s.get_loadavg())
         self.assertEqual(None, s.get_mem_total())
         self.assertEqual(None, s.get_mem_free())
@@ -315,7 +322,10 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual(NPROCESSORS_LINUX, s.get_num_processors())
         self.assertEqual('myhostname', s.get_platform_hostname())
         self.assertTrue(s.get_platform_is_smp())
-        self.assertEqual(86401, s.get_uptime())
+        self.assertEqual(172801, s.get_uptime())
+        # We check we add 's' to 'day', and the mm part has an additional
+        # 0, i.e., not '0:0' but '0:00':
+        self.assertEqual('2 days, 0:00', s.get_uptime_desc())
         self.assertEqual((0.1, 0.2, 0.3), s.get_loadavg())
         self.assertEqual(3157884928, s.get_mem_total())
         self.assertEqual(891383808, s.get_mem_free())
