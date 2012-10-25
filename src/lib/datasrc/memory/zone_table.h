@@ -102,7 +102,7 @@ private:
     /// This constructor internally involves resource allocation, and if
     /// it fails, a corresponding standard exception will be thrown.
     /// It never throws an exception otherwise.
-    ZoneTable(dns::RRClass rrclass, ZoneTableTree* zones) :
+    ZoneTable(const dns::RRClass& rrclass, ZoneTableTree* zones) :
         rrclass_(rrclass),
         zones_(zones)
     {}
@@ -121,7 +121,7 @@ public:
     /// \param zone_class The RR class of the zone.  It must be the RR class
     /// that is supposed to be associated to the zone table.
     static ZoneTable* create(util::MemorySegment& mem_sgmt,
-                             dns::RRClass zone_class);
+                             const dns::RRClass& zone_class);
 
     /// \brief Destruct and deallocate \c ZoneTable
     ///
@@ -186,7 +186,7 @@ public:
     FindResult findZone(const isc::dns::Name& name) const;
 
 private:
-    dns::RRClass rrclass_;
+    const dns::RRClass rrclass_;
     boost::interprocess::offset_ptr<ZoneTableTree> zones_;
 };
 }

@@ -98,7 +98,7 @@ public:
     ///               is returned.
     /// \return Returns a ZoneTableSegment object
     static ZoneTableSegment* create(const isc::data::Element& config,
-                                    isc::dns::RRClass rrclass);
+                                    const isc::dns::RRClass& rrclass);
 
     /// \brief Destroy a ZoneTableSegment
     ///
