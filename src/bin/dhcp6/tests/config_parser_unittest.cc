@@ -434,11 +434,6 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     const Subnet::OptionContainer& options1 = subnet1->getOptions();
     ASSERT_EQ(1, options1.size());
 
-    for (Subnet::OptionContainer::iterator it = options1.begin();
-         it != options1.end(); ++it) {
-        std::cout << it->option->getType() << std::endl;
-    }
-
     // Get the search index. Index #1 is to search using option code.
     const Subnet::OptionContainerTypeIndex& idx1 = options1.get<1>();
 
