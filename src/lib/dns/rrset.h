@@ -267,6 +267,8 @@ public:
     /// the resulting string with a trailing newline character.
     /// (following the BIND9 convention)
     ///
+    /// If any RRSIGs are associated with the RRset, they are also rendered.
+    ///
     /// If the class is not ANY or NONE, the RRset must contain some RDATA;
     /// otherwise, an exception of class \c EmptyRRset will be thrown.
     /// If resource allocation fails, a corresponding standard exception
@@ -292,6 +294,8 @@ public:
     /// In addition, this method detects the case where rendering the entire
     /// RRset would cause truncation, and handles the case appropriately
     /// (this is a TODO item, and not implemented in this version).
+    ///
+    /// If any RRSIGs are associated with the RRset, they are also rendered.
     ///
     /// Note: perhaps we may want to add more arguments to convey optional
     /// information such as an "rrset-order" policy or how to handle truncation
