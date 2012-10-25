@@ -773,7 +773,6 @@ public:
             subnet->addOption(option);
         }
 
-        std::cout << "ADDING SUBNET" << std::endl;
         CfgMgr::instance().addSubnet6(subnet);
     }
 
