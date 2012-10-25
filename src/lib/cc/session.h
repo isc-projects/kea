@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef _ISC_SESSION_H
-#define _ISC_SESSION_H 1
+#ifndef ISC_SESSION_H
+#define ISC_SESSION_H 1
 
 #include <string>
 
@@ -161,7 +161,7 @@ namespace isc {
     } // namespace cc
 } // namespace isc
 
-#endif // _ISC_SESSION_H
+#endif // ISC_SESSION_H
 
 // Local Variables:
 // mode: c++

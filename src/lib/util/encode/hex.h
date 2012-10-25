@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __HEX_H
-#define __HEX_H 1
+#ifndef HEX_H
+#define HEX_H 1
 
 #include <stdint.h>
 #include <string>
@@ -58,7 +58,7 @@ void decodeHex(const std::string& input, std::vector<uint8_t>& result);
 } // namespace util
 } // namespace isc
 
-#endif  // __HEX_H
+#endif  // HEX_H
 
 // Local Variables: 
 // mode: c++

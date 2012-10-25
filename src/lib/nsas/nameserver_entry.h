@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __NAMESERVER_ENTRY_H
-#define __NAMESERVER_ENTRY_H
+#ifndef NAMESERVER_ENTRY_H
+#define NAMESERVER_ENTRY_H
 
 #include <string>
 #include <vector>
@@ -281,4 +281,4 @@ private:
 }   // namespace dns
 }   // namespace isc
 
-#endif // __NAMESERVER_ENTRY_H
+#endif // NAMESERVER_ENTRY_H

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __CACHE_ENTRY_KEY_H
-#define __CACHE_ENTRY_KEY_H
+#ifndef CACHE_ENTRY_KEY_H
+#define CACHE_ENTRY_KEY_H
 
 #include <string>
 #include <dns/name.h>
@@ -50,5 +50,5 @@ genCacheEntryName(const std::string& namestr, const uint16_t type);
 } // namespace cache
 } // namespace isc
 
-#endif // __CACHE_ENTRY_KEY_H
+#endif // CACHE_ENTRY_KEY_H
 

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __EDNS_H
-#define __EDNS_H 1
+#ifndef EDNS_H
+#define EDNS_H 1
 
 #include <stdint.h>
 
@@ -438,7 +438,7 @@ EDNS* createEDNSFromRR(const Name& name, const RRClass& rrclass,
 std::ostream& operator<<(std::ostream& os, const EDNS& edns);
 }
 }
-#endif  // __EDNS_H
+#endif  // EDNS_H
 
 // Local Variables: 
 // mode: c++

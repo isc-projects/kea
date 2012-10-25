@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_SERIAL_H
-#define __PYTHON_SERIAL_H 1
+#ifndef PYTHON_SERIAL_H
+#define PYTHON_SERIAL_H 1
 
 #include <Python.h>
 
@@ -57,7 +57,7 @@ const Serial& PySerial_ToSerial(const PyObject* Serial_obj);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_SERIAL_H
+#endif // PYTHON_SERIAL_H
 
 // Local Variables:
 // mode: c++

@@ -13,8 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 
-#ifndef __DATASRC_SQLITE3_ACCESSOR_H
-#define __DATASRC_SQLITE3_ACCESSOR_H
+#ifndef DATASRC_SQLITE3_ACCESSOR_H
+#define DATASRC_SQLITE3_ACCESSOR_H
 
 #include <datasrc/database.h>
 #include <datasrc/data_source.h>

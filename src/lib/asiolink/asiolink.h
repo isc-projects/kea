@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ASIOLINK_H
-#define __ASIOLINK_H 1
+#ifndef ASIOLINK_H
+#define ASIOLINK_H 1
 
 // IMPORTANT NOTE: only very few ASIO headers files can be included in
 // this file.  In particular, asio.hpp should never be included here.
@@ -74,4 +74,4 @@
 /// the placeholder of callback handlers:
 /// http://think-async.com/Asio/asio-1.3.1/doc/asio/reference/asio_handler_allocate.html
 
-#endif // __ASIOLINK_H
+#endif // ASIOLINK_H

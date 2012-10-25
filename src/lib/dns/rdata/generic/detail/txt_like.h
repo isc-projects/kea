@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __TXT_LIKE_H
-#define __TXT_LIKE_H 1
+#ifndef TXT_LIKE_H
+#define TXT_LIKE_H 1
 
 #include <stdint.h>
 
@@ -217,7 +217,7 @@ private:
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
 
-#endif //  __TXT_LIKE_H
+#endif //  TXT_LIKE_H
 
 // Local Variables: 
 // mode: c++

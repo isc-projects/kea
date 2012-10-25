@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __NAME_H
-#define __NAME_H 1
+#ifndef NAME_H
+#define NAME_H 1
 
 #include <stdint.h>
 
@@ -724,7 +724,7 @@ operator<<(std::ostream& os, const Name& name);
 
 }
 }
-#endif // __NAME_H
+#endif // NAME_H
 
 // Local Variables:
 // mode: c++

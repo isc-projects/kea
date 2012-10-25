@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_MESSAGE_H
-#define __PYTHON_MESSAGE_H 1
+#ifndef PYTHON_MESSAGE_H
+#define PYTHON_MESSAGE_H 1
 
 #include <Python.h>
 
@@ -33,7 +33,7 @@ extern PyTypeObject message_type;
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_MESSAGE_H
+#endif // PYTHON_MESSAGE_H
 
 // Local Variables:
 // mode: c++

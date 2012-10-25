@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __CCSESSION_H
-#define __CCSESSION_H 1
+#ifndef CCSESSION_H
+#define CCSESSION_H 1
 
 #include <config/config_data.h>
 #include <config/module_spec.h>
@@ -576,7 +576,7 @@ getRelatedLoggers(isc::data::ConstElementPtr loggers);
 } // namespace config
 
 } // namespace isc
-#endif // __CCSESSION_H
+#endif // CCSESSION_H
 
 // Local Variables:
 // mode: c++

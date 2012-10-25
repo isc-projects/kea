@@ -1,7 +1,7 @@
 // File created from log_messages.mes on Thu Jul  7 15:32:06 2011
 
-#ifndef __LOG_MESSAGES_H
-#define __LOG_MESSAGES_H
+#ifndef LOG_MESSAGES_H
+#define LOG_MESSAGES_H
 
 #include <log/message_types.h>
 
@@ -32,4 +32,4 @@ extern const isc::log::MessageID LOG_WRITE_ERROR;
 } // namespace log
 } // namespace isc
 
-#endif // __LOG_MESSAGES_H
+#endif // LOG_MESSAGES_H

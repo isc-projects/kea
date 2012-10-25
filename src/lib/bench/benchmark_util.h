@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __BENCHMARK_UTIL_H
-#define __BENCHMARK_UTIL_H 1
+#ifndef BENCHMARK_UTIL_H
+#define BENCHMARK_UTIL_H 1
 
 /// \file
 /// Utilities to help write benchmark cases.
@@ -140,7 +140,7 @@ void loadQueryData(std::istream& input, BenchQueries& queries,
                    const isc::dns::RRClass& qclass, const bool strict = false);
 }
 }
-#endif  // __BENCHMARK_UTIL_H
+#endif  // BENCHMARK_UTIL_H
 
 // Local Variables: 
 // mode: c++

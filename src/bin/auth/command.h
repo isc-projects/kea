@@ -16,8 +16,8 @@
 
 #include <cc/data.h>
 
-#ifndef __COMMAND_H
-#define __COMMAND_H 1
+#ifndef COMMAND_H
+#define COMMAND_H 1
 
 class AuthSrv;
 
@@ -54,7 +54,7 @@ isc::data::ConstElementPtr
 execAuthServerCommand(AuthSrv& server, const std::string& command_id,
                       isc::data::ConstElementPtr args);
 
-#endif // __COMMAND_H
+#endif // COMMAND_H
 
 // Local Variables:
 // mode: c++
