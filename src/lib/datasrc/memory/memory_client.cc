@@ -221,7 +221,7 @@ private:
     bool separate_rrs_;
     bool ready_;
 public:
-    MemoryIterator(const RRClass rrclass,
+    MemoryIterator(const RRClass& rrclass,
                    const ZoneTree& tree, const Name& origin,
                    bool separate_rrs) :
         rrclass_(rrclass),
