@@ -341,43 +341,17 @@ ConfigurableClientList::findInternal(MutableResult& candidate,
     // and the need_updater parameter is true, get the zone there.
 }
 
+// We still provide this method for backward compatibility. But to not have
+// duplicate code, it is a thin wrapper around getCachedZoneWriter only.
 ConfigurableClientList::ReloadResult
 ConfigurableClientList::reload(const Name& name) {
-    if (!allow_cache_) {
-        return (CACHE_DISABLED);
+    ZoneWriterPair result(getCachedZoneWriter(name));
+    if (result.second) {
+        result.second->load();
+        result.second->install();
+        result.second->cleanup();
     }
-    // Try to find the correct zone.
-    MutableResult result;
-    findInternal(result, name, true, true);
-    if (!result.finder) {
-        return (ZONE_NOT_FOUND);
-    }
-    // Try to convert the finder to in-memory one. If it is the cache,
-    // it should work.
-    // It is of a different type or there's no cache.
-    if (!result.info->cache_) {
-        return (ZONE_NOT_CACHED);
-    }
-    DataSourceClient* client(result.info->data_src_client_);
-    if (client) {
-        // Now do the final reload. If it does not exist in client,
-        // DataSourceError is thrown, which is exactly the result what we
-        // want, so no need to handle it.
-        ZoneIteratorPtr iterator(client->getIterator(name));
-        if (!iterator) {
-            isc_throw(isc::Unexpected, "Null iterator from " << name);
-        }
-        result.info->cache_->load(name, *iterator);
-    } else {
-        // The MasterFiles special case
-        const string filename(result.info->cache_->getFileName(name));
-        if (filename.empty()) {
-            isc_throw(isc::Unexpected, "Confused about missing both filename "
-                      "and data source");
-        }
-        result.info->cache_->load(name, filename);
-    }
-    return (ZONE_RELOADED);
+    return (result.first);
 }
 
 namespace {
