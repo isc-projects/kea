@@ -387,6 +387,9 @@ private:
     }
 
     void doLoadZone(const isc::data::ConstElementPtr& arg);
+    boost::shared_ptr<datasrc::memory::ZoneWriter> getZoneWriter(
+        datasrc::ConfigurableClientList& client_list,
+        const dns::RRClass& rrclass, const dns::Name& origin);
 
     // The following are shared with the manager
     std::list<Command>* command_queue_;
@@ -503,28 +506,8 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
     assert(client_list);
 
     try {
-        const datasrc::ConfigurableClientList::ZoneWriterPair writerpair =
-            client_list->getCachedZoneWriter(origin);
-        switch (writerpair.first) {
-        case datasrc::ConfigurableClientList::ZONE_NOT_FOUND:
-            isc_throw(InternalCommandError, "failed to load zone " << origin
-                      << "/" << rrclass << ": not found in any configured "
-                      "data source.");
-        case datasrc::ConfigurableClientList::ZONE_NOT_CACHED:
-            isc_throw(InternalCommandError, "failed to load zone " << origin
-                      << "/" << rrclass << ": not served from memory");
-        case datasrc::ConfigurableClientList::CACHE_DISABLED:
-            // This is an internal error. Auth server must have the cache
-            // enabled.
-            isc_throw(InternalCommandError, "failed to load zone " << origin
-                      << "/" << rrclass << ": internal failure, in-memory cache "
-                      "is somehow disabled");
-        default:
-            break;
-        }
-
         boost::shared_ptr<datasrc::memory::ZoneWriter> zwriter =
-            writerpair.second;
+            getZoneWriter(*client_list, rrclass, origin);
         zwriter->load(); // this can take time but doesn't cause a race
         {   // install() can cause a race and must be in a critical section
             typename MutexType::Locker locker(*map_mutex_);
@@ -534,9 +517,11 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
                   AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE)
             .arg(origin).arg(rrclass);
 
+        // same as load(). We could let the destructor do it, but do it
+        // ourselves explicitly just in case.
         zwriter->cleanup();
     } catch (const InternalCommandError& ex) {
-        throw;
+        throw;     // this comes from getZoneWriter.  just let it go through.
     } catch (const isc::Exception& ex) {
         // We catch our internal exceptions (which will be just ignored) and
         // propagated others (which should generally be considered fatal and
@@ -544,6 +529,37 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
         isc_throw(InternalCommandError, "failed to load a zone " << origin <<
                   "/" << rrclass << ": error occurred in reload: " <<
                   ex.what());
+    }
+}
+
+// A dedicated subroutine of doLoadZone().  Separated just for keeping the
+// main method concise.
+template <typename MutexType, typename CondVarType>
+boost::shared_ptr<datasrc::memory::ZoneWriter>
+DataSrcClientsBuilderBase<MutexType, CondVarType>::getZoneWriter(
+    datasrc::ConfigurableClientList& client_list,
+    const dns::RRClass& rrclass, const dns::Name& origin)
+{
+    const datasrc::ConfigurableClientList::ZoneWriterPair writerpair =
+        client_list.getCachedZoneWriter(origin);
+
+    switch (writerpair.first) {
+    case datasrc::ConfigurableClientList::ZONE_RELOADED: // XXX misleading name
+        assert(writerpair.second);
+        return (writerpair.second);
+    case datasrc::ConfigurableClientList::ZONE_NOT_FOUND:
+        isc_throw(InternalCommandError, "failed to load zone " << origin
+                  << "/" << rrclass << ": not found in any configured "
+                  "data source.");
+    case datasrc::ConfigurableClientList::ZONE_NOT_CACHED:
+        isc_throw(InternalCommandError, "failed to load zone " << origin
+                  << "/" << rrclass << ": not served from memory");
+    case datasrc::ConfigurableClientList::CACHE_DISABLED:
+        // This is an internal error. Auth server must have the cache
+        // enabled.
+        isc_throw(InternalCommandError, "failed to load zone " << origin
+                  << "/" << rrclass << ": internal failure, in-memory cache "
+                  "is somehow disabled");
     }
 }
 } // namespace datasrc_clientmgr_internal
