@@ -134,7 +134,7 @@ sentinel(Filename& file) {
 
     string name = file.name();
     string ext = file.extension();
-    string sentinel_text = "__" + name + "_" + ext.substr(1);
+    string sentinel_text = name + "_" + ext.substr(1);
     isc::util::str::uppercase(sentinel_text);
     return (sentinel_text);
 }
