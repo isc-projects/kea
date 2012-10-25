@@ -18,6 +18,7 @@
 #include <cc/data.h>
 
 #include <datasrc/client.h>
+#include <datasrc/factory.h>
 
 #include <auth/datasrc_clients_mgr.h>
 #include <auth/datasrc_config.h>
