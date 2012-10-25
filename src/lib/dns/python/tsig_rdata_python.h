@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_TSIG_H
-#define __PYTHON_TSIG_H 1
+#ifndef PYTHON_TSIG_H
+#define PYTHON_TSIG_H 1
 
 #include <Python.h>
 
@@ -61,7 +61,7 @@ const rdata::any::TSIG& PyTSIG_ToTSIG(const PyObject* tsig_obj);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_TSIG_H
+#endif // PYTHON_TSIG_H
 
 // Local Variables:
 // mode: c++

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __MESSAGE_DICTIONARY_H
-#define __MESSAGE_DICTIONARY_H
+#ifndef MESSAGE_DICTIONARY_H
+#define MESSAGE_DICTIONARY_H
 
 #include <cstddef>
 #include <string>
@@ -187,4 +187,4 @@ private:
 } // namespace log
 } // namespace isc
 
-#endif // __MESSAGE_DICTIONARY_H
+#endif // MESSAGE_DICTIONARY_H

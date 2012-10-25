@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __COMMON_H
-#define __COMMON_H 1
+#ifndef COMMON_H
+#define COMMON_H 1
 
 #include <stdexcept>
 #include <string>
@@ -62,7 +62,7 @@ extern const char* const AUTH_NAME;
 /// This is sent to interested modules (currently only b10-ddns)
 extern const char* const AUTH_STARTED_NOTIFICATION;
 
-#endif // __COMMON_H
+#endif // COMMON_H
 
 // Local Variables:
 // mode: c++

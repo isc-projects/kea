@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __EXCEPTIONS_H
-#define __EXCEPTIONS_H 1
+#ifndef EXCEPTIONS_H
+#define EXCEPTIONS_H 1
 
 #include <stdexcept>
 #include <string>
@@ -230,7 +230,7 @@ public:
     } while (1)
 
 }
-#endif // __EXCEPTIONS_H
+#endif // EXCEPTIONS_H
 
 // Local Variables: 
 // mode: c++

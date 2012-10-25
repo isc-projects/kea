@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RRSET_H
-#define __RRSET_H 1
+#ifndef RRSET_H
+#define RRSET_H 1
 
 #include <iostream>
 #include <string>
@@ -929,7 +929,7 @@ private:
 std::ostream& operator<<(std::ostream& os, const AbstractRRset& rrset);
 } // end of namespace dns
 } // end of namespace isc
-#endif  // __RRSET_H
+#endif  // RRSET_H
 
 // Local Variables: 
 // mode: c++

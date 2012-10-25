@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __HASH_TABLE_H
-#define __HASH_TABLE_H
+#ifndef HASH_TABLE_H
+#define HASH_TABLE_H
 
 #include <list>
 
@@ -334,4 +334,4 @@ bool HashTable<T>::addInternal(boost::shared_ptr<T>& object,
 }   // namespace nsas
 }   // namespace isc
 
-#endif // __HASH_TABLE_H
+#endif // HASH_TABLE_H

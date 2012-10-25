@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_RRSET_H
-#define __PYTHON_RRSET_H 1
+#ifndef PYTHON_RRSET_H
+#define PYTHON_RRSET_H 1
 
 #include <Python.h>
 
@@ -71,7 +71,7 @@ RRsetPtr PyRRset_ToRRsetPtr(PyObject* rrset_obj);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_RRSET_H
+#endif // PYTHON_RRSET_H
 
 // Local Variables:
 // mode: c++

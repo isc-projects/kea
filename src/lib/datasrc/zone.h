@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ZONE_H
-#define __ZONE_H 1
+#ifndef ZONE_H
+#define ZONE_H 1
 
 #include <dns/name.h>
 #include <dns/rrset.h>
@@ -1065,7 +1065,7 @@ typedef boost::shared_ptr<ZoneJournalReader> ZoneJournalReaderPtr;
 } // end of datasrc
 } // end of isc
 
-#endif  // __ZONE_H
+#endif  // ZONE_H
 
 // Local Variables:
 // mode: c++

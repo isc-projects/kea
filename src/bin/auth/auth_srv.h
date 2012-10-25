@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __AUTH_SRV_H
-#define __AUTH_SRV_H 1
+#ifndef AUTH_SRV_H
+#define AUTH_SRV_H 1
 
 #include <config/ccsession.h>
 
@@ -328,7 +328,7 @@ private:
     isc::asiodns::DNSServiceBase* dnss_;
 };
 
-#endif // __AUTH_SRV_H
+#endif // AUTH_SRV_H
 
 // Local Variables:
 // mode: c++

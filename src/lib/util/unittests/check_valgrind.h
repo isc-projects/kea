@@ -27,8 +27,8 @@
 // natively
 //
 
-#ifndef __UTIL_UNITTESTS_CHECK_VALGRIND_H
-#define __UTIL_UNITTESTS_CHECK_VALGRIND_H 1
+#ifndef UTIL_UNITTESTS_CHECK_VALGRIND_H
+#define UTIL_UNITTESTS_CHECK_VALGRIND_H 1
 
 #include <config.h>
 
@@ -47,4 +47,4 @@ bool runningOnValgrind();
 } // end namespace util
 } // end namespace isc
 
-#endif // __UTIL_UNITTESTS_CHECK_VALGRIND_H
+#endif // UTIL_UNITTESTS_CHECK_VALGRIND_H

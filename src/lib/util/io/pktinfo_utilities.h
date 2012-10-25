@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PKTINFO_UTIL_H_
-#define __PKTINFO_UTIL_H_ 1
+#ifndef PKTINFO_UTIL_H
+#define PKTINFO_UTIL_H 1
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -48,4 +48,4 @@ convertPktInfo6(unsigned char* pktinfo) {
 }
 }
 
-#endif  // __PKTINFO_UTIL_H_
+#endif  // PKTINFO_UTIL_H

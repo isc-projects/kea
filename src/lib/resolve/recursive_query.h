@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RECURSIVE_QUERY_H
-#define __RECURSIVE_QUERY_H 1
+#ifndef RECURSIVE_QUERY_H
+#define RECURSIVE_QUERY_H 1
 
 #include <util/buffer.h>
 #include <asiodns/dns_service.h>
@@ -226,4 +226,4 @@ private:
 
 }      // namespace asiodns
 }      // namespace isc
-#endif // __RECURSIVE_QUERY_H
+#endif // RECURSIVE_QUERY_H

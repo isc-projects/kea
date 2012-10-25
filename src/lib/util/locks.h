@@ -23,8 +23,8 @@
 /// to be set. we might want to enfore this at compile time with a check
 /// (TODO)
 
-#ifndef __LOCKS_
-#define __LOCKS_
+#ifndef LOCKS
+#define LOCKS
 
 namespace isc {
 namespace util {
@@ -62,4 +62,4 @@ public:
 } // namespace util
 } // namespace isc
 
-#endif // __LOCKS_
+#endif // LOCKS

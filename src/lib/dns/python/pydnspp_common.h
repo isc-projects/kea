@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LIBDNS_PYTHON_COMMON_H
-#define __LIBDNS_PYTHON_COMMON_H 1
+#ifndef LIBDNS_PYTHON_COMMON_H
+#define LIBDNS_PYTHON_COMMON_H 1
 
 #include <Python.h>
 
@@ -106,7 +106,7 @@ convertToPyHash(HashvalType val) {
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __LIBDNS_PYTHON_COMMON_H
+#endif // LIBDNS_PYTHON_COMMON_H
 
 // Local Variables:
 // mode: c++

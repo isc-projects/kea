@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __AUTH_LOG__H
-#define __AUTH_LOG__H
+#ifndef AUTH_LOG_H
+#define AUTH_LOG_H
 
 #include <log/macros.h>
 #include <auth/auth_messages.h>
@@ -53,4 +53,4 @@ extern isc::log::Logger auth_logger;
 } // namespace nsas
 } // namespace isc
 
-#endif // __AUTH_LOG__H
+#endif // AUTH_LOG_H

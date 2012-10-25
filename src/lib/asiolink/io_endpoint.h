@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __IO_ENDPOINT_H
-#define __IO_ENDPOINT_H 1
+#ifndef IO_ENDPOINT_H
+#define IO_ENDPOINT_H 1
 
 // IMPORTANT NOTE: only very few ASIO headers files can be included in
 // this file.  In particular, asio.hpp should never be included here.
@@ -184,7 +184,7 @@ public:
 std::ostream& operator<<(std::ostream& os, const IOEndpoint& endpoint);
 } // namespace asiolink
 } // namespace isc
-#endif // __IO_ENDPOINT_H
+#endif // IO_ENDPOINT_H
 
 // Local Variables:
 // mode: c++

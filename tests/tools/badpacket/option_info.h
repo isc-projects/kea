@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __OPTION_INFO_H
-#define __OPTION_INFO_H
+#ifndef OPTION_INFO_H
+#define OPTION_INFO_H
 
 #include <stdint.h>
 #include "exceptions/exceptions.h"
@@ -171,4 +171,4 @@ public:
 } // namespace badpacket
 } // namespace isc
 
-#endif // __OPTION_INFO_H
+#endif // OPTION_INFO_H

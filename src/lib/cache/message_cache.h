@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __MESSAGE_CACHE_H
-#define __MESSAGE_CACHE_H
+#ifndef MESSAGE_CACHE_H
+#define MESSAGE_CACHE_H
 
 #include <string>
 #include <boost/shared_ptr.hpp>
@@ -90,5 +90,5 @@ typedef boost::shared_ptr<MessageCache> MessageCachePtr;
 } // namespace cache
 } // namespace isc
 
-#endif // __MESSAGE_CACHE_H
+#endif // MESSAGE_CACHE_H
 

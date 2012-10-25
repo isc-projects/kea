@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RDATA_UNITTEST_H
-#define __RDATA_UNITTEST_H 1
+#ifndef RDATA_UNITTEST_H
+#define RDATA_UNITTEST_H 1
 
 #include <util/buffer.h>
 #include <dns/messagerenderer.h>
@@ -44,7 +44,7 @@ protected:
 }
 }
 }
-#endif // __RDATA_UNITTEST_H
+#endif // RDATA_UNITTEST_H
 
 // Local Variables: 
 // mode: c++
