@@ -63,17 +63,21 @@ source clients receives a command from the manager.
 
 % AUTH_DATASRC_CLIENTS_BUILDER_FAILED data source builder thread stopped due to an exception: %1
 The separate thread for maintaining data source clients has been
-terminated due to some uncaught exception.  The manager cannot always
-catch this condition in timely fashion, and there is no way to recover
-from this situation except for restarting the entire server.  So this
-message needs to be carefully watched, and should it occur the auth
-server needs to be restarted by hand.
+terminated due to some uncaught exception.  When this happens, the
+thread immediately terminates the entire process because the manager
+cannot always catch this condition in a timely fashion and it would be
+worse to keep running with such a half-broken state.  This is really
+an unexpected event and should generally indicate an internal bug.
+It's advisable to file a bug report when this message is logged (and
+b10-auth subsequently stops).
 
 % AUTH_DATASRC_CLIENTS_BUILDER_FAILED_UNEXPECTED data source builder thread stopped due to an unexpected exception
 This is similar to AUTH_DATASRC_CLIENTS_BUILDER_FAILED, but the
-exception type is even more unexpected.  This may rather indicate some
-run time failure than program errors, but in any case the server needs
-to be restarted by hand.
+exception type indicates it's not thrown either within the BIND 10
+implementation or other standard-compliant libraries.  This may rather
+indicate some run time failure than program errors.  As in the other
+failure case, the thread terminates the entire process immediately
+after logging this message.
 
 % AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_CONFIG_ERROR Error in data source configuration: %1
 The thread for maintaining data source clients has received a command to

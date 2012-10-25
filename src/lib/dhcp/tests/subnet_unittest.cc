@@ -15,6 +15,7 @@
 
 #include <config.h>
 #include <dhcp/subnet.h>
+#include <dhcp/option.h>
 #include <exceptions/exceptions.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -104,6 +105,24 @@ TEST(Subnet4Test, Subnet4_Pool4_checks) {
     EXPECT_THROW(subnet->addPool4(pool3), BadValue);
 }
 
+TEST(Subnet4Test, addInvalidOption) {
+    // Create the V4 subnet.
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 8, 1, 2, 3));
+
+    // Some dummy option code.
+    uint16_t code = 100;
+    // Create option with invalid universe (V6 instead of V4).
+    // Attempt to add this option should result in exception.
+    OptionPtr option1(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+    EXPECT_THROW(subnet->addOption(option1), isc::BadValue);
+
+    // Create NULL pointer option. Attempt to add NULL option
+    // should result in exception.
+    OptionPtr option2;
+    ASSERT_FALSE(option2);
+    EXPECT_THROW(subnet->addOption(option2), isc::BadValue);
+}
+
 // Tests for Subnet6
 
 TEST(Subnet6Test, constructor) {
@@ -187,4 +206,146 @@ TEST(Subnet6Test, Subnet6_Pool6_checks) {
     EXPECT_THROW(subnet->addPool6(pool4), BadValue);
 }
 
+TEST(Subnet6Test, addOptions) {
+    // Create as subnet to add options to it.
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+
+    // Differentiate options by their codes (100-109)
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(subnet->addOption(option));
+    }
+
+    // Get options from the Subnet and check if all 10 are there.
+    Subnet::OptionContainer options = subnet->getOptions();
+    ASSERT_EQ(10, options.size());
+
+    // Validate codes of added options.
+    uint16_t expected_code = 100;
+    for (Subnet::OptionContainer::const_iterator option_desc = options.begin();
+         option_desc != options.end(); ++option_desc) {
+        ASSERT_TRUE(option_desc->option);
+        EXPECT_EQ(expected_code, option_desc->option->getType());
+        ++expected_code;
+    }
+
+    subnet->delOptions();
+
+    options = subnet->getOptions();
+    EXPECT_EQ(0, options.size());
+}
+
+TEST(Subnet6Test, addNonUniqueOptions) {
+    // Create as subnet to add options to it.
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+
+    // Create a set of options with non-unique codes.
+    for (int i = 0;  i < 2; ++i) {
+        // In the inner loop we create options with unique codes (100-109).
+        for (uint16_t code = 100; code < 110; ++code) {
+            OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+            ASSERT_NO_THROW(subnet->addOption(option));
+        }
+    }
+
+    // Sanity check that all options are there.
+    Subnet::OptionContainer options = subnet->getOptions();
+    ASSERT_EQ(20, options.size());
+
+    // Use container index #1 to get the options by their codes.
+    Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+    // Look for the codes 100-109.
+    for (uint16_t code = 100; code < 110; ++ code) {
+        // For each code we should get two instances of options.
+        std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+                  Subnet::OptionContainerTypeIndex::const_iterator> range =
+            idx.equal_range(code);
+        // Distance between iterators indicates how many options
+        // have been retured for the particular code.
+        ASSERT_EQ(2, distance(range.first, range.second));
+        // Check that returned options actually have the expected option code.
+        for (Subnet::OptionContainerTypeIndex::const_iterator option_desc = range.first;
+             option_desc != range.second; ++option_desc) {
+            ASSERT_TRUE(option_desc->option);
+            EXPECT_EQ(code, option_desc->option->getType());
+        }
+    }
+
+    // Let's try to find some non-exiting option.
+    const uint16_t non_existing_code = 150;
+    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+              Subnet::OptionContainerTypeIndex::const_iterator> range =
+        idx.equal_range(non_existing_code);
+    // Empty set is expected.
+    EXPECT_EQ(0, distance(range.first, range.second));
+
+    subnet->delOptions();
+
+    options = subnet->getOptions();
+    EXPECT_EQ(0, options.size());
+}
+
+TEST(Subnet6Test, addInvalidOption) {
+    // Create as subnet to add options to it.
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+
+    // Some dummy option code.
+    uint16_t code = 100;
+    // Create option with invalid universe (V4 instead of V6).
+    // Attempt to add this option should result in exception.
+    OptionPtr option1(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
+    EXPECT_THROW(subnet->addOption(option1), isc::BadValue);
+
+    // Create NULL pointer option. Attempt to add NULL option
+    // should result in exception.
+    OptionPtr option2;
+    ASSERT_FALSE(option2);
+    EXPECT_THROW(subnet->addOption(option2), isc::BadValue);
+}
+
+TEST(Subnet6Test, addPersistentOption) {
+    // Create as subnet to add options to it.
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+
+    // Add 10 options to the subnet with option codes 100 - 109.
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        // We create 10 options and want some of them to be flagged
+        // persistent and some non-persistent. Persistent options are
+        // those that server sends to clients regardless if they ask
+        // for them or not. We pick 3 out of 10 options and mark them
+        // non-persistent and 7 other options persistent.
+        // Code values: 102, 105 and 108 are divisable by 3
+        // and options with these codes will be flagged non-persistent.
+        // Options with other codes will be flagged persistent.
+        bool persistent = (code % 3) ? true : false;
+        ASSERT_NO_THROW(subnet->addOption(option, persistent));
+    }
+
+    // Get added options from the subnet.
+    Subnet::OptionContainer options = subnet->getOptions();
+
+    // options.get<2> returns reference to container index #2. This
+    // index is used to access options by the 'persistent' flag.
+    Subnet::OptionContainerPersistIndex& idx = options.get<2>();
+
+    // Get all persistent options.
+    std::pair<Subnet::OptionContainerPersistIndex::const_iterator,
+              Subnet::OptionContainerPersistIndex::const_iterator> range_persistent =
+        idx.equal_range(true);
+    // 3 out of 10 options have been flagged persistent.
+    ASSERT_EQ(7, distance(range_persistent.first, range_persistent.second));
+
+    // Get all non-persistent options.
+    std::pair<Subnet::OptionContainerPersistIndex::const_iterator,
+              Subnet::OptionContainerPersistIndex::const_iterator> range_non_persistent =
+        idx.equal_range(false);
+    // 7 out of 10 options have been flagged persistent.
+    ASSERT_EQ(3, distance(range_non_persistent.first, range_non_persistent.second));
+
+    subnet->delOptions();
+
+    options = subnet->getOptions();
+    EXPECT_EQ(0, options.size());
+}
 };
