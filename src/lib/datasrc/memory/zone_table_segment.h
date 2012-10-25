@@ -16,6 +16,7 @@
 #define __ZONE_TABLE_SEGMENT_H__
 
 #include <datasrc/memory/zone_table.h>
+#include "load_action.h"
 #include <cc/data.h>
 #include <util/memory_segment.h>
 
@@ -24,8 +25,14 @@
 #include <stdlib.h>
 
 namespace isc {
+// Some forward declarations
+namespace dns {
+class Name;
+class RRClass;
+}
 namespace datasrc {
 namespace memory {
+class ZoneWriter;
 
 /// \brief Memory-management independent entry point that contains a
 /// pointer to a zone table in memory.
@@ -43,6 +50,26 @@ public:
     /// \brief const version of \c getTable().
     const ZoneTable* getTable() const {
         return (table.get());
+    }
+
+    /// \brief Method to set the internal table
+    ///
+    /// The interface is tentative, we don't know if this is the correct place
+    /// and way to set the data. But for now, we need something to be there
+    /// at least for the tests. So we have this. For this reason, there are
+    /// no tests for this method directly. Do not use in actual
+    /// implementation.
+    ///
+    /// It can be used only once, to initially set it. It can't replace the
+    /// one already there.
+    ///
+    /// \param table Pointer to the table to use.
+    /// \throw isc::Unexpected if called the second time.
+    void setTable(ZoneTable* table) {
+        if (this->table.get() != NULL) {
+            isc_throw(isc::Unexpected, "Replacing table");
+        }
+        this->table = table;
     }
 
 private:
@@ -101,6 +128,21 @@ public:
     ///
     /// \param segment The segment to destroy.
     static void destroy(ZoneTableSegment* segment);
+
+    /// \brief Create a zone write corresponding to this segment
+    ///
+    /// This creates a new write that can be used to update zones
+    /// inside this zone table segment.
+    ///
+    /// \param loadAction Callback to provide the actual data.
+    /// \param origin The origin of the zone to reload.
+    /// \param rrclass The class of the zone to reload.
+    /// \return New instance of a zone writer. The ownership is passed
+    ///     onto the caller and the caller needs to \c delete it when
+    ///     it's done with the writer.
+    virtual ZoneWriter* getZoneWriter(const LoadAction& load_action,
+                                      const dns::Name& origin,
+                                      const dns::RRClass& rrclass) = 0;
 };
 
 } // namespace memory

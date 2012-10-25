@@ -12,7 +12,7 @@
                         {
                             "type": "sqlite3",
                             "params": {
-                                "database_file": "@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3"
+                                "database_file": "@@SQLITE3_DATABASE_FILE@@"
                             }
                         }
                     ],
@@ -20,7 +20,7 @@
                         {
                             "type": "static",
                             "cache-enable": false,
-                            "params": "@@PKGDATADIR@@/static.zone"
+                            "params": "@@STATIC_ZONE_FILE@@"
                         }
                     ]
                 },

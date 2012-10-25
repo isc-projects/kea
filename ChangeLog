@@ -1,3 +1,11 @@
+495.	[func]		team
+	b10-auth now handles reconfiguration of data sources in
+	background using a separate thread.  This means even if the new
+	configuration includes a large amount of data to be loaded into
+	memory (very large zones and/or a very large number of zones),
+	the reconfiguration doesn't block query handling.
+	(Multiple Trac tickets up to #2211)
+
 494.	[bug]		jinmei
 	Fixed a problem that shutting down BIND 10 kept some of the
 	processes alive.  It was two-fold: when the main bind10 process
@@ -54,7 +62,7 @@
 
 488.	[build]		jinmei
 	On configure, changed the search order for Python executable.
-	It first ties more specific file names such as "python3.2" before
+	It first tries more specific file names such as "python3.2" before
 	more generic "python3".  This will prevent configure failure on
 	Mac OS X that installs Python3 via recent versions of Homebrew.
 	(Trac #2339, git 88db890d8d1c64de49be87f03c24a2021bcf63da)

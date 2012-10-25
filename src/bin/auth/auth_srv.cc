@@ -26,7 +26,6 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
-#include <util/threads/sync.h>
 
 #include <dns/edns.h>
 #include <dns/exceptions.h>
@@ -53,6 +52,7 @@
 #include <auth/query.h>
 #include <auth/statistics.h>
 #include <auth/auth_log.h>
+#include <auth/datasrc_clients_mgr.h>
 
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
@@ -268,26 +268,8 @@ public:
     /// The TSIG keyring
     const shared_ptr<TSIGKeyRing>* keyring_;
 
-    /// The data source client list
-    AuthSrv::DataSrcClientListsPtr datasrc_client_lists_;
-
-    shared_ptr<ConfigurableClientList> getDataSrcClientList(
-        const RRClass& rrclass)
-    {
-#ifdef ENABLE_DEBUG
-        // Debug-build only check
-        if (!mutex_.locked()) {
-            isc_throw(isc::Unexpected, "Not locked!");
-        }
-#endif
-        const std::map<RRClass, shared_ptr<ConfigurableClientList> >::
-            const_iterator it(datasrc_client_lists_->find(rrclass));
-        if (it == datasrc_client_lists_->end()) {
-            return (shared_ptr<ConfigurableClientList>());
-        } else {
-            return (it->second);
-        }
-    }
+    /// The data source client list manager
+    auth::DataSrcClientsMgr datasrc_clients_mgr_;
 
     /// Bind the ModuleSpec object in config_session_ with
     /// isc:config::ModuleSpec::validateStatistics.
@@ -317,8 +299,6 @@ public:
                       isc::dns::Message& message,
                       bool done);
 
-    mutable util::thread::Mutex mutex_;
-
 private:
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
@@ -338,8 +318,6 @@ AuthSrvImpl::AuthSrvImpl(AbstractXfroutClient& xfrout_client,
     xfrin_session_(NULL),
     counters_(),
     keyring_(NULL),
-    datasrc_client_lists_(new std::map<RRClass,
-                          shared_ptr<ConfigurableClientList> >()),
     ddns_base_forwarder_(ddns_forwarder),
     ddns_forwarder_(NULL),
     xfrout_connected_(false),
@@ -488,6 +466,11 @@ makeErrorMessage(MessageRenderer& renderer, Message& message,
 IOService&
 AuthSrv::getIOService() {
     return (impl_->io_service_);
+}
+
+isc::auth::DataSrcClientsMgr&
+AuthSrv::getDataSrcClientsMgr() {
+    return (impl_->datasrc_clients_mgr_);
 }
 
 void
@@ -648,15 +631,15 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
         local_edns->setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
         message.setEDNS(local_edns);
     }
-    // Lock the client lists and keep them under the lock until the processing
-    // and rendering is done (this is the same mutex as from
-    // AuthSrv::getDataSrcClientListMutex()).
-    isc::util::thread::Mutex::Locker locker(mutex_);
+    // Get access to data source client list through the holder and keep the
+    // holder until the processing and rendering is done to avoid inter-thread
+    // race.
+    auth::DataSrcClientsMgr::Holder datasrc_holder(datasrc_clients_mgr_);
 
     try {
         const ConstQuestionPtr question = *message.beginQuestion();
         const shared_ptr<datasrc::ClientList>
-            list(getDataSrcClientList(question->getClass()));
+            list(datasrc_holder.findClientList(question->getClass()));
         if (list) {
             const RRType& qtype = question->getType();
             const Name& qname = question->getName();
@@ -933,28 +916,6 @@ AuthSrv::destroyDDNSForwarder() {
         LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_STOP_DDNS_FORWARDER);
         impl_->ddns_forwarder_.reset();
     }
-}
-
-AuthSrv::DataSrcClientListsPtr
-AuthSrv::swapDataSrcClientLists(DataSrcClientListsPtr new_lists) {
-#ifdef ENABLE_DEBUG
-    // Debug-build only check
-    if (!impl_->mutex_.locked()) {
-        isc_throw(isc::Unexpected, "Not locked!");
-    }
-#endif
-    std::swap(new_lists, impl_->datasrc_client_lists_);
-    return (new_lists);
-}
-
-shared_ptr<ConfigurableClientList>
-AuthSrv::getDataSrcClientList(const RRClass& rrclass) {
-    return (impl_->getDataSrcClientList(rrclass));
-}
-
-util::thread::Mutex&
-AuthSrv::getDataSrcClientListMutex() const {
-    return (impl_->mutex_);
 }
 
 void
