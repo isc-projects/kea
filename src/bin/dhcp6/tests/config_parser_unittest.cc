@@ -169,7 +169,7 @@ TEST_F(Dhcp6ParserTest, version) {
 
 /// The goal of this test is to verify that the code accepts only
 /// valid commands and malformed or unsupported parameters are rejected.
-TEST_F(Dhcp6ParserTest, bogus_command) {
+TEST_F(Dhcp6ParserTest, bogusCommand) {
 
     ConstElementPtr x;
 
@@ -185,7 +185,7 @@ TEST_F(Dhcp6ParserTest, bogus_command) {
 /// The goal of this test is to verify if wrongly defined subnet will
 /// be rejected. Properly defined subnet must include at least one
 /// pool definition.
-TEST_F(Dhcp6ParserTest, empty_subnet) {
+TEST_F(Dhcp6ParserTest, emptySubnet) {
 
     ConstElementPtr status;
 
@@ -205,7 +205,7 @@ TEST_F(Dhcp6ParserTest, empty_subnet) {
 
 /// The goal of this test is to verify if defined subnet uses global
 /// parameter timer definitions.
-TEST_F(Dhcp6ParserTest, subnet_global_defaults) {
+TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
 
     ConstElementPtr status;
 
@@ -240,7 +240,7 @@ TEST_F(Dhcp6ParserTest, subnet_global_defaults) {
 
 // This test checks if it is possible to override global values
 // on a per subnet basis.
-TEST_F(Dhcp6ParserTest, subnet_local) {
+TEST_F(Dhcp6ParserTest, subnetLocal) {
 
     ConstElementPtr status;
 
@@ -277,7 +277,7 @@ TEST_F(Dhcp6ParserTest, subnet_local) {
 
 // Test verifies that a subnet with pool values that do not belong to that
 // pool are rejected.
-TEST_F(Dhcp6ParserTest, pool_out_of_subnet) {
+TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
 
     ConstElementPtr status;
 
@@ -305,7 +305,7 @@ TEST_F(Dhcp6ParserTest, pool_out_of_subnet) {
 // Goal of this test is to verify if pools can be defined
 // using prefix/length notation. There is no separate test for min-max
 // notation as it was tested in several previous tests.
-TEST_F(Dhcp6ParserTest, pool_prefix_len) {
+TEST_F(Dhcp6ParserTest, poolPrefixLen) {
 
     ConstElementPtr x;
 
