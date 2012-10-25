@@ -96,8 +96,8 @@ TEST_F(AllocEngineTest, constructor) {
     AllocEngine* x = NULL;
 
     // Hashed and random allocators are not supported yet
-    ASSERT_THROW(x = new AllocEngine(AllocEngine::ALLOC_HASHED, 5), BadValue);
-    ASSERT_THROW(x = new AllocEngine(AllocEngine::ALLOC_RANDOM, 5), BadValue);
+    ASSERT_THROW(x = new AllocEngine(AllocEngine::ALLOC_HASHED, 5), NotImplemented);
+    ASSERT_THROW(x = new AllocEngine(AllocEngine::ALLOC_RANDOM, 5), NotImplemented);
 
     ASSERT_NO_THROW(x = new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
 
