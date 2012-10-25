@@ -15,10 +15,16 @@
 #ifndef SUBNET_H
 #define SUBNET_H
 
-#include <boost/shared_ptr.hpp>
 #include <asiolink/io_address.h>
 #include <dhcp/pool.h>
 #include <dhcp/triplet.h>
+#include <dhcp/option.h>
+#include <boost/shared_ptr.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/member.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -30,13 +36,173 @@ namespace dhcp {
 /// attached to it. In most cases all devices attached to a single link can
 /// share the same parameters. Therefore Subnet holds several values that are
 /// typically shared by all hosts: renew timer (T1), rebind timer (T2) and
-/// leased addresses lifetime (valid-lifetime).
-///
-/// @todo: Implement support for options here
+/// leased addresses lifetime (valid-lifetime). It also holds the set
+/// of DHCP option instances configured for the subnet. These options are
+/// included in DHCP messages being sent to clients which are connected
+/// to the particular subnet.
 class Subnet {
 public:
+
+    /// @brief Option descriptor.
+    ///
+    /// Option descriptor holds information about option configured for
+    /// a particular subnet. This information comprises the actual option
+    /// instance and information whether this option is sent to DHCP client
+    /// only on request (persistent = false) or always (persistent = true).
+    struct OptionDescriptor {
+        /// Option instance.
+        OptionPtr option;
+        /// Persistent flag, if true option is always sent to the client,
+        /// if false option is sent to the client on request.
+        bool persistent;
+
+        /// @brief Constructor.
+        ///
+        /// @param opt option
+        /// @param persist if true option is always sent.
+        OptionDescriptor(OptionPtr& opt, bool persist)
+            : option(opt), persistent(persist) {};
+    };
+
+    /// @brief Extractor class to extract key with another key.
+    ///
+    /// This class solves the problem of accessing index key values
+    /// that are stored in objects nested in other objects.
+    /// Each OptionDescriptor structure contains the OptionPtr object.
+    /// The value retured by one of its accessors (getType) is used
+    /// as an indexing value in the multi_index_container defined below.
+    /// There is no easy way to mark that value returned by Option::getType
+    /// should be an index of this multi_index_container. There are standard
+    /// key extractors such as 'member' or 'mem_fun' but they are not
+    /// sufficient here. The former can be used to mark that member of
+    /// the structure that is held in the container should be used as an
+    /// indexing value. The latter can be used if the indexing value is
+    /// a product of the class being held in the container. In this complex
+    /// scenario when the indexing value is a product of the function that
+    /// is wrapped by the structure, this new extractor template has to be
+    /// defined. The template class provides a 'chain' of two extractors
+    /// to access the value returned by nested object and to use it as
+    /// indexing value.
+    /// For some more examples of complex keys see:
+    /// http://www.cs.brown.edu/~jwicks/boost/libs/multi_index/doc/index.html
+    ///
+    /// @tparam KeyExtractor1 extractor used to access data in
+    /// OptionDescriptor::option
+    /// @tparam KeyExtractor2 extractor used to access
+    /// OptionDescriptor::option member.
+    template<typename KeyExtractor1, typename KeyExtractor2>
+    class KeyFromKey {
+    public:
+        typedef typename KeyExtractor1::result_type result_type;
+
+        /// @brief Constructor.
+        KeyFromKey()
+            : key1_(KeyExtractor1()), key2_(KeyExtractor2()) { };
+
+        /// @brief Extract key with another key.
+        ///
+        /// @param arg the key value.
+        ///
+        /// @tparam key value type.
+        template<typename T>
+        result_type operator() (T& arg) const {
+            return (key1_(key2_(arg)));
+        }
+    private:
+        KeyExtractor1 key1_; ///< key 1.
+        KeyExtractor2 key2_; ///< key 2.
+    };
+
+    /// @brief Multi index container for DHCP option descriptors.
+    ///
+    /// This container comprises three indexes to access option
+    /// descriptors:
+    /// - sequenced index: used to access elements in the order they
+    /// have been added to the container,
+    /// - option type index: used to search option descriptors containing
+    /// options with specific option code (aka option type).
+    /// - persistency flag index: used to search option descriptors with
+    /// 'persistent' flag set to true.
+    ///
+    /// This container is the equivalent of three separate STL containers:
+    /// - std::list of all options,
+    /// - std::multimap of options with option code used as a multimap key,
+    /// - std::multimap of option descriptors with option persistency flag
+    /// used as a multimap key.
+    /// The major advantage of this container over 3 separate STL containers
+    /// is automatic synchronization of all indexes when elements are added,
+    /// removed or modified in the container. With separate containers,
+    /// the synchronization would have to be guaranteed by the Subnet class
+    /// code. This would increase code complexity and presumably it would
+    /// be much harder to add new search criteria (indexes).
+    ///
+    /// @todo we may want to search for options using option spaces when
+    /// they are implemented.
+    ///
+    /// @see http://www.boost.org/doc/libs/1_51_0/libs/multi_index/doc/index.html
+    typedef boost::multi_index_container<
+        // Container comprises elements of OptionDescriptor type.
+        OptionDescriptor,
+        // Here we start enumerating various indexes.
+        boost::multi_index::indexed_by<
+            // Sequenced index allows accessing elements in the same way
+            // as elements in std::list.
+            // Sequenced is an index #0.
+            boost::multi_index::sequenced<>,
+            // Start definition of index #1.
+            boost::multi_index::hashed_non_unique<
+                // KeyFromKey is the index key extractor that allows accessing
+                // option type being held by the OptionPtr through
+                // OptionDescriptor structure.
+                KeyFromKey<
+                    // Use option type as the index key. The type is held
+                    // in OptionPtr object so we have to call Option::getType
+                    // to retrieve this key for each element.
+                    boost::multi_index::mem_fun<
+                        Option,
+                        uint16_t,
+                        &Option::getType
+                    >,
+                    // Indicate that OptionPtr is a member of
+                    // OptionDescriptor structure.
+                    boost::multi_index::member<
+                        OptionDescriptor,
+                        OptionPtr,
+                        &OptionDescriptor::option
+                    >
+                 >
+            >,
+            // Start definition of index #2.
+            // Use 'persistent' struct member as a key.
+            boost::multi_index::hashed_non_unique<
+                boost::multi_index::member<
+                    OptionDescriptor,
+                    bool,
+                    &OptionDescriptor::persistent
+                >
+            >
+        >
+    > OptionContainer;
+
+    /// Type of the index #1 - option type.
+    typedef OptionContainer::nth_index<1>::type OptionContainerTypeIndex;
+    /// Type of the index #2 - option persistency flag.
+    typedef OptionContainer::nth_index<2>::type OptionContainerPersistIndex;
+
     /// @brief checks if specified address is in range
     bool inRange(const isc::asiolink::IOAddress& addr) const;
+
+    /// @brief Add new option instance to the collection.
+    ///
+    /// @param option option instance.
+    /// @param persistent if true, send an option regardless if client
+    /// requested it or not.
+    ///
+    /// @throw isc::BadValue if invalid option provided.
+    void addOption(OptionPtr& option, bool persistent = false);
+
+    /// @brief Delete all options configured for the subnet.
+    void delOptions();
 
     /// @brief return valid-lifetime for addresses in that prefix
     Triplet<uint32_t> getValid() const {
@@ -53,6 +219,15 @@ public:
         return (t2_);
     }
 
+    /// @brief Return a collection of options.
+    ///
+    /// @return reference to collection of options configured for a subnet.
+    /// The returned reference is valid as long as the Subnet object which
+    /// returned it still exists.
+    const OptionContainer& getOptions() {
+        return (options_);
+    }
+
 protected:
     /// @brief protected constructor
     //
@@ -63,6 +238,12 @@ protected:
            const Triplet<uint32_t>& t2,
            const Triplet<uint32_t>& valid_lifetime);
 
+    /// @brief virtual destructor
+    ///
+    /// A virtual destructor is needed because other classes
+    /// derive from this class.
+    virtual ~Subnet() { };
+
     /// @brief returns the next unique Subnet-ID
     ///
     /// @return the next unique Subnet-ID
@@ -70,6 +251,11 @@ protected:
         static uint32_t id = 0;
         return (id++);
     }
+
+    /// @brief Check if option is valid and can be added to a subnet.
+    ///
+    /// @param option option to be validated.
+    virtual void validateOption(const OptionPtr& option) const = 0;
 
     /// @brief subnet-id
     ///
@@ -91,6 +277,9 @@ protected:
 
     /// @brief a tripet (min/default/max) holding allowed valid lifetime values
     Triplet<uint32_t> valid_;
+
+    /// @brief a collection of DHCP options configured for a subnet.
+    OptionContainer options_;
 };
 
 /// @brief A configuration holder for IPv4 subnet.
@@ -133,6 +322,14 @@ public:
     }
 
 protected:
+
+    /// @brief Check if option is valid and can be added to a subnet.
+    ///
+    /// @param option option to be validated.
+    ///
+    /// @throw isc::BadValue if provided option is invalid.
+    virtual void validateOption(const OptionPtr& option) const;
+
     /// @brief collection of pools in that list
     Pool4Collection pools_;
 };
@@ -193,6 +390,14 @@ public:
     }
 
 protected:
+
+    /// @brief Check if option is valid and can be added to a subnet.
+    ///
+    /// @param option option to be validated.
+    ///
+    /// @throw isc::BadValue if provided option is invalid.
+    virtual void validateOption(const OptionPtr& option) const;
+
     /// @brief collection of pools in that list
     Pool6Collection pools_;
 
