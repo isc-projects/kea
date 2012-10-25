@@ -235,11 +235,11 @@ public:
     ///
     /// \param other the \c RRType object to compare against.
     /// \return true if the two RRTypes are not equal; otherwise false.
-    bool nequals(const RRType& other) const 
+    bool nequals(const RRType& other) const
     { return (typecode_ != other.typecode_); }
     /// \brief Same as \c nequals().
     bool operator!=(const RRType& other) const { return (nequals(other)); }
- 
+
     /// \brief Less-than comparison for RRType against \c other
     ///
     /// We define the less-than relationship based on their type codes;
@@ -319,6 +319,6 @@ operator<<(std::ostream& os, const RRType& rrtype);
 }
 #endif  // RRTYPE_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

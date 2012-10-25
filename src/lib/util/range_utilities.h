@@ -65,4 +65,4 @@ fillRandom(Iterator begin, Iterator end) {
 } // end of isc::util namespace
 } // end of isc namespace
 
-#endif  // __PKTINFO_UTIL_H_
+#endif  // RANGE_UTIL_H

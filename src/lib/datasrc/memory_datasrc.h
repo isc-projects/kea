@@ -360,7 +360,7 @@ extern "C" void destroyInstance(DataSourceClient* instance);
 
 }
 }
-#endif  // __DATA_SOURCE_MEMORY_H
+#endif  // MEMORY_DATA_SOURCE_H
 // Local Variables:
 // mode: c++
 // End:
