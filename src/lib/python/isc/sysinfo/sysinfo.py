@@ -354,11 +354,11 @@ class SysInfoOpenBSD(SysInfoBSD):
             pass
 
         try:
+            # We use the size of free-list from the vmstat result.
             s = subprocess.check_output(['vmstat'])
             lines = s.decode('utf-8').split('\n')
             v = re.split('\s+', lines[2])
-            used = int(v[4]) * 1024
-            self._mem_free = self._mem_total - used
+            self._mem_free = int(v[5]) * 1024
         except (subprocess.CalledProcessError, OSError):
             pass
 

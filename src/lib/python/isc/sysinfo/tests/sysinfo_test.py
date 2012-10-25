@@ -379,7 +379,7 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual((0.7, 0.9, 0.8), s.get_loadavg())
         self.assertFalse(s.get_platform_is_smp())
         self.assertEqual(543214321, s.get_mem_total())
-        self.assertEqual(543214321 - (121212 * 1024), s.get_mem_free())
+        self.assertEqual(123456 * 1024, s.get_mem_free())
         self.assertEqual(566791168, s.get_mem_swap_total())
         self.assertEqual(566789120, s.get_mem_swap_free())
 
