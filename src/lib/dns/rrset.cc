@@ -65,7 +65,7 @@ AbstractRRset::toText() const {
     } while (!it->isLast());
 
     return (s);
-}   
+}
 
 namespace {
 template <typename T>
