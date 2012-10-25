@@ -32,8 +32,6 @@ namespace {
 // throw. This test will complete properly only when pthread debugging
 // facilities are enabled by configuring the code for debug build.
 TEST(MutexTest, lockMultiple) {
-    // TODO: Once we support non-debug mutexes, disable the test if we compile
-    // with them.
     Mutex mutex;
     EXPECT_FALSE(mutex.locked()); // Debug-only build
 
