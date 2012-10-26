@@ -320,6 +320,13 @@ public:
     /// open forever.
     void setTCPRecvTimeout(size_t timeout);
 
+    /// \brief Reloads a zone
+    ///
+    /// This method should only be called from the LoadZoneCommand class,
+    /// internally it will tell the clients builder thread to reload
+    /// the zone specified in the arguments.
+    void loadZone(isc::data::ConstElementPtr args);
+
 private:
     AuthSrvImpl* impl_;
     isc::asiolink::SimpleCallback* checkin_;

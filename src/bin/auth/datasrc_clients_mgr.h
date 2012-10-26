@@ -45,6 +45,14 @@
 namespace isc {
 namespace auth {
 
+/// \brief An exception that is thrown if the arguments to the loadZone
+/// call are not in the right format
+class LoadZoneCommandError : public isc::Exception {
+public:
+    LoadZoneCommandError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 namespace datasrc_clientmgr_internal {
 // This namespace is essentially private for DataSrcClientsMgr(Base) and
 // DataSrcClientsBuilder(Base).  This is exposed in the public header
@@ -237,6 +245,30 @@ public:
     void setDataSrcClientLists(datasrc::ClientListMapPtr new_lists) {
         typename MutexType::Locker locker(map_mutex_);
         clients_map_ = new_lists;
+    }
+
+    /// \brief Instruct internal thread to (re)load a zone
+    ///
+    /// \param args Element argument that should be a map of the form
+    /// { "class": "IN", "origin": "example.com" }
+    /// (but class is optional and will default to IN)
+    ///
+    /// \exception LoadZoneCommandError if the args value is null, or not in
+    ///                                 the expected format
+    void
+    loadZone(data::ConstElementPtr args) {
+        if (!args) {
+            isc_throw(LoadZoneCommandError, "loadZone argument empty");
+        }
+        if (args->getType() != isc::data::Element::map) {
+            isc_throw(LoadZoneCommandError, "loadZone argument not a map");
+        }
+        if (!args->contains("origin")) {
+            isc_throw(LoadZoneCommandError,
+                      "loadZone argument has no 'origin' value");
+        }
+
+        sendCommand(datasrc_clientmgr_internal::LOADZONE, args);
     }
 
 private:
@@ -489,10 +521,12 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
     // called via the manager in practice.  manager is expected to do the
     // minimal validation.
     assert(arg);
-    assert(arg->get("class"));
     assert(arg->get("origin"));
 
-    const dns::RRClass rrclass(arg->get("class")->stringValue());
+    isc::data::ConstElementPtr class_elem = arg->get("class");
+    const dns::RRClass rrclass(class_elem ?
+                                dns::RRClass(class_elem->stringValue()) :
+                                dns::RRClass::IN());
     const dns::Name origin(arg->get("origin")->stringValue());
     ClientListsMap::iterator found = (*clients_map_)->find(rrclass);
     if (found == (*clients_map_)->end()) {
