@@ -33,12 +33,14 @@ public:
     MasterLexerTokenTest() :
         token_eof(MasterLexer::Token::END_OF_FILE),
         token_str(TEST_STRING, TEST_STRING_LEN),
-        token_num(42)
+        token_num(42),
+        token_err(MasterLexer::Token::UNEXPECTED_END)
     {}
 
     const MasterLexer::Token token_eof; // an example of special type token
     const MasterLexer::Token token_str;
     const MasterLexer::Token token_num;
+    const MasterLexer::Token token_err;
 };
 
 
@@ -116,5 +118,39 @@ TEST_F(MasterLexerTokenTest, specials) {
                  isc::InvalidParameter);
     EXPECT_THROW(MasterLexer::Token t(MasterLexer::Token::NUMBER),
                  isc::InvalidParameter);
+    EXPECT_THROW(MasterLexer::Token t(MasterLexer::Token::ERROR),
+                 isc::InvalidParameter);
+}
+
+TEST_F(MasterLexerTokenTest, errors) {
+    EXPECT_EQ(MasterLexer::Token::ERROR, token_err.getType());
+    EXPECT_EQ(MasterLexer::Token::UNEXPECTED_END, token_err.getErrorCode());
+    EXPECT_EQ("unexpected end of input", token_err.getErrorText());
+    EXPECT_EQ("lexer not started",
+              MasterLexer::Token(MasterLexer::Token::NOT_STARTED).
+              getErrorText());
+    EXPECT_EQ("unbalanced parentheses",
+              MasterLexer::Token(MasterLexer::Token::UNBALANCED_PAREN).
+              getErrorText());
+    EXPECT_EQ("unbalanced quotes",
+              MasterLexer::Token(MasterLexer::Token::UNBALANCED_QUOTES).
+              getErrorText());
+
+    // getErrorCode/Text() isn't allowed for non number types
+    EXPECT_THROW(token_num.getErrorCode(), isc::InvalidOperation);
+    EXPECT_THROW(token_num.getErrorText(), isc::InvalidOperation);
+
+    // Only the pre-defined error code is accepted.  Hardcoding '4' (max code
+    // + 1) is intentional; it'd be actually better if we notice it when we
+    // update the enum list (which shouldn't happen too often).
+    EXPECT_THROW(MasterLexer::Token(MasterLexer::Token::ErrorCode(4)),
+                 isc::InvalidParameter);
+
+    // Check the coexistence of "from number" and "from error-code"
+    // constructors won't cause confusion.
+    EXPECT_EQ(MasterLexer::Token::NUMBER,
+              MasterLexer::Token(static_cast<uint32_t>(
+                                     MasterLexer::Token::NOT_STARTED)).
+              getType());
 }
 }
