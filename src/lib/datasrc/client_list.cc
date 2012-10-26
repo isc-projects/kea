@@ -44,22 +44,24 @@ namespace datasrc {
 ConfigurableClientList::DataSourceInfo::DataSourceInfo(
     DataSourceClient* data_src_client,
     const DataSourceClientContainerPtr& container, bool has_cache,
-    const RRClass& rrclass, shared_ptr<ZoneTableSegment>& segment) :
+    const RRClass& rrclass, const shared_ptr<ZoneTableSegment>& segment) :
     data_src_client_(data_src_client),
     container_(container)
 {
     if (has_cache) {
         cache_.reset(new InMemoryClient(segment, rrclass));
+        segment_ = segment;
     }
 }
 
 ConfigurableClientList::DataSourceInfo::DataSourceInfo(
-    const RRClass& rrclass, shared_ptr<ZoneTableSegment>& segment,
+    const RRClass& rrclass, const shared_ptr<ZoneTableSegment>& segment,
     bool has_cache) :
     data_src_client_(NULL)
 {
     if (has_cache) {
         cache_.reset(new InMemoryClient(segment, rrclass));
+        segment_ = segment;
     }
 }
 
@@ -446,7 +448,7 @@ ConfigurableClientList::getCachedZoneWriter(const Name& name) {
     }
     return (ZoneWriterPair(ZONE_SUCCESS,
                            ZoneWriterPtr(
-                               result.info->cache_->getZoneTableSegment().
+                               result.info->segment_->
                                getZoneWriter(load_action, name, rrclass_))));
 }
 

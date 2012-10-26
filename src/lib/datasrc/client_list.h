@@ -333,14 +333,14 @@ public:
     struct DataSourceInfo {
         // Plays a role of default constructor too (for vector)
         DataSourceInfo(const dns::RRClass& rrclass,
-                       boost::shared_ptr
+                       const boost::shared_ptr
                            <isc::datasrc::memory::ZoneTableSegment>&
                                ztable_segment,
                        bool has_cache = false);
         DataSourceInfo(DataSourceClient* data_src_client,
                        const DataSourceClientContainerPtr& container,
                        bool has_cache, const dns::RRClass& rrclass,
-                       boost::shared_ptr
+                       const boost::shared_ptr
                            <isc::datasrc::memory::ZoneTableSegment>&
                                ztable_segment);
         DataSourceClient* data_src_client_;
@@ -353,6 +353,7 @@ public:
         // No other applications or tests may use it.
         const DataSourceClient* getCacheClient() const;
         boost::shared_ptr<memory::InMemoryClient> cache_;
+        boost::shared_ptr<memory::ZoneTableSegment> segment_;
     };
 
     /// \brief The collection of data sources.

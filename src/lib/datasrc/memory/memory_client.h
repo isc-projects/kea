@@ -179,18 +179,6 @@ public:
     getJournalReader(const isc::dns::Name& zone, uint32_t begin_serial,
                      uint32_t end_serial) const;
 
-    /// \brief Get the zone table segment used
-    ///
-    /// This is a low-level function, used to some internal handling when,
-    /// for example, reloading the data inside the in-memory data source.
-    /// It should not be generally used.
-    ///
-    /// \todo Consider making this private and add a friend declaration
-    ///     for the ClientList.
-    ZoneTableSegment& getZoneTableSegment() {
-        return (*ztable_segment_);
-    }
-
 private:
     // Some type aliases
     typedef DomainTree<std::string> FileNameTree;
