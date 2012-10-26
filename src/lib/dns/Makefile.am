@@ -95,6 +95,7 @@ libb10_dns___la_SOURCES += edns.h edns.cc
 libb10_dns___la_SOURCES += exceptions.h exceptions.cc
 libb10_dns___la_SOURCES += labelsequence.h labelsequence.cc
 libb10_dns___la_SOURCES += masterload.h masterload.cc
+libb10_dns___la_SOURCES += master_lexer.h
 libb10_dns___la_SOURCES += message.h message.cc
 libb10_dns___la_SOURCES += messagerenderer.h messagerenderer.cc
 libb10_dns___la_SOURCES += name.h name.cc
@@ -145,6 +146,8 @@ libdns___include_HEADERS = \
 	exceptions.h \
 	labelsequence.h \
 	message.h \
+	master_lexer.h \
+	masterload.h \
 	messagerenderer.h \
 	name.h \
 	question.h \
