@@ -190,7 +190,7 @@ def _my_freebsd_subprocess_check_output(command, faked_output):
         output = faked_output['smp-sysctl']
         if isinstance(output, Exception):
             raise output
-        return faked_output['smp-sysctl']
+        return output
     elif command == ['vmstat', '-H']:
         return b' procs    memory       page                    disks    traps          cpu\n r b w    avm     fre  flt  re  pi  po  fr  sr wd0 cd0  int   sys   cs us sy id\n 0 0 0   343434  123456   47   0   0   0   0   0   2   0    2    80   14  0  1 99\n'
     elif command == ['swapctl', '-s', '-k']:
