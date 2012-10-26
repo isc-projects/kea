@@ -535,7 +535,7 @@ class StatsHttpd:
             xml_string=xml_string, xsl_url_path=XSL_URL_PATH)
         return self.xml_body
 
-    def xsd_handler(self, module_name=None, item_name=None):
+    def xsd_handler(self):
         """Loads the XSD template file, replaces the variable strings,
         and returns the string of the XSD document."""
         self.xsd_body = self.open_template(XSD_TEMPLATE_LOCATION).substitute(
