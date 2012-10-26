@@ -346,12 +346,16 @@ ConfigurableClientList::findInternal(MutableResult& candidate,
 ConfigurableClientList::ReloadResult
 ConfigurableClientList::reload(const Name& name) {
     const ZoneWriterPair result(getCachedZoneWriter(name));
-    if (result.second) {
-        result.second->load();
-        result.second->install();
-        result.second->cleanup();
+    if (result.first != ZONE_SUCCESS) {
+        return (result.first);
     }
-    return (result.first);
+
+    assert(result.second);
+    result.second->load();
+    result.second->install();
+    result.second->cleanup();
+
+    return (ZONE_SUCCESS);
 }
 
 namespace {
