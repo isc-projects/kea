@@ -32,20 +32,22 @@ public:
 class MasterLexer::Token {
 public:
     enum Type {
-        ERROR,
         END_OF_LINE,
         END_OF_FILE,
         INITIAL_WS,
+        SPECIAL_TYPE_MAX = INITIAL_WS,
         STRING,
         QSTRING,
-        NUMBER
+        NUMBER,
+        ERROR
     };
 
     enum ErrorCode {
         NOT_STARTED,
         UNBALANCED_PAREN,
         UNEXPECTED_END,
-        UNBALANCED_QUOTES
+        UNBALANCED_QUOTES,
+        MAX_ERROR_CODE = UNBALANCED_QUOTES
     };
 
     struct StringRegion {
@@ -54,7 +56,7 @@ public:
     };
 
     explicit Token(Type type) : type_(type) {
-        if (type >= STRING) {
+        if (type > SPECIAL_TYPE_MAX) {
             isc_throw(InvalidParameter, "Token per-type constructor "
                       "called with invalid type: " << type);
         }
@@ -67,6 +69,13 @@ public:
     }
     explicit Token(uint32_t number) : type_(NUMBER) {
         val_.number_ = number;
+    }
+    explicit Token(ErrorCode error_code) : type_(ERROR) {
+        if (error_code > MAX_ERROR_CODE) {
+            isc_throw(InvalidParameter, "Invalid master lexer error code: "
+                      << error_code);
+        }
+        val_.error_code_ = error_code;
     }
 
     Type getType() const { return (type_); }
@@ -81,7 +90,7 @@ public:
     const StringRegion& getStringRegion() const {
         if (type_ != STRING && type_ != QSTRING) {
             isc_throw(InvalidOperation,
-                      "Token::getString() for non string-variant type");
+                      "Token::getStringRegion() for non string-variant type");
         }
         return (val_.str_region_);
     }
@@ -92,12 +101,21 @@ public:
         }
         return (val_.number_);
     }
+    ErrorCode getErrorCode() const {
+        if (type_ != ERROR) {
+            isc_throw(InvalidOperation,
+                      "Token::getErrorCode() for non error type");
+        }
+        return (val_.error_code_);
+    };
+    std::string getErrorText() const;
 
 private:
     Type type_;
     union {
         StringRegion str_region_;
         uint32_t number_;
+        ErrorCode error_code_;
     } val_;
 };
 
