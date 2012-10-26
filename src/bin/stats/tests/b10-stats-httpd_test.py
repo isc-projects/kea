@@ -824,7 +824,7 @@ class TestStatsHttpd(unittest.TestCase):
             self.assertTrue(lines.find(opts[n])>0)
         tmpl = self.stats_httpd.open_template(stats_httpd.XSD_TEMPLATE_LOCATION)
         self.assertTrue(isinstance(tmpl, string.Template))
-        opts = dict(xsd_string="<dummy></dummy>")
+        opts = dict(xsd_namespace="http://host/path/to/")
         lines = tmpl.substitute(opts)
         for n in opts:
             self.assertTrue(lines.find(opts[n])>0)
