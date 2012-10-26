@@ -30,6 +30,7 @@ import socket
 import string
 import xml.etree.ElementTree
 import urllib.parse
+import re
 
 import isc.cc
 import isc.config
@@ -464,67 +465,55 @@ class StatsHttpd:
         """Requests the specified statistics data and specification by
         using the functions get_stats_data and get_stats_spec
         respectively and loads the XML template file and returns the
-        string of the XML document.The first argument is the module
-        name which owns the statistics data, the second argument is
-        one name of the statistics items which the the module
-        owns. The second argument cannot be specified when the first
-        argument is not specified."""
-
-        # TODO: Separate the following recursive function by type of
-        # the parameter. Because we should be sure what type there is
-        # when we call it recursively.
-        def stats_data2xml(stats_spec, stats_data, xml_elem):
-            """Internal use for xml_handler. Reads stats_data and
-            stats_spec specified as first and second arguments, and
-            modify the xml object specified as third
-            argument. xml_elem must be modified and always returns
-            None."""
-            # assumed started with module_spec or started with
-            # item_spec in statistics
-            if type(stats_spec) is dict:
-                # assumed started with module_spec
-                if 'item_name' not in stats_spec \
-                        and 'item_type' not in stats_spec:
-                    for module_name in stats_spec.keys():
-                        elem = xml.etree.ElementTree.Element(module_name)
-                        stats_data2xml(stats_spec[module_name],
-                                       stats_data[module_name], elem)
-                        xml_elem.append(elem)
-                # started with item_spec in statistics
-                else:
-                    elem = xml.etree.ElementTree.Element(stats_spec['item_name'])
-                    if stats_spec['item_type'] == 'map':
-                        stats_data2xml(stats_spec['map_item_spec'],
-                                       stats_data,
-                                       elem)
-                    elif stats_spec['item_type'] == 'list':
-                        for item in stats_data:
-                            stats_data2xml(stats_spec['list_item_spec'],
-                                           item, elem)
-                    else:
-                        elem.text = str(stats_data)
-                    xml_elem.append(elem)
-            # assumed started with stats_spec
-            elif type(stats_spec) is list:
-                for item_spec in stats_spec:
-                    stats_data2xml(item_spec,
-                                   stats_data[item_spec['item_name']],
-                                   xml_elem)
+        string of the XML document.The argument is a path in the
+        requested URI."""
 
         stats_spec = self.get_stats_spec(module_name, item_name)
         stats_data = self.get_stats_data(module_name, item_name)
-        # make the path xxx/module/item if specified respectively
-        path_info = ''
-        if module_name is not None and item_name is not None:
-            path_info = '/' + module_name + '/' + item_name
-        elif module_name is not None:
-            path_info = '/' + module_name
+        path = ''
+        if module_name:
+            path = module_name
+        if item_name:
+            path = '%s/%s' % (path, item_name)
+        path_list = []
+        try:
+            path_list = item_name_list(stats_data, path)
+        except isc.cc.data.DataNotFoundError as err:
+            raise StatsHttpdDataError(
+                "%s: %s" % (err.__class__.__name__, err))
+        item_list = []
+        for path in path_list:
+            dirs = path.split("/")
+            if len(dirs) < 2: continue
+            item = {}
+            item['identifier'] = path
+            value = isc.cc.data.find(stats_data, path)
+            if type(value) is bool:
+                value = str(value).lower()
+            if type(value) is dict or type(value) is list:
+                value = None
+            if value is not None:
+                item['value'] = str(value)
+            owner = dirs[0]
+            item['owner'] = owner
+            item['uri'] = urllib.parse.quote('%s/%s' % (XML_URL_PATH, path))
+            item_path = '/'.join(dirs[1:])
+            spec = isc.config.find_spec_part(stats_spec[owner], item_path)
+            for key in ['name', 'type', 'description', 'title', \
+                            'optional', 'default', 'format']:
+                value = spec.get('item_%s' % key)
+                if type(value) is bool:
+                    value = str(value).lower()
+                if type(value) is dict or type(value) is list:
+                    value = None
+                if value is not None:
+                    item[key] = str(value)
+            item_list.append(item)
         xml_elem = xml.etree.ElementTree.Element(
-            'bind10:statistics',
-            attrib={ 'xsi:schemaLocation' : XSD_NAMESPACE + ' ' + XSD_URL_PATH + path_info,
-                     'xmlns:bind10' : XSD_NAMESPACE,
-                     'xmlns:xsi' : "http://www.w3.org/2001/XMLSchema-instance" })
-        stats_data2xml(stats_spec, stats_data, xml_elem)
+            XML_ROOT_ELEMENT, attrib=XML_ROOT_ATTRIB)
+        for item in item_list:
+            item_elem = xml.etree.ElementTree.Element('item', attrib=item)
+            xml_elem.append(item_elem)
         # The coding conversion is tricky. xml..tostring() of Python 3.2
         # returns bytes (not string) regardless of the coding, while
         # tostring() of Python 3.1 returns a string.  To support both
@@ -536,9 +525,7 @@ class StatsHttpd:
         xml_string = str(xml.etree.ElementTree.tostring(xml_elem, encoding='utf-8'),
                          encoding='us-ascii')
         self.xml_body = self.open_template(XML_TEMPLATE_LOCATION).substitute(
-            xml_string=xml_string,
-            xsl_url_path=XSL_URL_PATH + path_info)
-        assert self.xml_body is not None
+            xml_string=xml_string, xsl_url_path=XSL_URL_PATH)
         return self.xml_body
 
     def xsd_handler(self, module_name=None, item_name=None):
