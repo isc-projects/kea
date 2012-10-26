@@ -561,6 +561,10 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::getZoneWriter(
                   << "/" << rrclass << ": internal failure, in-memory cache "
                   "is somehow disabled");
     }
+
+    // all cases above should either return or throw, but some compilers
+    // still need a return statement
+    return (boost::shared_ptr<datasrc::memory::ZoneWriter>());
 }
 } // namespace datasrc_clientmgr_internal
 
