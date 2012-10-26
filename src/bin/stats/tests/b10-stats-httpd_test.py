@@ -357,7 +357,7 @@ class TestHttpHandler(unittest.TestCase):
         self.client.putrequest('GET', stats_httpd.XSL_URL_PATH + '/Foo')
         self.client.endheaders()
         response = self.client.getresponse()
-        self.assertEqual(response.status, 404)
+        self.assertEqual(response.status, 200)
 
         # 404 NotFound (nonexistent item name)
         self.client._http_vsn_str = 'HTTP/1.0'
@@ -374,7 +374,7 @@ class TestHttpHandler(unittest.TestCase):
         self.client.putrequest('GET', stats_httpd.XSL_URL_PATH + '/Foo/bar')
         self.client.endheaders()
         response = self.client.getresponse()
-        self.assertEqual(response.status, 404)
+        self.assertEqual(response.status, 200)
 
         # 404 NotFound (existent module but nonexistent item name)
         self.client._http_vsn_str = 'HTTP/1.0'
@@ -391,7 +391,7 @@ class TestHttpHandler(unittest.TestCase):
         self.client.putrequest('GET', stats_httpd.XSL_URL_PATH + '/Auth/bar')
         self.client.endheaders()
         response = self.client.getresponse()
-        self.assertEqual(response.status, 404)
+        self.assertEqual(response.status, 200)
 
     def test_do_GET_failed1(self):
         # checks status
@@ -419,7 +419,7 @@ class TestHttpHandler(unittest.TestCase):
         self.client.putrequest('GET', stats_httpd.XSL_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
-        self.assertEqual(response.status, 500)
+        self.assertEqual(response.status, 200)
 
     def test_do_GET_failed2(self):
         # failure case(Stats replies an error)
@@ -444,7 +444,7 @@ class TestHttpHandler(unittest.TestCase):
         self.client.putrequest('GET', stats_httpd.XSL_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
-        self.assertEqual(response.status, 404)
+        self.assertEqual(response.status, 200)
 
     def test_do_HEAD(self):
         self.client.putrequest('HEAD', stats_httpd.XML_URL_PATH)
