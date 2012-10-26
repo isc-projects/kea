@@ -775,12 +775,4 @@ TEST_F(MemoryClientTest, getJournalReaderNotImplemented) {
                  isc::NotImplemented);
 }
 
-TEST_F(MemoryClientTest, getZoneTableSegment) {
-    // It's hard to test this method. It returns a reference, so we can't even
-    // check for non-NULL. Checking it doesn't throw/crash is good enough for
-    // now, the method will be used in other functions, so checked it works
-    // implicitly.
-    EXPECT_NO_THROW(client_->getZoneTableSegment());
-}
-
 }
