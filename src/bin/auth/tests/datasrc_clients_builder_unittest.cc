@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <util/unittests/check_valgrind.h>
+
 #include <dns/name.h>
 #include <dns/rrclass.h>
 
@@ -98,13 +100,15 @@ TEST_F(DataSrcClientsBuilderTest, exception) {
     // them.  Right now, we simply abort to prevent the system from running
     // with half-broken state.  Eventually we should introduce a better
     // error handling.
-    command_queue.push_back(noop_cmd);
-    queue_mutex.throw_from_noop = TestMutex::EXCLASS;
-    EXPECT_DEATH_IF_SUPPORTED({builder.run();}, "");
+    if (!isc::util::unittests::runningOnValgrind()) {
+        command_queue.push_back(noop_cmd);
+        queue_mutex.throw_from_noop = TestMutex::EXCLASS;
+        EXPECT_DEATH_IF_SUPPORTED({builder.run();}, "");
 
-    command_queue.push_back(noop_cmd);
-    queue_mutex.throw_from_noop = TestMutex::INTEGER;
-    EXPECT_DEATH_IF_SUPPORTED({builder.run();}, "");
+        command_queue.push_back(noop_cmd);
+        queue_mutex.throw_from_noop = TestMutex::INTEGER;
+        EXPECT_DEATH_IF_SUPPORTED({builder.run();}, "");
+    }
 
     command_queue.push_back(noop_cmd);
     command_queue.push_back(shutdown_cmd); // we need to stop the loop
@@ -457,10 +461,12 @@ TEST_F(DataSrcClientsBuilderTest, loadZoneWithoutDataSrc) {
 TEST_F(DataSrcClientsBuilderTest, loadZoneInvalidParams) {
     configureZones();
 
-    // null arg: this causes assertion failure
-    EXPECT_DEATH_IF_SUPPORTED({
-            builder.handleCommand(Command(LOADZONE, ElementPtr()));
-        }, "");
+    if (!isc::util::unittests::runningOnValgrind()) {
+        // null arg: this causes assertion failure
+        EXPECT_DEATH_IF_SUPPORTED({
+                builder.handleCommand(Command(LOADZONE, ElementPtr()));
+            }, "");
+    }
 
     // zone class is bogus (note that this shouldn't happen except in tests)
     EXPECT_THROW(builder.handleCommand(
@@ -479,16 +485,19 @@ TEST_F(DataSrcClientsBuilderTest, loadZoneInvalidParams) {
                  isc::data::TypeError);
 
     // class or origin is missing: result in assertion failure
-    EXPECT_DEATH_IF_SUPPORTED({
-            builder.handleCommand(
-                Command(LOADZONE,
-                        Element::fromJSON("{\"origin\": \"test1.example\"}")));
-        }, "");
-    EXPECT_DEATH_IF_SUPPORTED({
-            builder.handleCommand(Command(LOADZONE,
-                                          Element::fromJSON(
-                                              "{\"class\": \"IN\"}")));
-        }, "");
+    if (!isc::util::unittests::runningOnValgrind()) {
+        EXPECT_DEATH_IF_SUPPORTED({
+                builder.handleCommand(
+                    Command(LOADZONE,
+                            Element::fromJSON(
+                                "{\"origin\": \"test1.example\"}")));
+            }, "");
+        EXPECT_DEATH_IF_SUPPORTED({
+                builder.handleCommand(Command(LOADZONE,
+                                              Element::fromJSON(
+                                                  "{\"class\": \"IN\"}")));
+            }, "");
+    }
 
     // zone doesn't exist in the data source
     EXPECT_THROW(
