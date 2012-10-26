@@ -12,7 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "zone_table_segment_test.h"
 #include <datasrc/memory/zone_writer_local.h>
 #include <datasrc/memory/zone_table_segment_local.h>
 #include <util/memory_segment_local.h>
@@ -32,23 +31,15 @@ namespace {
 class ZoneTableSegmentTest : public ::testing::Test {
 protected:
     ZoneTableSegmentTest() :
-        ztable_segment_(new test::ZoneTableSegmentTest(RRClass::IN(),
-                                                       mem_sgmt_))
+        ztable_segment_(ZoneTableSegment::create(isc::data::NullElement(),
+                                                 RRClass::IN()))
     {}
-
-    ~ZoneTableSegmentTest() {
-        delete ztable_segment_;
-    }
 
     void TearDown() {
         ZoneTableSegment::destroy(ztable_segment_);
         ztable_segment_ = NULL;
-
-        // Catch any future leaks here.
-        EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated());
     }
 
-    MemorySegmentLocal mem_sgmt_;
     ZoneTableSegment* ztable_segment_;
 };
 

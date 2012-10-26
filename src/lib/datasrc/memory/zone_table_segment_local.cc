@@ -30,6 +30,7 @@ ZoneTableSegmentLocal::ZoneTableSegmentLocal(const RRClass& rrclass) :
 
 ZoneTableSegmentLocal::~ZoneTableSegmentLocal() {
     ZoneTable::destroy(mem_sgmt_, header_.getTable());
+    assert(mem_sgmt_.allMemoryDeallocated());
 }
 
 // After more methods' definitions are added here, it would be a good
