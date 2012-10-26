@@ -267,7 +267,8 @@ public:
     /// the resulting string with a trailing newline character.
     /// (following the BIND9 convention)
     ///
-    /// If any RRSIGs are associated with the RRset, they are also rendered.
+    /// If any RRSIGs are associated with the RRset, they are also
+    /// appended to the returned string.
     ///
     /// If the class is not ANY or NONE, the RRset must contain some RDATA;
     /// otherwise, an exception of class \c EmptyRRset will be thrown.
