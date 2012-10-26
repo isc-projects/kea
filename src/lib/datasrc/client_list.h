@@ -273,7 +273,8 @@ public:
         CACHE_DISABLED,     ///< The cache is not enabled in this list.
         ZONE_NOT_CACHED,    ///< Zone is served directly, not from cache.
         ZONE_NOT_FOUND,     ///< Zone does not exist or not cached.
-        ZONE_RELOADED       ///< The zone was successfully reloaded.
+        ZONE_SUCCESS        ///< The zone was successfully reloaded or
+                            ///  the writer provided.
     };
 
     /// \brief Reloads a cached zone.
@@ -309,7 +310,7 @@ public:
     /// \param zone The origin of the zone to reload.
     /// \return The result has two parts. The first one is a status describing
     ///     if it worked or not (and in case it didn't, also why). If the
-    ///     status is ZONE_RELOADED, the second part contains a shared pointer
+    ///     status is ZONE_SUCCESS, the second part contains a shared pointer
     ///     to the writer. If the status is anything else, the second part is
     ///     NULL.
     /// \throw DataSourceError or anything else that the data source

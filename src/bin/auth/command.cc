@@ -203,7 +203,7 @@ public:
         }
 
         switch (list->reload(origin)) {
-            case ConfigurableClientList::ZONE_RELOADED:
+            case ConfigurableClientList::ZONE_SUCCESS:
                 // Everything worked fine.
                 LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_LOAD_ZONE)
                     .arg(zone_class).arg(origin);
