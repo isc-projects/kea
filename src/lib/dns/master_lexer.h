@@ -26,70 +26,72 @@ namespace dns {
 
 class MasterLexer {
 public:
-    class Token {
-    public:
-        enum Type {
-            ERROR,
-            END_OF_LINE,
-            END_OF_FILE,
-            INITIAL_WS,
-            STRING,
-            QSTRING,
-            NUMBER
-        };
+    class Token;       // we define it separate for better readability
+};
 
-        struct StringRegion {
-            const char* beg;
-            size_t len;
-        };
-
-        explicit Token(Type type) : type_(type) {
-            if (type >= STRING) {
-                isc_throw(InvalidParameter, "Token per-type constructor "
-                          "called with invalid type: " << type);
-            }
-        }
-        Token(const char* str_beg, size_t str_len, bool quoted = false) :
-            type_(quoted ? QSTRING : STRING)
-        {
-            val_.str_region_.beg = str_beg;
-            val_.str_region_.len = str_len;
-        }
-        explicit Token(uint32_t number) : type_(NUMBER) {
-            val_.number_ = number;
-        }
-
-        Type getType() const { return (type_); }
-        std::string getString() const {
-            if (type_ != STRING && type_ != QSTRING) {
-                isc_throw(InvalidOperation,
-                          "Token::getString() for non string-variant type");
-            }
-            return (std::string(val_.str_region_.beg,
-                                val_.str_region_.beg + val_.str_region_.len));
-        }
-        const StringRegion& getStringRegion() const {
-            if (type_ != STRING && type_ != QSTRING) {
-                isc_throw(InvalidOperation,
-                          "Token::getString() for non string-variant type");
-            }
-            return (val_.str_region_);
-        }
-        uint32_t getNumber() const {
-            if (type_ != NUMBER) {
-                isc_throw(InvalidOperation,
-                          "Token::getNumber() for non number type");
-            }
-            return (val_.number_);
-        }
-
-    private:
-        Type type_;
-        union {
-            StringRegion str_region_;
-            uint32_t number_;
-        } val_;
+class MasterLexer::Token {
+public:
+    enum Type {
+        ERROR,
+        END_OF_LINE,
+        END_OF_FILE,
+        INITIAL_WS,
+        STRING,
+        QSTRING,
+        NUMBER
     };
+
+    struct StringRegion {
+        const char* beg;
+        size_t len;
+    };
+
+    explicit Token(Type type) : type_(type) {
+        if (type >= STRING) {
+            isc_throw(InvalidParameter, "Token per-type constructor "
+                      "called with invalid type: " << type);
+        }
+    }
+    Token(const char* str_beg, size_t str_len, bool quoted = false) :
+        type_(quoted ? QSTRING : STRING)
+    {
+        val_.str_region_.beg = str_beg;
+        val_.str_region_.len = str_len;
+    }
+    explicit Token(uint32_t number) : type_(NUMBER) {
+        val_.number_ = number;
+    }
+
+    Type getType() const { return (type_); }
+    std::string getString() const {
+        if (type_ != STRING && type_ != QSTRING) {
+            isc_throw(InvalidOperation,
+                      "Token::getString() for non string-variant type");
+        }
+        return (std::string(val_.str_region_.beg,
+                            val_.str_region_.beg + val_.str_region_.len));
+    }
+    const StringRegion& getStringRegion() const {
+        if (type_ != STRING && type_ != QSTRING) {
+            isc_throw(InvalidOperation,
+                      "Token::getString() for non string-variant type");
+        }
+        return (val_.str_region_);
+    }
+    uint32_t getNumber() const {
+        if (type_ != NUMBER) {
+            isc_throw(InvalidOperation,
+                      "Token::getNumber() for non number type");
+        }
+        return (val_.number_);
+    }
+
+private:
+    Type type_;
+    union {
+        StringRegion str_region_;
+        uint32_t number_;
+    } val_;
 };
 
 } // namespace dns
