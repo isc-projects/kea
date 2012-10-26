@@ -413,7 +413,7 @@ class SysInfoFreeBSD(SysInfoFreeBSDOSX):
             # There doesn't seem to be an easy way to reliably detect whether
             # the kernel was built with SMP support on FreeBSD.  We use
             # a sysctl variable that is only defined in SMP kernels.
-            # This assumption seems to hold for recent several versions of
+            # This assumption seems to hold for several recent versions of
             # FreeBSD, but it may not always be so for future versions.
             s = subprocess.check_output(['sysctl', '-n',
                                          'kern.smp.forward_signal_enabled'])

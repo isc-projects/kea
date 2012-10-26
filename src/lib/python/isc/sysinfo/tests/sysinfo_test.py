@@ -277,7 +277,7 @@ class SysInfoTest(unittest.TestCase):
         """Test that SysInfoFromFactory returns a valid system-specific
         SysInfo implementation.
 
-        See sysinfo.SysInfoTestcase() for some ofthe parameters.
+        See sysinfo.SysInfoTestcase() for some of the parameters.
 
         """
 
@@ -293,7 +293,7 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual('Unknown', s.get_platform_machine())
         self.assertFalse(s.get_platform_is_smp())
         self.assertEqual(131072, s.get_uptime())
-        # We check we do NOT add 's' to 'day' (because it's singular):
+        # We check that we do NOT add 's' to 'day' (because it's singular):
         self.assertEqual('1 day, 12:24', s.get_uptime_desc())
         self.assertEqual(None, s.get_loadavg())
         self.assertEqual(None, s.get_mem_total())
@@ -327,8 +327,8 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual('myhostname', s.get_platform_hostname())
         self.assertTrue(s.get_platform_is_smp())
         self.assertEqual(172801, s.get_uptime())
-        # We check we add 's' to 'day', and the mm part has an additional
-        # 0, i.e., not '0:0' but '0:00':
+        # We check that we add 's' to 'day', and that the mm part has an
+        # additional 0, i.e., not '0:0' but '0:00':
         self.assertEqual('2 days, 0:00', s.get_uptime_desc())
         self.assertEqual((0.1, 0.2, 0.3), s.get_loadavg())
         self.assertEqual(3157884928, s.get_mem_total())
@@ -409,8 +409,8 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual(NPROCESSORS_FREEBSD, s.get_num_processors())
         self.assertTrue(s.get_platform_is_smp())
 
-        # We check the kernel SMP support by the availability of an sysctl
-        # variable.  The value (especiall a 0 value) shouldn't matter.
+        # We check the kernel SMP support by the availability of a sysctl
+        # variable.  The value (especially a 0 value) shouldn't matter.
         faked_process_output['smp-sysctl'] = b'0\n'
         s = SysInfoFromFactory()
         self.assertTrue(s.get_platform_is_smp())
