@@ -22,6 +22,7 @@ if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES = unittest_util.h unittest_util.cc
 run_unittests_SOURCES += edns_unittest.cc
+run_unittests_SOURCES += inputsource_unittest.cc
 run_unittests_SOURCES += labelsequence_unittest.cc
 run_unittests_SOURCES += messagerenderer_unittest.cc
 run_unittests_SOURCES += name_unittest.cc
