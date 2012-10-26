@@ -40,7 +40,7 @@ AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress&
         len = 16;
     }
 
-    for (int i = len -1; i >=0; --i) {
+    for (int i = len - 1; i >= 0; --i) {
         packed[i]++;
         if (packed[i] != 0) {
             break;
@@ -56,7 +56,7 @@ AllocEngine::IterativeAllocator::pickAddress(const Subnet6Ptr& subnet,
                                              const DuidPtr&,
                                              const IOAddress&) {
 
-    // Let's get the last allocated address. It is usually be set correctly,
+    // Let's get the last allocated address. It is usually set correctly,
     // but there are times when it won't be (like after removing a pool or
     // perhaps restaring the server).
     IOAddress last = subnet->getLastAllocated();
@@ -92,7 +92,7 @@ AllocEngine::IterativeAllocator::pickAddress(const Subnet6Ptr& subnet,
 
     IOAddress next = increaseAddress(last); // basically addr++
     if ((*it)->inRange(next)) {
-        // the next one it in pool as well, so we haven't hit pool boundary yet
+        // the next one is in the pool as well, so we haven't hit pool boundary yet
         subnet->setLastAllocated(next);
         return (next);
     }
