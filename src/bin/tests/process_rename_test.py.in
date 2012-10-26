@@ -39,6 +39,11 @@ class TestRename(unittest.TestCase):
         Then scan them by looking at the source text
         (without actually running them)
         """
+
+        # Scripts nameds contained in this list are not expected to be
+        # renamed and should be excluded from the list.
+        EXCLUDED_SCRIPTS = ['isc-sysinfo']
+
         # Regexp to find all the *_SCRIPTS = something lines (except for
         # noinst_SCRIPTS, which are scripts for tests), including line
         # continuations (backslash and newline)
@@ -59,6 +64,8 @@ class TestRename(unittest.TestCase):
                 for (var, _) in lines.findall(re.sub(excluded_lines, '',
                                                      makefile)):
                     for (script, _) in scripts.findall(var):
+                        if script in EXCLUDED_SCRIPTS:
+                            continue
                         self.__scan(d, script, fun)
 
 if __name__ == "__main__":
