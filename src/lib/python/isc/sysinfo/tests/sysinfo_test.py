@@ -294,7 +294,7 @@ class SysInfoTest(unittest.TestCase):
         self.assertFalse(s.get_platform_is_smp())
         self.assertEqual(131072, s.get_uptime())
         # We check that we do NOT add 's' to 'day' (because it's singular):
-        self.assertEqual('1 day, 12:24', s.get_uptime_desc())
+        self.assertEqual('1 day, 12:24:32', s.get_uptime_desc())
         self.assertEqual(None, s.get_loadavg())
         self.assertEqual(None, s.get_mem_total())
         self.assertEqual(None, s.get_mem_free())
@@ -329,7 +329,7 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual(172801, s.get_uptime())
         # We check that we add 's' to 'day', and that the mm part has an
         # additional 0, i.e., not '0:0' but '0:00':
-        self.assertEqual('2 days, 0:00', s.get_uptime_desc())
+        self.assertEqual('2 days, 0:00:01', s.get_uptime_desc())
         self.assertEqual((0.1, 0.2, 0.3), s.get_loadavg())
         self.assertEqual(3157884928, s.get_mem_total())
         self.assertEqual(891383808, s.get_mem_free())
@@ -434,14 +434,6 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual(123456 * 1024, s.get_mem_free())
         self.assertEqual(1037533184, s.get_mem_swap_total())
         self.assertEqual(1037533184, s.get_mem_swap_free())
-
-        # One more untested case so far: get_uptime_desc() should omit the
-        # "days" field.
-        faked_process_output['boottime-sysctl'] = bytes(
-            '{ sec = ' + str(int(time.time() - 4200)) +
-                     ', usec = 0 }\n', 'utf-8')
-        s = SysInfoFromFactory()
-        self.assertEqual('1:10', s.get_uptime_desc())
 
     def test_sysinfo_osx(self):
         """Tests the OS X implementation of SysInfo. Note that this
