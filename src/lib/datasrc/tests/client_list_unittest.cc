@@ -293,6 +293,7 @@ public:
         ConfigurableClientList::DataSourceInfo& dsrc_info =
                 list_->getDataSources()[index];
         dsrc_info.cache_ = cache;
+        dsrc_info.segment_ = ztable_segment_;
     }
     // Check the positive result is as we expect it.
     void positiveResult(const ClientList::FindResult& result,
