@@ -217,6 +217,10 @@ case "$host" in
 	CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
 	# "now" binding is necessary to prevent deadlocks in C++ static initialization code
 	LDFLAGS="$LDFLAGS -z now"
+	# Destroying locked mutexes, condition variables being waited
+	# on, etc. are undefined behavior on Solaris, so we set it as
+	# such here.
+	AC_DEFINE([HAS_UNDEFINED_PTHREAD_BEHAVIOR], [1], [Does this platform have some undefined pthreads behavior?])
 	;;
 *-apple-darwin*)
 	# Starting with OSX 10.7 (Lion) we must choose which IPv6 API to use
