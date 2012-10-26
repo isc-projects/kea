@@ -435,7 +435,7 @@ ConfigurableClientList::getCachedZoneWriter(const Name& name) {
         load_action = boost::bind(loadZoneDataFromFile, _1, rrclass_, name,
                                   filename);
     }
-    return (ZoneWriterPair(ZONE_RELOADED,
+    return (ZoneWriterPair(ZONE_SUCCESS,
                            ZoneWriterPtr(
                                result.info->cache_->getZoneTableSegment().
                                getZoneWriter(load_action, name, rrclass_))));
