@@ -56,11 +56,6 @@ public:
     void TearDown() {
         // Release the writer
         writer_.reset();
-        // Release the table we used
-        ZoneTable::destroy(segment_->getMemorySegment(),
-                           segment_->getHeader().getTable());
-        // And check we freed all memory
-        EXPECT_TRUE(segment_->getMemorySegment().allMemoryDeallocated());
     }
 protected:
     scoped_ptr<ZoneTableSegment> segment_;
