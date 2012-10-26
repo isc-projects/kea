@@ -21,6 +21,7 @@
 #include <dns/rrclass.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
+#include "memory/zone_table_segment.h"
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
@@ -332,12 +333,16 @@ public:
     struct DataSourceInfo {
         // Plays a role of default constructor too (for vector)
         DataSourceInfo(const dns::RRClass& rrclass,
-                       util::MemorySegment& mem_sgmt,
+                       boost::shared_ptr
+                           <isc::datasrc::memory::ZoneTableSegment>&
+                               ztable_segment,
                        bool has_cache = false);
         DataSourceInfo(DataSourceClient* data_src_client,
                        const DataSourceClientContainerPtr& container,
                        bool has_cache, const dns::RRClass& rrclass,
-                       util::MemorySegment& mem_sgmt);
+                       boost::shared_ptr
+                           <isc::datasrc::memory::ZoneTableSegment>&
+                               ztable_segment);
         DataSourceClient* data_src_client_;
         DataSourceClientContainerPtr container_;
 

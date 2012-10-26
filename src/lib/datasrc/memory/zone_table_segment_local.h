@@ -37,17 +37,10 @@ protected:
     /// Instances are expected to be created by the factory method
     /// (\c ZoneTableSegment::create()), so this constructor is
     /// protected.
-    ZoneTableSegmentLocal() :
-        mem_sgmt_(mem_sgmt_local_)
-    {}
-    // TODO: A temporary constructor, for tests for now. Needs to
-    // be removed.
-    ZoneTableSegmentLocal(isc::util::MemorySegment& segment) :
-        mem_sgmt_(segment)
-    {}
+    ZoneTableSegmentLocal(const isc::dns::RRClass& rrclass);
 public:
     /// \brief Destructor
-    virtual ~ZoneTableSegmentLocal() {}
+    virtual ~ZoneTableSegmentLocal();
 
     /// \brief Return the ZoneTableHeader for the local zone table
     /// segment implementation.
@@ -65,9 +58,8 @@ public:
                                       const dns::Name& origin,
                                       const dns::RRClass& rrclass);
 private:
+    isc::util::MemorySegmentLocal mem_sgmt_;
     ZoneTableHeader header_;
-    isc::util::MemorySegmentLocal mem_sgmt_local_;
-    isc::util::MemorySegment& mem_sgmt_;
 };
 
 } // namespace memory
