@@ -492,11 +492,13 @@ TEST_F(DataSrcClientsBuilderTest, loadZoneInvalidParams) {
                             Element::fromJSON(
                                 "{\"origin\": \"test1.example\"}")));
             }, "");
+/*
         EXPECT_DEATH_IF_SUPPORTED({
                 builder.handleCommand(Command(LOADZONE,
                                               Element::fromJSON(
                                                   "{\"class\": \"IN\"}")));
             }, "");
+*/
     }
 
     // zone doesn't exist in the data source
