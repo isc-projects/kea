@@ -291,8 +291,10 @@ public:
     ///      the original data source no longer contains the cached zone.
     ReloadResult reload(const dns::Name& zone);
 
+private:
     /// \brief Convenience type shortcut
     typedef boost::shared_ptr<memory::ZoneWriter> ZoneWriterPtr;
+public:
 
     /// \brief Return value of getCachedZoneWriter()
     ///
