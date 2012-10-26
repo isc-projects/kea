@@ -33,6 +33,7 @@ import threading
 import http.client
 import xml.etree.ElementTree
 import random
+import urllib.parse
 
 import isc
 import stats_httpd
@@ -172,6 +173,7 @@ class TestHttpHandler(unittest.TestCase):
         self.base = BaseModules()
         self.stats_server = ThreadingServerManager(MyStats)
         self.stats = self.stats_server.server
+        DUMMY_DATA['Stats']['lname'] = self.stats.cc_session.lname
         self.stats_server.run()
         (self.address, self.port) = get_availaddr()
         self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd, (self.address, self.port))
@@ -204,64 +206,35 @@ class TestHttpHandler(unittest.TestCase):
             self.client.endheaders()
             response = self.client.getresponse()
             self.assertEqual(response.getheader("Content-type"), "text/xml")
-            self.assertTrue(int(response.getheader("Content-Length")) > 0)
+            self.assertGreater(int(response.getheader("Content-Length")), 0)
             self.assertEqual(response.status, 200)
             xml_doctype = response.readline().decode()
             xsl_doctype = response.readline().decode()
-            self.assertTrue(len(xml_doctype) > 0)
-            self.assertTrue(len(xsl_doctype) > 0)
+            self.assertGreater(len(xml_doctype), 0)
+            self.assertGreater(len(xsl_doctype), 0)
             root = xml.etree.ElementTree.parse(response).getroot()
-            self.assertTrue(root.tag.find('statistics') > 0)
-            schema_loc = '{http://www.w3.org/2001/XMLSchema-instance}schemaLocation'
-            if item is None and mod is None:
-                # check the path of XSD
-                self.assertEqual(root.attrib[schema_loc],
-                                 stats_httpd.XSD_NAMESPACE + ' '
-                                 + stats_httpd.XSD_URL_PATH)
-                # check the path of XSL
-                self.assertTrue(xsl_doctype.startswith(
-                        '<?xml-stylesheet type="text/xsl" href="' + 
-                        stats_httpd.XSL_URL_PATH
-                        + '"?>'))
-                for m in DUMMY_DATA:
-                    for k in DUMMY_DATA[m].keys():
-                        self.assertIsNotNone(root.find(m + '/' + k))
-                        itm = root.find(m + '/' + k)
-                        if type(DUMMY_DATA[m][k]) is list:
-                            for v in DUMMY_DATA[m][k]:
-                                for i in v:
-                                    self.assertIsNotNone(itm.find('zones/' + i))
-            elif item is None:
-                # check the path of XSD
-                self.assertEqual(root.attrib[schema_loc],
-                                 stats_httpd.XSD_NAMESPACE + ' '
-                                 + stats_httpd.XSD_URL_PATH + '/' + mod)
-                # check the path of XSL
-                self.assertTrue(xsl_doctype.startswith( 
-                                 '<?xml-stylesheet type="text/xsl" href="'
-                                 + stats_httpd.XSL_URL_PATH + '/' + mod
-                                 + '"?>'))
-                for k in DUMMY_DATA[mod].keys():
-                    self.assertIsNotNone(root.find(mod + '/' + k))
-                    itm = root.find(mod + '/' + k)
-                    self.assertIsNotNone(itm)
-                    if type(DUMMY_DATA[mod][k]) is list:
-                        for v in DUMMY_DATA[mod][k]:
-                            for i in v:
-                                self.assertIsNotNone(itm.find('zones/' + i))
-            else:
-                # check the path of XSD
-                self.assertEqual(root.attrib[schema_loc],
-                                 stats_httpd.XSD_NAMESPACE + ' '
-                                 + stats_httpd.XSD_URL_PATH + '/' + mod + '/' + item)
-                # check the path of XSL
-                self.assertTrue(xsl_doctype.startswith( 
-                                 '<?xml-stylesheet type="text/xsl" href="'
-                                 + stats_httpd.XSL_URL_PATH + '/' + mod + '/' + item
-                                 + '"?>'))
-                self.assertIsNotNone(root.find(mod + '/' + item))
+            self.assertGreater(root.tag.find('statistics'), 0)
+            schema_loc = '{%s}schemaLocation' % XMLNS_XSI
+            # check the path of XSD
+            self.assertEqual(root.attrib[schema_loc],
+                             stats_httpd.XSD_NAMESPACE + ' '
+                             + stats_httpd.XSD_URL_PATH)
+            # check the path of XSL
+            self.assertTrue(xsl_doctype.startswith(
+                    '<?xml-stylesheet type="text/xsl" href="' + 
+                    stats_httpd.XSL_URL_PATH
+                    + '"?>'))
+            for elem in root.find('item'):
+                attr = elem.attrib
+                value = isc.cc.data.find(DUMMY_DATA, attr['identifier'])
+                if type(value) is list or type(value) is dict:
+                    self.assertFalse('value' in attr)
+                elif type(value) is int or type(value) is float:
+                    self.assertEqual(attr['value'], str(value))
+                else:
+                    self.assertEqual(attr['value'], value)
 
-        # URL is '/bind10/statistics/xml'
+         # URL is '/bind10/statistics/xml'
         check_XML_URL_PATH(mod=None, item=None)
         for m in DUMMY_DATA:
             # URL is '/bind10/statistics/xml/Module'
