@@ -15,12 +15,12 @@
 #ifndef ALLOC_ENGINE_H
 #define ALLOC_ENGINE_H
 
+#include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 #include <dhcp/duid.h>
 #include <dhcp/subnet.h>
 #include <asiolink/io_address.h>
 #include <dhcp/lease_mgr.h>
-#include <iostream>
 
 namespace isc {
 namespace dhcp {
@@ -30,13 +30,13 @@ namespace dhcp {
 class AllocFailed : public isc::Exception {
 public:
 
-/// @brief constructor
-///
-/// @param file name of the file, where exception occurred
-/// @param line line of the file, where exception occurred
-/// @param what text description of the issue that caused exception
-AllocFailed(const char* file, size_t line, const char* what)
-    : isc::Exception(file, line, what) {}
+    /// @brief constructor
+    ///
+    /// @param file name of the file, where exception occurred
+    /// @param line line of the file, where exception occurred
+    /// @param what text description of the issue that caused exception
+    AllocFailed(const char* file, size_t line, const char* what)
+        : isc::Exception(file, line, what) {}
 };
 
 /// @brief DHCPv4 and DHCPv6 allocation engine
@@ -65,22 +65,17 @@ protected:
         /// again if necessary. The number of times this method is called will
         /// increase as the number of available leases will decrease.
         virtual isc::asiolink::IOAddress
-            pickAddress(const Subnet6Ptr& subnet,
-                        const DuidPtr& duid,
-                        const isc::asiolink::IOAddress& hint) = 0;
+        pickAddress(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                    const isc::asiolink::IOAddress& hint) = 0;
     protected:
-        /// @brief protected constructor
-        ///
-        /// Prevents anyone from attempting to instantiate Allocator objects
-        /// directly. Derived classes should be used instead.
-        Allocator() {
-        }
     };
 
     /// @brief Address/prefix allocator that iterates over all addresses
     ///
     /// This class implements iterative algorithm that returns all addresses in
-    /// a pool iteratively, one after another.
+    /// a pool iteratively, one after another. Once the last address is reached,
+    /// it starts allocating from the beginning of the first pool (i.e. it loops
+    /// over).
     class IterativeAllocator : public Allocator {
     public:
 
@@ -184,14 +179,15 @@ protected:
     /// @param duid Client'd DUID
     /// @param iaid iaid field from the IA_NA container that client sent
     /// @param hint a hint that the client provided
-    /// @param fake is this real (REQUEST) or fake (SOLICIT) allocation
+    /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
+    ///        an address for SOLICIT that is not really allocated (true)
     /// @return Allocated IPv6 lease (or NULL if allocation failed)
     Lease6Ptr
     allocateAddress6(const Subnet6Ptr& subnet,
                      const DuidPtr& duid,
                      uint32_t iaid,
                      const isc::asiolink::IOAddress& hint,
-                     bool fake);
+                     bool fake_allocation);
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~AllocEngine();
@@ -207,15 +203,16 @@ private:
     /// @param duid client's DUID
     /// @param iaid IAID from the IA_NA container the client sent to us
     /// @param addr an address that was selected and is confirmed to be available
-    /// @param fake is this SOLICIT (true) or a real/REQUEST allocation (false)?
+    /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
+    ///        an address for SOLICIT that is not really allocated (true)
     /// @return allocated lease (or NULL in the unlikely case of the lease just
     ///        becomed unavailable)
     Lease6Ptr createLease(const Subnet6Ptr& subnet, const DuidPtr& duid,
                           uint32_t iaid, const isc::asiolink::IOAddress& addr,
-                          bool fake = false);
+                          bool fake_allocation = false);
 
     /// @brief a pointer to currently used allocator
-    Allocator* allocator_;
+    boost::shared_ptr<Allocator> allocator_;
 
     /// @brief number of attempts before we give up lease allocation (0=unlimited)
     unsigned int attempts_;
@@ -224,4 +221,4 @@ private:
 }; // namespace isc::dhcp
 }; // namespace isc
 
-#endif // DHCP6_SRV_H
+#endif // ALLOC_ENGINE_H

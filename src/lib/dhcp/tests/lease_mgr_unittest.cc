@@ -86,18 +86,18 @@ TEST_F(LeaseMgrTest, addGetDelete) {
     x = leaseMgr->getLease6(IOAddress("2001:db8:1::456"));
     ASSERT_TRUE(x);
 
-    EXPECT_TRUE(x->addr_ == addr);
-    EXPECT_TRUE(*x->duid_ == *duid);
-    EXPECT_TRUE(x->iaid_ == iaid);
-    EXPECT_TRUE(x->subnet_id_ == subnet_id);
+    EXPECT_EQ(x->addr_.toText(), addr.toText());
+    EXPECT_EQ(*x->duid_, *duid);
+    EXPECT_EQ(x->iaid_, iaid);
+    EXPECT_EQ(x->subnet_id_, subnet_id);
 
     // These are not important from lease management perspective, but
     // let's check them anyway.
-    EXPECT_TRUE(x->type_ == Lease6::LEASE_IA_NA);
-    EXPECT_TRUE(x->preferred_lft_ == 100);
-    EXPECT_TRUE(x->valid_lft_ == 200);
-    EXPECT_TRUE(x->t1_ == 50);
-    EXPECT_TRUE(x->t2_ == 80);
+    EXPECT_EQ(x->type_, Lease6::LEASE_IA_NA);
+    EXPECT_EQ(x->preferred_lft_, 100);
+    EXPECT_EQ(x->valid_lft_, 200);
+    EXPECT_EQ(x->t1_, 50);
+    EXPECT_EQ(x->t2_, 80);
 
     // should return false - there's no such address
     EXPECT_FALSE(leaseMgr->deleteLease6(IOAddress("2001:db8:1::789")));

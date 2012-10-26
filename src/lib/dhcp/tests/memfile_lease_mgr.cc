@@ -24,11 +24,11 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const std::string& dbconfig)
 Memfile_LeaseMgr::~Memfile_LeaseMgr() {
 }
 
-bool Memfile_LeaseMgr::addLease(Lease4Ptr) {
+bool Memfile_LeaseMgr::addLease(const Lease4Ptr&) {
     return (false);
 }
 
-bool Memfile_LeaseMgr::addLease(Lease6Ptr lease) {
+bool Memfile_LeaseMgr::addLease(const Lease6Ptr& lease) {
     if (getLease6(lease->addr_)) {
         // there is a lease with specified address already
         return (false);
@@ -84,10 +84,10 @@ Lease6Ptr Memfile_LeaseMgr::getLease6(const DUID&, uint32_t,
     return (Lease6Ptr());
 }
 
-void Memfile_LeaseMgr::updateLease4(Lease4Ptr ) {
+void Memfile_LeaseMgr::updateLease4(const Lease4Ptr& ) {
 }
 
-void Memfile_LeaseMgr::updateLease6(Lease6Ptr ) {
+void Memfile_LeaseMgr::updateLease6(const Lease6Ptr& ) {
 
 }
 

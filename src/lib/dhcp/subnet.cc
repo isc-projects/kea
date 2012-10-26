@@ -15,7 +15,6 @@
 #include <dhcp/addr_utilities.h>
 #include <asiolink/io_address.h>
 #include <dhcp/subnet.h>
-#include <dhcp/pool.h>
 
 using namespace isc::asiolink;
 
