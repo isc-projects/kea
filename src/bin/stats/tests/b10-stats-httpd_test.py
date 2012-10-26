@@ -210,12 +210,9 @@ class TestHttpHandler(unittest.TestCase):
         self.assertEqual(len(self.stats_httpd.httpd), 1)
         self.assertEqual((self.address, self.port), self.stats_httpd.http_addrs[0])
 
-        def check_XML_URL_PATH(mod=None, item=None):
-            url_path = stats_httpd.XML_URL_PATH
-            if mod is not None:
-                url_path = url_path + '/' + mod
-                if item is not None:
-                    url_path = url_path + '/' + item
+        def check_XML_URL_PATH(path=''):
+            url_path = '%s/%s' % (stats_httpd.XML_URL_PATH, path)
+            url_path = urllib.parse.quote(url_path)
             self.client.putrequest('GET', url_path)
             self.client.endheaders()
             response = self.client.getresponse()
@@ -248,14 +245,10 @@ class TestHttpHandler(unittest.TestCase):
                 else:
                     self.assertEqual(attr['value'], value)
 
-         # URL is '/bind10/statistics/xml'
-        check_XML_URL_PATH(mod=None, item=None)
-        for m in DUMMY_DATA:
-            # URL is '/bind10/statistics/xml/Module'
-            check_XML_URL_PATH(mod=m)
-            for k in DUMMY_DATA[m].keys():
-                # URL is '/bind10/statistics/xml/Module/Item'
-                check_XML_URL_PATH(mod=m, item=k)
+        # URL is '/bind10/statistics/xml'
+        check_XML_URL_PATH()
+        for path in stats_httpd.item_name_list(DUMMY_DATA, ''):
+            check_XML_URL_PATH(path)
 
         def check_XSD_URL_PATH():
             url_path = stats_httpd.XSD_URL_PATH
