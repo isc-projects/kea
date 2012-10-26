@@ -870,7 +870,7 @@ ConfigurableClientList::ReloadResult
 ReloadTest<WriterUpdateType>::doReload(const Name& origin) {
     ConfigurableClientList::ZoneWriterPair
         result(list_->getCachedZoneWriter(origin));
-    if (result.first == ConfigurableClientList::ZONE_RELOADED) {
+    if (result.first == ConfigurableClientList::ZONE_SUCCESS) {
         // Can't use ASSERT_NE here, it would wan't to return(), which
         // it can't in non-void function.
         if (result.second) {
@@ -878,7 +878,7 @@ ReloadTest<WriterUpdateType>::doReload(const Name& origin) {
             result.second->install();
             result.second->cleanup();
         } else {
-            ADD_FAILURE() << "getCachedZoneWriter returned ZONE_RELOADED, "
+            ADD_FAILURE() << "getCachedZoneWriter returned ZONE_SUCCESS, "
                 "but the writer is NULL";
         }
     } else {
@@ -902,7 +902,7 @@ TYPED_TEST(ReloadTest, reloadSuccess) {
     EXPECT_EQ(ZoneFinder::NXRRSET,
               this->list_->find(name).finder_->find(name, RRType::NS())->code);
     // Now reload the full zone. It should be there now.
-    EXPECT_EQ(ConfigurableClientList::ZONE_RELOADED, this->doReload(name));
+    EXPECT_EQ(ConfigurableClientList::ZONE_SUCCESS, this->doReload(name));
     EXPECT_EQ(ZoneFinder::SUCCESS,
               this->list_->find(name).finder_->find(name, RRType::NS())->code);
 }
@@ -1035,7 +1035,7 @@ TYPED_TEST(ReloadTest, reloadMasterFile) {
     f << "nosuchdomain.\t\t3600\tIN\tTXT\ttest" << std::endl;
     f.close();
     // Do the reload.
-    EXPECT_EQ(ConfigurableClientList::ZONE_RELOADED, this->doReload(Name(".")));
+    EXPECT_EQ(ConfigurableClientList::ZONE_SUCCESS, this->doReload(Name(".")));
     // It is here now.
     EXPECT_EQ(ZoneFinder::SUCCESS,
               this->list_->find(Name(".")).finder_->find(Name("nosuchdomain"),
