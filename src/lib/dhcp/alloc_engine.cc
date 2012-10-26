@@ -12,7 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <asiolink/io_address.h>
 #include <alloc_engine.h>
 
 using namespace isc::asiolink;
@@ -41,7 +40,7 @@ AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress&
     }
 
     for (int i = len - 1; i >= 0; --i) {
-        packed[i]++;
+        ++packed[i];
         if (packed[i] != 0) {
             break;
         }
@@ -66,8 +65,6 @@ AllocEngine::IterativeAllocator::pickAddress(const Subnet6Ptr& subnet,
     if (pools.size() == 0) {
         isc_throw(AllocFailed, "No pools defined in selected subnet");
     }
-
-    Pool6Ptr pool = Pool6Ptr(); // null
 
     // first we need to find a pool the last address belongs to.
     Pool6Collection::const_iterator it;
@@ -144,13 +141,13 @@ AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts)
     :attempts_(attempts) {
     switch (engine_type) {
     case ALLOC_ITERATIVE:
-        allocator_ = new IterativeAllocator();
+        allocator_ = boost::shared_ptr<Allocator>(new IterativeAllocator());
         break;
     case ALLOC_HASHED:
-        allocator_ = new HashedAllocator();
+        allocator_ = boost::shared_ptr<Allocator>(new HashedAllocator());
         break;
     case ALLOC_RANDOM:
-        allocator_ = new RandomAllocator();
+        allocator_ = boost::shared_ptr<Allocator>(new RandomAllocator());
         break;
 
     default:
@@ -163,7 +160,8 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
                               const DuidPtr& duid,
                               uint32_t iaid,
                               const IOAddress& hint,
-                              bool fake /* = false */ ) {
+                              bool fake_allocation /* = false */ ) {
+
     // That check is not necessary. We create allocator in AllocEngine
     // constructor
     if (!allocator_) {
@@ -186,7 +184,7 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
             /// implemented
 
             // the hint is valid and not currently used, let's create a lease for it
-            Lease6Ptr lease = createLease(subnet, duid, iaid, hint, fake);
+            Lease6Ptr lease = createLease(subnet, duid, iaid, hint, fake_allocation);
 
             // It can happen that the lease allocation failed (we could have lost
             // the race condition. That means that the hint is lo longer usable and
@@ -208,7 +206,8 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
         // there's no existing lease for selected candidate, so it is
         // free. Let's allocate it.
         if (!existing) {
-            Lease6Ptr lease = createLease(subnet, duid, iaid, candidate, fake);
+            Lease6Ptr lease = createLease(subnet, duid, iaid, candidate,
+                                          fake_allocation);
             if (lease) {
                 return (lease);
             }
@@ -231,13 +230,13 @@ Lease6Ptr AllocEngine::createLease(const Subnet6Ptr& subnet,
                                    const DuidPtr& duid,
                                    uint32_t iaid,
                                    const IOAddress& addr,
-                                   bool fake /*= false */ ) {
+                                   bool fake_allocation /*= false */ ) {
 
     Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, duid, iaid,
                                subnet->getPreferred(), subnet->getValid(),
                                subnet->getT1(), subnet->getT2(), subnet->getID()));
 
-    if (!fake) {
+    if (!fake_allocation) {
         // That is a real (REQUEST) allocation
         bool status = LeaseMgr::instance().addLease(lease);
 
@@ -266,10 +265,7 @@ Lease6Ptr AllocEngine::createLease(const Subnet6Ptr& subnet,
 }
 
 AllocEngine::~AllocEngine() {
-    if (allocator_) {
-        delete allocator_;
-        allocator_ = NULL;
-    }
+    // no need to delete allocator. smart_ptr will do the trick for us
 }
 
 }; // end of isc::dhcp namespace

@@ -49,10 +49,11 @@ public:
     /// subnet (e.g. 2001::/64) there may be one or more pools defined
     /// that may or may not cover entire subnet, e.g. pool 2001::1-2001::10).
     /// inPool() returning true implies inSubnet(), but the reverse implication
-    /// is not always true. For the given example, 2001::abc would return
+    /// is not always true. For the given example, 2001::1234:abcd would return
     /// true for inSubnet(), but false for inPool() check.
     ///
-    /// @param addr this address will be checked if it belongs to any pools in that subnet
+    /// @param addr this address will be checked if it belongs to any pools in
+    ///        that subnet
     /// @return true if the address is in any of the pools
     virtual bool inPool(const isc::asiolink::IOAddress& addr) const = 0;
 
@@ -71,15 +72,35 @@ public:
         return (t2_);
     }
 
-    isc::asiolink::IOAddress getLastAllocated() {
+    /// @brief returns the last address that was tried from this pool
+    ///
+    /// This method returns the last address that was attempted to be allocated
+    /// from this subnet. This is used as helper information for the next
+    /// iteration of the allocation algorithm.
+    ///
+    /// @todo: Define map<SubnetID, IOAddress> somewhere in the
+    ///        AllocEngine::IterativeAllocator and keep the data there
+    ///
+    /// @return address that was last tried from this pool
+    isc::asiolink::IOAddress getLastAllocated() const {
         return (last_allocated_);
     }
 
+    /// @brief sets the last address that was tried from this pool
+    ///
+    /// This method sets the last address that was attempted to be allocated
+    /// from this subnet. This is used as helper information for the next
+    /// iteration of the allocation algorithm.
+    ///
+    /// @todo: Define map<SubnetID, IOAddress> somewhere in the
+    ///        AllocEngine::IterativeAllocator and keep the data there
     void setLastAllocated(const isc::asiolink::IOAddress& addr) {
         last_allocated_ = addr;
     }
 
-    SubnetID getID() { return id_; }
+    /// @brief returns unique ID for that subnet
+    /// @return unique ID for that subnet
+    SubnetID getID() const { return (id_); }
 
 protected:
     /// @brief protected constructor
@@ -90,6 +111,10 @@ protected:
            const Triplet<uint32_t>& t1,
            const Triplet<uint32_t>& t2,
            const Triplet<uint32_t>& valid_lifetime);
+
+    /// @brief virtual destructor
+    virtual ~Subnet() {
+    };
 
     /// @brief returns the next unique Subnet-ID
     ///
