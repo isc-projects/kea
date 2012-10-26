@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <exceptions/exceptions.h>
 
 #include <util/threads/sync.h>
@@ -137,8 +139,8 @@ signalAndWait(CondVar* condvar, Mutex* mutex) {
     condvar->wait(*mutex);
 }
 
-// Temporarily disabled: Solaris seems to make this behavior "undefined"
-TEST_F(CondVarTest, DISABLED_destroyWhileWait) {
+#ifndef HAS_UNDEFINED_PTHREAD_BEHAVIOR
+TEST_F(CondVarTest, destroyWhileWait) {
     // We'll destroy a CondVar object while the thread is still waiting
     // on it.  This will trigger an assertion failure.
     EXPECT_DEATH_IF_SUPPORTED({
@@ -148,6 +150,7 @@ TEST_F(CondVarTest, DISABLED_destroyWhileWait) {
             cond.wait(mutex_);
         }, "");
 }
+#endif // !HAS_UNDEFINED_PTHREAD_BEHAVIOR
 
 #ifdef ENABLE_DEBUG
 
