@@ -15,11 +15,22 @@
 #include <datasrc/memory/zone_table_segment_local.h>
 #include "zone_writer_local.h"
 
+using namespace isc::dns;
 using namespace isc::util;
 
 namespace isc {
 namespace datasrc {
 namespace memory {
+
+ZoneTableSegmentLocal::ZoneTableSegmentLocal(const RRClass& rrclass) :
+    ZoneTableSegment(rrclass),
+    header_(ZoneTable::create(mem_sgmt_, rrclass))
+{
+}
+
+ZoneTableSegmentLocal::~ZoneTableSegmentLocal() {
+    ZoneTable::destroy(mem_sgmt_, header_.getTable());
+}
 
 // After more methods' definitions are added here, it would be a good
 // idea to move getHeader() and getMemorySegment() definitions to the

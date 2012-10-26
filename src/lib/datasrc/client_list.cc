@@ -36,6 +36,7 @@ using boost::lexical_cast;
 using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
 using isc::datasrc::memory::InMemoryClient;
+using isc::datasrc::memory::ZoneTableSegment;
 
 namespace isc {
 namespace datasrc {
@@ -43,21 +44,22 @@ namespace datasrc {
 ConfigurableClientList::DataSourceInfo::DataSourceInfo(
     DataSourceClient* data_src_client,
     const DataSourceClientContainerPtr& container, bool has_cache,
-    const RRClass& rrclass, MemorySegment& mem_sgmt) :
+    const RRClass& rrclass, shared_ptr<ZoneTableSegment>& segment) :
     data_src_client_(data_src_client),
     container_(container)
 {
     if (has_cache) {
-        cache_.reset(new InMemoryClient(mem_sgmt, rrclass));
+        cache_.reset(new InMemoryClient(segment, rrclass));
     }
 }
 
 ConfigurableClientList::DataSourceInfo::DataSourceInfo(
-    const RRClass& rrclass, MemorySegment& mem_sgmt, bool has_cache) :
+    const RRClass& rrclass, shared_ptr<ZoneTableSegment>& segment,
+    bool has_cache) :
     data_src_client_(NULL)
 {
     if (has_cache) {
-        cache_.reset(new InMemoryClient(mem_sgmt, rrclass));
+        cache_.reset(new InMemoryClient(segment, rrclass));
     }
 }
 
@@ -94,6 +96,8 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
     size_t i(0); // Outside of the try to be able to access it in the catch
     try {
         vector<DataSourceInfo> new_data_sources;
+        shared_ptr<ZoneTableSegment> ztable_segment(
+            ZoneTableSegment::create(*config, rrclass_));
         for (; i < config->size(); ++i) {
             // Extract the parameters
             const ConstElementPtr dconf(config->get(i));
@@ -130,7 +134,8 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                     isc_throw(ConfigurationError, "The cache must be enabled "
                               "for the MasterFiles type");
                 }
-                new_data_sources.push_back(DataSourceInfo(rrclass_, *mem_sgmt_,
+                new_data_sources.push_back(DataSourceInfo(rrclass_,
+                                                          ztable_segment,
                                                           true));
             } else {
                 // Ask the factory to create the data source for us
@@ -139,7 +144,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                 // And put it into the vector
                 new_data_sources.push_back(DataSourceInfo(ds.first, ds.second,
                                                           want_cache, rrclass_,
-                                                          *mem_sgmt_));
+                                                          ztable_segment));
             }
 
             if (want_cache) {

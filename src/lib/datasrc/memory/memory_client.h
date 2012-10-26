@@ -22,6 +22,8 @@
 #include <datasrc/memory/zone_table.h>
 #include <datasrc/memory/zone_data.h>
 
+#include <boost/shared_ptr.hpp>
+
 #include <string>
 
 namespace isc {
@@ -62,7 +64,7 @@ public:
     /// This constructor internally involves resource allocation, and if
     /// it fails, a corresponding standard exception will be thrown.
     /// It never throws an exception otherwise.
-    InMemoryClient(util::MemorySegment& mem_sgmt,
+    InMemoryClient(boost::shared_ptr<ZoneTableSegment> ztable_segment,
                    isc::dns::RRClass rrclass);
 
     /// The destructor.
@@ -186,7 +188,7 @@ public:
     /// \todo Consider making this private and add a friend declaration
     ///     for the ClientList.
     ZoneTableSegment& getZoneTableSegment() {
-        return (*zone_table_segment_);
+        return (*ztable_segment_);
     }
 
 private:
@@ -200,11 +202,9 @@ private:
                                 const std::string& filename,
                                 ZoneData* zone_data);
 
-    ZoneTableSegment* zone_table_segment_;
-    util::MemorySegment& mem_sgmt_;
+    boost::shared_ptr<ZoneTableSegment> ztable_segment_;
     const isc::dns::RRClass rrclass_;
     unsigned int zone_count_;
-    ZoneTable* zone_table_;
     FileNameTree* file_name_tree_;
 };
 
