@@ -542,7 +542,7 @@ class StatsHttpd:
             xsd_namespace=XSD_NAMESPACE)
         return self.xsd_body
 
-    def xsl_handler(self, module_name=None, item_name=None):
+    def xsl_handler(self):
         """Loads the XSL template file, replaces the variable strings,
         and returns the string of the XSL document."""
         self.xsl_body = self.open_template(XSL_TEMPLATE_LOCATION).substitute(
