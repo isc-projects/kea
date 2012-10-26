@@ -12,6 +12,20 @@ AC_CONFIG_MACRO_DIR([m4macros])
 # Checks for programs.
 AC_PROG_CXX
 
+# Enable low-performing debugging facilities? This option optionally
+# enables some debugging aids that perform slowly and hence aren't built
+# by default.
+AC_ARG_ENABLE([debug],
+  AS_HELP_STRING([--enable-debug],
+    [enable debugging (default is no)]),
+  [case "${enableval}" in
+    yes) debug_enabled=yes ;;
+    no)  debug_enabled=no ;;
+    *)   AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+  esac],[debug_enabled=no])
+AM_CONDITIONAL([DEBUG_ENABLED], [test x$debug_enabled = xyes])
+AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable low-performing debugging facilities?])])
+
 # Libtool configuration
 #
 
@@ -1112,6 +1126,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/bindctl/Makefile
                  src/bin/bindctl/tests/Makefile
                  src/bin/cfgmgr/Makefile
+                 src/bin/cfgmgr/local_plugins/Makefile
                  src/bin/cfgmgr/plugins/Makefile
                  src/bin/cfgmgr/plugins/tests/Makefile
                  src/bin/cfgmgr/tests/Makefile
@@ -1421,6 +1436,7 @@ Features:
   $enable_features
 
 Developer:
+  Enable Debugging: $debug_enabled
   Google Tests: $enable_gtest
   Valgrind: $found_valgrind
   C++ Code Coverage: $USE_LCOV
