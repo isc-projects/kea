@@ -69,6 +69,13 @@ XSD_URL_PATH = '/bind10/statistics/xsd'
 XSL_URL_PATH = '/bind10/statistics/xsl'
 # TODO: This should be considered later.
 XSD_NAMESPACE = 'http://bind10.isc.org/bind10'
+XMLNS_XSI = "http://www.w3.org/2001/XMLSchema-instance"
+
+# constant parameter of XML
+XML_ROOT_ELEMENT = 'bind10:statistics'
+XML_ROOT_ATTRIB = { 'xsi:schemaLocation' : '%s %s' % (XSD_NAMESPACE, XSD_URL_PATH),
+                    'xmlns:bind10' : XSD_NAMESPACE,
+                    'xmlns:xsi' : XMLNS_XSI }
 
 # Assign this process name
 isc.util.process.rename()
