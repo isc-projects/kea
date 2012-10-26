@@ -62,13 +62,13 @@ A debug message, showing when the separate thread for maintaining data
 source clients receives a command from the manager.
 
 % AUTH_DATASRC_CLIENTS_BUILDER_COMMAND_ERROR command execution failure: %1
-The separate thread for maintaining data source clients failed to complete
-a comment given by the main thread.  In most cases this is some kind of
-configuration or temporary errors such as an attempt of non existent zone
-or temporary DB connection failure.  So the event is just logged and the
-thread keeps running.  In some rare cases, however, this may indicate
-an internal bug and it may be better to restart the entire program.
-So the log message should be carefully examined.
+The separate thread for maintaining data source clients failed to complete a
+command given by the main thread.  In most cases this is some kind of
+configuration or temporary error such as an attempt to load a non-existent
+zone or a temporary DB connection failure.  So the event is just logged and
+the thread keeps running.  In some rare cases, however, this may indicate an
+internal bug and it may be better to restart the entire program, so the log
+message should be carefully examined.
 
 % AUTH_DATASRC_CLIENTS_BUILDER_FAILED data source builder thread stopped due to an exception: %1
 The separate thread for maintaining data source clients has been
