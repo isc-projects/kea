@@ -720,7 +720,7 @@ class TestStatsHttpd(unittest.TestCase):
             self.assertTrue(lines.find(opts[n])>0)
         # unsuccessful condition
         self.assertRaises(
-            IOError,
+            stats_httpd.StatsHttpdDataError,
             self.stats_httpd.open_template, '/path/to/foo/bar')
 
     def test_commands(self):
