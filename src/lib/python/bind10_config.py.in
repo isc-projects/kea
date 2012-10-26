@@ -51,7 +51,7 @@ def reload():
     #  tree the programs in the tree (not installed ones) will be used.
     #
     # B10_FROM_SOURCE_LOCALSTATEDIR is specifically intended to be used for
-    # tests where we want to use variuos types of configuration within the test
+    # tests where we want to use various types of configuration within the test
     # environment.  (We may want to make it even more generic so that the path
     # is passed from the boss process)
     if "B10_FROM_SOURCE" in os.environ:
@@ -60,6 +60,8 @@ def reload():
         else:
             DATA_PATH = os.environ["B10_FROM_SOURCE"]
         PLUGIN_PATHS = [os.environ["B10_FROM_SOURCE"] +
+                            '/src/bin/cfgmgr/local_plugins',
+                             os.environ["B10_FROM_SOURCE"] +
                             '/src/bin/cfgmgr/plugins']
         programdirs = ['auth', 'cfgmgr', 'cmdctl', 'ddns', 'dhcp6', 'msgq',
                        'resolver', 'sockcreator', 'stats', 'xfrin', 'xfrout',
