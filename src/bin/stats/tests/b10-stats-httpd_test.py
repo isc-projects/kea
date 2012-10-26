@@ -705,19 +705,19 @@ class TestStatsHttpd(unittest.TestCase):
             xsl_url_path="/path/to/")
         lines = tmpl.substitute(opts)
         for n in opts:
-            self.assertTrue(lines.find(opts[n])>0)
+            self.assertGreater(lines.find(opts[n]), 0)
         tmpl = self.stats_httpd.open_template(stats_httpd.XSD_TEMPLATE_LOCATION)
         self.assertTrue(isinstance(tmpl, string.Template))
         opts = dict(xsd_namespace="http://host/path/to/")
         lines = tmpl.substitute(opts)
         for n in opts:
-            self.assertTrue(lines.find(opts[n])>0)
+            self.assertGreater(lines.find(opts[n]), 0)
         tmpl = self.stats_httpd.open_template(stats_httpd.XSL_TEMPLATE_LOCATION)
         self.assertTrue(isinstance(tmpl, string.Template))
         opts = dict(xsd_namespace="http://host/path/to/")
         lines = tmpl.substitute(opts)
         for n in opts:
-            self.assertTrue(lines.find(opts[n])>0)
+            self.assertGreater(lines.find(opts[n]), 0)
         # unsuccessful condition
         self.assertRaises(
             stats_httpd.StatsHttpdDataError,
