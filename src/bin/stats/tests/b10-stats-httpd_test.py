@@ -353,7 +353,7 @@ class TestHttpHandler(unittest.TestCase):
         self.client.putrequest('GET', stats_httpd.XSD_URL_PATH + '/Foo')
         self.client.endheaders()
         response = self.client.getresponse()
-        self.assertEqual(response.status, 200)
+        self.assertEqual(response.status, 404)
         self.client._http_vsn_str = 'HTTP/1.0'
         self.client.putrequest('GET', stats_httpd.XSL_URL_PATH + '/Foo')
         self.client.endheaders()
@@ -370,7 +370,7 @@ class TestHttpHandler(unittest.TestCase):
         self.client.putrequest('GET', stats_httpd.XSD_URL_PATH + '/Foo/bar')
         self.client.endheaders()
         response = self.client.getresponse()
-        self.assertEqual(response.status, 200)
+        self.assertEqual(response.status, 404)
         self.client._http_vsn_str = 'HTTP/1.0'
         self.client.putrequest('GET', stats_httpd.XSL_URL_PATH + '/Foo/bar')
         self.client.endheaders()
@@ -387,7 +387,7 @@ class TestHttpHandler(unittest.TestCase):
         self.client.putrequest('GET', stats_httpd.XSD_URL_PATH + '/Auth/bar')
         self.client.endheaders()
         response = self.client.getresponse()
-        self.assertEqual(response.status, 200)
+        self.assertEqual(response.status, 404)
         self.client._http_vsn_str = 'HTTP/1.0'
         self.client.putrequest('GET', stats_httpd.XSL_URL_PATH + '/Auth/bar')
         self.client.endheaders()
