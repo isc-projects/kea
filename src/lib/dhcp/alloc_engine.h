@@ -171,7 +171,7 @@ protected:
     ///
     /// @param engine_type selects allocation algorithm
     /// @param attempts number of attempts for each lease allocation before
-    ///        we give up (0 mean unlimited)
+    ///        we give up (0 means unlimited)
     AllocEngine(AllocType engine_type, unsigned int attempts);
 
     /// @brief Allocates an IPv6 lease
