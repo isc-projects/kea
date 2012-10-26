@@ -462,20 +462,26 @@ class StatsHttpd:
                                   (err.__class__.__name__, err))
 
 
-    def xml_handler(self, module_name=None, item_name=None):
+    def xml_handler(self, path=''):
         """Requests the specified statistics data and specification by
         using the functions get_stats_data and get_stats_spec
         respectively and loads the XML template file and returns the
         string of the XML document.The argument is a path in the
         requested URI."""
 
+        dirs = [ d for d in path.split("/") if len(d) > 0 ]
+        module_name = None
+        item_name = None
+        if len(dirs) > 0:
+            module_name = dirs[0]
+        if len(dirs) > 1:
+            item_name = dirs[1]
+            # removed an index string when list-type value is
+            # requested. Because such a item name can be accept by the
+            # stats module currently.
+            item_name = re.sub('\[\d+\]$', '', item_name)
         stats_spec = self.get_stats_spec(module_name, item_name)
         stats_data = self.get_stats_data(module_name, item_name)
-        path = ''
-        if module_name:
-            path = module_name
-        if item_name:
-            path = '%s/%s' % (path, item_name)
         path_list = []
         try:
             path_list = item_name_list(stats_data, path)
