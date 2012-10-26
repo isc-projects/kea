@@ -847,7 +847,7 @@ TEST_F(ListTest, BadMasterFile) {
 
 // This allows us to test two versions of the reloading code
 // (One by calling reload(), one by obtaining a ZoneWriter and
-// plaping with that). Once we deprecate reload(), we should revert this
+// playing with that). Once we deprecate reload(), we should revert this
 // change and not use typed tests any more.
 template<class UpdateType>
 class ReloadTest : public ListTest {
@@ -871,7 +871,7 @@ ReloadTest<WriterUpdateType>::doReload(const Name& origin) {
     ConfigurableClientList::ZoneWriterPair
         result(list_->getCachedZoneWriter(origin));
     if (result.first == ConfigurableClientList::ZONE_SUCCESS) {
-        // Can't use ASSERT_NE here, it would wan't to return(), which
+        // Can't use ASSERT_NE here, it would want to return(), which
         // it can't in non-void function.
         if (result.second) {
             result.second->load();
