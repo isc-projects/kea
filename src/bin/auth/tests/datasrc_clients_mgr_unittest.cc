@@ -196,6 +196,37 @@ TEST(DataSrcClientsMgrTest, holder) {
     EXPECT_THROW(TestDataSrcClientsMgr::Holder holder2(mgr), isc::Unexpected);
 }
 
+TEST(DataSrcClientsMgrTest, reload) {
+    TestDataSrcClientsMgr mgr;
+    EXPECT_TRUE(FakeDataSrcClientsBuilder::started);
+    EXPECT_TRUE(FakeDataSrcClientsBuilder::command_queue->empty());
+
+    isc::data::ElementPtr args =
+        isc::data::Element::fromJSON("{ \"class\": \"IN\","
+                                     "  \"origin\": \"example.com\" }");
+    mgr.loadZone(args);
+    EXPECT_EQ(1, FakeDataSrcClientsBuilder::command_queue->size());
+    mgr.loadZone(args);
+    EXPECT_EQ(2, FakeDataSrcClientsBuilder::command_queue->size());
+
+    // Should succeed without 'class'
+    args->remove("class");
+    mgr.loadZone(args);
+    EXPECT_EQ(3, FakeDataSrcClientsBuilder::command_queue->size());
+
+    // but fail without origin, without sending new commands
+    args->remove("origin");
+    EXPECT_THROW(mgr.loadZone(args), LoadZoneCommandError);
+    EXPECT_EQ(3, FakeDataSrcClientsBuilder::command_queue->size());
+
+    // same for empty data and data that is not a map
+    EXPECT_THROW(mgr.loadZone(isc::data::ConstElementPtr()),
+                              LoadZoneCommandError);
+    EXPECT_THROW(mgr.loadZone(isc::data::Element::createList()),
+                              LoadZoneCommandError);
+    EXPECT_EQ(3, FakeDataSrcClientsBuilder::command_queue->size());
+}
+
 TEST(DataSrcClientsMgrTest, realThread) {
     // Using the non-test definition with a real thread.  Just checking
     // no disruption happens.
