@@ -25,12 +25,14 @@ using namespace isc::dns;
 namespace {
 
 const char TEST_STRING[] = "string token";
+// This excludes the ending \0 character
+const size_t TEST_STRING_LEN = sizeof(TEST_STRING) - 1;
 
 class MasterLexerTokenTest : public ::testing::Test {
 public:
     MasterLexerTokenTest() :
         token_err(MasterLexer::Token::ERROR),
-        token_str(TEST_STRING, sizeof(TEST_STRING) - 1), // excluding ending 0
+        token_str(TEST_STRING, TEST_STRING_LEN),
         token_num(42)
     {}
 
@@ -41,12 +43,21 @@ public:
 
 
 TEST_F(MasterLexerTokenTest, strings) {
+    // basic construction and getter checks
     EXPECT_EQ(MasterLexer::Token::STRING, token_str.getType());
     EXPECT_EQ(std::string("string token"), token_str.getString());
     const MasterLexer::Token::StringRegion str_region =
         token_str.getStringRegion();
     EXPECT_EQ(TEST_STRING, str_region.beg);
-    EXPECT_EQ(sizeof(TEST_STRING) - 1, str_region.len);
+    EXPECT_EQ(TEST_STRING_LEN, str_region.len);
+
+    // Even if the stored string contains a nul character (in this case,
+    // it happens to be at the end of the string, but could be in the middle),
+    // getString() should return a string object containing the nul.
+    std::string expected_str("string token");
+    expected_str.push_back('\0');
+    EXPECT_EQ(expected_str,
+              MasterLexer::Token(TEST_STRING, TEST_STRING_LEN + 1).getString());
 
     // Construct type of qstring
     EXPECT_EQ(MasterLexer::Token::QSTRING,
@@ -85,8 +96,9 @@ TEST_F(MasterLexerTokenTest, numbers) {
     token = MasterLexer::Token(0xffffffff);
     EXPECT_EQ(4294967295u, token.getNumber());
 
-    // TBD: getNumber for other type
+    // getNumber() isn't allowed for non number types
     EXPECT_THROW(token_err.getNumber(), isc::InvalidOperation);
+    EXPECT_THROW(token_str.getNumber(), isc::InvalidOperation);
 }
 
 TEST_F(MasterLexerTokenTest, specials) {
