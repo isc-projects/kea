@@ -289,9 +289,9 @@ public:
     /// @brief returns a single instance of LeaseMgr
     ///
     /// LeaseMgr is a singleton and this method is the only way of
-    /// accessing it. LeaseMgr must be create first using
-    /// instantiate() method, otherwise instance() will throw
-    /// InvalidOperation exception.
+    /// accessing it. LeaseMgr must be created first. See
+    /// isc::dhcp::LeaseMgrFactory class (work of ticket #2342.
+    /// Otherwise instance() will throw InvalidOperation exception.
     /// @throw InvalidOperation if LeaseMgr not instantiated
     static LeaseMgr& instance();
 
@@ -305,12 +305,12 @@ public:
     /// @brief Adds an IPv4 lease.
     ///
     /// @param lease lease to be added
-    virtual bool addLease(Lease4Ptr lease) = 0;
+    virtual bool addLease(const Lease4Ptr& lease) = 0;
 
     /// @brief Adds an IPv6 lease.
     ///
     /// @param lease lease to be added
-    virtual bool addLease(Lease6Ptr lease) = 0;
+    virtual bool addLease(const Lease6Ptr& lease) = 0;
 
     /// @brief Returns existing IPv4 lease for specified IPv4 address and subnet_id
     ///
@@ -429,14 +429,14 @@ public:
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    virtual void updateLease4(Lease4Ptr lease4) = 0;
+    virtual void updateLease4(const Lease4Ptr& lease4) = 0;
 
     /// @brief Updates IPv4 lease.
     ///
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    virtual void updateLease6(Lease6Ptr lease6) = 0;
+    virtual void updateLease6(const Lease6Ptr& lease6) = 0;
 
     /// @brief Deletes a lease.
     ///

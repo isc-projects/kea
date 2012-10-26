@@ -50,22 +50,26 @@ public:
 
     /// @brief Adds an IPv4 lease.
     ///
+    /// @todo Not implemented yet
     /// @param lease lease to be added
-    virtual bool addLease(Lease4Ptr lease);
+    virtual bool addLease(const Lease4Ptr& lease);
 
     /// @brief Adds an IPv6 lease.
     ///
     /// @param lease lease to be added
-    virtual bool addLease(Lease6Ptr lease);
+    virtual bool addLease(const Lease6Ptr& lease);
 
     /// @brief Returns existing IPv4 lease for specified IPv4 address.
     ///
+    /// @todo Not implemented yet
     /// @param addr address of the searched lease
     ///
     /// @return a collection of leases
     virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr) const;
 
     /// @brief Returns existing IPv4 lease for specific address and subnet
+    ///
+    /// @todo Not implemented yet
     /// @param addr address of the searched lease
     /// @param subnet_id ID of the subnet the lease must belong to
     ///
@@ -74,6 +78,8 @@ public:
                                 SubnetID subnet_id) const;
 
     /// @brief Returns existing IPv4 leases for specified hardware address.
+    ///
+    /// @todo Not implemented yet
     ///
     /// Although in the usual case there will be only one lease, for mobile
     /// clients or clients with multiple static/fixed/reserved leases there
@@ -88,6 +94,8 @@ public:
     /// @brief Returns existing IPv4 leases for specified hardware address
     ///        and a subnet
     ///
+    /// @todo Not implemented yet
+    ///
     /// There can be at most one lease for a given HW address in a single
     /// pool, so this method with either return a single lease or NULL.
     ///
@@ -100,6 +108,8 @@ public:
 
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
+    /// @todo Not implemented yet
+    ///
     /// @param clientid client identifier
     virtual Lease4Collection getLease4(const ClientId& clientid) const;
 
@@ -107,6 +117,8 @@ public:
     ///
     /// There can be at most one lease for a given HW address in a single
     /// pool, so this method with either return a single lease or NULL.
+    ///
+    /// @todo Not implemented yet
     ///
     /// @param clientid client identifier
     /// @param subnet_id identifier of the subnet that lease must belong to
@@ -124,6 +136,8 @@ public:
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
+    /// @todo Not implemented yet
+    ///
     /// @param duid client DUID
     /// @param iaid IA identifier
     ///
@@ -131,6 +145,8 @@ public:
     Lease6Collection getLease6(const DUID& duid, uint32_t iaid) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
+    ///
+    /// @todo Not implemented yet
     ///
     /// @param duid client DUID
     /// @param iaid IA identifier
@@ -141,19 +157,25 @@ public:
 
     /// @brief Updates IPv4 lease.
     ///
+    /// @todo Not implemented yet
+    ///
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    void updateLease4(Lease4Ptr lease4);
+    void updateLease4(const Lease4Ptr& lease4);
 
     /// @brief Updates IPv4 lease.
     ///
+    /// @todo Not implemented yet
+    ///
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    void updateLease6(Lease6Ptr lease6);
+    void updateLease6(const Lease6Ptr& lease6);
 
     /// @brief Deletes a lease.
+    ///
+    /// @todo Not implemented yet
     ///
     /// @param addr IPv4 address of the lease to be deleted.
     ///
