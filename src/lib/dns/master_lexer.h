@@ -41,6 +41,13 @@ public:
         NUMBER
     };
 
+    enum ErrorCode {
+        NOT_STARTED,
+        UNBALANCED_PAREN,
+        UNEXPECTED_END,
+        UNBALANCED_QUOTES
+    };
+
     struct StringRegion {
         const char* beg;
         size_t len;

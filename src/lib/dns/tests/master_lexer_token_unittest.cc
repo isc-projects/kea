@@ -31,12 +31,12 @@ const size_t TEST_STRING_LEN = sizeof(TEST_STRING) - 1;
 class MasterLexerTokenTest : public ::testing::Test {
 public:
     MasterLexerTokenTest() :
-        token_err(MasterLexer::Token::ERROR),
+        token_eof(MasterLexer::Token::END_OF_FILE),
         token_str(TEST_STRING, TEST_STRING_LEN),
         token_num(42)
     {}
 
-    const MasterLexer::Token token_err;
+    const MasterLexer::Token token_eof; // an example of special type token
     const MasterLexer::Token token_str;
     const MasterLexer::Token token_num;
 };
@@ -69,9 +69,9 @@ TEST_F(MasterLexerTokenTest, strings) {
               getType());
 
     // getString/StringRegion() aren't allowed for non string(-variant) types
-    EXPECT_THROW(token_err.getString(), isc::InvalidOperation);
+    EXPECT_THROW(token_eof.getString(), isc::InvalidOperation);
     EXPECT_THROW(token_num.getString(), isc::InvalidOperation);
-    EXPECT_THROW(token_err.getStringRegion(), isc::InvalidOperation);
+    EXPECT_THROW(token_eof.getStringRegion(), isc::InvalidOperation);
     EXPECT_THROW(token_num.getStringRegion(), isc::InvalidOperation);
 }
 
@@ -89,25 +89,23 @@ TEST_F(MasterLexerTokenTest, numbers) {
     EXPECT_EQ(MasterLexer::Token::NUMBER, token.getType());
 
     // it's okay to replace it with a different type of token
-    token = token_err;
-    EXPECT_EQ(MasterLexer::Token::ERROR, token.getType());
+    token = token_eof;
+    EXPECT_EQ(MasterLexer::Token::END_OF_FILE, token.getType());
 
     // Possible max value
     token = MasterLexer::Token(0xffffffff);
     EXPECT_EQ(4294967295u, token.getNumber());
 
     // getNumber() isn't allowed for non number types
-    EXPECT_THROW(token_err.getNumber(), isc::InvalidOperation);
+    EXPECT_THROW(token_eof.getNumber(), isc::InvalidOperation);
     EXPECT_THROW(token_str.getNumber(), isc::InvalidOperation);
 }
 
 TEST_F(MasterLexerTokenTest, specials) {
     // Just checking we can construct them and getType() returns correct value.
-    EXPECT_EQ(MasterLexer::Token::ERROR, token_err.getType());
+    EXPECT_EQ(MasterLexer::Token::END_OF_FILE, token_eof.getType());
     EXPECT_EQ(MasterLexer::Token::END_OF_LINE,
               MasterLexer::Token(MasterLexer::Token::END_OF_LINE).getType());
-    EXPECT_EQ(MasterLexer::Token::END_OF_FILE,
-              MasterLexer::Token(MasterLexer::Token::END_OF_FILE).getType());
     EXPECT_EQ(MasterLexer::Token::INITIAL_WS,
               MasterLexer::Token(MasterLexer::Token::INITIAL_WS).getType());
 
