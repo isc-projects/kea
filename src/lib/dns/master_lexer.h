@@ -26,7 +26,7 @@ namespace dns {
 
 class MasterLexer {
 public:
-    class Token;       // we define it separate for better readability
+    class Token;       // we define it separately for better readability
 };
 
 /// \brief Tokens for \c MasterLexer
