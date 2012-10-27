@@ -37,7 +37,7 @@ public:
         token_err(MasterLexer::Token::UNEXPECTED_END)
     {}
 
-    const MasterLexer::Token token_eof; // an example of special type token
+    const MasterLexer::Token token_eof; // an example of non-value type token
     const MasterLexer::Token token_str;
     const MasterLexer::Token token_num;
     const MasterLexer::Token token_err;
@@ -103,7 +103,7 @@ TEST_F(MasterLexerTokenTest, numbers) {
     EXPECT_THROW(token_str.getNumber(), isc::InvalidOperation);
 }
 
-TEST_F(MasterLexerTokenTest, specials) {
+TEST_F(MasterLexerTokenTest, novalues) {
     // Just checking we can construct them and getType() returns correct value.
     EXPECT_EQ(MasterLexer::Token::END_OF_FILE, token_eof.getType());
     EXPECT_EQ(MasterLexer::Token::END_OF_LINE,
