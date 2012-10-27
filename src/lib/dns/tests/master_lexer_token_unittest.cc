@@ -29,7 +29,7 @@ const char TEST_STRING[] = "string token";
 const size_t TEST_STRING_LEN = sizeof(TEST_STRING) - 1;
 
 class MasterLexerTokenTest : public ::testing::Test {
-public:
+protected:
     MasterLexerTokenTest() :
         token_eof(MasterLexer::Token::END_OF_FILE),
         token_str(TEST_STRING, TEST_STRING_LEN),
