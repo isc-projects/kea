@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __IO_MESSAGE_H
-#define __IO_MESSAGE_H 1
+#ifndef IO_MESSAGE_H
+#define IO_MESSAGE_H 1
 
 // IMPORTANT NOTE: only very few ASIO headers files can be included in
 // this file.  In particular, asio.hpp should never be included here.
@@ -99,4 +99,4 @@ private:
 
 } // namespace asiolink
 } // namespace isc
-#endif // __IO_MESSAGE_H
+#endif // IO_MESSAGE_H

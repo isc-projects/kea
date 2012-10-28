@@ -18,8 +18,8 @@
 /// This module holds the functionality of the socket creator. It is a separate
 /// module from main to make testing easier.
 
-#ifndef __SOCKCREATOR_H
-#define __SOCKCREATOR_H 1
+#ifndef SOCKCREATOR_H
+#define SOCKCREATOR_H 1
 
 #include <util/io/fd_share.h>
 #include <exceptions/exceptions.h>
@@ -144,4 +144,4 @@ run(const int input_fd, const int output_fd, get_sock_t get_sock_fun,
 }   // namespace socket_creator
 }   // NAMESPACE ISC
 
-#endif // __SOCKCREATOR_H
+#endif // SOCKCREATOR_H

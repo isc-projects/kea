@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __CONFIG_DATA_H
-#define __CONFIG_DATA_H 1
+#ifndef CONFIG_DATA_H
+#define CONFIG_DATA_H 1
 
 #include <string>
 #include <vector>

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RDATA_H
-#define __RDATA_H 1
+#ifndef RDATA_H
+#define RDATA_H 1
 
 #include <stdint.h>
 
@@ -509,7 +509,7 @@ int compareNames(const Name& n1, const Name& n2);
 } // end of namespace "rdata"
 }
 }
-#endif  // __RDATA_H
+#endif  // RDATA_H
 
 // Local Variables: 
 // mode: c++

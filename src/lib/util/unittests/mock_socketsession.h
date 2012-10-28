@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __UTIL_UNITTESTS_MOCKSOCKETSESSION_H
-#define __UTIL_UNITTESTS_MOCKSOCKETSESSION_H 1
+#ifndef UTIL_UNITTESTS_MOCKSOCKETSESSION_H
+#define UTIL_UNITTESTS_MOCKSOCKETSESSION_H 1
 
 #include <exceptions/exceptions.h>
 
@@ -147,7 +147,7 @@ private:
 } // end of unittests
 } // end of util
 } // end of isc
-#endif  // __UTIL_UNITTESTS_MOCKSOCKETSESSION_H
+#endif  // UTIL_UNITTESTS_MOCKSOCKETSESSION_H
 
 // Local Variables:
 // mode: c++

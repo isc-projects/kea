@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_REQUESTLOADER_H
-#define __PYTHON_REQUESTLOADER_H 1
+#ifndef PYTHON_REQUESTLOADER_H
+#define PYTHON_REQUESTLOADER_H 1
 
 #include <Python.h>
 
@@ -39,7 +39,7 @@ bool initModulePart_RequestLoader(PyObject* mod);
 } // namespace dns
 } // namespace acl
 } // namespace isc
-#endif // __PYTHON_REQUESTLOADER_H
+#endif // PYTHON_REQUESTLOADER_H
 
 // Local Variables:
 // mode: c++

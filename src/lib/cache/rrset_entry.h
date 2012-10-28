@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RRSET_ENTRY_H
-#define __RRSET_ENTRY_H
+#ifndef RRSET_ENTRY_H
+#define RRSET_ENTRY_H
 
 #include <dns/rrset.h>
 #include <dns/message.h>
@@ -132,5 +132,5 @@ typedef boost::shared_ptr<RRsetEntry> RRsetEntryPtr;
 } // namespace cache
 } // namespace isc
 
-#endif // __RRSET_ENTRY_H
+#endif // RRSET_ENTRY_H
 

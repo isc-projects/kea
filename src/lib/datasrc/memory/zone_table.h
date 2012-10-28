@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __DATASRC_MEMORY_ZONE_TABLE_H
-#define __DATASRC_MEMORY_ZONE_TABLE_H 1
+#ifndef DATASRC_MEMORY_ZONE_TABLE_H
+#define DATASRC_MEMORY_ZONE_TABLE_H 1
 
 #include <util/memory_segment.h>
 
@@ -190,7 +190,7 @@ private:
 }
 }
 }
-#endif  // __DATASRC_MEMORY_ZONE_TABLE_H
+#endif  // DATASRC_MEMORY_ZONE_TABLE_H
 
 // Local Variables:
 // mode: c++

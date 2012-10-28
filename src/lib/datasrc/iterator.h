@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __DATASRC_ZONE_ITERATOR_H
-#define __DATASRC_ZONE_ITERATOR_H 1
+#ifndef DATASRC_ZONE_ITERATOR_H
+#define DATASRC_ZONE_ITERATOR_H 1
 
 #include <dns/rrset.h>
 
@@ -98,7 +98,7 @@ public:
 
 }
 }
-#endif  // __DATASRC_ZONE_ITERATOR_H
+#endif  // DATASRC_ZONE_ITERATOR_H
 
 // Local Variables:
 // mode: c++

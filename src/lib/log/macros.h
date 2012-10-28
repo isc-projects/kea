@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LOG_MACROS_H
-#define __LOG_MACROS_H
+#ifndef LOG_MACROS_H
+#define LOG_MACROS_H
 
 #include <log/logger.h>
 #include <log/log_dbglevels.h>

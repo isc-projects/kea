@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RRCLASS_H
-#define __RRCLASS_H 1
+#ifndef RRCLASS_H
+#define RRCLASS_H 1
 
 #include <stdint.h>
 
@@ -283,7 +283,7 @@ std::ostream&
 operator<<(std::ostream& os, const RRClass& rrclass);
 }
 }
-#endif  // __RRCLASS_H
+#endif  // RRCLASS_H
 
 // Local Variables: 
 // mode: c++

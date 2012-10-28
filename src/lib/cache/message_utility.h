@@ -14,8 +14,8 @@
 
 // $Id$
 
-#ifndef __MESSAGE_UTILITY_H
-#define __MESSAGE_UTILITY_H
+#ifndef MESSAGE_UTILITY_H
+#define MESSAGE_UTILITY_H
 
 #include <dns/message.h>
 
@@ -63,4 +63,4 @@ bool canMessageBeCached(const isc::dns::Message& msg);
 } // namespace isc
 
 
-#endif//__MESSAGE_UTILITY_H
+#endif//MESSAGE_UTILITY_H

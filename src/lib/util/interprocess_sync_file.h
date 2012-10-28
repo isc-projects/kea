@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __INTERPROCESS_SYNC_FILE_H__
-#define __INTERPROCESS_SYNC_FILE_H__
+#ifndef INTERPROCESS_SYNC_FILE_H
+#define INTERPROCESS_SYNC_FILE_H
 
 #include <util/interprocess_sync.h>
 #include <exceptions/exceptions.h>
@@ -88,4 +88,4 @@ private:
 } // namespace util
 } // namespace isc
 
-#endif // __INTERPROCESS_SYNC_FILE_H__
+#endif // INTERPROCESS_SYNC_FILE_H

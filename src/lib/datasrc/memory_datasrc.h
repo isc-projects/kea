@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __MEMORY_DATA_SOURCE_H
-#define __MEMORY_DATA_SOURCE_H 1
+#ifndef MEMORY_DATA_SOURCE_H
+#define MEMORY_DATA_SOURCE_H 1
 
 #include <string>
 
@@ -360,7 +360,7 @@ extern "C" void destroyInstance(DataSourceClient* instance);
 
 }
 }
-#endif  // __DATA_SOURCE_MEMORY_H
+#endif  // MEMORY_DATA_SOURCE_H
 // Local Variables:
 // mode: c++
 // End:

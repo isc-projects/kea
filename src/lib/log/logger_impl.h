@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LOGGER_IMPL_H
-#define __LOGGER_IMPL_H
+#ifndef LOGGER_IMPL_H
+#define LOGGER_IMPL_H
 
 #include <stdarg.h>
 #include <time.h>
@@ -200,4 +200,4 @@ private:
 } // namespace isc
 
 
-#endif // __LOGGER_IMPL_H
+#endif // LOGGER_IMPL_H
