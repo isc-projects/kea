@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_RRCLASS_H
-#define __PYTHON_RRCLASS_H 1
+#ifndef PYTHON_RRCLASS_H
+#define PYTHON_RRCLASS_H 1
 
 #include <Python.h>
 
@@ -61,7 +61,7 @@ const RRClass& PyRRClass_ToRRClass(const PyObject* rrclass_obj);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_RRCLASS_H
+#endif // PYTHON_RRCLASS_H
 
 // Local Variables:
 // mode: c++

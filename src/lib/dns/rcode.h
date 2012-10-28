@@ -18,8 +18,8 @@
 
 #include <ostream>
 
-#ifndef __RCODE_H
-#define __RCODE_H 1
+#ifndef RCODE_H
+#define RCODE_H 1
 
 namespace isc {
 namespace dns {

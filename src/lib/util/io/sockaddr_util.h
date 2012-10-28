@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __SOCKADDR_UTIL_H_
-#define __SOCKADDR_UTIL_H_ 1
+#ifndef SOCKADDR_UTIL_H
+#define SOCKADDR_UTIL_H 1
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -77,7 +77,7 @@ convertSockAddr(struct sockaddr* sa) {
 }
 }
 
-#endif  // __SOCKADDR_UTIL_H_
+#endif  // SOCKADDR_UTIL_H
 
 // Local Variables:
 // mode: c++

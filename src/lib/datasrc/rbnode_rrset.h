@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RBNODE_RRSET_H
-#define __RBNODE_RRSET_H
+#ifndef RBNODE_RRSET_H
+#define RBNODE_RRSET_H
 
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
@@ -227,4 +227,4 @@ private:
 }   // namespace datasrc
 }   // namespace isc
 
-#endif  // __RBNODE_RRSET_H
+#endif  // RBNODE_RRSET_H

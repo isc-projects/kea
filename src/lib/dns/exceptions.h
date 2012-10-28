@@ -17,8 +17,8 @@
 // style for the header guide (e.g. module-name_file-name_H) throughout the
 // package.
 
-#ifndef __DNS_EXCEPTIONS_H
-#define __DNS_EXCEPTIONS_H 1
+#ifndef DNS_EXCEPTIONS_H
+#define DNS_EXCEPTIONS_H 1
 
 #include <exceptions/exceptions.h>
 
@@ -52,7 +52,7 @@ public:
 };
 }
 }
-#endif  // __DNS_EXCEPTIONS_H
+#endif  // DNS_EXCEPTIONS_H
 
 // Local Variables: 
 // mode: c++

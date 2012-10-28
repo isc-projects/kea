@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __HASH_H
-#define __HASH_H
+#ifndef HASH_H
+#define HASH_H
 
 #include <stdint.h>
 #include <vector>
@@ -122,4 +122,4 @@ private:
 } // namspace nsas
 } // namespace isc
 
-#endif // __HASH_H
+#endif // HASH_H

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PERF_PKT6_H
-#define __PERF_PKT6_H
+#ifndef PERF_PKT6_H
+#define PERF_PKT6_H
 
 #include <time.h>
 #include <boost/shared_ptr.hpp>
@@ -136,4 +136,4 @@ typedef boost::shared_ptr<PerfPkt6> PerfPkt6Ptr;
 } // namespace perfdhcp
 } // namespace isc
 
-#endif // __PERF_PKT6_H
+#endif // PERF_PKT6_H

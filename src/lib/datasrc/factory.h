@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __DATA_SOURCE_FACTORY_H
-#define __DATA_SOURCE_FACTORY_H 1
+#ifndef DATA_SOURCE_FACTORY_H
+#define DATA_SOURCE_FACTORY_H 1
 
 #include <datasrc/data_source.h>
 #include <datasrc/client.h>

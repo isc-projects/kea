@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LOGGER_H
-#define __LOGGER_H
+#ifndef LOGGER_H
+#define LOGGER_H
 
 #include <cassert>
 #include <cstdlib>
@@ -320,4 +320,4 @@ private:
 } // namespace isc
 
 
-#endif // __LOGGER_H
+#endif // LOGGER_H

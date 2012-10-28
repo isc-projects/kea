@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __QUESTION_H
-#define __QUESTION_H 1
+#ifndef QUESTION_H
+#define QUESTION_H 1
 
 #include <iostream>
 #include <string>
@@ -288,7 +288,7 @@ private:
 std::ostream& operator<<(std::ostream& os, const Question& question);
 } // end of namespace dns
 } // end of namespace isc
-#endif  // __QUESTION_H
+#endif  // QUESTION_H
 
 // Local Variables: 
 // mode: c++
