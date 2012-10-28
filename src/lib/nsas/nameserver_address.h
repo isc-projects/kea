@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __NAMESERVER_ADDRESS_H
-#define __NAMESERVER_ADDRESS_H
+#ifndef NAMESERVER_ADDRESS_H
+#define NAMESERVER_ADDRESS_H
 
 #include <boost/shared_ptr.hpp>
 
@@ -114,4 +114,4 @@ private:
 } // namespace nsas
 } // namespace isc
 
-#endif//__NAMESERVER_ADDRESS_H
+#endif//NAMESERVER_ADDRESS_H

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_REQUESTCONTEXT_H
-#define __PYTHON_REQUESTCONTEXT_H 1
+#ifndef PYTHON_REQUESTCONTEXT_H
+#define PYTHON_REQUESTCONTEXT_H 1
 
 #include <Python.h>
 
@@ -47,7 +47,7 @@ bool initModulePart_RequestContext(PyObject* mod);
 } // namespace dns
 } // namespace acl
 } // namespace isc
-#endif // __PYTHON_REQUESTCONTEXT_H
+#endif // PYTHON_REQUESTCONTEXT_H
 
 // Local Variables:
 // mode: c++

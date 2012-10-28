@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LOGGER_MANAGER_H
-#define __LOGGER_MANAGER_H
+#ifndef LOGGER_MANAGER_H
+#define LOGGER_MANAGER_H
 
 #include "exceptions/exceptions.h"
 #include <log/logger_specification.h>
@@ -138,4 +138,4 @@ private:
 } // namespace isc
 
 
-#endif // __LOGGER_MANAGER_H
+#endif // LOGGER_MANAGER_H

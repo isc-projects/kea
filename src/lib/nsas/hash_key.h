@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __HASH_KEY_H
-#define __HASH_KEY_H
+#ifndef HASH_KEY_H
+#define HASH_KEY_H
 
 #include <dns/rrclass.h>
 
@@ -93,4 +93,4 @@ struct HashKey {
 } // namespace nsas
 } // namespace isc
 
-#endif // __HASH_KEY_H
+#endif // HASH_KEY_H

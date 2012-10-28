@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __NSAS_ENTRY_COMPARE_H
-#define __NSAS_ENTRY_COMPARE_H
+#ifndef NSAS_ENTRY_COMPARE_H
+#define NSAS_ENTRY_COMPARE_H
 
 #include "hash_key.h"
 #include "hash_table.h"
@@ -50,4 +50,4 @@ public:
 } // namespace nsas
 } // namespace isc
 
-#endif // __NSAS_ENTRY_COMPARE_H
+#endif // NSAS_ENTRY_COMPARE_H

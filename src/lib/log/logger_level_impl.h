@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LOGGER_LEVEL_IMPL_H
-#define __LOGGER_LEVEL_IMPL_H
+#ifndef LOGGER_LEVEL_IMPL_H
+#define LOGGER_LEVEL_IMPL_H
 
 #include <log4cplus/logger.h>
 #include <log4cplus/version.h>
@@ -131,4 +131,4 @@ public:
 } // namespace log
 } // namespace isc
 
-#endif // __LOGGER_LEVEL_IMPL_H
+#endif // LOGGER_LEVEL_IMPL_H

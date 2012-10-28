@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __MESSAGE_TYPES_H
-#define __MESSAGE_TYPES_H
+#ifndef MESSAGE_TYPES_H
+#define MESSAGE_TYPES_H
 
 #include <string.h>
 
@@ -34,4 +34,4 @@ bool equalMessageID(const MessageID& m1, const MessageID& m2);
 
 
 
-#endif // __MESSAGE_TYPES_H
+#endif // MESSAGE_TYPES_H

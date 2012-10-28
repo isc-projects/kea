@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LOG_DBGLVLS_H
-#define __LOG_DBGLVLS_H
+#ifndef LOG_DBGLVLS_H
+#define LOG_DBGLVLS_H
 
 /// \file
 ///
@@ -90,4 +90,4 @@ const int DBGLVL_TRACE_DETAIL_DATA = 55;
 
 }   // Anonymous namespace
 
-#endif // __LOG_DBGLVLS_H
+#endif // LOG_DBGLVLS_H

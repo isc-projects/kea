@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __BASE64_H
-#define __BASE64_H 1
+#ifndef BASE64_H
+#define BASE64_H 1
 
 #include <stdint.h>
 #include <string>
@@ -72,7 +72,7 @@ void decodeBase64(const std::string& input, std::vector<uint8_t>& result);
 } // namespace util
 } // namespace isc
 
-#endif  // __BASE64_H
+#endif  // BASE64_H
 
 // Local Variables: 
 // mode: c++

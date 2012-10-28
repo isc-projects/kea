@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef DATASRC_CONFIG_H
-#define DATASRC_CONFIG_H
+#ifndef AUTH_DATASRC_CONFIG_H
+#define AUTH_DATASRC_CONFIG_H
 
 #include <cc/data.h>
 #include <datasrc/client_list.h>
@@ -75,7 +75,7 @@ configureDataSourceGeneric(const isc::data::ConstElementPtr& config) {
 isc::datasrc::ClientListMapPtr
 configureDataSource(const isc::data::ConstElementPtr& config);
 
-#endif  // DATASRC_CONFIG_H
+#endif  // AUTH_DATASRC_CONFIG_H
 
 // Local Variables:
 // mode: c++

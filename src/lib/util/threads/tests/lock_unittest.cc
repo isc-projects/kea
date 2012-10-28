@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <gtest/gtest.h>
 
 #include <util/threads/sync.h>
@@ -26,25 +28,31 @@ using namespace isc::util::thread;
 
 namespace {
 
-// If we try to lock the debug mutex multiple times, it should throw.
+#ifdef ENABLE_DEBUG
+
+// If we try to lock the debug mutex multiple times, it should
+// throw. This test will complete properly only when pthread debugging
+// facilities are enabled by configuring the code for debug build.
 TEST(MutexTest, lockMultiple) {
-    // TODO: Once we support non-debug mutexes, disable the test if we compile
-    // with them.
     Mutex mutex;
     EXPECT_FALSE(mutex.locked()); // Debug-only build
+
     Mutex::Locker l1(mutex);
     EXPECT_TRUE(mutex.locked()); // Debug-only build
+
     EXPECT_THROW({
         Mutex::Locker l2(mutex); // Attempt to lock again.
     }, isc::InvalidOperation);
     EXPECT_TRUE(mutex.locked()); // Debug-only build
 }
 
+#endif // ENABLE_DEBUG
+
+#ifndef HAS_UNDEFINED_PTHREAD_BEHAVIOR
 // Destroying a locked mutex is a bad idea as well
-#ifdef EXPECT_DEATH
 TEST(MutexTest, destroyLocked) {
     if (!isc::util::unittests::runningOnValgrind()) {
-        EXPECT_DEATH({
+        EXPECT_DEATH_IF_SUPPORTED({
             Mutex* mutex = new Mutex;
             new Mutex::Locker(*mutex);
             delete mutex;
@@ -53,7 +61,7 @@ TEST(MutexTest, destroyLocked) {
         }, "");
     }
 }
-#endif
+#endif // !HAS_UNDEFINED_PTHREAD_BEHAVIOR
 
 // In this test, we try to check if a mutex really locks. We could try that
 // with a deadlock, but that's not practical (the test would not end).

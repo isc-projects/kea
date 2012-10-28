@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __UDP_SOCKET_H
-#define __UDP_SOCKET_H 1
+#ifndef UDP_SOCKET_H
+#define UDP_SOCKET_H 1
 
 #ifndef ASIO_HPP
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
@@ -321,4 +321,4 @@ UDPSocket<C>::close() {
 } // namespace asiolink
 } // namespace isc
 
-#endif // __UDP_SOCKET_H
+#endif // UDP_SOCKET_H

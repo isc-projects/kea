@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ASIOLINK_DNS_ANSWER_H
-#define __ASIOLINK_DNS_ANSWER_H 1
+#ifndef ASIOLINK_DNS_ANSWER_H
+#define ASIOLINK_DNS_ANSWER_H 1
 
 #include <asiolink/io_message.h>
 #include <util/buffer.h>
@@ -74,4 +74,4 @@ public:
 
 }      // namespace asiodns
 }      // namespace isc
-#endif // __ASIOLINK_DNS_ANSWER_H
+#endif // ASIOLINK_DNS_ANSWER_H

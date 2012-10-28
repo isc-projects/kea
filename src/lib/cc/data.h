@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef _ISC_DATA_H
-#define _ISC_DATA_H 1
+#ifndef ISC_DATA_H
+#define ISC_DATA_H 1
 
 #include <string>
 #include <vector>
@@ -567,7 +567,7 @@ std::ostream& operator<<(std::ostream& out, const Element& e);
 bool operator==(const Element& a, const Element& b);
 bool operator!=(const Element& a, const Element& b);
 } }
-#endif // _ISC_DATA_H
+#endif // ISC_DATA_H
 
 // Local Variables:
 // mode: c++
