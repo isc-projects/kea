@@ -40,8 +40,8 @@ class TestRename(unittest.TestCase):
         (without actually running them)
         """
 
-        # Scripts nameds contained in this list are not expected to be
-        # renamed and should be excluded from the list.
+        # Scripts named in this list are not expected to be renamed and
+        # should be excluded from the scan.
         EXCLUDED_SCRIPTS = ['isc-sysinfo']
 
         # Regexp to find all the *_SCRIPTS = something lines (except for
