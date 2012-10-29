@@ -27,6 +27,7 @@
 
 #include <datasrc/data_source.h>
 #include <datasrc/client_list.h>
+#include <datasrc/memory/zone_writer.h>
 
 #include <auth/auth_log.h>
 #include <auth/datasrc_config.h>
@@ -37,6 +38,7 @@
 #include <boost/noncopyable.hpp>
 
 #include <exception>
+#include <cassert>
 #include <list>
 #include <utility>
 
@@ -55,6 +57,9 @@ enum CommandID {
     RECONFIGURE,  ///< Reconfigure the datasource client lists,
                   ///  the argument to the command is the full new
                   ///  datasources configuration.
+    LOADZONE,     ///< Load a new version of zone into a memory,
+                  ///  the argument to the command is a map containing 'class'
+                  ///  and 'origin' elements, both should have been validated.
     SHUTDOWN,     ///< Shutdown the builder; no argument
     NUM_COMMANDS
 };
@@ -290,7 +295,23 @@ namespace datasrc_clientmgr_internal {
 /// threads or locks.
 template <typename MutexType, typename CondVarType>
 class DataSrcClientsBuilderBase : boost::noncopyable {
+private:
+    typedef std::map<dns::RRClass,
+                     boost::shared_ptr<datasrc::ConfigurableClientList> >
+    ClientListsMap;
+
 public:
+    /// \brief Internal errors in handling commands.
+    ///
+    /// This exception is expected to be caught within the
+    /// \c DataSrcClientsBuilder implementation, but is defined as public
+    /// so tests can be checked it.
+    class InternalCommandError : public isc::Exception {
+    public:
+        InternalCommandError(const char* file, size_t line, const char* what) :
+            isc::Exception(file, line, what) {}
+    };
+
     /// \brief Constructor.
     ///
     /// It simply sets up a local copy of shared data with the manager.
@@ -365,6 +386,11 @@ private:
         }
     }
 
+    void doLoadZone(const isc::data::ConstElementPtr& arg);
+    boost::shared_ptr<datasrc::memory::ZoneWriter> getZoneWriter(
+        datasrc::ConfigurableClientList& client_list,
+        const dns::RRClass& rrclass, const dns::Name& origin);
+
     // The following are shared with the manager
     std::list<Command>* command_queue_;
     CondVarType* cond_;
@@ -397,7 +423,13 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
             } // the lock is released here.
 
             while (keep_running && !current_commands.empty()) {
-                keep_running = handleCommand(current_commands.front());
+                try {
+                    keep_running = handleCommand(current_commands.front());;
+                } catch (const InternalCommandError& e) {
+                    LOG_ERROR(auth_logger,
+                              AUTH_DATASRC_CLIENTS_BUILDER_COMMAND_ERROR).
+                        arg(e.what());
+                }
                 current_commands.pop_front();
             }
         }
@@ -426,13 +458,16 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
     }
 
     const boost::array<const char*, NUM_COMMANDS> command_desc = {
-        {"NOOP", "RECONFIGURE", "SHUTDOWN"}
+        {"NOOP", "RECONFIGURE", "LOADZONE", "SHUTDOWN"}
     };
     LOG_DEBUG(auth_logger, DBGLVL_TRACE_BASIC,
               AUTH_DATASRC_CLIENTS_BUILDER_COMMAND).arg(command_desc.at(cid));
     switch (command.first) {
     case RECONFIGURE:
         doReconfigure(command.second);
+        break;
+    case LOADZONE:
+        doLoadZone(command.second);
         break;
     case SHUTDOWN:
         return (false);
@@ -443,6 +478,93 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
         assert(false);          // we rejected this case above
     }
     return (true);
+}
+
+template <typename MutexType, typename CondVarType>
+void
+DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
+    const isc::data::ConstElementPtr& arg)
+{
+    // We assume some basic level validation as this method can only be
+    // called via the manager in practice.  manager is expected to do the
+    // minimal validation.
+    assert(arg);
+    assert(arg->get("class"));
+    assert(arg->get("origin"));
+
+    const dns::RRClass rrclass(arg->get("class")->stringValue());
+    const dns::Name origin(arg->get("origin")->stringValue());
+    ClientListsMap::iterator found = (*clients_map_)->find(rrclass);
+    if (found == (*clients_map_)->end()) {
+        isc_throw(InternalCommandError, "failed to load a zone " << origin <<
+                  "/" << rrclass << ": not configured for the class");
+    }
+
+    boost::shared_ptr<datasrc::ConfigurableClientList> client_list =
+        found->second;
+    assert(client_list);
+
+    try {
+        boost::shared_ptr<datasrc::memory::ZoneWriter> zwriter =
+            getZoneWriter(*client_list, rrclass, origin);
+
+        zwriter->load(); // this can take time but doesn't cause a race
+        {   // install() can cause a race and must be in a critical section
+            typename MutexType::Locker locker(*map_mutex_);
+            zwriter->install();
+        }
+        LOG_DEBUG(auth_logger, DBG_AUTH_OPS,
+                  AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE)
+            .arg(origin).arg(rrclass);
+
+        // same as load(). We could let the destructor do it, but do it
+        // ourselves explicitly just in case.
+        zwriter->cleanup();
+    } catch (const InternalCommandError& ex) {
+        throw;     // this comes from getZoneWriter.  just let it go through.
+    } catch (const isc::Exception& ex) {
+        // We catch our internal exceptions (which will be just ignored) and
+        // propagated others (which should generally be considered fatal and
+        // will make the thread terminate)
+        isc_throw(InternalCommandError, "failed to load a zone " << origin <<
+                  "/" << rrclass << ": error occurred in reload: " <<
+                  ex.what());
+    }
+}
+
+// A dedicated subroutine of doLoadZone().  Separated just for keeping the
+// main method concise.
+template <typename MutexType, typename CondVarType>
+boost::shared_ptr<datasrc::memory::ZoneWriter>
+DataSrcClientsBuilderBase<MutexType, CondVarType>::getZoneWriter(
+    datasrc::ConfigurableClientList& client_list,
+    const dns::RRClass& rrclass, const dns::Name& origin)
+{
+    const datasrc::ConfigurableClientList::ZoneWriterPair writerpair =
+        client_list.getCachedZoneWriter(origin);
+
+    switch (writerpair.first) {
+    case datasrc::ConfigurableClientList::ZONE_RELOADED: // XXX misleading name
+        assert(writerpair.second);
+        return (writerpair.second);
+    case datasrc::ConfigurableClientList::ZONE_NOT_FOUND:
+        isc_throw(InternalCommandError, "failed to load zone " << origin
+                  << "/" << rrclass << ": not found in any configured "
+                  "data source.");
+    case datasrc::ConfigurableClientList::ZONE_NOT_CACHED:
+        isc_throw(InternalCommandError, "failed to load zone " << origin
+                  << "/" << rrclass << ": not served from memory");
+    case datasrc::ConfigurableClientList::CACHE_DISABLED:
+        // This is an internal error. Auth server must have the cache
+        // enabled.
+        isc_throw(InternalCommandError, "failed to load zone " << origin
+                  << "/" << rrclass << ": internal failure, in-memory cache "
+                  "is somehow disabled");
+    }
+
+    // all cases above should either return or throw, but some compilers
+    // still need a return statement
+    return (boost::shared_ptr<datasrc::memory::ZoneWriter>());
 }
 } // namespace datasrc_clientmgr_internal
 
