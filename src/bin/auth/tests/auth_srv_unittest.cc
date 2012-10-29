@@ -15,7 +15,6 @@
 #include <config.h>
 
 #include <util/io/sockaddr_util.h>
-#include <util/memory_segment_local.h>
 
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -74,6 +73,7 @@ using namespace isc::asiodns;
 using namespace isc::asiolink;
 using namespace isc::testutils;
 using namespace isc::server_common::portconfig;
+using isc::datasrc::memory::ZoneTableSegment;
 using isc::UnitTestUtil;
 using boost::scoped_ptr;
 
@@ -1401,7 +1401,9 @@ public:
              real_list, ThrowWhen throw_when, bool isc_exception,
              ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
         ConfigurableClientList(RRClass::IN()),
-        real_(real_list)
+        real_(real_list),
+        config_(Element::fromJSON("{}")),
+        ztable_segment_(ZoneTableSegment::create(*config_, RRClass::IN()))
     {
         BOOST_FOREACH(const DataSourceInfo& info, real_->getDataSources()) {
              const isc::datasrc::DataSourceClientPtr
@@ -1413,13 +1415,14 @@ public:
              data_sources_.push_back(
                  DataSourceInfo(client.get(),
                                 isc::datasrc::DataSourceClientContainerPtr(),
-                                false, RRClass::IN(), mem_sgmt_));
+                                false, RRClass::IN(), ztable_segment_));
         }
     }
 private:
     const boost::shared_ptr<isc::datasrc::ConfigurableClientList> real_;
+    const ConstElementPtr config_;
+    boost::shared_ptr<ZoneTableSegment> ztable_segment_;
     vector<isc::datasrc::DataSourceClientPtr> clients_;
-    MemorySegmentLocal mem_sgmt_;
 };
 
 } // end anonymous namespace for throwing proxy classes

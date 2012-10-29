@@ -22,6 +22,7 @@
 #include <datasrc/memory/treenode_rrset.h>
 #include <datasrc/memory/zone_finder.h>
 #include <datasrc/memory/zone_data_loader.h>
+#include <datasrc/memory/zone_table_segment.h>
 
 #include <util/memory_segment_local.h>
 
@@ -42,12 +43,14 @@ using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc::memory;
+using namespace isc::util;
 
 namespace isc {
 namespace datasrc {
 namespace memory {
 
 using detail::SegmentObjectHolder;
+using boost::shared_ptr;
 
 namespace { // unnamed namespace
 
@@ -64,25 +67,19 @@ public:
 
 } // end of unnamed namespace
 
-InMemoryClient::InMemoryClient(util::MemorySegment& mem_sgmt,
+InMemoryClient::InMemoryClient(shared_ptr<ZoneTableSegment> ztable_segment,
                                RRClass rrclass) :
-    mem_sgmt_(mem_sgmt),
+    ztable_segment_(ztable_segment),
     rrclass_(rrclass),
-    zone_count_(0)
-{
-    SegmentObjectHolder<ZoneTable, RRClass> holder(
-        mem_sgmt_, ZoneTable::create(mem_sgmt_, rrclass), rrclass_);
-
-    file_name_tree_ = FileNameTree::create(mem_sgmt_, false);
-
-    zone_table_ = holder.release();
-}
+    zone_count_(0),
+    file_name_tree_(FileNameTree::create(
+        ztable_segment_->getMemorySegment(), false))
+{}
 
 InMemoryClient::~InMemoryClient() {
+    MemorySegment& mem_sgmt = ztable_segment_->getMemorySegment();
     FileNameDeleter deleter;
-    FileNameTree::destroy(mem_sgmt_, file_name_tree_, deleter);
-
-    ZoneTable::destroy(mem_sgmt_, zone_table_, rrclass_);
+    FileNameTree::destroy(mem_sgmt, file_name_tree_, deleter);
 }
 
 result::Result
@@ -90,8 +87,9 @@ InMemoryClient::loadInternal(const isc::dns::Name& zone_name,
                              const std::string& filename,
                              ZoneData* zone_data)
 {
+    MemorySegment& mem_sgmt = ztable_segment_->getMemorySegment();
     SegmentObjectHolder<ZoneData, RRClass> holder(
-        mem_sgmt_, zone_data, rrclass_);
+        mem_sgmt, zone_data, rrclass_);
 
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_ADD_ZONE).
         arg(zone_name).arg(rrclass_);
@@ -99,7 +97,7 @@ InMemoryClient::loadInternal(const isc::dns::Name& zone_name,
     // Set the filename in file_name_tree_ now, so that getFileName()
     // can use it (during zone reloading).
     FileNameNode* node(NULL);
-    switch (file_name_tree_->insert(mem_sgmt_, zone_name, &node)) {
+    switch (file_name_tree_->insert(mem_sgmt, zone_name, &node)) {
     case FileNameTree::SUCCESS:
     case FileNameTree::ALREADYEXISTS:
         // These are OK
@@ -114,9 +112,10 @@ InMemoryClient::loadInternal(const isc::dns::Name& zone_name,
     const std::string* tstr = node->setData(new std::string(filename));
     delete tstr;
 
-    const ZoneTable::AddResult result(zone_table_->addZone(mem_sgmt_, rrclass_,
-                                                           zone_name,
-                                                           holder.release()));
+    ZoneTable* zone_table = ztable_segment_->getHeader().getTable();
+    const ZoneTable::AddResult result(zone_table->addZone(mem_sgmt, rrclass_,
+                                                          zone_name,
+                                                          holder.release()));
     if (result.code == result::SUCCESS) {
         // Only increment the zone count if the zone doesn't already
         // exist.
@@ -124,7 +123,7 @@ InMemoryClient::loadInternal(const isc::dns::Name& zone_name,
     }
     // Destroy the old instance of the zone if there was any
     if (result.zone_data != NULL) {
-        ZoneData::destroy(mem_sgmt_, result.zone_data, rrclass_);
+        ZoneData::destroy(mem_sgmt, result.zone_data, rrclass_);
     }
 
     return (result.code);
@@ -145,7 +144,8 @@ InMemoryClient::findZone(const isc::dns::Name& zone_name) const {
     LOG_DEBUG(logger, DBG_TRACE_DATA,
               DATASRC_MEMORY_MEM_FIND_ZONE).arg(zone_name);
 
-    ZoneTable::FindResult result(zone_table_->findZone(zone_name));
+    const ZoneTable* zone_table = ztable_segment_->getHeader().getTable();
+    const ZoneTable::FindResult result(zone_table->findZone(zone_name));
 
     ZoneFinderPtr finder;
     if (result.code != result::NOTFOUND) {
@@ -157,7 +157,8 @@ InMemoryClient::findZone(const isc::dns::Name& zone_name) const {
 
 const ZoneData*
 InMemoryClient::findZoneData(const isc::dns::Name& zone_name) {
-    ZoneTable::FindResult result(zone_table_->findZone(zone_name));
+    const ZoneTable* zone_table = ztable_segment_->getHeader().getTable();
+    const ZoneTable::FindResult result(zone_table->findZone(zone_name));
     return (result.zone_data);
 }
 
@@ -168,14 +169,16 @@ InMemoryClient::load(const isc::dns::Name& zone_name,
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_LOAD).arg(zone_name).
         arg(filename);
 
-    ZoneData* zone_data = loadZoneData(mem_sgmt_, rrclass_, zone_name,
+    MemorySegment& mem_sgmt = ztable_segment_->getMemorySegment();
+    ZoneData* zone_data = loadZoneData(mem_sgmt, rrclass_, zone_name,
                                        filename);
     return (loadInternal(zone_name, filename, zone_data));
 }
 
 result::Result
 InMemoryClient::load(const isc::dns::Name& zone_name, ZoneIterator& iterator) {
-    ZoneData* zone_data = loadZoneData(mem_sgmt_, rrclass_, zone_name,
+    MemorySegment& mem_sgmt = ztable_segment_->getMemorySegment();
+    ZoneData* zone_data = loadZoneData(mem_sgmt, rrclass_, zone_name,
                                        iterator);
     return (loadInternal(zone_name, string(), zone_data));
 }
@@ -207,7 +210,7 @@ private:
     bool separate_rrs_;
     bool ready_;
 public:
-    MemoryIterator(const RRClass rrclass,
+    MemoryIterator(const RRClass& rrclass,
                    const ZoneTree& tree, const Name& origin,
                    bool separate_rrs) :
         rrclass_(rrclass),
@@ -306,7 +309,8 @@ public:
 
 ZoneIteratorPtr
 InMemoryClient::getIterator(const Name& name, bool separate_rrs) const {
-    ZoneTable::FindResult result(zone_table_->findZone(name));
+    const ZoneTable* zone_table = ztable_segment_->getHeader().getTable();
+    const ZoneTable::FindResult result(zone_table->findZone(name));
     if (result.code != result::SUCCESS) {
         isc_throw(DataSourceError, "No such zone: " + name.toText());
     }
