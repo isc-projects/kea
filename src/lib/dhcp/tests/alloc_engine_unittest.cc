@@ -22,6 +22,7 @@
 #include <boost/shared_ptr.hpp>
 #include <iostream>
 #include <sstream>
+#include <map>
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -35,6 +36,9 @@ namespace {
 
 class NakedAllocEngine : public AllocEngine {
 public:
+    NakedAllocEngine(AllocEngine::AllocType engine_type, unsigned int attempts)
+        :AllocEngine(engine_type, attempts) {
+    }
     using AllocEngine::Allocator;
     using AllocEngine::IterativeAllocator;
 };
@@ -308,7 +312,7 @@ TEST_F(AllocEngineTest, IterativeAllocator_manyPools) {
                           // there are 8 extra pools with 9 addresses in each.
 
     // Let's keep picked addresses here and check their uniqueness.
-    map<IOAddress, int> generated_addrs;
+    std::map<IOAddress, int> generated_addrs;
     int cnt = 0;
     while (++cnt) {
         IOAddress candidate = alloc->pickAddress(subnet_, duid_, IOAddress("::"));

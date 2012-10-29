@@ -1,3 +1,10 @@
+4XX.	[func]		tomek
+	DHCPv6 Allocation Engine implemented. It allows address allocation
+	from the configured subnets/pools. It currently features a single
+	allocator: IterativeAllocator, which assigns addresses iteratively.
+	Other allocators (hashed, random) are planned.
+	(Trac #2324, git TBD)
+
 494.	[bug]		jinmei
 	Fixed a problem that shutting down BIND 10 kept some of the
 	processes alive.  It was two-fold: when the main bind10 process

@@ -398,7 +398,7 @@ public:
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(isc::asiolink::IOAddress addr) const = 0;
+    virtual Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const = 0;
 
     /// @brief Returns existing IPv6 leases for a given DUID+IA combination
     ///
@@ -450,7 +450,7 @@ public:
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    virtual bool deleteLease6(isc::asiolink::IOAddress addr) = 0;
+    virtual bool deleteLease6(const isc::asiolink::IOAddress& addr) = 0;
 
     /// @brief Returns backend name.
     ///
