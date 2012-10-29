@@ -41,7 +41,8 @@ public:
         // FIXME: The NullElement probably isn't the best one, but we don't
         // know how the config will look, so it just fills the argument
         // (which is currently ignored)
-        segment_(ZoneTableSegment::create(isc::data::NullElement())),
+        segment_(ZoneTableSegment::create(isc::data::NullElement(),
+                                          RRClass::IN())),
         writer_(new
             ZoneWriterLocal(dynamic_cast<ZoneTableSegmentLocal*>(segment_.
                                                                  get()),
@@ -51,20 +52,10 @@ public:
         load_throw_(false),
         load_null_(false),
         load_data_(false)
-    {
-        // TODO: The setTable is only a temporary interface
-        segment_->getHeader().
-            setTable(ZoneTable::create(segment_->getMemorySegment(),
-                                       RRClass::IN()));
-    }
+    {}
     void TearDown() {
         // Release the writer
         writer_.reset();
-        // Release the table we used
-        ZoneTable::destroy(segment_->getMemorySegment(),
-                           segment_->getHeader().getTable(), RRClass::IN());
-        // And check we freed all memory
-        EXPECT_TRUE(segment_->getMemorySegment().allMemoryDeallocated());
     }
 protected:
     scoped_ptr<ZoneTableSegment> segment_;
