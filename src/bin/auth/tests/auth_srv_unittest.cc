@@ -1715,6 +1715,15 @@ namespace {
         isc::config::parseAnswer(command_result, response);
         EXPECT_EQ(0, command_result);
     }
+
+    void sendCommand(AuthSrv& server, const std::string& command,
+                     ConstElementPtr args, int expected_result) {
+        ConstElementPtr response = execAuthServerCommand(server, command,
+                                                         args);
+        int command_result = -1;
+        isc::config::parseAnswer(command_result, response);
+        EXPECT_EQ(expected_result, command_result);
+    }
 } // end anonymous namespace
 
 TEST_F(AuthSrvTest, DDNSForwardCreateDestroy) {
@@ -1784,6 +1793,20 @@ TEST_F(AuthSrvTest, DDNSForwardCreateDestroy) {
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOTIMP(),
                 Opcode::UPDATE().getCode(), QR_FLAG, 0, 0, 0, 0);
+}
+
+TEST_F(AuthSrvTest, loadZoneCommand) {
+    // Just some very basic tests, to check the command is accepted, and that
+    // it raises on bad arguments, but not on correct ones (full testing
+    // is handled in the unit tests for the corresponding classes)
+
+    // Empty map should fail
+    ElementPtr args(Element::createMap());
+    sendCommand(server, "loadzone", args, 1);
+    // Setting an origin should be enough (even if it isn't actually loaded,
+    // it should be initially accepted)
+    args->set("origin", Element::create("example.com"));
+    sendCommand(server, "loadzone", args, 0);
 }
 
 }
