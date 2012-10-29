@@ -84,6 +84,13 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Attempt to update lease that was not there
+class NoSuchLease : public Exception {
+public:
+    NoSuchLease(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 /// @brief specifies unique subnet identifier
 /// @todo: Move this to subnet.h once ticket #2237 is merged
 typedef uint32_t SubnetID;
@@ -478,7 +485,8 @@ public:
     ///
     /// @param lease4 The lease to be updated.
     ///
-    /// If no such lease is present, an exception will be thrown.
+    /// @exception NoSuchLease Attempt to update lease that did not exist.
+    /// @exception DbOperationError Update operation updated multiple leases.
     virtual void updateLease6(const Lease6Ptr& lease6) = 0;
 
     /// @brief Deletes a lease.
