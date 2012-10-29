@@ -50,20 +50,16 @@ namespace dhcp {
 ///
 /// On any MySQL operation, arrays of MYSQL_BIND structures must be built to
 /// describe the parameters in the prepared statements.  Where information is
-/// inserted or retrieved - INSERT, UPDATE, SELECT - one array describes the
-/// data being exchanged with the database.  The other array describes the
-/// WHERE clause of the statement.
+/// inserted or retrieved - INSERT, UPDATE, SELECT - a large amount of that
+/// structure is identical - it defines data values in the Lease6 structure.
 ///
-/// The array describing the information exchanged is common between the
-/// INSERT, UPDATE and SELECT statements, and this class handles the creation
-/// of that array and the insertion/extraction of data into/from it.
+/// This class handles the creation of that array.  For maximum flexibility,
+/// the data is appended to an array of MYSQL_BIND elemements, so allowing
+/// additional elements to be prepended/appended to it.
 ///
 /// Owing to the MySQL API, the process requires some intermediate variables
 /// to hold things like length etc.  This object holds the intermediate
-/// variables and can:
-/// 1. Build the MYSQL_BIND structures for a Lease6 object ready for passing
-///    in to the MYSQL code.
-/// 1. Copy information from the MYSQL_BIND structures into a Lease6 object.
+/// variables as well.
 
 class MySqlLease6Exchange {
 public:
@@ -76,21 +72,19 @@ public:
     /// Fills in the MYSQL_BIND objects for the Lease6 passed to it.
     ///
     /// @param lease Lease object to be added to the database
-    ///
-    /// @return Pointer to MYSQL_BIND array holding the bind information.
-    ///         This is a pointer to data internal to this object, and remains
-    ///         valid only for as long as (1) this object is in existence and
-    ///         (2) the lease object passed to it is in existence.  The
-    ///         caller should NOT delete it.
-    MYSQL_BIND* createBindForSend(const Lease6Ptr& lease) {
+    /// @param bindvec Vector of MySQL BIND objects: the elements describing the
+    ///        lease are appended to this vector.  The data added to the vector
+    ///        only remain valid while both the lease and this object are valid.
+    void
+    createBindForSend(const Lease6Ptr& lease, std::vector<MYSQL_BIND>& bindvec) {
         // Store lease object to ensure it remains valid.
         lease_ = lease;
 
-        // Ensure bind array clear.
+        // Ensure bind_ array clear for constructing the MYSQL_BIND structures
+        // for this lease.
         memset(bind_, 0, sizeof(bind_));
 
         // address: varchar(40)
-
         addr6_ = lease_->addr_.toText();
         addr6_length_ = addr6_.size();
 
@@ -108,7 +102,7 @@ public:
         bind_[1].buffer_length = duid_length_;
         bind_[1].length = &duid_length_;
 
-        // lease_time: unsigned int
+        // valid lifetime: unsigned int
         bind_[2].buffer_type = MYSQL_TYPE_LONG;
         bind_[2].buffer = reinterpret_cast<char*>(&lease->valid_lft_);
         bind_[2].is_unsigned = true_;
@@ -119,6 +113,8 @@ public:
         /// expiry time (expire).  The relationship is given by:
         //
         // expire = cltt_ + valid_lft_
+        //
+        // @TODO Handle overflows
         MySqlLeaseMgr::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
                                              expire_);
         bind_[3].buffer_type = MYSQL_TYPE_TIMESTAMP;
@@ -156,7 +152,9 @@ public:
         bind_[8].buffer = reinterpret_cast<char*>(&lease_->prefixlen_);
         bind_[8].is_unsigned = true_;
 
-        return(bind_);
+        // Add the data to the vector.  Note the end element is one after the
+        // end of the array.
+        bindvec.insert(bindvec.end(), &bind_[0], &bind_[9]);
     }
 
     /// @brief Create BIND array to receive data
@@ -165,12 +163,14 @@ public:
     /// After data is successfully received, getLeaseData() is used to copy
     /// it to a Lease6 object.
     ///
-    /// @return Pointer to MYSQL_BIND array for data reception.  This array is
-    ///         valid only for as long as this MySqlLease6Exchange object is
-    ///         in existence.
-    MYSQL_BIND* createBindForReceive() {
+    /// @param bindvec Vector of MySQL BIND objects: the elements describing the
+    ///        lease are appended to this vector.  The data added to the vector
+    ///        only remain valid while both the lease and this object are valid.
 
-        // Ensure bind array clear.
+    void createBindForReceive(std::vector<MYSQL_BIND>& bindvec) {
+
+        // Ensure both the array of MYSQL_BIND structures and the error array
+        // are clear.
         memset(bind_, 0, sizeof(bind_));
         memset(error_, 0, sizeof(error_));
 
@@ -235,7 +235,9 @@ public:
         bind_[8].is_unsigned = true_;
         bind_[8].error = &error_[8];
 
-        return (bind_);
+        // Add the data to the vector.  Note the end element is one after the
+        // end of the array.
+        bindvec.insert(bindvec.end(), &bind_[0], &bind_[9]);
     }
 
     /// @brief Copy Received Data into Lease6 Object
@@ -253,7 +255,7 @@ public:
         // Create the object to be returned.
         Lease6Ptr result(new Lease6());
 
-        // Success - put the data in the lease object
+        // Put the data in the lease object
 
         // The address buffer is declared larger than the buffer size passed
         // to the access function so that we can always append a null byte.
@@ -465,9 +467,18 @@ MySqlLeaseMgr::openDatabase() {
                   mysql_error(mysql_));
     }
 
-    // Open the database.  Use defaults for non-specified options.
+    // Open the database.
+    //
+    // The option CLIENT_FOUND_ROWS is specified so that in an UPDATE,
+    // the affected rows are the number of rows found that match the
+    // WHERE clause of the SQL statement, not the rows changed.  The reason
+    // here is that MySQL apparently does not update a row if data has not
+    // changed and so the "affected rows" (retrievable from MySQL) is zero.
+    // This makes it hard to distinguish whether the UPDATE changed no rows
+    // because no row matching the WHERE clause was found, or because a
+    // row was found by no data was altered.
     MYSQL* status = mysql_real_connect(mysql_, host, user, password, name,
-                                       0, NULL, 0);
+                                       0, NULL, CLIENT_FOUND_ROWS);
     if (status != mysql_) {
         isc_throw(DbOpenError, mysql_error(mysql_));
     }
@@ -523,6 +534,11 @@ MySqlLeaseMgr::prepareStatements() {
                          "expire, subnet_id, pref_lifetime, "
                          "lease_type, iaid, prefix_len) "
                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    prepareStatement(UPDATE_LEASE6,
+                     "UPDATE lease6 SET address = ?, duid = ?, "
+                         "valid_lifetime = ?, expire = ?, subnet_id = ?, "
+                         "pref_lifetime = ?, lease_type = ?, iaid = ?, "
+                         "prefix_len = ? WHERE address = ?");
 }
 
 bool
@@ -537,10 +553,11 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
 
     // Create the MYSQL_BIND array for the lease
     MySqlLease6Exchange exchange;
-    MYSQL_BIND* bind = exchange.createBindForSend(lease);
+    std::vector<MYSQL_BIND> bind;
+    exchange.createBindForSend(lease, bind);
 
     // Bind the parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[INSERT_LEASE6], bind);
+    int status = mysql_stmt_bind_param(statements_[INSERT_LEASE6], &bind[0]);
     checkError(status, INSERT_LEASE6, "unable to bind parameters");
 
     // Execute the statement
@@ -621,14 +638,15 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
 
     // Set up the SELECT clause
     MySqlLease6Exchange exchange;
-    MYSQL_BIND* outbind = exchange.createBindForReceive();
+    std::vector<MYSQL_BIND> outbind;
+    exchange.createBindForReceive(outbind);
 
     // Bind the input parameters to the statement
     int status = mysql_stmt_bind_param(statements_[GET_LEASE6], inbind);
     checkError(status, GET_LEASE6, "unable to bind WHERE clause parameter");
 
     // Bind the output parameters to the statement
-    status = mysql_stmt_bind_result(statements_[GET_LEASE6], outbind);
+    status = mysql_stmt_bind_result(statements_[GET_LEASE6], &outbind[0]);
     checkError(status, GET_LEASE6, "unable to bind SELECT caluse parameters");
 
     // Execute the statement
@@ -691,9 +709,45 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& /* lease4 */) {
 }
 
 void
-MySqlLeaseMgr::updateLease6(const Lease6Ptr& /* lease6 */) {
-    isc_throw(NotImplemented, "MySqlLeaseMgr::updateLease6(const Lease6Ptr&) "
-              "not implemented yet");
+MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
+    // Create the MYSQL_BIND array for the data being updated
+    MySqlLease6Exchange exchange;
+    std::vector<MYSQL_BIND> bind;
+    exchange.createBindForSend(lease, bind);
+
+    // Set up the WHERE clause value
+    MYSQL_BIND where;
+    memset(&where, 0, sizeof(where));
+
+    std::string addr6 = lease->addr_.toText();
+    unsigned long addr6_length = addr6.size();
+
+    where.buffer_type = MYSQL_TYPE_STRING;
+    where.buffer = const_cast<char*>(addr6.c_str());
+    where.buffer_length = addr6_length;
+    where.length = &addr6_length;
+    bind.push_back(where);
+
+    // Bind the parameters to the statement
+    int status = mysql_stmt_bind_param(statements_[UPDATE_LEASE6], &bind[0]);
+    checkError(status, UPDATE_LEASE6, "unable to bind parameters");
+
+    // Execute
+    status = mysql_stmt_execute(statements_[UPDATE_LEASE6]);
+    checkError(status, UPDATE_LEASE6, "unable to execute");
+
+    // See how many rows were affected.  The statement should only delete a
+    // single row.
+    int affected_rows = mysql_stmt_affected_rows(statements_[UPDATE_LEASE6]);
+    if (affected_rows == 0) {
+        isc_throw(NoSuchLease, "unable to update lease for address " <<
+                  addr6 << " as it does not exist");
+    } else if (affected_rows > 1) {
+        // Should not happen - primary key constraint should only have selected
+        // one row.
+        isc_throw(DbOperationError, "apparently updated more than one lease "
+                  "that had the address " << addr6);
+    }
 }
 
 bool

@@ -208,7 +208,8 @@ public:
     ///
     /// @param lease4 The lease to be updated.
     ///
-    /// If no such lease is present, an exception will be thrown.
+    /// @exception NoSuchLease Attempt to update lease that did not exist.
+    /// @exception DbOperationError Update operation updated multiple leases.
     virtual void updateLease6(const Lease6Ptr& lease6);
 
     /// @brief Deletes a lease.
@@ -334,6 +335,7 @@ private:
         GET_LEASE6,         // Get lease 6 by address
         GET_VERSION,        // Obtain version number
         INSERT_LEASE6,      // Add entry to lease6 table
+        UPDATE_LEASE6,      // Update a Lease6 entry
         NUM_STATEMENTS      // Number of statements
     };
 
