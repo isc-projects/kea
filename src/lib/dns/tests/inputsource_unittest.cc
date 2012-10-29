@@ -132,8 +132,10 @@ TEST_F(InputSourceTest, lines) {
     EXPECT_TRUE(source_.atEOF());
     EXPECT_EQ(4, source_.getCurrentLine());
 
-    // Go backwards 1 character, skipping the last '\n'.
+    // Go backwards 2 characters, skipping the last EOF and '\n'.
     source_.ungetChar();
+    source_.ungetChar();
+
     EXPECT_FALSE(source_.atEOF());
     EXPECT_EQ(3, source_.getCurrentLine());
 
