@@ -1,3 +1,10 @@
+496.	[func]		tomek
+	DHCPv6 Allocation Engine implemented. It allows address allocation
+	from the configured subnets/pools. It currently features a single
+	allocator: IterativeAllocator, which assigns addresses iteratively.
+	Other allocators (hashed, random) are planned.
+	(Trac #2324, git 8aa188a10298e3a55b725db36502a99d2a8d638a)
+
 495.	[func]		team
 	b10-auth now handles reconfiguration of data sources in
 	background using a separate thread.  This means even if the new

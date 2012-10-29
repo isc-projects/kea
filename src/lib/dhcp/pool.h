@@ -141,6 +141,7 @@ public:
 
     /// @brief the constructor for Pool6 "min-max" style definition
     ///
+    /// @param type type of the pool (IA, TA or PD)
     /// @param first the first address in a pool
     /// @param last the last address in a pool
     Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
@@ -148,6 +149,7 @@ public:
 
     /// @brief the constructor for Pool6 "prefix/len" style definition
     ///
+    /// @param type type of the pool (IA, TA or PD)
     /// @param prefix specifies prefix of the pool
     /// @param prefix_len specifies length of the prefix of the pool
     Pool6(Pool6Type type, const isc::asiolink::IOAddress& prefix,
