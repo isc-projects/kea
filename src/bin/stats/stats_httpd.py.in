@@ -79,13 +79,12 @@ def item_name_list(element, identifier):
     method. The list to be returned is sorted. """
     elem = isc.cc.data.find(element, identifier)
     ret = []
-    ident = ''
-    if identifier and len(str(identifier)) > 0:
-        ident = str(identifier)
+    ident = identifier
+    if ident:
         ret.append(ident)
     if type(elem) is dict:
-        if len(ident) > 0:
-            ident = '%s/' % ident
+        if ident:
+            ident = ident + '/'
         for (key, value) in elem.items():
             idstr = '%s%s' % (ident, key)
             ret += item_name_list(element, idstr)
