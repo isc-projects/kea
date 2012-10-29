@@ -267,6 +267,15 @@ public:
             isc_throw(LoadZoneCommandError,
                       "loadZone argument has no 'origin' value");
         }
+        if (args->get("origin")->getType() != data::Element::string) {
+            isc_throw(LoadZoneCommandError,
+                      "loadZone argument 'origin' value not a string");
+        }
+        if (args->contains("class") &&
+            args->get("class")->getType() != data::Element::string) {
+            isc_throw(LoadZoneCommandError,
+                      "loadZone argument 'class' value not a string");
+        }
 
         sendCommand(datasrc_clientmgr_internal::LOADZONE, args);
     }
