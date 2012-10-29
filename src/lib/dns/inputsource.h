@@ -15,6 +15,8 @@
 #ifndef DNS_INPUTSOURCE_H
 #define DNS_INPUTSOURCE_H 1
 
+#include <exceptions/exceptions.h>
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -49,6 +51,14 @@ public:
     void saveLine() {
         saved_line_ = line_;
     }
+
+    /// \brief Exception thrown when ungetChar() is made to go before
+    /// the start of buffer.
+    struct UngetError : public OutOfRange {
+        UngetError(const char* file, size_t line, const char* what) :
+            OutOfRange(file, line, what)
+        {}
+    };
 
     int getChar();
     void ungetChar();
