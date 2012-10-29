@@ -55,10 +55,10 @@ InputSource::ungetChar() {
     } else if (buffer_pos_ == 0) {
         isc_throw(OutOfRange, "Cannot skip before the start of buffer");
     } else {
+        buffer_pos_--;
         if (buffer_[buffer_pos_] == '\n') {
             line_--;
         }
-        buffer_pos_--;
     }
 }
 
