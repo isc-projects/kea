@@ -1,3 +1,12 @@
+497.	[bug]		jinmei
+	Fixed several issues in isc-sysinfo:
+	- make sure it doesn't report a negative value for free memory
+	  size (this happened on FreeBSD, but can possibly occur on other
+	  BSD variants)
+	- correctly identifies the SMP support in kernel on FreeBSD
+	- print more human readable uptime as well as the time in seconds
+	(Trac #2297, git 59a449f506948e2371ffa87dcd19059388bd1657)
+
 496.	[func]		tomek
 	DHCPv6 Allocation Engine implemented. It allows address allocation
 	from the configured subnets/pools. It currently features a single
