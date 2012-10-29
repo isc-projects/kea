@@ -353,7 +353,7 @@ public:
         // No other applications or tests may use it.
         const DataSourceClient* getCacheClient() const;
         boost::shared_ptr<memory::InMemoryClient> cache_;
-        boost::shared_ptr<memory::ZoneTableSegment> segment_;
+        boost::shared_ptr<memory::ZoneTableSegment> ztable_segment_;
     };
 
     /// \brief The collection of data sources.
