@@ -61,6 +61,7 @@ typedef std::map<string, string> StringStorage;
 /// no subnet object created yet to store them.
 typedef std::vector<Pool6Ptr> PoolStorage;
 
+/// @brief Collection of options.
 typedef std::vector<OptionPtr> OptionStorage;
 
 /// @brief Global uint32 parameters that will be used as defaults.
@@ -68,6 +69,9 @@ Uint32Storage uint32_defaults;
 
 /// @brief global string parameters that will be used as defaults.
 StringStorage string_defaults;
+
+/// @brief Global storage for options that will be used as defaults.
+OptionStorage option_defaults;
 
 /// @brief a dummy configuration parser
 ///
@@ -652,7 +656,8 @@ class OptionDataListParser : public DhcpConfigParser {
 public:
 
     /// @brief Constructor.
-    OptionDataListParser(const std::string&) { }
+    OptionDataListParser(const std::string&)
+        : options_(&option_defaults) { }
 
     /// @brief Parses entries that define options' data for a subnet.
     ///
@@ -798,8 +803,34 @@ public:
             subnet->addPool6(*it);
         }
 
+        // Add subnet specific options.
         BOOST_FOREACH(OptionPtr option, options_) {
             subnet->addOption(option);
+        }
+
+        // Get all options that we have added to subnet so far. We will
+        // use them to check which of the global options must be added to
+        // the subnet.
+        Subnet::OptionContainer options = subnet->getOptions();
+        // Get the search index #1 which is used to search options
+        // by their code (type).
+        Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+        // Check all global options and add them to the subnet object if
+        // they have been configured in the global scope. If they have been
+        // configured in the subnet scope we don't add global option because
+        // the one configured in the subnet scope always takes precedense.
+        BOOST_FOREACH(OptionPtr option, option_defaults) {
+            // Get local option descriptors using global option code.
+            std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+                      Subnet::OptionContainerTypeIndex::const_iterator> range =
+                idx.equal_range(option->getType());
+            // @todo: In the future we will be searching for options using either
+            // option code or namespace. Currently we have only the option
+            // code available so if there is at least one option found with the
+            // specific code we don't add globally configured option.
+            if (std::distance(range.first, range.second) == 0) {
+                subnet->addOption(option);
+            }
         }
 
         CfgMgr::instance().addSubnet6(subnet);
@@ -982,6 +1013,9 @@ DhcpConfigParser* createGlobalDhcpConfigParser(const std::string& config_id) {
                          "subnet6", Subnets6ListConfigParser::Factory));
 
     factories.insert(pair<string, ParserFactory*>(
+                         "option-data", OptionDataListParser::Factory));
+
+    factories.insert(pair<string, ParserFactory*>(
                          "version", StringParser::Factory));
 
     FactoryMap::iterator f = factories.find(config_id);
@@ -1016,6 +1050,12 @@ configureDhcp6Server(Dhcpv6Srv& , ConstElementPtr config_set) {
         isc_throw(Dhcp6ConfigError,
                   "Null pointer is passed to configuration parser");
     }
+
+    /// Reset global storage. Containers being reset below may contain
+    /// data from the previous configuration attempts.
+    option_defaults.clear();
+    uint32_defaults.clear();
+    string_defaults.clear();
 
     /// @todo: append most essential info here (like "2 new subnets configured")
     string config_details;
