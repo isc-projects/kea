@@ -336,12 +336,77 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
     EXPECT_EQ(4000, subnet->getValid());
 }
 
+TEST_F(Dhcp6ParserTest, optionDataDefaults) {
+    ConstElementPtr x;
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"option_foo\","
+        "    \"code\": 100,"
+        "    \"data\": \"AB CDEF0105\""
+        " },"
+        " {"
+        "    \"name\": \"option_foo2\","
+        "    \"code\": 101,"
+        "    \"data\": \"01\""
+        " } ],"
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet);
+    const Subnet::OptionContainer& options = subnet->getOptions();
+    ASSERT_EQ(2, options.size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+              Subnet::OptionContainerTypeIndex::const_iterator> range =
+        idx.equal_range(100);
+    // Expect single option with the code equal to 100.
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    const uint8_t foo_expected[] = {
+        0xAB, 0xCD, 0xEF, 0x01, 0x05
+    };
+    // Check if option is valid in terms of code and carried data.
+    testOption(*range.first, 100, foo_expected, sizeof(foo_expected));
+
+    range = idx.equal_range(101);
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    // Do another round of testing with second option.
+    const uint8_t foo2_expected[] = {
+        0x01
+    };
+    testOption(*range.first, 101, foo2_expected, sizeof(foo2_expected));
+}
+
 TEST_F(Dhcp6ParserTest, optionDataInSingleSubnet) {
     ConstElementPtr x;
     string config = "{ \"interface\": [ \"all\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
+        "\"option-data\": [ {"
+        "      \"name\": \"option_foo\","
+        "      \"code\": 100,"
+        "      \"data\": \"AB\""
+        " } ],"
         "\"subnet6\": [ { "
         "    \"pool\": [ \"2001:db8:1::/80\" ],"
         "    \"subnet\": \"2001:db8:1::/64\", "
