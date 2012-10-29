@@ -29,6 +29,7 @@
 #include <log/logger_level.h>
 #include <log/logger_level_impl.h>
 #include <log/logger_name.h>
+#include <log/logger_manager.h>
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
 
@@ -123,9 +124,12 @@ LoggerImpl::setInterprocessSync(isc::util::InterprocessSync* sync) {
 
 void
 LoggerImpl::outputRaw(const Severity& severity, const string& message) {
+    // Use a mutex locker for mutual exclusion from other threads in
+    // this process.
+    isc::util::thread::Mutex::Locker mutex_locker(LoggerManager::getMutex());
+
     // Use an interprocess sync locker for mutual exclusion from other
     // processes to avoid log messages getting interspersed.
-
     InterprocessSyncLocker locker(*sync_);
 
     if (!locker.lock()) {
