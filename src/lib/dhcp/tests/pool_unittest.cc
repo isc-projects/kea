@@ -179,4 +179,3 @@ TEST(Pool6Test, unique_id) {
 }
 
 }; // end of anonymous namespace
-
