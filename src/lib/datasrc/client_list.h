@@ -222,9 +222,6 @@ public:
     /// \param rrclass For which class the list should work.
     ConfigurableClientList(const isc::dns::RRClass& rrclass);
 
-    /// \brief Destructor
-    virtual ~ConfigurableClientList();
-
     /// \brief Exception thrown when there's an error in configuration.
     class ConfigurationError : public Exception {
     public:
@@ -407,12 +404,6 @@ private:
     void findInternal(MutableResult& result, const dns::Name& name,
                       bool want_exact_match, bool want_finder) const;
     const isc::dns::RRClass rrclass_;
-
-    /// \brief Memory segment for in-memory cache.
-    ///
-    /// Note that this must be placed before data_sources_ so it won't be
-    /// destroyed before the built objects in the destructor.
-    boost::scoped_ptr<util::MemorySegment> mem_sgmt_;
 
     /// \brief Currently active configuration.
     isc::data::ConstElementPtr configuration_;
