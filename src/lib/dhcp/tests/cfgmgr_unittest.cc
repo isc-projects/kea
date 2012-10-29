@@ -66,7 +66,7 @@ TEST(CfgMgrTest, subnet4) {
 
 // This test verifies if the configuration manager is able to hold and return
 // valid leases
-TEST(CfgMgrTest, subnet6) {
+TEST(CfgMgrTest, DISABLED_subnet6) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
 
     ASSERT_TRUE(&cfg_mgr != 0);
