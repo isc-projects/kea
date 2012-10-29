@@ -87,7 +87,7 @@ TEST_F(LeaseMgrTest, addGetDelete) {
     ASSERT_TRUE(x);
 
     EXPECT_EQ(x->addr_.toText(), addr.toText());
-    EXPECT_EQ(*x->duid_, *duid);
+    EXPECT_TRUE(*x->duid_ == *duid);
     EXPECT_EQ(x->iaid_, iaid);
     EXPECT_EQ(x->subnet_id_, subnet_id);
 
