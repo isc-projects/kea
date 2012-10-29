@@ -100,7 +100,7 @@ TEST_F(InputSourceTest, getAndUngetChar) {
 }
 
 // ungetAll() should skip back to the place where the InputSource
-// started at construction.
+// started at construction, or the last saved start of line.
 TEST_F(InputSourceTest, ungetAll) {
     while (!source_.atEOF()) {
         source_.getChar();
@@ -116,7 +116,6 @@ TEST_F(InputSourceTest, ungetAll) {
     EXPECT_EQ(1, source_.getCurrentLine());
     EXPECT_FALSE(source_.atEOF());
 }
-
 
 // Test line counters.
 TEST_F(InputSourceTest, lines) {
