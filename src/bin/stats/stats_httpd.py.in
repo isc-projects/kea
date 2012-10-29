@@ -112,14 +112,15 @@ def item_name_list(element, identifier):
     if type(elem) is dict:
         if ident:
             ident = ident + '/'
-        for (key, value) in elem.items():
+        keys = list(elem.keys())
+        keys.sort()
+        for key in keys:
             idstr = '%s%s' % (ident, key)
             ret += item_name_list(element, idstr)
     elif type(elem) is list:
         for i in range(0, len(elem)):
             idstr = '%s[%d]' % (ident, i)
             ret += item_name_list(element, idstr)
-    ret.sort()
     return ret
 
 class HttpHandler(http.server.BaseHTTPRequestHandler):
