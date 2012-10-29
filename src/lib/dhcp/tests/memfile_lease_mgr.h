@@ -132,7 +132,7 @@ public:
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    Lease6Ptr getLease6(isc::asiolink::IOAddress addr) const;
+    Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
@@ -187,12 +187,12 @@ public:
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    bool deleteLease6(isc::asiolink::IOAddress addr);
+    bool deleteLease6(const isc::asiolink::IOAddress& addr);
 
     /// @brief Returns backend name.
     ///
     /// Each backend have specific name, e.g. "mysql" or "sqlite".
-    std::string getName() const { return "memfile"; }
+    std::string getName() const { return ("memfile"); }
 
     /// @brief Returns description of the backend.
     ///
@@ -200,7 +200,7 @@ public:
     std::string getDescription() const;
 
     /// @brief Returns backend version.
-    std::string getVersion() const { return "test-version"; }
+    std::string getVersion() const { return ("test-version"); }
 
     using LeaseMgr::getParameter;
 

@@ -65,7 +65,7 @@ Lease4Collection Memfile_LeaseMgr::getLease4(const ClientId& ) const {
     return (Lease4Collection());
 }
 
-Lease6Ptr Memfile_LeaseMgr::getLease6(isc::asiolink::IOAddress addr) const {
+Lease6Ptr Memfile_LeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
     Lease6Storage::iterator l = storage6_.find(addr);
     if (l == storage6_.end()) {
         return (Lease6Ptr());
@@ -95,7 +95,7 @@ bool Memfile_LeaseMgr::deleteLease4(uint32_t ) {
     return (false);
 }
 
-bool Memfile_LeaseMgr::deleteLease6(isc::asiolink::IOAddress addr) {
+bool Memfile_LeaseMgr::deleteLease6(const isc::asiolink::IOAddress& addr) {
     Lease6Storage::iterator l = storage6_.find(addr);
     if (l == storage6_.end()) {
         // no such lease
