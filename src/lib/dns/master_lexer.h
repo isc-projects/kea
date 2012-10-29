@@ -46,6 +46,11 @@ public:
 class MasterLexer::Token {
 public:
     /// \brief Enumeration for token types
+    ///
+    /// \note At the time of initial implementation, all numeric tokens
+    /// that would be extracted from \c MasterLexer should be represented
+    /// as an unsigned 32-bit integer.  If we see the need for larger integers
+    /// or negative numbers, we can then extend the token types.
     enum Type {
         END_OF_LINE, ///< End of line detected (if asked for detecting it)
         END_OF_FILE, ///< End of file detected (if asked for detecting it)
