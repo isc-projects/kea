@@ -1463,6 +1463,18 @@ dnl includes too
                  ${LOG4CPLUS_LIBS}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
+END
+
+# Avoid confusion on DNS/DHCP and only mention MySQL if it
+# were specified on the command line.
+if test "$MYSQL_CPPFLAGS" != "" ; then
+cat >> config.report << END
+  MySQL:         $MYSQL_CPPFLAGS
+                 $MYSQL_LIBS
+END
+fi
+
+cat >> config.report << END
 
 Features:
   $enable_features

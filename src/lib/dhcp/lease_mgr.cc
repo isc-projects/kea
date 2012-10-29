@@ -12,18 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <algorithm>
-#include <iostream>
-#include <iterator>
-#include <map>
-#include <sstream>
-#include <string>
-#include <utility>
-
-#include <boost/foreach.hpp>
-#include <boost/algorithm/string.hpp>
-
-#include <exceptions/exceptions.h>
 #include <dhcp/lease_mgr.h>
 
 using namespace std;

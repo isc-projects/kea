@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __MYSQL_LEASE_MGR_H
-#define __MYSQL_LEASE_MGR_H
+#ifndef MYSQL_LEASE_MGR_H
+#define MYSQL_LEASE_MGR_H
 
 #include <time.h>
 #include <mysql.h>
@@ -402,4 +402,4 @@ private:
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 
-#endif // __MYSQL_LEASE_MGR_H
+#endif // MYSQL_LEASE_MGR_H

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LEASE_MGR_FACTORY_H
-#define __LEASE_MGR_FACTORY_H
+#ifndef LEASE_MGR_FACTORY_H
+#define LEASE_MGR_FACTORY_H
 
 #include <string>
 #include <dhcp/lease_mgr.h>
@@ -120,4 +120,4 @@ private:
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 
-#endif // __LEASE_MGR_FACTORY_H
+#endif // LEASE_MGR_FACTORY_H
