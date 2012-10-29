@@ -27,6 +27,8 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/shared_ptr.hpp>
+
 #include <set>
 #include <fstream>
 
@@ -36,7 +38,9 @@ using isc::datasrc::memory::ZoneTableSegment;
 using isc::datasrc::memory::InMemoryZoneFinder;
 using namespace isc::data;
 using namespace isc::dns;
-using namespace boost;
+// don't import the entire boost namespace.  It will unexpectedly hide uintXX_t
+// for some systems.
+using boost::shared_ptr;
 using namespace std;
 
 namespace {
@@ -313,7 +317,7 @@ public:
                   result.life_keeper_);
         if (from_cache) {
             EXPECT_NE(shared_ptr<InMemoryZoneFinder>(),
-                      dynamic_pointer_cast<InMemoryZoneFinder>(
+                      boost::dynamic_pointer_cast<InMemoryZoneFinder>(
                           result.finder_)) << "Finder is not from cache";
             EXPECT_TRUE(NULL !=
                         dynamic_cast<InMemoryClient*>(result.dsrc_client_));
