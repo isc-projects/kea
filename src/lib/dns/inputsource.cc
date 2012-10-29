@@ -13,7 +13,6 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dns/inputsource.h>
-#include <exceptions/exceptions.h>
 
 namespace isc {
 namespace dns {
@@ -53,7 +52,7 @@ InputSource::ungetChar() {
     if (at_eof_) {
         at_eof_ = false;
     } else if (buffer_pos_ == 0) {
-        isc_throw(OutOfRange, "Cannot skip before the start of buffer");
+        isc_throw(UngetError, "Cannot skip before the start of buffer");
     } else {
         buffer_pos_--;
         if (buffer_[buffer_pos_] == '\n') {

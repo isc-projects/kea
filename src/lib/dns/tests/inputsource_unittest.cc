@@ -96,7 +96,7 @@ TEST_F(InputSourceTest, getAndUngetChar) {
     }
 
     // Skipping past the start of buffer should throw.
-    EXPECT_THROW(source_.ungetChar(), isc::OutOfRange);
+    EXPECT_THROW(source_.ungetChar(), InputSource::UngetError);
 }
 
 // ungetAll() should skip back to the place where the InputSource
@@ -162,7 +162,7 @@ TEST_F(InputSourceTest, lines) {
                          ((line - 1) == source_.getCurrentLine())));
             line = source_.getCurrentLine();
         }
-    }, isc::OutOfRange);
+    }, InputSource::UngetError);
 
     // Now we are back to where we started.
     EXPECT_EQ(1, source_.getCurrentLine());
