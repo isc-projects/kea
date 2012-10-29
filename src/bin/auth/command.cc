@@ -176,12 +176,8 @@ public:
     virtual ConstElementPtr exec(AuthSrv& server,
                                  isc::data::ConstElementPtr args)
     {
-        try {
-            server.loadZone(args);
-            return (createAnswer());
-        } catch (const LoadZoneCommandError& lzce) {
-            return (createAnswer(1, lzce.what()));
-        }
+        server.loadZone(args);
+        return (createAnswer());
     }
 };
 

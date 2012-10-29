@@ -209,6 +209,11 @@ TEST(DataSrcClientsMgrTest, reload) {
     mgr.loadZone(args);
     EXPECT_EQ(2, FakeDataSrcClientsBuilder::command_queue->size());
 
+    // Should fail with non-string 'class' value
+    args->set("class", Element::create(1));
+    EXPECT_THROW(mgr.loadZone(args), LoadZoneCommandError);
+    EXPECT_EQ(2, FakeDataSrcClientsBuilder::command_queue->size());
+
     // Should succeed without 'class'
     args->remove("class");
     mgr.loadZone(args);
@@ -216,6 +221,11 @@ TEST(DataSrcClientsMgrTest, reload) {
 
     // but fail without origin, without sending new commands
     args->remove("origin");
+    EXPECT_THROW(mgr.loadZone(args), LoadZoneCommandError);
+    EXPECT_EQ(3, FakeDataSrcClientsBuilder::command_queue->size());
+
+    // And for 'origin' that is not a string
+    args->set("origin", Element::create(1));
     EXPECT_THROW(mgr.loadZone(args), LoadZoneCommandError);
     EXPECT_EQ(3, FakeDataSrcClientsBuilder::command_queue->size());
 
