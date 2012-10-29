@@ -544,7 +544,7 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::getZoneWriter(
         client_list.getCachedZoneWriter(origin);
 
     switch (writerpair.first) {
-    case datasrc::ConfigurableClientList::ZONE_RELOADED: // XXX misleading name
+    case datasrc::ConfigurableClientList::ZONE_SUCCESS:
         assert(writerpair.second);
         return (writerpair.second);
     case datasrc::ConfigurableClientList::ZONE_NOT_FOUND:
