@@ -168,4 +168,36 @@ TEST_F(InputSourceTest, lines) {
     EXPECT_EQ(1, source_.getCurrentLine());
 }
 
+// ungetAll() after saveLine() should skip back to the last-saved place.
+TEST_F(InputSourceTest, saveLine) {
+    // First, skip to line 2.
+    while (!source_.atEOF() &&
+           (source_.getCurrentLine() != 2)) {
+        source_.getChar();
+    }
+    EXPECT_FALSE(source_.atEOF());
+    size_t line = source_.getCurrentLine();
+    EXPECT_EQ(2, line);
+
+    // Now, save the line.
+    source_.saveLine();
+
+    // Now, go to EOF
+    while (!source_.atEOF()) {
+        source_.getChar();
+    }
+    line = source_.getCurrentLine();
+
+    // Now, we are at EOF.
+    EXPECT_TRUE(source_.atEOF());
+    EXPECT_EQ(4, line);
+
+    // Now, ungetAll() and check where it goes back.
+    source_.ungetAll();
+
+    // Now we are back to where we last-saved.
+    EXPECT_EQ(2, source_.getCurrentLine());
+    EXPECT_FALSE(source_.atEOF());
+}
+
 } // end namespace
