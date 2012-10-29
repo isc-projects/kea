@@ -30,6 +30,11 @@ using namespace std;
 
 namespace {
 
+// IPv6 addresseses
+const char* ADDRESS_1 = "2001:db8::1";
+const char* ADDRESS_2 = "2001:db8::2";
+const char* ADDRESS_3 = "2001:db8::3";
+
 // Connection strings.  Assume:
 // Database: keatest
 // Username: keatest
@@ -93,47 +98,21 @@ validConnectionString() {
                              VALID_USER, VALID_PASSWORD));
 }
 
-// Clear everything from the database tables
-void
-clearAll() {
-        // Initialise
-        MYSQL handle;
-        (void) mysql_init(&handle);
-
-        // Open database
-        (void) mysql_real_connect(&handle, "localhost", "keatest", "keatest",
-                                  "keatest", 0, NULL, 0);
-
-        // Clear the database
-        (void) mysql_query(&handle, "DELETE FROM lease4");
-        (void) mysql_query(&handle, "DELETE FROM lease6");
-
-        // ... and close
-        (void) mysql_close(&handle);
-}
-
-/// @brief Test Fixture Class
-///
-/// Opens the database prior to each test and closes it afterwards.
-/// All pending transactions are deleted prior to closure.
+// @brief Test Fixture Class
+//
+// Opens the database prior to each test and closes it afterwards.
+// All pending transactions are deleted prior to closure.
 
 class MySqlLeaseMgrTest : public ::testing::Test {
 public:
     /// @brief Constructor
     ///
     /// Deletes everything from the database and opens it.
-    MySqlLeaseMgrTest() {
+    MySqlLeaseMgrTest() : L1_ADDRESS(ADDRESS_1), L2_ADDRESS(ADDRESS_2),
+        L3_ADDRESS(ADDRESS_3), L1_IOADDRESS(L1_ADDRESS),
+        L2_IOADDRESS(L2_ADDRESS), L3_IOADDRESS(L3_ADDRESS)
+    {
         clearAll();
-        LeaseMgrFactory::create(validConnectionString());
-        lmptr_ = &(LeaseMgrFactory::instance());
-    }
-
-    /// @brief Reopen the database
-    ///
-    /// Closes the database and re-open it.  Anything committed should be
-    /// visible.
-    void reopen() {
-        LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(validConnectionString());
         lmptr_ = &(LeaseMgrFactory::instance());
     }
@@ -149,16 +128,136 @@ public:
         clearAll();
     }
 
+    /// @brief Reopen the database
+    ///
+    /// Closes the database and re-open it.  Anything committed should be
+    /// visible.
+    void reopen() {
+        LeaseMgrFactory::destroy();
+        LeaseMgrFactory::create(validConnectionString());
+        lmptr_ = &(LeaseMgrFactory::instance());
+    }
+
+    /// @brief Clear everything from the database tables
+    ///
+    /// There is no error checking in this code, as this is just
+    /// extra checking that the database is clear before the text.
+    void
+    clearAll() {
+            // Initialise
+            MYSQL handle;
+            (void) mysql_init(&handle);
+
+            // Open database
+            (void) mysql_real_connect(&handle, "localhost", "keatest",
+                                      "keatest", "keatest", 0, NULL,
+                                      0);
+
+            // Clear the database
+            (void) mysql_query(&handle, "DELETE FROM lease4");
+            (void) mysql_query(&handle, "DELETE FROM lease6");
+
+            // ... and close
+            (void) mysql_close(&handle);
+    }
+
+    // @brief Initialize Lease6 Fields
+    //
+    // Returns a pointer to a Lease6 structure.  Different values are put
+    // in the lease according to the address passed.
+    //
+    // This is just a convenience function for the test methods.
+    //
+    // @param address Address to use for the initialization
+    //
+    // @return Lease6Ptr.  This will not point to anything if the initialization
+    //         failed (e.g. unknown address).
+
+    Lease6Ptr initializeLease6(std::string address) {
+        Lease6Ptr lease(new Lease6());
+
+        // Set the address of the lease
+        lease->addr_ = IOAddress(address);
+
+        // Initialize unused fields.
+        lease->t1_ = 0;                             // Not saved
+        lease->t2_ = 0;                             // Not saved
+        lease->fixed_ = false;                      // Unused
+        lease->hostname_ = std::string("");         // Unused
+        lease->fqdn_fwd_ = false;                   // Unused
+        lease->fqdn_rev_ = false;                   // Unused
+        lease->comments_ = std::string("");         // Unused
+
+        // Set the other parameters
+        if (address == L1_ADDRESS) {
+            lease->type_ = Lease6::LEASE_IA_TA;
+            lease->prefixlen_ = 0;
+            lease->iaid_ = 42;
+            lease->duid_ = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0x42)));
+            lease->preferred_lft_ = 3600;  // Preferred lifetime
+            lease->valid_lft_ = 3677;      // Actual lifetime
+            lease->cltt_ = 123456;         // Current time of day
+            lease->subnet_id_ = 73;        // Arbitrary number
+
+        } else if (address == L2_ADDRESS) {
+            lease->type_ = Lease6::LEASE_IA_PD;
+            lease->prefixlen_ = 7;
+            lease->iaid_ = 89;
+            lease->duid_ = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0x3a)));
+            lease->preferred_lft_ = 1800;  // Preferred lifetime
+            lease->valid_lft_ = 5412;      // Actual lifetime
+            lease->cltt_ = 234567;         // Current time of day
+            lease->subnet_id_ = 73;        // Same as for L1_ADDRESS
+
+        
+        } else if (address == L3_ADDRESS) {
+            lease->type_ = Lease6::LEASE_IA_NA;
+            lease->prefixlen_ = 28;
+            lease->iaid_ = 0xfffffffe;
+            vector<uint8_t> duid;
+            for (uint8_t i = 0; i < 128; ++i) {
+                duid.push_back(i + 5);
+            }
+            lease->duid_ = boost::shared_ptr<DUID>(new DUID(duid));
+
+            // The times used in the next tests are deliberately restricted - we
+            // should be able to cope with valid lifetimes up to 0xffffffff.
+            //  However, this will lead to overflows.
+            // @TODO: test overflow conditions when code has been fixed
+            lease->preferred_lft_ = 7200;  // Preferred lifetime
+            lease->valid_lft_ = 7000;      // Actual lifetime
+            lease->cltt_ = 234567;         // Current time of day
+            lease->subnet_id_ = 37;        // Different from L1 and L2
+
+        } else {
+            // Unknown address, return an empty pointer.
+            lease.reset();
+
+        }
+
+        return (lease);
+    }
+
+    // Member variables
+
     LeaseMgr*   lmptr_;         // Pointer to the lease manager
+
+    string L1_ADDRESS;          // String form of address 1
+    string L2_ADDRESS;          // String form of address 2
+    string L3_ADDRESS;          // String form of address 3
+
+    IOAddress L1_IOADDRESS;     // IOAddress form of L1_ADDRESS
+    IOAddress L2_IOADDRESS;     // IOAddress form of L2_ADDRESS
+    IOAddress L3_IOADDRESS;     // IOAddress form of L3_ADDRESS
 };
 
 
-/// @brief Check that Database Can Be Opened
-///
-/// This test checks if the MySqlLeaseMgr can be instantiated.  This happens
-/// only if the database can be opened.  Note that this is not part of the
-/// MySqlLeaseMgr test fixure set.  This test checks that the database can be
-/// opened: the fixtures assume that and check basic operations.
+// @brief Check that Database Can Be Opened
+//
+// This test checks if the MySqlLeaseMgr can be instantiated.  This happens
+// only if the database can be opened.  Note that this is not part of the
+// MySqlLeaseMgr test fixure set.  This test checks that the database can be
+// opened: the fixtures assume that and check basic operations.
 
 TEST(MySqlOpenTest, OpenDatabase) {
     // Check that database opens correctly and tidy up.  If it fails, print
@@ -208,7 +307,7 @@ TEST(MySqlOpenTest, OpenDatabase) {
         NoDatabaseName);
 }
 
-/// @brief Check conversion functions
+// @brief Check conversion functions
 TEST_F(MySqlLeaseMgrTest, CheckTimeConversion) {
     const time_t cltt = time(NULL);
     const uint32_t valid_lft = 86400;       // 1 day
@@ -239,7 +338,15 @@ TEST_F(MySqlLeaseMgrTest, CheckTimeConversion) {
     EXPECT_EQ(cltt, converted_cltt);
 }
 
-/// @brief Check that getVersion() works
+
+// @brief Check getName() returns correct database name
+TEST_F(MySqlLeaseMgrTest, getName) {
+    EXPECT_EQ(std::string("keatest"), lmptr_->getName());
+
+    // @TODO: check for the negative
+}
+
+// @brief Check that getVersion() works
 TEST_F(MySqlLeaseMgrTest, CheckVersion) {
     // Check version
     pair<uint32_t, uint32_t> version;
@@ -265,81 +372,24 @@ detailCompareLease6(const Lease6Ptr& first, const Lease6Ptr& second) {
     EXPECT_EQ(first->subnet_id_, second->subnet_id_);
 }
 
-/// @brief Initialize Lease
-///
-/// Initializes the unused fields in a lease to known values for
-/// testing purposes.
-void initializeUnusedLease6(Lease6Ptr& lease) {
-    lease->t1_ = 0;                             // Not saved
-    lease->t2_ = 0;                             // Not saved
-    lease->fixed_ = false;                      // Unused
-    lease->hostname_ = std::string("");         // Unused
-    lease->fqdn_fwd_ = false;                   // Unused
-    lease->fqdn_rev_ = false;                   // Unused
-    lease->comments_ = std::string("");         // Unused
-}
 
-/// @brief Check individual Lease6 methods
-///
-/// Checks that the add/update/delete works.  All are done within one
-/// test so that "rollback" can be used to remove trace of the tests
-/// from the database.
-///
-/// Tests where a collection of leases can be returned are in the test
-/// Lease6Collection.
+// @brief Check individual Lease6 methods
+//
+// Checks that the add/update/delete works.  All are done within one
+// test so that "rollback" can be used to remove trace of the tests
+// from the database.
+//
+// Tests where a collection of leases can be returned are in the test
+// Lease6Collection.
 TEST_F(MySqlLeaseMgrTest, BasicLease6) {
 
     // Define the leases being used for testing.
-    const IOAddress L1_ADDRESS(std::string("2001:db8::1"));
-    Lease6Ptr l1(new Lease6());
-    initializeUnusedLease6(l1);
-
-    l1->type_ = Lease6::LEASE_IA_TA;
-    l1->addr_ = L1_ADDRESS;
-    l1->prefixlen_ = 0;
-    l1->iaid_ = 42;
-    l1->duid_ = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0x42)));
-    l1->preferred_lft_ = 3600;  // Preferred lifetime
-    l1->valid_lft_ = 3677;      // Actual lifetime
-    l1->cltt_ = 123456;         // Current time of day
-    l1->subnet_id_ = 73;        // Arbitrary number
-
-    const IOAddress L2_ADDRESS(std::string("2001:db8::2"));
-    Lease6Ptr l2(new Lease6());
-    initializeUnusedLease6(l2);
-
-    l2->type_ = Lease6::LEASE_IA_PD;
-    l2->addr_ = L2_ADDRESS;
-    l2->prefixlen_ = 7;
-    l2->iaid_ = 89;
-    l2->duid_ = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0x3a)));
-    l2->preferred_lft_ = 1800;  // Preferred lifetime
-    l2->valid_lft_ = 5412;      // Actual lifetime
-    l2->cltt_ = 234567;         // Current time of day
-    l2->subnet_id_ = l1->subnet_id_;    // Same as l1
-
-    const IOAddress L3_ADDRESS(std::string("2001:db8::3"));
-    Lease6Ptr l3(new Lease6());
-    initializeUnusedLease6(l3);
-
-    l3->type_ = Lease6::LEASE_IA_NA;
-    l3->addr_ = L3_ADDRESS;
-    l3->prefixlen_ = 28;
-    l3->iaid_ = 0xfffffffe;
-    vector<uint8_t> duid;
-    for (uint8_t i = 0; i < 128; ++i) {
-        duid.push_back(i + 5);
-    }
-    l3->duid_ = boost::shared_ptr<DUID>(new DUID(duid));
-
-    // The times used in the next tests are deliberately restricted - we should
-    // be avle to cope with valid lifetimes up to 0xffffffff.  However, this
-    // will lead to overflows.
-    // @TODO: test overflow conditions when code has been fixed
-    l3->preferred_lft_ = 7200;          // Preferred lifetime
-    l3->valid_lft_ = 7000;              // Actual lifetime
-    l3->cltt_ = 234567;                 // Current time of day
-    l3->subnet_id_ = l1->subnet_id_;    // Same as l1
+    Lease6Ptr l1 = initializeLease6(L1_ADDRESS);
+    ASSERT_TRUE(l1);
+    Lease6Ptr l2 = initializeLease6(L2_ADDRESS);
+    ASSERT_TRUE(l2);
+    Lease6Ptr l3 = initializeLease6(L3_ADDRESS);
+    ASSERT_TRUE(l3);
 
     // Sanity check that the leases are different
     ASSERT_TRUE(*l1 != *l2);
@@ -358,16 +408,15 @@ TEST_F(MySqlLeaseMgrTest, BasicLease6) {
     // Reopen the database to ensure that they actually got stored.
     reopen();
 
-    // check that the values returned are as expected.
-    l_returned = lmptr_->getLease6(L1_ADDRESS);
+    l_returned = lmptr_->getLease6(L1_IOADDRESS);
     EXPECT_TRUE(l_returned);
     detailCompareLease6(l1, l_returned);
 
-    l_returned = lmptr_->getLease6(L2_ADDRESS);
+    l_returned = lmptr_->getLease6(L2_IOADDRESS);
     EXPECT_TRUE(l_returned);
     detailCompareLease6(l2, l_returned);
 
-    l_returned = lmptr_->getLease6(L3_ADDRESS);
+    l_returned = lmptr_->getLease6(L3_IOADDRESS);
     EXPECT_TRUE(l_returned);
     detailCompareLease6(l3, l_returned);
 
@@ -376,22 +425,72 @@ TEST_F(MySqlLeaseMgrTest, BasicLease6) {
 
     // Delete a lease, check that it's gone, and that we can't delete it
     // a second time.
-    EXPECT_TRUE(lmptr_->deleteLease6(L1_ADDRESS));
-    l_returned = lmptr_->getLease6(L1_ADDRESS);
+    EXPECT_TRUE(lmptr_->deleteLease6(L1_IOADDRESS));
+    l_returned = lmptr_->getLease6(L1_IOADDRESS);
     EXPECT_FALSE(l_returned);
-    EXPECT_FALSE(lmptr_->deleteLease6(L1_ADDRESS));
+    EXPECT_FALSE(lmptr_->deleteLease6(L1_IOADDRESS));
 
     // Check that the second address is still there.
-    l_returned = lmptr_->getLease6(L2_ADDRESS);
+    l_returned = lmptr_->getLease6(L2_IOADDRESS);
     EXPECT_TRUE(l_returned);
     detailCompareLease6(l2, l_returned);
 }
 
-/// @brief Check getName() returns correct database name
-TEST_F(MySqlLeaseMgrTest, getName) {
-    EXPECT_EQ(std::string("keatest"), lmptr_->getName());
+// @brief Lease6 Update Tests
+//
+// Checks that we are able to update a lease in the database.
+TEST_F(MySqlLeaseMgrTest, UpdateLease6) {
 
-    // @TODO: check for the negative
+    // Define the leases being used for testing.
+    Lease6Ptr l1 = initializeLease6(L1_ADDRESS);
+    ASSERT_TRUE(l1);
+
+    // Add a lease to the database and check that the lease is there.
+    EXPECT_TRUE(lmptr_->addLease(l1));
+    lmptr_->commit();
+
+    reopen();
+    Lease6Ptr l_returned = lmptr_->getLease6(L1_IOADDRESS);
+    EXPECT_TRUE(l_returned);
+    detailCompareLease6(l1, l_returned);
+
+    // Modify some fields in lease 1 (not the address) and update it.
+    ++l1->iaid_;
+    l1->type_ = Lease6::LEASE_IA_PD;
+    l1->valid_lft_ *= 2;
+    lmptr_->updateLease6(l1);
+    lmptr_->commit();
+    reopen();
+
+    // ... and check what is returned is what is expected.
+    l_returned.reset();
+    l_returned = lmptr_->getLease6(L1_IOADDRESS);
+    EXPECT_TRUE(l_returned);
+    detailCompareLease6(l1, l_returned);
+
+    // Alter the lease again and check.
+    ++l1->iaid_;
+    l1->type_ = Lease6::LEASE_IA_TA;
+    l1->cltt_ += 6;
+    l1->prefixlen_ = 93;
+    lmptr_->updateLease6(l1);
+
+    l_returned.reset();
+    l_returned = lmptr_->getLease6(L1_IOADDRESS);
+    EXPECT_TRUE(l_returned);
+    detailCompareLease6(l1, l_returned);
+
+    // Check we can do an update without changing data.
+    lmptr_->updateLease6(l1);
+    l_returned.reset();
+    l_returned = lmptr_->getLease6(L1_IOADDRESS);
+    EXPECT_TRUE(l_returned);
+    detailCompareLease6(l1, l_returned);
+
+    // Try updating a non-existent lease.
+    Lease6Ptr l2 = initializeLease6(L2_ADDRESS);
+    ASSERT_TRUE(l2);
+    EXPECT_THROW(lmptr_->updateLease6(l2), isc::dhcp::NoSuchLease);
 }
 
 }; // end of anonymous namespace
