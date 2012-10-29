@@ -144,6 +144,29 @@ TEST_F(InputSourceTest, lines) {
     // Now we are back to where we started.
     EXPECT_EQ(1, source_.getCurrentLine());
     EXPECT_FALSE(source_.atEOF());
+
+    // Now check that line numbers are decremented properly (as much as
+    // possible using the available API).
+    while (!source_.atEOF()) {
+        source_.getChar();
+    }
+    line = source_.getCurrentLine();
+
+    // Now, we are at EOF.
+    EXPECT_TRUE(source_.atEOF());
+    EXPECT_EQ(4, line);
+
+    EXPECT_THROW({
+        while (true) {
+            source_.ungetChar();
+            EXPECT_TRUE(((line == source_.getCurrentLine()) ||
+                         ((line - 1) == source_.getCurrentLine())));
+            line = source_.getCurrentLine();
+        }
+    }, isc::OutOfRange);
+
+    // Now we are back to where we started.
+    EXPECT_EQ(1, source_.getCurrentLine());
 }
 
 } // end namespace
