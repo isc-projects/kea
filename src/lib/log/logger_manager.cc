@@ -138,6 +138,9 @@ LoggerManager::init(const std::string& root, isc::log::Severity severity,
     if (file) {
         readLocalMessageFile(file);
     }
+
+    // Ensure that the mutex is constructed and ready at this point.
+    (void) getMutex();
 }
 
 
@@ -190,6 +193,13 @@ void
 LoggerManager::reset() {
     setRootLoggerName(initRootName());
     LoggerManagerImpl::reset(initSeverity(), initDebugLevel());
+}
+
+isc::util::thread::Mutex&
+LoggerManager::getMutex() {
+    static isc::util::thread::Mutex mutex;
+
+    return (mutex);
 }
 
 } // namespace log
