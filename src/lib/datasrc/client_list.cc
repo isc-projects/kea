@@ -72,20 +72,9 @@ ConfigurableClientList::DataSourceInfo::getCacheClient() const {
 
 ConfigurableClientList::ConfigurableClientList(const RRClass& rrclass) :
     rrclass_(rrclass),
-    mem_sgmt_(new util::MemorySegmentLocal),
     configuration_(new isc::data::ListElement),
     allow_cache_(false)
 {}
-
-ConfigurableClientList::~ConfigurableClientList() {
-    // Explicitly clear the contained data source clients, and check memory
-    // leak.  assert() (with abort on failure) may be too harsh, but
-    // it's probably better to find more leaks initially.  Once it's stabilized
-    // we should probably revisit it.
-
-    data_sources_.clear();
-    assert(mem_sgmt_->allMemoryDeallocated());
-}
 
 void
 ConfigurableClientList::configure(const ConstElementPtr& config,
