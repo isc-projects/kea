@@ -177,6 +177,17 @@ class TestItemNameList(unittest.TestCase):
                          stats_httpd.item_name_list, [1,2,3], 'a')
         self.assertRaises(isc.cc.data.DataTypeError,
                          stats_httpd.item_name_list, [1,2,3], '')
+        # for checking key names sorted which consist of element
+        num = 11
+        keys = [ 'a', 'aa', 'b' ]
+        keys.sort(reverse=True)
+        dictlist = dict([ (k, list(range(num))) for k in keys ])
+        keys.sort()
+        ans = []
+        for k in keys:
+            ans += [k] + [ '%s[%d]' % (k, i) for i in range(num) ]
+        self.assertEqual(ans,
+                         stats_httpd.item_name_list(dictlist, ''))
 
 class TestHttpHandler(unittest.TestCase):
     """Tests for HttpHandler class"""
