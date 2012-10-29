@@ -81,7 +81,7 @@ TEST(CfgMgrTest, subnet6) {
     cfg_mgr.addSubnet6(subnet1);
 
     // Now we have only one subnet, any request will be served from it
-    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(IOAddress("2001:db8::1")));
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(IOAddress("2000::1")));
 
     cfg_mgr.addSubnet6(subnet2);
     cfg_mgr.addSubnet6(subnet3);
