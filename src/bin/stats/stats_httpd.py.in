@@ -90,7 +90,7 @@ def item_name_list(element, identifier):
             ret += item_name_list(element, idstr)
     elif type(elem) is list:
         for i in range(0, len(elem)):
-            idstr = '%s[%s]' % (ident, i)
+            idstr = '%s[%d]' % (ident, i)
             ret += item_name_list(element, idstr)
     ret.sort()
     return ret
