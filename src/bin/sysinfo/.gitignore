@@ -1,3 +1,4 @@
 /isc-sysinfo
-/sysinfo.py
 /isc-sysinfo.1
+/run_sysinfo.sh
+/sysinfo.py
