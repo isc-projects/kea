@@ -67,6 +67,10 @@ protected:
         virtual isc::asiolink::IOAddress
         pickAddress(const Subnet6Ptr& subnet, const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint) = 0;
+
+        /// @brief virtual destructor
+        virtual ~Allocator() {
+        }
     protected:
     };
 
