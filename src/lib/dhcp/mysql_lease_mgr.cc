@@ -375,6 +375,7 @@ MySqlLeaseMgr::convertToDatabaseTime(time_t cltt, uint32_t valid_lifetime,
                                     MYSQL_TIME& expire) {
 
     // Calculate expiry time and convert to various date/time fields.
+    // @TODO: handle overflows
     time_t expire_time = cltt + valid_lifetime;
 
     // Convert to broken-out time

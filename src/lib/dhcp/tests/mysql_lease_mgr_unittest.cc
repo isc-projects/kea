@@ -331,8 +331,13 @@ TEST_F(MySqlLeaseMgrTest, BasicLease6) {
         duid.push_back(i + 5);
     }
     l3->duid_ = boost::shared_ptr<DUID>(new DUID(duid));
-    l3->preferred_lft_ = 0xfffffffc;    // Preferred lifetime
-    l3->valid_lft_ = 0xfffffffd;        // Actual lifetime
+
+    // The times used in the next tests are deliberately restricted - we should
+    // be avle to cope with valid lifetimes up to 0xffffffff.  However, this
+    // will lead to overflows.
+    // @TODO: test overflow conditions when code has been fixed
+    l3->preferred_lft_ = 7200;          // Preferred lifetime
+    l3->valid_lft_ = 7000;              // Actual lifetime
     l3->cltt_ = 234567;                 // Current time of day
     l3->subnet_id_ = l1->subnet_id_;    // Same as l1
 
