@@ -29,6 +29,11 @@ ZoneTableSegmentLocal::ZoneTableSegmentLocal(const RRClass& rrclass) :
 }
 
 ZoneTableSegmentLocal::~ZoneTableSegmentLocal() {
+    // Explicitly clear the contained data, and check memory
+    // leak.  assert() (with abort on failure) may be too harsh, but
+    // it's probably better to find more leaks initially.  Once it's stabilized
+    // we should probably revisit it.
+
     ZoneTable::destroy(mem_sgmt_, header_.getTable());
     assert(mem_sgmt_.allMemoryDeallocated());
 }
