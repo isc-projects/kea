@@ -486,19 +486,19 @@ TEST_F(DataSrcClientsBuilderTest, loadZoneInvalidParams) {
 
     // class or origin is missing: result in assertion failure
     if (!isc::util::unittests::runningOnValgrind()) {
+/*
         EXPECT_DEATH_IF_SUPPORTED({
                 builder.handleCommand(
                     Command(LOADZONE,
                             Element::fromJSON(
                                 "{\"origin\": \"test1.example\"}")));
             }, "");
-/*
+*/
         EXPECT_DEATH_IF_SUPPORTED({
                 builder.handleCommand(Command(LOADZONE,
                                               Element::fromJSON(
                                                   "{\"class\": \"IN\"}")));
             }, "");
-*/
     }
 
     // zone doesn't exist in the data source
