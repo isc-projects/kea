@@ -50,7 +50,7 @@ ConfigurableClientList::DataSourceInfo::DataSourceInfo(
 {
     if (has_cache) {
         cache_.reset(new InMemoryClient(segment, rrclass));
-        segment_ = segment;
+        ztable_segment_ = segment;
     }
 }
 
@@ -61,7 +61,7 @@ ConfigurableClientList::DataSourceInfo::DataSourceInfo(
 {
     if (has_cache) {
         cache_.reset(new InMemoryClient(segment, rrclass));
-        segment_ = segment;
+        ztable_segment_ = segment;
     }
 }
 
@@ -448,7 +448,7 @@ ConfigurableClientList::getCachedZoneWriter(const Name& name) {
     }
     return (ZoneWriterPair(ZONE_SUCCESS,
                            ZoneWriterPtr(
-                               result.info->segment_->
+                               result.info->ztable_segment_->
                                getZoneWriter(load_action, name, rrclass_))));
 }
 
