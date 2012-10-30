@@ -17,6 +17,7 @@
 
 #include <exceptions/exceptions.h>
 
+#include <istream>
 #include <string>
 
 #include <stdint.h>
@@ -27,6 +28,16 @@ namespace dns {
 class MasterLexer {
 public:
     class Token;       // we define it separately for better readability
+
+    MasterLexer();
+    ~MasterLexer();
+    void open(std::istream& input);
+    std::string getSourceName() const;
+    size_t getSourceLine() const;
+
+private:
+    struct MasterLexerImpl;
+    MasterLexerImpl* impl_;
 };
 
 /// \brief Tokens for \c MasterLexer
