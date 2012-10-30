@@ -45,8 +45,12 @@ const uint8_t bitMask6[]= { 0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
 /// @param len prefix length
 isc::asiolink::IOAddress firstAddrInPrefix6(const isc::asiolink::IOAddress& prefix,
                                             uint8_t len) {
-
     uint8_t packed[V6ADDRESS_LEN];
+
+    if (len > 128) {
+        isc_throw(isc::BadValue,
+                  "Too large netmask. 0..128 is allowed in IPv6");
+    }
 
     // First we copy the whole address as 16 bytes.
     memcpy(packed, prefix.getAddress().to_v6().to_bytes().data(), 16);
@@ -104,7 +108,7 @@ isc::asiolink::IOAddress firstAddrInPrefix4(const isc::asiolink::IOAddress& pref
 isc::asiolink::IOAddress lastAddrInPrefix4(const isc::asiolink::IOAddress& prefix,
                                            uint8_t len) {
     uint32_t addr = prefix;
-    if (len>32) {
+    if (len > 32) {
         isc_throw(isc::BadValue, "Too large netmask. 0..32 is allowed in IPv4");
     }
 
@@ -122,6 +126,11 @@ isc::asiolink::IOAddress lastAddrInPrefix6(const isc::asiolink::IOAddress& prefi
                                            uint8_t len) {
 
     uint8_t packed[V6ADDRESS_LEN];
+
+    if (len > 128) {
+        isc_throw(isc::BadValue,
+                  "Too large netmask. 0..128 is allowed in IPv6");
+    }
 
     // First we copy the whole address as 16 bytes.
     memcpy(packed, prefix.getAddress().to_v6().to_bytes().data(), 16);
