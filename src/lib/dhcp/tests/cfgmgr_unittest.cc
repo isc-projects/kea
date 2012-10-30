@@ -32,12 +32,21 @@ using boost::scoped_ptr;
 
 namespace {
 
+class CfgMgrTest : public ::testing::Test {
+public:
+    CfgMgrTest() {
+    }
+
+    ~CfgMgrTest() {
+        CfgMgr::instance().deleteSubnets6();
+    }
+};
+
+
 // This test verifies if the configuration manager is able to hold and return
 // valid leases
-TEST(CfgMgrTest, subnet4) {
+TEST_F(CfgMgrTest, subnet4) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
-
-    ASSERT_TRUE(&cfg_mgr != 0);
 
     Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
     Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
@@ -66,10 +75,8 @@ TEST(CfgMgrTest, subnet4) {
 
 // This test verifies if the configuration manager is able to hold and return
 // valid leases
-TEST(CfgMgrTest, subnet6) {
+TEST_F(CfgMgrTest, subnet6) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
-
-    ASSERT_TRUE(&cfg_mgr != 0);
 
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
     Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
@@ -82,6 +89,10 @@ TEST(CfgMgrTest, subnet6) {
 
     // Now we have only one subnet, any request will be served from it
     EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(IOAddress("2000::1")));
+
+    // If we have only a single subnet and the request came from a local
+    // address, let's use that subnet
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(IOAddress("fe80::dead:beef")));
 
     cfg_mgr.addSubnet6(subnet2);
     cfg_mgr.addSubnet6(subnet3);
