@@ -579,8 +579,9 @@ INPUT                  = ../src/lib/exceptions ../src/lib/cc \
     ../src/lib/log/compiler ../src/lib/asiolink/ ../src/lib/nsas \
     ../src/lib/testutils ../src/lib/cache ../src/lib/server_common/ \
     ../src/bin/sockcreator/ ../src/lib/util/ ../src/lib/util/io/ \
-    ../src/lib/resolve ../src/lib/acl ../src/lib/statistics ../src/lib/dhcp \
-    ../src/bin/dhcp6 ../src/bin/dhcp4 ../tests/tools/perfdhcp devel
+    ../src/lib/util/threads/ ../src/lib/resolve ../src/lib/acl \
+    ../src/lib/statistics ../src/bin/dhcp6 ../src/lib/dhcp ../src/bin/dhcp4 \
+    ../tests/tools/perfdhcp devel
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is

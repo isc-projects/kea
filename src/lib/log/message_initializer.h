@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __MESSAGEINITIALIZER_H
-#define __MESSAGEINITIALIZER_H
+#ifndef MESSAGEINITIALIZER_H
+#define MESSAGEINITIALIZER_H
 
 #include <cstdlib>
 #include <string>
@@ -108,4 +108,4 @@ public:
 } // namespace log
 } // namespace isc
 
-#endif // __MESSAGEINITIALIZER_H
+#endif // MESSAGEINITIALIZER_H

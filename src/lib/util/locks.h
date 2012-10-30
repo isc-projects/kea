@@ -23,8 +23,8 @@
 /// to be set. we might want to enfore this at compile time with a check
 /// (TODO)
 
-#ifndef __LOCKS_
-#define __LOCKS_
+#ifndef LOCKS
+#define LOCKS
 
 namespace isc {
 namespace util {
@@ -42,13 +42,17 @@ class upgradable_mutex {
 template <typename T>
 class sharable_lock {
 public:
-    sharable_lock(T) { }
+    sharable_lock(T) {}
 };
 
 template <typename T>
 class scoped_lock {
 public:
-    scoped_lock(T) { }
+    scoped_lock(T) {}
+
+    // We need to define this explicitly.  Some versions of clang++ would
+    // complain about this otherwise.  See Trac ticket #2340
+    ~scoped_lock() {}
 
     void lock() {}
     void unlock() {}
@@ -58,4 +62,4 @@ public:
 } // namespace util
 } // namespace isc
 
-#endif // __LOCKS_
+#endif // LOCKS

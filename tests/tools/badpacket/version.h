@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __VERSION_H
-#define __VERSION_H
+#ifndef VERSION_H
+#define VERSION_H
 
 namespace isc {
 namespace badpacket {
@@ -23,4 +23,4 @@ static const char* BADPACKET_VERSION = "1.0-1";
 } // namespace badpacket
 } // namespace isc
 
-#endif // __VERSION_H
+#endif // VERSION_H

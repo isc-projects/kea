@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ADDRESS_ENTRY_H
-#define __ADDRESS_ENTRY_H
+#ifndef ADDRESS_ENTRY_H
+#define ADDRESS_ENTRY_H
 
 /// \brief Address Entry
 ///
@@ -99,4 +99,4 @@ private:
 }   // namespace isc
 
 
-#endif // __ADDRESS_ENTRY_H
+#endif // ADDRESS_ENTRY_H

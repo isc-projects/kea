@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PKT_TRANSFORM_H
-#define __PKT_TRANSFORM_H
+#ifndef PKT_TRANSFORM_H
+#define PKT_TRANSFORM_H
 
 #include <dhcp/option.h>
 
@@ -166,4 +166,4 @@ private:
 } // namespace perfdhcp
 } // namespace isc
 
-#endif // __PKT_TRANSFORM_H
+#endif // PKT_TRANSFORM_H

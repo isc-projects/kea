@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __COUNTER_H
-#define __COUNTER_H 1
+#ifndef COUNTER_H
+#define COUNTER_H 1
 
 #include <exceptions/exceptions.h>
 

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __AUTH_DATA_SOURCE_UTIL_H
-#define __AUTH_DATA_SOURCE_UTIL_H 1
+#ifndef AUTH_DATA_SOURCE_UTIL_H
+#define AUTH_DATA_SOURCE_UTIL_H 1
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
@@ -51,7 +51,7 @@ createSQLite3DB(dns::RRClass zclass, const dns::Name& zname,
 } // end of auth
 } // end of isc
 
-#endif  // __AUTH_DATA_SOURCE_UTIL_H
+#endif  // AUTH_DATA_SOURCE_UTIL_H
 
 // Local Variables:
 // mode: c++

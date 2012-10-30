@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __MESSAGE_EXCEPTION_H
-#define __MESSAGE_EXCEPTION_H
+#ifndef MESSAGE_EXCEPTION_H
+#define MESSAGE_EXCEPTION_H
 
 #include <exceptions/exceptions.h>
 #include <log/message_types.h>
@@ -117,4 +117,4 @@ private:
 } // namespace log
 } // namespace isc
 
-#endif // __MESSAGE_EXCEPTION_H
+#endif // MESSAGE_EXCEPTION_H

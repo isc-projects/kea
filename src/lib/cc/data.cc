@@ -57,32 +57,32 @@ Element::toWire(std::ostream& ss) const {
 }
 
 bool
-Element::getValue(long int&) {
+Element::getValue(long int&) const {
     return (false);
 }
 
 bool
-Element::getValue(double&) {
+Element::getValue(double&) const {
     return (false);
 }
 
 bool
-Element::getValue(bool&) {
+Element::getValue(bool&) const {
     return (false);
 }
 
 bool
-Element::getValue(std::string&) {
+Element::getValue(std::string&) const {
     return (false);
 }
 
 bool
-Element::getValue(std::vector<ConstElementPtr>&) {
+Element::getValue(std::vector<ConstElementPtr>&) const {
     return (false);
 }
 
 bool
-Element::getValue(std::map<std::string, ConstElementPtr>&) {
+Element::getValue(std::map<std::string, ConstElementPtr>&) const {
     return (false);
 }
 
@@ -167,7 +167,7 @@ Element::find(const std::string&) const {
 }
 
 bool
-Element::find(const std::string&, ConstElementPtr) const {
+Element::find(const std::string&, ConstElementPtr&) const {
     return (false);
 }
 
@@ -413,7 +413,7 @@ from_stringstream_number(std::istream &in, int &pos) {
             isc_throw(JSONError, std::string("Number overflow: ") + number);
         }
     }
-    
+
     if (is_double) {
         return (Element::create(d));
     } else {
@@ -501,7 +501,7 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
 
             ConstElementPtr value = Element::fromJSON(in, file, line, pos);
             map->set(key, value);
-            
+
             skip_to(in, file, line, pos, ",}", WHITESPACE);
             c = in.get();
             pos++;
@@ -812,7 +812,7 @@ MapElement::set(const std::string& key, ConstElementPtr value) {
 }
 
 bool
-MapElement::find(const std::string& id, ConstElementPtr t) const {
+MapElement::find(const std::string& id, ConstElementPtr& t) const {
     try {
         ConstElementPtr p = find(id);
         if (p) {
@@ -942,7 +942,7 @@ removeIdentical(ConstElementPtr a, ConstElementPtr b) {
     if (!b) {
         return (result);
     }
-    
+
     if (a->getType() != Element::map || b->getType() != Element::map) {
         isc_throw(TypeError, "Non-map Elements passed to removeIdentical");
     }
@@ -965,7 +965,7 @@ merge(ElementPtr element, ConstElementPtr other) {
         other->getType() != Element::map) {
         isc_throw(TypeError, "merge arguments not MapElements");
     }
-    
+
     const std::map<std::string, ConstElementPtr>& m = other->mapValue();
     for (std::map<std::string, ConstElementPtr>::const_iterator it = m.begin();
          it != m.end() ; ++it) {

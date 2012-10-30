@@ -173,6 +173,9 @@ protected:
         // It would delete itself, but after the io_service_, which could
         // segfailt in case there were unhandled requests
         resolver_.reset();
+        // In a similar note, we wait until the resolver has been cleaned up
+        // until deleting and active test running_query_
+        delete running_query_;
     }
 
     void SetUp() {
@@ -218,7 +221,7 @@ protected:
     }
 
     // Receive a UDP packet from a mock server; used for testing
-    // recursive lookup.  The caller must place a RecursiveQuery 
+    // recursive lookup.  The caller must place a RecursiveQuery
     // on the IO Service queue before running this routine.
     void recvUDP(const int family, void* buffer, size_t& size) {
         ScopedAddrInfo sai(resolveAddress(family, IPPROTO_UDP, true));
@@ -267,7 +270,7 @@ protected:
         if (ret < 0) {
             isc_throw(IOError, "recvfrom failed: " << strerror(errno));
         }
-        
+
         // Pass the message size back via the size parameter
         size = ret;
     }
@@ -507,11 +510,13 @@ protected:
     vector<uint8_t> callback_data_;
     ScopedSocket sock_;
     boost::shared_ptr<isc::util::unittests::TestResolver> resolver_;
+    AbstractRunningQuery* running_query_;
 };
 
 RecursiveQueryTest::RecursiveQueryTest() :
     dns_service_(NULL), callback_(NULL), callback_protocol_(0),
-    callback_native_(-1), resolver_(new isc::util::unittests::TestResolver())
+    callback_native_(-1), resolver_(new isc::util::unittests::TestResolver()),
+    running_query_(NULL)
 {
     nsas_.reset(new isc::nsas::NameserverAddressStore(resolver_));
 }
@@ -652,12 +657,12 @@ TEST_F(RecursiveQueryTest, forwarderSend) {
                       singleAddress(TEST_IPV4_ADDR, port));
 
     Question q(Name("example.com"), RRClass::IN(), RRType::TXT());
-    Message query_message(Message::RENDER);
-    isc::resolve::initResponseMessage(q, query_message);
+    MessagePtr query_message(new Message(Message::RENDER));
+    isc::resolve::initResponseMessage(q, *query_message);
 
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
-    rq.forward(ConstMessagePtr(&query_message), answer, buffer, &server);
+    running_query_ = rq.forward(query_message, answer, buffer, &server);
 
     char data[4096];
     size_t size = sizeof(data);
@@ -691,37 +696,6 @@ createTestSocket() {
         isc_throw(IOError, "failed to bind test socket");
     }
     return (sock.release());
-}
-
-int
-setSocketTimeout(int sock, size_t tv_sec, size_t tv_usec) {
-    const struct timeval timeo = { tv_sec, tv_usec };
-    int recv_options = 0;
-    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeo, sizeof(timeo))) {
-        if (errno == ENOPROTOOPT) { // see RecursiveQueryTest::recvUDP()
-            recv_options = MSG_DONTWAIT;
-        } else {
-            isc_throw(IOError, "set RCVTIMEO failed: " << strerror(errno));
-        }
-    }
-    return (recv_options);
-}
-
-// try to read from the socket max time
-// *num is incremented for every succesfull read
-// returns true if it can read max times, false otherwise
-bool tryRead(int sock, int recv_options, size_t max, int* num) {
-    size_t i = 0;
-    do {
-        char inbuff[512];
-        if (recv(sock, inbuff, sizeof(inbuff), recv_options) < 0) {
-            return false;
-        } else {
-            ++i;
-            ++*num;
-        }
-    } while (i < max);
-    return true;
 }
 
 // Mock resolver callback for testing forward query.
@@ -780,11 +754,11 @@ TEST_F(RecursiveQueryTest, forwardQueryTimeout) {
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
-    Message query_message(Message::RENDER);
-    isc::resolve::initResponseMessage(question, query_message);
+    MessagePtr query_message(new Message(Message::RENDER));
+    isc::resolve::initResponseMessage(question, *query_message);
 
     boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
-    query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
+    running_query_ = query.forward(query_message, answer, buffer, &server, callback);
     // Run the test
     io_service_.run();
     EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
@@ -815,11 +789,11 @@ TEST_F(RecursiveQueryTest, forwardClientTimeout) {
                          1000, 10, 4000, 4);
     Question q(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
-    Message query_message(Message::RENDER);
-    isc::resolve::initResponseMessage(q, query_message);
+    MessagePtr query_message(new Message(Message::RENDER));
+    isc::resolve::initResponseMessage(q, *query_message);
 
     boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
-    query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
+    running_query_ = query.forward(query_message, answer, buffer, &server, callback);
     // Run the test
     io_service_.run();
     EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
@@ -850,11 +824,12 @@ TEST_F(RecursiveQueryTest, forwardLookupTimeout) {
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
 
-    Message query_message(Message::RENDER);
-    isc::resolve::initResponseMessage(question, query_message);
+    //Message query_message(Message::RENDER);
+    MessagePtr query_message(new Message(Message::RENDER));
+    isc::resolve::initResponseMessage(question, *query_message);
 
     boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
-    query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
+    running_query_ = query.forward(query_message, answer, buffer, &server, callback);
     // Run the test
     io_service_.run();
     EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
@@ -885,11 +860,11 @@ TEST_F(RecursiveQueryTest, lowtimeouts) {
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
 
-    Message query_message(Message::RENDER);
-    isc::resolve::initResponseMessage(question, query_message);
+    MessagePtr query_message(new Message(Message::RENDER));
+    isc::resolve::initResponseMessage(question, *query_message);
 
     boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
-    query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
+    running_query_ = query.forward(query_message, answer, buffer, &server, callback);
     // Run the test
     io_service_.run();
     EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
@@ -904,7 +879,7 @@ TEST_F(RecursiveQueryTest, lowtimeouts) {
 TEST_F(RecursiveQueryTest, DISABLED_recursiveSendOk) {
     setDNSService(true, false);
     bool done;
-    
+
     MockServerStop server(io_service_, &done);
     vector<pair<string, uint16_t> > empty_vector;
     RecursiveQuery rq(*dns_service_, *nsas_, cache_, empty_vector,
@@ -913,7 +888,7 @@ TEST_F(RecursiveQueryTest, DISABLED_recursiveSendOk) {
     Question q(Name("www.isc.org"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
-    rq.resolve(q, answer, buffer, &server);
+    running_query_ = rq.resolve(q, answer, buffer, &server);
     io_service_.run();
 
     // Check that the answer we got matches the one we wanted
@@ -930,7 +905,7 @@ TEST_F(RecursiveQueryTest, DISABLED_recursiveSendOk) {
 TEST_F(RecursiveQueryTest, DISABLED_recursiveSendNXDOMAIN) {
     setDNSService(true, false);
     bool done;
-    
+
     MockServerStop server(io_service_, &done);
     vector<pair<string, uint16_t> > empty_vector;
     RecursiveQuery rq(*dns_service_, *nsas_, cache_, empty_vector,
@@ -939,7 +914,7 @@ TEST_F(RecursiveQueryTest, DISABLED_recursiveSendNXDOMAIN) {
     Question q(Name("wwwdoesnotexist.isc.org"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
-    rq.resolve(q, answer, buffer, &server);
+    running_query_ = rq.resolve(q, answer, buffer, &server);
     io_service_.run();
 
     // Check that the answer we got matches the one we wanted
@@ -1003,9 +978,9 @@ TEST_F(RecursiveQueryTest, CachedNS) {
     // Prepare the recursive query
     vector<pair<string, uint16_t> > roots;
     roots.push_back(pair<string, uint16_t>("192.0.2.2", 53));
-
+    vector<pair<string, uint16_t> > upstream;
     RecursiveQuery rq(*dns_service_, *nsas_, cache_,
-                      vector<pair<string, uint16_t> >(), roots);
+                      upstream, roots);
     // Ask a question at the bottom. It should not use the lower NS, because
     // it would lead to a loop in NS. But it can use the nsUpper one, it has
     // an IP address and we can avoid asking root.
@@ -1015,7 +990,7 @@ TEST_F(RecursiveQueryTest, CachedNS) {
     MessagePtr answer(new Message(Message::RENDER));
     // The server is here so we have something to pass there
     MockServer server(io_service_);
-    rq.resolve(q, answer, buffer, &server);
+    running_query_ = rq.resolve(q, answer, buffer, &server);
     // We don't need to run the service in this test. We are interested only
     // in the place it starts resolving at
 

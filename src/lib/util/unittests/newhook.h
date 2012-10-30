@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __UTIL_UNITTESTS_NEWHOOK_H
-#define __UTIL_UNITTESTS_NEWHOOK_H 1
+#ifndef UTIL_UNITTESTS_NEWHOOK_H
+#define UTIL_UNITTESTS_NEWHOOK_H 1
 
 /**
  * \file newhook.h
@@ -75,7 +75,7 @@ extern size_t throw_size_on_new;
 }
 }
 
-#endif // __UTIL_UNITTESTS_NEWHOOK_H
+#endif // UTIL_UNITTESTS_NEWHOOK_H
 
 // Local Variables:
 // mode: c++

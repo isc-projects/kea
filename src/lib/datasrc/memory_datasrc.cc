@@ -20,7 +20,6 @@
 #include <dns/nsec3hash.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
-#include <dns/rrsetlist.h>
 #include <dns/masterload.h>
 
 #include <datasrc/memory_datasrc.h>
@@ -792,13 +791,19 @@ public:
     /// context.
     Context(ZoneFinder& finder, ZoneFinder::FindOptions options,
             const RBNodeResultContext& result) :
-        ZoneFinder::Context(finder, options,
+        ZoneFinder::Context(options,
                             ResultContext(result.code, result.rrset,
                                           result.flags)),
-        rrset_(result.rrset), found_node_(result.found_node)
+        finder_(finder), rrset_(result.rrset), found_node_(result.found_node)
     {}
 
 protected:
+    virtual ZoneFinder* getFinder() { return (&finder_); }
+
+    virtual const std::vector<isc::dns::ConstRRsetPtr>* getAllRRsets() const {
+        return (NULL);
+    }
+
     virtual void getAdditionalImpl(const vector<RRType>& requested_types,
                                    vector<ConstRRsetPtr>& result)
     {
@@ -866,6 +871,7 @@ private:
         }
     }
 
+    ZoneFinder& finder_;
     const ConstRBNodeRRsetPtr rrset_;
     const DomainNode* const found_node_;
 };

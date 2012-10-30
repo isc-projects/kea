@@ -546,8 +546,6 @@ class BoB:
         """
             Start the Authoritative server
         """
-        if self.uid is not None and self.__started:
-            logger.warn(BIND10_START_AS_NON_ROOT_AUTH)
         authargs = ['b10-auth']
         if self.verbose:
             authargs += ['-v']
@@ -693,31 +691,41 @@ class BoB:
         # from doing so
         if not self.nokill:
             # next try sending a SIGTERM
-            components_to_stop = list(self.components.values())
-            for component in components_to_stop:
-                logger.info(BIND10_SEND_SIGTERM, component.name(), component.pid())
-                try:
-                    component.kill()
-                except OSError:
-                    # ignore these (usually ESRCH because the child
-                    # finally exited)
-                    pass
-            # finally, send SIGKILL (unmaskable termination) until everybody dies
+            self.__kill_children(False)
+            # finally, send SIGKILL (unmaskable termination) until everybody
+            # dies
             while self.components:
                 # XXX: some delay probably useful... how much is uncertain
                 time.sleep(0.1)
                 self.reap_children()
-                components_to_stop = list(self.components.values())
-                for component in components_to_stop:
-                    logger.info(BIND10_SEND_SIGKILL, component.name(),
-                                component.pid())
-                    try:
-                        component.kill(True)
-                    except OSError:
-                        # ignore these (usually ESRCH because the child
-                        # finally exited)
-                        pass
+                self.__kill_children(True)
             logger.info(BIND10_SHUTDOWN_COMPLETE)
+
+    def __kill_children(self, forceful):
+        '''Terminate remaining subprocesses by sending a signal.
+
+        The forceful paramter will be passed Component.kill().
+        This is a dedicated subroutine of shutdown(), just to unify two
+        similar cases.
+
+        '''
+        logmsg = BIND10_SEND_SIGKILL if forceful else BIND10_SEND_SIGTERM
+        # We need to make a copy of values as the components may be modified
+        # in the loop.
+        for component in list(self.components.values()):
+            logger.info(logmsg, component.name(), component.pid())
+            try:
+                component.kill(forceful)
+            except OSError as ex:
+                # If kill() failed due to EPERM, it doesn't make sense to
+                # keep trying, so we just log the fact and forget that
+                # component.  Ignore other OSErrors (usually ESRCH because
+                # the child finally exited)
+                signame = "SIGKILL" if forceful else "SIGTERM"
+                logger.info(BIND10_SEND_SIGNAL_FAIL, signame,
+                            component.name(), component.pid(), ex)
+                if ex.errno == errno.EPERM:
+                    del self.components[component.pid()]
 
     def _get_process_exit_status(self):
         return os.waitpid(-1, os.WNOHANG)
@@ -739,7 +747,7 @@ class BoB:
                 component = self.components.pop(pid)
                 logger.info(BIND10_PROCESS_ENDED, component.name(), pid,
                             exit_status)
-                if component.running() and self.runnable:
+                if component.is_running() and self.runnable:
                     # Tell it it failed. But only if it matters (we are
                     # not shutting down and the component considers itself
                     # to be running.
@@ -771,7 +779,12 @@ class BoB:
         next_restart_time = None
         now = time.time()
         for component in self.components_to_restart:
-            if not component.restart(now):
+            # If the component was removed from the configurator between since
+            # scheduled to restart, just ignore it.  The object will just be
+            # dropped here.
+            if not self._component_configurator.has_component(component):
+                logger.info(BIND10_RESTART_COMPONENT_SKIPPED, component.name())
+            elif not component.restart(now):
                 still_dead.append(component)
                 if next_restart_time is None or\
                    next_restart_time > component.get_restart_time():

@@ -17,9 +17,8 @@
 #include "datasrc_util.h"
 
 #include <auth/auth_srv.h>
-#include <auth/auth_config.h>
 #include <auth/command.h>
-#include <auth/datasrc_configurator.h>
+#include <auth/datasrc_config.h>
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
@@ -56,6 +55,7 @@ using namespace isc::datasrc;
 using namespace isc::config;
 using namespace isc::util::unittests;
 using namespace isc::testutils;
+using namespace isc::auth;
 using namespace isc::auth::unittest;
 
 namespace {
@@ -174,18 +174,26 @@ TEST_F(AuthCommandTest, shutdownIncorrectPID) {
 // zones, and checks the zones are correctly loaded.
 void
 zoneChecks(AuthSrv& server) {
-    EXPECT_EQ(ZoneFinder::SUCCESS, server.getClientList(RRClass::IN())->
-              find(Name("ns.test1.example")).finder_->
-              find(Name("ns.test1.example"), RRType::A())->code);
-    EXPECT_EQ(ZoneFinder::NXRRSET, server.getClientList(RRClass::IN())->
-              find(Name("ns.test1.example")).finder_->
-              find(Name("ns.test1.example"), RRType::AAAA())->code);
-    EXPECT_EQ(ZoneFinder::SUCCESS, server.getClientList(RRClass::IN())->
-              find(Name("ns.test2.example")).finder_->
-              find(Name("ns.test2.example"), RRType::A())->code);
-    EXPECT_EQ(ZoneFinder::NXRRSET, server.getClientList(RRClass::IN())->
-              find(Name("ns.test2.example")).finder_->
-              find(Name("ns.test2.example"), RRType::AAAA())->code);
+    const RRClass rrclass(RRClass::IN());
+
+    DataSrcClientsMgr::Holder holder(server.getDataSrcClientsMgr());
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              holder.findClientList(rrclass)->find(Name("ns.test1.example"))
+              .finder_->find(Name("ns.test1.example"), RRType::A())->code);
+    EXPECT_EQ(ZoneFinder::NXRRSET,
+              holder.findClientList(rrclass)->find(Name("ns.test1.example")).
+              finder_->find(Name("ns.test1.example"), RRType::AAAA())->code);
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              holder.findClientList(rrclass)->find(Name("ns.test2.example")).
+              finder_->find(Name("ns.test2.example"), RRType::A())->code);
+    EXPECT_EQ(ZoneFinder::NXRRSET,
+              holder.findClientList(rrclass)->find(Name("ns.test2.example")).
+              finder_->find(Name("ns.test2.example"), RRType::AAAA())->code);
+}
+
+void
+installDataSrcClientLists(AuthSrv& server, ClientListMapPtr lists) {
+    server.getDataSrcClientsMgr().setDataSrcClientLists(lists);
 }
 
 void
@@ -207,26 +215,31 @@ configureZones(AuthSrv& server) {
         "   \"cache-enable\": true"
         "}]}"));
 
-    DataSourceConfigurator::testReconfigure(&server, config);
+    installDataSrcClientLists(server, configureDataSource(config));
 
     zoneChecks(server);
 }
 
 void
 newZoneChecks(AuthSrv& server) {
-    EXPECT_EQ(ZoneFinder::SUCCESS, server.getClientList(RRClass::IN())->
+    const RRClass rrclass(RRClass::IN());
+
+    DataSrcClientsMgr::Holder holder(server.getDataSrcClientsMgr());
+    EXPECT_EQ(ZoneFinder::SUCCESS, holder.findClientList(rrclass)->
               find(Name("ns.test1.example")).finder_->
               find(Name("ns.test1.example"), RRType::A())->code);
+
     // now test1.example should have ns/AAAA
-    EXPECT_EQ(ZoneFinder::SUCCESS, server.getClientList(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::SUCCESS, holder.findClientList(rrclass)->
               find(Name("ns.test1.example")).finder_->
               find(Name("ns.test1.example"), RRType::AAAA())->code);
 
     // test2.example shouldn't change
-    EXPECT_EQ(ZoneFinder::SUCCESS, server.getClientList(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::SUCCESS, holder.findClientList(rrclass)->
               find(Name("ns.test2.example")).finder_->
               find(Name("ns.test2.example"), RRType::A())->code);
-    EXPECT_EQ(ZoneFinder::NXRRSET, server.getClientList(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::NXRRSET,
+              holder.findClientList(rrclass)->
               find(Name("ns.test2.example")).finder_->
               find(Name("ns.test2.example"), RRType::AAAA())->code);
 }
@@ -269,32 +282,38 @@ TEST_F(AuthCommandTest,
         "    \"cache-enable\": true,"
         "    \"cache-zones\": [\"example.org\"]"
         "}]}"));
-    DataSourceConfigurator::testReconfigure(&server_, config);
+    installDataSrcClientLists(server_, configureDataSource(config));
 
-    // Check that the A record at www.example.org does not exist
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, server_.getClientList(RRClass::IN())->
-              find(Name("example.org")).finder_->
-              find(Name("www.example.org"), RRType::A())->code);
+    {
+        DataSrcClientsMgr::Holder holder(server_.getDataSrcClientsMgr());
 
-    // Add the record to the underlying sqlite database, by loading
-    // it as a separate datasource, and updating it
-    ConstElementPtr sql_cfg = Element::fromJSON("{ \"type\": \"sqlite3\","
-                                                "\"database_file\": \""
-                                                + test_db + "\"}");
-    DataSourceClientContainer sql_ds("sqlite3", sql_cfg);
-    ZoneUpdaterPtr sql_updater =
-        sql_ds.getInstance().getUpdater(Name("example.org"), false);
-    RRsetPtr rrset(new RRset(Name("www.example.org."), RRClass::IN(),
-                             RRType::A(), RRTTL(60)));
-    rrset->addRdata(rdata::createRdata(rrset->getType(),
-                                       rrset->getClass(),
-                                       "192.0.2.1"));
-    sql_updater->addRRset(*rrset);
-    sql_updater->commit();
+        // Check that the A record at www.example.org does not exist
+        EXPECT_EQ(ZoneFinder::NXDOMAIN,
+                  holder.findClientList(RRClass::IN())->
+                  find(Name("example.org")).finder_->
+                  find(Name("www.example.org"), RRType::A())->code);
 
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, server_.getClientList(RRClass::IN())->
-              find(Name("example.org")).finder_->
-              find(Name("www.example.org"), RRType::A())->code);
+        // Add the record to the underlying sqlite database, by loading
+        // it as a separate datasource, and updating it
+        ConstElementPtr sql_cfg = Element::fromJSON("{ \"type\": \"sqlite3\","
+                                                    "\"database_file\": \""
+                                                    + test_db + "\"}");
+        DataSourceClientContainer sql_ds("sqlite3", sql_cfg);
+        ZoneUpdaterPtr sql_updater =
+            sql_ds.getInstance().getUpdater(Name("example.org"), false);
+        RRsetPtr rrset(new RRset(Name("www.example.org."), RRClass::IN(),
+                                 RRType::A(), RRTTL(60)));
+        rrset->addRdata(rdata::createRdata(rrset->getType(),
+                                           rrset->getClass(),
+                                           "192.0.2.1"));
+        sql_updater->addRRset(*rrset);
+        sql_updater->commit();
+
+        EXPECT_EQ(ZoneFinder::NXDOMAIN,
+                  holder.findClientList(RRClass::IN())->
+                  find(Name("example.org")).finder_->
+                  find(Name("www.example.org"), RRType::A())->code);
+    }
 
     // Now send the command to reload it
     result_ = execAuthServerCommand(server_, "loadzone",
@@ -302,20 +321,28 @@ TEST_F(AuthCommandTest,
                                         "{\"origin\": \"example.org\"}"));
     checkAnswer(0, "Successful load");
 
-    // And now it should be present too.
-    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getClientList(RRClass::IN())->
-              find(Name("example.org")).finder_->
-              find(Name("www.example.org"), RRType::A())->code);
+    {
+        DataSrcClientsMgr::Holder holder(server_.getDataSrcClientsMgr());
+        // And now it should be present too.
+        EXPECT_EQ(ZoneFinder::SUCCESS,
+                  holder.findClientList(RRClass::IN())->
+                  find(Name("example.org")).finder_->
+                  find(Name("www.example.org"), RRType::A())->code);
+    }
 
     // Some error cases. First, the zone has no configuration. (note .com here)
     result_ = execAuthServerCommand(server_, "loadzone",
         Element::fromJSON("{\"origin\": \"example.com\"}"));
     checkAnswer(1, "example.com");
 
-    // The previous zone is not hurt in any way
-    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getClientList(RRClass::IN())->
-              find(Name("example.org")).finder_->
-              find(Name("example.org"), RRType::SOA())->code);
+    {
+        DataSrcClientsMgr::Holder holder(server_.getDataSrcClientsMgr());
+        // The previous zone is not hurt in any way
+        EXPECT_EQ(ZoneFinder::SUCCESS,
+                  holder.findClientList(RRClass::IN())->
+                  find(Name("example.org")).finder_->
+                  find(Name("example.org"), RRType::SOA())->code);
+    }
 
     const ConstElementPtr config2(Element::fromJSON("{"
         "\"IN\": [{"
@@ -324,15 +351,17 @@ TEST_F(AuthCommandTest,
         "    \"cache-enable\": true,"
         "    \"cache-zones\": [\"example.com\"]"
         "}]}"));
-    EXPECT_THROW(DataSourceConfigurator::testReconfigure(&server_, config2),
+    EXPECT_THROW(configureDataSource(config2),
                  ConfigurableClientList::ConfigurationError);
 
     result_ = execAuthServerCommand(server_, "loadzone",
         Element::fromJSON("{\"origin\": \"example.com\"}"));
     checkAnswer(1, "Unreadable");
 
+    DataSrcClientsMgr::Holder holder(server_.getDataSrcClientsMgr());
     // The previous zone is not hurt in any way
-    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getClientList(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              holder.findClientList(RRClass::IN())->
               find(Name("example.org")).finder_->
               find(Name("example.org"), RRType::SOA())->code);
 }

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __COMMAND_OPTIONS_HELPER_H
-#define __COMMAND_OPTIONS_HELPER_H
+#ifndef COMMAND_OPTIONS_HELPER_H
+#define COMMAND_OPTIONS_HELPER_H
 
 #include <string>
 #include <vector>
@@ -136,4 +136,4 @@ private:
 } // namespace isc::perfdhcp
 } // namespace isc
 
-#endif // __COMMAND_OPTIONS_HELPER_H
+#endif // COMMAND_OPTIONS_HELPER_H

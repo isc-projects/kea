@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __BENCHMARK_H
-#define __BENCHMARK_H 1
+#ifndef BENCHMARK_H
+#define BENCHMARK_H 1
 
 #include <sys/time.h>
 
@@ -402,7 +402,7 @@ private:
 
 }
 }
-#endif  // __BENCHMARK_H
+#endif  // BENCHMARK_H
 
 // Local Variables: 
 // mode: c++

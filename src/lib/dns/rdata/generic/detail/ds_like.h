@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __DS_LIKE_H
-#define __DS_LIKE_H 1
+#ifndef DS_LIKE_H
+#define DS_LIKE_H 1
 
 #include <stdint.h>
 
@@ -218,7 +218,7 @@ private:
 }
 }
 }
-#endif //  __DS_LIKE_H
+#endif //  DS_LIKE_H
 
 // Local Variables: 
 // mode: c++
