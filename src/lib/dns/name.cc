@@ -322,6 +322,11 @@ Name::Name(const std::string &namestring, bool downcase) {
 }
 
 Name::Name(const char* namedata, size_t data_len, const Name*, bool downcase) {
+    // Check validity of data
+    if (namedata == NULL || data_len == 0) {
+        isc_throw(isc::InvalidParameter,
+                  "No data provided to Name constructor");
+    }
     // Prepare inputs for the parser
     const char* end = namedata + data_len;
 
