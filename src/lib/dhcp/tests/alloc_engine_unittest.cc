@@ -30,7 +30,6 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test; // Memfile_LeaseMgr
-using namespace boost;
 
 namespace {
 
