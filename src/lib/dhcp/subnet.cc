@@ -15,6 +15,7 @@
 #include <dhcp/addr_utilities.h>
 #include <asiolink/io_address.h>
 #include <dhcp/subnet.h>
+#include <sstream>
 
 using namespace isc::asiolink;
 
@@ -50,6 +51,12 @@ Subnet::addOption(OptionPtr& option, bool persistent /* = false */) {
 void
 Subnet::delOptions() {
     options_.clear();
+}
+
+std::string Subnet::toText() {
+    std::stringstream tmp;
+    tmp << prefix_.toText() << "/" << static_cast<unsigned int>(prefix_len_);
+    return (tmp.str());
 }
 
 Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,

@@ -158,6 +158,19 @@ TEST(Subnet4Test, inRangeinPool) {
     EXPECT_FALSE(subnet->inPool(IOAddress("192.3.0.0")));
 }
 
+// This test checks if the toText() method returns text representation
+TEST(Subnet4Test, toText) {
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+    EXPECT_EQ("192.0.2.0/24", subnet->toText());
+}
+
+// This test checks if the get() method returns proper parameters
+TEST(Subnet4Test, get) {
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 28, 1, 2, 3));
+    EXPECT_EQ("192.0.2.0", subnet->get().first.toText());
+    EXPECT_EQ(28, subnet->get().second);
+}
+
 // Tests for Subnet6
 
 TEST(Subnet6Test, constructor) {
@@ -416,6 +429,19 @@ TEST(Subnet6Test, inRangeinPool) {
     // the first address that is in range, but out of pool
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::21")));
     EXPECT_FALSE(subnet->inPool(IOAddress("2001:db8::21")));
+}
+
+// This test checks if the toText() method returns text representation
+TEST(Subnet6Test, toText) {
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
+    EXPECT_EQ("2001:db8::/32", subnet->toText());
+}
+
+// This test checks if the get() method returns proper parameters
+TEST(Subnet6Test, get) {
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
+    EXPECT_EQ("2001:db8::", subnet->get().first.toText());
+    EXPECT_EQ(32, subnet->get().second);
 }
 
 };
