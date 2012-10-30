@@ -54,7 +54,10 @@ typedef boost::shared_ptr<InputSource> InputSourcePtr;
 using namespace master_lexer_internal;
 
 struct MasterLexer::MasterLexerImpl {
+    MasterLexerImpl() : token_(Token::NOT_STARTED) {}
+
     std::vector<InputSourcePtr> sources_;
+    Token token_;
 };
 
 MasterLexer::MasterLexer() : impl_(new MasterLexerImpl) {
