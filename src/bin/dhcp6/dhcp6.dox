@@ -76,4 +76,6 @@
  simple as possible. In fact, currently the code has to call Subnet6->getT1() and
  do not implement any fancy inheritance logic.
 
+ @todo Add section about setting up options and their definitions with bindctl.
+
  */
