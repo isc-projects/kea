@@ -157,14 +157,11 @@ checkBadTextName(const string& txt) {
     // NameParserException.
     EXPECT_THROW(Name(txt, false), ExceptionType);
     EXPECT_THROW(Name(txt, false), NameParserException);
-#if 0
-    // TODO: Enable once the new constructor exists.
     // The same is thrown when constructing by the master-file constructor
     EXPECT_THROW(Name(txt.c_str(), txt.length(), &Name::ROOT_NAME()),
                  ExceptionType);
     EXPECT_THROW(Name(txt.c_str(), txt.length(), &Name::ROOT_NAME()),
                  NameParserException);
-#endif
 }
 
 TEST_F(NameTest, fromText) {
@@ -239,8 +236,6 @@ TEST_F(NameTest, fromText) {
     EXPECT_EQ(Name::MAX_LABELS, maxlabels.getLabelCount());
 }
 
-#if 0
-// TODO: Enable once the constructor exists, there's a need to test the changes
 // on the rest while we prepare it.
 // Check the @ syntax is accepted and it just copies the origin.
 TEST_F(NameTest, copyOrigin) {
@@ -255,12 +250,12 @@ TEST_F(NameTest, copyOrigin) {
 // Test the master-file constructor does not append the origin when the
 // provided name is absolute
 TEST_F(NameTest, dontAppendOrigin) {
-    EXPECT_EQ(example_name, Name("www.example.org.", 16, &origin_name));
+    EXPECT_EQ(example_name, Name("www.example.com.", 16, &origin_name));
     // The downcase works (only if provided, though)
-    EXPECT_EQ(example_name, Name("WWW.EXAMPLE.ORG.", 16, &origin_name, true));
-    EXPECT_EQ(example_name_upper, Name("WWW.EXAMPLE.ORG.", 16, &origin_name));
+    EXPECT_EQ(example_name, Name("WWW.EXAMPLE.COM.", 16, &origin_name, true));
+    EXPECT_EQ(example_name_upper, Name("WWW.EXAMPLE.COM.", 16, &origin_name));
     // And it does not require the origin to be provided
-    EXPECT_NO_THROW(Name("www.example.org.", 16, NULL));
+    EXPECT_NO_THROW(Name("www.example.com.", 16, NULL));
 }
 
 // Test the master-file constructor properly appends the origin when
@@ -272,7 +267,7 @@ TEST_F(NameTest, appendOrigin) {
     EXPECT_EQ(example_name, Name("WWW", 3, &origin_name_upper, true));
     EXPECT_EQ(example_name_upper, Name("WWW", 3, &origin_name_upper));
     // Check we can prepend more than one label
-    EXPECT_EQ(Name("a.b.c.d.example.org."), Name("a.b.c.d", 7, &origin_name));
+    EXPECT_EQ(Name("a.b.c.d.example.com."), Name("a.b.c.d", 7, &origin_name));
     // When the name is relative, we throw.
     EXPECT_THROW(Name("www", 3, NULL), MissingNameOrigin);
 }
@@ -299,7 +294,6 @@ TEST_F(NameTest, combinedTooLong) {
     EXPECT_NO_THROW(Name(max_labels_str, strlen(max_labels_str),
                          &Name::ROOT_NAME()));
 }
-#endif
 
 TEST_F(NameTest, fromWire) {
     //
