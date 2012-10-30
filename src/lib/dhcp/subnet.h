@@ -279,6 +279,12 @@ public:
     /// @return unique ID for that subnet
     SubnetID getID() const { return (id_); }
 
+    std::pair<isc::asiolink::IOAddress, uint8_t> get() {
+        return (std::pair<isc::asiolink::IOAddress, uint8_t>(prefix_, prefix_len_));
+    }
+
+    virtual std::string toText();
+
 protected:
     /// @brief protected constructor
     //
