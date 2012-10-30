@@ -66,6 +66,9 @@ MasterLexer::~MasterLexer() {
 
 void
 MasterLexer::open(const char* filename) {
+    if (filename == NULL) {
+        isc_throw(InvalidParameter, "NULL filename for MasterLexer::open");
+    }
     impl_->sources_.push_back(InputSourcePtr(new InputSource(filename)));
 }
 
