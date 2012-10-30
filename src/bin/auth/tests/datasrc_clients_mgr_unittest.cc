@@ -211,7 +211,12 @@ TEST(DataSrcClientsMgrTest, reload) {
 
     // Should fail with non-string 'class' value
     args->set("class", Element::create(1));
-    EXPECT_THROW(mgr.loadZone(args), LoadZoneCommandError);
+    EXPECT_THROW(mgr.loadZone(args), CommandError);
+    EXPECT_EQ(2, FakeDataSrcClientsBuilder::command_queue->size());
+
+    // And with badclass
+    args->set("class", Element::create("BADCLASS"));
+    EXPECT_THROW(mgr.loadZone(args), CommandError);
     EXPECT_EQ(2, FakeDataSrcClientsBuilder::command_queue->size());
 
     // Should succeed without 'class'
@@ -221,19 +226,24 @@ TEST(DataSrcClientsMgrTest, reload) {
 
     // but fail without origin, without sending new commands
     args->remove("origin");
-    EXPECT_THROW(mgr.loadZone(args), LoadZoneCommandError);
+    EXPECT_THROW(mgr.loadZone(args), CommandError);
     EXPECT_EQ(3, FakeDataSrcClientsBuilder::command_queue->size());
 
     // And for 'origin' that is not a string
     args->set("origin", Element::create(1));
-    EXPECT_THROW(mgr.loadZone(args), LoadZoneCommandError);
+    EXPECT_THROW(mgr.loadZone(args), CommandError);
+    EXPECT_EQ(3, FakeDataSrcClientsBuilder::command_queue->size());
+
+    // And origin that is not a correct name
+    args->set("origin", Element::create(".."));
+    EXPECT_THROW(mgr.loadZone(args), CommandError);
     EXPECT_EQ(3, FakeDataSrcClientsBuilder::command_queue->size());
 
     // same for empty data and data that is not a map
     EXPECT_THROW(mgr.loadZone(isc::data::ConstElementPtr()),
-                              LoadZoneCommandError);
+                              CommandError);
     EXPECT_THROW(mgr.loadZone(isc::data::Element::createList()),
-                              LoadZoneCommandError);
+                              CommandError);
     EXPECT_EQ(3, FakeDataSrcClientsBuilder::command_queue->size());
 }
 

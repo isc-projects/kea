@@ -922,8 +922,3 @@ void
 AuthSrv::setTCPRecvTimeout(size_t timeout) {
     dnss_->setTCPRecvTimeout(timeout);
 }
-
-void
-AuthSrv::loadZone(ConstElementPtr args) {
-    impl_->datasrc_clients_mgr_.loadZone(args);
-}
