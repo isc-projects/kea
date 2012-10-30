@@ -78,6 +78,10 @@ TEST_F(MasterLexerTest, openFile) {
     checkEmptySource(lexer);
 }
 
+TEST_F(MasterLexerTest, openBadFileName) {
+    EXPECT_THROW(lexer.open(NULL), isc::InvalidParameter);
+}
+
 TEST_F(MasterLexerTest, nestedOpen) {
     lexer.open(ss);
     EXPECT_EQ(expected_stream_name, lexer.getSourceName());
