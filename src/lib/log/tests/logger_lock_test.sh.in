@@ -31,6 +31,7 @@ passfail() {
 
 echo -n  "Testing that logger acquires and releases locks correctly:"
 cat > $tempfile << .
+LOGGER_LOCK_TEST: MUTEXLOCK
 LOGGER_LOCK_TEST: LOCK
 INFO  [bind10.log] LOG_LOCK_TEST_MESSAGE this is a test message.
 LOGGER_LOCK_TEST: UNLOCK
