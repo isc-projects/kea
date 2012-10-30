@@ -14,9 +14,43 @@
 
 #include <dns/inputsource.h>
 
+#include <cstdio>
+
+using namespace std;
+
 namespace isc {
 namespace dns {
 namespace master_lexer_internal {
+
+InputSource::InputSource(std::istream& input_stream) :
+    at_eof_(false),
+    line_(1),
+    saved_line_(line_),
+    buffer_pos_(buffer_.size()),
+    input_(input_stream)
+{
+    char buf[FILENAME_MAX];
+    snprintf(buf, sizeof(buf), "stream-%p", &input_stream);
+    name_ = buf;
+}
+
+InputSource::InputSource(const char* filename) :
+    at_eof_(false),
+    line_(1),
+    saved_line_(line_),
+    buffer_pos_(buffer_.size()),
+    name_(filename),
+    input_(file_stream_)
+{
+    file_stream_.open(filename, fstream::in);
+}
+
+InputSource::~InputSource()
+{
+    if (file_stream_.is_open()) {
+        file_stream_.close();
+    }
+}
 
 int
 InputSource::getChar() {

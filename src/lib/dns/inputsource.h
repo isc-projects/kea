@@ -18,6 +18,7 @@
 #include <exceptions/exceptions.h>
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -27,16 +28,12 @@ namespace master_lexer_internal {
 
 class InputSource {
 public:
-    InputSource(std::istream& input, const std::string& name) :
-        input_(input),
-        name_(name),
-        at_eof_(false),
-        line_(1),
-        saved_line_(line_),
-        buffer_pos_(buffer_.size())
-    {}
+    InputSource(std::istream& input_stream);
+    InputSource(const char* filename);
 
-    const std::string& getName() {
+    ~InputSource();
+
+    const std::string& getName() const {
         return (name_);
     }
 
@@ -65,14 +62,16 @@ public:
     void ungetAll();
 
 private:
-    std::istream& input_;
-    const std::string name_;
     bool at_eof_;
     size_t line_;
     size_t saved_line_;
 
     std::vector<char> buffer_;
     size_t buffer_pos_;
+
+    std::string name_;
+    std::fstream file_stream_;
+    std::istream& input_;
 };
 
 } // namespace master_lexer_internal

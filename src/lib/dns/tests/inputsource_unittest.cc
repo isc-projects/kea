@@ -32,25 +32,31 @@ namespace {
 class InputSourceTest : public ::testing::Test {
 protected:
     InputSourceTest() :
-        name_("a90wjer"),
         str_("Line1 to scan.\nLine2 to scan.\nLine3 to scan.\n"),
         str_length_(strlen(str_)),
         iss_(str_),
-        source_(iss_, name_)
+        source_(iss_)
     {}
 
-    string name_;
     const char* str_;
-    size_t str_length_;
+    const size_t str_length_;
     stringstream iss_;
     InputSource source_;
 };
 
 // Test the default return values set during InputSource construction.
 TEST_F(InputSourceTest, defaults) {
-    EXPECT_EQ(name_, source_.getName());
     EXPECT_EQ(1, source_.getCurrentLine());
     EXPECT_FALSE(source_.atEOF());
+}
+
+// getName() on file and stream sources
+TEST_F(InputSourceTest, getName) {
+    EXPECT_EQ(0, source_.getName().find("stream-"));
+
+    // Use some file; doesn't really matter what.
+    InputSource source2(TEST_DATA_SRCDIR "/masterload.txt");
+    EXPECT_EQ(TEST_DATA_SRCDIR "/masterload.txt", source2.getName());
 }
 
 // getChar() should return characters from the input stream in
