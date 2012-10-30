@@ -19,6 +19,10 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/option.h>
+#include <dhcp/subnet.h>
+#include <dhcp/duid.h>
+#include <dhcp/option6_ia.h>
+#include <dhcp/alloc_engine.h>
 #include <iostream>
 
 namespace isc {
@@ -147,6 +151,36 @@ protected:
     /// @param infRequest message received from client
     Pkt6Ptr processInfRequest(const Pkt6Ptr& infRequest);
 
+    /// @brief creates status-code option
+    ///
+    /// @param code status code value (see RFC3315)
+    /// @param text textual explanation (will be sent in status code option)
+    /// @return status-code option
+    OptionPtr createStatusCode(uint16_t code, const std::string& text);
+
+    /// @brief selects a subnet for a given client's packet
+    ///
+    /// @return selected subnet (or NULL if no suitable subnet was found)
+    isc::dhcp::Subnet6Ptr getSubnet(const Pkt6Ptr& question);
+
+    /// @brief processes IA_NA option (and assigns addresses if necessary)
+    ///
+    /// Generates response to IA_NA. This typically includes selecting (and
+    /// allocating a lease in case of REQUEST) a lease and creating
+    /// IAADDR option. In case of allocation failure, it may contain
+    /// status code option with non-zero status, denoting cause of the
+    /// allocation failure.
+    ///
+    /// @param subnet subnet the client is connected to
+    /// @param duid client's duid
+    /// @param question client's message (typically SOLICIT or REQUEST)
+    /// @param ia pointer to client's IA_NA option (client's request)
+    /// @return IA_NA option (server's response)
+    OptionPtr handleIA_NA(const isc::dhcp::Subnet6Ptr& subnet,
+                          const isc::dhcp::DuidPtr& duid,
+                          isc::dhcp::Pkt6Ptr question,
+                          boost::shared_ptr<Option6IA> ia);
+
     /// @brief Copies required options from client message to server answer
     ///
     /// Copies options that must appear in any server response (ADVERTISE, REPLY)
@@ -201,6 +235,12 @@ protected:
 
     /// server DUID (to be sent in server-identifier option)
     boost::shared_ptr<isc::dhcp::Option> serverid_;
+
+    /// @brief Allocation Engine
+    /// Pointer to the allocation engine that we are currently using
+    /// It must be a pointer, because we will support changing engines
+    /// during normal operation (e.g. to use different allocators)
+    AllocEngine* alloc_engine_;
 
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
