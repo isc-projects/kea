@@ -32,10 +32,13 @@ namespace {
 
 class MasterLexerTest : public ::testing::Test {
 protected:
-    MasterLexerTest() {}
+    MasterLexerTest() :
+        expected_stream_name("stream-" + lexical_cast<string>(&ss))
+    {}
 
     MasterLexer lexer;
     stringstream ss;
+    const string expected_stream_name;
 };
 
 // Commonly used check case where the input sources stack is empty.
@@ -52,8 +55,7 @@ TEST_F(MasterLexerTest, preOpen) {
 
 TEST_F(MasterLexerTest, openStream) {
     lexer.open(ss);
-    EXPECT_EQ(string("stream-") + lexical_cast<string>(&ss),
-              lexer.getSourceName());
+    EXPECT_EQ(expected_stream_name, lexer.getSourceName());
 
     // From the point of view of this test, we only have to check (though
     // indirectly) getSourceLine calls InputSource::getCurrentLine.  It should
@@ -74,6 +76,22 @@ TEST_F(MasterLexerTest, openFile) {
 
     lexer.close();
     checkEmptySource(lexer);
+}
+
+TEST_F(MasterLexerTest, nestedOpen) {
+    lexer.open(ss);
+    EXPECT_EQ(expected_stream_name, lexer.getSourceName());
+
+    // We can open another source without closing the previous one.
+    lexer.open(TEST_DATA_SRCDIR "/masterload.txt");
+    EXPECT_EQ(TEST_DATA_SRCDIR "/masterload.txt", lexer.getSourceName());
+
+    // Close works on the "topmost" (opened last) source
+    lexer.close();
+    EXPECT_EQ(expected_stream_name, lexer.getSourceName());
+
+    lexer.close();
+    EXPECT_TRUE(lexer.getSourceName().empty());
 }
 
 TEST_F(MasterLexerTest, invalidClose) {
