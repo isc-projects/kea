@@ -14,6 +14,7 @@
 
 #include <log/macros.h>
 #include <log/logger_support.h>
+#include <log/logger_manager.h>
 #include <log/log_messages.h>
 #include "util/interprocess_sync.h"
 #include "log_test_messages.h"
@@ -21,6 +22,7 @@
 
 using namespace std;
 using namespace isc::log;
+using isc::util::thread::Mutex;
 
 class MockLoggingSync : public isc::util::InterprocessSync {
 public:
@@ -31,6 +33,15 @@ public:
 
 protected:
     virtual bool lock() {
+        // We first check if the logger acquired a lock on the
+        // LoggerManager mutex.
+        try {
+            // This lock attempt is non-blocking.
+            Mutex::Locker locker(LoggerManager::getMutex(), false);
+        } catch (Mutex::Locker::AlreadyLocked& e) {
+            cout << "FIELD1 FIELD2 LOGGER_LOCK_TEST: MUTEXLOCK\n";
+        }
+
         cout << "FIELD1 FIELD2 LOGGER_LOCK_TEST: LOCK\n";
         return (true);
     }
