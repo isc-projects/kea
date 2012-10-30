@@ -490,7 +490,8 @@ public:
     /// @brief Constructor.
     ///
     /// Class constructor.
-    OptionDataParser(const std::string&) { }
+    OptionDataParser(const std::string&)
+        : options_(NULL) { }
 
     /// @brief Parses the single option data.
     ///
@@ -499,11 +500,21 @@ public:
     /// carried by this option. Eventually it creates the instance of the
     /// option.
     ///
+    /// @warning setStorage must be called with valid storage pointer prior
+    /// to calling this method.
+    ///
     /// @param option_data_entries collection of entries that define value
     /// for a particular option.
-    /// @throw isc::InvalidParameter if invalid parameter specified in
+    /// @throw Dhcp6ConfigError if invalid parameter specified in
     /// the configuration.
+    /// @throw isc::InvalidOperation if failed to set storage prior to
+    /// calling build.
+    /// @throw isc::BadValue if option data storage is invalid.
     virtual void build(ConstElementPtr option_data_entries) {
+        if (options_ == NULL) {
+            isc_throw(isc::InvalidOperation, "Parser logic error: storage must be set before "
+                      "parsing option data.");
+        }
         BOOST_FOREACH(ConfigPair param, option_data_entries->mapValue()) {
             ParserPtr parser;
             if (param.first == "name") {
@@ -565,6 +576,10 @@ private:
     /// options storage. If the option data parsed by \ref build function
     /// are invalid or insufficient it emits exception.
     ///
+    /// @warning this function does not check if options_ storage pointer
+    /// is intitialized but this is not needed here because it is checked in
+    /// \ref build function.
+    ///
     /// @throw Dhcp6ConfigError if parameters provided in the configuration
     /// are invalid.
     void createOption() {
@@ -607,6 +622,7 @@ private:
         // created for all options.
         OptionPtr option(new Option(Option::V6, static_cast<uint16_t>(option_code),
                                     binary));
+
         // If option is created succesfully, add it to the storage.
         options_->push_back(option);
     }
@@ -656,6 +672,10 @@ class OptionDataListParser : public DhcpConfigParser {
 public:
 
     /// @brief Constructor.
+    ///
+    /// Unless otherwise specified, parsed options will be stored in
+    /// a global option containers (option_default). That storage location
+    /// is overriden on a subnet basis.
     OptionDataListParser(const std::string&)
         : options_(&option_defaults) { }
 
@@ -723,39 +743,36 @@ public:
     void build(ConstElementPtr subnet) {
 
         BOOST_FOREACH(ConfigPair param, subnet->mapValue()) {
-
             ParserPtr parser(createSubnet6ConfigParser(param.first));
+            // The actual type of the parser is unknown here. We have to discover
+            // parser type here to invoke corresponding setStorage function on it.
+            // We discover parser type by trying to cast the parser to various
+            // parser types and checking which one was successful. For this one
+            // a setStorage and build methods are invoked.
 
-            // if this is an Uint32 parser, tell it to store the values
-            // in values_, rather than in global storage
-            boost::shared_ptr<Uint32Parser> uintParser =
-                boost::dynamic_pointer_cast<Uint32Parser>(parser);
-            if (uintParser) {
-                uintParser->setStorage(&uint32_values_);
-            } else {
-
-                boost::shared_ptr<StringParser> stringParser =
-                    boost::dynamic_pointer_cast<StringParser>(parser);
-                if (stringParser) {
-                    stringParser->setStorage(&string_values_);
-                } else {
-
-                    boost::shared_ptr<PoolParser> poolParser =
-                        boost::dynamic_pointer_cast<PoolParser>(parser);
-                    if (poolParser) {
-                        poolParser->setStorage(&pools_);
-                    } else {
-                        boost::shared_ptr<OptionDataListParser> option_data_list_parser =
-                            boost::dynamic_pointer_cast<OptionDataListParser>(parser);
-                        option_data_list_parser->setStorage(&options_);
-                    }
-                }
+            // Try uint32 type parser.
+            if (buildParser<Uint32Parser, Uint32Storage >(parser, uint32_values_,
+                                                          param.second)) {
+                // Storage set, build invoked on the parser, proceed with
+                // next configuration element.
+                continue;
             }
-
-            parser->build(param.second);
-            parsers_.push_back(parser);
+            // Try string type parser.
+            if (buildParser<StringParser, StringStorage >(parser, string_values_,
+                                                          param.second)) {
+                continue;
+            }
+            // Try pools parser.
+            if (buildParser<PoolParser, PoolStorage >(parser, pools_,
+                                                      param.second)) {
+                continue;
+            }
+            // Try option data parser.
+            if (buildParser<OptionDataListParser, OptionStorage >(parser, options_,
+                                                                  param.second)) {
+                continue;
+            }
         }
-
         // Ok, we now have subnet parsed
     }
 
@@ -805,29 +822,32 @@ public:
 
         // Add subnet specific options.
         BOOST_FOREACH(OptionPtr option, options_) {
+            Subnet::OptionContainerTypeRange range =
+                subnet->getOptions(option->getType());
+            if (std::distance(range.first, range.second) > 0) {
+                LOG_WARN(dhcp6_logger, DHCP6_CONFIG_OPTION_DUPLICATE)
+                    .arg(option->getType()).arg(addr.toText());
+            }
             subnet->addOption(option);
         }
 
-        // Get all options that we have added to subnet so far. We will
-        // use them to check which of the global options must be added to
-        // the subnet.
-        Subnet::OptionContainer options = subnet->getOptions();
-        // Get the search index #1 which is used to search options
-        // by their code (type).
-        Subnet::OptionContainerTypeIndex& idx = options.get<1>();
         // Check all global options and add them to the subnet object if
         // they have been configured in the global scope. If they have been
         // configured in the subnet scope we don't add global option because
         // the one configured in the subnet scope always takes precedense.
         BOOST_FOREACH(OptionPtr option, option_defaults) {
-            // Get local option descriptors using global option code.
-            std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
-                      Subnet::OptionContainerTypeIndex::const_iterator> range =
-                idx.equal_range(option->getType());
+            // Get all options specified locally in the subnet and having
+            // code equal to global option's code.
+            Subnet::OptionContainerTypeRange range =
+                subnet->getOptions(option->getType());
             // @todo: In the future we will be searching for options using either
             // option code or namespace. Currently we have only the option
             // code available so if there is at least one option found with the
             // specific code we don't add globally configured option.
+            // @todo with this code the first globally configured option
+            // with the given code will be added to a subnet. We may
+            // want to issue warning about dropping configuration of
+            // global option if one already exsist.
             if (std::distance(range.first, range.second) == 0) {
                 subnet->addOption(option);
             }
@@ -836,7 +856,41 @@ public:
         CfgMgr::instance().addSubnet6(subnet);
     }
 
-protected:
+private:
+
+    /// @brief Set storage for a parser and invoke build.
+    ///
+    /// This helper method casts the provided parser pointer to specified
+    /// type. If cast is successful it sets the corresponding storage for
+    /// this parser, invokes build on it and save the parser.
+    ///
+    /// @tparam T parser type to which parser argument should be cast.
+    /// @tparam Y storage type for the specified parser type.
+    /// @param parser parser on which build must be invoked.
+    /// @param storage reference to a storage that will be set for a parser.
+    /// @param subnet subnet element read from the configuration and being parsed.
+    /// @return true if parser pointer was successfully cast to specialized
+    /// parser type provided as Y.
+    template<typename T, typename Y>
+    bool buildParser(const ParserPtr& parser, Y& storage, const ConstElementPtr& subnet) {
+        // We need to cast to T in order to set storage for the parser.
+        boost::shared_ptr<T> cast_parser = boost::dynamic_pointer_cast<T>(parser);
+        // It is common that this cast is not successful because we try to cast to all
+        // supported parser types as we don't know the type of a parser in advance.
+        if (cast_parser) {
+            // Cast, successful so we go ahead with setting storage and actual parse.
+            cast_parser->setStorage(&storage);
+            parser->build(subnet);
+            parsers_.push_back(parser);
+            // We indicate that cast was successful so as the calling function
+            // may skip attempts to cast to other parser types and proceed to
+            // next element.
+            return (true);
+        }
+        // It was not successful. Indicate that another parser type
+        // should be tried.
+        return (false);
+    }
 
     /// @brief creates parsers for entries in subnet definition
     ///
