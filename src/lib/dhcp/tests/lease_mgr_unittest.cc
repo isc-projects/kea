@@ -99,6 +99,27 @@ TEST_F(LeaseMgrTest, addGetDelete) {
     EXPECT_EQ(x->t1_, 50);
     EXPECT_EQ(x->t2_, 80);
 
+    // Test getLease6(duid, iaid, subnet_id) - positive case
+    Lease6Ptr y = leaseMgr->getLease6(*duid, iaid, subnet_id);
+    ASSERT_TRUE(y);
+    EXPECT_TRUE(*y->duid_ == *duid);
+    EXPECT_EQ(y->iaid_, iaid);
+    EXPECT_EQ(y->addr_.toText(), addr.toText());
+
+    // Test getLease6(duid, iaid, subnet_id) - wrong iaid
+    uint32_t invalid_iaid = 9; // no such iaid
+    y = leaseMgr->getLease6(*duid, invalid_iaid, subnet_id);
+    EXPECT_FALSE(y);
+
+    uint32_t invalid_subnet_id = 999;
+    y = leaseMgr->getLease6(*duid, iaid, invalid_subnet_id);
+    EXPECT_FALSE(y);
+
+    // truncated duid
+    DuidPtr invalid_duid(new DUID(llt, sizeof(llt) - 1));
+    y = leaseMgr->getLease6(*invalid_duid, iaid, subnet_id);
+    EXPECT_FALSE(y);
+
     // should return false - there's no such address
     EXPECT_FALSE(leaseMgr->deleteLease6(IOAddress("2001:db8:1::789")));
 
