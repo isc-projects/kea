@@ -353,6 +353,37 @@ Name::Name(const char* namedata, size_t data_len, const Name* origin,
     ndata_.assign(ndata.data(), ndata.size());
     length_ = ndata_.size();
     offsets_.assign(offsets.begin(), offsets.end());
+
+    if (!absolute) {
+        // Now, extend the data with the ones from origin. But eat the
+        // last label (the empty one).
+
+        // Drop the last character of the data (the \0) and append a copy of
+        // the origin's data
+        ndata_.erase(ndata_.end() - 1);
+        ndata_.append(origin->ndata_);
+
+        // Do a similar thing with offsets. However, we need to move them
+        // so they point after the prefix we parsed before.
+        size_t offset = offsets_.back();
+        offsets_.pop_back();
+        size_t offset_count = offsets_.size();
+        offsets_.insert(offsets_.end(), origin->offsets_.begin(),
+                        origin->offsets_.end());
+        for (NameOffsets::iterator it(offsets_.begin() + offset_count);
+             it != offsets_.end(); ++it) {
+            *it += offset;
+        }
+
+        // Adjust sizes.
+        length_ = ndata_.size();
+        labelcount_ = offsets_.size();
+
+        // And check the sizes are OK.
+        if (labelcount_ > Name::MAX_LABELS || length_ > Name::MAX_WIRE) {
+            isc_throw(TooLongName, "Combined name is too long");
+        }
+    }
 }
 
 namespace {
