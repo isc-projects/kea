@@ -142,6 +142,9 @@ protected:
 ///
 /// For overview of usability of this generic purpose parser, see
 /// \ref dhcpv6-config-inherit page.
+///
+/// @todo this class should be turned into the template class which
+/// will handle all uintX_types of data (see ticket #2415).
 class Uint32Parser : public DhcpConfigParser {
 public:
 
@@ -484,6 +487,12 @@ protected:
 /// and data carried by the option. If parsing is successful than
 /// instance of an option is created and added to the storage provided
 /// by the calling class.
+///
+/// @todo This class parses and validates option name. However it is
+/// not used anywhere util support for option spaces is implemented
+/// (see tickets #2319, #2314). When option spaces are implemented
+/// there will be a way to reference the particular option using
+/// its type (code) or option name.
 class OptionDataParser : public DhcpConfigParser {
 public:
 
