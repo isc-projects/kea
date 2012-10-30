@@ -27,6 +27,7 @@
 #include <exceptions/exceptions.h>
 #include <util/io_utilities.h>
 #include <util/range_utilities.h>
+#include <dhcp/duid.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -243,7 +244,7 @@ void Dhcpv6Srv::setServerID() {
         seconds -= DUID_TIME_EPOCH;
 
         OptionBuffer srvid(8 + iface->getMacLen());
-        writeUint16(DUID_LLT, &srvid[0]);
+        writeUint16(DUID::DUID_LLT, &srvid[0]);
         writeUint16(HWTYPE_ETHERNET, &srvid[2]);
         writeUint32(static_cast<uint32_t>(seconds), &srvid[4]);
         memcpy(&srvid[0]+8, iface->getMac(), iface->getMacLen());
@@ -259,7 +260,7 @@ void Dhcpv6Srv::setServerID() {
     // See Section 9.3 of RFC3315 for details.
 
     OptionBuffer srvid(12);
-    writeUint16(DUID_EN, &srvid[0]);
+    writeUint16(DUID::DUID_EN, &srvid[0]);
     writeUint32(ENTERPRISE_ID_ISC, &srvid[2]);
 
     // Length of the identifier is company specific. I hereby declare
