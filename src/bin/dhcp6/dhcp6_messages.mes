@@ -129,3 +129,8 @@ This is an informational message announcing the successful processing of a
 new configuration. it is output during server startup, and when an updated
 configuration is committed by the administrator.  Additional information
 may be provided.
+
+% DHCP6_CONFIG_OPTION_DUPLICATE multiple options with the code: %1 added to the subnet: %2
+This warning message is issued on attempt to configure multiple options with the
+same option code for the particular subnet. Adding multiple options is uncommon
+for DHCPv6, yet it is not prohibited.
