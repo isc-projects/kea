@@ -157,11 +157,14 @@ checkBadTextName(const string& txt) {
     // NameParserException.
     EXPECT_THROW(Name(txt, false), ExceptionType);
     EXPECT_THROW(Name(txt, false), NameParserException);
+#if 0
+    // TODO: Enable once the new constructor exists.
     // The same is thrown when constructing by the master-file constructor
     EXPECT_THROW(Name(txt.c_str(), txt.length(), &Name::ROOT_NAME()),
                  ExceptionType);
     EXPECT_THROW(Name(txt.c_str(), txt.length(), &Name::ROOT_NAME()),
                  NameParserException);
+#endif
 }
 
 TEST_F(NameTest, fromText) {
@@ -236,6 +239,9 @@ TEST_F(NameTest, fromText) {
     EXPECT_EQ(Name::MAX_LABELS, maxlabels.getLabelCount());
 }
 
+#if 0
+// TODO: Enable once the constructor exists, there's a need to test the changes
+// on the rest while we prepare it.
 // Check the @ syntax is accepted and it just copies the origin.
 TEST_F(NameTest, copyOrigin) {
     EXPECT_EQ(origin_name, Name("@", 1, &origin_name));
@@ -293,6 +299,7 @@ TEST_F(NameTest, combinedTooLong) {
     EXPECT_NO_THROW(Name(max_labels_str, strlen(max_labels_str),
                          &Name::ROOT_NAME()));
 }
+#endif
 
 TEST_F(NameTest, fromWire) {
     //

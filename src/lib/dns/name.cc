@@ -129,9 +129,15 @@ typedef enum {
     // parser where @ is used to mean an origin name.
     ft_at
 } ft_state;
-}
 
-Name::Name(const std::string &namestring, bool downcase) {
+// The parser of name from a string. It is a template, because
+// some parameters are used with two different types, while others
+// are private type aliases.
+template<class String, class Iterator, class Offsets, class Data>
+void
+stringParse(const String& namestring, Iterator s, Iterator send,
+            bool downcase, Offsets& offsets, Data& ndata)
+{
     //
     // Initialize things to make the compiler happy; they're not required.
     //
@@ -142,17 +148,13 @@ Name::Name(const std::string &namestring, bool downcase) {
     //
     // Set up the state machine.
     //
-    std::string::const_iterator s = namestring.begin();
-    std::string::const_iterator send = namestring.end();
     bool done = false;
     bool is_root = false;
     ft_state state = ft_init;
 
-    NameOffsets offsets;
+    // Prepare the output buffers.
     offsets.reserve(Name::MAX_LABELS);
     offsets.push_back(0);
-
-    NameString ndata;
     ndata.reserve(Name::MAX_WIRE);
 
     // should we refactor this code using, e.g, the state pattern?  Probably
@@ -212,7 +214,7 @@ Name::Name(const std::string &namestring, bool downcase) {
             } else if (c == '\\') {
                 state = ft_escape;
             } else {
-                if (++count > MAX_LABELLEN) {
+                if (++count > Name::MAX_LABELLEN) {
                     isc_throw(TooLongLabel,
                               "label is too long in " << namestring);
                 }
@@ -230,7 +232,7 @@ Name::Name(const std::string &namestring, bool downcase) {
             // FALLTHROUGH
         case ft_escape:
             if (!isdigit(c & 0xff)) {
-                if (++count > MAX_LABELLEN) {
+                if (++count > Name::MAX_LABELLEN) {
                     isc_throw(TooLongLabel,
                               "label is too long in " << namestring);
                 }
@@ -257,7 +259,7 @@ Name::Name(const std::string &namestring, bool downcase) {
                               "escaped decimal is too large in "
                               << namestring);
                 }
-                if (++count > MAX_LABELLEN) {
+                if (++count > Name::MAX_LABELLEN) {
                     isc_throw(TooLongLabel,
                               "label is too long in " << namestring);
                 }
@@ -291,7 +293,23 @@ Name::Name(const std::string &namestring, bool downcase) {
             ndata.push_back('\0');
         }
     }
+}
 
+}
+
+Name::Name(const std::string &namestring, bool downcase) {
+    // Prepare inputs for the parser
+    std::string::const_iterator s = namestring.begin();
+    std::string::const_iterator send = namestring.end();
+
+    // Prepare outputs
+    NameOffsets offsets;
+    NameString ndata;
+
+    // To the parsing
+    stringParse(namestring, s, send, downcase, offsets, ndata);
+
+    // And get the output
     labelcount_ = offsets.size();
     assert(labelcount_ > 0 && labelcount_ <= Name::MAX_LABELS);
     ndata_.assign(ndata.data(), ndata.size());
