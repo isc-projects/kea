@@ -277,8 +277,7 @@ public:
             try {
                 dns::Name(args->get("origin")->stringValue());
             } catch (const isc::Exception& exc) {
-                isc_throw(CommandError,
-                          "bad origin: " << exc.what());
+                isc_throw(CommandError, "bad origin: " << exc.what());
             }
         }
 
@@ -294,8 +293,7 @@ public:
                 try {
                     dns::RRClass(args->get("class")->stringValue());
                 } catch (const isc::Exception& exc) {
-                    isc_throw(CommandError,
-                              "bad class: " << exc.what());
+                    isc_throw(CommandError, "bad class: " << exc.what());
                 }
             }
         }
