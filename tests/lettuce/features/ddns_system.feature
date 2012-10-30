@@ -53,6 +53,7 @@ Feature: DDNS System
 
         # Test 8
         When I use DDNS to set the SOA serial to 1238
+        And wait for new bind10 stderr message AUTH_LOAD_ZONE
         The DDNS response should be SUCCESS
         And the SOA serial for example.org should be 1238
 
