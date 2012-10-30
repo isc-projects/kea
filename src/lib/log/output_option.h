@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __OUTPUT_OPTION_H
-#define __OUTPUT_OPTION_H
+#ifndef OUTPUT_OPTION_H
+#define OUTPUT_OPTION_H
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -82,4 +82,4 @@ OutputOption::Stream getStream(const std::string& stream_str);
 } // namespace log
 } // namespace isc
 
-#endif // __OUTPUT_OPTION_H
+#endif // OUTPUT_OPTION_H

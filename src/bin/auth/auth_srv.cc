@@ -52,6 +52,7 @@
 #include <auth/query.h>
 #include <auth/statistics.h>
 #include <auth/auth_log.h>
+#include <auth/datasrc_clients_mgr.h>
 
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
@@ -67,6 +68,8 @@
 #include <netinet/in.h>
 
 using namespace std;
+
+using boost::shared_ptr;
 
 using namespace isc;
 using namespace isc::cc;
@@ -264,23 +267,10 @@ public:
     AddressList listen_addresses_;
 
     /// The TSIG keyring
-    const boost::shared_ptr<TSIGKeyRing>* keyring_;
+    const shared_ptr<TSIGKeyRing>* keyring_;
 
-    /// The client list
-    std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >
-        client_lists_;
-
-    boost::shared_ptr<ConfigurableClientList> getClientList(const RRClass&
-                                                            rrclass)
-    {
-        const std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
-            const_iterator it(client_lists_.find(rrclass));
-        if (it == client_lists_.end()) {
-            return (boost::shared_ptr<ConfigurableClientList>());
-        } else {
-            return (it->second);
-        }
-    }
+    /// The data source client list manager
+    auth::DataSrcClientsMgr datasrc_clients_mgr_;
 
     /// Bind the ModuleSpec object in config_session_ with
     /// isc:config::ModuleSpec::validateStatistics.
@@ -481,6 +471,11 @@ AuthSrv::getIOService() {
     return (impl_->io_service_);
 }
 
+isc::auth::DataSrcClientsMgr&
+AuthSrv::getDataSrcClientsMgr() {
+    return (impl_->datasrc_clients_mgr_);
+}
+
 void
 AuthSrv::setXfrinSession(AbstractSession* xfrin_session) {
     impl_->xfrin_session_ = xfrin_session;
@@ -656,11 +651,15 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
         local_edns->setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
         message.setEDNS(local_edns);
     }
+    // Get access to data source client list through the holder and keep the
+    // holder until the processing and rendering is done to avoid inter-thread
+    // race.
+    auth::DataSrcClientsMgr::Holder datasrc_holder(datasrc_clients_mgr_);
 
     try {
         const ConstQuestionPtr question = *message.beginQuestion();
-        const boost::shared_ptr<datasrc::ClientList>
-            list(getClientList(question->getClass()));
+        const shared_ptr<datasrc::ClientList>
+            list(datasrc_holder.findClientList(question->getClass()));
         if (list) {
             const RRType& qtype = question->getType();
             const Name& qname = question->getName();
@@ -687,6 +686,8 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     LOG_DEBUG(auth_logger, DBG_AUTH_MESSAGES, AUTH_SEND_NORMAL_RESPONSE)
               .arg(renderer_.getLength()).arg(message);
     return (true);
+    // The message can contain some data from the locked resource. But outside
+    // this method, we touch only the RCode of it, so it should be safe.
 }
 
 bool
@@ -892,7 +893,7 @@ AuthSrv::setDNSService(isc::asiodns::DNSServiceBase& dnss) {
 }
 
 void
-AuthSrv::setTSIGKeyRing(const boost::shared_ptr<TSIGKeyRing>* keyring) {
+AuthSrv::setTSIGKeyRing(const shared_ptr<TSIGKeyRing>* keyring) {
     impl_->keyring_ = keyring;
 }
 
@@ -909,31 +910,6 @@ AuthSrv::destroyDDNSForwarder() {
         LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_STOP_DDNS_FORWARDER);
         impl_->ddns_forwarder_.reset();
     }
-}
-
-void
-AuthSrv::setClientList(const RRClass& rrclass,
-                       const boost::shared_ptr<ConfigurableClientList>& list) {
-    if (list) {
-        impl_->client_lists_[rrclass] = list;
-    } else {
-        impl_->client_lists_.erase(rrclass);
-    }
-}
-boost::shared_ptr<ConfigurableClientList>
-AuthSrv::getClientList(const RRClass& rrclass) {
-    return (impl_->getClientList(rrclass));
-}
-
-vector<RRClass>
-AuthSrv::getClientListClasses() const {
-    vector<RRClass> result;
-    for (std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
-         const_iterator it(impl_->client_lists_.begin());
-         it != impl_->client_lists_.end(); ++it) {
-        result.push_back(it->first);
-    }
-    return (result);
 }
 
 void

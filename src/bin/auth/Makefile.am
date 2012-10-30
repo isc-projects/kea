@@ -55,7 +55,8 @@ b10_auth_SOURCES += auth_config.cc auth_config.h
 b10_auth_SOURCES += command.cc command.h
 b10_auth_SOURCES += common.h common.cc
 b10_auth_SOURCES += statistics.cc statistics.h statistics_items.h
-b10_auth_SOURCES += datasrc_configurator.h
+b10_auth_SOURCES += datasrc_clients_mgr.h
+b10_auth_SOURCES += datasrc_config.h datasrc_config.cc
 b10_auth_SOURCES += main.cc
 
 nodist_b10_auth_SOURCES = auth_messages.h auth_messages.cc
@@ -73,6 +74,7 @@ b10_auth_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 b10_auth_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 b10_auth_LDADD += $(top_builddir)/src/lib/xfr/libb10-xfr.la
 b10_auth_LDADD += $(top_builddir)/src/lib/server_common/libb10-server-common.la
+b10_auth_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 b10_auth_LDADD += $(SQLITE_LIBS)
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir

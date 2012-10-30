@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __MEMORY_SEGMENT_LOCAL_H__
-#define __MEMORY_SEGMENT_LOCAL_H__
+#ifndef MEMORY_SEGMENT_LOCAL_H
+#define MEMORY_SEGMENT_LOCAL_H
 
 #include <util/memory_segment.h>
 
@@ -73,4 +73,4 @@ private:
 } // namespace util
 } // namespace isc
 
-#endif // __MEMORY_SEGMENT_LOCAL_H__
+#endif // MEMORY_SEGMENT_LOCAL_H

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __HASH_DELETER_H
-#define __HASH_DELETER_H
+#ifndef HASH_DELETER_H
+#define HASH_DELETER_H
 
 #include <boost/shared_ptr.hpp>
 #include <util/lru_list.h>
@@ -72,4 +72,4 @@ void HashDeleter<T>::operator()(T* element) const {
 } // namespace nsas
 } // namespace isc
 
-#endif // __HASH_DELETER_H
+#endif // HASH_DELETER_H

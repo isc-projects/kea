@@ -22,7 +22,7 @@ import sys
 from cmd import Cmd
 from bindctl.exception import *
 from bindctl.moduleinfo import *
-from bindctl.cmdparse import BindCmdParse
+from bindctl.cmdparse import BindCmdParser
 from bindctl import command_sets
 from xml.dom import minidom
 import isc
@@ -48,19 +48,20 @@ except ImportError:
 # if we have readline support, use that, otherwise use normal stdio
 try:
     import readline
-    # This is a fix for the problem described in
-    # http://bind10.isc.org/ticket/1345
-    # If '-' is seen as a word-boundary, the final completion-step
-    # (as handled by the cmd module, and hence outside our reach) can
-    # mistakenly add data twice, resulting in wrong completion results
-    # The solution is to remove it.
-    delims = readline.get_completer_delims()
-    delims = delims.replace('-', '')
-    readline.set_completer_delims(delims)
+    # Only consider spaces as word boundaries; identifiers can contain
+    # '/' and '[]', and configuration item names can in theory use any
+    # printable  character. See the discussion in tickets #1345 and
+    # #2254 for more information.
+    readline.set_completer_delims(' ')
 
     my_readline = readline.get_line_buffer
 except ImportError:
     my_readline = sys.stdin.readline
+
+# Used for tab-completion of 'identifiers' (i.e. config values)
+# If a command parameter has this name, the tab completion hints
+# are derived from config data
+CFGITEM_IDENTIFIER_PARAM = 'identifier'
 
 CSV_FILE_NAME = 'default_user.csv'
 CONFIG_MODULE_NAME = 'config'
@@ -463,41 +464,101 @@ class BindCmdInterpreter(Cmd):
 
         Cmd.onecmd(self, line)
 
-    def remove_prefix(self, list, prefix):
-        """Removes the prefix already entered, and all elements from the
-           list that don't match it"""
-        if prefix.startswith('/'):
-            prefix = prefix[1:]
+    def _get_identifier_startswith(self, id_text):
+        """Return the tab-completion hints for identifiers starting with
+           id_text.
 
-        new_list = []
-        for val in list:
-            if val.startswith(prefix):
-                new_val = val[len(prefix):]
-                if new_val.startswith("/"):
-                    new_val = new_val[1:]
-                new_list.append(new_val)
-        return new_list
+           Parameters:
+           id_text (string): the currently entered identifier part, which
+           is to be completed.
+        """
+        # Strip starting "/" from id_text
+        if id_text.startswith('/'):
+            id_text = id_text[1:]
+        # Get all items from the given module (up to the first /)
+        list = self.config_data.get_config_item_list(
+                        id_text.rpartition("/")[0], recurse=True)
+        # filter out all possibilities that don't match currently entered
+        # text part
+        hints = [val for val in list if val.startswith(id_text)]
+        return hints
+
+    def _cmd_has_identifier_param(self, cmd):
+        """
+        Returns True if the given (parsed) command is known and has a
+        parameter which points to a config data identifier
+
+        Parameters:
+        cmd (cmdparse.BindCmdParser): command context, including given params
+
+        """
+        if cmd.module not in self.modules:
+            return False
+        command = self.modules[cmd.module].get_command_with_name(cmd.command)
+        return command.has_param_with_name(CFGITEM_IDENTIFIER_PARAM)
 
     def complete(self, text, state):
-        if 0 == state:
+        """
+        Returns tab-completion hints. See the python documentation of the
+        readline and Cmd modules for more information.
+
+        The first time this is called (within one 'completer' action), it
+        has state 0, and a list of possible completions is made. This list
+        is stored; complete() will then be called with increasing values of
+        state, until it returns None. For each call it returns the state'th
+        element of the hints it collected in the first call.
+
+        The hints list contents depend on which part of the full command
+        line; if no module is given yet, it will list all modules. If a
+        module is given, but no command, it will complete with module
+        commands. If both have been given, it will create the hints based on
+        the command parameters.
+
+        If module and command have already been specified, and the command
+        has a parameter 'identifier', the configuration data is used to
+        create the hints list.
+
+        Parameters:
+        text (string): The text entered so far in the 'current' part of
+                       the command (module, command, parameters)
+        state (int): state used in the readline tab-completion logic;
+                     0 on first call, increasing by one until there are
+                     no (more) hints to return.
+
+        Returns the string value of the hints list with index 'state',
+        or None if no (more) hints are available.
+        """
+        if state == 0:
             self._update_all_modules_info()
             text = text.strip()
             hints = []
             cur_line = my_readline()
             try:
-                cmd = BindCmdParse(cur_line)
+                cmd = BindCmdParser(cur_line)
                 if not cmd.params and text:
                     hints = self._get_command_startswith(cmd.module, text)
+                elif self._cmd_has_identifier_param(cmd):
+                    # If the command has an argument that is a configuration
+                    # identifier (currently, this is only a subset of
+                    # the config commands), then don't tab-complete with
+                    # hints derived from command parameters, but from
+                    # possible configuration identifiers.
+                    #
+                    # This solves the issue reported in #2254, where
+                    # there were hints such as 'argument' and 'identifier'.
+                    #
+                    # Since they are replaced, the tab-completion no longer
+                    # adds 'help' as an option (but it still works)
+                    #
+                    # Also, currently, tab-completion does not work
+                    # together with 'config go' (it does not take 'current
+                    # position' into account). But config go currently has
+                    # problems by itself, unrelated to completion.
+                    hints = self._get_identifier_startswith(text)
                 else:
                     hints = self._get_param_startswith(cmd.module, cmd.command,
                                                        text)
-                    if cmd.module == CONFIG_MODULE_NAME:
-                        # grm text has been stripped of slashes...
-                        my_text = self.location + "/" + cur_line.rpartition(" ")[2]
-                        list = self.config_data.get_config_item_list(my_text.rpartition("/")[0], True)
-                        hints.extend([val for val in list if val.startswith(my_text[1:])])
-                        # remove the common prefix from the hints so we don't get it twice
-                        hints = self.remove_prefix(hints, my_text.rpartition("/")[0])
+
             except CmdModuleNameFormatError:
                 if not text:
                     hints = self.get_module_names()
@@ -562,7 +623,7 @@ class BindCmdInterpreter(Cmd):
 
     def _parse_cmd(self, line):
         try:
-            cmd = BindCmdParse(line)
+            cmd = BindCmdParser(line)
             self._validate_cmd(cmd)
             self._handle_cmd(cmd)
         except (IOError, http.client.HTTPException) as err:
@@ -794,7 +855,7 @@ class BindCmdInterpreter(Cmd):
                     else:
                         print("Warning: ignoring unknown directive: " + line)
                 else:
-                    cmd = BindCmdParse(line)
+                    cmd = BindCmdParser(line)
                     self._validate_cmd(cmd)
                     self._handle_cmd(cmd)
         except (isc.config.ModuleCCSessionError,

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __NSEC3PARAM_COMMON_H
-#define __NSEC3PARAM_COMMON_H 1
+#ifndef NSEC3PARAM_COMMON_H
+#define NSEC3PARAM_COMMON_H 1
 
 #include <util/buffer.h>
 
@@ -127,7 +127,7 @@ ParseNSEC3ParamResult parseNSEC3ParamWire(const char* const rrtype_name,
 }
 }
 
-#endif  // __NSEC3PARAM_COMMON_H
+#endif  // NSEC3PARAM_COMMON_H
 
 // Local Variables:
 // mode: c++

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LOGGER_SPECIFICATION_H
-#define __LOGGER_SPECIFICATION_H
+#ifndef LOGGER_SPECIFICATION_H
+#define LOGGER_SPECIFICATION_H
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -146,11 +146,11 @@ private:
     std::string                 name_;          ///< Logger name
     isc::log::Severity          severity_;      ///< Severity for this logger
     int                         dbglevel_;      ///< Debug level
-    bool                        additive_;      ///< Chaining output 
+    bool                        additive_;      ///< Chaining output
     std::vector<OutputOption>   options_;       ///< Logger options
 };
 
 } // namespace log
 } // namespace isc
 
-#endif // __LOGGER_SPEC_IFICATIONH
+#endif // LOGGER_SPECIFICATION_H

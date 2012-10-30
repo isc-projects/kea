@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ASIOLINK_IO_SERVICE_H
-#define __ASIOLINK_IO_SERVICE_H 1
+#ifndef ASIOLINK_IO_SERVICE_H
+#define ASIOLINK_IO_SERVICE_H 1
 
 namespace asio {
     class io_service;
@@ -76,4 +76,4 @@ private:
 
 } // namespace asiolink
 } // namespace isc
-#endif // __ASIOLINK_IO_SERVICE_H
+#endif // ASIOLINK_IO_SERVICE_H

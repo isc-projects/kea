@@ -13,8 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 
-#ifndef __IO_ERROR_H
-#define __IO_ERROR_H
+#ifndef IO_ERROR_H
+#define IO_ERROR_H
 
 #include <exceptions/exceptions.h>
 
@@ -34,4 +34,4 @@ public:
 } // namespace asiolink
 } // namespace isc
 
-#endif // __IO_ERROR_H
+#endif // IO_ERROR_H

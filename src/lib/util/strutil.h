@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __STRUTIL_H
-#define __STRUTIL_H
+#ifndef STRUTIL_H
+#define STRUTIL_H
 
 #include <algorithm>
 #include <cctype>
@@ -206,4 +206,4 @@ tokenToNum(const std::string& num_token) {
 } // namespace util
 } // namespace isc
 
-#endif // __STRUTIL_H
+#endif // STRUTIL_H

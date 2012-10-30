@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __IO_UTILITIES_H
-#define __IO_UTILITIES_H
+#ifndef IO_UTILITIES_H
+#define IO_UTILITIES_H
 
 #include <cstddef>
 
@@ -101,4 +101,4 @@ writeUint32(uint32_t value, uint8_t* buffer) {
 } // namespace util
 } // namespace isc
 
-#endif // __ASIOLINK_UTILITIES_H
+#endif // IO_UTILITIES_H

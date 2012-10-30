@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __SERIAL_H
-#define __SERIAL_H 1
+#ifndef SERIAL_H
+#define SERIAL_H 1
 
 #include <stdint.h>
 #include <iostream>
@@ -152,4 +152,4 @@ std::ostream& operator<<(std::ostream& os, const Serial& serial);
 } // end namespace dns
 } // end namespace isc
 
-#endif // __SERIAL_H
+#endif // SERIAL_H

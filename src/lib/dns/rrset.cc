@@ -64,8 +64,12 @@ AbstractRRset::toText() const {
         it->next();
     } while (!it->isLast());
 
+    if (getRRsig()) {
+        s += getRRsig()->toText();
+    }
+
     return (s);
-}   
+}
 
 namespace {
 template <typename T>

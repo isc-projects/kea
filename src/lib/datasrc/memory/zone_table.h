@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __DATASRC_MEMORY_ZONE_TABLE_H
-#define __DATASRC_MEMORY_ZONE_TABLE_H 1
+#ifndef DATASRC_MEMORY_ZONE_TABLE_H
+#define DATASRC_MEMORY_ZONE_TABLE_H 1
 
 #include <util/memory_segment.h>
 
@@ -74,23 +74,23 @@ private:
     typedef DomainTreeNode<ZoneData> ZoneTableNode;
 
 public:
-    /// \brief Result data of addZone() method.
-    struct AddResult {
-        AddResult(result::Result param_code, ZoneData* param_zone_data) :
-            code(param_code), zone_data(param_zone_data)
-        {}
-        const result::Result code;
-        ZoneData* const zone_data;
-    };
+     /// \brief Result data of addZone() method.
+     struct AddResult {
+         AddResult(result::Result param_code, ZoneData* param_zone_data) :
+             code(param_code), zone_data(param_zone_data)
+         {}
+         const result::Result code;
+         ZoneData* const zone_data;
+     };
 
     /// \brief Result data of findZone() method.
     struct FindResult {
         FindResult(result::Result param_code,
-                   ZoneData* param_zone_data) :
+                   const ZoneData* param_zone_data) :
             code(param_code), zone_data(param_zone_data)
         {}
         const result::Result code;
-        ZoneData* const zone_data;
+        const ZoneData* const zone_data;
     };
 
 private:
@@ -102,7 +102,9 @@ private:
     /// This constructor internally involves resource allocation, and if
     /// it fails, a corresponding standard exception will be thrown.
     /// It never throws an exception otherwise.
-    ZoneTable(ZoneTableTree* zones) : zones_(zones)
+    ZoneTable(const dns::RRClass& rrclass, ZoneTableTree* zones) :
+        rrclass_(rrclass),
+        zones_(zones)
     {}
 
 public:
@@ -119,7 +121,7 @@ public:
     /// \param zone_class The RR class of the zone.  It must be the RR class
     /// that is supposed to be associated to the zone table.
     static ZoneTable* create(util::MemorySegment& mem_sgmt,
-                             dns::RRClass zone_class);
+                             const dns::RRClass& zone_class);
 
     /// \brief Destruct and deallocate \c ZoneTable
     ///
@@ -135,35 +137,33 @@ public:
     /// \param ztable A non NULL pointer to a valid \c ZoneTable object
     /// that was originally created by the \c create() method (the behavior
     /// is undefined if this condition isn't met).
-    static void destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable,
-                        dns::RRClass zone_class);
+    static void destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable);
 
     /// Add a new zone to the \c ZoneTable.
     ///
-    /// This method creates a new \c ZoneData for the given zone name and
-    /// holds it in the internal table.  The newly created zone data will be
-    /// returned via the \c zone_data member of the return value.  If the given
-    /// zone name already exists in the table, a new data object won't be
-    /// created; instead, the existing corresponding data will be returned.
-    ///
-    /// The zone table keeps the ownership of the created zone data; the
-    /// caller must not try to destroy it directly.  (We'll eventually
-    /// add an interface to delete specific zone data from the table).
+    /// This method adds a given zone data to the internal table.
     ///
     /// \throw std::bad_alloc Internal resource allocation fails.
     ///
     /// \param mem_sgmt The \c MemorySegment to allocate zone data to be
-    /// created.  It must be the same segment that was used to create
-    /// the zone table at the time of create().
+    ///     created.  It must be the same segment that was used to create
+    ///     the zone table at the time of create().
     /// \param zone_name The name of the zone to be added.
     /// \param zone_class The RR class of the zone.  It must be the RR class
-    /// that is supposed to be associated to the zone table.
+    ///     that is supposed to be associated to the zone table.
+    /// \param content This one should hold the zone content (the ZoneData).
+    ///     The ownership is passed onto the zone table. Must not be null.
+    ///     Must correspond to the name and class and must be allocated from
+    ///     mem_sgmt.
     /// \return \c result::SUCCESS If the zone is successfully
-    /// added to the zone table.
-    /// \return \c result::EXIST The zone table already contains
-    /// zone of the same origin.
-    AddResult addZone(util::MemorySegment& mem_sgmt, dns::RRClass zone_class,
-                      const dns::Name& zone_name);
+    ///     added to the zone table.
+    /// \return \c result::EXIST The zone table already contained
+    ///     zone of the same origin. The old data is replaced and returned
+    ///     inside the result.
+    AddResult addZone(util::MemorySegment& mem_sgmt,
+                      dns::RRClass zone_class,
+                      const dns::Name& zone_name,
+                      ZoneData* content);
 
     /// Find a zone that best matches the given name in the \c ZoneTable.
     ///
@@ -185,23 +185,14 @@ public:
     /// \return A \c FindResult object enclosing the search result (see above).
     FindResult findZone(const isc::dns::Name& name) const;
 
-    /// Override the ZoneData for a node (zone) in the zone tree.
-    ///
-    /// \throw none
-    ///
-    /// \param name A domain name for which the zone data is set.
-    /// \param data The new zone data to set.
-    /// \return A \c FindResult object containing the old data if the
-    /// zone was found.
-    FindResult setZoneData(const isc::dns::Name& name, ZoneData* data);
-
 private:
+    const dns::RRClass rrclass_;
     boost::interprocess::offset_ptr<ZoneTableTree> zones_;
 };
 }
 }
 }
-#endif  // __DATASRC_MEMORY_ZONE_TABLE_H
+#endif  // DATASRC_MEMORY_ZONE_TABLE_H
 
 // Local Variables:
 // mode: c++

@@ -12,13 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __AUTH_SRV_H
-#define __AUTH_SRV_H 1
-
-#include <string>
+#ifndef AUTH_SRV_H
+#define AUTH_SRV_H 1
 
 #include <config/ccsession.h>
+
 #include <datasrc/factory.h>
+#include <datasrc/client_list.h>
+#include <datasrc/datasrc_config.h>
+
 #include <dns/message.h>
 #include <dns/opcode.h>
 #include <util/buffer.h>
@@ -33,12 +35,22 @@
 
 #include <asiolink/asiolink.h>
 #include <server_common/portconfig.h>
+
 #include <auth/statistics.h>
+#include <auth/datasrc_clients_mgr.h>
+
+#include <boost/shared_ptr.hpp>
+
+#include <map>
+#include <string>
 
 namespace isc {
 namespace util {
 namespace io {
 class BaseSocketSessionForwarder;
+}
+namespace thread {
+class Mutex;
 }
 }
 namespace datasrc {
@@ -184,6 +196,11 @@ public:
     /// \brief Return pointer to the Checkin callback function
     isc::asiolink::SimpleCallback* getCheckinProvider() const { return (checkin_); }
 
+    /// \brief Return data source clients manager.
+    ///
+    /// \throw None
+    isc::auth::DataSrcClientsMgr& getDataSrcClientsMgr();
+
     /// \brief Set the communication session with a separate process for
     /// outgoing zone transfers.
     ///
@@ -249,36 +266,10 @@ public:
     /// If there was no forwarder yet, this method does nothing.
     void destroyDDNSForwarder();
 
-    /// \brief Sets the currently used list for data sources of given
-    ///     class.
-    ///
-    /// Replaces the internally used client list with a new one. Other
-    /// classes are not changed.
-    ///
-    /// \param rrclass The class to modify.
-    /// \param list Shared pointer to the client list. If it is NULL,
-    ///     the list is removed instead.
-    void setClientList(const isc::dns::RRClass& rrclass, const
-                       boost::shared_ptr<isc::datasrc::ConfigurableClientList>&
-                       list);
-
-    /// \brief Returns the currently used client list for the class.
-    ///
-    /// \param rrclass The class for which to get the list.
-    /// \return The list, or NULL if no list is set for the class.
-    boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        getClientList(const isc::dns::RRClass& rrclass);
-
-    /// \brief Returns a list of classes that have a client list.
-    ///
-    /// \return List of classes for which a non-NULL client list
-    ///     has been set by setClientList.
-    std::vector<isc::dns::RRClass> getClientListClasses() const;
-
     /// \brief Sets the timeout for incoming TCP connections
     ///
     /// Incoming TCP connections that have not sent their data
-    /// withing this time are dropped.
+    /// within this time are dropped.
     ///
     /// \param timeout The timeout (in milliseconds). If se to
     /// zero, no timeouts are used, and the connection will remain
@@ -293,7 +284,7 @@ private:
     isc::asiodns::DNSServiceBase* dnss_;
 };
 
-#endif // __AUTH_SRV_H
+#endif // AUTH_SRV_H
 
 // Local Variables:
 // mode: c++

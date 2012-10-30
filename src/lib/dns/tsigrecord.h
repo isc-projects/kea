@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __TSIGRECORD_H
-#define __TSIGRECORD_H 1
+#ifndef TSIGRECORD_H
+#define TSIGRECORD_H 1
 
 #include <ostream>
 #include <string>
@@ -301,7 +301,7 @@ std::ostream& operator<<(std::ostream& os, const TSIGRecord& record);
 }
 }
 
-#endif  // __TSIGRECORD_H
+#endif  // TSIGRECORD_H
 
 // Local Variables:
 // mode: c++

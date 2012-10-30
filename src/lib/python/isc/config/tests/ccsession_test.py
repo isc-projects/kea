@@ -993,10 +993,15 @@ class TestUIModuleCCSession(unittest.TestCase):
 
         self.assertRaises(isc.cc.data.DataNotFoundError, uccs.add_value, 1, "a")
         self.assertRaises(isc.cc.data.DataNotFoundError, uccs.add_value, "no_such_item", "a")
-        self.assertRaises(isc.cc.data.DataNotFoundError, uccs.add_value, "Spec2/item1", "a")
         self.assertRaises(isc.cc.data.DataNotFoundError, uccs.remove_value, 1, "a")
         self.assertRaises(isc.cc.data.DataNotFoundError, uccs.remove_value, "no_such_item", "a")
-        self.assertRaises(isc.cc.data.DataNotFoundError, uccs.remove_value, "Spec2/item1", "a")
+        # add and remove should raise DataNotFoundError when used with items
+        # that are not a list or named_set (more importantly, they should
+        # not raise TypeError)
+        self.assertRaises(isc.cc.data.DataTypeError, uccs.add_value, "Spec2/item1", "a")
+        self.assertRaises(isc.cc.data.DataTypeError, uccs.remove_value, "Spec2/item1", "a")
+        self.assertRaises(isc.cc.data.DataTypeError, uccs.add_value, "Spec2", "")
+        self.assertRaises(isc.cc.data.DataTypeError, uccs.remove_value, "Spec2", "")
 
         self.assertEqual({}, uccs._local_changes)
         uccs.add_value("Spec2/item5", "foo")
@@ -1020,6 +1025,7 @@ class TestUIModuleCCSession(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataTypeError,
                           uccs.remove_value, "Spec2/item5", None)
 
+
     # Check that the difference between no default and default = null
     # is recognized
     def test_default_null(self):
@@ -1042,9 +1048,9 @@ class TestUIModuleCCSession(unittest.TestCase):
         items_as_str = [ '1234', 'foo', 'true', 'false' ]
 
         def test_fails():
-            self.assertRaises(isc.cc.data.DataNotFoundError, uccs.add_value, "Spec40/item1", "foo")
-            self.assertRaises(isc.cc.data.DataNotFoundError, uccs.add_value, "Spec40/item1", "foo", "bar")
-            self.assertRaises(isc.cc.data.DataNotFoundError, uccs.remove_value, "Spec40/item1", "foo")
+            self.assertRaises(isc.cc.data.DataTypeError, uccs.add_value, "Spec40/item1", "foo")
+            self.assertRaises(isc.cc.data.DataTypeError, uccs.add_value, "Spec40/item1", "foo", "bar")
+            self.assertRaises(isc.cc.data.DataTypeError, uccs.remove_value, "Spec40/item1", "foo")
             self.assertRaises(isc.cc.data.DataTypeError, uccs.remove_value, "Spec40/item1[0]", None)
 
         # A few helper functions to perform a number of tests

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RRSET_CACHE_H
-#define __RRSET_CACHE_H
+#ifndef RRSET_CACHE_H
+#define RRSET_CACHE_H
 
 #include <cache/rrset_entry.h>
 #include <nsas/hash_table.h>
@@ -89,5 +89,5 @@ typedef boost::shared_ptr<const RRsetCache> ConstRRsetCachePtr;
 } // namespace cache
 } // namespace isc
 
-#endif // __RRSET_CACHE_H
+#endif // RRSET_CACHE_H
 

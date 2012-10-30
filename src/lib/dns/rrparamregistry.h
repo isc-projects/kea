@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RRPARAMREGISTRY_H
-#define __RRPARAMREGISTRY_H 1
+#ifndef RRPARAMREGISTRY_H
+#define RRPARAMREGISTRY_H 1
 
 #include <string>
 
@@ -506,7 +506,7 @@ private:
 
 }
 }
-#endif  // __RRPARAMREGISTRY_H
+#endif  // RRPARAMREGISTRY_H
 
 // Local Variables: 
 // mode: c++

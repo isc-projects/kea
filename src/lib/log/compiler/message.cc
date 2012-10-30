@@ -109,18 +109,20 @@ currentTime() {
     // Get a text representation of the current time.
     time_t curtime;
     time(&curtime);
-    char* buffer = ctime(&curtime);
+    struct tm* timeinfo;
+    timeinfo = localtime(&curtime);
 
-    // Convert to string and strip out the trailing newline
-    string current_time = buffer;
-    return (isc::util::str::trim(current_time));
+    char buffer[80];
+    strftime(buffer, 80, "%a %b %d %Y %H:%M", timeinfo);
+
+    return (std::string(buffer));
 }
 
 
 /// \brief Create Header Sentinel
 ///
 /// Given the name of a file, create an \#ifdef sentinel name.  The name is
-/// __<name>_<ext>, where &lt;name&gt; is the name of the file, and &lt;ext&gt;
+/// <name>_<ext>, where &lt;name&gt; is the name of the file, and &lt;ext&gt;
 /// is the extension less the leading period.  The sentinel will be upper-case.
 ///
 /// \param file Filename object representing the file.
@@ -132,7 +134,7 @@ sentinel(Filename& file) {
 
     string name = file.name();
     string ext = file.extension();
-    string sentinel_text = "__" + name + "_" + ext.substr(1);
+    string sentinel_text = name + "_" + ext.substr(1);
     isc::util::str::uppercase(sentinel_text);
     return (sentinel_text);
 }

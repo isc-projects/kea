@@ -14,8 +14,8 @@
 
 
 
-#ifndef __RUN_ALL_H
-#define __RUN_ALL_H
+#ifndef RUN_ALL_H
+#define RUN_ALL_H
 
 // Avoid need for user to include this header file.
 
@@ -49,4 +49,4 @@ int run_all();
 
 
 
-#endif // __RUN_ALL_H
+#endif // RUN_ALL_H

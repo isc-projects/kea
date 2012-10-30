@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_TSIGERROR_H
-#define __PYTHON_TSIGERROR_H 1
+#ifndef PYTHON_TSIGERROR_H
+#define PYTHON_TSIGERROR_H 1
 
 #include <Python.h>
 
@@ -37,7 +37,7 @@ PyObject* createTSIGErrorObject(const TSIGError& source);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_TSIGERROR_H
+#endif // PYTHON_TSIGERROR_H
 
 // Local Variables:
 // mode: c++

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_QUESTION_H
-#define __PYTHON_QUESTION_H 1
+#ifndef PYTHON_QUESTION_H
+#define PYTHON_QUESTION_H 1
 
 #include <Python.h>
 
@@ -59,7 +59,7 @@ const Question& PyQuestion_ToQuestion(const PyObject* question_obj);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_QUESTION_H
+#endif // PYTHON_QUESTION_H
 
 // Local Variables:
 // mode: c++

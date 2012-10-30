@@ -76,13 +76,16 @@ using namespace std;
 /// directed to one or other of the "servers" in the RecursiveQueryTest2 class,
 /// regardless of the glue returned in referrals.
 
+namespace {
+const char* const TEST_ADDRESS = "127.0.0.1"; ///< Servers are on this address
+const uint16_t TEST_PORT = 5301;              ///< ... and this port
+const size_t BUFFER_SIZE = 1024;              ///< For all buffers
+const char* const WWW_EXAMPLE_ORG = "192.0.2.254";
+                                              ///< Address of www.example.org
+} //end anonymous namespace
+
 namespace isc {
 namespace asiodns {
-
-const std::string TEST_ADDRESS = "127.0.0.1";   ///< Servers are on this address
-const uint16_t TEST_PORT = 5301;                ///< ... and this port
-const size_t BUFFER_SIZE = 1024;                ///< For all buffers
-const char* WWW_EXAMPLE_ORG = "192.0.2.254";    ///< Address of www.example.org
 
 // As the test is fairly long and complex, debugging "print" statements have
 // been left in although they are disabled.  Set the following to "true" to
@@ -146,6 +149,12 @@ public:
     OutputBufferPtr udp_send_buffer_;           ///< Send buffer for UDP I/O
     udp::socket     udp_socket_;                ///< Socket used by UDP server
 
+    /// Some of the tests cause an 'active' running query to be created, but
+    /// don't complete the framework that makes that query delete itself.
+    /// This member can be used to store it so that it is deleted automatically
+    /// when the test is finished.
+    AbstractRunningQuery* running_query_;
+
     /// \brief Constructor
     RecursiveQueryTest2() :
         debug_(DEBUG_PRINT),
@@ -167,8 +176,18 @@ public:
         udp_length_(0),
         udp_receive_buffer_(),
         udp_send_buffer_(new OutputBuffer(BUFFER_SIZE)),
-        udp_socket_(service_.get_io_service(), udp::v4())
-    {
+        udp_socket_(service_.get_io_service(), udp::v4()),
+        running_query_(NULL)
+    {}
+
+    ~RecursiveQueryTest2() {
+        // It would delete itself, but after the io_service_, which could
+        // segfailt in case there were unhandled requests
+        resolver_.reset();
+        // In a similar note, we wait until the resolver has been cleaned up
+        // until deleting and active test running_query_
+        delete running_query_;
+        delete nsas_;
     }
 
     /// \brief Set Common Message Bits
@@ -683,7 +702,7 @@ TEST_F(RecursiveQueryTest2, Resolve) {
     // Kick off the resolution process.  We expect the first question to go to
     // "root".
     expected_ = UDP_ROOT;
-    query.resolve(question_, resolver_callback);
+    running_query_ = query.resolve(question_, resolver_callback);
     service_.run();
 
     // Check what ran. (We have to cast the callback to ResolverCallback as we

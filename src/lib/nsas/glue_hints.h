@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __GLUE_HINTS_H
-#define __GLUE_HINTS_H
+#ifndef GLUE_HINTS_H
+#define GLUE_HINTS_H
 
 #include <vector>
 
@@ -68,4 +68,4 @@ private:
 }
 
 
-#endif // __GLUE_HINTS_H
+#endif // GLUE_HINTS_H
