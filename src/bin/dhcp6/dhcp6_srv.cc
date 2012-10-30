@@ -28,6 +28,12 @@
 #include <util/io_utilities.h>
 #include <util/range_utilities.h>
 #include <dhcp/duid.h>
+#include <dhcp/lease_mgr.h>
+#include <dhcp/cfgmgr.h>
+#include <dhcp/option6_iaaddr.h>
+
+// @todo: Replace this with MySQL_LeaseMgr once it is merged
+#include <dhcp/tests/memfile_lease_mgr.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -35,20 +41,9 @@ using namespace isc::dhcp;
 using namespace isc::util;
 using namespace std;
 
-const std::string HARDCODED_LEASE = "2001:db8:1::1234:abcd";
-const uint32_t HARDCODED_T1 = 1500; // in seconds
-const uint32_t HARDCODED_T2 = 2600; // in seconds
-const uint32_t HARDCODED_PREFERRED_LIFETIME = 3600; // in seconds
-const uint32_t HARDCODED_VALID_LIFETIME = 7200; // in seconds
 const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
-    if (port == 0) {
-        // used for testing purposes. Some tests, e.g. configuration parser,
-        // require Dhcpv6Srv object, but they don't really need it to do
-        // anything. This speed up and simplifies the tests.
-        return;
-    }
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
 
@@ -56,13 +51,18 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
     // it may throw something if things go wrong
     try {
 
-        if (IfaceMgr::instance().countIfaces() == 0) {
-            LOG_ERROR(dhcp6_logger, DHCP6_NO_INTERFACES);
-            shutdown_ = true;
-            return;
-        }
+        // used for testing purposes. Some tests, e.g. configuration parser,
+        // require Dhcpv6Srv object, but they don't really need it to do
+        // anything. This speed up and simplifies the tests.
+        if (port) {
+            if (IfaceMgr::instance().countIfaces() == 0) {
+                LOG_ERROR(dhcp6_logger, DHCP6_NO_INTERFACES);
+                shutdown_ = true;
+                return;
+            }
 
-        IfaceMgr::instance().openSockets6(port);
+            IfaceMgr::instance().openSockets6(port);
+        }
 
         setServerID();
 
@@ -74,11 +74,20 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
         return;
     }
 
+    // Instantiate LeaseMgr
+    // @todo: Replace this with MySQL_LeaseMgr once it is merged
+    new isc::dhcp::test::Memfile_LeaseMgr("");
+
+    // Instantiate allocation engine
+    alloc_engine_ = new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100);
+
     shutdown_ = false;
 }
 
 Dhcpv6Srv::~Dhcpv6Srv() {
     IfaceMgr::instance().closeSockets();
+
+    LeaseMgr::destroy_instance();
 }
 
 void Dhcpv6Srv::shutdown() {
@@ -108,10 +117,9 @@ bool Dhcpv6Srv::run() {
                 continue;
             }
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PACKET_RECEIVED)
-                      .arg(serverReceivedPacketName(query->getType()))
-                      .arg(query->getType());
+                      .arg(serverReceivedPacketName(query->getType()));
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_QUERY_DATA)
-                      .arg(query->getType())
+                      .arg(static_cast<int>(query->getType()))
                       .arg(query->getBuffer().getLength())
                       .arg(query->toText());
 
@@ -301,33 +309,112 @@ void Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& /*question*/, Pkt6Ptr& ans
     answer->addOption(dnsservers);
 }
 
-void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
-    /// TODO Rewrite this once LeaseManager is implemented.
+OptionPtr Dhcpv6Srv::createStatusCode(uint16_t code, const std::string& text) {
 
-    // answer client's IA (this is mostly a dummy,
-    // so let's answer only first IA and hope there is only one)
-    boost::shared_ptr<Option> ia_opt = question->getOption(D6O_IA_NA);
-    if (ia_opt) {
-        // found IA
-        Option* tmp = ia_opt.get();
-        Option6IA* ia_req = dynamic_cast<Option6IA*>(tmp);
-        if (ia_req) {
-            boost::shared_ptr<Option6IA>
-                ia_rsp(new Option6IA(D6O_IA_NA, ia_req->getIAID()));
-            ia_rsp->setT1(HARDCODED_T1);
-            ia_rsp->setT2(HARDCODED_T2);
-            boost::shared_ptr<Option6IAAddr>
-                addr(new Option6IAAddr(D6O_IAADDR,
-                                       IOAddress(HARDCODED_LEASE),
-                                       HARDCODED_PREFERRED_LIFETIME,
-                                       HARDCODED_VALID_LIFETIME));
-            ia_rsp->addOption(addr);
-            answer->addOption(ia_rsp);
+    // @todo: Implement Option6_StatusCode and rewrite this code here
+    vector<uint8_t> data(text.c_str(), text.c_str() + text.length());
+    data.insert(data.begin(), static_cast<uint8_t>(code % 256));
+    data.insert(data.begin(), static_cast<uint8_t>(code >> 8));
+    OptionPtr status(new Option(Option::V6, D6O_STATUS_CODE, data));
+    return (status);
+}
+
+Subnet6Ptr Dhcpv6Srv::getSubnet(const Pkt6Ptr& question) {
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr());
+
+    return (subnet);
+}
+
+void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
+
+    Subnet6Ptr subnet = getSubnet(question);
+    if (subnet) {
+        cout << "#### Selected subnet " << subnet->toText() << endl;
+    } else {
+        cout << "#### Failed to select a subnet" << endl;
+    }
+
+    // @todo: We should implement Option6Duid some day, but we can do without it
+    // just fine for now
+    DuidPtr duid;
+    OptionPtr opt_duid = question->getOption(D6O_CLIENTID);
+    if (opt_duid) {
+        duid = DuidPtr(new DUID(opt_duid->getData()));
+    }
+    if (duid) {
+        cout << "#### Processing request from client with duid=" << duid->toText() << endl;
+    } else {
+        cout << "#### Failed to find client-id :(" << endl;
+    }
+
+    for (Option::OptionCollection::iterator opt = question->options_.begin(); opt != question->options_.end(); ++opt) {
+        switch (opt->second->getType()) {
+        case D6O_IA_NA: {
+            OptionPtr answer_opt = handleIA_NA(subnet, duid, question, boost::dynamic_pointer_cast<Option6IA>(opt->second));
+            if (answer_opt) {
+                answer->addOption(answer_opt);
+            }
+            break;
+        }
+        default:
+            break;
         }
     }
 }
 
+OptionPtr Dhcpv6Srv::handleIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid, Pkt6Ptr question,
+                                 boost::shared_ptr<Option6IA> ia) {
+    if (!subnet) {
+        boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
+
+        ia_rsp->addOption(createStatusCode(STATUS_NoAddrsAvail, "Sorry, no subnet available."));
+        return (ia_rsp);
+    }
+
+    boost::shared_ptr<Option6IAAddr> hintOpt = boost::dynamic_pointer_cast<Option6IAAddr>(ia->getOption(D6O_IAADDR));
+
+    IOAddress hint("::");
+    cout << "#### Processing request IA_NA: iaid=" << ia->getIAID();
+    if (hintOpt) {
+        hint = hintOpt->getAddress();
+        cout << ", hint=" << hint.toText() << endl;
+    } else {
+        cout << ", no hint provided" << endl;
+    }
+
+    bool fake_allocation = false;
+    if (question->getType() == DHCPV6_SOLICIT) {
+        /// @todo: Check if we support rapid commit
+        fake_allocation = true;
+    }
+
+    Lease6Ptr lease = alloc_engine_->allocateAddress6(subnet, duid, ia->getIAID(),
+                                                      hint, fake_allocation);
+
+    boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
+
+    if (lease) {
+        cout << "#### Allocated lease:" << lease->addr_.toText() << endl;
+
+        ia_rsp->setT1(subnet->getT1());
+        ia_rsp->setT2(subnet->getT2());
+
+        boost::shared_ptr<Option6IAAddr>
+            addr(new Option6IAAddr(D6O_IAADDR,
+                                   lease->addr_,
+                                   lease->preferred_lft_,
+                                   lease->valid_lft_));
+        ia_rsp->addOption(addr);
+    } else {
+        cout << "#### Failed to allocate a lease";
+
+        ia_rsp->addOption(createStatusCode(STATUS_NoAddrsAvail, "Sorry, no address could be allocated."));
+    }
+    return (ia_rsp);
+}
+
 Pkt6Ptr Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
+
     Pkt6Ptr advertise(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
 
     copyDefaultOptions(solicit, advertise);
