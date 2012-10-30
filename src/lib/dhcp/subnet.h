@@ -233,13 +233,6 @@ public:
         return (options_);
     }
 
-    /// @brief Return a collection of options of a specified type.
-    ///
-    /// @param type option type.
-    /// @return pair of iterators, first indicating begining of
-    /// options range, second indicating end of the range.
-    OptionContainerTypeRange getOptions(uint16_t type);
-
 protected:
     /// @brief protected constructor
     //

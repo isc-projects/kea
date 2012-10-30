@@ -829,10 +829,12 @@ public:
             subnet->addPool6(*it);
         }
 
+        const Subnet::OptionContainer& options = subnet->getOptions();
+        const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+
         // Add subnet specific options.
         BOOST_FOREACH(OptionPtr option, options_) {
-            Subnet::OptionContainerTypeRange range =
-                subnet->getOptions(option->getType());
+            Subnet::OptionContainerTypeRange range = idx.equal_range(option->getType());
             if (std::distance(range.first, range.second) > 0) {
                 LOG_WARN(dhcp6_logger, DHCP6_CONFIG_OPTION_DUPLICATE)
                     .arg(option->getType()).arg(addr.toText());
@@ -847,8 +849,7 @@ public:
         BOOST_FOREACH(OptionPtr option, option_defaults) {
             // Get all options specified locally in the subnet and having
             // code equal to global option's code.
-            Subnet::OptionContainerTypeRange range =
-                subnet->getOptions(option->getType());
+            Subnet::OptionContainerTypeRange range = idx.equal_range(option->getType());
             // @todo: In the future we will be searching for options using either
             // option code or namespace. Currently we have only the option
             // code available so if there is at least one option found with the
