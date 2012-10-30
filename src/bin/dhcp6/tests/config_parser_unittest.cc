@@ -571,17 +571,6 @@ TEST_F(Dhcp6ParserTest, optionNameSpaces) {
     testInvalidOptionParam("option foo", "name");
 }
 
-// Verify that very low negative option code is rejected in
-//  the configuration.
-TEST_F(Dhcp6ParserTest, optionCodeNegativeOverflow) {
-    // Using negative code. If range checking is not applied on the
-    // value then it may be successfully cast to uint16_t resulting
-    // in a value of 65531 (which will be accepted). The code should however
-    // detect that it is actually very low negative value and parsing should
-    // fail.
-    testInvalidOptionParam("-4294901765", "code");
-}
-
 // Verify that negative option code is rejected in the configuration.
 TEST_F(Dhcp6ParserTest, optionCodeNegative) {
     // Check negative option code -4. This should fail too.
