@@ -53,4 +53,12 @@ TEST_F(MasterLexerTest, openStream) {
     EXPECT_EQ(1, lexer.getSourceLine());
 }
 
+TEST_F(MasterLexerTest, openFile) {
+    // We use zone file (-like) data, but in this test that actually doesn't
+    // matter.
+    lexer.open(TEST_DATA_SRCDIR "/masterload.txt");
+    EXPECT_EQ(TEST_DATA_SRCDIR "/masterload.txt", lexer.getSourceName());
+    EXPECT_EQ(1, lexer.getSourceLine());
+}
+
 }

@@ -31,6 +31,7 @@ public:
 
     MasterLexer();
     ~MasterLexer();
+    void open(const char* filename);
     void open(std::istream& input);
     std::string getSourceName() const;
     size_t getSourceLine() const;

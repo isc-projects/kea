@@ -32,11 +32,14 @@ createStreamName(std::istream& input_stream) {
     return (ss.str());
 }
 
+// A fake version of InputSource until #2369 is ready.  This class only
+// provides some interfaces and doesn't manipulate the input source further.
 class InputSource {
 public:
     InputSource(std::istream& input_stream) :
         name_(createStreamName(input_stream))
     {}
+    InputSource(const char* filename) : name_(filename) {}
     const std::string& getName() const { return (name_); }
     size_t getCurrentLine() const { return (1); }
 
@@ -57,6 +60,11 @@ MasterLexer::MasterLexer() : impl_(new MasterLexerImpl) {
 
 MasterLexer::~MasterLexer() {
     delete impl_;
+}
+
+void
+MasterLexer::open(const char* filename) {
+    impl_->sources_.push_back(InputSourcePtr(new InputSource(filename)));
 }
 
 void
