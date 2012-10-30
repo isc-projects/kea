@@ -14,8 +14,71 @@
 
 #include <dns/master_lexer.h>
 
+#include <boost/shared_ptr.hpp>
+
 #include <cassert>
 #include <string>
+#include <sstream>
+#include <vector>
+
+namespace isc {
+namespace dns {
+
+namespace master_lexer_internal {
+std::string
+createStreamName(std::istream& input_stream) {
+    std::stringstream ss;
+    ss << "stream-" << &input_stream;
+    return (ss.str());
+}
+
+class InputSource {
+public:
+    InputSource(std::istream& input_stream) :
+        name_(createStreamName(input_stream))
+    {}
+    const std::string& getName() const { return (name_); }
+    size_t getCurrentLine() const { return (1); }
+
+private:
+    const std::string name_;
+};
+
+typedef boost::shared_ptr<InputSource> InputSourcePtr;
+}
+using namespace master_lexer_internal;
+
+struct MasterLexer::MasterLexerImpl {
+    std::vector<InputSourcePtr> sources_;
+};
+
+MasterLexer::MasterLexer() : impl_(new MasterLexerImpl) {
+}
+
+MasterLexer::~MasterLexer() {
+    delete impl_;
+}
+
+void
+MasterLexer::open(std::istream& input) {
+    impl_->sources_.push_back(InputSourcePtr(new InputSource(input)));
+}
+
+std::string
+MasterLexer::getSourceName() const {
+    if (impl_->sources_.empty()) {
+        return (std::string());
+    }
+    return (impl_->sources_.back()->getName());
+}
+
+size_t
+MasterLexer::getSourceLine() const {
+    if (impl_->sources_.empty()) {
+        return (0);
+    }
+    return (impl_->sources_.back()->getCurrentLine());
+}
 
 namespace {
 const char* const error_text[] = {
@@ -26,9 +89,6 @@ const char* const error_text[] = {
 };
 const size_t error_text_max_count = sizeof(error_text) / sizeof(error_text[0]);
 }
-
-namespace isc {
-namespace dns {
 
 std::string
 MasterLexer::Token::getErrorText() const {
@@ -41,7 +101,6 @@ MasterLexer::Token::getErrorText() const {
     assert(val_.error_code_ < error_text_max_count);
     return (error_text[val_.error_code_]);
 }
-
 
 } // end of namespace dns
 } // end of namespace isc
