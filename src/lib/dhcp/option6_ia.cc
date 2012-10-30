@@ -29,7 +29,7 @@ namespace isc {
 namespace dhcp {
 
 Option6IA::Option6IA(uint16_t type, uint32_t iaid)
-    :Option(Option::V6, type), iaid_(iaid) {
+    :Option(Option::V6, type), iaid_(iaid), t1_(0), t2_(0) {
 }
 
 Option6IA::Option6IA(uint16_t type, OptionBufferConstIter begin, OptionBufferConstIter end)
