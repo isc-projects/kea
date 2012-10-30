@@ -74,7 +74,7 @@ def import_classheader(class_txt, type_txt, type_code, file):
     # for each CLASS_n/TYPE_m.h
     rdata_header = open(file, 'r')
     content = ''
-    guard_macro = '__' + class_txt.upper() + '_' + type_txt.upper()
+    guard_macro = class_txt.upper() + '_' + type_txt.upper()
     guard_macro += '_' + type_code + '_H'
     for line in rdata_header.readlines():
         if re.match('// BEGIN_HEADER_GUARD', line):

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __UNITTEST_UTIL_H
-#define __UNITTEST_UTIL_H 1
+#ifndef UNITTEST_UTIL_H
+#define UNITTEST_UTIL_H 1
 
 #include <vector>
 #include <string>
@@ -111,7 +111,7 @@ public:
 
 };
 }
-#endif // __UNITTEST_UTIL_H
+#endif // UNITTEST_UTIL_H
 
 // Local Variables: 
 // mode: c++

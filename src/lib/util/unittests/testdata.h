@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __UTIL_UNITTESTS_TESTDATA_H
-#define __UTIL_UNITTESTS_TESTDATA_H 1
+#ifndef UTIL_UNITTESTS_TESTDATA_H
+#define UTIL_UNITTESTS_TESTDATA_H 1
 
 /**
  * \file testdata.h
@@ -47,7 +47,7 @@ void openTestData(const char* const datafile, std::ifstream& ifs);
 }
 }
 
-#endif // __UTIL_UNITTESTS_TESTDATA_H
+#endif // UTIL_UNITTESTS_TESTDATA_H
 
 // Local Variables:
 // mode: c++

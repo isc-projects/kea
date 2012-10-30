@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LOGGER_LEVEL_H
-#define __LOGGER_LEVEL_H
+#ifndef LOGGER_LEVEL_H
+#define LOGGER_LEVEL_H
 
 #include <string>
 
@@ -73,4 +73,4 @@ isc::log::Severity getSeverity(const std::string& sev_str);
 }   // namespace log
 }   // namespace isc
 
-#endif // __LOGGER_LEVEL_H
+#endif // LOGGER_LEVEL_H

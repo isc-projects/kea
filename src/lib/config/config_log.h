@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __CONFIG_LOG__H
-#define __CONFIG_LOG__H
+#ifndef CONFIG_LOG_H
+#define CONFIG_LOG_H
 
 #include <log/macros.h>
 #include "config_messages.h"
@@ -38,4 +38,4 @@ const int DBG_CONFIG_PROCESS = DBGLVL_TRACE_BASIC;
 } // namespace config
 } // namespace isc
 
-#endif // __CONFIG_LOG__H
+#endif // CONFIG_LOG_H

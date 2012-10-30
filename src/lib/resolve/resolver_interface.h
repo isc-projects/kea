@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RESOLVER_INTERFACE_H
-#define __RESOLVER_INTERFACE_H
+#ifndef RESOLVER_INTERFACE_H
+#define RESOLVER_INTERFACE_H
 
 #include <dns/message.h>
 
@@ -95,4 +95,4 @@ class ResolverInterface {
 } // namespace nsas
 } // namespace isc
 
-#endif //__RESOLVER_INTERFACE_H
+#endif //RESOLVER_INTERFACE_H

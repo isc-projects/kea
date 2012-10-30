@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __TIME_UTILITIES_H
-#define __TIME_UTILITIES_H 1
+#ifndef TIME_UTILITIES_H
+#define TIME_UTILITIES_H 1
 
 #include <string>
 
@@ -32,7 +32,7 @@ namespace isc {
 namespace util {
 
 ///
-/// \brief A standard DNS (or ISC) module exception that is thrown if 
+/// \brief A standard DNS (or ISC) module exception that is thrown if
 /// a time conversion function encounters bad input
 ///
 class InvalidTime : public Exception {
@@ -166,7 +166,7 @@ timeToText32(const uint32_t value);
 }
 }
 
-#endif  // __DNSSECTIME_H
+#endif  // TIME_UTILITIES_H
 
 // Local Variables:
 // mode: c++

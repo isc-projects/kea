@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __SOCKETSESSION_H_
-#define __SOCKETSESSION_H_ 1
+#ifndef SOCKETSESSION_H
+#define SOCKETSESSION_H 1
 
 #include <boost/noncopyable.hpp>
 
@@ -492,7 +492,7 @@ private:
 }
 }
 
-#endif  // __SOCKETSESSION_H_
+#endif  // SOCKETSESSION_H
 
 // Local Variables:
 // mode: c++

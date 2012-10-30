@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __NSAS_LOG__H
-#define __NSAS_LOG__H
+#ifndef NSAS_LOG_H
+#define NSAS_LOG_H
 
 #include <log/macros.h>
 #include "nsas_messages.h"
@@ -50,4 +50,4 @@ extern isc::log::Logger nsas_logger;    // isc::nsas::logger is the NSAS logger
 } // namespace nsas
 } // namespace isc
 
-#endif // __NSAS_LOG__H
+#endif // NSAS_LOG_H

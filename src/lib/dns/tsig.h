@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __TSIG_H
-#define __TSIG_H 1
+#ifndef TSIG_H
+#define TSIG_H 1
 
 #include <boost/noncopyable.hpp>
 
@@ -433,7 +433,7 @@ private:
 }
 }
 
-#endif  // __TSIG_H
+#endif  // TSIG_H
 
 // Local Variables:
 // mode: c++

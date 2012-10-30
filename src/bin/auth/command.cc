@@ -15,6 +15,7 @@
 #include <auth/command.h>
 #include <auth/auth_log.h>
 #include <auth/auth_srv.h>
+#include <auth/datasrc_clients_mgr.h>
 
 #include <cc/data.h>
 #include <datasrc/client_list.h>
@@ -187,10 +188,11 @@ public:
         if (!origin_elem) {
             isc_throw(AuthCommandError, "Zone origin is missing");
         }
-        Name origin(origin_elem->stringValue());
+        const Name origin(origin_elem->stringValue());
 
-        const boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-            list(server.getClientList(zone_class));
+        DataSrcClientsMgr::Holder holder(server.getDataSrcClientsMgr());
+        boost::shared_ptr<ConfigurableClientList> list =
+            holder.findClientList(zone_class);
 
         if (!list) {
             isc_throw(AuthCommandError, "There's no client list for "
@@ -198,7 +200,7 @@ public:
         }
 
         switch (list->reload(origin)) {
-            case ConfigurableClientList::ZONE_RELOADED:
+            case ConfigurableClientList::ZONE_SUCCESS:
                 // Everything worked fine.
                 LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_LOAD_ZONE)
                     .arg(zone_class).arg(origin);

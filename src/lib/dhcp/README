@@ -1,11 +1,9 @@
-This directory holds implementation for libdhcp++.
+This directory holds implementation for DHCP libraries:
 
+libdhcp++ - this is a generic purpose DHCP library. Please be careful
+what is put here. It is going to be shared by various servers (the "regular"
+one and the embedded as well), clients, relays and performance tools.
 
-Basic Ideas
-===========
+libdhcpsrv - Server specific code goes in here. It will be used by
+dhcp4 and dhcp6 server.
 
-
-Notes
-=====
-This work just begun. Don't expect to see much useful code here.
-We are working on it.

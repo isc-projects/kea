@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_SOCKETSESSION_H
-#define __PYTHON_SOCKETSESSION_H 1
+#ifndef PYTHON_SOCKETSESSION_H
+#define PYTHON_SOCKETSESSION_H 1
 
 #include <Python.h>
 
@@ -28,7 +28,7 @@ extern PyObject* po_SocketSessionError;
 } // namespace io
 } // namespace util
 } // namespace isc
-#endif // __PYTHON_SOCKETSESSION_H
+#endif // PYTHON_SOCKETSESSION_H
 
 // Local Variables:
 // mode: c++

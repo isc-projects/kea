@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __UTIL_UNITTESTS_WIREDATA_H
-#define __UTIL_UNITTESTS_WIREDATA_H 1
+#ifndef UTIL_UNITTESTS_WIREDATA_H
+#define UTIL_UNITTESTS_WIREDATA_H 1
 
 #include <cstddef>
 
@@ -38,7 +38,7 @@ void matchWireData(const void* expected_data, std::size_t expected_len,
 }
 }
 
-#endif // __UTIL_UNITTESTS_WIREDATA_H
+#endif // UTIL_UNITTESTS_WIREDATA_H
 
 // Local Variables:
 // mode: c++

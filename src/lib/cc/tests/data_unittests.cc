@@ -112,7 +112,7 @@ TEST(Element, from_and_to_json) {
         std::string s = std::string(pe.what());
         EXPECT_EQ("String expected in <string>:1:3", s);
     }
-    
+
     sv.clear();
     sv.push_back("{1}");
     //ElementPtr ep = Element::fromJSON("\"aaa\nbbb\"err");
@@ -172,14 +172,14 @@ TEST(Element, from_and_to_json) {
 
 }
 
-TEST(Element, create_and_value_throws) {
-    // this test checks whether elements throw exceptions if the
-    // incorrect type is requested
-    ElementPtr el;
+template <typename T>
+void
+testGetValueInt() {
+    T el;
     long int i;
     double d;
     bool b;
-    std::string s("asdf");
+    std::string s;
     std::vector<ConstElementPtr> v;
     std::map<std::string, ConstElementPtr> m;
 
@@ -196,7 +196,161 @@ TEST(Element, create_and_value_throws) {
     EXPECT_FALSE(el->getValue(s));
     EXPECT_FALSE(el->getValue(v));
     EXPECT_FALSE(el->getValue(m));
-    EXPECT_EQ(i, 1);
+    EXPECT_EQ(1, i);
+}
+
+template <typename T>
+void
+testGetValueDouble() {
+    T el;
+    long int i;
+    double d;
+    bool b;
+    std::string s;
+    std::vector<ConstElementPtr> v;
+    std::map<std::string, ConstElementPtr> m;
+
+    el = Element::create(1.1);
+    EXPECT_THROW(el->intValue(), TypeError);
+    EXPECT_NO_THROW(el->doubleValue());
+    EXPECT_THROW(el->boolValue(), TypeError);
+    EXPECT_THROW(el->stringValue(), TypeError);
+    EXPECT_THROW(el->listValue(), TypeError);
+    EXPECT_THROW(el->mapValue(), TypeError);
+    EXPECT_FALSE(el->getValue(i));
+    EXPECT_TRUE(el->getValue(d));
+    EXPECT_FALSE(el->getValue(b));
+    EXPECT_FALSE(el->getValue(s));
+    EXPECT_FALSE(el->getValue(v));
+    EXPECT_FALSE(el->getValue(m));
+    EXPECT_EQ(1.1, d);
+}
+
+template <typename T>
+void
+testGetValueBool() {
+    T el;
+    long int i;
+    double d;
+    bool b;
+    std::string s;
+    std::vector<ConstElementPtr> v;
+    std::map<std::string, ConstElementPtr> m;
+
+    el = Element::create(true);
+    EXPECT_THROW(el->intValue(), TypeError);
+    EXPECT_THROW(el->doubleValue(), TypeError);
+    EXPECT_NO_THROW(el->boolValue());
+    EXPECT_THROW(el->stringValue(), TypeError);
+    EXPECT_THROW(el->listValue(), TypeError);
+    EXPECT_THROW(el->mapValue(), TypeError);
+    EXPECT_FALSE(el->getValue(i));
+    EXPECT_FALSE(el->getValue(d));
+    EXPECT_TRUE(el->getValue(b));
+    EXPECT_FALSE(el->getValue(s));
+    EXPECT_FALSE(el->getValue(v));
+    EXPECT_FALSE(el->getValue(m));
+    EXPECT_EQ(true, b);
+}
+
+template <typename T>
+void
+testGetValueString() {
+    T el;
+    long int i;
+    double d;
+    bool b;
+    std::string s;
+    std::vector<ConstElementPtr> v;
+    std::map<std::string, ConstElementPtr> m;
+
+    el = Element::create("foo");
+    EXPECT_THROW(el->intValue(), TypeError);
+    EXPECT_THROW(el->doubleValue(), TypeError);
+    EXPECT_THROW(el->boolValue(), TypeError);
+    EXPECT_NO_THROW(el->stringValue());
+    EXPECT_THROW(el->listValue(), TypeError);
+    EXPECT_THROW(el->mapValue(), TypeError);
+    EXPECT_FALSE(el->getValue(i));
+    EXPECT_FALSE(el->getValue(d));
+    EXPECT_FALSE(el->getValue(b));
+    EXPECT_TRUE(el->getValue(s));
+    EXPECT_FALSE(el->getValue(v));
+    EXPECT_FALSE(el->getValue(m));
+    EXPECT_EQ("foo", s);
+}
+
+template <typename T>
+void
+testGetValueList() {
+    T el;
+    long int i;
+    double d;
+    bool b;
+    std::string s;
+    std::vector<ConstElementPtr> v;
+    std::map<std::string, ConstElementPtr> m;
+
+    el = Element::createList();
+    EXPECT_THROW(el->intValue(), TypeError);
+    EXPECT_THROW(el->doubleValue(), TypeError);
+    EXPECT_THROW(el->boolValue(), TypeError);
+    EXPECT_THROW(el->stringValue(), TypeError);
+    EXPECT_NO_THROW(el->listValue());
+    EXPECT_THROW(el->mapValue(), TypeError);
+    EXPECT_FALSE(el->getValue(i));
+    EXPECT_FALSE(el->getValue(d));
+    EXPECT_FALSE(el->getValue(b));
+    EXPECT_FALSE(el->getValue(s));
+    EXPECT_TRUE(el->getValue(v));
+    EXPECT_FALSE(el->getValue(m));
+    EXPECT_EQ("[  ]", el->str());
+}
+
+template <typename T>
+void
+testGetValueMap() {
+    T el;
+    long int i;
+    double d;
+    bool b;
+    std::string s;
+    std::vector<ConstElementPtr> v;
+    std::map<std::string, ConstElementPtr> m;
+
+    el = Element::createMap();
+    EXPECT_THROW(el->intValue(), TypeError);
+    EXPECT_THROW(el->doubleValue(), TypeError);
+    EXPECT_THROW(el->boolValue(), TypeError);
+    EXPECT_THROW(el->stringValue(), TypeError);
+    EXPECT_THROW(el->listValue(), TypeError);
+    EXPECT_NO_THROW(el->mapValue());
+    EXPECT_FALSE(el->getValue(i));
+    EXPECT_FALSE(el->getValue(d));
+    EXPECT_FALSE(el->getValue(b));
+    EXPECT_FALSE(el->getValue(s));
+    EXPECT_FALSE(el->getValue(v));
+    EXPECT_TRUE(el->getValue(m));
+    EXPECT_EQ("{  }", el->str());
+}
+
+TEST(Element, create_and_value_throws) {
+    // this test checks whether elements throw exceptions if the
+    // incorrect type is requested
+    ElementPtr el;
+    ConstElementPtr cel;
+    long int i = 0;
+    double d = 0.0;
+    bool b = false;
+    std::string s("asdf");
+    std::vector<ConstElementPtr> v;
+    std::map<std::string, ConstElementPtr> m;
+    ConstElementPtr tmp;
+
+    testGetValueInt<ElementPtr>();
+    testGetValueInt<ConstElementPtr>();
+
+    el = Element::create(1);
     i = 2;
     EXPECT_TRUE(el->setValue(i));
     EXPECT_EQ(2, el->intValue());
@@ -214,24 +368,12 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->set("foo", el), TypeError);
     EXPECT_THROW(el->remove("foo"), TypeError);
     EXPECT_THROW(el->contains("foo"), TypeError);
-    ConstElementPtr tmp;
     EXPECT_FALSE(el->find("foo", tmp));
-    
+
+    testGetValueDouble<ElementPtr>();
+    testGetValueDouble<ConstElementPtr>();
 
     el = Element::create(1.1);
-    EXPECT_THROW(el->intValue(), TypeError);
-    EXPECT_NO_THROW(el->doubleValue());
-    EXPECT_THROW(el->boolValue(), TypeError);
-    EXPECT_THROW(el->stringValue(), TypeError);
-    EXPECT_THROW(el->listValue(), TypeError);
-    EXPECT_THROW(el->mapValue(), TypeError);
-    EXPECT_FALSE(el->getValue(i));
-    EXPECT_TRUE(el->getValue(d));
-    EXPECT_FALSE(el->getValue(b));
-    EXPECT_FALSE(el->getValue(s));
-    EXPECT_FALSE(el->getValue(v));
-    EXPECT_FALSE(el->getValue(m));
-    EXPECT_EQ(d, 1.1);
     d = 2.2;
     EXPECT_TRUE(el->setValue(d));
     EXPECT_EQ(2.2, el->doubleValue());
@@ -240,75 +382,77 @@ TEST(Element, create_and_value_throws) {
     EXPECT_FALSE(el->setValue(s));
     EXPECT_FALSE(el->setValue(v));
     EXPECT_FALSE(el->setValue(m));
+    EXPECT_THROW(el->get(1), TypeError);
+    EXPECT_THROW(el->set(1, el), TypeError);
+    EXPECT_THROW(el->add(el), TypeError);
+    EXPECT_THROW(el->remove(1), TypeError);
+    EXPECT_THROW(el->size(), TypeError);
+    EXPECT_THROW(el->get("foo"), TypeError);
+    EXPECT_THROW(el->set("foo", el), TypeError);
+    EXPECT_THROW(el->remove("foo"), TypeError);
+    EXPECT_THROW(el->contains("foo"), TypeError);
+    EXPECT_FALSE(el->find("foo", tmp));
+
+    testGetValueBool<ElementPtr>();
+    testGetValueBool<ConstElementPtr>();
 
     el = Element::create(true);
-    EXPECT_THROW(el->intValue(), TypeError);
-    EXPECT_THROW(el->doubleValue(), TypeError);
-    EXPECT_NO_THROW(el->boolValue());
-    EXPECT_THROW(el->stringValue(), TypeError);
-    EXPECT_THROW(el->listValue(), TypeError);
-    EXPECT_THROW(el->mapValue(), TypeError);
-    EXPECT_FALSE(el->getValue(i));
-    EXPECT_FALSE(el->getValue(d));
-    EXPECT_TRUE(el->getValue(b));
-    EXPECT_FALSE(el->getValue(s));
-    EXPECT_FALSE(el->getValue(v));
-    EXPECT_FALSE(el->getValue(m));
-    EXPECT_EQ(b, true);
     b = false;
     EXPECT_TRUE(el->setValue(b));
     EXPECT_FALSE(el->boolValue());
+    EXPECT_FALSE(el->setValue(i));
+    EXPECT_FALSE(el->setValue(d));
+    EXPECT_FALSE(el->setValue(s));
+    EXPECT_FALSE(el->setValue(v));
+    EXPECT_FALSE(el->setValue(m));
+    EXPECT_THROW(el->get(1), TypeError);
+    EXPECT_THROW(el->set(1, el), TypeError);
+    EXPECT_THROW(el->add(el), TypeError);
+    EXPECT_THROW(el->remove(1), TypeError);
+    EXPECT_THROW(el->size(), TypeError);
+    EXPECT_THROW(el->get("foo"), TypeError);
+    EXPECT_THROW(el->set("foo", el), TypeError);
+    EXPECT_THROW(el->remove("foo"), TypeError);
+    EXPECT_THROW(el->contains("foo"), TypeError);
+    EXPECT_FALSE(el->find("foo", tmp));
+
+    testGetValueString<ElementPtr>();
+    testGetValueString<ConstElementPtr>();
 
     el = Element::create("foo");
-    EXPECT_THROW(el->intValue(), TypeError);
-    EXPECT_THROW(el->doubleValue(), TypeError);
-    EXPECT_THROW(el->boolValue(), TypeError);
-    EXPECT_NO_THROW(el->stringValue());
-    EXPECT_THROW(el->listValue(), TypeError);
-    EXPECT_THROW(el->mapValue(), TypeError);
-    EXPECT_FALSE(el->getValue(i));
-    EXPECT_FALSE(el->getValue(d));
-    EXPECT_FALSE(el->getValue(b));
-    EXPECT_TRUE(el->getValue(s));
-    EXPECT_FALSE(el->getValue(v));
-    EXPECT_FALSE(el->getValue(m));
-    EXPECT_EQ(s, "foo");
     s = "bar";
     EXPECT_TRUE(el->setValue(s));
     EXPECT_EQ("bar", el->stringValue());
+    EXPECT_FALSE(el->setValue(i));
+    EXPECT_FALSE(el->setValue(b));
+    EXPECT_FALSE(el->setValue(d));
+    EXPECT_FALSE(el->setValue(v));
+    EXPECT_FALSE(el->setValue(m));
+    EXPECT_THROW(el->get(1), TypeError);
+    EXPECT_THROW(el->set(1, el), TypeError);
+    EXPECT_THROW(el->add(el), TypeError);
+    EXPECT_THROW(el->remove(1), TypeError);
+    EXPECT_THROW(el->size(), TypeError);
+    EXPECT_THROW(el->get("foo"), TypeError);
+    EXPECT_THROW(el->set("foo", el), TypeError);
+    EXPECT_THROW(el->remove("foo"), TypeError);
+    EXPECT_THROW(el->contains("foo"), TypeError);
+    EXPECT_FALSE(el->find("foo", tmp));
+
+    testGetValueList<ElementPtr>();
+    testGetValueList<ConstElementPtr>();
 
     el = Element::createList();
-    EXPECT_THROW(el->intValue(), TypeError);
-    EXPECT_THROW(el->doubleValue(), TypeError);
-    EXPECT_THROW(el->boolValue(), TypeError);
-    EXPECT_THROW(el->stringValue(), TypeError);
-    EXPECT_NO_THROW(el->listValue());
-    EXPECT_THROW(el->mapValue(), TypeError);
-    EXPECT_FALSE(el->getValue(i));
-    EXPECT_FALSE(el->getValue(d));
-    EXPECT_FALSE(el->getValue(b));
-    EXPECT_FALSE(el->getValue(s));
-    EXPECT_TRUE(el->getValue(v));
-    EXPECT_FALSE(el->getValue(m));
-    EXPECT_EQ("[  ]", el->str());
     v.push_back(Element::create(1));
     EXPECT_TRUE(el->setValue(v));
     EXPECT_EQ("[ 1 ]", el->str());
 
-    el = Element::createMap();
-    EXPECT_THROW(el->intValue(), TypeError);
-    EXPECT_THROW(el->doubleValue(), TypeError);
-    EXPECT_THROW(el->boolValue(), TypeError);
-    EXPECT_THROW(el->stringValue(), TypeError);
-    EXPECT_THROW(el->listValue(), TypeError);
-    EXPECT_NO_THROW(el->mapValue());
-    EXPECT_FALSE(el->getValue(i));
-    EXPECT_FALSE(el->getValue(d));
-    EXPECT_FALSE(el->getValue(b));
-    EXPECT_FALSE(el->getValue(s));
-    EXPECT_FALSE(el->getValue(v));
-    EXPECT_TRUE(el->getValue(m));
+    testGetValueMap<ElementPtr>();
+    testGetValueMap<ConstElementPtr>();
 
+    el = Element::createMap();
+    EXPECT_NO_THROW(el->set("foo", Element::create("bar")));
+    EXPECT_EQ("{ \"foo\": \"bar\" }", el->str());
 }
 
 // Helper for escape check; it puts the given string in a StringElement,
@@ -382,7 +526,7 @@ TEST(Element, MapElement) {
     // this function checks the specific functions for ListElements
     ElementPtr el = Element::fromJSON("{ \"name\": \"foo\", \"value1\": \"bar\", \"value2\": { \"number\": 42 } }");
     ConstElementPtr el2;
-    
+
     EXPECT_EQ(el->get("name")->stringValue(), "foo");
     EXPECT_EQ(el->get("value2")->getType(), Element::map);
 
@@ -396,11 +540,12 @@ TEST(Element, MapElement) {
 
     EXPECT_EQ(el->find("value2/number")->intValue(), 42);
     EXPECT_TRUE(isNull(el->find("value2/nothing/")));
-   
+
     EXPECT_EQ(el->find("value1")->stringValue(), "bar");
     EXPECT_EQ(el->find("value1/")->stringValue(), "bar");
-    
+
     EXPECT_TRUE(el->find("value1", el2));
+    EXPECT_EQ("bar", el2->stringValue());
     EXPECT_FALSE(el->find("name/error", el2));
 
     // A map element whose (only) element has the maximum length of tag.
@@ -410,7 +555,7 @@ TEST(Element, MapElement) {
                        "9123456789abcdefa123456789abcdefb123456789abcdef"
                        "c123456789abcdefd123456789abcdefe123456789abcdef"
                        "f123456789abcde");
-    
+
     EXPECT_EQ(255, long_maptag.length()); // check prerequisite
     el = Element::fromJSON("{ \"" + long_maptag + "\": \"bar\"}");
     EXPECT_EQ("bar", el->find(long_maptag)->stringValue());
@@ -689,7 +834,7 @@ TEST(Element, merge) {
     c = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     merge(b, a);
     EXPECT_EQ(*b, *c);
-    
+
     // And some tests with multiple values
     a = Element::fromJSON("{ \"a\": 1, \"b\": true, \"c\": null }");
     b = Element::fromJSON("{ \"a\": 1, \"b\": null, \"c\": \"a string\" }");

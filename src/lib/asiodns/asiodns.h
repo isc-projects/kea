@@ -12,12 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ASIODNS_H
-#define __ASIODNS_H 1
+#ifndef ASIODNS_H
+#define ASIODNS_H 1
 
 #include <asiodns/dns_service.h>
 #include <asiodns/dns_server.h>
 #include <asiodns/dns_lookup.h>
 #include <asiodns/dns_answer.h>
 
-#endif // __ASIODNS_H
+#endif // ASIODNS_H

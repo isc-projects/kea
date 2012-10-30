@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __FILENAME_H
-#define __FILENAME_H
+#ifndef FILENAME_H
+#define FILENAME_H
 
 #include <string>
 
@@ -170,4 +170,4 @@ private:
 } // namespace util
 } // namespace isc
 
-#endif // __FILENAME_H
+#endif // FILENAME_H

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LOGGER_NAME_H
-#define __LOGGER_NAME_H
+#ifndef LOGGER_NAME_H
+#define LOGGER_NAME_H
 
 #include <string>
 
@@ -54,4 +54,4 @@ std::string expandLoggerName(const std::string& name);
 }
 }
 
-#endif // __LOGGER_NAME_H
+#endif // LOGGER_NAME_H

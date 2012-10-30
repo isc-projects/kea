@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_TSIGKEY_H
-#define __PYTHON_TSIGKEY_H 1
+#ifndef PYTHON_TSIGKEY_H
+#define PYTHON_TSIGKEY_H 1
 
 #include <Python.h>
 
@@ -68,7 +68,7 @@ const TSIGKeyRing& PyTSIGKeyRing_ToTSIGKeyRing(const PyObject* tsigkeyring_obj);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_TSIGKEY_H
+#endif // PYTHON_TSIGKEY_H
 
 // Local Variables:
 // mode: c++

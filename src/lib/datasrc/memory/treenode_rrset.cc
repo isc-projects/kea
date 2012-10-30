@@ -342,7 +342,7 @@ TreeNodeRRset::isSameKind(const AbstractRRset& abs_other) const {
         // Same for the owner name.  Comparing the nodes also detect
         // the case where RR classes are different (see the method description
         // of the header for details).
-        if (node_ != other->node_ ) {
+        if (node_ != other->node_) {
             return (false);
         }
         // If one is constructed with a "real name" and the other isn't

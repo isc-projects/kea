@@ -18,8 +18,8 @@
 
 #include <cryptolink/cryptolink.h>
 
-#ifndef _ISC_CRYPTO_HMAC_H
-#define _ISC_CRYPTO_HMAC_H
+#ifndef ISC_CRYPTO_HMAC_H
+#define ISC_CRYPTO_HMAC_H
 
 namespace isc {
 namespace cryptolink {
@@ -205,5 +205,5 @@ void deleteHMAC(HMAC* hmac);
 } // namespace cryptolink
 } // namespace isc
 
-#endif // __ISC_CRYPTO_HMAC
+#endif // ISC_CRYPTO_HMAC_H
 

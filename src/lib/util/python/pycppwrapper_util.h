@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYCPPWRAPPER_UTIL_H
-#define __PYCPPWRAPPER_UTIL_H 1
+#ifndef PYCPPWRAPPER_UTIL_H
+#define PYCPPWRAPPER_UTIL_H 1
 
 #include <Python.h>
 
@@ -328,7 +328,7 @@ installClassVariable(PyTypeObject& pyclass, const char* name, PyObject* obj) {
 } // namespace python
 } // namespace util
 } // namespace isc
-#endif // __PYCPPWRAPPER_UTIL_H
+#endif // PYCPPWRAPPER_UTIL_H
 
 // Local Variables:
 // mode: c++

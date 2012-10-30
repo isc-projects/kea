@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RRSET_H
-#define __RRSET_H 1
+#ifndef RRSET_H
+#define RRSET_H 1
 
 #include <iostream>
 #include <string>
@@ -267,6 +267,9 @@ public:
     /// the resulting string with a trailing newline character.
     /// (following the BIND9 convention)
     ///
+    /// If any RRSIGs are associated with the RRset, they are also
+    /// appended to the returned string.
+    ///
     /// If the class is not ANY or NONE, the RRset must contain some RDATA;
     /// otherwise, an exception of class \c EmptyRRset will be thrown.
     /// If resource allocation fails, a corresponding standard exception
@@ -292,6 +295,8 @@ public:
     /// In addition, this method detects the case where rendering the entire
     /// RRset would cause truncation, and handles the case appropriately
     /// (this is a TODO item, and not implemented in this version).
+    ///
+    /// If any RRSIGs are associated with the RRset, they are also rendered.
     ///
     /// Note: perhaps we may want to add more arguments to convey optional
     /// information such as an "rrset-order" policy or how to handle truncation
@@ -929,7 +934,7 @@ private:
 std::ostream& operator<<(std::ostream& os, const AbstractRRset& rrset);
 } // end of namespace dns
 } // end of namespace isc
-#endif  // __RRSET_H
+#endif  // RRSET_H
 
 // Local Variables: 
 // mode: c++

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LOCALIZED_OPTION_H
-#define __LOCALIZED_OPTION_H
+#ifndef LOCALIZED_OPTION_H
+#define LOCALIZED_OPTION_H
 
 #include <dhcp/pkt6.h>
 #include <dhcp/option6_ia.h>
@@ -147,4 +147,4 @@ private:
 } // namespace isc::perfdhcp
 } // namespace isc
 
-#endif // __LOCALIZED_OPTION_H
+#endif // LOCALIZED_OPTION_H

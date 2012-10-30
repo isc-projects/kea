@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __MESSAGE_H
-#define __MESSAGE_H 1
+#ifndef MESSAGE_H
+#define MESSAGE_H 1
 
 #include <stdint.h>
 
@@ -687,7 +687,7 @@ typedef boost::shared_ptr<const Message> ConstMessagePtr;
 std::ostream& operator<<(std::ostream& os, const Message& message);
 }
 }
-#endif  // __MESSAGE_H
+#endif  // MESSAGE_H
 
 // Local Variables:
 // mode: c++

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __TEST_CONTROL_H
-#define __TEST_CONTROL_H
+#ifndef TEST_CONTROL_H
+#define TEST_CONTROL_H
 
 #include <string>
 #include <vector>
@@ -97,7 +97,7 @@ static const size_t DHCPV6_IA_NA_OFFSET = 40;
 /// accept 'start' and 'stop' arguments. The first time it is called, it is
 /// called with the argument 'start' and the second time with the argument
 /// 'stop'.
-///   
+///
 /// The application is executed by calling fork() to fork the current perfdhcp
 /// process and then call execlp() to replace the current process image with
 /// the new one.
@@ -987,4 +987,4 @@ private:
 } // namespace perfdhcp
 } // namespace isc
 
-#endif // __COMMAND_OPTIONS_H
+#endif // TEST_CONTROL_H

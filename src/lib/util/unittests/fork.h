@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __UTIL_UNITTESTS_FORK_H
-#define __UTIL_UNITTESTS_FORK_H 1
+#ifndef UTIL_UNITTESTS_FORK_H
+#define UTIL_UNITTESTS_FORK_H 1
 
 #include <unistd.h>
 
@@ -49,4 +49,4 @@ check_output(int *write_pipe, const void *output, const size_t length);
 }
 }
 
-#endif // __UTIL_UNITTESTS_FORK_H
+#endif // UTIL_UNITTESTS_FORK_H

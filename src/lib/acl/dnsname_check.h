@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __DNSNAME_CHECK_H
-#define __DNSNAME_CHECK_H 1
+#ifndef DNSNAME_CHECK_H
+#define DNSNAME_CHECK_H 1
 
 #include <dns/name.h>
 
@@ -76,7 +76,7 @@ private:
 } // namespace acl
 } // namespace isc
 
-#endif // __DNSNAME_CHECK_H
+#endif // DNSNAME_CHECK_H
 
 // Local Variables:
 // mode: c++

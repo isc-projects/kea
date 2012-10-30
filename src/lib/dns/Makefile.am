@@ -95,6 +95,7 @@ libb10_dns___la_SOURCES += edns.h edns.cc
 libb10_dns___la_SOURCES += exceptions.h exceptions.cc
 libb10_dns___la_SOURCES += labelsequence.h labelsequence.cc
 libb10_dns___la_SOURCES += masterload.h masterload.cc
+libb10_dns___la_SOURCES += master_lexer.h master_lexer.cc
 libb10_dns___la_SOURCES += message.h message.cc
 libb10_dns___la_SOURCES += messagerenderer.h messagerenderer.cc
 libb10_dns___la_SOURCES += name.h name.cc
@@ -107,7 +108,6 @@ libb10_dns___la_SOURCES += rdatafields.h rdatafields.cc
 libb10_dns___la_SOURCES += rrclass.cc
 libb10_dns___la_SOURCES += rrparamregistry.h
 libb10_dns___la_SOURCES += rrset.h rrset.cc
-libb10_dns___la_SOURCES += rrsetlist.h rrsetlist.cc
 libb10_dns___la_SOURCES += rrttl.h rrttl.cc
 libb10_dns___la_SOURCES += rrtype.cc
 libb10_dns___la_SOURCES += question.h question.cc
@@ -146,14 +146,16 @@ libdns___include_HEADERS = \
 	exceptions.h \
 	labelsequence.h \
 	message.h \
+	master_lexer.h \
+	masterload.h \
 	messagerenderer.h \
 	name.h \
 	question.h \
+	opcode.h \
 	rcode.h \
 	rdata.h \
 	rrparamregistry.h \
 	rrset.h \
-	rrsetlist.h \
 	rrttl.h \
 	tsigkey.h
 # Purposely not installing these headers:

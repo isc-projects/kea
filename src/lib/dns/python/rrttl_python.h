@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_RRTTL_H
-#define __PYTHON_RRTTL_H 1
+#ifndef PYTHON_RRTTL_H
+#define PYTHON_RRTTL_H 1
 
 #include <Python.h>
 
@@ -60,7 +60,7 @@ const RRTTL& PyRRTTL_ToRRTTL(const PyObject* rrttl_obj);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_RRTTL_H
+#endif // PYTHON_RRTTL_H
 
 // Local Variables:
 // mode: c++
