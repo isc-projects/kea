@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
+
 #include <dns/master_lexer.h>
 
 #include <gtest/gtest.h>
@@ -36,10 +38,16 @@ protected:
     stringstream ss;
 };
 
-TEST_F(MasterLexerTest, preOPen) {
-    // Initially sources stack is empty, and getXXX() returns accordingly.
+// Commonly used check case where the input sources stack is empty.
+void
+checkEmptySource(const MasterLexer& lexer) {
     EXPECT_TRUE(lexer.getSourceName().empty());
     EXPECT_EQ(0, lexer.getSourceLine());
+}
+
+TEST_F(MasterLexerTest, preOpen) {
+    // Initially sources stack is empty.
+    checkEmptySource(lexer);
 }
 
 TEST_F(MasterLexerTest, openStream) {
@@ -51,6 +59,10 @@ TEST_F(MasterLexerTest, openStream) {
     // indirectly) getSourceLine calls InputSource::getCurrentLine.  It should
     // return 1 initially.
     EXPECT_EQ(1, lexer.getSourceLine());
+
+    // By closing it the stack will be empty again.
+    lexer.close();
+    checkEmptySource(lexer);
 }
 
 TEST_F(MasterLexerTest, openFile) {
@@ -59,6 +71,14 @@ TEST_F(MasterLexerTest, openFile) {
     lexer.open(TEST_DATA_SRCDIR "/masterload.txt");
     EXPECT_EQ(TEST_DATA_SRCDIR "/masterload.txt", lexer.getSourceName());
     EXPECT_EQ(1, lexer.getSourceLine());
+
+    lexer.close();
+    checkEmptySource(lexer);
+}
+
+TEST_F(MasterLexerTest, invalidClose) {
+    // close() cannot be called if the sources stack is empty.
+    EXPECT_THROW(lexer.close(), isc::InvalidOperation);
 }
 
 }

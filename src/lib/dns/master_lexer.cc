@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
+
 #include <dns/master_lexer.h>
 
 #include <boost/shared_ptr.hpp>
@@ -70,6 +72,14 @@ MasterLexer::open(const char* filename) {
 void
 MasterLexer::open(std::istream& input) {
     impl_->sources_.push_back(InputSourcePtr(new InputSource(input)));
+}
+
+void
+MasterLexer::close() {
+    if (impl_->sources_.empty()) {
+        isc_throw(InvalidOperation, "MasterLexer::close on an empty source");
+    }
+    impl_->sources_.pop_back();
 }
 
 std::string
