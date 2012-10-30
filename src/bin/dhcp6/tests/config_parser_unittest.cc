@@ -408,7 +408,7 @@ TEST_F(Dhcp6ParserTest, optionDataDefaults) {
 
     // Check that options with other option codes are not returned.
     for (uint16_t code = 102; code < 110; ++code) {
-        ASSERT_NO_THROW(range = subnet->getOptions(code));
+        range = idx.equal_range(code);
         EXPECT_EQ(0, std::distance(range.first, range.second));
     }
 }

@@ -285,43 +285,6 @@ TEST(Subnet6Test, addNonUniqueOptions) {
     EXPECT_EQ(0, options.size());
 }
 
-TEST(Subnet6Test, getOptionsByType) {
-    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
-    Subnet::OptionContainerTypeRange range;
-
-    // First check that subnet does not contain any options with
-    // option codes 100 and 101.
-    ASSERT_NO_THROW(range = subnet->getOptions(100));
-    EXPECT_EQ(0, std::distance(range.first, range.second));
-    ASSERT_NO_THROW(range = subnet->getOptions(101));
-    EXPECT_EQ(0, std::distance(range.first, range.second));
-
-    // Add 3 options with option code 100.
-    for (int i = 0; i < 3; ++i) {
-        OptionPtr option(new Option(Option::V6, 100, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(subnet->addOption(option));
-    }
-    // Add 7 options with option code 101.
-    for (int i = 0; i < 7; ++i) {
-        OptionPtr option(new Option(Option::V6, 101, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(subnet->addOption(option));
-    }
-    // Get options by their type and check that 3 options with the
-    // code 100 and 7 options with the code 101 are returned.
-    ASSERT_NO_THROW(range = subnet->getOptions(100));
-    EXPECT_EQ(3, std::distance(range.first, range.second));
-    ASSERT_NO_THROW(range = subnet->getOptions(101));
-    EXPECT_EQ(7, std::distance(range.first, range.second));
-    // Delete all options.
-    EXPECT_NO_THROW(subnet->delOptions());
-    // Verify that after deletion getOptions will not return
-    // any options.
-    ASSERT_NO_THROW(range = subnet->getOptions(100));
-    EXPECT_EQ(0, std::distance(range.first, range.second));
-    ASSERT_NO_THROW(range = subnet->getOptions(101));
-    EXPECT_EQ(0, std::distance(range.first, range.second));
-}
-
 TEST(Subnet6Test, addInvalidOption) {
     // Create as subnet to add options to it.
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
