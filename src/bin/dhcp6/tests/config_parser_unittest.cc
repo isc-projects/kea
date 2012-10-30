@@ -120,9 +120,12 @@ public:
     /// @param expected_code expected code of the option.
     /// @param expected_data expected data in the option.
     /// @param expected_data_len length of the reference data.
+    /// @param extra_data if true extra data is allowed in an option
+    /// after tested data.
     void testOption(const Subnet::OptionDescriptor& option_desc,
                     uint16_t expected_code, const uint8_t* expected_data,
-                    size_t expected_data_len) {
+                    size_t expected_data_len,
+                    bool extra_data = false) {
         // Check if option descriptor contains valid option pointer.
         ASSERT_TRUE(option_desc.option);
         // Verify option type.
@@ -134,12 +137,17 @@ public:
         // way is to call pack() which will prepare on-wire data.
         util::OutputBuffer buf(option_desc.option->getData().size());
         option_desc.option->pack(buf);
-        // The length of the buffer must be at least equal to size of the
-        // reference data but it can sometimes be greater than that. This is
-        // because some options carry suboptions that increase the overall
-        // length.
-        ASSERT_GE(buf.getLength() - option_desc.option->getHeaderLen(),
-                  expected_data_len);
+        if (extra_data) {
+            // The length of the buffer must be at least equal to size of the
+            // reference data but it can sometimes be greater than that. This is
+            // because some options carry suboptions that increase the overall
+            // length.
+            ASSERT_GE(buf.getLength() - option_desc.option->getHeaderLen(),
+                      expected_data_len);
+        } else {
+            ASSERT_EQ(buf.getLength() - option_desc.option->getHeaderLen(),
+                      expected_data_len);
+        }
         // Verify that the data is correct. However do not verify suboptions.
         const uint8_t* data = static_cast<const uint8_t*>(buf.getData());
         EXPECT_TRUE(memcmp(expected_data, data, expected_data_len));
@@ -336,6 +344,9 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
     EXPECT_EQ(4000, subnet->getValid());
 }
 
+// Goal of this test is to verify that global option
+// data is configured for the subnet if the subnet
+// configuration does not include options configuration.
 TEST_F(Dhcp6ParserTest, optionDataDefaults) {
     ConstElementPtr x;
     string config = "{ \"interface\": [ \"all\" ],"
@@ -394,8 +405,18 @@ TEST_F(Dhcp6ParserTest, optionDataDefaults) {
         0x01
     };
     testOption(*range.first, 101, foo2_expected, sizeof(foo2_expected));
+
+    // Check that options with other option codes are not returned.
+    for (uint16_t code = 102; code < 110; ++code) {
+        ASSERT_NO_THROW(range = subnet->getOptions(code));
+        EXPECT_EQ(0, std::distance(range.first, range.second));
+    }
 }
 
+// Goal of this test is to verify options configuration
+// for a single subnet. In particular this test checks
+// that local options configuration overrides global
+// option setting.
 TEST_F(Dhcp6ParserTest, optionDataInSingleSubnet) {
     ConstElementPtr x;
     string config = "{ \"interface\": [ \"all\" ],"
@@ -461,6 +482,8 @@ TEST_F(Dhcp6ParserTest, optionDataInSingleSubnet) {
     testOption(*range.first, 101, foo2_expected, sizeof(foo2_expected));
 }
 
+// Goal of this test is to verify options configuration
+// for multiple subnets.
 TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     ConstElementPtr x;
     string config = "{ \"interface\": [ \"all\" ],"
@@ -535,16 +558,21 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     testOption(*range2.first, 101, foo2_expected, sizeof(foo2_expected));
 }
 
+// Verify that empty option name is rejected in the configuration.
 TEST_F(Dhcp6ParserTest, optionNameEmpty) {
     // Empty option names not allowed.
     testInvalidOptionParam("", "name");
 }
 
+// Verify that empty option name with spaces is rejected
+// in the configuration.
 TEST_F(Dhcp6ParserTest, optionNameSpaces) {
     // Spaces in option names not allowed.
     testInvalidOptionParam("option foo", "name");
 }
 
+// Verify that very low negative option code is rejected in
+//  the configuration.
 TEST_F(Dhcp6ParserTest, optionCodeNegativeOverflow) {
     // Using negative code. If range checking is not applied on the
     // value then it may be successfully cast to uint16_t resulting
@@ -554,11 +582,13 @@ TEST_F(Dhcp6ParserTest, optionCodeNegativeOverflow) {
     testInvalidOptionParam("-4294901765", "code");
 }
 
+// Verify that negative option code is rejected in the configuration.
 TEST_F(Dhcp6ParserTest, optionCodeNegative) {
     // Check negative option code -4. This should fail too.
     testInvalidOptionParam("-4", "code");
 }
 
+// Verify that out of bounds option code is rejected in the configuration.
 TEST_F(Dhcp6ParserTest, optionCodeNonUint16) {
     // The valid option codes are uint16_t values so passing
     // uint16_t maximum value incremented by 1 should result
@@ -566,36 +596,46 @@ TEST_F(Dhcp6ParserTest, optionCodeNonUint16) {
     testInvalidOptionParam("65536", "code");
 }
 
+// Verify that out of bounds option code is rejected in the configuration.
 TEST_F(Dhcp6ParserTest, optionCodeHighNonUint16) {
     // Another check for uint16_t overflow but this time
     // let's pass even greater option code value.
     testInvalidOptionParam("70000", "code");
 }
 
+// Verify that zero option code is rejected in the configuration.
 TEST_F(Dhcp6ParserTest, optionCodeZero) {
     // Option code 0 is reserved and should not be accepted
     // by configuration parser.
     testInvalidOptionParam("0", "code");
 }
 
+// Verify that option data which contains non hexadecimal characters
+// is rejected by the configuration.
 TEST_F(Dhcp6ParserTest, optionDataInvalidChar) {
     // Option code 0 is reserved and should not be accepted
     // by configuration parser.
     testInvalidOptionParam("01020R", "data");
 }
 
+// Verify that option data containins '0x' prefix is rejected
+// by the configuration.
 TEST_F(Dhcp6ParserTest, optionDataUnexpectedPrefix) {
     // Option code 0 is reserved and should not be accepted
     // by configuration parser.
     testInvalidOptionParam("0x0102", "data");
 }
 
+// Verify that option data consisting od an odd number of
+// hexadecimal digits is rejected in the configuration.
 TEST_F(Dhcp6ParserTest, optionDataOddLength) {
     // Option code 0 is reserved and should not be accepted
     // by configuration parser.
     testInvalidOptionParam("123", "data");
 }
 
+// Verify that either lower or upper case characters are allowed
+// to specify the option data.
 TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
     ConstElementPtr x;
     std::string config = createConfigWithOption("0a0b0C0D", "data");

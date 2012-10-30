@@ -52,6 +52,18 @@ Subnet::delOptions() {
     options_.clear();
 }
 
+Subnet::OptionContainerTypeRange
+Subnet::getOptions(uint16_t type) {
+    OptionContainer options = getOptions();
+    // Get the search index #1. This index allows to search
+    // for options using option type.
+    OptionContainerTypeIndex& idx = options.get<1>();
+    OptionContainerTypeRange range = idx.equal_range(type);
+    // We don't perform any check if this range is empty. It is
+    // up to the calling function to check it with std::distance().
+    return (range);
+}
+
 Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t1,
                  const Triplet<uint32_t>& t2,

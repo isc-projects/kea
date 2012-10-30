@@ -186,6 +186,11 @@ public:
 
     /// Type of the index #1 - option type.
     typedef OptionContainer::nth_index<1>::type OptionContainerTypeIndex;
+    /// Pair of iterators to represent the range of options having the
+    /// same option type value. The first element in this pair represents
+    /// the begining of the range, the second element represents the end.
+    typedef std::pair<OptionContainerTypeIndex::const_iterator,
+                      OptionContainerTypeIndex::const_iterator> OptionContainerTypeRange;
     /// Type of the index #2 - option persistency flag.
     typedef OptionContainer::nth_index<2>::type OptionContainerPersistIndex;
 
@@ -227,6 +232,13 @@ public:
     const OptionContainer& getOptions() {
         return (options_);
     }
+
+    /// @brief Return a collection of options of a specified type.
+    ///
+    /// @param type option type.
+    /// @return pair of iterators, first indicating begining of
+    /// options range, second indicating end of the range.
+    OptionContainerTypeRange getOptions(uint16_t type);
 
 protected:
     /// @brief protected constructor
