@@ -21,6 +21,7 @@
 #include <gtest/gtest.h>
 
 #include <dhcp/dhcp6.h>
+#include <dhcp/duid.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <util/buffer.h>
@@ -79,7 +80,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
 
     boost::scoped_ptr<Dhcpv6Srv> srv;
     ASSERT_NO_THROW( {
-        srv.reset(new Dhcpv6Srv(DHCP6_SERVER_PORT + 10000));
+        srv.reset(new Dhcpv6Srv(0));
     });
 
     OptionPtr srvid = srv->getServerID();
@@ -101,7 +102,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
     uint16_t duid_type = data.readUint16();
     cout << "Duid-type=" << duid_type << endl;
     switch(duid_type) {
-    case DUID_LLT: {
+    case DUID::DUID_LLT: {
         // DUID must contain at least 6 bytes long MAC
         // + 8 bytes of fixed header
         EXPECT_GE(14, len);
@@ -125,7 +126,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
         EXPECT_TRUE(mac != zeros);
         break;
     }
-    case DUID_EN: {
+    case DUID::DUID_EN: {
         // there's not much we can check. Just simple
         // check if it is not all zeros
         vector<uint8_t> content(len-2);
@@ -133,7 +134,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
         EXPECT_FALSE(isRangeZero(content.begin(), content.end()));
         break;
     }
-    case DUID_LL: {
+    case DUID::DUID_LL: {
         // not supported yet
         cout << "Test not implemented for DUID-LL." << endl;
 
@@ -143,7 +144,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
         // and keep it despite hardware changes.
         break;
     }
-    case DUID_UUID: // not supported yet
+    case DUID::DUID_UUID: // not supported yet
     default:
         ADD_FAILURE() << "Not supported duid type=" << duid_type << endl;
         break;
