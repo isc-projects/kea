@@ -240,10 +240,8 @@ TEST(DataSrcClientsMgrTest, reload) {
     EXPECT_EQ(3, FakeDataSrcClientsBuilder::command_queue->size());
 
     // same for empty data and data that is not a map
-    EXPECT_THROW(mgr.loadZone(isc::data::ConstElementPtr()),
-                              CommandError);
-    EXPECT_THROW(mgr.loadZone(isc::data::Element::createList()),
-                              CommandError);
+    EXPECT_THROW(mgr.loadZone(isc::data::ConstElementPtr()), CommandError);
+    EXPECT_THROW(mgr.loadZone(isc::data::Element::createList()), CommandError);
     EXPECT_EQ(3, FakeDataSrcClientsBuilder::command_queue->size());
 }
 
