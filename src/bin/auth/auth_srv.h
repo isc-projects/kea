@@ -320,20 +320,6 @@ public:
     /// open forever.
     void setTCPRecvTimeout(size_t timeout);
 
-    /// \brief Reloads a zone
-    ///
-    /// This method should only be called from the LoadZoneCommand class,
-    /// internally it will tell the clients builder thread to reload
-    /// the zone specified in the arguments in the background.
-    ///
-    /// \param args Element argument that should be a map of the form
-    /// { "class": "IN", "origin": "example.com" }
-    /// (but class is optional and will default to IN)
-    ///
-    /// \exception LoadZoneCommandError if the args value is null, or not in
-    ///                                 the expected format
-    void loadZone(isc::data::ConstElementPtr args);
-
 private:
     AuthSrvImpl* impl_;
     isc::asiolink::SimpleCallback* checkin_;

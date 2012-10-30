@@ -176,7 +176,7 @@ public:
     virtual ConstElementPtr exec(AuthSrv& server,
                                  isc::data::ConstElementPtr args)
     {
-        server.loadZone(args);
+        server.getDataSrcClientsMgr().loadZone(args);
         return (createAnswer());
     }
 };

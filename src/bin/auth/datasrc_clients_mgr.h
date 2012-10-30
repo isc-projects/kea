@@ -45,11 +45,16 @@
 namespace isc {
 namespace auth {
 
-/// \brief An exception that is thrown if the arguments to the loadZone
-/// call are not in the right format
-class LoadZoneCommandError : public isc::Exception {
+/// \brief An exception that is thrown if initial checks for a command fail
+///
+/// This is raised *before* the command to the thread is constructed and
+/// sent, so the application can still handle them (and therefore it is
+/// public, as opposed to InternalCommandError).
+///
+/// And example of its use is currently in loadZone().
+class CommandError : public isc::Exception {
 public:
-    LoadZoneCommandError(const char* file, size_t line, const char* what) :
+    CommandError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
@@ -253,29 +258,49 @@ public:
     /// { "class": "IN", "origin": "example.com" }
     /// (but class is optional and will default to IN)
     ///
-    /// \exception LoadZoneCommandError if the args value is null, or not in
-    ///                                 the expected format
+    /// \exception CommandError if the args value is null, or not in
+    ///                                 the expected format, or contains
+    ///                                 a bad origin or class string
     void
     loadZone(data::ConstElementPtr args) {
         if (!args) {
-            isc_throw(LoadZoneCommandError, "loadZone argument empty");
+            isc_throw(CommandError, "loadZone argument empty");
         }
         if (args->getType() != isc::data::Element::map) {
-            isc_throw(LoadZoneCommandError, "loadZone argument not a map");
+            isc_throw(CommandError, "loadZone argument not a map");
         }
         if (!args->contains("origin")) {
-            isc_throw(LoadZoneCommandError,
+            isc_throw(CommandError,
                       "loadZone argument has no 'origin' value");
+        } else {
+            // Also check if it really is a valid name
+            try {
+                dns::Name(args->get("origin")->stringValue());
+            } catch (const isc::Exception& exc) {
+                isc_throw(CommandError,
+                          "bad origin: " << exc.what());
+            }
         }
+
         if (args->get("origin")->getType() != data::Element::string) {
-            isc_throw(LoadZoneCommandError,
+            isc_throw(CommandError,
                       "loadZone argument 'origin' value not a string");
         }
-        if (args->contains("class") &&
-            args->get("class")->getType() != data::Element::string) {
-            isc_throw(LoadZoneCommandError,
-                      "loadZone argument 'class' value not a string");
+        if (args->contains("class")) {
+            if (args->get("class")->getType() != data::Element::string) {
+                isc_throw(CommandError,
+                          "loadZone argument 'class' value not a string");
+            } else {
+                try {
+                    dns::RRClass(args->get("class")->stringValue());
+                } catch (const isc::Exception& exc) {
+                    isc_throw(CommandError,
+                              "bad class: " << exc.what());
+                }
+            }
         }
+
+        // Slightly more advanced checks
 
         sendCommand(datasrc_clientmgr_internal::LOADZONE, args);
     }
@@ -532,6 +557,14 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
     assert(arg);
     assert(arg->get("origin"));
 
+    // TODO: currently, we hardcode IN as the default for the optional
+    // 'class' argument. We should really derive this from the specification,
+    // but atm the config/command API does not allow that to be done
+    // easily. Once that is in place (tickets have yet to be created,
+    // as we need to do a tiny bit of design work for that), this
+    // code can be replaced with the original part:
+    // assert(arg->get("class"));
+    // const dns::RRClass(arg->get("class")->stringValue());
     isc::data::ConstElementPtr class_elem = arg->get("class");
     const dns::RRClass rrclass(class_elem ?
                                 dns::RRClass(class_elem->stringValue()) :
