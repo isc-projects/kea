@@ -321,11 +321,21 @@ Name::Name(const std::string &namestring, bool downcase) {
     offsets_.assign(offsets.begin(), offsets.end());
 }
 
-Name::Name(const char* namedata, size_t data_len, const Name*, bool downcase) {
+Name::Name(const char* namedata, size_t data_len, const Name* origin,
+           bool downcase)
+{
     // Check validity of data
     if (namedata == NULL || data_len == 0) {
         isc_throw(isc::InvalidParameter,
                   "No data provided to Name constructor");
+    }
+    // If the last character is not a dot, it is a relative to origin.
+    // It is safe to check now, we know there's at least one character.
+    const bool absolute = (namedata[data_len - 1] == '.');
+    // If we are not absolute, we need the origin to complete the name.
+    if (!absolute && origin == NULL) {
+        isc_throw(MissingNameOrigin,
+                  "No origin available and name is relative");
     }
     // Prepare inputs for the parser
     const char* end = namedata + data_len;
