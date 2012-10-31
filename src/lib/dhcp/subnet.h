@@ -193,6 +193,11 @@ public:
 
     /// Type of the index #1 - option type.
     typedef OptionContainer::nth_index<1>::type OptionContainerTypeIndex;
+    /// Pair of iterators to represent the range of options having the
+    /// same option type value. The first element in this pair represents
+    /// the begining of the range, the second element represents the end.
+    typedef std::pair<OptionContainerTypeIndex::const_iterator,
+                      OptionContainerTypeIndex::const_iterator> OptionContainerTypeRange;
     /// Type of the index #2 - option persistency flag.
     typedef OptionContainer::nth_index<2>::type OptionContainerPersistIndex;
 
@@ -245,7 +250,7 @@ public:
     /// @return reference to collection of options configured for a subnet.
     /// The returned reference is valid as long as the Subnet object which
     /// returned it still exists.
-    const OptionContainer& getOptions() {
+    const OptionContainer& getOptions() const {
         return (options_);
     }
 
