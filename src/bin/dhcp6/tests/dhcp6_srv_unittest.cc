@@ -12,45 +12,42 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
-#include <iostream>
-#include <fstream>
-#include <sstream>
 
-#include <arpa/inet.h>
-#include <gtest/gtest.h>
-
+#include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
+#include <dhcp/cfgmgr.h>
+#include <dhcp/option.h>
 #include <dhcp/option6_ia.h>
+#include <dhcp/option6_iaaddr.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
 #include <boost/scoped_ptr.hpp>
+#include <config.h>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::util;
+using namespace isc::asiolink;
+using namespace boost;
 
 // namespace has to be named, because friends are defined in Dhcpv6Srv class
 // Maybe it should be isc::test?
 namespace {
 
 class NakedDhcpv6Srv: public Dhcpv6Srv {
-    // "naked" Interface Manager, exposes internal fields
+    // "naked" Interface Manager, exposes internal members
 public:
     NakedDhcpv6Srv(uint16_t port):Dhcpv6Srv(port) { }
 
-    boost::shared_ptr<Pkt6>
-    processSolicit(boost::shared_ptr<Pkt6>& request) {
-        return Dhcpv6Srv::processSolicit(request);
-    }
-    boost::shared_ptr<Pkt6>
-    processRequest(boost::shared_ptr<Pkt6>& request) {
-        return Dhcpv6Srv::processRequest(request);
-    }
-
+    using Dhcpv6Srv::processSolicit;
+    using Dhcpv6Srv::processRequest;
     using Dhcpv6Srv::createStatusCode;
 };
 
@@ -58,11 +55,38 @@ class Dhcpv6SrvTest : public ::testing::Test {
 public:
     // these are empty for now, but let's keep them around
     Dhcpv6SrvTest() {
+        subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 48, 1000,
+                                         2000, 3000, 4000));
+        pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
+        subnet_->addPool6(pool_);
+
+        CfgMgr::instance().addSubnet6(subnet_);
     }
+
+    OptionPtr generateClientId() {
+
+        // a dummy content for client-id
+        const size_t duid_size = 32;
+        OptionBuffer clnt_duid(duid_size);
+        for (int i = 0; i < duid_size; i++) {
+            clnt_duid[i] = 100 + i;
+        }
+
+        return (OptionPtr(new Option(Option::V6, D6O_CLIENTID,
+                                     clnt_duid.begin(),
+                                     clnt_duid.begin() + 16)));
+    }
+
     ~Dhcpv6SrvTest() {
+        CfgMgr::instance().deleteSubnets6();
     };
+    Subnet6Ptr subnet_;
+    Pool6Ptr pool_;
 };
 
+// Test verifies that the Dhcpv6_srv class can be instantiated. It checks a mode
+// without open sockets and with sockets opened on a high port (to not require
+// root privileges).
 TEST_F(Dhcpv6SrvTest, basic) {
     // srv has stubbed interface detection. It will read
     // interfaces.txt instead. It will pretend to have detected
@@ -70,15 +94,21 @@ TEST_F(Dhcpv6SrvTest, basic) {
     // an attempt to bind this socket will fail.
     Dhcpv6Srv* srv = NULL;
     ASSERT_NO_THROW( {
-        // open an unpriviledged port
-        srv = new Dhcpv6Srv(DHCP6_SERVER_PORT + 10000);
+        // Skip opening any sockets
+        srv = new Dhcpv6Srv(0);
     });
 
     delete srv;
+
+    ASSERT_NO_THROW( {
+        // open an unpriviledged port
+        srv = new Dhcpv6Srv(DHCP6_SERVER_PORT + 10000);
+    });
+    delete srv;
 }
 
+// Test checks that DUID is generated properly
 TEST_F(Dhcpv6SrvTest, DUID) {
-    // tests that DUID is generated properly
 
     boost::scoped_ptr<Dhcpv6Srv> srv;
     ASSERT_NO_THROW( {
@@ -153,17 +183,18 @@ TEST_F(Dhcpv6SrvTest, DUID) {
     }
 }
 
-TEST_F(Dhcpv6SrvTest, Solicit_basic) {
+// This test verifies that incoming SOLICIT can be handled properly, that a
+// reponse is generated, that the response has an address and that address
+// really belongs to the configured pool.
+//
+// This test sends a SOLICIT without any hint in IA_NA.
+TEST_F(Dhcpv6SrvTest, SolicitBasic) {
     boost::scoped_ptr<NakedDhcpv6Srv> srv;
     ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv(0)) );
 
-    // a dummy content for client-id
-    OptionBuffer clntDuid(32);
-    for (int i = 0; i < 32; i++) {
-        clntDuid[i] = 100 + i;
-    }
-
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
 
     boost::shared_ptr<Option6IA> ia =
         boost::shared_ptr<Option6IA>(new Option6IA(D6O_IA_NA, 234));
@@ -186,12 +217,11 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     // - server-id
     // - IA that includes IAADDR
 
-    OptionPtr clientid = OptionPtr(new Option(Option::V6, D6O_CLIENTID,
-                                              clntDuid.begin(),
-                                              clntDuid.begin() + 16));
+    OptionPtr clientid = generateClientId();
+
     sol->addOption(clientid);
 
-    boost::shared_ptr<Pkt6> reply = srv->processSolicit(sol);
+    Pkt6Ptr reply = srv->processSolicit(sol);
 
     // check if we get response at all
     ASSERT_TRUE( reply != boost::shared_ptr<Pkt6>() );
@@ -204,9 +234,19 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
 
     Option6IA* reply_ia = dynamic_cast<Option6IA*>(tmp.get());
     EXPECT_EQ( 234, reply_ia->getIAID() );
+    EXPECT_EQ(subnet_->getT1(), reply_ia->getT1());
+    EXPECT_EQ(subnet_->getT2(), reply_ia->getT2());
 
     // check that there's an address included
-    EXPECT_TRUE( reply_ia->getOption(D6O_IAADDR));
+    OptionPtr addr_opt = reply_ia->getOption(D6O_IAADDR);
+    ASSERT_TRUE(addr_opt);
+    shared_ptr<Option6IAAddr> addr = dynamic_pointer_cast<Option6IAAddr>(addr_opt);
+    ASSERT_TRUE(addr);
+
+    // Check that the assigned address is indeed from the configured pool
+    EXPECT_TRUE(subnet_->inPool(addr->getAddress()));
+    EXPECT_EQ(addr->getPreferred(), subnet_->getPreferred());
+    EXPECT_EQ(addr->getValid(), subnet_->getValid());
 
     // check that server included our own client-id
     tmp = reply->getOption(D6O_CLIENTID);
