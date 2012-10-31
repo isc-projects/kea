@@ -20,6 +20,14 @@ dnl Checks for other BIND 10 module libraries are option, as not all
 dnl applications need all libraries.  The main configure.ac can handle any
 dnl missing library as fatal by checking whether the corresponding
 dnl BIND10_xxx_LIB is defined.
+dnl
+dnl In addition, it sets the BIND10_RPATH variable to a usable linker option
+dnl to embed the path to the BIND 10 library to the programs that are to be
+dnl linked with the library.  If the developer wants to use the option,
+dnl it can be used as follows:
+dnl if test "x$BIND10_RPATH" != "x"; then
+dnl     LDFLAGS="$LDFLAGS $BIND10_RPATH"
+dnl fi
 
 AC_DEFUN([AX_ISC_BIND10], [
 AC_REQUIRE([AX_BOOST_INCLUDE])
