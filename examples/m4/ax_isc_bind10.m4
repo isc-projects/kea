@@ -71,12 +71,12 @@ fi
 # make sure we have buildable libraries
 AC_MSG_CHECKING([for BIND 10 common library])
 BIND10_COMMON_LIB="-lb10-util -lb10-exceptions"
-LDFLAGS="$LDFLAGS $BIND10_LDFLAGS"
+LDFLAGS_SAVED="$LDFLAGS"
+LDFLAGS_CHECK_COMMON="$LDFLAGS $BIND10_LDFLAGS"
 LIBS="$LIBS $BIND10_COMMON_LIB"
 for d in $bind10_lib_dirs
 do
-  LDFLAGS_SAVED="$LDFLAGS"
-  LDFLAGS="$LDFLAGS -L$d"
+  LDFLAGS="$LDFLAGS_CHECK_COMMON -L$d"
   AC_TRY_LINK([
 #include <util/buffer.h>
 ],[
@@ -85,7 +85,6 @@ isc::util::OutputBuffer buffer(0);
   if test "x$BIND10_LDFLAGS" != "x"; then
      break
   fi
-  LDFLAGS="$LDFLAGS_SAVED"
 done
 if test "x$BIND10_LDFLAGS" != "x"; then
   AC_MSG_RESULT(yes)
@@ -117,7 +116,7 @@ AC_SUBST(BIND10_DNS_LIB)
 
 # Restore other flags
 CPPFLAGS="$CPPFLAGS_SAVED"
-LDFLAGS="$LDFLAGS_SAVES"
+LDFLAGS="$LDFLAGS_SAVED"
 
 AC_LANG_RESTORE
 ])dnl AX_ISC_BIND10
