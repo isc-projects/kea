@@ -556,7 +556,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         // statistics: check TSIG attributes
         // SIG(0) is currently not implemented in Auth
         impl_->stats_attrs_.setQuerySig(true, false,
-                                       tsig_error != TSIGError::NOERROR());
+                                        tsig_error != TSIGError::NOERROR());
     }
 
     if (tsig_error != TSIGError::NOERROR()) {
