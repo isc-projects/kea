@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,9 +15,10 @@
 #ifndef LIBDHCP_H_
 #define LIBDHCP_H_
 
-#include <iostream>
-#include <util/buffer.h>
+#include <dhcp/option_definition.h>
 #include <dhcp/pkt6.h>
+#include <util/buffer.h>
+#include <iostream>
 
 namespace isc {
 namespace dhcp {
@@ -102,6 +103,9 @@ public:
     static void OptionFactoryRegister(Option::Universe u,
                                       uint16_t type,
                                       Option::Factory * factory);
+
+    static void initStdOptionDefs6(OptionDefContainer& defs);
+
 protected:
     /// pointers to factories that produce DHCPv6 options
     static FactoryMap v4factories_;
