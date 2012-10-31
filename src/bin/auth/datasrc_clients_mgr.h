@@ -383,9 +383,6 @@ public:
     ///
     /// It simply sets up a local copy of shared data with the manager.
     ///
-    /// Note: this will take actual set (map) of data source clients and
-    /// a mutex object for it in #2210 or #2212.
-    ///
     /// \throw None
     DataSrcClientsBuilderBase(std::list<Command>* command_queue,
                               CondVarType* cond, MutexType* queue_mutex,
