@@ -13,6 +13,10 @@ AC_LANG([C++])
 
 # Checks for BIND 10 headers and libraries
 AX_ISC_BIND10
+
+# We use -R, -rpath etc so the resulting program will be more likekly to
+# "just work" by default.  Embedding a specific library path is a controversial
+# practice, though; if you don't like it you can remove the following setting.
 if test "x$BIND10_RPATH" != "x"; then
    LDFLAGS="$LDFLAGS $BIND10_RPATH"
 fi
