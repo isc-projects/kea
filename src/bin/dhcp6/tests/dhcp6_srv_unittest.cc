@@ -40,7 +40,7 @@ namespace {
 class NakedDhcpv6Srv: public Dhcpv6Srv {
     // "naked" Interface Manager, exposes internal fields
 public:
-    NakedDhcpv6Srv():Dhcpv6Srv(DHCP6_SERVER_PORT + 10000) { }
+    NakedDhcpv6Srv(uint16_t port):Dhcpv6Srv(port) { }
 
     boost::shared_ptr<Pkt6>
     processSolicit(boost::shared_ptr<Pkt6>& request) {
@@ -50,6 +50,8 @@ public:
     processRequest(boost::shared_ptr<Pkt6>& request) {
         return Dhcpv6Srv::processRequest(request);
     }
+
+    using Dhcpv6Srv::createStatusCode;
 };
 
 class Dhcpv6SrvTest : public ::testing::Test {
@@ -153,7 +155,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
 
 TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     boost::scoped_ptr<NakedDhcpv6Srv> srv;
-    ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv()) );
+    ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv(0)) );
 
     // a dummy content for client-id
     OptionBuffer clntDuid(32);
@@ -267,6 +269,19 @@ TEST_F(Dhcpv6SrvTest, serverReceivedPacketName) {
             EXPECT_STREQ("UNKNOWN", Dhcpv6Srv::serverReceivedPacketName(type));
         }
     }
+}
+
+TEST_F(Dhcpv6SrvTest, StatusCode) {
+    boost::scoped_ptr<NakedDhcpv6Srv> srv;
+    ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv(0)) );
+
+    // a dummy content for client-id
+    uint8_t expected[] = {0x0, 0x3, 0x41, 0x42, 0x43, 0x44, 0x45};
+    OptionBuffer exp(expected, expected + sizeof(expected));
+
+    OptionPtr status = srv->createStatusCode(3, "ABCDE");
+
+    EXPECT_TRUE(status->getData() == exp);
 }
 
 }   // end of anonymous namespace
