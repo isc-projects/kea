@@ -107,7 +107,7 @@ InputSource::compact() {
     if (buffer_pos_ == buffer_.size()) {
         buffer_.clear();
     } else {
-        buffer_.erase(buffer_.begin() + buffer_pos_);
+        buffer_.erase(buffer_.begin(), buffer_.begin() + buffer_pos_);
     }
 
     buffer_pos_ = 0;
