@@ -13,6 +13,9 @@ AC_LANG([C++])
 
 # Checks for BIND 10 headers and libraries
 AX_ISC_BIND10
+if test "x$BIND10_RPATH" != "x"; then
+   LDFLAGS="$LDFLAGS $BIND10_RPATH"
+fi
 
 # For the example host program, we require the BIND 10 DNS library
 if test "x$BIND10_DNS_LIB" = "x"; then
