@@ -21,6 +21,11 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcp/option6_ia.h>
+#include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_int.h>
+#include <dhcp/option6_int_array.h>
+#include <dhcp/option6_addrlst.h>
 #include "config.h"
 
 using namespace std;
@@ -45,6 +50,34 @@ public:
                                           const OptionBuffer& buf) {
         Option* option = new Option(u, type, buf);
         return OptionPtr(option);
+    }
+
+    /// @brief Test option option definition.
+    ///
+    /// This function tests if option definition for standard
+    /// option has been initialized correctly.
+    ///
+    /// @param code option code.
+    /// @param bug buffer to be used to create option instance.
+    /// @param expected_type type of the option created by the
+    /// factory function returned by the option definition.
+    static void testInitOptionDefs6(const uint16_t code,
+                             const OptionBuffer& buf,
+                             const std::type_info& expected_type) {
+        OptionDefContainer options;
+        LibDHCP::initStdOptionDefs6(options);
+        const OptionDefContainerTypeIndex& idx = options.get<1>();
+        OptionDefContainerTypeRange range = idx.equal_range(code);
+        ASSERT_EQ(1, std::distance(range.first, range.second));
+        OptionDefinitionPtr def = *(range.first);
+        ASSERT_TRUE(def);
+        ASSERT_NO_THROW(def->validate());
+        Option::Factory* factory = NULL;
+        ASSERT_NO_THROW(factory = def->getFactory());
+        OptionPtr option;
+        ASSERT_NO_THROW(option = factory(Option::V6, code, buf));
+        ASSERT_TRUE(option);
+        EXPECT_TRUE(typeid(*option) == expected_type);
     }
 };
 
@@ -309,6 +342,32 @@ TEST(LibDhcpTest, unpackOptions4) {
 
     x = options.find(2);
     EXPECT_TRUE(x == options.end()); // option 2 not found
+}
+
+// Test that definitions of standard options have been initialized
+// correctly.
+// @todo Only limited number of option definitions are now created
+// This test have to be extended once all option definitions are
+// created.
+TEST(LibDhcpTest, initStdOptionDefs) {
+    LibDhcpTest::testInitOptionDefs6(D6O_CLIENTID, OptionBuffer(14, 1),
+                                     typeid(Option));
+    LibDhcpTest::testInitOptionDefs6(D6O_SERVERID, OptionBuffer(14, 1),
+                                     typeid(Option));
+    LibDhcpTest::testInitOptionDefs6(D6O_IA_NA, OptionBuffer(12, 1),
+                                     typeid(Option6IA));
+    LibDhcpTest::testInitOptionDefs6(D6O_IAADDR, OptionBuffer(24, 1),
+                                     typeid(Option6IAAddr));
+    LibDhcpTest::testInitOptionDefs6(D6O_ORO, OptionBuffer(10, 1),
+                                     typeid(Option6IntArray<uint16_t>));
+    LibDhcpTest::testInitOptionDefs6(D6O_ELAPSED_TIME, OptionBuffer(2, 1),
+                                     typeid(Option6Int<uint16_t>));
+    LibDhcpTest::testInitOptionDefs6(D6O_STATUS_CODE, OptionBuffer(10, 1),
+                                     typeid(Option));
+    LibDhcpTest::testInitOptionDefs6(D6O_RAPID_COMMIT, OptionBuffer(),
+                                     typeid(Option));
+    LibDhcpTest::testInitOptionDefs6(D6O_NAME_SERVERS, OptionBuffer(32, 1),
+                                     typeid(Option6AddrLst));
 }
 
 }

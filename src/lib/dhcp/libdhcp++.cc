@@ -23,6 +23,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
+#include <dhcp/option_definition.h>
 
 using namespace std;
 using namespace isc::dhcp;
@@ -200,4 +201,53 @@ void LibDHCP::OptionFactoryRegister(Option::Universe u,
     }
 
     return;
+}
+
+void
+LibDHCP::initStdOptionDefs6(OptionDefContainer& defs) {
+    defs.clear();
+
+    struct OptionParams {
+        std::string name;
+        uint16_t code;
+        OptionDefinition::DataType type;
+        bool array;
+    };
+    OptionParams params[] = {
+        { "CLIENTID", D6O_CLIENTID, OptionDefinition::BINARY_TYPE, false },
+        { "SERVERID", D6O_SERVERID, OptionDefinition::BINARY_TYPE, false },
+        { "IA_NA", D6O_IA_NA, OptionDefinition::RECORD_TYPE, false },
+        { "IAADDR", D6O_IAADDR, OptionDefinition::RECORD_TYPE, false },
+        { "ORO", D6O_ORO, OptionDefinition::UINT16_TYPE, true },
+        { "ELAPSED_TIME", D6O_ELAPSED_TIME, OptionDefinition::UINT16_TYPE, false },
+        { "STATUS_CODE", D6O_STATUS_CODE, OptionDefinition::RECORD_TYPE, false },
+        { "RAPID_COMMIT", D6O_RAPID_COMMIT, OptionDefinition::EMPTY_TYPE, false },
+        { "DNS_SERVERS", D6O_NAME_SERVERS, OptionDefinition::IPV6_ADDRESS_TYPE, true }
+    };
+    const int params_size = sizeof(params) / sizeof(params[0]);
+
+    for (int i = 0; i < params_size; ++i) {
+        OptionDefinitionPtr definition(new OptionDefinition(params[i].name,
+                                                            params[i].code,
+                                                            params[i].type,
+                                                            params[i].array));
+        switch(params[i].code) {
+        case D6O_IA_NA:
+            for (int j = 0; j < 3; ++j) {
+                definition->addRecordField(OptionDefinition::UINT32_TYPE);
+            }
+            break;
+        case D6O_IAADDR:
+            definition->addRecordField(OptionDefinition::IPV6_ADDRESS_TYPE);
+            definition->addRecordField(OptionDefinition::UINT32_TYPE);
+            definition->addRecordField(OptionDefinition::UINT32_TYPE);
+            break;
+        case D6O_STATUS_CODE:
+            definition->addRecordField(OptionDefinition::UINT16_TYPE);
+            definition->addRecordField(OptionDefinition::STRING_TYPE);
+        default:
+            break;
+        }
+        defs.push_back(definition);
+    }
 }
