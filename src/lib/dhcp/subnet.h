@@ -229,7 +229,7 @@ public:
     /// @return reference to collection of options configured for a subnet.
     /// The returned reference is valid as long as the Subnet object which
     /// returned it still exists.
-    const OptionContainer& getOptions() {
+    const OptionContainer& getOptions() const {
         return (options_);
     }
 
