@@ -92,6 +92,11 @@ public:
     /// it sets the current line number to the line number saved then.
     void ungetAll();
 
+    /// Removes buffered content before the current location in the
+    /// \c InputSource. It's not possible to \c ungetChar() after this,
+    /// unless we read more data using \c getChar().
+    void compact();
+
 private:
     bool at_eof_;
     size_t line_;

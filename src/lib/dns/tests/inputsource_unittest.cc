@@ -123,6 +123,96 @@ TEST_F(InputSourceTest, ungetAll) {
     EXPECT_FALSE(source_.atEOF());
 }
 
+TEST_F(InputSourceTest, compact) {
+    // Compact at the start
+    source_.compact();
+
+    // Ungetting here must throw.
+    EXPECT_THROW(source_.ungetChar(), InputSource::UngetError);
+
+    for (size_t i = 0; i < str_length_; i++) {
+        EXPECT_EQ(str_[i], source_.getChar());
+        EXPECT_FALSE(source_.atEOF());
+    }
+
+    // At this point, we still have not reached EOF.
+    EXPECT_FALSE(source_.atEOF());
+
+    // This should cause EOF to be set.
+    EXPECT_EQ(-1, source_.getChar());
+
+    // Now, EOF should be set.
+    EXPECT_TRUE(source_.atEOF());
+    EXPECT_EQ(4, source_.getCurrentLine());
+
+    // Compact again
+    source_.compact();
+
+    // We are still at EOF.
+    EXPECT_TRUE(source_.atEOF());
+    EXPECT_EQ(4, source_.getCurrentLine());
+
+    // Skip the EOF.
+    source_.ungetChar();
+
+    // Ungetting here must throw.
+    EXPECT_THROW(source_.ungetChar(), InputSource::UngetError);
+
+    EXPECT_EQ(-1, source_.getChar());
+    EXPECT_TRUE(source_.atEOF());
+}
+
+TEST_F(InputSourceTest, compactDuring) {
+    // First, skip to line 2.
+    while (!source_.atEOF() &&
+           (source_.getCurrentLine() != 2)) {
+        source_.getChar();
+    }
+    EXPECT_FALSE(source_.atEOF());
+    size_t line = source_.getCurrentLine();
+    EXPECT_EQ(2, line);
+
+    source_.saveLine();
+    source_.compact();
+
+    // Ungetting here must throw.
+    EXPECT_THROW(source_.ungetChar(), InputSource::UngetError);
+
+    for (size_t i = 15; i < str_length_; i++) {
+        EXPECT_EQ(str_[i], source_.getChar());
+        EXPECT_FALSE(source_.atEOF());
+    }
+
+    // At this point, we still have not reached EOF.
+    EXPECT_FALSE(source_.atEOF());
+
+    // This should cause EOF to be set.
+    EXPECT_EQ(-1, source_.getChar());
+
+    // Now, EOF should be set.
+    EXPECT_TRUE(source_.atEOF());
+
+    // Now, ungetAll() and check where it goes back.
+    source_.ungetAll();
+
+    // Ungetting here must throw.
+    EXPECT_THROW(source_.ungetChar(), InputSource::UngetError);
+
+    for (size_t i = 15; i < str_length_; i++) {
+        EXPECT_EQ(str_[i], source_.getChar());
+        EXPECT_FALSE(source_.atEOF());
+    }
+
+    // At this point, we still have not reached EOF.
+    EXPECT_FALSE(source_.atEOF());
+
+    // This should cause EOF to be set.
+    EXPECT_EQ(-1, source_.getChar());
+
+    // Now, EOF should be set.
+    EXPECT_TRUE(source_.atEOF());
+}
+
 // Test line counters.
 TEST_F(InputSourceTest, lines) {
     size_t line = 1;
