@@ -43,6 +43,7 @@ if test "$bind10_inc_path" = "no"; then
    done
 fi
 CPPFLAGS_SAVED="$CPPFLAGS"
+CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS" # boost headers will be used in buffer.h
 if test "${bind10_inc_path}" != "no"; then
    BIND10_CPPFLAGS="-I${bind10_inc_path}"
    CPPFLAGS="$CPPFLAGS $BIND10_CPPFLAGS"
@@ -54,7 +55,7 @@ AC_SUBST(BIND10_CPPFLAGS)
 
 # Check for BIND10 libraries
 CPPFLAGS_SAVED="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS $BIND10_CPPFLAGS"
+CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS $BIND10_CPPFLAGS"
 
 AC_ARG_WITH(bind10-lib,
   AS_HELP_STRING([--with-bind10-lib=PATH],
