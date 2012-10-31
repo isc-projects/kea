@@ -1,4 +1,4 @@
-dnl @synopsis AX_BIND10
+dnl @synopsis AX_ISC_BIND10
 dnl
 dnl @summary figure out how to build C++ programs using ISC BIND 10 libraries
 dnl
@@ -23,6 +23,7 @@ dnl BIND10_xxx_LIB is defined.
 
 AC_DEFUN([AX_ISC_BIND10], [
 AC_REQUIRE([AX_BOOST_INCLUDE])
+AC_REQUIRE([AX_ISC_RPATH])
 AC_LANG_SAVE
 AC_LANG([C++])
 
@@ -82,7 +83,11 @@ do
 #include <util/buffer.h>
 ],[
 isc::util::OutputBuffer buffer(0);
-], [BIND10_LDFLAGS="-L${d}"])
+], [BIND10_LDFLAGS="-L${d}"
+    if test "x$ISC_RPATH_FLAG" != "x"; then
+       BIND10_RPATH="-R${d}"
+    fi
+    ])
   if test "x$BIND10_LDFLAGS" != "x"; then
      break
   fi
