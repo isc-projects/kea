@@ -102,6 +102,17 @@ InputSource::ungetAll() {
     at_eof_ = false;
 }
 
+void
+InputSource::compact() {
+    if (buffer_pos_ == buffer_.size()) {
+        buffer_.clear();
+    } else {
+        buffer_.erase(buffer_.begin() + buffer_pos_);
+    }
+
+    buffer_pos_ = 0;
+}
+
 } // namespace master_lexer_internal
 } // namespace dns
 } // namespace isc
