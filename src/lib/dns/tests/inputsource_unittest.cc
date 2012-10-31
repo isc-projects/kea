@@ -172,13 +172,18 @@ TEST_F(InputSourceTest, compactDuring) {
     size_t line = source_.getCurrentLine();
     EXPECT_EQ(2, line);
 
+    // Now, unget a couple of characters. This should cause the
+    // buffer_pos_ to be not equal to the size of the buffer.
+    source_.ungetChar();
+    source_.ungetChar();
+
     source_.saveLine();
     source_.compact();
 
     // Ungetting here must throw.
     EXPECT_THROW(source_.ungetChar(), InputSource::UngetError);
 
-    for (size_t i = 15; i < str_length_; i++) {
+    for (size_t i = 13; i < str_length_; i++) {
         EXPECT_EQ(str_[i], source_.getChar());
         EXPECT_FALSE(source_.atEOF());
     }
@@ -198,7 +203,7 @@ TEST_F(InputSourceTest, compactDuring) {
     // Ungetting here must throw.
     EXPECT_THROW(source_.ungetChar(), InputSource::UngetError);
 
-    for (size_t i = 15; i < str_length_; i++) {
+    for (size_t i = 13; i < str_length_; i++) {
         EXPECT_EQ(str_[i], source_.getChar());
         EXPECT_FALSE(source_.atEOF());
     }
