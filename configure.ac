@@ -64,25 +64,9 @@ AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
 # Linker options
 
-# check -R and -Wl,-R rather than gcc specific -rpath to be as portable
-# as possible.
-AC_MSG_CHECKING([whether -R flag is available in linker])
-LDFLAGS_SAVED="$LDFLAGS"
-LDFLAGS="$LDFLAGS -R/usr/lib"
-AC_TRY_LINK([],[],
-    [ AC_MSG_RESULT(yes)
-        rpath_flag=-R
-    ],[ AC_MSG_RESULT(no)
-        AC_MSG_CHECKING([whether -Wl,-R flag is available in linker])
-        LDFLAGS="$LDFLAGS_SAVED -Wl,-R"
-        AC_TRY_LINK([], [],
-            [ AC_MSG_RESULT(yes)
-                rpath_flag=-Wl,-R
-            ],[ AC_MSG_RESULT(no)
-                 rpath_flag=no
-            ])
-    ])
-LDFLAGS=$LDFLAGS_SAVED
+# check -R, "-Wl,-R" or -rpath (we share the AX function defined in
+#  examples/m4)
+AX_ISC_RPATH
 
 # Compiler dependent settings: define some mandatory CXXFLAGS here.
 # We also use a separate variable B10_CXXFLAGS.  This will (and should) be
@@ -332,10 +316,10 @@ fi
 # modules, we embed the path to the modules when possible.  We do this even
 # when the path is known in the common operational environment (e.g. when
 # it's stored in a common "hint" file) for simplicity.
-if test $rpath_flag != no; then
+if test "x$ISC_RPATH_FLAG" != "x"; then
 	python_rpath=
 	for flag in ${PYTHON_LDFLAGS}; do
-		python_rpath="${python_rpath} `echo $flag | sed -ne "s/^\(\-L\)/${rpath_flag}/p"`"
+		python_rpath="${python_rpath} `echo $flag | sed -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
 	done
 	PYTHON_LDFLAGS="${PYTHON_LDFLAGS} ${python_rpath}"
 fi
@@ -701,10 +685,10 @@ for flag in ${BOTAN_LIBS}; do
 done
 
 # See python_rpath for some info on why we do this
-if test $rpath_flag != no; then
+if test "x$ISC_RPATH_FLAG" != "x"; then
     BOTAN_RPATH=
     for flag in ${BOTAN_LIBS}; do
-            BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne "s/^\(\-L\)/${rpath_flag}/p"`"
+            BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
     done
 AC_SUBST(BOTAN_RPATH)
 
