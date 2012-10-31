@@ -73,6 +73,7 @@ AC_MSG_CHECKING([for BIND 10 common library])
 BIND10_COMMON_LIB="-lb10-util -lb10-exceptions"
 LDFLAGS_SAVED="$LDFLAGS"
 LDFLAGS_CHECK_COMMON="$LDFLAGS $BIND10_LDFLAGS"
+LIBS_SAVED="$LIBS"
 LIBS="$LIBS $BIND10_COMMON_LIB"
 for d in $bind10_lib_dirs
 do
@@ -94,7 +95,7 @@ else
 fi
 
 # restore LIBS once at this point
-LIBS="$LIBS_SAVES"
+LIBS="$LIBS_SAVED"
 
 AC_SUBST(BIND10_LDFLAGS)
 AC_SUBST(BIND10_COMMON_LIB)
@@ -111,7 +112,7 @@ isc::dns::RRType rrtype(1);
 ], [BIND10_DNS_LIB="-lb10-dns++"
     AC_MSG_RESULT(yes)],
    [AC_MSG_RESULT(no)])
-LIBS="$LIBS_SAVES"
+LIBS="$LIBS_SAVED"
 AC_SUBST(BIND10_DNS_LIB)
 
 # Restore other flags
