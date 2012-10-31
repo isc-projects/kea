@@ -30,3 +30,18 @@ to the configure.ac file:
 sinclude(m4/ax_boost_include.m4)
 sinclude(m4/ax_isc_bind10.m4)
 (and same for other m4 files as they are added under m4/)
+
+On some systems, espeically if you have installed the BIND 10
+libraries in an uncommon path, programs linked with the BIND 10
+library may not work at run time due to the "missing" shared library.
+Normally, you should be able to avoid this problem by making sure
+to invoking the program explicitly specifying the path to the library,
+e.g., "LD_LIBRARY_PATH=/usr/local/lib/bind10 ./my_bind10_app", or
+you may not even notice the issue if you have installed BIND 10
+library in a common library path on your system (sometimes you may
+still need to run ldconfig(8) beforehand).  Another option is to embed
+the path to the library in your program.  While this approach is
+controversial, and some people rather choose the alternatives, we
+provide a helper tool in case you want to use this option: see the
+lines using BIND10_RPATH in the sample configure.ac file of this
+directory.
