@@ -20,6 +20,7 @@
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_ia.h>
@@ -427,4 +428,10 @@ Dhcpv6Srv::serverReceivedPacketName(uint8_t type) {
         ;
     }
     return (UNKNOWN);
+}
+
+void
+Dhcpv6Srv::initStdOptionDefs() {
+    OptionDefContainer options;
+    LibDHCP::initStdOptionDefs6(options);
 }

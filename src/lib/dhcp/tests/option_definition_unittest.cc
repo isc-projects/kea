@@ -281,6 +281,43 @@ TEST_F(OptionDefinitionTest, factoryEmpty) {
     EXPECT_THROW(factory(Option::V6, D6O_RAPID_COMMIT,OptionBuffer(2)),isc::BadValue);
 }
 
+TEST_F(OptionDefinitionTest, factoryBinary) {
+    OptionDefinition opt_def("OPTION_SERVERID", D6O_SERVERID, "binary");
+    Option::Factory* factory(NULL);
+    EXPECT_NO_THROW(factory = opt_def.getFactory());
+    ASSERT_TRUE(factory != NULL);
+
+    OptionBuffer buf(14);
+    for (int i = 0; i < 14; ++i) {
+        buf[i] = i;
+    }
+    OptionPtr option_v6;
+    ASSERT_NO_THROW(
+        option_v6 = factory(Option::V6, D6O_SERVERID, buf);
+    );
+    // Expect base option type returned.
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option));
+    EXPECT_EQ(Option::V6, option_v6->getUniverse());
+    EXPECT_EQ(4, option_v6->getHeaderLen());
+    ASSERT_EQ(buf.size(), option_v6->getData().size());
+
+    EXPECT_TRUE(std::equal(option_v6->getData().begin(),
+                           option_v6->getData().end(),
+                           buf.begin()));
+
+    // Repeat the same test scenario for DHCPv4 option.
+    OptionPtr option_v4;
+    ASSERT_NO_THROW(option_v4 = factory(Option::V4, 214, buf));
+    // Expect 'empty' DHCPv4 option.
+    EXPECT_EQ(Option::V4, option_v4->getUniverse());
+    EXPECT_EQ(2, option_v4->getHeaderLen());
+    ASSERT_EQ(buf.size(), option_v4->getData().size());
+
+    EXPECT_TRUE(std::equal(option_v6->getData().begin(),
+                           option_v6->getData().end(),
+                           buf.begin()));
+}
+
 TEST_F(OptionDefinitionTest, factoryIA6) {
     // This option consists of IAID, T1 and T2 fields (each 4 bytes long).
     const int option6_ia_len = 12;
