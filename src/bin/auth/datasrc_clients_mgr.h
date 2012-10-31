@@ -272,13 +272,12 @@ public:
         if (!args->contains("origin")) {
             isc_throw(CommandError,
                       "loadZone argument has no 'origin' value");
-        } else {
-            // Also check if it really is a valid name
-            try {
-                dns::Name(args->get("origin")->stringValue());
-            } catch (const isc::Exception& exc) {
-                isc_throw(CommandError, "bad origin: " << exc.what());
-            }
+        }
+        // Also check if it really is a valid name
+        try {
+            dns::Name(args->get("origin")->stringValue());
+        } catch (const isc::Exception& exc) {
+            isc_throw(CommandError, "bad origin: " << exc.what());
         }
 
         if (args->get("origin")->getType() != data::Element::string) {
@@ -289,16 +288,20 @@ public:
             if (args->get("class")->getType() != data::Element::string) {
                 isc_throw(CommandError,
                           "loadZone argument 'class' value not a string");
-            } else {
-                try {
-                    dns::RRClass(args->get("class")->stringValue());
-                } catch (const isc::Exception& exc) {
-                    isc_throw(CommandError, "bad class: " << exc.what());
-                }
+            }
+            // Also check if it is a valid class
+            try {
+                dns::RRClass(args->get("class")->stringValue());
+            } catch (const isc::Exception& exc) {
+                isc_throw(CommandError, "bad class: " << exc.what());
             }
         }
 
-        // Slightly more advanced checks
+        // Note: we could do some more advanced checks here,
+        // e.g. check if the zone is known at all in the configuration.
+        // For now these are skipped, but one obvious way to
+        // implement it would be to factor out the code from
+        // the start of doLoadZone(), and call it here too
 
         sendCommand(datasrc_clientmgr_internal::LOADZONE, args);
     }
@@ -557,8 +560,8 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
 
     // TODO: currently, we hardcode IN as the default for the optional
     // 'class' argument. We should really derive this from the specification,
-    // but atm the config/command API does not allow that to be done
-    // easily. Once that is in place (tickets have yet to be created,
+    // but at the moment the config/command API does not allow that to be
+    // done easily. Once that is in place (tickets have yet to be created,
     // as we need to do a tiny bit of design work for that), this
     // code can be replaced with the original part:
     // assert(arg->get("class"));
