@@ -49,7 +49,7 @@ if test "${bind10_inc_path}" != "no"; then
    CPPFLAGS="$CPPFLAGS $BIND10_CPPFLAGS"
 fi
 AC_CHECK_HEADERS([util/buffer.h],,
-  AC_MSG_ERROR([Missing a commonly used BIND 10 header files]))
+  AC_MSG_ERROR([Missing a commonly used BIND 10 header file]))
 CPPFLAGS="$CPPFLAGS_SAVED"
 AC_SUBST(BIND10_CPPFLAGS)
 
