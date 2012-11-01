@@ -122,8 +122,7 @@ public:
     ///
     /// \throw None
     ///
-    /// \return A string representation of the current source (see the
-    /// description)
+    /// \return The current line number of the source (see the description)
     size_t getSourceLine() const;
 
 private:
