@@ -109,7 +109,7 @@ private:
     std::vector<char> buffer_;
     size_t buffer_pos_;
 
-    std::string name_;
+    const std::string name_;
     std::fstream file_stream_;
     std::istream& input_;
 };
