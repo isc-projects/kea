@@ -39,7 +39,7 @@ Feature: DDNS System
         # Test 5
         When I use DDNS to set the SOA serial to 1237
         # also check if Auth server reloaded
-        And wait for new bind10 stderr message AUTH_LOAD_ZONE
+        And wait for new bind10 stderr message AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE
         The DDNS response should be SUCCESS
         And the SOA serial for example.org should be 1237
 
@@ -53,12 +53,12 @@ Feature: DDNS System
 
         # Test 8
         When I use DDNS to set the SOA serial to 1238
-        And wait for new bind10 stderr message AUTH_LOAD_ZONE
+        And wait for new bind10 stderr message AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE
         The DDNS response should be SUCCESS
         And the SOA serial for example.org should be 1238
 
         When I use DDNS to set the SOA serial to 1239
-        And wait for new bind10 stderr message AUTH_LOAD_ZONE
+        And wait for new bind10 stderr message AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE
         The DDNS response should be SUCCESS
         And the SOA serial for example.org should be 1239
 
@@ -70,7 +70,7 @@ Feature: DDNS System
 
         # Test 10
         When I use DDNS to set the SOA serial to 1240
-        And wait for new bind10 stderr message AUTH_LOAD_ZONE
+        And wait for new bind10 stderr message AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE
         The DDNS response should be SUCCESS
         And the SOA serial for example.org should be 1240
 
