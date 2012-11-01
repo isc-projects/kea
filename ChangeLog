@@ -1,3 +1,9 @@
+499.	[func]		team
+	The b10-auth 'loadzone' command now uses the internal thread
+	introduced in 495 to (re)load a zone in the background, so that
+	query processing isn't blocked while loading a zone.
+	(Trac #2213, git 686594e391c645279cc4a95e0e0020d1c01fba7e)
+
 498.	[func]		marcin
 	Implemented DHCPv6 option values configuration using configuration
 	manager. In order to set values for data fields carried by the
