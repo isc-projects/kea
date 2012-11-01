@@ -29,7 +29,7 @@ namespace dns {
 ///
 /// The \c MasterLexer class provides tokenize interfaces for parsing DNS
 /// master files.  It understands some special rules of master files as
-/// defined in RFC 1035, such as comments, character escaping, or multi-line
+/// defined in RFC 1035, such as comments, character escaping, and multi-line
 /// data, and provides the user application with the actual data in a
 /// more convenient form such as a std::string object.
 ///
@@ -92,12 +92,12 @@ public:
     /// \throw isc::InvalidOperation Called with no opened source.
     void close();
 
-    /// \brief Return a name of the current input source name.
+    /// \brief Return the name of the current input source name.
     ///
     /// If it's a file, it will be the C string given at the corresponding
-    /// \c open() call, that is, its file name.  If it's a stream, it will
-    /// be formatted as "stream-%p" where %p is hex representation of the
-    /// address of the stream object.
+    /// \c open() call, that is, its filename.  If it's a stream, it will
+    /// be formatted as \c "stream-%p" where \c %p is hex representation
+    /// of the address of the stream object.
     ///
     /// If there is no opened source at the time of the call, this method
     /// returns an empty string.
