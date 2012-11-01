@@ -127,9 +127,11 @@ class TestItemNameList(unittest.TestCase):
         self.assertEqual(['a','a/b','a/b/c'],
                          stats_httpd.item_name_list({'a':{'b':{'c':1}}}, 'a'))
         self.assertEqual(['a/b','a/b/c'],
-                         stats_httpd.item_name_list({'a':{'b':{'c':1}}}, 'a/b'))
+                         stats_httpd.item_name_list({'a':{'b':{'c':1}}},
+                                                    'a/b'))
         self.assertEqual(['a/b/c'],
-                         stats_httpd.item_name_list({'a':{'b':{'c':1}}}, 'a/b/c'))
+                         stats_httpd.item_name_list({'a':{'b':{'c':1}}},
+                                                    'a/b/c'))
         # for a list under a dict
         self.assertEqual(['a[2]'],
                          stats_httpd.item_name_list({'a':[1,2,3]}, 'a[2]'))
