@@ -24,6 +24,9 @@
 
 namespace isc {
 namespace dns {
+namespace master_lexer_internal {
+class State;
+}
 
 /// \brief Tokenizer for parsing DNS master files.
 ///
@@ -43,6 +46,7 @@ namespace dns {
 /// specifically by the \c MasterLoader class and \c Rdata implementation
 /// classes.
 class MasterLexer {
+    friend class master_lexer_internal::State;
 public:
     class Token;       // we define it separately for better readability
 
