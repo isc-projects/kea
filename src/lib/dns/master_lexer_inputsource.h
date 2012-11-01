@@ -73,8 +73,8 @@ public:
 
     /// \brief Exception thrown when ungetChar() is made to go before
     /// the start of buffer.
-    struct UngetError : public OutOfRange {
-        UngetError(const char* file, size_t line, const char* what) :
+    struct UngetBeforeBeginning : public OutOfRange {
+        UngetBeforeBeginning(const char* file, size_t line, const char* what) :
             OutOfRange(file, line, what)
         {}
     };
@@ -85,6 +85,10 @@ public:
 
     /// \brief Skips backward a single character in the input
     /// source. The last-read character is unget.
+    ///
+    /// \throws UngetBeforeBeginning if we go backwards past the start
+    /// of reading, or backwards past the last time compact() was
+    /// called.
     void ungetChar();
 
     /// Forgets everything read so far, and skips back to the position
