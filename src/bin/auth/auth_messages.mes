@@ -178,11 +178,6 @@ has requested the keyring holding TSIG keys from the configuration
 database. It is issued during server startup is an indication that the
 initialization is proceeding normally.
 
-% AUTH_LOAD_ZONE loaded zone %1/%2
-This debug message is issued during the processing of the 'loadzone' command
-when the authoritative server has successfully loaded the named zone of the
-named class.
-
 % AUTH_MEM_DATASRC_DISABLED memory data source is disabled for class %1
 This is a debug message reporting that the authoritative server has
 discovered that the memory data source is disabled for the given class.
