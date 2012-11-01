@@ -33,7 +33,7 @@ InputSource::InputSource(std::istream& input_stream) :
     at_eof_(false),
     line_(1),
     saved_line_(line_),
-    buffer_pos_(buffer_.size()),
+    buffer_pos_(0),
     name_(createStreamName(input_stream)),
     input_(input_stream)
 {}
@@ -42,7 +42,7 @@ InputSource::InputSource(const char* filename) :
     at_eof_(false),
     line_(1),
     saved_line_(line_),
-    buffer_pos_(buffer_.size()),
+    buffer_pos_(0),
     name_(filename),
     input_(file_stream_)
 {
