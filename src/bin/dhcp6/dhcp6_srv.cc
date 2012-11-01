@@ -79,6 +79,9 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
     // @todo: Replace this with MySQL_LeaseMgr once it is merged
     new isc::dhcp::test::Memfile_LeaseMgr("");
 
+    LOG_INFO(dhcp6_logger, DHCP6_DB_BACKEND_STARTED)
+        .arg(LeaseMgr::instance().getName());
+
     // Instantiate allocation engine
     alloc_engine_ = new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100);
 
@@ -330,9 +333,12 @@ void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 
     Subnet6Ptr subnet = selectSubnet(question);
     if (subnet) {
-        cout << "#### Selected subnet " << subnet->toText() << endl;
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_SUBNET_SELECTED)
+            .arg(subnet->toText());
     } else {
-        cout << "#### Failed to select a subnet" << endl;
+        // perhaps this should be logged on some higher level? This is most likely
+        // configuration bug.
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_SUBNET_SELECTION_FAILED);
     }
 
     // @todo: We should implement Option6Duid some day, but we can do without it
@@ -341,11 +347,6 @@ void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     OptionPtr opt_duid = question->getOption(D6O_CLIENTID);
     if (opt_duid) {
         duid = DuidPtr(new DUID(opt_duid->getData()));
-    }
-    if (duid) {
-        cout << "#### Processing request from client with duid=" << duid->toText() << endl;
-    } else {
-        cout << "#### Failed to find client-id :(" << endl;
     }
 
     for (Option::OptionCollection::iterator opt = question->options_.begin();
@@ -375,15 +376,14 @@ OptionPtr Dhcpv6Srv::handleIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid, 
     }
 
     shared_ptr<Option6IAAddr> hintOpt = dynamic_pointer_cast<Option6IAAddr>(ia->getOption(D6O_IAADDR));
-
     IOAddress hint("::");
-    cout << "#### Processing request IA_NA: iaid=" << ia->getIAID();
     if (hintOpt) {
         hint = hintOpt->getAddress();
-        cout << ", hint=" << hint.toText() << endl;
-    } else {
-        cout << ", no hint provided" << endl;
     }
+
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_NA_REQUEST)
+        .arg(duid?duid->toText():"(no-duid)").arg(ia->getIAID())
+        .arg(hintOpt?hint.toText():"(no hint)");
 
     bool fake_allocation = false;
     if (question->getType() == DHCPV6_SOLICIT) {
@@ -397,7 +397,11 @@ OptionPtr Dhcpv6Srv::handleIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid, 
     boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
 
     if (lease) {
-        cout << "#### Allocated lease:" << lease->addr_.toText() << endl;
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_LEASE_ALLOC)
+            .arg(lease->addr_.toText())
+            .arg(fake_allocation?"would be":"has been")
+            .arg(duid?duid->toText():"(no-duid)")
+            .arg(ia->getIAID());
 
         ia_rsp->setT1(subnet->getT1());
         ia_rsp->setT2(subnet->getT2());
@@ -409,7 +413,11 @@ OptionPtr Dhcpv6Srv::handleIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid, 
                                    lease->valid_lft_));
         ia_rsp->addOption(addr);
     } else {
-        cout << "#### Failed to allocate a lease";
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_LEASE_ALLOC_FAIL)
+            .arg(fake_allocation?"advertise":"grant")
+            .arg(duid?duid->toText():"(no-duid)")
+            .arg(ia->getIAID())
+            .arg(subnet->toText());
 
         ia_rsp->addOption(createStatusCode(STATUS_NoAddrsAvail, "Sorry, no address could be allocated."));
     }
