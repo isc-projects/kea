@@ -156,6 +156,8 @@ public:
         EXPECT_TRUE(*lease->duid_ == *duid);
         EXPECT_EQ(ia->getIAID(), lease->iaid_);
         EXPECT_EQ(subnet_->getID(), lease->subnet_id_);
+
+        return (lease);
     }
 
     ~Dhcpv6SrvTest() {
