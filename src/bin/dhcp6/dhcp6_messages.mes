@@ -30,6 +30,11 @@ from the BIND 10 control system by the IPv6 DHCP server.
 A debug message indicating that the IPv6 DHCP server has received an
 updated configuration from the BIND 10 configuration system.
 
+% DHCP6_DB_BACKEND_STARTED Lease database started (backend type: %1)
+This informational message is printed every time DHCPv6 is started.
+It indicates which backend type will be used throughout the server
+operation.
+
 % DHCP6_NOT_RUNNING IPv6 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
 IPv6 DHCP server but it is not running.
@@ -41,6 +46,17 @@ interfaces and is therefore shutting down.
 % DHCP6_OPEN_SOCKET opening sockets on port %1
 A debug message issued during startup, this indicates that the IPv6 DHCP
 server is about to open sockets on the specified port.
+
+% DHCP6_LEASE_ALLOC Lease %1 %2 allocated (client duid=%3, iaid=%4)
+This debug message indicates that the server successfully advertised (i.e.
+responded to SOLICIT) or granted (i.e. responded to REQUEST) a lease.
+This is a normal behavior and incicates successful operation.
+
+% DHCP6_LEASE_ALLOC_FAIL Failed to %1 a lease for client duid=%2, iaid=%3
+This message indicates that the server failed to advertise (i.e. respond
+to SOLICIT) or grant (i.e. respond to REQUEST) a lease for a given client.
+There may be many reasons for such failure. Each specific failure is logged
+in a separate log entry.
 
 % DHCP6_PACKET_PARSE_FAIL failed to parse incoming packet
 The IPv6 DHCP server has received a packet that it is unable to interpret.
@@ -65,6 +81,11 @@ message.
 This error is output if the server failed to assemble the data to be
 returned to the client into a valid packet.  The reason is most likely
 to be to a programming error: please raise a bug report.
+
+% DHCP6_PROCESS_IA_NA_REQUEST Server is processing IA_NA option (duid=%1, iaid=%2, hint=%3)
+This is a debug message that indicates a processing of received IA_NA
+option. It may optionally contain an address that may be used by the server
+as a hint for possible requested address.
 
 % DHCP6_QUERY_DATA received packet length %1, data length %2, data is %3
 A debug message listing the data received from the client or relay.
@@ -109,6 +130,17 @@ processed any command-line switches and is starting.
 This is a debug message issued during the IPv6 DHCP server startup.
 It lists some information about the parameters with which the server
 is running.
+
+% DHCP6_SUBNET_SELECTED The %s subnet was selected for client assignment
+This is a debug message informing that a given subnet was selected. It will
+be used for address and option assignment. This is one of the early steps
+in the processing of incoming client message.
+
+% DHCP6_SUBNET_SELECTION_FAILED Failed to select a subnet for incoming packet, src=%1 type=%2
+This is a warning message that a packet was received, but the server is
+not configured to support the subnet the packet originated from. This
+message means that the received traffic does not match server configuration
+and is likely a configuration issue.
 
 % DHCP6_CONFIG_LOAD_FAIL failed to load configuration: %1
 This critical error message indicates that the initial DHCPv6
