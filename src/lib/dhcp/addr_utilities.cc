@@ -162,8 +162,14 @@ namespace dhcp {
 isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefix,
                                             uint8_t len) {
     if (prefix.getFamily() == AF_INET) {
+        if (len>32) {
+            isc_throw(BadValue, "IPv4 prefix length too large:" << len);
+        }
         return firstAddrInPrefix4(prefix, len);
     } else {
+        if (len>128) {
+            isc_throw(BadValue, "IPv6 prefix length too large:" << len);
+        }
         return firstAddrInPrefix6(prefix, len);
     }
 }
@@ -171,8 +177,14 @@ isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefi
 isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix,
                                            uint8_t len) {
     if (prefix.getFamily() == AF_INET) {
+        if (len>32) {
+            isc_throw(BadValue, "IPv4 prefix length too large:" << len);
+        }
         return lastAddrInPrefix4(prefix, len);
     } else {
+        if (len>128) {
+            isc_throw(BadValue, "IPv6 prefix length too large:" << len);
+        }
         return lastAddrInPrefix6(prefix, len);
     }
 }
