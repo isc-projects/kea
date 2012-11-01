@@ -63,7 +63,7 @@ InputSource::getChar() {
         // getChar(). at_eof_ will be set then. We then simply return
         // early.
         if (at_eof_) {
-            return -1;
+            return (END_OF_STREAM);
         }
         // We are not yet at EOF. Read from the stream.
         int c = input_.get();
@@ -72,7 +72,7 @@ InputSource::getChar() {
         // the size of buffer_).
         if (!input_.good()) {
             at_eof_ = true;
-            return -1;
+            return (END_OF_STREAM);
         }
         buffer_.push_back(c);
     }

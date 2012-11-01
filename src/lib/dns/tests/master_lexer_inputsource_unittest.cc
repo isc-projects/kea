@@ -71,7 +71,7 @@ TEST_F(InputSourceTest, getAndUngetChar) {
     EXPECT_FALSE(source_.atEOF());
 
     // This should cause EOF to be set.
-    EXPECT_EQ(-1, source_.getChar());
+    EXPECT_EQ(InputSource::END_OF_STREAM, source_.getChar());
 
     // Now, EOF should be set.
     EXPECT_TRUE(source_.atEOF());
@@ -84,7 +84,7 @@ TEST_F(InputSourceTest, getAndUngetChar) {
     EXPECT_FALSE(source_.atEOF());
 
     // This should cause EOF to be set again.
-    EXPECT_EQ(-1, source_.getChar());
+    EXPECT_EQ(InputSource::END_OF_STREAM, source_.getChar());
 
     // Now, EOF should be set.
     EXPECT_TRUE(source_.atEOF());
@@ -139,7 +139,7 @@ TEST_F(InputSourceTest, compact) {
     EXPECT_FALSE(source_.atEOF());
 
     // This should cause EOF to be set.
-    EXPECT_EQ(-1, source_.getChar());
+    EXPECT_EQ(InputSource::END_OF_STREAM, source_.getChar());
 
     // Now, EOF should be set.
     EXPECT_TRUE(source_.atEOF());
@@ -158,7 +158,7 @@ TEST_F(InputSourceTest, compact) {
     // Ungetting here must throw.
     EXPECT_THROW(source_.ungetChar(), InputSource::UngetBeforeBeginning);
 
-    EXPECT_EQ(-1, source_.getChar());
+    EXPECT_EQ(InputSource::END_OF_STREAM, source_.getChar());
     EXPECT_TRUE(source_.atEOF());
 }
 
@@ -192,7 +192,7 @@ TEST_F(InputSourceTest, compactDuring) {
     EXPECT_FALSE(source_.atEOF());
 
     // This should cause EOF to be set.
-    EXPECT_EQ(-1, source_.getChar());
+    EXPECT_EQ(InputSource::END_OF_STREAM, source_.getChar());
 
     // Now, EOF should be set.
     EXPECT_TRUE(source_.atEOF());
@@ -212,7 +212,7 @@ TEST_F(InputSourceTest, compactDuring) {
     EXPECT_FALSE(source_.atEOF());
 
     // This should cause EOF to be set.
-    EXPECT_EQ(-1, source_.getChar());
+    EXPECT_EQ(InputSource::END_OF_STREAM, source_.getChar());
 
     // Now, EOF should be set.
     EXPECT_TRUE(source_.atEOF());
