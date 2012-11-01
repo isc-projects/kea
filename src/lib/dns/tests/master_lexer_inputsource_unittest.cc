@@ -102,7 +102,7 @@ TEST_F(InputSourceTest, getAndUngetChar) {
     }
 
     // Skipping past the start of buffer should throw.
-    EXPECT_THROW(source_.ungetChar(), InputSource::UngetError);
+    EXPECT_THROW(source_.ungetChar(), InputSource::UngetBeforeBeginning);
 }
 
 // ungetAll() should skip back to the place where the InputSource
@@ -128,7 +128,7 @@ TEST_F(InputSourceTest, compact) {
     source_.compact();
 
     // Ungetting here must throw.
-    EXPECT_THROW(source_.ungetChar(), InputSource::UngetError);
+    EXPECT_THROW(source_.ungetChar(), InputSource::UngetBeforeBeginning);
 
     for (size_t i = 0; i < str_length_; i++) {
         EXPECT_EQ(str_[i], source_.getChar());
@@ -156,7 +156,7 @@ TEST_F(InputSourceTest, compact) {
     source_.ungetChar();
 
     // Ungetting here must throw.
-    EXPECT_THROW(source_.ungetChar(), InputSource::UngetError);
+    EXPECT_THROW(source_.ungetChar(), InputSource::UngetBeforeBeginning);
 
     EXPECT_EQ(-1, source_.getChar());
     EXPECT_TRUE(source_.atEOF());
@@ -181,7 +181,7 @@ TEST_F(InputSourceTest, compactDuring) {
     source_.compact();
 
     // Ungetting here must throw.
-    EXPECT_THROW(source_.ungetChar(), InputSource::UngetError);
+    EXPECT_THROW(source_.ungetChar(), InputSource::UngetBeforeBeginning);
 
     for (size_t i = 13; i < str_length_; i++) {
         EXPECT_EQ(str_[i], source_.getChar());
@@ -201,7 +201,7 @@ TEST_F(InputSourceTest, compactDuring) {
     source_.ungetAll();
 
     // Ungetting here must throw.
-    EXPECT_THROW(source_.ungetChar(), InputSource::UngetError);
+    EXPECT_THROW(source_.ungetChar(), InputSource::UngetBeforeBeginning);
 
     for (size_t i = 13; i < str_length_; i++) {
         EXPECT_EQ(str_[i], source_.getChar());
@@ -263,7 +263,7 @@ TEST_F(InputSourceTest, lines) {
                          ((line - 1) == source_.getCurrentLine())));
             line = source_.getCurrentLine();
         }
-    }, InputSource::UngetError);
+    }, InputSource::UngetBeforeBeginning);
 
     // Now we are back to where we started.
     EXPECT_EQ(1, source_.getCurrentLine());
