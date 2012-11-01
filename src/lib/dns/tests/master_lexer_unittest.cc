@@ -90,7 +90,7 @@ TEST_F(MasterLexerTest, nestedOpen) {
     lexer.open(TEST_DATA_SRCDIR "/masterload.txt");
     EXPECT_EQ(TEST_DATA_SRCDIR "/masterload.txt", lexer.getSourceName());
 
-    // Close works on the "topmost" (opened last) source
+    // Close works on the "topmost" (last-opened) source
     lexer.close();
     EXPECT_EQ(expected_stream_name, lexer.getSourceName());
 
