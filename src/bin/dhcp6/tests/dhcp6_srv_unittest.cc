@@ -23,6 +23,7 @@
 #include <dhcp6/dhcp6_srv.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
+#include <dhcp/lease_mgr.h>
 #include <boost/scoped_ptr.hpp>
 #include <config.h>
 #include <iostream>
@@ -80,9 +81,11 @@ public:
             clnt_duid[i] = 100 + i;
         }
 
+        duid_ = DuidPtr(new DUID(clnt_duid));
+
         return (OptionPtr(new Option(Option::V6, D6O_CLIENTID,
                                      clnt_duid.begin(),
-                                     clnt_duid.begin() + 16)));
+                                     clnt_duid.begin() + duid_size)));
     }
 
     void checkServerId(const Pkt6Ptr& rsp, const OptionPtr& expected_srvid) {
@@ -139,11 +142,27 @@ public:
         EXPECT_EQ(expected_transid, rsp->getTransid());
     }
 
+    Lease6Ptr checkLease(const DuidPtr& duid, const OptionPtr& ia_na, shared_ptr<Option6IAAddr> addr) {
+        shared_ptr<Option6IA> ia = dynamic_pointer_cast<Option6IA>(ia_na);
+
+        Lease6Ptr lease = LeaseMgr::instance().getLease6(addr->getAddress());
+        if (!lease) {
+            cout << "Lease for " << addr->getAddress().toText() << " not found in the database backend.";
+            return (Lease6Ptr());
+        }
+
+        EXPECT_EQ(addr->getAddress().toText(), lease->addr_.toText());
+        EXPECT_TRUE(*lease->duid_ == *duid);
+        EXPECT_EQ(ia->getIAID(), lease->iaid_);
+        EXPECT_EQ(subnet_->getID(), lease->subnet_id_);
+    }
+
     ~Dhcpv6SrvTest() {
         CfgMgr::instance().deleteSubnets6();
     };
     Subnet6Ptr subnet_;
     Pool6Ptr pool_;
+    DuidPtr duid_;
 };
 
 // Test verifies that the Dhcpv6_srv class can be instantiated. It checks a mode
@@ -399,6 +418,66 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     checkServerId(reply, srv->getServerID());
     checkClientId(reply, clientid);
 }
+
+// This test verifies that incoming SOLICIT can be handled properly, that a
+// reponse is generated, that the response has an address and that address
+// really belongs to the configured pool.
+//
+// This test sends a SOLICIT with IA_NA that contains a valid hint.
+//
+// constructed very simple SOLICIT message with:
+// - client-id option (mandatory)
+// - IA option (a request for address, with an address that belongs to the
+//              configured pool, i.e. is valid as hint)
+//
+// expected returned ADVERTISE message:
+// - copy of client-id
+// - server-id
+// - IA that includes IAADDR
+TEST_F(Dhcpv6SrvTest, RequestBasic) {
+    boost::scoped_ptr<NakedDhcpv6Srv> srv;
+    ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv(0)) );
+
+    // Let's create a SOLICIT
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    shared_ptr<Option6IA> ia = generateIA(234, 1500, 3000);
+
+    // with a valid hint
+    IOAddress hint("2001:db8:1:1::dead:beef");
+    ASSERT_TRUE(subnet_->inPool(hint));
+    OptionPtr hint_opt(new Option6IAAddr(D6O_IAADDR, hint, 300, 500));
+    ia->addOption(hint_opt);
+    sol->addOption(ia);
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Pass it to the server and hope for a reply
+    Pkt6Ptr reply = srv->processSolicit(sol);
+
+    // check if we get response at all
+    checkResponse(reply, DHCPV6_ADVERTISE, 1234);
+
+    OptionPtr tmp = reply->getOption(D6O_IA_NA);
+    ASSERT_TRUE(tmp);
+
+    // check that IA_NA was returned and that there's an address included
+    shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
+                                                subnet_->getT2());
+
+    // check that we've got the address we requested
+    checkIAAddr(addr, hint, subnet_->getPreferred(), subnet_->getValid());
+
+    // check DUIDs
+    checkServerId(reply, srv->getServerID());
+    checkClientId(reply, clientid);
+
+    // check that the lease is really in the database
+    Lease6Ptr l = checkLease(duid_, reply->getOption(D6O_IA_NA), addr);
+    EXPECT_TRUE(l);
+    LeaseMgr::instance().deleteLease6(addr->getAddress());
+}
+
 
 TEST_F(Dhcpv6SrvTest, serverReceivedPacketName) {
     // Check all possible packet types
