@@ -82,7 +82,7 @@ public:
     /// \brief Close the most recently opened input source (file or stream).
     ///
     /// If it's a file, the opened file will be literally closed.
-    /// If it's a stream, \c MasterLexer will simply release the reference to
+    /// If it's a stream, \c MasterLexer will simply stop using
     /// the stream; the caller can assume it will be never used in
     /// \c MasterLexer thereafter.
     ///
