@@ -123,11 +123,7 @@ typedef enum {
     ft_ordinary,                // parsing an ordinary label
     ft_initialescape,           // just found '\'
     ft_escape,                  // begin of handling a '\'-escaped sequence
-    ft_escdecimal,              // parsing a '\DDD' octet.
-
-    // Unused at this moment.  We'll revisit this when we support master file
-    // parser where @ is used to mean an origin name.
-    ft_at
+    ft_escdecimal               // parsing a '\DDD' octet.
 } ft_state;
 
 // The parser of name from a string. It is a template, because
@@ -283,7 +279,7 @@ stringParse(Iterator s, Iterator send, bool downcase, Offsets& offsets,
                       string(orig_s, send));
         }
         assert(s == send);
-        if (state != ft_ordinary && state != ft_at) {
+        if (state != ft_ordinary) {
             isc_throw(IncompleteName,
                       "incomplete textual name in " <<
                       (empty ? "<empty>" : string(orig_s, send)));
