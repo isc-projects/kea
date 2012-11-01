@@ -79,8 +79,11 @@ public:
         {}
     };
 
+    /// \brief Returned by getChar() when end of stream is reached.
+    static const int END_OF_STREAM;
+
     /// \brief Returns a single character from the input source. If end
-    /// of file is reached, -1 is returned.
+    /// of file is reached, \c END_OF_STREAM is returned.
     int getChar();
 
     /// \brief Skips backward a single character in the input
@@ -113,6 +116,8 @@ private:
     std::fstream file_stream_;
     std::istream& input_;
 };
+
+const int InputSource::END_OF_STREAM = -1;
 
 } // namespace master_lexer_internal
 } // namespace dns
