@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <alloc_engine.h>
+#include <string.h>
 
 using namespace isc::asiolink;
 
