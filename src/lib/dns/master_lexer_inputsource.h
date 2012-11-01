@@ -105,9 +105,11 @@ public:
     /// called.
     void ungetChar();
 
-    /// Forgets everything read so far, and skips back to the position
-    /// where reading started. If \c saveLine() was called previously,
-    /// it sets the current line number to the line number saved then.
+    /// Forgets what was read, and skips back to the position where
+    /// \c compact() was last called. If \c compact() was not called, it
+    /// skips back to where reading started. If \c saveLine() was called
+    /// previously, it sets the current line number to the line number
+    /// saved.
     void ungetAll();
 
     /// Removes buffered content before the current location in the
