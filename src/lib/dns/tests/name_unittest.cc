@@ -295,6 +295,30 @@ TEST_F(NameTest, combinedTooLong) {
                          &Name::ROOT_NAME()));
 }
 
+// Test the handling of @ in the name. If it is alone, it is the origin (when
+// it exists) or the root. If it is somewhere else, it has no special meaning.
+TEST_F(NameTest, atSign) {
+    // If it is alone, it is the origin
+    EXPECT_EQ(origin_name, Name("@", 1, &origin_name));
+    EXPECT_THROW(Name("@", 1, NULL), MissingNameOrigin);
+    EXPECT_EQ(Name::ROOT_NAME(), Name("@"));
+
+    // It is not alone. It is taken verbatim. We check the name converted
+    // back to the textual form, since checking it agains other name object
+    // may be wrong -- if we create it wrong the same way as the tested
+    // object.
+    EXPECT_EQ("\\@.", Name("@.").toText());
+    EXPECT_EQ("\\@.", Name("@.", 2, NULL).toText());
+    EXPECT_EQ("\\@something.", Name("@something").toText());
+    EXPECT_EQ("something\\@.", Name("something@").toText());
+    EXPECT_EQ("\\@x.example.com.", Name("@x", 2, &origin_name).toText());
+    EXPECT_EQ("x\\@.example.com.", Name("x@", 2, &origin_name).toText());
+
+    // An escaped at-sign isn't active
+    EXPECT_EQ("\\@.", Name("\\@").toText());
+    EXPECT_EQ("\\@.example.com.", Name("\\@", 2, &origin_name).toText());
+}
+
 TEST_F(NameTest, fromWire) {
     //
     // test cases derived from BIND9 tests.
@@ -593,7 +617,6 @@ TEST_F(NameTest, downcase) {
     // confirm the calling object is actually modified
     example_name_upper.downcase();
     compareInWireFormat(example_name_upper, example_name);
-    
 }
 
 TEST_F(NameTest, at) {
