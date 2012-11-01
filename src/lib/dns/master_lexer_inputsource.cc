@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <dns/inputsource.h>
+#include <dns/master_lexer_inputsource.h>
 
 namespace isc {
 namespace dns {
