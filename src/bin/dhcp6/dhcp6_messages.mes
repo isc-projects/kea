@@ -131,7 +131,7 @@ This is a debug message issued during the IPv6 DHCP server startup.
 It lists some information about the parameters with which the server
 is running.
 
-% DHCP6_SUBNET_SELECTED The %s subnet was selected for client assignment
+% DHCP6_SUBNET_SELECTED The %1 subnet was selected for client assignment
 This is a debug message informing that a given subnet was selected. It will
 be used for address and option assignment. This is one of the early steps
 in the processing of incoming client message.
