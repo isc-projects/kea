@@ -161,7 +161,7 @@ protected:
     /// @brief selects a subnet for a given client's packet
     ///
     /// @return selected subnet (or NULL if no suitable subnet was found)
-    isc::dhcp::Subnet6Ptr getSubnet(const Pkt6Ptr& question);
+    isc::dhcp::Subnet6Ptr selectSubnet(const Pkt6Ptr& question);
 
     /// @brief processes IA_NA option (and assigns addresses if necessary)
     ///

@@ -50,6 +50,7 @@ public:
     using Dhcpv6Srv::processSolicit;
     using Dhcpv6Srv::processRequest;
     using Dhcpv6Srv::createStatusCode;
+    using Dhcpv6Srv::selectSubnet;
 };
 
 class Dhcpv6SrvTest : public ::testing::Test {
@@ -263,6 +264,9 @@ TEST_F(Dhcpv6SrvTest, DUID) {
         break;
     }
 }
+
+// There are no dedicated tests for Dhcpv6Srv::handleIA_NA and Dhcpv6Srv::assignLeases
+// as they are indirectly tested in Solicit and Request tests.
 
 // This test verifies that incoming SOLICIT can be handled properly, that a
 // reponse is generated, that the response has an address and that address
@@ -478,7 +482,6 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     LeaseMgr::instance().deleteLease6(addr->getAddress());
 }
 
-
 TEST_F(Dhcpv6SrvTest, serverReceivedPacketName) {
     // Check all possible packet types
     for (int itype = 0; itype < 256; ++itype) {
@@ -524,6 +527,7 @@ TEST_F(Dhcpv6SrvTest, serverReceivedPacketName) {
     }
 }
 
+// This test verifies if the status code option is generated properly.
 TEST_F(Dhcpv6SrvTest, StatusCode) {
     boost::scoped_ptr<NakedDhcpv6Srv> srv;
     ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv(0)) );
@@ -535,6 +539,29 @@ TEST_F(Dhcpv6SrvTest, StatusCode) {
     OptionPtr status = srv->createStatusCode(3, "ABCDE");
 
     EXPECT_TRUE(status->getData() == exp);
+}
+
+// This test verifies if the selectSubnet() method works as expected.
+TEST_F(Dhcpv6SrvTest, SelectSubnet) {
+    boost::scoped_ptr<NakedDhcpv6Srv> srv;
+    ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv(0)) );
+
+    Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+
+    // check that the packets originating from local addresses can be
+    pkt->setRemoteAddr(IOAddress("fe80::abcd"));
+    EXPECT_EQ(subnet_, srv->selectSubnet(pkt));
+
+    // packets originating from subnet A will select subnet A
+    pkt->setRemoteAddr(IOAddress("2001:db8:1::6789"));
+    EXPECT_EQ(subnet_, srv->selectSubnet(pkt));
+
+    // packets from a subnet that is not supported will not get
+    // a subnet
+    pkt->setRemoteAddr(IOAddress("3000::faf"));
+    EXPECT_FALSE(srv->selectSubnet(pkt));
+
+    /// @todo: expand this test once support for relays is implemented
 }
 
 }   // end of anonymous namespace

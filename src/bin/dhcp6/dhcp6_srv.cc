@@ -40,6 +40,7 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
 using namespace std;
+using namespace boost;
 
 const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";
 
@@ -319,7 +320,7 @@ OptionPtr Dhcpv6Srv::createStatusCode(uint16_t code, const std::string& text) {
     return (status);
 }
 
-Subnet6Ptr Dhcpv6Srv::getSubnet(const Pkt6Ptr& question) {
+Subnet6Ptr Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr());
 
     return (subnet);
@@ -327,7 +328,7 @@ Subnet6Ptr Dhcpv6Srv::getSubnet(const Pkt6Ptr& question) {
 
 void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 
-    Subnet6Ptr subnet = getSubnet(question);
+    Subnet6Ptr subnet = selectSubnet(question);
     if (subnet) {
         cout << "#### Selected subnet " << subnet->toText() << endl;
     } else {
@@ -347,10 +348,12 @@ void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
         cout << "#### Failed to find client-id :(" << endl;
     }
 
-    for (Option::OptionCollection::iterator opt = question->options_.begin(); opt != question->options_.end(); ++opt) {
+    for (Option::OptionCollection::iterator opt = question->options_.begin();
+         opt != question->options_.end(); ++opt) {
         switch (opt->second->getType()) {
         case D6O_IA_NA: {
-            OptionPtr answer_opt = handleIA_NA(subnet, duid, question, boost::dynamic_pointer_cast<Option6IA>(opt->second));
+            OptionPtr answer_opt = handleIA_NA(subnet, duid, question,
+                                   boost::dynamic_pointer_cast<Option6IA>(opt->second));
             if (answer_opt) {
                 answer->addOption(answer_opt);
             }
@@ -371,7 +374,7 @@ OptionPtr Dhcpv6Srv::handleIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid, 
         return (ia_rsp);
     }
 
-    boost::shared_ptr<Option6IAAddr> hintOpt = boost::dynamic_pointer_cast<Option6IAAddr>(ia->getOption(D6O_IAADDR));
+    shared_ptr<Option6IAAddr> hintOpt = dynamic_pointer_cast<Option6IAAddr>(ia->getOption(D6O_IAADDR));
 
     IOAddress hint("::");
     cout << "#### Processing request IA_NA: iaid=" << ia->getIAID();
