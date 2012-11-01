@@ -16,6 +16,7 @@
 
 #include <dns/master_lexer.h>
 #include <dns/master_lexer_inputsource.h>
+#include <dns/master_lexer_state.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -33,9 +34,13 @@ typedef boost::shared_ptr<master_lexer_internal::InputSource> InputSourcePtr;
 using namespace master_lexer_internal;
 
 struct MasterLexer::MasterLexerImpl {
-    MasterLexerImpl() : token_(Token::NOT_STARTED) {}
+    MasterLexerImpl() : source_(NULL), last_was_eol_(false),
+                        token_(Token::NOT_STARTED)
+    {}
 
     std::vector<InputSourcePtr> sources_;
+    InputSource* source_;       // current source
+    bool last_was_eol_;
     Token token_;
 };
 
@@ -61,12 +66,15 @@ MasterLexer::pushSource(const char* filename, std::string* error) {
         return (false);
     }
 
+    impl_->sources_.push_back(InputSourcePtr(new InputSource(filename)));
+    impl_->source_ = impl_->sources_.back().get();
     return (true);
 }
 
 void
 MasterLexer::pushSource(std::istream& input) {
     impl_->sources_.push_back(InputSourcePtr(new InputSource(input)));
+    impl_->source_ = impl_->sources_.back().get();
 }
 
 void
@@ -76,6 +84,8 @@ MasterLexer::popSource() {
                   "MasterLexer::popSource on an empty source");
     }
     impl_->sources_.pop_back();
+    impl_->source_ = impl_->sources_.empty() ? NULL :
+        impl_->sources_.back().get();
 }
 
 std::string
@@ -115,6 +125,59 @@ MasterLexer::Token::getErrorText() const {
     assert(val_.error_code_ < error_text_max_count);
     return (error_text[val_.error_code_]);
 }
+
+namespace master_lexer_internal {
+typedef MasterLexer::Token Token; // convenience shortcut
+
+bool
+State::wasLastEOL(MasterLexer& lexer) const {
+    return (lexer.impl_->last_was_eol_);
+}
+
+const MasterLexer::Token
+State::getToken(MasterLexer& lexer) const {
+    return (lexer.impl_->token_);
+}
+
+class Start : public State {
+public:
+    Start() {}
+    virtual const State* handle(MasterLexer& lexer) const {
+        const int c = getLexerImpl(lexer)->source_->getChar();
+        if (c < 0) {
+            // TODO: handle unbalance cases
+            getLexerImpl(lexer)->last_was_eol_ = false;
+            getLexerImpl(lexer)->token_ = Token(Token::END_OF_FILE);
+            return (NULL);
+        } else if (c == '\n') {
+            getLexerImpl(lexer)->last_was_eol_ = true;
+            getLexerImpl(lexer)->token_ = Token(Token::END_OF_LINE);
+            return (NULL);
+        }
+        return (&State::getInstance(State::CRLF)); // placeholder
+    }
+};
+
+class CRLF : public State {
+public:
+    CRLF() {}
+    virtual const State* handle(MasterLexer& /*lexer*/) const {
+        return (NULL);
+    }
+};
+
+namespace {
+const Start START_STATE;
+const CRLF CRLF_STARTE;
+}
+
+const State&
+State::getInstance(ID /*state_id*/) {
+    return (START_STATE);
+}
+
+
+} // namespace master_lexer_internal
 
 } // end of namespace dns
 } // end of namespace isc
