@@ -70,9 +70,15 @@ InputSource::getChar() {
         // Have we reached EOF now? If so, set at_eof_ and return early,
         // but don't modify buffer_pos_ (which should still be equal to
         // the size of buffer_).
-        if (!input_.good()) {
+        if (input_.eof()) {
             at_eof_ = true;
             return (END_OF_STREAM);
+        }
+        // This has to come after the .eof() check as some
+        // implementations seem to check the eofbit also in .fail().
+        if (input_.fail()) {
+            isc_throw(ReadError,
+                      "Error reading from the input stream: " << getName());
         }
         buffer_.push_back(c);
     }
