@@ -53,7 +53,7 @@ TEST_F(MasterLexerTest, preOpen) {
     checkEmptySource(lexer);
 }
 
-TEST_F(MasterLexerTest, openStream) {
+TEST_F(MasterLexerTest, pushStream) {
     lexer.pushSource(ss);
     EXPECT_EQ(expected_stream_name, lexer.getSourceName());
 
@@ -67,7 +67,7 @@ TEST_F(MasterLexerTest, openStream) {
     checkEmptySource(lexer);
 }
 
-TEST_F(MasterLexerTest, openFile) {
+TEST_F(MasterLexerTest, pushFile) {
     // We use zone file (-like) data, but in this test that actually doesn't
     // matter.
     lexer.pushSource(TEST_DATA_SRCDIR "/masterload.txt");
@@ -78,19 +78,19 @@ TEST_F(MasterLexerTest, openFile) {
     checkEmptySource(lexer);
 }
 
-TEST_F(MasterLexerTest, openBadFileName) {
+TEST_F(MasterLexerTest, pushBadFileName) {
     EXPECT_THROW(lexer.pushSource(NULL), isc::InvalidParameter);
 }
 
-TEST_F(MasterLexerTest, nestedOpen) {
+TEST_F(MasterLexerTest, nestedPush) {
     lexer.pushSource(ss);
     EXPECT_EQ(expected_stream_name, lexer.getSourceName());
 
-    // We can open another source without closing the previous one.
+    // We can push another source without popping the previous one.
     lexer.pushSource(TEST_DATA_SRCDIR "/masterload.txt");
     EXPECT_EQ(TEST_DATA_SRCDIR "/masterload.txt", lexer.getSourceName());
 
-    // Close works on the "topmost" (last-opened) source
+    // Close works on the "topmost" (last-pushed) source
     lexer.popSource();
     EXPECT_EQ(expected_stream_name, lexer.getSourceName());
 
