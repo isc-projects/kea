@@ -59,6 +59,12 @@ TEST_F(InputSourceTest, getName) {
     EXPECT_EQ(TEST_DATA_SRCDIR "/masterload.txt", source2.getName());
 }
 
+TEST_F(InputSourceTest, nonExistentFile) {
+    EXPECT_THROW({
+        InputSource source(TEST_DATA_SRCDIR "/videokilledtheradiostar");
+    }, InputSource::OpenError);
+}
+
 // getChar() should return characters from the input stream in
 // sequence. ungetChar() should skip backwards.
 void
