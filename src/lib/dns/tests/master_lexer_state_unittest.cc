@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <dns/inputsource.h>
 #include <dns/master_lexer.h>
+#include <dns/master_lexer_inputsource.h>
 #include <dns/master_lexer_state.h>
 
 #include <gtest/gtest.h>
@@ -34,7 +34,7 @@ protected:
                              options(MasterLexer::END_OF_LINE),
                              orig_options(options)
     {
-        lexer.open(ss);
+        lexer.pushSource(ss);
     }
     const State& s_start;
     const State& s_crlf;
