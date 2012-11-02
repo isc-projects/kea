@@ -41,6 +41,7 @@ struct MasterLexer::MasterLexerImpl {
     std::vector<InputSourcePtr> sources_;
     InputSource* source_;       // current source
     size_t paren_count_;
+    Options orig_options_;
     bool last_was_eol_;
     Token token_;
 };
@@ -148,16 +149,14 @@ class Start : public State {
 public:
     Start() {}
     virtual const State* handle(MasterLexer& lexer,
-                                MasterLexer::Options& options,
-                                MasterLexer::Options orig_options) const;
+                                MasterLexer::Options& options) const;
 };
 
 class CRLF : public State {
 public:
     CRLF() {}
     virtual const State* handle(MasterLexer& /*lexer*/,
-                                MasterLexer::Options& /*options*/,
-                                MasterLexer::Options /*orig_options*/) const
+                                MasterLexer::Options& /*options*/) const
     {
         return (NULL);
     }
@@ -167,8 +166,7 @@ class String : public State {
 public:
     String() {}
     virtual const State* handle(MasterLexer& /*lexer*/,
-                                MasterLexer::Options& /*options*/,
-                                MasterLexer::Options /*orig_options*/) const
+                                MasterLexer::Options& /*options*/) const
     {
         return (NULL);
     }
@@ -203,9 +201,7 @@ cancelOptions(MasterLexer::Options& options,
 }
 
 const State*
-Start::handle(MasterLexer& lexer, MasterLexer::Options& options,
-              MasterLexer::Options orig_options) const
-{
+Start::handle(MasterLexer& lexer, MasterLexer::Options& options) const {
     while (true) {
         const int c = getLexerImpl(lexer)->source_->getChar();
         if (c == InputSource::END_OF_STREAM) {
@@ -237,7 +233,7 @@ Start::handle(MasterLexer& lexer, MasterLexer::Options& options,
             // TBD: unbalanced case
             --getLexerImpl(lexer)->paren_count_;
             if (getLexerImpl(lexer)->paren_count_ == 0) {
-                options = orig_options;
+                options = getLexerImpl(lexer)->orig_options_;
             }
             continue;
         } else {
@@ -245,6 +241,13 @@ Start::handle(MasterLexer& lexer, MasterLexer::Options& options,
             return (&STRING_STATE);
         }
     }
+}
+
+const State*
+State::getStartInstance(MasterLexer& lexer, MasterLexer::Options orig_options)
+{
+    lexer.impl_->orig_options_ = orig_options;
+    return (&START_STATE);
 }
 
 } // namespace master_lexer_internal

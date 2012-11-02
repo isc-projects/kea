@@ -25,17 +25,21 @@ class InputSource;
 
 class State {
 public:
+    virtual const State* handle(MasterLexer& lexer,
+                                MasterLexer::Options& options) const = 0;
+
+    static const State* getStartInstance(MasterLexer& lexer,
+                                         MasterLexer::Options orig_options);
+
+    /// Specific states are basically hidden within the implementation,
+    /// but we'd like to allow tests to examine them, so we provide
+    /// a way to get an instance of a specific state.
     enum ID {
         Start,                  ///< TBD
         CRLF,
         EatLine,
         String
     };
-    virtual const State* handle(MasterLexer& lexer,
-                                MasterLexer::Options& options,
-                                MasterLexer::Options orig_options =
-                                MasterLexer::NONE) const = 0;
-
     static const State& getInstance(ID state_id);
 
     /// \name Read-only accessors for testing purposes.
