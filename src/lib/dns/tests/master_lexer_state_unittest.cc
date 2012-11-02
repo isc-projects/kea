@@ -78,8 +78,17 @@ TEST_F(MasterLexerStateTest, startToEOL) {
     // The next lexer session will reach EOF.  Same eof check should pass.
     EXPECT_EQ(s_null, s_start.handle(lexer, options));
     eofCheck(s_start, lexer);
+}
 
-    // TBD: EOL after (
+TEST_F(MasterLexerStateTest, continuedInitialWS) {
+    // Unusual, probably impossible case in our expected usage.  We'll see
+    // an initial space after newline, but we didn't request recognizing
+    // the new line (so it'll be just skipped).
+    ss << "\n ";
+    options = MasterLexer::INITIAL_WS;
+    const State* state = State::getStartInstance(lexer, options);
+    EXPECT_EQ(s_null, state->handle(lexer, options));
+    EXPECT_EQ(Token::INITIAL_WS, s_start.getToken(lexer).getType());
 }
 
 TEST_F(MasterLexerStateTest, space) {
