@@ -37,6 +37,32 @@ namespace master_lexer_internal {
 /// This class is not meant for public use.
 class InputSource {
 public:
+    /// \brief Returned by getChar() when end of stream is reached.
+    static const int END_OF_STREAM;
+
+    /// \brief Exception thrown when ungetChar() is made to go before
+    /// the start of buffer.
+    struct UngetBeforeBeginning : public OutOfRange {
+        UngetBeforeBeginning(const char* file, size_t line, const char* what) :
+            OutOfRange(file, line, what)
+        {}
+    };
+
+    /// \brief Exception thrown when we fail to read from the input
+    /// stream or file.
+    struct ReadError : public Unexpected {
+        ReadError(const char* file, size_t line, const char* what) :
+            Unexpected(file, line, what)
+        {}
+    };
+
+    /// \brief Exception thrown when we fail to open the input file.
+    struct OpenError : public Unexpected {
+        OpenError(const char* file, size_t line, const char* what) :
+            Unexpected(file, line, what)
+        {}
+    };
+
     /// \brief Constructor which takes an input stream. The stream is
     /// read-from, but it is not closed.
     InputSource(std::istream& input_stream);
@@ -72,32 +98,6 @@ public:
     void saveLine() {
         saved_line_ = line_;
     }
-
-    /// \brief Exception thrown when ungetChar() is made to go before
-    /// the start of buffer.
-    struct UngetBeforeBeginning : public OutOfRange {
-        UngetBeforeBeginning(const char* file, size_t line, const char* what) :
-            OutOfRange(file, line, what)
-        {}
-    };
-
-    /// \brief Exception thrown when we fail to read from the input
-    /// stream or file.
-    struct ReadError : public Unexpected {
-        ReadError(const char* file, size_t line, const char* what) :
-            Unexpected(file, line, what)
-        {}
-    };
-
-    /// \brief Exception thrown when we fail to open the input file.
-    struct OpenError : public Unexpected {
-        OpenError(const char* file, size_t line, const char* what) :
-            Unexpected(file, line, what)
-        {}
-    };
-
-    /// \brief Returned by getChar() when end of stream is reached.
-    static const int END_OF_STREAM;
 
     /// \brief Returns a single character from the input source. If end
     /// of file is reached, \c END_OF_STREAM is returned.
