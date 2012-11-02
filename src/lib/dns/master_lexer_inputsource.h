@@ -38,7 +38,7 @@ namespace master_lexer_internal {
 class InputSource {
 public:
     /// \brief Returned by getChar() when end of stream is reached.
-    static const int END_OF_STREAM;
+    static const int END_OF_STREAM = -1;
 
     /// \brief Exception thrown when ungetChar() is made to go before
     /// the start of buffer.
@@ -138,8 +138,6 @@ private:
     std::fstream file_stream_;
     std::istream& input_;
 };
-
-const int InputSource::END_OF_STREAM = -1;
 
 } // namespace master_lexer_internal
 } // namespace dns
