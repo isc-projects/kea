@@ -15,6 +15,7 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/master_lexer.h>
+#include <dns/master_lexer_inputsource.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -26,30 +27,8 @@
 namespace isc {
 namespace dns {
 
-namespace master_lexer_internal {
-std::string
-createStreamName(std::istream& input_stream) {
-    std::stringstream ss;
-    ss << "stream-" << &input_stream;
-    return (ss.str());
-}
-
-// A fake version of InputSource until #2369 is ready.  This class only
-// provides some interfaces and doesn't manipulate the input source further.
-class InputSource {
-public:
-    InputSource(std::istream& input_stream) :
-        name_(createStreamName(input_stream))
-    {}
-    InputSource(const char* filename) : name_(filename) {}
-    const std::string& getName() const { return (name_); }
-    size_t getCurrentLine() const { return (1); }
-
-private:
-    const std::string name_;
-};
-
-typedef boost::shared_ptr<InputSource> InputSourcePtr;
+namespace {
+typedef boost::shared_ptr<master_lexer_internal::InputSource> InputSourcePtr;
 }
 using namespace master_lexer_internal;
 
