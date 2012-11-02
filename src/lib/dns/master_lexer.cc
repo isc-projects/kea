@@ -230,7 +230,11 @@ Start::handle(MasterLexer& lexer, MasterLexer::Options& options) const {
             ++getLexerImpl(lexer)->paren_count_;
             continue;
         } else if (c == ')') {
-            // TBD: unbalanced case
+            getLexerImpl(lexer)->last_was_eol_ = false;
+            if (getLexerImpl(lexer)->paren_count_ == 0) {
+                getLexerImpl(lexer)->token_ = Token(Token::UNBALANCED_PAREN);
+                return (NULL);
+            }
             --getLexerImpl(lexer)->paren_count_;
             if (getLexerImpl(lexer)->paren_count_ == 0) {
                 options = getLexerImpl(lexer)->orig_options_;
