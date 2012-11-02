@@ -19,6 +19,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/option.h>
+#include <dhcp/option_definition.h>
 #include <iostream>
 
 namespace isc {
@@ -210,6 +211,7 @@ protected:
     /// it is limited to critical options only.
     void initStdOptionDefs();
 
+private:
     /// server DUID (to be sent in server-identifier option)
     boost::shared_ptr<isc::dhcp::Option> serverid_;
 

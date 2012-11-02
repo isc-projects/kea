@@ -35,6 +35,23 @@ std::map<unsigned short, Option::Factory*> LibDHCP::v4factories_;
 // static array with factories for options
 std::map<unsigned short, Option::Factory*> LibDHCP::v6factories_;
 
+// Static container with DHCPv4 option definitions.
+OptionDefContainer LibDHCP::v4option_defs_;
+
+// Static container with DHCPv6 option definitions.
+OptionDefContainer LibDHCP::v6option_defs_;
+
+const OptionDefContainer&
+LibDHCP::getOptionDefs(Option::Universe u) {
+    switch (u) {
+    case Option::V4:
+        return (v4option_defs_);
+    case Option::V6:
+        return (v6option_defs_);
+    default:
+        isc_throw(isc::BadValue, "invalid universe " << u << " specified");
+    }
+}
 
 OptionPtr
 LibDHCP::optionFactory(Option::Universe u,
@@ -204,8 +221,27 @@ void LibDHCP::OptionFactoryRegister(Option::Universe u,
 }
 
 void
-LibDHCP::initStdOptionDefs6(OptionDefContainer& defs) {
-    defs.clear();
+LibDHCP::initStdOptionDefs(Option::Universe u) {
+    switch (u) {
+    case Option::V4:
+        initStdOptionDefs4();
+        break;
+    case Option::V6:
+        initStdOptionDefs6();
+        break;
+    default:
+        isc_throw(isc::BadValue, "invalid universe " << u << " specified");
+    }
+}
+
+void
+LibDHCP::initStdOptionDefs4() {
+    isc_throw(isc::NotImplemented, "initStdOptionDefs4 is not implemented");
+}
+
+void
+LibDHCP::initStdOptionDefs6() {
+    v6option_defs_.clear();
 
     struct OptionParams {
         std::string name;
@@ -243,11 +279,18 @@ LibDHCP::initStdOptionDefs6(OptionDefContainer& defs) {
             definition->addRecordField(OptionDefinition::UINT32_TYPE);
             break;
         case D6O_STATUS_CODE:
-            definition->addRecordField(OptionDefinition::UINT16_TYPE);
+            definotion->addRecordField(OptionDefinition::UINT16_TYPE);
             definition->addRecordField(OptionDefinition::STRING_TYPE);
         default:
             break;
         }
-        defs.push_back(definition);
+        try {
+            definition->validate();
+        } catch (const Exception& ex) {
+            isc_throw(isc::Unexpected, "internal server error: invalid definition of standard"
+                      << " DHCPv6 option (with code " << params[i].code << "): "
+                      << ex.what());
+        }
+        v6option_defs_.push_back(definition);
     }
 }

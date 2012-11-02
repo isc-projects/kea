@@ -52,10 +52,17 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
 
-    // First call to instance() will create IfaceMgr (it's a singleton)
-    // it may throw something if things go wrong
+    // Initialize objects required for DHCP server operation.
     try {
 
+        // Initialize standard DHCPv6 option definitions. This function
+        // may throw bad_alloc if system goes out of memory during the
+        // creation if option definitions. It may also throw isc::Unexpected
+        // if definitions are wrong. This would mean error in implementation.
+        initStdOptionDefs();
+
+        // Call IfaceMgr::instance() will create instance of Interface
+        // Manager (it's a singleton). It may throw if things go wrong.
         if (IfaceMgr::instance().countIfaces() == 0) {
             LOG_ERROR(dhcp6_logger, DHCP6_NO_INTERFACES);
             shutdown_ = true;
@@ -432,6 +439,5 @@ Dhcpv6Srv::serverReceivedPacketName(uint8_t type) {
 
 void
 Dhcpv6Srv::initStdOptionDefs() {
-    OptionDefContainer options;
-    LibDHCP::initStdOptionDefs6(options);
+    LibDHCP::initStdOptionDefs(Option::V6);
 }
