@@ -26,6 +26,7 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 #include <log/logger_support.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/triplet.h>
 #include <dhcp/pool.h>
 #include <dhcp/subnet.h>
@@ -601,7 +602,7 @@ private:
                       << " be equal to zero. Option code '0' is reserved in"
                       << " DHCPv6.");
         } else if (option_code > std::numeric_limits<uint16_t>::max()) {
-            isc_throw(Dhcp6ConfigError, "Parser error: value of 'code' must not"
+            isc_throw(Dhcp6ConfigError, "Parser error: value of 'code' must not"ciwtezcowy
                       << " exceed " << std::numeric_limits<uint16_t>::max());
         }
         // Check the option name has been specified, is non-empty and does not
@@ -625,15 +626,37 @@ private:
                       << " string of hexadecimal digits: " << option_data);
         }
 
-        // Create the actual option.
-        // @todo Currently we simply create dhcp::Option instance here but we will
-        // need to use dedicated factory functions once the option definitions are
-        // created for all options.
-        OptionPtr option(new Option(Option::V6, static_cast<uint16_t>(option_code),
-                                    binary));
+        OptionDefContainer option_defs = LibDHCP::getOptionDefs(Option::V6);
+        const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
 
-        // If option is created succesfully, add it to the storage.
-        options_->push_back(option);
+        const OptionDefContainerTypeRange& range = idx.equal_range(option_code);
+        size_t num_defs = std::distance(range.first, range.second);
+        OptionPtr option;
+        if (num_defs > 1) {
+            isc_throw(Dhcp6ConfigError, "Internal error: currently it is not"
+                      << " supported to initialize multiple option definitions"
+                      << " for the same option code. This will be supported once"
+                      << " there option spaces are implemented.");
+        } else if (num_defs == 0) {
+            // Create the actual option.
+            OptionPtr option(new Option(Option::V6, static_cast<uint16_t>(option_code),
+                                        binary));
+            // If option is created succesfully, add it to the storage.
+            options_->push_back(option);
+        } else {
+            const OptionDefinitionPtr& def = *(range.first);
+            // getFactory should never return NULL pointer so we skip
+            // sanity check here.
+            Option::Factory* factory = def->getFactory();
+            try {
+                OptionPtr option = factory(Option::V6, option_code, binary);
+                options_->push_back(option);
+            } catch (const isc::Exception& ex) {
+                isc_throw(Dhcp6ConfigError, "Parser error: option data does not match"
+                          << " option definition (code " << option_code << "): "
+                          << ex.what());
+            }
+        }
     }
 
     /// @brief Get a parameter from the strings storage.

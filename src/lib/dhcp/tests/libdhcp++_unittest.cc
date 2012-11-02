@@ -64,8 +64,8 @@ public:
     static void testInitOptionDefs6(const uint16_t code,
                              const OptionBuffer& buf,
                              const std::type_info& expected_type) {
-        OptionDefContainer options;
-        LibDHCP::initStdOptionDefs6(options);
+        LibDHCP::initStdOptionDefs(Option::V6);
+        OptionDefContainer options = LibDHCP::getOptionDefs(Option::V6);
         const OptionDefContainerTypeIndex& idx = options.get<1>();
         OptionDefContainerTypeRange range = idx.equal_range(code);
         ASSERT_EQ(1, std::distance(range.first, range.second));

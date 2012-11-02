@@ -17,6 +17,8 @@
 #include <fstream>
 #include <sstream>
 
+#include <boost/foreach.hpp>
+
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 
@@ -25,6 +27,7 @@
 #include <config/ccsession.h>
 #include <dhcp/subnet.h>
 #include <dhcp/cfgmgr.h>
+#include <dhcp/option6_ia.h>
 
 using namespace std;
 using namespace isc;
@@ -60,6 +63,24 @@ public:
     /// param value.
     std::string createConfigWithOption(const std::string& param_value,
                                        const std::string& parameter) {
+        std::map<std::string, std::string> params;
+        if (parameter == "name") {
+            params["name"] = param_value;
+            params["code"] = "80";
+            params["data"] = "AB CDEF0105";
+        } else if (parameter == "code") {
+            params["name"] = "option_foo";
+            params["code"] = param_value;
+            params["data"] = "AB CDEF0105";
+        } else if (parameter == "data") {
+            params["name"] = "option_foo";
+            params["code"] = "80";
+            params["data"] = param_value;
+        }
+        return (createConfigWithOption(params));
+    }
+
+    std::string createConfigWithOption(const std::map<std::string, std::string>& params) {
         std::ostringstream stream;
         stream << "{ \"interface\": [ \"all\" ],"
             "\"preferred-lifetime\": 3000,"
@@ -69,21 +90,21 @@ public:
             "    \"pool\": [ \"2001:db8:1::/80\" ],"
             "    \"subnet\": \"2001:db8:1::/64\", "
             "    \"option-data\": [ {";
-        if (parameter == "name") {
-            stream <<
-                "          \"name\": \"" << param_value << "\","
-                "          \"code\": 80,"
-                "          \"data\": \"AB CDEF0105\"";
-        } else if (parameter == "code") {
-            stream <<
-                "          \"name\": \"option_foo\","
-                "          \"code\": " << param_value << ","
-                "          \"data\": \"AB CDEF0105\"";
-        } else if (parameter == "data") {
-            stream <<
-                "          \"name\": \"option_foo\","
-                "          \"code\": 80,"
-                "          \"data\": \"" << param_value << "\"";
+        bool first = true;
+        typedef std::pair<std::string, std::string> ParamPair;
+        BOOST_FOREACH(ParamPair param, params) {
+            if (!first) {
+                stream << ", ";
+            } else {
+                first = false;
+            }
+            if (param.first == "name") {
+                stream << "\"name\": \"" << param.second << "\"";
+            } else if (param.first == "code") {
+                stream << "\"code\": " << param.second << "";
+            } else if (param.first == "data") {
+                stream << "\"data\": \"" << param.second << "\"";
+            }
         }
         stream <<
             "        } ]"
@@ -656,6 +677,60 @@ TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
     };
     // Check if option is valid in terms of code and carried data.
     testOption(*range.first, 80, foo_expected, sizeof(foo_expected));
+}
+
+// Verify that specific option object is returned for standard
+// option which has dedicated option class derived from Option.
+TEST_F(Dhcp6ParserTest, stdOptionData) {
+    ConstElementPtr x;
+    std::map<std::string, std::string> params;
+    params["name"] = "OPTION_IA_NA";
+    // Option code 3 means OPTION_IA_NA.
+    params["code"] = "3";
+    params["data"] = "ABCDEF01 02030405 06070809";
+    
+    std::string config = createConfigWithOption(params);
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet);
+    const Subnet::OptionContainer& options = subnet->getOptions();
+    ASSERT_EQ(1, options.size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+              Subnet::OptionContainerTypeIndex::const_iterator> range =
+        idx.equal_range(D6O_IA_NA);
+    // Expect single option with the code equal to IA_NA option code.
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    // The actual pointer to the option is held in the option field
+    // in the structure returned.
+    OptionPtr option = range.first->option;
+    ASSERT_TRUE(option);
+    // Option object returned for here is expected to be Option6IA
+    // which is derived from Option. This class is dedicated to
+    // represent standard option IA_NA.
+    boost::shared_ptr<Option6IA> optionIA =
+        boost::dynamic_pointer_cast<Option6IA>(option);
+    // If cast is unsuccessful than option returned was of a
+    // differnt type than Option6IA. This is wrong.
+    ASSERT_TRUE(optionIA);
+    // If cast was successful we may use accessors exposed by
+    // Option6IA to validate that the content of this option
+    // has been set correctly.
+    EXPECT_EQ(0xABCDEF01, optionIA->getIAID());
+    EXPECT_EQ(0x02030405, optionIA->getT1());
+    EXPECT_EQ(0x06070809, optionIA->getT2());
 }
 
 };

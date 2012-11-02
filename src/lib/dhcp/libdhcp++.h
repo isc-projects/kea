@@ -30,6 +30,12 @@ public:
     /// Map of factory functions.
     typedef std::map<unsigned short, Option::Factory*>  FactoryMap;
 
+    /// @brief Return collection of option definitions.
+    ///
+    /// @param u universe of the options (V4 or V6).
+    /// @return collection of option definitions.
+    static const OptionDefContainer& getOptionDefs(Option::Universe u);
+
     /// @brief Factory function to create instance of option.
     ///
     /// Factory method creates instance of specified option. The option
@@ -104,14 +110,53 @@ public:
                                       uint16_t type,
                                       Option::Factory * factory);
 
-    static void initStdOptionDefs6(OptionDefContainer& defs);
+    /// Initialize standard DHCP options (V4 or V6).
+    ///
+    /// The method creates option definitions for all options
+    /// (DHCPv4 or DHCPv6 depending on universe specified).
+    /// Currently DHCPv4 option definitions initialization is not
+    /// implemented thus this function will throw isc::NotImplemented
+    /// if V4 universe is specified.
+    ///
+    /// @param u universe
+    /// @throw isc::Unexpected if internal error occured during option
+    /// definitions creation.
+    /// @throw std::bad_alloc if system went out of memory.
+    /// @throw isc::NotImplemented when V4 universe specified.
+    static void initStdOptionDefs(Option::Universe u);
 
-protected:
+private:
+
+    /// Initialize standard DHCPv4 option definitions.
+    ///
+    /// The method creates option definitions for all DHCPv4 options.
+    /// Currently this function is not implemented.
+    ///
+    /// @todo implemend this function.
+    ///
+    /// @throw isc::NotImplemeneted
+    static void initStdOptionDefs4();
+
+    /// Initialize standard DHCPv6 option definitions.
+    ///
+    /// The method creates option definitions for all DHCPv6 options.
+    ///
+    /// @throw isc::Unexpected if internal error occured during option
+    /// definitions creation.
+    /// @throw std::bad_alloc if system went out of memory.
+    static void initStdOptionDefs6();
+
     /// pointers to factories that produce DHCPv6 options
     static FactoryMap v4factories_;
 
     /// pointers to factories that produce DHCPv6 options
     static FactoryMap v6factories_;
+
+    /// Container with DHCPv4 option definitions.
+    static OptionDefContainer v4option_defs_;
+
+    /// Container with DHCPv6 option definitions.
+    static OptionDefContainer v6option_defs_;
 };
 
 }
