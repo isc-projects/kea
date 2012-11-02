@@ -47,22 +47,24 @@ MasterLexer::~MasterLexer() {
 }
 
 void
-MasterLexer::open(const char* filename) {
+MasterLexer::pushSource(const char* filename) {
     if (filename == NULL) {
-        isc_throw(InvalidParameter, "NULL filename for MasterLexer::open");
+        isc_throw(InvalidParameter,
+                  "NULL filename for MasterLexer::pushSource");
     }
     impl_->sources_.push_back(InputSourcePtr(new InputSource(filename)));
 }
 
 void
-MasterLexer::open(std::istream& input) {
+MasterLexer::pushSource(std::istream& input) {
     impl_->sources_.push_back(InputSourcePtr(new InputSource(input)));
 }
 
 void
-MasterLexer::close() {
+MasterLexer::popSource() {
     if (impl_->sources_.empty()) {
-        isc_throw(InvalidOperation, "MasterLexer::close on an empty source");
+        isc_throw(InvalidOperation,
+                  "MasterLexer::popSource on an empty source");
     }
     impl_->sources_.pop_back();
 }
