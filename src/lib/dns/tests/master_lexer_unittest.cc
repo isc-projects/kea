@@ -62,7 +62,7 @@ TEST_F(MasterLexerTest, pushStream) {
     // return 1 initially.
     EXPECT_EQ(1, lexer.getSourceLine());
 
-    // By closing it the stack will be empty again.
+    // By popping it the stack will be empty again.
     lexer.popSource();
     checkEmptySource(lexer);
 }
@@ -111,7 +111,7 @@ TEST_F(MasterLexerTest, nestedPush) {
     lexer.pushSource(TEST_DATA_SRCDIR "/masterload.txt");
     EXPECT_EQ(TEST_DATA_SRCDIR "/masterload.txt", lexer.getSourceName());
 
-    // Close works on the "topmost" (last-pushed) source
+    // popSource() works on the "topmost" (last-pushed) source
     lexer.popSource();
     EXPECT_EQ(expected_stream_name, lexer.getSourceName());
 
@@ -119,7 +119,7 @@ TEST_F(MasterLexerTest, nestedPush) {
     EXPECT_TRUE(lexer.getSourceName().empty());
 }
 
-TEST_F(MasterLexerTest, invalidClose) {
+TEST_F(MasterLexerTest, invalidPop) {
     // popSource() cannot be called if the sources stack is empty.
     EXPECT_THROW(lexer.popSource(), isc::InvalidOperation);
 }
