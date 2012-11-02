@@ -34,12 +34,13 @@ typedef boost::shared_ptr<master_lexer_internal::InputSource> InputSourcePtr;
 using namespace master_lexer_internal;
 
 struct MasterLexer::MasterLexerImpl {
-    MasterLexerImpl() : source_(NULL), last_was_eol_(false),
+    MasterLexerImpl() : source_(NULL), paren_count_(0), last_was_eol_(false),
                         token_(Token::NOT_STARTED)
     {}
 
     std::vector<InputSourcePtr> sources_;
     InputSource* source_;       // current source
+    size_t paren_count_;
     bool last_was_eol_;
     Token token_;
 };
@@ -130,13 +131,18 @@ namespace master_lexer_internal {
 typedef MasterLexer::Token Token; // convenience shortcut
 
 bool
-State::wasLastEOL(MasterLexer& lexer) const {
+State::wasLastEOL(const MasterLexer& lexer) const {
     return (lexer.impl_->last_was_eol_);
 }
 
-const MasterLexer::Token
-State::getToken(MasterLexer& lexer) const {
+const MasterLexer::Token&
+State::getToken(const MasterLexer& lexer) const {
     return (lexer.impl_->token_);
+}
+
+size_t
+State::getParenCount(const MasterLexer& lexer) const {
+    return (lexer.impl_->paren_count_);
 }
 
 class Start : public State {
@@ -158,19 +164,48 @@ public:
     }
 };
 
+class String : public State {
+public:
+    String() {}
+    virtual const State* handle(MasterLexer& /*lexer*/,
+                                MasterLexer::Options& /*options*/,
+                                MasterLexer::Options /*orig_options*/) const
+    {
+        return (NULL);
+    }
+};
+
 namespace {
 const Start START_STATE;
 const CRLF CRLF_STATE;
+const String STRING_STATE;
 }
 
 const State&
-State::getInstance(ID /*state_id*/) {
-    return (START_STATE);
+State::getInstance(ID state_id) {
+    switch (state_id) {
+    case Start:
+        return (START_STATE);
+    case CRLF:
+        return (CRLF_STATE);
+    case EatLine:
+        return (CRLF_STATE);    // XXX
+    case String:
+        return (STRING_STATE);    // XXX
+    }
+}
+
+inline void
+cancelOptions(MasterLexer::Options& options,
+              MasterLexer::Options canceled_options)
+{
+    options = static_cast<MasterLexer::Options>(
+        options & static_cast<MasterLexer::Options>(~canceled_options));
 }
 
 const State*
 Start::handle(MasterLexer& lexer, MasterLexer::Options& options,
-              MasterLexer::Options /*orig_options*/) const
+              MasterLexer::Options orig_options) const
 {
     while (true) {
         const int c = getLexerImpl(lexer)->source_->getChar();
@@ -191,8 +226,20 @@ Start::handle(MasterLexer& lexer, MasterLexer::Options& options,
             getLexerImpl(lexer)->last_was_eol_ = true;
             getLexerImpl(lexer)->token_ = Token(Token::END_OF_LINE);
             return (NULL);
+        } else if (c == '(') {
+            getLexerImpl(lexer)->last_was_eol_ = false;
+            cancelOptions(options,
+                          MasterLexer::END_OF_LINE | MasterLexer::INITIAL_WS);
+            ++getLexerImpl(lexer)->paren_count_;
+            continue;
+        } else if (c == ')') {
+            // TBD: unbalanced case
+            --getLexerImpl(lexer)->paren_count_;
+            options = orig_options; // TBD: only when count becomes 0
+        } else {
+            getLexerImpl(lexer)->last_was_eol_ = false;
+            return (&STRING_STATE);
         }
-        return (&CRLF_STATE); // placeholder
     }
 }
 

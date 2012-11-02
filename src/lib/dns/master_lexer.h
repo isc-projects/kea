@@ -55,6 +55,8 @@ public:
         INITIAL_WS = 1, ///< recognize begin-of-line spaces
         QSTRING = INITIAL_WS << 1, ///< recognize quoted string
         NUMBER = QSTRING << 1, ///< recognize numeric text as integer
+        END_OF_LINE = NUMBER << 1 ///< recognize end of line as a token
+                                 /// (not user-settable)
     };
 
     /// \brief The constructor.
@@ -151,6 +153,16 @@ private:
     struct MasterLexerImpl;
     MasterLexerImpl* impl_;
 };
+
+/// \brief Operator to combine \c MasterLexer options
+///
+/// This is a trivial shortcut so that compound options can be specified
+/// in an intuitive way.
+inline MasterLexer::Options
+operator|(MasterLexer::Options o1, MasterLexer::Options o2) {
+    return (static_cast<MasterLexer::Options>(
+                static_cast<unsigned>(o1) | static_cast<unsigned>(o2)));
+}
 
 /// \brief Tokens for \c MasterLexer
 ///
