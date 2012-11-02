@@ -70,16 +70,37 @@ TEST_F(MasterLexerTest, pushStream) {
 TEST_F(MasterLexerTest, pushFile) {
     // We use zone file (-like) data, but in this test that actually doesn't
     // matter.
-    lexer.pushSource(TEST_DATA_SRCDIR "/masterload.txt");
+    EXPECT_TRUE(lexer.pushSource(TEST_DATA_SRCDIR "/masterload.txt"));
     EXPECT_EQ(TEST_DATA_SRCDIR "/masterload.txt", lexer.getSourceName());
     EXPECT_EQ(1, lexer.getSourceLine());
 
     lexer.popSource();
     checkEmptySource(lexer);
+
+    // If we give a non NULL string pointer, its content will be intact
+    // if pushSource succeeds.
+    std::string error_txt = "dummy";
+    EXPECT_TRUE(lexer.pushSource(TEST_DATA_SRCDIR "/masterload.txt",
+                                 &error_txt));
+    EXPECT_EQ("dummy", error_txt);
 }
 
 TEST_F(MasterLexerTest, pushBadFileName) {
     EXPECT_THROW(lexer.pushSource(NULL), isc::InvalidParameter);
+}
+
+TEST_F(MasterLexerTest, pushFileFail) {
+    // The file to be pushed doesn't exist.  pushSource() fails and
+    // some non empty error string should be set.
+    std::string error_txt;
+    EXPECT_TRUE(error_txt.empty());
+    EXPECT_FALSE(lexer.pushSource("no-such-file", &error_txt));
+    EXPECT_FALSE(error_txt.empty());
+
+    // It's safe to pass NULL error_txt (either explicitly or implicitly as
+    // the default)
+    EXPECT_FALSE(lexer.pushSource("no-such-file", NULL));
+    EXPECT_FALSE(lexer.pushSource("no-such-file"));
 }
 
 TEST_F(MasterLexerTest, nestedPush) {
