@@ -61,48 +61,67 @@ TEST_F(InputSourceTest, getName) {
 
 // getChar() should return characters from the input stream in
 // sequence. ungetChar() should skip backwards.
-TEST_F(InputSourceTest, getAndUngetChar) {
-    for (size_t i = 0; i < str_length_; i++) {
-        EXPECT_EQ(str_[i], source_.getChar());
-        EXPECT_FALSE(source_.atEOF());
+void
+checkGetAndUngetChar(InputSource& source, const char* str, size_t str_length)
+{
+    for (size_t i = 0; i < str_length; i++) {
+        EXPECT_EQ(str[i], source.getChar());
+        EXPECT_FALSE(source.atEOF());
     }
 
     // At this point, we still have not reached EOF.
-    EXPECT_FALSE(source_.atEOF());
+    EXPECT_FALSE(source.atEOF());
 
     // This should cause EOF to be set.
-    EXPECT_EQ(InputSource::END_OF_STREAM, source_.getChar());
+    EXPECT_EQ(InputSource::END_OF_STREAM, source.getChar());
 
     // Now, EOF should be set.
-    EXPECT_TRUE(source_.atEOF());
+    EXPECT_TRUE(source.atEOF());
 
     // Now, let's go backwards. This should cause the EOF to be set to
     // false.
-    source_.ungetChar();
+    source.ungetChar();
 
     // Now, EOF should be false.
-    EXPECT_FALSE(source_.atEOF());
+    EXPECT_FALSE(source.atEOF());
 
     // This should cause EOF to be set again.
-    EXPECT_EQ(InputSource::END_OF_STREAM, source_.getChar());
+    EXPECT_EQ(InputSource::END_OF_STREAM, source.getChar());
 
     // Now, EOF should be set.
-    EXPECT_TRUE(source_.atEOF());
+    EXPECT_TRUE(source.atEOF());
 
     // Now, let's go backwards in a loop. Start by skipping the EOF.
-    source_.ungetChar();
+    source.ungetChar();
 
-    for (size_t i = 0; i < str_length_; i++) {
-        size_t index = str_length_ - 1 - i;
+    for (size_t i = 0; i < str_length; i++) {
+        size_t index = str_length - 1 - i;
         // Skip one character.
-        source_.ungetChar();
-        EXPECT_EQ(str_[index], source_.getChar());
+        source.ungetChar();
+        EXPECT_EQ(str[index], source.getChar());
         // Skip the character we received again.
-        source_.ungetChar();
+        source.ungetChar();
     }
 
     // Skipping past the start of buffer should throw.
-    EXPECT_THROW(source_.ungetChar(), InputSource::UngetBeforeBeginning);
+    EXPECT_THROW(source.ungetChar(), InputSource::UngetBeforeBeginning);
+}
+
+TEST_F(InputSourceTest, stream) {
+    checkGetAndUngetChar(source_, str_, str_length_);
+}
+
+TEST_F(InputSourceTest, file) {
+    const char* str =
+        ";; a simple (incomplete) zone file\n"
+        "\n"
+        "example.com. 3600 IN TXT \"test data\"\n"
+        "www.example.com. 60 IN A 192.0.2.1\n"
+        "www.example.com. 60 IN A 192.0.2.2\n";
+    size_t str_length = strlen(str);
+
+    InputSource source(TEST_DATA_SRCDIR "/masterload.txt");
+    checkGetAndUngetChar(source, str, str_length);
 }
 
 // ungetAll() should skip back to the place where the InputSource
