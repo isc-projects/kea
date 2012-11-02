@@ -54,7 +54,7 @@ TEST_F(MasterLexerTest, preOpen) {
 }
 
 TEST_F(MasterLexerTest, openStream) {
-    lexer.open(ss);
+    lexer.pushSource(ss);
     EXPECT_EQ(expected_stream_name, lexer.getSourceName());
 
     // From the point of view of this test, we only have to check (though
@@ -63,44 +63,44 @@ TEST_F(MasterLexerTest, openStream) {
     EXPECT_EQ(1, lexer.getSourceLine());
 
     // By closing it the stack will be empty again.
-    lexer.close();
+    lexer.popSource();
     checkEmptySource(lexer);
 }
 
 TEST_F(MasterLexerTest, openFile) {
     // We use zone file (-like) data, but in this test that actually doesn't
     // matter.
-    lexer.open(TEST_DATA_SRCDIR "/masterload.txt");
+    lexer.pushSource(TEST_DATA_SRCDIR "/masterload.txt");
     EXPECT_EQ(TEST_DATA_SRCDIR "/masterload.txt", lexer.getSourceName());
     EXPECT_EQ(1, lexer.getSourceLine());
 
-    lexer.close();
+    lexer.popSource();
     checkEmptySource(lexer);
 }
 
 TEST_F(MasterLexerTest, openBadFileName) {
-    EXPECT_THROW(lexer.open(NULL), isc::InvalidParameter);
+    EXPECT_THROW(lexer.pushSource(NULL), isc::InvalidParameter);
 }
 
 TEST_F(MasterLexerTest, nestedOpen) {
-    lexer.open(ss);
+    lexer.pushSource(ss);
     EXPECT_EQ(expected_stream_name, lexer.getSourceName());
 
     // We can open another source without closing the previous one.
-    lexer.open(TEST_DATA_SRCDIR "/masterload.txt");
+    lexer.pushSource(TEST_DATA_SRCDIR "/masterload.txt");
     EXPECT_EQ(TEST_DATA_SRCDIR "/masterload.txt", lexer.getSourceName());
 
     // Close works on the "topmost" (last-opened) source
-    lexer.close();
+    lexer.popSource();
     EXPECT_EQ(expected_stream_name, lexer.getSourceName());
 
-    lexer.close();
+    lexer.popSource();
     EXPECT_TRUE(lexer.getSourceName().empty());
 }
 
 TEST_F(MasterLexerTest, invalidClose) {
-    // close() cannot be called if the sources stack is empty.
-    EXPECT_THROW(lexer.close(), isc::InvalidOperation);
+    // popSource() cannot be called if the sources stack is empty.
+    EXPECT_THROW(lexer.popSource(), isc::InvalidOperation);
 }
 
 }
