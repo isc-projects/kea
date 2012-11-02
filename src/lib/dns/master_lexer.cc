@@ -208,7 +208,7 @@ Start::handle(MasterLexer& lexer, MasterLexer::Options& options,
 {
     while (true) {
         const int c = getLexerImpl(lexer)->source_->getChar();
-        if (c < 0) {
+        if (c == InputSource::END_OF_STREAM) {
             // TODO: handle unbalance cases
             getLexerImpl(lexer)->last_was_eol_ = false;
             getLexerImpl(lexer)->token_ = Token(Token::END_OF_FILE);
