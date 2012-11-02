@@ -151,6 +151,8 @@ TEST_F(AllocEngineTest, simpleAlloc) {
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease6(lease, from_mgr);
+
+    delete engine;
 }
 
 // This test checks if the fake allocation (for SOLICIT) can succeed
@@ -201,6 +203,8 @@ TEST_F(AllocEngineTest, allocWithValidHint) {
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease6(lease, from_mgr);
+
+    delete engine;
 }
 
 // This test checks if the allocation with a hint that is in range,
@@ -241,6 +245,8 @@ TEST_F(AllocEngineTest, allocWithUsedHint) {
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease6(lease, from_mgr);
+
+    delete engine;
 }
 
 // This test checks if the allocation with a hint that is out the blue
@@ -272,6 +278,8 @@ TEST_F(AllocEngineTest, allocBogusHint) {
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease6(lease, from_mgr);
+
+    delete engine;
 }
 
 // This test verifies that the allocator picks addresses that belong to the
