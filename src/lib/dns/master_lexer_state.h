@@ -28,7 +28,8 @@ public:
     enum ID {
         Start,                  ///< TBD
         CRLF,
-        EatLine
+        EatLine,
+        String
     };
     virtual const State* handle(MasterLexer& lexer,
                                 MasterLexer::Options& options,
@@ -38,8 +39,9 @@ public:
     static const State& getInstance(ID state_id);
 
     /// \name Read-only accessors for testing purposes.
-    bool wasLastEOL(MasterLexer& lexer) const;
-    const MasterLexer::Token getToken(MasterLexer& lexer) const;
+    bool wasLastEOL(const MasterLexer& lexer) const;
+    const MasterLexer::Token& getToken(const MasterLexer& lexer) const;
+    size_t getParenCount(const MasterLexer& lexer) const;
 
 protected:
     MasterLexer::MasterLexerImpl* getLexerImpl(MasterLexer& lexer) const {
