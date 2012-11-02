@@ -47,6 +47,10 @@ InputSource::InputSource(const char* filename) :
     input_(file_stream_)
 {
     file_stream_.open(filename, std::fstream::in);
+    if (file_stream_.fail()) {
+        isc_throw(OpenError,
+                  "Error opening the input source file: " << filename);
+    }
 }
 
 InputSource::~InputSource()
