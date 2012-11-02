@@ -17,6 +17,7 @@
 
 #include <exceptions/exceptions.h>
 
+#include <istream>
 #include <string>
 
 #include <stdint.h>
@@ -24,9 +25,120 @@
 namespace isc {
 namespace dns {
 
+/// \brief Tokenizer for parsing DNS master files.
+///
+/// The \c MasterLexer class provides tokenize interfaces for parsing DNS
+/// master files.  It understands some special rules of master files as
+/// defined in RFC 1035, such as comments, character escaping, and multi-line
+/// data, and provides the user application with the actual data in a
+/// more convenient form such as a std::string object.
+///
+/// In order to support the $INCLUDE notation, this class is designed to be
+/// able to operate on multiple files or input streams in the nested way.
+/// The \c pushSource() and \c popSource() methods correspond to the push
+/// and pop operations.
+///
+/// While this class is public, it is less likely to be used by normal
+/// applications; it's mainly expected to be used within this library,
+/// specifically by the \c MasterLoader class and \c Rdata implementation
+/// classes.
 class MasterLexer {
 public:
     class Token;       // we define it separately for better readability
+
+    /// \brief The constructor.
+    ///
+    /// \throw std::bad_alloc Internal resource allocation fails (rare case).
+    MasterLexer();
+
+    /// \brief The destructor.
+    ///
+    /// It internally closes any remaining input sources.
+    ~MasterLexer();
+
+    /// \brief Open a file and make it the current input source of MasterLexer.
+    ///
+    /// The opened file can be explicitly closed by the \c popSource() method;
+    /// if \c popSource() is not called within the lifetime of the
+    /// \c MasterLexer, it will be closed in the destructor.
+    ///
+    /// In the case possible system errors in opening the file (most likely
+    /// because of specifying a non-existent or unreadable file), it returns
+    /// false, and if the optional \c error parameter is non NULL, it will be
+    /// set to a description of the error (any existing content of the string
+    /// will be discarded).  If opening the file succeeds, the given
+    /// \c error parameter will be intact.
+    ///
+    /// \throw InvalidParameter filename is NULL
+    /// \param filename A non NULL string specifying a master file
+    /// \param error If non null, a placeholder to set error description in
+    /// case of failure.
+    ///
+    /// \return true if pushing the file succeeds; false otherwise.
+    bool pushSource(const char* filename, std::string* error = NULL);
+
+    /// \brief Make the given stream the current input source of MasterLexer.
+    ///
+    /// The caller still holds the ownership of the passed stream; it's the
+    /// caller's responsibility to keep it valid as long as it's used in
+    /// \c MasterLexer or to release any resource for the stream after that.
+    /// The caller can explicitly tell \c MasterLexer to stop using the
+    /// stream by calling the \c popSource() method.
+    ///
+    /// \param input An input stream object that produces textual
+    /// representation of DNS RRs.
+    void pushSource(std::istream& input);
+
+    /// \brief Stop using the most recently opened input source (file or
+    /// stream).
+    ///
+    /// If it's a file, the previously opened file will be closed internally.
+    /// If it's a stream, \c MasterLexer will simply stop using
+    /// the stream; the caller can assume it will be never used in
+    /// \c MasterLexer thereafter.
+    ///
+    /// This method must not be called when there is no source pushed for
+    /// \c MasterLexer.  This method is otherwise exception free.
+    ///
+    /// \throw isc::InvalidOperation Called with no pushed source.
+    void popSource();
+
+    /// \brief Return the name of the current input source name.
+    ///
+    /// If it's a file, it will be the C string given at the corresponding
+    /// \c pushSource() call, that is, its filename.  If it's a stream, it will
+    /// be formatted as \c "stream-%p" where \c %p is hex representation
+    /// of the address of the stream object.
+    ///
+    /// If there is no opened source at the time of the call, this method
+    /// returns an empty string.
+    ///
+    /// \throw std::bad_alloc Resource allocation failed for string
+    /// construction (rare case)
+    ///
+    /// \return A string representation of the current source (see the
+    /// description)
+    std::string getSourceName() const;
+
+    /// \brief Return the input source line number.
+    ///
+    /// If there is an opened source, the return value will be a non-0
+    /// integer indicating the line number of the current source where
+    /// the \c MasterLexer is currently working.  The expected usage of
+    /// this value is to print a helpful error message when parsing fails
+    /// by specifically identifying the position of the error.
+    ///
+    /// If there is no opened source at the time of the call, this method
+    /// returns 0.
+    ///
+    /// \throw None
+    ///
+    /// \return The current line number of the source (see the description)
+    size_t getSourceLine() const;
+
+private:
+    struct MasterLexerImpl;
+    MasterLexerImpl* impl_;
 };
 
 /// \brief Tokens for \c MasterLexer
