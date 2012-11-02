@@ -46,13 +46,22 @@ MasterLexer::~MasterLexer() {
     delete impl_;
 }
 
-void
-MasterLexer::pushSource(const char* filename) {
+bool
+MasterLexer::pushSource(const char* filename, std::string* error) {
     if (filename == NULL) {
         isc_throw(InvalidParameter,
                   "NULL filename for MasterLexer::pushSource");
     }
-    impl_->sources_.push_back(InputSourcePtr(new InputSource(filename)));
+    try {
+        impl_->sources_.push_back(InputSourcePtr(new InputSource(filename)));
+    } catch (const InputSource::OpenError& ex) {
+        if (error != NULL) {
+            *error = ex.what();
+        }
+        return (false);
+    }
+
+    return (true);
 }
 
 void

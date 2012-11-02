@@ -62,10 +62,20 @@ public:
     /// if \c popSource() is not called within the lifetime of the
     /// \c MasterLexer, it will be closed in the destructor.
     ///
+    /// In the case possible system errors in opening the file (most likely
+    /// because of specifying a non-existent or unreadable file), it returns
+    /// false, and if the optional \c error parameter is non NULL, it will be
+    /// set to a description of the error (any existing content of the string
+    /// will be discarded).  If opening the file succeeds, the given
+    /// \c error parameter will be intact.
+    ///
     /// \throw InvalidParameter filename is NULL
-    /// \throw some_other The specified cannot be opened
     /// \param filename A non NULL string specifying a master file
-    void pushSource(const char* filename);
+    /// \param error If non null, a placeholder to set error description in
+    /// case of failure.
+    ///
+    /// \return true if pushing the file succeeds; false otherwise.
+    bool pushSource(const char* filename, std::string* error = NULL);
 
     /// \brief Make the given stream the current input source of MasterLexer.
     ///
