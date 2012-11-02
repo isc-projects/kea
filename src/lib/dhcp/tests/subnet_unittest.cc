@@ -433,15 +433,15 @@ TEST(Subnet6Test, inRangeinPool) {
 
 // This test checks if the toText() method returns text representation
 TEST(Subnet6Test, toText) {
-    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
-    EXPECT_EQ("2001:db8::/32", subnet->toText());
+    Subnet6 subnet(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
+    EXPECT_EQ("2001:db8::/32", subnet.toText());
 }
 
 // This test checks if the get() method returns proper parameters
 TEST(Subnet6Test, get) {
-    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
-    EXPECT_EQ("2001:db8::", subnet->get().first.toText());
-    EXPECT_EQ(32, subnet->get().second);
+    Subnet6 subnet(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
+    EXPECT_EQ("2001:db8::", subnet.get().first.toText());
+    EXPECT_EQ(32, subnet.get().second);
 }
 
 };

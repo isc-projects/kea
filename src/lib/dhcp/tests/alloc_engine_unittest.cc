@@ -18,7 +18,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/alloc_engine.h>
 #include <dhcp/cfgmgr.h>
-#include "memfile_lease_mgr.h"
+#include <dhcp/memfile_lease_mgr.h>
 #include <boost/shared_ptr.hpp>
 #include <iostream>
 #include <sstream>

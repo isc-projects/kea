@@ -65,10 +65,10 @@ class DUID {
     std::string toText() const;
 
     /// compares two DUIDs
-    bool operator == (const DUID& other) const;
+    bool operator==(const DUID& other) const;
 
     /// compares two DUIDs
-    bool operator != (const DUID& other) const;
+    bool operator!=(const DUID& other) const;
 
  protected:
     /// the actual content of the DUID

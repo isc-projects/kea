@@ -32,8 +32,9 @@
 #include <dhcp/cfgmgr.h>
 #include <dhcp/option6_iaaddr.h>
 
-// @todo: Replace this with MySQL_LeaseMgr once it is merged
-#include <dhcp/tests/memfile_lease_mgr.h>
+// @todo: Replace this with MySQL_LeaseMgr (or a LeaseMgr factory)
+// once it is merged
+#include <dhcp/memfile_lease_mgr.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -75,7 +76,8 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
     }
 
     // Instantiate LeaseMgr
-    // @todo: Replace this with MySQL_LeaseMgr once it is merged
+    // @todo: Replace this with MySQL_LeaseMgr (or a LeaseMgr factory)
+    // once it is merged
     new isc::dhcp::test::Memfile_LeaseMgr("");
 
     LOG_INFO(dhcp6_logger, DHCP6_DB_BACKEND_STARTED)
