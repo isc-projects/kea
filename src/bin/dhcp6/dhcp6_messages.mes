@@ -32,8 +32,8 @@ updated configuration from the BIND 10 configuration system.
 
 % DHCP6_DB_BACKEND_STARTED Lease database started (backend type: %1)
 This informational message is printed every time DHCPv6 is started.
-It indicates which backend type will be used throughout the server
-operation.
+It indicates what database backend type is being to store lease and
+other information.
 
 % DHCP6_NOT_RUNNING IPv6 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
@@ -47,16 +47,26 @@ interfaces and is therefore shutting down.
 A debug message issued during startup, this indicates that the IPv6 DHCP
 server is about to open sockets on the specified port.
 
-% DHCP6_LEASE_ALLOC Lease %1 %2 allocated (client duid=%3, iaid=%4)
-This debug message indicates that the server successfully advertised (i.e.
-responded to SOLICIT) or granted (i.e. responded to REQUEST) a lease.
-This is a normal behavior and incicates successful operation.
+% DHCP6_LEASE_ADVERT Lease %1 advertised (client duid=%2, iaid=%3)
+This debug message indicates that the server successfully advertised
+a lease. It is up to the client to choose one server out of othe advertised
+and continue allocation with that server. This is a normal behavior and
+incicates successful operation.
 
-% DHCP6_LEASE_ALLOC_FAIL Failed to %1 a lease for client duid=%2, iaid=%3
-This message indicates that the server failed to advertise (i.e. respond
-to SOLICIT) or grant (i.e. respond to REQUEST) a lease for a given client.
-There may be many reasons for such failure. Each specific failure is logged
-in a separate log entry.
+% DHCP6_LEASE_ALLOC lease %1 has been allocated (client duid=%2, iaid=%3)
+This debug message indicates that the server successfully granted (in
+response to client's REQUEST message) a lease. This is a normal behavior
+and incicates successful operation.
+
+% DHCP6_LEASE_ADVERT_FAIL failed to advertise a lease for client duid=%1, iaid=%2
+This message indicates that the server failed to advertise (in response to
+received SOLICIT) a lease for a given client. There may be many reasons for
+such failure. Each specific failure is logged in a separate log entry.
+
+% DHCP6_LEASE_ALLOC_FAIL failed to grant a lease for client duid=%1, iaid=%2
+This message indicates that the server failed to grant (in response to
+received REQUEST) a lease for a given client. There may be many reasons for
+such failure. Each specific failure is logged in a separate log entry.
 
 % DHCP6_PACKET_PARSE_FAIL failed to parse incoming packet
 The IPv6 DHCP server has received a packet that it is unable to interpret.
@@ -82,7 +92,7 @@ This error is output if the server failed to assemble the data to be
 returned to the client into a valid packet.  The reason is most likely
 to be to a programming error: please raise a bug report.
 
-% DHCP6_PROCESS_IA_NA_REQUEST Server is processing IA_NA option (duid=%1, iaid=%2, hint=%3)
+% DHCP6_PROCESS_IA_NA_REQUEST server is processing IA_NA option (duid=%1, iaid=%2, hint=%3)
 This is a debug message that indicates a processing of received IA_NA
 option. It may optionally contain an address that may be used by the server
 as a hint for possible requested address.
@@ -131,12 +141,18 @@ This is a debug message issued during the IPv6 DHCP server startup.
 It lists some information about the parameters with which the server
 is running.
 
-% DHCP6_SUBNET_SELECTED The %1 subnet was selected for client assignment
+% DHCP6_SUBNET_SELECTED the %1 subnet was selected for client assignment
 This is a debug message informing that a given subnet was selected. It will
 be used for address and option assignment. This is one of the early steps
 in the processing of incoming client message.
 
-% DHCP6_SUBNET_SELECTION_FAILED Failed to select a subnet for incoming packet, src=%1 type=%2
+% DHCP6_SUBNET_SELECTION_FAILED failed to select a subnet for incoming packet, src=%1 type=%2
+This warning message is output when a packet was received from a subnet for
+which the DHCPv6 server has not been configured. The cause is most likely due
+to a misconfiguration of the server. The packet processing will continue, but
+the response will only contain generic configuration parameters and no
+addresses or prefixes.
+
 This is a warning message that a packet was received, but the server is
 not configured to support the subnet the packet originated from. This
 message means that the received traffic does not match server configuration
@@ -152,7 +168,7 @@ This is a debug message that is issued every time the server receives a
 configuration. That happens start up and also when a server configuration
 change is committed by the administrator.
 
-% DHCP6_CONFIG_NEW_SUBNET A new subnet has been added to configuration: %1
+% DHCP6_CONFIG_NEW_SUBNET a new subnet has been added to configuration: %1
 This is an informational message reporting that the configuration has
 been extended to include the specified subnet.
 
