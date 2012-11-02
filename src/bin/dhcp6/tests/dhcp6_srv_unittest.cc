@@ -65,18 +65,18 @@ public:
         CfgMgr::instance().addSubnet6(subnet_);
     }
 
+    // Generate IA_NA option with specified parameters
     shared_ptr<Option6IA> generateIA(uint32_t iaid, uint32_t t1, uint32_t t2) {
         shared_ptr<Option6IA> ia =
-            shared_ptr<Option6IA>(new Option6IA(D6O_IA_NA, 234));
+            shared_ptr<Option6IA>(new Option6IA(D6O_IA_NA, iaid));
         ia->setT1(t1);
         ia->setT2(t2);
         return (ia);
     }
 
-    OptionPtr generateClientId() {
+    // Generate client-id option
+    OptionPtr generateClientId(size_t duid_size = 32) {
 
-        // a dummy content for client-id
-        const size_t duid_size = 32;
         OptionBuffer clnt_duid(duid_size);
         for (int i = 0; i < duid_size; i++) {
             clnt_duid[i] = 100 + i;
@@ -89,6 +89,7 @@ public:
                                      clnt_duid.begin() + duid_size)));
     }
 
+    // Checks if server response (ADVERTISE or REPLY) includes proper server-id.
     void checkServerId(const Pkt6Ptr& rsp, const OptionPtr& expected_srvid) {
         // check that server included its server-id
         OptionPtr tmp = rsp->getOption(D6O_SERVERID);
@@ -97,6 +98,7 @@ public:
         EXPECT_TRUE(tmp->getData() == expected_srvid->getData());
     }
 
+    // Checks if server response (ADVERTISE or REPLY) includes proper client-id.
     void checkClientId(const Pkt6Ptr& rsp, const OptionPtr& expected_clientid) {
         // check that server included our own client-id
         OptionPtr tmp = rsp->getOption(D6O_CLIENTID);
@@ -108,6 +110,8 @@ public:
         EXPECT_TRUE(expected_clientid->getData() == tmp->getData());
     }
 
+    // Checks that server response (ADVERTISE or REPLY) contains proper IA_NA option
+    // It returns IAADDR option for each chaining with checkIAAddr method.
     shared_ptr<Option6IAAddr> checkIA_NA(const Pkt6Ptr& rsp, uint32_t expected_iaid,
                                          uint32_t expected_t1, uint32_t expected_t2) {
         OptionPtr tmp = rsp->getOption(D6O_IA_NA);
@@ -127,6 +131,7 @@ public:
         return (addr);
     }
 
+    // Check that generated IAADDR option contains expected address.
     void checkIAAddr(shared_ptr<Option6IAAddr> addr, const IOAddress& expected_addr,
                      uint32_t expected_preferred, uint32_t expected_valid) {
         // Check that the assigned address is indeed from the configured pool
@@ -136,19 +141,23 @@ public:
         EXPECT_EQ(addr->getValid(), subnet_->getValid());
     }
 
-    void checkResponse(const Pkt6Ptr& rsp, uint8_t expected_type,
+    // Basic checks for generated response (message type and transaction-id).
+    void checkResponse(const Pkt6Ptr& rsp, uint8_t expected_message_type,
                        uint32_t expected_transid) {
         ASSERT_TRUE(rsp);
-        EXPECT_EQ(expected_type, rsp->getType());
+        EXPECT_EQ(expected_message_type, rsp->getType());
         EXPECT_EQ(expected_transid, rsp->getTransid());
     }
 
-    Lease6Ptr checkLease(const DuidPtr& duid, const OptionPtr& ia_na, shared_ptr<Option6IAAddr> addr) {
+    // Checks if the lease sent to client is present in the database
+    Lease6Ptr checkLease(const DuidPtr& duid, const OptionPtr& ia_na,
+                         shared_ptr<Option6IAAddr> addr) {
         shared_ptr<Option6IA> ia = dynamic_pointer_cast<Option6IA>(ia_na);
 
         Lease6Ptr lease = LeaseMgr::instance().getLease6(addr->getAddress());
         if (!lease) {
-            cout << "Lease for " << addr->getAddress().toText() << " not found in the database backend.";
+            cout << "Lease for " << addr->getAddress().toText()
+                 << " not found in the database backend.";
             return (Lease6Ptr());
         }
 
@@ -163,8 +172,14 @@ public:
     ~Dhcpv6SrvTest() {
         CfgMgr::instance().deleteSubnets6();
     };
+
+    // A subnet used in most tests
     Subnet6Ptr subnet_;
+
+    // A pool used in most tests
     Pool6Ptr pool_;
+
+    // A DUID used in most tests (typically as client-id)
     DuidPtr duid_;
 };
 
@@ -270,8 +285,8 @@ TEST_F(Dhcpv6SrvTest, DUID) {
 // There are no dedicated tests for Dhcpv6Srv::handleIA_NA and Dhcpv6Srv::assignLeases
 // as they are indirectly tested in Solicit and Request tests.
 
-// This test verifies that incoming SOLICIT can be handled properly, that a
-// reponse is generated, that the response has an address and that address
+// This test verifies that incoming SOLICIT can be handled properly, that an
+// ADVERTISE is generated, that the response has an address and that address
 // really belongs to the configured pool.
 //
 // This test sends a SOLICIT without any hint in IA_NA.
@@ -298,12 +313,7 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
 
     sol->addOption(clientid);
 
-    // Let's not send address in solicit yet
-    // boost::shared_ptr<Option6IAAddr> addr(new Option6IAAddr(D6O_IAADDR,
-    //    IOAddress("2001:db8:1234:ffff::ffff"), 5001, 7001));
-    // ia->addOption(addr);
-    // sol->addOption(ia);
-
+    // Pass it to the server and get an advertise
     Pkt6Ptr reply = srv->processSolicit(sol);
 
     // check if we get response at all
@@ -321,8 +331,8 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
     checkClientId(reply, clientid);
 }
 
-// This test verifies that incoming SOLICIT can be handled properly, that a
-// reponse is generated, that the response has an address and that address
+// This test verifies that incoming SOLICIT can be handled properly, that an
+// ADVERTISE is generated, that the response has an address and that address
 // really belongs to the configured pool.
 //
 // This test sends a SOLICIT with IA_NA that contains a valid hint.
@@ -354,7 +364,7 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
-    // Pass it to the server and hope for a reply
+    // Pass it to the server and get an advertise
     Pkt6Ptr reply = srv->processSolicit(sol);
 
     // check if we get response at all
@@ -375,8 +385,8 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
     checkClientId(reply, clientid);
 }
 
-// This test verifies that incoming SOLICIT can be handled properly, that a
-// reponse is generated, that the response has an address and that address
+// This test verifies that incoming SOLICIT can be handled properly, that an
+// ADVERTISE is generated, that the response has an address and that address
 // really belongs to the configured pool.
 //
 // This test sends a SOLICIT with IA_NA that contains an invalid hint.
@@ -406,7 +416,7 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
-    // Pass it to the server and get a reply
+    // Pass it to the server and get an advertise
     Pkt6Ptr reply = srv->processSolicit(sol);
 
     // check if we get response at all
@@ -425,18 +435,91 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     checkClientId(reply, clientid);
 }
 
-// This test verifies that incoming SOLICIT can be handled properly, that a
-// reponse is generated, that the response has an address and that address
+// This test checks that the server is offering different addresses to different
+// clients in ADVERTISEs. Please note that ADVERTISE is not a guarantee that such
+// and address will be assigned. Had the pool was very small and contained only
+// 2 addresses, the third client would get the same advertise as the first one
+// and this is a correct behavior. It is REQUEST that fill fail for the third
+// client. ADVERTISE is basically saying "if you send me a request, you will
+// probably get an address like this" (there are no guarantees).
+TEST_F(Dhcpv6SrvTest, ManySolicits) {
+    boost::scoped_ptr<NakedDhcpv6Srv> srv;
+    ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv(0)) );
+
+    Pkt6Ptr sol1 = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    Pkt6Ptr sol2 = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 2345));
+    Pkt6Ptr sol3 = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 3456));
+
+    sol1->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol2->setRemoteAddr(IOAddress("fe80::1223"));
+    sol3->setRemoteAddr(IOAddress("fe80::3467"));
+
+    sol1->addOption(generateIA(1, 1500, 3000));
+    sol2->addOption(generateIA(2, 1500, 3000));
+    sol3->addOption(generateIA(3, 1500, 3000));
+
+    // different client-id sizes
+    OptionPtr clientid1 = generateClientId(12);
+    OptionPtr clientid2 = generateClientId(14);
+    OptionPtr clientid3 = generateClientId(16);
+
+    sol1->addOption(clientid1);
+    sol2->addOption(clientid2);
+    sol3->addOption(clientid3);
+
+    // Pass it to the server and get an advertise
+    Pkt6Ptr reply1 = srv->processSolicit(sol1);
+    Pkt6Ptr reply2 = srv->processSolicit(sol2);
+    Pkt6Ptr reply3 = srv->processSolicit(sol3);
+
+    // check if we get response at all
+    checkResponse(reply1, DHCPV6_ADVERTISE, 1234);
+    checkResponse(reply2, DHCPV6_ADVERTISE, 2345);
+    checkResponse(reply3, DHCPV6_ADVERTISE, 3456);
+
+    // check that IA_NA was returned and that there's an address included
+    shared_ptr<Option6IAAddr> addr1 = checkIA_NA(reply1, 1, subnet_->getT1(),
+                                                subnet_->getT2());
+    shared_ptr<Option6IAAddr> addr2 = checkIA_NA(reply2, 2, subnet_->getT1(),
+                                                subnet_->getT2());
+    shared_ptr<Option6IAAddr> addr3 = checkIA_NA(reply3, 3, subnet_->getT1(),
+                                                subnet_->getT2());
+
+    // Check that the assigned address is indeed from the configured pool
+    checkIAAddr(addr1, addr1->getAddress(), subnet_->getPreferred(), subnet_->getValid());
+    checkIAAddr(addr2, addr2->getAddress(), subnet_->getPreferred(), subnet_->getValid());
+    checkIAAddr(addr3, addr3->getAddress(), subnet_->getPreferred(), subnet_->getValid());
+
+    // check DUIDs
+    checkServerId(reply1, srv->getServerID());
+    checkServerId(reply2, srv->getServerID());
+    checkServerId(reply3, srv->getServerID());
+    checkClientId(reply1, clientid1);
+    checkClientId(reply2, clientid2);
+    checkClientId(reply3, clientid3);
+
+    // Finally check that the addresses offered are different
+    EXPECT_NE(addr1->getAddress().toText(), addr2->getAddress().toText());
+    EXPECT_NE(addr2->getAddress().toText(), addr3->getAddress().toText());
+    EXPECT_NE(addr3->getAddress().toText(), addr1->getAddress().toText());
+    cout << "Offered address to client1=" << addr1->getAddress().toText() << endl;
+    cout << "Offered address to client2=" << addr2->getAddress().toText() << endl;
+    cout << "Offered address to client3=" << addr3->getAddress().toText() << endl;
+}
+
+
+// This test verifies that incoming REQUEST can be handled properly, that a
+// REPLY is generated, that the response has an address and that address
 // really belongs to the configured pool.
 //
-// This test sends a SOLICIT with IA_NA that contains a valid hint.
+// This test sends a REQUEST with IA_NA that contains a valid hint.
 //
-// constructed very simple SOLICIT message with:
+// constructed very simple REQUEST message with:
 // - client-id option (mandatory)
 // - IA option (a request for address, with an address that belongs to the
 //              configured pool, i.e. is valid as hint)
 //
-// expected returned ADVERTISE message:
+// expected returned REPLY message:
 // - copy of client-id
 // - server-id
 // - IA that includes IAADDR
@@ -444,9 +527,9 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     boost::scoped_ptr<NakedDhcpv6Srv> srv;
     ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv(0)) );
 
-    // Let's create a SOLICIT
-    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
-    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    // Let's create a REQUEST
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
     shared_ptr<Option6IA> ia = generateIA(234, 1500, 3000);
 
     // with a valid hint
@@ -454,15 +537,15 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     ASSERT_TRUE(subnet_->inPool(hint));
     OptionPtr hint_opt(new Option6IAAddr(D6O_IAADDR, hint, 300, 500));
     ia->addOption(hint_opt);
-    sol->addOption(ia);
+    req->addOption(ia);
     OptionPtr clientid = generateClientId();
-    sol->addOption(clientid);
+    req->addOption(clientid);
 
-    // Pass it to the server and hope for a reply
-    Pkt6Ptr reply = srv->processSolicit(sol);
+    // Pass it to the server and hope for a REPLY
+    Pkt6Ptr reply = srv->processRequest(req);
 
     // check if we get response at all
-    checkResponse(reply, DHCPV6_ADVERTISE, 1234);
+    checkResponse(reply, DHCPV6_REPLY, 1234);
 
     OptionPtr tmp = reply->getOption(D6O_IA_NA);
     ASSERT_TRUE(tmp);
@@ -483,6 +566,79 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     EXPECT_TRUE(l);
     LeaseMgr::instance().deleteLease6(addr->getAddress());
 }
+
+// This test checks that the server is offering different addresses to different
+// clients in REQUEST. Please note that ADVERTISE is not a guarantee that such
+// and address will be assigned. Had the pool was very small and contained only
+// 2 addresses, the third client would get the same advertise as the first one
+// and this is a correct behavior. It is REQUEST that fill fail for the third
+// client. ADVERTISE is basically saying "if you send me a request, you will
+// probably get an address like this" (there are no guarantees).
+TEST_F(Dhcpv6SrvTest, ManyRequests) {
+    boost::scoped_ptr<NakedDhcpv6Srv> srv;
+    ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv(0)) );
+
+    Pkt6Ptr req1 = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
+    Pkt6Ptr req2 = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 2345));
+    Pkt6Ptr req3 = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 3456));
+
+    req1->setRemoteAddr(IOAddress("fe80::abcd"));
+    req2->setRemoteAddr(IOAddress("fe80::1223"));
+    req3->setRemoteAddr(IOAddress("fe80::3467"));
+
+    req1->addOption(generateIA(1, 1500, 3000));
+    req2->addOption(generateIA(2, 1500, 3000));
+    req3->addOption(generateIA(3, 1500, 3000));
+
+    // different client-id sizes
+    OptionPtr clientid1 = generateClientId(12);
+    OptionPtr clientid2 = generateClientId(14);
+    OptionPtr clientid3 = generateClientId(16);
+
+    req1->addOption(clientid1);
+    req2->addOption(clientid2);
+    req3->addOption(clientid3);
+
+    // Pass it to the server and get an advertise
+    Pkt6Ptr reply1 = srv->processRequest(req1);
+    Pkt6Ptr reply2 = srv->processRequest(req2);
+    Pkt6Ptr reply3 = srv->processRequest(req3);
+
+    // check if we get response at all
+    checkResponse(reply1, DHCPV6_REPLY, 1234);
+    checkResponse(reply2, DHCPV6_REPLY, 2345);
+    checkResponse(reply3, DHCPV6_REPLY, 3456);
+
+    // check that IA_NA was returned and that there's an address included
+    shared_ptr<Option6IAAddr> addr1 = checkIA_NA(reply1, 1, subnet_->getT1(),
+                                                subnet_->getT2());
+    shared_ptr<Option6IAAddr> addr2 = checkIA_NA(reply2, 2, subnet_->getT1(),
+                                                subnet_->getT2());
+    shared_ptr<Option6IAAddr> addr3 = checkIA_NA(reply3, 3, subnet_->getT1(),
+                                                subnet_->getT2());
+
+    // Check that the assigned address is indeed from the configured pool
+    checkIAAddr(addr1, addr1->getAddress(), subnet_->getPreferred(), subnet_->getValid());
+    checkIAAddr(addr2, addr2->getAddress(), subnet_->getPreferred(), subnet_->getValid());
+    checkIAAddr(addr3, addr3->getAddress(), subnet_->getPreferred(), subnet_->getValid());
+
+    // check DUIDs
+    checkServerId(reply1, srv->getServerID());
+    checkServerId(reply2, srv->getServerID());
+    checkServerId(reply3, srv->getServerID());
+    checkClientId(reply1, clientid1);
+    checkClientId(reply2, clientid2);
+    checkClientId(reply3, clientid3);
+
+    // Finally check that the addresses offered are different
+    EXPECT_NE(addr1->getAddress().toText(), addr2->getAddress().toText());
+    EXPECT_NE(addr2->getAddress().toText(), addr3->getAddress().toText());
+    EXPECT_NE(addr3->getAddress().toText(), addr1->getAddress().toText());
+    cout << "Assigned address to client1=" << addr1->getAddress().toText() << endl;
+    cout << "Assigned address to client2=" << addr2->getAddress().toText() << endl;
+    cout << "Assigned address to client3=" << addr3->getAddress().toText() << endl;
+}
+
 
 TEST_F(Dhcpv6SrvTest, serverReceivedPacketName) {
     // Check all possible packet types
