@@ -28,8 +28,11 @@ typedef MasterLexer::Token Token; // shortcut
 
 class MasterLexerStateTest : public ::testing::Test {
 protected:
-    MasterLexerStateTest() : s_null(NULL),
-                             s_start(State::getInstance(State::Start)),
+    MasterLexerStateTest() : common_options(MasterLexer::END_OF_LINE |
+                                            MasterLexer::INITIAL_WS),
+                             s_null(NULL),
+                             s_start(*State::getStartInstance(
+                                         lexer, common_options)),
                              s_crlf(State::getInstance(State::CRLF)),
                              s_string(State::getInstance(State::String)),
                              options(MasterLexer::END_OF_LINE),
@@ -37,11 +40,14 @@ protected:
     {
         lexer.pushSource(ss);
     }
+
+    // Specify END_OF_LINE and INITIAL_WS as common initial options.
+    const MasterLexer::Options common_options;
+    MasterLexer lexer;
     const State* const s_null;
     const State& s_start;
     const State& s_crlf;
     const State& s_string;
-    MasterLexer lexer;
     std::stringstream ss;
     MasterLexer::Options options, orig_options;
 };
@@ -59,20 +65,18 @@ eofCheck(const State& state, MasterLexer& lexer) {
 TEST_F(MasterLexerStateTest, startAndEnd) {
     // A simple case: the input is empty, so we begin with start and
     // are immediately done.
-    const State* s_next = s_start.handle(lexer, options);
-    EXPECT_EQ(s_null, s_next);
+    EXPECT_EQ(s_null, s_start.handle(lexer, options));
     eofCheck(s_start, lexer);
 }
 
 TEST_F(MasterLexerStateTest, startToEOL) {
     ss << "\n";
-    const State* s_next = s_start.handle(lexer, options);
-    EXPECT_EQ(s_null, s_next);
+    EXPECT_EQ(s_null, s_start.handle(lexer, options));
     EXPECT_TRUE(s_start.wasLastEOL(lexer));
     EXPECT_EQ(Token::END_OF_LINE, s_start.getToken(lexer).getType());
 
     // The next lexer session will reach EOF.  Same eof check should pass.
-    s_start.handle(lexer, options);
+    EXPECT_EQ(s_null, s_start.handle(lexer, options));
     eofCheck(s_start, lexer);
 
     // TBD: EOL after (
@@ -83,11 +87,9 @@ TEST_F(MasterLexerStateTest, space) {
     // twice; at the second iteration, it's a white space at the beginning
     // of line, but since we don't specify INITIAL_WS option, it's treated as
     // normal space and ignored.
-    const State* s_next;
     for (size_t i = 0; i < 2; ++i) {
         ss << " \t\n";
-        s_next = s_start.handle(lexer, options);
-        EXPECT_EQ(s_null, s_next);
+        EXPECT_EQ(s_null, s_start.handle(lexer, options));
         EXPECT_TRUE(s_start.wasLastEOL(lexer));
         EXPECT_EQ(Token::END_OF_LINE, s_start.getToken(lexer).getType());
     }
@@ -96,8 +98,7 @@ TEST_F(MasterLexerStateTest, space) {
     // corresponding token will be returned.
     ss << " ";
     options = MasterLexer::INITIAL_WS;
-    s_next = s_start.handle(lexer, options);
-    EXPECT_EQ(s_null, s_next);
+    EXPECT_EQ(s_null, s_start.handle(lexer, options));
     EXPECT_FALSE(s_start.wasLastEOL(lexer));
     EXPECT_EQ(Token::INITIAL_WS, s_start.getToken(lexer).getType());
 }
@@ -105,14 +106,13 @@ TEST_F(MasterLexerStateTest, space) {
 TEST_F(MasterLexerStateTest, parentheses) {
     ss << "\n(\na)"; // 1st \n is to check if 'was EOL' is set to false
 
-    const State* s_next = s_start.handle(lexer, options); // handle \n
-    EXPECT_EQ(s_null, s_next);
+    EXPECT_EQ(s_null, s_start.handle(lexer, options)); // handle \n
 
     // Now handle '('.  It skips \n and recognize 'a' as strin
     EXPECT_EQ(0, s_start.getParenCount(lexer)); // check pre condition
     options = MasterLexer::END_OF_LINE | MasterLexer::INITIAL_WS;
-    s_next = s_start.handle(lexer, options, options);
-    EXPECT_EQ(&s_string, s_next); // should recognize 'a' as string
+    // should recognize 'a' as string
+    EXPECT_EQ(&s_string, s_start.handle(lexer, options));
 
     // Check post '(' conditions.  paren_count should be incremented, and
     // end-of-line and ws should be canceled at the first open paren
@@ -123,8 +123,7 @@ TEST_F(MasterLexerStateTest, parentheses) {
 
     // Then handle ')'.  eol and init_ws are currently cleared, which will be
     // set again.
-    s_next = s_start.handle(lexer, options, (MasterLexer::END_OF_LINE |
-                                             MasterLexer::INITIAL_WS));
+    EXPECT_EQ(s_null, s_start.handle(lexer, options));
     EXPECT_EQ(0, s_start.getParenCount(lexer));
     EXPECT_TRUE((options & MasterLexer::END_OF_LINE) != 0);
     EXPECT_TRUE((options & MasterLexer::INITIAL_WS) != 0);
@@ -142,18 +141,14 @@ TEST_F(MasterLexerStateTest, nestedParentheses) {
 
     // Close the inner most parentheses.  count will be decreased, but option
     // shouldn't be restored yet.
-    EXPECT_EQ(&s_string,
-              s_start.handle(lexer, options, (MasterLexer::END_OF_LINE |
-                                              MasterLexer::INITIAL_WS)));
+    EXPECT_EQ(&s_string, s_start.handle(lexer, options));
     EXPECT_EQ(1, s_start.getParenCount(lexer));
     EXPECT_TRUE((options & MasterLexer::END_OF_LINE) == 0);
     EXPECT_TRUE((options & MasterLexer::INITIAL_WS) == 0);
 
     // Close the outermost parentheses.  count will be reset to 0, and original
     // options are restored.
-    EXPECT_EQ(s_null,
-              s_start.handle(lexer, options, (MasterLexer::END_OF_LINE |
-                                              MasterLexer::INITIAL_WS)));
+    EXPECT_EQ(s_null, s_start.handle(lexer, options));
     EXPECT_TRUE((options & MasterLexer::END_OF_LINE) != 0);
     EXPECT_TRUE((options & MasterLexer::INITIAL_WS) != 0);
 }
