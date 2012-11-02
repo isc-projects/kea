@@ -67,7 +67,6 @@ MasterLexer::pushSource(const char* filename, std::string* error) {
         return (false);
     }
 
-    impl_->sources_.push_back(InputSourcePtr(new InputSource(filename)));
     impl_->source_ = impl_->sources_.back().get();
     return (true);
 }
