@@ -222,9 +222,11 @@ Start::handle(MasterLexer& lexer, MasterLexer::Options& options,
             }
             continue;
         } else if (c == '\n') {
-            getLexerImpl(lexer)->last_was_eol_ = true;
-            getLexerImpl(lexer)->token_ = Token(Token::END_OF_LINE);
-            return (NULL);
+            if ((options & MasterLexer::END_OF_LINE) != 0) {
+                getLexerImpl(lexer)->last_was_eol_ = true;
+                getLexerImpl(lexer)->token_ = Token(Token::END_OF_LINE);
+                return (NULL);
+            }
         } else if (c == '(') {
             getLexerImpl(lexer)->last_was_eol_ = false;
             cancelOptions(options,
@@ -234,7 +236,10 @@ Start::handle(MasterLexer& lexer, MasterLexer::Options& options,
         } else if (c == ')') {
             // TBD: unbalanced case
             --getLexerImpl(lexer)->paren_count_;
-            options = orig_options; // TBD: only when count becomes 0
+            if (getLexerImpl(lexer)->paren_count_ == 0) {
+                options = orig_options;
+            }
+            continue;
         } else {
             getLexerImpl(lexer)->last_was_eol_ = false;
             return (&STRING_STATE);
