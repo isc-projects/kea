@@ -218,8 +218,8 @@ Start::handle(MasterLexer& lexer, MasterLexer::Options& options) const {
             }
             continue;
         } else if (c == '\n') {
+            getLexerImpl(lexer)->last_was_eol_ = true;
             if ((options & MasterLexer::END_OF_LINE) != 0) {
-                getLexerImpl(lexer)->last_was_eol_ = true;
                 getLexerImpl(lexer)->token_ = Token(Token::END_OF_LINE);
                 return (NULL);
             }
