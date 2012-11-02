@@ -19,7 +19,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/lease_mgr.h>
 #include <dhcp/duid.h>
-#include "memfile_lease_mgr.h"
+#include <dhcp/memfile_lease_mgr.h>
 
 using namespace std;
 using namespace isc;
