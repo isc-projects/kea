@@ -30,7 +30,10 @@ public:
         CRLF,
         EatLine
     };
-    virtual const State* handle(MasterLexer& lexer) const = 0;
+    virtual const State* handle(MasterLexer& lexer,
+                                MasterLexer::Options& options,
+                                MasterLexer::Options orig_options =
+                                MasterLexer::NONE) const = 0;
 
     static const State& getInstance(ID state_id);
 
