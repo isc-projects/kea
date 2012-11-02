@@ -30,15 +30,18 @@ class MasterLexerStateTest : public ::testing::Test {
 protected:
     MasterLexerStateTest() : s_start(State::getInstance(State::Start)),
                              s_crlf(State::getInstance(State::CRLF)),
-                             options(MasterLexer::NONE)
+                             s_string(State::getInstance(State::String)),
+                             options(MasterLexer::END_OF_LINE),
+                             orig_options(options)
     {
         lexer.open(ss);
     }
     const State& s_start;
     const State& s_crlf;
+    const State& s_string;
     MasterLexer lexer;
     std::stringstream ss;
-    MasterLexer::Options options;
+    MasterLexer::Options options, orig_options;
 };
 
 // Common check for the end-of-file condition.
@@ -69,6 +72,8 @@ TEST_F(MasterLexerStateTest, startToEOL) {
     // The next lexer session will reach EOF.  Same eof check should pass.
     s_start.handle(lexer, options);
     eofCheck(s_start, lexer);
+
+    // TBD: EOL after (
 }
 
 TEST_F(MasterLexerStateTest, space) {
@@ -93,6 +98,36 @@ TEST_F(MasterLexerStateTest, space) {
     EXPECT_EQ(static_cast<const State*>(NULL), s_next);
     EXPECT_FALSE(s_start.wasLastEOL(lexer));
     EXPECT_EQ(Token::INITIAL_WS, s_start.getToken(lexer).getType());
+}
+
+TEST_F(MasterLexerStateTest, parentheses) {
+    ss << "\n(a)";         // add \n to check if 'was EOL' is set to false
+
+    const State* s_next = s_start.handle(lexer, options); // handle \n
+    EXPECT_EQ(static_cast<const State*>(NULL), s_next);
+
+    // Now handle '('
+    EXPECT_EQ(0, s_start.getParenCount(lexer)); // check pre condition
+    options = MasterLexer::END_OF_LINE | MasterLexer::INITIAL_WS;
+    s_next = s_start.handle(lexer, options, options);
+    EXPECT_EQ(&s_string, s_next); // should recognize 'a' as string
+
+    // Check post '(' conditions.  paren_count should be incremented, and
+    // end-of-line and ws should be canceled at the first open paren
+    EXPECT_FALSE(s_start.wasLastEOL(lexer));
+    EXPECT_TRUE((options & MasterLexer::END_OF_LINE) == 0); // eol is canceled
+    EXPECT_TRUE((options & MasterLexer::INITIAL_WS) == 0); // same for init WS
+    EXPECT_EQ(1, s_start.getParenCount(lexer));
+
+    // Then handle ')'.  eol and init_ws are kept cleared, and will be set
+    // again.
+    s_next = s_start.handle(lexer, options, (MasterLexer::END_OF_LINE |
+                                             MasterLexer::INITIAL_WS));
+    EXPECT_EQ(0, s_start.getParenCount(lexer));
+    EXPECT_TRUE((options & MasterLexer::END_OF_LINE) != 0);
+    EXPECT_TRUE((options & MasterLexer::INITIAL_WS) != 0);
+
+    // TBD: Test case: '(;'
 }
 
 }
