@@ -48,7 +48,6 @@ libdhcpsrv_unittests_SOURCES  = run_unittests.cc
 libdhcpsrv_unittests_SOURCES += cfgmgr_unittest.cc triplet_unittest.cc
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc subnet_unittest.cc
 libdhcpsrv_unittests_SOURCES += addr_utilities_unittest.cc
-libdhcpsrv_unittests_SOURCES += memfile_lease_mgr.cc memfile_lease_mgr.h
 libdhcpsrv_unittests_SOURCES += lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine_unittest.cc
 
@@ -60,7 +59,6 @@ libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptio
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcpsrv.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 
 

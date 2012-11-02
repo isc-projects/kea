@@ -16,6 +16,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcp/addr_utilities.h>
 
+using namespace isc;
 using namespace isc::asiolink;
 
 namespace {
@@ -45,6 +46,10 @@ const uint8_t bitMask6[]= { 0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
 /// @param len prefix length
 isc::asiolink::IOAddress firstAddrInPrefix6(const isc::asiolink::IOAddress& prefix,
                                             uint8_t len) {
+
+    if (len>128) {
+        isc_throw(BadValue, "IPv6 prefix length too large:" << len);
+    }
 
     uint8_t packed[V6ADDRESS_LEN];
 
@@ -120,6 +125,9 @@ isc::asiolink::IOAddress lastAddrInPrefix4(const isc::asiolink::IOAddress& prefi
 /// @param len netmask length (0-128)
 isc::asiolink::IOAddress lastAddrInPrefix6(const isc::asiolink::IOAddress& prefix,
                                            uint8_t len) {
+    if (len>128) {
+        isc_throw(BadValue, "IPv6 prefix length too large:" << len);
+    }
 
     uint8_t packed[V6ADDRESS_LEN];
 
@@ -162,14 +170,8 @@ namespace dhcp {
 isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefix,
                                             uint8_t len) {
     if (prefix.getFamily() == AF_INET) {
-        if (len>32) {
-            isc_throw(BadValue, "IPv4 prefix length too large:" << len);
-        }
         return firstAddrInPrefix4(prefix, len);
     } else {
-        if (len>128) {
-            isc_throw(BadValue, "IPv6 prefix length too large:" << len);
-        }
         return firstAddrInPrefix6(prefix, len);
     }
 }
@@ -177,14 +179,8 @@ isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefi
 isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix,
                                            uint8_t len) {
     if (prefix.getFamily() == AF_INET) {
-        if (len>32) {
-            isc_throw(BadValue, "IPv4 prefix length too large:" << len);
-        }
         return lastAddrInPrefix4(prefix, len);
     } else {
-        if (len>128) {
-            isc_throw(BadValue, "IPv6 prefix length too large:" << len);
-        }
         return lastAddrInPrefix6(prefix, len);
     }
 }

@@ -170,8 +170,8 @@ TEST(ClientIdTest, operators) {
 TEST(ClientIdTest, toText) {
     uint8_t data1[] = {0, 1, 2, 3, 4, 0xff, 0xfe};
 
-    scoped_ptr<DUID> duid1(new DUID(data1, sizeof(data1)));
-    EXPECT_EQ("00:01:02:03:04:ff:fe", duid1->toText());
+    DUID duid(data1, sizeof(data1));
+    EXPECT_EQ("00:01:02:03:04:ff:fe", duid.toText());
 }
 
 } // end of anonymous namespace

@@ -19,6 +19,9 @@ using namespace isc::dhcp::test;
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const std::string& dbconfig)
     : LeaseMgr(dbconfig) {
+    std::cout << "Warning: Using memfile database backend. It is usable for" << std::endl;
+    std::cout << "Warning: limited testing only. File support not implemented yet." << std::endl;
+    std::cout << "Warning: Leases will be lost after restart." << std::endl;
 }
 
 Memfile_LeaseMgr::~Memfile_LeaseMgr() {

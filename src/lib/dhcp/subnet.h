@@ -282,14 +282,14 @@ public:
     /// @brief returns subnet parameters (prefix and prefix length)
     ///
     /// @return (prefix, prefix length) pair
-    std::pair<isc::asiolink::IOAddress, uint8_t> get() {
-        return (std::pair<isc::asiolink::IOAddress, uint8_t>(prefix_, prefix_len_));
+    std::pair<isc::asiolink::IOAddress, uint8_t> get() const {
+        return (std::make_pair(prefix_, prefix_len_));
     }
 
     /// @brief returns textual representation of the subnet (e.g. "2001:db8::/64")
     ///
     /// @return textual representation
-    virtual std::string toText();
+    virtual std::string toText() const;
 
 protected:
     /// @brief protected constructor

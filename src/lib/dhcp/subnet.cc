@@ -53,7 +53,7 @@ Subnet::delOptions() {
     options_.clear();
 }
 
-std::string Subnet::toText() {
+std::string Subnet::toText() const {
     std::stringstream tmp;
     tmp << prefix_.toText() << "/" << static_cast<unsigned int>(prefix_len_);
     return (tmp.str());
