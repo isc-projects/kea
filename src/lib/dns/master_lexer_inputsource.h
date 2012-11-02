@@ -43,6 +43,8 @@ public:
 
     /// \brief Constructor which takes a filename to read from. The
     /// associated file stream is managed internally.
+    ///
+    /// \throws OpenError when opening the input file fails.
     InputSource(const char* filename);
 
     /// \brief Destructor
@@ -83,6 +85,13 @@ public:
     /// stream or file.
     struct ReadError : public Unexpected {
         ReadError(const char* file, size_t line, const char* what) :
+            Unexpected(file, line, what)
+        {}
+    };
+
+    /// \brief Exception thrown when we fail to open the input file.
+    struct OpenError : public Unexpected {
+        OpenError(const char* file, size_t line, const char* what) :
             Unexpected(file, line, what)
         {}
     };
