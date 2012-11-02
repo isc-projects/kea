@@ -93,7 +93,7 @@ do
 isc::util::OutputBuffer buffer(0);
 ], [BIND10_LDFLAGS="-L${d}"
     if test "x$ISC_RPATH_FLAG" != "x"; then
-       BIND10_RPATH="-R${d}"
+       BIND10_RPATH="${ISC_RPATH_FLAG}${d}"
     fi
     ])
   if test "x$BIND10_LDFLAGS" != "x"; then
