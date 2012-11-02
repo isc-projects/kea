@@ -142,33 +142,25 @@ State::getToken(MasterLexer& lexer) const {
 class Start : public State {
 public:
     Start() {}
-    virtual const State* handle(MasterLexer& lexer) const {
-        const int c = getLexerImpl(lexer)->source_->getChar();
-        if (c < 0) {
-            // TODO: handle unbalance cases
-            getLexerImpl(lexer)->last_was_eol_ = false;
-            getLexerImpl(lexer)->token_ = Token(Token::END_OF_FILE);
-            return (NULL);
-        } else if (c == '\n') {
-            getLexerImpl(lexer)->last_was_eol_ = true;
-            getLexerImpl(lexer)->token_ = Token(Token::END_OF_LINE);
-            return (NULL);
-        }
-        return (&State::getInstance(State::CRLF)); // placeholder
-    }
+    virtual const State* handle(MasterLexer& lexer,
+                                MasterLexer::Options& options,
+                                MasterLexer::Options orig_options) const;
 };
 
 class CRLF : public State {
 public:
     CRLF() {}
-    virtual const State* handle(MasterLexer& /*lexer*/) const {
+    virtual const State* handle(MasterLexer& /*lexer*/,
+                                MasterLexer::Options& /*options*/,
+                                MasterLexer::Options /*orig_options*/) const
+    {
         return (NULL);
     }
 };
 
 namespace {
 const Start START_STATE;
-const CRLF CRLF_STARTE;
+const CRLF CRLF_STATE;
 }
 
 const State&
@@ -176,6 +168,33 @@ State::getInstance(ID /*state_id*/) {
     return (START_STATE);
 }
 
+const State*
+Start::handle(MasterLexer& lexer, MasterLexer::Options& options,
+              MasterLexer::Options /*orig_options*/) const
+{
+    while (true) {
+        const int c = getLexerImpl(lexer)->source_->getChar();
+        if (c < 0) {
+            // TODO: handle unbalance cases
+            getLexerImpl(lexer)->last_was_eol_ = false;
+            getLexerImpl(lexer)->token_ = Token(Token::END_OF_FILE);
+            return (NULL);
+        } else if (c == ' ' || c == '\t') {
+            if (getLexerImpl(lexer)->last_was_eol_ &&
+                (options & MasterLexer::INITIAL_WS) != 0) {
+                getLexerImpl(lexer)->last_was_eol_ = false;
+                getLexerImpl(lexer)->token_ = Token(Token::INITIAL_WS);
+                return (NULL);
+            }
+            continue;
+        } else if (c == '\n') {
+            getLexerImpl(lexer)->last_was_eol_ = true;
+            getLexerImpl(lexer)->token_ = Token(Token::END_OF_LINE);
+            return (NULL);
+        }
+        return (&CRLF_STATE); // placeholder
+    }
+}
 
 } // namespace master_lexer_internal
 

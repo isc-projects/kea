@@ -50,6 +50,13 @@ class MasterLexer {
 public:
     class Token;       // we define it separately for better readability
 
+    enum Options {
+        NONE = 0, //< No option
+        INITIAL_WS = 1, ///< recognize begin-of-line spaces
+        QSTRING = INITIAL_WS << 1, ///< recognize quoted string
+        NUMBER = QSTRING << 1, ///< recognize numeric text as integer
+    };
+
     /// \brief The constructor.
     ///
     /// \throw std::bad_alloc Internal resource allocation fails (rare case).
