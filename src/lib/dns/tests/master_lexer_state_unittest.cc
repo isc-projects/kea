@@ -142,7 +142,6 @@ TEST_F(MasterLexerStateTest, parentheses) {
 
 TEST_F(MasterLexerStateTest, nestedParentheses) {
     // This is an unusual, but allowed (in this implementation) case.
-
     ss << "(a(b)c)";
     EXPECT_EQ(&s_string, s_start.handle(lexer, options)); // consume '(a'
     EXPECT_EQ(&s_string, s_start.handle(lexer, options)); // consume '(b'
@@ -160,6 +159,24 @@ TEST_F(MasterLexerStateTest, nestedParentheses) {
     EXPECT_EQ(s_null, s_start.handle(lexer, options));
     EXPECT_TRUE((options & MasterLexer::END_OF_LINE) != 0);
     EXPECT_TRUE((options & MasterLexer::INITIAL_WS) != 0);
+}
+
+TEST_F(MasterLexerStateTest, unbalancedParentheses) {
+    // Only closing paren is provided.  We prepend a \n to check if it's
+    // correctly canceled after detecting the error.
+    ss << "\n)";
+
+    EXPECT_EQ(s_null, s_start.handle(lexer, options)); // consume '\n'
+    EXPECT_TRUE(s_start.wasLastEOL(lexer)); // this \n was remembered
+
+    // Now checking ')'.  The result should be error, count shouldn't be
+    // changed.  "last EOL" should be canceled.
+    EXPECT_EQ(0, s_start.getParenCount(lexer));
+    EXPECT_EQ(s_null, s_start.handle(lexer, options));
+    EXPECT_EQ(0, s_start.getParenCount(lexer));
+    ASSERT_EQ(Token::ERROR, s_start.getToken(lexer).getType());
+    EXPECT_EQ(Token::UNBALANCED_PAREN, s_start.getToken(lexer).getErrorCode());
+    EXPECT_FALSE(s_start.wasLastEOL(lexer));
 }
 
 }
