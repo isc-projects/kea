@@ -52,10 +52,11 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
     // it may throw something if things go wrong
     try {
 
-        // used for testing purposes. Some tests, e.g. configuration parser,
+        // Port 0 is used for testing purposes. It means that the server should
+        // not open any sockets at all. Some tests, e.g. configuration parser,
         // require Dhcpv6Srv object, but they don't really need it to do
         // anything. This speed up and simplifies the tests.
-        if (port) {
+        if (port > 0) {
             if (IfaceMgr::instance().countIfaces() == 0) {
                 LOG_ERROR(dhcp6_logger, DHCP6_NO_INTERFACES);
                 shutdown_ = true;
@@ -66,8 +67,6 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
         }
 
         setServerID();
-
-        /// @todo: instantiate LeaseMgr here once it is imlpemented.
 
     } catch (const std::exception &e) {
         LOG_ERROR(dhcp6_logger, DHCP6_SRV_CONSTRUCT_ERROR).arg(e.what());
@@ -101,7 +100,12 @@ void Dhcpv6Srv::shutdown() {
 
 bool Dhcpv6Srv::run() {
     while (!shutdown_) {
-        /// @todo: calculate actual timeout once we have lease database
+        /// @todo: calculate actual timeout to the next event (e.g. lease
+        /// expiration) once we have lease database. The idea here is that
+        /// it is possible to do everything in a single process/thread.
+        /// For now, we are just calling select for 1000 seconds. There
+        /// were some issues reported on some systems when calling select()
+        /// with too large values. Unfortunately, I don't recall the details.
         int timeout = 1000;
 
         // client's message and server's response
@@ -209,7 +213,7 @@ void Dhcpv6Srv::setServerID() {
 
     const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
 
-    // let's find suitable interface
+    // Let's find suitable interface.
     for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
          iface != ifaces.end(); ++iface) {
         // All the following checks could be merged into one multi-condition
@@ -230,17 +234,17 @@ void Dhcpv6Srv::setServerID() {
             continue;
         }
 
-        // let's don't use loopback
+        // Let's don't use loopback.
         if (iface->flag_loopback_) {
             continue;
         }
 
-        // let's skip downed interfaces. It is better to use working ones.
+        // Let's skip downed interfaces. It is better to use working ones.
         if (!iface->flag_up_) {
             continue;
         }
 
-        // some interfaces (like lo on Linux) report 6-bytes long
+        // Some interfaces (like lo on Linux) report 6-bytes long
         // MAC adress 00:00:00:00:00:00. Let's not use such weird interfaces
         // to generate DUID.
         if (isRangeZero(iface->getMac(), iface->getMac() + iface->getMacLen())) {
@@ -259,14 +263,14 @@ void Dhcpv6Srv::setServerID() {
         writeUint16(DUID::DUID_LLT, &srvid[0]);
         writeUint16(HWTYPE_ETHERNET, &srvid[2]);
         writeUint32(static_cast<uint32_t>(seconds), &srvid[4]);
-        memcpy(&srvid[0]+8, iface->getMac(), iface->getMacLen());
+        memcpy(&srvid[0] + 8, iface->getMac(), iface->getMacLen());
 
         serverid_ = OptionPtr(new Option(Option::V6, D6O_SERVERID,
                                          srvid.begin(), srvid.end()));
         return;
     }
 
-    // if we reached here, there are no suitable interfaces found.
+    // If we reached here, there are no suitable interfaces found.
     // Either interface detection is not supported on this platform or
     // this is really weird box. Let's use DUID-EN instead.
     // See Section 9.3 of RFC3315 for details.
@@ -278,15 +282,15 @@ void Dhcpv6Srv::setServerID() {
     // Length of the identifier is company specific. I hereby declare
     // ISC "standard" of 6 bytes long pseudo-random numbers.
     srandom(time(NULL));
-    fillRandom(&srvid[6],&srvid[12]);
+    fillRandom(&srvid[6], &srvid[12]);
 
     serverid_ = OptionPtr(new Option(Option::V6, D6O_SERVERID,
                                      srvid.begin(), srvid.end()));
 }
 
 void Dhcpv6Srv::copyDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
-    // add client-id
-    boost::shared_ptr<Option> clientid = question->getOption(D6O_CLIENTID);
+    // Add client-id.
+    OptionPtr clientid = question->getOption(D6O_CLIENTID);
     if (clientid) {
         answer->addOption(clientid);
     }
@@ -298,7 +302,7 @@ void Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr& /*question*/, Pkt6Ptr& answe
     // TODO: question is currently unused, but we need it at least to know
     // message type we are answering
 
-    // add server-id
+    // Add server-id.
     answer->addOption(getServerID());
 }
 
@@ -307,9 +311,9 @@ void Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& /*question*/, Pkt6Ptr& ans
     // TODO: question is currently unused, but we need to extract ORO from it
     // and act on its content. Now we just send DNS-SERVERS option.
 
-    // add dns-servers option
-    boost::shared_ptr<Option> dnsservers(new Option6AddrLst(D6O_NAME_SERVERS,
-                                         IOAddress(HARDCODED_DNS_SERVER)));
+    // Add dns-servers option.
+    OptionPtr dnsservers(new Option6AddrLst(D6O_NAME_SERVERS,
+                                            IOAddress(HARDCODED_DNS_SERVER)));
     answer->addOption(dnsservers);
 }
 
@@ -331,8 +335,19 @@ Subnet6Ptr Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
 
 void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 
+    // We need to allocate addresses for all IA_NA options in the client's
+    // question (i.e. SOLICIT or REQUEST) message.
+
+    // We need to select a subnet the client is connected in.
     Subnet6Ptr subnet = selectSubnet(question);
     if (subnet) {
+        // This particular client is out of luck today. We do not have
+        // information about the subnet he is connected to. This likely means
+        // misconfiguration of the server (or some relays). We will continue to
+        // process this message, but our response will be almost useless: no
+        // addresses or prefixes, no subnet specific configuration etc. The only
+        // thing this client can get is some global information (like DNS
+        // servers).
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_SUBNET_SELECTED)
             .arg(subnet->toText());
     } else {
@@ -343,12 +358,23 @@ void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 
     // @todo: We should implement Option6Duid some day, but we can do without it
     // just fine for now
+
+    // Let's find client's DUID. Client is supposed to include its client-id
+    // option almost all the time (the only exception is an anonymous inf-request,
+    // but that is mostly a theoretical case). Our allocation engine needs DUID
+    // and will refuse to allocate anything to anonymous clients.
     DuidPtr duid;
     OptionPtr opt_duid = question->getOption(D6O_CLIENTID);
     if (opt_duid) {
         duid = DuidPtr(new DUID(opt_duid->getData()));
     }
 
+    // Now that we have all information about the client, let's iterate over all
+    // received options and handle IA_NA options one by one and store our
+    // responses in answer message (ADVERTISE or REPLY).
+    //
+    // @todo: expand this to cover IA_PD and IA_TA once we implement support for
+    // prefix delegation and temporary addresses.
     for (Option::OptionCollection::iterator opt = question->options_.begin();
          opt != question->options_.end(); ++opt) {
         switch (opt->second->getType()) {
@@ -368,14 +394,24 @@ void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 
 OptionPtr Dhcpv6Srv::handleIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid, Pkt6Ptr question,
                                  boost::shared_ptr<Option6IA> ia) {
+    // If there is no subnet selected for handling this IA_NA, the only thing to do left is
+    // to say that we are sorry, but the user won't get an address. As a convenience, we
+    // use a different status text to indicate that (compare to the same status code,
+    // but different wording below)
     if (!subnet) {
+        // Create empty IA_NA option with IAID matching the request.
         boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
 
+        // Insert status code NoAddrsAvail.
         ia_rsp->addOption(createStatusCode(STATUS_NoAddrsAvail, "Sorry, no subnet available."));
         return (ia_rsp);
     }
 
-    shared_ptr<Option6IAAddr> hintOpt = dynamic_pointer_cast<Option6IAAddr>(ia->getOption(D6O_IAADDR));
+    // Check if the client sent us a hint in his IA_NA. Clients may send an
+    // address in their IA_NA options as a suggestion (e.g. the last address
+    // they used before).
+    shared_ptr<Option6IAAddr> hintOpt = dynamic_pointer_cast<Option6IAAddr>
+                                        (ia->getOption(D6O_IAADDR));
     IOAddress hint("::");
     if (hintOpt) {
         hint = hintOpt->getAddress();
@@ -385,21 +421,34 @@ OptionPtr Dhcpv6Srv::handleIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid, 
         .arg(duid?duid->toText():"(no-duid)").arg(ia->getIAID())
         .arg(hintOpt?hint.toText():"(no hint)");
 
+    // "Fake" allocation is processing of SOLICIT message. We pretend to do an
+    // allocation, but we do not put the lease in the database. That is ok,
+    // because we do not guarantee that the user will get that exact lease. If
+    // the user selects this server to do actual allocation (i.e. sends REQUEST)
+    // it should include this hint. That will help us during the actual lease
+    // allocation.
     bool fake_allocation = false;
     if (question->getType() == DHCPV6_SOLICIT) {
         /// @todo: Check if we support rapid commit
         fake_allocation = true;
     }
 
+    // Use allocation engine to pick a lease for this client. Allocation engine
+    // will try to honour the hint, but it is just a hint - some other address
+    // may be used instead. If fake_allocation is set to false, the lease will
+    // be inserted into the LeaseMgr as well.
     Lease6Ptr lease = alloc_engine_->allocateAddress6(subnet, duid, ia->getIAID(),
                                                       hint, fake_allocation);
 
+    // Create IA_NA that we will put in the response.
     boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
 
     if (lease) {
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_LEASE_ALLOC)
+        // We have a lease! Let's wrap its content into IA_NA option
+        // with IAADDR suboption.
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, fake_allocation?
+                  DHCP6_LEASE_ADVERT:DHCP6_LEASE_ALLOC)
             .arg(lease->addr_.toText())
-            .arg(fake_allocation?"would be":"has been")
             .arg(duid?duid->toText():"(no-duid)")
             .arg(ia->getIAID());
 
@@ -412,14 +461,23 @@ OptionPtr Dhcpv6Srv::handleIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid, 
                                    lease->preferred_lft_,
                                    lease->valid_lft_));
         ia_rsp->addOption(addr);
+
+        // It would be possible to insert status code=0(success) as well,
+        // but this is considered waste of bandwidth as absence of status
+        // code is considered a success.
     } else {
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_LEASE_ALLOC_FAIL)
-            .arg(fake_allocation?"advertise":"grant")
+        // Allocation engine did not allocate a lease. The engine logged
+        // cause of that failure. The only thing left is to insert
+        // status code to pass the sad news to the client.
+
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, fake_allocation?
+                  DHCP6_LEASE_ADVERT_FAIL:DHCP6_LEASE_ALLOC_FAIL)
             .arg(duid?duid->toText():"(no-duid)")
             .arg(ia->getIAID())
             .arg(subnet->toText());
 
-        ia_rsp->addOption(createStatusCode(STATUS_NoAddrsAvail, "Sorry, no address could be allocated."));
+        ia_rsp->addOption(createStatusCode(STATUS_NoAddrsAvail,
+                          "Sorry, no address could be allocated."));
     }
     return (ia_rsp);
 }
