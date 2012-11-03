@@ -117,7 +117,7 @@ TEST_F(MasterLexerStateTest, parentheses) {
 
     EXPECT_EQ(s_null, s_start.handle(lexer, options)); // handle \n
 
-    // Now handle '('.  It skips \n and recognize 'a' as strin
+    // Now handle '('.  It skips \n and recognize 'a' as string
     EXPECT_EQ(0, s_start.getParenCount(lexer)); // check pre condition
     options = MasterLexer::END_OF_LINE | MasterLexer::INITIAL_WS;
     // should recognize 'a' as string
@@ -177,6 +177,15 @@ TEST_F(MasterLexerStateTest, unbalancedParentheses) {
     ASSERT_EQ(Token::ERROR, s_start.getToken(lexer).getType());
     EXPECT_EQ(Token::UNBALANCED_PAREN, s_start.getToken(lexer).getErrorCode());
     EXPECT_FALSE(s_start.wasLastEOL(lexer));
+
+    // Reach EOF without a dangling open parenthesis.
+    ss << "(a";
+    EXPECT_EQ(&s_string, s_start.handle(lexer, options)); // consume '(a'
+    EXPECT_EQ(1, s_start.getParenCount(lexer));
+    EXPECT_EQ(s_null, s_start.handle(lexer, options));    // reach EOF
+    ASSERT_EQ(Token::ERROR, s_start.getToken(lexer).getType());
+    EXPECT_EQ(Token::UNBALANCED_PAREN, s_start.getToken(lexer).getErrorCode());
+    EXPECT_EQ(0, s_start.getParenCount(lexer));
 }
 
 }
