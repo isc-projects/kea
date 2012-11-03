@@ -31,9 +31,14 @@ using namespace std;
 namespace {
 
 // IPv6 addresseses
+const char* ADDRESS_0 = "2001:db8::0";
 const char* ADDRESS_1 = "2001:db8::1";
 const char* ADDRESS_2 = "2001:db8::2";
 const char* ADDRESS_3 = "2001:db8::3";
+const char* ADDRESS_4 = "2001:db8::4";
+const char* ADDRESS_5 = "2001:db8::5";
+const char* ADDRESS_6 = "2001:db8::6";
+const char* ADDRESS_7 = "2001:db8::7";
 
 // Connection strings.  Assume:
 // Database: keatest
@@ -98,6 +103,10 @@ validConnectionString() {
                              VALID_USER, VALID_PASSWORD));
 }
 
+// Note: Doxygen "///" not used - even though Doxygen is used to
+// document class and methods - to avoid the comments appearing
+// in the programming manual.
+
 // @brief Test Fixture Class
 //
 // Opens the database prior to each test and closes it afterwards.
@@ -105,45 +114,50 @@ validConnectionString() {
 
 class MySqlLeaseMgrTest : public ::testing::Test {
 public:
-    /// @brief Constructor
-    ///
-    /// Deletes everything from the database and opens it.
-    MySqlLeaseMgrTest() : L1_ADDRESS(ADDRESS_1), L2_ADDRESS(ADDRESS_2),
-        L3_ADDRESS(ADDRESS_3), L1_IOADDRESS(L1_ADDRESS),
-        L2_IOADDRESS(L2_ADDRESS), L3_IOADDRESS(L3_ADDRESS)
-    {
+    // @brief Constructor
+    //
+    // Deletes everything from the database and opens it.
+    MySqlLeaseMgrTest() :
+        L0_ADDRESS(ADDRESS_0), L0_IOADDRESS(L0_ADDRESS), 
+        L1_ADDRESS(ADDRESS_1), L1_IOADDRESS(L1_ADDRESS), 
+        L2_ADDRESS(ADDRESS_2), L2_IOADDRESS(L2_ADDRESS), 
+        L3_ADDRESS(ADDRESS_3), L3_IOADDRESS(L3_ADDRESS), 
+        L4_ADDRESS(ADDRESS_4), L4_IOADDRESS(L4_ADDRESS), 
+        L5_ADDRESS(ADDRESS_5), L5_IOADDRESS(L5_ADDRESS), 
+        L6_ADDRESS(ADDRESS_6), L6_IOADDRESS(L6_ADDRESS), 
+        L7_ADDRESS(ADDRESS_7), L7_IOADDRESS(L7_ADDRESS)
+        {
         clearAll();
         LeaseMgrFactory::create(validConnectionString());
         lmptr_ = &(LeaseMgrFactory::instance());
     }
 
-    /// @brief Destructor
-    ///
-    /// Rolls back all pending transactions.  The deletion of the
-    /// lmptr_ member variable will close the database.  Then
-    /// reopen it and delete everything created by the test.
+    // @brief Destructor
+    //
+    // Rolls back all pending transactions.  The deletion of the
+    // lmptr_ member variable will close the database.  Then
+    // reopen it and delete everything created by the test.
     virtual ~MySqlLeaseMgrTest() {
         lmptr_->rollback();
         LeaseMgrFactory::destroy();
         clearAll();
     }
 
-    /// @brief Reopen the database
-    ///
-    /// Closes the database and re-open it.  Anything committed should be
-    /// visible.
+    // @brief Reopen the database
+    //
+    // Closes the database and re-open it.  Anything committed should be
+    // visible.
     void reopen() {
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(validConnectionString());
         lmptr_ = &(LeaseMgrFactory::instance());
     }
 
-    /// @brief Clear everything from the database tables
-    ///
-    /// There is no error checking in this code, as this is just
-    /// extra checking that the database is clear before the text.
-    void
-    clearAll() {
+    // @brief Clear everything from the database tables
+    //
+    // There is no error checking in this code, as this is just
+    // extra checking that the database is clear before the text.
+    void clearAll() {
             // Initialise
             MYSQL handle;
             (void) mysql_init(&handle);
@@ -172,7 +186,6 @@ public:
     //
     // @return Lease6Ptr.  This will not point to anything if the initialization
     //         failed (e.g. unknown address).
-
     Lease6Ptr initializeLease6(std::string address) {
         Lease6Ptr lease(new Lease6());
 
@@ -188,8 +201,18 @@ public:
         lease->fqdn_rev_ = false;                   // Unused
         lease->comments_ = std::string("");         // Unused
 
-        // Set the other parameters
-        if (address == L1_ADDRESS) {
+        // Set the other parameters.  For historical reasons, L0_ADDRESS is not used.
+        if (address == L0_ADDRESS) {
+            lease->type_ = Lease6::LEASE_IA_TA;
+            lease->prefixlen_ = 4;
+            lease->iaid_ = 142;
+            lease->duid_ = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0x77)));
+            lease->preferred_lft_ = 900;   // Preferred lifetime
+            lease->valid_lft_ = 8677;      // Actual lifetime
+            lease->cltt_ = 168256;         // Current time of day
+            lease->subnet_id_ = 23;        // Arbitrary number
+
+        } else if (address == L1_ADDRESS) {
             lease->type_ = Lease6::LEASE_IA_TA;
             lease->prefixlen_ = 0;
             lease->iaid_ = 42;
@@ -209,14 +232,13 @@ public:
             lease->cltt_ = 234567;         // Current time of day
             lease->subnet_id_ = 73;        // Same as for L1_ADDRESS
 
-        
         } else if (address == L3_ADDRESS) {
             lease->type_ = Lease6::LEASE_IA_NA;
             lease->prefixlen_ = 28;
             lease->iaid_ = 0xfffffffe;
             vector<uint8_t> duid;
-            for (uint8_t i = 0; i < 128; ++i) {
-                duid.push_back(i + 5);
+            for (uint8_t i = 31; i < 126; ++i) {
+                duid.push_back(i);
             }
             lease->duid_ = boost::shared_ptr<DUID>(new DUID(duid));
 
@@ -229,6 +251,50 @@ public:
             lease->cltt_ = 234567;         // Current time of day
             lease->subnet_id_ = 37;        // Different from L1 and L2
 
+        } else if (address == L4_ADDRESS) {
+            // Same DUID and IAID as L1_ADDRESS
+            lease->type_ = Lease6::LEASE_IA_PD;
+            lease->prefixlen_ = 15;
+            lease->iaid_ = 42;
+            lease->duid_ = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0x42)));
+            lease->preferred_lft_ = 4800;  // Preferred lifetime
+            lease->valid_lft_ = 7736;      // Actual lifetime
+            lease->cltt_ = 222456;         // Current time of day
+            lease->subnet_id_ = 75;        // Arbitrary number
+
+        } else if (address == L5_ADDRESS) {
+            // Same DUID and IAID as L1_ADDRESS
+            lease->type_ = Lease6::LEASE_IA_PD;
+            lease->prefixlen_ = 24;
+            lease->iaid_ = 42;
+            lease->duid_ = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0x42)));
+            lease->preferred_lft_ = 5400;  // Preferred lifetime
+            lease->valid_lft_ = 7832;      // Actual lifetime
+            lease->cltt_ = 227476;         // Current time of day
+            lease->subnet_id_ = 175;       // Arbitrary number
+
+        } else if (address == L6_ADDRESS) {
+            // Same DUID as L1_ADDRESS
+            lease->type_ = Lease6::LEASE_IA_PD;
+            lease->prefixlen_ = 24;
+            lease->iaid_ = 93;
+            lease->duid_ = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0x42)));
+            lease->preferred_lft_ = 5400;  // Preferred lifetime
+            lease->valid_lft_ = 1832;      // Actual lifetime
+            lease->cltt_ = 627476;         // Current time of day
+            lease->subnet_id_ = 112;       // Arbitrary number
+
+        } else if (address == L7_ADDRESS) {
+            // Same IAID as L1_ADDRESS
+            lease->type_ = Lease6::LEASE_IA_PD;
+            lease->prefixlen_ = 24;
+            lease->iaid_ = 42;
+            lease->duid_ = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0xe5)));
+            lease->preferred_lft_ = 5600;  // Preferred lifetime
+            lease->valid_lft_ = 7975;      // Actual lifetime
+            lease->cltt_ = 213876;         // Current time of day
+            lease->subnet_id_ = 19;        // Arbitrary number
+
         } else {
             // Unknown address, return an empty pointer.
             lease.reset();
@@ -238,17 +304,69 @@ public:
         return (lease);
     }
 
+    // @brief Creates Leases for the test
+    //
+    // Creates all leases for the test and checks that they are different.
+    //
+    // @return vector<Lease6Ptr> Vector of pointers to leases
+    vector<Lease6Ptr> createLeases6() {
+
+        // Create leases
+        vector<Lease6Ptr> leases;
+        leases.push_back(initializeLease6(L0_ADDRESS));
+        leases.push_back(initializeLease6(L1_ADDRESS));
+        leases.push_back(initializeLease6(L2_ADDRESS));
+        leases.push_back(initializeLease6(L3_ADDRESS));
+        leases.push_back(initializeLease6(L4_ADDRESS));
+        leases.push_back(initializeLease6(L5_ADDRESS));
+        leases.push_back(initializeLease6(L6_ADDRESS));
+        leases.push_back(initializeLease6(L7_ADDRESS));
+
+        EXPECT_EQ(8, leases.size());
+
+        // Check they were created
+        for (int i = 0; i < leases.size(); ++i) {
+            EXPECT_TRUE(leases[i]);
+        }
+
+        // Check they are different
+        for (int i = 0; i < (leases.size() - 1); ++i) {
+            for (int j = (i + 1); j < leases.size(); ++j) {
+                EXPECT_TRUE(leases[i] != leases[j]);
+            }
+        }
+
+        return (leases);
+    }
+
+
     // Member variables
 
     LeaseMgr*   lmptr_;         // Pointer to the lease manager
 
-    string L1_ADDRESS;          // String form of address 1
-    string L2_ADDRESS;          // String form of address 2
-    string L3_ADDRESS;          // String form of address 3
+    string L0_ADDRESS;          // String form of address 1
+    IOAddress L0_IOADDRESS;     // IOAddress form of L1_ADDRESS
 
+    string L1_ADDRESS;          // String form of address 1
     IOAddress L1_IOADDRESS;     // IOAddress form of L1_ADDRESS
+
+    string L2_ADDRESS;          // String form of address 2
     IOAddress L2_IOADDRESS;     // IOAddress form of L2_ADDRESS
+
+    string L3_ADDRESS;          // String form of address 3
     IOAddress L3_IOADDRESS;     // IOAddress form of L3_ADDRESS
+
+    string L4_ADDRESS;          // String form of address 4
+    IOAddress L4_IOADDRESS;     // IOAddress form of L4_ADDRESS
+
+    string L5_ADDRESS;          // String form of address 5
+    IOAddress L5_IOADDRESS;     // IOAddress form of L5_ADDRESS
+
+    string L6_ADDRESS;          // String form of address 6
+    IOAddress L6_IOADDRESS;     // IOAddress form of L6_ADDRESS
+
+    string L7_ADDRESS;          // String form of address 7
+    IOAddress L7_IOADDRESS;     // IOAddress form of L7_ADDRESS
 };
 
 
@@ -382,46 +500,33 @@ detailCompareLease6(const Lease6Ptr& first, const Lease6Ptr& second) {
 // Tests where a collection of leases can be returned are in the test
 // Lease6Collection.
 TEST_F(MySqlLeaseMgrTest, BasicLease6) {
-
-    // Define the leases being used for testing.
-    Lease6Ptr l1 = initializeLease6(L1_ADDRESS);
-    ASSERT_TRUE(l1);
-    Lease6Ptr l2 = initializeLease6(L2_ADDRESS);
-    ASSERT_TRUE(l2);
-    Lease6Ptr l3 = initializeLease6(L3_ADDRESS);
-    ASSERT_TRUE(l3);
-
-    // Sanity check that the leases are different
-    ASSERT_TRUE(*l1 != *l2);
-    ASSERT_TRUE(*l1 != *l3);
-    ASSERT_TRUE(*l2 != *l3);
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
 
     // Start the tests.  Add three leases to the database, read them back and
     // check they are what we think they are.
-    Lease6Ptr l_returned;
-
-    EXPECT_TRUE(lmptr_->addLease(l1));
-    EXPECT_TRUE(lmptr_->addLease(l2));
-    EXPECT_TRUE(lmptr_->addLease(l3));
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    EXPECT_TRUE(lmptr_->addLease(leases[2]));
+    EXPECT_TRUE(lmptr_->addLease(leases[3]));
     lmptr_->commit();
 
     // Reopen the database to ensure that they actually got stored.
     reopen();
 
-    l_returned = lmptr_->getLease6(L1_IOADDRESS);
+    Lease6Ptr l_returned = lmptr_->getLease6(L1_IOADDRESS);
     EXPECT_TRUE(l_returned);
-    detailCompareLease6(l1, l_returned);
+    detailCompareLease6(leases[1], l_returned);
 
     l_returned = lmptr_->getLease6(L2_IOADDRESS);
     EXPECT_TRUE(l_returned);
-    detailCompareLease6(l2, l_returned);
+    detailCompareLease6(leases[2], l_returned);
 
     l_returned = lmptr_->getLease6(L3_IOADDRESS);
     EXPECT_TRUE(l_returned);
-    detailCompareLease6(l3, l_returned);
+    detailCompareLease6(leases[3], l_returned);
 
     // Check that we can't add a second lease with the same address
-    EXPECT_FALSE(lmptr_->addLease(l1));
+    EXPECT_FALSE(lmptr_->addLease(leases[1]));
 
     // Delete a lease, check that it's gone, and that we can't delete it
     // a second time.
@@ -433,32 +538,67 @@ TEST_F(MySqlLeaseMgrTest, BasicLease6) {
     // Check that the second address is still there.
     l_returned = lmptr_->getLease6(L2_IOADDRESS);
     EXPECT_TRUE(l_returned);
-    detailCompareLease6(l2, l_returned);
+    detailCompareLease6(leases[2], l_returned);
 }
+
+
+// @brief Check GetLease6 methods - Access by DUID/IAID
+//
+// Adds leases to the database and checks that they can be accessed via
+// a combination of DIUID and IAID.
+TEST_F(MySqlLeaseMgrTest, GetLease6Extended1) {
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+    EXPECT_LE(6, leases.size());    // Expect to access leases 0 through 5
+
+    // Add them to the database
+    for (int i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Get the leases matching the DUID and IAID of lease[1].
+    Lease6Collection returned = lmptr_->getLease6(*leases[1]->duid_,
+                                                  leases[1]->iaid_);
+
+    // Should be three leases, matching leases[1], [4] and [5].
+    ASSERT_EQ(3, returned.size());
+
+    // Easiest way to check is to look at the addresses.
+    vector<string> addresses;
+    for (Lease6Collection::const_iterator i = returned.begin();
+         i != returned.end(); ++i) {
+        addresses.push_back((*i)->addr_.toText());
+    }
+    sort(addresses.begin(), addresses.end());
+    EXPECT_EQ(L1_ADDRESS, addresses[0]);
+    EXPECT_EQ(L4_ADDRESS, addresses[1]);
+    EXPECT_EQ(L5_ADDRESS, addresses[2]);
+}
+
+
 
 // @brief Lease6 Update Tests
 //
 // Checks that we are able to update a lease in the database.
 TEST_F(MySqlLeaseMgrTest, UpdateLease6) {
-
-    // Define the leases being used for testing.
-    Lease6Ptr l1 = initializeLease6(L1_ADDRESS);
-    ASSERT_TRUE(l1);
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+    EXPECT_LE(3, leases.size());    // Expect to access leases 0 through 5
 
     // Add a lease to the database and check that the lease is there.
-    EXPECT_TRUE(lmptr_->addLease(l1));
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
     lmptr_->commit();
 
     reopen();
     Lease6Ptr l_returned = lmptr_->getLease6(L1_IOADDRESS);
     EXPECT_TRUE(l_returned);
-    detailCompareLease6(l1, l_returned);
+    detailCompareLease6(leases[1], l_returned);
 
     // Modify some fields in lease 1 (not the address) and update it.
-    ++l1->iaid_;
-    l1->type_ = Lease6::LEASE_IA_PD;
-    l1->valid_lft_ *= 2;
-    lmptr_->updateLease6(l1);
+    ++leases[1]->iaid_;
+    leases[1]->type_ = Lease6::LEASE_IA_PD;
+    leases[1]->valid_lft_ *= 2;
+    lmptr_->updateLease6(leases[1]);
     lmptr_->commit();
     reopen();
 
@@ -466,31 +606,29 @@ TEST_F(MySqlLeaseMgrTest, UpdateLease6) {
     l_returned.reset();
     l_returned = lmptr_->getLease6(L1_IOADDRESS);
     EXPECT_TRUE(l_returned);
-    detailCompareLease6(l1, l_returned);
+    detailCompareLease6(leases[1], l_returned);
 
     // Alter the lease again and check.
-    ++l1->iaid_;
-    l1->type_ = Lease6::LEASE_IA_TA;
-    l1->cltt_ += 6;
-    l1->prefixlen_ = 93;
-    lmptr_->updateLease6(l1);
+    ++leases[1]->iaid_;
+    leases[1]->type_ = Lease6::LEASE_IA_TA;
+    leases[1]->cltt_ += 6;
+    leases[1]->prefixlen_ = 93;
+    lmptr_->updateLease6(leases[1]);
 
     l_returned.reset();
     l_returned = lmptr_->getLease6(L1_IOADDRESS);
     EXPECT_TRUE(l_returned);
-    detailCompareLease6(l1, l_returned);
+    detailCompareLease6(leases[1], l_returned);
 
     // Check we can do an update without changing data.
-    lmptr_->updateLease6(l1);
+    lmptr_->updateLease6(leases[1]);
     l_returned.reset();
     l_returned = lmptr_->getLease6(L1_IOADDRESS);
     EXPECT_TRUE(l_returned);
-    detailCompareLease6(l1, l_returned);
+    detailCompareLease6(leases[1], l_returned);
 
-    // Try updating a non-existent lease.
-    Lease6Ptr l2 = initializeLease6(L2_ADDRESS);
-    ASSERT_TRUE(l2);
-    EXPECT_THROW(lmptr_->updateLease6(l2), isc::dhcp::NoSuchLease);
+    // Try updating a lease not in the database.
+    EXPECT_THROW(lmptr_->updateLease6(leases[2]), isc::dhcp::NoSuchLease);
 }
 
 }; // end of anonymous namespace
