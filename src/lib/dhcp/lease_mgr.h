@@ -316,7 +316,7 @@ typedef boost::shared_ptr<Lease6> Lease6Ptr;
 typedef boost::shared_ptr<const Lease6> ConstLease6Ptr;
 
 /// @brief A collection of IPv6 leases.
-typedef std::vector< boost::shared_ptr<Lease6Ptr> > Lease6Collection;
+typedef std::vector<Lease6Ptr> Lease6Collection;
 
 /// @brief Abstract Lease Manager
 ///

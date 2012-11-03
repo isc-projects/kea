@@ -331,12 +331,13 @@ private:
     ///
     /// The contents of the enum are indexes into the list of SQL statements
     enum StatementIndex {
-        DELETE_LEASE6,      // Delete from lease6 by address
-        GET_LEASE6,         // Get lease 6 by address
-        GET_VERSION,        // Obtain version number
-        INSERT_LEASE6,      // Add entry to lease6 table
-        UPDATE_LEASE6,      // Update a Lease6 entry
-        NUM_STATEMENTS      // Number of statements
+        DELETE_LEASE6,              // Delete from lease6 by address
+        GET_LEASE6_ADDR,            // Get lease6 by address
+        GET_LEASE6_DUID_IAID,       // Get lease6 by DUID and IAID
+        GET_VERSION,                // Obtain version number
+        INSERT_LEASE6,              // Add entry to lease6 table
+        UPDATE_LEASE6,              // Update a Lease6 entry
+        NUM_STATEMENTS              // Number of statements
     };
 
     /// @brief Prepare Single Statement
