@@ -202,10 +202,16 @@ cancelOptions(MasterLexer::Options& options,
 
 const State*
 Start::handle(MasterLexer& lexer, MasterLexer::Options& options) const {
+    size_t& paren_count = getLexerImpl(lexer)->paren_count_;
+
     while (true) {
         const int c = getLexerImpl(lexer)->source_->getChar();
         if (c == InputSource::END_OF_STREAM) {
-            // TODO: handle unbalance cases
+            if (paren_count != 0) {
+                getLexerImpl(lexer)->token_ = Token(Token::UNBALANCED_PAREN);
+                paren_count = 0; // reset to 0; this helps in lenient mode.
+                return (NULL);
+            }
             getLexerImpl(lexer)->last_was_eol_ = false;
             getLexerImpl(lexer)->token_ = Token(Token::END_OF_FILE);
             return (NULL);
@@ -227,16 +233,16 @@ Start::handle(MasterLexer& lexer, MasterLexer::Options& options) const {
             getLexerImpl(lexer)->last_was_eol_ = false;
             cancelOptions(options,
                           MasterLexer::END_OF_LINE | MasterLexer::INITIAL_WS);
-            ++getLexerImpl(lexer)->paren_count_;
+            ++paren_count;
             continue;
         } else if (c == ')') {
             getLexerImpl(lexer)->last_was_eol_ = false;
-            if (getLexerImpl(lexer)->paren_count_ == 0) {
+            if (paren_count == 0) {
                 getLexerImpl(lexer)->token_ = Token(Token::UNBALANCED_PAREN);
                 return (NULL);
             }
-            --getLexerImpl(lexer)->paren_count_;
-            if (getLexerImpl(lexer)->paren_count_ == 0) {
+            --paren_count;
+            if (paren_count == 0) {
                 options = getLexerImpl(lexer)->orig_options_;
             }
             continue;
