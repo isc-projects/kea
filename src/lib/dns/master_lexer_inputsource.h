@@ -135,7 +135,7 @@ private:
     size_t buffer_pos_;
 
     const std::string name_;
-    std::fstream file_stream_;
+    std::ifstream file_stream_;
     std::istream& input_;
 };
 
