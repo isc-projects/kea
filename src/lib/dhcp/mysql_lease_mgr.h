@@ -334,6 +334,7 @@ private:
         DELETE_LEASE6,              // Delete from lease6 by address
         GET_LEASE6_ADDR,            // Get lease6 by address
         GET_LEASE6_DUID_IAID,       // Get lease6 by DUID and IAID
+        GET_LEASE6_DUID_IAID_SUBID, // Get lease6 by DUID, IAID and Subnet ID
         GET_VERSION,                // Obtain version number
         INSERT_LEASE6,              // Add entry to lease6 table
         UPDATE_LEASE6,              // Update a Lease6 entry

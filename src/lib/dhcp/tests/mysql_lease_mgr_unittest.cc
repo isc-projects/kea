@@ -541,7 +541,6 @@ TEST_F(MySqlLeaseMgrTest, BasicLease6) {
     detailCompareLease6(leases[2], l_returned);
 }
 
-
 // @brief Check GetLease6 methods - Access by DUID/IAID
 //
 // Adds leases to the database and checks that they can be accessed via
@@ -573,6 +572,60 @@ TEST_F(MySqlLeaseMgrTest, GetLease6Extended1) {
     EXPECT_EQ(L1_ADDRESS, addresses[0]);
     EXPECT_EQ(L4_ADDRESS, addresses[1]);
     EXPECT_EQ(L5_ADDRESS, addresses[2]);
+
+    // Check that nothing is returned when either the IAID or DUID match
+    // nothing.
+    returned = lmptr_->getLease6(*leases[1]->duid_, leases[1]->iaid_ + 1);
+    EXPECT_EQ(0, returned.size());
+
+    // Alter the leases[1] DUID to match nothing in the database.
+    vector<uint8_t> duid_vector = leases[1]->duid_->getDuid();
+    ++duid_vector[0];
+    DUID new_duid(duid_vector);
+    returned = lmptr_->getLease6(new_duid, leases[1]->iaid_);
+    EXPECT_EQ(0, returned.size());
+}
+
+
+
+// @brief Check GetLease6 methods - Access by DUID/IAID/SubnetID
+//
+// Adds leases to the database and checks that they can be accessed via
+// a combination of DIUID and IAID.
+TEST_F(MySqlLeaseMgrTest, GetLease6Extended2) {
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+    EXPECT_LE(6, leases.size());    // Expect to access leases 0 through 5
+
+    // Add them to the database
+    for (int i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Get the leases matching the DUID and IAID of lease[1].
+    Lease6Ptr returned = lmptr_->getLease6(*leases[1]->duid_,
+                                           leases[1]->iaid_,
+                                           leases[1]->subnet_id_);
+    ASSERT_TRUE(returned);
+    EXPECT_TRUE(*returned == *leases[1]);
+
+    // Modify each of the three parameters (DUID, IAID, Subnet ID) and
+    // check that nothing is returned.
+    returned = lmptr_->getLease6(*leases[1]->duid_, leases[1]->iaid_ + 1,
+                                 leases[1]->subnet_id_);
+    EXPECT_FALSE(returned);
+
+    returned = lmptr_->getLease6(*leases[1]->duid_, leases[1]->iaid_,
+                                 leases[1]->subnet_id_ + 1);
+    EXPECT_FALSE(returned);
+
+    // Alter the leases[1] DUID to match nothing in the database.
+    vector<uint8_t> duid_vector = leases[1]->duid_->getDuid();
+    ++duid_vector[0];
+    DUID new_duid(duid_vector);
+    returned = lmptr_->getLease6(new_duid, leases[1]->iaid_,
+                                 leases[1]->subnet_id_);
+    EXPECT_FALSE(returned);
 }
 
 
