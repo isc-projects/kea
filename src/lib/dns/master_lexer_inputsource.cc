@@ -21,7 +21,7 @@ namespace master_lexer_internal {
 namespace { // unnamed namespace
 
 std::string
-createStreamName(std::istream& input_stream) {
+createStreamName(const std::istream& input_stream) {
      std::stringstream ss;
      ss << "stream-" << &input_stream;
      return (ss.str());
@@ -70,7 +70,7 @@ InputSource::getChar() {
             return (END_OF_STREAM);
         }
         // We are not yet at EOF. Read from the stream.
-        int c = input_.get();
+        const int c = input_.get();
         // Have we reached EOF now? If so, set at_eof_ and return early,
         // but don't modify buffer_pos_ (which should still be equal to
         // the size of buffer_).
@@ -87,7 +87,7 @@ InputSource::getChar() {
         buffer_.push_back(c);
     }
 
-    int c = buffer_[buffer_pos_++];
+    const int c = buffer_[buffer_pos_++];
     if (c == '\n') {
         line_++;
     }
