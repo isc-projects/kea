@@ -532,24 +532,33 @@ MySqlLeaseMgr::prepareStatements() {
                      "SELECT address, duid, valid_lifetime, "
                          "expire, subnet_id, pref_lifetime, "
                          "lease_type, iaid, prefix_len "
-                         "FROM lease6 WHERE address = ?");
+                             "FROM lease6 "
+                             "WHERE address = ?");
     prepareStatement(GET_LEASE6_DUID_IAID,
                      "SELECT address, duid, valid_lifetime, "
                          "expire, subnet_id, pref_lifetime, "
                          "lease_type, iaid, prefix_len "
-                         "FROM lease6 WHERE duid = ? AND iaid = ?");
+                             "FROM lease6 "
+                             "WHERE duid = ? AND iaid = ?");
+    prepareStatement(GET_LEASE6_DUID_IAID_SUBID,
+                     "SELECT address, duid, valid_lifetime, "
+                         "expire, subnet_id, pref_lifetime, "
+                         "lease_type, iaid, prefix_len "
+                             "FROM lease6 "
+                             "WHERE duid = ? AND iaid = ? AND subnet_id = ?");
     prepareStatement(GET_VERSION,
                      "SELECT version, minor FROM schema_version");
     prepareStatement(INSERT_LEASE6,
                      "INSERT INTO lease6(address, duid, valid_lifetime, "
                          "expire, subnet_id, pref_lifetime, "
                          "lease_type, iaid, prefix_len) "
-                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
     prepareStatement(UPDATE_LEASE6,
                      "UPDATE lease6 SET address = ?, duid = ?, "
                          "valid_lifetime = ?, expire = ?, subnet_id = ?, "
                          "pref_lifetime = ?, lease_type = ?, iaid = ?, "
-                         "prefix_len = ? WHERE address = ?");
+                         "prefix_len = ? "
+                             "WHERE address = ?");
 }
 
 bool
@@ -778,11 +787,87 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
 }
 
 Lease6Ptr
-MySqlLeaseMgr::getLease6(const DUID& /* duid */, uint32_t /* iaid */,
-                         SubnetID /* subnet_id */) const {
-    isc_throw(NotImplemented, "MySqlLeaseMgr::getLease4(const DUID&, SubnetID) "
-              "not implemented yet");
-    return (Lease6Ptr());
+MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
+                         SubnetID subnet_id) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[3];
+    memset(inbind, 0, sizeof(inbind));
+
+    // DUID.  The complex casting is needed to obtain the "const" vector of
+    // uint8_t from the DUID, point to the start of it (discarding the
+    // "const"ness) and finally casing it to "char*" for the MySQL buffer
+    // element.
+    const vector<uint8_t>& duid_vector = duid.getDuid();
+    unsigned long duid_length = duid_vector.size();
+    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[0].buffer = reinterpret_cast<char*>(
+            const_cast<uint8_t*>(&duid_vector[0]));
+    inbind[0].buffer_length = duid_length;
+    inbind[0].length = &duid_length;
+
+    // IAID
+    inbind[1].buffer_type = MYSQL_TYPE_LONG;
+    inbind[1].buffer = reinterpret_cast<char*>(&iaid);
+    inbind[1].is_unsigned = static_cast<my_bool>(1);
+
+    // Subnet ID
+    inbind[2].buffer_type = MYSQL_TYPE_LONG;
+    inbind[2].buffer = reinterpret_cast<char*>(&subnet_id);
+    inbind[2].is_unsigned = static_cast<my_bool>(1);
+
+    // Bind the input parameters to the statement
+    int status = mysql_stmt_bind_param(statements_[GET_LEASE6_DUID_IAID_SUBID], inbind);
+    checkError(status, GET_LEASE6_DUID_IAID_SUBID, "unable to bind WHERE clause parameter");
+
+    // Set up the SELECT clause
+    MySqlLease6Exchange exchange;
+    std::vector<MYSQL_BIND> outbind;
+    exchange.createBindForReceive(outbind);
+
+    // Bind the output parameters to the statement
+    status = mysql_stmt_bind_result(statements_[GET_LEASE6_DUID_IAID_SUBID], &outbind[0]);
+    checkError(status, GET_LEASE6_DUID_IAID_SUBID, "unable to bind SELECT clause parameters");
+
+    // Execute the query.
+    status = mysql_stmt_execute(statements_[GET_LEASE6_DUID_IAID_SUBID]);
+    checkError(status, GET_LEASE6_DUID_IAID_SUBID, "unable to execute");
+
+    Lease6Ptr result;
+    status = mysql_stmt_fetch(statements_[GET_LEASE6_DUID_IAID_SUBID]);
+    if (status == 0) {
+        try {
+            result = exchange.getLeaseData();
+
+            // TODO: check for more than one row returned.  At present, just ignore
+            // the excess and take the first.
+
+        } catch (const isc::BadValue& ex) {
+            // Free up result set.
+
+            (void) mysql_stmt_free_result(statements_[GET_LEASE6_DUID_IAID_SUBID]);
+            // Lease type is returned, to rethrow the exception with a bit
+            // more data.
+            isc_throw(BadValue, ex.what() << ". Statement is <" <<
+                      text_statements_[GET_LEASE6_DUID_IAID_SUBID] << ">");
+        }
+
+        // As the address is the primary key in the table, we can't return
+        // two rows, so we don't bother checking whether multiple rows have
+        // been returned.
+
+    } else if (status == 1) {
+        checkError(status, GET_LEASE6_DUID_IAID_SUBID, "unable to fetch results");
+
+    } else {
+        // @TODO Handle truncation
+        // We are ignoring truncation for now, so the only other result is
+        // no data was found.  In that case, we return a null Lease6 structure.
+        // This has already been set, so the action is a no-op.
+    }
+
+    // Free data structures associated with information returned.
+    (void) mysql_stmt_free_result(statements_[GET_LEASE6_DUID_IAID_SUBID]);
+    return (result);
 }
 
 void
