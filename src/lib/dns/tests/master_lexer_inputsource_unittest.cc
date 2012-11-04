@@ -61,7 +61,7 @@ TEST_F(InputSourceTest, getName) {
 
 TEST_F(InputSourceTest, nonExistentFile) {
     EXPECT_THROW({
-        InputSource source(TEST_DATA_SRCDIR "/videokilledtheradiostar");
+        InputSource source(TEST_DATA_SRCDIR "/does-not-exist");
     }, InputSource::OpenError);
 }
 
