@@ -118,16 +118,13 @@ TEST_F(InputSourceTest, stream) {
 }
 
 TEST_F(InputSourceTest, file) {
-    const char* str =
-        ";; a simple (incomplete) zone file\n"
-        "\n"
-        "example.com. 3600 IN TXT \"test data\"\n"
-        "www.example.com. 60 IN A 192.0.2.1\n"
-        "www.example.com. 60 IN A 192.0.2.2\n";
-    size_t str_length = strlen(str);
+    std::ifstream fs(TEST_DATA_SRCDIR "/masterload.txt");
+    std::string str((std::istreambuf_iterator<char>(fs)),
+                    std::istreambuf_iterator<char>());
+    fs.close();
 
     InputSource source(TEST_DATA_SRCDIR "/masterload.txt");
-    checkGetAndUngetChar(source, str, str_length);
+    checkGetAndUngetChar(source, str.c_str(), str.size());
 }
 
 // ungetAll() should skip back to the place where the InputSource
