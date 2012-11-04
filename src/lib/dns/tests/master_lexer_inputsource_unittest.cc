@@ -68,7 +68,8 @@ TEST_F(InputSourceTest, nonExistentFile) {
 // getChar() should return characters from the input stream in
 // sequence. ungetChar() should skip backwards.
 void
-checkGetAndUngetChar(InputSource& source, const char* str, size_t str_length)
+checkGetAndUngetChar(InputSource& source,
+                     const char* str, const size_t str_length)
 {
     for (size_t i = 0; i < str_length; i++) {
         EXPECT_EQ(str[i], source.getChar());
@@ -101,7 +102,7 @@ checkGetAndUngetChar(InputSource& source, const char* str, size_t str_length)
     source.ungetChar();
 
     for (size_t i = 0; i < str_length; i++) {
-        size_t index = str_length - 1 - i;
+        const size_t index = str_length - 1 - i;
         // Skip one character.
         source.ungetChar();
         EXPECT_EQ(str[index], source.getChar());
@@ -119,8 +120,8 @@ TEST_F(InputSourceTest, stream) {
 
 TEST_F(InputSourceTest, file) {
     std::ifstream fs(TEST_DATA_SRCDIR "/masterload.txt");
-    std::string str((std::istreambuf_iterator<char>(fs)),
-                    std::istreambuf_iterator<char>());
+    const std::string str((std::istreambuf_iterator<char>(fs)),
+                          std::istreambuf_iterator<char>());
     fs.close();
 
     InputSource source(TEST_DATA_SRCDIR "/masterload.txt");
@@ -191,8 +192,7 @@ TEST_F(InputSourceTest, compactDuring) {
         source_.getChar();
     }
     EXPECT_FALSE(source_.atEOF());
-    size_t line = source_.getCurrentLine();
-    EXPECT_EQ(2, line);
+    EXPECT_EQ(2, source_.getCurrentLine());
 
     // Now, unget a couple of characters. This should cause the
     // buffer_pos_ to be not equal to the size of the buffer.
@@ -299,8 +299,7 @@ TEST_F(InputSourceTest, saveLine) {
         source_.getChar();
     }
     EXPECT_FALSE(source_.atEOF());
-    size_t line = source_.getCurrentLine();
-    EXPECT_EQ(2, line);
+    EXPECT_EQ(2, source_.getCurrentLine());
 
     // Now, save the line.
     source_.saveLine();
@@ -309,11 +308,10 @@ TEST_F(InputSourceTest, saveLine) {
     while (!source_.atEOF()) {
         source_.getChar();
     }
-    line = source_.getCurrentLine();
 
     // Now, we are at EOF.
     EXPECT_TRUE(source_.atEOF());
-    EXPECT_EQ(4, line);
+    EXPECT_EQ(4, source_.getCurrentLine());
 
     // Now, ungetAll() and check where it goes back.
     source_.ungetAll();
