@@ -95,9 +95,15 @@ public:
 
     /// \brief Saves the current line being read. Later, when
     /// \c ungetAll() is called, it skips back to the last-saved line.
-    void saveLine() {
-        saved_line_ = line_;
-    }
+    void saveLine();
+
+    /// Removes buffered content before the current location in the
+    /// \c InputSource. It's not possible to \c ungetChar() after this,
+    /// unless we read more data using \c getChar().
+    void compact();
+
+    /// Calls \c saveLine() and \c compact() in sequence.
+    void mark();
 
     /// \brief Returns a single character from the input source. If end
     /// of file is reached, \c END_OF_STREAM is returned.
@@ -120,11 +126,6 @@ public:
     /// previously, it sets the current line number to the line number
     /// saved.
     void ungetAll();
-
-    /// Removes buffered content before the current location in the
-    /// \c InputSource. It's not possible to \c ungetChar() after this,
-    /// unless we read more data using \c getChar().
-    void compact();
 
 private:
     bool at_eof_;

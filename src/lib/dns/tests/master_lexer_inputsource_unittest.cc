@@ -185,7 +185,7 @@ TEST_F(InputSourceTest, compact) {
     EXPECT_TRUE(source_.atEOF());
 }
 
-TEST_F(InputSourceTest, compactDuring) {
+TEST_F(InputSourceTest, markDuring) {
     // First, skip to line 2.
     while (!source_.atEOF() &&
            (source_.getCurrentLine() != 2)) {
@@ -199,8 +199,9 @@ TEST_F(InputSourceTest, compactDuring) {
     source_.ungetChar();
     source_.ungetChar();
 
-    source_.saveLine();
-    source_.compact();
+    // Now "mark" the source, meaning that we save line number and also
+    // compact the internal buffer at this stage.
+    source_.mark();
 
     // Ungetting here must throw.
     EXPECT_THROW(source_.ungetChar(), InputSource::UngetBeforeBeginning);
