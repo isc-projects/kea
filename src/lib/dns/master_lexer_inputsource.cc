@@ -118,6 +118,11 @@ InputSource::ungetAll() {
 }
 
 void
+InputSource::saveLine() {
+    saved_line_ = line_;
+}
+
+void
 InputSource::compact() {
     if (buffer_pos_ == buffer_.size()) {
         buffer_.clear();
@@ -126,6 +131,12 @@ InputSource::compact() {
     }
 
     buffer_pos_ = 0;
+}
+
+void
+InputSource::mark() {
+    saveLine();
+    compact();
 }
 
 } // namespace master_lexer_internal
