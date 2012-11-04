@@ -23,6 +23,7 @@
 #include <asiolink/io_address.h>
 
 using namespace isc;
+using namespace isc::dhcp;
 using namespace std;
 
 namespace {
@@ -41,7 +42,55 @@ namespace {
 const size_t ADDRESS6_TEXT_MAX_LEN = 42;    // Max size of a IPv6 text buffer
 const size_t DUID_MAX_LEN = 128;            // Max size of a DUID
 ///@}
+
+/// @brief MySQL Selection Statements
+///
+/// Each statement is associated with the index, used by the various methods
+/// to access the prepared statement.
+struct TaggedStatement {
+    MySqlLeaseMgr::StatementIndex index;
+    const char*                   text;
 };
+
+TaggedStatement tagged_statements[] = {
+    {MySqlLeaseMgr::DELETE_LEASE6,
+                    "DELETE FROM lease6 WHERE address = ?"},
+    {MySqlLeaseMgr::GET_LEASE6_ADDR,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len "
+                            "FROM lease6 "
+                            "WHERE address = ?"},
+    {MySqlLeaseMgr::GET_LEASE6_DUID_IAID,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len "
+                            "FROM lease6 "
+                            "WHERE duid = ? AND iaid = ?"},
+    {MySqlLeaseMgr::GET_LEASE6_DUID_IAID_SUBID,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len "
+                            "FROM lease6 "
+                            "WHERE duid = ? AND iaid = ? AND subnet_id = ?"},
+    {MySqlLeaseMgr::GET_VERSION,
+                    "SELECT version, minor FROM schema_version"},
+    {MySqlLeaseMgr::INSERT_LEASE6,
+                    "INSERT INTO lease6(address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len) "
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+    {MySqlLeaseMgr::UPDATE_LEASE6,
+                    "UPDATE lease6 SET address = ?, duid = ?, "
+                        "valid_lifetime = ?, expire = ?, subnet_id = ?, "
+                        "pref_lifetime = ?, lease_type = ?, iaid = ?, "
+                        "prefix_len = ? "
+                            "WHERE address = ?"},
+    // End of list sentinel
+    {MySqlLeaseMgr::NUM_STATEMENTS, NULL}
+};
+
+};  // Anonymous namespace
 
 namespace isc {
 namespace dhcp {
@@ -525,40 +574,11 @@ MySqlLeaseMgr::prepareStatements() {
     text_statements_.clear();
     text_statements_.resize(NUM_STATEMENTS, std::string(""));
 
-    // Now allocate the statements
-    prepareStatement(DELETE_LEASE6,
-                     "DELETE FROM lease6 WHERE address = ?");
-    prepareStatement(GET_LEASE6_ADDR,
-                     "SELECT address, duid, valid_lifetime, "
-                         "expire, subnet_id, pref_lifetime, "
-                         "lease_type, iaid, prefix_len "
-                             "FROM lease6 "
-                             "WHERE address = ?");
-    prepareStatement(GET_LEASE6_DUID_IAID,
-                     "SELECT address, duid, valid_lifetime, "
-                         "expire, subnet_id, pref_lifetime, "
-                         "lease_type, iaid, prefix_len "
-                             "FROM lease6 "
-                             "WHERE duid = ? AND iaid = ?");
-    prepareStatement(GET_LEASE6_DUID_IAID_SUBID,
-                     "SELECT address, duid, valid_lifetime, "
-                         "expire, subnet_id, pref_lifetime, "
-                         "lease_type, iaid, prefix_len "
-                             "FROM lease6 "
-                             "WHERE duid = ? AND iaid = ? AND subnet_id = ?");
-    prepareStatement(GET_VERSION,
-                     "SELECT version, minor FROM schema_version");
-    prepareStatement(INSERT_LEASE6,
-                     "INSERT INTO lease6(address, duid, valid_lifetime, "
-                         "expire, subnet_id, pref_lifetime, "
-                         "lease_type, iaid, prefix_len) "
-                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    prepareStatement(UPDATE_LEASE6,
-                     "UPDATE lease6 SET address = ?, duid = ?, "
-                         "valid_lifetime = ?, expire = ?, subnet_id = ?, "
-                         "pref_lifetime = ?, lease_type = ?, iaid = ?, "
-                         "prefix_len = ? "
-                             "WHERE address = ?");
+    // Created the MySQL prepared statements for each DML statement.
+    for (int i = 0; tagged_statements[i].text != NULL; ++i) {
+        prepareStatement(tagged_statements[i].index,
+                         tagged_statements[i].text);
+    }
 }
 
 bool
@@ -570,6 +590,7 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& /* lease */) {
 
 bool
 MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
+    const StatementIndex stindex = INSERT_LEASE6;
 
     // Create the MYSQL_BIND array for the lease
     MySqlLease6Exchange exchange;
@@ -577,11 +598,11 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     exchange.createBindForSend(lease, bind);
 
     // Bind the parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[INSERT_LEASE6], &bind[0]);
-    checkError(status, INSERT_LEASE6, "unable to bind parameters");
+    int status = mysql_stmt_bind_param(statements_[stindex], &bind[0]);
+    checkError(status, stindex, "unable to bind parameters");
 
     // Execute the statement
-    status = mysql_stmt_execute(statements_[INSERT_LEASE6]);
+    status = mysql_stmt_execute(statements_[stindex]);
     if (status != 0) {
 
         // Failure: check for the special case of duplicate entry.  If this is
@@ -590,7 +611,7 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
         if (mysql_errno(mysql_) == ER_DUP_ENTRY) {
             return (false);
         }
-        checkError(status, INSERT_LEASE6, "unable to execute");
+        checkError(status, stindex, "unable to execute");
     }
 
     // Insert succeeded
@@ -644,6 +665,8 @@ MySqlLeaseMgr::getLease4(const ClientId& /* clientid */,
 
 Lease6Ptr
 MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
+    const StatementIndex stindex = GET_LEASE6_ADDR;
+
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
@@ -657,8 +680,8 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
     inbind[0].length = &addr6_length;
 
     // Bind the input parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[GET_LEASE6_ADDR], inbind);
-    checkError(status, GET_LEASE6_ADDR, "unable to bind WHERE clause parameter");
+    int status = mysql_stmt_bind_param(statements_[stindex], inbind);
+    checkError(status, stindex, "unable to bind WHERE clause parameter");
 
     // Set up the SELECT clause
     MySqlLease6Exchange exchange;
@@ -666,15 +689,15 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
     exchange.createBindForReceive(outbind);
 
     // Bind the output parameters to the statement
-    status = mysql_stmt_bind_result(statements_[GET_LEASE6_ADDR], &outbind[0]);
-    checkError(status, GET_LEASE6_ADDR, "unable to bind SELECT caluse parameters");
+    status = mysql_stmt_bind_result(statements_[stindex], &outbind[0]);
+    checkError(status, stindex, "unable to bind SELECT caluse parameters");
 
     // Execute the statement
-    status = mysql_stmt_execute(statements_[GET_LEASE6_ADDR]);
-    checkError(status, GET_LEASE6_ADDR, "unable to execute");
+    status = mysql_stmt_execute(statements_[stindex]);
+    checkError(status, stindex, "unable to execute");
 
     // Fetch the data.
-    status = mysql_stmt_fetch(statements_[GET_LEASE6_ADDR]);
+    status = mysql_stmt_fetch(statements_[stindex]);
 
     Lease6Ptr result;
     if (status == 0) {
@@ -683,11 +706,11 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
         } catch (const isc::BadValue& ex) {
             // Free up result set.
 
-            (void) mysql_stmt_free_result(statements_[GET_LEASE6_ADDR]);
+            (void) mysql_stmt_free_result(statements_[stindex]);
             // Lease type is returned, to rethrow the exception with a bit
             // more data.
             isc_throw(BadValue, ex.what() << ". Statement is <" <<
-                      text_statements_[GET_LEASE6_ADDR] << ">");
+                      text_statements_[stindex] << ">");
         }
 
         // As the address is the primary key in the table, we can't return
@@ -695,7 +718,7 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
         // been returned.
 
     } else if (status == 1) {
-        checkError(status, GET_LEASE6_ADDR, "unable to fetch results");
+        checkError(status, stindex, "unable to fetch results");
 
     } else {
         // @TODO Handle truncation
@@ -705,12 +728,14 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
     }
 
     // Free data structures associated with information returned.
-    (void) mysql_stmt_free_result(statements_[GET_LEASE6_ADDR]);
+    (void) mysql_stmt_free_result(statements_[stindex]);
     return (result);
 }
 
 Lease6Collection
 MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
+    const StatementIndex stindex = GET_LEASE6_DUID_IAID;
+
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
@@ -733,8 +758,8 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
     inbind[1].is_unsigned = static_cast<my_bool>(1);
 
     // Bind the input parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[GET_LEASE6_DUID_IAID], inbind);
-    checkError(status, GET_LEASE6_DUID_IAID, "unable to bind WHERE clause parameter");
+    int status = mysql_stmt_bind_param(statements_[stindex], inbind);
+    checkError(status, stindex, "unable to bind WHERE clause parameter");
 
     // Set up the SELECT clause
     MySqlLease6Exchange exchange;
@@ -742,53 +767,55 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
     exchange.createBindForReceive(outbind);
 
     // Bind the output parameters to the statement
-    status = mysql_stmt_bind_result(statements_[GET_LEASE6_DUID_IAID], &outbind[0]);
-    checkError(status, GET_LEASE6_DUID_IAID, "unable to bind SELECT clause parameters");
+    status = mysql_stmt_bind_result(statements_[stindex], &outbind[0]);
+    checkError(status, stindex, "unable to bind SELECT clause parameters");
 
     // Execute the query.
-    status = mysql_stmt_execute(statements_[GET_LEASE6_DUID_IAID]);
-    checkError(status, GET_LEASE6_DUID_IAID, "unable to execute");
+    status = mysql_stmt_execute(statements_[stindex]);
+    checkError(status, stindex, "unable to execute");
 
     // Ensure that all the lease information is retrieved in one go to avoid overhead
     // of going back and forth between client and server.
-    status = mysql_stmt_store_result(statements_[GET_LEASE6_DUID_IAID]);
-    checkError(status, GET_LEASE6_DUID_IAID, "unable to set up for storing all results");
+    status = mysql_stmt_store_result(statements_[stindex]);
+    checkError(status, stindex, "unable to set up for storing all results");
 
     // Fetch the data.  There could be multiple rows, so we need to iterate
     // until all data has been retrieved.
     Lease6Collection result;
-    while ((status = mysql_stmt_fetch(statements_[GET_LEASE6_DUID_IAID])) == 0) {
+    while ((status = mysql_stmt_fetch(statements_[stindex])) == 0) {
         try {
             Lease6Ptr lease = exchange.getLeaseData();
             result.push_back(lease);
 
         } catch (const isc::BadValue& ex) {
             // Free up result set.
-            (void) mysql_stmt_free_result(statements_[GET_LEASE6_DUID_IAID]);
+            (void) mysql_stmt_free_result(statements_[stindex]);
 
             // Rethrow the exception with a bit more data.
             isc_throw(BadValue, ex.what() << ". Statement is <" <<
-                      text_statements_[GET_LEASE6_DUID_IAID] << ">");
+                      text_statements_[stindex] << ">");
         }
     }
 
     // How did the fetch end?
     if (status == 1) {
         // Error - unable to fecth results
-        checkError(status, GET_LEASE6_DUID_IAID, "unable to fetch results");
+        checkError(status, stindex, "unable to fetch results");
     } else if (status == MYSQL_DATA_TRUNCATED) {
         // @TODO Handle truncation
         ;
     }
 
     // Free up resources assoicated with the fetched data.
-    (void) mysql_stmt_free_result(statements_[GET_LEASE6_DUID_IAID]);
+    (void) mysql_stmt_free_result(statements_[stindex]);
     return (result);
 }
 
 Lease6Ptr
 MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
                          SubnetID subnet_id) const {
+    const StatementIndex stindex = GET_LEASE6_DUID_IAID_SUBID;
+
     // Set up the WHERE clause value
     MYSQL_BIND inbind[3];
     memset(inbind, 0, sizeof(inbind));
@@ -816,8 +843,8 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
     inbind[2].is_unsigned = static_cast<my_bool>(1);
 
     // Bind the input parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[GET_LEASE6_DUID_IAID_SUBID], inbind);
-    checkError(status, GET_LEASE6_DUID_IAID_SUBID, "unable to bind WHERE clause parameter");
+    int status = mysql_stmt_bind_param(statements_[stindex], inbind);
+    checkError(status, stindex, "unable to bind WHERE clause parameter");
 
     // Set up the SELECT clause
     MySqlLease6Exchange exchange;
@@ -825,15 +852,15 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
     exchange.createBindForReceive(outbind);
 
     // Bind the output parameters to the statement
-    status = mysql_stmt_bind_result(statements_[GET_LEASE6_DUID_IAID_SUBID], &outbind[0]);
-    checkError(status, GET_LEASE6_DUID_IAID_SUBID, "unable to bind SELECT clause parameters");
+    status = mysql_stmt_bind_result(statements_[stindex], &outbind[0]);
+    checkError(status, stindex, "unable to bind SELECT clause parameters");
 
     // Execute the query.
-    status = mysql_stmt_execute(statements_[GET_LEASE6_DUID_IAID_SUBID]);
-    checkError(status, GET_LEASE6_DUID_IAID_SUBID, "unable to execute");
+    status = mysql_stmt_execute(statements_[stindex]);
+    checkError(status, stindex, "unable to execute");
 
     Lease6Ptr result;
-    status = mysql_stmt_fetch(statements_[GET_LEASE6_DUID_IAID_SUBID]);
+    status = mysql_stmt_fetch(statements_[stindex]);
     if (status == 0) {
         try {
             result = exchange.getLeaseData();
@@ -844,11 +871,11 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
         } catch (const isc::BadValue& ex) {
             // Free up result set.
 
-            (void) mysql_stmt_free_result(statements_[GET_LEASE6_DUID_IAID_SUBID]);
+            (void) mysql_stmt_free_result(statements_[stindex]);
             // Lease type is returned, to rethrow the exception with a bit
             // more data.
             isc_throw(BadValue, ex.what() << ". Statement is <" <<
-                      text_statements_[GET_LEASE6_DUID_IAID_SUBID] << ">");
+                      text_statements_[stindex] << ">");
         }
 
         // As the address is the primary key in the table, we can't return
@@ -856,7 +883,7 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
         // been returned.
 
     } else if (status == 1) {
-        checkError(status, GET_LEASE6_DUID_IAID_SUBID, "unable to fetch results");
+        checkError(status, stindex, "unable to fetch results");
 
     } else {
         // @TODO Handle truncation
@@ -866,7 +893,7 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
     }
 
     // Free data structures associated with information returned.
-    (void) mysql_stmt_free_result(statements_[GET_LEASE6_DUID_IAID_SUBID]);
+    (void) mysql_stmt_free_result(statements_[stindex]);
     return (result);
 }
 
@@ -878,6 +905,8 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& /* lease4 */) {
 
 void
 MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
+    const StatementIndex stindex = UPDATE_LEASE6;
+
     // Create the MYSQL_BIND array for the data being updated
     MySqlLease6Exchange exchange;
     std::vector<MYSQL_BIND> bind;
@@ -897,16 +926,16 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     bind.push_back(where);
 
     // Bind the parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[UPDATE_LEASE6], &bind[0]);
-    checkError(status, UPDATE_LEASE6, "unable to bind parameters");
+    int status = mysql_stmt_bind_param(statements_[stindex], &bind[0]);
+    checkError(status, stindex, "unable to bind parameters");
 
     // Execute
-    status = mysql_stmt_execute(statements_[UPDATE_LEASE6]);
-    checkError(status, UPDATE_LEASE6, "unable to execute");
+    status = mysql_stmt_execute(statements_[stindex]);
+    checkError(status, stindex, "unable to execute");
 
     // See how many rows were affected.  The statement should only delete a
     // single row.
-    int affected_rows = mysql_stmt_affected_rows(statements_[UPDATE_LEASE6]);
+    int affected_rows = mysql_stmt_affected_rows(statements_[stindex]);
     if (affected_rows == 0) {
         isc_throw(NoSuchLease, "unable to update lease for address " <<
                   addr6 << " as it does not exist");
@@ -927,6 +956,7 @@ MySqlLeaseMgr::deleteLease4(const isc::asiolink::IOAddress& /* addr */) {
 
 bool
 MySqlLeaseMgr::deleteLease6(const isc::asiolink::IOAddress& addr) {
+    const StatementIndex stindex = DELETE_LEASE6;
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
@@ -941,16 +971,16 @@ MySqlLeaseMgr::deleteLease6(const isc::asiolink::IOAddress& addr) {
     inbind[0].length = &addr6_length;
 
     // Bind the input parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[DELETE_LEASE6], inbind);
-    checkError(status, DELETE_LEASE6, "unable to bind WHERE clause parameter");
+    int status = mysql_stmt_bind_param(statements_[stindex], inbind);
+    checkError(status, stindex, "unable to bind WHERE clause parameter");
 
     // Execute
-    status = mysql_stmt_execute(statements_[DELETE_LEASE6]);
-    checkError(status, DELETE_LEASE6, "unable to execute");
+    status = mysql_stmt_execute(statements_[stindex]);
+    checkError(status, stindex, "unable to execute");
 
     // See how many rows were affected.  Note that the statement may delete
     // multiple rows.
-    return (mysql_stmt_affected_rows(statements_[DELETE_LEASE6]) > 0);
+    return (mysql_stmt_affected_rows(statements_[stindex]) > 0);
 
     return false;
 }
@@ -973,14 +1003,16 @@ MySqlLeaseMgr::getDescription() const {
 
 std::pair<uint32_t, uint32_t>
 MySqlLeaseMgr::getVersion() const {
+    const StatementIndex stindex = GET_VERSION;
+
     uint32_t    major;      // Major version number
     uint32_t    minor;      // Minor version number
 
     // Execute the prepared statement
-    int status = mysql_stmt_execute(statements_[GET_VERSION]);
+    int status = mysql_stmt_execute(statements_[stindex]);
     if (status != 0) {
         isc_throw(DbOperationError, "unable to execute <"
-                  << text_statements_[GET_VERSION] << "> - reason: " <<
+                  << text_statements_[stindex] << "> - reason: " <<
                   mysql_error(mysql_));
     }
 
@@ -998,21 +1030,21 @@ MySqlLeaseMgr::getVersion() const {
     bind[1].buffer = &minor;
     bind[1].buffer_length = sizeof(minor);
 
-    status = mysql_stmt_bind_result(statements_[GET_VERSION], bind);
+    status = mysql_stmt_bind_result(statements_[stindex], bind);
     if (status != 0) {
         isc_throw(DbOperationError, "unable to bind result set: " <<
                   mysql_error(mysql_));
     }
 
     // Get the result
-    status = mysql_stmt_fetch(statements_[GET_VERSION]);
+    status = mysql_stmt_fetch(statements_[stindex]);
     if (status != 0) {
-        (void) mysql_stmt_free_result(statements_[GET_VERSION]);
+        (void) mysql_stmt_free_result(statements_[stindex]);
         isc_throw(DbOperationError, "unable to obtain result set: " <<
                   mysql_error(mysql_));
     }
 
-    (void) mysql_stmt_free_result(statements_[GET_VERSION]);
+    (void) mysql_stmt_free_result(statements_[stindex]);
     return (std::make_pair(major, minor));
 }
 

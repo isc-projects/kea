@@ -322,11 +322,8 @@ public:
     static
     void convertFromDatabaseTime(const MYSQL_TIME& expire, 
                                  uint32_t valid_lifetime, time_t& cltt);
-
     ///@}
 
-
-private:
     /// @brief Statement Tags
     ///
     /// The contents of the enum are indexes into the list of SQL statements
@@ -341,6 +338,7 @@ private:
         NUM_STATEMENTS              // Number of statements
     };
 
+private:
     /// @brief Prepare Single Statement
     ///
     /// Creates a prepared statement from the text given and adds it to the
