@@ -490,6 +490,7 @@ class MockBob(BoB):
         self.c_channel_env = {}
         self.components = { }
         self.creator = False
+        self.get_process_exit_status_called = False
 
         class MockSockCreator(isc.bind10.component.Component):
             def __init__(self, process, boss, kind, address=None, params=None):
@@ -660,6 +661,12 @@ class MockBob(BoB):
         if self.cmdctl:
             del self.components[12]
         self.cmdctl = False
+
+    def _get_process_exit_status(self):
+        if self.get_process_exit_status_called:
+            return (0, 0)
+        self.get_process_exit_status_called = True
+        return (53, 0)
 
 class TestStartStopProcessesBob(unittest.TestCase):
     """
@@ -937,6 +944,12 @@ class MockComponent:
     def restart(self, now):
         self.restarted = True
         return True
+
+    def is_running(self):
+        return True
+
+    def failed(self, status):
+        return False
 
 class TestBossCmd(unittest.TestCase):
     def test_ping(self):
@@ -1332,6 +1345,20 @@ class TestBossComponents(unittest.TestCase):
         self.__setup_restart(bob, component)
         self.assertFalse(component.restarted)
         self.assertFalse(component in bob.components_to_restart)
+
+    def test_reap_children(self):
+        '''Test that children are queued to be restarted when they ask for it.'''
+        bob = MockBob()
+        bob.runnable = True
+        component = MockComponent('test', 53)
+        bob.components[53] = component
+
+        # at first, we don't have the component with pid 53 that
+        # terminated in our restart queue.
+        self.assertFalse(component in bob.components_to_restart)
+        bob.reap_children()
+        # now, we should as the mock component.failed() returns False
+        self.assertTrue(component in bob.components_to_restart)
 
 class SocketSrvTest(unittest.TestCase):
     """
