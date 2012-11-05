@@ -142,8 +142,6 @@ TEST_F(MasterLexerStateTest, parentheses) {
     EXPECT_EQ(Token::END_OF_LINE, s_start.getToken(lexer).getType());
     EXPECT_EQ(s_null, s_start.handle(lexer));
     EXPECT_EQ(Token::INITIAL_WS, s_start.getToken(lexer).getType());
-
-    // TBD: Test case: '(;'
 }
 
 TEST_F(MasterLexerStateTest, nestedParentheses) {
@@ -213,6 +211,17 @@ TEST_F(MasterLexerStateTest, startToComment) {
     ss << ";a;";
     EXPECT_EQ(s_null, s_start.handle(lexer));
     EXPECT_EQ(Token::END_OF_FILE, s_start.getToken(lexer).getType());
+}
+
+TEST_F(MasterLexerStateTest, commentAfterParen) {
+    // comment after an opening parenthesis.  The code that is tested by
+    // other tests should also ensure that it works correctly, but we
+    // check it explicitly.
+    ss << "( ;this is a comment\na)\n";
+    EXPECT_EQ(&s_string, s_start.handle(lexer)); // consume '(', skip comments
+    s_string.handle(lexer);                      // consume 'a'
+    EXPECT_EQ(s_null, s_start.handle(lexer));    // consume ')', see '\n'
+    EXPECT_EQ(Token::END_OF_LINE, s_start.getToken(lexer).getType());
 }
 
 }
