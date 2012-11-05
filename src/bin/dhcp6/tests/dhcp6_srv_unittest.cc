@@ -439,7 +439,7 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
 // clients in ADVERTISEs. Please note that ADVERTISE is not a guarantee that such
 // and address will be assigned. Had the pool was very small and contained only
 // 2 addresses, the third client would get the same advertise as the first one
-// and this is a correct behavior. It is REQUEST that fill fail for the third
+// and this is a correct behavior. It is REQUEST that will fail for the third
 // client. ADVERTISE is basically saying "if you send me a request, you will
 // probably get an address like this" (there are no guarantees).
 TEST_F(Dhcpv6SrvTest, ManySolicits) {
@@ -571,7 +571,7 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
 // clients in REQUEST. Please note that ADVERTISE is not a guarantee that such
 // and address will be assigned. Had the pool was very small and contained only
 // 2 addresses, the third client would get the same advertise as the first one
-// and this is a correct behavior. It is REQUEST that fill fail for the third
+// and this is a correct behavior. It is REQUEST that will fail for the third
 // client. ADVERTISE is basically saying "if you send me a request, you will
 // probably get an address like this" (there are no guarantees).
 TEST_F(Dhcpv6SrvTest, ManyRequests) {
