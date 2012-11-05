@@ -30,6 +30,9 @@ using namespace std;
 
 namespace {
 
+// Creation of the schema
+#include "schema_copy.h"
+
 // IPv6 addresseses
 const char* ADDRESS_0 = "2001:db8::0";
 const char* ADDRESS_1 = "2001:db8::1";
@@ -103,6 +106,52 @@ validConnectionString() {
                              VALID_USER, VALID_PASSWORD));
 }
 
+// @brief Clear everything from the database
+//
+// There is no error checking in this code: if something fails, one of the
+// tests will fall over.
+void destroySchema() {
+    // Initialise
+    MYSQL handle;
+    (void) mysql_init(&handle);
+
+    // Open database
+    (void) mysql_real_connect(&handle, "localhost", "keatest",
+                              "keatest", "keatest", 0, NULL, 0);
+
+    // Get rid of everything in it.
+    for (int i = 0; destroy_statement[i] != NULL; ++i) {
+        (void) mysql_query(&handle, destroy_statement[i]);
+    }
+
+    // ... and close
+    (void) mysql_close(&handle);
+}
+
+// @brief Create the Schema
+//
+// Creates all the tables in what is assumed to be an empty database.
+//
+// There is no error checking in this code: if it fails, one of the tests
+// will fall over.
+void createSchema() {
+    // Initialise
+    MYSQL handle;
+    (void) mysql_init(&handle);
+
+    // Open database
+    (void) mysql_real_connect(&handle, "localhost", "keatest",
+                              "keatest", "keatest", 0, NULL, 0);
+
+    // Get rid of everything in it.
+    for (int i = 0; create_statement[i] != NULL; ++i) {
+        (void) mysql_query(&handle, create_statement[i]);
+    }
+
+    // ... and close
+    (void) mysql_close(&handle);
+}
+
 // Note: Doxygen "///" not used - even though Doxygen is used to
 // document class and methods - to avoid the comments appearing
 // in the programming manual.
@@ -127,7 +176,8 @@ public:
         L6_ADDRESS(ADDRESS_6), L6_IOADDRESS(L6_ADDRESS), 
         L7_ADDRESS(ADDRESS_7), L7_IOADDRESS(L7_ADDRESS)
         {
-        clearAll();
+        destroySchema();
+        createSchema();
         LeaseMgrFactory::create(validConnectionString());
         lmptr_ = &(LeaseMgrFactory::instance());
     }
@@ -140,7 +190,7 @@ public:
     virtual ~MySqlLeaseMgrTest() {
         lmptr_->rollback();
         LeaseMgrFactory::destroy();
-        clearAll();
+        destroySchema();
     }
 
     // @brief Reopen the database
@@ -151,28 +201,6 @@ public:
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(validConnectionString());
         lmptr_ = &(LeaseMgrFactory::instance());
-    }
-
-    // @brief Clear everything from the database tables
-    //
-    // There is no error checking in this code, as this is just
-    // extra checking that the database is clear before the text.
-    void clearAll() {
-            // Initialise
-            MYSQL handle;
-            (void) mysql_init(&handle);
-
-            // Open database
-            (void) mysql_real_connect(&handle, "localhost", "keatest",
-                                      "keatest", "keatest", 0, NULL,
-                                      0);
-
-            // Clear the database
-            (void) mysql_query(&handle, "DELETE FROM lease4");
-            (void) mysql_query(&handle, "DELETE FROM lease6");
-
-            // ... and close
-            (void) mysql_close(&handle);
     }
 
     // @brief Initialize Lease6 Fields
@@ -378,8 +406,13 @@ public:
 // opened: the fixtures assume that and check basic operations.
 
 TEST(MySqlOpenTest, OpenDatabase) {
-    // Check that database opens correctly and tidy up.  If it fails, print
-    // the error message.
+
+    // Schema needs to be created for the test to work.
+    destroySchema();
+    createSchema();
+
+    // Check that lease manager open the database opens correctly and tidy up.
+    //  If it fails, print the error message.
     try {
         LeaseMgrFactory::create(validConnectionString());
         EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
@@ -423,6 +456,9 @@ TEST(MySqlOpenTest, OpenDatabase) {
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
+
+    // Tidy up after the test
+    destroySchema();
 }
 
 // @brief Check conversion functions
@@ -684,4 +720,4 @@ TEST_F(MySqlLeaseMgrTest, UpdateLease6) {
     EXPECT_THROW(lmptr_->updateLease6(leases[2]), isc::dhcp::NoSuchLease);
 }
 
-}; // end of anonymous namespace
+}; // Of anonymous namespace
