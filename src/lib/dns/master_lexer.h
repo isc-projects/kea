@@ -42,6 +42,27 @@ namespace dns {
 /// applications; it's mainly expected to be used within this library,
 /// specifically by the \c MasterLoader class and \c Rdata implementation
 /// classes.
+///
+/// \note The error handling policy of this class is slightly different from
+/// that of other classes of this library.  We generally throw an exception
+/// for an invalid input, whether it's more likely to be a program error or
+/// a "user error", which means an invalid input that comes from outside of
+/// the library.  But, this class returns an error code for some certain
+/// types of user errors instead of throwing an exception.  Such cases include
+/// a syntax error identified by the lexer or a misspelled file name that
+/// causes a system error at the time of open.  This is based on the assumption
+/// that the main user of this class is a parser of master files, where
+/// we want to give an option to ignore some non fatal errors and continue
+/// the parsing.  This will be useful if it just performs overall error
+/// checks on a master file.  When the (immediate) caller needs to do explicit
+/// error handling, exceptions are not that a useful tool for error reporting
+/// because we cannot separate the normal and error cases anyway, which would
+/// be one major advantage when we use exceptions.  And, exceptions are
+/// generally more expensive, either when it happens or just by being able
+/// to handle with \c try and \c catch (depending on the underlying
+/// implementation of the exception handling).  For these reasons, some of
+/// this class does not throw for an error that would be reported as an
+/// exception in other classes.
 class MasterLexer {
 public:
     class Token;       // we define it separately for better readability
@@ -68,6 +89,11 @@ public:
     /// set to a description of the error (any existing content of the string
     /// will be discarded).  If opening the file succeeds, the given
     /// \c error parameter will be intact.
+    ///
+    /// Note that this method has two styles of error reporting: one by
+    /// returning \c false (and setting \c error optionally) and the other
+    /// by throwing an exception.  See the note for the class description
+    /// about the distinction.
     ///
     /// \throw InvalidParameter filename is NULL
     /// \param filename A non NULL string specifying a master file
