@@ -25,11 +25,11 @@ class InputSource;
 
 class State {
 public:
-    virtual const State* handle(MasterLexer& lexer,
-                                MasterLexer::Options& options) const = 0;
+    virtual const State* handle(MasterLexer& lexer) const = 0;
 
+    // Note: Pass options mainly for the convenience of tests.
     static const State* getStartInstance(MasterLexer& lexer,
-                                         MasterLexer::Options orig_options);
+                                         MasterLexer::Options options);
 
     /// Specific states are basically hidden within the implementation,
     /// but we'd like to allow tests to examine them, so we provide
