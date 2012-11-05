@@ -1313,7 +1313,7 @@ TODO
             <listitem>
               <simpara>
                   <command>bindctl</command> stores the username and
-                  password for logging in in a file called default_user.csv;
+                  password for logging in a file called default_user.csv;
                   this option specifies the directory where this file is
                   stored and read from. When not specified, ~/.bind10/ is
                   used.
