@@ -1626,7 +1626,7 @@ config set /Boss/components/b10-zonemgr/kind dispensable
                 <term>!verbose off</term>
                 <listitem>
                   <simpara>
-                      Enables verbose mode; commands that are to be executed are
+                      Disables verbose mode; commands that are to be executed are
                       no longer printed.
                   </simpara>
                 </listitem>
