@@ -25,6 +25,7 @@
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcp6/config_parser.h>
 #include <config/ccsession.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/subnet.h>
 #include <dhcp/cfgmgr.h>
 #include <dhcp/option6_ia.h>
@@ -46,6 +47,10 @@ public:
         // deal with sockets here, just check if configuration handling
         // is sane.
         srv_ = new Dhcpv6Srv(0);
+        // Create instances of option definitions and put them into storage.
+        // This is normally initialized by the server when calling run()
+        // run() function.
+        LibDHCP::initStdOptionDefs(Option::V6);
     }
 
     ~Dhcp6ParserTest() {
