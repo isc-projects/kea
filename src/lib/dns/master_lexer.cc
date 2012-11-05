@@ -21,7 +21,6 @@
 
 #include <cassert>
 #include <string>
-#include <sstream>
 #include <vector>
 
 namespace isc {
