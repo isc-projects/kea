@@ -53,7 +53,7 @@ struct MasterLexer::MasterLexerImpl {
     std::vector<InputSourcePtr> sources_;
     InputSource* source_;       // current source
     size_t paren_count_;
-    Options orig_options_;
+    Options options_;
     bool last_was_eol_;
     Token token_;
 };
@@ -160,16 +160,13 @@ State::getParenCount(const MasterLexer& lexer) const {
 class Start : public State {
 public:
     Start() {}
-    virtual const State* handle(MasterLexer& lexer,
-                                MasterLexer::Options& options) const;
+    virtual const State* handle(MasterLexer& lexer) const;
 };
 
 class CRLF : public State {
 public:
     CRLF() {}
-    virtual const State* handle(MasterLexer& /*lexer*/,
-                                MasterLexer::Options& /*options*/) const
-    {
+    virtual const State* handle(MasterLexer& /*lexer*/) const {
         return (NULL);
     }
 };
@@ -178,9 +175,7 @@ public:
 class String : public State {
 public:
     String() {}
-    virtual const State* handle(MasterLexer& /*lexer*/,
-                                MasterLexer::Options& /*options*/) const
-    {
+    virtual const State* handle(MasterLexer& /*lexer*/) const {
         return (NULL);
     }
 };
@@ -215,8 +210,8 @@ adjustOptionsForParen(MasterLexer::Options& options) {
 }
 
 const State*
-Start::handle(MasterLexer& lexer, MasterLexer::Options&) const {
-    MasterLexer::Options options = getLexerImpl(lexer)->orig_options_;
+Start::handle(MasterLexer& lexer) const {
+    MasterLexer::Options options = getLexerImpl(lexer)->options_;
     size_t& paren_count = getLexerImpl(lexer)->paren_count_;
     if (paren_count > 0) {
         adjustOptionsForParen(options);
@@ -260,7 +255,7 @@ Start::handle(MasterLexer& lexer, MasterLexer::Options&) const {
                 return (NULL);
             }
             if (--paren_count == 0) {
-                options = getLexerImpl(lexer)->orig_options_;
+                options = getLexerImpl(lexer)->options_;
             }
             continue;
         } else {
@@ -272,9 +267,9 @@ Start::handle(MasterLexer& lexer, MasterLexer::Options&) const {
 }
 
 const State*
-State::getStartInstance(MasterLexer& lexer, MasterLexer::Options orig_options)
+State::getStartInstance(MasterLexer& lexer, MasterLexer::Options options)
 {
-    lexer.impl_->orig_options_ = orig_options;
+    lexer.impl_->options_ = options;
     return (&START_STATE);
 }
 
