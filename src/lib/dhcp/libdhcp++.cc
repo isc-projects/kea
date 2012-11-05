@@ -24,6 +24,7 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option_definition.h>
+#include <dhcp/option6_int_array.h>
 
 using namespace std;
 using namespace isc::dhcp;
@@ -284,7 +285,7 @@ LibDHCP::initStdOptionDefs6() {
             definition->addRecordField(OptionDefinition::UINT32_TYPE);
             break;
         case D6O_STATUS_CODE:
-            definotion->addRecordField(OptionDefinition::UINT16_TYPE);
+            definition->addRecordField(OptionDefinition::UINT16_TYPE);
             definition->addRecordField(OptionDefinition::STRING_TYPE);
         default:
             break;
