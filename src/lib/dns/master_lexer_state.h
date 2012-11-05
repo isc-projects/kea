@@ -37,7 +37,6 @@ public:
     enum ID {
         Start,                  ///< TBD
         CRLF,
-        EatLine,
         String
     };
     static const State& getInstance(ID state_id);
