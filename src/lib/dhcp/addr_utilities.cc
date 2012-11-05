@@ -47,7 +47,7 @@ const uint8_t bitMask6[]= { 0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
 isc::asiolink::IOAddress firstAddrInPrefix6(const isc::asiolink::IOAddress& prefix,
                                             uint8_t len) {
 
-    if (len>128) {
+    if (len > 128) {
         isc_throw(BadValue, "IPv6 prefix length too large:" << len);
     }
 
@@ -91,11 +91,11 @@ isc::asiolink::IOAddress firstAddrInPrefix6(const isc::asiolink::IOAddress& pref
 /// @param len netmask length (0-32)
 isc::asiolink::IOAddress firstAddrInPrefix4(const isc::asiolink::IOAddress& prefix,
                                             uint8_t len) {
-    uint32_t addr = prefix;
     if (len > 32) {
         isc_throw(isc::BadValue, "Too large netmask. 0..32 is allowed in IPv4");
     }
 
+    uint32_t addr = prefix;
     return (IOAddress(addr & (~bitMask4[len])));
 }
 
@@ -108,11 +108,11 @@ isc::asiolink::IOAddress firstAddrInPrefix4(const isc::asiolink::IOAddress& pref
 /// @param len netmask length (0-32)
 isc::asiolink::IOAddress lastAddrInPrefix4(const isc::asiolink::IOAddress& prefix,
                                            uint8_t len) {
-    uint32_t addr = prefix;
-    if (len>32) {
+    if (len > 32) {
         isc_throw(isc::BadValue, "Too large netmask. 0..32 is allowed in IPv4");
     }
 
+    uint32_t addr = prefix;
     return (IOAddress(addr | bitMask4[len]));
 }
 
@@ -125,7 +125,7 @@ isc::asiolink::IOAddress lastAddrInPrefix4(const isc::asiolink::IOAddress& prefi
 /// @param len netmask length (0-128)
 isc::asiolink::IOAddress lastAddrInPrefix6(const isc::asiolink::IOAddress& prefix,
                                            uint8_t len) {
-    if (len>128) {
+    if (len > 128) {
         isc_throw(BadValue, "IPv6 prefix length too large:" << len);
     }
 

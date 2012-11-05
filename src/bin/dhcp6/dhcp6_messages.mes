@@ -51,7 +51,7 @@ server is about to open sockets on the specified port.
 This debug message indicates that the server successfully advertised
 a lease. It is up to the client to choose one server out of othe advertised
 and continue allocation with that server. This is a normal behavior and
-incicates successful operation.
+indicates successful operation.
 
 % DHCP6_LEASE_ALLOC lease %1 has been allocated (client duid=%2, iaid=%3)
 This debug message indicates that the server successfully granted (in
@@ -152,11 +152,6 @@ which the DHCPv6 server has not been configured. The cause is most likely due
 to a misconfiguration of the server. The packet processing will continue, but
 the response will only contain generic configuration parameters and no
 addresses or prefixes.
-
-This is a warning message that a packet was received, but the server is
-not configured to support the subnet the packet originated from. This
-message means that the received traffic does not match server configuration
-and is likely a configuration issue.
 
 % DHCP6_CONFIG_LOAD_FAIL failed to load configuration: %1
 This critical error message indicates that the initial DHCPv6
