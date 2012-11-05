@@ -602,7 +602,7 @@ private:
                       << " be equal to zero. Option code '0' is reserved in"
                       << " DHCPv6.");
         } else if (option_code > std::numeric_limits<uint16_t>::max()) {
-            isc_throw(Dhcp6ConfigError, "Parser error: value of 'code' must not"ciwtezcowy
+            isc_throw(Dhcp6ConfigError, "Parser error: value of 'code' must not"
                       << " exceed " << std::numeric_limits<uint16_t>::max());
         }
         // Check the option name has been specified, is non-empty and does not

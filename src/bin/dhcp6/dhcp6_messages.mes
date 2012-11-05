@@ -110,6 +110,10 @@ This is a debug message issued during the IPv6 DHCP server startup.
 It lists some information about the parameters with which the server
 is running.
 
+% DHCP6_NO_SUBNET_FOR_ADDRESS fail to find subnet for address: %1
+This warning message indicates that server does not support subnet
+that received DHCPv6 packet comes from.
+
 % DHCP6_CONFIG_LOAD_FAIL failed to load configuration: %1
 This critical error message indicates that the initial DHCPv6
 configuration has failed. The server will start, but nothing will be

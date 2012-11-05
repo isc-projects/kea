@@ -106,6 +106,11 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
                                               buf.begin() + offset,
                                               buf.begin() + offset + opt_len));
             break;
+        case D6O_ORO:
+            opt = OptionPtr(new Option6IntArray<uint16_t>(opt_type,
+                                                          buf.begin() + offset,
+                                                          buf.begin() + offset + opt_len));
+            break;
         default:
             opt = OptionPtr(new Option(Option::V6,
                                        opt_type,

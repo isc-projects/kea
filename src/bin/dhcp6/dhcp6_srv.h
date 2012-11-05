@@ -171,8 +171,6 @@ protected:
     /// @brief Appends requested options to server's answer.
     ///
     /// Appends options requested by client to the server's answer.
-    /// TODO: This method is currently a stub. It just appends DNS-SERVERS
-    /// option.
     ///
     /// @param question client's message
     /// @param answer server's message (options will be added here)
