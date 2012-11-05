@@ -1284,7 +1284,367 @@ TODO
       communicate to any other components directly.
     </para>
 
-<!-- TODO: explain and show interface -->
+    <section id="bindctl_commandline_options">
+        <title>bindctl command-line options</title>
+        <variablelist>
+          <varlistentry>
+            <term>-a &lt;address&gt;, --address=&lt;address&gt;</term>
+            <listitem>
+              <simpara>
+                  IP address that BIND10's <command>b10-cmdctl</command>
+                  module is listening on. By default, this is localhost.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>-c &lt;certificate file&gt;, --certificate-chain=&lt;certificate file&gt;</term>
+            <listitem>
+              <simpara>
+                  PEM-formatted server certificate file. When this option is
+                  given, <command>bindctl</command> will verify the server
+                  certificate using the given file as the root of the
+                  certificate chain. If not specified, <command>bindctl
+                  </command> does not validate the certificate.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--csv-file-dir=&lt;csv file&gt;</term>
+            <listitem>
+              <simpara>
+                  <command>bindctl</command> stores the username and
+                  password for logging in in a file called default_user.csv;
+                  this option specifies the directory where this file is
+                  stored and read from. When not specified, ~/.bind10/ is
+                  used.
+                  <note>At the moment, this file contains an unencrypted password.</note>
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>-h, --help</term>
+            <listitem>
+              <simpara>
+                  Shows a short overview of the command-line options of
+                  <command>bindctl</command>, and exits.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--version</term>
+            <listitem>
+              <simpara>
+                  Shows the version of <command>bindctl</command>, and exits.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>-p &lt;port number&gt;, --port=&lt;port number&gt;</term>
+            <listitem>
+              <simpara>
+                  Port number that BIND10's <command>b10-cmdctl</command>
+                  module is listening on. By default, this is port 8080.
+              </simpara>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+    </section>
+
+    <section id="bindctl_general_syntax">
+        <title>General syntax of bindctl commands</title>
+        The bindctl tool is an interactive command-line tool, with dynamic
+        commands depending on the modules that are running. There are a
+        number of fixed commands that have no module and that are always
+        available.
+
+        The general syntax of a command is
+
+        <screen><userinput>&lt;module&gt; &lt;command&gt; [argument(s)]</userinput></screen>
+
+        Example:
+        The Boss module has a shutdown command to shut down BIND 10, with an optional argument 'help':
+        <screen><userinput>> Boss shutdown help</userinput>
+Command  shutdown 	(Shut down BIND 10)
+		help (Get help for command)
+This command has no parameters
+        </screen>
+        There are no mandatory arguments, only the optional 'help'.
+    </section>
+
+    <section id="bindctl_help">
+        <title>Bindctl help</title>
+        <command>help</command> is both a command and an option that is available to all other commands. When run as a command directly, it shows the available modules.
+        <screen><userinput>> help</userinput>
+usage: &lt;module name&gt; &lt;command name&gt; [param1 = value1 [, param2 = value2]]
+Type Tab character to get the hint of module/command/parameters.
+Type "help(? h)" for help on bindctl.
+Type "&lt;module_name&gt; help" for help on the specific module.
+Type "&lt;module_name&gt; &lt;command_name&gt; help" for help on the specific command.
+
+Available module names:
+(list of modules)
+        </screen>
+
+        When run as a command to a module, it shows the commands that module supports:
+        <screen><userinput>> Boss help</userinput>
+Module  Boss 	Master process 
+Available commands:
+    help        Get help for module.
+    shutdown    Shut down BIND 10
+    ping        Ping the boss process
+    show_processes
+            List the running BIND 10 processes
+        </screen>
+
+    And when added to a module command, it shows the description and parameters of that command:
+    <screen><userinput>> Auth loadzone help</userinput>
+Command  loadzone 	((Re)load a specified zone)
+		help (Get help for command)
+Parameters:
+    class (string, optional)
+    origin (string, mandatory)
+    </screen>
+
+    </section>
+
+    <section id="bindctl_command_arguments">
+        <title>Command arguments</title>
+        The 'loadzone' command of the Auth module, as shown in the last
+        example of the previous section, has two arguments, one of which is
+        optional. When using positional arguments they are expected to be
+        provided in the order in which 'help' gives them, in this case class
+        first and origin second; i.e.
+        <screen><userinput>> Auth loadzone IN example.com.</userinput></screen>
+        But since the class is optional (defaulting to IN), leaving it out
+        works as well:
+        <screen><userinput>> Auth loadzone example.com.</userinput></screen>
+
+        Arguments can also be provided with their names:
+        <screen><userinput>> Auth loadzone origin="example.com." class="IN"</userinput></screen>
+
+        When using this method, the order does not matter.
+    </section>
+
+    <section id="bindctl_module_commands">
+        <title>Module commands</title>
+        Each module has its own set of commands (if any), which will only be
+        available if the module is running. For instance, Auth has a
+        'loadzone' command. The commands a module provides are documented in
+        the section of that module.
+    </section>
+
+    <section>
+        <title>Configuration commands</title>
+        Configuration commands are used to view and change the configuration
+        of BIND 10 and its modules. Module configuration is only shown if
+        that module is running, but similar to modules, there are a number
+        of top-level configuration items that are always available (for
+        instance tsig_keys and data_sources).
+
+        Configuration changes (set, unset, add and remove) are done locally
+        first, and have no immediate effect. The changes can be viewed with
+        'config diff', and either reverted (config revert), or committed
+        (config commit). In the latter case, all local changes are submitted
+        to the configuration manager, which verifies them, and if they are
+        accepted, applied and saved in persistent storage.
+
+        When identifying items in configuration commands, the format is
+        <screen><userinput>Module/example/item</userinput></screen>
+        Sub-elements of names, lists and sets are separated with the '/'
+        character, and list indices are identified with [&lt;index&gt;].
+        <screen><userinput>Module/example/list[2]/foo</userinput></screen>
+
+        <section id="bindctl_configuration_command_list">
+        <title>List of configuration commands</title>
+        The following configuration commands are available:
+        <variablelist>
+          <varlistentry>
+            <term>show [all] [item name]</term>
+            <listitem>
+              <simpara>
+                Shows the current configuration of the given item. If 'all'
+                is given, it will recurse through the entire set, and show
+                every nested value.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>show_json [item name]</term>
+            <listitem>
+              <simpara>
+                Shows the full configuration of the given item in JSON format.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>add &lt;item name&gt; [value]</term>
+            <listitem>
+              <simpara>
+                Add an entry to configuration list or a named set.
+                When adding to a list, the command has one optional
+                argument, a value to add to the list. The value must
+                be in correct JSON and complete. When adding to a
+                named set, it has one mandatory parameter (the name to
+                add), and an optional parameter value, similar to when
+                adding to a list. In either case, when no value is
+                given, an entry will be constructed with default
+                values.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>remove</term>
+            <listitem>
+              <simpara>
+                Remove an item from a configuration list or a named set.
+                When removing an item for a list, either the index needs to
+                be specified, or the complete value of the element to remove
+                must be (in JSON format).
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>set &lt;item name&gt; &lt;value&gt;</term>
+            <listitem>
+              <simpara>
+                  Directly set the value of the given item to the given value.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>unset &lt;item name&gt;</term>
+            <listitem>
+              <simpara>
+                  Remove any user-specified value for the given item.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>diff</term>
+            <listitem>
+              <simpara>
+                  Show all current local changes that have not been
+                  committed yet.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>revert</term>
+            <listitem>
+              <simpara>
+                  Revert all local changes without committing them.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>commit</term>
+            <listitem>
+              <simpara>
+                  Send all local changes to the configuration manager, which
+                  will validate them, and apply them if validation succeeds.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>go</term>
+            <listitem>
+              <simpara>
+                  Go to a specific configuration part, similar to the 'cd'
+                  command in a shell.
+                  <note>There are a number of problems with the current
+                  implementation of go within <command>bindctl</command>,
+                  and we recommend not using it for general cases.</note>
+              </simpara>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </section>
+    </section>
+
+    <section>
+        <title>The execute command</title>
+        The execute command executes a set of commands, either from a file
+        or from a pre-defined set. Currently, the only predefined set is
+        init_authoritative_server, which adds b10-auth, b10-xfrin, and
+        b10-xfrout to the set of components to be started by BIND 10. This
+        pre-defined set does not commit the changes, so these modules do not
+        show up for commands or configuration until the user enters 'config
+        commit' after 'execute init_authoritative_server'
+
+        Example:
+        <screen><userinput>> execute init_authoritative_server</userinput></screen>
+        <screen><userinput>> execute file /tmp/example_commands</userinput></screen>
+
+        There is an optional argument 'show', which shows the exact set of
+        commands that would be executed.
+
+        <screen><userinput>> execute init_authoritative_server show</userinput>
+!echo adding Authoritative server component
+config add /Boss/components b10-auth
+config set /Boss/components/b10-auth/kind needed
+config set /Boss/components/b10-auth/special auth
+!echo adding Xfrin component
+config add /Boss/components b10-xfrin
+config set /Boss/components/b10-xfrin/address Xfrin
+config set /Boss/components/b10-xfrin/kind dispensable
+!echo adding Xfrout component
+config add /Boss/components b10-xfrout
+config set /Boss/components/b10-xfrout/address Xfrout
+config set /Boss/components/b10-xfrout/kind dispensable
+!echo adding Zone Manager component
+config add /Boss/components b10-zonemgr
+config set /Boss/components/b10-zonemgr/address Zonemgr
+config set /Boss/components/b10-zonemgr/kind dispensable
+!echo Components added. Please enter "config commit" to
+!echo finalize initial setup and run the components.
+        </screen>
+        <screen><userinput>> execute file /tmp/example_commands show</userinput></screen>
+
+        <section id="bindctl_execute_directives">
+            <title>Execute directives</title>
+            Within sets of commands to be run with the <command>execute</command>
+            command, a number of directives are supported:
+            <variablelist>
+              <varlistentry>
+                <term>!echo &lt;string&gt;</term>
+                <listitem>
+                  <simpara>
+                      Prints the given string to bindctl's output.
+                  </simpara>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>!verbose on</term>
+                <listitem>
+                  <simpara>
+                      Enables verbose mode; all commands that are to be executed
+                      are printed.
+                  </simpara>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>!verbose off</term>
+                <listitem>
+                  <simpara>
+                      Enables verbose mode; commands that are to be executed are
+                      no longer printed.
+                  </simpara>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+        </section>
+
+        <section id="bindctl_execute_notes">
+            <title>Notes on execute scripts</title>
+            Within scripts, you can add or remove modules with the normal
+            configuration commands for Boss/components. However; as module
+            configuration and commands do not show up until the module is
+            running, it is currently not possible to add a module and set
+            its configuration in one script. This will be addressed in the
+            future, but for now the only option is to add and configure
+            modules in separate commands and execute scripts.
+        </section>
+    </section>
 
     <para>
       Configuration changes are actually commands to
