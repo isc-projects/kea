@@ -58,6 +58,9 @@ namespace isc {
 namespace dns {
 
 RRTTL::RRTTL(const std::string& ttlstr) {
+    // We use a larger data type during the computation. This is because
+    // some compilers don't fail when out of range, so we check the range
+    // ourself later.
     int64_t val = 0;
 
     const string::const_iterator end = ttlstr.end();
