@@ -97,6 +97,7 @@ TEST_F(MasterLexerStateTest, space) {
     // twice; at the second iteration, it's a white space at the beginning
     // of line, but since we don't specify INITIAL_WS option, it's treated as
     // normal space and ignored.
+    State::getStartInstance(lexer, MasterLexer::END_OF_LINE);
     for (size_t i = 0; i < 2; ++i) {
         ss << " \t\n";
         EXPECT_EQ(s_null, s_start.handle(lexer, options));
@@ -106,6 +107,7 @@ TEST_F(MasterLexerStateTest, space) {
 
     // Now we specify the INITIAL_WS option.  It will be recognized and the
     // corresponding token will be returned.
+    State::getStartInstance(lexer, common_options);
     ss << " ";
     options = MasterLexer::INITIAL_WS;
     EXPECT_EQ(s_null, s_start.handle(lexer, options));
@@ -114,52 +116,61 @@ TEST_F(MasterLexerStateTest, space) {
 }
 
 TEST_F(MasterLexerStateTest, parentheses) {
-    ss << "\n(\na)"; // 1st \n is to check if 'was EOL' is set to false
+    ss << "\n(\na\n )\n "; // 1st \n is to check if 'was EOL' is set to false
 
     EXPECT_EQ(s_null, s_start.handle(lexer, options)); // handle \n
 
     // Now handle '('.  It skips \n and recognize 'a' as string
     EXPECT_EQ(0, s_start.getParenCount(lexer)); // check pre condition
     options = MasterLexer::END_OF_LINE | MasterLexer::INITIAL_WS;
-    // should recognize 'a' as string
     EXPECT_EQ(&s_string, s_start.handle(lexer, options));
-
-    // Check post '(' conditions.  paren_count should be incremented, and
-    // end-of-line and ws should be canceled at the first open paren
+    EXPECT_EQ(1, s_start.getParenCount(lexer)); // check post condition
     EXPECT_FALSE(s_start.wasLastEOL(lexer));
-    EXPECT_TRUE((options & MasterLexer::END_OF_LINE) == 0); // eol is canceled
-    EXPECT_TRUE((options & MasterLexer::INITIAL_WS) == 0); // same for init WS
-    EXPECT_EQ(1, s_start.getParenCount(lexer));
 
-    // Then handle ')'.  eol and init_ws are currently cleared, which will be
-    // set again.
+    // skip 'a' (note: until #2373 it's actually skipped as part of the '('
+    // handling)
+    s_string.handle(lexer, options);
+
+    // Then handle ')'.  '\n' before ')' isn't recognized because
+    // it's canceled due to the '('.  Likewise, the space after the '\n'
+    // shouldn't be recognized but should be just ignored.
     EXPECT_EQ(s_null, s_start.handle(lexer, options));
     EXPECT_EQ(0, s_start.getParenCount(lexer));
-    EXPECT_TRUE((options & MasterLexer::END_OF_LINE) != 0);
-    EXPECT_TRUE((options & MasterLexer::INITIAL_WS) != 0);
+
+    // Now, temporarily disabled options are restored: Both EOL and the
+    // initial WS are recognized
+    EXPECT_EQ(Token::END_OF_LINE, s_start.getToken(lexer).getType());
+    EXPECT_EQ(s_null, s_start.handle(lexer, options));
+    EXPECT_EQ(Token::INITIAL_WS, s_start.getToken(lexer).getType());
 
     // TBD: Test case: '(;'
 }
 
 TEST_F(MasterLexerStateTest, nestedParentheses) {
     // This is an unusual, but allowed (in this implementation) case.
-    ss << "(a(b)c)";
-    EXPECT_EQ(&s_string, s_start.handle(lexer, options)); // consume '(a'
-    EXPECT_EQ(&s_string, s_start.handle(lexer, options)); // consume '(b'
+    ss << "(a(b)\n c)\n ";
+    EXPECT_EQ(&s_string, s_start.handle(lexer, options)); // consume '('
+    s_string.handle(lexer, options); // consume 'a'
+    EXPECT_EQ(&s_string, s_start.handle(lexer, options)); // consume '('
+    s_string.handle(lexer, options); // consume 'b'
     EXPECT_EQ(2, s_start.getParenCount(lexer)); // now the count is 2
 
     // Close the inner most parentheses.  count will be decreased, but option
-    // shouldn't be restored yet.
-    EXPECT_EQ(&s_string, s_start.handle(lexer, options));
+    // shouldn't be restored yet, so the intermediate EOL or initial WS won't
+    // be recognized.
+    EXPECT_EQ(&s_string, s_start.handle(lexer, options)); // consume ')'
+    s_string.handle(lexer, options); // consume 'c'
     EXPECT_EQ(1, s_start.getParenCount(lexer));
-    EXPECT_TRUE((options & MasterLexer::END_OF_LINE) == 0);
-    EXPECT_TRUE((options & MasterLexer::INITIAL_WS) == 0);
 
     // Close the outermost parentheses.  count will be reset to 0, and original
     // options are restored.
     EXPECT_EQ(s_null, s_start.handle(lexer, options));
-    EXPECT_TRUE((options & MasterLexer::END_OF_LINE) != 0);
-    EXPECT_TRUE((options & MasterLexer::INITIAL_WS) != 0);
+
+    // Now, temporarily disabled options are restored: Both EOL and the
+    // initial WS are recognized
+    EXPECT_EQ(Token::END_OF_LINE, s_start.getToken(lexer).getType());
+    EXPECT_EQ(s_null, s_start.handle(lexer, options));
+    EXPECT_EQ(Token::INITIAL_WS, s_start.getToken(lexer).getType());
 }
 
 TEST_F(MasterLexerStateTest, unbalancedParentheses) {
@@ -181,7 +192,8 @@ TEST_F(MasterLexerStateTest, unbalancedParentheses) {
 
     // Reach EOF with a dangling open parenthesis.
     ss << "(a";
-    EXPECT_EQ(&s_string, s_start.handle(lexer, options)); // consume '(a'
+    EXPECT_EQ(&s_string, s_start.handle(lexer, options)); // consume '('
+    s_string.handle(lexer, options);                      // consume 'a'
     EXPECT_EQ(1, s_start.getParenCount(lexer));
     EXPECT_EQ(s_null, s_start.handle(lexer, options));    // reach EOF
     ASSERT_EQ(Token::ERROR, s_start.getToken(lexer).getType());
@@ -198,7 +210,7 @@ TEST_F(MasterLexerStateTest, startToComment) {
     EXPECT_EQ(Token::END_OF_LINE, s_start.getToken(lexer).getType());
 
     // Likewise, but the comment ends with EOF.
-    ss << "  ;a;";
+    ss << ";a;";
     EXPECT_EQ(s_null, s_start.handle(lexer, options));
     EXPECT_EQ(Token::END_OF_FILE, s_start.getToken(lexer).getType());
 }
