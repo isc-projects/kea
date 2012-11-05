@@ -174,6 +174,7 @@ public:
     }
 };
 
+// Currently this is provided mostly as a place holder
 class String : public State {
 public:
     String() {}
@@ -203,18 +204,23 @@ State::getInstance(ID state_id) {
 }
 
 namespace {
+// A helper of Start::handle below: it ensures options that are not effective
+// within a pair of parentheses are really disabled.
 inline void
-cancelOptions(MasterLexer::Options& options,
-              MasterLexer::Options canceled_options)
-{
+adjustOptionsForParen(MasterLexer::Options& options) {
     options = static_cast<MasterLexer::Options>(
-        options & static_cast<MasterLexer::Options>(~canceled_options));
+        options & static_cast<MasterLexer::Options>(
+            ~(MasterLexer::END_OF_LINE | MasterLexer::INITIAL_WS)));
 }
 }
 
 const State*
-Start::handle(MasterLexer& lexer, MasterLexer::Options& options) const {
+Start::handle(MasterLexer& lexer, MasterLexer::Options&) const {
+    MasterLexer::Options options = getLexerImpl(lexer)->orig_options_;
     size_t& paren_count = getLexerImpl(lexer)->paren_count_;
+    if (paren_count > 0) {
+        adjustOptionsForParen(options);
+    }
 
     while (true) {
         const int c = getLexerImpl(lexer)->skipComment(
@@ -244,8 +250,7 @@ Start::handle(MasterLexer& lexer, MasterLexer::Options& options) const {
             }
         } else if (c == '(') {
             getLexerImpl(lexer)->last_was_eol_ = false;
-            cancelOptions(options,
-                          MasterLexer::END_OF_LINE | MasterLexer::INITIAL_WS);
+            adjustOptionsForParen(options);
             ++paren_count;
             continue;
         } else if (c == ')') {
@@ -259,6 +264,7 @@ Start::handle(MasterLexer& lexer, MasterLexer::Options& options) const {
             }
             continue;
         } else {
+            // Note: in #2373 we should probably ungetChar().
             getLexerImpl(lexer)->last_was_eol_ = false;
             return (&STRING_STATE);
         }
