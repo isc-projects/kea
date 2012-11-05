@@ -72,11 +72,46 @@ TEST_F(RRTTLTest, fromText) {
     EXPECT_EQ(0x12345678, ttl_32bit.getValue());
     EXPECT_EQ(0xffffffff, ttl_max.getValue());
 
-    EXPECT_THROW(RRTTL("1D"), InvalidRRTTL); // we don't support this form yet
     EXPECT_THROW(RRTTL("0xdeadbeef"), InvalidRRTTL); // must be decimal
     EXPECT_THROW(RRTTL("-1"), InvalidRRTTL); // must be positive
     EXPECT_THROW(RRTTL("1.1"), InvalidRRTTL); // must be integer
     EXPECT_THROW(RRTTL("4294967296"), InvalidRRTTL); // must be 32-bit
+}
+
+void
+checkUnit(unsigned multiply, char suffix) {
+    SCOPED_TRACE(string("Unit check with suffix ") + suffix);
+    const uint32_t value = 10 * multiply;
+    const string num = "10";
+    // Check both lower and upper version of the suffix
+    EXPECT_EQ(value,
+              RRTTL(num + static_cast<char>(tolower(suffix))).getValue());
+    EXPECT_EQ(value,
+              RRTTL(num + static_cast<char>(toupper(suffix))).getValue());
+}
+
+// Check parsing the unit form (1D, etc)
+TEST_F(RRTTLTest, fromTextUnit) {
+    // Check each of the units separately
+    checkUnit(1, 'S');
+    checkUnit(60, 'M');
+    checkUnit(60 * 60, 'H');
+    checkUnit(24 * 60 * 60, 'D');
+    checkUnit(7 * 24 * 60 * 60, 'W');
+
+    // Now some compound ones. We allow any order (it would be much work to
+    // check the order anyway). The last part can be without unit, in which
+    // case it is considered seconds.
+    EXPECT_EQ(60 * 60 + 3, RRTTL("1H3S").getValue());
+    EXPECT_EQ(2 * 24 * 60 * 60 + 75 * 60 + 4, RRTTL("75M2D4").getValue());
+
+    // Missing number is taken as 1 (or should we disallow that?)
+    EXPECT_EQ(7 * 24 * 60 * 60 + 5 * 60 * 60, RRTTL("W5H").getValue());
+    EXPECT_EQ(7 * 24 * 60 * 60 + 5 * 60 * 60, RRTTL("5hW").getValue());
+
+    // There are some wrong units
+    EXPECT_THROW(RRTTL("13X"), InvalidRRTTL);
+    EXPECT_THROW(RRTTL("3D5F"), InvalidRRTTL);
 }
 
 TEST_F(RRTTLTest, fromWire) {
