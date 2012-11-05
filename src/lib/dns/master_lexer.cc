@@ -38,6 +38,18 @@ struct MasterLexer::MasterLexerImpl {
                         token_(Token::NOT_STARTED)
     {}
 
+    int skipComment(int c) {
+        if (c == ';') {
+            while (true) {
+                c = source_->getChar();
+                if (c == '\n' || c == InputSource::END_OF_STREAM) {
+                    return (c);
+                }
+            }
+        }
+        return (c);
+    }
+
     std::vector<InputSourcePtr> sources_;
     InputSource* source_;       // current source
     size_t paren_count_;
@@ -185,13 +197,12 @@ State::getInstance(ID state_id) {
         return (START_STATE);
     case CRLF:
         return (CRLF_STATE);
-    case EatLine:
-        return (CRLF_STATE);    // XXX
     case String:
-        return (STRING_STATE);    // XXX
+        return (STRING_STATE);
     }
 }
 
+namespace {
 inline void
 cancelOptions(MasterLexer::Options& options,
               MasterLexer::Options canceled_options)
@@ -199,13 +210,15 @@ cancelOptions(MasterLexer::Options& options,
     options = static_cast<MasterLexer::Options>(
         options & static_cast<MasterLexer::Options>(~canceled_options));
 }
+}
 
 const State*
 Start::handle(MasterLexer& lexer, MasterLexer::Options& options) const {
     size_t& paren_count = getLexerImpl(lexer)->paren_count_;
 
     while (true) {
-        const int c = getLexerImpl(lexer)->source_->getChar();
+        const int c = getLexerImpl(lexer)->skipComment(
+            getLexerImpl(lexer)->source_->getChar());
         if (c == InputSource::END_OF_STREAM) {
             if (paren_count != 0) {
                 getLexerImpl(lexer)->token_ = Token(Token::UNBALANCED_PAREN);
@@ -241,8 +254,7 @@ Start::handle(MasterLexer& lexer, MasterLexer::Options& options) const {
                 getLexerImpl(lexer)->token_ = Token(Token::UNBALANCED_PAREN);
                 return (NULL);
             }
-            --paren_count;
-            if (paren_count == 0) {
+            if (--paren_count == 0) {
                 options = getLexerImpl(lexer)->orig_options_;
             }
             continue;

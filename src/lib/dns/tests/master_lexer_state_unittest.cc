@@ -47,6 +47,7 @@ protected:
     const State* const s_null;
     const State& s_start;
     const State& s_crlf;
+
     const State& s_string;
     std::stringstream ss;
     MasterLexer::Options options, orig_options;
@@ -178,14 +179,28 @@ TEST_F(MasterLexerStateTest, unbalancedParentheses) {
     EXPECT_EQ(Token::UNBALANCED_PAREN, s_start.getToken(lexer).getErrorCode());
     EXPECT_FALSE(s_start.wasLastEOL(lexer));
 
-    // Reach EOF without a dangling open parenthesis.
+    // Reach EOF with a dangling open parenthesis.
     ss << "(a";
     EXPECT_EQ(&s_string, s_start.handle(lexer, options)); // consume '(a'
     EXPECT_EQ(1, s_start.getParenCount(lexer));
     EXPECT_EQ(s_null, s_start.handle(lexer, options));    // reach EOF
     ASSERT_EQ(Token::ERROR, s_start.getToken(lexer).getType());
     EXPECT_EQ(Token::UNBALANCED_PAREN, s_start.getToken(lexer).getErrorCode());
-    EXPECT_EQ(0, s_start.getParenCount(lexer));
+    EXPECT_EQ(0, s_start.getParenCount(lexer)); // should be reset to 0
+}
+
+TEST_F(MasterLexerStateTest, startToComment) {
+    // Begin with 'start', skip space, then encounter a comment.  Skip
+    // the rest of the line, and recognize the new line.  Note that the
+    // second ';' is simply ignored.
+    ss << "  ;a;\n";
+    EXPECT_EQ(s_null, s_start.handle(lexer, options));
+    EXPECT_EQ(Token::END_OF_LINE, s_start.getToken(lexer).getType());
+
+    // Likewise, but the comment ends with EOF.
+    ss << "  ;a;";
+    EXPECT_EQ(s_null, s_start.handle(lexer, options));
+    EXPECT_EQ(Token::END_OF_FILE, s_start.getToken(lexer).getType());
 }
 
 }
