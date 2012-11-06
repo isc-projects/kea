@@ -413,10 +413,13 @@ private:
 ///
 /// This container allows to search for DHCP option definition
 /// using two indexes:
-/// - sequenced: used to access elements in the oreder they have
+/// - sequenced: used to access elements in the order they have
 /// been added to the container
 /// - option code: used to search defintions of options
 /// with a specified option code (aka option type).
+/// Note that this container can hold multiple options with the
+/// same code. For this reason, the latter index can be used to
+/// obtain a <b>range of options for a particular option code.
 /// 
 /// @todo: need an index to search options using option space name
 /// once option spaces are implemented.
@@ -433,7 +436,9 @@ typedef boost::multi_index_container<
             // Use option type as the index key. The type is held
             // in OptionDefinition object so we have to call
             // OptionDefinition::getCode to retrieve this key
-            // for each element.
+            // for each element. The option code is non-unique so
+            // multiple elements with the same option code can
+            // be returned by this index.
             boost::multi_index::const_mem_fun<
                 OptionDefinition,
                 uint16_t,

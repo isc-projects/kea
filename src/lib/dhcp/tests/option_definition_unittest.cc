@@ -282,25 +282,38 @@ TEST_F(OptionDefinitionTest, factoryEmpty) {
 }
 
 TEST_F(OptionDefinitionTest, factoryBinary) {
+    // Binary option is the one that is represented by the generic
+    // Option class. In fact all options can be represented by this
+    // class but for some of them it is just natural. The SERVERID
+    // option consists of the option code, length and binary data so
+    // this one was picked for this test.
     OptionDefinition opt_def("OPTION_SERVERID", D6O_SERVERID, "binary");
     Option::Factory* factory(NULL);
     EXPECT_NO_THROW(factory = opt_def.getFactory());
     ASSERT_TRUE(factory != NULL);
 
+    // Prepare some dummy data (serverid): 0, 1, 2 etc.
     OptionBuffer buf(14);
     for (int i = 0; i < 14; ++i) {
         buf[i] = i;
     }
+    // Create option instance with the factory function.
+    // If the OptionDefinition code works properly than
+    // object of the type Option should be returned.
     OptionPtr option_v6;
     ASSERT_NO_THROW(
         option_v6 = factory(Option::V6, D6O_SERVERID, buf);
     );
     // Expect base option type returned.
     ASSERT_TRUE(typeid(*option_v6) == typeid(Option));
+    // Sanity check on universe, length and size. These are
+    // the basic parameters identifying any option.
     EXPECT_EQ(Option::V6, option_v6->getUniverse());
     EXPECT_EQ(4, option_v6->getHeaderLen());
     ASSERT_EQ(buf.size(), option_v6->getData().size());
 
+    // Get the server id data from the option and compare
+    // against reference buffer. They are expected to match.
     EXPECT_TRUE(std::equal(option_v6->getData().begin(),
                            option_v6->getData().end(),
                            buf.begin()));

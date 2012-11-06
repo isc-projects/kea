@@ -287,8 +287,11 @@ LibDHCP::initStdOptionDefs6() {
         case D6O_STATUS_CODE:
             definition->addRecordField(OptionDefinition::UINT16_TYPE);
             definition->addRecordField(OptionDefinition::STRING_TYPE);
-        default:
             break;
+        default:
+            // The default case is intentionally left empty
+            // as it does not need any processing.
+            ;
         }
         try {
             definition->validate();

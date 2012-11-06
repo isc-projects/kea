@@ -64,19 +64,42 @@ public:
     static void testInitOptionDefs6(const uint16_t code,
                              const OptionBuffer& buf,
                              const std::type_info& expected_type) {
+        // Initialize stdandard options definitions. They are held
+        // in the static container throughout the program.
         LibDHCP::initStdOptionDefs(Option::V6);
+        // Get all option definitions, we will use them to extract
+        // the definition for a particular option code.
         OptionDefContainer options = LibDHCP::getOptionDefs(Option::V6);
+        // Get the container index #1. This one allows for searching
+        // option definitions using option code.
         const OptionDefContainerTypeIndex& idx = options.get<1>();
+        // Get 'all' option definitions for a particular option code.
+        // For standard options we expect that the range returned
+        // will contain single option as their codes are unique.
         OptionDefContainerTypeRange range = idx.equal_range(code);
         ASSERT_EQ(1, std::distance(range.first, range.second));
+        // If we have single option definition returned, the
+        // first iterator holds it.
         OptionDefinitionPtr def = *(range.first);
+        // It should not happen that option definition is NULL but
+        // let's make sure (test should take things like that into
+        // account).
         ASSERT_TRUE(def);
+        // Check that option definition is valid.
         ASSERT_NO_THROW(def->validate());
+        // Get the factory function for the particular option
+        // definition. We will use this factory function to
+        // create option instance.
         Option::Factory* factory = NULL;
         ASSERT_NO_THROW(factory = def->getFactory());
         OptionPtr option;
+        // Create the option.
         ASSERT_NO_THROW(option = factory(Option::V6, code, buf));
+        // Make sure it is not NULL.
         ASSERT_TRUE(option);
+        // And the actual object type is the one that we expect.
+        // Note that for many options there are dedicated classes
+        // derived from Option class to represent them.
         EXPECT_TRUE(typeid(*option) == expected_type);
     }
 };
