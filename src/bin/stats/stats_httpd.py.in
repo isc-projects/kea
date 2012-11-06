@@ -122,6 +122,9 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
             req_path = urllib.parse.urlsplit(req_path).path
             req_path = urllib.parse.unquote(req_path)
             body = None
+            # In case that the requested path (req_path),
+            # e.g. /bind10/statistics/Auth/, is started with
+            # XML_URL_PATH + '/'
             if req_path.find('%s/' % XML_URL_PATH) == 0:
                 req_path = os.path.normpath(req_path)
                 req_path = req_path.lstrip('%s/' % XML_URL_PATH)
@@ -129,8 +132,12 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
                 path_dirs = [ d for d in filter(None, path_dirs) ]
                 req_path = '/'.join(path_dirs)
                 body = self.server.xml_handler(req_path)
+            # In case that the requested path (req_path) is exactly
+            # matched with XSD_URL_PATH
             elif req_path == XSD_URL_PATH:
                 body = self.server.xsd_handler()
+            # In case that the requested path (req_path) is exactly
+            # matched with XSL_URL_PATH
             elif req_path == XSL_URL_PATH:
                 body = self.server.xsl_handler()
             else:
