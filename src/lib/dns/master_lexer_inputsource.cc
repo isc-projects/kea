@@ -29,6 +29,10 @@ createStreamName(std::istream& input_stream) {
 
 } // end of unnamed namespace
 
+// Explicit definition of class static constant.  The value is given in the
+// declaration so it's not needed here.
+const int InputSource::END_OF_STREAM;
+
 InputSource::InputSource(std::istream& input_stream) :
     at_eof_(false),
     line_(1),
