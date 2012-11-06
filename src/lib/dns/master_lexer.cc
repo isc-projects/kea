@@ -214,24 +214,10 @@ State::getInstance(ID state_id) {
     }
 }
 
-namespace {
-// A helper of Start::handle below: it ensures options that are not effective
-// within a pair of parentheses are really disabled.
-inline void
-adjustOptionsForParen(MasterLexer::Options& options) {
-    options = static_cast<MasterLexer::Options>(
-        options & static_cast<MasterLexer::Options>(~MasterLexer::INITIAL_WS));
-}
-}
-
 const State*
 Start::handle(MasterLexer& lexer) const {
     MasterLexer::Options options = getLexerImpl(lexer)->options_;
     size_t& paren_count = getLexerImpl(lexer)->paren_count_;
-    bool eol_ok = (paren_count == 0);
-    if (paren_count > 0) {
-        adjustOptionsForParen(options);
-    }
 
     while (true) {
         const int c = getLexerImpl(lexer)->skipComment(
@@ -246,7 +232,8 @@ Start::handle(MasterLexer& lexer) const {
             getLexerImpl(lexer)->token_ = Token(Token::END_OF_FILE);
             return (NULL);
         } else if (c == ' ' || c == '\t') {
-            if (getLexerImpl(lexer)->last_was_eol_ &&
+            // If requested and we are not in (), recognize the initial space.
+            if (getLexerImpl(lexer)->last_was_eol_ && paren_count == 0 &&
                 (options & MasterLexer::INITIAL_WS) != 0) {
                 getLexerImpl(lexer)->last_was_eol_ = false;
                 getLexerImpl(lexer)->token_ = Token(Token::INITIAL_WS);
@@ -255,18 +242,16 @@ Start::handle(MasterLexer& lexer) const {
             continue;
         } else if (c == '\n') {
             getLexerImpl(lexer)->last_was_eol_ = true;
-            if (eol_ok) {
+            if (paren_count == 0) { // we don't recognize EOL if we are in ()
                 getLexerImpl(lexer)->token_ = Token(Token::END_OF_LINE);
                 return (NULL);
             }
         } else if (c == '\r') {
-            if (eol_ok) {
+            if (paren_count == 0) { // check if we are in () (see above)
                 return (&CRLF_STATE);
             }
         } else if (c == '(') {
             getLexerImpl(lexer)->last_was_eol_ = false;
-            adjustOptionsForParen(options);
-            eol_ok = false;
             ++paren_count;
             continue;
         } else if (c == ')') {
@@ -276,7 +261,6 @@ Start::handle(MasterLexer& lexer) const {
                 return (NULL);
             }
             if (--paren_count == 0) {
-                eol_ok = true;
                 options = getLexerImpl(lexer)->options_;
             }
             continue;
