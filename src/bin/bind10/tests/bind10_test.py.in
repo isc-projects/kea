@@ -951,6 +951,9 @@ class MockComponent:
     def failed(self, status):
         return False
 
+    def kill(self, status):
+        return
+
 class TestBossCmd(unittest.TestCase):
     def test_ping(self):
         """
@@ -1369,6 +1372,17 @@ class TestBossComponents(unittest.TestCase):
         bob.reap_children()
         # now, we should as the mock component.failed() returns False
         self.assertTrue(component in bob.components_to_restart)
+
+    def test_kill_started_components(self):
+        '''Test that started components are killed.'''
+        bob = MockBob()
+        bob.runnable = True
+        component = MockComponent('test', 53, 'Test')
+        bob.components[53] = component
+
+        self.assertEqual([[53, 'test', 'Test']], bob.get_processes())
+        bob.kill_started_components()
+        self.assertEqual([], bob.get_processes())
 
 class SocketSrvTest(unittest.TestCase):
     """
