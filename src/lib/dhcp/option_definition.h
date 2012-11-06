@@ -419,7 +419,7 @@ private:
 /// with a specified option code (aka option type).
 /// Note that this container can hold multiple options with the
 /// same code. For this reason, the latter index can be used to
-/// obtain a <b>range of options for a particular option code.
+/// obtain a range of options for a particular option code.
 /// 
 /// @todo: need an index to search options using option space name
 /// once option spaces are implemented.
