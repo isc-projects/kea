@@ -256,8 +256,14 @@ class TestHttpHandler(unittest.TestCase):
             for elem in root:
                 attr = elem.attrib
                 value = isc.cc.data.find(DUMMY_DATA, attr['identifier'])
+                # No 'value' attribute should be found in the 'item'
+                # element when datatype of the value is list or dict.
                 if type(value) is list or type(value) is dict:
                     self.assertFalse('value' in attr)
+                # The value of the 'value' attribute should be checked
+                # after casting it to string type if datatype of the
+                # value is int or float. Because attr['value'] returns
+                # string type even if its value is int or float.
                 elif type(value) is int or type(value) is float:
                     self.assertEqual(attr['value'], str(value))
                 else:
