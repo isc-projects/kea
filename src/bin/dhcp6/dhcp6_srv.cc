@@ -303,7 +303,7 @@ void Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr());
     // Warn if subnet is not supported and quit.
     if (!subnet) {
-        LOG_WARN(dhcp6_logger, DHCP6_NO_SUBNET_FOR_ADDRESS)
+        LOG_WARN(dhcp6_logger, DHCP6_NO_SUBNET_DEF_OPT)
             .arg(question->getRemoteAddr().toText());
         return;
     }
@@ -325,7 +325,7 @@ void Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer)
     // Get the subnet for a particular address.
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr());
     if (!subnet) {
-        LOG_WARN(dhcp6_logger, DHCP6_NO_SUBNET_FOR_ADDRESS)
+        LOG_WARN(dhcp6_logger, DHCP6_NO_SUBNET_REQ_OPT)
             .arg(question->getRemoteAddr().toText());
         return;
     }
