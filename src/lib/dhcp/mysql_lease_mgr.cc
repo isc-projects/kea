@@ -95,20 +95,22 @@ TaggedStatement tagged_statements[] = {
 namespace isc {
 namespace dhcp {
 
+
+
 /// @brief Exchange MySQL and Lease6 Data
 ///
 /// On any MySQL operation, arrays of MYSQL_BIND structures must be built to
 /// describe the parameters in the prepared statements.  Where information is
 /// inserted or retrieved - INSERT, UPDATE, SELECT - a large amount of that
 /// structure is identical - it defines data values in the Lease6 structure.
-///
-/// This class handles the creation of that array.  For maximum flexibility,
-/// the data is appended to an array of MYSQL_BIND elemements, so allowing
-/// additional elements to be prepended/appended to it.
+/// This class handles the creation of that array.
 ///
 /// Owing to the MySQL API, the process requires some intermediate variables
 /// to hold things like length etc.  This object holds the intermediate
 /// variables as well.
+
+// Note - there are no unit tests for this class.  It is tested indirectly
+// in all MySqlLeaseMgr::xxx6() calls where it is used.
 
 class MySqlLease6Exchange {
 public:
@@ -117,7 +119,8 @@ public:
     /// Apart from the initialization of false_ and true_, the other
     /// initializations are to satisfy cppcheck: none are really needed, as all
     /// variables are initialized/set in the methods.
-    MySqlLease6Exchange() : addr6_length_(0), duid_length_(0), false_(0), true_(1) {
+    MySqlLease6Exchange() : addr6_length_(0), duid_length_(0),
+                            false_(0), true_(1) {
         memset(addr6_buffer_, 0, sizeof(addr6_buffer_));
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
     }
@@ -126,12 +129,10 @@ public:
     ///
     /// Fills in the MYSQL_BIND objects for the Lease6 passed to it.
     ///
-    /// @param lease Lease object to be added to the database
-    /// @param bindvec Vector of MySQL BIND objects: the elements describing the
-    ///        lease are appended to this vector.  The data added to the vector
-    ///        only remain valid while both the lease and this object are valid.
-    void
-    createBindForSend(const Lease6Ptr& lease, std::vector<MYSQL_BIND>& bindvec) {
+    /// @param lease Lease object to be added to the database.
+    ///
+    /// @return Vector of MySQL BIND objects representing the data to be added.
+    std::vector<MYSQL_BIND> createBindForSend(const Lease6Ptr& lease) {
         // Store lease object to ensure it remains valid.
         lease_ = lease;
 
@@ -209,7 +210,7 @@ public:
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
-        bindvec.insert(bindvec.end(), &bind_[0], &bind_[9]);
+        return (std::vector<MYSQL_BIND>(&bind_[0], &bind_[9]));
     }
 
     /// @brief Create BIND array to receive data
@@ -218,11 +219,8 @@ public:
     /// After data is successfully received, getLeaseData() is used to copy
     /// it to a Lease6 object.
     ///
-    /// @param bindvec Vector of MySQL BIND objects: the elements describing the
-    ///        lease are appended to this vector.  The data added to the vector
-    ///        only remain valid while both the lease and this object are valid.
-
-    void createBindForReceive(std::vector<MYSQL_BIND>& bindvec) {
+    /// @return Vector of MySQL BIND objects.
+    std::vector<MYSQL_BIND> createBindForReceive() {
 
         // Ensure both the array of MYSQL_BIND structures and the error array
         // are clear.
@@ -283,7 +281,7 @@ public:
         bind_[7].buffer = reinterpret_cast<char*>(&iaid_);
         bind_[7].is_unsigned = true_;
         bind_[7].error = &error_[7];
- 
+
         // prefix_len: unsigned tinyint
         bind_[8].buffer_type = MYSQL_TYPE_TINY;
         bind_[8].buffer = reinterpret_cast<char*>(&prefixlen_);
@@ -292,7 +290,7 @@ public:
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
-        bindvec.insert(bindvec.end(), &bind_[0], &bind_[9]);
+        return(std::vector<MYSQL_BIND>(&bind_[0], &bind_[9]));
     }
 
     /// @brief Copy Received Data into Lease6 Object
@@ -353,7 +351,7 @@ public:
     }
 
 private:
-    // Note: All array legths are equal to the corresponding variable in the
+    // Note: All array lengths are equal to the corresponding variable in the
     // schema.
     std::string     addr6_;             ///< String form of address
     char            addr6_buffer_[ADDRESS6_TEXT_MAX_LEN];  ///< Character 
@@ -377,6 +375,8 @@ private:
 };
 
 
+// MySqlLeaseMgr Methods
+
 MySqlLeaseMgr::MySqlLeaseMgr(const LeaseMgr::ParameterMap& parameters) 
     : LeaseMgr(parameters), mysql_(NULL) {
 
@@ -397,7 +397,12 @@ MySqlLeaseMgr::MySqlLeaseMgr(const LeaseMgr::ParameterMap& parameters)
 
     // Prepare all statements likely to be used.
     prepareStatements();
+
+    // Create the exchange object for use in exchanging data between the
+    // program and the database.
+    exchange6_.reset(new MySqlLease6Exchange());
 }
+
 
 MySqlLeaseMgr::~MySqlLeaseMgr() {
     // Free up the prepared statements, ignoring errors. (What would we do
@@ -470,6 +475,7 @@ MySqlLeaseMgr::convertFromDatabaseTime(const MYSQL_TIME& expire,
     cltt = mktime(&expire_tm) - valid_lifetime;
 }
 
+
 void
 MySqlLeaseMgr::openDatabase() {
 
@@ -539,6 +545,7 @@ MySqlLeaseMgr::openDatabase() {
     }
 }
 
+
 void
 MySqlLeaseMgr::prepareStatement(StatementIndex index, const char* text) {
     // Validate that there is space for the statement in the statements array
@@ -565,6 +572,7 @@ MySqlLeaseMgr::prepareStatement(StatementIndex index, const char* text) {
     }
 }
 
+
 void
 MySqlLeaseMgr::prepareStatements() {
     // Allocate space for all statements
@@ -581,6 +589,7 @@ MySqlLeaseMgr::prepareStatements() {
     }
 }
 
+
 bool
 MySqlLeaseMgr::addLease(const Lease4Ptr& /* lease */) {
     isc_throw(NotImplemented, "MySqlLeaseMgr::addLease(const Lease4Ptr&) "
@@ -588,14 +597,13 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& /* lease */) {
     return (false);
 }
 
+
 bool
 MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     const StatementIndex stindex = INSERT_LEASE6;
 
     // Create the MYSQL_BIND array for the lease
-    MySqlLease6Exchange exchange;
-    std::vector<MYSQL_BIND> bind;
-    exchange.createBindForSend(lease, bind);
+    std::vector<MYSQL_BIND> bind = exchange6_->createBindForSend(lease);
 
     // Bind the parameters to the statement
     int status = mysql_stmt_bind_param(statements_[stindex], &bind[0]);
@@ -618,6 +626,7 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     return (true);
 }
 
+
 Lease4Ptr
 MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& /* addr */,
                          SubnetID /* subnet_id */) const {
@@ -626,6 +635,7 @@ MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& /* addr */,
     return (Lease4Ptr());
 }
 
+
 Lease4Ptr
 MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& /* addr */) const {
     isc_throw(NotImplemented, "MySqlLeaseMgr::getLease4(const IOAddress&) "
@@ -633,12 +643,14 @@ MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& /* addr */) const {
     return (Lease4Ptr());
 }
 
+
 Lease4Collection
 MySqlLeaseMgr::getLease4(const HWAddr& /* hwaddr */) const {
     isc_throw(NotImplemented, "MySqlLeaseMgr::getLease4(const HWAddr&) "
               "not implemented yet");
     return (Lease4Collection());
 }
+
 
 Lease4Ptr
 MySqlLeaseMgr::getLease4(const HWAddr& /* hwaddr */,
@@ -648,12 +660,14 @@ MySqlLeaseMgr::getLease4(const HWAddr& /* hwaddr */,
     return (Lease4Ptr());
 }
 
+
 Lease4Collection
 MySqlLeaseMgr::getLease4(const ClientId& /* clientid */) const {
     isc_throw(NotImplemented, "MySqlLeaseMgr::getLease4(const ClientID&) "
               "not implemented yet");
     return (Lease4Collection());
 }
+
 
 Lease4Ptr
 MySqlLeaseMgr::getLease4(const ClientId& /* clientid */,
@@ -662,6 +676,32 @@ MySqlLeaseMgr::getLease4(const ClientId& /* clientid */,
               "not implemented yet");
     return (Lease4Ptr());
 }
+
+
+// A convenience function used in the various getLease6() methods.  It binds
+// the selection parameters to the prepared statement, and binds the variables
+// that will receive the data.  These are stored in the MySqlLease6Exchange
+// object associated with the lease manager and converted to a Lease6 object
+// when retrieved.
+void
+MySqlLeaseMgr::bind6AndExecute(StatementIndex stindex, MYSQL_BIND* inbind) const {
+
+    // Bind the input parameters to the statement
+    int status = mysql_stmt_bind_param(statements_[stindex], inbind);
+    checkError(status, stindex, "unable to bind WHERE clause parameter");
+
+    // Set up the SELECT clause
+    std::vector<MYSQL_BIND> outbind = exchange6_->createBindForReceive();
+
+    // Bind the output parameters to the statement
+    status = mysql_stmt_bind_result(statements_[stindex], &outbind[0]);
+    checkError(status, stindex, "unable to bind SELECT caluse parameters");
+
+    // Execute the statement
+    status = mysql_stmt_execute(statements_[stindex]);
+    checkError(status, stindex, "unable to execute");
+}
+
 
 Lease6Ptr
 MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
@@ -679,30 +719,17 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
     inbind[0].buffer_length = addr6_length;
     inbind[0].length = &addr6_length;
 
-    // Bind the input parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[stindex], inbind);
-    checkError(status, stindex, "unable to bind WHERE clause parameter");
-
-    // Set up the SELECT clause
-    MySqlLease6Exchange exchange;
-    std::vector<MYSQL_BIND> outbind;
-    exchange.createBindForReceive(outbind);
-
-    // Bind the output parameters to the statement
-    status = mysql_stmt_bind_result(statements_[stindex], &outbind[0]);
-    checkError(status, stindex, "unable to bind SELECT caluse parameters");
-
-    // Execute the statement
-    status = mysql_stmt_execute(statements_[stindex]);
-    checkError(status, stindex, "unable to execute");
+    // Bind the input parameters to the statement and bind the output
+    // to fields in the exchange object, then execute the prepared statement.
+    bind6AndExecute(stindex, inbind);
 
     // Fetch the data.
-    status = mysql_stmt_fetch(statements_[stindex]);
+    int status = mysql_stmt_fetch(statements_[stindex]);
 
     Lease6Ptr result;
     if (status == 0) {
         try {
-            result = exchange.getLeaseData();
+            result = exchange6_->getLeaseData();
         } catch (const isc::BadValue& ex) {
             // Free up result set.
 
@@ -724,13 +751,14 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
         // @TODO Handle truncation
         // We are ignoring truncation for now, so the only other result is
         // no data was found.  In that case, we return a null Lease6 structure.
-        // This has already been set, so the action is a no-op.
+        // This has already been set, so no action is needed.
     }
 
     // Free data structures associated with information returned.
     (void) mysql_stmt_free_result(statements_[stindex]);
     return (result);
 }
+
 
 Lease6Collection
 MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
@@ -742,7 +770,7 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
 
     // DUID.  The complex casting is needed to obtain the "const" vector of
     // uint8_t from the DUID, point to the start of it (discarding the
-    // "const"ness) and finally casing it to "char*" for the MySQL buffer
+    // "const"ness) and finally casting it to "char*" for the MySQL buffer
     // element.
     const vector<uint8_t>& duid_vector = duid.getDuid();
     unsigned long duid_length = duid_vector.size();
@@ -757,26 +785,13 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
     inbind[1].buffer = reinterpret_cast<char*>(&iaid);
     inbind[1].is_unsigned = static_cast<my_bool>(1);
 
-    // Bind the input parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[stindex], inbind);
-    checkError(status, stindex, "unable to bind WHERE clause parameter");
+    // Bind the input parameters to the statement and bind the output
+    // to fields in the exchange object, then execute the prepared statement.
+    bind6AndExecute(stindex, inbind);
 
-    // Set up the SELECT clause
-    MySqlLease6Exchange exchange;
-    std::vector<MYSQL_BIND> outbind;
-    exchange.createBindForReceive(outbind);
-
-    // Bind the output parameters to the statement
-    status = mysql_stmt_bind_result(statements_[stindex], &outbind[0]);
-    checkError(status, stindex, "unable to bind SELECT clause parameters");
-
-    // Execute the query.
-    status = mysql_stmt_execute(statements_[stindex]);
-    checkError(status, stindex, "unable to execute");
-
-    // Ensure that all the lease information is retrieved in one go to avoid overhead
-    // of going back and forth between client and server.
-    status = mysql_stmt_store_result(statements_[stindex]);
+    // Ensure that all the lease information is retrieved in one go to avoid
+    // overhead of going back and forth between client and server.
+    int status = mysql_stmt_store_result(statements_[stindex]);
     checkError(status, stindex, "unable to set up for storing all results");
 
     // Fetch the data.  There could be multiple rows, so we need to iterate
@@ -784,7 +799,7 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
     Lease6Collection result;
     while ((status = mysql_stmt_fetch(statements_[stindex])) == 0) {
         try {
-            Lease6Ptr lease = exchange.getLeaseData();
+            Lease6Ptr lease = exchange6_->getLeaseData();
             result.push_back(lease);
 
         } catch (const isc::BadValue& ex) {
@@ -810,6 +825,7 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
     (void) mysql_stmt_free_result(statements_[stindex]);
     return (result);
 }
+
 
 Lease6Ptr
 MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
@@ -842,31 +858,18 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
     inbind[2].buffer = reinterpret_cast<char*>(&subnet_id);
     inbind[2].is_unsigned = static_cast<my_bool>(1);
 
-    // Bind the input parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[stindex], inbind);
-    checkError(status, stindex, "unable to bind WHERE clause parameter");
-
-    // Set up the SELECT clause
-    MySqlLease6Exchange exchange;
-    std::vector<MYSQL_BIND> outbind;
-    exchange.createBindForReceive(outbind);
-
-    // Bind the output parameters to the statement
-    status = mysql_stmt_bind_result(statements_[stindex], &outbind[0]);
-    checkError(status, stindex, "unable to bind SELECT clause parameters");
-
-    // Execute the query.
-    status = mysql_stmt_execute(statements_[stindex]);
-    checkError(status, stindex, "unable to execute");
+    // Bind the input parameters to the statement and bind the output
+    // to fields in the exchange object, then execute the prepared statement.
+    bind6AndExecute(stindex, inbind);
 
     Lease6Ptr result;
-    status = mysql_stmt_fetch(statements_[stindex]);
+    int status = mysql_stmt_fetch(statements_[stindex]);
     if (status == 0) {
         try {
-            result = exchange.getLeaseData();
+            result = exchange6_->getLeaseData();
 
-            // TODO: check for more than one row returned.  At present, just ignore
-            // the excess and take the first.
+            // TODO: check for more than one row returned.  At present, just
+            // ignore the excess and take the first.
 
         } catch (const isc::BadValue& ex) {
             // Free up result set.
@@ -897,20 +900,20 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
     return (result);
 }
 
+
 void
 MySqlLeaseMgr::updateLease4(const Lease4Ptr& /* lease4 */) {
     isc_throw(NotImplemented, "MySqlLeaseMgr::updateLease4(const Lease4Ptr&) "
               "not implemented yet");
 }
 
+
 void
 MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     const StatementIndex stindex = UPDATE_LEASE6;
 
     // Create the MYSQL_BIND array for the data being updated
-    MySqlLease6Exchange exchange;
-    std::vector<MYSQL_BIND> bind;
-    exchange.createBindForSend(lease, bind);
+    std::vector<MYSQL_BIND> bind = exchange6_->createBindForSend(lease);
 
     // Set up the WHERE clause value
     MYSQL_BIND where;
@@ -947,12 +950,14 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     }
 }
 
+
 bool
 MySqlLeaseMgr::deleteLease4(const isc::asiolink::IOAddress& /* addr */) {
     isc_throw(NotImplemented, "MySqlLeaseMgr::deleteLease4(const IOAddress&) "
               "not implemented yet");
     return (false);
 }
+
 
 bool
 MySqlLeaseMgr::deleteLease6(const isc::asiolink::IOAddress& addr) {
@@ -981,9 +986,8 @@ MySqlLeaseMgr::deleteLease6(const isc::asiolink::IOAddress& addr) {
     // See how many rows were affected.  Note that the statement may delete
     // multiple rows.
     return (mysql_stmt_affected_rows(statements_[stindex]) > 0);
-
-    return false;
 }
+
 
 std::string
 MySqlLeaseMgr::getName() const {
@@ -996,10 +1000,12 @@ MySqlLeaseMgr::getName() const {
     return (name);
 }
 
+
 std::string
 MySqlLeaseMgr::getDescription() const {
-    return (std::string(""));
+    return (std::string("MySQL Database"));
 }
+
 
 std::pair<uint32_t, uint32_t>
 MySqlLeaseMgr::getVersion() const {
@@ -1048,12 +1054,14 @@ MySqlLeaseMgr::getVersion() const {
     return (std::make_pair(major, minor));
 }
 
+
 void
 MySqlLeaseMgr::commit() {
     if (mysql_commit(mysql_) != 0) {
         isc_throw(DbOperationError, "commit failed: " << mysql_error(mysql_));
     }
 }
+
 
 void
 MySqlLeaseMgr::rollback() {
