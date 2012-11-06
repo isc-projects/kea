@@ -17,6 +17,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <boost/noncopyable.hpp>
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -34,8 +36,9 @@ namespace master_lexer_internal {
 /// can have multiple InputSources if $INCLUDE is used. The source can
 /// also be generic input stream (std::istream).
 ///
-/// This class is not meant for public use.
-class InputSource {
+/// This class is not meant for public use. We also enforce that
+/// instances are non-copyable.
+class InputSource : boost::noncopyable {
 public:
     /// \brief Returned by getChar() when end of stream is reached.
     static const int END_OF_STREAM;
