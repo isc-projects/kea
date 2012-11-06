@@ -60,7 +60,7 @@ namespace dns {
 RRTTL::RRTTL(const std::string& ttlstr) {
     // We use a larger data type during the computation. This is because
     // some compilers don't fail when out of range, so we check the range
-    // ourself later.
+    // ourselves later.
     int64_t val = 0;
 
     const string::const_iterator end = ttlstr.end();
@@ -69,14 +69,13 @@ RRTTL::RRTTL(const std::string& ttlstr) {
     try {
         while (pos != end) {
             // Find the first unit, if there's any.
-            const string::const_iterator unit = find_if(pos, end,
-                                                        myIsalpha);
+            const string::const_iterator unit = find_if(pos, end, myIsalpha);
             // Default multiplication if no unit.
             uint32_t multiply = 1;
             if (unit != end) {
                 // Find the unit and get the size.
                 bool found = false;
-                for (size_t i = 0; i < sizeof units / sizeof *units; ++i) {
+                for (size_t i = 0; i < sizeof(units) / sizeof(*units); ++i) {
                     if (toupper(*unit) == units[i].unit) {
                         found = true;
                         multiply = units[i].multiply;
@@ -99,7 +98,7 @@ RRTTL::RRTTL(const std::string& ttlstr) {
             if (pos != end) {
                 ++pos;
             }
-        };
+        }
     } catch (const boost::bad_lexical_cast&) {
         isc_throw(InvalidRRTTL, "invalid TTL");
     }
