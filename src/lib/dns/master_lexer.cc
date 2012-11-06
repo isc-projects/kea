@@ -156,18 +156,10 @@ State::getParenCount(const MasterLexer& lexer) const {
     return (lexer.impl_->paren_count_);
 }
 
-class Start : public State {
-public:
-    Start() {}
-    virtual const State* handle(MasterLexer& lexer,
-                                MasterLexer::Options options) const;
-};
-
 class CRLF : public State {
 public:
     CRLF() {}
-    virtual const State* handle(MasterLexer& lexer, MasterLexer::Options) const
-    {
+    virtual const State* handle(MasterLexer& lexer) const {
         // We've just seen '\r'.  If this is part of a sequence of '\r\n',
         // we combine them as a single END-OF-LINE.  Otherwise we treat the
         // single '\r' as an EOL and continue tokeniziation from the character
@@ -192,15 +184,13 @@ public:
 class String : public State {
 public:
     String() {}
-    virtual const State* handle(MasterLexer& /*lexer*/,
-                                MasterLexer::Options /*options*/) const
+    virtual const State* handle(MasterLexer& /*lexer*/) const
     {
         return (NULL);
     }
 };
 
 namespace {
-const Start START_STATE;
 const CRLF CRLF_STATE;
 const String STRING_STATE;
 }
@@ -208,8 +198,6 @@ const String STRING_STATE;
 const State&
 State::getInstance(ID state_id) {
     switch (state_id) {
-    case Start:
-        return (START_STATE);
     case CRLF:
         return (CRLF_STATE);
     case String:
@@ -218,34 +206,35 @@ State::getInstance(ID state_id) {
 }
 
 const State*
-Start::handle(MasterLexer& lexer, MasterLexer::Options options) const {
-    size_t& paren_count = getLexerImpl(lexer)->paren_count_; // shortcut
+State::start(MasterLexer& lexer, MasterLexer::Options options) {
+    // define some shortcuts
+    MasterLexer::MasterLexerImpl& lexerimpl = *lexer.impl_;
+    size_t& paren_count = lexerimpl.paren_count_;
 
     while (true) {
-        const int c = getLexerImpl(lexer)->skipComment(
-            getLexerImpl(lexer)->source_->getChar());
+        const int c = lexerimpl.skipComment(lexerimpl.source_->getChar());
         if (c == InputSource::END_OF_STREAM) {
-            getLexerImpl(lexer)->last_was_eol_ = false;
+            lexerimpl.last_was_eol_ = false;
             if (paren_count != 0) {
-                getLexerImpl(lexer)->token_ = Token(Token::UNBALANCED_PAREN);
+                lexerimpl.token_ = Token(Token::UNBALANCED_PAREN);
                 paren_count = 0; // reset to 0; this helps in lenient mode.
                 return (NULL);
             }
-            getLexerImpl(lexer)->token_ = Token(Token::END_OF_FILE);
+            lexerimpl.token_ = Token(Token::END_OF_FILE);
             return (NULL);
         } else if (c == ' ' || c == '\t') {
             // If requested and we are not in (), recognize the initial space.
-            if (getLexerImpl(lexer)->last_was_eol_ && paren_count == 0 &&
+            if (lexerimpl.last_was_eol_ && paren_count == 0 &&
                 (options & MasterLexer::INITIAL_WS) != 0) {
-                getLexerImpl(lexer)->last_was_eol_ = false;
-                getLexerImpl(lexer)->token_ = Token(Token::INITIAL_WS);
+                lexerimpl.last_was_eol_ = false;
+                lexerimpl.token_ = Token(Token::INITIAL_WS);
                 return (NULL);
             }
             continue;
         } else if (c == '\n') {
-            getLexerImpl(lexer)->last_was_eol_ = true;
+            lexerimpl.last_was_eol_ = true;
             if (paren_count == 0) { // we don't recognize EOL if we are in ()
-                getLexerImpl(lexer)->token_ = Token(Token::END_OF_LINE);
+                lexerimpl.token_ = Token(Token::END_OF_LINE);
                 return (NULL);
             }
         } else if (c == '\r') {
@@ -253,20 +242,20 @@ Start::handle(MasterLexer& lexer, MasterLexer::Options options) const {
                 return (&CRLF_STATE);
             }
         } else if (c == '(') {
-            getLexerImpl(lexer)->last_was_eol_ = false;
+            lexerimpl.last_was_eol_ = false;
             ++paren_count;
             continue;
         } else if (c == ')') {
-            getLexerImpl(lexer)->last_was_eol_ = false;
+            lexerimpl.last_was_eol_ = false;
             if (paren_count == 0) {
-                getLexerImpl(lexer)->token_ = Token(Token::UNBALANCED_PAREN);
+                lexerimpl.token_ = Token(Token::UNBALANCED_PAREN);
                 return (NULL);
             }
             --paren_count;
             continue;
         } else {
             // Note: in #2373 we should probably ungetChar().
-            getLexerImpl(lexer)->last_was_eol_ = false;
+            lexerimpl.last_was_eol_ = false;
             return (&STRING_STATE);
         }
     }
