@@ -1,0 +1,47 @@
+/**
+  @page dhcp-database-backends DHCP Database Back-Ends
+
+  All DHCP lease data is stored in some form of database, the interface
+  to this being through the Lease Manager.
+
+  All backend classes such as isc::dhcp::MySqlLeaseMgr are derived from
+  the abstract isc::dhcp::LeaseMgr class.  This provides methods to
+  create, retrieve, modify and delete leases in the database.
+
+  @section dhcpdb-instantiation Instantiation of Lease Managers
+
+  A lease manager is instantiated through a the LeaseMgrFactory class.  This
+  has three methods:
+
+  - isc::dhcp::LeaseMgrFactory::create - Creates a singleton Lease
+    Manager of the appropriate type.
+  - isc::dhcp::LeaseMgrFactory::instance - Returns a reference to the
+    the instance of the Lease Manager.
+  - isc::dhcp::LeaseMgrFactory::destroy - Destroys the singleton lease manager.
+
+  The selection of the Lease Manager (and thus the backend database) is
+  is controlled by the argument passed to isc::dhcp::LeaseMgrfactory::create.
+  This is a string containing a set of "keyword=value" pairs (no embedded
+  spaces), each pair separated by a space from the others, e.g.
+
+  \code
+  type=mysql user=keatest password=keatest name=keatest host=localhost
+  \endcode
+
+  The following keywords are used for all backends:
+
+  - type - specifies the type of database backend.  The following types are
+    supported:
+       - mysql - Use MySQL as the database
+
+  The following keywords apply to the MySQL backend:
+
+  - host - host on which the selected database is running.  If not supplied,
+    "localhost" is assumed.
+  - name - name of the MySQL database to access.  There is no default - this
+    must be supplied.
+  - password - password for the selected user ID (see below).  If not specified,
+    no password is used.
+  - user - database user ID under which the database is accessed.  If not
+    specified, no user ID is used - the database is assumed to be open.
+  */

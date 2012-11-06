@@ -29,6 +29,7 @@
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpIfaceMgr
+ * - @subpage dhcp-database-backends
  * - @subpage perfdhcpInternals
  *
  * @section misc Miscellaneous topics
