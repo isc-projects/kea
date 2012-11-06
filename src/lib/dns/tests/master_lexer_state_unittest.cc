@@ -28,20 +28,19 @@ typedef MasterLexer::Token Token; // shortcut
 
 class MasterLexerStateTest : public ::testing::Test {
 protected:
-    MasterLexerStateTest() : common_options(MasterLexer::END_OF_LINE |
-                                            MasterLexer::INITIAL_WS),
+    MasterLexerStateTest() : common_options(MasterLexer::INITIAL_WS),
                              s_null(NULL),
                              s_start(*State::getStartInstance(
                                          lexer, common_options)),
                              s_crlf(State::getInstance(State::CRLF)),
                              s_string(State::getInstance(State::String)),
-                             options(MasterLexer::END_OF_LINE),
+                             options(MasterLexer::NONE),
                              orig_options(options)
     {
         lexer.pushSource(ss);
     }
 
-    // Specify END_OF_LINE and INITIAL_WS as common initial options.
+    // Specify INITIAL_WS as common initial options.
     const MasterLexer::Options common_options;
     MasterLexer lexer;
     const State* const s_null;
@@ -81,23 +80,12 @@ TEST_F(MasterLexerStateTest, startToEOL) {
     eofCheck(s_start, lexer);
 }
 
-TEST_F(MasterLexerStateTest, continuedInitialWS) {
-    // Unusual, probably impossible case in our expected usage.  We'll see
-    // an initial space after newline, but we didn't request recognizing
-    // the new line (so it'll be just skipped).
-    ss << "\n ";
-    options = MasterLexer::INITIAL_WS;
-    const State* state = State::getStartInstance(lexer, options);
-    EXPECT_EQ(s_null, state->handle(lexer));
-    EXPECT_EQ(Token::INITIAL_WS, s_start.getToken(lexer).getType());
-}
-
 TEST_F(MasterLexerStateTest, space) {
     // by default space characters and tabs will be ignored.  We check this
     // twice; at the second iteration, it's a white space at the beginning
     // of line, but since we don't specify INITIAL_WS option, it's treated as
     // normal space and ignored.
-    State::getStartInstance(lexer, MasterLexer::END_OF_LINE);
+    State::getStartInstance(lexer, MasterLexer::NONE);
     for (size_t i = 0; i < 2; ++i) {
         ss << " \t\n";
         EXPECT_EQ(s_null, s_start.handle(lexer));
@@ -122,7 +110,6 @@ TEST_F(MasterLexerStateTest, parentheses) {
 
     // Now handle '('.  It skips \n and recognize 'a' as string
     EXPECT_EQ(0, s_start.getParenCount(lexer)); // check pre condition
-    options = MasterLexer::END_OF_LINE | MasterLexer::INITIAL_WS;
     EXPECT_EQ(&s_string, s_start.handle(lexer));
     EXPECT_EQ(1, s_start.getParenCount(lexer)); // check post condition
     EXPECT_FALSE(s_start.wasLastEOL(lexer));
@@ -231,12 +218,6 @@ TEST_F(MasterLexerStateTest, crlf) {
     EXPECT_EQ(s_null, s_crlf.handle(lexer));   // recognize '\n'
     EXPECT_EQ(Token::END_OF_LINE, s_start.getToken(lexer).getType());
     EXPECT_TRUE(s_start.wasLastEOL(lexer));
-
-    // If EOL isn't expected to be recognized, \r is just ignored.
-    ss << "\r\na";
-    State::getStartInstance(lexer, MasterLexer::NONE);
-    EXPECT_EQ(&s_string, s_start.handle(lexer));
-    s_string.handle(lexer);     // skip
 
     // Single '\r' (not followed by \n) is recognized as a single 'end-of-line'
     ss << "\r ";                // then there will be "initial WS"

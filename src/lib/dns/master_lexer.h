@@ -54,9 +54,7 @@ public:
         NONE = 0, //< No option
         INITIAL_WS = 1, ///< recognize begin-of-line spaces
         QSTRING = INITIAL_WS << 1, ///< recognize quoted string
-        NUMBER = QSTRING << 1, ///< recognize numeric text as integer
-        END_OF_LINE = NUMBER << 1 ///< recognize end of line as a token
-                                 /// (not user-settable)
+        NUMBER = QSTRING << 1 ///< recognize numeric text as integer
     };
 
     /// \brief The constructor.
