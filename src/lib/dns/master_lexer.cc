@@ -166,7 +166,23 @@ public:
 class CRLF : public State {
 public:
     CRLF() {}
-    virtual const State* handle(MasterLexer& /*lexer*/) const {
+    virtual const State* handle(MasterLexer& lexer) const {
+        // We've just seen '\r'.  If this is part of a sequence of '\r\n',
+        // we combine them as a single END-OF-LINE.  Otherwise we treat the
+        // single '\r' as an EOL and continue tokeniziation from the character
+        // immediately after '\r'.  One tricky case is that there's a comment
+        // between '\r' and '\n'.  This implementation combines these
+        // characters and treats them as a single EOL (the behavior derived
+        // from BIND 9).  Technically this may not be correct, but in practice
+        // the caller wouldn't distinguish this case from the case it has
+        // two EOLs, so we simplify the process.
+        const int c = getLexerImpl(lexer)->skipComment(
+            getLexerImpl(lexer)->source_->getChar());
+        if (c != '\n') {
+            getLexerImpl(lexer)->source_->ungetChar();
+        }
+        getLexerImpl(lexer)->token_ = Token(Token::END_OF_LINE);
+        getLexerImpl(lexer)->last_was_eol_ = true;
         return (NULL);
     }
 };
@@ -242,6 +258,10 @@ Start::handle(MasterLexer& lexer) const {
             if ((options & MasterLexer::END_OF_LINE) != 0) {
                 getLexerImpl(lexer)->token_ = Token(Token::END_OF_LINE);
                 return (NULL);
+            }
+        } else if (c == '\r') {
+            if ((options & MasterLexer::END_OF_LINE) != 0) {
+                return (&CRLF_STATE);
             }
         } else if (c == '(') {
             getLexerImpl(lexer)->last_was_eol_ = false;
