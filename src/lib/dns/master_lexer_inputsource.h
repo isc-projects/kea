@@ -65,13 +65,13 @@ public:
 
     /// \brief Constructor which takes an input stream. The stream is
     /// read-from, but it is not closed.
-    InputSource(std::istream& input_stream);
+    explicit InputSource(std::istream& input_stream);
 
     /// \brief Constructor which takes a filename to read from. The
     /// associated file stream is managed internally.
     ///
     /// \throws OpenError when opening the input file fails.
-    InputSource(const char* filename);
+    explicit InputSource(const char* filename);
 
     /// \brief Destructor
     ~InputSource();
