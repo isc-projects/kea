@@ -44,4 +44,15 @@
     no password is used.
   - user - database user ID under which the database is accessed.  If not
     specified, no user ID is used - the database is assumed to be open.
+
+  @section dhcp-backend-unittest Running Unit Tests
+
+  With the use of databases requiring separate authorisation, there are
+  certain pre-requisties for scuccessfully running the unit tests.  These are
+  database-specific:
+
+  MySQL: a database called keatest needs to be set up.  A database user, also
+  called keatest (with a password keatest) must be given full privileges in
+  that database.  The unit tests create the database schema in the database
+  before each test, and delete it afterwards.
   */
