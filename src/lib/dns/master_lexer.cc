@@ -53,7 +53,6 @@ struct MasterLexer::MasterLexerImpl {
     std::vector<InputSourcePtr> sources_;
     InputSource* source_;       // current source
     size_t paren_count_;
-    Options options_;
     bool last_was_eol_;
     Token token_;
 };
@@ -160,13 +159,15 @@ State::getParenCount(const MasterLexer& lexer) const {
 class Start : public State {
 public:
     Start() {}
-    virtual const State* handle(MasterLexer& lexer) const;
+    virtual const State* handle(MasterLexer& lexer,
+                                MasterLexer::Options options) const;
 };
 
 class CRLF : public State {
 public:
     CRLF() {}
-    virtual const State* handle(MasterLexer& lexer) const {
+    virtual const State* handle(MasterLexer& lexer, MasterLexer::Options) const
+    {
         // We've just seen '\r'.  If this is part of a sequence of '\r\n',
         // we combine them as a single END-OF-LINE.  Otherwise we treat the
         // single '\r' as an EOL and continue tokeniziation from the character
@@ -191,7 +192,9 @@ public:
 class String : public State {
 public:
     String() {}
-    virtual const State* handle(MasterLexer& /*lexer*/) const {
+    virtual const State* handle(MasterLexer& /*lexer*/,
+                                MasterLexer::Options /*options*/) const
+    {
         return (NULL);
     }
 };
@@ -215,9 +218,8 @@ State::getInstance(ID state_id) {
 }
 
 const State*
-Start::handle(MasterLexer& lexer) const {
-    MasterLexer::Options options = getLexerImpl(lexer)->options_;
-    size_t& paren_count = getLexerImpl(lexer)->paren_count_;
+Start::handle(MasterLexer& lexer, MasterLexer::Options options) const {
+    size_t& paren_count = getLexerImpl(lexer)->paren_count_; // shortcut
 
     while (true) {
         const int c = getLexerImpl(lexer)->skipComment(
@@ -260,9 +262,7 @@ Start::handle(MasterLexer& lexer) const {
                 getLexerImpl(lexer)->token_ = Token(Token::UNBALANCED_PAREN);
                 return (NULL);
             }
-            if (--paren_count == 0) {
-                options = getLexerImpl(lexer)->options_;
-            }
+            --paren_count;
             continue;
         } else {
             // Note: in #2373 we should probably ungetChar().
@@ -270,13 +270,6 @@ Start::handle(MasterLexer& lexer) const {
             return (&STRING_STATE);
         }
     }
-}
-
-const State*
-State::getStartInstance(MasterLexer& lexer, MasterLexer::Options options)
-{
-    lexer.impl_->options_ = options;
-    return (&START_STATE);
 }
 
 } // namespace master_lexer_internal
