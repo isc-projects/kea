@@ -27,10 +27,6 @@ using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::master_lexer_internal;
 
-// Some compilers cannot find symbols of class constants when used in the
-// EXPECT_xxx macros, so we need explicit declaration.
-const int InputSource::END_OF_STREAM;
-
 namespace {
 
 class InputSourceTest : public ::testing::Test {
