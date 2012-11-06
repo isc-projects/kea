@@ -14,6 +14,9 @@
 
 #include <dns/master_lexer_inputsource.h>
 
+#include <cerrno>
+#include <cstring>
+
 namespace isc {
 namespace dns {
 namespace master_lexer_internal {
@@ -46,10 +49,16 @@ InputSource::InputSource(const char* filename) :
     name_(filename),
     input_(file_stream_)
 {
+    errno = 0;
     file_stream_.open(filename);
     if (file_stream_.fail()) {
-        isc_throw(OpenError,
-                  "Error opening the input source file: " << filename);
+        std::string error_txt("Error opening the input source file: ");
+        error_txt += filename;
+        if (errno != 0) {
+            error_txt += "; possible cause: ";
+            error_txt += std::strerror(errno);
+        }
+        isc_throw(OpenError, error_txt);
     }
 }
 
