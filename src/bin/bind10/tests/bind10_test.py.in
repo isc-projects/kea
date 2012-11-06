@@ -1393,6 +1393,14 @@ class TestBossComponents(unittest.TestCase):
         self.assertEqual({}, pi.env)
         self.assertNotEqual(0, pi.pid)
 
+    def test_register_process(self):
+        '''Test that processes can be registered with BoB.'''
+        bob = MockBob()
+        bob.runnable = True
+        component = MockComponent('test', 53, 'Test')
+        bob.register_process(53, component)
+        self.assertEqual([[53, 'test', 'Test']], bob.get_processes())
+
 class SocketSrvTest(unittest.TestCase):
     """
     This tests some methods of boss related to the unix domain sockets used
