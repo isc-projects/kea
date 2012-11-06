@@ -230,7 +230,6 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
                 lexerimpl.token_ = Token(Token::INITIAL_WS);
                 return (NULL);
             }
-            continue;
         } else if (c == '\n') {
             lexerimpl.last_was_eol_ = true;
             if (paren_count == 0) { // we don't recognize EOL if we are in ()
@@ -244,7 +243,6 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
         } else if (c == '(') {
             lexerimpl.last_was_eol_ = false;
             ++paren_count;
-            continue;
         } else if (c == ')') {
             lexerimpl.last_was_eol_ = false;
             if (paren_count == 0) {
@@ -252,12 +250,12 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
                 return (NULL);
             }
             --paren_count;
-            continue;
         } else {
             // Note: in #2373 we should probably ungetChar().
             lexerimpl.last_was_eol_ = false;
             return (&STRING_STATE);
         }
+        // no code should be here; we just continue the loop.
     }
 }
 
