@@ -126,11 +126,16 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
             # e.g. /bind10/statistics/Auth/, is started with
             # XML_URL_PATH + '/'
             if req_path.find('%s/' % XML_URL_PATH) == 0:
+                # remove './' from the path if there is
                 req_path = os.path.normpath(req_path)
+                # get the strings tailing after XML_URL_PATH
                 req_path = req_path.lstrip('%s/' % XML_URL_PATH)
+                # remove empty dir names from the path if there are
                 path_dirs = req_path.split('/')
                 path_dirs = [ d for d in filter(None, path_dirs) ]
                 req_path = '/'.join(path_dirs)
+                # pass the complete requested path,
+                # e.g. Auth/queries.upd, to xml_handler()
                 body = self.server.xml_handler(req_path)
             # In case that the requested path (req_path) is exactly
             # matched with XSD_URL_PATH
