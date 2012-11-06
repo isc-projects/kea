@@ -1559,6 +1559,141 @@ Parameters:
           </varlistentry>
         </variablelist>
       </section>
+
+      <section id="bindctl_configuration_data_types">
+        <title>Configuration data types</title>
+        Configuration data can be of different types, which can be modified
+        in ways that depend on the types. There are a few syntax
+        restrictions on these types, but only basic ones. Modules may impose
+        additional restrictions on the values of elements.
+        <variablelist>
+            <varlistentry>
+                <term>integer</term>
+                <listitem>
+                    <simpara>
+                        A basic integer, can be set directly with <command>config set</command>, to any integer value.
+                    </simpara>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>real</term>
+                <listitem>
+                    <simpara>
+                        A basic floating point number, can be set directly with <command>config set</command>, to any floating point value.
+                    </simpara>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>boolean</term>
+                <listitem>
+                    <simpara>
+                        A basic boolean value; can be set directly with <command>config set</command>, to either true or false.
+                    </simpara>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>string</term>
+                <listitem>
+                    <simpara>
+                        A basic string value; can be set directly with <command>config set,</command> so any string. Double quotation marks are optional.
+                    </simpara>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>null</term>
+                <listitem>
+                    <simpara>
+                        This is a special type representing 'no value at all', usable in compound structures that have optional elements that are not set.
+                    </simpara>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>maps</term>
+                <listitem>
+                    <simpara>
+                        Maps are compound collections of other elements of
+                        any other type. They are not usually modified
+                        directly, but their elements are; Every top-level
+                        element for a module is a map containing the
+                        configuration values for that map, which can
+                        themselves be maps again. For instance, the Auth
+                        module is a map containing the elements 'listen_on'
+                        (list) and 'tcp_recv_timeout' (integer). When
+                        changing one of its values, they can be modified
+                        directly with <command>config set Auth/tcp_recv_timeout 3000</command>.
+                    </simpara>
+                    <simpara>
+                        Maps *can* be modified as a whole, but using the
+                        full JSON representation of the entire map to set.
+                        Since this involves a lot of text, this is usually
+                        not recommended.
+                    </simpara>
+                    <simpara>
+                        Another example is the Logging virtual module, which
+                        is, like any module, a map, but it only contains one
+                        element; a list of loggers. Normally, an
+                        administrator would only modify that list (or its
+                        elements) directly, but it is possible to set the
+                        entire map in one command:
+                        Example: <command> config set Logging { "loggers": [] } </command>
+                    </simpara>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>list</term>
+                <listitem>
+                    <simpara>
+                        A list is a compound list of other elements of the
+                        same type; It can be modified by the <command>config
+                        add &lt;list name&gt; [value]</command> and
+                        <command>config remove &lt;list name&gt; [value]</command> or
+                        <command>config remove &lt;list name&gt;[&lt;index&gt;]</command>
+                        , to add and remove elements. For addition, if the value is omitted, an entry with default values will be added. For removal, either the index or the full value (in JSON format) needs to be specified.
+                    </simpara>
+                    <simpara>
+                        Lists can also be used with <command>config set
+                        </command>, but like maps, only by specifying the
+                        entire list value in JSON format.
+                    </simpara>
+                    <simpara>
+                        List indices are identified with square brackets.
+                        Example: <command> config show Auth/listen_on[1]/port</command>
+                    </simpara>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>named set</term>
+                <listitem>
+                    <simpara>
+                        Named sets are similar to lists, in that they are
+                        sets of elements of the same type, but they are not
+                        indexed by numbers, but by strings.
+                    </simpara>
+                    <simpara>
+                        Values can be added with
+                        <command>config add &lt;item name&gt; &lt;string&gt; [value]</command>
+                        Where 'string' is the name of the element. If value
+                        is ommitted, default values will be used. Elements
+                        can be removed with <command>config remove &lt;item
+                        name&gt; &lt;string&gt;</command>
+                    </simpara>
+                    <simpara>
+                        Elements in a named set can be addressed similarly
+                        to maps.
+                    </simpara>
+                    <simpara>
+                        For example, the Boss/components elements is a named set.
+                        <command>config add Boss/components example_module</command>
+                        <command>config show Boss/components/example_module</command>
+                        <command>config remove Boss/components example_module</command>
+                    </simpara>
+                </listitem>
+            </varlistentry>
+        </variablelist>
+      </section>
     </section>
 
     <section>
