@@ -1401,6 +1401,17 @@ class TestBossComponents(unittest.TestCase):
         bob.register_process(53, component)
         self.assertEqual([[53, 'test', 'Test']], bob.get_processes())
 
+    def test_start_simple(self):
+        '''Test simple process startup.'''
+        bob = BoB()
+        bob.verbose = False
+        bob.c_channel_env = {}
+        pi = bob.start_simple('/bin/true')
+        self.assertEqual('/bin/true', pi.name)
+        self.assertEqual(['/bin/true'], pi.args)
+        self.assertEqual({}, pi.env)
+        self.assertNotEqual(0, pi.pid)
+
 class SocketSrvTest(unittest.TestCase):
     """
     This tests some methods of boss related to the unix domain sockets used
