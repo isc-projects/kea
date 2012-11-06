@@ -220,8 +220,7 @@ namespace {
 inline void
 adjustOptionsForParen(MasterLexer::Options& options) {
     options = static_cast<MasterLexer::Options>(
-        options & static_cast<MasterLexer::Options>(
-            ~(MasterLexer::END_OF_LINE | MasterLexer::INITIAL_WS)));
+        options & static_cast<MasterLexer::Options>(~MasterLexer::INITIAL_WS));
 }
 }
 
@@ -229,6 +228,7 @@ const State*
 Start::handle(MasterLexer& lexer) const {
     MasterLexer::Options options = getLexerImpl(lexer)->options_;
     size_t& paren_count = getLexerImpl(lexer)->paren_count_;
+    bool eol_ok = (paren_count == 0);
     if (paren_count > 0) {
         adjustOptionsForParen(options);
     }
@@ -255,17 +255,18 @@ Start::handle(MasterLexer& lexer) const {
             continue;
         } else if (c == '\n') {
             getLexerImpl(lexer)->last_was_eol_ = true;
-            if ((options & MasterLexer::END_OF_LINE) != 0) {
+            if (eol_ok) {
                 getLexerImpl(lexer)->token_ = Token(Token::END_OF_LINE);
                 return (NULL);
             }
         } else if (c == '\r') {
-            if ((options & MasterLexer::END_OF_LINE) != 0) {
+            if (eol_ok) {
                 return (&CRLF_STATE);
             }
         } else if (c == '(') {
             getLexerImpl(lexer)->last_was_eol_ = false;
             adjustOptionsForParen(options);
+            eol_ok = false;
             ++paren_count;
             continue;
         } else if (c == ')') {
@@ -275,6 +276,7 @@ Start::handle(MasterLexer& lexer) const {
                 return (NULL);
             }
             if (--paren_count == 0) {
+                eol_ok = true;
                 options = getLexerImpl(lexer)->options_;
             }
             continue;
