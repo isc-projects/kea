@@ -617,7 +617,11 @@ private:
                       << " spaces");
         }
 
+        // Get option data from the configuration database ('data' field).
+        // Option data is specified by the user as case insensitive string
+        // of hexadecimal digits for each option.
         std::string option_data = getStringParam("data");
+        // Transform string of hexadecimal digits into binary format.
         std::vector<uint8_t> binary;
         try {
             util::encode::decodeHex(option_data, binary);
@@ -625,29 +629,40 @@ private:
             isc_throw(Dhcp6ConfigError, "Parser error: option data is not a valid"
                       << " string of hexadecimal digits: " << option_data);
         }
-
+        // Get all existing DHCPv6 option definitions. The one that matches
+        // our option will be picked and used to create it.
         OptionDefContainer option_defs = LibDHCP::getOptionDefs(Option::V6);
+        // Get search index #1. It allows searching for options definitions
+        // using option type value.
         const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
-
+        // Get all option definitions matching option code we want to create.
         const OptionDefContainerTypeRange& range = idx.equal_range(option_code);
         size_t num_defs = std::distance(range.first, range.second);
         OptionPtr option;
+        // Currently we do not allow duplicated definitions and if there are
+        // any duplicates we issue internal server error.
         if (num_defs > 1) {
             isc_throw(Dhcp6ConfigError, "Internal error: currently it is not"
                       << " supported to initialize multiple option definitions"
                       << " for the same option code. This will be supported once"
                       << " there option spaces are implemented.");
         } else if (num_defs == 0) {
-            // Create the actual option.
+            // @todo We have a limited set of option definitions intiialized at the moment.
+            // In the future we want to initialize option definitions for all options.
+            // Consequently error will be issued if option definition does not exist
+            // for a particular option code. For now it is ok to create generic option
+            // if definition does not exist.
             OptionPtr option(new Option(Option::V6, static_cast<uint16_t>(option_code),
                                         binary));
             // If option is created succesfully, add it to the storage.
             options_->push_back(option);
         } else {
+            // We have exactly one option definition for the particular option code.
+            // use it to create option instance.
             const OptionDefinitionPtr& def = *(range.first);
-            // getFactory should never return NULL pointer so we skip
-            // sanity check here.
+            // getFactory should never return NULL pointer.
             Option::Factory* factory = def->getFactory();
+            assert(factory != NULL);
             try {
                 OptionPtr option = factory(Option::V6, option_code, binary);
                 options_->push_back(option);

@@ -76,7 +76,7 @@ TEST_F(Dhcpv6SrvTest, basic) {
     // fe80::1234 link-local address on eth0 interface. Obviously
     // an attempt to bind this socket will fail.
     Dhcpv6Srv* srv = NULL;
-    ASSERT_NO_THROW( {
+    ASSERT_NO_THROW({
         // open an unpriviledged port
         srv = new Dhcpv6Srv(DHCP6_SERVER_PORT + 10000);
     });
@@ -88,7 +88,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
     // tests that DUID is generated properly
 
     boost::scoped_ptr<Dhcpv6Srv> srv;
-    ASSERT_NO_THROW( {
+    ASSERT_NO_THROW({
         srv.reset(new Dhcpv6Srv(DHCP6_SERVER_PORT + 10000));
     });
 
@@ -186,7 +186,7 @@ TEST_F(Dhcpv6SrvTest, solicitBasic) {
     ElementPtr json = Element::fromJSON(config);
 
     boost::scoped_ptr<NakedDhcpv6Srv> srv;
-    ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv()) );
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv6Srv()));
 
     EXPECT_NO_THROW(x = configureDhcp6Server(*srv, json));
     ASSERT_TRUE(x);
@@ -233,8 +233,8 @@ TEST_F(Dhcpv6SrvTest, solicitBasic) {
     // check if we get response at all
     ASSERT_TRUE(reply);
 
-    EXPECT_EQ( DHCPV6_ADVERTISE, reply->getType() );
-    EXPECT_EQ( 1234, reply->getTransid() );
+    EXPECT_EQ(DHCPV6_ADVERTISE, reply->getType());
+    EXPECT_EQ(1234, reply->getTransid());
 
     // We have not requested option with code 1000 so it should not
     // be included in the response.
@@ -258,28 +258,28 @@ TEST_F(Dhcpv6SrvTest, solicitBasic) {
     EXPECT_EQ(DHCPV6_ADVERTISE, reply->getType());
 
     OptionPtr tmp = reply->getOption(D6O_IA_NA);
-    ASSERT_TRUE( tmp );
+    ASSERT_TRUE(tmp);
 
     boost::shared_ptr<Option6IA> reply_ia =
         boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(reply_ia);
-    EXPECT_EQ( 234, reply_ia->getIAID() );
+    EXPECT_EQ(234, reply_ia->getIAID());
 
     // check that there's an address included
-    EXPECT_TRUE( reply_ia->getOption(D6O_IAADDR));
+    EXPECT_TRUE(reply_ia->getOption(D6O_IAADDR));
 
     // check that server included our own client-id
     tmp = reply->getOption(D6O_CLIENTID);
-    ASSERT_TRUE( tmp );
-    EXPECT_EQ(clientid->getType(), tmp->getType() );
-    ASSERT_EQ(clientid->len(), tmp->len() );
+    ASSERT_TRUE(tmp);
+    EXPECT_EQ(clientid->getType(), tmp->getType());
+    ASSERT_EQ(clientid->len(), tmp->len());
 
-    EXPECT_TRUE( clientid->getData() == tmp->getData() );
+    EXPECT_TRUE(clientid->getData() == tmp->getData());
 
     // check that server included its server-id
     tmp = reply->getOption(D6O_SERVERID);
-    EXPECT_EQ(tmp->getType(), srv->getServerID()->getType() );
-    ASSERT_EQ(tmp->len(),  srv->getServerID()->len() );
+    EXPECT_EQ(tmp->getType(), srv->getServerID()->getType());
+    ASSERT_EQ(tmp->len(),  srv->getServerID()->len());
 
     EXPECT_TRUE(tmp->getData() == srv->getServerID()->getData());
  
