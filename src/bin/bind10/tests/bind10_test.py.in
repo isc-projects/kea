@@ -1384,6 +1384,15 @@ class TestBossComponents(unittest.TestCase):
         bob.kill_started_components()
         self.assertEqual([], bob.get_processes())
 
+    def test_start_process(self):
+        '''Test that processes can be started.'''
+        bob = MockBob()
+        pi = bob.start_process('Test Process', ['/bin/true'], {})
+        self.assertEqual('Test Process', pi.name)
+        self.assertEqual(['/bin/true'], pi.args)
+        self.assertEqual({}, pi.env)
+        self.assertNotEqual(0, pi.pid)
+
 class SocketSrvTest(unittest.TestCase):
     """
     This tests some methods of boss related to the unix domain sockets used
