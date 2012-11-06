@@ -253,7 +253,7 @@ class TestHttpHandler(unittest.TestCase):
                     '<?xml-stylesheet type="text/xsl" href="' + 
                     stats_httpd.XSL_URL_PATH
                     + '"?>'))
-            for elem in root.find('item'):
+            for elem in root:
                 attr = elem.attrib
                 value = isc.cc.data.find(DUMMY_DATA, attr['identifier'])
                 if type(value) is list or type(value) is dict:
