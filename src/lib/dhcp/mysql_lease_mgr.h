@@ -16,6 +16,7 @@
 #define MYSQL_LEASE_MGR_H
 
 #include <time.h>
+#include <boost/scoped_ptr.hpp>
 #include <mysql.h>
 #include <dhcp/lease_mgr.h>
 
@@ -26,6 +27,12 @@ namespace dhcp {
 
 const uint32_t CURRENT_VERSION_VERSION = 0;
 const uint32_t CURRENT_VERSION_MINOR = 1;
+
+
+// Forward declaration of the Lease6 exchange object.  This class is defined
+// in the .cc file.
+class MySqlLease6Exchange;
+
 
 /// @brief MySQL Lease Manager
 ///
@@ -374,6 +381,25 @@ private:
     /// @exception DbOpenError Error opening the database
     void openDatabase();
 
+    /// @brief Binds Parameters and Executes
+    ///
+    /// This method abstracts a lot of common processing from the getXxxx()
+    /// methods.  It binds the parameters passed to it to the appropriate
+    /// prepared statement, and binds the variables in the exchange6 object to
+    /// the output parameters of the statement.  It then executes the prepared
+    /// statement.
+    ///
+    /// The data can be retrieved using mysql_stmt_fetch and the getLeaseData()
+    /// method on the exchange6 object.
+    ///
+    /// @param stindex Index of prepared statement to be executed
+    /// @param inbind Array of MYSQL_BIND objects representing the parameters.
+    ///        (Note that the number is determined by the number of parameters
+    ///        in the statement.)
+    ///
+    /// @exception DbOperationError Error doing a database operation.
+    void bind6AndExecute(StatementIndex stindex, MYSQL_BIND* inbind) const;
+
     /// @brief Check Error and Throw Exception
     ///
     /// Virtually all MySQL functions return a status which, if non-zero,
@@ -396,6 +422,12 @@ private:
     }
 
     // Members
+
+    /// Used for transfer of data to/from the database. This is a pointed-to
+    /// object as its contents may change in "const" calls, while the rest
+    /// of this object does not.  (At alternative would be to declare it as
+    /// "mutable".)
+    boost::scoped_ptr<MySqlLease6Exchange> exchange6_;
     MYSQL*              mysql_;                 ///< MySQL context object
     std::vector<std::string> text_statements_;  ///< Raw text of statements
     std::vector<MYSQL_STMT*> statements_;       ///< Prepared statements
