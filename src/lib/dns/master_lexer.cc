@@ -34,10 +34,14 @@ typedef boost::shared_ptr<master_lexer_internal::InputSource> InputSourcePtr;
 using namespace master_lexer_internal;
 
 struct MasterLexer::MasterLexerImpl {
-    MasterLexerImpl() : source_(NULL), paren_count_(0), last_was_eol_(false),
-                        token_(Token::NOT_STARTED)
+    MasterLexerImpl() : source_(NULL), token_(Token::NOT_STARTED),
+                        paren_count_(0), last_was_eol_(false)
     {}
 
+    // A helper method to skip possible comments toward the end of EOL or EOF.
+    // commonly used by state classes.  It returns the corresponding "end-of"
+    // character in case it's a comment; otherwise it simply returns the
+    // current character.
     int skipComment(int c) {
         if (c == ';') {
             while (true) {
@@ -51,10 +55,13 @@ struct MasterLexer::MasterLexerImpl {
     }
 
     std::vector<InputSourcePtr> sources_;
-    InputSource* source_;       // current source
-    size_t paren_count_;
-    bool last_was_eol_;
-    Token token_;
+    InputSource* source_;       // current source (NULL if sources_ is empty)
+    Token token_;               // currently recognized token (set by a state)
+
+    // These are used in states, and defined here only as a placeholder.
+    // The main lexer class does not need these members.
+    size_t paren_count_;        // nest count of the parentheses
+    bool last_was_eol_; // whether the lexer just passed an end-of-line
 };
 
 MasterLexer::MasterLexer() : impl_(new MasterLexerImpl) {
@@ -139,6 +146,10 @@ MasterLexer::Token::getErrorText() const {
 }
 
 namespace master_lexer_internal {
+// Below we implement state classes for state transitions of MasterLexer.
+// Note that these need to be defined here so that they can refer to
+// the details of of MasterLexerImpl.
+
 typedef MasterLexer::Token Token; // convenience shortcut
 
 bool
@@ -184,13 +195,17 @@ public:
 class String : public State {
 public:
     String() {}
-    virtual const State* handle(MasterLexer& /*lexer*/) const
-    {
+    virtual const State* handle(MasterLexer& /*lexer*/) const {
         return (NULL);
     }
 };
 
 namespace {
+// We use a common instance of a each state in a singleton-like way to save
+// construction overhead.  They are not singletons in its strict sense as
+// we don't prohibit direct construction of these objects.  But that doesn't
+// matter much anyway, because the definitions are completely hidden within
+// this file.
 const CRLF CRLF_STATE;
 const String STRING_STATE;
 }
