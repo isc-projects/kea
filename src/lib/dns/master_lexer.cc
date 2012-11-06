@@ -221,12 +221,12 @@ Start::handle(MasterLexer& lexer) const {
         const int c = getLexerImpl(lexer)->skipComment(
             getLexerImpl(lexer)->source_->getChar());
         if (c == InputSource::END_OF_STREAM) {
+            getLexerImpl(lexer)->last_was_eol_ = false;
             if (paren_count != 0) {
                 getLexerImpl(lexer)->token_ = Token(Token::UNBALANCED_PAREN);
                 paren_count = 0; // reset to 0; this helps in lenient mode.
                 return (NULL);
             }
-            getLexerImpl(lexer)->last_was_eol_ = false;
             getLexerImpl(lexer)->token_ = Token(Token::END_OF_FILE);
             return (NULL);
         } else if (c == ' ' || c == '\t') {
