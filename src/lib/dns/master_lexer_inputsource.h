@@ -95,11 +95,19 @@ public:
 
     /// \brief Saves the current line being read. Later, when
     /// \c ungetAll() is called, it skips back to the last-saved line.
+    ///
+    /// TODO: Please make this method private if it is unused after the
+    /// MasterLexer implementation is complete (and only \c mark() is
+    /// used instead).
     void saveLine();
 
     /// Removes buffered content before the current location in the
     /// \c InputSource. It's not possible to \c ungetChar() after this,
     /// unless we read more data using \c getChar().
+    ///
+    /// TODO: Please make this method private if it is unused after the
+    /// MasterLexer implementation is complete (and only \c mark() is
+    /// used instead).
     void compact();
 
     /// Calls \c saveLine() and \c compact() in sequence.
