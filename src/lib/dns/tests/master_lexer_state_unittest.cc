@@ -224,4 +224,40 @@ TEST_F(MasterLexerStateTest, commentAfterParen) {
     EXPECT_EQ(Token::END_OF_LINE, s_start.getToken(lexer).getType());
 }
 
+TEST_F(MasterLexerStateTest, crlf) {
+    // A sequence of \r, \n is recognized as a single 'end-of-line'
+    ss << "\r\n";
+    EXPECT_EQ(&s_crlf, s_start.handle(lexer)); // recognize '\r'
+    EXPECT_EQ(s_null, s_crlf.handle(lexer));   // recognize '\n'
+    EXPECT_EQ(Token::END_OF_LINE, s_start.getToken(lexer).getType());
+    EXPECT_TRUE(s_start.wasLastEOL(lexer));
+
+    // If EOL isn't expected to be recognized, \r is just ignored.
+    ss << "\r\na";
+    State::getStartInstance(lexer, MasterLexer::NONE);
+    EXPECT_EQ(&s_string, s_start.handle(lexer));
+    s_string.handle(lexer);     // skip
+
+    // Single '\r' (not followed by \n) is recognized as a single 'end-of-line'
+    ss << "\r ";                // then there will be "initial WS"
+    State::getStartInstance(lexer, common_options); // specify usual options
+    EXPECT_EQ(&s_crlf, s_start.handle(lexer)); // recognize '\r'
+    EXPECT_EQ(s_null, s_crlf.handle(lexer));   // recognize ' ', "unget" it
+    EXPECT_EQ(s_null, s_start.handle(lexer)); // re-recognize ' '
+    EXPECT_EQ(Token::INITIAL_WS, s_start.getToken(lexer).getType());
+
+    ss << "\r;comment\na";
+    EXPECT_EQ(&s_crlf, s_start.handle(lexer)); // recognize '\r'
+    EXPECT_EQ(s_null, s_crlf.handle(lexer));   // skip comments, recognize '\n'
+    EXPECT_EQ(Token::END_OF_LINE, s_start.getToken(lexer).getType());
+    EXPECT_EQ(&s_string, s_start.handle(lexer));
+
+    // \r then EOF
+    ss << "\r";
+    EXPECT_EQ(&s_crlf, s_start.handle(lexer)); // recognize '\r'
+    EXPECT_EQ(s_null, s_crlf.handle(lexer));   // see EOF, then "unget" it
+    EXPECT_EQ(s_null, s_start.handle(lexer));  // re-recognize EOF
+    EXPECT_EQ(Token::END_OF_FILE, s_start.getToken(lexer).getType());
+}
+
 }
