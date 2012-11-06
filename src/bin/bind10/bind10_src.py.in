@@ -738,10 +738,12 @@ class BoB:
             try:
                 (pid, exit_status) = self._get_process_exit_status()
             except OSError as o:
-                if o.errno == errno.ECHILD: break
+                if o.errno == errno.ECHILD:
+                    break
                 # XXX: should be impossible to get any other error here
                 raise
-            if pid == 0: break
+            if pid == 0:
+                break
             if pid in self.components:
                 # One of the components we know about.  Get information on it.
                 component = self.components.pop(pid)
