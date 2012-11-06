@@ -480,7 +480,8 @@ class StatsHttpd:
         using the functions get_stats_data and get_stats_spec
         respectively and loads the XML template file and returns the
         string of the XML document.The argument is a path in the
-        requested URI."""
+        requested URI. For example, the path is assumed to be like
+        ${module_name}/${top_level_item_name}/${second_level_item_name}/..."""
 
         dirs = [ d for d in path.split("/") if len(d) > 0 ]
         module_name = None
