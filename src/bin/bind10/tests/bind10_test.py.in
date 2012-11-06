@@ -1346,6 +1346,16 @@ class TestBossComponents(unittest.TestCase):
         self.assertFalse(component.restarted)
         self.assertFalse(component in bob.components_to_restart)
 
+    def test_get_processes(self):
+        '''Test that procsses are returned correctly.'''
+        bob = MockBob()
+        bob.runnable = True
+        component = MockComponent('test', 53, 'Test')
+        bob.components[53] = component
+
+        process_list = bob.get_processes()
+        self.assertEqual([[53, 'test', 'Test']], process_list)
+
     def test_reap_children(self):
         '''Test that children are queued to be restarted when they ask for it.'''
         bob = MockBob()
