@@ -25,15 +25,15 @@ class InputSource;
 
 class State {
 public:
-    virtual const State* handle(MasterLexer& lexer,
-                                MasterLexer::Options options) const = 0;
+    static const State* start(MasterLexer& lexer,
+                              MasterLexer::Options options);
+    virtual const State* handle(MasterLexer& lexer) const = 0;
 
     /// Specific states are basically hidden within the implementation,
     /// but we'd like to allow tests to examine them, so we provide
     /// a way to get an instance of a specific state.
     enum ID {
-        Start,                  ///< TBD
-        CRLF,
+        CRLF,                  ///< TBD
         String
     };
     static const State& getInstance(ID state_id);
