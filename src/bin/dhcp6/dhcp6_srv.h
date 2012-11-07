@@ -19,6 +19,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/option.h>
+#include <dhcp/option_definition.h>
 #include <iostream>
 
 namespace isc {
@@ -170,8 +171,6 @@ protected:
     /// @brief Appends requested options to server's answer.
     ///
     /// Appends options requested by client to the server's answer.
-    /// TODO: This method is currently a stub. It just appends DNS-SERVERS
-    /// option.
     ///
     /// @param question client's message
     /// @param answer server's message (options will be added here)
@@ -199,6 +198,18 @@ protected:
     ///         interfaces for new DUID generation are detected.
     void setServerID();
 
+    /// @brief Initializes option definitions for standard options.
+    ///
+    /// Each standard option's format is described by the
+    /// dhcp::OptionDefinition object. This function creates such objects
+    /// for each standard DHCPv6 option.
+    ///
+    /// @todo list thrown exceptions.
+    /// @todo extend this function to cover all standard options. Currently
+    /// it is limited to critical options only.
+    void initStdOptionDefs();
+
+private:
     /// server DUID (to be sent in server-identifier option)
     boost::shared_ptr<isc::dhcp::Option> serverid_;
 

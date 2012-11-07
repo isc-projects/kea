@@ -29,6 +29,7 @@ namespace dhcp {
 
 OptionDefinition::DataTypeUtil::DataTypeUtil() {
     data_types_["empty"] = EMPTY_TYPE;
+    data_types_["binary"] = BINARY_TYPE;
     data_types_["boolean"] = BOOLEAN_TYPE;
     data_types_["int8"] = INT8_TYPE;
     data_types_["int16"] = INT16_TYPE;
@@ -97,11 +98,15 @@ OptionDefinition::addRecordField(const DataType data_type) {
 
 Option::Factory*
 OptionDefinition::getFactory() const {
+    validate();
+
     // @todo This function must be extended to return more factory
     // functions that create instances of more specialized options.
     // This requires us to first implement those more specialized
     // options that will be derived from Option class.
-    if (type_ == IPV6_ADDRESS_TYPE && array_type_) {
+    if (type_ == BINARY_TYPE) {
+        return (factoryGeneric);
+    } else if (type_ == IPV6_ADDRESS_TYPE && array_type_) {
         return (factoryAddrList6);
     } else if (type_ == IPV4_ADDRESS_TYPE && array_type_) {
         return (factoryAddrList4);
