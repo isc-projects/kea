@@ -65,13 +65,15 @@ RRTTLTest::rrttlFactoryFromWire(const char* datafile) {
     return (RRTTL(buffer));
 }
 
-TEST_F(RRTTLTest, fromText) {
+TEST_F(RRTTLTest, getValue) {
     EXPECT_EQ(0, ttl_0.getValue());
     EXPECT_EQ(3600, ttl_1h.getValue());
     EXPECT_EQ(86400, ttl_1d.getValue());
     EXPECT_EQ(0x12345678, ttl_32bit.getValue());
     EXPECT_EQ(0xffffffff, ttl_max.getValue());
+}
 
+TEST_F(RRTTLTest, fromText) {
     EXPECT_THROW(RRTTL("0xdeadbeef"), InvalidRRTTL); // must be decimal
     EXPECT_THROW(RRTTL("-1"), InvalidRRTTL); // must be positive
     EXPECT_THROW(RRTTL("1.1"), InvalidRRTTL); // must be integer
