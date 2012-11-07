@@ -308,8 +308,12 @@ TEST_F(DataSrcClientsBuilderTest, loadZone) {
                                    "{\"class\": \"IN\","
                                    " \"origin\": \"test1.example\"}"));
     EXPECT_TRUE(builder.handleCommand(loadzone_cmd));
-    EXPECT_EQ(1, map_mutex.lock_count); // we should have acquired the lock
-    EXPECT_EQ(1, map_mutex.unlock_count); // and released it.
+
+    // loadZone involves two critical sections: one for getting the zone
+    // writer, and one for actually updating the zone data.  So the lock/unlock
+    // count should be incremented by 2.
+    EXPECT_EQ(2, map_mutex.lock_count);
+    EXPECT_EQ(2, map_mutex.unlock_count);
 
     newZoneChecks(clients_map, rrclass);
 }
