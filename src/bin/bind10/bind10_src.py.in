@@ -916,6 +916,9 @@ class BoB:
             self._srv_socket.close()
             os.remove(self._socket_path)
             os.rmdir(self._tmpdir)
+            self._srv_socket = None
+            self._tmpdir = None
+            self._socket_path = None
 
     def _srv_accept(self):
         """

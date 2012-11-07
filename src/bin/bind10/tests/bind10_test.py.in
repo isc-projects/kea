@@ -25,6 +25,7 @@ import bind10_src
 import unittest
 import sys
 import os
+import os.path
 import copy
 import signal
 import socket
@@ -365,6 +366,28 @@ class TestBoB(unittest.TestCase):
                         isc.bind10.socket_cache.Cache))
         self.assertEqual(creator, bob._socket_cache._creator)
         self.assertRaises(ValueError, bob.set_creator, creator)
+
+    def test_socket_srv(self):
+        """Tests init_socket_srv() and remove_socket_srv() work as expected."""
+        bob = BoB()
+
+        self.assertIsNone(bob._srv_socket)
+        self.assertIsNone(bob._tmpdir)
+        self.assertIsNone(bob._socket_path)
+
+        bob.init_socket_srv()
+
+        self.assertIsNotNone(bob._srv_socket)
+        self.assertIsNotNone(bob._tmpdir)
+        self.assertTrue(os.path.isdir(bob._tmpdir))
+        self.assertIsNotNone(bob._socket_path)
+        self.assertTrue(os.path.exists(bob._socket_path))
+
+        bob.remove_socket_srv()
+
+        self.assertIsNone(bob._srv_socket)
+        self.assertIsNone(bob._tmpdir)
+        self.assertIsNone(bob._socket_path)
 
     def test_init_alternate_socket(self):
         bob = BoB("alt_socket_file")
