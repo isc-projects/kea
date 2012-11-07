@@ -1,0 +1,8 @@
+example.com.	3600	IN	SOA	ns1.example.com. admin.example.com. 1234 3600 1800 2419200 7200
+example.com.	3600	IN	NS	ns1.example.com.
+example.com.	3600	IN	NS	ns2.example.com.
+example.com.	3600	IN	MX	10 mail.example.com.
+www.example.com.	3600	IN	A	192.0.2.1
+ns1.example.com.	3600	IN	A	192.0.2.3
+ns2.example.com.	3600	IN	A	192.0.2.4
+shell.example.com.	3600	IN	SSHFP	# this is clearly broken

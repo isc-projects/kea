@@ -1,0 +1,36 @@
+{
+    "version": 2,
+    "Logging": {
+        "loggers": [{
+            "severity": "DEBUG",
+            "name": "*",
+            "debuglevel": 99
+        }]
+    },
+    "Auth": {
+        "listen_on": [{
+            "port": 47806,
+            "address": "127.0.0.1"
+        }]
+    },
+    "data_sources": {
+        "classes": {
+            "IN": [
+                {
+                    "type": "MasterFiles",
+                    "cache-enable": true,
+                    "params": {
+                        "example.org": "data/example.org",
+                        "example.com": "data/example.com-broken"
+                    }
+                }
+            ]
+        }
+    },
+    "Boss": {
+        "components": {
+            "b10-auth": { "kind": "needed", "special": "auth" },
+            "b10-cmdctl": { "special": "cmdctl", "kind": "needed" }
+        }
+    }
+}
