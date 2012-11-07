@@ -1705,6 +1705,16 @@ class TestFunctions(unittest.TestCase):
         # second call should not assert anyway
         bind10_src.remove_lock_files()
 
+    def test_get_signame(self):
+        # just test with some samples
+        signame = bind10_src.get_signame(signal.SIGTERM)
+        self.assertEqual('SIGTERM', signame)
+        signame = bind10_src.get_signame(signal.SIGKILL)
+        self.assertEqual('SIGKILL', signame)
+        # 59426 is hopefully an unused signal on most platforms
+        signame = bind10_src.get_signame(59426)
+        self.assertEqual('Unknown signal 59426', signame)
+
 if __name__ == '__main__':
     # store os.environ for test_unchanged_environment
     original_os_environ = copy.deepcopy(os.environ)
