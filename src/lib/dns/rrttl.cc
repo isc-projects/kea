@@ -110,7 +110,7 @@ RRTTL::RRTTL(const std::string& ttlstr) {
     }
 
     if (val >= 0 && val <= 0xffffffff) {
-        ttlval_ = static_cast<uint32_t>(val);
+        ttlval_ = val;
     } else {
         isc_throw(InvalidRRTTL, "TTL out of range: " << ttlstr);
     }
