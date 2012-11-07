@@ -581,6 +581,9 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
     try {
         boost::shared_ptr<datasrc::memory::ZoneWriter> zwriter =
             getZoneWriter(*client_list, rrclass, origin);
+        if (!zwriter) {
+            return;
+        }
 
         zwriter->load(); // this can take time but doesn't cause a race
         {   // install() can cause a race and must be in a critical section
@@ -632,8 +635,10 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::getZoneWriter(
                   << "/" << rrclass << ": not found in any configured "
                   "data source.");
     case datasrc::ConfigurableClientList::ZONE_NOT_CACHED:
-        isc_throw(InternalCommandError, "failed to load zone " << origin
-                  << "/" << rrclass << ": not served from memory");
+        LOG_DEBUG(auth_logger, DBG_AUTH_OPS,
+                  AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE_NOCACHE)
+            .arg(origin).arg(rrclass);
+        break;                  // return NULL below
     case datasrc::ConfigurableClientList::CACHE_DISABLED:
         // This is an internal error. Auth server must have the cache
         // enabled.
@@ -642,8 +647,6 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::getZoneWriter(
                   "is somehow disabled");
     }
 
-    // all cases above should either return or throw, but some compilers
-    // still need a return statement
     return (boost::shared_ptr<datasrc::memory::ZoneWriter>());
 }
 } // namespace datasrc_clientmgr_internal
