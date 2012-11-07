@@ -1275,6 +1275,14 @@ TODO
       configuring BIND 10.
     </para></note>
 
+    <note><para>
+      <command>bindctl</command> has an internal command history, as
+      well as tab-completion for most of the commands and arguments.
+      However, these are only enabled if the python readline module
+      is available on the system. If not, neither of these
+      features will be supported.
+    </para></note>
+
     <para>
       The <command>bindctl</command> tool provides an interactive
       prompt for configuring, controlling, and querying the BIND 10
@@ -1387,7 +1395,7 @@ Available module names:
 
         When run as a command to a module, it shows the commands that module supports:
         <screen><userinput>> Boss help</userinput>
-Module  Boss 	Master process 
+Module  Boss 	Master process
 Available commands:
     help        Get help for module.
     shutdown    Shut down BIND 10
@@ -1437,7 +1445,7 @@ Parameters:
         <title>Configuration commands</title>
         Configuration commands are used to view and change the configuration
         of BIND 10 and its modules. Module configuration is only shown if
-        that module is running, but similar to modules, there are a number
+        that module is running, but similar to commands, there are a number
         of top-level configuration items that are always available (for
         instance tsig_keys and data_sources).
 
@@ -1450,7 +1458,8 @@ Parameters:
 
         When identifying items in configuration commands, the format is
         <screen><userinput>Module/example/item</userinput></screen>
-        Sub-elements of names, lists and sets are separated with the '/'
+        Sub-elements of names, lists and sets (see <xref linkend=
+        "bindctl_configuration_data_types"/>) are separated with the '/'
         character, and list indices are identified with [&lt;index&gt;].
         <screen><userinput>Module/example/list[2]/foo</userinput></screen>
 
@@ -1480,7 +1489,8 @@ Parameters:
             <term>add &lt;item name&gt; [value]</term>
             <listitem>
               <simpara>
-                Add an entry to configuration list or a named set.
+                Add an entry to configuration list or a named set (see <xref
+                linkend="bindctl_configuration_data_types"/>).
                 When adding to a list, the command has one optional
                 argument, a value to add to the list. The value must
                 be in correct JSON and complete. When adding to a
@@ -1499,7 +1509,7 @@ Parameters:
                 Remove an item from a configuration list or a named set.
                 When removing an item for a list, either the index needs to
                 be specified, or the complete value of the element to remove
-                must be (in JSON format).
+                must be specified (in JSON format).
               </simpara>
             </listitem>
           </varlistentry>
@@ -1571,7 +1581,7 @@ Parameters:
                 <term>integer</term>
                 <listitem>
                     <simpara>
-                        A basic integer, can be set directly with <command>config set</command>, to any integer value.
+                        A basic integer; can be set directly with <command>config set</command>, to any integer value.
                     </simpara>
                 </listitem>
             </varlistentry>
@@ -1579,7 +1589,7 @@ Parameters:
                 <term>real</term>
                 <listitem>
                     <simpara>
-                        A basic floating point number, can be set directly with <command>config set</command>, to any floating point value.
+                        A basic floating point number; can be set directly with <command>config set</command>, to any floating point value.
                     </simpara>
                 </listitem>
             </varlistentry>
@@ -1603,7 +1613,7 @@ Parameters:
                 <term>null</term>
                 <listitem>
                     <simpara>
-                        This is a special type representing 'no value at all', usable in compound structures that have optional elements that are not set.
+                        This is a special type representing 'no value at all'; usable in compound structures that have optional elements that are not set.
                     </simpara>
                 </listitem>
             </varlistentry>
@@ -1612,16 +1622,24 @@ Parameters:
                 <term>maps</term>
                 <listitem>
                     <simpara>
-                        Maps are compound collections of other elements of
-                        any other type. They are not usually modified
-                        directly, but their elements are; Every top-level
-                        element for a module is a map containing the
-                        configuration values for that map, which can
+                        Maps are (pre-defined) compound collections of other
+                        elements of any other type. They are not usually
+                        modified directly, but their elements are; Every
+                        top-level element for a module is a map containing
+                        the configuration values for that map, which can
                         themselves be maps again. For instance, the Auth
-                        module is a map containing the elements 'listen_on'
-                        (list) and 'tcp_recv_timeout' (integer). When
-                        changing one of its values, they can be modified
-                        directly with <command>config set Auth/tcp_recv_timeout 3000</command>.
+                        module configuration is a map containing the
+                        elements 'listen_on' (list) and 'tcp_recv_timeout'
+                        (integer). When changing one of its values, they can
+                        be modified directly with <command>config set
+                        Auth/tcp_recv_timeout 3000</command>.
+                    </simpara>
+                    <simpara>
+                        Some map entries are optional; If they are, and
+                        currently have a value, the value can be unset by
+                        using either <command>config unset &lt;item name&gt;
+                        </command> or <command>config set &lt;item name&gt;
+                        null</command>.
                     </simpara>
                     <simpara>
                         Maps *can* be modified as a whole, but using the
@@ -1685,10 +1703,37 @@ Parameters:
                         to maps.
                     </simpara>
                     <simpara>
-                        For example, the Boss/components elements is a named set.
+                        For example, the Boss/components elements is a named
+                        set; adding, showing, and then removing an element
+                        can be done with the following three commands (note
+                        the '/'-character versus the space before
+                        'example_module'):
+                    </simpara>
+                    <simpara>
                         <command>config add Boss/components example_module</command>
+                    </simpara>
+                    <simpara>
                         <command>config show Boss/components/example_module</command>
+                    </simpara>
+                    <simpara>
                         <command>config remove Boss/components example_module</command>
+                    </simpara>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>any</term>
+                <listitem>
+                    <simpara>
+                        The 'any' type is a special type that can have any
+                        form. Apart from that it must consist of elements as
+                        decsribed in this chapter, there is no restriction
+                        on which element types are used. This type is used
+                        in places where different data formats could be
+                        used. Element modification commands depend on the
+                        actual type of the value. For instance, if the value
+                        of an 'any' element is a list, <command>config add
+                        </command> and <command>config remove</command> work
+                        as for other lists.
                     </simpara>
                 </listitem>
             </varlistentry>
@@ -1772,7 +1817,7 @@ config set /Boss/components/b10-zonemgr/kind dispensable
         <section id="bindctl_execute_notes">
             <title>Notes on execute scripts</title>
             Within scripts, you can add or remove modules with the normal
-            configuration commands for Boss/components. However; as module
+            configuration commands for Boss/components. However, as module
             configuration and commands do not show up until the module is
             running, it is currently not possible to add a module and set
             its configuration in one script. This will be addressed in the
@@ -1780,21 +1825,6 @@ config set /Boss/components/b10-zonemgr/kind dispensable
             modules in separate commands and execute scripts.
         </section>
     </section>
-
-    <para>
-      Configuration changes are actually commands to
-      <command>b10-cfgmgr</command>. So when <command>bindctl</command>
-      sends a configuration, it is sent to <command>b10-cmdctl</command>
-      (over a HTTPS connection); then <command>b10-cmdctl</command>
-      sends the command (over a <command>b10-msgq</command> command
-      channel) to <command>b10-cfgmgr</command> which then stores
-      the details and relays (over a <command>b10-msgq</command> command
-      channel) the configuration on to the specified module.
-    </para>
-
-    <para>
-    </para>
-
   </chapter>
 
   <chapter id="common">
