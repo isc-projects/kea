@@ -293,15 +293,17 @@ TEST_F(Dhcpv6SrvTest, DUID) {
     }
 }
 
-TEST_F(Dhcpv6SrvTest, solicitBasic1) {
+// This test checks if Option Request Option (ORO) is parsed correctly
+// and the requested options are actually assigned.
+TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     ConstElementPtr x;
     string config = "{ \"interface\": [ \"all\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
-        "    \"pool\": [ \"2001:db8:1234::/80\" ],"
-        "    \"subnet\": \"2001:db8:1234::/64\", "
+        "    \"pool\": [ \"2001:db8:1::/64\" ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"option-data\": [ {"
         "          \"name\": \"OPTION_DNS_SERVERS\","
         "          \"code\": 23,"
@@ -327,51 +329,21 @@ TEST_F(Dhcpv6SrvTest, solicitBasic1) {
 
     ASSERT_EQ(0, rcode_);
 
-    // a dummy content for client-id
-    OptionBuffer clntDuid(32);
-    for (int i = 0; i < 32; i++) {
-        clntDuid[i] = 100 + i;
-    }
-
-    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
-
-    boost::shared_ptr<Option6IA> ia =
-        boost::shared_ptr<Option6IA>(new Option6IA(D6O_IA_NA, 234));
-    ia->setT1(1501);
-    ia->setT2(2601);
-    sol->addOption(ia);
-
-    // Let's not send address in solicit yet
-    /*    boost::shared_ptr<Option6IAAddr>
-        addr(new Option6IAAddr(D6O_IAADDR, IOAddress("2001:db8:1234:ffff::ffff"), 5001, 7001));
-    ia->addOption(addr);
-    sol->addOption(ia); */
-
-    // constructed very simple SOLICIT message with:
-    // - client-id option (mandatory)
-    // - IA option (a request for address, without any addresses)
-
-    // expected returned ADVERTISE message:
-    // - copy of client-id
-    // - server-id
-    // - IA that includes IAADDR
-
-    OptionPtr clientid = OptionPtr(new Option(Option::V6, D6O_CLIENTID,
-                                              clntDuid.begin(),
-                                              clntDuid.begin() + 16));
+     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->addOption(generateIA(234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
-    boost::shared_ptr<Pkt6> reply = srv->processSolicit(sol);
+    // Pass it to the server and get an advertise
+    boost::shared_ptr<Pkt6> adv = srv->processSolicit(sol);
 
     // check if we get response at all
-    ASSERT_TRUE(reply);
-
-    EXPECT_EQ(DHCPV6_ADVERTISE, reply->getType());
-    EXPECT_EQ(1234, reply->getTransid());
+    ASSERT_TRUE(adv);
 
     // We have not requested option with code 1000 so it should not
     // be included in the response.
-    ASSERT_FALSE(reply->getOption(1000));
+    ASSERT_FALSE(adv->getOption(1000));
 
     // Let's now request option with code 1000.
     // We expect that server will include this option in its reply.
@@ -383,42 +355,14 @@ TEST_F(Dhcpv6SrvTest, solicitBasic1) {
     option_oro->setValues(codes);
     // Append ORO to SOLICIT message.
     sol->addOption(option_oro);
-    
+
     // Need to process SOLICIT again after requesting new option.
-    reply = srv->processSolicit(sol);
-    ASSERT_TRUE(reply);
+    adv = srv->processSolicit(sol);
+    ASSERT_TRUE(adv);
 
-    EXPECT_EQ(DHCPV6_ADVERTISE, reply->getType());
-
-    OptionPtr tmp = reply->getOption(D6O_IA_NA);
+    OptionPtr tmp = adv->getOption(D6O_NAME_SERVERS);
     ASSERT_TRUE(tmp);
 
-    boost::shared_ptr<Option6IA> reply_ia =
-        boost::dynamic_pointer_cast<Option6IA>(tmp);
-    ASSERT_TRUE(reply_ia);
-    EXPECT_EQ(234, reply_ia->getIAID());
-
-    // check that there's an address included
-    EXPECT_TRUE(reply_ia->getOption(D6O_IAADDR));
-
-    // check that server included our own client-id
-    tmp = reply->getOption(D6O_CLIENTID);
-    ASSERT_TRUE(tmp);
-    EXPECT_EQ(clientid->getType(), tmp->getType());
-    ASSERT_EQ(clientid->len(), tmp->len());
-
-    EXPECT_TRUE(clientid->getData() == tmp->getData());
-
-    // check that server included its server-id
-    tmp = reply->getOption(D6O_SERVERID);
-    EXPECT_EQ(tmp->getType(), srv->getServerID()->getType());
-    ASSERT_EQ(tmp->len(),  srv->getServerID()->len());
-
-    EXPECT_TRUE(tmp->getData() == srv->getServerID()->getData());
- 
-    tmp = reply->getOption(D6O_NAME_SERVERS);
-    ASSERT_TRUE(tmp);
-    
     boost::shared_ptr<Option6AddrLst> reply_nameservers =
         boost::dynamic_pointer_cast<Option6AddrLst>(tmp);
     ASSERT_TRUE(reply_nameservers);
@@ -430,7 +374,7 @@ TEST_F(Dhcpv6SrvTest, solicitBasic1) {
 
     // There is a dummy option with code 1000 we requested from a server.
     // Expect that this option is in server's response.
-    tmp = reply->getOption(1000);
+    tmp = adv->getOption(1000);
     ASSERT_TRUE(tmp);
 
     // Check that the option contains valid data (from configuration).
@@ -468,13 +412,9 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic2) {
     ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv(0)) );
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
-
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
-
     sol->addOption(generateIA(234, 1500, 3000));
-
     OptionPtr clientid = generateClientId();
-
     sol->addOption(clientid);
 
     // Pass it to the server and get an advertise
