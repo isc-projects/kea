@@ -49,6 +49,9 @@ using namespace isc::util;
 using namespace std;
 using namespace boost;
 
+namespace isc {
+namespace dhcp {
+
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
@@ -628,3 +631,6 @@ void
 Dhcpv6Srv::initStdOptionDefs() {
     LibDHCP::initStdOptionDefs(Option::V6);
 }
+
+};
+};
