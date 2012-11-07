@@ -105,9 +105,12 @@ TEST_F(RRTTLTest, fromTextUnit) {
     EXPECT_EQ(60 * 60 + 3, RRTTL("1H3S").getValue());
     EXPECT_EQ(2 * 24 * 60 * 60 + 75 * 60 + 4, RRTTL("75M2D4").getValue());
 
-    // Missing number is taken as 1 (or should we disallow that?)
-    EXPECT_EQ(7 * 24 * 60 * 60 + 5 * 60 * 60, RRTTL("W5H").getValue());
-    EXPECT_EQ(7 * 24 * 60 * 60 + 5 * 60 * 60, RRTTL("5hW").getValue());
+    // Missing before unit.
+    EXPECT_THROW(RRTTL("W5H"), InvalidRRTTL);
+    EXPECT_THROW(RRTTL("5hW"), InvalidRRTTL);
+
+    // Empty string is not allowed
+    EXPECT_THROW(RRTTL(""), InvalidRRTTL);
 
     // There are some wrong units
     EXPECT_THROW(RRTTL("13X"), InvalidRRTTL);

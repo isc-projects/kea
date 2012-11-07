@@ -58,6 +58,9 @@ namespace isc {
 namespace dns {
 
 RRTTL::RRTTL(const std::string& ttlstr) {
+    if (ttlstr.empty()) {
+        isc_throw(InvalidRRTTL, "Empty TTL string");
+    }
     // We use a larger data type during the computation. This is because
     // some compilers don't fail when out of range, so we check the range
     // ourselves later.
@@ -87,8 +90,10 @@ RRTTL::RRTTL(const std::string& ttlstr) {
                 }
             }
             // Now extract the number, defaut to 1 if there's no digit
-            const int64_t value = (unit == pos) ? 1 :
-                                  boost::lexical_cast<int64_t>(string(pos,
+            if (unit == pos) {
+                isc_throw(InvalidRRTTL, "Missing number in TTL ");
+            }
+            const int64_t value = boost::lexical_cast<int64_t>(string(pos,
                                                                       unit));
             // Add what we found
             val += multiply * value;
