@@ -108,6 +108,23 @@ TEST_F(RRTTLTest, fromTextUnit) {
     // Awkward, but allowed case - the same unit used twice.
     EXPECT_EQ(20 * 3600, RRTTL("12H8H").getValue());
 
+    // Negative number in part of the expression, but the total is positive.
+    // Rejected.
+    EXPECT_THROW(RRTTL("-1S1H"), InvalidRRTTL);
+
+    // Some things out of range in the ttl, but it wraps to number in range
+    // in int64_t. Should still not get fooled and reject it.
+
+    // First part out of range
+    EXPECT_THROW(RRTTL("9223372036854775807S9223372036854775807S2S"),
+                 InvalidRRTTL);
+    // Second part out of range, but it immediately wraps (2S+2^64-2S)
+    EXPECT_THROW(RRTTL("2S18446744073709551614S"),
+                 InvalidRRTTL);
+    // The whole thing wraps right away (2^64S)
+    EXPECT_THROW(RRTTL("18446744073709551616S"),
+                 InvalidRRTTL);
+
     // Missing before unit.
     EXPECT_THROW(RRTTL("W5H"), InvalidRRTTL);
     EXPECT_THROW(RRTTL("5hW"), InvalidRRTTL);
