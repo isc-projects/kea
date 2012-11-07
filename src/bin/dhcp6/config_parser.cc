@@ -62,8 +62,10 @@ typedef std::map<string, string> StringStorage;
 /// no subnet object created yet to store them.
 typedef std::vector<Pool6Ptr> PoolStorage;
 
-/// @brief Collection of options.
-typedef std::vector<OptionPtr> OptionStorage;
+/// @brief Collection of option descriptors. This container allows to search for
+/// options using option code or persistency flag. This is useful when merging
+/// existing options with newly configured options.
+typedef Subnet::OptionContainer OptionStorage;
 
 /// @brief Global uint32 parameters that will be used as defaults.
 Uint32Storage uint32_defaults;
@@ -193,7 +195,9 @@ public:
                       << " as unsigned 32-bit integer.");
         }
 
-        storage_->insert(pair<string, uint32_t>(param_name_, value_));
+        // If a given parameter already exists in the storage we override
+        // its value. If it doesn't we insert new element.
+        (*storage_)[param_name_] = value_;
     }
 
     /// @brief does nothing
@@ -204,8 +208,7 @@ public:
     /// subnet is stored in subnet-specific storage. It is not commited
     /// here, but is rather used by \ref Subnet6Parser when constructing
     /// the subnet.
-    virtual void commit() {
-    }
+    virtual void commit() { }
 
     /// @brief factory that constructs Uint32Parser objects
     ///
@@ -263,7 +266,9 @@ public:
     virtual void build(ConstElementPtr value) {
         value_ = value->str();
         boost::erase_all(value_, "\"");
-        storage_->insert(pair<string, string>(param_name_, value_));
+        // If a given parameter already exists in the storage we override
+        // its value. If it doesn't we insert new element.
+        (*storage_)[param_name_] = value_;
     }
 
     /// @brief does nothing
@@ -274,8 +279,7 @@ public:
     /// subnet is stored in subnet-specific storage. It is not commited
     /// here, but is rather used by its parent parser when constructing
     /// an object, e.g. the subnet.
-    virtual void commit() {
-    }
+    virtual void commit() { }
 
     /// @brief factory that constructs StringParser objects
     ///
@@ -559,11 +563,41 @@ public:
         createOption();
     }
 
-    /// @brief Does nothing.
+    /// @brief Commits option values.
     ///
-    /// This function does noting because option data is committed
-    /// by a higher level parser.
-    virtual void commit() { }
+    /// This function iterates over all options configured for a particular
+    /// subnet or globally and moves them to the storage. If there are any options
+    /// already present in the storage they will be replaced if options with
+    /// the same code are present in the intermediate storage.
+    ///
+    /// @throw isc::InvalidOperation if failed to set pointer to storage
+    /// prior to calling commit. If that happens the data in the storage remain
+    /// not modified.
+    virtual void commit() {
+        if (options_ == NULL) {
+            isc_throw(isc::InvalidOperation, "Parser logic error: storage must be set before "
+                      "commiting option data.");
+        }
+        // Get all new options from the intermediate storage. Note that it holds
+        // all options configured since last commit.
+        BOOST_FOREACH(Subnet::OptionDescriptor desc, intermediate_storage_) {
+            uint16_t opt_type = desc.option->getType();
+            Subnet::OptionContainerTypeIndex& idx = options_->get<1>();
+            // Try to find options with the particular option code in the main
+            // storage. If found, remove these options because they will be
+            // replaced with new ones.
+            Subnet::OptionContainerTypeRange range =
+                idx.equal_range(opt_type);
+            if (std::distance(range.first, range.second) > 0) {
+                idx.erase(range.first, range.second);
+            }
+        }
+        // Append all options from the intermediate storage to the
+        // main storage.
+        options_->insert(options_->end(),
+                         intermediate_storage_.begin(),
+                         intermediate_storage_.end());
+    }
 
     /// @brief Set storage for the parser.
     ///
@@ -654,8 +688,14 @@ private:
             // if definition does not exist.
             OptionPtr option(new Option(Option::V6, static_cast<uint16_t>(option_code),
                                         binary));
-            // If option is created succesfully, add it to the storage.
-            options_->push_back(option);
+            // The intermerdiate storage is used here because it is
+            // reset for each new parser created. Thus it collects only new
+            // options and can be later used to merge new options with
+            // options configured earlier (replace those that have the same
+            // option code and add new to storage). Merge is performed in
+            // commit stage.
+            Subnet::OptionDescriptor desc(option, false);
+            intermediate_storage_.push_back(desc);
         } else {
             // We have exactly one option definition for the particular option code.
             // use it to create option instance.
@@ -665,7 +705,8 @@ private:
             assert(factory != NULL);
             try {
                 OptionPtr option = factory(Option::V6, option_code, binary);
-                options_->push_back(option);
+                Subnet::OptionDescriptor desc(option, false);
+                intermediate_storage_.push_back(desc);
             } catch (const isc::Exception& ex) {
                 isc_throw(Dhcp6ConfigError, "Parser error: option data does not match"
                           << " option definition (code " << option_code << "): "
@@ -707,6 +748,9 @@ private:
     /// Pointer to options storage. This storage is provided by
     /// the calling class and is shared by all OptionDataParser objects.
     OptionStorage* options_;
+    /// Intermediate option storage. It holds all newly configured
+    /// option values.
+    OptionStorage intermediate_storage_;
 };
 
 /// @brief Parser for option data values with ina subnet.
@@ -741,6 +785,8 @@ public:
             parser->setStorage(options_);
             // Build the instance of a singkle option.
             parser->build(option_value);
+            // Store a parser as it will be used to commit.
+            parsers_.push_back(parser);
         }
     }
 
@@ -752,11 +798,14 @@ public:
     }
 
 
-    /// @brief Does nothing.
+    /// @brief Commit all option values.
     ///
-    /// @todo Currently this function does nothing but in the future
-    /// we may need to extend it to commit at this level.
-    void commit() { }
+    /// This function invokes commit for all option values.
+    void commit() {
+        BOOST_FOREACH(ParserPtr parser, parsers_) {
+            parser->commit();
+        }
+    }
 
     /// @brief Create DhcpDataListParser object
     ///
@@ -769,6 +818,8 @@ public:
 
     /// Pointer to options instances storage.
     OptionStorage* options_;
+    /// Collection of parsers;
+    ParserCollection parsers_;
 };
 
 /// @brief this class parses a single subnet
@@ -830,6 +881,10 @@ public:
     /// created in other parsers are used here and added to newly created Subnet6
     /// objects. Subnet6 are then added to DHCP CfgMgr.
     void commit() {
+        // Invoke commit on all sub-data parsers.
+        BOOST_FOREACH(ParserPtr parser, parsers_) {
+            parser->commit();
+        }
 
         StringStorage::const_iterator it = string_values_.find("subnet");
         if (it == string_values_.end()) {
@@ -871,23 +926,23 @@ public:
         const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
 
         // Add subnet specific options.
-        BOOST_FOREACH(OptionPtr option, options_) {
-            Subnet::OptionContainerTypeRange range = idx.equal_range(option->getType());
+        BOOST_FOREACH(Subnet::OptionDescriptor desc, options_) {
+            Subnet::OptionContainerTypeRange range = idx.equal_range(desc.option->getType());
             if (std::distance(range.first, range.second) > 0) {
                 LOG_WARN(dhcp6_logger, DHCP6_CONFIG_OPTION_DUPLICATE)
-                    .arg(option->getType()).arg(addr.toText());
+                    .arg(desc.option->getType()).arg(addr.toText());
             }
-            subnet->addOption(option);
+            subnet->addOption(desc.option);
         }
 
         // Check all global options and add them to the subnet object if
         // they have been configured in the global scope. If they have been
         // configured in the subnet scope we don't add global option because
-        // the one configured in the subnet scope always takes precedense.
-        BOOST_FOREACH(OptionPtr option, option_defaults) {
+        // the one configured in the subnet scope always takes precedence.
+        BOOST_FOREACH(Subnet::OptionDescriptor desc, option_defaults) {
             // Get all options specified locally in the subnet and having
             // code equal to global option's code.
-            Subnet::OptionContainerTypeRange range = idx.equal_range(option->getType());
+            Subnet::OptionContainerTypeRange range = idx.equal_range(desc.option->getType());
             // @todo: In the future we will be searching for options using either
             // option code or namespace. Currently we have only the option
             // code available so if there is at least one option found with the
@@ -897,7 +952,7 @@ public:
             // want to issue warning about dropping configuration of
             // global option if one already exsist.
             if (std::distance(range.first, range.second) == 0) {
-                subnet->addOption(option);
+                subnet->addOption(desc.option);
             }
         }
 
@@ -1152,12 +1207,6 @@ configureDhcp6Server(Dhcpv6Srv& , ConstElementPtr config_set) {
         isc_throw(Dhcp6ConfigError,
                   "Null pointer is passed to configuration parser");
     }
-
-    /// Reset global storage. Containers being reset below may contain
-    /// data from the previous configuration attempts.
-    option_defaults.clear();
-    uint32_defaults.clear();
-    string_defaults.clear();
 
     /// @todo: append most essential info here (like "2 new subnets configured")
     string config_details;
