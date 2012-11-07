@@ -71,7 +71,7 @@ void
 checkGetAndUngetChar(InputSource& source,
                      const char* str, const size_t str_length)
 {
-    for (size_t i = 0; i < str_length; i++) {
+    for (size_t i = 0; i < str_length; ++i) {
         EXPECT_EQ(str[i], source.getChar());
         EXPECT_FALSE(source.atEOF());
     }
@@ -101,7 +101,7 @@ checkGetAndUngetChar(InputSource& source,
     // Now, let's go backwards in a loop. Start by skipping the EOF.
     source.ungetChar();
 
-    for (size_t i = 0; i < str_length; i++) {
+    for (size_t i = 0; i < str_length; ++i) {
         const size_t index = str_length - 1 - i;
         // Skip one character.
         source.ungetChar();
@@ -153,7 +153,7 @@ TEST_F(InputSourceTest, compact) {
     // Ungetting here must throw.
     EXPECT_THROW(source_.ungetChar(), InputSource::UngetBeforeBeginning);
 
-    for (size_t i = 0; i < str_length_; i++) {
+    for (size_t i = 0; i < str_length_; ++i) {
         EXPECT_EQ(str_[i], source_.getChar());
         EXPECT_FALSE(source_.atEOF());
     }
@@ -206,7 +206,7 @@ TEST_F(InputSourceTest, markDuring) {
     // Ungetting here must throw.
     EXPECT_THROW(source_.ungetChar(), InputSource::UngetBeforeBeginning);
 
-    for (size_t i = 13; i < str_length_; i++) {
+    for (size_t i = 13; i < str_length_; ++i) {
         EXPECT_EQ(str_[i], source_.getChar());
         EXPECT_FALSE(source_.atEOF());
     }
@@ -226,7 +226,7 @@ TEST_F(InputSourceTest, markDuring) {
     // Ungetting here must throw.
     EXPECT_THROW(source_.ungetChar(), InputSource::UngetBeforeBeginning);
 
-    for (size_t i = 13; i < str_length_; i++) {
+    for (size_t i = 13; i < str_length_; ++i) {
         EXPECT_EQ(str_[i], source_.getChar());
         EXPECT_FALSE(source_.atEOF());
     }
@@ -246,7 +246,7 @@ TEST_F(InputSourceTest, lines) {
     size_t line = 1;
     while (!source_.atEOF()) {
         if (source_.getChar() == '\n') {
-            line++;
+            ++line;
         }
         EXPECT_EQ(line, source_.getCurrentLine());
     }
