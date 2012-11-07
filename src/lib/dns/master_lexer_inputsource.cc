@@ -96,9 +96,10 @@ InputSource::getChar() {
         buffer_.push_back(c);
     }
 
-    const int c = buffer_[buffer_pos_++];
+    const int c = buffer_[buffer_pos_];
+    ++buffer_pos_;
     if (c == '\n') {
-        line_++;
+        ++line_;
     }
 
     return (c);
@@ -112,9 +113,9 @@ InputSource::ungetChar() {
         isc_throw(UngetBeforeBeginning,
                   "Cannot skip before the start of buffer");
     } else {
-        buffer_pos_--;
+        --buffer_pos_;
         if (buffer_[buffer_pos_] == '\n') {
-            line_--;
+            --line_;
         }
     }
 }
