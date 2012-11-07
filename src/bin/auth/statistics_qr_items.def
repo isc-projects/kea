@@ -1,0 +1,54 @@
+request	QRCounterRequest	Request statistics	=
+	v4		QR_REQUEST_IPV4		Number of IPv4 requests received by the b10-auth server.
+	v6		QR_REQUEST_IPV6		Number of IPv6 requests received by the b10-auth server.
+	edns0		QR_REQUEST_EDNS0	Number of requests with EDNS(0) received by the b10-auth server.
+	badednsver	QR_REQUEST_BADEDNSVER	Number of requests with unsupported EDNS version received by the b10-auth server.
+	tsig		QR_REQUEST_TSIG		Number of requests with TSIG received by the b10-auth server.
+	sig0		QR_REQUEST_SIG0		Number of requests with SIG(0) received by the b10-auth server; currently not implemented in BIND 10.
+	badsig		QR_REQUEST_BADSIG	Number of requests with invalid TSIG or SIG(0) signature received by the b10-auth server.
+	udp		QR_REQUEST_UDP		Number of UDP requests received by the b10-auth server.
+	tcp		QR_REQUEST_TCP		Number of UDP requests received by the b10-auth server.
+	dnssec_ok	QR_REQUEST_DNSSEC_OK	Number of requests with DO bit received by the b10-auth server.
+	;
+opcode	QRCounterOpcode		Opcode statistics	=
+	query		QR_OPCODE_QUERY		Number of Opcode=QUERY requests received by the b10-auth server.
+	iquery		QR_OPCODE_IQUERY	Number of Opcode=IQUERY requests received by the b10-auth server.
+	status		QR_OPCODE_STATUS	Number of Opcode=STATUS requests received by the b10-auth server.
+	notify		QR_OPCODE_NOTIFY	Number of Opcode=NOTIFY requests received by the b10-auth server.
+	update		QR_OPCODE_UPDATE	Number of Opcode=UPDATE requests received by the b10-auth server.
+	other		QR_OPCODE_OTHER		Number of requests in other OpCode received by the b10-auth server.
+	;
+responses	QR_RESPONSE			Number of responses sent by the b10-auth server.
+response	QRCounterResponse	Response statistics	=
+	truncated	QR_RESPONSE_TRUNCATED	Number of truncated responses sent by the b10-auth server.
+	edns0		QR_RESPONSE_EDNS0	Number of responses with EDNS0 sent by the b10-auth server.
+	tsig		QR_RESPONSE_TSIG	Number of responses with TSIG sent by the b10-auth server.
+	sig0		QR_RESPONSE_SIG0	Number of responses with SIG(0) sent by the b10-auth server; currently not implemented in BIND 10.
+	;
+qrysuccess	QR_QRYSUCCESS			Number of queries received by the b10-auth server resulted in rcode = NOERROR and the number of answer RR >= 1.
+qryauthans	QR_QRYAUTHANS			Number of queries received by the b10-auth server resulted in authoritative answer.
+qrynoauthans	QR_QRYNOAUTHANS			Number of queries received by the b10-auth server resulted in non-authoritative answer.
+qryreferral	QR_QRYREFERRAL			Number of queries received by the b10-auth server resulted in referral answer.
+qrynxrrset	QR_QRYNXRRSET			Number of queries received by the b10-auth server resulted in NOERROR but the number of answer RR == 0.
+authqryrej	QR_QRYREJECT			Number of authoritative queries rejected by the b10-auth server.
+rcode		QRCounterRcode	Rcode statistics	=
+	noerror		QR_RCODE_NOERROR	Number of queries received by the b10-auth server resulted in RCODE = 0 (NoError).
+	formerr		QR_RCODE_FORMERR	Number of queries received by the b10-auth server resulted in RCODE = 1 (FormErr).
+	servfail	QR_RCODE_SERVFAIL	Number of queries received by the b10-auth server resulted in RCODE = 2 (ServFail).
+	nxdomain	QR_RCODE_NXDOMAIN	Number of queries received by the b10-auth server resulted in RCODE = 3 (NXDomain).
+	notimp		QR_RCODE_NOTIMP		Number of queries received by the b10-auth server resulted in RCODE = 4 (NotImp).
+	refused		QR_RCODE_REFUSED	Number of queries received by the b10-auth server resulted in RCODE = 5 (Refused).
+	yxdomain	QR_RCODE_YXDOMAIN	Number of queries received by the b10-auth server resulted in RCODE = 6 (YXDomain).
+	yxrrset		QR_RCODE_YXRRSET	Number of queries received by the b10-auth server resulted in RCODE = 7 (YXRRSet).
+	nxrrset		QR_RCODE_NXRRSET	Number of queries received by the b10-auth server resulted in RCODE = 8 (NXRRSet).
+	notauth		QR_RCODE_NOTAUTH	Number of queries received by the b10-auth server resulted in RCODE = 9 (NotAuth).
+	notzone		QR_RCODE_NOTZONE	Number of queries received by the b10-auth server resulted in RCODE = 10 (NotZone).
+	badsigvers	QR_RCODE_BADSIGVERS	Number of queries received by the b10-auth server resulted in RCODE = 16 (BADVERS, BADSIG).
+	badkey		QR_RCODE_BADKEY		Number of queries received by the b10-auth server resulted in RCODE = 17 (BADKEY).
+	badtime		QR_RCODE_BADTIME	Number of queries received by the b10-auth server resulted in RCODE = 18 (BADTIME).
+	badmode		QR_RCODE_BADMODE	Number of queries received by the b10-auth server resulted in RCODE = 19 (BADMODE).
+	badname		QR_RCODE_BADNAME	Number of queries received by the b10-auth server resulted in RCODE = 20 (BADNAME).
+	badalg		QR_RCODE_BADALG		Number of queries received by the b10-auth server resulted in RCODE = 21 (BADALG).
+	badtrunc	QR_RCODE_BADTRUNC	Number of queries received by the b10-auth server resulted in RCODE = 22 (BADTRUNC).
+	other		QR_RCODE_OTHER		Number of queries received by the b10-auth server resulted in other RCODEs.
+	;

@@ -1078,7 +1078,7 @@ TEST_F(AuthSrvTest, queryCounterUDPNormal) {
     server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
     // After processing the UDP query, these counters should be incremented:
-    //   request.tcp, opcode.query, qtype.ns, rcode.refused, response
+    //   request.tcp, opcode.query, rcode.refused, response
     // and these counters should not be incremented:
     //   request.tcp
     ConstElementPtr stats_after = server.getStatistics()->
@@ -1106,7 +1106,7 @@ TEST_F(AuthSrvTest, queryCounterTCPNormal) {
     server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
     // After processing the TCP query, these counters should be incremented:
-    //   request.tcp, opcode.query, qtype.ns, rcode.refused, response
+    //   request.tcp, opcode.query, rcode.refused, response
     // and these counters should not be incremented:
     //   request.udp
     ConstElementPtr stats_after = server.getStatistics()->
@@ -1135,7 +1135,7 @@ TEST_F(AuthSrvTest, queryCounterTCPAXFR) {
     EXPECT_FALSE(dnsserv.hasAnswer());
     // After processing the TCP AXFR query, these counters should be
     // incremented:
-    //   request.tcp, opcode.query, qtype.axfr
+    //   request.tcp, opcode.query
     // and these counters should not be incremented:
     //   request.udp, response
     ConstElementPtr stats_after = server.getStatistics()->
@@ -1163,7 +1163,7 @@ TEST_F(AuthSrvTest, queryCounterTCPIXFR) {
     EXPECT_FALSE(dnsserv.hasAnswer());
     // After processing the TCP IXFR query, these counters should be
     // incremented:
-    //   request.tcp, opcode.query, qtype.ixfr
+    //   request.tcp, opcode.query
     // and these counters should not be incremented:
     //   request.udp, response
     ConstElementPtr stats_after = server.getStatistics()->
@@ -1178,7 +1178,8 @@ TEST_F(AuthSrvTest, queryCounterOpcodes) {
     for (int i = 0; i < 16; ++i) {
         std::string item_name;
         int expected;
-        if (QROpCodeToQRCounterType[i] == QR_OPCODE_OTHER) {
+        if (isc::auth::statistics::QROpCodeToQRCounterType[i] ==
+            isc::auth::statistics::QR_OPCODE_OTHER) {
             item_name = "OTHER";
             other_expected += i + 1;
             expected = other_expected;

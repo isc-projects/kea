@@ -41,10 +41,11 @@ using namespace std;
 using namespace isc::cc;
 using namespace isc::dns;
 using namespace isc::data;
-using isc::auth::statistics::Counters;
-using isc::auth::statistics::QRAttributes;
+using namespace isc::auth::statistics;
 
 namespace {
+
+// ### STATISTICS ITEMS DEFINITION ###
 
 class CountersTest : public ::testing::Test {
 protected:
@@ -122,7 +123,6 @@ TEST_F(CountersTest, incrementNormalQuery) {
 
     expect_nonzero.clear();
     expect_nonzero.insert("opcode.query");
-    expect_nonzero.insert("qtype.aaaa");
     expect_nonzero.insert("request.v6");
     expect_nonzero.insert("request.udp");
     expect_nonzero.insert("request.edns0");
