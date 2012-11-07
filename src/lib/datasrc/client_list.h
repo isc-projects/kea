@@ -21,6 +21,7 @@
 #include <dns/rrclass.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
+#include "memory/zone_table_segment.h"
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
@@ -42,6 +43,7 @@ typedef boost::shared_ptr<DataSourceClientContainer>
 // and hide real definitions except for itself and tests.
 namespace memory {
 class InMemoryClient;
+class ZoneWriter;
 }
 
 /// \brief The list of data source clients.
@@ -219,9 +221,6 @@ public:
     /// \param rrclass For which class the list should work.
     ConfigurableClientList(const isc::dns::RRClass& rrclass);
 
-    /// \brief Destructor
-    virtual ~ConfigurableClientList();
-
     /// \brief Exception thrown when there's an error in configuration.
     class ConfigurationError : public Exception {
     public:
@@ -271,7 +270,8 @@ public:
         CACHE_DISABLED,     ///< The cache is not enabled in this list.
         ZONE_NOT_CACHED,    ///< Zone is served directly, not from cache.
         ZONE_NOT_FOUND,     ///< Zone does not exist or not cached.
-        ZONE_RELOADED       ///< The zone was successfully reloaded.
+        ZONE_SUCCESS        ///< The zone was successfully reloaded or
+                            ///  the writer provided.
     };
 
     /// \brief Reloads a cached zone.
@@ -288,6 +288,36 @@ public:
     ///      the original data source no longer contains the cached zone.
     ReloadResult reload(const dns::Name& zone);
 
+private:
+    /// \brief Convenience type shortcut
+    typedef boost::shared_ptr<memory::ZoneWriter> ZoneWriterPtr;
+public:
+
+    /// \brief Return value of getCachedZoneWriter()
+    ///
+    /// A pair containing status and the zone writer, for the
+    /// getCachedZoneWriter() method.
+    typedef std::pair<ReloadResult, ZoneWriterPtr> ZoneWriterPair;
+
+    /// \brief Return a zone writer that can be used to reload a zone.
+    ///
+    /// This looks up a cached copy of zone and returns the ZoneWriter
+    /// that can be used to reload the content of the zone. This can
+    /// be used instead of reload() -- reload() works synchronously, which
+    /// is not what is needed every time.
+    ///
+    /// \param zone The origin of the zone to reload.
+    /// \return The result has two parts. The first one is a status describing
+    ///     if it worked or not (and in case it didn't, also why). If the
+    ///     status is ZONE_SUCCESS, the second part contains a shared pointer
+    ///     to the writer. If the status is anything else, the second part is
+    ///     NULL.
+    /// \throw DataSourceError or anything else that the data source
+    ///      containing the zone might throw is propagated.
+    /// \throw DataSourceError if something unexpected happens, like when
+    ///      the original data source no longer contains the cached zone.
+    ZoneWriterPair getCachedZoneWriter(const dns::Name& zone);
+
     /// \brief Implementation of the ClientList::find.
     virtual FindResult find(const dns::Name& zone,
                             bool want_exact_match = false,
@@ -299,12 +329,16 @@ public:
     struct DataSourceInfo {
         // Plays a role of default constructor too (for vector)
         DataSourceInfo(const dns::RRClass& rrclass,
-                       util::MemorySegment& mem_sgmt,
+                       const boost::shared_ptr
+                           <isc::datasrc::memory::ZoneTableSegment>&
+                               ztable_segment,
                        bool has_cache = false);
         DataSourceInfo(DataSourceClient* data_src_client,
                        const DataSourceClientContainerPtr& container,
                        bool has_cache, const dns::RRClass& rrclass,
-                       util::MemorySegment& mem_sgmt);
+                       const boost::shared_ptr
+                           <isc::datasrc::memory::ZoneTableSegment>&
+                               ztable_segment);
         DataSourceClient* data_src_client_;
         DataSourceClientContainerPtr container_;
 
@@ -315,6 +349,7 @@ public:
         // No other applications or tests may use it.
         const DataSourceClient* getCacheClient() const;
         boost::shared_ptr<memory::InMemoryClient> cache_;
+        boost::shared_ptr<memory::ZoneTableSegment> ztable_segment_;
     };
 
     /// \brief The collection of data sources.
@@ -368,12 +403,6 @@ private:
     void findInternal(MutableResult& result, const dns::Name& name,
                       bool want_exact_match, bool want_finder) const;
     const isc::dns::RRClass rrclass_;
-
-    /// \brief Memory segment for in-memory cache.
-    ///
-    /// Note that this must be placed before data_sources_ so it won't be
-    /// destroyed before the built objects in the destructor.
-    boost::scoped_ptr<util::MemorySegment> mem_sgmt_;
 
     /// \brief Currently active configuration.
     isc::data::ConstElementPtr configuration_;

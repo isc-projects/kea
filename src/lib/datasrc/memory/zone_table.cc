@@ -47,23 +47,22 @@ typedef boost::function<void(ZoneData*)> ZoneDataDeleterType;
 }
 
 ZoneTable*
-ZoneTable::create(util::MemorySegment& mem_sgmt, RRClass zone_class) {
+ZoneTable::create(util::MemorySegment& mem_sgmt, const RRClass& zone_class) {
     SegmentObjectHolder<ZoneTableTree, ZoneDataDeleterType> holder(
         mem_sgmt, ZoneTableTree::create(mem_sgmt),
         boost::bind(deleteZoneData, &mem_sgmt, _1, zone_class));
     void* p = mem_sgmt.allocate(sizeof(ZoneTable));
-    ZoneTable* zone_table = new(p) ZoneTable(holder.get());
+    ZoneTable* zone_table = new(p) ZoneTable(zone_class, holder.get());
     holder.release();
     return (zone_table);
 }
 
 void
-ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable,
-                   RRClass zone_class)
+ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable)
 {
     ZoneTableTree::destroy(mem_sgmt, ztable->zones_.get(),
                            boost::bind(deleteZoneData, &mem_sgmt, _1,
-                                       zone_class));
+                                       ztable->rrclass_));
     mem_sgmt.deallocate(ztable, sizeof(ZoneTable));
 }
 
