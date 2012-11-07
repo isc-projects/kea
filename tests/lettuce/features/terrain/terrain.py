@@ -51,6 +51,8 @@ copylist = [
      "configurations/bindctl/bindctl.config"],
     ["configurations/auth/auth_basic.config.orig",
      "configurations/auth/auth_basic.config"],
+    ["configurations/auth/auth_badzone.config.orig",
+     "configurations/auth/auth_badzone.config"],
     ["configurations/resolver/resolver_basic.config.orig",
      "configurations/resolver/resolver_basic.config"],
     ["configurations/multi_instance/multi_auth.config.orig",
