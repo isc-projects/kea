@@ -105,6 +105,9 @@ TEST_F(RRTTLTest, fromTextUnit) {
     EXPECT_EQ(60 * 60 + 3, RRTTL("1H3S").getValue());
     EXPECT_EQ(2 * 24 * 60 * 60 + 75 * 60 + 4, RRTTL("75M2D4").getValue());
 
+    // Awkward, but allowed case - the same unit used twice.
+    EXPECT_EQ(20 * 3600, RRTTL("12H8H").getValue());
+
     // Missing before unit.
     EXPECT_THROW(RRTTL("W5H"), InvalidRRTTL);
     EXPECT_THROW(RRTTL("5hW"), InvalidRRTTL);
