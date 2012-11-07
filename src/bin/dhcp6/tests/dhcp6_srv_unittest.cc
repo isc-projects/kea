@@ -344,13 +344,16 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     // We have not requested option with code 1000 so it should not
     // be included in the response.
     ASSERT_FALSE(adv->getOption(1000));
+    ASSERT_FALSE(adv->getOption(D6O_NAME_SERVERS));
 
     // Let's now request option with code 1000.
     // We expect that server will include this option in its reply.
     boost::shared_ptr<Option6IntArray<uint16_t> >
         option_oro(new Option6IntArray<uint16_t>(D6O_ORO));
-    // Create vector with one code equal to 1000.
-    std::vector<uint16_t> codes(1, 1000);
+    // Create vector with two option codes.
+    std::vector<uint16_t> codes(2);
+    codes[0] = 1000;
+    codes[1] = D6O_NAME_SERVERS;
     // Pass this code to option.
     option_oro->setValues(codes);
     // Append ORO to SOLICIT message.
@@ -407,7 +410,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
 // - copy of client-id
 // - server-id
 // - IA that includes IAADDR
-TEST_F(Dhcpv6SrvTest, SolicitBasic2) {
+TEST_F(Dhcpv6SrvTest, SolicitBasic) {
     boost::scoped_ptr<NakedDhcpv6Srv> srv;
     ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv(0)) );
 
