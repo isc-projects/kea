@@ -50,6 +50,8 @@ TestDataSrcClientsBuilder::doNoop() {
         isc_throw(Exception, "test exception");
     case TestMutex::INTEGER:
         throw 42;
+    case TestMutex::INTERNAL:
+        isc_throw(InternalCommandError, "internal error, should be ignored");
     }
 }
 } // namespace datasrc_clientmgr_internal

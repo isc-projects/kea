@@ -1,4 +1,5 @@
 bin_SCRIPTS = isc-sysinfo
+noinst_SCRIPTS = run_sysinfo.sh
 
 CLEANFILES = isc-sysinfo sysinfo.pyc
 

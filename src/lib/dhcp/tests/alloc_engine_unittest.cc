@@ -20,6 +20,7 @@
 #include <dhcp/cfgmgr.h>
 #include <dhcp/memfile_lease_mgr.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <iostream>
 #include <sstream>
 #include <map>
@@ -30,7 +31,6 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test; // Memfile_LeaseMgr
-using namespace boost;
 
 namespace {
 
@@ -96,7 +96,6 @@ public:
 // This test checks if the Allocation Engine can be instantiated and that it
 // parses parameters string properly.
 TEST_F(AllocEngineTest, constructor) {
-
     AllocEngine* x = NULL;
 
     // Hashed and random allocators are not supported yet
@@ -131,9 +130,8 @@ detailCompareLease6(const Lease6Ptr& first, const Lease6Ptr& second) {
 
 // This test checks if the simple allocation can succeed
 TEST_F(AllocEngineTest, simpleAlloc) {
-
-    AllocEngine* engine = NULL;
-    ASSERT_NO_THROW(engine = new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
     ASSERT_TRUE(engine);
 
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
@@ -151,15 +149,12 @@ TEST_F(AllocEngineTest, simpleAlloc) {
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease6(lease, from_mgr);
-
-    delete engine;
 }
 
 // This test checks if the fake allocation (for SOLICIT) can succeed
 TEST_F(AllocEngineTest, fakeAlloc) {
-
-    AllocEngine* engine = NULL;
-    ASSERT_NO_THROW(engine = new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
     ASSERT_TRUE(engine);
 
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
@@ -179,9 +174,8 @@ TEST_F(AllocEngineTest, fakeAlloc) {
 // This test checks if the allocation with a hint that is valid (in range,
 // in pool and free) can succeed
 TEST_F(AllocEngineTest, allocWithValidHint) {
-
-    AllocEngine* engine = NULL;
-    ASSERT_NO_THROW(engine = new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
     ASSERT_TRUE(engine);
 
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_,
@@ -203,16 +197,13 @@ TEST_F(AllocEngineTest, allocWithValidHint) {
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease6(lease, from_mgr);
-
-    delete engine;
 }
 
 // This test checks if the allocation with a hint that is in range,
 // in pool, but is currently used) can succeed
 TEST_F(AllocEngineTest, allocWithUsedHint) {
-
-    AllocEngine* engine = NULL;
-    ASSERT_NO_THROW(engine = new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
     ASSERT_TRUE(engine);
 
     // let's create a lease and put it in the LeaseMgr
@@ -245,16 +236,13 @@ TEST_F(AllocEngineTest, allocWithUsedHint) {
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease6(lease, from_mgr);
-
-    delete engine;
 }
 
 // This test checks if the allocation with a hint that is out the blue
 // can succeed. The invalid hint should be ignored completely.
 TEST_F(AllocEngineTest, allocBogusHint) {
-
-    AllocEngine* engine = NULL;
-    ASSERT_NO_THROW(engine = new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
     ASSERT_TRUE(engine);
 
     // Client would like to get a 3000::abc lease, which does not belong to any
@@ -278,8 +266,6 @@ TEST_F(AllocEngineTest, allocBogusHint) {
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease6(lease, from_mgr);
-
-    delete engine;
 }
 
 // This test verifies that the allocator picks addresses that belong to the
