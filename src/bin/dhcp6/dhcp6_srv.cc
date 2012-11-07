@@ -49,8 +49,6 @@ using namespace isc::util;
 using namespace std;
 using namespace boost;
 
-const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";
-
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
@@ -322,18 +320,7 @@ void Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
             .arg(question->getRemoteAddr().toText());
         return;
     }
-    // Add DNS_SERVERS option. It should have been configured.
-    const Subnet::OptionContainer& options = subnet->getOptions();
-    const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
-    const Subnet::OptionContainerTypeRange range =
-        idx.equal_range(D6O_NAME_SERVERS);
-    // In theory we may have multiple options with the same
-    // option code. They are not differentiated right now
-    // until support for option spaces is implemented.
-    // Until that's the case, simply add the first found option.
-    if (std::distance(range.first, range.second) > 0) {
-        answer->addOption(range.first->option);
-    }
+
 }
 
 void Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
@@ -344,11 +331,6 @@ void Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer)
             .arg(question->getRemoteAddr().toText());
         return;
     }
-
-    // Add dns-servers option.
-    OptionPtr dnsservers(new Option6AddrLst(D6O_NAME_SERVERS,
-                                            IOAddress(HARDCODED_DNS_SERVER)));
-    answer->addOption(dnsservers);
 
     // Client requests some options using ORO option. Try to
     // get this option from client's message.
