@@ -42,7 +42,8 @@ using namespace isc::statistics;
 namespace {
 
 void
-fillNodes(const Counter& counter, const struct CounterTypeTree type_tree[],
+fillNodes(const Counter& counter,
+          const struct isc::auth::statistics::CounterTypeTree type_tree[],
           isc::auth::statistics::Counters::ItemTreeType& trees)
 {
     using namespace isc::data;
@@ -68,6 +69,52 @@ namespace isc {
 namespace auth {
 namespace statistics {
 
+// ### STATISTICS ITEMS DEFINITION ###
+
+const int QROpCodeToQRCounterType[16] = {
+    QR_OPCODE_QUERY,
+    QR_OPCODE_IQUERY,
+    QR_OPCODE_STATUS,
+    QR_OPCODE_OTHER,
+    QR_OPCODE_NOTIFY,
+    QR_OPCODE_UPDATE,
+    QR_OPCODE_OTHER,
+    QR_OPCODE_OTHER,
+    QR_OPCODE_OTHER,
+    QR_OPCODE_OTHER,
+    QR_OPCODE_OTHER,
+    QR_OPCODE_OTHER,
+    QR_OPCODE_OTHER,
+    QR_OPCODE_OTHER,
+    QR_OPCODE_OTHER,
+    QR_OPCODE_OTHER
+};
+const int QRRCodeToQRCounterType[23] = {
+    QR_RCODE_NOERROR,
+    QR_RCODE_FORMERR,
+    QR_RCODE_SERVFAIL,
+    QR_RCODE_NXDOMAIN,
+    QR_RCODE_NOTIMP,
+    QR_RCODE_REFUSED,
+    QR_RCODE_YXDOMAIN,
+    QR_RCODE_YXRRSET,
+    QR_RCODE_NXRRSET,
+    QR_RCODE_NOTAUTH,
+    QR_RCODE_NOTZONE,
+    QR_RCODE_OTHER,
+    QR_RCODE_OTHER,
+    QR_RCODE_OTHER,
+    QR_RCODE_OTHER,
+    QR_RCODE_OTHER,
+    QR_RCODE_BADSIGVERS,
+    QR_RCODE_BADKEY,
+    QR_RCODE_BADTIME,
+    QR_RCODE_BADMODE,
+    QR_RCODE_BADNAME,
+    QR_RCODE_BADALG,
+    QR_RCODE_BADTRUNC
+};
+
 Counters::Counters() :
     // size of server_qr_counter_, zone_qr_counters_: QR_COUNTER_TYPES
     server_qr_counter_(QR_COUNTER_TYPES),
@@ -78,7 +125,7 @@ Counters::~Counters()
 {}
 
 void
-Counters::incRequest(const QRAttributes& qrattrs, const Message& response) {
+Counters::incRequest(const QRAttributes& qrattrs) {
     // protocols carrying request
     if (qrattrs.req_ip_version_ == AF_INET) {
         server_qr_counter_.inc(QR_REQUEST_IPV4);
@@ -118,31 +165,6 @@ Counters::incRequest(const QRAttributes& qrattrs, const Message& response) {
         server_qr_counter_.inc(QR_REQUEST_DNSSEC_OK);
     }
 
-    // QTYPE
-    unsigned int qtype_type = QR_QTYPE_OTHER;
-    const QuestionIterator qiter = response.beginQuestion();
-    if (qiter != response.endQuestion()) {
-        // get the first and only question section
-        const QuestionPtr qptr = *qiter;
-        if (qptr != NULL) {
-            // get the qtype code
-            const unsigned int qtype = qptr->getType().getCode();
-            if (qtype < 258) {
-                // qtype 0..257
-                qtype_type = QRQTypeToQRCounterType[qtype];
-            } else if (qtype < 32768) {
-                // qtype 258..32767
-                qtype_type = QR_QTYPE_OTHER;
-            } else if (qtype < 32770) {
-                // qtype 32768..32769
-                qtype_type = QR_QTYPE_TA + (qtype - 32768);
-            } else {
-                // qtype 32770..65535
-                qtype_type = QR_QTYPE_OTHER;
-            }
-        }
-    }
-    server_qr_counter_.inc(qtype_type);
     // OPCODE
     server_qr_counter_.inc(QROpCodeToQRCounterType[qrattrs.req_opcode_]);
 }
@@ -218,7 +240,7 @@ Counters::incResponse(const QRAttributes& qrattrs, const Message& response) {
 void
 Counters::inc(const QRAttributes& qrattrs, const Message& response) {
     // increment request counters
-    incRequest(qrattrs, response);
+    incRequest(qrattrs);
 
     if (qrattrs.answer_sent_) {
         // increment response counters if answer was sent

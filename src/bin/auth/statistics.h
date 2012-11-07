@@ -208,8 +208,7 @@ private:
     isc::statistics::Counter server_qr_counter_;
     // set of counters for zones
     isc::statistics::CounterDictionary zone_qr_counters_;
-    void incRequest(const QRAttributes& qrattrs,
-                    const isc::dns::Message& response);
+    void incRequest(const QRAttributes& qrattrs);
     void incResponse(const QRAttributes& qrattrs,
                      const isc::dns::Message& response);
 public:

@@ -1,0 +1,276 @@
+#!@PYTHON@
+
+# Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+import os
+import re
+import sys
+import json
+from xml.etree import ElementTree
+
+item_list = []
+localstatedir = '@@LOCALSTATEDIR@@'
+builddir = '@builddir@'
+srcdir = '@srcdir@'
+pre_suffix = '.pre'
+
+xmldocument_command_name = 'b10-auth'
+
+def need_generate(filepath, mtime):
+    '''Check if we need to generate the specified file.
+
+    To avoid unnecessary compilation, we skip (re)generating the file when
+    the file already exists and newer than the base file.
+    '''
+    if os.path.exists(filepath) and os.path.getmtime(filepath) > mtime:
+        return False
+    return True
+
+def import_definitions():
+    global item_list
+
+    items_definition_file = srcdir + os.sep + 'statistics_qr_items.def'
+    item_definition = open(items_definition_file, 'r')
+
+    re_splitter = re.compile('\t+')
+    l = item_list
+    lp = None
+    for line in item_definition.readlines():
+        element = re_splitter.split(line.rstrip())
+        if element[0] == '':
+            element.pop(0)
+
+        if element[-1] == '=':
+            l.append({'name': element[0], 'child': [], 'index': element[1],
+                      'description': element[2], 'parent': lp})
+            lp = l
+            l = l[-1]['child']
+        elif element[-1] == ';':
+            l = lp
+            lp = l[-1]['parent']
+        else:
+            l.append({'name': element[0], 'child': None, 'index': element[1],
+                      'description': element[2], 'parent': lp})
+
+    item_definition.close()
+    return os.path.getmtime(items_definition_file)
+
+def generate_specfile(specfile, def_mtime):
+    global item_list
+
+    def convert_list(items, prefix = ''):
+        spec_list = []
+        default_map = {}
+        for item in items:
+            full_item_name = prefix + item['name']
+            if item['child'] is None:
+                default_map[item['name']] = 0
+                spec_list.append({
+                        'item_name': item['name'],
+                        'item_optional': False,
+                        'item_type': 'integer',
+                        'item_default': 0,
+                        'item_title': full_item_name,
+                        'item_description': item['description'],
+                    })
+            else:
+                child_spec_list, child_default_map = \
+                    convert_list(item['child'], full_item_name + '.')
+                spec_list.append({
+                        'item_name': item['name'],
+                        'item_type': 'map',
+                        'item_optional': False,
+                        'item_title': full_item_name,
+                        'item_description': item['description'],
+                        'item_default': child_default_map,
+                        'map_item_spec': child_spec_list,
+                    })
+                default_map[item['name']] = child_default_map
+        return spec_list, default_map
+
+    item_spec_list, item_default_map = convert_list(item_list)
+
+    statistics_spec_list = [{
+        'item_name': 'zones',
+        'item_type': 'named_set',
+        'item_optional': False,
+        'item_title': 'Zone statistics',
+        'item_description':
+                'Zone statistics items. ' +
+                "Items for all zones are stored in '_SERVER_'.",
+        'item_default': { '_SERVER_': item_default_map },
+        'named_set_item_spec': {
+            'item_name': 'zone',
+            'item_type': 'map',
+            'item_optional': False,
+            'item_default': {},
+            'map_item_spec': item_spec_list,
+            },
+        }]
+
+    if need_generate(builddir+os.sep+specfile, def_mtime):
+        stats_pre = open(builddir+os.sep+specfile+pre_suffix, 'r')
+        stats_pre_json = json.loads(stats_pre.read().replace('@@LOCAL'+'STATEDIR@@',
+                                                             localstatedir))
+        stats_pre.close()
+        stats_pre_json['module_spec']['statistics'] = statistics_spec_list
+        statistics_spec_json = json.dumps(stats_pre_json, sort_keys = True,
+                                          indent = 2)
+        stats_spec = open(builddir+os.sep+specfile, 'w')
+        stats_spec.write(statistics_spec_json)
+        stats_spec.close()
+    else:
+        print('skip generating ' + specfile)
+    return
+
+def generate_docfile(docfile, def_mtime):
+    global item_list
+
+    def convert_list(items, tree, prefix = ''):
+        for item in items:
+            full_item_name = prefix + item['name']
+            if item['child'] is None:
+                child_element = ElementTree.SubElement(tree, 'varlistentry')
+                term = ElementTree.SubElement(child_element, 'term')
+                term.text = full_item_name
+                list_item = ElementTree.SubElement(child_element, 'listitem')
+                sim_para = ElementTree.SubElement(list_item, 'simpara')
+                sim_para.text = ''
+                prev = None
+                for word in item['description'].split():
+                    if word == xmldocument_command_name:
+                        command = ElementTree.SubElement(sim_para, 'command')
+                        command.text = word
+                        para_tail = command
+                        command.tail = ' '
+                        prev = command
+                    else:
+                        if prev is None:
+                            sim_para.text += word + ' '
+                        else:
+                            prev.tail += word + ' '
+            else:
+                convert_list(item['child'], tree, full_item_name + '.')
+        return
+
+    if need_generate(builddir+os.sep+docfile, def_mtime):
+        doc_pre = open(srcdir+os.sep+docfile+pre_suffix, 'r')
+        doc_pre_xml = doc_pre.read().replace('@@LOCALSTATEDIR@@', localstatedir)
+        doc_pre.close
+
+        variable_tree = ElementTree.Element('variablelist')
+        convert_list(item_list, variable_tree)
+        doc = open(builddir+os.sep+docfile, 'w')
+        doc.write(doc_pre_xml.replace(
+            '<!-- ### STATISTICS DATA PLACEHOLDER ### -->',
+            ElementTree.tostring(variable_tree)))
+        doc.close()
+    else:
+        print('skip generating ' + docfile)
+    return
+
+def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
+    global item_list
+
+    qr_counter_types = 'enum QRCounterType {\n'
+    item_names = []
+
+    def convert_list(items, qr_counter_types, item_names_current, item_names):
+        for item in items:
+            if item['child'] is None:
+                qr_counter_types += '    ' + item['index'] + ',    ' +\
+                                    '///< ' + item['description'] + '\n'
+                item_names_current.append('    { "' + item['name'] +
+                                          '", NULL, ' + item['index'] + ' },\n'
+                                          )
+            else:
+                item_names_current_ = ['const struct CounterTypeTree ' +
+                                       item['index'] + '[] = {\n']
+                qr_counter_types, item_names_current_, item_names = \
+                        convert_list(item['child'], qr_counter_types,
+                                     item_names_current_, item_names)
+                item_names_current_.append('    { NULL, NULL, -1 }\n' +
+                              '};\n')
+                item_names.extend(item_names_current_)
+                item_names_current.append('    { "' + item['name'] + '", ' +
+                                          item['index'] + ', -1 },\n')
+        return qr_counter_types, item_names_current, item_names
+
+    qr_counter_types, item_names_current, item_names = \
+            convert_list(item_list, qr_counter_types, [], item_names)
+    item_names.append('const struct CounterTypeTree QRCounterTree[] = {\n')
+    item_names.extend(item_names_current)
+    item_names.append('    { NULL, NULL, -1 }\n' +
+                  '};\n')
+
+    qr_counter_types += \
+        '    // End of counter types\n' +\
+        '    QR_COUNTER_TYPES  ///< The number of defined counters\n' +\
+        '};\n'
+
+    item_defs = qr_counter_types
+    item_decls = ''.join(item_names)
+
+    if need_generate(builddir+os.sep+itemsfile, def_mtime):
+        statistics_items_h_pre = open(srcdir+os.sep+itemsfile+pre_suffix, 'r')
+        items_pre = statistics_items_h_pre.read()
+        statistics_items_h_pre.close
+
+        statistics_items_h = open(builddir+os.sep+itemsfile, 'w')
+        statistics_items_h.write(items_pre.replace(
+            '// ### STATISTICS ITEMS DECLARATION ###', item_defs))
+        statistics_items_h.close()
+    else:
+        print('skip generating ' + itemsfile)
+
+    if need_generate(builddir+os.sep+ccfile, def_mtime):
+        statistics_cc_pre = open(srcdir+os.sep+ccfile+pre_suffix, 'r')
+        items_pre = statistics_cc_pre.read()
+        statistics_cc_pre.close
+
+        statistics_cc = open(builddir+os.sep+ccfile, 'w')
+        statistics_cc.write(items_pre.replace(
+            '// ### STATISTICS ITEMS DEFINITION ###', item_decls))
+        statistics_cc.close()
+    else:
+        print('skip generating ' + ccfile)
+
+    if need_generate(builddir+os.sep+utfile, def_mtime):
+        statistics_ut_cc_pre = open(srcdir+os.sep+utfile+pre_suffix, 'r')
+        items_pre = statistics_ut_cc_pre.read()
+        statistics_ut_cc_pre.close
+
+        statistics_ut_cc = open(builddir+os.sep+utfile, 'w')
+        statistics_ut_cc.write(items_pre.replace(
+            '// ### STATISTICS ITEMS DEFINITION ###', item_decls))
+        statistics_ut_cc.close()
+    else:
+        print('skip generating ' + utfile)
+
+    return
+
+if __name__ == "__main__":
+    try:
+        def_mtime = import_definitions()
+        generate_specfile('auth.spec', def_mtime)
+        generate_docfile('b10-auth.xml', def_mtime)
+        generate_cxx('statistics_items.h',
+                     'statistics.cc',
+                     'tests'+os.sep+'statistics_unittest.cc',
+                     def_mtime)
+    except:
+        sys.stderr.write('Code generation failed due to exception: %s\n' %
+                sys.exc_info()[1])
+        exit(1)
