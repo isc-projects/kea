@@ -668,6 +668,18 @@ class MockBob(BoB):
         self.get_process_exit_status_called = True
         return (53, 0)
 
+class MockBob2(BoB):
+    def __init__(self):
+        BoB.__init__(self)
+        # Set which process has been started
+        self.started_process_name = None
+        self.started_process_args = None
+
+    def start_process(self, name, args, c_channel_env, port=None, address=None):
+        self.started_process_name = name
+        self.started_process_args = args
+        return None
+
 class TestStartStopProcessesBob(unittest.TestCase):
     """
     Check that the start_all_components method starts the right combination
@@ -1411,6 +1423,34 @@ class TestBossComponents(unittest.TestCase):
         self.assertEqual(['/bin/true'], pi.args)
         self.assertEqual({}, pi.env)
         self.assertNotEqual(0, pi.pid)
+
+    # there is another test with this name (minus the digits), but both
+    # do different things.
+    def test_start_auth2(self):
+        '''Test that b10-auth is started.'''
+        bob = MockBob2()
+        bob.c_channel_env = {}
+        bob.start_auth()
+        self.assertEqual('b10-auth', bob.started_process_name)
+        self.assertEqual(['b10-auth'], bob.started_process_args)
+
+    # there is another test with this name (minus the digits), but both
+    # do different things.
+    def test_start_resolver2(self):
+        '''Test that b10-resolver is started.'''
+        bob = MockBob2()
+        bob.c_channel_env = {}
+        bob.start_resolver()
+        self.assertEqual('b10-resolver', bob.started_process_name)
+        self.assertEqual(['b10-resolver'], bob.started_process_args)
+
+    def test_start_cmdctl(self):
+        '''Test that b10-cmdctl is started.'''
+        bob = MockBob2()
+        bob.c_channel_env = {}
+        bob.start_cmdctl()
+        self.assertEqual('b10-cmdctl', bob.started_process_name)
+        self.assertEqual(['b10-cmdctl'], bob.started_process_args)
 
 class SocketSrvTest(unittest.TestCase):
     """
