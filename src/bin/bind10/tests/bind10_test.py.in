@@ -1715,6 +1715,15 @@ class TestFunctions(unittest.TestCase):
         signame = bind10_src.get_signame(59426)
         self.assertEqual('Unknown signal 59426', signame)
 
+    def test_fatal_signal(self):
+        self.assertIsNone(bind10_src.boss_of_bind)
+        bind10_src.boss_of_bind = BoB()
+        bind10_src.boss_of_bind.runnable = True
+        bind10_src.fatal_signal(signal.SIGTERM, None)
+        # Now, runnable must be False
+        self.assertFalse(bind10_src.boss_of_bind.runnable)
+        bind10_src.boss_of_bind = None
+
 if __name__ == '__main__':
     # store os.environ for test_unchanged_environment
     original_os_environ = copy.deepcopy(os.environ)
