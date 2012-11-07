@@ -20,6 +20,7 @@
 #include "memory/zone_table_segment.h"
 #include "memory/zone_writer.h"
 #include "memory/zone_data_loader.h"
+#include "memory/zone_data_updater.h"
 #include "logger.h"
 #include <dns/masterload.h>
 #include <util/memory_segment_local.h>
@@ -37,6 +38,7 @@ using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
 using isc::datasrc::memory::InMemoryClient;
 using isc::datasrc::memory::ZoneTableSegment;
+using isc::datasrc::memory::ZoneDataUpdater;
 
 namespace isc {
 namespace datasrc {
@@ -178,6 +180,15 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                         } catch (const isc::dns::MasterLoadError& mle) {
                             LOG_ERROR(logger, DATASRC_MASTERLOAD_ERROR)
                                 .arg(mle.what());
+                        } catch (const ZoneDataUpdater::NullRRset& e) {
+                            LOG_ERROR(logger, DATASRC_LOAD_NULL_RRSET_ERROR)
+                                .arg(e.what());
+                        } catch (const ZoneDataUpdater::AddError& e) {
+                            LOG_ERROR(logger, DATASRC_LOAD_ADD_ERROR)
+                                .arg(e.what());
+                        } catch (const isc::datasrc::memory::EmptyZone& e) {
+                            LOG_ERROR(logger, DATASRC_LOAD_EMPTY_ZONE_ERROR)
+                                .arg(e.what());
                         }
                     } else {
                         ZoneIteratorPtr iterator;
@@ -192,7 +203,21 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                             isc_throw(isc::Unexpected, "Got NULL iterator "
                                       "for zone " << origin);
                         }
-                        cache->load(origin, *iterator);
+                        try {
+                            cache->load(origin, *iterator);
+                        } catch (const isc::dns::MasterLoadError& mle) {
+                            LOG_ERROR(logger, DATASRC_MASTERLOAD_ERROR)
+                                .arg(mle.what());
+                        } catch (const ZoneDataUpdater::NullRRset& e) {
+                            LOG_ERROR(logger, DATASRC_LOAD_NULL_RRSET_ERROR)
+                                .arg(e.what());
+                        } catch (const ZoneDataUpdater::AddError& e) {
+                            LOG_ERROR(logger, DATASRC_LOAD_ADD_ERROR)
+                                .arg(e.what());
+                        } catch (const isc::datasrc::memory::EmptyZone& e) {
+                            LOG_ERROR(logger, DATASRC_LOAD_EMPTY_ZONE_ERROR)
+                                .arg(e.what());
+                        }
                     }
                 }
             }
