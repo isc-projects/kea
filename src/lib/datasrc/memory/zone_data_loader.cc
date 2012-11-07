@@ -165,7 +165,7 @@ ZoneDataLoader::getCurrentName() const {
 
 ZoneData*
 loadZoneDataInternal(util::MemorySegment& mem_sgmt,
-                     const isc::dns::RRClass rrclass,
+                     const isc::dns::RRClass& rrclass,
                      const Name& zone_name,
                      boost::function<void(LoadCallback)> rrset_installer)
 {
@@ -223,7 +223,7 @@ generateRRsetFromIterator(ZoneIterator* iterator, LoadCallback callback) {
 
 ZoneData*
 loadZoneData(util::MemorySegment& mem_sgmt,
-             const isc::dns::RRClass rrclass,
+             const isc::dns::RRClass& rrclass,
              const isc::dns::Name& zone_name,
              const std::string& zone_file)
 {
@@ -236,7 +236,7 @@ loadZoneData(util::MemorySegment& mem_sgmt,
 
 ZoneData*
 loadZoneData(util::MemorySegment& mem_sgmt,
-             const isc::dns::RRClass rrclass,
+             const isc::dns::RRClass& rrclass,
              const isc::dns::Name& zone_name,
              ZoneIterator& iterator)
 {

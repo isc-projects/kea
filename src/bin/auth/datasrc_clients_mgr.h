@@ -27,6 +27,7 @@
 
 #include <datasrc/data_source.h>
 #include <datasrc/client_list.h>
+#include <datasrc/memory/zone_writer.h>
 
 #include <auth/auth_log.h>
 #include <auth/datasrc_config.h>
@@ -37,11 +38,25 @@
 #include <boost/noncopyable.hpp>
 
 #include <exception>
+#include <cassert>
 #include <list>
 #include <utility>
 
 namespace isc {
 namespace auth {
+
+/// \brief An exception that is thrown if initial checks for a command fail
+///
+/// This is raised *before* the command to the thread is constructed and
+/// sent, so the application can still handle them (and therefore it is
+/// public, as opposed to InternalCommandError).
+///
+/// And example of its use is currently in loadZone().
+class CommandError : public isc::Exception {
+public:
+    CommandError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
 
 namespace datasrc_clientmgr_internal {
 // This namespace is essentially private for DataSrcClientsMgr(Base) and
@@ -55,6 +70,9 @@ enum CommandID {
     RECONFIGURE,  ///< Reconfigure the datasource client lists,
                   ///  the argument to the command is the full new
                   ///  datasources configuration.
+    LOADZONE,     ///< Load a new version of zone into a memory,
+                  ///  the argument to the command is a map containing 'class'
+                  ///  and 'origin' elements, both should have been validated.
     SHUTDOWN,     ///< Shutdown the builder; no argument
     NUM_COMMANDS
 };
@@ -234,6 +252,60 @@ public:
         clients_map_ = new_lists;
     }
 
+    /// \brief Instruct internal thread to (re)load a zone
+    ///
+    /// \param args Element argument that should be a map of the form
+    /// { "class": "IN", "origin": "example.com" }
+    /// (but class is optional and will default to IN)
+    ///
+    /// \exception CommandError if the args value is null, or not in
+    ///                                 the expected format, or contains
+    ///                                 a bad origin or class string
+    void
+    loadZone(data::ConstElementPtr args) {
+        if (!args) {
+            isc_throw(CommandError, "loadZone argument empty");
+        }
+        if (args->getType() != isc::data::Element::map) {
+            isc_throw(CommandError, "loadZone argument not a map");
+        }
+        if (!args->contains("origin")) {
+            isc_throw(CommandError,
+                      "loadZone argument has no 'origin' value");
+        }
+        // Also check if it really is a valid name
+        try {
+            dns::Name(args->get("origin")->stringValue());
+        } catch (const isc::Exception& exc) {
+            isc_throw(CommandError, "bad origin: " << exc.what());
+        }
+
+        if (args->get("origin")->getType() != data::Element::string) {
+            isc_throw(CommandError,
+                      "loadZone argument 'origin' value not a string");
+        }
+        if (args->contains("class")) {
+            if (args->get("class")->getType() != data::Element::string) {
+                isc_throw(CommandError,
+                          "loadZone argument 'class' value not a string");
+            }
+            // Also check if it is a valid class
+            try {
+                dns::RRClass(args->get("class")->stringValue());
+            } catch (const isc::Exception& exc) {
+                isc_throw(CommandError, "bad class: " << exc.what());
+            }
+        }
+
+        // Note: we could do some more advanced checks here,
+        // e.g. check if the zone is known at all in the configuration.
+        // For now these are skipped, but one obvious way to
+        // implement it would be to factor out the code from
+        // the start of doLoadZone(), and call it here too
+
+        sendCommand(datasrc_clientmgr_internal::LOADZONE, args);
+    }
+
 private:
     // This is expected to be called at the end of the destructor.  It
     // actually does nothing, but provides a customization point for
@@ -290,13 +362,26 @@ namespace datasrc_clientmgr_internal {
 /// threads or locks.
 template <typename MutexType, typename CondVarType>
 class DataSrcClientsBuilderBase : boost::noncopyable {
+private:
+    typedef std::map<dns::RRClass,
+                     boost::shared_ptr<datasrc::ConfigurableClientList> >
+    ClientListsMap;
+
 public:
+    /// \brief Internal errors in handling commands.
+    ///
+    /// This exception is expected to be caught within the
+    /// \c DataSrcClientsBuilder implementation, but is defined as public
+    /// so tests can be checked it.
+    class InternalCommandError : public isc::Exception {
+    public:
+        InternalCommandError(const char* file, size_t line, const char* what) :
+            isc::Exception(file, line, what) {}
+    };
+
     /// \brief Constructor.
     ///
     /// It simply sets up a local copy of shared data with the manager.
-    ///
-    /// Note: this will take actual set (map) of data source clients and
-    /// a mutex object for it in #2210 or #2212.
     ///
     /// \throw None
     DataSrcClientsBuilderBase(std::list<Command>* command_queue,
@@ -365,6 +450,11 @@ private:
         }
     }
 
+    void doLoadZone(const isc::data::ConstElementPtr& arg);
+    boost::shared_ptr<datasrc::memory::ZoneWriter> getZoneWriter(
+        datasrc::ConfigurableClientList& client_list,
+        const dns::RRClass& rrclass, const dns::Name& origin);
+
     // The following are shared with the manager
     std::list<Command>* command_queue_;
     CondVarType* cond_;
@@ -397,7 +487,13 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
             } // the lock is released here.
 
             while (keep_running && !current_commands.empty()) {
-                keep_running = handleCommand(current_commands.front());
+                try {
+                    keep_running = handleCommand(current_commands.front());;
+                } catch (const InternalCommandError& e) {
+                    LOG_ERROR(auth_logger,
+                              AUTH_DATASRC_CLIENTS_BUILDER_COMMAND_ERROR).
+                        arg(e.what());
+                }
                 current_commands.pop_front();
             }
         }
@@ -426,13 +522,16 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
     }
 
     const boost::array<const char*, NUM_COMMANDS> command_desc = {
-        {"NOOP", "RECONFIGURE", "SHUTDOWN"}
+        {"NOOP", "RECONFIGURE", "LOADZONE", "SHUTDOWN"}
     };
     LOG_DEBUG(auth_logger, DBGLVL_TRACE_BASIC,
               AUTH_DATASRC_CLIENTS_BUILDER_COMMAND).arg(command_desc.at(cid));
     switch (command.first) {
     case RECONFIGURE:
         doReconfigure(command.second);
+        break;
+    case LOADZONE:
+        doLoadZone(command.second);
         break;
     case SHUTDOWN:
         return (false);
@@ -443,6 +542,103 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
         assert(false);          // we rejected this case above
     }
     return (true);
+}
+
+template <typename MutexType, typename CondVarType>
+void
+DataSrcClientsBuilderBase<MutexType, CondVarType>::doLoadZone(
+    const isc::data::ConstElementPtr& arg)
+{
+    // We assume some basic level validation as this method can only be
+    // called via the manager in practice.  manager is expected to do the
+    // minimal validation.
+    assert(arg);
+    assert(arg->get("origin"));
+
+    // TODO: currently, we hardcode IN as the default for the optional
+    // 'class' argument. We should really derive this from the specification,
+    // but at the moment the config/command API does not allow that to be
+    // done easily. Once that is in place (tickets have yet to be created,
+    // as we need to do a tiny bit of design work for that), this
+    // code can be replaced with the original part:
+    // assert(arg->get("class"));
+    // const dns::RRClass(arg->get("class")->stringValue());
+    isc::data::ConstElementPtr class_elem = arg->get("class");
+    const dns::RRClass rrclass(class_elem ?
+                                dns::RRClass(class_elem->stringValue()) :
+                                dns::RRClass::IN());
+    const dns::Name origin(arg->get("origin")->stringValue());
+    ClientListsMap::iterator found = (*clients_map_)->find(rrclass);
+    if (found == (*clients_map_)->end()) {
+        isc_throw(InternalCommandError, "failed to load a zone " << origin <<
+                  "/" << rrclass << ": not configured for the class");
+    }
+
+    boost::shared_ptr<datasrc::ConfigurableClientList> client_list =
+        found->second;
+    assert(client_list);
+
+    try {
+        boost::shared_ptr<datasrc::memory::ZoneWriter> zwriter =
+            getZoneWriter(*client_list, rrclass, origin);
+
+        zwriter->load(); // this can take time but doesn't cause a race
+        {   // install() can cause a race and must be in a critical section
+            typename MutexType::Locker locker(*map_mutex_);
+            zwriter->install();
+        }
+        LOG_DEBUG(auth_logger, DBG_AUTH_OPS,
+                  AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE)
+            .arg(origin).arg(rrclass);
+
+        // same as load(). We could let the destructor do it, but do it
+        // ourselves explicitly just in case.
+        zwriter->cleanup();
+    } catch (const InternalCommandError& ex) {
+        throw;     // this comes from getZoneWriter.  just let it go through.
+    } catch (const isc::Exception& ex) {
+        // We catch our internal exceptions (which will be just ignored) and
+        // propagated others (which should generally be considered fatal and
+        // will make the thread terminate)
+        isc_throw(InternalCommandError, "failed to load a zone " << origin <<
+                  "/" << rrclass << ": error occurred in reload: " <<
+                  ex.what());
+    }
+}
+
+// A dedicated subroutine of doLoadZone().  Separated just for keeping the
+// main method concise.
+template <typename MutexType, typename CondVarType>
+boost::shared_ptr<datasrc::memory::ZoneWriter>
+DataSrcClientsBuilderBase<MutexType, CondVarType>::getZoneWriter(
+    datasrc::ConfigurableClientList& client_list,
+    const dns::RRClass& rrclass, const dns::Name& origin)
+{
+    const datasrc::ConfigurableClientList::ZoneWriterPair writerpair =
+        client_list.getCachedZoneWriter(origin);
+
+    switch (writerpair.first) {
+    case datasrc::ConfigurableClientList::ZONE_SUCCESS:
+        assert(writerpair.second);
+        return (writerpair.second);
+    case datasrc::ConfigurableClientList::ZONE_NOT_FOUND:
+        isc_throw(InternalCommandError, "failed to load zone " << origin
+                  << "/" << rrclass << ": not found in any configured "
+                  "data source.");
+    case datasrc::ConfigurableClientList::ZONE_NOT_CACHED:
+        isc_throw(InternalCommandError, "failed to load zone " << origin
+                  << "/" << rrclass << ": not served from memory");
+    case datasrc::ConfigurableClientList::CACHE_DISABLED:
+        // This is an internal error. Auth server must have the cache
+        // enabled.
+        isc_throw(InternalCommandError, "failed to load zone " << origin
+                  << "/" << rrclass << ": internal failure, in-memory cache "
+                  "is somehow disabled");
+    }
+
+    // all cases above should either return or throw, but some compilers
+    // still need a return statement
+    return (boost::shared_ptr<datasrc::memory::ZoneWriter>());
 }
 } // namespace datasrc_clientmgr_internal
 

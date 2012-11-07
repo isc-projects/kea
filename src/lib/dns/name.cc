@@ -123,15 +123,18 @@ typedef enum {
     ft_ordinary,                // parsing an ordinary label
     ft_initialescape,           // just found '\'
     ft_escape,                  // begin of handling a '\'-escaped sequence
-    ft_escdecimal,              // parsing a '\DDD' octet.
-
-    // Unused at this moment.  We'll revisit this when we support master file
-    // parser where @ is used to mean an origin name.
-    ft_at
+    ft_escdecimal               // parsing a '\DDD' octet.
 } ft_state;
-}
 
-Name::Name(const std::string &namestring, bool downcase) {
+// The parser of name from a string. It is a template, because
+// some parameters are used with two different types, while others
+// are private type aliases.
+template<class Iterator, class Offsets, class Data>
+void
+stringParse(Iterator s, Iterator send, bool downcase, Offsets& offsets,
+            Data& ndata)
+{
+    const Iterator orig_s(s);
     //
     // Initialize things to make the compiler happy; they're not required.
     //
@@ -142,17 +145,14 @@ Name::Name(const std::string &namestring, bool downcase) {
     //
     // Set up the state machine.
     //
-    std::string::const_iterator s = namestring.begin();
-    std::string::const_iterator send = namestring.end();
     bool done = false;
     bool is_root = false;
+    const bool empty = s == send;
     ft_state state = ft_init;
 
-    NameOffsets offsets;
+    // Prepare the output buffers.
     offsets.reserve(Name::MAX_LABELS);
     offsets.push_back(0);
-
-    NameString ndata;
     ndata.reserve(Name::MAX_WIRE);
 
     // should we refactor this code using, e.g, the state pattern?  Probably
@@ -171,7 +171,8 @@ Name::Name(const std::string &namestring, bool downcase) {
             if (c == '.') {
                 if (s != send) {
                     isc_throw(EmptyLabel,
-                              "non terminating empty label in " << namestring);
+                              "non terminating empty label in " <<
+                              string(orig_s, send));
                 }
                 is_root = true;
             } else if (c == '@' && s == send) {
@@ -200,7 +201,7 @@ Name::Name(const std::string &namestring, bool downcase) {
             if (c == '.') {
                 if (count == 0) {
                     isc_throw(EmptyLabel,
-                              "duplicate period in " << namestring);
+                              "duplicate period in " << string(orig_s, send));
                 }
                 ndata.at(offsets.back()) = count;
                 offsets.push_back(ndata.size());
@@ -212,9 +213,9 @@ Name::Name(const std::string &namestring, bool downcase) {
             } else if (c == '\\') {
                 state = ft_escape;
             } else {
-                if (++count > MAX_LABELLEN) {
+                if (++count > Name::MAX_LABELLEN) {
                     isc_throw(TooLongLabel,
-                              "label is too long in " << namestring);
+                              "label is too long in " << string(orig_s, send));
                 }
                 ndata.push_back(downcase ? maptolower[c] : c);
             }
@@ -224,15 +225,15 @@ Name::Name(const std::string &namestring, bool downcase) {
                 // This looks like a bitstring label, which was deprecated.
                 // Intentionally drop it.
                 isc_throw(BadLabelType,
-                          "invalid label type in " << namestring);
+                          "invalid label type in " << string(orig_s, send));
             }
             state = ft_escape;
             // FALLTHROUGH
         case ft_escape:
             if (!isdigit(c & 0xff)) {
-                if (++count > MAX_LABELLEN) {
+                if (++count > Name::MAX_LABELLEN) {
                     isc_throw(TooLongLabel,
-                              "label is too long in " << namestring);
+                              "label is too long in " << string(orig_s, send));
                 }
                 ndata.push_back(downcase ? maptolower[c] : c);
                 state = ft_ordinary;
@@ -246,7 +247,7 @@ Name::Name(const std::string &namestring, bool downcase) {
             if (!isdigit(c & 0xff)) {
                 isc_throw(BadEscape,
                           "mixture of escaped digit and non-digit in "
-                          << namestring);
+                          << string(orig_s, send));
             }
             value *= 10;
             value += digitvalue[c];
@@ -255,11 +256,11 @@ Name::Name(const std::string &namestring, bool downcase) {
                 if (value > 255) {
                     isc_throw(BadEscape,
                               "escaped decimal is too large in "
-                              << namestring);
+                              << string(orig_s, send));
                 }
-                if (++count > MAX_LABELLEN) {
+                if (++count > Name::MAX_LABELLEN) {
                     isc_throw(TooLongLabel,
-                              "label is too long in " << namestring);
+                              "label is too long in " << string(orig_s, send));
                 }
                 ndata.push_back(downcase ? maptolower[value] : value);
                 state = ft_ordinary;
@@ -274,13 +275,14 @@ Name::Name(const std::string &namestring, bool downcase) {
     if (!done) {                // no trailing '.' was found.
         if (ndata.size() == Name::MAX_WIRE) {
             isc_throw(TooLongName,
-                      "name is too long for termination in " << namestring);
+                      "name is too long for termination in " <<
+                      string(orig_s, send));
         }
         assert(s == send);
-        if (state != ft_ordinary && state != ft_at) {
+        if (state != ft_ordinary) {
             isc_throw(IncompleteName,
                       "incomplete textual name in " <<
-                      (namestring.empty() ? "<empty>" : namestring));
+                      (empty ? "<empty>" : string(orig_s, send)));
         }
         if (state == ft_ordinary) {
             assert(count != 0);
@@ -291,12 +293,93 @@ Name::Name(const std::string &namestring, bool downcase) {
             ndata.push_back('\0');
         }
     }
+}
 
+}
+
+Name::Name(const std::string &namestring, bool downcase) {
+    // Prepare inputs for the parser
+    const std::string::const_iterator s = namestring.begin();
+    const std::string::const_iterator send = namestring.end();
+
+    // Prepare outputs
+    NameOffsets offsets;
+    NameString ndata;
+
+    // To the parsing
+    stringParse(s, send, downcase, offsets, ndata);
+
+    // And get the output
     labelcount_ = offsets.size();
     assert(labelcount_ > 0 && labelcount_ <= Name::MAX_LABELS);
     ndata_.assign(ndata.data(), ndata.size());
     length_ = ndata_.size();
     offsets_.assign(offsets.begin(), offsets.end());
+}
+
+Name::Name(const char* namedata, size_t data_len, const Name* origin,
+           bool downcase)
+{
+    // Check validity of data
+    if (namedata == NULL || data_len == 0) {
+        isc_throw(isc::InvalidParameter,
+                  "No data provided to Name constructor");
+    }
+    // If the last character is not a dot, it is a relative to origin.
+    // It is safe to check now, we know there's at least one character.
+    const bool absolute = (namedata[data_len - 1] == '.');
+    // If we are not absolute, we need the origin to complete the name.
+    if (!absolute && origin == NULL) {
+        isc_throw(MissingNameOrigin,
+                  "No origin available and name is relative");
+    }
+    // Prepare inputs for the parser
+    const char* end = namedata + data_len;
+
+    // Prepare outputs
+    NameOffsets offsets;
+    NameString ndata;
+
+    // Do the actual parsing
+    stringParse(namedata, end, downcase, offsets, ndata);
+
+    // Get the output
+    labelcount_ = offsets.size();
+    assert(labelcount_ > 0 && labelcount_ <= Name::MAX_LABELS);
+    ndata_.assign(ndata.data(), ndata.size());
+    length_ = ndata_.size();
+    offsets_.assign(offsets.begin(), offsets.end());
+
+    if (!absolute) {
+        // Now, extend the data with the ones from origin. But eat the
+        // last label (the empty one).
+
+        // Drop the last character of the data (the \0) and append a copy of
+        // the origin's data
+        ndata_.erase(ndata_.end() - 1);
+        ndata_.append(origin->ndata_);
+
+        // Do a similar thing with offsets. However, we need to move them
+        // so they point after the prefix we parsed before.
+        size_t offset = offsets_.back();
+        offsets_.pop_back();
+        size_t offset_count = offsets_.size();
+        offsets_.insert(offsets_.end(), origin->offsets_.begin(),
+                        origin->offsets_.end());
+        for (NameOffsets::iterator it(offsets_.begin() + offset_count);
+             it != offsets_.end(); ++it) {
+            *it += offset;
+        }
+
+        // Adjust sizes.
+        length_ = ndata_.size();
+        labelcount_ = offsets_.size();
+
+        // And check the sizes are OK.
+        if (labelcount_ > Name::MAX_LABELS || length_ > Name::MAX_WIRE) {
+            isc_throw(TooLongName, "Combined name is too long");
+        }
+    }
 }
 
 namespace {

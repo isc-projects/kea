@@ -40,6 +40,13 @@ namespace dhcp {
 /// of DHCP option instances configured for the subnet. These options are
 /// included in DHCP messages being sent to clients which are connected
 /// to the particular subnet.
+///
+/// @todo: Implement support for options here
+
+
+/// @brief Unique indentifier for a subnet (both v4 and v6)
+typedef uint32_t SubnetID;
+
 class Subnet {
 public:
 
@@ -186,6 +193,11 @@ public:
 
     /// Type of the index #1 - option type.
     typedef OptionContainer::nth_index<1>::type OptionContainerTypeIndex;
+    /// Pair of iterators to represent the range of options having the
+    /// same option type value. The first element in this pair represents
+    /// the begining of the range, the second element represents the end.
+    typedef std::pair<OptionContainerTypeIndex::const_iterator,
+                      OptionContainerTypeIndex::const_iterator> OptionContainerTypeRange;
     /// Type of the index #2 - option persistency flag.
     typedef OptionContainer::nth_index<2>::type OptionContainerPersistIndex;
 
@@ -203,6 +215,20 @@ public:
 
     /// @brief Delete all options configured for the subnet.
     void delOptions();
+
+    /// @brief checks if the specified address is in pools
+    ///
+    /// Note the difference between inSubnet() and inPool(). For a given
+    /// subnet (e.g. 2001::/64) there may be one or more pools defined
+    /// that may or may not cover entire subnet, e.g. pool 2001::1-2001::10).
+    /// inPool() returning true implies inSubnet(), but the reverse implication
+    /// is not always true. For the given example, 2001::1234:abcd would return
+    /// true for inSubnet(), but false for inPool() check.
+    ///
+    /// @param addr this address will be checked if it belongs to any pools in
+    ///        that subnet
+    /// @return true if the address is in any of the pools
+    virtual bool inPool(const isc::asiolink::IOAddress& addr) const = 0;
 
     /// @brief return valid-lifetime for addresses in that prefix
     Triplet<uint32_t> getValid() const {
@@ -224,9 +250,39 @@ public:
     /// @return reference to collection of options configured for a subnet.
     /// The returned reference is valid as long as the Subnet object which
     /// returned it still exists.
-    const OptionContainer& getOptions() {
+    const OptionContainer& getOptions() const {
         return (options_);
     }
+
+    /// @brief returns the last address that was tried from this pool
+    ///
+    /// This method returns the last address that was attempted to be allocated
+    /// from this subnet. This is used as helper information for the next
+    /// iteration of the allocation algorithm.
+    ///
+    /// @todo: Define map<SubnetID, IOAddress> somewhere in the
+    ///        AllocEngine::IterativeAllocator and keep the data there
+    ///
+    /// @return address that was last tried from this pool
+    isc::asiolink::IOAddress getLastAllocated() const {
+        return (last_allocated_);
+    }
+
+    /// @brief sets the last address that was tried from this pool
+    ///
+    /// This method sets the last address that was attempted to be allocated
+    /// from this subnet. This is used as helper information for the next
+    /// iteration of the allocation algorithm.
+    ///
+    /// @todo: Define map<SubnetID, IOAddress> somewhere in the
+    ///        AllocEngine::IterativeAllocator and keep the data there
+    void setLastAllocated(const isc::asiolink::IOAddress& addr) {
+        last_allocated_ = addr;
+    }
+
+    /// @brief returns unique ID for that subnet
+    /// @return unique ID for that subnet
+    SubnetID getID() const { return (id_); }
 
 protected:
     /// @brief protected constructor
@@ -247,8 +303,8 @@ protected:
     /// @brief returns the next unique Subnet-ID
     ///
     /// @return the next unique Subnet-ID
-    static uint32_t getNextID() {
-        static uint32_t id = 0;
+    static SubnetID getNextID() {
+        static SubnetID id = 0;
         return (id++);
     }
 
@@ -261,7 +317,7 @@ protected:
     ///
     /// Subnet-id is a unique value that can be used to find or identify
     /// a Subnet4 or Subnet6.
-    uint32_t id_;
+    SubnetID id_;
 
     /// @brief a prefix of the subnet
     isc::asiolink::IOAddress prefix_;
@@ -280,6 +336,17 @@ protected:
 
     /// @brief a collection of DHCP options configured for a subnet.
     OptionContainer options_;
+
+    /// @brief last allocated address
+    ///
+    /// This is the last allocated address that was previously allocated from
+    /// this particular subnet. Some allocation algorithms (e.g. iterative) use
+    /// that value, others do not. It should be noted that although the value
+    /// is usually correct, there are cases when it is invalid, e.g. after
+    /// removing a pool, restarting or changing allocation algorithms. For
+    /// that purpose it should be only considered a help that should not be
+    /// fully trusted.
+    isc::asiolink::IOAddress last_allocated_;
 };
 
 /// @brief A configuration holder for IPv4 subnet.
@@ -313,13 +380,20 @@ public:
 
     /// @brief returns all pools
     ///
-    /// The reference is only valid as long as the object that
-    /// returned it.
+    /// The reference is only valid as long as the object that returned it.
     ///
     /// @return a collection of all pools
     const Pool4Collection& getPools() const {
         return pools_;
     }
+
+    /// @brief checks if the specified address is in pools
+    ///
+    /// See the description in \ref Subnet::inPool().
+    ///
+    /// @param addr this address will be checked if it belongs to any pools in that subnet
+    /// @return true if the address is in any of the pools
+    bool inPool(const isc::asiolink::IOAddress& addr) const;
 
 protected:
 
@@ -388,6 +462,14 @@ public:
     const Pool6Collection& getPools() const {
         return pools_;
     }
+
+    /// @brief checks if the specified address is in pools
+    ///
+    /// See the description in \ref Subnet::inPool().
+    ///
+    /// @param addr this address will be checked if it belongs to any pools in that subnet
+    /// @return true if the address is in any of the pools
+    bool inPool(const isc::asiolink::IOAddress& addr) const;
 
 protected:
 

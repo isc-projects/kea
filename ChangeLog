@@ -1,3 +1,33 @@
+499.	[func]		team
+	The b10-auth 'loadzone' command now uses the internal thread
+	introduced in 495 to (re)load a zone in the background, so that
+	query processing isn't blocked while loading a zone.
+	(Trac #2213, git 686594e391c645279cc4a95e0e0020d1c01fba7e)
+
+498.	[func]		marcin
+	Implemented DHCPv6 option values configuration using configuration
+	manager. In order to set values for data fields carried by the
+	particular option, user specifies the string of hexadecimal digits
+	that is in turn converted to binary data and stored into option buffer.
+	More user friendly way of option content specification is planned.
+	(Trac #2318, git e75c686cd9c14f4d6c2a242a0a0853314704fee9)
+
+497.	[bug]		jinmei
+	Fixed several issues in isc-sysinfo:
+	- make sure it doesn't report a negative value for free memory
+	  size (this happened on FreeBSD, but can possibly occur on other
+	  BSD variants)
+	- correctly identifies the SMP support in kernel on FreeBSD
+	- print more human readable uptime as well as the time in seconds
+	(Trac #2297, git 59a449f506948e2371ffa87dcd19059388bd1657)
+
+496.	[func]		tomek
+	DHCPv6 Allocation Engine implemented. It allows address allocation
+	from the configured subnets/pools. It currently features a single
+	allocator: IterativeAllocator, which assigns addresses iteratively.
+	Other allocators (hashed, random) are planned.
+	(Trac #2324, git 8aa188a10298e3a55b725db36502a99d2a8d638a)
+
 495.	[func]		team
 	b10-auth now handles reconfiguration of data sources in
 	background using a separate thread.  This means even if the new

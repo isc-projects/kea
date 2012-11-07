@@ -1,4 +1,4 @@
-ACLOCAL_AMFLAGS = -I m4macros ${ACLOCAL_FLAGS}
+ACLOCAL_AMFLAGS = -I m4macros -I examples/m4 ${ACLOCAL_FLAGS}
 # ^^^^^^^^ This has to be the first line and cannot come later in this
 # Makefile.am due to some bork in some versions of autotools.
 
