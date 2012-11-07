@@ -20,9 +20,13 @@
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 
+#include <dhcp6/config_parser.h>
+#include <dhcp6/dhcp6_srv.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option6_ia.h>
-#include <dhcp6/dhcp6_srv.h>
+#include <dhcp/option6_addrlst.h>
+#include <dhcp/option6_int_array.h>
+#include <config/ccsession.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
 #include <boost/scoped_ptr.hpp>
@@ -31,6 +35,9 @@ using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::util;
+using namespace isc::data;
+using namespace isc::config;
+using namespace isc::asiolink;
 
 // namespace has to be named, because friends are defined in Dhcpv6Srv class
 // Maybe it should be isc::test?
@@ -53,11 +60,14 @@ public:
 
 class Dhcpv6SrvTest : public ::testing::Test {
 public:
-    // these are empty for now, but let's keep them around
-    Dhcpv6SrvTest() {
+    Dhcpv6SrvTest()
+        : rcode_(-1) {
     }
     ~Dhcpv6SrvTest() {
     };
+
+    int rcode_;
+    ConstElementPtr comment_;
 };
 
 TEST_F(Dhcpv6SrvTest, basic) {
@@ -66,7 +76,7 @@ TEST_F(Dhcpv6SrvTest, basic) {
     // fe80::1234 link-local address on eth0 interface. Obviously
     // an attempt to bind this socket will fail.
     Dhcpv6Srv* srv = NULL;
-    ASSERT_NO_THROW( {
+    ASSERT_NO_THROW({
         // open an unpriviledged port
         srv = new Dhcpv6Srv(DHCP6_SERVER_PORT + 10000);
     });
@@ -78,7 +88,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
     // tests that DUID is generated properly
 
     boost::scoped_ptr<Dhcpv6Srv> srv;
-    ASSERT_NO_THROW( {
+    ASSERT_NO_THROW({
         srv.reset(new Dhcpv6Srv(DHCP6_SERVER_PORT + 10000));
     });
 
@@ -150,9 +160,39 @@ TEST_F(Dhcpv6SrvTest, DUID) {
     }
 }
 
-TEST_F(Dhcpv6SrvTest, Solicit_basic) {
+TEST_F(Dhcpv6SrvTest, solicitBasic) {
+    ConstElementPtr x;
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1234::/80\" ],"
+        "    \"subnet\": \"2001:db8:1234::/64\", "
+        "    \"option-data\": [ {"
+        "          \"name\": \"OPTION_DNS_SERVERS\","
+        "          \"code\": 23,"
+        "          \"data\": \"2001 0DB8 1234 FFFF 0000 0000 0000 0001"
+        "2001 0DB8 1234 FFFF 0000 0000 0000 0002\""
+        "        },"
+        "        {"
+        "          \"name\": \"OPTION_FOO\","
+        "          \"code\": 1000,"
+        "          \"data\": \"1234\""
+        "        } ]"
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
     boost::scoped_ptr<NakedDhcpv6Srv> srv;
-    ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv()) );
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv6Srv()));
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(*srv, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+
+    ASSERT_EQ(0, rcode_);
 
     // a dummy content for client-id
     OptionBuffer clntDuid(32);
@@ -169,10 +209,10 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     sol->addOption(ia);
 
     // Let's not send address in solicit yet
-    // boost::shared_ptr<Option6IAAddr> addr(new Option6IAAddr(D6O_IAADDR,
-    //    IOAddress("2001:db8:1234:ffff::ffff"), 5001, 7001));
-    // ia->addOption(addr);
-    // sol->addOption(ia);
+    /*    boost::shared_ptr<Option6IAAddr>
+        addr(new Option6IAAddr(D6O_IAADDR, IOAddress("2001:db8:1234:ffff::ffff"), 5001, 7001));
+    ia->addOption(addr);
+    sol->addOption(ia); */
 
     // constructed very simple SOLICIT message with:
     // - client-id option (mandatory)
@@ -191,34 +231,83 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     boost::shared_ptr<Pkt6> reply = srv->processSolicit(sol);
 
     // check if we get response at all
-    ASSERT_TRUE( reply != boost::shared_ptr<Pkt6>() );
+    ASSERT_TRUE(reply);
 
-    EXPECT_EQ( DHCPV6_ADVERTISE, reply->getType() );
-    EXPECT_EQ( 1234, reply->getTransid() );
+    EXPECT_EQ(DHCPV6_ADVERTISE, reply->getType());
+    EXPECT_EQ(1234, reply->getTransid());
+
+    // We have not requested option with code 1000 so it should not
+    // be included in the response.
+    ASSERT_FALSE(reply->getOption(1000));
+
+    // Let's now request option with code 1000.
+    // We expect that server will include this option in its reply.
+    boost::shared_ptr<Option6IntArray<uint16_t> >
+        option_oro(new Option6IntArray<uint16_t>(D6O_ORO));
+    // Create vector with one code equal to 1000.
+    std::vector<uint16_t> codes(1, 1000);
+    // Pass this code to option.
+    option_oro->setValues(codes);
+    // Append ORO to SOLICIT message.
+    sol->addOption(option_oro);
+    
+    // Need to process SOLICIT again after requesting new option.
+    reply = srv->processSolicit(sol);
+    ASSERT_TRUE(reply);
+
+    EXPECT_EQ(DHCPV6_ADVERTISE, reply->getType());
 
     OptionPtr tmp = reply->getOption(D6O_IA_NA);
-    ASSERT_TRUE( tmp );
+    ASSERT_TRUE(tmp);
 
-    Option6IA* reply_ia = dynamic_cast<Option6IA*>(tmp.get());
-    EXPECT_EQ( 234, reply_ia->getIAID() );
+    boost::shared_ptr<Option6IA> reply_ia =
+        boost::dynamic_pointer_cast<Option6IA>(tmp);
+    ASSERT_TRUE(reply_ia);
+    EXPECT_EQ(234, reply_ia->getIAID());
 
     // check that there's an address included
-    EXPECT_TRUE( reply_ia->getOption(D6O_IAADDR));
+    EXPECT_TRUE(reply_ia->getOption(D6O_IAADDR));
 
     // check that server included our own client-id
     tmp = reply->getOption(D6O_CLIENTID);
-    ASSERT_TRUE( tmp );
-    EXPECT_EQ(clientid->getType(), tmp->getType() );
-    ASSERT_EQ(clientid->len(), tmp->len() );
+    ASSERT_TRUE(tmp);
+    EXPECT_EQ(clientid->getType(), tmp->getType());
+    ASSERT_EQ(clientid->len(), tmp->len());
 
-    EXPECT_TRUE( clientid->getData() == tmp->getData() );
+    EXPECT_TRUE(clientid->getData() == tmp->getData());
 
     // check that server included its server-id
     tmp = reply->getOption(D6O_SERVERID);
-    EXPECT_EQ(tmp->getType(), srv->getServerID()->getType() );
-    ASSERT_EQ(tmp->len(),  srv->getServerID()->len() );
+    EXPECT_EQ(tmp->getType(), srv->getServerID()->getType());
+    ASSERT_EQ(tmp->len(),  srv->getServerID()->len());
 
     EXPECT_TRUE(tmp->getData() == srv->getServerID()->getData());
+ 
+    tmp = reply->getOption(D6O_NAME_SERVERS);
+    ASSERT_TRUE(tmp);
+    
+    boost::shared_ptr<Option6AddrLst> reply_nameservers =
+        boost::dynamic_pointer_cast<Option6AddrLst>(tmp);
+    ASSERT_TRUE(reply_nameservers);
+
+    Option6AddrLst::AddressContainer addrs = reply_nameservers->getAddresses();
+    ASSERT_EQ(2, addrs.size());
+    EXPECT_TRUE(addrs[0] == IOAddress("2001:db8:1234:FFFF::1"));
+    EXPECT_TRUE(addrs[1] == IOAddress("2001:db8:1234:FFFF::2"));
+
+    // There is a dummy option with code 1000 we requested from a server.
+    // Expect that this option is in server's response.
+    tmp = reply->getOption(1000);
+    ASSERT_TRUE(tmp);
+
+    // Check that the option contains valid data (from configuration).
+    std::vector<uint8_t> data = tmp->getData();
+    ASSERT_EQ(2, data.size());
+
+    const uint8_t foo_expected[] = {
+        0x12, 0x34
+    };
+    EXPECT_EQ(0, memcmp(&data[0], foo_expected, 2));
 
     // more checks to be implemented
 }
