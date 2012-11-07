@@ -64,25 +64,9 @@ AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
 # Linker options
 
-# check -R and -Wl,-R rather than gcc specific -rpath to be as portable
-# as possible.
-AC_MSG_CHECKING([whether -R flag is available in linker])
-LDFLAGS_SAVED="$LDFLAGS"
-LDFLAGS="$LDFLAGS -R/usr/lib"
-AC_TRY_LINK([],[],
-    [ AC_MSG_RESULT(yes)
-        rpath_flag=-R
-    ],[ AC_MSG_RESULT(no)
-        AC_MSG_CHECKING([whether -Wl,-R flag is available in linker])
-        LDFLAGS="$LDFLAGS_SAVED -Wl,-R"
-        AC_TRY_LINK([], [],
-            [ AC_MSG_RESULT(yes)
-                rpath_flag=-Wl,-R
-            ],[ AC_MSG_RESULT(no)
-                 rpath_flag=no
-            ])
-    ])
-LDFLAGS=$LDFLAGS_SAVED
+# check -R, "-Wl,-R" or -rpath (we share the AX function defined in
+#  examples/m4)
+AX_ISC_RPATH
 
 # Compiler dependent settings: define some mandatory CXXFLAGS here.
 # We also use a separate variable B10_CXXFLAGS.  This will (and should) be
@@ -217,6 +201,10 @@ case "$host" in
 	CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
 	# "now" binding is necessary to prevent deadlocks in C++ static initialization code
 	LDFLAGS="$LDFLAGS -z now"
+	# Destroying locked mutexes, condition variables being waited
+	# on, etc. are undefined behavior on Solaris, so we set it as
+	# such here.
+	AC_DEFINE([HAS_UNDEFINED_PTHREAD_BEHAVIOR], [1], [Does this platform have some undefined pthreads behavior?])
 	;;
 *-apple-darwin*)
 	# Starting with OSX 10.7 (Lion) we must choose which IPv6 API to use
@@ -328,10 +316,10 @@ fi
 # modules, we embed the path to the modules when possible.  We do this even
 # when the path is known in the common operational environment (e.g. when
 # it's stored in a common "hint" file) for simplicity.
-if test $rpath_flag != no; then
+if test "x$ISC_RPATH_FLAG" != "x"; then
 	python_rpath=
 	for flag in ${PYTHON_LDFLAGS}; do
-		python_rpath="${python_rpath} `echo $flag | sed -ne "s/^\(\-L\)/${rpath_flag}/p"`"
+		python_rpath="${python_rpath} `echo $flag | sed -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
 	done
 	PYTHON_LDFLAGS="${PYTHON_LDFLAGS} ${python_rpath}"
 fi
@@ -697,10 +685,10 @@ for flag in ${BOTAN_LIBS}; do
 done
 
 # See python_rpath for some info on why we do this
-if test $rpath_flag != no; then
+if test "x$ISC_RPATH_FLAG" != "x"; then
     BOTAN_RPATH=
     for flag in ${BOTAN_LIBS}; do
-            BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne "s/^\(\-L\)/${rpath_flag}/p"`"
+            BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
     done
 AC_SUBST(BOTAN_RPATH)
 
@@ -1295,6 +1283,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/zonemgr/tests/zonemgr_test
            src/bin/zonemgr/run_b10-zonemgr.sh
            src/bin/sysinfo/sysinfo.py
+           src/bin/sysinfo/run_sysinfo.sh
            src/bin/stats/stats.py
            src/bin/stats/stats_httpd.py
            src/bin/bind10/bind10_src.py
@@ -1373,6 +1362,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/loadzone/run_loadzone.sh
            chmod +x src/bin/loadzone/tests/correct/correct_test.sh
            chmod +x src/bin/loadzone/tests/error/error_test.sh
+           chmod +x src/bin/sysinfo/run_sysinfo.sh
            chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/tests/msgq_test

@@ -12,6 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include "lease_mgr.h"
+#include <exceptions/exceptions.h>
+#include <boost/foreach.hpp>
+#include <boost/algorithm/string.hpp>
 #include <sstream>
 #include <iostream>
 #include <map>
@@ -20,16 +24,50 @@
 #include <sstream>
 #include <algorithm>
 #include <iterator>
-#include <exceptions/exceptions.h>
-#include <boost/foreach.hpp>
-#include <boost/algorithm/string.hpp>
-#include "lease_mgr.h"
+#include <time.h>
 
 using namespace std;
 
 using namespace isc::dhcp;
 
+LeaseMgr* LeaseMgr::instance_ = NULL;
+
+Lease6::Lease6(LeaseType type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
+               uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
+               uint32_t t2, SubnetID subnet_id, uint8_t prefixlen)
+    :type_(type), addr_(addr), prefixlen_(prefixlen), iaid_(iaid), duid_(duid),
+     preferred_lft_(preferred), valid_lft_(valid), t1_(t1), t2_(t2),
+     subnet_id_(subnet_id), fixed_(false), fqdn_fwd_(false),
+     fqdn_rev_(false) {
+    if (!duid) {
+        isc_throw(InvalidOperation, "DUID must be specified for a lease");
+    }
+
+    cltt_ = time(NULL);
+}
+
+LeaseMgr& LeaseMgr::instance() {
+    if (!instance_) {
+        isc_throw(InvalidOperation, "LeaseManager not instantiated yet");
+    }
+    return (*instance_);
+}
+
+void LeaseMgr::destroy_instance() {
+    if (!instance_) {
+        isc_throw(InvalidOperation, "LeaseManager not instantiated yet");
+    }
+    delete instance_;
+    instance_ = NULL;
+}
+
 LeaseMgr::LeaseMgr(const std::string& dbconfig) {
+    if (instance_) {
+        isc_throw(InvalidOperation, "LeaseManager already instantiated");
+    }
+
+    // remember the pointer to the singleton instance
+    instance_ = this;
 
     if (dbconfig.length() == 0) {
         return;
@@ -65,4 +103,5 @@ std::string LeaseMgr::getParameter(const std::string& name) const {
 }
 
 LeaseMgr::~LeaseMgr() {
+    instance_ = NULL;
 }

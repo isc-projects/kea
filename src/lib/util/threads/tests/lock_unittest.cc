@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <gtest/gtest.h>
 
 #include <util/threads/sync.h>
@@ -46,11 +48,11 @@ TEST(MutexTest, lockMultiple) {
 
 #endif // ENABLE_DEBUG
 
+#ifndef HAS_UNDEFINED_PTHREAD_BEHAVIOR
 // Destroying a locked mutex is a bad idea as well
-#ifdef EXPECT_DEATH
 TEST(MutexTest, destroyLocked) {
     if (!isc::util::unittests::runningOnValgrind()) {
-        EXPECT_DEATH({
+        EXPECT_DEATH_IF_SUPPORTED({
             Mutex* mutex = new Mutex;
             new Mutex::Locker(*mutex);
             delete mutex;
@@ -59,7 +61,7 @@ TEST(MutexTest, destroyLocked) {
         }, "");
     }
 }
-#endif
+#endif // !HAS_UNDEFINED_PTHREAD_BEHAVIOR
 
 // In this test, we try to check if a mutex really locks. We could try that
 // with a deadlock, but that's not practical (the test would not end).

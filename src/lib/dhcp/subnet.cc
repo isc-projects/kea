@@ -15,7 +15,6 @@
 #include <dhcp/addr_utilities.h>
 #include <asiolink/io_address.h>
 #include <dhcp/subnet.h>
-#include <dhcp/pool.h>
 
 using namespace isc::asiolink;
 
@@ -27,7 +26,8 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
                const Triplet<uint32_t>& t2,
                const Triplet<uint32_t>& valid_lifetime)
     :id_(getNextID()), prefix_(prefix), prefix_len_(len), t1_(t1),
-     t2_(t2), valid_(valid_lifetime) {
+     t2_(t2), valid_(valid_lifetime),
+     last_allocated_(lastAddrInPrefix(prefix, len)) {
     if ( (prefix.getFamily() == AF_INET6 && len > 128) ||
          (prefix.getFamily() == AF_INET && len > 32) ) {
         isc_throw(BadValue, "Invalid prefix length specified for subnet: " << len);
@@ -105,6 +105,22 @@ Subnet4::validateOption(const OptionPtr& option) const {
     }
 }
 
+bool Subnet4::inPool(const isc::asiolink::IOAddress& addr) const {
+
+    // Let's start with checking if it even belongs to that subnet.
+    if (!inRange(addr)) {
+        return (false);
+    }
+
+    for (Pool4Collection::const_iterator pool = pools_.begin(); pool != pools_.end(); ++pool) {
+        if ((*pool)->inRange(addr)) {
+            return (true);
+        }
+    }
+    // there's no pool that address belongs to
+    return (false);
+}
+
 Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t1,
                  const Triplet<uint32_t>& t2,
@@ -159,5 +175,22 @@ Subnet6::validateOption(const OptionPtr& option) const {
         isc_throw(isc::BadValue, "expected V6 option to be added to the subnet");
     }
 }
+
+bool Subnet6::inPool(const isc::asiolink::IOAddress& addr) const {
+
+    // Let's start with checking if it even belongs to that subnet.
+    if (!inRange(addr)) {
+        return (false);
+    }
+
+    for (Pool6Collection::const_iterator pool = pools_.begin(); pool != pools_.end(); ++pool) {
+        if ((*pool)->inRange(addr)) {
+            return (true);
+        }
+    }
+    // there's no pool that address belongs to
+    return (false);
+}
+
 } // end of isc::dhcp namespace
 } // end of isc namespace

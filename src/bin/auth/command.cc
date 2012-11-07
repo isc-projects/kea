@@ -176,51 +176,7 @@ public:
     virtual ConstElementPtr exec(AuthSrv& server,
                                  isc::data::ConstElementPtr args)
     {
-        if (args == NULL) {
-            isc_throw(AuthCommandError, "Null argument");
-        }
-
-        ConstElementPtr class_elem = args->get("class");
-        RRClass zone_class(class_elem ? RRClass(class_elem->stringValue()) :
-            RRClass::IN());
-
-        ConstElementPtr origin_elem = args->get("origin");
-        if (!origin_elem) {
-            isc_throw(AuthCommandError, "Zone origin is missing");
-        }
-        const Name origin(origin_elem->stringValue());
-
-        DataSrcClientsMgr::Holder holder(server.getDataSrcClientsMgr());
-        boost::shared_ptr<ConfigurableClientList> list =
-            holder.findClientList(zone_class);
-
-        if (!list) {
-            isc_throw(AuthCommandError, "There's no client list for "
-                      "class " << zone_class);
-        }
-
-        switch (list->reload(origin)) {
-            case ConfigurableClientList::ZONE_RELOADED:
-                // Everything worked fine.
-                LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_LOAD_ZONE)
-                    .arg(zone_class).arg(origin);
-                return (createAnswer());
-            case ConfigurableClientList::ZONE_NOT_FOUND:
-                isc_throw(AuthCommandError, "Zone " << origin << "/" <<
-                          zone_class << " was not found in any configured "
-                          "data source. Configure it first.");
-            case ConfigurableClientList::ZONE_NOT_CACHED:
-                isc_throw(AuthCommandError, "Zone " << origin << "/" <<
-                          zone_class << " is not served from memory, but "
-                          "directly from the data source. It is not possible "
-                          "to reload it into memory. Configure it to be cached "
-                          "first.");
-            case ConfigurableClientList::CACHE_DISABLED:
-                // This is an internal error. Auth server must have the cache
-                // enabled.
-                isc_throw(isc::Unexpected, "Cache disabled in client list of "
-                          "class " << zone_class);
-        }
+        server.getDataSrcClientsMgr().loadZone(args);
         return (createAnswer());
     }
 };
