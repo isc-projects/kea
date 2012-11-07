@@ -86,12 +86,13 @@ RRTTL::RRTTL(const std::string& ttlstr) {
                     }
                 }
                 if (!found) {
-                    isc_throw(InvalidRRTTL, "Unknown unit used: " << *unit);
+                    isc_throw(InvalidRRTTL, "Unknown unit used: " << *unit <<
+                              "in: " << ttlstr);
                 }
             }
             // Now extract the number, defaut to 1 if there's no digit
             if (unit == pos) {
-                isc_throw(InvalidRRTTL, "Missing number in TTL ");
+                isc_throw(InvalidRRTTL, "Missing number in TTL: " << ttlstr);
             }
             const int64_t value = boost::lexical_cast<int64_t>(string(pos,
                                                                       unit));
@@ -105,13 +106,13 @@ RRTTL::RRTTL(const std::string& ttlstr) {
             }
         }
     } catch (const boost::bad_lexical_cast&) {
-        isc_throw(InvalidRRTTL, "invalid TTL");
+        isc_throw(InvalidRRTTL, "invalid TTL: " << ttlstr);
     }
 
     if (val >= 0 && val <= 0xffffffff) {
         ttlval_ = static_cast<uint32_t>(val);
     } else {
-        isc_throw(InvalidRRTTL, "invalid TTL");
+        isc_throw(InvalidRRTTL, "TTL out of range: " << ttlstr);
     }
 }
 
