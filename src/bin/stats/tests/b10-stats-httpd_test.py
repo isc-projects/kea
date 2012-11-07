@@ -253,6 +253,13 @@ class TestHttpHandler(unittest.TestCase):
                     '<?xml-stylesheet type="text/xsl" href="' + 
                     stats_httpd.XSL_URL_PATH
                     + '"?>'))
+            # check whether the list of 'identifier' attributes in
+            # root is same as the list of item names in DUMMY_DATA
+            id_list = [ elm.attrib['identifier'] for elm in root ]
+            item_list = [ it for it in \
+                              stats_httpd.item_name_list(DUMMY_DATA, path) \
+                              if len(it.split('/')) > 1 ]
+            self.assertEqual(id_list, item_list)
             for elem in root:
                 attr = elem.attrib
                 value = isc.cc.data.find(DUMMY_DATA, attr['identifier'])
