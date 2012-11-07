@@ -35,3 +35,4 @@ Feature: Authoritative DNS server with a bad zone
         """
 
         A query for www.example.com should have rcode REFUSED
+        A query for www.example.net should have rcode REFUSED

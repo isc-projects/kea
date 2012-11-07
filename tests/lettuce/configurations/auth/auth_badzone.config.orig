@@ -21,7 +21,8 @@
                     "cache-enable": true,
                     "params": {
                         "example.org": "data/example.org",
-                        "example.com": "data/example.com-broken"
+                        "example.com": "data/example.com-broken",
+                        "example.net": "data/example.net-empty"
                     }
                 }
             ]
