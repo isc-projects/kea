@@ -87,7 +87,7 @@ RRTTL::RRTTL(const std::string& ttlstr) {
                 }
                 if (!found) {
                     isc_throw(InvalidRRTTL, "Unknown unit used: " << *unit <<
-                              "in: " << ttlstr);
+                              " in: " << ttlstr);
                 }
             }
             // Now extract the number, defaut to 1 if there's no digit
