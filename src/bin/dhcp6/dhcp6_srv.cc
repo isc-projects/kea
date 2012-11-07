@@ -20,13 +20,19 @@
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_ia.h>
+#include <dhcp/option6_int_array.h>
 #include <dhcp/pkt6.h>
+#include <dhcp/subnet.h>
+#include <dhcp/cfgmgr.h>
 #include <exceptions/exceptions.h>
 #include <util/io_utilities.h>
 #include <util/range_utilities.h>
+
+#include <boost/foreach.hpp>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -51,10 +57,17 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
 
-    // First call to instance() will create IfaceMgr (it's a singleton)
-    // it may throw something if things go wrong
+    // Initialize objects required for DHCP server operation.
     try {
 
+        // Initialize standard DHCPv6 option definitions. This function
+        // may throw bad_alloc if system goes out of memory during the
+        // creation if option definitions. It may also throw isc::Unexpected
+        // if definitions are wrong. This would mean error in implementation.
+        initStdOptionDefs();
+
+        // Call IfaceMgr::instance() will create instance of Interface
+        // Manager (it's a singleton). It may throw if things go wrong.
         if (IfaceMgr::instance().countIfaces() == 0) {
             LOG_ERROR(dhcp6_logger, DHCP6_NO_INTERFACES);
             shutdown_ = true;
@@ -281,23 +294,63 @@ void Dhcpv6Srv::copyDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     // TODO: Should throw if there is no client-id (except anonymous INF-REQUEST)
 }
 
-void Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr& /*question*/, Pkt6Ptr& answer) {
-    // TODO: question is currently unused, but we need it at least to know
-    // message type we are answering
-
+void Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     // add server-id
     answer->addOption(getServerID());
+
+    // Get the subnet object. It holds options to be sent to the client
+    // that belongs to the particular subnet.
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr());
+    // Warn if subnet is not supported and quit.
+    if (!subnet) {
+        LOG_WARN(dhcp6_logger, DHCP6_NO_SUBNET_DEF_OPT)
+            .arg(question->getRemoteAddr().toText());
+        return;
+    }
+    // Add DNS_SERVERS option. It should have been configured.
+    const Subnet::OptionContainer& options = subnet->getOptions();
+    const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+    const Subnet::OptionContainerTypeRange range =
+        idx.equal_range(D6O_NAME_SERVERS);
+    // In theory we may have multiple options with the same
+    // option code. They are not differentiated right now
+    // until support for option spaces is implemented.
+    // Until that's the case, simply add the first found option.
+    if (std::distance(range.first, range.second) > 0) {
+        answer->addOption(range.first->option);
+    }
 }
 
+void Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
+    // Get the subnet for a particular address.
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr());
+    if (!subnet) {
+        LOG_WARN(dhcp6_logger, DHCP6_NO_SUBNET_REQ_OPT)
+            .arg(question->getRemoteAddr().toText());
+        return;
+    }
 
-void Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& /*question*/, Pkt6Ptr& answer) {
-    // TODO: question is currently unused, but we need to extract ORO from it
-    // and act on its content. Now we just send DNS-SERVERS option.
-
-    // add dns-servers option
-    boost::shared_ptr<Option> dnsservers(new Option6AddrLst(D6O_NAME_SERVERS,
-                                         IOAddress(HARDCODED_DNS_SERVER)));
-    answer->addOption(dnsservers);
+    // Client requests some options using ORO option. Try to
+    // get this option from client's message.
+    boost::shared_ptr<Option6IntArray<uint16_t> > option_oro =
+        boost::dynamic_pointer_cast<Option6IntArray<uint16_t> >(question->getOption(D6O_ORO));
+    // Option ORO not found. Don't do anything then.
+    if (!option_oro) {
+        return;
+    }
+    // Get the list of options that client requested.
+    const std::vector<uint16_t>& requested_opts = option_oro->getValues();
+    // Get the list of options configured for a subnet.
+    const Subnet::OptionContainer& options = subnet->getOptions();
+    const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+    // Try to match requested options with those configured for a subnet.
+    // If match is found, append configured option to the answer message.
+    BOOST_FOREACH(uint16_t opt, requested_opts) {
+        const Subnet::OptionContainerTypeRange& range = idx.equal_range(opt);
+        BOOST_FOREACH(Subnet::OptionDescriptor desc, range) {
+            answer->addOption(desc.option);
+        }
+    }
 }
 
 void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
@@ -427,4 +480,9 @@ Dhcpv6Srv::serverReceivedPacketName(uint8_t type) {
         ;
     }
     return (UNKNOWN);
+}
+
+void
+Dhcpv6Srv::initStdOptionDefs() {
+    LibDHCP::initStdOptionDefs(Option::V6);
 }

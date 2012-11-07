@@ -16,12 +16,41 @@
 #define OPTION_DEFINITION_H_
 
 #include <dhcp/option_data_types.h>
-#include <dhcp/option6_int.h>
-#include <dhcp/option6_int_array.h>
 #include <dhcp/option.h>
+#include <boost/shared_ptr.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index/mem_fun.hpp>
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Forward declaration to OptionDefinition.
+class OptionDefinition;
+
+/// @brief Pointer to option definition object.
+typedef boost::shared_ptr<OptionDefinition> OptionDefinitionPtr;
+
+/// @brief Forward declaration to Option6Int.
+///
+/// This forward declaration is needed to access Option6Int class
+/// without having to include option6_int.h header. This is because
+/// this header includes libdhcp++.h and this causes circular
+/// inclusion between libdhcp++.h, option_definition.h and
+/// option6_int.h.
+template<typename T>
+class Option6Int;
+
+/// @brief Forward declaration to Option6IntArray.
+///
+/// This forward declaration is needed to access Option6IntArray class
+/// without having to include option6_int_array.h header. This is because
+/// this header includes libdhcp++.h and this causes circular
+/// inclusion between libdhcp++.h, option_definition.h and
+/// option6_int_array.h.
+template<typename T>
+class Option6IntArray;
 
 /// @brief Base class representing a DHCP option definition.
 ///
@@ -52,7 +81,7 @@ namespace dhcp {
 ///
 /// Should the option comprise data fields of different types, the "record"
 /// option type is used. In such cases the data field types within the record
-/// are specified using \ref OptionDefinition::addRecordField.
+/// are specified using \ref OptioDefinition::addRecordField.
 ///
 /// When the OptionDefinition object has been sucessfully created, it can be
 /// queried to return the appropriate option factory function for the specified
@@ -84,6 +113,7 @@ public:
     /// Data types of DHCP option fields.
     enum DataType {
         EMPTY_TYPE,
+        BINARY_TYPE,
         BOOLEAN_TYPE,
         INT8_TYPE,
         INT16_TYPE,
@@ -202,7 +232,9 @@ public:
 
     /// @brief Return factory function for the given definition.
     ///
-    /// @return pointer to factory function.
+    /// @throw isc::OutOfRange if \ref validate returns it.
+    /// @throw isc::BadValue if \ref validate returns it.
+    /// @return pointer to a factory function.
     Option::Factory* getFactory() const;
 
     /// @brief Return option name.
@@ -375,6 +407,55 @@ private:
     /// Collection of data fields within the record.
     RecordFieldsCollection record_fields_;
 };
+
+
+/// @brief Multi index container for DHCP option definitions.
+///
+/// This container allows to search for DHCP option definition
+/// using two indexes:
+/// - sequenced: used to access elements in the order they have
+/// been added to the container
+/// - option code: used to search defintions of options
+/// with a specified option code (aka option type).
+/// Note that this container can hold multiple options with the
+/// same code. For this reason, the latter index can be used to
+/// obtain a range of options for a particular option code.
+/// 
+/// @todo: need an index to search options using option space name
+/// once option spaces are implemented.
+typedef boost::multi_index_container<
+    // Container comprises elements of OptionDefinition type.
+    OptionDefinitionPtr,
+    // Here we start enumerating various indexes.
+    boost::multi_index::indexed_by<
+        // Sequenced index allows accessing elements in the same way
+        // as elements in std::list. Sequenced is an index #0.
+        boost::multi_index::sequenced<>,
+        // Start definition of index #1.
+        boost::multi_index::hashed_non_unique<
+            // Use option type as the index key. The type is held
+            // in OptionDefinition object so we have to call
+            // OptionDefinition::getCode to retrieve this key
+            // for each element. The option code is non-unique so
+            // multiple elements with the same option code can
+            // be returned by this index.
+            boost::multi_index::const_mem_fun<
+                OptionDefinition,
+                uint16_t,
+                &OptionDefinition::getCode
+            >
+        >
+    >
+> OptionDefContainer;
+
+/// Type of the index #1 - option type.
+typedef OptionDefContainer::nth_index<1>::type OptionDefContainerTypeIndex;
+/// Pair of iterators to represent the range of options definitions
+///  having the same option type value. The first element in this pair
+///  represents the begining of the range, the second element
+///  represents the end.
+typedef std::pair<OptionDefContainerTypeIndex::const_iterator,
+                  OptionDefContainerTypeIndex::const_iterator> OptionDefContainerTypeRange;
 
 
 } // namespace isc::dhcp
