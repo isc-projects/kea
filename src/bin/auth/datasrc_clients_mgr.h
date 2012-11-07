@@ -614,8 +614,14 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::getZoneWriter(
     datasrc::ConfigurableClientList& client_list,
     const dns::RRClass& rrclass, const dns::Name& origin)
 {
-    const datasrc::ConfigurableClientList::ZoneWriterPair writerpair =
-        client_list.getCachedZoneWriter(origin);
+    // getCachedZoneWriter() could get access to an underlying data source
+    // that can cause a race condition with the main thread using that data
+    // source for lookup.  So we need to protect the access here.
+    datasrc::ConfigurableClientList::ZoneWriterPair writerpair;
+    {
+        typename MutexType::Locker locker(*map_mutex_);
+        writerpair = client_list.getCachedZoneWriter(origin);
+    }
 
     switch (writerpair.first) {
     case datasrc::ConfigurableClientList::ZONE_SUCCESS:
