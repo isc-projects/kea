@@ -145,7 +145,7 @@
         "item_type": "integer",
         "item_optional": false,
         "item_default": 0,
-        "item_title": "Queries TCP ",
+        "item_title": "Queries TCP",
         "item_description": "A number of total query counts which all auth servers receive over TCP since they started initially"
       },
       {
@@ -181,14 +181,6 @@
         "item_description": "The number of total request counts whose opcode is status"
       },
       {
-        "item_name": "opcode.reserved3",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Received requests opcode 3",
-        "item_description": "The number of total request counts whose opcode is 3 (reserved)"
-      },
-      {
         "item_name": "opcode.notify",
         "item_type": "integer",
         "item_optional": true,
@@ -205,84 +197,12 @@
         "item_description": "The number of total request counts whose opcode is update"
       },
       {
-        "item_name": "opcode.reserved6",
+        "item_name": "opcode.other",
         "item_type": "integer",
         "item_optional": true,
         "item_default": 0,
-        "item_title": "Received requests opcode 6",
-        "item_description": "The number of total request counts whose opcode is 6 (reserved)"
-      },
-      {
-        "item_name": "opcode.reserved7",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Received requests opcode 7",
-        "item_description": "The number of total request counts whose opcode is 7 (reserved)"
-      },
-      {
-        "item_name": "opcode.reserved8",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Received requests opcode 8",
-        "item_description": "The number of total request counts whose opcode is 8 (reserved)"
-      },
-      {
-        "item_name": "opcode.reserved9",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Received requests opcode 9",
-        "item_description": "The number of total request counts whose opcode is 9 (reserved)"
-      },
-      {
-        "item_name": "opcode.reserved10",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Received requests opcode 10",
-        "item_description": "The number of total request counts whose opcode is 10 (reserved)"
-      },
-      {
-        "item_name": "opcode.reserved11",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Received requests opcode 11",
-        "item_description": "The number of total request counts whose opcode is 11 (reserved)"
-      },
-      {
-        "item_name": "opcode.reserved12",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Received requests opcode 12",
-        "item_description": "The number of total request counts whose opcode is 12 (reserved)"
-      },
-      {
-        "item_name": "opcode.reserved13",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Received requests opcode 13",
-        "item_description": "The number of total request counts whose opcode is 13 (reserved)"
-      },
-      {
-        "item_name": "opcode.reserved14",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Received requests opcode 14",
-        "item_description": "The number of total request counts whose opcode is 14 (reserved)"
-      },
-      {
-        "item_name": "opcode.reserved15",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Received requests opcode 15",
-        "item_description": "The number of total request counts whose opcode is 15 (reserved)"
+        "item_title": "Received requests opcode other",
+        "item_description": "The number of total request counts whose opcode is other (not well-known)"
       },
       {
         "item_name": "rcode.noerror",
@@ -373,52 +293,68 @@
         "item_description": "The number of total responses with rcode 10 (NOTZONE)"
       },
       {
-        "item_name": "rcode.reserved11",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent response with rcode 11",
-        "item_description": "The number of total responses with rcode 11 (reserved)"
-      },
-      {
-        "item_name": "rcode.reserved12",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent response with rcode 12",
-        "item_description": "The number of total responses with rcode 12 (reserved)"
-      },
-      {
-        "item_name": "rcode.reserved13",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent response with rcode 13",
-        "item_description": "The number of total responses with rcode 13 (reserved)"
-      },
-      {
-        "item_name": "rcode.reserved14",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent response with rcode 14",
-        "item_description": "The number of total responses with rcode 14 (reserved)"
-      },
-      {
-        "item_name": "rcode.reserved15",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 0,
-        "item_title": "Sent response with rcode 15",
-        "item_description": "The number of total responses with rcode 15 (reserved)"
-      },
-      {
-        "item_name": "rcode.badvers",
+        "item_name": "rcode.badsigvers",
         "item_type": "integer",
         "item_optional": true,
         "item_default": 0,
         "item_title": "Sent 'EDNS version not implemented' response",
         "item_description": "The number of total responses with rcode 16 (BADVERS)"
+      },
+      {
+        "item_name": "rcode.badkey",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Sent 'Key not recognized' response",
+        "item_description": "The number of total responses with rcode 17 (BADKEY)"
+      },
+      {
+        "item_name": "rcode.badtime",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Sent 'Signature out of time window' response",
+        "item_description": "The number of total responses with rcode 18 (BADTIME)"
+      },
+      {
+        "item_name": "rcode.badmode",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Sent 'Bad TKEY Mode' response",
+        "item_description": "The number of total responses with rcode 19 (BADMODE)"
+      },
+      {
+        "item_name": "rcode.badname",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Sent 'Duplicate key name' response",
+        "item_description": "The number of total responses with rcode 20 (BADNAME)"
+      },
+      {
+        "item_name": "rcode.badalg",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Sent 'Algorithm not supported' response",
+        "item_description": "The number of total responses with rcode 21 (BADALG)"
+      },
+      {
+        "item_name": "rcode.badtrunc",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Sent 'Bad Truncation' response",
+        "item_description": "The number of total responses with rcode 22 (BADTRUNC)"
+      },
+      {
+        "item_name": "rcode.other",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 0,
+        "item_title": "Sent responses with rcode other",
+        "item_description": "The number of total responses with rcode other (not well-known)"
       }
     ]
   }

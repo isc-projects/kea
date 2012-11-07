@@ -222,54 +222,10 @@ public:
     /// \brief Returns statistics data
     ///
     /// This function can throw an exception from
-    /// AuthCounters::getStatistics().
+    /// Counters::getStatistics().
     ///
     /// \return JSON format statistics data.
     isc::data::ConstElementPtr getStatistics() const;
-
-    /// \brief Get the value of counter in the AuthCounters.
-    ///
-    /// This function calls AuthCounters::getStatistics() and
-    /// returns its return value.
-    ///
-    /// This function never throws an exception as far as
-    /// AuthCounters::getStatistics() doesn't throw.
-    ///
-    /// Note: Currently this function is for testing purpose only.
-    ///
-    /// \param type Type of a counter to get the value of
-    ///
-    /// \return the value of the counter.
-
-    uint64_t getCounter(const AuthCounters::ServerCounterType type) const;
-
-    /// \brief Get the value of per Opcode counter in the Auth Counters.
-    ///
-    /// This function calls AuthCounters::getCounter(isc::dns::Opcode) and
-    /// returns its return value.
-    ///
-    /// \note This is a tentative interface as an attempt of experimentally
-    /// supporting more statistics counters.  This should eventually be more
-    /// generalized.  In any case, this method is mainly for testing.
-    ///
-    /// \throw None
-    /// \param opcode The opcode of the counter to get the value of
-    /// \return the value of the counter.
-    uint64_t getCounter(const isc::dns::Opcode opcode) const;
-
-    /// \brief Get the value of per Rcode counter in the Auth Counters.
-    ///
-    /// This function calls AuthCounters::getCounter(isc::dns::Rcode) and
-    /// returns its return value.
-    ///
-    /// \note This is a tentative interface as an attempt of experimentally
-    /// supporting more statistics counters.  This should eventually be more
-    /// generalized.  In any case, this method is mainly for testing.
-    ///
-    /// \throw None
-    /// \param rcode The rcode of the counter to get the value of
-    /// \return the value of the counter.
-    uint64_t getCounter(const isc::dns::Rcode rcode) const;
 
     /**
      * \brief Set and get the addresses we listen on.

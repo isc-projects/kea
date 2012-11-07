@@ -22,6 +22,7 @@ import subprocess
 import os.path
 import platform
 import time
+from datetime import timedelta
 
 class SysInfo:
     def __init__(self):
@@ -92,6 +93,18 @@ class SysInfo:
     def get_uptime(self):
         """Returns the uptime in seconds."""
         return self._uptime
+
+    def get_uptime_desc(self):
+        """Returns the uptime in human readable form.
+
+        The format is the result of str() method of the standard library
+        datetime.timedelta class.  It returns None if _uptime is None.
+
+        """
+        if self._uptime is None:
+            return None
+
+        return str(timedelta(seconds=self._uptime))
 
     def get_loadavg(self):
         """Returns the load average as 3 floating point values in an array."""
@@ -333,11 +346,11 @@ class SysInfoOpenBSD(SysInfoBSD):
             pass
 
         try:
+            # We use the size of free-list from the vmstat result.
             s = subprocess.check_output(['vmstat'])
             lines = s.decode('utf-8').split('\n')
             v = re.split('\s+', lines[2])
-            used = int(v[4]) * 1024
-            self._mem_free = self._mem_total - used
+            self._mem_free = int(v[5]) * 1024
         except (subprocess.CalledProcessError, OSError):
             pass
 
@@ -389,17 +402,27 @@ class SysInfoFreeBSD(SysInfoFreeBSDOSX):
         super().__init__()
 
         try:
-            s = subprocess.check_output(['sysctl', '-n', 'kern.smp.active'])
-            self._platform_is_smp = int(s.decode('utf-8').strip()) > 0
-        except (subprocess.CalledProcessError, OSError):
+            # There doesn't seem to be an easy way to reliably detect whether
+            # the kernel was built with SMP support on FreeBSD.  We use
+            # a sysctl variable that is only defined in SMP kernels.
+            # This assumption seems to hold for several recent versions of
+            # FreeBSD, but it may not always be so for future versions.
+            s = subprocess.check_output(['sysctl', '-n',
+                                         'kern.smp.forward_signal_enabled'])
+            self._platform_is_smp = True # the value doesn't matter
+        except subprocess.CalledProcessError:
+            # if this variable isn't defined we should see this exception.
+            # intepret it as an indication of non-SMP kernel.
+            self._platform_is_smp = False
+        except OSError:
             pass
 
         try:
+            # We use the size of free-list from the vmstat result.
             s = subprocess.check_output(['vmstat', '-H'])
             lines = s.decode('utf-8').split('\n')
             v = re.split('\s+', lines[2])
-            used = int(v[4]) * 1024
-            self._mem_free = self._mem_total - used
+            self._mem_free = int(v[5]) * 1024
         except (subprocess.CalledProcessError, OSError):
             pass
 

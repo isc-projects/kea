@@ -15,67 +15,83 @@
 #ifndef COUNTER_DICT_H
 #define COUNTER_DICT_H 1
 
-#include <string>
-#include <vector>
-#include <utility>
+#include <statistics/counter.h>
+#include <exceptions/exceptions.h>
+
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 
-#include <exceptions/exceptions.h>
-#include <statistics/counter.h>
+#include <cassert>
+#include <stdexcept>
+#include <string>
+#include <vector>
+#include <map>
+#include <iterator>
+#include <utility>
+
+namespace {
+typedef boost::shared_ptr<isc::statistics::Counter> CounterPtr;
+typedef std::map<std::string, CounterPtr> DictionaryMap;
+}
 
 namespace isc {
 namespace statistics {
 
-class CounterDictionaryImpl;
-class CounterDictionaryConstIteratorImpl;
-
 class CounterDictionary : boost::noncopyable {
 private:
-    boost::scoped_ptr<CounterDictionaryImpl> impl_;
+    DictionaryMap dictionary_;
+    std::vector<std::string> elements_;
+    const size_t items_;
     // Default constructor is forbidden; number of counter items must be
     // specified at the construction of this class.
     CounterDictionary();
 public:
-    /// The constructor.
-    /// This constructor is mostly exception free. But it may still throw
-    /// a standard exception if memory allocation fails inside the method.
-    ///
-    /// \param items A number of counter items to hold (greater than 0)
-    ///
-    /// \throw isc::InvalidParameter \a items is 0
-    CounterDictionary(const size_t items);
-
-    /// The destructor.
-    ///
-    /// This method never throws an exception.
-    ~CounterDictionary();
-
-    /// \brief Add an element
-    ///
-    /// \throw isc::InvalidParameter \a element already exists.
-    ///
-    /// \param name A name of the element to append
-    void addElement(const std::string& name);
-
-    /// \brief Delete
-    ///
-    /// \throw isc::OutOfRange \a element does not exist.
-    ///
-    /// \param name A name of the element to delete
-    void deleteElement(const std::string& name);
-
-    /// \brief Lookup
-    ///
-    /// \throw isc::OutOfRange \a element does not exist.
-    ///
-    /// \param name A name of the element to get the counters
-    Counter& getElement(const std::string &name) const;
-
-    /// Same as getElement()
-    Counter& operator[](const std::string &name) const;
-
+    explicit CounterDictionary(const size_t items) :
+        items_(items)
+    {
+        // The number of items must not be 0
+        if (items == 0) {
+            isc_throw(isc::InvalidParameter, "Items must not be 0");
+        }
+    };
+    ~CounterDictionary() {};
+    void addElement(const std::string& name) {
+        // throw if the element already exists
+        if (dictionary_.count(name) != 0) {
+            isc_throw(isc::InvalidParameter,
+                      "Element " << name << " already exists");
+        }
+        assert(items_ != 0);
+        // Create a new Counter and add to the map
+        dictionary_.insert(
+            DictionaryMap::value_type(name, CounterPtr(new Counter(items_))));
+    };
+    void deleteElement(const std::string& name) {
+        size_t result = dictionary_.erase(name);
+        if (result != 1) {
+            // If an element with specified name does not exist, throw
+            // isc::OutOfRange.
+            isc_throw(isc::OutOfRange,
+                      "Element " << name << " does not exist");
+        }
+    };
+    Counter& getElement(const std::string& name) {
+        DictionaryMap::const_iterator i = dictionary_.find(name);
+        if (i != dictionary_.end()) {
+            // the key was found. return the element.
+            return (*(i->second));
+        } else {
+            // If an element with specified name does not exist, throw
+            // isc::OutOfRange.
+            isc_throw(isc::OutOfRange,
+                      "Element " << name << " does not exist");
+        }
+    };
+    Counter& operator[](const std::string& name) {
+        return (getElement(name));
+    };
     /// \brief \c ConstIterator is a constant iterator that provides an
     /// interface for enumerating name of zones stored in CounterDictionary.
     ///
@@ -90,67 +106,53 @@ public:
                                 const std::string,
                                 boost::forward_traversal_tag>
     {
-        private:
-            boost::scoped_ptr<CounterDictionaryConstIteratorImpl> impl_;
         public:
             /// The constructor.
             ///
             /// This constructor is mostly exception free. But it may still
             /// throw a standard exception if memory allocation fails
             /// inside the method.
-            ConstIterator();
+            ConstIterator() {}
             /// The destructor.
             ///
             /// This method never throws an exception.
-            ~ConstIterator();
-            /// The assignment operator.
-            ///
-            /// This method is mostly exception free. But it may still
-            /// throw a standard exception if memory allocation fails
-            /// inside the method.
-            ConstIterator& operator=(const ConstIterator &source);
-            /// The copy constructor.
-            ///
-            /// This constructor is mostly exception free. But it may still
-            /// throw a standard exception if memory allocation fails
-            /// inside the method.
-            ConstIterator(const ConstIterator& source);
-            /// The constructor from implementation detail.
-            ///
-            /// This method is used to create an instance of ConstIterator
-            /// by CounterDict::begin() and CounterDict::end().
-            ///
-            /// This constructor is mostly exception free. But it may still
-            /// throw a standard exception if memory allocation fails
-            /// inside the method.
+            ~ConstIterator() {}
+            /// Constructor from implementation detail DictionaryMap::const_iterator
             ConstIterator(
-                const CounterDictionaryConstIteratorImpl& source);
+                DictionaryMap::const_iterator iterator) :
+                iterator_(iterator)
+            {}
+
         private:
             /// \brief An internal method to increment this iterator.
-            void increment();
+            void increment() {
+                ++iterator_;
+                return;
+            }
+
             /// \brief An internal method to check equality.
-            bool equal(const ConstIterator& other) const;
+            bool equal(const ConstIterator& other) const {
+                return (iterator_ == other.iterator_);
+            }
+
             /// \brief An internal method to dereference this iterator.
-            const value_type& dereference() const;
+            const value_type& dereference() const {
+                return (iterator_->first);
+            }
+
         private:
             friend class boost::iterator_core_access;
+            DictionaryMap::const_iterator iterator_;
+    };
+
+    ConstIterator begin() const {
+        return (CounterDictionary::ConstIterator(dictionary_.begin()));
+    };
+    ConstIterator end() const {
+        return (CounterDictionary::ConstIterator(dictionary_.end()));
     };
 
     typedef ConstIterator const_iterator;
-
-    /// \brief Return an iterator corresponding to the beginning of the
-    /// elements stored in CounterDictionary.
-    ///
-    /// This method is mostly exception free. But it may still throw a
-    /// standard exception if memory allocation fails inside the method.
-    const_iterator begin() const;
-
-    /// \brief Return an iterator corresponding to the end of the elements
-    /// stored in CounterDictionary.
-    ///
-    /// This method is mostly exception free. But it may still throw a
-    /// standard exception if memory allocation fails inside the method.
-    const_iterator end() const;
 };
 
 }   // namespace statistics
