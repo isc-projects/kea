@@ -40,6 +40,22 @@ using namespace isc::util;
 const size_t Name::MAX_WIRE;
 const size_t Name::MAX_LABELS;
 
+// This is a name of maximum allowed number of labels
+const char* max_labels_str = "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 40
+                             "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 80
+                             "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 120
+                             "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 160
+                             "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 200
+                             "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 240
+                             "0.1.2.3.4.5.6";
+// This is a name of maximum allowed length
+const char* max_len_str = "123456789.123456789.123456789.123456789.123456789."
+                          "123456789.123456789.123456789.123456789.123456789."
+                          "123456789.123456789.123456789.123456789.123456789."
+                          "123456789.123456789.123456789.123456789.123456789."
+                          "123456789.123456789.123456789.123456789.123456789."
+                          "123";
+
 namespace {
 class NameTest : public ::testing::Test {
 protected:
@@ -47,6 +63,8 @@ protected:
                  example_name_upper("WWW.EXAMPLE.COM"),
                  small_name("aaa.example.com"),
                  large_name("zzz.example.com"),
+                 origin_name("example.com."),
+                 origin_name_upper("EXAMPLE.COM"),
                  buffer_actual(0), buffer_expected(0)
     {}
 
@@ -54,6 +72,8 @@ protected:
     Name example_name_upper;    // this will be modified and cannot be const
     const Name small_name;
     const Name large_name;
+    const Name origin_name;
+    const Name origin_name_upper;
     OutputBuffer buffer_actual, buffer_expected;
 
     //
@@ -137,6 +157,11 @@ checkBadTextName(const string& txt) {
     // NameParserException.
     EXPECT_THROW(Name(txt, false), ExceptionType);
     EXPECT_THROW(Name(txt, false), NameParserException);
+    // The same is thrown when constructing by the master-file constructor
+    EXPECT_THROW(Name(txt.c_str(), txt.length(), &Name::ROOT_NAME()),
+                 ExceptionType);
+    EXPECT_THROW(Name(txt.c_str(), txt.length(), &Name::ROOT_NAME()),
+                 NameParserException);
 }
 
 TEST_F(NameTest, fromText) {
@@ -201,25 +226,97 @@ TEST_F(NameTest, fromText) {
                                   "123456789.123456789.123456789.123456789."
                                   "123456789.1234");
     // This is a possible longest name and should be accepted
-    EXPECT_NO_THROW(Name("123456789.123456789.123456789.123456789.123456789."
-                         "123456789.123456789.123456789.123456789.123456789."
-                         "123456789.123456789.123456789.123456789.123456789."
-                         "123456789.123456789.123456789.123456789.123456789."
-                         "123456789.123456789.123456789.123456789.123456789."
-                         "123"));
+    EXPECT_NO_THROW(Name(string(max_len_str)));
     // \DDD must consist of 3 digits.
     checkBadTextName<IncompleteName>("\\12");
 
     // a name with the max number of labels.  should be constructed without
     // an error, and its length should be the max value.
-    Name maxlabels = Name("0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 40
-                          "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 80
-                          "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 120
-                          "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 160
-                          "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 200
-                          "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 240
-                          "0.1.2.3.4.5.6.");
+    Name maxlabels = Name(string(max_labels_str));
     EXPECT_EQ(Name::MAX_LABELS, maxlabels.getLabelCount());
+}
+
+// on the rest while we prepare it.
+// Check the @ syntax is accepted and it just copies the origin.
+TEST_F(NameTest, copyOrigin) {
+    EXPECT_EQ(origin_name, Name("@", 1, &origin_name));
+    // The downcase works on the origin too. But only when we provide it.
+    EXPECT_EQ(origin_name, Name("@", 1, &origin_name_upper, true));
+    EXPECT_EQ(origin_name_upper, Name("@", 1, &origin_name_upper, true));
+    // If we don't provide the origin, it throws
+    EXPECT_THROW(Name("@", 1, NULL), MissingNameOrigin);
+}
+
+// Test the master-file constructor does not append the origin when the
+// provided name is absolute
+TEST_F(NameTest, dontAppendOrigin) {
+    EXPECT_EQ(example_name, Name("www.example.com.", 16, &origin_name));
+    // The downcase works (only if provided, though)
+    EXPECT_EQ(example_name, Name("WWW.EXAMPLE.COM.", 16, &origin_name, true));
+    EXPECT_EQ(example_name_upper, Name("WWW.EXAMPLE.COM.", 16, &origin_name));
+    // And it does not require the origin to be provided
+    EXPECT_NO_THROW(Name("www.example.com.", 16, NULL));
+}
+
+// Test the master-file constructor properly appends the origin when
+// the provided name is relative.
+TEST_F(NameTest, appendOrigin) {
+    EXPECT_EQ(example_name, Name("www", 3, &origin_name));
+    // Check the downcase works (if provided)
+    EXPECT_EQ(example_name, Name("WWW", 3, &origin_name, true));
+    EXPECT_EQ(example_name, Name("WWW", 3, &origin_name_upper, true));
+    EXPECT_EQ(example_name_upper, Name("WWW", 3, &origin_name_upper));
+    // Check we can prepend more than one label
+    EXPECT_EQ(Name("a.b.c.d.example.com."), Name("a.b.c.d", 7, &origin_name));
+    // When the name is relative, we throw.
+    EXPECT_THROW(Name("www", 3, NULL), MissingNameOrigin);
+}
+
+// When we don't provide the data, it throws
+TEST_F(NameTest, noDataProvided) {
+    EXPECT_THROW(Name(NULL, 10, NULL), isc::InvalidParameter);
+    EXPECT_THROW(Name(NULL, 10, &origin_name), isc::InvalidParameter);
+    EXPECT_THROW(Name("www", 0, NULL), isc::InvalidParameter);
+    EXPECT_THROW(Name("www", 0, &origin_name), isc::InvalidParameter);
+}
+
+// When we combine the first part and the origin together, the resulting name
+// is too long. It should throw. Other test checks this is valid when alone
+// (without the origin appended).
+TEST_F(NameTest, combinedTooLong) {
+    EXPECT_THROW(Name(max_len_str, strlen(max_len_str), &origin_name),
+                 TooLongName);
+    EXPECT_THROW(Name(max_labels_str, strlen(max_labels_str), &origin_name),
+                 TooLongName);
+    // Appending the root should be OK
+    EXPECT_NO_THROW(Name(max_len_str, strlen(max_len_str),
+                         &Name::ROOT_NAME()));
+    EXPECT_NO_THROW(Name(max_labels_str, strlen(max_labels_str),
+                         &Name::ROOT_NAME()));
+}
+
+// Test the handling of @ in the name. If it is alone, it is the origin (when
+// it exists) or the root. If it is somewhere else, it has no special meaning.
+TEST_F(NameTest, atSign) {
+    // If it is alone, it is the origin
+    EXPECT_EQ(origin_name, Name("@", 1, &origin_name));
+    EXPECT_THROW(Name("@", 1, NULL), MissingNameOrigin);
+    EXPECT_EQ(Name::ROOT_NAME(), Name("@"));
+
+    // It is not alone. It is taken verbatim. We check the name converted
+    // back to the textual form, since checking it agains other name object
+    // may be wrong -- if we create it wrong the same way as the tested
+    // object.
+    EXPECT_EQ("\\@.", Name("@.").toText());
+    EXPECT_EQ("\\@.", Name("@.", 2, NULL).toText());
+    EXPECT_EQ("\\@something.", Name("@something").toText());
+    EXPECT_EQ("something\\@.", Name("something@").toText());
+    EXPECT_EQ("\\@x.example.com.", Name("@x", 2, &origin_name).toText());
+    EXPECT_EQ("x\\@.example.com.", Name("x@", 2, &origin_name).toText());
+
+    // An escaped at-sign isn't active
+    EXPECT_EQ("\\@.", Name("\\@").toText());
+    EXPECT_EQ("\\@.example.com.", Name("\\@", 2, &origin_name).toText());
 }
 
 TEST_F(NameTest, fromWire) {
@@ -520,7 +617,6 @@ TEST_F(NameTest, downcase) {
     // confirm the calling object is actually modified
     example_name_upper.downcase();
     compareInWireFormat(example_name_upper, example_name);
-    
 }
 
 TEST_F(NameTest, at) {

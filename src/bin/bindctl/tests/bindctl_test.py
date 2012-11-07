@@ -511,10 +511,7 @@ class TestBindCmdInterpreter(unittest.TestCase):
 
     def test_csv_file_dir(self):
         # Checking default value
-        if "HOME" in os.environ:
-            home_dir = os.environ["HOME"]
-        else:
-            home_dir = pwd.getpwnam(getpass.getuser()).pw_dir
+        home_dir = pwd.getpwnam(getpass.getuser()).pw_dir
         self.assertEqual(home_dir + os.sep + '.bind10' + os.sep,
                          bindcmd.BindCmdInterpreter().csv_file_dir)
 
