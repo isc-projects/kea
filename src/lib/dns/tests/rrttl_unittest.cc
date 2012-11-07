@@ -74,6 +74,11 @@ TEST_F(RRTTLTest, getValue) {
 }
 
 TEST_F(RRTTLTest, fromText) {
+    // Border cases
+    EXPECT_EQ(0, RRTTL("0").getValue());
+    EXPECT_EQ(4294967295, RRTTL("4294967295").getValue());
+
+    // Invalid cases
     EXPECT_THROW(RRTTL("0xdeadbeef"), InvalidRRTTL); // must be decimal
     EXPECT_THROW(RRTTL("-1"), InvalidRRTTL); // must be positive
     EXPECT_THROW(RRTTL("1.1"), InvalidRRTTL); // must be integer
@@ -100,6 +105,11 @@ TEST_F(RRTTLTest, fromTextUnit) {
     checkUnit(60 * 60, 'H');
     checkUnit(24 * 60 * 60, 'D');
     checkUnit(7 * 24 * 60 * 60, 'W');
+
+    // Some border cases
+    EXPECT_EQ(4294967295, RRTTL("4294967295S").getValue());
+    EXPECT_EQ(0, RRTTL("0W0D0H0M0S").getValue());
+    EXPECT_EQ(4294967295, RRTTL("1193046H1695S").getValue());
 
     // Now some compound ones. We allow any order (it would be much work to
     // check the order anyway). The last part can be without unit, in which

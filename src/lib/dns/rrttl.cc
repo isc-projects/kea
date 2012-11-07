@@ -104,8 +104,8 @@ RRTTL::RRTTL(const std::string& ttlstr) {
             // Any valid uint32_t number must have at most 10 digits. If it
             // has more, it could wrap around the int64_t silently (at least
             // in theory, some compilers seem to throw from lexical_cast).
-            if (unit - pos > 10 || value <= 0 || val <= 0 ||
-                val >= 0xffffffff) {
+            if (unit - pos > 10 || value < 0 || val < 0 ||
+                val > 0xffffffff) {
                 isc_throw(InvalidRRTTL, "Part of TTL out of range: " <<
                           ttlstr);
             }
