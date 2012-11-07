@@ -4,7 +4,7 @@ AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
-AM_CPPFLAGS += -DTEST_DATA_SRCDIR=\"$(srcdir)/testdata\"
+AM_CPPFLAGS += -DTEST_DATA_SRCDIR=\"$(abs_top_srcdir)/src/lib/dns/tests/testdata\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/dns/tests/testdata\"
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
@@ -26,6 +26,7 @@ run_unittests_SOURCES += master_lexer_inputsource_unittest.cc
 run_unittests_SOURCES += labelsequence_unittest.cc
 run_unittests_SOURCES += messagerenderer_unittest.cc
 run_unittests_SOURCES += master_lexer_token_unittest.cc
+run_unittests_SOURCES += master_lexer_unittest.cc
 run_unittests_SOURCES += name_unittest.cc
 run_unittests_SOURCES += nsec3hash_unittest.cc
 run_unittests_SOURCES += rrclass_unittest.cc rrtype_unittest.cc
