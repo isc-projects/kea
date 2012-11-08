@@ -57,10 +57,10 @@ public:
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
     ///
-    /// @exception NoDatabaseName Mandatory database name not given
-    /// @exception DbOpenError Error opening the database
-    /// @exception DbOperationError An operation on the open database has
-    ///            failed.
+    /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
+    /// @throw isc::dhcp::DbOpenError Error opening the database
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     MySqlLeaseMgr(const ParameterMap& parameters);
 
     /// @brief Destructor (closes database)
@@ -73,7 +73,8 @@ public:
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
     ///
-    /// @exception DbOperationError Database function failed
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual bool addLease(const Lease4Ptr& lease);
 
     /// @brief Adds an IPv6 lease.
@@ -83,7 +84,8 @@ public:
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
     ///
-    /// @exception DbOperationError Database function failed
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual bool addLease(const Lease6Ptr& lease);
 
     /// @brief Return IPv4 lease for specified IPv4 address and subnet_id
@@ -174,10 +176,10 @@ public:
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
     ///
-    /// @exception BadValue record retrieved from database had an invalid
-    ///            lease type field.
-    /// @exception DbOperationError MySQL operation failed, exception will give
-    ///            text indicating the reason.
+    /// @throw isc::BadValue record retrieved from database had an invalid
+    ///        lease type field.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns existing IPv6 leases for a given DUID+IA combination
@@ -215,8 +217,10 @@ public:
     ///
     /// @param lease4 The lease to be updated.
     ///
-    /// @exception NoSuchLease Attempt to update lease that did not exist.
-    /// @exception DbOperationError Update operation updated multiple leases.
+    /// @throw isc::dhcp::NoSuchLease Attempt to update a lease that did not
+    ///        exist.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual void updateLease6(const Lease6Ptr& lease6);
 
     /// @brief Deletes a lease.
@@ -232,8 +236,8 @@ public:
     ///
     /// @return true if deletion was successful, false if no such lease exists
     ///
-    /// @exception DbOperationError MySQL operation failed, exception will give
-    ///            text indicating the reason.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual bool deleteLease6(const isc::asiolink::IOAddress& addr);
 
     /// @brief Returns backend name.
@@ -261,8 +265,8 @@ public:
     /// compatible)
     /// Also if B>C, some database upgrade procedure may be triggered
     ///
-    /// @exception DbOperationError MySQL operation failed, exception will give
-    ///            text indicating the reason.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual std::pair<uint32_t, uint32_t> getVersion() const;
 
     /// @brief Commit Transactions
@@ -270,7 +274,7 @@ public:
     /// Commits all pending database operations.  On databases that don't
     /// support transactions, this is a no-op.
     ///
-    /// @exception DbOperationError if the commit failed.
+    /// @throw DbOperationError Iif the commit failed.
     virtual void commit();
 
     /// @brief Rollback Transactions
@@ -278,7 +282,7 @@ public:
     /// Rolls back all pending database operations.  On databases that don't
     /// support transactions, this is a no-op.
     ///
-    /// @exception DbOperationError if the rollback failed.
+    /// @throw DbOperationError If the rollback failed.
     virtual void rollback();
 
     ///@{
@@ -356,9 +360,9 @@ private:
     ///        to be valid, else an exception will be thrown.
     /// @param text Text of the SQL statement to be prepared.
     ///
-    /// @exception DbOperationError MySQL operation failed, exception will give
-    ///            text indicating the reason.
-    /// @exception InvalidParameter 'index' is not valid for the vector.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
+    /// @throw isc::InvalidParameter 'index' is not valid for the vector.
     void prepareStatement(StatementIndex index, const char* text);
 
     /// @brief Prepare statements
@@ -366,10 +370,10 @@ private:
     /// Creates the prepared statements for all of the SQL statements used
     /// by the MySQL backend.
     ///
-    /// @exception DbOperationError MySQL operation failed, exception will give
-    ///            text indicating the reason.
-    /// @exception InvalidParameter 'index' is not valid for the vector.  This
-    ///            represents an internal error within the code.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
+    /// @throw isc::InvalidParameter 'index' is not valid for the vector.  This
+    ///        represents an internal error within the code.
     void prepareStatements();
 
     /// @brief Open Database
@@ -377,8 +381,8 @@ private:
     /// Opens the database using the information supplied in the parameters
     /// passed to the constructor.
     ///
-    /// @exception NoDatabaseName Mandatory database name not given
-    /// @exception DbOpenError Error opening the database
+    /// @throw NoDatabaseName Mandatory database name not given
+    /// @throw DbOpenError Error opening the database
     void openDatabase();
 
     /// @brief Binds Parameters and Executes
@@ -397,7 +401,8 @@ private:
     ///        (Note that the number is determined by the number of parameters
     ///        in the statement.)
     ///
-    /// @exception DbOperationError Error doing a database operation.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     void bind6AndExecute(StatementIndex stindex, MYSQL_BIND* inbind) const;
 
     /// @brief Check Error and Throw Exception
@@ -410,7 +415,8 @@ private:
     /// @param index Index of statement that caused the error
     /// @param what High-level description of the error
     ///
-    /// @exception DbOperationError Error doing a database operation
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     inline void checkError(int status, StatementIndex index,
                            const char* what) const {
         if (status != 0) {

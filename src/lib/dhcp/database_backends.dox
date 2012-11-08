@@ -10,7 +10,7 @@
 
   @section dhcpdb-instantiation Instantiation of Lease Managers
 
-  A lease manager is instantiated through a the LeaseMgrFactory class.  This
+  A lease manager is instantiated through the LeaseMgrFactory class.  This
   has three methods:
 
   - isc::dhcp::LeaseMgrFactory::create - Creates a singleton Lease
@@ -20,9 +20,9 @@
   - isc::dhcp::LeaseMgrFactory::destroy - Destroys the singleton lease manager.
 
   The selection of the Lease Manager (and thus the backend database) is
-  is controlled by the argument passed to isc::dhcp::LeaseMgrfactory::create.
-  This is a string containing a set of "keyword=value" pairs (no embedded
-  spaces), each pair separated by a space from the others, e.g.
+  controlled by the connection string passed to
+  isc::dhcp::LeaseMgrFactory::create.  This is a set of "keyword=value" pairs
+  (no embedded spaces), each pair separated by a space from the others, e.g.
 
   \code
   type=mysql user=keatest password=keatest name=keatest host=localhost
@@ -30,29 +30,35 @@
 
   The following keywords are used for all backends:
 
-  - type - specifies the type of database backend.  The following types are
-    supported:
-       - mysql - Use MySQL as the database
+  - <b>type</b> - specifies the type of database backend.  The following values
+  for the type keyword are supported:
+     - <b>mysql</b> - Use MySQL as the database
 
-  The following keywords apply to the MySQL backend:
+  The following sections list the database-specific keywords:
 
-  - host - host on which the selected database is running.  If not supplied,
-    "localhost" is assumed.
-  - name - name of the MySQL database to access.  There is no default - this
-    must be supplied.
-  - password - password for the selected user ID (see below).  If not specified,
-    no password is used.
-  - user - database user ID under which the database is accessed.  If not
+  @subsection dhcpdb-keywords-mysql MySQL connection string keywords
+
+  - <b>host</b> - host on which the selected database is running.  If not
+  supplied, "localhost" is assumed.
+  - <b>name</b> - name of the MySQL database to access.  There is no default -
+  this must always be supplied.
+  - <b>password</b> - password for the selected user ID (see below).  If not
+  specified, no password is used.
+  - <b>user</b> - database user ID under which the database is accessed.  If not
     specified, no user ID is used - the database is assumed to be open.
+
 
   @section dhcp-backend-unittest Running Unit Tests
 
   With the use of databases requiring separate authorisation, there are
-  certain pre-requisties for scuccessfully running the unit tests.  These are
-  database-specific:
+  certain database-specific pre-requisites for successfully running the unit
+  tests.  These are listed in the following sections.
 
-  MySQL: a database called keatest needs to be set up.  A database user, also
-  called keatest (with a password keatest) must be given full privileges in
-  that database.  The unit tests create the database schema in the database
-  before each test, and delete it afterwards.
+  @subsection dhcp-mysql-unittest MySQL
+
+  A database called <i>keatest</i> needs to be set up using the MySQL
+  <b>CREATE DATABASE</b> command.  A database user, also called <i>keatest</i>
+  (with a password <i>keatest</i>) must be given full privileges in that
+  database.  The unit tests create the schema in the database before each test
+  and delete it afterwards.
   */
