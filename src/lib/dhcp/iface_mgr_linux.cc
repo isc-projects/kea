@@ -125,7 +125,7 @@ const static size_t RCVBUF_SIZE = 32768;
 
 /// @brief Opens netlink socket and initializes handle structure.
 ///
-/// @exception Unexpected Thrown if socket configuration fails.
+/// @throw isc::Unexpected Thrown if socket configuration fails.
 void Netlink::rtnl_open_socket() {
 
     fd_ = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);

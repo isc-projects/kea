@@ -12,15 +12,17 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <iostream>
-#include <iomanip>
-#include <string>
 #include <config.h>
-#include <time.h>
-#include <mysql/mysqld_error.h>
 
 #include <dhcp/mysql_lease_mgr.h>
 #include <asiolink/io_address.h>
+
+#include <mysql/mysqld_error.h>
+
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include <time.h>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -108,17 +110,18 @@ namespace dhcp {
 /// Owing to the MySQL API, the process requires some intermediate variables
 /// to hold things like length etc.  This object holds the intermediate
 /// variables as well.
-
-// Note - there are no unit tests for this class.  It is tested indirectly
-// in all MySqlLeaseMgr::xxx6() calls where it is used.
+///
+/// @note There are no unit tests for this class.  It is tested indirectly
+/// in all MySqlLeaseMgr::xxx6() calls where it is used.
 
 class MySqlLease6Exchange {
 public:
     /// @brief Constructor
     ///
-    /// Apart from the initialization of false_ and true_, the other
-    /// initializations are to satisfy cppcheck: none are really needed, as all
-    /// variables are initialized/set in the methods.
+    /// Apart from the initialization of false_ and true_, the initialization
+    /// of addr6_length_, duid_length_, addr6_buffer_ and duid_buffer_ are
+    /// to satisfy cppcheck: none are really needed, as all variables are
+    /// initialized/set in the methods.
     MySqlLease6Exchange() : addr6_length_(0), duid_length_(0),
                             false_(0), true_(1) {
         memset(addr6_buffer_, 0, sizeof(addr6_buffer_));
@@ -144,6 +147,12 @@ public:
         addr6_ = lease_->addr_.toText();
         addr6_length_ = addr6_.size();
 
+        // In the following statement, the string is being read.  However, the
+        // MySQL C interface does not use "const", so the "buffer" element
+        // is declared as "char*" instead of "const char*".  To resolve this,
+        // the "const" is discarded.  Note that the address of addr6_.c_str()
+        // is guaranteed to be valid until the next non-const operation on
+        // addr6_.
         bind_[0].buffer_type = MYSQL_TYPE_STRING;
         bind_[0].buffer = const_cast<char*>(addr6_.c_str());
         bind_[0].buffer_length = addr6_length_;
@@ -302,7 +311,7 @@ public:
     /// @return Lease6Ptr Pointer to a Lease6 object holding the relevant
     ///         data.
     ///
-    /// @exception BadValue Unable to convert Lease Type value in database
+    /// @throw isc::BadValue Unable to convert Lease Type value in database
     Lease6Ptr getLeaseData() {
 
         // Create the object to be returned.
@@ -373,6 +382,17 @@ private:
     uint32_t        subnet_id_;         ///< Subnet identification
     const my_bool   true_;              ///< "true_" for MySql
 };
+
+
+/// @brief Fetch and Release MySQL Results
+///
+/// When a MySQL statement is exected, to fetch the results the function
+/// mysql_stmt_fetch() must be called.  As well as getting data, this
+/// allocated internal state.  Subsequent calls to mysql_stmt_fetch
+/// can be made, but when all the data is retrieved, mysql_stmt_free_result
+/// must be called to free up the resources allocated.
+///
+/// This class acts as a wrapper around mysql_stmt_fect
 
 
 // MySqlLeaseMgr Methods
@@ -714,6 +734,8 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
     std::string addr6 = addr.toText();
     unsigned long addr6_length = addr6.size();
 
+    // See the earlier description of the use of "const_cast" when accessing
+    // the address for an explanation of the reason.
     inbind[0].buffer_type = MYSQL_TYPE_STRING;
     inbind[0].buffer = const_cast<char*>(addr6.c_str());
     inbind[0].buffer_length = addr6_length;
@@ -768,10 +790,10 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
     MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
 
-    // DUID.  The complex casting is needed to obtain the "const" vector of
-    // uint8_t from the DUID, point to the start of it (discarding the
-    // "const"ness) and finally casting it to "char*" for the MySQL buffer
-    // element.
+    // In the following statement, the DUID is being read.  However, the
+    // MySQL C interface does not use "const", so the "buffer" element
+    // is declared as "char*" instead of "const char*".  To resolve this,
+    // the "const" is discarded before the uint8_t* is cast to char*.
     const vector<uint8_t>& duid_vector = duid.getDuid();
     unsigned long duid_length = duid_vector.size();
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
@@ -836,10 +858,8 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
     MYSQL_BIND inbind[3];
     memset(inbind, 0, sizeof(inbind));
 
-    // DUID.  The complex casting is needed to obtain the "const" vector of
-    // uint8_t from the DUID, point to the start of it (discarding the
-    // "const"ness) and finally casing it to "char*" for the MySQL buffer
-    // element.
+    // See the earlier description of the use of "const_cast" when accessing
+    // the DUID for an explanation of the reason.
     const vector<uint8_t>& duid_vector = duid.getDuid();
     unsigned long duid_length = duid_vector.size();
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
@@ -922,6 +942,8 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     std::string addr6 = lease->addr_.toText();
     unsigned long addr6_length = addr6.size();
 
+    // See the earlier description of the use of "const_cast" when accessing
+    // the address for an explanation of the reason.
     where.buffer_type = MYSQL_TYPE_STRING;
     where.buffer = const_cast<char*>(addr6.c_str());
     where.buffer_length = addr6_length;
@@ -970,6 +992,8 @@ MySqlLeaseMgr::deleteLease6(const isc::asiolink::IOAddress& addr) {
     std::string addr6 = addr.toText();
     unsigned long addr6_length = addr6.size();
 
+    // See the earlier description of the use of "const_cast" when accessing
+    // the address for an explanation of the reason.
     inbind[0].buffer_type = MYSQL_TYPE_STRING;
     inbind[0].buffer = const_cast<char*>(addr6.c_str());
     inbind[0].buffer_length = addr6_length;

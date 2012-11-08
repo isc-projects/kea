@@ -324,6 +324,10 @@ typedef std::vector<Lease6Ptr> Lease6Collection;
 /// interface to all backends. As this is an abstract class, it should not
 /// be used directly, but rather specialized derived class should be used
 /// instead.
+///
+/// As all methods are virtual, this class throws no exceptions.  However,
+/// methods in concrete implementations of this class may throw exceptions:
+/// see the documentation of those classes for details.
 class LeaseMgr {
 public:
 
@@ -348,8 +352,6 @@ public:
     ///
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
-    ///
-    /// @exception DbOperationError Database function failed
     virtual bool addLease(const Lease4Ptr& lease) = 0;
 
     /// @brief Adds an IPv6 lease.
@@ -358,8 +360,6 @@ public:
     ///
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
-    ///
-    /// @exception DbOperationError Database function failed
     virtual bool addLease(const Lease6Ptr& lease) = 0;
 
     /// @brief Returns IPv4 lease for specified IPv4 address and subnet_id
@@ -484,9 +484,6 @@ public:
     /// @brief Updates IPv4 lease.
     ///
     /// @param lease4 The lease to be updated.
-    ///
-    /// @exception NoSuchLease Attempt to update lease that did not exist.
-    /// @exception DbOperationError Update operation updated multiple leases.
     virtual void updateLease6(const Lease6Ptr& lease6) = 0;
 
     /// @brief Deletes a lease.
@@ -533,16 +530,12 @@ public:
     ///
     /// Commits all pending database operations.  On databases that don't
     /// support transactions, this is a no-op.
-    ///
-    /// @exception DbOperationError if the commit failed.
     virtual void commit() = 0;
 
     /// @brief Rollback Transactions
     ///
     /// Rolls back all pending database operations.  On databases that don't
     /// support transactions, this is a no-op.
-    ///
-    /// @exception DbOperationError if the rollback failed.
     virtual void rollback() = 0;
 
     /// @todo: Add host management here

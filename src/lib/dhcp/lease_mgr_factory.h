@@ -75,10 +75,10 @@ public:
     ///        are back-end specific, although must include the "type" keyword
     ///        which gives the backend in use.
     ///
-    /// @exception InvalidParameter dbconfig string does not contain the
-    ///            "type" keyword.
-    /// @exception InvalidType The "type" keyword in dbconfig does not identify
-    ///            a supported backend.
+    /// @throw isc::InvalidParameter dbconfig string does not contain the "type"
+    ///        keyword.
+    /// @throw isc::dhcp::InvalidType The "type" keyword in dbconfig does not
+    ///        identify a supported backend.
     static void create(const std::string& dbconfig);
 
     /// @brief Destroy lease manager
@@ -93,8 +93,8 @@ public:
     /// Returns an instance of the "current" lease manager.  An exception
     /// will be thrown if none is available.
     ///
-    /// @exception NoLeaseManager No lease manager is available: use create()
-    ///            to create one before calling this method.
+    /// @throw isc::dhcp::NoLeaseManager No lease manager is available: use
+    ///        create() to create one before calling this method.
     static LeaseMgr& instance();
 
     /// @brief Parse Database Parameters
