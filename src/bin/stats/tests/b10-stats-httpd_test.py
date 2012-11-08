@@ -761,6 +761,7 @@ class TestStatsHttpd(unittest.TestCase):
             self.assertEqual(ht.address_family, socket.AF_INET)
             self.assertTrue(isinstance(ht.socket, socket.socket))
 
+    def test_httpd_anyIPv4(self):
         # any address (IPv4)
         server_addresses = get_availaddr(address='0.0.0.0')
         self.stats_httpd = MyStatsHttpd(server_addresses)
@@ -769,6 +770,7 @@ class TestStatsHttpd(unittest.TestCase):
             self.assertEqual(ht.address_family,socket.AF_INET)
             self.assertTrue(isinstance(ht.socket, socket.socket))
 
+    def test_httpd_anyIPv6(self):
         # any address (IPv6)
         if self.ipv6_enabled:
             server_addresses = get_availaddr(address='::')
@@ -778,6 +780,7 @@ class TestStatsHttpd(unittest.TestCase):
                 self.assertEqual(ht.address_family,socket.AF_INET6)
                 self.assertTrue(isinstance(ht.socket, socket.socket))
 
+    def test_httpd_failed(self):
         # existent hostname
         self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd,
                           get_availaddr(address='localhost'))
