@@ -506,7 +506,8 @@ public:
     /// Class constructor.
     OptionDataParser(const std::string&)
         : options_(NULL),
-          option_descriptor_(OptionPtr(), false) { }
+          // initialize option to NULL ptr
+          option_descriptor_(false) { }
 
     /// @brief Parses the single option data.
     ///
