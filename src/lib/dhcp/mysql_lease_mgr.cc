@@ -392,7 +392,37 @@ private:
 /// can be made, but when all the data is retrieved, mysql_stmt_free_result
 /// must be called to free up the resources allocated.
 ///
-/// This class acts as a wrapper around mysql_stmt_fect
+/// Created prior to the first fetch, this class's destructor calls
+/// mysql_stmt_free_result, so eliminating the need for an explicit release
+/// in the method using mysql_stmt_free_result.  In this way, it guarantees
+/// that the resources are released even if the MySqlLeaseMgr method concerned
+/// exits via an exception.
+class MySqlFreeResult {
+public:
+
+    /// @brief Constructor
+    ///
+    /// Store the pointer to the statement for which data is being fetched.
+    ///
+    /// Note that according to the MySQL documentation, mysql_stmt_free_result
+    /// only releases resources if a cursor has been allocated for the
+    /// statement.  This implies that it is a no-op if none have been.  Either
+    /// way, any error from mysql_stmt_free_result is ignored. (Generating
+    /// an exception is not much help, as it will only confuse things if the
+    /// method calling mysql_stmt_fetch is exiting via an exception.)
+    MySqlFreeResult(MYSQL_STMT* statement) : statement_(statement)
+    {}
+
+    /// @brief Destructor
+    ///
+    /// Frees up fetch context if a fetch has been successfully executed.
+    ~MySqlFreeResult() {
+        (void) mysql_stmt_free_result(statement_);
+    }
+
+private:
+    MYSQL_STMT*     statement_;     ///< Statement for which results are freed
+};
 
 
 // MySqlLeaseMgr Methods
@@ -745,7 +775,9 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
     // to fields in the exchange object, then execute the prepared statement.
     bind6AndExecute(stindex, inbind);
 
-    // Fetch the data.
+    // Fetch the data and set up the "release" object to release associated
+    // resources when this method exits.
+    MySqlFreeResult fetch_release(statements_[stindex]);
     int status = mysql_stmt_fetch(statements_[stindex]);
 
     Lease6Ptr result;
@@ -753,9 +785,6 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
         try {
             result = exchange6_->getLeaseData();
         } catch (const isc::BadValue& ex) {
-            // Free up result set.
-
-            (void) mysql_stmt_free_result(statements_[stindex]);
             // Lease type is returned, to rethrow the exception with a bit
             // more data.
             isc_throw(BadValue, ex.what() << ". Statement is <" <<
@@ -776,8 +805,6 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
         // This has already been set, so no action is needed.
     }
 
-    // Free data structures associated with information returned.
-    (void) mysql_stmt_free_result(statements_[stindex]);
     return (result);
 }
 
@@ -819,15 +846,17 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
     // Fetch the data.  There could be multiple rows, so we need to iterate
     // until all data has been retrieved.
     Lease6Collection result;
+
+    // Set up the fetch "release" object to release resources associated
+    // with the call to mysql_stmt_fetch when this method exits, then
+    // retrieve the data.
+    MySqlFreeResult fetch_release(statements_[stindex]);
     while ((status = mysql_stmt_fetch(statements_[stindex])) == 0) {
         try {
             Lease6Ptr lease = exchange6_->getLeaseData();
             result.push_back(lease);
 
         } catch (const isc::BadValue& ex) {
-            // Free up result set.
-            (void) mysql_stmt_free_result(statements_[stindex]);
-
             // Rethrow the exception with a bit more data.
             isc_throw(BadValue, ex.what() << ". Statement is <" <<
                       text_statements_[stindex] << ">");
@@ -843,8 +872,6 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
         ;
     }
 
-    // Free up resources assoicated with the fetched data.
-    (void) mysql_stmt_free_result(statements_[stindex]);
     return (result);
 }
 
@@ -882,7 +909,10 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
     // to fields in the exchange object, then execute the prepared statement.
     bind6AndExecute(stindex, inbind);
 
+    // Fetch the data and set up the "release" object to release associated
+    // resources when this method exits then retrieve the data.
     Lease6Ptr result;
+    MySqlFreeResult fetch_release(statements_[stindex]);
     int status = mysql_stmt_fetch(statements_[stindex]);
     if (status == 0) {
         try {
@@ -892,9 +922,6 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
             // ignore the excess and take the first.
 
         } catch (const isc::BadValue& ex) {
-            // Free up result set.
-
-            (void) mysql_stmt_free_result(statements_[stindex]);
             // Lease type is returned, to rethrow the exception with a bit
             // more data.
             isc_throw(BadValue, ex.what() << ". Statement is <" <<
@@ -915,8 +942,6 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
         // This has already been set, so the action is a no-op.
     }
 
-    // Free data structures associated with information returned.
-    (void) mysql_stmt_free_result(statements_[stindex]);
     return (result);
 }
 
@@ -1066,15 +1091,15 @@ MySqlLeaseMgr::getVersion() const {
                   mysql_error(mysql_));
     }
 
-    // Get the result
+    // Fetch the data and set up the "release" object to release associated
+    // resources when this method exits then retrieve the data.
+    MySqlFreeResult fetch_release(statements_[stindex]);
     status = mysql_stmt_fetch(statements_[stindex]);
     if (status != 0) {
-        (void) mysql_stmt_free_result(statements_[stindex]);
         isc_throw(DbOperationError, "unable to obtain result set: " <<
                   mysql_error(mysql_));
     }
 
-    (void) mysql_stmt_free_result(statements_[stindex]);
     return (std::make_pair(major, minor));
 }
 
