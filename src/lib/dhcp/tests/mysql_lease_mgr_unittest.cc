@@ -174,11 +174,20 @@ public:
         L4_ADDRESS(ADDRESS_4), L4_IOADDRESS(L4_ADDRESS), 
         L5_ADDRESS(ADDRESS_5), L5_IOADDRESS(L5_ADDRESS), 
         L6_ADDRESS(ADDRESS_6), L6_IOADDRESS(L6_ADDRESS), 
-        L7_ADDRESS(ADDRESS_7), L7_IOADDRESS(L7_ADDRESS)
-        {
+        L7_ADDRESS(ADDRESS_7), L7_IOADDRESS(L7_ADDRESS) {
+
         destroySchema();
         createSchema();
-        LeaseMgrFactory::create(validConnectionString());
+        try {
+            LeaseMgrFactory::create(validConnectionString());
+        } catch (...) {
+            std::cerr << "*** ERROR: unable to open database. The test\n"
+                         "*** environment is broken and must be fixed before\n"
+                         "*** the MySQL tests will run correctly.\n"
+                         "*** The reason for the problem is described in the\n"
+                         "*** accompanying exception output.\n";
+            throw;
+        }
         lmptr_ = &(LeaseMgrFactory::instance());
     }
 
@@ -419,7 +428,7 @@ TEST(MySqlOpenTest, OpenDatabase) {
         LeaseMgrFactory::destroy();
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
-               << "    " << ex.what()
+               << "    " << ex.what() << "\n"
                << "*** The test environment is broken and must be fixed\n"
                << "*** before the MySQL tests will run correctly.\n";
     }
