@@ -90,7 +90,7 @@ RRTTL::RRTTL(const std::string& ttlstr) {
                               " in: " << ttlstr);
                 }
             }
-            // Now extract the number, defaut to 1 if there's no digit
+            // Now extract the number.
             if (unit == pos) {
                 isc_throw(InvalidRRTTL, "Missing number in TTL: " << ttlstr);
             }
