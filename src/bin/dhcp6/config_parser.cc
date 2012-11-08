@@ -565,15 +565,13 @@ public:
         createOption();
     }
 
-    /// @brief Commits option values.
+    /// @brief Commits option value.
     ///
-    /// This function iterates over all options configured for a particular
-    /// subnet or globally and moves them to the storage. If there are any options
-    /// already present in the storage they will be replaced if options with
-    /// the same code are present in the intermediate storage.
+    /// This function adds new option to the storage or replaces existing option
+    /// with the same code.
     ///
-    /// @throw isc::InvalidOperation if failed to set pointer to storage failed
-    /// to call build() prior to commit. If that happens the data in the storage
+    /// @throw isc::InvalidOperation if failed to set pointer to storage or failed
+    /// to call build() prior to commit. If that happens data in the storage
     /// remain not modified.
     virtual void commit() {
         if (options_ == NULL) {
@@ -802,6 +800,9 @@ public:
         BOOST_FOREACH(ParserPtr parser, parsers_) {
             parser->commit();
         }
+        // Parsing was successful and we have all configured
+        // options in local storage. We can now replace old values
+        // with new values.
         std::swap(local_options_, *options_);
     }
 
@@ -814,7 +815,10 @@ public:
         return (new OptionDataListParser(param_name));
     }
 
-    /// Intermediate option storage
+    /// Intermediate option storage. This storage is used by
+    /// lower level parsers to add new options. Values held
+    /// in this storage are assigned to main storage (options_)
+    /// if overall parsing was successful.
     OptionStorage local_options_;
     /// Pointer to options instances storage.
     OptionStorage* options_;
