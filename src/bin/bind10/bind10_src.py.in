@@ -331,11 +331,7 @@ class BoB:
             each one.  It then clears that list.
         """
         logger.info(BIND10_KILLING_ALL_PROCESSES)
-
-        for pid in self.components:
-            logger.info(BIND10_KILL_PROCESS, self.components[pid].name())
-            self.components[pid].kill(True)
-        self.components = {}
+        self.__kill_children(True)
 
     def _read_bind10_config(self):
         """

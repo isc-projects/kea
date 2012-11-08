@@ -94,11 +94,6 @@ and continue running as the specified user, but the user is unknown.
 The boss module was not able to start every process it needed to start
 during startup, and will now kill the processes that did get started.
 
-% BIND10_KILL_PROCESS killing process %1
-The boss module is sending a kill signal to process with the given name,
-as part of the process of killing all started processes during a failed
-startup, as described for BIND10_KILLING_ALL_PROCESSES
-
 % BIND10_LOST_SOCKET_CONSUMER consumer %1 of sockets disconnected, considering all its sockets closed
 A connection from one of the applications which requested a socket was
 closed. This means the application has terminated, so all the sockets it was
