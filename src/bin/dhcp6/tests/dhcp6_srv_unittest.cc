@@ -34,13 +34,10 @@
 #include <dhcp/option6_int_array.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_srv.h>
-#include <dhcp6/dhcp6_srv.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
 
-using namespace boost;
 using namespace isc;
-using namespace isc::asiolink;
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
@@ -76,9 +73,9 @@ public:
     }
 
     // Generate IA_NA option with specified parameters
-    shared_ptr<Option6IA> generateIA(uint32_t iaid, uint32_t t1, uint32_t t2) {
-        shared_ptr<Option6IA> ia =
-            shared_ptr<Option6IA>(new Option6IA(D6O_IA_NA, iaid));
+    boost::shared_ptr<Option6IA> generateIA(uint32_t iaid, uint32_t t1, uint32_t t2) {
+        boost::shared_ptr<Option6IA> ia =
+            boost::shared_ptr<Option6IA>(new Option6IA(D6O_IA_NA, iaid));
         ia->setT1(t1);
         ia->setT2(t2);
         return (ia);
@@ -122,27 +119,27 @@ public:
 
     // Checks that server response (ADVERTISE or REPLY) contains proper IA_NA option
     // It returns IAADDR option for each chaining with checkIAAddr method.
-    shared_ptr<Option6IAAddr> checkIA_NA(const Pkt6Ptr& rsp, uint32_t expected_iaid,
+    boost::shared_ptr<Option6IAAddr> checkIA_NA(const Pkt6Ptr& rsp, uint32_t expected_iaid,
                                          uint32_t expected_t1, uint32_t expected_t2) {
         OptionPtr tmp = rsp->getOption(D6O_IA_NA);
         // Can't use ASSERT_TRUE() in method that returns something
         if (!tmp) {
             ADD_FAILURE() << "IA_NA option not present in response";
-            return (shared_ptr<Option6IAAddr>());
+            return (boost::shared_ptr<Option6IAAddr>());
         }
 
-        shared_ptr<Option6IA> ia = dynamic_pointer_cast<Option6IA>(tmp);
+        boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
         EXPECT_EQ(expected_iaid, ia->getIAID() );
         EXPECT_EQ(expected_t1, ia->getT1());
         EXPECT_EQ(expected_t2, ia->getT2());
 
         tmp = ia->getOption(D6O_IAADDR);
-        shared_ptr<Option6IAAddr> addr = dynamic_pointer_cast<Option6IAAddr>(tmp);
+        boost::shared_ptr<Option6IAAddr> addr = boost::dynamic_pointer_cast<Option6IAAddr>(tmp);
         return (addr);
     }
 
     // Check that generated IAADDR option contains expected address.
-    void checkIAAddr(shared_ptr<Option6IAAddr> addr, const IOAddress& expected_addr,
+    void checkIAAddr(boost::shared_ptr<Option6IAAddr> addr, const IOAddress& expected_addr,
                      uint32_t expected_preferred, uint32_t expected_valid) {
         // Check that the assigned address is indeed from the configured pool
         EXPECT_TRUE(subnet_->inPool(addr->getAddress()));
@@ -161,8 +158,8 @@ public:
 
     // Checks if the lease sent to client is present in the database
     Lease6Ptr checkLease(const DuidPtr& duid, const OptionPtr& ia_na,
-                         shared_ptr<Option6IAAddr> addr) {
-        shared_ptr<Option6IA> ia = dynamic_pointer_cast<Option6IA>(ia_na);
+                         boost::shared_ptr<Option6IAAddr> addr) {
+        boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(ia_na);
 
         Lease6Ptr lease = LeaseMgr::instance().getLease6(addr->getAddress());
         if (!lease) {
@@ -427,7 +424,7 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
     checkResponse(reply, DHCPV6_ADVERTISE, 1234);
 
     // check that IA_NA was returned and that there's an address included
-    shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
+    boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
                                                 subnet_->getT2());
 
     // Check that the assigned address is indeed from the configured pool
@@ -460,7 +457,7 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
     // Let's create a SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
-    shared_ptr<Option6IA> ia = generateIA(234, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(234, 1500, 3000);
 
     // with a valid hint
     IOAddress hint("2001:db8:1:1::dead:beef");
@@ -481,7 +478,7 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
     ASSERT_TRUE(tmp);
 
     // check that IA_NA was returned and that there's an address included
-    shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
+    boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
                                                 subnet_->getT2());
 
     // check that we've got the address we requested
@@ -514,7 +511,7 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     // Let's create a SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
-    shared_ptr<Option6IA> ia = generateIA(234, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(234, 1500, 3000);
     IOAddress hint("2001:db8:1::cafe:babe");
     ASSERT_FALSE(subnet_->inPool(hint));
     OptionPtr hint_opt(new Option6IAAddr(D6O_IAADDR, hint, 300, 500));
@@ -530,7 +527,7 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     checkResponse(reply, DHCPV6_ADVERTISE, 1234);
 
     // check that IA_NA was returned and that there's an address included
-    shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
+    boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
                                                 subnet_->getT2());
 
     // Check that the assigned address is indeed from the configured pool
@@ -585,11 +582,11 @@ TEST_F(Dhcpv6SrvTest, ManySolicits) {
     checkResponse(reply3, DHCPV6_ADVERTISE, 3456);
 
     // check that IA_NA was returned and that there's an address included
-    shared_ptr<Option6IAAddr> addr1 = checkIA_NA(reply1, 1, subnet_->getT1(),
+    boost::shared_ptr<Option6IAAddr> addr1 = checkIA_NA(reply1, 1, subnet_->getT1(),
                                                 subnet_->getT2());
-    shared_ptr<Option6IAAddr> addr2 = checkIA_NA(reply2, 2, subnet_->getT1(),
+    boost::shared_ptr<Option6IAAddr> addr2 = checkIA_NA(reply2, 2, subnet_->getT1(),
                                                 subnet_->getT2());
-    shared_ptr<Option6IAAddr> addr3 = checkIA_NA(reply3, 3, subnet_->getT1(),
+    boost::shared_ptr<Option6IAAddr> addr3 = checkIA_NA(reply3, 3, subnet_->getT1(),
                                                 subnet_->getT2());
 
     // Check that the assigned address is indeed from the configured pool
@@ -637,7 +634,7 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     // Let's create a REQUEST
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    shared_ptr<Option6IA> ia = generateIA(234, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(234, 1500, 3000);
 
     // with a valid hint
     IOAddress hint("2001:db8:1:1::dead:beef");
@@ -658,7 +655,7 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     ASSERT_TRUE(tmp);
 
     // check that IA_NA was returned and that there's an address included
-    shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
+    boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
                                                 subnet_->getT2());
 
     // check that we've got the address we requested
@@ -717,11 +714,11 @@ TEST_F(Dhcpv6SrvTest, ManyRequests) {
     checkResponse(reply3, DHCPV6_REPLY, 3456);
 
     // check that IA_NA was returned and that there's an address included
-    shared_ptr<Option6IAAddr> addr1 = checkIA_NA(reply1, 1, subnet_->getT1(),
+    boost::shared_ptr<Option6IAAddr> addr1 = checkIA_NA(reply1, 1, subnet_->getT1(),
                                                 subnet_->getT2());
-    shared_ptr<Option6IAAddr> addr2 = checkIA_NA(reply2, 2, subnet_->getT1(),
+    boost::shared_ptr<Option6IAAddr> addr2 = checkIA_NA(reply2, 2, subnet_->getT1(),
                                                 subnet_->getT2());
-    shared_ptr<Option6IAAddr> addr3 = checkIA_NA(reply3, 3, subnet_->getT1(),
+    boost::shared_ptr<Option6IAAddr> addr3 = checkIA_NA(reply3, 3, subnet_->getT1(),
                                                 subnet_->getT2());
 
     // Check that the assigned address is indeed from the configured pool
