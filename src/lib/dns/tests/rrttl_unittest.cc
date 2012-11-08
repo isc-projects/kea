@@ -110,6 +110,8 @@ TEST_F(RRTTLTest, fromTextUnit) {
     EXPECT_EQ(4294967295, RRTTL("4294967295S").getValue());
     EXPECT_EQ(0, RRTTL("0W0D0H0M0S").getValue());
     EXPECT_EQ(4294967295, RRTTL("1193046H1695S").getValue());
+    // Leading zeroes are accepted
+    EXPECT_EQ(4294967295, RRTTL("0000000000000004294967295S").getValue());
 
     // Now some compound ones. We allow any order (it would be much work to
     // check the order anyway). The last part can be without unit, in which
