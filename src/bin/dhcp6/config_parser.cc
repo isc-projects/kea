@@ -505,7 +505,8 @@ public:
     ///
     /// Class constructor.
     OptionDataParser(const std::string&)
-        : options_(NULL) { }
+        : options_(NULL),
+          option_descriptor_(OptionPtr(), false) { }
 
     /// @brief Parses the single option data.
     ///
@@ -570,33 +571,31 @@ public:
     /// already present in the storage they will be replaced if options with
     /// the same code are present in the intermediate storage.
     ///
-    /// @throw isc::InvalidOperation if failed to set pointer to storage
-    /// prior to calling commit. If that happens the data in the storage remain
-    /// not modified.
+    /// @throw isc::InvalidOperation if failed to set pointer to storage failed
+    /// to call build() prior to commit. If that happens the data in the storage
+    /// remain not modified.
     virtual void commit() {
         if (options_ == NULL) {
             isc_throw(isc::InvalidOperation, "Parser logic error: storage must be set before "
                       "commiting option data.");
+        } else  if (!option_descriptor_.option) {
+            // Before we can commit the new option should be configured. If it is not
+            // than somebody must have called commit() before build().
+            isc_throw(isc::InvalidOperation, "Parser logic error: no option has been configured and"
+                      " thus there is nothing to commit. Has build() been called?");
         }
-        // Get all new options from the intermediate storage. Note that it holds
-        // all options configured since last commit.
-        BOOST_FOREACH(Subnet::OptionDescriptor desc, intermediate_storage_) {
-            uint16_t opt_type = desc.option->getType();
-            Subnet::OptionContainerTypeIndex& idx = options_->get<1>();
-            // Try to find options with the particular option code in the main
-            // storage. If found, remove these options because they will be
-            // replaced with new ones.
-            Subnet::OptionContainerTypeRange range =
-                idx.equal_range(opt_type);
-            if (std::distance(range.first, range.second) > 0) {
-                idx.erase(range.first, range.second);
-            }
+        uint16_t opt_type = option_descriptor_.option->getType();
+        Subnet::OptionContainerTypeIndex& idx = options_->get<1>();
+        // Try to find options with the particular option code in the main
+        // storage. If found, remove these options because they will be
+        // replaced with new one.
+        Subnet::OptionContainerTypeRange range =
+            idx.equal_range(opt_type);
+        if (std::distance(range.first, range.second) > 0) {
+            idx.erase(range.first, range.second);
         }
-        // Append all options from the intermediate storage to the
-        // main storage.
-        options_->insert(options_->end(),
-                         intermediate_storage_.begin(),
-                         intermediate_storage_.end());
+        // Append new option to the main storage.
+        options_->push_back(option_descriptor_);
     }
 
     /// @brief Set storage for the parser.
@@ -688,14 +687,11 @@ private:
             // if definition does not exist.
             OptionPtr option(new Option(Option::V6, static_cast<uint16_t>(option_code),
                                         binary));
-            // The intermerdiate storage is used here because it is
-            // reset for each new parser created. Thus it collects only new
-            // options and can be later used to merge new options with
-            // options configured earlier (replace those that have the same
-            // option code and add new to storage). Merge is performed in
-            // commit stage.
-            Subnet::OptionDescriptor desc(option, false);
-            intermediate_storage_.push_back(desc);
+            // Created option is stored in option_descriptor_ class member until commit
+            // stage when it inserted into the main storage. If option with the same
+            // code exists in main storage already it replaces old option.
+            option_descriptor_.option = option;
+            option_descriptor_.persistent = false;
         } else {
             // We have exactly one option definition for the particular option code.
             // use it to create option instance.
@@ -706,7 +702,8 @@ private:
             try {
                 OptionPtr option = factory(Option::V6, option_code, binary);
                 Subnet::OptionDescriptor desc(option, false);
-                intermediate_storage_.push_back(desc);
+                option_descriptor_.option = option;
+                option_descriptor_.persistent = false;
             } catch (const isc::Exception& ex) {
                 isc_throw(Dhcp6ConfigError, "Parser error: option data does not match"
                           << " option definition (code " << option_code << "): "
@@ -748,9 +745,8 @@ private:
     /// Pointer to options storage. This storage is provided by
     /// the calling class and is shared by all OptionDataParser objects.
     OptionStorage* options_;
-    /// Intermediate option storage. It holds all newly configured
-    /// option values.
-    OptionStorage intermediate_storage_;
+    /// Option descriptor holds newly configured option.
+    Subnet::OptionDescriptor option_descriptor_;
 };
 
 /// @brief Parser for option data values with ina subnet.
@@ -768,7 +764,7 @@ public:
     /// a global option containers (option_default). That storage location
     /// is overriden on a subnet basis.
     OptionDataListParser(const std::string&)
-        : options_(&option_defaults) { }
+        : options_(&option_defaults), local_options_() { }
 
     /// @brief Parses entries that define options' data for a subnet.
     ///
@@ -782,8 +778,8 @@ public:
             boost::shared_ptr<OptionDataParser> parser(new OptionDataParser("option-data"));
             // options_ member will hold instances of all options thus
             // each OptionDataParser takes it as a storage.
-            parser->setStorage(options_);
-            // Build the instance of a singkle option.
+            parser->setStorage(&local_options_);
+            // Build the instance of a single option.
             parser->build(option_value);
             // Store a parser as it will be used to commit.
             parsers_.push_back(parser);
@@ -805,6 +801,7 @@ public:
         BOOST_FOREACH(ParserPtr parser, parsers_) {
             parser->commit();
         }
+        std::swap(local_options_, *options_);
     }
 
     /// @brief Create DhcpDataListParser object
@@ -816,6 +813,8 @@ public:
         return (new OptionDataListParser(param_name));
     }
 
+    /// Intermediate option storage
+    OptionStorage local_options_;
     /// Pointer to options instances storage.
     OptionStorage* options_;
     /// Collection of parsers;
