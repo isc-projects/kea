@@ -1,3 +1,13 @@
+500.	[bug]		jinmei
+	Corrected the autoconf example in the examples directory so it can
+	use the configured path to Boost to check availability of the BIND 10
+	library.  Previously the sample configure script could fail if
+	Boost is installed in an uncommon place.  Also, it now provides a
+	helper m4 function and example usage for embedding the library
+	path to executable (using linker options like -Wl,-R) to help
+	minimize post-build hassles.
+	(Trac #2356, git 36514ddc884c02a063e166d44319467ce6fb1d8f)
+
 499.	[func]		team
 	The b10-auth 'loadzone' command now uses the internal thread
 	introduced in 495 to (re)load a zone in the background, so that
