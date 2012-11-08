@@ -41,7 +41,12 @@ namespace master_lexer_internal {
 class InputSource : boost::noncopyable {
 public:
     /// \brief Returned by getChar() when end of stream is reached.
-    static const int END_OF_STREAM;
+    ///
+    /// \note C++ allows a static const class member of an integral type to
+    /// be used without explicit definition as long as its address isn't
+    /// required.  But, since this is a public member variable and we cannot
+    /// assume how it's used, we give a definition in the implementation.
+    static const int END_OF_STREAM = -1;
 
     /// \brief Exception thrown when ungetChar() is made to go before
     /// the start of buffer.
@@ -150,8 +155,6 @@ private:
     std::ifstream file_stream_;
     std::istream& input_;
 };
-
-const int InputSource::END_OF_STREAM = -1;
 
 } // namespace master_lexer_internal
 } // namespace dns
