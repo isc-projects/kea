@@ -748,7 +748,7 @@ private:
     Subnet::OptionDescriptor option_descriptor_;
 };
 
-/// @brief Parser for option data values with ina subnet.
+/// @brief Parser for option data values within a subnet.
 ///
 /// This parser iterates over all entries that define options
 /// data for a particular subnet and creates a collection of options.
