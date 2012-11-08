@@ -423,7 +423,7 @@ class BoB:
         while self.cc_session is None:
             # if we have been trying for "a while" give up
             if (time.time() - cc_connect_start) > 5:
-                logger.error(BIND10_STARTING_CC_FAIL)
+                logger.error(BIND10_CONNECTING_TO_CC_FAIL)
                 raise CChannelConnectError("Unable to connect to c-channel after 5 seconds")
 
             # try to connect, and if we can't wait a short while
