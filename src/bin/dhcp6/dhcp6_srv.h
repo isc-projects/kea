@@ -246,14 +246,14 @@ protected:
     void initStdOptionDefs();
 
 private:
-    /// server DUID (to be sent in server-identifier option)
-    boost::shared_ptr<isc::dhcp::Option> serverid_;
-
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
     /// It must be a pointer, because we will support changing engines
     /// during normal operation (e.g. to use different allocators)
-    AllocEngine* alloc_engine_;
+    boost::shared_ptr<AllocEngine> alloc_engine_;
+
+    /// Server DUID (to be sent in server-identifier option)
+    boost::shared_ptr<isc::dhcp::Option> serverid_;
 
     /// Indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.

@@ -41,12 +41,11 @@ namespace {
 
 class Dhcp6ParserTest : public ::testing::Test {
 public:
-    Dhcp6ParserTest()
-    :rcode_(-1) {
-        // Open port 0 means to not do anything at all. We don't want to
+    Dhcp6ParserTest() :rcode_(-1), srv_(0) {
+        // srv_(0) means to not open any sockets. We don't want to
         // deal with sockets here, just check if configuration handling
         // is sane.
-        srv_ = new Dhcpv6Srv(0);
+
         // Create instances of option definitions and put them into storage.
         // This is normally initialized by the server when calling run()
         // run() function.
@@ -54,7 +53,6 @@ public:
     }
 
     ~Dhcp6ParserTest() {
-        delete srv_;
     };
 
     /// @brief Create the simple configuration with single option.
@@ -133,7 +131,7 @@ public:
         ConstElementPtr x;
         std::string config = createConfigWithOption(param_value, parameter);
         ElementPtr json = Element::fromJSON(config);
-        EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+        EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
         ASSERT_TRUE(x);
         comment_ = parseAnswer(rcode_, x);
         ASSERT_EQ(1, rcode_);
@@ -179,7 +177,7 @@ public:
         EXPECT_TRUE(memcmp(expected_data, data, expected_data_len));
     }
 
-    Dhcpv6Srv* srv_;
+    Dhcpv6Srv srv_;
 
     int rcode_;
     ConstElementPtr comment_;
@@ -192,7 +190,7 @@ TEST_F(Dhcp6ParserTest, version) {
 
     ConstElementPtr x;
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_,
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_,
                     Element::fromJSON("{\"version\": 0}")));
 
     // returned value must be 0 (configuration accepted)
@@ -207,7 +205,7 @@ TEST_F(Dhcp6ParserTest, bogusCommand) {
 
     ConstElementPtr x;
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_,
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_,
                     Element::fromJSON("{\"bogus\": 5}")));
 
     // returned value must be 1 (configuration parse error)
@@ -223,7 +221,7 @@ TEST_F(Dhcp6ParserTest, emptySubnet) {
 
     ConstElementPtr status;
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(*srv_,
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
                     Element::fromJSON("{ \"interface\": [ \"all\" ],"
                                       "\"preferred-lifetime\": 3000,"
                                       "\"rebind-timer\": 2000, "
@@ -255,7 +253,7 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // check if returned status is OK
     ASSERT_TRUE(status);
@@ -294,7 +292,7 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value should be 0 (configuration success)
     ASSERT_TRUE(status);
@@ -327,7 +325,7 @@ TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value must be 2 (values error)
     // as the pool does not belong to that subnet
@@ -355,7 +353,7 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
 
     // returned value must be 1 (configuration parse error)
     ASSERT_TRUE(x);
@@ -397,7 +395,7 @@ TEST_F(Dhcp6ParserTest, optionDataDefaults) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
@@ -472,7 +470,7 @@ TEST_F(Dhcp6ParserTest, optionDataInSingleSubnet) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
@@ -538,7 +536,7 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
@@ -656,7 +654,7 @@ TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
     std::string config = createConfigWithOption("0a0b0C0D", "data");
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
@@ -697,7 +695,7 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     std::string config = createConfigWithOption(params);
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);

@@ -52,7 +52,8 @@ using namespace boost;
 namespace isc {
 namespace dhcp {
 
-Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
+Dhcpv6Srv::Dhcpv6Srv(uint16_t port) : alloc_engine_(), serverid_(),
+                                      shutdown_(false) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
 
@@ -94,9 +95,7 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
         .arg(LeaseMgr::instance().getName());
 
     // Instantiate allocation engine
-    alloc_engine_ = new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100);
-
-    shutdown_ = false;
+    alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
 }
 
 Dhcpv6Srv::~Dhcpv6Srv() {
