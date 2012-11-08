@@ -47,7 +47,6 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
 using namespace std;
-using namespace boost;
 
 namespace isc {
 namespace dhcp {
@@ -450,7 +449,7 @@ OptionPtr Dhcpv6Srv::handleIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid, 
     // Check if the client sent us a hint in his IA_NA. Clients may send an
     // address in their IA_NA options as a suggestion (e.g. the last address
     // they used before).
-    shared_ptr<Option6IAAddr> hintOpt = dynamic_pointer_cast<Option6IAAddr>
+    boost::shared_ptr<Option6IAAddr> hintOpt = boost::dynamic_pointer_cast<Option6IAAddr>
                                         (ia->getOption(D6O_IAADDR));
     IOAddress hint("::");
     if (hintOpt) {
