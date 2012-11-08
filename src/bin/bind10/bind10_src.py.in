@@ -1153,7 +1153,7 @@ TIP: if this is about permission error for a lock file, check if the directory
 of the file is writable for the user of the bind10 process; often you need
 to start bind10 as a super user.  Also, if you specify the -u option to
 change the user and group, the directory must be writable for the group,
-and the created lock file must be writabel for that user.
+and the created lock file must be writable for that user.
 """)
         sys.exit(1)
 
