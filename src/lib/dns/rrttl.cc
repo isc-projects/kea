@@ -98,14 +98,10 @@ RRTTL::RRTTL(const std::string& ttlstr) {
                                                                       unit));
             // Add what we found
             val += multiply * value;
-            // The partial value is still in range (the value can only grow,
-            // so if we get out now, it won't get better).
-            //
-            // Any valid uint32_t number must have at most 10 digits. If it
-            // has more, it could wrap around the int64_t silently (at least
-            // in theory, some compilers seem to throw from lexical_cast).
-            if (unit - pos > 10 || value < 0 || val < 0 ||
-                val > 0xffffffff) {
+            // Check the partial value is still in range (the value can only
+            // grow, so if we get out of range now, it won't get better, so
+            // there's no need to continue).
+            if (value < 0 || val < 0 || val > 0xffffffff) {
                 isc_throw(InvalidRRTTL, "Part of TTL out of range: " <<
                           ttlstr);
             }
