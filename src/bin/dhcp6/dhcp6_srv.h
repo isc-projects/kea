@@ -32,12 +32,16 @@ namespace isc {
 namespace dhcp {
 /// @brief DHCPv6 server service.
 ///
-/// This singleton class represents DHCPv6 server. It contains all
+/// This class represents DHCPv6 server. It contains all
 /// top-level methods and routines necessary for server operation.
 /// In particular, it instantiates IfaceMgr, loads or generates DUID
 /// that is going to be used as server-identifier, receives incoming
 /// packets, processes them, manages leases assignment and generates
 /// appropriate responses.
+///
+/// @note Only one instance of this class is instantated as it encompasses
+///       the whole operation of the server.  Nothing, however, enforces the
+///       singleton status of the object.
 class Dhcpv6Srv : public boost::noncopyable {
 
 public:
