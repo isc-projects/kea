@@ -576,16 +576,6 @@ TEST_F(MemoryClientTest, loadDNAMEAndNSNonApex2) {
     // Teardown checks for memory segment leaks
 }
 
-TEST_F(MemoryClientTest, loadRRSIGFollowsNothing) {
-    // This causes the situation where an RRSIG is added without a covered
-    // RRset.  Such cases are currently rejected.
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-rrsig-follows-nothing.zone"),
-                 ZoneDataUpdater::AddError);
-    // Teardown checks for memory segment leaks
-}
-
 TEST_F(MemoryClientTest, loadRRSIGs) {
     client_->load(Name("example.org"),
                   TEST_DATA_DIR "/example.org-rrsigs.zone");
