@@ -1474,8 +1474,10 @@ class TestBossComponents(unittest.TestCase):
         bob = MockBob()
         bob.runnable = True
         component = MockComponent('test', 53, 'Test')
+
+        self.assertFalse(53 in bob.components)
         bob.register_process(53, component)
-        self.assertEqual([[53, 'test', 'Test']], bob.get_processes())
+        self.assertTrue(53 in bob.components)
 
     def test_start_simple(self):
         '''Test simple process startup.'''
