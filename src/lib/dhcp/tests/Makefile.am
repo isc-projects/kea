@@ -29,7 +29,6 @@ TESTS =
 if HAVE_GTEST
 TESTS += libdhcp++_unittests libdhcpsrv_unittests
 libdhcp___unittests_SOURCES  = run_unittests.cc
-libdhcp___unittests_SOURCES += duid_unittest.cc
 libdhcp___unittests_SOURCES += iface_mgr_unittest.cc
 libdhcp___unittests_SOURCES += libdhcp++_unittest.cc
 libdhcp___unittests_SOURCES += option4_addrlst_unittest.cc
@@ -48,6 +47,7 @@ libdhcp___unittests_CXXFLAGS = $(AM_CXXFLAGS)
 libdhcpsrv_unittests_SOURCES  = run_unittests.cc
 libdhcpsrv_unittests_SOURCES += addr_utilities_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfgmgr_unittest.cc
+libdhcpsrv_unittests_SOURCES += duid_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_mgr_factory_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_mgr_unittest.cc
 if HAVE_MYSQL
