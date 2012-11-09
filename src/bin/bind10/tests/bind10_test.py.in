@@ -1413,7 +1413,6 @@ class TestBossComponents(unittest.TestCase):
     def test_get_processes(self):
         '''Test that procsses are returned correctly, sorted by pid.'''
         bob = MockBob()
-        bob.runnable = True
 
         pids = []
         pids.extend(range(0, 20))
