@@ -378,6 +378,7 @@ class TestBoB(unittest.TestCase):
         bob.init_socket_srv()
 
         self.assertIsNotNone(bob._srv_socket)
+        self.assertNotEqual(-1, bob._srv_socket.fileno())
         self.assertIsNotNone(bob._tmpdir)
         self.assertTrue(os.path.isdir(bob._tmpdir))
         self.assertIsNotNone(bob._socket_path)
@@ -385,9 +386,9 @@ class TestBoB(unittest.TestCase):
 
         bob.remove_socket_srv()
 
-        self.assertIsNone(bob._srv_socket)
-        self.assertIsNone(bob._tmpdir)
-        self.assertIsNone(bob._socket_path)
+        self.assertEqual(-1, bob._srv_socket.fileno())
+        self.assertFalse(os.path.exists(bob._socket_path))
+        self.assertFalse(os.path.isdir(bob._tmpdir))
 
     def test_init_alternate_socket(self):
         bob = BoB("alt_socket_file")
