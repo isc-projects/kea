@@ -406,6 +406,14 @@ class TestBoB(unittest.TestCase):
         self.assertFalse(os.path.exists(bob._socket_path))
         self.assertFalse(os.path.isdir(bob._tmpdir))
 
+        # These should not fail either:
+
+        # second call
+        bob.remove_socket_srv()
+
+        bob._srv_socket = None
+        bob.remove_socket_srv()
+
     def test_init_alternate_socket(self):
         bob = BoB("alt_socket_file")
         self.assertEqual(bob.verbose, False)
