@@ -28,6 +28,8 @@
 
 #include <gtest/gtest.h>
 
+#include <cassert>
+
 using isc::testutils::textToRRset;
 using namespace isc::dns;
 using namespace isc::datasrc::memory;
@@ -46,6 +48,11 @@ protected:
         if (zone_data_ != NULL) {
             ZoneData::destroy(mem_sgmt_, zone_data_, zclass_);
         }
+    }
+    void clearZoneData() {
+        assert(zone_data_ != NULL);
+        ZoneData::destroy(mem_sgmt_, zone_data_, zclass_);
+        zone_data_ = ZoneData::create(mem_sgmt_, zname_);
     }
 
     void TearDown() {
@@ -134,6 +141,67 @@ TEST_F(ZoneDataUpdaterTest, rrisgOnly) {
                      "example.org. 3600 IN RRSIG NSEC 5 3 3600 "
                      "20150420235959 20051021000000 1 example.org. FAKE"));
     EXPECT_FALSE(zone_data_->isSigned());
+}
+
+// Commonly used checks for rrisgForNSEC3Only
+void
+checkNSEC3Rdata(isc::util::MemorySegment& mem_sgmt, const Name& name,
+                ZoneData* zone_data)
+{
+    ZoneNode* node = NULL;
+    zone_data->getNSEC3Data()->insertName(mem_sgmt, name, &node);
+    ASSERT_NE(static_cast<ZoneNode*>(NULL), node);
+    const RdataSet* rdset = node->getData();
+    ASSERT_NE(static_cast<RdataSet*>(NULL), rdset);
+    ASSERT_EQ(RRType::NSEC3(), rdset->type);
+    EXPECT_EQ(0, rdset->getRdataCount());
+    EXPECT_EQ(1, rdset->getSigRdataCount());
+}
+
+TEST_F(ZoneDataUpdaterTest, rrisgForNSEC3Only) {
+    // Adding only RRSIG covering NSEC3 is tricky.  It should go to the
+    // separate NSEC3 tree, but the separate space is only created when
+    // NSEC3 or NSEC3PARAM is added.  So, in many cases RRSIG-only is allowed,
+    // but if no NSEC3 or NSEC3PARAM has been added it will be rejected.
+
+    // Below we use abnormal owner names and RDATA for NSEC3s for brevity,
+    // but that doesn't matter for this test.
+
+    // Add NSEC3PARAM, then RRSIG-only, which is okay.
+    updater_.add(textToRRset(
+                     "example.org. 3600 IN NSEC3PARAM 1 0 12 AABBCCDD"),
+                 textToRRset(
+                     "example.org. 3600 IN RRSIG NSEC3PARAM 5 3 3600 "
+                     "20150420235959 20051021000000 1 example.org. FAKE"));
+    EXPECT_TRUE(zone_data_->isNSEC3Signed());
+    updater_.add(ConstRRsetPtr(),
+                 textToRRset(
+                     "09GM.example.org. 3600 IN RRSIG NSEC3 5 3 3600 "
+                     "20150420235959 20051021000000 1 example.org. FAKE"));
+    checkNSEC3Rdata(mem_sgmt_, Name("09GM.example.org"), zone_data_);
+
+    // Clear the current content of zone, then add NSEC3
+    clearZoneData();
+    updater_.add(textToRRset(
+                     "AABB.example.org. 3600 IN NSEC3 1 0 10 AA 00000000 A"),
+                 textToRRset(
+                     "AABB.example.org. 3600 IN RRSIG NSEC3 5 3 3600 "
+                     "20150420235959 20051021000000 1 example.org. FAKE"));
+    updater_.add(ConstRRsetPtr(),
+                 textToRRset(
+                     "09GM.example.org. 3600 IN RRSIG NSEC3 5 3 3600 "
+                     "20150420235959 20051021000000 1 example.org. FAKE"));
+    checkNSEC3Rdata(mem_sgmt_, Name("09GM.example.org"), zone_data_);
+
+    // If we add only RRSIG without any NSEC3 related data beforehand,
+    // it will be rejected; it's a limitation of the current implementation.
+    clearZoneData();
+    EXPECT_THROW(updater_.add(
+                     ConstRRsetPtr(),
+                     textToRRset(
+                         "09GM.example.org. 3600 IN RRSIG NSEC3 5 3 3600 "
+                         "20150420235959 20051021000000 1 example.org. FAKE")),
+                 isc::NotImplemented);
 }
 
 }

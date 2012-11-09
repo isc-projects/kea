@@ -121,9 +121,18 @@ public:
     /// zone is half broken and really contains an RRSIG that doesn't have
     /// any covered RRset.  This implementation supports these cases.
     ///
+    /// There is one tricky case: Due to a limitation of the current
+    /// implementation, it cannot accept an RRSIG for NSEC3 without the covered
+    /// NSEC3, unless at least one NSEC3 or NSEC3PARAM has been added.
+    /// In this case an isc::NotImplemented exception will be thrown.  It
+    /// should be very rare in practice, and hopefully wouldn't be a real
+    /// issue.
+    ///
     /// \throw NullRRset Both \c rrset and sig_rrset is NULL
     /// \throw AddError any of a variety of validation checks fail for the
     /// \c rrset and its associated \c sig_rrset.
+    /// \throw NotImplemented RRSIG for NSEC3 cannot be added due to internal
+    /// restriction.
     ///
     /// \param rrset The RRset to be added.
     /// \param sig_rrset An associated RRSIG RRset for the \c rrset. It
@@ -162,7 +171,8 @@ private:
     const isc::dns::NSEC3Hash* getNSEC3Hash();
     template <typename T>
     void setupNSEC3(const isc::dns::ConstRRsetPtr rrset);
-    void addNSEC3(const isc::dns::ConstRRsetPtr rrset,
+    void addNSEC3(const isc::dns::Name& name,
+                  const isc::dns::ConstRRsetPtr rrset,
                   const isc::dns::ConstRRsetPtr rrsig);
     void addRdataSet(const isc::dns::Name& name,
                      const isc::dns::RRType& rrtype,

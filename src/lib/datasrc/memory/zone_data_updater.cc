@@ -243,14 +243,28 @@ ZoneDataUpdater::setupNSEC3(const ConstRRsetPtr rrset) {
 }
 
 void
-ZoneDataUpdater::addNSEC3(const ConstRRsetPtr rrset, const ConstRRsetPtr rrsig)
+ZoneDataUpdater::addNSEC3(const Name& name, const ConstRRsetPtr rrset,
+                          const ConstRRsetPtr rrsig)
 {
-    setupNSEC3<generic::NSEC3>(rrset);
+    if (rrset) {
+        setupNSEC3<generic::NSEC3>(rrset);
+    }
 
     NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
+    if (nsec3_data == NULL) {
+        // This is some tricky case: an RRSIG for NSEC3 is given without the
+        // covered NSEC3, and we don't even know any NSEC3 related data.
+        // This situation is not necessarily broken, but in our current
+        // implementation it's very difficult to deal with.  So we reject it;
+        // hopefully this case shouldn't happen in practice, at least unless
+        // zone is really broken.
+        assert(!rrset);
+        isc_throw(NotImplemented,
+                  "RRSIG for NSEC3 cannot be added - no known NSEC3 data");
+    }
 
     ZoneNode* node;
-    nsec3_data->insertName(mem_sgmt_, rrset->getName(), &node);
+    nsec3_data->insertName(mem_sgmt_, name, &node);
 
     RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, rrset, rrsig);
     RdataSet* old_rdataset = node->setData(rdataset);
@@ -265,7 +279,7 @@ ZoneDataUpdater::addRdataSet(const Name& name, const RRType& rrtype,
                              const ConstRRsetPtr rrsig)
 {
     if (rrtype == RRType::NSEC3()) {
-        addNSEC3(rrset, rrsig); // TBD: check RRSIG only case
+        addNSEC3(name, rrset, rrsig);
     } else {
         ZoneNode* node;
         zone_data_.insertName(mem_sgmt_, name, &node);
