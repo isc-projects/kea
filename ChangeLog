@@ -1,3 +1,8 @@
+501.	[func]      tomek
+	Added DHCPv6 allocation engine, now used in the processing of DHCPv6
+	messages.
+	(Trac #2414, git b3526430f02aa3dc3273612524d23137b8f1fe87)
+
 500.	[bug]		jinmei
 	Corrected the autoconf example in the examples directory so it can
 	use the configured path to Boost to check availability of the BIND 10
