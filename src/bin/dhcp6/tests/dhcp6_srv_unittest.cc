@@ -139,9 +139,14 @@ public:
     }
 
     // Check that generated IAADDR option contains expected address.
-    void checkIAAddr(boost::shared_ptr<Option6IAAddr> addr, const IOAddress& expected_addr,
+    void checkIAAddr(const boost::shared_ptr<Option6IAAddr>& addr,
+                     const IOAddress& expected_addr,
                      uint32_t expected_preferred, uint32_t expected_valid) {
-        // Check that the assigned address is indeed from the configured pool
+
+        // Check that the assigned address is indeed from the configured pool.
+        // Note that when comparing addresses, we compare the textual
+        // representation. IOAddress does not support being streamed to
+        // an ostream, which means it can't be used in EXPECT_EQ.
         EXPECT_TRUE(subnet_->inPool(addr->getAddress()));
         EXPECT_EQ(expected_addr.toText(), addr->getAddress().toText());
         EXPECT_EQ(addr->getPreferred(), subnet_->getPreferred());
@@ -326,7 +331,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
 
     ASSERT_EQ(0, rcode_);
 
-     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->addOption(generateIA(234, 1500, 3000));
     OptionPtr clientid = generateClientId();
