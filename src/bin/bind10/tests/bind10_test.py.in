@@ -998,6 +998,7 @@ class MockComponent:
         self.pid = lambda: pid
         self.address = lambda: address
         self.restarted = False
+        self.forceful = False
 
     def get_restart_time(self):
         return 0                # arbitrary dummy value
@@ -1012,8 +1013,8 @@ class MockComponent:
     def failed(self, status):
         return False
 
-    def kill(self, status):
-        return
+    def kill(self, forceful):
+        self.forceful = forceful
 
 class TestBossCmd(unittest.TestCase):
     def test_ping(self):
@@ -1450,12 +1451,14 @@ class TestBossComponents(unittest.TestCase):
     def test_kill_started_components(self):
         '''Test that started components are killed.'''
         bob = MockBob()
+
         component = MockComponent('test', 53, 'Test')
         bob.components[53] = component
 
         self.assertEqual([[53, 'test', 'Test']], bob.get_processes())
         bob.kill_started_components()
         self.assertEqual([], bob.get_processes())
+        self.assertTrue(component.forceful)
 
     def test_start_process(self):
         '''Test that processes can be started.'''
