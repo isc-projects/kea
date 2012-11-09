@@ -150,9 +150,17 @@ public:
         // In the following statement, the string is being read.  However, the
         // MySQL C interface does not use "const", so the "buffer" element
         // is declared as "char*" instead of "const char*".  To resolve this,
-        // the "const" is discarded.  Note that the address of addr6_.c_str()
+        // the "const" is discarded.  (Note that the address of addr6_.c_str()
         // is guaranteed to be valid until the next non-const operation on
-        // addr6_.
+        // addr6_.)
+        //
+        // Note that the const_cast could be avoided by copying the string to
+        // a writeable buffer and storing the address of that in the "buffer"
+        // element.  However, this introduces a copy operation (with additional
+        // overhead) purely to get round the strictures introduced by design of
+        // the MySQL interface (which uses the area pointed to by "buffer" as
+        // input when specifying query parameters and as output when retrieving
+        // data).  For that reason, "const_cast" has been used.
         bind_[0].buffer_type = MYSQL_TYPE_STRING;
         bind_[0].buffer = const_cast<char*>(addr6_.c_str());
         bind_[0].buffer_length = addr6_length_;
@@ -821,6 +829,14 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
     // MySQL C interface does not use "const", so the "buffer" element
     // is declared as "char*" instead of "const char*".  To resolve this,
     // the "const" is discarded before the uint8_t* is cast to char*.
+    //
+    // Note that the const_cast could be avoided by copying the DUID to
+    // a writeable buffer and storing the address of that in the "buffer"
+    // element.  However, this introduces a copy operation (with additional
+    // overhead) purely to get round the strictures introduced by design of
+    // the MySQL interface (which uses the area pointed to by "buffer" as
+    // input when specifying query parameters and as output when retrieving
+    // data).  For that reason, "const_cast" has been used.
     const vector<uint8_t>& duid_vector = duid.getDuid();
     unsigned long duid_length = duid_vector.size();
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
