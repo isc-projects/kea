@@ -1481,11 +1481,21 @@ class TestBossComponents(unittest.TestCase):
     def test_start_simple(self):
         '''Test simple process startup.'''
         bob = BoB()
-        bob.verbose = False
         bob.c_channel_env = {}
+
+        # non-verbose case
+        bob.verbose = False
         pi = bob.start_simple('/bin/true')
         self.assertEqual('/bin/true', pi.name)
         self.assertEqual(['/bin/true'], pi.args)
+        self.assertEqual({}, pi.env)
+        self.assertNotEqual(0, pi.pid)
+
+        # verbose case
+        bob.verbose = True
+        pi = bob.start_simple('/bin/true')
+        self.assertEqual('/bin/true', pi.name)
+        self.assertEqual(['/bin/true', '-v'], pi.args)
         self.assertEqual({}, pi.env)
         self.assertNotEqual(0, pi.pid)
 
