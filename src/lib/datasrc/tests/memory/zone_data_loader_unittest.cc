@@ -15,6 +15,7 @@
 #include <dns/name.h>
 #include <dns/rrclass.h>
 
+#include <datasrc/memory/rdataset.h>
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/zone_data_updater.h>
 #include <datasrc/memory/zone_data_loader.h>
@@ -42,13 +43,18 @@ protected:
     ZoneData* zone_data_;
 };
 
-TEST_F(ZoneDataLoaderTest, loadRRSIGFollowsNothing) {
+TEST_F(ZoneDataLoaderTest, DISABLED_loadRRSIGFollowsNothing) {
     // This causes the situation where an RRSIG is added without a covered
     // RRset.  Such cases are currently rejected.
-    EXPECT_THROW(loadZoneData(mem_sgmt_, zclass_, Name("example.org"),
+    zone_data_ = loadZoneData(mem_sgmt_, zclass_, Name("example.org"),
                               TEST_DATA_DIR
-                              "/example.org-rrsig-follows-nothing.zone"),
-                 ZoneDataUpdater::AddError);
+                              "/example.org-rrsig-follows-nothing.zone");
+    ZoneNode* node = NULL;
+    zone_data_->insertName(mem_sgmt_, Name("ns1.example.org"), &node);
+    ASSERT_NE(static_cast<ZoneNode*>(NULL), node);
+    const RdataSet* rdset = node->getData();
+    ASSERT_NE(static_cast<RdataSet*>(NULL), rdset);
+
     // Teardown checks for memory segment leaks
 }
 
