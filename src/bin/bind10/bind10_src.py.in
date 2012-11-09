@@ -914,11 +914,10 @@ class BoB:
         """
         if self._srv_socket is not None:
             self._srv_socket.close()
-            os.remove(self._socket_path)
-            os.rmdir(self._tmpdir)
-            self._srv_socket = None
-            self._tmpdir = None
-            self._socket_path = None
+            if os.path.exists(self._socket_path):
+                os.remove(self._socket_path)
+            if os.path.isdir(self._tmpdir):
+                os.rmdir(self._tmpdir)
 
     def _srv_accept(self):
         """
