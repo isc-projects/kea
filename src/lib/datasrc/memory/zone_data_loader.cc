@@ -126,20 +126,12 @@ ZoneDataLoader::flushNodeRRsets() {
         updater_.add(val.second, sig_rrset);
     }
 
-#ifdef notyet
+    // Normally rrsigsets map should be empty at this point, but it's still
+    // possible that an RRSIG that don't has covered RRset is added; they
+    // still remain in the map.  We add them to the zone separately.
     BOOST_FOREACH(NodeRRsetsVal val, node_rrsigsets_) {
         updater_.add(ConstRRsetPtr(), val.second);
     }
-#else
-    // Right now, we don't accept RRSIG without covered RRsets (this
-    // should eventually allowed, but to do so we'll need to update the
-    // finder).
-    if (!node_rrsigsets_.empty()) {
-        isc_throw(ZoneDataUpdater::AddError,
-                  "RRSIG is added without covered RRset for "
-                  << getCurrentName());
-    }
-#endif
 
     node_rrsets_.clear();
     node_rrsigsets_.clear();
