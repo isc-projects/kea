@@ -114,10 +114,16 @@ public:
     /// populated with the record data and added to the ZoneData for the
     /// name in the RRset.
     ///
-    /// This method throws an \c NullRRset exception (see above) if
-    /// \c rrset is empty. It throws \c AddError if any of a variety of
-    /// validation checks fail for the \c rrset and its associated
-    /// \c sig_rrset.
+    /// At least one of \c rrset or \c sig_rrset must be non NULL.
+    /// \c sig_rrset can be reasonably NULL when \c rrset is not signed in
+    /// the zone; it's unusual that \c rrset is NULL, but is still possible
+    /// if these RRsets are given separately to the loader, or if even the
+    /// zone is half broken and really contains an RRSIG that doesn't have
+    /// any covered RRset.  This implementation supports these cases.
+    ///
+    /// \throw NullRRset Both \c rrset and sig_rrset is NULL
+    /// \throw AddError any of a variety of validation checks fail for the
+    /// \c rrset and its associated \c sig_rrset.
     ///
     /// \param rrset The RRset to be added.
     /// \param sig_rrset An associated RRSIG RRset for the \c rrset. It
@@ -158,7 +164,9 @@ private:
     void setupNSEC3(const isc::dns::ConstRRsetPtr rrset);
     void addNSEC3(const isc::dns::ConstRRsetPtr rrset,
                   const isc::dns::ConstRRsetPtr rrsig);
-    void addRdataSet(const isc::dns::ConstRRsetPtr rrset,
+    void addRdataSet(const isc::dns::Name& name,
+                     const isc::dns::RRType& rrtype,
+                     const isc::dns::ConstRRsetPtr rrset,
                      const isc::dns::ConstRRsetPtr rrsig);
 
     util::MemorySegment& mem_sgmt_;
