@@ -76,11 +76,11 @@ public:
     ///
     /// It accepts either a decimal number, specifying number of seconds. Or,
     /// it can be given a sequence of numbers and units, like "2H" (meaning
-    /// two hours), "1W3D" (one week and 3 days). The allowed units are W, D,
-    /// H, M and S. They can be also specified in lower-case. No further
-    /// restrictions are checked (so they can be specified in arbitrary order
-    /// and even things like "1D1D" can be used to specify two days). The
-    /// unit at the last number can be omitted in case it is seconds.
+    /// two hours), "1W3D" (one week and 3 days). The allowed units are W
+    /// (week), D (day), H (hour), M (minute) and S (second). They can be also
+    /// specified in lower-case. No further restrictions are checked (so they
+    /// can be specified in arbitrary order and even things like "1D1D" can
+    /// be used to specify two days).
     ///
     /// \param ttlstr A string representation of the \c RRTTL.
     ///
