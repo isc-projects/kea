@@ -379,6 +379,9 @@ class TestBoB(unittest.TestCase):
 
         self.assertIsNotNone(bob._srv_socket)
         self.assertNotEqual(-1, bob._srv_socket.fileno())
+        self.assertEqual(os.path.join(bob._tmpdir, 'sockcreator'),
+                         bob._srv_socket.getsockname())
+
         self.assertIsNotNone(bob._tmpdir)
         self.assertTrue(os.path.isdir(bob._tmpdir))
         self.assertIsNotNone(bob._socket_path)
