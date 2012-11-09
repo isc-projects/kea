@@ -387,6 +387,19 @@ class TestBoB(unittest.TestCase):
         self.assertIsNotNone(bob._socket_path)
         self.assertTrue(os.path.exists(bob._socket_path))
 
+        # Check that it's possible to connect to the socket file (this
+        # only works if the socket file exists and the server listens on
+        # it).
+        s = socket.socket(socket.AF_UNIX)
+        try:
+            s.connect(bob._socket_path)
+            can_connect = True
+            s.close()
+        except socket.error as e:
+            can_connect = False
+
+        self.assertTrue(can_connect)
+
         bob.remove_socket_srv()
 
         self.assertEqual(-1, bob._srv_socket.fileno())
