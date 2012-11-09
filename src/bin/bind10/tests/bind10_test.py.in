@@ -35,6 +35,7 @@ import isc
 import isc.log
 import isc.bind10.socket_cache
 import errno
+import random
 
 from isc.testutils.parse_args import TestOptParser, OptsError
 from isc.testutils.ccsession_mock import MockModuleCCSession
@@ -1410,14 +1411,28 @@ class TestBossComponents(unittest.TestCase):
         self.assertFalse(component in bob.components_to_restart)
 
     def test_get_processes(self):
-        '''Test that procsses are returned correctly.'''
+        '''Test that procsses are returned correctly, sorted by pid.'''
         bob = MockBob()
         bob.runnable = True
-        component = MockComponent('test', 53, 'Test')
-        bob.components[53] = component
+
+        pids = []
+        pids.extend(range(0, 20))
+        random.shuffle(pids)
+
+        for i in range(0, 20):
+            pid = pids[i]
+            component = MockComponent('test' + str(pid), pid, 'Test' + str(pid))
+            bob.components[pid] = component
 
         process_list = bob.get_processes()
-        self.assertEqual([[53, 'test', 'Test']], process_list)
+        self.assertEqual(20, len(process_list))
+
+        last_pid = -1
+        for process in process_list:
+            pid = process[0]
+            self.assertLessEqual(last_pid, pid)
+            last_pid = pid
+            self.assertEqual([pid, 'test' + str(pid), 'Test' + str(pid)], process)
 
     def test_reap_children(self):
         '''Test that children are queued to be restarted when they ask for it.'''
