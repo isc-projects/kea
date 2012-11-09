@@ -83,7 +83,8 @@ RRTTL::RRTTL(const std::string& ttlstr) {
                     isc_throw(InvalidRRTTL, "Missing the last unit: " <<
                               ttlstr);
                 } else {
-                    // Case without any units at all. Just convert and store it.
+                    // Case without any units at all. Just convert and store
+                    // it.
                     val = boost::lexical_cast<int64_t>(ttlstr);
                     break;
                 }
