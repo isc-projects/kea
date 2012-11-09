@@ -47,10 +47,15 @@ available. It is issued during server startup is an indication that
 the initialization is proceeding normally.
 
 % AUTH_CONFIG_LOAD_FAIL load of configuration failed: %1
-An attempt to configure the server with information from the configuration
-database during the startup sequence has failed. (The reason for
-the failure is given in the message.) The server will continue its
-initialization although it may not be configured in the desired way.
+An attempt to configure the server with information from the
+configuration database during the startup sequence has failed.  The
+server will continue its initialization although it may not be
+configured in the desired way.  The reason for the failure is given in
+the message.  One common reason is that the server failed to acquire a
+socket bound to a privileged port (53 for DNS).  In that case the
+reason in the log message should show something like "permission
+denied", and the solution would be to restart BIND 10 as a super
+(root) user.
 
 % AUTH_CONFIG_UPDATE_FAIL update of configuration failed: %1
 At attempt to update the configuration the server with information
