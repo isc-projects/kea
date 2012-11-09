@@ -1450,7 +1450,6 @@ class TestBossComponents(unittest.TestCase):
     def test_kill_started_components(self):
         '''Test that started components are killed.'''
         bob = MockBob()
-        bob.runnable = True
         component = MockComponent('test', 53, 'Test')
         bob.components[53] = component
 
