@@ -106,7 +106,7 @@ TEST_F(RRTTLTest, fromTextUnit) {
     checkUnit(24 * 60 * 60, 'D');
     checkUnit(7 * 24 * 60 * 60, 'W');
 
-    // Some border cases
+    // Some border cases (with units)
     EXPECT_EQ(4294967295, RRTTL("4294967295S").getValue());
     EXPECT_EQ(0, RRTTL("0W0D0H0M0S").getValue());
     EXPECT_EQ(4294967295, RRTTL("1193046H1695S").getValue());
@@ -114,10 +114,8 @@ TEST_F(RRTTLTest, fromTextUnit) {
     EXPECT_EQ(4294967295, RRTTL("0000000000000004294967295S").getValue());
 
     // Now some compound ones. We allow any order (it would be much work to
-    // check the order anyway). The last part can be without unit, in which
-    // case it is considered seconds.
+    // check the order anyway).
     EXPECT_EQ(60 * 60 + 3, RRTTL("1H3S").getValue());
-    EXPECT_EQ(2 * 24 * 60 * 60 + 75 * 60 + 4, RRTTL("75M2D4").getValue());
 
     // Awkward, but allowed case - the same unit used twice.
     EXPECT_EQ(20 * 3600, RRTTL("12H8H").getValue());
@@ -145,6 +143,8 @@ TEST_F(RRTTLTest, fromTextUnit) {
 
     // Empty string is not allowed
     EXPECT_THROW(RRTTL(""), InvalidRRTTL);
+    // Missing the last unit is not allowed
+    EXPECT_THROW(RRTTL("3D5"), InvalidRRTTL);
 
     // There are some wrong units
     EXPECT_THROW(RRTTL("13X"), InvalidRRTTL);
