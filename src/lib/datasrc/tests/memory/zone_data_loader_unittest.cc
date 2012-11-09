@@ -43,9 +43,10 @@ protected:
     ZoneData* zone_data_;
 };
 
-TEST_F(ZoneDataLoaderTest, DISABLED_loadRRSIGFollowsNothing) {
+TEST_F(ZoneDataLoaderTest, loadRRSIGFollowsNothing) {
     // This causes the situation where an RRSIG is added without a covered
-    // RRset.  Such cases are currently rejected.
+    // RRset.  It will be accepted, and corresponding "sig-only" rdata will
+    // be created.
     zone_data_ = loadZoneData(mem_sgmt_, zclass_, Name("example.org"),
                               TEST_DATA_DIR
                               "/example.org-rrsig-follows-nothing.zone");
@@ -54,6 +55,9 @@ TEST_F(ZoneDataLoaderTest, DISABLED_loadRRSIGFollowsNothing) {
     ASSERT_NE(static_cast<ZoneNode*>(NULL), node);
     const RdataSet* rdset = node->getData();
     ASSERT_NE(static_cast<RdataSet*>(NULL), rdset);
+    EXPECT_EQ(RRType::A(), rdset->type); // there should be only 1 data here
+    EXPECT_EQ(0, rdset->getRdataCount()); // no RDATA
+    EXPECT_EQ(1, rdset->getSigRdataCount()); // but 1 SIG
 
     // Teardown checks for memory segment leaks
 }
