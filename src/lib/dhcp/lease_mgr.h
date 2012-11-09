@@ -481,9 +481,9 @@ public:
     /// If no such lease is present, an exception will be thrown.
     virtual void updateLease4(const Lease4Ptr& lease4) = 0;
 
-    /// @brief Updates IPv4 lease.
+    /// @brief Updates IPv6 lease.
     ///
-    /// @param lease4 The lease to be updated.
+    /// @param lease6 The lease to be updated.
     virtual void updateLease6(const Lease6Ptr& lease6) = 0;
 
     /// @brief Deletes a lease.
@@ -495,7 +495,7 @@ public:
 
     /// @brief Deletes a lease.
     ///
-    /// @param addr IPv4 address of the lease to be deleted.
+    /// @param addr IPv6 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
     virtual bool deleteLease6(const isc::asiolink::IOAddress& addr) = 0;
