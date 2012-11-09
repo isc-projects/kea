@@ -1472,7 +1472,6 @@ class TestBossComponents(unittest.TestCase):
     def test_register_process(self):
         '''Test that processes can be registered with BoB.'''
         bob = MockBob()
-        bob.runnable = True
         component = MockComponent('test', 53, 'Test')
 
         self.assertFalse(53 in bob.components)
