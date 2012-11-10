@@ -187,12 +187,12 @@ public:
     ///
     /// \param mem_sgmt The \c MemorySegment that allocated memory for
     /// \c node.
-    /// \param rrclass The RR class of the \c RdataSet to be destroyed.
     /// \param rdataset A non NULL pointer to a valid \c RdataSet object
+    /// \param rrclass The RR class of the \c RdataSet to be destroyed.
     /// that was originally created by the \c create() method (the behavior
     /// is undefined if this condition isn't met).
-    static void destroy(util::MemorySegment& mem_sgmt, dns::RRClass rrclass,
-                        RdataSet* rdataset);
+    static void destroy(util::MemorySegment& mem_sgmt, RdataSet* rdataset,
+                        dns::RRClass rrclass);
 
     /// \brief Find \c RdataSet of given RR type from a list (const version).
     ///

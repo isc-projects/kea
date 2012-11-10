@@ -253,7 +253,7 @@ ZoneDataUpdater::addNSEC3(const ConstRRsetPtr rrset, const ConstRRsetPtr rrsig)
     RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, rrset, rrsig);
     RdataSet* old_rdataset = node->setData(rdataset);
     if (old_rdataset != NULL) {
-        RdataSet::destroy(mem_sgmt_, rrclass_, old_rdataset);
+        RdataSet::destroy(mem_sgmt_, old_rdataset, rrclass_);
     }
 }
 
