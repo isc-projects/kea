@@ -131,11 +131,11 @@ TEST_F(RRTTLTest, fromTextUnit) {
     EXPECT_THROW(RRTTL("9223372036854775807S9223372036854775807S2S"),
                  InvalidRRTTL);
     // Second part out of range, but it immediately wraps (2S+2^64-2S)
-    EXPECT_THROW(RRTTL("2S18446744073709551614S"),
-                 InvalidRRTTL);
+    EXPECT_THROW(RRTTL("2S18446744073709551614S"), InvalidRRTTL);
     // The whole thing wraps right away (2^64S)
-    EXPECT_THROW(RRTTL("18446744073709551616S"),
-                 InvalidRRTTL);
+    EXPECT_THROW(RRTTL("18446744073709551616S"), InvalidRRTTL);
+    // Second part out of range, and will become negative with the unit,
+    EXPECT_THROW(RRTTL("256S307445734561825856M"), InvalidRRTTL);
 
     // Missing before unit.
     EXPECT_THROW(RRTTL("W5H"), InvalidRRTTL);
