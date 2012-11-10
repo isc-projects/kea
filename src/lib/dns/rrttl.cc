@@ -116,7 +116,8 @@ RRTTL::RRTTL(const std::string& ttlstr) {
             // Check the partial value is still in range (the value can only
             // grow, so if we get out of range now, it won't get better, so
             // there's no need to continue).
-            if (value < 0 || val < 0 || val > 0xffffffff) {
+            if (value < 0 || value > 0xffffffff || val < 0 ||
+                val > 0xffffffff) {
                 isc_throw(InvalidRRTTL, "Part of TTL out of range: " <<
                           ttlstr);
             }
