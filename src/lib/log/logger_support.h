@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LOGGER_SUPPORT_H
-#define __LOGGER_SUPPORT_H
+#ifndef LOGGER_SUPPORT_H
+#define LOGGER_SUPPORT_H
 
 #include <unistd.h>
 
@@ -68,4 +68,4 @@ void initLogger(const std::string& root,
 } // namespace log
 } // namespace isc
 
-#endif // __LOGGER_SUPPORT_H
+#endif // LOGGER_SUPPORT_H

@@ -18,6 +18,7 @@
 #include <testutils/socket_request.h>
 #include <testutils/mockups.h>
 
+#include <util/unittests/check_valgrind.h>
 #include <util/unittests/resource.h>
 
 #include <cc/data.h>
@@ -311,44 +312,48 @@ typedef InstallListenAddresses InstallListenAddressesDeathTest;
 // We make the socket requestor throw a "fatal" exception, one where we can't be
 // sure the state between processes is consistent. So we abort in that case.
 TEST_F(InstallListenAddressesDeathTest, inconsistent) {
-    AddressList deathAddresses;
-    deathAddresses.push_back(AddressPair("192.0.2.3", 5288));
-    // Make sure it actually kills the application (there should be an abort
-    // in this case)
-    EXPECT_DEATH({
-        isc::util::unittests::dontCreateCoreDumps();
+    if (!isc::util::unittests::runningOnValgrind()) {
+        AddressList deathAddresses;
+        deathAddresses.push_back(AddressPair("192.0.2.3", 5288));
+        // Make sure it actually kills the application (there should be an abort
+        // in this case)
+        EXPECT_DEATH({
+            isc::util::unittests::dontCreateCoreDumps();
 
-        try {
-          installListenAddresses(deathAddresses, store_, dnss_);
-        } catch (...) {
-          // Prevent exceptions killing the application, we need
-          // to make sure it dies the real hard way
-        };
-      }, "");
+            try {
+              installListenAddresses(deathAddresses, store_, dnss_);
+            } catch (...) {
+              // Prevent exceptions killing the application, we need
+              // to make sure it dies the real hard way
+            };
+          }, "");
+    }
 }
 
 // If we are unable to tell the boss we closed a socket, we abort, as we are
 // not consistent with the boss most probably.
 TEST_F(InstallListenAddressesDeathTest, cantClose) {
-    installListenAddresses(valid_, store_, dnss_);
-    AddressList empty;
-    // Instruct it to fail on close
-    sock_requestor_.break_release_ = true;
-    EXPECT_DEATH({
-        isc::util::unittests::dontCreateCoreDumps();
+    if (!isc::util::unittests::runningOnValgrind()) {
+        installListenAddresses(valid_, store_, dnss_);
+        AddressList empty;
+        // Instruct it to fail on close
+        sock_requestor_.break_release_ = true;
+        EXPECT_DEATH({
+            isc::util::unittests::dontCreateCoreDumps();
 
-        try {
-          // Setting to empty will close all current sockets.
-          // And thanks to the break_release_, the close will
-          // throw, which will make it crash.
-          installListenAddresses(empty, store_, dnss_);
-        } catch (...) {
-          // To make sure it is killed by abort, not by some
-          // (unhandled) exception
-        };
-      }, "");
-    // And reset it back, so it can safely clean up itself.
-    sock_requestor_.break_release_ = false;
+            try {
+              // Setting to empty will close all current sockets.
+              // And thanks to the break_release_, the close will
+              // throw, which will make it crash.
+              installListenAddresses(empty, store_, dnss_);
+            } catch (...) {
+              // To make sure it is killed by abort, not by some
+              // (unhandled) exception
+            };
+          }, "");
+        // And reset it back, so it can safely clean up itself.
+        sock_requestor_.break_release_ = false;
+    }
 }
 #endif // EXPECT_DEATH
 

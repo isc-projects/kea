@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ZONETABLE_H
-#define __ZONETABLE_H 1
+#ifndef ZONETABLE_H
+#define ZONETABLE_H 1
 
 #include <util/memory_segment.h>
 
@@ -153,7 +153,7 @@ private:
 };
 }
 }
-#endif  // __ZONETABLE_H
+#endif  // ZONETABLE_H
 
 // Local Variables:
 // mode: c++

@@ -14,8 +14,8 @@
 
 // $Id$
 
-#ifndef __RESPONSE_SCRUBBER_H
-#define __RESPONSE_SCRUBBER_H
+#ifndef RESPONSE_SCRUBBER_H
+#define RESPONSE_SCRUBBER_H
 
 /// \page DataScrubbing Data Scrubbing
 /// \section DataScrubbingIntro Introduction
@@ -419,4 +419,4 @@ public:
     }
 };
 
-#endif // __RESPONSE_SCRUBBER_H
+#endif // RESPONSE_SCRUBBER_H

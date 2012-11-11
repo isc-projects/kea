@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __NSAS_TEST_H
-#define __NSAS_TEST_H
+#ifndef NSAS_TEST_H
+#define NSAS_TEST_H
 
 /// \file nsas_test.h
 ///
@@ -293,4 +293,4 @@ protected:
 } // namespace nsas
 } // namespace isc
 
-#endif // __NSAS_TEST_H
+#endif // NSAS_TEST_H

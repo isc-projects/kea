@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(MULTITHREADING_FLAG)
@@ -17,8 +17,9 @@ if USE_CLANGPP
 AM_CXXFLAGS += -Wno-unused-parameter
 endif
 
-lib_LTLIBRARIES = libb10-statistics.la
-libb10_statistics_la_SOURCES  = counter.h counter.cc
-libb10_statistics_la_SOURCES  += counter_dict.h counter_dict.cc
-
 CLEANFILES = *.gcno *.gcda
+
+# These are header-only shared classes and required to build BIND 10.
+# Include them in the distributed tarball with EXTRA_DIST (like as
+# external sources in ext/).
+EXTRA_DIST = counter.h counter_dict.h

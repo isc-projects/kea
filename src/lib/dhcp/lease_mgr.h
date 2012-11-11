@@ -15,17 +15,20 @@
 #ifndef LEASE_MGR_H
 #define LEASE_MGR_H
 
+#include <asiolink/io_address.h>
+#include <dhcp/duid.h>
+#include <dhcp/option.h>
+#include <dhcp/subnet.h>
+#include <exceptions/exceptions.h>
+
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
+
 #include <fstream>
 #include <map>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include <asiolink/io_address.h>
-#include <boost/shared_ptr.hpp>
-#include <dhcp/duid.h>
-#include <dhcp/option.h>
-#include <exceptions/exceptions.h>
 
 /// @file dhcp/lease_mgr.h
 /// @brief An abstract API for lease database
@@ -90,10 +93,6 @@ public:
     NoSuchLease(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
-
-/// @brief specifies unique subnet identifier
-/// @todo: Move this to subnet.h once ticket #2237 is merged
-typedef uint32_t SubnetID;
 
 /// @brief Structure that holds a lease for IPv4 address
 ///
@@ -203,6 +202,10 @@ struct Lease6 {
         LEASE_IA_PD  /// the lease contains IPv6 prefix (for prefix delegation)
     } LeaseType;
 
+    Lease6(LeaseType type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
+           uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
+           uint32_t t2, SubnetID subnet_id, uint8_t prefixlen_ = 0);
+
     /// @brief specifies lease type (normal addr, temporary addr, prefix)
     LeaseType type_;
 
@@ -241,6 +244,8 @@ struct Lease6 {
     /// entity, we are keeping it in the lease. In case of multiple addresses/prefixes
     /// for the same IA, each must have consistent T1 and T2 values. Specified in
     /// seconds since cltt.
+    /// This value will also be useful for failover to calculate the next expected
+    /// client transmission time.
     uint32_t t1_;
 
     /// @brief T2 timer
@@ -330,21 +335,20 @@ typedef std::vector<Lease6Ptr> Lease6Collection;
 /// see the documentation of those classes for details.
 class LeaseMgr {
 public:
-
     /// Client Hardware address
     typedef std::vector<uint8_t> HWAddr;
 
     /// Database configuration parameter map
     typedef std::map<std::string, std::string> ParameterMap;
 
-    /// @brief The sole lease manager constructor
+    /// @brief Constructor
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
     LeaseMgr(const ParameterMap& parameters);
 
-    /// @brief Destructor (closes file)
-    virtual ~LeaseMgr();
+    /// @brief Destructor
+    ~LeaseMgr();
 
     /// @brief Adds an IPv4 lease.
     ///
@@ -542,10 +546,10 @@ public:
     /// As host reservation is outside of scope for 2012, support for hosts
     /// is currently postponed.
 
-protected:
     /// @brief returns value of the parameter
     std::string getParameter(const std::string& name) const;
 
+private:
     /// @brief list of parameters passed in dbconfig
     ///
     /// That will be mostly used for storing database name, username,

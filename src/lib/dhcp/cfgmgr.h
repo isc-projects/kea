@@ -162,4 +162,4 @@ protected:
 } // namespace isc::dhcp
 } // namespace isc
 
-#endif
+#endif // CFGMGR_H

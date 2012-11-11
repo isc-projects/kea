@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __DATASRC_MEMORY_ZONE_TABLE_H
-#define __DATASRC_MEMORY_ZONE_TABLE_H 1
+#ifndef DATASRC_MEMORY_ZONE_TABLE_H
+#define DATASRC_MEMORY_ZONE_TABLE_H 1
 
 #include <util/memory_segment.h>
 
@@ -102,7 +102,9 @@ private:
     /// This constructor internally involves resource allocation, and if
     /// it fails, a corresponding standard exception will be thrown.
     /// It never throws an exception otherwise.
-    ZoneTable(ZoneTableTree* zones) : zones_(zones)
+    ZoneTable(const dns::RRClass& rrclass, ZoneTableTree* zones) :
+        rrclass_(rrclass),
+        zones_(zones)
     {}
 
 public:
@@ -119,7 +121,7 @@ public:
     /// \param zone_class The RR class of the zone.  It must be the RR class
     /// that is supposed to be associated to the zone table.
     static ZoneTable* create(util::MemorySegment& mem_sgmt,
-                             dns::RRClass zone_class);
+                             const dns::RRClass& zone_class);
 
     /// \brief Destruct and deallocate \c ZoneTable
     ///
@@ -135,8 +137,7 @@ public:
     /// \param ztable A non NULL pointer to a valid \c ZoneTable object
     /// that was originally created by the \c create() method (the behavior
     /// is undefined if this condition isn't met).
-    static void destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable,
-                        dns::RRClass zone_class);
+    static void destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable);
 
     /// Add a new zone to the \c ZoneTable.
     ///
@@ -185,12 +186,13 @@ public:
     FindResult findZone(const isc::dns::Name& name) const;
 
 private:
+    const dns::RRClass rrclass_;
     boost::interprocess::offset_ptr<ZoneTableTree> zones_;
 };
 }
 }
 }
-#endif  // __DATASRC_MEMORY_ZONE_TABLE_H
+#endif  // DATASRC_MEMORY_ZONE_TABLE_H
 
 // Local Variables:
 // mode: c++

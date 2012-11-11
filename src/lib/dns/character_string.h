@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __CHARACTER_STRING_H
-#define __CHARACTER_STRING_H
+#ifndef CHARACTER_STRING_H
+#define CHARACTER_STRING_H
 
 #include <string>
 #include <exceptions/exceptions.h>
@@ -54,4 +54,4 @@ namespace characterstr {
 } // namespace dns
 } // namespace isc
 
-#endif // __CHARACTER_STRING_H
+#endif // CHARACTER_STRING_H

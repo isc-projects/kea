@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __MESSAGE_READER_H
-#define __MESSAGE_READER_H
+#ifndef MESSAGE_READER_H
+#define MESSAGE_READER_H
 
 #include <map>
 #include <string>
@@ -212,4 +212,4 @@ private:
 } // namespace log
 } // namespace isc
 
-#endif // __MESSAGE_READER_H
+#endif // MESSAGE_READER_H

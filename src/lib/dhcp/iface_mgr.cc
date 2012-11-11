@@ -247,6 +247,15 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
                 continue;
             }
 
+            // Bind link-local addresses only. Otherwise we bind several sockets
+            // on interfaces that have several global addresses. For examples
+            // with interface with 2 global addresses, we would bind 3 sockets
+            // (one for link-local and two for global). That would result in
+            // getting each message 3 times.
+            if (!addr->getAddress().to_v6().is_link_local()){
+                continue;
+            }
+
             sock = openSocket(iface->getName(), *addr, port);
             if (sock < 0) {
                 isc_throw(SocketConfigError, "failed to open unicast socket");

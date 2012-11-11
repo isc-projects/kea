@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ZONE_ENTRY_H
-#define __ZONE_ENTRY_H
+#ifndef ZONE_ENTRY_H
+#define ZONE_ENTRY_H
 
 #include <string>
 #include <vector>
@@ -189,4 +189,4 @@ private:
 } // namespace nsas
 } // namespace isc
 
-#endif // __ZONE_ENTRY_H
+#endif // ZONE_ENTRY_H

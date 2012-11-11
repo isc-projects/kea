@@ -681,4 +681,4 @@ private:
 }; // namespace isc::dhcp
 }; // namespace isc
 
-#endif
+#endif // IFACE_MGR_H

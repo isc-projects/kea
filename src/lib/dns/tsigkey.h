@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __TSIGKEY_H
-#define __TSIGKEY_H 1
+#ifndef TSIGKEY_H
+#define TSIGKEY_H 1
 
 #include <cryptolink/cryptolink.h>
 
@@ -353,7 +353,7 @@ private:
 }
 }
 
-#endif  // __TSIGKEY_H
+#endif  // TSIGKEY_H
 
 // Local Variables:
 // mode: c++

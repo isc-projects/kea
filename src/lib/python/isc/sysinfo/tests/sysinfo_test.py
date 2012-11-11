@@ -49,7 +49,7 @@ class MyLinuxFile:
         elif self._filename == '/proc/version':
             return 'An SMP version string'
         elif self._filename == '/proc/uptime':
-            return '86400.75 139993.71'
+            return '172800.75 139993.71'
         elif self._filename == '/proc/loadavg':
             return '0.1 0.2 0.3 0.4'
         else:
@@ -171,26 +171,33 @@ def _my_freebsd_os_sysconf(key):
 def _my_freebsd_platform_uname():
     return ('FreeBSD', 'freebsd', '8.2-RELEASE', '', 'i386')
 
-def _my_freebsd_osx_subprocess_check_output(command):
+def _my_freebsd_osx_subprocess_check_output(command, faked_output={}):
     '''subprocess output shared for freebsd and osx'''
     assert type(command) == list, 'command argument is not a list'
     if command == ['sysctl', '-n', 'kern.boottime']:
-        return bytes('{ sec = ' + str(int(time.time() - 76632)) + ', usec = 0 }\n', 'utf-8')
+        if 'boottime-sysctl' in faked_output:
+            return faked_output['boottime-sysctl']
+        return bytes('{ sec = ' + str(int(time.time() - 76632)) +
+                     ', usec = 0 }\n', 'utf-8')
     elif command == ['sysctl', '-n', 'vm.loadavg']:
         return b'{ 0.2 0.4 0.6 }\n'
     else:
         return _my_bsd_subprocess_check_output(command)
 
-def _my_freebsd_subprocess_check_output(command):
+def _my_freebsd_subprocess_check_output(command, faked_output):
     assert type(command) == list, 'command argument is not a list'
-    if command == ['sysctl', '-n', 'kern.smp.active']:
-        return b'1\n'
+    if command == ['sysctl', '-n', 'kern.smp.forward_signal_enabled']:
+        output = faked_output['smp-sysctl']
+        if isinstance(output, Exception):
+            raise output
+        return output
     elif command == ['vmstat', '-H']:
         return b' procs    memory       page                    disks    traps          cpu\n r b w    avm     fre  flt  re  pi  po  fr  sr wd0 cd0  int   sys   cs us sy id\n 0 0 0   343434  123456   47   0   0   0   0   0   2   0    2    80   14  0  1 99\n'
     elif command == ['swapctl', '-s', '-k']:
         return b'Total:         1013216    0\n'
     else:
-        freebsd_osx_output = _my_freebsd_osx_subprocess_check_output(command)
+        freebsd_osx_output = \
+            _my_freebsd_osx_subprocess_check_output(command, faked_output)
         if freebsd_osx_output is not None:
             return freebsd_osx_output
         else:
@@ -252,6 +259,7 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual('Unknown', s.get_platform_machine())
         self.assertFalse(s.get_platform_is_smp())
         self.assertEqual(None, s.get_uptime())
+        self.assertEqual(None, s.get_uptime_desc())
         self.assertEqual(None, s.get_loadavg())
         self.assertEqual(None, s.get_mem_total())
         self.assertEqual(None, s.get_mem_free())
@@ -267,7 +275,11 @@ class SysInfoTest(unittest.TestCase):
 
     def test_sysinfo_factory(self):
         """Test that SysInfoFromFactory returns a valid system-specific
-        SysInfo implementation."""
+        SysInfo implementation.
+
+        See sysinfo.SysInfoTestcase() for some of the parameters.
+
+        """
 
         old_platform_system = platform.system
         platform.system = _my_testcase_platform_system
@@ -281,6 +293,8 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual('Unknown', s.get_platform_machine())
         self.assertFalse(s.get_platform_is_smp())
         self.assertEqual(131072, s.get_uptime())
+        # We check that we do NOT add 's' to 'day' (because it's singular):
+        self.assertEqual('1 day, 12:24:32', s.get_uptime_desc())
         self.assertEqual(None, s.get_loadavg())
         self.assertEqual(None, s.get_mem_total())
         self.assertEqual(None, s.get_mem_free())
@@ -312,7 +326,10 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual(NPROCESSORS_LINUX, s.get_num_processors())
         self.assertEqual('myhostname', s.get_platform_hostname())
         self.assertTrue(s.get_platform_is_smp())
-        self.assertEqual(86401, s.get_uptime())
+        self.assertEqual(172801, s.get_uptime())
+        # We check that we add 's' to 'day', and that the mm part has an
+        # additional 0, i.e., not '0:0' but '0:00':
+        self.assertEqual('2 days, 0:00:01', s.get_uptime_desc())
         self.assertEqual((0.1, 0.2, 0.3), s.get_loadavg())
         self.assertEqual(3157884928, s.get_mem_total())
         self.assertEqual(891383808, s.get_mem_free())
@@ -366,7 +383,7 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual((0.7, 0.9, 0.8), s.get_loadavg())
         self.assertFalse(s.get_platform_is_smp())
         self.assertEqual(543214321, s.get_mem_total())
-        self.assertEqual(543214321 - (121212 * 1024), s.get_mem_free())
+        self.assertEqual(123456 * 1024, s.get_mem_free())
         self.assertEqual(566791168, s.get_mem_swap_total())
         self.assertEqual(566789120, s.get_mem_swap_free())
 
@@ -379,18 +396,42 @@ class SysInfoTest(unittest.TestCase):
         # with mock ones for testing.
         platform.system = _my_freebsd_platform_system
         os.sysconf = _my_freebsd_os_sysconf
-        subprocess.check_output = _my_freebsd_subprocess_check_output
+
+        # We use a lambda object so we can tweak the subprocess output during
+        # the tests later.
+        faked_process_output = { 'smp-sysctl': b'1\n' }
+        subprocess.check_output = lambda command : \
+            _my_freebsd_subprocess_check_output(command, faked_process_output)
+
         os.uname = _my_freebsd_platform_uname
 
         s = SysInfoFromFactory()
         self.assertEqual(NPROCESSORS_FREEBSD, s.get_num_processors())
         self.assertTrue(s.get_platform_is_smp())
 
+        # We check the kernel SMP support by the availability of a sysctl
+        # variable.  The value (especially a 0 value) shouldn't matter.
+        faked_process_output['smp-sysctl'] = b'0\n'
+        s = SysInfoFromFactory()
+        self.assertTrue(s.get_platform_is_smp())
+
+        # if the sysctl raises CalledProcessError, we treat it as non-SMP
+        # kernel.
+        faked_process_output['smp-sysctl'] = \
+            subprocess.CalledProcessError(1, 'sysctl')
+        s = SysInfoFromFactory()
+        self.assertFalse(s.get_platform_is_smp())
+
+        # if it results in OSError, no SMP information will be provided.
+        faked_process_output['smp-sysctl'] = OSError()
+        s = SysInfoFromFactory()
+        self.assertIsNone(s.get_platform_is_smp())
+
         self.check_bsd_values(s)
 
         self.assertEqual((0.2, 0.4, 0.6), s.get_loadavg())
         self.assertEqual(543214321, s.get_mem_total())
-        self.assertEqual(543214321 - (343434 * 1024), s.get_mem_free())
+        self.assertEqual(123456 * 1024, s.get_mem_free())
         self.assertEqual(1037533184, s.get_mem_swap_total())
         self.assertEqual(1037533184, s.get_mem_swap_free())
 

@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef ADDR_UTILITIES_H
+#define ADDR_UTILITIES_H
+
 #include <asiolink/io_address.h>
 
 namespace isc {
@@ -51,3 +54,5 @@ isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix
 
 };
 };
+
+#endif // ADDR_UTILITIES_H

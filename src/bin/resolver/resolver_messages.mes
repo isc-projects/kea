@@ -108,7 +108,7 @@ This error is issued when a resolver configuration update has specified
 a negative retry count: only zero or positive values are valid.  The
 configuration update was abandoned and the parameters were not changed.
 
-% RESOLVER_NON_IN_PACKET non-IN class request received, returning REFUSED message
+% RESOLVER_NON_IN_PACKET non-IN class (%1) request received, returning REFUSED message
 This debug message is issued when resolver has received a DNS packet that
 was not IN (Internet) class.  The resolver cannot handle such packets,
 so is returning a REFUSED response to the sender.

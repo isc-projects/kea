@@ -15,13 +15,13 @@
 #include <auth/command.h>
 #include <auth/auth_log.h>
 #include <auth/auth_srv.h>
+#include <auth/datasrc_clients_mgr.h>
 
 #include <cc/data.h>
 #include <datasrc/client_list.h>
 #include <config/ccsession.h>
 #include <exceptions/exceptions.h>
 #include <dns/rrclass.h>
-#include <util/threads/lock.h>
 
 #include <string>
 
@@ -176,54 +176,7 @@ public:
     virtual ConstElementPtr exec(AuthSrv& server,
                                  isc::data::ConstElementPtr args)
     {
-        if (args == NULL) {
-            isc_throw(AuthCommandError, "Null argument");
-        }
-
-        ConstElementPtr class_elem = args->get("class");
-        RRClass zone_class(class_elem ? RRClass(class_elem->stringValue()) :
-            RRClass::IN());
-
-        ConstElementPtr origin_elem = args->get("origin");
-        if (!origin_elem) {
-            isc_throw(AuthCommandError, "Zone origin is missing");
-        }
-        Name origin(origin_elem->stringValue());
-
-        // We're going to work with the client lists. They may be used
-        // from a different thread too, protect them.
-        isc::util::thread::Mutex::Locker locker(
-            server.getDataSrcClientListMutex());
-        const boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-            list(server.getDataSrcClientList(zone_class));
-
-        if (!list) {
-            isc_throw(AuthCommandError, "There's no client list for "
-                      "class " << zone_class);
-        }
-
-        switch (list->reload(origin)) {
-            case ConfigurableClientList::ZONE_RELOADED:
-                // Everything worked fine.
-                LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_LOAD_ZONE)
-                    .arg(zone_class).arg(origin);
-                return (createAnswer());
-            case ConfigurableClientList::ZONE_NOT_FOUND:
-                isc_throw(AuthCommandError, "Zone " << origin << "/" <<
-                          zone_class << " was not found in any configured "
-                          "data source. Configure it first.");
-            case ConfigurableClientList::ZONE_NOT_CACHED:
-                isc_throw(AuthCommandError, "Zone " << origin << "/" <<
-                          zone_class << " is not served from memory, but "
-                          "directly from the data source. It is not possible "
-                          "to reload it into memory. Configure it to be cached "
-                          "first.");
-            case ConfigurableClientList::CACHE_DISABLED:
-                // This is an internal error. Auth server must have the cache
-                // enabled.
-                isc_throw(isc::Unexpected, "Cache disabled in client list of "
-                          "class " << zone_class);
-        }
+        server.getDataSrcClientsMgr().loadZone(args);
         return (createAnswer());
     }
 };

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __HEADER_FLAGS_H
-#define __HEADER_FLAGS_H
+#ifndef HEADER_FLAGS_H
+#define HEADER_FLAGS_H
 
 #include <exceptions/exceptions.h>
 #include "option_info.h"
@@ -99,4 +99,4 @@ private:
 } // namespace badpacket
 } // namespace isc
 
-#endif // __HEADER_FLAGS_H
+#endif // HEADER_FLAGS_H

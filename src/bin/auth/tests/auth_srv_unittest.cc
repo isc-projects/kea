@@ -15,7 +15,6 @@
 #include <config.h>
 
 #include <util/io/sockaddr_util.h>
-#include <util/memory_segment_local.h>
 
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -36,10 +35,10 @@
 #include <auth/command.h>
 #include <auth/common.h>
 #include <auth/statistics.h>
+#include <auth/statistics_items.h>
 #include <auth/datasrc_config.h>
 
 #include <util/unittests/mock_socketsession.h>
-#include <util/threads/lock.h>
 #include <dns/tests/unittest_util.h>
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
@@ -70,12 +69,15 @@ using namespace isc::util::unittests;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::xfr;
+using namespace isc::auth;
 using namespace isc::asiodns;
 using namespace isc::asiolink;
 using namespace isc::testutils;
 using namespace isc::server_common::portconfig;
+using isc::datasrc::memory::ZoneTableSegment;
 using isc::UnitTestUtil;
 using boost::scoped_ptr;
+using isc::auth::statistics::Counters;
 
 namespace {
 const char* const CONFIG_TESTDB =
@@ -123,29 +125,47 @@ protected:
 
     // Helper for checking Rcode statistic counters;
     // Checks for one specific Rcode statistics counter value
-    void checkRcodeCounter(const Rcode& rcode, int expected_value) const {
-        EXPECT_EQ(expected_value, server.getCounter(rcode)) <<
-                  "Expected Rcode count for " << rcode.toText() <<
-                  " " << expected_value << ", was: " <<
-                  server.getCounter(rcode);
+    void checkRcodeCounter(const std::string& rcode_name, const int rcode_value,
+                           const int expected_value) const
+    {
+            EXPECT_EQ(expected_value, rcode_value) <<
+                      "Expected Rcode count for " << rcode_name <<
+                      " " << expected_value << ", was: " <<
+                      rcode_value;
     }
 
     // Checks whether all Rcode counters are set to zero
     void checkAllRcodeCountersZero() const {
-        for (int i = 0; i < 17; i++) {
-            checkRcodeCounter(Rcode(i), 0);
-        }
+        // with checking NOERROR == 0 and the others are 0
+        checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 0);
     }
 
     // Checks whether all Rcode counters are set to zero except the given
     // rcode (it is checked to be set to 'value')
     void checkAllRcodeCountersZeroExcept(const Rcode& rcode, int value) const {
-        for (int i = 0; i < 17; i++) {
-            const Rcode rc(i);
-            if (rc == rcode) {
-                checkRcodeCounter(Rcode(i), value);
-            } else {
-                checkRcodeCounter(Rcode(i), 0);
+        std::string target_rcode_name = rcode.toText();
+        std::transform(target_rcode_name.begin(), target_rcode_name.end(),
+                       target_rcode_name.begin(), ::tolower);
+        // rcode 16 is registered as both BADVERS and BADSIG
+        if (target_rcode_name == "badvers") {
+            target_rcode_name = "badsigvers";
+        }
+
+        const std::map<std::string, ConstElementPtr>
+            stats_map(server.getStatistics()->mapValue());
+
+        const std::string rcode_prefix("rcode.");
+        for (std::map<std::string, ConstElementPtr>::const_iterator
+                 i = stats_map.begin(), e = stats_map.end();
+             i != e;
+             ++i)
+        {
+            if (i->first.compare(0, rcode_prefix.size(), rcode_prefix) == 0) {
+                if (i->first.compare(rcode_prefix + target_rcode_name) == 0) {
+                    checkRcodeCounter(i->first, i->second->intValue(), value);
+                } else {
+                    checkRcodeCounter(i->first, i->second->intValue(), 0);
+                }
             }
         }
     }
@@ -220,6 +240,29 @@ createBuiltinVersionResponse(const qid_t qid, vector<uint8_t>& data) {
     data.assign(static_cast<const uint8_t*>(renderer.getData()),
                 static_cast<const uint8_t*>(renderer.getData()) +
                 renderer.getLength());
+}
+
+// Check if the item has expected value.
+// Before reading the item, check the item exists.
+void
+expectCounterItem(ConstElementPtr stats,
+                  const std::string& item, const int expected) {
+    ConstElementPtr value(Element::create(0));
+    if (item == "queries.udp" || item == "queries.tcp" || expected != 0) {
+        // if the value of the item is not zero, the item exists and has
+        // expected value
+        // item "queries.udp" and "queries.tcp" exists whether the value
+        // is zero or nonzero
+        ASSERT_TRUE(stats->find(item, value)) << "    Item: " << item;
+        // Get the value of the item with another method because of API bug
+        // (ticket #2302)
+        value = stats->find(item);
+        EXPECT_EQ(expected, value->intValue()) << "    Item: " << item;
+    } else {
+        // otherwise the item does not exist
+        ASSERT_FALSE(stats->find(item, value)) << "    Item: " << item <<
+            std::endl << "   Value: " << value->intValue();
+    }
 }
 
 // We did not configure any client lists. Therefore it should be REFUSED
@@ -405,7 +448,9 @@ TEST_F(AuthSrvTest, TSIGCheckFirst) {
         "It should be unsigned with this error";
     // TSIG should have failed, and so the per opcode counter shouldn't be
     // incremented.
-    EXPECT_EQ(0, server.getCounter(Opcode::RESERVED14()));
+    ConstElementPtr stats = server.getStatistics();
+    expectCounterItem(stats, "opcode.normal", 0);
+    expectCounterItem(stats, "opcode.other", 0);
 
     checkAllRcodeCountersZeroExcept(Rcode::NOTAUTH(), 1);
 }
@@ -726,11 +771,11 @@ TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
 }
 
 void
-installDataSrcClientLists(AuthSrv& server,
-                          AuthSrv::DataSrcClientListsPtr lists)
-{
-    thread::Mutex::Locker locker(server.getDataSrcClientListMutex());
-    server.swapDataSrcClientLists(lists);
+installDataSrcClientLists(AuthSrv& server, ClientListMapPtr lists) {
+    // For now, we use explicit swap than reconfigure() because the latter
+    // involves a separate thread and cannot guarantee the new config is
+    // available for the subsequent test.
+    server.getDataSrcClientsMgr().setDataSrcClientLists(lists);
 }
 
 void
@@ -1041,8 +1086,12 @@ TEST_F(AuthSrvTest,
 
 // Submit UDP normal query and check query counter
 TEST_F(AuthSrvTest, queryCounterUDPNormal) {
-    // The counter should be initialized to 0.
-    EXPECT_EQ(0, server.getCounter(AuthCounters::SERVER_UDP_QUERY));
+    // The counters should be initialized to 0.
+    ConstElementPtr stats_init = server.getStatistics();
+    expectCounterItem(stats_init, "queries.udp", 0);
+    expectCounterItem(stats_init, "queries.tcp", 0);
+    expectCounterItem(stats_init, "opcode.query", 0);
+    expectCounterItem(stats_init, "rcode.refused", 0);
     // Create UDP message and process.
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
                                        default_qid, Name("example.com"),
@@ -1050,18 +1099,25 @@ TEST_F(AuthSrvTest, queryCounterUDPNormal) {
     createRequestPacket(request_message, IPPROTO_UDP);
     server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
-    // After processing UDP query, the counter should be 1.
-    EXPECT_EQ(1, server.getCounter(AuthCounters::SERVER_UDP_QUERY));
-    // The counter for opcode Query should also be one
-    EXPECT_EQ(1, server.getCounter(Opcode::QUERY()));
-    // The counter for REFUSED responses should also be one, the rest zero
-    checkAllRcodeCountersZeroExcept(Rcode::REFUSED(), 1);
+    // After processing the UDP query, these counters should be incremented:
+    //   queries.udp, opcode.query, rcode.refused
+    // and these counters should not be incremented:
+    //   queries.tcp
+    ConstElementPtr stats_after = server.getStatistics();
+    expectCounterItem(stats_after, "queries.udp", 1);
+    expectCounterItem(stats_after, "queries.tcp", 0);
+    expectCounterItem(stats_after, "opcode.query", 1);
+    expectCounterItem(stats_after, "rcode.refused", 1);
 }
 
 // Submit TCP normal query and check query counter
 TEST_F(AuthSrvTest, queryCounterTCPNormal) {
-    // The counter should be initialized to 0.
-    EXPECT_EQ(0, server.getCounter(AuthCounters::SERVER_TCP_QUERY));
+    // The counters should be initialized to 0.
+    ConstElementPtr stats_init = server.getStatistics();
+    expectCounterItem(stats_init, "queries.udp", 0);
+    expectCounterItem(stats_init, "queries.tcp", 0);
+    expectCounterItem(stats_init, "opcode.query", 0);
+    expectCounterItem(stats_init, "rcode.refused", 0);
     // Create TCP message and process.
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
                                        default_qid, Name("example.com"),
@@ -1069,18 +1125,24 @@ TEST_F(AuthSrvTest, queryCounterTCPNormal) {
     createRequestPacket(request_message, IPPROTO_TCP);
     server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
-    // After processing TCP query, the counter should be 1.
-    EXPECT_EQ(1, server.getCounter(AuthCounters::SERVER_TCP_QUERY));
-    // The counter for SUCCESS responses should also be one
-    EXPECT_EQ(1, server.getCounter(Opcode::QUERY()));
-    // The counter for REFUSED responses should also be one, the rest zero
-    checkAllRcodeCountersZeroExcept(Rcode::REFUSED(), 1);
+    // After processing the TCP query, these counters should be incremented:
+    //   queries.tcp, opcode.query, rcode.refused
+    // and these counters should not be incremented:
+    //   queries.udp
+    ConstElementPtr stats_after = server.getStatistics();
+    expectCounterItem(stats_after, "queries.udp", 0);
+    expectCounterItem(stats_after, "queries.tcp", 1);
+    expectCounterItem(stats_after, "opcode.query", 1);
+    expectCounterItem(stats_after, "rcode.refused", 1);
 }
 
 // Submit TCP AXFR query and check query counter
 TEST_F(AuthSrvTest, queryCounterTCPAXFR) {
-    // The counter should be initialized to 0.
-    EXPECT_EQ(0, server.getCounter(AuthCounters::SERVER_TCP_QUERY));
+    // The counters should be initialized to 0.
+    ConstElementPtr stats_init = server.getStatistics();
+    expectCounterItem(stats_init, "queries.udp", 0);
+    expectCounterItem(stats_init, "queries.tcp", 0);
+    expectCounterItem(stats_init, "opcode.query", 0);
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
                          Name("example.com"), RRClass::IN(), RRType::AXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
@@ -1089,16 +1151,24 @@ TEST_F(AuthSrvTest, queryCounterTCPAXFR) {
     server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
     EXPECT_FALSE(dnsserv.hasAnswer());
-    // After processing TCP AXFR query, the counter should be 1.
-    EXPECT_EQ(1, server.getCounter(AuthCounters::SERVER_TCP_QUERY));
-    // No rcodes should be incremented
-    checkAllRcodeCountersZero();
+    // After processing the TCP AXFR query, these counters should be
+    // incremented:
+    //   queries.tcp, opcode.query
+    // and these counters should not be incremented:
+    //   queries.udp
+    ConstElementPtr stats_after = server.getStatistics();
+    expectCounterItem(stats_after, "queries.udp", 0);
+    expectCounterItem(stats_after, "queries.tcp", 1);
+    expectCounterItem(stats_after, "opcode.query", 1);
 }
 
 // Submit TCP IXFR query and check query counter
 TEST_F(AuthSrvTest, queryCounterTCPIXFR) {
-    // The counter should be initialized to 0.
-    EXPECT_EQ(0, server.getCounter(AuthCounters::SERVER_TCP_QUERY));
+    // The counters should be initialized to 0.
+    ConstElementPtr stats_init = server.getStatistics();
+    expectCounterItem(stats_init, "queries.udp", 0);
+    expectCounterItem(stats_init, "queries.tcp", 0);
+    expectCounterItem(stats_init, "opcode.query", 0);
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
                          Name("example.com"), RRClass::IN(), RRType::IXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
@@ -1107,14 +1177,27 @@ TEST_F(AuthSrvTest, queryCounterTCPIXFR) {
     server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
     EXPECT_FALSE(dnsserv.hasAnswer());
-    // After processing TCP IXFR query, the counter should be 1.
-    EXPECT_EQ(1, server.getCounter(AuthCounters::SERVER_TCP_QUERY));
+    // After processing the TCP IXFR query, these counters should be
+    // incremented:
+    //   queries.tcp, opcode.query
+    // and these counters should not be incremented:
+    //   queries.udp
+    ConstElementPtr stats_after = server.getStatistics();
+    expectCounterItem(stats_after, "queries.udp", 0);
+    expectCounterItem(stats_after, "queries.tcp", 1);
+    expectCounterItem(stats_after, "opcode.query", 1);
 }
 
 TEST_F(AuthSrvTest, queryCounterOpcodes) {
-    for (int i = 0; i < 16; ++i) {
+    // Check for 0..2, 3(=other), 4..5
+    // The counter should be initialized to 0.
+    for (int i = 0; i < 6; ++i) {
         // The counter should be initialized to 0.
-        EXPECT_EQ(0, server.getCounter(Opcode(i)));
+        expectCounterItem(server.getStatistics(),
+                          std::string("opcode.") +
+                              QRCounterOpcode[QROpCodeToQRCounterType[i] -
+                                                  QR_OPCODE_QUERY].name,
+                          0);
 
         // For each possible opcode, create a request message and send it
         UnitTestUtil::createRequestMessage(request_message, Opcode(i),
@@ -1132,7 +1215,45 @@ TEST_F(AuthSrvTest, queryCounterOpcodes) {
         }
 
         // Confirm the counter.
-        EXPECT_EQ(i + 1, server.getCounter(Opcode(i)));
+        expectCounterItem(server.getStatistics(),
+                          std::string("opcode.") +
+                              QRCounterOpcode[QROpCodeToQRCounterType[i] -
+                                                  QR_OPCODE_QUERY].name,
+                          i + 1);
+    }
+    // Check for 6..15
+    // they are treated as the 'other' opcode
+    // the 'other' opcode counter is 4 at this point
+    int expected = 4;
+    for (int i = 6; i < 16; ++i) {
+        // The counter should be initialized to 0.
+        expectCounterItem(server.getStatistics(),
+                          std::string("opcode.") +
+                              QRCounterOpcode[QROpCodeToQRCounterType[i] -
+                                              QR_OPCODE_QUERY].name,
+                          expected);
+
+        // For each possible opcode, create a request message and send it
+        UnitTestUtil::createRequestMessage(request_message, Opcode(i),
+                                           default_qid, Name("example.com"),
+                                           RRClass::IN(), RRType::NS());
+        createRequestPacket(request_message, IPPROTO_UDP);
+
+        // "send" the request once
+        parse_message->clear(Message::PARSE);
+        server.processMessage(*io_message, *parse_message,
+                              *response_obuffer,
+                              &dnsserv);
+
+        // the 'other' opcode counter should be incremented
+        ++expected;
+
+        // Confirm the counter.
+        expectCounterItem(server.getStatistics(),
+                          std::string("opcode.") +
+                              QRCounterOpcode[QROpCodeToQRCounterType[i] -
+                                              QR_OPCODE_QUERY].name,
+                          expected);
     }
 }
 
@@ -1401,7 +1522,9 @@ public:
              real_list, ThrowWhen throw_when, bool isc_exception,
              ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
         ConfigurableClientList(RRClass::IN()),
-        real_(real_list)
+        real_(real_list),
+        config_(Element::fromJSON("{}")),
+        ztable_segment_(ZoneTableSegment::create(*config_, RRClass::IN()))
     {
         BOOST_FOREACH(const DataSourceInfo& info, real_->getDataSources()) {
              const isc::datasrc::DataSourceClientPtr
@@ -1413,13 +1536,14 @@ public:
              data_sources_.push_back(
                  DataSourceInfo(client.get(),
                                 isc::datasrc::DataSourceClientContainerPtr(),
-                                false, RRClass::IN(), mem_sgmt_));
+                                false, RRClass::IN(), ztable_segment_));
         }
     }
 private:
     const boost::shared_ptr<isc::datasrc::ConfigurableClientList> real_;
+    const ConstElementPtr config_;
+    boost::shared_ptr<ZoneTableSegment> ztable_segment_;
     vector<isc::datasrc::DataSourceClientPtr> clients_;
-    MemorySegmentLocal mem_sgmt_;
 };
 
 } // end anonymous namespace for throwing proxy classes
@@ -1438,16 +1562,16 @@ TEST_F(AuthSrvTest,
 {
     // Set real inmem client to proxy
     updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
+    boost::shared_ptr<isc::datasrc::ConfigurableClientList> list;
+    DataSrcClientsMgr& mgr = server.getDataSrcClientsMgr();
     {
-        isc::util::thread::Mutex::Locker locker(
-            server.getDataSrcClientListMutex());
-        boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-            list(new FakeList(server.getDataSrcClientList(RRClass::IN()),
-                              THROW_NEVER, false));
-        AuthSrv::DataSrcClientListsPtr lists(new std::map<RRClass, ListPtr>);
-        lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
-        server.swapDataSrcClientLists(lists);
+        DataSrcClientsMgr::Holder holder(mgr);
+        list.reset(new FakeList(holder.findClientList(RRClass::IN()),
+                                THROW_NEVER, false));
     }
+    ClientListMapPtr lists(new std::map<RRClass, ListPtr>);
+    lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
+    server.getDataSrcClientsMgr().setDataSrcClientLists(lists);
 
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -1470,14 +1594,16 @@ setupThrow(AuthSrv& server, ThrowWhen throw_when, bool isc_exception,
 {
     updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
-    isc::util::thread::Mutex::Locker locker(
-        server.getDataSrcClientListMutex());
-    boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        list(new FakeList(server.getDataSrcClientList(RRClass::IN()),
-                          throw_when, isc_exception, rrset));
-    AuthSrv::DataSrcClientListsPtr lists(new std::map<RRClass, ListPtr>);
+    boost::shared_ptr<isc::datasrc::ConfigurableClientList> list;
+    DataSrcClientsMgr& mgr = server.getDataSrcClientsMgr();
+    {           // we need to limit the scope so swap is outside of it
+        DataSrcClientsMgr::Holder holder(mgr);
+        list.reset(new FakeList(holder.findClientList(RRClass::IN()),
+                                throw_when, isc_exception, rrset));
+    }
+    ClientListMapPtr lists(new std::map<RRClass, ListPtr>);
     lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
-    server.swapDataSrcClientLists(lists);
+    mgr.setDataSrcClientLists(lists);
 }
 
 TEST_F(AuthSrvTest,
@@ -1713,6 +1839,15 @@ namespace {
         isc::config::parseAnswer(command_result, response);
         EXPECT_EQ(0, command_result);
     }
+
+    void sendCommand(AuthSrv& server, const std::string& command,
+                     ConstElementPtr args, int expected_result) {
+        ConstElementPtr response = execAuthServerCommand(server, command,
+                                                         args);
+        int command_result = -1;
+        isc::config::parseAnswer(command_result, response);
+        EXPECT_EQ(expected_result, command_result);
+    }
 } // end anonymous namespace
 
 TEST_F(AuthSrvTest, DDNSForwardCreateDestroy) {
@@ -1784,57 +1919,18 @@ TEST_F(AuthSrvTest, DDNSForwardCreateDestroy) {
                 Opcode::UPDATE().getCode(), QR_FLAG, 0, 0, 0, 0);
 }
 
-// Check the client list accessors
-TEST_F(AuthSrvTest, clientList) {
-    // We need to lock the mutex to make the (get|set)ClientList happy.
-    // There's a debug-build only check in them to make sure everything
-    // locks them and we call them directly here.
-    isc::util::thread::Mutex::Locker locker(
-        server.getDataSrcClientListMutex());
+TEST_F(AuthSrvTest, loadZoneCommand) {
+    // Just some very basic tests, to check the command is accepted, and that
+    // it raises on bad arguments, but not on correct ones (full testing
+    // is handled in the unit tests for the corresponding classes)
 
-    AuthSrv::DataSrcClientListsPtr lists; // initially empty
-
-    // The lists don't exist. Therefore, the list of RRClasses is empty.
-    EXPECT_TRUE(server.swapDataSrcClientLists(lists)->empty());
-
-    // Put something in.
-    const ListPtr list(new ConfigurableClientList(RRClass::IN()));
-    const ListPtr list2(new ConfigurableClientList(RRClass::CH()));
-
-    lists.reset(new std::map<RRClass, ListPtr>);
-    lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
-    lists->insert(pair<RRClass, ListPtr>(RRClass::CH(), list2));
-    server.swapDataSrcClientLists(lists);
-
-    // And the lists can be retrieved.
-    EXPECT_EQ(list, server.getDataSrcClientList(RRClass::IN()));
-    EXPECT_EQ(list2, server.getDataSrcClientList(RRClass::CH()));
-
-    // Replace the lists with new lists containing only one list.
-    lists.reset(new std::map<RRClass, ListPtr>);
-    lists->insert(pair<RRClass, ListPtr>(RRClass::IN(), list));
-    lists = server.swapDataSrcClientLists(lists);
-
-    // Old one had two lists.  That confirms our swap for IN and CH classes
-    // (i.e., no other entries were there).
-    EXPECT_EQ(2, lists->size());
-
-    // The CH list really got deleted.
-    EXPECT_EQ(list, server.getDataSrcClientList(RRClass::IN()));
-    EXPECT_FALSE(server.getDataSrcClientList(RRClass::CH()));
-}
-
-// We just test the mutex can be locked (exactly once).
-TEST_F(AuthSrvTest, mutex) {
-    isc::util::thread::Mutex::Locker l1(server.getDataSrcClientListMutex());
-    // TODO: Once we have non-debug build, this one will not work, since
-    // we currently use the fact that we can't lock twice from the same
-    // thread. In the non-debug mode, this would deadlock.
-    // Skip then.
-    EXPECT_THROW({
-        isc::util::thread::Mutex::Locker l2(
-            server.getDataSrcClientListMutex());
-    }, isc::InvalidOperation);
+    // Empty map should fail
+    ElementPtr args(Element::createMap());
+    sendCommand(server, "loadzone", args, 1);
+    // Setting an origin should be enough (even if it isn't actually loaded,
+    // it should be initially accepted)
+    args->set("origin", Element::create("example.com"));
+    sendCommand(server, "loadzone", args, 0);
 }
 
 }

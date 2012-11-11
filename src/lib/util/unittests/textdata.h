@@ -18,8 +18,8 @@
 
 #include <gtest/gtest.h>
 
-#ifndef __UTIL_UNITTESTS_TEXTDATA_H
-#define __UTIL_UNITTESTS_TEXTDATA_H 1
+#ifndef UTIL_UNITTESTS_TEXTDATA_H
+#define UTIL_UNITTESTS_TEXTDATA_H 1
 
 /**
  * \file textdata.h
@@ -96,7 +96,7 @@ matchTextData(const std::string& expected_text,
 }
 }
 
-#endif // __UTIL_UNITTESTS_TEXTDATA_H
+#endif // UTIL_UNITTESTS_TEXTDATA_H
 
 // Local Variables:
 // mode: c++
