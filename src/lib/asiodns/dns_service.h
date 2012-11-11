@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ASIOLINK_DNS_SERVICE_H
-#define __ASIOLINK_DNS_SERVICE_H 1
+#ifndef ASIOLINK_DNS_SERVICE_H
+#define ASIOLINK_DNS_SERVICE_H 1
 
 #include <resolve/resolver_interface.h>
 
@@ -210,7 +210,7 @@ private:
 
 } // namespace asiodns
 } // namespace isc
-#endif // __ASIOLINK_DNS_SERVICE_H
+#endif // ASIOLINK_DNS_SERVICE_H
 
 // Local Variables:
 // mode: c++

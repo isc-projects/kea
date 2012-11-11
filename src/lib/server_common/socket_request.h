@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __SOCKET_REQUEST_H
-#define __SOCKET_REQUEST_H 1
+#ifndef SOCKET_REQUEST_H
+#define SOCKET_REQUEST_H 1
 
 #include <exceptions/exceptions.h>
 
@@ -275,4 +275,4 @@ void cleanupSocketRequestor();
 }
 }
 
-#endif  // __SOCKET_REQUEST_H
+#endif  // SOCKET_REQUEST_H

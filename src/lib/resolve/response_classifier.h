@@ -14,8 +14,8 @@
 
 // $Id$
 
-#ifndef __RESPONSE_CLASSIFIER_H
-#define __RESPONSE_CLASSIFIER_H
+#ifndef RESPONSE_CLASSIFIER_H
+#define RESPONSE_CLASSIFIER_H
 
 #include <cstddef>
 
@@ -154,4 +154,4 @@ private:
 } // namespace resolve
 } // namespace isc
 
-#endif // __RESPONSE_CLASSIFIER_H
+#endif // RESPONSE_CLASSIFIER_H

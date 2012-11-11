@@ -11,8 +11,9 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
-#ifndef __DATASRC_CONFIG_H
-#define __DATASRC_CONFIG_H 1
+
+#ifndef DATASRC_CONFIG_H
+#define DATASRC_CONFIG_H 1
 
 namespace isc {
 namespace datasrc {
@@ -28,4 +29,4 @@ const char* const BACKEND_LIBRARY_PATH = "@@PKGLIBDIR@@/";
 } // end namespace datasrc
 } // end namespace isc
 
-#endif // __DATASRC_CONFIG_H
+#endif // DATASRC_CONFIG_H

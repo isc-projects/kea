@@ -18,8 +18,8 @@
 
 #include <cc/data.h>
 
-#ifndef __CONFIG_H
-#define __CONFIG_H 1
+#ifndef CONFIG_H
+#define CONFIG_H 1
 
 class AuthSrv;
 
@@ -195,7 +195,7 @@ void configureAuthServer(AuthSrv& server,
 AuthConfigParser* createAuthConfigParser(AuthSrv& server,
                                          const std::string& config_id);
 
-#endif // __CONFIG_H
+#endif // CONFIG_H
 
 // Local Variables:
 // mode: c++

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __IP_CHECK_H
-#define __IP_CHECK_H
+#ifndef IP_CHECK_H
+#define IP_CHECK_H
 
 #include <sys/socket.h>
 
@@ -410,7 +410,7 @@ const size_t IPCheck<Context>::IPV4_SIZE;
 } // namespace acl
 } // namespace isc
 
-#endif // __IP_CHECK_H
+#endif // IP_CHECK_H
 
 // Local Variables:
 // mode: c++

@@ -166,4 +166,12 @@ TEST(ClientIdTest, operators) {
     EXPECT_TRUE(*id1 != *id3);
 }
 
+// Test checks if the toText() returns valid texual representation
+TEST(ClientIdTest, toText) {
+    uint8_t data1[] = {0, 1, 2, 3, 4, 0xff, 0xfe};
+
+    DUID duid(data1, sizeof(data1));
+    EXPECT_EQ("00:01:02:03:04:ff:fe", duid.toText());
+}
+
 } // end of anonymous namespace

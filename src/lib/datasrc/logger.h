@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __DATASRC_LOGGER_H
-#define __DATASRC_LOGGER_H
+#ifndef DATASRC_LOGGER_H
+#define DATASRC_LOGGER_H
 
 #include <log/macros.h>
 #include <datasrc/datasrc_messages.h>

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_TSIGRECORD_H
-#define __PYTHON_TSIGRECORD_H 1
+#ifndef PYTHON_TSIGRECORD_H
+#define PYTHON_TSIGRECORD_H 1
 
 #include <Python.h>
 
@@ -58,7 +58,7 @@ const TSIGRecord& PyTSIGRecord_ToTSIGRecord(PyObject* tsigrecord_obj);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_TSIGRECORD_H
+#endif // PYTHON_TSIGRECORD_H
 
 // Local Variables:
 // mode: c++

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_SOCKETSESSIONRECEIVER_H
-#define __PYTHON_SOCKETSESSIONRECEIVER_H 1
+#ifndef PYTHON_SOCKETSESSIONRECEIVER_H
+#define PYTHON_SOCKETSESSIONRECEIVER_H 1
 
 #include <Python.h>
 
@@ -39,7 +39,7 @@ bool initModulePart_SocketSessionReceiver(PyObject* mod);
 } // namespace python
 } // namespace util
 } // namespace isc
-#endif // __PYTHON_SOCKETSESSIONRECEIVER_H
+#endif // PYTHON_SOCKETSESSIONRECEIVER_H
 
 // Local Variables:
 // mode: c++

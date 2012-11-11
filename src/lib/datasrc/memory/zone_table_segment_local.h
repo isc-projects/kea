@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ZONE_TABLE_SEGMENT_LOCAL_H__
-#define __ZONE_TABLE_SEGMENT_LOCAL_H__
+#ifndef ZONE_TABLE_SEGMENT_LOCAL_H
+#define ZONE_TABLE_SEGMENT_LOCAL_H
 
 #include <datasrc/memory/zone_table_segment.h>
 #include <util/memory_segment_local.h>
@@ -37,11 +37,10 @@ protected:
     /// Instances are expected to be created by the factory method
     /// (\c ZoneTableSegment::create()), so this constructor is
     /// protected.
-    ZoneTableSegmentLocal()
-    {}
+    ZoneTableSegmentLocal(const isc::dns::RRClass& rrclass);
 public:
     /// \brief Destructor
-    virtual ~ZoneTableSegmentLocal() {}
+    virtual ~ZoneTableSegmentLocal();
 
     /// \brief Return the ZoneTableHeader for the local zone table
     /// segment implementation.
@@ -54,13 +53,17 @@ public:
     /// implementation (a MemorySegmentLocal instance).
     virtual isc::util::MemorySegment& getMemorySegment();
 
+    /// \brief Concrete implementation of ZoneTableSegment::getZoneWriter
+    virtual ZoneWriter* getZoneWriter(const LoadAction& load_action,
+                                      const dns::Name& origin,
+                                      const dns::RRClass& rrclass);
 private:
-    ZoneTableHeader header_;
     isc::util::MemorySegmentLocal mem_sgmt_;
+    ZoneTableHeader header_;
 };
 
 } // namespace memory
 } // namespace datasrc
 } // namespace isc
 
-#endif // __ZONE_TABLE_SEGMENT_LOCAL_H__
+#endif // ZONE_TABLE_SEGMENT_LOCAL_H

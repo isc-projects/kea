@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_CONFIGURABLECLIENTLIST_H
-#define __PYTHON_CONFIGURABLECLIENTLIST_H 1
+#ifndef PYTHON_CONFIGURABLECLIENTLIST_H
+#define PYTHON_CONFIGURABLECLIENTLIST_H 1
 
 #include <Python.h>
 
@@ -37,7 +37,7 @@ bool initModulePart_ConfigurableClientList(PyObject* mod);
 } // namespace python
 } // namespace datasrc
 } // namespace isc
-#endif // __PYTHON_CONFIGURABLECLIENTLIST_H
+#endif // PYTHON_CONFIGURABLECLIENTLIST_H
 
 // Local Variables:
 // mode: c++

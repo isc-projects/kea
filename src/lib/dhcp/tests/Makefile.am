@@ -33,8 +33,11 @@ libdhcp___unittests_SOURCES += iface_mgr_unittest.cc
 libdhcp___unittests_SOURCES += libdhcp++_unittest.cc
 libdhcp___unittests_SOURCES += option4_addrlst_unittest.cc
 libdhcp___unittests_SOURCES += option6_addrlst_unittest.cc
-libdhcp___unittests_SOURCES += option6_iaaddr_unittest.cc
 libdhcp___unittests_SOURCES += option6_ia_unittest.cc
+libdhcp___unittests_SOURCES += option6_iaaddr_unittest.cc
+libdhcp___unittests_SOURCES += option6_int_array_unittest.cc
+libdhcp___unittests_SOURCES += option6_int_unittest.cc
+libdhcp___unittests_SOURCES += option_definition_unittest.cc
 libdhcp___unittests_SOURCES += option_unittest.cc
 libdhcp___unittests_SOURCES += pkt4_unittest.cc
 libdhcp___unittests_SOURCES += pkt6_unittest.cc
@@ -46,10 +49,12 @@ libdhcp___unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
 libdhcpsrv_unittests_SOURCES  = run_unittests.cc
 libdhcpsrv_unittests_SOURCES += addr_utilities_unittest.cc
+libdhcpsrv_unittests_SOURCES += alloc_engine_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfgmgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += duid_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_mgr_factory_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_mgr_unittest.cc
+libdhcpsrv_unittests_SOURCES += memfile_lease_mgr_unittest.cc
 if HAVE_MYSQL
 libdhcpsrv_unittests_SOURCES += mysql_lease_mgr_unittest.cc
 endif

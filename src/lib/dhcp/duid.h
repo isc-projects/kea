@@ -12,11 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef DUID_H
+#define DUID_H
+
+#include <asiolink/io_address.h>
+#include <vector>
 #include <stdint.h>
 #include <unistd.h>
-#include <vector>
-#include <asiolink/io_address.h>
-
 
 namespace isc {
 namespace dhcp {
@@ -59,16 +61,21 @@ class DUID {
     /// @brief returns DUID type
     DUIDType getType() const;
 
-    // compares two DUIDs
-    bool operator == (const DUID& other) const;
+    /// returns textual prepresentation (e.g. 00:01:02:03:ff)
+    std::string toText() const;
 
-    // compares two DUIDs
-    bool operator != (const DUID& other) const;
+    /// compares two DUIDs
+    bool operator==(const DUID& other) const;
+
+    /// compares two DUIDs
+    bool operator!=(const DUID& other) const;
 
  protected:
     /// the actual content of the DUID
     std::vector<uint8_t> duid_;
 };
+
+typedef boost::shared_ptr<DUID> DuidPtr;
 
 /// @brief Holds Client identifier or client IPv4 address
 ///
@@ -96,3 +103,5 @@ class ClientId : DUID {
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
+
+#endif /* DUID_H */

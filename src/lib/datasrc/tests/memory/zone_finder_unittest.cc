@@ -23,6 +23,7 @@
 #include "../../tests/faked_nsec3.h"
 
 #include <datasrc/memory/zone_finder.h>
+#include <datasrc/memory/zone_data_updater.h>
 #include <datasrc/memory/rdata_serialization.h>
 #include <datasrc/data_source.h>
 #include <testutils/dnsmessage_test.h>
@@ -105,7 +106,8 @@ public:
         class_(RRClass::IN()),
         origin_("example.org"),
         zone_data_(ZoneData::create(mem_sgmt_, origin_)),
-        zone_finder_(*zone_data_, class_)
+        zone_finder_(*zone_data_, class_),
+        updater_(mem_sgmt_, class_, origin_, *zone_data_)
     {
         // Build test RRsets.  Below, we construct an RRset for
         // each textual RR(s) of zone_data, and assign it to the corresponding
@@ -190,130 +192,8 @@ public:
         ZoneData::destroy(mem_sgmt_, zone_data_, RRClass::IN());
     }
 
-    // NSEC3-specific call for 'loading' data
-    void addZoneDataNSEC3(const ConstRRsetPtr rrset) {
-        assert(rrset->getType() == RRType::NSEC3());
-
-        const generic::NSEC3& nsec3_rdata =
-             dynamic_cast<const generic::NSEC3&>(
-                  rrset->getRdataIterator()->getCurrent());
-
-        NSEC3Data* nsec3_data = zone_data_->getNSEC3Data();
-        if (nsec3_data == NULL) {
-             nsec3_data = NSEC3Data::create(mem_sgmt_, nsec3_rdata);
-             zone_data_->setNSEC3Data(nsec3_data);
-        } else {
-             const size_t salt_len = nsec3_data->getSaltLen();
-             const uint8_t* salt_data = nsec3_data->getSaltData();
-             const vector<uint8_t>& salt_data_2 = nsec3_rdata.getSalt();
-
-             if ((nsec3_rdata.getHashalg() != nsec3_data->hashalg) ||
-                 (nsec3_rdata.getIterations() != nsec3_data->iterations) ||
-                 (salt_data_2.size() != salt_len)) {
-                  isc_throw(isc::Unexpected,
-                            "NSEC3 with inconsistent parameters: " <<
-                            rrset->toText());
-             }
-
-             if ((salt_len > 0) &&
-                 (std::memcmp(&salt_data_2[0], salt_data, salt_len) != 0)) {
-                  isc_throw(isc::Unexpected,
-                            "NSEC3 with inconsistent parameters: " <<
-                            rrset->toText());
-             }
-        }
-
-        ZoneNode* node;
-        nsec3_data->insertName(mem_sgmt_, rrset->getName(), &node);
-
-        RdataSet* rdset = RdataSet::create(mem_sgmt_, encoder_,
-                                           rrset, ConstRRsetPtr());
-        RdataSet* old_rdset = node->setData(rdset);
-        if (old_rdset != NULL) {
-             RdataSet::destroy(mem_sgmt_, class_, old_rdset);
-        }
-        zone_data_->setSigned(true);
-    }
-
-    // simplified version of 'loading' data
-    void addZoneData(const ConstRRsetPtr rrset) {
-        ZoneNode* node = NULL;
-
-        if (rrset->getType() == RRType::NSEC3()) {
-            return (addZoneDataNSEC3(rrset));
-        } else if (rrset->getType() == RRType::NSEC()) {
-            zone_data_->setSigned(true);
-        }
-
-        zone_data_->insertName(mem_sgmt_, rrset->getName(), &node);
-
-        if (rrset->getType() == RRType::NS() &&
-            rrset->getName() != zone_data_->getOriginNode()->getName()) {
-            node->setFlag(DomainTreeNode<RdataSet>::FLAG_CALLBACK);
-        } else if (rrset->getType() == RRType::DNAME()) {
-            node->setFlag(DomainTreeNode<RdataSet>::FLAG_CALLBACK);
-        }
-
-        RdataSet* next_rds = node->getData();
-        RdataSet* rdataset =
-            RdataSet::create(mem_sgmt_, encoder_, rrset, rrset->getRRsig());
-        rdataset->next = next_rds;
-        node->setData(rdataset);
-
-        // find wildcard nodes in name (go through all of them in case there
-        // is a nonterminal one)
-        // Note that this method is pretty much equal to the 'real' loader;
-        // but less efficient
-        Name name(rrset->getName());
-        while (name.getLabelCount() > 1) {
-            if (name.isWildcard()) {
-                ZoneNode* wnode = NULL;
-                // add Wild node
-                zone_data_->insertName(mem_sgmt_, name.split(1), &wnode);
-                wnode->setFlag(ZoneData::WILDCARD_NODE);
-                // add wildcard name itself too
-                zone_data_->insertName(mem_sgmt_, name, &wnode);
-            }
-            name = name.split(1);
-        }
-
-        // If we've added NSEC3PARAM at zone origin, set up NSEC3
-        // specific data or check consistency with already set up
-        // parameters.
-        if (rrset->getType() == RRType::NSEC3PARAM() &&
-            rrset->getName() == origin_) {
-            // We know rrset has exactly one RDATA
-            const generic::NSEC3PARAM& param =
-                dynamic_cast<const generic::NSEC3PARAM&>
-                 (rrset->getRdataIterator()->getCurrent());
-
-            NSEC3Data* nsec3_data = zone_data_->getNSEC3Data();
-            if (nsec3_data == NULL) {
-                nsec3_data = NSEC3Data::create(mem_sgmt_, param);
-                zone_data_->setNSEC3Data(nsec3_data);
-                zone_data_->setSigned(true);
-            } else {
-                size_t salt_len = nsec3_data->getSaltLen();
-                const uint8_t* salt_data = nsec3_data->getSaltData();
-                const vector<uint8_t>& salt_data_2 = param.getSalt();
-
-                if ((param.getHashalg() != nsec3_data->hashalg) ||
-                    (param.getIterations() != nsec3_data->iterations) ||
-                    (salt_data_2.size() != salt_len)) {
-                     isc_throw(isc::Unexpected,
-                               "NSEC3PARAM with inconsistent parameters: "
-                               << rrset->toText());
-                }
-
-                if ((salt_len > 0) &&
-                    (std::memcmp(&salt_data_2[0],
-                                 salt_data, salt_len) != 0)) {
-                     isc_throw(isc::Unexpected,
-                               "NSEC3PARAM with inconsistent parameters: "
-                               << rrset->toText());
-                }
-            }
-        }
+    void addToZoneData(const ConstRRsetPtr rrset) {
+        updater_.add(rrset, rrset->getRRsig());
     }
 
     // Some data to test with
@@ -323,7 +203,7 @@ public:
     MemorySegmentTest mem_sgmt_;
     memory::ZoneData* zone_data_;
     memory::InMemoryZoneFinder zone_finder_;
-    isc::datasrc::memory::RdataEncoder encoder_;
+    ZoneDataUpdater updater_;
 
     // Placeholder for storing RRsets to be checked with rrsetsCheck()
     vector<ConstRRsetPtr> actual_rrsets_;
@@ -538,7 +418,7 @@ TEST_F(InMemoryZoneFinderTest, constructor) {
 
 TEST_F(InMemoryZoneFinderTest, findCNAME) {
     // install CNAME RR
-    addZoneData(rr_cname_);
+    addToZoneData(rr_cname_);
 
     // Find A RR of the same.  Should match the CNAME
     findTest(rr_cname_->getName(), RRType::NS(), ZoneFinder::CNAME, true,
@@ -553,10 +433,10 @@ TEST_F(InMemoryZoneFinderTest, findCNAMEUnderZoneCut) {
     // There's nothing special when we find a CNAME under a zone cut
     // (with FIND_GLUE_OK).  The behavior is different from BIND 9,
     // so we test this case explicitly.
-    addZoneData(rr_child_ns_);
+    addToZoneData(rr_child_ns_);
     ConstRRsetPtr rr_cname_under_cut_ = textToRRset(
         "cname.child.example.org. 300 IN CNAME target.child.example.org.");
-    addZoneData(rr_cname_under_cut_);
+    addToZoneData(rr_cname_under_cut_);
     findTest(Name("cname.child.example.org"), RRType::AAAA(),
              ZoneFinder::CNAME, true, rr_cname_under_cut_,
              ZoneFinder::RESULT_DEFAULT, NULL, ZoneFinder::FIND_GLUE_OK);
@@ -564,7 +444,7 @@ TEST_F(InMemoryZoneFinderTest, findCNAMEUnderZoneCut) {
 
 // Search under a DNAME record. It should return the DNAME
 TEST_F(InMemoryZoneFinderTest, findBelowDNAME) {
-    EXPECT_NO_THROW(addZoneData(rr_dname_));
+    EXPECT_NO_THROW(addToZoneData(rr_dname_));
     findTest(Name("below.dname.example.org"), RRType::A(), ZoneFinder::DNAME,
              true, rr_dname_);
 }
@@ -572,8 +452,8 @@ TEST_F(InMemoryZoneFinderTest, findBelowDNAME) {
 // Search at the domain with DNAME. It should act as DNAME isn't there, DNAME
 // influences only the data below (see RFC 2672, section 3)
 TEST_F(InMemoryZoneFinderTest, findAtDNAME) {
-    EXPECT_NO_THROW(addZoneData(rr_dname_));
-    EXPECT_NO_THROW(addZoneData(rr_dname_a_));
+    EXPECT_NO_THROW(addToZoneData(rr_dname_));
+    EXPECT_NO_THROW(addToZoneData(rr_dname_a_));
 
     const Name dname_name(rr_dname_->getName());
     findTest(dname_name, RRType::A(), ZoneFinder::SUCCESS, true, rr_dname_a_);
@@ -585,8 +465,8 @@ TEST_F(InMemoryZoneFinderTest, findAtDNAME) {
 // Try searching something that is both under NS and DNAME, without and with
 // GLUE_OK mode (it should stop at the NS and DNAME respectively).
 TEST_F(InMemoryZoneFinderTest, DNAMEUnderNS) {
-    addZoneData(rr_child_ns_);
-    addZoneData(rr_child_dname_);
+    addToZoneData(rr_child_ns_);
+    addToZoneData(rr_child_dname_);
 
     Name lowName("below.dname.child.example.org.");
 
@@ -598,10 +478,10 @@ TEST_F(InMemoryZoneFinderTest, DNAMEUnderNS) {
 // Test adding child zones and zone cut handling
 TEST_F(InMemoryZoneFinderTest, delegationNS) {
     // add in-zone data
-    EXPECT_NO_THROW(addZoneData(rr_ns_));
+    EXPECT_NO_THROW(addToZoneData(rr_ns_));
 
     // install a zone cut
-    EXPECT_NO_THROW(addZoneData(rr_child_ns_));
+    EXPECT_NO_THROW(addToZoneData(rr_child_ns_));
 
     // below the zone cut
     findTest(Name("www.child.example.org"), RRType::A(),
@@ -618,7 +498,7 @@ TEST_F(InMemoryZoneFinderTest, delegationNS) {
     findTest(origin_, RRType::NS(), ZoneFinder::SUCCESS, true, rr_ns_);
 
     // unusual case of "nested delegation": the highest cut should be used.
-    EXPECT_NO_THROW(addZoneData(rr_grandchild_ns_));
+    EXPECT_NO_THROW(addToZoneData(rr_grandchild_ns_));
     findTest(Name("www.grand.child.example.org"), RRType::A(),
              // note: !rr_grandchild_ns_
              ZoneFinder::DELEGATION, true, rr_child_ns_);
@@ -627,9 +507,9 @@ TEST_F(InMemoryZoneFinderTest, delegationNS) {
 TEST_F(InMemoryZoneFinderTest, delegationWithDS) {
     // Similar setup to the previous one, but with DS RR at the delegation
     // point.
-    addZoneData(rr_ns_);
-    addZoneData(rr_child_ns_);
-    addZoneData(rr_child_ds_);
+    addToZoneData(rr_ns_);
+    addToZoneData(rr_child_ns_);
+    addToZoneData(rr_child_ds_);
 
     // Normal types of query should result in delegation, but DS query
     // should be considered in-zone (but only exactly at the delegation point).
@@ -647,9 +527,9 @@ TEST_F(InMemoryZoneFinderTest, delegationWithDS) {
 }
 
 TEST_F(InMemoryZoneFinderTest, findAny) {
-    EXPECT_NO_THROW(addZoneData(rr_a_));
-    EXPECT_NO_THROW(addZoneData(rr_ns_));
-    EXPECT_NO_THROW(addZoneData(rr_child_glue_));
+    EXPECT_NO_THROW(addToZoneData(rr_a_));
+    EXPECT_NO_THROW(addToZoneData(rr_ns_));
+    EXPECT_NO_THROW(addToZoneData(rr_child_glue_));
 
     vector<ConstRRsetPtr> expected_sets;
 
@@ -668,7 +548,7 @@ TEST_F(InMemoryZoneFinderTest, findAny) {
     findAllTest(rr_child_glue_->getName(), ZoneFinder::SUCCESS, expected_sets);
 
     // add zone cut
-    EXPECT_NO_THROW(addZoneData(rr_child_ns_));
+    EXPECT_NO_THROW(addToZoneData(rr_child_ns_));
 
     // zone cut
     findAllTest(rr_child_ns_->getName(), ZoneFinder::DELEGATION,
@@ -684,16 +564,16 @@ TEST_F(InMemoryZoneFinderTest, findAny) {
 TEST_F(InMemoryZoneFinderTest, glue) {
     // install zone data:
     // a zone cut
-    EXPECT_NO_THROW(addZoneData(rr_child_ns_));
+    EXPECT_NO_THROW(addToZoneData(rr_child_ns_));
     // glue for this cut
-    EXPECT_NO_THROW(addZoneData(rr_child_glue_));
+    EXPECT_NO_THROW(addToZoneData(rr_child_glue_));
     // a nested zone cut (unusual)
-    EXPECT_NO_THROW(addZoneData(rr_grandchild_ns_));
+    EXPECT_NO_THROW(addToZoneData(rr_grandchild_ns_));
     // glue under the deeper zone cut
-    EXPECT_NO_THROW(addZoneData(rr_grandchild_glue_));
+    EXPECT_NO_THROW(addToZoneData(rr_grandchild_glue_));
     // glue 'at the' zone cut
-    EXPECT_NO_THROW(addZoneData(rr_ns_a_));
-    EXPECT_NO_THROW(addZoneData(rr_ns_ns_));
+    EXPECT_NO_THROW(addToZoneData(rr_ns_a_));
+    EXPECT_NO_THROW(addToZoneData(rr_ns_ns_));
 
     // by default glue is hidden due to the zone cut
     findTest(rr_child_glue_->getName(), RRType::A(), ZoneFinder::DELEGATION,
@@ -749,16 +629,16 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags,
     rr_a_->addRRsig(createRdata(RRType::RRSIG(), RRClass::IN(),
                                 "A 5 3 3600 20120814220826 20120715220826 "
                                 "1234 example.com. FAKE"));
-    EXPECT_NO_THROW(addZoneData(rr_ns_));
-    EXPECT_NO_THROW(addZoneData(rr_ns_a_));
-    EXPECT_NO_THROW(addZoneData(rr_ns_aaaa_));
-    EXPECT_NO_THROW(addZoneData(rr_a_));
+    EXPECT_NO_THROW(addToZoneData(rr_ns_));
+    EXPECT_NO_THROW(addToZoneData(rr_ns_a_));
+    EXPECT_NO_THROW(addToZoneData(rr_ns_aaaa_));
+    EXPECT_NO_THROW(addToZoneData(rr_a_));
     if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
-        addZoneData(rr_nsec3_);
+        addToZoneData(rr_nsec3_);
         zone_data_->setSigned(true);
     }
     if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
-        addZoneData(rr_nsec_);
+        addToZoneData(rr_nsec_);
         zone_data_->setSigned(true);
     }
 
@@ -805,7 +685,7 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags,
              expected_nsec, expected_flags, NULL, find_options);
 
     if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
-        addZoneData(rr_ns_nsec_);
+        addToZoneData(rr_ns_nsec_);
         zone_data_->setSigned(true);
         if ((find_options & ZoneFinder::FIND_DNSSEC) != 0) {
             expected_nsec = rr_ns_nsec_;
@@ -841,8 +721,8 @@ InMemoryZoneFinderTest::findNSECENTCheck(const Name& ent_name,
     ConstRRsetPtr expected_nsec,
     ZoneFinder::FindResultFlags expected_flags)
 {
-    addZoneData(rr_emptywild_);
-    addZoneData(rr_under_wild_);
+    addToZoneData(rr_emptywild_);
+    addToZoneData(rr_under_wild_);
 
     // Sanity check: Should result in NXRRSET
     findTest(ent_name, RRType::A(), ZoneFinder::NXRRSET, true,
@@ -854,10 +734,10 @@ InMemoryZoneFinderTest::findNSECENTCheck(const Name& ent_name,
 
     // Now add the NSEC rrs making it a 'complete' zone (in terms of NSEC,
     // there are no sigs)
-    addZoneData(rr_nsec_);
-    addZoneData(rr_ent_nsec2_);
-    addZoneData(rr_ent_nsec3_);
-    addZoneData(rr_ent_nsec4_);
+    addToZoneData(rr_nsec_);
+    addToZoneData(rr_ent_nsec2_);
+    addToZoneData(rr_ent_nsec3_);
+    addToZoneData(rr_ent_nsec4_);
     zone_data_->setSigned(true);
 
     // Should result in NXRRSET, and RESULT_NSEC_SIGNED
@@ -915,14 +795,14 @@ InMemoryZoneFinderTest::emptyNodeCheck(
     for (int i = 0; names[i] != NULL; ++i) {
         ConstRRsetPtr rrset = textToRRset(string(names[i]) +
                                           " 300 IN A 192.0.2.1");
-        addZoneData(rrset);
+        addToZoneData(rrset);
     }
     if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
-        addZoneData(rr_nsec3_);
+        addToZoneData(rr_nsec3_);
         zone_data_->setSigned(true);
     }
     if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
-        addZoneData(rr_nsec_);
+        addToZoneData(rr_nsec_);
         zone_data_->setSigned(true);
     }
 
@@ -989,15 +869,15 @@ InMemoryZoneFinderTest::wildcardCheck(
                                             "RRSIG CNAME " +
                                             string(rrsig_common)));
     }
-    addZoneData(rr_wild_);
-    addZoneData(rr_cnamewild_);
+    addToZoneData(rr_wild_);
+    addToZoneData(rr_cnamewild_);
     // If the zone is expected to be "signed" with NSEC3, add an NSEC3.
     // (the content of the NSEC3 shouldn't matter)
     if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
-        addZoneData(rr_nsec3_);
+        addToZoneData(rr_nsec3_);
     }
     if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
-        addZoneData(rr_nsec_);
+        addToZoneData(rr_nsec_);
     }
 
     // Search at the parent. The parent will not have the A, but it will
@@ -1073,7 +953,7 @@ InMemoryZoneFinderTest::wildcardCheck(
                  wild_expected_flags, NULL, find_options, wild_ok);
     }
 
-    addZoneData(rr_under_wild_);
+    addToZoneData(rr_under_wild_);
     {
         SCOPED_TRACE("Search under non-wildcard");
         findTest(Name("bar.foo.wild.example.org"), RRType::A(),
@@ -1090,7 +970,7 @@ InMemoryZoneFinderTest::wildcardCheck(
     // NO_WILDCARD effect itself can be checked by the result code (NXDOMAIN).
     ConstRRsetPtr expected_wild_nsec; // by default it's NULL
     if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
-        addZoneData(rr_wild_nsec_);
+        addToZoneData(rr_wild_nsec_);
         expected_wild_nsec = rr_wild_nsec_;
     }
     {
@@ -1127,8 +1007,8 @@ TEST_F(InMemoryZoneFinderTest, wildcardDisabledWithoutNSEC) {
  *     the wildcard defaults."
  */
 TEST_F(InMemoryZoneFinderTest, delegatedWildcard) {
-    addZoneData(rr_child_wild_);
-    addZoneData(rr_child_ns_);
+    addToZoneData(rr_child_wild_);
+    addToZoneData(rr_child_ns_);
 
     {
         SCOPED_TRACE("Looking under delegation point");
@@ -1149,12 +1029,12 @@ void
 InMemoryZoneFinderTest::anyWildcardCheck(
     ZoneFinder::FindResultFlags expected_flags)
 {
-    addZoneData(rr_wild_);
+    addToZoneData(rr_wild_);
     if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
-        addZoneData(rr_nsec3_);
+        addToZoneData(rr_nsec3_);
     }
     if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
-        addZoneData(rr_nsec_);
+        addToZoneData(rr_nsec_);
     }
 
     vector<ConstRRsetPtr> expected_sets;
@@ -1206,12 +1086,12 @@ InMemoryZoneFinderTest::emptyWildcardCheck(
      *                 *
      *               wild
      */
-    addZoneData(rr_emptywild_);
+    addToZoneData(rr_emptywild_);
     if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
-        addZoneData(rr_nsec3_);
+        addToZoneData(rr_nsec3_);
     }
     if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
-        addZoneData(rr_nsec_);
+        addToZoneData(rr_nsec_);
     }
 
     {
@@ -1263,7 +1143,7 @@ TEST_F(InMemoryZoneFinderTest, emptyWildcardNSEC) {
 
 // Same as emptyWildcard, but with multiple * in the path.
 TEST_F(InMemoryZoneFinderTest, nestedEmptyWildcard) {
-    addZoneData(rr_nested_emptywild_);
+    addToZoneData(rr_nested_emptywild_);
 
     {
         SCOPED_TRACE("Asking for the original record under wildcards");
@@ -1394,8 +1274,8 @@ InMemoryZoneFinderTest::doCancelWildcardCheck(
  * shouldn't be canceled isn't.
  */
 TEST_F(InMemoryZoneFinderTest, cancelWildcard) {
-    addZoneData(rr_wild_);
-    addZoneData(rr_not_wild_);
+    addToZoneData(rr_wild_);
+    addToZoneData(rr_not_wild_);
 
     {
         SCOPED_TRACE("Runnig with single entry under foo.wild.example.org");
@@ -1405,7 +1285,7 @@ TEST_F(InMemoryZoneFinderTest, cancelWildcard) {
     // Try putting another one under foo.wild....
     // The result should be the same but it will be done in another way in the
     // code, because the foo.wild.example.org will exist in the tree.
-    addZoneData(rr_not_wild_another_);
+    addToZoneData(rr_not_wild_another_);
     {
         SCOPED_TRACE("Runnig with two entries under foo.wild.example.org");
         doCancelWildcardCheck();
@@ -1414,15 +1294,15 @@ TEST_F(InMemoryZoneFinderTest, cancelWildcard) {
 
 // Same tests as cancelWildcard for NSEC3-signed zone
 TEST_F(InMemoryZoneFinderTest, cancelWildcardNSEC3) {
-    addZoneData(rr_wild_);
-    addZoneData(rr_not_wild_);
-    addZoneData(rr_nsec3_);
+    addToZoneData(rr_wild_);
+    addToZoneData(rr_not_wild_);
+    addToZoneData(rr_nsec3_);
 
     {
         SCOPED_TRACE("Runnig with single entry under foo.wild.example.org");
         doCancelWildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
     }
-    addZoneData(rr_not_wild_another_);
+    addToZoneData(rr_not_wild_another_);
     {
         SCOPED_TRACE("Runnig with two entries under foo.wild.example.org");
         doCancelWildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
@@ -1433,9 +1313,9 @@ TEST_F(InMemoryZoneFinderTest, cancelWildcardNSEC3) {
 // or without FIND_DNSSEC option.  NSEC should be returned only when the option
 // is given.
 TEST_F(InMemoryZoneFinderTest, cancelWildcardNSEC) {
-    addZoneData(rr_wild_);
-    addZoneData(rr_not_wild_);
-    addZoneData(rr_nsec_);
+    addToZoneData(rr_wild_);
+    addToZoneData(rr_not_wild_);
+    addToZoneData(rr_nsec_);
 
     {
         SCOPED_TRACE("Runnig with single entry under foo.wild.example.org");
@@ -1443,7 +1323,7 @@ TEST_F(InMemoryZoneFinderTest, cancelWildcardNSEC) {
                               ZoneFinder::FIND_DNSSEC);
         doCancelWildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED);
     }
-    addZoneData(rr_not_wild_another_);
+    addToZoneData(rr_not_wild_another_);
     {
         SCOPED_TRACE("Runnig with two entries under foo.wild.example.org");
         doCancelWildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED,
@@ -1464,7 +1344,7 @@ TEST_F(InMemoryZoneFinderTest, findNSEC3ForBadZone) {
                  DataSourceError);
 
     // Only having NSEC3PARAM isn't enough
-    addZoneData(textToRRset("example.org. 300 IN NSEC3PARAM "
+    addToZoneData(textToRRset("example.org. 300 IN NSEC3PARAM "
                             "1 0 12 aabbccdd"));
     EXPECT_THROW(zone_finder_.findNSEC3(Name("www.example.org"), true),
                  DataSourceError);
@@ -1473,7 +1353,7 @@ TEST_F(InMemoryZoneFinderTest, findNSEC3ForBadZone) {
     // is guaranteed.
     const string ns1_nsec3_text = string(ns1_hash) + ".example.org." +
         string(nsec3_common);
-    addZoneData(textToRRset(ns1_nsec3_text));
+    addToZoneData(textToRRset(ns1_nsec3_text));
     EXPECT_THROW(zone_finder_.findNSEC3(Name("www.example.org"), true),
                  DataSourceError);
 }
@@ -1492,16 +1372,16 @@ public:
         // zzz.example.org:     hash=R5..
         const string apex_nsec3_text = string(apex_hash) + ".example.org." +
             string(nsec3_common);
-        addZoneData(textToRRset(apex_nsec3_text));
+        addToZoneData(textToRRset(apex_nsec3_text));
         const string ns1_nsec3_text = string(ns1_hash) + ".example.org." +
             string(nsec3_common);
-        addZoneData(textToRRset(ns1_nsec3_text));
+        addToZoneData(textToRRset(ns1_nsec3_text));
         const string w_nsec3_text = string(w_hash) + ".example.org." +
             string(nsec3_common);
-        addZoneData(textToRRset(w_nsec3_text));
+        addToZoneData(textToRRset(w_nsec3_text));
         const string zzz_nsec3_text = string(zzz_hash) + ".example.org." +
             string(nsec3_common);
-        addZoneData(textToRRset(zzz_nsec3_text));
+        addToZoneData(textToRRset(zzz_nsec3_text));
     }
 
 private:

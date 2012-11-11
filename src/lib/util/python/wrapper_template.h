@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_@CPPCLASS@_H
-#define __PYTHON_@CPPCLASS@_H 1
+#ifndef PYTHON_@CPPCLASS@_H
+#define PYTHON_@CPPCLASS@_H 1
 
 #include <Python.h>
 
@@ -52,7 +52,7 @@ PyObject* create@CPPCLASS@Object(const @CPPCLASS@& source);
 } // namespace python
 } // namespace @MODULE@
 } // namespace isc
-#endif // __PYTHON_@CPPCLASS@_H
+#endif // PYTHON_@CPPCLASS@_H
 
 // Local Variables:
 // mode: c++

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_MESSAGERENDERER_H
-#define __PYTHON_MESSAGERENDERER_H 1
+#ifndef PYTHON_MESSAGERENDERER_H
+#define PYTHON_MESSAGERENDERER_H 1
 
 #include <Python.h>
 
@@ -50,7 +50,7 @@ MessageRenderer& PyMessageRenderer_ToMessageRenderer(PyObject* messagerenderer_o
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_MESSAGERENDERER_H
+#endif // PYTHON_MESSAGERENDERER_H
 
 // Local Variables:
 // mode: c++

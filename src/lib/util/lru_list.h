@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LRU_LIST_H
-#define __LRU_LIST_H
+#ifndef LRU_LIST_H
+#define LRU_LIST_H
 
 #include <list>
 #include <string>
@@ -257,4 +257,4 @@ void LruList<T>::clear() {
 }   // namespace util
 }   // namespace isc
 
-#endif // __LRU_LIST_H
+#endif // LRU_LIST_H

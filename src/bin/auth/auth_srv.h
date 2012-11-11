@@ -12,13 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __AUTH_SRV_H
-#define __AUTH_SRV_H 1
+#ifndef AUTH_SRV_H
+#define AUTH_SRV_H 1
 
 #include <config/ccsession.h>
 
 #include <datasrc/factory.h>
 #include <datasrc/client_list.h>
+#include <datasrc/datasrc_config.h>
 
 #include <dns/message.h>
 #include <dns/opcode.h>
@@ -34,7 +35,9 @@
 
 #include <asiolink/asiolink.h>
 #include <server_common/portconfig.h>
+
 #include <auth/statistics.h>
+#include <auth/datasrc_clients_mgr.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -193,6 +196,11 @@ public:
     /// \brief Return pointer to the Checkin callback function
     isc::asiolink::SimpleCallback* getCheckinProvider() const { return (checkin_); }
 
+    /// \brief Return data source clients manager.
+    ///
+    /// \throw None
+    isc::auth::DataSrcClientsMgr& getDataSrcClientsMgr();
+
     /// \brief Set the communication session with a separate process for
     /// outgoing zone transfers.
     ///
@@ -214,54 +222,10 @@ public:
     /// \brief Returns statistics data
     ///
     /// This function can throw an exception from
-    /// AuthCounters::getStatistics().
+    /// Counters::getStatistics().
     ///
     /// \return JSON format statistics data.
     isc::data::ConstElementPtr getStatistics() const;
-
-    /// \brief Get the value of counter in the AuthCounters.
-    ///
-    /// This function calls AuthCounters::getStatistics() and
-    /// returns its return value.
-    ///
-    /// This function never throws an exception as far as
-    /// AuthCounters::getStatistics() doesn't throw.
-    ///
-    /// Note: Currently this function is for testing purpose only.
-    ///
-    /// \param type Type of a counter to get the value of
-    ///
-    /// \return the value of the counter.
-
-    uint64_t getCounter(const AuthCounters::ServerCounterType type) const;
-
-    /// \brief Get the value of per Opcode counter in the Auth Counters.
-    ///
-    /// This function calls AuthCounters::getCounter(isc::dns::Opcode) and
-    /// returns its return value.
-    ///
-    /// \note This is a tentative interface as an attempt of experimentally
-    /// supporting more statistics counters.  This should eventually be more
-    /// generalized.  In any case, this method is mainly for testing.
-    ///
-    /// \throw None
-    /// \param opcode The opcode of the counter to get the value of
-    /// \return the value of the counter.
-    uint64_t getCounter(const isc::dns::Opcode opcode) const;
-
-    /// \brief Get the value of per Rcode counter in the Auth Counters.
-    ///
-    /// This function calls AuthCounters::getCounter(isc::dns::Rcode) and
-    /// returns its return value.
-    ///
-    /// \note This is a tentative interface as an attempt of experimentally
-    /// supporting more statistics counters.  This should eventually be more
-    /// generalized.  In any case, this method is mainly for testing.
-    ///
-    /// \throw None
-    /// \param rcode The rcode of the counter to get the value of
-    /// \return the value of the counter.
-    uint64_t getCounter(const isc::dns::Rcode rcode) const;
 
     /**
      * \brief Set and get the addresses we listen on.
@@ -302,83 +266,10 @@ public:
     /// If there was no forwarder yet, this method does nothing.
     void destroyDDNSForwarder();
 
-    /// \brief Shortcut typedef used for swapDataSrcClientLists().
-    typedef boost::shared_ptr<std::map<
-        isc::dns::RRClass, boost::shared_ptr<
-                               isc::datasrc::ConfigurableClientList> > >
-    DataSrcClientListsPtr;
-
-    /// \brief Swap the currently used set of data source client lists with
-    /// given one.
-    ///
-    /// The "set" of lists is actually given in the form of map from
-    /// RRClasses to shared pointers to isc::datasrc::ConfigurableClientList.
-    ///
-    /// This method returns the swapped set of lists, which was previously
-    /// used by the server.
-    ///
-    /// This method is intended to be used by a separate method to update
-    /// the data source configuration "at once".  The caller must hold
-    /// a lock for the mutex object returned by  \c getDataSrcClientListMutex()
-    /// before calling this method.
-    ///
-    /// The ownership of the returned pointer is transferred to the caller.
-    /// The caller is generally expected to release the resources used in
-    /// the old lists.  Note that it could take longer time if some of the
-    /// data source clients contain a large size of in-memory data.
-    ///
-    /// The caller can pass a NULL pointer.  This effectively disables
-    /// any data source for the server.
-    ///
-    /// \param new_lists Shared pointer to a new set of data source client
-    /// lists.
-    /// \return The previous set of lists.  It can be NULL.
-    DataSrcClientListsPtr swapDataSrcClientLists(DataSrcClientListsPtr
-                                                 new_lists);
-
-    /// \brief Returns the currently used client list for the class.
-    ///
-    /// \param rrclass The class for which to get the list.
-    /// \return The list, or NULL if no list is set for the class.
-    boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        getDataSrcClientList(const isc::dns::RRClass& rrclass);
-
-    /// \brief Return a mutex for the client lists.
-    ///
-    /// Background loading of data uses threads. Therefore we need to protect
-    /// the client lists by a mutex, so they don't change (or get destroyed)
-    /// during query processing. Get (and lock) this mutex whenever you do
-    /// something with the lists and keep it locked until you finish. This
-    /// is correct:
-    /// \code
-    /// {
-    ///  Mutex::Locker locker(auth->getDataSrcClientListMutex());
-    ///  boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-    ///    list(auth->getDataSrcClientList(RRClass::IN()));
-    ///  // Do some processing here
-    /// }
-    /// \endcode
-    ///
-    /// But this is not (it releases the mutex too soon):
-    /// \code
-    /// boost::shared_ptr<isc::datasrc::ConfigurableClientList> list;
-    /// {
-    ///     Mutex::Locker locker(auth->getDataSrcClientListMutex());
-    ///     list = auth->getDataSrcClientList(RRClass::IN()));
-    /// }
-    /// // Do some processing here
-    /// \endcode
-    ///
-    /// \note This method is const even if you are allowed to modify
-    ///    (lock) the mutex. It's because locking of the mutex is not really
-    ///    a modification of the server object and it is needed to protect the
-    ///    lists even on read-only operations.
-    isc::util::thread::Mutex& getDataSrcClientListMutex() const;
-
     /// \brief Sets the timeout for incoming TCP connections
     ///
     /// Incoming TCP connections that have not sent their data
-    /// withing this time are dropped.
+    /// within this time are dropped.
     ///
     /// \param timeout The timeout (in milliseconds). If se to
     /// zero, no timeouts are used, and the connection will remain
@@ -393,7 +284,7 @@ private:
     isc::asiodns::DNSServiceBase* dnss_;
 };
 
-#endif // __AUTH_SRV_H
+#endif // AUTH_SRV_H
 
 // Local Variables:
 // mode: c++

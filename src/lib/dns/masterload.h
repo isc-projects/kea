@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __MASTERLOAD_H
-#define __MASTERLOAD_H 1
+#ifndef MASTERLOAD_H
+#define MASTERLOAD_H 1
 
 #include <iosfwd>
 
@@ -244,7 +244,7 @@ void masterLoad(std::istream& input, const Name& origin,
 //@}
 }
 
-#endif  // __MASTERLOAD_H
+#endif  // MASTERLOAD_H
 
 // Local Variables:
 // mode: c++

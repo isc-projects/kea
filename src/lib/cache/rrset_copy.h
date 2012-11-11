@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RRSET_COPY_
-#define __RRSET_COPY_
+#ifndef RRSET_COPY
+#define RRSET_COPY
 
 #include <dns/rrset.h>
 
@@ -38,5 +38,5 @@ rrsetCopy(const isc::dns::AbstractRRset& src, isc::dns::AbstractRRset& dst);
 } // namespace cache
 } // namespace isc
 
-#endif // __RRSET_COPY_
+#endif // RRSET_COPY
 

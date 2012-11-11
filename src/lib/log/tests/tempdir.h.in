@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __TEMPDIR_H
-#define __TEMPDIR_H
+#ifndef TEMPDIR_H
+#define TEMPDIR_H
 
 /// \brief Define temporary directory
 ///
@@ -26,4 +26,4 @@ namespace {
 std::string TEMP_DIR("@builddir@");
 }
 
-#endif // __TEMPDIR_H
+#endif // TEMPDIR_H

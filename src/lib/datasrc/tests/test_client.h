@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __TEST_DATA_SOURCE_CLIENT_H
-#define __TEST_DATA_SOURCE_CLIENT_H 1
+#ifndef TEST_DATA_SOURCE_CLIENT_H
+#define TEST_DATA_SOURCE_CLIENT_H 1
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
@@ -64,7 +64,7 @@ createSQLite3Client(dns::RRClass zclass, const dns::Name& zname,
 } // end of datasrc
 } // end of isc
 
-#endif  // __TEST_DATA_SOURCE_CLIENT_H
+#endif  // TEST_DATA_SOURCE_CLIENT_H
 
 // Local Variables:
 // mode: c++
