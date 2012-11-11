@@ -28,6 +28,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcp/lease_mgr_factory.h>
 
+#include <dhcp/memfile_lease_mgr.h>
 #ifdef HAVE_MYSQL
 #include <dhcp/mysql_lease_mgr.h>
 #endif
@@ -89,6 +90,10 @@ LeaseMgrFactory::create(const std::string& dbconfig) {
         return;
     }
 #endif
+    if (parameters[type] == string("memfile")) {
+        getLeaseMgrPtr().reset(new Memfile_LeaseMgr(parameters));
+        return;
+    }
 
     // Get here on no match
     isc_throw(InvalidType, "Database configuration parameter 'type' does "

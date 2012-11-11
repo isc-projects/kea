@@ -1,3 +1,83 @@
+501.	[func]      tomek
+	Added DHCPv6 allocation engine, now used in the processing of DHCPv6
+	messages.
+	(Trac #2414, git b3526430f02aa3dc3273612524d23137b8f1fe87)
+
+500.	[bug]		jinmei
+	Corrected the autoconf example in the examples directory so it can
+	use the configured path to Boost to check availability of the BIND 10
+	library.  Previously the sample configure script could fail if
+	Boost is installed in an uncommon place.  Also, it now provides a
+	helper m4 function and example usage for embedding the library
+	path to executable (using linker options like -Wl,-R) to help
+	minimize post-build hassles.
+	(Trac #2356, git 36514ddc884c02a063e166d44319467ce6fb1d8f)
+
+499.	[func]		team
+	The b10-auth 'loadzone' command now uses the internal thread
+	introduced in 495 to (re)load a zone in the background, so that
+	query processing isn't blocked while loading a zone.
+	(Trac #2213, git 686594e391c645279cc4a95e0e0020d1c01fba7e)
+
+498.	[func]		marcin
+	Implemented DHCPv6 option values configuration using configuration
+	manager. In order to set values for data fields carried by the
+	particular option, user specifies the string of hexadecimal digits
+	that is in turn converted to binary data and stored into option buffer.
+	More user friendly way of option content specification is planned.
+	(Trac #2318, git e75c686cd9c14f4d6c2a242a0a0853314704fee9)
+
+497.	[bug]		jinmei
+	Fixed several issues in isc-sysinfo:
+	- make sure it doesn't report a negative value for free memory
+	  size (this happened on FreeBSD, but can possibly occur on other
+	  BSD variants)
+	- correctly identifies the SMP support in kernel on FreeBSD
+	- print more human readable uptime as well as the time in seconds
+	(Trac #2297, git 59a449f506948e2371ffa87dcd19059388bd1657)
+
+496.	[func]		tomek
+	DHCPv6 Allocation Engine implemented. It allows address allocation
+	from the configured subnets/pools. It currently features a single
+	allocator: IterativeAllocator, which assigns addresses iteratively.
+	Other allocators (hashed, random) are planned.
+	(Trac #2324, git 8aa188a10298e3a55b725db36502a99d2a8d638a)
+
+495.	[func]		team
+	b10-auth now handles reconfiguration of data sources in
+	background using a separate thread.  This means even if the new
+	configuration includes a large amount of data to be loaded into
+	memory (very large zones and/or a very large number of zones),
+	the reconfiguration doesn't block query handling.
+	(Multiple Trac tickets up to #2211)
+
+494.	[bug]		jinmei
+	Fixed a problem that shutting down BIND 10 kept some of the
+	processes alive.  It was two-fold: when the main bind10 process
+	started as a root, started b10-sockcreator with the privilege, and
+	then dropped the privilege, the bind10 process cannot kill the
+	sockcreator via signal any more (when it has to), but it kept
+	sending the signal and didn't stop.  Also, when running on Python
+	3.1 (or older), the sockcreator had some additional file
+	descriptor open, which prevented it from exiting even after the
+	bind10 process terminated.  Now the bind10 process simply gives up
+	killing a subprocess if it fails due to lack of permission, and it
+	makes sure the socket creator is spawned without any unnecessary
+	FDs open.
+	(Trac #1858, git 405d85c8a0042ba807a3a123611ff383c4081ee1)
+
+493.	[build]		jinmei
+	Fixed build failure with newer versions of clang++.  These
+	versions are stricter regarding "unused variable" and "unused
+	(driver) arguments" warnings, and cause fatal build error
+	with -Werror.  The affected versions of clang++ include Apple's
+	customized version 4.1 included in Xcode 4.5.1.  So this fix
+	will solve build errors for Mac OS X that uses newer versions of
+	Xcode.
+	(Trac #2340, git 55be177fc4f7537143ab6ef5a728bd44bdf9d783,
+	3e2a372012e633d017a97029d13894e743199741 and commits before it
+	with [2340] in the commit log)
+
 492.	[func]		tomek
 	libdhcpsrv: The DHCP Configuration Manager is now able to store
 	information about IPv4 subnets and pools. It is still not possible
@@ -27,7 +107,7 @@
 
 488.	[build]		jinmei
 	On configure, changed the search order for Python executable.
-	It first ties more specific file names such as "python3.2" before
+	It first tries more specific file names such as "python3.2" before
 	more generic "python3".  This will prevent configure failure on
 	Mac OS X that installs Python3 via recent versions of Homebrew.
 	(Trac #2339, git 88db890d8d1c64de49be87f03c24a2021bcf63da)

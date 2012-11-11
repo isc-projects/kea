@@ -12,6 +12,20 @@ AC_CONFIG_MACRO_DIR([m4macros])
 # Checks for programs.
 AC_PROG_CXX
 
+# Enable low-performing debugging facilities? This option optionally
+# enables some debugging aids that perform slowly and hence aren't built
+# by default.
+AC_ARG_ENABLE([debug],
+  AS_HELP_STRING([--enable-debug],
+    [enable debugging (default is no)]),
+  [case "${enableval}" in
+    yes) debug_enabled=yes ;;
+    no)  debug_enabled=no ;;
+    *)   AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+  esac],[debug_enabled=no])
+AM_CONDITIONAL([DEBUG_ENABLED], [test x$debug_enabled = xyes])
+AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable low-performing debugging facilities?])])
+
 # Libtool configuration
 #
 
@@ -50,25 +64,9 @@ AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
 # Linker options
 
-# check -R and -Wl,-R rather than gcc specific -rpath to be as portable
-# as possible.
-AC_MSG_CHECKING([whether -R flag is available in linker])
-LDFLAGS_SAVED="$LDFLAGS"
-LDFLAGS="$LDFLAGS -R/usr/lib"
-AC_TRY_LINK([],[],
-    [ AC_MSG_RESULT(yes)
-        rpath_flag=-R
-    ],[ AC_MSG_RESULT(no)
-        AC_MSG_CHECKING([whether -Wl,-R flag is available in linker])
-        LDFLAGS="$LDFLAGS_SAVED -Wl,-R"
-        AC_TRY_LINK([], [],
-            [ AC_MSG_RESULT(yes)
-                rpath_flag=-Wl,-R
-            ],[ AC_MSG_RESULT(no)
-                 rpath_flag=no
-            ])
-    ])
-LDFLAGS=$LDFLAGS_SAVED
+# check -R, "-Wl,-R" or -rpath (we share the AX function defined in
+#  examples/m4)
+AX_ISC_RPATH
 
 # Compiler dependent settings: define some mandatory CXXFLAGS here.
 # We also use a separate variable B10_CXXFLAGS.  This will (and should) be
@@ -203,6 +201,10 @@ case "$host" in
 	CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
 	# "now" binding is necessary to prevent deadlocks in C++ static initialization code
 	LDFLAGS="$LDFLAGS -z now"
+	# Destroying locked mutexes, condition variables being waited
+	# on, etc. are undefined behavior on Solaris, so we set it as
+	# such here.
+	AC_DEFINE([HAS_UNDEFINED_PTHREAD_BEHAVIOR], [1], [Does this platform have some undefined pthreads behavior?])
 	;;
 *-apple-darwin*)
 	# Starting with OSX 10.7 (Lion) we must choose which IPv6 API to use
@@ -314,10 +316,10 @@ fi
 # modules, we embed the path to the modules when possible.  We do this even
 # when the path is known in the common operational environment (e.g. when
 # it's stored in a common "hint" file) for simplicity.
-if test $rpath_flag != no; then
+if test "x$ISC_RPATH_FLAG" != "x"; then
 	python_rpath=
 	for flag in ${PYTHON_LDFLAGS}; do
-		python_rpath="${python_rpath} `echo $flag | sed -ne "s/^\(\-L\)/${rpath_flag}/p"`"
+		python_rpath="${python_rpath} `echo $flag | sed -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
 	done
 	PYTHON_LDFLAGS="${PYTHON_LDFLAGS} ${python_rpath}"
 fi
@@ -683,10 +685,10 @@ for flag in ${BOTAN_LIBS}; do
 done
 
 # See python_rpath for some info on why we do this
-if test $rpath_flag != no; then
+if test "x$ISC_RPATH_FLAG" != "x"; then
     BOTAN_RPATH=
     for flag in ${BOTAN_LIBS}; do
-            BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne "s/^\(\-L\)/${rpath_flag}/p"`"
+            BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
     done
 AC_SUBST(BOTAN_RPATH)
 
@@ -1121,6 +1123,13 @@ AM_COND_IF([ENABLE_LOGGER_CHECKS], [AC_DEFINE([ENABLE_LOGGER_CHECKS], [1], [Chec
 AC_PATH_PROG(VALGRIND, valgrind, no)
 AM_CONDITIONAL(HAVE_VALGRIND, test "x$VALGRIND" != "xno")
 
+# Also check for valgrind headers
+# We could consider adding them to the source code tree, as this
+# is the encouraged method of using them; they are BSD-licensed.
+# However, until we find that this is a problem, we just use
+# the system-provided ones, if available
+AC_CHECK_HEADERS(valgrind/valgrind.h, [AC_DEFINE([HAVE_VALGRIND_HEADERS], [1], [Check valgrind headers])])
+
 found_valgrind="not found"
 if test "x$VALGRIND" != "xno"; then
    found_valgrind="found"
@@ -1159,6 +1168,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/bindctl/Makefile
                  src/bin/bindctl/tests/Makefile
                  src/bin/cfgmgr/Makefile
+                 src/bin/cfgmgr/local_plugins/Makefile
                  src/bin/cfgmgr/plugins/Makefile
                  src/bin/cfgmgr/plugins/tests/Makefile
                  src/bin/cfgmgr/tests/Makefile
@@ -1327,6 +1337,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/zonemgr/tests/zonemgr_test
            src/bin/zonemgr/run_b10-zonemgr.sh
            src/bin/sysinfo/sysinfo.py
+           src/bin/sysinfo/run_sysinfo.sh
            src/bin/stats/stats.py
            src/bin/stats/stats_httpd.py
            src/bin/bind10/bind10_src.py
@@ -1405,6 +1416,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/loadzone/run_loadzone.sh
            chmod +x src/bin/loadzone/tests/correct/correct_test.sh
            chmod +x src/bin/loadzone/tests/error/error_test.sh
+           chmod +x src/bin/sysinfo/run_sysinfo.sh
            chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/tests/msgq_test
@@ -1480,6 +1492,7 @@ Features:
   $enable_features
 
 Developer:
+  Enable Debugging: $debug_enabled
   Google Tests: $enable_gtest
   Valgrind: $found_valgrind
   C++ Code Coverage: $USE_LCOV

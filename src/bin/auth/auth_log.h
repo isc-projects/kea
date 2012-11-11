@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __AUTH_LOG__H
-#define __AUTH_LOG__H
+#ifndef AUTH_LOG_H
+#define AUTH_LOG_H
 
 #include <log/macros.h>
 #include <auth/auth_messages.h>
@@ -28,21 +28,21 @@ namespace auth {
 /// output.
 
 // Debug messages indicating normal startup are logged at this debug level.
-const int DBG_AUTH_START = DBGLVL_START_SHUT;
+extern const int DBG_AUTH_START;
 // Debug messages upon shutdown
-const int DBG_AUTH_SHUT = DBGLVL_START_SHUT;
+extern const int DBG_AUTH_SHUT;
 
 // Debug level used to log setting information (such as configuration changes).
-const int DBG_AUTH_OPS = DBGLVL_COMMAND;
+extern const int DBG_AUTH_OPS;
 
 // Trace detailed operations, including errors raised when processing invalid
 // packets.  (These are not logged at severities of WARN or higher for fear
 // that a set of deliberately invalid packets set to the authoritative server
 // could overwhelm the logging.)
-const int DBG_AUTH_DETAIL = DBGLVL_TRACE_BASIC;
+extern const int DBG_AUTH_DETAIL;
 
 // This level is used to log the contents of packets received and sent.
-const int DBG_AUTH_MESSAGES = DBGLVL_TRACE_DETAIL_DATA;
+extern const int DBG_AUTH_MESSAGES;
 
 /// Define the logger for the "auth" module part of b10-auth.  We could define
 /// a logger in each file, but we would want to define a common name to avoid
@@ -53,4 +53,4 @@ extern isc::log::Logger auth_logger;
 } // namespace nsas
 } // namespace isc
 
-#endif // __AUTH_LOG__H
+#endif // AUTH_LOG_H

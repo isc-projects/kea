@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __UDP_ENDPOINT_H
-#define __UDP_ENDPOINT_H 1
+#ifndef UDP_ENDPOINT_H
+#define UDP_ENDPOINT_H 1
 
 #ifndef ASIO_HPP
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
@@ -116,7 +116,7 @@ private:
 
 } // namespace asiolink
 } // namespace isc
-#endif // __UDP_ENDPOINT_H
+#endif // UDP_ENDPOINT_H
 
 // Local Variables:
 // mode: c++

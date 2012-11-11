@@ -178,6 +178,8 @@ class MsgQ:
             if os.path.exists(self.socket_file):
                 os.remove(self.socket_file)
             self.listen_socket.close()
+            sys.stderr.write("[b10-msgq] failed to setup listener on %s: %s\n"
+                             % (self.socket_file, str(e)))
             raise e
 
         if self.poller:
@@ -543,9 +545,10 @@ if __name__ == "__main__":
 
     msgq = MsgQ(options.msgq_socket_file, options.verbose)
 
-    setup_result = msgq.setup()
-    if setup_result:
-        sys.stderr.write("[b10-msgq] Error on startup: %s\n" % setup_result)
+    try:
+        msgq.setup()
+    except Exception as e:
+        sys.stderr.write("[b10-msgq] Error on startup: %s\n" % str(e))
         sys.exit(1)
 
     try:

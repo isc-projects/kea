@@ -23,6 +23,7 @@
 
 #include <exceptions/exceptions.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/duid.h>
 #include "command_options.h"
 
 using namespace std;
@@ -567,8 +568,8 @@ CommandOptions::generateDuidTemplate() {
     const uint8_t duid_template_len = 14;
     duid_template_.resize(duid_template_len);
     // The first four octets consist of DUID LLT and hardware type.
-    duid_template_[0] = DUID_LLT >> 8;
-    duid_template_[1] = DUID_LLT & 0xff;
+    duid_template_[0] = static_cast<uint8_t>(static_cast<uint16_t>(isc::dhcp::DUID::DUID_LLT) >> 8);
+    duid_template_[1] = static_cast<uint8_t>(static_cast<uint16_t>(isc::dhcp::DUID::DUID_LLT) & 0xff);
     duid_template_[2] = HWTYPE_ETHERNET >> 8;
     duid_template_[3] = HWTYPE_ETHERNET & 0xff;
 

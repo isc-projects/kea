@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RESOLVE_LOG__H
-#define __RESOLVE_LOG__H
+#ifndef RESOLVE_LOG_H
+#define RESOLVE_LOG_H
 
 #include <log/macros.h>
 #include "resolve_messages.h"
@@ -50,4 +50,4 @@ extern isc::log::Logger logger;
 } // namespace resolve
 } // namespace isc
 
-#endif // __RESOLVE_LOG__H
+#endif // RESOLVE_LOG_H

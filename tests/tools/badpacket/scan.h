@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __SCAN_H
-#define __SCAN_H
+#ifndef SCAN_H
+#define SCAN_H
 
 #include <stdint.h>
 
@@ -195,4 +195,4 @@ private:
 } // namespace test
 } // namespace isc
 
-#endif // __SCAN_H
+#endif // SCAN_H

@@ -23,6 +23,8 @@
 #include <dhcp/option.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
+#include <dhcp/option_definition.h>
+#include <dhcp/option6_int_array.h>
 
 using namespace std;
 using namespace isc::dhcp;
@@ -34,6 +36,23 @@ std::map<unsigned short, Option::Factory*> LibDHCP::v4factories_;
 // static array with factories for options
 std::map<unsigned short, Option::Factory*> LibDHCP::v6factories_;
 
+// Static container with DHCPv4 option definitions.
+OptionDefContainer LibDHCP::v4option_defs_;
+
+// Static container with DHCPv6 option definitions.
+OptionDefContainer LibDHCP::v6option_defs_;
+
+const OptionDefContainer&
+LibDHCP::getOptionDefs(Option::Universe u) {
+    switch (u) {
+    case Option::V4:
+        return (v4option_defs_);
+    case Option::V6:
+        return (v6option_defs_);
+    default:
+        isc_throw(isc::BadValue, "invalid universe " << u << " specified");
+    }
+}
 
 OptionPtr
 LibDHCP::optionFactory(Option::Universe u,
@@ -87,6 +106,11 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
             opt = OptionPtr(new Option6IAAddr(opt_type,
                                               buf.begin() + offset,
                                               buf.begin() + offset + opt_len));
+            break;
+        case D6O_ORO:
+            opt = OptionPtr(new Option6IntArray<uint16_t>(opt_type,
+                                                          buf.begin() + offset,
+                                                          buf.begin() + offset + opt_len));
             break;
         default:
             opt = OptionPtr(new Option(Option::V6,
@@ -200,4 +224,82 @@ void LibDHCP::OptionFactoryRegister(Option::Universe u,
     }
 
     return;
+}
+
+void
+LibDHCP::initStdOptionDefs(Option::Universe u) {
+    switch (u) {
+    case Option::V4:
+        initStdOptionDefs4();
+        break;
+    case Option::V6:
+        initStdOptionDefs6();
+        break;
+    default:
+        isc_throw(isc::BadValue, "invalid universe " << u << " specified");
+    }
+}
+
+void
+LibDHCP::initStdOptionDefs4() {
+    isc_throw(isc::NotImplemented, "initStdOptionDefs4 is not implemented");
+}
+
+void
+LibDHCP::initStdOptionDefs6() {
+    v6option_defs_.clear();
+
+    struct OptionParams {
+        std::string name;
+        uint16_t code;
+        OptionDefinition::DataType type;
+        bool array;
+    };
+    OptionParams params[] = {
+        { "CLIENTID", D6O_CLIENTID, OptionDefinition::BINARY_TYPE, false },
+        { "SERVERID", D6O_SERVERID, OptionDefinition::BINARY_TYPE, false },
+        { "IA_NA", D6O_IA_NA, OptionDefinition::RECORD_TYPE, false },
+        { "IAADDR", D6O_IAADDR, OptionDefinition::RECORD_TYPE, false },
+        { "ORO", D6O_ORO, OptionDefinition::UINT16_TYPE, true },
+        { "ELAPSED_TIME", D6O_ELAPSED_TIME, OptionDefinition::UINT16_TYPE, false },
+        { "STATUS_CODE", D6O_STATUS_CODE, OptionDefinition::RECORD_TYPE, false },
+        { "RAPID_COMMIT", D6O_RAPID_COMMIT, OptionDefinition::EMPTY_TYPE, false },
+        { "DNS_SERVERS", D6O_NAME_SERVERS, OptionDefinition::IPV6_ADDRESS_TYPE, true }
+    };
+    const int params_size = sizeof(params) / sizeof(params[0]);
+
+    for (int i = 0; i < params_size; ++i) {
+        OptionDefinitionPtr definition(new OptionDefinition(params[i].name,
+                                                            params[i].code,
+                                                            params[i].type,
+                                                            params[i].array));
+        switch(params[i].code) {
+        case D6O_IA_NA:
+            for (int j = 0; j < 3; ++j) {
+                definition->addRecordField(OptionDefinition::UINT32_TYPE);
+            }
+            break;
+        case D6O_IAADDR:
+            definition->addRecordField(OptionDefinition::IPV6_ADDRESS_TYPE);
+            definition->addRecordField(OptionDefinition::UINT32_TYPE);
+            definition->addRecordField(OptionDefinition::UINT32_TYPE);
+            break;
+        case D6O_STATUS_CODE:
+            definition->addRecordField(OptionDefinition::UINT16_TYPE);
+            definition->addRecordField(OptionDefinition::STRING_TYPE);
+            break;
+        default:
+            // The default case is intentionally left empty
+            // as it does not need any processing.
+            ;
+        }
+        try {
+            definition->validate();
+        } catch (const Exception& ex) {
+            isc_throw(isc::Unexpected, "internal server error: invalid definition of standard"
+                      << " DHCPv6 option (with code " << params[i].code << "): "
+                      << ex.what());
+        }
+        v6option_defs_.push_back(definition);
+    }
 }

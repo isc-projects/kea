@@ -29,6 +29,10 @@
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpIfaceMgr
+ * - @subpage libdhcpsrv
+ *   - @subpage leasemgr
+ *   - @subpage cfgmgr
+ *   - @subpage allocengine
  * - @subpage dhcp-database-backends
  * - @subpage perfdhcpInternals
  *

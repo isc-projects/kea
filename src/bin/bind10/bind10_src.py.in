@@ -331,11 +331,7 @@ class BoB:
             each one.  It then clears that list.
         """
         logger.info(BIND10_KILLING_ALL_PROCESSES)
-
-        for pid in self.components:
-            logger.info(BIND10_KILL_PROCESS, self.components[pid].name())
-            self.components[pid].kill(True)
-        self.components = {}
+        self.__kill_children(True)
 
     def _read_bind10_config(self):
         """
@@ -427,6 +423,7 @@ class BoB:
         while self.cc_session is None:
             # if we have been trying for "a while" give up
             if (time.time() - cc_connect_start) > 5:
+                logger.error(BIND10_CONNECTING_TO_CC_FAIL)
                 raise CChannelConnectError("Unable to connect to c-channel after 5 seconds")
 
             # try to connect, and if we can't wait a short while
@@ -546,8 +543,6 @@ class BoB:
         """
             Start the Authoritative server
         """
-        if self.uid is not None and self.__started:
-            logger.warn(BIND10_START_AS_NON_ROOT_AUTH)
         authargs = ['b10-auth']
         if self.verbose:
             authargs += ['-v']
@@ -693,31 +688,41 @@ class BoB:
         # from doing so
         if not self.nokill:
             # next try sending a SIGTERM
-            components_to_stop = list(self.components.values())
-            for component in components_to_stop:
-                logger.info(BIND10_SEND_SIGTERM, component.name(), component.pid())
-                try:
-                    component.kill()
-                except OSError:
-                    # ignore these (usually ESRCH because the child
-                    # finally exited)
-                    pass
-            # finally, send SIGKILL (unmaskable termination) until everybody dies
+            self.__kill_children(False)
+            # finally, send SIGKILL (unmaskable termination) until everybody
+            # dies
             while self.components:
                 # XXX: some delay probably useful... how much is uncertain
                 time.sleep(0.1)
                 self.reap_children()
-                components_to_stop = list(self.components.values())
-                for component in components_to_stop:
-                    logger.info(BIND10_SEND_SIGKILL, component.name(),
-                                component.pid())
-                    try:
-                        component.kill(True)
-                    except OSError:
-                        # ignore these (usually ESRCH because the child
-                        # finally exited)
-                        pass
+                self.__kill_children(True)
             logger.info(BIND10_SHUTDOWN_COMPLETE)
+
+    def __kill_children(self, forceful):
+        '''Terminate remaining subprocesses by sending a signal.
+
+        The forceful paramter will be passed Component.kill().
+        This is a dedicated subroutine of shutdown(), just to unify two
+        similar cases.
+
+        '''
+        logmsg = BIND10_SEND_SIGKILL if forceful else BIND10_SEND_SIGTERM
+        # We need to make a copy of values as the components may be modified
+        # in the loop.
+        for component in list(self.components.values()):
+            logger.info(logmsg, component.name(), component.pid())
+            try:
+                component.kill(forceful)
+            except OSError as ex:
+                # If kill() failed due to EPERM, it doesn't make sense to
+                # keep trying, so we just log the fact and forget that
+                # component.  Ignore other OSErrors (usually ESRCH because
+                # the child finally exited)
+                signame = "SIGKILL" if forceful else "SIGTERM"
+                logger.info(BIND10_SEND_SIGNAL_FAIL, signame,
+                            component.name(), component.pid(), ex)
+                if ex.errno == errno.EPERM:
+                    del self.components[component.pid()]
 
     def _get_process_exit_status(self):
         return os.waitpid(-1, os.WNOHANG)
@@ -1137,6 +1142,21 @@ def main():
 
     options = parse_args()
 
+    # Announce startup.  Making this is the first log message.
+    try:
+        logger.info(BIND10_STARTING, VERSION)
+    except RuntimeError as e:
+        sys.stderr.write('ERROR: failed to write the initial log: %s\n' %
+                         str(e))
+        sys.stderr.write("""\
+TIP: if this is about permission error for a lock file, check if the directory
+of the file is writable for the user of the bind10 process; often you need
+to start bind10 as a super user.  Also, if you specify the -u option to
+change the user and group, the directory must be writable for the group,
+and the created lock file must be writable for that user.
+""")
+        sys.exit(1)
+
     # Check user ID.
     setuid = None
     setgid = None
@@ -1168,9 +1188,6 @@ def main():
         if setuid is None:
             logger.fatal(BIND10_INVALID_USER, options.user)
             sys.exit(1)
-
-    # Announce startup.
-    logger.info(BIND10_STARTING, VERSION)
 
     # Create wakeup pipe for signal handlers
     wakeup_pipe = os.pipe()

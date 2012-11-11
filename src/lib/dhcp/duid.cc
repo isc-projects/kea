@@ -12,11 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <vector>
 #include <exceptions/exceptions.h>
 #include <stdint.h>
 #include <util/io_utilities.h>
 #include <dhcp/duid.h>
+#include <vector>
+#include <sstream>
+#include <iomanip>
 
 namespace isc {
 namespace dhcp {
@@ -51,6 +53,21 @@ DUID::DUIDType DUID::getType() const {
     } else {
         return (DUID_UNKNOWN);
     }
+}
+
+std::string DUID::toText() const {
+    std::stringstream tmp;
+    tmp << std::hex;
+    bool delim = false;
+    for (std::vector<uint8_t>::const_iterator it = duid_.begin();
+         it != duid_.end(); ++it) {
+        if (delim) {
+            tmp << ":";
+        }
+        tmp << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(*it);
+        delim = true;
+    }
+    return (tmp.str());
 }
 
 bool DUID::operator == (const DUID& other) const {

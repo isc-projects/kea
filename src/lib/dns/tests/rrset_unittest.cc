@@ -359,4 +359,12 @@ TEST_F(RRsetRRSIGTest, getRRsigDataCount) {
     rrset_a->removeRRsig();
     EXPECT_EQ(0, rrset_a->getRRsigDataCount());
 }
+
+TEST_F(RRsetRRSIGTest, toText) {
+    // toText() should also return the associated RRSIG.
+    EXPECT_EQ("test.example.com. 3600 IN AAAA 2001:db8::1234\n"
+              "test.example.com. 3600 IN RRSIG AAAA 5 3 7200 "
+              "20100322084538 20100220084538 1 example.com. FAKEFAKEFAKEFAKE\n",
+              rrset_aaaa->toText());
+}
 }

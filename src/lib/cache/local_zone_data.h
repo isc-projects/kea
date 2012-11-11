@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef _LOCAL_ZONE_DATA
-#define _LOCAL_ZONE_DATA
+#ifndef LOCAL_ZONE_DATA
+#define LOCAL_ZONE_DATA
 
 #include <map>
 #include <string>
@@ -60,5 +60,5 @@ typedef boost::shared_ptr<const LocalZoneData> ConstLocalZoneDataPtr;
 } // namespace cache
 } // namespace isc
 
-#endif // _LOCAL_ZONE_DATA
+#endif // LOCAL_ZONE_DATA
 

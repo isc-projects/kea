@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RRTTL_H
-#define __RRTTL_H 1
+#ifndef RRTTL_H
+#define RRTTL_H 1
 
 #include <stdint.h>
 
@@ -255,7 +255,7 @@ std::ostream&
 operator<<(std::ostream& os, const RRTTL& rrttl);
 }
 }
-#endif  // __RRTTL_H
+#endif  // RRTTL_H
 
 // Local Variables: 
 // mode: c++

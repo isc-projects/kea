@@ -12,7 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "lock.h"
+#include "config.h"
+
+#include "sync.h"
 
 #include <exceptions/exceptions.h>
 
@@ -31,12 +33,16 @@ namespace thread {
 
 class Mutex::Impl {
 public:
-    Impl() :
-        locked_count(0)
+    Impl()
+#ifdef ENABLE_DEBUG
+        : locked_count(0)
+#endif // ENABLE_DEBUG
     {}
+
     pthread_mutex_t mutex;
-    // Only in debug mode
+#ifdef ENABLE_DEBUG
     size_t locked_count;
+#endif // ENABLE_DEBUG
 };
 
 namespace {
@@ -70,12 +76,20 @@ Mutex::Mutex() :
             isc_throw(isc::InvalidOperation, std::strerror(result));
     }
     Deinitializer deinitializer(attributes);
-    // TODO: Distinguish if debug mode is enabled in compilation.
-    // If so, it should be PTHREAD_MUTEX_NORMAL or NULL
+
+    // If debug mode is enabled in compilation, use the slower
+    // error-checking mutexes that detect deadlocks. Otherwise, use fast
+    // mutexes which don't. See the pthread_mutexattr_settype() POSIX
+    // documentation which describes these type attributes.
+#ifdef ENABLE_DEBUG
     result = pthread_mutexattr_settype(&attributes, PTHREAD_MUTEX_ERRORCHECK);
+#else
+    result = pthread_mutexattr_settype(&attributes, PTHREAD_MUTEX_NORMAL);
+#endif // ENABLE_DEBUG
     if (result != 0) {
         isc_throw(isc::InvalidOperation, std::strerror(result));
     }
+
     auto_ptr<Impl> impl(new Impl);
     result = pthread_mutex_init(&impl->mutex, &attributes);
     switch (result) {
@@ -93,12 +107,17 @@ Mutex::Mutex() :
 Mutex::~Mutex() {
     if (impl_ != NULL) {
         const int result = pthread_mutex_destroy(&impl_->mutex);
+
+#ifdef ENABLE_DEBUG
         const bool locked = impl_->locked_count != 0;
+#endif // ENABLE_DEBUG
+
         delete impl_;
         // We don't want to throw from the destructor. Also, if this ever
         // fails, something is really screwed up a lot.
         assert(result == 0);
 
+#ifdef ENABLE_DEBUG
         // We should not try to destroy a locked mutex, bad threaded monsters
         // could get loose if we ever do and it is also forbidden by pthreads.
 
@@ -106,8 +125,37 @@ Mutex::~Mutex() {
         // pthread_mutex_destroy should check for it already. But it seems
         // there are systems that don't check it.
         assert(!locked);
+#endif // ENABLE_DEBUG
     }
 }
+
+#ifdef ENABLE_DEBUG
+
+void
+Mutex::postLockAction() {
+    assert(impl_->locked_count == 0);
+    ++impl_->locked_count;
+}
+
+void
+Mutex::preUnlockAction(bool throw_ok) {
+    if (impl_->locked_count == 0) {
+        if (throw_ok) {
+            isc_throw(isc::InvalidOperation,
+                      "Unlock attempt for unlocked mutex");
+        } else {
+            assert(false);
+        }
+    }
+    --impl_->locked_count;
+}
+
+bool
+Mutex::locked() const {
+    return (impl_->locked_count != 0);
+}
+
+#endif // ENABLE_DEBUG
 
 void
 Mutex::lock() {
@@ -116,21 +164,75 @@ Mutex::lock() {
     if (result != 0) {
         isc_throw(isc::InvalidOperation, std::strerror(result));
     }
-    ++impl_->locked_count; // Only in debug mode
+#ifdef ENABLE_DEBUG
+    postLockAction();           // Only in debug mode
+#endif // ENABLE_DEBUG
 }
 
 void
 Mutex::unlock() {
     assert(impl_ != NULL);
-    --impl_->locked_count; // Only in debug mode
+#ifdef ENABLE_DEBUG
+    preUnlockAction(false);     // Only in debug mode.  Ensure no throw.
+#endif // ENABLE_DEBUG
     const int result = pthread_mutex_unlock(&impl_->mutex);
     assert(result == 0); // This should never be possible
 }
 
-// TODO: Disable in non-debug build
-bool
-Mutex::locked() const {
-    return (impl_->locked_count != 0);
+class CondVar::Impl {
+public:
+    Impl() {
+        const int result = pthread_cond_init(&cond_, NULL);
+        if (result != 0) {
+            isc_throw(isc::Unexpected, "pthread_cond_init failed: "
+                      << std::strerror(result));
+        }
+    }
+    ~Impl() {
+        const int result = pthread_cond_destroy(&cond_);
+
+        // This can happen if we try to destroy cond_ while some other thread
+        // is waiting on it.  assert() may be too strong for such a case,
+        // but we cannot safely destroy cond_ anyway.  In order to avoid
+        // throwing from a destructor we simply let the process die.
+        assert(result == 0);
+    }
+
+    // For convenience allow the main class to access this directly.
+    pthread_cond_t cond_;
+};
+
+CondVar::CondVar() : impl_(new Impl)
+{}
+
+CondVar::~CondVar() {
+    delete impl_;
+}
+
+void
+CondVar::wait(Mutex& mutex) {
+#ifdef ENABLE_DEBUG
+    mutex.preUnlockAction(true);    // Only in debug mode
+    const int result = pthread_cond_wait(&impl_->cond_, &mutex.impl_->mutex);
+    mutex.postLockAction();     // Only in debug mode
+#else
+    const int result = pthread_cond_wait(&impl_->cond_, &mutex.impl_->mutex);
+#endif
+    // pthread_cond_wait should normally succeed unless mutex is completely
+    // broken.
+    if (result != 0) {
+        isc_throw(isc::BadValue, "pthread_cond_wait failed unexpectedly: " <<
+                  std::strerror(result));
+    }
+}
+
+void
+CondVar::signal() {
+    const int result = pthread_cond_signal(&impl_->cond_);
+
+    // pthread_cond_signal() can only fail when if cond_ is invalid.  It
+    //should be impossible as long as this is a valid CondVar object.
+    assert(result == 0);
 }
 
 }

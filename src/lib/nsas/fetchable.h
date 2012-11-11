@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __FETCHABLE_H
-#define __FETCHABLE_H
+#ifndef FETCHABLE_H
+#define FETCHABLE_H
 
 /**
  * \file fetchable.h
@@ -63,4 +63,4 @@ class Fetchable {
 } // namespace nsas
 } // namespace isc
 
-#endif // __FETCHABLE_H
+#endif // FETCHABLE_H

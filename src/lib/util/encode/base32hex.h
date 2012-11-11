@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __BASE32HEX_H
-#define __BASE32HEX_H 1
+#ifndef BASE32HEX_H
+#define BASE32HEX_H 1
 
 #include <stdint.h>
 #include <string>
@@ -57,7 +57,7 @@ void decodeBase32Hex(const std::string& input, std::vector<uint8_t>& result);
 } // namespace util
 } // namespace isc
 
-#endif  // __BASE32HEX_H
+#endif  // BASE32HEX_H
 
 // Local Variables:
 // mode: c++

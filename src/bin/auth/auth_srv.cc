@@ -26,7 +26,6 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
-#include <util/threads/lock.h>
 
 #include <dns/edns.h>
 #include <dns/exceptions.h>
@@ -53,6 +52,7 @@
 #include <auth/query.h>
 #include <auth/statistics.h>
 #include <auth/auth_log.h>
+#include <auth/datasrc_clients_mgr.h>
 
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
@@ -85,6 +85,7 @@ using namespace isc::xfr;
 using namespace isc::asiolink;
 using namespace isc::asiodns;
 using namespace isc::server_common::portconfig;
+using isc::auth::statistics::Counters;
 
 namespace {
 // A helper class for cleaning up message renderer.
@@ -260,7 +261,7 @@ public:
     AbstractSession* xfrin_session_;
 
     /// Query counters for statistics
-    AuthCounters counters_;
+    Counters counters_;
 
     /// Addresses we listen on
     AddressList listen_addresses_;
@@ -268,24 +269,8 @@ public:
     /// The TSIG keyring
     const shared_ptr<TSIGKeyRing>* keyring_;
 
-    /// The data source client list
-    AuthSrv::DataSrcClientListsPtr datasrc_client_lists_;
-
-    shared_ptr<ConfigurableClientList> getDataSrcClientList(
-        const RRClass& rrclass)
-    {
-        // TODO: Debug-build only check
-        if (!mutex_.locked()) {
-            isc_throw(isc::Unexpected, "Not locked!");
-        }
-        const std::map<RRClass, shared_ptr<ConfigurableClientList> >::
-            const_iterator it(datasrc_client_lists_->find(rrclass));
-        if (it == datasrc_client_lists_->end()) {
-            return (shared_ptr<ConfigurableClientList>());
-        } else {
-            return (it->second);
-        }
-    }
+    /// The data source client list manager
+    auth::DataSrcClientsMgr datasrc_clients_mgr_;
 
     /// Bind the ModuleSpec object in config_session_ with
     /// isc:config::ModuleSpec::validateStatistics.
@@ -301,28 +286,28 @@ public:
 
     /// \brief Resume the server
     ///
-    /// This is a wrapper call for DNSServer::resume(done), if 'done' is true,
-    /// the Rcode set in the given Message is counted in the statistics
-    /// counter.
+    /// This is a wrapper call for DNSServer::resume(done). Query/Response
+    /// statistics counters are incremented in this method.
     ///
     /// This method is expected to be called by processMessage()
     ///
     /// \param server The DNSServer as passed to processMessage()
     /// \param message The response as constructed by processMessage()
-    /// \param done If true, the Rcode from the given message is counted,
-    ///             this value is then passed to server->resume(bool)
+    /// \param stats_attrs Query/response attributes for statistics which is
+    ///                    not in \p messsage.
+    ///                    Note: This parameter is modified inside this method
+    ///                          to store whether the answer has been sent and
+    ///                          the response is truncated.
+    /// \param done If true, it indicates there is a response.
+    ///             this value will be passed to server->resume(bool)
     void resumeServer(isc::asiodns::DNSServer* server,
                       isc::dns::Message& message,
-                      bool done);
-
-    mutable util::thread::Mutex mutex_;
+                      statistics::QRAttributes& stats_attrs,
+                      const bool done);
 
 private:
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
-
-    /// Increment query counter
-    void incCounter(const int protocol);
 
     // validateStatistics
     bool validateStatistics(isc::data::ConstElementPtr data) const;
@@ -336,8 +321,6 @@ AuthSrvImpl::AuthSrvImpl(AbstractXfroutClient& xfrout_client,
     xfrin_session_(NULL),
     counters_(),
     keyring_(NULL),
-    datasrc_client_lists_(new std::map<RRClass,
-                          shared_ptr<ConfigurableClientList> >()),
     ddns_base_forwarder_(ddns_forwarder),
     ddns_forwarder_(NULL),
     xfrout_connected_(false),
@@ -488,6 +471,11 @@ AuthSrv::getIOService() {
     return (impl_->io_service_);
 }
 
+isc::auth::DataSrcClientsMgr&
+AuthSrv::getDataSrcClientsMgr() {
+    return (impl_->datasrc_clients_mgr_);
+}
+
 void
 AuthSrv::setXfrinSession(AbstractSession* xfrin_session) {
     impl_->xfrin_session_ = xfrin_session;
@@ -509,6 +497,12 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
                         OutputBuffer& buffer, DNSServer* server)
 {
     InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
+    statistics::QRAttributes stats_attrs;
+
+    // statistics: check transport carrying the message (IP, transport)
+    stats_attrs.setQueryIPVersion(io_message.getRemoteEndpoint().getFamily());
+    stats_attrs.setQueryTransportProtocol(
+        io_message.getRemoteEndpoint().getProtocol());
 
     // First, check the header part.  If we fail even for the base header,
     // just drop the message.
@@ -518,13 +512,13 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         // Ignore all responses.
         if (message.getHeaderFlag(Message::HEADERFLAG_QR)) {
             LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RESPONSE_RECEIVED);
-            impl_->resumeServer(server, message, false);
+            impl_->resumeServer(server, message, stats_attrs, false);
             return;
         }
     } catch (const Exception& ex) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_HEADER_PARSE_FAIL)
                   .arg(ex.what());
-        impl_->resumeServer(server, message, false);
+        impl_->resumeServer(server, message, stats_attrs, false);
         return;
     }
 
@@ -535,13 +529,13 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PACKET_PROTOCOL_ERROR)
                   .arg(error.getRcode().toText()).arg(error.what());
         makeErrorMessage(impl_->renderer_, message, buffer, error.getRcode());
-        impl_->resumeServer(server, message, true);
+        impl_->resumeServer(server, message, stats_attrs, true);
         return;
     } catch (const Exception& ex) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PACKET_PARSE_ERROR)
                   .arg(ex.what());
         makeErrorMessage(impl_->renderer_, message, buffer, Rcode::SERVFAIL());
-        impl_->resumeServer(server, message, true);
+        impl_->resumeServer(server, message, stats_attrs, true);
         return;
     } // other exceptions will be handled at a higher layer.
 
@@ -564,21 +558,35 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
                                            **impl_->keyring_));
         tsig_error = tsig_context->verify(tsig_record, io_message.getData(),
                                           io_message.getDataSize());
+        // statistics: check TSIG attributes
+        // SIG(0) is currently not implemented in Auth, but it is implemented
+        // in BIND 9. At the point we support it, the code to check if the
+        // signature is valid would be around here.
+        stats_attrs.setQuerySig(true, false,
+                                tsig_error == TSIGError::NOERROR());
     }
 
     if (tsig_error != TSIGError::NOERROR()) {
         makeErrorMessage(impl_->renderer_, message, buffer,
                          tsig_error.toRcode(), tsig_context);
-        impl_->resumeServer(server, message, true);
+        impl_->resumeServer(server, message, stats_attrs, true);
         return;
     }
 
     const Opcode opcode = message.getOpcode();
     bool send_answer = true;
     try {
-        // update per opcode statistics counter.  This can only be reliable
-        // after TSIG check succeeds.
-        impl_->counters_.inc(message.getOpcode());
+        // statistics: check EDNS
+        //     note: This can only be reliable after TSIG check succeeds.
+        ConstEDNSPtr edns = message.getEDNS();
+        if (edns != NULL) {
+            stats_attrs.setQueryEDNS(true, edns->getVersion() == 0);
+            stats_attrs.setQueryDO(edns->getDNSSECAwareness());
+        }
+
+        // statistics: check OpCode
+        //     note: This can only be reliable after TSIG check succeeds.
+        stats_attrs.setQueryOpCode(opcode.getCode());
 
         if (opcode == Opcode::NOTIFY()) {
             send_answer = impl_->processNotify(io_message, message, buffer,
@@ -620,7 +628,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RESPONSE_FAILURE_UNKNOWN);
         makeErrorMessage(impl_->renderer_, message, buffer, Rcode::SERVFAIL());
     }
-    impl_->resumeServer(server, message, send_answer);
+    impl_->resumeServer(server, message, stats_attrs, send_answer);
 }
 
 bool
@@ -637,24 +645,21 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     message.setHeaderFlag(Message::HEADERFLAG_AA);
     message.setRcode(Rcode::NOERROR());
 
-    // Increment query counter.
-    incCounter(io_message.getSocket().getProtocol());
-
     if (remote_edns) {
         EDNSPtr local_edns = EDNSPtr(new EDNS());
         local_edns->setDNSSECAwareness(dnssec_ok);
         local_edns->setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
         message.setEDNS(local_edns);
     }
-    // Lock the client lists and keep them under the lock until the processing
-    // and rendering is done (this is the same mutex as from
-    // AuthSrv::getDataSrcClientListMutex()).
-    isc::util::thread::Mutex::Locker locker(mutex_);
+    // Get access to data source client list through the holder and keep the
+    // holder until the processing and rendering is done to avoid inter-thread
+    // race.
+    auth::DataSrcClientsMgr::Holder datasrc_holder(datasrc_clients_mgr_);
 
     try {
         const ConstQuestionPtr question = *message.beginQuestion();
         const shared_ptr<datasrc::ClientList>
-            list(getDataSrcClientList(question->getClass()));
+            list(datasrc_holder.findClientList(question->getClass()));
         if (list) {
             const RRType& qtype = question->getType();
             const Name& qname = question->getName();
@@ -690,9 +695,6 @@ AuthSrvImpl::processXfrQuery(const IOMessage& io_message, Message& message,
                              OutputBuffer& buffer,
                              auto_ptr<TSIGContext> tsig_context)
 {
-    // Increment query counter.
-    incCounter(io_message.getSocket().getProtocol());
-
     if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_AXFR_UDP);
         makeErrorMessage(renderer_, message, buffer, Rcode::FORMERR(),
@@ -825,19 +827,6 @@ AuthSrvImpl::processUpdate(const IOMessage& io_message) {
 }
 
 void
-AuthSrvImpl::incCounter(const int protocol) {
-    // Increment query counter.
-    if (protocol == IPPROTO_UDP) {
-        counters_.inc(AuthCounters::SERVER_UDP_QUERY);
-    } else if (protocol == IPPROTO_TCP) {
-        counters_.inc(AuthCounters::SERVER_TCP_QUERY);
-    } else {
-        // unknown protocol
-        isc_throw(Unexpected, "Unknown protocol: " << protocol);
-    }
-}
-
-void
 AuthSrvImpl::registerStatisticsValidator() {
     counters_.registerStatisticsValidator(
         boost::bind(&AuthSrvImpl::validateStatistics, this, _1));
@@ -854,10 +843,15 @@ AuthSrvImpl::validateStatistics(isc::data::ConstElementPtr data) const {
 }
 
 void
-AuthSrvImpl::resumeServer(DNSServer* server, Message& message, bool done) {
+AuthSrvImpl::resumeServer(DNSServer* server, Message& message,
+                          statistics::QRAttributes& stats_attrs,
+                          const bool done) {
     if (done) {
-        counters_.inc(message.getRcode());
+        stats_attrs.answerWasSent();
+        // isTruncated from MessageRenderer
+        stats_attrs.setResponseTruncated(renderer_.isTruncated());
     }
+    counters_.inc(stats_attrs, message);
     server->resume(done);
 }
 
@@ -878,21 +872,6 @@ AuthSrv::updateConfig(ConstElementPtr new_config) {
 
 ConstElementPtr AuthSrv::getStatistics() const {
     return (impl_->counters_.getStatistics());
-}
-
-uint64_t
-AuthSrv::getCounter(const AuthCounters::ServerCounterType type) const {
-    return (impl_->counters_.getCounter(type));
-}
-
-uint64_t
-AuthSrv::getCounter(const Opcode opcode) const {
-    return (impl_->counters_.getCounter(opcode));
-}
-
-uint64_t
-AuthSrv::getCounter(const Rcode rcode) const {
-    return (impl_->counters_.getCounter(rcode));
 }
 
 const AddressList&
@@ -931,26 +910,6 @@ AuthSrv::destroyDDNSForwarder() {
         LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_STOP_DDNS_FORWARDER);
         impl_->ddns_forwarder_.reset();
     }
-}
-
-AuthSrv::DataSrcClientListsPtr
-AuthSrv::swapDataSrcClientLists(DataSrcClientListsPtr new_lists) {
-    // TODO: Debug-build only check
-    if (!impl_->mutex_.locked()) {
-        isc_throw(isc::Unexpected, "Not locked!");
-    }
-    std::swap(new_lists, impl_->datasrc_client_lists_);
-    return (new_lists);
-}
-
-shared_ptr<ConfigurableClientList>
-AuthSrv::getDataSrcClientList(const RRClass& rrclass) {
-    return (impl_->getDataSrcClientList(rrclass));
-}
-
-util::thread::Mutex&
-AuthSrv::getDataSrcClientListMutex() const {
-    return (impl_->mutex_);
 }
 
 void

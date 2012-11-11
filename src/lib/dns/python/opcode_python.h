@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_OPCODE_H
-#define __PYTHON_OPCODE_H 1
+#ifndef PYTHON_OPCODE_H
+#define PYTHON_OPCODE_H 1
 
 #include <Python.h>
 
@@ -57,7 +57,7 @@ const Opcode& PyOpcode_ToOpcode(const PyObject* opcode_obj);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_OPCODE_H
+#endif // PYTHON_OPCODE_H
 
 // Local Variables:
 // mode: c++
