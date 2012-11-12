@@ -74,15 +74,18 @@ public:
     explicit RRTTL(uint32_t ttlval) : ttlval_(ttlval) {}
     /// Constructor from a string.
     ///
-    /// This version of the implementation only accepts decimal TTL values in
-    /// seconds.
-    /// In a near future version, we'll extend it so that we can accept more
-    /// convenient ones such as "2H" or "1D".
+    /// It accepts either a decimal number, specifying number of seconds. Or,
+    /// it can be given a sequence of numbers and units, like "2H" (meaning
+    /// two hours), "1W3D" (one week and 3 days). The allowed units are W
+    /// (week), D (day), H (hour), M (minute) and S (second). They can be also
+    /// specified in lower-case. No further restrictions are checked (so they
+    /// can be specified in arbitrary order and even things like "1D1D" can
+    /// be used to specify two days).
     ///
-    /// If the given string is not recognized as a valid representation of
-    /// an RR TTL, an exception of class \c InvalidRRTTL will be thrown.
+    /// \param ttlstr A string representation of the \c RRTTL.
     ///
-    /// \param ttlstr A string representation of the \c RRTTL
+    /// \throw InvalidRRTTL in case the string is not recognized as valid
+    ///     TTL representation.
     explicit RRTTL(const std::string& ttlstr);
     /// Constructor from wire-format data.
     ///
