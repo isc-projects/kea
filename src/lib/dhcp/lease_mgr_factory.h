@@ -51,7 +51,7 @@ public:
 /// Strictly speaking these functions could be stand-alone functions.  However,
 /// it is convenient to encapsulate them in a class for naming purposes.
 ///
-/// @TODO: Will need to develop some form of registration mechanism for
+/// @todo: Will need to develop some form of registration mechanism for
 ///        user-supplied backends (so that there is no need to modify the code).
 class LeaseMgrFactory {
 public:
@@ -62,8 +62,8 @@ public:
     /// appropriate type.  The actual lease manager is returned by the
     /// "instance" method.
     ///
-    /// Note: when called, the current lease manager is *always* destroyed
-    /// and a new one created - even if the parameters are the same.
+    /// @note When called, the current lease manager is <b>always</b> destroyed
+    ///       and a new one created - even if the parameters are the same.
     ///
     /// dbconfig is a generic way of passing parameters. Parameters are passed
     /// in the "name=value" format, separated by spaces.  The data MUST include
@@ -104,7 +104,7 @@ public:
     ///
     /// @param dbconfig Database configuration string
     ///
-    /// @return std::map<>std::string, std::string> Map of keyword/value pairs.
+    /// @return std::map<std::string, std::string> Map of keyword/value pairs.
     static LeaseMgr::ParameterMap parse(const std::string& dbconfig);
 
 private:
