@@ -205,6 +205,11 @@ public:
     /// if not found in the entire list, it returns NULL.  The head pointer
     /// can be NULL, in which case this function will simply return NULL.
     ///
+    /// By default, this method ignores an RdataSet that only contains an
+    /// RRSIG (i.e., missing the covered RdataSet); if the optional
+    /// sigonly_ok parameter is explicitly set to true, it matches such
+    /// RdataSet and returns it if found.
+    ///
     /// \note This function is defined as a (static) class method to
     /// clarify its an operation for \c RdataSet objects and to make the
     /// name shorter.  But its implementation does not depend on private
@@ -215,10 +220,14 @@ public:
     /// \param rdata_head A pointer to \c RdataSet from which the search
     /// starts.  It can be NULL.
     /// \param type The RRType of \c RdataSet to find.
+    /// \param sigonly_ok Whether it should find an RdataSet that only has
+    /// RRSIG
     /// \return A pointer to the found \c RdataSet or NULL if none found.
     static const RdataSet*
-    find(const RdataSet* rdataset_head, const dns::RRType& type) {
-        return (find<const RdataSet>(rdataset_head, type));
+    find(const RdataSet* rdataset_head, const dns::RRType& type,
+         bool sigonly_ok = false)
+    {
+        return (find<const RdataSet>(rdataset_head, type, sigonly_ok));
     }
 
     /// \brief Find \c RdataSet of given RR type from a list (non const
@@ -227,8 +236,10 @@ public:
     /// This is similar to the const version, except it takes and returns non
     /// const pointers.
     static RdataSet*
-    find(RdataSet* rdataset_head, const dns::RRType& type) {
-        return (find<RdataSet>(rdataset_head, type));
+    find(RdataSet* rdataset_head, const dns::RRType& type,
+         bool sigonly_ok = false)
+    {
+        return (find<RdataSet>(rdataset_head, type, sigonly_ok));
     }
 
     typedef boost::interprocess::offset_ptr<RdataSet> RdataSetPtr;
@@ -347,12 +358,14 @@ private:
     // Shared by both mutable and immutable versions of find()
     template <typename RdataSetType>
     static RdataSetType*
-    find(RdataSetType* rdataset_head, const dns::RRType& type) {
+    find(RdataSetType* rdataset_head, const dns::RRType& type, bool sigonly_ok)
+    {
         for (RdataSetType* rdataset = rdataset_head;
              rdataset != NULL;
              rdataset = rdataset->getNext()) // use getNext() for efficiency
         {
-            if (rdataset->type == type) {
+            if (rdataset->type == type &&
+                (rdataset->getRdataCount() > 0 || sigonly_ok)) {
                 return (rdataset);
             }
         }

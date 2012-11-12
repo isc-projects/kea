@@ -294,7 +294,7 @@ ZoneDataUpdater::addRdataSet(const Name& name, const RRType& rrtype,
             contextCheck(*rrset, rdataset_head);
         }
 
-        if (RdataSet::find(rdataset_head, rrtype) != NULL) {
+        if (RdataSet::find(rdataset_head, rrtype, true) != NULL) {
             isc_throw(AddError,
                       "RRset of the type already exists: "
                       << name << " (type: " << rrtype << ")");

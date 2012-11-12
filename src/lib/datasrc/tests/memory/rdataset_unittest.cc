@@ -40,6 +40,7 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc::memory;
 using namespace isc::testutils;
+using isc::datasrc::memory::detail::SegmentObjectHolder;
 using boost::lexical_cast;
 
 namespace {
@@ -133,6 +134,61 @@ TEST_F(RdataSetTest, getNext) {
     EXPECT_EQ(rdataset, static_cast<const RdataSet*>(rdataset)->getNext());
 
     RdataSet::destroy(mem_sgmt_, rdataset, RRClass::IN());
+}
+
+TEST_F(RdataSetTest, find) {
+    // Create some RdataSets and make a chain of them.
+    SegmentObjectHolder<RdataSet, RRClass> holder1(
+        mem_sgmt_,
+        RdataSet::create(mem_sgmt_, encoder_, a_rrset_, ConstRRsetPtr()),
+        RRClass::IN());
+    ConstRRsetPtr aaaa_rrset =
+        textToRRset("www.example.com. 1076895760 IN AAAA 2001:db8::1");
+    SegmentObjectHolder<RdataSet, RRClass> holder2(
+        mem_sgmt_,
+        RdataSet::create(mem_sgmt_, encoder_, aaaa_rrset, ConstRRsetPtr()),
+        RRClass::IN());
+    ConstRRsetPtr sigonly_rrset =
+        textToRRset("www.example.com. 1076895760 IN RRSIG "
+                    "TXT 5 2 3600 20120814220826 20120715220826 "
+                    "1234 example.com. FAKE");
+    SegmentObjectHolder<RdataSet, RRClass> holder3(
+        mem_sgmt_,
+        RdataSet::create(mem_sgmt_, encoder_, ConstRRsetPtr(), sigonly_rrset),
+        RRClass::IN());
+
+    RdataSet* rdataset_a = holder1.get();
+    RdataSet* rdataset_aaaa = holder2.get();
+    RdataSet* rdataset_sigonly = holder3.get();
+    RdataSet* rdataset_null = NULL;
+    rdataset_a->next = rdataset_aaaa;
+    rdataset_aaaa->next = rdataset_sigonly;
+
+    // If a non-RRSIG part of rdataset exists for the given type, it will be
+    // returned regardless of the value of sigonly_ok.  If it's RRSIG-only
+    // rdataset, it returns non NULL iff sigonly_ok is explicitly set to true.
+    EXPECT_EQ(rdataset_aaaa, RdataSet::find(rdataset_a, RRType::AAAA()));
+    EXPECT_EQ(rdataset_aaaa, RdataSet::find(rdataset_a, RRType::AAAA(), true));
+    EXPECT_EQ(rdataset_aaaa, RdataSet::find(rdataset_a, RRType::AAAA(), false));
+
+    EXPECT_EQ(rdataset_null, RdataSet::find(rdataset_a, RRType::TXT()));
+    EXPECT_EQ(rdataset_sigonly, RdataSet::find(rdataset_a, RRType::TXT(),
+                                               true));
+    EXPECT_EQ(rdataset_null, RdataSet::find(rdataset_a, RRType::TXT(), false));
+
+    // Same tests for the const version of find().
+    const RdataSet* rdataset_a_const = holder1.get();
+    EXPECT_EQ(rdataset_aaaa, RdataSet::find(rdataset_a_const, RRType::AAAA()));
+    EXPECT_EQ(rdataset_aaaa, RdataSet::find(rdataset_a_const, RRType::AAAA(),
+                                            true));
+    EXPECT_EQ(rdataset_aaaa, RdataSet::find(rdataset_a_const, RRType::AAAA(),
+                                            false));
+
+    EXPECT_EQ(rdataset_null, RdataSet::find(rdataset_a_const, RRType::TXT()));
+    EXPECT_EQ(rdataset_sigonly, RdataSet::find(rdataset_a_const, RRType::TXT(),
+                                               true));
+    EXPECT_EQ(rdataset_null, RdataSet::find(rdataset_a_const, RRType::TXT(),
+                                            false));
 }
 
 // A helper function to create an RRset containing the given number of
