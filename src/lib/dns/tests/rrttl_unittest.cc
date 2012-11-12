@@ -65,18 +65,90 @@ RRTTLTest::rrttlFactoryFromWire(const char* datafile) {
     return (RRTTL(buffer));
 }
 
-TEST_F(RRTTLTest, fromText) {
+TEST_F(RRTTLTest, getValue) {
     EXPECT_EQ(0, ttl_0.getValue());
     EXPECT_EQ(3600, ttl_1h.getValue());
     EXPECT_EQ(86400, ttl_1d.getValue());
     EXPECT_EQ(0x12345678, ttl_32bit.getValue());
     EXPECT_EQ(0xffffffff, ttl_max.getValue());
+}
 
-    EXPECT_THROW(RRTTL("1D"), InvalidRRTTL); // we don't support this form yet
+TEST_F(RRTTLTest, fromText) {
+    // Border cases
+    EXPECT_EQ(0, RRTTL("0").getValue());
+    EXPECT_EQ(4294967295, RRTTL("4294967295").getValue());
+
+    // Invalid cases
     EXPECT_THROW(RRTTL("0xdeadbeef"), InvalidRRTTL); // must be decimal
     EXPECT_THROW(RRTTL("-1"), InvalidRRTTL); // must be positive
     EXPECT_THROW(RRTTL("1.1"), InvalidRRTTL); // must be integer
     EXPECT_THROW(RRTTL("4294967296"), InvalidRRTTL); // must be 32-bit
+}
+
+void
+checkUnit(unsigned multiply, char suffix) {
+    SCOPED_TRACE(string("Unit check with suffix ") + suffix);
+    const uint32_t value = 10 * multiply;
+    const string num = "10";
+    // Check both lower and upper version of the suffix
+    EXPECT_EQ(value,
+              RRTTL(num + static_cast<char>(tolower(suffix))).getValue());
+    EXPECT_EQ(value,
+              RRTTL(num + static_cast<char>(toupper(suffix))).getValue());
+}
+
+// Check parsing the unit form (1D, etc)
+TEST_F(RRTTLTest, fromTextUnit) {
+    // Check each of the units separately
+    checkUnit(1, 'S');
+    checkUnit(60, 'M');
+    checkUnit(60 * 60, 'H');
+    checkUnit(24 * 60 * 60, 'D');
+    checkUnit(7 * 24 * 60 * 60, 'W');
+
+    // Some border cases (with units)
+    EXPECT_EQ(4294967295, RRTTL("4294967295S").getValue());
+    EXPECT_EQ(0, RRTTL("0W0D0H0M0S").getValue());
+    EXPECT_EQ(4294967295, RRTTL("1193046H1695S").getValue());
+    // Leading zeroes are accepted
+    EXPECT_EQ(4294967295, RRTTL("0000000000000004294967295S").getValue());
+
+    // Now some compound ones. We allow any order (it would be much work to
+    // check the order anyway).
+    EXPECT_EQ(60 * 60 + 3, RRTTL("1H3S").getValue());
+
+    // Awkward, but allowed case - the same unit used twice.
+    EXPECT_EQ(20 * 3600, RRTTL("12H8H").getValue());
+
+    // Negative number in part of the expression, but the total is positive.
+    // Rejected.
+    EXPECT_THROW(RRTTL("-1S1H"), InvalidRRTTL);
+
+    // Some things out of range in the ttl, but it wraps to number in range
+    // in int64_t. Should still not get fooled and reject it.
+
+    // First part out of range
+    EXPECT_THROW(RRTTL("9223372036854775807S9223372036854775807S2S"),
+                 InvalidRRTTL);
+    // Second part out of range, but it immediately wraps (2S+2^64-2S)
+    EXPECT_THROW(RRTTL("2S18446744073709551614S"), InvalidRRTTL);
+    // The whole thing wraps right away (2^64S)
+    EXPECT_THROW(RRTTL("18446744073709551616S"), InvalidRRTTL);
+    // Second part out of range, and will become negative with the unit,
+    EXPECT_THROW(RRTTL("256S307445734561825856M"), InvalidRRTTL);
+
+    // Missing before unit.
+    EXPECT_THROW(RRTTL("W5H"), InvalidRRTTL);
+    EXPECT_THROW(RRTTL("5hW"), InvalidRRTTL);
+
+    // Empty string is not allowed
+    EXPECT_THROW(RRTTL(""), InvalidRRTTL);
+    // Missing the last unit is not allowed
+    EXPECT_THROW(RRTTL("3D5"), InvalidRRTTL);
+
+    // There are some wrong units
+    EXPECT_THROW(RRTTL("13X"), InvalidRRTTL);
+    EXPECT_THROW(RRTTL("3D5F"), InvalidRRTTL);
 }
 
 TEST_F(RRTTLTest, fromWire) {
