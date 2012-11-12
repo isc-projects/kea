@@ -148,7 +148,7 @@ MasterLexer::Token::getErrorText() const {
 namespace master_lexer_internal {
 // Below we implement state classes for state transitions of MasterLexer.
 // Note that these need to be defined here so that they can refer to
-// the details of of MasterLexerImpl.
+// the details of MasterLexerImpl.
 
 typedef MasterLexer::Token Token; // convenience shortcut
 
