@@ -218,6 +218,12 @@ State::getInstance(ID state_id) {
     case String:
         return (STRING_STATE);
     }
+
+    // This is a bug of the caller, and this method is only expected to be
+    // used by tests, so we just forcefully make it fail by asserting the
+    // condition.
+    assert(false);
+    return (STRING_STATE); // a dummy return, to silence some compilers.
 }
 
 const State*
