@@ -94,7 +94,7 @@ TEST_F(ZoneDataUpdaterTest, rrisgOnly) {
     ZoneNode* node = getNode(mem_sgmt_, Name("www.example.org"), zone_data_);
     const RdataSet* rdset = node->getData();
     ASSERT_NE(static_cast<RdataSet*>(NULL), rdset);
-    rdset = RdataSet::find(rdset, RRType::A());
+    rdset = RdataSet::find(rdset, RRType::A(), true);
     ASSERT_NE(static_cast<RdataSet*>(NULL), rdset);
     EXPECT_EQ(0, rdset->getRdataCount());
     EXPECT_EQ(1, rdset->getSigRdataCount());
