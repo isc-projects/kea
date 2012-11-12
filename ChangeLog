@@ -1,3 +1,8 @@
+502.    [func]      vorner
+	TTLs can be specified with units as well as number of seconds now.
+	This allows specifications like "1D3H".
+	(Trac #2384, git 44c321c37e17347f33ced9d0868af0c891ff422b)
+
 501.	[func]      tomek
 	Added DHCPv6 allocation engine, now used in the processing of DHCPv6
 	messages.
