@@ -50,11 +50,15 @@ class MasterLexer {
 public:
     class Token;       // we define it separately for better readability
 
+    /// \brief Options for getNextToken.
+    ///
+    /// A compound option, indicating multiple options are set, can be
+    /// specified using the logical OR operator (operator|()).
     enum Options {
-        NONE = 0, //< No option
-        INITIAL_WS = 1, ///< recognize begin-of-line spaces
-        QSTRING = INITIAL_WS << 1, ///< recognize quoted string
-        NUMBER = QSTRING << 1 ///< recognize numeric text as integer
+        NONE = 0,               //< No option
+        INITIAL_WS = 1,         ///< recognize begin-of-line spaces
+        QSTRING = 2,    ///< recognize quoted string
+        NUMBER = 4   ///< recognize numeric text as integer
     };
 
     /// \brief The constructor.
