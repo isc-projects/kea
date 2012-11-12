@@ -15,10 +15,12 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/master_lexer.h>
+#include <dns/master_lexer_state.h>
 
 #include <gtest/gtest.h>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/function.hpp>
 
 #include <string>
 #include <sstream>
