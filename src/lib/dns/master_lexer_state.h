@@ -17,6 +17,8 @@
 
 #include <dns/master_lexer.h>
 
+#include <boost/function.hpp>
+
 namespace isc {
 namespace dns {
 
@@ -108,6 +110,21 @@ public:
     /// the behavior of each state separately.  \c MasterLexer shouldn't
     /// need this method.
     static const State& getInstance(ID state_id);
+
+    /// \brief Returns a fake State instance.
+    ///
+    /// The returned State will eat eat_chars from the input source,
+    /// it'll set the given token if not NULL, call the given callback
+    /// and return the next state when its handle() is called.
+    ///
+    /// This is provided only for testing purposes. MasterLexer shouldn't
+    /// need this method.
+    ///
+    /// The caller is responsible for deleting the State.
+    static State* getFakeState(const State* next, size_t eat_chars,
+                               MasterLexer::Token* token = NULL,
+                               const boost::function<void ()>& callback =
+                               boost::function<void ()>());
 
     /// \name Read-only accessors for testing purposes.
     ///

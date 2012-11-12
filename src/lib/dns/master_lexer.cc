@@ -390,6 +390,52 @@ QString::handle(MasterLexer& lexer) const {
     }
 }
 
+namespace {
+
+// A fake state that just eats something from the input, pushes
+// a given token and calls a callback if it is set. It refers to
+// another state to return.
+class FakeState : public State {
+public:
+    FakeState(const State* next, size_t eat_chars,
+              MasterLexer::Token* token = NULL,
+              const boost::function<void ()>& callback =
+              boost::function<void ()>()) :
+        next_(next),
+        eat_chars_(eat_chars),
+        token_(token),
+        callback_(callback)
+    {}
+    virtual const State* handle(MasterLexer& lexer) const {
+        for (size_t i = 0; i < eat_chars_; ++i) {
+            getLexerImpl(lexer)->source_->getChar();
+        }
+        if (token_ != NULL) {
+            getLexerImpl(lexer)->token_ = *token_;
+        }
+        if (!callback_.empty()) {
+            callback_();
+        }
+        return (next_);
+    }
+private:
+    const State* const next_;
+    size_t eat_chars_;
+    MasterLexer::Token* const token_;
+    const boost::function<void ()> callback_;
+};
+
+}
+
+State*
+State::getFakeState(const State* next, size_t eat_chars,
+                    MasterLexer::Token* token,
+                    const boost::function<void ()>& callback)
+{
+    // Just allocate new FakeState with the parameters.
+    return (new FakeState(next, eat_chars, token, callback));
+}
+
 } // namespace master_lexer_internal
 
 } // end of namespace dns
