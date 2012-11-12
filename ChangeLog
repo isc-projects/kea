@@ -1,3 +1,12 @@
+503.    [func]      Stephen
+	Add initial version of a MySQL backend for the DHCP code.  This
+	implements the basic IPv6 lease access functions - add lease, delete
+	lease and update lease.  The backend is enabled by specifying
+	--with-dhcp-mysql on the "configure" command line: without this
+	switch, the MySQL code is not compiled, so leaving BIND 10 able to
+	be built on systems without MySQL installed.
+	(Trac #2342, git c7defffb89bd0f3fdd7ad2437c78950bcb86ad37)
+
 502.    [func]      vorner
 	TTLs can be specified with units as well as number of seconds now.
 	This allows specifications like "1D3H".
