@@ -76,7 +76,7 @@ TEST_F(RRTTLTest, getValue) {
 TEST_F(RRTTLTest, fromText) {
     // Border cases
     EXPECT_EQ(0, RRTTL("0").getValue());
-    EXPECT_EQ(4294967295, RRTTL("4294967295").getValue());
+    EXPECT_EQ(4294967295U, RRTTL("4294967295").getValue());
 
     // Invalid cases
     EXPECT_THROW(RRTTL("0xdeadbeef"), InvalidRRTTL); // must be decimal
@@ -107,11 +107,11 @@ TEST_F(RRTTLTest, fromTextUnit) {
     checkUnit(7 * 24 * 60 * 60, 'W');
 
     // Some border cases (with units)
-    EXPECT_EQ(4294967295, RRTTL("4294967295S").getValue());
+    EXPECT_EQ(4294967295U, RRTTL("4294967295S").getValue());
     EXPECT_EQ(0, RRTTL("0W0D0H0M0S").getValue());
-    EXPECT_EQ(4294967295, RRTTL("1193046H1695S").getValue());
+    EXPECT_EQ(4294967295U, RRTTL("1193046H1695S").getValue());
     // Leading zeroes are accepted
-    EXPECT_EQ(4294967295, RRTTL("0000000000000004294967295S").getValue());
+    EXPECT_EQ(4294967295U, RRTTL("0000000000000004294967295S").getValue());
 
     // Now some compound ones. We allow any order (it would be much work to
     // check the order anyway).
