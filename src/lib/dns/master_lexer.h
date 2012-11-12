@@ -178,6 +178,41 @@ public:
     /// \return The current line number of the source (see the description)
     size_t getSourceLine() const;
 
+    /// \brief Parse and return another token from the input.
+    ///
+    /// It reads a bit of the last opened source and produces another token
+    /// found in it.
+    ///
+    /// \param options The options can be used to modify the tokenization.
+    ///     The method can be made reporting things which are usually ignored
+    ///     by this parameter. Multiple options can be passed at once by
+    ///     bitwise or (eg. option1 | option 2). See description of available
+    ///     options.
+    /// \return Next token found in the input.
+    /// \throw isc::InvalidOperation in case the source is not available. This
+    ///     may mean the pushSource() has not been called yet, or that the
+    ///     current source has been read past the end.
+    /// \throw std::bad_alloc in case allocation of some internal resources
+    ///     or the token fail.
+    Token getNextToken(Options options = NONE);
+
+    /// \brief Return the last token back to the lexer.
+    ///
+    /// The method undoes the lasts call to getNextToken(). If you call the
+    /// getNextToken() again with the same options, it'll return the same
+    /// token. If the options are different, it may return a different token,
+    /// but it acts as if the previous getNextToken() was never called.
+    ///
+    /// It is possible to return only one token back in time (you can't call
+    /// ungetToken() twice in a row without calling getNextToken() in between
+    /// successfully).
+    ///
+    /// It does not work after change of source (by pushSource or popSource).
+    ///
+    /// \throw isc::InvalidOperation If called second time in a row or if
+    ///     getNextToken() was not called since the last change of the source.
+    void ungetToken();
+
 private:
     struct MasterLexerImpl;
     MasterLexerImpl* impl_;

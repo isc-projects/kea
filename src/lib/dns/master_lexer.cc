@@ -152,6 +152,17 @@ MasterLexer::getSourceLine() const {
     return (impl_->sources_.back()->getCurrentLine());
 }
 
+MasterLexer::Token
+MasterLexer::getNextToken(Options) {
+    // TODO load the token
+    return (impl_->token_);
+}
+
+void
+MasterLexer::ungetToken() {
+    // TODO
+}
+
 namespace {
 const char* const error_text[] = {
     "lexer not started",        // NOT_STARTED
