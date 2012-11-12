@@ -179,7 +179,7 @@ struct Lease4 {
     /// @brief Constructor
     ///
     /// Initialize fields that don't have a default constructor.
-    /// @TODO Remove this
+    /// @todo Remove this
     Lease4() : addr_(0) {}
 };
 
@@ -345,10 +345,12 @@ public:
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
-    LeaseMgr(const ParameterMap& parameters);
+    LeaseMgr(const ParameterMap& parameters) : parameters_(parameters)
+    {}
 
     /// @brief Destructor
-    ~LeaseMgr();
+    virtual ~LeaseMgr()
+    {}
 
     /// @brief Adds an IPv4 lease.
     ///
@@ -389,7 +391,6 @@ public:
     /// a single lease, not a container of leases.
     ///
     /// @param addr address of the searched lease
-    /// @param subnet_id ID of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
     virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const = 0;

@@ -169,7 +169,7 @@ public:
     ///
     /// @todo Not implemented yet
     ///
-    /// @param lease4 The lease to be updated.
+    /// @param lease6 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
     void updateLease6(const Lease6Ptr& lease6);
@@ -237,5 +237,5 @@ protected:
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 
-#endif // MEMFILE_LEASE_MGR_HSE4
+#endif // MEMFILE_LEASE_MGR
 

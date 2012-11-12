@@ -14,24 +14,22 @@
 
 #include "config.h"
 
+#include <dhcp/lease_mgr_factory.h>
+#include <dhcp/memfile_lease_mgr.h>
+#ifdef HAVE_MYSQL
+#include <dhcp/mysql_lease_mgr.h>
+#endif
+
+#include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
+#include <boost/scoped_ptr.hpp>
+
 #include <algorithm>
 #include <iostream>
 #include <iterator>
 #include <map>
 #include <sstream>
-#include <string>
 #include <utility>
-
-#include <boost/foreach.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/algorithm/string.hpp>
-#include <exceptions/exceptions.h>
-#include <dhcp/lease_mgr_factory.h>
-
-#include <dhcp/memfile_lease_mgr.h>
-#ifdef HAVE_MYSQL
-#include <dhcp/mysql_lease_mgr.h>
-#endif
 
 using namespace std;
 
@@ -48,7 +46,7 @@ LeaseMgr::ParameterMap
 LeaseMgrFactory::parse(const std::string& dbconfig) {
     LeaseMgr::ParameterMap mapped_tokens;
 
-    if (! dbconfig.empty()) {
+    if (!dbconfig.empty()) {
         vector<string> tokens;
 
         // We need to pass a string to is_any_of, not just char*. Otherwise

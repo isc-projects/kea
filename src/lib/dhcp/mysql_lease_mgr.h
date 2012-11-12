@@ -111,7 +111,6 @@ public:
     /// a single lease, not a container of leases.
     ///
     /// @param addr address of the searched lease
-    /// @param subnet_id ID of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
     virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
@@ -327,7 +326,7 @@ public:
     ///
     /// @param expire Reference to MYSQL_TIME object from where the expiry
     ///        time of the lease is taken.
-    /// @param lease_time lifetime of the lease.
+    /// @param valid_lifetime lifetime of the lease.
     /// @param cltt Reference to location where client last transmit time
     ///        is put.
     static

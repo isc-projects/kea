@@ -39,10 +39,6 @@
 #include <dhcp/cfgmgr.h>
 #include <dhcp/option6_iaaddr.h>
 
-// @todo: Replace this with MySQL_LeaseMgr (or a LeaseMgr factory)
-// once it is merged
-#include <dhcp/memfile_lease_mgr.h>
-
 #include <boost/foreach.hpp>
 
 using namespace isc;
@@ -54,8 +50,8 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-Dhcpv6Srv::Dhcpv6Srv(uint16_t port) : alloc_engine_(), serverid_(),
-                                      shutdown_(false) {
+Dhcpv6Srv::Dhcpv6Srv(uint16_t port, const char* dbconfig)
+    : alloc_engine_(), serverid_(), shutdown_(true) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
 
@@ -74,7 +70,6 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) : alloc_engine_(), serverid_(),
         if (port > 0) {
             if (IfaceMgr::instance().countIfaces() == 0) {
                 LOG_ERROR(dhcp6_logger, DHCP6_NO_INTERFACES);
-                shutdown_ = true;
                 return;
             }
             IfaceMgr::instance().openSockets6(port);
@@ -82,25 +77,21 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) : alloc_engine_(), serverid_(),
 
         setServerID();
 
+        // Instantiate LeaseMgr
+        LeaseMgrFactory::create(dbconfig);
+        LOG_INFO(dhcp6_logger, DHCP6_DB_BACKEND_STARTED)
+            .arg(LeaseMgrFactory::instance().getName());
+
+        // Instantiate allocation engine
+        alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
+
     } catch (const std::exception &e) {
         LOG_ERROR(dhcp6_logger, DHCP6_SRV_CONSTRUCT_ERROR).arg(e.what());
-        shutdown_ = true;
         return;
     }
 
-    // Instantiate LeaseMgr
-    // @todo: Replace this with MySQL_LeaseMgr (or a LeaseMgr factory)
-    // once it is merged
-#ifdef HAVE_MYSQL
-    LeaseMgrFactory::create("type=mysql user=kea password=kea name=kea host=localhost");
-#else
-    LeaseMgrFactory::create("type=memfile");
-#endif
-    LOG_INFO(dhcp6_logger, DHCP6_DB_BACKEND_STARTED)
-        .arg(LeaseMgrFactory::instance().getName());
-
-    // Instantiate allocation engine
-    alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
+    // All done, so can proceed
+    shutdown_ = false;
 }
 
 Dhcpv6Srv::~Dhcpv6Srv() {

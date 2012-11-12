@@ -23,6 +23,9 @@
 using namespace std;
 using namespace isc::dhcp;
 
+// This set of tests only check the parsing functions of LeaseMgrFactory.
+// Tests of the LeaseMgr create/instance/destroy are implicitly carried out
+// in the tests for the different concrete lease managers (e.g. MySqlLeaseMgr).
 
 namespace {
 // empty class for now, but may be extended once Addr6 becomes bigger

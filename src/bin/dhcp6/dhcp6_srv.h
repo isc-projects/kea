@@ -57,7 +57,10 @@ public:
     /// old or create new DUID.
     ///
     /// @param port port on will all sockets will listen
-    Dhcpv6Srv(uint16_t port = DHCP6_SERVER_PORT);
+    /// @param dbconfig Lease manager configuration string.  The default
+    ///        of the "memfile" manager is used for testing.
+    Dhcpv6Srv(uint16_t port = DHCP6_SERVER_PORT,
+            const char* dbconfig = "type=memfile");
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();

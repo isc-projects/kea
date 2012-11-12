@@ -95,15 +95,13 @@ public:
 // This test checks if the Allocation Engine can be instantiated and that it
 // parses parameters string properly.
 TEST_F(AllocEngineTest, constructor) {
-    AllocEngine* x = NULL;
+    boost::scoped_ptr<AllocEngine> x;
 
     // Hashed and random allocators are not supported yet
-    ASSERT_THROW(x = new AllocEngine(AllocEngine::ALLOC_HASHED, 5), NotImplemented);
-    ASSERT_THROW(x = new AllocEngine(AllocEngine::ALLOC_RANDOM, 5), NotImplemented);
+    ASSERT_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_HASHED, 5)), NotImplemented);
+    ASSERT_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_RANDOM, 5)), NotImplemented);
 
-    ASSERT_NO_THROW(x = new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
-
-    delete x;
+    ASSERT_NO_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
 }
 
 /// @todo: This method is taken from mysql_lease_mgr_utilities.cc from ticket
@@ -269,15 +267,13 @@ TEST_F(AllocEngineTest, allocBogusHint) {
 // This test verifies that the allocator picks addresses that belong to the
 // pool
 TEST_F(AllocEngineTest, IterativeAllocator) {
-    NakedAllocEngine::Allocator* alloc = new NakedAllocEngine::IterativeAllocator();
+    boost::scoped_ptr<NakedAllocEngine::Allocator>
+        alloc(new NakedAllocEngine::IterativeAllocator());
 
     for (int i = 0; i < 1000; ++i) {
         IOAddress candidate = alloc->pickAddress(subnet_, duid_, IOAddress("::"));
-
         EXPECT_TRUE(subnet_->inPool(candidate));
     }
-
-    delete alloc;
 }
 
 
