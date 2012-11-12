@@ -34,9 +34,7 @@ protected:
                              s_string(State::getInstance(State::String)),
                              options(MasterLexer::NONE),
                              orig_options(options)
-    {
-        lexer.pushSource(ss);
-    }
+    {}
 
     // Specify INITIAL_WS as common initial options.
     const MasterLexer::Options common_options;
@@ -61,12 +59,15 @@ eofCheck(const State& state, MasterLexer& lexer) {
 TEST_F(MasterLexerStateTest, startAndEnd) {
     // A simple case: the input is empty, so we begin with start and
     // are immediately done.
+    lexer.pushSource(ss);
     EXPECT_EQ(s_null, State::start(lexer, common_options));
     eofCheck(s_crlf, lexer);
 }
 
 TEST_F(MasterLexerStateTest, startToEOL) {
     ss << "\n";
+    lexer.pushSource(ss);
+
     EXPECT_EQ(s_null, State::start(lexer, common_options));
     EXPECT_TRUE(s_crlf.wasLastEOL(lexer));
     EXPECT_EQ(Token::END_OF_LINE, s_crlf.getToken(lexer).getType());
@@ -77,12 +78,15 @@ TEST_F(MasterLexerStateTest, startToEOL) {
 }
 
 TEST_F(MasterLexerStateTest, space) {
+    // repeat '\t\n' twice (see below), then space after EOL
+    ss << " \t\n\t\n ";
+    lexer.pushSource(ss);
+
     // by default space characters and tabs will be ignored.  We check this
     // twice; at the second iteration, it's a white space at the beginning
     // of line, but since we don't specify INITIAL_WS option, it's treated as
     // normal space and ignored.
     for (size_t i = 0; i < 2; ++i) {
-        ss << " \t\n";
         EXPECT_EQ(s_null, State::start(lexer, MasterLexer::NONE));
         EXPECT_TRUE(s_crlf.wasLastEOL(lexer));
         EXPECT_EQ(Token::END_OF_LINE, s_crlf.getToken(lexer).getType());
@@ -90,7 +94,6 @@ TEST_F(MasterLexerStateTest, space) {
 
     // Now we specify the INITIAL_WS option.  It will be recognized and the
     // corresponding token will be returned.
-    ss << " ";
     EXPECT_EQ(s_null, State::start(lexer, MasterLexer::INITIAL_WS));
     EXPECT_FALSE(s_crlf.wasLastEOL(lexer));
     EXPECT_EQ(Token::INITIAL_WS, s_crlf.getToken(lexer).getType());
@@ -98,6 +101,7 @@ TEST_F(MasterLexerStateTest, space) {
 
 TEST_F(MasterLexerStateTest, parentheses) {
     ss << "\n(\na\n )\n "; // 1st \n is to check if 'was EOL' is set to false
+    lexer.pushSource(ss);
 
     EXPECT_EQ(s_null, State::start(lexer, common_options)); // handle \n
 
@@ -127,6 +131,8 @@ TEST_F(MasterLexerStateTest, parentheses) {
 TEST_F(MasterLexerStateTest, nestedParentheses) {
     // This is an unusual, but allowed (in this implementation) case.
     ss << "(a(b)\n c)\n ";
+    lexer.pushSource(ss);
+
     EXPECT_EQ(&s_string, State::start(lexer, common_options)); // consume '('
     s_string.handle(lexer);                      // consume 'a'
     EXPECT_EQ(&s_string, State::start(lexer, common_options)); // consume '('
@@ -155,6 +161,8 @@ TEST_F(MasterLexerStateTest, unbalancedParentheses) {
     // Only closing paren is provided.  We prepend a \n to check if it's
     // correctly canceled after detecting the error.
     ss << "\n)";
+    ss << "(a";
+    lexer.pushSource(ss);
 
     EXPECT_EQ(s_null, State::start(lexer, common_options)); // consume '\n'
     EXPECT_TRUE(s_crlf.wasLastEOL(lexer)); // this \n was remembered
@@ -169,7 +177,6 @@ TEST_F(MasterLexerStateTest, unbalancedParentheses) {
     EXPECT_FALSE(s_crlf.wasLastEOL(lexer));
 
     // Reach EOF with a dangling open parenthesis.
-    ss << "(a";
     EXPECT_EQ(&s_string, State::start(lexer, common_options)); // consume '('
     s_string.handle(lexer);                      // consume 'a'
     EXPECT_EQ(1, s_crlf.getParenCount(lexer));
@@ -184,11 +191,14 @@ TEST_F(MasterLexerStateTest, startToComment) {
     // the rest of the line, and recognize the new line.  Note that the
     // second ';' is simply ignored.
     ss << "  ;a;\n";
+    ss << ";a;";           // Likewise, but the comment ends with EOF.
+    lexer.pushSource(ss);
+
+    // Comment ending with EOL
     EXPECT_EQ(s_null, State::start(lexer, common_options));
     EXPECT_EQ(Token::END_OF_LINE, s_crlf.getToken(lexer).getType());
 
-    // Likewise, but the comment ends with EOF.
-    ss << ";a;";
+    // Comment ending with EOF
     EXPECT_EQ(s_null, State::start(lexer, common_options));
     EXPECT_EQ(Token::END_OF_FILE, s_crlf.getToken(lexer).getType());
 }
@@ -198,6 +208,8 @@ TEST_F(MasterLexerStateTest, commentAfterParen) {
     // other tests should also ensure that it works correctly, but we
     // check it explicitly.
     ss << "( ;this is a comment\na)\n";
+    lexer.pushSource(ss);
+
     // consume '(', skip comments, consume 'a', then consume ')'
     EXPECT_EQ(&s_string, State::start(lexer, common_options));
     s_string.handle(lexer);
@@ -206,30 +218,34 @@ TEST_F(MasterLexerStateTest, commentAfterParen) {
 }
 
 TEST_F(MasterLexerStateTest, crlf) {
-    // A sequence of \r, \n is recognized as a single 'end-of-line'
-    ss << "\r\n";
+    ss << "\r\n";               // case 1
+    ss << "\r ";                // case 2
+    ss << "\r;comment\na";      // case 3
+    ss << "\r";                 // case 4
+    lexer.pushSource(ss);
+
+    // 1. A sequence of \r, \n is recognized as a single 'end-of-line'
     EXPECT_EQ(&s_crlf, State::start(lexer, common_options)); // recognize '\r'
     EXPECT_EQ(s_null, s_crlf.handle(lexer));   // recognize '\n'
     EXPECT_EQ(Token::END_OF_LINE, s_crlf.getToken(lexer).getType());
     EXPECT_TRUE(s_crlf.wasLastEOL(lexer));
 
-    // Single '\r' (not followed by \n) is recognized as a single 'end-of-line'
-    ss << "\r ";                // then there will be "initial WS"
+    // 2. Single '\r' (not followed by \n) is recognized as a single
+    // 'end-of-line'.  then there will be "initial WS"
     EXPECT_EQ(&s_crlf, State::start(lexer, common_options)); // recognize '\r'
     // see ' ', "unget" it
     EXPECT_EQ(s_null, s_crlf.handle(lexer));
     EXPECT_EQ(s_null, State::start(lexer, common_options)); // recognize ' '
     EXPECT_EQ(Token::INITIAL_WS, s_crlf.getToken(lexer).getType());
 
-    ss << "\r;comment\na";
+    // 3. comment between \r and \n
     EXPECT_EQ(&s_crlf, State::start(lexer, common_options)); // recognize '\r'
     // skip comments, recognize '\n'
     EXPECT_EQ(s_null, s_crlf.handle(lexer));
     EXPECT_EQ(Token::END_OF_LINE, s_crlf.getToken(lexer).getType());
     EXPECT_EQ(&s_string, State::start(lexer, common_options));
 
-    // \r then EOF
-    ss << "\r";
+    // 4. \r then EOF
     EXPECT_EQ(&s_crlf, State::start(lexer, common_options)); // recognize '\r'
     // see EOF, then "unget" it
     EXPECT_EQ(s_null, s_crlf.handle(lexer));
