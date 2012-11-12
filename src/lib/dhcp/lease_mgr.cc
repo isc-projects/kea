@@ -96,10 +96,3 @@ Lease6::operator==(const Lease6& other) const {
         subnet_id_ == other.subnet_id_
         );
 }
-
-LeaseMgr::LeaseMgr(const LeaseMgr::ParameterMap& parameters)
-    : parameters_(parameters) {
-}
-
-LeaseMgr::~LeaseMgr() {
-}
