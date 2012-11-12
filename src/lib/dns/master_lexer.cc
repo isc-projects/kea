@@ -167,6 +167,7 @@ State::getParenCount(const MasterLexer& lexer) const {
     return (lexer.impl_->paren_count_);
 }
 
+namespace {
 class CRLF : public State {
 public:
     CRLF() {}
@@ -200,7 +201,6 @@ public:
     }
 };
 
-namespace {
 // We use a common instance of a each state in a singleton-like way to save
 // construction overhead.  They are not singletons in its strict sense as
 // we don't prohibit direct construction of these objects.  But that doesn't
