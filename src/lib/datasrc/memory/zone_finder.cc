@@ -627,7 +627,10 @@ private:
             // This can be a bit more optimized, but unless we have many
             // requested types the effect is probably marginal.  For now we
             // keep it simple.
-            if (std::find(type_beg, type_end, rdset->type) != type_end) {
+            // Check for getRdataCount is necessary not to include RRSIG-only
+            // records accidentally (should be rare, but possible).
+            if (std::find(type_beg, type_end, rdset->type) != type_end &&
+                rdset->getRdataCount() > 0) {
                 result->push_back(createTreeNodeRRset(node, rdset, rrclass_,
                                                       options, real_name));
             }
