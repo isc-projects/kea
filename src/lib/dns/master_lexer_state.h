@@ -35,7 +35,7 @@ namespace master_lexer_internal {
 /// context, and updates it as necessary; each \c State derived class is
 /// completely stateless.
 ///
-/// The initial transition takes place a static method of the base class,
+/// The initial transition takes place in a static method of the base class,
 /// \c start().  This is mainly for implementation convenience; we need to
 /// pass options given to \c MasterLexer::getNextToken() for the initial
 /// state, so it makes more sense to separate the interface for the transition
