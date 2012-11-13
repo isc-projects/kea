@@ -55,8 +55,9 @@ public:
     /// A compound option, indicating multiple options are set, can be
     /// specified using the logical OR operator (operator|()).
     enum Options {
-        NONE = 0,               //< No option
-        INITIAL_WS = 1,         ///< recognize begin-of-line spaces
+        NONE = 0,               ///< No option
+        INITIAL_WS = 1, ///< recognize begin-of-line spaces after an
+                        ///< end-of-line
         QSTRING = 2,    ///< recognize quoted string
         NUMBER = 4   ///< recognize numeric text as integer
     };
@@ -191,7 +192,8 @@ public:
     enum Type {
         END_OF_LINE, ///< End of line detected (if asked for detecting it)
         END_OF_FILE, ///< End of file detected (if asked for detecting it)
-        INITIAL_WS,  ///< White spaces at the beginning of a line
+        INITIAL_WS,  ///< White spaces at the beginning of a line after an
+                     ///< end of line
         NOVALUE_TYPE_MAX = INITIAL_WS, ///< Max integer corresponding to
                                        /// no-value (type only) types.
                                        /// Mainly for internal use.
