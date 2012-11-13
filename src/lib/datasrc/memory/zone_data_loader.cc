@@ -16,6 +16,7 @@
 #include <datasrc/memory/zone_data_updater.h>
 #include <datasrc/memory/logger.h>
 #include <datasrc/memory/segment_object_holder.h>
+#include <datasrc/memory/util_internal.h>
 
 #include <dns/rdataclass.h>
 #include <dns/rrset.h>
@@ -35,6 +36,7 @@ namespace datasrc {
 namespace memory {
 
 using detail::SegmentObjectHolder;
+using detail::getCoveredType;
 
 namespace { // unnamed namespace
 
@@ -75,8 +77,6 @@ private:
     typedef NodeRRsets::value_type NodeRRsetsVal;
 
     // A helper to identify the covered type of an RRSIG.
-    static isc::dns::RRType getCoveredType
-        (const isc::dns::ConstRRsetPtr& sig_rrset);
     const isc::dns::Name& getCurrentName() const;
 
 private:
@@ -135,21 +135,6 @@ ZoneDataLoader::flushNodeRRsets() {
 
     node_rrsets_.clear();
     node_rrsigsets_.clear();
-}
-
-RRType
-ZoneDataLoader::getCoveredType(const ConstRRsetPtr& sig_rrset) {
-    RdataIteratorPtr it = sig_rrset->getRdataIterator();
-    // Empty RRSIG shouldn't be passed either via a master file or
-    // another data source iterator, but it could still happen if the
-    // iterator has a bug.  We catch and reject such cases.
-    if (it->isLast()) {
-        isc_throw(isc::Unexpected,
-                  "Empty RRset is passed in-memory loader, name: "
-                  << sig_rrset->getName());
-    }
-    return (dynamic_cast<const generic::RRSIG&>(it->getCurrent()).
-            typeCovered());
 }
 
 const Name&
