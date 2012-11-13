@@ -52,5 +52,5 @@ class MockTSIGContext(TSIGContext):
             return self.error(self)
         return self.error
 
-    def last_has_signature(self):
+    def last_had_signature(self):
         return True
