@@ -45,7 +45,8 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
 }
 
-TEST_F(MemfileLeaseMgrTest, GetTypeAndName) {
+// Checks if the getType() and getName() methods both return "memfile".
+TEST_F(MemfileLeaseMgrTest, getTypeAndName) {
     const LeaseMgr::ParameterMap pmap;  // Empty parameter map
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
 
@@ -53,14 +54,8 @@ TEST_F(MemfileLeaseMgrTest, GetTypeAndName) {
     EXPECT_EQ(std::string("memfile"), lease_mgr->getName());
 }
 
-// There's no point in calling any other methods in LeaseMgr, as they
-// are purely virtual, so we would only call Memfile_LeaseMgr methods.
-// Those methods are just stubs that does not return anything.
-// It seems likely that we will need to extend the memfile code for
-// allocation engine tests, so we may implement tests that call
-// Memfile_LeaseMgr methods then.
-
-TEST_F(MemfileLeaseMgrTest, addGetDelete) {
+// Checks that adding/getting/deleting a Lease6 object works.
+TEST_F(MemfileLeaseMgrTest, addGetDeletei6) {
     const LeaseMgr::ParameterMap pmap;  // Empty parameter map
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
 

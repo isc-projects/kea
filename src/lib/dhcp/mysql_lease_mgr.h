@@ -267,16 +267,6 @@ public:
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
     ///
-    /// @todo: We will need to implement 3 version functions eventually:
-    /// A. abstract API version
-    /// B. backend version
-    /// C. database version (stored in the database scheme)
-    ///
-    /// and then check that:
-    /// B>=A and B=C (it is ok to have newer backend, as it should be backward
-    /// compatible)
-    /// Also if B>C, some database upgrade procedure may be triggered
-    ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual std::pair<uint32_t, uint32_t> getVersion() const;

@@ -470,11 +470,25 @@ TEST(MySqlOpenTest, OpenDatabase) {
     destroySchema();
 }
 
-TEST_F(MySqlLeaseMgrTest, GetType) {
+// @brief Check the getType() method
+//
+// getType() returns a string giving the type of the backend, which should
+// always be "mysql".
+TEST_F(MySqlLeaseMgrTest, getType) {
     EXPECT_EQ(std::string("mysql"), lmptr_->getType());
 }
 
 // @brief Check conversion functions
+//
+// The server works using cltt and valid_filetime.  In the database, the
+// information is stored as expire_time and valid-lifetime, which are
+// related by
+//
+// expire_time = cltt + valid_lifetime
+//
+// This test checks that the conversion is correct.  It does not check that the
+// data is entered into the database correctly, only that the MYSQL_TIME
+// structure used for the entry is correctly set up.
 TEST_F(MySqlLeaseMgrTest, CheckTimeConversion) {
     const time_t cltt = time(NULL);
     const uint32_t valid_lft = 86400;       // 1 day
@@ -513,7 +527,7 @@ TEST_F(MySqlLeaseMgrTest, getName) {
     // @TODO: check for the negative
 }
 
-// @brief Check that getVersion() works
+// @brief Check that getVersion() returns the expected version
 TEST_F(MySqlLeaseMgrTest, CheckVersion) {
     // Check version
     pair<uint32_t, uint32_t> version;
@@ -522,13 +536,15 @@ TEST_F(MySqlLeaseMgrTest, CheckVersion) {
     EXPECT_EQ(CURRENT_VERSION_MINOR, version.second);
 }
 
+// @brief Compare two Lease6 structures for equality
 void
 detailCompareLease6(const Lease6Ptr& first, const Lease6Ptr& second) {
     EXPECT_EQ(first->type_, second->type_);
 
-    // Compare address strings - odd things happen when they are different
-    // as the EXPECT_EQ appears to call the operator uint32_t() function,
-    // which causes an exception to be thrown for IPv6 addresses.
+    // Compare address strings.  Comparison of address objects is not used, as
+    // odd things happen when they are different: the EXPECT_EQ macro appears to
+    // call the operator uint32_t() function, which causes an exception to be
+    // thrown for IPv6 addresses.
     EXPECT_EQ(first->addr_.toText(), second->addr_.toText());
     EXPECT_EQ(first->prefixlen_, second->prefixlen_);
     EXPECT_EQ(first->iaid_, second->iaid_);

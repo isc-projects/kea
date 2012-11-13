@@ -133,7 +133,7 @@ public:
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const;
+    virtual Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
@@ -143,7 +143,7 @@ public:
     /// @param iaid IA identifier
     ///
     /// @return collection of IPv6 leases
-    Lease6Collection getLease6(const DUID& duid, uint32_t iaid) const;
+    virtual Lease6Collection getLease6(const DUID& duid, uint32_t iaid) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
@@ -154,7 +154,7 @@ public:
     /// @param subnet_id identifier of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    Lease6Ptr getLease6(const DUID& duid, uint32_t iaid, SubnetID subnet_id) const;
+    virtual Lease6Ptr getLease6(const DUID& duid, uint32_t iaid, SubnetID subnet_id) const;
 
     /// @brief Updates IPv4 lease.
     ///
@@ -163,7 +163,7 @@ public:
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    void updateLease4(const Lease4Ptr& lease4);
+    virtual void updateLease4(const Lease4Ptr& lease4);
 
     /// @brief Updates IPv4 lease.
     ///
@@ -172,7 +172,7 @@ public:
     /// @param lease6 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    void updateLease6(const Lease6Ptr& lease6);
+    virtual void updateLease6(const Lease6Ptr& lease6);
 
     /// @brief Deletes a lease.
     ///
@@ -186,7 +186,7 @@ public:
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    bool deleteLease6(const isc::asiolink::IOAddress& addr);
+    virtual bool deleteLease6(const isc::asiolink::IOAddress& addr);
 
     /// @brief Return backend type
     ///
@@ -215,6 +215,9 @@ public:
     virtual std::string getDescription() const;
 
     /// @brief Returns backend version.
+    ///
+    /// @return Version number as a pair of unsigned integers.  "first" is the
+    ///         major version number, "second" the minor number.
     virtual std::pair<uint32_t, uint32_t> getVersion() const {
         return (std::make_pair(1, 0));
     }
@@ -230,8 +233,6 @@ public:
     /// Rolls back all pending database operations.  On databases that don't
     /// support transactions, this is a no-op.
     virtual void rollback();
-
-    using LeaseMgr::getParameter;
 
 protected:
 
