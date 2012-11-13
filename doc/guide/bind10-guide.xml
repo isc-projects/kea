@@ -1436,7 +1436,7 @@ Parameters:
             For example, the <command>loadzone</command> command of the Auth
             module, as shown in the last example of the previous section, has
             two arguments, one of which is optional. The positional arguments in
-            this case are class first and origin second; i.e.
+            this case are class first and origin second; for example:
             <screen>&gt; <userinput>Auth loadzone IN example.com.</userinput></screen>
             But since the class is optional (defaulting to IN), leaving it out
             works as well:
@@ -1691,12 +1691,12 @@ Parameters:
                 <listitem>
                     <simpara>
                         A list is a compound list of other elements of the
-                        same type; Elements can be added with <command>config
+                        same type. Elements can be added with <command>config
                         add <replaceable>&lt;list name&gt; [value]</replaceable></command>, and removed with
                         <command>config remove <replaceable>&lt;list name&gt; [value]</replaceable></command> or
                         <command>config remove <replaceable>&lt;list name&gt;</replaceable><replaceable>&lt;index&gt;</replaceable></command>.
-                        The index is of the form square bracket, number,
-                        square bracket (e.g.
+                        The index is of the form <emphasis>square bracket, number,
+                        square bracket</emphasis> (e.g.
                         <command>[0]</command>), and it immediately follows
                         the list name (there is no separator or space
                         between them). List indices start with 0 for the
@@ -1715,7 +1715,7 @@ Parameters:
                         entire list value in JSON format.
                     </simpara>
                     <simpara>
-                        For example, this command shows the port number used for the second element of the list listen_on in the Auth module:
+                        For example, this command shows the port number used for the second element of the list <varname>listen_on</varname> in the Auth module:
                         <command> config show Auth/listen_on[1]/port</command>
                     </simpara>
                 </listitem>
