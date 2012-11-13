@@ -30,5 +30,27 @@ td.title {
       </body>
     </html>
   </xsl:template>
-  $xsl_string
+  <xsl:template match="bind10:statistics">
+    <table>
+      <tr>
+	<th>Identifier</th><th>Value</th><th>Description</th>
+      </tr>
+      <xsl:for-each select="item">
+	<tr>
+	  <td>
+	    <xsl:element name="a">
+	      <xsl:attribute name="href"><xsl:value-of select="@uri" /></xsl:attribute>
+	      <xsl:value-of select="@identifier" />
+	    </xsl:element>
+	  </td>
+	  <td>
+	    <xsl:if test="@value"><xsl:value-of select="@value" /></xsl:if>
+	  </td>
+	  <td>
+	    <xsl:if test="@description"><xsl:value-of select="@description" /></xsl:if>
+	  </td>
+	</tr>
+      </xsl:for-each>
+    </table>
+  </xsl:template>
 </xsl:stylesheet>
