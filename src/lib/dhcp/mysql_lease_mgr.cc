@@ -447,8 +447,9 @@ MySqlLeaseMgr::MySqlLeaseMgr(const LeaseMgr::ParameterMap& parameters)
     // Open the database
     openDatabase();
 
-    // Disable autocommit
-    my_bool result = mysql_autocommit(mysql_, 0);
+    // Enable autocommit.  For maximum speed, the global parameter
+    // innodb_flush_log_at_trx_commit should be set to 2.
+    my_bool result = mysql_autocommit(mysql_, 1);
     if (result != 0) {
         isc_throw(DbOperationError, mysql_error(mysql_));
     }
