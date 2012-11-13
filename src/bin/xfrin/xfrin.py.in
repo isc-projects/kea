@@ -797,7 +797,7 @@ class XfrinConnection(asyncore.dispatcher):
         Check there's a signature at the last message.
         """
         if self._tsig_ctx is not None:
-            if not self._tsig_ctx.last_has_signature():
+            if not self._tsig_ctx.last_had_signature():
                 raise XfrinProtocolError('TSIG verify fail: no TSIG on last '+
                                          'message')
 
