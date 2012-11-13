@@ -470,6 +470,10 @@ TEST(MySqlOpenTest, OpenDatabase) {
     destroySchema();
 }
 
+TEST_F(MySqlLeaseMgrTest, GetType) {
+    EXPECT_EQ(std::string("mysql"), lmptr_->getType());
+}
+
 // @brief Check conversion functions
 TEST_F(MySqlLeaseMgrTest, CheckTimeConversion) {
     const time_t cltt = time(NULL);

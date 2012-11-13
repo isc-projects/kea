@@ -188,15 +188,31 @@ public:
     /// @return true if deletion was successful, false if no such lease exists
     bool deleteLease6(const isc::asiolink::IOAddress& addr);
 
+    /// @brief Return backend type
+    ///
+    /// Returns the type of the backend.
+    ///
+    /// @return Type of the backend.
+    virtual std::string getType() const {
+        return (std::string("memfile"));
+    }
+
     /// @brief Returns backend name.
     ///
-    /// Each backend have specific name, e.g. "mysql" or "sqlite".
-    std::string getName() const { return ("memfile"); }
+    /// As there is no variation, in this case we return the type of the
+    /// backend.
+    ///
+    /// @return Name of the backend.
+    virtual std::string getName() const {
+        return ("memfile");
+    }
 
     /// @brief Returns description of the backend.
     ///
     /// This description may be multiline text that describes the backend.
-    std::string getDescription() const;
+    ///
+    /// @return Description of the backend.
+    virtual std::string getDescription() const;
 
     /// @brief Returns backend version.
     virtual std::pair<uint32_t, uint32_t> getVersion() const {
