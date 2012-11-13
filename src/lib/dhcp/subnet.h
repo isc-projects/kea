@@ -69,6 +69,12 @@ public:
         /// @param persist if true option is always sent.
         OptionDescriptor(OptionPtr& opt, bool persist)
             : option(opt), persistent(persist) {};
+
+        /// @brief Constructor
+        ///
+        /// @param persist if true option is always sent.
+        OptionDescriptor(bool persist)
+            : option(OptionPtr()), persistent(persist) {};
     };
 
     /// @brief Extractor class to extract key with another key.
