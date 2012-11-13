@@ -153,7 +153,14 @@ MasterLexer::getSourceLine() const {
 }
 
 MasterLexer::Token
-MasterLexer::getNextToken(Options) {
+MasterLexer::getNextToken(Options options) {
+    if (impl_->source_ == NULL) {
+        isc_throw(isc::InvalidOperation, "No source to read tokens from");
+    }
+    for (const State *state = start(options); state != NULL;
+         state = state->handle(*this)) {
+        // Do nothing here. All is handled in the for cycle header itself.
+    }
     // TODO load the token
     return (impl_->token_);
 }
@@ -164,9 +171,8 @@ MasterLexer::ungetToken() {
 }
 
 const State*
-MasterLexer::start() {
-    // TODO
-    return (NULL);
+MasterLexer::start(Options options) {
+    return (State::start(*this, options));
 }
 
 namespace {
