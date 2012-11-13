@@ -65,39 +65,50 @@ public:
     /// a standard exception if memory allocation fails inside the method.
     ///
     inline QRAttributes();
+
     /// The destructor.
     ///
     /// This method never throws an exception.
     ///
     inline ~QRAttributes();
+
     /// \brief Set query opcode.
     /// \throw None
     inline void setQueryOpCode(const int opcode);
+
     /// \brief Set IP version carrying a query.
     /// \throw None
     inline void setQueryIPVersion(const int ip_version);
+
     /// \brief Set transport protocol carrying a query.
     /// \throw None
     inline void setQueryTransportProtocol(const int transport_protocol);
+
     /// \brief Set query EDNS attributes.
     /// \throw None
     inline void setQueryEDNS(const bool is_edns_0, const bool is_edns_badver);
+
     /// \brief Set query DO bit.
     /// \throw None
     inline void setQueryDO(const bool is_dnssec_ok);
+
     /// \brief Set query TSIG attributes.
     /// \throw None
     inline void setQuerySig(const bool is_tsig, const bool is_sig0,
                             const bool is_badsig);
+
     /// \brief Set zone origin.
     /// \throw None
     inline void setOrigin(const std::string& origin);
+
     /// \brief Set if the answer has sent.
     /// \throw None
     inline void answerWasSent();
+
     /// \brief Set if the response is truncated.
     /// \throw None
     inline void setResponseTruncated(const bool is_truncated);
+
     /// \brief Reset attributes.
     /// \throw None
     inline void reset();
