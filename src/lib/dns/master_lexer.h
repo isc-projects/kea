@@ -277,8 +277,10 @@ public:
         NOT_STARTED, ///< The lexer is just initialized and has no token
         UNBALANCED_PAREN,       ///< Unbalanced parentheses detected
         UNEXPECTED_END, ///< The lexer reaches the end of line or file
-                       /// unexpectedly
+                        /// unexpectedly
         UNBALANCED_QUOTES,      ///< Unbalanced quotations detected
+        NO_TOKEN_PRODUCED, ///< No token was produced. This means programmer
+                           /// error and should never get out of the lexer.
         MAX_ERROR_CODE ///< Max integer corresponding to valid error codes.
                        /// (excluding this one). Mainly for internal use.
     };
