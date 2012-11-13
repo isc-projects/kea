@@ -1321,7 +1321,7 @@ TODO
             <listitem>
               <simpara>
                   <command>bindctl</command> stores the username and
-                  password for logging in a file called
+                  password for logging in in a file called
                   <filename>default_user.csv</filename>;
                   this option specifies the directory where this file is
                   stored and read from. When not specified,
@@ -1420,21 +1420,33 @@ Parameters:
 
     <section id="bindctl_command_arguments">
         <title>Command arguments</title>
-        The <command>loadzone</command> command of the Auth
-        module, as shown in the last
-        example of the previous section, has two arguments, one of which is
-        optional. When using positional arguments they are expected to be
-        provided in the order in which 'help' gives them, in this case class
-        first and origin second; i.e.
-        <screen>&gt; <userinput>Auth loadzone IN example.com.</userinput></screen>
-        But since the class is optional (defaulting to IN), leaving it out
-        works as well:
-        <screen>&gt;<userinput>Auth loadzone example.com.</userinput></screen>
-
-        Arguments can also be provided with their names:
-        <screen>&gt; <userinput>Auth loadzone origin="example.com." class="IN"</userinput></screen>
-
-        When using this method, the order does not matter.
+        <simpara>
+            Commands can have arguments, which can be either optional or
+            mandatory. They can be specified by name
+            (e.g. <command><replaceable>&lt;command&gt;</replaceable> <replaceable>&lt;argument name&gt;=&lt;argument value&gt;</replaceable></command>), or positionally,
+            (e.g. <command><replaceable>&lt;command&gt;</replaceable> <replaceable>&lt;argument value 1&gt;</replaceable> <replaceable>&lt;argument value 2&gt;</replaceable></command>).
+        </simpara>
+        <simpara>
+            <command><replaceable>&lt;command&gt;</replaceable> <replaceable>help</replaceable></command>
+            shows the arguments a command supports and which of those are
+            mandatory, and in which order the arguments are expected if
+            positional arguments are used.
+        </simpara>
+        <simpara>
+            For example, the <command>loadzone</command> command of the Auth
+            module, as shown in the last example of the previous section, has
+            two arguments, one of which is optional. The positional arguments in
+            this case are class first and origin second; i.e.
+            <screen>&gt; <userinput>Auth loadzone IN example.com.</userinput></screen>
+            But since the class is optional (defaulting to IN), leaving it out
+            works as well:
+            <screen>&gt; <userinput>Auth loadzone example.com.</userinput></screen>
+        </simpara>
+        <simpara>
+            The arguments can also be provided with their names, in which
+            case the order does not matter:
+            <screen>&gt; <userinput>Auth loadzone origin="example.com." class="IN"</userinput></screen>
+        </simpara>
     </section>
 
     <section id="bindctl_module_commands">
@@ -1679,11 +1691,22 @@ Parameters:
                 <listitem>
                     <simpara>
                         A list is a compound list of other elements of the
-                        same type; It can be modified by the <command>config
-                        add <replaceable>&lt;list name&gt; [value]</replaceable></command> and
+                        same type; Elements can be added with <command>config
+                        add <replaceable>&lt;list name&gt; [value]</replaceable></command>, and removed with
                         <command>config remove <replaceable>&lt;list name&gt; [value]</replaceable></command> or
-                        <command>config remove <replaceable>&lt;list name&gt;</replaceable>[<replaceable>&lt;index&gt;</replaceable>]</command>
-                        , to add and remove elements. For addition, if the value is omitted, an entry with default values will be added. For removal, either the index or the full value (in JSON format) needs to be specified.
+                        <command>config remove <replaceable>&lt;list name&gt;</replaceable><replaceable>&lt;index&gt;</replaceable></command>.
+                        The index is of the form square bracket, number,
+                        square bracket (e.g.
+                        <command>[0]</command>), and it immediately follows
+                        the list name (there is no separator or space
+                        between them). List indices start with 0 for the
+                        first element.
+                    </simpara>
+                    <simpara>
+                        For addition, if the value is omitted, an entry with
+                        default values will be added. For removal, either
+                        the index or the full value (in JSON format) needs
+                        to be specified.
                     </simpara>
                     <simpara>
                         Lists can also be used with
@@ -1692,8 +1715,7 @@ Parameters:
                         entire list value in JSON format.
                     </simpara>
                     <simpara>
-                        List indices are identified with square brackets;
-                        for example:
+                        For example, this command shows the port number used for the second element of the list listen_on in the Auth module:
                         <command> config show Auth/listen_on[1]/port</command>
                     </simpara>
                 </listitem>
@@ -3544,7 +3566,7 @@ Dhcp6/subnet6	         []     list    (default)</screen>
         enclosed in square brackets, even though only one range of addresses
         is specified.</para>
         <para>It is possible to define more than one pool in a
-        subnet: continuing the previous example, further assume that 
+        subnet: continuing the previous example, further assume that
         2001:db8:1:0:5::/80 should be also be managed by the server. It could be written as
         2001:db8:1:0:5:: to 2001:db8:1::5:ffff:ffff:ffff, but typing so many 'f's
         is cumbersome. It can be expressed more simply as 2001:db8:1:0:5::/80. Both
