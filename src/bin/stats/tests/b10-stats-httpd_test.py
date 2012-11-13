@@ -1,4 +1,4 @@
-# Copyright (C) 2011  Internet Systems Consortium.
+# Copyright (C) 2011-2012  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -112,6 +112,84 @@ def is_ipv6_enabled(address='::1', port=8001):
         finally:
             if sock: sock.close()
     return False
+
+class TestItemNameList(unittest.TestCase):
+
+    def test_item_name_list(self):
+        # for a one-element list
+        self.assertEqual(['a'],
+                         stats_httpd.item_name_list({'a':1}, 'a'))
+        # for a dict under a dict
+        self.assertEqual(['a','a/b'],
+                         stats_httpd.item_name_list({'a':{'b':1}}, 'a'))
+        self.assertEqual(['a/b'],
+                         stats_httpd.item_name_list({'a':{'b':1}}, 'a/b'))
+        self.assertEqual(['a','a/b','a/b/c'],
+                         stats_httpd.item_name_list({'a':{'b':{'c':1}}}, 'a'))
+        self.assertEqual(['a/b','a/b/c'],
+                         stats_httpd.item_name_list({'a':{'b':{'c':1}}},
+                                                    'a/b'))
+        self.assertEqual(['a/b/c'],
+                         stats_httpd.item_name_list({'a':{'b':{'c':1}}},
+                                                    'a/b/c'))
+        # for a list under a dict
+        self.assertEqual(['a[2]'],
+                         stats_httpd.item_name_list({'a':[1,2,3]}, 'a[2]'))
+        self.assertEqual(['a', 'a[0]', 'a[1]', 'a[2]'],
+                         stats_httpd.item_name_list({'a':[1,2,3]}, 'a'))
+        self.assertEqual(['a', 'a[0]', 'a[1]', 'a[2]'],
+                         stats_httpd.item_name_list({'a':[1,2,3]}, ''))
+        # for a list under adict under a dict
+        self.assertEqual(['a', 'a/b', 'a/b[0]', 'a/b[1]', 'a/b[2]'],
+                         stats_httpd.item_name_list({'a':{'b':[1,2,3]}}, 'a'))
+        self.assertEqual(['a', 'a/b', 'a/b[0]', 'a/b[1]', 'a/b[2]'],
+                         stats_httpd.item_name_list({'a':{'b':[1,2,3]}}, ''))
+        self.assertEqual(['a/b', 'a/b[0]', 'a/b[1]', 'a/b[2]'],
+                         stats_httpd.item_name_list({'a':{'b':[1,2,3]}}, 'a/b'))
+        # for a mixed case of the above
+        self.assertEqual(['a', 'a/b', 'a/b[0]', 'a/b[1]', 'a/b[2]', 'a/c'],
+                         stats_httpd.item_name_list(
+                {'a':{'b':[1,2,3], 'c':1}}, 'a'))
+        self.assertEqual(['a/b', 'a/b[0]', 'a/b[1]', 'a/b[2]'],
+                         stats_httpd.item_name_list(
+                {'a':{'b':[1,2,3], 'c':1}}, 'a/b'))
+        self.assertEqual(['a/c'],
+                         stats_httpd.item_name_list(
+                {'a':{'b':[1,2,3], 'c':1}}, 'a/c'))
+        # for specifying a wrong identifier which is not found in
+        # element
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                         stats_httpd.item_name_list, {'x':1}, 'a')
+        # for specifying a string in element and an empty string in
+        # identifier
+        self.assertEqual([],
+                         stats_httpd.item_name_list('a', ''))
+        # for specifying empty strings in element and identifier
+        self.assertEqual([],
+                         stats_httpd.item_name_list('', ''))
+        # for specifying wrong element, which is an non-empty string,
+        # and an non-empty string in identifier
+        self.assertRaises(isc.cc.data.DataTypeError,
+                         stats_httpd.item_name_list, 'a', 'a')
+        # for specifying None in element and identifier
+        self.assertRaises(isc.cc.data.DataTypeError,
+                         stats_httpd.item_name_list, None, None)
+        # for specifying non-dict in element
+        self.assertRaises(isc.cc.data.DataTypeError,
+                         stats_httpd.item_name_list, [1,2,3], 'a')
+        self.assertRaises(isc.cc.data.DataTypeError,
+                         stats_httpd.item_name_list, [1,2,3], '')
+        # for checking key names sorted which consist of element
+        num = 11
+        keys = [ 'a', 'aa', 'b' ]
+        keys.sort(reverse=True)
+        dictlist = dict([ (k, list(range(num))) for k in keys ])
+        keys.sort()
+        ans = []
+        for k in keys:
+            ans += [k] + [ '%s[%d]' % (k, i) for i in range(num) ]
+        self.assertEqual(ans,
+                         stats_httpd.item_name_list(dictlist, ''))
 
 class TestHttpHandler(unittest.TestCase):
     """Tests for HttpHandler class"""
