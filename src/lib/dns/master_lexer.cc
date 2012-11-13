@@ -157,7 +157,8 @@ MasterLexer::getNextToken(Options options) {
     // Reset the token now. This is to check a token was actually produced.
     // This is debugging aid.
     impl_->token_ = Token(Token::NO_TOKEN_PRODUCED);
-    if (impl_->source_ == NULL) {
+    // If the source is not available
+    if (impl_->source_ == NULL || impl_->source_->atEOF()) {
         isc_throw(isc::InvalidOperation, "No source to read tokens from");
     }
     for (const State *state = start(options); state != NULL;
@@ -187,7 +188,7 @@ const char* const error_text[] = {
     "unbalanced parentheses",   // UNBALANCED_PAREN
     "unexpected end of input",  // UNEXPECTED_END
     "unbalanced quotes",        // UNBALANCED_QUOTES
-    "no token produced"
+    "no token produced"         // NO_TOKEN_PRODUCED
 };
 const size_t error_text_max_count = sizeof(error_text) / sizeof(error_text[0]);
 }
