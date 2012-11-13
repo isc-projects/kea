@@ -570,7 +570,7 @@ class TestXfrinIXFRAdd(TestXfrinState):
         # difference, starting with removing that SOA.
         self.conn._diff.add_data(self.ns_rrset) # put some dummy change
         self.conn._tsig_ctx = MockTSIGContext(TSIG_KEY)
-        self.conn._tsig_ctx.last_has_signature = lambda: False
+        self.conn._tsig_ctx.last_had_signature = lambda: False
         # First, push a starting SOA inside. This should be OK, nothing checked
         # yet.
         self.state.handle_rr(self.conn, self.begin_soa)
@@ -821,7 +821,7 @@ class TestAXFR(TestXfrinConnection):
         mock_ctx = MockTSIGContext(key)
         mock_ctx.error = error
         if not has_last_signature:
-            mock_ctx.last_has_signature = lambda: False
+            mock_ctx.last_had_signature = lambda: False
         return mock_ctx
 
     def __match_exception(self, expected_exception, expected_msg, expression):

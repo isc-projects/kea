@@ -1,3 +1,17 @@
+505.	[bug]		jelte
+	Fixed a bug in b10-xfrin where a wrong call was made during the
+	final check of a TSIG-signed transfer, incorrectly rejecting the
+	transfer.
+	(Trac #2464, git eac81c0cbebee72f6478bdb5cda915f5470d08e1)
+
+504.	[bug]*		naokikambe
+	Fixed an XML format viewed from b10-stats-httpd. Regarding
+	per-zone counters as zones of Xfrout, a part of the item values wasn't
+	an exact XML format. A zone name can be specified in URI as
+	/bind10/statistics/xml/Xfrout/zones/example.org/xfrreqdone. XSD and XSL
+	formats are also changed to constant ones due to these changes.
+	(Trac #2298, git 512d2d46f3cb431bcdbf8d90af27bff8874ba075)
+
 503.    [func]      Stephen
 	Add initial version of a MySQL backend for the DHCP code.  This
 	implements the basic IPv6 lease access functions - add lease, delete

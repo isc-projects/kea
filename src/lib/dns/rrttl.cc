@@ -92,7 +92,7 @@ RRTTL::RRTTL(const std::string& ttlstr) {
             // There's a unit now.
             units_mode = true;
             // Find the unit and get the size.
-            uint32_t multiply;
+            uint32_t multiply = 1;  // initialize to silence compiler warnings
             bool found = false;
             for (size_t i = 0; i < sizeof(units) / sizeof(*units); ++i) {
                 if (toupper(*unit) == units[i].unit) {
