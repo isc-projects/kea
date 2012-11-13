@@ -48,7 +48,7 @@ public:
         fake_start_ = state;
     }
 protected:
-    virtual const State* start() {
+    virtual const State* start(Options options) {
         if (fake_start_ != NULL) {
             // There's a fake start, so remove it (not to be used next time)
             // and return it.
@@ -58,7 +58,7 @@ protected:
         } else {
             // No fake start ready. So we act the usual way, by delegating it to
             // the parent class.
-            return (MasterLexer::start());
+            return (MasterLexer::start(options));
         }
     }
 private:
@@ -173,7 +173,7 @@ TEST_F(MasterLexerTest, tokenFromStart) {
         StartLexer() :
             token_(MasterLexer::Token::END_OF_LINE)
         {}
-        virtual const State* start() {
+        virtual const State* start(Options) {
             // We don't have access directly inside the implementation.
             // We get the fake state, run it to install the token.
             // Then we just delete it ourself and return NULL.
@@ -211,7 +211,7 @@ TEST_F(MasterLexerTest, simpleGetToken) {
     // We test by extracting the rest and comparing.
     int rest;
     ss >> rest;
-    EXPECT_EQ(rest, 45);
+    EXPECT_EQ(45, rest);
 }
 
 // A token that takes multiple states.
@@ -224,6 +224,7 @@ TEST_F(MasterLexerTest, chainGetToken) {
     MasterLexer::Token t2(MasterLexer::Token::INITIAL_WS);
     scoped_ptr<State> s2(State::getFakeState(NULL, 1, &t2));
     scoped_ptr<State> s1(State::getFakeState(s2.get(), 2, &t1));
+    lexer.pushFakeStart(s1.get());
     // Put something into the source
     ss << "12345";
     lexer.pushSource(ss);
@@ -237,7 +238,7 @@ TEST_F(MasterLexerTest, chainGetToken) {
     // We test by extracting the rest and comparing.
     int rest;
     ss >> rest;
-    EXPECT_EQ(rest, 45);
+    EXPECT_EQ(45, rest);
 }
 
 // Test getting a token without overriding the start() method (well, it
@@ -246,12 +247,14 @@ TEST_F(MasterLexerTest, chainGetToken) {
 // This also tests the real start() passes the options, otherwise we wouldn't
 // get the initial whitespace.
 TEST_F(MasterLexerTest, realStart) {
-    ss << "   \n42";
+    ss << "\n   \n";
     lexer.pushSource(ss);
 
-    // The correct one gets out.
-    MasterLexer::Token generated(lexer.getNextToken());
-    EXPECT_EQ(MasterLexer::Token::INITIAL_WS, generated.getType());
+    // First, the newline should get out.
+    EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
+    // Then the whitespace, if we specify the option.
+    EXPECT_EQ(MasterLexer::Token::INITIAL_WS,
+              lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
 }
 
 }
