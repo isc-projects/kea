@@ -145,7 +145,7 @@ countTreeElements(const struct CounterTypeTree* tree) {
             count += countTreeElements(tree[i].sub_tree);
         }
     }
-    return count;
+    return (count);
 }
 
 TEST(StatisticsItemsTest, QRItemNamesCheck) {
