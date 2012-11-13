@@ -163,6 +163,12 @@ MasterLexer::ungetToken() {
     // TODO
 }
 
+const State*
+MasterLexer::start() {
+    // TODO
+    return (NULL);
+}
+
 namespace {
 const char* const error_text[] = {
     "lexer not started",        // NOT_STARTED

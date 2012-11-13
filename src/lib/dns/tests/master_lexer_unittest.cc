@@ -21,6 +21,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/function.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <string>
 #include <sstream>
@@ -29,8 +30,40 @@ using namespace isc::dns;
 using std::string;
 using std::stringstream;
 using boost::lexical_cast;
+using boost::scoped_ptr;
+using master_lexer_internal::State;
 
 namespace {
+
+// This acts like the normal MasterLexer. It, however, allows to mock the start()
+// method to return some given state instead of the auto-detected ones.
+class TestedMasterLexer : public MasterLexer {
+public:
+    TestedMasterLexer() :
+        fake_start_(NULL)
+    {}
+    // During the next call to start(), return the given state instead of the
+    // auto-detected one.
+    void pushFakeStart(const State* state) {
+        fake_start_ = state;
+    }
+protected:
+    virtual const State* start() {
+        if (fake_start_ != NULL) {
+            // There's a fake start, so remove it (not to be used next time)
+            // and return it.
+            const State* result = fake_start_;
+            fake_start_ = NULL;
+            return (result);
+        } else {
+            // No fake start ready. So we act the usual way, by delegating it to
+            // the parent class.
+            return (MasterLexer::start());
+        }
+    }
+private:
+    const State* fake_start_;
+};
 
 class MasterLexerTest : public ::testing::Test {
 protected:
@@ -38,7 +71,7 @@ protected:
         expected_stream_name("stream-" + lexical_cast<string>(&ss))
     {}
 
-    MasterLexer lexer;
+    TestedMasterLexer lexer;
     stringstream ss;
     const string expected_stream_name;
 };
@@ -124,6 +157,101 @@ TEST_F(MasterLexerTest, nestedPush) {
 TEST_F(MasterLexerTest, invalidPop) {
     // popSource() cannot be called if the sources stack is empty.
     EXPECT_THROW(lexer.popSource(), isc::InvalidOperation);
+}
+
+// Test it is not possible to get token when no source is available.
+TEST_F(MasterLexerTest, noSource) {
+    EXPECT_THROW(lexer.getNextToken(), isc::InvalidOperation);
+}
+
+// Getting a token directly from the start() method.
+TEST_F(MasterLexerTest, tokenFromStart) {
+    // A class that sets the token directly in start() and returns no
+    // state. This is equivalent to the State::start() doing so.
+    class StartLexer : public MasterLexer {
+    public:
+        StartLexer() :
+            token_(MasterLexer::Token::END_OF_LINE)
+        {}
+        virtual const State* start() {
+            // We don't have access directly inside the implementation.
+            // We get the fake state, run it to install the token.
+            // Then we just delete it ourself and return NULL.
+            State* state(State::getFakeState(NULL, 0, &token_));
+            state->handle(*this);
+            delete state;
+            return (NULL);
+        }
+    private:
+        MasterLexer::Token token_;
+    } lexer;
+    lexer.pushSource(ss);
+
+    // The token gets out.
+    MasterLexer::Token generated(lexer.getNextToken());
+    EXPECT_EQ(MasterLexer::Token::END_OF_LINE, generated.getType());
+}
+
+// Getting a token with a single iteration through the states.
+TEST_F(MasterLexerTest, simpleGetToken) {
+    // Prepare the fake state.
+    MasterLexer::Token token(MasterLexer::Token::END_OF_LINE);
+    scoped_ptr<State> state(State::getFakeState(NULL, 3, &token));
+    lexer.pushFakeStart(state.get());
+    // Push some source inside.
+    ss << "12345";
+    lexer.pushSource(ss);
+
+    // Get the token.
+    MasterLexer::Token generated(lexer.getNextToken());
+    // It is the same token (well, on a different address)
+    // We can't compare directly, so compare types.
+    EXPECT_EQ(token.getType(), generated.getType());
+    // 3 characters were read from the source.
+    // We test by extracting the rest and comparing.
+    int rest;
+    ss >> rest;
+    EXPECT_EQ(rest, 45);
+}
+
+// A token that takes multiple states.
+//
+// The first state sets the token as well as the second. The second one should
+// survive and be returned.
+TEST_F(MasterLexerTest, chainGetToken) {
+    // Build the states
+    MasterLexer::Token t1(MasterLexer::Token::END_OF_LINE);
+    MasterLexer::Token t2(MasterLexer::Token::INITIAL_WS);
+    scoped_ptr<State> s2(State::getFakeState(NULL, 1, &t2));
+    scoped_ptr<State> s1(State::getFakeState(s2.get(), 2, &t1));
+    // Put something into the source
+    ss << "12345";
+    lexer.pushSource(ss);
+
+    // Get the token.
+    MasterLexer::Token generated(lexer.getNextToken());
+    // It is the same token as the second one (well, on a different address)
+    // We can't compare directly, so compare types.
+    EXPECT_EQ(t2.getType(), generated.getType());
+    // 3 characters were read from the source.
+    // We test by extracting the rest and comparing.
+    int rest;
+    ss >> rest;
+    EXPECT_EQ(rest, 45);
+}
+
+// Test getting a token without overriding the start() method (well, it
+// is overriden, but no fake state is set, so it refers to the real one).
+//
+// This also tests the real start() passes the options, otherwise we wouldn't
+// get the initial whitespace.
+TEST_F(MasterLexerTest, realStart) {
+    ss << "   \n42";
+    lexer.pushSource(ss);
+
+    // The correct one gets out.
+    MasterLexer::Token generated(lexer.getNextToken());
+    EXPECT_EQ(MasterLexer::Token::INITIAL_WS, generated.getType());
 }
 
 }
