@@ -53,6 +53,8 @@ public:
     }
 
     ~Dhcp6ParserTest() {
+        // Reset configuration database after each test.
+        resetConfiguration();
     };
 
     /// @brief Create the simple configuration with single option.
@@ -114,6 +116,51 @@ public:
             " } ],"
             "\"valid-lifetime\": 4000 }";
         return (stream.str());
+    }
+
+    /// @brief Reset configuration database.
+    ///
+    /// This function resets configuration data base by
+    /// removing all subnets and option-data. Reset must
+    /// be performed after each test to make sure that
+    /// contents of the database do not affect result of
+    /// subsequent tests.
+    void resetConfiguration() {
+        ConstElementPtr status;
+
+        string config = "{ \"interface\": [ \"all\" ],"
+            "\"preferred-lifetime\": 3000,"
+            "\"rebind-timer\": 2000, "
+            "\"renew-timer\": 1000, "
+            "\"valid-lifetime\": 4000, "
+            "\"subnet6\": [ ], "
+            "\"option-data\": [ ] }";
+
+        try {
+            ElementPtr json = Element::fromJSON(config);
+            status = configureDhcp6Server(srv_, json);
+        } catch (const std::exception& ex) {
+            FAIL() << "Fatal error: unable to reset configuration database"
+                   << " after the test. The following configuration was used"
+                   << " to reset database: " << std::endl
+                   << config << std::endl
+                   << " and the following error message was returned:"
+                   << ex.what() << std::endl;
+        }
+
+
+        // returned value should be 0 (configuration success)
+        if (!status) {
+            FAIL() << "Fatal error: unable to reset configuration database"
+                   << " after the test. Configuration function returned"
+                   << " NULL pointer" << std::endl;
+        }
+        comment_ = parseAnswer(rcode_, status);
+        if (rcode_ != 0) {
+            FAIL() << "Fatal error: unable to reset configuration database"
+                   << " after the test. Configuration function returned"
+                   << " error code " << rcode_ << std::endl;
+        }
     }
 
     /// @brief Test invalid option parameter value.
@@ -691,7 +738,7 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     // Option code 3 means OPTION_IA_NA.
     params["code"] = "3";
     params["data"] = "ABCDEF01 02030405 06070809";
-    
+
     std::string config = createConfigWithOption(params);
     ElementPtr json = Element::fromJSON(config);
 
