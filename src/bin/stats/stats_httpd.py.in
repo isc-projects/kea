@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2011  Internet Systems Consortium.
+# Copyright (C) 2011-2012  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -71,6 +71,55 @@ XSD_NAMESPACE = 'http://bind10.isc.org/bind10'
 
 # Assign this process name
 isc.util.process.rename()
+
+def item_name_list(element, identifier):
+    """Return a list of strings. The strings are string expression of
+    the first argument element which is dict type. The second argument
+    identifier is a string for specifying the strings which are
+    returned from this method as a list. For example, if we specify as
+
+      item_name_list({'a': {'aa': [0, 1]}, 'b': [0, 1]}, 'a/aa'),
+
+    then it returns
+
+      ['a/aa', 'a/aa[0]', 'a/aa[1]'].
+
+    If an empty string is specified in the second argument, all
+    possible strings are returned as a list.  In that example if we
+    specify an empty string in the second argument, then it returns
+
+      ['a', 'a/aa', 'a/aa[0]', 'a/aa[1]', 'b', 'b[0]', 'b[1]'].
+
+    The key name of element which is in the first argument is sorted.
+    Even if we specify as
+
+      item_name_list({'xx': 0, 'a': 1, 'x': 2}, ''),
+
+    then it returns
+
+      ['a', 'x', 'xx'].
+
+    This method internally invokes isc.cc.data.find(). The arguments
+    of this method are passed to isc.cc.data.find(). So an exception
+    DataNotFoundError or DataTypeError might be raised via
+    isc.cc.data.find() depending on the arguments. See details of
+    isc.cc.data.find() for more information about exceptions"""
+    elem = isc.cc.data.find(element, identifier)
+    ret = []
+    ident = identifier
+    if ident:
+        ret.append(ident)
+    if type(elem) is dict:
+        if ident:
+            ident = ident + '/'
+        for key in sorted(elem.keys()):
+            idstr = '%s%s' % (ident, key)
+            ret += item_name_list(element, idstr)
+    elif type(elem) is list:
+        for i in range(0, len(elem)):
+            idstr = '%s[%d]' % (ident, i)
+            ret += item_name_list(element, idstr)
+    return ret
 
 class HttpHandler(http.server.BaseHTTPRequestHandler):
     """HTTP handler class for HttpServer class. The class inhrits the super
