@@ -257,4 +257,16 @@ TEST_F(MasterLexerTest, realStart) {
               lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
 }
 
+// Test we correctly find end of file. Then, upon more attempts to produce
+// tokens past the end, it throws.
+TEST_F(MasterLexerTest, eof) {
+    // Let the ss empty.
+    lexer.pushSource(ss);
+
+    // The first one is found to be EOF
+    EXPECT_EQ(MasterLexer::Token::END_OF_FILE, lexer.getNextToken().getType());
+    // And it is not allowed to use this one any more.
+    EXPECT_THROW(lexer.getNextToken(), isc::InvalidOperation);
+}
+
 }
