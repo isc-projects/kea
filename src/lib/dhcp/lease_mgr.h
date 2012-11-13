@@ -505,14 +505,26 @@ public:
     /// @return true if deletion was successful, false if no such lease exists
     virtual bool deleteLease6(const isc::asiolink::IOAddress& addr) = 0;
 
+    /// @brief Return backend type
+    ///
+    /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
+    ///
+    /// @return Type of the backend.
+    virtual std::string getType() const = 0;
+
     /// @brief Returns backend name.
     ///
-    /// Each backend have specific name, e.g. "mysql" or "sqlite".
+    /// If the backend is a database, this is the name of the database or the
+    /// file.  Otherwise it is just the same as the type.
+    ///
+    /// @return Name of the backend.
     virtual std::string getName() const = 0;
 
     /// @brief Returns description of the backend.
     ///
     /// This description may be multiline text that describes the backend.
+    ///
+    /// @return Description of the backend.
     virtual std::string getDescription() const = 0;
 
     /// @brief Returns backend version.
@@ -548,7 +560,7 @@ public:
     /// is currently postponed.
 
     /// @brief returns value of the parameter
-    std::string getParameter(const std::string& name) const;
+    virtual std::string getParameter(const std::string& name) const;
 
 private:
     /// @brief list of parameters passed in dbconfig

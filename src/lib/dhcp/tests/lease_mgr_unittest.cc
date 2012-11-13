@@ -134,7 +134,7 @@ public:
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    Lease6Ptr getLease6(const isc::asiolink::IOAddress&) const {
+    virtual Lease6Ptr getLease6(const isc::asiolink::IOAddress&) const {
         return (Lease6Ptr());
     }
 
@@ -144,7 +144,7 @@ public:
     /// @param iaid IA identifier
     ///
     /// @return collection of IPv6 leases
-    Lease6Collection getLease6(const DUID&, uint32_t) const {
+    virtual Lease6Collection getLease6(const DUID&, uint32_t) const {
         return (Lease6Collection());
     }
 
@@ -155,7 +155,7 @@ public:
     /// @param subnet_id identifier of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    Lease6Ptr getLease6(const DUID&, uint32_t, SubnetID) const {
+    virtual Lease6Ptr getLease6(const DUID&, uint32_t, SubnetID) const {
         return (Lease6Ptr());
     }
 
@@ -164,21 +164,21 @@ public:
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    void updateLease4(const Lease4Ptr&) {}
+    virtual void updateLease4(const Lease4Ptr&) {}
 
     /// @brief Updates IPv4 lease.
     ///
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    void updateLease6(const Lease6Ptr&) {}
+    virtual void updateLease6(const Lease6Ptr&) {}
 
     /// @brief Deletes a lease.
     ///
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    bool deleteLease4(const isc::asiolink::IOAddress&) {
+    virtual bool deleteLease4(const isc::asiolink::IOAddress&) {
         return (false);
     }
 
@@ -187,35 +187,49 @@ public:
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    bool deleteLease6(const isc::asiolink::IOAddress&) {
+    virtual bool deleteLease6(const isc::asiolink::IOAddress&) {
         return (false);
+    }
+
+    /// @brief Returns backend type.
+    ///
+    /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
+    ///
+    /// @return Type of the backend.
+    virtual std::string getType() const {
+        return (std::string("concrete"));
     }
 
     /// @brief Returns backend name.
     ///
-    /// Each backend have specific name, e.g. "mysql" or "sqlite".
-    std::string getName() const {
+    /// If the backend is a database, this is the name of the database or the
+    /// file.  Otherwise it is just the same as the type.
+    ///
+    /// @return Name of the backend.
+    virtual std::string getName() const {
         return (std::string("concrete"));
     }
 
     /// @brief Returns description of the backend.
     ///
     /// This description may be multiline text that describes the backend.
-    std::string getDescription() const {
+    ///
+    /// @return Description of the backend.
+    virtual std::string getDescription() const {
         return (std::string("This is a dummy concrete backend implementation."));
     }
 
     /// @brief Returns backend version.
-    std::pair<uint32_t, uint32_t> getVersion() const {
+    virtual std::pair<uint32_t, uint32_t> getVersion() const {
         return (make_pair(uint32_t(0), uint32_t(0)));
     }
 
     /// @brief Commit transactions
-    void commit() {
+    virtual void commit() {
     }
 
     /// @brief Rollback transactions
-    void rollback() {
+    virtual void rollback() {
     }
 };
 
