@@ -309,11 +309,12 @@ ZoneDataUpdater::addRdataSet(const Name& name, const RRType& rrtype,
         node->setData(rdataset_new);
 
         // Ok, we just put it in.
+        const bool is_origin = (node == zone_data_.getOriginNode());
 
         // If this RRset creates a zone cut at this node, mark the node
         // indicating the need for callback in find().  Note that we do this
         // only when non RRSIG RRset of that type is added.
-        if (rrset && rrtype == RRType::NS() && name != zone_name_) {
+        if (rrset && rrtype == RRType::NS() && !is_origin) {
             node->setFlag(ZoneNode::FLAG_CALLBACK);
             // If it is DNAME, we have a callback as well here
         } else if (rrset && rrtype == RRType::DNAME()) {
@@ -323,9 +324,9 @@ ZoneDataUpdater::addRdataSet(const Name& name, const RRType& rrtype,
         // If we've added NSEC3PARAM at zone origin, set up NSEC3
         // specific data or check consistency with already set up
         // parameters.
-        if (rrset && rrtype == RRType::NSEC3PARAM() && name == zone_name_) {
+        if (rrset && rrtype == RRType::NSEC3PARAM() && is_origin) {
             setupNSEC3<generic::NSEC3PARAM>(rrset);
-        } else if (rrset && rrtype == RRType::NSEC()) {
+        } else if (rrset && rrtype == RRType::NSEC() && is_origin) {
             // If it is NSEC signed zone, we mark the zone as signed
             // (conceptually "signed" is a broader notion but our
             // current zone finder implementation regards "signed" as
