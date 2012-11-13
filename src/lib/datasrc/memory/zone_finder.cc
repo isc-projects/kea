@@ -216,6 +216,14 @@ createNSEC3RRset(const ZoneNode* node, const RRClass& rrclass) {
      assert(rdataset != NULL);
      assert(rdataset->type == RRType::NSEC3());
 
+     // Check for the rare case of RRSIG-only record; in theory it could exist
+     // but we simply consider it broken for NSEC3.
+     if (rdataset->getRdataCount() == 0) {
+         uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+         isc_throw(DataSourceError, "Broken zone: RRSIG-only NSEC3 record at "
+                   << node->getAbsoluteLabels(labels_buf) << "/" << rrclass);
+     }
+
     // Create the RRset.  Note the DNSSEC flag: NSEC3 implies DNSSEC.
     return (createTreeNodeRRset(node, rdataset, rrclass,
                                 ZoneFinder::FIND_DNSSEC));

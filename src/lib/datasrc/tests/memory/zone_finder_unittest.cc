@@ -1549,4 +1549,17 @@ TEST_F(InMemoryZoneFinderNSEC3Test, findNSEC3Walk) {
         }
     }
 }
+
+TEST_F(InMemoryZoneFinderNSEC3Test, RRSIGOnly) {
+    // add an RRSIG-only NSEC3 to the NSEC3 space, and try to find it; it
+    // should result in an exception.
+    const string n8_hash = "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";
+    updater_.add(ConstRRsetPtr(),
+                 textToRRset(
+                     n8_hash + ".example.org. 300 IN RRSIG NSEC3 5 3 300 "
+                     "20120814220826 20120715220826 1234 example.com. FAKE"));
+    EXPECT_THROW(zone_finder_.findNSEC3(Name("n8.example.org"), false),
+                 DataSourceError);
+}
+
 }
