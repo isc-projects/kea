@@ -45,6 +45,14 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
 }
 
+TEST_F(MemfileLeaseMgrTest, GetTypeAndName) {
+    const LeaseMgr::ParameterMap pmap;  // Empty parameter map
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
+
+    EXPECT_EQ(std::string("memfile"), lease_mgr->getType());
+    EXPECT_EQ(std::string("memfile"), lease_mgr->getName());
+}
+
 // There's no point in calling any other methods in LeaseMgr, as they
 // are purely virtual, so we would only call Memfile_LeaseMgr methods.
 // Those methods are just stubs that does not return anything.

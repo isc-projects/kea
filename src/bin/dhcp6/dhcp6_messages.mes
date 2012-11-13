@@ -30,7 +30,7 @@ from the BIND 10 control system by the IPv6 DHCP server.
 A debug message indicating that the IPv6 DHCP server has received an
 updated configuration from the BIND 10 configuration system.
 
-% DHCP6_DB_BACKEND_STARTED Lease database started (backend type: %1)
+% DHCP6_DB_BACKEND_STARTED lease database started (type: %1, name: %2)
 This informational message is printed every time DHCPv6 is started.
 It indicates what database backend type is being to store lease and
 other information.
@@ -47,7 +47,7 @@ interfaces and is therefore shutting down.
 A debug message issued during startup, this indicates that the IPv6 DHCP
 server is about to open sockets on the specified port.
 
-% DHCP6_LEASE_ADVERT Lease %1 advertised (client duid=%2, iaid=%3)
+% DHCP6_LEASE_ADVERT lease %1 advertised (client duid=%2, iaid=%3)
 This debug message indicates that the server successfully advertised
 a lease. It is up to the client to choose one server out of othe advertised
 and continue allocation with that server. This is a normal behavior and
@@ -154,14 +154,16 @@ the response will only contain generic configuration parameters and no
 addresses or prefixes.
 
 % DHCP6_NO_SUBNET_DEF_OPT failed to find subnet for address %1 when adding default options
-This warning message indicates that when attempting to add default options to a response,
-the server found that it was not configured to support the subnet from which the DHCPv6
-request was received.  The packet has been ignored.
+This warning message indicates that when attempting to add default options
+to a response, the server found that it was not configured to support
+the subnet from which the DHCPv6 request was received.  The packet has
+been ignored.
 
 % DHCP6_NO_SUBNET_REQ_OPT failed to find subnet for address %1 when adding requested options
-This warning message indicates that when attempting to add requested options to a response,
-the server found that it was not configured to support the subnet from which the DHCPv6
-request was received.  The packet has been ignored.
+This warning message indicates that when attempting to add requested
+options to a response, the server found that it was not configured
+to support the subnet from which the DHCPv6 request was received.
+The packet has been ignored.
 
 % DHCP6_CONFIG_LOAD_FAIL failed to load configuration: %1
 This critical error message indicates that the initial DHCPv6
