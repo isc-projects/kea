@@ -154,6 +154,9 @@ MasterLexer::getSourceLine() const {
 
 MasterLexer::Token
 MasterLexer::getNextToken(Options options) {
+    // Reset the token now. This is to check a token was actually produced.
+    // This is debugging aid.
+    impl_->token_ = Token(Token::NO_TOKEN_PRODUCED);
     if (impl_->source_ == NULL) {
         isc_throw(isc::InvalidOperation, "No source to read tokens from");
     }
@@ -161,7 +164,10 @@ MasterLexer::getNextToken(Options options) {
          state = state->handle(*this)) {
         // Do nothing here. All is handled in the for cycle header itself.
     }
-    // TODO load the token
+    // Make sure a token was produced. Since this Can Not Happen, we assert
+    // here instead of throwing.
+    assert(impl_->token_.getType() != Token::ERROR ||
+           impl_->token_.getErrorCode() != Token::NO_TOKEN_PRODUCED);
     return (impl_->token_);
 }
 
@@ -180,7 +186,8 @@ const char* const error_text[] = {
     "lexer not started",        // NOT_STARTED
     "unbalanced parentheses",   // UNBALANCED_PAREN
     "unexpected end of input",  // UNEXPECTED_END
-    "unbalanced quotes"         // UNBALANCED_QUOTES
+    "unbalanced quotes",        // UNBALANCED_QUOTES
+    "no token produced"
 };
 const size_t error_text_max_count = sizeof(error_text) / sizeof(error_text[0]);
 }
