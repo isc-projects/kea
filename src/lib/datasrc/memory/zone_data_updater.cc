@@ -16,6 +16,7 @@
 
 #include <datasrc/memory/zone_data_updater.h>
 #include <datasrc/memory/logger.h>
+#include <datasrc/memory/util_internal.h>
 #include <datasrc/zone.h>
 
 #include <dns/rdataclass.h>
@@ -28,6 +29,8 @@ using namespace isc::dns::rdata;
 namespace isc {
 namespace datasrc {
 namespace memory {
+
+using detail::getCoveredType;
 
 void
 ZoneDataUpdater::addWildcards(const Name& name) {
@@ -330,23 +333,6 @@ ZoneDataUpdater::addRdataSet(const Name& name, const RRType& rrtype,
             zone_data_.setSigned(true);
         }
     }
-}
-
-namespace {
-RRType
-getCoveredType(const ConstRRsetPtr& sig_rrset) {
-    RdataIteratorPtr it = sig_rrset->getRdataIterator();
-    // Empty RRSIG shouldn't be passed either via a master file or
-    // another data source iterator, but it could still happen if the
-    // iterator has a bug.  We catch and reject such cases.
-    if (it->isLast()) {
-        isc_throw(isc::Unexpected,
-                  "Empty RRset is passed in-memory loader, name: "
-                  << sig_rrset->getName());
-    }
-    return (dynamic_cast<const generic::RRSIG&>(it->getCurrent()).
-            typeCovered());
-}
 }
 
 void
