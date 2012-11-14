@@ -39,19 +39,6 @@ using namespace isc::log;
 using namespace isc::util;
 using namespace std;
 
-namespace {
-// @todo: Replace the next line by extraction from configuration parameters
-// This is the "dbconfig" string for the MySQL database.  It is likely
-// that a long-term solution will be to create the instance of the lease manager
-// somewhere other than the Dhcpv6Srv constructor, to give time to extract
-// the connection string from the configuration database.
-#ifdef HAVE_MYSQL
-const char* DBCONFIG = "type=mysql name=kea user=kea password=kea host=localhost";
-#else
-const char* DBCONFIG = "type=memfile";
-#endif
-};
-
 namespace isc {
 namespace dhcp {
 
@@ -163,8 +150,8 @@ void ControlledDhcpv6Srv::disconnectSession() {
     IfaceMgr::instance().set_session_socket(IfaceMgr::INVALID_SOCKET, NULL);
 }
 
-ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
-    : Dhcpv6Srv(port, DBCONFIG), cc_session_(NULL), config_session_(NULL) {
+ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port, const char* dbconfig)
+    : Dhcpv6Srv(port, dbconfig), cc_session_(NULL), config_session_(NULL) {
     server_ = this; // remember this instance for use in callback
 }
 

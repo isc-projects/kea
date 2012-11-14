@@ -34,6 +34,16 @@ using namespace std;
 /// Dhcpv6Srv and other classes, see \ref dhcpv6Session.
 
 namespace {
+// @todo: Replace the next line by extraction from configuration parameters
+// This is the "dbconfig" string for the MySQL database.  It is likely
+// that a long-term solution will be to create the instance of the lease manager
+// somewhere other than the Dhcpv6Srv constructor, to give time to extract
+// the connection string from the configuration database.
+#ifdef HAVE_MYSQL
+const char* DBCONFIG = "type=mysql name=kea user=kea password=kea host=localhost";
+#else
+const char* DBCONFIG = "type=memfile";
+#endif
 
 const char* const DHCP6_NAME = "b10-dhcp6";
 
@@ -102,7 +112,7 @@ main(int argc, char* argv[]) {
 
     int ret = EXIT_SUCCESS;
     try {
-        ControlledDhcpv6Srv server(port_number);
+        ControlledDhcpv6Srv server(port_number, DBCONFIG);
         if (!stand_alone) {
             try {
                 server.establishSession();
