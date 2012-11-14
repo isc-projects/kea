@@ -26,6 +26,31 @@ to establish a session with the BIND 10 control channel.
 A debug message listing the command (and possible arguments) received
 from the BIND 10 control system by the IPv6 DHCP server.
 
+% DHCP6_CONFIG_COMPLETE DHCPv6 server has completed configuration: %1
+This is an informational message announcing the successful processing of a
+new configuration. it is output during server startup, and when an updated
+configuration is committed by the administrator.  Additional information
+may be provided.
+
+% DHCP6_CONFIG_LOAD_FAIL failed to load configuration: %1
+This critical error message indicates that the initial DHCPv6
+configuration has failed. The server will start, but nothing will be
+served until the configuration has been corrected.
+
+% DHCP6_CONFIG_NEW_SUBNET a new subnet has been added to configuration: %1
+This is an informational message reporting that the configuration has
+been extended to include the specified subnet.
+
+% DHCP6_CONFIG_OPTION_DUPLICATE multiple options with the code: %1 added to the subnet: %2
+This warning message is issued on attempt to configure multiple options with the
+same option code for the particular subnet. Adding multiple options is uncommon
+for DHCPv6, yet it is not prohibited.
+
+% DHCP6_CONFIG_START DHCPv6 server is processing the following configuration: %1
+This is a debug message that is issued every time the server receives a
+configuration. That happens start up and also when a server configuration
+change is committed by the administrator.
+
 % DHCP6_CONFIG_UPDATE updated configuration received: %1
 A debug message indicating that the IPv6 DHCP server has received an
 updated configuration from the BIND 10 configuration system.
@@ -35,6 +60,27 @@ This informational message is printed every time DHCPv6 is started.
 It indicates what database backend type is being to store lease and
 other information.
 
+% DHCP6_LEASE_ADVERT lease %1 advertised (client duid=%2, iaid=%3)
+This debug message indicates that the server successfully advertised
+a lease. It is up to the client to choose one server out of othe advertised
+and continue allocation with that server. This is a normal behavior and
+indicates successful operation.
+
+% DHCP6_LEASE_ADVERT_FAIL failed to advertise a lease for client duid=%1, iaid=%2
+This message indicates that the server failed to advertise (in response to
+received SOLICIT) a lease for a given client. There may be many reasons for
+such failure. Each specific failure is logged in a separate log entry.
+
+% DHCP6_LEASE_ALLOC lease %1 has been allocated (client duid=%2, iaid=%3)
+This debug message indicates that the server successfully granted (in
+response to client's REQUEST message) a lease. This is a normal behavior
+and incicates successful operation.
+
+% DHCP6_LEASE_ALLOC_FAIL failed to grant a lease for client duid=%1, iaid=%2
+This message indicates that the server failed to grant (in response to
+received REQUEST) a lease for a given client. There may be many reasons for
+such failure. Each specific failure is logged in a separate log entry.
+
 % DHCP6_NOT_RUNNING IPv6 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
 IPv6 DHCP server but it is not running.
@@ -43,44 +89,35 @@ IPv6 DHCP server but it is not running.
 During startup the IPv6 DHCP server failed to detect any network
 interfaces and is therefore shutting down.
 
+% DHCP6_NO_SUBNET_DEF_OPT failed to find subnet for address %1 when adding default options
+This warning message indicates that when attempting to add default options
+to a response, the server found that it was not configured to support
+the subnet from which the DHCPv6 request was received.  The packet has
+been ignored.
+
+% DHCP6_NO_SUBNET_REQ_OPT failed to find subnet for address %1 when adding requested options
+This warning message indicates that when attempting to add requested
+options to a response, the server found that it was not configured
+to support the subnet from which the DHCPv6 request was received.
+The packet has been ignored.
+
 % DHCP6_OPEN_SOCKET opening sockets on port %1
 A debug message issued during startup, this indicates that the IPv6 DHCP
 server is about to open sockets on the specified port.
 
-% DHCP6_LEASE_ADVERT lease %1 advertised (client duid=%2, iaid=%3)
-This debug message indicates that the server successfully advertised
-a lease. It is up to the client to choose one server out of othe advertised
-and continue allocation with that server. This is a normal behavior and
-indicates successful operation.
-
-% DHCP6_LEASE_ALLOC lease %1 has been allocated (client duid=%2, iaid=%3)
-This debug message indicates that the server successfully granted (in
-response to client's REQUEST message) a lease. This is a normal behavior
-and incicates successful operation.
-
-% DHCP6_LEASE_ADVERT_FAIL failed to advertise a lease for client duid=%1, iaid=%2
-This message indicates that the server failed to advertise (in response to
-received SOLICIT) a lease for a given client. There may be many reasons for
-such failure. Each specific failure is logged in a separate log entry.
-
-% DHCP6_LEASE_ALLOC_FAIL failed to grant a lease for client duid=%1, iaid=%2
-This message indicates that the server failed to grant (in response to
-received REQUEST) a lease for a given client. There may be many reasons for
-such failure. Each specific failure is logged in a separate log entry.
-
 % DHCP6_PACKET_PARSE_FAIL failed to parse incoming packet
 The IPv6 DHCP server has received a packet that it is unable to interpret.
-
-% DHCP6_PACKET_RECEIVE_FAIL error on attempt to receive packet: %1
-The IPv6 DHCP server tried to receive a packet but an error
-occured during this attempt. The reason for the error is included in
-the message.
 
 % DHCP6_PACKET_RECEIVED %1 packet received
 A debug message noting that the server has received the specified type
 of packet.  Note that a packet marked as UNKNOWN may well be a valid
 DHCP packet, just a type not expected by the server (e.g. it will report
 a received OFFER packet as UNKNOWN).
+
+% DHCP6_PACKET_RECEIVE_FAIL error on attempt to receive packet: %1
+The IPv6 DHCP server tried to receive a packet but an error
+occured during this attempt. The reason for the error is included in
+the message.
 
 % DHCP6_PACKET_SEND_FAIL failed to send DHCPv6 packet: %1
 This error is output if the IPv6 DHCP server fails to send an assembled
@@ -152,40 +189,3 @@ which the DHCPv6 server has not been configured. The cause is most likely due
 to a misconfiguration of the server. The packet processing will continue, but
 the response will only contain generic configuration parameters and no
 addresses or prefixes.
-
-% DHCP6_NO_SUBNET_DEF_OPT failed to find subnet for address %1 when adding default options
-This warning message indicates that when attempting to add default options
-to a response, the server found that it was not configured to support
-the subnet from which the DHCPv6 request was received.  The packet has
-been ignored.
-
-% DHCP6_NO_SUBNET_REQ_OPT failed to find subnet for address %1 when adding requested options
-This warning message indicates that when attempting to add requested
-options to a response, the server found that it was not configured
-to support the subnet from which the DHCPv6 request was received.
-The packet has been ignored.
-
-% DHCP6_CONFIG_LOAD_FAIL failed to load configuration: %1
-This critical error message indicates that the initial DHCPv6
-configuration has failed. The server will start, but nothing will be
-served until the configuration has been corrected.
-
-% DHCP6_CONFIG_START DHCPv6 server is processing the following configuration: %1
-This is a debug message that is issued every time the server receives a
-configuration. That happens start up and also when a server configuration
-change is committed by the administrator.
-
-% DHCP6_CONFIG_NEW_SUBNET a new subnet has been added to configuration: %1
-This is an informational message reporting that the configuration has
-been extended to include the specified subnet.
-
-% DHCP6_CONFIG_COMPLETE DHCPv6 server has completed configuration: %1
-This is an informational message announcing the successful processing of a
-new configuration. it is output during server startup, and when an updated
-configuration is committed by the administrator.  Additional information
-may be provided.
-
-% DHCP6_CONFIG_OPTION_DUPLICATE multiple options with the code: %1 added to the subnet: %2
-This warning message is issued on attempt to configure multiple options with the
-same option code for the particular subnet. Adding multiple options is uncommon
-for DHCPv6, yet it is not prohibited.
