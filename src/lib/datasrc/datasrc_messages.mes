@@ -305,11 +305,6 @@ Therefore, the zone will not be available for this process. If this is
 a problem, you should move the zone to some database backend (sqlite3, for
 example) and use it from there.
 
-% DATASRC_MASTERLOAD_ERROR %1
-An error was found in the zone data for a MasterFiles zone. The zone
-is not loaded. The specific error is shown in the message, and should
-be addressed.
-
 % DATASRC_LOAD_FROM_FILE_ERROR %1
 An error was found in the zone data when it was being loaded from a
 file. The zone was not loaded. The specific error is shown in the

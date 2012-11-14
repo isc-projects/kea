@@ -31,8 +31,8 @@ struct ZoneException : public Exception {
 /// Base class for a number of exceptions that are thrown when zones are
 /// being loaded. This is a recoverable exception. It should be possible
 /// to skip the bad zone and continue loading/serving other zones.
-struct ZoneValidationException : public ZoneException {
-    ZoneValidationException(const char* file, size_t line, const char* what) :
+struct ZoneLoaderException : public ZoneException {
+    ZoneLoaderException(const char* file, size_t line, const char* what) :
         ZoneException(file, line, what)
     {}
 };
