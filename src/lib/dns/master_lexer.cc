@@ -170,6 +170,7 @@ namespace {
 class CRLF : public State {
 public:
     CRLF() {}
+    virtual ~CRLF() {}          // see the base class for the destructor
     virtual const State* handle(MasterLexer& lexer) const {
         // We've just seen '\r'.  If this is part of a sequence of '\r\n',
         // we combine them as a single END-OF-LINE.  Otherwise we treat the
@@ -195,6 +196,7 @@ public:
 class String : public State {
 public:
     String() {}
+    virtual ~String() {}      // see the base class for the destructor
     virtual const State* handle(MasterLexer& /*lexer*/) const {
         return (NULL);
     }

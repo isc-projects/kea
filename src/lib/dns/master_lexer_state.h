@@ -55,6 +55,12 @@ namespace master_lexer_internal {
 /// this library are expected to use this class.
 class State {
 public:
+    /// \brief Virtual destructor.
+    ///
+    /// In our usage this actually doesn't matter, but some compilers complain
+    /// about it and we need to silence them.
+    virtual ~State() {}
+
     /// \brief Begin state transitions to get the next token.
     ///
     /// This is the first method that \c MasterLexer needs to call for a
