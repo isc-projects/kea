@@ -308,8 +308,12 @@ TEST_F(DataSrcClientsBuilderTest, loadZone) {
                                    "{\"class\": \"IN\","
                                    " \"origin\": \"test1.example\"}"));
     EXPECT_TRUE(builder.handleCommand(loadzone_cmd));
-    EXPECT_EQ(1, map_mutex.lock_count); // we should have acquired the lock
-    EXPECT_EQ(1, map_mutex.unlock_count); // and released it.
+
+    // loadZone involves two critical sections: one for getting the zone
+    // writer, and one for actually updating the zone data.  So the lock/unlock
+    // count should be incremented by 2.
+    EXPECT_EQ(2, map_mutex.lock_count);
+    EXPECT_EQ(2, map_mutex.unlock_count);
 
     newZoneChecks(clients_map, rrclass);
 }
@@ -381,7 +385,10 @@ TEST_F(DataSrcClientsBuilderTest,
               find(Name("example.org")).finder_->
               find(Name("example.org"), RRType::SOA())->code);
 
-    // attempt of reloading a zone but in-memory cache is disabled.
+    // attempt of reloading a zone but in-memory cache is disabled.  In this
+    // case the command is simply ignored.
+    const size_t orig_lock_count = map_mutex.lock_count;
+    const size_t orig_unlock_count = map_mutex.unlock_count;
     const ConstElementPtr config2(Element::fromJSON("{"
         "\"IN\": [{"
         "    \"type\": \"sqlite3\","
@@ -390,11 +397,13 @@ TEST_F(DataSrcClientsBuilderTest,
         "    \"cache-zones\": [\"example.org\"]"
         "}]}"));
     clients_map = configureDataSource(config2);
-    EXPECT_THROW(builder.handleCommand(
+    builder.handleCommand(
                      Command(LOADZONE, Element::fromJSON(
                                  "{\"class\": \"IN\","
-                                 " \"origin\": \"example.org\"}"))),
-                 TestDataSrcClientsBuilder::InternalCommandError);
+                                 " \"origin\": \"example.org\"}")));
+    // Only one mutex was needed because there was no actual reload.
+    EXPECT_EQ(orig_lock_count + 1, map_mutex.lock_count);
+    EXPECT_EQ(orig_unlock_count + 1, map_mutex.unlock_count);
 
     // basically impossible case: in-memory cache is completely disabled.
     // In this implementation of manager-builder, this should never happen,
