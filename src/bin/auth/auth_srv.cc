@@ -651,9 +651,10 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
         local_edns->setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
         message.setEDNS(local_edns);
     }
-    // Get access to data source client list through the holder and keep the
-    // holder until the processing and rendering is done to avoid inter-thread
-    // race.
+
+    // Get access to data source client list through the holder and keep
+    // the holder until the processing and rendering is done to avoid
+    // race with any other thread(s) such as the background loader.
     auth::DataSrcClientsMgr::Holder datasrc_holder(datasrc_clients_mgr_);
 
     try {
@@ -688,6 +689,9 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     return (true);
     // The message can contain some data from the locked resource. But outside
     // this method, we touch only the RCode of it, so it should be safe.
+
+    // Lock on datasrc_clients_mgr_ acquired by datasrc_holder is
+    // released here upon its deletion.
 }
 
 bool
