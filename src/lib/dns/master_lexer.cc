@@ -272,9 +272,9 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
             }
             --paren_count;
         } else {
-            // Note: in #2373 we should probably ungetChar().
-            lexerimpl.last_was_eol_ = false;
+            // this character will be handled in the string state
             lexerimpl.source_->ungetChar();
+            lexerimpl.last_was_eol_ = false;
             return (&STRING_STATE);
         }
         // no code should be here; we just continue the loop.
