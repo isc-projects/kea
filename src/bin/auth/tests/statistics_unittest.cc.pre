@@ -55,7 +55,7 @@ protected:
 };
 
 void
-flatten(std::map<std::string, int> &flat_map, const std::string &prefix,
+flatten(std::map<std::string, int>& flat_map, const std::string& prefix,
         const isc::data::ConstElementPtr map_element) {
     std::map<std::string, ConstElementPtr> map = map_element->mapValue();
     for (std::map<std::string, ConstElementPtr>::const_iterator
