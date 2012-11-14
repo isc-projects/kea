@@ -27,6 +27,7 @@ run_unittests_SOURCES += labelsequence_unittest.cc
 run_unittests_SOURCES += messagerenderer_unittest.cc
 run_unittests_SOURCES += master_lexer_token_unittest.cc
 run_unittests_SOURCES += master_lexer_unittest.cc
+run_unittests_SOURCES += master_lexer_state_unittest.cc
 run_unittests_SOURCES += name_unittest.cc
 run_unittests_SOURCES += nsec3hash_unittest.cc
 run_unittests_SOURCES += rrclass_unittest.cc rrtype_unittest.cc
