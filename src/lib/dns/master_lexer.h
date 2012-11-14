@@ -24,6 +24,9 @@
 
 namespace isc {
 namespace dns {
+namespace master_lexer_internal {
+class State;
+}
 
 /// \brief Tokenizer for parsing DNS master files.
 ///
@@ -64,8 +67,21 @@ namespace dns {
 /// this class does not throw for an error that would be reported as an
 /// exception in other classes.
 class MasterLexer {
+    friend class master_lexer_internal::State;
 public:
     class Token;       // we define it separately for better readability
+
+    /// \brief Options for getNextToken.
+    ///
+    /// A compound option, indicating multiple options are set, can be
+    /// specified using the logical OR operator (operator|()).
+    enum Options {
+        NONE = 0,               ///< No option
+        INITIAL_WS = 1, ///< recognize begin-of-line spaces after an
+                        ///< end-of-line
+        QSTRING = 2,    ///< recognize quoted string
+        NUMBER = 4   ///< recognize numeric text as integer
+    };
 
     /// \brief The constructor.
     ///
@@ -167,6 +183,16 @@ private:
     MasterLexerImpl* impl_;
 };
 
+/// \brief Operator to combine \c MasterLexer options
+///
+/// This is a trivial shortcut so that compound options can be specified
+/// in an intuitive way.
+inline MasterLexer::Options
+operator|(MasterLexer::Options o1, MasterLexer::Options o2) {
+    return (static_cast<MasterLexer::Options>(
+                static_cast<unsigned>(o1) | static_cast<unsigned>(o2)));
+}
+
 /// \brief Tokens for \c MasterLexer
 ///
 /// This is a simple value-class encapsulating a type of a lexer token and
@@ -192,7 +218,8 @@ public:
     enum Type {
         END_OF_LINE, ///< End of line detected (if asked for detecting it)
         END_OF_FILE, ///< End of file detected (if asked for detecting it)
-        INITIAL_WS,  ///< White spaces at the beginning of a line
+        INITIAL_WS,  ///< White spaces at the beginning of a line after an
+                     ///< end of line
         NOVALUE_TYPE_MAX = INITIAL_WS, ///< Max integer corresponding to
                                        /// no-value (type only) types.
                                        /// Mainly for internal use.
