@@ -1,15 +1,10 @@
 
-This is the source for the development version of BIND 10.
+This is the source for the BIND 10 suite.
 
 BIND is the popular implementation of a DNS server, developer
 interfaces, and DNS tools. BIND 10 is a rewrite of BIND 9 and ISC
 DHCP. BIND 10 is written in C++ and Python and provides a modular
 environment for serving, maintaining, and developing DNS and DHCP.
-
-BIND10-devel is new development leading up to the production
-BIND 10 release. It contains prototype code and experimental
-interfaces. Nevertheless it is ready to use now for testing the
-new BIND 10 infrastructure ideas.
 
 This release includes the bind10 master process, b10-msgq message
 bus, b10-auth authoritative DNS server (with SQLite3 and in-memory
@@ -62,3 +57,6 @@ For operating system specific tips see the wiki at:
        http://bind10.isc.org/wiki/SystemSpecificNotes
 
 Please see the wiki and the doc/ directory for various documentation.
+
+The BIND 10 suite is started by running "bind10". Note that the
+default configuration does not run any DNS or DHCP servers.
