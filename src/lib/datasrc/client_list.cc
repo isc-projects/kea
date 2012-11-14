@@ -14,6 +14,7 @@
 
 
 #include "client_list.h"
+#include "exceptions.h"
 #include "client.h"
 #include "factory.h"
 #include "memory/memory_client.h"
@@ -180,14 +181,8 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                         } catch (const isc::dns::MasterLoadError& mle) {
                             LOG_ERROR(logger, DATASRC_MASTERLOAD_ERROR)
                                 .arg(mle.what());
-                        } catch (const ZoneDataUpdater::NullRRset& e) {
-                            LOG_ERROR(logger, DATASRC_LOAD_NULL_RRSET_ERROR)
-                                .arg(e.what());
-                        } catch (const ZoneDataUpdater::AddError& e) {
-                            LOG_ERROR(logger, DATASRC_LOAD_ADD_ERROR)
-                                .arg(e.what());
-                        } catch (const isc::datasrc::memory::EmptyZone& e) {
-                            LOG_ERROR(logger, DATASRC_LOAD_EMPTY_ZONE_ERROR)
+                        } catch (const ZoneValidationException& e) {
+                            LOG_ERROR(logger, DATASRC_LOAD_FROM_FILE_ERROR)
                                 .arg(e.what());
                         }
                     } else {
@@ -205,17 +200,8 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                         }
                         try {
                             cache->load(origin, *iterator);
-                        } catch (const isc::dns::MasterLoadError& mle) {
-                            LOG_ERROR(logger, DATASRC_MASTERLOAD_ERROR)
-                                .arg(mle.what());
-                        } catch (const ZoneDataUpdater::NullRRset& e) {
-                            LOG_ERROR(logger, DATASRC_LOAD_NULL_RRSET_ERROR)
-                                .arg(e.what());
-                        } catch (const ZoneDataUpdater::AddError& e) {
-                            LOG_ERROR(logger, DATASRC_LOAD_ADD_ERROR)
-                                .arg(e.what());
-                        } catch (const isc::datasrc::memory::EmptyZone& e) {
-                            LOG_ERROR(logger, DATASRC_LOAD_EMPTY_ZONE_ERROR)
+                        } catch (const ZoneValidationException& e) {
+                            LOG_ERROR(logger, DATASRC_LOAD_FROM_ITERATOR_ERROR)
                                 .arg(e.what());
                         }
                     }
