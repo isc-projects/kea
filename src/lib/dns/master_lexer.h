@@ -183,6 +183,12 @@ public:
     /// It reads a bit of the last opened source and produces another token
     /// found in it.
     ///
+    /// This method provides the weak exception guarantee. It'll return the
+    /// class to the state before the call on exception, except that it is
+    /// not possible to call ungetToken() after the failed call. This is
+    /// considered OK, since the caller was expecting the call to succeed
+    /// in which case the previous token would not be ungettable as well.
+    ///
     /// \param options The options can be used to modify the tokenization.
     ///     The method can be made reporting things which are usually ignored
     ///     by this parameter. Multiple options can be passed at once by
@@ -192,6 +198,9 @@ public:
     /// \throw isc::InvalidOperation in case the source is not available. This
     ///     may mean the pushSource() has not been called yet, or that the
     ///     current source has been read past the end.
+    /// \throw isc::master_lexer_internal::InputSource::ReadError in case
+    ///     there's problem reading from the underlying source (eg. I/O error
+    ///     in the file on the disk).
     /// \throw std::bad_alloc in case allocation of some internal resources
     ///     or the token fail.
     Token getNextToken(Options options = NONE);
