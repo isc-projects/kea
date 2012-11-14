@@ -41,7 +41,9 @@ public:
     /// @brief Constructor
     ///
     /// @param port UDP port to be opened for DHCP traffic
-    ControlledDhcpv6Srv(uint16_t port = DHCP6_SERVER_PORT);
+    /// @param dbconfig Lease manager database configuration string
+    ControlledDhcpv6Srv(uint16_t port = DHCP6_SERVER_PORT,
+                        const char* dbconfig = "type=memfile");
 
     /// @brief Destructor.
     ~ControlledDhcpv6Srv();
