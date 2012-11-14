@@ -111,8 +111,7 @@ TEST_F(MasterLexerStateTest, parentheses) {
     EXPECT_EQ(1, s_crlf.getParenCount(lexer)); // check post condition
     EXPECT_FALSE(s_crlf.wasLastEOL(lexer));
 
-    // skip 'a' (note: until #2373 it's actually skipped as part of the '('
-    // handling)
+    // skip 'a'
     s_string.handle(lexer);
 
     // Then handle ')'.  '\n' before ')' isn't recognized because
@@ -254,15 +253,65 @@ TEST_F(MasterLexerStateTest, crlf) {
     EXPECT_EQ(Token::END_OF_FILE, s_crlf.getToken(lexer).getType());
 }
 
+void
+stringTokenCheck(const std::string& expected, const MasterLexer::Token& token)
+{
+    EXPECT_EQ(Token::STRING, token.getType());
+    EXPECT_EQ(expected, token.getString());
+    const std::string actual(token.getStringRegion().beg,
+                             token.getStringRegion().beg +
+                             token.getStringRegion().len);
+    EXPECT_EQ(expected, actual);
+}
+
 TEST_F(MasterLexerStateTest, string) {
-    ss << "a-string";
+    // Check with simple strings followed by separate characters
+    ss << "followed-by-EOL\n";
+    ss << "followed-by-CR\r";
+    ss << "followed-by-space ";
+    ss << "followed-by-tab\t";
+    ss << "followed-by-comment;this is comment and ignored\n";
+    ss << "followed-by-paren(closing)";
+    ss << "followed-by-EOF";
     lexer.pushSource(ss);
 
     EXPECT_EQ(&s_string, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_string.handle(lexer));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see \n
     EXPECT_FALSE(s_string.wasLastEOL(lexer));
-    EXPECT_EQ(Token::STRING, s_string.getToken(lexer).getType());
-    EXPECT_EQ("a-string", s_string.getToken(lexer).getString());
+    stringTokenCheck("followed-by-EOL", s_string.getToken(lexer));
+    EXPECT_EQ(s_null, State::start(lexer, common_options)); // skip \n
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see \r
+    stringTokenCheck("followed-by-CR", s_string.getToken(lexer));
+    EXPECT_EQ(&s_crlf, State::start(lexer, common_options)); // handle \r...
+    EXPECT_EQ(s_null, s_crlf.handle(lexer)); // ...and skip it
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' '
+    stringTokenCheck("followed-by-space", s_string.getToken(lexer));
+
+    // skip ' ', then recognize the next string
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see \t
+    stringTokenCheck("followed-by-tab", s_string.getToken(lexer));
+
+    // skip \t, then recognize the next string
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see comment
+    stringTokenCheck("followed-by-comment", s_string.getToken(lexer));
+    EXPECT_EQ(s_null, State::start(lexer, common_options)); // skip \n after it
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see '('
+    stringTokenCheck("followed-by-paren", s_string.getToken(lexer));
+    EXPECT_EQ(&s_string, State::start(lexer, common_options)); // str in ()
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize the str, see ')'
+    stringTokenCheck("closing", s_string.getToken(lexer));
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see EOF
+    stringTokenCheck("followed-by-EOF", s_string.getToken(lexer));
 }
 
 }
