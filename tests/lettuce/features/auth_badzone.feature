@@ -6,6 +6,16 @@ Feature: Authoritative DNS server with a bad zone
 
     Scenario: Bad zone
         Given I have bind10 running with configuration auth/auth_badzone.config
+
+        # loading example.com, example.net and example.info zones fail.
+        # Note: wait for these messages right away as otherwise they
+        # will be logged and we cannot use the 'new' keyword to wait for
+        # 3 different log messages. *There could still be a race here if
+        # auth starts very quickly.*
+        And wait for new bind10 stderr message DATASRC_LOAD_FROM_FILE_ERROR
+        And wait for new bind10 stderr message DATASRC_LOAD_FROM_FILE_ERROR
+        And wait for new bind10 stderr message DATASRC_LOAD_FROM_FILE_ERROR
+
         And wait for bind10 stderr message BIND10_STARTED_CC
         And wait for bind10 stderr message CMDCTL_STARTED
         And wait for bind10 stderr message AUTH_SERVER_STARTED
