@@ -22,6 +22,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/function.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/bind.hpp>
 
 #include <string>
 #include <sstream>
@@ -267,6 +268,105 @@ TEST_F(MasterLexerTest, eof) {
     EXPECT_EQ(MasterLexer::Token::END_OF_FILE, lexer.getNextToken().getType());
     // And it is not allowed to use this one any more.
     EXPECT_THROW(lexer.getNextToken(), isc::InvalidOperation);
+}
+
+void
+checkInput(const std::string& expected, const std::string& received) {
+    EXPECT_EQ(expected, received);
+}
+
+// Check ungetting a token, which should get to the previous state. We do
+// so with changing the state a little bit.
+TEST_F(MasterLexerTest, ungetSimple) {
+    ss << "12345";
+    lexer.pushSource(ss);
+
+    const bool true_value = true, false_value = false;
+    // Make sure we change the state to non-default, so we return to previous
+    // not default state.
+    MasterLexer::Token t0(MasterLexer::Token::INITIAL_WS);
+    scoped_ptr<State> s0(State::getFakeState(NULL, 1, &t0, 1, &true_value));
+    lexer.pushFakeStart(s0.get());
+    EXPECT_EQ(MasterLexer::Token::INITIAL_WS, lexer.getNextToken().getType());
+
+    // Prepare the token to get and return
+    const std::string expected = "234";
+    MasterLexer::Token token(MasterLexer::Token::END_OF_LINE);
+    // Change the internal state with it too. So we can check it is retured.
+    scoped_ptr<State> state(State::getFakeState(NULL, 3, &token, 1,
+                                                &false_value,
+                                                boost::bind(&checkInput,
+                                                            expected, _1)));
+    lexer.pushFakeStart(state.get());
+
+    // Check the internal state before getting the token
+    // We access the lexer through any state, so use the one we have.
+    EXPECT_EQ(1, state->getParenCount(lexer));
+    EXPECT_TRUE(state->wasLastEOL(lexer));
+    EXPECT_EQ(MasterLexer::Token::INITIAL_WS,
+              state->getToken(lexer).getType());
+
+    // Now get the token and check the state changed
+    EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
+    EXPECT_EQ(2, state->getParenCount(lexer));
+    EXPECT_FALSE(state->wasLastEOL(lexer));
+    EXPECT_EQ(MasterLexer::Token::END_OF_LINE,
+              state->getToken(lexer).getType());
+
+    // Return the token back. Check the state is as it was before.
+    lexer.ungetToken();
+    EXPECT_EQ(1, state->getParenCount(lexer));
+    EXPECT_TRUE(state->wasLastEOL(lexer));
+    EXPECT_EQ(MasterLexer::Token::INITIAL_WS,
+              state->getToken(lexer).getType());
+    // By calling getToken again, we verify even the source got back to
+    // original. We must push it as a fake start again so it is picked.
+    lexer.pushFakeStart(state.get());
+    EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
+    EXPECT_EQ(2, state->getParenCount(lexer));
+    EXPECT_FALSE(state->wasLastEOL(lexer));
+    EXPECT_EQ(MasterLexer::Token::END_OF_LINE,
+              state->getToken(lexer).getType());
+}
+
+// Check ungetting token without overriding the start method. We also
+// check it works well with changing options between the calls.
+TEST_F(MasterLexerTest, ungetRealOptions) {
+    ss << "    \n";
+    lexer.pushSource(ss);
+
+    // If we call it the usual way, it skips up to the newline and returns
+    // it
+    EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
+
+    // Now we return it. If we call it again, but with different options,
+    // we get the initial whitespace.
+    EXPECT_EQ(MasterLexer::Token::INITIAL_WS,
+              lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
+}
+
+// Test we can't unget a token before we get one
+TEST_F(MasterLexerTest, ungetBeforeGet) {
+    lexer.pushSource(ss); // Just to eliminate the missing source problem
+    EXPECT_THROW(lexer.ungetToken(), isc::InvalidOperation);
+}
+
+// Test we can't unget a token after a source switch, even when we got
+// something before.
+TEST_F(MasterLexerTest, ungetAfterSwitch) {
+    ss << "\n\n";
+    lexer.pushSource(ss);
+    EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
+    // Switch the source
+    std::stringstream ss2;
+    ss2 << "\n\n";
+    lexer.pushSource(ss2);
+    EXPECT_THROW(lexer.ungetToken(), isc::InvalidOperation);
+    // We can get from the new source
+    EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
+    // And when we drop the current source, we can't unget again
+    lexer.popSource();
+    EXPECT_THROW(lexer.ungetToken(), isc::InvalidOperation);
 }
 
 }
