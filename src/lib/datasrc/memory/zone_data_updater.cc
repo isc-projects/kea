@@ -158,7 +158,7 @@ ZoneDataUpdater::validate(const isc::dns::ConstRRsetPtr rrset) const {
         LOG_ERROR(logger,
                   DATASRC_MEMORY_MEM_OUT_OF_ZONE).arg(rrset->getName()).
             arg(zone_name_);
-        isc_throw(OutOfZone,
+        isc_throw(AddError,
                   "The name " << rrset->getName() <<
                   " is not contained in zone " << zone_name_);
     }
