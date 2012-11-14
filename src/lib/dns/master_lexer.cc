@@ -56,6 +56,7 @@ struct MasterLexer::MasterLexerImpl {
     std::vector<InputSourcePtr> sources_;
     InputSource* source_;       // current source (NULL if sources_ is empty)
     Token token_;               // currently recognized token (set by a state)
+    std::vector<char> data_;    // placeholder for string data
 
     // These are used in states, and defined here only as a placeholder.
     // The main lexer class does not need these members.
@@ -197,9 +198,7 @@ class String : public State {
 public:
     String() {}
     virtual ~String() {}      // see the base class for the destructor
-    virtual const State* handle(MasterLexer& /*lexer*/) const {
-        return (NULL);
-    }
+    virtual const State* handle(MasterLexer& lexer) const;
 };
 
 // We use a common instance of a each state in a singleton-like way to save
@@ -275,9 +274,27 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
         } else {
             // Note: in #2373 we should probably ungetChar().
             lexerimpl.last_was_eol_ = false;
+            lexerimpl.source_->ungetChar();
             return (&STRING_STATE);
         }
         // no code should be here; we just continue the loop.
+    }
+}
+
+const State*
+String::handle(MasterLexer& lexer) const {
+    std::vector<char>& data = getLexerImpl(lexer)->data_;
+    MasterLexer::Token& token = getLexerImpl(lexer)->token_;
+    data.clear();
+
+    while (true) {
+        const int c = getLexerImpl(lexer)->source_->getChar(); // TODO comment
+        if (c == '\r' || c == EOF || c == '(' || c == ')') { // TODO special chars, etc.
+            getLexerImpl(lexer)->source_->ungetChar();
+            token = MasterLexer::Token(&data.at(0), data.size());
+            return (NULL);
+        }
+        data.push_back(c);
     }
 }
 
