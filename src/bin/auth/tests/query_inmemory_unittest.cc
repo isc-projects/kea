@@ -46,7 +46,7 @@ const char* const synthetized_cname_txt =
     "www.dname.example.com. 3600 IN CNAME "
     "www.somethinglong.dnametarget.example.com.\n";
 
-// This is a subset of QueryTest using (sbuset of) the same test data, but
+// This is a subset of QueryTest using (subset of) the same test data, but
 // with the production in-memory data source.  Both tests should be eventually
 // unified to avoid duplicates.
 class InMemoryQueryTest : public ::testing::Test {
