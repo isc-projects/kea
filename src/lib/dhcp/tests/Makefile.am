@@ -4,9 +4,6 @@ AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/dhcp/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
-# Temp
-AM_CPPFLAGS += -I/usr/include/mysql -DBIG_JOINS=1 -fno-strict-aliasing
-AM_CPPFLAGS += -DUNIV_LINUX
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
