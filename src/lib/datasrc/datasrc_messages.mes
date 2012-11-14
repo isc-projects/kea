@@ -310,20 +310,15 @@ An error was found in the zone data for a MasterFiles zone. The zone
 is not loaded. The specific error is shown in the message, and should
 be addressed.
 
-% DATASRC_LOAD_ADD_ERROR %1
-An error was found in the zone data when it was being loaded. The zone
-was not loaded. The specific error is shown in the message, and should
-be addressed.
+% DATASRC_LOAD_FROM_FILE_ERROR %1
+An error was found in the zone data when it was being loaded from a
+file. The zone was not loaded. The specific error is shown in the
+message, and should be addressed.
 
-% DATASRC_LOAD_NULL_RRSET_ERROR %1
-A NULL RRset was passed to be added to a zone. The zone was not
-loaded. The specific error is shown in the message, and should be
-addressed.
-
-% DATASRC_LOAD_EMPTY_ZONE_ERROR %1
-A zone was asked to be loaded without any zone data. The zone was not
-loaded. The specific error is shown in the message, and should be
-addressed.
+% DATASRC_LOAD_FROM_ITERATOR_ERROR %1
+An error was found in the zone data when it was being loaded from an
+iterator. The zone was not loaded. The specific error is shown in the
+message, and should be addressed.
 
 % DATASRC_MEM_ADD_RRSET adding RRset '%1/%2' into zone '%3'
 Debug information. An RRset is being added to the in-memory data source.
