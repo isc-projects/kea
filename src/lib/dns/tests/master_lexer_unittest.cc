@@ -384,4 +384,40 @@ TEST_F(MasterLexerTest, ungetAfterSwitch) {
     EXPECT_THROW(lexer.ungetToken(), isc::InvalidOperation);
 }
 
+class TestException {};
+
+void
+doThrow(const std::string&) {
+    throw TestException();
+}
+
+// Check the getNextToken provides at least the weak exception guarantee.
+TEST_F(MasterLexerTest, getTokenExceptions) {
+    ss << "\n12345";
+    lexer.pushSource(ss);
+
+    // Prepare a chain that changes the internal state, reads something.
+    // The next item in the chain will throw an exception (we explicitly
+    // throw something not known to it, so we know it can handle anything).
+    // Then the thing should get to the previous state and getting the
+    // token the usual way without mock should work.
+    const bool true_value = true;
+    boost::scoped_ptr<State> s2(State::getFakeState(NULL, 3, NULL, 0, NULL,
+                                                    &doThrow));
+    boost::scoped_ptr<State> s1(State::getFakeState(s2.get(), 3, NULL, 1,
+                                                    &true_value));
+    lexer.pushFakeStart(s1.get());
+
+    // Getting the token with the fake start should throw. But then, the
+    // current state should be untouched.
+    EXPECT_THROW(lexer.getNextToken(), TestException);
+    EXPECT_EQ(0, s1->getParenCount(lexer));
+    EXPECT_FALSE(s1->wasLastEOL(lexer));
+    EXPECT_EQ(MasterLexer::Token::NOT_STARTED,
+              s1->getToken(lexer).getErrorCode());
+
+    // It gets back to the original state, so getting the newline works.
+    EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
+}
+
 }

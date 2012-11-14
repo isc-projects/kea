@@ -173,6 +173,9 @@ MasterLexer::getNextToken(Options options) {
         isc_throw(isc::InvalidOperation, "No source to read tokens from");
     }
     // Store current state, for the case we need to restore by ungetToken
+    impl_->has_previous_ = false;
+    // If thrown in this section, nothing observable except for not having
+    // previous will happen.
     impl_->previous_token_ = impl_->token_;
     impl_->previous_paren_count_ = impl_->paren_count_;
     impl_->previous_was_eol_ = impl_->last_was_eol_;
@@ -180,26 +183,36 @@ MasterLexer::getNextToken(Options options) {
     impl_->has_previous_ = true;
     // Reset the token now. This is to check a token was actually produced.
     // This is debugging aid.
-    impl_->token_ = Token(Token::NO_TOKEN_PRODUCED);
-    for (const State *state = start(options); state != NULL;
-         state = state->handle(*this)) {
-        // Do nothing here. All is handled in the for cycle header itself.
+
+    // From now on, if we throw, we can at least restore the old state.
+    try {
+        impl_->token_ = Token(Token::NO_TOKEN_PRODUCED);
+        for (const State *state = start(options); state != NULL;
+             state = state->handle(*this)) {
+            // Do nothing here. All is handled in the for cycle header itself.
+        }
+        // Make sure a token was produced. Since this Can Not Happen, we assert
+        // here instead of throwing.
+        assert(impl_->token_.getType() != Token::ERROR ||
+               impl_->token_.getErrorCode() != Token::NO_TOKEN_PRODUCED);
+        return (impl_->token_);
+    } catch (...) {
+        // Restore the old state and let the exception continue.
+        ungetToken();
+        throw;
     }
-    // Make sure a token was produced. Since this Can Not Happen, we assert
-    // here instead of throwing.
-    assert(impl_->token_.getType() != Token::ERROR ||
-           impl_->token_.getErrorCode() != Token::NO_TOKEN_PRODUCED);
-    return (impl_->token_);
 }
 
 void
 MasterLexer::ungetToken() {
     if (impl_->has_previous_) {
+        // The one that could fail due to bad_alloc first
+        impl_->token_ = impl_->previous_token_;
+        // The rest should not throw.
         impl_->has_previous_ = false;
         impl_->source_->ungetAll();
         impl_->last_was_eol_ = impl_->previous_was_eol_;
         impl_->paren_count_ = impl_->previous_paren_count_;
-        impl_->token_ = impl_->previous_token_;
     } else {
         isc_throw(isc::InvalidOperation, "No token to unget ready");
     }
