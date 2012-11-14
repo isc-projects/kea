@@ -244,6 +244,7 @@ TEST_F(MasterLexerStateTest, crlf) {
     EXPECT_EQ(s_null, s_crlf.handle(lexer));
     EXPECT_EQ(Token::END_OF_LINE, s_crlf.getToken(lexer).getType());
     EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // skip 'a'
 
     // 4. \r then EOF
     EXPECT_EQ(&s_crlf, State::start(lexer, common_options)); // recognize '\r'
@@ -251,6 +252,17 @@ TEST_F(MasterLexerStateTest, crlf) {
     EXPECT_EQ(s_null, s_crlf.handle(lexer));
     EXPECT_EQ(s_null, State::start(lexer, common_options));  // recognize EOF
     EXPECT_EQ(Token::END_OF_FILE, s_crlf.getToken(lexer).getType());
+}
+
+TEST_F(MasterLexerStateTest, string) {
+    ss << "a-string";
+    lexer.pushSource(ss);
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer));
+    EXPECT_FALSE(s_string.wasLastEOL(lexer));
+    EXPECT_EQ(Token::STRING, s_string.getToken(lexer).getType());
+    EXPECT_EQ("a-string", s_string.getToken(lexer).getString());
 }
 
 }
