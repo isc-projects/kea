@@ -216,10 +216,10 @@ public:
     /// as an unsigned 32-bit integer.  If we see the need for larger integers
     /// or negative numbers, we can then extend the token types.
     enum Type {
-        END_OF_LINE, ///< End of line detected (if asked for detecting it)
-        END_OF_FILE, ///< End of file detected (if asked for detecting it)
+        END_OF_LINE, ///< End of line detected
+        END_OF_FILE, ///< End of file detected
         INITIAL_WS,  ///< White spaces at the beginning of a line after an
-                     ///< end of line
+                     ///< end of line (if asked for detecting it)
         NOVALUE_TYPE_MAX = INITIAL_WS, ///< Max integer corresponding to
                                        /// no-value (type only) types.
                                        /// Mainly for internal use.
