@@ -663,6 +663,12 @@ if test "x${BOTAN_CONFIG}" != "x"
 then
     BOTAN_LIBS=`${BOTAN_CONFIG} --libs`
     BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
+    echo "XXX"
+    echo "XXX ${BOTAN_CONFIG}"
+    echo "XXX libs: ${BOTAN_LIBS}"
+    echo "XXX includes: ${BOTAN_INCLUDES}"
+    echo "XXX"
+    echo "XXX"
 
     # We expect botan-config --libs to contain -L<path_to_libbotan>, but
     # this is not always the case.  As a heuristics workaround we add
@@ -705,12 +711,13 @@ fi
 AC_SUBST(BOTAN_LDFLAGS)
 AC_SUBST(BOTAN_LIBS)
 AC_SUBST(BOTAN_INCLUDES)
-
+echo "XXX substed: ${BOTAN_INCLUDES}"
 # Even though chances are high we already performed a real compilation check
 # in the search for the right (pkg)config data, we try again here, to
 # be sure.
 CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
+echo "XXX CPPFLAGS: ${CPPFLAGS}"
 LIBS_SAVED="$LIBS"
 LIBS="$LIBS $BOTAN_LIBS"
 AC_CHECK_HEADERS([botan/botan.h],,AC_MSG_ERROR([Missing required header files.]))
