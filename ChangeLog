@@ -11,13 +11,15 @@
 
 504.	[bug]*		naokikambe
 	Fixed an XML format viewed from b10-stats-httpd. Regarding
-	per-zone counters as zones of Xfrout, a part of the item values wasn't
-	an exact XML format. A zone name can be specified in URI as
-	/bind10/statistics/xml/Xfrout/zones/example.org/xfrreqdone. XSD and XSL
-	formats are also changed to constant ones due to these changes.
+	per-zone counters as zones of Xfrout, a part of the item
+	values wasn't an exact XML format. A zone name can be
+	specified in URI as
+	/bind10/statistics/xml/Xfrout/zones/example.org/xfrreqdone.
+	XSD and XSL formats are also changed to constant ones due
+	to these changes.
 	(Trac #2298, git 512d2d46f3cb431bcdbf8d90af27bff8874ba075)
 
-503.    [func]      Stephen
+503.	[func]		Stephen
 	Add initial version of a MySQL backend for the DHCP code.  This
 	implements the basic IPv6 lease access functions - add lease, delete
 	lease and update lease.  The backend is enabled by specifying
@@ -26,12 +28,12 @@
 	be built on systems without MySQL installed.
 	(Trac #2342, git c7defffb89bd0f3fdd7ad2437c78950bcb86ad37)
 
-502.    [func]      vorner
+502.	[func]		vorner
 	TTLs can be specified with units as well as number of seconds now.
 	This allows specifications like "1D3H".
 	(Trac #2384, git 44c321c37e17347f33ced9d0868af0c891ff422b)
 
-501.	[func]      tomek
+501.	[func]		tomek
 	Added DHCPv6 allocation engine, now used in the processing of DHCPv6
 	messages.
 	(Trac #2414, git b3526430f02aa3dc3273612524d23137b8f1fe87)
@@ -56,8 +58,9 @@
 	Implemented DHCPv6 option values configuration using configuration
 	manager. In order to set values for data fields carried by the
 	particular option, user specifies the string of hexadecimal digits
-	that is in turn converted to binary data and stored into option buffer.
-	More user friendly way of option content specification is planned.
+	that is in turn converted to binary data and stored into option
+	buffer. More user friendly way of option content specification is
+	planned.
 	(Trac #2318, git e75c686cd9c14f4d6c2a242a0a0853314704fee9)
 
 497.	[bug]		jinmei
