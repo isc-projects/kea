@@ -26,6 +26,7 @@ lib_LTLIBRARIES = libb10-datasrc.la
 libb10_datasrc_la_SOURCES = data_source.h
 libb10_datasrc_la_SOURCES += rbnode_rrset.h
 libb10_datasrc_la_SOURCES += rbtree.h
+libb10_datasrc_la_SOURCES += exceptions.h
 libb10_datasrc_la_SOURCES += zonetable.h zonetable.cc
 libb10_datasrc_la_SOURCES += zone.h zone_finder.cc zone_finder_context.cc
 libb10_datasrc_la_SOURCES += result.h

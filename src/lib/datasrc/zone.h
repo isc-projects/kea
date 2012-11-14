@@ -19,6 +19,7 @@
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
 
+#include <datasrc/exceptions.h>
 #include <datasrc/result.h>
 
 #include <utility>
@@ -31,10 +32,10 @@ namespace datasrc {
 ///
 /// This is thrown when a method is called for a name or RRset which
 /// is not in or below the zone.
-class OutOfZone : public Exception {
+class OutOfZone : public ZoneException {
 public:
     OutOfZone(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        ZoneException(file, line, what) {}
 };
 
 /// \brief The base class to search a zone for RRsets
