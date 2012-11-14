@@ -470,8 +470,26 @@ TEST(MySqlOpenTest, OpenDatabase) {
     destroySchema();
 }
 
+// @brief Check the getType() method
+//
+// getType() returns a string giving the type of the backend, which should
+// always be "mysql".
+TEST_F(MySqlLeaseMgrTest, getType) {
+    EXPECT_EQ(std::string("mysql"), lmptr_->getType());
+}
+
 // @brief Check conversion functions
-TEST_F(MySqlLeaseMgrTest, CheckTimeConversion) {
+//
+// The server works using cltt and valid_filetime.  In the database, the
+// information is stored as expire_time and valid-lifetime, which are
+// related by
+//
+// expire_time = cltt + valid_lifetime
+//
+// This test checks that the conversion is correct.  It does not check that the
+// data is entered into the database correctly, only that the MYSQL_TIME
+// structure used for the entry is correctly set up.
+TEST_F(MySqlLeaseMgrTest, checkTimeConversion) {
     const time_t cltt = time(NULL);
     const uint32_t valid_lft = 86400;       // 1 day
     struct tm tm_expire;
@@ -509,8 +527,8 @@ TEST_F(MySqlLeaseMgrTest, getName) {
     // @TODO: check for the negative
 }
 
-// @brief Check that getVersion() works
-TEST_F(MySqlLeaseMgrTest, CheckVersion) {
+// @brief Check that getVersion() returns the expected version
+TEST_F(MySqlLeaseMgrTest, checkVersion) {
     // Check version
     pair<uint32_t, uint32_t> version;
     ASSERT_NO_THROW(version = lmptr_->getVersion());
@@ -518,13 +536,15 @@ TEST_F(MySqlLeaseMgrTest, CheckVersion) {
     EXPECT_EQ(CURRENT_VERSION_MINOR, version.second);
 }
 
+// @brief Compare two Lease6 structures for equality
 void
 detailCompareLease6(const Lease6Ptr& first, const Lease6Ptr& second) {
     EXPECT_EQ(first->type_, second->type_);
 
-    // Compare address strings - odd things happen when they are different
-    // as the EXPECT_EQ appears to call the operator uint32_t() function,
-    // which causes an exception to be thrown for IPv6 addresses.
+    // Compare address strings.  Comparison of address objects is not used, as
+    // odd things happen when they are different: the EXPECT_EQ macro appears to
+    // call the operator uint32_t() function, which causes an exception to be
+    // thrown for IPv6 addresses.
     EXPECT_EQ(first->addr_.toText(), second->addr_.toText());
     EXPECT_EQ(first->prefixlen_, second->prefixlen_);
     EXPECT_EQ(first->iaid_, second->iaid_);
@@ -544,7 +564,7 @@ detailCompareLease6(const Lease6Ptr& first, const Lease6Ptr& second) {
 //
 // Tests where a collection of leases can be returned are in the test
 // Lease6Collection.
-TEST_F(MySqlLeaseMgrTest, BasicLease6) {
+TEST_F(MySqlLeaseMgrTest, basicLease6) {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
 
@@ -590,7 +610,7 @@ TEST_F(MySqlLeaseMgrTest, BasicLease6) {
 //
 // Adds leases to the database and checks that they can be accessed via
 // a combination of DIUID and IAID.
-TEST_F(MySqlLeaseMgrTest, GetLease6Extended1) {
+TEST_F(MySqlLeaseMgrTest, getLease6Extended1) {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
     EXPECT_LE(6, leases.size());    // Expect to access leases 0 through 5
@@ -637,7 +657,7 @@ TEST_F(MySqlLeaseMgrTest, GetLease6Extended1) {
 //
 // Adds leases to the database and checks that they can be accessed via
 // a combination of DIUID and IAID.
-TEST_F(MySqlLeaseMgrTest, GetLease6Extended2) {
+TEST_F(MySqlLeaseMgrTest, getLease6Extended2) {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
     EXPECT_LE(6, leases.size());    // Expect to access leases 0 through 5
@@ -678,7 +698,7 @@ TEST_F(MySqlLeaseMgrTest, GetLease6Extended2) {
 // @brief Lease6 Update Tests
 //
 // Checks that we are able to update a lease in the database.
-TEST_F(MySqlLeaseMgrTest, UpdateLease6) {
+TEST_F(MySqlLeaseMgrTest, updateLease6) {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
     EXPECT_LE(3, leases.size());    // Expect to access leases 0 through 5
