@@ -288,8 +288,12 @@ String::handle(MasterLexer& lexer) const {
     data.clear();
 
     while (true) {
-        const int c = getLexerImpl(lexer)->source_->getChar(); // TODO comment
-        if (c == '\r' || c == EOF || c == '(' || c == ')') { // TODO special chars, etc.
+        int c = getLexerImpl(lexer)->source_->getChar(); // TODO comment
+        c = getLexerImpl(lexer)->skipComment(c);
+
+        if (c == '\r' || c == '\n' || c == EOF ||
+            /* escape consideration */
+            c == ' ' || c == '\t' || c == '(' || c == ')') {
             getLexerImpl(lexer)->source_->ungetChar();
             token = MasterLexer::Token(&data.at(0), data.size());
             return (NULL);
