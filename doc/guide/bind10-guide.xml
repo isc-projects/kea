@@ -84,8 +84,7 @@
     </para>
 
     <para>
-      This guide covers the experimental prototype of
-      BIND 10 version &__VERSION__;.
+      This guide covers BIND 10 version &__VERSION__;.
     </para>
 
     <section>
@@ -168,8 +167,8 @@
         However, these processes are started, stopped, and maintained
         by a single command, <command>bind10</command>.
         This command starts a master process which will start other
-        processes as needed.
-        The processes started by the <command>bind10</command>
+        required processes and other processes when configured.
+        The processes that may be started by the <command>bind10</command>
         command have names starting with "b10-", including:
       </para>
 
@@ -285,8 +284,7 @@
       </para>
 
       <para>
-        These are ran by <command>bind10</command>
-        and do not need to be manually started independently.
+        These do not need to be manually started independently.
       </para>
 
     </section>
@@ -838,6 +836,7 @@ as a dependency earlier -->
       <command>b10-cmdctl</command> for administration tools to
       communicate with the system, and
       <command>b10-stats</command> for statistics collection.
+      The DNS and DHCP servers are not started by default.
       The configuration of components to start is covered in
       <xref linkend="bind10.components"/>.
     </para>
@@ -923,7 +922,7 @@ as a dependency earlier -->
 <!-- TODO -->
       <note>
         <para>
-          The development prototype release only provides
+          The current release only provides
           <command>bindctl</command> as a user interface to
           <command>b10-cmdctl</command>.
           Upcoming releases will provide another interactive command-line
@@ -1145,7 +1144,7 @@ TODO
     <title>Control and configure user interface</title>
 
     <note><para>
-      For this development prototype release, <command>bindctl</command>
+      For the current release, <command>bindctl</command>
       is the only user interface. It is expected that upcoming
       releases will provide another interactive command-line
       interface and a web-based interface for controlling and
@@ -2292,8 +2291,7 @@ can use various data source backends.
       By default, this is empty.
 
       <note><simpara>
-        In this development version, currently this is only used for the
-        memory data source.
+        Currently this is only used for the memory data source.
         Only the IN class is supported at this time.
         By default, the memory data source is disabled.
         Also, currently the zone file must be canonical such as
@@ -2371,7 +2369,7 @@ can use various data source backends.
       (it defaults to <quote>memory</quote>).
 
       <note><simpara>
-        In this development version, currently this only supports the
+        Currently this only supports the
         IN class and the memory data source.
       </simpara></note>
               </simpara>
@@ -2429,7 +2427,7 @@ can use various data source backends.
       </para>
 
       <note><para>
-        In the development prototype release, <command>b10-auth</command>
+        In the current release, <command>b10-auth</command>
         can serve data from a SQLite3 data source backend and from master
         files.
         Upcoming versions will be able to use multiple different
@@ -2629,7 +2627,7 @@ can use various data source backends.
 
       <note>
       <para>
-        In the development prototype release, only the SQLite3 back
+        In the current release, only the SQLite3 back
         end is used by <command>b10-loadzone</command>.
         By default, it stores the zone data in
         <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>
@@ -2970,7 +2968,8 @@ what is XfroutClient xfr_client??
         underlying data source storing the zone data be writable.
         In the current implementation this means the zone must be stored
         in an SQLite3-based data source.
-	Also, in this development version, the <command>b10-ddns</command>
+<!-- TODO -->
+	Also, in this current version, the <command>b10-ddns</command>
 	component configures itself with the data source referring to the
         <varname>database_file</varname> configuration parameter of
         <command>b10-auth</command>.
