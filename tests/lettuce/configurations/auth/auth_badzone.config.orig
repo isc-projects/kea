@@ -22,7 +22,8 @@
                     "params": {
                         "example.org": "data/example.org",
                         "example.com": "data/example.com-broken",
-                        "example.net": "data/example.net-empty"
+                        "example.net": "data/example.net-empty",
+                        "example.info": "data/example.info-doesnt-exist"
                     }
                 }
             ]
