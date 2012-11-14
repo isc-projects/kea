@@ -236,13 +236,14 @@ public:
     ///
     typedef isc::data::ElementPtr ItemTreeType;
 
-    /// The constructor.
+    /// \brief The constructor.
     ///
     /// This constructor is mostly exception free. But it may still throw
     /// a standard exception if memory allocation fails inside the method.
     ///
     Counters();
-    /// The destructor.
+
+    /// \brief The destructor.
     ///
     /// This method never throws an exception.
     ///
