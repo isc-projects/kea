@@ -59,14 +59,14 @@ private:
     bool answer_sent_;              // DNS message has sent
     bool res_is_truncated_;         // DNS message is truncated
 public:
-    /// The constructor.
+    /// \brief The constructor.
     ///
     /// This constructor is mostly exception free. But it may still throw
     /// a standard exception if memory allocation fails inside the method.
     ///
     inline QRAttributes();
 
-    /// The destructor.
+    /// \brief The destructor.
     ///
     /// This method never throws an exception.
     ///
