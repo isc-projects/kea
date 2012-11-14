@@ -314,4 +314,40 @@ TEST_F(MasterLexerStateTest, string) {
     stringTokenCheck("followed-by-EOF", s_string.getToken(lexer));
 }
 
+TEST_F(MasterLexerStateTest, stringEscape) {
+    // some of the separate characters should be considered part of the
+    // string if escaped.
+    ss << "escaped\\ space ";
+    ss << "escaped\\\ttab ";
+    ss << "escaped\\(paren ";
+    ss << "escaped\\)close ";
+    ss << "escaped\\;comment ";
+    ss << "escaped\\\\ backslash "; // second '\' shouldn't escape ' '
+    lexer.pushSource(ss);
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("escaped\\ space", s_string.getToken(lexer));
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("escaped\\\ttab", s_string.getToken(lexer));
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("escaped\\(paren", s_string.getToken(lexer));
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("escaped\\)close", s_string.getToken(lexer));
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("escaped\\;comment", s_string.getToken(lexer));
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' ' in mid
+    stringTokenCheck("escaped\\\\", s_string.getToken(lexer));
+}
+
 }
