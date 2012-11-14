@@ -367,6 +367,105 @@ var/
 
   </chapter>
 
+  <chapter id="quickstart">
+    <title>Quick start</title>
+
+    <para>
+        This quickly covers the standard steps for installing
+        and deploying BIND 10.
+        For further details, full customizations, and troubleshooting,
+        see the respective chapters in the BIND 10 guide.
+    </para>
+
+    <section id="quick-start-auth-dns">
+      <title>Quick start guide for authoritative DNS service</title>
+
+      <orderedlist>
+
+        <listitem>
+          <simpara>
+            Install required run-time and build dependencies.
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara>
+            Download the BIND 10 source tar file from
+            <ulink url="ftp://ftp.isc.org/isc/bind10/"/>.
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <para>Extract the tar file:
+          <screen>$ <userinput>gzcat bind10-<replaceable>VERSION</replaceable>.tar.gz | tar -xvf -</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Go into the source and run configure:
+            <screen>$ <userinput>cd bind10-<replaceable>VERSION</replaceable></userinput>
+  $ <userinput>./configure</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Build it:
+            <screen>$ <userinput>make</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Install it as root (to default /usr/local):
+            <screen>$ <userinput>make install</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Start the server (as root):
+            <screen>$ <userinput>/usr/local/sbin/bind10</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>In another console, enable the authoritative DNS service
+            (by using the <command>bindctl</command> utility to configure
+            the <command>b10-auth</command> component to run):
+            <screen>$ <userinput>bindctl</userinput></screen>
+            (Login with the provided default username and password.)
+            <screen>
+&gt; <userinput>config add Boss/components b10-auth</userinput>
+&gt; <userinput>config set Boss/components/b10-auth/special auth</userinput>
+&gt; <userinput>config set Boss/components/b10-auth/kind needed</userinput>
+&gt; <userinput>config commit</userinput>
+&gt; <userinput>quit</userinput>
+            </screen>
+          </para>
+        </listitem>
+
+        <listitem>
+         <para>Test it; for example:
+            <screen>$ <userinput>dig @127.0.0.1 -c CH -t TXT version.bind</userinput></screen>
+         </para>
+        </listitem>
+
+        <listitem>
+          <para>Load desired zone file(s), for example:
+            <screen>$ <userinput>b10-loadzone <replaceable>your.zone.example.org</replaceable></userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <simpara>
+            Test the new zone.
+          </simpara>
+        </listitem>
+
+      </orderedlist>
+
+    </section>
+
+  </chapter>
+
   <chapter id="installation">
     <title>Installation</title>
 
@@ -511,90 +610,6 @@ as a dependency earlier -->
           url="http://bind10.isc.org/wiki/SystemSpecificNotes" />
           for system-specific installation tips.
         </para>
-
-    </section>
-
-    <section id="quickstart">
-      <title>Quick start</title>
-      <note>
-        <simpara>
-          This quickly covers the standard steps for installing
-          and deploying BIND 10 as an authoritative name server using
-          its defaults. For troubleshooting, full customizations and further
-          details, see the respective chapters in the BIND 10 guide.
-        </simpara>
-      </note>
-
-      <para>
-        To quickly get started with BIND 10, follow these steps.
-      </para>
-
-      <orderedlist>
-
-        <listitem>
-          <simpara>
-            Install required run-time and build dependencies.
-          </simpara>
-        </listitem>
-
-        <listitem>
-          <simpara>
-            Download the BIND 10 source tar file from
-            <ulink url="ftp://ftp.isc.org/isc/bind10/"/>.
-          </simpara>
-        </listitem>
-
-        <listitem>
-          <para>Extract the tar file:
-          <screen>$ <userinput>gzcat bind10-<replaceable>VERSION</replaceable>.tar.gz | tar -xvf -</userinput></screen>
-          </para>
-        </listitem>
-
-        <listitem>
-          <para>Go into the source and run configure:
-            <screen>$ <userinput>cd bind10-<replaceable>VERSION</replaceable></userinput>
-  $ <userinput>./configure</userinput></screen>
-          </para>
-        </listitem>
-
-        <listitem>
-          <para>Build it:
-            <screen>$ <userinput>make</userinput></screen>
-          </para>
-        </listitem>
-
-        <listitem>
-          <para>Install it (to default /usr/local):
-            <screen>$ <userinput>make install</userinput></screen>
-          </para>
-        </listitem>
-
-        <listitem>
-          <para>Start the server:
-            <screen>$ <userinput>/usr/local/sbin/bind10</userinput></screen>
-          </para>
-        </listitem>
-
-        <listitem>
-<!-- TODO: this is wrong; b10-auth is not started by default any more -->
-         <para>Test it; for example:
-            <screen>$ <userinput>dig @127.0.0.1 -c CH -t TXT authors.bind</userinput></screen>
-         </para>
-        </listitem>
-
-        <listitem>
-          <para>Load desired zone file(s), for example:
-            <screen>$ <userinput>b10-loadzone <replaceable>your.zone.example.org</replaceable></userinput></screen>
-          </para>
-        </listitem>
-
-        <listitem>
-          <simpara>
-            Test the new zone.
-          </simpara>
-        </listitem>
-
-      </orderedlist>
 
     </section>
 
@@ -825,11 +840,18 @@ as a dependency earlier -->
     <section id="start">
       <title>Starting BIND 10</title>
       <para>
-        To start the BIND 10 service, simply run <command>bind10</command>.
+        To start the BIND 10 service, simply run <command>bind10</command>
+        as root.
+        It will run in the foreground and your shell prompt will not
+        be available. It will output various log messages as it starts up
+        and is used.
         Run it with the <option>--verbose</option> switch to
         get additional debugging or diagnostic output.
       </para>
-<!-- TODO: note it doesn't go into background -->
+
+<!-- TODO: user switch -->
+
+<!-- TODO:  example:  nohup /usr/local/sbin/bind10 1>bind10.log 2>&1 -->
 
       <note>
         <para>
