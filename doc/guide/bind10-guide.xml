@@ -1248,7 +1248,7 @@ TODO
         For example, the Boss module has a 'shutdown' command to shut down
         BIND 10, with an optional argument 'help':
 
-        <screen><userinput>> Boss shutdown help</userinput>
+        <screen>&gt; <userinput>Boss shutdown help</userinput>
 Command  shutdown 	(Shut down BIND 10)
 		help (Get help for command)
 This command has no parameters
@@ -1701,7 +1701,7 @@ config set /Boss/components/b10-zonemgr/kind dispensable
         The optional <command>show</command> argument may also be used when
         executing a script from a file; for example:
 
-        <screen><userinput>> execute file /tmp/example_commands show</userinput></screen>
+        <screen>&gt; <userinput>execute file /tmp/example_commands show</userinput></screen>
 
         <section id="bindctl_execute_directives">
             <title>Execute directives</title>
@@ -2707,8 +2707,8 @@ TODO
       <para>
         As noted above, <command>b10-xfrin</command> uses AXFR for
         zone transfers by default.  To enable IXFR for zone transfers
-        for a particular zone, set the <userinput>use_ixfr</userinput>
-        configuration parameter to <userinput>true</userinput>.
+        for a particular zone, set the <varname>use_ixfr</varname>
+        configuration parameter to <quote>true</quote>.
         In the above example of configuration sequence, you'll need
         to add the following before performing <userinput>commit</userinput>:
       <screen>&gt; <userinput>config set Xfrin/zones[0]/use_ixfr true</userinput></screen>
@@ -4299,7 +4299,7 @@ Logging/loggers	[]	list
 <!-- TODO: adding the empty loggers makes no sense -->
         <para>
 
-          <screen><userinput>&gt; config add Logging/loggers</userinput>
+          <screen>&gt; <userinput>config add Logging/loggers</userinput>
 &gt; <userinput>config show Logging</userinput>
 Logging/loggers/	list	(modified)
 </screen>
