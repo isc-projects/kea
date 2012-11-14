@@ -835,6 +835,8 @@ as a dependency earlier -->
       <command>b10-cmdctl</command> for administration tools to
       communicate with the system, and
       <command>b10-stats</command> for statistics collection.
+      The configuration of components to start is covered in
+      <xref linkend="bind10.components"/>.
     </para>
 
     <section id="start">
@@ -862,156 +864,6 @@ as a dependency earlier -->
         </para>
       </note>
 
-    </section>
-    <section id="bind10.config">
-      <title>Configuration to start processes</title>
-
-      <para>
-	The processes to be used can be configured for
-	<command>bind10</command> to start, with the exception
-	of the required <command>b10-sockcreator</command>,
-	<command>b10-msgq</command> and <command>b10-cfgmgr</command>
-	components.
-	The configuration is in the <varname>Boss/components</varname>
-	section. Each element represents one component, which is
-	an abstraction of a process.
-      </para>
-
-      <para>
-	To add a process to the set, let's say the resolver (which
-	is not started by default), you would do this:
-        <screen>&gt; <userinput>config add Boss/components b10-resolver</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/special resolver</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/kind needed</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/priority 10</userinput>
-&gt; <userinput>config commit</userinput></screen></para>
-
-      <para>
-	Now, what it means. We add an entry called
-	<quote>b10-resolver</quote>. It is both a name used to
-	reference this component in the configuration and the name
-	of the process to start. Then we set some parameters on
-	how to start it.
-      </para>
-
-      <para>
-	The <varname>special</varname> setting is for components
-	that need some kind of special care during startup or
-	shutdown. Unless specified, the component is started in a
-	usual way. This is the list of components that need to be
-	started in a special way, with the value of special used
-	for them:
-<!-- TODO: this still doesn't explain why they are special -->
-        <table>
-          <title>Special startup components</title>
-          <tgroup cols='3' align='left'>
-          <colspec colname='component'/>
-          <colspec colname='special'/>
-          <colspec colname='description'/>
-          <thead><row><entry>Component</entry><entry>Special</entry><entry>Description</entry></row></thead>
-          <tbody>
-            <row><entry>b10-auth</entry><entry>auth</entry><entry>Authoritative DNS server</entry></row>
-            <row><entry>b10-resolver</entry><entry>resolver</entry><entry>DNS resolver</entry></row>
-            <row><entry>b10-cmdctl</entry><entry>cmdctl</entry><entry>Command control (remote control interface)</entry></row>
-            <!-- TODO Either add xfrin and xfrout as well or clean up the workarounds in boss before the release -->
-          </tbody>
-          </tgroup>
-        </table>
-      </para>
-
-      <para>
-	The <varname>kind</varname> specifies how a failure of the
-	component should be handled.  If it is set to
-	<quote>dispensable</quote> (the default unless you set
-	something else), it will get started again if it fails. If
-	it is set to <quote>needed</quote> and it fails at startup,
-	the whole <command>bind10</command> shuts down and exits
-	with an error exit code. But if it fails some time later, it
-	is just started again. If you set it to <quote>core</quote>,
-	you indicate that the system is not usable without the
-	component and if such component fails, the system shuts
-	down no matter when the failure happened.  This is the
-	behaviour of the core components (the ones you can't turn
-	off), but you can declare any other components as core as
-	well if you wish (but you can turn these off, they just
-	can't fail).
-      </para>
-
-      <para>
-	The <varname>priority</varname> defines order in which the
-	components should start.  The ones with higher numbers are
-	started sooner than the ones with lower ones. If you don't
-	set it, 0 (zero) is used as the priority.  Usually, leaving
-	it at the default is enough.
-      </para>
-
-      <para>
-        There are other parameters we didn't use in our example.
-        One of them is <varname>address</varname>. It is the address
-        used by the component on the <command>b10-msgq</command>
-        message bus. The special components already know their
-        address, but the usual ones don't. The address is by
-        convention the thing after <emphasis>b10-</emphasis>, with
-        the first letter capitalized (eg. <command>b10-stats</command>
-        would have <quote>Stats</quote> as its address).
-<!-- TODO: this should be simplified so we don't even have to document it -->
-      </para>
-
-<!-- TODO: what does "The special components already know their
-address, but the usual ones don't." mean? -->
-
-<!-- TODO: document params when is enabled -->
-
-      <para>
-	The last one is <varname>process</varname>. It is the name
-	of the process to be started.  It defaults to the name of
-	the component if not set, but you can use this to override
-	it. (The special components also already know their
-        executable name.)
-      </para>
-
-      <!-- TODO Add parameters when they work, not implemented yet-->
-
-      <note>
-        <para>
-          The configuration is quite powerful, but that includes
-          a lot of space for mistakes. You could turn off the
-          <command>b10-cmdctl</command>, but then you couldn't
-          change it back the usual way, as it would require it to
-          be running (you would have to find and edit the configuration
-          directly).  Also, some modules might have dependencies:
-          <command>b10-stats-httpd</command> needs
-          <command>b10-stats</command>, <command>b10-xfrout</command>
-          needs <command>b10-auth</command> to be running, etc.
-
-<!-- TODO: should we define dependencies? -->
-
-        </para>
-        <para>
-          In short, you should think twice before disabling something here.
-        </para>
-      </note>
-      <para>
-        It is possible to start some components multiple times (currently
-        <command>b10-auth</command> and <command>b10-resolver</command>).
-        You might want to do that to gain more performance (each one uses only
-        single core). Just put multiple entries under different names, like
-        this, with the same config:
-        <screen>&gt; <userinput>config add Boss/components b10-resolver-2</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver-2/special resolver</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver-2/kind needed</userinput>
-&gt; <userinput>config commit</userinput></screen>
-      </para>
-      <para>
-        However, this is work in progress and the support is not yet complete.
-        For example, each resolver will have its own cache, each authoritative
-        server will keep its own copy of in-memory data and there could be
-        problems with locking the sqlite database, if used. The configuration
-        might be changed to something more convenient in future.
-	Other components don't expect such a situation, so it would
-	probably not do what you want. Such support is yet to be
-	implemented.
-      </para>
     </section>
 
   </chapter>
@@ -2194,6 +2046,185 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
 &gt; <userinput>config commit</userinput></screen>
         </para>
       </section>
+    </section>
+  </chapter>
+
+  <chapter id="bind10.config">
+    <title>bind10 Control and Configuration</title>
+
+    <para>
+      This chapter explains how to control and configure the
+      <command>bind10</command> parent.
+      The startup of this resident process that runs the BIND 10
+      daemons is covered in <xref linkend="bind10"/>.
+    </para>
+
+    <section id="bind10.shutdown">
+      <title>Stopping bind10</title>
+      <para>
+        The BIND 10 suite may be shut down by stopping the
+        parent <command>bind10</command> process. This may be done
+        by running the <userinput>Boss shutdown</userinput> command
+        at the <command>bindctl</command> prompt.
+      </para>
+    </section>
+
+    <section id="bind10.components">
+      <title>Configuration to start processes</title>
+
+      <para>
+	The processes to be used can be configured for
+	<command>bind10</command> to start, with the exception
+	of the required <command>b10-sockcreator</command>,
+	<command>b10-msgq</command> and <command>b10-cfgmgr</command>
+	components.
+	The configuration is in the <varname>Boss/components</varname>
+	section. Each element represents one component, which is
+	an abstraction of a process.
+      </para>
+
+      <para>
+	To add a process to the set, let's say the resolver (which
+	is not started by default), you would do this:
+        <screen>&gt; <userinput>config add Boss/components b10-resolver</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver/special resolver</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver/kind needed</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver/priority 10</userinput>
+&gt; <userinput>config commit</userinput></screen></para>
+
+      <para>
+	Now, what it means. We add an entry called
+	<quote>b10-resolver</quote>. It is both a name used to
+	reference this component in the configuration and the name
+	of the process to start. Then we set some parameters on
+	how to start it.
+      </para>
+
+      <para>
+	The <varname>special</varname> setting is for components
+	that need some kind of special care during startup or
+	shutdown. Unless specified, the component is started in a
+	usual way. This is the list of components that need to be
+	started in a special way, with the value of special used
+	for them:
+<!-- TODO: this still doesn't explain why they are special -->
+        <table>
+          <title>Special startup components</title>
+          <tgroup cols='3' align='left'>
+          <colspec colname='component'/>
+          <colspec colname='special'/>
+          <colspec colname='description'/>
+          <thead><row><entry>Component</entry><entry>Special</entry><entry>Description</entry></row></thead>
+          <tbody>
+            <row><entry>b10-auth</entry><entry>auth</entry><entry>Authoritative DNS server</entry></row>
+            <row><entry>b10-resolver</entry><entry>resolver</entry><entry>DNS resolver</entry></row>
+            <row><entry>b10-cmdctl</entry><entry>cmdctl</entry><entry>Command control (remote control interface)</entry></row>
+            <!-- TODO Either add xfrin and xfrout as well or clean up the workarounds in boss before the release -->
+          </tbody>
+          </tgroup>
+        </table>
+      </para>
+
+      <para>
+	The <varname>kind</varname> specifies how a failure of the
+	component should be handled.  If it is set to
+	<quote>dispensable</quote> (the default unless you set
+	something else), it will get started again if it fails. If
+	it is set to <quote>needed</quote> and it fails at startup,
+	the whole <command>bind10</command> shuts down and exits
+	with an error exit code. But if it fails some time later, it
+	is just started again. If you set it to <quote>core</quote>,
+	you indicate that the system is not usable without the
+	component and if such component fails, the system shuts
+	down no matter when the failure happened.  This is the
+	behaviour of the core components (the ones you can't turn
+	off), but you can declare any other components as core as
+	well if you wish (but you can turn these off, they just
+	can't fail).
+      </para>
+
+      <para>
+	The <varname>priority</varname> defines order in which the
+	components should start.  The ones with higher numbers are
+	started sooner than the ones with lower ones. If you don't
+	set it, 0 (zero) is used as the priority.  Usually, leaving
+	it at the default is enough.
+      </para>
+
+      <para>
+        There are other parameters we didn't use in our example.
+        One of them is <varname>address</varname>. It is the address
+        used by the component on the <command>b10-msgq</command>
+        message bus. The special components already know their
+        address, but the usual ones don't. The address is by
+        convention the thing after <emphasis>b10-</emphasis>, with
+        the first letter capitalized (eg. <command>b10-stats</command>
+        would have <quote>Stats</quote> as its address).
+<!-- TODO: this should be simplified so we don't even have to document it -->
+      </para>
+
+<!-- TODO: what does "The special components already know their
+address, but the usual ones don't." mean? -->
+
+<!-- TODO: document params when is enabled -->
+
+      <para>
+	The last one is <varname>process</varname>. It is the name
+	of the process to be started.  It defaults to the name of
+	the component if not set, but you can use this to override
+	it. (The special components also already know their
+        executable name.)
+      </para>
+
+      <!-- TODO Add parameters when they work, not implemented yet-->
+
+      <note>
+        <para>
+          The configuration is quite powerful, but that includes
+          a lot of space for mistakes. You could turn off the
+          <command>b10-cmdctl</command>, but then you couldn't
+          change it back the usual way, as it would require it to
+          be running (you would have to find and edit the configuration
+          directly).  Also, some modules might have dependencies:
+          <command>b10-stats-httpd</command> needs
+          <command>b10-stats</command>, <command>b10-xfrout</command>
+          needs <command>b10-auth</command> to be running, etc.
+
+<!-- TODO: should we define dependencies? -->
+
+        </para>
+        <para>
+          In short, you should think twice before disabling something here.
+        </para>
+      </note>
+      <para>
+        It is possible to start some components multiple times (currently
+        <command>b10-auth</command> and <command>b10-resolver</command>).
+        You might want to do that to gain more performance (each one uses only
+        single core). Just put multiple entries under different names, like
+        this, with the same config:
+        <screen>&gt; <userinput>config add Boss/components b10-resolver-2</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver-2/special resolver</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver-2/kind needed</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+      <para>
+        However, this is work in progress and the support is not yet complete.
+        For example, each resolver will have its own cache, each authoritative
+        server will keep its own copy of in-memory data and there could be
+        problems with locking the sqlite database, if used. The configuration
+        might be changed to something more convenient in future.
+	Other components don't expect such a situation, so it would
+	probably not do what you want. Such support is yet to be
+	implemented.
+      </para>
+
+      <para>
+        The running processes started by <command>bind10</command>
+        may be listed by running <userinput>Boss show_processes</userinput>
+        using <command>bindctl</command>.
+      </para>
+
     </section>
   </chapter>
 
