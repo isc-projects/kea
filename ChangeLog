@@ -1,3 +1,5 @@
+bind10-devel-20121115 released on November 15, 2012
+
 506.	[doc]		jelte
 	Added a chapter about the use of the bindctl command tool to
 	to the BIND 10 guide.
