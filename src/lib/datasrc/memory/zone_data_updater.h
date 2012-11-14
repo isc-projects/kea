@@ -15,6 +15,7 @@
 #ifndef DATASRC_ZONE_DATA_UPDATER_H
 #define DATASRC_ZONE_DATA_UPDATER_H 1
 
+#include <datasrc/exceptions.h>
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/rdata_serialization.h>
 #include <dns/name.h>
@@ -94,14 +95,9 @@ public:
     ///
     /// This is thrown against general error cases in adding an RRset
     /// to the zone.
-    ///
-    /// Note: this exception would cover cases for \c OutOfZone or
-    /// \c NullRRset.  We'll need to clarify and unify the granularity
-    /// of exceptions eventually.  For now, exceptions are added as
-    /// developers see the need for it.
-    struct AddError : public InvalidParameter {
+    struct AddError : public ZoneValidationException {
         AddError(const char* file, size_t line, const char* what) :
-            InvalidParameter(file, line, what)
+            ZoneValidationException(file, line, what)
         {}
     };
 
