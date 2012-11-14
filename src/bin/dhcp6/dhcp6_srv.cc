@@ -80,6 +80,7 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port, const char* dbconfig)
         // Instantiate LeaseMgr
         LeaseMgrFactory::create(dbconfig);
         LOG_INFO(dhcp6_logger, DHCP6_DB_BACKEND_STARTED)
+            .arg(LeaseMgrFactory::instance().getType())
             .arg(LeaseMgrFactory::instance().getName());
 
         // Instantiate allocation engine

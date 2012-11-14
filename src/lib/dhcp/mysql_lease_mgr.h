@@ -239,30 +239,33 @@ public:
     ///        failed.
     virtual bool deleteLease6(const isc::asiolink::IOAddress& addr);
 
+    /// @brief Return backend type
+    ///
+    /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
+    ///
+    /// @return Type of the backend.
+    virtual std::string getType() const {
+        return (std::string("mysql"));
+    }
+
     /// @brief Returns backend name.
     ///
     /// Each backend have specific name, e.g. "mysql" or "sqlite".
+    ///
+    /// @return Name of the backend.
     virtual std::string getName() const;
 
     /// @brief Returns description of the backend.
     ///
     /// This description may be multiline text that describes the backend.
+    ///
+    /// @return Description of the backend.
     virtual std::string getDescription() const;
 
     /// @brief Returns backend version.
     ///
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
-    ///
-    /// @todo: We will need to implement 3 version functions eventually:
-    /// A. abstract API version
-    /// B. backend version
-    /// C. database version (stored in the database scheme)
-    ///
-    /// and then check that:
-    /// B>=A and B=C (it is ok to have newer backend, as it should be backward
-    /// compatible)
-    /// Also if B>C, some database upgrade procedure may be triggered
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.

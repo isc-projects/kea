@@ -42,6 +42,7 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
+
 ControlledDhcpv6Srv* ControlledDhcpv6Srv::server_ = NULL;
 
 ConstElementPtr
@@ -149,8 +150,8 @@ void ControlledDhcpv6Srv::disconnectSession() {
     IfaceMgr::instance().set_session_socket(IfaceMgr::INVALID_SOCKET, NULL);
 }
 
-ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port /*= DHCP6_SERVER_PORT*/)
-    :Dhcpv6Srv(port), cc_session_(NULL), config_session_(NULL) {
+ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port, const char* dbconfig)
+    : Dhcpv6Srv(port, dbconfig), cc_session_(NULL), config_session_(NULL) {
     server_ = this; // remember this instance for use in callback
 }
 
