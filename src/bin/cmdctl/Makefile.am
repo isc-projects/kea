@@ -54,12 +54,17 @@ b10-cmdctl: cmdctl.py $(PYTHON_LOGMSGPKG_DIR)/work/cmdctl_messages.py
 	$(SED) "s|@@PYTHONPATH@@|@pyexecdir@|" cmdctl.py >$@
 	chmod a+x $@
 
+bin_PROGRAMS = b10-certgen
+b10_certgen_SOURCES = b10-certgen.cc
+b10_certgen_CXXFLAGS = $(BOTAN_INCLUDES)
+b10_certgen_LDFLAGS = $(BOTAN_LIBS)
+
 if INSTALL_CONFIGURATIONS
 
 # Below we intentionally use ${INSTALL} -m 640 instead of $(INSTALL_DATA)
 # because these file will contain sensitive information.
 install-data-local:
-	$(mkinstalldirs) $(DESTDIR)/@sysconfdir@/@PACKAGE@   
+	$(mkinstalldirs) $(DESTDIR)/@sysconfdir@/@PACKAGE@
 	for f in $(CMDCTL_CONFIGURATIONS) ; do	\
 	  if test ! -f $(DESTDIR)$(sysconfdir)/@PACKAGE@/$$f; then	\
 	    ${INSTALL} -m 640 $(srcdir)/$$f $(DESTDIR)$(sysconfdir)/@PACKAGE@/ ;	\
