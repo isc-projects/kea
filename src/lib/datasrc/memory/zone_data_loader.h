@@ -15,6 +15,7 @@
 #ifndef DATASRC_ZONE_DATA_LOADER_H
 #define DATASRC_ZONE_DATA_LOADER_H 1
 
+#include <datasrc/exceptions.h>
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/iterator.h>
 #include <dns/name.h>
@@ -29,9 +30,9 @@ namespace memory {
 ///
 /// This is thrown if an empty zone would be created during
 /// \c loadZoneData().
-struct EmptyZone : public InvalidParameter {
+struct EmptyZone : public ZoneValidationException {
     EmptyZone(const char* file, size_t line, const char* what) :
-        InvalidParameter(file, line, what)
+        ZoneValidationException(file, line, what)
     {}
 };
 
