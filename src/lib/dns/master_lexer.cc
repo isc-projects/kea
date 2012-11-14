@@ -33,9 +33,14 @@ typedef boost::shared_ptr<master_lexer_internal::InputSource> InputSourcePtr;
 }
 using namespace master_lexer_internal;
 
+
 struct MasterLexer::MasterLexerImpl {
     MasterLexerImpl() : source_(NULL), token_(Token::NOT_STARTED),
-                        paren_count_(0), last_was_eol_(false)
+                        paren_count_(0), last_was_eol_(false),
+                        has_previous_(false),
+                        previous_token_(Token::NOT_STARTED),
+                        previous_paren_count_(0),
+                        previous_was_eol_(false)
     {
         separators_.set('\r');
         separators_.set('\n');
@@ -91,6 +96,12 @@ struct MasterLexer::MasterLexerImpl {
     // if escaped by a backslash.  See isTokenEnd() for the bitmap size.
     std::bitset<128> separators_;
     std::bitset<128> esc_separators_;
+
+    // These are to allow restoring state before previous token.
+    bool has_previous_;
+    Token previous_token_;
+    size_t previous_paren_count_;
+    bool previous_was_eol_;
 };
 
 MasterLexer::MasterLexer() : impl_(new MasterLexerImpl) {
@@ -116,6 +127,7 @@ MasterLexer::pushSource(const char* filename, std::string* error) {
     }
 
     impl_->source_ = impl_->sources_.back().get();
+    impl_->has_previous_ = false;
     return (true);
 }
 
@@ -123,6 +135,7 @@ void
 MasterLexer::pushSource(std::istream& input) {
     impl_->sources_.push_back(InputSourcePtr(new InputSource(input)));
     impl_->source_ = impl_->sources_.back().get();
+    impl_->has_previous_ = false;
 }
 
 void
@@ -134,6 +147,7 @@ MasterLexer::popSource() {
     impl_->sources_.pop_back();
     impl_->source_ = impl_->sources_.empty() ? NULL :
         impl_->sources_.back().get();
+    impl_->has_previous_ = false;
 }
 
 std::string
@@ -154,13 +168,19 @@ MasterLexer::getSourceLine() const {
 
 MasterLexer::Token
 MasterLexer::getNextToken(Options options) {
-    // Reset the token now. This is to check a token was actually produced.
-    // This is debugging aid.
-    impl_->token_ = Token(Token::NO_TOKEN_PRODUCED);
     // If the source is not available
     if (impl_->source_ == NULL || impl_->source_->atEOF()) {
         isc_throw(isc::InvalidOperation, "No source to read tokens from");
     }
+    // Store current state, for the case we need to restore by ungetToken
+    impl_->previous_token_ = impl_->token_;
+    impl_->previous_paren_count_ = impl_->paren_count_;
+    impl_->previous_was_eol_ = impl_->last_was_eol_;
+    impl_->source_->mark();
+    impl_->has_previous_ = true;
+    // Reset the token now. This is to check a token was actually produced.
+    // This is debugging aid.
+    impl_->token_ = Token(Token::NO_TOKEN_PRODUCED);
     for (const State *state = start(options); state != NULL;
          state = state->handle(*this)) {
         // Do nothing here. All is handled in the for cycle header itself.
@@ -174,7 +194,15 @@ MasterLexer::getNextToken(Options options) {
 
 void
 MasterLexer::ungetToken() {
-    // TODO
+    if (impl_->has_previous_) {
+        impl_->has_previous_ = false;
+        impl_->source_->ungetAll();
+        impl_->last_was_eol_ = impl_->previous_was_eol_;
+        impl_->paren_count_ = impl_->previous_paren_count_;
+        impl_->token_ = impl_->previous_token_;
+    } else {
+        isc_throw(isc::InvalidOperation, "No token to unget ready");
+    }
 }
 
 const State*

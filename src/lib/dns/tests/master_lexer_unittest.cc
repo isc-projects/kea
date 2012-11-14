@@ -332,8 +332,10 @@ TEST_F(MasterLexerTest, ungetSimple) {
 // Check ungetting token without overriding the start method. We also
 // check it works well with changing options between the calls.
 TEST_F(MasterLexerTest, ungetRealOptions) {
-    ss << "    \n";
+    ss << "\n    \n";
     lexer.pushSource(ss);
+    // Skip the first newline
+    EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
 
     // If we call it the usual way, it skips up to the newline and returns
     // it
@@ -341,8 +343,21 @@ TEST_F(MasterLexerTest, ungetRealOptions) {
 
     // Now we return it. If we call it again, but with different options,
     // we get the initial whitespace.
+    lexer.ungetToken();
     EXPECT_EQ(MasterLexer::Token::INITIAL_WS,
               lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
+}
+
+// Test only one token can be ungotten
+TEST_F(MasterLexerTest, ungetTwice) {
+    ss << "\n";
+    lexer.pushSource(ss);
+
+    EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
+    // Unget the token. It can be done once
+    lexer.ungetToken();
+    // But not twice
+    EXPECT_THROW(lexer.ungetToken(), isc::InvalidOperation);
 }
 
 // Test we can't unget a token before we get one
