@@ -418,23 +418,30 @@ namespace {
 class FakeState : public State {
 public:
     FakeState(const State* next, size_t eat_chars,
-              MasterLexer::Token* token = NULL,
-              const boost::function<void ()>& callback =
-              boost::function<void ()>()) :
+              MasterLexer::Token* token,
+              int paren_change, const bool* set_eol,
+              const boost::function<void (const std::string&)>& callback) :
         next_(next),
         eat_chars_(eat_chars),
         token_(token),
+        paren_change_(paren_change),
+        set_eol_(set_eol),
         callback_(callback)
     {}
     virtual const State* handle(MasterLexer& lexer) const {
+        std::string input;
         for (size_t i = 0; i < eat_chars_; ++i) {
-            getLexerImpl(lexer)->source_->getChar();
+            input += getLexerImpl(lexer)->source_->getChar();
+        }
+        if (!callback_.empty()) {
+            callback_(input);
         }
         if (token_ != NULL) {
             getLexerImpl(lexer)->token_ = *token_;
         }
-        if (!callback_.empty()) {
-            callback_();
+        getLexerImpl(lexer)->paren_count_ += paren_change_;
+        if (set_eol_ != NULL) {
+            getLexerImpl(lexer)->last_was_eol_ = *set_eol_;
         }
         return (next_);
     }
@@ -442,7 +449,9 @@ private:
     const State* const next_;
     size_t eat_chars_;
     MasterLexer::Token* const token_;
-    const boost::function<void ()> callback_;
+    const int paren_change_;
+    const bool* const set_eol_;
+    const boost::function<void (const std::string&)> callback_;
 };
 
 }
@@ -450,10 +459,12 @@ private:
 State*
 State::getFakeState(const State* next, size_t eat_chars,
                     MasterLexer::Token* token,
-                    const boost::function<void ()>& callback)
+                    int paren_change, const bool* set_eol,
+                    const boost::function<void (const std::string&)>& callback)
 {
     // Just allocate new FakeState with the parameters.
-    return (new FakeState(next, eat_chars, token, callback));
+    return (new FakeState(next, eat_chars, token, paren_change, set_eol,
+                          callback));
 }
 
 } // namespace master_lexer_internal
