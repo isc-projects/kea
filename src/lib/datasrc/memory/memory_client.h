@@ -87,11 +87,11 @@ public:
     /// current content. The masterfile parsing ability is kind of limited,
     /// see isc::dns::masterLoad.
     ///
-    /// This throws isc::dns::MasterLoadError if there is problem with loading
-    /// (missing file, malformed, it contains different zone, etc - see
-    /// isc::dns::masterLoad for details).
+    /// This throws isc::dns::MasterLoadError or AddError if there are
+    /// problems with loading (missing file, malformed data, unexpected
+    /// zone, etc. - see isc::dns::masterLoad for details).
     ///
-    /// In case of internal problems, OutOfZone, NullRRset or AssertError could
+    /// In case of internal problems, NullRRset or AssertError could
     /// be thrown, but they should not be expected. Exceptions caused by
     /// allocation may be thrown as well.
     ///
