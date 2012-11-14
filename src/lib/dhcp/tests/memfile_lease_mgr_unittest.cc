@@ -55,7 +55,7 @@ TEST_F(MemfileLeaseMgrTest, getTypeAndName) {
 }
 
 // Checks that adding/getting/deleting a Lease6 object works.
-TEST_F(MemfileLeaseMgrTest, addGetDeletei6) {
+TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
     const LeaseMgr::ParameterMap pmap;  // Empty parameter map
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
 
