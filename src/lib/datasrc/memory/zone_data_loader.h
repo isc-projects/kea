@@ -30,9 +30,9 @@ namespace memory {
 ///
 /// This is thrown if an empty zone would be created during
 /// \c loadZoneData().
-struct EmptyZone : public ZoneValidationException {
+struct EmptyZone : public ZoneLoaderException {
     EmptyZone(const char* file, size_t line, const char* what) :
-        ZoneValidationException(file, line, what)
+        ZoneLoaderException(file, line, what)
     {}
 };
 

@@ -186,7 +186,7 @@ TEST_F(MemoryClientTest, loadRRsetDoesntMatchOrigin) {
     // in an exception.
     EXPECT_THROW(client_->load(Name("example.com"),
                                TEST_DATA_DIR "/example.org-empty.zone"),
-                 MasterLoadError);
+                 ZoneLoaderException);
 }
 
 TEST_F(MemoryClientTest, loadErrorsInParsingZoneMustNotLeak1) {
@@ -195,7 +195,7 @@ TEST_F(MemoryClientTest, loadErrorsInParsingZoneMustNotLeak1) {
     // allocations.
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR "/example.org-broken1.zone"),
-                 MasterLoadError);
+                 ZoneLoaderException);
     // Teardown checks for memory segment leaks
 }
 
@@ -205,14 +205,14 @@ TEST_F(MemoryClientTest, loadErrorsInParsingZoneMustNotLeak2) {
     // allocations.
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR "/example.org-broken2.zone"),
-                 MasterLoadError);
+                 ZoneLoaderException);
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadNonExistentZoneFile) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR "/somerandomfilename"),
-                 MasterLoadError);
+                 ZoneLoaderException);
     // Teardown checks for memory segment leaks
 }
 
@@ -478,7 +478,7 @@ TEST_F(MemoryClientTest, loadOutOfZoneThrows) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-out-of-zone.zone"),
-                 MasterLoadError);
+                 ZoneLoaderException);
     // Teardown checks for memory segment leaks
 }
 
