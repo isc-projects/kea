@@ -178,10 +178,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                         try {
                             cache->load(origin,
                                         paramConf->get(*it)->stringValue());
-                        } catch (const isc::dns::MasterLoadError& mle) {
-                            LOG_ERROR(logger, DATASRC_MASTERLOAD_ERROR)
-                                .arg(mle.what());
-                        } catch (const ZoneValidationException& e) {
+                        } catch (const ZoneLoaderException& e) {
                             LOG_ERROR(logger, DATASRC_LOAD_FROM_FILE_ERROR)
                                 .arg(e.what());
                         }
@@ -200,7 +197,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                         }
                         try {
                             cache->load(origin, *iterator);
-                        } catch (const ZoneValidationException& e) {
+                        } catch (const ZoneLoaderException& e) {
                             LOG_ERROR(logger, DATASRC_LOAD_FROM_ITERATOR_ERROR)
                                 .arg(e.what());
                         }

@@ -207,7 +207,11 @@ void
 masterLoadWrapper(const char* const filename, const Name& origin,
                   const RRClass& zone_class, LoadCallback callback)
 {
-    masterLoad(filename, origin, zone_class, boost::bind(callback, _1));
+    try {
+        masterLoad(filename, origin, zone_class, boost::bind(callback, _1));
+    } catch (MasterLoadError& e) {
+        isc_throw(ZoneLoaderException, e.what());
+    }
 }
 
 // The installer called from the iterator version of loadZoneData().

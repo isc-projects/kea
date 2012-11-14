@@ -95,9 +95,9 @@ public:
     ///
     /// This is thrown against general error cases in adding an RRset
     /// to the zone.
-    struct AddError : public ZoneValidationException {
+    struct AddError : public ZoneLoaderException {
         AddError(const char* file, size_t line, const char* what) :
-            ZoneValidationException(file, line, what)
+            ZoneLoaderException(file, line, what)
         {}
     };
 
