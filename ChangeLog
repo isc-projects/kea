@@ -1,3 +1,8 @@
+506.	[doc]		jelte
+	Added a chapter about the use of the bindctl command tool to
+	to the BIND 10 guide.
+	(Trac #2305, git c4b0294b5bf4a9d32fb18ab62ca572f492788d72)
+
 505.	[bug]		jelte
 	Fixed a bug in b10-xfrin where a wrong call was made during the
 	final check of a TSIG-signed transfer, incorrectly rejecting the
