@@ -435,7 +435,8 @@ TEST_F(AuthSrvTest, TSIGCheckFirst) {
     // TSIG should have failed, and so the per opcode counter shouldn't be
     // incremented.
     ConstElementPtr stats = server.getStatistics();
-    expectCounterItem(stats->get("zones")->get("_SERVER_")->get("opcode"), "other", 0);
+    expectCounterItem(stats->get("zones")->get("_SERVER_")->get("opcode"),
+                      "other", 0);
 
     checkAllRcodeCountersZeroExcept(Rcode::NOTAUTH(), 1);
 }
