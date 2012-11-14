@@ -287,17 +287,21 @@ String::handle(MasterLexer& lexer) const {
     MasterLexer::Token& token = getLexerImpl(lexer)->token_;
     data.clear();
 
+    bool escaped = false;
     while (true) {
-        int c = getLexerImpl(lexer)->source_->getChar(); // TODO comment
-        c = getLexerImpl(lexer)->skipComment(c);
+        int c = getLexerImpl(lexer)->source_->getChar();
+        if (!escaped) {
+            c = getLexerImpl(lexer)->skipComment(c);
+        }
 
         if (c == '\r' || c == '\n' || c == EOF ||
-            /* escape consideration */
-            c == ' ' || c == '\t' || c == '(' || c == ')') {
+            (!escaped &&
+             (c == ' ' || c == '\t' || c == '(' || c == ')'))) {
             getLexerImpl(lexer)->source_->ungetChar();
             token = MasterLexer::Token(&data.at(0), data.size());
             return (NULL);
         }
+        escaped = (!escaped && (c == '\\'));
         data.push_back(c);
     }
 }
