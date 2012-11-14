@@ -98,6 +98,16 @@ This debug message is issued when the separate thread for maintaining data
 source clients successfully loaded the named zone of the named class as a
 result of the 'loadzone' command.
 
+% AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE_NOCACHE skipped loading zone %1/%2 due to no in-memory cache
+This debug message is issued when the separate thread for maintaining data
+source clients received a command to reload a zone but skipped it because
+the specified zone is not loaded in-memory (but served from an underlying
+data source).  This could happen if the loadzone command is manually issued
+by a user but the zone name is misspelled, but a more likely cause is
+that the command is sent from another BIND 10 module (such as xfrin or DDNS).
+In the latter case it can be simply ignored because there is no need
+for explicit reloading.
+
 % AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_CONFIG_ERROR Error in data source configuration: %1
 The thread for maintaining data source clients has received a command to
 reconfigure, but the parameter data (the new configuration) contains an
