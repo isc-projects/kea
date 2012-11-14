@@ -489,7 +489,7 @@ TEST_F(MySqlLeaseMgrTest, getType) {
 // This test checks that the conversion is correct.  It does not check that the
 // data is entered into the database correctly, only that the MYSQL_TIME
 // structure used for the entry is correctly set up.
-TEST_F(MySqlLeaseMgrTest, CheckTimeConversion) {
+TEST_F(MySqlLeaseMgrTest, checkTimeConversion) {
     const time_t cltt = time(NULL);
     const uint32_t valid_lft = 86400;       // 1 day
     struct tm tm_expire;
@@ -528,7 +528,7 @@ TEST_F(MySqlLeaseMgrTest, getName) {
 }
 
 // @brief Check that getVersion() returns the expected version
-TEST_F(MySqlLeaseMgrTest, CheckVersion) {
+TEST_F(MySqlLeaseMgrTest, checkVersion) {
     // Check version
     pair<uint32_t, uint32_t> version;
     ASSERT_NO_THROW(version = lmptr_->getVersion());
@@ -564,7 +564,7 @@ detailCompareLease6(const Lease6Ptr& first, const Lease6Ptr& second) {
 //
 // Tests where a collection of leases can be returned are in the test
 // Lease6Collection.
-TEST_F(MySqlLeaseMgrTest, BasicLease6) {
+TEST_F(MySqlLeaseMgrTest, basicLease6) {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
 
@@ -610,7 +610,7 @@ TEST_F(MySqlLeaseMgrTest, BasicLease6) {
 //
 // Adds leases to the database and checks that they can be accessed via
 // a combination of DIUID and IAID.
-TEST_F(MySqlLeaseMgrTest, GetLease6Extended1) {
+TEST_F(MySqlLeaseMgrTest, getLease6Extended1) {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
     EXPECT_LE(6, leases.size());    // Expect to access leases 0 through 5
@@ -657,7 +657,7 @@ TEST_F(MySqlLeaseMgrTest, GetLease6Extended1) {
 //
 // Adds leases to the database and checks that they can be accessed via
 // a combination of DIUID and IAID.
-TEST_F(MySqlLeaseMgrTest, GetLease6Extended2) {
+TEST_F(MySqlLeaseMgrTest, getLease6Extended2) {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
     EXPECT_LE(6, leases.size());    // Expect to access leases 0 through 5
@@ -698,7 +698,7 @@ TEST_F(MySqlLeaseMgrTest, GetLease6Extended2) {
 // @brief Lease6 Update Tests
 //
 // Checks that we are able to update a lease in the database.
-TEST_F(MySqlLeaseMgrTest, UpdateLease6) {
+TEST_F(MySqlLeaseMgrTest, updateLease6) {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
     EXPECT_LE(3, leases.size());    // Expect to access leases 0 through 5
