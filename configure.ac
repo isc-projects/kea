@@ -767,7 +767,7 @@ if test "$MYSQL_CONFIG" != "" ; then
     LIBS="$MYSQL_LIBS $LIBS"
 
     AC_LINK_IFELSE(
-            [AC_LANG_PROGRAM([#include <mysql/mysql.h>],
+            [AC_LANG_PROGRAM([#include <mysql.h>],
                              [MYSQL mysql_handle;
                               (void) mysql_init(&mysql_handle);
                              ])],
