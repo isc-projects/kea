@@ -3330,7 +3330,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         skeleton server. That means that while it is capable of
         performing DHCP configuration, it is not fully functional.
         In particular, it does not have a functional lease
-        databases. This means that they will assign the same, fixed,
+        database. This means that they will assign the same, fixed,
         hardcoded addresses to any client that will ask. See <xref
         linkend="dhcp4-limit"/> for a
         detailed description.
@@ -3356,10 +3356,8 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 &gt; <userinput>config commit</userinput></screen></para>
 
        <para>
-         To shutdown running <command>b10-dhcp4</command>, please use the
+         To stop running <command>b10-dhcp4</command>, please use the
          following command:
-         <screen>&gt; <userinput>Dhcp4 shutdown</userinput></screen>
-         or
          <screen>&gt; <userinput>config remove Boss/components b10-dhcp4</userinput>
 &gt; <userinput>config commit</userinput></screen></para>
 
@@ -3467,8 +3465,8 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
             <simpara><command>b10-dhcp4</command> does not support
             BOOTP. That is a design choice. This limitation is
             permanent. If you have legacy nodes that can't use DHCP and
-            require BOOTP support, please use latest version of ISC DHCP
-            <ulink url="http://www.isc.org/software/dhcp"/>.</simpara>
+            require BOOTP support, please use the latest version of ISC DHCP
+            via <ulink url="http://www.isc.org/software/dhcp"/>.</simpara>
           </listitem>
           <listitem>
             <simpara>Interface detection is currently working on Linux
@@ -3533,7 +3531,7 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
     <section id="dhcp6-install">
       <title>DHCPv6 Server Build and Installation</title>
       <para>
-      DHCPv6 is part of the BIND suite of programs and is built as part of
+      DHCPv6 is part of the BIND 10 suite of programs and is built as part of
       the build of BIND 10.  With the use of MySQL, some additional
       installation steps are needed:
       </para>
@@ -3554,7 +3552,7 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
           i.e.
           <screen><userinput>./configure [other-options] --with-dhcp-mysql</userinput></screen>
           ...if MySQL was installed in the default location, or:
-          <screen><userinput>./configure [other-options] --with-dhcp-mysql=&lt;path-to-mysql_config&gt;</userinput></screen>
+          <screen><userinput>./configure [other-options] --with-dhcp-mysql=<replaceable>&lt;path-to-mysql_config&gt;</replaceable></userinput></screen>
           ...if not.
         </para>
       </section>
@@ -3580,7 +3578,7 @@ mysql></screen>
          <para>
           3. Create the database tables:
           <screen>mysql> <userinput>CONNECT kea;</userinput>
-mysql> <userinput>SOURCE &lt;path-to-bind10&gt;/share/bind10-devel/dhcpdb_create.mysql</userinput></screen>
+mysql> <userinput>SOURCE <replaceable>&lt;path-to-bind10&gt;</replaceable>/share/bind10-devel/dhcpdb_create.mysql</userinput></screen>
         </para>
          <para>
           4. Create the user under which BIND 10 will access the database and grant it access to the database tables:
@@ -3609,10 +3607,8 @@ $</screen>
       </para>
 
        <para>
-         To shutdown running <command>b10-dhcp6</command>, use use the
+         To stop running <command>b10-dhcp6</command>, use the
          following command:
-         <screen>&gt; <userinput>Dhcp6 shutdown</userinput></screen>
-         or
          <screen>&gt; <userinput>config remove Boss/components b10-dhcp6</userinput>
 &gt; <userinput>config commit</userinput></screen>
        </para>
@@ -3873,9 +3869,11 @@ Dhcp6/renew-timer	1000	integer	(default)
     <para>
     While this library is currently used by
     <command>b10-dhcp4</command> and <command>b10-dhcp6</command>
-    only, it is designed to be portable, universal library, useful for
+    only, it is designed to be a portable, universal library, useful for
     any kind of DHCP-related software.
     </para>
+
+<!-- TODO: point to doxygen docs -->
 
     <section id="iface-detect">
       <title>Interface detection</title>
@@ -3890,10 +3888,12 @@ Dhcp6/renew-timer	1000	integer	(default)
       in running DHCP components on systems other than Linux.</para>
     </section>
 
+<!--
     <section id="packet-handling">
       <title>DHCPv4/DHCPv6 packet handling</title>
       <para>TODO: Describe packet handling here, with pointers to wiki</para>
     </section>
+-->
 
   </chapter>
 
