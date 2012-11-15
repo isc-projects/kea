@@ -33,7 +33,6 @@
 
 #include <asiolink/asiolink.h>
 #include <server_common/portconfig.h>
-#include <auth/statistics.h>
 
 namespace isc {
 namespace util {
