@@ -311,9 +311,9 @@ file. The zone was not loaded. The specific error is shown in the
 message, and should be addressed.
 
 % DATASRC_LOAD_FROM_ITERATOR_ERROR %1
-An error was found in the zone data when it was being loaded from an
-iterator. The zone was not loaded. The specific error is shown in the
-message, and should be addressed.
+An error was found in the zone data when it was being loaded from
+another data source. The zone was not loaded. The specific error is
+shown in the message, and should be addressed.
 
 % DATASRC_MEM_ADD_RRSET adding RRset '%1/%2' into zone '%3'
 Debug information. An RRset is being added to the in-memory data source.
