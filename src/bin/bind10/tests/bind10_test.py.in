@@ -1520,9 +1520,18 @@ class TestBossComponents(unittest.TestCase):
         '''Test that b10-resolver is started.'''
         bob = MockBobSimple()
         bob.c_channel_env = {}
+
+        # non-verbose case
+        bob.verbose = False
         bob.start_resolver()
         self.assertEqual('b10-resolver', bob.started_process_name)
         self.assertEqual(['b10-resolver'], bob.started_process_args)
+
+        # verbose case
+        bob.verbose = True
+        bob.start_resolver()
+        self.assertEqual('b10-resolver', bob.started_process_name)
+        self.assertEqual(['b10-resolver', '-v'], bob.started_process_args)
 
     def test_start_cmdctl(self):
         '''Test that b10-cmdctl is started.'''
