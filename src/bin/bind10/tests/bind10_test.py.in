@@ -1537,9 +1537,18 @@ class TestBossComponents(unittest.TestCase):
         '''Test that b10-cmdctl is started.'''
         bob = MockBobSimple()
         bob.c_channel_env = {}
+
+        # non-verbose case
+        bob.verbose = False
         bob.start_cmdctl()
         self.assertEqual('b10-cmdctl', bob.started_process_name)
         self.assertEqual(['b10-cmdctl'], bob.started_process_args)
+
+        # verbose case
+        bob.verbose = True
+        bob.start_cmdctl()
+        self.assertEqual('b10-cmdctl', bob.started_process_name)
+        self.assertEqual(['b10-cmdctl', '-v'], bob.started_process_args)
 
 class SocketSrvTest(unittest.TestCase):
     """
