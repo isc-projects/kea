@@ -33,7 +33,6 @@ namespace isc {
 namespace auth {
 namespace statistics {
 
-class QRAttributes {
 /// \brief Query/Response attributes for statistics.
 ///
 /// This class holds some attributes related to a query/response
@@ -41,6 +40,7 @@ class QRAttributes {
 ///
 /// This class does not have getter methods since it exposes private members
 /// to \c Counters directly.
+class QRAttributes {
 friend class Counters;
 private:
     // request attributes
