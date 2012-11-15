@@ -20,6 +20,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <bitset>
 #include <cassert>
 #include <string>
 #include <vector>
@@ -35,7 +36,16 @@ using namespace master_lexer_internal;
 struct MasterLexer::MasterLexerImpl {
     MasterLexerImpl() : source_(NULL), token_(Token::NOT_STARTED),
                         paren_count_(0), last_was_eol_(false)
-    {}
+    {
+        separators_.set('\r');
+        separators_.set('\n');
+        separators_.set(' ');
+        separators_.set('\t');
+        separators_.set('(');
+        separators_.set(')');
+        esc_separators_.set('\r');
+        esc_separators_.set('\n');
+    }
 
     // A helper method to skip possible comments toward the end of EOL or EOF.
     // commonly used by state classes.  It returns the corresponding "end-of"
@@ -53,6 +63,14 @@ struct MasterLexer::MasterLexerImpl {
         return (c);
     }
 
+    bool isTokenEnd(int c, bool escaped) {
+        if (c == InputSource::END_OF_STREAM) {
+            return (true);
+        }
+        return (escaped ? esc_separators_.test(c & 0x7f) :
+                separators_.test(c & 0x7f));
+    }
+
     std::vector<InputSourcePtr> sources_;
     InputSource* source_;       // current source (NULL if sources_ is empty)
     Token token_;               // currently recognized token (set by a state)
@@ -62,6 +80,13 @@ struct MasterLexer::MasterLexerImpl {
     // The main lexer class does not need these members.
     size_t paren_count_;        // nest count of the parentheses
     bool last_was_eol_; // whether the lexer just passed an end-of-line
+
+    // Bitmaps that gives whether a given (positive) character should be
+    // considered a separator of a string/number token.  The esc_ version
+    // is a subset of the other, excluding characters that can be ignored
+    // if escaped by a backslash.
+    std::bitset<128> separators_;
+    std::bitset<128> esc_separators_;
 };
 
 MasterLexer::MasterLexer() : impl_(new MasterLexerImpl) {
@@ -305,9 +330,7 @@ String::handle(MasterLexer& lexer) const {
             c = getLexerImpl(lexer)->skipComment(c);
         }
 
-        if (c == '\r' || c == '\n' || c == EOF ||
-            (!escaped &&
-             (c == ' ' || c == '\t' || c == '(' || c == ')'))) {
+        if (getLexerImpl(lexer)->isTokenEnd(c, escaped)) {
             getLexerImpl(lexer)->source_->ungetChar();
             getLexerImpl(lexer)->token_ =
                 MasterLexer::Token(&data.at(0), data.size());
