@@ -111,13 +111,7 @@ const int rcode_to_qrcounter[] = {
     QR_RCODE_OTHER,         // Rcode = 13: (Unassigned)
     QR_RCODE_OTHER,         // Rcode = 14: (Unassigned)
     QR_RCODE_OTHER,         // Rcode = 15: (Unassigned)
-    QR_RCODE_BADSIGVERS,    // Rcode = 16: BADVERS, BADSIG
-    QR_RCODE_BADKEY,        // Rcode = 17: BADKEY
-    QR_RCODE_BADTIME,       // Rcode = 18: BADTIME
-    QR_RCODE_BADMODE,       // Rcode = 19: BADMODE
-    QR_RCODE_BADNAME,       // Rcode = 20: BADNAME
-    QR_RCODE_BADALG,        // Rcode = 21: BADALG
-    QR_RCODE_BADTRUNC       // Rcode = 22: BADTRUNC
+    QR_RCODE_BADVERS        // Rcode = 16: (BADVERS)
 };
 const size_t num_rcode_to_qrcounter =
     sizeof(rcode_to_qrcounter) / sizeof(rcode_to_qrcounter[0]);
