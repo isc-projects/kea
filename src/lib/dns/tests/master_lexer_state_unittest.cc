@@ -255,6 +255,8 @@ TEST_F(MasterLexerStateTest, crlf) {
     EXPECT_EQ(Token::END_OF_FILE, s_crlf.getToken(lexer).getType());
 }
 
+// Commonly used check for string related test cases, checking if the given
+// token has expected values.
 void
 stringTokenCheck(const std::string& expected, const MasterLexer::Token& token,
                  bool quoted = false)
