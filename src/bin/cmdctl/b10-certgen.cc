@@ -245,7 +245,7 @@ public:
                 validateCertificate(certfile) != VERIFIED) {
                 return (createKeyAndCertificate(keyfile, certfile));
             } else {
-                print(certfile + " exists and is valid. Not creating a new one");
+                print("Not creating a new certificate (use -f to force)");
             }
         } else {
             if (!fileExists(certfile)) {

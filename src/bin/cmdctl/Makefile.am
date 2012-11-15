@@ -25,14 +25,17 @@ CLEANFILES= b10-cmdctl cmdctl.pyc cmdctl.spec
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/cmdctl_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/cmdctl_messages.pyc
 
-man_MANS = b10-cmdctl.8
+man_MANS = b10-cmdctl.8 b10-certgen.1
 DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST += $(man_MANS) b10-cmdctl.xml cmdctl_messages.mes
+EXTRA_DIST += $(man_MANS) b10-certgen.xml b10-cmdctl.xml cmdctl_messages.mes
 
 if GENERATE_DOCS
 
 b10-cmdctl.8: b10-cmdctl.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-cmdctl.xml
+
+b10-certgen.1: b10-certgen.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-certgen.xml
 
 else
 
