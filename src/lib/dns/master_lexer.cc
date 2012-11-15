@@ -51,8 +51,8 @@ struct MasterLexer::MasterLexerImpl {
     // commonly used by state classes.  It returns the corresponding "end-of"
     // character in case it's a comment; otherwise it simply returns the
     // current character.
-    int skipComment(int c) {
-        if (c == ';') {
+    int skipComment(int c, bool escaped = false) {
+        if (c == ';' && !escaped) {
             while (true) {
                 c = source_->getChar();
                 if (c == '\n' || c == InputSource::END_OF_STREAM) {
@@ -325,10 +325,8 @@ String::handle(MasterLexer& lexer) const {
 
     bool escaped = false;
     while (true) {
-        int c = getLexerImpl(lexer)->source_->getChar();
-        if (!escaped) {
-            c = getLexerImpl(lexer)->skipComment(c);
-        }
+        const int c = getLexerImpl(lexer)->skipComment(
+            getLexerImpl(lexer)->source_->getChar(), escaped);
 
         if (getLexerImpl(lexer)->isTokenEnd(c, escaped)) {
             getLexerImpl(lexer)->source_->ungetChar();
