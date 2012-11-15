@@ -178,7 +178,7 @@ Counters::incResponse(const QRAttributes& qrattrs, const Message& response) {
 
     // response EDNS
     ConstEDNSPtr response_edns = response.getEDNS();
-    if (response_edns != NULL && response_edns->getVersion() == 0) {
+    if (response_edns && response_edns->getVersion() == 0) {
         server_qr_counter_.inc(QR_RESPONSE_EDNS0);
     }
 
