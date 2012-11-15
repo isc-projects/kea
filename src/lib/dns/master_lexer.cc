@@ -64,9 +64,13 @@ struct MasterLexer::MasterLexerImpl {
     }
 
     bool isTokenEnd(int c, bool escaped) {
+        // Special case of EOF (end of stream); this is not in the bitmaps
         if (c == InputSource::END_OF_STREAM) {
             return (true);
         }
+        // In this implementation we only ensure the behavior for unsigned
+        // range of characters, so we restrict the range of the values up to
+        // 0x7f = 127
         return (escaped ? esc_separators_.test(c & 0x7f) :
                 separators_.test(c & 0x7f));
     }
@@ -84,7 +88,7 @@ struct MasterLexer::MasterLexerImpl {
     // Bitmaps that gives whether a given (positive) character should be
     // considered a separator of a string/number token.  The esc_ version
     // is a subset of the other, excluding characters that can be ignored
-    // if escaped by a backslash.
+    // if escaped by a backslash.  See isTokenEnd() for the bitmap size.
     std::bitset<128> separators_;
     std::bitset<128> esc_separators_;
 };
