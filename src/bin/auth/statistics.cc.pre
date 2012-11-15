@@ -44,13 +44,13 @@ namespace {
 void
 fillNodes(const Counter& counter,
           const struct isc::auth::statistics::CounterTypeTree type_tree[],
-          isc::auth::statistics::Counters::ItemTreeType& trees)
+          isc::auth::statistics::Counters::ItemTreePtr& trees)
 {
     using namespace isc::data;
 
     for (int i = 0; type_tree[i].name != NULL; ++i) {
         if (type_tree[i].sub_tree != NULL) {
-            isc::auth::statistics::Counters::ItemTreeType sub_tree =
+            isc::auth::statistics::Counters::ItemTreePtr sub_tree =
                 Element::createMap();
             trees->set(type_tree[i].name, sub_tree);
             fillNodes(counter, type_tree[i].sub_tree, sub_tree);
@@ -247,16 +247,16 @@ Counters::inc(const QRAttributes& qrattrs, const Message& response,
     }
 }
 
-Counters::ItemTreeType
+Counters::ItemTreePtr
 Counters::get() const {
     using namespace isc::data;
 
-    Counters::ItemTreeType item_tree = Element::createMap();
+    Counters::ItemTreePtr item_tree = Element::createMap();
 
-    Counters::ItemTreeType zones = Element::createMap();
+    Counters::ItemTreePtr zones = Element::createMap();
     item_tree->set("zones", zones);
 
-    Counters::ItemTreeType server = Element::createMap();
+    Counters::ItemTreePtr server = Element::createMap();
     fillNodes(server_qr_counter_, QRCounterTree, server);
     zones->set("_SERVER_", server);
 
