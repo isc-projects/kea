@@ -125,7 +125,7 @@ public:
     ///
     /// The caller is responsible for deleting the State.
     static State* getFakeState(const State* next, size_t eat_chars,
-                               MasterLexer::Token* token = NULL,
+                               const MasterLexer::Token* token = NULL,
                                int paren_change = 0,
                                const bool* set_eol = NULL,
                                const boost::function<void
