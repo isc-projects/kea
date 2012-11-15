@@ -856,8 +856,11 @@ TEST_F(ListTest, BadMasterFile) {
         "   }"
         "}]"));
 
-    // this should not throw even if there are any zone loading errors.
-    list_->configure(elem, true);
+    EXPECT_NO_THROW({
+        // This should not throw even if there are any zone loading
+        // errors.
+        list_->configure(elem, true);
+    });
 
     positiveResult(list_->find(Name("example.com."), true), ds_[0],
                    Name("example.com."), true, "example.com", true);
