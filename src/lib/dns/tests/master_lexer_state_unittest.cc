@@ -32,6 +32,7 @@ protected:
                              s_null(NULL),
                              s_crlf(State::getInstance(State::CRLF)),
                              s_string(State::getInstance(State::String)),
+                             s_qstring(State::getInstance(State::QString)),
                              options(MasterLexer::NONE),
                              orig_options(options)
     {}
@@ -42,6 +43,7 @@ protected:
     const State* const s_null;
     const State& s_crlf;
     const State& s_string;
+    const State& s_qstring;
     std::stringstream ss;
     MasterLexer::Options options, orig_options;
 };
@@ -254,9 +256,10 @@ TEST_F(MasterLexerStateTest, crlf) {
 }
 
 void
-stringTokenCheck(const std::string& expected, const MasterLexer::Token& token)
+stringTokenCheck(const std::string& expected, const MasterLexer::Token& token,
+                 bool quoted = false)
 {
-    EXPECT_EQ(Token::STRING, token.getType());
+    EXPECT_EQ(quoted ? Token::QSTRING : Token::STRING, token.getType());
     EXPECT_EQ(expected, token.getString());
     const std::string actual(token.getStringRegion().beg,
                              token.getStringRegion().beg +
@@ -348,6 +351,86 @@ TEST_F(MasterLexerStateTest, stringEscape) {
     EXPECT_EQ(&s_string, State::start(lexer, common_options));
     EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' ' in mid
     stringTokenCheck("escaped\\\\", s_string.getToken(lexer));
+}
+
+TEST_F(MasterLexerStateTest, quotedString) {
+    ss << "\"ignore-quotes\"\n";
+    ss << "\"quoted string\" ";
+    ss << "\"escape\\ in quote\" ";
+    ss << "\"escaped\\\"\" ";
+    ss << "\"escaped backslash\\\\\" ";
+    ss << "\"no;comment\"";
+    lexer.pushSource(ss);
+
+    // by default, '"' doesn't have any special meaning and part of string
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see \n
+    stringTokenCheck("\"ignore-quotes\"", s_string.getToken(lexer));
+    EXPECT_EQ(s_null, State::start(lexer, common_options)); // skip \n after it
+    EXPECT_TRUE(s_string.wasLastEOL(lexer));
+
+    // If QSTRING is specified in option, '"' is regarded as a beginning of
+    // a quoted string.
+    const MasterLexer::Options options = common_options | MasterLexer::QSTRING;
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_FALSE(s_string.wasLastEOL(lexer)); // EOL is canceled due to '"'
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    stringTokenCheck("quoted string", s_string.getToken(lexer), true);
+
+    // escape character mostly doesn't have any effect in the qstring
+    // processing
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    stringTokenCheck("escape\\ in quote", s_string.getToken(lexer), true);
+
+    // The only exception is the quotation mark itself.  Note that the escape
+    // only works on the quotation mark immediately after it.
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    stringTokenCheck("escaped\"", s_string.getToken(lexer), true);
+
+    // quoted '\' then '"'.  Unlike the previous case '"' shouldn't be
+    // escaped.
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    stringTokenCheck("escaped backslash\\\\", s_string.getToken(lexer), true);
+
+    // ';' has no meaning in a quoted string (not indicating a comment)
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    stringTokenCheck("no;comment", s_string.getToken(lexer), true);
+}
+
+TEST_F(MasterLexerStateTest, brokenQuotedString) {
+    ss << "\"unbalanced-quote\n";
+    ss << "\"quoted\\\n\" ";
+    ss << "\"unclosed quote and EOF";
+    lexer.pushSource(ss);
+
+    // EOL is encountered without closing the quote
+    const MasterLexer::Options options = common_options | MasterLexer::QSTRING;
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    ASSERT_EQ(Token::ERROR, s_qstring.getToken(lexer).getType());
+    EXPECT_EQ(Token::UNBALANCED_QUOTES,
+              s_qstring.getToken(lexer).getErrorCode());
+    // We can resume after the error from the '\n'
+    EXPECT_EQ(s_null, State::start(lexer, options));
+    EXPECT_EQ(Token::END_OF_LINE, s_crlf.getToken(lexer).getType());
+
+    // \n is okay in a quoted string if escaped
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    stringTokenCheck("quoted\\\n", s_string.getToken(lexer), true);
+
+    // EOF is encountered without closing the quote
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    ASSERT_EQ(Token::ERROR, s_qstring.getToken(lexer).getType());
+    EXPECT_EQ(Token::UNEXPECTED_END, s_qstring.getToken(lexer).getErrorCode());
+    // If we continue we'll simply see the EOF
+    EXPECT_EQ(s_null, State::start(lexer, options));
+    EXPECT_EQ(Token::END_OF_FILE, s_crlf.getToken(lexer).getType());
 }
 
 }

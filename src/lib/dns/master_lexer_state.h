@@ -98,7 +98,8 @@ public:
     /// a way to get an instance of a specific state.
     enum ID {
         CRLF,                  ///< Just seen a carriage-return character
-        String                 ///< Handling a string token
+        String,                ///< Handling a string token
+        QString                ///< Handling a quoted string token
     };
 
     /// \brief Returns a \c State instance of the given state.
