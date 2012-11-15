@@ -62,6 +62,13 @@ b10_certgen_SOURCES = b10-certgen.cc
 b10_certgen_CXXFLAGS = $(BOTAN_INCLUDES)
 b10_certgen_LDFLAGS = $(BOTAN_LIBS)
 
+# Generate the initial certificates immediately
+cmdctl-certfile.pem: b10-certgen
+	./b10-certgen -w
+
+cmdctl-keyfile.pem: b10-certgen
+	./b10-certgen -w
+
 if INSTALL_CONFIGURATIONS
 
 # Below we intentionally use ${INSTALL} -m 640 instead of $(INSTALL_DATA)
