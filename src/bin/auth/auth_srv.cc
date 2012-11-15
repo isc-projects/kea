@@ -237,7 +237,8 @@ public:
                 BaseSocketSessionForwarder& ddns_forwarder);
     ~AuthSrvImpl();
 
-    bool processNormalQuery(const IOMessage& io_message, Message& message,
+    bool processNormalQuery(const IOMessage& io_message,
+                            ConstEDNSPtr remote_edns, Message& message,
                             OutputBuffer& buffer,
                             auto_ptr<TSIGContext> tsig_context);
     bool processXfrQuery(const IOMessage& io_message, Message& message,
@@ -571,13 +572,11 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
     try {
         // statistics: check EDNS
         //     note: This can only be reliable after TSIG check succeeds.
-        {
-            ConstEDNSPtr edns = message.getEDNS();
-            if (edns != NULL) {
-                impl_->stats_attrs_.setQueryEDNS(true,
-                                                 edns->getVersion() != 0);
-                impl_->stats_attrs_.setQueryDO(edns->getDNSSECAwareness());
-            }
+        ConstEDNSPtr edns = message.getEDNS();
+        if (edns) {
+            impl_->stats_attrs_.setQueryEDNS(true,
+                                             edns->getVersion() != 0);
+            impl_->stats_attrs_.setQueryDO(edns->getDNSSECAwareness());
         }
 
         // statistics: check OpCode
@@ -612,8 +611,9 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
                 send_answer = impl_->processXfrQuery(io_message, message,
                                                      buffer, tsig_context);
             } else {
-                send_answer = impl_->processNormalQuery(io_message, message,
-                                                        buffer, tsig_context);
+                send_answer = impl_->processNormalQuery(io_message, edns,
+                                                        message, buffer,
+                                                        tsig_context);
             }
         }
     } catch (const std::exception& ex) {
@@ -628,11 +628,11 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
 }
 
 bool
-AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
+AuthSrvImpl::processNormalQuery(const IOMessage& io_message,
+                                ConstEDNSPtr remote_edns, Message& message,
                                 OutputBuffer& buffer,
                                 auto_ptr<TSIGContext> tsig_context)
 {
-    ConstEDNSPtr remote_edns = message.getEDNS();
     const bool dnssec_ok = remote_edns && remote_edns->getDNSSECAwareness();
     const uint16_t remote_bufsize = remote_edns ? remote_edns->getUDPSize() :
         Message::DEFAULT_MAX_UDPSIZE;
@@ -820,11 +820,10 @@ void
 AuthSrvImpl::resumeServer(DNSServer* server, Message& message,
                           const bool done) {
     if (done) {
-        stats_attrs_.answerWasSent();
         // isTruncated from MessageRenderer
         stats_attrs_.setResponseTruncated(renderer_.isTruncated());
     }
-    counters_.inc(stats_attrs_, message);
+    counters_.inc(stats_attrs_, message, done);
     stats_attrs_.reset();
     server->resume(done);
 }

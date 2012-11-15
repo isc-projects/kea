@@ -113,13 +113,12 @@ TEST_F(CountersTest, incrementNormalQuery) {
     qrattrs.setQueryOpCode(Opcode::QUERY_CODE);
     qrattrs.setQueryEDNS(true, false);
     qrattrs.setQueryDO(true);
-    qrattrs.answerWasSent();
 
     response.setRcode(Rcode::REFUSED());
     response.addQuestion(Question(Name("example.com"),
                                   RRClass::IN(), RRType::AAAA()));
 
-    counters.inc(qrattrs, response);
+    counters.inc(qrattrs, response, true);
 
     expect_nonzero.clear();
     expect_nonzero.insert("opcode.query");

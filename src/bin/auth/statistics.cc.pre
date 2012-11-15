@@ -238,11 +238,13 @@ Counters::incResponse(const QRAttributes& qrattrs, const Message& response) {
 }
 
 void
-Counters::inc(const QRAttributes& qrattrs, const Message& response) {
+Counters::inc(const QRAttributes& qrattrs, const Message& response,
+              const bool done)
+{
     // increment request counters
     incRequest(qrattrs);
 
-    if (qrattrs.answer_sent_) {
+    if (done) {
         // increment response counters if answer was sent
         incResponse(qrattrs, response);
     }
