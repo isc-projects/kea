@@ -65,12 +65,6 @@ public:
         reset();
     };
 
-    /// \brief The destructor.
-    ///
-    /// This method never throws an exception.
-    ///
-    ~QRAttributes() {};
-
     /// \brief Set query opcode.
     /// \throw None
     void setQueryOpCode(const int opcode) {
@@ -187,12 +181,6 @@ public:
     /// a standard exception if memory allocation fails inside the method.
     ///
     Counters();
-
-    /// \brief The destructor.
-    ///
-    /// This method never throws an exception.
-    ///
-    ~Counters();
 
     /// \brief Increment counters according to the parameters.
     ///

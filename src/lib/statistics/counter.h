@@ -54,11 +54,6 @@ public:
         }
     };
 
-    /// The destructor.
-    ///
-    /// This method never throws an exception.
-    ~Counter() {};
-
     /// \brief Increment a counter item specified with \a type.
     ///
     /// \param type %Counter item to increment
