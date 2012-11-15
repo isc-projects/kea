@@ -101,10 +101,6 @@ public:
     /// \throw None
     inline void setOrigin(const std::string& origin);
 
-    /// \brief Set if the answer has sent.
-    /// \throw None
-    inline void answerWasSent();
-
     /// \brief Set if the response is truncated.
     /// \throw None
     inline void setResponseTruncated(const bool is_truncated);
@@ -161,11 +157,6 @@ QRAttributes::setQuerySig(const bool is_tsig, const bool is_sig0,
     req_is_tsig_ = is_tsig;
     req_is_sig0_ = is_sig0;
     req_is_badsig_ = is_badsig;
-}
-
-inline void
-QRAttributes::answerWasSent() {
-    answer_sent_ = true;
 }
 
 inline void
@@ -256,10 +247,12 @@ public:
     ///
     /// \param qrattrs Query/Response attributes.
     /// \param response DNS response message.
+    /// \param done DNS response was sent to the client.
     ///
     /// \throw std::bad_alloc Internal resource allocation fails
     ///
-    void inc(const QRAttributes& qrattrs, const isc::dns::Message& response);
+    void inc(const QRAttributes& qrattrs, const isc::dns::Message& response,
+             const bool done);
 
     /// \brief Get statistics counters.
     ///
