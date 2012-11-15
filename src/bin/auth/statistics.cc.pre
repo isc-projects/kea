@@ -121,9 +121,6 @@ Counters::Counters() :
     zone_qr_counters_(QR_COUNTER_TYPES)
 {}
 
-Counters::~Counters()
-{}
-
 void
 Counters::incRequest(const QRAttributes& qrattrs) {
     // protocols carrying request

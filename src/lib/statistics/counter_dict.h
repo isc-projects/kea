@@ -56,7 +56,6 @@ public:
             isc_throw(isc::InvalidParameter, "Items must not be 0");
         }
     };
-    ~CounterDictionary() {};
     void addElement(const std::string& name) {
         // throw if the element already exists
         if (dictionary_.count(name) != 0) {
@@ -113,10 +112,6 @@ public:
             /// throw a standard exception if memory allocation fails
             /// inside the method.
             ConstIterator() {}
-            /// The destructor.
-            ///
-            /// This method never throws an exception.
-            ~ConstIterator() {}
             /// Constructor from implementation detail DictionaryMap::const_iterator
             ConstIterator(
                 DictionaryMap::const_iterator iterator) :
