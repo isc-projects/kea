@@ -180,7 +180,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                                         paramConf->get(*it)->stringValue());
                         } catch (const ZoneLoaderException& e) {
                             LOG_ERROR(logger, DATASRC_LOAD_FROM_FILE_ERROR)
-                                .arg(e.what());
+                                .arg(origin).arg(e.what());
                         }
                     } else {
                         ZoneIteratorPtr iterator;
@@ -199,7 +199,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                             cache->load(origin, *iterator);
                         } catch (const ZoneLoaderException& e) {
                             LOG_ERROR(logger, DATASRC_LOAD_FROM_ITERATOR_ERROR)
-                                .arg(e.what());
+                                .arg(origin).arg(e.what());
                         }
                     }
                 }
