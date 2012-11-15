@@ -827,22 +827,32 @@ TEST_F(ListTest, masterFiles) {
 }
 
 TEST_F(ListTest, BadMasterFile) {
-    // Configure two zone correctly, and one with the wrong origin
-    // (resulting in an out-of-zone data error)
-    // Configuration should succeed, and the correct zones should
-    // be loaded. Neither the 'bad' origin or the zone it used
-    // should be loaded
+    // Configuration should succeed, and the good zones in the list
+    // below should be loaded. No bad zones should be loaded.
     const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"MasterFiles\","
         "   \"cache-enable\": true,"
         "   \"params\": {"
+
+        // good zone
         "       \"example.com.\": \"" TEST_DATA_DIR "/example.com.flattened\","
+
+        // bad zone (empty file)
         "       \"example.net.\": \"" TEST_DATA_DIR "/example.net-empty\","
+
+        // bad zone (data doesn't validate: see the file for details)
         "       \"example.edu.\": \"" TEST_DATA_DIR "/example.edu-broken\","
+
+        // bad zone (file doesn't exist)
         "       \"example.info.\": \"" TEST_DATA_DIR "/example.info-nonexist\","
+
+        // bad zone (data doesn't match the zone name)
         "       \"foo.bar.\": \"" TEST_DATA_DIR "/example.org.nsec3-signed\","
+
+        // good zone
         "       \".\": \"" TEST_DATA_DIR "/root.zone\""
+
         "   }"
         "}]"));
 
