@@ -167,7 +167,8 @@ def generate_docfile(docfile, def_mtime):
 
     if need_generate(builddir+os.sep+docfile, def_mtime):
         doc_pre = open(srcdir+os.sep+docfile+pre_suffix, 'r')
-        doc_pre_xml = doc_pre.read().replace('@@LOCAL'+'STATEDIR@@', localstatedir)
+        doc_pre_xml = doc_pre.read().replace('@@LOCAL'+'STATEDIR@@',
+                                             localstatedir)
         doc_pre.close
 
         variable_tree = ElementTree.Element('variablelist')
@@ -175,7 +176,7 @@ def generate_docfile(docfile, def_mtime):
         doc = open(builddir+os.sep+docfile, 'w')
         doc.write(doc_pre_xml.replace(
             '<!-- ### STATISTICS DATA PLACEHOLDER ### -->',
-            ElementTree.tostring(variable_tree)))
+            str(ElementTree.tostring(variable_tree))))
         doc.close()
     else:
         print('skip generating ' + docfile)
