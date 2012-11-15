@@ -15,8 +15,8 @@
 #ifndef __STATISTICS_ITEMS_H
 #define __STATISTICS_ITEMS_H 1
 
-/// This file defines a set of statistics items in Auth module for internal
-/// use. This file is intended to be included in statistics.cc.
+/// This file declares a set of statistics items in Auth module for internal
+/// use. This file is intended to be included in statistics.cc and unittests.
 
 namespace isc {
 namespace auth {
