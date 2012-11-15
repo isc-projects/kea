@@ -717,7 +717,7 @@ class MockBob(BoB):
         self.get_process_exit_status_called = True
         return (53, 0)
 
-class MockBob2(BoB):
+class MockBobSimple(BoB):
     def __init__(self):
         BoB.__init__(self)
         # Set which process has been started
@@ -1480,7 +1480,7 @@ class TestBossComponents(unittest.TestCase):
 
     def test_start_simple(self):
         '''Test simple process startup.'''
-        bob = MockBob2()
+        bob = MockBobSimple()
         bob.c_channel_env = {}
 
         # non-verbose case
@@ -1499,7 +1499,7 @@ class TestBossComponents(unittest.TestCase):
     # do different things.
     def test_start_auth2(self):
         '''Test that b10-auth is started.'''
-        bob = MockBob2()
+        bob = MockBobSimple()
         bob.c_channel_env = {}
         bob.start_auth()
         self.assertEqual('b10-auth', bob.started_process_name)
@@ -1509,7 +1509,7 @@ class TestBossComponents(unittest.TestCase):
     # do different things.
     def test_start_resolver2(self):
         '''Test that b10-resolver is started.'''
-        bob = MockBob2()
+        bob = MockBobSimple()
         bob.c_channel_env = {}
         bob.start_resolver()
         self.assertEqual('b10-resolver', bob.started_process_name)
@@ -1517,7 +1517,7 @@ class TestBossComponents(unittest.TestCase):
 
     def test_start_cmdctl(self):
         '''Test that b10-cmdctl is started.'''
-        bob = MockBob2()
+        bob = MockBobSimple()
         bob.c_channel_env = {}
         bob.start_cmdctl()
         self.assertEqual('b10-cmdctl', bob.started_process_name)
