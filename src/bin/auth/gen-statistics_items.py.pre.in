@@ -34,7 +34,9 @@ def need_generate(filepath, mtime):
     To avoid unnecessary compilation, we skip (re)generating the file when
     the file already exists and newer than the base file.
     '''
-    if os.path.exists(filepath) and os.path.getmtime(filepath) > mtime:
+    if os.path.exists(filepath) and\
+        (os.path.getmtime(filepath) > mtime or
+         os.path.getmtime(filepath) > os.path.getmtime(filepath+pre_suffix)):
         return False
     return True
 
