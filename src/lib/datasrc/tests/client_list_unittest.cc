@@ -838,16 +838,24 @@ TEST_F(ListTest, BadMasterFile) {
         "   \"cache-enable\": true,"
         "   \"params\": {"
         "       \"example.com.\": \"" TEST_DATA_DIR "/example.com.flattened\","
+        "       \"example.net.\": \"" TEST_DATA_DIR "/example.net-empty\","
+        "       \"example.edu.\": \"" TEST_DATA_DIR "/example.edu-broken\","
+        "       \"example.info.\": \"" TEST_DATA_DIR "/example.info-nonexist\","
         "       \"foo.bar.\": \"" TEST_DATA_DIR "/example.org.nsec3-signed\","
         "       \".\": \"" TEST_DATA_DIR "/root.zone\""
         "   }"
         "}]"));
+
+    // this should not throw even if there are any zone loading errors.
     list_->configure(elem, true);
 
     positiveResult(list_->find(Name("example.com."), true), ds_[0],
                    Name("example.com."), true, "example.com", true);
     EXPECT_TRUE(negative_result_ == list_->find(Name("example.org."), true));
     EXPECT_TRUE(negative_result_ == list_->find(Name("foo.bar"), true));
+    EXPECT_TRUE(negative_result_ == list_->find(Name("example.net."), true));
+    EXPECT_TRUE(negative_result_ == list_->find(Name("example.edu."), true));
+    EXPECT_TRUE(negative_result_ == list_->find(Name("example.info."), true));
     positiveResult(list_->find(Name(".")), ds_[0], Name("."), true, "root",
                    true);
 }
