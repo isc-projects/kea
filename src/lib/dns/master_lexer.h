@@ -340,12 +340,34 @@ public:
     ///                       string object.
     /// \return A std::string object corresponding to the string token value.
     std::string getString() const {
+        std::string ret;
+        getString(ret);
+        return (ret);
+    }
+
+    /// \brief Fill in a string with the value of a string-variant token.
+    ///
+    /// This is similar to the other version of \c getString(), but
+    /// the caller is supposed to pass a placeholder string object.
+    /// This will be more efficient if the caller uses the same
+    /// \c MasterLexer repeatedly and needs to get string token in the
+    /// form of a string object many times as this version could reuse
+    /// the existing internal storage of the passed string.
+    ///
+    /// Any existing content of the passed string will be removed.
+    ///
+    /// \throw InvalidOperation Called on a non string-variant types of token.
+    /// \throw std::bad_alloc Resource allocation failure in constructing the
+    ///                       string object.
+    ///
+    /// \param ret A string object to be filled with the token string.
+    void getString(std::string& ret) const {
         if (type_ != STRING && type_ != QSTRING) {
             isc_throw(InvalidOperation,
                       "Token::getString() for non string-variant type");
         }
-        return (std::string(val_.str_region_.beg,
-                            val_.str_region_.beg + val_.str_region_.len));
+        ret.assign(val_.str_region_.beg,
+                   val_.str_region_.beg + val_.str_region_.len);
     }
 
     /// \brief Return the value of a string-variant token as a string object.
