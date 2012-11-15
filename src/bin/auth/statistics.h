@@ -53,8 +53,6 @@ private:
     bool req_is_tsig_;              // signed with valid TSIG
     bool req_is_sig0_;              // signed with valid SIG(0)
     bool req_is_badsig_;            // signed but bad signature
-    // zone origin
-    std::string zone_origin_;       // zone origin
     // response attributes
     bool answer_sent_;              // DNS message has sent
     bool res_is_truncated_;         // DNS message is truncated
@@ -116,7 +114,6 @@ inline QRAttributes::QRAttributes() :
     req_is_edns_0_(false), req_is_edns_badver_(false),
     req_is_dnssec_ok_(false),
     req_is_tsig_(false), req_is_sig0_(false), req_is_badsig_(false),
-    zone_origin_(),
     answer_sent_(false),
     res_is_truncated_(false)
 {}
@@ -175,7 +172,6 @@ QRAttributes::reset() {
     req_is_tsig_ = false;
     req_is_sig0_ = false;
     req_is_badsig_ = false;
-    zone_origin_.clear();
     answer_sent_ = false;
     res_is_truncated_ = false;
 }

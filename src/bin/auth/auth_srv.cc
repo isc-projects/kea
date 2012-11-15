@@ -494,7 +494,6 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
 {
     InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
 
-    // statistics: check transport carrying the message (IP, transport)
     impl_->stats_attrs_.setQueryIPVersion(
         io_message.getRemoteEndpoint().getFamily());
     impl_->stats_attrs_.setQueryTransportProtocol(
@@ -554,8 +553,6 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
                                            **impl_->keyring_));
         tsig_error = tsig_context->verify(tsig_record, io_message.getData(),
                                           io_message.getDataSize());
-        // statistics: check TSIG attributes
-        // SIG(0) is currently not implemented in Auth
         impl_->stats_attrs_.setQuerySig(true, false,
                                         tsig_error != TSIGError::NOERROR());
     }
@@ -570,8 +567,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
     const Opcode opcode = message.getOpcode();
     bool send_answer = true;
     try {
-        // statistics: check EDNS
-        //     note: This can only be reliable after TSIG check succeeds.
+        // note: This can only be reliable after TSIG check succeeds.
         ConstEDNSPtr edns = message.getEDNS();
         if (edns) {
             impl_->stats_attrs_.setQueryEDNS(true,
@@ -579,8 +575,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
             impl_->stats_attrs_.setQueryDO(edns->getDNSSECAwareness());
         }
 
-        // statistics: check OpCode
-        //     note: This can only be reliable after TSIG check succeeds.
+        // note: This can only be reliable after TSIG check succeeds.
         impl_->stats_attrs_.setQueryOpCode(opcode.getCode());
 
         if (opcode == Opcode::NOTIFY()) {
