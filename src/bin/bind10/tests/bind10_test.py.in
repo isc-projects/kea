@@ -1501,9 +1501,18 @@ class TestBossComponents(unittest.TestCase):
         '''Test that b10-auth is started.'''
         bob = MockBobSimple()
         bob.c_channel_env = {}
+
+        # non-verbose case
+        bob.verbose = False
         bob.start_auth()
         self.assertEqual('b10-auth', bob.started_process_name)
         self.assertEqual(['b10-auth'], bob.started_process_args)
+
+        # verbose case
+        bob.verbose = True
+        bob.start_auth()
+        self.assertEqual('b10-auth', bob.started_process_name)
+        self.assertEqual(['b10-auth', '-v'], bob.started_process_args)
 
     # there is another test with this name (minus the digits), but both
     # do different things.
