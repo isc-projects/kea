@@ -1480,24 +1480,20 @@ class TestBossComponents(unittest.TestCase):
 
     def test_start_simple(self):
         '''Test simple process startup.'''
-        bob = BoB()
+        bob = MockBob2()
         bob.c_channel_env = {}
 
         # non-verbose case
         bob.verbose = False
-        pi = bob.start_simple('/bin/true')
-        self.assertEqual('/bin/true', pi.name)
-        self.assertEqual(['/bin/true'], pi.args)
-        self.assertEqual({}, pi.env)
-        self.assertNotEqual(0, pi.pid)
+        bob.start_simple('/bin/true')
+        self.assertEqual('/bin/true', bob.started_process_name)
+        self.assertEqual(['/bin/true'], bob.started_process_args)
 
         # verbose case
         bob.verbose = True
-        pi = bob.start_simple('/bin/true')
-        self.assertEqual('/bin/true', pi.name)
-        self.assertEqual(['/bin/true', '-v'], pi.args)
-        self.assertEqual({}, pi.env)
-        self.assertNotEqual(0, pi.pid)
+        bob.start_simple('/bin/true')
+        self.assertEqual('/bin/true', bob.started_process_name)
+        self.assertEqual(['/bin/true', '-v'], bob.started_process_args)
 
     # there is another test with this name (minus the digits), but both
     # do different things.
