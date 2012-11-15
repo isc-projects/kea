@@ -163,6 +163,7 @@ private:
                      const isc::dns::Message& response);
 public:
     /// \brief A type of statistics item tree in isc::data::MapElement.
+    /// \verbatim
     ///        {
     ///          zone_name => {
     ///                         item_name => item_value,
@@ -172,8 +173,9 @@ public:
     ///        }
     ///        item_name is a string seperated by '.'.
     ///        item_value is an integer.
+    /// \endverbatim
     ///
-    typedef isc::data::ElementPtr ItemTreeType;
+    typedef isc::data::ElementPtr ItemTreePtr;
 
     /// \brief The constructor.
     ///
@@ -205,7 +207,7 @@ public:
     ///
     /// \throw std::bad_alloc Internal resource allocation fails
     ///
-    ItemTreeType get() const;
+    ItemTreePtr get() const;
 };
 
 } // namespace statistics
