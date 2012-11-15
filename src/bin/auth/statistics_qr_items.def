@@ -8,7 +8,7 @@ request	QRCounterRequest	Request statistics	=
 	badsig		QR_REQUEST_BADSIG	Number of requests with invalid TSIG or SIG(0) signature received by the b10-auth server.
 	udp		QR_REQUEST_UDP		Number of UDP requests received by the b10-auth server.
 	tcp		QR_REQUEST_TCP		Number of UDP requests received by the b10-auth server.
-	dnssec_ok	QR_REQUEST_DNSSEC_OK	Number of requests with DO bit received by the b10-auth server.
+	dnssec_ok	QR_REQUEST_DNSSEC_OK	Number of requests with "DNSSEC OK" (DO) bit was set received by the b10-auth server.
 	;
 opcode	QRCounterOpcode		Opcode statistics	=
 	query		QR_OPCODE_QUERY		Number of Opcode=QUERY requests received by the b10-auth server.
@@ -43,12 +43,6 @@ rcode		QRCounterRcode	Rcode statistics	=
 	nxrrset		QR_RCODE_NXRRSET	Number of queries received by the b10-auth server resulted in RCODE = 8 (NXRRSet).
 	notauth		QR_RCODE_NOTAUTH	Number of queries received by the b10-auth server resulted in RCODE = 9 (NotAuth).
 	notzone		QR_RCODE_NOTZONE	Number of queries received by the b10-auth server resulted in RCODE = 10 (NotZone).
-	badsigvers	QR_RCODE_BADSIGVERS	Number of queries received by the b10-auth server resulted in RCODE = 16 (BADVERS, BADSIG).
-	badkey		QR_RCODE_BADKEY		Number of queries received by the b10-auth server resulted in RCODE = 17 (BADKEY).
-	badtime		QR_RCODE_BADTIME	Number of queries received by the b10-auth server resulted in RCODE = 18 (BADTIME).
-	badmode		QR_RCODE_BADMODE	Number of queries received by the b10-auth server resulted in RCODE = 19 (BADMODE).
-	badname		QR_RCODE_BADNAME	Number of queries received by the b10-auth server resulted in RCODE = 20 (BADNAME).
-	badalg		QR_RCODE_BADALG		Number of queries received by the b10-auth server resulted in RCODE = 21 (BADALG).
-	badtrunc	QR_RCODE_BADTRUNC	Number of queries received by the b10-auth server resulted in RCODE = 22 (BADTRUNC).
+	badvers		QR_RCODE_BADVERS	Number of queries received by the b10-auth server resulted in RCODE = 16 (BADVERS).
 	other		QR_RCODE_OTHER		Number of queries received by the b10-auth server resulted in other RCODEs.
 	;

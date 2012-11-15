@@ -138,9 +138,7 @@ protected:
     // Checks whether all Rcode counters are set to zero except the given
     // rcode (it is checked to be set to 'value')
     void checkAllRcodeCountersZeroExcept(const Rcode& rcode, int value) const {
-        // rcode 16 is registered as both BADVERS and BADSIG
-        std::string target_rcode_name =
-            rcode.toText() == "BADVERS" ? "BADSIGVERS" : rcode.toText();
+        std::string target_rcode_name = rcode.toText();
         std::transform(target_rcode_name.begin(), target_rcode_name.end(),
                        target_rcode_name.begin(), ::tolower);
 
