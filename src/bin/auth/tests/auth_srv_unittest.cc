@@ -1172,7 +1172,7 @@ TEST_F(AuthSrvTest, queryCounterOpcodes) {
     for (int i = 0; i < 16; ++i) {
         std::string item_name;
         int expected;
-        if (isc::auth::statistics::QROpCodeToQRCounterType[i] ==
+        if (isc::auth::statistics::opcode_to_qrcounter[i] ==
             isc::auth::statistics::QR_OPCODE_OTHER) {
             item_name = "OTHER";
             other_expected += i + 1;

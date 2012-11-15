@@ -71,7 +71,8 @@ namespace statistics {
 
 // ### STATISTICS ITEMS DEFINITION ###
 
-const int QROpCodeToQRCounterType[16] = {
+// Note: opcode in this array must be start with 0 and be sequential
+const int opcode_to_qrcounter[] = {
     QR_OPCODE_QUERY,    // Opcode =  0: Query
     QR_OPCODE_IQUERY,   // Opcode =  1: Iquery
     QR_OPCODE_STATUS,   // Opcode =  2: STATUS
@@ -89,7 +90,11 @@ const int QROpCodeToQRCounterType[16] = {
     QR_OPCODE_OTHER,    // Opcode = 14: (Unassigned)
     QR_OPCODE_OTHER     // Opcode = 15: (Unassigned)
 };
-const int QRRCodeToQRCounterType[23] = {
+const size_t num_opcode_to_qrcounter =
+    sizeof(opcode_to_qrcounter) / sizeof(opcode_to_qrcounter[0]);
+
+// Note: rcode in this array must be start with 0 and be sequential
+const int rcode_to_qrcounter[] = {
     QR_RCODE_NOERROR,       // Rcode =  0: NoError
     QR_RCODE_FORMERR,       // Rcode =  1: FormErr
     QR_RCODE_SERVFAIL,      // Rcode =  2: ServFail
@@ -114,6 +119,8 @@ const int QRRCodeToQRCounterType[23] = {
     QR_RCODE_BADALG,        // Rcode = 21: BADALG
     QR_RCODE_BADTRUNC       // Rcode = 22: BADTRUNC
 };
+const size_t num_rcode_to_qrcounter =
+    sizeof(rcode_to_qrcounter) / sizeof(rcode_to_qrcounter[0]);
 
 Counters::Counters() :
     // size of server_qr_counter_, zone_qr_counters_: QR_COUNTER_TYPES
@@ -163,7 +170,7 @@ Counters::incRequest(const QRAttributes& qrattrs) {
     }
 
     // OPCODE
-    server_qr_counter_.inc(QROpCodeToQRCounterType[qrattrs.req_opcode_]);
+    server_qr_counter_.inc(opcode_to_qrcounter[qrattrs.req_opcode_]);
 }
 
 void
@@ -192,14 +199,9 @@ Counters::incResponse(const QRAttributes& qrattrs, const Message& response) {
 
     // RCODE
     const unsigned int rcode = response.getRcode().getCode();
-    unsigned int rcode_type = QR_RCODE_OTHER;
-    if (rcode < 23) {
-        // rcode 0..22: lookup rcode-countertype table
-        rcode_type = QRRCodeToQRCounterType[rcode];
-    } else {
-        // opcode larger than 22 is reserved or unassigned
-        rcode_type = QR_RCODE_OTHER;
-    }
+    const unsigned int rcode_type =
+        rcode < num_rcode_to_qrcounter ?
+        rcode_to_qrcounter[rcode] : QR_RCODE_OTHER;
     server_qr_counter_.inc(rcode_type);
 
     // compound attributes
