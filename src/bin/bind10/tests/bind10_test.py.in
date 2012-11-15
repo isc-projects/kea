@@ -1550,6 +1550,13 @@ class TestBossComponents(unittest.TestCase):
         self.assertEqual('b10-cmdctl', bob.started_process_name)
         self.assertEqual(['b10-cmdctl', '-v'], bob.started_process_args)
 
+        # with port
+        bob.verbose = True
+        bob.cmdctl_port = 9353
+        bob.start_cmdctl()
+        self.assertEqual('b10-cmdctl', bob.started_process_name)
+        self.assertEqual(['b10-cmdctl', '--port=9353', '-v'], bob.started_process_args)
+
 class SocketSrvTest(unittest.TestCase):
     """
     This tests some methods of boss related to the unix domain sockets used
