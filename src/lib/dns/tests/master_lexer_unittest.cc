@@ -36,8 +36,8 @@ using master_lexer_internal::State;
 
 namespace {
 
-// This acts like the normal MasterLexer. It, however, allows to mock the start()
-// method to return some given state instead of the auto-detected ones.
+// This acts like the normal MasterLexer. It, however, allows to mock the
+// start() method to return some given state instead of the auto-detected ones.
 class TestedMasterLexer : public MasterLexer {
 public:
     TestedMasterLexer() :
@@ -184,27 +184,27 @@ TEST_F(MasterLexerTest, tokenFromStart) {
             return (NULL);
         }
     private:
-        MasterLexer::Token token_;
+        const MasterLexer::Token token_;
     } lexer;
     lexer.pushSource(ss);
 
     // The token gets out.
-    MasterLexer::Token generated(lexer.getNextToken());
+    const MasterLexer::Token generated(lexer.getNextToken());
     EXPECT_EQ(MasterLexer::Token::END_OF_LINE, generated.getType());
 }
 
 // Getting a token with a single iteration through the states.
 TEST_F(MasterLexerTest, simpleGetToken) {
     // Prepare the fake state.
-    MasterLexer::Token token(MasterLexer::Token::END_OF_LINE);
-    scoped_ptr<State> state(State::getFakeState(NULL, 3, &token));
+    const MasterLexer::Token token(MasterLexer::Token::END_OF_LINE);
+    scoped_ptr<const State> state(State::getFakeState(NULL, 3, &token));
     lexer.pushFakeStart(state.get());
     // Push some source inside.
     ss << "12345";
     lexer.pushSource(ss);
 
     // Get the token.
-    MasterLexer::Token generated(lexer.getNextToken());
+    const MasterLexer::Token generated(lexer.getNextToken());
     // It is the same token (well, on a different address)
     // We can't compare directly, so compare types.
     EXPECT_EQ(token.getType(), generated.getType());
@@ -221,17 +221,17 @@ TEST_F(MasterLexerTest, simpleGetToken) {
 // survive and be returned.
 TEST_F(MasterLexerTest, chainGetToken) {
     // Build the states
-    MasterLexer::Token t1(MasterLexer::Token::END_OF_LINE);
-    MasterLexer::Token t2(MasterLexer::Token::INITIAL_WS);
-    scoped_ptr<State> s2(State::getFakeState(NULL, 1, &t2));
-    scoped_ptr<State> s1(State::getFakeState(s2.get(), 2, &t1));
+    const MasterLexer::Token t1(MasterLexer::Token::END_OF_LINE);
+    const MasterLexer::Token t2(MasterLexer::Token::INITIAL_WS);
+    scoped_ptr<const State> s2(State::getFakeState(NULL, 1, &t2));
+    scoped_ptr<const State> s1(State::getFakeState(s2.get(), 2, &t1));
     lexer.pushFakeStart(s1.get());
     // Put something into the source
     ss << "12345";
     lexer.pushSource(ss);
 
     // Get the token.
-    MasterLexer::Token generated(lexer.getNextToken());
+    const MasterLexer::Token generated(lexer.getNextToken());
     // It is the same token as the second one (well, on a different address)
     // We can't compare directly, so compare types.
     EXPECT_EQ(t2.getType(), generated.getType());
@@ -315,19 +315,21 @@ TEST_F(MasterLexerTest, ungetSimple) {
     const bool true_value = true, false_value = false;
     // Make sure we change the state to non-default, so we return to previous
     // not default state.
-    MasterLexer::Token t0(MasterLexer::Token::INITIAL_WS);
-    scoped_ptr<State> s0(State::getFakeState(NULL, 1, &t0, 1, &true_value));
+    const MasterLexer::Token t0(MasterLexer::Token::INITIAL_WS);
+    scoped_ptr<const State> s0(State::getFakeState(NULL, 1, &t0, 1,
+                                                   &true_value));
     lexer.pushFakeStart(s0.get());
     EXPECT_EQ(MasterLexer::Token::INITIAL_WS, lexer.getNextToken().getType());
 
     // Prepare the token to get and return
     const std::string expected = "234";
-    MasterLexer::Token token(MasterLexer::Token::END_OF_LINE);
+    const MasterLexer::Token token(MasterLexer::Token::END_OF_LINE);
     // Change the internal state with it too. So we can check it is retured.
-    scoped_ptr<State> state(State::getFakeState(NULL, 3, &token, 1,
-                                                &false_value,
-                                                boost::bind(&checkInput,
-                                                            expected, _1)));
+    scoped_ptr<const State> state(State::getFakeState(NULL, 3, &token, 1,
+                                                      &false_value,
+                                                      boost::bind(&checkInput,
+                                                                  expected,
+                                                                  _1)));
     lexer.pushFakeStart(state.get());
 
     // Check the internal state before getting the token
@@ -344,6 +346,7 @@ TEST_F(MasterLexerTest, ungetSimple) {
     lexer.ungetToken();
     EXPECT_EQ(1, state->getParenCount(lexer));
     EXPECT_TRUE(state->wasLastEOL(lexer));
+
     // By calling getToken again, we verify even the source got back to
     // original (as the second fake state checks it gets "234"). We must
     // push it as a fake start again so it is picked.

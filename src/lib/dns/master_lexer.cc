@@ -445,7 +445,7 @@ namespace {
 class FakeState : public State {
 public:
     FakeState(const State* next, size_t eat_chars,
-              MasterLexer::Token* token,
+              const MasterLexer::Token* token,
               int paren_change, const bool* set_eol,
               const boost::function<void (const std::string&)>& callback) :
         next_(next),
@@ -475,7 +475,7 @@ public:
 private:
     const State* const next_;
     size_t eat_chars_;
-    MasterLexer::Token* const token_;
+    const MasterLexer::Token* const token_;
     const int paren_change_;
     const bool* const set_eol_;
     const boost::function<void (const std::string&)> callback_;
@@ -485,7 +485,7 @@ private:
 
 State*
 State::getFakeState(const State* next, size_t eat_chars,
-                    MasterLexer::Token* token,
+                    const MasterLexer::Token* token,
                     int paren_change, const bool* set_eol,
                     const boost::function<void (const std::string&)>& callback)
 {
