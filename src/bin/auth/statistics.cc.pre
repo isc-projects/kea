@@ -72,47 +72,47 @@ namespace statistics {
 // ### STATISTICS ITEMS DEFINITION ###
 
 const int QROpCodeToQRCounterType[16] = {
-    QR_OPCODE_QUERY,
-    QR_OPCODE_IQUERY,
-    QR_OPCODE_STATUS,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_NOTIFY,
-    QR_OPCODE_UPDATE,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER,
-    QR_OPCODE_OTHER
+    QR_OPCODE_QUERY,    // Opcode =  0: Query
+    QR_OPCODE_IQUERY,   // Opcode =  1: Iquery
+    QR_OPCODE_STATUS,   // Opcode =  2: STATUS
+    QR_OPCODE_OTHER,    // Opcode =  3: (Unassigned)
+    QR_OPCODE_NOTIFY,   // Opcode =  4: Notify
+    QR_OPCODE_UPDATE,   // Opcode =  5: Update
+    QR_OPCODE_OTHER,    // Opcode =  6: (Unassigned)
+    QR_OPCODE_OTHER,    // Opcode =  7: (Unassigned)
+    QR_OPCODE_OTHER,    // Opcode =  8: (Unassigned)
+    QR_OPCODE_OTHER,    // Opcode =  9: (Unassigned)
+    QR_OPCODE_OTHER,    // Opcode = 10: (Unassigned)
+    QR_OPCODE_OTHER,    // Opcode = 11: (Unassigned)
+    QR_OPCODE_OTHER,    // Opcode = 12: (Unassigned)
+    QR_OPCODE_OTHER,    // Opcode = 13: (Unassigned)
+    QR_OPCODE_OTHER,    // Opcode = 14: (Unassigned)
+    QR_OPCODE_OTHER     // Opcode = 15: (Unassigned)
 };
 const int QRRCodeToQRCounterType[23] = {
-    QR_RCODE_NOERROR,
-    QR_RCODE_FORMERR,
-    QR_RCODE_SERVFAIL,
-    QR_RCODE_NXDOMAIN,
-    QR_RCODE_NOTIMP,
-    QR_RCODE_REFUSED,
-    QR_RCODE_YXDOMAIN,
-    QR_RCODE_YXRRSET,
-    QR_RCODE_NXRRSET,
-    QR_RCODE_NOTAUTH,
-    QR_RCODE_NOTZONE,
-    QR_RCODE_OTHER,
-    QR_RCODE_OTHER,
-    QR_RCODE_OTHER,
-    QR_RCODE_OTHER,
-    QR_RCODE_OTHER,
-    QR_RCODE_BADSIGVERS,
-    QR_RCODE_BADKEY,
-    QR_RCODE_BADTIME,
-    QR_RCODE_BADMODE,
-    QR_RCODE_BADNAME,
-    QR_RCODE_BADALG,
-    QR_RCODE_BADTRUNC
+    QR_RCODE_NOERROR,       // Rcode =  0: NoError
+    QR_RCODE_FORMERR,       // Rcode =  1: FormErr
+    QR_RCODE_SERVFAIL,      // Rcode =  2: ServFail
+    QR_RCODE_NXDOMAIN,      // Rcode =  3: NXDomain
+    QR_RCODE_NOTIMP,        // Rcode =  4: NotImp
+    QR_RCODE_REFUSED,       // Rcode =  5: Refused
+    QR_RCODE_YXDOMAIN,      // Rcode =  6: YXDomain
+    QR_RCODE_YXRRSET,       // Rcode =  7: YXRRSet
+    QR_RCODE_NXRRSET,       // Rcode =  8: NXRRSet
+    QR_RCODE_NOTAUTH,       // Rcode =  9: NotAuth
+    QR_RCODE_NOTZONE,       // Rcode = 10: NotZone
+    QR_RCODE_OTHER,         // Rcode = 11: (Unassigned)
+    QR_RCODE_OTHER,         // Rcode = 12: (Unassigned)
+    QR_RCODE_OTHER,         // Rcode = 13: (Unassigned)
+    QR_RCODE_OTHER,         // Rcode = 14: (Unassigned)
+    QR_RCODE_OTHER,         // Rcode = 15: (Unassigned)
+    QR_RCODE_BADSIGVERS,    // Rcode = 16: BADVERS, BADSIG
+    QR_RCODE_BADKEY,        // Rcode = 17: BADKEY
+    QR_RCODE_BADTIME,       // Rcode = 18: BADTIME
+    QR_RCODE_BADMODE,       // Rcode = 19: BADMODE
+    QR_RCODE_BADNAME,       // Rcode = 20: BADNAME
+    QR_RCODE_BADALG,        // Rcode = 21: BADALG
+    QR_RCODE_BADTRUNC       // Rcode = 22: BADTRUNC
 };
 
 Counters::Counters() :
@@ -197,7 +197,7 @@ Counters::incResponse(const QRAttributes& qrattrs, const Message& response) {
     const unsigned int rcode = response.getRcode().getCode();
     unsigned int rcode_type = QR_RCODE_OTHER;
     if (rcode < 23) {
-        // rcode 0..22
+        // rcode 0..22: lookup rcode-countertype table
         rcode_type = QRRCodeToQRCounterType[rcode];
     } else {
         // opcode larger than 22 is reserved or unassigned
