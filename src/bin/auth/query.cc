@@ -410,9 +410,9 @@ Query::process(datasrc::ClientList& client_list,
              */
             assert(db_context->rrset->getRdataCount() > 0);
             // Get the data of DNAME
+            RdataIteratorPtr rit = db_context->rrset->getRdataIterator();
             const rdata::generic::DNAME& dname(
-                dynamic_cast<const rdata::generic::DNAME&>(
-                db_context->rrset->getRdataIterator()->getCurrent()));
+                dynamic_cast<const rdata::generic::DNAME&>(rit->getCurrent()));
             // The yet unmatched prefix dname
             const Name prefix(qname_->split(0, qname_->getLabelCount() -
                 db_context->rrset->getName().getLabelCount()));
