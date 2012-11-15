@@ -1497,7 +1497,7 @@ class TestBossComponents(unittest.TestCase):
 
     # there is another test with this name (minus the digits), but both
     # do different things.
-    def test_start_auth2(self):
+    def test_start_auth(self):
         '''Test that b10-auth is started.'''
         bob = MockBobSimple()
         bob.c_channel_env = {}
@@ -1507,7 +1507,7 @@ class TestBossComponents(unittest.TestCase):
 
     # there is another test with this name (minus the digits), but both
     # do different things.
-    def test_start_resolver2(self):
+    def test_start_resolver(self):
         '''Test that b10-resolver is started.'''
         bob = MockBobSimple()
         bob.c_channel_env = {}
