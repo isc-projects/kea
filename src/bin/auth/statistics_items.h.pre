@@ -30,8 +30,8 @@ struct CounterTypeTree {
 
 // ### STATISTICS ITEMS DECLARATION ###
 
-extern const int QROpCodeToQRCounterType[];
-extern const int QRRCodeToQRCounterType[];
+extern const int opcode_to_qrcounter[];
+extern const int rcode_to_qrcounter[];
 
 } // namespace statistics
 } // namespace auth
