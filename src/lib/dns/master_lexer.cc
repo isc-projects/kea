@@ -193,11 +193,17 @@ public:
     }
 };
 
-// Currently this is provided mostly as a place holder
 class String : public State {
 public:
     String() {}
     virtual ~String() {}      // see the base class for the destructor
+    virtual const State* handle(MasterLexer& lexer) const;
+};
+
+class QString : public State {
+public:
+    QString() {}
+    virtual ~QString() {}      // see the base class for the destructor
     virtual const State* handle(MasterLexer& lexer) const;
 };
 
@@ -208,6 +214,7 @@ public:
 // this file.
 const CRLF CRLF_STATE;
 const String STRING_STATE;
+const QString QSTRING_STATE;
 }
 
 const State&
@@ -217,6 +224,8 @@ State::getInstance(ID state_id) {
         return (CRLF_STATE);
     case String:
         return (STRING_STATE);
+    case QString:
+        return (QSTRING_STATE);
     }
 
     // This is a bug of the caller, and this method is only expected to be
@@ -261,6 +270,9 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
             if (paren_count == 0) { // check if we are in () (see above)
                 return (&CRLF_STATE);
             }
+        } else if (c == '"' && (options & MasterLexer::QSTRING) != 0) {
+            lexerimpl.last_was_eol_ = false;
+            return (&QSTRING_STATE);
         } else if (c == '(') {
             lexerimpl.last_was_eol_ = false;
             ++paren_count;
@@ -284,7 +296,6 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
 const State*
 String::handle(MasterLexer& lexer) const {
     std::vector<char>& data = getLexerImpl(lexer)->data_;
-    MasterLexer::Token& token = getLexerImpl(lexer)->token_;
     data.clear();
 
     bool escaped = false;
@@ -298,11 +309,45 @@ String::handle(MasterLexer& lexer) const {
             (!escaped &&
              (c == ' ' || c == '\t' || c == '(' || c == ')'))) {
             getLexerImpl(lexer)->source_->ungetChar();
-            token = MasterLexer::Token(&data.at(0), data.size());
+            getLexerImpl(lexer)->token_ =
+                MasterLexer::Token(&data.at(0), data.size());
             return (NULL);
         }
-        escaped = (!escaped && (c == '\\'));
+        escaped = (c == '\\' && !escaped);
         data.push_back(c);
+    }
+}
+
+const State*
+QString::handle(MasterLexer& lexer) const {
+    MasterLexer::Token& token = getLexerImpl(lexer)->token_;
+    std::vector<char>& data = getLexerImpl(lexer)->data_;
+    data.clear();
+
+    bool escaped = false;
+    while (true) {
+        const int c = getLexerImpl(lexer)->source_->getChar();
+        if (c == InputSource::END_OF_STREAM) {
+            token = Token(Token::UNEXPECTED_END);
+            return (NULL);
+        } else if (c == '"') {
+            if (escaped) {
+                // found escaped '"'. overwrite the preceding backslash.
+                assert(!data.empty());
+                escaped = false;
+                data.back() = '"';
+            } else {
+                token = MasterLexer::Token(&data.at(0), data.size(), true);
+                return (NULL);
+            }
+        } else if (c == '\n' && !escaped) {
+            getLexerImpl(lexer)->source_->ungetChar();
+            token = Token(Token::UNBALANCED_QUOTES);
+            return (NULL);
+        } else {
+            escaped = (c == '\\' && !escaped);
+            data.push_back(c);
+        }
     }
 }
 
