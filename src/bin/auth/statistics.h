@@ -37,11 +37,7 @@ namespace statistics {
 ///
 /// This class holds some attributes related to a DNS message
 /// for statistics data collection.
-///
-/// This class does not have getter methods since it exposes private members
-/// to \c Counters directly.
 class MessageAttributes {
-friend class Counters;
 private:
     // request attributes
     int req_ip_version_;            // IP version
@@ -65,10 +61,24 @@ public:
         reset();
     };
 
+    /// \brief Get request opcode.
+    /// \return opcode of a request
+    /// \throw None
+    int getRequestOpCode() const {
+        return (req_opcode_);
+    };
+
     /// \brief Set request opcode.
     /// \throw None
     void setRequestOpCode(const int opcode) {
         req_opcode_ = opcode;
+    };
+
+    /// \brief Get IP version carrying a request.
+    /// \return IP version carrying a request
+    /// \throw None
+    int getRequestIPVersion() const {
+        return (req_ip_version_);
     };
 
     /// \brief Set IP version carrying a request.
@@ -77,10 +87,31 @@ public:
         req_ip_version_ = ip_version;
     };
 
+    /// \brief Get transport protocol carrying a request.
+    /// \return Transport protocol carrying a request
+    /// \throw None
+    int getRequestTransportProtocol() const {
+        return (req_transport_protocol_);
+    };
+
     /// \brief Set transport protocol carrying a request.
     /// \throw None
     void setRequestTransportProtocol(const int transport_protocol) {
         req_transport_protocol_ = transport_protocol;
+    };
+
+    /// \brief Get request is EDNS version 0.
+    /// \return true if EDNS version 0
+    /// \throw None
+    bool getRequestEDNS0() const {
+        return (req_is_edns_0_);
+    };
+
+    /// \brief Get request is EDNS version other than 0.
+    /// \return true if EDNS version other than 0
+    /// \throw None
+    bool getRequestEDNSBadVer() const {
+        return (req_is_edns_badver_);
     };
 
     /// \brief Set request EDNS attributes.
@@ -90,10 +121,38 @@ public:
         req_is_edns_badver_ = is_edns_badver;
     };
 
-    /// \brief Set request DO bit.
+    /// \brief Get request DNSSEC OK (DO) bit.
+    /// \return true if DNSSEC OK bit is set
+    /// \throw None
+    bool getRequestDO() const {
+        return (req_is_dnssec_ok_);
+    };
+
+    /// \brief Set request DNSSEC OK (DO) bit.
     /// \throw None
     void setRequestDO(const bool is_dnssec_ok) {
         req_is_dnssec_ok_ = is_dnssec_ok;
+    };
+
+    /// \brief Get request TSIG signed and verified.
+    /// \return true if request is TSIG signed and verified
+    /// \throw None
+    bool getRequestSigTSIG() const {
+        return (req_is_tsig_);
+    };
+
+    /// \brief Get request SIG(0) signed and verified.
+    /// \return true if request is SIG(0) signed and verified
+    /// \throw None
+    bool getRequestSigSIG0() const {
+        return (req_is_sig0_);
+    };
+
+    /// \brief Get request signature is bad.
+    /// \return true if request signature is bad
+    /// \throw None
+    bool getRequestSigBadSig() const {
+        return (req_is_badsig_);
     };
 
     /// \brief Set request TSIG attributes.
@@ -104,6 +163,13 @@ public:
         req_is_tsig_ = is_tsig;
         req_is_sig0_ = is_sig0;
         req_is_badsig_ = is_badsig;
+    };
+
+    /// \brief Get if the response is truncated.
+    /// \return true if the response is truncated
+    /// \throw None
+    bool getResponseTruncated() const {
+        return (res_is_truncated_);
     };
 
     /// \brief Set if the response is truncated.
