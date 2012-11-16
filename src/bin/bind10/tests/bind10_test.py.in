@@ -717,6 +717,12 @@ class MockBob(BoB):
         self.get_process_exit_status_called = True
         return (53, 0)
 
+    def _get_process_exit_status_unknown_pid(self):
+        if self.get_process_exit_status_called:
+            return (0, 0)
+        self.get_process_exit_status_called = True
+        return (42, 0)
+
     def _get_process_exit_status_raises_oserror_echild(self):
         raise OSError(errno.ECHILD, 'Mock error')
 
@@ -1456,6 +1462,15 @@ class TestBossComponents(unittest.TestCase):
         bob.reap_children()
         # now, we should as the mock component.failed() returns False
         self.assertTrue(component in bob.components_to_restart)
+
+        # case where the returned pid is unknown to us. nothing should
+        # happpen then.
+        bob.get_process_exit_status_called = False
+        bob._get_process_exit_status = bob._get_process_exit_status_unknown_pid
+        bob.components_to_restart = []
+        # this should do nothing as the pid is unknown
+        bob.reap_children()
+        self.assertFalse(bob.components_to_restart)
 
         # case where bob._get_process_exit_status() raises OSError with errno.ECHILD
         bob._get_process_exit_status = bob._get_process_exit_status_raises_oserror_echild
