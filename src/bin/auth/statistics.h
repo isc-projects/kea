@@ -25,7 +25,7 @@
 
 #include <boost/noncopyable.hpp>
 
-#include <string>
+#include <bitset>
 
 #include <stdint.h>
 
@@ -43,14 +43,17 @@ private:
     int req_ip_version_;            // IP version
     int req_transport_protocol_;    // Transport layer protocol
     int req_opcode_;                // OpCode
-    bool req_is_edns_0_;            // EDNS ver.0
-    bool req_is_edns_badver_;       // other EDNS version
-    bool req_is_dnssec_ok_;         // DO bit
-    bool req_is_tsig_;              // signed with valid TSIG
-    bool req_is_sig0_;              // signed with valid SIG(0)
-    bool req_is_badsig_;            // signed but bad signature
-    // response attributes
-    bool res_is_truncated_;         // DNS message is truncated
+    enum BitAttributes {
+        REQ_IS_EDNS_0,              // EDNS ver.0
+        REQ_IS_EDNS_BADVER,         // EDNS version other than 0
+        REQ_IS_DNSSEC_OK,           // DNSSEC OK (DO) bit is set
+        REQ_IS_TSIG,                // signed with valid TSIG
+        REQ_IS_SIG0,                // signed with valid SIG(0)
+        REQ_IS_BADSIG,              // signed but bad signature,
+        RES_IS_TRUNCATED,           // DNS message is truncated
+        BIT_ATTRIBUTES_TYPES
+    };
+    std::bitset<BIT_ATTRIBUTES_TYPES> bit_attributes_;
 public:
     /// \brief The constructor.
     ///
@@ -75,13 +78,14 @@ public:
     };
 
     /// \brief Get IP version carrying a request.
-    /// \return IP version carrying a request
+    /// \return IP version carrying a request (AF_INET or AF_INET6)
     /// \throw None
     int getRequestIPVersion() const {
         return (req_ip_version_);
     };
 
     /// \brief Set IP version carrying a request.
+    /// \param ip_version AF_INET or AF_INET6
     /// \throw None
     void setRequestIPVersion(const int ip_version) {
         req_ip_version_ = ip_version;
@@ -89,12 +93,14 @@ public:
 
     /// \brief Get transport protocol carrying a request.
     /// \return Transport protocol carrying a request
+    ///         (IPPROTO_UDP or IPPROTO_TCP)
     /// \throw None
     int getRequestTransportProtocol() const {
         return (req_transport_protocol_);
     };
 
     /// \brief Set transport protocol carrying a request.
+    /// \param transport_protocol IPPROTO_UDP or IPPROTO_TCP
     /// \throw None
     void setRequestTransportProtocol(const int transport_protocol) {
         req_transport_protocol_ = transport_protocol;
@@ -104,78 +110,87 @@ public:
     /// \return true if EDNS version 0
     /// \throw None
     bool getRequestEDNS0() const {
-        return (req_is_edns_0_);
+        return (bit_attributes_[REQ_IS_EDNS_0]);
     };
 
     /// \brief Get request is EDNS version other than 0.
     /// \return true if EDNS version other than 0
     /// \throw None
     bool getRequestEDNSBadVer() const {
-        return (req_is_edns_badver_);
+        return (bit_attributes_[REQ_IS_EDNS_BADVER]);
     };
 
     /// \brief Set request EDNS attributes.
+    /// \param is_edns_0 true if request is EDNS version 0
+    /// \param is_edns_badver true if request is EDNS version other than 0
     /// \throw None
     void setRequestEDNS(const bool is_edns_0, const bool is_edns_badver) {
-        req_is_edns_0_ = is_edns_0;
-        req_is_edns_badver_ = is_edns_badver;
+        assert(!(is_edns_0 && is_edns_badver));
+        bit_attributes_[REQ_IS_EDNS_0] = is_edns_0;
+        bit_attributes_[REQ_IS_EDNS_BADVER] = is_edns_badver;
     };
 
     /// \brief Get request DNSSEC OK (DO) bit.
-    /// \return true if DNSSEC OK bit is set
+    /// \return true if DNSSEC OK (DO) bit is set
     /// \throw None
     bool getRequestDO() const {
-        return (req_is_dnssec_ok_);
+        return (bit_attributes_[REQ_IS_DNSSEC_OK]);
     };
 
     /// \brief Set request DNSSEC OK (DO) bit.
+    /// \param is_dnssec_ok true if DNSSEC OK (DO) bit is set
     /// \throw None
     void setRequestDO(const bool is_dnssec_ok) {
-        req_is_dnssec_ok_ = is_dnssec_ok;
+        bit_attributes_[REQ_IS_DNSSEC_OK] = is_dnssec_ok;
     };
 
     /// \brief Get request TSIG signed and verified.
     /// \return true if request is TSIG signed and verified
     /// \throw None
     bool getRequestSigTSIG() const {
-        return (req_is_tsig_);
+        return (bit_attributes_[REQ_IS_TSIG]);
     };
 
     /// \brief Get request SIG(0) signed and verified.
     /// \return true if request is SIG(0) signed and verified
     /// \throw None
     bool getRequestSigSIG0() const {
-        return (req_is_sig0_);
+        return (bit_attributes_[REQ_IS_SIG0]);
     };
 
     /// \brief Get request signature is bad.
     /// \return true if request signature is bad
     /// \throw None
     bool getRequestSigBadSig() const {
-        return (req_is_badsig_);
+        return (bit_attributes_[REQ_IS_BADSIG]);
     };
 
     /// \brief Set request TSIG attributes.
+    /// \param is_tsig true if request is TSIG signed
+    /// \param is_sig0 true if request is SIG(0) signed
+    /// \param is_badsig true if request signature is bad
     /// \throw None
     void setRequestSig(const bool is_tsig, const bool is_sig0,
                        const bool is_badsig)
     {
-        req_is_tsig_ = is_tsig;
-        req_is_sig0_ = is_sig0;
-        req_is_badsig_ = is_badsig;
+        assert(!(is_tsig && is_sig0));
+        bit_attributes_[REQ_IS_TSIG] = is_tsig;
+        bit_attributes_[REQ_IS_SIG0] = is_sig0;
+        bit_attributes_[REQ_IS_BADSIG] = is_badsig;
     };
 
     /// \brief Get if the response is truncated.
     /// \return true if the response is truncated
     /// \throw None
     bool getResponseTruncated() const {
-        return (res_is_truncated_);
+        return (bit_attributes_[RES_IS_TRUNCATED]);
     };
 
     /// \brief Set if the response is truncated.
+    /// \param is_truncated true if the response is truncated
     /// \throw None
     void setResponseTruncated(const bool is_truncated) {
-        res_is_truncated_ = is_truncated;
+        bit_attributes_[RES_IS_TRUNCATED] = is_truncated;
     };
 
     /// \brief Reset attributes.
@@ -184,13 +199,7 @@ public:
         req_ip_version_ = 0;
         req_transport_protocol_ = 0;
         req_opcode_ = 0;
-        req_is_edns_0_ = false;
-        req_is_edns_badver_ = false;
-        req_is_dnssec_ok_ = false;
-        req_is_tsig_ = false;
-        req_is_sig0_ = false;
-        req_is_badsig_ = false;
-        res_is_truncated_ = false;
+        bit_attributes_.reset();
     };
 };
 
