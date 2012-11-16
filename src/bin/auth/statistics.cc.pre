@@ -72,121 +72,123 @@ namespace statistics {
 // ### STATISTICS ITEMS DEFINITION ###
 
 // Note: opcode in this array must be start with 0 and be sequential
-const int opcode_to_qrcounter[] = {
-    QR_OPCODE_QUERY,    // Opcode =  0: Query
-    QR_OPCODE_IQUERY,   // Opcode =  1: Iquery
-    QR_OPCODE_STATUS,   // Opcode =  2: STATUS
-    QR_OPCODE_OTHER,    // Opcode =  3: (Unassigned)
-    QR_OPCODE_NOTIFY,   // Opcode =  4: Notify
-    QR_OPCODE_UPDATE,   // Opcode =  5: Update
-    QR_OPCODE_OTHER,    // Opcode =  6: (Unassigned)
-    QR_OPCODE_OTHER,    // Opcode =  7: (Unassigned)
-    QR_OPCODE_OTHER,    // Opcode =  8: (Unassigned)
-    QR_OPCODE_OTHER,    // Opcode =  9: (Unassigned)
-    QR_OPCODE_OTHER,    // Opcode = 10: (Unassigned)
-    QR_OPCODE_OTHER,    // Opcode = 11: (Unassigned)
-    QR_OPCODE_OTHER,    // Opcode = 12: (Unassigned)
-    QR_OPCODE_OTHER,    // Opcode = 13: (Unassigned)
-    QR_OPCODE_OTHER,    // Opcode = 14: (Unassigned)
-    QR_OPCODE_OTHER     // Opcode = 15: (Unassigned)
+const int opcode_to_msgcounter[] = {
+    MSG_OPCODE_QUERY,    // Opcode =  0: Query
+    MSG_OPCODE_IQUERY,   // Opcode =  1: Iquery
+    MSG_OPCODE_STATUS,   // Opcode =  2: STATUS
+    MSG_OPCODE_OTHER,    // Opcode =  3: (Unassigned)
+    MSG_OPCODE_NOTIFY,   // Opcode =  4: Notify
+    MSG_OPCODE_UPDATE,   // Opcode =  5: Update
+    MSG_OPCODE_OTHER,    // Opcode =  6: (Unassigned)
+    MSG_OPCODE_OTHER,    // Opcode =  7: (Unassigned)
+    MSG_OPCODE_OTHER,    // Opcode =  8: (Unassigned)
+    MSG_OPCODE_OTHER,    // Opcode =  9: (Unassigned)
+    MSG_OPCODE_OTHER,    // Opcode = 10: (Unassigned)
+    MSG_OPCODE_OTHER,    // Opcode = 11: (Unassigned)
+    MSG_OPCODE_OTHER,    // Opcode = 12: (Unassigned)
+    MSG_OPCODE_OTHER,    // Opcode = 13: (Unassigned)
+    MSG_OPCODE_OTHER,    // Opcode = 14: (Unassigned)
+    MSG_OPCODE_OTHER     // Opcode = 15: (Unassigned)
 };
-const size_t num_opcode_to_qrcounter =
-    sizeof(opcode_to_qrcounter) / sizeof(opcode_to_qrcounter[0]);
+const size_t num_opcode_to_msgcounter =
+    sizeof(opcode_to_msgcounter) / sizeof(opcode_to_msgcounter[0]);
 
 // Note: rcode in this array must be start with 0 and be sequential
-const int rcode_to_qrcounter[] = {
-    QR_RCODE_NOERROR,       // Rcode =  0: NoError
-    QR_RCODE_FORMERR,       // Rcode =  1: FormErr
-    QR_RCODE_SERVFAIL,      // Rcode =  2: ServFail
-    QR_RCODE_NXDOMAIN,      // Rcode =  3: NXDomain
-    QR_RCODE_NOTIMP,        // Rcode =  4: NotImp
-    QR_RCODE_REFUSED,       // Rcode =  5: Refused
-    QR_RCODE_YXDOMAIN,      // Rcode =  6: YXDomain
-    QR_RCODE_YXRRSET,       // Rcode =  7: YXRRSet
-    QR_RCODE_NXRRSET,       // Rcode =  8: NXRRSet
-    QR_RCODE_NOTAUTH,       // Rcode =  9: NotAuth
-    QR_RCODE_NOTZONE,       // Rcode = 10: NotZone
-    QR_RCODE_OTHER,         // Rcode = 11: (Unassigned)
-    QR_RCODE_OTHER,         // Rcode = 12: (Unassigned)
-    QR_RCODE_OTHER,         // Rcode = 13: (Unassigned)
-    QR_RCODE_OTHER,         // Rcode = 14: (Unassigned)
-    QR_RCODE_OTHER,         // Rcode = 15: (Unassigned)
-    QR_RCODE_BADVERS        // Rcode = 16: (BADVERS)
+const int rcode_to_msgcounter[] = {
+    MSG_RCODE_NOERROR,       // Rcode =  0: NoError
+    MSG_RCODE_FORMERR,       // Rcode =  1: FormErr
+    MSG_RCODE_SERVFAIL,      // Rcode =  2: ServFail
+    MSG_RCODE_NXDOMAIN,      // Rcode =  3: NXDomain
+    MSG_RCODE_NOTIMP,        // Rcode =  4: NotImp
+    MSG_RCODE_REFUSED,       // Rcode =  5: Refused
+    MSG_RCODE_YXDOMAIN,      // Rcode =  6: YXDomain
+    MSG_RCODE_YXRRSET,       // Rcode =  7: YXRRSet
+    MSG_RCODE_NXRRSET,       // Rcode =  8: NXRRSet
+    MSG_RCODE_NOTAUTH,       // Rcode =  9: NotAuth
+    MSG_RCODE_NOTZONE,       // Rcode = 10: NotZone
+    MSG_RCODE_OTHER,         // Rcode = 11: (Unassigned)
+    MSG_RCODE_OTHER,         // Rcode = 12: (Unassigned)
+    MSG_RCODE_OTHER,         // Rcode = 13: (Unassigned)
+    MSG_RCODE_OTHER,         // Rcode = 14: (Unassigned)
+    MSG_RCODE_OTHER,         // Rcode = 15: (Unassigned)
+    MSG_RCODE_BADVERS        // Rcode = 16: BADVERS
 };
-const size_t num_rcode_to_qrcounter =
-    sizeof(rcode_to_qrcounter) / sizeof(rcode_to_qrcounter[0]);
+const size_t num_rcode_to_msgcounter =
+    sizeof(rcode_to_msgcounter) / sizeof(rcode_to_msgcounter[0]);
 
 Counters::Counters() :
-    // size of server_qr_counter_, zone_qr_counters_: QR_COUNTER_TYPES
-    server_qr_counter_(QR_COUNTER_TYPES),
-    zone_qr_counters_(QR_COUNTER_TYPES)
+    // size of server_msg_counter_, zone_msg_counters_: MSG_COUNTER_TYPES
+    server_msg_counter_(MSG_COUNTER_TYPES),
+    zone_msg_counters_(MSG_COUNTER_TYPES)
 {}
 
 void
-Counters::incRequest(const QRAttributes& qrattrs) {
+Counters::incRequest(const MessageAttributes& msgattrs) {
     // protocols carrying request
-    if (qrattrs.req_ip_version_ == AF_INET) {
-        server_qr_counter_.inc(QR_REQUEST_IPV4);
-    } else if (qrattrs.req_ip_version_ == AF_INET6) {
-        server_qr_counter_.inc(QR_REQUEST_IPV6);
+    if (msgattrs.req_ip_version_ == AF_INET) {
+        server_msg_counter_.inc(MSG_REQUEST_IPV4);
+    } else if (msgattrs.req_ip_version_ == AF_INET6) {
+        server_msg_counter_.inc(MSG_REQUEST_IPV6);
     }
-    if (qrattrs.req_transport_protocol_ == IPPROTO_UDP) {
-        server_qr_counter_.inc(QR_REQUEST_UDP);
-    } else if (qrattrs.req_transport_protocol_ == IPPROTO_TCP) {
-        server_qr_counter_.inc(QR_REQUEST_TCP);
+    if (msgattrs.req_transport_protocol_ == IPPROTO_UDP) {
+        server_msg_counter_.inc(MSG_REQUEST_UDP);
+    } else if (msgattrs.req_transport_protocol_ == IPPROTO_TCP) {
+        server_msg_counter_.inc(MSG_REQUEST_TCP);
     }
 
-    // query TSIG
-    if (qrattrs.req_is_tsig_) {
-        server_qr_counter_.inc(QR_REQUEST_TSIG);
+    // request TSIG
+    if (msgattrs.req_is_tsig_) {
+        server_msg_counter_.inc(MSG_REQUEST_TSIG);
     }
-    if (qrattrs.req_is_sig0_) {
-        server_qr_counter_.inc(QR_REQUEST_SIG0);
+    if (msgattrs.req_is_sig0_) {
+        server_msg_counter_.inc(MSG_REQUEST_SIG0);
     }
-    if (qrattrs.req_is_badsig_) {
-        server_qr_counter_.inc(QR_REQUEST_BADSIG);
+    if (msgattrs.req_is_badsig_) {
+        server_msg_counter_.inc(MSG_REQUEST_BADSIG);
         // If signature validation is failed, no other query attributes are
         // reliable. Skip processing of the rest of query counters.
         return;
     }
 
-    // query EDNS
-    if (qrattrs.req_is_edns_0_) {
-        server_qr_counter_.inc(QR_REQUEST_EDNS0);
+    // request EDNS
+    if (msgattrs.req_is_edns_0_) {
+        server_msg_counter_.inc(MSG_REQUEST_EDNS0);
     }
-    if (qrattrs.req_is_edns_badver_) {
-        server_qr_counter_.inc(QR_REQUEST_BADEDNSVER);
+    if (msgattrs.req_is_edns_badver_) {
+        server_msg_counter_.inc(MSG_REQUEST_BADEDNSVER);
     }
 
-    // query DNSSEC
-    if (qrattrs.req_is_dnssec_ok_) {
-        server_qr_counter_.inc(QR_REQUEST_DNSSEC_OK);
+    // request DNSSEC
+    if (msgattrs.req_is_dnssec_ok_) {
+        server_msg_counter_.inc(MSG_REQUEST_DNSSEC_OK);
     }
 
     // OPCODE
-    server_qr_counter_.inc(opcode_to_qrcounter[qrattrs.req_opcode_]);
+    server_msg_counter_.inc(opcode_to_msgcounter[msgattrs.req_opcode_]);
 }
 
 void
-Counters::incResponse(const QRAttributes& qrattrs, const Message& response) {
+Counters::incResponse(const MessageAttributes& msgattrs,
+                      const Message& response)
+{
     // responded
-    server_qr_counter_.inc(QR_RESPONSE);
+    server_msg_counter_.inc(MSG_RESPONSE);
 
     // response truncated
-    if (qrattrs.res_is_truncated_) {
-        server_qr_counter_.inc(QR_RESPONSE_TRUNCATED);
+    if (msgattrs.res_is_truncated_) {
+        server_msg_counter_.inc(MSG_RESPONSE_TRUNCATED);
     }
 
     // response EDNS
     ConstEDNSPtr response_edns = response.getEDNS();
     if (response_edns && response_edns->getVersion() == 0) {
-        server_qr_counter_.inc(QR_RESPONSE_EDNS0);
+        server_msg_counter_.inc(MSG_RESPONSE_EDNS0);
     }
 
     // response TSIG
-    if (qrattrs.req_is_tsig_) {
+    if (msgattrs.req_is_tsig_) {
         // assume response is TSIG signed if request is TSIG signed
-        server_qr_counter_.inc(QR_RESPONSE_TSIG);
+        server_msg_counter_.inc(MSG_RESPONSE_TSIG);
     }
 
     // response SIG(0) is currently not implemented
@@ -194,9 +196,9 @@ Counters::incResponse(const QRAttributes& qrattrs, const Message& response) {
     // RCODE
     const unsigned int rcode = response.getRcode().getCode();
     const unsigned int rcode_type =
-        rcode < num_rcode_to_qrcounter ?
-        rcode_to_qrcounter[rcode] : QR_RCODE_OTHER;
-    server_qr_counter_.inc(rcode_type);
+        rcode < num_rcode_to_msgcounter ?
+        rcode_to_msgcounter[rcode] : MSG_RCODE_OTHER;
+    server_msg_counter_.inc(rcode_type);
 
     // compound attributes
     const unsigned int answer_rrs =
@@ -205,41 +207,41 @@ Counters::incResponse(const QRAttributes& qrattrs, const Message& response) {
 
     if (is_aa_set) {
         // QryAuthAns
-        server_qr_counter_.inc(QR_QRYAUTHANS);
+        server_msg_counter_.inc(MSG_QRYAUTHANS);
     } else {
         // QryNoAuthAns
-        server_qr_counter_.inc(QR_QRYNOAUTHANS);
+        server_msg_counter_.inc(MSG_QRYNOAUTHANS);
     }
 
     if (rcode == Rcode::NOERROR_CODE) {
         if (answer_rrs > 0) {
             // QrySuccess
-            server_qr_counter_.inc(QR_QRYSUCCESS);
+            server_msg_counter_.inc(MSG_QRYSUCCESS);
         } else {
             if (is_aa_set) {
                 // QryNxrrset
-                server_qr_counter_.inc(QR_QRYNXRRSET);
+                server_msg_counter_.inc(MSG_QRYNXRRSET);
             } else {
                 // QryReferral
-                server_qr_counter_.inc(QR_QRYREFERRAL);
+                server_msg_counter_.inc(MSG_QRYREFERRAL);
             }
         }
     } else if (rcode == Rcode::REFUSED_CODE) {
         // AuthRej
-        server_qr_counter_.inc(QR_QRYREJECT);
+        server_msg_counter_.inc(MSG_QRYREJECT);
     }
 }
 
 void
-Counters::inc(const QRAttributes& qrattrs, const Message& response,
+Counters::inc(const MessageAttributes& msgattrs, const Message& response,
               const bool done)
 {
     // increment request counters
-    incRequest(qrattrs);
+    incRequest(msgattrs);
 
     if (done) {
         // increment response counters if answer was sent
-        incResponse(qrattrs, response);
+        incResponse(msgattrs, response);
     }
 }
 
@@ -253,7 +255,7 @@ Counters::get() const {
     item_tree->set("zones", zones);
 
     Counters::ItemTreePtr server = Element::createMap();
-    fillNodes(server_qr_counter_, QRCounterTree, server);
+    fillNodes(server_msg_counter_, MSGCounterTree, server);
     zones->set("_SERVER_", server);
 
     return (item_tree);

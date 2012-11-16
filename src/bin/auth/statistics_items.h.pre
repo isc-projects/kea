@@ -30,8 +30,8 @@ struct CounterTypeTree {
 
 // ### STATISTICS ITEMS DECLARATION ###
 
-extern const int opcode_to_qrcounter[];
-extern const int rcode_to_qrcounter[];
+extern const int opcode_to_msgcounter[];
+extern const int rcode_to_msgcounter[];
 
 } // namespace statistics
 } // namespace auth

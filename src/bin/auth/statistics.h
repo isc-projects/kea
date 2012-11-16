@@ -33,14 +33,14 @@ namespace isc {
 namespace auth {
 namespace statistics {
 
-/// \brief Query/Response attributes for statistics.
+/// \brief DNS Message attributes for statistics.
 ///
-/// This class holds some attributes related to a query/response
+/// This class holds some attributes related to a DNS message
 /// for statistics data collection.
 ///
 /// This class does not have getter methods since it exposes private members
 /// to \c Counters directly.
-class QRAttributes {
+class MessageAttributes {
 friend class Counters;
 private:
     // request attributes
@@ -61,45 +61,45 @@ public:
     /// This constructor is mostly exception free. But it may still throw
     /// a standard exception if memory allocation fails inside the method.
     ///
-    QRAttributes() {
+    MessageAttributes() {
         reset();
     };
 
-    /// \brief Set query opcode.
+    /// \brief Set request opcode.
     /// \throw None
-    void setQueryOpCode(const int opcode) {
+    void setRequestOpCode(const int opcode) {
         req_opcode_ = opcode;
     };
 
-    /// \brief Set IP version carrying a query.
+    /// \brief Set IP version carrying a request.
     /// \throw None
-    void setQueryIPVersion(const int ip_version) {
+    void setRequestIPVersion(const int ip_version) {
         req_ip_version_ = ip_version;
     };
 
-    /// \brief Set transport protocol carrying a query.
+    /// \brief Set transport protocol carrying a request.
     /// \throw None
-    void setQueryTransportProtocol(const int transport_protocol) {
+    void setRequestTransportProtocol(const int transport_protocol) {
         req_transport_protocol_ = transport_protocol;
     };
 
-    /// \brief Set query EDNS attributes.
+    /// \brief Set request EDNS attributes.
     /// \throw None
-    void setQueryEDNS(const bool is_edns_0, const bool is_edns_badver) {
+    void setRequestEDNS(const bool is_edns_0, const bool is_edns_badver) {
         req_is_edns_0_ = is_edns_0;
         req_is_edns_badver_ = is_edns_badver;
     };
 
-    /// \brief Set query DO bit.
+    /// \brief Set request DO bit.
     /// \throw None
-    void setQueryDO(const bool is_dnssec_ok) {
+    void setRequestDO(const bool is_dnssec_ok) {
         req_is_dnssec_ok_ = is_dnssec_ok;
     };
 
-    /// \brief Set query TSIG attributes.
+    /// \brief Set request TSIG attributes.
     /// \throw None
-    void setQuerySig(const bool is_tsig, const bool is_sig0,
-                            const bool is_badsig)
+    void setRequestSig(const bool is_tsig, const bool is_sig0,
+                       const bool is_badsig)
     {
         req_is_tsig_ = is_tsig;
         req_is_sig0_ = is_sig0;
@@ -128,17 +128,17 @@ public:
     };
 };
 
-/// \brief Set of query counters.
+/// \brief Set of DNS message counters.
 ///
-/// \c Counters is set of query counters class. It holds query counters
-/// and provides an interface to increment the counter of specified type
-/// (e.g. UDP query, TCP query).
+/// \c Counters is set of DNS message counters class. It holds DNS message
+/// counters and provides an interface to increment the counter of specified
+/// type (e.g. UDP message, TCP message).
 ///
 /// This class also provides a function to send statistics information to
 /// statistics module.
 ///
 /// This class is designed to be a part of \c AuthSrv.
-/// Call \c inc() to increment a counter for the query.
+/// Call \c inc() to increment a counter for the message.
 /// Call \c getStatistics() to answer statistics information to statistics
 /// module with statistics_session, when the command \c getstats is received.
 ///
@@ -150,16 +150,16 @@ public:
 /// This class is constructed on startup of the server, so
 /// construction overhead of this approach should be acceptable.
 ///
-/// \todo Hold counters for each query types (Notify, Axfr, Ixfr, Normal)
+/// \todo Hold counters for each message types (Notify, Axfr, Ixfr, Normal)
 /// \todo Consider overhead of \c Counters::inc()
 class Counters : boost::noncopyable {
 private:
-    // counter for query/response
-    isc::statistics::Counter server_qr_counter_;
+    // counter for DNS message attributes
+    isc::statistics::Counter server_msg_counter_;
     // set of counters for zones
-    isc::statistics::CounterDictionary zone_qr_counters_;
-    void incRequest(const QRAttributes& qrattrs);
-    void incResponse(const QRAttributes& qrattrs,
+    isc::statistics::CounterDictionary zone_msg_counters_;
+    void incRequest(const MessageAttributes& msgattrs);
+    void incResponse(const MessageAttributes& msgattrs,
                      const isc::dns::Message& response);
 public:
     /// \brief A type of statistics item tree in isc::data::MapElement.
@@ -189,14 +189,14 @@ public:
     /// This constructor is mostly exception free. But it may still throw
     /// a standard exception if memory allocation fails inside the method.
     ///
-    /// \param qrattrs Query/Response attributes.
+    /// \param msgattrs DNS message attributes.
     /// \param response DNS response message.
     /// \param done DNS response was sent to the client.
     ///
     /// \throw std::bad_alloc Internal resource allocation fails
     ///
-    void inc(const QRAttributes& qrattrs, const isc::dns::Message& response,
-             const bool done);
+    void inc(const MessageAttributes& msgattrs,
+             const isc::dns::Message& response, const bool done);
 
     /// \brief Get statistics counters.
     ///
