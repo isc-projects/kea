@@ -188,7 +188,9 @@ def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
     global item_list
 
     msg_counter_types = 'enum MSGCounterType {\n'
-    item_names = []
+    item_names =  ['// using -1 as counter_id to state it is not a '
+                   + 'counter item\n']
+    item_names += ['const int NOT_ITEM = -1;\n']
 
     def convert_list(items, msg_counter_types, item_names_current, item_names):
         for item in items:
@@ -204,18 +206,18 @@ def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
                 msg_counter_types, item_names_current_, item_names = \
                         convert_list(item['child'], msg_counter_types,
                                      item_names_current_, item_names)
-                item_names_current_.append('    { NULL, NULL, -1 }\n' +
+                item_names_current_.append('    { NULL, NULL, NOT_ITEM }\n' +
                               '};\n')
                 item_names.extend(item_names_current_)
                 item_names_current.append('    { "' + item['name'] + '", ' +
-                                          item['index'] + ', -1 },\n')
+                                          item['index'] + ', NOT_ITEM },\n')
         return msg_counter_types, item_names_current, item_names
 
     msg_counter_types, item_names_current, item_names = \
             convert_list(item_list, msg_counter_types, [], item_names)
     item_names.append('const struct CounterTypeTree MSGCounterTree[] = {\n')
     item_names.extend(item_names_current)
-    item_names.append('    { NULL, NULL, -1 }\n' +
+    item_names.append('    { NULL, NULL, NOT_ITEM }\n' +
                   '};\n')
 
     msg_counter_types += \
@@ -223,8 +225,8 @@ def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
         '    MSG_COUNTER_TYPES  ///< The number of defined counters\n' +\
         '};\n'
 
-    item_defs = msg_counter_types
-    item_decls = ''.join(item_names)
+    item_decls = msg_counter_types
+    item_defs = ''.join(item_names)
 
     if need_generate(builddir+os.sep+itemsfile, def_mtime):
         statistics_items_h_pre = open(srcdir+os.sep+itemsfile+pre_suffix, 'r')
@@ -233,7 +235,7 @@ def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
 
         statistics_items_h = open(builddir+os.sep+itemsfile, 'w')
         statistics_items_h.write(items_pre.replace(
-            '// ### STATISTICS ITEMS DECLARATION ###', item_defs))
+            '// ### STATISTICS ITEMS DECLARATION ###', item_decls))
         statistics_items_h.close()
     else:
         print('skip generating ' + itemsfile)
@@ -245,7 +247,7 @@ def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
 
         statistics_cc = open(builddir+os.sep+ccfile, 'w')
         statistics_cc.write(items_pre.replace(
-            '// ### STATISTICS ITEMS DEFINITION ###', item_decls))
+            '// ### STATISTICS ITEMS DEFINITION ###', item_defs))
         statistics_cc.close()
     else:
         print('skip generating ' + ccfile)
@@ -257,7 +259,7 @@ def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
 
         statistics_ut_cc = open(builddir+os.sep+utfile, 'w')
         statistics_ut_cc.write(items_pre.replace(
-            '// ### STATISTICS ITEMS DEFINITION ###', item_decls))
+            '// ### STATISTICS ITEMS DEFINITION ###', item_defs))
         statistics_ut_cc.close()
     else:
         print('skip generating ' + utfile)
