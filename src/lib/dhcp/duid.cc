@@ -12,13 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <exceptions/exceptions.h>
-#include <stdint.h>
-#include <util/io_utilities.h>
 #include <dhcp/duid.h>
-#include <vector>
-#include <sstream>
+#include <exceptions/exceptions.h>
+#include <util/io_utilities.h>
+
 #include <iomanip>
+#include <sstream>
+#include <vector>
+
+#include <stdint.h>
 
 namespace isc {
 namespace dhcp {

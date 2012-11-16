@@ -17,10 +17,11 @@
 #include <asiolink/io_address.h>
 #include <dhcpsrv/pool.h>
 
+#include <gtest/gtest.h>
+
 #include <iostream>
 #include <vector>
 #include <sstream>
-#include <gtest/gtest.h>
 
 using boost::scoped_ptr;
 using namespace isc;

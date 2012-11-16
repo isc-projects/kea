@@ -16,7 +16,9 @@
 #define DUID_H
 
 #include <asiolink/io_address.h>
+
 #include <vector>
+
 #include <stdint.h>
 #include <unistd.h>
 

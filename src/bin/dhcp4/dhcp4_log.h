@@ -15,8 +15,8 @@
 #ifndef DHCP4_LOG_H
 #define DHCP4_LOG_H
 
-#include <log/macros.h>
 #include <log/logger_support.h>
+#include <log/macros.h>
 #include <dhcp4/dhcp4_messages.h>
 
 namespace isc {

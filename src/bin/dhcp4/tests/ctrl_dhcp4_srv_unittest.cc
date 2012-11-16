@@ -13,16 +13,18 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <iostream>
+
+#include <config/ccsession.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
+
+#include <gtest/gtest.h>
+
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
 #include <arpa/inet.h>
-#include <gtest/gtest.h>
-
-#include <dhcp/dhcp4.h>
-#include <dhcp4/ctrl_dhcp4_srv.h>
-#include <config/ccsession.h>
 
 using namespace std;
 using namespace isc;

@@ -12,14 +12,16 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef OPTION_H_
-#define OPTION_H_
+#ifndef OPTION_H
+#define OPTION_H
 
-#include <string>
-#include <map>
-#include <vector>
-#include <boost/shared_ptr.hpp>
 #include <util/buffer.h>
+
+#include <boost/shared_ptr.hpp>
+
+#include <map>
+#include <string>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
@@ -329,4 +331,4 @@ protected:
 } // namespace isc::dhcp
 } // namespace isc
 
-#endif
+#endif // OPTION_H

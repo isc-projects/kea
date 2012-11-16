@@ -18,11 +18,12 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
 
+#include <gtest/gtest.h>
+
 #include <iostream>
 #include <sstream>
-#include <utility>
 #include <string>
-#include <gtest/gtest.h>
+#include <utility>
 
 using namespace isc;
 using namespace isc::asiolink;

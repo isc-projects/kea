@@ -17,9 +17,10 @@
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease_mgr.h>
 
+#include <gtest/gtest.h>
+
 #include <iostream>
 #include <sstream>
-#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

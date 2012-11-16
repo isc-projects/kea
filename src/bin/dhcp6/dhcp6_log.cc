@@ -14,7 +14,7 @@
 
 /// Defines the logger used by the top-level component of b10-dhcp6.
 
-#include "dhcp6_log.h"
+#include <dhcp6/dhcp6_log.h>
 
 namespace isc {
 namespace dhcp {
