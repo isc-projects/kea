@@ -38,6 +38,7 @@
 using namespace isc::dns;
 using namespace isc::auth;
 using namespace isc::statistics;
+using namespace isc::auth::statistics;
 
 namespace {
 
@@ -63,13 +64,13 @@ fillNodes(const Counter& counter,
     }
 }
 
+// ### STATISTICS ITEMS DEFINITION ###
+
 } // anonymous namespace
 
 namespace isc {
 namespace auth {
 namespace statistics {
-
-// ### STATISTICS ITEMS DEFINITION ###
 
 // Note: opcode in this array must be start with 0 and be sequential
 const int opcode_to_msgcounter[] = {
@@ -255,7 +256,7 @@ Counters::get() const {
     item_tree->set("zones", zones);
 
     Counters::ItemTreePtr server = Element::createMap();
-    fillNodes(server_msg_counter_, MSGCounterTree, server);
+    fillNodes(server_msg_counter_, msg_counter_tree, server);
     zones->set("_SERVER_", server);
 
     return (item_tree);
