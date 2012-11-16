@@ -34,6 +34,10 @@ public:
     /// @brief Return collection of option definitions.
     ///
     /// @param u universe of the options (V4 or V6).
+    ///
+    /// @throw isc::InvalidOperation if option definitions for a specified
+    /// universe have not been initialized yet. initStdOptionDefs must
+    /// be first called to avoid this error.
     /// @return collection of option definitions.
     static const OptionDefContainer& getOptionDefs(Option::Universe u);
 

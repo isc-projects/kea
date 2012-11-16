@@ -213,12 +213,8 @@ OptionDefinition::factoryAddrList6(Option::Universe u, uint16_t type,
 
 OptionPtr
 OptionDefinition::factoryEmpty(Option::Universe u, uint16_t type,
-                               OptionBufferConstIter begin,
-                               OptionBufferConstIter end) {
-    if (std::distance(begin, end) > 0) {
-        isc_throw(isc::BadValue, "input option buffer must be empty"
-                  " when creating empty option instance");
-    }
+                               OptionBufferConstIter,
+                               OptionBufferConstIter) {
     OptionPtr option(new Option(u, type));
     return (option);
 }
@@ -236,9 +232,9 @@ OptionDefinition::factoryIA6(Option::Universe u, uint16_t type,
                              OptionBufferConstIter begin,
                              OptionBufferConstIter end) {
     sanityCheckUniverse(u, Option::V6);
-    if (std::distance(begin, end) != Option6IA::OPTION6_IA_LEN) {
-        isc_throw(isc::OutOfRange, "input option buffer has invalid size, expeted "
-                  << Option6IA::OPTION6_IA_LEN << " bytes");
+    if (std::distance(begin, end) < Option6IA::OPTION6_IA_LEN) {
+        isc_throw(isc::OutOfRange, "input option buffer has invalid size, expected "
+                  "at least " << Option6IA::OPTION6_IA_LEN << " bytes");
     }
     boost::shared_ptr<Option6IA> option(new Option6IA(type, begin, end));
     return (option);
@@ -249,9 +245,9 @@ OptionDefinition::factoryIAAddr6(Option::Universe u, uint16_t type,
                                  OptionBufferConstIter begin,
                                  OptionBufferConstIter end) {
     sanityCheckUniverse(u, Option::V6);
-    if (std::distance(begin, end) != Option6IAAddr::OPTION6_IAADDR_LEN) {
-        isc_throw(isc::OutOfRange, "input option buffer has invalid size, expeted "
-                  << Option6IAAddr::OPTION6_IAADDR_LEN << " bytes");
+    if (std::distance(begin, end) < Option6IAAddr::OPTION6_IAADDR_LEN) {
+        isc_throw(isc::OutOfRange, "input option buffer has invalid size, expected "
+                  " at least " << Option6IAAddr::OPTION6_IAADDR_LEN << " bytes");
     }
     boost::shared_ptr<Option6IAAddr> option(new Option6IAAddr(type, begin, end));
     return (option);

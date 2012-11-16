@@ -372,10 +372,6 @@ public:
     static OptionPtr factoryInteger(Option::Universe, uint16_t type,
                                     OptionBufferConstIter begin,
                                     OptionBufferConstIter end) {
-        if (std::distance(begin, end) > sizeof(T)) {
-            isc_throw(isc::OutOfRange, "provided option buffer is too large, expected: "
-                      << sizeof(T) << " bytes");
-        }
         OptionPtr option(new Option6Int<T>(type, begin, end));
         return (option);
     }
@@ -391,12 +387,6 @@ public:
     static OptionPtr factoryIntegerArray(Option::Universe, uint16_t type,
                                          OptionBufferConstIter begin,
                                          OptionBufferConstIter end) {
-        if (std::distance(begin, end) == 0) {
-            isc_throw(isc::OutOfRange, "option buffer length must be greater than zero");
-        } else if (std::distance(begin, end) % OptionDataTypes<T>::len != 0) {
-            isc_throw(isc::OutOfRange, "option buffer length must be multiple of "
-                      << OptionDataTypes<T>::len << " bytes");
-        }
         OptionPtr option(new Option6IntArray<T>(type, begin, end));
         return (option);
     }
