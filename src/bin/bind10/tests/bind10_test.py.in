@@ -717,6 +717,15 @@ class MockBob(BoB):
         self.get_process_exit_status_called = True
         return (53, 0)
 
+    def _get_process_exit_status_raises_oserror_echild(self):
+        raise OSError(errno.ECHILD, 'Mock error')
+
+    def _get_process_exit_status_raises_oserror_other(self):
+        raise OSError(0, 'Mock error')
+
+    def _get_process_exit_status_raises_other(self):
+        raise Exception('Mock error')
+
 class MockBobSimple(BoB):
     def __init__(self):
         BoB.__init__(self)
@@ -1447,6 +1456,25 @@ class TestBossComponents(unittest.TestCase):
         bob.reap_children()
         # now, we should as the mock component.failed() returns False
         self.assertTrue(component in bob.components_to_restart)
+
+        # case where bob._get_process_exit_status() raises OSError with errno.ECHILD
+        bob._get_process_exit_status = bob._get_process_exit_status_raises_oserror_echild
+        bob.components_to_restart = []
+        # this should catch and handle the OSError
+        bob.reap_children()
+        self.assertFalse(component in bob.components_to_restart)
+
+        # case where bob._get_process_exit_status() raises OSError with
+        # errno other than ECHILD
+        bob._get_process_exit_status = bob._get_process_exit_status_raises_oserror_other
+        with self.assertRaises(OSError):
+            bob.reap_children()
+
+        # case where bob._get_process_exit_status() raises something
+        # other than OSError
+        bob._get_process_exit_status = bob._get_process_exit_status_raises_other
+        with self.assertRaises(Exception):
+            bob.reap_children()
 
     def test_kill_started_components(self):
         '''Test that started components are killed.'''
