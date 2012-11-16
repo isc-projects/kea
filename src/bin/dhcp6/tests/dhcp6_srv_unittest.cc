@@ -14,20 +14,11 @@
 
 #include <config.h>
 
-#include <fstream>
-#include <iostream>
-#include <sstream>
-
-#include <gtest/gtest.h>
-
 #include <asiolink/io_address.h>
 #include <boost/scoped_ptr.hpp>
 #include <config/ccsession.h>
-#include <dhcp/cfgmgr.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
-#include <dhcp/lease_mgr.h>
-#include <dhcp/lease_mgr_factory.h>
 #include <dhcp/option.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_ia.h>
@@ -35,8 +26,17 @@
 #include <dhcp/option6_int_array.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_srv.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
+
+#include <gtest/gtest.h>
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
 
 using namespace isc;
 using namespace isc::asiolink;

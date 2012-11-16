@@ -1264,6 +1264,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/benchmarks/Makefile
                  src/lib/dhcp/Makefile
                  src/lib/dhcp/tests/Makefile
+                 src/lib/dhcpsrv/Makefile
+                 src/lib/dhcpsrv/tests/Makefile
                  src/lib/exceptions/Makefile
                  src/lib/exceptions/tests/Makefile
                  src/lib/datasrc/Makefile

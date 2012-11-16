@@ -15,12 +15,12 @@
 #ifndef MEMFILE_LEASE_MGR_H
 #define MEMFILE_LEASE_MGR_H
 
-#include <boost/multi_index_container.hpp>
-#include <boost/multi_index/indexed_by.hpp>
-#include <boost/multi_index/ordered_index.hpp>
-#include <boost/multi_index/member.hpp>
+#include <dhcpsrv/lease_mgr.h>
 
-#include <dhcp/lease_mgr.h>
+#include <boost/multi_index/indexed_by.hpp>
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index_container.hpp>
 
 namespace isc {
 namespace dhcp {

@@ -13,8 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <asiolink/io_address.h>
-#include <dhcp/addr_utilities.h>
-#include <dhcp/pool.h>
+#include <dhcpsrv/addr_utilities.h>
+#include <dhcpsrv/pool.h>
 
 using namespace isc::asiolink;
 

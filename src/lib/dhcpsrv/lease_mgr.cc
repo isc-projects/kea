@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <dhcp/lease_mgr.h>
+#include <dhcpsrv/lease_mgr.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/foreach.hpp>

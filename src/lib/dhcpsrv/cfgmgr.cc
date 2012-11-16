@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <asiolink/io_address.h>
-#include <dhcp/cfgmgr.h>
+#include <dhcpsrv/cfgmgr.h>
 
 using namespace isc::asiolink;
 using namespace isc::util;

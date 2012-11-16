@@ -12,9 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <dhcp/addr_utilities.h>
 #include <asiolink/io_address.h>
-#include <dhcp/subnet.h>
+#include <dhcpsrv/addr_utilities.h>
+#include <dhcpsrv/subnet.h>
+
 #include <sstream>
 
 using namespace isc::asiolink;

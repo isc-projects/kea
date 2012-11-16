@@ -15,9 +15,10 @@
 #ifndef LEASE_MGR_FACTORY_H
 #define LEASE_MGR_FACTORY_H
 
-#include <string>
-#include <dhcp/lease_mgr.h>
+#include <dhcpsrv/lease_mgr.h>
 #include <exceptions/exceptions.h>
+
+#include <string>
 
 namespace isc {
 namespace dhcp {

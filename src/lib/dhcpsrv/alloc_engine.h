@@ -15,12 +15,13 @@
 #ifndef ALLOC_ENGINE_H
 #define ALLOC_ENGINE_H
 
+#include <asiolink/io_address.h>
+#include <dhcp/duid.h>
+#include <dhcpsrv/subnet.h>
+#include <dhcpsrv/lease_mgr.h>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
-#include <dhcp/duid.h>
-#include <dhcp/subnet.h>
-#include <asiolink/io_address.h>
-#include <dhcp/lease_mgr.h>
 
 namespace isc {
 namespace dhcp {

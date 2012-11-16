@@ -17,15 +17,16 @@
 
 #include <iostream>
 
-#include <boost/noncopyable.hpp>
-#include <dhcp/alloc_engine.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/pkt6.h>
-#include <dhcp/subnet.h>
+#include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/subnet.h>
+
+#include <boost/noncopyable.hpp>
 
 namespace isc {
 

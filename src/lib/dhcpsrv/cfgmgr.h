@@ -15,16 +15,18 @@
 #ifndef CFGMGR_H
 #define CFGMGR_H
 
-#include <string>
-#include <map>
-#include <vector>
+#include <asiolink/io_address.h>
+#include <dhcp/option.h>
+#include <dhcpsrv/pool.h>
+#include <dhcpsrv/subnet.h>
+#include <util/buffer.h>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
-#include <asiolink/io_address.h>
-#include <util/buffer.h>
-#include <dhcp/option.h>
-#include <dhcp/pool.h>
-#include <dhcp/subnet.h>
+
+#include <map>
+#include <string>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
