@@ -258,21 +258,12 @@ TEST_F(OptionDefinitionTest, factoryEmpty) {
     EXPECT_EQ(0, option_v6->getData().size());
 
     // Repeat the same test scenario for DHCPv4 option.
-    EXPECT_THROW(opt_def.optionFactory(Option::V4, 214, OptionBuffer(2)),
-                 isc::BadValue);
-
     OptionPtr option_v4;
     ASSERT_NO_THROW(option_v4 = opt_def.optionFactory(Option::V4, 214, OptionBuffer()));
     // Expect 'empty' DHCPv4 option.
     EXPECT_EQ(Option::V4, option_v4->getUniverse());
     EXPECT_EQ(2, option_v4->getHeaderLen());
     EXPECT_EQ(0, option_v4->getData().size());
-
-    // This factory produces empty option (consisting of option type
-    // and length). Attempt to provide some data in the buffer should
-    // result in exception.
-    EXPECT_THROW(opt_def.optionFactory(Option::V6, D6O_RAPID_COMMIT, OptionBuffer(2)),
-                 isc::BadValue);
 }
 
 TEST_F(OptionDefinitionTest, factoryBinary) {
@@ -352,17 +343,12 @@ TEST_F(OptionDefinitionTest, factoryIA6) {
         opt_def.optionFactory(Option::V4, D6O_IA_NA, OptionBuffer(option6_ia_len)),
         isc::BadValue
     );
-    // The length of the buffer must be 12 bytes.
+    // The length of the buffer must be at least 12 bytes.
     // Check too short buffer.
     EXPECT_THROW(
         opt_def.optionFactory(Option::V6, D6O_IA_NA, OptionBuffer(option6_ia_len - 1)),
         isc::OutOfRange
      );
-    // Check too long buffer.
-    EXPECT_THROW(
-        opt_def.optionFactory(Option::V6, D6O_IA_NA, OptionBuffer(option6_ia_len + 1)),
-        isc::OutOfRange
-    );
 }
 
 TEST_F(OptionDefinitionTest, factoryIAAddr6) {
@@ -401,17 +387,12 @@ TEST_F(OptionDefinitionTest, factoryIAAddr6) {
         opt_def.optionFactory(Option::V4, D6O_IAADDR, OptionBuffer(option6_iaaddr_len)),
         isc::BadValue
     );
-    // The length of the buffer must be 12 bytes.
+    // The length of the buffer must be at least 12 bytes.
     // Check too short buffer.
     EXPECT_THROW(
         opt_def.optionFactory(Option::V6, D6O_IAADDR, OptionBuffer(option6_iaaddr_len - 1)),
         isc::OutOfRange
      );
-    // Check too long buffer.
-    EXPECT_THROW(
-        opt_def.optionFactory(Option::V6, D6O_IAADDR, OptionBuffer(option6_iaaddr_len + 1)),
-        isc::OutOfRange
-    );
 }
 
 TEST_F(OptionDefinitionTest, factoryIntegerInvalidType) {
@@ -440,12 +421,6 @@ TEST_F(OptionDefinitionTest, factoryUint8) {
         boost::static_pointer_cast<Option6Int<uint8_t> >(option_v6);
     EXPECT_EQ(1, option_cast_v6->getValue());
 
-    // Try to provide too large buffer. Expect exception.
-    EXPECT_THROW(
-        option_v6 = opt_def.optionFactory(Option::V6, D6O_PREFERENCE, OptionBuffer(3)),
-        isc::OutOfRange
-    );
-
     // Try to provide zero-length buffer. Expect exception.
     EXPECT_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, D6O_PREFERENCE, OptionBuffer()),
@@ -472,11 +447,6 @@ TEST_F(OptionDefinitionTest, factoryUint16) {
         boost::static_pointer_cast<Option6Int<uint16_t> >(option_v6);
     EXPECT_EQ(0x0102, option_cast_v6->getValue());
 
-    // Try to provide too large buffer. Expect exception.
-    EXPECT_THROW(
-        option_v6 = opt_def.optionFactory(Option::V6, D6O_ELAPSED_TIME, OptionBuffer(3)),
-        isc::OutOfRange
-    );
     // Try to provide zero-length buffer. Expect exception.
     EXPECT_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, D6O_ELAPSED_TIME, OptionBuffer(1)),
@@ -504,12 +474,7 @@ TEST_F(OptionDefinitionTest, factoryUint32) {
         boost::static_pointer_cast<Option6Int<uint32_t> >(option_v6);
     EXPECT_EQ(0x01020304, option_cast_v6->getValue());
 
-    // Try to provide too large buffer. Expect exception.
-    EXPECT_THROW(
-        option_v6 = opt_def.optionFactory(Option::V6, D6O_CLT_TIME, OptionBuffer(5)),
-        isc::OutOfRange
-    );
-    // Try to provide zero-length buffer. Expect exception.
+    // Try to provide too short buffer. Expect exception.
     EXPECT_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, D6O_CLT_TIME, OptionBuffer(2)),
         isc::OutOfRange
