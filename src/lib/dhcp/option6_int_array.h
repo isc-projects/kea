@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef OPTION6_INT_ARRAY_H_
-#define OPTION6_INT_ARRAY_H_
+#ifndef OPTION6_INT_ARRAY_H
+#define OPTION6_INT_ARRAY_H
 
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
@@ -225,4 +225,4 @@ private:
 } // isc::dhcp namespace
 } // isc namespace
 
-#endif /* OPTION6_INT_ARRAY_H_ */
+#endif // OPTION6_INT_ARRAY_H

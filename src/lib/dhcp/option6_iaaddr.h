@@ -12,11 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef OPTION6_IAADDR_H_
-#define OPTION6_IAADDR_H_
+#ifndef OPTION6_IAADDR_H
+#define OPTION6_IAADDR_H
 
-#include "asiolink/io_address.h"
-#include "dhcp/option.h"
+#include <asiolink/io_address.h>
+#include <dhcp/option.h>
 
 namespace isc {
 namespace dhcp {
@@ -120,4 +120,4 @@ protected:
 } // isc::dhcp namespace
 } // isc namespace
 
-#endif /* OPTION_IA_H_ */
+#endif // OPTION_IA_H

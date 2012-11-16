@@ -13,17 +13,19 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+
+#include <dhcp/dhcp6.h>
+#include <dhcp/option.h>
+#include <exceptions/exceptions.h>
+#include <util/buffer.h>
+
+#include <boost/shared_ptr.hpp>
+#include <gtest/gtest.h>
+
 #include <iostream>
 #include <sstream>
 
 #include <arpa/inet.h>
-#include <gtest/gtest.h>
-#include <boost/shared_ptr.hpp>
-#include <exceptions/exceptions.h>
-#include <util/buffer.h>
-
-#include "dhcp/dhcp6.h"
-#include "dhcp/option.h"
 
 using namespace std;
 using namespace isc;

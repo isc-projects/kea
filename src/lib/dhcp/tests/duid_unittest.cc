@@ -13,14 +13,18 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <iostream>
-#include <sstream>
-#include <arpa/inet.h>
-#include <gtest/gtest.h>
-#include <exceptions/exceptions.h>
-#include <boost/scoped_ptr.hpp>
+
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
+#include <exceptions/exceptions.h>
+
+#include <boost/scoped_ptr.hpp>
+#include <gtest/gtest.h>
+
+#include <iostream>
+#include <sstream>
+
+#include <arpa/inet.h>
 
 using namespace std;
 using namespace isc;

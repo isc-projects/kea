@@ -31,18 +31,17 @@
 
 #if defined(OS_LINUX)
 
+#include <asiolink/io_address.h>
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
+#include <util/io/sockaddr_util.h>
+
+#include <boost/array.hpp>
+#include <boost/static_assert.hpp>
 
 #include <stdint.h>
 #include <net/if.h>
 #include <linux/rtnetlink.h>
-#include <boost/array.hpp>
-#include <boost/static_assert.hpp>
-#include <dhcp/iface_mgr.h>
-#include <exceptions/exceptions.h>
-#include <asiolink/io_address.h>
-#include <util/io/sockaddr_util.h>
 
 using namespace std;
 using namespace isc;

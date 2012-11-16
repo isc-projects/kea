@@ -15,8 +15,6 @@
 #ifndef DHCPV6_SRV_H
 #define DHCPV6_SRV_H
 
-#include <iostream>
-
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
@@ -28,8 +26,9 @@
 
 #include <boost/noncopyable.hpp>
 
-namespace isc {
+#include <iostream>
 
+namespace isc {
 namespace dhcp {
 /// @brief DHCPv6 server service.
 ///

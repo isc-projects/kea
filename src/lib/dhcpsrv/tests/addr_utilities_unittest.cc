@@ -1,5 +1,5 @@
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,13 +14,15 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <stdint.h>
-#include <stdlib.h>
-
-#include <gtest/gtest.h>
-#include <vector>
 
 #include <dhcpsrv/addr_utilities.h>
+
+#include <gtest/gtest.h>
+
+#include <vector>
+
+#include <stdint.h>
+#include <stdlib.h>
 
 using namespace std;
 using namespace isc::dhcp;

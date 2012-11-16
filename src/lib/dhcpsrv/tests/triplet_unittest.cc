@@ -17,8 +17,9 @@
 #include <dhcpsrv/triplet.h>
 #include <exceptions/exceptions.h>
 
-#include <stdint.h>
 #include <gtest/gtest.h>
+
+#include <stdint.h>
 
 using namespace isc::dhcp;
 using namespace isc;

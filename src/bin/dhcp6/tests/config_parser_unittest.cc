@@ -23,13 +23,13 @@
 #include <dhcpsrv/subnet.h>
 
 #include <boost/foreach.hpp>
+#include <gtest/gtest.h>
 
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
 #include <arpa/inet.h>
-#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

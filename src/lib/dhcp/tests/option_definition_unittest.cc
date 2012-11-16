@@ -14,7 +14,6 @@
 
 #include <config.h>
 
-#include <exceptions/exceptions.h>
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
@@ -25,10 +24,11 @@
 #include <dhcp/option6_int.h>
 #include <dhcp/option6_int_array.h>
 #include <dhcp/option_definition.h>
+#include <exceptions/exceptions.h>
 
-#include <gtest/gtest.h>
-#include <boost/shared_ptr.hpp>
 #include <boost/pointer_cast.hpp>
+#include <boost/shared_ptr.hpp>
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;
