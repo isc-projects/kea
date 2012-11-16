@@ -1462,7 +1462,7 @@ class TestBossComponents(unittest.TestCase):
         bob.components_to_restart = []
         # this should catch and handle the OSError
         bob.reap_children()
-        self.assertFalse(component in bob.components_to_restart)
+        self.assertFalse(bob.components_to_restart)
 
         # case where bob._get_process_exit_status() raises OSError with
         # errno other than ECHILD
