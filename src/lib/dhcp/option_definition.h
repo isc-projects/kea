@@ -231,13 +231,6 @@ public:
     /// @return option code.
     uint16_t getCode() const { return (code_); }
 
-    /// @brief Return factory function for the given definition.
-    ///
-    /// @throw isc::OutOfRange if \ref validate returns it.
-    /// @throw isc::BadValue if \ref validate returns it.
-    /// @return pointer to a factory function.
-    Option::Factory* getFactory() const;
-
     /// @brief Return option name.
     ///
     /// @return option name.
@@ -270,6 +263,36 @@ public:
     /// @return true if specified format is IAADDR option format.
     bool haveIAAddr6Format() const;
 
+    /// @brief Option factory.
+    ///
+    /// This function creates an instance of DHCP option using
+    /// provided chunk of buffer. This function may be used to
+    /// create option which is to be sent in the outgoing packet.
+    ///
+    /// @param universe option universe (V4 or V6).
+    /// @param type option type.
+    /// @param begin beginning of the option buffer.
+    /// @param end end of the option buffer.
+    ///
+    /// @return instance of the DHCP option.
+    OptionPtr optionFactory(Option::Universe u, uint16_t type,
+                            OptionBufferConstIter begin,
+                            OptionBufferConstIter end);
+
+    /// @brief Option factory.
+    ///
+    /// This function creates an instance of DHCP option using
+    /// whole provided buffer. This function may be used to
+    /// create option which is to be sent in the outgoing packet.
+    ///
+    /// @param universe option universe (V4 or V6).
+    /// @param type option type.
+    /// @param buf option buffer.
+    ///
+    /// @return instance of the DHCP option.
+    OptionPtr optionFactory(Option::Universe u, uint16_t type,
+                            const OptionBuffer& buf);
+
     /// @brief Factory to create option with address list.
     ///
     /// @param u universe (must be V4).
@@ -279,7 +302,8 @@ public:
     /// @throw isc::OutOfRange if length of the provided option buffer
     /// is not multiple of IPV4 address length.
     static OptionPtr factoryAddrList4(Option::Universe u, uint16_t type,
-                                      const OptionBuffer& buf);
+                                      OptionBufferConstIter begin,
+                                      OptionBufferConstIter end);
 
     /// @brief Factory to create option with address list.
     ///
@@ -290,7 +314,8 @@ public:
     /// @throw isc::OutOfaRange if length of provided option buffer
     /// is not multiple of IPV6 address length.
     static OptionPtr factoryAddrList6(Option::Universe u, uint16_t type,
-                                      const OptionBuffer& buf);
+                                      OptionBufferConstIter begin,
+                                      OptionBufferConstIter end);
 
     /// @brief Empty option factory.
     ///
@@ -298,7 +323,8 @@ public:
     /// @param type option type.
     /// @param buf option buffer (must be empty).
     static OptionPtr factoryEmpty(Option::Universe u, uint16_t type,
-                                  const OptionBuffer& buf);
+                                  OptionBufferConstIter begin,
+                                  OptionBufferConstIter end);
 
     /// @brief Factory to create generic option.
     ///
@@ -306,7 +332,8 @@ public:
     /// @param type option type.
     /// @param buf option buffer.
     static OptionPtr factoryGeneric(Option::Universe u, uint16_t type,
-                                    const OptionBuffer& buf);
+                                    OptionBufferConstIter begin,
+                                    OptionBufferConstIter end);
 
     /// @brief Factory for IA-type of option.
     ///
@@ -318,7 +345,8 @@ public:
     /// too long. Expected size is 12 bytes.
     /// @throw isc::BadValue if specified universe value is not V6.
     static OptionPtr factoryIA6(Option::Universe u, uint16_t type,
-                                const OptionBuffer& buf);
+                                OptionBufferConstIter begin,
+                                OptionBufferConstIter end);
 
     /// @brief Factory for IAADDR-type of option.
     ///
@@ -330,7 +358,8 @@ public:
     /// too long. Expected size is 24 bytes.
     /// @throw isc::BadValue if specified universe value is not V6.
     static OptionPtr factoryIAAddr6(Option::Universe u, uint16_t type,
-                                const OptionBuffer& buf);
+                                    OptionBufferConstIter begin,
+                                    OptionBufferConstIter end);
 
     /// @brief Factory function to create option with integer value.
     ///
@@ -340,12 +369,14 @@ public:
     ///
     /// @throw isc::OutOfRange if provided option buffer length is invalid.
     template<typename T>
-    static OptionPtr factoryInteger(Option::Universe, uint16_t type, const OptionBuffer& buf) {
-        if (buf.size() > sizeof(T)) {
+    static OptionPtr factoryInteger(Option::Universe, uint16_t type,
+                                    OptionBufferConstIter begin,
+                                    OptionBufferConstIter end) {
+        if (std::distance(begin, end) > sizeof(T)) {
             isc_throw(isc::OutOfRange, "provided option buffer is too large, expected: "
                       << sizeof(T) << " bytes");
         }
-        OptionPtr option(new Option6Int<T>(type, buf.begin(), buf.end()));
+        OptionPtr option(new Option6Int<T>(type, begin, end));
         return (option);
     }
 
@@ -357,14 +388,16 @@ public:
     ///
     /// @throw isc::OutOfRange if provided option buffer length is invalid.
     template<typename T>
-    static OptionPtr factoryIntegerArray(Option::Universe, uint16_t type, const OptionBuffer& buf) {
-        if (buf.size() == 0) {
+    static OptionPtr factoryIntegerArray(Option::Universe, uint16_t type,
+                                         OptionBufferConstIter begin,
+                                         OptionBufferConstIter end) {
+        if (std::distance(begin, end) == 0) {
             isc_throw(isc::OutOfRange, "option buffer length must be greater than zero");
-        } else if (buf.size() % OptionDataTypes<T>::len != 0) {
+        } else if (std::distance(begin, end) % OptionDataTypes<T>::len != 0) {
             isc_throw(isc::OutOfRange, "option buffer length must be multiple of "
                       << OptionDataTypes<T>::len << " bytes");
         }
-        OptionPtr option(new Option6IntArray<T>(type, buf.begin(), buf.end()));
+        OptionPtr option(new Option6IntArray<T>(type, begin, end));
         return (option);
     }
 
@@ -395,7 +428,7 @@ private:
     ///
     /// @throw isc::BadValue if expected universe and actual universe don't match.
    static inline void sanityCheckUniverse(const Option::Universe expected_universe,
-                                          const Option::Universe actual_universe); 
+                                          const Option::Universe actual_universe);
 
     /// Option name.
     std::string name_;
@@ -421,7 +454,7 @@ private:
 /// Note that this container can hold multiple options with the
 /// same code. For this reason, the latter index can be used to
 /// obtain a range of options for a particular option code.
-/// 
+///
 /// @todo: need an index to search options using option space name
 /// once option spaces are implemented.
 typedef boost::multi_index_container<

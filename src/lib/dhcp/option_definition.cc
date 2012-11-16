@@ -96,51 +96,50 @@ OptionDefinition::addRecordField(const DataType data_type) {
     record_fields_.push_back(data_type);
 }
 
-Option::Factory*
-OptionDefinition::getFactory() const {
+OptionPtr
+OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
+                                OptionBufferConstIter begin,
+                                OptionBufferConstIter end) {
     validate();
 
-    // @todo This function must be extended to return more factory
-    // functions that create instances of more specialized options.
-    // This requires us to first implement those more specialized
-    // options that will be derived from Option class.
     if (type_ == BINARY_TYPE) {
-        return (factoryGeneric);
+        return (factoryGeneric(u, type, begin, end));
     } else if (type_ == IPV6_ADDRESS_TYPE && array_type_) {
-        return (factoryAddrList6);
+        return (factoryAddrList6(u, type, begin, end));
     } else if (type_ == IPV4_ADDRESS_TYPE && array_type_) {
-        return (factoryAddrList4);
+        return (factoryAddrList4(u, type, begin, end));
     } else if (type_ == EMPTY_TYPE) {
-        return (factoryEmpty);
+        return (factoryEmpty(u, type, begin, end));
     } else if (code_ == D6O_IA_NA && haveIA6Format()) {
-        return (factoryIA6);
+        return (factoryIA6(u, type, begin, end));
     } else if (code_ == D6O_IAADDR && haveIAAddr6Format()) {
-        return (factoryIAAddr6);
+        return (factoryIAAddr6(u, type, begin, end));
     } else if (type_ == UINT8_TYPE) {
         if (array_type_) {
-            return (factoryGeneric);
+            return (factoryGeneric(u, type, begin, end));
         } else {
-            return (factoryInteger<uint8_t>);
+            return (factoryInteger<uint8_t>(u, type, begin, end));
         }
     } else if (type_ == UINT16_TYPE) {
         if (array_type_) {
-            return (factoryIntegerArray<uint16_t>);
+            return (factoryIntegerArray<uint16_t>(u, type, begin, end));
         } else {
-            return (factoryInteger<uint16_t>);
+            return (factoryInteger<uint16_t>(u, type, begin, end));
         }
     } else if (type_ == UINT32_TYPE) {
         if (array_type_) {
-            return (factoryIntegerArray<uint32_t>);
+            return (factoryIntegerArray<uint32_t>(u, type, begin, end));
         } else {
-            return (factoryInteger<uint32_t>);
+            return (factoryInteger<uint32_t>(u, type, begin, end));
         }
     }
-    // Factory generic returns instance of Option class. However, once we
-    // implement CustomOption class we may want to return factory function
-    // that will create instance of CustomOption rather than Option.
-    // CustomOption will allow to access particular data fields within the
-    // option rather than raw data buffer.
-    return (factoryGeneric);
+    return (factoryGeneric(u, type, begin, end));
+}
+
+OptionPtr
+OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
+                                const OptionBuffer& buf) {
+    return (optionFactory(u, type, buf.begin(), buf.end()));
 }
 
 void
@@ -195,26 +194,28 @@ OptionDefinition::haveIAAddr6Format() const {
 
 OptionPtr
 OptionDefinition::factoryAddrList4(Option::Universe u, uint16_t type,
-                                   const OptionBuffer& buf) {
+                                  OptionBufferConstIter begin,
+                                  OptionBufferConstIter end) {
     sanityCheckUniverse(u, Option::V4);
-    boost::shared_ptr<Option4AddrLst> option(new Option4AddrLst(type, buf.begin(),
-                                                                buf.begin() + buf.size()));
+    boost::shared_ptr<Option4AddrLst> option(new Option4AddrLst(type, begin, end));
     return (option);
 }
 
 OptionPtr
 OptionDefinition::factoryAddrList6(Option::Universe u, uint16_t type,
-                                   const OptionBuffer& buf) {
+                                   OptionBufferConstIter begin,
+                                   OptionBufferConstIter end) {
     sanityCheckUniverse(u, Option::V6);
-    boost::shared_ptr<Option6AddrLst> option(new Option6AddrLst(type, buf.begin(),
-                                                                buf.begin() + buf.size()));
+    boost::shared_ptr<Option6AddrLst> option(new Option6AddrLst(type, begin, end));
     return (option);
 }
 
 
 OptionPtr
-OptionDefinition::factoryEmpty(Option::Universe u, uint16_t type, const OptionBuffer& buf) {
-    if (buf.size() > 0) {
+OptionDefinition::factoryEmpty(Option::Universe u, uint16_t type,
+                               OptionBufferConstIter begin,
+                               OptionBufferConstIter end) {
+    if (std::distance(begin, end) > 0) {
         isc_throw(isc::BadValue, "input option buffer must be empty"
                   " when creating empty option instance");
     }
@@ -223,32 +224,36 @@ OptionDefinition::factoryEmpty(Option::Universe u, uint16_t type, const OptionBu
 }
 
 OptionPtr
-OptionDefinition::factoryGeneric(Option::Universe u, uint16_t type, const OptionBuffer& buf) {
-    OptionPtr option(new Option(u, type, buf));
+OptionDefinition::factoryGeneric(Option::Universe u, uint16_t type,
+                                 OptionBufferConstIter begin,
+                                 OptionBufferConstIter end) {
+    OptionPtr option(new Option(u, type, begin, end));
     return (option);
 }
 
 OptionPtr
-OptionDefinition::factoryIA6(Option::Universe u, uint16_t type, const OptionBuffer& buf) {
+OptionDefinition::factoryIA6(Option::Universe u, uint16_t type,
+                             OptionBufferConstIter begin,
+                             OptionBufferConstIter end) {
     sanityCheckUniverse(u, Option::V6);
-    if (buf.size() != Option6IA::OPTION6_IA_LEN) {
+    if (std::distance(begin, end) != Option6IA::OPTION6_IA_LEN) {
         isc_throw(isc::OutOfRange, "input option buffer has invalid size, expeted "
                   << Option6IA::OPTION6_IA_LEN << " bytes");
     }
-    boost::shared_ptr<Option6IA> option(new Option6IA(type, buf.begin(),
-                                                      buf.begin() + buf.size()));
+    boost::shared_ptr<Option6IA> option(new Option6IA(type, begin, end));
     return (option);
 }
 
 OptionPtr
-OptionDefinition::factoryIAAddr6(Option::Universe u, uint16_t type, const OptionBuffer& buf) {
+OptionDefinition::factoryIAAddr6(Option::Universe u, uint16_t type,
+                                 OptionBufferConstIter begin,
+                                 OptionBufferConstIter end) {
     sanityCheckUniverse(u, Option::V6);
-    if (buf.size() != Option6IAAddr::OPTION6_IAADDR_LEN) {
+    if (std::distance(begin, end) != Option6IAAddr::OPTION6_IAADDR_LEN) {
         isc_throw(isc::OutOfRange, "input option buffer has invalid size, expeted "
                   << Option6IAAddr::OPTION6_IAADDR_LEN << " bytes");
     }
-    boost::shared_ptr<Option6IAAddr> option(new Option6IAAddr(type, buf.begin(),
-                                                      buf.begin() + buf.size()));
+    boost::shared_ptr<Option6IAAddr> option(new Option6IAAddr(type, begin, end));
     return (option);
 }
 
