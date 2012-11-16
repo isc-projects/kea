@@ -126,25 +126,25 @@ Counters::Counters() :
 void
 Counters::incRequest(const MessageAttributes& msgattrs) {
     // protocols carrying request
-    if (msgattrs.req_ip_version_ == AF_INET) {
+    if (msgattrs.getRequestIPVersion() == AF_INET) {
         server_msg_counter_.inc(MSG_REQUEST_IPV4);
-    } else if (msgattrs.req_ip_version_ == AF_INET6) {
+    } else if (msgattrs.getRequestIPVersion() == AF_INET6) {
         server_msg_counter_.inc(MSG_REQUEST_IPV6);
     }
-    if (msgattrs.req_transport_protocol_ == IPPROTO_UDP) {
+    if (msgattrs.getRequestTransportProtocol() == IPPROTO_UDP) {
         server_msg_counter_.inc(MSG_REQUEST_UDP);
-    } else if (msgattrs.req_transport_protocol_ == IPPROTO_TCP) {
+    } else if (msgattrs.getRequestTransportProtocol() == IPPROTO_TCP) {
         server_msg_counter_.inc(MSG_REQUEST_TCP);
     }
 
     // request TSIG
-    if (msgattrs.req_is_tsig_) {
+    if (msgattrs.getRequestSigTSIG()) {
         server_msg_counter_.inc(MSG_REQUEST_TSIG);
     }
-    if (msgattrs.req_is_sig0_) {
+    if (msgattrs.getRequestSigSIG0()) {
         server_msg_counter_.inc(MSG_REQUEST_SIG0);
     }
-    if (msgattrs.req_is_badsig_) {
+    if (msgattrs.getRequestSigBadSig()) {
         server_msg_counter_.inc(MSG_REQUEST_BADSIG);
         // If signature validation is failed, no other query attributes are
         // reliable. Skip processing of the rest of query counters.
@@ -152,20 +152,20 @@ Counters::incRequest(const MessageAttributes& msgattrs) {
     }
 
     // request EDNS
-    if (msgattrs.req_is_edns_0_) {
+    if (msgattrs.getRequestEDNS0()) {
         server_msg_counter_.inc(MSG_REQUEST_EDNS0);
     }
-    if (msgattrs.req_is_edns_badver_) {
+    if (msgattrs.getRequestEDNSBadVer()) {
         server_msg_counter_.inc(MSG_REQUEST_BADEDNSVER);
     }
 
     // request DNSSEC
-    if (msgattrs.req_is_dnssec_ok_) {
+    if (msgattrs.getRequestDO()) {
         server_msg_counter_.inc(MSG_REQUEST_DNSSEC_OK);
     }
 
     // OPCODE
-    server_msg_counter_.inc(opcode_to_msgcounter[msgattrs.req_opcode_]);
+    server_msg_counter_.inc(opcode_to_msgcounter[msgattrs.getRequestOpCode()]);
 }
 
 void
@@ -176,7 +176,7 @@ Counters::incResponse(const MessageAttributes& msgattrs,
     server_msg_counter_.inc(MSG_RESPONSE);
 
     // response truncated
-    if (msgattrs.res_is_truncated_) {
+    if (msgattrs.getResponseTruncated()) {
         server_msg_counter_.inc(MSG_RESPONSE_TRUNCATED);
     }
 
@@ -187,7 +187,7 @@ Counters::incResponse(const MessageAttributes& msgattrs,
     }
 
     // response TSIG
-    if (msgattrs.req_is_tsig_) {
+    if (msgattrs.getRequestSigTSIG()) {
         // assume response is TSIG signed if request is TSIG signed
         server_msg_counter_.inc(MSG_RESPONSE_TSIG);
     }
