@@ -39,11 +39,11 @@ $(man_MANS):
 
 endif
 
-auth.spec: auth.spec.pre statistics_qr_items.def
-b10-auth.xml: b10-auth.xml.pre statistics_qr_items.def
-statistics_items.h: statistics_items.h.pre statistics_qr_items.def
-statistics.cc: statistics.cc.pre statistics_qr_items.def
-tests/statistics_unittest.cc: tests/statistics_unittest.cc.pre statistics_qr_items.def
+auth.spec: auth.spec.pre statistics_msg_items.def
+b10-auth.xml: b10-auth.xml.pre statistics_msg_items.def
+statistics_items.h: statistics_items.h.pre statistics_msg_items.def
+statistics.cc: statistics.cc.pre statistics_msg_items.def
+tests/statistics_unittest.cc: tests/statistics_unittest.cc.pre statistics_msg_items.def
 
 gen-statistics_items.py: gen-statistics_items.py.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" gen-statistics_items.py.pre >$@
@@ -76,7 +76,7 @@ b10_auth_SOURCES += main.cc
 nodist_b10_auth_SOURCES = auth_messages.h auth_messages.cc
 nodist_b10_auth_SOURCES += statistics.cc statistics_items.h
 EXTRA_DIST += auth_messages.mes
-EXTRA_DIST += statistics_qr_items.def
+EXTRA_DIST += statistics_msg_items.def
 EXTRA_DIST += b10-auth.xml.pre
 EXTRA_DIST += statistics_items.h.pre statistics.cc.pre
 EXTRA_DIST += tests/statistics_unittest.cc.pre

@@ -43,7 +43,7 @@ def need_generate(filepath, mtime):
 def import_definitions():
     global item_list
 
-    items_definition_file = srcdir + os.sep + 'statistics_qr_items.def'
+    items_definition_file = srcdir + os.sep + 'statistics_msg_items.def'
     item_definition = open(items_definition_file, 'r')
 
     re_splitter = re.compile('\t+')
@@ -187,13 +187,13 @@ def generate_docfile(docfile, def_mtime):
 def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
     global item_list
 
-    qr_counter_types = 'enum QRCounterType {\n'
+    msg_counter_types = 'enum MSGCounterType {\n'
     item_names = []
 
-    def convert_list(items, qr_counter_types, item_names_current, item_names):
+    def convert_list(items, msg_counter_types, item_names_current, item_names):
         for item in items:
             if item['child'] is None:
-                qr_counter_types += '    ' + item['index'] + ',    ' +\
+                msg_counter_types += '    ' + item['index'] + ',    ' +\
                                     '///< ' + item['description'] + '\n'
                 item_names_current.append('    { "' + item['name'] +
                                           '", NULL, ' + item['index'] + ' },\n'
@@ -201,29 +201,29 @@ def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
             else:
                 item_names_current_ = ['const struct CounterTypeTree ' +
                                        item['index'] + '[] = {\n']
-                qr_counter_types, item_names_current_, item_names = \
-                        convert_list(item['child'], qr_counter_types,
+                msg_counter_types, item_names_current_, item_names = \
+                        convert_list(item['child'], msg_counter_types,
                                      item_names_current_, item_names)
                 item_names_current_.append('    { NULL, NULL, -1 }\n' +
                               '};\n')
                 item_names.extend(item_names_current_)
                 item_names_current.append('    { "' + item['name'] + '", ' +
                                           item['index'] + ', -1 },\n')
-        return qr_counter_types, item_names_current, item_names
+        return msg_counter_types, item_names_current, item_names
 
-    qr_counter_types, item_names_current, item_names = \
-            convert_list(item_list, qr_counter_types, [], item_names)
-    item_names.append('const struct CounterTypeTree QRCounterTree[] = {\n')
+    msg_counter_types, item_names_current, item_names = \
+            convert_list(item_list, msg_counter_types, [], item_names)
+    item_names.append('const struct CounterTypeTree MSGCounterTree[] = {\n')
     item_names.extend(item_names_current)
     item_names.append('    { NULL, NULL, -1 }\n' +
                   '};\n')
 
-    qr_counter_types += \
+    msg_counter_types += \
         '    // End of counter types\n' +\
-        '    QR_COUNTER_TYPES  ///< The number of defined counters\n' +\
+        '    MSG_COUNTER_TYPES  ///< The number of defined counters\n' +\
         '};\n'
 
-    item_defs = qr_counter_types
+    item_defs = msg_counter_types
     item_decls = ''.join(item_names)
 
     if need_generate(builddir+os.sep+itemsfile, def_mtime):

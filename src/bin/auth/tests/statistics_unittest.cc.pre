@@ -101,24 +101,24 @@ checkCountersAllZeroExcept(const isc::data::ConstElementPtr counters,
 
 TEST_F(CountersTest, incrementNormalQuery) {
     Message response(Message::RENDER);
-    QRAttributes qrattrs;
+    MessageAttributes msgattrs;
     std::set<std::string> expect_nonzero;
 
     expect_nonzero.clear();
     checkCountersAllZeroExcept(counters.get()->get("zones")->get("_SERVER_"),
                                expect_nonzero);
 
-    qrattrs.setQueryIPVersion(AF_INET6);
-    qrattrs.setQueryTransportProtocol(IPPROTO_UDP);
-    qrattrs.setQueryOpCode(Opcode::QUERY_CODE);
-    qrattrs.setQueryEDNS(true, false);
-    qrattrs.setQueryDO(true);
+    msgattrs.setRequestIPVersion(AF_INET6);
+    msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
+    msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+    msgattrs.setRequestEDNS(true, false);
+    msgattrs.setRequestDO(true);
 
     response.setRcode(Rcode::REFUSED());
     response.addQuestion(Question(Name("example.com"),
                                   RRClass::IN(), RRType::AAAA()));
 
-    counters.inc(qrattrs, response, true);
+    counters.inc(msgattrs, response, true);
 
     expect_nonzero.clear();
     expect_nonzero.insert("opcode.query");
@@ -147,8 +147,8 @@ countTreeElements(const struct CounterTypeTree* tree) {
     return (count);
 }
 
-TEST(StatisticsItemsTest, QRItemNamesCheck) {
-    EXPECT_EQ(QR_COUNTER_TYPES, countTreeElements(QRCounterTree));
+TEST(StatisticsItemsTest, MSGItemNamesCheck) {
+    EXPECT_EQ(MSG_COUNTER_TYPES, countTreeElements(MSGCounterTree));
 }
 
 }

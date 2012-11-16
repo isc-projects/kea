@@ -83,7 +83,7 @@ using namespace isc::asiolink;
 using namespace isc::asiodns;
 using namespace isc::server_common::portconfig;
 using isc::auth::statistics::Counters;
-using isc::auth::statistics::QRAttributes;
+using isc::auth::statistics::MessageAttributes;
 
 namespace {
 // A helper class for cleaning up message renderer.
@@ -272,8 +272,8 @@ public:
     std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >
         client_lists_;
 
-    /// Query / Response attributes
-    QRAttributes stats_attrs_;
+    /// Message attributes
+    MessageAttributes stats_attrs_;
 
     boost::shared_ptr<ConfigurableClientList> getClientList(const RRClass&
                                                             rrclass)
@@ -494,9 +494,9 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
 {
     InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
 
-    impl_->stats_attrs_.setQueryIPVersion(
+    impl_->stats_attrs_.setRequestIPVersion(
         io_message.getRemoteEndpoint().getFamily());
-    impl_->stats_attrs_.setQueryTransportProtocol(
+    impl_->stats_attrs_.setRequestTransportProtocol(
         io_message.getRemoteEndpoint().getProtocol());
 
     // First, check the header part.  If we fail even for the base header,
@@ -553,8 +553,8 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
                                            **impl_->keyring_));
         tsig_error = tsig_context->verify(tsig_record, io_message.getData(),
                                           io_message.getDataSize());
-        impl_->stats_attrs_.setQuerySig(true, false,
-                                        tsig_error != TSIGError::NOERROR());
+        impl_->stats_attrs_.setRequestSig(true, false,
+                                          tsig_error != TSIGError::NOERROR());
     }
 
     if (tsig_error != TSIGError::NOERROR()) {
@@ -570,13 +570,13 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         // note: This can only be reliable after TSIG check succeeds.
         ConstEDNSPtr edns = message.getEDNS();
         if (edns) {
-            impl_->stats_attrs_.setQueryEDNS(edns->getVersion() == 0,
-                                             edns->getVersion() != 0);
-            impl_->stats_attrs_.setQueryDO(edns->getDNSSECAwareness());
+            impl_->stats_attrs_.setRequestEDNS(edns->getVersion() == 0,
+                                               edns->getVersion() != 0);
+            impl_->stats_attrs_.setRequestDO(edns->getDNSSECAwareness());
         }
 
         // note: This can only be reliable after TSIG check succeeds.
-        impl_->stats_attrs_.setQueryOpCode(opcode.getCode());
+        impl_->stats_attrs_.setRequestOpCode(opcode.getCode());
 
         if (opcode == Opcode::NOTIFY()) {
             send_answer = impl_->processNotify(io_message, message, buffer,
