@@ -1,3 +1,10 @@
+508.	[bug]		stephen
+	Split the DHCP library into two directories, each with its own
+	Makefile.  This properly solves the problem whereby a "make"
+	operation with multiple threads could fail because of the
+	dependencies between two libraries in the same directory.
+	(Trac #2475, git 834fa9e8f5097c6fd06845620f68547a97da8ff8)
+
 bind10-devel-20121115 released on November 15, 2012
 
 507.	[doc]		jelte
