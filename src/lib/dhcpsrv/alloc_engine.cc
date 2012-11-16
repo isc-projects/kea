@@ -16,6 +16,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 
 #include <cstring>
+
 #include <string.h>
 
 using namespace isc::asiolink;

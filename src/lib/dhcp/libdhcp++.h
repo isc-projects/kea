@@ -12,12 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef LIBDHCP_H_
-#define LIBDHCP_H_
+#ifndef LIBDHCP_H
+#define LIBDHCP_H
 
 #include <dhcp/option_definition.h>
 #include <dhcp/pkt6.h>
 #include <util/buffer.h>
+
 #include <iostream>
 
 namespace isc {
@@ -164,4 +165,4 @@ private:
 }
 }
 
-#endif
+#endif // LIBDHCP_H

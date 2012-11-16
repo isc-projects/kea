@@ -12,16 +12,17 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef OPTION_DEFINITION_H_
-#define OPTION_DEFINITION_H_
+#ifndef OPTION_DEFINITION_H
+#define OPTION_DEFINITION_H
 
-#include <dhcp/option_data_types.h>
 #include <dhcp/option.h>
-#include <boost/shared_ptr.hpp>
-#include <boost/multi_index_container.hpp>
+#include <dhcp/option_data_types.h>
+
 #include <boost/multi_index/hashed_index.hpp>
-#include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -461,4 +462,4 @@ typedef std::pair<OptionDefContainerTypeIndex::const_iterator,
 } // namespace isc::dhcp
 } // namespace isc
 
-#endif
+#endif // OPTION_DEFINITION_H

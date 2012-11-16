@@ -24,12 +24,11 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <gtest/gtest.h>
 
 #include <iostream>
 #include <sstream>
 #include <map>
-
-#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

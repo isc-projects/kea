@@ -15,7 +15,6 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
-#include <boost/scoped_ptr.hpp>
 #include <config/ccsession.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
@@ -32,6 +31,7 @@
 #include <util/buffer.h>
 #include <util/range_utilities.h>
 
+#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 #include <fstream>

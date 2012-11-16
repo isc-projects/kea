@@ -18,7 +18,7 @@
 #include <dhcpsrv/lease_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
-#include <mysql.h>
+#include <mysql/mysql.h>
 
 #include <time.h>
 

@@ -12,16 +12,17 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <asiolink/io_address.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option6_iaaddr.h>
+#include <exceptions/exceptions.h>
+#include <util/io_utilities.h>
+
+#include <sstream>
+
 #include <stdint.h>
 #include <arpa/inet.h>
-#include <sstream>
-#include "exceptions/exceptions.h"
-
-#include "dhcp/libdhcp++.h"
-#include "dhcp/option6_iaaddr.h"
-#include "dhcp/dhcp6.h"
-#include "asiolink/io_address.h"
-#include "util/io_utilities.h"
 
 using namespace std;
 using namespace isc::asiolink;

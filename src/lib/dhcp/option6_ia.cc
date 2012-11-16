@@ -12,15 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <stdint.h>
-#include <arpa/inet.h>
-#include <sstream>
-
-#include <exceptions/exceptions.h>
+#include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_ia.h>
-#include <dhcp/dhcp6.h>
+#include <exceptions/exceptions.h>
 #include <util/io_utilities.h>
+
+#include <arpa/inet.h>
+#include <sstream>
+#include <stdint.h>
 
 using namespace std;
 using namespace isc::util;

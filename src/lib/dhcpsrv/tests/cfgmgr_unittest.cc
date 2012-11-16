@@ -17,10 +17,12 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <exceptions/exceptions.h>
 
+#include <gtest/gtest.h>
+
 #include <iostream>
 #include <sstream>
+
 #include <arpa/inet.h>
-#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc::asiolink;

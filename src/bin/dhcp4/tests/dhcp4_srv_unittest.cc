@@ -13,17 +13,19 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <iostream>
-#include <fstream>
 #include <sstream>
 
-#include <arpa/inet.h>
+#include <asiolink/io_address.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp/option.h>
+#include <dhcp4/dhcp4_srv.h>
+
 #include <gtest/gtest.h>
 
-#include <dhcp/dhcp4.h>
-#include <dhcp4/dhcp4_srv.h>
-#include <dhcp/option.h>
-#include <asiolink/io_address.h>
+#include <fstream>
+#include <iostream>
+
+#include <arpa/inet.h>
 
 using namespace std;
 using namespace isc;
