@@ -15,16 +15,17 @@
 #ifndef SUBNET_H
 #define SUBNET_H
 
-#include <asiolink/io_address.h>
-#include <dhcp/pool.h>
-#include <dhcp/triplet.h>
-#include <dhcp/option.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/member.hpp>
+
+#include <asiolink/io_address.h>
+#include <dhcp/option.h>
+#include <dhcpsrv/pool.h>
+#include <dhcpsrv/triplet.h>
 
 namespace isc {
 namespace dhcp {

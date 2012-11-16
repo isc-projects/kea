@@ -13,12 +13,14 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+
+#include <dhcpsrv/cfgmgr.h>
+#include <exceptions/exceptions.h>
+
 #include <iostream>
 #include <sstream>
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
-#include <dhcp/cfgmgr.h>
-#include <exceptions/exceptions.h>
 
 using namespace std;
 using namespace isc::asiolink;

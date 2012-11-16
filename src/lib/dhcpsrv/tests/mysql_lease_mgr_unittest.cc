@@ -13,15 +13,16 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+
+#include <asiolink/io_address.h>
+#include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/mysql_lease_mgr.h>
+
 #include <iostream>
 #include <sstream>
 #include <utility>
 #include <string>
 #include <gtest/gtest.h>
-
-#include <asiolink/io_address.h>
-#include <dhcp/lease_mgr_factory.h>
-#include <dhcp/mysql_lease_mgr.h>
 
 using namespace isc;
 using namespace isc::asiolink;

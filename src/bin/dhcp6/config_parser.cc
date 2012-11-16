@@ -12,27 +12,30 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <stdint.h>
-#include <iostream>
-#include <vector>
-#include <map>
-#include <boost/foreach.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
-#include <util/encode/hex.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <config/ccsession.h>
-#include <log/logger_support.h>
 #include <dhcp/libdhcp++.h>
-#include <dhcp/triplet.h>
-#include <dhcp/pool.h>
-#include <dhcp/subnet.h>
-#include <dhcp/cfgmgr.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_log.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/pool.h>
+#include <dhcpsrv/subnet.h>
+#include <dhcpsrv/triplet.h>
+#include <log/logger_support.h>
+#include <util/encode/hex.h>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <iostream>
+#include <map>
+#include <vector>
+
+#include <stdint.h>
 
 using namespace std;
 using namespace isc::data;

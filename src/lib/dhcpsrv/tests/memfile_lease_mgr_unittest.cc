@@ -13,14 +13,15 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+
+#include <asiolink/io_address.h>
+#include <dhcp/duid.h>
+#include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/memfile_lease_mgr.h>
+
 #include <iostream>
 #include <sstream>
 #include <gtest/gtest.h>
-#include <asiolink/io_address.h>
-
-#include <dhcp/lease_mgr.h>
-#include <dhcp/duid.h>
-#include <dhcp/memfile_lease_mgr.h>
 
 using namespace std;
 using namespace isc;

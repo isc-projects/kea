@@ -12,14 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-
 #include <config.h>
-#include <dhcp/subnet.h>
+
+#include <asiolink/io_address.h>
 #include <dhcp/option.h>
+#include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
+
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
-#include <asiolink/io_address.h>
 
 // don't import the entire boost namespace.  It will unexpectedly hide uint8_t
 // for some systems.

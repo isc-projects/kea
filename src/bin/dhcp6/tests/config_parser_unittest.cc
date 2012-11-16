@@ -13,22 +13,23 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <iostream>
-#include <fstream>
-#include <sstream>
+
+#include <config/ccsession.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option6_ia.h>
+#include <dhcp6/config_parser.h>
+#include <dhcp6/dhcp6_srv.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/subnet.h>
 
 #include <boost/foreach.hpp>
 
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
-
-#include <dhcp6/dhcp6_srv.h>
-#include <dhcp6/config_parser.h>
-#include <config/ccsession.h>
-#include <dhcp/libdhcp++.h>
-#include <dhcp/subnet.h>
-#include <dhcp/cfgmgr.h>
-#include <dhcp/option6_ia.h>
 
 using namespace std;
 using namespace isc;
