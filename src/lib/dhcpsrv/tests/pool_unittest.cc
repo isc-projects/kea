@@ -13,12 +13,14 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+
+#include <asiolink/io_address.h>
+#include <dhcpsrv/pool.h>
+
 #include <iostream>
 #include <vector>
 #include <sstream>
 #include <gtest/gtest.h>
-#include <dhcp/pool.h>
-#include <asiolink/io_address.h>
 
 using boost::scoped_ptr;
 using namespace isc;

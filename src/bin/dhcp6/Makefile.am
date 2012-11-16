@@ -64,7 +64,7 @@ b10_dhcp6_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcpsrv.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 

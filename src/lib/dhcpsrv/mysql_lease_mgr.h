@@ -15,10 +15,12 @@
 #ifndef MYSQL_LEASE_MGR_H
 #define MYSQL_LEASE_MGR_H
 
-#include <time.h>
+#include <dhcpsrv/lease_mgr.h>
+
 #include <boost/scoped_ptr.hpp>
 #include <mysql.h>
-#include <dhcp/lease_mgr.h>
+
+#include <time.h>
 
 namespace isc {
 namespace dhcp {

@@ -12,11 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <alloc_engine.h>
-#include <lease_mgr_factory.h>
-#include <string.h>
+#include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 
 #include <cstring>
+#include <string.h>
 
 using namespace isc::asiolink;
 

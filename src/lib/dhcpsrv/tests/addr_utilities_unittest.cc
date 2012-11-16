@@ -20,7 +20,7 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-#include <dhcp/addr_utilities.h>
+#include <dhcpsrv/addr_utilities.h>
 
 using namespace std;
 using namespace isc::dhcp;

@@ -18,7 +18,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
-#include <dhcp/subnet.h>
+#include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>

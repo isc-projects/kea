@@ -14,10 +14,10 @@
 
 #include "config.h"
 
-#include <dhcp/lease_mgr_factory.h>
-#include <dhcp/memfile_lease_mgr.h>
+#include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/memfile_lease_mgr.h>
 #ifdef HAVE_MYSQL
-#include <dhcp/mysql_lease_mgr.h>
+#include <dhcpsrv/mysql_lease_mgr.h>
 #endif
 
 #include <boost/algorithm/string.hpp>

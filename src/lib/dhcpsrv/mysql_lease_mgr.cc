@@ -14,8 +14,8 @@
 
 #include <config.h>
 
-#include <dhcp/mysql_lease_mgr.h>
 #include <asiolink/io_address.h>
+#include <dhcpsrv/mysql_lease_mgr.h>
 
 #include <mysql/mysqld_error.h>
 

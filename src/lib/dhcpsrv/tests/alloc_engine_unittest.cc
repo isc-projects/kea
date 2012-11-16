@@ -13,18 +13,22 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+
 #include <asiolink/io_address.h>
-#include <dhcp/lease_mgr.h>
-#include <dhcp/lease_mgr_factory.h>
 #include <dhcp/duid.h>
-#include <dhcp/alloc_engine.h>
-#include <dhcp/cfgmgr.h>
-#include <dhcp/memfile_lease_mgr.h>
+#include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/memfile_lease_mgr.h>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
+
 #include <iostream>
 #include <sstream>
 #include <map>
+
 #include <gtest/gtest.h>
 
 using namespace std;

@@ -15,9 +15,11 @@
 #ifndef POOL_H
 #define POOL_H
 
-#include <vector>
 #include <asiolink/io_address.h>
+
 #include <boost/shared_ptr.hpp>
+
+#include <vector>
 
 namespace isc {
 namespace dhcp {
