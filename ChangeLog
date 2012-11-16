@@ -1,9 +1,16 @@
 bind10-devel-20121115 released on November 15, 2012
 
-506.	[doc]		jelte
+507.	[doc]		jelte
 	Added a chapter about the use of the bindctl command tool to
 	to the BIND 10 guide.
 	(Trac #2305, git c4b0294b5bf4a9d32fb18ab62ca572f492788d72)
+
+506.	[security]		jinmei
+	Fixed a use-after-free case in handling DNAME record with the
+	in-memory data source.  This could lead to a crash of b10-auth
+	if it serves a zone containing a DNAME RR from the in-memory
+	data source.  This bug was introduced at bind10-devel-20120927.
+	(Trac #2471, git 2b1793ac78f972ddb1ae2fd092a7f539902223ff)
 
 505.	[bug]		jelte
 	Fixed a bug in b10-xfrin where a wrong call was made during the
