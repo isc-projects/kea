@@ -1014,6 +1014,8 @@ class MockComponent:
         self.address = lambda: address
         self.restarted = False
         self.forceful = False
+        self.running = True
+        self.has_failed = False
 
     def get_restart_time(self):
         return 0                # arbitrary dummy value
@@ -1023,10 +1025,10 @@ class MockComponent:
         return True
 
     def is_running(self):
-        return True
+        return self.running
 
     def failed(self, status):
-        return False
+        return self.has_failed
 
     def kill(self, forceful):
         self.forceful = forceful
@@ -1449,19 +1451,45 @@ class TestBossComponents(unittest.TestCase):
             last_pid = pid
             self.assertEqual([pid, 'test' + str(pid), 'Test' + str(pid)], process)
 
+    def _test_reap_children_helper(self, runnable, is_running, failed):
+        '''Construct a BoB instance, set various data in it according to
+        passed args and check if the component was added to the list of
+        components to restart.'''
+        bob = MockBob()
+        bob.runnable = runnable
+
+        component = MockComponent('test', 53)
+        component.running = is_running
+        component.has_failed = failed
+        bob.components[53] = component
+
+        self.assertFalse(component in bob.components_to_restart)
+
+        bob.reap_children()
+
+        if runnable and is_running and not failed:
+            self.assertTrue(bob.components_to_restart)
+        else:
+            self.assertFalse(bob.components_to_restart)
+
     def test_reap_children(self):
         '''Test that children are queued to be restarted when they ask for it.'''
+        # test various combinations of 3 booleans
+        # (BoB.runnable, component.is_running(), component.failed())
+        self._test_reap_children_helper(False, False, False)
+        self._test_reap_children_helper(False, False, True)
+        self._test_reap_children_helper(False, True,  False)
+        self._test_reap_children_helper(False, True,  True)
+        self._test_reap_children_helper(True,  False, False)
+        self._test_reap_children_helper(True,  False, True)
+        self._test_reap_children_helper(True,  True,  False)
+        self._test_reap_children_helper(True,  True,  True)
+
+        # setup for more tests below
         bob = MockBob()
         bob.runnable = True
         component = MockComponent('test', 53)
         bob.components[53] = component
-
-        # at first, we don't have the component with pid 53 that
-        # terminated in our restart queue.
-        self.assertFalse(component in bob.components_to_restart)
-        bob.reap_children()
-        # now, we should as the mock component.failed() returns False
-        self.assertTrue(component in bob.components_to_restart)
 
         # case where the returned pid is unknown to us. nothing should
         # happpen then.
