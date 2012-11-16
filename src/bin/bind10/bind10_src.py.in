@@ -493,6 +493,9 @@ class BoB:
 
     # A couple of utility methods for starting processes...
 
+    def _make_process_info(self, name, args, c_channel_env):
+        return ProcessInfo(name, args, c_channel_env)
+
     def start_process(self, name, args, c_channel_env, port=None, address=None):
         """
             Given a set of command arguments, start the process and output
@@ -502,7 +505,7 @@ class BoB:
             The port and address arguments are for log messages only.
         """
         self.log_starting(name, port, address)
-        newproc = ProcessInfo(name, args, c_channel_env)
+        newproc = self._make_process_info(name, args, c_channel_env)
         newproc.spawn()
         self.log_started(newproc.pid)
         return newproc

@@ -510,6 +510,22 @@ class TestBoB(unittest.TestCase):
         self.assertEqual({'command': ['shutdown', {'pid': 42}]},
                          bob.cc_session.msg)
 
+# Mock class for testing BoB's usage of ProcessInfo
+class MockProcessInfo:
+    def __init__(self, name, args, env={}, dev_null_stdout=False,
+                 dev_null_stderr=False):
+        self.name = name
+        self.args = args
+        self.env = env
+        self.dev_null_stdout = dev_null_stdout
+        self.dev_null_stderr = dev_null_stderr
+        self.process = None
+        self.pid = None
+
+    def spawn(self):
+        # set some pid (only used for testing that it is not None anymore)
+        self.pid = 42147
+
 # Class for testing the BoB without actually starting processes.
 # This is used for testing the start/stop components routines and
 # the BoB commands.
@@ -731,6 +747,9 @@ class MockBob(BoB):
 
     def _get_process_exit_status_raises_other(self):
         raise Exception('Mock error')
+
+    def _make_mock_process_info(self, name, args, c_channel_env):
+        return MockProcessInfo(name, args, c_channel_env)
 
 class MockBobSimple(BoB):
     def __init__(self):
@@ -1534,11 +1553,17 @@ class TestBossComponents(unittest.TestCase):
     def test_start_process(self):
         '''Test that processes can be started.'''
         bob = MockBob()
+
+        # use the MockProcessInfo creator
+        bob._make_process_info = bob._make_mock_process_info
+
         pi = bob.start_process('Test Process', ['/bin/true'], {})
         self.assertEqual('Test Process', pi.name)
         self.assertEqual(['/bin/true'], pi.args)
         self.assertEqual({}, pi.env)
-        self.assertNotEqual(0, pi.pid)
+
+        # this is set by ProcessInfo.spawn()
+        self.assertEqual(42147, pi.pid)
 
     def test_register_process(self):
         '''Test that processes can be registered with BoB.'''
