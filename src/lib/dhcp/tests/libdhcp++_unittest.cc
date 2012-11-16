@@ -90,14 +90,9 @@ public:
         ASSERT_TRUE(def);
         // Check that option definition is valid.
         ASSERT_NO_THROW(def->validate());
-        // Get the factory function for the particular option
-        // definition. We will use this factory function to
-        // create option instance.
-        Option::Factory* factory = NULL;
-        ASSERT_NO_THROW(factory = def->getFactory());
         OptionPtr option;
         // Create the option.
-        ASSERT_NO_THROW(option = factory(Option::V6, code, buf));
+        ASSERT_NO_THROW(option = def->optionFactory(Option::V6, code, buf));
         // Make sure it is not NULL.
         ASSERT_TRUE(option);
         // And the actual object type is the one that we expect.
