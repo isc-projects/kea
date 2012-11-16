@@ -148,7 +148,7 @@ countTreeElements(const struct CounterTypeTree* tree) {
 }
 
 TEST(StatisticsItemsTest, MSGItemNamesCheck) {
-    EXPECT_EQ(MSG_COUNTER_TYPES, countTreeElements(MSGCounterTree));
+    EXPECT_EQ(MSG_COUNTER_TYPES, countTreeElements(msg_counter_tree));
 }
 
 }

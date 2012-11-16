@@ -1,4 +1,4 @@
-request	MSGCounterRequest		Request statistics	=
+request	msg_counter_request		Request statistics	=
 	v4		MSG_REQUEST_IPV4	Number of IPv4 requests received by the b10-auth server.
 	v6		MSG_REQUEST_IPV6	Number of IPv6 requests received by the b10-auth server.
 	edns0		MSG_REQUEST_EDNS0	Number of requests with EDNS0 received by the b10-auth server.
@@ -10,7 +10,7 @@ request	MSGCounterRequest		Request statistics	=
 	tcp		MSG_REQUEST_TCP		Number of UDP requests received by the b10-auth server.
 	dnssec_ok	MSG_REQUEST_DNSSEC_OK	Number of requests with "DNSSEC OK" (DO) bit was set received by the b10-auth server.
 	;
-opcode	MSGCounterOpcode		Opcode statistics	=
+opcode	msg_counter_opcode		Opcode statistics	=
 	query		MSG_OPCODE_QUERY		Number of Opcode=QUERY requests received by the b10-auth server.
 	iquery		MSG_OPCODE_IQUERY	Number of Opcode=IQUERY requests received by the b10-auth server.
 	status		MSG_OPCODE_STATUS	Number of Opcode=STATUS requests received by the b10-auth server.
@@ -19,7 +19,7 @@ opcode	MSGCounterOpcode		Opcode statistics	=
 	other		MSG_OPCODE_OTHER	Number of requests in other OpCode received by the b10-auth server.
 	;
 responses	MSG_RESPONSE			Number of responses sent by the b10-auth server.
-response	MSGCounterResponse	Response statistics	=
+response	msg_counter_response	Response statistics	=
 	truncated	MSG_RESPONSE_TRUNCATED	Number of truncated responses sent by the b10-auth server.
 	edns0		MSG_RESPONSE_EDNS0	Number of responses with EDNS0 sent by the b10-auth server.
 	tsig		MSG_RESPONSE_TSIG	Number of responses with TSIG sent by the b10-auth server.
@@ -31,7 +31,7 @@ qrynoauthans	MSG_QRYNOAUTHANS		Number of queries received by the b10-auth server
 qryreferral	MSG_QRYREFERRAL			Number of queries received by the b10-auth server resulted in referral answer.
 qrynxrrset	MSG_QRYNXRRSET			Number of queries received by the b10-auth server resulted in NOERROR but the number of answer RR == 0.
 authqryrej	MSG_QRYREJECT			Number of authoritative queries rejected by the b10-auth server.
-rcode		MSGCounterRcode		Rcode statistics	=
+rcode		msg_counter_rcode	Rcode statistics	=
 	noerror		MSG_RCODE_NOERROR	Number of requests received by the b10-auth server resulted in RCODE = 0 (NoError).
 	formerr		MSG_RCODE_FORMERR	Number of requests received by the b10-auth server resulted in RCODE = 1 (FormErr).
 	servfail	MSG_RCODE_SERVFAIL	Number of requests received by the b10-auth server resulted in RCODE = 2 (ServFail).
