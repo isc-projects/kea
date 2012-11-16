@@ -35,7 +35,7 @@ def need_generate(filepath, mtime):
     the file already exists and newer than the base file.
     '''
     if os.path.exists(filepath) and\
-        (os.path.getmtime(filepath) > mtime or
+        (os.path.getmtime(filepath) > mtime and
          os.path.getmtime(filepath) > os.path.getmtime(filepath+pre_suffix)):
         return False
     return True
@@ -190,7 +190,7 @@ def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
     msg_counter_types = 'enum MSGCounterType {\n'
     item_names =  ['// using -1 as counter_id to state it is not a '
                    + 'counter item\n']
-    item_names += ['const int NOT_ITEM = -1;\n']
+    item_names += ['const int NOT_ITEM = -1;\n', '\n']
 
     def convert_list(items, msg_counter_types, item_names_current, item_names):
         for item in items:
@@ -215,7 +215,7 @@ def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
 
     msg_counter_types, item_names_current, item_names = \
             convert_list(item_list, msg_counter_types, [], item_names)
-    item_names.append('const struct CounterTypeTree MSGCounterTree[] = {\n')
+    item_names.append('const struct CounterTypeTree msg_counter_tree[] = {\n')
     item_names.extend(item_names_current)
     item_names.append('    { NULL, NULL, NOT_ITEM }\n' +
                   '};\n')
