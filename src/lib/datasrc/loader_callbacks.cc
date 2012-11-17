@@ -13,10 +13,60 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/loader_callbacks.h>
+#include <datasrc/zone.h>
+#include <datasrc/logger.h>
+
+#include <dns/name.h>
+#include <dns/rrclass.h>
+#include <dns/rrset.h>
+
+#include <string>
+#include <boost/bind.hpp>
 
 namespace isc {
 namespace datasrc {
 
+namespace {
+
+void
+logError(const dns::Name& name, const dns::RRClass& rrclass, bool* ok,
+         const std::string& source, size_t line, const std::string& reason)
+{
+    LOG_ERROR(logger, DATASRC_LOAD_CONTEXT_ERROR).arg(source).arg(line).
+        arg(name).arg(rrclass).arg(reason);
+    if (ok != NULL) {
+        *ok = false;
+    }
+}
+
+void
+logWarning(const dns::Name& name, const dns::RRClass& rrclass,
+         const std::string& source, size_t line, const std::string& reason)
+{
+    LOG_WARN(logger, DATASRC_LOAD_CONTEXT_WARN).arg(source).arg(line).
+        arg(name).arg(rrclass).arg(reason);
+}
+
+}
+
+isc::dns::LoaderCallbacks
+createCallbacks(ZoneUpdater& updater, const dns::Name& name,
+                const dns::RRClass& rrclass, bool* ok)
+{
+    return (isc::dns::LoaderCallbacks(boost::bind(&logError, name, rrclass, ok,
+                                                  _1, _2, _3),
+                                      boost::bind(&logWarning, name, rrclass,
+                                                  _1, _2, _3),
+                                      boost::bind(&ZoneUpdater::addRRset,
+                                                  &updater,
+                                                  // The callback provides a
+                                                  // shared pointer, we need
+                                                  // the object. This bind
+                                                  // unpacks the object.
+                                                  boost::bind(&dns::RRsetPtr::
+                                                              operator*,
+                                                              _1))));
+}
 
 }
 }
