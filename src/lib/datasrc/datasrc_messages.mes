@@ -305,6 +305,18 @@ Therefore, the zone will not be available for this process. If this is
 a problem, you should move the zone to some database backend (sqlite3, for
 example) and use it from there.
 
+% DATASRC_LOAD_CONTEXT_ERROR %1:%2: Zone '%3/%4' contains error: %5
+There's an error in the given master file. The zone won't be loaded for
+this reason. Parsing might follow, so you might get further errors and
+warnings to fix everything at once. But in case the error is serious enough,
+the parser might just give up or get confused and generate false errors
+afterwards.
+
+% DATASRC_LOAD_CONTEXT_WARN %1:%2: Zone '%3/%4' has a potential problem: %5
+There's something suspicious in the master file. This is a warning only.
+It may be a problem or it may be harmless, but it should be checked.
+This problem does not stop the zone from being loaded.
+
 % DATASRC_MASTERLOAD_ERROR %1
 An error was found in the zone data for a MasterFiles zone. The zone
 is not loaded. The specific error is shown in the message, and should
