@@ -14,7 +14,7 @@
 
 /// Defines the logger used by the top-level component of b10-dhcp4.
 
-#include "dhcp4_log.h"
+#include <dhcp4/dhcp4_log.h>
 
 namespace isc {
 namespace dhcp {

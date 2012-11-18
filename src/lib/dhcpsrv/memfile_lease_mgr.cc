@@ -12,13 +12,17 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "memfile_lease_mgr.h"
+#include <dhcpsrv/memfile_lease_mgr.h>
+
+#include <iostream>
 
 using namespace isc::dhcp;
-using namespace isc::dhcp::test;
 
-Memfile_LeaseMgr::Memfile_LeaseMgr(const std::string& dbconfig)
-    : LeaseMgr(dbconfig) {
+Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
+    : LeaseMgr(parameters) {
+    std::cout << "Warning: Using memfile database backend. It is usable for" << std::endl;
+    std::cout << "Warning: limited testing only. File support not implemented yet." << std::endl;
+    std::cout << "Warning: Leases will be lost after restart." << std::endl;
 }
 
 Memfile_LeaseMgr::~Memfile_LeaseMgr() {
@@ -37,7 +41,7 @@ bool Memfile_LeaseMgr::addLease(const Lease6Ptr& lease) {
     return (true);
 }
 
-Lease4Ptr Memfile_LeaseMgr::getLease4(isc::asiolink::IOAddress) const {
+Lease4Ptr Memfile_LeaseMgr::getLease4(const isc::asiolink::IOAddress&) const {
     return (Lease4Ptr());
 }
 
@@ -45,7 +49,7 @@ Lease4Collection Memfile_LeaseMgr::getLease4(const HWAddr& ) const {
     return (Lease4Collection());
 }
 
-Lease4Ptr Memfile_LeaseMgr::getLease4(isc::asiolink::IOAddress ,
+Lease4Ptr Memfile_LeaseMgr::getLease4(const isc::asiolink::IOAddress&,
                                       SubnetID) const {
     return (Lease4Ptr());
 }
@@ -78,9 +82,16 @@ Lease6Collection Memfile_LeaseMgr::getLease6(const DUID& , uint32_t ) const {
     return (Lease6Collection());
 }
 
-Lease6Ptr Memfile_LeaseMgr::getLease6(const DUID&, uint32_t,
-                                      SubnetID) const {
-
+Lease6Ptr Memfile_LeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
+                                      SubnetID subnet_id) const {
+    /// @todo: Slow, naive implementation. Write it using additional indexes
+    for (Lease6Storage::iterator l = storage6_.begin(); l != storage6_.end(); ++l) {
+        if ( (*((*l)->duid_) == duid) &&
+             ( (*l)->iaid_ == iaid) &&
+             ( (*l)->subnet_id_ == subnet_id)) {
+            return (*l);
+        }
+    }
     return (Lease6Ptr());
 }
 
@@ -91,7 +102,7 @@ void Memfile_LeaseMgr::updateLease6(const Lease6Ptr& ) {
 
 }
 
-bool Memfile_LeaseMgr::deleteLease4(uint32_t ) {
+bool Memfile_LeaseMgr::deleteLease4(const isc::asiolink::IOAddress&) {
     return (false);
 }
 
@@ -110,4 +121,12 @@ std::string Memfile_LeaseMgr::getDescription() const {
     return (std::string("This is a dummy memfile backend implementation.\n"
                         "It does not offer any useful lease management and its only\n"
                         "purpose is to test abstract lease manager API."));
+}
+
+void
+Memfile_LeaseMgr::commit() {
+}
+
+void
+Memfile_LeaseMgr::rollback() {
 }

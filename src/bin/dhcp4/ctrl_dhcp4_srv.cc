@@ -14,20 +14,19 @@
 
 #include <config.h>
 
-#include <cassert>
-#include <iostream>
-
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
 #include <cc/session.h>
-#include <cc/session.h>
 #include <config/ccsession.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/spec_config.h>
-#include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
+
+#include <cassert>
+#include <iostream>
 
 using namespace isc::asiolink;
 using namespace isc::cc;

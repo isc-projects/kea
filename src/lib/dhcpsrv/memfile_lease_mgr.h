@@ -15,15 +15,15 @@
 #ifndef MEMFILE_LEASE_MGR_H
 #define MEMFILE_LEASE_MGR_H
 
-#include <dhcp/lease_mgr.h>
-#include <boost/multi_index_container.hpp>
+#include <dhcpsrv/lease_mgr.h>
+
 #include <boost/multi_index/indexed_by.hpp>
-#include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/member.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index_container.hpp>
 
 namespace isc {
 namespace dhcp {
-namespace test {
 
 // This is a concrete implementation of a Lease database.
 //
@@ -42,8 +42,9 @@ public:
     /// are passed in the "name=value" format, separated by spaces.
     /// Values may be enclosed in double quotes, if needed.
     ///
-    /// @param dbconfig database configuration
-    Memfile_LeaseMgr(const std::string& dbconfig);
+    /// @param parameters A data structure relating keywords and values
+    ///        concerned with the database.
+    Memfile_LeaseMgr(const ParameterMap& parameters);
 
     /// @brief Destructor (closes file)
     virtual ~Memfile_LeaseMgr();
@@ -65,7 +66,7 @@ public:
     /// @param addr address of the searched lease
     ///
     /// @return a collection of leases
-    virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr) const;
+    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns existing IPv4 lease for specific address and subnet
     ///
@@ -74,7 +75,7 @@ public:
     /// @param subnet_id ID of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr,
+    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr,
                                 SubnetID subnet_id) const;
 
     /// @brief Returns existing IPv4 leases for specified hardware address.
@@ -132,7 +133,7 @@ public:
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const;
+    virtual Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
@@ -142,7 +143,7 @@ public:
     /// @param iaid IA identifier
     ///
     /// @return collection of IPv6 leases
-    Lease6Collection getLease6(const DUID& duid, uint32_t iaid) const;
+    virtual Lease6Collection getLease6(const DUID& duid, uint32_t iaid) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
@@ -153,7 +154,7 @@ public:
     /// @param subnet_id identifier of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    Lease6Ptr getLease6(const DUID& duid, uint32_t iaid, SubnetID subnet_id) const;
+    virtual Lease6Ptr getLease6(const DUID& duid, uint32_t iaid, SubnetID subnet_id) const;
 
     /// @brief Updates IPv4 lease.
     ///
@@ -162,47 +163,76 @@ public:
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    void updateLease4(const Lease4Ptr& lease4);
+    virtual void updateLease4(const Lease4Ptr& lease4);
 
     /// @brief Updates IPv4 lease.
     ///
     /// @todo Not implemented yet
     ///
-    /// @param lease4 The lease to be updated.
+    /// @param lease6 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
-    void updateLease6(const Lease6Ptr& lease6);
-
-    /// @brief Deletes a lease.
-    ///
-    /// @todo Not implemented yet
-    ///
-    /// @param addr IPv4 address of the lease to be deleted.
-    ///
-    /// @return true if deletion was successful, false if no such lease exists
-    bool deleteLease4(uint32_t addr);
+    virtual void updateLease6(const Lease6Ptr& lease6);
 
     /// @brief Deletes a lease.
     ///
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    bool deleteLease6(const isc::asiolink::IOAddress& addr);
+    virtual bool deleteLease4(const isc::asiolink::IOAddress& addr);
+
+    /// @brief Deletes a lease.
+    ///
+    /// @param addr IPv4 address of the lease to be deleted.
+    ///
+    /// @return true if deletion was successful, false if no such lease exists
+    virtual bool deleteLease6(const isc::asiolink::IOAddress& addr);
+
+    /// @brief Return backend type
+    ///
+    /// Returns the type of the backend.
+    ///
+    /// @return Type of the backend.
+    virtual std::string getType() const {
+        return (std::string("memfile"));
+    }
 
     /// @brief Returns backend name.
     ///
-    /// Each backend have specific name, e.g. "mysql" or "sqlite".
-    std::string getName() const { return ("memfile"); }
+    /// As there is no variation, in this case we return the type of the
+    /// backend.
+    ///
+    /// @return Name of the backend.
+    virtual std::string getName() const {
+        return ("memfile");
+    }
 
     /// @brief Returns description of the backend.
     ///
     /// This description may be multiline text that describes the backend.
-    std::string getDescription() const;
+    ///
+    /// @return Description of the backend.
+    virtual std::string getDescription() const;
 
     /// @brief Returns backend version.
-    std::string getVersion() const { return ("test-version"); }
+    ///
+    /// @return Version number as a pair of unsigned integers.  "first" is the
+    ///         major version number, "second" the minor number.
+    virtual std::pair<uint32_t, uint32_t> getVersion() const {
+        return (std::make_pair(1, 0));
+    }
 
-    using LeaseMgr::getParameter;
+    /// @brief Commit Transactions
+    ///
+    /// Commits all pending database operations.  On databases that don't
+    /// support transactions, this is a no-op.
+    virtual void commit();
+
+    /// @brief Rollback Transactions
+    ///
+    /// Rolls back all pending database operations.  On databases that don't
+    /// support transactions, this is a no-op.
+    virtual void rollback();
 
 protected:
 
@@ -221,8 +251,8 @@ protected:
     Lease6Storage storage6_;
 };
 
-}; // end of isc::dhcp::test namespace
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 
-#endif // MEMFILE_LEASE_MGR_H
+#endif // MEMFILE_LEASE_MGR
+

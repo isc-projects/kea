@@ -13,10 +13,13 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <stdint.h>
-#include <gtest/gtest.h>
-#include <dhcp/triplet.h>
+
+#include <dhcpsrv/triplet.h>
 #include <exceptions/exceptions.h>
+
+#include <gtest/gtest.h>
+
+#include <stdint.h>
 
 using namespace isc::dhcp;
 using namespace isc;

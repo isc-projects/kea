@@ -13,10 +13,11 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
-#include <dhcp/option6_int_array.h>
 #include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_int_array.h>
 #include <util/buffer.h>
 
 #include <boost/pointer_cast.hpp>

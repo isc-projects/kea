@@ -12,27 +12,30 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <stdint.h>
-#include <iostream>
-#include <vector>
-#include <map>
-#include <boost/foreach.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
-#include <util/encode/hex.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <config/ccsession.h>
-#include <log/logger_support.h>
 #include <dhcp/libdhcp++.h>
-#include <dhcp/triplet.h>
-#include <dhcp/pool.h>
-#include <dhcp/subnet.h>
-#include <dhcp/cfgmgr.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_log.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/pool.h>
+#include <dhcpsrv/subnet.h>
+#include <dhcpsrv/triplet.h>
+#include <log/logger_support.h>
+#include <util/encode/hex.h>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <iostream>
+#include <map>
+#include <vector>
+
+#include <stdint.h>
 
 using namespace std;
 using namespace isc::data;
@@ -41,13 +44,13 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
-/// @brief auxiliary type used for storing element name and its parser
+/// @brief an auxiliary type used for storing an element name and its parser
 typedef pair<string, ConstElementPtr> ConfigPair;
 
 /// @brief a factory method that will create a parser for a given element name
 typedef DhcpConfigParser* ParserFactory(const std::string& config_id);
 
-/// @brief a collection of factories that creates parsers for specified element names
+/// @brief a collection of factories that create parsers for specified element names
 typedef std::map<std::string, ParserFactory*> FactoryMap;
 
 /// @brief a collection of elements that store uint32 values (e.g. renew-timer = 900)
@@ -58,12 +61,14 @@ typedef std::map<string, string> StringStorage;
 
 /// @brief a collection of pools
 ///
-/// That type is used as intermediate storage, when pools are parsed, but there is
+/// This type is used as intermediate storage, when pools are parsed, but there is
 /// no subnet object created yet to store them.
 typedef std::vector<Pool6Ptr> PoolStorage;
 
-/// @brief Collection of options.
-typedef std::vector<OptionPtr> OptionStorage;
+/// @brief Collection of option descriptors. This container allows searching for
+/// options using the option code or persistency flag. This is useful when merging
+/// existing options with newly configured options.
+typedef Subnet::OptionContainer OptionStorage;
 
 /// @brief Global uint32 parameters that will be used as defaults.
 Uint32Storage uint32_defaults;
@@ -76,9 +81,9 @@ OptionStorage option_defaults;
 
 /// @brief a dummy configuration parser
 ///
-/// It is a debugging parser. It does not configure anything,
+/// This is a debugging parser. It does not configure anything,
 /// will accept any configuration and will just print it out
-/// on commit. Useful for debugging existing configurations and
+/// on commit.  Useful for debugging existing configurations and
 /// adding new ones.
 class DebugParser : public DhcpConfigParser {
 public:
@@ -105,7 +110,7 @@ public:
 
     /// @brief pretends to apply the configuration
     ///
-    /// This is a method required by base class. It pretends to apply the
+    /// This is a method required by the base class. It pretends to apply the
     /// configuration, but in fact it only prints the parameter out.
     ///
     /// See \ref DhcpConfigParser class for details.
@@ -169,7 +174,7 @@ public:
             // Parsing the value as a int64 value allows to
             // check if the provided value is within the range
             // of uint32_t (is not negative or greater than
-            // maximal uint32_t value.
+            // maximal uint32_t value).
             int64value = boost::lexical_cast<int64_t>(value->str());
         } catch (const boost::bad_lexical_cast&) {
             parse_error = true;
@@ -193,19 +198,20 @@ public:
                       << " as unsigned 32-bit integer.");
         }
 
-        storage_->insert(pair<string, uint32_t>(param_name_, value_));
+        // If a given parameter already exists in the storage we override
+        // its value. If it doesn't we insert a new element.
+        (*storage_)[param_name_] = value_;
     }
 
     /// @brief does nothing
     ///
-    /// This method is required for all parser. The value itself
+    /// This method is required for all parsers. The value itself
     /// is not commited anywhere. Higher level parsers are expected to
     /// use values stored in the storage, e.g. renew-timer for a given
     /// subnet is stored in subnet-specific storage. It is not commited
     /// here, but is rather used by \ref Subnet6Parser when constructing
     /// the subnet.
-    virtual void commit() {
-    }
+    virtual void commit() { }
 
     /// @brief factory that constructs Uint32Parser objects
     ///
@@ -237,9 +243,9 @@ protected:
 /// @brief Configuration parser for string parameters
 ///
 /// This class is a generic parser that is able to handle any string
-/// parameter. By default it stores the value in external global container
+/// parameter. By default it stores the value in an external global container
 /// (string_defaults). If used in smaller scopes (e.g. to parse parameters
-/// in subnet config), it can be pointed to a different storage, using
+/// in subnet config), it can be pointed to a different storage, using the
 /// setStorage() method. This class follows the parser interface, laid out
 /// in its base class, \ref DhcpConfigParser.
 ///
@@ -256,26 +262,27 @@ public:
 
     /// @brief parses parameter value
     ///
-    /// Parses configuration entry and stored it in storage. See
+    /// Parses configuration entry and stores it in storage. See
     /// \ref setStorage() for details.
     ///
     /// @param value pointer to the content of parsed values
     virtual void build(ConstElementPtr value) {
         value_ = value->str();
         boost::erase_all(value_, "\"");
-        storage_->insert(pair<string, string>(param_name_, value_));
+        // If a given parameter already exists in the storage we override
+        // its value. If it doesn't we insert a new element.
+        (*storage_)[param_name_] = value_;
     }
 
     /// @brief does nothing
     ///
-    /// This method is required for all parser. The value itself
+    /// This method is required for all parsers. The value itself
     /// is not commited anywhere. Higher level parsers are expected to
     /// use values stored in the storage, e.g. renew-timer for a given
     /// subnet is stored in subnet-specific storage. It is not commited
     /// here, but is rather used by its parent parser when constructing
     /// an object, e.g. the subnet.
-    virtual void commit() {
-    }
+    virtual void commit() { }
 
     /// @brief factory that constructs StringParser objects
     ///
@@ -366,7 +373,7 @@ protected:
 /// and stored in chosen PoolStorage container.
 ///
 /// As there are no default values for pool, setStorage() must be called
-/// before build(). Otherwise exception will be thrown.
+/// before build(). Otherwise an exception will be thrown.
 ///
 /// It is useful for parsing Dhcp6/subnet6[X]/pool parameters.
 class PoolParser : public DhcpConfigParser {
@@ -393,7 +400,7 @@ public:
         BOOST_FOREACH(ConstElementPtr text_pool, pools_list->listValue()) {
 
             // That should be a single pool representation. It should contain
-            // text is form prefix/len or first - last. Note that spaces
+            // text in the form prefix/len or first - last. Note that spaces
             // are allowed
             string txt = text_pool->stringValue();
 
@@ -412,7 +419,7 @@ public:
                     // start with the first character after /
                     string prefix_len = txt.substr(pos + 1);
 
-                    // It is lexical cast to int and then downcast to uint8_t.
+                    // It is lexically cast to int and then downcast to uint8_t.
                     // Direct cast to uint8_t (which is really an unsigned char)
                     // will result in interpreting the first digit as output
                     // value and throwing exception if length is written on two
@@ -461,7 +468,7 @@ public:
 
     /// @brief does nothing.
     ///
-    /// This method is required for all parser. The value itself
+    /// This method is required for all parsers. The value itself
     /// is not commited anywhere. Higher level parsers (for subnet) are expected
     /// to use values stored in the storage.
     virtual void commit() {}
@@ -476,7 +483,7 @@ public:
 protected:
     /// @brief pointer to the actual Pools storage
     ///
-    /// That is typically a storage somewhere in Subnet parser
+    /// This is typically a storage somewhere in Subnet parser
     /// (an upper level parser).
     PoolStorage* pools_;
 };
@@ -485,11 +492,11 @@ protected:
 ///
 /// This parser parses configuration entries that specify value of
 /// a single option. These entries include option name, option code
-/// and data carried by the option. If parsing is successful than
+/// and data carried by the option. If parsing is successful than an
 /// instance of an option is created and added to the storage provided
 /// by the calling class.
 ///
-/// @todo This class parses and validates option name. However it is
+/// @todo This class parses and validates the option name. However it is
 /// not used anywhere util support for option spaces is implemented
 /// (see tickets #2319, #2314). When option spaces are implemented
 /// there will be a way to reference the particular option using
@@ -501,7 +508,9 @@ public:
     ///
     /// Class constructor.
     OptionDataParser(const std::string&)
-        : options_(NULL) { }
+        : options_(NULL),
+          // initialize option to NULL ptr
+          option_descriptor_(false) { }
 
     /// @brief Parses the single option data.
     ///
@@ -559,11 +568,37 @@ public:
         createOption();
     }
 
-    /// @brief Does nothing.
+    /// @brief Commits option value.
     ///
-    /// This function does noting because option data is committed
-    /// by a higher level parser.
-    virtual void commit() { }
+    /// This function adds a new option to the storage or replaces an existing option
+    /// with the same code.
+    ///
+    /// @throw isc::InvalidOperation if failed to set pointer to storage or failed
+    /// to call build() prior to commit. If that happens data in the storage
+    /// remain un-modified.
+    virtual void commit() {
+        if (options_ == NULL) {
+            isc_throw(isc::InvalidOperation, "Parser logic error: storage must be set before "
+                      "commiting option data.");
+        } else  if (!option_descriptor_.option) {
+            // Before we can commit the new option should be configured. If it is not
+            // than somebody must have called commit() before build().
+            isc_throw(isc::InvalidOperation, "Parser logic error: no option has been configured and"
+                      " thus there is nothing to commit. Has build() been called?");
+        }
+        uint16_t opt_type = option_descriptor_.option->getType();
+        Subnet::OptionContainerTypeIndex& idx = options_->get<1>();
+        // Try to find options with the particular option code in the main
+        // storage. If found, remove these options because they will be
+        // replaced with new one.
+        Subnet::OptionContainerTypeRange range =
+            idx.equal_range(opt_type);
+        if (std::distance(range.first, range.second) > 0) {
+            idx.erase(range.first, range.second);
+        }
+        // Append new option to the main storage.
+        options_->push_back(option_descriptor_);
+    }
 
     /// @brief Set storage for the parser.
     ///
@@ -584,11 +619,11 @@ private:
     ///
     /// Creates an instance of an option and adds it to the provided
     /// options storage. If the option data parsed by \ref build function
-    /// are invalid or insufficient it emits exception.
+    /// are invalid or insufficient this function emits an exception.
     ///
     /// @warning this function does not check if options_ storage pointer
-    /// is intitialized but this is not needed here because it is checked in
-    /// \ref build function.
+    /// is intitialized but this check is not needed here because it is done
+    /// in the \ref build function.
     ///
     /// @throw Dhcp6ConfigError if parameters provided in the configuration
     /// are invalid.
@@ -605,7 +640,7 @@ private:
             isc_throw(Dhcp6ConfigError, "Parser error: value of 'code' must not"
                       << " exceed " << std::numeric_limits<uint16_t>::max());
         }
-        // Check the option name has been specified, is non-empty and does not
+        // Check that the option name has been specified, is non-empty and does not
         // contain spaces.
         // @todo possibly some more restrictions apply here?
         std::string option_name = getStringParam("name");
@@ -649,23 +684,28 @@ private:
         } else if (num_defs == 0) {
             // @todo We have a limited set of option definitions intiialized at the moment.
             // In the future we want to initialize option definitions for all options.
-            // Consequently error will be issued if option definition does not exist
+            // Consequently an error will be issued if an option definition does not exist
             // for a particular option code. For now it is ok to create generic option
             // if definition does not exist.
             OptionPtr option(new Option(Option::V6, static_cast<uint16_t>(option_code),
                                         binary));
-            // If option is created succesfully, add it to the storage.
-            options_->push_back(option);
+            // The created option is stored in option_descriptor_ class member until the
+            // commit stage when it is inserted into the main storage. If an option with the
+            // same code exists in main storage already the old option is replaced.
+            option_descriptor_.option = option;
+            option_descriptor_.persistent = false;
         } else {
-            // We have exactly one option definition for the particular option code.
-            // use it to create option instance.
+            // We have exactly one option definition for the particular option code
+            // use it to create the option instance.
             const OptionDefinitionPtr& def = *(range.first);
             // getFactory should never return NULL pointer.
             Option::Factory* factory = def->getFactory();
             assert(factory != NULL);
             try {
                 OptionPtr option = factory(Option::V6, option_code, binary);
-                options_->push_back(option);
+                Subnet::OptionDescriptor desc(option, false);
+                option_descriptor_.option = option;
+                option_descriptor_.persistent = false;
             } catch (const isc::Exception& ex) {
                 isc_throw(Dhcp6ConfigError, "Parser error: option data does not match"
                           << " option definition (code " << option_code << "): "
@@ -707,9 +747,11 @@ private:
     /// Pointer to options storage. This storage is provided by
     /// the calling class and is shared by all OptionDataParser objects.
     OptionStorage* options_;
+    /// Option descriptor holds newly configured option.
+    Subnet::OptionDescriptor option_descriptor_;
 };
 
-/// @brief Parser for option data values with ina subnet.
+/// @brief Parser for option data values within a subnet.
 ///
 /// This parser iterates over all entries that define options
 /// data for a particular subnet and creates a collection of options.
@@ -721,10 +763,10 @@ public:
     /// @brief Constructor.
     ///
     /// Unless otherwise specified, parsed options will be stored in
-    /// a global option containers (option_default). That storage location
+    /// a global option container (option_default). That storage location
     /// is overriden on a subnet basis.
     OptionDataListParser(const std::string&)
-        : options_(&option_defaults) { }
+        : options_(&option_defaults), local_options_() { }
 
     /// @brief Parses entries that define options' data for a subnet.
     ///
@@ -738,9 +780,11 @@ public:
             boost::shared_ptr<OptionDataParser> parser(new OptionDataParser("option-data"));
             // options_ member will hold instances of all options thus
             // each OptionDataParser takes it as a storage.
-            parser->setStorage(options_);
-            // Build the instance of a singkle option.
+            parser->setStorage(&local_options_);
+            // Build the instance of a single option.
             parser->build(option_value);
+            // Store a parser as it will be used to commit.
+            parsers_.push_back(parser);
         }
     }
 
@@ -752,11 +796,18 @@ public:
     }
 
 
-    /// @brief Does nothing.
+    /// @brief Commit all option values.
     ///
-    /// @todo Currently this function does nothing but in the future
-    /// we may need to extend it to commit at this level.
-    void commit() { }
+    /// This function invokes commit for all option values.
+    void commit() {
+        BOOST_FOREACH(ParserPtr parser, parsers_) {
+            parser->commit();
+        }
+        // Parsing was successful and we have all configured
+        // options in local storage. We can now replace old values
+        // with new values.
+        std::swap(local_options_, *options_);
+    }
 
     /// @brief Create DhcpDataListParser object
     ///
@@ -767,8 +818,15 @@ public:
         return (new OptionDataListParser(param_name));
     }
 
+    /// Intermediate option storage. This storage is used by
+    /// lower level parsers to add new options.  Values held
+    /// in this storage are assigned to main storage (options_)
+    /// if overall parsing was successful.
+    OptionStorage local_options_;
     /// Pointer to options instances storage.
     OptionStorage* options_;
+    /// Collection of parsers;
+    ParserCollection parsers_;
 };
 
 /// @brief this class parses a single subnet
@@ -780,8 +838,8 @@ public:
 
     /// @brief constructor
     Subnet6ConfigParser(const std::string& ) {
-        // The parameter should always be "subnet", but we don't check here
-        // against it in case some wants to reuse this parser somewhere.
+        // The parameter should always be "subnet", but we don't check
+        // against that here in case some wants to reuse this parser somewhere.
     }
 
     /// @brief parses parameter value
@@ -792,8 +850,8 @@ public:
         BOOST_FOREACH(ConfigPair param, subnet->mapValue()) {
             ParserPtr parser(createSubnet6ConfigParser(param.first));
             // The actual type of the parser is unknown here. We have to discover
-            // parser type here to invoke corresponding setStorage function on it.
-            // We discover parser type by trying to cast the parser to various
+            // the parser type here to invoke the corresponding setStorage function
+            // on it.  We discover parser type by trying to cast the parser to various
             // parser types and checking which one was successful. For this one
             // a setStorage and build methods are invoked.
 
@@ -830,6 +888,10 @@ public:
     /// created in other parsers are used here and added to newly created Subnet6
     /// objects. Subnet6 are then added to DHCP CfgMgr.
     void commit() {
+        // Invoke commit on all sub-data parsers.
+        BOOST_FOREACH(ParserPtr parser, parsers_) {
+            parser->commit();
+        }
 
         StringStorage::const_iterator it = string_values_.find("subnet");
         if (it == string_values_.end()) {
@@ -871,33 +933,33 @@ public:
         const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
 
         // Add subnet specific options.
-        BOOST_FOREACH(OptionPtr option, options_) {
-            Subnet::OptionContainerTypeRange range = idx.equal_range(option->getType());
+        BOOST_FOREACH(Subnet::OptionDescriptor desc, options_) {
+            Subnet::OptionContainerTypeRange range = idx.equal_range(desc.option->getType());
             if (std::distance(range.first, range.second) > 0) {
                 LOG_WARN(dhcp6_logger, DHCP6_CONFIG_OPTION_DUPLICATE)
-                    .arg(option->getType()).arg(addr.toText());
+                    .arg(desc.option->getType()).arg(addr.toText());
             }
-            subnet->addOption(option);
+            subnet->addOption(desc.option);
         }
 
         // Check all global options and add them to the subnet object if
         // they have been configured in the global scope. If they have been
         // configured in the subnet scope we don't add global option because
-        // the one configured in the subnet scope always takes precedense.
-        BOOST_FOREACH(OptionPtr option, option_defaults) {
+        // the one configured in the subnet scope always takes precedence.
+        BOOST_FOREACH(Subnet::OptionDescriptor desc, option_defaults) {
             // Get all options specified locally in the subnet and having
             // code equal to global option's code.
-            Subnet::OptionContainerTypeRange range = idx.equal_range(option->getType());
+            Subnet::OptionContainerTypeRange range = idx.equal_range(desc.option->getType());
             // @todo: In the future we will be searching for options using either
-            // option code or namespace. Currently we have only the option
+            // an option code or namespace. Currently we have only the option
             // code available so if there is at least one option found with the
-            // specific code we don't add globally configured option.
+            // specific code we don't add the globally configured option.
             // @todo with this code the first globally configured option
             // with the given code will be added to a subnet. We may
-            // want to issue warning about dropping configuration of
-            // global option if one already exsist.
+            // want to issue a warning about dropping the configuration of
+            // a global option if one already exsists.
             if (std::distance(range.first, range.second) == 0) {
-                subnet->addOption(option);
+                subnet->addOption(desc.option);
             }
         }
 
@@ -908,9 +970,9 @@ private:
 
     /// @brief Set storage for a parser and invoke build.
     ///
-    /// This helper method casts the provided parser pointer to specified
-    /// type. If cast is successful it sets the corresponding storage for
-    /// this parser, invokes build on it and save the parser.
+    /// This helper method casts the provided parser pointer to the specified
+    /// type. If the cast is successful it sets the corresponding storage for
+    /// this parser, invokes build on it and saves the parser.
     ///
     /// @tparam T parser type to which parser argument should be cast.
     /// @tparam Y storage type for the specified parser type.
@@ -982,7 +1044,7 @@ private:
 
     /// @brief returns value for a given parameter (after using inheritance)
     ///
-    /// This method implements inheritance. For a given parameter name, it first
+    /// This method implements inheritance.  For a given parameter name, it first
     /// checks if there is a global value for it and overwrites it with specific
     /// value if such value was defined in subnet.
     ///
@@ -1028,7 +1090,7 @@ private:
     ParserCollection parsers_;
 };
 
-/// @brief this class parses list of subnets
+/// @brief this class parses a list of subnets
 ///
 /// This is a wrapper parser that handles the whole list of Subnet6
 /// definitions. It iterates over all entries and creates Subnet6ConfigParser
@@ -1044,7 +1106,7 @@ public:
 
     /// @brief parses contents of the list
     ///
-    /// Iterates over all entries on the list and creates Subnet6ConfigParser
+    /// Iterates over all entries on the list and creates a Subnet6ConfigParser
     /// for each entry.
     ///
     /// @param subnets_list pointer to a list of IPv6 subnets
@@ -1152,12 +1214,6 @@ configureDhcp6Server(Dhcpv6Srv& , ConstElementPtr config_set) {
         isc_throw(Dhcp6ConfigError,
                   "Null pointer is passed to configuration parser");
     }
-
-    /// Reset global storage. Containers being reset below may contain
-    /// data from the previous configuration attempts.
-    option_defaults.clear();
-    uint32_defaults.clear();
-    string_defaults.clear();
 
     /// @todo: append most essential info here (like "2 new subnets configured")
     string config_details;

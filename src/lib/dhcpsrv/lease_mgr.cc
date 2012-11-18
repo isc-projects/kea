@@ -12,25 +12,24 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "lease_mgr.h"
+#include <dhcpsrv/lease_mgr.h>
 #include <exceptions/exceptions.h>
+
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
-#include <sstream>
-#include <iostream>
-#include <map>
-#include <iostream>
-#include <string>
-#include <sstream>
+
 #include <algorithm>
+#include <iostream>
 #include <iterator>
+#include <map>
+#include <sstream>
+#include <string>
+
 #include <time.h>
 
 using namespace std;
 
 using namespace isc::dhcp;
-
-LeaseMgr* LeaseMgr::instance_ = NULL;
 
 Lease6::Lease6(LeaseType type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
                uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
@@ -46,62 +45,54 @@ Lease6::Lease6(LeaseType type, const isc::asiolink::IOAddress& addr, DuidPtr dui
     cltt_ = time(NULL);
 }
 
-LeaseMgr& LeaseMgr::instance() {
-    if (!instance_) {
-        isc_throw(InvalidOperation, "LeaseManager not instantiated yet");
-    }
-    return (*instance_);
-}
-
-void LeaseMgr::destroy_instance() {
-    if (!instance_) {
-        isc_throw(InvalidOperation, "LeaseManager not instantiated yet");
-    }
-    delete instance_;
-    instance_ = NULL;
-}
-
-LeaseMgr::LeaseMgr(const std::string& dbconfig) {
-    if (instance_) {
-        isc_throw(InvalidOperation, "LeaseManager already instantiated");
-    }
-
-    // remember the pointer to the singleton instance
-    instance_ = this;
-
-    if (dbconfig.length() == 0) {
-        return;
-    }
-
-    vector<string> tokens;
-
-    // we need to pass a string to is_any_of, not just char *. Otherwise there
-    // are cryptic warnings on Debian6 running g++ 4.4 in /usr/include/c++/4.4
-    // /bits/stl_algo.h:2178 "array subscript is above array bounds"
-    boost::split(tokens, dbconfig, boost::is_any_of( string("\t ") ));
-    BOOST_FOREACH(std::string token, tokens) {
-        size_t pos = token.find("=");
-        if (pos != string::npos) {
-            string name = token.substr(0, pos);
-            string value = token.substr(pos + 1);
-            parameters_.insert(pair<string,string>(name, value));
-        } else {
-            isc_throw(InvalidParameter, "Cannot parse " << token
-                      << ", expected format is name=value");
-        }
-
-    }
-}
-
 std::string LeaseMgr::getParameter(const std::string& name) const {
-    std::map<std::string, std::string>::const_iterator param
-        = parameters_.find(name);
+    ParameterMap::const_iterator param = parameters_.find(name);
     if (param == parameters_.end()) {
         isc_throw(BadValue, "Parameter not found");
     }
     return (param->second);
 }
 
-LeaseMgr::~LeaseMgr() {
-    instance_ = NULL;
+std::string
+Lease6::toText() {
+    ostringstream stream;
+
+    stream << "Type:          " << static_cast<int>(type_) << " (";
+    switch (type_) {
+        case Lease6::LEASE_IA_NA:
+            stream << "IA_NA)\n";
+            break;
+        case Lease6::LEASE_IA_TA:
+            stream << "IA_TA)\n";
+            break;
+        case Lease6::LEASE_IA_PD:
+            stream << "IA_PD)\n";
+            break;
+        default:
+            stream << "unknown)\n";
+    }
+    stream << "Address:       " << addr_.toText() << "\n"
+           << "Prefix length: " << static_cast<int>(prefixlen_) << "\n"
+           << "IAID:          " << iaid_ << "\n"
+           << "Pref life:     " << preferred_lft_ << "\n"
+           << "Valid life:    " << valid_lft_ << "\n"
+           << "Cltt:          " << cltt_ << "\n"
+           << "Subnet ID:     " << subnet_id_ << "\n";
+
+    return (stream.str());
+}
+
+bool
+Lease6::operator==(const Lease6& other) const {
+    return (
+        type_ == other.type_ &&
+        addr_ == other.addr_ &&
+        prefixlen_ == other.prefixlen_ &&
+        iaid_ == other.iaid_ &&
+        *duid_ == *other.duid_ &&
+        preferred_lft_ == other.preferred_lft_ &&
+        valid_lft_ == other.valid_lft_ &&
+        cltt_ == other.cltt_ &&
+        subnet_id_ == other.subnet_id_
+        );
 }

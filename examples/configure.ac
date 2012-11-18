@@ -21,7 +21,14 @@ if test "x$BIND10_RPATH" != "x"; then
    LDFLAGS="$LDFLAGS $BIND10_RPATH"
 fi
 
-# For the example host program, we require the BIND 10 DNS library
+# For the example host program, we require some socket API library
+# and the BIND 10 DNS library.
+
+# In practice, these are specific to Solaris, but wouldn't do any harm for
+# others except for the checking overhead.
+AC_SEARCH_LIBS(inet_pton, [nsl])
+AC_SEARCH_LIBS(recvfrom, [socket])
+
 if test "x$BIND10_DNS_LIB" = "x"; then
    AC_MSG_ERROR([unable to find BIND 10 DNS library needed to build 'host'])
 fi

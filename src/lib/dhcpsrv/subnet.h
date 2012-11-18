@@ -15,16 +15,17 @@
 #ifndef SUBNET_H
 #define SUBNET_H
 
-#include <asiolink/io_address.h>
-#include <dhcp/pool.h>
-#include <dhcp/triplet.h>
-#include <dhcp/option.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/member.hpp>
+
+#include <asiolink/io_address.h>
+#include <dhcp/option.h>
+#include <dhcpsrv/pool.h>
+#include <dhcpsrv/triplet.h>
 
 namespace isc {
 namespace dhcp {
@@ -69,6 +70,12 @@ public:
         /// @param persist if true option is always sent.
         OptionDescriptor(OptionPtr& opt, bool persist)
             : option(opt), persistent(persist) {};
+
+        /// @brief Constructor
+        ///
+        /// @param persist if true option is always sent.
+        OptionDescriptor(bool persist)
+            : option(OptionPtr()), persistent(persist) {};
     };
 
     /// @brief Extractor class to extract key with another key.
@@ -283,6 +290,18 @@ public:
     /// @brief returns unique ID for that subnet
     /// @return unique ID for that subnet
     SubnetID getID() const { return (id_); }
+
+    /// @brief returns subnet parameters (prefix and prefix length)
+    ///
+    /// @return (prefix, prefix length) pair
+    std::pair<isc::asiolink::IOAddress, uint8_t> get() const {
+        return (std::make_pair(prefix_, prefix_len_));
+    }
+
+    /// @brief returns textual representation of the subnet (e.g. "2001:db8::/64")
+    ///
+    /// @return textual representation
+    virtual std::string toText() const;
 
 protected:
     /// @brief protected constructor
