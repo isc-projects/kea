@@ -216,6 +216,7 @@ class BoB:
         self.clear_config = clear_config
         self.cmdctl_port = cmdctl_port
         self.wait_time = wait_time
+        self.msgq_timeout = 5
         self._component_configurator = isc.bind10.component.Configurator(self,
             isc.bind10.special_component.get_specials())
         # The priorities here make them start in the correct order. First
@@ -412,21 +413,30 @@ class BoB:
     # raised which is caught by the caller of start_all_processes(); this kills
     # processes started up to that point before terminating the program.
 
+    def _make_process_info(self, name, args, env,
+                           dev_null_stdout=False, dev_null_stderr=False):
+        return ProcessInfo(name, args, env, dev_null_stdout, dev_null_stderr)
+
     def start_msgq(self):
         """
             Start the message queue and connect to the command channel.
         """
         self.log_starting("b10-msgq")
-        msgq_proc = ProcessInfo("b10-msgq", ["b10-msgq"], self.c_channel_env,
-                                True, not self.verbose)
+        msgq_proc = self._make_process_info("b10-msgq", ["b10-msgq"],
+                                            self.c_channel_env,
+                                            True, not self.verbose)
         msgq_proc.spawn()
         self.log_started(msgq_proc.pid)
 
         # Now connect to the c-channel
         cc_connect_start = time.time()
         while self.cc_session is None:
+            # this is only used by unittests
+            if self.msgq_timeout == 0:
+                break
+
             # if we have been trying for "a while" give up
-            if (time.time() - cc_connect_start) > 5:
+            if (time.time() - cc_connect_start) > self.msgq_timeout:
                 raise CChannelConnectError("Unable to connect to c-channel after 5 seconds")
 
             # try to connect, and if we can't wait a short while
@@ -437,7 +447,8 @@ class BoB:
 
         # Subscribe to the message queue.  The only messages we expect to receive
         # on this channel are once relating to process startup.
-        self.cc_session.group_subscribe("Boss")
+        if self.cc_session is not None:
+            self.cc_session.group_subscribe("Boss")
 
         return msgq_proc
 
@@ -492,9 +503,6 @@ class BoB:
         logger.debug(DBG_PROCESS, BIND10_STARTED_CC)
 
     # A couple of utility methods for starting processes...
-
-    def _make_process_info(self, name, args, c_channel_env):
-        return ProcessInfo(name, args, c_channel_env)
 
     def start_process(self, name, args, c_channel_env, port=None, address=None):
         """
