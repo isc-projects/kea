@@ -748,8 +748,10 @@ class MockBob(BoB):
     def _get_process_exit_status_raises_other(self):
         raise Exception('Mock error')
 
-    def _make_mock_process_info(self, name, args, c_channel_env):
-        return MockProcessInfo(name, args, c_channel_env)
+    def _make_mock_process_info(self, name, args, c_channel_env,
+                                dev_null_stdout=False, dev_null_stderr=False):
+        return MockProcessInfo(name, args, c_channel_env,
+                               dev_null_stdout, dev_null_stderr)
 
 class MockBobSimple(BoB):
     def __init__(self):
@@ -757,6 +759,11 @@ class MockBobSimple(BoB):
         # Set which process has been started
         self.started_process_name = None
         self.started_process_args = None
+
+    def _make_mock_process_info(self, name, args, c_channel_env,
+                                dev_null_stdout=False, dev_null_stderr=False):
+        return MockProcessInfo(name, args, c_channel_env,
+                               dev_null_stdout, dev_null_stderr)
 
     def start_process(self, name, args, c_channel_env, port=None, address=None):
         self.started_process_name = name
@@ -1549,6 +1556,39 @@ class TestBossComponents(unittest.TestCase):
         bob.kill_started_components()
         self.assertFalse(bob.get_processes())
         self.assertTrue(component.forceful)
+
+    def test_start_msgq(self):
+        '''Test that b10-msgq is started.'''
+        bob = MockBobSimple()
+        bob.c_channel_env = {}
+        bob.msgq_timeout = 0
+
+        # use the MockProcessInfo creator
+        bob._make_process_info = bob._make_mock_process_info
+
+        # non-verbose case
+        bob.verbose = False
+        pi = bob.start_msgq()
+        self.assertEqual('b10-msgq', pi.name)
+        self.assertEqual(['b10-msgq'], pi.args)
+        self.assertTrue(pi.dev_null_stdout)
+        self.assertTrue(pi.dev_null_stderr)
+        self.assertEqual({}, pi.env)
+
+        # this is set by ProcessInfo.spawn()
+        self.assertEqual(42147, pi.pid)
+
+        # verbose case
+        bob.verbose = True
+        pi = bob.start_msgq()
+        self.assertEqual('b10-msgq', pi.name)
+        self.assertEqual(['b10-msgq'], pi.args)
+        self.assertTrue(pi.dev_null_stdout)
+        self.assertFalse(pi.dev_null_stderr)
+        self.assertEqual({}, pi.env)
+
+        # this is set by ProcessInfo.spawn()
+        self.assertEqual(42147, pi.pid)
 
     def test_start_process(self):
         '''Test that processes can be started.'''
