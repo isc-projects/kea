@@ -1591,8 +1591,6 @@ class TestBossComponents(unittest.TestCase):
         self.assertEqual('/bin/true', bob.started_process_name)
         self.assertEqual(['/bin/true', '-v'], bob.started_process_args)
 
-    # there is another test with this name (minus the digits), but both
-    # do different things.
     def test_start_auth(self):
         '''Test that b10-auth is started.'''
         bob = MockBobSimple()
@@ -1610,8 +1608,6 @@ class TestBossComponents(unittest.TestCase):
         self.assertEqual('b10-auth', bob.started_process_name)
         self.assertEqual(['b10-auth', '-v'], bob.started_process_args)
 
-    # there is another test with this name (minus the digits), but both
-    # do different things.
     def test_start_resolver(self):
         '''Test that b10-resolver is started.'''
         bob = MockBobSimple()
