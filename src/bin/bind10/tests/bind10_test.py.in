@@ -1686,6 +1686,44 @@ class TestBossComponents(unittest.TestCase):
         # this is set by ProcessInfo.spawn()
         self.assertEqual(42147, pi.pid)
 
+    def test_start_cfgmgr_timeout(self):
+        '''Test that b10-cfgmgr startup attempts connections several times
+        and times out eventually.'''
+        class DummySession():
+            def group_recvmsg(self):
+                return (None, None)
+        bob = MockBobSimple()
+        bob.c_channel_env = {}
+        bob.cc_session = DummySession()
+        bob.wait_time = 2
+
+        # use the MockProcessInfo creator
+        bob._make_process_info = bob._make_mock_process_info
+
+        global attempts
+        attempts = 0
+        tmp_sleep = time.sleep
+        def _my_sleep(nsec):
+            global attempts
+            attempts += 1
+            return tmp_sleep(nsec)
+        time.sleep = _my_sleep
+
+        thrown = False
+        # An exception will be thrown here when it eventually times out.
+        try:
+            pi = bob.start_cfgmgr()
+        except bind10_src.ProcessStartError as e:
+            thrown = True
+
+        # We just check that an exception was thrown, and that several
+        # attempts were made to connect.
+        self.assertTrue(thrown)
+        # 2 seconds of attempts every 1 second should result in 2 attempts
+        self.assertEqual(attempts, 2)
+
+        time.sleep = tmp_sleep
+
     def test_start_ccsession(self):
         '''Test that CC session is started.'''
         class DummySession():
