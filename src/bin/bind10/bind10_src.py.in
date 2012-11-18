@@ -464,8 +464,8 @@ class BoB:
             args.append("--config-filename=" + self.config_filename)
         if self.clear_config:
             args.append("--clear-config")
-        bind_cfgd = ProcessInfo("b10-cfgmgr", args,
-                                self.c_channel_env)
+        bind_cfgd = self._make_process_info("b10-cfgmgr", args,
+                                            self.c_channel_env)
         bind_cfgd.spawn()
         self.log_started(bind_cfgd.pid)
 
@@ -479,7 +479,8 @@ class BoB:
             time_remaining = time_remaining - 1
             msg, env = self.cc_session.group_recvmsg()
         
-        if not self.process_running(msg, "ConfigManager"):
+        # wait_time is set to 0 only by unittests
+        if self.wait_time > 0 and not self.process_running(msg, "ConfigManager"):
             raise ProcessStartError("Configuration manager process has not started")
 
         return bind_cfgd

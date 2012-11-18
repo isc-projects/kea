@@ -1590,6 +1590,28 @@ class TestBossComponents(unittest.TestCase):
         # this is set by ProcessInfo.spawn()
         self.assertEqual(42147, pi.pid)
 
+    def test_start_cfgmgr(self):
+        '''Test that b10-msgq is started.'''
+        class DummySession():
+            def group_recvmsg(self):
+                return (None, None)
+        bob = MockBobSimple()
+        bob.c_channel_env = {}
+        bob.cc_session = DummySession()
+        bob.wait_time = 0
+
+        # use the MockProcessInfo creator
+        bob._make_process_info = bob._make_mock_process_info
+
+        # defaults
+        pi = bob.start_cfgmgr()
+        self.assertEqual('b10-cfgmgr', pi.name)
+        self.assertEqual(['b10-cfgmgr'], pi.args)
+        self.assertEqual({}, pi.env)
+
+        # this is set by ProcessInfo.spawn()
+        self.assertEqual(42147, pi.pid)
+
     def test_start_process(self):
         '''Test that processes can be started.'''
         bob = MockBob()
