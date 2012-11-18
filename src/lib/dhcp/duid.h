@@ -16,7 +16,9 @@
 #define DUID_H
 
 #include <asiolink/io_address.h>
+
 #include <vector>
+
 #include <stdint.h>
 #include <unistd.h>
 
@@ -61,11 +63,14 @@ class DUID {
     /// @brief returns DUID type
     DUIDType getType() const;
 
-    // compares two DUIDs
-    bool operator == (const DUID& other) const;
+    /// returns textual prepresentation (e.g. 00:01:02:03:ff)
+    std::string toText() const;
 
-    // compares two DUIDs
-    bool operator != (const DUID& other) const;
+    /// compares two DUIDs
+    bool operator==(const DUID& other) const;
+
+    /// compares two DUIDs
+    bool operator!=(const DUID& other) const;
 
  protected:
     /// the actual content of the DUID

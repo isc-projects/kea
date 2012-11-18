@@ -1,3 +1,18 @@
+# Copyright (C) 2011-2012  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 """
 Utilities and mock modules for unittests of statistics modules
 
@@ -15,6 +30,8 @@ import msgq
 import isc.config.cfgmgr
 import stats
 import stats_httpd
+
+CONST_BASETIME = (2011, 6, 22, 8, 14, 8, 2, 173, 0)
 
 class SignalHandler():
     """A signal handler class for deadlock in unittest"""
@@ -222,7 +239,7 @@ class MockBoss:
   }
 }
 """
-    _BASETIME = (2011, 6, 22, 8, 14, 8, 2, 173, 0)
+    _BASETIME = CONST_BASETIME
 
     def __init__(self):
         self._started = threading.Event()
@@ -457,6 +474,11 @@ class MockAuth:
         return isc.config.create_answer(1, "Unknown Command")
 
 class MyStats(stats.Stats):
+
+    stats._BASETIME = CONST_BASETIME
+    stats.get_timestamp = lambda: time.mktime(CONST_BASETIME)
+    stats.get_datetime = lambda x=None: time.strftime("%Y-%m-%dT%H:%M:%SZ", CONST_BASETIME)
+
     def __init__(self):
         self._started = threading.Event()
         stats.Stats.__init__(self)

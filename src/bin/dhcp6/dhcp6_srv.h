@@ -15,24 +15,33 @@
 #ifndef DHCPV6_SRV_H
 #define DHCPV6_SRV_H
 
-#include <boost/noncopyable.hpp>
 #include <dhcp/dhcp6.h>
-#include <dhcp/pkt6.h>
+#include <dhcp/duid.h>
 #include <dhcp/option.h>
+#include <dhcp/option6_ia.h>
 #include <dhcp/option_definition.h>
+#include <dhcp/pkt6.h>
+#include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/subnet.h>
+
+#include <boost/noncopyable.hpp>
+
 #include <iostream>
 
 namespace isc {
-
 namespace dhcp {
 /// @brief DHCPv6 server service.
 ///
-/// This singleton class represents DHCPv6 server. It contains all
+/// This class represents DHCPv6 server. It contains all
 /// top-level methods and routines necessary for server operation.
 /// In particular, it instantiates IfaceMgr, loads or generates DUID
 /// that is going to be used as server-identifier, receives incoming
 /// packets, processes them, manages leases assignment and generates
 /// appropriate responses.
+///
+/// @note Only one instance of this class is instantated as it encompasses
+///       the whole operation of the server.  Nothing, however, enforces the
+///       singleton status of the object.
 class Dhcpv6Srv : public boost::noncopyable {
 
 public:
@@ -48,12 +57,15 @@ public:
     /// old or create new DUID.
     ///
     /// @param port port on will all sockets will listen
-    Dhcpv6Srv(uint16_t port = DHCP6_SERVER_PORT);
+    /// @param dbconfig Lease manager configuration string.  The default
+    ///        of the "memfile" manager is used for testing.
+    Dhcpv6Srv(uint16_t port = DHCP6_SERVER_PORT,
+            const char* dbconfig = "type=memfile");
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();
 
-    /// @brief Returns server-intentifier option
+    /// @brief Returns server-intentifier option.
     ///
     /// @return server-id option
     OptionPtr getServerID() { return serverid_; }
@@ -71,7 +83,7 @@ public:
     /// @brief Instructs the server to shut down.
     void shutdown();
 
-    /// @brief Return textual type of packet received by server
+    /// @brief Return textual type of packet received by server.
     ///
     /// Returns the name of valid packet received by the server (e.g. SOLICIT).
     /// If the packet is unknown - or if it is a valid DHCP packet but not one
@@ -148,7 +160,38 @@ protected:
     /// @param infRequest message received from client
     Pkt6Ptr processInfRequest(const Pkt6Ptr& infRequest);
 
-    /// @brief Copies required options from client message to server answer
+    /// @brief Creates status-code option.
+    ///
+    /// @param code status code value (see RFC3315)
+    /// @param text textual explanation (will be sent in status code option)
+    /// @return status-code option
+    OptionPtr createStatusCode(uint16_t code, const std::string& text);
+
+    /// @brief Selects a subnet for a given client's packet.
+    ///
+    /// @param question client's message
+    /// @return selected subnet (or NULL if no suitable subnet was found)
+    isc::dhcp::Subnet6Ptr selectSubnet(const Pkt6Ptr& question);
+
+    /// @brief Processes IA_NA option (and assigns addresses if necessary).
+    ///
+    /// Generates response to IA_NA. This typically includes selecting (and
+    /// allocating a lease in case of REQUEST) a lease and creating
+    /// IAADDR option. In case of allocation failure, it may contain
+    /// status code option with non-zero status, denoting cause of the
+    /// allocation failure.
+    ///
+    /// @param subnet subnet the client is connected to
+    /// @param duid client's duid
+    /// @param question client's message (typically SOLICIT or REQUEST)
+    /// @param ia pointer to client's IA_NA option (client's request)
+    /// @return IA_NA option (server's response)
+    OptionPtr handleIA_NA(const isc::dhcp::Subnet6Ptr& subnet,
+                          const isc::dhcp::DuidPtr& duid,
+                          isc::dhcp::Pkt6Ptr question,
+                          boost::shared_ptr<Option6IA> ia);
+
+    /// @brief Copies required options from client message to server answer.
     ///
     /// Copies options that must appear in any server response (ADVERTISE, REPLY)
     /// to client's messages (SOLICIT, REQUEST, RENEW, REBIND, DECLINE, RELEASE).
@@ -210,10 +253,16 @@ protected:
     void initStdOptionDefs();
 
 private:
-    /// server DUID (to be sent in server-identifier option)
+    /// @brief Allocation Engine.
+    /// Pointer to the allocation engine that we are currently using
+    /// It must be a pointer, because we will support changing engines
+    /// during normal operation (e.g. to use different allocators)
+    boost::shared_ptr<AllocEngine> alloc_engine_;
+
+    /// Server DUID (to be sent in server-identifier option)
     boost::shared_ptr<isc::dhcp::Option> serverid_;
 
-    /// indicates if shutdown is in progress. Setting it to true will
+    /// Indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
 };

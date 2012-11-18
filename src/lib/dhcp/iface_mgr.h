@@ -15,15 +15,17 @@
 #ifndef IFACE_MGR_H
 #define IFACE_MGR_H
 
-#include <list>
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_array.hpp>
-#include <boost/noncopyable.hpp>
 #include <asiolink/io_address.h>
-#include <dhcp/dhcp6.h>
 #include <dhcp/dhcp4.h>
+#include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+
+#include <boost/noncopyable.hpp>
+#include <boost/scoped_array.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <list>
 
 namespace isc {
 
@@ -681,4 +683,4 @@ private:
 }; // namespace isc::dhcp
 }; // namespace isc
 
-#endif
+#endif // IFACE_MGR_H

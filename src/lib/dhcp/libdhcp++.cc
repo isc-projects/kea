@@ -12,19 +12,21 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <boost/shared_array.hpp>
-#include <boost/shared_ptr.hpp>
-#include <util/buffer.h>
-#include <exceptions/exceptions.h>
-#include <dhcp/libdhcp++.h>
-#include "config.h"
+#include <config.h>
+
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
-#include <dhcp/option_definition.h>
 #include <dhcp/option6_int_array.h>
+#include <dhcp/option_definition.h>
+#include <exceptions/exceptions.h>
+#include <util/buffer.h>
+
+#include <boost/shared_array.hpp>
+#include <boost/shared_ptr.hpp>
 
 using namespace std;
 using namespace isc::dhcp;

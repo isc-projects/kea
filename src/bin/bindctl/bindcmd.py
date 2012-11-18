@@ -133,7 +133,18 @@ class BindCmdInterpreter(Cmd):
         return digest
 
     def run(self):
-        '''Parse commands from user and send them to cmdctl. '''
+        '''Parse commands from user and send them to cmdctl.'''
+
+        # Show helper warning about a well known issue.  We only do this
+        # when stdin is attached to a terminal, because otherwise it doesn't
+        # matter and is just noisy, and could even be harmful if the output
+        # is processed by a script that expects a specific format.
+        if my_readline == sys.stdin.readline and sys.stdin.isatty():
+            sys.stdout.write("""\
+WARNING: Python readline module isn't available, so the command line editor
+         (including command history management) does not work.  See BIND 10
+         guide for more details.\n\n""")
+
         try:
             if not self.login_to_cmdctl():
                 return 1
