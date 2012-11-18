@@ -1591,7 +1591,7 @@ class TestBossComponents(unittest.TestCase):
         self.assertEqual(42147, pi.pid)
 
     def test_start_cfgmgr(self):
-        '''Test that b10-msgq is started.'''
+        '''Test that b10-cfgmgr is started.'''
         class DummySession():
             def group_recvmsg(self):
                 return (None, None)
