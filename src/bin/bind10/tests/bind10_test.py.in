@@ -1623,6 +1623,8 @@ class TestBossComponents(unittest.TestCase):
         # 1 second of attempts every 0.1 seconds should result in at least 5 attempts
         self.assertGreater(attempts, 5)
 
+        time.time = tmp_time
+
     def test_start_cfgmgr(self):
         '''Test that b10-cfgmgr is started.'''
         class DummySession():
