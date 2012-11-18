@@ -1612,6 +1612,45 @@ class TestBossComponents(unittest.TestCase):
         # this is set by ProcessInfo.spawn()
         self.assertEqual(42147, pi.pid)
 
+        # data_path is specified
+        bob.data_path = '/var/lib/test'
+        pi = bob.start_cfgmgr()
+        self.assertEqual('b10-cfgmgr', pi.name)
+        self.assertEqual(['b10-cfgmgr',
+                          '--data-path=/var/lib/test'],
+                         pi.args)
+        self.assertEqual({}, pi.env)
+
+        # this is set by ProcessInfo.spawn()
+        self.assertEqual(42147, pi.pid)
+
+        # config_filename is specified
+        bob.config_filename = 'foo.cfg'
+        pi = bob.start_cfgmgr()
+        self.assertEqual('b10-cfgmgr', pi.name)
+        self.assertEqual(['b10-cfgmgr',
+                          '--data-path=/var/lib/test',
+                          '--config-filename=foo.cfg'],
+                         pi.args)
+        self.assertEqual({}, pi.env)
+
+        # this is set by ProcessInfo.spawn()
+        self.assertEqual(42147, pi.pid)
+
+        # clear_config is specified
+        bob.clear_config = True
+        pi = bob.start_cfgmgr()
+        self.assertEqual('b10-cfgmgr', pi.name)
+        self.assertEqual(['b10-cfgmgr',
+                          '--data-path=/var/lib/test',
+                          '--config-filename=foo.cfg',
+                          '--clear-config'],
+                         pi.args)
+        self.assertEqual({}, pi.env)
+
+        # this is set by ProcessInfo.spawn()
+        self.assertEqual(42147, pi.pid)
+
     def test_start_process(self):
         '''Test that processes can be started.'''
         bob = MockBob()
