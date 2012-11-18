@@ -12,12 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef LIBDHCP_H_
-#define LIBDHCP_H_
+#ifndef LIBDHCP_H
+#define LIBDHCP_H
 
 #include <dhcp/option_definition.h>
 #include <dhcp/pkt6.h>
 #include <util/buffer.h>
+
 #include <iostream>
 
 namespace isc {
@@ -45,9 +46,11 @@ public:
     /// @param u universe of the option (V4 or V6)
     /// @param type option-type
     /// @param buf option-buffer
-    /// @throw isc::InvalidOperation if there is no factory function
-    /// registered for specified option type.
+    ///
     /// @return instance of option.
+    ///
+    /// @throw isc::InvalidOperation if there is no factory function registered
+    ///        for the specified option type.
     static isc::dhcp::OptionPtr optionFactory(isc::dhcp::Option::Universe u,
                                               uint16_t type,
                                               const OptionBuffer& buf);
@@ -100,8 +103,8 @@ public:
 
     /// Registers factory method that produces options of specific option types.
     ///
-    /// @exception BadValue if provided type is already registered, has too large
-    ///            value or invalid universe is specified
+    /// @throw isc::BadValue if provided the type is already registered, has
+    ///        too large a value or an invalid universe is specified.
     ///
     /// @param u universe of the option (V4 or V6)
     /// @param type option-type
@@ -162,4 +165,4 @@ private:
 }
 }
 
-#endif
+#endif // LIBDHCP_H

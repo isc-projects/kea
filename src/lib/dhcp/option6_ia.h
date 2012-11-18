@@ -12,11 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef OPTION_IA_H_
-#define OPTION_IA_H_
+#ifndef OPTION_IA_H
+#define OPTION_IA_H
+
+#include <dhcp/option.h>
 
 #include <stdint.h>
-#include "option.h"
 
 namespace isc {
 namespace dhcp {
@@ -112,4 +113,4 @@ protected:
 } // isc::dhcp namespace
 } // isc namespace
 
-#endif /* OPTION_IA_H_ */
+#endif // OPTION_IA_H

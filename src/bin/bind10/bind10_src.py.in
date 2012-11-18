@@ -331,11 +331,7 @@ class BoB:
             each one.  It then clears that list.
         """
         logger.info(BIND10_KILLING_ALL_PROCESSES)
-
-        for pid in self.components:
-            logger.info(BIND10_KILL_PROCESS, self.components[pid].name())
-            self.components[pid].kill(True)
-        self.components = {}
+        self.__kill_children(True)
 
     def _read_bind10_config(self):
         """
@@ -427,6 +423,7 @@ class BoB:
         while self.cc_session is None:
             # if we have been trying for "a while" give up
             if (time.time() - cc_connect_start) > 5:
+                logger.error(BIND10_CONNECTING_TO_CC_FAIL)
                 raise CChannelConnectError("Unable to connect to c-channel after 5 seconds")
 
             # try to connect, and if we can't wait a short while
@@ -1145,6 +1142,21 @@ def main():
 
     options = parse_args()
 
+    # Announce startup.  Making this is the first log message.
+    try:
+        logger.info(BIND10_STARTING, VERSION)
+    except RuntimeError as e:
+        sys.stderr.write('ERROR: failed to write the initial log: %s\n' %
+                         str(e))
+        sys.stderr.write("""\
+TIP: if this is about permission error for a lock file, check if the directory
+of the file is writable for the user of the bind10 process; often you need
+to start bind10 as a super user.  Also, if you specify the -u option to
+change the user and group, the directory must be writable for the group,
+and the created lock file must be writable for that user.
+""")
+        sys.exit(1)
+
     # Check user ID.
     setuid = None
     setgid = None
@@ -1176,9 +1188,6 @@ def main():
         if setuid is None:
             logger.fatal(BIND10_INVALID_USER, options.user)
             sys.exit(1)
-
-    # Announce startup.
-    logger.info(BIND10_STARTING, VERSION)
 
     # Create wakeup pipe for signal handlers
     wakeup_pipe = os.pipe()

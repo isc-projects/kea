@@ -14,21 +14,21 @@
 
 #include <config.h>
 
-#include <cassert>
-#include <iostream>
-
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
 #include <cc/session.h>
 #include <cc/session.h>
 #include <config/ccsession.h>
+#include <dhcp/iface_mgr.h>
+#include <dhcp6/config_parser.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/spec_config.h>
-#include <dhcp6/config_parser.h>
-#include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
+
+#include <cassert>
+#include <iostream>
 
 using namespace isc::asiolink;
 using namespace isc::cc;
@@ -41,6 +41,7 @@ using namespace std;
 
 namespace isc {
 namespace dhcp {
+
 
 ControlledDhcpv6Srv* ControlledDhcpv6Srv::server_ = NULL;
 
@@ -149,8 +150,8 @@ void ControlledDhcpv6Srv::disconnectSession() {
     IfaceMgr::instance().set_session_socket(IfaceMgr::INVALID_SOCKET, NULL);
 }
 
-ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port /*= DHCP6_SERVER_PORT*/)
-    :Dhcpv6Srv(port), cc_session_(NULL), config_session_(NULL) {
+ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port, const char* dbconfig)
+    : Dhcpv6Srv(port, dbconfig), cc_session_(NULL), config_session_(NULL) {
     server_ = this; // remember this instance for use in callback
 }
 

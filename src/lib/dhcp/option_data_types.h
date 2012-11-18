@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef OPTION_DATA_TYPES_H_
-#define OPTION_DATA_TYPES_H_
+#ifndef OPTION_DATA_TYPES_H
+#define OPTION_DATA_TYPES_H
 
 #include <exceptions/exceptions.h>
 
@@ -86,4 +86,4 @@ struct OptionDataTypes<uint32_t> {
 } // isc::dhcp namespace
 } // isc namespace
 
-#endif /* OPTION_DATA_TYPES_H_ */
+#endif // OPTION_DATA_TYPES_H

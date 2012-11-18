@@ -33,6 +33,7 @@
  *   - @subpage leasemgr
  *   - @subpage cfgmgr
  *   - @subpage allocengine
+ * - @subpage dhcp-database-backends
  * - @subpage perfdhcpInternals
  *
  * @section misc Miscellaneous topics

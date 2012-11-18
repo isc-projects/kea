@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <asiolink/io_address.h>
-#include <dhcp/cfgmgr.h>
+#include <dhcpsrv/cfgmgr.h>
 
 using namespace isc::asiolink;
 using namespace isc::util;
@@ -41,7 +41,7 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
     // configuration. Such requirement makes sense in IPv4, but not in IPv6.
     // The server does not need to have a global address (using just link-local
     // is ok for DHCPv6 server) from the pool it serves.
-    if (subnets6_.size() == 1) {
+    if ((subnets6_.size() == 1) && hint.getAddress().to_v6().is_link_local()) {
         return (subnets6_[0]);
     }
 

@@ -733,6 +733,60 @@ AC_LINK_IFELSE(
 CPPFLAGS=$CPPFLAGS_SAVED
 LIBS=$LIBS_SAVED
 
+# Check for MySql.  The path to the mysql_config program is given with
+# the --with-mysql-config (default to /usr/bin/mysql-config).  By default,
+# the software is not built with MySQL support enabled.
+mysql_config="no"
+AC_ARG_WITH([dhcp-mysql],
+  AC_HELP_STRING([--with-dhcp-mysql=PATH],
+    [path to the MySQL 'mysql_config' script (MySQL is used for the DHCP database)]),
+    [mysql_config="$withval"])
+
+if test "${mysql_config}" = "yes" ; then
+    MYSQL_CONFIG="/usr/bin/mysql_config"
+elif test "${mysql_config}" != "no" ; then
+    MYSQL_CONFIG="${withval}"
+fi
+
+if test "$MYSQL_CONFIG" != "" ; then
+    if test -d "$MYSQL_CONFIG" -o ! -x "$MYSQL_CONFIG" ; then
+        AC_MSG_ERROR([--with-dhcp-mysql should point to a mysql_config program])
+    fi
+
+    MYSQL_CPPFLAGS=`$MYSQL_CONFIG --cflags`
+    MYSQL_LIBS=`$MYSQL_CONFIG --libs`
+
+    AC_SUBST(MYSQL_CPPFLAGS)
+    AC_SUBST(MYSQL_LIBS)
+
+    # Check that a simple program using MySQL functions can compile and link.
+    CPPFLAGS_SAVED="$CPPFLAGS"
+    LIBS_SAVED="$LIBS"
+
+    CPPFLAGS="$MYSQL_CPPFLAGS $CPPFLAGS"
+    LIBS="$MYSQL_LIBS $LIBS"
+
+    AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM([#include <mysql.h>],
+                             [MYSQL mysql_handle;
+                              (void) mysql_init(&mysql_handle);
+                             ])],
+            [AC_MSG_RESULT([checking for MySQL headers and library... yes])],
+            [AC_MSG_RESULT([checking for MySQL headers and library... no])
+             AC_MSG_ERROR([Needs MySQL library])]
+    )
+
+    CPPFLAGS=$CPPFLAGS_SAVED
+    LIBS=$LIBS_SAVED
+
+    # Note that MYSQL is present in the config.h file
+    AC_DEFINE([HAVE_MYSQL], [1], [MySQL is present])
+fi
+
+# ... and at the shell level, so Makefile.am can take action depending on this.
+AM_CONDITIONAL(HAVE_MYSQL, test "$MYSQL_CONFIG" != "")
+
+
 # Check for log4cplus
 log4cplus_path="yes"
 AC_ARG_WITH([log4cplus],
@@ -1210,6 +1264,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/benchmarks/Makefile
                  src/lib/dhcp/Makefile
                  src/lib/dhcp/tests/Makefile
+                 src/lib/dhcpsrv/Makefile
+                 src/lib/dhcpsrv/tests/Makefile
                  src/lib/exceptions/Makefile
                  src/lib/exceptions/tests/Makefile
                  src/lib/datasrc/Makefile
@@ -1421,6 +1477,18 @@ dnl includes too
                  ${LOG4CPLUS_LIBS}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
+END
+
+# Avoid confusion on DNS/DHCP and only mention MySQL if it
+# were specified on the command line.
+if test "$MYSQL_CPPFLAGS" != "" ; then
+cat >> config.report << END
+  MySQL:         $MYSQL_CPPFLAGS
+                 $MYSQL_LIBS
+END
+fi
+
+cat >> config.report << END
 
 Features:
   $enable_features

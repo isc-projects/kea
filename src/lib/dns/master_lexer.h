@@ -17,17 +17,181 @@
 
 #include <exceptions/exceptions.h>
 
+#include <istream>
 #include <string>
 
 #include <stdint.h>
 
 namespace isc {
 namespace dns {
+namespace master_lexer_internal {
+class State;
+}
 
+/// \brief Tokenizer for parsing DNS master files.
+///
+/// The \c MasterLexer class provides tokenize interfaces for parsing DNS
+/// master files.  It understands some special rules of master files as
+/// defined in RFC 1035, such as comments, character escaping, and multi-line
+/// data, and provides the user application with the actual data in a
+/// more convenient form such as a std::string object.
+///
+/// In order to support the $INCLUDE notation, this class is designed to be
+/// able to operate on multiple files or input streams in the nested way.
+/// The \c pushSource() and \c popSource() methods correspond to the push
+/// and pop operations.
+///
+/// While this class is public, it is less likely to be used by normal
+/// applications; it's mainly expected to be used within this library,
+/// specifically by the \c MasterLoader class and \c Rdata implementation
+/// classes.
+///
+/// \note The error handling policy of this class is slightly different from
+/// that of other classes of this library.  We generally throw an exception
+/// for an invalid input, whether it's more likely to be a program error or
+/// a "user error", which means an invalid input that comes from outside of
+/// the library.  But, this class returns an error code for some certain
+/// types of user errors instead of throwing an exception.  Such cases include
+/// a syntax error identified by the lexer or a misspelled file name that
+/// causes a system error at the time of open.  This is based on the assumption
+/// that the main user of this class is a parser of master files, where
+/// we want to give an option to ignore some non fatal errors and continue
+/// the parsing.  This will be useful if it just performs overall error
+/// checks on a master file.  When the (immediate) caller needs to do explicit
+/// error handling, exceptions are not that a useful tool for error reporting
+/// because we cannot separate the normal and error cases anyway, which would
+/// be one major advantage when we use exceptions.  And, exceptions are
+/// generally more expensive, either when it happens or just by being able
+/// to handle with \c try and \c catch (depending on the underlying
+/// implementation of the exception handling).  For these reasons, some of
+/// this class does not throw for an error that would be reported as an
+/// exception in other classes.
 class MasterLexer {
+    friend class master_lexer_internal::State;
 public:
     class Token;       // we define it separately for better readability
+
+    /// \brief Options for getNextToken.
+    ///
+    /// A compound option, indicating multiple options are set, can be
+    /// specified using the logical OR operator (operator|()).
+    enum Options {
+        NONE = 0,               ///< No option
+        INITIAL_WS = 1, ///< recognize begin-of-line spaces after an
+                        ///< end-of-line
+        QSTRING = 2,    ///< recognize quoted string
+        NUMBER = 4   ///< recognize numeric text as integer
+    };
+
+    /// \brief The constructor.
+    ///
+    /// \throw std::bad_alloc Internal resource allocation fails (rare case).
+    MasterLexer();
+
+    /// \brief The destructor.
+    ///
+    /// It internally closes any remaining input sources.
+    ~MasterLexer();
+
+    /// \brief Open a file and make it the current input source of MasterLexer.
+    ///
+    /// The opened file can be explicitly closed by the \c popSource() method;
+    /// if \c popSource() is not called within the lifetime of the
+    /// \c MasterLexer, it will be closed in the destructor.
+    ///
+    /// In the case possible system errors in opening the file (most likely
+    /// because of specifying a non-existent or unreadable file), it returns
+    /// false, and if the optional \c error parameter is non NULL, it will be
+    /// set to a description of the error (any existing content of the string
+    /// will be discarded).  If opening the file succeeds, the given
+    /// \c error parameter will be intact.
+    ///
+    /// Note that this method has two styles of error reporting: one by
+    /// returning \c false (and setting \c error optionally) and the other
+    /// by throwing an exception.  See the note for the class description
+    /// about the distinction.
+    ///
+    /// \throw InvalidParameter filename is NULL
+    /// \param filename A non NULL string specifying a master file
+    /// \param error If non null, a placeholder to set error description in
+    /// case of failure.
+    ///
+    /// \return true if pushing the file succeeds; false otherwise.
+    bool pushSource(const char* filename, std::string* error = NULL);
+
+    /// \brief Make the given stream the current input source of MasterLexer.
+    ///
+    /// The caller still holds the ownership of the passed stream; it's the
+    /// caller's responsibility to keep it valid as long as it's used in
+    /// \c MasterLexer or to release any resource for the stream after that.
+    /// The caller can explicitly tell \c MasterLexer to stop using the
+    /// stream by calling the \c popSource() method.
+    ///
+    /// \param input An input stream object that produces textual
+    /// representation of DNS RRs.
+    void pushSource(std::istream& input);
+
+    /// \brief Stop using the most recently opened input source (file or
+    /// stream).
+    ///
+    /// If it's a file, the previously opened file will be closed internally.
+    /// If it's a stream, \c MasterLexer will simply stop using
+    /// the stream; the caller can assume it will be never used in
+    /// \c MasterLexer thereafter.
+    ///
+    /// This method must not be called when there is no source pushed for
+    /// \c MasterLexer.  This method is otherwise exception free.
+    ///
+    /// \throw isc::InvalidOperation Called with no pushed source.
+    void popSource();
+
+    /// \brief Return the name of the current input source name.
+    ///
+    /// If it's a file, it will be the C string given at the corresponding
+    /// \c pushSource() call, that is, its filename.  If it's a stream, it will
+    /// be formatted as \c "stream-%p" where \c %p is hex representation
+    /// of the address of the stream object.
+    ///
+    /// If there is no opened source at the time of the call, this method
+    /// returns an empty string.
+    ///
+    /// \throw std::bad_alloc Resource allocation failed for string
+    /// construction (rare case)
+    ///
+    /// \return A string representation of the current source (see the
+    /// description)
+    std::string getSourceName() const;
+
+    /// \brief Return the input source line number.
+    ///
+    /// If there is an opened source, the return value will be a non-0
+    /// integer indicating the line number of the current source where
+    /// the \c MasterLexer is currently working.  The expected usage of
+    /// this value is to print a helpful error message when parsing fails
+    /// by specifically identifying the position of the error.
+    ///
+    /// If there is no opened source at the time of the call, this method
+    /// returns 0.
+    ///
+    /// \throw None
+    ///
+    /// \return The current line number of the source (see the description)
+    size_t getSourceLine() const;
+
+private:
+    struct MasterLexerImpl;
+    MasterLexerImpl* impl_;
 };
+
+/// \brief Operator to combine \c MasterLexer options
+///
+/// This is a trivial shortcut so that compound options can be specified
+/// in an intuitive way.
+inline MasterLexer::Options
+operator|(MasterLexer::Options o1, MasterLexer::Options o2) {
+    return (static_cast<MasterLexer::Options>(
+                static_cast<unsigned>(o1) | static_cast<unsigned>(o2)));
+}
 
 /// \brief Tokens for \c MasterLexer
 ///
@@ -54,7 +218,8 @@ public:
     enum Type {
         END_OF_LINE, ///< End of line detected (if asked for detecting it)
         END_OF_FILE, ///< End of file detected (if asked for detecting it)
-        INITIAL_WS,  ///< White spaces at the beginning of a line
+        INITIAL_WS,  ///< White spaces at the beginning of a line after an
+                     ///< end of line
         NOVALUE_TYPE_MAX = INITIAL_WS, ///< Max integer corresponding to
                                        /// no-value (type only) types.
                                        /// Mainly for internal use.

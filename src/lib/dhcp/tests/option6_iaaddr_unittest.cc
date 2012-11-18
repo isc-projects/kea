@@ -13,16 +13,18 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <iostream>
-#include <sstream>
-
-#include <arpa/inet.h>
-#include <gtest/gtest.h>
 
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
 #include <dhcp/option6_iaaddr.h>
 #include <util/buffer.h>
+
+#include <gtest/gtest.h>
+
+#include <iostream>
+#include <sstream>
+
+#include <arpa/inet.h>
 
 using namespace std;
 using namespace isc;

@@ -15,16 +15,20 @@
 #ifndef LEASE_MGR_H
 #define LEASE_MGR_H
 
-#include <string>
-#include <fstream>
-#include <vector>
-#include <map>
 #include <asiolink/io_address.h>
+#include <dhcp/duid.h>
+#include <dhcp/option.h>
+#include <dhcpsrv/subnet.h>
+#include <exceptions/exceptions.h>
+
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
-#include <dhcp/option.h>
-#include <dhcp/duid.h>
-#include <dhcp/subnet.h>
+
+#include <fstream>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
 
 /// @file dhcp/lease_mgr.h
 /// @brief An abstract API for lease database
@@ -57,8 +61,38 @@
 /// Nevertheless, we hope to have failover protocol eventually implemented in
 /// the Kea.
 
+#include <iostream>
+
 namespace isc {
 namespace dhcp {
+
+/// @brief Exception thrown if name of database is not specified
+class NoDatabaseName : public Exception {
+public:
+    NoDatabaseName(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/// @brief Exception thrown on failure to open database
+class DbOpenError : public Exception {
+public:
+    DbOpenError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/// @brief Exception thrown on failure to execute a database function
+class DbOperationError : public Exception {
+public:
+    DbOperationError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/// @brief Attempt to update lease that was not there
+class NoSuchLease : public Exception {
+public:
+    NoSuchLease(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
 
 /// @brief Structure that holds a lease for IPv4 address
 ///
@@ -141,6 +175,12 @@ struct Lease4 {
     std::string comments_;
 
     /// @todo: Add DHCPv4 failover related fields here
+
+    /// @brief Constructor
+    ///
+    /// Initialize fields that don't have a default constructor.
+    /// @todo Remove this
+    Lease4() : addr_(0) {}
 };
 
 /// @brief Pointer to a Lease4 structure.
@@ -181,15 +221,6 @@ struct Lease6 {
     /// in IA containers (IA_NA, IA_TA, IA_PD). Most containers may appear more
     /// than once in a message. To differentiate between them, IAID field is present
     uint32_t iaid_;
-
-    /// @brief hardware address
-    ///
-    /// This field is not really used and is optional at best. The concept of identifying
-    /// clients by their hardware address was replaced in DHCPv6 by DUID concept. Each
-    /// client has its own unique DUID (DHCP Unique IDentifier). Furthermore, client's
-    /// HW address is not always available, because client may be behind a relay (relay
-    /// stores only link-local address).
-    std::vector<uint8_t> hwaddr_;
 
     /// @brief client identifier
     boost::shared_ptr<DUID> duid_;
@@ -258,6 +289,29 @@ struct Lease6 {
     std::string comments_;
 
     /// @todo: Add DHCPv6 failover related fields here
+
+    /// @brief Constructor
+    ///
+    /// Initialize fields that don't have a default constructor.
+    Lease6() : addr_("::") {}
+
+    /// @brief Convert Lease6 to Printable Form
+    ///
+    /// @return String form of the lease
+    std::string toText();
+
+    /// @brief Compare two leases for equality
+    ///
+    /// @param other lease6 object with which to compare
+    bool operator==(const Lease6& other) const;
+
+    /// @brief Compare two leases for inequality
+    ///
+    /// @param other lease6 object with which to compare
+    bool operator!=(const Lease6& other) const {
+        return (!operator==(other));
+    }
+
 };
 
 /// @brief Pointer to a Lease6 structure.
@@ -267,7 +321,7 @@ typedef boost::shared_ptr<Lease6> Lease6Ptr;
 typedef boost::shared_ptr<const Lease6> ConstLease6Ptr;
 
 /// @brief A collection of IPv6 leases.
-typedef std::vector< boost::shared_ptr<Lease6Ptr> > Lease6Collection;
+typedef std::vector<Lease6Ptr> Lease6Collection;
 
 /// @brief Abstract Lease Manager
 ///
@@ -276,43 +330,45 @@ typedef std::vector< boost::shared_ptr<Lease6Ptr> > Lease6Collection;
 /// be used directly, but rather specialized derived class should be used
 /// instead.
 ///
-/// This class is a meta-singleton. At any given time, there is only one
-/// instance of any classes derived from that class. That is achieved with
-/// defining only a single protected constructor, so every derived class has
-/// to use it. Furthermore, this sole constructor registers the first instance
-/// (and throws InvalidOperation if there is an attempt to create a second one).
-class LeaseMgr : public boost::noncopyable {
+/// As all methods are virtual, this class throws no exceptions.  However,
+/// methods in concrete implementations of this class may throw exceptions:
+/// see the documentation of those classes for details.
+class LeaseMgr {
 public:
     /// Client Hardware address
     typedef std::vector<uint8_t> HWAddr;
 
-    /// @brief returns a single instance of LeaseMgr
-    ///
-    /// LeaseMgr is a singleton and this method is the only way of
-    /// accessing it. LeaseMgr must be created first. See
-    /// isc::dhcp::LeaseMgrFactory class (work of ticket #2342.
-    /// Otherwise instance() will throw InvalidOperation exception.
-    /// @throw InvalidOperation if LeaseMgr not instantiated
-    static LeaseMgr& instance();
+    /// Database configuration parameter map
+    typedef std::map<std::string, std::string> ParameterMap;
 
-    /// @brief destroys the only instance of LeaseMgr
+    /// @brief Constructor
     ///
-    /// This method is used mostly in tests, where LeaseMgr is destroyed
-    /// at the end of each test, just to be created at the beginning of
-    /// the next one.
-    static void destroy_instance();
+    /// @param parameters A data structure relating keywords and values
+    ///        concerned with the database.
+    LeaseMgr(const ParameterMap& parameters) : parameters_(parameters)
+    {}
+
+    /// @brief Destructor
+    virtual ~LeaseMgr()
+    {}
 
     /// @brief Adds an IPv4 lease.
     ///
     /// @param lease lease to be added
+    ///
+    /// @result true if the lease was added, false if not (because a lease
+    ///         with the same address was already there).
     virtual bool addLease(const Lease4Ptr& lease) = 0;
 
     /// @brief Adds an IPv6 lease.
     ///
     /// @param lease lease to be added
+    ///
+    /// @result true if the lease was added, false if not (because a lease
+    ///         with the same address was already there).
     virtual bool addLease(const Lease6Ptr& lease) = 0;
 
-    /// @brief Returns existing IPv4 lease for specified IPv4 address and subnet_id
+    /// @brief Returns IPv4 lease for specified IPv4 address and subnet_id
     ///
     /// This method is used to get a lease for specific subnet_id. There can be
     /// at most one lease for any given subnet, so this method returns a single
@@ -322,7 +378,7 @@ public:
     /// @param subnet_id ID of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr,
+    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr,
                                 SubnetID subnet_id) const = 0;
 
     /// @brief Returns an IPv4 lease for specified IPv4 address
@@ -335,10 +391,9 @@ public:
     /// a single lease, not a container of leases.
     ///
     /// @param addr address of the searched lease
-    /// @param subnet_id ID of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr) const = 0;
+    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const = 0;
 
     /// @brief Returns existing IPv4 leases for specified hardware address.
     ///
@@ -431,11 +486,9 @@ public:
     /// If no such lease is present, an exception will be thrown.
     virtual void updateLease4(const Lease4Ptr& lease4) = 0;
 
-    /// @brief Updates IPv4 lease.
+    /// @brief Updates IPv6 lease.
     ///
-    /// @param lease4 The lease to be updated.
-    ///
-    /// If no such lease is present, an exception will be thrown.
+    /// @param lease6 The lease to be updated.
     virtual void updateLease6(const Lease6Ptr& lease6) = 0;
 
     /// @brief Deletes a lease.
@@ -443,26 +496,41 @@ public:
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    virtual bool deleteLease4(uint32_t addr) = 0;
+    virtual bool deleteLease4(const isc::asiolink::IOAddress& addr) = 0;
 
     /// @brief Deletes a lease.
     ///
-    /// @param addr IPv4 address of the lease to be deleted.
+    /// @param addr IPv6 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
     virtual bool deleteLease6(const isc::asiolink::IOAddress& addr) = 0;
 
+    /// @brief Return backend type
+    ///
+    /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
+    ///
+    /// @return Type of the backend.
+    virtual std::string getType() const = 0;
+
     /// @brief Returns backend name.
     ///
-    /// Each backend have specific name, e.g. "mysql" or "sqlite".
+    /// If the backend is a database, this is the name of the database or the
+    /// file.  Otherwise it is just the same as the type.
+    ///
+    /// @return Name of the backend.
     virtual std::string getName() const = 0;
 
     /// @brief Returns description of the backend.
     ///
     /// This description may be multiline text that describes the backend.
+    ///
+    /// @return Description of the backend.
     virtual std::string getDescription() const = 0;
 
     /// @brief Returns backend version.
+    ///
+    /// @return Version number as a pair of unsigned integers.  "first" is the
+    ///         major version number, "second" the minor number.
     ///
     /// @todo: We will need to implement 3 version functions eventually:
     /// A. abstract API version
@@ -473,44 +541,37 @@ public:
     /// B>=A and B=C (it is ok to have newer backend, as it should be backward
     /// compatible)
     /// Also if B>C, some database upgrade procedure may be triggered
-    virtual std::string getVersion() const = 0;
+    virtual std::pair<uint32_t, uint32_t> getVersion() const = 0;
+
+    /// @brief Commit Transactions
+    ///
+    /// Commits all pending database operations.  On databases that don't
+    /// support transactions, this is a no-op.
+    virtual void commit() = 0;
+
+    /// @brief Rollback Transactions
+    ///
+    /// Rolls back all pending database operations.  On databases that don't
+    /// support transactions, this is a no-op.
+    virtual void rollback() = 0;
 
     /// @todo: Add host management here
     /// As host reservation is outside of scope for 2012, support for hosts
     /// is currently postponed.
 
-protected:
-    /// @brief The sole lease manager constructor
-    ///
-    /// dbconfig is a generic way of passing parameters. Parameters are passed
-    /// in the "name=value" format, separated by spaces. Values may be enclosed
-    /// in double quotes, if needed. This ctor guarantees that there will be
-    /// only one instance of any derived classes. If there is a second instance
-    /// being created with the first one still around, it will throw
-    /// InvalidOperation.
-    ///
-    /// @param dbconfig database configuration
-    /// @throw InvalidOperation when trying to create second LeaseMgr
-    LeaseMgr(const std::string& dbconfig);
-
-    /// @brief Destructor
-    virtual ~LeaseMgr();
-
     /// @brief returns value of the parameter
-    std::string getParameter(const std::string& name) const;
+    virtual std::string getParameter(const std::string& name) const;
 
+private:
     /// @brief list of parameters passed in dbconfig
     ///
     /// That will be mostly used for storing database name, username,
     /// password and other parameters required for DB access. It is not
     /// intended to keep any DHCP-related parameters.
-    std::map<std::string, std::string> parameters_;
-
-    static LeaseMgr* instance_;
+    ParameterMap parameters_;
 };
 
 }; // end of isc::dhcp namespace
-
 }; // end of isc namespace
 
 #endif // LEASE_MGR_H

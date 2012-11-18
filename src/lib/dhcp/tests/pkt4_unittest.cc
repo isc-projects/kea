@@ -13,18 +13,22 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+
+#include <asiolink/io_address.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp/pkt4.h>
+#include <exceptions/exceptions.h>
+#include <util/buffer.h>
+
+#include <boost/shared_array.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/static_assert.hpp>
+#include <gtest/gtest.h>
+
 #include <iostream>
 #include <sstream>
+
 #include <arpa/inet.h>
-#include <gtest/gtest.h>
-#include <boost/static_assert.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/shared_array.hpp>
-#include <util/buffer.h>
-#include <asiolink/io_address.h>
-#include <dhcp/pkt4.h>
-#include <dhcp/dhcp4.h>
-#include <exceptions/exceptions.h>
 
 using namespace std;
 using namespace isc;
