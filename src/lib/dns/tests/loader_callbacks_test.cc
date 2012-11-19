@@ -30,7 +30,8 @@ using namespace isc::dns;
 class LoaderCallbacksTest : public ::testing::Test {
 protected:
     LoaderCallbacksTest() :
-        called_(false),
+        issue_called_(false),
+        add_called_(false),
         rrset_(new RRset(Name("example.org"), RRClass::IN(), RRType::A(),
                          RRTTL(3600))),
         error_(boost::bind(&LoaderCallbacksTest::checkCallback, this, true, _1,
@@ -44,18 +45,18 @@ protected:
     void checkCallback(bool error, const string& source, size_t line,
                        const string& reason)
     {
-        called_ = true;
+        issue_called_ = true;
         last_was_error_ = error;
         EXPECT_EQ("source", source);
         EXPECT_EQ(1, line);
         EXPECT_EQ("reason", reason);
     }
     void checkAdd(const RRsetPtr& rrset) {
-        called_ = true;
+        add_called_ = true;
         EXPECT_EQ(rrset_, rrset);
     }
     bool last_was_error_;
-    bool called_;
+    bool issue_called_, add_called_;
     const RRsetPtr rrset_;
     const LoaderCallbacks::IssueCallback error_, warning_;
     const LoaderCallbacks::AddCallback add_;
@@ -78,20 +79,20 @@ TEST_F(LoaderCallbacksTest, constructor) {
 TEST_F(LoaderCallbacksTest, issueCall) {
     callbacks_.error("source", 1, "reason");
     EXPECT_TRUE(last_was_error_);
-    EXPECT_TRUE(called_);
+    EXPECT_TRUE(issue_called_);
 
-    called_ = false;
+    issue_called_ = false;
 
     callbacks_.warning("source", 1, "reason");
     EXPECT_FALSE(last_was_error_);
-    EXPECT_TRUE(called_);
+    EXPECT_TRUE(issue_called_);
 }
 
 // Call the add callback
 TEST_F(LoaderCallbacksTest, addCall) {
-    EXPECT_FALSE(called_);
+    EXPECT_FALSE(issue_called_);
     callbacks_.addRRset(rrset_);
-    EXPECT_TRUE(called_);
+    EXPECT_TRUE(add_called_);
 }
 
 
