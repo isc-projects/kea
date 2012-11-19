@@ -302,7 +302,7 @@ void Netlink::ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info) {
 
             memcpy(addr, RTA_DATA(rta_tb[IFLA_ADDRESS]),
                    ifa->ifa_family==AF_INET?V4ADDRESS_LEN:V6ADDRESS_LEN);
-            IOAddress a = IOAddress::from_bytes(ifa->ifa_family, addr);
+            IOAddress a = IOAddress::fromBytes(ifa->ifa_family, addr);
             iface.addAddress(a);
 
             /// TODO: Read lifetimes of configured IPv6 addresses
