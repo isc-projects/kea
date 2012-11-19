@@ -111,33 +111,14 @@ class Option6IntArray;
 class OptionDefinition {
 public:
 
-    /// Data types of DHCP option fields.
-    enum DataType {
-        EMPTY_TYPE,
-        BINARY_TYPE,
-        BOOLEAN_TYPE,
-        INT8_TYPE,
-        INT16_TYPE,
-        INT32_TYPE,
-        UINT8_TYPE,
-        UINT16_TYPE,
-        UINT32_TYPE,
-        IPV4_ADDRESS_TYPE,
-        IPV6_ADDRESS_TYPE,
-        STRING_TYPE,
-        FQDN_TYPE,
-        RECORD_TYPE,
-        UNKNOWN_TYPE
-    };
-
     /// List of fields within the record.
-    typedef std::vector<DataType> RecordFieldsCollection;
+    typedef std::vector<OptionDataType> RecordFieldsCollection;
     /// Const iterator for record data fields.
-    typedef std::vector<DataType>::const_iterator RecordFieldsConstIter;
+    typedef std::vector<OptionDataType>::const_iterator RecordFieldsConstIter;
 
 private:
 
-    /// @brief Utility class for operations on DataTypes.
+    /// @brief Utility class for operations on OptionDataTypes.
     ///
     /// This class is implemented as the singleton because the list of
     /// supported data types need only be loaded only once into memory as it
@@ -156,12 +137,15 @@ private:
             return (instance);
         }
 
+        template<typename T>
+        T dataTypeCast(const std::string& value_str) const;
+
         /// @brief Convert type given as string value to option data type.
         ///
         /// @param data_type_name data type string.
         ///
         /// @return option data type.
-        DataType getDataType(const std::string& data_type_name);
+        OptionDataType getOptionDataType(const std::string& data_type_name);
 
     private:
         /// @brief Private constructor.
@@ -174,7 +158,7 @@ private:
         DataTypeUtil();
 
         /// Map of data types, maps name of the type to enum value.
-        std::map<std::string, DataType> data_types_;
+        std::map<std::string, OptionDataType> data_types_;
     };
 
 public:
@@ -199,7 +183,7 @@ public:
     /// option fields are the array.
     OptionDefinition(const std::string& name,
                      const uint16_t code,
-                     const DataType type,
+                     const OptionDataType type,
                      const bool array_type = false);
 
     /// @brief Adds data field to the record.
@@ -216,7 +200,7 @@ public:
     ///
     /// @throw isc::InvalidOperation if option type is not set to RECORD_TYPE.
     /// @throw isc::BadValue if specified invalid data type.
-    void addRecordField(const DataType data_type);
+    void addRecordField(const OptionDataType data_type);
 
     /// @brief Return array type indicator.
     ///
@@ -244,7 +228,7 @@ public:
     /// @brief Return option data type.
     ///
     /// @return option data type.
-    DataType getType() const { return (type_); };
+    OptionDataType getType() const { return (type_); };
 
     /// @brief Check if the option definition is valid.
     ///
@@ -427,12 +411,12 @@ private:
     /// @param first_type type of the first data field.
     ///
     /// @return true if actual option format matches expected format.
-    bool haveIAx6Format(const OptionDefinition::DataType first_type) const;
+    bool haveIAx6Format(const OptionDataType first_type) const;
 
     /// @brief Check if specified type matches option definition type.
     ///
     /// @return true if specified type matches option definition type.
-    inline bool haveType(const DataType type) const {
+    inline bool haveType(const OptionDataType type) const {
         return (type == type_);
     }
 
@@ -450,7 +434,7 @@ private:
     /// Option code.
     uint16_t code_;
     /// Option data type.
-    DataType type_;
+    OptionDataType type_;
     /// Indicates wheter option is a single value or array.
     bool array_type_;
     /// Collection of data fields within the record.

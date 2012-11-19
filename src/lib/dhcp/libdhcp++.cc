@@ -257,20 +257,20 @@ LibDHCP::initStdOptionDefs6() {
     struct OptionParams {
         std::string name;
         uint16_t code;
-        OptionDefinition::DataType type;
+        OptionDataType type;
         bool array;
     };
     OptionParams params[] = {
-        { "CLIENTID", D6O_CLIENTID, OptionDefinition::BINARY_TYPE, false },
-        { "SERVERID", D6O_SERVERID, OptionDefinition::BINARY_TYPE, false },
-        { "IA_NA", D6O_IA_NA, OptionDefinition::RECORD_TYPE, false },
-        { "IAADDR", D6O_IAADDR, OptionDefinition::RECORD_TYPE, false },
-        { "ORO", D6O_ORO, OptionDefinition::UINT16_TYPE, true },
-        { "ELAPSED_TIME", D6O_ELAPSED_TIME, OptionDefinition::UINT16_TYPE, false },
-        { "STATUS_CODE", D6O_STATUS_CODE, OptionDefinition::RECORD_TYPE, false },
-        { "RAPID_COMMIT", D6O_RAPID_COMMIT, OptionDefinition::EMPTY_TYPE, false },
-        { "DNS_SERVERS", D6O_NAME_SERVERS, OptionDefinition::IPV6_ADDRESS_TYPE, true },
-        { "IA_PD", D6O_IA_PD, OptionDefinition::RECORD_TYPE, false }
+        { "CLIENTID", D6O_CLIENTID, OPT_BINARY_TYPE, false },
+        { "SERVERID", D6O_SERVERID, OPT_BINARY_TYPE, false },
+        { "IA_NA", D6O_IA_NA, OPT_RECORD_TYPE, false },
+        { "IAADDR", D6O_IAADDR, OPT_RECORD_TYPE, false },
+        { "ORO", D6O_ORO, OPT_UINT16_TYPE, true },
+        { "ELAPSED_TIME", D6O_ELAPSED_TIME, OPT_UINT16_TYPE, false },
+        { "STATUS_CODE", D6O_STATUS_CODE, OPT_RECORD_TYPE, false },
+        { "RAPID_COMMIT", D6O_RAPID_COMMIT, OPT_EMPTY_TYPE, false },
+        { "DNS_SERVERS", D6O_NAME_SERVERS, OPT_IPV6_ADDRESS_TYPE, true },
+        { "IA_PD", D6O_IA_PD, OPT_RECORD_TYPE, false }
     };
     const int params_size = sizeof(params) / sizeof(params[0]);
 
@@ -283,17 +283,17 @@ LibDHCP::initStdOptionDefs6() {
         case D6O_IA_NA:
         case D6O_IA_PD:
             for (int j = 0; j < 3; ++j) {
-                definition->addRecordField(OptionDefinition::UINT32_TYPE);
+                definition->addRecordField(OPT_UINT32_TYPE);
             }
             break;
         case D6O_IAADDR:
-            definition->addRecordField(OptionDefinition::IPV6_ADDRESS_TYPE);
-            definition->addRecordField(OptionDefinition::UINT32_TYPE);
-            definition->addRecordField(OptionDefinition::UINT32_TYPE);
+            definition->addRecordField(OPT_IPV6_ADDRESS_TYPE);
+            definition->addRecordField(OPT_UINT32_TYPE);
+            definition->addRecordField(OPT_UINT32_TYPE);
             break;
         case D6O_STATUS_CODE:
-            definition->addRecordField(OptionDefinition::UINT16_TYPE);
-            definition->addRecordField(OptionDefinition::STRING_TYPE);
+            definition->addRecordField(OPT_UINT16_TYPE);
+            definition->addRecordField(OPT_STRING_TYPE);
             break;
         default:
             // The default case is intentionally left empty

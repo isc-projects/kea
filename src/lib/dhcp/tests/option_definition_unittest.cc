@@ -52,27 +52,28 @@ TEST_F(OptionDefinitionTest, constructor) {
     // to enum value returned by getType().
     OptionDefinition opt_def1("OPTION_CLIENTID", 1, "string");
     EXPECT_EQ("OPTION_CLIENTID", opt_def1.getName());
+
     EXPECT_EQ(1, opt_def1.getCode());
-    EXPECT_EQ(OptionDefinition::STRING_TYPE,  opt_def1.getType());
+    EXPECT_EQ(OPT_STRING_TYPE,  opt_def1.getType());
     EXPECT_FALSE(opt_def1.getArrayType());
     EXPECT_NO_THROW(opt_def1.validate());
 
     // Specify the option data type as an enum value.
     OptionDefinition opt_def2("OPTION_RAPID_COMMIT", 14,
-                              OptionDefinition::EMPTY_TYPE);
+                              OPT_EMPTY_TYPE);
     EXPECT_EQ("OPTION_RAPID_COMMIT", opt_def2.getName());
     EXPECT_EQ(14, opt_def2.getCode());
-    EXPECT_EQ(OptionDefinition::EMPTY_TYPE, opt_def2.getType());
+    EXPECT_EQ(OPT_EMPTY_TYPE, opt_def2.getType());
     EXPECT_FALSE(opt_def2.getArrayType());
     EXPECT_NO_THROW(opt_def1.validate());
 
     // Check if it is possible to set that option is an array.
     OptionDefinition opt_def3("OPTION_NIS_SERVERS", 27,
-                              OptionDefinition::IPV6_ADDRESS_TYPE,
+                              OPT_IPV6_ADDRESS_TYPE,
                               true);
     EXPECT_EQ("OPTION_NIS_SERVERS", opt_def3.getName());
     EXPECT_EQ(27, opt_def3.getCode());
-    EXPECT_EQ(OptionDefinition::IPV6_ADDRESS_TYPE, opt_def3.getType());
+    EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, opt_def3.getType());
     EXPECT_TRUE(opt_def3.getArrayType());
     EXPECT_NO_THROW(opt_def3.validate());
 
@@ -81,8 +82,8 @@ TEST_F(OptionDefinitionTest, constructor) {
     // it has been created.
     EXPECT_NO_THROW(
         OptionDefinition opt_def4("OPTION_SERVERID",
-                                  OptionDefinition::UNKNOWN_TYPE + 10,
-                                  OptionDefinition::STRING_TYPE);
+                                  OPT_UNKNOWN_TYPE + 10,
+                                  OPT_STRING_TYPE);
     );
 }
 
@@ -90,14 +91,14 @@ TEST_F(OptionDefinitionTest, addRecordField) {
     // We can only add fields to record if the option type has been
     // specified as 'record'. We try all other types but 'record'
     // here and expect exception to be thrown.
-    for (int i = 0; i < OptionDefinition::UNKNOWN_TYPE; ++i) {
+    for (int i = 0; i < OPT_UNKNOWN_TYPE; ++i) {
         // Do not try for 'record' type because this is the only
         // type for which adding record will succeed.
-        if (i == OptionDefinition::RECORD_TYPE) {
+        if (i == OPT_RECORD_TYPE) {
             continue;
         }
         OptionDefinition opt_def("OPTION_IAADDR", 5,
-                                 static_cast<OptionDefinition::DataType>(i));
+                                 static_cast<OptionDataType>(i));
         EXPECT_THROW(opt_def.addRecordField("uint8"), isc::InvalidOperation);
     }
 
@@ -106,19 +107,19 @@ TEST_F(OptionDefinitionTest, addRecordField) {
     EXPECT_NO_THROW(opt_def.addRecordField("ipv6-address"));
     EXPECT_NO_THROW(opt_def.addRecordField("uint32"));
     // It should not matter if we specify field type by its name or using enum.
-    EXPECT_NO_THROW(opt_def.addRecordField(OptionDefinition::UINT32_TYPE));
+    EXPECT_NO_THROW(opt_def.addRecordField(OPT_UINT32_TYPE));
 
     // Check what we have actually added.
     OptionDefinition::RecordFieldsCollection fields = opt_def.getRecordFields();
     ASSERT_EQ(3, fields.size());
-    EXPECT_EQ(OptionDefinition::IPV6_ADDRESS_TYPE, fields[0]);
-    EXPECT_EQ(OptionDefinition::UINT32_TYPE, fields[1]);
-    EXPECT_EQ(OptionDefinition::UINT32_TYPE, fields[2]);
+    EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, fields[0]);
+    EXPECT_EQ(OPT_UINT32_TYPE, fields[1]);
+    EXPECT_EQ(OPT_UINT32_TYPE, fields[2]);
 
     // Let's try some more negative scenarios: use invalid data types.
     EXPECT_THROW(opt_def.addRecordField("unknown_type_xyz"), isc::BadValue);
-    OptionDefinition::DataType invalid_type =
-        static_cast<OptionDefinition::DataType>(OptionDefinition::UNKNOWN_TYPE + 10);
+    OptionDataType invalid_type =
+        static_cast<OptionDataType>(OPT_UNKNOWN_TYPE + 10);
     EXPECT_THROW(opt_def.addRecordField(invalid_type), isc::BadValue);
 }
 
@@ -128,11 +129,11 @@ TEST_F(OptionDefinitionTest, validate) {
     EXPECT_THROW(opt_def1.validate(), isc::OutOfRange);
 
     // Not supported option type enum value is not allowed.
-    OptionDefinition opt_def2("OPTION_CLIENTID", D6O_CLIENTID, OptionDefinition::UNKNOWN_TYPE);
+    OptionDefinition opt_def2("OPTION_CLIENTID", D6O_CLIENTID, OPT_UNKNOWN_TYPE);
     EXPECT_THROW(opt_def2.validate(), isc::OutOfRange);
 
     OptionDefinition opt_def3("OPTION_CLIENTID", D6O_CLIENTID,
-                              static_cast<OptionDefinition::DataType>(OptionDefinition::UNKNOWN_TYPE
+                              static_cast<OptionDataType>(OPT_UNKNOWN_TYPE
                                                                       + 2));
     EXPECT_THROW(opt_def3.validate(), isc::OutOfRange);
 

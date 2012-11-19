@@ -15,6 +15,7 @@
 #ifndef OPTION_DATA_TYPES_H
 #define OPTION_DATA_TYPES_H
 
+#include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>
 
 #include <stdint.h>
@@ -29,59 +30,129 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-/// @brief Trait class for integer data types supported in DHCP option definitions.
+
+/// @brief Data types of DHCP option fields.
+enum OptionDataType {
+    OPT_EMPTY_TYPE,
+    OPT_BINARY_TYPE,
+    OPT_BOOLEAN_TYPE,
+    OPT_INT8_TYPE,
+    OPT_INT16_TYPE,
+    OPT_INT32_TYPE,
+    OPT_UINT8_TYPE,
+    OPT_UINT16_TYPE,
+    OPT_UINT32_TYPE,
+    OPT_ANY_ADDRESS_TYPE,
+    OPT_IPV4_ADDRESS_TYPE,
+    OPT_IPV6_ADDRESS_TYPE,
+    OPT_STRING_TYPE,
+    OPT_FQDN_TYPE,
+    OPT_RECORD_TYPE,
+    OPT_UNKNOWN_TYPE
+};
+
+/// @brief Trait class for data types supported in DHCP option definitions.
 ///
 /// This is useful to check whether the type specified as template parameter
 /// is supported by classes like Option6Int, Option6IntArray and some template
 /// factory functions in OptionDefinition class.
 template<typename T>
-struct OptionDataTypes {
+struct OptionDataTypeTraits {
     static const bool valid = false;
     static const int len = 0;
+    static const bool integer_type = false;
+    static const OptionDataType type = OPT_UNKNOWN_TYPE;
+};
+
+/// binary type is supported
+template<>
+struct OptionDataTypeTraits<OptionBuffer> {
+    static const bool valid = true;
+    static const int len = sizeof(OptionBuffer);
+    static const bool integer_type = false;
+    static const OptionDataType type = OPT_BINARY_TYPE;
+};
+
+/// bool type is supported
+template<>
+struct OptionDataTypeTraits<bool> {
+    static const bool valid = true;
+    static const int len = sizeof(bool);
+    static const bool integer_type = false;
+    static const OptionDataType type = OPT_BOOLEAN_TYPE;
 };
 
 /// int8_t type is supported.
 template<>
-struct OptionDataTypes<int8_t> {
+struct OptionDataTypeTraits<int8_t> {
     static const bool valid = true;
     static const int len = 1;
+    static const bool integer_type = true;
+    static const OptionDataType type = OPT_INT8_TYPE;
 };
 
 /// int16_t type is supported.
 template<>
-struct OptionDataTypes<int16_t> {
+struct OptionDataTypeTraits<int16_t> {
     static const bool valid = true;
     static const int len = 2;
+    static const bool integer_type = true;
+    static const OptionDataType type = OPT_INT16_TYPE;
 };
 
 /// int32_t type is supported.
 template<>
-struct OptionDataTypes<int32_t> {
+struct OptionDataTypeTraits<int32_t> {
     static const bool valid = true;
     static const int len = 4;
+    static const bool integer_type = true;
+    static const OptionDataType type = OPT_INT32_TYPE;
 };
 
 /// uint8_t type is supported.
 template<>
-struct OptionDataTypes<uint8_t> {
+struct OptionDataTypeTraits<uint8_t> {
     static const bool valid = true;
     static const int len = 1;
+    static const bool integer_type = true;
+    static const OptionDataType type = OPT_UINT8_TYPE;
 };
 
 /// uint16_t type is supported.
 template<>
-struct OptionDataTypes<uint16_t> {
+struct OptionDataTypeTraits<uint16_t> {
     static const bool valid = true;
     static const int len = 2;
+    static const bool integer_type = true;
+    static const OptionDataType type = OPT_UINT16_TYPE;
 };
 
 /// uint32_t type is supported.
 template<>
-struct OptionDataTypes<uint32_t> {
+struct OptionDataTypeTraits<uint32_t> {
     static const bool valid = true;
     static const int len = 4;
+    static const bool integer_type = true;
+    static const OptionDataType type = OPT_UINT32_TYPE;
 };
 
+/// IPv4 and IPv6 address type is supported
+template<>
+struct OptionDataTypeTraits<asiolink::IOAddress> {
+    static const bool valid = true;
+    static const int len = sizeof(asiolink::IOAddress);
+    static const bool integer_type = false;
+    static const OptionDataType type = OPT_ANY_ADDRESS_TYPE;
+};
+
+/// string type is supported
+template<>
+struct OptionDataTypeTraits<std::string> {
+    static const bool valid = true;
+    static const int len = sizeof(std::string);
+    static const bool integer_type = false;
+    static const OptionDataType type = OPT_STRING_TYPE;
+};
 
 } // isc::dhcp namespace
 } // isc namespace
