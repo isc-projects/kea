@@ -20,6 +20,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <bitset>
 #include <cassert>
 #include <string>
 #include <vector>
@@ -35,14 +36,23 @@ using namespace master_lexer_internal;
 struct MasterLexer::MasterLexerImpl {
     MasterLexerImpl() : source_(NULL), token_(Token::NOT_STARTED),
                         paren_count_(0), last_was_eol_(false)
-    {}
+    {
+        separators_.set('\r');
+        separators_.set('\n');
+        separators_.set(' ');
+        separators_.set('\t');
+        separators_.set('(');
+        separators_.set(')');
+        esc_separators_.set('\r');
+        esc_separators_.set('\n');
+    }
 
     // A helper method to skip possible comments toward the end of EOL or EOF.
     // commonly used by state classes.  It returns the corresponding "end-of"
     // character in case it's a comment; otherwise it simply returns the
     // current character.
-    int skipComment(int c) {
-        if (c == ';') {
+    int skipComment(int c, bool escaped = false) {
+        if (c == ';' && !escaped) {
             while (true) {
                 c = source_->getChar();
                 if (c == '\n' || c == InputSource::END_OF_STREAM) {
@@ -53,14 +63,34 @@ struct MasterLexer::MasterLexerImpl {
         return (c);
     }
 
+    bool isTokenEnd(int c, bool escaped) {
+        // Special case of EOF (end of stream); this is not in the bitmaps
+        if (c == InputSource::END_OF_STREAM) {
+            return (true);
+        }
+        // In this implementation we only ensure the behavior for unsigned
+        // range of characters, so we restrict the range of the values up to
+        // 0x7f = 127
+        return (escaped ? esc_separators_.test(c & 0x7f) :
+                separators_.test(c & 0x7f));
+    }
+
     std::vector<InputSourcePtr> sources_;
     InputSource* source_;       // current source (NULL if sources_ is empty)
     Token token_;               // currently recognized token (set by a state)
+    std::vector<char> data_;    // placeholder for string data
 
     // These are used in states, and defined here only as a placeholder.
     // The main lexer class does not need these members.
     size_t paren_count_;        // nest count of the parentheses
     bool last_was_eol_; // whether the lexer just passed an end-of-line
+
+    // Bitmaps that gives whether a given (positive) character should be
+    // considered a separator of a string/number token.  The esc_ version
+    // is a subset of the other, excluding characters that can be ignored
+    // if escaped by a backslash.  See isTokenEnd() for the bitmap size.
+    std::bitset<128> separators_;
+    std::bitset<128> esc_separators_;
 };
 
 MasterLexer::MasterLexer() : impl_(new MasterLexerImpl) {
@@ -192,14 +222,18 @@ public:
     }
 };
 
-// Currently this is provided mostly as a place holder
 class String : public State {
 public:
     String() {}
     virtual ~String() {}      // see the base class for the destructor
-    virtual const State* handle(MasterLexer& /*lexer*/) const {
-        return (NULL);
-    }
+    virtual const State* handle(MasterLexer& lexer) const;
+};
+
+class QString : public State {
+public:
+    QString() {}
+    virtual ~QString() {}      // see the base class for the destructor
+    virtual const State* handle(MasterLexer& lexer) const;
 };
 
 // We use a common instance of a each state in a singleton-like way to save
@@ -209,6 +243,7 @@ public:
 // this file.
 const CRLF CRLF_STATE;
 const String STRING_STATE;
+const QString QSTRING_STATE;
 }
 
 const State&
@@ -218,6 +253,8 @@ State::getInstance(ID state_id) {
         return (CRLF_STATE);
     case String:
         return (STRING_STATE);
+    case QString:
+        return (QSTRING_STATE);
     }
 
     // This is a bug of the caller, and this method is only expected to be
@@ -233,6 +270,9 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
     MasterLexer::MasterLexerImpl& lexerimpl = *lexer.impl_;
     size_t& paren_count = lexerimpl.paren_count_;
 
+    // Note: the if-else in the loop is getting complicated.  When we complete
+    // #2374, revisit the organization to see if we need a fundamental
+    // refactoring.
     while (true) {
         const int c = lexerimpl.skipComment(lexerimpl.source_->getChar());
         if (c == InputSource::END_OF_STREAM) {
@@ -262,6 +302,9 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
             if (paren_count == 0) { // check if we are in () (see above)
                 return (&CRLF_STATE);
             }
+        } else if (c == '"' && (options & MasterLexer::QSTRING) != 0) {
+            lexerimpl.last_was_eol_ = false;
+            return (&QSTRING_STATE);
         } else if (c == '(') {
             lexerimpl.last_was_eol_ = false;
             ++paren_count;
@@ -273,11 +316,66 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
             }
             --paren_count;
         } else {
-            // Note: in #2373 we should probably ungetChar().
+            // this character will be handled in the string state
+            lexerimpl.source_->ungetChar();
             lexerimpl.last_was_eol_ = false;
             return (&STRING_STATE);
         }
         // no code should be here; we just continue the loop.
+    }
+}
+
+const State*
+String::handle(MasterLexer& lexer) const {
+    std::vector<char>& data = getLexerImpl(lexer)->data_;
+    data.clear();
+
+    bool escaped = false;
+    while (true) {
+        const int c = getLexerImpl(lexer)->skipComment(
+            getLexerImpl(lexer)->source_->getChar(), escaped);
+
+        if (getLexerImpl(lexer)->isTokenEnd(c, escaped)) {
+            getLexerImpl(lexer)->source_->ungetChar();
+            getLexerImpl(lexer)->token_ =
+                MasterLexer::Token(&data.at(0), data.size());
+            return (NULL);
+        }
+        escaped = (c == '\\' && !escaped);
+        data.push_back(c);
+    }
+}
+
+const State*
+QString::handle(MasterLexer& lexer) const {
+    MasterLexer::Token& token = getLexerImpl(lexer)->token_;
+    std::vector<char>& data = getLexerImpl(lexer)->data_;
+    data.clear();
+
+    bool escaped = false;
+    while (true) {
+        const int c = getLexerImpl(lexer)->source_->getChar();
+        if (c == InputSource::END_OF_STREAM) {
+            token = Token(Token::UNEXPECTED_END);
+            return (NULL);
+        } else if (c == '"') {
+            if (escaped) {
+                // found escaped '"'. overwrite the preceding backslash.
+                assert(!data.empty());
+                escaped = false;
+                data.back() = '"';
+            } else {
+                token = MasterLexer::Token(&data.at(0), data.size(), true);
+                return (NULL);
+            }
+        } else if (c == '\n' && !escaped) {
+            getLexerImpl(lexer)->source_->ungetChar();
+            token = Token(Token::UNBALANCED_QUOTES);
+            return (NULL);
+        } else {
+            escaped = (c == '\\' && !escaped);
+            data.push_back(c);
+        }
     }
 }
 
