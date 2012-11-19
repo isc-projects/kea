@@ -1886,7 +1886,7 @@ class TestBossComponents(unittest.TestCase):
             def socket_consumer_dead(self, sock):
                 self.dead.append(sock.fd)
 
-        # All is well case
+        # Case where we get data every time we call recv()
         bob = MockBobSocketData(False)
         bob._socket_data(42)
         self.assertEqual(bob.requests,
@@ -1895,8 +1895,9 @@ class TestBossComponents(unittest.TestCase):
         self.assertEqual(bob.dead, [42])
         self.assertFalse(bob._unix_sockets)
 
-        # Case where socket raises EAGAIN. In this case, the routine is
-        # supposed to save what it has back to BoB._unix_sockets.
+        # Case where socket.recv() raises EAGAIN. In this case, the
+        # routine is supposed to save what it has back to
+        # BoB._unix_sockets.
         bob = MockBobSocketData(True)
         bob._socket_data(42)
         self.assertEqual(bob.requests, [{42: b'Hello World.'}])
@@ -1923,7 +1924,9 @@ class TestBossComponents(unittest.TestCase):
             def kill_started_components(self):
                 self.killed = True
 
-        # All is well case
+        # All is well case, where all components are started
+        # successfully. We check that the actual call to
+        # start_all_components() is made, and BoB.runnable is true.
         bob = MockBobStartup(False)
         r = bob.startup()
         self.assertIsNone(r)
@@ -1931,7 +1934,9 @@ class TestBossComponents(unittest.TestCase):
         self.assertFalse(bob.killed)
         self.assertTrue(bob.runnable)
 
-        # Case where starting all components fails
+        # Case where starting components fails. We check that
+        # kill_started_components() is called right after, and
+        # BoB.runnable is not modified.
         bob = MockBobStartup(True)
         r = bob.startup()
         # r contains an error message
