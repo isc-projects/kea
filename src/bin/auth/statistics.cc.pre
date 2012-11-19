@@ -118,9 +118,7 @@ const size_t num_rcode_to_msgcounter =
     sizeof(rcode_to_msgcounter) / sizeof(rcode_to_msgcounter[0]);
 
 Counters::Counters() :
-    // size of server_msg_counter_, zone_msg_counters_: MSG_COUNTER_TYPES
-    server_msg_counter_(MSG_COUNTER_TYPES),
-    zone_msg_counters_(MSG_COUNTER_TYPES)
+    server_msg_counter_(MSG_COUNTER_TYPES)
 {}
 
 void
