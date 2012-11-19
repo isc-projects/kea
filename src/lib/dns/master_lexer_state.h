@@ -116,8 +116,9 @@ public:
     /// The returned State will eat eat_chars from the input source,
     /// it'll set the given token if not NULL, call the given callback
     /// and return the next state when its handle() is called. Also, the
-    /// parentheses count is changed accordingly a the last EOL condition
-    /// set if provided.
+    /// parentheses count is changed accordingly to paren_change (positive
+    /// to increase, negative to decrease) and the last_was_eof condition
+    /// is set if set_eol is non-NULL.
     ///
     /// This is provided only for testing purposes. MasterLexer shouldn't
     /// need this method.
