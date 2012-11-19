@@ -48,13 +48,11 @@ const OptionDefContainer&
 LibDHCP::getOptionDefs(Option::Universe u) {
     switch (u) {
     case Option::V4:
-        isc_throw(isc::InvalidOperation, "DHCPv4 option definitions not initialized."
-                  << " Call initStdOptionDefs first");
+        initStdOptionDefs4();
         return (v4option_defs_);
     case Option::V6:
         if (v6option_defs_.size() == 0) {
-            isc_throw(isc::InvalidOperation, "DHCPv6 option definitions not initialized."
-                      << " Call initStdOptionDefs first");
+            initStdOptionDefs6();
         }
         return (v6option_defs_);
     default:
@@ -248,20 +246,6 @@ void LibDHCP::OptionFactoryRegister(Option::Universe u,
 }
 
 void
-LibDHCP::initStdOptionDefs(Option::Universe u) {
-    switch (u) {
-    case Option::V4:
-        initStdOptionDefs4();
-        break;
-    case Option::V6:
-        initStdOptionDefs6();
-        break;
-    default:
-        isc_throw(isc::BadValue, "invalid universe " << u << " specified");
-    }
-}
-
-void
 LibDHCP::initStdOptionDefs4() {
     isc_throw(isc::NotImplemented, "initStdOptionDefs4 is not implemented");
 }
@@ -319,9 +303,11 @@ LibDHCP::initStdOptionDefs6() {
         try {
             definition->validate();
         } catch (const Exception& ex) {
-            isc_throw(isc::Unexpected, "internal server error: invalid definition of standard"
-                      << " DHCPv6 option (with code " << params[i].code << "): "
-                      << ex.what());
+            // Return empty set in an unlikely event of a validation error.
+            // We don't return exception here on error because it should
+            // not happen to the regular user. It is a programming error.
+            v6option_defs_.clear();
+            return;
         }
         v6option_defs_.push_back(definition);
     }
