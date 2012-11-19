@@ -311,6 +311,8 @@ class MyModuleCCSession(isc.config.ConfigData):
         self.stopped = False
         self.closed = False
         self.lname = 'mock_mod_ccs'
+        self._msg = None
+        self._env = None
 
     def start(self):
         pass
@@ -320,6 +322,10 @@ class MyModuleCCSession(isc.config.ConfigData):
 
     def close(self):
         self.closed = True
+
+    def check_command_without_recvmsg(self, msg, env):
+        self._msg = msg
+        self._env = env
 
 class MyStats(stats.Stats):
     """A faked Stats class for unit tests.
@@ -411,7 +417,7 @@ class MyStats(stats.Stats):
         self._seq += 1
         return self._seq
 
-    def __group_recvmsg(self, nonblocking, seq):
+    def __group_recvmsg(self, nonblocking = True, seq = None):
         """Faked ModuleCCSession.group_recvmsg for tests.
 
         Skipping actual network communication, and returning an internally
