@@ -33,7 +33,7 @@ logError(const isc::dns::Name& name, const isc::dns::RRClass& rrclass,
          bool* ok, const std::string& source, size_t line,
          const std::string& reason)
 {
-    LOG_ERROR(logger, DATASRC_LOAD_CONTEXT_ERROR).arg(source).arg(line).
+    LOG_ERROR(logger, DATASRC_MASTER_LOAD_ERROR).arg(source).arg(line).
         arg(name).arg(rrclass).arg(reason);
     if (ok != NULL) {
         *ok = false;
@@ -44,7 +44,7 @@ void
 logWarning(const isc::dns::Name& name, const isc::dns::RRClass& rrclass,
          const std::string& source, size_t line, const std::string& reason)
 {
-    LOG_WARN(logger, DATASRC_LOAD_CONTEXT_WARN).arg(source).arg(line).
+    LOG_WARN(logger, DATASRC_MASTER_LOAD_WARN).arg(source).arg(line).
         arg(name).arg(rrclass).arg(reason);
 }
 
