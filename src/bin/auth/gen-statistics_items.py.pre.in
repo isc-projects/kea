@@ -14,6 +14,11 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+"""\
+This script generates spec file, docbook XML and some part of statistics code
+from statistics_msg_items.def.
+"""
+
 import os
 import re
 import sys
@@ -32,7 +37,8 @@ def need_generate(filepath, mtime):
     '''Check if we need to generate the specified file.
 
     To avoid unnecessary compilation, we skip (re)generating the file when
-    the file already exists and newer than the base file.
+    the file already exists and newer than the base file, and definition file
+    specified with mtime.
     '''
     if os.path.exists(filepath) and\
         (os.path.getmtime(filepath) > mtime and
@@ -41,6 +47,28 @@ def need_generate(filepath, mtime):
     return True
 
 def import_definitions():
+    '''Load statsitics items definitions from statistics_msg_items.def.
+
+    statistics_msg_items.def defines a tree of message statistics items.
+    Syntax:
+        Each line describes a node; branch node for subset of counters,
+        leaf node for a counter item.
+        Each fields are separated with one or more field separator (Tab).
+        Field separator in the head of a line is ignored.
+
+        branch node:
+        (item name)\t+(internal branch name)\t+(description of the item)\t+'='
+        leaf node:
+        (item name)\t+(internal item counter name)\t+(description of the item)
+
+        Branch nodes contains leaf nodes and/or branch nodes. The end of
+        a branch node is indicated with ';' as item name (first column).
+
+        Internal branch name and internal item counter name must be unique.
+
+    Returns mtime of statistics_msg_items.def. It will be used to check
+    auto-generated files need to be regenerated.
+    '''
     global item_list
 
     items_definition_file = srcdir + os.sep + 'statistics_msg_items.def'
@@ -70,6 +98,16 @@ def import_definitions():
     return os.path.getmtime(items_definition_file)
 
 def generate_specfile(specfile, def_mtime):
+    '''Generate spec in specfile from skeleton (specfille+'.pre').
+    If the specfile is newer than both sleketon and def_mtime, file generation
+    will be skipped.
+
+    This method reads the content of skeleton and repaces
+    <!-- ### STATISTICS DATA PLACEHOLDER ### --> with statistics items
+    definition. LOCALSTATEDIR is also expanded.
+
+    Returns nothing.
+    '''
     global item_list
 
     def convert_list(items, prefix = ''):
@@ -124,8 +162,9 @@ def generate_specfile(specfile, def_mtime):
 
     if need_generate(builddir+os.sep+specfile, def_mtime):
         stats_pre = open(builddir+os.sep+specfile+pre_suffix, 'r')
-        stats_pre_json = json.loads(stats_pre.read().replace('@@LOCAL'+'STATEDIR@@',
-                                                             localstatedir))
+        stats_pre_json = \
+            json.loads(stats_pre.read().replace('@@LOCAL'+'STATEDIR@@',
+                                                localstatedir))
         stats_pre.close()
         stats_pre_json['module_spec']['statistics'] = statistics_spec_list
         statistics_spec_json = json.dumps(stats_pre_json, sort_keys = True,
@@ -138,6 +177,16 @@ def generate_specfile(specfile, def_mtime):
     return
 
 def generate_docfile(docfile, def_mtime):
+    '''Generate docbook XML in docfile from skeleton (docfile+'.pre').
+    If the docfile is newer than both sleketon and def_mtime, file generation
+    will be skipped.
+
+    This method reads the content of skeleton and repaces
+    <!-- ### STATISTICS DATA PLACEHOLDER ### --> with statistics items
+    definition. LOCALSTATEDIR is also expanded.
+
+    Returns nothing.
+    '''
     global item_list
 
     def convert_list(items, tree, prefix = ''):
@@ -185,6 +234,19 @@ def generate_docfile(docfile, def_mtime):
     return
 
 def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
+    '''Generate some part of statistics code in itemsfile, ccfile, utfile from
+    skeleton (itemsfile+'.pre', ccfile+'.pre', utfile+'.pre').
+    If the file is newer than both sleketon and def_mtime, file generation
+    will be skipped.
+
+    This method reads the content of skeleton and repaces
+    // ### STATISTICS ITEMS DEFINITION ### with statistics items definition in
+    ccfile and utfile,
+    // ### STATISTICS ITEMS DECLARATION ### with statistics items declaration
+    in itemsfile.
+
+    Returns nothing.
+    '''
     global item_list
 
     msg_counter_types = 'enum MSGCounterType {\n'
@@ -276,6 +338,6 @@ if __name__ == "__main__":
                      'tests'+os.sep+'statistics_unittest.cc',
                      def_mtime)
     except:
-        sys.stderr.write('Code generation failed due to exception: %s\n' %
+        sys.stderr.write('File generation failed due to exception: %s\n' %
                 sys.exc_info()[1])
         exit(1)
