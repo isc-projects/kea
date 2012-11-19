@@ -69,6 +69,14 @@ class State;
 class MasterLexer {
     friend class master_lexer_internal::State;
 public:
+    /// \brief Exception thrown when we fail to read from the input
+    /// stream or file.
+    struct ReadError : public Unexpected {
+        ReadError(const char* file, size_t line, const char* what) :
+            Unexpected(file, line, what)
+        {}
+    };
+
     class Token;       // we define it separately for better readability
 
     /// \brief Options for getNextToken.
@@ -198,9 +206,8 @@ public:
     /// \throw isc::InvalidOperation in case the source is not available. This
     ///     may mean the pushSource() has not been called yet, or that the
     ///     current source has been read past the end.
-    /// \throw isc::master_lexer_internal::InputSource::ReadError in case
-    ///     there's problem reading from the underlying source (eg. I/O error
-    ///     in the file on the disk).
+    /// \throw ReadError in case there's problem reading from the underlying
+    ///     source (eg. I/O error in the file on the disk).
     /// \throw std::bad_alloc in case allocation of some internal resources
     ///     or the token fail.
     Token getNextToken(Options options = NONE);
