@@ -270,7 +270,6 @@ class TestXfroutSessionBase(unittest.TestCase):
 
     def setUp(self):
         self.sock = MySocket(socket.AF_INET,socket.SOCK_STREAM)
-        self.setup_counters()
         self.xfrsess = MyXfroutSession(self.sock, None, Dbserver(),
                                        TSIGKeyRing(),
                                        (socket.AF_INET, socket.SOCK_STREAM,
@@ -278,8 +277,7 @@ class TestXfroutSessionBase(unittest.TestCase):
                                        # When not testing ACLs, simply accept
                                        isc.acl.dns.REQUEST_LOADER.load(
                                            [{"action": "ACCEPT"}]),
-                                       {},
-                                       **self._counters)
+                                       {})
         self.set_request_type(RRType.AXFR()) # test AXFR by default
         self.mdata = self.create_request_data()
         self.soa_rrset = create_soa(SOA_CURRENT_VERSION)
@@ -287,52 +285,13 @@ class TestXfroutSessionBase(unittest.TestCase):
         # original is used elsewhere.
         self.orig_get_rrset_len = xfrout.get_rrset_len
 
-    def setup_counters(self):
-        self._statistics_data = {
-            'zones' : {
-                TEST_ZONE_NAME_STR : {
-                    'xfrrej': 0,
-                    'xfrreqdone': 0
-                    }
-                },
-            'axfr_started': 0,
-            'ixfr_started': 0,
-            'axfr_ended': 0,
-            'ixfr_ended': 0
-            }
-        def _counter_xfrrej(zone_name):
-            self._statistics_data['zones'][zone_name]['xfrrej'] += 1
-        def _counter_xfrreqdone(zone_name):
-            self._statistics_data['zones'][zone_name]['xfrreqdone'] += 1
-        def _inc_ixfr_running():
-            self._statistics_data['ixfr_started'] += 1
-        def _dec_ixfr_running():
-            self._statistics_data['ixfr_ended'] += 1
-        def _inc_axfr_running():
-            self._statistics_data['axfr_started'] += 1
-        def _dec_axfr_running():
-            self._statistics_data['axfr_ended'] += 1
-        self._counters = {
-            'counter_xfrrej': _counter_xfrrej,
-            'counter_xfrreqdone': _counter_xfrreqdone,
-            'inc_ixfr_running': _inc_ixfr_running,
-            'dec_ixfr_running': _dec_ixfr_running,
-            'inc_axfr_running': _inc_axfr_running,
-            'dec_axfr_running': _dec_axfr_running
-            }
-
-    def get_counter(self, name):
-        if name.find('ixfr_') == 0 or name.find('axfr_') == 0:
-            return self._statistics_data[name]
-        else:
-            return \
-                self._statistics_data['zones'][TEST_ZONE_NAME_STR][name]
-
     def tearDown(self):
         xfrout.get_rrset_len = self.orig_get_rrset_len
         # transfer_counter must be always be reset no matter happens within
         # the XfroutSession object.  We check the condition here.
         self.assertEqual(0, self.xfrsess._server.transfer_counter)
+        # clear statistics counters
+        counter.clear_counters()
 
 class TestXfroutSession(TestXfroutSessionBase):
     def test_quota_error(self):
@@ -420,7 +379,8 @@ class TestXfroutSession(TestXfroutSessionBase):
             }
         ]))
         # check the 'xfrrej' counter initially
-        self.assertEqual(self.get_counter('xfrrej'), 0)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_xfrrej, TEST_ZONE_NAME_STR)
         # Localhost (the default in this test) is accepted
         rcode, msg = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "NOERROR")
@@ -435,7 +395,7 @@ class TestXfroutSession(TestXfroutSessionBase):
         rcode, msg = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
-        self.assertEqual(self.get_counter('xfrrej'), 1)
+        self.assertEqual(counter.get_xfrrej(TEST_ZONE_NAME_STR), 1)
 
         # TSIG signed request
         request_data = self.create_request_data(with_tsig=True)
@@ -465,7 +425,7 @@ class TestXfroutSession(TestXfroutSessionBase):
         [rcode, msg] = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
-        self.assertEqual(self.get_counter('xfrrej'), 2)
+        self.assertEqual(counter.get_xfrrej(TEST_ZONE_NAME_STR), 2)
 
         # ACL using TSIG: no TSIG; should be rejected
         acl_setter(isc.acl.dns.REQUEST_LOADER.load([
@@ -474,7 +434,7 @@ class TestXfroutSession(TestXfroutSessionBase):
         [rcode, msg] = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
-        self.assertEqual(self.get_counter('xfrrej'), 3)
+        self.assertEqual(counter.get_xfrrej(TEST_ZONE_NAME_STR), 3)
 
         #
         # ACL using IP + TSIG: both should match
@@ -495,21 +455,21 @@ class TestXfroutSession(TestXfroutSessionBase):
         [rcode, msg] = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
-        self.assertEqual(self.get_counter('xfrrej'), 4)
+        self.assertEqual(counter.get_xfrrej(TEST_ZONE_NAME_STR), 4)
         # Address matches, but TSIG doesn't (not included)
         self.xfrsess._remote = (socket.AF_INET, socket.SOCK_STREAM,
                                 ('192.0.2.1', 12345))
         [rcode, msg] = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
-        self.assertEqual(self.get_counter('xfrrej'), 5)
+        self.assertEqual(counter.get_xfrrej(TEST_ZONE_NAME_STR), 5)
         # Neither address nor TSIG matches
         self.xfrsess._remote = (socket.AF_INET, socket.SOCK_STREAM,
                                 ('192.0.2.2', 12345))
         [rcode, msg] = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
-        self.assertEqual(self.get_counter('xfrrej'), 6)
+        self.assertEqual(counter.get_xfrrej(TEST_ZONE_NAME_STR), 6)
 
     def test_transfer_acl(self):
         # ACL checks only with the default ACL
@@ -517,14 +477,6 @@ class TestXfroutSession(TestXfroutSessionBase):
             self.xfrsess._acl = acl
         self.check_transfer_acl(acl_setter)
 
-    def test_transfer_acl_with_notcallable_xfrrej(self):
-        # ACL checks only with the default ACL and not callable xfrrej
-        # counter
-        def acl_setter(acl):
-            self.xfrsess._acl = acl
-        self.xfrsess._counter_xfrrej = 'NOT CALLABLE'
-        self.assertRaises(TypeError,
-                          self.check_transfer_acl, acl_setter)
 
     def test_transfer_zoneacl(self):
         # ACL check with a per zone ACL + default ACL.  The per zone ACL
@@ -889,6 +841,22 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
         self.assertEqual(self.sock.read_msg().get_rcode(), Rcode.SERVFAIL())
 
+    def test_dns_xfrout_start_unixsocketsenderr(self):
+        """This test is for a counter senderr of unixsocket."""
+
+        def noerror(msg, name, rrclass):
+            return Rcode.NOERROR()
+        self.xfrsess._xfrout_setup = noerror
+
+        def myreply(msg, sock):
+            raise Exception
+
+        self.xfrsess._reply_xfrout_query = myreply
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_unixsocket_senderr)
+        self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
+        self.assertEqual(counter.get_unixsocket_senderr(), 1)
+
     def test_dns_xfrout_start_noerror(self):
         def noerror(msg, name, rrclass):
             return Rcode.NOERROR()
@@ -897,25 +865,13 @@ class TestXfroutSession(TestXfroutSessionBase):
         def myreply(msg, sock):
             self.sock.send(b"success")
 
-        self.assertEqual(self.get_counter('xfrreqdone'), 0)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+            counter.get_xfrreqdone, TEST_ZONE_NAME_STR)
         self.xfrsess._reply_xfrout_query = myreply
         self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
         self.assertEqual(self.sock.readsent(), b"success")
-        self.assertGreater(self.get_counter('xfrreqdone'), 0)
-
-    def test_dns_xfrout_start_with_notcallable_xfrreqdone(self):
-        def noerror(msg, name, rrclass):
-            return Rcode.NOERROR()
-        self.xfrsess._xfrout_setup = noerror
-
-        def myreply(msg, sock):
-            self.sock.send(b"success")
-
-        self.xfrsess._reply_xfrout_query = myreply
-        self.xfrsess._counter_xfrreqdone = 'NOT CALLABLE'
-        self.assertRaises(TypeError,
-                          self.xfrsess.dns_xfrout_start, self.sock,
-                          self.mdata)
+        self.assertGreater(\
+            counter.get_xfrreqdone(TEST_ZONE_NAME_STR), 0)
 
     def test_reply_xfrout_query_axfr(self):
         self.xfrsess._soa = self.soa_rrset
@@ -1171,20 +1127,18 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
             self.assertTrue(rrsets_equal(expected_rr, actual_rr))
 
     def test_axfr_normal_session(self):
-        self.assertEqual(self.get_counter('axfr_started'), 0)
-        self.assertEqual(self.get_counter('axfr_ended'), 0)
-        self.assertEqual(self.get_counter('ixfr_started'), 0)
-        self.assertEqual(self.get_counter('ixfr_ended'), 0)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_axfr_running)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_ixfr_running)
         XfroutSession._handle(self.xfrsess)
         response = self.sock.read_msg(Message.PRESERVE_ORDER);
         self.assertEqual(Rcode.NOERROR(), response.get_rcode())
         self.check_axfr_stream(response)
         self.assertEqual(self.xfrsess._request_type, RRType.AXFR())
         self.assertNotEqual(self.xfrsess._request_type, RRType.IXFR())
-        self.assertEqual(self.get_counter('axfr_started'), 1)
-        self.assertEqual(self.get_counter('axfr_ended'), 1)
-        self.assertEqual(self.get_counter('ixfr_started'), 0)
-        self.assertEqual(self.get_counter('ixfr_ended'), 0)
+        self.assertEqual(counter.get_ixfr_running(), 0)
+        self.assertEqual(counter.get_axfr_running(), 0)
 
     def test_ixfr_to_axfr(self):
         self.xfrsess._request_data = \
@@ -1203,10 +1157,10 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
         # two beginning and trailing SOAs.
         self.xfrsess._request_data = \
             self.create_request_data(ixfr=IXFR_OK_VERSION)
-        self.assertEqual(self.get_counter('axfr_started'), 0)
-        self.assertEqual(self.get_counter('axfr_ended'), 0)
-        self.assertEqual(self.get_counter('ixfr_started'), 0)
-        self.assertEqual(self.get_counter('ixfr_ended'), 0)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_axfr_running)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_ixfr_running)
         XfroutSession._handle(self.xfrsess)
         response = self.sock.read_msg(Message.PRESERVE_ORDER)
         actual_records = response.get_section(Message.SECTION_ANSWER)
@@ -1224,10 +1178,8 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
             self.assertTrue(rrsets_equal(expected_rr, actual_rr))
         self.assertNotEqual(self.xfrsess._request_type, RRType.AXFR())
         self.assertEqual(self.xfrsess._request_type, RRType.IXFR())
-        self.assertEqual(self.get_counter('axfr_started'), 0)
-        self.assertEqual(self.get_counter('axfr_ended'), 0)
-        self.assertEqual(self.get_counter('ixfr_started'), 1)
-        self.assertEqual(self.get_counter('ixfr_ended'), 1)
+        self.assertEqual(counter.get_axfr_running(), 0)
+        self.assertEqual(counter.get_ixfr_running(), 0)
 
     def ixfr_soa_only_common_checks(self, request_serial):
         self.xfrsess._request_data = \
@@ -1561,6 +1513,106 @@ class TestUnixSockServer(unittest.TestCase):
         self.unix._select_loop(self.__select_return_redable[0])
         self.assertEqual(1, self.__select_count)
 
+class DummyBaseSocketserver():
+    def shutdown(self): pass
+    def send(self, arg): pass
+    def get_request(self): pass
+
+class DummySocketserver(DummyBaseSocketserver):
+    def __init__(self, *args): pass
+
+class DummySocketserverException(DummyBaseSocketserver):
+    def __init__(self, *args): raise Exception
+
+class TestUnixSockServerForCounter(unittest.TestCase):
+
+    def setUp(self):
+        (self.orig_remove_unused_sock_file,
+         self.orig_update_config_data,
+         self.orig_socket_socketpair,
+         self.orig_NoPollMixIn,
+         self.orig_ThreadingUnixStreamServer ) = \
+         ( UnixSockServer._remove_unused_sock_file,
+           UnixSockServer.update_config_data,
+           xfrout.socket.socketpair,
+           xfrout.socketserver_mixin.NoPollMixIn,
+           xfrout.ThreadingUnixStreamServer )
+        UnixSockServer._remove_unused_sock_file = lambda x,y: None
+        UnixSockServer.update_config_data = lambda x,y: None
+        xfrout.socket.socketpair = \
+            lambda : (DummySocketserver(), DummySocketserver())
+        xfrout.socketserver_mixin.NoPollMixIn = DummySocketserver
+        xfrout.ThreadingUnixStreamServer = DummySocketserver
+        xfrout.super = lambda : DummySocketserver()
+        self.unix = UnixSockServer(None, None, None, None, None)
+
+    def tearDown(self):
+        ( UnixSockServer._remove_unused_sock_file,
+          UnixSockServer.update_config_data,
+          xfrout.socket.socketpair,
+          xfrout.socketserver_mixin.NoPollMixIn,
+          xfrout.ThreadingUnixStreamServer,
+          xfrout.super ) = \
+          ( self.orig_remove_unused_sock_file,
+            self.orig_update_config_data,
+            self.orig_socket_socketpair,
+            self.orig_NoPollMixIn,
+            self.orig_ThreadingUnixStreamServer,
+            super )
+        counter.clear_counters()
+
+    def test_open(self):
+        # open
+        self.assertEqual(counter.get_unixsocket_open(), 1)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_unixsocket_openfail)
+        xfrout.ThreadingUnixStreamServer = DummySocketserverException
+        self.unix = UnixSockServer(None, None, None, None, None)
+        self.assertEqual(counter.get_unixsocket_open(), 1)
+        self.assertEqual(counter.get_unixsocket_openfail(), 1)
+
+    def test_close(self):
+        # close
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_unixsocket_close)
+        self.unix.shutdown()
+        self.assertEqual(counter.get_unixsocket_close(), 1)
+
+    def test_bindfail(self):
+        # bindfail
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_unixsocket_bindfail)
+        self.assertRaises(Exception, self.unix.server_bind)
+        self.assertEqual(counter.get_unixsocket_bindfail(), 1)
+
+    def test_accept(self):
+        # accept
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_unixsocket_accept)
+        self.unix.get_request()
+        self.assertEqual(counter.get_unixsocket_accept(), 1)
+        # acceptfail
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_unixsocket_acceptfail)
+        xfrout.super = lambda : DummyClassException()
+        self.unix = UnixSockServer(None, None, None, None, None)
+        self.assertRaises(Exception, self.unix.get_request)
+        self.assertEqual(counter.get_unixsocket_acceptfail(), 1)
+
+    def test_senderr(self):
+        # do inside of above TestXfroutSession
+        pass
+
+    def test_recverr(self):
+        # recverr
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_unixsocket_recverr)
+        def raise_socketerror():
+            raise socket.error
+        self.unix.get_request = raise_socketerror
+        self.unix.handle_request()
+        self.assertEqual(counter.get_unixsocket_recverr(), 1)
+
 class TestInitialization(unittest.TestCase):
     def setEnv(self, name, value):
         if value is None:
@@ -1609,116 +1661,6 @@ class MyXfroutServer(XfroutServer):
         self._wait_for_threads = lambda : None
         self._cc.get_module_spec = lambda:\
             isc.config.module_spec_from_file(xfrout.SPECFILE_LOCATION)
-        # setup an XfroutCount object
-        self._counter = XfroutCounter(
-            self._cc.get_module_spec().get_statistics_spec())
-
-class TestXfroutCounter(unittest.TestCase):
-    def setUp(self):
-        self._module_spec = isc.config.module_spec_from_file(\
-            xfrout.SPECFILE_LOCATION)
-        statistics_spec = self._module_spec.get_statistics_spec()
-        self.xfrout_counter = XfroutCounter(statistics_spec)
-        self._counters = isc.config.spec_name_list(\
-            isc.config.find_spec_part(\
-                statistics_spec, XfroutCounter.perzone_prefix)\
-                ['named_set_item_spec']['map_item_spec'])
-        self._started = threading.Event()
-        self._number = 3 # number of the threads
-        self._cycle = 10000 # number of counting per thread
-
-    def test_get_default_statistics_data(self):
-        self.assertTrue(\
-            self._module_spec.validate_statistics(\
-                True,
-                self.xfrout_counter._get_default_statistics_data(),
-                )
-            )
-
-    def setup_incrementer(self, incrementer, *args):
-        self._started.wait()
-        for i in range(self._cycle): incrementer(*args)
-
-    def start_incrementer(self, incrementer, *args):
-        threads = []
-        for i in range(self._number):
-            threads.append(threading.Thread(\
-                    target=self.setup_incrementer, \
-                        args=(incrementer,) + args \
-                        ))
-        for th in threads: th.start()
-        self._started.set()
-        for th in threads: th.join()
-
-    def get_count(self, zone_name, counter_name):
-        return isc.cc.data.find(\
-            self.xfrout_counter.get_statistics(),\
-                '%s/%s/%s' % (XfroutCounter.perzone_prefix,\
-                                  zone_name, counter_name))
-
-    def test_incdecrementers(self):
-        # for per-zone counters
-        result = { XfroutCounter.entire_server: {},
-                   TEST_ZONE_NAME_STR: {} }
-        for counter_name in self._counters:
-            cntrs_xfrss = \
-                self.xfrout_counter.get_counters_for_xfroutsession()
-            cntrs_notfy = \
-                self.xfrout_counter.get_counters_for_notifyout()
-            cnt_name = 'counter_%s' % counter_name
-            incrementer = None
-            if cnt_name in cntrs_xfrss:
-                incrementer = cntrs_xfrss[cnt_name]
-            else:
-                incrementer = cntrs_notfy[cnt_name]
-            self.start_incrementer(incrementer, TEST_ZONE_NAME_STR)
-            self.assertEqual(self.get_count(\
-                        TEST_ZONE_NAME_STR, counter_name), \
-                                 self._number * self._cycle)
-            self.assertEqual(self.get_count(\
-                    XfroutCounter.entire_server, counter_name), \
-                                 self._number * self._cycle)
-            result[XfroutCounter.entire_server][counter_name] = \
-                result[TEST_ZONE_NAME_STR][counter_name] = \
-                self._number * self._cycle
-        statistics_data = {XfroutCounter.perzone_prefix: result}
-
-        # for {a|i}xfrrunning counters
-        for counter_name in self.xfrout_counter._xfrrunning_names:
-            incrementer = \
-                dict(self.xfrout_counter.get_counters_for_xfroutsession(), \
-                         **self.xfrout_counter.get_counters_for_notifyout())\
-                         ['inc_%s' % counter_name]
-            self.start_incrementer(incrementer)
-            self.assertEqual(
-                self.xfrout_counter.get_statistics()[counter_name],
-                self._number * self._cycle
-                )
-            decrementer = \
-                dict(self.xfrout_counter.get_counters_for_xfroutsession(), \
-                         **self.xfrout_counter.get_counters_for_notifyout())\
-                         ['dec_%s' % counter_name]
-            self.start_incrementer(decrementer)
-            self.assertEqual(
-                self.xfrout_counter.get_statistics()[counter_name],
-                0)
-            statistics_data[counter_name] = 0
-        self.assertEqual(
-            self.xfrout_counter.get_statistics(),
-            statistics_data)
-        self.assertTrue(\
-            self._module_spec.validate_statistics(\
-                True, statistics_data
-                )
-            )
-
-    def test_add_perzone_counter(self):
-        for counter_name in self._counters:
-            self.assertRaises(isc.cc.data.DataNotFoundError,\
-                                  self.get_count, TEST_ZONE_NAME_STR, counter_name)
-        self.xfrout_counter._add_perzone_counter(TEST_ZONE_NAME_STR)
-        for counter_name in self._counters:
-            self.assertEqual(self.get_count(TEST_ZONE_NAME_STR, counter_name), 0)
 
 class TestXfroutServer(unittest.TestCase):
     def setUp(self):
