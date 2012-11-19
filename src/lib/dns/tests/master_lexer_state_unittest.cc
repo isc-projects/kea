@@ -362,7 +362,12 @@ TEST_F(MasterLexerStateTest, stringEscape) {
 
 TEST_F(MasterLexerStateTest, quotedString) {
     ss << "\"ignore-quotes\"\n";
-    ss << "\"quoted string\" ";
+    ss << "\"quoted string\" "; // space is part of the qstring
+    // also check other separator characters. note that \r doesn't cause
+    // UNBALANCED_QUOTES.  Not sure if it's intentional, but that's how the
+    // BIND 9 version works, so we follow it (it should be too minor to matter
+    // in practice anyway)
+    ss << "\"quoted()\t\rstring\" ";
     ss << "\"escape\\ in quote\" ";
     ss << "\"escaped\\\"\" ";
     ss << "\"escaped backslash\\\\\" ";
@@ -383,6 +388,11 @@ TEST_F(MasterLexerStateTest, quotedString) {
     EXPECT_FALSE(s_string.wasLastEOL(lexer)); // EOL is canceled due to '"'
     EXPECT_EQ(s_null, s_qstring.handle(lexer));
     stringTokenCheck("quoted string", s_string.getToken(lexer), true);
+
+    // Also checks other separator characters within a qstring
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    stringTokenCheck("quoted()\t\rstring", s_string.getToken(lexer), true);
 
     // escape character mostly doesn't have any effect in the qstring
     // processing
