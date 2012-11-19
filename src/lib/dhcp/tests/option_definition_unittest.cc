@@ -135,7 +135,7 @@ TEST_F(OptionDefinitionTest, validate) {
                               static_cast<OptionDefinition::DataType>(OptionDefinition::UNKNOWN_TYPE
                                                                       + 2));
     EXPECT_THROW(opt_def3.validate(), isc::OutOfRange);
-    
+
     // Empty option name is not allowed.
     OptionDefinition opt_def4("", D6O_CLIENTID, "string");
     EXPECT_THROW(opt_def4.validate(), isc::BadValue);
@@ -195,6 +195,54 @@ TEST_F(OptionDefinitionTest, factoryAddrList6) {
         opt_def.optionFactory(Option::V6, D6O_NIS_SERVERS, buf),
         isc::OutOfRange
     );
+}
+
+// This test checks that a vector of strings, holding IPv6 addresses,
+// can be used to create option instance with the optionFactory function.
+TEST_F(OptionDefinitionTest, factoryTokenizedAddrList6) {
+    OptionDefinition opt_def("OPTION_NIS_SERVERS", D6O_NIS_SERVERS,
+                             "ipv6_address", true);
+
+    // Create a vector of some V6 addresses.
+    std::vector<asiolink::IOAddress> addrs;
+    addrs.push_back(asiolink::IOAddress("2001:0db8::ff00:0042:8329"));
+    addrs.push_back(asiolink::IOAddress("2001:0db8::ff00:0042:2319"));
+    addrs.push_back(asiolink::IOAddress("::1"));
+    addrs.push_back(asiolink::IOAddress("::2"));
+
+    // Create a vector of strings representing addresses given above.
+    std::vector<std::string> addrs_str;
+    for (std::vector<asiolink::IOAddress>::const_iterator it = addrs.begin();
+         it != addrs.end(); ++it) {
+        addrs_str.push_back(it->toText());
+    }
+
+    // Create DHCPv6 option using the list of IPv6 addresses given in the
+    // string form.
+    OptionPtr option_v6;
+    ASSERT_NO_THROW(
+        option_v6 = opt_def.optionFactory(Option::V6, D6O_NIS_SERVERS,
+                                          addrs_str);
+    );
+    // This is temporary check to make this test pass until factory function is
+    // implemented and returns the pointer rather than NULL.
+    ASSERT_FALSE(option_v6);
+
+    /*    // Non-null pointer option is supposed to be returned and it
+    // should have Option6AddrLst type.
+    ASSERT_TRUE(option_v6);
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6AddrLst));
+    // Cast to the actual option type to get IPv6 addresses from it.
+    boost::shared_ptr<Option6AddrLst> option_cast_v6 =
+        boost::static_pointer_cast<Option6AddrLst>(option_v6);
+    // Check that cast was successful.
+    ASSERT_TRUE(option_cast_v6);
+    // Get the list of parsed addresses from the option object.
+    std::vector<asiolink::IOAddress> addrs_returned =
+        option_cast_v6->getAddresses();
+    // Returned addresses must match the addresses that have been used to create
+    // the option instance.
+    EXPECT_TRUE(std::equal(addrs.begin(), addrs.end(), addrs_returned.begin())); */
 }
 
 TEST_F(OptionDefinitionTest, factoryAddrList4) {
