@@ -44,17 +44,17 @@ namespace {
 
 void
 fillNodes(const Counter& counter,
-          const struct isc::auth::statistics::CounterTypeTree type_tree[],
+          const struct isc::auth::statistics::CounterSpec type_tree[],
           isc::auth::statistics::Counters::ItemTreePtr& trees)
 {
     using namespace isc::data;
 
     for (int i = 0; type_tree[i].name != NULL; ++i) {
-        if (type_tree[i].sub_tree != NULL) {
-            isc::auth::statistics::Counters::ItemTreePtr sub_tree =
+        if (type_tree[i].sub_counters != NULL) {
+            isc::auth::statistics::Counters::ItemTreePtr sub_counters =
                 Element::createMap();
-            trees->set(type_tree[i].name, sub_tree);
-            fillNodes(counter, type_tree[i].sub_tree, sub_tree);
+            trees->set(type_tree[i].name, sub_counters);
+            fillNodes(counter, type_tree[i].sub_counters, sub_counters);
         } else {
             trees->set(type_tree[i].name,
                        Element::create(static_cast<long int>(
