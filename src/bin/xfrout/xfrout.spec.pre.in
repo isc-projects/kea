@@ -188,6 +188,110 @@
           "item_default": 0,
           "item_title": "AXFR running",
           "item_description": "Number of AXFRs in progress"
+        },
+        {
+          "item_name": "socket",
+          "item_type": "map",
+          "item_optional": false,
+          "item_default": {
+            "unixdomain": {
+              "open": 0,
+              "openfail": 0,
+              "close": 0,
+              "bindfail": 0,
+              "acceptfail": 0,
+              "accept": 0,
+              "senderr": 0,
+              "recverr": 0
+            }
+          },
+          "item_title": "Socket",
+          "item_description": "Socket",
+          "map_item_spec": [
+            {
+              "item_name": "unixdomain",
+              "item_type": "map",
+              "item_optional": false,
+              "item_default": {
+                "open": 0,
+                "openfail": 0,
+                "close": 0,
+                "bindfail": 0,
+                "acceptfail": 0,
+                "accept": 0,
+                "senderr": 0,
+                "recverr": 0
+              },
+              "item_title": "Unix Domain",
+              "item_description": "Unix Domain",
+              "map_item_spec": [
+                {
+                  "item_name": "open",
+                  "item_type": "integer",
+                  "item_optional": false,
+                  "item_default": 0,
+                  "item_title": "Open",
+                  "item_description": "Unix Domain sockets opened successfully"
+                },
+                {
+                  "item_name": "openfail",
+                  "item_type": "integer",
+                  "item_optional": false,
+                  "item_default": 0,
+                  "item_title": "Open failures",
+                  "item_description": "Unix Domain sockets open failures"
+                },
+                {
+                  "item_name": "close",
+                  "item_type": "integer",
+                  "item_optional": false,
+                  "item_default": 0,
+                  "item_title": "Close",
+                  "item_description": "Unix Domain sockets closed"
+                },
+                {
+                  "item_name": "bindfail",
+                  "item_type": "integer",
+                  "item_optional": false,
+                  "item_default": 0,
+                  "item_title": "Bind failures",
+                  "item_description": "Unix Domain sockets bind failures"
+                },
+                {
+                  "item_name": "acceptfail",
+                  "item_type": "integer",
+                  "item_optional": false,
+                  "item_default": 0,
+                  "item_title": "Accept failures",
+                  "item_description": "Unix Domain sockets incoming accept failures"
+                },
+                {
+                  "item_name": "accept",
+                  "item_type": "integer",
+                  "item_optional": false,
+                  "item_default": 0,
+                  "item_title": "Accept",
+                  "item_description": "Unix Domain sockets incoming connections successfully accepted"
+                },
+                {
+                  "item_name": "senderr",
+                  "item_type": "integer",
+                  "item_optional": false,
+                  "item_default": 0,
+                  "item_title": "Send errors",
+                  "item_description": "Unix Domain sockets send errors"
+                },
+                {
+                  "item_name": "recverr",
+                  "item_type": "integer",
+                  "item_optional": false,
+                  "item_default": 0,
+                  "item_title": "Receive errors",
+                  "item_description": "Unix Domain sockets receive errors"
+                }
+              ]
+            }
+          ]
         }
       ]
   }
