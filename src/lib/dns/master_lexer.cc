@@ -270,6 +270,9 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
     MasterLexer::MasterLexerImpl& lexerimpl = *lexer.impl_;
     size_t& paren_count = lexerimpl.paren_count_;
 
+    // Note: the if-else in the loop is getting complicated.  When we complete
+    // #2374, revisit the organization to see if we need a fundamental
+    // refactoring.
     while (true) {
         const int c = lexerimpl.skipComment(lexerimpl.source_->getChar());
         if (c == InputSource::END_OF_STREAM) {
