@@ -22,9 +22,9 @@ namespace isc {
 namespace auth {
 namespace statistics {
 
-struct CounterTypeTree {
+struct CounterSpec {
     const char* const name;
-    const struct CounterTypeTree* const sub_tree;
+    const struct CounterSpec* const sub_counters;
     const int counter_id;
 };
 
