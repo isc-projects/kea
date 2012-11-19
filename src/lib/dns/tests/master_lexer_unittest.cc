@@ -270,6 +270,19 @@ TEST_F(MasterLexerTest, eof) {
     EXPECT_THROW(lexer.getNextToken(), isc::InvalidOperation);
 }
 
+// Check we properly return error when there's an opened parentheses and no
+// closing one
+TEST_F(MasterLexerTest, getUnbalanced) {
+    ss << "(\"string\"";
+    lexer.pushSource(ss);
+
+    // The string gets out first
+    EXPECT_EQ(MasterLexer::Token::STRING, lexer.getNextToken().getType());
+    // Then an unbalanced parethsis
+    EXPECT_EQ(MasterLexer::Token::UNBALANCED_PAREN,
+              lexer.getNextToken().getErrorCode());
+}
+
 void
 checkInput(const std::string& expected, const std::string& received) {
     EXPECT_EQ(expected, received);
