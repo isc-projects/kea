@@ -69,7 +69,7 @@ void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
     }
 
     // 16 bytes: IPv6 address
-    addr_ = IOAddress::from_bytes(AF_INET6, &(*begin));
+    addr_ = IOAddress::fromBytes(AF_INET6, &(*begin));
     begin += V6ADDRESS_LEN;
 
     preferred_ = readUint32( &(*begin) );
