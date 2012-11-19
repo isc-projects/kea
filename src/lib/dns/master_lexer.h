@@ -202,7 +202,10 @@ public:
     ///     by this parameter. Multiple options can be passed at once by
     ///     bitwise or (eg. option1 | option 2). See description of available
     ///     options.
-    /// \return Next token found in the input.
+    /// \return Next token found in the input. Note that the token refers to
+    ///     some internal data in in the lexer. It is valid only until
+    ///     getNextToken or ungetToken is called. Also, the token becomes
+    ///     invalid when the lexer is destroyed.
     /// \throw isc::InvalidOperation in case the source is not available. This
     ///     may mean the pushSource() has not been called yet, or that the
     ///     current source has been read past the end.
