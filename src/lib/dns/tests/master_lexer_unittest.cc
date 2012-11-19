@@ -178,9 +178,9 @@ TEST_F(MasterLexerTest, tokenFromStart) {
             // We don't have access directly inside the implementation.
             // We get the fake state, run it to install the token.
             // Then we just delete it ourself and return NULL.
-            State* state(State::getFakeState(NULL, 0, &token_));
+            scoped_ptr<const State> state(State::getFakeState(NULL, 0,
+                                                              &token_));
             state->handle(*this);
-            delete state;
             return (NULL);
         }
     private:
