@@ -1849,6 +1849,61 @@ class TestBossComponents(unittest.TestCase):
         self.assertEqual('b10-cmdctl', bob.started_process_name)
         self.assertEqual(['b10-cmdctl', '--port=9353', '-v'], bob.started_process_args)
 
+    def test_socket_data(self):
+        '''Test that BoB._socket_data works as expected.'''
+        class MockSock:
+            def __init__(self, fd, throw):
+                self.fd = fd
+                self.throw = throw
+                self.buf = b'Hello World.\nYou are so nice today.\nXX'
+                self.i = 0
+
+            def recv(self, bufsize, flags = 0):
+                if bufsize != 1:
+                    raise Exception('bufsize != 1')
+                if flags != socket.MSG_DONTWAIT:
+                    raise Exception('flags != socket.MSG_DONTWAIT')
+                if self.throw and self.i > 15:
+                    raise socket.error(errno.EAGAIN, 'Try again')
+                if self.i >= len(self.buf):
+                    return b'';
+                t = self.i
+                self.i += 1
+                return self.buf[t:t+1]
+
+            def close(self):
+                return
+
+        class MockBobSocketData(BoB):
+            def __init__(self, throw):
+                self._unix_sockets = {42: (MockSock(42, throw), b'')}
+                self.requests = []
+                self.dead = []
+
+            def socket_request_handler(self, previous, sock):
+                self.requests.append({sock.fd: previous})
+
+            def socket_consumer_dead(self, sock):
+                self.dead.append(sock.fd)
+
+        # All is well case
+        bob = MockBobSocketData(False)
+        bob._socket_data(42)
+        self.assertEqual(bob.requests,
+                         [{42: b'Hello World.'},
+                          {42: b'You are so nice today.'}])
+        self.assertEqual(bob.dead, [42])
+        self.assertFalse(bob._unix_sockets)
+
+        # Case where socket raises EAGAIN. In this case, the routine is
+        # supposed to save what it has back to BoB._unix_sockets.
+        bob = MockBobSocketData(True)
+        bob._socket_data(42)
+        self.assertEqual(bob.requests, [{42: b'Hello World.'}])
+        self.assertFalse(bob.dead)
+        self.assertEqual(len(bob._unix_sockets), 1)
+        self.assertEqual(bob._unix_sockets[42][1], b'You')
+
 class SocketSrvTest(unittest.TestCase):
     """
     This tests some methods of boss related to the unix domain sockets used
