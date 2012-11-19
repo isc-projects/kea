@@ -39,12 +39,7 @@ using namespace isc::util;
 namespace {
 class LibDhcpTest : public ::testing::Test {
 public:
-    LibDhcpTest() {
-        // @todo initialize standard DHCPv4 option definitions
-
-        // Initialize DHCPv6 option definitions.
-        LibDHCP::initStdOptionDefs(Option::V6);
-    }
+    LibDhcpTest() { }
 
     /// @brief Generic factory function to create any option.
     ///
@@ -68,7 +63,7 @@ public:
     /// @param bug buffer to be used to create option instance.
     /// @param expected_type type of the option created by the
     /// factory function returned by the option definition.
-    static void testInitOptionDefs6(const uint16_t code,
+    static void testStdOptionDefs6(const uint16_t code,
                              const OptionBuffer& buf,
                              const std::type_info& expected_type) {
         // Get all option definitions, we will use them to extract
@@ -403,24 +398,24 @@ TEST_F(LibDhcpTest, unpackOptions4) {
 // @todo Only limited number of option definitions are now created
 // This test have to be extended once all option definitions are
 // created.
-TEST_F(LibDhcpTest, initStdOptionDefs) {
-    LibDhcpTest::testInitOptionDefs6(D6O_CLIENTID, OptionBuffer(14, 1),
+TEST_F(LibDhcpTest, stdOptionDefs6) {
+    LibDhcpTest::testStdOptionDefs6(D6O_CLIENTID, OptionBuffer(14, 1),
                                      typeid(Option));
-    LibDhcpTest::testInitOptionDefs6(D6O_SERVERID, OptionBuffer(14, 1),
+    LibDhcpTest::testStdOptionDefs6(D6O_SERVERID, OptionBuffer(14, 1),
                                      typeid(Option));
-    LibDhcpTest::testInitOptionDefs6(D6O_IA_NA, OptionBuffer(12, 1),
+    LibDhcpTest::testStdOptionDefs6(D6O_IA_NA, OptionBuffer(12, 1),
                                      typeid(Option6IA));
-    LibDhcpTest::testInitOptionDefs6(D6O_IAADDR, OptionBuffer(24, 1),
+    LibDhcpTest::testStdOptionDefs6(D6O_IAADDR, OptionBuffer(24, 1),
                                      typeid(Option6IAAddr));
-    LibDhcpTest::testInitOptionDefs6(D6O_ORO, OptionBuffer(10, 1),
+    LibDhcpTest::testStdOptionDefs6(D6O_ORO, OptionBuffer(10, 1),
                                      typeid(Option6IntArray<uint16_t>));
-    LibDhcpTest::testInitOptionDefs6(D6O_ELAPSED_TIME, OptionBuffer(2, 1),
+    LibDhcpTest::testStdOptionDefs6(D6O_ELAPSED_TIME, OptionBuffer(2, 1),
                                      typeid(Option6Int<uint16_t>));
-    LibDhcpTest::testInitOptionDefs6(D6O_STATUS_CODE, OptionBuffer(10, 1),
+    LibDhcpTest::testStdOptionDefs6(D6O_STATUS_CODE, OptionBuffer(10, 1),
                                      typeid(Option));
-    LibDhcpTest::testInitOptionDefs6(D6O_RAPID_COMMIT, OptionBuffer(),
+    LibDhcpTest::testStdOptionDefs6(D6O_RAPID_COMMIT, OptionBuffer(),
                                      typeid(Option));
-    LibDhcpTest::testInitOptionDefs6(D6O_NAME_SERVERS, OptionBuffer(32, 1),
+    LibDhcpTest::testStdOptionDefs6(D6O_NAME_SERVERS, OptionBuffer(32, 1),
                                      typeid(Option6AddrLst));
 }
 
