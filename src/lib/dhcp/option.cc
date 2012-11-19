@@ -97,8 +97,7 @@ void Option::pack(isc::util::OutputBuffer& buf) {
 
 void
 Option::pack4(isc::util::OutputBuffer& buf) {
-    switch (universe_) {
-    case V4: {
+    if (universe_ == V4) {
         if (len() > 255) {
             isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big."
                       << "At most 255 bytes are supported.");
@@ -109,33 +108,32 @@ Option::pack4(isc::util::OutputBuffer& buf) {
 
         buf.writeUint8(type_);
         buf.writeUint8(len() - getHeaderLen());
-
-        buf.writeData(&data_[0], data_.size());
-
-        LibDHCP::packOptions(buf, options_);
-        return;
-    }
-    case V6:
-        /// TODO: Do we need a sanity check for option size here?
-        buf.writeUint16(type_);
-        buf.writeUint16(len() - getHeaderLen());
+        if (!data_.empty()) {
+            buf.writeData(&data_[0], data_.size());
+        }
 
         LibDHCP::packOptions(buf, options_);
-        return;
-    default:
+
+    } else {
         isc_throw(OutOfRange, "Invalid universe type" << universe_);
     }
+
+    return;
 }
 
 void Option::pack6(isc::util::OutputBuffer& buf) {
-    buf.writeUint16(type_);
-    buf.writeUint16(len() - getHeaderLen());
+    if (universe_ == V6) {
+        buf.writeUint16(type_);
+        buf.writeUint16(len() - getHeaderLen());
+        if (!data_.empty()) {
+            buf.writeData(&data_[0], data_.size());
+        }
 
-    if (! data_.empty()) {
-        buf.writeData(&data_[0], data_.size());
+        LibDHCP::packOptions6(buf, options_);
+    } else {
+        isc_throw(OutOfRange, "Invalid universe type" << universe_);
     }
-
-    return LibDHCP::packOptions6(buf, options_);
+    return;
 }
 
 void Option::unpack(OptionBufferConstIter begin,
