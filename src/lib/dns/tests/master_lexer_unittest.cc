@@ -268,6 +268,9 @@ TEST_F(MasterLexerTest, eof) {
     EXPECT_EQ(MasterLexer::Token::END_OF_FILE, lexer.getNextToken().getType());
     // And it is not allowed to use this one any more.
     EXPECT_THROW(lexer.getNextToken(), isc::InvalidOperation);
+    // But if we unget a step back, we should get the EOF again
+    lexer.ungetToken();
+    EXPECT_EQ(MasterLexer::Token::END_OF_FILE, lexer.getNextToken().getType());
 }
 
 // Check we properly return error when there's an opened parentheses and no
