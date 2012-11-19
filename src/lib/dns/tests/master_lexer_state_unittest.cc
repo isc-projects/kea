@@ -353,6 +353,11 @@ TEST_F(MasterLexerStateTest, stringEscape) {
     EXPECT_EQ(&s_string, State::start(lexer, common_options));
     EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' ' in mid
     stringTokenCheck("escaped\\\\", s_string.getToken(lexer));
+
+    // Confirm the word that follows the escaped '\' is correctly recognized.
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("backslash", s_string.getToken(lexer));
 }
 
 TEST_F(MasterLexerStateTest, quotedString) {
