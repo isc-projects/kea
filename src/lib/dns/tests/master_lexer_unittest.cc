@@ -330,7 +330,8 @@ TEST_F(MasterLexerTest, ungetSimple) {
     EXPECT_EQ(1, state->getParenCount(lexer));
     EXPECT_TRUE(state->wasLastEOL(lexer));
     // By calling getToken again, we verify even the source got back to
-    // original. We must push it as a fake start again so it is picked.
+    // original (as the second fake state checks it gets "234"). We must
+    // push it as a fake start again so it is picked.
     lexer.pushFakeStart(state.get());
     EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
     EXPECT_EQ(2, state->getParenCount(lexer));
