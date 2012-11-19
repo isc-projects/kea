@@ -32,6 +32,7 @@ protected:
                              s_null(NULL),
                              s_crlf(State::getInstance(State::CRLF)),
                              s_string(State::getInstance(State::String)),
+                             s_qstring(State::getInstance(State::QString)),
                              options(MasterLexer::NONE),
                              orig_options(options)
     {}
@@ -42,6 +43,7 @@ protected:
     const State* const s_null;
     const State& s_crlf;
     const State& s_string;
+    const State& s_qstring;
     std::stringstream ss;
     MasterLexer::Options options, orig_options;
 };
@@ -111,8 +113,7 @@ TEST_F(MasterLexerStateTest, parentheses) {
     EXPECT_EQ(1, s_crlf.getParenCount(lexer)); // check post condition
     EXPECT_FALSE(s_crlf.wasLastEOL(lexer));
 
-    // skip 'a' (note: until #2373 it's actually skipped as part of the '('
-    // handling)
+    // skip 'a'
     s_string.handle(lexer);
 
     // Then handle ')'.  '\n' before ')' isn't recognized because
@@ -244,12 +245,208 @@ TEST_F(MasterLexerStateTest, crlf) {
     EXPECT_EQ(s_null, s_crlf.handle(lexer));
     EXPECT_EQ(Token::END_OF_LINE, s_crlf.getToken(lexer).getType());
     EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // skip 'a'
 
     // 4. \r then EOF
     EXPECT_EQ(&s_crlf, State::start(lexer, common_options)); // recognize '\r'
     // see EOF, then "unget" it
     EXPECT_EQ(s_null, s_crlf.handle(lexer));
     EXPECT_EQ(s_null, State::start(lexer, common_options));  // recognize EOF
+    EXPECT_EQ(Token::END_OF_FILE, s_crlf.getToken(lexer).getType());
+}
+
+// Commonly used check for string related test cases, checking if the given
+// token has expected values.
+void
+stringTokenCheck(const std::string& expected, const MasterLexer::Token& token,
+                 bool quoted = false)
+{
+    EXPECT_EQ(quoted ? Token::QSTRING : Token::STRING, token.getType());
+    EXPECT_EQ(expected, token.getString());
+    const std::string actual(token.getStringRegion().beg,
+                             token.getStringRegion().beg +
+                             token.getStringRegion().len);
+    EXPECT_EQ(expected, actual);
+}
+
+TEST_F(MasterLexerStateTest, string) {
+    // Check with simple strings followed by separate characters
+    ss << "followed-by-EOL\n";
+    ss << "followed-by-CR\r";
+    ss << "followed-by-space ";
+    ss << "followed-by-tab\t";
+    ss << "followed-by-comment;this is comment and ignored\n";
+    ss << "followed-by-paren(closing)";
+    ss << "followed-by-EOF";
+    lexer.pushSource(ss);
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see \n
+    EXPECT_FALSE(s_string.wasLastEOL(lexer));
+    stringTokenCheck("followed-by-EOL", s_string.getToken(lexer));
+    EXPECT_EQ(s_null, State::start(lexer, common_options)); // skip \n
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see \r
+    stringTokenCheck("followed-by-CR", s_string.getToken(lexer));
+    EXPECT_EQ(&s_crlf, State::start(lexer, common_options)); // handle \r...
+    EXPECT_EQ(s_null, s_crlf.handle(lexer)); // ...and skip it
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' '
+    stringTokenCheck("followed-by-space", s_string.getToken(lexer));
+
+    // skip ' ', then recognize the next string
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see \t
+    stringTokenCheck("followed-by-tab", s_string.getToken(lexer));
+
+    // skip \t, then recognize the next string
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see comment
+    stringTokenCheck("followed-by-comment", s_string.getToken(lexer));
+    EXPECT_EQ(s_null, State::start(lexer, common_options)); // skip \n after it
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see '('
+    stringTokenCheck("followed-by-paren", s_string.getToken(lexer));
+    EXPECT_EQ(&s_string, State::start(lexer, common_options)); // str in ()
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize the str, see ')'
+    stringTokenCheck("closing", s_string.getToken(lexer));
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see EOF
+    stringTokenCheck("followed-by-EOF", s_string.getToken(lexer));
+}
+
+TEST_F(MasterLexerStateTest, stringEscape) {
+    // some of the separate characters should be considered part of the
+    // string if escaped.
+    ss << "escaped\\ space ";
+    ss << "escaped\\\ttab ";
+    ss << "escaped\\(paren ";
+    ss << "escaped\\)close ";
+    ss << "escaped\\;comment ";
+    ss << "escaped\\\\ backslash "; // second '\' shouldn't escape ' '
+    lexer.pushSource(ss);
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("escaped\\ space", s_string.getToken(lexer));
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("escaped\\\ttab", s_string.getToken(lexer));
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("escaped\\(paren", s_string.getToken(lexer));
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("escaped\\)close", s_string.getToken(lexer));
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("escaped\\;comment", s_string.getToken(lexer));
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' ' in mid
+    stringTokenCheck("escaped\\\\", s_string.getToken(lexer));
+
+    // Confirm the word that follows the escaped '\' is correctly recognized.
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("backslash", s_string.getToken(lexer));
+}
+
+TEST_F(MasterLexerStateTest, quotedString) {
+    ss << "\"ignore-quotes\"\n";
+    ss << "\"quoted string\" "; // space is part of the qstring
+    // also check other separator characters. note that \r doesn't cause
+    // UNBALANCED_QUOTES.  Not sure if it's intentional, but that's how the
+    // BIND 9 version works, so we follow it (it should be too minor to matter
+    // in practice anyway)
+    ss << "\"quoted()\t\rstring\" ";
+    ss << "\"escape\\ in quote\" ";
+    ss << "\"escaped\\\"\" ";
+    ss << "\"escaped backslash\\\\\" ";
+    ss << "\"no;comment\"";
+    lexer.pushSource(ss);
+
+    // by default, '"' doesn't have any special meaning and part of string
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer)); // recognize str, see \n
+    stringTokenCheck("\"ignore-quotes\"", s_string.getToken(lexer));
+    EXPECT_EQ(s_null, State::start(lexer, common_options)); // skip \n after it
+    EXPECT_TRUE(s_string.wasLastEOL(lexer));
+
+    // If QSTRING is specified in option, '"' is regarded as a beginning of
+    // a quoted string.
+    const MasterLexer::Options options = common_options | MasterLexer::QSTRING;
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_FALSE(s_string.wasLastEOL(lexer)); // EOL is canceled due to '"'
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    stringTokenCheck("quoted string", s_string.getToken(lexer), true);
+
+    // Also checks other separator characters within a qstring
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    stringTokenCheck("quoted()\t\rstring", s_string.getToken(lexer), true);
+
+    // escape character mostly doesn't have any effect in the qstring
+    // processing
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    stringTokenCheck("escape\\ in quote", s_string.getToken(lexer), true);
+
+    // The only exception is the quotation mark itself.  Note that the escape
+    // only works on the quotation mark immediately after it.
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    stringTokenCheck("escaped\"", s_string.getToken(lexer), true);
+
+    // quoted '\' then '"'.  Unlike the previous case '"' shouldn't be
+    // escaped.
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    stringTokenCheck("escaped backslash\\\\", s_string.getToken(lexer), true);
+
+    // ';' has no meaning in a quoted string (not indicating a comment)
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    stringTokenCheck("no;comment", s_string.getToken(lexer), true);
+}
+
+TEST_F(MasterLexerStateTest, brokenQuotedString) {
+    ss << "\"unbalanced-quote\n";
+    ss << "\"quoted\\\n\" ";
+    ss << "\"unclosed quote and EOF";
+    lexer.pushSource(ss);
+
+    // EOL is encountered without closing the quote
+    const MasterLexer::Options options = common_options | MasterLexer::QSTRING;
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    ASSERT_EQ(Token::ERROR, s_qstring.getToken(lexer).getType());
+    EXPECT_EQ(Token::UNBALANCED_QUOTES,
+              s_qstring.getToken(lexer).getErrorCode());
+    // We can resume after the error from the '\n'
+    EXPECT_EQ(s_null, State::start(lexer, options));
+    EXPECT_EQ(Token::END_OF_LINE, s_crlf.getToken(lexer).getType());
+
+    // \n is okay in a quoted string if escaped
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    stringTokenCheck("quoted\\\n", s_string.getToken(lexer), true);
+
+    // EOF is encountered without closing the quote
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(s_null, s_qstring.handle(lexer));
+    ASSERT_EQ(Token::ERROR, s_qstring.getToken(lexer).getType());
+    EXPECT_EQ(Token::UNEXPECTED_END, s_qstring.getToken(lexer).getErrorCode());
+    // If we continue we'll simply see the EOF
+    EXPECT_EQ(s_null, State::start(lexer, options));
     EXPECT_EQ(Token::END_OF_FILE, s_crlf.getToken(lexer).getType());
 }
 
