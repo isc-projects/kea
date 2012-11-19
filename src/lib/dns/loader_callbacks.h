@@ -115,8 +115,7 @@ public:
     /// \brief Call the add callback.
     ///
     /// This is called for each loaded RRset.
-    void addRRset(const RRsetPtr& rrset)
-    {
+    void addRRset(const RRsetPtr& rrset) {
         add_(rrset);
     }
 
