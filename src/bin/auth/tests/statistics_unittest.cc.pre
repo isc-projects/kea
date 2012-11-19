@@ -71,7 +71,7 @@ flatten(std::map<std::string, int>& flat_map, const std::string& prefix,
                 flat_map[prefix + i->first] = i->second->intValue();
                 break;
             default:
-                EXPECT_FALSE("Element Parse Error");
+                FAIL() << "Element Parse Error";
         }
     }
 }
