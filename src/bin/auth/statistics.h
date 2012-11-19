@@ -42,7 +42,7 @@ private:
     // request attributes
     int req_ip_version_;            // IP version
     int req_transport_protocol_;    // Transport layer protocol
-    int req_opcode_;                // OpCode
+    uint8_t req_opcode_;            // OpCode
     enum BitAttributes {
         REQ_IS_EDNS_0,              // EDNS ver.0
         REQ_IS_EDNS_BADVER,         // EDNS version other than 0
@@ -67,13 +67,13 @@ public:
     /// \brief Get request opcode.
     /// \return opcode of a request
     /// \throw None
-    int getRequestOpCode() const {
+    uint8_t getRequestOpCode() const {
         return (req_opcode_);
     };
 
     /// \brief Set request opcode.
     /// \throw None
-    void setRequestOpCode(const int opcode) {
+    void setRequestOpCode(const uint8_t opcode) {
         req_opcode_ = opcode;
     };
 
