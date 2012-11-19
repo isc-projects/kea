@@ -263,7 +263,7 @@ def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
                                           '", NULL, ' + item['index'] + ' },\n'
                                           )
             else:
-                item_names_current_ = ['const struct CounterTypeTree ' +
+                item_names_current_ = ['const struct CounterSpec ' +
                                        item['index'] + '[] = {\n']
                 msg_counter_types, item_names_current_, item_names = \
                         convert_list(item['child'], msg_counter_types,
@@ -277,7 +277,7 @@ def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
 
     msg_counter_types, item_names_current, item_names = \
             convert_list(item_list, msg_counter_types, [], item_names)
-    item_names.append('const struct CounterTypeTree msg_counter_tree[] = {\n')
+    item_names.append('const struct CounterSpec msg_counter_tree[] = {\n')
     item_names.extend(item_names_current)
     item_names.append('    { NULL, NULL, NOT_ITEM }\n' +
                   '};\n')

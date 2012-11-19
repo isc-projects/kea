@@ -135,13 +135,13 @@ TEST_F(CountersTest, incrementNormalQuery) {
 }
 
 int
-countTreeElements(const struct CounterTypeTree* tree) {
+countTreeElements(const struct CounterSpec* tree) {
     int count = 0;
     for (int i = 0; tree[i].name != NULL; ++i) {
-        if (tree[i].sub_tree == NULL) {
+        if (tree[i].sub_counters == NULL) {
             ++count;
         } else {
-            count += countTreeElements(tree[i].sub_tree);
+            count += countTreeElements(tree[i].sub_counters);
         }
     }
     return (count);
