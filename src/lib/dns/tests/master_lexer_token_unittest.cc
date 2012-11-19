@@ -48,6 +48,9 @@ TEST_F(MasterLexerTokenTest, strings) {
     // basic construction and getter checks
     EXPECT_EQ(MasterLexer::Token::STRING, token_str.getType());
     EXPECT_EQ(std::string("string token"), token_str.getString());
+    std::string strval = "dummy"; // this should be replaced
+    token_str.getString(strval);
+    EXPECT_EQ(std::string("string token"), strval);
     const MasterLexer::Token::StringRegion str_region =
         token_str.getStringRegion();
     EXPECT_EQ(TEST_STRING, str_region.beg);
@@ -60,6 +63,8 @@ TEST_F(MasterLexerTokenTest, strings) {
     expected_str.push_back('\0');
     EXPECT_EQ(expected_str,
               MasterLexer::Token(TEST_STRING, TEST_STRING_LEN + 1).getString());
+    MasterLexer::Token(TEST_STRING, TEST_STRING_LEN + 1).getString(strval);
+    EXPECT_EQ(expected_str, strval);
 
     // Construct type of qstring
     EXPECT_EQ(MasterLexer::Token::QSTRING,
@@ -72,7 +77,9 @@ TEST_F(MasterLexerTokenTest, strings) {
 
     // getString/StringRegion() aren't allowed for non string(-variant) types
     EXPECT_THROW(token_eof.getString(), isc::InvalidOperation);
+    EXPECT_THROW(token_eof.getString(strval), isc::InvalidOperation);
     EXPECT_THROW(token_num.getString(), isc::InvalidOperation);
+    EXPECT_THROW(token_num.getString(strval), isc::InvalidOperation);
     EXPECT_THROW(token_eof.getStringRegion(), isc::InvalidOperation);
     EXPECT_THROW(token_num.getStringRegion(), isc::InvalidOperation);
 }
