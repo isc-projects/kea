@@ -303,30 +303,22 @@ TEST_F(MasterLexerTest, ungetSimple) {
     // We access the lexer through any state, so use the one we have.
     EXPECT_EQ(1, state->getParenCount(lexer));
     EXPECT_TRUE(state->wasLastEOL(lexer));
-    EXPECT_EQ(MasterLexer::Token::INITIAL_WS,
-              state->getToken(lexer).getType());
 
     // Now get the token and check the state changed
     EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
     EXPECT_EQ(2, state->getParenCount(lexer));
     EXPECT_FALSE(state->wasLastEOL(lexer));
-    EXPECT_EQ(MasterLexer::Token::END_OF_LINE,
-              state->getToken(lexer).getType());
 
     // Return the token back. Check the state is as it was before.
     lexer.ungetToken();
     EXPECT_EQ(1, state->getParenCount(lexer));
     EXPECT_TRUE(state->wasLastEOL(lexer));
-    EXPECT_EQ(MasterLexer::Token::INITIAL_WS,
-              state->getToken(lexer).getType());
     // By calling getToken again, we verify even the source got back to
     // original. We must push it as a fake start again so it is picked.
     lexer.pushFakeStart(state.get());
     EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
     EXPECT_EQ(2, state->getParenCount(lexer));
     EXPECT_FALSE(state->wasLastEOL(lexer));
-    EXPECT_EQ(MasterLexer::Token::END_OF_LINE,
-              state->getToken(lexer).getType());
 }
 
 // Check ungetting token without overriding the start method. We also
@@ -413,8 +405,6 @@ TEST_F(MasterLexerTest, getTokenExceptions) {
     EXPECT_THROW(lexer.getNextToken(), TestException);
     EXPECT_EQ(0, s1->getParenCount(lexer));
     EXPECT_FALSE(s1->wasLastEOL(lexer));
-    EXPECT_EQ(MasterLexer::Token::NOT_STARTED,
-              s1->getToken(lexer).getErrorCode());
 
     // It gets back to the original state, so getting the newline works.
     EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
