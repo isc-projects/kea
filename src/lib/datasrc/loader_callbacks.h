@@ -40,9 +40,9 @@ class ZoneUpdater;
 ///     the loading, it is set to false. Otherwise, it is untouched.
 /// \return Set of callbacks to be passed to the master loader.
 /// \throw std::bad_alloc when allocation fails.
-dns::LoaderCallbacks
-createCallbacks(ZoneUpdater& updater, const dns::Name& name,
-                const dns::RRClass& rrclass, bool* ok);
+isc::dns::LoaderCallbacks
+createCallbacks(ZoneUpdater& updater, const isc::dns::Name& name,
+                const isc::dns::RRClass& rrclass, bool* ok);
 
 }
 }

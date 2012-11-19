@@ -29,8 +29,9 @@ namespace datasrc {
 namespace {
 
 void
-logError(const dns::Name& name, const dns::RRClass& rrclass, bool* ok,
-         const std::string& source, size_t line, const std::string& reason)
+logError(const isc::dns::Name& name, const isc::dns::RRClass& rrclass,
+         bool* ok, const std::string& source, size_t line,
+         const std::string& reason)
 {
     LOG_ERROR(logger, DATASRC_LOAD_CONTEXT_ERROR).arg(source).arg(line).
         arg(name).arg(rrclass).arg(reason);
@@ -40,7 +41,7 @@ logError(const dns::Name& name, const dns::RRClass& rrclass, bool* ok,
 }
 
 void
-logWarning(const dns::Name& name, const dns::RRClass& rrclass,
+logWarning(const isc::dns::Name& name, const isc::dns::RRClass& rrclass,
          const std::string& source, size_t line, const std::string& reason)
 {
     LOG_WARN(logger, DATASRC_LOAD_CONTEXT_WARN).arg(source).arg(line).
@@ -50,8 +51,8 @@ logWarning(const dns::Name& name, const dns::RRClass& rrclass,
 }
 
 isc::dns::LoaderCallbacks
-createCallbacks(ZoneUpdater& updater, const dns::Name& name,
-                const dns::RRClass& rrclass, bool* ok)
+createCallbacks(ZoneUpdater& updater, const isc::dns::Name& name,
+                const isc::dns::RRClass& rrclass, bool* ok)
 {
     return (isc::dns::LoaderCallbacks(boost::bind(&logError, name, rrclass, ok,
                                                   _1, _2, _3),
@@ -63,7 +64,8 @@ createCallbacks(ZoneUpdater& updater, const dns::Name& name,
                                                   // shared pointer, we need
                                                   // the object. This bind
                                                   // unpacks the object.
-                                                  boost::bind(&dns::RRsetPtr::
+                                                  boost::bind(&isc::dns::
+                                                              RRsetPtr::
                                                               operator*,
                                                               _1))));
 }
