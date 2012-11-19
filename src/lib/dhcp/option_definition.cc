@@ -99,7 +99,7 @@ OptionDefinition::addRecordField(const DataType data_type) {
 OptionPtr
 OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                                 OptionBufferConstIter begin,
-                                OptionBufferConstIter end) {
+                                OptionBufferConstIter end) const {
     validate();
 
     if (type_ == BINARY_TYPE) {
@@ -138,8 +138,14 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
 
 OptionPtr
 OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
-                                const OptionBuffer& buf) {
+                                const OptionBuffer& buf) const {
     return (optionFactory(u, type, buf.begin(), buf.end()));
+}
+
+OptionPtr
+OptionDefinition::optionFactory(Option::Universe, uint16_t,
+                                const std::vector<std::string>&) const {
+    return (OptionPtr());
 }
 
 void

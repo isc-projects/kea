@@ -275,9 +275,10 @@ public:
     /// @param end end of the option buffer.
     ///
     /// @return instance of the DHCP option.
+    /// @todo list thrown exceptions.
     OptionPtr optionFactory(Option::Universe u, uint16_t type,
                             OptionBufferConstIter begin,
-                            OptionBufferConstIter end);
+                            OptionBufferConstIter end) const;
 
     /// @brief Option factory.
     ///
@@ -290,8 +291,32 @@ public:
     /// @param buf option buffer.
     ///
     /// @return instance of the DHCP option.
+    /// @todo list thrown exceptions.
     OptionPtr optionFactory(Option::Universe u, uint16_t type,
-                            const OptionBuffer& buf);
+                            const OptionBuffer& buf) const;
+
+    /// @brief Option factory.
+    ///
+    /// This function creates an instance of DHCP option using the vector
+    /// of strings which carry data values for option data fields.
+    /// The order of values in the vector corresponds to the order of data
+    /// fields in the option. The supplied string values are cast to
+    /// their actual data types which are determined based on the
+    /// option definition. If cast fails due to type mismatch, an exception
+    /// is thrown. This factory function can be used to create option
+    /// instance when user specified option value in the <b>comma separated
+    /// values</b> format in the configuration database. Provided string
+    /// must be tokenized into the vector of string values and this vector
+    /// can be supplied to this function.
+    ///
+    /// @param universe option universe (V4 or V6).
+    /// @param type option type.
+    /// @param values a vector of values to be used to set data for an option.
+    ///
+    /// @return instance of the DHCP option.
+    /// @todo list thrown exceptions.
+    OptionPtr optionFactory(Option::Universe u, uint16_t type,
+                            const std::vector<std::string>& values) const;
 
     /// @brief Factory to create option with address list.
     ///
