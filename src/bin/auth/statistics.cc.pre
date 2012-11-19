@@ -203,35 +203,39 @@ Counters::incResponse(const MessageAttributes& msgattrs,
         rcode_to_msgcounter[rcode] : MSG_RCODE_OTHER;
     server_msg_counter_.inc(rcode_type);
 
-    // compound attributes
-    const unsigned int answer_rrs =
-        response.getRRCount(Message::SECTION_ANSWER);
-    const bool is_aa_set = response.getHeaderFlag(Message::HEADERFLAG_AA);
+    if (msgattrs.getRequestOpCode() == Opcode::QUERY_CODE) {
+        // compound attributes
+        const unsigned int answer_rrs =
+            response.getRRCount(Message::SECTION_ANSWER);
+        const bool is_aa_set = response.getHeaderFlag(Message::HEADERFLAG_AA);
 
-    if (is_aa_set) {
-        // QryAuthAns
-        server_msg_counter_.inc(MSG_QRYAUTHANS);
-    } else {
-        // QryNoAuthAns
-        server_msg_counter_.inc(MSG_QRYNOAUTHANS);
-    }
-
-    if (rcode == Rcode::NOERROR_CODE) {
-        if (answer_rrs > 0) {
-            // QrySuccess
-            server_msg_counter_.inc(MSG_QRYSUCCESS);
+        if (is_aa_set) {
+            // QryAuthAns
+            server_msg_counter_.inc(MSG_QRYAUTHANS);
         } else {
-            if (is_aa_set) {
-                // QryNxrrset
-                server_msg_counter_.inc(MSG_QRYNXRRSET);
+            // QryNoAuthAns
+            server_msg_counter_.inc(MSG_QRYNOAUTHANS);
+        }
+
+        if (rcode == Rcode::NOERROR_CODE) {
+            if (answer_rrs > 0) {
+                // QrySuccess
+                server_msg_counter_.inc(MSG_QRYSUCCESS);
             } else {
-                // QryReferral
-                server_msg_counter_.inc(MSG_QRYREFERRAL);
+                if (is_aa_set) {
+                    // QryNxrrset
+                    server_msg_counter_.inc(MSG_QRYNXRRSET);
+                } else {
+                    // QryReferral
+                    server_msg_counter_.inc(MSG_QRYREFERRAL);
+                }
+            }
+        } else if (rcode == Rcode::REFUSED_CODE) {
+            if (!response.getHeaderFlag(Message::HEADERFLAG_RD)) {
+                // AuthRej
+                server_msg_counter_.inc(MSG_QRYREJECT);
             }
         }
-    } else if (rcode == Rcode::REFUSED_CODE) {
-        // AuthRej
-        server_msg_counter_.inc(MSG_QRYREJECT);
     }
 }
 
