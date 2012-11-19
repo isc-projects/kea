@@ -28,30 +28,35 @@ namespace isc {
 namespace dhcp {
 
 OptionDefinition::DataTypeUtil::DataTypeUtil() {
-    data_types_["empty"] = EMPTY_TYPE;
-    data_types_["binary"] = BINARY_TYPE;
-    data_types_["boolean"] = BOOLEAN_TYPE;
-    data_types_["int8"] = INT8_TYPE;
-    data_types_["int16"] = INT16_TYPE;
-    data_types_["int32"] = INT32_TYPE;
-    data_types_["uint8"] = UINT8_TYPE;
-    data_types_["uint16"] = UINT16_TYPE;
-    data_types_["uint32"] = UINT32_TYPE;
-    data_types_["ipv4-address"] = IPV4_ADDRESS_TYPE;
-    data_types_["ipv6-address"] = IPV6_ADDRESS_TYPE;
-    data_types_["string"] = STRING_TYPE;
-    data_types_["fqdn"] = FQDN_TYPE;
-    data_types_["record"] = RECORD_TYPE;
+    data_types_["empty"] = OPT_EMPTY_TYPE;
+    data_types_["binary"] = OPT_BINARY_TYPE;
+    data_types_["boolean"] = OPT_BOOLEAN_TYPE;
+    data_types_["int8"] = OPT_INT8_TYPE;
+    data_types_["int16"] = OPT_INT16_TYPE;
+    data_types_["int32"] = OPT_INT32_TYPE;
+    data_types_["uint8"] = OPT_UINT8_TYPE;
+    data_types_["uint16"] = OPT_UINT16_TYPE;
+    data_types_["uint32"] = OPT_UINT32_TYPE;
+    data_types_["ipv4-address"] = OPT_IPV4_ADDRESS_TYPE;
+    data_types_["ipv6-address"] = OPT_IPV6_ADDRESS_TYPE;
+    data_types_["string"] = OPT_STRING_TYPE;
+    data_types_["fqdn"] = OPT_FQDN_TYPE;
+    data_types_["record"] = OPT_RECORD_TYPE;
 }
 
-OptionDefinition::DataType
-OptionDefinition::DataTypeUtil::getDataType(const std::string& data_type) {
-    std::map<std::string, DataType>::const_iterator data_type_it =
+template<typename T>
+T OptionDefinition::DataTypeUtil::dataTypeCast(const std::string& value_str) const {
+    return (T());
+}
+
+OptionDataType
+OptionDefinition::DataTypeUtil::getOptionDataType(const std::string& data_type) {
+    std::map<std::string, OptionDataType>::const_iterator data_type_it =
         data_types_.find(data_type);
     if (data_type_it != data_types_.end()) {
         return (data_type_it->second);
     }
-    return UNKNOWN_TYPE;
+    return (OPT_UNKNOWN_TYPE);
 }
 
 OptionDefinition::OptionDefinition(const std::string& name,
@@ -60,17 +65,17 @@ OptionDefinition::OptionDefinition(const std::string& name,
                                  const bool array_type /* = false */)
     : name_(name),
       code_(code),
-      type_(UNKNOWN_TYPE),
+      type_(OPT_UNKNOWN_TYPE),
       array_type_(array_type) {
     // Data type is held as enum value by this class.
     // Use the provided option type string to get the
     // corresponding enum value.
-    type_ = DataTypeUtil::instance().getDataType(type);
+    type_ = DataTypeUtil::instance().getOptionDataType(type);
 }
 
 OptionDefinition::OptionDefinition(const std::string& name,
                                    const uint16_t code,
-                                   const DataType type,
+                                   const OptionDataType type,
                                    const bool array_type /* = false */)
     : name_(name),
       code_(code),
@@ -80,17 +85,17 @@ OptionDefinition::OptionDefinition(const std::string& name,
 
 void
 OptionDefinition::addRecordField(const std::string& data_type_name) {
-    DataType data_type = DataTypeUtil::instance().getDataType(data_type_name);
+    OptionDataType data_type = DataTypeUtil::instance().getOptionDataType(data_type_name);
     addRecordField(data_type);
 }
 
 void
-OptionDefinition::addRecordField(const DataType data_type) {
-    if (type_ != RECORD_TYPE) {
+OptionDefinition::addRecordField(const OptionDataType data_type) {
+    if (type_ != OPT_RECORD_TYPE) {
         isc_throw(isc::InvalidOperation, "'record' option type must be used"
                   " to add data fields to the record");
     }
-    if (data_type >= UNKNOWN_TYPE) {
+    if (data_type >= OPT_UNKNOWN_TYPE) {
         isc_throw(isc::BadValue, "attempted to add invalid data type to the record");
     }
     record_fields_.push_back(data_type);
@@ -101,32 +106,32 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                                 OptionBufferConstIter begin,
                                 OptionBufferConstIter end) const {
     validate();
-
-    if (type_ == BINARY_TYPE) {
+    
+    if (type_ == OPT_BINARY_TYPE) {
         return (factoryGeneric(u, type, begin, end));
-    } else if (type_ == IPV6_ADDRESS_TYPE && array_type_) {
+    } else if (type_ == OPT_IPV6_ADDRESS_TYPE && array_type_) {
         return (factoryAddrList6(u, type, begin, end));
-    } else if (type_ == IPV4_ADDRESS_TYPE && array_type_) {
+    } else if (type_ == OPT_IPV4_ADDRESS_TYPE && array_type_) {
         return (factoryAddrList4(u, type, begin, end));
-    } else if (type_ == EMPTY_TYPE) {
+    } else if (type_ == OPT_EMPTY_TYPE) {
         return (factoryEmpty(u, type, begin, end));
     } else if (code_ == D6O_IA_NA && haveIA6Format()) {
         return (factoryIA6(u, type, begin, end));
     } else if (code_ == D6O_IAADDR && haveIAAddr6Format()) {
         return (factoryIAAddr6(u, type, begin, end));
-    } else if (type_ == UINT8_TYPE) {
+    } else if (type_ == OPT_UINT8_TYPE) {
         if (array_type_) {
             return (factoryGeneric(u, type, begin, end));
         } else {
             return (factoryInteger<uint8_t>(u, type, begin, end));
         }
-    } else if (type_ == UINT16_TYPE) {
+    } else if (type_ == OPT_UINT16_TYPE) {
         if (array_type_) {
             return (factoryIntegerArray<uint16_t>(u, type, begin, end));
         } else {
             return (factoryInteger<uint16_t>(u, type, begin, end));
         }
-    } else if (type_ == UINT32_TYPE) {
+    } else if (type_ == OPT_UINT32_TYPE) {
         if (array_type_) {
             return (factoryIntegerArray<uint32_t>(u, type, begin, end));
         } else {
@@ -167,19 +172,19 @@ OptionDefinition::validate() const {
         isc_throw(isc::BadValue, "option name must not contain spaces");
     }
     // Unsupported option types are not allowed.
-    if (type_ >= UNKNOWN_TYPE) {
+    if (type_ >= OPT_UNKNOWN_TYPE) {
         isc_throw(isc::OutOfRange, "option type value " << type_
                   << " is out of range");
     }
 }
 
 bool
-OptionDefinition::haveIAx6Format(OptionDefinition::DataType first_type) const {
-   return (haveType(RECORD_TYPE) &&
+OptionDefinition::haveIAx6Format(OptionDataType first_type) const {
+   return (haveType(OPT_RECORD_TYPE) &&
            record_fields_.size() == 3 &&
            record_fields_[0] == first_type &&
-           record_fields_[1] == UINT32_TYPE &&
-           record_fields_[2] == UINT32_TYPE);
+           record_fields_[1] == OPT_UINT32_TYPE &&
+           record_fields_[2] == OPT_UINT32_TYPE);
 }
 
 bool
@@ -190,12 +195,12 @@ OptionDefinition::haveIA6Format() const {
     // arrays do not impose limitations on number of elements in
     // the array while this limitation is needed for IA_NA - need
     // exactly 3 elements.
-    return (haveIAx6Format(UINT32_TYPE));
+    return (haveIAx6Format(OPT_UINT32_TYPE));
 }
 
 bool
 OptionDefinition::haveIAAddr6Format() const {
-    return (haveIAx6Format(IPV6_ADDRESS_TYPE));
+    return (haveIAx6Format(OPT_IPV6_ADDRESS_TYPE));
 }
 
 OptionPtr
