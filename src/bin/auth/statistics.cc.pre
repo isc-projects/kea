@@ -42,6 +42,10 @@ using namespace isc::auth::statistics;
 
 namespace {
 
+/// \brief Fill ItemTreePtr with given counter.
+/// \param counter Counter which stores values to fill
+/// \param type_tree CounterSpec corresponding to counter for building item name
+/// \param trees ItemTreePtr to be filled in; caller has ownership of ItemTreePtr
 void
 fillNodes(const Counter& counter,
           const struct isc::auth::statistics::CounterSpec type_tree[],
