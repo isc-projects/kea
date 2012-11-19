@@ -1904,6 +1904,42 @@ class TestBossComponents(unittest.TestCase):
         self.assertEqual(len(bob._unix_sockets), 1)
         self.assertEqual(bob._unix_sockets[42][1], b'You')
 
+    def test_startup(self):
+        '''Test that BoB.startup() handles failures properly.'''
+        class MockBobStartup(BoB):
+            def __init__(self, throw):
+                self.throw = throw
+                self.started = False
+                self.killed = False
+                self.msgq_socket_file = None
+                self.curproc = 'myproc'
+                self.runnable = False
+
+            def start_all_components(self):
+                self.started = True
+                if self.throw:
+                    raise Exception('Assume starting components has failed.')
+
+            def kill_started_components(self):
+                self.killed = True
+
+        # All is well case
+        bob = MockBobStartup(False)
+        r = bob.startup()
+        self.assertIsNone(r)
+        self.assertTrue(bob.started)
+        self.assertFalse(bob.killed)
+        self.assertTrue(bob.runnable)
+
+        # Case where starting all components fails
+        bob = MockBobStartup(True)
+        r = bob.startup()
+        # r contains an error message
+        self.assertEqual(r, 'Unable to start myproc: Assume starting components has failed.')
+        self.assertTrue(bob.started)
+        self.assertTrue(bob.killed)
+        self.assertFalse(bob.runnable)
+
 class SocketSrvTest(unittest.TestCase):
     """
     This tests some methods of boss related to the unix domain sockets used
