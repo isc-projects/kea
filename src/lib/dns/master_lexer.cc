@@ -38,7 +38,6 @@ struct MasterLexer::MasterLexerImpl {
     MasterLexerImpl() : source_(NULL), token_(Token::NOT_STARTED),
                         paren_count_(0), last_was_eol_(false),
                         has_previous_(false),
-                        previous_token_(Token::NOT_STARTED),
                         previous_paren_count_(0),
                         previous_was_eol_(false)
     {
@@ -99,7 +98,6 @@ struct MasterLexer::MasterLexerImpl {
 
     // These are to allow restoring state before previous token.
     bool has_previous_;
-    Token previous_token_;
     size_t previous_paren_count_;
     bool previous_was_eol_;
 };
@@ -176,7 +174,6 @@ MasterLexer::getNextToken(Options options) {
     impl_->has_previous_ = false;
     // If thrown in this section, nothing observable except for not having
     // previous will happen.
-    impl_->previous_token_ = impl_->token_;
     impl_->previous_paren_count_ = impl_->paren_count_;
     impl_->previous_was_eol_ = impl_->last_was_eol_;
     impl_->source_->mark();
@@ -206,9 +203,6 @@ MasterLexer::getNextToken(Options options) {
 void
 MasterLexer::ungetToken() {
     if (impl_->has_previous_) {
-        // The one that could fail due to bad_alloc first
-        impl_->token_ = impl_->previous_token_;
-        // The rest should not throw.
         impl_->has_previous_ = false;
         impl_->source_->ungetAll();
         impl_->last_was_eol_ = impl_->previous_was_eol_;
