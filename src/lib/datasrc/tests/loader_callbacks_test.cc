@@ -59,9 +59,9 @@ public:
     std::list<isc::dns::RRsetPtr> expected_rrsets_;
 };
 
-class LoaderContextTest : public ::testing::Test {
+class LoaderCallbackTest : public ::testing::Test {
 protected:
-    LoaderContextTest() :
+    LoaderCallbackTest() :
         ok_(true),
         callbacks_(createCallbacks(updater_, isc::dns::Name("example.org"),
                                    isc::dns::RRClass::IN(), &ok_))
@@ -85,7 +85,7 @@ protected:
 };
 
 // Check it doesn't crash if we don't provide the OK
-TEST_F(LoaderContextTest, noOkProvided) {
+TEST_F(LoaderCallbackTest, noOkProvided) {
     createCallbacks(updater_, isc::dns::Name("example.org"),
                     isc::dns::RRClass::IN(), NULL).error("No source", 1,
                                                          "No reason");
@@ -94,7 +94,7 @@ TEST_F(LoaderContextTest, noOkProvided) {
 // Check the callbacks can be called, don't crash and the error one switches
 // to non-OK mode. This, however, does not stop anybody from calling more
 // callbacks.
-TEST_F(LoaderContextTest, callbacks) {
+TEST_F(LoaderCallbackTest, callbacks) {
     EXPECT_NO_THROW(callbacks_.warning("No source", 1, "Just for fun"));
     // The warning does not hurt the OK mode.
     EXPECT_TRUE(ok_);
@@ -111,7 +111,7 @@ TEST_F(LoaderContextTest, callbacks) {
 }
 
 // Try adding some RRsets.
-TEST_F(LoaderContextTest, addRRset) {
+TEST_F(LoaderCallbackTest, addRRset) {
     // Put some of them in.
     EXPECT_NO_THROW(callbacks_.addRRset(generateRRset()));
     EXPECT_NO_THROW(callbacks_.addRRset(generateRRset()));
