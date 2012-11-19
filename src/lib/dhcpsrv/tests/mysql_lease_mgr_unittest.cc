@@ -36,14 +36,11 @@ namespace {
 #include "schema_copy.h"
 
 // IPv6 addresseses
-const char* ADDRESS_0 = "2001:db8::0";
-const char* ADDRESS_1 = "2001:db8::1";
-const char* ADDRESS_2 = "2001:db8::2";
-const char* ADDRESS_3 = "2001:db8::3";
-const char* ADDRESS_4 = "2001:db8::4";
-const char* ADDRESS_5 = "2001:db8::5";
-const char* ADDRESS_6 = "2001:db8::6";
-const char* ADDRESS_7 = "2001:db8::7";
+const char* ADDRESS6[] = {
+    "2001:db8::0", "2001:db8::1", "2001:db8::2", "2001:db8::3",
+    "2001:db8::4", "2001:db8::5", "2001:db8::6", "2001:db8::7",
+    NULL
+};
 
 // Connection strings.  Assume:
 // Database: keatest
@@ -168,15 +165,14 @@ public:
     // @brief Constructor
     //
     // Deletes everything from the database and opens it.
-    MySqlLeaseMgrTest() :
-        L0_ADDRESS(ADDRESS_0), L0_IOADDRESS(L0_ADDRESS), 
-        L1_ADDRESS(ADDRESS_1), L1_IOADDRESS(L1_ADDRESS), 
-        L2_ADDRESS(ADDRESS_2), L2_IOADDRESS(L2_ADDRESS), 
-        L3_ADDRESS(ADDRESS_3), L3_IOADDRESS(L3_ADDRESS), 
-        L4_ADDRESS(ADDRESS_4), L4_IOADDRESS(L4_ADDRESS), 
-        L5_ADDRESS(ADDRESS_5), L5_IOADDRESS(L5_ADDRESS), 
-        L6_ADDRESS(ADDRESS_6), L6_IOADDRESS(L6_ADDRESS), 
-        L7_ADDRESS(ADDRESS_7), L7_IOADDRESS(L7_ADDRESS) {
+    MySqlLeaseMgrTest() {
+        // Initialize address strings and IOAddresses
+        for (int i = 0; ADDRESS6[i] != NULL; ++i) {
+            string addr(ADDRESS6[i]);
+            straddress6_.push_back(addr);
+            IOAddress ioaddr(addr);
+            ioaddress6_.push_back(ioaddr);
+        }
 
         destroySchema();
         createSchema();
@@ -240,8 +236,8 @@ public:
         lease->fqdn_rev_ = false;                   // Unused
         lease->comments_ = std::string("");         // Unused
 
-        // Set the other parameters.  For historical reasons, L0_ADDRESS is not used.
-        if (address == L0_ADDRESS) {
+        // Set other parameters.  For historical reasons, address 0 is not used.
+        if (address == straddress6_[0]) {
             lease->type_ = Lease6::LEASE_IA_TA;
             lease->prefixlen_ = 4;
             lease->iaid_ = 142;
@@ -251,7 +247,7 @@ public:
             lease->cltt_ = 168256;         // Current time of day
             lease->subnet_id_ = 23;        // Arbitrary number
 
-        } else if (address == L1_ADDRESS) {
+        } else if (address == straddress6_[1]) {
             lease->type_ = Lease6::LEASE_IA_TA;
             lease->prefixlen_ = 0;
             lease->iaid_ = 42;
@@ -261,7 +257,7 @@ public:
             lease->cltt_ = 123456;         // Current time of day
             lease->subnet_id_ = 73;        // Arbitrary number
 
-        } else if (address == L2_ADDRESS) {
+        } else if (address == straddress6_[2]) {
             lease->type_ = Lease6::LEASE_IA_PD;
             lease->prefixlen_ = 7;
             lease->iaid_ = 89;
@@ -269,9 +265,9 @@ public:
             lease->preferred_lft_ = 1800;  // Preferred lifetime
             lease->valid_lft_ = 5412;      // Actual lifetime
             lease->cltt_ = 234567;         // Current time of day
-            lease->subnet_id_ = 73;        // Same as for L1_ADDRESS
+            lease->subnet_id_ = 73;        // Same as for straddress6_1
 
-        } else if (address == L3_ADDRESS) {
+        } else if (address == straddress6_[3]) {
             lease->type_ = Lease6::LEASE_IA_NA;
             lease->prefixlen_ = 28;
             lease->iaid_ = 0xfffffffe;
@@ -290,8 +286,8 @@ public:
             lease->cltt_ = 234567;         // Current time of day
             lease->subnet_id_ = 37;        // Different from L1 and L2
 
-        } else if (address == L4_ADDRESS) {
-            // Same DUID and IAID as L1_ADDRESS
+        } else if (address == straddress6_[4]) {
+            // Same DUID and IAID as straddress6_1
             lease->type_ = Lease6::LEASE_IA_PD;
             lease->prefixlen_ = 15;
             lease->iaid_ = 42;
@@ -301,8 +297,8 @@ public:
             lease->cltt_ = 222456;         // Current time of day
             lease->subnet_id_ = 75;        // Arbitrary number
 
-        } else if (address == L5_ADDRESS) {
-            // Same DUID and IAID as L1_ADDRESS
+        } else if (address == straddress6_[5]) {
+            // Same DUID and IAID as straddress6_1
             lease->type_ = Lease6::LEASE_IA_PD;
             lease->prefixlen_ = 24;
             lease->iaid_ = 42;
@@ -312,8 +308,8 @@ public:
             lease->cltt_ = 227476;         // Current time of day
             lease->subnet_id_ = 175;       // Arbitrary number
 
-        } else if (address == L6_ADDRESS) {
-            // Same DUID as L1_ADDRESS
+        } else if (address == straddress6_[6]) {
+            // Same DUID as straddress6_1
             lease->type_ = Lease6::LEASE_IA_PD;
             lease->prefixlen_ = 24;
             lease->iaid_ = 93;
@@ -323,8 +319,8 @@ public:
             lease->cltt_ = 627476;         // Current time of day
             lease->subnet_id_ = 112;       // Arbitrary number
 
-        } else if (address == L7_ADDRESS) {
-            // Same IAID as L1_ADDRESS
+        } else if (address == straddress6_[7]) {
+            // Same IAID as straddress6_1
             lease->type_ = Lease6::LEASE_IA_PD;
             lease->prefixlen_ = 24;
             lease->iaid_ = 42;
@@ -350,17 +346,11 @@ public:
     // @return vector<Lease6Ptr> Vector of pointers to leases
     vector<Lease6Ptr> createLeases6() {
 
-        // Create leases
+        // Create leases for each address
         vector<Lease6Ptr> leases;
-        leases.push_back(initializeLease6(L0_ADDRESS));
-        leases.push_back(initializeLease6(L1_ADDRESS));
-        leases.push_back(initializeLease6(L2_ADDRESS));
-        leases.push_back(initializeLease6(L3_ADDRESS));
-        leases.push_back(initializeLease6(L4_ADDRESS));
-        leases.push_back(initializeLease6(L5_ADDRESS));
-        leases.push_back(initializeLease6(L6_ADDRESS));
-        leases.push_back(initializeLease6(L7_ADDRESS));
-
+        for (int i = 0; i < straddress6_.size(); ++i) {
+            leases.push_back(initializeLease6(straddress6_[i]));
+        }
         EXPECT_EQ(8, leases.size());
 
         // Check they were created
@@ -381,31 +371,10 @@ public:
 
     // Member variables
 
-    LeaseMgr*   lmptr_;         // Pointer to the lease manager
+    LeaseMgr*   lmptr_;             // Pointer to the lease manager
 
-    string L0_ADDRESS;          // String form of address 1
-    IOAddress L0_IOADDRESS;     // IOAddress form of L1_ADDRESS
-
-    string L1_ADDRESS;          // String form of address 1
-    IOAddress L1_IOADDRESS;     // IOAddress form of L1_ADDRESS
-
-    string L2_ADDRESS;          // String form of address 2
-    IOAddress L2_IOADDRESS;     // IOAddress form of L2_ADDRESS
-
-    string L3_ADDRESS;          // String form of address 3
-    IOAddress L3_IOADDRESS;     // IOAddress form of L3_ADDRESS
-
-    string L4_ADDRESS;          // String form of address 4
-    IOAddress L4_IOADDRESS;     // IOAddress form of L4_ADDRESS
-
-    string L5_ADDRESS;          // String form of address 5
-    IOAddress L5_IOADDRESS;     // IOAddress form of L5_ADDRESS
-
-    string L6_ADDRESS;          // String form of address 6
-    IOAddress L6_IOADDRESS;     // IOAddress form of L6_ADDRESS
-
-    string L7_ADDRESS;          // String form of address 7
-    IOAddress L7_IOADDRESS;     // IOAddress form of L7_ADDRESS
+    vector<string>  straddress6_;   // String forms of IPv6 addresses
+    vector<IOAddress> ioaddress6_;  // IOAddress forms of IPv6 addresses
 };
 
 
@@ -538,9 +507,24 @@ TEST_F(MySqlLeaseMgrTest, checkVersion) {
     EXPECT_EQ(CURRENT_VERSION_MINOR, version.second);
 }
 
+// @brief Compare two Lease4 structures for equality
+void
+detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second) {
+    // Compare address strings.  Comparison of address objects is not used, as
+    // odd things happen when they are different: the EXPECT_EQ macro appears to
+    // call the operator uint32_t() function, which causes an exception to be
+    // thrown for IPv6 addresses.
+    EXPECT_EQ(first->addr_.toText(), second->addr_.toText());
+    EXPECT_TRUE(first->hwaddr_ == second->hwaddr_);
+    EXPECT_TRUE(*first->client_id_ == *second->client_id_);
+    EXPECT_EQ(first->valid_lft_, second->valid_lft_);
+    EXPECT_EQ(first->cltt_, second->cltt_);
+    EXPECT_EQ(first->subnet_id_, second->subnet_id_);
+}
+
 // @brief Compare two Lease6 structures for equality
 void
-detailCompareLease6(const Lease6Ptr& first, const Lease6Ptr& second) {
+detailCompareLease(const Lease6Ptr& first, const Lease6Ptr& second) {
     EXPECT_EQ(first->type_, second->type_);
 
     // Compare address strings.  Comparison of address objects is not used, as
@@ -560,7 +544,7 @@ detailCompareLease6(const Lease6Ptr& first, const Lease6Ptr& second) {
 
 // @brief Check individual Lease6 methods
 //
-// Checks that the add/update/delete works.  All are done within one
+// Checks that the add/get/delete works.  All are done within one
 // test so that "rollback" can be used to remove trace of the tests
 // from the database.
 //
@@ -580,32 +564,32 @@ TEST_F(MySqlLeaseMgrTest, basicLease6) {
     // Reopen the database to ensure that they actually got stored.
     reopen();
 
-    Lease6Ptr l_returned = lmptr_->getLease6(L1_IOADDRESS);
+    Lease6Ptr l_returned = lmptr_->getLease6(ioaddress6_[1]);
     EXPECT_TRUE(l_returned);
-    detailCompareLease6(leases[1], l_returned);
+    detailCompareLease(leases[1], l_returned);
 
-    l_returned = lmptr_->getLease6(L2_IOADDRESS);
+    l_returned = lmptr_->getLease6(ioaddress6_[2]);
     EXPECT_TRUE(l_returned);
-    detailCompareLease6(leases[2], l_returned);
+    detailCompareLease(leases[2], l_returned);
 
-    l_returned = lmptr_->getLease6(L3_IOADDRESS);
+    l_returned = lmptr_->getLease6(ioaddress6_[3]);
     EXPECT_TRUE(l_returned);
-    detailCompareLease6(leases[3], l_returned);
+    detailCompareLease(leases[3], l_returned);
 
     // Check that we can't add a second lease with the same address
     EXPECT_FALSE(lmptr_->addLease(leases[1]));
 
     // Delete a lease, check that it's gone, and that we can't delete it
     // a second time.
-    EXPECT_TRUE(lmptr_->deleteLease6(L1_IOADDRESS));
-    l_returned = lmptr_->getLease6(L1_IOADDRESS);
+    EXPECT_TRUE(lmptr_->deleteLease6(ioaddress6_[1]));
+    l_returned = lmptr_->getLease6(ioaddress6_[1]);
     EXPECT_FALSE(l_returned);
-    EXPECT_FALSE(lmptr_->deleteLease6(L1_IOADDRESS));
+    EXPECT_FALSE(lmptr_->deleteLease6(ioaddress6_[1]));
 
     // Check that the second address is still there.
-    l_returned = lmptr_->getLease6(L2_IOADDRESS);
+    l_returned = lmptr_->getLease6(ioaddress6_[2]);
     EXPECT_TRUE(l_returned);
-    detailCompareLease6(leases[2], l_returned);
+    detailCompareLease(leases[2], l_returned);
 }
 
 // @brief Check GetLease6 methods - Access by DUID/IAID
@@ -636,9 +620,9 @@ TEST_F(MySqlLeaseMgrTest, getLease6Extended1) {
         addresses.push_back((*i)->addr_.toText());
     }
     sort(addresses.begin(), addresses.end());
-    EXPECT_EQ(L1_ADDRESS, addresses[0]);
-    EXPECT_EQ(L4_ADDRESS, addresses[1]);
-    EXPECT_EQ(L5_ADDRESS, addresses[2]);
+    EXPECT_EQ(straddress6_[1], addresses[0]);
+    EXPECT_EQ(straddress6_[4], addresses[1]);
+    EXPECT_EQ(straddress6_[5], addresses[2]);
 
     // Check that nothing is returned when either the IAID or DUID match
     // nothing.
@@ -710,9 +694,9 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
     lmptr_->commit();
 
     reopen();
-    Lease6Ptr l_returned = lmptr_->getLease6(L1_IOADDRESS);
+    Lease6Ptr l_returned = lmptr_->getLease6(ioaddress6_[1]);
     EXPECT_TRUE(l_returned);
-    detailCompareLease6(leases[1], l_returned);
+    detailCompareLease(leases[1], l_returned);
 
     // Modify some fields in lease 1 (not the address) and update it.
     ++leases[1]->iaid_;
@@ -724,9 +708,9 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
 
     // ... and check what is returned is what is expected.
     l_returned.reset();
-    l_returned = lmptr_->getLease6(L1_IOADDRESS);
+    l_returned = lmptr_->getLease6(ioaddress6_[1]);
     EXPECT_TRUE(l_returned);
-    detailCompareLease6(leases[1], l_returned);
+    detailCompareLease(leases[1], l_returned);
 
     // Alter the lease again and check.
     ++leases[1]->iaid_;
@@ -736,16 +720,16 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
     lmptr_->updateLease6(leases[1]);
 
     l_returned.reset();
-    l_returned = lmptr_->getLease6(L1_IOADDRESS);
+    l_returned = lmptr_->getLease6(ioaddress6_[1]);
     EXPECT_TRUE(l_returned);
-    detailCompareLease6(leases[1], l_returned);
+    detailCompareLease(leases[1], l_returned);
 
     // Check we can do an update without changing data.
     lmptr_->updateLease6(leases[1]);
     l_returned.reset();
-    l_returned = lmptr_->getLease6(L1_IOADDRESS);
+    l_returned = lmptr_->getLease6(ioaddress6_[1]);
     EXPECT_TRUE(l_returned);
-    detailCompareLease6(leases[1], l_returned);
+    detailCompareLease(leases[1], l_returned);
 
     // Try updating a lease not in the database.
     EXPECT_THROW(lmptr_->updateLease6(leases[2]), isc::dhcp::NoSuchLease);
