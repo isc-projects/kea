@@ -69,7 +69,7 @@ public:
     /// tokenization session.  The lexer passes a reference to itself
     /// and options given in \c getNextToken().
     ///
-    /// \throw InputSource::ReadError Unexpected I/O error
+    /// \throw MasterLexer::ReadError Unexpected I/O error
     /// \throw std::bad_alloc Internal resource allocation failure
     ///
     /// \param lexer The lexer object that holds the main context.
@@ -85,7 +85,7 @@ public:
     /// start(), and keep called on the returned object until NULL is
     /// returned.  The call chain will form the complete state transition.
     ///
-    /// \throw InputSource::ReadError Unexpected I/O error
+    /// \throw MasterLexer::ReadError Unexpected I/O error
     /// \throw std::bad_alloc Internal resource allocation failure
     ///
     /// \param lexer The lexer object that holds the main context.
