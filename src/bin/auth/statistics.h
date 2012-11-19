@@ -231,8 +231,6 @@ class Counters : boost::noncopyable {
 private:
     // counter for DNS message attributes
     isc::statistics::Counter server_msg_counter_;
-    // set of counters for zones
-    isc::statistics::CounterDictionary zone_msg_counters_;
     void incRequest(const MessageAttributes& msgattrs);
     void incResponse(const MessageAttributes& msgattrs,
                      const isc::dns::Message& response);
