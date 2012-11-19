@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dns/master_lexer_inputsource.h>
+#include <dns/master_lexer.h>
 
 #include <cerrno>
 #include <cstring>
@@ -94,7 +95,7 @@ InputSource::getChar() {
         // This has to come after the .eof() check as some
         // implementations seem to check the eofbit also in .fail().
         if (input_.fail()) {
-            isc_throw(ReadError,
+            isc_throw(MasterLexer::ReadError,
                       "Error reading from the input stream: " << getName());
         }
         buffer_.push_back(c);
