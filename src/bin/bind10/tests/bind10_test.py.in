@@ -765,7 +765,8 @@ class MockBobSimple(BoB):
         return MockProcessInfo(name, args, c_channel_env,
                                dev_null_stdout, dev_null_stderr)
 
-    def start_process(self, name, args, c_channel_env, port=None, address=None):
+    def start_process(self, name, args, c_channel_env, port=None,
+                      address=None):
         self.started_process_name = name
         self.started_process_args = args
         return None
