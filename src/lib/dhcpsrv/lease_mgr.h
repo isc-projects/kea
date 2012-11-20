@@ -101,6 +101,33 @@ public:
 /// would be required. As this is a critical part of the code that will be used
 /// extensively, direct access is warranted.
 struct Lease4 {
+    /// @brief Constructor
+    ///
+    /// @param addr IPv4 address as unsigned 32-bit integer in network byte
+    ///        order.
+    /// @param hwaddr Hardware address buffer
+    /// @param hwaddr_len Length of hardware address buffer
+    /// @param clientid Client identification buffer
+    /// @param clientid_len Length of client identification buffer
+    /// @param valid_lft Lifetime of the lease
+    /// @param cltt Client last transmission time
+    /// @param subnet_id Subnet identification
+    Lease4(uint32_t addr, const uint8_t* hwaddr, size_t hwaddr_len,
+           const uint8_t* clientid, size_t clientid_len, uint32_t valid_lft,
+           time_t cltt, uint32_t subnet_id)
+        : addr_(addr), ext_(0), hwaddr_(hwaddr, hwaddr + hwaddr_len),
+          client_id_(new ClientId(clientid, clientid_len)), t1_(0), t2_(0),
+          valid_lft_(valid_lft), cltt_(cltt), subnet_id_(subnet_id),
+          fixed_(false), hostname_(), fqdn_fwd_(false), fqdn_rev_(false),
+          comments_()
+    {}
+
+    /// @brief Default Constructor
+    ///
+    /// Initialize fields that don't have a default constructor.
+    Lease4() : addr_(0) {}
+
+
     /// IPv4 address
     isc::asiolink::IOAddress addr_;
 
@@ -175,12 +202,6 @@ struct Lease4 {
     std::string comments_;
 
     /// @todo: Add DHCPv4 failover related fields here
-
-    /// @brief Constructor
-    ///
-    /// Initialize fields that don't have a default constructor.
-    /// @todo Remove this
-    Lease4() : addr_(0) {}
 };
 
 /// @brief Pointer to a Lease4 structure.
@@ -202,6 +223,7 @@ struct Lease6 {
         LEASE_IA_PD  /// the lease contains IPv6 prefix (for prefix delegation)
     } LeaseType;
 
+    /// @brief Constructor
     Lease6(LeaseType type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
            uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
            uint32_t t2, SubnetID subnet_id, uint8_t prefixlen_ = 0);
