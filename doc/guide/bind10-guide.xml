@@ -419,6 +419,14 @@ var/
         </listitem>
 
         <listitem>
+          <para>If required, run <command>ldconfig</command> as root
+          (with <filename>/usr/local</filename> in
+          <filename>/etc/ld.so.conf</filename>):
+            <screen>$ <userinput>ldconfig</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
           <para>Start the server (as root):
             <screen>$ <userinput>/usr/local/sbin/bind10</userinput></screen>
           </para>
@@ -783,7 +791,22 @@ as a dependency earlier -->
         <note>
           <para>The install step may require superuser privileges.</para>
         </note>
-
+        <para>
+	  If required, run <command>ldconfig</command> as root (with
+	  <filename>/usr/local</filename> in
+	  <filename>/etc/ld.so.conf</filename>):
+	  <screen>$ <userinput>ldconfig</userinput></screen>
+        </para>
+        <note>
+          <para>
+	    If you do not run <command>ldconfig</command> where it is
+	    required, you may see errors like the following:
+            <screen>
+	      program: error while loading shared libraries: libb10-something.so.1:
+	      cannot open shared object file: No such file or directory
+	    </screen>
+	  </para>
+        </note>
       </section>
 
   <!-- TODO: tests -->
