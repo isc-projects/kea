@@ -324,7 +324,7 @@ TEST_F(MasterLexerTest, ungetSimple) {
     // Prepare the token to get and return
     const std::string expected = "234";
     const MasterLexer::Token token(MasterLexer::Token::END_OF_LINE);
-    // Change the internal state with it too. So we can check it is retured.
+    // Change the internal state with it too. So we can check it is returned.
     scoped_ptr<const State> state(State::getFakeState(NULL, 3, &token, 1,
                                                       &false_value,
                                                       boost::bind(&checkInput,
