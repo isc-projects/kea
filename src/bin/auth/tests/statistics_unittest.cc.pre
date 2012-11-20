@@ -14,14 +14,13 @@
 
 #include <config.h>
 
-#include <string>
-
 #include <gtest/gtest.h>
 
 #include <boost/bind.hpp>
 
 #include <dns/opcode.h>
 #include <dns/rcode.h>
+#include <dns/rrttl.h>
 
 #include <cc/data.h>
 #include <cc/session.h>
@@ -30,6 +29,9 @@
 #include <auth/statistics_items.h>
 
 #include <dns/tests/unittest_util.h>
+
+#include <string>
+#include <map>
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -54,14 +56,15 @@ protected:
     Counters counters;
 };
 
+// flatten counters
 void
 flatten(std::map<std::string, int>& flat_map, const std::string& prefix,
         const isc::data::ConstElementPtr map_element) {
     std::map<std::string, ConstElementPtr> map = map_element->mapValue();
     for (std::map<std::string, ConstElementPtr>::const_iterator
-            i = map.begin(), e = map.end();
-            i != e;
-            ++i)
+             i = map.begin(), e = map.end();
+         i != e;
+         ++i)
     {
         switch (i->second->getType()) {
             case isc::data::Element::map:
@@ -76,11 +79,12 @@ flatten(std::map<std::string, int>& flat_map, const std::string& prefix,
     }
 }
 
-// Test if the values of the counters are all zero except for the items
-// specified in except_for.
+// Test if the counters has expected values specified in expect and the others
+// are zero.
 void
-checkCountersAllZeroExcept(const isc::data::ConstElementPtr counters,
-                           const std::set<std::string>& except_for) {
+checkCounters(const isc::data::ConstElementPtr counters,
+              const std::map<std::string, int>& expect)
+{
     std::map<std::string, int> stats_map;
     flatten(stats_map, "", counters);
 
@@ -89,49 +93,612 @@ checkCountersAllZeroExcept(const isc::data::ConstElementPtr counters,
             i != e;
             ++i)
     {
-        int expect = 0;
-        if (except_for.count(i->first) != 0) {
-            expect = 1;
-        }
-        EXPECT_EQ(expect, i->second) << "Expected counter "
-            << i->first << " = " << expect << ", actual: "
+        const int value =
+            expect.find(i->first) == expect.end() ?
+                0 : expect.find(i->first)->second;
+        EXPECT_EQ(value, i->second) << "Expected counter "
+            << i->first << " = " << value << ", actual: "
             << i->second;
     }
 }
 
-TEST_F(CountersTest, incrementNormalQuery) {
+TEST_F(CountersTest, incrementResponse) {
     Message response(Message::RENDER);
     MessageAttributes msgattrs;
-    std::set<std::string> expect_nonzero;
+    std::map<std::string, int> expect;
 
-    expect_nonzero.clear();
-    checkCountersAllZeroExcept(counters.get()->get("zones")->get("_SERVER_"),
-                               expect_nonzero);
+    // Test response counters are incremented only if responded == true.
+    for (int i = 0; i < 2; ++i) {
+        const bool responded = i & 1;
 
-    msgattrs.setRequestIPVersion(AF_INET6);
+        msgattrs.setRequestIPVersion(AF_INET);
+        msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
+        msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestDO(true);
+
+        response.setRcode(Rcode::REFUSED());
+        response.addQuestion(Question(Name("example.com"),
+                                      RRClass::IN(), RRType::AAAA()));
+        response.setHeaderFlag(Message::HEADERFLAG_QR);
+
+        counters.inc(msgattrs, response, responded);
+
+        expect.clear();
+        expect["opcode.query"] = i+1;
+        expect["request.v4"] = i+1;
+        expect["request.udp"] = i+1;
+        expect["request.edns0"] = i+1;
+        expect["request.badednsver"] = 0;
+        expect["request.dnssec_ok"] = i+1;
+        expect["responses"] = responded ? 1 : 0;
+        expect["qrynoauthans"] = responded ? 1 : 0;
+        expect["rcode.refused"] = responded ? 1 : 0;
+        expect["authqryrej"] = responded ? 1 : 0;
+        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+    }
+}
+
+TEST_F(CountersTest, incrementProtocolType) {
+    Message response(Message::RENDER);
+    MessageAttributes msgattrs;
+    std::map<std::string, int> expect;
+
+    // Test these patterns:
+    //      af     protocol
+    //     -----------------
+    //      ipv4   udp
+    //      ipv6   udp
+    //      ipv4   tcp
+    //      ipv6   tcp
+    int count_v4 = 0, count_v6 = 0, count_udp = 0, count_tcp = 0;
+    for (int i = 0; i < 4; ++i) {
+        const int af = i & 1 ? AF_INET : AF_INET6;
+        const int proto = i & 2 ? IPPROTO_UDP : IPPROTO_TCP;
+
+        msgattrs.setRequestIPVersion(af);
+        msgattrs.setRequestTransportProtocol(proto);
+        msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestDO(true);
+
+        response.setRcode(Rcode::REFUSED());
+        response.addQuestion(Question(Name("example.com"),
+                                      RRClass::IN(), RRType::AAAA()));
+        response.setHeaderFlag(Message::HEADERFLAG_QR);
+
+        counters.inc(msgattrs, response, true);
+
+        if (af == AF_INET) {
+            ++count_v4;
+        } else {
+            ++count_v6;
+        }
+        if (proto == IPPROTO_UDP) {
+            ++count_udp;
+        } else {
+            ++count_tcp;
+        }
+
+        expect.clear();
+        expect["opcode.query"] = i+1;
+        expect["request.v4"] = count_v4;
+        expect["request.v6"] = count_v6;
+        expect["request.udp"] = count_udp;
+        expect["request.tcp"] = count_tcp;
+        expect["request.edns0"] = i+1;
+        expect["request.badednsver"] = 0;
+        expect["request.dnssec_ok"] = i+1;
+        expect["responses"] = i+1;
+        expect["qrynoauthans"] = i+1;
+        expect["rcode.refused"] = i+1;
+        expect["authqryrej"] = i+1;
+        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+    }
+}
+
+TEST_F(CountersTest, incrementDO) {
+    Message response(Message::RENDER);
+    MessageAttributes msgattrs;
+    std::map<std::string, int> expect;
+
+    // Test these patterns:
+    //     DNSSEC OK
+    //    -----------
+    //     false
+    //     true
+    for (int i = 0; i < 2; ++i) {
+        const bool is_dnssec_ok = i & 1;
+        msgattrs.setRequestIPVersion(AF_INET);
+        msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
+        msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestDO(is_dnssec_ok);
+
+        response.setRcode(Rcode::REFUSED());
+        response.addQuestion(Question(Name("example.com"),
+                                      RRClass::IN(), RRType::AAAA()));
+        response.setHeaderFlag(Message::HEADERFLAG_QR);
+
+        counters.inc(msgattrs, response, true);
+
+        expect.clear();
+        expect["opcode.query"] = i+1;
+        expect["request.v4"] = i+1;
+        expect["request.udp"] = i+1;
+        expect["request.edns0"] = i+1;
+        expect["request.badednsver"] = 0;
+        expect["request.dnssec_ok"] = i & 1;
+        expect["responses"] = i+1;
+        expect["qrynoauthans"] = i+1;
+        expect["rcode.refused"] = i+1;
+        expect["authqryrej"] = i+1;
+        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+    }
+}
+
+TEST_F(CountersTest, incrementEDNS) {
+    Message response(Message::RENDER);
+    MessageAttributes msgattrs;
+    std::map<std::string, int> expect;
+
+    // Test these patterns:
+    //     request edns0   badednsver  response edns0
+    //    --------------------------------------------
+    //     false           false       true
+    //     false           true        true
+    //     true            false       false
+    //
+    // They can't be both true since edns0 and badednsver are exclusive.
+    int count_req_edns0 = 0, count_res_edns0 = 0, count_badver = 0;
+    for (int i = 0; i < 3; ++i) {
+        const bool is_edns0 = i & 1;
+        const bool is_badver = i & 2;
+        msgattrs.setRequestIPVersion(AF_INET);
+        msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
+        msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+        msgattrs.setRequestEDNS(is_edns0, is_badver);
+        msgattrs.setRequestDO(true);
+
+        if (!is_edns0) {
+            ConstEDNSPtr edns = EDNSPtr(new EDNS(0));
+            response.setEDNS(edns);
+        } else {
+            response.setEDNS(EDNSPtr());
+        }
+        response.setRcode(Rcode::REFUSED());
+        response.addQuestion(Question(Name("example.com"),
+                                      RRClass::IN(), RRType::AAAA()));
+        response.setHeaderFlag(Message::HEADERFLAG_QR);
+
+        counters.inc(msgattrs, response, true);
+
+        if (is_edns0) {
+            ++count_req_edns0;
+        } else {
+            ++count_res_edns0;
+        }
+        if (is_badver) {
+            ++count_badver;
+        }
+
+        expect.clear();
+        expect["opcode.query"] = i+1;
+        expect["request.v4"] = i+1;
+        expect["request.udp"] = i+1;
+        expect["request.edns0"] = count_req_edns0;
+        expect["response.edns0"] = count_res_edns0;
+        expect["request.badednsver"] = count_badver;
+        expect["request.dnssec_ok"] = i+1;
+        expect["responses"] = i+1;
+        expect["qrynoauthans"] = i+1;
+        expect["rcode.refused"] = i+1;
+        expect["authqryrej"] = i+1;
+        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+    }
+}
+
+TEST_F(CountersTest, incrementTSIG) {
+    Message response(Message::RENDER);
+    MessageAttributes msgattrs;
+    std::map<std::string, int> expect;
+
+    // Test these patterns:
+    //      signature  badsig
+    //     -------------------
+    //      (none)     false
+    //      TSIG       false
+    //      TSIG       true
+    //      SIG(0)     false
+    //      SIG(0)     true
+    //
+    // badsig can't be true if the message does not have signature.
+    int count_req_tsig = 0, count_res_tsig = 0, count_req_sig0 = 0,
+        count_badsig = 0;
+    for (int i = 0; i < 5; ++i) {
+        const bool is_tsig = (i == 0 ? i : i+1) & 2;
+        const bool is_sig0 = (i == 0 ? i : i+1) & 4;
+        const bool is_badsig = (i == 0 ? i : i+1) & 1;
+        msgattrs.setRequestIPVersion(AF_INET);
+        msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
+        msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestDO(true);
+        msgattrs.setRequestSig(is_tsig, is_sig0, is_badsig);
+
+        response.setRcode(Rcode::REFUSED());
+        response.addQuestion(Question(Name("example.com"),
+                                      RRClass::IN(), RRType::AAAA()));
+        response.setHeaderFlag(Message::HEADERFLAG_QR);
+
+        // don't increment response counters if signature is bad
+        counters.inc(msgattrs, response, !is_badsig);
+
+        if (is_tsig) {
+            ++count_req_tsig;
+            if (!is_badsig) {
+                ++count_res_tsig;
+            }
+        }
+        if (is_sig0) {
+            ++count_req_sig0;
+        }
+        if (is_badsig) {
+            ++count_badsig;
+        }
+
+        expect.clear();
+        expect["request.v4"] = i+1;
+        expect["request.udp"] = i+1;
+        expect["opcode.query"] = i+1 - count_badsig;
+        expect["request.edns0"] = i+1 - count_badsig;
+        expect["request.badednsver"] = 0;
+        expect["request.dnssec_ok"] = i+1 - count_badsig;
+        expect["request.tsig"] = count_req_tsig;
+        expect["response.tsig"] = count_res_tsig;
+        expect["request.sig0"] = count_req_sig0;
+        expect["request.badsig"] = count_badsig;
+        expect["responses"] = i+1 - count_badsig;
+        expect["qrynoauthans"] = i+1 - count_badsig;
+        expect["rcode.refused"] = i+1 - count_badsig;
+        expect["authqryrej"] = i+1 - count_badsig;
+        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+    }
+}
+
+TEST_F(CountersTest, incrementOpcode) {
+    Message response(Message::RENDER);
+    MessageAttributes msgattrs;
+    std::map<std::string, int> expect;
+
+    // Test all opcodes (QUERY..RESERVED15)
+    int count_all = 0, count_opcode_other = 0;
+    for (uint8_t i = Opcode::QUERY().getCode(),
+                 e = Opcode::RESERVED15().getCode();
+         i <= e;
+         ++i)
+    {
+        msgattrs.setRequestIPVersion(AF_INET);
+        msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
+        msgattrs.setRequestOpCode(i);
+        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestDO(true);
+        msgattrs.setRequestSig(false, false, false);
+
+        response.setRcode(Rcode::REFUSED());
+        response.addQuestion(Question(Name("example.com"),
+                                      RRClass::IN(), RRType::AAAA()));
+        response.setHeaderFlag(Message::HEADERFLAG_QR);
+
+        for (uint8_t j = 0; j < i; ++j) {
+            // count up i times for i-th opcode to identify counters
+            counters.inc(msgattrs, response, true);
+            ++count_all;
+        }
+
+        expect.clear();
+        expect["request.v4"] = count_all;
+        expect["request.udp"] = count_all;
+        expect["request.edns0"] = count_all;
+        expect["request.badednsver"] = 0;
+        expect["request.dnssec_ok"] = count_all;
+        expect["request.tsig"] = 0;
+        expect["request.sig0"] = 0;
+        expect["request.badsig"] = 0;
+        expect["responses"] = count_all;
+        expect["rcode.refused"] = count_all;
+        if (opcode_to_msgcounter[i] == MSG_OPCODE_OTHER) {
+            count_opcode_other += i;
+        }
+        for (uint8_t j = 0; j <= i; ++j) {
+            if (opcode_to_msgcounter[j] == MSG_OPCODE_OTHER) {
+                expect["opcode.other"] = count_opcode_other;
+            } else {
+                std::string code_text = Opcode(j).toText();
+                std::transform(code_text.begin(), code_text.end(),
+                               code_text.begin(), ::tolower);
+                expect["opcode."+code_text] = j;
+            }
+        }
+        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+    }
+}
+
+TEST_F(CountersTest, incrementRcode) {
+    Message response(Message::RENDER);
+    MessageAttributes msgattrs;
+    std::map<std::string, int> expect;
+
+    // Test all rcodes (NOERROR..BADVERS)
+    int count_all = 0, count_rcode_other = 0;
+    for (uint16_t i = Rcode::NOERROR().getCode(),
+                  e = Rcode::BADVERS().getCode();
+         i <= e;
+         ++i)
+    {
+        msgattrs.setRequestIPVersion(AF_INET);
+        msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
+        msgattrs.setRequestOpCode(Opcode::IQUERY_CODE);
+        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestDO(true);
+        msgattrs.setRequestSig(false, false, false);
+
+        response.setRcode(Rcode(i));
+        response.addQuestion(Question(Name("example.com"),
+                                      RRClass::IN(), RRType::AAAA()));
+        response.setHeaderFlag(Message::HEADERFLAG_QR);
+
+        for (uint16_t j = 0; j < i; ++j) {
+            // count up i times for i-th rcode to identify counters
+            counters.inc(msgattrs, response, true);
+            ++count_all;
+        }
+
+        expect.clear();
+        expect["opcode.iquery"] = count_all;
+        expect["request.v4"] = count_all;
+        expect["request.udp"] = count_all;
+        expect["request.edns0"] = count_all;
+        expect["request.badednsver"] = 0;
+        expect["request.dnssec_ok"] = count_all;
+        expect["request.tsig"] = 0;
+        expect["request.sig0"] = 0;
+        expect["request.badsig"] = 0;
+        expect["responses"] = count_all;
+        if (rcode_to_msgcounter[i] == MSG_RCODE_OTHER) {
+            count_rcode_other += i;
+        }
+        for (uint16_t j = 0; j <= i; ++j) {
+            if (rcode_to_msgcounter[j] == MSG_RCODE_OTHER) {
+                expect["rcode.other"] = count_rcode_other;
+            } else {
+                std::string code_text = Rcode(j).toText();
+                std::transform(code_text.begin(), code_text.end(),
+                               code_text.begin(), ::tolower);
+                expect["rcode."+code_text] = j;
+            }
+        }
+        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+    }
+}
+
+TEST_F(CountersTest, incrementTruncated) {
+    Message response(Message::RENDER);
+    MessageAttributes msgattrs;
+    std::map<std::string, int> expect;
+
+    // Test these patterns:
+    //      truncated
+    //     -----------
+    //      false
+    //      true
+    int count_truncated = 0;
+    for (int i = 0; i < 2; ++i) {
+        const bool is_truncated = i & 1;
+        msgattrs.setRequestIPVersion(AF_INET);
+        msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
+        msgattrs.setRequestOpCode(Opcode::IQUERY_CODE);
+        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestDO(true);
+        msgattrs.setRequestSig(false, false, false);
+        msgattrs.setResponseTruncated(is_truncated);
+
+        response.setRcode(Rcode::SERVFAIL());
+        response.addQuestion(Question(Name("example.com"),
+                                      RRClass::IN(), RRType::TXT()));
+        response.setHeaderFlag(Message::HEADERFLAG_QR);
+
+        counters.inc(msgattrs, response, true);
+
+        if (is_truncated) {
+            ++count_truncated;
+        }
+
+        expect.clear();
+        expect["opcode.iquery"] = i+1;
+        expect["request.v4"] = i+1;
+        expect["request.udp"] = i+1;
+        expect["request.edns0"] = i+1;
+        expect["request.dnssec_ok"] = i+1;
+        expect["responses"] = i+1;
+        expect["rcode.servfail"] = i+1;
+        expect["response.truncated"] = count_truncated;
+        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+    }
+}
+
+TEST_F(CountersTest, incrementQryAuthAnsAndNoAuthAns) {
+    Message response(Message::RENDER);
+    MessageAttributes msgattrs;
+    std::map<std::string, int> expect;
+
+    // Opcode = QUERY, ANCOUNT = 0 (don't care), Rcode = SERVFAIL (don't care)
+    // Test these patterns:
+    //      AA flag
+    //     -----------------------
+    //      false -> QryNoAuthAns
+    //      true  -> QryAuthAns
+    int count_authans = 0, count_noauthans = 0;
+    for (int i = 0; i < 2; ++i) {
+        const bool is_aa_set = i & 1;
+        msgattrs.setRequestIPVersion(AF_INET);
+        msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
+        msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestDO(true);
+        msgattrs.setRequestSig(false, false, false);
+
+        response.setRcode(Rcode::SERVFAIL());
+        response.addQuestion(Question(Name("example.com"),
+                                      RRClass::IN(), RRType::TXT()));
+        response.setHeaderFlag(Message::HEADERFLAG_QR);
+        if (is_aa_set) {
+            response.setHeaderFlag(Message::HEADERFLAG_AA);
+            ++count_authans;
+        } else {
+            ++count_noauthans;
+        }
+
+        counters.inc(msgattrs, response, true);
+
+        expect.clear();
+        expect["opcode.query"] = i+1;
+        expect["request.v4"] = i+1;
+        expect["request.udp"] = i+1;
+        expect["request.edns0"] = i+1;
+        expect["request.dnssec_ok"] = i+1;
+        expect["responses"] = i+1;
+        expect["rcode.servfail"] = i+1;
+        expect["qryauthans"] = count_authans;
+        expect["qrynoauthans"] = count_noauthans;
+        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+    }
+}
+
+TEST_F(CountersTest, incrementQrySuccess) {
+    Message response(Message::RENDER);
+    MessageAttributes msgattrs;
+    std::map<std::string, int> expect;
+
+    // Opcode = QUERY, Rcode = NOERROR, ANCOUNT > 0
+    msgattrs.setRequestIPVersion(AF_INET);
     msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
     msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
     msgattrs.setRequestEDNS(true, false);
     msgattrs.setRequestDO(true);
+    msgattrs.setRequestSig(false, false, false);
 
-    response.setRcode(Rcode::REFUSED());
+    response.setRcode(Rcode::NOERROR());
     response.addQuestion(Question(Name("example.com"),
-                                  RRClass::IN(), RRType::AAAA()));
+                                  RRClass::IN(), RRType::TXT()));
+    RRsetPtr answer_rrset(new RRset(Name("example.com"),
+                                    RRClass::IN(), RRType::TXT(),
+                                    RRTTL(3600)));
+    answer_rrset->addRdata(rdata::createRdata(RRType::TXT(),
+                                              RRClass::IN(),
+                                              "Answer"));
+    response.addRRset(Message::SECTION_ANSWER, answer_rrset);
+    response.setHeaderFlag(Message::HEADERFLAG_QR);
 
     counters.inc(msgattrs, response, true);
 
-    expect_nonzero.clear();
-    expect_nonzero.insert("opcode.query");
-    expect_nonzero.insert("request.v6");
-    expect_nonzero.insert("request.udp");
-    expect_nonzero.insert("request.edns0");
-    expect_nonzero.insert("request.dnssec_ok");
-    expect_nonzero.insert("responses");
-    expect_nonzero.insert("qrynoauthans");
-    expect_nonzero.insert("rcode.refused");
-    expect_nonzero.insert("authqryrej");
-    checkCountersAllZeroExcept(counters.get()->get("zones")->get("_SERVER_"),
-                               expect_nonzero);
+    expect.clear();
+    expect["opcode.query"] = 1;
+    expect["request.v4"] = 1;
+    expect["request.udp"] = 1;
+    expect["request.edns0"] = 1;
+    expect["request.dnssec_ok"] = 1;
+    expect["responses"] = 1;
+    expect["rcode.noerror"] = 1;
+    expect["qrysuccess"] = 1;
+    // noauthans is also incremented
+    expect["qrynoauthans"] = 1;
+    checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+}
+
+TEST_F(CountersTest, incrementQryReferralAndNxrrset) {
+    Message response(Message::RENDER);
+    MessageAttributes msgattrs;
+    std::map<std::string, int> expect;
+
+    // Opcode = QUERY, Rcode = NOERROR, ANCOUNT = 0
+    // Test these patterns:
+    //      AA flag
+    //     ----------------------
+    //      false -> QryReferral
+    //      true  -> QryNxrrset
+    int count_referral = 0, count_nxrrset = 0;
+    for (int i = 0; i < 2; ++i) {
+        const bool is_aa_set = i & 1;
+        msgattrs.setRequestIPVersion(AF_INET);
+        msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
+        msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestDO(true);
+        msgattrs.setRequestSig(false, false, false);
+
+        response.setRcode(Rcode::NOERROR());
+        response.addQuestion(Question(Name("example.com"),
+                                      RRClass::IN(), RRType::TXT()));
+        response.setHeaderFlag(Message::HEADERFLAG_QR);
+        if (is_aa_set) {
+            response.setHeaderFlag(Message::HEADERFLAG_AA);
+            ++count_nxrrset;
+        } else {
+            ++count_referral;
+        }
+
+        counters.inc(msgattrs, response, true);
+
+        expect.clear();
+        expect["opcode.query"] = i+1;
+        expect["request.v4"] = i+1;
+        expect["request.udp"] = i+1;
+        expect["request.edns0"] = i+1;
+        expect["request.dnssec_ok"] = i+1;
+        expect["responses"] = i+1;
+        expect["rcode.noerror"] = i+1;
+        expect["qrynxrrset"] = count_nxrrset;
+        expect["qryreferral"] = count_referral;
+        // qryauthans or qrynoauthans is also incremented
+        expect["qryauthans"] = count_nxrrset;
+        expect["qrynoauthans"] = count_referral;
+        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+    }
+}
+
+TEST_F(CountersTest, incrementAuthQryRej) {
+    Message response(Message::RENDER);
+    MessageAttributes msgattrs;
+    std::map<std::string, int> expect;
+
+    // Opcode = QUERY, Rcode = REFUSED, ANCOUNT = 0 (don't care)
+    msgattrs.setRequestIPVersion(AF_INET);
+    msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
+    msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+    msgattrs.setRequestEDNS(true, false);
+    msgattrs.setRequestDO(true);
+    msgattrs.setRequestSig(false, false, false);
+
+    response.setRcode(Rcode::REFUSED());
+    response.addQuestion(Question(Name("example.com"),
+                                  RRClass::IN(), RRType::TXT()));
+    response.setHeaderFlag(Message::HEADERFLAG_QR);
+
+    counters.inc(msgattrs, response, true);
+
+    expect.clear();
+    expect["opcode.query"] = 1;
+    expect["request.v4"] = 1;
+    expect["request.udp"] = 1;
+    expect["request.edns0"] = 1;
+    expect["request.dnssec_ok"] = 1;
+    expect["responses"] = 1;
+    expect["rcode.refused"] = 1;
+    expect["authqryrej"] = 1;
+    // noauthans is also incremented since AA bit is not set
+    expect["qrynoauthans"] = 1;
+    checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
 }
 
 int
