@@ -44,7 +44,7 @@ const char* create_statement[] = {
         "address INT UNSIGNED PRIMARY KEY NOT NULL,"
         "hwaddr VARBINARY(20),"
         "client_id VARBINARY(128),"
-        "lease_time INT UNSIGNED,"
+        "valid_lifetime INT UNSIGNED,"
         "expire TIMESTAMP,"
         "subnet_id INT UNSIGNED"
         ") ENGINE = INNODB",
