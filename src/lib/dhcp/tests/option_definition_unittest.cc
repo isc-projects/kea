@@ -202,7 +202,7 @@ TEST_F(OptionDefinitionTest, factoryAddrList6) {
 // can be used to create option instance with the optionFactory function.
 TEST_F(OptionDefinitionTest, factoryTokenizedAddrList6) {
     OptionDefinition opt_def("OPTION_NIS_SERVERS", D6O_NIS_SERVERS,
-                             "ipv6_address", true);
+                             "ipv6-address", true);
 
     // Create a vector of some V6 addresses.
     std::vector<asiolink::IOAddress> addrs;
@@ -225,11 +225,7 @@ TEST_F(OptionDefinitionTest, factoryTokenizedAddrList6) {
         option_v6 = opt_def.optionFactory(Option::V6, D6O_NIS_SERVERS,
                                           addrs_str);
     );
-    // This is temporary check to make this test pass until factory function is
-    // implemented and returns the pointer rather than NULL.
-    ASSERT_FALSE(option_v6);
-
-    /*    // Non-null pointer option is supposed to be returned and it
+    // Non-null pointer option is supposed to be returned and it
     // should have Option6AddrLst type.
     ASSERT_TRUE(option_v6);
     ASSERT_TRUE(typeid(*option_v6) == typeid(Option6AddrLst));
@@ -243,7 +239,7 @@ TEST_F(OptionDefinitionTest, factoryTokenizedAddrList6) {
         option_cast_v6->getAddresses();
     // Returned addresses must match the addresses that have been used to create
     // the option instance.
-    EXPECT_TRUE(std::equal(addrs.begin(), addrs.end(), addrs_returned.begin())); */
+    EXPECT_TRUE(std::equal(addrs.begin(), addrs.end(), addrs_returned.begin()));
 }
 
 TEST_F(OptionDefinitionTest, factoryAddrList4) {
@@ -290,6 +286,50 @@ TEST_F(OptionDefinitionTest, factoryAddrList4) {
     // It should throw exception then.
     EXPECT_THROW(opt_def.optionFactory(Option::V4, DHO_NIS_SERVERS, buf),
                  isc::OutOfRange);
+}
+
+// This test checks that a vector of strings, holding IPv4 addresses,
+// can be used to create option instance with the optionFactory function.
+TEST_F(OptionDefinitionTest, factoryTokenizedAddrList4) {
+    OptionDefinition opt_def("OPTION_NIS_SERVERS", DHO_NIS_SERVERS,
+                             "ipv4-address", true);
+
+    // Create a vector of some V6 addresses.
+    std::vector<asiolink::IOAddress> addrs;
+    addrs.push_back(asiolink::IOAddress("192.168.0.1"));
+    addrs.push_back(asiolink::IOAddress("172.16.1.1"));
+    addrs.push_back(asiolink::IOAddress("127.0.0.1"));
+    addrs.push_back(asiolink::IOAddress("213.41.23.12"));
+
+    // Create a vector of strings representing addresses given above.
+    std::vector<std::string> addrs_str;
+    for (std::vector<asiolink::IOAddress>::const_iterator it = addrs.begin();
+         it != addrs.end(); ++it) {
+        addrs_str.push_back(it->toText());
+    }
+
+    // Create DHCPv4 option using the list of IPv4 addresses given in the
+    // string form.
+    OptionPtr option_v4;
+    ASSERT_NO_THROW(
+        option_v4 = opt_def.optionFactory(Option::V4, DHO_NIS_SERVERS,
+                                          addrs_str);
+    );
+    // Non-null pointer option is supposed to be returned and it
+    // should have Option6AddrLst type.
+    ASSERT_TRUE(option_v4);
+    ASSERT_TRUE(typeid(*option_v4) == typeid(Option4AddrLst));
+    // Cast to the actual option type to get IPv4 addresses from it.
+    boost::shared_ptr<Option4AddrLst> option_cast_v4 =
+        boost::static_pointer_cast<Option4AddrLst>(option_v4);
+    // Check that cast was successful.
+    ASSERT_TRUE(option_cast_v4);
+    // Get the list of parsed addresses from the option object.
+    std::vector<asiolink::IOAddress> addrs_returned =
+        option_cast_v4->getAddresses();
+    // Returned addresses must match the addresses that have been used to create
+    // the option instance.
+    EXPECT_TRUE(std::equal(addrs.begin(), addrs.end(), addrs_returned.begin()));
 }
 
 TEST_F(OptionDefinitionTest, factoryEmpty) {
@@ -361,6 +401,53 @@ TEST_F(OptionDefinitionTest, factoryBinary) {
                            option_v6->getData().end(),
                            buf.begin()));
 }
+
+TEST_F(OptionDefinitionTest, factoryTokenizedBinary) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "binary", true);
+
+    // Prepare some dummy data (serverid): 0, 1, 2 etc.
+    OptionBuffer buf(16);
+    for (int i = 0; i < buf.size(); ++i) {
+        buf[i] = i;
+    }
+    std::vector<std::string> hex_data;
+    hex_data.push_back("00010203");
+    hex_data.push_back("04050607");
+    hex_data.push_back("08090A0B0C0D0E0F");
+
+    // Create option instance with the factory function.
+    // If the OptionDefinition code works properly than
+    // object of the type Option should be returned.
+    OptionPtr option_v6;
+    ASSERT_NO_THROW(
+        option_v6 = opt_def.optionFactory(Option::V6, 1000, hex_data);
+    );
+    // Expect base option type returned.
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option));
+    // Sanity check on universe, length and size. These are
+    // the basic parameters identifying any option.
+    EXPECT_EQ(Option::V6, option_v6->getUniverse());
+    EXPECT_EQ(4, option_v6->getHeaderLen());
+    ASSERT_EQ(buf.size(), option_v6->getData().size());
+
+    // Get data from the option and compare against reference buffer.
+    // They are expected to match.
+    EXPECT_TRUE(std::equal(option_v6->getData().begin(),
+                           option_v6->getData().end(),
+                           buf.begin()));
+
+    // Repeat the same test scenario for DHCPv4 option.
+    OptionPtr option_v4;
+    ASSERT_NO_THROW(option_v4 = opt_def.optionFactory(Option::V4, 214, hex_data));
+    EXPECT_EQ(Option::V4, option_v4->getUniverse());
+    EXPECT_EQ(2, option_v4->getHeaderLen());
+    ASSERT_EQ(buf.size(), option_v4->getData().size());
+
+    EXPECT_TRUE(std::equal(option_v6->getData().begin(),
+                           option_v6->getData().end(),
+                           buf.begin()));
+}
+
 
 TEST_F(OptionDefinitionTest, factoryIA6) {
     // This option consists of IAID, T1 and T2 fields (each 4 bytes long).
@@ -444,6 +531,37 @@ TEST_F(OptionDefinitionTest, factoryIAAddr6) {
      );
 }
 
+TEST_F(OptionDefinitionTest, factoryTokenizedIAAddr6) {
+    // This option consists of IPV6 Address (16 bytes) and preferred-lifetime and
+    // valid-lifetime fields (each 4 bytes long).
+    OptionDefinition opt_def("OPTION_IAADDR", D6O_IAADDR, "record");
+    ASSERT_NO_THROW(opt_def.addRecordField("ipv6-address"));
+    ASSERT_NO_THROW(opt_def.addRecordField("uint32"));
+    ASSERT_NO_THROW(opt_def.addRecordField("uint32"));
+
+    // Check the positive scenario.
+    std::vector<std::string> data_field_values;
+    data_field_values.push_back("2001:0db8::ff00:0042:8329");
+    data_field_values.push_back("1234");
+    data_field_values.push_back("5678");
+
+    OptionPtr option_v6;
+    ASSERT_NO_THROW(option_v6 = opt_def.optionFactory(Option::V6, D6O_IAADDR,
+                                                      data_field_values));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6IAAddr));
+    boost::shared_ptr<Option6IAAddr> option_cast_v6 =
+        boost::static_pointer_cast<Option6IAAddr>(option_v6);
+    EXPECT_EQ("2001:db8::ff00:42:8329", option_cast_v6->getAddress().toText());
+    EXPECT_EQ(1234, option_cast_v6->getPreferred());
+    EXPECT_EQ(5678, option_cast_v6->getValid());
+
+    // This should work for DHCPv6 only, try passing in\valid universe value.
+    EXPECT_THROW(
+        opt_def.optionFactory(Option::V4, D6O_IAADDR, data_field_values),
+        isc::BadValue
+    );
+}
+
 TEST_F(OptionDefinitionTest, factoryIntegerInvalidType) {
     // The template function factoryInteger<> accepts integer values only
     // as template typename. Here we try passing different type and
@@ -479,6 +597,31 @@ TEST_F(OptionDefinitionTest, factoryUint8) {
     // @todo Add more cases for DHCPv4
 }
 
+TEST_F(OptionDefinitionTest, factoryTokenizedUint8) {
+    OptionDefinition opt_def("OPTION_PREFERENCE", D6O_PREFERENCE, "uint8");
+
+    OptionPtr option_v6;
+    std::vector<std::string> values;
+    values.push_back("123");
+    values.push_back("456");
+    try {
+        option_v6 = opt_def.optionFactory(Option::V6, D6O_PREFERENCE, values);
+    } catch (std::exception& ex) {
+        std::cout << ex.what() << std::endl;
+    }
+    ASSERT_NO_THROW(
+        option_v6 = opt_def.optionFactory(Option::V6, D6O_PREFERENCE, values);
+    );
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6Int<uint8_t>));
+    // Validate the value.
+    boost::shared_ptr<Option6Int<uint8_t> > option_cast_v6 =
+        boost::static_pointer_cast<Option6Int<uint8_t> >(option_v6);
+    EXPECT_EQ(123, option_cast_v6->getValue());
+
+    // @todo Add more cases for DHCPv4
+}
+
+
 TEST_F(OptionDefinitionTest, factoryUint16) {
     OptionDefinition opt_def("OPTION_ELAPSED_TIME", D6O_ELAPSED_TIME, "uint16");
 
@@ -503,6 +646,27 @@ TEST_F(OptionDefinitionTest, factoryUint16) {
     );
 
     // @todo Add more cases for DHCPv4
+}
+
+TEST_F(OptionDefinitionTest, factoryTokenizedUint16) {
+    OptionDefinition opt_def("OPTION_ELAPSED_TIME", D6O_ELAPSED_TIME, "uint16");
+
+    OptionPtr option_v6;
+
+    std::vector<std::string> values;
+    values.push_back("1234");
+    values.push_back("5678");
+    ASSERT_NO_THROW(
+        option_v6 = opt_def.optionFactory(Option::V6, D6O_ELAPSED_TIME, values);
+    );
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6Int<uint16_t>));
+    // Validate the value.
+    boost::shared_ptr<Option6Int<uint16_t> > option_cast_v6 =
+        boost::static_pointer_cast<Option6Int<uint16_t> >(option_v6);
+    EXPECT_EQ(1234, option_cast_v6->getValue());
+
+    // @todo Add more cases for DHCPv4
+
 }
 
 TEST_F(OptionDefinitionTest, factoryUint32) {
@@ -531,6 +695,26 @@ TEST_F(OptionDefinitionTest, factoryUint32) {
 
     // @todo Add more cases for DHCPv4
 }
+
+TEST_F(OptionDefinitionTest, factoryTokenizedUint32) {
+    OptionDefinition opt_def("OPTION_CLT_TIME", D6O_CLT_TIME, "uint32");
+
+    OptionPtr option_v6;
+    std::vector<std::string> values;
+    values.push_back("123456");
+    values.push_back("789");
+    ASSERT_NO_THROW(
+        option_v6 = opt_def.optionFactory(Option::V6, D6O_CLT_TIME, values);
+    );
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6Int<uint32_t>));
+    // Validate the value.
+    boost::shared_ptr<Option6Int<uint32_t> > option_cast_v6 =
+        boost::static_pointer_cast<Option6Int<uint32_t> >(option_v6);
+    EXPECT_EQ(123456, option_cast_v6->getValue());
+
+    // @todo Add more cases for DHCPv4
+}
+
 
 TEST_F(OptionDefinitionTest, factoryUint16Array) {
     // Let's define some dummy option.
@@ -575,6 +759,30 @@ TEST_F(OptionDefinitionTest, factoryUint16Array) {
     );
 }
 
+TEST_F(OptionDefinitionTest, factoryTokenizedUint16Array) {
+    // Let's define some dummy option.
+    const uint16_t opt_code = 79;
+    OptionDefinition opt_def("OPTION_UINT16_ARRAY", opt_code, "uint16", true);
+
+    OptionPtr option_v6;
+    std::vector<std::string> str_values;
+    str_values.push_back("12345");
+    str_values.push_back("5679");
+    str_values.push_back("12");
+    EXPECT_NO_THROW(
+        option_v6 = opt_def.optionFactory(Option::V6, opt_code, str_values);
+    );
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6IntArray<uint16_t>));
+    boost::shared_ptr<Option6IntArray<uint16_t> > option_cast_v6 =
+        boost::static_pointer_cast<Option6IntArray<uint16_t> >(option_v6);
+    // Get the values from the initiated options and validate.
+    std::vector<uint16_t> values = option_cast_v6->getValues();
+    EXPECT_EQ(12345, values[0]);
+    EXPECT_EQ(5679, values[1]);
+    EXPECT_EQ(12, values[2]);
+}
+
+
 TEST_F(OptionDefinitionTest, factoryUint32Array) {
     // Let's define some dummy option.
     const uint16_t opt_code = 80;
@@ -617,6 +825,33 @@ TEST_F(OptionDefinitionTest, factoryUint32Array) {
         option_v6 = opt_def.optionFactory(Option::V6, opt_code, OptionBuffer(5)),
         isc::OutOfRange
     );
+}
+
+TEST_F(OptionDefinitionTest, factoryTokenizedUint32Array) {
+    // Let's define some dummy option.
+    const uint16_t opt_code = 80;
+
+    OptionDefinition opt_def("OPTION_UINT32_ARRAY", opt_code, "uint32", true);
+
+    OptionPtr option_v6;
+    std::vector<std::string> str_values;
+    str_values.push_back("123456");
+    str_values.push_back("7");
+    str_values.push_back("256");
+    str_values.push_back("1111");
+
+    EXPECT_NO_THROW(
+        option_v6 = opt_def.optionFactory(Option::V6, opt_code, str_values);
+    );
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6IntArray<uint32_t>));
+    boost::shared_ptr<Option6IntArray<uint32_t> > option_cast_v6 =
+        boost::static_pointer_cast<Option6IntArray<uint32_t> >(option_v6);
+    // Get the values from the initiated options and validate.
+    std::vector<uint32_t> values = option_cast_v6->getValues();
+    EXPECT_EQ(123456, values[0]);
+    EXPECT_EQ(7, values[1]);
+    EXPECT_EQ(256, values[2]);
+    EXPECT_EQ(1111, values[3]);
 }
 
 TEST_F(OptionDefinitionTest, recognizeFormat) {
