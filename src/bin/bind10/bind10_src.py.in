@@ -480,7 +480,8 @@ class BoB:
             msg, env = self.cc_session.group_recvmsg()
         
         # wait_time is set to 0 only by unittests
-        if self.wait_time > 0 and not self.process_running(msg, "ConfigManager"):
+        if self.wait_time > 0 and not self.process_running(msg,
+                                                           "ConfigManager"):
             raise ProcessStartError("Configuration manager process has not started")
 
         return bind_cfgd

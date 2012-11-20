@@ -1465,7 +1465,8 @@ class TestBossComponents(unittest.TestCase):
 
         for i in range(0, 20):
             pid = pids[i]
-            component = MockComponent('test' + str(pid), pid, 'Test' + str(pid))
+            component = MockComponent('test' + str(pid), pid,
+                                      'Test' + str(pid))
             bob.components[pid] = component
 
         process_list = bob.get_processes()
@@ -1476,7 +1477,8 @@ class TestBossComponents(unittest.TestCase):
             pid = process[0]
             self.assertLessEqual(last_pid, pid)
             last_pid = pid
-            self.assertEqual([pid, 'test' + str(pid), 'Test' + str(pid)], process)
+            self.assertEqual([pid, 'test' + str(pid), 'Test' + str(pid)],
+                             process)
 
     def _test_reap_children_helper(self, runnable, is_running, failed):
         '''Construct a BoB instance, set various data in it according to
@@ -1527,8 +1529,10 @@ class TestBossComponents(unittest.TestCase):
         bob.reap_children()
         self.assertFalse(bob.components_to_restart)
 
-        # case where bob._get_process_exit_status() raises OSError with errno.ECHILD
-        bob._get_process_exit_status = bob._get_process_exit_status_raises_oserror_echild
+        # case where bob._get_process_exit_status() raises OSError with
+        # errno.ECHILD
+        bob._get_process_exit_status = \
+            bob._get_process_exit_status_raises_oserror_echild
         bob.components_to_restart = []
         # this should catch and handle the OSError
         bob.reap_children()
@@ -1536,13 +1540,15 @@ class TestBossComponents(unittest.TestCase):
 
         # case where bob._get_process_exit_status() raises OSError with
         # errno other than ECHILD
-        bob._get_process_exit_status = bob._get_process_exit_status_raises_oserror_other
+        bob._get_process_exit_status = \
+            bob._get_process_exit_status_raises_oserror_other
         with self.assertRaises(OSError):
             bob.reap_children()
 
         # case where bob._get_process_exit_status() raises something
         # other than OSError
-        bob._get_process_exit_status = bob._get_process_exit_status_raises_other
+        bob._get_process_exit_status = \
+            bob._get_process_exit_status_raises_other
         with self.assertRaises(Exception):
             bob.reap_children()
 
