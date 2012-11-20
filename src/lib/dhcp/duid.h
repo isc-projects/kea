@@ -49,7 +49,7 @@ class DUID {
     DUID(const std::vector<uint8_t>& duid);
 
     /// @brief creates a DUID
-    DUID(const uint8_t *duid, size_t len);
+    DUID(const uint8_t* duid, size_t len);
 
     /// @brief returns a const reference to the actual DUID value
     ///
@@ -90,17 +90,17 @@ class ClientId : DUID {
     ClientId(const std::vector<uint8_t>& clientid);
 
     /// constructor based on C-style data
-    ClientId(const uint8_t *clientid, size_t len);
+    ClientId(const uint8_t* clientid, size_t len);
 
     /// @brief returns reference to the client-id data
     ///
     const std::vector<uint8_t> getClientId() const;
 
     // compares two client-ids
-    bool operator == (const ClientId& other) const;
+    bool operator==(const ClientId& other) const;
 
     // compares two client-ids
-    bool operator != (const ClientId& other) const;
+    bool operator!=(const ClientId& other) const;
 };
 
 }; // end of isc::dhcp namespace
