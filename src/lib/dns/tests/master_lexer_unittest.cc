@@ -281,7 +281,7 @@ TEST_F(MasterLexerTest, getUnbalanced) {
 
     // The string gets out first
     EXPECT_EQ(MasterLexer::Token::STRING, lexer.getNextToken().getType());
-    // Then an unbalanced parethsis
+    // Then an unbalanced parenthesis
     EXPECT_EQ(MasterLexer::Token::UNBALANCED_PAREN,
               lexer.getNextToken().getErrorCode());
 }

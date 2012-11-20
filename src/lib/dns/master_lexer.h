@@ -203,7 +203,7 @@ public:
     ///     bitwise or (eg. option1 | option 2). See description of available
     ///     options.
     /// \return Next token found in the input. Note that the token refers to
-    ///     some internal data in in the lexer. It is valid only until
+    ///     some internal data in the lexer. It is valid only until
     ///     getNextToken or ungetToken is called. Also, the token becomes
     ///     invalid when the lexer is destroyed.
     /// \throw isc::InvalidOperation in case the source is not available. This
