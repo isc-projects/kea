@@ -30,6 +30,13 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Exception to be thrown when cast to the data type was unsuccessful.
+class BadDataTypeCast : public Exception {
+public:
+    BadDataTypeCast(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 
 /// @brief Data types of DHCP option fields.
 enum OptionDataType {

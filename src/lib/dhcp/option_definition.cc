@@ -20,6 +20,7 @@
 #include <dhcp/option6_int.h>
 #include <dhcp/option6_int_array.h>
 #include <dhcp/option_definition.h>
+#include <util/encode/hex.h>
 
 using namespace std;
 using namespace isc::util;
@@ -44,11 +45,6 @@ OptionDefinition::DataTypeUtil::DataTypeUtil() {
     data_types_["record"] = OPT_RECORD_TYPE;
 }
 
-template<typename T>
-T OptionDefinition::DataTypeUtil::dataTypeCast(const std::string& value_str) const {
-    return (T());
-}
-
 OptionDataType
 OptionDefinition::DataTypeUtil::getOptionDataType(const std::string& data_type) {
     std::map<std::string, OptionDataType>::const_iterator data_type_it =
@@ -57,6 +53,135 @@ OptionDefinition::DataTypeUtil::getOptionDataType(const std::string& data_type) 
         return (data_type_it->second);
     }
     return (OPT_UNKNOWN_TYPE);
+}
+
+template<typename T>
+T OptionDefinition::DataTypeUtil::lexicalCastWithRangeCheck(const std::string& value_str) const {
+    if (!OptionDataTypeTraits<T>::integer_type &&
+        OptionDataTypeTraits<T>::type != OPT_BOOLEAN_TYPE) {
+        isc_throw(BadDataTypeCast, "unable to do lexical cast to non-integer and"
+                  << " non-boolean data type");
+    }
+    int64_t result = 0;
+    try {
+        result = boost::lexical_cast<int64_t>(value_str);
+    } catch (const boost::bad_lexical_cast& ex) {
+        std::string data_type_str = "boolean";
+        if (OptionDataTypeTraits<T>::integer_type) {
+            data_type_str = "integer";
+        }
+        isc_throw(BadDataTypeCast, "unable to do lexical cast to " << data_type_str
+                  << " data type for value " << value_str << ": " << ex.what());
+    }
+    if (OptionDataTypeTraits<T>::integer_type) {
+        if (result > numeric_limits<T>::max() ||
+            result < numeric_limits<T>::min()) {
+            isc_throw(BadDataTypeCast, "unable to do lexical cast for value "
+                      << value_str << ". This value is expected to be in the range of "
+                      << numeric_limits<T>::min() << ".." << numeric_limits<T>::max());
+        }
+    }
+    return (static_cast<T>(result));
+}
+
+void
+OptionDefinition::DataTypeUtil::writeToBuffer(const std::string& value, uint16_t type,
+                                              OptionBuffer& buf) {
+    switch (type) {
+    case OPT_BINARY_TYPE:
+        {
+            OptionBuffer binary;
+            try {
+                util::encode::decodeHex(value, binary);
+            } catch (const Exception& ex) {
+                isc_throw(BadDataTypeCast, "unable to cast " << value
+                          << " to binary data type: " << ex.what());
+            }
+            buf.insert(buf.end(), binary.begin(), binary.end());
+            return;
+        }
+    case OPT_BOOLEAN_TYPE:
+        {
+            bool bool_value = lexicalCastWithRangeCheck<bool>(value);
+            if (bool_value) {
+                buf.push_back(static_cast<uint8_t>(1));
+            } else {
+                buf.push_back(static_cast<uint8_t>(0));
+            }
+            return;
+        }
+    case OPT_INT8_TYPE:
+        {
+            buf.push_back(static_cast<uint8_t>(lexicalCastWithRangeCheck<int8_t>(value)));
+            return;
+        }
+    case OPT_INT16_TYPE:
+        {
+            int16_t int_value = lexicalCastWithRangeCheck<int16_t>(value);
+            buf.resize(buf.size() + 2);
+            writeUint16(static_cast<uint16_t>(int_value), &buf[buf.size() - 2]);
+            return;
+        }
+    case OPT_INT32_TYPE:
+        {
+            int32_t int_value = lexicalCastWithRangeCheck<int32_t>(value);
+            buf.resize(buf.size() + 4);
+            writeUint32(static_cast<uint32_t>(int_value), &buf[buf.size() - 4]);
+            return;
+        }
+    case OPT_UINT8_TYPE:
+        {
+            buf.push_back(lexicalCastWithRangeCheck<int8_t>(value));
+            return;
+        }
+    case OPT_UINT16_TYPE:
+        {
+            uint16_t uint_value = lexicalCastWithRangeCheck<uint16_t>(value);
+            buf.resize(buf.size() + 2);
+            writeUint16(uint_value, &buf[buf.size() - 2]);
+            return;
+        }
+    case OPT_UINT32_TYPE:
+        {
+            uint32_t uint_value = lexicalCastWithRangeCheck<uint32_t>(value);
+            buf.resize(buf.size() + 4);
+            writeUint32(uint_value, &buf[buf.size() - 4]);
+            return;
+        }
+    case OPT_IPV4_ADDRESS_TYPE:
+        {
+            asiolink::IOAddress address(value);
+            if (!address.getAddress().is_v4()) {
+                isc_throw(BadDataTypeCast, "provided address " << address.toText()
+                          << " is not a valid IPV4 address");
+            }
+            asio::ip::address_v4::bytes_type addr_bytes =
+                address.getAddress().to_v4().to_bytes();
+            buf.resize(buf.size() + addr_bytes.size());
+            std::copy_backward(addr_bytes.begin(), addr_bytes.end(),
+                               buf.end());
+            return;
+        }
+    case OPT_IPV6_ADDRESS_TYPE:
+        {
+            asiolink::IOAddress address(value);
+            if (!address.getAddress().is_v6()) {
+                isc_throw(BadDataTypeCast, "provided address " << address.toText()
+                          << " is not a valid IPV6 address");
+            }
+            asio::ip::address_v6::bytes_type addr_bytes =
+                address.getAddress().to_v6().to_bytes();
+            buf.resize(buf.size() + addr_bytes.size());
+            std::copy_backward(addr_bytes.begin(), addr_bytes.end(),
+                               buf.end());
+            return;
+        }
+    default:
+        ;
+    }
+    isc_throw(isc::NotImplemented, "write of string, FQDN record into option buffer"
+              " is not supported yet");
+
 }
 
 OptionDefinition::OptionDefinition(const std::string& name,
@@ -148,9 +273,32 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
 }
 
 OptionPtr
-OptionDefinition::optionFactory(Option::Universe, uint16_t,
-                                const std::vector<std::string>&) const {
-    return (OptionPtr());
+OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
+                                const std::vector<std::string>& values) const {
+    validate();
+
+    OptionBuffer buf;
+    if (!array_type_ && type_ != OPT_RECORD_TYPE) {
+        if (values.size() == 0) {
+            isc_throw(InvalidOptionValue, "no option value specified");
+        }
+        DataTypeUtil::instance().writeToBuffer(values[0], type_, buf);
+    } else if (array_type_ && type_ != OPT_RECORD_TYPE) {
+        for (size_t i = 0; i < values.size(); ++i) {
+            DataTypeUtil::instance().writeToBuffer(values[i], type_, buf);
+        }
+    } else if (type_ == OPT_RECORD_TYPE) {
+        const RecordFieldsCollection& records = getRecordFields();
+        if (records.size() > values.size()) {
+            isc_throw(InvalidOptionValue, "number of data fields for the option"
+                      << " type " << type_ << " is greater than number of values"
+                      << " provided.");
+        }
+        for (size_t i = 0; i < records.size(); ++i) {
+            DataTypeUtil::instance().writeToBuffer(values[i], records[i], buf);
+        }
+    }
+    return (optionFactory(u, type, buf.begin(), buf.end()));
 }
 
 void

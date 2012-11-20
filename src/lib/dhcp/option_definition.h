@@ -27,6 +27,14 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief Exception to be thrown when invalid option value has been
+/// specified for a particular option definition.
+class InvalidOptionValue : public Exception {
+public:
+    InvalidOptionValue(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 /// @brief Forward declaration to OptionDefinition.
 class OptionDefinition;
 
@@ -137,15 +145,18 @@ private:
             return (instance);
         }
 
-        template<typename T>
-        T dataTypeCast(const std::string& value_str) const;
-
         /// @brief Convert type given as string value to option data type.
         ///
         /// @param data_type_name data type string.
         ///
         /// @return option data type.
         OptionDataType getOptionDataType(const std::string& data_type_name);
+
+        template<typename T>
+        T lexicalCastWithRangeCheck(const std::string& value_str) const;
+
+        void writeToBuffer(const std::string& value, uint16_t type,
+                           OptionBuffer& buf);
 
     private:
         /// @brief Private constructor.
