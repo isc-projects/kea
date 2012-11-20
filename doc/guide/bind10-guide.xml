@@ -425,11 +425,12 @@ var/
         </listitem>
 
         <listitem>
-          <para>In another console, enable the authoritative DNS service
-            (by using the <command>bindctl</command> utility to configure
-            the <command>b10-auth</command> component to run):
-            <screen>$ <userinput>bindctl</userinput></screen>
-            (Login with the provided default username and password.)
+          <para>DNS and DHCP components are not started in the default
+	    configuration.  In another console, enable the authoritative
+	    DNS service (by using the <command>bindctl</command> utility
+	    to configure the <command>b10-auth</command> component to
+	    run): <screen>$ <userinput>bindctl</userinput></screen>
+	    (Login with the provided default username and password.)
             <screen>
 &gt; <userinput>config add Boss/components b10-auth</userinput>
 &gt; <userinput>config set Boss/components/b10-auth/special auth</userinput>
