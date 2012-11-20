@@ -57,15 +57,23 @@ OptionDefinition::DataTypeUtil::getOptionDataType(const std::string& data_type) 
 
 template<typename T>
 T OptionDefinition::DataTypeUtil::lexicalCastWithRangeCheck(const std::string& value_str) const {
+    // Lexical cast in case of our data types make sense only
+    // for uintX_t, intX_t and bool type.
     if (!OptionDataTypeTraits<T>::integer_type &&
         OptionDataTypeTraits<T>::type != OPT_BOOLEAN_TYPE) {
         isc_throw(BadDataTypeCast, "unable to do lexical cast to non-integer and"
                   << " non-boolean data type");
     }
+    // We use the 64-bit value here because it has greater range than
+    // any other type we use here and it allows to detect some out of
+    // bounds conditions e.g. negative value specified for uintX_t
+    // data type. Obviously if the value exceeds the limits of int64
+    // this function will not handle that properly.
     int64_t result = 0;
     try {
         result = boost::lexical_cast<int64_t>(value_str);
     } catch (const boost::bad_lexical_cast& ex) {
+        // Prepare error message here.
         std::string data_type_str = "boolean";
         if (OptionDataTypeTraits<T>::integer_type) {
             data_type_str = "integer";
@@ -73,6 +81,7 @@ T OptionDefinition::DataTypeUtil::lexicalCastWithRangeCheck(const std::string& v
         isc_throw(BadDataTypeCast, "unable to do lexical cast to " << data_type_str
                   << " data type for value " << value_str << ": " << ex.what());
     }
+    // Perform range checks for integer values only (exclude bool values).
     if (OptionDataTypeTraits<T>::integer_type) {
         if (result > numeric_limits<T>::max() ||
             result < numeric_limits<T>::min()) {
@@ -85,7 +94,8 @@ T OptionDefinition::DataTypeUtil::lexicalCastWithRangeCheck(const std::string& v
 }
 
 void
-OptionDefinition::DataTypeUtil::writeToBuffer(const std::string& value, uint16_t type,
+OptionDefinition::DataTypeUtil::writeToBuffer(const std::string& value,
+                                              const OptionDataType type,
                                               OptionBuffer& buf) {
     switch (type) {
     case OPT_BINARY_TYPE:
