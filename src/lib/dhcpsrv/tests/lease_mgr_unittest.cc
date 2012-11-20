@@ -22,6 +22,8 @@
 #include <iostream>
 #include <sstream>
 
+#include <time.h>
+
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
@@ -260,6 +262,46 @@ TEST_F(LeaseMgrTest, getParameter) {
 // There's no point in calling any other methods in LeaseMgr, as they
 // are purely virtual, so we would only call ConcreteLeaseMgr methods.
 // Those methods are just stubs that do not return anything.
+
+// Lease4 is also defined in lease_mgr.h, so is tested in this file as well.
+// This test checks if the Lease4 structure can be instantiated correctly
+TEST(Lease4, Lease4Constructor) {
+
+    // Random values for the tests
+    const uint8_t HWADDR[] = {0x08, 0x00, 0x2b, 0x02, 0x3f, 0x4e};
+    std::vector<uint8_t> hwaddr(HWADDR, HWADDR + sizeof(HWADDR));
+
+    const uint8_t CLIENTID[] = {0x17, 0x34, 0xe2, 0xff, 0x09, 0x92, 0x54};
+    std::vector<uint8_t> clientid_vec(CLIENTID, CLIENTID + sizeof(CLIENTID));
+    ClientId clientid(clientid_vec);
+
+    // ...and a time
+    const time_t current_time = time(NULL);
+
+    // Other random constants
+    const uint32_t ADDRESS = 103478;
+    const uint32_t VALID_LIFETIME = 10986;
+    const uint32_t SUBNET_ID = 42;
+
+    // Create the lease
+    Lease4 lease(ADDRESS, HWADDR, sizeof(HWADDR), CLIENTID, sizeof(CLIENTID),
+                 VALID_LIFETIME, current_time, SUBNET_ID);
+
+    EXPECT_EQ(ADDRESS, static_cast<uint32_t>(lease.addr_));
+    EXPECT_EQ(0, lease.ext_);
+    EXPECT_TRUE(hwaddr == lease.hwaddr_);
+    EXPECT_TRUE(clientid == *lease.client_id_);
+    EXPECT_EQ(0, lease.t1_);
+    EXPECT_EQ(0, lease.t2_);
+    EXPECT_EQ(VALID_LIFETIME, lease.valid_lft_);
+    EXPECT_EQ(current_time, lease.cltt_);
+    EXPECT_EQ(SUBNET_ID, lease.subnet_id_);
+    EXPECT_FALSE(lease.fixed_);
+    EXPECT_TRUE(lease.hostname_.empty());
+    EXPECT_FALSE(lease.fqdn_fwd_);
+    EXPECT_FALSE(lease.fqdn_rev_);
+    EXPECT_TRUE(lease.comments_.empty());
+}
 
 // Lease6 is also defined in lease_mgr.h, so is tested in this file as well.
 // This test checks if the Lease6 structure can be instantiated correctly
