@@ -35,6 +35,13 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Exception to be thrown when option definition is invalid.
+class MalformedOptionDefinition : public Exception {
+public:
+    MalformedOptionDefinition(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 /// @brief Forward declaration to OptionDefinition.
 class OptionDefinition;
 
@@ -271,9 +278,7 @@ public:
 
     /// @brief Check if the option definition is valid.
     ///
-    /// @throw isc::OutOfRange if invalid option type was specified.
-    /// @throw isc::BadValue if invalid option name was specified,
-    /// e.g. empty or containing spaces.
+    /// @throw MalformedOptionDefinition option definition is invalid.
     void validate() const;
 
     /// @brief Check if specified format is IA_NA option format.
@@ -298,7 +303,8 @@ public:
     /// @param end end of the option buffer.
     ///
     /// @return instance of the DHCP option.
-    /// @todo list thrown exceptions.
+    /// @throw MalformedOptionDefinition if option definition is invalid.
+    /// @throw InvalidOptionValue if data for the option is invalid.
     OptionPtr optionFactory(Option::Universe u, uint16_t type,
                             OptionBufferConstIter begin,
                             OptionBufferConstIter end) const;
@@ -314,7 +320,8 @@ public:
     /// @param buf option buffer.
     ///
     /// @return instance of the DHCP option.
-    /// @todo list thrown exceptions.
+    /// @throw MalformedOptionDefinition if option definition is invalid.
+    /// @throw InvalidOptionValue if data for the option is invalid.
     OptionPtr optionFactory(Option::Universe u, uint16_t type,
                             const OptionBuffer& buf) const;
 
@@ -337,7 +344,8 @@ public:
     /// @param values a vector of values to be used to set data for an option.
     ///
     /// @return instance of the DHCP option.
-    /// @todo list thrown exceptions.
+    /// @throw MalformedOptionDefinition if option definition is invalid.
+    /// @throw InvalidOptionValue if data for the option is invalid.
     OptionPtr optionFactory(Option::Universe u, uint16_t type,
                             const std::vector<std::string>& values) const;
 

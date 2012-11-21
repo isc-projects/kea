@@ -127,6 +127,15 @@ TEST_F(OptionDefinitionTest, addRecordField) {
     OptionDataType invalid_type =
         static_cast<OptionDataType>(OPT_UNKNOWN_TYPE + 10);
     EXPECT_THROW(opt_def.addRecordField(invalid_type), isc::BadValue);
+
+    // It is bad if we use 'record' option type but don't specify
+    // at least two fields.
+    OptionDefinition opt_def2("OPTION_EMPTY_RECORD", 100, "record");
+    EXPECT_THROW(opt_def2.validate(), MalformedOptionDefinition);
+    opt_def2.addRecordField("uint8");
+    EXPECT_THROW(opt_def2.validate(), MalformedOptionDefinition);
+    opt_def2.addRecordField("uint32");
+    EXPECT_NO_THROW(opt_def2.validate());
 }
 
 // The purpose of this test is to check that validate() function
@@ -134,28 +143,51 @@ TEST_F(OptionDefinitionTest, addRecordField) {
 TEST_F(OptionDefinitionTest, validate) {
     // Not supported option type string is not allowed.
     OptionDefinition opt_def1("OPTION_CLIENTID", D6O_CLIENTID, "non-existent-type");
-    EXPECT_THROW(opt_def1.validate(), isc::OutOfRange);
+    EXPECT_THROW(opt_def1.validate(), MalformedOptionDefinition);
 
     // Not supported option type enum value is not allowed.
     OptionDefinition opt_def2("OPTION_CLIENTID", D6O_CLIENTID, OPT_UNKNOWN_TYPE);
-    EXPECT_THROW(opt_def2.validate(), isc::OutOfRange);
+    EXPECT_THROW(opt_def2.validate(), MalformedOptionDefinition);
 
     OptionDefinition opt_def3("OPTION_CLIENTID", D6O_CLIENTID,
                               static_cast<OptionDataType>(OPT_UNKNOWN_TYPE
                                                                       + 2));
-    EXPECT_THROW(opt_def3.validate(), isc::OutOfRange);
+    EXPECT_THROW(opt_def3.validate(), MalformedOptionDefinition);
 
     // Empty option name is not allowed.
     OptionDefinition opt_def4("", D6O_CLIENTID, "string");
-    EXPECT_THROW(opt_def4.validate(), isc::BadValue);
+    EXPECT_THROW(opt_def4.validate(), MalformedOptionDefinition);
 
     // Option name must not contain spaces.
     OptionDefinition opt_def5(" OPTION_CLIENTID", D6O_CLIENTID, "string");
-    EXPECT_THROW(opt_def5.validate(), isc::BadValue);
+    EXPECT_THROW(opt_def5.validate(), MalformedOptionDefinition);
 
-    OptionDefinition opt_def6("OPTION CLIENTID", D6O_CLIENTID, "string");
-    EXPECT_THROW(opt_def6.validate(), isc::BadValue);
+    // Option name must not contain spaces.
+    OptionDefinition opt_def6("OPTION CLIENTID", D6O_CLIENTID, "string", true);
+    EXPECT_THROW(opt_def6.validate(), MalformedOptionDefinition);
+
+    // Having array of strings does not make sense because there is no way
+    // to determine string's length.
+    OptionDefinition opt_def7("OPTION_CLIENTID", D6O_CLIENTID, "string", true);
+    EXPECT_THROW(opt_def7.validate(), MalformedOptionDefinition);
+
+    // It does not make sense to have string field within the record before
+    // other fields because there is no way to determine the length of this
+    // string and thus there is no way to determine where the other field
+    // begins.
+    OptionDefinition opt_def8("OPTION_STATUS_CODE", D6O_STATUS_CODE,
+                              "record");
+    opt_def8.addRecordField("string");
+    opt_def8.addRecordField("uint16");
+    EXPECT_THROW(opt_def8.validate(), MalformedOptionDefinition);
+
+    // ... but it is ok if the string value is the last one.
+    OptionDefinition opt_def9("OPTION_STATUS_CODE", D6O_STATUS_CODE,
+                              "record");
+    opt_def9.addRecordField("uint8");
+    opt_def9.addRecordField("string");
 }
+
 
 // The purpose of this test is to verify that option definition
 // that comprises array of IPv6 addresses will return an instance
@@ -205,7 +237,7 @@ TEST_F(OptionDefinitionTest, ipv6AddressArray) {
     // It should throw exception then.
     EXPECT_THROW(
         opt_def.optionFactory(Option::V6, D6O_NIS_SERVERS, buf),
-        isc::OutOfRange
+        InvalidOptionValue
     );
 }
 
@@ -302,7 +334,7 @@ TEST_F(OptionDefinitionTest, ipv4AddressArray) {
     buf.insert(buf.end(), 1, 1);
     // It should throw exception then.
     EXPECT_THROW(opt_def.optionFactory(Option::V4, DHO_NIS_SERVERS, buf),
-                 isc::OutOfRange);
+                 InvalidOptionValue);
 }
 
 // The purpose of this test is to verify that option definition
@@ -507,13 +539,13 @@ TEST_F(OptionDefinitionTest, recordIA6) {
     // This should work for DHCPv6 only, try passing invalid universe value.
     EXPECT_THROW(
         opt_def.optionFactory(Option::V4, D6O_IA_NA, OptionBuffer(option6_ia_len)),
-        isc::BadValue
+        InvalidOptionValue
     );
     // The length of the buffer must be at least 12 bytes.
     // Check too short buffer.
     EXPECT_THROW(
         opt_def.optionFactory(Option::V6, D6O_IA_NA, OptionBuffer(option6_ia_len - 1)),
-        isc::OutOfRange
+        InvalidOptionValue
      );
 }
 
@@ -554,13 +586,13 @@ TEST_F(OptionDefinitionTest, recordIAAddr6) {
     // This should work for DHCPv6 only, try passing invalid universe value.
     EXPECT_THROW(
         opt_def.optionFactory(Option::V4, D6O_IAADDR, OptionBuffer(option6_iaaddr_len)),
-        isc::BadValue
+        InvalidOptionValue
     );
     // The length of the buffer must be at least 12 bytes.
     // Check too short buffer.
     EXPECT_THROW(
         opt_def.optionFactory(Option::V6, D6O_IAADDR, OptionBuffer(option6_iaaddr_len - 1)),
-        isc::OutOfRange
+        InvalidOptionValue
      );
 }
 
@@ -596,7 +628,7 @@ TEST_F(OptionDefinitionTest, recordIAAddr6Tokenized) {
     // This should work for DHCPv6 only, try passing in\valid universe value.
     EXPECT_THROW(
         opt_def.optionFactory(Option::V4, D6O_IAADDR, data_field_values),
-        isc::BadValue
+        InvalidOptionValue
     );
 }
 
@@ -620,7 +652,7 @@ TEST_F(OptionDefinitionTest, uint8) {
     // Try to provide zero-length buffer. Expect exception.
     EXPECT_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, D6O_PREFERENCE, OptionBuffer()),
-        isc::OutOfRange
+        InvalidOptionValue
     );
 
     // @todo Add more cases for DHCPv4
@@ -676,7 +708,7 @@ TEST_F(OptionDefinitionTest, uint16) {
     // Try to provide zero-length buffer. Expect exception.
     EXPECT_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, D6O_ELAPSED_TIME, OptionBuffer(1)),
-        isc::OutOfRange
+        InvalidOptionValue
     );
 
     // @todo Add more cases for DHCPv4
@@ -730,7 +762,7 @@ TEST_F(OptionDefinitionTest, uint32) {
     // Try to provide too short buffer. Expect exception.
     EXPECT_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, D6O_CLT_TIME, OptionBuffer(2)),
-        isc::OutOfRange
+        InvalidOptionValue
     );
 
     // @todo Add more cases for DHCPv4
@@ -795,12 +827,12 @@ TEST_F(OptionDefinitionTest, uint16Array) {
     // get exception if we provide zero-length buffer.
     EXPECT_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, opt_code, OptionBuffer()),
-        isc::OutOfRange
+        InvalidOptionValue
     );
     // Buffer length must be multiple of data type size.
     EXPECT_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, opt_code, OptionBuffer(5)),
-        isc::OutOfRange
+        InvalidOptionValue
     );
 }
 
@@ -868,12 +900,12 @@ TEST_F(OptionDefinitionTest, uint32Array) {
     // get exception if we provide zero-length buffer.
     EXPECT_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, opt_code, OptionBuffer()),
-        isc::OutOfRange
+        InvalidOptionValue
     );
     // Buffer length must be multiple of data type size.
     EXPECT_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, opt_code, OptionBuffer(5)),
-        isc::OutOfRange
+        InvalidOptionValue
     );
 }
 
