@@ -149,7 +149,7 @@ TEST_F(OptionDefinitionTest, validate) {
     EXPECT_THROW(opt_def6.validate(), isc::BadValue);
 }
 
-TEST_F(OptionDefinitionTest, factoryAddrList6) {
+TEST_F(OptionDefinitionTest, ipv6AddressArray) {
     OptionDefinition opt_def("OPTION_NIS_SERVERS", D6O_NIS_SERVERS,
                              "ipv6-address", true);
 
@@ -200,7 +200,7 @@ TEST_F(OptionDefinitionTest, factoryAddrList6) {
 
 // This test checks that a vector of strings, holding IPv6 addresses,
 // can be used to create option instance with the optionFactory function.
-TEST_F(OptionDefinitionTest, factoryTokenizedAddrList6) {
+TEST_F(OptionDefinitionTest, ipv6AddressArrayTokenized) {
     OptionDefinition opt_def("OPTION_NIS_SERVERS", D6O_NIS_SERVERS,
                              "ipv6-address", true);
 
@@ -242,7 +242,7 @@ TEST_F(OptionDefinitionTest, factoryTokenizedAddrList6) {
     EXPECT_TRUE(std::equal(addrs.begin(), addrs.end(), addrs_returned.begin()));
 }
 
-TEST_F(OptionDefinitionTest, factoryAddrList4) {
+TEST_F(OptionDefinitionTest, ipv4AddressArray) {
     OptionDefinition opt_def("OPTION_NAME_SERVERS", D6O_NIS_SERVERS,
                              "ipv4-address", true);
 
@@ -290,7 +290,7 @@ TEST_F(OptionDefinitionTest, factoryAddrList4) {
 
 // This test checks that a vector of strings, holding IPv4 addresses,
 // can be used to create option instance with the optionFactory function.
-TEST_F(OptionDefinitionTest, factoryTokenizedAddrList4) {
+TEST_F(OptionDefinitionTest, ipv4AddressArrayTokenized) {
     OptionDefinition opt_def("OPTION_NIS_SERVERS", DHO_NIS_SERVERS,
                              "ipv4-address", true);
 
@@ -332,7 +332,7 @@ TEST_F(OptionDefinitionTest, factoryTokenizedAddrList4) {
     EXPECT_TRUE(std::equal(addrs.begin(), addrs.end(), addrs_returned.begin()));
 }
 
-TEST_F(OptionDefinitionTest, factoryEmpty) {
+TEST_F(OptionDefinitionTest, empty) {
     OptionDefinition opt_def("OPTION_RAPID_COMMIT", D6O_RAPID_COMMIT, "empty");
 
     // Create option instance and provide empty buffer as expected.
@@ -355,7 +355,7 @@ TEST_F(OptionDefinitionTest, factoryEmpty) {
     EXPECT_EQ(0, option_v4->getData().size());
 }
 
-TEST_F(OptionDefinitionTest, factoryBinary) {
+TEST_F(OptionDefinitionTest, binary) {
     // Binary option is the one that is represented by the generic
     // Option class. In fact all options can be represented by this
     // class but for some of them it is just natural. The SERVERID
@@ -402,7 +402,7 @@ TEST_F(OptionDefinitionTest, factoryBinary) {
                            buf.begin()));
 }
 
-TEST_F(OptionDefinitionTest, factoryTokenizedBinary) {
+TEST_F(OptionDefinitionTest, binaryTokenized) {
     OptionDefinition opt_def("OPTION_FOO", 1000, "binary", true);
 
     // Prepare some dummy data (serverid): 0, 1, 2 etc.
@@ -449,7 +449,7 @@ TEST_F(OptionDefinitionTest, factoryTokenizedBinary) {
 }
 
 
-TEST_F(OptionDefinitionTest, factoryIA6) {
+TEST_F(OptionDefinitionTest, recordIA6) {
     // This option consists of IAID, T1 and T2 fields (each 4 bytes long).
     const int option6_ia_len = 12;
 
@@ -487,7 +487,7 @@ TEST_F(OptionDefinitionTest, factoryIA6) {
      );
 }
 
-TEST_F(OptionDefinitionTest, factoryIAAddr6) {
+TEST_F(OptionDefinitionTest, recordIAAddr6) {
     // This option consists of IPV6 Address (16 bytes) and preferred-lifetime and
     // valid-lifetime fields (each 4 bytes long).
     const int option6_iaaddr_len = 24;
@@ -531,7 +531,7 @@ TEST_F(OptionDefinitionTest, factoryIAAddr6) {
      );
 }
 
-TEST_F(OptionDefinitionTest, factoryTokenizedIAAddr6) {
+TEST_F(OptionDefinitionTest, recordIAAddr6Tokenized) {
     // This option consists of IPV6 Address (16 bytes) and preferred-lifetime and
     // valid-lifetime fields (each 4 bytes long).
     OptionDefinition opt_def("OPTION_IAADDR", D6O_IAADDR, "record");
@@ -562,7 +562,7 @@ TEST_F(OptionDefinitionTest, factoryTokenizedIAAddr6) {
     );
 }
 
-TEST_F(OptionDefinitionTest, factoryIntegerInvalidType) {
+TEST_F(OptionDefinitionTest, integerInvalidType) {
     // The template function factoryInteger<> accepts integer values only
     // as template typename. Here we try passing different type and
     // see if it rejects it.
@@ -574,7 +574,7 @@ TEST_F(OptionDefinitionTest, factoryIntegerInvalidType) {
     );
 }
 
-TEST_F(OptionDefinitionTest, factoryUint8) {
+TEST_F(OptionDefinitionTest, uint8) {
     OptionDefinition opt_def("OPTION_PREFERENCE", D6O_PREFERENCE, "uint8");
 
     OptionPtr option_v6;
@@ -597,7 +597,7 @@ TEST_F(OptionDefinitionTest, factoryUint8) {
     // @todo Add more cases for DHCPv4
 }
 
-TEST_F(OptionDefinitionTest, factoryTokenizedUint8) {
+TEST_F(OptionDefinitionTest, uint8Tokenized) {
     OptionDefinition opt_def("OPTION_PREFERENCE", D6O_PREFERENCE, "uint8");
 
     OptionPtr option_v6;
@@ -622,7 +622,7 @@ TEST_F(OptionDefinitionTest, factoryTokenizedUint8) {
 }
 
 
-TEST_F(OptionDefinitionTest, factoryUint16) {
+TEST_F(OptionDefinitionTest, uint16) {
     OptionDefinition opt_def("OPTION_ELAPSED_TIME", D6O_ELAPSED_TIME, "uint16");
 
     OptionPtr option_v6;
@@ -648,7 +648,7 @@ TEST_F(OptionDefinitionTest, factoryUint16) {
     // @todo Add more cases for DHCPv4
 }
 
-TEST_F(OptionDefinitionTest, factoryTokenizedUint16) {
+TEST_F(OptionDefinitionTest, uint16Tokenized) {
     OptionDefinition opt_def("OPTION_ELAPSED_TIME", D6O_ELAPSED_TIME, "uint16");
 
     OptionPtr option_v6;
@@ -669,7 +669,7 @@ TEST_F(OptionDefinitionTest, factoryTokenizedUint16) {
 
 }
 
-TEST_F(OptionDefinitionTest, factoryUint32) {
+TEST_F(OptionDefinitionTest, uint32) {
     OptionDefinition opt_def("OPTION_CLT_TIME", D6O_CLT_TIME, "uint32");
 
     OptionPtr option_v6;
@@ -696,7 +696,7 @@ TEST_F(OptionDefinitionTest, factoryUint32) {
     // @todo Add more cases for DHCPv4
 }
 
-TEST_F(OptionDefinitionTest, factoryTokenizedUint32) {
+TEST_F(OptionDefinitionTest, uint32Tokenized) {
     OptionDefinition opt_def("OPTION_CLT_TIME", D6O_CLT_TIME, "uint32");
 
     OptionPtr option_v6;
@@ -715,8 +715,7 @@ TEST_F(OptionDefinitionTest, factoryTokenizedUint32) {
     // @todo Add more cases for DHCPv4
 }
 
-
-TEST_F(OptionDefinitionTest, factoryUint16Array) {
+TEST_F(OptionDefinitionTest, uint16Array) {
     // Let's define some dummy option.
     const uint16_t opt_code = 79;
     OptionDefinition opt_def("OPTION_UINT16_ARRAY", opt_code, "uint16", true);
@@ -759,7 +758,7 @@ TEST_F(OptionDefinitionTest, factoryUint16Array) {
     );
 }
 
-TEST_F(OptionDefinitionTest, factoryTokenizedUint16Array) {
+TEST_F(OptionDefinitionTest, uint16ArrayTokenized) {
     // Let's define some dummy option.
     const uint16_t opt_code = 79;
     OptionDefinition opt_def("OPTION_UINT16_ARRAY", opt_code, "uint16", true);
@@ -783,7 +782,7 @@ TEST_F(OptionDefinitionTest, factoryTokenizedUint16Array) {
 }
 
 
-TEST_F(OptionDefinitionTest, factoryUint32Array) {
+TEST_F(OptionDefinitionTest, uint32Array) {
     // Let's define some dummy option.
     const uint16_t opt_code = 80;
 
@@ -827,7 +826,7 @@ TEST_F(OptionDefinitionTest, factoryUint32Array) {
     );
 }
 
-TEST_F(OptionDefinitionTest, factoryTokenizedUint32Array) {
+TEST_F(OptionDefinitionTest, uint32ArrayTokenized) {
     // Let's define some dummy option.
     const uint16_t opt_code = 80;
 
@@ -852,6 +851,26 @@ TEST_F(OptionDefinitionTest, factoryTokenizedUint32Array) {
     EXPECT_EQ(7, values[1]);
     EXPECT_EQ(256, values[2]);
     EXPECT_EQ(1111, values[3]);
+}
+
+TEST_F(OptionDefinitionTest, utf8StringTokenized) {
+    // Let's create some dummy option.
+    const uint16_t opt_code = 80;
+    OptionDefinition opt_def("OPTION_WITH_STRING", opt_code, "string");
+    
+    std::vector<std::string> values;
+    values.push_back("Hello World");
+    values.push_back("this string should not be included in the option");
+    OptionPtr option_v6;
+    EXPECT_NO_THROW(
+        option_v6 = opt_def.optionFactory(Option::V6, opt_code, values);
+    );
+    ASSERT_TRUE(option_v6);
+    ASSERT_TRUE(typeid(*option_v6) == typeid(Option));
+    std::vector<uint8_t> data = option_v6->getData();
+    std::vector<uint8_t> ref_data(values[0].c_str(), values[0].c_str()
+                                  + values[0].length());
+    EXPECT_TRUE(std::equal(ref_data.begin(), ref_data.end(), data.begin()));
 }
 
 TEST_F(OptionDefinitionTest, recognizeFormat) {
