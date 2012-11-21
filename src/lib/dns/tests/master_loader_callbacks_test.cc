@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dns/master_loader_callbacks.h>
+#include <dns/rrset.h>
 #include <dns/name.h>
 #include <dns/rrttl.h>
 #include <dns/rrclass.h>
