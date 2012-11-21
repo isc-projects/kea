@@ -97,7 +97,7 @@ class Option6IntArray;
 ///
 /// Should the option comprise data fields of different types, the "record"
 /// option type is used. In such cases the data field types within the record
-/// are specified using \ref OptioDefinition::addRecordField.
+/// are specified using \ref OptionDefinition::addRecordField.
 ///
 /// When the OptionDefinition object has been sucessfully created, it can be
 /// queried to return the appropriate option factory function for the specified
@@ -297,7 +297,7 @@ public:
     /// provided chunk of buffer. This function may be used to
     /// create option which is to be sent in the outgoing packet.
     ///
-    /// @param universe option universe (V4 or V6).
+    /// @param u option universe (V4 or V6).
     /// @param type option type.
     /// @param begin beginning of the option buffer.
     /// @param end end of the option buffer.
@@ -315,7 +315,7 @@ public:
     /// whole provided buffer. This function may be used to
     /// create option which is to be sent in the outgoing packet.
     ///
-    /// @param universe option universe (V4 or V6).
+    /// @param u option universe (V4 or V6).
     /// @param type option type.
     /// @param buf option buffer.
     ///
@@ -339,7 +339,7 @@ public:
     /// must be tokenized into the vector of string values and this vector
     /// can be supplied to this function.
     ///
-    /// @param universe option universe (V4 or V6).
+    /// @param u option universe (V4 or V6).
     /// @param type option type.
     /// @param values a vector of values to be used to set data for an option.
     ///
@@ -351,25 +351,29 @@ public:
 
     /// @brief Factory to create option with address list.
     ///
-    /// @param u universe (must be V4).
     /// @param type option type.
-    /// @param buf option buffer with a list of IPv4 addresses.
+    /// @param begin iterator pointing to the beginning of the buffer
+    /// with a list of IPv4 addresses.
+    /// @param end iterator pointing to the end of the buffer with
+    /// a list of IPv4 addresses.
     ///
     /// @throw isc::OutOfRange if length of the provided option buffer
     /// is not multiple of IPV4 address length.
-    static OptionPtr factoryAddrList4(Option::Universe u, uint16_t type,
+    static OptionPtr factoryAddrList4(uint16_t type,
                                       OptionBufferConstIter begin,
                                       OptionBufferConstIter end);
 
     /// @brief Factory to create option with address list.
     ///
-    /// @param u universe (must be V6).
     /// @param type option type.
-    /// @param buf option buffer with a list of IPv6 addresses.
+    /// @param begin iterator pointing to the beginning of the buffer
+    /// with a list of IPv6 addresses.
+    /// @param end iterator pointing to the end of the buffer with
+    /// a list of IPv6 addresses.
     ///
     /// @throw isc::OutOfaRange if length of provided option buffer
     /// is not multiple of IPV6 address length.
-    static OptionPtr factoryAddrList6(Option::Universe u, uint16_t type,
+    static OptionPtr factoryAddrList6(uint16_t type,
                                       OptionBufferConstIter begin,
                                       OptionBufferConstIter end);
 
@@ -377,50 +381,49 @@ public:
     ///
     /// @param u universe (V6 or V4).
     /// @param type option type.
-    /// @param buf option buffer (must be empty).
-    static OptionPtr factoryEmpty(Option::Universe u, uint16_t type,
-                                  OptionBufferConstIter begin,
-                                  OptionBufferConstIter end);
+    static OptionPtr factoryEmpty(Option::Universe u, uint16_t type);
 
     /// @brief Factory to create generic option.
     ///
     /// @param u universe (V6 or V4).
     /// @param type option type.
-    /// @param buf option buffer.
+    /// @param begin iterator pointing to the beginning of the buffer.
+    /// @param end iterator pointing to the end of the buffer.
     static OptionPtr factoryGeneric(Option::Universe u, uint16_t type,
                                     OptionBufferConstIter begin,
                                     OptionBufferConstIter end);
 
     /// @brief Factory for IA-type of option.
     ///
-    /// @param u universe (must be V6).
     /// @param type option type.
-    /// @param buf option buffer.
+    /// @param begin iterator pointing to the beginning of the buffer.
+    /// @param end iterator pointing to the end of the buffer.
     ///
     /// @throw isc::OutOfRange if provided option buffer is too short or
     /// too long. Expected size is 12 bytes.
     /// @throw isc::BadValue if specified universe value is not V6.
-    static OptionPtr factoryIA6(Option::Universe u, uint16_t type,
+    static OptionPtr factoryIA6(uint16_t type,
                                 OptionBufferConstIter begin,
                                 OptionBufferConstIter end);
 
     /// @brief Factory for IAADDR-type of option.
     ///
-    /// @param u universe (must be V6).
     /// @param type option type.
-    /// @param buf option buffer.
+    /// @param begin iterator pointing to the beginning of the buffer.
+    /// @param end iterator pointing to the end of the buffer.
     ///
     /// @throw isc::OutOfRange if provided option buffer is too short or
     /// too long. Expected size is 24 bytes.
     /// @throw isc::BadValue if specified universe value is not V6.
-    static OptionPtr factoryIAAddr6(Option::Universe u, uint16_t type,
+    static OptionPtr factoryIAAddr6(uint16_t type,
                                     OptionBufferConstIter begin,
                                     OptionBufferConstIter end);
 
     /// @brief Factory function to create option with integer value.
     ///
     /// @param type option type.
-    /// @param buf option buffer.
+    /// @param begin iterator pointing to the beginning of the buffer.
+    /// @param end iterator pointing to the end of the buffer.
     /// @tparam T type of the data field (must be one of the uintX_t or intX_t).
     ///
     /// @throw isc::OutOfRange if provided option buffer length is invalid.
@@ -435,12 +438,13 @@ public:
     /// @brief Factory function to create option with array of integer values.
     ///
     /// @param type option type.
-    /// @param buf option buffer.
+    /// @param begin iterator pointing to the beginning of the buffer.
+    /// @param end iterator pointing to the end of the buffer.
     /// @tparam T type of the data field (must be one of the uintX_t or intX_t).
     ///
     /// @throw isc::OutOfRange if provided option buffer length is invalid.
     template<typename T>
-    static OptionPtr factoryIntegerArray(Option::Universe, uint16_t type,
+    static OptionPtr factoryIntegerArray(uint16_t type,
                                          OptionBufferConstIter begin,
                                          OptionBufferConstIter end) {
         OptionPtr option(new Option6IntArray<T>(type, begin, end));

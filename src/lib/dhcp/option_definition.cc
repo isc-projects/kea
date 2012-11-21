@@ -289,15 +289,19 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
         if (type_ == OPT_BINARY_TYPE) {
             return (factoryGeneric(u, type, begin, end));
         } else if (type_ == OPT_IPV6_ADDRESS_TYPE && array_type_) {
-            return (factoryAddrList6(u, type, begin, end));
+            return (factoryAddrList6(type, begin, end));
         } else if (type_ == OPT_IPV4_ADDRESS_TYPE && array_type_) {
-            return (factoryAddrList4(u, type, begin, end));
+            return (factoryAddrList4(type, begin, end));
         } else if (type_ == OPT_EMPTY_TYPE) {
-            return (factoryEmpty(u, type, begin, end));
-        } else if (code_ == D6O_IA_NA && haveIA6Format()) {
-            return (factoryIA6(u, type, begin, end));
-        } else if (code_ == D6O_IAADDR && haveIAAddr6Format()) {
-            return (factoryIAAddr6(u, type, begin, end));
+            return (factoryEmpty(u, type));
+        } else if (u == Option::V6 &&
+                   code_ == D6O_IA_NA &&
+                   haveIA6Format()) {
+            return (factoryIA6(type, begin, end));
+        } else if (u == Option::V6 &&
+                   code_ == D6O_IAADDR &&
+                   haveIAAddr6Format()) {
+            return (factoryIAAddr6(type, begin, end));
         } else if (type_ == OPT_UINT8_TYPE) {
             if (array_type_) {
                 return (factoryGeneric(u, type, begin, end));
@@ -306,13 +310,13 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             }
         } else if (type_ == OPT_UINT16_TYPE) {
             if (array_type_) {
-                return (factoryIntegerArray<uint16_t>(u, type, begin, end));
+                return (factoryIntegerArray<uint16_t>(type, begin, end));
             } else {
                 return (factoryInteger<uint16_t>(u, type, begin, end));
             }
         } else if (type_ == OPT_UINT32_TYPE) {
             if (array_type_) {
-                return (factoryIntegerArray<uint32_t>(u, type, begin, end));
+                return (factoryIntegerArray<uint32_t>(type, begin, end));
             } else {
                 return (factoryInteger<uint32_t>(u, type, begin, end));
             }
@@ -442,28 +446,24 @@ OptionDefinition::haveIAAddr6Format() const {
 }
 
 OptionPtr
-OptionDefinition::factoryAddrList4(Option::Universe u, uint16_t type,
+OptionDefinition::factoryAddrList4(uint16_t type,
                                   OptionBufferConstIter begin,
                                   OptionBufferConstIter end) {
-    sanityCheckUniverse(u, Option::V4);
     boost::shared_ptr<Option4AddrLst> option(new Option4AddrLst(type, begin, end));
     return (option);
 }
 
 OptionPtr
-OptionDefinition::factoryAddrList6(Option::Universe u, uint16_t type,
+OptionDefinition::factoryAddrList6(uint16_t type,
                                    OptionBufferConstIter begin,
                                    OptionBufferConstIter end) {
-    sanityCheckUniverse(u, Option::V6);
     boost::shared_ptr<Option6AddrLst> option(new Option6AddrLst(type, begin, end));
     return (option);
 }
 
 
 OptionPtr
-OptionDefinition::factoryEmpty(Option::Universe u, uint16_t type,
-                               OptionBufferConstIter,
-                               OptionBufferConstIter) {
+OptionDefinition::factoryEmpty(Option::Universe u, uint16_t type) {
     OptionPtr option(new Option(u, type));
     return (option);
 }
@@ -477,10 +477,9 @@ OptionDefinition::factoryGeneric(Option::Universe u, uint16_t type,
 }
 
 OptionPtr
-OptionDefinition::factoryIA6(Option::Universe u, uint16_t type,
+OptionDefinition::factoryIA6(uint16_t type,
                              OptionBufferConstIter begin,
                              OptionBufferConstIter end) {
-    sanityCheckUniverse(u, Option::V6);
     if (std::distance(begin, end) < Option6IA::OPTION6_IA_LEN) {
         isc_throw(isc::OutOfRange, "input option buffer has invalid size, expected "
                   "at least " << Option6IA::OPTION6_IA_LEN << " bytes");
@@ -490,10 +489,9 @@ OptionDefinition::factoryIA6(Option::Universe u, uint16_t type,
 }
 
 OptionPtr
-OptionDefinition::factoryIAAddr6(Option::Universe u, uint16_t type,
+OptionDefinition::factoryIAAddr6(uint16_t type,
                                  OptionBufferConstIter begin,
                                  OptionBufferConstIter end) {
-    sanityCheckUniverse(u, Option::V6);
     if (std::distance(begin, end) < Option6IAAddr::OPTION6_IAADDR_LEN) {
         isc_throw(isc::OutOfRange, "input option buffer has invalid size, expected "
                   " at least " << Option6IAAddr::OPTION6_IAADDR_LEN << " bytes");
