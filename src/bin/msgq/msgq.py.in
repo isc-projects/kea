@@ -393,7 +393,18 @@ class MsgQ:
         # Try to send some data from the buffer
         (_, msg) = self.sendbuffs[fileno]
         sock = self.sockets[fileno]
-        amount_sent = self.__send_data(sock, msg)
+        try:
+            amount_sent = self.__send_data(sock, msg)
+        except socket.error as sockerr:
+            # in the case the other side seems gone, kill the socket
+            # and drop the send action
+            if sockerr.errno == errno.EPIPE:
+                print("[b10-msgq] SIGPIPE on send, dropping message " +
+                      "and closing connection")
+                self.kill_socket(fileno, sock)
+                return
+            else:
+                raise
         # Keep the rest
         msg = msg[amount_sent:]
         if len(msg) == 0:
