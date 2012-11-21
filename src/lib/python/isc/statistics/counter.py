@@ -84,11 +84,11 @@ def init(spec_file_name):
     module_spec = isc.config.module_spec_from_file(spec_file_name)
     class_name = '%sCounter' % module_spec.get_module_name()
     global _COUNTER
-    if issubclass(_COUNTER.__class__, _Counter):
+    if isinstance(_COUNTER, _Counter):
         # already loaded
         return _COUNTER
     # create an instance once
-    _COUNTER = globals()[class_name](module_spec)
+    _COUNTER = _Counter(module_spec)
     # make globals
     globals().update(_COUNTER._to_global)
     return _COUNTER
@@ -170,7 +170,50 @@ class Counter():
         pass
 
 class _Counter():
-    """A basic counter class for concrete classes"""
+    """A module for holding all statistics counters of modules. The
+    counter numbers can be accessed by the accesseers defined
+    according to a spec file. In this class, the structure of per-zone
+    counters is assumed to be like this:
+
+        zones/example.com./notifyoutv4
+        zones/example.com./notifyoutv6
+        zones/example.com./xfrrej
+        zones/example.com./xfrreqdone
+        zones/example.com./soaoutv4
+        zones/example.com./soaoutv6
+        zones/example.com./axfrreqv4
+        zones/example.com./axfrreqv6
+        zones/example.com./ixfrreqv4
+        zones/example.com./ixfrreqv6
+        zones/example.com./xfrsuccess
+        zones/example.com./xfrfail
+        zones/example.com./time_to_ixfr
+        zones/example.com./time_to_axfr
+        ixfr_running
+        axfr_running
+        socket/unixdomain/open
+        socket/unixdomain/openfail
+        socket/unixdomain/close
+        socket/unixdomain/bindfail
+        socket/unixdomain/acceptfail
+        socket/unixdomain/accept
+        socket/unixdomain/senderr
+        socket/unixdomain/recverr
+        socket/ipv4/tcp/open
+        socket/ipv4/tcp/openfail
+        socket/ipv4/tcp/close
+        socket/ipv4/tcp/connfail
+        socket/ipv4/tcp/conn
+        socket/ipv4/tcp/senderr
+        socket/ipv4/tcp/recverr
+        socket/ipv6/tcp/open
+        socket/ipv6/tcp/openfail
+        socket/ipv6/tcp/close
+        socket/ipv6/tcp/connfail
+        socket/ipv6/tcp/conn
+        socket/ipv6/tcp/senderr
+        socket/ipv6/tcp/recverr
+    """
 
     # '_SERVER_' is a special zone name representing an entire
     # count. It doesn't mean a specific zone, but it means an
@@ -179,7 +222,7 @@ class _Counter():
     # zone names are contained under this dirname in the spec file.
     _perzone_prefix = 'zones'
 
-    def __init__(self):
+    def __init__(self, module_spec):
         # for exporting to the global scope
         self._to_global = {}
         self._statistics_spec = {}
@@ -190,9 +233,37 @@ class _Counter():
         self._start_time = {}
         self._disabled = False
         self._rlock = threading.RLock()
+        self._statistics_spec = module_spec.get_statistics_spec()
+        self._zones_item_list = isc.config.spec_name_list(
+            isc.config.find_spec_part(
+                self._statistics_spec, self._perzone_prefix)\
+                ['named_set_item_spec']['map_item_spec'])
+        self._xfrrunning_names = [
+            n for n in isc.config.spec_name_list\
+                (self._statistics_spec) \
+                if n.find('xfr_running') == 1 \
+                or n.find('xfr_deferred') == 1 \
+                or n.find('soa_in_progress') == 0 ]
+        self._unixsocket_names = [ \
+            n.split('/')[-1] for n in \
+                isc.config.spec_name_list(
+                self._statistics_spec, "", True) \
+                if n.find('socket/unixdomain/') == 0 ]
+        self._ipsocket_names = [ \
+            (n.split('/')[-3], n.split('/')[-1]) for n in \
+                isc.config.spec_name_list(
+                self._statistics_spec, "", True) \
+                if n.find('socket/ipv4/tcp/') == 0 \
+                or n.find('socket/ipv6/tcp/') == 0 ]
+        self._create_perzone_functors()
+        self._create_perzone_timer_functors()
+        self._create_xfrrunning_functors()
+        self._create_unixsocket_functors()
+        self._create_ipsocket_functors()
         self._to_global['clear_counters'] = self.clear_counters
         self._to_global['disable'] = self.disable
         self._to_global['enable'] = self.enable
+        self._to_global['dump_statistics'] = self.dump_statistics
 
     def clear_counters(self):
         """clears all statistics data"""
@@ -274,6 +345,36 @@ class _Counter():
             self._to_global['inc_%s' % item] = __incrementer
             self._to_global['get_%s' % item] = __getter
 
+    def _create_perzone_timer_functors(self):
+        """Creates timer method of each per-zone counter based on the
+        spec file. Starter of the timer can be accessed by the name
+        "start_${item_name}".  Stopper of the timer can be accessed by
+        the name "stop_${item_name}".  These starter and stopper are
+        passed to the XfrinConnection class as timer handlers."""
+        for item in self._zones_item_list:
+            if item.find('time_to_') == -1: continue
+            def __getter(zone_name, counter_name=item):
+                """A getter method for perzone timer. A zone name in
+                string is required in argument."""
+                return self._getter(
+                    '%s/%s/%s' % \
+                        (self._perzone_prefix, zone_name, counter_name))
+            def __starttimer(zone_name, counter_name=item):
+                """A starter method for perzone timer. A zone name in
+                string is required in argument."""
+                self._starttimer(
+                    '%s/%s/%s' % \
+                        (self._perzone_prefix, zone_name, counter_name))
+            def __stoptimer(zone_name, counter_name=item):
+                """A stopper method for perzone timer. A zone name in
+                string is required in argument."""
+                self._stoptimer(
+                    '%s/%s/%s' % \
+                        (self._perzone_prefix, zone_name, counter_name))
+            self._to_global['start_%s' % item] = __starttimer
+            self._to_global['stop_%s' % item] = __stoptimer
+            self._to_global['get_%s' % item] = __getter
+
     def _create_xfrrunning_functors(self):
         """Creates increment/decrement method of (a|i)xfr_running
         based on the spec file. Incrementer can be accessed by name
@@ -326,51 +427,6 @@ class _Counter():
             **zones_data)
         return statistics_data
 
-class XfroutCounter(Counter):
-    """A module for holding all statistics counters of Xfrout. The
-    counter numbers can be accessed by the accesseers defined
-    according to a spec file. In this class, the structure of per-zone
-    counters is assumed to be like this:
-
-        zones/example.com./notifyoutv4
-        zones/example.com./notifyoutv6
-        zones/example.com./xfrrej
-        zones/example.com./xfrreqdone
-        ixfr_running
-        axfr_running
-        socket/unixdomain/open
-        socket/unixdomain/openfail
-        socket/unixdomain/close
-        socket/unixdomain/bindfail
-        socket/unixdomain/acceptfail
-        socket/unixdomain/accept
-        socket/unixdomain/senderr
-        socket/unixdomain/recverr
-    """
-
-    def __init__(self, module_spec):
-        """Creates an instance. A module_spec object for the target
-        module Xfrout is required in the argument."""
-        Counter.__init__(self)
-        self._statistics_spec = module_spec.get_statistics_spec()
-        self._zones_item_list = isc.config.spec_name_list(
-            isc.config.find_spec_part(
-                self._statistics_spec, self._perzone_prefix)\
-                ['named_set_item_spec']['map_item_spec'])
-        self._xfrrunning_names = [
-            n for n in isc.config.spec_name_list\
-                (self._statistics_spec) \
-                if n.find('xfr_running') == 1 ]
-        self._unixsocket_names = [ \
-            n.split('/')[-1] for n in \
-                isc.config.spec_name_list(
-                self._statistics_spec, "", True) \
-                if n.find('socket/unixdomain/') == 0 ]
-        self._create_perzone_functors()
-        self._create_xfrrunning_functors()
-        self._create_unixsocket_functors()
-        self._to_global['dump_statistics'] = self.dump_statistics
-
     def _create_unixsocket_functors(self):
         """Creates increment method of unixsocket socket. Incrementer
         can be accessed by name "inc_unixsocket_${item_name}"."""
@@ -386,95 +442,6 @@ class XfroutCounter(Counter):
                     'socket/unixdomain/%s' % counter_name)
             self._to_global['inc_unixsocket_%s' % item] = __incrementer
             self._to_global['get_unixsocket_%s' % item] = __getter
-
-class XfrinCounter(Counter):
-    """A module for holding all statistics counters of Xfrin. The
-    counter numbers can be accessed by the accesseers defined
-    according to a spec file. In this class, the structure of per-zone
-    counters is assumed to be like this:
-
-	zones/example.com./soaoutv4
-	zones/example.com./soaoutv6
-	zones/example.com./axfrreqv4
-	zones/example.com./axfrreqv6
-	zones/example.com./ixfrreqv4
-	zones/example.com./ixfrreqv6
-	zones/example.com./xfrsuccess
-	zones/example.com./xfrfail
-	zones/example.com./time_to_ixfr
-	zones/example.com./time_to_axfr
-        socket/ipv4/tcp/open
-        socket/ipv4/tcp/openfail
-        socket/ipv4/tcp/close
-        socket/ipv4/tcp/connfail
-        socket/ipv4/tcp/conn
-        socket/ipv4/tcp/senderr
-        socket/ipv4/tcp/recverr
-        socket/ipv6/tcp/open
-        socket/ipv6/tcp/openfail
-        socket/ipv6/tcp/close
-        socket/ipv6/tcp/connfail
-        socket/ipv6/tcp/conn
-        socket/ipv6/tcp/senderr
-        socket/ipv6/tcp/recverr
-    """
-
-    def __init__(self, module_spec):
-        """Creates an instance. A module_spec object for the target
-        module Xfrin is required in the argument."""
-        Counter.__init__(self)
-        self._statistics_spec = module_spec.get_statistics_spec()
-        self._zones_item_list = isc.config.spec_name_list(\
-            isc.config.find_spec_part(
-            self._statistics_spec, self._perzone_prefix)\
-                ['named_set_item_spec']['map_item_spec'])
-        self._xfrrunning_names = [
-            n for n in isc.config.spec_name_list\
-                (self._statistics_spec) \
-                if n.find('xfr_running') == 1 \
-                or n.find('xfr_deferred') == 1 \
-                or n.find('soa_in_progress') == 0 ]
-        self._ipsocket_names = [ \
-            (n.split('/')[-3], n.split('/')[-1]) for n in \
-                isc.config.spec_name_list(
-                self._statistics_spec, "", True) \
-                if n.find('socket/ipv4/tcp/') == 0 \
-                or n.find('socket/ipv6/tcp/') == 0 ]
-        self._create_perzone_functors()
-        self._create_perzone_timer_functors()
-        self._create_xfrrunning_functors()
-        self._create_ipsocket_functors()
-        self._to_global['dump_statistics'] = self.dump_statistics
-
-    def _create_perzone_timer_functors(self):
-        """Creates timer method of each per-zone counter based on the
-        spec file. Starter of the timer can be accessed by the name
-        "start_${item_name}".  Stopper of the timer can be accessed by
-        the name "stop_${item_name}".  These starter and stopper are
-        passed to the XfrinConnection class as timer handlers."""
-        for item in self._zones_item_list:
-            if item.find('time_to_') == -1: continue
-            def __getter(zone_name, counter_name=item):
-                """A getter method for perzone timer. A zone name in
-                string is required in argument."""
-                return self._getter(
-                    '%s/%s/%s' % \
-                        (self._perzone_prefix, zone_name, counter_name))
-            def __starttimer(zone_name, counter_name=item):
-                """A starter method for perzone timer. A zone name in
-                string is required in argument."""
-                self._starttimer(
-                    '%s/%s/%s' % \
-                        (self._perzone_prefix, zone_name, counter_name))
-            def __stoptimer(zone_name, counter_name=item):
-                """A stopper method for perzone timer. A zone name in
-                string is required in argument."""
-                self._stoptimer(
-                    '%s/%s/%s' % \
-                        (self._perzone_prefix, zone_name, counter_name))
-            self._to_global['start_%s' % item] = __starttimer
-            self._to_global['stop_%s' % item] = __stoptimer
-            self._to_global['get_%s' % item] = __getter
 
     def _create_ipsocket_functors(self):
         """Creates increment method of ip socket. Incrementer can be
