@@ -45,7 +45,6 @@ private:
     uint8_t req_opcode_;            // OpCode
     enum BitAttributes {
         REQ_IS_EDNS_0,              // EDNS ver.0
-        REQ_IS_EDNS_BADVER,         // EDNS version other than 0
         REQ_IS_DNSSEC_OK,           // DNSSEC OK (DO) bit is set
         REQ_IS_TSIG,                // signed with valid TSIG
         REQ_IS_SIG0,                // signed with valid SIG(0)
@@ -113,21 +112,12 @@ public:
         return (bit_attributes_[REQ_IS_EDNS_0]);
     };
 
-    /// \brief Get request is EDNS version other than 0.
-    /// \return true if EDNS version other than 0
-    /// \throw None
-    bool getRequestEDNSBadVer() const {
-        return (bit_attributes_[REQ_IS_EDNS_BADVER]);
-    };
-
     /// \brief Set request EDNS attributes.
     /// \param is_edns_0 true if request is EDNS version 0
     /// \param is_edns_badver true if request is EDNS version other than 0
     /// \throw None
-    void setRequestEDNS(const bool is_edns_0, const bool is_edns_badver) {
-        assert(!(is_edns_0 && is_edns_badver));
+    void setRequestEDNS0(const bool is_edns_0) {
         bit_attributes_[REQ_IS_EDNS_0] = is_edns_0;
-        bit_attributes_[REQ_IS_EDNS_BADVER] = is_edns_badver;
     };
 
     /// \brief Get request DNSSEC OK (DO) bit.
