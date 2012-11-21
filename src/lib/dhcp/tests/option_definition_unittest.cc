@@ -47,6 +47,8 @@ public:
     OptionDefinitionTest() { }
 };
 
+// The purpose of this test is to verify that OptionDefinition
+// constructor initializes its members correctly.
 TEST_F(OptionDefinitionTest, constructor) {
     // Specify the option data type as string. This should get converted
     // to enum value returned by getType().
@@ -87,6 +89,10 @@ TEST_F(OptionDefinitionTest, constructor) {
     );
 }
 
+// The purpose of this test is to verify that various data fields
+// can be specified for an option definition when this definition
+// is marked as 'record' and that fields can't be added if option
+// definition is not marked as 'record'.
 TEST_F(OptionDefinitionTest, addRecordField) {
     // We can only add fields to record if the option type has been
     // specified as 'record'. We try all other types but 'record'
@@ -123,6 +129,8 @@ TEST_F(OptionDefinitionTest, addRecordField) {
     EXPECT_THROW(opt_def.addRecordField(invalid_type), isc::BadValue);
 }
 
+// The purpose of this test is to check that validate() function
+// reports errors for invalid option definitions.
 TEST_F(OptionDefinitionTest, validate) {
     // Not supported option type string is not allowed.
     OptionDefinition opt_def1("OPTION_CLIENTID", D6O_CLIENTID, "non-existent-type");
@@ -149,6 +157,9 @@ TEST_F(OptionDefinitionTest, validate) {
     EXPECT_THROW(opt_def6.validate(), isc::BadValue);
 }
 
+// The purpose of this test is to verify that option definition
+// that comprises array of IPv6 addresses will return an instance
+// of option with a list of IPv6 addresses.
 TEST_F(OptionDefinitionTest, ipv6AddressArray) {
     OptionDefinition opt_def("OPTION_NIS_SERVERS", D6O_NIS_SERVERS,
                              "ipv6-address", true);
@@ -198,8 +209,11 @@ TEST_F(OptionDefinitionTest, ipv6AddressArray) {
     );
 }
 
-// This test checks that a vector of strings, holding IPv6 addresses,
-// can be used to create option instance with the optionFactory function.
+// The purpose of this test is to verify that option definition
+// that comprises array of IPv6 addresses will return an instance
+// of option with a list of IPv6 addresses. Array of IPv6 addresses
+// is specified as a vector of strings (each string represents single
+// IPv6 address).
 TEST_F(OptionDefinitionTest, ipv6AddressArrayTokenized) {
     OptionDefinition opt_def("OPTION_NIS_SERVERS", D6O_NIS_SERVERS,
                              "ipv6-address", true);
@@ -242,6 +256,9 @@ TEST_F(OptionDefinitionTest, ipv6AddressArrayTokenized) {
     EXPECT_TRUE(std::equal(addrs.begin(), addrs.end(), addrs_returned.begin()));
 }
 
+// The purpose of this test is to verify that option definition
+// that comprises array of IPv4 addresses will return an instance
+// of option with a list of IPv4 addresses.
 TEST_F(OptionDefinitionTest, ipv4AddressArray) {
     OptionDefinition opt_def("OPTION_NAME_SERVERS", D6O_NIS_SERVERS,
                              "ipv4-address", true);
@@ -288,8 +305,11 @@ TEST_F(OptionDefinitionTest, ipv4AddressArray) {
                  isc::OutOfRange);
 }
 
-// This test checks that a vector of strings, holding IPv4 addresses,
-// can be used to create option instance with the optionFactory function.
+// The purpose of this test is to verify that option definition
+// that comprises array of IPv4 addresses will return an instance
+// of option with a list of IPv4 addresses. The array of IPv4 addresses
+// is specified as a vector of strings (each string represents single
+// IPv4 address).
 TEST_F(OptionDefinitionTest, ipv4AddressArrayTokenized) {
     OptionDefinition opt_def("OPTION_NIS_SERVERS", DHO_NIS_SERVERS,
                              "ipv4-address", true);
@@ -332,6 +352,8 @@ TEST_F(OptionDefinitionTest, ipv4AddressArrayTokenized) {
     EXPECT_TRUE(std::equal(addrs.begin(), addrs.end(), addrs_returned.begin()));
 }
 
+// The purpose of thie test is to verify that option definition for
+// 'empty' option can be created and that it returns 'empty' option.
 TEST_F(OptionDefinitionTest, empty) {
     OptionDefinition opt_def("OPTION_RAPID_COMMIT", D6O_RAPID_COMMIT, "empty");
 
@@ -355,6 +377,8 @@ TEST_F(OptionDefinitionTest, empty) {
     EXPECT_EQ(0, option_v4->getData().size());
 }
 
+// The purpose of this test is to verify that definition can be
+// creates for the option that holds binary data.
 TEST_F(OptionDefinitionTest, binary) {
     // Binary option is the one that is represented by the generic
     // Option class. In fact all options can be represented by this
@@ -402,6 +426,10 @@ TEST_F(OptionDefinitionTest, binary) {
                            buf.begin()));
 }
 
+// The purpose of this test is to verify that definition can be
+// creates for the option that holds binary data and that the
+// binary data can be specified in 'comma separated values'
+// format.
 TEST_F(OptionDefinitionTest, binaryTokenized) {
     OptionDefinition opt_def("OPTION_FOO", 1000, "binary", true);
 
@@ -448,13 +476,15 @@ TEST_F(OptionDefinitionTest, binaryTokenized) {
                            buf.begin()));
 }
 
-
+// The purpose of this test is to verify that definition can be created
+// for option that comprises record of data. In this particular test
+// the IA_NA option is used. This option comprises three uint32 fields.
 TEST_F(OptionDefinitionTest, recordIA6) {
     // This option consists of IAID, T1 and T2 fields (each 4 bytes long).
     const int option6_ia_len = 12;
 
     // Get the factory function pointer.
-    OptionDefinition opt_def("OPTION_IA_NA", D6O_IA_NA, "record", true);
+    OptionDefinition opt_def("OPTION_IA_NA", D6O_IA_NA, "record", false);
     // Each data field is uint32.
     for (int i = 0; i < 3; ++i) {
         EXPECT_NO_THROW(opt_def.addRecordField("uint32"));
@@ -487,6 +517,9 @@ TEST_F(OptionDefinitionTest, recordIA6) {
      );
 }
 
+// The purpose of this test is to verify that definition can be created
+// for option that comprises record of data. In this particular test
+// the IAADDR option is used.
 TEST_F(OptionDefinitionTest, recordIAAddr6) {
     // This option consists of IPV6 Address (16 bytes) and preferred-lifetime and
     // valid-lifetime fields (each 4 bytes long).
@@ -531,6 +564,11 @@ TEST_F(OptionDefinitionTest, recordIAAddr6) {
      );
 }
 
+// The purpose of this test is to verify that definition can be created
+// for option that comprises record of data. In this particular test
+// the IAADDR option is used. The data for the option is speicifed as
+// a vector of strings. Each string carries the data for the corresponding
+// data field.
 TEST_F(OptionDefinitionTest, recordIAAddr6Tokenized) {
     // This option consists of IPV6 Address (16 bytes) and preferred-lifetime and
     // valid-lifetime fields (each 4 bytes long).
@@ -562,18 +600,9 @@ TEST_F(OptionDefinitionTest, recordIAAddr6Tokenized) {
     );
 }
 
-TEST_F(OptionDefinitionTest, integerInvalidType) {
-    // The template function factoryInteger<> accepts integer values only
-    // as template typename. Here we try passing different type and
-    // see if it rejects it.
-    OptionBuffer buf(1);
-    EXPECT_THROW(
-        OptionDefinition::factoryInteger<bool>(Option::V6, D6O_PREFERENCE,
-                                               buf.begin(), buf.end()),
-        isc::dhcp::InvalidDataType
-    );
-}
-
+// The purpose of this test is to verify that definition for option that
+// comprises single uint8 value can be created and that this definition
+// can be used to create an option with single uint8 value.
 TEST_F(OptionDefinitionTest, uint8) {
     OptionDefinition opt_def("OPTION_PREFERENCE", D6O_PREFERENCE, "uint8");
 
@@ -597,6 +626,9 @@ TEST_F(OptionDefinitionTest, uint8) {
     // @todo Add more cases for DHCPv4
 }
 
+// The purpose of this test is to verify that definition for option that
+// comprises single uint8 value can be created and that this definition
+// can be used to create an option with single uint8 value.
 TEST_F(OptionDefinitionTest, uint8Tokenized) {
     OptionDefinition opt_def("OPTION_PREFERENCE", D6O_PREFERENCE, "uint8");
 
@@ -621,7 +653,9 @@ TEST_F(OptionDefinitionTest, uint8Tokenized) {
     // @todo Add more cases for DHCPv4
 }
 
-
+// The purpose of this test is to verify that definition for option that
+// comprises single uint16 value can be created and that this definition
+// can be used to create an option with single uint16 value.
 TEST_F(OptionDefinitionTest, uint16) {
     OptionDefinition opt_def("OPTION_ELAPSED_TIME", D6O_ELAPSED_TIME, "uint16");
 
@@ -648,6 +682,9 @@ TEST_F(OptionDefinitionTest, uint16) {
     // @todo Add more cases for DHCPv4
 }
 
+// The purpose of this test is to verify that definition for option that
+// comprises single uint16 value can be created and that this definition
+// can be used to create an option with single uint16 value.
 TEST_F(OptionDefinitionTest, uint16Tokenized) {
     OptionDefinition opt_def("OPTION_ELAPSED_TIME", D6O_ELAPSED_TIME, "uint16");
 
@@ -669,6 +706,9 @@ TEST_F(OptionDefinitionTest, uint16Tokenized) {
 
 }
 
+// The purpose of this test is to verify that definition for option that
+// comprises single uint32 value can be created and that this definition
+// can be used to create an option with single uint32 value.
 TEST_F(OptionDefinitionTest, uint32) {
     OptionDefinition opt_def("OPTION_CLT_TIME", D6O_CLT_TIME, "uint32");
 
@@ -696,6 +736,9 @@ TEST_F(OptionDefinitionTest, uint32) {
     // @todo Add more cases for DHCPv4
 }
 
+// The purpose of this test is to verify that definition for option that
+// comprises single uint32 value can be created and that this definition
+// can be used to create an option with single uint32 value.
 TEST_F(OptionDefinitionTest, uint32Tokenized) {
     OptionDefinition opt_def("OPTION_CLT_TIME", D6O_CLT_TIME, "uint32");
 
@@ -715,6 +758,9 @@ TEST_F(OptionDefinitionTest, uint32Tokenized) {
     // @todo Add more cases for DHCPv4
 }
 
+// The purpose of this test is to verify that definition for option that
+// comprises array of uint16 values can be created and that this definition
+// can be used to create option with an array of uint16 values.
 TEST_F(OptionDefinitionTest, uint16Array) {
     // Let's define some dummy option.
     const uint16_t opt_code = 79;
@@ -758,6 +804,9 @@ TEST_F(OptionDefinitionTest, uint16Array) {
     );
 }
 
+// The purpose of this test is to verify that definition for option that
+// comprises array of uint16 values can be created and that this definition
+// can be used to create option with an array of uint16 values.
 TEST_F(OptionDefinitionTest, uint16ArrayTokenized) {
     // Let's define some dummy option.
     const uint16_t opt_code = 79;
@@ -781,7 +830,9 @@ TEST_F(OptionDefinitionTest, uint16ArrayTokenized) {
     EXPECT_EQ(12, values[2]);
 }
 
-
+// The purpose of this test is to verify that definition for option that
+// comprises array of uint32 values can be created and that this definition
+// can be used to create option with an array of uint32 values.
 TEST_F(OptionDefinitionTest, uint32Array) {
     // Let's define some dummy option.
     const uint16_t opt_code = 80;
@@ -826,6 +877,9 @@ TEST_F(OptionDefinitionTest, uint32Array) {
     );
 }
 
+// The purpose of this test is to verify that definition for option that
+// comprises array of uint32 values can be created and that this definition
+// can be used to create option with an array of uint32 values.
 TEST_F(OptionDefinitionTest, uint32ArrayTokenized) {
     // Let's define some dummy option.
     const uint16_t opt_code = 80;
@@ -853,6 +907,8 @@ TEST_F(OptionDefinitionTest, uint32ArrayTokenized) {
     EXPECT_EQ(1111, values[3]);
 }
 
+// The purpose of this test is to verify that the definition can be created
+// for the option that comprises string value in the UTF8 format.
 TEST_F(OptionDefinitionTest, utf8StringTokenized) {
     // Let's create some dummy option.
     const uint16_t opt_code = 80;
@@ -873,6 +929,23 @@ TEST_F(OptionDefinitionTest, utf8StringTokenized) {
     EXPECT_TRUE(std::equal(ref_data.begin(), ref_data.end(), data.begin()));
 }
 
+// The purpose of this test is to check that non-integer data type can't
+// be used for factoryInteger function.
+TEST_F(OptionDefinitionTest, integerInvalidType) {
+    // The template function factoryInteger<> accepts integer values only
+    // as template typename. Here we try passing different type and
+    // see if it rejects it.
+    OptionBuffer buf(1);
+    EXPECT_THROW(
+        OptionDefinition::factoryInteger<bool>(Option::V6, D6O_PREFERENCE,
+                                               buf.begin(), buf.end()),
+        isc::dhcp::InvalidDataType
+    );
+}
+
+// The purpose of this test is to verify that helper methods
+// haveIA6Format and haveIAAddr6Format can be used to determine
+// IA_NA  and IAADDR option formats.
 TEST_F(OptionDefinitionTest, recognizeFormat) {
     // IA_NA option format.
     OptionDefinition opt_def1("OPTION_IA_NA", D6O_IA_NA, "record");
