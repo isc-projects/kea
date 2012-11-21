@@ -89,8 +89,9 @@ def init(spec_file_name):
         return _COUNTER
     # create an instance once
     _COUNTER = _Counter(module_spec)
-    # make globals
-    globals().update(_COUNTER._to_global)
+    # set methods in Counter
+    for (k, v) in _COUNTER._to_global.items():
+        setattr(Counter, k, v)
     return _COUNTER
 
 # static internal functions
