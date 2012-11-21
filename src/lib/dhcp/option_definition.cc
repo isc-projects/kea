@@ -64,8 +64,8 @@ T OptionDefinition::DataTypeUtil::lexicalCastWithRangeCheck(const std::string& v
         isc_throw(BadDataTypeCast, "unable to do lexical cast to non-integer and"
                   << " non-boolean data type");
     }
-    // We use the 64-bit value here because it has greater range than
-    // any other type we use here and it allows to detect some out of
+    // We use the 64-bit value here because it has wider range than
+    // any other type we use here and it allows to detect out of
     // bounds conditions e.g. negative value specified for uintX_t
     // data type. Obviously if the value exceeds the limits of int64
     // this function will not handle that properly.
@@ -97,9 +97,15 @@ void
 OptionDefinition::DataTypeUtil::writeToBuffer(const std::string& value,
                                               const OptionDataType type,
                                               OptionBuffer& buf) {
+    // We are going to write value given by value argument to the buffer.
+    // The actual type of the value is given by second argument. Check
+    // this argument to determine how to write this value to the buffer.
     switch (type) {
     case OPT_BINARY_TYPE:
         {
+            // Binary value means that the value is encoded as a string
+            // of hexadecimal deigits. We need to decode this string
+            // to the binary format here.
             OptionBuffer binary;
             try {
                 util::encode::decodeHex(value, binary);
@@ -107,11 +113,17 @@ OptionDefinition::DataTypeUtil::writeToBuffer(const std::string& value,
                 isc_throw(BadDataTypeCast, "unable to cast " << value
                           << " to binary data type: " << ex.what());
             }
+            // Decode was successful so append decoded binary value
+            // to the buffer.
             buf.insert(buf.end(), binary.begin(), binary.end());
             return;
         }
     case OPT_BOOLEAN_TYPE:
         {
+            // We encode the true value as 1 and false as 0 on 8 bits.
+            // That way we actually waist 7 bits but it seems to be the
+            // simpler way to encode boolean.
+            // @todo Consider if any other encode methods can be used.
             bool bool_value = lexicalCastWithRangeCheck<bool>(value);
             if (bool_value) {
                 buf.push_back(static_cast<uint8_t>(1));
@@ -122,11 +134,15 @@ OptionDefinition::DataTypeUtil::writeToBuffer(const std::string& value,
         }
     case OPT_INT8_TYPE:
         {
+            // Buffer holds the uin8_t values so we need to cast the signed
+            // value to unsigned but the bits values remain untouched.
             buf.push_back(static_cast<uint8_t>(lexicalCastWithRangeCheck<int8_t>(value)));
             return;
         }
     case OPT_INT16_TYPE:
         {
+            // Write the int16 value as uint16 value is ok because the bit values
+            // remain untouched.
             int16_t int_value = lexicalCastWithRangeCheck<int16_t>(value);
             buf.resize(buf.size() + 2);
             writeUint16(static_cast<uint16_t>(int_value), &buf[buf.size() - 2]);
@@ -160,6 +176,9 @@ OptionDefinition::DataTypeUtil::writeToBuffer(const std::string& value,
         }
     case OPT_IPV4_ADDRESS_TYPE:
         {
+            // The easiest way to get the binary form of IPv4 address is
+            // to create IOAddress object from string and use its accessors
+            // to retrieve the binary form.
             asiolink::IOAddress address(value);
             if (!address.getAddress().is_v4()) {
                 isc_throw(BadDataTypeCast, "provided address " << address.toText()
@@ -167,6 +186,7 @@ OptionDefinition::DataTypeUtil::writeToBuffer(const std::string& value,
             }
             asio::ip::address_v4::bytes_type addr_bytes =
                 address.getAddress().to_v4().to_bytes();
+            // Increase the buffer size by the size of IPv4 address.
             buf.resize(buf.size() + addr_bytes.size());
             std::copy_backward(addr_bytes.begin(), addr_bytes.end(),
                                buf.end());
@@ -181,16 +201,39 @@ OptionDefinition::DataTypeUtil::writeToBuffer(const std::string& value,
             }
             asio::ip::address_v6::bytes_type addr_bytes =
                 address.getAddress().to_v6().to_bytes();
+            // Incresase the buffer size by the size of IPv6 address.
             buf.resize(buf.size() + addr_bytes.size());
             std::copy_backward(addr_bytes.begin(), addr_bytes.end(),
                                buf.end());
             return;
         }
+    case OPT_STRING_TYPE:
+        if (value.size() > 0) {
+            // Increase the size of the storage by the size of the string.
+            buf.resize(buf.size() + value.size());
+            // Assuming that the string is already UTF8 encoded.
+            std::copy_backward(value.c_str(), value.c_str() + value.length(),
+                               buf.end());
+            return;
+        }
+    case OPT_FQDN_TYPE:
+        {
+            // FQDN implementation is not terribly complicated but will require
+            // creation of some additional logic (maybe object) that will parse
+            // the fqdn into labels.
+            isc_throw(isc::NotImplemented, "write of FQDN record into option buffer"
+                      " is not supported yet");
+            return;
+        }
     default:
+        // We hit this point because invalid option data type has been specified
+        // This may be the case because 'empty' or 'record' data type has been
+        // specified. We don't throw exception here because it will be thrown
+        // at the exit point from this function.
         ;
     }
-    isc_throw(isc::NotImplemented, "write of string, FQDN record into option buffer"
-              " is not supported yet");
+    isc_throw(isc::BadValue, "attempt to write invalid option data field type"
+              " into the option buffer: " << type);
 
 }
 
