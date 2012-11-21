@@ -25,7 +25,18 @@
 namespace isc {
 namespace dns {
 
-/// \brief Set of callbacks for a loader.
+/// \brief Type of callback to add a RRset.
+///
+/// This type of callback is used by the loader to report another loaded
+/// RRset. The RRset is no longer preserved by the loader and is fully
+/// owned by the callback.
+///
+/// \param RRset The rrset to add. It does not contain the accompanying
+///     RRSIG (if the zone is signed), they are reported with separate
+///     calls to the callback.
+typedef boost::function<void(const RRsetPtr& rrset)> AddRRsetCallback;
+
+/// \brief Set of issue callbacks for a loader.
 ///
 /// This holds a set of callbacks by which a loader (such as MasterLoader)
 /// can report loaded RRsets, errors and other unusual conditions.
@@ -47,33 +58,19 @@ public:
                                  size_t source_line,
                                  const std::string& reason)> IssueCallback;
 
-    /// \brief Type of callback to add a RRset.
-    ///
-    /// This type of callback is used by the loader to report another loaded
-    /// RRset. The RRset is no longer preserved by the loader and is fully
-    /// owned by the callback.
-    ///
-    /// \param RRset The rrset to add. It does not contain the accompanying
-    ///     RRSIG (if the zone is signed), they are reported with separate
-    ///     calls to the callback.
-    typedef boost::function<void(const RRsetPtr& rrset)> AddCallback;
-
     /// \brief Constructor
     ///
     /// Initializes the callbacks.
     ///
     /// \param error The error callback to use.
     /// \param warning The warning callback to use.
-    /// \param add The add callback to use.
     /// \throw isc::InvalidParameter if any of the callbacks is empty.
     MasterLoaderCallbacks(const IssueCallback& error,
-                          const IssueCallback& warning,
-                          const AddCallback& add) :
+                          const IssueCallback& warning) :
         error_(error),
-        warning_(warning),
-        add_(add)
+        warning_(warning)
     {
-        if (error_.empty() || warning_.empty() || add_.empty()) {
+        if (error_.empty() || warning_.empty()) {
             isc_throw(isc::InvalidParameter,
                       "Empty function passed as callback");
         }
@@ -113,16 +110,8 @@ public:
         warning_(source_name, source_line, reason);
     }
 
-    /// \brief Call the add callback.
-    ///
-    /// This is called for each loaded RRset.
-    void addRRset(const RRsetPtr& rrset) {
-        add_(rrset);
-    }
-
 private:
     IssueCallback error_, warning_;
-    AddCallback add_;
 };
 
 }

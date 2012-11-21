@@ -31,15 +31,13 @@ class MasterLoaderCallbacksTest : public ::testing::Test {
 protected:
     MasterLoaderCallbacksTest() :
         issue_called_(false),
-        add_called_(false),
         rrset_(new RRset(Name("example.org"), RRClass::IN(), RRType::A(),
                          RRTTL(3600))),
         error_(boost::bind(&MasterLoaderCallbacksTest::checkCallback, this,
                            true, _1, _2, _3)),
         warning_(boost::bind(&MasterLoaderCallbacksTest::checkCallback, this,
                              false, _1, _2, _3)),
-        add_(boost::bind(&MasterLoaderCallbacksTest::checkAdd, this, _1)),
-        callbacks_(error_, warning_, add_)
+        callbacks_(error_, warning_)
     {}
 
     void checkCallback(bool error, const string& source, size_t line,
@@ -51,29 +49,21 @@ protected:
         EXPECT_EQ(1, line);
         EXPECT_EQ("reason", reason);
     }
-    void checkAdd(const RRsetPtr& rrset) {
-        add_called_ = true;
-        EXPECT_EQ(rrset_, rrset);
-    }
     bool last_was_error_;
-    bool issue_called_, add_called_;
+    bool issue_called_;
     const RRsetPtr rrset_;
     const MasterLoaderCallbacks::IssueCallback error_, warning_;
-    const MasterLoaderCallbacks::AddCallback add_;
     MasterLoaderCallbacks callbacks_;
 };
 
 // Check the constructor rejects empty callbacks, but accepts non-empty ones
 TEST_F(MasterLoaderCallbacksTest, constructor) {
     EXPECT_THROW(MasterLoaderCallbacks(MasterLoaderCallbacks::IssueCallback(),
-                                       warning_, add_), isc::InvalidParameter);
+                                       warning_), isc::InvalidParameter);
     EXPECT_THROW(MasterLoaderCallbacks(error_,
-                                       MasterLoaderCallbacks::IssueCallback(),
-                                       add_), isc::InvalidParameter);
-    EXPECT_THROW(MasterLoaderCallbacks(error_, warning_,
-                                       MasterLoaderCallbacks::AddCallback()),
+                                       MasterLoaderCallbacks::IssueCallback()),
                  isc::InvalidParameter);
-    EXPECT_NO_THROW(MasterLoaderCallbacks(error_, warning_, add_));
+    EXPECT_NO_THROW(MasterLoaderCallbacks(error_, warning_));
 }
 
 // Call the issue callbacks
@@ -88,13 +78,5 @@ TEST_F(MasterLoaderCallbacksTest, issueCall) {
     EXPECT_FALSE(last_was_error_);
     EXPECT_TRUE(issue_called_);
 }
-
-// Call the add callback
-TEST_F(MasterLoaderCallbacksTest, addCall) {
-    EXPECT_FALSE(issue_called_);
-    callbacks_.addRRset(rrset_);
-    EXPECT_TRUE(add_called_);
-}
-
 
 }

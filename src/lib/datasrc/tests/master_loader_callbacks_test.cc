@@ -63,8 +63,7 @@ class MasterLoaderCallbackTest : public ::testing::Test {
 protected:
     MasterLoaderCallbackTest() :
         ok_(true),
-        callbacks_(createMasterLoaderCallbacks(updater_,
-                                               isc::dns::Name("example.org"),
+        callbacks_(createMasterLoaderCallbacks(isc::dns::Name("example.org"),
                                                isc::dns::RRClass::IN(), &ok_))
     {}
     // Generate a new RRset, put it to the updater and return it.
@@ -87,7 +86,7 @@ protected:
 
 // Check it doesn't crash if we don't provide the OK
 TEST_F(MasterLoaderCallbackTest, noOkProvided) {
-    createMasterLoaderCallbacks(updater_, isc::dns::Name("example.org"),
+    createMasterLoaderCallbacks(isc::dns::Name("example.org"),
                                 isc::dns::RRClass::IN(), NULL).
         error("No source", 1, "No reason");
 }
@@ -113,22 +112,13 @@ TEST_F(MasterLoaderCallbackTest, callbacks) {
 
 // Try adding some RRsets.
 TEST_F(MasterLoaderCallbackTest, addRRset) {
+    isc::dns::AddRRsetCallback
+        callback(createMasterLoaderAddCallback(updater_));
     // Put some of them in.
-    EXPECT_NO_THROW(callbacks_.addRRset(generateRRset()));
-    EXPECT_NO_THROW(callbacks_.addRRset(generateRRset()));
+    EXPECT_NO_THROW(callback(generateRRset()));
+    EXPECT_NO_THROW(callback(generateRRset()));
     // They all get pushed there right away, so there are none in the queue
     EXPECT_TRUE(updater_.expected_rrsets_.empty());
-
-    // Making the status not OK by an error does not stop the RRsets to get
-    // through.
-    callbacks_.error("No source", 1, "Just an error");
-    EXPECT_FALSE(ok_);
-
-    EXPECT_NO_THROW(callbacks_.addRRset(generateRRset()));
-    EXPECT_NO_THROW(callbacks_.addRRset(generateRRset()));
-    // They got through and the OK status didn't get reset
-    EXPECT_TRUE(updater_.expected_rrsets_.empty());
-    EXPECT_FALSE(ok_);
 }
 
 }
