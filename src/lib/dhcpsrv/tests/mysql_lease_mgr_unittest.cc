@@ -35,7 +35,12 @@ namespace {
 // Creation of the schema
 #include "schema_copy.h"
 
-// IPv6 addresseses
+// IPv4 and IPv6 addresseses
+const char* ADDRESS4[] = {
+    "192.0.2.0", "192.0.2.1", "192.0.2.2", "192.0.2.3",
+    "192.0.2.4", "192.0.2.5", "192.0.2.6", "192.0.2.7",
+    NULL
+};
 const char* ADDRESS6[] = {
     "2001:db8::0", "2001:db8::1", "2001:db8::2", "2001:db8::3",
     "2001:db8::4", "2001:db8::5", "2001:db8::6", "2001:db8::7",
@@ -167,6 +172,13 @@ public:
     // Deletes everything from the database and opens it.
     MySqlLeaseMgrTest() {
         // Initialize address strings and IOAddresses
+        for (int i = 0; ADDRESS4[i] != NULL; ++i) {
+            string addr(ADDRESS4[i]);
+            straddress4_.push_back(addr);
+            IOAddress ioaddr(addr);
+            ioaddress4_.push_back(ioaddr);
+        }
+
         for (int i = 0; ADDRESS6[i] != NULL; ++i) {
             string addr(ADDRESS6[i]);
             straddress6_.push_back(addr);
@@ -176,6 +188,7 @@ public:
 
         destroySchema();
         createSchema();
+
         try {
             LeaseMgrFactory::create(validConnectionString());
         } catch (...) {
@@ -208,6 +221,119 @@ public:
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(validConnectionString());
         lmptr_ = &(LeaseMgrFactory::instance());
+    }
+
+    // @brief Initialize Lease4 Fields
+    //
+    // Returns a pointer to a Lease4 structure.  Different values are put
+    // in the lease according to the address passed.
+    //
+    // This is just a convenience function for the test methods.
+    //
+    // @param address Address to use for the initialization
+    //
+    // @return Lease4Ptr.  This will not point to anything if the initialization
+    //         failed (e.g. unknown address).
+    Lease4Ptr initializeLease4(std::string address) {
+        Lease4Ptr lease(new Lease4());
+
+        // Set the address of the lease
+        lease->addr_ = IOAddress(address);
+
+        // Initialize unused fields.
+        lease->ext_ = 0;                            // Not saved
+        lease->t1_ = 0;                             // Not saved
+        lease->t2_ = 0;                             // Not saved
+        lease->fixed_ = false;                      // Unused
+        lease->hostname_ = std::string("");         // Unused
+        lease->fqdn_fwd_ = false;                   // Unused
+        lease->fqdn_rev_ = false;                   // Unused
+        lease->comments_ = std::string("");         // Unused
+
+        // Set other parameters.  For historical reasons, address 0 is not used.
+        if (address == straddress4_[0]) {
+            lease->hwaddr_ = vector<uint8_t>(6, 0x08);
+            lease->client_id_ = boost::shared_ptr<ClientId>(
+                new ClientId(vector<uint8_t>(8, 0x77)));
+            lease->valid_lft_ = 8677;      // Actual lifetime
+            lease->cltt_ = 168256;         // Current time of day
+            lease->subnet_id_ = 23;        // Arbitrary number
+
+        } else if (address == straddress4_[1]) {
+            lease->hwaddr_ = vector<uint8_t>(6, 0x19);
+            lease->client_id_ = boost::shared_ptr<ClientId>(
+                new ClientId(vector<uint8_t>(8, 0x42)));
+            lease->valid_lft_ = 3677;      // Actual lifetime
+            lease->cltt_ = 123456;         // Current time of day
+            lease->subnet_id_ = 73;        // Arbitrary number
+
+        } else if (address == straddress4_[2]) {
+            lease->hwaddr_ = vector<uint8_t>(6, 0x2a);
+            lease->client_id_ = boost::shared_ptr<ClientId>(
+                new ClientId(vector<uint8_t>(8, 0x3a)));
+            lease->valid_lft_ = 5412;      // Actual lifetime
+            lease->cltt_ = 234567;         // Current time of day
+            lease->subnet_id_ = 73;        // Same as for straddress4_1
+
+        } else if (address == straddress4_[3]) {
+            lease->hwaddr_ = vector<uint8_t>(6, 0x3b);
+            vector<uint8_t> clientid;
+            for (uint8_t i = 31; i < 126; ++i) {
+                clientid.push_back(i);
+            }
+            lease->client_id_ = boost::shared_ptr<ClientId>
+                (new ClientId(clientid));
+
+            // The times used in the next tests are deliberately restricted - we
+            // should be able to cope with valid lifetimes up to 0xffffffff.
+            //  However, this will lead to overflows.
+            // @TODO: test overflow conditions when code has been fixed
+            lease->valid_lft_ = 7000;      // Actual lifetime
+            lease->cltt_ = 234567;         // Current time of day
+            lease->subnet_id_ = 37;        // Different from L1 and L2
+
+        } else if (address == straddress4_[4]) {
+            lease->hwaddr_ = vector<uint8_t>(6, 0x4c);
+            // Same ClientId as straddr4_[1]
+            lease->client_id_ = boost::shared_ptr<ClientId>(
+                new ClientId(vector<uint8_t>(8, 0x42)));
+            lease->valid_lft_ = 7736;      // Actual lifetime
+            lease->cltt_ = 222456;         // Current time of day
+            lease->subnet_id_ = 75;        // Arbitrary number
+
+        } else if (address == straddress4_[5]) {
+            lease->hwaddr_ = vector<uint8_t>(6, 0x5d);
+            // Same ClientId and IAID as straddress4_1
+            lease->client_id_ = boost::shared_ptr<ClientId>(
+                new ClientId(vector<uint8_t>(8, 0x42)));
+            lease->valid_lft_ = 7832;      // Actual lifetime
+            lease->cltt_ = 227476;         // Current time of day
+            lease->subnet_id_ = 175;       // Arbitrary number
+
+        } else if (address == straddress4_[6]) {
+            lease->hwaddr_ = vector<uint8_t>(6, 0x6e);
+            // Same ClientId as straddress4_1
+            lease->client_id_ = boost::shared_ptr<ClientId>(
+                new ClientId(vector<uint8_t>(8, 0x42)));
+            lease->valid_lft_ = 1832;      // Actual lifetime
+            lease->cltt_ = 627476;         // Current time of day
+            lease->subnet_id_ = 112;       // Arbitrary number
+
+        } else if (address == straddress4_[7]) {
+            lease->hwaddr_ = vector<uint8_t>(6, 0x7f);
+            lease->client_id_ = boost::shared_ptr<ClientId>(
+                new ClientId(vector<uint8_t>(8, 0xe5)));
+            lease->valid_lft_ = 7975;      // Actual lifetime
+            lease->cltt_ = 213876;         // Current time of day
+            lease->subnet_id_ = 19;        // Arbitrary number
+
+        } else {
+            // Unknown address, return an empty pointer.
+            lease.reset();
+
+        }
+
+        return (lease);
     }
 
     // @brief Initialize Lease6 Fields
@@ -339,6 +465,49 @@ public:
         return (lease);
     }
 
+    // @brief Check Leases Present and Different
+    //
+    // Checks a vector of lease pointers and ensures that all the leases
+    // they point to are present and different.  If not, a GTest assertion
+    // will fail.
+    //
+    // @param leases Vector of pointers to leases
+    template <typename T>
+    void checkLeasesDifferent(const std::vector<T> leases) const {
+
+        // Check they were created
+        for (int i = 0; i < leases.size(); ++i) {
+            EXPECT_TRUE(leases[i]);
+        }
+
+        // Check they are different
+        for (int i = 0; i < (leases.size() - 1); ++i) {
+            for (int j = (i + 1); j < leases.size(); ++j) {
+                EXPECT_TRUE(leases[i] != leases[j]);
+            }
+        }
+    }
+
+    // @brief Creates Leases for the test
+    //
+    // Creates all leases for the test and checks that they are different.
+    //
+    // @return vector<Lease4Ptr> Vector of pointers to leases
+    vector<Lease4Ptr> createLeases4() {
+
+        // Create leases for each address
+        vector<Lease4Ptr> leases;
+        for (int i = 0; i < straddress4_.size(); ++i) {
+            leases.push_back(initializeLease4(straddress4_[i]));
+        }
+        EXPECT_EQ(8, leases.size());
+
+        // Check all were created and that they are different.
+        checkLeasesDifferent(leases);
+
+        return (leases);
+    }
+
     // @brief Creates Leases for the test
     //
     // Creates all leases for the test and checks that they are different.
@@ -353,17 +522,8 @@ public:
         }
         EXPECT_EQ(8, leases.size());
 
-        // Check they were created
-        for (int i = 0; i < leases.size(); ++i) {
-            EXPECT_TRUE(leases[i]);
-        }
-
-        // Check they are different
-        for (int i = 0; i < (leases.size() - 1); ++i) {
-            for (int j = (i + 1); j < leases.size(); ++j) {
-                EXPECT_TRUE(leases[i] != leases[j]);
-            }
-        }
+        // Check all were created and that they are different.
+        checkLeasesDifferent(leases);
 
         return (leases);
     }
@@ -373,6 +533,8 @@ public:
 
     LeaseMgr*   lmptr_;             // Pointer to the lease manager
 
+    vector<string>  straddress4_;   // String forms of IPv4 addresses
+    vector<IOAddress> ioaddress4_;  // IOAddress forms of IPv4 addresses
     vector<string>  straddress6_;   // String forms of IPv6 addresses
     vector<IOAddress> ioaddress6_;  // IOAddress forms of IPv6 addresses
 };
@@ -539,6 +701,61 @@ detailCompareLease(const Lease6Ptr& first, const Lease6Ptr& second) {
     EXPECT_EQ(first->valid_lft_, second->valid_lft_);
     EXPECT_EQ(first->cltt_, second->cltt_);
     EXPECT_EQ(first->subnet_id_, second->subnet_id_);
+}
+
+
+// @brief Basic Lease Checks
+//
+// Checks that the add/get/delete works.  All are done within one
+// test so that "rollback" can be used to remove trace of the tests
+// from the database.
+//
+// Tests where a collection of leases can be returned are in the test
+// Lease4Collection.
+//
+// @param leases Vector of leases used in the tests
+// @param ioaddress Vector of IOAddresses used in the tests
+
+TEST_F(MySqlLeaseMgrTest, basicLease4) {
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Start the tests.  Add three leases to the database, read them back and
+    // check they are what we think they are.
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    EXPECT_TRUE(lmptr_->addLease(leases[2]));
+    EXPECT_TRUE(lmptr_->addLease(leases[3]));
+    lmptr_->commit();
+
+    // Reopen the database to ensure that they actually got stored.
+    reopen();
+
+    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    EXPECT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
+
+    l_returned = lmptr_->getLease4(ioaddress4_[2]);
+    EXPECT_TRUE(l_returned);
+    detailCompareLease(leases[2], l_returned);
+
+    l_returned = lmptr_->getLease4(ioaddress4_[3]);
+    EXPECT_TRUE(l_returned);
+    detailCompareLease(leases[3], l_returned);
+
+    // Check that we can't add a second lease with the same address
+    EXPECT_FALSE(lmptr_->addLease(leases[1]));
+
+    // Delete a lease, check that it's gone, and that we can't delete it
+    // a second time.
+    EXPECT_TRUE(lmptr_->deleteLease4(ioaddress4_[1]));
+    l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    EXPECT_FALSE(l_returned);
+    EXPECT_FALSE(lmptr_->deleteLease4(ioaddress4_[1]));
+
+    // Check that the second address is still there.
+    l_returned = lmptr_->getLease4(ioaddress4_[2]);
+    EXPECT_TRUE(l_returned);
+    detailCompareLease(leases[2], l_returned);
 }
 
 
