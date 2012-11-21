@@ -536,11 +536,6 @@ TEST_F(OptionDefinitionTest, recordIA6) {
     EXPECT_EQ(0x04050607, option_cast_v6->getT1());
     EXPECT_EQ(0x08090A0B, option_cast_v6->getT2());
 
-    // This should work for DHCPv6 only, try passing invalid universe value.
-    EXPECT_THROW(
-        opt_def.optionFactory(Option::V4, D6O_IA_NA, OptionBuffer(option6_ia_len)),
-        InvalidOptionValue
-    );
     // The length of the buffer must be at least 12 bytes.
     // Check too short buffer.
     EXPECT_THROW(
@@ -583,11 +578,6 @@ TEST_F(OptionDefinitionTest, recordIAAddr6) {
     EXPECT_EQ(0x00010203, option_cast_v6->getPreferred());
     EXPECT_EQ(0x04050607, option_cast_v6->getValid());
 
-    // This should work for DHCPv6 only, try passing invalid universe value.
-    EXPECT_THROW(
-        opt_def.optionFactory(Option::V4, D6O_IAADDR, OptionBuffer(option6_iaaddr_len)),
-        InvalidOptionValue
-    );
     // The length of the buffer must be at least 12 bytes.
     // Check too short buffer.
     EXPECT_THROW(
@@ -624,12 +614,6 @@ TEST_F(OptionDefinitionTest, recordIAAddr6Tokenized) {
     EXPECT_EQ("2001:db8::ff00:42:8329", option_cast_v6->getAddress().toText());
     EXPECT_EQ(1234, option_cast_v6->getPreferred());
     EXPECT_EQ(5678, option_cast_v6->getValid());
-
-    // This should work for DHCPv6 only, try passing in\valid universe value.
-    EXPECT_THROW(
-        opt_def.optionFactory(Option::V4, D6O_IAADDR, data_field_values),
-        InvalidOptionValue
-    );
 }
 
 // The purpose of this test is to verify that definition for option that
