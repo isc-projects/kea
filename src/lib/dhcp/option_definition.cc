@@ -285,38 +285,42 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                                 OptionBufferConstIter end) const {
     validate();
     
-    if (type_ == OPT_BINARY_TYPE) {
-        return (factoryGeneric(u, type, begin, end));
-    } else if (type_ == OPT_IPV6_ADDRESS_TYPE && array_type_) {
-        return (factoryAddrList6(u, type, begin, end));
-    } else if (type_ == OPT_IPV4_ADDRESS_TYPE && array_type_) {
-        return (factoryAddrList4(u, type, begin, end));
-    } else if (type_ == OPT_EMPTY_TYPE) {
-        return (factoryEmpty(u, type, begin, end));
-    } else if (code_ == D6O_IA_NA && haveIA6Format()) {
-        return (factoryIA6(u, type, begin, end));
-    } else if (code_ == D6O_IAADDR && haveIAAddr6Format()) {
-        return (factoryIAAddr6(u, type, begin, end));
-    } else if (type_ == OPT_UINT8_TYPE) {
-        if (array_type_) {
+    try {
+        if (type_ == OPT_BINARY_TYPE) {
             return (factoryGeneric(u, type, begin, end));
-        } else {
-            return (factoryInteger<uint8_t>(u, type, begin, end));
+        } else if (type_ == OPT_IPV6_ADDRESS_TYPE && array_type_) {
+            return (factoryAddrList6(u, type, begin, end));
+        } else if (type_ == OPT_IPV4_ADDRESS_TYPE && array_type_) {
+            return (factoryAddrList4(u, type, begin, end));
+        } else if (type_ == OPT_EMPTY_TYPE) {
+            return (factoryEmpty(u, type, begin, end));
+        } else if (code_ == D6O_IA_NA && haveIA6Format()) {
+            return (factoryIA6(u, type, begin, end));
+        } else if (code_ == D6O_IAADDR && haveIAAddr6Format()) {
+            return (factoryIAAddr6(u, type, begin, end));
+        } else if (type_ == OPT_UINT8_TYPE) {
+            if (array_type_) {
+                return (factoryGeneric(u, type, begin, end));
+            } else {
+                return (factoryInteger<uint8_t>(u, type, begin, end));
+            }
+        } else if (type_ == OPT_UINT16_TYPE) {
+            if (array_type_) {
+                return (factoryIntegerArray<uint16_t>(u, type, begin, end));
+            } else {
+                return (factoryInteger<uint16_t>(u, type, begin, end));
+            }
+        } else if (type_ == OPT_UINT32_TYPE) {
+            if (array_type_) {
+                return (factoryIntegerArray<uint32_t>(u, type, begin, end));
+            } else {
+                return (factoryInteger<uint32_t>(u, type, begin, end));
+            }
         }
-    } else if (type_ == OPT_UINT16_TYPE) {
-        if (array_type_) {
-            return (factoryIntegerArray<uint16_t>(u, type, begin, end));
-        } else {
-            return (factoryInteger<uint16_t>(u, type, begin, end));
-        }
-    } else if (type_ == OPT_UINT32_TYPE) {
-        if (array_type_) {
-            return (factoryIntegerArray<uint32_t>(u, type, begin, end));
-        } else {
-            return (factoryInteger<uint32_t>(u, type, begin, end));
-        }
+        return (factoryGeneric(u, type, begin, end));
+    } catch (const Exception& ex) {
+        isc_throw(InvalidOptionValue, ex.what());
     }
-    return (factoryGeneric(u, type, begin, end));
 }
 
 OptionPtr
@@ -364,18 +368,51 @@ OptionDefinition::sanityCheckUniverse(const Option::Universe expected_universe,
 
 void
 OptionDefinition::validate() const {
-    // Option name must not be empty.
+    std::ostringstream err_str;
     if (name_.empty()) {
-        isc_throw(isc::BadValue, "option name must not be empty");
+        // Option name must not be empty.
+        err_str << "option name must not be empty";
+    } else if (name_.find(" ") != string::npos) {
+        // Option name must not contain spaces.
+        err_str << "option name must not contain spaces";
+    } else if (type_ >= OPT_UNKNOWN_TYPE) {
+        // Option definition must be of a known type.
+        err_str << "option type value " << type_ << " is out of range";
+    } else if (type_ == OPT_STRING_TYPE && array_type_) {
+        // Array of strings is not allowed because there is no way
+        // to determine the size of a particular string and thus there
+        // it no way to tell when other data fields begin.
+        err_str << "array of strings is not a valid option definition";
+    } else if (type_ == OPT_RECORD_TYPE) {
+        // At least two data fields should be added to the record. Otherwise
+        // non-record option definition could be used.
+        if (getRecordFields().size() < 2) {
+            err_str << "invalid number of data fields: " << getRecordFields().size()
+                    << " specified for the option of type 'record'. Expected at"
+                    << " least 2 fields.";
+        } else {
+            // If the number of fields is valid we have to check if their order
+            // is valid too. We check that string data fields are not laid before
+            // other fields. But we allow that they are laid at the end of
+            // an option.
+            const RecordFieldsCollection& fields = getRecordFields();
+            for (RecordFieldsConstIter it = fields.begin();
+                 it != fields.end(); ++it) {
+                if (*it == OPT_STRING_TYPE &&
+                    it < fields.end() - 1) {
+                    err_str << "string data field can't be laid before data fields"
+                            << " of other types.";
+                    break;
+                }
+            }
+        }
+
     }
-    // Option name must not contain spaces.
-    if (name_.find(" ") != string::npos) {
-        isc_throw(isc::BadValue, "option name must not contain spaces");
-    }
-    // Unsupported option types are not allowed.
-    if (type_ >= OPT_UNKNOWN_TYPE) {
-        isc_throw(isc::OutOfRange, "option type value " << type_
-                  << " is out of range");
+
+    // Non-empty error string means that we have hit the error. We throw
+    // exception and include error string.
+    if (!err_str.str().empty()) {
+        isc_throw(MalformedOptionDefinition, err_str.str());
     }
 }
 
