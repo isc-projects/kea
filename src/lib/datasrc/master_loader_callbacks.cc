@@ -50,24 +50,26 @@ logWarning(const isc::dns::Name& name, const isc::dns::RRClass& rrclass,
 
 }
 
-isc::dns::LoaderCallbacks
-createCallbacks(ZoneUpdater& updater, const isc::dns::Name& name,
-                const isc::dns::RRClass& rrclass, bool* ok)
+isc::dns::MasterLoaderCallbacks
+createMasterLoaderCallbacks(ZoneUpdater& updater, const isc::dns::Name& name,
+                            const isc::dns::RRClass& rrclass, bool* ok)
 {
-    return (isc::dns::LoaderCallbacks(boost::bind(&logError, name, rrclass, ok,
-                                                  _1, _2, _3),
-                                      boost::bind(&logWarning, name, rrclass,
-                                                  _1, _2, _3),
-                                      boost::bind(&ZoneUpdater::addRRset,
-                                                  &updater,
-                                                  // The callback provides a
-                                                  // shared pointer, we need
-                                                  // the object. This bind
-                                                  // unpacks the object.
-                                                  boost::bind(&isc::dns::
-                                                              RRsetPtr::
-                                                              operator*,
-                                                              _1))));
+    return (isc::dns::MasterLoaderCallbacks(boost::bind(&logError, name,
+                                                        rrclass, ok, _1, _2,
+                                                        _3),
+                                            boost::bind(&logWarning, name,
+                                                        rrclass, _1, _2, _3),
+                                            boost::bind(&ZoneUpdater::addRRset,
+                                                        &updater,
+                                                        // The callback provides
+                                                        // a shared pointer, we
+                                                        // need the object. This
+                                                        // bind unpacks the
+                                                        // object.
+                                                        boost::bind(&isc::dns::
+                                                                    RRsetPtr::
+                                                                    operator*,
+                                                                    _1))));
 }
 
 }

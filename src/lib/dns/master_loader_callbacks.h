@@ -31,7 +31,7 @@ namespace dns {
 /// can report loaded RRsets, errors and other unusual conditions.
 ///
 /// All the callbacks must be set.
-class LoaderCallbacks {
+class MasterLoaderCallbacks {
 public:
     /// \brief Type of one callback to report problems.
     ///
@@ -66,8 +66,9 @@ public:
     /// \param warning The warning callback to use.
     /// \param add The add callback to use.
     /// \throw isc::InvalidParameter if any of the callbacks is empty.
-    LoaderCallbacks(const IssueCallback& error, const IssueCallback& warning,
-                    const AddCallback& add) :
+    MasterLoaderCallbacks(const IssueCallback& error,
+                          const IssueCallback& warning,
+                          const AddCallback& add) :
         error_(error),
         warning_(warning),
         add_(add)

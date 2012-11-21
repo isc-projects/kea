@@ -59,12 +59,13 @@ public:
     std::list<isc::dns::RRsetPtr> expected_rrsets_;
 };
 
-class LoaderCallbackTest : public ::testing::Test {
+class MasterLoaderCallbackTest : public ::testing::Test {
 protected:
-    LoaderCallbackTest() :
+    MasterLoaderCallbackTest() :
         ok_(true),
-        callbacks_(createCallbacks(updater_, isc::dns::Name("example.org"),
-                                   isc::dns::RRClass::IN(), &ok_))
+        callbacks_(createMasterLoaderCallbacks(updater_,
+                                               isc::dns::Name("example.org"),
+                                               isc::dns::RRClass::IN(), &ok_))
     {}
     // Generate a new RRset, put it to the updater and return it.
     isc::dns::RRsetPtr generateRRset() {
@@ -81,20 +82,20 @@ protected:
     // Is the loading OK?
     bool ok_;
     // The tested context
-    isc::dns::LoaderCallbacks callbacks_;
+    isc::dns::MasterLoaderCallbacks callbacks_;
 };
 
 // Check it doesn't crash if we don't provide the OK
-TEST_F(LoaderCallbackTest, noOkProvided) {
-    createCallbacks(updater_, isc::dns::Name("example.org"),
-                    isc::dns::RRClass::IN(), NULL).error("No source", 1,
-                                                         "No reason");
+TEST_F(MasterLoaderCallbackTest, noOkProvided) {
+    createMasterLoaderCallbacks(updater_, isc::dns::Name("example.org"),
+                                isc::dns::RRClass::IN(), NULL).
+        error("No source", 1, "No reason");
 }
 
 // Check the callbacks can be called, don't crash and the error one switches
 // to non-OK mode. This, however, does not stop anybody from calling more
 // callbacks.
-TEST_F(LoaderCallbackTest, callbacks) {
+TEST_F(MasterLoaderCallbackTest, callbacks) {
     EXPECT_NO_THROW(callbacks_.warning("No source", 1, "Just for fun"));
     // The warning does not hurt the OK mode.
     EXPECT_TRUE(ok_);
@@ -111,7 +112,7 @@ TEST_F(LoaderCallbackTest, callbacks) {
 }
 
 // Try adding some RRsets.
-TEST_F(LoaderCallbackTest, addRRset) {
+TEST_F(MasterLoaderCallbackTest, addRRset) {
     // Put some of them in.
     EXPECT_NO_THROW(callbacks_.addRRset(generateRRset()));
     EXPECT_NO_THROW(callbacks_.addRRset(generateRRset()));
