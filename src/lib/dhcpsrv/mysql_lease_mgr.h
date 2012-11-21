@@ -31,8 +31,9 @@ const uint32_t CURRENT_VERSION_VERSION = 0;
 const uint32_t CURRENT_VERSION_MINOR = 1;
 
 
-// Forward declaration of the Lease6 exchange object.  This class is defined
+// Forward declaration of the Lease exchange objects.  This class is defined
 // in the .cc file.
+class MySqlLease4Exchange;
 class MySqlLease6Exchange;
 
 
@@ -226,12 +227,20 @@ public:
 
     /// @brief Deletes an IPv4 lease.
     ///
+    /// @todo Merge with deleteLease6: it is possible to determine whether
+    ///       an address is V4 or V6 from the IOAddress argument, so there
+    ///       is no need for separate V4 or V6 methods.
+    ///
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
     virtual bool deleteLease4(const isc::asiolink::IOAddress& addr);
 
     /// @brief Deletes an IPv6 lease.
+    ///
+    /// @todo Merge with deleteLease4: it is possible to determine whether
+    ///       an address is V4 or V6 from the IOAddress argument, so there
+    ///       is no need for separate V4 or V6 methods.
     ///
     /// @param addr IPv6 address of the lease to be deleted.
     ///
@@ -343,11 +352,14 @@ public:
     ///
     /// The contents of the enum are indexes into the list of SQL statements
     enum StatementIndex {
+        DELETE_LEASE4,              // Delete from lease4 by address
         DELETE_LEASE6,              // Delete from lease6 by address
+        GET_LEASE4_ADDR,            // Get lease4 by address
         GET_LEASE6_ADDR,            // Get lease6 by address
         GET_LEASE6_DUID_IAID,       // Get lease6 by DUID and IAID
         GET_LEASE6_DUID_IAID_SUBID, // Get lease6 by DUID, IAID and Subnet ID
         GET_VERSION,                // Obtain version number
+        INSERT_LEASE4,              // Add entry to lease4 table
         INSERT_LEASE6,              // Add entry to lease6 table
         UPDATE_LEASE6,              // Update a Lease6 entry
         NUM_STATEMENTS              // Number of statements
@@ -389,6 +401,34 @@ private:
     /// @throw DbOpenError Error opening the database
     void openDatabase();
 
+    /// @brief Add Lease Common Code
+    ///
+    /// This method performs the common actions for both flavours of the
+    /// addLease method.
+    ///
+    /// @param stindex Index of statemnent being executed
+    /// @param bind MYSQL_BIND array that has been created for the type
+    ///        of lease in question.
+    ///
+    /// @return true if the lease was added, false if it was not added because
+    ///         a lease with that address already exists in the database.
+    ///
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
+    bool addLease(StatementIndex stindex, std::vector<MYSQL_BIND>& bind);
+
+    /// @brief Get Lease Common Code
+    ///
+    /// This method performs the common actions for the getLease methods.
+    ///
+    /// @param stindex Index of statement being executed
+    /// @param inbind MYSQL_BIND array for input parameters
+    /// @param exchange Exchange object to use
+    /// @param lease Lease object returned
+    template <typename Exchange, typename LeasePtr>
+    void getLease(StatementIndex stindex, MYSQL_BIND* inbind,
+                  Exchange& exchange, LeasePtr& result) const;
+
     /// @brief Binds Parameters and Executes
     ///
     /// This method abstracts a lot of common processing from the getXxxx()
@@ -398,16 +438,19 @@ private:
     /// statement.
     ///
     /// The data can be retrieved using mysql_stmt_fetch and the getLeaseData()
-    /// method on the exchange6 object.
+    /// method on the appropriate exchange object.
     ///
     /// @param stindex Index of prepared statement to be executed
+    /// @param exchange Exchange object to use
     /// @param inbind Array of MYSQL_BIND objects representing the parameters.
     ///        (Note that the number is determined by the number of parameters
     ///        in the statement.)
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    void bind6AndExecute(StatementIndex stindex, MYSQL_BIND* inbind) const;
+    template <typename Exchange>
+    void bindAndExecute(StatementIndex stindex, Exchange& exchange,
+                         MYSQL_BIND* inbind) const;
 
     /// @brief Check Error and Throw Exception
     ///
@@ -437,10 +480,11 @@ private:
     /// object as its contents may change in "const" calls, while the rest
     /// of this object does not.  (At alternative would be to declare it as
     /// "mutable".)
-    boost::scoped_ptr<MySqlLease6Exchange> exchange6_;
     MYSQL*              mysql_;                 ///< MySQL context object
     std::vector<std::string> text_statements_;  ///< Raw text of statements
     std::vector<MYSQL_STMT*> statements_;       ///< Prepared statements
+    boost::scoped_ptr<MySqlLease4Exchange> exchange4_; ///< Exchange object
+    boost::scoped_ptr<MySqlLease6Exchange> exchange6_; ///< Exchange object
 };
 
 }; // end of isc::dhcp namespace
