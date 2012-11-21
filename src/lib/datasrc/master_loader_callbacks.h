@@ -18,6 +18,10 @@
 #include <dns/master_loader_callbacks.h>
 
 namespace isc {
+namespace dns {
+class Name;
+class RRClass;
+}
 namespace datasrc {
 
 class ZoneUpdater;

@@ -15,15 +15,17 @@
 #ifndef MASTER_LOADER_CALLBACKS_H
 #define MASTER_LOADER_CALLBACKS_H
 
-#include <dns/rrset.h>
-
 #include <exceptions/exceptions.h>
 
 #include <string>
 #include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dns {
+
+class AbstractRRset;
+typedef boost::shared_ptr<AbstractRRset> RRsetPtr;
 
 /// \brief Type of callback to add a RRset.
 ///
