@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <datasrc/loader_callbacks.h>
+#include <datasrc/master_loader_callbacks.h>
 #include <datasrc/zone.h>
 
 #include <dns/rrset.h>
