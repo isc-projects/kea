@@ -12,10 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef DATASRC_LOADER_CALLBACKS_H
-#define DATASRC_LOADER_CALLBACKS_H
+#ifndef DATASRC_MASTER_LOADER_CALLBACKS_H
+#define DATASRC_MASTER_LOADER_CALLBACKS_H
 
-#include <dns/loader_callbacks.h>
+#include <dns/master_loader_callbacks.h>
 
 namespace isc {
 namespace datasrc {
