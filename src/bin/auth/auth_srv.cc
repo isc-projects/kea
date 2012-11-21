@@ -570,8 +570,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         // note: This can only be reliable after TSIG check succeeds.
         ConstEDNSPtr edns = message.getEDNS();
         if (edns) {
-            impl_->stats_attrs_.setRequestEDNS(edns->getVersion() == 0,
-                                               edns->getVersion() != 0);
+            impl_->stats_attrs_.setRequestEDNS0(true);
             impl_->stats_attrs_.setRequestDO(edns->getDNSSECAwareness());
         }
 

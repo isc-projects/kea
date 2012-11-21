@@ -157,9 +157,6 @@ Counters::incRequest(const MessageAttributes& msgattrs) {
     if (msgattrs.getRequestEDNS0()) {
         server_msg_counter_.inc(MSG_REQUEST_EDNS0);
     }
-    if (msgattrs.getRequestEDNSBadVer()) {
-        server_msg_counter_.inc(MSG_REQUEST_BADEDNSVER);
-    }
 
     // request DNSSEC
     if (msgattrs.getRequestDO()) {
@@ -202,6 +199,10 @@ Counters::incResponse(const MessageAttributes& msgattrs,
         rcode < num_rcode_to_msgcounter ?
         rcode_to_msgcounter[rcode] : MSG_RCODE_OTHER;
     server_msg_counter_.inc(rcode_type);
+    // Unsupported EDNS version
+    if (rcode == Rcode::BADVERS().getCode()) {
+        server_msg_counter_.inc(MSG_REQUEST_BADEDNSVER);
+    }
 
     if (msgattrs.getRequestOpCode() == Opcode::QUERY_CODE) {
         // compound attributes

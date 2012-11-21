@@ -114,7 +114,7 @@ TEST_F(CountersTest, incrementResponse) {
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
         msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
-        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
 
         response.setRcode(Rcode::REFUSED());
@@ -159,7 +159,7 @@ TEST_F(CountersTest, incrementProtocolType) {
         msgattrs.setRequestIPVersion(af);
         msgattrs.setRequestTransportProtocol(proto);
         msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
-        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
 
         response.setRcode(Rcode::REFUSED());
@@ -212,7 +212,7 @@ TEST_F(CountersTest, incrementDO) {
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
         msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
-        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(is_dnssec_ok);
 
         response.setRcode(Rcode::REFUSED());
@@ -243,21 +243,19 @@ TEST_F(CountersTest, incrementEDNS) {
     std::map<std::string, int> expect;
 
     // Test these patterns:
-    //     request edns0   badednsver  response edns0
-    //    --------------------------------------------
-    //     false           false       true
-    //     false           true        true
-    //     true            false       false
+    //     request edns0   response edns0
+    //    --------------------------------
+    //     false           true
+    //     true            false
     //
     // They can't be both true since edns0 and badednsver are exclusive.
-    int count_req_edns0 = 0, count_res_edns0 = 0, count_badver = 0;
-    for (int i = 0; i < 3; ++i) {
+    int count_req_edns0 = 0, count_res_edns0 = 0;
+    for (int i = 0; i < 2; ++i) {
         const bool is_edns0 = i & 1;
-        const bool is_badver = i & 2;
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
         msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
-        msgattrs.setRequestEDNS(is_edns0, is_badver);
+        msgattrs.setRequestEDNS0(is_edns0);
         msgattrs.setRequestDO(true);
 
         if (!is_edns0) {
@@ -278,9 +276,6 @@ TEST_F(CountersTest, incrementEDNS) {
         } else {
             ++count_res_edns0;
         }
-        if (is_badver) {
-            ++count_badver;
-        }
 
         expect.clear();
         expect["opcode.query"] = i+1;
@@ -288,7 +283,7 @@ TEST_F(CountersTest, incrementEDNS) {
         expect["request.udp"] = i+1;
         expect["request.edns0"] = count_req_edns0;
         expect["response.edns0"] = count_res_edns0;
-        expect["request.badednsver"] = count_badver;
+        expect["request.badednsver"] = 0;
         expect["request.dnssec_ok"] = i+1;
         expect["responses"] = i+1;
         expect["qrynoauthans"] = i+1;
@@ -322,7 +317,7 @@ TEST_F(CountersTest, incrementTSIG) {
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
         msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
-        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
         msgattrs.setRequestSig(is_tsig, is_sig0, is_badsig);
 
@@ -381,7 +376,7 @@ TEST_F(CountersTest, incrementOpcode) {
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
         msgattrs.setRequestOpCode(i);
-        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
         msgattrs.setRequestSig(false, false, false);
 
@@ -430,7 +425,7 @@ TEST_F(CountersTest, incrementRcode) {
     std::map<std::string, int> expect;
 
     // Test all rcodes (NOERROR..BADVERS)
-    int count_all = 0, count_rcode_other = 0;
+    int count_all = 0, count_rcode_other = 0, count_ednsbadver = 0;
     for (uint16_t i = Rcode::NOERROR().getCode(),
                   e = Rcode::BADVERS().getCode();
          i <= e;
@@ -439,7 +434,7 @@ TEST_F(CountersTest, incrementRcode) {
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
         msgattrs.setRequestOpCode(Opcode::IQUERY_CODE);
-        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
         msgattrs.setRequestSig(false, false, false);
 
@@ -459,7 +454,6 @@ TEST_F(CountersTest, incrementRcode) {
         expect["request.v4"] = count_all;
         expect["request.udp"] = count_all;
         expect["request.edns0"] = count_all;
-        expect["request.badednsver"] = 0;
         expect["request.dnssec_ok"] = count_all;
         expect["request.tsig"] = 0;
         expect["request.sig0"] = 0;
@@ -468,6 +462,11 @@ TEST_F(CountersTest, incrementRcode) {
         if (rcode_to_msgcounter[i] == MSG_RCODE_OTHER) {
             count_rcode_other += i;
         }
+        // "request.badednsver" counts for Rcode == BADVERS
+        if (rcode_to_msgcounter[i] == MSG_RCODE_BADVERS) {
+            count_ednsbadver += i;
+        }
+        expect["request.badednsver"] = count_ednsbadver;
         for (uint16_t j = 0; j <= i; ++j) {
             if (rcode_to_msgcounter[j] == MSG_RCODE_OTHER) {
                 expect["rcode.other"] = count_rcode_other;
@@ -498,7 +497,7 @@ TEST_F(CountersTest, incrementTruncated) {
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
         msgattrs.setRequestOpCode(Opcode::IQUERY_CODE);
-        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
         msgattrs.setRequestSig(false, false, false);
         msgattrs.setResponseTruncated(is_truncated);
@@ -544,7 +543,7 @@ TEST_F(CountersTest, incrementQryAuthAnsAndNoAuthAns) {
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
         msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
-        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
         msgattrs.setRequestSig(false, false, false);
 
@@ -584,7 +583,7 @@ TEST_F(CountersTest, incrementQrySuccess) {
     msgattrs.setRequestIPVersion(AF_INET);
     msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
     msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
-    msgattrs.setRequestEDNS(true, false);
+    msgattrs.setRequestEDNS0(true);
     msgattrs.setRequestDO(true);
     msgattrs.setRequestSig(false, false, false);
 
@@ -633,7 +632,7 @@ TEST_F(CountersTest, incrementQryReferralAndNxrrset) {
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
         msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
-        msgattrs.setRequestEDNS(true, false);
+        msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
         msgattrs.setRequestSig(false, false, false);
 
@@ -676,7 +675,7 @@ TEST_F(CountersTest, incrementAuthQryRej) {
     msgattrs.setRequestIPVersion(AF_INET);
     msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
     msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
-    msgattrs.setRequestEDNS(true, false);
+    msgattrs.setRequestEDNS0(true);
     msgattrs.setRequestDO(true);
     msgattrs.setRequestSig(false, false, false);
 
