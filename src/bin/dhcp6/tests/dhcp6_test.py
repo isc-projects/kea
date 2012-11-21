@@ -89,44 +89,65 @@ class TestDhcpv6Daemon(unittest.TestCase):
         fl = fcntl.fcntl(fd, fcntl.F_GETFL)
         fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
-        # There's potential problem if b10-dhcp4 prints out more
-        # than 16k of text
-        try:
-            output = os.read(self.stdout_pipes[0], 16384)
-        except OSError:
-            print("No data available from stdout")
-            output = ""
+        # As we don't know how long the subprocess will take to start and
+        # produce output, we'll loop and sleep for 250ms between each
+        # iteration.  To avoid an infinite loop, we'll loop for a maximum
+        # of five seconds: that should be enough.
+        count = 20
+        output = ""
+        error = ""
+        while count > 0:
+            try:
+                new_output = os.read(self.stdout_pipes[0], 16384)
+            except OSError:
+                new_output = ""
 
-        # read can return None. Make sure we have a string
-        if (output is None):
-            output = ""
+            # read can return None. Make sure we have a string
+            if (new_output is not None):
+                output = output + str(new_output)
 
-        try:
-            error = os.read(self.stderr_pipes[0], 16384)
-        except OSError:
-            print("No data available on stderr")
-            error = ""
+            try:
+                new_error = os.read(self.stderr_pipes[0], 16384)
+            except OSError:
+                new_error = ""
 
-        # read can return None. Make sure we have a string
-        if (error is None):
-            error = ""
+            # read can return None. Make sure we have a string
+            if (new_error is not None):
+                error = error + str(new_error)
 
-        try:
-            if (not pi.process.poll()):
-                # let's be nice at first...
+            # If the process has already exited, or if it has output something,
+            # quit the loop now.
+            if pi.process.poll() is not None or len(error) > 0 or len(output) > 0:
+                break
+
+            # Process still running, try again in 250 ms.
+            count = count - 1
+            time.sleep(0.25)
+
+        # Exited loop, kill the process if it is still running
+        if pi.process.poll() is None:
+            try:
                 pi.process.terminate()
-        except OSError:
-            print("Ignoring failed kill attempt. Process is dead already.")
+            except OSError:
+                print("Ignoring failed kill attempt. Process is dead already.")
 
         # call this to get returncode, process should be dead by now
         rc = pi.process.wait()
 
         # Clean up our stdout/stderr munging.
         os.dup2(self.stdout_old, sys.stdout.fileno())
+        os.close(self.stdout_old)
         os.close(self.stdout_pipes[0])
 
         os.dup2(self.stderr_old, sys.stderr.fileno())
+        os.close(self.stderr_old)
         os.close(self.stderr_pipes[0])
+
+        # Free up resources (file descriptors) from the ProcessInfo object
+        # TODO: For some reason, this gives an error if the process has ended,
+        #       although it does cause all descriptors still allocated to the
+        #       object to be freed.
+        pi = None
 
         print ("Process finished, return code=%d, stdout=%d bytes, stderr=%d bytes"
                % (rc, len(output), len(error)) )
