@@ -33,6 +33,7 @@ protected:
                              s_crlf(State::getInstance(State::CRLF)),
                              s_string(State::getInstance(State::String)),
                              s_qstring(State::getInstance(State::QString)),
+                             s_number(State::getInstance(State::Number)),
                              options(MasterLexer::NONE),
                              orig_options(options)
     {}
@@ -44,6 +45,7 @@ protected:
     const State& s_crlf;
     const State& s_string;
     const State& s_qstring;
+    const State& s_number;
     std::stringstream ss;
     MasterLexer::Options options, orig_options;
 };
@@ -448,6 +450,67 @@ TEST_F(MasterLexerStateTest, brokenQuotedString) {
     // If we continue we'll simply see the EOF
     EXPECT_EQ(s_null, State::start(lexer, options));
     EXPECT_EQ(Token::END_OF_FILE, s_crlf.getToken(lexer).getType());
+}
+
+TEST_F(MasterLexerStateTest, number) {
+    ss << "0 ";
+    ss << "1 ";
+    ss << "12345 ";
+    ss << "4294967295 "; // 2^32-1
+    ss << "4294967296 "; // 2^32 (this overflows to 0, we
+                         // can consider failing on it, but
+                         // this is what bind9 does as well)
+    ss << "4294967297 "; // 2^32+1 (this overflows to 1, see
+                         // above)
+    ss << "1000000000000000000 "; // overflows to 2808348672
+    ss << "005 ";        // Leading zeroes are ignored
+    ss << "-1 ";         // Negative numbers are interpreted
+                         // as strings (unsigned integers only)
+    ss << "123abc456";   // 'Numbers' containing non-digits should
+                         // be interpreted as strings
+
+    lexer.pushSource(ss);
+
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer));
+    EXPECT_EQ(0, s_number.getToken(lexer).getNumber());
+
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer));
+    EXPECT_EQ(1, s_number.getToken(lexer).getNumber());
+
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer));
+    EXPECT_EQ(12345, s_number.getToken(lexer).getNumber());
+
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer));
+    EXPECT_EQ(4294967295, s_number.getToken(lexer).getNumber());
+
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer));
+    EXPECT_EQ(0, s_number.getToken(lexer).getNumber());
+
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer));
+    EXPECT_EQ(1, s_number.getToken(lexer).getNumber());
+
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer));
+    EXPECT_EQ(2808348672, s_number.getToken(lexer).getNumber());
+
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer));
+    EXPECT_EQ(5, s_number.getToken(lexer).getNumber());
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer));
+    stringTokenCheck("-1", s_string.getToken(lexer), false);
+
+    // Starts out as a number, but ends up being a string
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer));
+    stringTokenCheck("123abc456", s_string.getToken(lexer), false);
 }
 
 }
