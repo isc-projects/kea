@@ -477,13 +477,13 @@ public:
 
         // Check they were created
         for (int i = 0; i < leases.size(); ++i) {
-            EXPECT_TRUE(leases[i]);
+            ASSERT_TRUE(leases[i]);
         }
 
         // Check they are different
         for (int i = 0; i < (leases.size() - 1); ++i) {
             for (int j = (i + 1); j < leases.size(); ++j) {
-                EXPECT_TRUE(leases[i] != leases[j]);
+                ASSERT_TRUE(leases[i] != leases[j]);
             }
         }
     }
@@ -731,15 +731,15 @@ TEST_F(MySqlLeaseMgrTest, basicLease4) {
     reopen();
 
     Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    EXPECT_TRUE(l_returned);
+    ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
     l_returned = lmptr_->getLease4(ioaddress4_[2]);
-    EXPECT_TRUE(l_returned);
+    ASSERT_TRUE(l_returned);
     detailCompareLease(leases[2], l_returned);
 
     l_returned = lmptr_->getLease4(ioaddress4_[3]);
-    EXPECT_TRUE(l_returned);
+    ASSERT_TRUE(l_returned);
     detailCompareLease(leases[3], l_returned);
 
     // Check that we can't add a second lease with the same address
@@ -754,7 +754,7 @@ TEST_F(MySqlLeaseMgrTest, basicLease4) {
 
     // Check that the second address is still there.
     l_returned = lmptr_->getLease4(ioaddress4_[2]);
-    EXPECT_TRUE(l_returned);
+    ASSERT_TRUE(l_returned);
     detailCompareLease(leases[2], l_returned);
 }
 
@@ -782,15 +782,15 @@ TEST_F(MySqlLeaseMgrTest, basicLease6) {
     reopen();
 
     Lease6Ptr l_returned = lmptr_->getLease6(ioaddress6_[1]);
-    EXPECT_TRUE(l_returned);
+    ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
     l_returned = lmptr_->getLease6(ioaddress6_[2]);
-    EXPECT_TRUE(l_returned);
+    ASSERT_TRUE(l_returned);
     detailCompareLease(leases[2], l_returned);
 
     l_returned = lmptr_->getLease6(ioaddress6_[3]);
-    EXPECT_TRUE(l_returned);
+    ASSERT_TRUE(l_returned);
     detailCompareLease(leases[3], l_returned);
 
     // Check that we can't add a second lease with the same address
@@ -805,18 +805,84 @@ TEST_F(MySqlLeaseMgrTest, basicLease6) {
 
     // Check that the second address is still there.
     l_returned = lmptr_->getLease6(ioaddress6_[2]);
-    EXPECT_TRUE(l_returned);
+    ASSERT_TRUE(l_returned);
     detailCompareLease(leases[2], l_returned);
+}
+
+// @brief Check GetLease4 methods - Access by Address and SubnetID
+//
+// Adds leases to the database and checks that they can be accessed via
+// a combination of Address, SubnetID
+TEST_F(MySqlLeaseMgrTest, getLease4AddressSubnetId) {
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Add just one to the database.
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+
+    // Look for a known lease with a valid Subnet ID
+    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1], 73);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
+
+    // Look for a lease known to be in the database with an invalid Subnet ID
+    l_returned = lmptr_->getLease4(ioaddress4_[1], 74);
+    EXPECT_FALSE(l_returned);
+
+    // Look for a lease known not to be in the database with a valid Subnet ID
+    l_returned = lmptr_->getLease4(ioaddress4_[2], 73);
+    EXPECT_FALSE(l_returned);
+
+    // Look for a lease known not to be in the database with and invalid
+    l_returned = lmptr_->getLease4(ioaddress4_[2], 74);
+    EXPECT_FALSE(l_returned);
+}
+
+// @brief Check GetLease4 methods - Access by Hardware Address
+//
+// Adds leases to the database and checks that they can be accessed via
+// hardware address
+TEST_F(MySqlLeaseMgrTest, getLease4AddressHwaddr) {
+    FAIL() << "Test not complete";
+/*
+    // Get the leases to be used for the test and add to the database.
+    vector<Lease4Ptr> leases = createLeases4();
+    for (int i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Get a known hardware address
+    vector<uint8_t> hwaddr = leases[1]->hwaddr_;
+    EXPECT_FALSE(hwaddr.empty());
+
+    // Look for a lease with a valid hardware address
+    Lease4Ptr l_returned = lmptr_->getLease4(hwaddr);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
+
+    // Look for a lease with an invalid valid hardware address
+    hwaddr[0] += 1;
+    Lease4Ptr l_returned = lmptr_->getLease4(hwaddr);
+    EXPECT_FALSE(l_returned);
+
+    // Check it handles an empty hardware address
+    hwaddr.clear();
+    Lease4Ptr l_returned = lmptr_->getLease4(hwaddr);
+    EXPECT_FALSE(l_returned);
+
+    // Add a lease with an empty hardware address to the database and
+    // check that it find that.
+*/
 }
 
 // @brief Check GetLease6 methods - Access by DUID/IAID
 //
 // Adds leases to the database and checks that they can be accessed via
 // a combination of DIUID and IAID.
-TEST_F(MySqlLeaseMgrTest, getLease6Extended1) {
+TEST_F(MySqlLeaseMgrTest, getLease6DuidIaid) {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
-    EXPECT_LE(6, leases.size());    // Expect to access leases 0 through 5
+    ASSERT_LE(6, leases.size());    // Expect to access leases 0 through 5
 
     // Add them to the database
     for (int i = 0; i < leases.size(); ++i) {
@@ -860,10 +926,10 @@ TEST_F(MySqlLeaseMgrTest, getLease6Extended1) {
 //
 // Adds leases to the database and checks that they can be accessed via
 // a combination of DIUID and IAID.
-TEST_F(MySqlLeaseMgrTest, getLease6Extended2) {
+TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
-    EXPECT_LE(6, leases.size());    // Expect to access leases 0 through 5
+    ASSERT_LE(6, leases.size());    // Expect to access leases 0 through 5
 
     // Add them to the database
     for (int i = 0; i < leases.size(); ++i) {
@@ -904,7 +970,7 @@ TEST_F(MySqlLeaseMgrTest, getLease6Extended2) {
 TEST_F(MySqlLeaseMgrTest, updateLease6) {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
-    EXPECT_LE(3, leases.size());    // Expect to access leases 0 through 5
+    ASSERT_LE(3, leases.size());    // Expect to access leases 0 through 2
 
     // Add a lease to the database and check that the lease is there.
     EXPECT_TRUE(lmptr_->addLease(leases[1]));
@@ -912,7 +978,7 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
 
     reopen();
     Lease6Ptr l_returned = lmptr_->getLease6(ioaddress6_[1]);
-    EXPECT_TRUE(l_returned);
+    ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
     // Modify some fields in lease 1 (not the address) and update it.
@@ -926,7 +992,7 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
     // ... and check what is returned is what is expected.
     l_returned.reset();
     l_returned = lmptr_->getLease6(ioaddress6_[1]);
-    EXPECT_TRUE(l_returned);
+    ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
     // Alter the lease again and check.
@@ -938,14 +1004,14 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
 
     l_returned.reset();
     l_returned = lmptr_->getLease6(ioaddress6_[1]);
-    EXPECT_TRUE(l_returned);
+    ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
     // Check we can do an update without changing data.
     lmptr_->updateLease6(leases[1]);
     l_returned.reset();
     l_returned = lmptr_->getLease6(ioaddress6_[1]);
-    EXPECT_TRUE(l_returned);
+    ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
     // Try updating a lease not in the database.
