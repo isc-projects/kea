@@ -215,13 +215,9 @@ TEST_F(MasterLexerTest, simpleGetToken) {
     EXPECT_EQ(45, rest);
 }
 
-// Test getting a token without overriding the start() method (well, it
-// is overriden, but no fake state is set, so it refers to the real one).
-//
-// This also tests the real start() passes the options, otherwise we wouldn't
-// get the initial whitespace.
-TEST_F(MasterLexerTest, realStart) {
-    ss << "\n   \n";
+// Test getting some tokens
+TEST_F(MasterLexerTest, getNextToken) {
+    ss << "\n   \n\"STRING\"\n";
     lexer.pushSource(ss);
 
     // First, the newline should get out.
@@ -229,10 +225,18 @@ TEST_F(MasterLexerTest, realStart) {
     // Then the whitespace, if we specify the option.
     EXPECT_EQ(MasterLexer::Token::INITIAL_WS,
               lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
+    // The newline
+    EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
+    // The (quoted) string
+    EXPECT_EQ(MasterLexer::Token::QSTRING,
+              lexer.getNextToken(MasterLexer::QSTRING).getType());
+
+    // And the end of line and file
+    EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
+    EXPECT_EQ(MasterLexer::Token::END_OF_FILE, lexer.getNextToken().getType());
 }
 
-// Test we correctly find end of file. Then, upon more attempts to produce
-// tokens past the end, it throws.
+// Test we correctly find end of file.
 TEST_F(MasterLexerTest, eof) {
     // Let the ss empty.
     lexer.pushSource(ss);
@@ -272,6 +276,37 @@ TEST_F(MasterLexerTest, getUnbalancedString) {
               lexer.getNextToken(MasterLexer::QSTRING).getErrorCode());
     // And then EOF
     EXPECT_EQ(MasterLexer::Token::END_OF_FILE, lexer.getNextToken().getType());
+}
+
+// Test ungetting tokens works
+TEST_F(MasterLexerTest, ungetToken) {
+    ss << "\n (\"string\"\n) more";
+    lexer.pushSource(ss);
+
+    // Try getting the newline
+    EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
+    // Return it and get again
+    lexer.ungetToken();
+    EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
+    // Get the string and return it back
+    EXPECT_EQ(MasterLexer::Token::QSTRING,
+              lexer.getNextToken(MasterLexer::QSTRING).getType());
+    lexer.ungetToken();
+    // But if we change the options, it honors them
+    EXPECT_EQ(MasterLexer::Token::INITIAL_WS,
+              lexer.getNextToken(MasterLexer::QSTRING |
+                                 MasterLexer::INITIAL_WS).getType());
+    // Get to the "more" string
+    EXPECT_EQ(MasterLexer::Token::QSTRING,
+              lexer.getNextToken(MasterLexer::QSTRING).getType());
+    EXPECT_EQ(MasterLexer::Token::STRING,
+              lexer.getNextToken(MasterLexer::QSTRING).getType());
+    // Return it back. It should get inside the parentheses.
+    // Upon next attempt to get it again, the newline inside the parentheses
+    // should be still ignored.
+    lexer.ungetToken();
+    EXPECT_EQ(MasterLexer::Token::STRING,
+              lexer.getNextToken(MasterLexer::QSTRING).getType());
 }
 
 void
