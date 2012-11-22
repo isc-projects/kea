@@ -391,14 +391,16 @@ def find_value(dictionary, key):
         for v in dictionary.values():
             return find_value(v, key)
 
-@step('the statistics counter (\S+)(?: for the zone (\S+))? should be' + \
+@step('the statistics counter (\S+)(?: in the category (\S+))?'+ \
+          '(?: for the zone (\S+))? should be' + \
           '(?:( greater than| less than| between))? (\-?\d+)(?: and (\-?\d+))?')
-def check_statistics(step, counter, zone, gtltbt, number, upper):
+def check_statistics(step, counter, category, zone, gtltbt, number, upper):
     """
     check the output of bindctl for statistics of specified counter
     and zone.
     Parameters:
     counter ('counter <counter>'): The counter name of statistics.
+    category ('category <category>', optional): The category of counter.
     zone ('zone <zone>', optional): The zone name.
     gtltbt (' greater than'|' less than'|' between', optional): greater than
           <number> or less than <number> or between <number> and <upper>.
@@ -409,14 +411,22 @@ def check_statistics(step, counter, zone, gtltbt, number, upper):
     """
     output = parse_bindctl_output_as_data_structure()
     found = None
+    category_str = ""
     zone_str = ""
+    depth = []
+    if category:
+        depth.insert(0, category)
+        category_str = " for category %s" % category
     if zone:
-        found = find_value(find_value(output, zone), counter)
+        depth.insert(0, zone)
         zone_str = " for zone %s" % zone
+    for level in depth:
+        output = find_value(output, level)
     else:
         found = find_value(output, counter)
     assert found is not None, \
-        'Not found statistics counter %s%s' % (counter, zone_str)
+        'Not found statistics counter %s%s%s' % \
+            (counter, category_str, zone_str)
     msg = "Got %s, expected%s %s as counter %s%s" % \
         (found, gtltbt, number, counter, zone_str)
     if gtltbt and 'between' in gtltbt and upper:
