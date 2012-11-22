@@ -58,5 +58,7 @@ For operating system specific tips see the wiki at:
 
 Please see the wiki and the doc/ directory for various documentation.
 
-The BIND 10 suite is started by running "bind10". Note that the
-default configuration does not run any DNS or DHCP servers.
+The BIND 10 suite is started by running "bind10". Note that the default
+configuration does not start any DNS or DHCP services.  Please see the
+Guide for information on how to configure these services to be started
+automatically.
