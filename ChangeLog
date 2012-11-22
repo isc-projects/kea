@@ -1,3 +1,11 @@
+TBD.	[func]		y-aharen
+	Added statistics items in b10-auth based on
+	http://bind10.isc.org/wiki/StatisticsItems. Qtype counters are
+	dropped as it requires further spec design discussion.
+	(Trac #2154, Trac #2155,
+	             git 61d7c3959eb991b22bc1c0ef8f4ecb96b65d9325)
+	(Trac #2157, git TBD)
+
 482.	[func]		team
 	Memory footprint of the in-memory data source has been
 	substantially improved.  For example, b10-auth now requires much
