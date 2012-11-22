@@ -191,11 +191,11 @@ public:
     /// It reads a bit of the last opened source and produces another token
     /// found in it.
     ///
-    /// This method provides the weak exception guarantee. It'll return the
-    /// class to the state before the call on exception, except that it is
-    /// not possible to call ungetToken() after the failed call. This is
-    /// considered OK, since the caller was expecting the call to succeed
-    /// in which case the previous token would not be ungettable as well.
+    /// This method does not provide the strong exception guarantee. Generally,
+    /// if it throws, the object should not be used any more and should be
+    /// discarded. It was decided all the exceptions thrown from here are
+    /// serious enough that aborting the loading process is the only reasonable
+    /// recovery anyway, so the strong exception guarantee is not needed.
     ///
     /// \param options The options can be used to modify the tokenization.
     ///     The method can be made reporting things which are usually ignored
