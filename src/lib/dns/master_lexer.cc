@@ -181,7 +181,7 @@ MasterLexer::getNextToken(Options options) {
     // And get the token
 
     // This actually handles EOF internally too.
-    const State* state = start(options);
+    const State* state = State::start(*this, options);
     if (state != NULL) {
         state->handle(*this);
     }
@@ -202,11 +202,6 @@ MasterLexer::ungetToken() {
     } else {
         isc_throw(isc::InvalidOperation, "No token to unget ready");
     }
-}
-
-const State*
-MasterLexer::start(Options options) {
-    return (State::start(*this, options));
 }
 
 namespace {
@@ -434,62 +429,6 @@ QString::handle(MasterLexer& lexer) const {
             data.push_back(c);
         }
     }
-}
-
-namespace {
-
-// A fake state that just eats something from the input, pushes
-// a given token and calls a callback if it is set. It refers to
-// another state to return.
-class FakeState : public State {
-public:
-    FakeState(const State* next, size_t eat_chars,
-              const MasterLexer::Token* token,
-              int paren_change, const bool* set_eol,
-              const boost::function<void (const std::string&)>& callback) :
-        next_(next),
-        eat_chars_(eat_chars),
-        token_(token),
-        paren_change_(paren_change),
-        set_eol_(set_eol),
-        callback_(callback)
-    {}
-    virtual void handle(MasterLexer& lexer) const {
-        std::string input;
-        for (size_t i = 0; i < eat_chars_; ++i) {
-            input += getLexerImpl(lexer)->source_->getChar();
-        }
-        if (!callback_.empty()) {
-            callback_(input);
-        }
-        if (token_ != NULL) {
-            getLexerImpl(lexer)->token_ = *token_;
-        }
-        getLexerImpl(lexer)->paren_count_ += paren_change_;
-        if (set_eol_ != NULL) {
-            getLexerImpl(lexer)->last_was_eol_ = *set_eol_;
-        }
-    }
-private:
-    const State* const next_;
-    size_t eat_chars_;
-    const MasterLexer::Token* const token_;
-    const int paren_change_;
-    const bool* const set_eol_;
-    const boost::function<void (const std::string&)> callback_;
-};
-
-}
-
-State*
-State::getFakeState(const State* next, size_t eat_chars,
-                    const MasterLexer::Token* token,
-                    int paren_change, const bool* set_eol,
-                    const boost::function<void (const std::string&)>& callback)
-{
-    // Just allocate new FakeState with the parameters.
-    return (new FakeState(next, eat_chars, token, paren_change, set_eol,
-                          callback));
 }
 
 } // namespace master_lexer_internal
