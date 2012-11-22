@@ -55,31 +55,31 @@ BEGIN {
 # since the content of datasource and requests are not changed in this test. 
 test_counters () {
     status=0
-    awk "$awk_flatten_json" bindctl.out.$n | \
+    $AWK "$awk_flatten_json" bindctl.out.$n | \
         grep '"Auth":"zones":"_SERVER_":"request":"v4": '$1 > \
         /dev/null || status=1
-    awk "$awk_flatten_json" bindctl.out.$n | \
+    $AWK "$awk_flatten_json" bindctl.out.$n | \
         grep '"Auth":"zones":"_SERVER_":"request":"v6": '0 > \
         /dev/null || status=1
-    awk "$awk_flatten_json" bindctl.out.$n | \
+    $AWK "$awk_flatten_json" bindctl.out.$n | \
         grep '"Auth":"zones":"_SERVER_":"request":"udp": '$1 > \
         /dev/null || status=1
-    awk "$awk_flatten_json" bindctl.out.$n | \
+    $AWK "$awk_flatten_json" bindctl.out.$n | \
         grep '"Auth":"zones":"_SERVER_":"request":"tcp": '0 > \
         /dev/null || status=1
-    awk "$awk_flatten_json" bindctl.out.$n | \
+    $AWK "$awk_flatten_json" bindctl.out.$n | \
         grep '"Auth":"zones":"_SERVER_":"opcode":"query": '$1 > \
         /dev/null || status=1
-    awk "$awk_flatten_json" bindctl.out.$n | \
+    $AWK "$awk_flatten_json" bindctl.out.$n | \
         grep '"Auth":"zones":"_SERVER_":"responses": '$1 > \
         /dev/null || status=1
-    awk "$awk_flatten_json" bindctl.out.$n | \
+    $AWK "$awk_flatten_json" bindctl.out.$n | \
         grep '"Auth":"zones":"_SERVER_":"rcode":"noerror": '$1 > \
         /dev/null || status=1
-    awk "$awk_flatten_json" bindctl.out.$n | \
+    $AWK "$awk_flatten_json" bindctl.out.$n | \
         grep '"Auth":"zones":"_SERVER_":"qrysuccess": '$1 > \
         /dev/null || status=1
-    awk "$awk_flatten_json" bindctl.out.$n | \
+    $AWK "$awk_flatten_json" bindctl.out.$n | \
         grep '"Auth":"zones":"_SERVER_":"qryauthans": '$1 > \
         /dev/null || status=1
     return $status
