@@ -82,16 +82,16 @@ public:
     /// \brief Handle the process of one specific state.
     ///
     /// This method is expected to be called on the object returned by
-    /// start(), and keep called on the returned object until NULL is
-    /// returned.  The call chain will form the complete state transition.
+    /// start(). In the usual state transition design pattern, it would
+    /// return the next state. But as we noticed, we never have another
+    /// state, so we simplify it by not returning anything instead of
+    /// returning NULL every time.
     ///
     /// \throw MasterLexer::ReadError Unexpected I/O error
     /// \throw std::bad_alloc Internal resource allocation failure
     ///
     /// \param lexer The lexer object that holds the main context.
-    /// \return A pointer to the next state object or NULL if the transition
-    /// is completed.
-    virtual const State* handle(MasterLexer& lexer) const = 0;
+    virtual void handle(MasterLexer& lexer) const = 0;
 
     /// \brief Types of states.
     ///

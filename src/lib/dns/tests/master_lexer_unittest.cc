@@ -215,33 +215,6 @@ TEST_F(MasterLexerTest, simpleGetToken) {
     EXPECT_EQ(45, rest);
 }
 
-// A token that takes multiple states.
-//
-// The first state sets the token as well as the second. The second one should
-// survive and be returned.
-TEST_F(MasterLexerTest, chainGetToken) {
-    // Build the states
-    const MasterLexer::Token t1(MasterLexer::Token::END_OF_LINE);
-    const MasterLexer::Token t2(MasterLexer::Token::INITIAL_WS);
-    scoped_ptr<const State> s2(State::getFakeState(NULL, 1, &t2));
-    scoped_ptr<const State> s1(State::getFakeState(s2.get(), 2, &t1));
-    lexer.pushFakeStart(s1.get());
-    // Put something into the source
-    ss << "12345";
-    lexer.pushSource(ss);
-
-    // Get the token.
-    const MasterLexer::Token generated(lexer.getNextToken());
-    // It is the same token as the second one (well, on a different address)
-    // We can't compare directly, so compare types.
-    EXPECT_EQ(t2.getType(), generated.getType());
-    // 3 characters were read from the source.
-    // We test by extracting the rest and comparing.
-    int rest;
-    ss >> rest;
-    EXPECT_EQ(45, rest);
-}
-
 // Test getting a token without overriding the start() method (well, it
 // is overriden, but no fake state is set, so it refers to the real one).
 //
