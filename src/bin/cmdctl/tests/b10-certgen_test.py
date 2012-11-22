@@ -22,6 +22,7 @@ import os
 from subprocess import call
 import subprocess
 import ssl
+import stat
 
 def run(command):
     """
@@ -48,6 +49,39 @@ class FileDeleterContext:
         for f in self.files:
             if os.path.exists(f):
                 os.unlink(f)
+
+class FilePermissionContext:
+    """
+    Simple Context Manager that temporarily modifies file permissions for
+    a given file
+    """
+    def __init__(self, f, unset_flags = [], set_flags = []):
+        """
+        Initialize file permission context.
+        See the stat module for possible flags to set or unset.
+        The flags are changed when the context is entered (i.e.
+        you can create the context first without any change)
+        The flags are changed back when the context is left.
+
+        Parameters:
+        f: string, file to change permissions for
+        unset_flags: list of flags to unset
+        set_flags: list of flags to set
+        """
+        self.file = f
+        self.orig_mode = os.stat(f).st_mode
+        new_mode = self.orig_mode
+        for flag in unset_flags:
+            new_mode = new_mode & ~flag
+        for flag in set_flags:
+            new_mode = new_mode | flag
+        self.new_mode = new_mode
+
+    def __enter__(self):
+        os.chmod(self.file, self.new_mode)
+
+    def __exit__(self, type, value, traceback):
+        os.chmod(self.file, self.orig_mode)
 
 def read_file_data(filename):
     """
@@ -138,9 +172,13 @@ class TestCertGenTool(unittest.TestCase):
         """
         Tests a few pre-created certificates with the -c option
         """
-        self.validate_certificate(10, 'testdata/expired-certfile.pem')
-        self.validate_certificate(100, 'testdata/mangled-certfile.pem')
-        self.validate_certificate(17, 'testdata/noca-certfile.pem')
+        if ('CMDCTL_SRC_PATH' in os.environ):
+            path = os.environ['CMDCTL_SRC_PATH'] + "/tests/testdata/"
+        else:
+            path = "testdata/"
+        self.validate_certificate(10, path + 'expired-certfile.pem')
+        self.validate_certificate(100, path + 'mangled-certfile.pem')
+        self.validate_certificate(17, path + 'noca-certfile.pem')
 
     def test_bad_options(self):
         """
@@ -164,6 +202,52 @@ class TestCertGenTool(unittest.TestCase):
         self.run_check(101, None, None, [self.TOOL, 'foo'])
         # No such file
         self.run_check(105, None, None, [self.TOOL, '-c', 'foo'])
+
+    def test_permissions(self):
+        """
+        Test some combinations of correct and bad permissions.
+        """
+        keyfile = 'mod-keyfile.pem'
+        certfile = 'mod-certfile.pem'
+        command = [ self.TOOL, '-q', '-w', '-c', certfile, '-k', keyfile ]
+        # Delete them at the end
+        with FileDeleterContext([keyfile, certfile]):
+            # Create the two files first
+            self.run_check(0, '', '', command)
+            self.validate_certificate(0, certfile)
+
+            # Make the key file unwritable
+            with FilePermissionContext(keyfile, unset_flags = [stat.S_IWUSR]):
+                self.run_check(106, '', '', command)
+                # Should have no effect on validation
+                self.validate_certificate(0, certfile)
+
+            # Make the cert file unwritable
+            with FilePermissionContext(certfile, unset_flags = [stat.S_IWUSR]):
+                self.run_check(106, '', '', command)
+                # Should have no effect on validation
+                self.validate_certificate(0, certfile)
+
+            # Make the key file unreadable (this should not matter)
+            with FilePermissionContext(keyfile, unset_flags = [stat.S_IRUSR]):
+                self.run_check(0, '', '', command)
+
+                # unreadable key file should also not have any effect on
+                # validation
+                self.validate_certificate(0, certfile)
+
+            # Make the cert file unreadable (this should matter)
+            with FilePermissionContext(certfile, unset_flags = [stat.S_IRUSR]):
+                self.run_check(106, '', '', command)
+
+                # Unreadable cert file should also fail validation
+                self.validate_certificate(106, certfile)
+
+        # Not directly a permission problem, but trying to check or create
+        # in a nonexistent directory returns different error codes
+        self.validate_certificate(105, 'fakedir/cert')
+        self.run_check(103, '', '', [ self.TOOL, '-q', '-w', '-c',
+                                      'fakedir/cert', '-k', 'fakedir/key' ])
 
 if __name__== '__main__':
     unittest.main()

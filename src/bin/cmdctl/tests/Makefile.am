@@ -1,6 +1,9 @@
 PYCOVERAGE_RUN=@PYCOVERAGE_RUN@
 PYTESTS = cmdctl_test.py b10-certgen_test.py
 EXTRA_DIST = $(PYTESTS)
+EXTRA_DIST += testdata/expired-certfile.pem
+EXTRA_DIST += testdata/mangled-certfile.pem
+EXTRA_DIST += testdata/noca-certfile.pem
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
