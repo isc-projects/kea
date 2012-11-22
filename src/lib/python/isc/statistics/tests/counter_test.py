@@ -51,18 +51,6 @@ class TestBasicMethods(unittest.TestCase):
 
     def setUp(self):
         self.counter = counter.init(self.TEST_SPECFILE_LOCATION)
-        self._statistics_data = {}
-        self._start_time = {}
-        self._counter_name = "counter"
-        self._timer_name = "seconds"
-        self._statistics_spec = [{ "item_name": self._counter_name,
-                                   "item_type": "integer",
-                                   "item_optional": False,
-                                   "item_default": 0 },
-                                 { "item_name": self._timer_name,
-                                   "item_type": "real",
-                                   "item_optional": False,
-                                   "item_default": 0.0 }]
 
     def tearDown(self):
         self.counter.clear_counters()
@@ -134,22 +122,28 @@ class TestBasicMethods(unittest.TestCase):
         """ use Thread"""
         number = 3    # number of the threads
         cycle = 10000 # number of counting per thread
-        self.counter._statistics_data = self._statistics_data
-        self.counter._statistics_spec = self._statistics_spec
-        self._start_time = counter._start_timer()
+        statistics_data = {}
+        counter_name = "counter"
+        timer_name = "seconds"
+        statistics_spec = \
+            isc.config.module_spec_from_file(self.TEST_SPECFILE_LOCATION)\
+            .get_statistics_spec()
+        self.counter._statistics_data = statistics_data
+        self.counter._statistics_spec = statistics_spec
+        start_time = counter._start_timer()
         start_functor(number, cycle, self.counter._incrementer,
-                      self._counter_name)
-        counter._stop_timer(self._start_time,
-                            self._statistics_data,
-                            self._statistics_spec,
-                            self._timer_name)
+                      counter_name)
+        counter._stop_timer(start_time,
+                            statistics_data,
+                            statistics_spec,
+                            timer_name)
         self.assertEqual(
-            counter._get_counter(self._statistics_data,
-                                 self._counter_name),
+            counter._get_counter(statistics_data,
+                                 counter_name),
             number * cycle)
         self.assertGreater(
-            counter._get_counter(self._statistics_data,
-                                 self._timer_name), 0)
+            counter._get_counter(statistics_data,
+                                 timer_name), 0)
 
 class BaseTestCounter():
     imp.reload(counter)
