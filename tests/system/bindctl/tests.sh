@@ -25,12 +25,66 @@ status=0
 n=0
 
 # TODO: consider consistency with statistics definition in auth.spec
-cnt_name1="\<tcp\>"
-cnt_name2="\<udp\>"
-cnt_name3="\<query\>"
-cnt_value1=0
-cnt_value2=0
-cnt_value3=0
+
+# flatten JSON
+awk_flatten_json='
+function join(ary, len) {
+    ret = "";
+    for (i = 1; i <= len; ++i) {
+        ret = ret""ary[i];
+    }
+    return ret;
+}
+BEGIN {
+    depth = 0;
+}
+/.+{$/ {
+    label[++depth] = $1;
+    next;
+}
+/},?/ {
+    --depth;
+    next;
+}
+/:/ {
+    print join(label,depth)""$1" "$2;
+}
+'
+# Check the counters have expected values given with 1st argument.
+# This function tests only these counters will be incremented in every checks
+# since the content of datasource and requests are not changed in this test. 
+test_counters () {
+    status=0
+    awk "$awk_flatten_json" bindctl.out.$n | \
+        grep '"Auth":"zones":"_SERVER_":"request":"v4": '$1 > \
+        /dev/null || status=1
+    awk "$awk_flatten_json" bindctl.out.$n | \
+        grep '"Auth":"zones":"_SERVER_":"request":"v6": '0 > \
+        /dev/null || status=1
+    awk "$awk_flatten_json" bindctl.out.$n | \
+        grep '"Auth":"zones":"_SERVER_":"request":"udp": '$1 > \
+        /dev/null || status=1
+    awk "$awk_flatten_json" bindctl.out.$n | \
+        grep '"Auth":"zones":"_SERVER_":"request":"tcp": '0 > \
+        /dev/null || status=1
+    awk "$awk_flatten_json" bindctl.out.$n | \
+        grep '"Auth":"zones":"_SERVER_":"opcode":"query": '$1 > \
+        /dev/null || status=1
+    awk "$awk_flatten_json" bindctl.out.$n | \
+        grep '"Auth":"zones":"_SERVER_":"responses": '$1 > \
+        /dev/null || status=1
+    awk "$awk_flatten_json" bindctl.out.$n | \
+        grep '"Auth":"zones":"_SERVER_":"rcode":"noerror": '$1 > \
+        /dev/null || status=1
+    awk "$awk_flatten_json" bindctl.out.$n | \
+        grep '"Auth":"zones":"_SERVER_":"qrysuccess": '$1 > \
+        /dev/null || status=1
+    awk "$awk_flatten_json" bindctl.out.$n | \
+        grep '"Auth":"zones":"_SERVER_":"qryauthans": '$1 > \
+        /dev/null || status=1
+    return $status
+}
+expected_count=0
 
 echo "I:Checking b10-auth is disabled by default ($n)"
 $DIG +norec @10.53.0.1 -p 53210 ns.example.com. A > /dev/null && status=1
@@ -56,15 +110,10 @@ sleep 2
 echo 'Stats show
 ' | $RUN_BINDCTL \
 	--csv-file-dir=$BINDCTL_CSV_DIR > bindctl.out.$n || status=1
-# the server should have received 1 UDP and 0 TCP queries (the server
-# startup script no longer sends any TCP queries)
-cnt_value1=`expr $cnt_value1 + 0`
-cnt_value2=`expr $cnt_value2 + 1`
-cnt_value3=`expr $cnt_value1 + $cnt_value2`
-grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
-grep $cnt_name2".*\<"$cnt_value2"\>" bindctl.out.$n > /dev/null || status=1
-grep $cnt_name3".*\<"$cnt_value3"\>" bindctl.out.$n > /dev/null || status=1
-if [ $status != 0 ]; then echo "I:failed"; fi
+# the server should have received 1 request
+expected_count=`expr $expected_count + 1`
+test_counters $expected_count
+if [ $? != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
 echo "I:Stopping b10-auth and checking that ($n)"
@@ -101,13 +150,9 @@ echo 'Stats show
 # auth sent. Then it cumulates them and new counts which the living
 # auth sends. This note assumes that the issue would have been
 # resolved : "#1941 stats lossage (multiple auth servers)".
-cnt_value1=`expr $cnt_value1 + 0`
-cnt_value2=`expr $cnt_value2 + 1`
-cnt_value3=`expr $cnt_value1 + $cnt_value2`
-grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
-grep $cnt_name2".*\<"$cnt_value2"\>" bindctl.out.$n > /dev/null || status=1
-grep $cnt_name3".*\<"$cnt_value3"\>" bindctl.out.$n > /dev/null || status=1
-if [ $status != 0 ]; then echo "I:failed"; fi
+expected_count=`expr $expected_count + 1`
+test_counters $expected_count
+if [ $? != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
 echo "I:Changing the data source from sqlite3 to in-memory ($n)"
@@ -129,13 +174,9 @@ echo 'Stats show
 ' | $RUN_BINDCTL \
 	--csv-file-dir=$BINDCTL_CSV_DIR > bindctl.out.$n || status=1
 # The statistics counters shouldn't be reset due to hot-swapping datasource.
-cnt_value1=`expr $cnt_value1 + 0`
-cnt_value2=`expr $cnt_value2 + 1`
-cnt_value3=`expr $cnt_value1 + $cnt_value2`
-grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
-grep $cnt_name2".*\<"$cnt_value2"\>" bindctl.out.$n > /dev/null || status=1
-grep $cnt_name3".*\<"$cnt_value3"\>" bindctl.out.$n > /dev/null || status=1
-if [ $status != 0 ]; then echo "I:failed"; fi
+expected_count=`expr $expected_count + 1`
+test_counters $expected_count
+if [ $? != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
 echo "I:Starting more b10-auths and checking that ($n)"
@@ -155,9 +196,7 @@ n=`expr $n + 1`
 
 echo "I:Rechecking BIND 10 statistics consistency after a pause ($n)"
 sleep 2
-cnt_value1=`expr $cnt_value1 + 0`
-cnt_value2=`expr $cnt_value2 + 1`
-cnt_value3=`expr $cnt_value1 + $cnt_value2`
+expected_count=`expr $expected_count + 1`
 # Rechecking some times
 for i in 1 2 3 4
 do
@@ -167,10 +206,8 @@ do
     # The statistics counters should keep being consistent even while
     # multiple b10-auths are running.
 
-    grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
-    grep $cnt_name2".*\<"$cnt_value2"\>" bindctl.out.$n > /dev/null || status=1
-    grep $cnt_name3".*\<"$cnt_value3"\>" bindctl.out.$n > /dev/null || status=1
-    if [ $status != 0 ]; then echo "I:failed "; break ; fi
+    test_counters $expected_count
+    if [ $? != 0 ]; then echo "I:failed "; break ; fi
 done
 n=`expr $n + 1`
 
