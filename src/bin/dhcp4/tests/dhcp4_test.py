@@ -45,6 +45,25 @@ class TestDhcpv4Daemon(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def readPipe(self, pipe_fd):
+        """
+        Reads bytes from a pipe and returns a character string.  If nothing is
+        read, or if there is an error, an empty string is returned.
+
+        pipe_fd - Pipe file descriptor to read
+        """
+        try:
+            data = os.read(pipe_fd, 16384)
+            # Make sure we have a string
+            if (data is None):
+                data = ""
+            else:
+                data = str(data)
+        except OSError:
+            data = ""
+
+        return data
+
     def runCommand(self, params, wait=1):
         """
         This method runs a command and returns a tuple: (returncode, stdout, stderr)
@@ -90,30 +109,13 @@ class TestDhcpv4Daemon(unittest.TestCase):
         fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
         # As we don't know how long the subprocess will take to start and
-        # produce output, we'll loop and sleep for 250ms between each
+        # produce output, we'll loop and sleep for 250 ms between each
         # iteration.  To avoid an infinite loop, we'll loop for a maximum
         # of five seconds: that should be enough.
-        count = 20
-        output = ""
-        error = ""
-        while count > 0:
-            try:
-                new_output = os.read(self.stdout_pipes[0], 16384)
-            except OSError:
-                new_output = ""
-
-            # read can return None. Make sure we have a string
-            if (new_output is not None):
-                output = output + str(new_output)
-
-            try:
-                new_error = os.read(self.stderr_pipes[0], 16384)
-            except OSError:
-                new_error = ""
-
-            # read can return None. Make sure we have a string
-            if (new_error is not None):
-                error = error + str(new_error)
+        for count in range(20):
+            # Read something from stderr and stdout (these reads don't block).
+            output = self.readPipe(self.stdout_pipes[0])
+            error  = self.readPipe(self.stderr_pipes[0])
 
             # If the process has already exited, or if it has output something,
             # quit the loop now.
@@ -121,7 +123,6 @@ class TestDhcpv4Daemon(unittest.TestCase):
                 break
 
             # Process still running, try again in 250 ms.
-            count = count - 1
             time.sleep(0.25)
 
         # Exited loop, kill the process if it is still running
