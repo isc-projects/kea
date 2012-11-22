@@ -143,8 +143,8 @@
         <listitem>
           <para>
             Check the given certificate file. If it does not exist, a new
-            private key and certificate are created. If it is does exist,
-            the certificate is validated. If it is not valid (for instance
+            private key and certificate are created. If it does exist, the
+            certificate is validated. If it is not valid (for instance
             because it has expired), it is overwritten with a newly created
             certificate. If it is valid, nothing happens (use
             <option>-f</option> to force an update in that case).
@@ -179,7 +179,7 @@
   <refsect1>
     <title>HISTORY</title>
     <para>
-      The <command>b10-certgen</command> daemon was first implemented
+      The <command>b10-certgen</command> tool was first implemented
       in November 2012 for the ISC BIND 10 project.
     </para>
   </refsect1>
