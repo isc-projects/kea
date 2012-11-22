@@ -232,14 +232,6 @@ public:
     ///     getNextToken() was not called since the last change of the source.
     void ungetToken();
 
-protected:
-    /// \brief Call the State::start()
-    ///
-    /// This calls the State::start() method and returns the result. It is
-    /// a virtual method so tests can override it to mock some different
-    /// behaviour.
-    virtual const master_lexer_internal::State* start(Options options);
-
 private:
     struct MasterLexerImpl;
     MasterLexerImpl* impl_;
