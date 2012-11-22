@@ -81,14 +81,12 @@ def init(spec_file_name):
     """A creator method for a counter class. It creates a counter
     object by the module name of the given spec file. An argument is a
     specification file name."""
-    module_spec = isc.config.module_spec_from_file(spec_file_name)
-    class_name = '%sCounter' % module_spec.get_module_name()
     global _COUNTER
     if isinstance(_COUNTER, _Counter):
         # already loaded
         return _COUNTER
     # create an instance once
-    _COUNTER = _Counter(module_spec)
+    _COUNTER = _Counter(spec_file_name)
     # set methods in Counter
     for (k, v) in _COUNTER._to_global.items():
         setattr(Counter, k, v)
@@ -223,7 +221,7 @@ class _Counter():
     # zone names are contained under this dirname in the spec file.
     _perzone_prefix = 'zones'
 
-    def __init__(self, module_spec):
+    def __init__(self, spec_file_name):
         # for exporting to the global scope
         self._to_global = {}
         self._statistics_spec = {}
@@ -234,7 +232,10 @@ class _Counter():
         self._start_time = {}
         self._disabled = False
         self._rlock = threading.RLock()
-        self._statistics_spec = module_spec.get_statistics_spec()
+        self._module_spec = \
+            isc.config.module_spec_from_file(spec_file_name)
+        self._statistics_spec = \
+            self._module_spec.get_statistics_spec()
         self._parse_stats_spec()
         self._create_perzone_functors()
         self._create_perzone_timer_functors()
