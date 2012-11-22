@@ -164,7 +164,7 @@ MasterLexer::getSourceLine() const {
     return (impl_->sources_.back()->getCurrentLine());
 }
 
-MasterLexer::Token
+const MasterLexer::Token&
 MasterLexer::getNextToken(Options options) {
     // If the source is not available
     if (impl_->source_ == NULL) {

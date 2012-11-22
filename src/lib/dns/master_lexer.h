@@ -213,7 +213,7 @@ public:
     ///     source (eg. I/O error in the file on the disk).
     /// \throw std::bad_alloc in case allocation of some internal resources
     ///     or the token fail.
-    Token getNextToken(Options options = NONE);
+    const Token& getNextToken(Options options = NONE);
 
     /// \brief Return the last token back to the lexer.
     ///
