@@ -51,6 +51,7 @@ const int READ_ERROR = 102;
 const int WRITE_ERROR = 103;
 const int UNKNOWN_ERROR = 104;
 const int NO_SUCH_FILE = 105;
+const int FILE_PERMISSION_ERROR = 106;
 
 void
 usage() {
@@ -66,10 +67,20 @@ usage() {
     std::cout << "-h, --help\t\t\tshow this help" << std::endl;
     std::cout << "-k, --keyfile=FILE\t\tfile to store the generated private key"
               << std::endl;
-    std::cout << "-w, --write\t\t\tcreate a new certificate if the given file "
-                 "does not exist, or if is is not valid" << std::endl;
+    std::cout << "-w, --write\t\t\tcreate a new certificate if the given file"
+              << std::endl << "\t\t\t\tdoes not exist, or if is is not valid"
+              << std::endl;
     std::cout << "-q, --quiet\t\t\tprint no output when creating or validating"
               << std::endl;
+}
+
+/// \brief Returns true if the given file exists
+///
+/// \param filename The file to check
+/// \return true if file exists
+bool
+fileExists(const std::string& filename) {
+    return (access(filename.c_str(), F_OK) == 0);
 }
 
 /// \brief Returns true if the given file exists and is readable
@@ -77,8 +88,17 @@ usage() {
 /// \param filename The file to check
 /// \return true if file exists and is readable
 bool
-fileExists(const std::string& filename) {
+fileIsReadable(const std::string& filename) {
     return (access(filename.c_str(), R_OK) == 0);
+}
+
+/// \brief Returns true if the given file exists and is writable
+///
+/// \param filename The file to check
+/// \return true if file exists and is writable
+bool
+fileIsWritable(const std::string& filename) {
+    return (access(filename.c_str(), W_OK) == 0);
 }
 
 /// \brief Helper function for readable error output;
@@ -146,15 +166,19 @@ public:
             AutoSeeded_RNG rng;
 
             // Create and store a private key
-            RSA_PrivateKey key(rng, 2048);
-
             print("Creating key file " + key_file_name);
+            RSA_PrivateKey key(rng, 2048);
             std::ofstream key_file(key_file_name.c_str());
+            if (!key_file.good()) {
+                print(std::string("Error writing to ") + key_file_name +
+                      ": " + strerror(errno));
+                return (WRITE_ERROR);
+            }
             key_file << PKCS8::PEM_encode(key, rng, "");
             if (!key_file.good()) {
                 print(std::string("Error writing to ") + key_file_name +
                       ": " + strerror(errno));
-                return WRITE_ERROR;
+                return (WRITE_ERROR);
             }
             key_file.close();
 
@@ -163,8 +187,8 @@ public:
             // settable.
             X509_Cert_Options opts;
             opts.common_name = "localhost";
-            opts.organization = "BIND10";
-            opts.country = "US";
+            opts.organization = "UNKNOWN";
+            opts.country = "XX";
 
             opts.CA_key();
 
@@ -187,6 +211,11 @@ public:
                 return (WRITE_ERROR);
             }
             cert_file << cert.PEM_encode();
+            if (!cert_file.good()) {
+                print(std::string("Error writing to ") + cert_file_name +
+                      ": " + strerror(errno));
+                return (WRITE_ERROR);
+            }
             cert_file.close();
         } catch(std::exception& e) {
             std::cout << "Error creating key or certificate: " << e.what()
@@ -241,6 +270,40 @@ public:
         if (create_cert) {
             // Unless force is given, only create it if the current
             // one is not OK
+
+            // First do some basic permission checks; both files
+            // should either not exist, or be both readable
+            // and writable
+            // The checks are done one by one so all errors can
+            // be enumerated in one go
+            if (fileExists(certfile)) {
+                if (!fileIsReadable(certfile)) {
+                    print(certfile + " not readable: " + strerror(errno));
+                    create_cert = false;
+                }
+                if (!fileIsWritable(certfile)) {
+                    print(certfile + " not writable: " + strerror(errno));
+                    create_cert = false;
+                }
+            }
+            // The key file really only needs write permissions (for
+            // b10-certgen that is)
+            if (fileExists(keyfile)) {
+                if (!fileIsWritable(keyfile)) {
+                    print(keyfile + " not writable: " + strerror(errno));
+                    create_cert = false;
+                }
+            }
+            if (!create_cert) {
+                print("Not creating new certificate, "
+                      "check file permissions");
+                return (FILE_PERMISSION_ERROR);
+            }
+
+            // If we reach this, we know that if they exist, we can both
+            // read and write them, so now it's up to content checking
+            // and/or force_create
+
             if (force_create || !fileExists(certfile) ||
                 validateCertificate(certfile) != VERIFIED) {
                 return (createKeyAndCertificate(keyfile, certfile));
@@ -252,8 +315,12 @@ public:
                 print(certfile + ": " + strerror(errno));
                 return (NO_SUCH_FILE);
             }
+            if (!fileIsReadable(certfile)) {
+                print(certfile + " not readable: " + strerror(errno));
+                return (FILE_PERMISSION_ERROR);
+            }
             int result = validateCertificate(certfile);
-            if (result != 0 && !quiet_) {
+            if (result != 0) {
                 print("Running with -w would overwrite the certificate");
             }
             return (result);
@@ -341,8 +408,7 @@ main(int argc, char* argv[])
     }
 
     // Some sanity checks on option combinations
-    if ((create_cert && certfile_default && !keyfile_default) ||
-        (create_cert && !certfile_default && keyfile_default)) {
+    if (create_cert && (certfile_default ^ keyfile_default)) {
         std::cout << "Error: keyfile and certfile must both be specified "
                      "if one of them is when calling b10-certgen in write "
                      "mode." << std::endl;
