@@ -19,8 +19,6 @@ import unittest
 import threading
 from datetime import timedelta
 import isc.config
-import xfrout
-import xfrin
 
 TEST_ZONE_NAME_STR = "example.com."
 
@@ -145,7 +143,19 @@ class TestCounter(unittest.TestCase):
             counter._get_counter(self._statistics_data,
                                  self._timer_name), 0)
 
-class BaseTestXfrCounter():
+class BaseTestCounter():
+    def setUp(self):
+        self._module_spec = isc.config.module_spec_from_file(
+            self.TEST_SPECFILE_LOCATION)
+        self.counter = counter.init(self.TEST_SPECFILE_LOCATION)
+        self._statistics_data = {}
+        self._entire_server    = self.counter._entire_server
+        self._perzone_prefix   = self.counter._perzone_prefix
+        self._xfrrunning_names = self.counter._xfrrunning_names
+        self._unixsocket_names = self.counter._unixsocket_names
+        self._ipsocket_names = self.counter._ipsocket_names
+        self._zones_item_list   = self.counter._zones_item_list
+        self._started = threading.Event()
 
     def test_perzone_counters(self):
         # for per-zone counters
@@ -226,23 +236,6 @@ class BaseTestXfrCounter():
         self.assertTrue(self._module_spec.validate_statistics(
                 False, self._statistics_data))
 
-class TestXfroutCounter(unittest.TestCase, BaseTestXfrCounter):
-
-    def setUp(self):
-        self._module_spec = isc.config.module_spec_from_file(\
-            xfrout.SPECFILE_LOCATION)
-        self._statistics_spec = \
-            self._module_spec.get_statistics_spec()
-        self.counter = \
-            counter.XfroutCounter(self._module_spec)
-        self._statistics_data = {}
-        self._entire_server    = self.counter._entire_server
-        self._perzone_prefix   = self.counter._perzone_prefix
-        self._xfrrunning_names = self.counter._xfrrunning_names
-        self._unixsocket_names = self.counter._unixsocket_names
-        self._zones_item_list   = self.counter._zones_item_list
-        self._started = threading.Event()
-
     def test_unixsocket_counters(self):
         # for unixsocket counters
         for counter_name in self._unixsocket_names:
@@ -263,23 +256,6 @@ class TestXfroutCounter(unittest.TestCase, BaseTestXfrCounter):
                 self._statistics_data,
                 'socket/unixdomain/%s' % counter_name, 2)
         self.check_dump_statistics()
-
-class TestXfrinCounter(unittest.TestCase, BaseTestXfrCounter):
-
-    def setUp(self):
-        self._module_spec = isc.config.module_spec_from_file(\
-            xfrin.SPECFILE_LOCATION)
-        self._statistics_spec = \
-            self._module_spec.get_statistics_spec()
-        self._statistics_data = {}
-        self.counter = \
-            counter.XfrinCounter(self._module_spec)
-        self._entire_server    = self.counter._entire_server
-        self._perzone_prefix   = self.counter._perzone_prefix
-        self._xfrrunning_names = self.counter._xfrrunning_names
-        self._ipsocket_names = self.counter._ipsocket_names
-        self._zones_item_list   = self.counter._zones_item_list
-        self._started = threading.Event()
 
     def test_perzone_timers(self):
         # for timer counters
