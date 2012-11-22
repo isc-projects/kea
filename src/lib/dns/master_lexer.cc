@@ -167,7 +167,7 @@ MasterLexer::getSourceLine() const {
 MasterLexer::Token
 MasterLexer::getNextToken(Options options) {
     // If the source is not available
-    if (impl_->source_ == NULL || impl_->source_->atEOF()) {
+    if (impl_->source_ == NULL) {
         isc_throw(isc::InvalidOperation, "No source to read tokens from");
     }
     // Store the current state so we can restore it in ungetToken
@@ -179,6 +179,8 @@ MasterLexer::getNextToken(Options options) {
     // This is debugging aid.
     impl_->token_ = Token(Token::NO_TOKEN_PRODUCED);
     // And get the token
+
+    // This actually handles EOF internally too.
     for (const State *state = start(options); state != NULL;
          state = state->handle(*this)) {
         // Do nothing here. All is handled in the for cycle header itself.
