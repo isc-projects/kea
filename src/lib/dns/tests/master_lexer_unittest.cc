@@ -266,16 +266,16 @@ TEST_F(MasterLexerTest, eof) {
 
     // The first one is found to be EOF
     EXPECT_EQ(MasterLexer::Token::END_OF_FILE, lexer.getNextToken().getType());
-    // And it is not allowed to use this one any more.
-    EXPECT_THROW(lexer.getNextToken(), isc::InvalidOperation);
-    // But if we unget a step back, we should get the EOF again
+    // And it stays on EOF for any following attempts
+    EXPECT_EQ(MasterLexer::Token::END_OF_FILE, lexer.getNextToken().getType());
+    // And we can step back one token, but that is the EOF too.
     lexer.ungetToken();
     EXPECT_EQ(MasterLexer::Token::END_OF_FILE, lexer.getNextToken().getType());
 }
 
 // Check we properly return error when there's an opened parentheses and no
 // closing one
-TEST_F(MasterLexerTest, getUnbalanced) {
+TEST_F(MasterLexerTest, getUnbalancedParen) {
     ss << "(\"string\"";
     lexer.pushSource(ss);
 
@@ -284,6 +284,21 @@ TEST_F(MasterLexerTest, getUnbalanced) {
     // Then an unbalanced parenthesis
     EXPECT_EQ(MasterLexer::Token::UNBALANCED_PAREN,
               lexer.getNextToken().getErrorCode());
+    // And then EOF
+    EXPECT_EQ(MasterLexer::Token::END_OF_FILE, lexer.getNextToken().getType());
+}
+
+// Check we properly return error when there's an opened parentheses and no
+// closing one
+TEST_F(MasterLexerTest, getUnbalancedString) {
+    ss << "\"string";
+    lexer.pushSource(ss);
+
+    // Then an unbalanced parenthesis
+    EXPECT_EQ(MasterLexer::Token::UNEXPECTED_END,
+              lexer.getNextToken(MasterLexer::QSTRING).getErrorCode());
+    // And then EOF
+    EXPECT_EQ(MasterLexer::Token::END_OF_FILE, lexer.getNextToken().getType());
 }
 
 void
