@@ -36,43 +36,13 @@ using master_lexer_internal::State;
 
 namespace {
 
-// This acts like the normal MasterLexer. It, however, allows to mock the
-// start() method to return some given state instead of the auto-detected ones.
-class TestedMasterLexer : public MasterLexer {
-public:
-    TestedMasterLexer() :
-        fake_start_(NULL)
-    {}
-    // During the next call to start(), return the given state instead of the
-    // auto-detected one.
-    void pushFakeStart(const State* state) {
-        fake_start_ = state;
-    }
-protected:
-    virtual const State* start(Options options) {
-        if (fake_start_ != NULL) {
-            // There's a fake start, so remove it (not to be used next time)
-            // and return it.
-            const State* result = fake_start_;
-            fake_start_ = NULL;
-            return (result);
-        } else {
-            // No fake start ready. So we act the usual way, by delegating it to
-            // the parent class.
-            return (MasterLexer::start(options));
-        }
-    }
-private:
-    const State* fake_start_;
-};
-
 class MasterLexerTest : public ::testing::Test {
 protected:
     MasterLexerTest() :
         expected_stream_name("stream-" + lexical_cast<string>(&ss))
     {}
 
-    TestedMasterLexer lexer;
+    MasterLexer lexer;
     stringstream ss;
     const string expected_stream_name;
 };
@@ -163,56 +133,6 @@ TEST_F(MasterLexerTest, invalidPop) {
 // Test it is not possible to get token when no source is available.
 TEST_F(MasterLexerTest, noSource) {
     EXPECT_THROW(lexer.getNextToken(), isc::InvalidOperation);
-}
-
-// Getting a token directly from the start() method.
-TEST_F(MasterLexerTest, tokenFromStart) {
-    // A class that sets the token directly in start() and returns no
-    // state. This is equivalent to the State::start() doing so.
-    class StartLexer : public MasterLexer {
-    public:
-        StartLexer() :
-            token_(MasterLexer::Token::END_OF_LINE)
-        {}
-        virtual const State* start(Options) {
-            // We don't have access directly inside the implementation.
-            // We get the fake state, run it to install the token.
-            // Then we just delete it ourself and return NULL.
-            scoped_ptr<const State> state(State::getFakeState(NULL, 0,
-                                                              &token_));
-            state->handle(*this);
-            return (NULL);
-        }
-    private:
-        const MasterLexer::Token token_;
-    } lexer;
-    lexer.pushSource(ss);
-
-    // The token gets out.
-    const MasterLexer::Token generated(lexer.getNextToken());
-    EXPECT_EQ(MasterLexer::Token::END_OF_LINE, generated.getType());
-}
-
-// Getting a token with a single iteration through the states.
-TEST_F(MasterLexerTest, simpleGetToken) {
-    // Prepare the fake state.
-    const MasterLexer::Token token(MasterLexer::Token::END_OF_LINE);
-    scoped_ptr<const State> state(State::getFakeState(NULL, 3, &token));
-    lexer.pushFakeStart(state.get());
-    // Push some source inside.
-    ss << "12345";
-    lexer.pushSource(ss);
-
-    // Get the token.
-    const MasterLexer::Token generated(lexer.getNextToken());
-    // It is the same token (well, on a different address)
-    // We can't compare directly, so compare types.
-    EXPECT_EQ(token.getType(), generated.getType());
-    // 3 characters were read from the source.
-    // We test by extracting the rest and comparing.
-    int rest;
-    ss >> rest;
-    EXPECT_EQ(45, rest);
 }
 
 // Test getting some tokens
@@ -312,56 +232,6 @@ TEST_F(MasterLexerTest, ungetToken) {
 void
 checkInput(const std::string& expected, const std::string& received) {
     EXPECT_EQ(expected, received);
-}
-
-// Check ungetting a token, which should get to the previous state. We do
-// so with changing the state a little bit.
-TEST_F(MasterLexerTest, ungetSimple) {
-    ss << "12345";
-    lexer.pushSource(ss);
-
-    const bool true_value = true, false_value = false;
-    // Make sure we change the state to non-default, so we return to previous
-    // not default state.
-    const MasterLexer::Token t0(MasterLexer::Token::INITIAL_WS);
-    scoped_ptr<const State> s0(State::getFakeState(NULL, 1, &t0, 1,
-                                                   &true_value));
-    lexer.pushFakeStart(s0.get());
-    EXPECT_EQ(MasterLexer::Token::INITIAL_WS, lexer.getNextToken().getType());
-
-    // Prepare the token to get and return
-    const std::string expected = "234";
-    const MasterLexer::Token token(MasterLexer::Token::END_OF_LINE);
-    // Change the internal state with it too. So we can check it is returned.
-    scoped_ptr<const State> state(State::getFakeState(NULL, 3, &token, 1,
-                                                      &false_value,
-                                                      boost::bind(&checkInput,
-                                                                  expected,
-                                                                  _1)));
-    lexer.pushFakeStart(state.get());
-
-    // Check the internal state before getting the token
-    // We access the lexer through any state, so use the one we have.
-    EXPECT_EQ(1, state->getParenCount(lexer));
-    EXPECT_TRUE(state->wasLastEOL(lexer));
-
-    // Now get the token and check the state changed
-    EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
-    EXPECT_EQ(2, state->getParenCount(lexer));
-    EXPECT_FALSE(state->wasLastEOL(lexer));
-
-    // Return the token back. Check the state is as it was before.
-    lexer.ungetToken();
-    EXPECT_EQ(1, state->getParenCount(lexer));
-    EXPECT_TRUE(state->wasLastEOL(lexer));
-
-    // By calling getToken again, we verify even the source got back to
-    // original (as the second fake state checks it gets "234"). We must
-    // push it as a fake start again so it is picked.
-    lexer.pushFakeStart(state.get());
-    EXPECT_EQ(MasterLexer::Token::END_OF_LINE, lexer.getNextToken().getType());
-    EXPECT_EQ(2, state->getParenCount(lexer));
-    EXPECT_FALSE(state->wasLastEOL(lexer));
 }
 
 // Check ungetting token without overriding the start method. We also

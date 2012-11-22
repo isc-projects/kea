@@ -111,27 +111,6 @@ public:
     /// need this method.
     static const State& getInstance(ID state_id);
 
-    /// \brief Returns a fake State instance.
-    ///
-    /// The returned State will eat eat_chars from the input source,
-    /// it'll set the given token if not NULL, call the given callback
-    /// and return the next state when its handle() is called. Also, the
-    /// parentheses count is changed accordingly to paren_change (positive
-    /// to increase, negative to decrease) and the last_was_eof condition
-    /// is set if set_eol is non-NULL.
-    ///
-    /// This is provided only for testing purposes. MasterLexer shouldn't
-    /// need this method.
-    ///
-    /// The caller is responsible for deleting the State.
-    static State* getFakeState(const State* next, size_t eat_chars,
-                               const MasterLexer::Token* token = NULL,
-                               int paren_change = 0,
-                               const bool* set_eol = NULL,
-                               const boost::function<void
-                                   (const std::string&)>& callback =
-                               boost::function<void (const std::string&)>());
-
     /// \name Read-only accessors for testing purposes.
     ///
     /// These allow tests to inspect some selected portion of the internal
