@@ -28,5 +28,6 @@ endif
 	TESTDATASRCDIR=$(abs_top_srcdir)/src/bin/xfrin/tests/testdata/ \
 	TESTDATAOBJDIR=$(abs_top_builddir)/src/bin/xfrin/tests/testdata/ \
 	B10_FROM_BUILD=$(abs_top_builddir) \
+	B10_FROM_SOURCE=$(abs_top_srcdir) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done

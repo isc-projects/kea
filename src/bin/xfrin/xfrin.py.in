@@ -54,17 +54,19 @@ except ImportError as e:
 
 isc.util.process.rename()
 
-# If B10_FROM_BUILD is set in the environment, we use data files
-# from a directory relative to that, otherwise we use the ones
-# installed on the system
+# If B10_FROM_BUILD or B10_FROM_SOURCE is set in the environment, we
+# use data files from a directory relative to that, otherwise we use
+# the ones installed on the system
+PREFIX = "@prefix@"
+DATAROOTDIR = "@datarootdir@"
 if "B10_FROM_BUILD" in os.environ:
-    SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/xfrin"
     AUTH_SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/auth"
 else:
-    PREFIX = "@prefix@"
-    DATAROOTDIR = "@datarootdir@"
+    AUTH_SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+if "B10_FROM_SOURCE" in os.environ:
+    SPECFILE_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/xfrin"
+else:
     SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
-    AUTH_SPECFILE_PATH = SPECFILE_PATH
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrin.spec"
 AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + "/auth.spec"
 
