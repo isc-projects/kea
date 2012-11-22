@@ -64,6 +64,9 @@ class TestBasicMethods(unittest.TestCase):
                                    "item_optional": False,
                                    "item_default": 0.0 }]
 
+    def tearDown(self):
+        self.counter.clear_counters()
+
     def test_clear_counters(self):
         self.counter._statistics_data = {'counter': 1}
         self.counter.clear_counters()
