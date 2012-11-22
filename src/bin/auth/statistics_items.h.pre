@@ -23,14 +23,15 @@ namespace auth {
 namespace statistics {
 
 struct CounterSpec {
-    // item name: Name of this node. This appears in the spec file.
+    /// \brief name Name of this node. This appears in the spec file.
     const char* const name;
-    // sub counters: If this is a branch node, sub_counters points to
-    //               CounterSpec which contains child nodes. Otherwise, for
-    //               leaf nodes, sub_counters is NULL.
+    /// \brief sub_counters If this is a branch node, sub_counters points to
+    ///                     CounterSpec which contains child nodes. Otherwise,
+    ///                     for leaf nodes, sub_counters is NULL.
     const struct CounterSpec* const sub_counters;
-    // counter id: If this is a leaf node, counter_id is an enumerator of this
-    //             item. Otherwise, for branch nodes, counter_id is NOT_ITEM.
+    /// \brief counter_id If this is a leaf node, counter_id is an enumerator
+    ///                   of this item. Otherwise, for branch nodes, counter_id
+    ///                   is NOT_ITEM.
     const int counter_id;
 };
 
