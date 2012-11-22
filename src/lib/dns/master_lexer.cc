@@ -181,9 +181,9 @@ MasterLexer::getNextToken(Options options) {
     // And get the token
 
     // This actually handles EOF internally too.
-    for (const State *state = start(options); state != NULL;
-         state = state->handle(*this)) {
-        // Do nothing here. All is handled in the for cycle header itself.
+    const State* state = start(options);
+    if (state != NULL) {
+        state->handle(*this);
     }
     // Make sure a token was produced. Since this Can Not Happen, we assert
     // here instead of throwing.
@@ -259,7 +259,7 @@ class CRLF : public State {
 public:
     CRLF() {}
     virtual ~CRLF() {}          // see the base class for the destructor
-    virtual const State* handle(MasterLexer& lexer) const {
+    virtual void handle(MasterLexer& lexer) const {
         // We've just seen '\r'.  If this is part of a sequence of '\r\n',
         // we combine them as a single END-OF-LINE.  Otherwise we treat the
         // single '\r' as an EOL and continue tokeniziation from the character
@@ -276,7 +276,6 @@ public:
         }
         getLexerImpl(lexer)->token_ = Token(Token::END_OF_LINE);
         getLexerImpl(lexer)->last_was_eol_ = true;
-        return (NULL);
     }
 };
 
@@ -284,14 +283,14 @@ class String : public State {
 public:
     String() {}
     virtual ~String() {}      // see the base class for the destructor
-    virtual const State* handle(MasterLexer& lexer) const;
+    virtual void handle(MasterLexer& lexer) const;
 };
 
 class QString : public State {
 public:
     QString() {}
     virtual ~QString() {}      // see the base class for the destructor
-    virtual const State* handle(MasterLexer& lexer) const;
+    virtual void handle(MasterLexer& lexer) const;
 };
 
 // We use a common instance of a each state in a singleton-like way to save
@@ -383,7 +382,7 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
     }
 }
 
-const State*
+void
 String::handle(MasterLexer& lexer) const {
     std::vector<char>& data = getLexerImpl(lexer)->data_;
     data.clear();
@@ -397,14 +396,14 @@ String::handle(MasterLexer& lexer) const {
             getLexerImpl(lexer)->source_->ungetChar();
             getLexerImpl(lexer)->token_ =
                 MasterLexer::Token(&data.at(0), data.size());
-            return (NULL);
+            return;
         }
         escaped = (c == '\\' && !escaped);
         data.push_back(c);
     }
 }
 
-const State*
+void
 QString::handle(MasterLexer& lexer) const {
     MasterLexer::Token& token = getLexerImpl(lexer)->token_;
     std::vector<char>& data = getLexerImpl(lexer)->data_;
@@ -415,7 +414,7 @@ QString::handle(MasterLexer& lexer) const {
         const int c = getLexerImpl(lexer)->source_->getChar();
         if (c == InputSource::END_OF_STREAM) {
             token = Token(Token::UNEXPECTED_END);
-            return (NULL);
+            return;
         } else if (c == '"') {
             if (escaped) {
                 // found escaped '"'. overwrite the preceding backslash.
@@ -424,12 +423,12 @@ QString::handle(MasterLexer& lexer) const {
                 data.back() = '"';
             } else {
                 token = MasterLexer::Token(&data.at(0), data.size(), true);
-                return (NULL);
+                return;
             }
         } else if (c == '\n' && !escaped) {
             getLexerImpl(lexer)->source_->ungetChar();
             token = Token(Token::UNBALANCED_QUOTES);
-            return (NULL);
+            return;
         } else {
             escaped = (c == '\\' && !escaped);
             data.push_back(c);
@@ -455,7 +454,7 @@ public:
         set_eol_(set_eol),
         callback_(callback)
     {}
-    virtual const State* handle(MasterLexer& lexer) const {
+    virtual void handle(MasterLexer& lexer) const {
         std::string input;
         for (size_t i = 0; i < eat_chars_; ++i) {
             input += getLexerImpl(lexer)->source_->getChar();
@@ -470,7 +469,6 @@ public:
         if (set_eol_ != NULL) {
             getLexerImpl(lexer)->last_was_eol_ = *set_eol_;
         }
-        return (next_);
     }
 private:
     const State* const next_;
