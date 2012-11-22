@@ -235,10 +235,25 @@ class _Counter():
         self._disabled = False
         self._rlock = threading.RLock()
         self._statistics_spec = module_spec.get_statistics_spec()
-        self._zones_item_list = isc.config.spec_name_list(
-            isc.config.find_spec_part(
-                self._statistics_spec, self._perzone_prefix)\
-                ['named_set_item_spec']['map_item_spec'])
+        self._parse_stats_spec()
+        self._create_perzone_functors()
+        self._create_perzone_timer_functors()
+        self._create_xfrrunning_functors()
+        self._create_unixsocket_functors()
+        self._create_ipsocket_functors()
+        self._to_global['clear_counters'] = self.clear_counters
+        self._to_global['disable'] = self.disable
+        self._to_global['enable'] = self.enable
+        self._to_global['dump_statistics'] = self.dump_statistics
+
+    def _parse_stats_spec(self):
+        """Gets each list of names on statistics spec"""
+        if self._perzone_prefix in \
+                isc.config.spec_name_list(self._statistics_spec):
+            self._zones_item_list = isc.config.spec_name_list(
+                isc.config.find_spec_part(
+                    self._statistics_spec, self._perzone_prefix)\
+                    ['named_set_item_spec']['map_item_spec'])
         self._xfrrunning_names = [
             n for n in isc.config.spec_name_list\
                 (self._statistics_spec) \
@@ -256,15 +271,6 @@ class _Counter():
                 self._statistics_spec, "", True) \
                 if n.find('socket/ipv4/tcp/') == 0 \
                 or n.find('socket/ipv6/tcp/') == 0 ]
-        self._create_perzone_functors()
-        self._create_perzone_timer_functors()
-        self._create_xfrrunning_functors()
-        self._create_unixsocket_functors()
-        self._create_ipsocket_functors()
-        self._to_global['clear_counters'] = self.clear_counters
-        self._to_global['disable'] = self.disable
-        self._to_global['enable'] = self.enable
-        self._to_global['dump_statistics'] = self.dump_statistics
 
     def clear_counters(self):
         """clears all statistics data"""
