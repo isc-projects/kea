@@ -114,7 +114,6 @@ public:
 
     /// \brief Set request EDNS attributes.
     /// \param is_edns_0 true if request is EDNS version 0
-    /// \param is_edns_badver true if request is EDNS version other than 0
     /// \throw None
     void setRequestEDNS0(const bool is_edns_0) {
         bit_attributes_[REQ_IS_EDNS_0] = is_edns_0;
@@ -134,15 +133,15 @@ public:
         bit_attributes_[REQ_IS_DNSSEC_OK] = is_dnssec_ok;
     };
 
-    /// \brief Get request TSIG signed and verified.
-    /// \return true if request is TSIG signed and verified
+    /// \brief Get request TSIG signed.
+    /// \return true if request is TSIG signed
     /// \throw None
     bool getRequestSigTSIG() const {
         return (bit_attributes_[REQ_IS_TSIG]);
     };
 
-    /// \brief Get request SIG(0) signed and verified.
-    /// \return true if request is SIG(0) signed and verified
+    /// \brief Get request SIG(0) signed.
+    /// \return true if request is SIG(0) signed
     /// \throw None
     bool getRequestSigSIG0() const {
         return (bit_attributes_[REQ_IS_SIG0]);
