@@ -61,6 +61,16 @@ TaggedStatement tagged_statements[] = {
                     "DELETE FROM lease4 WHERE address = ?"},
     {MySqlLeaseMgr::DELETE_LEASE6,
                     "DELETE FROM lease6 WHERE address = ?"},
+    {MySqlLeaseMgr::GET_LEASE4_ADDR,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id "
+                            "FROM lease4 "
+                            "WHERE address = ?"},
+    {MySqlLeaseMgr::GET_LEASE4_CLIENTID,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id "
+                            "FROM lease4 "
+                            "WHERE client_id = ?"},
     {MySqlLeaseMgr::GET_LEASE4_HWADDR,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id "
@@ -71,11 +81,6 @@ TaggedStatement tagged_statements[] = {
                         "valid_lifetime, expire, subnet_id "
                             "FROM lease4 "
                             "WHERE hwaddr = ? AND subnet_id = ?"},
-    {MySqlLeaseMgr::GET_LEASE4_ADDR,
-                    "SELECT address, hwaddr, client_id, "
-                        "valid_lifetime, expire, subnet_id "
-                            "FROM lease4 "
-                            "WHERE address = ?"},
     {MySqlLeaseMgr::GET_LEASE6_ADDR,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
@@ -1141,10 +1146,23 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
 
 
 Lease4Collection
-MySqlLeaseMgr::getLease4(const ClientId& /* clientid */) const {
-    isc_throw(NotImplemented, "MySqlLeaseMgr::getLease4(const ClientID&) "
-              "not implemented yet");
-    return (Lease4Collection());
+MySqlLeaseMgr::getLease4(const ClientId& clientid) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+
+    std::vector<uint8_t> client_data = clientid.getClientId();
+    unsigned long client_data_length = client_data.size();
+    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[0].buffer = reinterpret_cast<char*>(&client_data[0]);
+    inbind[0].buffer_length = client_data_length;
+    inbind[0].length = &client_data_length;
+
+    // Get the data
+    Lease4Collection result;
+    getLeaseCollection(GET_LEASE4_CLIENTID, inbind, exchange4_, result);
+
+    return (result);
 }
 
 
@@ -1225,7 +1243,6 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
 Lease6Ptr
 MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
                          SubnetID subnet_id) const {
-//    const StatementIndex stindex = GET_LEASE6_DUID_IAID_SUBID;
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[3];
