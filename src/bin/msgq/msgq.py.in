@@ -346,7 +346,9 @@ class MsgQ:
             sock.setblocking(0)
             return sock.send(data)
         except socket.error as e:
-            if e.errno == errno.EAGAIN or e.errno == errno.EWOULDBLOCK:
+            if e.errno in [ errno.EAGAIN,
+                            errno.EWOULDBLOCK,
+                            errno.EINTR ]:
                 return 0
             else:
                 raise e
@@ -363,11 +365,14 @@ class MsgQ:
             try:
                 amount_sent = self.__send_data(sock, msg)
             except socket.error as sockerr:
-                # in the case the other side seems gone, kill the socket
-                # and drop the send action
-                if sockerr.errno == errno.EPIPE:
-                    print("[b10-msgq] SIGPIPE on send, dropping message " +
-                          "and closing connection")
+                # in the case the other side seems gone, or unable to handle
+                # life, kill the socket and drop the send action
+                if sockerr.errno in [ errno.EPIPE,
+                                      errno.ECONNRESET,
+                                      errno.ENOBUFS
+                                    ]:
+                    print("[b10-msgq] " + errno.errorcode[sockerr.errno] +
+                          " on send, dropping message and closing connection")
                     self.kill_socket(fileno, sock)
                     return
                 else:
@@ -400,11 +405,14 @@ class MsgQ:
         try:
             amount_sent = self.__send_data(sock, msg)
         except socket.error as sockerr:
-            # in the case the other side seems gone, kill the socket
-            # and drop the send action
-            if sockerr.errno == errno.EPIPE:
-                print("[b10-msgq] SIGPIPE on send, dropping message " +
-                      "and closing connection")
+            # in the case the other side seems gone, or unable to handle
+            # life, kill the socket and drop the send action
+            if sockerr.errno in [ errno.EPIPE,
+                                  errno.ECONNRESET,
+                                  errno.ENOBUFS
+                                ]:
+                print("[b10-msgq] " + errno.errorcode[sockerr.errno] +
+                      " on send, dropping message and closing connection")
                 self.kill_socket(fileno, sock)
                 return
             else:
