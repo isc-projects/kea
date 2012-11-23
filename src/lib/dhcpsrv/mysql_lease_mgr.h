@@ -355,6 +355,7 @@ public:
         DELETE_LEASE4,              // Delete from lease4 by address
         DELETE_LEASE6,              // Delete from lease6 by address
         GET_LEASE4_ADDR,            // Get lease4 by address
+        GET_LEASE4_HWADDR,          // Get lease4 by hardward address
         GET_LEASE6_ADDR,            // Get lease6 by address
         GET_LEASE6_DUID_IAID,       // Get lease6 by DUID and IAID
         GET_LEASE6_DUID_IAID_SUBID, // Get lease6 by DUID, IAID and Subnet ID
@@ -419,7 +420,8 @@ private:
 
     /// @brief Get Lease Common Code
     ///
-    /// This method performs the common actions for the getLease methods.
+    /// This method performs the common actions for obtaining a single lease
+    /// from the database.
     ///
     /// @param stindex Index of statement being executed
     /// @param inbind MYSQL_BIND array for input parameters
@@ -428,6 +430,20 @@ private:
     template <typename Exchange, typename LeasePtr>
     void getLease(StatementIndex stindex, MYSQL_BIND* inbind,
                   Exchange& exchange, LeasePtr& result) const;
+
+    /// @brief Get Lease Collection Common Code
+    ///
+    /// This method performs the common actions for obtaining multiple leases
+    /// from the database.
+    ///
+    /// @param stindex Index of statement being executed
+    /// @param inbind MYSQL_BIND array for input parameters
+    /// @param exchange Exchange object to use
+    /// @param lease LeaseCollection object returned.  Note that any data in
+    ///        the collection is cleared before new data is added.
+    template <typename Exchange, typename LeaseCollection>
+    void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* inbind,
+                            Exchange& exchange, LeaseCollection& result) const;
 
     /// @brief Binds Parameters and Executes
     ///

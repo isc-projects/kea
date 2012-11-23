@@ -61,6 +61,11 @@ TaggedStatement tagged_statements[] = {
                     "DELETE FROM lease4 WHERE address = ?"},
     {MySqlLeaseMgr::DELETE_LEASE6,
                     "DELETE FROM lease6 WHERE address = ?"},
+    {MySqlLeaseMgr::GET_LEASE4_HWADDR,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id "
+                            "FROM lease4 "
+                            "WHERE hwaddr = ?"},
     {MySqlLeaseMgr::GET_LEASE4_ADDR,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id "
@@ -985,6 +990,55 @@ void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* inbind,
     }
 }
 
+// Extraction of leases from the database.  Much the code has common logic
+// with the difference between V4 and V6 being the data types of the
+// objects involved.  For this reason, the common logic is inside a
+// template method.
+
+template <typename Exchange, typename LeaseCollection>
+void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
+                                       MYSQL_BIND* inbind,
+                                       Exchange& exchange,
+                                       LeaseCollection& result) const {
+
+    // Bind the input parameters to the statement and bind the output
+    // to fields in the exchange object, then execute the prepared statement.
+    bindAndExecute(stindex, exchange, inbind);
+
+    // Ensure that all the lease information is retrieved in one go to avoid
+    // overhead of going back and forth between client and server.
+    int status = mysql_stmt_store_result(statements_[stindex]);
+    checkError(status, stindex, "unable to set up for storing all results");
+
+    // Initialize for returning the data
+    result.clear();
+
+    // Set up the fetch "release" object to release resources associated
+    // with the call to mysql_stmt_fetch when this method exits, then
+    // retrieve the data.
+    MySqlFreeResult fetch_release(statements_[stindex]);
+    while ((status = mysql_stmt_fetch(statements_[stindex])) == 0) {
+        try {
+            result.push_back(exchange->getLeaseData());
+
+        } catch (const isc::BadValue& ex) {
+            // Rethrow the exception with a bit more data.
+            isc_throw(BadValue, ex.what() << ". Statement is <" <<
+                      text_statements_[stindex] << ">");
+        }
+    }
+
+    // How did the fetch end?
+    if (status == 1) {
+        // Error - unable to fecth results
+        checkError(status, stindex, "unable to fetch results");
+    } else if (status == MYSQL_DATA_TRUNCATED) {
+        // @TODO Handle truncation
+        ;
+    }
+}
+
+
 Lease4Ptr
 MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
     // Set up the WHERE clause value
@@ -996,6 +1050,7 @@ MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
     inbind[0].buffer = reinterpret_cast<char*>(&addr4);
     inbind[0].is_unsigned = static_cast<my_bool>(1);
 
+    // Get the data
     Lease4Ptr result;
     getLease(GET_LEASE4_ADDR, inbind, exchange4_, result);
 
@@ -1022,10 +1077,29 @@ MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr,
 
 
 Lease4Collection
-MySqlLeaseMgr::getLease4(const HWAddr& /* hwaddr */) const {
-    isc_throw(NotImplemented, "MySqlLeaseMgr::getLease4(const HWAddr&) "
-              "not implemented yet");
-    return (Lease4Collection());
+MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+
+    // As "buffer" is "char*" - even though the data is being read - we need
+    // to cast away the "const"ness as well as reinterpreting the data as
+    // a "char*". (We could avoid the "const_cast" by copying the data to a
+    // local variable, but as the data is only being read, this introduces
+    // an unnecessary copy).
+    unsigned long hwaddr_length = hwaddr.size();
+    uint8_t* data = const_cast<uint8_t*>(&hwaddr[0]);
+
+    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[0].buffer = reinterpret_cast<char*>(data);
+    inbind[0].buffer_length = hwaddr_length;
+    inbind[0].length = &hwaddr_length;
+
+    // Get the data
+    Lease4Collection result;
+    getLeaseCollection(GET_LEASE4_HWADDR, inbind, exchange4_, result);
+
+    return (result);
 }
 
 
@@ -1082,7 +1156,6 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
 
 Lease6Collection
 MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
-    const StatementIndex stindex = GET_LEASE6_DUID_IAID;
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
@@ -1113,43 +1186,9 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
     inbind[1].buffer = reinterpret_cast<char*>(&iaid);
     inbind[1].is_unsigned = static_cast<my_bool>(1);
 
-    // Bind the input parameters to the statement and bind the output
-    // to fields in the exchange object, then execute the prepared statement.
-    bindAndExecute(stindex, exchange6_, inbind);
-
-    // Ensure that all the lease information is retrieved in one go to avoid
-    // overhead of going back and forth between client and server.
-    int status = mysql_stmt_store_result(statements_[stindex]);
-    checkError(status, stindex, "unable to set up for storing all results");
-
-    // Fetch the data.  There could be multiple rows, so we need to iterate
-    // until all data has been retrieved.
+    // ... and get the data
     Lease6Collection result;
-
-    // Set up the fetch "release" object to release resources associated
-    // with the call to mysql_stmt_fetch when this method exits, then
-    // retrieve the data.
-    MySqlFreeResult fetch_release(statements_[stindex]);
-    while ((status = mysql_stmt_fetch(statements_[stindex])) == 0) {
-        try {
-            Lease6Ptr lease = exchange6_->getLeaseData();
-            result.push_back(lease);
-
-        } catch (const isc::BadValue& ex) {
-            // Rethrow the exception with a bit more data.
-            isc_throw(BadValue, ex.what() << ". Statement is <" <<
-                      text_statements_[stindex] << ">");
-        }
-    }
-
-    // How did the fetch end?
-    if (status == 1) {
-        // Error - unable to fecth results
-        checkError(status, stindex, "unable to fetch results");
-    } else if (status == MYSQL_DATA_TRUNCATED) {
-        // @TODO Handle truncation
-        ;
-    }
+    getLeaseCollection(GET_LEASE6_DUID_IAID, inbind, exchange6_, result);
 
     return (result);
 }
@@ -1158,7 +1197,7 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
 Lease6Ptr
 MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
                          SubnetID subnet_id) const {
-    const StatementIndex stindex = GET_LEASE6_DUID_IAID_SUBID;
+//    const StatementIndex stindex = GET_LEASE6_DUID_IAID_SUBID;
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[3];
@@ -1184,42 +1223,8 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
     inbind[2].buffer = reinterpret_cast<char*>(&subnet_id);
     inbind[2].is_unsigned = static_cast<my_bool>(1);
 
-    // Bind the input parameters to the statement and bind the output
-    // to fields in the exchange object, then execute the prepared statement.
-    bindAndExecute(stindex, exchange6_, inbind);
-
-    // Fetch the data and set up the "release" object to release associated
-    // resources when this method exits then retrieve the data.
     Lease6Ptr result;
-    MySqlFreeResult fetch_release(statements_[stindex]);
-    int status = mysql_stmt_fetch(statements_[stindex]);
-    if (status == 0) {
-        try {
-            result = exchange6_->getLeaseData();
-
-            // TODO: check for more than one row returned.  At present, just
-            // ignore the excess and take the first.
-
-        } catch (const isc::BadValue& ex) {
-            // Lease type is returned, to rethrow the exception with a bit
-            // more data.
-            isc_throw(BadValue, ex.what() << ". Statement is <" <<
-                      text_statements_[stindex] << ">");
-        }
-
-        // As the address is the primary key in the table, we can't return
-        // two rows, so we don't bother checking whether multiple rows have
-        // been returned.
-
-    } else if (status == 1) {
-        checkError(status, stindex, "unable to fetch results");
-
-    } else {
-        // @TODO Handle truncation
-        // We are ignoring truncation for now, so the only other result is
-        // no data was found.  In that case, we return a null Lease6 structure.
-        // This has already been set, so the action is a no-op.
-    }
+    getLease(GET_LEASE6_DUID_IAID_SUBID, inbind, exchange6_, result);
 
     return (result);
 }
