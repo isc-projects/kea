@@ -365,6 +365,7 @@ public:
         GET_VERSION,                // Obtain version number
         INSERT_LEASE4,              // Add entry to lease4 table
         INSERT_LEASE6,              // Add entry to lease6 table
+        UPDATE_LEASE4,              // Update a Lease4 entry
         UPDATE_LEASE6,              // Update a Lease6 entry
         NUM_STATEMENTS              // Number of statements
     };

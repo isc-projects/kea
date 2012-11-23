@@ -1067,11 +1067,8 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaid) {
 // Adds leases to the database and checks that they can be accessed via
 // a combination of DIUID and IAID.
 TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
-    // Get the leases to be used for the test.
+    // Get the leases to be used for the test and add them to the database.
     vector<Lease6Ptr> leases = createLeases6();
-    ASSERT_LE(6, leases.size());    // Expect to access leases 0 through 5
-
-    // Add them to the database
     for (int i = 0; i < leases.size(); ++i) {
         EXPECT_TRUE(lmptr_->addLease(leases[i]));
     }
@@ -1100,6 +1097,50 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
     returned = lmptr_->getLease6(new_duid, leases[1]->iaid_,
                                  leases[1]->subnet_id_);
     EXPECT_FALSE(returned);
+}
+
+
+// Update lease4 tests
+
+TEST_F(MySqlLeaseMgrTest, updateLease4) {
+    // Get the leases to be used for the test and add them to the database.
+    vector<Lease4Ptr> leases = createLeases4();
+    for (int i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Modify some fields in lease 1 (not the address) and update it.
+    ++leases[1]->subnet_id_;
+    leases[1]->valid_lft_ *= 2;
+    lmptr_->updateLease4(leases[1]);
+
+    // ... and check what is returned is what is expected.
+    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
+
+    // Alter the lease again and check.
+    ++leases[1]->subnet_id_;
+    leases[1]->cltt_ += 6;
+    lmptr_->updateLease4(leases[1]);
+
+    // Explicitly clear the returned pointer before getting new data to ensure
+    // that the new data is returned.
+    l_returned.reset();
+    l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
+
+    // Check we can do an update without changing data.
+    lmptr_->updateLease4(leases[1]);
+    l_returned.reset();
+    l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
+
+    // Try updating a lease not in the database.
+    lmptr_->deleteLease4(ioaddress4_[2]);
+    EXPECT_THROW(lmptr_->updateLease4(leases[2]), isc::dhcp::NoSuchLease);
 }
 
 
