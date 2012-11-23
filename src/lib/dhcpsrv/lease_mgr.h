@@ -208,7 +208,7 @@ struct Lease4 {
 typedef boost::shared_ptr<Lease4> Lease4Ptr;
 
 /// @brief A collection of IPv4 leases.
-typedef std::vector< boost::shared_ptr<Lease4Ptr> > Lease4Collection;
+typedef std::vector<Lease4Ptr> Lease4Collection;
 
 /// @brief Structure that holds a lease for IPv6 address and/or prefix
 ///
