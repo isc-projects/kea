@@ -180,15 +180,18 @@ class MsgQThread(threading.Thread):
     def __init__(self, msgq):
         threading.Thread.__init__(self)
         self.msgq_ = msgq
-        self.stop = False
         self.caught_exception = None
+        self.lock = threading.Lock()
 
     def run(self):
         try:
-            while not self.stop:
-                self.msgq_.run()
+            self.msgq_.run()
         except Exception as exc:
+            # Store the exception to make the test fail if necessary
             self.caught_exception = exc
+
+    def stop(self):
+        self.msgq_.stop()
 
 
 class SendNonblock(unittest.TestCase):
@@ -352,7 +355,6 @@ class SendNonblock(unittest.TestCase):
         # Run it in a thread
         msgq_thread = MsgQThread(msgq)
         # If we're done, just kill it
-        msgq_thread.daemon = True
         msgq_thread.start()
 
         if expect_arrive:
@@ -361,12 +363,35 @@ class SendNonblock(unittest.TestCase):
             self.assertEqual(env, recv_env)
             self.assertEqual(msg, recv_msg)
 
-        # Give it a chance to stop, if it doesn't, no problem, it'll
-        # die when the program does
-        msgq_thread.join(0.2)
+            # expect_arrive also suggests everything should
+            # still be working, so a stop command should also
+            # be processed correctly
+            msg = msgq.preparemsg({"type" : "stop"})
+            read.sendall(msg)
+        else:
+            # OK, then bluntly call stop itself
+            # First give it a chance to handle any remaining events.
+            # 1 second arbitrarily chosen to hopefully be long enough
+            # yet not bog down the tests too much.
+            msgq_thread.join(1.0)
+            msgq.stop()
+
+        # Wait for thread to stop if it hasn't already
+        # Put in a (long) timeout; the thread *should* stop, but if it
+        # does not, we don't want the test to hang forever
+        msgq_thread.join(60)
+        # Fail the test if it didn't stop
+        self.assertFalse(msgq_thread.isAlive(), "Thread did not stop")
 
         # Check the exception from the thread, if any
-        self.assertEqual(expect_send_exception, msgq_thread.caught_exception)
+        # First, if we didn't expect it; reraise it (to make test fail and
+        # show the stacktrace for debugging)
+        if expect_send_exception is None:
+            if msgq_thread.caught_exception is not None:
+                raise msgq_thread.caught_exception
+        else:
+            # If we *did* expect it, fail it there was none
+            self.assertIsNotNone(msgq_thread.caught_exception)
 
     def do_send_with_send_error(self, raise_on_send, send_exception,
                                 expect_answer=True,
@@ -384,9 +409,6 @@ class SendNonblock(unittest.TestCase):
                                send_exception is raised by BadSocket.
         """
         (write, read) = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
-        # prevent the test from hanging if something goes wrong
-        read.settimeout(0.2)
-        write.settimeout(0.2)
         badwrite = BadSocket(write, raise_on_send, send_exception)
         self.do_send(badwrite, read, expect_answer, expect_send_exception)
         write.close()
