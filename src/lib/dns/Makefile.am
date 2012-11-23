@@ -98,6 +98,7 @@ libb10_dns___la_SOURCES += labelsequence.h labelsequence.cc
 libb10_dns___la_SOURCES += masterload.h masterload.cc
 libb10_dns___la_SOURCES += master_lexer.h master_lexer.cc
 libb10_dns___la_SOURCES += master_lexer_state.h
+libb10_dns___la_SOURCES += master_loader.h master_loader.cc
 libb10_dns___la_SOURCES += message.h message.cc
 libb10_dns___la_SOURCES += messagerenderer.h messagerenderer.cc
 libb10_dns___la_SOURCES += name.h name.cc

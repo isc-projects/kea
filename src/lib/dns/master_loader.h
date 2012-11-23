@@ -15,20 +15,34 @@
 #ifndef MASTER_LOADER_H
 #define MASTER_LOADER_H
 
+#include <dns/name.h>
+#include <dns/rrclass.h>
+#include <dns/master_lexer.h>
+#include <dns/master_loader_callbacks.h>
+
 namespace isc {
 namespace dns {
-
-// Placeholder introduced by #2497. The real class should be updated in
-// #2377.
 class MasterLoader {
 public:
     enum Options {
-         MANY_ERRORS, // lenient mode
-         // also eventually some check policies like "check NS name"
+        MANY_ERRORS,        ///< Lenient mode
     };
+    MasterLoader(const char* master_file,
+                 const Name& zone_origin,
+                 const RRClass zone_class,
+                 MasterLoaderCallbacks callbacks,
+                 Options options);
+    ~MasterLoader();
+
+    bool loadIncremental(size_t count_limit);
+    //void load();
+
+private:
+    class MasterLoaderImpl;
+    MasterLoaderImpl* impl_;
 };
 
-}
-}
+} // end namespace dns
+} // end namespace isc
 
 #endif // MASTER_LOADER_H
