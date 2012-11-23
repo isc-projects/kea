@@ -66,6 +66,11 @@ TaggedStatement tagged_statements[] = {
                         "valid_lifetime, expire, subnet_id "
                             "FROM lease4 "
                             "WHERE hwaddr = ?"},
+    {MySqlLeaseMgr::GET_LEASE4_HWADDR_SUBID,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id "
+                            "FROM lease4 "
+                            "WHERE hwaddr = ? AND subnet_id = ?"},
     {MySqlLeaseMgr::GET_LEASE4_ADDR,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id "
@@ -1104,12 +1109,35 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
 
 
 Lease4Ptr
-MySqlLeaseMgr::getLease4(const HWAddr& /* hwaddr */,
-                         SubnetID /* subnet_id */) const {
-    isc_throw(NotImplemented, "MySqlLeaseMgr::getLease4(const HWAddr&, SubnetID) "
-              "not implemented yet");
-    return (Lease4Ptr());
+MySqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[2];
+    memset(inbind, 0, sizeof(inbind));
+
+    // As "buffer" is "char*" - even though the data is being read - we need
+    // to cast away the "const"ness as well as reinterpreting the data as
+    // a "char*". (We could avoid the "const_cast" by copying the data to a
+    // local variable, but as the data is only being read, this introduces
+    // an unnecessary copy).
+    unsigned long hwaddr_length = hwaddr.size();
+    uint8_t* data = const_cast<uint8_t*>(&hwaddr[0]);
+
+    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[0].buffer = reinterpret_cast<char*>(data);
+    inbind[0].buffer_length = hwaddr_length;
+    inbind[0].length = &hwaddr_length;
+
+    inbind[1].buffer_type = MYSQL_TYPE_LONG;
+    inbind[1].buffer = reinterpret_cast<char*>(&subnet_id);
+    inbind[1].is_unsigned = my_bool(1);
+
+    // Get the data
+    Lease4Ptr result;
+    getLease(GET_LEASE4_HWADDR_SUBID, inbind, exchange4_, result);
+
+    return (result);
 }
+
 
 
 Lease4Collection
