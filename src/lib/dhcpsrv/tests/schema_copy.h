@@ -75,7 +75,7 @@ const char* create_statement[] = {
         "minor INT"
         ")",
 
-    "INSERT INTO schema_version VALUES (0, 1)",
+    "INSERT INTO schema_version VALUES (0, 2)",
 
     NULL
 };
