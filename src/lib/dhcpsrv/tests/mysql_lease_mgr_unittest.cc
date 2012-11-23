@@ -276,7 +276,7 @@ public:
             lease->subnet_id_ = 73;        // Same as for straddress4_1
 
         } else if (address == straddress4_[3]) {
-            lease->hwaddr_ = vector<uint8_t>(6, 0x3b);
+            lease->hwaddr_ = vector<uint8_t>(6, 0x19);  // Same as lease 1
             vector<uint8_t> clientid;
             for (uint8_t i = 31; i < 126; ++i) {
                 clientid.push_back(i);
@@ -302,7 +302,7 @@ public:
             lease->subnet_id_ = 75;        // Arbitrary number
 
         } else if (address == straddress4_[5]) {
-            lease->hwaddr_ = vector<uint8_t>(6, 0x5d);
+            lease->hwaddr_ = vector<uint8_t>(6, 0x19);  // Same as lease 1
             // Same ClientId and IAID as straddress4_1
             lease->client_id_ = boost::shared_ptr<ClientId>(
                 new ClientId(vector<uint8_t>(8, 0x42)));
@@ -320,9 +320,9 @@ public:
             lease->subnet_id_ = 112;       // Arbitrary number
 
         } else if (address == straddress4_[7]) {
-            lease->hwaddr_ = vector<uint8_t>(6, 0x7f);
+            lease->hwaddr_ = vector<uint8_t>();     // Deliberately empty
             lease->client_id_ = boost::shared_ptr<ClientId>(
-                new ClientId(vector<uint8_t>(8, 0xe5)));
+                new ClientId(vector<uint8_t>()));   // Deliberately empty
             lease->valid_lft_ = 7975;      // Actual lifetime
             lease->cltt_ = 213876;         // Current time of day
             lease->subnet_id_ = 19;        // Arbitrary number
@@ -838,42 +838,59 @@ TEST_F(MySqlLeaseMgrTest, getLease4AddressSubnetId) {
     EXPECT_FALSE(l_returned);
 }
 
+
+
 // @brief Check GetLease4 methods - Access by Hardware Address
 //
 // Adds leases to the database and checks that they can be accessed via
-// hardware address
-TEST_F(MySqlLeaseMgrTest, getLease4AddressHwaddr) {
-    FAIL() << "Test not complete";
-/*
-    // Get the leases to be used for the test and add to the database.
+// a combination of DIUID and IAID.
+TEST_F(MySqlLeaseMgrTest, getLease4Hwaddr) {
+    // Get the leases to be used for the test and add to the database
     vector<Lease4Ptr> leases = createLeases4();
     for (int i = 0; i < leases.size(); ++i) {
         EXPECT_TRUE(lmptr_->addLease(leases[i]));
     }
 
-    // Get a known hardware address
-    vector<uint8_t> hwaddr = leases[1]->hwaddr_;
-    EXPECT_FALSE(hwaddr.empty());
+    // Get the leases matching the hardware address of lease 1
+    Lease4Collection returned = lmptr_->getLease4(leases[1]->hwaddr_);
 
-    // Look for a lease with a valid hardware address
-    Lease4Ptr l_returned = lmptr_->getLease4(hwaddr);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
+    // Should be three leases, matching leases[1], [3] and [5].
+    ASSERT_EQ(3, returned.size());
 
-    // Look for a lease with an invalid valid hardware address
-    hwaddr[0] += 1;
-    Lease4Ptr l_returned = lmptr_->getLease4(hwaddr);
-    EXPECT_FALSE(l_returned);
+    // Easiest way to check is to look at the addresses.
+    vector<string> addresses;
+    for (Lease4Collection::const_iterator i = returned.begin();
+         i != returned.end(); ++i) {
+        addresses.push_back((*i)->addr_.toText());
+    }
+    sort(addresses.begin(), addresses.end());
+    EXPECT_EQ(straddress4_[1], addresses[0]);
+    EXPECT_EQ(straddress4_[3], addresses[1]);
+    EXPECT_EQ(straddress4_[5], addresses[2]);
 
-    // Check it handles an empty hardware address
-    hwaddr.clear();
-    Lease4Ptr l_returned = lmptr_->getLease4(hwaddr);
-    EXPECT_FALSE(l_returned);
+    // Repeat test with just one expected match
+    returned = lmptr_->getLease4(leases[2]->hwaddr_);
+    EXPECT_EQ(1, returned.size());
+    detailCompareLease(leases[2], *returned.begin());
 
-    // Add a lease with an empty hardware address to the database and
-    // check that it find that.
-*/
+    // Check that an empty vector is valid
+    EXPECT_TRUE(leases[7]->hwaddr_.empty());
+    returned = lmptr_->getLease4(leases[7]->hwaddr_);
+    EXPECT_EQ(1, returned.size());
+    detailCompareLease(leases[7], *returned.begin());
+
+    // Try to get something with invalid hardware address
+    vector<uint8_t> invalid(6, 0);
+    returned = lmptr_->getLease4(invalid);
+    EXPECT_EQ(0, returned.size());
+
+    // And check that size of the vector matters
+    invalid = leases[4]->hwaddr_;
+    invalid.push_back(0);
+    returned = lmptr_->getLease4(invalid);
+    EXPECT_EQ(0, returned.size());
 }
+
 
 // @brief Check GetLease6 methods - Access by DUID/IAID
 //
