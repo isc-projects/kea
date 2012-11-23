@@ -254,78 +254,74 @@ public:
         if (address == straddress4_[0]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x08);
             lease->client_id_ = boost::shared_ptr<ClientId>(
-                new ClientId(vector<uint8_t>(8, 0x77)));
-            lease->valid_lft_ = 8677;      // Actual lifetime
-            lease->cltt_ = 168256;         // Current time of day
-            lease->subnet_id_ = 23;        // Arbitrary number
+                new ClientId(vector<uint8_t>(8, 0x42)));
+            lease->valid_lft_ = 8677;
+            lease->cltt_ = 168256;
+            lease->subnet_id_ = 23;
 
         } else if (address == straddress4_[1]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x19);
             lease->client_id_ = boost::shared_ptr<ClientId>(
-                new ClientId(vector<uint8_t>(8, 0x42)));
-            lease->valid_lft_ = 3677;      // Actual lifetime
-            lease->cltt_ = 123456;         // Current time of day
-            lease->subnet_id_ = 73;        // Arbitrary number
+                new ClientId(vector<uint8_t>(8, 0x53)));
+            lease->valid_lft_ = 3677;
+            lease->cltt_ = 123456;
+            lease->subnet_id_ = 73;
 
         } else if (address == straddress4_[2]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x2a);
             lease->client_id_ = boost::shared_ptr<ClientId>(
-                new ClientId(vector<uint8_t>(8, 0x3a)));
-            lease->valid_lft_ = 5412;      // Actual lifetime
-            lease->cltt_ = 234567;         // Current time of day
-            lease->subnet_id_ = 73;        // Same as for straddress4_1
+                new ClientId(vector<uint8_t>(8, 0x64)));
+            lease->valid_lft_ = 5412;
+            lease->cltt_ = 234567;
+            lease->subnet_id_ = 73;                         // Same as lease 1
 
         } else if (address == straddress4_[3]) {
-            lease->hwaddr_ = vector<uint8_t>(6, 0x19);  // Same as lease 1
-            vector<uint8_t> clientid;
-            for (uint8_t i = 31; i < 126; ++i) {
-                clientid.push_back(i);
-            }
-            lease->client_id_ = boost::shared_ptr<ClientId>
-                (new ClientId(clientid));
+            lease->hwaddr_ = vector<uint8_t>(6, 0x19);      // Same as lease 1
+            lease->client_id_ = boost::shared_ptr<ClientId>(
+                new ClientId(vector<uint8_t>(8, 0x75)));
 
             // The times used in the next tests are deliberately restricted - we
             // should be able to cope with valid lifetimes up to 0xffffffff.
             //  However, this will lead to overflows.
             // @TODO: test overflow conditions when code has been fixed
-            lease->valid_lft_ = 7000;      // Actual lifetime
-            lease->cltt_ = 234567;         // Current time of day
-            lease->subnet_id_ = 37;        // Different from L1 and L2
+            lease->valid_lft_ = 7000;
+            lease->cltt_ = 234567;
+            lease->subnet_id_ = 37;
 
         } else if (address == straddress4_[4]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x4c);
             // Same ClientId as straddr4_[1]
             lease->client_id_ = boost::shared_ptr<ClientId>(
-                new ClientId(vector<uint8_t>(8, 0x42)));
-            lease->valid_lft_ = 7736;      // Actual lifetime
-            lease->cltt_ = 222456;         // Current time of day
-            lease->subnet_id_ = 85;        // Arbitrary number
+                new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
+            lease->valid_lft_ = 7736;
+            lease->cltt_ = 222456;
+            lease->subnet_id_ = 85;
 
         } else if (address == straddress4_[5]) {
-            lease->hwaddr_ = vector<uint8_t>(6, 0x19);  // Same as lease 1
+            lease->hwaddr_ = vector<uint8_t>(6, 0x19);      // Same as lease 1
             // Same ClientId and IAID as straddress4_1
             lease->client_id_ = boost::shared_ptr<ClientId>(
-                new ClientId(vector<uint8_t>(8, 0x42)));
-            lease->valid_lft_ = 7832;      // Actual lifetime
-            lease->cltt_ = 227476;         // Current time of day
-            lease->subnet_id_ = 175;       // Arbitrary number
+                new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
+            lease->valid_lft_ = 7832;
+            lease->cltt_ = 227476;
+            lease->subnet_id_ = 175;
 
         } else if (address == straddress4_[6]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x6e);
             // Same ClientId as straddress4_1
             lease->client_id_ = boost::shared_ptr<ClientId>(
-                new ClientId(vector<uint8_t>(8, 0x42)));
-            lease->valid_lft_ = 1832;      // Actual lifetime
-            lease->cltt_ = 627476;         // Current time of day
-            lease->subnet_id_ = 112;       // Arbitrary number
+                new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
+            lease->valid_lft_ = 1832;
+            lease->cltt_ = 627476;
+            lease->subnet_id_ = 112;
 
         } else if (address == straddress4_[7]) {
-            lease->hwaddr_ = vector<uint8_t>();     // Deliberately empty
+            lease->hwaddr_ = vector<uint8_t>();             // Empty
             lease->client_id_ = boost::shared_ptr<ClientId>(
-                new ClientId(vector<uint8_t>()));   // Deliberately empty
-            lease->valid_lft_ = 7975;      // Actual lifetime
-            lease->cltt_ = 213876;         // Current time of day
-            lease->subnet_id_ = 19;        // Arbitrary number
+                new ClientId(vector<uint8_t>()));           // Empty
+            lease->valid_lft_ = 7975;
+            lease->cltt_ = 213876;
+            lease->subnet_id_ = 19;
 
         } else {
             // Unknown address, return an empty pointer.
@@ -839,47 +835,6 @@ TEST_F(MySqlLeaseMgrTest, getLease4AddressSubnetId) {
 }
 
 
-
-// @brief Check GetLease4 methods - Access by Hardware Address & Subnet ID
-//
-// Adds leases to the database and checks that they can be accessed via
-// a combination of hardware address and subnet ID
-
-TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
-    // Get the leases to be used for the test and add to the database
-    vector<Lease4Ptr> leases = createLeases4();
-    for (int i = 0; i < leases.size(); ++i) {
-        EXPECT_TRUE(lmptr_->addLease(leases[i]));
-    }
-
-    // Get the leases matching the hardware address of lease 1 and
-    // subnet ID of lease 1.  Result should be a single lease - lease 1.
-    Lease4Ptr returned = lmptr_->getLease4(leases[1]->hwaddr_,
-                                           leases[1]->subnet_id_);
-    ASSERT_TRUE(returned);
-    detailCompareLease(leases[1], returned);
-
-    // Try for a match to the hardware address of lease 1 and the wrong
-    // subnet ID.
-    returned = lmptr_->getLease4(leases[1]->hwaddr_,
-                                 leases[1]->subnet_id_ + 1);
-    EXPECT_FALSE(returned);
-
-    // Try for a match to the subnet ID of lease 1 (and lease 4) but
-    // the wrong hardware address.
-    vector<uint8_t> invalid_hwaddr(15, 0x77);
-    returned = lmptr_->getLease4(invalid_hwaddr,
-                                 leases[1]->subnet_id_);
-    EXPECT_FALSE(returned);
-
-    // Try for a match to an unknown hardware address and an unknown
-    // subnet ID.
-    returned = lmptr_->getLease4(invalid_hwaddr,
-                                 leases[1]->subnet_id_ + 1);
-    EXPECT_FALSE(returned);
-}
-
-
 // @brief Check GetLease4 methods - Access by Hardware Address
 //
 // Adds leases to the database and checks that they can be accessed via
@@ -927,6 +882,95 @@ TEST_F(MySqlLeaseMgrTest, getLease4Hwaddr) {
     // And check that size of the vector matters
     invalid = leases[4]->hwaddr_;
     invalid.push_back(0);
+    returned = lmptr_->getLease4(invalid);
+    EXPECT_EQ(0, returned.size());
+}
+
+
+
+// @brief Check GetLease4 methods - Access by Hardware Address & Subnet ID
+//
+// Adds leases to the database and checks that they can be accessed via
+// a combination of hardware address and subnet ID
+
+TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
+    // Get the leases to be used for the test and add to the database
+    vector<Lease4Ptr> leases = createLeases4();
+    for (int i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Get the leases matching the hardware address of lease 1 and
+    // subnet ID of lease 1.  Result should be a single lease - lease 1.
+    Lease4Ptr returned = lmptr_->getLease4(leases[1]->hwaddr_,
+                                           leases[1]->subnet_id_);
+    ASSERT_TRUE(returned);
+    detailCompareLease(leases[1], returned);
+
+    // Try for a match to the hardware address of lease 1 and the wrong
+    // subnet ID.
+    returned = lmptr_->getLease4(leases[1]->hwaddr_,
+                                 leases[1]->subnet_id_ + 1);
+    EXPECT_FALSE(returned);
+
+    // Try for a match to the subnet ID of lease 1 (and lease 4) but
+    // the wrong hardware address.
+    vector<uint8_t> invalid_hwaddr(15, 0x77);
+    returned = lmptr_->getLease4(invalid_hwaddr,
+                                 leases[1]->subnet_id_);
+    EXPECT_FALSE(returned);
+
+    // Try for a match to an unknown hardware address and an unknown
+    // subnet ID.
+    returned = lmptr_->getLease4(invalid_hwaddr,
+                                 leases[1]->subnet_id_ + 1);
+    EXPECT_FALSE(returned);
+}
+
+
+// @brief Check GetLease4 methods - Access by Client ID
+//
+// Adds leases to the database and checks that they can be accessed via
+// the Client ID
+TEST_F(MySqlLeaseMgrTest, getLease4ClientId) {
+    // Get the leases to be used for the test and add to the database
+    vector<Lease4Ptr> leases = createLeases4();
+    for (int i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Get the leases matching the Client ID address of lease 1
+    Lease4Collection returned = lmptr_->getLease4(*leases[1]->client_id_);
+
+    // Should be four leases, matching leases[1], [4], [5] and [6].
+    ASSERT_EQ(4, returned.size());
+
+    // Easiest way to check is to look at the addresses.
+    vector<string> addresses;
+    for (Lease4Collection::const_iterator i = returned.begin();
+         i != returned.end(); ++i) {
+        addresses.push_back((*i)->addr_.toText());
+    }
+    sort(addresses.begin(), addresses.end());
+    EXPECT_EQ(straddress4_[1], addresses[0]);
+    EXPECT_EQ(straddress4_[4], addresses[1]);
+    EXPECT_EQ(straddress4_[5], addresses[2]);
+    EXPECT_EQ(straddress4_[6], addresses[3]);
+
+    // Repeat test with just one expected match
+    returned = lmptr_->getLease4(*leases[3]->client_id_);
+    EXPECT_EQ(1, returned.size());
+    detailCompareLease(leases[3], *returned.begin());
+
+    // Check that an empty vector is valid
+    EXPECT_TRUE(leases[7]->client_id_->getClientId().empty());
+    returned = lmptr_->getLease4(leases[7]->hwaddr_);
+    EXPECT_EQ(1, returned.size());
+    detailCompareLease(leases[7], *returned.begin());
+
+    // Try to get something with invalid client ID
+    const uint8_t invalid_data[] = {0, 0, 0};
+    ClientId invalid(invalid_data, sizeof(invalid_data));
     returned = lmptr_->getLease4(invalid);
     EXPECT_EQ(0, returned.size());
 }
