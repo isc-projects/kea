@@ -356,6 +356,7 @@ public:
         DELETE_LEASE6,              // Delete from lease6 by address
         GET_LEASE4_ADDR,            // Get lease4 by address
         GET_LEASE4_CLIENTID,        // Get lease4 by Client ID
+        GET_LEASE4_CLIENTID_SUBID,  // Get lease4 by Client ID
         GET_LEASE4_HWADDR,          // Get lease4 by HW address
         GET_LEASE4_HWADDR_SUBID,    // Get lease4 by HW address & subnet ID
         GET_LEASE6_ADDR,            // Get lease6 by address

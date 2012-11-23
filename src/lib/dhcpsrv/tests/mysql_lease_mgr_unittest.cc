@@ -976,6 +976,45 @@ TEST_F(MySqlLeaseMgrTest, getLease4ClientId) {
 }
 
 
+// @brief Check GetLease4 methods - Access by Client ID & Subnet ID
+//
+// Adds leases to the database and checks that they can be accessed via
+// a combination of client and subnet IDs.
+
+TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSubnetId) {
+    // Get the leases to be used for the test and add to the database
+    vector<Lease4Ptr> leases = createLeases4();
+    for (int i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Get the leases matching the client ID of lease 1 and
+    // subnet ID of lease 1.  Result should be a single lease - lease 1.
+    Lease4Ptr returned = lmptr_->getLease4(*leases[1]->client_id_,
+                                           leases[1]->subnet_id_);
+    ASSERT_TRUE(returned);
+    detailCompareLease(leases[1], returned);
+
+    // Try for a match to the client ID of lease 1 and the wrong
+    // subnet ID.
+    returned = lmptr_->getLease4(*leases[1]->client_id_,
+                                 leases[1]->subnet_id_ + 1);
+    EXPECT_FALSE(returned);
+
+    // Try for a match to the subnet ID of lease 1 (and lease 4) but
+    // the wrong client ID
+    const uint8_t invalid_data[] = {0, 0, 0};
+    ClientId invalid(invalid_data, sizeof(invalid_data));
+    returned = lmptr_->getLease4(invalid, leases[1]->subnet_id_);
+    EXPECT_FALSE(returned);
+
+    // Try for a match to an unknown hardware address and an unknown
+    // subnet ID.
+    returned = lmptr_->getLease4(invalid, leases[1]->subnet_id_ + 1);
+    EXPECT_FALSE(returned);
+}
+
+
 // @brief Check GetLease6 methods - Access by DUID/IAID
 //
 // Adds leases to the database and checks that they can be accessed via

@@ -71,6 +71,11 @@ TaggedStatement tagged_statements[] = {
                         "valid_lifetime, expire, subnet_id "
                             "FROM lease4 "
                             "WHERE client_id = ?"},
+    {MySqlLeaseMgr::GET_LEASE4_CLIENTID_SUBID,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id "
+                            "FROM lease4 "
+                            "WHERE client_id = ? AND subnet_id = ?"},
     {MySqlLeaseMgr::GET_LEASE4_HWADDR,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id "
@@ -1144,7 +1149,6 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
 }
 
 
-
 Lease4Collection
 MySqlLeaseMgr::getLease4(const ClientId& clientid) const {
     // Set up the WHERE clause value
@@ -1167,14 +1171,28 @@ MySqlLeaseMgr::getLease4(const ClientId& clientid) const {
 
 
 Lease4Ptr
-MySqlLeaseMgr::getLease4(const ClientId& /* clientid */,
-                         SubnetID /* subnet_id */) const {
-    isc_throw(NotImplemented, "MySqlLeaseMgr::getLease4(const ClientID&, SubnetID) "
-              "not implemented yet");
-    return (Lease4Ptr());
+MySqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[2];
+    memset(inbind, 0, sizeof(inbind));
+
+    std::vector<uint8_t> client_data = clientid.getClientId();
+    unsigned long client_data_length = client_data.size();
+    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[0].buffer = reinterpret_cast<char*>(&client_data[0]);
+    inbind[0].buffer_length = client_data_length;
+    inbind[0].length = &client_data_length;
+
+    inbind[1].buffer_type = MYSQL_TYPE_LONG;
+    inbind[1].buffer = reinterpret_cast<char*>(&subnet_id);
+    inbind[1].is_unsigned = my_bool(1);
+
+    // Get the data
+    Lease4Ptr result;
+    getLease(GET_LEASE4_CLIENTID_SUBID, inbind, exchange4_, result);
+
+    return (result);
 }
-
-
 
 
 Lease6Ptr
