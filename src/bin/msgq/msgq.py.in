@@ -127,6 +127,7 @@ class MsgQ:
         self.subs = SubscriptionManager()
         self.lnames = {}
         self.sendbuffs = {}
+        self.running = False
 
     def setup_poller(self):
         """Set up the poll thing.  Internal function."""
@@ -238,6 +239,7 @@ class MsgQ:
         self.subs.unsubscribe_all(sock)
         lname = [ k for k, v in self.lnames.items() if v == sock ][0]
         del self.lnames[lname]
+        sock.shutdown(socket.SHUT_RDWR)
         sock.close()
         del self.sockets[fd]
         if fd in self.sendbuffs:
@@ -315,6 +317,8 @@ class MsgQ:
         elif cmd == 'ping':
             # Command for testing purposes
             self.process_command_ping(sock, routing, data)
+        elif cmd == 'stop':
+            self.stop()
         else:
             sys.stderr.write("[b10-msgq] Invalid command: %s\n" % cmd)
 
@@ -469,6 +473,7 @@ class MsgQ:
 
     def run(self):
         """Process messages.  Forever.  Mostly."""
+        self.running = True
 
         if self.poller:
             self.run_poller()
@@ -476,9 +481,13 @@ class MsgQ:
             self.run_kqueue()
 
     def run_poller(self):
-        while True:
+        while self.running:
             try:
-                events = self.poller.poll()
+                # Poll with a timeout so that every once in a while,
+                # the loop checks for self.running.
+                # Timeout set to 2 seconds so as not to block too long,
+                # but also not cause too many loop cycles
+                events = self.poller.poll(2000)
             except select.error as err:
                 if err.args[0] == errno.EINTR:
                     events = []
@@ -491,12 +500,18 @@ class MsgQ:
                 else:
                     if event & select.POLLOUT:
                         self.__process_write(fd)
-                    if event & select.POLLIN:
+                    elif event & select.POLLIN:
                         self.process_socket(fd)
+                    else:
+                        print("[XX] UNKNOWN EVENT")
 
     def run_kqueue(self):
-        while True:
-            events = self.kqueue.control(None, 10)
+        while self.running:
+            # Check with a timeout so that every once in a while,
+            # the loop checks for self.running.
+            # Timeout set to 2 seconds so as not to block too long,
+            # but also not cause too many loop cycles
+            events = self.kqueue.control(None, 10, 2)
             if not events:
                 raise RuntimeError('serve: kqueue returned no events')
 
@@ -512,6 +527,9 @@ class MsgQ:
                     elif event.flags & select.KQ_EV_EOF:
                         self.kill_socket(event.ident,
                                          self.sockets[event.ident])
+
+    def stop(self):
+        self.running = False
 
     def shutdown(self):
         """Stop the MsgQ master."""
