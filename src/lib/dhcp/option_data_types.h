@@ -147,7 +147,14 @@ struct OptionDataTypeTraits<uint32_t> {
 template<>
 struct OptionDataTypeTraits<asiolink::IOAddress> {
     static const bool valid = true;
-    static const int len = sizeof(asiolink::IOAddress);
+    // The len value is used to determine the size of the data
+    // to be written to an option buffer. IOAddress object may
+    // either represent an IPv4 or IPv6 addresses which have
+    // different lengths. Thus we can't put fixed value here.
+    // The length of a data to be written into an option buffer
+    // have to be determined in the runtime for a particular
+    // IOAddress object. Thus setting len to zero.
+    static const int len = 0;
     static const bool integer_type = false;
     static const OptionDataType type = OPT_ANY_ADDRESS_TYPE;
 };
@@ -156,7 +163,11 @@ struct OptionDataTypeTraits<asiolink::IOAddress> {
 template<>
 struct OptionDataTypeTraits<std::string> {
     static const bool valid = true;
-    static const int len = sizeof(std::string);
+    // The len value is used to determine the size of the data
+    // to be written to an option buffer. For strings this
+    // size is unknown until we actually deal with the particular
+    // string to be written. Thus setting it to zero.
+    static const int len = 0;
     static const bool integer_type = false;
     static const OptionDataType type = OPT_STRING_TYPE;
 };
