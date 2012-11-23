@@ -115,6 +115,11 @@ TaggedStatement tagged_statements[] = {
                         "expire, subnet_id, pref_lifetime, "
                         "lease_type, iaid, prefix_len) "
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+    {MySqlLeaseMgr::UPDATE_LEASE4,
+                    "UPDATE lease4 SET address = ?, hwaddr = ?, "
+                        "client_id = ?, valid_lifetime = ?, expire = ?, "
+                        "subnet_id = ? "
+                            "WHERE address = ?"},
     {MySqlLeaseMgr::UPDATE_LEASE6,
                     "UPDATE lease6 SET address = ?, duid = ?, "
                         "valid_lifetime = ?, expire = ?, subnet_id = ?, "
@@ -1294,9 +1299,42 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
 
 
 void
-MySqlLeaseMgr::updateLease4(const Lease4Ptr& /* lease4 */) {
-    isc_throw(NotImplemented, "MySqlLeaseMgr::updateLease4(const Lease4Ptr&) "
-              "not implemented yet");
+MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
+    const StatementIndex stindex = UPDATE_LEASE4;
+
+    // Create the MYSQL_BIND array for the data being updated
+    std::vector<MYSQL_BIND> bind = exchange4_->createBindForSend(lease);
+
+    // Set up the WHERE clause and append it to the MYSQL_BIND array
+    MYSQL_BIND where;
+    memset(&where, 0, sizeof(where));
+
+    uint32_t addr4 = static_cast<uint32_t>(lease->addr_);
+    where.buffer_type = MYSQL_TYPE_LONG;
+    where.buffer = reinterpret_cast<char*>(&addr4);
+    where.is_unsigned = my_bool(1);
+    bind.push_back(where);
+
+    // Bind the parameters to the statement
+    int status = mysql_stmt_bind_param(statements_[stindex], &bind[0]);
+    checkError(status, stindex, "unable to bind parameters");
+
+    // Execute
+    status = mysql_stmt_execute(statements_[stindex]);
+    checkError(status, stindex, "unable to execute");
+
+    // See how many rows were affected.  The statement should only update a
+    // single row.
+    int affected_rows = mysql_stmt_affected_rows(statements_[stindex]);
+    if (affected_rows == 0) {
+        isc_throw(NoSuchLease, "unable to update lease for address " <<
+                  lease->addr_.toText() << " as it does not exist");
+    } else if (affected_rows > 1) {
+        // Should not happen - primary key constraint should only have selected
+        // one row.
+        isc_throw(DbOperationError, "apparently updated more than one lease "
+                  "that had the address " << lease->addr_.toText());
+    }
 }
 
 
@@ -1372,9 +1410,6 @@ MySqlLeaseMgr::deleteLease4(const isc::asiolink::IOAddress& addr) {
     // See how many rows were affected.  Note that the statement may delete
     // multiple rows.
     return (mysql_stmt_affected_rows(statements_[stindex]) > 0);
-    isc_throw(NotImplemented, "MySqlLeaseMgr::deleteLease4(const IOAddress&) "
-              "not implemented yet");
-    return (false);
 }
 
 
