@@ -299,7 +299,7 @@ public:
                 new ClientId(vector<uint8_t>(8, 0x42)));
             lease->valid_lft_ = 7736;      // Actual lifetime
             lease->cltt_ = 222456;         // Current time of day
-            lease->subnet_id_ = 75;        // Arbitrary number
+            lease->subnet_id_ = 85;        // Arbitrary number
 
         } else if (address == straddress4_[5]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x19);  // Same as lease 1
@@ -812,7 +812,7 @@ TEST_F(MySqlLeaseMgrTest, basicLease6) {
 // @brief Check GetLease4 methods - Access by Address and SubnetID
 //
 // Adds leases to the database and checks that they can be accessed via
-// a combination of Address, SubnetID
+// a the hardware address
 TEST_F(MySqlLeaseMgrTest, getLease4AddressSubnetId) {
     // Get the leases to be used for the test.
     vector<Lease4Ptr> leases = createLeases4();
@@ -838,6 +838,46 @@ TEST_F(MySqlLeaseMgrTest, getLease4AddressSubnetId) {
     EXPECT_FALSE(l_returned);
 }
 
+
+
+// @brief Check GetLease4 methods - Access by Hardware Address & Subnet ID
+//
+// Adds leases to the database and checks that they can be accessed via
+// a combination of hardware address and subnet ID
+
+TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
+    // Get the leases to be used for the test and add to the database
+    vector<Lease4Ptr> leases = createLeases4();
+    for (int i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Get the leases matching the hardware address of lease 1 and
+    // subnet ID of lease 1.  Result should be a single lease - lease 1.
+    Lease4Ptr returned = lmptr_->getLease4(leases[1]->hwaddr_,
+                                           leases[1]->subnet_id_);
+    ASSERT_TRUE(returned);
+    detailCompareLease(leases[1], returned);
+
+    // Try for a match to the hardware address of lease 1 and the wrong
+    // subnet ID.
+    returned = lmptr_->getLease4(leases[1]->hwaddr_,
+                                 leases[1]->subnet_id_ + 1);
+    EXPECT_FALSE(returned);
+
+    // Try for a match to the subnet ID of lease 1 (and lease 4) but
+    // the wrong hardware address.
+    vector<uint8_t> invalid_hwaddr(15, 0x77);
+    returned = lmptr_->getLease4(invalid_hwaddr,
+                                 leases[1]->subnet_id_);
+    EXPECT_FALSE(returned);
+
+    // Try for a match to an unknown hardware address and an unknown
+    // subnet ID.
+    returned = lmptr_->getLease4(invalid_hwaddr,
+                                 leases[1]->subnet_id_ + 1);
+    EXPECT_FALSE(returned);
+}
 
 
 // @brief Check GetLease4 methods - Access by Hardware Address
