@@ -137,6 +137,8 @@ private:
     /// The method creates option definitions for all DHCPv6 options.
     ///
     /// @throw std::bad_alloc if system went out of memory.
+    /// @throw MalformedOptionDefinition if any of the definitions
+    /// is incorect. This is a programming error.
     static void initStdOptionDefs6();
 
     /// pointers to factories that produce DHCPv6 options

@@ -157,7 +157,7 @@ OptionDefinition::DataTypeUtil::writeToBuffer(const std::string& value,
         }
     case OPT_UINT8_TYPE:
         {
-            buf.push_back(lexicalCastWithRangeCheck<int8_t>(value));
+            buf.push_back(lexicalCastWithRangeCheck<uint8_t>(value));
             return;
         }
     case OPT_UINT16_TYPE:
@@ -212,7 +212,7 @@ OptionDefinition::DataTypeUtil::writeToBuffer(const std::string& value,
             // Increase the size of the storage by the size of the string.
             buf.resize(buf.size() + value.size());
             // Assuming that the string is already UTF8 encoded.
-            std::copy_backward(value.c_str(), value.c_str() + value.length(),
+            std::copy_backward(value.c_str(), value.c_str() + value.size(),
                                buf.end());
             return;
         }
@@ -288,40 +288,50 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
     try {
         if (type_ == OPT_BINARY_TYPE) {
             return (factoryGeneric(u, type, begin, end));
+
         } else if (type_ == OPT_IPV6_ADDRESS_TYPE && array_type_) {
             return (factoryAddrList6(type, begin, end));
+
         } else if (type_ == OPT_IPV4_ADDRESS_TYPE && array_type_) {
             return (factoryAddrList4(type, begin, end));
+
         } else if (type_ == OPT_EMPTY_TYPE) {
             return (factoryEmpty(u, type));
+
         } else if (u == Option::V6 &&
                    code_ == D6O_IA_NA &&
                    haveIA6Format()) {
             return (factoryIA6(type, begin, end));
+
         } else if (u == Option::V6 &&
                    code_ == D6O_IAADDR &&
                    haveIAAddr6Format()) {
             return (factoryIAAddr6(type, begin, end));
+
         } else if (type_ == OPT_UINT8_TYPE) {
             if (array_type_) {
                 return (factoryGeneric(u, type, begin, end));
             } else {
                 return (factoryInteger<uint8_t>(u, type, begin, end));
             }
+
         } else if (type_ == OPT_UINT16_TYPE) {
             if (array_type_) {
                 return (factoryIntegerArray<uint16_t>(type, begin, end));
             } else {
                 return (factoryInteger<uint16_t>(u, type, begin, end));
             }
+
         } else if (type_ == OPT_UINT32_TYPE) {
             if (array_type_) {
                 return (factoryIntegerArray<uint32_t>(type, begin, end));
             } else {
                 return (factoryInteger<uint32_t>(u, type, begin, end));
             }
+
         }
         return (factoryGeneric(u, type, begin, end));
+
     } catch (const Exception& ex) {
         isc_throw(InvalidOptionValue, ex.what());
     }

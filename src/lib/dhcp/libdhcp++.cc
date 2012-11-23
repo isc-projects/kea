@@ -122,7 +122,7 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
                       " for the same option code. This will be supported once"
                       " support for option spaces is implemented");
         } else if (num_defs == 0) {
-            // Don't crash if definition does not exist because only a few
+            // @todo Don't crash if definition does not exist because only a few
             // option definitions are initialized right now. In the future
             // we will initialize definitions for all options and we will
             // remove this elseif. For now, return generic option.
@@ -303,11 +303,12 @@ LibDHCP::initStdOptionDefs6() {
         try {
             definition->validate();
         } catch (const Exception& ex) {
-            // Return empty set in an unlikely event of a validation error.
-            // We don't return exception here on error because it should
-            // not happen to the regular user. It is a programming error.
+            // This is unlikely event that validation fails and may
+            // be only caused by programming error. To guarantee the
+            // data consistency we clear all option definitions that
+            // have been added so far and pass the exception forward.
             v6option_defs_.clear();
-            return;
+            throw;
         }
         v6option_defs_.push_back(definition);
     }
