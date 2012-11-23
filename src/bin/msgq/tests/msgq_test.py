@@ -138,10 +138,9 @@ class BadSocket:
         """
         Parameters:
         real_socket: The actual socket to wrap
-        raise_on_send: integer. If send_exception is not None, it will be
-                                raised on this byte (i.e. 1 = on the first
-                                call to send(), 1 = on the 4th call to send)
-                                Note: if 0, send_exception will not be raised.
+        raise_on_send: integer. If higher than 0, and send_exception is
+                       not None, send_exception will be raised on the
+                       'raise_on_send'th call to send().
         send_exception: if not None, this exception will be raised
                         (if raise_on_send is not 0)
         """
@@ -374,9 +373,10 @@ class SendNonblock(unittest.TestCase):
             # 1 second arbitrarily chosen to hopefully be long enough
             # yet not bog down the tests too much.
             msgq_thread.join(1.0)
+            # If it didn't crash, stop it now.
             msgq.stop()
 
-        # Wait for thread to stop if it hasn't already
+        # Wait for thread to stop if it hasn't already.
         # Put in a (long) timeout; the thread *should* stop, but if it
         # does not, we don't want the test to hang forever
         msgq_thread.join(60)
