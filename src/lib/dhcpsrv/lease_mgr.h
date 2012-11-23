@@ -87,6 +87,13 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Multiple lease records found where one expected
+class MultipleRecords : public Exception {
+public:
+    MultipleRecords(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 /// @brief Attempt to update lease that was not there
 class NoSuchLease : public Exception {
 public:
@@ -101,6 +108,7 @@ public:
 /// would be required. As this is a critical part of the code that will be used
 /// extensively, direct access is warranted.
 struct Lease4 {
+
     /// @brief Constructor
     ///
     /// @param addr IPv4 address as unsigned 32-bit integer in network byte
@@ -133,69 +141,78 @@ struct Lease4 {
 
     /// @brief Address extension
     ///
-    /// It is envisaged that in some cases IPv4 address will be accompanied with some
-    /// additional data. One example of such use are Address + Port solutions (or
-    /// Port-restricted Addresses), where several clients may get the same address, but
-    /// different port ranges. This feature is not expected to be widely used.
-    /// Under normal circumstances, the value should be 0.
+    /// It is envisaged that in some cases IPv4 address will be accompanied
+    /// with some additional data. One example of such use are Address + Port
+    /// solutions (or Port-restricted Addresses), where several clients may get
+    /// the same address, but different port ranges. This feature is not
+    /// expected to be widely used.  Under normal circumstances, the value
+    /// should be 0.
     uint32_t ext_;
 
-    /// @brief hardware address
+    /// @brief Hardware address
     std::vector<uint8_t> hwaddr_;
 
-    /// @brief client identifier
+    /// @brief Client identifier
+    ///
+    /// @todo Should this be a pointer to a client ID or the ID itself?
+    ///       Compare with the DUID in the Lease6 structure.
     boost::shared_ptr<ClientId> client_id_;
 
-    /// @brief renewal timer
+    /// @brief Renewal timer
     ///
-    /// Specifies renewal time. Although technically it is a property of IA container,
-    /// not the address itself, since our data model does not define separate IA
-    /// entity, we are keeping it in the lease. In case of multiple addresses/prefixes
-    /// for the same IA, each must have consistent T1 and T2 values. Specified in
-    /// seconds since cltt.
+    /// Specifies renewal time. Although technically it is a property of the
+    /// IA container and not the address itself, since our data model does not
+    /// define a separate IA entity, we are keeping it in the lease. In the
+    /// case of multiple addresses/prefixes for the same IA, each must have
+    /// consistent T1 and T2 values. This is specified in seconds since cltt.
     uint32_t t1_;
 
-    /// @brief rebinding timer
+    /// @brief Rebinding timer
     ///
-    /// Specifies rebinding time. Although technically it is a property of IA container,
-    /// not the address itself, since our data model does not define separate IA
-    /// entity, we are keeping it in the lease. In case of multiple addresses/prefixes
-    /// for the same IA, each must have consistent T1 and T2 values. Specified in
-    /// seconds since cltt.
+    /// Specifies rebinding time. Although technically it is a property of the
+    /// IA container and not the address itself, since our data model does not
+    /// define a separate IA entity, we are keeping it in the lease. In the
+    /// case of multiple addresses/prefixes for the same IA, each must have
+    /// consistent T1 and T2 values. This is pecified in seconds since cltt.
     uint32_t t2_;
 
-    /// @brief valid lifetime
+    /// @brief Ralid lifetime
     ///
-    /// Expressed as number of seconds since cltt
+    /// Expressed as number of seconds since cltt.
     uint32_t valid_lft_;
 
-    /// @brief client last transmission time
+    /// @brief Client last transmission time
     ///
-    /// Specifies a timestamp, when last transmission from a client was received.
+    /// Specifies a timestamp giving the time when the last transmission from a
+    /// client was received.
     time_t cltt_;
 
     /// @brief Subnet identifier
     ///
-    /// Specifies subnet-id of the subnet that the lease belongs to
+    /// Specifies the identification of the subnet to which the lease belongs.
     SubnetID subnet_id_;
 
-    /// @brief Is this a fixed lease?
+    /// @brief Fixed lease?
     ///
     /// Fixed leases are kept after they are released/expired.
     bool fixed_;
 
-    /// @brief client hostname
+    /// @brief Client hostname
     ///
     /// This field may be empty
     std::string hostname_;
 
-    /// @brief did we update AAAA record for this lease?
+    /// @brief Forward zone updated?
+    ///
+    /// Set true if the DNS AAAA record for this lease has been updated.
     bool fqdn_fwd_;
 
-    /// @brief did we update PTR record for this lease?
+    /// @brief Reverse zone updated?
+    ///
+    /// Set true if the DNS PTR record for this lease has been updated.
     bool fqdn_rev_;
 
-    /// @brief Lease comments.
+    /// @brief Lease comments
     ///
     /// Currently not used. It may be used for keeping comments made by the
     /// system administrator.
@@ -210,13 +227,16 @@ typedef boost::shared_ptr<Lease4> Lease4Ptr;
 /// @brief A collection of IPv4 leases.
 typedef std::vector<Lease4Ptr> Lease4Collection;
 
+
+
 /// @brief Structure that holds a lease for IPv6 address and/or prefix
 ///
-/// For performance reasons it is a simple structure, not a class. Had we chose to
-/// make it a class, all fields would have to be made private and getters/setters
+/// For performance reasons it is a simple structure, not a class. If we chose
+/// make it a class, all fields would have to made private and getters/setters
 /// would be required. As this is a critical part of the code that will be used
-/// extensively, direct access rather than through getters/setters is warranted.
 struct Lease6 {
+
+    /// @brief Type of lease contents
     typedef enum {
         LEASE_IA_NA, /// the lease contains non-temporary IPv6 address
         LEASE_IA_TA, /// the lease contains temporary IPv6 address
@@ -228,86 +248,96 @@ struct Lease6 {
            uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
            uint32_t t2, SubnetID subnet_id, uint8_t prefixlen_ = 0);
 
-    /// @brief specifies lease type (normal addr, temporary addr, prefix)
-    LeaseType type_;
-
-    /// IPv6 address
+    /// @brief IPv6 address
     isc::asiolink::IOAddress addr_;
 
-    /// IPv6 prefix length (used only for PD)
+    /// @brief Lease type
+    ///
+    /// One of normal address, temporary address, or prefix.
+    LeaseType type_;
+
+    /// @brief IPv6 prefix length
+    ///
+    /// This is used only for prefix delegations and is ignored otherwise.
     uint8_t prefixlen_;
 
-    /// @brief IAID
+    /// @brief Identity Association Identifier (IAID)
     ///
-    /// Identity Association IDentifier. DHCPv6 stores all addresses and prefixes
-    /// in IA containers (IA_NA, IA_TA, IA_PD). Most containers may appear more
-    /// than once in a message. To differentiate between them, IAID field is present
+    /// DHCPv6 stores all addresses and prefixes in IA containers (IA_NA,
+    /// IA_TA, IA_PD). Most containers may appear more than once in a message.
+    /// To differentiate between them, the IAID field is present
     uint32_t iaid_;
 
-    /// @brief client identifier
+    /// @brief Client identifier
     boost::shared_ptr<DUID> duid_;
 
     /// @brief preferred lifetime
     ///
-    /// This parameter specifies preferred lifetime since the lease was assigned/renewed
-    /// (cltt), expressed in seconds.
+    /// This parameter specifies the preferred lifetime since the lease was
+    /// assigned or renewed (cltt), expressed in seconds.
     uint32_t preferred_lft_;
 
     /// @brief valid lifetime
     ///
-    /// This parameter specified valid lifetime since the lease was assigned/renewed
-    /// (cltt), expressed in seconds.
+    /// This parameter specifies the valid lifetime since the lease waa
+    /// assigned/renewed (cltt), expressed in seconds.
     uint32_t valid_lft_;
 
     /// @brief T1 timer
     ///
-    /// Specifies renewal time. Although technically it is a property of IA container,
-    /// not the address itself, since our data model does not define separate IA
-    /// entity, we are keeping it in the lease. In case of multiple addresses/prefixes
-    /// for the same IA, each must have consistent T1 and T2 values. Specified in
-    /// seconds since cltt.
-    /// This value will also be useful for failover to calculate the next expected
-    /// client transmission time.
+    /// Specifies renewal time. Although technically it is a property of the
+    /// IA container and not the address itself, since our data model does not
+    /// define a separate IA entity, we are keeping it in the lease. In the
+    /// case of multiple addresses/prefixes for the same IA, each must have
+    /// consistent T1 and T2 values. This is specified in seconds since cltt.
+    /// The value will also be useful for failover to calculate the next
+    /// expected client transmission time.
     uint32_t t1_;
 
     /// @brief T2 timer
     ///
-    /// Specifies rebinding time. Although technically it is a property of IA container,
-    /// not the address itself, since our data model does not define separate IA
-    /// entity, we are keeping it in the lease. In case of multiple addresses/prefixes
-    /// for the same IA, each must have consistent T1 and T2 values. Specified in
-    /// seconds since cltt.
+    /// Specifies rebinding time. Although technically it is a property of the
+    /// IA container and not the address itself, since our data model does not
+    /// define a separate IA entity, we are keeping it in the lease. In the
+    /// case of multiple addresses/prefixes for the same IA, each must have
+    /// consistent T1 and T2 values. This is specified in seconds since cltt.
     uint32_t t2_;
 
-    /// @brief client last transmission time
+    /// @brief Client last transmission time
     ///
-    /// Specifies a timestamp, when last transmission from a client was received.
+    /// Specifies a timestamp giving the time when the last transmission from a
+    /// client was received.
     time_t cltt_;
 
     /// @brief Subnet identifier
     ///
-    /// Specifies subnet-id of the subnet that the lease belongs to
+    /// Specifies the identification of the subnet to which the lease belongs.
     SubnetID subnet_id_;
 
-    /// @brief Is this a fixed lease?
+    /// @brief Fixed lease?
     ///
     /// Fixed leases are kept after they are released/expired.
     bool fixed_;
 
-    /// @brief client hostname
+    /// @brief Client hostname
     ///
     /// This field may be empty
     std::string hostname_;
 
-    /// @brief did we update AAAA record for this lease?
+    /// @brief Forward zone updated?
+    ///
+    /// Set true if the DNS AAAA record for this lease has been updated.
     bool fqdn_fwd_;
 
-    /// @brief did we update PTR record for this lease?
+    /// @brief Reverse zone updated?
+    ///
+    /// Set true if the DNS PTR record for this lease has been updated.
     bool fqdn_rev_;
 
     /// @brief Lease comments
     ///
-    /// This field is currently not used.
+    /// Currently not used. It may be used for keeping comments made by the
+    /// system administrator.
     std::string comments_;
 
     /// @todo: Add DHCPv6 failover related fields here
@@ -357,7 +387,7 @@ typedef std::vector<Lease6Ptr> Lease6Collection;
 /// see the documentation of those classes for details.
 class LeaseMgr {
 public:
-    /// Client Hardware address
+    /// Client hardware address
     typedef std::vector<uint8_t> HWAddr;
 
     /// Database configuration parameter map
