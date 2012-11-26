@@ -31,6 +31,7 @@ using namespace isc::dns;
 class MasterLoaderCallbacksTest : public ::testing::Test {
 protected:
     MasterLoaderCallbacksTest() :
+        last_was_error_(false), // Not needed, but then cppcheck complains
         issue_called_(false),
         rrset_(new RRset(Name("example.org"), RRClass::IN(), RRType::A(),
                          RRTTL(3600))),
