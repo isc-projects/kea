@@ -20,7 +20,6 @@
 #include <dns/rcode.h>
 
 #include <cc/data.h>
-#include <cc/session.h>
 
 #include <algorithm>
 #include <cctype>
