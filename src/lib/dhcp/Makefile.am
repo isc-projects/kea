@@ -23,6 +23,7 @@ libb10_dhcp___la_SOURCES += libdhcp++.cc libdhcp++.h
 libb10_dhcp___la_SOURCES += option.cc option.h
 libb10_dhcp___la_SOURCES += option_data_types.h
 libb10_dhcp___la_SOURCES += option_definition.cc option_definition.h
+libb10_dhcp___la_SOURCES += option_custom.cc option_custom.h
 libb10_dhcp___la_SOURCES += option6_ia.cc option6_ia.h
 libb10_dhcp___la_SOURCES += option6_iaaddr.cc option6_iaaddr.h
 libb10_dhcp___la_SOURCES += option6_addrlst.cc option6_addrlst.h
