@@ -91,19 +91,28 @@ OptionCustom::pack6(isc::util::OutputBuffer& buf) {
 }
 
 void
-OptionCustom::readAddress(const uint32_t index, asiolink::IOAddress&) const {
+OptionCustom::readAddress(const uint32_t index, asiolink::IOAddress& address) const {
     checkIndex(index);
+    if (buffers_[index].size() == asiolink::V4ADDRESS_LEN) {
+        OptionDataTypeUtil::readAddress(buffers_[index], AF_INET, address);
+    } else if (buffers_[index].size() == asiolink::V6ADDRESS_LEN) {
+        OptionDataTypeUtil::readAddress(buffers_[index], AF_INET6, address);
+    } else {
+        isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
+                  << " IP address. Invalid buffer length " << buffers_[index].size());
+    }
 }
 
 bool
 OptionCustom::readBoolean(const uint32_t index) const {
     checkIndex(index);
-    return (true);
+    return (OptionDataTypeUtil::readBool(buffers_[index]));
 }
 
 void
-OptionCustom::readString(const uint32_t index, std::string&) const {
+OptionCustom::readString(const uint32_t index, std::string& value) const {
     checkIndex(index);
+    OptionDataTypeUtil::readString(buffers_[index], value);
 }
 
 void

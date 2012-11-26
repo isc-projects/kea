@@ -104,24 +104,7 @@ public:
                       << "returned by the readInteger function.");
         }
         assert(buffers_[index].size() == OptionDataTypeTraits<T>::len);
-        T value;
-        switch (OptionDataTypeTraits<T>::len) {
-        case 1:
-            value = *(buffers_[index].begin());
-            break;
-        case 2:
-            value = isc::util::readUint16(&(*buffers_[index].begin()));
-            break;
-        case 4:
-            value = isc::util::readUint32(&(*buffers_[index].begin()));
-            break;
-        default:
-            // This should not happen because we made checks on data types
-            // but it does not hurt to keep throw statement here.
-            isc_throw(isc::dhcp::InvalidDataType,
-                      "invalid size of the data type to be read as integer.");
-        }
-        return (value);
+        return (OptionDataTypeUtil::readInt<T>(buffers_[index]));
     }
 
     void readString(const uint32_t index, std::string& value) const;
