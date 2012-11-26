@@ -100,7 +100,7 @@ public:
     /// This is called whenever a minor problem is discovered. This might mean
     /// the data is completely OK, it just looks suspicious.
     ///
-    /// It calls whatever was passed to the error parameter to the constructor.
+    /// It calls whatever was passed to the warn parameter to the constructor.
     ///
     /// The loading will continue after the callback. If the caller wants to
     /// abort (which is probably not a very good idea, since warnings
