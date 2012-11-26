@@ -408,7 +408,8 @@ Number::handle(MasterLexer& lexer) const {
     bool escaped = false;
 
     while (true) {
-        const int c = getLexerImpl(lexer)->source_->getChar();
+        const int c = getLexerImpl(lexer)->skipComment(
+            getLexerImpl(lexer)->source_->getChar(), escaped);
         if (getLexerImpl(lexer)->isTokenEnd(c, escaped)) {
             getLexerImpl(lexer)->source_->ungetChar();
             if (digits_only) {
