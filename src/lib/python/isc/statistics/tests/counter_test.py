@@ -18,9 +18,11 @@
 import unittest
 import threading
 from datetime import timedelta
+import os
 import isc.config
 
 TEST_ZONE_NAME_STR = "example.com."
+TESTDATA_SRCDIR = os.getenv("TESTDATASRCDIR")
 
 from isc.statistics import counter
 
@@ -43,9 +45,11 @@ def start_functor(number, cycle, functor, *args):
     event.set()
     for th in threads: th.join()
 
-class TestCounter(unittest.TestCase):
+class TestBasicMethods(unittest.TestCase):
+    TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
+
     def setUp(self):
-        self.counter = counter.Counter()
+        self.counter = counter.init(self.TEST_SPECFILE_LOCATION)
         self._statistics_data = {}
         self._start_time = {}
         self._counter_name = "counter"
@@ -308,6 +312,15 @@ class BaseTestCounter():
                 self._statistics_data,
                 'socket/%s/tcp/%s' % counter_name, 2)
         self.check_dump_statistics()
+
+class TestCounter1(BaseTestCounter, unittest.TestCase):
+    TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
+
+class TestCounter2(BaseTestCounter, unittest.TestCase):
+    TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec2.spec'
+
+class TestCounter3(BaseTestCounter, unittest.TestCase):
+    TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec3.spec'
 
 if __name__== "__main__":
     unittest.main()
