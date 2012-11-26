@@ -292,7 +292,7 @@ class BaseTestCounter():
         self.check_dump_statistics()
 
     def test_ipsocket_counters(self):
-        # for unixsocket counters
+        # for ipsocket counters
         for counter_name in self._ipsocket_names:
             incrementer = self.counter._to_global\
                 ['inc_%ssocket_%s' % counter_name]
