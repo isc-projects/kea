@@ -32,6 +32,8 @@
 
   - <b>type</b> - specifies the type of database backend.  The following values
   for the type keyword are supported:
+     - <B>memfile</b> - In-memory database.  Nothing is written to any
+       external storage, so this should not be used in production.
      - <b>mysql</b> - Use MySQL as the database
 
   The following sections list the database-specific keywords:
