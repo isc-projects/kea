@@ -24,7 +24,7 @@ if ENABLE_PYTHON_COVERAGE
 endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
-	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/bin/xfrout:$(abs_top_builddir)/src/bin/xfrin:$(abs_top_builddir)/src/lib/dns/python/.libs \
+	PYTHONPATH=$(COMMON_PYTHON_PATH) \
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	B10_FROM_BUILD=$(abs_top_builddir) \
 	B10_FROM_SOURCE=$(abs_top_srcdir) \
