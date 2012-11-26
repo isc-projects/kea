@@ -291,7 +291,7 @@ class TestXfroutSessionBase(unittest.TestCase):
         # the XfroutSession object.  We check the condition here.
         self.assertEqual(0, self.xfrsess._server.transfer_counter)
         # clear statistics counters
-        counter.clear_counters()
+        Counter.clear_counters()
 
 class TestXfroutSession(TestXfroutSessionBase):
     def test_quota_error(self):
@@ -380,7 +380,7 @@ class TestXfroutSession(TestXfroutSessionBase):
         ]))
         # check the 'xfrrej' counter initially
         self.assertRaises(isc.cc.data.DataNotFoundError,
-                          counter.get_xfrrej, TEST_ZONE_NAME_STR)
+                          Counter.get_xfrrej, TEST_ZONE_NAME_STR)
         # Localhost (the default in this test) is accepted
         rcode, msg = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "NOERROR")
@@ -395,7 +395,7 @@ class TestXfroutSession(TestXfroutSessionBase):
         rcode, msg = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
-        self.assertEqual(counter.get_xfrrej(TEST_ZONE_NAME_STR), 1)
+        self.assertEqual(Counter.get_xfrrej(TEST_ZONE_NAME_STR), 1)
 
         # TSIG signed request
         request_data = self.create_request_data(with_tsig=True)
@@ -425,7 +425,7 @@ class TestXfroutSession(TestXfroutSessionBase):
         [rcode, msg] = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
-        self.assertEqual(counter.get_xfrrej(TEST_ZONE_NAME_STR), 2)
+        self.assertEqual(Counter.get_xfrrej(TEST_ZONE_NAME_STR), 2)
 
         # ACL using TSIG: no TSIG; should be rejected
         acl_setter(isc.acl.dns.REQUEST_LOADER.load([
@@ -434,7 +434,7 @@ class TestXfroutSession(TestXfroutSessionBase):
         [rcode, msg] = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
-        self.assertEqual(counter.get_xfrrej(TEST_ZONE_NAME_STR), 3)
+        self.assertEqual(Counter.get_xfrrej(TEST_ZONE_NAME_STR), 3)
 
         #
         # ACL using IP + TSIG: both should match
@@ -455,21 +455,21 @@ class TestXfroutSession(TestXfroutSessionBase):
         [rcode, msg] = self.xfrsess._parse_query_message(request_data)
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
-        self.assertEqual(counter.get_xfrrej(TEST_ZONE_NAME_STR), 4)
+        self.assertEqual(Counter.get_xfrrej(TEST_ZONE_NAME_STR), 4)
         # Address matches, but TSIG doesn't (not included)
         self.xfrsess._remote = (socket.AF_INET, socket.SOCK_STREAM,
                                 ('192.0.2.1', 12345))
         [rcode, msg] = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
-        self.assertEqual(counter.get_xfrrej(TEST_ZONE_NAME_STR), 5)
+        self.assertEqual(Counter.get_xfrrej(TEST_ZONE_NAME_STR), 5)
         # Neither address nor TSIG matches
         self.xfrsess._remote = (socket.AF_INET, socket.SOCK_STREAM,
                                 ('192.0.2.2', 12345))
         [rcode, msg] = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
-        self.assertEqual(counter.get_xfrrej(TEST_ZONE_NAME_STR), 6)
+        self.assertEqual(Counter.get_xfrrej(TEST_ZONE_NAME_STR), 6)
 
     def test_transfer_acl(self):
         # ACL checks only with the default ACL
@@ -853,9 +853,9 @@ class TestXfroutSession(TestXfroutSessionBase):
 
         self.xfrsess._reply_xfrout_query = myreply
         self.assertRaises(isc.cc.data.DataNotFoundError,
-                          counter.get_unixsocket_senderr)
+                          Counter.get_unixsocket_senderr)
         self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
-        self.assertEqual(counter.get_unixsocket_senderr(), 1)
+        self.assertEqual(Counter.get_unixsocket_senderr(), 1)
 
     def test_dns_xfrout_start_noerror(self):
         def noerror(msg, name, rrclass):
@@ -866,12 +866,12 @@ class TestXfroutSession(TestXfroutSessionBase):
             self.sock.send(b"success")
 
         self.assertRaises(isc.cc.data.DataNotFoundError,
-            counter.get_xfrreqdone, TEST_ZONE_NAME_STR)
+            Counter.get_xfrreqdone, TEST_ZONE_NAME_STR)
         self.xfrsess._reply_xfrout_query = myreply
         self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
         self.assertEqual(self.sock.readsent(), b"success")
         self.assertGreater(\
-            counter.get_xfrreqdone(TEST_ZONE_NAME_STR), 0)
+            Counter.get_xfrreqdone(TEST_ZONE_NAME_STR), 0)
 
     def test_reply_xfrout_query_axfr(self):
         self.xfrsess._soa = self.soa_rrset
@@ -1128,7 +1128,7 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
 
     def test_axfr_normal_session(self):
         self.assertRaises(isc.cc.data.DataNotFoundError,
-                          counter.get_axfr_running)
+                          Counter.get_axfr_running)
         XfroutSession._handle(self.xfrsess)
         response = self.sock.read_msg(Message.PRESERVE_ORDER);
         self.assertEqual(Rcode.NOERROR(), response.get_rcode())
@@ -1136,8 +1136,8 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
         self.assertEqual(self.xfrsess._request_type, RRType.AXFR())
         self.assertNotEqual(self.xfrsess._request_type, RRType.IXFR())
         self.assertRaises(isc.cc.data.DataNotFoundError,
-                          counter.get_ixfr_running)
-        self.assertEqual(counter.get_axfr_running(), 0)
+                          Counter.get_ixfr_running)
+        self.assertEqual(Counter.get_axfr_running(), 0)
 
     def test_ixfr_to_axfr(self):
         self.xfrsess._request_data = \
@@ -1157,9 +1157,9 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
         self.xfrsess._request_data = \
             self.create_request_data(ixfr=IXFR_OK_VERSION)
         self.assertRaises(isc.cc.data.DataNotFoundError,
-                          counter.get_axfr_running)
+                          Counter.get_axfr_running)
         self.assertRaises(isc.cc.data.DataNotFoundError,
-                          counter.get_ixfr_running)
+                          Counter.get_ixfr_running)
         XfroutSession._handle(self.xfrsess)
         response = self.sock.read_msg(Message.PRESERVE_ORDER)
         actual_records = response.get_section(Message.SECTION_ANSWER)
@@ -1178,8 +1178,8 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
         self.assertNotEqual(self.xfrsess._request_type, RRType.AXFR())
         self.assertEqual(self.xfrsess._request_type, RRType.IXFR())
         self.assertRaises(isc.cc.data.DataNotFoundError,
-                          counter.get_axfr_running)
-        self.assertEqual(counter.get_ixfr_running(), 0)
+                          Counter.get_axfr_running)
+        self.assertEqual(Counter.get_ixfr_running(), 0)
 
     def ixfr_soa_only_common_checks(self, request_serial):
         self.xfrsess._request_data = \
@@ -1568,45 +1568,45 @@ class TestUnixSockServerForCounter(unittest.TestCase):
             super,
             self.orig_process_request,
             self.orig_select )
-        counter.clear_counters()
+        Counter.clear_counters()
 
     def test_open(self):
         # open
-        self.assertEqual(counter.get_unixsocket_open(), 1)
+        self.assertEqual(Counter.get_unixsocket_open(), 1)
         self.assertRaises(isc.cc.data.DataNotFoundError,
-                          counter.get_unixsocket_openfail)
+                          Counter.get_unixsocket_openfail)
         xfrout.ThreadingUnixStreamServer = DummySocketserverException
         self.unix = UnixSockServer(None, None, None, None, None)
-        self.assertEqual(counter.get_unixsocket_open(), 1)
-        self.assertEqual(counter.get_unixsocket_openfail(), 1)
+        self.assertEqual(Counter.get_unixsocket_open(), 1)
+        self.assertEqual(Counter.get_unixsocket_openfail(), 1)
 
     def test_close(self):
         # close
         self.assertRaises(isc.cc.data.DataNotFoundError,
-                          counter.get_unixsocket_close)
+                          Counter.get_unixsocket_close)
         self.unix.shutdown()
-        self.assertEqual(counter.get_unixsocket_close(), 1)
+        self.assertEqual(Counter.get_unixsocket_close(), 1)
 
     def test_bindfail(self):
         # bindfail
         self.assertRaises(isc.cc.data.DataNotFoundError,
-                          counter.get_unixsocket_bindfail)
+                          Counter.get_unixsocket_bindfail)
         self.assertRaises(Exception, self.unix.server_bind)
-        self.assertEqual(counter.get_unixsocket_bindfail(), 1)
+        self.assertEqual(Counter.get_unixsocket_bindfail(), 1)
 
     def test_accept(self):
         # accept
         self.assertRaises(isc.cc.data.DataNotFoundError,
-                          counter.get_unixsocket_accept)
+                          Counter.get_unixsocket_accept)
         self.unix.get_request()
-        self.assertEqual(counter.get_unixsocket_accept(), 1)
+        self.assertEqual(Counter.get_unixsocket_accept(), 1)
         # acceptfail
         self.assertRaises(isc.cc.data.DataNotFoundError,
-                          counter.get_unixsocket_acceptfail)
+                          Counter.get_unixsocket_acceptfail)
         xfrout.super = lambda : DummyClassException()
         self.unix = UnixSockServer(None, None, None, None, None)
         self.assertRaises(Exception, self.unix.get_request)
-        self.assertEqual(counter.get_unixsocket_acceptfail(), 1)
+        self.assertEqual(Counter.get_unixsocket_acceptfail(), 1)
 
     def test_senderr(self):
         # do inside of above TestXfroutSession
@@ -1615,12 +1615,12 @@ class TestUnixSockServerForCounter(unittest.TestCase):
     def test_recverr(self):
         # recverr
         self.assertRaises(isc.cc.data.DataNotFoundError,
-                          counter.get_unixsocket_recverr)
+                          Counter.get_unixsocket_recverr)
         def raise_socketerror(x,y):
             raise socket.error
         self.unix.process_request = raise_socketerror
         self.unix._select_loop(None)
-        self.assertEqual(counter.get_unixsocket_recverr(), 1)
+        self.assertEqual(Counter.get_unixsocket_recverr(), 1)
 
 class TestInitialization(unittest.TestCase):
     def setEnv(self, name, value):
