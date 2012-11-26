@@ -466,8 +466,12 @@ TEST_F(MasterLexerStateTest, number) {
     ss << "005 ";        // Leading zeroes are ignored
     ss << "-1 ";         // Negative numbers are interpreted
                          // as strings (unsigned integers only)
-    ss << "123abc456";   // 'Numbers' containing non-digits should
+    ss << "123abc456 ";  // 'Numbers' containing non-digits should
                          // be interpreted as strings
+    ss << "42;asdf\n";   // Number with comment
+    ss << "37";          // Simple number again, here to make
+                         // sure none of the above messed up
+                         // the tokenizer
 
     lexer.pushSource(ss);
 
@@ -511,6 +515,22 @@ TEST_F(MasterLexerStateTest, number) {
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
     EXPECT_EQ(s_null, s_string.handle(lexer));
     stringTokenCheck("123abc456", s_string.getToken(lexer), false);
+
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer));
+    EXPECT_EQ(42, s_number.getToken(lexer).getNumber());
+
+    EXPECT_EQ(s_null, State::start(lexer, common_options));
+    EXPECT_TRUE(s_crlf.wasLastEOL(lexer));
+    EXPECT_EQ(Token::END_OF_LINE, s_crlf.getToken(lexer).getType());
+
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer));
+    EXPECT_EQ(37, s_number.getToken(lexer).getNumber());
+
+    // If we continue we'll simply see the EOF
+    EXPECT_EQ(s_null, State::start(lexer, options));
+    EXPECT_EQ(Token::END_OF_FILE, s_crlf.getToken(lexer).getType());
 }
 
 }
