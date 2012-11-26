@@ -102,120 +102,56 @@ OptionDefinition::DataTypeUtil::writeToBuffer(const std::string& value,
     // this argument to determine how to write this value to the buffer.
     switch (type) {
     case OPT_BINARY_TYPE:
-        {
-            // Binary value means that the value is encoded as a string
-            // of hexadecimal deigits. We need to decode this string
-            // to the binary format here.
-            OptionBuffer binary;
-            try {
-                util::encode::decodeHex(value, binary);
-            } catch (const Exception& ex) {
-                isc_throw(BadDataTypeCast, "unable to cast " << value
-                          << " to binary data type: " << ex.what());
-            }
-            // Decode was successful so append decoded binary value
-            // to the buffer.
-            buf.insert(buf.end(), binary.begin(), binary.end());
-            return;
-        }
+        OptionDataTypeUtil::writeBinary(value, buf);
+        return;
     case OPT_BOOLEAN_TYPE:
-        {
-            // We encode the true value as 1 and false as 0 on 8 bits.
-            // That way we actually waist 7 bits but it seems to be the
-            // simpler way to encode boolean.
-            // @todo Consider if any other encode methods can be used.
-            bool bool_value = lexicalCastWithRangeCheck<bool>(value);
-            if (bool_value) {
-                buf.push_back(static_cast<uint8_t>(1));
-            } else {
-                buf.push_back(static_cast<uint8_t>(0));
-            }
-            return;
-        }
+        // We encode the true value as 1 and false as 0 on 8 bits.
+        // That way we actually waste 7 bits but it seems to be the
+        // simpler way to encode boolean.
+        // @todo Consider if any other encode methods can be used.
+        OptionDataTypeUtil::writeBool(lexicalCastWithRangeCheck<bool>(value), buf);
+        return;
     case OPT_INT8_TYPE:
-        {
-            // Buffer holds the uin8_t values so we need to cast the signed
-            // value to unsigned but the bits values remain untouched.
-            buf.push_back(static_cast<uint8_t>(lexicalCastWithRangeCheck<int8_t>(value)));
-            return;
-        }
+        OptionDataTypeUtil::writeInt<uint8_t>(lexicalCastWithRangeCheck<int8_t>(value),
+                                              buf);
+        return;
     case OPT_INT16_TYPE:
-        {
-            // Write the int16 value as uint16 value is ok because the bit values
-            // remain untouched.
-            int16_t int_value = lexicalCastWithRangeCheck<int16_t>(value);
-            buf.resize(buf.size() + 2);
-            writeUint16(static_cast<uint16_t>(int_value), &buf[buf.size() - 2]);
-            return;
-        }
+        OptionDataTypeUtil::writeInt<uint16_t>(lexicalCastWithRangeCheck<int16_t>(value),
+                                               buf);
+        return;
     case OPT_INT32_TYPE:
-        {
-            int32_t int_value = lexicalCastWithRangeCheck<int32_t>(value);
-            buf.resize(buf.size() + 4);
-            writeUint32(static_cast<uint32_t>(int_value), &buf[buf.size() - 4]);
-            return;
-        }
+        OptionDataTypeUtil::writeInt<uint32_t>(lexicalCastWithRangeCheck<int32_t>(value),
+                                               buf);
+        return;
     case OPT_UINT8_TYPE:
-        {
-            buf.push_back(lexicalCastWithRangeCheck<uint8_t>(value));
-            return;
-        }
+        OptionDataTypeUtil::writeInt<uint8_t>(lexicalCastWithRangeCheck<uint8_t>(value),
+                                              buf);
+        return;
     case OPT_UINT16_TYPE:
-        {
-            uint16_t uint_value = lexicalCastWithRangeCheck<uint16_t>(value);
-            buf.resize(buf.size() + 2);
-            writeUint16(uint_value, &buf[buf.size() - 2]);
-            return;
-        }
+        OptionDataTypeUtil::writeInt<uint16_t>(lexicalCastWithRangeCheck<uint16_t>(value),
+                                               buf);
+        return;
     case OPT_UINT32_TYPE:
-        {
-            uint32_t uint_value = lexicalCastWithRangeCheck<uint32_t>(value);
-            buf.resize(buf.size() + 4);
-            writeUint32(uint_value, &buf[buf.size() - 4]);
-            return;
-        }
+        OptionDataTypeUtil::writeInt<uint32_t>(lexicalCastWithRangeCheck<uint32_t>(value),
+                                               buf);
+        return;
     case OPT_IPV4_ADDRESS_TYPE:
-        {
-            // The easiest way to get the binary form of IPv4 address is
-            // to create IOAddress object from string and use its accessors
-            // to retrieve the binary form.
-            asiolink::IOAddress address(value);
-            if (!address.getAddress().is_v4()) {
-                isc_throw(BadDataTypeCast, "provided address " << address.toText()
-                          << " is not a valid IPV4 address");
-            }
-            asio::ip::address_v4::bytes_type addr_bytes =
-                address.getAddress().to_v4().to_bytes();
-            // Increase the buffer size by the size of IPv4 address.
-            buf.resize(buf.size() + addr_bytes.size());
-            std::copy_backward(addr_bytes.begin(), addr_bytes.end(),
-                               buf.end());
-            return;
-        }
     case OPT_IPV6_ADDRESS_TYPE:
         {
             asiolink::IOAddress address(value);
-            if (!address.getAddress().is_v6()) {
+            if (!address.getAddress().is_v4() &&
+                !address.getAddress().is_v6()) {
                 isc_throw(BadDataTypeCast, "provided address " << address.toText()
-                          << " is not a valid IPV6 address");
+                          << " is not a valid "
+                          << (address.getAddress().is_v4() ? "IPv4" : "IPv6")
+                          << " address");
             }
-            asio::ip::address_v6::bytes_type addr_bytes =
-                address.getAddress().to_v6().to_bytes();
-            // Incresase the buffer size by the size of IPv6 address.
-            buf.resize(buf.size() + addr_bytes.size());
-            std::copy_backward(addr_bytes.begin(), addr_bytes.end(),
-                               buf.end());
+            OptionDataTypeUtil::writeAddress(address, buf);
             return;
         }
     case OPT_STRING_TYPE:
-        if (value.size() > 0) {
-            // Increase the size of the storage by the size of the string.
-            buf.resize(buf.size() + value.size());
-            // Assuming that the string is already UTF8 encoded.
-            std::copy_backward(value.c_str(), value.c_str() + value.size(),
-                               buf.end());
-            return;
-        }
+        OptionDataTypeUtil::writeString(value, buf);
+        return;
     case OPT_FQDN_TYPE:
         {
             // FQDN implementation is not terribly complicated but will require

@@ -192,7 +192,7 @@ public:
     /// @param address IPv4 or IPv6 address.
     /// @param [out] buf output buffer.
     static void writeAddress(const asiolink::IOAddress& address,
-                                     std::vector<uint8_t>& buf);
+                             std::vector<uint8_t>& buf);
 
     /// @brief Write hex-encoded binary values into a buffer.
     ///
@@ -223,7 +223,7 @@ public:
     /// @tparam integer type of the returned value.
     /// @return integer value being read.
     template<typename T>
-    T readInt(const std::vector<uint8_t>& buf) {
+    static T readInt(const std::vector<uint8_t>& buf) {
         if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(isc::dhcp::InvalidDataType, "specified data type to be returned"
                       " by readInteger is not supported integer type");
@@ -258,7 +258,7 @@ public:
     template<typename T>
     static void writeInt(const T value,
                          std::vector<uint8_t>& buf) {
-        if (!OptionDataTypeTraits<T>::is_integer) {
+        if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(InvalidDataType, "provided data type is not the supported.");
         }
         switch (OptionDataTypeTraits<T>::len) {
@@ -285,8 +285,8 @@ public:
     ///
     /// @param buf input buffer.
     /// @param [out] value string value being read.
-    void readString(const std::vector<uint8_t>& buf,
-                    std::string& value);
+    static void readString(const std::vector<uint8_t>& buf,
+                           std::string& value);
 
     /// @brief Write utf8-encoded string into a buffer.
     ///
