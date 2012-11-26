@@ -398,7 +398,7 @@ const State*
 Number::handle(MasterLexer& lexer) const {
     MasterLexer::Token& token = getLexerImpl(lexer)->token_;
     // Do we want to support octal and/or hex here?
-    const unsigned int base = 10;
+    const int base = 10;
 
     // It may yet turn out to be a string, so we first
     // collect all the data
