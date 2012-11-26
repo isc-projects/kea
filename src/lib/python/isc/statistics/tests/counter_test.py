@@ -160,6 +160,9 @@ class BaseTestCounter():
         self._zones_item_list   = self.counter._zones_item_list
         self._started = threading.Event()
 
+    def tearDown(self):
+        self.counter.clear_counters()
+
     def test_perzone_counters(self):
         # for per-zone counters
         for counter_name in self._zones_item_list:
