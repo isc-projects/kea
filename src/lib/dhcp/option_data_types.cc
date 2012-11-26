@@ -19,30 +19,25 @@ namespace isc {
 namespace dhcp {
 
 void
-OptionDataTypeUtil::writeBinary(const std::string& hex_str,
-                                std::vector<uint8_t>& buf) {
-    // Binary value means that the value is encoded as a string
-    // of hexadecimal deigits. We need to decode this string
-    // to the binary format here.
-    OptionBuffer binary;
-    try {
-        util::encode::decodeHex(hex_str, binary);
-    } catch (const Exception& ex) {
-        isc_throw(BadDataTypeCast, "unable to cast " << hex_str
-                  << " to binary data type: " << ex.what());
-    }
-    // Decode was successful so append decoded binary value
-    // to the buffer.
-    buf.insert(buf.end(), binary.begin(), binary.end());
-}
-
-void
-OptionDataTypeUtil::writeBool(const bool value,
-                              std::vector<uint8_t>& buf) {
-    if (value) {
-        buf.push_back(static_cast<uint8_t>(1));
+OptionDataTypeUtil::readAddress(const std::vector<uint8_t>& buf,
+                            const short family,
+                            asiolink::IOAddress& address) {
+    using namespace isc::asiolink;
+    if (family == AF_INET) {
+        if (buf.size() < V4ADDRESS_LEN) {
+            isc_throw(BadDataTypeCast, "unavle to read data from the buffer as"
+                      << " IPv4 address. Invalid buffer size: " << buf.size());
+        }
+        address = IOAddress::from_bytes(AF_INET, &buf[0]);
+    } else if (buf.size() == V6ADDRESS_LEN) {
+        if (buf.size() < V6ADDRESS_LEN) {
+            isc_throw(BadDataTypeCast, "unavle to read data from the buffer as"
+                      << " IPv6 address. Invalid buffer size: " << buf.size());
+        }
+        address = IOAddress::from_bytes(AF_INET6, &buf[0]);
     } else {
-        buf.push_back(static_cast<uint8_t>(0));
+        isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
+                  "IP address. Invalid family: " << family);
     }
 }
 
@@ -67,6 +62,55 @@ OptionDataTypeUtil::writeAddress(const asiolink::IOAddress& address,
         isc_throw(BadDataTypeCast, "the address " << address.toText()
                   << " is neither valid IPv4 not IPv6 address.");
     }
+}
+
+void
+OptionDataTypeUtil::writeBinary(const std::string& hex_str,
+                                std::vector<uint8_t>& buf) {
+    // Binary value means that the value is encoded as a string
+    // of hexadecimal deigits. We need to decode this string
+    // to the binary format here.
+    OptionBuffer binary;
+    try {
+        util::encode::decodeHex(hex_str, binary);
+    } catch (const Exception& ex) {
+        isc_throw(BadDataTypeCast, "unable to cast " << hex_str
+                  << " to binary data type: " << ex.what());
+    }
+    // Decode was successful so append decoded binary value
+    // to the buffer.
+    buf.insert(buf.end(), binary.begin(), binary.end());
+}
+
+bool
+OptionDataTypeUtil::readBool(const std::vector<uint8_t>& buf) {
+    if (buf.size() < 1) {
+        isc_throw(BadDataTypeCast, "unable to read the buffer as boolean"
+                  << " value. Invalid buffer size " << buf.size());
+    }
+    if (buf[0] == 1) {
+        return (true);
+    } else if (buf[0] == 0) {
+        return (false);
+    }
+    isc_throw(BadDataTypeCast, "unable to read the buffer as boolean"
+              << " value. Inavlid value " << static_cast<int>(buf[0]));
+}
+
+void
+OptionDataTypeUtil::writeBool(const bool value,
+                              std::vector<uint8_t>& buf) {
+    if (value) {
+        buf.push_back(static_cast<uint8_t>(1));
+    } else {
+        buf.push_back(static_cast<uint8_t>(0));
+    }
+}
+
+void
+OptionDataTypeUtil::readString(const std::vector<uint8_t>& buf,
+                               std::string& value) {
+    value.insert(value.end(), buf.begin(), buf.end());
 }
 
 void
