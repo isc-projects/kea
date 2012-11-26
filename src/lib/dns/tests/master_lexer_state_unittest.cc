@@ -452,7 +452,7 @@ TEST_F(MasterLexerStateTest, brokenQuotedString) {
     EXPECT_EQ(Token::END_OF_FILE, s_crlf.getToken(lexer).getType());
 }
 
-TEST_F(MasterLexerStateTest, number) {
+TEST_F(MasterLexerStateTest, basicNumbers) {
     ss << "0 ";
     ss << "1 ";
     ss << "12345 ";
@@ -464,15 +464,10 @@ TEST_F(MasterLexerStateTest, number) {
                          // above)
     ss << "1000000000000000000 "; // overflows to 2808348672
     ss << "005 ";        // Leading zeroes are ignored
-    ss << "-1 ";         // Negative numbers are interpreted
-                         // as strings (unsigned integers only)
-    ss << "123abc456 ";  // 'Numbers' containing non-digits should
-                         // be interpreted as strings
     ss << "42;asdf\n";   // Number with comment
     ss << "37";          // Simple number again, here to make
                          // sure none of the above messed up
                          // the tokenizer
-
     lexer.pushSource(ss);
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
@@ -507,15 +502,6 @@ TEST_F(MasterLexerStateTest, number) {
     EXPECT_EQ(s_null, s_number.handle(lexer));
     EXPECT_EQ(5, s_number.getToken(lexer).getNumber());
 
-    EXPECT_EQ(&s_string, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_string.handle(lexer));
-    stringTokenCheck("-1", s_string.getToken(lexer), false);
-
-    // Starts out as a number, but ends up being a string
-    EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_string.handle(lexer));
-    stringTokenCheck("123abc456", s_string.getToken(lexer), false);
-
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
     EXPECT_EQ(s_null, s_number.handle(lexer));
     EXPECT_EQ(42, s_number.getToken(lexer).getNumber());
@@ -527,6 +513,65 @@ TEST_F(MasterLexerStateTest, number) {
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
     EXPECT_EQ(s_null, s_number.handle(lexer));
     EXPECT_EQ(37, s_number.getToken(lexer).getNumber());
+
+    // If we continue we'll simply see the EOF
+    EXPECT_EQ(s_null, State::start(lexer, options));
+    EXPECT_EQ(Token::END_OF_FILE, s_crlf.getToken(lexer).getType());
+}
+
+// Test tokens that look like (or start out as) numbers,
+// but turn out to be strings. Tests include escaped characters.
+TEST_F(MasterLexerStateTest, stringNumbers) {
+    ss << "-1 ";         // Negative numbers are interpreted
+                         // as strings (unsigned integers only)
+    ss << "123abc456 ";  // 'Numbers' containing non-digits should
+                         // be interpreted as strings
+    ss << "3scaped\\ space ";
+    ss << "3scaped\\\ttab ";
+    ss << "3scaped\\(paren ";
+    ss << "3scaped\\)close ";
+    ss << "3scaped\\;comment ";
+    ss << "3scaped\\\\ 8ackslash "; // second '\' shouldn't escape ' '
+
+    lexer.pushSource(ss);
+
+    EXPECT_EQ(&s_string, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_string.handle(lexer));
+    stringTokenCheck("-1", s_string.getToken(lexer), false);
+
+    // Starts out as a number, but ends up being a string
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer));
+    stringTokenCheck("123abc456", s_number.getToken(lexer), false);
+
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("3scaped\\ space", s_number.getToken(lexer));
+
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("3scaped\\\ttab", s_number.getToken(lexer));
+
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("3scaped\\(paren", s_number.getToken(lexer));
+
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("3scaped\\)close", s_number.getToken(lexer));
+
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("3scaped\\;comment", s_number.getToken(lexer));
+
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer)); // recognize str, see ' ' in mid
+    stringTokenCheck("3scaped\\\\", s_number.getToken(lexer));
+
+    // Confirm the word that follows the escaped '\' is correctly recognized.
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer)); // recognize str, see ' ' at end
+    stringTokenCheck("8ackslash", s_number.getToken(lexer));
 
     // If we continue we'll simply see the EOF
     EXPECT_EQ(s_null, State::start(lexer, options));
