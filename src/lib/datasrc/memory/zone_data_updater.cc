@@ -22,6 +22,7 @@
 #include <dns/rdataclass.h>
 
 #include <cassert>
+#include <string>
 
 using namespace isc::dns;
 using namespace isc::dns::rdata;
@@ -359,8 +360,9 @@ ZoneDataUpdater::add(const ConstRRsetPtr& rrset,
         getCoveredType(sig_rrset);
 
     // OK, can add the RRset.
-    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEMORY_MEM_ADD_RRSET).
-        arg(name).arg(rrtype).arg(zone_name_);
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEMORY_MEM_ADD_RRSET).arg(name).
+        arg(rrset ? rrtype.toText() : "RRSIG(" + rrtype.toText() + ")").
+        arg(zone_name_);
 
     // Add wildcards possibly contained in the owner name to the domain
     // tree.  This can only happen for the normal (non-NSEC3) tree.
