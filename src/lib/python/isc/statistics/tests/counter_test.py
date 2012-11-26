@@ -264,6 +264,13 @@ class BaseTestCounter():
         self.check_dump_statistics()
 
     def test_perzone_timers(self):
+        # should not do this test unless there is no timer
+        # parameter(time_to_xxx) in statistics spec
+        has_timer = False
+        for counter_name in self._zones_item_list:
+            if counter_name.find('time_to_') == 0:
+                has_timer = True
+        if not has_timer: return
         # for timer counters
         for counter_name in self._zones_item_list:
             if counter_name.find('time_to_') == -1:
