@@ -652,11 +652,6 @@ TEST_F(OptionDefinitionTest, uint8Tokenized) {
     std::vector<std::string> values;
     values.push_back("123");
     values.push_back("456");
-    try {
-        option_v6 = opt_def.optionFactory(Option::V6, D6O_PREFERENCE, values);
-    } catch (std::exception& ex) {
-        std::cout << ex.what() << std::endl;
-    }
     ASSERT_NO_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, D6O_PREFERENCE, values);
     );

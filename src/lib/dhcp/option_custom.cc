@@ -60,7 +60,36 @@ OptionCustom::createBuffers() {
     // to use it to split the data_ buffer into set of sub buffers.
     definition_.validate();
 
-    // @todo create buffers here
+    std::vector<OptionBuffer> buffers;
+    if (definition_.getType() == OPT_RECORD_TYPE) {
+        const OptionDefinition::RecordFieldsCollection& fields =
+            definition_.getRecordFields();
+        OptionBuffer::iterator data = data_.begin();
+        for (OptionDefinition::RecordFieldsConstIter field = fields.begin();
+             field != fields.end(); ++field) {
+            int data_size = OptionDataTypeUtil::getDataTypeLen(*field);
+            if (data_size == 0) {
+                if (*field == OPT_IPV4_ADDRESS_TYPE) {
+                    data_size = asiolink::V4ADDRESS_LEN;
+                } else if (*field == OPT_IPV6_ADDRESS_TYPE) {
+                    data_size = asiolink::V6ADDRESS_LEN;
+                } else if (*field == OPT_STRING_TYPE ||
+                           *field == OPT_FQDN_TYPE ||
+                           *field == OPT_BINARY_TYPE) {
+                    data_size = std::distance(data, data_.end());
+                } else {
+                    isc_throw(InvalidDataType, "invalid option data type"
+                              << " used in the option record");
+                }
+            }
+            if (std::distance(data, data_.end()) < data_size ||
+                data_size == 0) {
+                isc_throw(OutOfRange, "option buffer truncated");
+            }
+            buffers_.push_back(OptionBuffer(data, data + data_size));
+            data += data_size;
+        }
+    }
 }
 
 void

@@ -178,6 +178,20 @@ struct OptionDataTypeTraits<std::string> {
 class OptionDataTypeUtil {
 public:
 
+    /// @brief Get data type size.
+    ///
+    /// This functionm returs the size of a particular data type.
+    /// Values retured by this function correspond to the data type
+    /// sizes defined in OptionDataTypeTraits so they rather indicate
+    /// the fixed length of the data being written into the buffer,
+    /// not the sizeof the particular data type. Thus for data types
+    /// such as string, binary etc. for which the buffer length can't
+    /// be determined this function returns 0.
+    ///
+    /// @param data_type data type which size is to be returned.
+    /// @return data type size or zero for variable length types.
+    static int getDataTypeLen(const OptionDataType data_type);
+
     /// @brief Read IPv4 or IPv6 addres from a buffer.
     ///
     /// @param buf input buffer.
