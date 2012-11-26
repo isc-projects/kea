@@ -18,6 +18,25 @@
 namespace isc {
 namespace dhcp {
 
+int
+OptionDataTypeUtil::getDataTypeLen(const OptionDataType data_type) {
+    switch (data_type) {
+    case OPT_BOOLEAN_TYPE:
+    case OPT_INT8_TYPE:
+    case OPT_UINT8_TYPE:
+        return (1);
+    case OPT_INT16_TYPE:
+    case OPT_UINT16_TYPE:
+        return (2);
+    case OPT_INT32_TYPE:
+    case OPT_UINT32_TYPE:
+        return (4);
+    default:
+        ;
+    }
+    return (0);
+}
+
 void
 OptionDataTypeUtil::readAddress(const std::vector<uint8_t>& buf,
                             const short family,

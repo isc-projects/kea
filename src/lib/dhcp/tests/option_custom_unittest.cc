@@ -51,7 +51,7 @@ public:
     template<typename T>
     void writeInt(T value, std::vector<uint8_t>& buf) {
         for (int i = 0; i < sizeof(T); ++i) {
-            buf.push_back(value >> ((3 - i) * 8) & 0xFF);
+            buf.push_back(value >> ((sizeof(T) - i - 1) * 8) & 0xFF);
         }
     }
 
@@ -70,7 +70,7 @@ TEST_F(OptionCustomTest, constructor) {
           ASSERT_THROW(opt_def1.validate(), isc::Exception); */
 }
 
-TEST_F(OptionCustomTest, setData) {
+TEST_F(OptionCustomTest, setRecordData) {
     OptionDefinition opt_def("OPTION_FOO", 1000, "record");
     ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
     ASSERT_NO_THROW(opt_def.addRecordField("boolean"));
@@ -80,17 +80,17 @@ TEST_F(OptionCustomTest, setData) {
 
     OptionBuffer buf;
     writeInt<uint16_t>(8712, buf);
-    buf.push_back(1);
+    buf.push_back(static_cast<unsigned short>(1));
     writeAddress(IOAddress("192.168.0.1"), buf);
     writeAddress(IOAddress("2001:db8:1::1"), buf);
     writeString("ABCD", buf);
 
-    OptionCustom option(opt_def, Option::V6, buf_.begin(), buf_.begin() + 30);
+    OptionCustom option(opt_def, Option::V6, buf.begin(), buf.begin() + 27);
     ASSERT_TRUE(option.valid());
 
     uint16_t value0 = 0;
     ASSERT_NO_THROW(value0 = option.readInteger<uint16_t>(0));
-    EXPECT_EQ(0x0001, value0);
+    EXPECT_EQ(8712, value0);
     bool value1 = false;
     ASSERT_NO_THROW(value1 = option.readBoolean(1));
     EXPECT_TRUE(value1);
