@@ -50,7 +50,7 @@ class TestBasicMethods(unittest.TestCase):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
 
     def setUp(self):
-        self.counter = counter.init(self.TEST_SPECFILE_LOCATION)
+        self.counter = counter.Counter.init(self.TEST_SPECFILE_LOCATION)
 
     def tearDown(self):
         self.counter.clear_counters()
@@ -150,7 +150,7 @@ class BaseTestCounter():
     def setUp(self):
         self._module_spec = isc.config.module_spec_from_file(
             self.TEST_SPECFILE_LOCATION)
-        self.counter = counter.init(self.TEST_SPECFILE_LOCATION)
+        self.counter = counter.Counter.init(self.TEST_SPECFILE_LOCATION)
         self._statistics_data = {}
         self._entire_server    = self.counter._entire_server
         self._perzone_prefix   = self.counter._perzone_prefix

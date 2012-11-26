@@ -77,21 +77,6 @@ from datetime import datetime
 # container of a counter object
 _COUNTER = None
 
-def init(spec_file_name):
-    """A creator method for a counter class. It creates a counter
-    object by the module name of the given spec file. An argument is a
-    specification file name."""
-    global _COUNTER
-    if isinstance(_COUNTER, _Counter):
-        # already loaded
-        return _COUNTER
-    # create an instance once
-    _COUNTER = _Counter(spec_file_name)
-    # set methods in Counter
-    for (k, v) in _COUNTER._to_global.items():
-        setattr(Counter, k, v)
-    return _COUNTER
-
 # static internal functions
 def _add_counter(element, spec, identifier):
     """Returns value of the identifier if the identifier is in the
@@ -159,6 +144,22 @@ def _stop_timer(start_time, element, spec, identifier):
     _set_counter(element, spec, identifier, sec)
 
 class Counter():
+    """A counter class"""
+    def init(spec_file_name):
+        """A creator method for a counter class. It creates a counter
+        object by the module name of the given spec file. An argument is a
+        specification file name."""
+        global _COUNTER
+        if isinstance(_COUNTER, _Counter):
+            # already loaded
+            return _COUNTER
+        # create an instance once
+        _COUNTER = _Counter(spec_file_name)
+        # set methods in Counter
+        for (k, v) in _COUNTER._to_global.items():
+            setattr(Counter, k, v)
+        return _COUNTER
+
     # These method are dummies for notify_out in case XfroutCounter is not
     # loaded.
     def inc_notifyoutv4(arg):
