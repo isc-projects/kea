@@ -62,14 +62,14 @@ Option::Option(Universe u, uint16_t type, OptionBufferConstIter first,
 void
 Option::check() {
     if ( (universe_ != V4) && (universe_ != V6) ) {
-        isc_throw(BadValue, "Invalid universe type specified."
-                  << "Only V4 and V6 are allowed.");
+        isc_throw(BadValue, "Invalid universe type specified. "
+                  "Only V4 and V6 are allowed.");
     }
 
     if (universe_ == V4) {
 
         if (type_ > 255) {
-            isc_throw(OutOfRange, "DHCPv4 Option type " << type_ << " is too big."
+            isc_throw(OutOfRange, "DHCPv4 Option type " << type_ << " is too big. "
                       << "For DHCPv4 allowed type range is 0..255");
         } else if (data_.size() > 255) {
             isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big.");
@@ -99,7 +99,7 @@ void
 Option::pack4(isc::util::OutputBuffer& buf) {
     if (universe_ == V4) {
         if (len() > 255) {
-            isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big."
+            isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big. "
                       << "At most 255 bytes are supported.");
             /// TODO Larger options can be stored as separate instances
             /// of DHCPv4 options. Clients MUST concatenate them.
@@ -115,7 +115,7 @@ Option::pack4(isc::util::OutputBuffer& buf) {
         LibDHCP::packOptions(buf, options_);
 
     } else {
-        isc_throw(OutOfRange, "Invalid universe type" << universe_);
+        isc_throw(OutOfRange, "Invalid universe type " << universe_);
     }
 
     return;
@@ -131,7 +131,7 @@ void Option::pack6(isc::util::OutputBuffer& buf) {
 
         LibDHCP::packOptions6(buf, options_);
     } else {
-        isc_throw(OutOfRange, "Invalid universe type" << universe_);
+        isc_throw(OutOfRange, "Invalid universe type " << universe_);
     }
     return;
 }
