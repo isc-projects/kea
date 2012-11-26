@@ -15,7 +15,6 @@
 #ifndef __STATISTICS_H
 #define __STATISTICS_H 1
 
-#include <cc/session.h>
 #include <cc/data.h>
 
 #include <dns/message.h>
@@ -194,27 +193,21 @@ public:
 
 /// \brief Set of DNS message counters.
 ///
-/// \c Counters is set of DNS message counters class. It holds DNS message
+/// \c Counters is a set of DNS message counters class. It holds DNS message
 /// counters and provides an interface to increment the counter of specified
 /// type (e.g. UDP message, TCP message).
 ///
-/// This class also provides a function to send statistics information to
-/// statistics module.
-///
 /// This class is designed to be a part of \c AuthSrv.
 /// Call \c inc() to increment a counter for the message.
-/// Call \c getStatistics() to answer statistics information to statistics
-/// module with statistics_session, when the command \c getstats is received.
+/// Call \c get() to get a set of DNS message counters.
 ///
 /// We may eventually want to change the structure to hold values that are
 /// not counters (such as concurrent TCP connections), or seperate generic
 /// part to src/lib to share with the other modules.
 ///
-/// This class uses pimpl idiom and hides detailed implementation.
 /// This class is constructed on startup of the server, so
 /// construction overhead of this approach should be acceptable.
 ///
-/// \todo Hold counters for each message types (Notify, Axfr, Ixfr, Normal)
 /// \todo Consider overhead of \c Counters::inc()
 class Counters : boost::noncopyable {
 private:
@@ -248,8 +241,8 @@ public:
 
     /// \brief Increment counters according to the parameters.
     ///
-    /// This constructor is mostly exception free. But it may still throw
-    /// a standard exception if memory allocation fails inside the method.
+    /// This method is mostly exception free. But it may still throw a
+    /// standard exception if memory allocation fails inside the method.
     ///
     /// \param msgattrs DNS message attributes.
     /// \param response DNS response message.
@@ -262,8 +255,8 @@ public:
 
     /// \brief Get statistics counters.
     ///
-    /// This method is mostly exception free. But it may still throw
-    /// a standard exception if memory allocation fails inside the method.
+    /// This method is mostly exception free. But it may still throw a
+    /// standard exception if memory allocation fails inside the method.
     ///
     /// \return statistics data
     ///
