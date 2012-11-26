@@ -23,7 +23,6 @@
 #include <dns/rrttl.h>
 
 #include <cc/data.h>
-#include <cc/session.h>
 
 #include <auth/statistics.h>
 #include <auth/statistics_items.h>
@@ -40,7 +39,6 @@
 #include <netdb.h>
 
 using namespace std;
-using namespace isc::cc;
 using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::auth::statistics;
