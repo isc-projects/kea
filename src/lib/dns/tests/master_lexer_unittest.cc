@@ -229,11 +229,6 @@ TEST_F(MasterLexerTest, ungetToken) {
               lexer.getNextToken(MasterLexer::QSTRING).getType());
 }
 
-void
-checkInput(const std::string& expected, const std::string& received) {
-    EXPECT_EQ(expected, received);
-}
-
 // Check ungetting token without overriding the start method. We also
 // check it works well with changing options between the calls.
 TEST_F(MasterLexerTest, ungetRealOptions) {
