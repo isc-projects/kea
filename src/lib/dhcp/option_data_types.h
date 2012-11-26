@@ -16,7 +16,9 @@
 #define OPTION_DATA_TYPES_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/option.h>
 #include <exceptions/exceptions.h>
+#include <util/io_utilities.h>
 
 #include <stdint.h>
 
@@ -171,6 +173,74 @@ struct OptionDataTypeTraits<std::string> {
     static const bool integer_type = false;
     static const OptionDataType type = OPT_STRING_TYPE;
 };
+
+/// @brief Utility class to write/read data to/from a buffer.
+class OptionDataTypeUtil {
+public:
+    /// @brief Write IPv4 or IPv6 address into a buffer.
+    ///
+    /// @param address IPv4 or IPv6 address.
+    /// @param [out] buf output buffer.
+    static void writeAddress(const asiolink::IOAddress& address,
+                                     std::vector<uint8_t>& buf);
+
+    /// @brief Write hex-encoded binary values into a buffer.
+    ///
+    /// @param hex_str string representing a binary value encoded
+    /// with hexadecimal digits (without 0x prefix).
+    /// @param [out] output buffer.
+    static void writeBinary(const std::string& hex_str,
+                                    std::vector<uint8_t>& buf);
+
+    /// @brief Write boolean value into a buffer.
+    ///
+    /// The bool value is encoded in a buffer in such a way that
+    /// "1" means "true" and "0" means "false".
+    ///
+    /// @param boolean value to be written.
+    /// @param [out] buf output buffer.
+    static void writeBool(const bool value, std::vector<uint8_t>& buf);
+
+    /// @brief Write integer or unsiged integer value into a buffer.
+    ///
+    /// @param value an integer value to be written into a buffer.
+    /// @param [out] buf output buffer.
+    /// @tparam data type of the value.
+    template<typename T>
+    static void writeInt(const T value,
+                         std::vector<uint8_t>& buf) {
+        if (!OptionDataTypeTraits<T>::is_integer) {
+            isc_throw(InvalidDataType, "provided data type is not the supported.");
+        }
+        switch (OptionDataTypeTraits<T>::len) {
+        case 1:
+            buf.push_back(static_cast<uint8_t>(value));
+            break;
+        case 2:
+            buf.resize(buf.size() + 2);
+            isc::util::writeUint16(static_cast<uint16_t>(value), &buf[buf.size() - 2]);
+            break;
+        case 4:
+            buf.resize(buf.size() + 4);
+            isc::util::writeUint32(static_cast<uint32_t>(value), &buf[buf.size() - 4]);
+            break;
+        default:
+            // The cases above cover whole range of possible data lengths because
+            // we check at the beginning of this function that given data type is
+            // a supported integer type which can be only 1,2 or 4 bytes long.
+            ;
+        }
+    }
+
+    /// @brief Write utf8-encoded string into a buffer.
+    ///
+    /// @param value string value to be written into a buffer.
+    /// @param [out] buf output buffer.
+    static void writeString(const std::string& value,
+                            std::vector<uint8_t>& buf);
+
+};
+
 
 } // isc::dhcp namespace
 } // isc namespace
