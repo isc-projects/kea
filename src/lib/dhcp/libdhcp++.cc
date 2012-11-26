@@ -48,8 +48,12 @@ const OptionDefContainer&
 LibDHCP::getOptionDefs(Option::Universe u) {
     switch (u) {
     case Option::V4:
+        initStdOptionDefs4();
         return (v4option_defs_);
     case Option::V6:
+        if (v6option_defs_.size() == 0) {
+            initStdOptionDefs6();
+        }
         return (v6option_defs_);
     default:
         isc_throw(isc::BadValue, "invalid universe " << u << " specified");
@@ -96,30 +100,43 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
             // @todo: consider throwing exception here.
             return (offset);
         }
+
+        // Get the list of stdandard option definitions.
+        OptionDefContainer option_defs = LibDHCP::getOptionDefs(Option::V6);
+        // Get the search index #1. It allows to search for option definitions
+        // using option code.
+        const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
+        // Get all options with the particular option code. Note that option code
+        // is non-unique within this container however at this point we expect
+        // to get one option definition with the particular code. If more are
+        // returned we report an error.
+        const OptionDefContainerTypeRange& range = idx.equal_range(opt_type);
+        // Get the number of returned option definitions for the option code.
+        size_t num_defs = distance(range.first, range.second);
         OptionPtr opt;
-        switch (opt_type) {
-        case D6O_IA_NA:
-        case D6O_IA_PD:
-            opt = OptionPtr(new Option6IA(opt_type,
-                                          buf.begin() + offset,
-                                          buf.begin() + offset + opt_len));
-            break;
-        case D6O_IAADDR:
-            opt = OptionPtr(new Option6IAAddr(opt_type,
-                                              buf.begin() + offset,
-                                              buf.begin() + offset + opt_len));
-            break;
-        case D6O_ORO:
-            opt = OptionPtr(new Option6IntArray<uint16_t>(opt_type,
-                                                          buf.begin() + offset,
-                                                          buf.begin() + offset + opt_len));
-            break;
-        default:
-            opt = OptionPtr(new Option(Option::V6,
-                                       opt_type,
+        if (num_defs > 1) {
+            // Multiple options of the same code are not supported right now!
+            isc_throw(isc::Unexpected, "Internal error: multiple option definitions"
+                      " for option type " << opt_type << " returned. Currently it is not"
+                      " supported to initialize multiple option definitions"
+                      " for the same option code. This will be supported once"
+                      " support for option spaces is implemented");
+        } else if (num_defs == 0) {
+            // @todo Don't crash if definition does not exist because only a few
+            // option definitions are initialized right now. In the future
+            // we will initialize definitions for all options and we will
+            // remove this elseif. For now, return generic option.
+            opt = OptionPtr(new Option(Option::V6, opt_type,
                                        buf.begin() + offset,
                                        buf.begin() + offset + opt_len));
-            break;
+        } else {
+            // The option definition has been found. Use it to create
+            // the option instance from the provided buffer chunk.
+            const OptionDefinitionPtr& def = *(range.first);
+            assert(def);
+            opt = def->optionFactory(Option::V6, opt_type,
+                                     buf.begin() + offset,
+                                     buf.begin() + offset + opt_len);
         }
         // add option to options
         options.insert(std::make_pair(opt_type, opt));
@@ -229,20 +246,6 @@ void LibDHCP::OptionFactoryRegister(Option::Universe u,
 }
 
 void
-LibDHCP::initStdOptionDefs(Option::Universe u) {
-    switch (u) {
-    case Option::V4:
-        initStdOptionDefs4();
-        break;
-    case Option::V6:
-        initStdOptionDefs6();
-        break;
-    default:
-        isc_throw(isc::BadValue, "invalid universe " << u << " specified");
-    }
-}
-
-void
 LibDHCP::initStdOptionDefs4() {
     isc_throw(isc::NotImplemented, "initStdOptionDefs4 is not implemented");
 }
@@ -254,19 +257,20 @@ LibDHCP::initStdOptionDefs6() {
     struct OptionParams {
         std::string name;
         uint16_t code;
-        OptionDefinition::DataType type;
+        OptionDataType type;
         bool array;
     };
     OptionParams params[] = {
-        { "CLIENTID", D6O_CLIENTID, OptionDefinition::BINARY_TYPE, false },
-        { "SERVERID", D6O_SERVERID, OptionDefinition::BINARY_TYPE, false },
-        { "IA_NA", D6O_IA_NA, OptionDefinition::RECORD_TYPE, false },
-        { "IAADDR", D6O_IAADDR, OptionDefinition::RECORD_TYPE, false },
-        { "ORO", D6O_ORO, OptionDefinition::UINT16_TYPE, true },
-        { "ELAPSED_TIME", D6O_ELAPSED_TIME, OptionDefinition::UINT16_TYPE, false },
-        { "STATUS_CODE", D6O_STATUS_CODE, OptionDefinition::RECORD_TYPE, false },
-        { "RAPID_COMMIT", D6O_RAPID_COMMIT, OptionDefinition::EMPTY_TYPE, false },
-        { "DNS_SERVERS", D6O_NAME_SERVERS, OptionDefinition::IPV6_ADDRESS_TYPE, true }
+        { "CLIENTID", D6O_CLIENTID, OPT_BINARY_TYPE, false },
+        { "SERVERID", D6O_SERVERID, OPT_BINARY_TYPE, false },
+        { "IA_NA", D6O_IA_NA, OPT_RECORD_TYPE, false },
+        { "IAADDR", D6O_IAADDR, OPT_RECORD_TYPE, false },
+        { "ORO", D6O_ORO, OPT_UINT16_TYPE, true },
+        { "ELAPSED_TIME", D6O_ELAPSED_TIME, OPT_UINT16_TYPE, false },
+        { "STATUS_CODE", D6O_STATUS_CODE, OPT_RECORD_TYPE, false },
+        { "RAPID_COMMIT", D6O_RAPID_COMMIT, OPT_EMPTY_TYPE, false },
+        { "DNS_SERVERS", D6O_NAME_SERVERS, OPT_IPV6_ADDRESS_TYPE, true },
+        { "IA_PD", D6O_IA_PD, OPT_RECORD_TYPE, false }
     };
     const int params_size = sizeof(params) / sizeof(params[0]);
 
@@ -277,18 +281,19 @@ LibDHCP::initStdOptionDefs6() {
                                                             params[i].array));
         switch(params[i].code) {
         case D6O_IA_NA:
+        case D6O_IA_PD:
             for (int j = 0; j < 3; ++j) {
-                definition->addRecordField(OptionDefinition::UINT32_TYPE);
+                definition->addRecordField(OPT_UINT32_TYPE);
             }
             break;
         case D6O_IAADDR:
-            definition->addRecordField(OptionDefinition::IPV6_ADDRESS_TYPE);
-            definition->addRecordField(OptionDefinition::UINT32_TYPE);
-            definition->addRecordField(OptionDefinition::UINT32_TYPE);
+            definition->addRecordField(OPT_IPV6_ADDRESS_TYPE);
+            definition->addRecordField(OPT_UINT32_TYPE);
+            definition->addRecordField(OPT_UINT32_TYPE);
             break;
         case D6O_STATUS_CODE:
-            definition->addRecordField(OptionDefinition::UINT16_TYPE);
-            definition->addRecordField(OptionDefinition::STRING_TYPE);
+            definition->addRecordField(OPT_UINT16_TYPE);
+            definition->addRecordField(OPT_STRING_TYPE);
             break;
         default:
             // The default case is intentionally left empty
@@ -298,9 +303,12 @@ LibDHCP::initStdOptionDefs6() {
         try {
             definition->validate();
         } catch (const Exception& ex) {
-            isc_throw(isc::Unexpected, "internal server error: invalid definition of standard"
-                      << " DHCPv6 option (with code " << params[i].code << "): "
-                      << ex.what());
+            // This is unlikely event that validation fails and may
+            // be only caused by programming error. To guarantee the
+            // data consistency we clear all option definitions that
+            // have been added so far and pass the exception forward.
+            v6option_defs_.clear();
+            throw;
         }
         v6option_defs_.push_back(definition);
     }

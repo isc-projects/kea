@@ -33,7 +33,14 @@ public:
 
     /// @brief Return collection of option definitions.
     ///
+    /// Method returns the collection of DHCP standard DHCP
+    /// option definitions.
+    /// @todo DHCPv4 option definitions are not implemented. For now
+    /// this function will throw isc::NotImplemented in case of attempt
+    /// to get option definitions for V4 universe.
+    ///
     /// @param u universe of the options (V4 or V6).
+    ///
     /// @return collection of option definitions.
     static const OptionDefContainer& getOptionDefs(Option::Universe u);
 
@@ -113,21 +120,6 @@ public:
                                       uint16_t type,
                                       Option::Factory * factory);
 
-    /// Initialize standard DHCP options (V4 or V6).
-    ///
-    /// The method creates option definitions for all options
-    /// (DHCPv4 or DHCPv6 depending on universe specified).
-    /// Currently DHCPv4 option definitions initialization is not
-    /// implemented thus this function will throw isc::NotImplemented
-    /// if V4 universe is specified.
-    ///
-    /// @param u universe
-    /// @throw isc::Unexpected if internal error occured during option
-    /// definitions creation.
-    /// @throw std::bad_alloc if system went out of memory.
-    /// @throw isc::NotImplemented when V4 universe specified.
-    static void initStdOptionDefs(Option::Universe u);
-
 private:
 
     /// Initialize standard DHCPv4 option definitions.
@@ -144,9 +136,9 @@ private:
     ///
     /// The method creates option definitions for all DHCPv6 options.
     ///
-    /// @throw isc::Unexpected if internal error occured during option
-    /// definitions creation.
     /// @throw std::bad_alloc if system went out of memory.
+    /// @throw MalformedOptionDefinition if any of the definitions
+    /// is incorect. This is a programming error.
     static void initStdOptionDefs6();
 
     /// pointers to factories that produce DHCPv6 options
