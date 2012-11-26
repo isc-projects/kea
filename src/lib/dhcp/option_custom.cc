@@ -61,10 +61,10 @@ OptionCustom::createBuffers() {
     definition_.validate();
 
     std::vector<OptionBuffer> buffers;
+    OptionBuffer::iterator data = data_.begin();
     if (definition_.getType() == OPT_RECORD_TYPE) {
         const OptionDefinition::RecordFieldsCollection& fields =
             definition_.getRecordFields();
-        OptionBuffer::iterator data = data_.begin();
         for (OptionDefinition::RecordFieldsConstIter field = fields.begin();
              field != fields.end(); ++field) {
             int data_size = OptionDataTypeUtil::getDataTypeLen(*field);
@@ -73,21 +73,44 @@ OptionCustom::createBuffers() {
                     data_size = asiolink::V4ADDRESS_LEN;
                 } else if (*field == OPT_IPV6_ADDRESS_TYPE) {
                     data_size = asiolink::V6ADDRESS_LEN;
-                } else if (*field == OPT_STRING_TYPE ||
-                           *field == OPT_FQDN_TYPE ||
-                           *field == OPT_BINARY_TYPE) {
-                    data_size = std::distance(data, data_.end());
                 } else {
-                    isc_throw(InvalidDataType, "invalid option data type"
-                              << " used in the option record");
+                    data_size = std::distance(data, data_.end());
                 }
             }
-            if (std::distance(data, data_.end()) < data_size ||
-                data_size == 0) {
+            if (data_size == 0) {
                 isc_throw(OutOfRange, "option buffer truncated");
             }
             buffers_.push_back(OptionBuffer(data, data + data_size));
             data += data_size;
+        }
+    } else {
+        OptionDataType data_type = definition_.getType();
+        int data_size = OptionDataTypeUtil::getDataTypeLen(data_type);
+        if (data_size == 0) {
+            if (data_type == OPT_IPV4_ADDRESS_TYPE) {
+                data_size = asiolink::V4ADDRESS_LEN;
+            } else if (data_type == OPT_IPV6_ADDRESS_TYPE) {
+                data_size = asiolink::V6ADDRESS_LEN;
+            }
+        }
+        if (std::distance(data, data_.end()) < data_size) {
+            isc_throw(OutOfRange, "option buffer truncated");
+        }
+        if (definition_.getArrayType()) {
+            // We don't perform other checks for data types that can't be
+            // used together with array indicator such as strings, empty field
+            // etc. This is because OptionDefinition::validate function should
+            // have checked this already.
+            assert(data_size > 0);
+            do {
+                buffers_.push_back(OptionBuffer(data, data + data_size));
+                data += data_size;
+            } while (std::distance(data, data_.end()) >= data_size);
+        } else {
+            if (data_size == 0) {
+                data_size = std::distance(data, data_.end());
+            }
+            buffers_.push_back(OptionBuffer(data, data + data_size));
         }
     }
 }
@@ -105,7 +128,6 @@ OptionCustom::pack4(isc::util::OutputBuffer& buf) {
     // @todo write option data here
 
     LibDHCP::packOptions(buf, options_);
-    return;
 }
 
 void
@@ -116,7 +138,6 @@ OptionCustom::pack6(isc::util::OutputBuffer& buf) {
     // @todo write option data here.
 
     LibDHCP::packOptions(buf, options_);
-    return;
 }
 
 void
