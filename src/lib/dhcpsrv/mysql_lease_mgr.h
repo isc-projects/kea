@@ -39,7 +39,10 @@ class MySqlLease6Exchange;
 
 /// @brief MySQL Lease Manager
 ///
-/// This is a concrete API for the backend for the MySQL database.
+/// This class provides the \ref isc::dhcp::LeaseMgr interface to the MySQL
+/// database.  Use of this backend presupposes that a MySQL database is
+/// available and that the Kea schema has been created within it.
+
 class MySqlLeaseMgr : public LeaseMgr {
 public:
     /// @brief Constructor
@@ -433,30 +436,7 @@ private:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    bool addLease(StatementIndex stindex, std::vector<MYSQL_BIND>& bind);
-
-    /// @brief Binds Parameters and Executes
-    ///
-    /// This method abstracts a lot of common processing from the getXxxx()
-    /// methods.  It binds the parameters passed to it to the appropriate
-    /// prepared statement, and binds the variables in the exchange6 object to
-    /// the output parameters of the statement.  It then executes the prepared
-    /// statement.
-    ///
-    /// The data can be retrieved using mysql_stmt_fetch and the getLeaseData()
-    /// method on the appropriate exchange object.
-    ///
-    /// @param stindex Index of prepared statement to be executed
-    /// @param exchange Exchange object to use
-    /// @param inbind Array of MYSQL_BIND objects representing the parameters.
-    ///        (Note that the number is determined by the number of parameters
-    ///        in the statement.)
-    ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    template <typename Exchange>
-    void bindAndExecute(StatementIndex stindex, Exchange& exchange,
-                         MYSQL_BIND* inbind) const;
+    bool addLeaseCommon(StatementIndex stindex, std::vector<MYSQL_BIND>& bind);
 
     /// @brief Get Lease Collection Common Code
     ///
@@ -464,7 +444,7 @@ private:
     /// from the database.
     ///
     /// @param stindex Index of statement being executed
-    /// @param inbind MYSQL_BIND array for input parameters
+    /// @param bind MYSQL_BIND array for input parameters
     /// @param exchange Exchange object to use
     /// @param lease LeaseCollection object returned.  Note that any data in
     ///        the collection is cleared before new data is added.
@@ -478,7 +458,7 @@ private:
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     template <typename Exchange, typename LeaseCollection>
-    void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* inbind,
+    void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
                             Exchange& exchange, LeaseCollection& result,
                             bool single = false) const;
 
@@ -488,7 +468,7 @@ private:
     /// the get lease collection common code.
     ///
     /// @param stindex Index of statement being executed
-    /// @param inbind MYSQL_BIND array for input parameters
+    /// @param bind MYSQL_BIND array for input parameters
     /// @param lease LeaseCollection object returned.  Note that any data in
     ///        the collection is cleared before new data is added.
     ///
@@ -497,9 +477,9 @@ private:
     ///        failed.
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* inbind,
+    void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
                             Lease4Collection& result) const {
-        getLeaseCollection(stindex, inbind, exchange4_, result);
+        getLeaseCollection(stindex, bind, exchange4_, result);
     }
 
     /// @brief Get Lease Collection
@@ -508,7 +488,7 @@ private:
     /// the get lease collection common code.
     ///
     /// @param stindex Index of statement being executed
-    /// @param inbind MYSQL_BIND array for input parameters
+    /// @param bind MYSQL_BIND array for input parameters
     /// @param lease LeaseCollection object returned.  Note that any data in
     ///        the collection is cleared before new data is added.
     ///
@@ -517,9 +497,9 @@ private:
     ///        failed.
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* inbind,
+    void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
                             Lease6Collection& result) const {
-        getLeaseCollection(stindex, inbind, exchange6_, result);
+        getLeaseCollection(stindex, bind, exchange6_, result);
     }
 
     /// @brief Get Lease6 Common Code
@@ -529,9 +509,9 @@ private:
     /// but retrieveing only a single lease.
     ///
     /// @param stindex Index of statement being executed
-    /// @param inbind MYSQL_BIND array for input parameters
+    /// @param bind MYSQL_BIND array for input parameters
     /// @param lease Lease4 object returned
-    void getLease(StatementIndex stindex, MYSQL_BIND* inbind,
+    void getLease(StatementIndex stindex, MYSQL_BIND* bind,
                   Lease4Ptr& result) const;
 
     /// @brief Get Lease4 Common Code
@@ -541,9 +521,9 @@ private:
     /// but retrieveing only a single lease.
     ///
     /// @param stindex Index of statement being executed
-    /// @param inbind MYSQL_BIND array for input parameters
+    /// @param bind MYSQL_BIND array for input parameters
     /// @param lease Lease6 object returned
-    void getLease(StatementIndex stindex, MYSQL_BIND* inbind,
+    void getLease(StatementIndex stindex, MYSQL_BIND* bind,
                    Lease6Ptr& result) const;
 
     /// @brief Update lease common code
@@ -563,8 +543,8 @@ private:
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     template <typename LeasePtr>
-    void updateLease(StatementIndex stindex, MYSQL_BIND* bind,
-                     const LeasePtr& lease);
+    void updateLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind,
+                           const LeasePtr& lease);
 
     /// @brief Delete lease common code
     ///

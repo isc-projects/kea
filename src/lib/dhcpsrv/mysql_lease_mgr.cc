@@ -28,6 +28,48 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace std;
 
+/// @file
+///
+/// This file holds the implementation of the Lease Manager using MySQL.  The
+/// implementation uses MySQL's C API, as it comes as standard with the MySQL
+/// client libraries.
+///
+/// In general, each of the database access methods corresponds to one SQL
+/// statement.  To avoid the overhead of parsing a statement every time it is
+/// used, when the database is opened "prepared statements" are created -
+/// essentially doing the SQL parsing up front.  Every time a method is used
+/// to access data, the corresponding prepared statement is referenced. Each
+/// prepared statement contains a set of placeholders for data, each
+/// placeholder being for:
+///
+/// - data being added to the database (as in adding or updating a lease)
+/// - data being retrieved from the database (as in getting lease information)
+/// - selection criteria used to determine which records to update/retrieve.
+///
+/// All such data is associated with the prepared statment using an array of
+/// MYSQL_BIND structures.  Each element in the array corresponds to one
+/// parameter in the prepared statement - the first element in the array is
+/// associated with the first parameter, the second element with the second
+/// parameter etc.
+///
+/// Within this file, the setting up of the MYSQL_BIND arrays for data being
+/// passed to and retrieved from the database is handled in the
+/// isc::dhcp::MySqlLease4Exchange and isc::dhcp::MySqlLease6Exchange classes.
+/// The classes also hold intermediate variables required for exchanging some
+/// of the data.
+///
+/// With these exchange objects in place, many of the methods follow similar
+/// logic:
+/// - Set up the MYSQL_BIND array for data being transferred to/from the
+///   database.  For data being transferred to the database, some of the
+///   data is extracted from the lease to intermediate variables, whilst
+///   in other cases the MYSQL_BIND arrays point to the data in the lease.
+/// - Set up the MYSQL_BIND array for the data selection parameters.
+/// - Bind these arrays to the prepared statement.
+/// - Execute the statement.
+/// - If there is output, copy the data from the bound variables to the output
+///   lease object.
+
 namespace {
 ///@{
 
@@ -51,7 +93,8 @@ const size_t CLIENT_ID_MAX_LEN = 128;       ///< Max size of a client ID
 ///
 /// Declare typed values so as to avoid problems of data conversion.  These
 /// are local to the file but are given the prefix MLM (MySql Lease Manager) to
-/// avoid any likely conflicts with variables named TRUE or FALSE.
+/// avoid any likely conflicts with variables n header files named TRUE or
+/// FALSE.
 
 const my_bool MLM_FALSE = 0;                ///< False value
 const my_bool MLM_TRUE = 1;                 ///< True value
@@ -155,8 +198,7 @@ namespace dhcp {
 /// structure is identical.  This class handles the creation of that array.
 ///
 /// Owing to the MySQL API, the process requires some intermediate variables
-/// to hold things like data length etc.  This object holds the intermediate
-/// variables as well.
+/// to hold things like data length etc.  This object holds those variables.
 ///
 /// @note There are no unit tests for this class.  It is tested indirectly
 /// in all MySqlLeaseMgr::xxx4() calls where it is used.
@@ -229,7 +271,7 @@ public:
         //
         // expire = cltt_ + valid_lft_
         //
-        // @TODO Handle overflows - a large enough valid_lft_ could cause
+        // @todo Handle overflows - a large enough valid_lft_ could cause
         //       an overflow on a 32-bit system.
         MySqlLeaseMgr::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
                                              expire_);
@@ -256,8 +298,7 @@ public:
     ///
     std::vector<MYSQL_BIND> createBindForReceive() {
 
-        // Ensure both the array of MYSQL_BIND structures and the error array
-        // are clear.
+        // Initialize MYSQL_BIND array.
         memset(bind_, 0, sizeof(bind_));
 
         // address:  uint32_t
@@ -303,7 +344,7 @@ public:
     ///
     /// Called after the MYSQL_BIND array created by createBindForReceive()
     /// has been used, this copies data from the internal member variables
-    /// into a Lease4 object.
+    /// into a Lease4 objec.
     ///
     /// @return Lease4Ptr Pointer to a Lease6 object holding the relevant
     ///         data.
@@ -348,8 +389,7 @@ private:
 /// structure is identical.  This class handles the creation of that array.
 ///
 /// Owing to the MySQL API, the process requires some intermediate variables
-/// to hold things like data length etc.  This object holds the intermediate
-/// variables as well.
+/// to hold things like data length etc.  This object holds those variables.
 ///
 /// @note There are no unit tests for this class.  It is tested indirectly
 /// in all MySqlLeaseMgr::xxx6() calls where it is used.
@@ -478,8 +518,7 @@ public:
     ///         functions.
     std::vector<MYSQL_BIND> createBindForReceive() {
 
-        // Ensure both the array of MYSQL_BIND structures and the error array
-        // are clear.
+        // Initialize MYSQL_BIND array.
         memset(bind_, 0, sizeof(bind_));
 
         // address:  varchar
@@ -542,7 +581,7 @@ public:
     /// @brief Copy Received Data into Lease6 Object
     ///
     /// Called after the MYSQL_BIND array created by createBindForReceive()
-    /// has been used, this copies data from the internal member vairables
+    /// has been used, this copies data from the internal member variables
     /// into a Lease6 object.
     ///
     /// @return Lease6Ptr Pointer to a Lease6 object holding the relevant
@@ -558,7 +597,7 @@ public:
         isc::asiolink::IOAddress addr(address);
 
         // Set the lease type in a variable of the appropriate data type, which
-        // has been initialized with an arbitrary but valid value.
+        // has been initialized with an arbitrary (but valid) value.
         Lease6::LeaseType type = Lease6::LEASE_IA_NA;
         switch (lease_type_) {
             case Lease6::LEASE_IA_NA:
@@ -673,8 +712,12 @@ MySqlLeaseMgr::MySqlLeaseMgr(const LeaseMgr::ParameterMap& parameters)
     // Open the database.
     openDatabase();
 
-    // Enable autocommit.  For maximum speed, the global parameter
-    // innodb_flush_log_at_trx_commit should be set to 2.
+    // Enable autocommit.  To avoid a flush to disk on every commit, the global
+    // parameter innodb_flush_log_at_trx_commit should be set to 2.  This will
+    // cause the changes to be written to the log, but flushed to disk in the
+    // background every second or so.  Setting the parameter to that value will
+    // speed up the system, but at the risk of losing data if the system
+    // crashes.
     my_bool result = mysql_autocommit(mysql_, 1);
     if (result != 0) {
         isc_throw(DbOperationError, mysql_error(mysql_));
@@ -835,12 +878,12 @@ MySqlLeaseMgr::openDatabase() {
     }
 }
 
-// Prepared statement setup.  The textual form of the SQL statement is stored
+// Prepared statement setup.  The textual form of an SQL statement is stored
 // in a vector of strings (text_statements_) and is used in the output of
 // error messages.  The SQL statement is also compiled into a "prepared
 // statement" (stored in statements_), which avoids the overhead of compilation
-// during use.  As these allocate resources, the class destructor explicitly
-// destroys the prepared statements.
+// during use.  As prepared statements have resources allocated to them, the
+// class destructor explicitly destroys them.
 
 void
 MySqlLeaseMgr::prepareStatement(StatementIndex index, const char* text) {
@@ -884,13 +927,13 @@ MySqlLeaseMgr::prepareStatements() {
     }
 }
 
-
 // Add leases to the database.  The two public methods accept a lease object
 // (of different types), bind the contents to the appropriate prepared
 // statement, then call common code to execute the statement.
 
 bool
-MySqlLeaseMgr::addLease(StatementIndex stindex, std::vector<MYSQL_BIND>& bind) {
+MySqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
+                              std::vector<MYSQL_BIND>& bind) {
 
     // Bind the parameters to the statement
     int status = mysql_stmt_bind_param(statements_[stindex], &bind[0]);
@@ -919,7 +962,7 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
     std::vector<MYSQL_BIND> bind = exchange4_->createBindForSend(lease);
 
     // ... and drop to common code.
-    return (addLease(INSERT_LEASE4, bind));
+    return (addLeaseCommon(INSERT_LEASE4, bind));
 }
 
 bool
@@ -928,33 +971,7 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     std::vector<MYSQL_BIND> bind = exchange6_->createBindForSend(lease);
 
     // ... and drop to common code.
-    return (addLease(INSERT_LEASE6, bind));
-}
-
-// A convenience function used in the various getLease() methods.  It binds
-// the selection parameters to the prepared statement, and binds the variables
-// that will receive the data.  These are stored in the MySqlLease6Exchange
-// object associated with the lease manager and converted to a Lease6 object
-// when retrieved.
-template <typename Exchange>
-void
-MySqlLeaseMgr::bindAndExecute(StatementIndex stindex, Exchange& exchange,
-                              MYSQL_BIND* inbind) const {
-
-    // Bind the input parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[stindex], inbind);
-    checkError(status, stindex, "unable to bind WHERE clause parameter");
-
-    // Set up the SELECT clause
-    std::vector<MYSQL_BIND> outbind = exchange->createBindForReceive();
-
-    // Bind the output parameters to the statement
-    status = mysql_stmt_bind_result(statements_[stindex], &outbind[0]);
-    checkError(status, stindex, "unable to bind SELECT caluse parameters");
-
-    // Execute the statement
-    status = mysql_stmt_execute(statements_[stindex]);
-    checkError(status, stindex, "unable to execute");
+    return (addLeaseCommon(INSERT_LEASE6, bind));
 }
 
 // Extraction of leases from the database.
@@ -984,18 +1001,28 @@ MySqlLeaseMgr::bindAndExecute(StatementIndex stindex, Exchange& exchange,
 
 template <typename Exchange, typename LeaseCollection>
 void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
-                                       MYSQL_BIND* inbind,
+                                       MYSQL_BIND* bind,
                                        Exchange& exchange,
                                        LeaseCollection& result,
                                        bool single) const {
 
-    // Bind the input parameters to the statement and bind the output
-    // to fields in the exchange object, then execute the prepared statement.
-    bindAndExecute(stindex, exchange, inbind);
+    // Bind the selection parameters to the statement
+    int status = mysql_stmt_bind_param(statements_[stindex], bind);
+    checkError(status, stindex, "unable to bind WHERE clause parameter");
+
+    // Set up the MYSQL_BIND array for the data being returned and bind it to
+    // the statement.
+    std::vector<MYSQL_BIND> outbind = exchange->createBindForReceive();
+    status = mysql_stmt_bind_result(statements_[stindex], &outbind[0]);
+    checkError(status, stindex, "unable to bind SELECT clause parameters");
+
+    // Execute the statement
+    status = mysql_stmt_execute(statements_[stindex]);
+    checkError(status, stindex, "unable to execute");
 
     // Ensure that all the lease information is retrieved in one go to avoid
     // overhead of going back and forth between client and server.
-    int status = mysql_stmt_store_result(statements_[stindex]);
+    status = mysql_stmt_store_result(statements_[stindex]);
     checkError(status, stindex, "unable to set up for storing all results");
 
     // Initialize for returning the data
@@ -1034,7 +1061,7 @@ void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
 }
 
 
-void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* inbind,
+void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
                              Lease4Ptr& result) const {
     // Create appropriate collection object and get all leases matching
     // the selection criteria.  The "single" paraeter is true to indicate
@@ -1042,7 +1069,7 @@ void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* inbind,
     // matching records are found: this particular method is called when only
     // one or zero matches is expected.
     Lease4Collection collection;
-    getLeaseCollection(stindex, inbind, exchange4_, collection, true);
+    getLeaseCollection(stindex, bind, exchange4_, collection, true);
 
     // Return single record if present, else clear the lease.
     if (collection.empty()) {
@@ -1052,7 +1079,8 @@ void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* inbind,
     }
 }
 
-void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* inbind,
+
+void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
                              Lease6Ptr& result) const {
     // Create appropriate collection object and get all leases matching
     // the selection criteria.  The "single" paraeter is true to indicate
@@ -1060,7 +1088,7 @@ void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* inbind,
     // matching records are found: this particular method is called when only
     // one or zero matches is expected.
     Lease6Collection collection;
-    getLeaseCollection(stindex, inbind, exchange6_, collection, true);
+    getLeaseCollection(stindex, bind, exchange6_, collection, true);
 
     // Return single record if present, else clear the lease.
     if (collection.empty()) {
@@ -1318,8 +1346,8 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
 
 template <typename LeasePtr>
 void
-MySqlLeaseMgr::updateLease(StatementIndex stindex, MYSQL_BIND* bind,
-                           const LeasePtr& lease) {
+MySqlLeaseMgr::updateLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind,
+                                 const LeasePtr& lease) {
 
     // Bind the parameters to the statement
     int status = mysql_stmt_bind_param(statements_[stindex], bind);
@@ -1362,7 +1390,7 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     bind.push_back(where);
 
     // Drop to common update code
-    updateLease(stindex, &bind[0], lease);
+    updateLeaseCommon(stindex, &bind[0], lease);
 }
 
 
@@ -1389,7 +1417,7 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     bind.push_back(where);
 
     // Drop to common update code
-    updateLease(stindex, &bind[0], lease);
+    updateLeaseCommon(stindex, &bind[0], lease);
 }
 
 // Delete lease methods.  As with other groups of methods, these comprise
