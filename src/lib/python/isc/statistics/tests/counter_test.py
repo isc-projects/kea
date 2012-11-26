@@ -19,6 +19,7 @@ import unittest
 import threading
 from datetime import timedelta
 import os
+import imp
 import isc.config
 
 TEST_ZONE_NAME_STR = "example.com."
@@ -148,6 +149,7 @@ class TestBasicMethods(unittest.TestCase):
                                  self._timer_name), 0)
 
 class BaseTestCounter():
+    imp.reload(counter)
     def setUp(self):
         self._module_spec = isc.config.module_spec_from_file(
             self.TEST_SPECFILE_LOCATION)
