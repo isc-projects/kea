@@ -209,8 +209,10 @@ OptionDefinition::addRecordField(const OptionDataType data_type) {
         isc_throw(isc::InvalidOperation, "'record' option type must be used"
                   " to add data fields to the record");
     }
-    if (data_type >= OPT_UNKNOWN_TYPE) {
-        isc_throw(isc::BadValue, "attempted to add invalid data type to the record");
+    if (data_type >= OPT_RECORD_TYPE ||
+        data_type == OPT_ANY_ADDRESS_TYPE ||
+        data_type == OPT_EMPTY_TYPE) {
+        isc_throw(isc::BadValue, "attempted to add invalid data type to the record.");
     }
     record_fields_.push_back(data_type);
 }
@@ -321,18 +323,24 @@ OptionDefinition::validate() const {
     std::ostringstream err_str;
     if (name_.empty()) {
         // Option name must not be empty.
-        err_str << "option name must not be empty";
+        err_str << "option name must not be empty.";
     } else if (name_.find(" ") != string::npos) {
         // Option name must not contain spaces.
-        err_str << "option name must not contain spaces";
+        err_str << "option name must not contain spaces.";
     } else if (type_ >= OPT_UNKNOWN_TYPE) {
         // Option definition must be of a known type.
-        err_str << "option type value " << type_ << " is out of range";
-    } else if (type_ == OPT_STRING_TYPE && array_type_) {
-        // Array of strings is not allowed because there is no way
-        // to determine the size of a particular string and thus there
-        // it no way to tell when other data fields begin.
-        err_str << "array of strings is not a valid option definition";
+        err_str << "option type value " << type_ << " is out of range.";
+    } else if (array_type_) {
+        if (type_ == OPT_STRING_TYPE) {
+            // Array of strings is not allowed because there is no way
+            // to determine the size of a particular string and thus there
+            // it no way to tell when other data fields begin.
+            err_str << "array of strings is not a valid option definition.";
+        } else if (type_ == OPT_BINARY_TYPE) {
+            err_str << "array of binary values is not a valid option definition.";
+        } else if (type_ == OPT_EMPTY_TYPE) {
+            err_str << "array of empty value is not a valid option definition.";
+        }
     } else if (type_ == OPT_RECORD_TYPE) {
         // At least two data fields should be added to the record. Otherwise
         // non-record option definition could be used.
@@ -342,8 +350,8 @@ OptionDefinition::validate() const {
                     << " least 2 fields.";
         } else {
             // If the number of fields is valid we have to check if their order
-            // is valid too. We check that string data fields are not laid before
-            // other fields. But we allow that they are laid at the end of
+            // is valid too. We check that string or binary data fields are not
+            // laid before other fields. But we allow that they are laid at the end of
             // an option.
             const RecordFieldsCollection& fields = getRecordFields();
             for (RecordFieldsConstIter it = fields.begin();
@@ -352,6 +360,17 @@ OptionDefinition::validate() const {
                     it < fields.end() - 1) {
                     err_str << "string data field can't be laid before data fields"
                             << " of other types.";
+                    break;
+                }
+                if (*it == OPT_BINARY_TYPE &&
+                    it < fields.end() - 1) {
+                    err_str << "binary data field can't be laid before data fields"
+                            << " of other types.";
+                }
+                /// Empty typy is not allowed within a record.
+                if (*it == OPT_EMPTY_TYPE) {
+                    err_str << "empty data type can't be stored as a field in an"
+                            << " option record.";
                     break;
                 }
             }

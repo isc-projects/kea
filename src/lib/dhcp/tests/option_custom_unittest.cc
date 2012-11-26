@@ -70,6 +70,43 @@ TEST_F(OptionCustomTest, constructor) {
           ASSERT_THROW(opt_def1.validate(), isc::Exception); */
 }
 
+TEST_F(OptionCustomTest, setData) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "string");
+
+    OptionBuffer buf;
+    writeString("hello world!", buf);
+    OptionCustom option(opt_def, Option::V6, buf.begin(), buf.end());
+    ASSERT_TRUE(option.valid());
+
+    std::string value;
+    ASSERT_NO_THROW(option.readString(0, value));
+
+    EXPECT_EQ("hello world!", value);
+}
+
+TEST_F(OptionCustomTest, setArrayData) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "uint32", true);
+
+    std::vector<uint32_t> values;
+    values.push_back(71234);
+    values.push_back(12234);
+    values.push_back(54362);
+    values.push_back(1234);
+
+    OptionBuffer buf;
+    for (int i = 0; i < values.size(); ++i) {
+        writeInt<uint32_t>(values[i], buf);
+    }
+    OptionCustom option(opt_def, Option::V6, buf.begin(), buf.begin() + 13);
+    ASSERT_TRUE(option.valid());
+
+    for (int i = 0; i < 3; ++i) {
+        uint32_t value = 0;
+        ASSERT_NO_THROW(value = option.readInteger<uint32_t>(i));
+        EXPECT_EQ(values[i], value);
+    }
+}
+
 TEST_F(OptionCustomTest, setRecordData) {
     OptionDefinition opt_def("OPTION_FOO", 1000, "record");
     ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
