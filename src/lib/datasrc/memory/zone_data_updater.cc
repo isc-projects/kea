@@ -309,6 +309,8 @@ ZoneDataUpdater::addRdataSet(const Name& name, const RRType& rrtype,
         node->setData(rdataset_new);
 
         // Ok, we just put it in.
+
+        // Convenient (and more efficient) shortcut to check RRsets at origin
         const bool is_origin = (node == zone_data_.getOriginNode());
 
         // If this RRset creates a zone cut at this node, mark the node
