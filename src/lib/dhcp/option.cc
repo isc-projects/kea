@@ -63,7 +63,7 @@ void
 Option::check() {
     if ( (universe_ != V4) && (universe_ != V6) ) {
         isc_throw(BadValue, "Invalid universe type specified. "
-                  "Only V4 and V6 are allowed.");
+                  << "Only V4 and V6 are allowed.");
     }
 
     if (universe_ == V4) {
@@ -87,11 +87,13 @@ void Option::pack(isc::util::OutputBuffer& buf) {
     switch (universe_) {
     case V6:
         return (pack6(buf));
+
     case V4:
         return (pack4(buf));
+
     default:
-        isc_throw(BadValue, "Failed to pack " << type_ << " option. Do not "
-                  << "use this method for options other than DHCPv6.");
+        isc_throw(BadValue, "Failed to pack " << type_ << " option as the "
+                  << "universe type is unknown.");
     }
 }
 
@@ -115,7 +117,7 @@ Option::pack4(isc::util::OutputBuffer& buf) {
         LibDHCP::packOptions(buf, options_);
 
     } else {
-        isc_throw(OutOfRange, "Invalid universe type " << universe_);
+        isc_throw(BadValue, "Invalid universe type " << universe_);
     }
 
     return;
@@ -131,7 +133,7 @@ void Option::pack6(isc::util::OutputBuffer& buf) {
 
         LibDHCP::packOptions6(buf, options_);
     } else {
-        isc_throw(OutOfRange, "Invalid universe type " << universe_);
+        isc_throw(BadValue, "Invalid universe type " << universe_);
     }
     return;
 }
