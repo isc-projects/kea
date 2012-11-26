@@ -578,4 +578,5 @@ TEST_F(MasterLexerStateTest, stringNumbers) {
     EXPECT_EQ(Token::END_OF_FILE, s_crlf.getToken(lexer).getType());
 }
 
-}
+} // end anonymous namespace
+

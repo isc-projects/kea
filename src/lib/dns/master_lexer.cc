@@ -30,7 +30,7 @@ namespace dns {
 
 namespace {
 typedef boost::shared_ptr<master_lexer_internal::InputSource> InputSourcePtr;
-}
+} // end unnamed namespace
 using namespace master_lexer_internal;
 
 struct MasterLexer::MasterLexerImpl {
@@ -160,7 +160,7 @@ const char* const error_text[] = {
     "unbalanced quotes"         // UNBALANCED_QUOTES
 };
 const size_t error_text_max_count = sizeof(error_text) / sizeof(error_text[0]);
-}
+} // end unnamed namespace
 
 std::string
 MasterLexer::Token::getErrorText() const {
@@ -252,7 +252,7 @@ const CRLF CRLF_STATE;
 const String STRING_STATE;
 const QString QSTRING_STATE;
 const Number NUMBER_STATE;
-}
+} // end unnamed namespace
 
 const State&
 State::getInstance(ID state_id) {
