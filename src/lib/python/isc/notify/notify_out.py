@@ -25,7 +25,7 @@ from isc.datasrc import DataSourceClient
 from isc.net import addr
 import isc
 from isc.log_messages.notify_out_messages import *
-from isc.statistics import counter
+from isc.statistics import Counter
 
 logger = isc.log.Logger("notify_out")
 
@@ -481,9 +481,9 @@ class NotifyOut:
             sock.sendto(render.get_data(), 0, addrinfo)
             # count notifying by IPv4 or IPv6 for statistics
             if zone_notify_info.get_socket().family == socket.AF_INET:
-                counter.inc_notifyoutv4(zone_notify_info.zone_name)
+                Counter.inc_notifyoutv4(zone_notify_info.zone_name)
             elif zone_notify_info.get_socket().family == socket.AF_INET6:
-                counter.inc_notifyoutv6(zone_notify_info.zone_name)
+                Counter.inc_notifyoutv6(zone_notify_info.zone_name)
             logger.info(NOTIFY_OUT_SENDING_NOTIFY, addrinfo[0],
                         addrinfo[1])
         except (socket.error, addr.InvalidAddress) as err:

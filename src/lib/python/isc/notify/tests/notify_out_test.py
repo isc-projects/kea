@@ -107,8 +107,8 @@ class DummyNotifyOutCounter:
         self._notifiesv4 = []
         self._notifiesv6 = []
 
-counter = DummyNotifyOutCounter()
-notify_out.counter = counter
+notify_out.Counter = DummyNotifyOutCounter()
+Counter = notify_out.Counter
 
 class TestNotifyOut(unittest.TestCase):
     def setUp(self):
@@ -129,7 +129,7 @@ class TestNotifyOut(unittest.TestCase):
         com_ch_info.notify_slaves.append(('1.1.1.1', 5353))
 
     def tearDown(self):
-        counter.clear_counters()
+        Counter.clear_counters()
 
     def test_send_notify(self):
         notify_out._MAX_NOTIFY_NUM = 2
@@ -283,35 +283,35 @@ class TestNotifyOut(unittest.TestCase):
     def test_send_notify_message_udp_ipv4(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
 
-        self.assertEqual(counter.get_notifyoutv4('example.net.'), 0)
-        self.assertEqual(counter.get_notifyoutv6('example.net.'), 0)
+        self.assertEqual(Counter.get_notifyoutv4('example.net.'), 0)
+        self.assertEqual(Counter.get_notifyoutv6('example.net.'), 0)
 
         example_com_info.prepare_notify_out()
         ret = self._notify._send_notify_message_udp(example_com_info,
                                                     ('192.0.2.1', 53))
         self.assertTrue(ret)
         self.assertEqual(socket.AF_INET, example_com_info.sock_family)
-        self.assertGreater(counter.get_notifyoutv4('example.net.'), 0)
-        self.assertEqual(counter.get_notifyoutv6('example.net.'), 0)
+        self.assertGreater(Counter.get_notifyoutv4('example.net.'), 0)
+        self.assertEqual(Counter.get_notifyoutv6('example.net.'), 0)
 
     def test_send_notify_message_udp_ipv6(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
 
-        self.assertEqual(counter.get_notifyoutv4('example.net.'), 0)
-        self.assertEqual(counter.get_notifyoutv6('example.net.'), 0)
+        self.assertEqual(Counter.get_notifyoutv4('example.net.'), 0)
+        self.assertEqual(Counter.get_notifyoutv6('example.net.'), 0)
 
         ret = self._notify._send_notify_message_udp(example_com_info,
                                                     ('2001:db8::53', 53))
         self.assertTrue(ret)
         self.assertEqual(socket.AF_INET6, example_com_info.sock_family)
-        self.assertEqual(counter.get_notifyoutv4('example.net.'), 0)
-        self.assertGreater(counter.get_notifyoutv6('example.net.'), 0)
+        self.assertEqual(Counter.get_notifyoutv4('example.net.'), 0)
+        self.assertGreater(Counter.get_notifyoutv6('example.net.'), 0)
 
     def test_send_notify_message_with_bogus_address(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
 
-        self.assertEqual(counter.get_notifyoutv4('example.net.'), 0)
-        self.assertEqual(counter.get_notifyoutv6('example.net.'), 0)
+        self.assertEqual(Counter.get_notifyoutv4('example.net.'), 0)
+        self.assertEqual(Counter.get_notifyoutv6('example.net.'), 0)
 
         # As long as the underlying data source validates RDATA this shouldn't
         # happen, but right now it's not actually the case.  Even if the
@@ -321,8 +321,8 @@ class TestNotifyOut(unittest.TestCase):
                                                     ('invalid', 53))
         self.assertFalse(ret)
 
-        self.assertEqual(counter.get_notifyoutv4('example.net.'), 0)
-        self.assertEqual(counter.get_notifyoutv6('example.net.'), 0)
+        self.assertEqual(Counter.get_notifyoutv4('example.net.'), 0)
+        self.assertEqual(Counter.get_notifyoutv6('example.net.'), 0)
 
     def test_zone_notify_handler(self):
         old_send_msg = self._notify._send_notify_message_udp
