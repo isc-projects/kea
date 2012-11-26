@@ -1,6 +1,9 @@
 PYCOVERAGE_RUN=@PYCOVERAGE_RUN@
 PYTESTS = counter_test.py
 EXTRA_DIST = $(PYTESTS)
+EXTRA_DIST += testdata/test_spec1.spec
+EXTRA_DIST += testdata/test_spec2.spec
+EXTRA_DIST += testdata/test_spec3.spec
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
