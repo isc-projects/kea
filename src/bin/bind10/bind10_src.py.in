@@ -629,7 +629,6 @@ class BoB:
         if self.msgq_socket_file is not None:
              c_channel_env["BIND10_MSGQ_SOCKET_FILE"] = self.msgq_socket_file
         logger.debug(DBG_PROCESS, BIND10_CHECK_MSGQ_ALREADY_RUNNING)
-        # try to connect, and if we can't wait a short while
         try:
             self.cc_session = isc.cc.Session(self.msgq_socket_file)
             logger.fatal(BIND10_MSGQ_ALREADY_RUNNING)
