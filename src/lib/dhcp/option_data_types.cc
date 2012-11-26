@@ -44,16 +44,16 @@ OptionDataTypeUtil::readAddress(const std::vector<uint8_t>& buf,
     using namespace isc::asiolink;
     if (family == AF_INET) {
         if (buf.size() < V4ADDRESS_LEN) {
-            isc_throw(BadDataTypeCast, "unavle to read data from the buffer as"
+            isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
                       << " IPv4 address. Invalid buffer size: " << buf.size());
         }
-        address = IOAddress::from_bytes(AF_INET, &buf[0]);
+        address = IOAddress::fromBytes(AF_INET, &buf[0]);
     } else if (buf.size() == V6ADDRESS_LEN) {
         if (buf.size() < V6ADDRESS_LEN) {
-            isc_throw(BadDataTypeCast, "unavle to read data from the buffer as"
+            isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
                       << " IPv6 address. Invalid buffer size: " << buf.size());
         }
-        address = IOAddress::from_bytes(AF_INET6, &buf[0]);
+        address = IOAddress::fromBytes(AF_INET6, &buf[0]);
     } else {
         isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
                   "IP address. Invalid family: " << family);
