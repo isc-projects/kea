@@ -84,7 +84,7 @@ def init(spec_file_name):
     module_spec = isc.config.module_spec_from_file(spec_file_name)
     class_name = '%sCounter' % module_spec.get_module_name()
     global _COUNTER
-    if issubclass(_COUNTER.__class__, Counter):
+    if issubclass(_COUNTER.__class__, _Counter):
         # already loaded
         return _COUNTER
     # create an instance once
@@ -92,15 +92,6 @@ def init(spec_file_name):
     # make globals
     globals().update(_COUNTER._to_global)
     return _COUNTER
-
-# These method are dummies for notify_out in case XfroutCounter is not
-# loaded.
-def inc_notifyoutv4(self, arg):
-    """An empty method to be disclosed"""
-    pass
-def inc_notifyoutv6(self, arg):
-    """An empty method to be disclosed"""
-    pass
 
 # static internal functions
 def _add_counter(element, spec, identifier):
@@ -169,6 +160,16 @@ def _stop_timer(start_time, element, spec, identifier):
     _set_counter(element, spec, identifier, sec)
 
 class Counter():
+    # These method are dummies for notify_out in case XfroutCounter is not
+    # loaded.
+    def inc_notifyoutv4(arg):
+        """An empty method to be disclosed"""
+        pass
+    def inc_notifyoutv6(arg):
+        """An empty method to be disclosed"""
+        pass
+
+class _Counter():
     """A basic counter class for concrete classes"""
 
     # '_SERVER_' is a special zone name representing an entire
