@@ -177,6 +177,16 @@ struct OptionDataTypeTraits<std::string> {
 /// @brief Utility class to write/read data to/from a buffer.
 class OptionDataTypeUtil {
 public:
+
+    /// @brief Read IPv4 or IPv6 addres from a buffer.
+    ///
+    /// @param buf input buffer.
+    /// @param family address family: AF_INET or AF_INET6.
+    /// @param [out] address being read.
+    static void readAddress(const std::vector<uint8_t>& buf,
+                            const short family,
+                            asiolink::IOAddress& address);
+
     /// @brief Write IPv4 or IPv6 address into a buffer.
     ///
     /// @param address IPv4 or IPv6 address.
@@ -190,7 +200,13 @@ public:
     /// with hexadecimal digits (without 0x prefix).
     /// @param [out] output buffer.
     static void writeBinary(const std::string& hex_str,
-                                    std::vector<uint8_t>& buf);
+                            std::vector<uint8_t>& buf);
+
+    /// @brief Read boolean value from a buffer.
+    ///
+    /// @param buf input buffer.
+    /// @return boolean value read from a buffer.
+    static bool readBool(const std::vector<uint8_t>& buf);
 
     /// @brief Write boolean value into a buffer.
     ///
@@ -200,6 +216,39 @@ public:
     /// @param boolean value to be written.
     /// @param [out] buf output buffer.
     static void writeBool(const bool value, std::vector<uint8_t>& buf);
+
+    /// @brief Read integer value from a buffer.
+    ///
+    /// @param buf input buffer.
+    /// @tparam integer type of the returned value.
+    /// @return integer value being read.
+    template<typename T>
+    T readInt(const std::vector<uint8_t>& buf) {
+        if (!OptionDataTypeTraits<T>::integer_type) {
+            isc_throw(isc::dhcp::InvalidDataType, "specified data type to be returned"
+                      " by readInteger is not supported integer type");
+        }
+
+        assert(buf.size() == OptionDataTypeTraits<T>::len);
+        T value;
+        switch (OptionDataTypeTraits<T>::len) {
+        case 1:
+            value = *(buf.begin());
+            break;
+        case 2:
+            value = isc::util::readUint16(&(*buf.begin()));
+            break;
+        case 4:
+            value = isc::util::readUint32(&(*buf.begin()));
+            break;
+        default:
+            // This should not happen because we made checks on data types
+            // but it does not hurt to keep throw statement here.
+            isc_throw(isc::dhcp::InvalidDataType,
+                      "invalid size of the data type to be read as integer.");
+        }
+        return (value);
+    }
 
     /// @brief Write integer or unsiged integer value into a buffer.
     ///
@@ -231,6 +280,13 @@ public:
             ;
         }
     }
+
+    /// @brief Read string value from a buffer.
+    ///
+    /// @param buf input buffer.
+    /// @param [out] value string value being read.
+    void readString(const std::vector<uint8_t>& buf,
+                    std::string& value);
 
     /// @brief Write utf8-encoded string into a buffer.
     ///
