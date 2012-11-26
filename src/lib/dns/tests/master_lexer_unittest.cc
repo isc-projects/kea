@@ -185,13 +185,13 @@ TEST_F(MasterLexerTest, getUnbalancedParen) {
     EXPECT_EQ(MasterLexer::Token::END_OF_FILE, lexer.getNextToken().getType());
 }
 
-// Check we properly return error when there's an opened parentheses and no
+// Check we properly return error when there's an opened quoted string and no
 // closing one
 TEST_F(MasterLexerTest, getUnbalancedString) {
     ss << "\"string";
     lexer.pushSource(ss);
 
-    // Then an unbalanced parenthesis
+    // Then an unbalanced qstring (reported as an unexpected end)
     EXPECT_EQ(MasterLexer::Token::UNEXPECTED_END,
               lexer.getNextToken(MasterLexer::QSTRING).getErrorCode());
     // And then EOF
