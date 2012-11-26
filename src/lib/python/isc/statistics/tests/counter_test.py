@@ -322,14 +322,26 @@ class BaseTestCounter():
                 'socket/%s/tcp/%s' % counter_name, 2)
         self.check_dump_statistics()
 
-class TestCounter1(BaseTestCounter, unittest.TestCase):
+class TestCounter1(unittest.TestCase, BaseTestCounter):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
+    def setUp(self):
+        BaseTestCounter.setUp(self)
+    def tearDown(self):
+        BaseTestCounter.tearDown(self)
 
-class TestCounter2(BaseTestCounter, unittest.TestCase):
+class TestCounter2(unittest.TestCase, BaseTestCounter):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec2.spec'
+    def setUp(self):
+        BaseTestCounter.setUp(self)
+    def tearDown(self):
+        BaseTestCounter.tearDown(self)
 
-class TestCounter3(BaseTestCounter, unittest.TestCase):
+class TestCounter3(unittest.TestCase, BaseTestCounter):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec3.spec'
+    def setUp(self):
+        BaseTestCounter.setUp(self)
+    def tearDown(self):
+        BaseTestCounter.tearDown(self)
 
 if __name__== "__main__":
     unittest.main()
