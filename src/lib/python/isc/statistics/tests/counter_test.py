@@ -146,8 +146,8 @@ class TestBasicMethods(unittest.TestCase):
                                  timer_name), 0)
 
 class BaseTestCounter():
-    imp.reload(counter)
     def setUp(self):
+        imp.reload(counter)
         self._module_spec = isc.config.module_spec_from_file(
             self.TEST_SPECFILE_LOCATION)
         self.counter = counter.Counter.init(self.TEST_SPECFILE_LOCATION)
