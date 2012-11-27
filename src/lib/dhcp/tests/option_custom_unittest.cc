@@ -437,4 +437,184 @@ TEST_F(OptionCustomTest, recordData) {
     EXPECT_EQ("ABCD", value4);
 }
 
+// The purpose of this test is to verify that pack function for
+// DHCPv4 custom option works correctly.
+TEST_F(OptionCustomTest, pack4) {
+    OptionDefinition opt_def("OPTION_FOO", 234, "record");
+    ASSERT_NO_THROW(opt_def.addRecordField("uint8"));
+    ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
+    ASSERT_NO_THROW(opt_def.addRecordField("uint32"));
+
+    OptionBuffer buf;
+    writeInt<uint8_t>(1, buf);
+    writeInt<uint16_t>(1000, buf);
+    writeInt<uint32_t>(100000, buf);
+
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V4, buf));
+    );
+    ASSERT_TRUE(option);
+
+    util::OutputBuffer buf_out(7);
+    ASSERT_NO_THROW(option->pack(buf_out));
+    ASSERT_EQ(9, buf_out.getLength());
+
+    // The original buffer holds the option data but it lacks a header.
+    // We append data length and option code so as it can be directly
+    // compared with the output buffer that holds whole option.
+    buf.insert(buf.begin(), 7);
+    buf.insert(buf.begin(), 234);
+
+    // Validate the buffer.
+    EXPECT_EQ(0, memcmp(&buf[0], buf_out.getData(), 7));
+}
+
+// The purpose of this test is to verify that pack function for
+// DHCPv6 custom option works correctly.
+TEST_F(OptionCustomTest, pack6) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "record");
+    ASSERT_NO_THROW(opt_def.addRecordField("boolean"));
+    ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
+    ASSERT_NO_THROW(opt_def.addRecordField("string"));
+
+    OptionBuffer buf;
+    buf.push_back(1);
+    writeInt<uint16_t>(1000, buf);
+    writeString("hello world", buf);
+
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf));
+    );
+    ASSERT_TRUE(option);
+
+    util::OutputBuffer buf_out(buf.size() + option->getHeaderLen());
+    ASSERT_NO_THROW(option->pack(buf_out));
+    ASSERT_EQ(buf.size() + option->getHeaderLen(), buf_out.getLength());
+
+    // The original buffer holds the option data but it lacks a header.
+    // We append data length and option code so as it can be directly
+    // compared with the output buffer that holds whole option.
+    OptionBuffer tmp;
+    writeInt<uint16_t>(1000, tmp);
+    writeInt<uint16_t>(buf.size(), tmp);
+    buf.insert(buf.begin(), tmp.begin(), tmp.end());
+
+    // Validate the buffer.
+    EXPECT_EQ(0, memcmp(&buf[0], buf_out.getData(), 7));
+}
+
+// The purpose of this test is to verify that unpack function works
+// correctly for a custom option.
+TEST_F(OptionCustomTest, unpack) {
+    OptionDefinition opt_def("OPTION_FOO", 231, "ipv4-address", true);
+
+    // Initialize reference data.
+    std::vector<IOAddress> addresses;
+    addresses.push_back(IOAddress("192.168.0.1"));
+    addresses.push_back(IOAddress("127.0.0.1"));
+    addresses.push_back(IOAddress("10.10.1.2"));
+
+    // Store the collection of IPv4 addresses into the buffer.
+    OptionBuffer buf;
+    for (int i = 0; i < addresses.size(); ++i) {
+        writeAddress(addresses[i], buf);
+    }
+
+    // Use the input buffer to create custom option.
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V4, buf.begin(), buf.begin() + 13));
+    );
+    ASSERT_TRUE(option);
+
+    // We expect 3 IPv4 addresses being stored in the option.
+    for (int i = 0; i < 3; ++i) {
+        IOAddress address("10.10.10.10");
+        ASSERT_NO_THROW(option->readAddress(i, address));
+        EXPECT_EQ(addresses[i].toText(), address.toText());
+    }
+
+    // Remove all addresses we had added. We are going to replace
+    // them with a new set of addresses.
+    addresses.clear();
+
+    // Add new addresses.
+    addresses.push_back(IOAddress("10.1.2.3"));
+    addresses.push_back(IOAddress("85.26.43.234"));
+
+    // Clear the buffer as we need to store new addresses in it.
+    buf.clear();
+    for (int i = 0; i < addresses.size(); ++i) {
+        writeAddress(addresses[i], buf);
+    }
+
+    // Perform 'unpack'.
+    ASSERT_NO_THROW(option->unpack(buf.begin(), buf.end()));
+
+    // Verify that the addresses have been overwritten.
+    for (int i = 0; i < 2; ++i) {
+        IOAddress address("10.10.10.10");
+        ASSERT_NO_THROW(option->readAddress(i, address));
+        EXPECT_EQ(addresses[i].toText(), address.toText());
+    }
+}
+
+// The purpose of this test is to verify that new data can be set for
+// a custom option.
+TEST_F(OptionCustomTest, setData) 
+{
+    OptionDefinition opt_def("OPTION_FOO", 1000, "ipv6-address", true);
+
+    // Initialize reference data.
+    std::vector<IOAddress> addresses;
+    addresses.push_back(IOAddress("2001:db8:1::3"));
+    addresses.push_back(IOAddress("::1"));
+    addresses.push_back(IOAddress("fe80::3"));
+
+    // Store the collection of IPv6 addresses into the buffer.
+    OptionBuffer buf;
+    for (int i = 0; i < addresses.size(); ++i) {
+        writeAddress(addresses[i], buf);
+    }
+
+    // Use the input buffer to create custom option.
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 70));
+    );
+    ASSERT_TRUE(option);
+
+    // We expect 3 IPv6 addresses being stored in the option.
+    for (int i = 0; i < 3; ++i) {
+        IOAddress address("fe80::4");
+        ASSERT_NO_THROW(option->readAddress(i, address));
+        EXPECT_EQ(addresses[i].toText(), address.toText());
+    }
+
+    // Clear addresses we had previously added.
+    addresses.clear();
+
+    // Store new addresses.
+    addresses.push_back(IOAddress("::1"));
+    addresses.push_back(IOAddress("fe80::10"));
+
+    // Clear the buffer as we need to store new addresses in it.
+    buf.clear();
+    for (int i = 0; i < addresses.size(); ++i) {
+        writeAddress(addresses[i], buf);
+    }
+
+    // Replace the option data.
+    ASSERT_NO_THROW(option->setData(buf.begin(), buf.end()));
+
+    // Check that it has been replaced.
+    for (int i = 0; i < 2; ++i) {
+        IOAddress address("10.10.10.10");
+        ASSERT_NO_THROW(option->readAddress(i, address));
+        EXPECT_EQ(addresses[i].toText(), address.toText());
+    }
+}
+
 } // anonymous namespace
