@@ -37,7 +37,7 @@ using namespace std;
 using namespace boost;
 
 using namespace isc::util;
-using namespace isc::dns::rdata; 
+using namespace isc::dns::rdata;
 
 namespace isc {
 namespace dns {
@@ -307,7 +307,7 @@ namespace {
 /// This could be simplified using strncasecmp(), but unfortunately it's not
 /// included in <cstring>.  To be as much as portable within the C++ standard
 /// we take the "in house" approach here.
-/// 
+///
 bool CICharEqual(char c1, char c2) {
     return (tolower(static_cast<unsigned char>(c1)) ==
             tolower(static_cast<unsigned char>(c2)));
