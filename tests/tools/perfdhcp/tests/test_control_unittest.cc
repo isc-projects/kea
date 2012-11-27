@@ -896,7 +896,7 @@ TEST_F(TestControlTest, Packet6) {
     }
 }
 
-TEST_F(TestControlTest, Packet4Exchange) {
+TEST_F(TestControlTest, DISABLED_Packet4Exchange) {
     // Get the local loopback interface to open socket on
     // it and test packets exchanges. We don't want to fail
     // the test if interface is not available.
@@ -939,7 +939,7 @@ TEST_F(TestControlTest, Packet4Exchange) {
     EXPECT_EQ(12, iterations_performed);
 }
 
-TEST_F(TestControlTest, Packet6Exchange) {
+TEST_F(TestControlTest, DISABLED_Packet6Exchange) {
     // Get the local loopback interface to open socket on
     // it and test packets exchanges. We don't want to fail
     // the test if interface is not available.
