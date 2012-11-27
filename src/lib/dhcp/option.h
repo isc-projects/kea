@@ -164,7 +164,7 @@ public:
     ///
     /// @param buf pointer to a buffer
     ///
-    /// @throw BadValid Universe of the option is neither V4 nor V6.
+    /// @throw BadValue Universe of the option is neither V4 nor V6.
     virtual void pack(isc::util::OutputBuffer& buf);
 
     /// @brief Writes option in a wire-format to a buffer.
@@ -177,7 +177,7 @@ public:
     /// @param buf output buffer (option will be stored there)
     ///
     /// @throw OutOfRange Option type is greater than 255.
-    /// @throw BadValid Universe is not V4.
+    /// @throw BadValue Universe is not V4.
     virtual void pack4(isc::util::OutputBuffer& buf);
 
     /// @brief Parses received buffer.
@@ -309,7 +309,7 @@ protected:
     ///
     /// @param buf output buffer (built options will be stored here)
     ///
-    /// @throw BadValid Universe is not V6.
+    /// @throw BadValue Universe is not V6.
     virtual void pack6(isc::util::OutputBuffer& buf);
 
     /// @brief A private method used for option correctness.
