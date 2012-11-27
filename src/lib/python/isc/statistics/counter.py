@@ -160,9 +160,11 @@ class Counter():
         return cls._COUNTER
 
     # These method are dummies for isc.notify.notify_out.
+    @staticmethod
     def inc_notifyoutv4(arg):
         """An empty method to be disclosed"""
         pass
+    @staticmethod
     def inc_notifyoutv6(arg):
         """An empty method to be disclosed"""
         pass
