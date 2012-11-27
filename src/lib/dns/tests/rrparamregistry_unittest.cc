@@ -24,6 +24,10 @@
 #include <dns/rdataclass.h>
 #include <dns/rrparamregistry.h>
 #include <dns/rrtype.h>
+#include <dns/master_loader.h>
+
+#include <boost/scoped_ptr.hpp>
+#include <boost/bind.hpp>
 
 using namespace std;
 using namespace isc::dns;
@@ -151,6 +155,27 @@ TEST_F(RRParamRegistryTest, addRemoveFactory) {
                     RRType(test_type_code)));
     EXPECT_FALSE(RRParamRegistry::getRegistry().removeRdataFactory(
                      RRType(test_type_code)));
+}
+
+void dummyCallback(const string&, size_t, const string&) {
+}
+
+TEST_F(RRParamRegistryTest, createFromLexer) {
+    boost::scoped_ptr<AbstractRdataFactory> rdf(new TestRdataFactory);
+
+    std::stringstream ss("192.168.0.1");
+    MasterLexer lexer;
+    lexer.pushSource(ss);
+
+    const MasterLoaderCallbacks::IssueCallback callback
+        (boost::bind(&dummyCallback, _1, _2, _3));
+    MasterLoaderCallbacks callbacks(callback, callback);
+    Name origin("example.org.");
+
+    const RdataPtr rdata = rdf->create(lexer, &origin,
+                                       MasterLoader::MANY_ERRORS,
+                                       callbacks);
+    EXPECT_EQ(0, in::A("192.168.0.1").compare(*rdata));
 }
 
 }
