@@ -64,6 +64,11 @@ public:
     OptionCustom(const OptionDefinition& def, Universe u,
                  OptionBufferConstIter first, OptionBufferConstIter last);
 
+    /// @brief Return a number of the data fields.
+    ///
+    /// @return number of data fields held by the option.
+    uint32_t getDataFieldsNum() const { return (buffers_.size()); }
+
     /// @brief Read a buffer as IP address.
     ///
     /// @param index buffer index.
