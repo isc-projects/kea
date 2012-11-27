@@ -484,7 +484,7 @@ TEST_F(MasterLexerStateTest, basicNumbers) {
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
     s_number.handle(lexer);
-    EXPECT_EQ(4294967295, s_number.getToken(lexer).getNumber());
+    EXPECT_EQ(4294967295u, s_number.getToken(lexer).getNumber());
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
     s_number.handle(lexer);
@@ -496,7 +496,7 @@ TEST_F(MasterLexerStateTest, basicNumbers) {
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
     s_number.handle(lexer);
-    EXPECT_EQ(2808348672, s_number.getToken(lexer).getNumber());
+    EXPECT_EQ(2808348672u, s_number.getToken(lexer).getNumber());
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
     s_number.handle(lexer);
