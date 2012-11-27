@@ -242,4 +242,110 @@ TEST_F(ZoneLoaderTest, copyMissingSource) {
                             source_client_), DataSourceError);
 }
 
+// Load an unsigned zone, all at once
+TEST_F(ZoneLoaderTest, loadUnsigned) {
+    ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
+                      TEST_DATA_DIR "root.zone");
+    // It gets the updater directly in the constructor
+    ASSERT_EQ(1, destination_client_.provided_updaters_.size());
+    EXPECT_EQ(Name::ROOT_NAME(), destination_client_.provided_updaters_[0]);
+    // Now load the whole zone
+    loader.load();
+    EXPECT_TRUE(destination_client_.commit_called_);
+    // We don't check the whole zone. We check the first and last and the
+    // count, which should be enough.
+
+    // The count is 34 because we expect the RRs to be separated.
+    EXPECT_EQ(34, destination_client_.rrsets_.size());
+    // Ensure known order.
+    std::sort(destination_client_.rrsets_.begin(),
+              destination_client_.rrsets_.end());
+    EXPECT_EQ(". 518400 IN NS a.root-servers.net.\n",
+              destination_client_.rrsets_.front());
+    EXPECT_EQ("m.root-servers.net. 3600000 IN AAAA 2001:dc3::35\n",
+              destination_client_.rrsets_.back());
+
+    // It isn't possible to try again now
+    EXPECT_THROW(loader.load(), isc::InvalidOperation);
+    EXPECT_THROW(loader.loadIncremental(1), isc::InvalidOperation);
+    // Even 0, which should load nothing, returns the error
+    EXPECT_THROW(loader.loadIncremental(0), isc::InvalidOperation);
+}
+
+// Try loading from master file incrementally.
+TEST_F(ZoneLoaderTest, loadUnsignedIncremental) {
+    ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
+                      TEST_DATA_DIR "/root.zone");
+
+    // Try loading few RRs first.
+    loader.loadIncremental(10);
+    // We should get the 10 we asked for
+    EXPECT_EQ(10, destination_client_.rrsets_.size());
+    // Not committed yet, we didn't complete the loading
+    EXPECT_FALSE(destination_client_.commit_called_);
+
+    // This is unusual, but allowed. Check it doesn't do anything
+    loader.loadIncremental(0);
+    EXPECT_EQ(10, destination_client_.rrsets_.size());
+    EXPECT_FALSE(destination_client_.commit_called_);
+
+    // We can finish the rest
+    loader.loadIncremental(30);
+    EXPECT_EQ(34, destination_client_.rrsets_.size());
+    EXPECT_TRUE(destination_client_.commit_called_);
+
+    // No more loading now
+    EXPECT_THROW(loader.load(), isc::InvalidOperation);
+    EXPECT_THROW(loader.loadIncremental(1), isc::InvalidOperation);
+    EXPECT_THROW(loader.loadIncremental(0), isc::InvalidOperation);
+}
+
+// If the destination zone does not exist, it throws
+TEST_F(ZoneLoaderTest, loadMissingDestination) {
+    destination_client_.missing_zone_ = true;
+    EXPECT_THROW(ZoneLoader(destination_client_, Name::ROOT_NAME(),
+                            TEST_DATA_DIR "/root.zone"), DataSourceError);
+}
+
+// Check we can load RRSIGs and NSEC3 (which could break due to them being
+// in separate namespace)
+TEST_F(ZoneLoaderTest, loadSigned) {
+    ZoneLoader loader(destination_client_, Name("example.org"),
+                      TEST_DATA_DIR "/example.org.nsec3-signed");
+    loader.load();
+
+    // All the RRs are there, including the ones in NSEC3 namespace
+    EXPECT_EQ(14, destination_client_.rrsets_.size());
+    EXPECT_TRUE(destination_client_.commit_called_);
+    // Same trick with sorting to know where they are
+    std::sort(destination_client_.rrsets_.begin(),
+              destination_client_.rrsets_.end());
+    // Due to the R at the beginning, this one should be last
+    EXPECT_EQ("09GM5T42SMIMT7R8DF6RTG80SFMS1NLU.example.org. 1200 IN NSEC3 "
+              "1 0 10 AABBCCDD RKOF8QMFRB5F2V9EJHFBVB2JPVSA0DJD A RRSIG\n",
+              destination_client_.rrsets_[0]);
+    EXPECT_EQ("09GM5T42SMIMT7R8DF6RTG80SFMS1NLU.example.org. 1200 IN RRSIG "
+              "NSEC3 7 3 1200 20120301040838 20120131040838 19562 example.org."
+              " EdwMeepLf//lV+KpCAN+213Scv1rrZyj4i2OwoCP4XxxS3CWGSuvYuKOyfZc8w"
+              "KRcrD/4YG6nZVXE0s5O8NahjBJmDIyVt4WkfZ6QthxGg8ggLVvcD3dFksPyiKHf"
+              "/WrTOZPSsxvN5m/i1Ey6+YWS01Gf3WDCMWDauC7Nmh3CTM=\n",
+              destination_client_.rrsets_[1]);
+}
+
+// Test it throws when there's no such file
+TEST_F(ZoneLoaderTest, loadNoSuchFile) {
+    EXPECT_THROW(ZoneLoader(destination_client_, Name::ROOT_NAME(),
+                            "This file does not exist"), MasterFileError);
+}
+
+// And it also throws when there's a syntax error in the master file
+TEST_F(ZoneLoaderTest, loadSyntaxError) {
+    EXPECT_THROW(ZoneLoader(destination_client_, Name::ROOT_NAME(),
+                            // This is not a master file for sure
+                            // (misusing a file that happens to be there
+                            // already).
+                            TEST_DATA_DIR "/example.org.sqlite3"),
+                 MasterFileError);
+}
+
 }
