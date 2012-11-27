@@ -169,4 +169,33 @@ TEST_F(ZoneLoaderTest, copyUnsigned) {
     EXPECT_THROW(loader.loadIncremental(0), isc::InvalidOperation);
 }
 
+// Try loading incrementally.
+TEST_F(ZoneLoaderTest, copyUnsignedIncremental) {
+    prepareSource(Name::ROOT_NAME(), "root.zone");
+    ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
+                      source_client_);
+
+    // Try loading few RRs first.
+    loader.loadIncremental(10);
+    // We should get the 10 we asked for
+    EXPECT_EQ(10, destination_client_.rrsets_.size());
+    // Not committed yet, we didn't complete the loading
+    EXPECT_FALSE(destination_client_.commit_called_);
+
+    // This is unusual, but allowed. Check it doesn't do anything
+    loader.loadIncremental(0);
+    EXPECT_EQ(10, destination_client_.rrsets_.size());
+    EXPECT_FALSE(destination_client_.commit_called_);
+
+    // We can finish the rest
+    loader.loadIncremental(30);
+    EXPECT_EQ(34, destination_client_.rrsets_.size());
+    EXPECT_TRUE(destination_client_.commit_called_);
+
+    // No more loading now
+    EXPECT_THROW(loader.load(), isc::InvalidOperation);
+    EXPECT_THROW(loader.loadIncremental(1), isc::InvalidOperation);
+    EXPECT_THROW(loader.loadIncremental(0), isc::InvalidOperation);
+}
+
 }
