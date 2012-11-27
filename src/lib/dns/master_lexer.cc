@@ -33,9 +33,13 @@ typedef boost::shared_ptr<master_lexer_internal::InputSource> InputSourcePtr;
 }
 using namespace master_lexer_internal;
 
+
 struct MasterLexer::MasterLexerImpl {
     MasterLexerImpl() : source_(NULL), token_(Token::NOT_STARTED),
-                        paren_count_(0), last_was_eol_(false)
+                        paren_count_(0), last_was_eol_(false),
+                        has_previous_(false),
+                        previous_paren_count_(0),
+                        previous_was_eol_(false)
     {
         separators_.set('\r');
         separators_.set('\n');
@@ -91,6 +95,11 @@ struct MasterLexer::MasterLexerImpl {
     // if escaped by a backslash.  See isTokenEnd() for the bitmap size.
     std::bitset<128> separators_;
     std::bitset<128> esc_separators_;
+
+    // These are to allow restoring state before previous token.
+    bool has_previous_;
+    size_t previous_paren_count_;
+    bool previous_was_eol_;
 };
 
 MasterLexer::MasterLexer() : impl_(new MasterLexerImpl) {
@@ -116,6 +125,7 @@ MasterLexer::pushSource(const char* filename, std::string* error) {
     }
 
     impl_->source_ = impl_->sources_.back().get();
+    impl_->has_previous_ = false;
     return (true);
 }
 
@@ -123,6 +133,7 @@ void
 MasterLexer::pushSource(std::istream& input) {
     impl_->sources_.push_back(InputSourcePtr(new InputSource(input)));
     impl_->source_ = impl_->sources_.back().get();
+    impl_->has_previous_ = false;
 }
 
 void
@@ -134,6 +145,7 @@ MasterLexer::popSource() {
     impl_->sources_.pop_back();
     impl_->source_ = impl_->sources_.empty() ? NULL :
         impl_->sources_.back().get();
+    impl_->has_previous_ = false;
 }
 
 std::string
@@ -152,12 +164,53 @@ MasterLexer::getSourceLine() const {
     return (impl_->sources_.back()->getCurrentLine());
 }
 
+const MasterLexer::Token&
+MasterLexer::getNextToken(Options options) {
+    // If the source is not available
+    if (impl_->source_ == NULL) {
+        isc_throw(isc::InvalidOperation, "No source to read tokens from");
+    }
+    // Store the current state so we can restore it in ungetToken
+    impl_->previous_paren_count_ = impl_->paren_count_;
+    impl_->previous_was_eol_ = impl_->last_was_eol_;
+    impl_->source_->mark();
+    impl_->has_previous_ = true;
+    // Reset the token now. This is to check a token was actually produced.
+    // This is debugging aid.
+    impl_->token_ = Token(Token::NO_TOKEN_PRODUCED);
+    // And get the token
+
+    // This actually handles EOF internally too.
+    const State* state = State::start(*this, options);
+    if (state != NULL) {
+        state->handle(*this);
+    }
+    // Make sure a token was produced. Since this Can Not Happen, we assert
+    // here instead of throwing.
+    assert(impl_->token_.getType() != Token::ERROR ||
+           impl_->token_.getErrorCode() != Token::NO_TOKEN_PRODUCED);
+    return (impl_->token_);
+}
+
+void
+MasterLexer::ungetToken() {
+    if (impl_->has_previous_) {
+        impl_->has_previous_ = false;
+        impl_->source_->ungetAll();
+        impl_->last_was_eol_ = impl_->previous_was_eol_;
+        impl_->paren_count_ = impl_->previous_paren_count_;
+    } else {
+        isc_throw(isc::InvalidOperation, "No token to unget ready");
+    }
+}
+
 namespace {
 const char* const error_text[] = {
     "lexer not started",        // NOT_STARTED
     "unbalanced parentheses",   // UNBALANCED_PAREN
     "unexpected end of input",  // UNEXPECTED_END
-    "unbalanced quotes"         // UNBALANCED_QUOTES
+    "unbalanced quotes",        // UNBALANCED_QUOTES
+    "no token produced"         // NO_TOKEN_PRODUCED
 };
 const size_t error_text_max_count = sizeof(error_text) / sizeof(error_text[0]);
 }
@@ -201,7 +254,7 @@ class CRLF : public State {
 public:
     CRLF() {}
     virtual ~CRLF() {}          // see the base class for the destructor
-    virtual const State* handle(MasterLexer& lexer) const {
+    virtual void handle(MasterLexer& lexer) const {
         // We've just seen '\r'.  If this is part of a sequence of '\r\n',
         // we combine them as a single END-OF-LINE.  Otherwise we treat the
         // single '\r' as an EOL and continue tokeniziation from the character
@@ -218,7 +271,6 @@ public:
         }
         getLexerImpl(lexer)->token_ = Token(Token::END_OF_LINE);
         getLexerImpl(lexer)->last_was_eol_ = true;
-        return (NULL);
     }
 };
 
@@ -226,14 +278,14 @@ class String : public State {
 public:
     String() {}
     virtual ~String() {}      // see the base class for the destructor
-    virtual const State* handle(MasterLexer& lexer) const;
+    virtual void handle(MasterLexer& lexer) const;
 };
 
 class QString : public State {
 public:
     QString() {}
     virtual ~QString() {}      // see the base class for the destructor
-    virtual const State* handle(MasterLexer& lexer) const;
+    virtual void handle(MasterLexer& lexer) const;
 };
 
 // We use a common instance of a each state in a singleton-like way to save
@@ -325,7 +377,7 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
     }
 }
 
-const State*
+void
 String::handle(MasterLexer& lexer) const {
     std::vector<char>& data = getLexerImpl(lexer)->data_;
     data.clear();
@@ -339,14 +391,14 @@ String::handle(MasterLexer& lexer) const {
             getLexerImpl(lexer)->source_->ungetChar();
             getLexerImpl(lexer)->token_ =
                 MasterLexer::Token(&data.at(0), data.size());
-            return (NULL);
+            return;
         }
         escaped = (c == '\\' && !escaped);
         data.push_back(c);
     }
 }
 
-const State*
+void
 QString::handle(MasterLexer& lexer) const {
     MasterLexer::Token& token = getLexerImpl(lexer)->token_;
     std::vector<char>& data = getLexerImpl(lexer)->data_;
@@ -357,7 +409,7 @@ QString::handle(MasterLexer& lexer) const {
         const int c = getLexerImpl(lexer)->source_->getChar();
         if (c == InputSource::END_OF_STREAM) {
             token = Token(Token::UNEXPECTED_END);
-            return (NULL);
+            return;
         } else if (c == '"') {
             if (escaped) {
                 // found escaped '"'. overwrite the preceding backslash.
@@ -366,12 +418,12 @@ QString::handle(MasterLexer& lexer) const {
                 data.back() = '"';
             } else {
                 token = MasterLexer::Token(&data.at(0), data.size(), true);
-                return (NULL);
+                return;
             }
         } else if (c == '\n' && !escaped) {
             getLexerImpl(lexer)->source_->ungetChar();
             token = Token(Token::UNBALANCED_QUOTES);
-            return (NULL);
+            return;
         } else {
             escaped = (c == '\\' && !escaped);
             data.push_back(c);
