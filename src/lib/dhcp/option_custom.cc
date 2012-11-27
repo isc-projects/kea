@@ -116,8 +116,13 @@ OptionCustom::pack4(isc::util::OutputBuffer& buf) {
     buf.writeUint8(type_);
     buf.writeUint8(len() - getHeaderLen());
 
-    // @todo write option data here
+    // Write data from buffers.
+    for (std::vector<OptionBuffer>::const_iterator it = buffers_.begin();
+         it != buffers_.end(); ++it) {
+        buf.writeData(&(*it)[0], it->size());
+    }
 
+    // Write suboptions.
     LibDHCP::packOptions(buf, options_);
 }
 
@@ -126,7 +131,11 @@ OptionCustom::pack6(isc::util::OutputBuffer& buf) {
     buf.writeUint16(type_);
     buf.writeUint16(len() - getHeaderLen());
 
-    // @todo write option data here.
+    // Write data from buffers.
+    for (std::vector<OptionBuffer>::const_iterator it = buffers_.begin();
+         it != buffers_.end(); ++it) {
+        buf.writeData(&(*it)[0], it->size());
+    }
 
     LibDHCP::packOptions(buf, options_);
 }
@@ -168,8 +177,10 @@ OptionCustom::readString(const uint32_t index, std::string& value) const {
 
 void
 OptionCustom::unpack(OptionBufferConstIter begin,
-                           OptionBufferConstIter end) {
+                     OptionBufferConstIter end) {
     data_ = OptionBuffer(begin, end);
+    // Chop the buffer stored in data_ into set of sub buffers.
+    createBuffers();
 }
 
 uint16_t
@@ -180,7 +191,7 @@ OptionCustom::len() {
     // ... lengths of all buffers that hold option data ...
     for (std::vector<OptionBuffer>::const_iterator buf = buffers_.begin();
          buf != buffers_.end(); ++buf) {
-        length += buf.size();
+        length += buf->size();
     }
 
     // ... and lengths of all suboptions
@@ -191,11 +202,6 @@ OptionCustom::len() {
     }
 
     return (length);
-}
-
-bool
-OptionCustom::valid() {
-    return (Option::valid());
 }
 
 std::string OptionCustom::toText(int /* =0 */ ) {

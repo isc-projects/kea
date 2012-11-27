@@ -91,6 +91,7 @@ public:
     /// @brief Read a buffer as integer value.
     ///
     /// @param index buffer index.
+    /// @tparam integer type of a value being returned.
     ///
     /// @throw isc::OutOfRange if index is out of range.
     /// @return read integer value.
@@ -160,17 +161,6 @@ public:
     ///
     /// @return length of the option
     virtual uint16_t len();
-
-    /// Check if option is valid.
-    ///
-    /// @return true, if option is valid.
-    virtual bool valid();
-
-    /// Returns pointer to actual data.
-    ///
-    /// @return pointer to actual data (or reference to an empty vector
-    /// if there is no data).
-    virtual const OptionBuffer& getData() { return (data_); }
 
     /// @brief Sets content of this option from buffer.
     ///
