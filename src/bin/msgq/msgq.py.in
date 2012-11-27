@@ -493,9 +493,7 @@ class MsgQ:
             try:
                 # Poll with a timeout so that every once in a while,
                 # the loop checks for self.running.
-                # Timeout set to 2 seconds so as not to block too long,
-                # but also not cause too many loop cycles
-                events = self.poller.poll(2000)
+                events = self.poller.poll()
             except select.error as err:
                 if err.args[0] == errno.EINTR:
                     events = []
@@ -517,9 +515,7 @@ class MsgQ:
         while self.running:
             # Check with a timeout so that every once in a while,
             # the loop checks for self.running.
-            # Timeout set to 2 seconds so as not to block too long,
-            # but also not cause too many loop cycles
-            events = self.kqueue.control(None, 10, 2)
+            events = self.kqueue.control(None, 10)
             if not events:
                 raise RuntimeError('serve: kqueue returned no events')
 
