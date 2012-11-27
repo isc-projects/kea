@@ -45,8 +45,8 @@ rm -f $destfile1 $destfile2
 ./logger_example -s error -f $destfile1_tmp -f $destfile2_tmp
 
 # strip the pids
-sed -e 's/\[\([a-z0-9\.]\+\)\/\([0-9]\+\)\]/[\1]/' < $destfile1_tmp > $destfile1
-sed -e 's/\[\([a-z0-9\.]\+\)\/\([0-9]\+\)\]/[\1]/' < $destfile2_tmp > $destfile2
+sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' < $destfile1_tmp > $destfile1
+sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' < $destfile2_tmp > $destfile2
 
 echo -n  "   - destination 1:"
 cut -d' ' -f3- $destfile1 | diff $tempfile -
@@ -64,8 +64,8 @@ rm -f $destfile1 $destfile2
 ./logger_example -l example -s info -f $destfile1_tmp -l alpha -s warn -f $destfile2_tmp
 
 # strip the pids
-sed -e 's/\[\([a-z0-9\.]\+\)\/\([0-9]\+\)\]/[\1]/' < $destfile1_tmp > $destfile1
-sed -e 's/\[\([a-z0-9\.]\+\)\/\([0-9]\+\)\]/[\1]/' < $destfile2_tmp > $destfile2
+sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' < $destfile1_tmp > $destfile1
+sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' < $destfile2_tmp > $destfile2
 
 # All output for example and example.beta should have gone to destfile1.
 # Output for example.alpha should have done to destfile2.

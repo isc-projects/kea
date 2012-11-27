@@ -46,7 +46,7 @@ ERROR [bind10.log] LOG_DUPLICATE_MESSAGE_ID duplicate message ID (error) in comp
 FATAL [bind10.log] LOG_NO_MESSAGE_ID line fatal: message definition line found without a message ID
 .
 B10_LOGGER_DESTINATION=stdout B10_LOGGER_SEVERITY=DEBUG B10_LOGGER_DBGLEVEL=99 ./init_logger_test | \
-    sed -e 's/\[\([a-z0-9\.]\+\)\/\([0-9]\+\)\]/[\1]/' | \
+    sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' | \
     cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
@@ -60,7 +60,7 @@ ERROR [bind10.log] LOG_DUPLICATE_MESSAGE_ID duplicate message ID (error) in comp
 FATAL [bind10.log] LOG_NO_MESSAGE_ID line fatal: message definition line found without a message ID
 .
 B10_LOGGER_DESTINATION=stdout B10_LOGGER_SEVERITY=DEBUG B10_LOGGER_DBGLEVEL=50 ./init_logger_test | \
-    sed -e 's/\[\([a-z0-9\.]\+\)\/\([0-9]\+\)\]/[\1]/' | \
+    sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' | \
     cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
@@ -71,7 +71,7 @@ ERROR [bind10.log] LOG_DUPLICATE_MESSAGE_ID duplicate message ID (error) in comp
 FATAL [bind10.log] LOG_NO_MESSAGE_ID line fatal: message definition line found without a message ID
 .
 B10_LOGGER_DESTINATION=stdout B10_LOGGER_SEVERITY=WARN ./init_logger_test | \
-    sed -e 's/\[\([a-z0-9\.]\+\)\/\([0-9]\+\)\]/[\1]/' | \
+    sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' | \
     cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
@@ -83,21 +83,21 @@ FATAL [bind10.log] LOG_NO_MESSAGE_ID line fatal: message definition line found w
 .
 rm -f $destfile_tmp $destfile
 B10_LOGGER_SEVERITY=FATAL B10_LOGGER_DESTINATION=stdout ./init_logger_test 1> $destfile_tmp
-sed -e 's/\[\([a-z0-9\.]\+\)\/\([0-9]\+\)\]/[\1]/' < $destfile_tmp > $destfile
+sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' < $destfile_tmp > $destfile
 cut -d' ' -f3- $destfile | diff $tempfile -
 passfail $?
 
 echo -n  "   - stderr: "
 rm -f $destfile_tmp $destfile
 B10_LOGGER_SEVERITY=FATAL B10_LOGGER_DESTINATION=stderr ./init_logger_test 2> $destfile_tmp
-sed -e 's/\[\([a-z0-9\.]\+\)\/\([0-9]\+\)\]/[\1]/' < $destfile_tmp > $destfile
+sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' < $destfile_tmp > $destfile
 cut -d' ' -f3- $destfile | diff $tempfile -
 passfail $?
 
 echo -n  "   - file: "
 rm -f $destfile_tmp $destfile
 B10_LOGGER_SEVERITY=FATAL B10_LOGGER_DESTINATION=$destfile_tmp ./init_logger_test
-sed -e 's/\[\([a-z0-9\.]\+\)\/\([0-9]\+\)\]/[\1]/' < $destfile_tmp > $destfile
+sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' < $destfile_tmp > $destfile
 cut -d' ' -f3- $destfile | diff $tempfile -
 passfail $?
 
