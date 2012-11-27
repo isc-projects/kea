@@ -181,6 +181,19 @@ public:
     }
 };
 
+template <typename T>
+class RdataFactory : public OldRdataFactory<T> {
+public:
+    using OldRdataFactory<T>::create;
+
+    virtual RdataPtr create(MasterLexer& lexer, const Name* origin,
+                            MasterLoader::Options options,
+                            MasterLoaderCallbacks& callbacks) const {
+        return (RdataPtr(new T(dynamic_cast<const T&>(lexer, origin, options,
+                                                      callbacks))));
+    }
+};
+
 ///
 /// \brief The \c RRParamRegistryImpl class is the actual implementation of
 /// \c RRParamRegistry.
