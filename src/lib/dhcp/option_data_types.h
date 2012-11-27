@@ -77,7 +77,7 @@ struct OptionDataTypeTraits {
 template<>
 struct OptionDataTypeTraits<OptionBuffer> {
     static const bool valid = true;
-    static const int len = sizeof(OptionBuffer);
+    static const int len = 0;
     static const bool integer_type = false;
     static const OptionDataType type = OPT_BINARY_TYPE;
 };
@@ -178,15 +178,19 @@ struct OptionDataTypeTraits<std::string> {
 class OptionDataTypeUtil {
 public:
 
-    /// @brief Get data type size.
+    /// @brief Get data type buffer length.
     ///
     /// This functionm returs the size of a particular data type.
     /// Values retured by this function correspond to the data type
-    /// sizes defined in OptionDataTypeTraits so they rather indicate
+    /// sizes defined in OptionDataTypeTraits (IPV4_ADDRESS_TYPE and
+    /// IPV6_ADDRESS_TYPE are exceptions here) so they rather indicate
     /// the fixed length of the data being written into the buffer,
     /// not the sizeof the particular data type. Thus for data types
     /// such as string, binary etc. for which the buffer length can't
     /// be determined this function returns 0.
+    /// In addition, this function returns the data sizes for
+    /// IPV4_ADDRESS_TYPE and IPV6_ADDRESS_TYPE as their buffer
+    /// representations have fixed data lengths: 4 and 16 respectively.
     ///
     /// @param data_type data type which size is to be returned.
     /// @return data type size or zero for variable length types.
