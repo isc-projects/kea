@@ -32,6 +32,10 @@ public:
     /// @brief Constructor.
     OptionCustomTest() { }
 
+    /// @brief Write IP address into a buffer.
+    ///
+    /// @param address address to be written.
+    /// @param [out] buf output buffer.
     void writeAddress(const asiolink::IOAddress& address,
                       std::vector<uint8_t>& buf) {
         short family = address.getFamily();
@@ -46,6 +50,11 @@ public:
         }
     }
 
+    /// @brief Write integer (signed or unsiged) into a buffer.
+    ///
+    /// @param value integer value.
+    /// @param [out] buf output buffer.
+    /// @tparam integer type.
     template<typename T>
     void writeInt(T value, std::vector<uint8_t>& buf) {
         for (int i = 0; i < sizeof(T); ++i) {
@@ -53,6 +62,10 @@ public:
         }
     }
 
+    /// @brief Write a string into a buffer.
+    ///
+    /// @param value string to be written into a buffer.
+    /// @param buf output buffer.
     void writeString(const std::string& value,
                      std::vector<uint8_t>& buf) {
         buf.resize(buf.size() + value.size());
@@ -61,9 +74,38 @@ public:
     }
 };
 
+// The purpose of this test is to check that parameters passed to
+// a custom option's constructor are used to initialize class
+// members.
 TEST_F(OptionCustomTest, constructor) {
-    /*    OptionDefinition opt_def1("OPTION_FOO", 1000, "string", true);
-          ASSERT_THROW(opt_def1.validate(), isc::Exception); */
+    // Create option definition for a DHCPv6 option.
+    OptionDefinition opt_def1("OPTION_FOO", 1000, "boolean", true);
+
+    // Initialize some dummy buffer that holds single boolean value.
+    OptionBuffer buf;
+    buf.push_back(1);
+
+    // Create DHCPv6 option.
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def1, Option::V6, buf));
+    );
+    ASSERT_TRUE(option);
+
+    // Check if constructor initialized the universe and type correctly.
+    EXPECT_EQ(Option::V6, option->getUniverse());
+    EXPECT_EQ(1000, option->getType());
+
+    // Do another round of testing for DHCPv4 option.
+    OptionDefinition opt_def2("OPTION_FOO", 232, "boolean");
+
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def2, Option::V4, buf.begin(), buf.end()));
+    );
+    ASSERT_TRUE(option);
+
+    EXPECT_EQ(Option::V4, option->getUniverse());
+    EXPECT_EQ(232, option->getType());
 }
 
 // The purpose of this test is to verify that 'empty' option definition can
