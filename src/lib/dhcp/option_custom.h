@@ -38,66 +38,87 @@ namespace dhcp {
 class OptionCustom : public Option {
 public:
 
-    class OptionFieldBuffer {
-    public:
-        OptionFieldBuffer(OptionDataType type,
-                          const OptionBuffer& buf)
-            : type_(type), buf_(buf) {
-        }
-
-        const OptionBuffer& getBuffer() const {
-            return (buf_);
-        }
-
-        OptionDataType getType() const {
-            return (type_);
-        }
-
-    private:
-        OptionDataType type_;
-        OptionBuffer buf_;
-    };
-
     /// @brief Constructor, used for options to be sent.
     ///
+    /// @param def option definition.
     /// @param u specifies universe (V4 or V6).
     /// @param def option definition.
     /// @param data content of the option.
+    ///
+    /// @throw OutOfRange if option buffer is truncated.
+    ///
+    /// @todo list all exceptions thrown by ctor.
     OptionCustom(const OptionDefinition& def, Universe u, const OptionBuffer& data);
 
     /// @brief Constructor, used for received options.
     ///
-    /// @param u specifies universe (V4 or V6).
     /// @param def option definition.
+    /// @param u specifies universe (V4 or V6).
     /// @param first iterator to the first element that should be copied.
     /// @param last iterator to the next element after the last one
     /// to be copied.
+    ///
+    /// @throw OutOfRange if option buffer is truncated.
+    ///
+    /// @todo list all exceptions thrown by ctor.
     OptionCustom(const OptionDefinition& def, Universe u,
                  OptionBufferConstIter first, OptionBufferConstIter last);
 
+    /// @brief Read a buffer as IP address.
+    ///
+    /// @param index buffer index.
+    /// @param [out] address read IP address.
+    ///
+    /// @throw isc::OutOfRange if index is out of range.
     void readAddress(const uint32_t index, asiolink::IOAddress& address) const;
 
+    /// @brief Read a buffer as binary data.
+    ///
+    /// @param index buffer index.
+    ///
+    /// @throw isc::OutOfRange if index is out of range.
+    /// @return read buffer holding binary data.
     const OptionBuffer& readBinary(const uint32_t index) const;
 
+    /// @brief Read a buffer as boolean value.
+    ///
+    /// @param index buffer index.
+    ///
+    /// @throw isc::OutOfRange if index is out of range.
+    /// @return read boolean value.
     bool readBoolean(const uint32_t index) const;
 
+    /// @brief Read a buffer as integer value.
+    ///
+    /// @param index buffer index.
+    ///
+    /// @throw isc::OutOfRange if index is out of range.
+    /// @return read integer value.
     template<typename T>
     T readInteger(const uint32_t index) const {
         checkIndex(index);
 
+        // Check that the requested return type is a supported integer.
         if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(isc::dhcp::InvalidDataType, "specified data type to be returned"
                       " by readInteger is not supported integer type");
         }
 
+        // Get the option definition type.
         OptionDataType data_type = definition_.getType();
+        //
         if (data_type == OPT_RECORD_TYPE) {
             const OptionDefinition::RecordFieldsCollection& record_fields =
                 definition_.getRecordFields();
+            // When we initialized buffers we have already checked that
+            // the number of these buffers is equal to number of option
+            // fields in the record so the condition below should be met.
             assert(index < record_fields.size());
+            // Get the data type to be returned.
             data_type = record_fields[index];
         }
 
+        // Requested data type must match the data type in a record.
         if (OptionDataTypeTraits<T>::type != data_type) {
             isc_throw(isc::dhcp::InvalidDataType,
                       "unable to read option field with index " << index
@@ -105,10 +126,19 @@ public:
                       << data_type << " does not match the integer type"
                       << "returned by the readInteger function.");
         }
+        // When we created the buffer we have checked that it has a
+        // valid size so this condition here should be always fulfiled.
         assert(buffers_[index].size() == OptionDataTypeTraits<T>::len);
+        // Read an integer value.
         return (OptionDataTypeUtil::readInt<T>(buffers_[index]));
     }
 
+    /// @brief Read a buffer as string value.
+    ///
+    /// @param index buffer index.
+    /// @param [out] value read string value.
+    ///
+    /// @throw isc::OutOfRange if index is out of range.
     void readString(const uint32_t index, std::string& value) const;
 
     /// @brief Parses received buffer.
@@ -173,8 +203,12 @@ private:
     /// @brief Create collection of buffers representing data field values.
     void createBuffers();
 
+    /// Option definition used to create an option.
     OptionDefinition definition_;
 
+    /// The collection of buffers holding data for option fields.
+    /// The order of buffers corresponds to the order of option
+    /// fields.
     std::vector<OptionBuffer> buffers_;
 };
 
