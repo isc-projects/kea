@@ -146,8 +146,10 @@ class TestBasicMethods(unittest.TestCase):
                                  timer_name), 0)
 
 class BaseTestCounter():
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         imp.reload(counter)
+    def setUp(self):
         self._module_spec = isc.config.module_spec_from_file(
             self.TEST_SPECFILE_LOCATION)
         self.counter = counter.Counter.init(self.TEST_SPECFILE_LOCATION)
@@ -324,6 +326,9 @@ class BaseTestCounter():
 
 class TestCounter1(unittest.TestCase, BaseTestCounter):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
+    @classmethod
+    def setUpClass(cls):
+        BaseTestCounter.setUpClass()
     def setUp(self):
         BaseTestCounter.setUp(self)
     def tearDown(self):
@@ -331,6 +336,9 @@ class TestCounter1(unittest.TestCase, BaseTestCounter):
 
 class TestCounter2(unittest.TestCase, BaseTestCounter):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec2.spec'
+    @classmethod
+    def setUpClass(cls):
+        BaseTestCounter.setUpClass()
     def setUp(self):
         BaseTestCounter.setUp(self)
     def tearDown(self):
@@ -338,6 +346,9 @@ class TestCounter2(unittest.TestCase, BaseTestCounter):
 
 class TestCounter3(unittest.TestCase, BaseTestCounter):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec3.spec'
+    @classmethod
+    def setUpClass(cls):
+        BaseTestCounter.setUpClass()
     def setUp(self):
         BaseTestCounter.setUp(self)
     def tearDown(self):
