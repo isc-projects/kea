@@ -471,39 +471,39 @@ TEST_F(MasterLexerStateTest, basicNumbers) {
     lexer.pushSource(ss);
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer));
+    s_number.handle(lexer);
     EXPECT_EQ(0, s_number.getToken(lexer).getNumber());
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer));
+    s_number.handle(lexer);
     EXPECT_EQ(1, s_number.getToken(lexer).getNumber());
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer));
+    s_number.handle(lexer);
     EXPECT_EQ(12345, s_number.getToken(lexer).getNumber());
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer));
+    s_number.handle(lexer);
     EXPECT_EQ(4294967295, s_number.getToken(lexer).getNumber());
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer));
+    s_number.handle(lexer);
     EXPECT_EQ(0, s_number.getToken(lexer).getNumber());
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer));
+    s_number.handle(lexer);
     EXPECT_EQ(1, s_number.getToken(lexer).getNumber());
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer));
+    s_number.handle(lexer);
     EXPECT_EQ(2808348672, s_number.getToken(lexer).getNumber());
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer));
+    s_number.handle(lexer);
     EXPECT_EQ(5, s_number.getToken(lexer).getNumber());
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer));
+    s_number.handle(lexer);
     EXPECT_EQ(42, s_number.getToken(lexer).getNumber());
 
     EXPECT_EQ(s_null, State::start(lexer, common_options));
@@ -511,7 +511,7 @@ TEST_F(MasterLexerStateTest, basicNumbers) {
     EXPECT_EQ(Token::END_OF_LINE, s_crlf.getToken(lexer).getType());
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer));
+    s_number.handle(lexer);
     EXPECT_EQ(37, s_number.getToken(lexer).getNumber());
 
     // If we continue we'll simply see the EOF
@@ -538,45 +538,45 @@ TEST_F(MasterLexerStateTest, stringNumbers) {
     lexer.pushSource(ss);
 
     EXPECT_EQ(&s_string, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_string.handle(lexer));
+    s_string.handle(lexer);
     stringTokenCheck("-1", s_string.getToken(lexer), false);
 
     // Starts out as a number, but ends up being a string
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer));
+    s_number.handle(lexer);
     stringTokenCheck("123abc456", s_number.getToken(lexer), false);
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer));
+    s_number.handle(lexer);
     stringTokenCheck("123\\456", s_number.getToken(lexer), false);
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer)); // recognize str, see ' ' at end
+    s_number.handle(lexer); // recognize str, see ' ' at end
     stringTokenCheck("3scaped\\ space", s_number.getToken(lexer));
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer)); // recognize str, see ' ' at end
+    s_number.handle(lexer); // recognize str, see ' ' at end
     stringTokenCheck("3scaped\\\ttab", s_number.getToken(lexer));
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer)); // recognize str, see ' ' at end
+    s_number.handle(lexer); // recognize str, see ' ' at end
     stringTokenCheck("3scaped\\(paren", s_number.getToken(lexer));
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer)); // recognize str, see ' ' at end
+    s_number.handle(lexer); // recognize str, see ' ' at end
     stringTokenCheck("3scaped\\)close", s_number.getToken(lexer));
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer)); // recognize str, see ' ' at end
+    s_number.handle(lexer); // recognize str, see ' ' at end
     stringTokenCheck("3scaped\\;comment", s_number.getToken(lexer));
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer)); // recognize str, see ' ' in mid
+    s_number.handle(lexer); // recognize str, see ' ' in mid
     stringTokenCheck("3scaped\\\\", s_number.getToken(lexer));
 
     // Confirm the word that follows the escaped '\' is correctly recognized.
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    EXPECT_EQ(s_null, s_number.handle(lexer)); // recognize str, see ' ' at end
+    s_number.handle(lexer); // recognize str, see ' ' at end
     stringTokenCheck("8ackslash", s_number.getToken(lexer));
 
     // If we continue we'll simply see the EOF
