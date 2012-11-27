@@ -163,6 +163,8 @@ typedef map<RRType, RdataFactoryPtr> GenericRdataFactoryMap;
 template <typename T>
 class RdataFactory : public AbstractRdataFactory {
 public:
+    using AbstractRdataFactory::create;
+
     virtual RdataPtr create(const string& rdata_str) const
     {
         return (RdataPtr(new T(rdata_str)));
