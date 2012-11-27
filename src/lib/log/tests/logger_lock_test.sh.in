@@ -36,7 +36,8 @@ INFO  [bind10.log] LOG_LOCK_TEST_MESSAGE this is a test message.
 LOGGER_LOCK_TEST: UNLOCK
 .
 rm -f $destfile
-B10_LOGGER_SEVERITY=INFO B10_LOGGER_DESTINATION=stdout ./logger_lock_test > $destfile
+B10_LOGGER_SEVERITY=INFO B10_LOGGER_DESTINATION=stdout ./logger_lock_test | \
+    sed -e 's/\[\([a-z0-9\.]\+\)\/\([0-9]\+\)\]/[\1]/' > $destfile
 cut -d' ' -f3- $destfile | diff $tempfile -
 passfail $?
 
