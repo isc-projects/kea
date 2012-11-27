@@ -1,3 +1,8 @@
+509.	[func]		muks
+	Log messages now include the pid of the process that logged the
+	message.
+	(Trac #1745, git fc8bbf3d438e8154e7c2bdd322145a7f7854dc6a)
+
 508.	[bug]		stephen
 	Split the DHCP library into two directories, each with its own
 	Makefile.  This properly solves the problem whereby a "make"
