@@ -80,7 +80,7 @@ OptionCustom::createBuffers() {
             if (data_size == 0) {
                 isc_throw(OutOfRange, "option buffer truncated");
             }
-            buffers_.push_back(OptionBuffer(data, data + data_size));
+            buffers.push_back(OptionBuffer(data, data + data_size));
             data += data_size;
         }
     } else {
@@ -103,16 +103,17 @@ OptionCustom::createBuffers() {
             // have checked this already.
             assert(data_size > 0);
             do {
-                buffers_.push_back(OptionBuffer(data, data + data_size));
+                buffers.push_back(OptionBuffer(data, data + data_size));
                 data += data_size;
             } while (std::distance(data, data_.end()) >= data_size);
         } else {
             if (data_size == 0) {
                 data_size = std::distance(data, data_.end());
             }
-            buffers_.push_back(OptionBuffer(data, data + data_size));
+            buffers.push_back(OptionBuffer(data, data + data_size));
         }
     }
+    std::swap(buffers_, buffers);
 }
 
 void
@@ -232,6 +233,8 @@ void OptionCustom::setData(const OptionBufferConstIter first,
     // We will copy entire option buffer, so we have to resize data_.
     data_.resize(std::distance(first, last));
     std::copy(first, last, data_.begin());
+
+    createBuffers();
 }
 
 } // end of isc::dhcp namespace
