@@ -104,6 +104,7 @@ TEST_F(RRParamRegistryTest, addError) {
 
 class TestRdataFactory : public AbstractRdataFactory {
 public:
+    using AbstractRdataFactory::create;
     virtual RdataPtr create(const string& rdata_str) const
     { return (RdataPtr(new in::A(rdata_str))); }
     virtual RdataPtr create(InputBuffer& buffer, size_t rdata_len) const
