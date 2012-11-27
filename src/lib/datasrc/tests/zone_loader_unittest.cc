@@ -141,8 +141,7 @@ protected:
 // Use the loader to load an unsigned zone.
 TEST_F(ZoneLoaderTest, copyUnsigned) {
     prepareSource(Name::ROOT_NAME(), "root.zone");
-    ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
-                      source_client_);
+    ZoneLoader loader(destination_client_, Name::ROOT_NAME(), source_client_);
     // It gets the updater directly in the constructor
     ASSERT_EQ(1, destination_client_.provided_updaters_.size());
     EXPECT_EQ(Name::ROOT_NAME(), destination_client_.provided_updaters_[0]);
@@ -172,8 +171,7 @@ TEST_F(ZoneLoaderTest, copyUnsigned) {
 // Try loading incrementally.
 TEST_F(ZoneLoaderTest, copyUnsignedIncremental) {
     prepareSource(Name::ROOT_NAME(), "root.zone");
-    ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
-                      source_client_);
+    ZoneLoader loader(destination_client_, Name::ROOT_NAME(), source_client_);
 
     // Try loading few RRs first.
     loader.loadIncremental(10);
@@ -196,6 +194,32 @@ TEST_F(ZoneLoaderTest, copyUnsignedIncremental) {
     EXPECT_THROW(loader.load(), isc::InvalidOperation);
     EXPECT_THROW(loader.loadIncremental(1), isc::InvalidOperation);
     EXPECT_THROW(loader.loadIncremental(0), isc::InvalidOperation);
+}
+
+// Check we can load RRSIGs and NSEC3 (which could break due to them being
+// in separate namespace)
+TEST_F(ZoneLoaderTest, copySigned) {
+    prepareSource(Name("example.org"), "example.org.nsec3-signed");
+    ZoneLoader loader(destination_client_, Name("example.org"),
+                      source_client_);
+    loader.load();
+
+    // All the RRs are there, including the ones in NSEC3 namespace
+    EXPECT_EQ(14, destination_client_.rrsets_.size());
+    EXPECT_TRUE(destination_client_.commit_called_);
+    // Same trick with sorting to know where they are
+    std::sort(destination_client_.rrsets_.begin(),
+              destination_client_.rrsets_.end());
+    // Due to the R at the beginning, this one should be last
+    EXPECT_EQ("09GM5T42SMIMT7R8DF6RTG80SFMS1NLU.example.org. 1200 IN NSEC3 "
+              "1 0 10 AABBCCDD RKOF8QMFRB5F2V9EJHFBVB2JPVSA0DJD A RRSIG\n",
+              destination_client_.rrsets_[0]);
+    EXPECT_EQ("09GM5T42SMIMT7R8DF6RTG80SFMS1NLU.example.org. 1200 IN RRSIG "
+              "NSEC3 7 3 1200 20120301040838 20120131040838 19562 example.org."
+              " EdwMeepLf//lV+KpCAN+213Scv1rrZyj4i2OwoCP4XxxS3CWGSuvYuKOyfZc8w"
+              "KRcrD/4YG6nZVXE0s5O8NahjBJmDIyVt4WkfZ6QthxGg8ggLVvcD3dFksPyiKHf"
+              "/WrTOZPSsxvN5m/i1Ey6+YWS01Gf3WDCMWDauC7Nmh3CTM=\n",
+              destination_client_.rrsets_[1]);
 }
 
 }
