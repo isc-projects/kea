@@ -78,12 +78,20 @@ OptionCustom::createBuffers() {
             // are laid at the end).
             if (data_size == 0) {
                 data_size = std::distance(data, data_.end());
-            }
-            // If we reached the end of buffer we assume that this option is
-            // truncated because there is no remaining data to initialize
-            // an option field.
-            if (data_size == 0) {
-                isc_throw(OutOfRange, "option buffer truncated");
+                if (data_size == 0) {
+                    // If we reached the end of buffer we assume that this option is
+                    // truncated because there is no remaining data to initialize
+                    // an option field.
+                    if (data_size == 0) {
+                        isc_throw(OutOfRange, "option buffer truncated");
+                    }
+                }
+            } else {
+                // Our data field requires that there is a certain chunk of
+                // data left in the buffer. If not, option is truncated.
+                if (std::distance(data, data_.end()) < data_size) {
+                    isc_throw(OutOfRange, "option buffer truncated");
+                }
             }
             // Store the created buffer.
             buffers.push_back(OptionBuffer(data, data + data_size));
