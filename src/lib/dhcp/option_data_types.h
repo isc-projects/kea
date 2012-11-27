@@ -174,9 +174,21 @@ struct OptionDataTypeTraits<std::string> {
     static const OptionDataType type = OPT_STRING_TYPE;
 };
 
-/// @brief Utility class to write/read data to/from a buffer.
+/// @brief Utility class for option data types.
 class OptionDataTypeUtil {
 public:
+
+    /// @brief Return option data type from its name.
+    ///
+    /// @param data_type data type name.
+    /// @return option data type.
+    static OptionDataType getDataType(const std::string& data_type);
+
+    /// @brief Return option data type name from the data type enumerator.
+    ///
+    /// @param data_type option data type.
+    /// @return option data type name.
+    static const std::string& getDataTypeName(const OptionDataType data_type);
 
     /// @brief Get data type buffer length.
     ///
@@ -312,7 +324,43 @@ public:
     /// @param [out] buf output buffer.
     static void writeString(const std::string& value,
                             std::vector<uint8_t>& buf);
+private:
 
+    /// The container holding mapping of data type names to
+    /// data types enumerator.
+    std::map<std::string, OptionDataType> data_types_;
+
+    /// The container holding mapping of data types to data
+    /// type names.
+    std::map<OptionDataType, std::string> data_type_names_;
+
+    /// @brief Private constructor.
+    ///
+    /// This constructor is private because this class should
+    /// be used as singleton (through static public functions).
+    OptionDataTypeUtil();
+
+    /// @brief Return instance of OptionDataTypeUtil
+    ///
+    /// This function is used by some of the public static functions
+    /// to create an instance of OptionDataTypeUtil class.
+    /// When instance is called it calls the class'es constructor
+    /// and initializes some of the private data members.
+    ///
+    /// @return instance of OptionDataTypeUtil singleton.
+    static OptionDataTypeUtil& instance();
+
+    /// @brief Return option data type from its name.
+    ///
+    /// @param data_type data type name.
+    /// @return option data type.
+    OptionDataType getDataTypeImpl(const std::string& data_type) const;
+
+    /// @brief Return option data type name from the data type enumerator.
+    ///
+    /// @param data_type option data type.
+    /// @return option data type name.
+    const std::string& getDataTypeNameImpl(const OptionDataType data_type) const;
 };
 
 

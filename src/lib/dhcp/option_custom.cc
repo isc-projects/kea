@@ -242,20 +242,30 @@ OptionCustom::len() {
     return (length);
 }
 
-std::string OptionCustom::toText(int /* =0 */ ) {
+std::string OptionCustom::toText(int indent /* = 0 */ ) {
     std::stringstream tmp;
 
-    /*    for (int i = 0; i < indent; i++)
+    for (int i = 0; i < indent; ++i)
         tmp << " ";
 
-    tmp << "type=" << type_ << ", len=" << len()-getHeaderLen() << ": ";
+    tmp << "type=" << type_ << ", len=" << len()-getHeaderLen()
+        << ", data fields:" << std::endl;
 
-    for (unsigned int i = 0; i < data_.size(); i++) {
-        if (i) {
-            tmp << ":";
+    OptionDataType data_type = definition_.getType();
+    for (unsigned int i = 0; i < getDataFieldsNum(); ++i) {
+        if (data_type == OPT_RECORD_TYPE) {
+            const OptionDefinition::RecordFieldsCollection& fields =
+                definition_.getRecordFields();
+
+            for (OptionDefinition::RecordFieldsConstIter field = fields.begin();
+                 field != fields.end(); ++field) {
+                for (int j = 0; j < indent + 2; ++j) {
+                    tmp << " ";
+                }
+                tmp << OptionDataTypeUtil::getDataTypeName(*field)
+                    << ", value = " << "here is a value" << std::endl;
+            }
         }
-        tmp << setfill('0') << setw(2) << hex
-            << static_cast<unsigned short>(data_[i]);
     }
 
     // print suboptions
@@ -263,7 +273,7 @@ std::string OptionCustom::toText(int /* =0 */ ) {
          opt != options_.end();
          ++opt) {
         tmp << (*opt).second->toText(indent+2);
-        } */
+    }
     return tmp.str();
 }
 
