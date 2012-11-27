@@ -140,24 +140,26 @@ protected:
 
 // Use the loader to load an unsigned zone.
 TEST_F(ZoneLoaderTest, copyUnsigned) {
-    prepareSource(Name("example.org"), "example.org");
-    ZoneLoader loader(destination_client_, Name("example.org"),
+    prepareSource(Name::ROOT_NAME(), "root.zone");
+    ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
                       source_client_);
     // It gets the updater directly in the constructor
     ASSERT_EQ(1, destination_client_.provided_updaters_.size());
-    EXPECT_EQ(Name("example.org"), destination_client_.provided_updaters_[0]);
+    EXPECT_EQ(Name::ROOT_NAME(), destination_client_.provided_updaters_[0]);
     // Now load the whole zone
     loader.load();
     EXPECT_TRUE(destination_client_.commit_called_);
     // We don't check the whole zone. We check the first and last and the
     // count, which should be enough.
-    EXPECT_EQ(7, destination_client_.rrsets_.size());
+
+    // The count is 34 because we expect the RRs to be separated.
+    EXPECT_EQ(34, destination_client_.rrsets_.size());
     // Ensure known order.
     std::sort(destination_client_.rrsets_.begin(),
               destination_client_.rrsets_.end());
-    EXPECT_EQ("TODO - check manually and copy-paste",
+    EXPECT_EQ(". 518400 IN NS a.root-servers.net.\n",
               destination_client_.rrsets_.front());
-    EXPECT_EQ("TODO - check manually and copy-paste",
+    EXPECT_EQ("m.root-servers.net. 3600000 IN AAAA 2001:dc3::35\n",
               destination_client_.rrsets_.back());
 }
 

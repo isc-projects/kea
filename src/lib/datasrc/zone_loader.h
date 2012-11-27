@@ -16,6 +16,7 @@
 #define DATASRC_ZONE_LOADER_H
 
 #include <cstdlib> // For size_t
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dns {
@@ -24,8 +25,12 @@ class Name;
 }
 namespace datasrc {
 
-// Forward declaration
+// Forward declarations
 class DataSourceClient;
+class ZoneIterator;
+typedef boost::shared_ptr<ZoneIterator> ZoneIteratorPtr;
+class ZoneUpdater;
+typedef boost::shared_ptr<ZoneUpdater> ZoneUpdaterPtr;
 
 /// \brief Class to load data into a data source client.
 ///
@@ -85,7 +90,7 @@ public:
     ///     before this call.
     /// \throw DataSourceError in case some error (possibly low-level) happens.
     void load() {
-        while (~loadIncremental(1000)) { // 1000 is arbitrary largish number
+        while (!loadIncremental(1000)) { // 1000 is arbitrary largish number
             // Body intentionally left blank.
         }
     }
@@ -109,6 +114,11 @@ public:
     ///     true).
     /// \throw DataSourceError in case some error (possibly low-level) happens.
     bool loadIncremental(size_t limit);
+private:
+    /// \brief The iterator used as source of data in case of the copy mode.
+    const ZoneIteratorPtr iterator_;
+    /// \brief The destination zone updater
+    const ZoneUpdaterPtr updater_;
 };
 
 }
