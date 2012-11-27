@@ -15,6 +15,8 @@
 #ifndef DATASRC_ZONE_LOADER_H
 #define DATASRC_ZONE_LOADER_H
 
+#include <datasrc/data_source.h>
+
 #include <cstdlib> // For size_t
 #include <boost/shared_ptr.hpp>
 
@@ -31,6 +33,17 @@ class ZoneIterator;
 typedef boost::shared_ptr<ZoneIterator> ZoneIteratorPtr;
 class ZoneUpdater;
 typedef boost::shared_ptr<ZoneUpdater> ZoneUpdaterPtr;
+
+/// \brief Exception thrown when there's a problem with master file.
+///
+/// This is thrown by the ZoneLoader when there's a fatal problem with
+/// a master file being loaded.
+class MasterFileError : public DataSourceError {
+public:
+    MasterFileError(const char* file, size_t line, const char* what) :
+        DataSourceError(file, line, what)
+    {}
+};
 
 /// \brief Class to load data into a data source client.
 ///
@@ -56,6 +69,8 @@ public:
     ///     beforehead.
     /// \throw DataSourceError in case of other (possibly low-level) errors,
     ///     such as read-only data source or database error.
+    /// \throw MasterFileError when the master_file is badly formatted or some
+    ///     similar problem is found when loading the master file.
     ZoneLoader(DataSourceClient& destination, const isc::dns::Name& zone_name,
                const char* master_file);
 
