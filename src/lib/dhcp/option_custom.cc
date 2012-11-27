@@ -23,13 +23,8 @@ OptionCustom::OptionCustom(const OptionDefinition& def,
                              Universe u,
                              const OptionBuffer& data)
     : Option(u, def.getCode(), data.begin(), data.end()),
-      definition_(def),
-      init_passed_(true) {
-    try {
-        createBuffers();
-    } catch (const Exception& ex) {
-        init_passed_ = false;
-    }
+      definition_(def) {
+    createBuffers();
 }
 
 OptionCustom::OptionCustom(const OptionDefinition& def,
@@ -37,13 +32,8 @@ OptionCustom::OptionCustom(const OptionDefinition& def,
                              OptionBufferConstIter first,
                              OptionBufferConstIter last)
     : Option(u, def.getCode(), first, last),
-      definition_(def),
-      init_passed_(true) {
-    try {
-        createBuffers();
-    } catch (const Exception& ex) {
-        init_passed_ = false;
-    }
+      definition_(def) {
+    createBuffers();
 }
 
 void
@@ -119,8 +109,8 @@ OptionCustom::createBuffers() {
 void
 OptionCustom::pack4(isc::util::OutputBuffer& buf) {
     if (len() > 255) {
-        isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big."
-                  << " At most 255 bytes are supported.");
+        isc_throw(OutOfRange, "DHCPv4 Option " << type_
+                  << " value is too high. At most 255 is supported.");
     }
 
     buf.writeUint8(type_);
@@ -152,6 +142,12 @@ OptionCustom::readAddress(const uint32_t index, asiolink::IOAddress& address) co
         isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
                   << " IP address. Invalid buffer length " << buffers_[index].size());
     }
+}
+
+const OptionBuffer&
+OptionCustom::readBinary(const uint32_t index) const {
+    checkIndex(index);
+    return (buffers_[index]);
 }
 
 bool
@@ -195,12 +191,7 @@ OptionCustom::len() {
 
 bool
 OptionCustom::valid() {
-    if ((universe_ != V4 && universe_ != V6) ||
-        !init_passed_) {
-        return (false);
-    }
-
-    return (true);
+    return (Option::valid());
 }
 
 std::string OptionCustom::toText(int /* =0 */ ) {
