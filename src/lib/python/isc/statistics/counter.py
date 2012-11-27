@@ -143,20 +143,21 @@ class Counter():
     """A counter class"""
     # container of a counter object
     _COUNTER = None
-    def init(spec_file_name):
+
+    @classmethod
+    def init(cls, spec_file_name):
         """A creator method for a counter class. It creates a counter
         object by the module name of the given spec file. An argument is a
         specification file name."""
-        global _COUNTER
-        if isinstance(_COUNTER, _Counter):
+        if isinstance(cls._COUNTER, _Counter):
             # already loaded
-            return _COUNTER
+            return cls._COUNTER
         # create an instance once
-        _COUNTER = _Counter(spec_file_name)
+        cls._COUNTER = _Counter(spec_file_name)
         # set methods in Counter
-        for (k, v) in _COUNTER._to_global.items():
+        for (k, v) in cls._COUNTER._to_global.items():
             setattr(Counter, k, v)
-        return _COUNTER
+        return cls._COUNTER
 
     # These method are dummies for isc.notify.notify_out.
     def inc_notifyoutv4(arg):
