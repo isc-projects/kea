@@ -323,15 +323,23 @@ class SendNonblock(unittest.TestCase):
             data = data + data
         self.send_many(data)
 
-    def do_send(self, write, read, expect_arrive=True,
-                expect_send_exception=None):
+    def do_send(self, write, read, control_write, control_read,
+                expect_arrive=True, expect_send_exception=None):
         """
         Makes a msgq object that is talking to itself,
         run it in a separate thread so we can use and
         test run().
+        It is given two sets of connected sockets; write/read, and
+        control_write/control_read. The former may be throwing errors
+        and mangle data to test msgq. The second is mainly used to
+        send msgq the stop command.
+        (Note that the terms 'read' and 'write' are from the msgq
+        point of view, so the test itself writes to 'control_read')
         Parameters:
         write: a socket that is used to send the data to
         read: a socket that is used to read the data from
+        control_write: a second socket for communication with msgq
+        control_read: a second socket for communication with msgq
         expect_arrive: if True, the read socket is read from, and the data
                        that is read is expected to be the same as the data
                        that has been sent to the write socket.
@@ -348,6 +356,7 @@ class SendNonblock(unittest.TestCase):
         msgq.listen_socket = DummySocket
         msgq.setup_poller()
         msgq.register_socket(write)
+        msgq.register_socket(control_write)
         # Queue the message for sending
         msgq.sendmsg(write, env, msg)
 
@@ -366,14 +375,16 @@ class SendNonblock(unittest.TestCase):
             # still be working, so a stop command should also
             # be processed correctly
             msg = msgq.preparemsg({"type" : "stop"})
-            read.sendall(msg)
+            control_read.sendall(msg)
         else:
             # OK, then bluntly call stop itself
             # First give it a chance to handle any remaining events.
             # 1 second arbitrarily chosen to hopefully be long enough
             # yet not bog down the tests too much.
-            msgq_thread.join(1.0)
+            #msgq_thread.join(1.0)
             # If it didn't crash, stop it now.
+            msg = msgq.preparemsg({"type" : "stop"})
+            control_read.sendall(msg)
             msgq.stop()
 
         # Wait for thread to stop if it hasn't already.
@@ -409,10 +420,13 @@ class SendNonblock(unittest.TestCase):
                                send_exception is raised by BadSocket.
         """
         (write, read) = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+        (control_write, control_read) = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
         badwrite = BadSocket(write, raise_on_send, send_exception)
-        self.do_send(badwrite, read, expect_answer, expect_send_exception)
+        self.do_send(badwrite, read, control_write, control_read, expect_answer, expect_send_exception)
         write.close()
         read.close()
+        control_write.close()
+        control_read.close()
 
     def test_send_raise_recoverable(self):
         """
