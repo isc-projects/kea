@@ -73,9 +73,6 @@ import threading
 import isc.config
 from datetime import datetime
 
-# container of a counter object
-_COUNTER = None
-
 # static internal functions
 def _add_counter(element, spec, identifier):
     """Returns value of the identifier if the identifier is in the
@@ -144,6 +141,8 @@ def _stop_timer(start_time, element, spec, identifier):
 
 class Counter():
     """A counter class"""
+    # container of a counter object
+    _COUNTER = None
     def init(spec_file_name):
         """A creator method for a counter class. It creates a counter
         object by the module name of the given spec file. An argument is a
