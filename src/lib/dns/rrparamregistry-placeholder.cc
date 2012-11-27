@@ -161,7 +161,7 @@ typedef map<RRTypeClass, RdataFactoryPtr> RdataFactoryMap;
 typedef map<RRType, RdataFactoryPtr> GenericRdataFactoryMap;
 
 template <typename T>
-class RdataFactory : public AbstractRdataFactory {
+class OldRdataFactory : public AbstractRdataFactory {
 public:
     using AbstractRdataFactory::create;
 
