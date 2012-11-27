@@ -503,7 +503,7 @@ class MsgQ:
                     elif event & select.POLLIN:
                         self.process_socket(fd)
                     else:
-                        print("[XX] UNKNOWN EVENT")
+                        print("[b10-msgq] Error: Unknown even in run_poller()")
 
     def run_kqueue(self):
         while self.running:
