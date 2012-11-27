@@ -118,6 +118,9 @@ TEST_F(OptionCustomTest, emptyData) {
         option.reset(new OptionCustom(opt_def, Option::V4, OptionBuffer()));
     );
     ASSERT_TRUE(option);
+
+    // Option is 'empty' so no data fields are expected.
+    EXPECT_EQ(0, option->getDataFieldsNum());
 }
 
 // The purpose of this test is to verify that the option definition comprising
@@ -141,6 +144,9 @@ TEST_F(OptionCustomTest, binaryData) {
         option.reset(new OptionCustom(opt_def, Option::V4, buf_in));
     );
     ASSERT_TRUE(option);
+
+    // We should have just one data field.
+    ASSERT_EQ(1, option->getDataFieldsNum());
 
     // The custom option should hold just one buffer that can be
     // accessed using index 0.
@@ -172,6 +178,9 @@ TEST_F(OptionCustomTest, booleanData) {
     );
     ASSERT_TRUE(option);
 
+    // We should have just one data field.
+    ASSERT_EQ(1, option->getDataFieldsNum());
+
     // Initialize the value to true because we want to make sure
     // that it is modified to 'false' by readBoolean below.
     bool value = true;
@@ -198,6 +207,9 @@ TEST_F(OptionCustomTest, int16Data) {
     );
     ASSERT_TRUE(option);
 
+    // We should have just one data field.
+    ASSERT_EQ(1, option->getDataFieldsNum());
+
     // Initialize value to 0 explicitely to make sure that is
     // modified by readInteger function to expected -234.
     int16_t value = 0;
@@ -221,6 +233,9 @@ TEST_F(OptionCustomTest, ipv4AddressData) {
     );
     ASSERT_TRUE(option);
 
+    // We should have just one data field.
+    ASSERT_EQ(1, option->getDataFieldsNum());
+
     IOAddress address("127.0.0.1");
     // Read IPv4 address from using index 0.
     ASSERT_NO_THROW(option->readAddress(0, address));
@@ -243,6 +258,9 @@ TEST_F(OptionCustomTest, ipv6AddressData) {
         option.reset(new OptionCustom(opt_def, Option::V6, buf));
     );
     ASSERT_TRUE(option);
+
+    // We should have just one data field.
+    ASSERT_EQ(1, option->getDataFieldsNum());
 
     // Custom option should comprise exactly one buffer that represents
     // IPv6 address.
@@ -268,6 +286,9 @@ TEST_F(OptionCustomTest, stringData) {
         option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end()));
     );
     ASSERT_TRUE(option);
+
+    // We should have just one data field.
+    ASSERT_EQ(1, option->getDataFieldsNum());
 
     // Custom option should now comprise single string value that
     // can be accessed using index 0.
@@ -297,6 +318,9 @@ TEST_F(OptionCustomTest, booleanDataArray) {
         option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end()));
     );
     ASSERT_TRUE(option);
+
+    // We should have 5 data fields.
+    ASSERT_EQ(5, option->getDataFieldsNum());
 
     // Read values from custom option using indexes 0..4 and
     // check that they are valid.
@@ -350,6 +374,9 @@ TEST_F(OptionCustomTest, uint32DataArray) {
     );
     ASSERT_TRUE(option);
 
+    // We should have 3 data fields.
+    ASSERT_EQ(3, option->getDataFieldsNum());
+
     // Expect only 3 values.
     for (int i = 0; i < 3; ++i) {
         uint32_t value = 0;
@@ -382,6 +409,9 @@ TEST_F(OptionCustomTest, ipv4AddressDataArray) {
     );
     ASSERT_TRUE(option);
 
+    // We should have 3 data fields.
+    ASSERT_EQ(3, option->getDataFieldsNum());
+
     // We expect 3 IPv4 addresses being stored in the option.
     for (int i = 0; i < 3; ++i) {
         IOAddress address("10.10.10.10");
@@ -410,9 +440,12 @@ TEST_F(OptionCustomTest, ipv6AddressDataArray) {
     // Use the input buffer to create custom option.
     boost::scoped_ptr<OptionCustom> option;
     ASSERT_NO_THROW(
-        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 70));
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 50));
     );
     ASSERT_TRUE(option);
+
+    // We should have 3 data fields.
+    ASSERT_EQ(3, option->getDataFieldsNum());
 
     // We expect 3 IPv6 addresses being stored in the option.
     for (int i = 0; i < 3; ++i) {
@@ -452,6 +485,9 @@ TEST_F(OptionCustomTest, recordData) {
         option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 27));
     );
     ASSERT_TRUE(option);
+
+    // We should have 5 data fields.
+    ASSERT_EQ(5, option->getDataFieldsNum());
 
     // Verify value in the field 0.
     uint16_t value0 = 0;
@@ -571,6 +607,9 @@ TEST_F(OptionCustomTest, unpack) {
     );
     ASSERT_TRUE(option);
 
+    // We should have 3 data fields.
+    ASSERT_EQ(3, option->getDataFieldsNum());
+
     // We expect 3 IPv4 addresses being stored in the option.
     for (int i = 0; i < 3; ++i) {
         IOAddress address("10.10.10.10");
@@ -594,6 +633,9 @@ TEST_F(OptionCustomTest, unpack) {
 
     // Perform 'unpack'.
     ASSERT_NO_THROW(option->unpack(buf.begin(), buf.end()));
+
+    // Now we should have only 2 data fields.
+    ASSERT_EQ(2, option->getDataFieldsNum());
 
     // Verify that the addresses have been overwritten.
     for (int i = 0; i < 2; ++i) {
@@ -624,9 +666,12 @@ TEST_F(OptionCustomTest, setData)
     // Use the input buffer to create custom option.
     boost::scoped_ptr<OptionCustom> option;
     ASSERT_NO_THROW(
-        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 70));
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 50));
     );
     ASSERT_TRUE(option);
+
+    // We should have 3 data fields.
+    ASSERT_EQ(3, option->getDataFieldsNum());
 
     // We expect 3 IPv6 addresses being stored in the option.
     for (int i = 0; i < 3; ++i) {
@@ -650,6 +695,9 @@ TEST_F(OptionCustomTest, setData)
 
     // Replace the option data.
     ASSERT_NO_THROW(option->setData(buf.begin(), buf.end()));
+
+    // Now we should have only 2 data fields.
+    ASSERT_EQ(2, option->getDataFieldsNum());
 
     // Check that it has been replaced.
     for (int i = 0; i < 2; ++i) {
