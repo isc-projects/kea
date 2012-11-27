@@ -1,3 +1,16 @@
+510.	[func]		marcin
+	DHCP option instances can be created using a collection of strings.
+	Each string represents a value of a particular data field within
+	an option. The data field values, given as strings, are validated
+	against the actual types of option fields specified in the options
+	definitions.
+	(Trac #2490, git 56cfd6612fcaeae9acec4a94e1e5f1a88142c44d)
+
+509.	[func]		muks
+	Log messages now include the pid of the process that logged the
+	message.
+	(Trac #1745, git fc8bbf3d438e8154e7c2bdd322145a7f7854dc6a)
+
 508.	[bug]		stephen
 	Split the DHCP library into two directories, each with its own
 	Makefile.  This properly solves the problem whereby a "make"
