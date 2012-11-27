@@ -101,7 +101,8 @@ public:
     enum ID {
         CRLF,                  ///< Just seen a carriage-return character
         String,                ///< Handling a string token
-        QString                ///< Handling a quoted string token
+        QString,               ///< Handling a quoted string token
+        Number                 ///< Handling a number
     };
 
     /// \brief Returns a \c State instance of the given state.

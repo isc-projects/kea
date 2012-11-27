@@ -30,7 +30,7 @@ namespace dns {
 
 namespace {
 typedef boost::shared_ptr<master_lexer_internal::InputSource> InputSourcePtr;
-}
+} // end unnamed namespace
 using namespace master_lexer_internal;
 
 
@@ -213,7 +213,7 @@ const char* const error_text[] = {
     "no token produced"         // NO_TOKEN_PRODUCED
 };
 const size_t error_text_max_count = sizeof(error_text) / sizeof(error_text[0]);
-}
+} // end unnamed namespace
 
 std::string
 MasterLexer::Token::getErrorText() const {
@@ -288,6 +288,13 @@ public:
     virtual void handle(MasterLexer& lexer) const;
 };
 
+class Number : public State {
+public:
+    Number() {}
+    virtual ~Number() {}
+    virtual const State* handle(MasterLexer& lexer) const;
+};
+
 // We use a common instance of a each state in a singleton-like way to save
 // construction overhead.  They are not singletons in its strict sense as
 // we don't prohibit direct construction of these objects.  But that doesn't
@@ -296,7 +303,8 @@ public:
 const CRLF CRLF_STATE;
 const String STRING_STATE;
 const QString QSTRING_STATE;
-}
+const Number NUMBER_STATE;
+} // end unnamed namespace
 
 const State&
 State::getInstance(ID state_id) {
@@ -307,6 +315,8 @@ State::getInstance(ID state_id) {
         return (STRING_STATE);
     case QString:
         return (QSTRING_STATE);
+    case Number:
+        return (NUMBER_STATE);
     }
 
     // This is a bug of the caller, and this method is only expected to be
@@ -367,6 +377,11 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
                 return (NULL);
             }
             --paren_count;
+        } else if (isdigit(c)) {
+            lexerimpl.last_was_eol_ = false;
+            // this character will be handled in the number state
+            lexerimpl.source_->ungetChar();
+            return (&NUMBER_STATE);
         } else {
             // this character will be handled in the string state
             lexerimpl.source_->ungetChar();
@@ -428,6 +443,43 @@ QString::handle(MasterLexer& lexer) const {
             escaped = (c == '\\' && !escaped);
             data.push_back(c);
         }
+    }
+}
+
+const State*
+Number::handle(MasterLexer& lexer) const {
+    MasterLexer::Token& token = getLexerImpl(lexer)->token_;
+    // Do we want to support octal and/or hex here?
+    const int base = 10;
+
+    // It may yet turn out to be a string, so we first
+    // collect all the data
+    bool digits_only = true;
+    std::vector<char>& data = getLexerImpl(lexer)->data_;
+    data.clear();
+    bool escaped = false;
+
+    while (true) {
+        const int c = getLexerImpl(lexer)->skipComment(
+            getLexerImpl(lexer)->source_->getChar(), escaped);
+        if (getLexerImpl(lexer)->isTokenEnd(c, escaped)) {
+            getLexerImpl(lexer)->source_->ungetChar();
+            if (digits_only) {
+                // Close the string for strtoul
+                data.push_back('\0');
+                token = MasterLexer::Token(strtoul(&data.at(0),
+                                                   NULL, base));
+            } else {
+                token = MasterLexer::Token(&data.at(0),
+                                           data.size());
+            }
+            return (NULL);
+        }
+        if (!isdigit(c)) {
+            digits_only = false;
+        }
+        escaped = (c == '\\' && !escaped);
+        data.push_back(c);
     }
 }
 
