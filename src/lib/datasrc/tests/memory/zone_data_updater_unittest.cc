@@ -85,7 +85,7 @@ getNode(isc::util::MemorySegment& mem_sgmt, const Name& name,
     return (node);
 }
 
-TEST_F(ZoneDataUpdaterTest, rrisgOnly) {
+TEST_F(ZoneDataUpdaterTest, rrsigOnly) {
     // RRSIG that doesn't have covered RRset can be added.  The resulting
     // rdataset won't have "normal" RDATA but sig RDATA.
     updater_.add(ConstRRsetPtr(), textToRRset(
@@ -143,7 +143,7 @@ TEST_F(ZoneDataUpdaterTest, rrisgOnly) {
     EXPECT_FALSE(zone_data_->isSigned());
 }
 
-// Commonly used checks for rrisgForNSEC3Only
+// Commonly used checks for rrsigForNSEC3Only
 void
 checkNSEC3Rdata(isc::util::MemorySegment& mem_sgmt, const Name& name,
                 ZoneData* zone_data)
@@ -158,7 +158,7 @@ checkNSEC3Rdata(isc::util::MemorySegment& mem_sgmt, const Name& name,
     EXPECT_EQ(1, rdset->getSigRdataCount());
 }
 
-TEST_F(ZoneDataUpdaterTest, rrisgForNSEC3Only) {
+TEST_F(ZoneDataUpdaterTest, rrsigForNSEC3Only) {
     // Adding only RRSIG covering NSEC3 is tricky.  It should go to the
     // separate NSEC3 tree, but the separate space is only created when
     // NSEC3 or NSEC3PARAM is added.  So, in many cases RRSIG-only is allowed,
