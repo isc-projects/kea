@@ -18,6 +18,54 @@
 namespace isc {
 namespace dhcp {
 
+OptionDataTypeUtil::OptionDataTypeUtil() {
+    data_types_["empty"] = OPT_EMPTY_TYPE;
+    data_types_["binary"] = OPT_BINARY_TYPE;
+    data_types_["boolean"] = OPT_BOOLEAN_TYPE;
+    data_types_["int8"] = OPT_INT8_TYPE;
+    data_types_["int16"] = OPT_INT16_TYPE;
+    data_types_["int32"] = OPT_INT32_TYPE;
+    data_types_["uint8"] = OPT_UINT8_TYPE;
+    data_types_["uint16"] = OPT_UINT16_TYPE;
+    data_types_["uint32"] = OPT_UINT32_TYPE;
+    data_types_["ipv4-address"] = OPT_IPV4_ADDRESS_TYPE;
+    data_types_["ipv6-address"] = OPT_IPV6_ADDRESS_TYPE;
+    data_types_["string"] = OPT_STRING_TYPE;
+    data_types_["fqdn"] = OPT_FQDN_TYPE;
+    data_types_["record"] = OPT_RECORD_TYPE;
+
+    data_type_names_[OPT_EMPTY_TYPE] = "empty";
+    data_type_names_[OPT_BINARY_TYPE] = "binary";
+    data_type_names_[OPT_BOOLEAN_TYPE] = "boolean";
+    data_type_names_[OPT_INT8_TYPE] = "int8";
+    data_type_names_[OPT_INT16_TYPE] = "int16";
+    data_type_names_[OPT_INT32_TYPE] = "int32";
+    data_type_names_[OPT_UINT8_TYPE] = "uint8";
+    data_type_names_[OPT_UINT16_TYPE] = "uint16";
+    data_type_names_[OPT_UINT32_TYPE] = "uint32";
+    data_type_names_[OPT_IPV4_ADDRESS_TYPE] = "ipv4-address";
+    data_type_names_[OPT_IPV6_ADDRESS_TYPE] = "ipv4-address";
+    data_type_names_[OPT_STRING_TYPE] = "string";
+    data_type_names_[OPT_FQDN_TYPE] = "fqdn";
+    data_type_names_[OPT_RECORD_TYPE] = "record";
+    data_type_names_[OPT_UNKNOWN_TYPE] = "unknown";
+}
+
+OptionDataType
+OptionDataTypeUtil::getDataType(const std::string& data_type) {
+    return (OptionDataTypeUtil::instance().getDataTypeImpl(data_type));
+}
+
+OptionDataType
+OptionDataTypeUtil::getDataTypeImpl(const std::string& data_type) const {
+    std::map<std::string, OptionDataType>::const_iterator data_type_it =
+        data_types_.find(data_type);
+    if (data_type_it != data_types_.end()) {
+        return (data_type_it->second);
+    }
+    return (OPT_UNKNOWN_TYPE);
+}
+
 int
 OptionDataTypeUtil::getDataTypeLen(const OptionDataType data_type) {
     switch (data_type) {
@@ -39,6 +87,27 @@ OptionDataTypeUtil::getDataTypeLen(const OptionDataType data_type) {
         ;
     }
     return (0);
+}
+
+const std::string&
+OptionDataTypeUtil::getDataTypeName(const OptionDataType data_type) {
+    return (OptionDataTypeUtil::instance().getDataTypeNameImpl(data_type));
+}
+
+const std::string&
+OptionDataTypeUtil::getDataTypeNameImpl(const OptionDataType data_type) const {
+    std::map<OptionDataType, std::string>::const_iterator data_type_it =
+        data_type_names_.find(data_type);
+    if (data_type_it != data_type_names_.end()) {
+        return (data_type_it->second);
+    }
+    return (data_type_names_.find(OPT_UNKNOWN_TYPE)->second);
+}
+
+OptionDataTypeUtil&
+OptionDataTypeUtil::instance() {
+    static OptionDataTypeUtil instance;
+    return (instance);
 }
 
 void
