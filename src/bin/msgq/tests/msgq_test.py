@@ -371,21 +371,9 @@ class SendNonblock(unittest.TestCase):
             self.assertEqual(env, recv_env)
             self.assertEqual(msg, recv_msg)
 
-            # expect_arrive also suggests everything should
-            # still be working, so a stop command should also
-            # be processed correctly
-            msg = msgq.preparemsg({"type" : "stop"})
-            control_read.sendall(msg)
-        else:
-            # OK, then bluntly call stop itself
-            # First give it a chance to handle any remaining events.
-            # 1 second arbitrarily chosen to hopefully be long enough
-            # yet not bog down the tests too much.
-            #msgq_thread.join(1.0)
-            # If it didn't crash, stop it now.
-            msg = msgq.preparemsg({"type" : "stop"})
-            control_read.sendall(msg)
-            msgq.stop()
+        # Tell msgq to stop
+        msg = msgq.preparemsg({"type" : "stop"})
+        control_read.sendall(msg)
 
         # Wait for thread to stop if it hasn't already.
         # Put in a (long) timeout; the thread *should* stop, but if it
