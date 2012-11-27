@@ -19,6 +19,7 @@
 #include <dns/master_lexer_state.h>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <bitset>
 #include <cassert>
@@ -210,7 +211,8 @@ const char* const error_text[] = {
     "unbalanced parentheses",   // UNBALANCED_PAREN
     "unexpected end of input",  // UNEXPECTED_END
     "unbalanced quotes",        // UNBALANCED_QUOTES
-    "no token produced"         // NO_TOKEN_PRODUCED
+    "no token produced",        // NO_TOKEN_PRODUCED
+    "number out of range"       // NUMBER_RANGE
 };
 const size_t error_text_max_count = sizeof(error_text) / sizeof(error_text[0]);
 } // end unnamed namespace
@@ -449,8 +451,6 @@ QString::handle(MasterLexer& lexer) const {
 void
 Number::handle(MasterLexer& lexer) const {
     MasterLexer::Token& token = getLexerImpl(lexer)->token_;
-    // Do we want to support octal and/or hex here?
-    const int base = 10;
 
     // It may yet turn out to be a string, so we first
     // collect all the data
@@ -465,10 +465,17 @@ Number::handle(MasterLexer& lexer) const {
         if (getLexerImpl(lexer)->isTokenEnd(c, escaped)) {
             getLexerImpl(lexer)->source_->ungetChar();
             if (digits_only) {
-                // Close the string for strtoul
+                // Close the string for lexical_cast
                 data.push_back('\0');
-                token = MasterLexer::Token(strtoul(&data.at(0),
-                                                   NULL, base));
+                try {
+                    const uint32_t number32 =
+                        boost::lexical_cast<uint32_t, const char*>(&data.at(0));
+                    token = MasterLexer::Token(number32);
+                } catch (const boost::bad_lexical_cast&) {
+                    // Since we already know we have only digits,
+                    // range should be the only possible problem.
+                    token = Token(Token::NUMBER_RANGE);
+                }
             } else {
                 token = MasterLexer::Token(&data.at(0),
                                            data.size());

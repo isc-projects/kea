@@ -457,12 +457,9 @@ TEST_F(MasterLexerStateTest, basicNumbers) {
     ss << "1 ";
     ss << "12345 ";
     ss << "4294967295 "; // 2^32-1
-    ss << "4294967296 "; // 2^32 (this overflows to 0, we
-                         // can consider failing on it, but
-                         // this is what bind9 does as well)
-    ss << "4294967297 "; // 2^32+1 (this overflows to 1, see
-                         // above)
-    ss << "1000000000000000000 "; // overflows to 2808348672
+    ss << "4294967296 "; // Out of range
+    ss << "340282366920938463463374607431768211456 ";
+                         // Very much out of range (2^128)
     ss << "005 ";        // Leading zeroes are ignored
     ss << "42;asdf\n";   // Number with comment
     ss << "37";          // Simple number again, here to make
@@ -484,19 +481,17 @@ TEST_F(MasterLexerStateTest, basicNumbers) {
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
     s_number.handle(lexer);
-    EXPECT_EQ(4294967295u, s_number.getToken(lexer).getNumber());
+    EXPECT_EQ(4294967295, s_number.getToken(lexer).getNumber());
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
     s_number.handle(lexer);
-    EXPECT_EQ(0, s_number.getToken(lexer).getNumber());
+    EXPECT_EQ(Token::NUMBER_RANGE,
+              s_number.getToken(lexer).getErrorCode());
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
     s_number.handle(lexer);
-    EXPECT_EQ(1, s_number.getToken(lexer).getNumber());
-
-    EXPECT_EQ(&s_number, State::start(lexer, common_options));
-    s_number.handle(lexer);
-    EXPECT_EQ(2808348672u, s_number.getToken(lexer).getNumber());
+    EXPECT_EQ(Token::NUMBER_RANGE,
+              s_number.getToken(lexer).getErrorCode());
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
     s_number.handle(lexer);
