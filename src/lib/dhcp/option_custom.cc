@@ -134,6 +134,10 @@ OptionCustom::pack6(isc::util::OutputBuffer& buf) {
 void
 OptionCustom::readAddress(const uint32_t index, asiolink::IOAddress& address) const {
     checkIndex(index);
+
+    // The address being read can be either IPv4 or IPv6. The decision
+    // is made based on the buffer length. If it holds 4 bytes it is IPv4
+    // address, if it holds 16 bytes it is IPv6.
     if (buffers_[index].size() == asiolink::V4ADDRESS_LEN) {
         OptionDataTypeUtil::readAddress(buffers_[index], AF_INET, address);
     } else if (buffers_[index].size() == asiolink::V6ADDRESS_LEN) {
@@ -170,22 +174,22 @@ OptionCustom::unpack(OptionBufferConstIter begin,
 
 uint16_t
 OptionCustom::len() {
-    // Returns length of the complete option (data length + DHCPv4/DHCPv6
-    // option header)
+    // The length of the option is a sum of option header ...
+    int length = getHeaderLen();
 
-    // length of the whole option is header and data stored in this option...
-    int length = getHeaderLen() + data_.size();
+    // ... lengths of all buffers that hold option data ...
+    for (std::vector<OptionBuffer>::const_iterator buf = buffers_.begin();
+         buf != buffers_.end(); ++buf) {
+        length += buf.size();
+    }
 
-    // ... and sum of lengths of all suboptions
+    // ... and lengths of all suboptions
     for (OptionCustom::OptionCollection::iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();
     }
 
-    // note that this is not equal to lenght field. This value denotes
-    // number of bytes required to store this option. length option should
-    // contain (len()-getHeaderLen()) value.
     return (length);
 }
 
@@ -225,6 +229,8 @@ void OptionCustom::setData(const OptionBufferConstIter first,
     data_.resize(std::distance(first, last));
     std::copy(first, last, data_.begin());
 
+    // Chop the data_ buffer into set of buffers that represent
+    // option fields data.
     createBuffers();
 }
 
