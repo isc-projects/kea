@@ -217,6 +217,46 @@ TEST_F(OptionCustomTest, int16Data) {
     EXPECT_EQ(-234, value);
 }
 
+// The purpose of this test is to verify that truncated option buffer
+// can't be used to form option holding an integer data.
+TEST_F(OptionCustomTest, int32DataTruncated) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "int32");
+
+    // Put two integer values into the buffer. One of
+    // them will be ignored by the option's constructor.
+    OptionBuffer buf;
+    writeInt<int32_t>(-234, buf);
+    writeInt<int32_t>(100, buf);
+
+    // Create custom option.
+    boost::scoped_ptr<OptionCustom> option;
+
+    // The length of the provided buffer is equal to 2*sizeof(uint32_t) so
+    // both values will be processed by constructor. Second one should be
+    // dropped.
+    EXPECT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 8));
+    );
+
+    // The option buffer's length is sufficient to keep only one uint32_t
+    // but this is ok since option needs only one value anyway.
+    EXPECT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 4));
+    );
+
+    // The option buffer's length is equal to sizeof(uint32_t) so it should
+    // be processed successfuly.
+    EXPECT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 4));
+    );
+
+    // The option bufferis now 1 byte too short. Expect exception being thrown.
+    EXPECT_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 3)),
+        isc::OutOfRange
+    );
+}
+
 // The purpose of this test is to verify that the option definition comprising
 // single IPv4 addres can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, ipv4AddressData) {
@@ -343,6 +383,45 @@ TEST_F(OptionCustomTest, booleanDataArray) {
     bool value4 = false;
     ASSERT_NO_THROW(value4 = option->readBoolean(4));
     EXPECT_TRUE(value4);
+}
+
+// The purpose of this test is to verify that truncated buffer can't
+// be used to create an instance of the option which holds an array
+// of values.
+TEST_F(OptionCustomTest, uint16DataArrayTruncated) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "uint16", true);
+
+    OptionBuffer buf;
+    for (int i = 0; i < 3; ++i) {
+        writeInt<uint16_t>(i, buf);
+    }
+
+    // Create custom option using the input buffer.
+    boost::scoped_ptr<OptionCustom> option;
+
+    // Provide a buffer of a length of 4. This should succeed because exactly two
+    // uint16_t values fit into it.
+    EXPECT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 4));
+    );
+
+    // Provide a buffer of a length of 3. This should succeed because one uint16_t
+    // value fits into it despite the second one is truncated.
+    EXPECT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 3));
+    );
+
+    // Provide a buffer of a length of 2. This should succeed because still
+    // one uint16_t fits into it.
+    EXPECT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 2));
+    );
+
+    // Provide truncated buffer. This should cause the exception.
+    EXPECT_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 1)),
+        isc::OutOfRange
+    );
 }
 
 // The purpose of this test is to verify that the option definition comprising
@@ -515,6 +594,54 @@ TEST_F(OptionCustomTest, recordData) {
     EXPECT_EQ("ABCD", value4);
 }
 
+// The purpose of this test is to verify that truncated buffer
+// can't be used to create an option being a record of value of
+// different types.
+TEST_F(OptionCustomTest, recordDataTruncated) {
+    // Create the definition of an option which comprises
+    // a record of fields of different types.
+    OptionDefinition opt_def("OPTION_FOO", 1000, "record");
+    ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
+    ASSERT_NO_THROW(opt_def.addRecordField("ipv6-address"));
+    ASSERT_NO_THROW(opt_def.addRecordField("string"));
+
+    OptionBuffer buf;
+    // Initialize field 0.
+    writeInt<uint16_t>(8712, buf);
+    // Initialize field 1 to IPv6 address.
+    writeAddress(IOAddress("2001:db8:1::1"), buf);
+    // Initialize field 2 to string value.
+    writeString("ABCD", buf);
+
+    boost::scoped_ptr<OptionCustom> option;
+
+    // Constructor should not throw exception here because the length of the
+    // buffer meets the minimum length. The first 19 bytes hold data for
+    // all option fields: uint16, IPv4 address and first letter of string.
+    // Note that string will be truncated but this is acceptable because
+    // constructor have no way to determine the length of the original string.
+    EXPECT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 19));
+    );
+
+    // Reduce the buffer length by one byte should cause the constructor
+    // to fail. This is because 18 bytes can only hold first two data fields:
+    // 2 bytes of uint16_t value and IPv6 address. Option definitions specifies
+    // 3 data fields for this option but the length of the data is insufficient
+    // to initialize 3 data field.
+    EXPECT_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 18)),
+        isc::OutOfRange
+    );
+
+    // Try to further reduce the length of the buffer to make it insufficient
+    // to even initialize the second data field.
+    EXPECT_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 17)),
+        isc::OutOfRange
+    );
+}
+
 // The purpose of this test is to verify that pack function for
 // DHCPv4 custom option works correctly.
 TEST_F(OptionCustomTest, pack4) {
@@ -647,8 +774,7 @@ TEST_F(OptionCustomTest, unpack) {
 
 // The purpose of this test is to verify that new data can be set for
 // a custom option.
-TEST_F(OptionCustomTest, setData) 
-{
+TEST_F(OptionCustomTest, setData) {
     OptionDefinition opt_def("OPTION_FOO", 1000, "ipv6-address", true);
 
     // Initialize reference data.
@@ -706,5 +832,34 @@ TEST_F(OptionCustomTest, setData)
         EXPECT_EQ(addresses[i].toText(), address.toText());
     }
 }
+
+// The purpose of this test is to verify that an invalid index
+// value can't be used to access option data fields.
+TEST_F(OptionCustomTest, invalidIndex) {
+    OptionDefinition opt_def("OPTION_FOO", 999, "uint32", true);
+
+    OptionBuffer buf;
+    for (int i = 0; i < 10; ++i) {
+        writeInt<uint32_t>(i, buf);
+    }
+
+    // Use the input buffer to create custom option.
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf));
+    );
+    ASSERT_TRUE(option);
+
+    // We expect that there are 10 uint32_t values stored in
+    // the option. The 10th element is accessed by index eq 9.
+    // Check that 9 is accepted.
+    EXPECT_NO_THROW(option->readInteger<uint32_t>(9));
+
+    // Check that index value beyond 9 is not accepted.
+    EXPECT_THROW(option->readInteger<uint32_t>(10), isc::OutOfRange);
+    EXPECT_THROW(option->readInteger<uint32_t>(11), isc::OutOfRange);
+}
+
+
 
 } // anonymous namespace
