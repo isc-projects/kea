@@ -292,7 +292,7 @@ class Number : public State {
 public:
     Number() {}
     virtual ~Number() {}
-    virtual const State* handle(MasterLexer& lexer) const;
+    virtual void handle(MasterLexer& lexer) const;
 };
 
 // We use a common instance of a each state in a singleton-like way to save
@@ -446,7 +446,7 @@ QString::handle(MasterLexer& lexer) const {
     }
 }
 
-const State*
+void
 Number::handle(MasterLexer& lexer) const {
     MasterLexer::Token& token = getLexerImpl(lexer)->token_;
     // Do we want to support octal and/or hex here?
@@ -473,7 +473,7 @@ Number::handle(MasterLexer& lexer) const {
                 token = MasterLexer::Token(&data.at(0),
                                            data.size());
             }
-            return (NULL);
+            return;
         }
         if (!isdigit(c)) {
             digits_only = false;
