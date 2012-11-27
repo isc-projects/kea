@@ -32,7 +32,8 @@ ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
     // Separate the RRsets as that is possibly faster (the data source doesn't
     // have to aggregate them) and also because our limit semantics.
     iterator_(source.getIterator(zone_name, true)),
-    updater_(destination.getUpdater(zone_name, true, false))
+    updater_(destination.getUpdater(zone_name, true, false)),
+    complete_(false)
 {
     // The getIterator should never return NULL. So we check it.
     // Or should we throw instead?
@@ -69,9 +70,15 @@ copyRRsets(const ZoneUpdaterPtr& destination, const ZoneIteratorPtr& source,
 
 bool
 ZoneLoader::loadIncremental(size_t limit) {
+    if (complete_) {
+        isc_throw(isc::InvalidOperation,
+                  "Loading has been completed previously");
+    }
+
     if (iterator_ != ZoneIteratorPtr()) {
         if (copyRRsets(updater_, iterator_, limit)) {
             updater_->commit();
+            complete_ = true;
             return (true);
         } else {
             return (false);
