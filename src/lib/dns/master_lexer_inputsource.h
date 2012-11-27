@@ -56,14 +56,6 @@ public:
         {}
     };
 
-    /// \brief Exception thrown when we fail to read from the input
-    /// stream or file.
-    struct ReadError : public Unexpected {
-        ReadError(const char* file, size_t line, const char* what) :
-            Unexpected(file, line, what)
-        {}
-    };
-
     /// \brief Exception thrown when we fail to open the input file.
     struct OpenError : public Unexpected {
         OpenError(const char* file, size_t line, const char* what) :
@@ -124,8 +116,8 @@ public:
     /// \brief Returns a single character from the input source. If end
     /// of file is reached, \c END_OF_STREAM is returned.
     ///
-    /// \throws ReadError when reading from the input stream or file
-    /// fails.
+    /// \throws MasterLexer::ReadError when reading from the input stream or
+    /// file fails.
     int getChar();
 
     /// \brief Skips backward a single character in the input

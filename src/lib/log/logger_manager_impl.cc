@@ -203,7 +203,7 @@ void LoggerManagerImpl::setConsoleAppenderLayout(
         log4cplus::SharedAppenderPtr& appender)
 {
     // Create the pattern we want for the output - local time.
-    string pattern = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c] %m\n";
+    string pattern = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i] %m\n";
 
     // Finally the text of the message
     auto_ptr<log4cplus::Layout> layout(new log4cplus::PatternLayout(pattern));

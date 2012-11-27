@@ -56,12 +56,6 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port, const char* dbconfig)
 
     // Initialize objects required for DHCP server operation.
     try {
-        // Initialize standard DHCPv6 option definitions. This function
-        // may throw bad_alloc if system goes out of memory during the
-        // creation if option definitions. It may also throw isc::Unexpected
-        // if definitions are wrong. This would mean error in implementation.
-        initStdOptionDefs();
-
         // Port 0 is used for testing purposes. It means that the server should
         // not open any sockets at all. Some tests, e.g. configuration parser,
         // require Dhcpv6Srv object, but they don't really need it to do
@@ -620,11 +614,6 @@ Dhcpv6Srv::serverReceivedPacketName(uint8_t type) {
         ;
     }
     return (UNKNOWN);
-}
-
-void
-Dhcpv6Srv::initStdOptionDefs() {
-    LibDHCP::initStdOptionDefs(Option::V6);
 }
 
 };

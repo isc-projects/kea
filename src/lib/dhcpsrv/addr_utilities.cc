@@ -79,7 +79,7 @@ isc::asiolink::IOAddress firstAddrInPrefix6(const isc::asiolink::IOAddress& pref
     }
 
     // Finally, let's wrap this into nice and easy IOAddress object.
-    return (isc::asiolink::IOAddress::from_bytes(AF_INET6, packed));
+    return (isc::asiolink::IOAddress::fromBytes(AF_INET6, packed));
 }
 
 /// @brief calculates the first IPv4 address in a IPv4 prefix
@@ -159,7 +159,7 @@ isc::asiolink::IOAddress lastAddrInPrefix6(const isc::asiolink::IOAddress& prefi
     }
 
     // Finally, let's wrap this into nice and easy IOAddress object.
-    return (isc::asiolink::IOAddress::from_bytes(AF_INET6, packed));
+    return (isc::asiolink::IOAddress::fromBytes(AF_INET6, packed));
 }
 
 }; // end of anonymous namespace

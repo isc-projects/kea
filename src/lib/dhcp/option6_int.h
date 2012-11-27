@@ -48,7 +48,7 @@ public:
     /// as template parameter is not a supported integer type.
     Option6Int(uint16_t type, T value)
         : Option(Option::V6, type), value_(value) {
-        if (!OptionDataTypes<T>::valid) {
+        if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
     }
@@ -69,7 +69,7 @@ public:
     Option6Int(uint16_t type, OptionBufferConstIter begin,
                OptionBufferConstIter end)
         : Option(Option::V6, type) {
-        if (!OptionDataTypes<T>::valid) {
+        if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
         unpack(begin, end);
@@ -91,7 +91,7 @@ public:
         // order to the provided buffer. The same functions can be safely used
         // for either unsiged or signed integers so there is not need to create
         // special cases for intX_t types.
-        switch (OptionDataTypes<T>::len) {
+        switch (OptionDataTypeTraits<T>::len) {
         case 1:
             buf.writeUint8(value_);
             break;
@@ -130,7 +130,7 @@ public:
         // order from the provided buffer. The same functions can be safely used
         // for either unsiged or signed integers so there is not need to create
         // special cases for intX_t types.
-        int data_size_len = OptionDataTypes<T>::len;
+        int data_size_len = OptionDataTypeTraits<T>::len;
         switch (data_size_len) {
         case 1:
             value_ = *begin;
@@ -145,9 +145,9 @@ public:
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
         // Use local variable to set a new value for this iterator.
-        // When using OptionDataTypes<T>::len directly some versions
+        // When using OptionDataTypeTraits<T>::len directly some versions
         // of clang complain about unresolved reference to
-        // OptionDataTypes structure during linking.
+        // OptionDataTypeTraits structure during linking.
         begin += data_size_len;
         LibDHCP::unpackOptions6(OptionBuffer(begin, end), options_);
     }
