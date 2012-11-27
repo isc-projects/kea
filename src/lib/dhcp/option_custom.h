@@ -77,6 +77,8 @@ public:
 
     void readAddress(const uint32_t index, asiolink::IOAddress& address) const;
 
+    const OptionBuffer& readBinary(const uint32_t index) const;
+
     bool readBoolean(const uint32_t index) const;
 
     template<typename T>
@@ -172,8 +174,6 @@ private:
     void createBuffers();
 
     OptionDefinition definition_;
-
-    bool init_passed_;
 
     std::vector<OptionBuffer> buffers_;
 };
