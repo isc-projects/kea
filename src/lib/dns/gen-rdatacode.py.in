@@ -275,11 +275,11 @@ def generate_rrparam(fileprefix, basemtime):
             typeandclassparams += 'add("' + type_utxt + '", '
             typeandclassparams += str(type_code) + ', "' + class_utxt
             typeandclassparams += '", ' + str(class_code)
-            typeandclassparams += ', RdataFactoryPtr(new RdataFactory<'
+            typeandclassparams += ', RdataFactoryPtr(new OldRdataFactory<'
             typeandclassparams += class_txt + '::' + type_utxt + '>()));\n'
         else:
             typeandclassparams += 'add("' + type_utxt + '", ' + str(type_code)
-            typeandclassparams += ', RdataFactoryPtr(new RdataFactory<'
+            typeandclassparams += ', RdataFactoryPtr(new OldRdataFactory<'
             typeandclassparams += class_txt + '::' + type_utxt + '>()));\n'
 
     rrparam_temp = open(placeholder, 'r')
