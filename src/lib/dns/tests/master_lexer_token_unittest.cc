@@ -145,15 +145,18 @@ TEST_F(MasterLexerTokenTest, errors) {
     EXPECT_EQ("no token produced",
               MasterLexer::Token(MasterLexer::Token::NO_TOKEN_PRODUCED).
               getErrorText());
+    EXPECT_EQ("number out of range",
+              MasterLexer::Token(MasterLexer::Token::NUMBER_RANGE).
+              getErrorText());
 
     // getErrorCode/Text() isn't allowed for non number types
     EXPECT_THROW(token_num.getErrorCode(), isc::InvalidOperation);
     EXPECT_THROW(token_num.getErrorText(), isc::InvalidOperation);
 
-    // Only the pre-defined error code is accepted.  Hardcoding '5' (max code
+    // Only the pre-defined error code is accepted.  Hardcoding '6' (max code
     // + 1) is intentional; it'd be actually better if we notice it when we
     // update the enum list (which shouldn't happen too often).
-    EXPECT_THROW(MasterLexer::Token(MasterLexer::Token::ErrorCode(5)),
+    EXPECT_THROW(MasterLexer::Token(MasterLexer::Token::ErrorCode(6)),
                  isc::InvalidParameter);
 
     // Check the coexistence of "from number" and "from error-code"
