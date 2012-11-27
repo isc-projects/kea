@@ -31,6 +31,10 @@ OptionDataTypeUtil::getDataTypeLen(const OptionDataType data_type) {
     case OPT_INT32_TYPE:
     case OPT_UINT32_TYPE:
         return (4);
+    case OPT_IPV4_ADDRESS_TYPE:
+        return (asiolink::V4ADDRESS_LEN);
+    case OPT_IPV6_ADDRESS_TYPE:
+        return (asiolink::V6ADDRESS_LEN);
     default:
         ;
     }

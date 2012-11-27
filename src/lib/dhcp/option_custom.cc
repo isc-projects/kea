@@ -52,57 +52,87 @@ OptionCustom::createBuffers() {
 
     std::vector<OptionBuffer> buffers;
     OptionBuffer::iterator data = data_.begin();
-    if (definition_.getType() == OPT_RECORD_TYPE) {
+
+    OptionDataType data_type = definition_.getType();
+    if (data_type == OPT_RECORD_TYPE) {
+        // An option comprises a record of data fields. We need to
+        // get types of these data fields to allocate enough space
+        // for each buffer.
         const OptionDefinition::RecordFieldsCollection& fields =
             definition_.getRecordFields();
+
+        // Go over all data fields within a record.
         for (OptionDefinition::RecordFieldsConstIter field = fields.begin();
              field != fields.end(); ++field) {
+            // For fixed-size data type such as boolean, integer, even
+            // IP address we can use the utility function to get the required
+            // buffer size.
             int data_size = OptionDataTypeUtil::getDataTypeLen(*field);
+
+            // For variable size types (such as string) the function above
+            // will return 0 so we need to do a runtime check. Since variable
+            // length data fields may be laid only at the end of an option we
+            // consume the rest of this option. Note that validate() function
+            // in OptionDefinition object should have checked whether the
+            // data fields layout is correct (that the variable string fields
+            // are laid at the end).
             if (data_size == 0) {
-                if (*field == OPT_IPV4_ADDRESS_TYPE) {
-                    data_size = asiolink::V4ADDRESS_LEN;
-                } else if (*field == OPT_IPV6_ADDRESS_TYPE) {
-                    data_size = asiolink::V6ADDRESS_LEN;
-                } else {
-                    data_size = std::distance(data, data_.end());
-                }
+                data_size = std::distance(data, data_.end());
             }
+            // If we reached the end of buffer we assume that this option is
+            // truncated because there is no remaining data to initialize
+            // an option field.
             if (data_size == 0) {
                 isc_throw(OutOfRange, "option buffer truncated");
             }
+            // Store the created buffer.
             buffers.push_back(OptionBuffer(data, data + data_size));
+            // Proceed to the next data field.
             data += data_size;
         }
     } else {
-        OptionDataType data_type = definition_.getType();
+        // If option definition type is not a 'record' than definition
+        // type itself indicates what type of data is being held there.
         int data_size = OptionDataTypeUtil::getDataTypeLen(data_type);
-        if (data_size == 0) {
-            if (data_type == OPT_IPV4_ADDRESS_TYPE) {
-                data_size = asiolink::V4ADDRESS_LEN;
-            } else if (data_type == OPT_IPV6_ADDRESS_TYPE) {
-                data_size = asiolink::V6ADDRESS_LEN;
-            }
-        }
+        // The check below will fail if the input buffer is too short
+        // for the data size being held by this option.
+        // Note that data_size returned by getDataTypeLen may be zero
+        // if variable length data is being held by the option but
+        // this will not cause this check to throw exception.
         if (std::distance(data, data_.end()) < data_size) {
             isc_throw(OutOfRange, "option buffer truncated");
         }
+        // For an array of values we are taking different path because
+        // we have to handle multiple buffers.
         if (definition_.getArrayType()) {
             // We don't perform other checks for data types that can't be
             // used together with array indicator such as strings, empty field
             // etc. This is because OptionDefinition::validate function should
-            // have checked this already.
+            // have checked this already. Thus data_size must be greater than
+            // zero.
             assert(data_size > 0);
+            // Get equal chunks of data and store as collection of buffers.
+            // Truncate any remaining part which length is not divisible by
+            // data_size.
             do {
                 buffers.push_back(OptionBuffer(data, data + data_size));
                 data += data_size;
             } while (std::distance(data, data_.end()) >= data_size);
         } else {
+            // For non-arrays the data_size can be zero because
+            // getDataTypeLen returns zero for variable size data types
+            // such as strings. Simply take whole buffer.
             if (data_size == 0) {
                 data_size = std::distance(data, data_.end());
             }
-            buffers.push_back(OptionBuffer(data, data + data_size));
+            if (data_size > 0 && data_type != OPT_EMPTY_TYPE) {
+                buffers.push_back(OptionBuffer(data, data + data_size));
+            } else if (data_type != OPT_EMPTY_TYPE) {
+                isc_throw(OutOfRange, "option buffer truncated");
+            }
         }
     }
+    // If everything went ok we can replace old buffer set with new ones.
     std::swap(buffers_, buffers);
 }
 
