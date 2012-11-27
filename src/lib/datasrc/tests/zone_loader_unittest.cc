@@ -41,7 +41,8 @@ namespace {
 class MockClient : public DataSourceClient {
 public:
     MockClient() :
-        commit_called_(false)
+        commit_called_(false),
+        missing_zone_(false)
     {}
     virtual FindResult findZone(const Name&) const {
         isc_throw(isc::NotImplemented, "Method not used in tests");
@@ -64,6 +65,8 @@ public:
     // we get them as references.
     vector<string> rrsets_;
     bool commit_called_;
+    // If set to true, getUpdater returns NULL
+    bool missing_zone_;
 };
 
 // The updater isn't really correct according to the API. For example,
@@ -97,6 +100,9 @@ private:
 
 ZoneUpdaterPtr
 MockClient::getUpdater(const Name& name, bool replace, bool journaling) const {
+    if (missing_zone_) {
+        return (ZoneUpdaterPtr());
+    }
     EXPECT_TRUE(replace);
     EXPECT_FALSE(journaling);
     provided_updaters_.push_back(name);
@@ -220,6 +226,20 @@ TEST_F(ZoneLoaderTest, copySigned) {
               "KRcrD/4YG6nZVXE0s5O8NahjBJmDIyVt4WkfZ6QthxGg8ggLVvcD3dFksPyiKHf"
               "/WrTOZPSsxvN5m/i1Ey6+YWS01Gf3WDCMWDauC7Nmh3CTM=\n",
               destination_client_.rrsets_[1]);
+}
+
+// If the destination zone does not exist, it throws
+TEST_F(ZoneLoaderTest, copyMissingDestination) {
+    destination_client_.missing_zone_ = true;
+    prepareSource(Name::ROOT_NAME(), "root.zone");
+    EXPECT_THROW(ZoneLoader(destination_client_, Name::ROOT_NAME(),
+                            source_client_), DataSourceError);
+}
+
+// If the source zone does not exist, it throws
+TEST_F(ZoneLoaderTest, copyMissingSource) {
+    EXPECT_THROW(ZoneLoader(destination_client_, Name::ROOT_NAME(),
+                            source_client_), DataSourceError);
 }
 
 }
