@@ -20,6 +20,8 @@ echo $testname
 
 failcount=0
 tempfile=@abs_builddir@/destination_test_tempfile_$$
+destfile1_tmp=@abs_builddir@/destination_test_destfile_1_tmp_$$
+destfile2_tmp=@abs_builddir@/destination_test_destfile_2_tmp_$$
 destfile1=@abs_builddir@/destination_test_destfile_1_$$
 destfile2=@abs_builddir@/destination_test_destfile_2_$$
 
@@ -40,7 +42,11 @@ FATAL [example.beta] LOG_BAD_SEVERITY unrecognized log severity: beta_fatal
 ERROR [example.beta] LOG_BAD_DESTINATION unrecognized log destination: beta_error
 .
 rm -f $destfile1 $destfile2
-./logger_example -s error -f $destfile1 -f $destfile2
+./logger_example -s error -f $destfile1_tmp -f $destfile2_tmp
+
+# strip the pids
+sed -e 's/\[\([a-z0-9\.]\+\)\/\([0-9]\+\)\]/[\1]/' < $destfile1_tmp > $destfile1
+sed -e 's/\[\([a-z0-9\.]\+\)\/\([0-9]\+\)\]/[\1]/' < $destfile2_tmp > $destfile2
 
 echo -n  "   - destination 1:"
 cut -d' ' -f3- $destfile1 | diff $tempfile -
@@ -50,9 +56,16 @@ echo -n  "   - destination 2:"
 cut -d' ' -f3- $destfile2 | diff $tempfile -
 passfail $?
 
+# Tidy up.
+rm -f $tempfile $destfile1_tmp $destfile2_tmp $destfile1 $destfile2
+
 echo     "2. Two loggers, different destinations and severities"
 rm -f $destfile1 $destfile2
-./logger_example -l example -s info -f $destfile1 -l alpha -s warn -f $destfile2
+./logger_example -l example -s info -f $destfile1_tmp -l alpha -s warn -f $destfile2_tmp
+
+# strip the pids
+sed -e 's/\[\([a-z0-9\.]\+\)\/\([0-9]\+\)\]/[\1]/' < $destfile1_tmp > $destfile1
+sed -e 's/\[\([a-z0-9\.]\+\)\/\([0-9]\+\)\]/[\1]/' < $destfile2_tmp > $destfile2
 
 # All output for example and example.beta should have gone to destfile1.
 # Output for example.alpha should have done to destfile2.
@@ -86,6 +99,6 @@ else
 fi
 
 # Tidy up.
-rm -f $tempfile $destfile1 $destfile2
+rm -f $tempfile $destfile1_tmp $destfile2_tmp $destfile1 $destfile2
 
 exit $failcount
