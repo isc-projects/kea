@@ -216,7 +216,7 @@ public:
     ///
     /// @param hex_str string representing a binary value encoded
     /// with hexadecimal digits (without 0x prefix).
-    /// @param [out] output buffer.
+    /// @param [out] buf output buffer.
     static void writeBinary(const std::string& hex_str,
                             std::vector<uint8_t>& buf);
 
@@ -231,7 +231,7 @@ public:
     /// The bool value is encoded in a buffer in such a way that
     /// "1" means "true" and "0" means "false".
     ///
-    /// @param boolean value to be written.
+    /// @param value boolean value to be written.
     /// @param [out] buf output buffer.
     static void writeBool(const bool value, std::vector<uint8_t>& buf);
 
