@@ -119,4 +119,4 @@ private:
 }
 }
 
-#endif // LOADER_CALLBACKS_H
+#endif // MASTER_LOADER_CALLBACKS_H
