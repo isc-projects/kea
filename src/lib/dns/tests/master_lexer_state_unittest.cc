@@ -526,6 +526,8 @@ TEST_F(MasterLexerStateTest, stringNumbers) {
                          // as strings (unsigned integers only)
     ss << "123abc456 ";  // 'Numbers' containing non-digits should
                          // be interpreted as strings
+    ss << "123\\456 ";   // Numbers containing escaped digits are
+                         // interpreted as strings
     ss << "3scaped\\ space ";
     ss << "3scaped\\\ttab ";
     ss << "3scaped\\(paren ";
@@ -543,6 +545,10 @@ TEST_F(MasterLexerStateTest, stringNumbers) {
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
     EXPECT_EQ(s_null, s_number.handle(lexer));
     stringTokenCheck("123abc456", s_number.getToken(lexer), false);
+
+    EXPECT_EQ(&s_number, State::start(lexer, common_options));
+    EXPECT_EQ(s_null, s_number.handle(lexer));
+    stringTokenCheck("123\\456", s_number.getToken(lexer), false);
 
     EXPECT_EQ(&s_number, State::start(lexer, common_options));
     EXPECT_EQ(s_null, s_number.handle(lexer)); // recognize str, see ' ' at end
