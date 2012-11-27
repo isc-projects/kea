@@ -1,3 +1,11 @@
+511.	[bug]		stephen
+	Fixed a race condition in the DHCP tests whereby the test program
+	spawned a subprocess and attempted to read (without waiting) from
+	the interconnecting pipe before the subprocess had written
+	anything.  The lack of output was being interpreted as a test
+	failure.
+	(Trac #2410, git f53e65cdceeb8e6da4723730e4ed0a17e4646579)
+
 510.	[func]		marcin
 	DHCP option instances can be created using a collection of strings.
 	Each string represents a value of a particular data field within
