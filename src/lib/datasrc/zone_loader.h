@@ -119,6 +119,8 @@ private:
     const ZoneIteratorPtr iterator_;
     /// \brief The destination zone updater
     const ZoneUpdaterPtr updater_;
+    /// \brief Indicator if loading was completed
+    bool complete_;
 };
 
 }

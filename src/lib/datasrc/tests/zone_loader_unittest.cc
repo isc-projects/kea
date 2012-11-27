@@ -161,6 +161,12 @@ TEST_F(ZoneLoaderTest, copyUnsigned) {
               destination_client_.rrsets_.front());
     EXPECT_EQ("m.root-servers.net. 3600000 IN AAAA 2001:dc3::35\n",
               destination_client_.rrsets_.back());
+
+    // It isn't possible to try again now
+    EXPECT_THROW(loader.load(), isc::InvalidOperation);
+    EXPECT_THROW(loader.loadIncremental(1), isc::InvalidOperation);
+    // Even 0, which should load nothing, returns the error
+    EXPECT_THROW(loader.loadIncremental(0), isc::InvalidOperation);
 }
 
 }
