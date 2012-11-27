@@ -64,7 +64,7 @@ TEST(IOAddressTest, Family) {
     EXPECT_EQ(AF_INET6, IOAddress("2001:0DB8:0:0::0012").getFamily());
 }
 
-TEST(IOAddressTest, from_bytes) {
+TEST(IOAddressTest, fromBytes) {
     // 2001:db8:1::dead:beef
     uint8_t v6[] = {
         0x20, 0x01, 0x0d, 0xb8, 0x00, 0x01, 0, 0,
@@ -74,12 +74,12 @@ TEST(IOAddressTest, from_bytes) {
 
     IOAddress addr("::");
     EXPECT_NO_THROW({
-        addr = IOAddress::from_bytes(AF_INET6, v6);
+        addr = IOAddress::fromBytes(AF_INET6, v6);
     });
     EXPECT_EQ("2001:db8:1::dead:beef", addr.toText());
 
     EXPECT_NO_THROW({
-        addr = IOAddress::from_bytes(AF_INET, v4);
+        addr = IOAddress::fromBytes(AF_INET, v4);
     });
     EXPECT_EQ(addr.toText(), IOAddress("192.0.2.3").toText());
 }

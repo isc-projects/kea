@@ -61,7 +61,7 @@ IOAddress::toText() const {
 }
 
 IOAddress
-IOAddress::from_bytes(short family, const uint8_t* data) {
+IOAddress::fromBytes(short family, const uint8_t* data) {
     if (data == NULL) {
         isc_throw(BadValue, "NULL pointer received.");
     } else

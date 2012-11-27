@@ -241,17 +241,6 @@ protected:
     ///         interfaces for new DUID generation are detected.
     void setServerID();
 
-    /// @brief Initializes option definitions for standard options.
-    ///
-    /// Each standard option's format is described by the
-    /// dhcp::OptionDefinition object. This function creates such objects
-    /// for each standard DHCPv6 option.
-    ///
-    /// @todo list thrown exceptions.
-    /// @todo extend this function to cover all standard options. Currently
-    /// it is limited to critical options only.
-    void initStdOptionDefs();
-
 private:
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using

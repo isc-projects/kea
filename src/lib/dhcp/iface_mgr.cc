@@ -1098,9 +1098,9 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
     pkt->updateTimestamp();
 
-    pkt->setLocalAddr(IOAddress::from_bytes(AF_INET6,
+    pkt->setLocalAddr(IOAddress::fromBytes(AF_INET6,
                       reinterpret_cast<const uint8_t*>(&to_addr)));
-    pkt->setRemoteAddr(IOAddress::from_bytes(AF_INET6,
+    pkt->setRemoteAddr(IOAddress::fromBytes(AF_INET6,
                        reinterpret_cast<const uint8_t*>(&from.sin6_addr)));
     pkt->setRemotePort(ntohs(from.sin6_port));
     pkt->setIndex(ifindex);
