@@ -28,150 +28,6 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-OptionDefinition::DataTypeUtil::DataTypeUtil() {
-    data_types_["empty"] = OPT_EMPTY_TYPE;
-    data_types_["binary"] = OPT_BINARY_TYPE;
-    data_types_["boolean"] = OPT_BOOLEAN_TYPE;
-    data_types_["int8"] = OPT_INT8_TYPE;
-    data_types_["int16"] = OPT_INT16_TYPE;
-    data_types_["int32"] = OPT_INT32_TYPE;
-    data_types_["uint8"] = OPT_UINT8_TYPE;
-    data_types_["uint16"] = OPT_UINT16_TYPE;
-    data_types_["uint32"] = OPT_UINT32_TYPE;
-    data_types_["ipv4-address"] = OPT_IPV4_ADDRESS_TYPE;
-    data_types_["ipv6-address"] = OPT_IPV6_ADDRESS_TYPE;
-    data_types_["string"] = OPT_STRING_TYPE;
-    data_types_["fqdn"] = OPT_FQDN_TYPE;
-    data_types_["record"] = OPT_RECORD_TYPE;
-}
-
-OptionDataType
-OptionDefinition::DataTypeUtil::getOptionDataType(const std::string& data_type) {
-    std::map<std::string, OptionDataType>::const_iterator data_type_it =
-        data_types_.find(data_type);
-    if (data_type_it != data_types_.end()) {
-        return (data_type_it->second);
-    }
-    return (OPT_UNKNOWN_TYPE);
-}
-
-template<typename T>
-T OptionDefinition::DataTypeUtil::lexicalCastWithRangeCheck(const std::string& value_str) const {
-    // Lexical cast in case of our data types make sense only
-    // for uintX_t, intX_t and bool type.
-    if (!OptionDataTypeTraits<T>::integer_type &&
-        OptionDataTypeTraits<T>::type != OPT_BOOLEAN_TYPE) {
-        isc_throw(BadDataTypeCast, "unable to do lexical cast to non-integer and"
-                  << " non-boolean data type");
-    }
-    // We use the 64-bit value here because it has wider range than
-    // any other type we use here and it allows to detect out of
-    // bounds conditions e.g. negative value specified for uintX_t
-    // data type. Obviously if the value exceeds the limits of int64
-    // this function will not handle that properly.
-    int64_t result = 0;
-    try {
-        result = boost::lexical_cast<int64_t>(value_str);
-    } catch (const boost::bad_lexical_cast& ex) {
-        // Prepare error message here.
-        std::string data_type_str = "boolean";
-        if (OptionDataTypeTraits<T>::integer_type) {
-            data_type_str = "integer";
-        }
-        isc_throw(BadDataTypeCast, "unable to do lexical cast to " << data_type_str
-                  << " data type for value " << value_str << ": " << ex.what());
-    }
-    // Perform range checks for integer values only (exclude bool values).
-    if (OptionDataTypeTraits<T>::integer_type) {
-        if (result > numeric_limits<T>::max() ||
-            result < numeric_limits<T>::min()) {
-            isc_throw(BadDataTypeCast, "unable to do lexical cast for value "
-                      << value_str << ". This value is expected to be in the range of "
-                      << numeric_limits<T>::min() << ".." << numeric_limits<T>::max());
-        }
-    }
-    return (static_cast<T>(result));
-}
-
-void
-OptionDefinition::DataTypeUtil::writeToBuffer(const std::string& value,
-                                              const OptionDataType type,
-                                              OptionBuffer& buf) {
-    // We are going to write value given by value argument to the buffer.
-    // The actual type of the value is given by second argument. Check
-    // this argument to determine how to write this value to the buffer.
-    switch (type) {
-    case OPT_BINARY_TYPE:
-        OptionDataTypeUtil::writeBinary(value, buf);
-        return;
-    case OPT_BOOLEAN_TYPE:
-        // We encode the true value as 1 and false as 0 on 8 bits.
-        // That way we actually waste 7 bits but it seems to be the
-        // simpler way to encode boolean.
-        // @todo Consider if any other encode methods can be used.
-        OptionDataTypeUtil::writeBool(lexicalCastWithRangeCheck<bool>(value), buf);
-        return;
-    case OPT_INT8_TYPE:
-        OptionDataTypeUtil::writeInt<uint8_t>(lexicalCastWithRangeCheck<int8_t>(value),
-                                              buf);
-        return;
-    case OPT_INT16_TYPE:
-        OptionDataTypeUtil::writeInt<uint16_t>(lexicalCastWithRangeCheck<int16_t>(value),
-                                               buf);
-        return;
-    case OPT_INT32_TYPE:
-        OptionDataTypeUtil::writeInt<uint32_t>(lexicalCastWithRangeCheck<int32_t>(value),
-                                               buf);
-        return;
-    case OPT_UINT8_TYPE:
-        OptionDataTypeUtil::writeInt<uint8_t>(lexicalCastWithRangeCheck<uint8_t>(value),
-                                              buf);
-        return;
-    case OPT_UINT16_TYPE:
-        OptionDataTypeUtil::writeInt<uint16_t>(lexicalCastWithRangeCheck<uint16_t>(value),
-                                               buf);
-        return;
-    case OPT_UINT32_TYPE:
-        OptionDataTypeUtil::writeInt<uint32_t>(lexicalCastWithRangeCheck<uint32_t>(value),
-                                               buf);
-        return;
-    case OPT_IPV4_ADDRESS_TYPE:
-    case OPT_IPV6_ADDRESS_TYPE:
-        {
-            asiolink::IOAddress address(value);
-            if (!address.getAddress().is_v4() &&
-                !address.getAddress().is_v6()) {
-                isc_throw(BadDataTypeCast, "provided address " << address.toText()
-                          << " is not a valid "
-                          << (address.getAddress().is_v4() ? "IPv4" : "IPv6")
-                          << " address");
-            }
-            OptionDataTypeUtil::writeAddress(address, buf);
-            return;
-        }
-    case OPT_STRING_TYPE:
-        OptionDataTypeUtil::writeString(value, buf);
-        return;
-    case OPT_FQDN_TYPE:
-        {
-            // FQDN implementation is not terribly complicated but will require
-            // creation of some additional logic (maybe object) that will parse
-            // the fqdn into labels.
-            isc_throw(isc::NotImplemented, "write of FQDN record into option buffer"
-                      " is not supported yet");
-            return;
-        }
-    default:
-        // We hit this point because invalid option data type has been specified
-        // This may be the case because 'empty' or 'record' data type has been
-        // specified. We don't throw exception here because it will be thrown
-        // at the exit point from this function.
-        ;
-    }
-    isc_throw(isc::BadValue, "attempt to write invalid option data field type"
-              " into the option buffer: " << type);
-
-}
 
 OptionDefinition::OptionDefinition(const std::string& name,
                                  const uint16_t code,
@@ -184,7 +40,7 @@ OptionDefinition::OptionDefinition(const std::string& name,
     // Data type is held as enum value by this class.
     // Use the provided option type string to get the
     // corresponding enum value.
-    type_ = DataTypeUtil::instance().getOptionDataType(type);
+    type_ = OptionDataTypeUtil::getDataType(type);
 }
 
 OptionDefinition::OptionDefinition(const std::string& name,
@@ -199,7 +55,7 @@ OptionDefinition::OptionDefinition(const std::string& name,
 
 void
 OptionDefinition::addRecordField(const std::string& data_type_name) {
-    OptionDataType data_type = DataTypeUtil::instance().getOptionDataType(data_type_name);
+    OptionDataType data_type = OptionDataTypeUtil::getDataType(data_type_name);
     addRecordField(data_type);
 }
 
@@ -291,10 +147,10 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
         if (values.size() == 0) {
             isc_throw(InvalidOptionValue, "no option value specified");
         }
-        DataTypeUtil::instance().writeToBuffer(values[0], type_, buf);
+        writeToBuffer(values[0], type_, buf);
     } else if (array_type_ && type_ != OPT_RECORD_TYPE) {
         for (size_t i = 0; i < values.size(); ++i) {
-            DataTypeUtil::instance().writeToBuffer(values[i], type_, buf);
+            writeToBuffer(values[i], type_, buf);
         }
     } else if (type_ == OPT_RECORD_TYPE) {
         const RecordFieldsCollection& records = getRecordFields();
@@ -304,7 +160,7 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                       << " provided.");
         }
         for (size_t i = 0; i < records.size(); ++i) {
-            DataTypeUtil::instance().writeToBuffer(values[i], records[i], buf);
+            writeToBuffer(values[i], records[i], buf);
         }
     }
     return (optionFactory(u, type, buf.begin(), buf.end()));
@@ -408,6 +264,124 @@ OptionDefinition::haveIA6Format() const {
 bool
 OptionDefinition::haveIAAddr6Format() const {
     return (haveIAx6Format(OPT_IPV6_ADDRESS_TYPE));
+}
+
+template<typename T>
+T OptionDefinition::lexicalCastWithRangeCheck(const std::string& value_str) const {
+    // Lexical cast in case of our data types make sense only
+    // for uintX_t, intX_t and bool type.
+    if (!OptionDataTypeTraits<T>::integer_type &&
+        OptionDataTypeTraits<T>::type != OPT_BOOLEAN_TYPE) {
+        isc_throw(BadDataTypeCast, "unable to do lexical cast to non-integer and"
+                  << " non-boolean data type");
+    }
+    // We use the 64-bit value here because it has wider range than
+    // any other type we use here and it allows to detect out of
+    // bounds conditions e.g. negative value specified for uintX_t
+    // data type. Obviously if the value exceeds the limits of int64
+    // this function will not handle that properly.
+    int64_t result = 0;
+    try {
+        result = boost::lexical_cast<int64_t>(value_str);
+    } catch (const boost::bad_lexical_cast& ex) {
+        // Prepare error message here.
+        std::string data_type_str = "boolean";
+        if (OptionDataTypeTraits<T>::integer_type) {
+            data_type_str = "integer";
+        }
+        isc_throw(BadDataTypeCast, "unable to do lexical cast to " << data_type_str
+                  << " data type for value " << value_str << ": " << ex.what());
+    }
+    // Perform range checks for integer values only (exclude bool values).
+    if (OptionDataTypeTraits<T>::integer_type) {
+        if (result > numeric_limits<T>::max() ||
+            result < numeric_limits<T>::min()) {
+            isc_throw(BadDataTypeCast, "unable to do lexical cast for value "
+                      << value_str << ". This value is expected to be in the range of "
+                      << numeric_limits<T>::min() << ".." << numeric_limits<T>::max());
+        }
+    }
+    return (static_cast<T>(result));
+}
+
+void
+OptionDefinition::writeToBuffer(const std::string& value,
+                                const OptionDataType type,
+                                OptionBuffer& buf) const {
+    // We are going to write value given by value argument to the buffer.
+    // The actual type of the value is given by second argument. Check
+    // this argument to determine how to write this value to the buffer.
+    switch (type) {
+    case OPT_BINARY_TYPE:
+        OptionDataTypeUtil::writeBinary(value, buf);
+        return;
+    case OPT_BOOLEAN_TYPE:
+        // We encode the true value as 1 and false as 0 on 8 bits.
+        // That way we actually waste 7 bits but it seems to be the
+        // simpler way to encode boolean.
+        // @todo Consider if any other encode methods can be used.
+        OptionDataTypeUtil::writeBool(lexicalCastWithRangeCheck<bool>(value), buf);
+        return;
+    case OPT_INT8_TYPE:
+        OptionDataTypeUtil::writeInt<uint8_t>(lexicalCastWithRangeCheck<int8_t>(value),
+                                              buf);
+        return;
+    case OPT_INT16_TYPE:
+        OptionDataTypeUtil::writeInt<uint16_t>(lexicalCastWithRangeCheck<int16_t>(value),
+                                               buf);
+        return;
+    case OPT_INT32_TYPE:
+        OptionDataTypeUtil::writeInt<uint32_t>(lexicalCastWithRangeCheck<int32_t>(value),
+                                               buf);
+        return;
+    case OPT_UINT8_TYPE:
+        OptionDataTypeUtil::writeInt<uint8_t>(lexicalCastWithRangeCheck<uint8_t>(value),
+                                              buf);
+        return;
+    case OPT_UINT16_TYPE:
+        OptionDataTypeUtil::writeInt<uint16_t>(lexicalCastWithRangeCheck<uint16_t>(value),
+                                               buf);
+        return;
+    case OPT_UINT32_TYPE:
+        OptionDataTypeUtil::writeInt<uint32_t>(lexicalCastWithRangeCheck<uint32_t>(value),
+                                               buf);
+        return;
+    case OPT_IPV4_ADDRESS_TYPE:
+    case OPT_IPV6_ADDRESS_TYPE:
+        {
+            asiolink::IOAddress address(value);
+            if (!address.getAddress().is_v4() &&
+                !address.getAddress().is_v6()) {
+                isc_throw(BadDataTypeCast, "provided address " << address.toText()
+                          << " is not a valid "
+                          << (address.getAddress().is_v4() ? "IPv4" : "IPv6")
+                          << " address");
+            }
+            OptionDataTypeUtil::writeAddress(address, buf);
+            return;
+        }
+    case OPT_STRING_TYPE:
+        OptionDataTypeUtil::writeString(value, buf);
+        return;
+    case OPT_FQDN_TYPE:
+        {
+            // FQDN implementation is not terribly complicated but will require
+            // creation of some additional logic (maybe object) that will parse
+            // the fqdn into labels.
+            isc_throw(isc::NotImplemented, "write of FQDN record into option buffer"
+                      " is not supported yet");
+            return;
+        }
+    default:
+        // We hit this point because invalid option data type has been specified
+        // This may be the case because 'empty' or 'record' data type has been
+        // specified. We don't throw exception here because it will be thrown
+        // at the exit point from this function.
+        ;
+    }
+    isc_throw(isc::BadValue, "attempt to write invalid option data field type"
+              " into the option buffer: " << type);
+
 }
 
 OptionPtr
