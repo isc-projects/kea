@@ -278,7 +278,7 @@ TEST_F(OptionCustomTest, ipv4AddressData) {
 
     IOAddress address("127.0.0.1");
     // Read IPv4 address from using index 0.
-    ASSERT_NO_THROW(option->readAddress(0, address));
+    ASSERT_NO_THROW(address = option->readAddress(0));
 
     EXPECT_EQ("192.168.100.50", address.toText());
 }
@@ -306,7 +306,7 @@ TEST_F(OptionCustomTest, ipv6AddressData) {
     // IPv6 address.
     IOAddress address("::1");
     // Read an address from buffer #0.
-    ASSERT_NO_THROW(option->readAddress(0, address));
+    ASSERT_NO_THROW(address = option->readAddress(0));
 
     EXPECT_EQ("2001:db8:1::100", address.toText());
 }
@@ -333,7 +333,7 @@ TEST_F(OptionCustomTest, stringData) {
     // Custom option should now comprise single string value that
     // can be accessed using index 0.
     std::string value;
-    ASSERT_NO_THROW(option->readString(0, value));
+    ASSERT_NO_THROW(value = option->readString(0));
 
     EXPECT_EQ("hello world!", value);
 }
@@ -494,7 +494,7 @@ TEST_F(OptionCustomTest, ipv4AddressDataArray) {
     // We expect 3 IPv4 addresses being stored in the option.
     for (int i = 0; i < 3; ++i) {
         IOAddress address("10.10.10.10");
-        ASSERT_NO_THROW(option->readAddress(i, address));
+        ASSERT_NO_THROW(address = option->readAddress(i));
         EXPECT_EQ(addresses[i].toText(), address.toText());
     }
 }
@@ -529,7 +529,7 @@ TEST_F(OptionCustomTest, ipv6AddressDataArray) {
     // We expect 3 IPv6 addresses being stored in the option.
     for (int i = 0; i < 3; ++i) {
         IOAddress address("fe80::4");
-        ASSERT_NO_THROW(option->readAddress(i, address));
+        ASSERT_NO_THROW(address = option->readAddress(i));
         EXPECT_EQ(addresses[i].toText(), address.toText());
     }
 }
@@ -580,17 +580,17 @@ TEST_F(OptionCustomTest, recordData) {
 
     // Verify value in the field 2.
     IOAddress value2("127.0.0.1");
-    ASSERT_NO_THROW(option->readAddress(2, value2));
+    ASSERT_NO_THROW(value2 = option->readAddress(2));
     EXPECT_EQ("192.168.0.1", value2.toText());
 
     // Verify value in the field 3.
     IOAddress value3("::1");
-    ASSERT_NO_THROW(option->readAddress(3, value3));
+    ASSERT_NO_THROW(value3 = option->readAddress(3));
     EXPECT_EQ("2001:db8:1::1", value3.toText());
 
     // Verify value in the field 4.
     std::string value4;
-    ASSERT_NO_THROW(option->readString(4, value4));
+    ASSERT_NO_THROW(value4 = option->readString(4));
     EXPECT_EQ("ABCD", value4);
 }
 
@@ -740,7 +740,7 @@ TEST_F(OptionCustomTest, unpack) {
     // We expect 3 IPv4 addresses being stored in the option.
     for (int i = 0; i < 3; ++i) {
         IOAddress address("10.10.10.10");
-        ASSERT_NO_THROW(option->readAddress(i, address));
+        ASSERT_NO_THROW(address = option->readAddress(i));
         EXPECT_EQ(addresses[i].toText(), address.toText());
     }
 
@@ -767,7 +767,7 @@ TEST_F(OptionCustomTest, unpack) {
     // Verify that the addresses have been overwritten.
     for (int i = 0; i < 2; ++i) {
         IOAddress address("10.10.10.10");
-        ASSERT_NO_THROW(option->readAddress(i, address));
+        ASSERT_NO_THROW(address = option->readAddress(i));
         EXPECT_EQ(addresses[i].toText(), address.toText());
     }
 }
@@ -802,7 +802,7 @@ TEST_F(OptionCustomTest, setData) {
     // We expect 3 IPv6 addresses being stored in the option.
     for (int i = 0; i < 3; ++i) {
         IOAddress address("fe80::4");
-        ASSERT_NO_THROW(option->readAddress(i, address));
+        ASSERT_NO_THROW(address = option->readAddress(i));
         EXPECT_EQ(addresses[i].toText(), address.toText());
     }
 
@@ -828,7 +828,7 @@ TEST_F(OptionCustomTest, setData) {
     // Check that it has been replaced.
     for (int i = 0; i < 2; ++i) {
         IOAddress address("10.10.10.10");
-        ASSERT_NO_THROW(option->readAddress(i, address));
+        ASSERT_NO_THROW(address = option->readAddress(i));
         EXPECT_EQ(addresses[i].toText(), address.toText());
     }
 }
