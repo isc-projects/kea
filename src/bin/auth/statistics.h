@@ -48,8 +48,7 @@ private:
         REQ_IS_EDNS_0,              // EDNS ver.0
         REQ_IS_DNSSEC_OK,           // DNSSEC OK (DO) bit is set
         REQ_IS_TSIG,                // signed with valid TSIG
-        REQ_IS_SIG0,                // signed with valid SIG(0)
-        REQ_IS_BADSIG,              // signed but bad signature,
+        REQ_IS_BADSIG,              // signed but bad signature
         RES_IS_TRUNCATED,           // DNS message is truncated
         BIT_ATTRIBUTES_TYPES
     };
@@ -139,13 +138,6 @@ public:
         return (bit_attributes_[REQ_IS_TSIG]);
     }
 
-    /// \brief Get request SIG(0) signed.
-    /// \return true if request is SIG(0) signed
-    /// \throw None
-    bool getRequestSigSIG0() const {
-        return (bit_attributes_[REQ_IS_SIG0]);
-    }
-
     /// \brief Get request signature is bad.
     /// \return true if request signature is bad
     /// \throw None
@@ -155,15 +147,11 @@ public:
 
     /// \brief Set request TSIG attributes.
     /// \param is_tsig true if request is TSIG signed
-    /// \param is_sig0 true if request is SIG(0) signed
     /// \param is_badsig true if request signature is bad
     /// \throw None
-    void setRequestSig(const bool is_tsig, const bool is_sig0,
-                       const bool is_badsig)
-    {
-        assert(!(is_tsig && is_sig0));
+    void setRequestSig(const bool is_tsig, const bool is_badsig) {
+        assert(!(!is_tsig && is_badsig));
         bit_attributes_[REQ_IS_TSIG] = is_tsig;
-        bit_attributes_[REQ_IS_SIG0] = is_sig0;
         bit_attributes_[REQ_IS_BADSIG] = is_badsig;
     }
 

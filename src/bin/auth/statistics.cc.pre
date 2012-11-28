@@ -147,9 +147,6 @@ Counters::incRequest(const MessageAttributes& msgattrs) {
     if (msgattrs.getRequestSigTSIG()) {
         server_msg_counter_.inc(MSG_REQUEST_TSIG);
     }
-    if (msgattrs.getRequestSigSIG0()) {
-        server_msg_counter_.inc(MSG_REQUEST_SIG0);
-    }
     if (msgattrs.getRequestSigBadSig()) {
         server_msg_counter_.inc(MSG_REQUEST_BADSIG);
         // If signature validation is failed, no other query attributes are
