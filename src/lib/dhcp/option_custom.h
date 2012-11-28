@@ -198,6 +198,15 @@ private:
     /// @brief Create collection of buffers representing data field values.
     void createBuffers();
 
+    /// @brief Return a text representation of a data field.
+    ///
+    /// @param data_type data type of a field.
+    /// @param index data field buffer index within a custom option.
+    ///
+    /// @return text representation of a data field.
+    std::string dataFieldToText(const OptionDataType data_type,
+                                const uint32_t index) const;
+
     /// Option definition used to create an option.
     OptionDefinition definition_;
 
