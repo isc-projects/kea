@@ -40,6 +40,12 @@ public:
 
     /// @brief Constructor, used for options to be sent.
     ///
+    /// This constructor creates an instance of an option from the whole
+    /// supplied buffer. This constructor is mainly used to create an
+    /// instances of options to be stored in outgoing DHCP packets.
+    /// The buffer used to create the instance of an option can be
+    /// created from the option data specified in server's configuration.
+    ///
     /// @param def option definition.
     /// @param u specifies universe (V4 or V6).
     /// @param data content of the option.
@@ -50,6 +56,13 @@ public:
     OptionCustom(const OptionDefinition& def, Universe u, const OptionBuffer& data);
 
     /// @brief Constructor, used for received options.
+    ///
+    /// This constructor creates an instance an option from the portion
+    /// of the buffer specified by iterators. This is mainly useful when
+    /// parsing received packets. Such packets are represented by a single
+    /// buffer holding option data and all sub options. Methods that are
+    /// parsing a packet, supply relevant portions of the packet buffer
+    /// to this constructor to create option instances out of it.
     ///
     /// @param def option definition.
     /// @param u specifies universe (V4 or V6).
@@ -71,10 +84,10 @@ public:
     /// @brief Read a buffer as IP address.
     ///
     /// @param index buffer index.
-    /// @param [out] address read IP address.
     ///
+    /// @return IP address read from a buffer.
     /// @throw isc::OutOfRange if index is out of range.
-    void readAddress(const uint32_t index, asiolink::IOAddress& address) const;
+    asiolink::IOAddress readAddress(const uint32_t index) const;
 
     /// @brief Read a buffer as binary data.
     ///
@@ -140,10 +153,10 @@ public:
     /// @brief Read a buffer as string value.
     ///
     /// @param index buffer index.
-    /// @param [out] value read string value.
     ///
+    /// @return string value read from buffer.
     /// @throw isc::OutOfRange if index is out of range.
-    void readString(const uint32_t index, std::string& value) const;
+    std::string readString(const uint32_t index) const;
 
     /// @brief Parses received buffer.
     ///

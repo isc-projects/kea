@@ -99,9 +99,12 @@ OptionCustom::createBuffers() {
             // Proceed to the next data field.
             data += data_size;
         }
-    } else {
-        // If option definition type is not a 'record' than definition
-        // type itself indicates what type of data is being held there.
+    } else if (data_type != OPT_EMPTY_TYPE) {
+        // If data_type value is other than OPT_RECORD_TYPE, our option is
+        // empty (have no data at all) or it comprises one or more
+        // data fields of the same type. The type of those fields
+        // is held in the data_type variable so let's use it to determine
+        // a size of buffers.
         int data_size = OptionDataTypeUtil::getDataTypeLen(data_type);
         // The check below will fail if the input buffer is too short
         // for the data size being held by this option.
@@ -122,7 +125,9 @@ OptionCustom::createBuffers() {
             assert(data_size > 0);
             // Get equal chunks of data and store as collection of buffers.
             // Truncate any remaining part which length is not divisible by
-            // data_size.
+            // data_size. Note that it is ok to truncate the data if and only
+            // if the data buffer is long enough to keep at least one value.
+            // This has been checked above already.
             do {
                 buffers.push_back(OptionBuffer(data, data + data_size));
                 data += data_size;
@@ -134,9 +139,9 @@ OptionCustom::createBuffers() {
             if (data_size == 0) {
                 data_size = std::distance(data, data_.end());
             }
-            if (data_size > 0 && data_type != OPT_EMPTY_TYPE) {
+            if (data_size > 0) {
                 buffers.push_back(OptionBuffer(data, data + data_size));
-            } else if (data_type != OPT_EMPTY_TYPE) {
+            } else {
                 isc_throw(OutOfRange, "option buffer truncated");
             }
         }
@@ -148,57 +153,49 @@ OptionCustom::createBuffers() {
 std::string
 OptionCustom::dataFieldToText(const OptionDataType data_type,
                               const uint32_t index) const {
-    std::ostringstream tmp;
+    std::ostringstream text;
 
     // Get the value of the data field.
     switch (data_type) {
     case OPT_BINARY_TYPE:
-        tmp << util::encode::encodeHex(readBinary(index));
+        text << util::encode::encodeHex(readBinary(index));
         break;
     case OPT_BOOLEAN_TYPE:
-        tmp << (readBoolean(index) ? "true" : "false");
+        text << (readBoolean(index) ? "true" : "false");
         break;
     case OPT_INT8_TYPE:
-        tmp << readInteger<int8_t>(index);
+        text << readInteger<int8_t>(index);
         break;
     case OPT_INT16_TYPE:
-        tmp << readInteger<int16_t>(index);
+        text << readInteger<int16_t>(index);
         break;
     case OPT_INT32_TYPE:
-        tmp << readInteger<int32_t>(index);
+        text << readInteger<int32_t>(index);
         break;
     case OPT_UINT8_TYPE:
-        tmp << readInteger<uint8_t>(index);
+        text << readInteger<uint8_t>(index);
         break;
     case OPT_UINT16_TYPE:
-        tmp << readInteger<uint16_t>(index);
+        text << readInteger<uint16_t>(index);
         break;
     case OPT_UINT32_TYPE:
-        tmp << readInteger<uint32_t>(index);
+        text << readInteger<uint32_t>(index);
         break;
     case OPT_IPV4_ADDRESS_TYPE:
     case OPT_IPV6_ADDRESS_TYPE:
-        {
-            asiolink::IOAddress address("127.0.0.1");
-            readAddress(index, address);
-            tmp << address.toText();
-            break;
-        }
+        text << readAddress(index).toText();
+        break;
     case OPT_STRING_TYPE:
-        {
-            std::string s;
-            readString(index, s);
-            tmp << s;
-            break;
-        }
+        text << readString(index);
+        break;
     default:
         ;
     }
 
     // Append data field type in brackets.
-    tmp << " ( " << OptionDataTypeUtil::getDataTypeName(data_type) << " ) ";
+    text << " ( " << OptionDataTypeUtil::getDataTypeName(data_type) << " ) ";
 
-    return (tmp.str());
+    return (text.str());
 }
 
 void
@@ -214,7 +211,12 @@ OptionCustom::pack4(isc::util::OutputBuffer& buf) {
     // Write data from buffers.
     for (std::vector<OptionBuffer>::const_iterator it = buffers_.begin();
          it != buffers_.end(); ++it) {
-        buf.writeData(&(*it)[0], it->size());
+        // In theory the createBuffers function should have taken
+        // care that there are no empty buffers added to the
+        // collection but it is almost always good to make sure.
+        if (it->size() > 0) {
+            buf.writeData(&(*it)[0], it->size());
+        }
     }
 
     // Write suboptions.
@@ -235,17 +237,17 @@ OptionCustom::pack6(isc::util::OutputBuffer& buf) {
     LibDHCP::packOptions(buf, options_);
 }
 
-void
-OptionCustom::readAddress(const uint32_t index, asiolink::IOAddress& address) const {
+asiolink::IOAddress
+OptionCustom::readAddress(const uint32_t index) const {
     checkIndex(index);
 
     // The address being read can be either IPv4 or IPv6. The decision
     // is made based on the buffer length. If it holds 4 bytes it is IPv4
     // address, if it holds 16 bytes it is IPv6.
     if (buffers_[index].size() == asiolink::V4ADDRESS_LEN) {
-        OptionDataTypeUtil::readAddress(buffers_[index], AF_INET, address);
+        return (OptionDataTypeUtil::readAddress(buffers_[index], AF_INET));
     } else if (buffers_[index].size() == asiolink::V6ADDRESS_LEN) {
-        OptionDataTypeUtil::readAddress(buffers_[index], AF_INET6, address);
+        return (OptionDataTypeUtil::readAddress(buffers_[index], AF_INET6));
     } else {
         isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
                   << " IP address. Invalid buffer length " << buffers_[index].size());
@@ -264,10 +266,10 @@ OptionCustom::readBoolean(const uint32_t index) const {
     return (OptionDataTypeUtil::readBool(buffers_[index]));
 }
 
-void
-OptionCustom::readString(const uint32_t index, std::string& value) const {
+std::string
+OptionCustom::readString(const uint32_t index) const {
     checkIndex(index);
-    OptionDataTypeUtil::readString(buffers_[index], value);
+    return (OptionDataTypeUtil::readString(buffers_[index]));
 }
 
 void
@@ -310,7 +312,7 @@ void OptionCustom::setData(const OptionBufferConstIter first,
     createBuffers();
 }
 
-std::string OptionCustom::toText(int indent /* = 0 */ ) {
+std::string OptionCustom::toText(int indent) {
     std::stringstream tmp;
 
     for (int i = 0; i < indent; ++i)
