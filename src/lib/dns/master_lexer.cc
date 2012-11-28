@@ -167,7 +167,6 @@ MasterLexer::getSourceLine() const {
 
 const MasterLexer::Token&
 MasterLexer::getNextToken(Options options) {
-    // If the source is not available
     if (impl_->source_ == NULL) {
         isc_throw(isc::InvalidOperation, "No source to read tokens from");
     }
