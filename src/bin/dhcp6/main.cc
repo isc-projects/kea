@@ -105,7 +105,7 @@ main(int argc, char* argv[]) {
     // Initialize logging.  If verbose, we'll use maximum verbosity.
     isc::log::initLogger(DHCP6_NAME,
                          (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
-                         isc::log::MAX_DEBUG_LEVEL, NULL);
+                         isc::log::MAX_DEBUG_LEVEL, NULL, true);
     LOG_INFO(dhcp6_logger, DHCP6_STARTING);
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_START_INFO)
               .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no")
@@ -119,7 +119,7 @@ main(int argc, char* argv[]) {
                 server.establishSession();
             } catch (const std::exception& ex) {
                 LOG_ERROR(dhcp6_logger, DHCP6_SESSION_FAIL).arg(ex.what());
-                // Let's continue. It is useful to have the ability to run 
+                // Let's continue. It is useful to have the ability to run
                 // DHCP server in stand-alone mode, e.g. for testing
             }
         } else {
