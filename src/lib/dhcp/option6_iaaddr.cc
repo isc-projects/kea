@@ -59,7 +59,7 @@ void Option6IAAddr::pack(isc::util::OutputBuffer& buf) {
     buf.writeUint32(valid_);
 
     // parse suboption (there shouldn't be any for IAADDR)
-    LibDHCP::packOptions6(buf, options_);
+    packOptions(buf);
 }
 
 void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
@@ -77,7 +77,8 @@ void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
 
     valid_ = readUint32( &(*begin) );
     begin += sizeof(uint32_t);
-    LibDHCP::unpackOptions6(OptionBuffer(begin, end), options_);
+
+    unpackOptions(OptionBuffer(begin, end));
 }
 
 std::string Option6IAAddr::toText(int indent /* =0 */) {
