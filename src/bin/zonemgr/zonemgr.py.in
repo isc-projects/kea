@@ -42,7 +42,7 @@ from isc.log_messages.zonemgr_messages import *
 from isc.notify import notify_out
 
 # Initialize logging for called modules.
-isc.log.init("b10-zonemgr")
+isc.log.init("b10-zonemgr", buffer=True)
 logger = isc.log.Logger("zonemgr")
 
 # Pending system-wide debug level definitions, the ones we

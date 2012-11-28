@@ -95,7 +95,7 @@ main(int argc, char* argv[]) {
     // Initialize logging.  If verbose, we'll use maximum verbosity.
     isc::log::initLogger(DHCP4_NAME,
                          (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
-                         isc::log::MAX_DEBUG_LEVEL, NULL);
+                         isc::log::MAX_DEBUG_LEVEL, NULL, true);
     LOG_INFO(dhcp4_logger, DHCP4_STARTING);
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_START_INFO)
               .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no")

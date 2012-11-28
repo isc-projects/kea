@@ -31,7 +31,7 @@ import isc.util.process
 import isc.log
 from isc.log_messages.stats_messages import *
 
-isc.log.init("b10-stats")
+isc.log.init("b10-stats", buffer=True)
 logger = isc.log.Logger("stats")
 
 # Some constants for debug levels.
@@ -682,7 +682,7 @@ if __name__ == "__main__":
             help="enable maximum debug logging")
         (options, args) = parser.parse_args()
         if options.verbose:
-            isc.log.init("b10-stats", "DEBUG", 99)
+            isc.log.init("b10-stats", "DEBUG", 99, buffer=True)
         stats = Stats()
         stats.start()
     except OptionValueError as ove:

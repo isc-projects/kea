@@ -36,7 +36,7 @@ from isc.xfrin.diff import Diff
 from isc.server_common.auth_command import auth_loadzone_command
 from isc.log_messages.xfrin_messages import *
 
-isc.log.init("b10-xfrin")
+isc.log.init("b10-xfrin", buffer=True)
 logger = isc.log.Logger("xfrin")
 
 # Pending system-wide debug level definitions, the ones we
