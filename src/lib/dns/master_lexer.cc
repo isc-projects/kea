@@ -379,7 +379,7 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
                 return (NULL);
             }
             --paren_count;
-        } else if (isdigit(c)) {
+        } else if (isdigit(c) && (options & MasterLexer::NUMBER) != 0) {
             lexerimpl.last_was_eol_ = false;
             // this character will be handled in the number state
             lexerimpl.source_->ungetChar();
