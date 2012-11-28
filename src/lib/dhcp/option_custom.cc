@@ -334,8 +334,9 @@ std::string OptionCustom::toText(int indent) {
             for (int j = 0; j < indent + 2; ++j) {
                 tmp << " ";
             }
-            tmp << "#" << distance(fields.begin(), field) << " "
-                << dataFieldToText(*field, distance(fields.begin(), field))
+            tmp << "#" << std::distance(fields.begin(), field) << " "
+                << dataFieldToText(*field, std::distance(fields.begin(),
+                                                         field))
                 << std::endl;
         }
     } else {
