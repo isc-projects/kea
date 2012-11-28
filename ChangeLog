@@ -1,3 +1,11 @@
+512.	[func]		jelte
+	Added a new tool b10-certgen, to check and update the self-signed
+	SSL certificate used by b10-cmdctl. The original certificate
+	provided has been removed, and a fresh one is generated upon first
+	build. See the b10-certgen manpage for information on how to update
+	existing installed certificates.
+	(Trac #1044, git 510773dd9057ccf6caa8241e74a7a0b34ca971ab)
+
 511.	[bug]		stephen
 	Fixed a race condition in the DHCP tests whereby the test program
 	spawned a subprocess and attempted to read (without waiting) from
