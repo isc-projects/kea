@@ -119,7 +119,7 @@ public:
     /// purposes.
     ///@{
     bool wasLastEOL(const MasterLexer& lexer) const;
-    const MasterLexer::Token& getToken(const MasterLexer& lexer) const;
+    const MasterToken& getToken(const MasterLexer& lexer) const;
     size_t getParenCount(const MasterLexer& lexer) const;
     ///@}
 
