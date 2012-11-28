@@ -43,10 +43,10 @@ namespace master_lexer_internal {
 /// state, so it makes more sense to separate the interface for the transition
 /// from the initial state.
 ///
-/// When an object of a specific state class completes the session, it
-/// normally sets the identified token in the lexer, and returns NULL;
-/// if more transition is necessary, it returns a pointer to the next state
-/// object.
+/// If the whole lexer transition is completed within start(), it sets the
+/// identified token and returns NULL; otherwise it returns a pointer to
+/// an object of a specific state class that completes the session
+/// on the call of handle().
 ///
 /// As is usual in the state design pattern, the \c State class is made
 /// a friend class of \c MasterLexer and can refer to its internal details.
