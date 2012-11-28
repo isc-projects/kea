@@ -261,16 +261,60 @@ LibDHCP::initStdOptionDefs6() {
         bool array;
     };
     OptionParams params[] = {
-        { "CLIENTID", D6O_CLIENTID, OPT_BINARY_TYPE, false },
-        { "SERVERID", D6O_SERVERID, OPT_BINARY_TYPE, false },
-        { "IA_NA", D6O_IA_NA, OPT_RECORD_TYPE, false },
-        { "IAADDR", D6O_IAADDR, OPT_RECORD_TYPE, false },
-        { "ORO", D6O_ORO, OPT_UINT16_TYPE, true },
-        { "ELAPSED_TIME", D6O_ELAPSED_TIME, OPT_UINT16_TYPE, false },
-        { "STATUS_CODE", D6O_STATUS_CODE, OPT_RECORD_TYPE, false },
-        { "RAPID_COMMIT", D6O_RAPID_COMMIT, OPT_EMPTY_TYPE, false },
-        { "DNS_SERVERS", D6O_NAME_SERVERS, OPT_IPV6_ADDRESS_TYPE, true },
-        { "IA_PD", D6O_IA_PD, OPT_RECORD_TYPE, false }
+        { "clientid", D6O_CLIENTID, OPT_BINARY_TYPE, false },
+        { "serverid", D6O_SERVERID, OPT_BINARY_TYPE, false },
+        { "ia-na", D6O_IA_NA, OPT_RECORD_TYPE, false },
+        { "ia-ta", D6O_IA_TA, OPT_UINT32_TYPE, false },
+        { "iaaddr", D6O_IAADDR, OPT_RECORD_TYPE, false },
+        { "oro", D6O_ORO, OPT_UINT16_TYPE, true },
+        { "preference", D6O_PREFERENCE, OPT_UINT8_TYPE, false },
+        { "elapsed-time", D6O_ELAPSED_TIME, OPT_UINT16_TYPE, false },
+        { "relay-msg", D6O_RELAY_MSG, OPT_BINARY_TYPE, false },
+        //        { "AUTH", D6O_AUTH, D6O_AUTH, OPT_RECORD_TYPE, false },
+        { "unicast", D6O_UNICAST, OPT_IPV6_ADDRESS_TYPE, false },
+        { "status-code", D6O_STATUS_CODE, OPT_RECORD_TYPE, false },
+        { "rapid-commit", D6O_RAPID_COMMIT, OPT_EMPTY_TYPE, false },
+        { "user-class", D6O_USER_CLASS, OPT_BINARY_TYPE, false },
+        { "vendor-class", D6O_VENDOR_CLASS, OPT_RECORD_TYPE, false },
+        { "vendor-opts", D6O_VENDOR_OPTS, OPT_RECORD_TYPE, false },
+        { "interface-id", D6O_INTERFACE_ID, OPT_BINARY_TYPE, false },
+        { "reconf-msg", D6O_RECONF_MSG, OPT_UINT8_TYPE, false },
+        { "reconf-accept", D6O_RECONF_ACCEPT, OPT_EMPTY_TYPE, false },
+        { "sip-server-dns", D6O_SIP_SERVERS_DNS, OPT_FQDN_TYPE, true },
+        { "sip-server-addr", D6O_SIP_SERVERS_ADDR, OPT_IPV6_ADDRESS_TYPE, true },
+        { "dns-servers", D6O_NAME_SERVERS, OPT_IPV6_ADDRESS_TYPE, true },
+        { "domain-search", D6O_DOMAIN_SEARCH, OPT_FQDN_TYPE, true },
+        { "ia-pd", D6O_IA_PD, OPT_RECORD_TYPE, false },
+        { "iaprefix", D6O_IAPREFIX, OPT_RECORD_TYPE, false },
+        { "nis-servers", D6O_NIS_SERVERS, OPT_IPV6_ADDRESS_TYPE, true },
+        { "nisp-servers", D6O_NISP_SERVERS, OPT_IPV6_ADDRESS_TYPE, true },
+        { "nis-domain-name", D6O_NIS_DOMAIN_NAME, OPT_FQDN_TYPE, true },
+        { "nisp-domain-name", D6O_NISP_DOMAIN_NAME, OPT_FQDN_TYPE, true },
+        { "sntp-servers", D6O_SNTP_SERVERS, OPT_IPV6_ADDRESS_TYPE, true },
+        { "information-refresh-time", D6O_INFORMATION_REFRESH_TIME,
+          OPT_UINT32_TYPE, false },
+        { "bcmcs-server-dns", D6O_BCMCS_SERVER_D, OPT_FQDN_TYPE, true },
+        { "bcmcs-server-addr", D6O_BCMCS_SERVER_A, OPT_IPV6_ADDRESS_TYPE, true },
+        { "geoconf-civic", D6O_GEOCONF_CIVIC, OPT_RECORD_TYPE, false },
+        { "remote-id", D6O_REMOTE_ID, OPT_RECORD_TYPE, false },
+        { "subscriber-id", D6O_SUBSCRIBER_ID, OPT_BINARY_TYPE, false },
+        { "client-fqdn", D6O_CLIENT_FQDN, OPT_RECORD_TYPE, false },
+        { "pana-agent", D6O_PANA_AGENT, OPT_IPV6_ADDRESS_TYPE, true },
+        { "new-posix-timezone", D6O_NEW_POSIX_TIMEZONE, OPT_STRING_TYPE, false },
+        { "new-tzdb-timezone", D6O_NEW_TZDB_TIMEZONE, OPT_STRING_TYPE, false },
+        { "ero", D6O_ERO, OPT_UINT16_TYPE, true },
+        { "lq-query", D6O_LQ_QUERY, OPT_RECORD_TYPE, false },
+        { "client-data", D6O_CLIENT_DATA, OPT_EMPTY_TYPE, false },
+        { "clt-time", D6O_CLT_TIME, OPT_UINT32_TYPE, false },
+        { "lq-relay-data", D6O_LQ_RELAY_DATA, OPT_RECORD_TYPE, false },
+        { "lq-client-link", D6O_LQ_CLIENT_LINK, OPT_IPV6_ADDRESS_TYPE, true },
+        /*        { "MIP6_HNIDF", D6O_MIP6_HNIDF, OPT_FQDN_TYPE, false },
+        { "MIP6_VDINF", D6O_MIP6_VDINF, OPT_EMPTY_TYPE, false },
+        { "V6_LOST", D6O_V6_LOST, OPT_FQDN_TYPE, false },
+        { "CAPWAP_AC_V6", D6O_CAPWAP_AC_V6, OPT_IPV6_ADDRESS_TYPE, true },
+        { "RELAY_ID", D6O_RELAY_ID, OPT_BINARY_TYPE, false },
+        { "IPV6_ADDRESS_MOS", */
+
     };
     const int params_size = sizeof(params) / sizeof(params[0]);
 
@@ -294,6 +338,41 @@ LibDHCP::initStdOptionDefs6() {
         case D6O_STATUS_CODE:
             definition->addRecordField(OPT_UINT16_TYPE);
             definition->addRecordField(OPT_STRING_TYPE);
+            break;
+        case D6O_VENDOR_CLASS:
+            definition->addRecordField(OPT_UINT32_TYPE);
+            definition->addRecordField(OPT_BINARY_TYPE);
+            break;
+        case D6O_VENDOR_OPTS:
+            definition->addRecordField(OPT_UINT32_TYPE);
+            definition->addRecordField(OPT_BINARY_TYPE);
+            break;
+        case D6O_IAPREFIX:
+            definition->addRecordField(OPT_UINT32_TYPE);
+            definition->addRecordField(OPT_UINT32_TYPE);
+            definition->addRecordField(OPT_UINT8_TYPE);
+            definition->addRecordField(OPT_BINARY_TYPE);
+            break;
+        case D6O_GEOCONF_CIVIC:
+            definition->addRecordField(OPT_UINT8_TYPE);
+            definition->addRecordField(OPT_UINT16_TYPE);
+            definition->addRecordField(OPT_STRING_TYPE);
+            break;
+        case D6O_REMOTE_ID:
+            definition->addRecordField(OPT_UINT32_TYPE);
+            definition->addRecordField(OPT_BINARY_TYPE);
+            break;
+        case D6O_CLIENT_FQDN:
+            definition->addRecordField(OPT_UINT8_TYPE);
+            definition->addRecordField(OPT_FQDN_TYPE);
+            break;
+        case D6O_LQ_QUERY:
+            definition->addRecordField(OPT_UINT8_TYPE);
+            definition->addRecordField(OPT_IPV6_ADDRESS_TYPE);
+            break;
+        case D6O_LQ_RELAY_DATA:
+            definition->addRecordField(OPT_IPV6_ADDRESS_TYPE);
+            definition->addRecordField(OPT_BINARY_TYPE);
             break;
         default:
             // The default case is intentionally left empty
