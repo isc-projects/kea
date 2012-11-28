@@ -7,15 +7,15 @@ request	msg_counter_request		Request statistics	=
 	sig0		MSG_REQUEST_SIG0	Number of requests with SIG(0) received by the b10-auth server; currently not implemented in BIND 10.
 	badsig		MSG_REQUEST_BADSIG	Number of requests with invalid TSIG or SIG(0) signature received by the b10-auth server.
 	udp		MSG_REQUEST_UDP		Number of UDP requests received by the b10-auth server.
-	tcp		MSG_REQUEST_TCP		Number of UDP requests received by the b10-auth server.
+	tcp		MSG_REQUEST_TCP		Number of TCP requests received by the b10-auth server.
 	dnssec_ok	MSG_REQUEST_DNSSEC_OK	Number of requests with "DNSSEC OK" (DO) bit was set received by the b10-auth server.
 	;
-opcode	msg_counter_opcode		Opcode statistics	=
-	query		MSG_OPCODE_QUERY		Number of Opcode=QUERY requests received by the b10-auth server.
-	iquery		MSG_OPCODE_IQUERY	Number of Opcode=IQUERY requests received by the b10-auth server.
-	status		MSG_OPCODE_STATUS	Number of Opcode=STATUS requests received by the b10-auth server.
-	notify		MSG_OPCODE_NOTIFY	Number of Opcode=NOTIFY requests received by the b10-auth server.
-	update		MSG_OPCODE_UPDATE	Number of Opcode=UPDATE requests received by the b10-auth server.
+opcode	msg_counter_opcode		OpCode statistics	=
+	query		MSG_OPCODE_QUERY		Number of OpCode=Query requests received by the b10-auth server.
+	iquery		MSG_OPCODE_IQUERY	Number of OpCode=IQuery requests received by the b10-auth server.
+	status		MSG_OPCODE_STATUS	Number of OpCode=Status requests received by the b10-auth server.
+	notify		MSG_OPCODE_NOTIFY	Number of OpCode=Notify requests received by the b10-auth server.
+	update		MSG_OPCODE_UPDATE	Number of OpCode=Update requests received by the b10-auth server.
 	other		MSG_OPCODE_OTHER	Number of requests in other OpCode received by the b10-auth server.
 	;
 responses	MSG_RESPONSE			Number of responses sent by the b10-auth server.
@@ -25,11 +25,11 @@ response	msg_counter_response	Response statistics	=
 	tsig		MSG_RESPONSE_TSIG	Number of responses with TSIG sent by the b10-auth server.
 	sig0		MSG_RESPONSE_SIG0	Number of responses with SIG(0) sent by the b10-auth server; currently not implemented in BIND 10.
 	;
-qrysuccess	MSG_QRYSUCCESS			Number of queries received by the b10-auth server resulted in rcode = NOERROR and the number of answer RR >= 1.
+qrysuccess	MSG_QRYSUCCESS			Number of queries received by the b10-auth server resulted in rcode = NoError and the number of answer RR >= 1.
 qryauthans	MSG_QRYAUTHANS			Number of queries received by the b10-auth server resulted in authoritative answer.
 qrynoauthans	MSG_QRYNOAUTHANS		Number of queries received by the b10-auth server resulted in non-authoritative answer.
 qryreferral	MSG_QRYREFERRAL			Number of queries received by the b10-auth server resulted in referral answer.
-qrynxrrset	MSG_QRYNXRRSET			Number of queries received by the b10-auth server resulted in NOERROR but the number of answer RR == 0.
+qrynxrrset	MSG_QRYNXRRSET			Number of queries received by the b10-auth server resulted in NoError but the number of answer RR == 0.
 authqryrej	MSG_QRYREJECT			Number of authoritative queries rejected by the b10-auth server.
 rcode		msg_counter_rcode	Rcode statistics	=
 	noerror		MSG_RCODE_NOERROR	Number of requests received by the b10-auth server resulted in RCODE = 0 (NoError).
