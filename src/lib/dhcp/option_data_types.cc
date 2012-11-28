@@ -48,6 +48,10 @@ OptionDataTypeUtil::OptionDataTypeUtil() {
     data_type_names_[OPT_STRING_TYPE] = "string";
     data_type_names_[OPT_FQDN_TYPE] = "fqdn";
     data_type_names_[OPT_RECORD_TYPE] = "record";
+    // The "unknown" data type is declared here so as
+    // it can be returned by reference by a getDataTypeName
+    // function it no other type is suitable. Other than that
+    // this is unused.
     data_type_names_[OPT_UNKNOWN_TYPE] = "unknown";
 }
 
@@ -73,16 +77,21 @@ OptionDataTypeUtil::getDataTypeLen(const OptionDataType data_type) {
     case OPT_INT8_TYPE:
     case OPT_UINT8_TYPE:
         return (1);
+
     case OPT_INT16_TYPE:
     case OPT_UINT16_TYPE:
         return (2);
+
     case OPT_INT32_TYPE:
     case OPT_UINT32_TYPE:
         return (4);
+
     case OPT_IPV4_ADDRESS_TYPE:
         return (asiolink::V4ADDRESS_LEN);
+
     case OPT_IPV6_ADDRESS_TYPE:
         return (asiolink::V6ADDRESS_LEN);
+
     default:
         ;
     }
@@ -110,23 +119,22 @@ OptionDataTypeUtil::instance() {
     return (instance);
 }
 
-void
+asiolink::IOAddress
 OptionDataTypeUtil::readAddress(const std::vector<uint8_t>& buf,
-                            const short family,
-                            asiolink::IOAddress& address) {
+                                const short family) {
     using namespace isc::asiolink;
     if (family == AF_INET) {
         if (buf.size() < V4ADDRESS_LEN) {
             isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
                       << " IPv4 address. Invalid buffer size: " << buf.size());
         }
-        address = IOAddress::fromBytes(AF_INET, &buf[0]);
-    } else if (buf.size() == V6ADDRESS_LEN) {
+        return (IOAddress::fromBytes(AF_INET, &buf[0]));
+    } else if (family == AF_INET6) {
         if (buf.size() < V6ADDRESS_LEN) {
             isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
                       << " IPv6 address. Invalid buffer size: " << buf.size());
         }
-        address = IOAddress::fromBytes(AF_INET6, &buf[0]);
+        return (IOAddress::fromBytes(AF_INET6, &buf[0]));
     } else {
         isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
                   "IP address. Invalid family: " << family);
@@ -136,6 +144,9 @@ OptionDataTypeUtil::readAddress(const std::vector<uint8_t>& buf,
 void
 OptionDataTypeUtil::writeAddress(const asiolink::IOAddress& address,
                                  std::vector<uint8_t>& buf) {
+    // @todo There is a ticket 2396 submitted, which adds the
+    // functionality to return a buffer representation of
+    // IOAddress. If so, this function can be simplified.
     if (address.getAddress().is_v4()) {
         asio::ip::address_v4::bytes_type addr_bytes =
             address.getAddress().to_v4().to_bytes();
@@ -192,28 +203,23 @@ OptionDataTypeUtil::readBool(const std::vector<uint8_t>& buf) {
 void
 OptionDataTypeUtil::writeBool(const bool value,
                               std::vector<uint8_t>& buf) {
-    if (value) {
-        buf.push_back(static_cast<uint8_t>(1));
-    } else {
-        buf.push_back(static_cast<uint8_t>(0));
-    }
+    buf.push_back(static_cast<uint8_t>(value ? 1 : 0));
 }
 
-void
-OptionDataTypeUtil::readString(const std::vector<uint8_t>& buf,
-                               std::string& value) {
-    value.insert(value.end(), buf.begin(), buf.end());
+std::string
+OptionDataTypeUtil::readString(const std::vector<uint8_t>& buf) {
+    std::string value;
+    if (buf.size() > 0) {
+        value.insert(value.end(), buf.begin(), buf.end());
+    }
+    return (value);
 }
 
 void
 OptionDataTypeUtil::writeString(const std::string& value,
                                 std::vector<uint8_t>& buf) {
     if (value.size() > 0) {
-        // Increase the size of the storage by the size of the string.
-        buf.resize(buf.size() + value.size());
-        // Assuming that the string is already UTF8 encoded.
-        std::copy_backward(value.c_str(), value.c_str() + value.size(),
-                           buf.end());
+        buf.insert(buf.end(), value.begin(), value.end());
     }
 }
 

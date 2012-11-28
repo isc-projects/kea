@@ -350,8 +350,8 @@ OptionDefinition::writeToBuffer(const std::string& value,
     case OPT_IPV6_ADDRESS_TYPE:
         {
             asiolink::IOAddress address(value);
-            if (!address.getAddress().is_v4() &&
-                !address.getAddress().is_v6()) {
+            if (address.getFamily() != AF_INET &&
+                address.getFamily() != AF_INET6) {
                 isc_throw(BadDataTypeCast, "provided address " << address.toText()
                           << " is not a valid "
                           << (address.getAddress().is_v4() ? "IPv4" : "IPv6")

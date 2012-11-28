@@ -41,6 +41,13 @@ public:
 
 
 /// @brief Data types of DHCP option fields.
+///
+/// @warning The order of data types matters: OPT_UNKNOWN_TYPE
+/// must always be the last position. Also, OPT_RECORD_TYPE
+/// must be at last but one position. This is because some
+/// functions perform sanity checks on data type values using
+/// '>' operators, assuming that all values beyond the
+/// OPT_RECORD_TYPE are invalid.
 enum OptionDataType {
     OPT_EMPTY_TYPE,
     OPT_BINARY_TYPE,
@@ -175,6 +182,16 @@ struct OptionDataTypeTraits<std::string> {
 };
 
 /// @brief Utility class for option data types.
+///
+/// This class provides a set of utility functions to operate on
+/// supported DHCP option data types. It includes conversion
+/// between enumerator values representing data types and data
+/// type names. It also includes a set of functions that write
+/// data into option buffers and read data from option buffers.
+/// The data being written and read are converted from/to actual
+/// data types.
+/// @note This is a singleton class but it can be accessed via
+/// static methods only.
 class OptionDataTypeUtil {
 public:
 
@@ -212,19 +229,19 @@ public:
     ///
     /// @param buf input buffer.
     /// @param family address family: AF_INET or AF_INET6.
-    /// @param [out] address being read.
-    static void readAddress(const std::vector<uint8_t>& buf,
-                            const short family,
-                            asiolink::IOAddress& address);
+    /// 
+    /// @return address being read.
+    static asiolink::IOAddress readAddress(const std::vector<uint8_t>& buf,
+                                           const short family);
 
-    /// @brief Write IPv4 or IPv6 address into a buffer.
+    /// @brief Append IPv4 or IPv6 address to a buffer.
     ///
     /// @param address IPv4 or IPv6 address.
     /// @param [out] buf output buffer.
     static void writeAddress(const asiolink::IOAddress& address,
                              std::vector<uint8_t>& buf);
 
-    /// @brief Write hex-encoded binary values into a buffer.
+    /// @brief Append hex-encoded binary values to a buffer.
     ///
     /// @param hex_str string representing a binary value encoded
     /// with hexadecimal digits (without 0x prefix).
@@ -238,7 +255,7 @@ public:
     /// @return boolean value read from a buffer.
     static bool readBool(const std::vector<uint8_t>& buf);
 
-    /// @brief Write boolean value into a buffer.
+    /// @brief Append boolean value into a buffer.
     ///
     /// The bool value is encoded in a buffer in such a way that
     /// "1" means "true" and "0" means "false".
@@ -256,7 +273,7 @@ public:
     static T readInt(const std::vector<uint8_t>& buf) {
         if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(isc::dhcp::InvalidDataType, "specified data type to be returned"
-                      " by readInteger is not supported integer type");
+                      " by readInteger is unsupported integer type");
         }
 
         assert(buf.size() == OptionDataTypeTraits<T>::len);
@@ -266,9 +283,13 @@ public:
             value = *(buf.begin());
             break;
         case 2:
+            // Calling readUint16 works either for unsigned
+            // or signed types.
             value = isc::util::readUint16(&(*buf.begin()));
             break;
         case 4:
+            // Calling readUint32 works either for unsigned
+            // or signed types.
             value = isc::util::readUint32(&(*buf.begin()));
             break;
         default:
@@ -280,7 +301,7 @@ public:
         return (value);
     }
 
-    /// @brief Write integer or unsigned integer value into a buffer.
+    /// @brief Append integer or unsigned integer value to a buffer.
     ///
     /// @param value an integer value to be written into a buffer.
     /// @param [out] buf output buffer.
@@ -314,9 +335,9 @@ public:
     /// @brief Read string value from a buffer.
     ///
     /// @param buf input buffer.
-    /// @param [out] value string value being read.
-    static void readString(const std::vector<uint8_t>& buf,
-                           std::string& value);
+    ///
+    /// @return string value being read.
+    static std::string readString(const std::vector<uint8_t>& buf);
 
     /// @brief Write UTF8-encoded string into a buffer.
     ///
