@@ -94,9 +94,8 @@ LoggerManager::processEnd() {
 
 void
 LoggerManager::init(const std::string& root, isc::log::Severity severity,
-                    int dbglevel, const char* file)
+                    int dbglevel, const char* file, bool buffer)
 {
-
     // Load in the messages declared in the program and registered by
     // statically-declared MessageInitializer objects.
     MessageInitializer::loadDictionary();
@@ -115,7 +114,9 @@ LoggerManager::init(const std::string& root, isc::log::Severity severity,
 
     // Initialize the implementation logging.  After this point, some basic
     // logging has been set up and messages can be logged.
-    LoggerManagerImpl::init(severity, dbglevel);
+    // However, they will not appear until a logging specification has been
+    // processed (or the program exits), see TODO
+    LoggerManagerImpl::init(severity, dbglevel, buffer);
     setLoggingInitialized();
 
     // Check if there were any duplicate message IDs in the default dictionary
@@ -188,9 +189,9 @@ LoggerManager::readLocalMessageFile(const char* file) {
 
 // Reset logging to settings passed to init()
 void
-LoggerManager::reset() {
+LoggerManager::reset(bool buffer) {
     setRootLoggerName(initRootName());
-    LoggerManagerImpl::reset(initSeverity(), initDebugLevel());
+    LoggerManagerImpl::reset(initSeverity(), initDebugLevel(), buffer);
 }
 
 } // namespace log

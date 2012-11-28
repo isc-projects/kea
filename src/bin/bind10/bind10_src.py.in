@@ -48,7 +48,7 @@ else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_LOCATION = "@datadir@/@PACKAGE@/bob.spec".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
-    
+
 import subprocess
 import signal
 import re
@@ -76,7 +76,7 @@ import isc.bind10.socket_cache
 import libutil_io_python
 import tempfile
 
-isc.log.init("b10-boss")
+isc.log.init("b10-boss", buffer=True)
 logger = isc.log.Logger("boss")
 
 # Pending system-wide debug level definitions, the ones we
@@ -166,14 +166,14 @@ class ProcessStartError(Exception): pass
 
 class BoB:
     """Boss of BIND class."""
-    
+
     def __init__(self, msgq_socket_file=None, data_path=None,
                  config_filename=None, clear_config=False,
                  verbose=False, nokill=False, setuid=None, setgid=None,
                  username=None, cmdctl_port=None, wait_time=10):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
-        
+
             The msgq_socket_file specifies the UNIX domain socket file that the
             msgq process listens on.  If verbose is True, then the boss reports
             what it is doing.
@@ -400,7 +400,7 @@ class BoB:
                     logger.error(BIND10_STARTUP_UNEXPECTED_MESSAGE, msg)
             except:
                 logger.error(BIND10_STARTUP_UNRECOGNISED_MESSAGE, msg)
-        
+
         return False
 
     # The next few methods start the individual processes of BIND-10.  They
@@ -464,7 +464,7 @@ class BoB:
             time.sleep(1)
             time_remaining = time_remaining - 1
             msg, env = self.cc_session.group_recvmsg()
-        
+
         if not self.process_running(msg, "ConfigManager"):
             raise ProcessStartError("Configuration manager process has not started")
 
@@ -481,7 +481,7 @@ class BoB:
             process, the log_starting/log_started methods are not used.
         """
         logger.info(BIND10_STARTING_CC)
-        self.ccs = isc.config.ModuleCCSession(SPECFILE_LOCATION, 
+        self.ccs = isc.config.ModuleCCSession(SPECFILE_LOCATION,
                                       self.config_handler,
                                       self.command_handler,
                                       socket_file = self.msgq_socket_file)
@@ -679,7 +679,7 @@ class BoB:
         except:
             pass
         # XXX: some delay probably useful... how much is uncertain
-        # I have changed the delay from 0.5 to 1, but sometime it's 
+        # I have changed the delay from 0.5 to 1, but sometime it's
         # still not enough.
         time.sleep(1)
         self.reap_children()
@@ -728,8 +728,8 @@ class BoB:
         return os.waitpid(-1, os.WNOHANG)
 
     def reap_children(self):
-        """Check to see if any of our child processes have exited, 
-        and note this for later handling. 
+        """Check to see if any of our child processes have exited,
+        and note this for later handling.
         """
         while True:
             try:
@@ -760,11 +760,11 @@ class BoB:
         """
             Restart any dead processes:
 
-            * Returns the time when the next process is ready to be restarted. 
+            * Returns the time when the next process is ready to be restarted.
             * If the server is shutting down, returns 0.
             * If there are no processes, returns None.
 
-            The values returned can be safely passed into select() as the 
+            The values returned can be safely passed into select() as the
             timeout value.
 
         """
@@ -1006,7 +1006,7 @@ boss_of_bind = None
 
 def reaper(signal_number, stack_frame):
     """A child process has died (SIGCHLD received)."""
-    # don't do anything... 
+    # don't do anything...
     # the Python signal handler has been set up to write
     # down a pipe, waking up our select() bit
     pass
@@ -1173,7 +1173,7 @@ and the created lock file must be writable for that user.
         except KeyError:
             pass
 
-        # Next try getting information about the user, assuming user name 
+        # Next try getting information about the user, assuming user name
         # passed.
         # If the information is both a valid user name and user number, we
         # prefer the name because we try it second. A minor point, hopefully.

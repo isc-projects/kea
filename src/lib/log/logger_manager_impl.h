@@ -88,8 +88,11 @@ public:
     ///
     /// \param severity Severity to be associated with this logger
     /// \param dbglevel Debug level associated with the root logger
+    /// \param buffer If true, all log messages will be buffered until one of
+    ///        the \c process() methods is called. If false, initial logging
+    ///        shall go to the default output (i.e. stdout)
     static void init(isc::log::Severity severity = isc::log::INFO,
-                     int dbglevel = 0);
+                     int dbglevel = 0, bool buffer = false);
 
     /// \brief Reset logging
     ///
@@ -98,8 +101,11 @@ public:
     ///
     /// \param severity Severity to be associated with this logger
     /// \param dbglevel Debug level associated with the root logger
+    /// \param buffer If true, all log messages will be buffered until one of
+    ///        the \c process() methods is called. If false, initial logging
+    ///        shall go to the default output (i.e. stdout)
     static void reset(isc::log::Severity severity = isc::log::INFO,
-                      int dbglevel = 0);
+                      int dbglevel = 0, bool buffer = false);
 
 private:
     /// \brief Create console appender
@@ -142,8 +148,11 @@ private:
     ///
     /// \param severity Severity of messages that the logger should output.
     /// \param dbglevel Debug level if severity = DEBUG
+    /// \param buffer If true, all log messages will be buffered until one of
+    ///        the \c process() methods is called. If false, initial logging
+    ///        shall go to the default output (i.e. stdout)
     static void initRootLogger(isc::log::Severity severity = isc::log::INFO,
-                               int dbglevel = 0);
+                               int dbglevel = 0, bool buffer = false);
 
     /// \brief Set layout for console appender
     ///

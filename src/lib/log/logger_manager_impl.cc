@@ -65,6 +65,9 @@ public:
         // be a good idea.
         for (size_t i = 0; i < stored_.size(); ++i) {
             std::cout << stored_.at(i).getMessage() << std::endl;
+            log4cplus::Logger logger = log4cplus::Logger::getInstance(stored_.at(i).getLoggerName());
+
+            logger.log(stored_.at(i).getLogLevel(), stored_.at(i).getMessage());
         }
         stored_.clear();
     }
@@ -241,7 +244,9 @@ LoggerManagerImpl::createSyslogAppender(log4cplus::Logger& logger,
 
 // One-time initialization of the log4cplus system
 void
-LoggerManagerImpl::init(isc::log::Severity severity, int dbglevel) {
+LoggerManagerImpl::init(isc::log::Severity severity, int dbglevel,
+                        bool buffer)
+{
     // Set up basic configurator.  This attaches a ConsoleAppender to the
     // root logger with suitable output.  This is used until we we have
     // actually read the logging configuration, in which case the output
@@ -252,21 +257,23 @@ LoggerManagerImpl::init(isc::log::Severity severity, int dbglevel) {
     // Add the additional debug levels
     LoggerLevelImpl::init();
 
-    reset(severity, dbglevel);
+    reset(severity, dbglevel, buffer);
 }
 
 // Reset logging to default configuration.  This closes all appenders
 // and resets the root logger to output INFO messages to the console.
 // It is principally used in testing.
 void
-LoggerManagerImpl::reset(isc::log::Severity severity, int dbglevel) {
+LoggerManagerImpl::reset(isc::log::Severity severity, int dbglevel,
+                         bool buffer)
+{
     // Initialize the root logger
-    initRootLogger(severity, dbglevel);
+    initRootLogger(severity, dbglevel, buffer);
 }
 
 // Initialize the root logger
 void LoggerManagerImpl::initRootLogger(isc::log::Severity severity,
-                                       int dbglevel)
+                                       int dbglevel, bool buffer)
 {
     log4cplus::Logger::getDefaultHierarchy().resetConfiguration();
 
@@ -281,14 +288,12 @@ void LoggerManagerImpl::initRootLogger(isc::log::Severity severity,
     b10root.setLogLevel(LoggerLevelImpl::convertFromBindLevel(
                                                     Level(severity, dbglevel)));
 
-    // Set the BIND 10 root to use a console logger.
-    //OutputOption opt;
-    //createConsoleAppender(b10root, opt);
-    createBufferAppender(b10root);
-    //if (!buffer_appender_) {
-    //    buffer_appender_ = new BufferAppender(logger);
-    //    b10_root.addAppender(buffer_appender_);
-    //}
+    if (buffer) {
+        createBufferAppender(b10root);
+    } else {
+        OutputOption opt;
+        createConsoleAppender(b10root, opt);
+    }
 }
 
 void LoggerManagerImpl::setConsoleAppenderLayout(
