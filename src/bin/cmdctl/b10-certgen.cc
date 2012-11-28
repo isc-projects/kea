@@ -171,13 +171,13 @@ public:
             std::ofstream key_file(key_file_name.c_str());
             if (!key_file.good()) {
                 print(std::string("Error writing to ") + key_file_name +
-                      ": " + strerror(errno));
+                      ": " + std::strerror(errno));
                 return (WRITE_ERROR);
             }
             key_file << PKCS8::PEM_encode(key, rng, "");
             if (!key_file.good()) {
                 print(std::string("Error writing to ") + key_file_name +
-                      ": " + strerror(errno));
+                      ": " + std::strerror(errno));
                 return (WRITE_ERROR);
             }
             key_file.close();
@@ -207,13 +207,13 @@ public:
             std::ofstream cert_file(cert_file_name.c_str());
             if (!cert_file.good()) {
                 print(std::string("Error writing to ") + cert_file_name +
-                      ": " + strerror(errno));
+                      ": " + std::strerror(errno));
                 return (WRITE_ERROR);
             }
             cert_file << cert.PEM_encode();
             if (!cert_file.good()) {
                 print(std::string("Error writing to ") + cert_file_name +
-                      ": " + strerror(errno));
+                      ": " + std::strerror(errno));
                 return (WRITE_ERROR);
             }
             cert_file.close();
@@ -278,11 +278,11 @@ public:
             // be enumerated in one go
             if (fileExists(certfile)) {
                 if (!fileIsReadable(certfile)) {
-                    print(certfile + " not readable: " + strerror(errno));
+                    print(certfile + " not readable: " + std::strerror(errno));
                     create_cert = false;
                 }
                 if (!fileIsWritable(certfile)) {
-                    print(certfile + " not writable: " + strerror(errno));
+                    print(certfile + " not writable: " + std::strerror(errno));
                     create_cert = false;
                 }
             }
@@ -290,7 +290,7 @@ public:
             // b10-certgen that is)
             if (fileExists(keyfile)) {
                 if (!fileIsWritable(keyfile)) {
-                    print(keyfile + " not writable: " + strerror(errno));
+                    print(keyfile + " not writable: " + std::strerror(errno));
                     create_cert = false;
                 }
             }
@@ -312,11 +312,11 @@ public:
             }
         } else {
             if (!fileExists(certfile)) {
-                print(certfile + ": " + strerror(errno));
+                print(certfile + ": " + std::strerror(errno));
                 return (NO_SUCH_FILE);
             }
             if (!fileIsReadable(certfile)) {
-                print(certfile + " not readable: " + strerror(errno));
+                print(certfile + " not readable: " + std::strerror(errno));
                 return (FILE_PERMISSION_ERROR);
             }
             int result = validateCertificate(certfile);
@@ -360,14 +360,17 @@ main(int argc, char* argv[])
     bool certfile_default = true;
     bool keyfile_default = true;
 
-    struct option long_options[] = {
-        { "certfile", required_argument, 0, 'c' },
-        { "force", no_argument, 0, 'f' },
-        { "help", no_argument, 0, 'h' },
-        { "keyfile", required_argument, 0, 'k' },
-        { "write", no_argument, 0, 'w' },
-        { "quiet", no_argument, 0, 'q' },
-        { 0, 0, 0, 0 }
+    // It would appear some environments insist on
+    // char* here (Sunstudio on Solaris), so we const_cast
+    // them to get rid of compiler warnings.
+    const struct option long_options[] = {
+        { const_cast<char*>("certfile"), required_argument, NULL, 'c' },
+        { const_cast<char*>("force"), no_argument, NULL, 'f' },
+        { const_cast<char*>("help"), no_argument, NULL, 'h' },
+        { const_cast<char*>("keyfile"), required_argument, NULL, 'k' },
+        { const_cast<char*>("write"), no_argument, NULL, 'w' },
+        { const_cast<char*>("quiet"), no_argument, NULL, 'q' },
+        { NULL, 0, NULL, 0 }
     };
 
     int opt, option_index;
