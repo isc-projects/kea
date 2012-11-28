@@ -50,7 +50,7 @@ public:
         }
     }
 
-    /// @brief Write integer (signed or unsiged) into a buffer.
+    /// @brief Write integer (signed or unsigned) into a buffer.
     ///
     /// @param value integer value.
     /// @param [out] buf output buffer.
@@ -159,8 +159,8 @@ TEST_F(OptionCustomTest, binaryData) {
     EXPECT_TRUE(std::equal(buf_in.begin(), buf_in.end(), buf_out.begin()));
 }
 
-// The purpose of this test is to verify that the option definition comprising
-// single boolean value can be used to create an instance of custom option.
+// The purpose of this test is to verify that an option definition comprising
+// a single boolean value can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, booleanData) {
     OptionDefinition opt_def("OPTION_FOO", 1000, "boolean");
 

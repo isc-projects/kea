@@ -192,12 +192,12 @@ public:
 
     /// @brief Get data type buffer length.
     ///
-    /// This functionm returs the size of a particular data type.
+    /// This function returns the size of a particular data type.
     /// Values retured by this function correspond to the data type
     /// sizes defined in OptionDataTypeTraits (IPV4_ADDRESS_TYPE and
     /// IPV6_ADDRESS_TYPE are exceptions here) so they rather indicate
     /// the fixed length of the data being written into the buffer,
-    /// not the sizeof the particular data type. Thus for data types
+    /// not the size of the particular data type. Thus for data types
     /// such as string, binary etc. for which the buffer length can't
     /// be determined this function returns 0.
     /// In addition, this function returns the data sizes for
@@ -280,7 +280,7 @@ public:
         return (value);
     }
 
-    /// @brief Write integer or unsiged integer value into a buffer.
+    /// @brief Write integer or unsigned integer value into a buffer.
     ///
     /// @param value an integer value to be written into a buffer.
     /// @param [out] buf output buffer.
@@ -318,7 +318,7 @@ public:
     static void readString(const std::vector<uint8_t>& buf,
                            std::string& value);
 
-    /// @brief Write utf8-encoded string into a buffer.
+    /// @brief Write UTF8-encoded string into a buffer.
     ///
     /// @param value string value to be written into a buffer.
     /// @param [out] buf output buffer.
