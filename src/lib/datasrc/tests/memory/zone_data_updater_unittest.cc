@@ -45,12 +45,16 @@ protected:
         zone_data_(ZoneData::create(mem_sgmt_, zname_)),
         updater_(new ZoneDataUpdater(mem_sgmt_, zclass_, zname_, *zone_data_))
     {}
+
     ~ZoneDataUpdaterTest() {
-        // Make sure zone data is destroyed even if a test results in exception
         if (zone_data_ != NULL) {
             ZoneData::destroy(mem_sgmt_, zone_data_, zclass_);
         }
+        if (!mem_sgmt_.allMemoryDeallocated()) {
+            ADD_FAILURE() << "Memory leak detected";
+        }
     }
+
     void clearZoneData() {
         assert(zone_data_ != NULL);
         ZoneData::destroy(mem_sgmt_, zone_data_, zclass_);
@@ -59,13 +63,6 @@ protected:
                                            *zone_data_));
     }
 
-    void TearDown() {
-        if (zone_data_ != NULL) {
-            ZoneData::destroy(mem_sgmt_, zone_data_, zclass_);
-            zone_data_ = NULL;
-        }
-        EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated()); // catch any leak here.
-    }
     const Name zname_;
     const RRClass zclass_;
     test::MemorySegmentTest mem_sgmt_;
