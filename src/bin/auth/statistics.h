@@ -21,7 +21,6 @@
 #include <dns/opcode.h>
 
 #include <statistics/counter.h>
-#include <statistics/counter_dict.h>
 
 #include <boost/noncopyable.hpp>
 

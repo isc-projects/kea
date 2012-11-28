@@ -22,6 +22,8 @@
 #include <dns/opcode.h>
 #include <dns/rcode.h>
 
+#include <statistics/counter.h>
+
 #include <algorithm>
 #include <cctype>
 #include <cassert>
