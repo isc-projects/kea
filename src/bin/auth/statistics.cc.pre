@@ -16,10 +16,11 @@
 #include <auth/statistics_items.h>
 #include <auth/auth_log.h>
 
+#include <cc/data.h>
+
+#include <dns/message.h>
 #include <dns/opcode.h>
 #include <dns/rcode.h>
-
-#include <cc/data.h>
 
 #include <algorithm>
 #include <cctype>
@@ -165,7 +166,8 @@ Counters::incRequest(const MessageAttributes& msgattrs) {
     }
 
     // OPCODE
-    server_msg_counter_.inc(opcode_to_msgcounter[msgattrs.getRequestOpCode()]);
+    server_msg_counter_.inc(
+        opcode_to_msgcounter[msgattrs.getRequestOpCode().getCode()]);
 }
 
 void
@@ -205,7 +207,7 @@ Counters::incResponse(const MessageAttributes& msgattrs,
         server_msg_counter_.inc(MSG_REQUEST_BADEDNSVER);
     }
 
-    if (msgattrs.getRequestOpCode() == Opcode::QUERY_CODE) {
+    if (msgattrs.getRequestOpCode() == Opcode::QUERY()) {
         // compound attributes
         const unsigned int answer_rrs =
             response.getRRCount(Message::SECTION_ANSWER);

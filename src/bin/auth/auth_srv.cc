@@ -575,7 +575,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         }
 
         // note: This can only be reliable after TSIG check succeeds.
-        impl_->stats_attrs_.setRequestOpCode(opcode.getCode());
+        impl_->stats_attrs_.setRequestOpCode(opcode);
 
         if (opcode == Opcode::NOTIFY()) {
             send_answer = impl_->processNotify(io_message, message, buffer,

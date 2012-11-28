@@ -18,6 +18,7 @@
 #include <cc/data.h>
 
 #include <dns/message.h>
+#include <dns/opcode.h>
 
 #include <statistics/counter.h>
 #include <statistics/counter_dict.h>
@@ -32,6 +33,8 @@ namespace isc {
 namespace auth {
 namespace statistics {
 
+using isc::dns::Opcode;
+
 /// \brief DNS Message attributes for statistics.
 ///
 /// This class holds some attributes related to a DNS message
@@ -41,7 +44,7 @@ private:
     // request attributes
     int req_ip_version_;            // IP version
     int req_transport_protocol_;    // Transport layer protocol
-    uint8_t req_opcode_;            // OpCode
+    Opcode req_opcode_;   // OpCode
     enum BitAttributes {
         REQ_IS_EDNS_0,              // EDNS ver.0
         REQ_IS_DNSSEC_OK,           // DNSSEC OK (DO) bit is set
@@ -56,20 +59,20 @@ public:
     /// \brief The constructor.
     ///
     /// \throw None
-    MessageAttributes() {
+    MessageAttributes() : req_opcode_(Opcode::RESERVED15_CODE) {
         reset();
     }
 
     /// \brief Get request opcode.
     /// \return opcode of a request
     /// \throw None
-    uint8_t getRequestOpCode() const {
+    const Opcode& getRequestOpCode() const {
         return (req_opcode_);
     }
 
     /// \brief Set request opcode.
     /// \throw None
-    void setRequestOpCode(const uint8_t opcode) {
+    void setRequestOpCode(const Opcode& opcode) {
         req_opcode_ = opcode;
     }
 
@@ -184,7 +187,7 @@ public:
     void reset() {
         req_ip_version_ = 0;
         req_transport_protocol_ = 0;
-        req_opcode_ = 0;
+        req_opcode_ = Opcode(Opcode::RESERVED15_CODE);
         bit_attributes_.reset();
     }
 };
