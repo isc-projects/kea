@@ -23,6 +23,7 @@
 #include <log4cplus/syslogappender.h>
 
 #include <log/logger.h>
+#include <log/logger_support.h>
 #include <log/logger_level_impl.h>
 #include <log/logger_manager.h>
 #include <log/logger_manager_impl.h>
@@ -30,17 +31,76 @@
 #include <log/logger_name.h>
 #include <log/logger_specification.h>
 
+#include <boost/scoped_ptr.hpp>
+
 using namespace std;
 
 namespace isc {
 namespace log {
+
+class LogBuffer {
+public:
+    LogBuffer() {
+        flushed_ = false;
+    }
+
+    ~LogBuffer() {
+        // If there is anything left in the buffer,
+        // it means no reconfig has been done, and
+        // we can assume the logging system was either
+        // never setup, or broke while doing so.
+        // So dump all that is left to stdout
+        flush_stdout();
+    }
+    void add(const log4cplus::spi::InternalLoggingEvent& event) {
+        if (flushed_) {
+            isc_throw(isc::Exception, "BUFFER APPEND AFTER FLUSH");
+        }
+        stored_.push_back(log4cplus::spi::InternalLoggingEvent(event));
+    }
+    void flush_stdout() {
+        // This does not show a bit of information normal log messages
+        // do, so perhaps we should try and setup a new logger here
+        // However, as this is called from a destructor, it may not
+        // be a good idea.
+        for (size_t i = 0; i < stored_.size(); ++i) {
+            std::cout << stored_.at(i).getMessage() << std::endl;
+        }
+        stored_.clear();
+    }
+    //void flush(log4cplus::Logger& logger) {
+    void flush() {
+        for (size_t i = 0; i < stored_.size(); ++i) {
+            const log4cplus::spi::InternalLoggingEvent event(stored_.at(i));
+            //logger.log(event.getLogLevel(), event.getMessage());
+            // Flush to the last defined logger
+            log4cplus::Logger logger = log4cplus::Logger::getInstance(event.getLoggerName());
+
+            logger.log(event.getLogLevel(), event.getMessage());
+        }
+        stored_.clear();
+        flushed_ = true;
+    }
+private:
+    std::vector<log4cplus::spi::InternalLoggingEvent> stored_;
+    bool flushed_;
+};
+
+LogBuffer& getLogBuffer() {
+    static boost::scoped_ptr<LogBuffer> log_buffer(NULL);
+    if (!log_buffer) {
+        log_buffer.reset(new LogBuffer);
+    }
+    return (*log_buffer);
+}
+
+
 
 // Reset hierarchy of loggers back to default settings.  This removes all
 // appenders from loggers, sets their severity to NOT_SET (so that events are
 // passed back to the parent) and resets the root logger to logging
 // informational messages.  (This last is not a log4cplus default, so we have to
 // explicitly reset the logging severity.)
-
 void
 LoggerManagerImpl::processInit() {
     log4cplus::Logger::getDefaultHierarchy().resetConfiguration();
@@ -49,12 +109,16 @@ LoggerManagerImpl::processInit() {
 
 // Process logging specification.  Set up the common states then dispatch to
 // add output specifications.
-
 void
 LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
-
-    log4cplus::Logger logger = log4cplus::Logger::getInstance(
+    log4cplus::Logger logger;
+    // If this is an 'empty' specification, just set the root logger
+    if (spec.getName() == "") {
+        logger = log4cplus::Logger::getInstance(getRootLoggerName());
+    } else {
+        logger = log4cplus::Logger::getInstance(
                                    expandLoggerName(spec.getName()));
+    }
 
     // Set severity level according to specification entry.
     logger.setLogLevel(LoggerLevelImpl::convertFromBindLevel(
@@ -95,7 +159,15 @@ LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
                           i->destination);
             }
         }
+    } else {
+        // If no output options are given, use a default appender
+        // Yes, so replace all appenders for this logger.
+        logger.removeAllAppenders();
+        OutputOption opt;
+        createConsoleAppender(logger, opt);
     }
+    // Should anything be left in the buffer, this is the time to flush it.
+    getLogBuffer().flush();
 }
 
 // Console appender - log to either stdout or stderr.
@@ -134,7 +206,28 @@ LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
     logger.addAppender(fileapp);
 }
 
-// Syslog appender. 
+class BufferAppender : public log4cplus::Appender {
+public:
+    BufferAppender() {}
+
+    virtual void close() {
+        //relog();
+        //log2out();
+    }
+    virtual void append(const log4cplus::spi::InternalLoggingEvent& event) {
+        getLogBuffer().add(event);
+    }
+};
+
+void
+LoggerManagerImpl::createBufferAppender(log4cplus::Logger& logger)
+{
+    log4cplus::SharedAppenderPtr bufferapp(new BufferAppender());
+    bufferapp->setName("buffer");
+    logger.addAppender(bufferapp);
+}
+
+// Syslog appender.
 void
 LoggerManagerImpl::createSyslogAppender(log4cplus::Logger& logger,
                                          const OutputOption& opt)
@@ -147,10 +240,8 @@ LoggerManagerImpl::createSyslogAppender(log4cplus::Logger& logger,
 
 
 // One-time initialization of the log4cplus system
-
 void
 LoggerManagerImpl::init(isc::log::Severity severity, int dbglevel) {
-
     // Set up basic configurator.  This attaches a ConsoleAppender to the
     // root logger with suitable output.  This is used until we we have
     // actually read the logging configuration, in which case the output
@@ -169,7 +260,6 @@ LoggerManagerImpl::init(isc::log::Severity severity, int dbglevel) {
 // It is principally used in testing.
 void
 LoggerManagerImpl::reset(isc::log::Severity severity, int dbglevel) {
-
     // Initialize the root logger
     initRootLogger(severity, dbglevel);
 }
@@ -192,12 +282,14 @@ void LoggerManagerImpl::initRootLogger(isc::log::Severity severity,
                                                     Level(severity, dbglevel)));
 
     // Set the BIND 10 root to use a console logger.
-    OutputOption opt;
-    createConsoleAppender(b10root, opt);
+    //OutputOption opt;
+    //createConsoleAppender(b10root, opt);
+    createBufferAppender(b10root);
+    //if (!buffer_appender_) {
+    //    buffer_appender_ = new BufferAppender(logger);
+    //    b10_root.addAppender(buffer_appender_);
+    //}
 }
-
-// Set the the "console" layout for the given appenders.  This layout includes
-// a date/time and the name of the logger.
 
 void LoggerManagerImpl::setConsoleAppenderLayout(
         log4cplus::SharedAppenderPtr& appender)

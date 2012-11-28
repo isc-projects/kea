@@ -60,6 +60,7 @@ LoggerImpl::LoggerImpl(const string& name) :
 // Destructor. (Here because of virtual declaration.)
 
 LoggerImpl::~LoggerImpl() {
+    logger_.shutdown();
     delete sync_;
 }
 

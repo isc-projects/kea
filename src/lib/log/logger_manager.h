@@ -59,8 +59,14 @@ public:
     template <typename T>
     void process(T start, T finish) {
         processInit();
-        for (T i = start; i != finish; ++i) {
-            processSpecification(*i);
+        if (start == finish) {
+            // empty iterator; set defaults
+            const LoggerSpecification spec;
+            processSpecification(spec);
+        } else {
+            for (T i = start; i != finish; ++i) {
+                processSpecification(*i);
+            }
         }
         processEnd();
     }
