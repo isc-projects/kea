@@ -104,7 +104,7 @@ public:
         default:
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
-        LibDHCP::packOptions6(buf, options_);
+        packOptions(buf);
     }
 
     /// @brief Parses received buffer
@@ -149,7 +149,7 @@ public:
         // of clang complain about unresolved reference to
         // OptionDataTypeTraits structure during linking.
         begin += data_size_len;
-        LibDHCP::unpackOptions6(OptionBuffer(begin, end), options_);
+        unpackOptions(OptionBuffer(begin, end));
     }
 
     /// @brief Set option value.
