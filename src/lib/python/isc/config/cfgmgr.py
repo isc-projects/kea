@@ -226,6 +226,8 @@ class ConfigManager:
         if self.log_module_name in config:
             ccsession.default_logconfig_handler(config[self.log_module_name],
                                                 self.log_config_data)
+        else:
+            ccsession.default_logconfig_handler({}, self.log_config_data)
 
     def notify_boss(self):
         """Notifies the Boss module that the Config Manager is running"""
@@ -313,11 +315,11 @@ class ConfigManager:
             self.config = ConfigManagerData.read_from_file(self.data_path,
                                                            self.\
                                                            database_filename)
-            self.check_logging_config(self.config.data);
         except ConfigManagerDataEmpty:
             # ok, just start with an empty config
             self.config = ConfigManagerData(self.data_path,
                                             self.database_filename)
+        self.check_logging_config(self.config.data);
 
     def write_config(self):
         """Write the current configuration to the file specificied at init()"""

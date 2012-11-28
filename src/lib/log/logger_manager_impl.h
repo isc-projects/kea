@@ -51,8 +51,9 @@ class LoggerManagerImpl {
 public:
 
     /// \brief Constructor
-    LoggerManagerImpl()
-    {}
+    LoggerManagerImpl() {}
+
+    ~LoggerManagerImpl() {}
 
     /// \brief Initialize Processing
     ///
@@ -131,6 +132,8 @@ private:
     /// \param opt Output options for this appender.
     static void createSyslogAppender(log4cplus::Logger& logger,
                                      const OutputOption& opt);
+
+    static void createBufferAppender(log4cplus::Logger& logger);
 
     /// \brief Set default layout and severity for root logger
     ///
