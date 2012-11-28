@@ -15,6 +15,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_data_types.h>
 #include <dhcp/option_custom.h>
+#include <util/encode/hex.h>
 
 namespace isc {
 namespace dhcp {
@@ -144,6 +145,62 @@ OptionCustom::createBuffers() {
     std::swap(buffers_, buffers);
 }
 
+std::string
+OptionCustom::dataFieldToText(const OptionDataType data_type,
+                              const uint32_t index) const {
+    std::ostringstream tmp;
+
+    // Get the value of the data field.
+    switch (data_type) {
+    case OPT_BINARY_TYPE:
+        tmp << util::encode::encodeHex(readBinary(index));
+        break;
+    case OPT_BOOLEAN_TYPE:
+        tmp << (readBoolean(index) ? "true" : "false");
+        break;
+    case OPT_INT8_TYPE:
+        tmp << readInteger<int8_t>(index);
+        break;
+    case OPT_INT16_TYPE:
+        tmp << readInteger<int16_t>(index);
+        break;
+    case OPT_INT32_TYPE:
+        tmp << readInteger<int32_t>(index);
+        break;
+    case OPT_UINT8_TYPE:
+        tmp << readInteger<uint8_t>(index);
+        break;
+    case OPT_UINT16_TYPE:
+        tmp << readInteger<uint16_t>(index);
+        break;
+    case OPT_UINT32_TYPE:
+        tmp << readInteger<uint32_t>(index);
+        break;
+    case OPT_IPV4_ADDRESS_TYPE:
+    case OPT_IPV6_ADDRESS_TYPE:
+        {
+            asiolink::IOAddress address("127.0.0.1");
+            readAddress(index, address);
+            tmp << address.toText();
+            break;
+        }
+    case OPT_STRING_TYPE:
+        {
+            std::string s;
+            readString(index, s);
+            tmp << s;
+            break;
+        }
+    default:
+        ;
+    }
+
+    // Append data field type in brackets.
+    tmp << " ( " << OptionDataTypeUtil::getDataTypeName(data_type) << " ) ";
+
+    return (tmp.str());
+}
+
 void
 OptionCustom::pack4(isc::util::OutputBuffer& buf) {
     if (len() > 255) {
@@ -242,6 +299,17 @@ OptionCustom::len() {
     return (length);
 }
 
+void OptionCustom::setData(const OptionBufferConstIter first,
+                     const OptionBufferConstIter last) {
+    // We will copy entire option buffer, so we have to resize data_.
+    data_.resize(std::distance(first, last));
+    std::copy(first, last, data_.begin());
+
+    // Chop the data_ buffer into set of buffers that represent
+    // option fields data.
+    createBuffers();
+}
+
 std::string OptionCustom::toText(int indent /* = 0 */ ) {
     std::stringstream tmp;
 
@@ -252,19 +320,35 @@ std::string OptionCustom::toText(int indent /* = 0 */ ) {
         << ", data fields:" << std::endl;
 
     OptionDataType data_type = definition_.getType();
-    for (unsigned int i = 0; i < getDataFieldsNum(); ++i) {
-        if (data_type == OPT_RECORD_TYPE) {
-            const OptionDefinition::RecordFieldsCollection& fields =
-                definition_.getRecordFields();
+    if (data_type == OPT_RECORD_TYPE) {
+        const OptionDefinition::RecordFieldsCollection& fields =
+            definition_.getRecordFields();
 
-            for (OptionDefinition::RecordFieldsConstIter field = fields.begin();
-                 field != fields.end(); ++field) {
-                for (int j = 0; j < indent + 2; ++j) {
-                    tmp << " ";
-                }
-                tmp << OptionDataTypeUtil::getDataTypeName(*field)
-                    << ", value = " << "here is a value" << std::endl;
+        // For record types we iterate over fields defined in
+        // option definition and match the appropriate buffer
+        // with them.
+        for (OptionDefinition::RecordFieldsConstIter field = fields.begin();
+             field != fields.end(); ++field) {
+            for (int j = 0; j < indent + 2; ++j) {
+                tmp << " ";
             }
+            tmp << "#" << distance(fields.begin(), field) << " "
+                << dataFieldToText(*field, distance(fields.begin(), field))
+                << std::endl;
+        }
+    } else {
+        // For non-record types we iterate over all buffers
+        // and print the data type set globally for an option
+        // definition. We take the same code path for arrays
+        // and non-arrays as they only differ in such a way that
+        // non-arrays have just single data field.
+        for (unsigned int i = 0; i < getDataFieldsNum(); ++i) {
+            for (int j = 0; j < indent + 2; ++j) {
+                tmp << " ";
+            }
+            tmp << "#" << i << " "
+                << dataFieldToText(definition_.getType(), i)
+                << std::endl;
         }
     }
 
@@ -275,17 +359,6 @@ std::string OptionCustom::toText(int indent /* = 0 */ ) {
         tmp << (*opt).second->toText(indent+2);
     }
     return tmp.str();
-}
-
-void OptionCustom::setData(const OptionBufferConstIter first,
-                     const OptionBufferConstIter last) {
-    // We will copy entire option buffer, so we have to resize data_.
-    data_.resize(std::distance(first, last));
-    std::copy(first, last, data_.begin());
-
-    // Chop the data_ buffer into set of buffers that represent
-    // option fields data.
-    createBuffers();
 }
 
 } // end of isc::dhcp namespace

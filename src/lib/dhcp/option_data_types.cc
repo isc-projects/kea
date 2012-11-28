@@ -44,7 +44,7 @@ OptionDataTypeUtil::OptionDataTypeUtil() {
     data_type_names_[OPT_UINT16_TYPE] = "uint16";
     data_type_names_[OPT_UINT32_TYPE] = "uint32";
     data_type_names_[OPT_IPV4_ADDRESS_TYPE] = "ipv4-address";
-    data_type_names_[OPT_IPV6_ADDRESS_TYPE] = "ipv4-address";
+    data_type_names_[OPT_IPV6_ADDRESS_TYPE] = "ipv6-address";
     data_type_names_[OPT_STRING_TYPE] = "string";
     data_type_names_[OPT_FQDN_TYPE] = "fqdn";
     data_type_names_[OPT_RECORD_TYPE] = "record";
