@@ -553,7 +553,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
                                            **impl_->keyring_));
         tsig_error = tsig_context->verify(tsig_record, io_message.getData(),
                                           io_message.getDataSize());
-        impl_->stats_attrs_.setRequestSig(true, false,
+        impl_->stats_attrs_.setRequestSig(true,
                                           tsig_error != TSIGError::NOERROR());
     }
 
