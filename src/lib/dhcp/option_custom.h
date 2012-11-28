@@ -42,7 +42,6 @@ public:
     ///
     /// @param def option definition.
     /// @param u specifies universe (V4 or V6).
-    /// @param def option definition.
     /// @param data content of the option.
     ///
     /// @throw OutOfRange if option buffer is truncated.
@@ -112,7 +111,6 @@ public:
 
         // Get the option definition type.
         OptionDataType data_type = definition_.getType();
-        //
         if (data_type == OPT_RECORD_TYPE) {
             const OptionDefinition::RecordFieldsCollection& record_fields =
                 definition_.getRecordFields();
@@ -154,15 +152,15 @@ public:
     virtual void unpack(OptionBufferConstIter begin,
                         OptionBufferConstIter end);
 
-    /// Returns string representation of the option.
+    /// @brief Returns string representation of the option.
     ///
     /// @param indent number of spaces before printed text.
     ///
     /// @return string with text representation.
     virtual std::string toText(int indent = 0);
 
-    /// Returns length of the complete option (data length + DHCPv4/DHCPv6
-    /// option header)
+    /// @brief Returns length of the complete option (data length +
+    ///        DHCPv4/DHCPv6 option header)
     ///
     /// @return length of the option
     virtual uint16_t len();
@@ -191,6 +189,8 @@ protected:
 private:
 
     /// @brief Check if data field index is valid.
+    ///
+    /// @param index Data field index to check.
     ///
     /// @throw isc::OutOfRange if index is out of range.
     void checkIndex(const uint32_t index) const;

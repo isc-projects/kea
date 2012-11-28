@@ -89,7 +89,7 @@ public:
         // Depending on the data type length we use different utility functions
         // writeUint16 or writeUint32 which write the data in the network byte
         // order to the provided buffer. The same functions can be safely used
-        // for either unsiged or signed integers so there is not need to create
+        // for either unsigned or signed integers so there is not need to create
         // special cases for intX_t types.
         switch (OptionDataTypeTraits<T>::len) {
         case 1:
@@ -128,7 +128,7 @@ public:
         // Depending on the data type length we use different utility functions
         // readUint16 or readUint32 which read the data laid in the network byte
         // order from the provided buffer. The same functions can be safely used
-        // for either unsiged or signed integers so there is not need to create
+        // for either unsigned or signed integers so there is not need to create
         // special cases for intX_t types.
         int data_size_len = OptionDataTypeTraits<T>::len;
         switch (data_size_len) {
