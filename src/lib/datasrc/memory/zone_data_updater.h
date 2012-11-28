@@ -119,7 +119,8 @@ public:
     /// the zone; it's unusual that \c rrset is NULL, but is still possible
     /// if these RRsets are given separately to the loader, or if even the
     /// zone is half broken and really contains an RRSIG that doesn't have
-    /// any covered RRset.  This implementation supports these cases.
+    /// any covered RRset.  This implementation supports these cases (but
+    /// see the note below).
     ///
     /// There is one tricky case: Due to a limitation of the current
     /// implementation, it cannot accept an RRSIG for NSEC3 without the covered
@@ -127,6 +128,12 @@ public:
     /// In this case an isc::NotImplemented exception will be thrown.  It
     /// should be very rare in practice, and hopefully wouldn't be a real
     /// issue.
+    ///
+    /// \note Due to limitations of the current implementation, if a
+    /// (non RRSIG) RRset and its RRSIG are added separately in different
+    /// calls to this method, the second attempt will be rejected due to
+    /// an \c AddError exception.  This will be loosened in Trac
+    /// ticket #2441.
     ///
     /// \throw NullRRset Both \c rrset and sig_rrset is NULL
     /// \throw AddError any of a variety of validation checks fail for the
