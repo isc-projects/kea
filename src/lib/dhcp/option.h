@@ -312,6 +312,25 @@ protected:
     /// @throw BadValue Universe is not V6.
     virtual void pack6(isc::util::OutputBuffer& buf);
 
+    /// @brief Store sub options in a buffer.
+    ///
+    /// This method stores all sub-options defined for a particular
+    /// option in a on-wire format in output buffer provided.
+    /// This function is called by pack function in this class or
+    /// derived classes that override pack.
+    ///
+    /// @param [out] buf output buffer.
+    void packOptions(isc::util::OutputBuffer& buf);
+
+    /// @brief Builds a collection of sub options from the buffer.
+    ///
+    /// This method parses the provided buffer and builds a collection
+    /// of objects representing sub options. This function may throw
+    /// different exceptions when option assembly fails.
+    ///
+    /// @param buf buffer to be parsed.
+    void unpackOptions(const OptionBuffer& buf);
+
     /// @brief A private method used for option correctness.
     ///
     /// It is used in constructors. In there are any problems detected
