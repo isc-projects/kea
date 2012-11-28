@@ -160,7 +160,7 @@ void
 OptionDataTypeUtil::writeBinary(const std::string& hex_str,
                                 std::vector<uint8_t>& buf) {
     // Binary value means that the value is encoded as a string
-    // of hexadecimal deigits. We need to decode this string
+    // of hexadecimal digits. We need to decode this string
     // to the binary format here.
     OptionBuffer binary;
     try {
@@ -186,7 +186,7 @@ OptionDataTypeUtil::readBool(const std::vector<uint8_t>& buf) {
         return (false);
     }
     isc_throw(BadDataTypeCast, "unable to read the buffer as boolean"
-              << " value. Inavlid value " << static_cast<int>(buf[0]));
+              << " value. Invalid value " << static_cast<int>(buf[0]));
 }
 
 void

@@ -223,7 +223,7 @@ OptionDefinition::validate() const {
                     err_str << "binary data field can't be laid before data fields"
                             << " of other types.";
                 }
-                /// Empty typy is not allowed within a record.
+                /// Empty type is not allowed within a record.
                 if (*it == OPT_EMPTY_TYPE) {
                     err_str << "empty data type can't be stored as a field in an"
                             << " option record.";
