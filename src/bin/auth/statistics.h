@@ -55,9 +55,7 @@ private:
 public:
     /// \brief The constructor.
     ///
-    /// This constructor is mostly exception free. But it may still throw
-    /// a standard exception if memory allocation fails inside the method.
-    ///
+    /// \throw None
     MessageAttributes() {
         reset();
     }
