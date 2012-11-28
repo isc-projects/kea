@@ -400,23 +400,29 @@ TEST_F(LibDhcpTest, unpackOptions4) {
 // created.
 TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_CLIENTID, OptionBuffer(14, 1),
-                                     typeid(Option));
+                                    typeid(Option));
     LibDhcpTest::testStdOptionDefs6(D6O_SERVERID, OptionBuffer(14, 1),
-                                     typeid(Option));
+                                    typeid(Option));
     LibDhcpTest::testStdOptionDefs6(D6O_IA_NA, OptionBuffer(12, 1),
-                                     typeid(Option6IA));
+                                    typeid(Option6IA));
+    LibDhcpTest::testStdOptionDefs6(D6O_IA_TA, OptionBuffer(4, 1),
+                                    typeid(Option6Int<uint32_t>));
     LibDhcpTest::testStdOptionDefs6(D6O_IAADDR, OptionBuffer(24, 1),
-                                     typeid(Option6IAAddr));
+                                    typeid(Option6IAAddr));
     LibDhcpTest::testStdOptionDefs6(D6O_ORO, OptionBuffer(10, 1),
-                                     typeid(Option6IntArray<uint16_t>));
+                                    typeid(Option6IntArray<uint16_t>));
+    LibDhcpTest::testStdOptionDefs6(D6O_PREFERENCE, OptionBuffer(1, 1),
+                                    typeid(Option6Int<uint8_t>));
     LibDhcpTest::testStdOptionDefs6(D6O_ELAPSED_TIME, OptionBuffer(2, 1),
-                                     typeid(Option6Int<uint16_t>));
+                                    typeid(Option6Int<uint16_t>));
+    LibDhcpTest::testStdOptionDefs6(D6O_RELAY_MSG, OptionBuffer(30, 1),
+                                    typeid(Option));
     LibDhcpTest::testStdOptionDefs6(D6O_STATUS_CODE, OptionBuffer(10, 1),
-                                     typeid(Option));
+                                    typeid(Option));
     LibDhcpTest::testStdOptionDefs6(D6O_RAPID_COMMIT, OptionBuffer(),
-                                     typeid(Option));
+                                    typeid(Option));
     LibDhcpTest::testStdOptionDefs6(D6O_NAME_SERVERS, OptionBuffer(32, 1),
-                                     typeid(Option6AddrLst));
+                                    typeid(Option6AddrLst));
 }
 
 }
