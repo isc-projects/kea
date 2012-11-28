@@ -60,34 +60,34 @@ public:
     ///
     MessageAttributes() {
         reset();
-    };
+    }
 
     /// \brief Get request opcode.
     /// \return opcode of a request
     /// \throw None
     uint8_t getRequestOpCode() const {
         return (req_opcode_);
-    };
+    }
 
     /// \brief Set request opcode.
     /// \throw None
     void setRequestOpCode(const uint8_t opcode) {
         req_opcode_ = opcode;
-    };
+    }
 
     /// \brief Get IP version carrying a request.
     /// \return IP version carrying a request (AF_INET or AF_INET6)
     /// \throw None
     int getRequestIPVersion() const {
         return (req_ip_version_);
-    };
+    }
 
     /// \brief Set IP version carrying a request.
     /// \param ip_version AF_INET or AF_INET6
     /// \throw None
     void setRequestIPVersion(const int ip_version) {
         req_ip_version_ = ip_version;
-    };
+    }
 
     /// \brief Get transport protocol carrying a request.
     /// \return Transport protocol carrying a request
@@ -95,63 +95,63 @@ public:
     /// \throw None
     int getRequestTransportProtocol() const {
         return (req_transport_protocol_);
-    };
+    }
 
     /// \brief Set transport protocol carrying a request.
     /// \param transport_protocol IPPROTO_UDP or IPPROTO_TCP
     /// \throw None
     void setRequestTransportProtocol(const int transport_protocol) {
         req_transport_protocol_ = transport_protocol;
-    };
+    }
 
     /// \brief Get request is EDNS version 0.
     /// \return true if EDNS version 0
     /// \throw None
     bool getRequestEDNS0() const {
         return (bit_attributes_[REQ_IS_EDNS_0]);
-    };
+    }
 
     /// \brief Set request EDNS attributes.
     /// \param is_edns_0 true if request is EDNS version 0
     /// \throw None
     void setRequestEDNS0(const bool is_edns_0) {
         bit_attributes_[REQ_IS_EDNS_0] = is_edns_0;
-    };
+    }
 
     /// \brief Get request DNSSEC OK (DO) bit.
     /// \return true if DNSSEC OK (DO) bit is set
     /// \throw None
     bool getRequestDO() const {
         return (bit_attributes_[REQ_IS_DNSSEC_OK]);
-    };
+    }
 
     /// \brief Set request DNSSEC OK (DO) bit.
     /// \param is_dnssec_ok true if DNSSEC OK (DO) bit is set
     /// \throw None
     void setRequestDO(const bool is_dnssec_ok) {
         bit_attributes_[REQ_IS_DNSSEC_OK] = is_dnssec_ok;
-    };
+    }
 
     /// \brief Get request TSIG signed.
     /// \return true if request is TSIG signed
     /// \throw None
     bool getRequestSigTSIG() const {
         return (bit_attributes_[REQ_IS_TSIG]);
-    };
+    }
 
     /// \brief Get request SIG(0) signed.
     /// \return true if request is SIG(0) signed
     /// \throw None
     bool getRequestSigSIG0() const {
         return (bit_attributes_[REQ_IS_SIG0]);
-    };
+    }
 
     /// \brief Get request signature is bad.
     /// \return true if request signature is bad
     /// \throw None
     bool getRequestSigBadSig() const {
         return (bit_attributes_[REQ_IS_BADSIG]);
-    };
+    }
 
     /// \brief Set request TSIG attributes.
     /// \param is_tsig true if request is TSIG signed
@@ -165,21 +165,21 @@ public:
         bit_attributes_[REQ_IS_TSIG] = is_tsig;
         bit_attributes_[REQ_IS_SIG0] = is_sig0;
         bit_attributes_[REQ_IS_BADSIG] = is_badsig;
-    };
+    }
 
     /// \brief Get if the response is truncated.
     /// \return true if the response is truncated
     /// \throw None
     bool getResponseTruncated() const {
         return (bit_attributes_[RES_IS_TRUNCATED]);
-    };
+    }
 
     /// \brief Set if the response is truncated.
     /// \param is_truncated true if the response is truncated
     /// \throw None
     void setResponseTruncated(const bool is_truncated) {
         bit_attributes_[RES_IS_TRUNCATED] = is_truncated;
-    };
+    }
 
     /// \brief Reset attributes.
     /// \throw None
@@ -188,7 +188,7 @@ public:
         req_transport_protocol_ = 0;
         req_opcode_ = 0;
         bit_attributes_.reset();
-    };
+    }
 };
 
 /// \brief Set of DNS message counters.
