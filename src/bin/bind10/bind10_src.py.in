@@ -217,6 +217,7 @@ class BoB:
         self.cmdctl_port = cmdctl_port
         self.wait_time = wait_time
         self.msgq_timeout = 5
+        self.run_under_unittests = False
         self._component_configurator = isc.bind10.component.Configurator(self,
             isc.bind10.special_component.get_specials())
         # The priorities here make them start in the correct order. First
@@ -431,8 +432,8 @@ class BoB:
         # Now connect to the c-channel
         cc_connect_start = time.time()
         while self.cc_session is None:
-            # this is only used by unittests
-            if self.msgq_timeout == 0:
+            # if we are run under unittests, break
+            if self.run_under_unittests:
                 break
 
             # if we have been trying for "a while" give up
