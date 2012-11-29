@@ -509,8 +509,6 @@ class BoB:
         self.ccs.start()
         logger.debug(DBG_PROCESS, BIND10_STARTED_CC)
 
-        return self.ccs
-
     # A couple of utility methods for starting processes...
 
     def start_process(self, name, args, c_channel_env, port=None, address=None):
