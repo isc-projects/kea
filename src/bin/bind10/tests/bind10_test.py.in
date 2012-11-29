@@ -1459,8 +1459,7 @@ class TestBossComponents(unittest.TestCase):
         '''Test that procsses are returned correctly, sorted by pid.'''
         bob = MockBob()
 
-        pids = []
-        pids.extend(range(0, 20))
+        pids = list(range(0, 20))
         random.shuffle(pids)
 
         for i in range(0, 20):
