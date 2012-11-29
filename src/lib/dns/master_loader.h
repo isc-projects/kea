@@ -25,13 +25,15 @@ namespace dns {
 class MasterLoader {
 public:
     enum Options {
-        MANY_ERRORS,        ///< Lenient mode
+        DEFAULT = 0,
+        MANY_ERRORS        ///< Lenient mode
     };
     MasterLoader(const char* master_file,
                  const Name& zone_origin,
-                 const RRClass zone_class,
-                 MasterLoaderCallbacks callbacks,
-                 Options options);
+                 const RRClass& zone_class,
+                 const MasterLoaderCallbacks& callbacks,
+                 const AddRRsetCallback& add_callback,
+                 Options options = DEFAULT);
     ~MasterLoader();
 
     bool loadIncremental(size_t count_limit);
