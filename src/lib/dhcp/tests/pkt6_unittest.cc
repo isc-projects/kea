@@ -234,4 +234,52 @@ TEST_F(Pkt6Test, Timestamp) {
     EXPECT_TRUE(ts_period.length().total_microseconds() >= 0);
 }
 
+// This test verifies that getName() method returns proper
+// packet type names.
+TEST_F(Pkt6Test, getName) {
+    // Check all possible packet types
+    for (int itype = 0; itype < 256; ++itype) {
+        uint8_t type = itype;
+
+        switch (type) {
+        case DHCPV6_CONFIRM:
+            EXPECT_STREQ("CONFIRM", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_DECLINE:
+            EXPECT_STREQ("DECLINE", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_INFORMATION_REQUEST:
+            EXPECT_STREQ("INFORMATION_REQUEST",
+                         Pkt6::getName(type));
+            break;
+
+        case DHCPV6_REBIND:
+            EXPECT_STREQ("REBIND", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_RELEASE:
+            EXPECT_STREQ("RELEASE", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_RENEW:
+            EXPECT_STREQ("RENEW", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_REQUEST:
+            EXPECT_STREQ("REQUEST", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_SOLICIT:
+            EXPECT_STREQ("SOLICIT", Pkt6::getName(type));
+            break;
+
+        default:
+            EXPECT_STREQ("UNKNOWN", Pkt6::getName(type));
+        }
+    }
+}
+
+
 }
