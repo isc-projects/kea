@@ -18,9 +18,9 @@
 #include <cc/data.h>
 
 #include <dns/message.h>
+#include <dns/opcode.h>
 
 #include <statistics/counter.h>
-#include <statistics/counter_dict.h>
 
 #include <boost/noncopyable.hpp>
 
@@ -32,6 +32,8 @@ namespace isc {
 namespace auth {
 namespace statistics {
 
+using isc::dns::Opcode;
+
 /// \brief DNS Message attributes for statistics.
 ///
 /// This class holds some attributes related to a DNS message
@@ -41,13 +43,12 @@ private:
     // request attributes
     int req_ip_version_;            // IP version
     int req_transport_protocol_;    // Transport layer protocol
-    uint8_t req_opcode_;            // OpCode
+    Opcode req_opcode_;   // OpCode
     enum BitAttributes {
         REQ_IS_EDNS_0,              // EDNS ver.0
         REQ_IS_DNSSEC_OK,           // DNSSEC OK (DO) bit is set
         REQ_IS_TSIG,                // signed with valid TSIG
-        REQ_IS_SIG0,                // signed with valid SIG(0)
-        REQ_IS_BADSIG,              // signed but bad signature,
+        REQ_IS_BADSIG,              // signed but bad signature
         RES_IS_TRUNCATED,           // DNS message is truncated
         BIT_ATTRIBUTES_TYPES
     };
@@ -56,20 +57,20 @@ public:
     /// \brief The constructor.
     ///
     /// \throw None
-    MessageAttributes() {
+    MessageAttributes() : req_opcode_(Opcode::RESERVED15_CODE) {
         reset();
     }
 
     /// \brief Get request opcode.
     /// \return opcode of a request
     /// \throw None
-    uint8_t getRequestOpCode() const {
+    const Opcode& getRequestOpCode() const {
         return (req_opcode_);
     }
 
     /// \brief Set request opcode.
     /// \throw None
-    void setRequestOpCode(const uint8_t opcode) {
+    void setRequestOpCode(const Opcode& opcode) {
         req_opcode_ = opcode;
     }
 
@@ -137,13 +138,6 @@ public:
         return (bit_attributes_[REQ_IS_TSIG]);
     }
 
-    /// \brief Get request SIG(0) signed.
-    /// \return true if request is SIG(0) signed
-    /// \throw None
-    bool getRequestSigSIG0() const {
-        return (bit_attributes_[REQ_IS_SIG0]);
-    }
-
     /// \brief Get request signature is bad.
     /// \return true if request signature is bad
     /// \throw None
@@ -153,15 +147,11 @@ public:
 
     /// \brief Set request TSIG attributes.
     /// \param is_tsig true if request is TSIG signed
-    /// \param is_sig0 true if request is SIG(0) signed
     /// \param is_badsig true if request signature is bad
     /// \throw None
-    void setRequestSig(const bool is_tsig, const bool is_sig0,
-                       const bool is_badsig)
-    {
-        assert(!(is_tsig && is_sig0));
+    void setRequestSig(const bool is_tsig, const bool is_badsig) {
+        assert(!(!is_tsig && is_badsig));
         bit_attributes_[REQ_IS_TSIG] = is_tsig;
-        bit_attributes_[REQ_IS_SIG0] = is_sig0;
         bit_attributes_[REQ_IS_BADSIG] = is_badsig;
     }
 
@@ -184,7 +174,7 @@ public:
     void reset() {
         req_ip_version_ = 0;
         req_transport_protocol_ = 0;
-        req_opcode_ = 0;
+        req_opcode_ = Opcode(Opcode::RESERVED15_CODE);
         bit_attributes_.reset();
     }
 };

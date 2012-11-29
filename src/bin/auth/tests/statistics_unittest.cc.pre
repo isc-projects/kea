@@ -111,7 +111,7 @@ TEST_F(CountersTest, incrementResponse) {
 
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
-        msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+        msgattrs.setRequestOpCode(Opcode::QUERY());
         msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
 
@@ -156,7 +156,7 @@ TEST_F(CountersTest, incrementProtocolType) {
 
         msgattrs.setRequestIPVersion(af);
         msgattrs.setRequestTransportProtocol(proto);
-        msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+        msgattrs.setRequestOpCode(Opcode::QUERY());
         msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
 
@@ -209,7 +209,7 @@ TEST_F(CountersTest, incrementDO) {
         const bool is_dnssec_ok = i & 1;
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
-        msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+        msgattrs.setRequestOpCode(Opcode::QUERY());
         msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(is_dnssec_ok);
 
@@ -252,7 +252,7 @@ TEST_F(CountersTest, incrementEDNS) {
         const bool is_edns0 = i & 1;
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
-        msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+        msgattrs.setRequestOpCode(Opcode::QUERY());
         msgattrs.setRequestEDNS0(is_edns0);
         msgattrs.setRequestDO(true);
 
@@ -302,22 +302,18 @@ TEST_F(CountersTest, incrementTSIG) {
     //      (none)     false
     //      TSIG       false
     //      TSIG       true
-    //      SIG(0)     false
-    //      SIG(0)     true
     //
     // badsig can't be true if the message does not have signature.
-    int count_req_tsig = 0, count_res_tsig = 0, count_req_sig0 = 0,
-        count_badsig = 0;
-    for (int i = 0; i < 5; ++i) {
-        const bool is_tsig = (i == 0 ? i : i+1) & 2;
-        const bool is_sig0 = (i == 0 ? i : i+1) & 4;
-        const bool is_badsig = (i == 0 ? i : i+1) & 1;
+    int count_req_tsig = 0, count_res_tsig = 0, count_badsig = 0;
+    for (int i = 0; i < 3; ++i) {
+        const bool is_tsig = (i == 2) ? true : i & 1;
+        const bool is_badsig = i & 2;
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
-        msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+        msgattrs.setRequestOpCode(Opcode::QUERY());
         msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
-        msgattrs.setRequestSig(is_tsig, is_sig0, is_badsig);
+        msgattrs.setRequestSig(is_tsig, is_badsig);
 
         response.setRcode(Rcode::REFUSED());
         response.addQuestion(Question(Name("example.com"),
@@ -333,9 +329,6 @@ TEST_F(CountersTest, incrementTSIG) {
                 ++count_res_tsig;
             }
         }
-        if (is_sig0) {
-            ++count_req_sig0;
-        }
         if (is_badsig) {
             ++count_badsig;
         }
@@ -349,7 +342,7 @@ TEST_F(CountersTest, incrementTSIG) {
         expect["request.dnssec_ok"] = i+1 - count_badsig;
         expect["request.tsig"] = count_req_tsig;
         expect["response.tsig"] = count_res_tsig;
-        expect["request.sig0"] = count_req_sig0;
+        expect["request.sig0"] = 0;
         expect["request.badsig"] = count_badsig;
         expect["responses"] = i+1 - count_badsig;
         expect["qrynoauthans"] = i+1 - count_badsig;
@@ -373,10 +366,10 @@ TEST_F(CountersTest, incrementOpcode) {
     {
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
-        msgattrs.setRequestOpCode(i);
+        msgattrs.setRequestOpCode(Opcode(i));
         msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
-        msgattrs.setRequestSig(false, false, false);
+        msgattrs.setRequestSig(false, false);
 
         response.setRcode(Rcode::REFUSED());
         response.addQuestion(Question(Name("example.com"),
@@ -431,10 +424,10 @@ TEST_F(CountersTest, incrementRcode) {
     {
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
-        msgattrs.setRequestOpCode(Opcode::IQUERY_CODE);
+        msgattrs.setRequestOpCode(Opcode::IQUERY());
         msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
-        msgattrs.setRequestSig(false, false, false);
+        msgattrs.setRequestSig(false, false);
 
         response.setRcode(Rcode(i));
         response.addQuestion(Question(Name("example.com"),
@@ -494,10 +487,10 @@ TEST_F(CountersTest, incrementTruncated) {
         const bool is_truncated = i & 1;
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
-        msgattrs.setRequestOpCode(Opcode::IQUERY_CODE);
+        msgattrs.setRequestOpCode(Opcode::IQUERY());
         msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
-        msgattrs.setRequestSig(false, false, false);
+        msgattrs.setRequestSig(false, false);
         msgattrs.setResponseTruncated(is_truncated);
 
         response.setRcode(Rcode::SERVFAIL());
@@ -540,10 +533,10 @@ TEST_F(CountersTest, incrementQryAuthAnsAndNoAuthAns) {
         const bool is_aa_set = i & 1;
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
-        msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+        msgattrs.setRequestOpCode(Opcode::QUERY());
         msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
-        msgattrs.setRequestSig(false, false, false);
+        msgattrs.setRequestSig(false, false);
 
         response.setRcode(Rcode::SERVFAIL());
         response.addQuestion(Question(Name("example.com"),
@@ -580,10 +573,10 @@ TEST_F(CountersTest, incrementQrySuccess) {
     // Opcode = QUERY, Rcode = NOERROR, ANCOUNT > 0
     msgattrs.setRequestIPVersion(AF_INET);
     msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
-    msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+    msgattrs.setRequestOpCode(Opcode::QUERY());
     msgattrs.setRequestEDNS0(true);
     msgattrs.setRequestDO(true);
-    msgattrs.setRequestSig(false, false, false);
+    msgattrs.setRequestSig(false, false);
 
     response.setRcode(Rcode::NOERROR());
     response.addQuestion(Question(Name("example.com"),
@@ -629,10 +622,10 @@ TEST_F(CountersTest, incrementQryReferralAndNxrrset) {
         const bool is_aa_set = i & 1;
         msgattrs.setRequestIPVersion(AF_INET);
         msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
-        msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+        msgattrs.setRequestOpCode(Opcode::QUERY());
         msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
-        msgattrs.setRequestSig(false, false, false);
+        msgattrs.setRequestSig(false, false);
 
         response.setRcode(Rcode::NOERROR());
         response.addQuestion(Question(Name("example.com"),
@@ -672,10 +665,10 @@ TEST_F(CountersTest, incrementAuthQryRej) {
     // Opcode = QUERY, Rcode = REFUSED, ANCOUNT = 0 (don't care)
     msgattrs.setRequestIPVersion(AF_INET);
     msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
-    msgattrs.setRequestOpCode(Opcode::QUERY_CODE);
+    msgattrs.setRequestOpCode(Opcode::QUERY());
     msgattrs.setRequestEDNS0(true);
     msgattrs.setRequestDO(true);
-    msgattrs.setRequestSig(false, false, false);
+    msgattrs.setRequestSig(false, false);
 
     response.setRcode(Rcode::REFUSED());
     response.addQuestion(Question(Name("example.com"),
