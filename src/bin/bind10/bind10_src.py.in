@@ -416,6 +416,10 @@ class BoB:
 
     def _make_process_info(self, name, args, env,
                            dev_null_stdout=False, dev_null_stderr=False):
+        """
+            Wrapper around ProcessInfo(), useful to override
+            ProcessInfo() creation during testing.
+        """
         return ProcessInfo(name, args, env, dev_null_stdout, dev_null_stderr)
 
     def start_msgq(self):
