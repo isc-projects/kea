@@ -1,3 +1,11 @@
+515.	[bug]		jinmei
+	The in-memory data source now accepts an RRSIG provided without
+	a covered RRset in loading.  A subsequent query for its owner name
+	of the covered type would generally result in NXRRSET; if the
+	covered RRset is of type NSEC3, the corresponding NSEC3 processing
+	would result in SERVFAIL.
+	(Trac #2420, git 6744c100953f6def5500bcb4bfc330b9ffba0f5f)
+
 514.	[bug]		jelte
 	b10-msgq now handles socket errors more gracefully when sending data
 	to clients. It no longer exits with 'broken pipe' errors, and is
