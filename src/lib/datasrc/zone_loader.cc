@@ -43,6 +43,17 @@ ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
         isc_throw(DataSourceError, "Zone " << zone_name << " not found in "
                   "destination data source, can't fill it with data");
     }
+    // The dereference of zone_finder is safe, if we can get iterator, we can
+    // get a finder.
+    //
+    // TODO: We probably need a getClass on the data source itself.
+    if (source.findZone(zone_name).zone_finder->getClass() !=
+        updater_->getFinder().getClass()) {
+        isc_throw(isc::InvalidParameter,
+                  "Source and destination class mismatch");
+    }
+}
+
 }
 
 namespace {
