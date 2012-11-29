@@ -458,56 +458,6 @@ TEST_F(OptionDefinitionTest, binary) {
                            buf.begin()));
 }
 
-// The purpose of this test is to verify that definition can be
-// creates for the option that holds binary data and that the
-// binary data can be specified in 'comma separated values'
-// format.
-TEST_F(OptionDefinitionTest, binaryTokenized) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "binary", true);
-
-    // Prepare some dummy data (serverid): 0, 1, 2 etc.
-    OptionBuffer buf(16);
-    for (int i = 0; i < buf.size(); ++i) {
-        buf[i] = i;
-    }
-    std::vector<std::string> hex_data;
-    hex_data.push_back("00010203");
-    hex_data.push_back("04050607");
-    hex_data.push_back("08090A0B0C0D0E0F");
-
-    // Create option instance with the factory function.
-    // If the OptionDefinition code works properly than
-    // object of the type Option should be returned.
-    OptionPtr option_v6;
-    ASSERT_NO_THROW(
-        option_v6 = opt_def.optionFactory(Option::V6, 1000, hex_data);
-    );
-    // Expect base option type returned.
-    ASSERT_TRUE(typeid(*option_v6) == typeid(Option));
-    // Sanity check on universe, length and size. These are
-    // the basic parameters identifying any option.
-    EXPECT_EQ(Option::V6, option_v6->getUniverse());
-    EXPECT_EQ(4, option_v6->getHeaderLen());
-    ASSERT_EQ(buf.size(), option_v6->getData().size());
-
-    // Get data from the option and compare against reference buffer.
-    // They are expected to match.
-    EXPECT_TRUE(std::equal(option_v6->getData().begin(),
-                           option_v6->getData().end(),
-                           buf.begin()));
-
-    // Repeat the same test scenario for DHCPv4 option.
-    OptionPtr option_v4;
-    ASSERT_NO_THROW(option_v4 = opt_def.optionFactory(Option::V4, 214, hex_data));
-    EXPECT_EQ(Option::V4, option_v4->getUniverse());
-    EXPECT_EQ(2, option_v4->getHeaderLen());
-    ASSERT_EQ(buf.size(), option_v4->getData().size());
-
-    EXPECT_TRUE(std::equal(option_v6->getData().begin(),
-                           option_v6->getData().end(),
-                           buf.begin()));
-}
-
 // The purpose of this test is to verify that definition can be created
 // for option that comprises record of data. In this particular test
 // the IA_NA option is used. This option comprises three uint32 fields.
@@ -652,11 +602,6 @@ TEST_F(OptionDefinitionTest, uint8Tokenized) {
     std::vector<std::string> values;
     values.push_back("123");
     values.push_back("456");
-    try {
-        option_v6 = opt_def.optionFactory(Option::V6, D6O_PREFERENCE, values);
-    } catch (std::exception& ex) {
-        std::cout << ex.what() << std::endl;
-    }
     ASSERT_NO_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, D6O_PREFERENCE, values);
     );
