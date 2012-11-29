@@ -1619,16 +1619,11 @@ class TestBossComponents(unittest.TestCase):
             return tmp_time()
         time.time = _my_time
 
-        thrown = False
-        # An exception will be thrown here when it eventually times out.
-        try:
+        with self.assertRaises(bind10_src.CChannelConnectError):
+            # An exception will be thrown here when it eventually times
+            # out.
             pi = bob.start_msgq()
-        except bind10_src.CChannelConnectError as e:
-            thrown = True
 
-        # We just check that an exception was thrown, and that several
-        # attempts were made to connect.
-        self.assertTrue(thrown)
         # 1 second of attempts every 0.1 seconds should result in at
         # least 5 attempts
         self.assertGreater(attempts, 5)
