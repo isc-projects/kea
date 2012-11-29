@@ -213,6 +213,12 @@ MasterLexer::getNextToken(MasterToken::Type expect, bool eol_ok) {
     // the result should be set in impl_->token_
     getNextToken(optionsForTokenType(expect));
 
+    if (impl_->token_.getType() == MasterToken::ERROR) {
+        //if (impl_->token_.getErrorCode() == MasterToken::NUMBER_OUT_OF_RANGE)
+        ungetToken();
+        throw LexerError(__FILE__, __LINE__, impl_->token_);
+    }
+
     const bool is_eol_like =
         (impl_->token_.getType() == MasterToken::END_OF_LINE ||
          impl_->token_.getType() == MasterToken::END_OF_FILE);
