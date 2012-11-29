@@ -788,8 +788,8 @@ as a dependency earlier -->
 	  <filename>/usr/local/lib</filename> (or with ${prefix}/lib if
 	  configured with --prefix) in
 	  <filename>/etc/ld.so.conf</filename> (or the relevant linker
-	  cache configuration file for your OS): <screen>$
-	  <userinput>ldconfig</userinput></screen>
+	  cache configuration file for your OS):
+	  <screen>$ <userinput>ldconfig</userinput></screen>
         </para>
         <note>
           <para>
