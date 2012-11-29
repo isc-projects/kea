@@ -42,7 +42,8 @@ class MockClient : public DataSourceClient {
 public:
     MockClient() :
         commit_called_(false),
-        missing_zone_(false)
+        missing_zone_(false),
+        rrclass_(RRClass::IN())
     {}
     virtual FindResult findZone(const Name&) const {
         isc_throw(isc::NotImplemented, "Method not used in tests");
@@ -67,6 +68,8 @@ public:
     bool commit_called_;
     // If set to true, getUpdater returns NULL
     bool missing_zone_;
+    // The pretended class of the client. Usualy IN, but can be overriden.
+    RRClass rrclass_;
 };
 
 // The updater isn't really correct according to the API. For example,
@@ -77,10 +80,11 @@ public:
 class Updater : public ZoneUpdater {
 public:
     Updater(MockClient* client) :
-        client_(client)
+        client_(client),
+        finder_(client_->rrclass_)
     {}
     virtual ZoneFinder& getFinder() {
-        isc_throw(isc::NotImplemented, "Method not used in tests");
+        return (finder_);
     }
     virtual void addRRset(const isc::dns::AbstractRRset& rrset) {
         if (client_->commit_called_) {
@@ -96,6 +100,34 @@ public:
     }
 private:
     MockClient* client_;
+    class Finder : public ZoneFinder {
+    public:
+        Finder(const RRClass& rrclass) :
+            class_(rrclass)
+        {}
+        virtual RRClass getClass() const {
+            return (class_);
+        }
+        virtual Name getOrigin() const {
+            isc_throw(isc::NotImplemented, "Method not used in tests");
+        }
+        virtual shared_ptr<Context> find(const Name&, const RRType&,
+                                         const FindOptions)
+        {
+            isc_throw(isc::NotImplemented, "Method not used in tests");
+        }
+        virtual shared_ptr<Context> findAll(const Name&,
+                                            vector<ConstRRsetPtr>&,
+                                            const FindOptions)
+        {
+            isc_throw(isc::NotImplemented, "Method not used in tests");
+        }
+        virtual FindNSEC3Result findNSEC3(const Name&, bool) {
+            isc_throw(isc::NotImplemented, "Method not used in tests");
+        }
+    private:
+        const RRClass class_;
+    } finder_;
 };
 
 ZoneUpdaterPtr
@@ -240,6 +272,14 @@ TEST_F(ZoneLoaderTest, copyMissingDestination) {
 TEST_F(ZoneLoaderTest, copyMissingSource) {
     EXPECT_THROW(ZoneLoader(destination_client_, Name::ROOT_NAME(),
                             source_client_), DataSourceError);
+}
+
+// The class of the source and destination are different
+TEST_F(ZoneLoaderTest, classMismatch) {
+    destination_client_.rrclass_ = RRClass::CH();
+    prepareSource(Name::ROOT_NAME(), "root.zone");
+    EXPECT_THROW(ZoneLoader(destination_client_, Name::ROOT_NAME(),
+                            source_client_), isc::InvalidParameter);
 }
 
 // Load an unsigned zone, all at once
