@@ -524,4 +524,27 @@ TEST_F(OptionTest, setData) {
     EXPECT_TRUE(0 == memcmp(&buf_[0], test_data + opt1->getHeaderLen(),
                             buf_.size()));
 }
+
+// This test verifies that options can be compared using equal() method.
+TEST_F(OptionTest, equal) {
+
+    // five options with varying lengths
+    OptionPtr opt1(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 1));
+    OptionPtr opt2(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 2));
+    OptionPtr opt3(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 3));
+
+    // the same content as opt2, but different type
+    OptionPtr opt4(new Option(Option::V6, 1, buf_.begin(), buf_.begin() + 2));
+
+    // another instance with the same type and content as opt2
+    OptionPtr opt5(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 2));
+
+    EXPECT_TRUE(opt1->equal(opt1));
+
+    EXPECT_FALSE(opt1->equal(opt2));
+    EXPECT_FALSE(opt1->equal(opt3));
+    EXPECT_FALSE(opt1->equal(opt4));
+
+    EXPECT_TRUE(opt2->equal(opt5));
+}
 }
