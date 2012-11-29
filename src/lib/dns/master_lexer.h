@@ -306,6 +306,15 @@ public:
         {}
     };
 
+    class LexerError : public Exception {
+    public:
+        LexerError(const char* file, size_t line, MasterToken error_token) :
+            Exception(file, line, error_token.getErrorText().c_str()),
+            token_(error_token)
+        {}
+        const MasterToken token_;
+    };
+
     /// \brief Options for getNextToken.
     ///
     /// A compound option, indicating multiple options are set, can be
@@ -441,6 +450,9 @@ public:
     /// \throw std::bad_alloc in case allocation of some internal resources
     ///     or the token fail.
     const MasterToken& getNextToken(Options options = NONE);
+
+    const MasterToken& getNextToken(MasterToken::Type expect,
+                                    bool eol_ok = false);
 
     /// \brief Return the last token back to the lexer.
     ///

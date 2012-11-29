@@ -284,4 +284,76 @@ TEST_F(MasterLexerTest, ungetAfterSwitch) {
     EXPECT_THROW(lexer.ungetToken(), isc::InvalidOperation);
 }
 
+// Common checks regarding expected/unexpected end-of-line
+void
+eolCheck(MasterLexer& lexer, MasterToken::Type expect) {
+    // If EOL is found and eol_ok is true, we get it.
+    EXPECT_EQ(MasterToken::END_OF_LINE,
+              lexer.getNextToken(expect, true).getType());
+    // We'll see the second '\n'; by default it will fail.
+    EXPECT_THROW(lexer.getNextToken(expect), MasterLexer::LexerError);
+    // Same if eol_ok is explicitly set to false.  This also checks the
+    // offending '\n' was "ungotten".
+    EXPECT_THROW(lexer.getNextToken(expect, false), MasterLexer::LexerError);
+
+    // And also check the error token set in the exception object.
+    bool thrown = false;
+    try {
+        lexer.getNextToken(expect);
+    } catch (const MasterLexer::LexerError& error) {
+        EXPECT_EQ(MasterToken::UNEXPECTED_END, error.token_.getErrorCode());
+        thrown = true;
+    }
+    EXPECT_TRUE(thrown);
+}
+
+// Common checks regarding expected/unexpected end-of-file
+void
+eofCheck(MasterLexer& lexer, MasterToken::Type expect) {
+    EXPECT_EQ(MasterToken::END_OF_FILE,
+              lexer.getNextToken(expect, true).getType());
+    EXPECT_THROW(lexer.getNextToken(expect), MasterLexer::LexerError);
+    EXPECT_THROW(lexer.getNextToken(expect, false), MasterLexer::LexerError);
+}
+
+TEST_F(MasterLexerTest, getNextTokenString) {
+    ss << "normal-string\n";
+    ss << "\n";
+    ss << "another-string";
+    lexer.pushSource(ss);
+
+    // Normal successful case: Expecting a string and get one.
+    EXPECT_EQ("normal-string",
+              lexer.getNextToken(MasterToken::STRING).getString());
+    eolCheck(lexer, MasterToken::STRING);
+
+    // Skip the 2nd '\n'
+    EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
+
+    // Same set of tests but for end-of-file
+    EXPECT_EQ("another-string",
+              lexer.getNextToken(MasterToken::STRING, true).getString());
+    eofCheck(lexer, MasterToken::STRING);
+}
+
+TEST_F(MasterLexerTest, getNextTokenQString) {
+    ss << "\"quoted-string\"\n";
+    ss << "\n";
+    ss << "normal-string";
+    lexer.pushSource(ss);
+
+    // Expecting a quoted string and get one.
+    EXPECT_EQ("quoted-string",
+              lexer.getNextToken(MasterToken::QSTRING).getString());
+    eolCheck(lexer, MasterToken::QSTRING);
+
+    // Skip the 2nd '\n'
+    EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
+
+    // Expecting a quoted string but see a normal string.  It's okay.
+    EXPECT_EQ("normal-string",
+              lexer.getNextToken(MasterToken::QSTRING).getString());
+    eofCheck(lexer, MasterToken::QSTRING);
+}
+
 }
