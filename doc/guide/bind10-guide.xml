@@ -784,10 +784,12 @@ as a dependency earlier -->
           <para>The install step may require superuser privileges.</para>
         </note>
         <para>
-	  If required, run <command>ldconfig</command> as root (with
-	  <filename>/usr/local/lib</filename> (or under the path used
-	  with --prefix) in <filename>/etc/ld.so.conf</filename>):
-	  <screen>$ <userinput>ldconfig</userinput></screen>
+	  If required, run <command>ldconfig</command> as root with
+	  <filename>/usr/local/lib</filename> (or with ${prefix}/lib if
+	  configured with --prefix) in
+	  <filename>/etc/ld.so.conf</filename> (or the relevant linker
+	  cache configuration file for your OS): <screen>$
+	  <userinput>ldconfig</userinput></screen>
         </para>
         <note>
           <para>
