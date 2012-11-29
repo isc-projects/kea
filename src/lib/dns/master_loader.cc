@@ -21,13 +21,15 @@ class MasterLoader::MasterLoaderImpl {
 public:
     MasterLoaderImpl(const char* master_file,
                      const Name& zone_origin,
-                     const RRClass zone_class,
-                     MasterLoaderCallbacks callbacks,
+                     const RRClass& zone_class,
+                     const MasterLoaderCallbacks& callbacks,
+                     const AddRRsetCallback& add_callback,
                      MasterLoader::Options options) :
         lexer_(),
         zone_origin_(zone_origin),
         zone_class_(zone_class),
         callbacks_(callbacks),
+        add_callback_(add_callback),
         options_(options)
     {
         lexer_.pushSource(master_file);
@@ -48,18 +50,20 @@ private:
     const Name& zone_origin_;
     const RRClass zone_class_;
     MasterLoaderCallbacks callbacks_;
+    AddRRsetCallback add_callback_;
     MasterLoader::Options options_;
     RRsetPtr current_rrset_;
 };
 
 MasterLoader::MasterLoader(const char* master_file,
                            const Name& zone_origin,
-                           const RRClass zone_class,
-                           MasterLoaderCallbacks callbacks,
+                           const RRClass& zone_class,
+                           const MasterLoaderCallbacks& callbacks,
+                           const AddRRsetCallback& add_callback,
                            Options options)
 {
     impl_ = new MasterLoaderImpl(master_file, zone_origin,
-                                 zone_class, callbacks, options);
+                                 zone_class, callbacks, add_callback, options);
 }
 
 MasterLoader::~MasterLoader() {

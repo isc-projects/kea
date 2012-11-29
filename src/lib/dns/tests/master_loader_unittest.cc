@@ -46,11 +46,17 @@ public:
         }
     }
 
+    void addRRset(const RRsetPtr&) {
+        // TODO
+    }
+
     void
     setLoader(const char* file, const Name& origin, const RRClass rrclass,
               const MasterLoader::Options options)
     {
-        loader.reset(new MasterLoader(file, origin, rrclass, callbacks_, options));
+        loader.reset(new MasterLoader(file, origin, rrclass, callbacks_,
+                                      boost::bind(&MasterLoaderTest::addRRset,
+                                                  this, _1), options));
     }
 
     MasterLoaderCallbacks callbacks_;
