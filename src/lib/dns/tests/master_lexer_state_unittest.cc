@@ -488,12 +488,12 @@ TEST_F(MasterLexerStateTest, basicNumbers) {
 
     EXPECT_EQ(&s_number, State::start(lexer, options));
     s_number.handle(lexer);
-    EXPECT_EQ(Token::NUMBER_RANGE,
+    EXPECT_EQ(Token::NUMBER_OUT_OF_RANGE,
               s_number.getToken(lexer).getErrorCode());
 
     EXPECT_EQ(&s_number, State::start(lexer, options));
     s_number.handle(lexer);
-    EXPECT_EQ(Token::NUMBER_RANGE,
+    EXPECT_EQ(Token::NUMBER_OUT_OF_RANGE,
               s_number.getToken(lexer).getErrorCode());
 
     EXPECT_EQ(&s_number, State::start(lexer, options));
