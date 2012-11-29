@@ -356,4 +356,25 @@ TEST_F(MasterLexerTest, getNextTokenQString) {
     eofCheck(lexer, MasterToken::QSTRING);
 }
 
+TEST_F(MasterLexerTest, getNextTokenNumber) {
+    ss << "3600\n";
+    ss << "\n";
+    ss << "86400";
+    lexer.pushSource(ss);
+
+    // Expecting a number string and get one.
+    EXPECT_EQ(3600,
+              lexer.getNextToken(MasterToken::NUMBER).getNumber());
+    eolCheck(lexer, MasterToken::NUMBER);
+
+    // Skip the 2nd '\n'
+    EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
+
+    // Unless we specify NUMBER, decimal number string should be recognized
+    // as a string.
+    EXPECT_EQ("86400",
+              lexer.getNextToken(MasterToken::STRING).getString());
+    eofCheck(lexer, MasterToken::NUMBER);
+}
+
 }

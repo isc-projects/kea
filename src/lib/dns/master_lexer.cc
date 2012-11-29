@@ -192,14 +192,26 @@ MasterLexer::getNextToken(Options options) {
     return (impl_->token_);
 }
 
+namespace {
+inline MasterLexer::Options
+optionsForTokenType(MasterToken::Type expect) {
+    switch (expect) {
+    case MasterToken::STRING:
+        return (MasterLexer::NONE);
+    case MasterToken::QSTRING:
+        return (MasterLexer::QSTRING);
+    case MasterToken::NUMBER:
+        return (MasterLexer::NUMBER);
+    default:
+        assert(false);
+    }
+}
+}
+
 const MasterToken&
 MasterLexer::getNextToken(MasterToken::Type expect, bool eol_ok) {
-    Options options = NONE;
-    if (expect == MasterToken::QSTRING) {
-        options = options | QSTRING;
-    }
-
-    getNextToken(options);      // the result should be set in impl_->token_
+    // the result should be set in impl_->token_
+    getNextToken(optionsForTokenType(expect));
 
     const bool is_eol_like =
         (impl_->token_.getType() == MasterToken::END_OF_LINE ||
