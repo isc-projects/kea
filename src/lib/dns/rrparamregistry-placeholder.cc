@@ -571,5 +571,26 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
     return (RdataPtr(new rdata::generic::Generic(
                          dynamic_cast<const generic::Generic&>(source))));
 }
+
+RdataPtr
+RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
+                             MasterLexer& lexer, const Name* name,
+                             MasterLoader::Options options,
+                             MasterLoaderCallbacks& callbacks)
+{
+    RdataFactoryMap::const_iterator found =
+        impl_->rdata_factories.find(RRTypeClass(rrtype, rrclass));
+    if (found != impl_->rdata_factories.end()) {
+        return (found->second->create(lexer, name, options, callbacks));
+    }
+
+    GenericRdataFactoryMap::const_iterator genfound =
+        impl_->genericrdata_factories.find(rrtype);
+    if (genfound != impl_->genericrdata_factories.end()) {
+        return (genfound->second->create(lexer, name, options, callbacks));
+    }
+
+    return (RdataPtr(new generic::Generic(lexer, name, options, callbacks)));
+}
 }
 }

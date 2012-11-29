@@ -24,9 +24,6 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/rdata.h>
-#include <dns/master_lexer.h>
-#include <dns/master_loader.h>
-#include <dns/master_loader_callbacks.h>
 
 namespace isc {
 namespace dns {
@@ -506,6 +503,12 @@ public:
     /// \c rdata::Rdata object.
     rdata::RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                                 const rdata::Rdata& source);
+
+    /// \brief Create RDATA from MasterLexer
+    rdata::RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
+                                MasterLexer& lexer, const Name* name,
+                                MasterLoader::Options options,
+                                MasterLoaderCallbacks& callbacks);
     //@}
 
 private:
@@ -516,6 +519,6 @@ private:
 }
 #endif  // RRPARAMREGISTRY_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

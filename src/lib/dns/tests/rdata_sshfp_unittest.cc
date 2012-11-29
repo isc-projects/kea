@@ -68,6 +68,12 @@ TEST_F(Rdata_SSHFP_Test, createFromText) {
     EXPECT_EQ(0, rdata_sshfp4.compare(rdata_sshfp));
 }
 
+TEST_F(Rdata_SSHFP_Test, createFromLexer) {
+    EXPECT_EQ(0, rdata_sshfp.compare(
+        *test::createRdataUsingLexer(RRType::SSHFP(), RRClass::IN(),
+                                     "2 1 123456789abcdef67890123456789abcdef67890")));
+}
+
 TEST_F(Rdata_SSHFP_Test, algorithmTypes) {
     // Some of these may not be RFC conformant, but we relax the check
     // in our code to work with algorithm and fingerprint types that may
