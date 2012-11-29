@@ -1566,7 +1566,7 @@ class TestBossComponents(unittest.TestCase):
     def test_start_msgq(self):
         '''Test that b10-msgq is started.'''
         bob = MockBobSimple()
-        bob.c_channel_env = {}
+        bob.c_channel_env = {'FOO': 'an env string'}
         bob.run_under_unittests = True
 
         # use the MockProcessInfo creator
@@ -1579,7 +1579,7 @@ class TestBossComponents(unittest.TestCase):
         self.assertEqual(['b10-msgq'], pi.args)
         self.assertTrue(pi.dev_null_stdout)
         self.assertTrue(pi.dev_null_stderr)
-        self.assertEqual({}, pi.env)
+        self.assertEqual({'FOO': 'an env string'}, pi.env)
 
         # this is set by ProcessInfo.spawn()
         self.assertEqual(42147, pi.pid)
@@ -1591,7 +1591,7 @@ class TestBossComponents(unittest.TestCase):
         self.assertEqual(['b10-msgq'], pi.args)
         self.assertTrue(pi.dev_null_stdout)
         self.assertFalse(pi.dev_null_stderr)
-        self.assertEqual({}, pi.env)
+        self.assertEqual({'FOO': 'an env string'}, pi.env)
 
         # this is set by ProcessInfo.spawn()
         self.assertEqual(42147, pi.pid)
