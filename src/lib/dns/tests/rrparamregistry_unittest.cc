@@ -161,6 +161,9 @@ void dummyCallback(const string&, size_t, const string&) {
 }
 
 TEST_F(RRParamRegistryTest, createFromLexer) {
+    // This test basically checks that the string version of
+    // AbstractRdataFactory::create() is called by the MasterLexer
+    // variant of create().
     boost::scoped_ptr<AbstractRdataFactory> rdf(new TestRdataFactory);
 
     std::stringstream ss("192.168.0.1");
