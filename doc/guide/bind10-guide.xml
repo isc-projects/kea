@@ -785,8 +785,8 @@ as a dependency earlier -->
         </note>
         <para>
 	  If required, run <command>ldconfig</command> as root (with
-	  <filename>/usr/local</filename> in
-	  <filename>/etc/ld.so.conf</filename>):
+	  <filename>/usr/local/lib</filename> (or under the path used
+	  with --prefix) in <filename>/etc/ld.so.conf</filename>):
 	  <screen>$ <userinput>ldconfig</userinput></screen>
         </para>
         <note>
