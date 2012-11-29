@@ -83,23 +83,6 @@ public:
     /// @brief Instructs the server to shut down.
     void shutdown();
 
-    /// @brief Return textual type of packet received by server.
-    ///
-    /// Returns the name of valid packet received by the server (e.g. SOLICIT).
-    /// If the packet is unknown - or if it is a valid DHCP packet but not one
-    /// expected to be received by the server (such as an ADVERTISE), the string
-    /// "UNKNOWN" is returned.  This method is used in debug messages.
-    ///
-    /// As the operation of the method does not depend on any server state, it
-    /// is declared static.
-    ///
-    /// @param type DHCPv4 packet type
-    ///
-    /// @return Pointer to "const" string containing the packet name.
-    ///         Note that this string is statically allocated and MUST NOT
-    ///         be freed by the caller.
-    static const char* serverReceivedPacketName(uint8_t type);
-
 protected:
     /// @brief Processes incoming SOLICIT and returns response.
     ///

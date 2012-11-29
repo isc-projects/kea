@@ -205,6 +205,52 @@ Pkt6::updateTimestamp() {
     timestamp_ = boost::posix_time::microsec_clock::universal_time();
 }
 
+const char*
+Pkt6::getName(uint8_t type) {
+    static const char* CONFIRM = "CONFIRM";
+    static const char* DECLINE = "DECLINE";
+    static const char* INFORMATION_REQUEST = "INFORMATION_REQUEST";
+    static const char* REBIND = "REBIND";
+    static const char* RELEASE = "RELEASE";
+    static const char* RENEW = "RENEW";
+    static const char* REQUEST = "REQUEST";
+    static const char* SOLICIT = "SOLICIT";
+    static const char* UNKNOWN = "UNKNOWN";
+
+    switch (type) {
+    case DHCPV6_CONFIRM:
+        return (CONFIRM);
+
+    case DHCPV6_DECLINE:
+        return (DECLINE);
+
+    case DHCPV6_INFORMATION_REQUEST:
+        return (INFORMATION_REQUEST);
+
+    case DHCPV6_REBIND:
+        return (REBIND);
+
+    case DHCPV6_RELEASE:
+        return (RELEASE);
+
+    case DHCPV6_RENEW:
+        return (RENEW);
+
+    case DHCPV6_REQUEST:
+        return (REQUEST);
+
+    case DHCPV6_SOLICIT:
+        return (SOLICIT);
+
+    default:
+        ;
+    }
+    return (UNKNOWN);
+}
+
+const char* Pkt6::getName() const {
+    return (getName(getType()));
+}
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

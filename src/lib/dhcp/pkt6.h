@@ -127,7 +127,7 @@ public:
     /// Returns message type (e.g. 1 = SOLICIT)
     ///
     /// @return message type
-    uint8_t getType() { return (msg_type_); }
+    uint8_t getType() const { return (msg_type_); }
 
     /// Sets message type (e.g. 1 = SOLICIT)
     ///
@@ -265,6 +265,34 @@ public:
     /// just after receiving it.
     /// @throw isc::Unexpected if timestamp update failed
     void updateTimestamp();
+
+    /// @brief Return textual type of packet.
+    ///
+    /// Returns the name of valid packet received by the server (e.g. SOLICIT).
+    /// If the packet is unknown - or if it is a valid DHCP packet but not one
+    /// expected to be received by the server (such as an ADVERTISE), the string
+    /// "UNKNOWN" is returned.  This method is used in debug messages.
+    ///
+    /// As the operation of the method does not depend on any server state, it
+    /// is declared static. There is also non-static getName() method that
+    /// works on Pkt6 objects.
+    ///
+    /// @param type DHCPv6 packet type
+    ///
+    /// @return Pointer to "const" string containing the packet name.
+    ///         Note that this string is statically allocated and MUST NOT
+    ///         be freed by the caller.
+    static const char* getName(uint8_t type);
+
+    /// @brief returns textual representation of packet type.
+    ///
+    /// This method requires an object. There is also static version, which
+    /// requires one parameter (type).
+    ///
+    /// @return Pointer to "const" string containing packet name.
+    ///         Note that this string is statically allocated and MUST NOT
+    ///         be freed by the caller.
+    const char* getName() const;
 
 protected:
     /// Builds on wire packet for TCP transmission.
