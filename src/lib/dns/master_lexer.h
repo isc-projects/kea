@@ -307,6 +307,13 @@ public:
         {}
     };
 
+    /// \brief Exception thrown from a wrapper version of
+    /// \c MasterLexer::getNextToken() for non fatal errors.
+    ///
+    /// See the method description for more details.
+    ///
+    /// The \c token_ member variable (read-only) is set to a \c MasterToken
+    /// object of type ERROR indicating the reason for the error.
     class LexerError : public Exception {
     public:
         LexerError(const char* file, size_t line, MasterToken error_token) :
@@ -452,6 +459,73 @@ public:
     ///     or the token fail.
     const MasterToken& getNextToken(Options options = NONE);
 
+    /// \brief Parse the input for the expected type of token.
+    ///
+    /// This method is a wrapper of the other version, customized for the case
+    /// where a particular type of token is expected as the next one.
+    /// More specifically, it's intended to be used to get tokens for RDATA
+    /// fields.  Since most RDATA types of fixed format, the token type is
+    /// often predictable and the method interface can be simplified.
+    ///
+    /// This method basically works as follows: it gets the type of the
+    /// expected token, calls the other version of \c getNextToken(Options),
+    /// and returns the token if it's of the expected type (due to the usage
+    /// assumption this should be normally the case).  There are some non
+    /// trivial details though:
+    ///
+    /// - If the expected type is MasterToken::QSTRING, both quoted and
+    ///   unquoted strings are recognized and returned.
+    /// - If the optional \c eol_ok parameter is \c true (very rare case),
+    ///   MasterToken::END_OF_LINE and MasterToken::END_OF_FILE are recognized
+    ///   and returned if they are found instead of the expected type of
+    ///   token.
+    /// - If the next token is not of the expected type (including the case
+    ///   a number is expected but it's out of range), ungetToken() is
+    ///   internally called so the caller can re-read that token.
+    /// - If other types or errors (such as unbalanced parentheses) are
+    ///   detected, the erroneous part isn't "ungotten"; the caller can
+    ///   continue parsing after that part.
+    ///
+    /// In some very rare cases where the RDATA has an optional trailing field,
+    /// the \c eol_ok parameter would be set to \c true.  This way the caller
+    /// can handle both cases (the field does or does not exist) by a single
+    /// call to this method.  In all other cases \c eol_ok should be set to
+    /// \c false, and that is the default and can be omitted.
+    ///
+    /// Unlike the other version of \c getNextToken(Options), this method
+    /// throws an exception of type \c LexerError for non fatal errors such as
+    /// broken syntax or encountering an unexpected type of token.  This way
+    /// the caller can write RDATA parser code without bothering to handle
+    /// errors for each field.  For example, pseudo parser code for MX RDATA
+    /// would look like this:
+    /// \code
+    ///    const uint32_t pref =
+    ///        lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    ///    // check if pref is the uint16_t range; no other check is needed.
+    ///    const Name mx(lexer.getNextToken(MasterToken::STRING).getString());
+    /// \endcode
+    ///
+    /// In the case where \c LexerError exception is thrown, it's expected
+    /// to be handled comprehensively for the parser of the RDATA or at a
+    /// higher layer.  The \c token_ member variable of the corresponding
+    /// \c LexerError exception object stores a token of type
+    /// \c MasterToken::ERROR that indicates the reason for the error.
+    ///
+    /// Due to the specific intended usage of this method, only a subset
+    /// of \c MasterToken::Type values are acceptable for the \c expect
+    /// parameter: \c MasterToken::STRING, \c MasterToken::QSTRING, and
+    /// \c MasterToken::NUMBER.  Specifying other values will result in
+    /// an \c InvalidParameter exception.
+    ///
+    /// \throw InvalidParameter The expected token type is not allowed for
+    /// this method.
+    /// \throw LexerError The lexer finds non fatal error or it finds an
+    /// \throw other Anything the other version of getNextToken() can throw.
+    ///
+    /// \param expect Expected type of token.  Must be either STRING, QSTRING,
+    /// or NUMBER.
+    /// \param eol_ok \c true iff END_OF_LINE or END_OF_FILE is acceptable.
+    /// \return The expected type of token.
     const MasterToken& getNextToken(MasterToken::Type expect,
                                     bool eol_ok = false);
 
