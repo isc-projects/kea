@@ -105,6 +105,17 @@ public:
     /// @return read boolean value.
     bool readBoolean(const uint32_t index) const;
 
+    /// @brief Read a buffer as FQDN.
+    ///
+    /// @param index buffer index.
+    /// @param [out] len number of bytes read from a buffer.
+    ///
+    /// @throw isc::OutOfRange if buffer index is out of range.
+    /// @throw isc::dhcp::BadDataTypeCast if a buffer being read
+    /// does not hold a valid FQDN.
+    /// @return string representation if FQDN.
+    std::string readFqdn(const uint32_t index) const;
+
     /// @brief Read a buffer as integer value.
     ///
     /// @param index buffer index.
