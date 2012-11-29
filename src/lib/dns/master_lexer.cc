@@ -495,11 +495,11 @@ Number::handle(MasterLexer& lexer) const {
                 try {
                     const uint32_t number32 =
                         boost::lexical_cast<uint32_t, const char*>(&data[0]);
-                    token = MasterLexer::Token(number32);
+                    token = MasterToken(number32);
                 } catch (const boost::bad_lexical_cast&) {
                     // Since we already know we have only digits,
                     // range should be the only possible problem.
-                    token = Token(MasterToken::NUMBER_OUT_OF_RANGE);
+                    token = MasterToken(MasterToken::NUMBER_OUT_OF_RANGE);
                 }
             } else {
                 token = MasterToken(&data.at(0), data.size());

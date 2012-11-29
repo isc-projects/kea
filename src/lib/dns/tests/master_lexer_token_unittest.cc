@@ -139,7 +139,7 @@ TEST_F(MasterLexerTokenTest, errors) {
     EXPECT_EQ("no token produced", MasterToken(MasterToken::NO_TOKEN_PRODUCED).
               getErrorText());
     EXPECT_EQ("number out of range",
-              MasterLexer::Token(MasterToken::NUMBER_OUT_OF_RANGE).
+              MasterToken(MasterToken::NUMBER_OUT_OF_RANGE).
               getErrorText());
 
     // getErrorCode/Text() isn't allowed for non number types
