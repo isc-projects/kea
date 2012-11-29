@@ -16,10 +16,13 @@
 #include <auth/statistics_items.h>
 #include <auth/auth_log.h>
 
+#include <cc/data.h>
+
+#include <dns/message.h>
 #include <dns/opcode.h>
 #include <dns/rcode.h>
 
-#include <cc/data.h>
+#include <statistics/counter.h>
 
 #include <algorithm>
 #include <cctype>
@@ -80,8 +83,8 @@ namespace statistics {
 // Note: opcode in this array must be start with 0 and be sequential
 const int opcode_to_msgcounter[] = {
     MSG_OPCODE_QUERY,    // Opcode =  0: Query
-    MSG_OPCODE_IQUERY,   // Opcode =  1: Iquery
-    MSG_OPCODE_STATUS,   // Opcode =  2: STATUS
+    MSG_OPCODE_IQUERY,   // Opcode =  1: IQuery
+    MSG_OPCODE_STATUS,   // Opcode =  2: Status
     MSG_OPCODE_OTHER,    // Opcode =  3: (Unassigned)
     MSG_OPCODE_NOTIFY,   // Opcode =  4: Notify
     MSG_OPCODE_UPDATE,   // Opcode =  5: Update
@@ -144,9 +147,6 @@ Counters::incRequest(const MessageAttributes& msgattrs) {
     if (msgattrs.getRequestSigTSIG()) {
         server_msg_counter_.inc(MSG_REQUEST_TSIG);
     }
-    if (msgattrs.getRequestSigSIG0()) {
-        server_msg_counter_.inc(MSG_REQUEST_SIG0);
-    }
     if (msgattrs.getRequestSigBadSig()) {
         server_msg_counter_.inc(MSG_REQUEST_BADSIG);
         // If signature validation is failed, no other query attributes are
@@ -165,7 +165,8 @@ Counters::incRequest(const MessageAttributes& msgattrs) {
     }
 
     // OPCODE
-    server_msg_counter_.inc(opcode_to_msgcounter[msgattrs.getRequestOpCode()]);
+    server_msg_counter_.inc(
+        opcode_to_msgcounter[msgattrs.getRequestOpCode().getCode()]);
 }
 
 void
@@ -205,7 +206,7 @@ Counters::incResponse(const MessageAttributes& msgattrs,
         server_msg_counter_.inc(MSG_REQUEST_BADEDNSVER);
     }
 
-    if (msgattrs.getRequestOpCode() == Opcode::QUERY_CODE) {
+    if (msgattrs.getRequestOpCode() == Opcode::QUERY()) {
         // compound attributes
         const unsigned int answer_rrs =
             response.getRRCount(Message::SECTION_ANSWER);
