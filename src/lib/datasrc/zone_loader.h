@@ -17,8 +17,11 @@
 
 #include <datasrc/data_source.h>
 
+#include <dns/master_loader.h>
+
 #include <cstdlib> // For size_t
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 
 namespace isc {
 namespace dns {
@@ -136,8 +139,12 @@ private:
     const ZoneIteratorPtr iterator_;
     /// \brief The destination zone updater
     const ZoneUpdaterPtr updater_;
+    /// \brief The master loader (for the loader mode)
+    const boost::scoped_ptr<isc::dns::MasterLoader> loader_;
     /// \brief Indicator if loading was completed
     bool complete_;
+    /// \brief Was the loading successful?
+    bool loaded_ok_;
 };
 
 }

@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/zone_loader.h>
+#include <datasrc/master_loader_callbacks.h>
 
 #include <datasrc/client.h>
 #include <datasrc/data_source.h>
@@ -23,6 +24,7 @@
 
 using isc::dns::Name;
 using isc::dns::ConstRRsetPtr;
+using isc::dns::MasterLoader;
 
 namespace isc {
 namespace datasrc {
@@ -53,6 +55,21 @@ ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
                   "Source and destination class mismatch");
     }
 }
+
+ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
+                       const char* filename) :
+    updater_(destination.getUpdater(zone_name, true, false)),
+    loader_(new MasterLoader(filename, zone_name,
+                             // TODO: Maybe we should have getClass() on the
+                             // data source?
+                             updater_->getFinder().getClass(),
+                             createMasterLoaderCallbacks(zone_name,
+                                             updater_->getFinder().getClass(),
+                                             &loaded_ok_),
+                             createMasterLoaderAddCallback(*updater_))),
+    complete_(false),
+    loaded_ok_(true)
+{
 
 }
 
@@ -86,7 +103,20 @@ ZoneLoader::loadIncremental(size_t limit) {
                   "Loading has been completed previously");
     }
 
-    if (iterator_ != ZoneIteratorPtr()) {
+    if (iterator_ == ZoneIteratorPtr()) {
+        assert(loader_.get() != NULL);
+        if (loader_->loadIncremental(limit)) {
+            complete_ = true;
+            if (!loaded_ok_) {
+                isc_throw(MasterFileError, "Error while loading master file");
+            } else {
+                updater_->commit();
+            }
+            return (true);
+        } else {
+            return (false);
+        }
+    } else {
         if (copyRRsets(updater_, iterator_, limit)) {
             updater_->commit();
             complete_ = true;
@@ -94,8 +124,6 @@ ZoneLoader::loadIncremental(size_t limit) {
         } else {
             return (false);
         }
-    } else {
-        isc_throw(isc::NotImplemented, "The master file way is not ready yet");
     }
 }
 
