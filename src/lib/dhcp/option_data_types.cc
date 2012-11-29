@@ -209,7 +209,10 @@ OptionDataTypeUtil::writeBool(const bool value,
 }
 
 std::string
-OptionDataTypeUtil::readFqdn(const std::vector<uint8_t>& buf) {
+OptionDataTypeUtil::readFqdn(const std::vector<uint8_t>& buf,
+                             size_t& len) {
+    len = 0;
+
     // If buffer is empty emit an error.
     if (buf.empty()) {
         isc_throw(BadDataTypeCast, "unable to read FQDN from a buffer."
@@ -225,6 +228,7 @@ OptionDataTypeUtil::readFqdn(const std::vector<uint8_t>& buf) {
         // it means that the buffer doesn't hold a valid domain name (invalid
         // syntax).
         isc::dns::Name name(in_buf);
+        len = name.getLength();
         return (name.toText());
     } catch (const isc::Exception& ex) {
         // Unable to convert the data in the buffer into FQDN.
