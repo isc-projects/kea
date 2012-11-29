@@ -398,4 +398,30 @@ TEST_F(MasterLexerTest, getNextTokenNumber) {
     eofCheck(lexer, MasterToken::NUMBER);
 }
 
+TEST_F(MasterLexerTest, getNextTokenErrors) {
+    // Check miscellaneous error cases
+
+    ss << ") ";                 // unbalanced parenthesis
+    ss << "string-after-error ";
+    lexer.pushSource(ss);
+
+    // Only string/qstring/number can be "expected".
+    EXPECT_THROW(lexer.getNextToken(MasterToken::END_OF_LINE),
+                 isc::InvalidParameter);
+    EXPECT_THROW(lexer.getNextToken(MasterToken::END_OF_FILE),
+                 isc::InvalidParameter);
+    EXPECT_THROW(lexer.getNextToken(MasterToken::INITIAL_WS),
+                 isc::InvalidParameter);
+    EXPECT_THROW(lexer.getNextToken(MasterToken::ERROR),
+                 isc::InvalidParameter);
+
+    // If it encounters a syntax error, it results in LexerError exception.
+    lexerErrorCheck(lexer, MasterToken::STRING, MasterToken::UNBALANCED_PAREN);
+
+    // Unlike the NUMBER_OUT_OF_RANGE case, the error part has been skipped
+    // within getNextToken().  We should be able to get the next token.
+    EXPECT_EQ("string-after-error",
+              lexer.getNextToken(MasterToken::STRING).getString());
+}
+
 }
