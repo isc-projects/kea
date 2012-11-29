@@ -192,6 +192,34 @@ MasterLexer::getNextToken(Options options) {
     return (impl_->token_);
 }
 
+const MasterToken&
+MasterLexer::getNextToken(MasterToken::Type expect, bool eol_ok) {
+    Options options = NONE;
+    if (expect == MasterToken::QSTRING) {
+        options = options | QSTRING;
+    }
+
+    getNextToken(options);      // the result should be set in impl_->token_
+
+    const bool is_eol_like =
+        (impl_->token_.getType() == MasterToken::END_OF_LINE ||
+         impl_->token_.getType() == MasterToken::END_OF_FILE);
+    if (eol_ok && is_eol_like) {
+        return (impl_->token_);
+    }
+    if (impl_->token_.getType() == MasterToken::STRING &&
+        expect == MasterToken::QSTRING) {
+        return (impl_->token_);
+    }
+    if (impl_->token_.getType() != expect) {
+        ungetToken();
+        throw LexerError(__FILE__, __LINE__,
+                         MasterToken(MasterToken::UNEXPECTED_END));
+    }
+
+    return (impl_->token_);
+}
+
 void
 MasterLexer::ungetToken() {
     if (impl_->has_previous_) {
