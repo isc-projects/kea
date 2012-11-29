@@ -1,0 +1,144 @@
+// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
+#include <dhcp/option_data_types.h>
+#include <gtest/gtest.h>
+
+using namespace isc;
+using namespace isc::dhcp;
+
+namespace {
+
+/// @brief Test class for option data type utilities.
+class OptionDataTypesTest : public ::testing::Test {
+public:
+
+    /// @brief Constructor.
+    OptionDataTypesTest() { }
+
+};
+
+// The purpose of this test is to verify that FQDN is read from
+// a buffer and returned as a text. The representation of the FQDN
+// in the buffer complies with RFC1035, section 3.1.
+// This test also checks that if invalid (truncated) FQDN is stored
+// in a buffer the appropriate exception is returned when trying to
+// read it as a string.
+TEST_F(OptionDataTypesTest, readFqdn) {
+    // The binary representation of the "mydomain.example.com".
+    // Values: 8, 7, 3 and 0 specify the lengths of subsequent
+    // labels within the FQDN.
+    const char data[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0
+    };
+
+    // Make a vector out of the data.
+    std::vector<uint8_t> buf(data, data + sizeof(data));
+
+    // Read the buffer as FQDN and verify its correctness.
+    std::string fqdn;
+    EXPECT_NO_THROW(fqdn = OptionDataTypeUtil::readFqdn(buf));
+    EXPECT_EQ("mydomain.example.com.", fqdn);
+
+    // By resizing the buffer we simulate truncation. The first
+    // length field (8) indicate that the first label's size is
+    // 8 but the actual buffer size is 5. Expect that conversion
+    // fails.
+    buf.resize(5);
+    EXPECT_THROW(
+        OptionDataTypeUtil::readFqdn(buf),
+        isc::dhcp::BadDataTypeCast
+    );
+
+    // Another special case: provide an empty buffer.
+    buf.clear();
+    EXPECT_THROW(
+        OptionDataTypeUtil::readFqdn(buf),
+        isc::dhcp::BadDataTypeCast
+    );
+}
+
+// The purpose of this test is to verify that FQDN's syntax is validated
+// and that FQDN is correctly written to a buffer in a format described
+// in RFC1035 section 3.1.
+TEST_F(OptionDataTypesTest, writeFqdn) {
+    // Create empty buffer. The FQDN will be written to it.
+    OptionBuffer buf;
+    // Write a domain name into the buffer in the format described
+    // in RFC1035 section 3.1. This function should not throw
+    // exception because domain name is well formed.
+    EXPECT_NO_THROW(
+        OptionDataTypeUtil::writeFqdn("mydomain.example.com", buf)
+    );
+    // The length of the data is 22 (8 bytes for "mydomain" label,
+    // 7 bytes for "example" label, 3 bytes for "com" label and
+    // finally 4 bytes positions between labels where length
+    // information is stored.
+    ASSERT_EQ(22, buf.size());
+
+    // Verify that length fields between labels hold valid values.
+    EXPECT_EQ(8, buf[0]);  // length of "mydomain"
+    EXPECT_EQ(7, buf[9]);  // length of "example"
+    EXPECT_EQ(3, buf[17]); // length of "com"
+    EXPECT_EQ(0, buf[21]); // zero byte at the end.
+
+    // Verify that labels are valid.
+    std::string label0(buf.begin() + 1, buf.begin() + 9);
+    EXPECT_EQ("mydomain", label0);
+
+    std::string label1(buf.begin() + 10, buf.begin() + 17);
+    EXPECT_EQ("example", label1);
+
+    std::string label2(buf.begin() + 18, buf.begin() + 21);
+    EXPECT_EQ("com", label2);
+
+    // The tested function is supposed to append data to a buffer
+    // so let's check that it is a case by appending another domain.
+    OptionDataTypeUtil::writeFqdn("hello.net", buf);
+
+    // The buffer length should be now longer.
+    ASSERT_EQ(33, buf.size());
+
+    // Check the length fields for new labels being appended.
+    EXPECT_EQ(5, buf[22]);
+    EXPECT_EQ(3, buf[28]);
+
+    // And check that labels are ok.
+    std::string label3(buf.begin() + 23, buf.begin() + 28);
+    EXPECT_EQ("hello", label3);
+
+    std::string label4(buf.begin() + 29, buf.begin() + 32);
+    EXPECT_EQ("net", label4);
+
+    // Check that invalid (empty) FQDN is rejected and expected
+    // exception type is thrown.
+    buf.clear();
+    EXPECT_THROW(
+        OptionDataTypeUtil::writeFqdn("", buf),
+        isc::dhcp::BadDataTypeCast
+    );
+
+    // Check another invalid domain name (with repeated dot).
+    buf.clear();
+    EXPECT_THROW(
+        OptionDataTypeUtil::writeFqdn("example..com", buf),
+        isc::dhcp::BadDataTypeCast
+    );
+}
+
+} // anonymous namespace
