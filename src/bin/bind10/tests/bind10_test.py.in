@@ -1446,14 +1446,14 @@ class TestBossComponents(unittest.TestCase):
         bob._component_configurator._components['test'] = (None, component)
         self.__setup_restart(bob, component)
         self.assertTrue(component.restarted)
-        self.assertFalse(component in bob.components_to_restart)
+        self.assertNotIn(component, bob.components_to_restart)
 
         # Remove the component from the configuration.  It won't be restarted
         # even if scheduled, nor will remain in the to-be-restarted list.
         del bob._component_configurator._components['test']
         self.__setup_restart(bob, component)
         self.assertFalse(component.restarted)
-        self.assertFalse(component in bob.components_to_restart)
+        self.assertNotIn(component, bob.components_to_restart)
 
     def test_get_processes(self):
         '''Test that procsses are returned correctly, sorted by pid.'''
@@ -1491,12 +1491,12 @@ class TestBossComponents(unittest.TestCase):
         component.has_failed = failed
         bob.components[53] = component
 
-        self.assertFalse(component in bob.components_to_restart)
+        self.assertNotIn(component, bob.components_to_restart)
 
         bob.reap_children()
 
         if runnable and is_running and not failed:
-            self.assertTrue(component in bob.components_to_restart)
+            self.assertIn(component, bob.components_to_restart)
         else:
             self.assertEqual([], bob.components_to_restart)
 
