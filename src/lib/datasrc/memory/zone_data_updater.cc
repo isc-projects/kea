@@ -12,11 +12,17 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
+
 #include <datasrc/memory/zone_data_updater.h>
 #include <datasrc/memory/logger.h>
+#include <datasrc/memory/util_internal.h>
 #include <datasrc/zone.h>
 
 #include <dns/rdataclass.h>
+
+#include <cassert>
+#include <string>
 
 using namespace isc::dns;
 using namespace isc::dns::rdata;
@@ -24,6 +30,8 @@ using namespace isc::dns::rdata;
 namespace isc {
 namespace datasrc {
 namespace memory {
+
+using detail::getCoveredType;
 
 void
 ZoneDataUpdater::addWildcards(const Name& name) {
@@ -99,9 +107,7 @@ ZoneDataUpdater::contextCheck(const AbstractRRset& rrset,
 
 void
 ZoneDataUpdater::validate(const isc::dns::ConstRRsetPtr rrset) const {
-    if (!rrset) {
-        isc_throw(NullRRset, "The rrset provided is NULL");
-    }
+    assert(rrset);
 
     if (rrset->getRdataCount() == 0) {
         isc_throw(AddError,
@@ -241,31 +247,46 @@ ZoneDataUpdater::setupNSEC3(const ConstRRsetPtr rrset) {
 }
 
 void
-ZoneDataUpdater::addNSEC3(const ConstRRsetPtr rrset, const ConstRRsetPtr rrsig)
+ZoneDataUpdater::addNSEC3(const Name& name, const ConstRRsetPtr rrset,
+                          const ConstRRsetPtr rrsig)
 {
-    setupNSEC3<generic::NSEC3>(rrset);
+    if (rrset) {
+        setupNSEC3<generic::NSEC3>(rrset);
+    }
 
     NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
+    if (nsec3_data == NULL) {
+        // This is some tricky case: an RRSIG for NSEC3 is given without the
+        // covered NSEC3, and we don't even know any NSEC3 related data.
+        // This situation is not necessarily broken, but in our current
+        // implementation it's very difficult to deal with.  So we reject it;
+        // hopefully this case shouldn't happen in practice, at least unless
+        // zone is really broken.
+        assert(!rrset);
+        isc_throw(NotImplemented,
+                  "RRSIG for NSEC3 cannot be added - no known NSEC3 data");
+    }
 
     ZoneNode* node;
-    nsec3_data->insertName(mem_sgmt_, rrset->getName(), &node);
+    nsec3_data->insertName(mem_sgmt_, name, &node);
 
     RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, rrset, rrsig);
     RdataSet* old_rdataset = node->setData(rdataset);
     if (old_rdataset != NULL) {
-        RdataSet::destroy(mem_sgmt_, rrclass_, old_rdataset);
+        RdataSet::destroy(mem_sgmt_, old_rdataset, rrclass_);
     }
 }
 
 void
-ZoneDataUpdater::addRdataSet(const ConstRRsetPtr rrset,
+ZoneDataUpdater::addRdataSet(const Name& name, const RRType& rrtype,
+                             const ConstRRsetPtr rrset,
                              const ConstRRsetPtr rrsig)
 {
-    if (rrset->getType() == RRType::NSEC3()) {
-        addNSEC3(rrset, rrsig);
+    if (rrtype == RRType::NSEC3()) {
+        addNSEC3(name, rrset, rrsig);
     } else {
         ZoneNode* node;
-        zone_data_.insertName(mem_sgmt_, rrset->getName(), &node);
+        zone_data_.insertName(mem_sgmt_, name, &node);
 
         RdataSet* rdataset_head = node->getData();
 
@@ -273,13 +294,14 @@ ZoneDataUpdater::addRdataSet(const ConstRRsetPtr rrset,
         // fails and the exception is thrown, it may break strong
         // exception guarantee.  At the moment we prefer code simplicity
         // and don't bother to introduce complicated recovery code.
-        contextCheck(*rrset, rdataset_head);
+        if (rrset) { // this check is only for covered RRset, not RRSIG
+            contextCheck(*rrset, rdataset_head);
+        }
 
-        if (RdataSet::find(rdataset_head, rrset->getType()) != NULL) {
+        if (RdataSet::find(rdataset_head, rrtype, true) != NULL) {
             isc_throw(AddError,
                       "RRset of the type already exists: "
-                      << rrset->getName() << " (type: "
-                      << rrset->getType() << ")");
+                      << name << " (type: " << rrtype << ")");
         }
 
         RdataSet* rdataset_new = RdataSet::create(mem_sgmt_, encoder_,
@@ -289,23 +311,25 @@ ZoneDataUpdater::addRdataSet(const ConstRRsetPtr rrset,
 
         // Ok, we just put it in.
 
+        // Convenient (and more efficient) shortcut to check RRsets at origin
+        const bool is_origin = (node == zone_data_.getOriginNode());
+
         // If this RRset creates a zone cut at this node, mark the node
-        // indicating the need for callback in find().
-        if (rrset->getType() == RRType::NS() &&
-            rrset->getName() != zone_name_) {
+        // indicating the need for callback in find().  Note that we do this
+        // only when non RRSIG RRset of that type is added.
+        if (rrset && rrtype == RRType::NS() && !is_origin) {
             node->setFlag(ZoneNode::FLAG_CALLBACK);
             // If it is DNAME, we have a callback as well here
-        } else if (rrset->getType() == RRType::DNAME()) {
+        } else if (rrset && rrtype == RRType::DNAME()) {
             node->setFlag(ZoneNode::FLAG_CALLBACK);
         }
 
         // If we've added NSEC3PARAM at zone origin, set up NSEC3
         // specific data or check consistency with already set up
         // parameters.
-        if (rrset->getType() == RRType::NSEC3PARAM() &&
-            rrset->getName() == zone_name_) {
+        if (rrset && rrtype == RRType::NSEC3PARAM() && is_origin) {
             setupNSEC3<generic::NSEC3PARAM>(rrset);
-        } else if (rrset->getType() == RRType::NSEC()) {
+        } else if (rrset && rrtype == RRType::NSEC() && is_origin) {
             // If it is NSEC signed zone, we mark the zone as signed
             // (conceptually "signed" is a broader notion but our
             // current zone finder implementation regards "signed" as
@@ -319,27 +343,37 @@ void
 ZoneDataUpdater::add(const ConstRRsetPtr& rrset,
                      const ConstRRsetPtr& sig_rrset)
 {
-    // Validate input.  This will cause an exception to be thrown if the
-    // input RRset is empty.
-    validate(rrset);
+    // Validate input.
+    if (!rrset && !sig_rrset) {
+        isc_throw(NullRRset,
+                  "ZoneDataUpdater::add is given 2 NULL pointers");
+    }
+    if (rrset) {
+        validate(rrset);
+    }
     if (sig_rrset) {
         validate(sig_rrset);
     }
 
+    const Name& name = rrset ? rrset->getName() : sig_rrset->getName();
+    const RRType& rrtype = rrset ? rrset->getType() :
+        getCoveredType(sig_rrset);
+
     // OK, can add the RRset.
-    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEMORY_MEM_ADD_RRSET).
-        arg(rrset->getName()).arg(rrset->getType()).arg(zone_name_);
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEMORY_MEM_ADD_RRSET).arg(name).
+        arg(rrset ? rrtype.toText() : "RRSIG(" + rrtype.toText() + ")").
+        arg(zone_name_);
 
     // Add wildcards possibly contained in the owner name to the domain
     // tree.  This can only happen for the normal (non-NSEC3) tree.
     // Note: this can throw an exception, breaking strong exception
     // guarantee.  (see also the note for the call to contextCheck()
     // above).
-    if (rrset->getType() != RRType::NSEC3()) {
-        addWildcards(rrset->getName());
+    if (rrtype != RRType::NSEC3()) {
+        addWildcards(name);
     }
 
-    addRdataSet(rrset, sig_rrset);
+    addRdataSet(name, rrtype, rrset, sig_rrset);
 }
 
 } // namespace memory
