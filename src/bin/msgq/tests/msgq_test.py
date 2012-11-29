@@ -9,6 +9,7 @@ import time
 import errno
 import threading
 import isc.cc
+import collections
 
 #
 # Currently only the subscription part and some sending is implemented...
@@ -153,7 +154,7 @@ class BadSocket:
     # (except explicitely overridden ones)
     def __getattr__(self, name, *args):
         attr = getattr(self.socket, name)
-        if callable(attr):
+        if isinstance(attr, collections.Callable):
             def callable_attr(*args):
                 return attr.__call__(*args)
             return callable_attr
