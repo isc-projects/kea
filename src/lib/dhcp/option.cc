@@ -114,7 +114,7 @@ Option::pack4(isc::util::OutputBuffer& buf) {
             buf.writeData(&data_[0], data_.size());
         }
 
-        LibDHCP::packOptions(buf, options_);
+        packOptions(buf);
 
     } else {
         isc_throw(BadValue, "Invalid universe type " << universe_);
@@ -131,16 +131,44 @@ void Option::pack6(isc::util::OutputBuffer& buf) {
             buf.writeData(&data_[0], data_.size());
         }
 
-        LibDHCP::packOptions6(buf, options_);
+        packOptions(buf);
     } else {
         isc_throw(BadValue, "Invalid universe type " << universe_);
     }
     return;
 }
 
+void
+Option::packOptions(isc::util::OutputBuffer& buf) {
+    switch (universe_) {
+    case V4:
+        LibDHCP::packOptions(buf, options_);
+        return;
+    case V6:
+        LibDHCP::packOptions6(buf, options_);
+        return;
+    default:
+        isc_throw(isc::BadValue, "Invalid universe type " << universe_);
+    }
+}
+
 void Option::unpack(OptionBufferConstIter begin,
                     OptionBufferConstIter end) {
     data_ = OptionBuffer(begin, end);
+}
+
+void
+Option::unpackOptions(const OptionBuffer& buf) {
+    switch (universe_) {
+    case V4:
+        LibDHCP::unpackOptions4(buf, options_);
+        return;
+    case V6:
+        LibDHCP::unpackOptions6(buf, options_);
+        return;
+    default:
+        isc_throw(isc::BadValue, "Invalid universe type " << universe_);
+    }
 }
 
 uint16_t Option::len() {
