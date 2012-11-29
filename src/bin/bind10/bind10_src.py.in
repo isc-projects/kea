@@ -474,19 +474,20 @@ class BoB:
         bind_cfgd.spawn()
         self.log_started(bind_cfgd.pid)
 
-        # Wait for the configuration manager to start up as subsequent initialization
-        # cannot proceed without it.  The time to wait can be set on the command line.
-        time_remaining = self.wait_time
-        msg, env = self.cc_session.group_recvmsg()
-        while time_remaining > 0 and not self.process_running(msg, "ConfigManager"):
-            logger.debug(DBG_PROCESS, BIND10_WAIT_CFGMGR)
-            time.sleep(1)
-            time_remaining = time_remaining - 1
+        if not self.run_under_unittests:
+            # Wait for the configuration manager to start up as
+            # subsequent initialization cannot proceed without it.  The
+            # time to wait can be set on the command line.
+            time_remaining = self.wait_time
             msg, env = self.cc_session.group_recvmsg()
+            while time_remaining > 0 and not self.process_running(msg, "ConfigManager"):
+                logger.debug(DBG_PROCESS, BIND10_WAIT_CFGMGR)
+                time.sleep(1)
+                time_remaining = time_remaining - 1
+                msg, env = self.cc_session.group_recvmsg()
         
-        if not self.process_running(msg, "ConfigManager") and \
-                not self.run_under_unittests:
-            raise ProcessStartError("Configuration manager process has not started")
+            if not self.process_running(msg, "ConfigManager"):
+                raise ProcessStartError("Configuration manager process has not started")
 
         return bind_cfgd
 
