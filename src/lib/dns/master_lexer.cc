@@ -203,19 +203,22 @@ optionsForTokenType(MasterToken::Type expect) {
     case MasterToken::NUMBER:
         return (MasterLexer::NUMBER);
     default:
-        assert(false);
+        isc_throw(InvalidParameter,
+                  "expected type for getNextToken not supported: " << expect);
     }
 }
 }
 
 const MasterToken&
 MasterLexer::getNextToken(MasterToken::Type expect, bool eol_ok) {
-    // the result should be set in impl_->token_
+    // Get the next token, specifying an appropriate option corresponding to
+    // the expected type.  The result should be set in impl_->token_.
     getNextToken(optionsForTokenType(expect));
 
     if (impl_->token_.getType() == MasterToken::ERROR) {
-        //if (impl_->token_.getErrorCode() == MasterToken::NUMBER_OUT_OF_RANGE)
-        ungetToken();
+        if (impl_->token_.getErrorCode() == MasterToken::NUMBER_OUT_OF_RANGE) {
+            ungetToken();
+        }
         throw LexerError(__FILE__, __LINE__, impl_->token_);
     }
 
