@@ -99,10 +99,10 @@ def import_definitions():
 
 def generate_specfile(specfile, def_mtime):
     '''Generate spec in specfile from skeleton (specfille+'.pre').
-    If the specfile is newer than both sleketon and def_mtime, file generation
+    If the specfile is newer than both skeleton and def_mtime, file generation
     will be skipped.
 
-    This method reads the content of skeleton and repaces
+    This method reads the content of skeleton and replaces
     <!-- ### STATISTICS DATA PLACEHOLDER ### --> with statistics items
     definition. LOCALSTATEDIR is also expanded.
 
@@ -110,7 +110,7 @@ def generate_specfile(specfile, def_mtime):
     '''
     global item_list
 
-    def convert_list(items, prefix = ''):
+    def convert_list(items, prefix=''):
         spec_list = []
         default_map = {}
         for item in items:
@@ -167,8 +167,8 @@ def generate_specfile(specfile, def_mtime):
                                                 localstatedir))
         stats_pre.close()
         stats_pre_json['module_spec']['statistics'] = statistics_spec_list
-        statistics_spec_json = json.dumps(stats_pre_json, sort_keys = True,
-                                          indent = 2)
+        statistics_spec_json = json.dumps(stats_pre_json, sort_keys=True,
+                                          indent=2)
         stats_spec = open(builddir+os.sep+specfile, 'w')
         stats_spec.write(statistics_spec_json)
         stats_spec.close()
@@ -178,10 +178,10 @@ def generate_specfile(specfile, def_mtime):
 
 def generate_docfile(docfile, def_mtime):
     '''Generate docbook XML in docfile from skeleton (docfile+'.pre').
-    If the docfile is newer than both sleketon and def_mtime, file generation
+    If the docfile is newer than both skeleton and def_mtime, file generation
     will be skipped.
 
-    This method reads the content of skeleton and repaces
+    This method reads the content of skeleton and replaces
     <!-- ### STATISTICS DATA PLACEHOLDER ### --> with statistics items
     definition. LOCALSTATEDIR is also expanded.
 
@@ -189,7 +189,7 @@ def generate_docfile(docfile, def_mtime):
     '''
     global item_list
 
-    def convert_list(items, tree, prefix = ''):
+    def convert_list(items, tree, prefix=''):
         for item in items:
             full_item_name = prefix + item['name']
             if item['child'] is None:
@@ -236,10 +236,10 @@ def generate_docfile(docfile, def_mtime):
 def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
     '''Generate some part of statistics code in itemsfile, ccfile, utfile from
     skeleton (itemsfile+'.pre', ccfile+'.pre', utfile+'.pre').
-    If the file is newer than both sleketon and def_mtime, file generation
+    If the file is newer than both skeleton and def_mtime, file generation
     will be skipped.
 
-    This method reads the content of skeleton and repaces
+    This method reads the content of skeleton and replaces
     // ### STATISTICS ITEMS DEFINITION ### with statistics items definition in
     ccfile and utfile,
     // ### STATISTICS ITEMS DECLARATION ### with statistics items declaration
@@ -339,5 +339,5 @@ if __name__ == "__main__":
                      def_mtime)
     except:
         sys.stderr.write('File generation failed due to exception: %s\n' %
-                sys.exc_info()[1])
+                         sys.exc_info()[1])
         exit(1)
