@@ -212,7 +212,7 @@ const char* const error_text[] = {
     "unexpected end of input",  // UNEXPECTED_END
     "unbalanced quotes",        // UNBALANCED_QUOTES
     "no token produced",        // NO_TOKEN_PRODUCED
-    "number out of range"       // NUMBER_RANGE
+    "number out of range"       // NUMBER_OUT_OF_RANGE
 };
 const size_t error_text_max_count = sizeof(error_text) / sizeof(error_text[0]);
 } // end unnamed namespace
@@ -379,7 +379,7 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
                 return (NULL);
             }
             --paren_count;
-        } else if (isdigit(c) && (options & MasterLexer::NUMBER) != 0) {
+        } else if ((options & MasterLexer::NUMBER) != 0 &&isdigit(c)) {
             lexerimpl.last_was_eol_ = false;
             // this character will be handled in the number state
             lexerimpl.source_->ungetChar();
@@ -469,12 +469,12 @@ Number::handle(MasterLexer& lexer) const {
                 data.push_back('\0');
                 try {
                     const uint32_t number32 =
-                        boost::lexical_cast<uint32_t, const char*>(&data.at(0));
+                        boost::lexical_cast<uint32_t, const char*>(&data[0]);
                     token = MasterLexer::Token(number32);
                 } catch (const boost::bad_lexical_cast&) {
                     // Since we already know we have only digits,
                     // range should be the only possible problem.
-                    token = Token(Token::NUMBER_RANGE);
+                    token = Token(Token::NUMBER_OUT_OF_RANGE);
                 }
             } else {
                 token = MasterLexer::Token(&data.at(0),
