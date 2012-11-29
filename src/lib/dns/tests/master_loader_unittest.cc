@@ -14,13 +14,21 @@
 
 #include <dns/master_loader_callbacks.h>
 #include <dns/master_loader.h>
-
+#include <dns/rrtype.h>
+#include <dns/rrset.h>
 
 #include <gtest/gtest.h>
 #include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include <string>
+#include <vector>
+#include <list>
+
 using namespace isc::dns;
+using std::vector;
+using std::string;
+using std::list;
 
 class MasterLoaderTest : public ::testing::Test {
 public:
@@ -33,42 +41,67 @@ public:
 
     /// Concatenate file, line, and reason, and add it to either errors
     /// or warnings
-    void
-    callback(bool error, const std::string& file, size_t line,
-             const std::string reason)
+    void callback(bool error, const std::string& file, size_t line,
+                  const std::string reason)
     {
         std::stringstream ss;
         ss << file << line << reason;
         if (error) {
-            errors.push_back(ss.str());
+            errors_.push_back(ss.str());
         } else {
-            warnings.push_back(ss.str());
+            warnings_.push_back(ss.str());
         }
     }
 
-    void addRRset(const RRsetPtr&) {
-        // TODO
+    void addRRset(const RRsetPtr& rrset) {
+        rrsets_.push_back(rrset);
     }
 
-    void
-    setLoader(const char* file, const Name& origin, const RRClass rrclass,
-              const MasterLoader::Options options)
+    void setLoader(const char* file, const Name& origin, const RRClass rrclass,
+                   const MasterLoader::Options options)
     {
-        loader.reset(new MasterLoader(file, origin, rrclass, callbacks_,
-                                      boost::bind(&MasterLoaderTest::addRRset,
-                                                  this, _1), options));
+        loader_.reset(new MasterLoader((string(TEST_DATA_SRCDIR) +
+                                        file).c_str(), origin, rrclass,
+                                       callbacks_,
+                                       boost::bind(&MasterLoaderTest::addRRset,
+                                                   this, _1), options));
+    }
+
+    // Check the next RR in the ones produced by the loader
+    // Other than passed arguments are checked to be the default for the tests
+    void checkRR(const string& name, const RRType& type, const string& data) {
+        ASSERT_FALSE(rrsets_.empty());
+        RRsetPtr current = rrsets_.front();
+        rrsets_.pop_front();
+
+        EXPECT_EQ(Name(name), current->getName());
+        ASSERT_EQ(type, current->getType());
+        ASSERT_EQ(1, current->getRdataCount());
+        EXPECT_EQ(data, current->getRdataIterator()->getCurrent().toText());
     }
 
     MasterLoaderCallbacks callbacks_;
-    boost::scoped_ptr<MasterLoader> loader;
-    std::vector<std::string> errors;
-    std::vector<std::string> warnings;
+    boost::scoped_ptr<MasterLoader> loader_;
+    vector<string> errors_;
+    vector<string> warnings_;
+    list<RRsetPtr> rrsets_;
 };
 
+// Test simple loading. The zone file contains no tricky things, and nothing is
+// omitted. No RRset contains more than one RR Also no errors or warnings.
 TEST_F(MasterLoaderTest, basicLoad) {
-    setLoader("testdata/loader_test.txt",
-              Name("example.com."),
+    setLoader("example.org",
+              Name("example.org."),
               RRClass::IN(),
               MasterLoader::MANY_ERRORS);
-    ASSERT_FALSE(loader->loadIncremental(1));
+
+    loader_->load();
+
+    EXPECT_TRUE(errors_.empty());
+    EXPECT_TRUE(warnings_.empty());
+
+    checkRR("example.org", RRType::SOA(), "ns1.example.org. admin.example.org. "
+            "1234 3600 1800 2419200 7200");
+    checkRR("example.org", RRType::NS(), "ns1.example.org");
+    checkRR("www.example.org", RRType::A(), "192.0.2.1");
 }

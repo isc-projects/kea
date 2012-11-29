@@ -37,7 +37,10 @@ public:
     ~MasterLoader();
 
     bool loadIncremental(size_t count_limit);
-    //void load();
+    void load() {
+        while (!loadIncremental(1000)) {
+        }
+    }
 
 private:
     class MasterLoaderImpl;
