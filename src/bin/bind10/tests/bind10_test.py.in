@@ -1560,7 +1560,7 @@ class TestBossComponents(unittest.TestCase):
 
         self.assertEqual([[53, 'test', 'Test']], bob.get_processes())
         bob.kill_started_components()
-        self.assertFalse(bob.get_processes())
+        self.assertEqual([], bob.get_processes())
         self.assertTrue(component.forceful)
 
     def test_start_msgq(self):
