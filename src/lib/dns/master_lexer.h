@@ -301,7 +301,8 @@ class MasterLexer {
 public:
     /// \brief Exception thrown when we fail to read from the input
     /// stream or file.
-    struct ReadError : public Unexpected {
+    class ReadError : public Unexpected {
+    public:
         ReadError(const char* file, size_t line, const char* what) :
             Unexpected(file, line, what)
         {}
