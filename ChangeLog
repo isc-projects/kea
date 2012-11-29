@@ -1,3 +1,11 @@
+513.	[func]		marcin
+	Implemented the OptionCustom class for DHCPv4 and DHCPv6.
+	This class represents an option which has a defined
+	structure: a set of data fields of specific types and order.
+	It is used to represent those options that can't be
+	represented by any other specialized class.
+	(Trac #2312, git 28d885b457dda970d9aecc5de018ec1120143a10)
+
 512.	[func]		jelte
 	Added a new tool b10-certgen, to check and update the self-signed
 	SSL certificate used by b10-cmdctl. The original certificate
