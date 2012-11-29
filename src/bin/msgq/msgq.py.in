@@ -239,7 +239,6 @@ class MsgQ:
         self.subs.unsubscribe_all(sock)
         lname = [ k for k, v in self.lnames.items() if v == sock ][0]
         del self.lnames[lname]
-        sock.shutdown(socket.SHUT_RDWR)
         sock.close()
         del self.sockets[fd]
         if fd in self.sendbuffs:
