@@ -284,6 +284,21 @@ TEST_F(MasterLexerTest, ungetAfterSwitch) {
     EXPECT_THROW(lexer.ungetToken(), isc::InvalidOperation);
 }
 
+// Common checks for the case when getNextToken() should result in LexerError
+void
+lexerErrorCheck(MasterLexer& lexer, MasterToken::Type expect,
+                MasterToken::ErrorCode expected_error)
+{
+    bool thrown = false;
+    try {
+        lexer.getNextToken(expect);
+    } catch (const MasterLexer::LexerError& error) {
+        EXPECT_EQ(expected_error, error.token_.getErrorCode());
+        thrown = true;
+    }
+    EXPECT_TRUE(thrown);
+}
+
 // Common checks regarding expected/unexpected end-of-line
 void
 eolCheck(MasterLexer& lexer, MasterToken::Type expect) {
@@ -297,14 +312,7 @@ eolCheck(MasterLexer& lexer, MasterToken::Type expect) {
     EXPECT_THROW(lexer.getNextToken(expect, false), MasterLexer::LexerError);
 
     // And also check the error token set in the exception object.
-    bool thrown = false;
-    try {
-        lexer.getNextToken(expect);
-    } catch (const MasterLexer::LexerError& error) {
-        EXPECT_EQ(MasterToken::UNEXPECTED_END, error.token_.getErrorCode());
-        thrown = true;
-    }
-    EXPECT_TRUE(thrown);
+    lexerErrorCheck(lexer, expect, MasterToken::UNEXPECTED_END);
 }
 
 // Common checks regarding expected/unexpected end-of-file
@@ -359,6 +367,7 @@ TEST_F(MasterLexerTest, getNextTokenQString) {
 TEST_F(MasterLexerTest, getNextTokenNumber) {
     ss << "3600\n";
     ss << "\n";
+    ss << "4294967296 ";        // =2^32, out of range
     ss << "not-a-number ";
     ss << "86400";
     lexer.pushSource(ss);
@@ -371,15 +380,14 @@ TEST_F(MasterLexerTest, getNextTokenNumber) {
     // Skip the 2nd '\n'
     EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
 
+    // Expecting a number, but it's too big for uint32.
+    lexerErrorCheck(lexer, MasterToken::NUMBER,
+                    MasterToken::NUMBER_OUT_OF_RANGE);
+    // The token should have been "ungotten".  Re-read and skip it.
+    EXPECT_EQ(MasterToken::STRING, lexer.getNextToken().getType());
+
     // Expecting a number, but see a string.
-    bool thrown = false;
-    try {
-        lexer.getNextToken(MasterToken::NUMBER);
-    } catch (const MasterLexer::LexerError& error) {
-        EXPECT_EQ(MasterToken::BAD_NUMBER, error.token_.getErrorCode());
-        thrown = true;
-    }
-    EXPECT_TRUE(thrown);
+    lexerErrorCheck(lexer, MasterToken::NUMBER, MasterToken::BAD_NUMBER);
     // The unexpected string should have been "ungotten".  Re-read and skip it.
     EXPECT_EQ(MasterToken::STRING, lexer.getNextToken().getType());
 
