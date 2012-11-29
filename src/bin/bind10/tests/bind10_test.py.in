@@ -1644,7 +1644,7 @@ class TestBossComponents(unittest.TestCase):
         bob = MockBobSimple()
         bob.c_channel_env = {}
         bob.cc_session = DummySession()
-        bob.wait_time = 0
+        bob.run_under_unittests = True
 
         # use the MockProcessInfo creator
         bob._make_process_info = bob._make_mock_process_info
@@ -1706,7 +1706,11 @@ class TestBossComponents(unittest.TestCase):
         bob = MockBobSimple()
         bob.c_channel_env = {}
         bob.cc_session = DummySession()
+        # keep the wait time small for the test to complete quickly
         bob.wait_time = 2
+        # specifically set this to False so that the process check is
+        # attempted
+        bob.run_under_unittests = False
 
         # use the MockProcessInfo creator
         bob._make_process_info = bob._make_mock_process_info
