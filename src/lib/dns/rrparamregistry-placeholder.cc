@@ -217,8 +217,7 @@ public:
     virtual RdataPtr create(MasterLexer& lexer, const Name* origin,
                             MasterLoader::Options options,
                             MasterLoaderCallbacks& callbacks) const {
-        return (RdataPtr(new T(dynamic_cast<const T&>(lexer, origin, options,
-                                                      callbacks))));
+        return (RdataPtr(new T(lexer, origin, options, callbacks)));
     }
 };
 
