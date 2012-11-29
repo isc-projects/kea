@@ -214,7 +214,7 @@ OptionCustom::pack4(isc::util::OutputBuffer& buf) {
         // In theory the createBuffers function should have taken
         // care that there are no empty buffers added to the
         // collection but it is almost always good to make sure.
-        if (it->size() > 0) {
+        if (!it->empty()) {
             buf.writeData(&(*it)[0], it->size());
         }
     }
@@ -231,7 +231,9 @@ OptionCustom::pack6(isc::util::OutputBuffer& buf) {
     // Write data from buffers.
     for (std::vector<OptionBuffer>::const_iterator it = buffers_.begin();
          it != buffers_.end(); ++it) {
-        buf.writeData(&(*it)[0], it->size());
+        if (!it->empty()) {
+            buf.writeData(&(*it)[0], it->size());
+        }
     }
 
     LibDHCP::packOptions(buf, options_);
