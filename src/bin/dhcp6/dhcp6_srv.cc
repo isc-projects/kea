@@ -126,7 +126,7 @@ bool Dhcpv6Srv::run() {
                 continue;
             }
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PACKET_RECEIVED)
-                      .arg(serverReceivedPacketName(query->getType()));
+                      .arg(query->getName());
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_QUERY_DATA)
                       .arg(static_cast<int>(query->getType()))
                       .arg(query->getBuffer().getLength())
@@ -571,49 +571,6 @@ Pkt6Ptr Dhcpv6Srv::processInfRequest(const Pkt6Ptr& infRequest) {
     /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, infRequest->getTransid()));
     return reply;
-}
-
-const char*
-Dhcpv6Srv::serverReceivedPacketName(uint8_t type) {
-    static const char* CONFIRM = "CONFIRM";
-    static const char* DECLINE = "DECLINE";
-    static const char* INFORMATION_REQUEST = "INFORMATION_REQUEST";
-    static const char* REBIND = "REBIND";
-    static const char* RELEASE = "RELEASE";
-    static const char* RENEW = "RENEW";
-    static const char* REQUEST = "REQUEST";
-    static const char* SOLICIT = "SOLICIT";
-    static const char* UNKNOWN = "UNKNOWN";
-
-    switch (type) {
-    case DHCPV6_CONFIRM:
-        return (CONFIRM);
-
-    case DHCPV6_DECLINE:
-        return (DECLINE);
-
-    case DHCPV6_INFORMATION_REQUEST:
-        return (INFORMATION_REQUEST);
-
-    case DHCPV6_REBIND:
-        return (REBIND);
-
-    case DHCPV6_RELEASE:
-        return (RELEASE);
-
-    case DHCPV6_RENEW:
-        return (RENEW);
-
-    case DHCPV6_REQUEST:
-        return (REQUEST);
-
-    case DHCPV6_SOLICIT:
-        return (SOLICIT);
-
-    default:
-        ;
-    }
-    return (UNKNOWN);
 }
 
 };
