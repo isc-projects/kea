@@ -225,8 +225,13 @@ MasterLexer::getNextToken(MasterToken::Type expect, bool eol_ok) {
     }
     if (impl_->token_.getType() != expect) {
         ungetToken();
+        if (is_eol_like) {
+            throw LexerError(__FILE__, __LINE__,
+                             MasterToken(MasterToken::UNEXPECTED_END));
+        }
+        assert(expect == MasterToken::NUMBER);
         throw LexerError(__FILE__, __LINE__,
-                         MasterToken(MasterToken::UNEXPECTED_END));
+                         MasterToken(MasterToken::BAD_NUMBER));
     }
 
     return (impl_->token_);
@@ -251,7 +256,8 @@ const char* const error_text[] = {
     "unexpected end of input",  // UNEXPECTED_END
     "unbalanced quotes",        // UNBALANCED_QUOTES
     "no token produced",        // NO_TOKEN_PRODUCED
-    "number out of range"       // NUMBER_OUT_OF_RANGE
+    "number out of range",      // NUMBER_OUT_OF_RANGE
+    "not a valid number"        // BAD_NUMBER
 };
 const size_t error_text_max_count = sizeof(error_text) / sizeof(error_text[0]);
 } // end unnamed namespace
