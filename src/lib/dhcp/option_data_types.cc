@@ -13,6 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcp/option_data_types.h>
+#include <dns/labelsequence.h>
+#include <dns/name.h>
 #include <util/encode/hex.h>
 
 namespace isc {
@@ -204,6 +206,48 @@ void
 OptionDataTypeUtil::writeBool(const bool value,
                               std::vector<uint8_t>& buf) {
     buf.push_back(static_cast<uint8_t>(value ? 1 : 0));
+}
+
+std::string
+OptionDataTypeUtil::readFqdn(const std::vector<uint8_t>& buf) {
+    // If buffer is empty emit an error.
+    if (buf.empty()) {
+        isc_throw(BadDataTypeCast, "unable to read FQDN from a buffer."
+                  << " The buffer is empty");
+    }
+    // Copy the data from a buffer to InputBuffer so as we can use
+    // isc::dns::Name object to get the FQDN. This is not the most
+    // efficient way to do it but currently there is no construtor
+    // in Name that would use std::vector directly.
+    isc::util::InputBuffer in_buf(static_cast<const void*>(&buf[0]), buf.size());
+    try {
+        // Try to create an object from the buffer. If exception is thrown
+        // it means that the buffer doesn't hold a valid domain name (invalid
+        // syntax).
+        isc::dns::Name name(in_buf);
+        return (name.toText());
+    } catch (const isc::Exception& ex) {
+        // Unable to convert the data in the buffer into FQDN.
+        isc_throw(BadDataTypeCast, ex.what());
+    }
+}
+
+void
+OptionDataTypeUtil::writeFqdn(const std::string& fqdn,
+                              std::vector<uint8_t>& buf) {
+    try {
+        isc::dns::Name name(fqdn);
+        isc::dns::LabelSequence labels(name);
+        if (labels.getDataLength() > 0) {
+            buf.resize(buf.size() + labels.getDataLength());
+            size_t read_len = 0;
+            const uint8_t* data = labels.getData(&read_len);
+            memcpy(static_cast<void*>(&buf[buf.size() - labels.getDataLength()]),
+                   data, read_len);
+        }
+    } catch (const isc::Exception& ex) {
+        isc_throw(BadDataTypeCast, ex.what());
+    }
 }
 
 std::string
