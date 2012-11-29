@@ -69,8 +69,6 @@ public:
     ///     beforehead.
     /// \throw DataSourceError in case of other (possibly low-level) errors,
     ///     such as read-only data source or database error.
-    /// \throw MasterFileError when the master_file is badly formatted or some
-    ///     similar problem is found when loading the master file.
     ZoneLoader(DataSourceClient& destination, const isc::dns::Name& zone_name,
                const char* master_file);
 
@@ -104,6 +102,8 @@ public:
     /// \throw InvalidOperation in case the loading was already completed
     ///     before this call.
     /// \throw DataSourceError in case some error (possibly low-level) happens.
+    /// \throw MasterFileError when the master_file is badly formatted or some
+    ///     similar problem is found when loading the master file.
     void load() {
         while (!loadIncremental(1000)) { // 1000 is arbitrary largish number
             // Body intentionally left blank.
@@ -128,6 +128,8 @@ public:
     ///     before this call (by load() or by a loadIncremental that returned
     ///     true).
     /// \throw DataSourceError in case some error (possibly low-level) happens.
+    /// \throw MasterFileError when the master_file is badly formatted or some
+    ///     similar problem is found when loading the master file.
     bool loadIncremental(size_t limit);
 private:
     /// \brief The iterator used as source of data in case of the copy mode.

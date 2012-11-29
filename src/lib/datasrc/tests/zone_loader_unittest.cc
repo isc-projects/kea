@@ -32,8 +32,11 @@
 
 using isc::dns::RRClass;
 using isc::dns::Name;
+using isc::dns::RRType;
+using isc::dns::ConstRRsetPtr;
 using std::string;
 using std::vector;
+using boost::shared_ptr;
 using namespace isc::datasrc;
 
 namespace {
@@ -168,7 +171,7 @@ private:
 
     // FIXME: We should be destroying it by ZoneTableSegment::destroy.
     // But the shared pointer won't let us, will it?
-    boost::shared_ptr<memory::ZoneTableSegment> ztable_segment_;
+    shared_ptr<memory::ZoneTableSegment> ztable_segment_;
 protected:
     memory::InMemoryClient source_client_;
     // This one is mocked. It will help us see what is happening inside.
@@ -380,12 +383,13 @@ TEST_F(ZoneLoaderTest, loadNoSuchFile) {
 
 // And it also throws when there's a syntax error in the master file
 TEST_F(ZoneLoaderTest, loadSyntaxError) {
-    EXPECT_THROW(ZoneLoader(destination_client_, Name::ROOT_NAME(),
-                            // This is not a master file for sure
-                            // (misusing a file that happens to be there
-                            // already).
-                            TEST_DATA_DIR "/example.org.sqlite3"),
-                 MasterFileError);
+    ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
+                      // This is not a master file for sure
+                      // (misusing a file that happens to be there
+                      // already).
+                      TEST_DATA_DIR "/example.org.sqlite3");
+    EXPECT_THROW(loader.load(), MasterFileError);
+    EXPECT_FALSE(destination_client_.commit_called_);
 }
 
 }
