@@ -41,6 +41,34 @@ using namespace isc::dns::rdata;
 
 namespace isc {
 namespace dns {
+
+namespace rdata {
+
+RdataPtr
+AbstractRdataFactory::create(MasterLexer& lexer, const Name*,
+                             MasterLoader::Options,
+                             MasterLoaderCallbacks&) const
+{
+    std::string s;
+
+    while (true) {
+        const MasterLexer::Token& token = lexer.getNextToken();
+        if (token.getType() == MasterLexer::Token::END_OF_FILE) {
+            break;
+        }
+
+        if (!s.empty()) {
+            s += " ";
+        }
+
+        s += token.getString();
+    }
+
+    return (create(s));
+}
+
+} // end of namespace isc::dns::rdata
+
 namespace {
 ///
 /// The following function and class are a helper to define case-insensitive
