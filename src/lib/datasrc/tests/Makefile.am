@@ -94,6 +94,7 @@ endif
 
 EXTRA_DIST =  testdata/brokendb.sqlite3
 EXTRA_DIST += testdata/contexttest.zone
+EXTRA_DIST += testdata/contexttest-almost-obsolete.zone
 EXTRA_DIST += testdata/diffs.sqlite3
 EXTRA_DIST += testdata/duplicate_rrset.zone
 EXTRA_DIST += testdata/example2.com

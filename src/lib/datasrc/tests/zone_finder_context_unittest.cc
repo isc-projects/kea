@@ -418,4 +418,16 @@ TEST_P(ZoneFinderContextTest, getAdditionalForAny) {
                 result_sets_.begin(), result_sets_.end());
 }
 
+TEST_P(ZoneFinderContextTest, getAdditionalWithRRSIGOnly) {
+    // This has two MX records, but type-A for one of them only has RRSIG.
+    // It shouldn't be contained in the result.
+    ZoneFinderContextPtr ctx = finder_->find(Name("f.example.org"),
+                                             RRType::MX(),
+                                             ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
+    ctx->getAdditional(REQUESTED_BOTH, result_sets_);
+    rrsetsCheck("mx2.f.example.org. 3600 IN A 192.0.2.16\n",
+                result_sets_.begin(), result_sets_.end());
+}
+
 }
