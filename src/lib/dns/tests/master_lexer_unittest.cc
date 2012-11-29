@@ -359,6 +359,7 @@ TEST_F(MasterLexerTest, getNextTokenQString) {
 TEST_F(MasterLexerTest, getNextTokenNumber) {
     ss << "3600\n";
     ss << "\n";
+    ss << "not-a-number ";
     ss << "86400";
     lexer.pushSource(ss);
 
@@ -369,6 +370,18 @@ TEST_F(MasterLexerTest, getNextTokenNumber) {
 
     // Skip the 2nd '\n'
     EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
+
+    // Expecting a number, but see a string.
+    bool thrown = false;
+    try {
+        lexer.getNextToken(MasterToken::NUMBER);
+    } catch (const MasterLexer::LexerError& error) {
+        EXPECT_EQ(MasterToken::BAD_NUMBER, error.token_.getErrorCode());
+        thrown = true;
+    }
+    EXPECT_TRUE(thrown);
+    // The unexpected string should have been "ungotten".  Re-read and skip it.
+    EXPECT_EQ(MasterToken::STRING, lexer.getNextToken().getType());
 
     // Unless we specify NUMBER, decimal number string should be recognized
     // as a string.
