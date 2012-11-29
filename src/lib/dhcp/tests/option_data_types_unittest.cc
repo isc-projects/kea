@@ -52,8 +52,10 @@ TEST_F(OptionDataTypesTest, readFqdn) {
 
     // Read the buffer as FQDN and verify its correctness.
     std::string fqdn;
-    EXPECT_NO_THROW(fqdn = OptionDataTypeUtil::readFqdn(buf));
+    size_t len = 0;
+    EXPECT_NO_THROW(fqdn = OptionDataTypeUtil::readFqdn(buf, len));
     EXPECT_EQ("mydomain.example.com.", fqdn);
+    EXPECT_EQ(len, buf.size());
 
     // By resizing the buffer we simulate truncation. The first
     // length field (8) indicate that the first label's size is
@@ -61,14 +63,14 @@ TEST_F(OptionDataTypesTest, readFqdn) {
     // fails.
     buf.resize(5);
     EXPECT_THROW(
-        OptionDataTypeUtil::readFqdn(buf),
+        OptionDataTypeUtil::readFqdn(buf, len),
         isc::dhcp::BadDataTypeCast
     );
 
     // Another special case: provide an empty buffer.
     buf.clear();
     EXPECT_THROW(
-        OptionDataTypeUtil::readFqdn(buf),
+        OptionDataTypeUtil::readFqdn(buf, len),
         isc::dhcp::BadDataTypeCast
     );
 }

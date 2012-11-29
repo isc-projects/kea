@@ -203,6 +203,39 @@ TEST_F(OptionCustomTest, booleanData) {
     );
 }
 
+// The purpose of this test is to verify that the data from a buffer
+// can be read as FQDN.
+TEST_F(OptionCustomTest, fqdnData) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "fqdn");
+
+    const char data[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0,
+    };
+
+    std::vector<uint8_t> buf(data, data + sizeof(data));
+
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end()));
+    );
+    ASSERT_TRUE(option);
+
+    ASSERT_EQ(1, option->getDataFieldsNum());
+
+    std::string domain0 = option->readFqdn(0);
+    EXPECT_EQ("mydomain.example.com.", domain0);
+
+    // Check that the option with truncated data can't be created.
+    EXPECT_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6,
+                                      buf.begin(), buf.begin() + 4)),
+        isc::dhcp::BadDataTypeCast
+    );
+}
+
 // The purpose of this test is to verify that the option definition comprising
 // 16-bit signed integer value can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, int16Data) {
@@ -337,6 +370,7 @@ TEST_F(OptionCustomTest, ipv6AddressData) {
         isc::OutOfRange
     );
 }
+
 
 // The purpose of this test is to verify that the option definition comprising
 // string value can be used to create an instance of custom option.
@@ -575,6 +609,45 @@ TEST_F(OptionCustomTest, ipv6AddressDataArray) {
     );
 }
 
+// The purpose of this test is to verify that the option comprising
+// an array of FQDN values can be created from a buffer which holds
+// multiple FQDN values encoded as described in the RFC1035, section
+// 3.1
+TEST_F(OptionCustomTest, fqdnDataArray) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "fqdn", true);
+
+    const char data[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0,
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0
+    };
+
+    // Create a buffer that holds two FQDNs.
+    std::vector<uint8_t> buf(data, data + sizeof(data));
+
+    // Create an option from using a buffer.
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf));
+    );
+    ASSERT_TRUE(option);
+
+    // We expect that two FQDN values have been extracted
+    // from a buffer.
+    ASSERT_EQ(2, option->getDataFieldsNum());
+
+    // Validate both values.
+    std::string domain0 = option->readFqdn(0);
+    EXPECT_EQ("mydomain.example.com.", domain0);
+
+    std::string domain1 = option->readFqdn(1);
+    EXPECT_EQ("example.com.", domain1);
+}
+
 // The purpose of this test is to verify that the option definition comprising
 // a record of various data fields can be used to create an instance of
 // custom option.
@@ -584,30 +657,46 @@ TEST_F(OptionCustomTest, recordData) {
     OptionDefinition opt_def("OPTION_FOO", 1000, "record");
     ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
     ASSERT_NO_THROW(opt_def.addRecordField("boolean"));
+    ASSERT_NO_THROW(opt_def.addRecordField("fqdn"));
     ASSERT_NO_THROW(opt_def.addRecordField("ipv4-address"));
     ASSERT_NO_THROW(opt_def.addRecordField("ipv6-address"));
     ASSERT_NO_THROW(opt_def.addRecordField("string"));
+
+    const char fqdn_data[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0,
+    };
 
     OptionBuffer buf;
     // Initialize field 0.
     writeInt<uint16_t>(8712, buf);
     // Initialize field 1 to 'true'
     buf.push_back(static_cast<unsigned short>(1));
-    // Initialize field 2 to IPv4 address.
+    // Initialize field 2.
+    buf.insert(buf.end(), fqdn_data, fqdn_data + sizeof(fqdn_data));
+    // Initialize field 3 to IPv4 address.
     writeAddress(IOAddress("192.168.0.1"), buf);
-    // Initialize field 3 to IPv6 address.
+    // Initialize field 4 to IPv6 address.
     writeAddress(IOAddress("2001:db8:1::1"), buf);
-    // Initialize field 4 to string value.
+    // Initialize field 5 to string value.
     writeString("ABCD", buf);
 
     boost::scoped_ptr<OptionCustom> option;
+    try {
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end()));
+    } catch (const Exception& ex) {
+        std::cout << ex.what() << std::endl;
+    }
+
     ASSERT_NO_THROW(
          option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end()));
     );
     ASSERT_TRUE(option);
 
     // We should have 5 data fields.
-    ASSERT_EQ(5, option->getDataFieldsNum());
+    ASSERT_EQ(6, option->getDataFieldsNum());
 
     // Verify value in the field 0.
     uint16_t value0 = 0;
@@ -620,19 +709,24 @@ TEST_F(OptionCustomTest, recordData) {
     EXPECT_TRUE(value1);
 
     // Verify value in the field 2.
-    IOAddress value2("127.0.0.1");
-    ASSERT_NO_THROW(value2 = option->readAddress(2));
-    EXPECT_EQ("192.168.0.1", value2.toText());
+    std::string value2 = "";
+    ASSERT_NO_THROW(value2 = option->readFqdn(2));
+    EXPECT_EQ("mydomain.example.com.", value2);
 
     // Verify value in the field 3.
-    IOAddress value3("::1");
+    IOAddress value3("127.0.0.1");
     ASSERT_NO_THROW(value3 = option->readAddress(3));
-    EXPECT_EQ("2001:db8:1::1", value3.toText());
+    EXPECT_EQ("192.168.0.1", value3.toText());
 
     // Verify value in the field 4.
-    std::string value4;
-    ASSERT_NO_THROW(value4 = option->readString(4));
-    EXPECT_EQ("ABCD", value4);
+    IOAddress value4("::1");
+    ASSERT_NO_THROW(value4 = option->readAddress(4));
+    EXPECT_EQ("2001:db8:1::1", value4.toText());
+
+    // Verify value in the field 4.
+    std::string value5;
+    ASSERT_NO_THROW(value5 = option->readString(5));
+    EXPECT_EQ("ABCD", value5);
 }
 
 // The purpose of this test is to verify that truncated buffer
@@ -900,7 +994,5 @@ TEST_F(OptionCustomTest, invalidIndex) {
     EXPECT_THROW(option->readInteger<uint32_t>(10), isc::OutOfRange);
     EXPECT_THROW(option->readInteger<uint32_t>(11), isc::OutOfRange);
 }
-
-
 
 } // anonymous namespace
