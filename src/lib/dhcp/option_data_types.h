@@ -332,6 +332,33 @@ public:
         }
     }
 
+    /// @brief Read FQDN from a buffer as a string value.
+    ///
+    /// The format of an FQDN within a buffer complies with RFC1035,
+    /// section 3.1.
+    ///
+    /// @param buf input buffer holding a FQDN.
+    ///
+    /// @throw BadDataTypeCast if a FQDN stored within a buffer is
+    /// invalid (e.g. empty, contains invalid characters, truncated).
+    /// @return fully qualified domain name in a text form.
+    static std::string readFqdn(const std::vector<uint8_t>& buf);
+
+    /// @brief Append FQDN into a buffer.
+    ///
+    /// This method appends the Fully Qualified Domain Name (FQDN)
+    /// represented as string value into a buffer. The format of
+    /// the FQDN being stored into a buffer complies with RFC1035,
+    /// section 3.1.
+    ///
+    /// @param fqdn fully qualified domain name to be written.
+    /// @param [out] buf output buffer.
+    ///
+    /// @throw isc::dhcp::BadDataTypeCast if provided FQDN
+    /// is invalid.
+    static void writeFqdn(const std::string& fqdn,
+                          std::vector<uint8_t>& buf);
+
     /// @brief Read string value from a buffer.
     ///
     /// @param buf input buffer.
