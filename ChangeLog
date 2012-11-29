@@ -1,3 +1,9 @@
+514.	[bug]		jelte
+	b10-msgq now handles socket errors more gracefully when sending data
+	to clients. It no longer exits with 'broken pipe' errors, and is
+	also better at resending data on temporary error codes from send().
+	(Trac #2398, git 9f6b45ee210a253dca608848a58c824ff5e0d234)
+
 513.	[func]		marcin
 	Implemented the OptionCustom class for DHCPv4 and DHCPv6.
 	This class represents an option which has a defined
