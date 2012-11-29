@@ -147,18 +147,27 @@ public:
     /// Adds an option to this packet.
     ///
     /// @param opt option to be added.
-    void addOption(OptionPtr opt);
+    void addOption(const OptionPtr& opt);
 
     /// @brief Returns the first option of specified type.
     ///
     /// Returns the first option of specified type. Note that in DHCPv6 several
     /// instances of the same option are allowed (and frequently used).
-    /// See getOptions().
+    /// Also see \ref getOptions().
     ///
     /// @param type option type we are looking for
     ///
     /// @return pointer to found option (or NULL)
     OptionPtr getOption(uint16_t type);
+
+    /// @brief Returns all instances of specified type.
+    ///
+    /// Returns all instances of options of the specified type. DHCPv6 protocol
+    /// allows (and uses frequently) multiple instances.
+    ///
+    /// @param type option type we are looking for
+    /// @return instance of option collection with requested options
+    isc::dhcp::Option::OptionCollection getOptions(uint16_t type);
 
     /// Attempts to delete first suboption of requested type
     ///
@@ -245,8 +254,6 @@ public:
     ///
     /// @return interface name
     void setIface(const std::string& iface ) { iface_ = iface; };
-
-    /// TODO Need to implement getOptions() as well
 
     /// collection of options present in this message
     ///
