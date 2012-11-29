@@ -125,25 +125,7 @@ public:
     /// \brief Create RDATA from MasterLexer
     virtual RdataPtr create(MasterLexer& lexer, const Name*,
                             MasterLoader::Options,
-                            MasterLoaderCallbacks&) const {
-        std::string s;
-
-        while (true) {
-            const MasterLexer::Token& token = lexer.getNextToken();
-            if (token.getType() == MasterLexer::Token::END_OF_FILE) {
-                break;
-            }
-
-            if (!s.empty()) {
-                s += " ";
-            }
-
-            s += token.getString();
-        }
-
-        return (create(s));
-    }
-
+                            MasterLoaderCallbacks&) const;
     //@}
 };
 
