@@ -419,14 +419,6 @@ var/
         </listitem>
 
         <listitem>
-          <para>If required, run <command>ldconfig</command> as root
-          (with <filename>/usr/local</filename> in
-          <filename>/etc/ld.so.conf</filename>):
-            <screen>$ <userinput>ldconfig</userinput></screen>
-          </para>
-        </listitem>
-
-        <listitem>
           <para>Start the server (as root):
             <screen>$ <userinput>/usr/local/sbin/bind10</userinput></screen>
           </para>
