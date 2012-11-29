@@ -1755,12 +1755,12 @@ class TestBossComponents(unittest.TestCase):
         tmp = isc.config.ModuleCCSession
         isc.config.ModuleCCSession = DummySession
 
-        ccs = bob.start_ccsession({})
-        self.assertEqual(bind10_src.SPECFILE_LOCATION, ccs.specfile)
-        self.assertEqual(bob.config_handler, ccs.config_handler)
-        self.assertEqual(bob.command_handler, ccs.command_handler)
-        self.assertEqual(bob.msgq_socket_file, ccs.socket_file)
-        self.assertTrue(ccs.started)
+        bob.start_ccsession({})
+        self.assertEqual(bind10_src.SPECFILE_LOCATION, bob.ccs.specfile)
+        self.assertEqual(bob.config_handler, bob.ccs.config_handler)
+        self.assertEqual(bob.command_handler, bob.ccs.command_handler)
+        self.assertEqual(bob.msgq_socket_file, bob.ccs.socket_file)
+        self.assertTrue(bob.ccs.started)
 
         isc.config.ModuleCCSession = tmp
 
