@@ -135,12 +135,10 @@ TEST_F(Rdata_NAPTR_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::NAPTR(), RRClass::IN(),
                                      naptr_str)));
 
-    // Check that bad input throws as usual (order > 65535)
-    EXPECT_THROW({
-        *test::createRdataUsingLexer(RRType::NAPTR(), RRClass::IN(),
-                                     "65536 10 S SIP \"\" "
-                                     "_sip._udp.example.com.");
-    }, InvalidRdataText);
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::NAPTR(), RRClass::IN(),
+                                             "65536 10 S SIP \"\" "
+                                             "_sip._udp.example.com."));
 }
 
 TEST_F(Rdata_NAPTR_Test, toWire) {

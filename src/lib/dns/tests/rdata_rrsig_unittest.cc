@@ -106,11 +106,9 @@ TEST_F(Rdata_RRSIG_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::RRSIG(), RRClass::IN(),
                                      rrsig_txt)));
 
-    // Check that bad input throws as usual
-    EXPECT_THROW({
-        *test::createRdataUsingLexer(RRType::RRSIG(), RRClass::IN(),
-                                     "INVALIDINPUT");
-    }, InvalidRdataText);
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::RRSIG(), RRClass::IN(),
+                                             "INVALIDINPUT"));
 }
 
 TEST_F(Rdata_RRSIG_Test, toWireRenderer) {

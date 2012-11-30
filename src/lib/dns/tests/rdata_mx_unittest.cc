@@ -67,10 +67,9 @@ TEST_F(Rdata_MX_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
                                      "10 mx.example.com")));
 
-    EXPECT_THROW({
-        test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
-                                    "10 mx. example.com");
-    }, InvalidRdataText);
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
+                                             "10 mx. example.com"));
 }
 
 TEST_F(Rdata_MX_Test, toWireRenderer) {

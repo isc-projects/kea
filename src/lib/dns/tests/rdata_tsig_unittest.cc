@@ -252,11 +252,9 @@ TEST_F(Rdata_TSIG_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::TSIG(), RRClass::ANY(),
                                      valid_text1)));
 
-    // Check that bad input throws as usual
-    EXPECT_THROW({
-        *test::createRdataUsingLexer(RRType::TSIG(), RRClass::ANY(),
-                                     "foo 0 0 0 0 BADKEY 0 0");
-    }, InvalidRdataText);
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::TSIG(), RRClass::ANY(),
+                                             "foo 0 0 0 0 BADKEY 0 0"));
 }
 
 TEST_F(Rdata_TSIG_Test, assignment) {
