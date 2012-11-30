@@ -77,6 +77,19 @@ TEST_F(Rdata_HINFO_Test, createFromWire) {
     EXPECT_EQ(string("Linux"), hinfo.getOS());
 }
 
+TEST_F(Rdata_HINFO_Test, createFromLexer) {
+    HINFO rdata_hinfo(hinfo_str);
+    EXPECT_EQ(0, rdata_hinfo.compare(
+        *test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
+                                     hinfo_str)));
+
+    // Check that bad input throws as usual
+    EXPECT_THROW({
+        *test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
+                                     "\"Pentium\"\"Linux\"");
+    }, InvalidRdataText);
+}
+
 TEST_F(Rdata_HINFO_Test, toText) {
     HINFO hinfo(hinfo_str);
     EXPECT_EQ(hinfo_str, hinfo.toText());

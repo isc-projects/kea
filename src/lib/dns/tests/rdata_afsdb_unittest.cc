@@ -114,6 +114,18 @@ TEST_F(Rdata_AFSDB_Test, createFromWire) {
                  DNSMessageFORMERR);
 }
 
+TEST_F(Rdata_AFSDB_Test, createFromLexer) {
+    EXPECT_EQ(0, rdata_afsdb.compare(
+        *test::createRdataUsingLexer(RRType::AFSDB(), RRClass::IN(),
+                                     afsdb_text)));
+
+    // Check that bad input throws as usual
+    EXPECT_THROW({
+        *test::createRdataUsingLexer(RRType::AFSDB(), RRClass::IN(),
+                                     "1root.example.com.");
+    }, InvalidRdataText);
+}
+
 TEST_F(Rdata_AFSDB_Test, toWireBuffer) {
     // construct actual data
     rdata_afsdb.toWire(obuffer);
