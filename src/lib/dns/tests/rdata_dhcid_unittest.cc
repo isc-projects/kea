@@ -63,6 +63,17 @@ TEST_F(Rdata_DHCID_Test, createFromWire) {
     // TBD: more tests
 }
 
+TEST_F(Rdata_DHCID_Test, createFromLexer) {
+    EXPECT_EQ(0, rdata_dhcid.compare(
+        *test::createRdataUsingLexer(RRType::DHCID(), RRClass::IN(),
+                                     string_dhcid)));
+
+    // Check that bad input throws as usual
+    EXPECT_THROW({
+        *test::createRdataUsingLexer(RRType::DHCID(), RRClass::IN(), "00");
+    }, isc::BadValue);
+}
+
 TEST_F(Rdata_DHCID_Test, toWireRenderer) {
     rdata_dhcid.toWire(renderer);
 
