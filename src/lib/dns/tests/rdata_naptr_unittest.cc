@@ -128,6 +128,21 @@ TEST_F(Rdata_NAPTR_Test, createFromWire) {
     EXPECT_EQ(Name("_sip._udp.example.com."), naptr.getReplacement());
 }
 
+TEST_F(Rdata_NAPTR_Test, createFromLexer) {
+    NAPTR rdata_naptr(naptr_str);
+
+    EXPECT_EQ(0, rdata_naptr.compare(
+        *test::createRdataUsingLexer(RRType::NAPTR(), RRClass::IN(),
+                                     naptr_str)));
+
+    // Check that bad input throws as usual (order > 65535)
+    EXPECT_THROW({
+        *test::createRdataUsingLexer(RRType::NAPTR(), RRClass::IN(),
+                                     "65536 10 S SIP \"\" "
+                                     "_sip._udp.example.com.");
+    }, InvalidRdataText);
+}
+
 TEST_F(Rdata_NAPTR_Test, toWire) {
     NAPTR naptr(naptr_str);
     naptr.toWire(obuffer);
