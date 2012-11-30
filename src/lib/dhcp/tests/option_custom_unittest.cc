@@ -106,6 +106,17 @@ TEST_F(OptionCustomTest, constructor) {
 
     EXPECT_EQ(Option::V4, option->getUniverse());
     EXPECT_EQ(232, option->getType());
+
+    // Try to create an option using 'empty data' constructor
+    OptionDefinition opt_def3("OPTION_FOO", 1000, "uint32");
+
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def3, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    EXPECT_EQ(Option::V6, option->getUniverse());
+    EXPECT_EQ(1000, option->getType());
 }
 
 // The purpose of this test is to verify that 'empty' option definition can
@@ -775,6 +786,134 @@ TEST_F(OptionCustomTest, recordDataTruncated) {
         option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 17)),
         isc::OutOfRange
     );
+}
+
+// The purpose of this test is to verify that an option comprising
+// single boolean data field can be created and that its default
+// value can be overriden by a new value.
+TEST_F(OptionCustomTest, setBooleanData) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "boolean");
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+    // Check that the default boolean value is false.
+    bool value = false;
+    ASSERT_NO_THROW(value = option->readBoolean());
+    EXPECT_FALSE(value);
+    // Check that we can override the default value.
+    ASSERT_NO_THROW(option->writeBoolean(true));
+    // Finally, check that it has been actually overriden.
+    ASSERT_NO_THROW(value = option->readBoolean());
+    EXPECT_TRUE(value);
+}
+
+/// The purpose of this test is to verify that the data field value
+/// can be overriden by a new value.
+TEST_F(OptionCustomTest, setUint32Data) {
+    // Create a definition of an option that holds single
+    // uint32 value.
+    OptionDefinition opt_def("OPTION_FOO", 1000, "uint32");
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // The default value for integer data fields is 0.
+    uint32_t value = 0;
+    ASSERT_NO_THROW(option->readInteger<uint32_t>());
+    EXPECT_EQ(0, value);
+
+    // Try to set the data field value to something different
+    // than 0.
+    ASSERT_NO_THROW(option->writeInteger<uint32_t>(1234));
+
+    // Verify that it has been set.
+    ASSERT_NO_THROW(value = option->readInteger<uint32_t>());
+    EXPECT_EQ(1234, value);
+}
+
+// The purpose of this test is to verify that an opton comprising
+// single IPv4 address can be created and that this address can
+// be overriden by a new value.
+TEST_F(OptionCustomTest, setIpv4AddressData) {
+    OptionDefinition opt_def("OPTION_FOO", 232, "ipv4-address");
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V4));
+    );
+    ASSERT_TRUE(option);
+
+    asiolink::IOAddress address("127.0.0.1");
+    ASSERT_NO_THROW(address = option->readAddress());
+    EXPECT_EQ("0.0.0.0", address.toText());
+
+    EXPECT_NO_THROW(option->writeAddress(IOAddress("192.168.0.1")));
+
+    EXPECT_NO_THROW(address = option->readAddress());
+    EXPECT_EQ("192.168.0.1", address.toText());
+}
+
+// The purpose of this test is to verify that an opton comprising
+// single IPv6 address can be created and that this address can
+// be overriden by a new value.
+TEST_F(OptionCustomTest, setIpv6AddressData) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "ipv6-address");
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    asiolink::IOAddress address("::1");
+    ASSERT_NO_THROW(address = option->readAddress());
+    EXPECT_EQ("::", address.toText());
+
+    EXPECT_NO_THROW(option->writeAddress(IOAddress("2001:db8:1::1")));
+
+    EXPECT_NO_THROW(address = option->readAddress());
+    EXPECT_EQ("2001:db8:1::1", address.toText());
+}
+
+// The purpose of this test is to verify that an option comprising
+// single string value can be created and that this value
+// is initialized to the default value. Also, this test checks that
+// this value can be overwritten by a new value.
+TEST_F(OptionCustomTest, setStringData) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "string");
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // Get the default value of the option.
+    std::string value;
+    ASSERT_NO_THROW(value = option->readString());
+    // By default the string data field is empty.
+    EXPECT_TRUE(value.empty());
+    // Write some text to this field.
+    EXPECT_NO_THROW(option->writeString("hello world"));
+    // Check that it has been actually written.
+    EXPECT_NO_THROW(value = option->readString());
+    EXPECT_EQ("hello world", value);
 }
 
 // The purpose of this test is to verify that pack function for

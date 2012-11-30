@@ -40,6 +40,17 @@ public:
 
     /// @brief Constructor, used for options to be sent.
     ///
+    /// This constructor creates an instance of an option with default
+    /// data set for all data fields. The option buffers are allocated
+    /// according to data size being stored in particular data fields.
+    /// For variable size data empty buffers are created.
+    ///
+    /// @param def option definition.
+    /// @param u specifies universe (V4 or V6)
+    OptionCustom(const OptionDefinition& def, Universe u);
+
+    /// @brief Constructor, used for options to be sent.
+    ///
     /// This constructor creates an instance of an option from the whole
     /// supplied buffer. This constructor is mainly used to create an
     /// instances of options to be stored in outgoing DHCP packets.
@@ -87,7 +98,17 @@ public:
     ///
     /// @return IP address read from a buffer.
     /// @throw isc::OutOfRange if index is out of range.
-    asiolink::IOAddress readAddress(const uint32_t index) const;
+    asiolink::IOAddress readAddress(const uint32_t index = 0) const;
+
+    /// @brief Write an IP address into a buffer.
+    ///
+    /// @param address IP address being written.
+    /// @param index buffer index.
+    ///
+    /// @throw isc::OutOfRange if index is out of range.
+    /// @throw isc::dhcp::BadDataTypeCast if IP address is invalid.
+    void writeAddress(const asiolink::IOAddress& address,
+                      const uint32_t index = 0);
 
     /// @brief Read a buffer as binary data.
     ///
@@ -95,7 +116,7 @@ public:
     ///
     /// @throw isc::OutOfRange if index is out of range.
     /// @return read buffer holding binary data.
-    const OptionBuffer& readBinary(const uint32_t index) const;
+    const OptionBuffer& readBinary(const uint32_t index = 0) const;
 
     /// @brief Read a buffer as boolean value.
     ///
@@ -103,7 +124,15 @@ public:
     ///
     /// @throw isc::OutOfRange if index is out of range.
     /// @return read boolean value.
-    bool readBoolean(const uint32_t index) const;
+    bool readBoolean(const uint32_t index = 0) const;
+
+    /// @brief Write a boolean value into a buffer.
+    ///
+    /// @param value boolean value to be written.
+    /// @param index buffer index.
+    ///
+    /// @throw isc::OutOfRange if index is out of range.
+    void writeBoolean(const bool value, const uint32_t index = 0);
 
     /// @brief Read a buffer as FQDN.
     ///
@@ -114,7 +143,7 @@ public:
     /// @throw isc::dhcp::BadDataTypeCast if a buffer being read
     /// does not hold a valid FQDN.
     /// @return string representation if FQDN.
-    std::string readFqdn(const uint32_t index) const;
+    std::string readFqdn(const uint32_t index = 0) const;
 
     /// @brief Read a buffer as integer value.
     ///
@@ -122,43 +151,43 @@ public:
     /// @tparam integer type of a value being returned.
     ///
     /// @throw isc::OutOfRange if index is out of range.
+    /// @throw isc::dhcp::InvalidDataType if T is invalid.
     /// @return read integer value.
     template<typename T>
-    T readInteger(const uint32_t index) const {
+    T readInteger(const uint32_t index = 0) const {
+        // Check thet tha index is not out of range.
         checkIndex(index);
-
-        // Check that the requested return type is a supported integer.
-        if (!OptionDataTypeTraits<T>::integer_type) {
-            isc_throw(isc::dhcp::InvalidDataType, "specified data type to be returned"
-                      " by readInteger is not supported integer type");
-        }
-
-        // Get the option definition type.
-        OptionDataType data_type = definition_.getType();
-        if (data_type == OPT_RECORD_TYPE) {
-            const OptionDefinition::RecordFieldsCollection& record_fields =
-                definition_.getRecordFields();
-            // When we initialized buffers we have already checked that
-            // the number of these buffers is equal to number of option
-            // fields in the record so the condition below should be met.
-            assert(index < record_fields.size());
-            // Get the data type to be returned.
-            data_type = record_fields[index];
-        }
-
-        // Requested data type must match the data type in a record.
-        if (OptionDataTypeTraits<T>::type != data_type) {
-            isc_throw(isc::dhcp::InvalidDataType,
-                      "unable to read option field with index " << index
-                      << " as integer value. The field's data type"
-                      << data_type << " does not match the integer type"
-                      << "returned by the readInteger function.");
-        }
+        // Check that T points to a valid integer type and this type
+        // is consistent with an option definition.
+        checkDataType<T>(index);
         // When we created the buffer we have checked that it has a
         // valid size so this condition here should be always fulfiled.
         assert(buffers_[index].size() == OptionDataTypeTraits<T>::len);
         // Read an integer value.
         return (OptionDataTypeUtil::readInt<T>(buffers_[index]));
+    }
+
+    /// @brief Write an integer value into a buffer.
+    ///
+    /// @param value integer value to be written.
+    /// @param index buffer index.
+    /// @tparam T integer type of a value being written.
+    ///
+    /// @throw isc::OutOfRange if index is out of range.
+    /// @throw isc::dhcp::InvalidDataType if T is invalid.
+    template<typename T>
+    void writeInteger(const T value, const uint32_t index = 0) {
+        // Check that the index is not out of range.
+        checkIndex(index);
+        // Check that T points to a valid integer type and this type
+        // is consistent with an option definition.
+        checkDataType<T>(index);
+        // Get some temporary buffer.
+        OptionBuffer buf;
+        // Try to write to the buffer.
+        OptionDataTypeUtil::writeInt<T>(value, buf);
+        // If successful, replace the old buffer with new one.
+        std::swap(buffers_[index], buf);
     }
 
     /// @brief Read a buffer as string value.
@@ -167,7 +196,14 @@ public:
     ///
     /// @return string value read from buffer.
     /// @throw isc::OutOfRange if index is out of range.
-    std::string readString(const uint32_t index) const;
+    std::string readString(const uint32_t index = 0) const;
+
+    /// @brief Write a string value into a buffer.
+    ///
+    /// @param text the string value to be written.
+    /// @param buffer index.
+    void writeString(const std::string& text,
+                     const uint32_t index = 0);
 
     /// @brief Parses received buffer.
     ///
@@ -219,8 +255,26 @@ private:
     /// @throw isc::OutOfRange if index is out of range.
     void checkIndex(const uint32_t index) const;
 
-    /// @brief Create collection of buffers representing data field values.
+    /// @brief Verify that the integer type is consistent with option
+    /// field type.
+    ///
+    /// This convenience function checks that the data type specified as T
+    /// is consistent with a type of a data field identified by index.
+    ///
+    /// @param index data field index.
+    /// @tparam data type to be validated.
+    ///
+    /// @throw isc::dhcp::InvalidDataType if the type is invalid.
+    template<typename T>
+    void checkDataType(const uint32_t index) const;
+
+    /// @brief Create a collection of non initialized buffers.
     void createBuffers();
+
+    /// @brief Create collection of buffers representing data field values.
+    ///
+    /// @param data_buf a buffer to be parsed.
+    void createBuffers(const OptionBuffer& data_buf);
 
     /// @brief Return a text representation of a data field.
     ///
