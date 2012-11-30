@@ -46,8 +46,8 @@ public:
         rdata_rrsig(rrsig_txt)
     {}
 
-    string rrsig_txt;
-    generic::RRSIG rdata_rrsig;
+    const string rrsig_txt;
+    const generic::RRSIG rdata_rrsig;
 };
 
 TEST_F(Rdata_RRSIG_Test, fromText) {
@@ -122,14 +122,15 @@ TEST_F(Rdata_RRSIG_Test, toWireBuffer) {
 }
 
 TEST_F(Rdata_RRSIG_Test, createFromWire) {
-    string rrsig_txt2("A 5 2 43200 20100327070149 20100225070149 2658 isc.org. "
-                "HkJk/xZTvzePU8NENl/ley8bbUumhk1hXciyqhLnz1VQFzkDooej6neX"
-                "ZgWZzQKeTKPOYWrnYtdZW4PnPQFeUl3orgLev7F8J6FZlDn0y/J/ThR5"
-                "m36Mo2/Gdxjj8lJ/IjPVkdpKyBpcnYND8KEIma5MyNCNeyO1UkfPQZGHNSQ=");
+    const string rrsig_txt2(
+        "A 5 2 43200 20100327070149 20100225070149 2658 isc.org. "
+        "HkJk/xZTvzePU8NENl/ley8bbUumhk1hXciyqhLnz1VQFzkDooej6neX"
+        "ZgWZzQKeTKPOYWrnYtdZW4PnPQFeUl3orgLev7F8J6FZlDn0y/J/ThR5"
+        "m36Mo2/Gdxjj8lJ/IjPVkdpKyBpcnYND8KEIma5MyNCNeyO1UkfPQZGHNSQ=");
     EXPECT_EQ(rrsig_txt2,
               rdataFactoryFromFile(RRType("RRSIG"), RRClass("IN"),
                                    "rdata_rrsig_fromWire1")->toText());
-    generic::RRSIG rdata_rrsig2(rrsig_txt2);
+    const generic::RRSIG rdata_rrsig2(rrsig_txt2);
     EXPECT_EQ(0, rdata_rrsig2.compare(
                       *rdataFactoryFromFile(RRType("RRSIG"), RRClass("IN"),
                                           "rdata_rrsig_fromWire1")));

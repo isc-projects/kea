@@ -129,7 +129,7 @@ TEST_F(Rdata_NAPTR_Test, createFromWire) {
 }
 
 TEST_F(Rdata_NAPTR_Test, createFromLexer) {
-    NAPTR rdata_naptr(naptr_str);
+    const NAPTR rdata_naptr(naptr_str);
 
     EXPECT_EQ(0, rdata_naptr.compare(
         *test::createRdataUsingLexer(RRType::NAPTR(), RRClass::IN(),
