@@ -118,6 +118,12 @@ public:
     /// @return read buffer holding binary data.
     const OptionBuffer& readBinary(const uint32_t index = 0) const;
 
+    /// @brief Write binary data into a buffer.
+    ///
+    /// @param buf buffer holding binary data to be written.
+    /// @param index buffer index.
+    void writeBinary(const OptionBuffer& buf, const uint32_t index = 0);
+
     /// @brief Read a buffer as boolean value.
     ///
     /// @param index buffer index.
