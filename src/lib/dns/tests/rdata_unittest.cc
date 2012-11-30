@@ -29,6 +29,7 @@
 #include <dns/tests/rdata_unittest.h>
 
 #include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
 
 using isc::UnitTestUtil;
 using namespace std;
@@ -82,28 +83,71 @@ createRdataUsingLexer(const RRType& rrtype, const RRClass& rrclass,
 
 } // end of namespace isc::dns::rdata::test
 
+// A mock class to check parameters passed via loader callbacks.  Its callback
+// records the passed parameters, allowing the test to check them later via
+// the check() method.
+class CreateRdataCallback {
+public:
+    enum CallbackType { NONE, ERROR, WARN };
+    CreateRdataCallback() : type_(NONE), line_(0) {}
+    void callback(CallbackType type, const string& source, size_t line,
+                  const string& reason_txt) {
+        type_ = type;
+        source_ = source;
+        line_ = line;
+        reason_txt_ = reason_txt;
+    }
+
+    void clear() {
+        type_ = NONE;
+        source_.clear();
+        line_ = 0;
+        reason_txt_.clear();
+    }
+
+    void check(const string& expected_srcname, size_t expected_line,
+               CallbackType expected_type, const string& expected_reason)
+    {
+        EXPECT_EQ(expected_srcname, source_);
+        EXPECT_EQ(expected_line, line_);
+        EXPECT_EQ(expected_type, type_);
+        EXPECT_EQ(expected_reason, reason_txt_);
+    }
+
+private:
+    CallbackType type_;
+    string source_;
+    size_t line_;
+    string reason_txt_;
+};
+
 // Test class/type-independent behavior of createRdata().
 TEST_F(RdataTest, createRdataWithLexer) {
-    const generic::NS ns_rdata("ns.example.com.");
     const in::AAAA aaaa_rdata("2001:db8::1");
 
     stringstream ss;
-    ss << ns_rdata.toText() << "\n"; // valid case
+    const string src_name = "stream-" + boost::lexical_cast<string>(&ss);
+    ss << aaaa_rdata.toText() << "\n"; // valid case
     ss << aaaa_rdata.toText() << " extra-token\n"; // extra token
     lexer.pushSource(ss);
 
-    const MasterLoaderCallbacks::IssueCallback callback
-        (boost::bind(&test::dummyCallback, _1, _2, _3));
-    MasterLoaderCallbacks callbacks(callback, callback);
-    ConstRdataPtr rdata = createRdata(RRType::NS(), RRClass::IN(), lexer, NULL,
-                                      MasterLoader::MANY_ERRORS, callbacks);
-    EXPECT_EQ(0, ns_rdata.compare(*rdata));
-
-#ifdef notyet
-    rdata = createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
-                        MasterLoader::MANY_ERRORS, callbacks);
+    CreateRdataCallback callback;
+    MasterLoaderCallbacks callbacks(
+        boost::bind(&CreateRdataCallback::callback, &callback,
+                    CreateRdataCallback::ERROR, _1, _2, _3),
+        boost::bind(&CreateRdataCallback::callback, &callback,
+                    CreateRdataCallback::WARN,  _1, _2, _3));
+    ConstRdataPtr rdata = createRdata(RRType::AAAA(), RRClass::IN(), lexer,
+                                      NULL, MasterLoader::MANY_ERRORS,
+                                      callbacks);
     EXPECT_EQ(0, aaaa_rdata.compare(*rdata));
-#endif
+
+    callback.clear();
+    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+                             MasterLoader::MANY_ERRORS, callbacks));
+    callback.check(src_name, 2, CreateRdataCallback::ERROR,
+                   "createRdata from text failed near 'extra-token': "
+                   "extra input text");
 }
 
 }

@@ -82,6 +82,24 @@ createRdata(const RRType& rrtype, const RRClass& rrclass, const Rdata& source)
                                                        source));
 }
 
+namespace {
+void
+fromtextError(const MasterLexer& lexer, MasterLoaderCallbacks& callbacks,
+              const MasterToken& token, const char* reason)
+{
+    switch (token.getType()) {
+    case MasterToken::STRING:
+    case MasterToken::QSTRING:
+        callbacks.error(lexer.getSourceName(), lexer.getSourceLine(),
+                        "createRdata from text failed near '" +
+                        token.getString() + "': " + string(reason));
+        break;
+    default:
+        assert(false);
+    }
+}
+}
+
 RdataPtr
 createRdata(const RRType& rrtype, const RRClass& rrclass,
             MasterLexer& lexer, const Name* origin,
@@ -93,10 +111,13 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
 
     // Consume to end of line / file.
     // If not at end of line initially set error code.
-    // Call callback via fromtext_error once if there was an error.
+    // Call callback via fromtextError once if there was an error.
     const MasterToken& token = lexer.getNextToken();
-    assert(token.getType() == MasterToken::END_OF_LINE ||
-           token.getType() == MasterToken::END_OF_FILE);
+    if (token.getType() != MasterToken::END_OF_LINE &&
+        token.getType() != MasterToken::END_OF_FILE) {
+        fromtextError(lexer, callbacks, token, "extra input text");
+        return (RdataPtr());
+    }
 
     return (rdata);
 }
