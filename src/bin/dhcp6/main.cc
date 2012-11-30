@@ -103,9 +103,10 @@ main(int argc, char* argv[]) {
     }
 
     // Initialize logging.  If verbose, we'll use maximum verbosity.
+    // If standalone is enabled, do not buffer initial log messages
     isc::log::initLogger(DHCP6_NAME,
                          (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
-                         isc::log::MAX_DEBUG_LEVEL, NULL, true);
+                         isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone);
     LOG_INFO(dhcp6_logger, DHCP6_STARTING);
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_START_INFO)
               .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no")
