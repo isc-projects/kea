@@ -90,11 +90,9 @@ TYPED_TEST(Rdata_DS_LIKE_Test, createFromLexer_DS_LIKE) {
         *test::createRdataUsingLexer(RRTYPE<TypeParam>(), RRClass::IN(),
                                      ds_like_txt)));
 
-    // Check that bad input throws as usual
-    EXPECT_THROW({
-        *test::createRdataUsingLexer(RRTYPE<TypeParam>(), RRClass::IN(),
-                                     "99999 5 2 BEEF");
-    }, InvalidRdataText);
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRTYPE<TypeParam>(), RRClass::IN(),
+                                             "99999 5 2 BEEF"));
 }
 
 TYPED_TEST(Rdata_DS_LIKE_Test, assignment_DS_LIKE) {
