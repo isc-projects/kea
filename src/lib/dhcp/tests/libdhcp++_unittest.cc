@@ -22,6 +22,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_int.h>
 #include <dhcp/option6_int_array.h>
+#include <dhcp/option_custom.h>
 #include <util/buffer.h>
 
 #include <gtest/gtest.h>
@@ -90,13 +91,15 @@ public:
         ASSERT_NO_THROW(def->validate());
         OptionPtr option;
         // Create the option.
-        ASSERT_NO_THROW(option = def->optionFactory(Option::V6, code, buf));
+        ASSERT_NO_THROW(option = def->optionFactory(Option::V6, code, buf))
+            << "Option creation failed to option code " << code;
         // Make sure it is not NULL.
         ASSERT_TRUE(option);
         // And the actual object type is the one that we expect.
         // Note that for many options there are dedicated classes
         // derived from Option class to represent them.
-        EXPECT_TRUE(typeid(*option) == expected_type);
+        EXPECT_TRUE(typeid(*option) == expected_type)
+            << "Invalid class returned for option code " << code;
     }
 };
 
@@ -399,29 +402,148 @@ TEST_F(LibDhcpTest, unpackOptions4) {
 // This test have to be extended once all option definitions are
 // created.
 TEST_F(LibDhcpTest, stdOptionDefs6) {
-    LibDhcpTest::testStdOptionDefs6(D6O_CLIENTID, OptionBuffer(14, 1),
-                                    typeid(Option));
-    LibDhcpTest::testStdOptionDefs6(D6O_SERVERID, OptionBuffer(14, 1),
-                                    typeid(Option));
-    LibDhcpTest::testStdOptionDefs6(D6O_IA_NA, OptionBuffer(12, 1),
-                                    typeid(Option6IA));
-    LibDhcpTest::testStdOptionDefs6(D6O_IA_TA, OptionBuffer(4, 1),
+
+    // Create a buffer that holds dummy option data.
+    // It will be used to create most of the options.
+    std::vector<uint8_t> buf(48, 1);
+
+    // Prepare buffer holding an array of FQDNs.
+    const char data[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0,
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0
+    };
+    // Initialize a vector with the FQDN data.
+    std::vector<uint8_t> fqdn_buf(data, data + sizeof(data));
+
+    // The CLIENT_FQDN holds a uint8_t value and FQDN. We have
+    // to add the uint8_t value to it and then append the buffer
+    // holding some valid FQDN.
+    std::vector<uint8_t> client_fqdn_buf(1);
+    client_fqdn_buf.insert(client_fqdn_buf.end(), fqdn_buf.begin(),
+                           fqdn_buf.end());
+
+    // The actual test starts here for all supported option codes.
+    LibDhcpTest::testStdOptionDefs6(D6O_CLIENTID, buf, typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_SERVERID, buf, typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_IA_NA, buf, typeid(Option6IA));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_IA_TA, buf,
                                     typeid(Option6Int<uint32_t>));
-    LibDhcpTest::testStdOptionDefs6(D6O_IAADDR, OptionBuffer(24, 1),
-                                    typeid(Option6IAAddr));
-    LibDhcpTest::testStdOptionDefs6(D6O_ORO, OptionBuffer(10, 1),
+
+    LibDhcpTest::testStdOptionDefs6(D6O_IAADDR, buf, typeid(Option6IAAddr));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_ORO, buf,
                                     typeid(Option6IntArray<uint16_t>));
-    LibDhcpTest::testStdOptionDefs6(D6O_PREFERENCE, OptionBuffer(1, 1),
+
+    LibDhcpTest::testStdOptionDefs6(D6O_PREFERENCE, buf,
                                     typeid(Option6Int<uint8_t>));
-    LibDhcpTest::testStdOptionDefs6(D6O_ELAPSED_TIME, OptionBuffer(2, 1),
+
+    LibDhcpTest::testStdOptionDefs6(D6O_ELAPSED_TIME, buf,
                                     typeid(Option6Int<uint16_t>));
-    LibDhcpTest::testStdOptionDefs6(D6O_RELAY_MSG, OptionBuffer(30, 1),
-                                    typeid(Option));
-    LibDhcpTest::testStdOptionDefs6(D6O_STATUS_CODE, OptionBuffer(10, 1),
-                                    typeid(Option));
-    LibDhcpTest::testStdOptionDefs6(D6O_RAPID_COMMIT, OptionBuffer(),
-                                    typeid(Option));
-    LibDhcpTest::testStdOptionDefs6(D6O_NAME_SERVERS, OptionBuffer(32, 1),
+
+    LibDhcpTest::testStdOptionDefs6(D6O_RELAY_MSG, buf, typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_STATUS_CODE, buf, typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_RAPID_COMMIT, buf, typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_USER_CLASS, buf, typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_CLASS, buf,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_OPTS, buf, typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_INTERFACE_ID, buf, typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_RECONF_MSG, buf,
+                                    typeid(Option6Int<uint8_t>));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_RECONF_ACCEPT, buf, typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_SIP_SERVERS_DNS, fqdn_buf,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_SIP_SERVERS_ADDR, buf,
+                                    typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_NAME_SERVERS, buf,
+                                    typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_DOMAIN_SEARCH, fqdn_buf,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_IA_PD, buf, typeid(Option6IA));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_IAPREFIX, buf, typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_NIS_SERVERS, buf,
+                                    typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_NISP_SERVERS, buf,
+                                    typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_NIS_DOMAIN_NAME, fqdn_buf,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_NISP_DOMAIN_NAME, fqdn_buf,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_SNTP_SERVERS, buf,
+                                    typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_INFORMATION_REFRESH_TIME,
+                                    buf, typeid(Option6Int<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_BCMCS_SERVER_D, fqdn_buf,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_BCMCS_SERVER_A, buf,
+                                    typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_GEOCONF_CIVIC, buf,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_REMOTE_ID, buf, typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_SUBSCRIBER_ID, buf,typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_CLIENT_FQDN, client_fqdn_buf,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_PANA_AGENT, buf,
+                                    typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_PANA_AGENT, buf,
+                                    typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_NEW_POSIX_TIMEZONE, buf,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_NEW_TZDB_TIMEZONE, buf,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_ERO, buf,
+                                    typeid(Option6IntArray<uint16_t>));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_LQ_QUERY, buf, typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_CLIENT_DATA, buf, typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_CLT_TIME, buf,
+                                    typeid(Option6Int<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_LQ_RELAY_DATA, buf,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_LQ_CLIENT_LINK, buf,
                                     typeid(Option6AddrLst));
 }
 
