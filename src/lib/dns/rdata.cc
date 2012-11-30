@@ -30,6 +30,7 @@
 #include <util/buffer.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
+#include <dns/master_lexer.h>
 #include <dns/rdata.h>
 #include <dns/rrparamregistry.h>
 #include <dns/rrtype.h>
@@ -87,17 +88,17 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
             MasterLoader::Options options,
             MasterLoaderCallbacks& callbacks)
 {
-    RdataPtr ret;
+    const RdataPtr rdata = RRParamRegistry::getRegistry().createRdata(
+        rrtype, rrclass, lexer, origin, options, callbacks);
 
-    try {
-        ret = RRParamRegistry::getRegistry().createRdata(rrtype, rrclass,
-                                                         lexer, origin,
-                                                         options, callbacks);
-    } catch (...) {
-        // ret is NULL here.
-    }
+    // Consume to end of line / file.
+    // If not at end of line initially set error code.
+    // Call callback via fromtext_error once if there was an error.
+    const MasterToken& token = lexer.getNextToken();
+    assert(token.getType() == MasterToken::END_OF_LINE ||
+           token.getType() == MasterToken::END_OF_FILE);
 
-    return (ret);
+    return (rdata);
 }
 
 int
