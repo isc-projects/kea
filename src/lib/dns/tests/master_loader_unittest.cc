@@ -16,6 +16,8 @@
 #include <dns/master_loader.h>
 #include <dns/rrtype.h>
 #include <dns/rrset.h>
+#include <dns/rrclass.h>
+#include <dns/name.h>
 
 #include <gtest/gtest.h>
 #include <boost/bind.hpp>

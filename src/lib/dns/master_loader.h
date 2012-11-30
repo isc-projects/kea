@@ -15,13 +15,14 @@
 #ifndef MASTER_LOADER_H
 #define MASTER_LOADER_H
 
-#include <dns/name.h>
-#include <dns/rrclass.h>
-#include <dns/master_lexer.h>
 #include <dns/master_loader_callbacks.h>
 
 namespace isc {
 namespace dns {
+
+class Name;
+class RRClass;
+
 class MasterLoader {
 public:
     enum Options {
