@@ -1375,6 +1375,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/log/tests/console_test.sh
            src/lib/log/tests/destination_test.sh
            src/lib/log/tests/init_logger_test.sh
+           src/lib/log/tests/buffer_logger_test.sh
            src/lib/log/tests/local_file_test.sh
            src/lib/log/tests/logger_lock_test.sh
            src/lib/log/tests/severity_test.sh
