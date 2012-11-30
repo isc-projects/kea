@@ -269,6 +269,10 @@ stringTokenCheck(const std::string& expected, const MasterToken& token,
                              token.getStringRegion().beg +
                              token.getStringRegion().len);
     EXPECT_EQ(expected, actual);
+
+    // There should be "hidden" nul-terminator after the string data.
+    ASSERT_NE(static_cast<const char*>(NULL), token.getStringRegion().beg);
+    EXPECT_EQ(0, *(token.getStringRegion().beg + token.getStringRegion().len));
 }
 
 TEST_F(MasterLexerStateTest, string) {
@@ -365,6 +369,7 @@ TEST_F(MasterLexerStateTest, stringEscape) {
 TEST_F(MasterLexerStateTest, quotedString) {
     ss << "\"ignore-quotes\"\n";
     ss << "\"quoted string\" "; // space is part of the qstring
+    ss << "\"\" "; // empty quoted string
     // also check other separator characters. note that \r doesn't cause
     // UNBALANCED_QUOTES.  Not sure if it's intentional, but that's how the
     // BIND 9 version works, so we follow it (it should be too minor to matter
@@ -390,6 +395,11 @@ TEST_F(MasterLexerStateTest, quotedString) {
     EXPECT_FALSE(s_string.wasLastEOL(lexer)); // EOL is canceled due to '"'
     s_qstring.handle(lexer);
     stringTokenCheck("quoted string", s_string.getToken(lexer), true);
+
+    // Empty string is okay as qstring
+    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    s_qstring.handle(lexer);
+    stringTokenCheck("", s_string.getToken(lexer), true);
 
     // Also checks other separator characters within a qstring
     EXPECT_EQ(&s_qstring, State::start(lexer, options));
