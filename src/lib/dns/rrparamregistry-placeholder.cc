@@ -52,9 +52,9 @@ AbstractRdataFactory::create(MasterLexer& lexer, const Name*,
     std::string s;
 
     while (true) {
-        const MasterLexer::Token& token = lexer.getNextToken();
-        if ((token.getType() == MasterLexer::Token::END_OF_FILE) ||
-            (token.getType() == MasterLexer::Token::END_OF_LINE)) {
+        const MasterToken& token = lexer.getNextToken();
+        if ((token.getType() == MasterToken::END_OF_FILE) ||
+            (token.getType() == MasterToken::END_OF_LINE)) {
             break;
         }
 
