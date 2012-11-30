@@ -208,6 +208,19 @@ TYPED_TEST(NSEC3PARAMLikeTest, createFromWire) {
     EXPECT_EQ(0, this->convert(*rdata).getSalt().size());
 }
 
+TYPED_TEST(NSEC3PARAMLikeTest, createFromLexer) {
+    EXPECT_EQ(0, this->fromText(this->salt_txt).compare(
+        *test::createRdataUsingLexer(this->getType(), RRClass::IN(),
+                                     this->salt_txt)));
+
+    // Check that bad input throws as usual (too large algorithm)
+    EXPECT_THROW({
+        *test::createRdataUsingLexer(this->getType(), RRClass::IN(),
+                                     "1000000 1 1 ADDAFEEE" +
+                                     this->getCommonText());
+    }, InvalidRdataText);
+}
+
 template <typename OUTPUT_TYPE>
 void
 toWireCheck(RRType rrtype, OUTPUT_TYPE& output, const string& data_file) {
