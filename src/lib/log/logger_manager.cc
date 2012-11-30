@@ -189,9 +189,9 @@ LoggerManager::readLocalMessageFile(const char* file) {
 
 // Reset logging to settings passed to init()
 void
-LoggerManager::reset(bool buffer) {
+LoggerManager::reset() {
     setRootLoggerName(initRootName());
-    LoggerManagerImpl::reset(initSeverity(), initDebugLevel(), buffer);
+    LoggerManagerImpl::reset(initSeverity(), initDebugLevel());
 }
 
 } // namespace log

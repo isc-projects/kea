@@ -121,12 +121,9 @@ public:
 
     /// \brief Reset logging
     ///
-    /// Resets logging to whatever was set in the call to init().
-    ///
-    /// \param buffer If true, all log messages will be buffered until one of
-    ///        the \c process() methods is called. If false, initial logging
-    ///        shall go to the default output (i.e. stdout)
-    static void reset(bool buffer = false);
+    /// Resets logging to whatever was set in the call to init(), expect for
+    /// the buffer option.
+    static void reset();
 
     /// \brief Read local message file
     ///

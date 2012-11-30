@@ -17,7 +17,6 @@
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <log/logger_support.h>
-#include <log/logger_manager.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -116,7 +115,6 @@ main(int argc, char* argv[]) {
                 // DHCP server in stand-alone mode, e.g. for testing
             }
         } else {
-            std::cout << "[XX] STANDALONE" << std::endl;
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_STANDALONE);
         }
         server.run();
