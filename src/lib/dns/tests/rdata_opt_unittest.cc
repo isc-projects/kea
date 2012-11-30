@@ -56,6 +56,14 @@ TEST_F(Rdata_OPT_Test, createFromWire) {
                  InvalidRdataLength);
 }
 
+TEST_F(Rdata_OPT_Test, createFromLexer) {
+    // OPT RR cannot be created from text.
+    EXPECT_THROW({
+        *test::createRdataUsingLexer(RRType::OPT(), RRClass::IN(),
+                                     "this does not matter");
+    }, InvalidRdataText);
+}
+
 TEST_F(Rdata_OPT_Test, toWireBuffer) {
     rdata_opt.toWire(obuffer);
     EXPECT_EQ(0, obuffer.getLength());
