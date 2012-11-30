@@ -13,6 +13,14 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dns/master_loader.h>
+#include <dns/master_lexer.h>
+#include <dns/name.h>
+#include <dns/rrttl.h>
+#include <dns/rrclass.h>
+#include <dns/rrtype.h>
+#include <dns/rrset.h>
+
+using std::string;
 
 namespace isc {
 namespace dns {
@@ -35,13 +43,48 @@ public:
         lexer_.pushSource(master_file);
     }
 
+    // Get a string token. Handle it as error if it is not string.
+    const string getString() {
+        return (lexer_.getNextToken(MasterToken::QSTRING).getString());
+    }
+
     bool loadIncremental(size_t count_limit) {
         size_t count = 0;
         bool done = false;
-        do {
-            // Code goes here
-        } while (!done && (count_limit != 0 && ++count < count_limit));
-        // add remaining rrset that was being built (TODO)
+        // TODO: Replace getNextToken with the wrapper version
+        while (!done && (count < count_limit)) {
+            // Skip all EOLNs and finish on EOF
+            bool empty = true;
+            do {
+                const MasterToken& empty_token(lexer_.getNextToken());
+                if (empty_token.getType() == MasterToken::END_OF_FILE) {
+                    // TODO: Check if this is the last source, possibly pop
+                    return (true);
+                }
+                empty = empty_token.getType() == MasterToken::END_OF_LINE;
+            } while (empty);
+            // Return the last token, as it was not empty
+            lexer_.ungetToken();
+
+            const string name_string(getString());
+            // TODO $ handling
+            const Name name(name_string); // TODO: Origin
+            // TODO: Some more flexibility. We don't allow omitting anything yet
+
+            // The parameters
+            const RRTTL ttl(getString());
+            const RRClass rrclass(getString());
+            const RRType rrtype(getString());
+
+            // Create the RRset. We don't need the RRSIG, so we are good
+            // with the basic one
+            RRsetPtr rrset(new BasicRRset(name, rrclass, rrtype, ttl));
+
+            // TODO: Create the RData
+
+            // OK now, so give the RRset with single RR to the caller
+            add_callback_(rrset);
+        }
         return (false);
     }
 
