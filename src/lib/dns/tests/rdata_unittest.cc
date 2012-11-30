@@ -28,6 +28,8 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 
+#include <boost/bind.hpp>
+
 using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
@@ -54,6 +56,32 @@ RdataTest::rdataFactoryFromFile(const RRType& rrtype, const RRClass& rrclass,
     uint16_t rdlen = buffer.readUint16();
     return (createRdata(rrtype, rrclass, buffer, rdlen));
 }
+
+namespace test {
+
+void
+dummyCallback(const string&, size_t, const string&) {
+}
+
+RdataPtr
+createRdataUsingLexer(const RRType& rrtype, const RRClass& rrclass,
+                      const std::string& str)
+{
+    std::stringstream ss(str);
+    MasterLexer lexer;
+    lexer.pushSource(ss);
+
+    const MasterLoaderCallbacks::IssueCallback callback
+        (boost::bind(&dummyCallback, _1, _2, _3));
+    MasterLoaderCallbacks callbacks(callback, callback);
+    Name origin("example.org.");
+
+    return (createRdata(rrtype, rrclass, lexer, &origin,
+                        MasterLoader::MANY_ERRORS, callbacks));
+}
+
+} // end of namespace isc::dns::rdata::test
+
 }
 }
 }

@@ -37,10 +37,39 @@ using namespace std;
 using namespace boost;
 
 using namespace isc::util;
-using namespace isc::dns::rdata; 
+using namespace isc::dns::rdata;
 
 namespace isc {
 namespace dns {
+
+namespace rdata {
+
+RdataPtr
+AbstractRdataFactory::create(MasterLexer& lexer, const Name*,
+                             MasterLoader::Options,
+                             MasterLoaderCallbacks&) const
+{
+    std::string s;
+
+    while (true) {
+        const MasterLexer::Token& token = lexer.getNextToken();
+        if ((token.getType() == MasterLexer::Token::END_OF_FILE) ||
+            (token.getType() == MasterLexer::Token::END_OF_LINE)) {
+            break;
+        }
+
+        if (!s.empty()) {
+            s += " ";
+        }
+
+        s += token.getString();
+    }
+
+    return (create(s));
+}
+
+} // end of namespace isc::dns::rdata
+
 namespace {
 ///
 /// The following function and class are a helper to define case-insensitive
@@ -161,8 +190,10 @@ typedef map<RRTypeClass, RdataFactoryPtr> RdataFactoryMap;
 typedef map<RRType, RdataFactoryPtr> GenericRdataFactoryMap;
 
 template <typename T>
-class RdataFactory : public AbstractRdataFactory {
+class OldRdataFactory : public AbstractRdataFactory {
 public:
+    using AbstractRdataFactory::create;
+
     virtual RdataPtr create(const string& rdata_str) const
     {
         return (RdataPtr(new T(rdata_str)));
@@ -176,6 +207,18 @@ public:
     virtual RdataPtr create(const Rdata& source) const
     {
         return (RdataPtr(new T(dynamic_cast<const T&>(source))));
+    }
+};
+
+template <typename T>
+class RdataFactory : public OldRdataFactory<T> {
+public:
+    using OldRdataFactory<T>::create;
+
+    virtual RdataPtr create(MasterLexer& lexer, const Name* origin,
+                            MasterLoader::Options options,
+                            MasterLoaderCallbacks& callbacks) const {
+        return (RdataPtr(new T(lexer, origin, options, callbacks)));
     }
 };
 
@@ -305,7 +348,7 @@ namespace {
 /// This could be simplified using strncasecmp(), but unfortunately it's not
 /// included in <cstring>.  To be as much as portable within the C++ standard
 /// we take the "in house" approach here.
-/// 
+///
 bool CICharEqual(char c1, char c2) {
     return (tolower(static_cast<unsigned char>(c1)) ==
             tolower(static_cast<unsigned char>(c2)));
@@ -527,6 +570,27 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
 
     return (RdataPtr(new rdata::generic::Generic(
                          dynamic_cast<const generic::Generic&>(source))));
+}
+
+RdataPtr
+RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
+                             MasterLexer& lexer, const Name* name,
+                             MasterLoader::Options options,
+                             MasterLoaderCallbacks& callbacks)
+{
+    RdataFactoryMap::const_iterator found =
+        impl_->rdata_factories.find(RRTypeClass(rrtype, rrclass));
+    if (found != impl_->rdata_factories.end()) {
+        return (found->second->create(lexer, name, options, callbacks));
+    }
+
+    GenericRdataFactoryMap::const_iterator genfound =
+        impl_->genericrdata_factories.find(rrtype);
+    if (genfound != impl_->genericrdata_factories.end()) {
+        return (genfound->second->create(lexer, name, options, callbacks));
+    }
+
+    return (RdataPtr(new generic::Generic(lexer, name, options, callbacks)));
 }
 }
 }

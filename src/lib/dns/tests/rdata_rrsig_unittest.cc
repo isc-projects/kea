@@ -36,16 +36,21 @@ using namespace isc::dns::rdata;
 
 namespace {
 class Rdata_RRSIG_Test : public RdataTest {
-    // there's nothing to specialize
+public:
+    Rdata_RRSIG_Test() :
+        rrsig_txt("A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
+                  "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
+                  "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
+                  "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
+                  "f49t+sXKPzbipN9g+s1ZPiIyofc="),
+        rdata_rrsig(rrsig_txt)
+    {}
+
+    string rrsig_txt;
+    generic::RRSIG rdata_rrsig;
 };
 
 TEST_F(Rdata_RRSIG_Test, fromText) {
-    string rrsig_txt("A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
-                     "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
-                     "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
-                     "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
-                     "f49t+sXKPzbipN9g+s1ZPiIyofc=");
-    generic::RRSIG rdata_rrsig(rrsig_txt);
     EXPECT_EQ(rrsig_txt, rdata_rrsig.toText());
     EXPECT_EQ(isc::dns::RRType::A(), rdata_rrsig.typeCovered());
 }
@@ -96,35 +101,38 @@ TEST_F(Rdata_RRSIG_Test, DISABLED_badText) {
                                 "8496isc.org. ofc="), InvalidRdataText);
 }
 
+TEST_F(Rdata_RRSIG_Test, createFromLexer) {
+    EXPECT_EQ(0, rdata_rrsig.compare(
+        *test::createRdataUsingLexer(RRType::RRSIG(), RRClass::IN(),
+                                     rrsig_txt)));
+
+    // Check that bad input throws as usual
+    EXPECT_THROW({
+        *test::createRdataUsingLexer(RRType::RRSIG(), RRClass::IN(),
+                                     "INVALIDINPUT");
+    }, InvalidRdataText);
+}
+
 TEST_F(Rdata_RRSIG_Test, toWireRenderer) {
-    string rrsig_txt("A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
-                     "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
-                     "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
-                     "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
-                     "f49t+sXKPzbipN9g+s1ZPiIyofc=");
-    generic::RRSIG rdata_rrsig(rrsig_txt);
+    // FIXME: This doesn't check the result.
     rdata_rrsig.toWire(renderer);
 }
 
 TEST_F(Rdata_RRSIG_Test, toWireBuffer) {
-    string rrsig_txt("A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
-                     "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
-                     "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
-                     "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
-                     "f49t+sXKPzbipN9g+s1ZPiIyofc=");
-    generic::RRSIG rdata_rrsig(rrsig_txt);
+    // FIXME: This doesn't check the result.
     rdata_rrsig.toWire(obuffer);
 }
 
 TEST_F(Rdata_RRSIG_Test, createFromWire) {
-    string rrsig_txt("A 5 2 43200 20100327070149 20100225070149 2658 isc.org. "
+    string rrsig_txt2("A 5 2 43200 20100327070149 20100225070149 2658 isc.org. "
                 "HkJk/xZTvzePU8NENl/ley8bbUumhk1hXciyqhLnz1VQFzkDooej6neX"
                 "ZgWZzQKeTKPOYWrnYtdZW4PnPQFeUl3orgLev7F8J6FZlDn0y/J/ThR5"
                 "m36Mo2/Gdxjj8lJ/IjPVkdpKyBpcnYND8KEIma5MyNCNeyO1UkfPQZGHNSQ=");
-    EXPECT_EQ(rrsig_txt, rdataFactoryFromFile(RRType("RRSIG"), RRClass("IN"),
-                             "rdata_rrsig_fromWire1")->toText());
-    generic::RRSIG rdata_rrsig(rrsig_txt);
-    EXPECT_EQ(0, rdata_rrsig.compare(
+    EXPECT_EQ(rrsig_txt2,
+              rdataFactoryFromFile(RRType("RRSIG"), RRClass("IN"),
+                                   "rdata_rrsig_fromWire1")->toText());
+    generic::RRSIG rdata_rrsig2(rrsig_txt2);
+    EXPECT_EQ(0, rdata_rrsig2.compare(
                       *rdataFactoryFromFile(RRType("RRSIG"), RRClass("IN"),
                                           "rdata_rrsig_fromWire1")));
 
