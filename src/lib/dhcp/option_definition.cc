@@ -19,6 +19,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_int.h>
 #include <dhcp/option6_int_array.h>
+#include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
 #include <util/encode/hex.h>
 
@@ -78,53 +79,64 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                                 OptionBufferConstIter begin,
                                 OptionBufferConstIter end) const {
     validate();
-    
+
     try {
-        if (type_ == OPT_BINARY_TYPE) {
-            return (factoryGeneric(u, type, begin, end));
-
-        } else if (type_ == OPT_IPV6_ADDRESS_TYPE && array_type_) {
-            return (factoryAddrList6(type, begin, end));
-
-        } else if (type_ == OPT_IPV4_ADDRESS_TYPE && array_type_) {
-            return (factoryAddrList4(type, begin, end));
-
-        } else if (type_ == OPT_EMPTY_TYPE) {
+        switch(type_) {
+        case OPT_EMPTY_TYPE:
             return (factoryEmpty(u, type));
 
-        } else if (u == Option::V6 &&
-                   code_ == D6O_IA_NA &&
-                   haveIA6Format()) {
-            return (factoryIA6(type, begin, end));
+        case OPT_BINARY_TYPE:
+            return (factoryGeneric(u, type, begin, end));
 
-        } else if (u == Option::V6 &&
-                   code_ == D6O_IAADDR &&
-                   haveIAAddr6Format()) {
-            return (factoryIAAddr6(type, begin, end));
+        case OPT_UINT8_TYPE:
+            return (array_type_ ? factoryGeneric(u, type, begin, end) :
+                    factoryInteger<uint8_t>(u, type, begin, end));;
 
-        } else if (type_ == OPT_UINT8_TYPE) {
+        case OPT_INT8_TYPE:
+            return (array_type_ ? factoryGeneric(u, type, begin, end) :
+                    factoryInteger<int8_t>(u, type, begin, end));
+
+        case OPT_UINT16_TYPE:
+            return (array_type_ ? factoryIntegerArray<uint16_t>(type, begin, end) :
+                    factoryInteger<uint16_t>(u, type, begin, end));
+
+        case OPT_INT16_TYPE:
+            return (array_type_ ? factoryIntegerArray<uint16_t>(type, begin, end) :
+                    factoryInteger<int16_t>(u, type, begin, end));
+
+        case OPT_UINT32_TYPE:
+            return (array_type_ ? factoryIntegerArray<uint32_t>(type, begin, end) :
+                    factoryInteger<uint32_t>(u, type, begin, end));
+
+        case OPT_INT32_TYPE:
+            return (array_type_ ? factoryIntegerArray<uint32_t>(type, begin, end) :
+                    factoryInteger<int32_t>(u, type, begin, end));
+
+        case OPT_IPV4_ADDRESS_TYPE:
             if (array_type_) {
-                return (factoryGeneric(u, type, begin, end));
-            } else {
-                return (factoryInteger<uint8_t>(u, type, begin, end));
+                return (factoryAddrList4(type, begin, end));
             }
+            break;
 
-        } else if (type_ == OPT_UINT16_TYPE) {
+        case OPT_IPV6_ADDRESS_TYPE:
             if (array_type_) {
-                return (factoryIntegerArray<uint16_t>(type, begin, end));
-            } else {
-                return (factoryInteger<uint16_t>(u, type, begin, end));
+                return (factoryAddrList6(type, begin, end));
             }
+            break;
 
-        } else if (type_ == OPT_UINT32_TYPE) {
-            if (array_type_) {
-                return (factoryIntegerArray<uint32_t>(type, begin, end));
-            } else {
-                return (factoryInteger<uint32_t>(u, type, begin, end));
+        default:
+            if (u == Option::V6 &&
+                (code_ == D6O_IA_NA || code_ == D6O_IA_PD) &&
+                haveIA6Format()) {
+                return (factoryIA6(type, begin, end));
+
+            } else if (u == Option::V6 &&
+                       code_ == D6O_IAADDR &&
+                       haveIAAddr6Format()) {
+                return (factoryIAAddr6(type, begin, end));
             }
-
         }
-        return (factoryGeneric(u, type, begin, end));
+        return (OptionPtr(new OptionCustom(*this, u, begin, end)));
 
     } catch (const Exception& ex) {
         isc_throw(InvalidOptionValue, ex.what());
