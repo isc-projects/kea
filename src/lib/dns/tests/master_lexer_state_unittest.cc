@@ -24,7 +24,7 @@ using namespace isc::dns;
 using namespace master_lexer_internal;
 
 namespace {
-typedef MasterLexer::Token Token; // shortcut
+typedef MasterToken Token; // shortcut
 
 class MasterLexerStateTest : public ::testing::Test {
 protected:
@@ -260,7 +260,7 @@ TEST_F(MasterLexerStateTest, crlf) {
 // Commonly used check for string related test cases, checking if the given
 // token has expected values.
 void
-stringTokenCheck(const std::string& expected, const MasterLexer::Token& token,
+stringTokenCheck(const std::string& expected, const MasterToken& token,
                  bool quoted = false)
 {
     EXPECT_EQ(quoted ? Token::QSTRING : Token::STRING, token.getType());
