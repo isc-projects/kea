@@ -390,6 +390,13 @@ OptionCustom::readBinary(const uint32_t index) const {
     return (buffers_[index]);
 }
 
+void
+OptionCustom::writeBinary(const OptionBuffer& buf,
+                          const uint32_t index) {
+    checkIndex(index);
+    buffers_[index] = buf;
+}
+
 bool
 OptionCustom::readBoolean(const uint32_t index) const {
     checkIndex(index);

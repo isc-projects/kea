@@ -789,6 +789,40 @@ TEST_F(OptionCustomTest, recordDataTruncated) {
 }
 
 // The purpose of this test is to verify that an option comprising
+// single data field with binary data can be used and that this
+// binary data is properly initialized to a default value. This
+// test also checks that it is possible to override this default
+// value.
+TEST_F(OptionCustomTest, setBinaryData) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "binary");
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // Get the default binary value.
+    OptionBuffer buf;
+    ASSERT_NO_THROW(option->readBinary());
+    // The buffer is by default empty.
+    EXPECT_TRUE(buf.empty());
+    // Prepare input buffer with some dummy data.
+    OptionBuffer buf_in(10);
+    for (int i = 0; i < buf_in.size(); ++i) {
+        buf_in[i] = i;
+    }
+    // Try to override the default binary buffer.
+    ASSERT_NO_THROW(option->writeBinary(buf_in));
+    // And check that it has been actually overriden.
+    ASSERT_NO_THROW(buf = option->readBinary());
+    ASSERT_EQ(buf_in.size(), buf.size());
+    EXPECT_TRUE(std::equal(buf_in.begin(), buf_in.end(), buf.begin()));
+}
+
+// The purpose of this test is to verify that an option comprising
 // single boolean data field can be created and that its default
 // value can be overriden by a new value.
 TEST_F(OptionCustomTest, setBooleanData) {
