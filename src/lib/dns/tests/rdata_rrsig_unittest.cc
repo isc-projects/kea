@@ -101,6 +101,18 @@ TEST_F(Rdata_RRSIG_Test, DISABLED_badText) {
                                 "8496isc.org. ofc="), InvalidRdataText);
 }
 
+TEST_F(Rdata_RRSIG_Test, createFromLexer) {
+    EXPECT_EQ(0, rdata_rrsig.compare(
+        *test::createRdataUsingLexer(RRType::RRSIG(), RRClass::IN(),
+                                     rrsig_txt)));
+
+    // Check that bad input throws as usual
+    EXPECT_THROW({
+        *test::createRdataUsingLexer(RRType::RRSIG(), RRClass::IN(),
+                                     "INVALIDINPUT");
+    }, InvalidRdataText);
+}
+
 TEST_F(Rdata_RRSIG_Test, toWireRenderer) {
     // FIXME: This doesn't check the result.
     rdata_rrsig.toWire(renderer);
