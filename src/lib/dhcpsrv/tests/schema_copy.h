@@ -50,7 +50,7 @@ const char* create_statement[] = {
         ") ENGINE = INNODB",
 
     "CREATE TABLE lease6 ("
-        "address VARCHAR(40) PRIMARY KEY NOT NULL,"
+        "address VARCHAR(39) PRIMARY KEY NOT NULL,"
         "duid VARBINARY(128),"
         "valid_lifetime INT UNSIGNED,"
         "expire TIMESTAMP,"
@@ -75,7 +75,7 @@ const char* create_statement[] = {
         "minor INT"
         ")",
 
-    "INSERT INTO schema_version VALUES (0, 2)",
+    "INSERT INTO schema_version VALUES (1, 0)",
 
     NULL
 };

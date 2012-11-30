@@ -17,8 +17,10 @@
 #include <asiolink/io_address.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
 
+#include <boost/static_assert.hpp>
 #include <mysql/mysqld_error.h>
 
+#include <algorithm>
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -79,21 +81,39 @@ namespace {
 /// fields.  The values should be greater than or equal to the length set in
 /// the schema definition.
 ///
-/// The exception is the length of any VARCHAR fields: these should be set
-/// greater than or equal to the length of the field plus 2: this allows for
-/// the insertion of a trailing null regardless of whether the data returned
-/// contains a trailing null (the documentation is not clear on this point).
+/// The exception is the length of any VARCHAR fields: buffers for these should
+/// be set greater than or equal to the length of the field plus 1: this allows
+/// for the insertion of a trailing null whatever data is returned.
 
-const size_t ADDRESS6_TEXT_MAX_LEN = 42;    ///< Max size of a IPv6 text buffer
-const size_t DUID_MAX_LEN = 128;            ///< Max size of a DUID
-const size_t HWADDR_MAX_LEN = 128;          ///< Max size of a hardware address
-const size_t CLIENT_ID_MAX_LEN = 128;       ///< Max size of a client ID
+/// @brief Maximum size of an IPv6 address represented as a text string.
+///
+/// This is 32 hexadecimal characters written in 8 groups of four, plus seven
+/// colon separators.
+const size_t ADDRESS6_TEXT_MAX_LEN = 39;
+
+/// @brief Maximum size of a DUID.
+const size_t DUID_MAX_LEN = 128;
+
+/// @brief Maximum size of a hardware address.
+const size_t HWADDR_MAX_LEN = 20;
+
+/// @brief Maximum size of a client identification.
+///
+/// Note that the value is arbitrarily chosen: RFC 2131 does not specify an
+/// upper limit, but this seems long enough.
+const size_t CLIENT_ID_MAX_LEN = 128;
+
+/// @brief Number of columns in Lease4 table
+const size_t LEASE4_COLUMNS = 6;
+
+/// @brief Number of columns in Lease6 table
+const size_t LEASE6_COLUMNS = 9;
 
 /// @brief MySQL True/False constants
 ///
 /// Declare typed values so as to avoid problems of data conversion.  These
 /// are local to the file but are given the prefix MLM (MySql Lease Manager) to
-/// avoid any likely conflicts with variables n header files named TRUE or
+/// avoid any likely conflicts with variables in header files named TRUE or
 /// FALSE.
 
 const my_bool MLM_FALSE = 0;                ///< False value
@@ -136,6 +156,7 @@ TaggedStatement tagged_statements[] = {
                         "valid_lifetime, expire, subnet_id "
                             "FROM lease4 "
                             "WHERE hwaddr = ?"},
+
     {MySqlLeaseMgr::GET_LEASE4_HWADDR_SUBID,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id "
@@ -190,6 +211,69 @@ TaggedStatement tagged_statements[] = {
 namespace isc {
 namespace dhcp {
 
+/// @brief Common MySQL and Lease Data Methods
+///
+/// The MySqlLease4Exchange and MySqlLease6Exchange classes provide the
+/// functionaility to set up binding information between variables in the
+/// program and data extracted from the database.  This class is the common
+/// base to both of them, containing some common methods.
+
+class MySqlLeaseExchange {
+public:
+    /// @brief Set error indicators
+    ///
+    /// Sets the error indicator for each of the MYSQL_BIND elements.  It points
+    /// the "error" field within an element of the input array to the
+    /// corresponding element of the passed error array.
+    ///
+    /// @param bind Array of BIND elements
+    /// @param error Array of error elements.  If there is an error in getting
+    ///        data associated with one of the "bind" elements, the
+    ///        corresponding element in the error array is set to MLM_TRUE.
+    /// @param count Size of each of the arrays.
+    void setErrorIndicators(MYSQL_BIND* bind, my_bool* error, size_t count) {
+        for (size_t i = 0; i < count; ++i) {
+            error[i] = MLM_FALSE;
+            bind[i].error = reinterpret_cast<char*>(&error[i]);
+        }
+    }
+
+    /// @brief Return columns in error
+    ///
+    /// If an error is returned from a fetch (in particular, a truncated
+    /// status), this method can be called to get the names of the fields in
+    /// error.  It returns a string comprising the names of the fields
+    /// separated by commas.  In the case of there being no error indicators
+    /// set, it returns the string "(None)".
+    ///
+    /// @param error Array of error elements.  An element is set to MLM_TRUE
+    ///        if the corresponding column in the database is the source of
+    ///        the error.
+    /// @param names Array of column names, the same size as the error array.
+    /// @param count Size of each of the arrays.
+    std::string getColumnsInError(my_bool* error, std::string* names,
+                                  size_t count) {
+        std::string result = "";
+
+        // Accumulate list of column names
+        for (size_t i = 0; i < count; ++i) {
+            if (error[i] == MLM_TRUE) {
+                if (!result.empty()) {
+                    result += ", ";
+                }
+                result += names[i];
+            }
+        }
+
+        if (result.empty()) {
+            result = "(None)";
+        }
+
+        return (result);
+    }
+};
+
+
 /// @brief Exchange MySQL and Lease4 Data
 ///
 /// On any MySQL operation, arrays of MYSQL_BIND structures must be built to
@@ -203,15 +287,28 @@ namespace dhcp {
 /// @note There are no unit tests for this class.  It is tested indirectly
 /// in all MySqlLeaseMgr::xxx4() calls where it is used.
 
-class MySqlLease4Exchange {
+class MySqlLease4Exchange : public MySqlLeaseExchange {
 public:
+    /// @brief Set number of columns in this lease structure
+    static const size_t LEASE_COLUMNS = LEASE4_COLUMNS;
+
     /// @brief Constructor
     ///
-    /// The initialization of the variables here is nonly to satisfy cppcheck -
+    /// The initialization of the variables here is only to satisfy cppcheck -
     /// all variables are initialized/set in the methods before they are used.
     MySqlLease4Exchange() : addr4_(0), hwaddr_length_(0), client_id_length_(0) {
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
+        std::fill(&error_[0], &error_[LEASE_COLUMNS], MLM_FALSE);
+ 
+        // Set the column names (for error messages)
+        columns_[0] = "address";
+        columns_[1] = "hwaddr";
+        columns_[2] = "client_id";
+        columns_[3] = "valid_lifetime";
+        columns_[4] = "expire";
+        columns_[5] = "subnet_id";
+        BOOST_STATIC_ASSERT(5 < LEASE_COLUMNS);
     }
 
     /// @brief Create MYSQL_BIND objects for Lease4 Pointer
@@ -235,14 +332,14 @@ public:
         // structure.
 
         // Address: uint32_t
-        // The address in the Lease structre is an IOAddress object.  Convert
+        // The address in the Lease structure is an IOAddress object.  Convert
         // this to an integer for storage.
         addr4_ = static_cast<uint32_t>(lease_->addr_);
         bind_[0].buffer_type = MYSQL_TYPE_LONG;
         bind_[0].buffer = reinterpret_cast<char*>(&addr4_);
         bind_[0].is_unsigned = MLM_TRUE;
 
-        // hwaddr: varbinary
+        // hwaddr: varbinary(128)
         // For speed, we avoid copying the data into temporary storage and
         // instead extract it from the lease structure directly.
         hwaddr_length_ = lease_->hwaddr_.size();
@@ -251,7 +348,7 @@ public:
         bind_[1].buffer_length = hwaddr_length_;
         bind_[1].length = &hwaddr_length_;
 
-        // client_id: varbinary
+        // client_id: varbinary(128)
         client_id_ = lease_->client_id_->getClientId();
         client_id_length_ = client_id_.size();
         bind_[2].buffer_type = MYSQL_TYPE_BLOB;
@@ -285,9 +382,15 @@ public:
         bind_[5].buffer = reinterpret_cast<char*>(&lease_->subnet_id_);
         bind_[5].is_unsigned = MLM_TRUE;
 
+        // Add the error flags
+        setErrorIndicators(bind_, error_, LEASE_COLUMNS);
+
+        // .. and check that we have the numbers correct at compile time.
+        BOOST_STATIC_ASSERT(5 < LEASE_COLUMNS);
+
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
-        return (std::vector<MYSQL_BIND>(&bind_[0], &bind_[6]));
+        return (std::vector<MYSQL_BIND>(&bind_[0], &bind_[LEASE_COLUMNS]));
     }
 
     /// @brief Create BIND array to receive data
@@ -335,9 +438,15 @@ public:
         bind_[5].buffer = reinterpret_cast<char*>(&subnet_id_);
         bind_[5].is_unsigned = MLM_TRUE;
 
+        // Add the error flags
+        setErrorIndicators(bind_, error_, LEASE_COLUMNS);
+
+        // .. and check that we have the numbers correct at compile time.
+        BOOST_STATIC_ASSERT(5 < LEASE_COLUMNS);
+
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
-        return(std::vector<MYSQL_BIND>(&bind_[0], &bind_[6]));
+        return(std::vector<MYSQL_BIND>(&bind_[0], &bind_[LEASE_COLUMNS]));
     }
 
     /// @brief Copy Received Data into Lease6 Object
@@ -359,12 +468,29 @@ public:
                                      valid_lifetime_, cltt, subnet_id_)));
     }
 
+    /// @brief Return columns in error
+    ///
+    /// If an error is returned from a fetch (in particular, a truncated
+    /// status), this method can be called to get the names of the fields in
+    /// error.  It returns a string comprising the names of the fields
+    /// separated by commas.  In the case of there being no error indicators
+    /// set, it returns the string "(None)".
+    ///
+    /// @return Comma-separated list of columns in error, or the string
+    ///         "(None)".
+    std::string getErrorColumns() {
+        return (getColumnsInError(error_, columns_, LEASE_COLUMNS));
+    }
+
 private:
+
     // Note: All array lengths are equal to the corresponding variable in the
     //       schema.
     // Note: Arrays are declared fixed length for speed of creation
     uint32_t        addr4_;             ///< IPv4 address
-    MYSQL_BIND      bind_[6];           ///< Bind array
+    MYSQL_BIND      bind_[LEASE_COLUMNS]; ///< Bind array
+    std::string     columns_[LEASE_COLUMNS];///< Column names
+    my_bool         error_[LEASE_COLUMNS];  ///< Error array
     std::vector<uint8_t> hwaddr_;       ///< Hardware address
     uint8_t         hwaddr_buffer_[HWADDR_MAX_LEN];
                                         ///< Hardware address buffer
@@ -394,7 +520,10 @@ private:
 /// @note There are no unit tests for this class.  It is tested indirectly
 /// in all MySqlLeaseMgr::xxx6() calls where it is used.
 
-class MySqlLease6Exchange {
+class MySqlLease6Exchange : public MySqlLeaseExchange {
+    /// @brief Set number of columns in this lease structure
+    static const size_t LEASE_COLUMNS = LEASE6_COLUMNS;
+
 public:
     /// @brief Constructor
     ///
@@ -403,6 +532,19 @@ public:
     MySqlLease6Exchange() : addr6_length_(0), duid_length_(0) {
         memset(addr6_buffer_, 0, sizeof(addr6_buffer_));
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
+        std::fill(&error_[0], &error_[LEASE_COLUMNS], MLM_FALSE);
+ 
+        // Set the column names (for error messages)
+        columns_[0] = "address";
+        columns_[1] = "duid";
+        columns_[2] = "valid_lifetime";
+        columns_[3] = "expire";
+        columns_[4] = "subnet_id";
+        columns_[5] = "pref_lifetime";
+        columns_[6] = "lease_type";
+        columns_[7] = "iaid";
+        columns_[8] = "prefix_len";
+        BOOST_STATIC_ASSERT(5 < LEASE_COLUMNS);
     }
 
     /// @brief Create MYSQL_BIND objects for Lease6 Pointer
@@ -421,7 +563,7 @@ public:
         // for this lease.
         memset(bind_, 0, sizeof(bind_));
 
-        // address: varchar(40)
+        // address: varchar(39)
         addr6_ = lease_->addr_.toText();
         addr6_length_ = addr6_.size();
 
@@ -435,7 +577,7 @@ public:
         // The const_cast could be avoided by copying the string to a writeable
         // buffer and storing the address of that in the "buffer" element.
         // However, this introduces a copy operation (with additional overhead)
-        // purely to get round the strictures introduced by design of the
+        // purely to get round the structures introduced by design of the
         // MySQL interface (which uses the area pointed to by "buffer" as input
         // when specifying query parameters and as output when retrieving data).
         // For that reason, "const_cast" has been used.
@@ -465,7 +607,7 @@ public:
         //
         // expire = cltt_ + valid_lft_
         //
-        // @TODO Handle overflows
+        // @todo Handle overflows
         MySqlLeaseMgr::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
                                              expire_);
         bind_[3].buffer_type = MYSQL_TYPE_TIMESTAMP;
@@ -503,9 +645,15 @@ public:
         bind_[8].buffer = reinterpret_cast<char*>(&lease_->prefixlen_);
         bind_[8].is_unsigned = MLM_TRUE;
 
+        // Add the error flags
+        setErrorIndicators(bind_, error_, LEASE_COLUMNS);
+
+        // .. and check that we have the numbers correct at compile time.
+        BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
+
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
-        return (std::vector<MYSQL_BIND>(&bind_[0], &bind_[9]));
+        return (std::vector<MYSQL_BIND>(&bind_[0], &bind_[LEASE_COLUMNS]));
     }
 
     /// @brief Create BIND array to receive data
@@ -521,10 +669,10 @@ public:
         // Initialize MYSQL_BIND array.
         memset(bind_, 0, sizeof(bind_));
 
-        // address:  varchar
+        // address:  varchar(39)
         // A Lease6_ address has a maximum of 39 characters.  The array is
-        // a few bytes longer than this to guarantee that we can always null
-        // terminate it.
+        // one byte longer than this to guarantee that we can always null
+        // terminate it whatever is returned.
         addr6_length_ = sizeof(addr6_buffer_) - 1;
         bind_[0].buffer_type = MYSQL_TYPE_STRING;
         bind_[0].buffer = addr6_buffer_;
@@ -573,9 +721,15 @@ public:
         bind_[8].buffer = reinterpret_cast<char*>(&prefixlen_);
         bind_[8].is_unsigned = MLM_TRUE;
 
+        // Add the error flags
+        setErrorIndicators(bind_, error_, LEASE_COLUMNS);
+
+        // .. and check that we have the numbers correct at compile time.
+        BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
+
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
-        return(std::vector<MYSQL_BIND>(&bind_[0], &bind_[9]));
+        return(std::vector<MYSQL_BIND>(&bind_[0], &bind_[LEASE_COLUMNS]));
     }
 
     /// @brief Copy Received Data into Lease6 Object
@@ -633,18 +787,34 @@ public:
         return (result);
     }
 
+    /// @brief Return columns in error
+    ///
+    /// If an error is returned from a fetch (in particular, a truncated
+    /// status), this method can be called to get the names of the fields in
+    /// error.  It returns a string comprising the names of the fields
+    /// separated by commas.  In the case of there being no error indicators
+    /// set, it returns the string "(None)".
+    ///
+    /// @return Comma-separated list of columns in error, or the string
+    ///         "(None)".
+    std::string getErrorColumns() {
+        return (getColumnsInError(error_, columns_, LEASE_COLUMNS));
+    }
+
 private:
     // Note: All array lengths are equal to the corresponding variable in the
     // schema.
     // Note: arrays are declared fixed length for speed of creation
     std::string     addr6_;             ///< String form of address
-    char            addr6_buffer_[ADDRESS6_TEXT_MAX_LEN];  ///< Character 
+    char            addr6_buffer_[ADDRESS6_TEXT_MAX_LEN + 1];  ///< Character 
                                         ///< array form of V6 address
     unsigned long   addr6_length_;      ///< Length of the address
-    MYSQL_BIND      bind_[9];           ///< Bind array
+    MYSQL_BIND      bind_[LEASE_COLUMNS]; ///< Bind array
+    std::string     columns_[LEASE_COLUMNS];///< Column names
     std::vector<uint8_t> duid_;         ///< Client identification
     uint8_t         duid_buffer_[DUID_MAX_LEN]; ///< Buffer form of DUID
     unsigned long   duid_length_;       ///< Length of the DUID
+    my_bool         error_[LEASE_COLUMNS]; ///< Error indicators
     MYSQL_TIME      expire_;            ///< Lease expiry time
     uint32_t        iaid_;              ///< Identity association ID
     Lease6Ptr       lease_;             ///< Pointer to lease object
@@ -1055,8 +1225,9 @@ void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
         // Error - unable to fetch results
         checkError(status, stindex, "unable to fetch results");
     } else if (status == MYSQL_DATA_TRUNCATED) {
-        // @TODO Handle truncation
-        ;
+        // Data truncated - throw an exception indicating what was at fault
+        isc_throw(DataTruncated, "returned data truncated column affected: "
+                  << exchange->getErrorColumns());
     }
 }
 
@@ -1281,7 +1452,7 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
     // Note that the const_cast could be avoided by copying the DUID to
     // a writeable buffer and storing the address of that in the "buffer"
     // element.  However, this introduces a copy operation (with additional
-    // overhead) purely to get round the strictures introduced by design of
+    // overhead) purely to get round the structures introduced by design of
     // the MySQL interface (which uses the area pointed to by "buffer" as
     // input when specifying query parameters and as output when retrieving
     // data).  For that reason, "const_cast" has been used.

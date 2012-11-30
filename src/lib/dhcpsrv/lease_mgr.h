@@ -101,6 +101,13 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Data is truncated
+class DataTruncated : public Exception {
+public:
+    DataTruncated(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 /// @brief Structure that holds a lease for IPv4 address
 ///
 /// For performance reasons it is a simple structure, not a class. If we chose
@@ -173,7 +180,7 @@ struct Lease4 {
     /// IA container and not the address itself, since our data model does not
     /// define a separate IA entity, we are keeping it in the lease. In the
     /// case of multiple addresses/prefixes for the same IA, each must have
-    /// consistent T1 and T2 values. This is pecified in seconds since cltt.
+    /// consistent T1 and T2 values. This is specified in seconds since cltt.
     uint32_t t2_;
 
     /// @brief Ralid lifetime
@@ -234,6 +241,7 @@ typedef std::vector<Lease4Ptr> Lease4Collection;
 /// For performance reasons it is a simple structure, not a class. If we chose
 /// make it a class, all fields would have to made private and getters/setters
 /// would be required. As this is a critical part of the code that will be used
+/// extensively, direct access is warranted.
 struct Lease6 {
 
     /// @brief Type of lease contents
@@ -249,6 +257,8 @@ struct Lease6 {
            uint32_t t2, SubnetID subnet_id, uint8_t prefixlen_ = 0);
 
     /// @brief IPv6 address
+    ///
+    /// IPv6 address or, in the case of a prefix delegation, the prefix.
     isc::asiolink::IOAddress addr_;
 
     /// @brief Lease type
@@ -264,7 +274,7 @@ struct Lease6 {
     /// @brief Identity Association Identifier (IAID)
     ///
     /// DHCPv6 stores all addresses and prefixes in IA containers (IA_NA,
-    /// IA_TA, IA_PD). Most containers may appear more than once in a message.
+    /// IA_TA, IA_PD). All containers may appear more than once in a message.
     /// To differentiate between them, the IAID field is present
     uint32_t iaid_;
 
