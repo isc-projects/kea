@@ -85,6 +85,18 @@ TYPED_TEST(Rdata_DS_LIKE_Test, createFromWire_DS_LIKE) {
                                           "rdata_ds_fromWire")));
 }
 
+TYPED_TEST(Rdata_DS_LIKE_Test, createFromLexer_DS_LIKE) {
+    EXPECT_EQ(0, this->rdata_ds_like.compare(
+        *test::createRdataUsingLexer(RRTYPE<TypeParam>(), RRClass::IN(),
+                                     ds_like_txt)));
+
+    // Check that bad input throws as usual
+    EXPECT_THROW({
+        *test::createRdataUsingLexer(RRTYPE<TypeParam>(), RRClass::IN(),
+                                     "99999 5 2 BEEF");
+    }, InvalidRdataText);
+}
+
 TYPED_TEST(Rdata_DS_LIKE_Test, assignment_DS_LIKE) {
     TypeParam copy((string(ds_like_txt)));
     copy = this->rdata_ds_like;
