@@ -247,6 +247,18 @@ TEST_F(Rdata_TSIG_Test, createFromParams) {
                  isc::InvalidParameter);
 }
 
+TEST_F(Rdata_TSIG_Test, createFromLexer) {
+    EXPECT_EQ(0, rdata_tsig.compare(
+        *test::createRdataUsingLexer(RRType::TSIG(), RRClass::ANY(),
+                                     valid_text1)));
+
+    // Check that bad input throws as usual
+    EXPECT_THROW({
+        *test::createRdataUsingLexer(RRType::TSIG(), RRClass::ANY(),
+                                     "foo 0 0 0 0 BADKEY 0 0");
+    }, InvalidRdataText);
+}
+
 TEST_F(Rdata_TSIG_Test, assignment) {
     any::TSIG copy((string(valid_text2)));
     copy = rdata_tsig;

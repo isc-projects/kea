@@ -130,6 +130,20 @@ TEST_F(Rdata_NSEC3_Test, createFromWire) {
     }
 }
 
+TEST_F(Rdata_NSEC3_Test, createFromLexer) {
+    const generic::NSEC3 rdata_nsec3(nsec3_txt);
+    EXPECT_EQ(0, rdata_nsec3.compare(
+        *test::createRdataUsingLexer(RRType::NSEC3(), RRClass::IN(),
+                                     nsec3_txt)));
+
+    // Check that bad input throws as usual (next hash shouldn't be
+    // padded)
+    EXPECT_THROW({
+        *test::createRdataUsingLexer(RRType::NSEC3(), RRClass::IN(),
+                                     "1 1 1 ADDAFEEE CPNMU=== A NS SOA");
+    }, InvalidRdataText);
+}
+
 TEST_F(Rdata_NSEC3_Test, assign) {
     generic::NSEC3 rdata_nsec3(nsec3_txt);
     generic::NSEC3 other_nsec3 = rdata_nsec3;
