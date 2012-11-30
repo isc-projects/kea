@@ -82,7 +82,7 @@ public:
     /// \name Factory methods for polymorphic creation.
     ///
     //@{
-    ///
+
     /// \brief Create RDATA from a string.
     ///
     /// This method creates from a string an \c Rdata object of specific class
@@ -91,7 +91,7 @@ public:
     /// \param rdata_str A string of textual representation of the \c Rdata.
     /// \return An \c RdataPtr object pointing to the created \c Rdata object.
     virtual RdataPtr create(const std::string& rdata_str) const = 0;
-    ///
+
     /// \brief Create RDATA from wire-format data.
     ///
     /// This method creates from wire-format binary data an \c Rdata object
@@ -103,7 +103,7 @@ public:
     /// \param rdata_len The length in buffer of the \c Rdata.  In bytes.
     /// \return An \c RdataPtr object pointing to the created \c Rdata object.
     virtual RdataPtr create(isc::util::InputBuffer& buffer, size_t rdata_len) const = 0;
-    ///
+
     /// \brief Create RDATA from another \c Rdata object of the same type.
     ///
     /// This method creates an \c Rdata object of specific class corresponding
@@ -118,6 +118,11 @@ public:
     /// be copied to the created \c Rdata object.
     /// \return An \c RdataPtr object pointing to the created \c Rdata object.
     virtual RdataPtr create(const rdata::Rdata& source) const = 0;
+
+    /// \brief Create RDATA from MasterLexer
+    virtual RdataPtr create(MasterLexer& lexer, const Name*,
+                            MasterLoader::Options,
+                            MasterLoaderCallbacks&) const;
     //@}
 };
 
@@ -498,6 +503,12 @@ public:
     /// \c rdata::Rdata object.
     rdata::RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                                 const rdata::Rdata& source);
+
+    /// \brief Create RDATA from MasterLexer
+    rdata::RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
+                                MasterLexer& lexer, const Name* name,
+                                MasterLoader::Options options,
+                                MasterLoaderCallbacks& callbacks);
     //@}
 
 private:
@@ -508,6 +519,6 @@ private:
 }
 #endif  // RRPARAMREGISTRY_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

@@ -15,11 +15,15 @@
 #ifndef RDATA_H
 #define RDATA_H 1
 
-#include <stdint.h>
+#include <dns/master_lexer.h>
+#include <dns/master_loader.h>
+#include <dns/master_loader_callbacks.h>
+
+#include <exceptions/exceptions.h>
 
 #include <boost/shared_ptr.hpp>
 
-#include <exceptions/exceptions.h>
+#include <stdint.h>
 
 namespace isc {
 namespace util {
@@ -279,6 +283,11 @@ public:
     /// \param rdata_len The length in buffer of the \c Rdata.  In bytes.
     Generic(isc::util::InputBuffer& buffer, size_t rdata_len);
 
+    /// \brief Constructor from master lexer.
+    ///
+    Generic(MasterLexer& lexer, const Name* name,
+            MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
+
     ///
     /// \brief The destructor.
     virtual ~Generic();
@@ -367,7 +376,10 @@ public:
     /// \return > 0 if \c this would be sorted after \c other.
     virtual int compare(const Rdata& other) const;
     //@}
+
 private:
+    void constructHelper(const std::string& rdata_string);
+
     GenericImpl* impl_;
 };
 
@@ -472,6 +484,14 @@ RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
 /// \c Rdata object.
 RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                      const Rdata& source);
+
+/// \brief Create RDATA of a given pair of RR type and class from the
+/// master lexer.
+RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
+                     MasterLexer& lexer, const Name* origin,
+                     MasterLoader::Options options,
+                     MasterLoaderCallbacks& callbacks);
+
 //@}
 
 ///
@@ -511,6 +531,6 @@ int compareNames(const Name& n1, const Name& n2);
 }
 #endif  // RDATA_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

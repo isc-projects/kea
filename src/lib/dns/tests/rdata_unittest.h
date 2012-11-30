@@ -41,11 +41,18 @@ protected:
     /// used to test the compare() method against a well-known RR type.
     RdataPtr rdata_nomatch;
 };
+
+namespace test {
+RdataPtr
+createRdataUsingLexer(const RRType& rrtype, const RRClass& rrclass,
+                      const std::string& str);
+}
+
 }
 }
 }
 #endif // RDATA_UNITTEST_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

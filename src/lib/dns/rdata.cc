@@ -65,7 +65,7 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
     RdataPtr rdata =
         RRParamRegistry::getRegistry().createRdata(rrtype, rrclass, buffer,
                                                    len);
-                                                   
+
     if (buffer.getPosition() - old_pos != len) {
         isc_throw(InvalidRdataLength, "RDLENGTH mismatch: " <<
                   buffer.getPosition() - old_pos << " != " << len);
@@ -79,6 +79,17 @@ createRdata(const RRType& rrtype, const RRClass& rrclass, const Rdata& source)
 {
     return (RRParamRegistry::getRegistry().createRdata(rrtype, rrclass,
                                                        source));
+}
+
+RdataPtr
+createRdata(const RRType& rrtype, const RRClass& rrclass,
+            MasterLexer& lexer, const Name* origin,
+            MasterLoader::Options options,
+            MasterLoaderCallbacks& callbacks)
+{
+     return (RRParamRegistry::getRegistry().createRdata(rrtype, rrclass,
+                                                        lexer, origin,
+                                                        options, callbacks));
 }
 
 int
@@ -119,7 +130,8 @@ Generic::Generic(isc::util::InputBuffer& buffer, size_t rdata_len) {
     impl_ = new GenericImpl(data);
 }
 
-Generic::Generic(const std::string& rdata_string) {
+void
+Generic::constructHelper(const std::string& rdata_string) {
     istringstream iss(rdata_string);
     string unknown_mark;
     iss >> unknown_mark;
@@ -178,6 +190,33 @@ Generic::Generic(const std::string& rdata_string) {
     }
 
     impl_ = new GenericImpl(data);
+}
+
+Generic::Generic(const std::string& rdata_string) {
+    constructHelper(rdata_string);
+}
+
+Generic::Generic(MasterLexer& lexer, const Name*,
+                 MasterLoader::Options,
+                 MasterLoaderCallbacks&)
+{
+    std::string s;
+
+    while (true) {
+        const MasterLexer::Token& token = lexer.getNextToken();
+        if ((token.getType() == MasterLexer::Token::END_OF_FILE) ||
+            (token.getType() == MasterLexer::Token::END_OF_LINE)) {
+            break;
+        }
+
+        if (!s.empty()) {
+            s += " ";
+        }
+
+        s += token.getString();
+    }
+
+    constructHelper(s);
 }
 
 Generic::~Generic() {
