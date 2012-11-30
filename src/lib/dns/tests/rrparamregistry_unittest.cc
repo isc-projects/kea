@@ -172,7 +172,7 @@ createRdataHelper(const std::string& str) {
     const MasterLoaderCallbacks::IssueCallback callback
         (boost::bind(&dummyCallback, _1, _2, _3));
     MasterLoaderCallbacks callbacks(callback, callback);
-    Name origin("example.org.");
+    const Name origin("example.org.");
 
     return (rdf->create(lexer, &origin,
                         MasterLoader::MANY_ERRORS,
