@@ -72,11 +72,9 @@ TEST_F(Rdata_NSEC_Test, createFromLexer_NSEC) {
         *test::createRdataUsingLexer(RRType::NSEC(), RRClass::IN(),
                                      nsec_txt)));
 
-    // Check that bad input throws as usual
-    EXPECT_THROW({
-        *test::createRdataUsingLexer(RRType::NSEC(), RRClass::IN(),
-                                     "www.isc.org.");
-    }, InvalidRdataText);
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::NSEC(), RRClass::IN(),
+                                             "www.isc.org."));
 }
 
 TEST_F(Rdata_NSEC_Test, toWireRenderer_NSEC) {

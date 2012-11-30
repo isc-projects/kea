@@ -91,10 +91,9 @@ TEST_F(Rdata_NS_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::NS(), RRClass::IN(),
                                      "ns.example.com")));
 
-    EXPECT_THROW({
-        test::createRdataUsingLexer(RRType::NS(), RRClass::IN(),
-                                    "");
-    }, IncompleteName);
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::NS(), RRClass::IN(),
+                                             ""));
 }
 
 TEST_F(Rdata_NS_Test, toWireBuffer) {
