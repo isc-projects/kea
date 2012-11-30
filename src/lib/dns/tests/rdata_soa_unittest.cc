@@ -49,6 +49,13 @@ TEST_F(Rdata_SOA_Test, createFromWire) {
     // TBD: more tests
 }
 
+TEST_F(Rdata_SOA_Test, createFromLexer) {
+    EXPECT_EQ(0, rdata_soa.compare(
+        *test::createRdataUsingLexer(RRType::SOA(), RRClass::IN(),
+                                     "ns.example.com. root.example.com. "
+                                     "2010012601 3600 300 3600000 1200")));
+}
+
 TEST_F(Rdata_SOA_Test, toWireRenderer) {
     renderer.skip(2);
     rdata_soa.toWire(renderer);
