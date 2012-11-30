@@ -82,6 +82,30 @@ createRdataUsingLexer(const RRType& rrtype, const RRClass& rrclass,
 
 } // end of namespace isc::dns::rdata::test
 
+// Test class/type-independent behavior of createRdata().
+TEST_F(RdataTest, createRdataWithLexer) {
+    const generic::NS ns_rdata("ns.example.com.");
+    const in::AAAA aaaa_rdata("2001:db8::1");
+
+    stringstream ss;
+    ss << ns_rdata.toText() << "\n"; // valid case
+    ss << aaaa_rdata.toText() << " extra-token\n"; // extra token
+    lexer.pushSource(ss);
+
+    const MasterLoaderCallbacks::IssueCallback callback
+        (boost::bind(&test::dummyCallback, _1, _2, _3));
+    MasterLoaderCallbacks callbacks(callback, callback);
+    ConstRdataPtr rdata = createRdata(RRType::NS(), RRClass::IN(), lexer, NULL,
+                                      MasterLoader::MANY_ERRORS, callbacks);
+    EXPECT_EQ(0, ns_rdata.compare(*rdata));
+
+#ifdef notyet
+    rdata = createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+                        MasterLoader::MANY_ERRORS, callbacks);
+    EXPECT_EQ(0, aaaa_rdata.compare(*rdata));
+#endif
+}
+
 }
 }
 }
