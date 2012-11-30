@@ -157,16 +157,15 @@ TEST_F(RRParamRegistryTest, addRemoveFactory) {
                      RRType(test_type_code)));
 }
 
-void dummyCallback(const string&, size_t, const string&) {
+void
+dummyCallback(const string&, size_t, const string&) {
 }
 
-TEST_F(RRParamRegistryTest, createFromLexer) {
-    // This test basically checks that the string version of
-    // AbstractRdataFactory::create() is called by the MasterLexer
-    // variant of create().
+RdataPtr
+createRdataHelper(const std::string& str) {
     boost::scoped_ptr<AbstractRdataFactory> rdf(new TestRdataFactory);
 
-    std::stringstream ss("192.168.0.1");
+    std::stringstream ss(str);
     MasterLexer lexer;
     lexer.pushSource(ss);
 
@@ -175,10 +174,22 @@ TEST_F(RRParamRegistryTest, createFromLexer) {
     MasterLoaderCallbacks callbacks(callback, callback);
     Name origin("example.org.");
 
-    const RdataPtr rdata = rdf->create(lexer, &origin,
-                                       MasterLoader::MANY_ERRORS,
-                                       callbacks);
-    EXPECT_EQ(0, in::A("192.168.0.1").compare(*rdata));
+    return (rdf->create(lexer, &origin,
+                        MasterLoader::MANY_ERRORS,
+                        callbacks));
+}
+
+TEST_F(RRParamRegistryTest, createFromLexer) {
+    // This test basically checks that the string version of
+    // AbstractRdataFactory::create() is called by the MasterLexer
+    // variant of create().
+    EXPECT_EQ(0, in::A("192.168.0.1").compare(
+              *createRdataHelper("192.168.0.1")));
+
+    // This should parse only up to the end of line. Everything that
+    // comes afterwards is not parsed.
+    EXPECT_EQ(0, in::A("192.168.0.42").compare(
+              *createRdataHelper("192.168.0.42\na b c d e f")));
 }
 
 }

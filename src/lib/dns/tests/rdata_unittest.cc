@@ -59,7 +59,8 @@ RdataTest::rdataFactoryFromFile(const RRType& rrtype, const RRClass& rrclass,
 
 namespace test {
 
-void dummyCallback(const string&, size_t, const string&) {
+void
+dummyCallback(const string&, size_t, const string&) {
 }
 
 RdataPtr
