@@ -27,8 +27,8 @@ namespace dhcp {
 
 // Define the current database schema values
 
-const uint32_t CURRENT_VERSION_VERSION = 0;
-const uint32_t CURRENT_VERSION_MINOR = 2;
+const uint32_t CURRENT_VERSION_VERSION = 1;
+const uint32_t CURRENT_VERSION_MINOR = 0;
 
 
 // Forward declaration of the Lease exchange objects.  This class is defined
@@ -119,6 +119,12 @@ public:
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
+    ///
+    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
+    ///        fit into the space allocated for the result.  This indicates a
+    ///        programming error.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
 
 
@@ -132,6 +138,12 @@ public:
     /// @param hwaddr hardware address of the client
     ///
     /// @return lease collection
+    ///
+    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
+    ///        fit into the space allocated for the result.  This indicates a
+    ///        programming error.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual Lease4Collection getLease4(const HWAddr& hwaddr) const;
 
     /// @brief Returns existing IPv4 leases for specified hardware address
@@ -144,6 +156,12 @@ public:
     /// @param subnet_id identifier of the subnet that lease must belong to
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
+    ///
+    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
+    ///        fit into the space allocated for the result.  This indicates a
+    ///        programming error.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual Lease4Ptr getLease4(const HWAddr& hwaddr,
                                 SubnetID subnet_id) const;
 
@@ -157,6 +175,12 @@ public:
     /// @param clientid client identifier
     ///
     /// @return lease collection
+    ///
+    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
+    ///        fit into the space allocated for the result.  This indicates a
+    ///        programming error.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual Lease4Collection getLease4(const ClientId& clientid) const;
 
     /// @brief Returns existing IPv4 lease for specified client-id
@@ -168,6 +192,12 @@ public:
     /// @param subnet_id identifier of the subnet that lease must belong to
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
+    ///
+    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
+    ///        fit into the space allocated for the result.  This indicates a
+    ///        programming error.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual Lease4Ptr getLease4(const ClientId& clientid,
                                 SubnetID subnet_id) const;
 
@@ -183,6 +213,9 @@ public:
     ///
     /// @throw isc::BadValue record retrieved from database had an invalid
     ///        lease type field.
+    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
+    ///        fit into the space allocated for the result.  This indicates a
+    ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const;
@@ -198,6 +231,14 @@ public:
     /// @param iaid IA identifier
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
+    ///
+    /// @throw isc::BadValue record retrieved from database had an invalid
+    ///        lease type field.
+    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
+    ///        fit into the space allocated for the result.  This indicates a
+    ///        programming error.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual Lease6Collection getLease6(const DUID& duid,
                                        uint32_t iaid) const;
 
@@ -208,6 +249,14 @@ public:
     /// @param subnet_id subnet id of the subnet the lease belongs to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
+    ///
+    /// @throw isc::BadValue record retrieved from database had an invalid
+    ///        lease type field.
+    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
+    ///        fit into the space allocated for the result.  This indicates a
+    ///        programming error.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual Lease6Ptr getLease6(const DUID& duid, uint32_t iaid,
                                 SubnetID subnet_id) const;
 
