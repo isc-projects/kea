@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,9 +16,9 @@
 #include <gtest/gtest.h>
 
 #include <log/macros.h>
-#include <log/buffer_appender.h>
 #include <log/logger_support.h>
 #include <log/log_messages.h>
+#include <log/log_buffer.h>
 
 #include <log4cplus/logger.h>
 #include <log4cplus/nullappender.h>
@@ -28,23 +28,10 @@ using namespace isc::log;
 namespace isc {
 namespace log {
 
-// In these tests we are testing the LogBuffer class itself,
-// and not the singleton usage of one, so we need another
-// special appender
-class TestLogBufferAppender : public log4cplus::Appender {
-public:
-    TestLogBufferAppender(LogBuffer& buffer) : buffer_(buffer) {}
-    virtual void close() {}
-    virtual void append(const log4cplus::spi::InternalLoggingEvent& event) {
-        buffer_.add(event);
-    }
-    LogBuffer& buffer_;
-};
-
 class LogBufferTest : public ::testing::Test {
 public:
-    LogBufferTest() : appender1(new TestLogBufferAppender(buffer1)),
-                      appender2(new TestLogBufferAppender(buffer2)),
+    LogBufferTest() : appender1(new BufferAppender(buffer1)),
+                      appender2(new BufferAppender(buffer2)),
                       logger(log4cplus::Logger::getInstance("buffer"))
     {
         logger.setLogLevel(log4cplus::TRACE_LOG_LEVEL);
@@ -71,6 +58,8 @@ public:
     log4cplus::Logger logger;
 };
 
+// Test that log events are indeed stored, and that they are
+// flushed to the new appenders of their logger
 TEST_F(LogBufferTest, flush) {
     checkBufferedSize(buffer1, 0);
     checkBufferedSize(buffer2, 0);
@@ -96,8 +85,8 @@ TEST_F(LogBufferTest, flush) {
     checkBufferedSize(buffer2, 3);
 }
 
+// Once flushed, logging new messages with the same buffer should fail
 TEST_F(LogBufferTest, addAfterFlush) {
-    // Once flushed, logging new messages with the same buffer should fail
     logger.addAppender(appender1);
     buffer1.flush();
     EXPECT_THROW(LOG4CPLUS_INFO(logger, "Foo"), LogBufferAddAfterFlush);
@@ -113,7 +102,3 @@ TEST_F(LogBufferTest, addAfterFlush) {
 
 }
 }
-
-namespace {
-
-} // end unnamed namespace

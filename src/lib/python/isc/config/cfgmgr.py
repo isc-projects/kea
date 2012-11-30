@@ -34,7 +34,7 @@ import bind10_config
 import isc.log
 from isc.log_messages.cfgmgr_messages import *
 
-logger = isc.log.Logger("cfgmgr")
+logger = isc.log.Logger("cfgmgr", buffer=True)
 
 class ConfigManagerDataReadError(Exception):
     """This exception is thrown when there is an error while reading

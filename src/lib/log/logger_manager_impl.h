@@ -53,8 +53,6 @@ public:
     /// \brief Constructor
     LoggerManagerImpl() {}
 
-    ~LoggerManagerImpl() {}
-
     /// \brief Initialize Processing
     ///
     /// This resets the hierachy of loggers back to their defaults.  This means
@@ -101,11 +99,8 @@ public:
     ///
     /// \param severity Severity to be associated with this logger
     /// \param dbglevel Debug level associated with the root logger
-    /// \param buffer If true, all log messages will be buffered until one of
-    ///        the \c process() methods is called. If false, initial logging
-    ///        shall go to the default output (i.e. stdout)
     static void reset(isc::log::Severity severity = isc::log::INFO,
-                      int dbglevel = 0, bool buffer = false);
+                      int dbglevel = 0);
 
 private:
     /// \brief Create console appender
@@ -139,12 +134,21 @@ private:
     static void createSyslogAppender(log4cplus::Logger& logger,
                                      const OutputOption& opt);
 
+    /// \brief Create buffered appender
+    ///
+    /// Appends an object to the logger that will store the log events sent
+    /// to the logger in the singleton \c LogBuffer instance. These log
+    /// messages are replayed to the logger when the LogBuffer instance is
+    /// flushed (which is done at the end of \c ProcessSpecification().
+    ///
+    /// \param logger Log4cplus logger to which the appender must be attached.
+    /// \param opt Output options for this appender.
     static void createBufferAppender(log4cplus::Logger& logger);
 
     /// \brief Set default layout and severity for root logger
     ///
-    /// Initializes the root logger to BIND 10 defaults - console output and
-    /// the passed severity/debug level.
+    /// Initializes the root logger to BIND 10 defaults - console or buffered
+    /// output and the passed severity/debug level.
     ///
     /// \param severity Severity of messages that the logger should output.
     /// \param dbglevel Debug level if severity = DEBUG
