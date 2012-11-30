@@ -30,6 +30,7 @@
 #include <log/log_messages.h>
 #include <log/logger_name.h>
 #include <log/logger_specification.h>
+#include <log/buffer_appender.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -37,67 +38,6 @@ using namespace std;
 
 namespace isc {
 namespace log {
-
-class LogBuffer {
-public:
-    LogBuffer() {
-        flushed_ = false;
-    }
-
-    ~LogBuffer() {
-        // If there is anything left in the buffer,
-        // it means no reconfig has been done, and
-        // we can assume the logging system was either
-        // never setup, or broke while doing so.
-        // So dump all that is left to stdout
-        flush_stdout();
-    }
-    void add(const log4cplus::spi::InternalLoggingEvent& event) {
-        if (flushed_) {
-            isc_throw(isc::Exception, "BUFFER APPEND AFTER FLUSH");
-        }
-        stored_.push_back(log4cplus::spi::InternalLoggingEvent(event));
-    }
-    void flush_stdout() {
-        // This does not show a bit of information normal log messages
-        // do, so perhaps we should try and setup a new logger here
-        // However, as this is called from a destructor, it may not
-        // be a good idea.
-        for (size_t i = 0; i < stored_.size(); ++i) {
-            std::cout << stored_.at(i).getMessage() << std::endl;
-            log4cplus::Logger logger = log4cplus::Logger::getInstance(stored_.at(i).getLoggerName());
-
-            logger.log(stored_.at(i).getLogLevel(), stored_.at(i).getMessage());
-        }
-        stored_.clear();
-    }
-    //void flush(log4cplus::Logger& logger) {
-    void flush() {
-        for (size_t i = 0; i < stored_.size(); ++i) {
-            const log4cplus::spi::InternalLoggingEvent event(stored_.at(i));
-            //logger.log(event.getLogLevel(), event.getMessage());
-            // Flush to the last defined logger
-            log4cplus::Logger logger = log4cplus::Logger::getInstance(event.getLoggerName());
-
-            logger.log(event.getLogLevel(), event.getMessage());
-        }
-        stored_.clear();
-        flushed_ = true;
-    }
-private:
-    std::vector<log4cplus::spi::InternalLoggingEvent> stored_;
-    bool flushed_;
-};
-
-LogBuffer& getLogBuffer() {
-    static boost::scoped_ptr<LogBuffer> log_buffer(NULL);
-    if (!log_buffer) {
-        log_buffer.reset(new LogBuffer);
-    }
-    return (*log_buffer);
-}
-
-
 
 // Reset hierarchy of loggers back to default settings.  This removes all
 // appenders from loggers, sets their severity to NOT_SET (so that events are
@@ -209,25 +149,15 @@ LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
     logger.addAppender(fileapp);
 }
 
-class BufferAppender : public log4cplus::Appender {
-public:
-    BufferAppender() {}
-
-    virtual void close() {
-        //relog();
-        //log2out();
-    }
-    virtual void append(const log4cplus::spi::InternalLoggingEvent& event) {
-        getLogBuffer().add(event);
-    }
-};
-
 void
 LoggerManagerImpl::createBufferAppender(log4cplus::Logger& logger)
 {
     log4cplus::SharedAppenderPtr bufferapp(new BufferAppender());
     bufferapp->setName("buffer");
     logger.addAppender(bufferapp);
+    // Since we do not know at what level the loggers will end up
+    // running, set it to the highest for now
+    logger.setLogLevel(log4cplus::TRACE_LOG_LEVEL);
 }
 
 // Syslog appender.

@@ -17,6 +17,7 @@
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <log/logger_support.h>
+#include <log/logger_manager.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -93,9 +94,10 @@ main(int argc, char* argv[]) {
     }
 
     // Initialize logging.  If verbose, we'll use maximum verbosity.
+    // If standalone is enabled, do not buffer initial log messages
     isc::log::initLogger(DHCP4_NAME,
                          (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
-                         isc::log::MAX_DEBUG_LEVEL, NULL, true);
+                         isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone);
     LOG_INFO(dhcp4_logger, DHCP4_STARTING);
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_START_INFO)
               .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no")
@@ -114,6 +116,7 @@ main(int argc, char* argv[]) {
                 // DHCP server in stand-alone mode, e.g. for testing
             }
         } else {
+            std::cout << "[XX] STANDALONE" << std::endl;
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_STANDALONE);
         }
         server.run();
