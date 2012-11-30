@@ -112,11 +112,9 @@ TEST_F(Rdata_RP_Test, createFromLexer) {
                                      "root.example.com. "
                                      "rp-text.example.com.")));
 
-    // Check that bad input throws as usual
-    EXPECT_THROW({
-        *test::createRdataUsingLexer(RRType::RP(), RRClass::IN(),
-                                     "mailbox.example.com.");
-    }, InvalidRdataText);
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::RP(), RRClass::IN(),
+                                             "mailbox.example.com."));
 }
 
 TEST_F(Rdata_RP_Test, toWireBuffer) {
