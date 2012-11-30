@@ -45,7 +45,7 @@ OptionDefContainer LibDHCP::v4option_defs_;
 OptionDefContainer LibDHCP::v6option_defs_;
 
 const OptionDefContainer&
-LibDHCP::getOptionDefs(Option::Universe u) {
+LibDHCP::getOptionDefs(const Option::Universe u) {
     switch (u) {
     case Option::V4:
         initStdOptionDefs4();
@@ -58,6 +58,17 @@ LibDHCP::getOptionDefs(Option::Universe u) {
     default:
         isc_throw(isc::BadValue, "invalid universe " << u << " specified");
     }
+}
+
+OptionDefinitionPtr
+LibDHCP::getOptionDef(const Option::Universe u, const uint16_t code) {
+    const OptionDefContainer& defs = getOptionDefs(u);
+    const OptionDefContainerTypeIndex& idx = defs.get<1>();
+    const OptionDefContainerTypeRange& range = idx.equal_range(code);
+    if (range.first != range.second) {
+        return (*range.first);
+    }
+    return (OptionDefinitionPtr());
 }
 
 OptionPtr
