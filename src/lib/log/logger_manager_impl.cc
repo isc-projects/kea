@@ -30,7 +30,7 @@
 #include <log/log_messages.h>
 #include <log/logger_name.h>
 #include <log/logger_specification.h>
-#include <log/buffer_appender.h>
+#include <log/log_buffer.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -70,11 +70,11 @@ LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
     // Set the additive flag.
     logger.setAdditivity(spec.getAdditive());
 
+    // Replace all appenders for this logger.
+    logger.removeAllAppenders();
+
     // Output options given?
     if (spec.optionCount() > 0) {
-
-        // Yes, so replace all appenders for this logger.
-        logger.removeAllAppenders();
 
         // Now process output specifications.
         for (LoggerSpecification::const_iterator i = spec.begin();
@@ -104,8 +104,6 @@ LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
         }
     } else {
         // If no output options are given, use a default appender
-        // Yes, so replace all appenders for this logger.
-        logger.removeAllAppenders();
         OutputOption opt;
         createConsoleAppender(logger, opt);
     }
@@ -152,7 +150,7 @@ LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
 void
 LoggerManagerImpl::createBufferAppender(log4cplus::Logger& logger)
 {
-    log4cplus::SharedAppenderPtr bufferapp(new BufferAppender());
+    log4cplus::SharedAppenderPtr bufferapp(new BufferAppender(getLogBuffer()));
     bufferapp->setName("buffer");
     logger.addAppender(bufferapp);
     // Since we do not know at what level the loggers will end up
@@ -187,18 +185,17 @@ LoggerManagerImpl::init(isc::log::Severity severity, int dbglevel,
     // Add the additional debug levels
     LoggerLevelImpl::init();
 
-    reset(severity, dbglevel, buffer);
+    initRootLogger(severity, dbglevel, buffer);
 }
 
 // Reset logging to default configuration.  This closes all appenders
 // and resets the root logger to output INFO messages to the console.
 // It is principally used in testing.
 void
-LoggerManagerImpl::reset(isc::log::Severity severity, int dbglevel,
-                         bool buffer)
+LoggerManagerImpl::reset(isc::log::Severity severity, int dbglevel)
 {
     // Initialize the root logger
-    initRootLogger(severity, dbglevel, buffer);
+    initRootLogger(severity, dbglevel);
 }
 
 // Initialize the root logger
