@@ -74,7 +74,7 @@ createRdataUsingLexer(const RRType& rrtype, const RRClass& rrclass,
     const MasterLoaderCallbacks::IssueCallback callback
         (boost::bind(&dummyCallback, _1, _2, _3));
     MasterLoaderCallbacks callbacks(callback, callback);
-    Name origin("example.org.");
+    const Name origin("example.org.");
 
     return (createRdata(rrtype, rrclass, lexer, &origin,
                         MasterLoader::MANY_ERRORS, callbacks));
