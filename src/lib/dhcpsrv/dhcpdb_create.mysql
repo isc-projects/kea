@@ -43,7 +43,7 @@ CREATE TABLE lease4 (
 # N.B. The use of a VARCHAR for the address is temporary for development:
 # it will eventually be replaced by BINARY(16).
 CREATE TABLE lease6 (
-    address VARCHAR(40) PRIMARY KEY NOT NULL,   # IPv6 address
+    address VARCHAR(39) PRIMARY KEY NOT NULL,   # IPv6 address
     duid VARBINARY(128),                        # DUID
     valid_lifetime INT UNSIGNED,                # Length of the lease (seconds)
     expire TIMESTAMP,                           # Expiration time of the lease
@@ -77,7 +77,7 @@ CREATE TABLE schema_version (
     minor INT                               # Minor version number
     );
 START TRANSACTION;
-INSERT INTO schema_version VALUES (0, 2);
+INSERT INTO schema_version VALUES (1, 0);
 COMMIT;
 
 # Notes:
