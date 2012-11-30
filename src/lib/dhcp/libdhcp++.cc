@@ -356,7 +356,7 @@ LibDHCP::initStdOptionDefs6() {
         case D6O_GEOCONF_CIVIC:
             definition->addRecordField(OPT_UINT8_TYPE);
             definition->addRecordField(OPT_UINT16_TYPE);
-            definition->addRecordField(OPT_STRING_TYPE);
+            definition->addRecordField(OPT_BINARY_TYPE);
             break;
         case D6O_REMOTE_ID:
             definition->addRecordField(OPT_UINT32_TYPE);
