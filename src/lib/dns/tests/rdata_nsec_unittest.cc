@@ -66,6 +66,19 @@ TEST_F(Rdata_NSEC_Test, createFromWire_NSEC) {
     // Invalid bitmap cases are tested in Rdata_NSECBITMAP_Test.
 }
 
+TEST_F(Rdata_NSEC_Test, createFromLexer_NSEC) {
+    const generic::NSEC rdata_nsec(nsec_txt);
+    EXPECT_EQ(0, rdata_nsec.compare(
+        *test::createRdataUsingLexer(RRType::NSEC(), RRClass::IN(),
+                                     nsec_txt)));
+
+    // Check that bad input throws as usual
+    EXPECT_THROW({
+        *test::createRdataUsingLexer(RRType::NSEC(), RRClass::IN(),
+                                     "www.isc.org.");
+    }, InvalidRdataText);
+}
+
 TEST_F(Rdata_NSEC_Test, toWireRenderer_NSEC) {
     renderer.skip(2);
     const generic::NSEC rdata_nsec(nsec_txt);
