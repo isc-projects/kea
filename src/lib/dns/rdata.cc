@@ -214,6 +214,7 @@ Generic::Generic(MasterLexer& lexer, const Name*,
         const MasterToken& token = lexer.getNextToken();
         if ((token.getType() == MasterToken::END_OF_FILE) ||
             (token.getType() == MasterToken::END_OF_LINE)) {
+            lexer.ungetToken(); // let the upper layer handle the end-of token
             break;
         }
 
