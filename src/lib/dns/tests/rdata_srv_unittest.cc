@@ -123,11 +123,11 @@ TEST_F(Rdata_SRV_Test, createFromLexer) {
     EXPECT_EQ(0, rdata_srv.compare(
         *test::createRdataUsingLexer(RRType::SRV(), RRClass::IN(),
                                      "1 5 1500 a.example.com.")));
-    // port is too large
-    EXPECT_THROW({
-        *test::createRdataUsingLexer(RRType::SRV(), RRClass::IN(),
-                                     "1 5 281474976710656 a.example.com.");
-    }, InvalidRdataText);
+
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::SRV(), RRClass::IN(),
+                                             "1 5 281474976710656 "
+                                             "a.example.com."));
 }
 
 TEST_F(Rdata_SRV_Test, toWireBuffer) {

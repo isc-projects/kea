@@ -83,11 +83,9 @@ TEST_F(Rdata_HINFO_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
                                      hinfo_str)));
 
-    // Check that bad input throws as usual
-    EXPECT_THROW({
-        *test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
-                                     "\"Pentium\"\"Linux\"");
-    }, InvalidRdataText);
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
+                                             "\"Pentium\"\"Linux\""));
 }
 
 TEST_F(Rdata_HINFO_Test, toText) {

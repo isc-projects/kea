@@ -213,12 +213,10 @@ TYPED_TEST(NSEC3PARAMLikeTest, createFromLexer) {
         *test::createRdataUsingLexer(this->getType(), RRClass::IN(),
                                      this->salt_txt)));
 
-    // Check that bad input throws as usual (too large algorithm)
-    EXPECT_THROW({
-        *test::createRdataUsingLexer(this->getType(), RRClass::IN(),
-                                     "1000000 1 1 ADDAFEEE" +
-                                     this->getCommonText());
-    }, InvalidRdataText);
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(this->getType(), RRClass::IN(),
+                                             "1000000 1 1 ADDAFEEE" +
+                                             this->getCommonText()));
 }
 
 template <typename OUTPUT_TYPE>
