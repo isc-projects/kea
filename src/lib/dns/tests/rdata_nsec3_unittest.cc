@@ -136,12 +136,10 @@ TEST_F(Rdata_NSEC3_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::NSEC3(), RRClass::IN(),
                                      nsec3_txt)));
 
-    // Check that bad input throws as usual (next hash shouldn't be
-    // padded)
-    EXPECT_THROW({
-        *test::createRdataUsingLexer(RRType::NSEC3(), RRClass::IN(),
-                                     "1 1 1 ADDAFEEE CPNMU=== A NS SOA");
-    }, InvalidRdataText);
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::NSEC3(), RRClass::IN(),
+                                             "1 1 1 ADDAFEEE CPNMU=== "
+                                             "A NS SOA"));
 }
 
 TEST_F(Rdata_NSEC3_Test, assign) {

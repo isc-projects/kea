@@ -87,9 +87,17 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
             MasterLoader::Options options,
             MasterLoaderCallbacks& callbacks)
 {
-     return (RRParamRegistry::getRegistry().createRdata(rrtype, rrclass,
-                                                        lexer, origin,
-                                                        options, callbacks));
+    RdataPtr ret;
+
+    try {
+        ret = RRParamRegistry::getRegistry().createRdata(rrtype, rrclass,
+                                                         lexer, origin,
+                                                         options, callbacks);
+    } catch (...) {
+        // ret is NULL here.
+    }
+
+    return (ret);
 }
 
 int

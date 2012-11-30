@@ -68,10 +68,9 @@ TEST_F(Rdata_DHCID_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::DHCID(), RRClass::IN(),
                                      string_dhcid)));
 
-    // Check that bad input throws as usual
-    EXPECT_THROW({
-        *test::createRdataUsingLexer(RRType::DHCID(), RRClass::IN(), "00");
-    }, isc::BadValue);
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::DHCID(), RRClass::IN(),
+                                             "00"));
 }
 
 TEST_F(Rdata_DHCID_Test, toWireRenderer) {
