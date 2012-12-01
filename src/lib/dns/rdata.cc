@@ -133,7 +133,7 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
     } catch (const MasterLexer::LexerError& error) {
         fromtextError(error_issued, lexer, callbacks, &error.token_, "");
     } catch (const Exception& ex) {
-        // Catching all isc::Exception is too broad, and right now we don't
+        // Catching all isc::Exception is too broad, but right now we don't
         // have better granularity.  When we complete #2518 we can make this
         // finer.
         fromtextError(error_issued, lexer, callbacks, NULL, ex.what());
