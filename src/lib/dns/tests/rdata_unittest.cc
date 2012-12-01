@@ -136,6 +136,7 @@ TEST_F(RdataTest, createRdataWithLexer) {
     ss << aaaa_rdata.toText() << " extra token\n"; // 2 extra tokens
     ss << ")\n"; // causing lexer error in parsing the RDATA text
     ss << "192.0.2.1\n"; // semantics error: IPv4 address is given for AAAA
+    ss << aaaa_rdata.toText();  // valid, but end with EOF, not EOL
     lexer.pushSource(ss);
 
     CreateRdataCallback callback;
@@ -185,6 +186,15 @@ TEST_F(RdataTest, createRdataWithLexer) {
     callback.check(src_name, 5, CreateRdataCallback::ERROR,
                    "createRdata from text failed: Failed to convert "
                    "'192.0.2.1' to IN/AAAA RDATA");
+
+    // Input is valid and parse will succeed, but with a warning that the
+    // file is not ended with a newline.
+    callback.clear();
+    rdata = createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+                        MasterLoader::MANY_ERRORS, callbacks);
+    EXPECT_EQ(0, aaaa_rdata.compare(*rdata));
+    callback.check(src_name, 6, CreateRdataCallback::WARN,
+                   "file does not end with newline");
 }
 
 }
