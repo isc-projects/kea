@@ -138,27 +138,33 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
         // finer.
         fromtextError(error_issued, lexer, callbacks, NULL, ex.what());
     }
-    // Other exceptions mean a serious implementation bug; it doesn't make
-    // sense to catch and try to recover from them here.  Just propagate.
+    // Other exceptions mean a serious implementation bug or fatal system
+    // error; it doesn't make sense to catch and try to recover from them
+    // here.  Just propagate.
 
     // Consume to end of line / file.
     // If not at end of line initially set error code.
     // Call callback via fromtextError once if there was an error.
     do {
         const MasterToken& token = lexer.getNextToken();
-        if (token.getType() != MasterToken::END_OF_LINE &&
-            token.getType() != MasterToken::END_OF_FILE) {
+        switch (token.getType()) {
+        case MasterToken::END_OF_LINE:
+            return (rdata);
+        case MasterToken::END_OF_FILE:
+            callbacks.warning(lexer.getSourceName(), lexer.getSourceLine(),
+                              "file does not end with newline");
+            return (rdata);
+        default:
             rdata.reset();      // we'll return NULL
-            if (!error_issued) {
-                fromtextError(error_issued, lexer, callbacks, &token,
-                              "extra input text");
-            }
-        } else {                // reached EOL or EOF
-            break;
+            fromtextError(error_issued, lexer, callbacks, &token,
+                          "extra input text");
+            // Continue until we see EOL or EOF
         }
     } while (true);
 
-    return (rdata);
+    // We shouldn't reach here
+    assert(false);
+    return (RdataPtr()); // add explicit return to silence some compilers
 }
 
 int
