@@ -84,15 +84,33 @@ createRdata(const RRType& rrtype, const RRClass& rrclass, const Rdata& source)
 
 namespace {
 void
-fromtextError(const MasterLexer& lexer, MasterLoaderCallbacks& callbacks,
-              const MasterToken& token, const char* reason)
+fromtextError(bool& error_issued, const MasterLexer& lexer,
+              MasterLoaderCallbacks& callbacks,
+              const MasterToken* token, const char* reason)
 {
-    switch (token.getType()) {
+    // Don't be too noisy if there are many issues for single RDATA
+    if (error_issued) {
+        return;
+    }
+    error_issued = true;
+
+    if (token == NULL) {
+        callbacks.error(lexer.getSourceName(), lexer.getSourceLine(),
+                        "createRdata from text failed: " + string(reason));
+        return;
+    }
+
+    switch (token->getType()) {
     case MasterToken::STRING:
     case MasterToken::QSTRING:
         callbacks.error(lexer.getSourceName(), lexer.getSourceLine(),
                         "createRdata from text failed near '" +
-                        token.getString() + "': " + string(reason));
+                        token->getString() + "': " + string(reason));
+        break;
+    case MasterToken::ERROR:
+        callbacks.error(lexer.getSourceName(), lexer.getSourceLine(),
+                        "createRdata from text failed: " +
+                        token->getErrorText());
         break;
     default:
         assert(false);
@@ -106,18 +124,39 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
             MasterLoader::Options options,
             MasterLoaderCallbacks& callbacks)
 {
-    const RdataPtr rdata = RRParamRegistry::getRegistry().createRdata(
-        rrtype, rrclass, lexer, origin, options, callbacks);
+    RdataPtr rdata;
+
+    bool error_issued = false;
+    try {
+        rdata = RRParamRegistry::getRegistry().createRdata(
+            rrtype, rrclass, lexer, origin, options, callbacks);
+    } catch (const MasterLexer::LexerError& error) {
+        fromtextError(error_issued, lexer, callbacks, &error.token_, "");
+    } catch (const Exception& ex) {
+        // Catching all isc::Exception is too broad, and right now we don't
+        // have better granularity.  When we complete #2518 we can make this
+        // finer.
+        fromtextError(error_issued, lexer, callbacks, NULL, ex.what());
+    }
+    // Other exceptions mean a serious implementation bug; it doesn't make
+    // sense to catch and try to recover from them here.  Just propagate.
 
     // Consume to end of line / file.
     // If not at end of line initially set error code.
     // Call callback via fromtextError once if there was an error.
-    const MasterToken& token = lexer.getNextToken();
-    if (token.getType() != MasterToken::END_OF_LINE &&
-        token.getType() != MasterToken::END_OF_FILE) {
-        fromtextError(lexer, callbacks, token, "extra input text");
-        return (RdataPtr());
-    }
+    do {
+        const MasterToken& token = lexer.getNextToken();
+        if (token.getType() != MasterToken::END_OF_LINE &&
+            token.getType() != MasterToken::END_OF_FILE) {
+            rdata.reset();      // we'll return NULL
+            if (!error_issued) {
+                fromtextError(error_issued, lexer, callbacks, &token,
+                              "extra input text");
+            }
+        } else {                // reached EOL or EOF
+            break;
+        }
+    } while (true);
 
     return (rdata);
 }

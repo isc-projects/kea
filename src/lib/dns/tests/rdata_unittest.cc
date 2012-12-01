@@ -105,8 +105,12 @@ public:
         reason_txt_.clear();
     }
 
+    // Return if callback is called since the previous call to clear().
+    bool isCalled() const { return (type_ != NONE); }
+
     void check(const string& expected_srcname, size_t expected_line,
                CallbackType expected_type, const string& expected_reason)
+        const
     {
         EXPECT_EQ(expected_srcname, source_);
         EXPECT_EQ(expected_line, line_);
@@ -129,6 +133,9 @@ TEST_F(RdataTest, createRdataWithLexer) {
     const string src_name = "stream-" + boost::lexical_cast<string>(&ss);
     ss << aaaa_rdata.toText() << "\n"; // valid case
     ss << aaaa_rdata.toText() << " extra-token\n"; // extra token
+    ss << aaaa_rdata.toText() << " extra token\n"; // 2 extra tokens
+    ss << ")\n"; // causing lexer error in parsing the RDATA text
+    ss << "192.0.2.1\n"; // semantics error: IPv4 address is given for AAAA
     lexer.pushSource(ss);
 
     CreateRdataCallback callback;
@@ -137,17 +144,47 @@ TEST_F(RdataTest, createRdataWithLexer) {
                     CreateRdataCallback::ERROR, _1, _2, _3),
         boost::bind(&CreateRdataCallback::callback, &callback,
                     CreateRdataCallback::WARN,  _1, _2, _3));
+
+    // Valid case.
     ConstRdataPtr rdata = createRdata(RRType::AAAA(), RRClass::IN(), lexer,
                                       NULL, MasterLoader::MANY_ERRORS,
                                       callbacks);
     EXPECT_EQ(0, aaaa_rdata.compare(*rdata));
+    EXPECT_FALSE(callback.isCalled());
 
+    // Broken RDATA text: extra token.  createRdata() returns NULL, error
+    // callback is called.
     callback.clear();
     EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
                              MasterLoader::MANY_ERRORS, callbacks));
     callback.check(src_name, 2, CreateRdataCallback::ERROR,
                    "createRdata from text failed near 'extra-token': "
                    "extra input text");
+
+    // Similar to the previous case, but only the first extra token triggers
+    // callback.
+    callback.clear();
+    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+                             MasterLoader::MANY_ERRORS, callbacks));
+    callback.check(src_name, 3, CreateRdataCallback::ERROR,
+                   "createRdata from text failed near 'extra': "
+                   "extra input text");
+
+    // Lexer error will happen, corresponding error callback will be triggered.
+    callback.clear();
+    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+                             MasterLoader::MANY_ERRORS, callbacks));
+    callback.check(src_name, 4, CreateRdataCallback::ERROR,
+                   "createRdata from text failed: unbalanced parentheses");
+
+    // Semantics level error will happen, corresponding error callback will be
+    // triggered.
+    callback.clear();
+    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+                             MasterLoader::MANY_ERRORS, callbacks));
+    callback.check(src_name, 5, CreateRdataCallback::ERROR,
+                   "createRdata from text failed: Failed to convert "
+                   "'192.0.2.1' to IN/AAAA RDATA");
 }
 
 }
