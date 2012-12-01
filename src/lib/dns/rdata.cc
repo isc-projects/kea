@@ -143,7 +143,6 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
     // here.  Just propagate.
 
     // Consume to end of line / file.
-    // If not at end of line initially set error code.
     // Call callback via fromtextError once if there was an error.
     do {
         const MasterToken& token = lexer.getNextToken();
