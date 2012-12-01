@@ -36,6 +36,7 @@ run_unittests_SOURCES += opcode_unittest.cc
 run_unittests_SOURCES += rcode_unittest.cc
 run_unittests_SOURCES += rdata_unittest.h rdata_unittest.cc
 run_unittests_SOURCES += rdatafields_unittest.cc
+run_unittests_SOURCES += rdata_char_string_unittest.cc
 run_unittests_SOURCES += rdata_in_a_unittest.cc rdata_in_aaaa_unittest.cc
 run_unittests_SOURCES += rdata_ns_unittest.cc rdata_soa_unittest.cc
 run_unittests_SOURCES += rdata_txt_like_unittest.cc
