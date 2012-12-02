@@ -20,6 +20,7 @@
 #include <log/log_messages.h>
 #include <log/log_buffer.h>
 
+#include <log4cplus/loggingmacros.h>
 #include <log4cplus/logger.h>
 #include <log4cplus/nullappender.h>
 
@@ -40,7 +41,8 @@ public:
     ~LogBufferTest() {
         // If any log messages are left, we don't care, get rid of them,
         // by flushing them to a null appender
-        log4cplus::SharedAppenderPtr null_appender(new log4cplus::NullAppender());
+        log4cplus::SharedAppenderPtr null_appender(
+            new log4cplus::NullAppender());
         logger.removeAllAppenders();
         logger.addAppender(null_appender);
         buffer1.flush();
