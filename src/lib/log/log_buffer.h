@@ -18,6 +18,7 @@
 #include <exceptions/exceptions.h>
 
 #include <log4cplus/logger.h>
+#include <log4cplus/spi/loggingevent.h>
 #include <boost/scoped_ptr.hpp>
 
 namespace isc {
