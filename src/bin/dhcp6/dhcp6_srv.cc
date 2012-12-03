@@ -24,6 +24,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_int_array.h>
+#include <dhcp/option_custom.h>
 #include <dhcp/pkt6.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
@@ -348,13 +349,18 @@ void Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer)
 }
 
 OptionPtr Dhcpv6Srv::createStatusCode(uint16_t code, const std::string& text) {
+    OptionDefinitionPtr status_code_def =
+        LibDHCP::getOptionDef(Option::V6, D6O_STATUS_CODE);
+    assert(status_code_def);
 
-    // @todo: Implement Option6_StatusCode and rewrite this code here
-    vector<uint8_t> data(text.c_str(), text.c_str() + text.length());
-    data.insert(data.begin(), static_cast<uint8_t>(code % 256));
-    data.insert(data.begin(), static_cast<uint8_t>(code >> 8));
-    OptionPtr status(new Option(Option::V6, D6O_STATUS_CODE, data));
-    return (status);
+    boost::shared_ptr<OptionCustom> option_status =
+        boost::dynamic_pointer_cast<
+            OptionCustom>(status_code_def->optionFactory(Option::V6, D6O_STATUS_CODE));
+    assert(option_status);
+
+    option_status->writeInteger<uint16_t>(code, 0);
+    option_status->writeString(text, 1);
+    return (option_status);
 }
 
 Subnet6Ptr Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
