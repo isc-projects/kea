@@ -1129,6 +1129,70 @@ TEST_F(OptionCustomTest, setIpv6AddressDataArray) {
     );
 }
 
+TEST_F(OptionCustomTest, setRecordData) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "record");
+
+    ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
+    ASSERT_NO_THROW(opt_def.addRecordField("boolean"));
+    ASSERT_NO_THROW(opt_def.addRecordField("fqdn"));
+    ASSERT_NO_THROW(opt_def.addRecordField("ipv4-address"));
+    ASSERT_NO_THROW(opt_def.addRecordField("ipv6-address"));
+    ASSERT_NO_THROW(opt_def.addRecordField("string"));
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // The number of elements should be equal to number of elements
+    // in the record.
+    ASSERT_EQ(6, option->getDataFieldsNum());
+
+    // Check that the default values have been correctly set.
+    uint16_t value0;
+    ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
+    EXPECT_EQ(0, value0);
+    bool value1 = true;
+    ASSERT_NO_THROW(value1 = option->readBoolean(1));
+    EXPECT_FALSE(value1);
+    std::string value2;
+    ASSERT_NO_THROW(value2 = option->readFqdn(2));
+    EXPECT_EQ(".", value2);
+    IOAddress value3("127.0.0.1");
+    ASSERT_NO_THROW(value3 = option->readAddress(3));
+    EXPECT_EQ("0.0.0.0", value3.toText());
+    IOAddress value4("2001:db8:1::1");
+    ASSERT_NO_THROW(value4 = option->readAddress(4));
+    EXPECT_EQ("::", value4.toText());
+    std::string value5 = "xyz";
+    ASSERT_NO_THROW(value5 = option->readString(5));
+    EXPECT_TRUE(value5.empty());
+
+    // Override each value with a new value.
+    ASSERT_NO_THROW(option->writeInteger<uint16_t>(1234, 0));
+    ASSERT_NO_THROW(option->writeBoolean(true, 1));
+    ASSERT_NO_THROW(option->writeFqdn("example.com", 2));
+    ASSERT_NO_THROW(option->writeAddress(IOAddress("192.168.0.1"), 3));
+    ASSERT_NO_THROW(option->writeAddress(IOAddress("2001:db8:1::100"), 4));
+    ASSERT_NO_THROW(option->writeString("hello world", 5));
+
+    // Check that the new values have been correctly set.
+    ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
+    EXPECT_EQ(1234, value0);
+    ASSERT_NO_THROW(value1 = option->readBoolean(1));
+    EXPECT_TRUE(value1);
+    ASSERT_NO_THROW(value2 = option->readFqdn(2));
+    EXPECT_EQ("example.com.", value2);
+    ASSERT_NO_THROW(value3 = option->readAddress(3));
+    EXPECT_EQ("192.168.0.1", value3.toText());
+    ASSERT_NO_THROW(value4 = option->readAddress(4));
+    EXPECT_EQ("2001:db8:1::100", value4.toText());
+    ASSERT_NO_THROW(value5 = option->readString(5));
+    EXPECT_EQ(value5, "hello world");
+}
 
 // The purpose of this test is to verify that pack function for
 // DHCPv4 custom option works correctly.
