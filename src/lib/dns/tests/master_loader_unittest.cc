@@ -111,6 +111,32 @@ TEST_F(MasterLoaderTest, basicLoad) {
     checkRR("www.example.org", RRType::A(), "192.0.2.1");
 }
 
+// Try loading data incrementally.
+TEST_F(MasterLoaderTest, incrementalLoad) {
+    setLoader("example.org", Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    EXPECT_FALSE(loader_->loadIncremental(2));
+
+    EXPECT_TRUE(errors_.empty());
+    EXPECT_TRUE(warnings_.empty());
+
+    checkRR("example.org", RRType::SOA(), "ns1.example.org. admin.example.org. "
+            "1234 3600 1800 2419200 7200");
+    checkRR("example.org", RRType::NS(), "ns1.example.org.");
+
+    // The third one is not loaded yet
+    EXPECT_TRUE(rrsets_.empty());
+
+    // Load the rest.
+    EXPECT_TRUE(loader_->loadIncremental(20));
+
+    EXPECT_TRUE(errors_.empty());
+    EXPECT_TRUE(warnings_.empty());
+
+    checkRR("www.example.org", RRType::A(), "192.0.2.1");
+}
+
 // Try loading from file that doesn't exist. There should be single error
 // saying so.
 TEST_F(MasterLoaderTest, invalidFile) {
