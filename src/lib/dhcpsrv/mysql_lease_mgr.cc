@@ -885,9 +885,8 @@ MySqlLeaseMgr::MySqlLeaseMgr(const LeaseMgr::ParameterMap& parameters)
     // Enable autocommit.  To avoid a flush to disk on every commit, the global
     // parameter innodb_flush_log_at_trx_commit should be set to 2.  This will
     // cause the changes to be written to the log, but flushed to disk in the
-    // background every second or so.  Setting the parameter to that value will
-    // speed up the system, but at the risk of losing data if the system
-    // crashes.
+    // background every second.  Setting the parameter to that value will speed
+    // up the system, but at the risk of losing data if the system crashes.
     my_bool result = mysql_autocommit(mysql_, 1);
     if (result != 0) {
         isc_throw(DbOperationError, mysql_error(mysql_));
@@ -988,7 +987,7 @@ MySqlLeaseMgr::openDatabase() {
         shost = getParameter("host");
         host = shost.c_str();
     } catch (...) {
-        ; // No host.  Fine, we'll use "localhost"
+        // No host.  Fine, we'll use "localhost"
     }
 
     const char* user = NULL;
@@ -997,7 +996,7 @@ MySqlLeaseMgr::openDatabase() {
         suser = getParameter("user");
         user = suser.c_str();
     } catch (...) {
-        ; // No user.  Fine, we'll use NULL
+        // No user.  Fine, we'll use NULL
     }
 
     const char* password = NULL;
@@ -1006,7 +1005,7 @@ MySqlLeaseMgr::openDatabase() {
         spassword = getParameter("password");
         password = spassword.c_str();
     } catch (...) {
-        ; // No password.  Fine, we'll use NULL
+        // No password.  Fine, we'll use NULL
     }
 
     const char* name = NULL;
@@ -1098,7 +1097,7 @@ MySqlLeaseMgr::prepareStatements() {
 }
 
 // Add leases to the database.  The two public methods accept a lease object
-// (of different types), bind the contents to the appropriate prepared
+// (either V4 of V6), bind the contents to the appropriate prepared
 // statement, then call common code to execute the statement.
 
 bool
@@ -1194,9 +1193,6 @@ void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     // overhead of going back and forth between client and server.
     status = mysql_stmt_store_result(statements_[stindex]);
     checkError(status, stindex, "unable to set up for storing all results");
-
-    // Initialize for returning the data
-    result.clear();
 
     // Set up the fetch "release" object to release resources associated
     // with the call to mysql_stmt_fetch when this method exits, then
@@ -1659,7 +1655,7 @@ MySqlLeaseMgr::getName() const {
     try {
         name = getParameter("name");
     } catch (...) {
-        ;
+        // Return an empty name
     }
     return (name);
 }

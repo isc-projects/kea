@@ -72,7 +72,7 @@ string connectionString(const char* type, const char* name, const char* host,
     if (type != NULL) {
         result += string(type);
     }
-if (name != NULL) {
+    if (name != NULL) {
         if (! result.empty()) {
             result += space;
         }
@@ -182,9 +182,11 @@ public:
             ioaddress6_.push_back(ioaddr);
         }
 
+        // Ensure schema is the correct one.
         destroySchema();
         createSchema();
 
+        // Connect to the database
         try {
             LeaseMgrFactory::create(validConnectionString());
         } catch (...) {
@@ -200,9 +202,8 @@ public:
 
     /// @brief Destructor
     ///
-    /// Rolls back all pending transactions.  The deletion of the
-    /// lmptr_ member variable will close the database.  Then
-    /// reopen it and delete everything created by the test.
+    /// Rolls back all pending transactions.  The deletion of lmptr_ will close
+    /// the database.  Then reopen it and delete everything created by the test.
     virtual ~MySqlLeaseMgrTest() {
         lmptr_->rollback();
         LeaseMgrFactory::destroy();
@@ -221,8 +222,8 @@ public:
 
     /// @brief Initialize Lease4 Fields
     ///
-    /// Returns a pointer to a Lease4 structure.  Different values are put
-    /// in the lease according to the address passed.
+    /// Returns a pointer to a Lease4 structure.  Different values are put into
+    /// the lease according to the address passed.
     ///
     /// This is just a convenience function for the test methods.
     ///
@@ -330,8 +331,8 @@ public:
 
     /// @brief Initialize Lease6 Fields
     ///
-    /// Returns a pointer to a Lease6 structure.  Different values are put
-    /// in the lease according to the address passed.
+    /// Returns a pointer to a Lease6 structure.  Different values are put into
+    /// the lease according to the address passed.
     ///
     /// This is just a convenience function for the test methods.
     ///
@@ -359,8 +360,7 @@ public:
             lease->type_ = Lease6::LEASE_IA_TA;
             lease->prefixlen_ = 4;
             lease->iaid_ = 142;
-            lease->duid_ = boost::shared_ptr<DUID>(
-                new DUID(vector<uint8_t>(8, 0x77)));
+            lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x77)));
             lease->preferred_lft_ = 900;
             lease->valid_lft_ = 8677;
             lease->cltt_ = 168256;
@@ -370,8 +370,7 @@ public:
             lease->type_ = Lease6::LEASE_IA_TA;
             lease->prefixlen_ = 0;
             lease->iaid_ = 42;
-            lease->duid_ = boost::shared_ptr<DUID>(
-                new DUID(vector<uint8_t>(8, 0x42)));
+            lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
             lease->preferred_lft_ = 3600;
             lease->valid_lft_ = 3677;
             lease->cltt_ = 123456;
@@ -381,8 +380,7 @@ public:
             lease->type_ = Lease6::LEASE_IA_PD;
             lease->prefixlen_ = 7;
             lease->iaid_ = 89;
-            lease->duid_ = boost::shared_ptr<DUID>(
-                new DUID(vector<uint8_t>(8, 0x3a)));
+            lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x3a)));
             lease->preferred_lft_ = 1800;
             lease->valid_lft_ = 5412;
             lease->cltt_ = 234567;
@@ -396,7 +394,7 @@ public:
             for (uint8_t i = 31; i < 126; ++i) {
                 duid.push_back(i);
             }
-            lease->duid_ = boost::shared_ptr<DUID>(new DUID(duid));
+            lease->duid_ = DuidPtr(new DUID(duid));
 
             // The times used in the next tests are deliberately restricted - we
             // should be able to cope with valid lifetimes up to 0xffffffff.
@@ -412,8 +410,7 @@ public:
             lease->type_ = Lease6::LEASE_IA_PD;
             lease->prefixlen_ = 15;
             lease->iaid_ = 42;
-            lease->duid_ = boost::shared_ptr<DUID>(
-                new DUID(vector<uint8_t>(8, 0x42)));
+            lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
             lease->preferred_lft_ = 4800;
             lease->valid_lft_ = 7736;
             lease->cltt_ = 222456;
@@ -424,8 +421,8 @@ public:
             lease->type_ = Lease6::LEASE_IA_PD;
             lease->prefixlen_ = 24;
             lease->iaid_ = 42;                          // Same as lease 4
-            lease->duid_ = boost::shared_ptr<DUID>(
-                new DUID(vector<uint8_t>(8, 0x42)));    // Same as lease 4
+            lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
+                                                        // Same as lease 4
             lease->preferred_lft_ = 5400;
             lease->valid_lft_ = 7832;
             lease->cltt_ = 227476;
@@ -436,8 +433,8 @@ public:
             lease->type_ = Lease6::LEASE_IA_PD;
             lease->prefixlen_ = 24;
             lease->iaid_ = 93;
-            lease->duid_ = boost::shared_ptr<DUID>(
-                new DUID(vector<uint8_t>(8, 0x42)));    // Same as lease 4
+            lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
+                                                        // Same as lease 4
             lease->preferred_lft_ = 5400;
             lease->valid_lft_ = 1832;
             lease->cltt_ = 627476;
@@ -448,8 +445,7 @@ public:
             lease->type_ = Lease6::LEASE_IA_PD;
             lease->prefixlen_ = 24;
             lease->iaid_ = 42;
-            lease->duid_ = boost::shared_ptr<DUID>(
-                new DUID(vector<uint8_t>(8, 0xe5)));
+            lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0xe5)));
             lease->preferred_lft_ = 5600;
             lease->valid_lft_ = 7975;
             lease->cltt_ = 213876;
@@ -482,7 +478,10 @@ public:
         // Check they are different
         for (int i = 0; i < (leases.size() - 1); ++i) {
             for (int j = (i + 1); j < leases.size(); ++j) {
-                ASSERT_TRUE(leases[i] != leases[j]);
+                stringstream s;
+                s << "Comparing leases " << i << " & " << j << " for equality";
+                SCOPED_TRACE(s.str());
+                EXPECT_TRUE(*leases[i] != *leases[j]);
             }
         }
     }
@@ -536,6 +535,47 @@ public:
     vector<string>  straddress6_;   ///< String forms of IPv6 addresses
     vector<IOAddress> ioaddress6_;  ///< IOAddress forms of IPv6 addresses
 };
+
+///@{
+/// @brief Test Utilities
+///
+/// The follow are a set of functions used during the tests.
+
+/// @brief Compare two Lease4 structures for equality
+void
+detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second) {
+    // Compare address strings.  Comparison of address objects is not used, as
+    // odd things happen when they are different: the EXPECT_EQ macro appears to
+    // call the operator uint32_t() function, which causes an exception to be
+    // thrown for IPv6 addresses.
+    EXPECT_EQ(first->addr_.toText(), second->addr_.toText());
+    EXPECT_TRUE(first->hwaddr_ == second->hwaddr_);
+    EXPECT_TRUE(*first->client_id_ == *second->client_id_);
+    EXPECT_EQ(first->valid_lft_, second->valid_lft_);
+    EXPECT_EQ(first->cltt_, second->cltt_);
+    EXPECT_EQ(first->subnet_id_, second->subnet_id_);
+}
+
+/// @brief Compare two Lease6 structures for equality
+void
+detailCompareLease(const Lease6Ptr& first, const Lease6Ptr& second) {
+    EXPECT_EQ(first->type_, second->type_);
+
+    // Compare address strings.  Comparison of address objects is not used, as
+    // odd things happen when they are different: the EXPECT_EQ macro appears to
+    // call the operator uint32_t() function, which causes an exception to be
+    // thrown for IPv6 addresses.
+    EXPECT_EQ(first->addr_.toText(), second->addr_.toText());
+    EXPECT_EQ(first->prefixlen_, second->prefixlen_);
+    EXPECT_EQ(first->iaid_, second->iaid_);
+    EXPECT_TRUE(*first->duid_ == *second->duid_);
+    EXPECT_EQ(first->preferred_lft_, second->preferred_lft_);
+    EXPECT_EQ(first->valid_lft_, second->valid_lft_);
+    EXPECT_EQ(first->cltt_, second->cltt_);
+    EXPECT_EQ(first->subnet_id_, second->subnet_id_);
+}
+
+///@}
 
 
 /// @brief Check that database can be opened
@@ -667,53 +707,9 @@ TEST_F(MySqlLeaseMgrTest, checkVersion) {
     EXPECT_EQ(CURRENT_VERSION_MINOR, version.second);
 }
 
-/// @brief Compare two Lease4 structures for equality
-void
-detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second) {
-    // Compare address strings.  Comparison of address objects is not used, as
-    // odd things happen when they are different: the EXPECT_EQ macro appears to
-    // call the operator uint32_t() function, which causes an exception to be
-    // thrown for IPv6 addresses.
-    EXPECT_EQ(first->addr_.toText(), second->addr_.toText());
-    EXPECT_TRUE(first->hwaddr_ == second->hwaddr_);
-    EXPECT_TRUE(*first->client_id_ == *second->client_id_);
-    EXPECT_EQ(first->valid_lft_, second->valid_lft_);
-    EXPECT_EQ(first->cltt_, second->cltt_);
-    EXPECT_EQ(first->subnet_id_, second->subnet_id_);
-}
-
-/// @brief Compare two Lease6 structures for equality
-void
-detailCompareLease(const Lease6Ptr& first, const Lease6Ptr& second) {
-    EXPECT_EQ(first->type_, second->type_);
-
-    // Compare address strings.  Comparison of address objects is not used, as
-    // odd things happen when they are different: the EXPECT_EQ macro appears to
-    // call the operator uint32_t() function, which causes an exception to be
-    // thrown for IPv6 addresses.
-    EXPECT_EQ(first->addr_.toText(), second->addr_.toText());
-    EXPECT_EQ(first->prefixlen_, second->prefixlen_);
-    EXPECT_EQ(first->iaid_, second->iaid_);
-    EXPECT_TRUE(*first->duid_ == *second->duid_);
-    EXPECT_EQ(first->preferred_lft_, second->preferred_lft_);
-    EXPECT_EQ(first->valid_lft_, second->valid_lft_);
-    EXPECT_EQ(first->cltt_, second->cltt_);
-    EXPECT_EQ(first->subnet_id_, second->subnet_id_);
-}
-
-
-/// @brief Basic Lease Checks
+/// @brief Basic Lease4 Checks
 ///
-/// Checks that the add/get/delete works.  All are done within one
-/// test so that "rollback" can be used to remove trace of the tests
-/// from the database.
-///
-/// Tests where a collection of leases can be returned are in the test
-/// Lease4Collection.
-///
-/// @param leases Vector of leases used in the tests
-/// @param ioaddress Vector of IOAddresses used in the tests
-
+/// Checks that the addLease, getLease4 (by address) and deleteLease4 works.
 TEST_F(MySqlLeaseMgrTest, basicLease4) {
     // Get the leases to be used for the test.
     vector<Lease4Ptr> leases = createLeases4();
@@ -756,15 +752,9 @@ TEST_F(MySqlLeaseMgrTest, basicLease4) {
     detailCompareLease(leases[2], l_returned);
 }
 
-
-/// @brief Check individual Lease6 methods
+/// @brief Basic Lease6 Checks
 ///
-/// Checks that the add/get/delete works.  All are done within one
-/// test so that "rollback" can be used to remove trace of the tests
-/// from the database.
-///
-/// Tests where a collection of leases can be returned are in the test
-/// Lease6Collection.
+/// Checks that the addLease, getLease6 (by address) and deleteLease6 works.
 TEST_F(MySqlLeaseMgrTest, basicLease6) {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
@@ -836,7 +826,6 @@ TEST_F(MySqlLeaseMgrTest, getLease4AddressSubnetId) {
     EXPECT_FALSE(l_returned);
 }
 
-
 /// @brief Check GetLease4 methods - access by Hardware Address
 ///
 /// Adds leases to the database and checks that they can be accessed via
@@ -888,8 +877,6 @@ TEST_F(MySqlLeaseMgrTest, getLease4Hwaddr) {
     EXPECT_EQ(0, returned.size());
 }
 
-
-
 /// @brief Check GetLease4 methods - access by Hardware Address & Subnet ID
 ///
 /// Adds leases to the database and checks that they can be accessed via
@@ -940,7 +927,6 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
                  isc::dhcp::MultipleRecords);
 }
 
-
 /// @brief Check GetLease4 methods - access by Client ID
 ///
 /// Adds leases to the database and checks that they can be accessed via
@@ -988,7 +974,6 @@ TEST_F(MySqlLeaseMgrTest, getLease4ClientId) {
     EXPECT_EQ(0, returned.size());
 }
 
-
 /// @brief Check GetLease4 methods - access by Client ID & Subnet ID
 ///
 /// Adds leases to the database and checks that they can be accessed via
@@ -1025,7 +1010,6 @@ TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSubnetId) {
     returned = lmptr_->getLease4(invalid, leases[1]->subnet_id_ + 1);
     EXPECT_FALSE(returned);
 }
-
 
 /// @brief Check GetLease6 methods - access by DUID/IAID
 ///
@@ -1072,8 +1056,6 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaid) {
     EXPECT_EQ(0, returned.size());
 }
 
-
-
 /// @brief Check GetLease6 methods - access by DUID/IAID/SubnetID
 ///
 /// Adds leases to the database and checks that they can be accessed via
@@ -1110,7 +1092,6 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
                                  leases[1]->subnet_id_);
     EXPECT_FALSE(returned);
 }
-
 
 /// @brief Lease4 update tests
 ///
@@ -1155,7 +1136,6 @@ TEST_F(MySqlLeaseMgrTest, updateLease4) {
     lmptr_->deleteLease4(ioaddress4_[2]);
     EXPECT_THROW(lmptr_->updateLease4(leases[2]), isc::dhcp::NoSuchLease);
 }
-
 
 /// @brief Lease6 update tests
 ///

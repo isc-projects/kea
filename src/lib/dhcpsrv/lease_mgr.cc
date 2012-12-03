@@ -29,7 +29,8 @@
 
 using namespace std;
 
-using namespace isc::dhcp;
+namespace isc {
+namespace dhcp {
 
 Lease6::Lease6(LeaseType type, const isc::asiolink::IOAddress& addr,
                DuidPtr duid, uint32_t iaid, uint32_t preferred, uint32_t valid,
@@ -83,16 +84,46 @@ Lease6::toText() {
 }
 
 bool
+Lease4::operator==(const Lease4& other) const {
+    return (
+        addr_ == other.addr_ &&
+        ext_ == other.ext_ &&
+        hwaddr_ == other.hwaddr_ &&
+        *client_id_ == *other.client_id_ &&
+        t1_ == other.t1_ &&
+        t2_ == other.t2_ &&
+        valid_lft_ == other.valid_lft_ &&
+        cltt_ == other.cltt_ &&
+        subnet_id_ == other.subnet_id_ &&
+        fixed_ == other.fixed_ &&
+        hostname_ == other.hostname_ &&
+        fqdn_fwd_ == other.fqdn_fwd_ &&
+        fqdn_rev_ == other.fqdn_rev_ &&
+        comments_ == other.comments_
+    );
+}
+
+bool
 Lease6::operator==(const Lease6& other) const {
     return (
-        type_ == other.type_ &&
         addr_ == other.addr_ &&
+        type_ == other.type_ &&
         prefixlen_ == other.prefixlen_ &&
         iaid_ == other.iaid_ &&
         *duid_ == *other.duid_ &&
         preferred_lft_ == other.preferred_lft_ &&
         valid_lft_ == other.valid_lft_ &&
+        t1_ == other.t1_ &&
+        t2_ == other.t2_ &&
         cltt_ == other.cltt_ &&
-        subnet_id_ == other.subnet_id_
-        );
+        subnet_id_ == other.subnet_id_ &&
+        fixed_ == other.fixed_ &&
+        hostname_ == other.hostname_ &&
+        fqdn_fwd_ == other.fqdn_fwd_ &&
+        fqdn_rev_ == other.fqdn_rev_ &&
+        comments_ == other.comments_
+    );
 }
+
+} // namespace isc::dhcp
+} // namespace isc

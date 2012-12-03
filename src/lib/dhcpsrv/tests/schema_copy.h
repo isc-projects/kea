@@ -25,7 +25,9 @@ namespace {
 // by semicolons, and the strings must end with a comma.  The final line
 // statement must be NULL (not in quotes)
 
-// THIS MUST BE KEPT UP TO DATE AND UPDATED IF THE SCHEMA CHANGES
+// NOTE: This file mirrors the schema in src/lib/dhcpsrv/dhcpdb_create.mysql.
+//       If this file is altered, please ensure that any change is compatible
+//       with the schema in dhcpdb_create.mysql.
 
 // Deletion of existing tables.
 

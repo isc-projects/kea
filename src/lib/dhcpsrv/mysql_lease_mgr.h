@@ -31,7 +31,7 @@ const uint32_t CURRENT_VERSION_VERSION = 1;
 const uint32_t CURRENT_VERSION_MINOR = 0;
 
 
-// Forward declaration of the Lease exchange objects.  This class is defined
+// Forward declaration of the Lease exchange objects.  These classes are defined
 // in the .cc file.
 class MySqlLease4Exchange;
 class MySqlLease6Exchange;
@@ -419,13 +419,13 @@ public:
         DELETE_LEASE4,              // Delete from lease4 by address
         DELETE_LEASE6,              // Delete from lease6 by address
         GET_LEASE4_ADDR,            // Get lease4 by address
-        GET_LEASE4_CLIENTID,        // Get lease4 by Client ID
-        GET_LEASE4_CLIENTID_SUBID,  // Get lease4 by Client ID
+        GET_LEASE4_CLIENTID,        // Get lease4 by client ID
+        GET_LEASE4_CLIENTID_SUBID,  // Get lease4 by client ID & subnet ID
         GET_LEASE4_HWADDR,          // Get lease4 by HW address
         GET_LEASE4_HWADDR_SUBID,    // Get lease4 by HW address & subnet ID
         GET_LEASE6_ADDR,            // Get lease6 by address
         GET_LEASE6_DUID_IAID,       // Get lease6 by DUID and IAID
-        GET_LEASE6_DUID_IAID_SUBID, // Get lease6 by DUID, IAID and Subnet ID
+        GET_LEASE6_DUID_IAID_SUBID, // Get lease6 by DUID, IAID and subnet ID
         GET_VERSION,                // Obtain version number
         INSERT_LEASE4,              // Add entry to lease4 table
         INSERT_LEASE6,              // Add entry to lease6 table
@@ -472,9 +472,9 @@ private:
 
     /// @brief Add Lease Common Code
     ///
-    /// This method performs the common actions for both flavours of the
-    /// addLease method.  It binds the contents of the lease object to
-    /// the prepated statement and adds it to the database.
+    /// This method performs the common actions for both flavours (V4 and V6)
+    /// of the addLease method.  It binds the contents of the lease object to
+    /// the prepared statement and adds it to the database.
     ///
     /// @param stindex Index of statemnent being executed
     /// @param bind MYSQL_BIND array that has been created for the type
@@ -495,8 +495,9 @@ private:
     /// @param stindex Index of statement being executed
     /// @param bind MYSQL_BIND array for input parameters
     /// @param exchange Exchange object to use
-    /// @param lease LeaseCollection object returned.  Note that any data in
-    ///        the collection is cleared before new data is added.
+    /// @param lease LeaseCollection object returned.  Note that any leases in
+    ///        the collection when this method is called are not erased: the
+    ///        new data is appended to the end.
     /// @param single If true, only a single data item is to be retrieved.
     ///        If more than one is present, a MultipleRecords exception will
     ///        be thrown.
@@ -518,8 +519,9 @@ private:
     ///
     /// @param stindex Index of statement being executed
     /// @param bind MYSQL_BIND array for input parameters
-    /// @param lease LeaseCollection object returned.  Note that any data in
-    ///        the collection is cleared before new data is added.
+    /// @param lease LeaseCollection object returned.  Note that any leases in
+    ///        the collection when this method is called are not erased: the
+    ///        new data is appended to the end.
     ///
     /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
@@ -538,8 +540,8 @@ private:
     ///
     /// @param stindex Index of statement being executed
     /// @param bind MYSQL_BIND array for input parameters
-    /// @param lease LeaseCollection object returned.  Note that any data in
-    ///        the collection is cleared before new data is added.
+    /// @param lease LeaseCollection object returned.  Note that any existing
+    ///        data in the collection is erased first.
     ///
     /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
@@ -551,7 +553,7 @@ private:
         getLeaseCollection(stindex, bind, exchange6_, result);
     }
 
-    /// @brief Get Lease6 Common Code
+    /// @brief Get Lease4 Common Code
     ///
     /// This method performs the common actions for the various getLease4()
     /// methods.  It acts as an interface to the getLeaseCollection() method,
@@ -563,9 +565,9 @@ private:
     void getLease(StatementIndex stindex, MYSQL_BIND* bind,
                   Lease4Ptr& result) const;
 
-    /// @brief Get Lease4 Common Code
+    /// @brief Get Lease6 Common Code
     ///
-    /// This method performs the common actions for the various getLease4()
+    /// This method performs the common actions for the various getLease46)
     /// methods.  It acts as an interface to the getLeaseCollection() method,
     /// but retrieveing only a single lease.
     ///
