@@ -50,10 +50,8 @@ public:
 
     bool loadIncremental(size_t count_limit) {
         size_t count = 0;
-        bool done = false;
-        // TODO: Replace getNextToken with the wrapper version
-        while (!done && (count < count_limit)) {
-            // Skip all EOLNs and finish on EOF
+        while (count < count_limit) {
+            // Skip all EOLNs (empty lines) and finish on EOF
             bool empty = true;
             do {
                 const MasterToken& empty_token(lexer_.getNextToken());
