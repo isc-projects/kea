@@ -1007,6 +1007,43 @@ TEST_F(OptionCustomTest, setBooleanDataArray) {
     EXPECT_TRUE(value2);
 }
 
+// The purpose of this test is to verify that am option carying
+// an array of 16-bit signed integer values can be created with
+// no values initially and that the values can be later added to it.
+TEST_F(OptionCustomTest, setUint16DataArray) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "uint16", true);
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // Initially, the array should contain no values.
+    ASSERT_EQ(0, option->getDataFieldsNum());
+
+    // Add 3 new data fields holding integer values.
+    ASSERT_NO_THROW(option->addArrayDataField<uint16_t>(67));
+    ASSERT_NO_THROW(option->addArrayDataField<uint16_t>(876));
+    ASSERT_NO_THROW(option->addArrayDataField<uint16_t>(32222));
+
+    // We should now have 3 data fields.
+    ASSERT_EQ(3, option->getDataFieldsNum());
+
+    // Check that the values have been correctly set.
+    uint16_t value0;
+    ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
+    EXPECT_EQ(67, value0);
+    uint16_t value1;
+    ASSERT_NO_THROW(value1 = option->readInteger<uint16_t>(1));
+    EXPECT_EQ(876, value1);
+    uint16_t value2;
+    ASSERT_NO_THROW(value2 = option->readInteger<uint16_t>(2));
+    EXPECT_EQ(32222, value2);
+}
+
 /// The purpose of this test is to verify that an option comprising
 /// array of IPv4 address can be created with no addresses and that
 /// multiple IPv4 addresses can be added to it after creation.
