@@ -136,7 +136,7 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                 return (factoryIAAddr6(type, begin, end));
             }
         }
-        return (OptionPtr(new OptionCustom(*this, u, begin, end)));
+        return (OptionPtr(new OptionCustom(*this, u, OptionBuffer(begin, end))));
 
     } catch (const Exception& ex) {
         isc_throw(InvalidOptionValue, ex.what());
