@@ -349,16 +349,27 @@ void Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer)
 }
 
 OptionPtr Dhcpv6Srv::createStatusCode(uint16_t code, const std::string& text) {
+    // @todo This function uses OptionCustom class to manage contents
+    // of the data fields. Since this this option is frequently used
+    // it may be good to implement dedicated class to avoid performance
+    // impact.
+
+    // Get the definition of the option holding status code.
     OptionDefinitionPtr status_code_def =
         LibDHCP::getOptionDef(Option::V6, D6O_STATUS_CODE);
+    // This definition is assumed to be initialized in LibDHCP.
     assert(status_code_def);
 
+    // As there is no dedicated class to represent Status Code
+    // the OptionCustom class should be returned here.
     boost::shared_ptr<OptionCustom> option_status =
         boost::dynamic_pointer_cast<
             OptionCustom>(status_code_def->optionFactory(Option::V6, D6O_STATUS_CODE));
     assert(option_status);
 
+    // Set status code to 'code' (0 - means data field #0).
     option_status->writeInteger<uint16_t>(code, 0);
+    // Set a message (1 - means data field #1).
     option_status->writeString(text, 1);
     return (option_status);
 }
