@@ -57,8 +57,11 @@ TEST_F(Rdata_HINFO_Test, createFromText) {
 }
 
 TEST_F(Rdata_HINFO_Test, badText) {
-    // Fields must be seperated by spaces
-    EXPECT_THROW(const HINFO hinfo("\"Pentium\"\"Linux\""), InvalidRdataText);
+    // Only 2 fields must exist
+    EXPECT_THROW(const HINFO hinfo("\"Pentium\"\"Linux\"\"Computer\""),
+                 InvalidRdataText);
+    EXPECT_THROW(const HINFO hinfo("\"Pentium\" \"Linux\" \"Computer\""),
+                 InvalidRdataText);
     // Field cannot be missing
     EXPECT_THROW(const HINFO hinfo("Pentium"), InvalidRdataText);
     // The <character-string> cannot exceed 255 characters
@@ -82,10 +85,16 @@ TEST_F(Rdata_HINFO_Test, createFromLexer) {
     EXPECT_EQ(0, rdata_hinfo.compare(
         *test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
                                      hinfo_str)));
-
+    EXPECT_EQ(0, rdata_hinfo.compare(
+        *test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
+                                     "\"Pentium\"\"Linux\"")));
     // Exceptions cause NULL to be returned.
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
-                                             "\"Pentium\"\"Linux\""));
+                                             "\"Pentium\"\"Linux\""
+                                             "\"Computer\""));
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
+                                             "\"Pentium\" \"Linux\" "
+                                             "\"Computer\""));
 }
 
 TEST_F(Rdata_HINFO_Test, toText) {
