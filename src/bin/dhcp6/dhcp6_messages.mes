@@ -81,6 +81,12 @@ This message indicates that the server failed to grant (in response to
 received REQUEST) a lease for a given client. There may be many reasons for
 such failure. Each specific failure is logged in a separate log entry.
 
+% DHCP6_REQUIRED_OPTIONS_CHECK_FAIL %1 message received from %2 failed the following check: %3
+This message indicates that received message has invalid number of options:
+mandatory client-id option is missing, server-id forbidden in that particular
+type of message is present, there is more than one instance of client-id
+or server-id etc. Exact reason for rejecting the packed is printed.
+
 % DHCP6_NOT_RUNNING IPv6 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
 IPv6 DHCP server but it is not running.
