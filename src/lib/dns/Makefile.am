@@ -82,6 +82,8 @@ EXTRA_DIST += rdata/in_1/srv_33.h
 #EXTRA_DIST += rdata/template.cc
 #EXTRA_DIST += rdata/template.h
 
+noinst_SCRIPTS = gen-rdatacode.py
+
 # auto-generate by gen-rdatacode.py:
 BUILT_SOURCES = rrclass.h rrtype.h rrparamregistry.cc
 BUILT_SOURCES += rdataclass.h rdataclass.cc
@@ -141,7 +143,7 @@ rrclass.h: rrclass-placeholder.h
 rrtype.h: rrtype-placeholder.h
 rrparamregistry.cc: rrparamregistry-placeholder.cc
 rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: Makefile
-	./gen-rdatacode.py
+	$(PYTHON) ./gen-rdatacode.py
 
 libdns___includedir = $(includedir)/$(PACKAGE_NAME)/dns
 libdns___include_HEADERS = \
