@@ -216,7 +216,7 @@ OptionDataTypeUtil::readFqdn(const std::vector<uint8_t>& buf,
     // If buffer is empty emit an error.
     if (buf.empty()) {
         isc_throw(BadDataTypeCast, "unable to read FQDN from a buffer."
-                  << " The buffer is empty");
+                  << " The buffer is empty.");
     }
     // Copy the data from a buffer to InputBuffer so as we can use
     // isc::dns::Name object to get the FQDN. This is not the most

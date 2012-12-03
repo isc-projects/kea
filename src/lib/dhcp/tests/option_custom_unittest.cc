@@ -944,10 +944,34 @@ TEST_F(OptionCustomTest, setStringData) {
     // By default the string data field is empty.
     EXPECT_TRUE(value.empty());
     // Write some text to this field.
-    EXPECT_NO_THROW(option->writeString("hello world"));
+    ASSERT_NO_THROW(option->writeString("hello world"));
     // Check that it has been actually written.
     EXPECT_NO_THROW(value = option->readString());
     EXPECT_EQ("hello world", value);
+}
+
+/// The purpose of this test is to verify that an option comprising
+/// a default FQDN value can be created and that this value can be
+/// overriden after the option has been created.
+TEST_F(OptionCustomTest, setFqdnData) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "fqdn");
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+    // Read a default FQDN value from the option.
+    std::string fqdn;
+    ASSERT_NO_THROW(fqdn = option->readFqdn());
+    EXPECT_EQ(".", fqdn);
+    // Try override the default FQDN value.
+    ASSERT_NO_THROW(option->writeFqdn("example.com"));
+    // Check that the value has been actually overriden.
+    ASSERT_NO_THROW(fqdn = option->readFqdn());
+    EXPECT_EQ("example.com.", fqdn);
 }
 
 // The purpose of this test is to verify that pack function for

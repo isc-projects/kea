@@ -101,7 +101,7 @@ OptionCustom::createBuffers() {
 
             if (data_size == 0 &&
                 *field == OPT_FQDN_TYPE) {
-                    OptionDataTypeUtil::writeFqdn(".", buf);
+                OptionDataTypeUtil::writeFqdn(".", buf);
             } else {
                 buf.resize(data_size);
             }
@@ -114,8 +114,9 @@ OptionCustom::createBuffers() {
         if (data_size == 0 &&
             data_type == OPT_FQDN_TYPE) {
             OptionDataTypeUtil::writeFqdn(".", buf);
+        } else {
+            buf.resize(data_size);
         }
-        buf.resize(data_size);
         buffers.push_back(buf);
     }
     std::swap(buffers, buffers_);
@@ -414,12 +415,16 @@ OptionCustom::writeBoolean(const bool value, const uint32_t index) {
 std::string
 OptionCustom::readFqdn(const uint32_t index) const {
     checkIndex(index);
-    try {
-        size_t len = 0;
-        return (OptionDataTypeUtil::readFqdn(buffers_[index], len));
-    } catch (const Exception& ex) {
-        isc_throw(BadDataTypeCast, ex.what());
-    }
+    size_t len = 0;
+    return (OptionDataTypeUtil::readFqdn(buffers_[index], len));
+}
+
+void
+OptionCustom::writeFqdn(const std::string& fqdn, const uint32_t index) {
+    checkIndex(index);
+
+    buffers_[index].clear();
+    OptionDataTypeUtil::writeFqdn(fqdn, buffers_[index]);
 }
 
 std::string
