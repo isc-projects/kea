@@ -46,11 +46,6 @@ public:
         // srv_(0) means to not open any sockets. We don't want to
         // deal with sockets here, just check if configuration handling
         // is sane.
-
-        // Create instances of option definitions and put them into storage.
-        // This is normally initialized by the server when calling run()
-        // run() function.
-        LibDHCP::initStdOptionDefs(Option::V6);
     }
 
     ~Dhcp6ParserTest() {

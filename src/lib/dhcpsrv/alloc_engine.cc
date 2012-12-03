@@ -51,7 +51,7 @@ AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress&
         }
     }
 
-    return (IOAddress::from_bytes(addr.getFamily(), packed));
+    return (IOAddress::fromBytes(addr.getFamily(), packed));
 }
 
 

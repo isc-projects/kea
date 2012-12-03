@@ -122,8 +122,8 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
 }
 
 void
-RdataSet::destroy(util::MemorySegment& mem_sgmt, RRClass rrclass,
-                  RdataSet* rdataset)
+RdataSet::destroy(util::MemorySegment& mem_sgmt, RdataSet* rdataset,
+                  RRClass rrclass)
 {
     const size_t data_len =
         RdataReader(rrclass, rdataset->type,
