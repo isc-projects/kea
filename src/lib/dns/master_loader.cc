@@ -77,9 +77,11 @@ public:
             // Return the last token, as it was not empty
             lexer_.ungetToken();
 
-            const string name_string(getString());
+            const MasterToken::StringRegion
+                name_string(lexer_.getNextToken(MasterToken::QSTRING).
+                            getStringRegion());
             // TODO $ handling
-            const Name name(name_string); // TODO: Origin
+            const Name name(name_string.beg, name_string.len, &zone_origin_);
             // TODO: Some more flexibility. We don't allow omitting anything yet
 
             // The parameters
@@ -87,9 +89,9 @@ public:
             const RRClass rrclass(getString());
             const RRType rrtype(getString());
 
-            // TODO: Origin handling
             const rdata::RdataPtr data(rdata::createRdata(rrtype, rrclass,
-                                                          lexer_, NULL,
+                                                          lexer_,
+                                                          &zone_origin_,
                                                           options_,
                                                           callbacks_));
             // In case we get NULL, it means there was error creating
@@ -108,7 +110,7 @@ public:
 
 private:
     MasterLexer lexer_;
-    const Name& zone_origin_;
+    const Name zone_origin_;
     const RRClass zone_class_;
     MasterLoaderCallbacks callbacks_;
     AddRRCallback add_callback_;

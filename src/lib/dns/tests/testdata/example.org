@@ -11,4 +11,4 @@ example.org.        3600    IN  NS ns1.example.org.
 
 
 ; Some empty lines here. They are to make sure the loader can skip them.
-www.example.org.    3600    IN  A 192.0.2.1
+www                 3600    IN  A 192.0.2.1 ; Test a relative name as well.
