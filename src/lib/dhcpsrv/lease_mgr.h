@@ -183,7 +183,7 @@ struct Lease4 {
     /// consistent T1 and T2 values. This is specified in seconds since cltt.
     uint32_t t2_;
 
-    /// @brief Ralid lifetime
+    /// @brief Valid lifetime
     ///
     /// Expressed as number of seconds since cltt.
     uint32_t valid_lft_;
@@ -224,6 +224,18 @@ struct Lease4 {
     /// Currently not used. It may be used for keeping comments made by the
     /// system administrator.
     std::string comments_;
+
+    /// @brief Compare two leases for equality
+    ///
+    /// @param other lease6 object with which to compare
+    bool operator==(const Lease4& other) const;
+
+    /// @brief Compare two leases for inequality
+    ///
+    /// @param other lease6 object with which to compare
+    bool operator!=(const Lease4& other) const {
+        return (!operator==(other));
+    }
 
     /// @todo: Add DHCPv4 failover related fields here
 };
@@ -279,7 +291,7 @@ struct Lease6 {
     uint32_t iaid_;
 
     /// @brief Client identifier
-    boost::shared_ptr<DUID> duid_;
+    DuidPtr duid_;
 
     /// @brief preferred lifetime
     ///
@@ -373,7 +385,6 @@ struct Lease6 {
     bool operator!=(const Lease6& other) const {
         return (!operator==(other));
     }
-
 };
 
 /// @brief Pointer to a Lease6 structure.
