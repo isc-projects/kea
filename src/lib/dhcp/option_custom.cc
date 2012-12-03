@@ -73,18 +73,10 @@ OptionCustom::addArrayDataField(const bool value) {
 }
 
 void
-OptionCustom::checkArrayType() const {
-    if (!definition_.getArrayType()) {
-        isc_throw(InvalidOperation, "failed to add new array entry to an"
-                  << " option. The option is not an array.");
-    }
-}
-
-void
 OptionCustom::checkIndex(const uint32_t index) const {
     if (index >= buffers_.size()) {
         isc_throw(isc::OutOfRange, "specified data field index " << index
-                  << " is out of rangex.");
+                  << " is out of range.");
     }
 }
 
@@ -113,7 +105,7 @@ OptionCustom::checkDataType(const uint32_t index) const {
     if (OptionDataTypeTraits<T>::type != data_type) {
         isc_throw(isc::dhcp::InvalidDataType,
                   "specified data type " << data_type << " does not"
-                  "match data type in an option definition for field"
+                  " match the data type in an option definition for field"
                   " index " << index);
     }
 }
