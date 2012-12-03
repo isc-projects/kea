@@ -84,7 +84,8 @@ typedef boost::shared_ptr<DUID> DuidPtr;
 /// This class is intended to be a generic IPv4 client identifier. It can hold
 /// a client-id
 class ClientId : DUID {
- public:
+public:
+    static const size_t MAX_CLIENT_ID_LEN = DUID::MAX_DUID_LEN;
 
     /// constructor based on vector<uint8_t>
     ClientId(const std::vector<uint8_t>& clientid);
