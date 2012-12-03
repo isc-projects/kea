@@ -132,44 +132,51 @@ bool Dhcpv6Srv::run() {
                       .arg(query->getBuffer().getLength())
                       .arg(query->toText());
 
-            switch (query->getType()) {
-            case DHCPV6_SOLICIT:
-                rsp = processSolicit(query);
-                break;
+            try {
+                switch (query->getType()) {
+                case DHCPV6_SOLICIT:
+                    rsp = processSolicit(query);
+                    break;
 
-            case DHCPV6_REQUEST:
-                rsp = processRequest(query);
-                break;
+                case DHCPV6_REQUEST:
+                    rsp = processRequest(query);
+                    break;
 
-            case DHCPV6_RENEW:
-                rsp = processRenew(query);
-                break;
+                case DHCPV6_RENEW:
+                    rsp = processRenew(query);
+                    break;
 
-            case DHCPV6_REBIND:
-                rsp = processRebind(query);
-                break;
+                case DHCPV6_REBIND:
+                    rsp = processRebind(query);
+                    break;
 
-            case DHCPV6_CONFIRM:
-                rsp = processConfirm(query);
-                break;
+                case DHCPV6_CONFIRM:
+                    rsp = processConfirm(query);
+                    break;
 
-            case DHCPV6_RELEASE:
+                case DHCPV6_RELEASE:
                 rsp = processRelease(query);
                 break;
 
-            case DHCPV6_DECLINE:
-                rsp = processDecline(query);
-                break;
+                case DHCPV6_DECLINE:
+                    rsp = processDecline(query);
+                    break;
 
-            case DHCPV6_INFORMATION_REQUEST:
-                rsp = processInfRequest(query);
-                break;
+                case DHCPV6_INFORMATION_REQUEST:
+                    rsp = processInfRequest(query);
+                    break;
 
-            default:
-                // Only action is to output a message if debug is enabled,
-                // and that will be covered by the debug statement before
-                // the "switch" statement.
-                ;
+                default:
+                    // Only action is to output a message if debug is enabled,
+                    // and that will be covered by the debug statement before
+                    // the "switch" statement.
+                    ;
+                }
+            } catch (const RFCViolation& e) {
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_REQUIRED_OPTIONS_CHECK_FAIL)
+                    .arg(query->getName())
+                    .arg(query->getRemoteAddr())
+                    .arg(e.what());
             }
 
             if (rsp) {
@@ -195,9 +202,6 @@ bool Dhcpv6Srv::run() {
                 }
             }
         }
-
-        // TODO add support for config session (see src/bin/auth/main.cc)
-        //      so this daemon can be controlled from bob
     }
 
     return (true);
@@ -357,6 +361,54 @@ OptionPtr Dhcpv6Srv::createStatusCode(uint16_t code, const std::string& text) {
     return (status);
 }
 
+void Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
+                            RequirementLevel serverid) {
+    Option::OptionCollection client_ids = pkt->getOptions(D6O_CLIENTID);
+    switch (clientid) {
+    case MANDATORY:
+        if (client_ids.size() != 1) {
+            isc_throw(RFCViolation, "Exactly 1 client-id option expected in "
+                      << pkt->getName() << ", but " << client_ids.size()
+                      << " received");
+        }
+        break;
+    case OPTIONAL:
+        if (client_ids.size() > 1) {
+            isc_throw(RFCViolation, "Too many (" << client_ids.size()
+                      << ") client-id options received in " << pkt->getName());
+        }
+        break;
+
+    case FORBIDDEN:
+        // doesn't make sense - client-id is always allowed
+        break;
+    }
+
+    Option::OptionCollection server_ids = pkt->getOptions(D6O_SERVERID);
+    switch (serverid) {
+    case FORBIDDEN:
+        if (server_ids.size() > 0) {
+            isc_throw(RFCViolation, "Exactly 1 server-id option expected, but "
+                      << server_ids.size() << " received in " << pkt->getName());
+        }
+        break;
+
+    case MANDATORY:
+        if (server_ids.size() != 1) {
+            isc_throw(RFCViolation, "Invalid number of server-id options received ("
+                      << server_ids.size() << "), exactly 1 expected in message "
+                      << pkt->getName());
+        }
+        break;
+
+    case OPTIONAL:
+        if (server_ids.size() > 1) {
+            isc_throw(RFCViolation, "Too many (" << server_ids.size()
+                      << ") client-id options received in " << pkt->getName());
+        }
+    }
+}
+
 Subnet6Ptr Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr());
 
@@ -370,7 +422,7 @@ void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 
     // We need to select a subnet the client is connected in.
     Subnet6Ptr subnet = selectSubnet(question);
-    if (subnet) {
+    if (!subnet) {
         // This particular client is out of luck today. We do not have
         // information about the subnet he is connected to. This likely means
         // misconfiguration of the server (or some relays). We will continue to
@@ -378,12 +430,13 @@ void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
         // addresses or prefixes, no subnet specific configuration etc. The only
         // thing this client can get is some global information (like DNS
         // servers).
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_SUBNET_SELECTED)
-            .arg(subnet->toText());
-    } else {
+
         // perhaps this should be logged on some higher level? This is most likely
         // configuration bug.
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_SUBNET_SELECTION_FAILED);
+    } else {
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_SUBNET_SELECTED)
+            .arg(subnet->toText());
     }
 
     // @todo: We should implement Option6Duid some day, but we can do without it
@@ -514,6 +567,14 @@ OptionPtr Dhcpv6Srv::handleIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid, 
 
 Pkt6Ptr Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
+    if (!sanityCheck(solicit, MANDATORY, FORBIDDEN)) {
+        return (Pkt6Ptr());
+    }
+
+Pkt6Ptr Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
+
+    sanityCheck(solicit, MANDATORY, FORBIDDEN);
+
     Pkt6Ptr advertise(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
 
     copyDefaultOptions(solicit, advertise);
@@ -526,6 +587,9 @@ Pkt6Ptr Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 }
 
 Pkt6Ptr Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
+
+    sanityCheck(request, MANDATORY, MANDATORY);
+
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, request->getTransid()));
 
     copyDefaultOptions(request, reply);
