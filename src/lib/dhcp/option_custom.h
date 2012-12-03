@@ -98,6 +98,26 @@ public:
     /// @param value value to be stored in the created buffer.
     void addArrayDataField(const bool value);
 
+    /// @brief Create new buffer and store integer value in it.
+    ///
+    /// @param value value to be stored in the created buffer.
+    /// @tparam T integer type of the value being stored.
+    template<typename T>
+    void addArrayDataField(const T value) {
+        checkArrayType();
+
+        OptionDataType data_type = definition_.getType();
+        if (OptionDataTypeTraits<T>::type != data_type) {
+            isc_throw(isc::dhcp::InvalidDataType,
+                      "specified data type " << data_type << " does not"
+                      " match the data type in an option definition");
+        }
+
+        OptionBuffer buf;
+        OptionDataTypeUtil::writeInt<T>(value, buf);
+        buffers_.push_back(buf);
+    }
+
     /// @brief Return a number of the data fields.
     ///
     /// @return number of data fields held by the option.
@@ -280,7 +300,12 @@ private:
     /// an array.
     ///
     /// @throw isc::InvalidOperation if option is not an array.
-    inline void checkArrayType() const;
+    inline void checkArrayType() const {
+        if (!definition_.getArrayType()) {
+            isc_throw(InvalidOperation, "failed to add new array entry to an"
+                      << " option. The option is not an array.");
+        }
+    }
 
     /// @brief Verify that the integer type is consistent with option
     /// field type.
