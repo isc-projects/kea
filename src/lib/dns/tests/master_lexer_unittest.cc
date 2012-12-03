@@ -300,6 +300,11 @@ lexerErrorCheck(MasterLexer& lexer, MasterToken::Type expect,
 }
 
 // Common checks regarding expected/unexpected end-of-line
+//
+// The 'lexer' should be at a position before two consecutive '\n's.
+// The first one will be recognized, and the second one will be considered an
+// unexpected token.  Then this helper consumes the second '\n', so the caller
+// can continue the test after these '\n's.
 void
 eolCheck(MasterLexer& lexer, MasterToken::Type expect) {
     // If EOL is found and eol_ok is true, we get it.
@@ -313,9 +318,14 @@ eolCheck(MasterLexer& lexer, MasterToken::Type expect) {
 
     // And also check the error token set in the exception object.
     lexerErrorCheck(lexer, expect, MasterToken::UNEXPECTED_END);
+
+    // Then skip the 2nd '\n'
+    EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
 }
 
 // Common checks regarding expected/unexpected end-of-file
+//
+// The 'lexer' should be at a position just before an end-of-file.
 void
 eofCheck(MasterLexer& lexer, MasterToken::Type expect) {
     EXPECT_EQ(MasterToken::END_OF_FILE,
@@ -335,9 +345,6 @@ TEST_F(MasterLexerTest, getNextTokenString) {
               lexer.getNextToken(MasterToken::STRING).getString());
     eolCheck(lexer, MasterToken::STRING);
 
-    // Skip the 2nd '\n'
-    EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
-
     // Same set of tests but for end-of-file
     EXPECT_EQ("another-string",
               lexer.getNextToken(MasterToken::STRING, true).getString());
@@ -354,9 +361,6 @@ TEST_F(MasterLexerTest, getNextTokenQString) {
     EXPECT_EQ("quoted-string",
               lexer.getNextToken(MasterToken::QSTRING).getString());
     eolCheck(lexer, MasterToken::QSTRING);
-
-    // Skip the 2nd '\n'
-    EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
 
     // Expecting a quoted string but see a normal string.  It's okay.
     EXPECT_EQ("normal-string",
@@ -376,9 +380,6 @@ TEST_F(MasterLexerTest, getNextTokenNumber) {
     EXPECT_EQ(3600,
               lexer.getNextToken(MasterToken::NUMBER).getNumber());
     eolCheck(lexer, MasterToken::NUMBER);
-
-    // Skip the 2nd '\n'
-    EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
 
     // Expecting a number, but it's too big for uint32.
     lexerErrorCheck(lexer, MasterToken::NUMBER,
