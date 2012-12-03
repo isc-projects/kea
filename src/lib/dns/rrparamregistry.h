@@ -82,7 +82,7 @@ public:
     /// \name Factory methods for polymorphic creation.
     ///
     //@{
-    ///
+
     /// \brief Create RDATA from a string.
     ///
     /// This method creates from a string an \c Rdata object of specific class
@@ -91,7 +91,7 @@ public:
     /// \param rdata_str A string of textual representation of the \c Rdata.
     /// \return An \c RdataPtr object pointing to the created \c Rdata object.
     virtual RdataPtr create(const std::string& rdata_str) const = 0;
-    ///
+
     /// \brief Create RDATA from wire-format data.
     ///
     /// This method creates from wire-format binary data an \c Rdata object
@@ -103,7 +103,7 @@ public:
     /// \param rdata_len The length in buffer of the \c Rdata.  In bytes.
     /// \return An \c RdataPtr object pointing to the created \c Rdata object.
     virtual RdataPtr create(isc::util::InputBuffer& buffer, size_t rdata_len) const = 0;
-    ///
+
     /// \brief Create RDATA from another \c Rdata object of the same type.
     ///
     /// This method creates an \c Rdata object of specific class corresponding
@@ -118,6 +118,23 @@ public:
     /// be copied to the created \c Rdata object.
     /// \return An \c RdataPtr object pointing to the created \c Rdata object.
     virtual RdataPtr create(const rdata::Rdata& source) const = 0;
+
+    /// \brief Create RDATA using MasterLexer.
+    ///
+    /// This version of the method defines the entry point of factory
+    /// of a specific RR type and class for \c RRParamRegistry::createRdata()
+    /// that uses \c MasterLexer.  See its description for the expected
+    /// behavior and meaning of the parameters.
+    ///
+    /// \note Right now this is not defined as a pure virtual method and
+    /// provides the default implementation.  This is an intermediate
+    /// workaround until we implement the underlying constructor for all
+    /// supported \c Rdata classes; once it's completed the workaround
+    /// default implementation should be removed and this method should become
+    /// pure virtual.
+    virtual RdataPtr create(MasterLexer& lexer, const Name* origin,
+                            MasterLoader::Options options,
+                            MasterLoaderCallbacks& callbacks) const;
     //@}
 };
 
@@ -498,6 +515,23 @@ public:
     /// \c rdata::Rdata object.
     rdata::RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                                 const rdata::Rdata& source);
+
+    /// \brief Create RDATA using MasterLexer
+    ///
+    /// This method is expected to be used as the underlying implementation
+    /// of the same signature of \c rdata::createRdata().  One main
+    /// difference is that this method is only responsible for constructing
+    /// the Rdata; it doesn't update the lexer to reach the end of line or
+    /// file or doesn't care about whether there's an extra (garbage) token
+    /// after the textual RDATA representation.  Another difference is that
+    /// this method can throw on error and never returns a NULL pointer.
+    ///
+    /// For other details and parameters, see the description of
+    /// \c rdata::createRdata().
+    rdata::RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
+                                MasterLexer& lexer, const Name* origin,
+                                MasterLoader::Options options,
+                                MasterLoaderCallbacks& callbacks);
     //@}
 
 private:
@@ -508,6 +542,6 @@ private:
 }
 #endif  // RRPARAMREGISTRY_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

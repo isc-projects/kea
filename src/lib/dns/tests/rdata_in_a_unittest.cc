@@ -68,6 +68,11 @@ TEST_F(Rdata_IN_A_Test, createFromWire) {
                  DNSMessageFORMERR);
 }
 
+TEST_F(Rdata_IN_A_Test, createFromLexer) {
+    EXPECT_EQ(0, rdata_in_a.compare(
+        *test::createRdataUsingLexer(RRType::A(), RRClass::IN(), "192.0.2.1")));
+}
+
 TEST_F(Rdata_IN_A_Test, toWireBuffer) {
     rdata_in_a.toWire(obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,

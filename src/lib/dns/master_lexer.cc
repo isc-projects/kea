@@ -458,8 +458,11 @@ String::handle(MasterLexer& lexer) const {
 
         if (getLexerImpl(lexer)->isTokenEnd(c, escaped)) {
             getLexerImpl(lexer)->source_->ungetChar();
+            // make sure it nul-terminated as a c-str (excluded from token
+            // data).
+            data.push_back('\0');
             getLexerImpl(lexer)->token_ =
-                MasterToken(&data.at(0), data.size());
+                MasterToken(&data.at(0), data.size() - 1);
             return;
         }
         escaped = (c == '\\' && !escaped);
@@ -486,7 +489,10 @@ QString::handle(MasterLexer& lexer) const {
                 escaped = false;
                 data.back() = '"';
             } else {
-                token = MasterToken(&data.at(0), data.size(), true);
+                // make sure it nul-terminated as a c-str (excluded from token
+                // data).  This also simplifies the case of an empty string.
+                data.push_back('\0');
+                token = MasterToken(&data.at(0), data.size() - 1, true);
                 return;
             }
         } else if (c == '\n' && !escaped) {
@@ -529,7 +535,8 @@ Number::handle(MasterLexer& lexer) const {
                     token = MasterToken(MasterToken::NUMBER_OUT_OF_RANGE);
                 }
             } else {
-                token = MasterToken(&data.at(0), data.size());
+                data.push_back('\0'); // see String::handle()
+                token = MasterToken(&data.at(0), data.size() - 1);
             }
             return;
         }

@@ -103,6 +103,12 @@ TEST_F(Rdata_MINFO_Test, createFromWire) {
                  DNSMessageFORMERR);
 }
 
+TEST_F(Rdata_MINFO_Test, createFromLexer) {
+    EXPECT_EQ(0, rdata_minfo.compare(
+        *test::createRdataUsingLexer(RRType::MINFO(), RRClass::IN(),
+                                     minfo_txt)));
+}
+
 TEST_F(Rdata_MINFO_Test, assignment) {
     generic::MINFO copy((string(minfo_txt2)));
     copy = rdata_minfo;
