@@ -404,7 +404,7 @@ void Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
     case OPTIONAL:
         if (server_ids.size() > 1) {
             isc_throw(RFCViolation, "Too many (" << server_ids.size()
-                      << ") client-id options received in " << pkt->getName());
+                      << ") server-id options received in " << pkt->getName());
         }
     }
 }
@@ -450,6 +450,9 @@ void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     OptionPtr opt_duid = question->getOption(D6O_CLIENTID);
     if (opt_duid) {
         duid = DuidPtr(new DUID(opt_duid->getData()));
+    } else {
+        // Let's drop the message. This client is not sane.
+        isc_throw(RFCViolation, "Mandatory client-id is missing in received message");
     }
 
     // Now that we have all information about the client, let's iterate over all
@@ -462,7 +465,7 @@ void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
          opt != question->options_.end(); ++opt) {
         switch (opt->second->getType()) {
         case D6O_IA_NA: {
-            OptionPtr answer_opt = handleIA_NA(subnet, duid, question,
+            OptionPtr answer_opt = assignIA_NA(subnet, duid, question,
                                    boost::dynamic_pointer_cast<Option6IA>(opt->second));
             if (answer_opt) {
                 answer->addOption(answer_opt);
@@ -475,8 +478,8 @@ void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     }
 }
 
-OptionPtr Dhcpv6Srv::handleIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid, Pkt6Ptr question,
-                                 boost::shared_ptr<Option6IA> ia) {
+OptionPtr Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                                 Pkt6Ptr question, boost::shared_ptr<Option6IA> ia) {
     // If there is no subnet selected for handling this IA_NA, the only thing to do left is
     // to say that we are sorry, but the user won't get an address. As a convenience, we
     // use a different status text to indicate that (compare to the same status code,
@@ -565,11 +568,100 @@ OptionPtr Dhcpv6Srv::handleIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid, 
     return (ia_rsp);
 }
 
-Pkt6Ptr Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
+OptionPtr Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                                Pkt6Ptr question, boost::shared_ptr<Option6IA> ia) {
+    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(*duid, ia->getIAID(),
+                                                            subnet->getID());
 
-    if (!sanityCheck(solicit, MANDATORY, FORBIDDEN)) {
-        return (Pkt6Ptr());
+    if (!lease) {
+        // client renewing a lease that we don't know about.
+
+        // Create empty IA_NA option with IAID matching the request.
+        boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
+
+        // Insert status code NoAddrsAvail.
+        ia_rsp->addOption(createStatusCode(STATUS_NoAddrsAvail,
+                          "Sorry, no known leases for this duid/iaid."));
+        return (ia_rsp);
     }
+
+    lease->preferred_lft_ = subnet->getPreferred();
+    lease->valid_lft_ = subnet->getValid();
+    lease->t1_ = subnet->getT1();
+    lease->t2_ = subnet->getT2();
+    lease->cltt_ = time(NULL);
+
+    LeaseMgrFactory::instance().updateLease6(lease);
+
+    // Create empty IA_NA option with IAID matching the request.
+    boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
+
+    ia_rsp->setT1(subnet->getT1());
+    ia_rsp->setT2(subnet->getT2());
+
+    boost::shared_ptr<Option6IAAddr> addr(new Option6IAAddr(D6O_IAADDR,
+                                          lease->addr_, lease->preferred_lft_,
+                                          lease->valid_lft_));
+    ia_rsp->addOption(addr);
+    return (ia_rsp);
+}
+
+void Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply) {
+
+    // We need to renew addresses for all IA_NA options in the client's
+    // RENEW message.
+
+    // We need to select a subnet the client is connected in.
+    Subnet6Ptr subnet = selectSubnet(renew);
+    if (!subnet) {
+        // This particular client is out of luck today. We do not have
+        // information about the subnet he is connected to. This likely means
+        // misconfiguration of the server (or some relays). We will continue to
+        // process this message, but our response will be almost useless: no
+        // addresses or prefixes, no subnet specific configuration etc. The only
+        // thing this client can get is some global information (like DNS
+        // servers).
+
+        // perhaps this should be logged on some higher level? This is most likely
+        // configuration bug.
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_SUBNET_SELECTION_FAILED);
+    } else {
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_SUBNET_SELECTED)
+            .arg(subnet->toText());
+    }
+
+    // Let's find client's DUID. Client is supposed to include its client-id
+    // option almost all the time (the only exception is an anonymous inf-request,
+    // but that is mostly a theoretical case). Our allocation engine needs DUID
+    // and will refuse to allocate anything to anonymous clients.
+    OptionPtr opt_duid = renew->getOption(D6O_CLIENTID);
+    if (!opt_duid) {
+        // This should not happen. We have checked this before.
+        reply->addOption(createStatusCode(STATUS_UnspecFail,
+                         "You did not include mandatory client-id"));
+        return;
+    }
+    DuidPtr duid(new DUID(opt_duid->getData()));
+
+    for (Option::OptionCollection::iterator opt = renew->options_.begin();
+         opt != renew->options_.end(); ++opt) {
+        switch (opt->second->getType()) {
+        case D6O_IA_NA: {
+            OptionPtr answer_opt = renewIA_NA(subnet, duid, renew,
+                                   boost::dynamic_pointer_cast<Option6IA>(opt->second));
+            if (answer_opt) {
+                reply->addOption(answer_opt);
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    }
+
+
+
+}
 
 Pkt6Ptr Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
@@ -602,8 +694,17 @@ Pkt6Ptr Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
 }
 
 Pkt6Ptr Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
-    /// @todo: Implement this
+
+    sanityCheck(renew, MANDATORY, MANDATORY);
+
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, renew->getTransid()));
+
+    copyDefaultOptions(renew, reply);
+    appendDefaultOptions(renew, reply);
+    appendRequestedOptions(renew, reply);
+
+    renewLeases(renew, reply);
+
     return reply;
 }
 
