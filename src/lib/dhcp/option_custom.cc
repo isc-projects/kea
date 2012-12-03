@@ -423,8 +423,17 @@ void
 OptionCustom::writeFqdn(const std::string& fqdn, const uint32_t index) {
     checkIndex(index);
 
-    buffers_[index].clear();
-    OptionDataTypeUtil::writeFqdn(fqdn, buffers_[index]);
+    // Create a temporay buffer where the FQDN will be written.
+    OptionBuffer buf;
+    // Try to write to the temporary buffer rather than to the
+    // buffers_ member directly guarantees that we don't modify
+    // (clear) buffers_ until we are sure that the provided FQDN
+    // is valid.
+    OptionDataTypeUtil::writeFqdn(fqdn, buf);
+    // If we got to this point it means that the FQDN is valid.
+    // We can move the contents of the teporary buffer to the
+    // target buffer.
+    std::swap(buffers_[index], buf);
 }
 
 std::string
@@ -437,12 +446,16 @@ void
 OptionCustom::writeString(const std::string& text, const uint32_t index) {
     checkIndex(index);
 
+    // Let's clear a buffer as we want to replace the value of the
+    // whole buffer. If we fail to clear the buffer the data will
+    // be appended.
+    buffers_[index].clear();
+    // If the text value is empty we can leave because the buffer
+    // is already empty.
     if (!text.empty()) {
-        buffers_[index].clear();
         OptionDataTypeUtil::writeString(text, buffers_[index]);
     }
 }
-
 
 void
 OptionCustom::unpack(OptionBufferConstIter begin,
