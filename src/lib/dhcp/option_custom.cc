@@ -64,6 +64,15 @@ OptionCustom::addArrayDataField(const asiolink::IOAddress& address) {
 }
 
 void
+OptionCustom::addArrayDataField(const bool value) {
+    checkArrayType();
+
+    OptionBuffer buf;
+    OptionDataTypeUtil::writeBool(value, buf);
+    buffers_.push_back(buf);
+}
+
+void
 OptionCustom::checkArrayType() const {
     if (!definition_.getArrayType()) {
         isc_throw(InvalidOperation, "failed to add new array entry to an"

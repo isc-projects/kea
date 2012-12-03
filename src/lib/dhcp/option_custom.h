@@ -93,6 +93,11 @@ public:
     /// a buffer being created.
     void addArrayDataField(const asiolink::IOAddress& address);
 
+    /// @brief Create new buffer and store boolean value in it.
+    ///
+    /// @param value value to be stored in the created buffer.
+    void addArrayDataField(const bool value);
+
     /// @brief Return a number of the data fields.
     ///
     /// @return number of data fields held by the option.

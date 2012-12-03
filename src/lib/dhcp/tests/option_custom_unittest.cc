@@ -973,6 +973,9 @@ TEST_F(OptionCustomTest, setFqdnData) {
     EXPECT_EQ("example.com.", fqdn);
 }
 
+// The purpose of this test is to verify that an option carrying
+// an array of boolean values can be created with no values
+// initially and that values can be later added to it.
 TEST_F(OptionCustomTest, setBooleanDataArray) {
     OptionDefinition opt_def("OPTION_FOO", 1000, "boolean", true);
 
@@ -984,7 +987,24 @@ TEST_F(OptionCustomTest, setBooleanDataArray) {
     );
     ASSERT_TRUE(option);
 
+    // Initially, the array should contain no values.
     ASSERT_EQ(0, option->getDataFieldsNum());
+
+    // Add some boolean values to it.
+    ASSERT_NO_THROW(option->addArrayDataField(true));
+    ASSERT_NO_THROW(option->addArrayDataField(false));
+    ASSERT_NO_THROW(option->addArrayDataField(true));
+
+    // Verify that the new data fields can be added.
+    bool value0 = false;
+    ASSERT_NO_THROW(value0 = option->readBoolean(0));
+    EXPECT_TRUE(value0);
+    bool value1 = true;
+    ASSERT_NO_THROW(value1 = option->readBoolean(1));
+    EXPECT_FALSE(value1);
+    bool value2 = false;
+    ASSERT_NO_THROW(value2 = option->readBoolean(2));
+    EXPECT_TRUE(value2);
 }
 
 /// The purpose of this test is to verify that an option comprising
