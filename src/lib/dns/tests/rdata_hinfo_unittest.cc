@@ -41,6 +41,7 @@ static uint8_t hinfo_rdata[] = {0x07,0x50,0x65,0x6e,0x74,0x69,0x75,0x6d,0x05,
 static const char *hinfo_str = "\"Pentium\" \"Linux\"";
 static const char *hinfo_str1 = "\"Pen\\\"tium\" \"Linux\"";
 
+static const char *hinfo_str_equal = "\"Pentium\"\"Linux\"";
 static const char *hinfo_str_small1 = "\"Lentium\" \"Linux\"";
 static const char *hinfo_str_small2 = "\"Pentium\" \"Kinux\"";
 static const char *hinfo_str_large1 = "\"Qentium\" \"Linux\"";
@@ -127,6 +128,7 @@ TEST_F(Rdata_HINFO_Test, compare) {
     HINFO hinfo_large2(hinfo_str_large2);
 
     EXPECT_EQ(0, hinfo.compare(HINFO(hinfo_str)));
+    EXPECT_EQ(0, hinfo.compare(HINFO(hinfo_str_equal)));
     EXPECT_EQ(1, hinfo.compare(HINFO(hinfo_str_small1)));
     EXPECT_EQ(1, hinfo.compare(HINFO(hinfo_str_small2)));
     EXPECT_EQ(-1, hinfo.compare(HINFO(hinfo_str_large1)));
