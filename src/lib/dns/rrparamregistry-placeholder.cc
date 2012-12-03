@@ -512,6 +512,27 @@ RRParamRegistry::codeToClassText(uint16_t code) const {
                                                      impl_->code2classmap));
 }
 
+namespace {
+inline const AbstractRdataFactory*
+findRdataFactory(RRParamRegistryImpl* reg_impl,
+                 const RRType& rrtype, const RRClass& rrclass)
+{
+    RdataFactoryMap::const_iterator found;
+    found = reg_impl->rdata_factories.find(RRTypeClass(rrtype, rrclass));
+    if (found != reg_impl->rdata_factories.end()) {
+        return (found->second.get());
+    }
+
+    GenericRdataFactoryMap::const_iterator genfound =
+        reg_impl->genericrdata_factories.find(rrtype);
+    if (genfound != reg_impl->genericrdata_factories.end()) {
+        return (genfound->second.get());
+    }
+
+    return (NULL);
+}
+}
+
 RdataPtr
 RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
                              const std::string& rdata_string)
@@ -519,16 +540,10 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
     // If the text indicates that it's rdata of an "unknown" type (beginning
     // with '\# n'), parse it that way. (TBD)
 
-    RdataFactoryMap::const_iterator found;
-    found = impl_->rdata_factories.find(RRTypeClass(rrtype, rrclass));
-    if (found != impl_->rdata_factories.end()) {
-        return (found->second->create(rdata_string));
-    }
-
-    GenericRdataFactoryMap::const_iterator genfound =
-        impl_->genericrdata_factories.find(rrtype);
-    if (genfound != impl_->genericrdata_factories.end()) {
-        return (genfound->second->create(rdata_string));
+    const AbstractRdataFactory* factory =
+        findRdataFactory(impl_, rrtype, rrclass);
+    if (factory != NULL) {
+        return (factory->create(rdata_string));
     }
 
     return (RdataPtr(new generic::Generic(rdata_string)));
@@ -538,16 +553,10 @@ RdataPtr
 RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
                              InputBuffer& buffer, size_t rdata_len)
 {
-    RdataFactoryMap::const_iterator found =
-        impl_->rdata_factories.find(RRTypeClass(rrtype, rrclass));
-    if (found != impl_->rdata_factories.end()) {
-        return (found->second->create(buffer, rdata_len));
-    }
-
-    GenericRdataFactoryMap::const_iterator genfound =
-        impl_->genericrdata_factories.find(rrtype);
-    if (genfound != impl_->genericrdata_factories.end()) {
-        return (genfound->second->create(buffer, rdata_len));
+    const AbstractRdataFactory* factory =
+        findRdataFactory(impl_, rrtype, rrclass);
+    if (factory != NULL) {
+        return (factory->create(buffer, rdata_len));
     }
 
     return (RdataPtr(new generic::Generic(buffer, rdata_len)));
@@ -557,16 +566,10 @@ RdataPtr
 RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
                              const Rdata& source)
 {
-    RdataFactoryMap::const_iterator found =
-        impl_->rdata_factories.find(RRTypeClass(rrtype, rrclass));
-    if (found != impl_->rdata_factories.end()) {
-        return (found->second->create(source));
-    }
-
-    GenericRdataFactoryMap::const_iterator genfound =
-        impl_->genericrdata_factories.find(rrtype);
-    if (genfound != impl_->genericrdata_factories.end()) {
-        return (genfound->second->create(source));
+    const AbstractRdataFactory* factory =
+        findRdataFactory(impl_, rrtype, rrclass);
+    if (factory != NULL) {
+        return (factory->create(source));
     }
 
     return (RdataPtr(new rdata::generic::Generic(
@@ -579,16 +582,10 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
                              MasterLoader::Options options,
                              MasterLoaderCallbacks& callbacks)
 {
-    RdataFactoryMap::const_iterator found =
-        impl_->rdata_factories.find(RRTypeClass(rrtype, rrclass));
-    if (found != impl_->rdata_factories.end()) {
-        return (found->second->create(lexer, name, options, callbacks));
-    }
-
-    GenericRdataFactoryMap::const_iterator genfound =
-        impl_->genericrdata_factories.find(rrtype);
-    if (genfound != impl_->genericrdata_factories.end()) {
-        return (genfound->second->create(lexer, name, options, callbacks));
+    const AbstractRdataFactory* factory =
+        findRdataFactory(impl_, rrtype, rrclass);
+    if (factory != NULL) {
+        return (factory->create(lexer, name, options, callbacks));
     }
 
     return (RdataPtr(new generic::Generic(lexer, name, options, callbacks)));
