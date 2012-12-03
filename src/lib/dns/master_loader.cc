@@ -41,7 +41,11 @@ public:
         add_callback_(add_callback),
         options_(options)
     {
-        lexer_.pushSource(master_file);
+        string errors;
+        if (!lexer_.pushSource(master_file, &errors)) {
+            // TODO: Handle somehow.
+            assert(0);
+        }
     }
 
     // Get a string token. Handle it as error if it is not string.
