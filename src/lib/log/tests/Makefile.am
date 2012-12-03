@@ -127,3 +127,10 @@ check-local:
 	$(SHELL) $(abs_builddir)/local_file_test.sh
 	$(SHELL) $(abs_builddir)/logger_lock_test.sh
 	$(SHELL) $(abs_builddir)/severity_test.sh
+
+noinst_SCRIPTS  = console_test.sh
+noinst_SCRIPTS += destination_test.sh
+noinst_SCRIPTS += init_logger_test.sh
+noinst_SCRIPTS += local_file_test.sh
+noinst_SCRIPTS += logger_lock_test.sh
+noinst_SCRIPTS += severity_test.sh
