@@ -19,6 +19,7 @@
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 #include <dns/rrset.h>
+#include <dns/rdata.h>
 
 using std::string;
 
@@ -74,14 +75,26 @@ public:
             const RRClass rrclass(getString());
             const RRType rrtype(getString());
 
-            // Create the RRset. We don't need the RRSIG, so we are good
-            // with the basic one
-            RRsetPtr rrset(new BasicRRset(name, rrclass, rrtype, ttl));
+            // TODO: Origin handling
+            const rdata::RdataPtr data(rdata::createRdata(rrtype, rrclass,
+                                                          lexer_, NULL,
+                                                          options_,
+                                                          callbacks_));
+            // In case we get NULL, it means there was error creating
+            // the Rdata. The errors should have been reported by
+            // callbacks_ already, so we just need to not report the RR
+            if (data != rdata::RdataPtr()) {
+                // Create the RRset. We don't need the RRSIG, so we are good
+                // with the basic one
+                const RRsetPtr rrset(new BasicRRset(name, rrclass, rrtype,
+                                                    ttl));
+                rrset->addRdata(data);
+                // OK now, so give the RRset with single RR to the caller
+                add_callback_(rrset);
 
-            // TODO: Create the RData
-
-            // OK now, so give the RRset with single RR to the caller
-            add_callback_(rrset);
+                // Good, we loaded another one
+                ++count;
+            };
         }
         return (false);
     }
