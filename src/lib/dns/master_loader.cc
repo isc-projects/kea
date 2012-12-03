@@ -60,6 +60,7 @@ public:
     bool loadIncremental(size_t count_limit) {
         if (!initialized_) {
             pushSource(master_file_);
+            initialized_ = true;
         }
         size_t count = 0;
         while (ok_ && count < count_limit) {
