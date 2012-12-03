@@ -705,7 +705,6 @@ fi
 AC_SUBST(BOTAN_LDFLAGS)
 AC_SUBST(BOTAN_LIBS)
 AC_SUBST(BOTAN_INCLUDES)
-
 # Even though chances are high we already performed a real compilation check
 # in the search for the right (pkg)config data, we try again here, to
 # be sure.

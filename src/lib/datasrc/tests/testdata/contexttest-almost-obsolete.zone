@@ -1,0 +1,85 @@
+;; test zone file used for ZoneFinderContext tests.
+;; RRSIGs are (obviouslly) faked ones for testing.
+
+example.org. 3600 IN SOA	ns1.example.org. bugs.x.w.example.org. 78 3600 300 3600000 3600
+example.org.			      3600 IN NS	ns1.example.org.
+example.org.			      3600 IN NS	ns2.example.org.
+example.org.			      3600 IN RRSIG	NS 7 3 3600 20150420235959 20051021000000 40430 example.org. FAKEFAKEFAKE
+example.org.			      3600 IN MX	1 mx1.example.org.
+example.org.			      3600 IN MX	2 mx2.example.org.
+example.org.			      3600 IN MX	3 mx.a.example.org.
+
+ns1.example.org.		      3600 IN A		192.0.2.1
+ns1.example.org.		      3600 IN RRSIG	A 7 3 3600 20150420235959 20051021000000 40430 example.org. FAKEFAKE
+ns1.example.org.		      3600 IN AAAA	2001:db8::1
+ns1.example.org.		      3600 IN RRSIG	AAAA 7 3 3600 20150420235959 20051021000000 40430 example.org. FAKEFAKEFAKE
+ns2.example.org.		      3600 IN A		192.0.2.2
+ns2.example.org.		      3600 IN TXT	"text data"
+
+mx1.example.org.		      3600 IN A		192.0.2.10
+mx2.example.org.		      3600 IN AAAA	2001:db8::10
+
+;; delegation
+a.example.org.			      3600 IN NS	ns1.a.example.org.
+a.example.org.			      3600 IN NS	ns2.a.example.org.
+a.example.org.			      3600 IN NS	ns.example.com.
+
+ns1.a.example.org.		      3600 IN A		192.0.2.5
+ns2.a.example.org.		      3600 IN A		192.0.2.6
+ns2.a.example.org.		      3600 IN AAAA	2001:db8::6
+mx.a.example.org.		      3600 IN A		192.0.2.7
+
+;; delegation, one of its NS names is at zone cut.
+b.example.org.			      3600 IN NS	ns.b.example.org.
+b.example.org.			      3600 IN NS	b.example.org.
+b.example.org.			      3600 IN AAAA	2001:db8::8
+
+ns.b.example.org.		      3600 IN A		192.0.2.9
+
+;; The MX name is at a zone cut.  shouldn't be included in the
+;; additional section.
+mxatcut.example.org.		      3600 IN MX	1 b.example.org.
+
+;; delegation, one of its NS names is under a DNAME delegation point;
+;; another is at that point; and yet another is under DNAME below a
+;; zone cut.
+c.example.org. 	      	      3600 IN NS	ns.dname.example.org.
+c.example.org. 	      	      3600 IN NS	dname.example.org.
+c.example.org.      	      3600 IN NS	ns.deepdname.example.org.
+ns.dname.example.org.		      3600 IN A		192.0.2.11
+dname.example.org.		      3600 IN A		192.0.2.12
+ns.deepdname.example.org.	      3600 IN AAAA	2001:db8::9
+
+;; delegation, one of its NS name is at an empty non terminal.
+d.example.org. 	      	      3600 IN NS	ns.empty.example.org.
+d.example.org. 	      	      3600 IN NS	ns1.example.org.
+;; by adding these two we can create an empty RB node for
+;; ns.empty.example.org in the in-memory zone
+foo.ns.empty.example.org.     3600 IN A		192.0.2.13
+bar.ns.empty.example.org.     3600 IN A		192.0.2.14
+
+;; delegation; the NS name matches a wildcard (and there's no exact
+;; match).  One of the NS names matches an empty wildcard node, for
+;; which no additional record should be provided (or any other
+;; disruption should happen).
+e.example.org. 	      	      3600 IN NS	ns.wild.example.org.
+e.example.org. 	      	      3600 IN NS	ns.emptywild.example.org.
+e.example.org. 	      	      3600 IN NS	ns2.example.org.
+*.wild.example.org.	      3600 IN A		192.0.2.15
+a.*.emptywild.example.org.    3600 IN AAAA	2001:db8::2
+
+;; additional for an answer RRset (MX) as a result of wildcard
+;; expansion
+*.wildmx.example.org. 3600 IN MX 1 mx1.example.org.
+
+;; the owner name of additional for an answer RRset (MX) has DNAME
+dnamemx.example.org. 3600 IN MX 1 dname.example.org.
+
+;; CNAME
+alias.example.org. 3600 IN CNAME cname.example.org.
+
+;; DNAME
+dname.example.org. 3600 IN DNAME dname.example.com.
+
+;; DNAME under a NS (strange one)
+deepdname.c.example.org. 3600 IN DNAME deepdname.example.com.

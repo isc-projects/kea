@@ -69,6 +69,14 @@ class State;
 class MasterLexer {
     friend class master_lexer_internal::State;
 public:
+    /// \brief Exception thrown when we fail to read from the input
+    /// stream or file.
+    struct ReadError : public Unexpected {
+        ReadError(const char* file, size_t line, const char* what) :
+            Unexpected(file, line, what)
+        {}
+    };
+
     class Token;       // we define it separately for better readability
 
     /// \brief Options for getNextToken.
@@ -178,6 +186,52 @@ public:
     /// \return The current line number of the source (see the description)
     size_t getSourceLine() const;
 
+    /// \brief Parse and return another token from the input.
+    ///
+    /// It reads a bit of the last opened source and produces another token
+    /// found in it.
+    ///
+    /// This method does not provide the strong exception guarantee. Generally,
+    /// if it throws, the object should not be used any more and should be
+    /// discarded. It was decided all the exceptions thrown from here are
+    /// serious enough that aborting the loading process is the only reasonable
+    /// recovery anyway, so the strong exception guarantee is not needed.
+    ///
+    /// \param options The options can be used to modify the tokenization.
+    ///     The method can be made reporting things which are usually ignored
+    ///     by this parameter. Multiple options can be passed at once by
+    ///     bitwise or (eg. option1 | option 2). See description of available
+    ///     options.
+    /// \return Next token found in the input. Note that the token refers to
+    ///     some internal data in the lexer. It is valid only until
+    ///     getNextToken or ungetToken is called. Also, the token becomes
+    ///     invalid when the lexer is destroyed.
+    /// \throw isc::InvalidOperation in case the source is not available. This
+    ///     may mean the pushSource() has not been called yet, or that the
+    ///     current source has been read past the end.
+    /// \throw ReadError in case there's problem reading from the underlying
+    ///     source (eg. I/O error in the file on the disk).
+    /// \throw std::bad_alloc in case allocation of some internal resources
+    ///     or the token fail.
+    const Token& getNextToken(Options options = NONE);
+
+    /// \brief Return the last token back to the lexer.
+    ///
+    /// The method undoes the lasts call to getNextToken(). If you call the
+    /// getNextToken() again with the same options, it'll return the same
+    /// token. If the options are different, it may return a different token,
+    /// but it acts as if the previous getNextToken() was never called.
+    ///
+    /// It is possible to return only one token back in time (you can't call
+    /// ungetToken() twice in a row without calling getNextToken() in between
+    /// successfully).
+    ///
+    /// It does not work after change of source (by pushSource or popSource).
+    ///
+    /// \throw isc::InvalidOperation If called second time in a row or if
+    ///     getNextToken() was not called since the last change of the source.
+    void ungetToken();
+
 private:
     struct MasterLexerImpl;
     MasterLexerImpl* impl_;
@@ -216,10 +270,10 @@ public:
     /// as an unsigned 32-bit integer.  If we see the need for larger integers
     /// or negative numbers, we can then extend the token types.
     enum Type {
-        END_OF_LINE, ///< End of line detected (if asked for detecting it)
-        END_OF_FILE, ///< End of file detected (if asked for detecting it)
+        END_OF_LINE, ///< End of line detected
+        END_OF_FILE, ///< End of file detected
         INITIAL_WS,  ///< White spaces at the beginning of a line after an
-                     ///< end of line
+                     ///< end of line (if asked for detecting it)
         NOVALUE_TYPE_MAX = INITIAL_WS, ///< Max integer corresponding to
                                        /// no-value (type only) types.
                                        /// Mainly for internal use.
@@ -234,8 +288,11 @@ public:
         NOT_STARTED, ///< The lexer is just initialized and has no token
         UNBALANCED_PAREN,       ///< Unbalanced parentheses detected
         UNEXPECTED_END, ///< The lexer reaches the end of line or file
-                       /// unexpectedly
+                        /// unexpectedly
         UNBALANCED_QUOTES,      ///< Unbalanced quotations detected
+        NO_TOKEN_PRODUCED, ///< No token was produced. This means programmer
+                           /// error and should never get out of the lexer.
+        NUMBER_OUT_OF_RANGE, ///< Number was out of range
         MAX_ERROR_CODE ///< Max integer corresponding to valid error codes.
                        /// (excluding this one). Mainly for internal use.
     };
@@ -340,12 +397,34 @@ public:
     ///                       string object.
     /// \return A std::string object corresponding to the string token value.
     std::string getString() const {
+        std::string ret;
+        getString(ret);
+        return (ret);
+    }
+
+    /// \brief Fill in a string with the value of a string-variant token.
+    ///
+    /// This is similar to the other version of \c getString(), but
+    /// the caller is supposed to pass a placeholder string object.
+    /// This will be more efficient if the caller uses the same
+    /// \c MasterLexer repeatedly and needs to get string token in the
+    /// form of a string object many times as this version could reuse
+    /// the existing internal storage of the passed string.
+    ///
+    /// Any existing content of the passed string will be removed.
+    ///
+    /// \throw InvalidOperation Called on a non string-variant types of token.
+    /// \throw std::bad_alloc Resource allocation failure in constructing the
+    ///                       string object.
+    ///
+    /// \param ret A string object to be filled with the token string.
+    void getString(std::string& ret) const {
         if (type_ != STRING && type_ != QSTRING) {
             isc_throw(InvalidOperation,
                       "Token::getString() for non string-variant type");
         }
-        return (std::string(val_.str_region_.beg,
-                            val_.str_region_.beg + val_.str_region_.len));
+        ret.assign(val_.str_region_.beg,
+                   val_.str_region_.beg + val_.str_region_.len);
     }
 
     /// \brief Return the value of a string-variant token as a string object.
