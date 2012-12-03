@@ -189,12 +189,6 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromLexer) {
     EXPECT_EQ(0, this->rdata_txt_like.compare(
         *test::createRdataUsingLexer(RRTYPE<TypeParam>(), RRClass::IN(),
                                      "Test String")));
-    EXPECT_EQ(0, this->rdata_txt_like_empty.compare(
-        *test::createRdataUsingLexer(RRTYPE<TypeParam>(), RRClass::IN(),
-                                     "")));
-    EXPECT_EQ(0, this->rdata_txt_like_quoted.compare(
-        *test::createRdataUsingLexer(RRTYPE<TypeParam>(), RRClass::IN(),
-                                     "\"Test String\"")));
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, toWireBuffer) {
