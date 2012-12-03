@@ -373,6 +373,7 @@ TEST_F(MasterLexerTest, getNextTokenNumber) {
     ss << "\n";
     ss << "4294967296 ";        // =2^32, out of range
     ss << "not-a-number ";
+    ss << "123abc "; // starting with digits, but resulting in a string
     ss << "86400";
     lexer.pushSource(ss);
 
@@ -385,6 +386,11 @@ TEST_F(MasterLexerTest, getNextTokenNumber) {
     lexerErrorCheck(lexer, MasterToken::NUMBER,
                     MasterToken::NUMBER_OUT_OF_RANGE);
     // The token should have been "ungotten".  Re-read and skip it.
+    EXPECT_EQ(MasterToken::STRING, lexer.getNextToken().getType());
+
+    // Expecting a number, but see a string.
+    lexerErrorCheck(lexer, MasterToken::NUMBER, MasterToken::BAD_NUMBER);
+    // The unexpected string should have been "ungotten".  Re-read and skip it.
     EXPECT_EQ(MasterToken::STRING, lexer.getNextToken().getType());
 
     // Expecting a number, but see a string.
