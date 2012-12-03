@@ -28,7 +28,93 @@ public:
     /// @brief Constructor.
     OptionDataTypesTest() { }
 
+    /// @brief Write IP address into a buffer.
+    ///
+    /// @param address address to be written.
+    /// @param [out] buf output buffer.
+    void writeAddress(const asiolink::IOAddress& address,
+                      std::vector<uint8_t>& buf) {
+        short family = address.getFamily();
+        if (family == AF_INET) {
+            asio::ip::address_v4::bytes_type buf_addr =
+                address.getAddress().to_v4().to_bytes();
+            buf.insert(buf.end(), buf_addr.begin(), buf_addr.end());
+        } else if (family == AF_INET6) {
+            asio::ip::address_v6::bytes_type buf_addr =
+                address.getAddress().to_v6().to_bytes();
+            buf.insert(buf.end(), buf_addr.begin(), buf_addr.end());
+        }
+    }
+
+    /// @brief Write integer (signed or unsigned) into a buffer.
+    ///
+    /// @param value integer value.
+    /// @param [out] buf output buffer.
+    /// @tparam integer type.
+    template<typename T>
+    void writeInt(T value, std::vector<uint8_t>& buf) {
+        for (int i = 0; i < sizeof(T); ++i) {
+            buf.push_back(value >> ((sizeof(T) - i - 1) * 8) & 0xFF);
+        }
+    }
+
+    /// @brief Write a string into a buffer.
+    ///
+    /// @param value string to be written into a buffer.
+    /// @param buf output buffer.
+    void writeString(const std::string& value,
+                     std::vector<uint8_t>& buf) {
+        buf.resize(buf.size() + value.size());
+        std::copy_backward(value.c_str(), value.c_str() + value.size(),
+                           buf.end());
+    }
 };
+
+// The goal of this test is to verify that an IPv4 address being
+// stored in a buffer (wire format) can be read into IOAddress
+// object.
+TEST_F(OptionDataTypesTest, readAddress) {
+    // Create some IPv4 address.
+    asiolink::IOAddress address("192.168.0.1");
+    // And store it in a buffer in a wire format.
+    std::vector<uint8_t> buf;
+    writeAddress(address, buf);
+
+    // Now, try to read the IP address with a utility function
+    // being under test.
+    asiolink::IOAddress address_out("127.0.0.1");
+    EXPECT_NO_THROW(address_out = OptionDataTypeUtil::readAddress(buf, AF_INET));
+
+    // Check that the read address matches address that
+    // we used as input.
+    EXPECT_EQ(address.toText(), address_out.toText());
+}
+
+// The goal of this test is to verify that an IPv6 address
+// is properly converted to wire format and stored in a
+// buffer.
+TEST_F(OptionDataTypesTest, writeAddress) {
+    // Encode an IPv6 address 2001:db8:1::1 in wire format.
+    // This will be used as reference data to validate if
+    // an IPv6 address is stored in a buffer properly.
+    const char data[] = {
+        0x20, 0x01, 0x0d, 0xb8, 0x0, 0x1, 0x0, 0x0,
+        0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1
+    };
+    std::vector<uint8_t> buf_in(data, data + sizeof(data));
+
+    // Create IPv6 address object.
+    asiolink::IOAddress address("2001:db8:1::1");
+    // Define the output buffer to write IP address to.
+    std::vector<uint8_t> buf_out;
+    // Write the address to the buffer.
+    ASSERT_NO_THROW(OptionDataTypeUtil::writeAddress(address, buf_out));
+    // Make sure that input and output buffers have the same size
+    // so we can compare them.
+    ASSERT_EQ(buf_in.size(), buf_out.size());
+    // And finally compare them.
+    EXPECT_TRUE(std::equal(buf_in.begin(), buf_in.end(), buf_out.begin()));
+}
 
 // The purpose of this test is to verify that FQDN is read from
 // a buffer and returned as a text. The representation of the FQDN
