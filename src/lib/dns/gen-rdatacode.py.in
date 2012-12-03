@@ -24,11 +24,20 @@ from os.path import getmtime
 import re
 import sys
 
+# new_rdata_factory_users[] is a list of tuples of the form (rrtype,
+# rrclass). Items in the list use the (new) RdataFactory class, and
+# items which are not in the list use OldRdataFactory class.
+# Note: rrtype and rrclass must be specified in lowercase in
+# new_rdata_factory_users.
+#
+# Example:
+#     new_rdata_factory_users = [('a', 'in'), ('a', 'ch')]
+new_rdata_factory_users = []
+
 re_typecode = re.compile('([\da-z]+)_(\d+)')
 classcode2txt = {}
 typecode2txt = {}
 typeandclass = []
-new_rdatafactory_users = []
 generic_code = 65536            # something larger than any code value
 rdata_declarations = ''
 class_definitions = ''
@@ -275,8 +284,8 @@ def generate_rrparam(fileprefix, basemtime):
 
         # By default, we use OldRdataFactory (see bug #2497). If you
         # want to pick RdataFactory for a particular type, add it to
-        # new_rdatafactory_users.
-        if type_txt in new_rdatafactory_users:
+        # new_rdata_factory_users.
+        if (type_txt.lower(), class_txt.lower()) in new_rdata_factory_users:
             rdf_class = 'RdataFactory'
         else:
             rdf_class = 'OldRdataFactory'
