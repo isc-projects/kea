@@ -23,9 +23,14 @@
 
 namespace isc {
 namespace dns {
-
-class AbstractRRset;
-typedef boost::shared_ptr<AbstractRRset> RRsetPtr;
+class Name;
+class RRClass;
+class RRType;
+class RRTTL;
+namespace rdata {
+class Rdata;
+typedef boost::shared_ptr<Rdata> RdataPtr;
+}
 
 /// \brief Type of callback to add a RRset.
 ///
@@ -36,7 +41,10 @@ typedef boost::shared_ptr<AbstractRRset> RRsetPtr;
 /// \param RRset The rrset to add. It does not contain the accompanying
 ///     RRSIG (if the zone is signed), they are reported with separate
 ///     calls to the callback.
-typedef boost::function<void(const RRsetPtr& rrset)> AddRRsetCallback;
+typedef boost::function<void(const Name& name, const RRClass& rrclass,
+                             const RRType& rrtype, const RRTTL& rrttl,
+                             const rdata::RdataPtr& rdata)>
+    AddRRCallback;
 
 /// \brief Set of issue callbacks for a loader.
 ///
