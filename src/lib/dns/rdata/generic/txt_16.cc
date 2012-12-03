@@ -23,14 +23,13 @@
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/rdata/generic/detail/txt_like.h>
 
 using namespace std;
 using namespace isc::util;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
-
-#include <dns/rdata/generic/detail/txt_like.h>
 
 TXT&
 TXT::operator=(const TXT& source) {

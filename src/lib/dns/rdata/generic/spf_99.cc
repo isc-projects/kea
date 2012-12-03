@@ -24,17 +24,16 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
+/// This class implements the basic interfaces inherited from the abstract
+/// \c rdata::Rdata class. The semantics of the class is provided by
+/// a copy of instantiated TXTLikeImpl class common to both TXT and SPF.
+#include <dns/rdata/generic/detail/txt_like.h>
+
 using namespace std;
 using namespace isc::util;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
-
-/// This class implements the basic interfaces inherited from the abstract
-/// \c rdata::Rdata class. The semantics of the class is provided by
-/// a copy of instantiated TXTLikeImpl class common to both TXT and SPF.
-
-#include <dns/rdata/generic/detail/txt_like.h>
 
 /// \brief The assignment operator
 ///
