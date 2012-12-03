@@ -47,7 +47,7 @@ public:
                   const std::string reason)
     {
         std::stringstream ss;
-        ss << file << line << reason;
+        ss << reason << " [" << file << ":" << line << "]";
         if (error) {
             errors_.push_back(ss.str());
         } else {
@@ -97,9 +97,7 @@ public:
 // Test simple loading. The zone file contains no tricky things, and nothing is
 // omitted. No RRset contains more than one RR Also no errors or warnings.
 TEST_F(MasterLoaderTest, basicLoad) {
-    setLoader("example.org",
-              Name("example.org."),
-              RRClass::IN(),
+    setLoader("example.org", Name("example.org."), RRClass::IN(),
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
@@ -111,4 +109,23 @@ TEST_F(MasterLoaderTest, basicLoad) {
             "1234 3600 1800 2419200 7200");
     checkRR("example.org", RRType::NS(), "ns1.example.org.");
     checkRR("www.example.org", RRType::A(), "192.0.2.1");
+}
+
+// Try loading from file that doesn't exist. There should be single error
+// saying so.
+TEST_F(MasterLoaderTest, invalidFile) {
+    setLoader("This file doesn't exist at all",
+              Name("exmaple.org."), RRClass::IN(), MasterLoader::MANY_ERRORS);
+
+    // Nothing yet. The loader is dormant until invoked.
+    // Is it really what we want?
+    EXPECT_TRUE(errors_.empty());
+
+    loader_->load();
+
+    EXPECT_TRUE(warnings_.empty());
+    EXPECT_TRUE(rrsets_.empty());
+    ASSERT_EQ(1, errors_.size());
+    EXPECT_EQ(0, errors_[0].find("Error opening the input source file: ")) <<
+        "Different error: " << errors_[0];
 }
