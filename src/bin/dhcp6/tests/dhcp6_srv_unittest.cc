@@ -59,6 +59,7 @@ public:
     using Dhcpv6Srv::processRequest;
     using Dhcpv6Srv::createStatusCode;
     using Dhcpv6Srv::selectSubnet;
+    using Dhcpv6Srv::sanityCheck;
 };
 
 class Dhcpv6SrvTest : public ::testing::Test {
@@ -651,6 +652,9 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     OptionPtr clientid = generateClientId();
     req->addOption(clientid);
 
+    // server-id is mandatory in REQUEST
+    req->addOption(srv->getServerID());
+
     // Pass it to the server and hope for a REPLY
     Pkt6Ptr reply = srv->processRequest(req);
 
@@ -709,6 +713,11 @@ TEST_F(Dhcpv6SrvTest, ManyRequests) {
     req2->addOption(clientid2);
     req3->addOption(clientid3);
 
+    // server-id is mandatory in REQUEST
+    req1->addOption(srv->getServerID());
+    req2->addOption(srv->getServerID());
+    req3->addOption(srv->getServerID());
+
     // Pass it to the server and get an advertise
     Pkt6Ptr reply1 = srv->processRequest(req1);
     Pkt6Ptr reply2 = srv->processRequest(req2);
@@ -763,8 +772,8 @@ TEST_F(Dhcpv6SrvTest, StatusCode) {
     EXPECT_TRUE(status->getData() == exp);
 }
 
-// This test verifies if the selectSubnet() method works as expected.
-TEST_F(Dhcpv6SrvTest, SelectSubnet) {
+// This test verifies if the sanityCheck() really checks options presence.
+TEST_F(Dhcpv6SrvTest, sanityCheck) {
     boost::scoped_ptr<NakedDhcpv6Srv> srv;
     ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv(0)) );
 
@@ -772,18 +781,63 @@ TEST_F(Dhcpv6SrvTest, SelectSubnet) {
 
     // check that the packets originating from local addresses can be
     pkt->setRemoteAddr(IOAddress("fe80::abcd"));
-    EXPECT_EQ(subnet_, srv->selectSubnet(pkt));
 
-    // packets originating from subnet A will select subnet A
-    pkt->setRemoteAddr(IOAddress("2001:db8:1::6789"));
-    EXPECT_EQ(subnet_, srv->selectSubnet(pkt));
+    // client-id is optional for information-request, so 
+    EXPECT_NO_THROW(srv->sanityCheck(pkt, Dhcpv6Srv::OPTIONAL, Dhcpv6Srv::OPTIONAL));
 
-    // packets from a subnet that is not supported will not get
-    // a subnet
-    pkt->setRemoteAddr(IOAddress("3000::faf"));
-    EXPECT_FALSE(srv->selectSubnet(pkt));
+    // empty packet, no client-id, no server-id
+    EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::FORBIDDEN),
+                 RFCViolation);
 
-    /// @todo: expand this test once support for relays is implemented
+    // This doesn't make much sense, but let's check it for completeness
+    EXPECT_NO_THROW(srv->sanityCheck(pkt, Dhcpv6Srv::FORBIDDEN, Dhcpv6Srv::FORBIDDEN));
+
+    OptionPtr clientid = generateClientId();
+    pkt->addOption(clientid);
+
+    // client-id is mandatory, server-id is forbidden (as in SOLICIT or REBIND)
+    EXPECT_NO_THROW(srv->sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::FORBIDDEN));
+
+    pkt->addOption(srv->getServerID());
+
+    // both client-id and server-id are mandatory (as in REQUEST, RENEW, RELEASE, DECLINE)
+    EXPECT_NO_THROW(srv->sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::MANDATORY));
+
+    // sane section ends here, let's do some negative tests as well
+
+    pkt->addOption(clientid);
+    pkt->addOption(clientid);
+
+    // with more than one client-id it should throw, no matter what
+    EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv6Srv::OPTIONAL, Dhcpv6Srv::OPTIONAL),
+                 RFCViolation);
+    EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::OPTIONAL),
+                 RFCViolation);
+    EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv6Srv::OPTIONAL, Dhcpv6Srv::MANDATORY),
+                 RFCViolation);
+    EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::MANDATORY),
+                 RFCViolation);
+
+    pkt->delOption(D6O_CLIENTID);
+    pkt->delOption(D6O_CLIENTID);
+
+    // again we have only one client-id
+
+    // let's try different type of insanity - several server-ids
+    pkt->addOption(srv->getServerID());
+    pkt->addOption(srv->getServerID());
+
+    // with more than one server-id it should throw, no matter what
+    EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv6Srv::OPTIONAL, Dhcpv6Srv::OPTIONAL),
+                 RFCViolation);
+    EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::OPTIONAL),
+                 RFCViolation);
+    EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv6Srv::OPTIONAL, Dhcpv6Srv::MANDATORY),
+                 RFCViolation);
+    EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::MANDATORY),
+                 RFCViolation);
+    
+
 }
 
 }   // end of anonymous namespace

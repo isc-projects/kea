@@ -30,6 +30,23 @@
 
 namespace isc {
 namespace dhcp {
+
+/// An exception that is thrown if a DHCPv6 protocol violation occurs while
+/// processing a message (e.g. a mandatory option is missing)
+class RFCViolation : public isc::Exception {
+public:
+
+/// @brief constructor
+///
+/// @param file name of the file, where exception occurred
+/// @param line line of the file, where exception occurred
+/// @param what text description of the issue that caused exception
+RFCViolation(const char* file, size_t line, const char* what) :
+    isc::Exception(file, line, what) {}
+};
+
+
+
 /// @brief DHCPv6 server service.
 ///
 /// This class represents DHCPv6 server. It contains all
@@ -45,6 +62,12 @@ namespace dhcp {
 class Dhcpv6Srv : public boost::noncopyable {
 
 public:
+    /// @brief defines if certain option may, must or must not appear
+    typedef enum {
+        FORBIDDEN,
+        MANDATORY,
+        OPTIONAL
+    } RequirementLevel;
 
     /// @brief Minimum length of a MAC address to be used in DUID generation.
     static const size_t MIN_MAC_LEN = 6;
@@ -84,6 +107,19 @@ public:
     void shutdown();
 
 protected:
+
+    /// @brief verifies if specified packet meets RFC requirements
+    ///
+    /// Checks if mandatory option is really there, that forbidden option
+    /// is not there, and that client-id or server-id appears only once.
+    ///
+    /// @param pkt packet to be checked
+    /// @param clientid expectation regarding client-id option
+    /// @param serverid expectation regarding server-id option
+    /// @throw RFCViolation if any issues are detected
+    void sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
+                     RequirementLevel serverid);
+
     /// @brief Processes incoming SOLICIT and returns response.
     ///
     /// Processes received SOLICIT message and verifies that its sender
