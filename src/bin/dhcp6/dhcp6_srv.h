@@ -205,10 +205,23 @@ protected:
     /// @param question client's message (typically SOLICIT or REQUEST)
     /// @param ia pointer to client's IA_NA option (client's request)
     /// @return IA_NA option (server's response)
-    OptionPtr handleIA_NA(const isc::dhcp::Subnet6Ptr& subnet,
+    OptionPtr assignIA_NA(const isc::dhcp::Subnet6Ptr& subnet,
                           const isc::dhcp::DuidPtr& duid,
                           isc::dhcp::Pkt6Ptr question,
                           boost::shared_ptr<Option6IA> ia);
+
+    /// @brief Renews specific IA_NA option
+    ///
+    /// Generates response to IA_NA. This typically includes finding a lease that
+    /// corresponds to the received address. If no such lease is found, IA_NA
+    /// response is generates with appropriate status code.
+    ///
+    /// @param subnet subnet the sender belongs to
+    /// @param duid client's duid
+    /// @param question client's message
+    /// @param ia IA_NA option that is being renewed
+    OptionPtr renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                         Pkt6Ptr question, boost::shared_ptr<Option6IA> ia);
 
     /// @brief Copies required options from client message to server answer.
     ///
@@ -240,13 +253,22 @@ protected:
 
     /// @brief Assigns leases.
     ///
-    /// TODO: This method is currently a stub. It just appends one
-    /// hardcoded lease. It supports addresses (IA_NA) only. It does NOT
-    /// support temporary addresses (IA_TA) nor prefixes (IA_PD).
+    /// It supports addresses (IA_NA) only. It does NOT support temporary
+    /// addresses (IA_TA) nor prefixes (IA_PD).
     ///
     /// @param question client's message (with requested IA_NA)
     /// @param answer server's message (IA_NA options will be added here)
     void assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer);
+
+    /// @brief Attempts to renew received addresses
+    ///
+    /// It iterates through received IA_NA options and attempts to renew
+    /// received addresses. If no such leases are found, proper status
+    /// code is added to reply message. Renewed addresses are added
+    /// as IA_NA/IAADDR to reply packet.
+    /// @param renew client's message asking for renew
+    /// @param reply server's response
+    void renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply);
 
     /// @brief Sets server-identifier.
     ///
