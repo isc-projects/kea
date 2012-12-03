@@ -517,7 +517,6 @@ TEST_F(OptionCustomTest, uint32DataArray) {
                                       buf.begin() + 3)),
         isc::OutOfRange
     );
-
 }
 
 // The purpose of this test is to verify that the option definition comprising
@@ -973,6 +972,106 @@ TEST_F(OptionCustomTest, setFqdnData) {
     ASSERT_NO_THROW(fqdn = option->readFqdn());
     EXPECT_EQ("example.com.", fqdn);
 }
+
+TEST_F(OptionCustomTest, setBooleanDataArray) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "boolean", true);
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    ASSERT_EQ(0, option->getDataFieldsNum());
+}
+
+/// The purpose of this test is to verify that an option comprising
+/// array of IPv4 address can be created with no addresses and that
+/// multiple IPv4 addresses can be added to it after creation.
+TEST_F(OptionCustomTest, setIpv4AddressDataArray) {
+    OptionDefinition opt_def("OPTION_FOO", 232, "ipv4-address", true);
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V4));
+    );
+    ASSERT_TRUE(option);
+
+    // Expect that the array does not contain any data fields yet.
+    ASSERT_EQ(0, option->getDataFieldsNum());
+
+    // Add 3 IPv4 addresses.
+    ASSERT_NO_THROW(option->addArrayDataField(IOAddress("192.168.0.1")));
+    ASSERT_NO_THROW(option->addArrayDataField(IOAddress("192.168.0.2")));
+    ASSERT_NO_THROW(option->addArrayDataField(IOAddress("192.168.0.3")));
+
+    ASSERT_EQ(3, option->getDataFieldsNum());
+
+    // Check that all IP addresses have been set correctly.
+    IOAddress address0("127.0.0.1");
+    ASSERT_NO_THROW(address0 = option->readAddress(0));
+    EXPECT_EQ("192.168.0.1", address0.toText());
+    IOAddress address1("127.0.0.1");
+    ASSERT_NO_THROW(address1 = option->readAddress(1));
+    EXPECT_EQ("192.168.0.2", address1.toText());
+    IOAddress address2("127.0.0.1");
+    ASSERT_NO_THROW(address2 = option->readAddress(2));
+    EXPECT_EQ("192.168.0.3", address2.toText());
+
+    // Add invalid address (IPv6 instead of IPv4).
+    EXPECT_THROW(
+        option->addArrayDataField(IOAddress("2001:db8:1::1")),
+        isc::dhcp::BadDataTypeCast
+    );
+}
+
+/// The purpose of this test is to verify that an option comprising
+/// array of IPv6 address can be created with no addresses and that
+/// multiple IPv6 addresses can be added to it after creation.
+TEST_F(OptionCustomTest, setIpv6AddressDataArray) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "ipv6-address", true);
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // Initially, the array does not contain any data fields.
+    ASSERT_EQ(0, option->getDataFieldsNum());
+
+    // Add 3 new IPv6 addresses into the array.
+    ASSERT_NO_THROW(option->addArrayDataField(IOAddress("2001:db8:1::1")));
+    ASSERT_NO_THROW(option->addArrayDataField(IOAddress("2001:db8:1::2")));
+    ASSERT_NO_THROW(option->addArrayDataField(IOAddress("2001:db8:1::3")));
+
+    // We should have now 3 addresses added.
+    ASSERT_EQ(3, option->getDataFieldsNum());
+
+    // Check that they have correct values set.
+    IOAddress address0("::1");
+    ASSERT_NO_THROW(address0 = option->readAddress(0));
+    EXPECT_EQ("2001:db8:1::1", address0.toText());
+    IOAddress address1("::1");
+    ASSERT_NO_THROW(address1 = option->readAddress(1));
+    EXPECT_EQ("2001:db8:1::2", address1.toText());
+    IOAddress address2("::1");
+    ASSERT_NO_THROW(address2 = option->readAddress(2));
+    EXPECT_EQ("2001:db8:1::3", address2.toText());
+
+    // Add invalid address (IPv4 instead of IPv6).
+    EXPECT_THROW(
+        option->addArrayDataField(IOAddress("192.168.0.1")),
+        isc::dhcp::BadDataTypeCast
+    );
+}
+
 
 // The purpose of this test is to verify that pack function for
 // DHCPv4 custom option works correctly.

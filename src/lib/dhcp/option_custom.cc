@@ -45,6 +45,33 @@ OptionCustom::OptionCustom(const OptionDefinition& def,
 }
 
 void
+OptionCustom::addArrayDataField(const asiolink::IOAddress& address) {
+    checkArrayType();
+
+    if ((address.getFamily() == AF_INET &&
+         definition_.getType() != OPT_IPV4_ADDRESS_TYPE) ||
+        (address.getFamily() == AF_INET6 &&
+         definition_.getType() != OPT_IPV6_ADDRESS_TYPE)) {
+        isc_throw(BadDataTypeCast, "invalid address specified "
+                  << address.toText() << ". Expected a valid IPv"
+                  << (definition_.getType() == OPT_IPV4_ADDRESS_TYPE ? "4" : "6")
+                  << " address.");
+    }
+
+    OptionBuffer buf;
+    OptionDataTypeUtil::writeAddress(address, buf);
+    buffers_.push_back(buf);
+}
+
+void
+OptionCustom::checkArrayType() const {
+    if (!definition_.getArrayType()) {
+        isc_throw(InvalidOperation, "failed to add new array entry to an"
+                  << " option. The option is not an array.");
+    }
+}
+
+void
 OptionCustom::checkIndex(const uint32_t index) const {
     if (index >= buffers_.size()) {
         isc_throw(isc::OutOfRange, "specified data field index " << index
@@ -359,7 +386,8 @@ OptionCustom::readAddress(const uint32_t index) const {
         return (OptionDataTypeUtil::readAddress(buffers_[index], AF_INET6));
     } else {
         isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
-                  << " IP address. Invalid buffer length " << buffers_[index].size());
+                  << " IP address. Invalid buffer length "
+                  << buffers_[index].size() << ".");
     }
 }
 
