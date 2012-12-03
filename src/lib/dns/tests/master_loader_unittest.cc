@@ -26,11 +26,14 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <fstream>
 
 using namespace isc::dns;
 using std::vector;
 using std::string;
 using std::list;
+using std::ofstream;
+using std::endl;
 
 class MasterLoaderTest : public ::testing::Test {
 public:
@@ -72,6 +75,23 @@ public:
                                        boost::bind(&MasterLoaderTest::addRRset,
                                                    this, _1, _2, _3, _4, _5),
                                        options));
+    }
+
+    void prepareBrokenZone(const string& filename, const string& line) {
+        ofstream out(filename.c_str(),
+                     std::ios_base::out | std::ios_base::trunc);
+        ASSERT_FALSE(out.fail());
+        out << "example.org. 3600 IN SOA ns1.example.org.filename "
+            "admin.example.org.filename 1234 3600 1800 2419200 7200" << endl;
+        out << line << endl;
+        out << "correct 3600    IN  A 192.0.2.2" << endl;
+        out.close();
+    }
+
+    void clear() {
+        warnings_.clear();
+        errors_.clear();
+        rrsets_.clear();
     }
 
     // Check the next RR in the ones produced by the loader
@@ -154,4 +174,58 @@ TEST_F(MasterLoaderTest, invalidFile) {
     ASSERT_EQ(1, errors_.size());
     EXPECT_EQ(0, errors_[0].find("Error opening the input source file: ")) <<
         "Different error: " << errors_[0];
+}
+
+struct ErrorCase {
+    const char* line;
+    const char* problem;
+} error_cases[] = {
+    { "www...   3600    IN  A   192.0.2.1", "Invalid name" },
+    { "www      FORTNIGHT   IN  A   192.0.2.1", "Invalid TTL" },
+    { "www      3600    XX  A   192.0.2.1", "Invalid class" },
+    { "www      3600    IN  A   bad_ip", "Invalid Rdata" },
+    { "www      3600    IN", "Unexpected EOLN" },
+    { "www      3600    CH  TXT nothing", "Class mismatch" },
+    { NULL, NULL }
+};
+
+// Test a broken zone is handled properly. We test several problems,
+// both in strict and lenient mode.
+TEST_F(MasterLoaderTest, brokenZone) {
+    const string filename(TEST_DATA_BUILDDIR "/broken.zone");
+    for (const ErrorCase* ec = error_cases; ec->line != NULL; ++ec) {
+        SCOPED_TRACE(ec->problem);
+        prepareBrokenZone(filename, ec->line);
+
+        {
+            SCOPED_TRACE("Strict mode");
+            clear();
+            setLoader(filename.c_str(), Name("example.org."), RRClass::IN(),
+                      MasterLoader::DEFAULT);
+            loader_->load();
+            EXPECT_EQ(1, errors_.size());
+            EXPECT_TRUE(warnings_.empty());
+
+            checkRR("example.org", RRType::SOA(), "ns1.example.org. "
+                    "admin.example.org. 1234 3600 1800 2419200 7200");
+            // In the strict mode, it is aborted. The last RR is not
+            // even attempted.
+            EXPECT_TRUE(rrsets_.empty());
+        }
+
+        {
+            SCOPED_TRACE("Lenient mode");
+            clear();
+            setLoader(filename.c_str(), Name("example.org."), RRClass::IN(),
+                      MasterLoader::MANY_ERRORS);
+            loader_->load();
+            EXPECT_EQ(1, errors_.size());
+            EXPECT_TRUE(warnings_.empty());
+            checkRR("example.org", RRType::SOA(), "ns1.example.org. "
+                    "admin.example.org. 1234 3600 1800 2419200 7200");
+            // This one is below the error one.
+            checkRR("correct.example.org", RRType::A(), "192.0.2.2");
+            EXPECT_TRUE(rrsets_.empty());
+        }
+    }
 }
