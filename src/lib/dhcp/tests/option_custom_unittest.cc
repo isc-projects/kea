@@ -124,9 +124,10 @@ TEST_F(OptionCustomTest, constructor) {
 TEST_F(OptionCustomTest, emptyData) {
     OptionDefinition opt_def("OPTION_FOO", 232, "empty");
 
+    OptionBuffer buf;
     boost::scoped_ptr<OptionCustom> option;
     ASSERT_NO_THROW(
-        option.reset(new OptionCustom(opt_def, Option::V4, OptionBuffer()));
+        option.reset(new OptionCustom(opt_def, Option::V4, buf.begin(), buf.end()));
     );
     ASSERT_TRUE(option);
 
@@ -170,8 +171,10 @@ TEST_F(OptionCustomTest, binaryData) {
     EXPECT_TRUE(std::equal(buf_in.begin(), buf_in.end(), buf_out.begin()));
 
     // Check that option with "no data" is rejected.
+    buf_in.clear();
     EXPECT_THROW(
-        option.reset(new OptionCustom(opt_def, Option::V4, OptionBuffer())),
+        option.reset(new OptionCustom(opt_def, Option::V4, buf_in.begin(),
+                                      buf_in.end())),
         isc::OutOfRange
     );
 }
@@ -208,8 +211,9 @@ TEST_F(OptionCustomTest, booleanData) {
     EXPECT_FALSE(value);
 
     // Check that the option with "no data" is rejected.
+    buf.clear();
     EXPECT_THROW(
-        option.reset(new OptionCustom(opt_def, Option::V6, OptionBuffer())),
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end())),
         isc::OutOfRange
     );
 }
@@ -410,8 +414,9 @@ TEST_F(OptionCustomTest, stringData) {
     EXPECT_EQ("hello world!", value);
 
     // Check that option will not be created if empty buffer is provided.
+    buf.clear();
     EXPECT_THROW(
-        option.reset(new OptionCustom(opt_def, Option::V6, OptionBuffer())),
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end())),
         isc::OutOfRange
     );
 }
@@ -464,8 +469,9 @@ TEST_F(OptionCustomTest, booleanDataArray) {
 
     // Check that empty buffer can't be used to create option holding
     // array of boolean values.
+    buf.clear();
     EXPECT_THROW(
-         option.reset(new OptionCustom(opt_def, Option::V6, OptionBuffer())),
+         option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end())),
          isc::OutOfRange
     );
 }
