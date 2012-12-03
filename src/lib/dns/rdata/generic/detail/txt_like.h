@@ -20,8 +20,11 @@
 #include <string>
 #include <vector>
 
-using namespace std;
-using namespace isc::util;
+namespace isc {
+namespace dns {
+namespace rdata {
+namespace generic {
+namespace detail {
 
 /// \brief \c rdata::TXTLikeImpl class represents the TXT-like RDATA for TXT
 /// and SPF types.
@@ -41,7 +44,7 @@ public:
     ///
     /// \c InvalidRdataLength is thrown if rdata_len exceeds the maximum.
     /// \c DNSMessageFORMERR is thrown if the RR is misformed.
-    TXTLikeImpl(InputBuffer& buffer, size_t rdata_len) {
+    TXTLikeImpl(util::InputBuffer& buffer, size_t rdata_len) {
         if (rdata_len > MAX_RDLENGTH) {
             isc_throw(InvalidRdataLength, "RDLENGTH too large: " << rdata_len);
         }
@@ -59,7 +62,7 @@ public:
                           " RDATA: character string length is too large: " <<
                           static_cast<int>(len));
             }
-            vector<uint8_t> data(len + 1);
+            std::vector<uint8_t> data(len + 1);
             data[0] = len;
             buffer.readData(&data[0] + 1, len);
             string_list_.push_back(data);
@@ -102,7 +105,7 @@ public:
                       txtstr);
         }
 
-        vector<uint8_t> data;
+        std::vector<uint8_t> data;
         data.reserve(length + 1);
         data.push_back(length);
         data.insert(data.end(), txtstr.begin() + pos_begin,
@@ -122,9 +125,9 @@ public:
     ///
     /// \param buffer An output buffer to store the wire data.
     void
-    toWire(OutputBuffer& buffer) const {
-        for (vector<vector<uint8_t> >::const_iterator it =
-                                                          string_list_.begin();
+    toWire(util::OutputBuffer& buffer) const {
+        for (std::vector<std::vector<uint8_t> >::const_iterator it =
+                 string_list_.begin();
              it != string_list_.end();
              ++it)
         {
@@ -139,8 +142,8 @@ public:
     /// to.
     void
     toWire(AbstractMessageRenderer& renderer) const {
-        for (vector<vector<uint8_t> >::const_iterator it =
-                                                          string_list_.begin();
+        for (std::vector<std::vector<uint8_t> >::const_iterator it =
+                 string_list_.begin();
              it != string_list_.end();
              ++it)
         {
@@ -151,14 +154,14 @@ public:
     /// \brief Convert the TXT-like data to a string.
     ///
     /// \return A \c string object that represents the TXT-like data.
-    string
+    std::string
     toText() const {
-        string s;
+        std::string s;
 
         // XXX: this implementation is not entirely correct.  for example, it
         // should escape double-quotes if they appear in the character string.
-        for (vector<vector<uint8_t> >::const_iterator it =
-                                                          string_list_.begin();
+        for (std::vector<std::vector<uint8_t> >::const_iterator it =
+                 string_list_.begin();
              it != string_list_.end();
              ++it)
         {
@@ -189,7 +192,7 @@ public:
         OutputBuffer this_buffer(0);
         toWire(this_buffer);
         uint8_t const* const this_data = (uint8_t const*)this_buffer.getData();
-        size_t this_len = this_buffer.getLength();
+        const size_t this_len = this_buffer.getLength();
 
         OutputBuffer other_buffer(0);
         other.toWire(other_buffer);
@@ -214,11 +217,14 @@ private:
     std::vector<std::vector<uint8_t> > string_list_;
 };
 
-// END_RDATA_NAMESPACE
-// END_ISC_NAMESPACE
+}      // namespace detail
+}      // namespace generic
+}      // namespace rdata
+}      // namespace dns
+}      // namespace isc
 
 #endif //  TXT_LIKE_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:
