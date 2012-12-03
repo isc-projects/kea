@@ -87,6 +87,12 @@ public:
     OptionCustom(const OptionDefinition& def, Universe u,
                  OptionBufferConstIter first, OptionBufferConstIter last);
 
+    /// @brief Create new buffer and set its value as an IP address.
+    ///
+    /// @param address IPv4 or IPv6 address to be written to
+    /// a buffer being created.
+    void addArrayDataField(const asiolink::IOAddress& address);
+
     /// @brief Return a number of the data fields.
     ///
     /// @return number of data fields held by the option.
@@ -262,12 +268,14 @@ protected:
 
 private:
 
-    /// @brief Check if data field index is valid.
+    /// @brief Verify that the option comprises an array of values.
     ///
-    /// @param index Data field index to check.
+    /// This helper function is used by createArrayEntry functions
+    /// and throws an exception if the particular option is not
+    /// an array.
     ///
-    /// @throw isc::OutOfRange if index is out of range.
-    void checkIndex(const uint32_t index) const;
+    /// @throw isc::InvalidOperation if option is not an array.
+    inline void checkArrayType() const;
 
     /// @brief Verify that the integer type is consistent with option
     /// field type.
@@ -281,6 +289,13 @@ private:
     /// @throw isc::dhcp::InvalidDataType if the type is invalid.
     template<typename T>
     void checkDataType(const uint32_t index) const;
+
+    /// @brief Check if data field index is valid.
+    ///
+    /// @param index Data field index to check.
+    ///
+    /// @throw isc::OutOfRange if index is out of range.
+    void checkIndex(const uint32_t index) const;
 
     /// @brief Create a collection of non initialized buffers.
     void createBuffers();
