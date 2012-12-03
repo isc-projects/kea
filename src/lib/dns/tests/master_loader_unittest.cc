@@ -62,7 +62,7 @@ public:
     void setLoader(const char* file, const Name& origin, const RRClass rrclass,
                    const MasterLoader::Options options)
     {
-        loader_.reset(new MasterLoader((string(TEST_DATA_SRCDIR) +
+        loader_.reset(new MasterLoader((string(TEST_DATA_SRCDIR "/") +
                                         file).c_str(), origin, rrclass,
                                        callbacks_,
                                        boost::bind(&MasterLoaderTest::addRRset,
@@ -104,6 +104,6 @@ TEST_F(MasterLoaderTest, basicLoad) {
 
     checkRR("example.org", RRType::SOA(), "ns1.example.org. admin.example.org. "
             "1234 3600 1800 2419200 7200");
-    checkRR("example.org", RRType::NS(), "ns1.example.org");
+    checkRR("example.org", RRType::NS(), "ns1.example.org.");
     checkRR("www.example.org", RRType::A(), "192.0.2.1");
 }
