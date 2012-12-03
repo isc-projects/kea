@@ -285,7 +285,9 @@ def generate_rrparam(fileprefix, basemtime):
         # By default, we use OldRdataFactory (see bug #2497). If you
         # want to pick RdataFactory for a particular type, add it to
         # new_rdata_factory_users.
-        if (type_txt.lower(), class_txt.lower()) in new_rdata_factory_users:
+        if ((type_txt.lower(), class_txt.lower()) in new_rdata_factory_users) or \
+                ((class_txt.lower() == 'in') and \
+                     ((type_txt.lower(), 'generic') in new_rdata_factory_users)):
             rdf_class = 'RdataFactory'
         else:
             rdf_class = 'OldRdataFactory'
