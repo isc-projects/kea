@@ -33,7 +33,7 @@ public:
                  const Name& zone_origin,
                  const RRClass& zone_class,
                  const MasterLoaderCallbacks& callbacks,
-                 const AddRRsetCallback& add_callback,
+                 const AddRRCallback& add_callback,
                  Options options = DEFAULT);
     ~MasterLoader();
 

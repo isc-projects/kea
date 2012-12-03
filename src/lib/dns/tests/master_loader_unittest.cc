@@ -55,7 +55,11 @@ public:
         }
     }
 
-    void addRRset(const RRsetPtr& rrset) {
+    void addRRset(const Name& name, const RRClass& rrclass,
+                  const RRType& rrtype, const RRTTL& rrttl,
+                  const rdata::RdataPtr& data) {
+        const RRsetPtr rrset(new BasicRRset(name, rrclass, rrtype, rrttl));
+        rrset->addRdata(data);
         rrsets_.push_back(rrset);
     }
 
@@ -66,7 +70,8 @@ public:
                                         file).c_str(), origin, rrclass,
                                        callbacks_,
                                        boost::bind(&MasterLoaderTest::addRRset,
-                                                   this, _1), options));
+                                                   this, _1, _2, _3, _4, _5),
+                                       options));
     }
 
     // Check the next RR in the ones produced by the loader
