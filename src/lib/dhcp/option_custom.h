@@ -151,6 +151,14 @@ public:
     /// @return string representation if FQDN.
     std::string readFqdn(const uint32_t index = 0) const;
 
+    /// @brief Write an FQDN into a buffer.
+    ///
+    /// @param fqdn text representation of FQDN.
+    /// @param index buffer index.
+    ///
+    /// @throw isc::OutOfRange if index is out of range.
+    void writeFqdn(const std::string& fqdn, const uint32_t index = 0);
+
     /// @brief Read a buffer as integer value.
     ///
     /// @param index buffer index.
