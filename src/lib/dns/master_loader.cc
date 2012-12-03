@@ -18,7 +18,6 @@
 #include <dns/rrttl.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
-#include <dns/rrset.h>
 #include <dns/rdata.h>
 
 using std::string;
@@ -32,7 +31,7 @@ public:
                      const Name& zone_origin,
                      const RRClass& zone_class,
                      const MasterLoaderCallbacks& callbacks,
-                     const AddRRsetCallback& add_callback,
+                     const AddRRCallback& add_callback,
                      MasterLoader::Options options) :
         lexer_(),
         zone_origin_(zone_origin),
@@ -88,13 +87,7 @@ public:
             // the Rdata. The errors should have been reported by
             // callbacks_ already, so we just need to not report the RR
             if (data != rdata::RdataPtr()) {
-                // Create the RRset. We don't need the RRSIG, so we are good
-                // with the basic one
-                const RRsetPtr rrset(new BasicRRset(name, rrclass, rrtype,
-                                                    ttl));
-                rrset->addRdata(data);
-                // OK now, so give the RRset with single RR to the caller
-                add_callback_(rrset);
+                add_callback_(name, rrclass, rrtype, ttl, data);
 
                 // Good, we loaded another one
                 ++count;
@@ -108,16 +101,15 @@ private:
     const Name& zone_origin_;
     const RRClass zone_class_;
     MasterLoaderCallbacks callbacks_;
-    AddRRsetCallback add_callback_;
+    AddRRCallback add_callback_;
     MasterLoader::Options options_;
-    RRsetPtr current_rrset_;
 };
 
 MasterLoader::MasterLoader(const char* master_file,
                            const Name& zone_origin,
                            const RRClass& zone_class,
                            const MasterLoaderCallbacks& callbacks,
-                           const AddRRsetCallback& add_callback,
+                           const AddRRCallback& add_callback,
                            Options options)
 {
     impl_ = new MasterLoaderImpl(master_file, zone_origin,

@@ -18,6 +18,7 @@
 #include <dns/rrset.h>
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
+#include <dns/rdata.h>
 
 #include <exceptions/exceptions.h>
 
@@ -40,8 +41,8 @@ public:
     // the correct ones, according to a predefined set in a list.
     virtual void addRRset(const isc::dns::AbstractRRset& rrset) {
         ASSERT_FALSE(expected_rrsets_.empty());
-        // In our tests, pointer equality is enough.
-        EXPECT_EQ(expected_rrsets_.front().get(), &rrset);
+
+        EXPECT_EQ(expected_rrsets_.front().get()->toText(), rrset.toText());
         // And remove this RRset, as it has been used.
         expected_rrsets_.pop_front();
     }
@@ -67,14 +68,22 @@ protected:
                                                isc::dns::RRClass::IN(), &ok_))
     {}
     // Generate a new RRset, put it to the updater and return it.
-    isc::dns::RRsetPtr generateRRset() {
+    void generateRRset(isc::dns::AddRRCallback callback) {
         const isc::dns::RRsetPtr
             result(new isc::dns::RRset(isc::dns::Name("example.org"),
                                        isc::dns::RRClass::IN(),
                                        isc::dns::RRType::A(),
                                        isc::dns::RRTTL(3600)));
+        const isc::dns::rdata::RdataPtr
+            data(isc::dns::rdata::createRdata(isc::dns::RRType::A(),
+                                              isc::dns::RRClass::IN(),
+                                              "192.0.2.1"));
+
+        result->addRdata(data);
         updater_.expected_rrsets_.push_back(result);
-        return (result);
+
+        callback(result->getName(), result->getClass(), result->getType(),
+                 result->getTTL(), data);
     }
     // An updater to be passed to the context
     MockUpdater updater_;
@@ -112,11 +121,11 @@ TEST_F(MasterLoaderCallbackTest, callbacks) {
 
 // Try adding some RRsets.
 TEST_F(MasterLoaderCallbackTest, addRRset) {
-    isc::dns::AddRRsetCallback
+    isc::dns::AddRRCallback
         callback(createMasterLoaderAddCallback(updater_));
     // Put some of them in.
-    EXPECT_NO_THROW(callback(generateRRset()));
-    EXPECT_NO_THROW(callback(generateRRset()));
+    EXPECT_NO_THROW(generateRRset(callback));
+    EXPECT_NO_THROW(generateRRset(callback));
     // They all get pushed there right away, so there are none in the queue
     EXPECT_TRUE(updater_.expected_rrsets_.empty());
 }
