@@ -82,6 +82,17 @@ TEST_F(Rdata_DNSKEY_Test, DISABLED_badText) {
                  InvalidRdataText);
 }
 
+TEST_F(Rdata_DNSKEY_Test, createFromLexer) {
+    generic::DNSKEY rdata_dnskey(dnskey_txt);
+    EXPECT_EQ(0, rdata_dnskey.compare(
+        *test::createRdataUsingLexer(RRType::DNSKEY(), RRClass::IN(),
+                                     dnskey_txt)));
+
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::DNSKEY(), RRClass::IN(),
+                                             "257 3 5"));
+}
+
 TEST_F(Rdata_DNSKEY_Test, toWireRenderer) {
     renderer.skip(2);
     generic::DNSKEY rdata_dnskey(dnskey_txt);

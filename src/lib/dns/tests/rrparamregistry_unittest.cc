@@ -24,6 +24,10 @@
 #include <dns/rdataclass.h>
 #include <dns/rrparamregistry.h>
 #include <dns/rrtype.h>
+#include <dns/master_loader.h>
+
+#include <boost/scoped_ptr.hpp>
+#include <boost/bind.hpp>
 
 using namespace std;
 using namespace isc::dns;
@@ -104,6 +108,7 @@ TEST_F(RRParamRegistryTest, addError) {
 
 class TestRdataFactory : public AbstractRdataFactory {
 public:
+    using AbstractRdataFactory::create;
     virtual RdataPtr create(const string& rdata_str) const
     { return (RdataPtr(new in::A(rdata_str))); }
     virtual RdataPtr create(InputBuffer& buffer, size_t rdata_len) const
@@ -150,6 +155,41 @@ TEST_F(RRParamRegistryTest, addRemoveFactory) {
                     RRType(test_type_code)));
     EXPECT_FALSE(RRParamRegistry::getRegistry().removeRdataFactory(
                      RRType(test_type_code)));
+}
+
+void
+dummyCallback(const string&, size_t, const string&) {
+}
+
+RdataPtr
+createRdataHelper(const std::string& str) {
+    boost::scoped_ptr<AbstractRdataFactory> rdf(new TestRdataFactory);
+
+    std::stringstream ss(str);
+    MasterLexer lexer;
+    lexer.pushSource(ss);
+
+    const MasterLoaderCallbacks::IssueCallback callback
+        (boost::bind(&dummyCallback, _1, _2, _3));
+    MasterLoaderCallbacks callbacks(callback, callback);
+    const Name origin("example.org.");
+
+    return (rdf->create(lexer, &origin,
+                        MasterLoader::MANY_ERRORS,
+                        callbacks));
+}
+
+TEST_F(RRParamRegistryTest, createFromLexer) {
+    // This test basically checks that the string version of
+    // AbstractRdataFactory::create() is called by the MasterLexer
+    // variant of create().
+    EXPECT_EQ(0, in::A("192.168.0.1").compare(
+              *createRdataHelper("192.168.0.1")));
+
+    // This should parse only up to the end of line. Everything that
+    // comes afterwards is not parsed.
+    EXPECT_EQ(0, in::A("192.168.0.42").compare(
+              *createRdataHelper("192.168.0.42\na b c d e f")));
 }
 
 }

@@ -28,6 +28,9 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 
+#include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
+
 using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
@@ -54,6 +57,146 @@ RdataTest::rdataFactoryFromFile(const RRType& rrtype, const RRClass& rrclass,
     uint16_t rdlen = buffer.readUint16();
     return (createRdata(rrtype, rrclass, buffer, rdlen));
 }
+
+namespace test {
+
+void
+dummyCallback(const string&, size_t, const string&) {
+}
+
+RdataPtr
+createRdataUsingLexer(const RRType& rrtype, const RRClass& rrclass,
+                      const std::string& str)
+{
+    std::stringstream ss(str);
+    MasterLexer lexer;
+    lexer.pushSource(ss);
+
+    const MasterLoaderCallbacks::IssueCallback callback
+        (boost::bind(&dummyCallback, _1, _2, _3));
+    MasterLoaderCallbacks callbacks(callback, callback);
+    const Name origin("example.org.");
+
+    return (createRdata(rrtype, rrclass, lexer, &origin,
+                        MasterLoader::MANY_ERRORS, callbacks));
+}
+
+} // end of namespace isc::dns::rdata::test
+
+// A mock class to check parameters passed via loader callbacks.  Its callback
+// records the passed parameters, allowing the test to check them later via
+// the check() method.
+class CreateRdataCallback {
+public:
+    enum CallbackType { NONE, ERROR, WARN };
+    CreateRdataCallback() : type_(NONE), line_(0) {}
+    void callback(CallbackType type, const string& source, size_t line,
+                  const string& reason_txt) {
+        type_ = type;
+        source_ = source;
+        line_ = line;
+        reason_txt_ = reason_txt;
+    }
+
+    void clear() {
+        type_ = NONE;
+        source_.clear();
+        line_ = 0;
+        reason_txt_.clear();
+    }
+
+    // Return if callback is called since the previous call to clear().
+    bool isCalled() const { return (type_ != NONE); }
+
+    void check(const string& expected_srcname, size_t expected_line,
+               CallbackType expected_type, const string& expected_reason)
+        const
+    {
+        EXPECT_EQ(expected_srcname, source_);
+        EXPECT_EQ(expected_line, line_);
+        EXPECT_EQ(expected_type, type_);
+        EXPECT_EQ(expected_reason, reason_txt_);
+    }
+
+private:
+    CallbackType type_;
+    string source_;
+    size_t line_;
+    string reason_txt_;
+};
+
+// Test class/type-independent behavior of createRdata().
+TEST_F(RdataTest, createRdataWithLexer) {
+    const in::AAAA aaaa_rdata("2001:db8::1");
+
+    stringstream ss;
+    const string src_name = "stream-" + boost::lexical_cast<string>(&ss);
+    ss << aaaa_rdata.toText() << "\n"; // valid case
+    ss << aaaa_rdata.toText() << " extra-token\n"; // extra token
+    ss << aaaa_rdata.toText() << " extra token\n"; // 2 extra tokens
+    ss << ")\n"; // causing lexer error in parsing the RDATA text
+    ss << "192.0.2.1\n"; // semantics error: IPv4 address is given for AAAA
+    ss << aaaa_rdata.toText();  // valid, but end with EOF, not EOL
+    lexer.pushSource(ss);
+
+    CreateRdataCallback callback;
+    MasterLoaderCallbacks callbacks(
+        boost::bind(&CreateRdataCallback::callback, &callback,
+                    CreateRdataCallback::ERROR, _1, _2, _3),
+        boost::bind(&CreateRdataCallback::callback, &callback,
+                    CreateRdataCallback::WARN,  _1, _2, _3));
+
+    // Valid case.
+    ConstRdataPtr rdata = createRdata(RRType::AAAA(), RRClass::IN(), lexer,
+                                      NULL, MasterLoader::MANY_ERRORS,
+                                      callbacks);
+    EXPECT_EQ(0, aaaa_rdata.compare(*rdata));
+    EXPECT_FALSE(callback.isCalled());
+
+    // Broken RDATA text: extra token.  createRdata() returns NULL, error
+    // callback is called.
+    callback.clear();
+    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+                             MasterLoader::MANY_ERRORS, callbacks));
+    callback.check(src_name, 2, CreateRdataCallback::ERROR,
+                   "createRdata from text failed near 'extra-token': "
+                   "extra input text");
+
+    // Similar to the previous case, but only the first extra token triggers
+    // callback.
+    callback.clear();
+    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+                             MasterLoader::MANY_ERRORS, callbacks));
+    callback.check(src_name, 3, CreateRdataCallback::ERROR,
+                   "createRdata from text failed near 'extra': "
+                   "extra input text");
+
+    // Lexer error will happen, corresponding error callback will be triggered.
+    callback.clear();
+    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+                             MasterLoader::MANY_ERRORS, callbacks));
+    callback.check(src_name, 4, CreateRdataCallback::ERROR,
+                   "createRdata from text failed: unbalanced parentheses");
+
+    // Semantics level error will happen, corresponding error callback will be
+    // triggered.
+    callback.clear();
+    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+                             MasterLoader::MANY_ERRORS, callbacks));
+    callback.check(src_name, 5, CreateRdataCallback::ERROR,
+                   "createRdata from text failed: Failed to convert "
+                   "'192.0.2.1' to IN/AAAA RDATA");
+
+    // Input is valid and parse will succeed, but with a warning that the
+    // file is not ended with a newline.
+    callback.clear();
+    rdata = createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+                        MasterLoader::MANY_ERRORS, callbacks);
+    EXPECT_EQ(0, aaaa_rdata.compare(*rdata));
+    callback.check(src_name, 6, CreateRdataCallback::WARN,
+                   "file does not end with newline");
+}
+
 }
 }
 }

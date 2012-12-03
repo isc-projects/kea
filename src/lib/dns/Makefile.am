@@ -120,6 +120,7 @@ libb10_dns___la_SOURCES += tsigkey.h tsigkey.cc
 libb10_dns___la_SOURCES += tsigrecord.h tsigrecord.cc
 libb10_dns___la_SOURCES += character_string.h character_string.cc
 libb10_dns___la_SOURCES += master_loader_callbacks.h
+libb10_dns___la_SOURCES += master_loader.h
 libb10_dns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
 libb10_dns___la_SOURCES += rdata/generic/detail/nsec_bitmap.cc
 libb10_dns___la_SOURCES += rdata/generic/detail/nsec3param_common.cc

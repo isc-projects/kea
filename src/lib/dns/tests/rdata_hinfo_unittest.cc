@@ -77,6 +77,17 @@ TEST_F(Rdata_HINFO_Test, createFromWire) {
     EXPECT_EQ(string("Linux"), hinfo.getOS());
 }
 
+TEST_F(Rdata_HINFO_Test, createFromLexer) {
+    HINFO rdata_hinfo(hinfo_str);
+    EXPECT_EQ(0, rdata_hinfo.compare(
+        *test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
+                                     hinfo_str)));
+
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
+                                             "\"Pentium\"\"Linux\""));
+}
+
 TEST_F(Rdata_HINFO_Test, toText) {
     HINFO hinfo(hinfo_str);
     EXPECT_EQ(hinfo_str, hinfo.toText());
