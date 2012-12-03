@@ -59,7 +59,8 @@ LogBuffer::flush_stdout() {
     // So we print a slightly shortened format (it really only excludes
     // the time and the pid)
     std::vector<log4cplus::spi::InternalLoggingEvent>::const_iterator it;
-    log4cplus::LogLevelManager& manager = log4cplus::getLogLevelManager();
+    const log4cplus::LogLevelManager& manager =
+        log4cplus::getLogLevelManager();
     for (it = stored_.begin(); it != stored_.end(); ++it) {
         std::cout << manager.toString(it->getLogLevel()) << " " <<
                      "[" << it->getLoggerName() << "] " <<
