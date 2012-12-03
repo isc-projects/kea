@@ -72,7 +72,8 @@ void
 LogBuffer::flush() {
     for (size_t i = 0; i < stored_.size(); ++i) {
         const log4cplus::spi::InternalLoggingEvent event(stored_.at(i));
-        log4cplus::Logger logger = log4cplus::Logger::getInstance(event.getLoggerName());
+        log4cplus::Logger logger =
+            log4cplus::Logger::getInstance(event.getLoggerName());
 
         logger.log(event.getLogLevel(), event.getMessage());
     }
