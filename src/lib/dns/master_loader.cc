@@ -38,12 +38,17 @@ public:
         zone_class_(zone_class),
         callbacks_(callbacks),
         add_callback_(add_callback),
-        options_(options)
-    {
-        string errors;
-        if (!lexer_.pushSource(master_file, &errors)) {
-            // TODO: Handle somehow.
-            assert(0);
+        options_(options),
+        master_file_(master_file),
+        initialized_(false),
+        ok_(true)
+    {}
+
+    void pushSource(const std::string& filename) {
+        std::string error;
+        if (!lexer_.pushSource(filename.c_str(), &error)) {
+            ok_ = false;
+            callbacks_.error("", 0, error);
         }
     }
 
@@ -53,8 +58,11 @@ public:
     }
 
     bool loadIncremental(size_t count_limit) {
+        if (!initialized_) {
+            pushSource(master_file_);
+        }
         size_t count = 0;
-        while (count < count_limit) {
+        while (ok_ && count < count_limit) {
             // Skip all EOLNs (empty lines) and finish on EOF
             bool empty = true;
             do {
@@ -93,7 +101,8 @@ public:
                 ++count;
             };
         }
-        return (false);
+        // When there was a fatal error and ok is false, we say we are done.
+        return (!ok_);
     }
 
 private:
@@ -103,6 +112,9 @@ private:
     MasterLoaderCallbacks callbacks_;
     AddRRCallback add_callback_;
     MasterLoader::Options options_;
+    const std::string master_file_;
+    bool initialized_;
+    bool ok_;
 };
 
 MasterLoader::MasterLoader(const char* master_file,
