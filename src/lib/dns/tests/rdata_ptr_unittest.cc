@@ -90,6 +90,12 @@ TEST_F(Rdata_PTR_Test, createFromWire) {
                  InvalidRdataLength);
 }
 
+TEST_F(Rdata_PTR_Test, createFromLexer) {
+    EXPECT_EQ(0, rdata_ptr.compare(
+        *test::createRdataUsingLexer(RRType::PTR(), RRClass::IN(),
+                                     "ns.example.com")));
+}
+
 TEST_F(Rdata_PTR_Test, toWireBuffer) {
     rdata_ptr.toWire(obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,

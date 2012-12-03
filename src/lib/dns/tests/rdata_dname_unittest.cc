@@ -89,6 +89,12 @@ TEST_F(Rdata_DNAME_Test, createFromWire) {
                  InvalidRdataLength);
 }
 
+TEST_F(Rdata_DNAME_Test, createFromLexer) {
+    EXPECT_EQ(0, rdata_dname.compare(
+        *test::createRdataUsingLexer(RRType::DNAME(), RRClass::IN(),
+                                     "dn.example.com")));
+}
+
 TEST_F(Rdata_DNAME_Test, toWireBuffer) {
     rdata_dname.toWire(obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
