@@ -89,12 +89,19 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
     std::stringstream ss;
     ss << "Test-String\n";
     ss << "\"Test-String\"\n";   // explicitly surrounded by '"'s
+    ss << "\"\"\n";              // empty string
+    ss << string(255, 'a') << "\n"; // Longest possible character-string.
+    ss << string(256, 'a') << "\n"; // char-string too long
+    ss << "\"Test-String\\\"\n";    // unbalanced quote
+    ss << "\"Test-String\\\"\"\n";
     this->lexer.pushSource(ss);
 
-    // normal case is covered in toWireBuffer.
+    // Rdata to compare, created from wire
     this->rdata_txt_like_fromwire =
         this->rdataFactoryFromFile(RRTYPE<TypeParam>(),
                                    RRClass("IN"), "rdata_txt_fromWire1");
+
+    // normal case is covered in toWireBuffer.
     EXPECT_EQ(0, this->rdata_txt_like.compare(*this->rdata_txt_like_fromwire));
     EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
                            this->loader_cb).compare(
@@ -107,34 +114,56 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
     EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
                            this->loader_cb).compare(
                                *this->rdata_txt_like_fromwire));
+    EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // Null character-string.
     this->obuffer.clear();
-    TypeParam(string("")).toWire(this->obuffer);
+    TypeParam(string("\"\"")).toWire(this->obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(),
-                        this->obuffer.getLength(),
+                        this->obuffer.getData(), this->obuffer.getLength(),
                         wiredata_nulltxt, sizeof(wiredata_nulltxt));
+    this->obuffer.clear();
+    TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS, this->loader_cb).
+        toWire(this->obuffer);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        this->obuffer.getData(), this->obuffer.getLength(),
+                        wiredata_nulltxt, sizeof(wiredata_nulltxt));
+    EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // Longest possible character-string.
     this->obuffer.clear();
     TypeParam(string(255, 'a')).toWire(this->obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(),
-                        this->obuffer.getLength(),
+                        this->obuffer.getData(), this->obuffer.getLength(),
                         &this->wiredata_longesttxt[0],
                         this->wiredata_longesttxt.size());
+    this->obuffer.clear();
+    TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS, this->loader_cb).
+        toWire(this->obuffer);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        this->obuffer.getData(), this->obuffer.getLength(),
+                        &this->wiredata_longesttxt[0],
+                        this->wiredata_longesttxt.size());
+    EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // Too long text for a valid character-string.
     EXPECT_THROW(TypeParam(string(256, 'a')), CharStringTooLong);
+    EXPECT_THROW(TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+                           this->loader_cb), CharStringTooLong);
+    EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // The escape character makes the double quote a part of character-string,
     // so this is invalid input and should be rejected.
     EXPECT_THROW(TypeParam("\"Test-String\\\""), InvalidRdataText);
+    EXPECT_THROW(TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+                           this->loader_cb), MasterLexer::LexerError);
+    EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // Terminating double-quote is provided, so this is valid, but in this
     // version of implementation we reject escaped characters.
     EXPECT_THROW(TypeParam("\"Test-String\\\"\""), InvalidRdataText);
+    TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+              this->loader_cb);
 }
 
 void
