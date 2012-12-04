@@ -116,6 +116,173 @@ TEST_F(OptionDataTypesTest, writeAddress) {
     EXPECT_TRUE(std::equal(buf_in.begin(), buf_in.end(), buf_out.begin()));
 }
 
+// The purpose of this test is to verify that binary data represented
+// as a string of hexadecimal digits can be written to a buffer.
+TEST_F(OptionDataTypesTest, writeBinary) {
+    // Prepare the reference data.
+    const char data[] = {
+        0x0, 0x1, 0x2, 0x3, 0x4, 0x5,
+        0x6, 0x7, 0x8, 0x9, 0xA, 0xB
+    };
+    std::vector<uint8_t> buf_ref(data, data + sizeof(data));
+    // Create empty vector where binary data will be written to.
+    std::vector<uint8_t> buf;
+    ASSERT_NO_THROW(
+        OptionDataTypeUtil::writeBinary("000102030405060708090A0B", buf)
+    );
+    // Verify that the buffer contains valid data.
+    ASSERT_EQ(buf_ref.size(), buf.size());
+    EXPECT_TRUE(std::equal(buf_ref.begin(), buf_ref.end(), buf.begin()));
+}
+
+// The purpose of this test is to verify that the boolean value stored
+// in a buffer is correctly read from this buffer.
+TEST_F(OptionDataTypesTest, readBool) {
+    // Create an input buffer.
+    std::vector<uint8_t> buf;
+    // 'true' value is encoded as 1 ('false' is encoded as 0)
+    buf.push_back(1);
+
+    // Read the value from the buffer.
+    bool value = false;
+    ASSERT_NO_THROW(
+        value = OptionDataTypeUtil::readBool(buf);
+    );
+    // Verify the value.
+    EXPECT_TRUE(value);
+    // Check if 'false' is read correctly either.
+    buf[0] = 0;
+    ASSERT_NO_THROW(
+        value = OptionDataTypeUtil::readBool(buf);
+    );
+    EXPECT_FALSE(value);
+
+    // Check that invalid value causes exception.
+    buf[0] = 5;
+    ASSERT_THROW(
+        OptionDataTypeUtil::readBool(buf),
+        isc::dhcp::BadDataTypeCast
+    );
+}
+
+// The purpose of this test is to verify that boolean values
+// are correctly encoded in a buffer as '1' for 'true' and
+// '0' for 'false' values.
+TEST_F(OptionDataTypesTest, writeBool) {
+    // Create a buffer we will write to.
+    std::vector<uint8_t> buf;
+    // Write the 'true' value to the buffer.
+    ASSERT_NO_THROW(OptionDataTypeUtil::writeBool(true, buf));
+    // We should now have 'true' value stored in a buffer.
+    ASSERT_EQ(1, buf.size());
+    EXPECT_EQ(buf[0], 1);
+    // Let's append another value to make sure that it is not always
+    // 'true' value being written.
+    ASSERT_NO_THROW(OptionDataTypeUtil::writeBool(false, buf));
+    ASSERT_EQ(2, buf.size());
+    EXPECT_EQ(buf[1], 0);
+}
+
+// The purpose of this test is to verify that the integer values
+// of different types are correctly read from a buffer.
+TEST_F(OptionDataTypesTest, readInt) {
+    std::vector<uint8_t> buf;
+
+    // Write an 8-bit unsigned integer value to the buffer.
+    writeInt<uint8_t>(129, buf);
+    uint8_t valueUint8 = 0;
+    // Read the value and check that it is valid.
+    ASSERT_NO_THROW(
+        valueUint8 = OptionDataTypeUtil::readInt<uint8_t>(buf);
+    );
+    EXPECT_EQ(129, valueUint8);
+    // Clear the buffer for the next check we are going to do.
+    buf.clear();
+
+    // Test uint16_t value.
+    writeInt<uint16_t>(1234, buf);
+    uint16_t valueUint16 = 0;
+    ASSERT_NO_THROW(
+        valueUint16 = OptionDataTypeUtil::readInt<uint16_t>(buf);
+    );
+    EXPECT_EQ(1234, valueUint16);
+    buf.clear();
+
+    // Test uint32_t value.
+    writeInt<uint32_t>(56789, buf);
+    uint32_t valueUint32 = 0;
+    ASSERT_NO_THROW(
+        valueUint32 = OptionDataTypeUtil::readInt<uint32_t>(buf);
+    );
+    EXPECT_EQ(56789, valueUint32);
+    buf.clear();
+
+    // Test int8_t value.
+    writeInt<int8_t>(-65, buf);
+    int8_t valueInt8 = 0;
+    ASSERT_NO_THROW(
+        valueInt8 = OptionDataTypeUtil::readInt<int8_t>(buf);
+    );
+    EXPECT_EQ(-65, valueInt8);
+    buf.clear();
+
+    // Test int16_t value.
+    writeInt<int16_t>(2345, buf);
+    int32_t valueInt16 = 0;
+    ASSERT_NO_THROW(
+        valueInt16 = OptionDataTypeUtil::readInt<int16_t>(buf);
+    );
+    EXPECT_EQ(2345, valueInt16);
+    buf.clear();
+
+    // Test int32_t value.
+    writeInt<int32_t>(-16543, buf);
+    int32_t valueInt32 = 0;
+    ASSERT_NO_THROW(
+        valueInt32 = OptionDataTypeUtil::readInt<int32_t>(buf);
+    );
+    EXPECT_EQ(-16543, valueInt32);
+    buf.clear();
+}
+
+// The purpose of this test is to verify that integer values of different
+// types are correctly written to a buffer.
+TEST_F(OptionDataTypesTest, writeInt) {
+    // Prepare the reference buffer.
+    const char data[] = {
+        0x7F, // 127
+        0x03, 0xFF, // 1023
+        0x00, 0x00, 0x10, 0x00, // 4096
+        0xFF, 0xFF, 0xFC, 0x00, // -1024
+        0x02, 0x00, // 512
+        0x81 // -127
+    };
+    std::vector<uint8_t> buf_ref(data, data + sizeof(data));
+
+    // Fill in the buffer with data. Each write operation appends an
+    // integer value. Eventually the buffer holds all values and should
+    // match with the reference buffer.
+    std::vector<uint8_t> buf;
+    // Write uint8_t
+    ASSERT_NO_THROW(OptionDataTypeUtil::writeInt<uint8_t>(127, buf));
+    // Write uint16_t
+    ASSERT_NO_THROW(OptionDataTypeUtil::writeInt<uint16_t>(1023, buf));
+    // Write uint32_t
+    ASSERT_NO_THROW(OptionDataTypeUtil::writeInt<uint32_t>(4096, buf));
+    // Write int32_t
+    ASSERT_NO_THROW(OptionDataTypeUtil::writeInt<int32_t>(-1024, buf));
+    // Write int16_t
+    ASSERT_NO_THROW(OptionDataTypeUtil::writeInt<int16_t>(512, buf));
+    // Write int8_t
+    ASSERT_NO_THROW(OptionDataTypeUtil::writeInt<int8_t>(-127, buf));
+
+    // Make sure that the buffer has the same size as the reference
+    // buffer.
+    ASSERT_EQ(buf_ref.size(), buf.size());
+    // Compare buffers.
+    EXPECT_TRUE(std::equal(buf_ref.begin(), buf_ref.end(), buf.begin()));
+}
+
 // The purpose of this test is to verify that FQDN is read from
 // a buffer and returned as a text. The representation of the FQDN
 // in the buffer complies with RFC1035, section 3.1.
@@ -227,6 +394,36 @@ TEST_F(OptionDataTypesTest, writeFqdn) {
         OptionDataTypeUtil::writeFqdn("example..com", buf),
         isc::dhcp::BadDataTypeCast
     );
+}
+
+// The purpose of this test is to verify that the string
+// can be read from a buffer correctly.
+TEST_F(OptionDataTypesTest, readString) {
+    // Prepare a buffer with some string in it.
+    std::vector<uint8_t> buf;
+    writeString("hello world", buf);
+
+    // Read the string from the buffer.
+    std::string value;
+    ASSERT_NO_THROW(
+        value = OptionDataTypeUtil::readString(buf);
+    );
+    // Check that it is valid.
+    EXPECT_EQ("hello world", value);
+}
+
+// The purpose of this test is to verify that a string can be
+// stored in a buffer correctly.
+TEST_F(OptionDataTypesTest, writeString) {
+    // Prepare a buffer with a reference data.
+    std::vector<uint8_t> buf_ref;
+    writeString("hello world!", buf_ref);
+    // Create empty buffer we will write to.
+    std::vector<uint8_t> buf;
+    ASSERT_NO_THROW(OptionDataTypeUtil::writeString("hello world!", buf));
+    // Compare two buffers.
+    ASSERT_EQ(buf_ref.size(), buf.size());
+    EXPECT_TRUE(std::equal(buf_ref.begin(), buf_ref.end(), buf.begin()));
 }
 
 } // anonymous namespace
