@@ -115,8 +115,8 @@ public:
 /// would be required. As this is a critical part of the code that will be used
 /// extensively, direct access is warranted.
 struct Lease4 {
-    // The following constants definine the size of fields in the database
-    static const size_t HWADDR_MAX = 20;     // Maximum size of hardware address
+    /// @brief Maximum size of a hardware address
+    static const size_t HWADDR_MAX = 20;
 
     /// @brief Constructor
     ///
@@ -392,7 +392,7 @@ struct Lease6 {
 /// @brief Pointer to a Lease6 structure.
 typedef boost::shared_ptr<Lease6> Lease6Ptr;
 
-/// @brief Const pointer to a Lease6 structure.
+/// @brief Pointer to a const Lease6 structure.
 typedef boost::shared_ptr<const Lease6> ConstLease6Ptr;
 
 /// @brief A collection of IPv6 leases.
