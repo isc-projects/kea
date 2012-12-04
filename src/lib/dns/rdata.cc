@@ -12,6 +12,20 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
+
+#include <util/buffer.h>
+
+#include <dns/name.h>
+#include <dns/messagerenderer.h>
+#include <dns/master_lexer.h>
+#include <dns/rdata.h>
+#include <dns/rrparamregistry.h>
+#include <dns/rrtype.h>
+
+#include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
+
 #include <algorithm>
 #include <cctype>
 #include <string>
@@ -23,17 +37,6 @@
 
 #include <stdint.h>
 #include <string.h>
-
-#include <boost/lexical_cast.hpp>
-#include <boost/shared_ptr.hpp>
-
-#include <util/buffer.h>
-#include <dns/name.h>
-#include <dns/messagerenderer.h>
-#include <dns/master_lexer.h>
-#include <dns/rdata.h>
-#include <dns/rrparamregistry.h>
-#include <dns/rrtype.h>
 
 using namespace std;
 using boost::lexical_cast;
@@ -113,7 +116,11 @@ fromtextError(bool& error_issued, const MasterLexer& lexer,
                         token->getErrorText());
         break;
     default:
-        assert(false);
+        // This case shouldn't happen based on how we use MasterLexer in
+        // createRdata(), so we could assert() that here.  But since it
+        // depends on detailed behavior of other classes, we treat the case
+        // in a bit less harsh way.
+        isc_throw(Unexpected, "bug: createRdata() saw unexpected token type");
     }
 }
 }
