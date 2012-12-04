@@ -281,7 +281,13 @@ LibDHCP::initStdOptionDefs6() {
         { "preference", D6O_PREFERENCE, OPT_UINT8_TYPE, false },
         { "elapsed-time", D6O_ELAPSED_TIME, OPT_UINT16_TYPE, false },
         { "relay-msg", D6O_RELAY_MSG, OPT_BINARY_TYPE, false },
-        //        { "AUTH", D6O_AUTH, D6O_AUTH, OPT_RECORD_TYPE, false },
+        // Unfortunatelly the AUTH option contains a 64-bit data field
+        // called 'replay-detection' that can't be added as a record
+        // field to a custom option. Also, there is no dedicated
+        // option class to handle it so we simply return binary
+        // option type for now.
+        // @todo implement a class to handle AUTH option.
+        { "AUTH", D6O_AUTH, D6O_AUTH, OPT_BINARY_TYPE, false },
         { "unicast", D6O_UNICAST, OPT_IPV6_ADDRESS_TYPE, false },
         { "status-code", D6O_STATUS_CODE, OPT_RECORD_TYPE, false },
         { "rapid-commit", D6O_RAPID_COMMIT, OPT_EMPTY_TYPE, false },
@@ -318,14 +324,11 @@ LibDHCP::initStdOptionDefs6() {
         { "client-data", D6O_CLIENT_DATA, OPT_EMPTY_TYPE, false },
         { "clt-time", D6O_CLT_TIME, OPT_UINT32_TYPE, false },
         { "lq-relay-data", D6O_LQ_RELAY_DATA, OPT_RECORD_TYPE, false },
-        { "lq-client-link", D6O_LQ_CLIENT_LINK, OPT_IPV6_ADDRESS_TYPE, true },
-        /*        { "MIP6_HNIDF", D6O_MIP6_HNIDF, OPT_FQDN_TYPE, false },
-        { "MIP6_VDINF", D6O_MIP6_VDINF, OPT_EMPTY_TYPE, false },
-        { "V6_LOST", D6O_V6_LOST, OPT_FQDN_TYPE, false },
-        { "CAPWAP_AC_V6", D6O_CAPWAP_AC_V6, OPT_IPV6_ADDRESS_TYPE, true },
-        { "RELAY_ID", D6O_RELAY_ID, OPT_BINARY_TYPE, false },
-        { "IPV6_ADDRESS_MOS", */
+        { "lq-client-link", D6O_LQ_CLIENT_LINK, OPT_IPV6_ADDRESS_TYPE, true }
 
+        // @todo There is still a bunch of options for which we have to provide
+        // definitions but we don't do it because they are not really
+        // critical right now.
     };
     const int params_size = sizeof(params) / sizeof(params[0]);
 
@@ -334,6 +337,8 @@ LibDHCP::initStdOptionDefs6() {
                                                             params[i].code,
                                                             params[i].type,
                                                             params[i].array));
+        // Some of the options comprise a "record" of data fields so
+        // we have to add those fields here.
         switch(params[i].code) {
         case D6O_IA_NA:
         case D6O_IA_PD:
