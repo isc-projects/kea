@@ -69,9 +69,7 @@ public:
     void setLoader(const char* file, const Name& origin, const RRClass rrclass,
                    const MasterLoader::Options options)
     {
-        loader_.reset(new MasterLoader((string(TEST_DATA_SRCDIR "/") +
-                                        file).c_str(), origin, rrclass,
-                                       callbacks_,
+        loader_.reset(new MasterLoader(file, origin, rrclass, callbacks_,
                                        boost::bind(&MasterLoaderTest::addRRset,
                                                    this, _1, _2, _3, _4, _5),
                                        options));
@@ -117,8 +115,8 @@ public:
 // Test simple loading. The zone file contains no tricky things, and nothing is
 // omitted. No RRset contains more than one RR Also no errors or warnings.
 TEST_F(MasterLoaderTest, basicLoad) {
-    setLoader("example.org", Name("example.org."), RRClass::IN(),
-              MasterLoader::MANY_ERRORS);
+    setLoader(TEST_DATA_SRCDIR "/example.org", Name("example.org."),
+              RRClass::IN(), MasterLoader::MANY_ERRORS);
 
     loader_->load();
 
@@ -133,8 +131,8 @@ TEST_F(MasterLoaderTest, basicLoad) {
 
 // Try loading data incrementally.
 TEST_F(MasterLoaderTest, incrementalLoad) {
-    setLoader("example.org", Name("example.org."), RRClass::IN(),
-              MasterLoader::MANY_ERRORS);
+    setLoader(TEST_DATA_SRCDIR "/example.org", Name("example.org."),
+              RRClass::IN(), MasterLoader::MANY_ERRORS);
 
     EXPECT_FALSE(loader_->loadIncremental(2));
 
