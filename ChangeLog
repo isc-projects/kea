@@ -1,3 +1,7 @@
+5XX.	[func]		tomek
+	b10-dhcp6 is now able to handle RENEW messages. Leases are
+	renewed and REPLY responses are sent back to clients.
+
 513.	[func]		marcin
 	Implemented the OptionCustom class for DHCPv4 and DHCPv6.
 	This class represents an option which has a defined
