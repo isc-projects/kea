@@ -41,7 +41,8 @@ public:
         options_(options),
         master_file_(master_file),
         initialized_(false),
-        ok_(true)
+        ok_(true),
+        complete_(false)
     {}
 
     void pushSource(const std::string& filename) {
@@ -58,6 +59,10 @@ public:
     }
 
     bool loadIncremental(size_t count_limit) {
+        if (complete_) {
+            isc_throw(isc::InvalidOperation,
+                      "Trying to load when already loaded");
+        }
         if (!initialized_) {
             pushSource(master_file_);
             initialized_ = true;
@@ -161,6 +166,8 @@ private:
     const std::string master_file_;
     bool initialized_;
     bool ok_;
+public:
+    bool complete_;
 };
 
 MasterLoader::MasterLoader(const char* master_file,
@@ -170,6 +177,9 @@ MasterLoader::MasterLoader(const char* master_file,
                            const AddRRCallback& add_callback,
                            Options options)
 {
+    if (add_callback.empty()) {
+        isc_throw(isc::InvalidParameter, "Empty add RR callback");
+    }
     impl_ = new MasterLoaderImpl(master_file, zone_origin,
                                  zone_class, callbacks, add_callback, options);
 }
@@ -180,7 +190,9 @@ MasterLoader::~MasterLoader() {
 
 bool
 MasterLoader::loadIncremental(size_t count_limit) {
-    return (impl_->loadIncremental(count_limit));
+    bool result = impl_->loadIncremental(count_limit);
+    impl_->complete_ = result;
+    return (result);
 }
 
 } // end namespace dns

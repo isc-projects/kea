@@ -227,3 +227,19 @@ TEST_F(MasterLoaderTest, brokenZone) {
         }
     }
 }
+
+// Test the constructor rejects empty add callback.
+TEST_F(MasterLoaderTest, emptyCallback) {
+    EXPECT_THROW(MasterLoader(TEST_DATA_SRCDIR "/example.org",
+                              Name("example.org"), RRClass::IN(), callbacks_,
+                              AddRRCallback()), isc::InvalidParameter);
+}
+
+// Check it throws when we try to load after loading was complete.
+TEST_F(MasterLoaderTest, loadTwice) {
+    setLoader(TEST_DATA_SRCDIR "/example.org", Name("example.org."),
+              RRClass::IN(), MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_THROW(loader_->load(), isc::InvalidOperation);
+}
