@@ -131,83 +131,6 @@ public:
     /// Const iterator for record data fields.
     typedef std::vector<OptionDataType>::const_iterator RecordFieldsConstIter;
 
-private:
-
-    /// @brief Utility class for operations on OptionDataTypes.
-    ///
-    /// This class is implemented as the singleton because the list of
-    /// supported data types need only be loaded only once into memory as it
-    /// can persist for all option definitions.
-    ///
-    /// @todo This class can be extended to return the string value
-    /// representing the data type from the enum value.
-    class DataTypeUtil {
-    public:
-
-        /// @brief Return the sole instance of this class.
-        ///
-        /// @return instance of this class.
-        static DataTypeUtil& instance() {
-            static DataTypeUtil instance;
-            return (instance);
-        }
-
-        /// @brief Convert type given as string value to option data type.
-        ///
-        /// @param data_type_name data type string.
-        ///
-        /// @return option data type.
-        OptionDataType getOptionDataType(const std::string& data_type_name);
-
-        /// @brief Perform lexical cast of the value and validate its range.
-        ///
-        /// This function performs lexical cast of a string value to integer
-        /// or boolean value and checks if the resulting value is within a
-        /// range of a target type. Note that range checks are not performed
-        /// on boolean values. The target type should be one of the supported
-        /// integer types or bool.
-        ///
-        /// @param value_str input value given as string.
-        /// @tparam T target type for lexical cast.
-        ///
-        /// @return cast value.
-        /// @throw BadDataTypeCast if cast was not successful.
-        template<typename T>
-        T lexicalCastWithRangeCheck(const std::string& value_str) const;
-
-        /// @brief Write the string value into the provided buffer.
-        ///
-        /// This method writes the given value to the specified buffer.
-        /// The provided string value may represent data of different types.
-        /// The actual data type is specified with the second argument.
-        /// Based on a value of this argument, this function will first
-        /// try to cast the string value to the particular data type and
-        /// if it is successful it will store the data in the buffer
-        /// in a binary format.
-        ///
-        /// @param value string representation of the value to be written.
-        /// @param type the actual data type to be stored.
-        /// @param [in, out] buf buffer where the value is to be stored.
-        ///
-        /// @throw BadDataTypeCast if data write was unsuccessful.
-        void writeToBuffer(const std::string& value, const OptionDataType type,
-                           OptionBuffer& buf);
-
-    private:
-        /// @brief Private constructor.
-        ///
-        /// Constructor initializes the internal data structures, e.g.
-        /// mapping between data type name and the corresponding enum.
-        /// This constructor is private to ensure that exactly one
-        /// instance of this class can be created using \ref instance
-        /// function.
-        DataTypeUtil();
-
-        /// Map of data types, maps name of the type to enum value.
-        std::map<std::string, OptionDataType> data_types_;
-    };
-
-public:
     /// @brief Constructor.
     ///
     /// @param name option name.
@@ -470,6 +393,40 @@ private:
     inline bool haveType(const OptionDataType type) const {
         return (type == type_);
     }
+
+    /// @brief Perform lexical cast of the value and validate its range.
+    ///
+    /// This function performs lexical cast of a string value to integer
+    /// or boolean value and checks if the resulting value is within a
+    /// range of a target type. Note that range checks are not performed
+    /// on boolean values. The target type should be one of the supported
+    /// integer types or bool.
+    ///
+    /// @param value_str input value given as string.
+    /// @tparam T target type for lexical cast.
+    ///
+    /// @return cast value.
+    /// @throw BadDataTypeCast if cast was not successful.
+    template<typename T>
+    T lexicalCastWithRangeCheck(const std::string& value_str) const;
+
+    /// @brief Write the string value into the provided buffer.
+    ///
+    /// This method writes the given value to the specified buffer.
+    /// The provided string value may represent data of different types.
+    /// The actual data type is specified with the second argument.
+    /// Based on a value of this argument, this function will first
+    /// try to cast the string value to the particular data type and
+    /// if it is successful it will store the data in the buffer
+    /// in a binary format.
+    ///
+    /// @param value string representation of the value to be written.
+    /// @param type the actual data type to be stored.
+    /// @param [in, out] buf buffer where the value is to be stored.
+    ///
+    /// @throw BadDataTypeCast if data write was unsuccessful.
+    void writeToBuffer(const std::string& value, const OptionDataType type,
+                       OptionBuffer& buf) const;
 
     /// @brief Sanity check universe value.
     ///
