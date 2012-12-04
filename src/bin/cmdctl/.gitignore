@@ -6,3 +6,5 @@
 /b10-cmdctl.8
 /cmdctl-keyfile.pem
 /cmdctl-certfile.pem
+/b10-certgen
+/b10-certgen.1
