@@ -522,9 +522,10 @@ Number::handle(MasterLexer& lexer) const {
             getLexerImpl(lexer)->source_->getChar(), escaped);
         if (getLexerImpl(lexer)->isTokenEnd(c, escaped)) {
             getLexerImpl(lexer)->source_->ungetChar();
+            // We need to close the string whether it's digits-only (for
+            // lexical_cast) or not (see String::handle()).
+            data.push_back('\0');
             if (digits_only) {
-                // Close the string for lexical_cast
-                data.push_back('\0');
                 try {
                     const uint32_t number32 =
                         boost::lexical_cast<uint32_t, const char*>(&data[0]);
@@ -535,7 +536,6 @@ Number::handle(MasterLexer& lexer) const {
                     token = MasterToken(MasterToken::NUMBER_OUT_OF_RANGE);
                 }
             } else {
-                data.push_back('\0'); // see String::handle()
                 token = MasterToken(&data.at(0), data.size() - 1);
             }
             return;
