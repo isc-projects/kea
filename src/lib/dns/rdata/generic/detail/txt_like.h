@@ -15,6 +15,11 @@
 #ifndef TXT_LIKE_H
 #define TXT_LIKE_H 1
 
+#include <dns/master_lexer.h>
+#include <dns/master_loader.h>
+#include <dns/master_loader_callbacks.h>
+#include <dns/rdata/generic/detail/char_string.h>
+
 #include <stdint.h>
 
 #include <string>
@@ -111,6 +116,23 @@ public:
         data.insert(data.end(), txtstr.begin() + pos_begin,
                     txtstr.begin() + pos_begin + length);
         string_list_.push_back(data);
+    }
+
+    TXTLikeImpl(MasterLexer& lexer, const Name*,
+                MasterLoader::Options,
+                MasterLoaderCallbacks&)
+    {
+        while (true) {
+            const MasterToken& token = lexer.getNextToken(
+                MasterToken::QSTRING, true);
+            if (token.getType() != MasterToken::STRING &&
+                token.getType() != MasterToken::QSTRING) {
+                break;
+            }
+            string_list_.push_back(std::vector<uint8_t>());
+            strToCharString(token.getStringRegion(), string_list_.back());
+        }
+        lexer.ungetToken();
     }
 
     /// \brief The copy constructor.

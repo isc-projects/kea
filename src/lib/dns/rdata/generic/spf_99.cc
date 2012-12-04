@@ -66,6 +66,13 @@ SPF::SPF(InputBuffer& buffer, size_t rdata_len) :
     impl_(new SPFImpl(buffer, rdata_len))
 {}
 
+
+/// \brief Constructor from TBD
+SPF::SPF(MasterLexer& lexer, const Name* origin,
+         MasterLoader::Options options, MasterLoaderCallbacks& callbacks) :
+    impl_(new SPFImpl(lexer, origin, options, callbacks))
+{}
+
 /// \brief Constructor from string.
 ///
 /// It internally allocates a resource, and if it fails a corresponding
