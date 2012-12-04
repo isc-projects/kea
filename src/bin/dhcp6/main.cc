@@ -17,6 +17,7 @@
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
 #include <log/logger_support.h>
+#include <log/logger_manager.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -122,6 +123,10 @@ main(int argc, char* argv[]) {
                 LOG_ERROR(dhcp6_logger, DHCP6_SESSION_FAIL).arg(ex.what());
                 // Let's continue. It is useful to have the ability to run
                 // DHCP server in stand-alone mode, e.g. for testing
+                // We do need to make sure logging is no longer buffered
+                // since then it would not print until dhcp6 is stopped
+                isc::log::LoggerManager log_manager;
+                log_manager.process();
             }
         } else {
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_STANDALONE);
