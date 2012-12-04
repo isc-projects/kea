@@ -292,6 +292,7 @@ public:
         UNBALANCED_QUOTES,      ///< Unbalanced quotations detected
         NO_TOKEN_PRODUCED, ///< No token was produced. This means programmer
                            /// error and should never get out of the lexer.
+        NUMBER_OUT_OF_RANGE, ///< Number was out of range
         MAX_ERROR_CODE ///< Max integer corresponding to valid error codes.
                        /// (excluding this one). Mainly for internal use.
     };

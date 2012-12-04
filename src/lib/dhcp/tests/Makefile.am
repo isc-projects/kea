@@ -36,6 +36,7 @@ libdhcp___unittests_SOURCES += option6_iaaddr_unittest.cc
 libdhcp___unittests_SOURCES += option6_int_array_unittest.cc
 libdhcp___unittests_SOURCES += option6_int_unittest.cc
 libdhcp___unittests_SOURCES += option_definition_unittest.cc
+libdhcp___unittests_SOURCES += option_custom_unittest.cc
 libdhcp___unittests_SOURCES += option_unittest.cc
 libdhcp___unittests_SOURCES += pkt4_unittest.cc
 libdhcp___unittests_SOURCES += pkt6_unittest.cc
