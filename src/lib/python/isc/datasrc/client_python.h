@@ -44,6 +44,9 @@ wrapDataSourceClient(DataSourceClient* client,
                      LifeKeeper>& life_keeper = boost::shared_ptr<ClientList::
                      FindResult::LifeKeeper>());
 
+DataSourceClient&
+PyDataSourceClient_ToDataSourceClient(PyObject* client_obj);
+
 } // namespace python
 } // namespace datasrc
 } // namespace isc
