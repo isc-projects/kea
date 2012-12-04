@@ -345,21 +345,21 @@ TEST(Lease4, OperatorEquals) {
     EXPECT_TRUE(lease1 != lease2);
     lease1.addr_ = lease2.addr_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     ++lease1.ext_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.ext_ = lease2.ext_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     ++lease1.hwaddr_[0];
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.hwaddr_ = lease2.hwaddr_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     ++clientid_vec[0];
     lease1.client_id_.reset(new ClientId(clientid_vec));
@@ -368,77 +368,77 @@ TEST(Lease4, OperatorEquals) {
     --clientid_vec[0];
     lease1.client_id_.reset(new ClientId(clientid_vec));
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     ++lease1.t1_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.t1_ = lease2.t1_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     ++lease1.t2_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.t2_ = lease2.t2_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     ++lease1.valid_lft_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.valid_lft_ = lease2.valid_lft_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     ++lease1.cltt_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.cltt_ = lease2.cltt_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     ++lease1.subnet_id_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.subnet_id_ = lease2.subnet_id_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     lease1.fixed_ = !lease1.fixed_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.fixed_ = lease2.fixed_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     lease1.hostname_ += string("Something random");
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.hostname_ = lease2.hostname_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     lease1.fqdn_fwd_ = !lease1.fqdn_fwd_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.fqdn_fwd_ = lease2.fqdn_fwd_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     lease1.fqdn_rev_ = !lease1.fqdn_rev_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.fqdn_rev_ = lease2.fqdn_rev_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     lease1.comments_ += string("Something random");
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.comments_ = lease2.comments_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 }
 
 
@@ -514,28 +514,28 @@ TEST(Lease6, OperatorEquals) {
     EXPECT_TRUE(lease1 != lease2);
     lease1.addr_ = lease2.addr_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     lease1.type_ = Lease6::LEASE_IA_PD;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.type_ = lease2.type_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     ++lease1.prefixlen_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.prefixlen_ = lease2.prefixlen_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     ++lease1.iaid_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.iaid_ = lease2.iaid_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     ++duid_array[0];
     lease1.duid_.reset(new DUID(duid_array, sizeof(duid_array)));
@@ -544,83 +544,83 @@ TEST(Lease6, OperatorEquals) {
     --duid_array[0];
     lease1.duid_.reset(new DUID(duid_array, sizeof(duid_array)));
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     ++lease1.preferred_lft_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.preferred_lft_ = lease2.preferred_lft_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     ++lease1.valid_lft_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.valid_lft_ = lease2.valid_lft_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     ++lease1.t1_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.t1_ = lease2.t1_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     ++lease1.t2_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.t2_ = lease2.t2_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     ++lease1.cltt_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.cltt_ = lease2.cltt_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     ++lease1.subnet_id_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.subnet_id_ = lease2.subnet_id_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     lease1.fixed_ = !lease1.fixed_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.fixed_ = lease2.fixed_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     lease1.hostname_ += string("Something random");
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.hostname_ = lease2.hostname_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     lease1.fqdn_fwd_ = !lease1.fqdn_fwd_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.fqdn_fwd_ = lease2.fqdn_fwd_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     lease1.fqdn_rev_ = !lease1.fqdn_rev_;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.fqdn_rev_ = lease2.fqdn_rev_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
     lease1.comments_ += string("Something random");
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.comments_ = lease2.comments_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... lease equal
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 }
 }; // end of anonymous namespace

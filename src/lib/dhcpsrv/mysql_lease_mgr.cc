@@ -15,6 +15,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <dhcp/duid.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
 
 #include <boost/static_assert.hpp>
@@ -91,17 +92,8 @@ namespace {
 /// colon separators.
 const size_t ADDRESS6_TEXT_MAX_LEN = 39;
 
-/// @brief Maximum size of a DUID.
-const size_t DUID_MAX_LEN = 128;
-
 /// @brief Maximum size of a hardware address.
 const size_t HWADDR_MAX_LEN = 20;
-
-/// @brief Maximum size of a client identification.
-///
-/// Note that the value is arbitrarily chosen: RFC 2131 does not specify an
-/// upper limit, but this seems long enough.
-const size_t CLIENT_ID_MAX_LEN = 128;
 
 /// @brief Number of columns in Lease4 table
 const size_t LEASE4_COLUMNS = 6;
@@ -156,7 +148,6 @@ TaggedStatement tagged_statements[] = {
                         "valid_lifetime, expire, subnet_id "
                             "FROM lease4 "
                             "WHERE hwaddr = ?"},
-
     {MySqlLeaseMgr::GET_LEASE4_HWADDR_SUBID,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id "
@@ -496,7 +487,7 @@ private:
                                         ///< Hardware address buffer
     unsigned long   hwaddr_length_;     ///< Hardware address length
     std::vector<uint8_t> client_id_;    ///< Client identification
-    uint8_t         client_id_buffer_[CLIENT_ID_MAX_LEN];
+    uint8_t         client_id_buffer_[ClientId::MAX_CLIENT_ID_LEN];
                                         ///< Client ID buffer
     unsigned long   client_id_length_;  ///< Client ID address length
     MYSQL_TIME      expire_;            ///< Lease expiry time
@@ -812,7 +803,7 @@ private:
     MYSQL_BIND      bind_[LEASE_COLUMNS]; ///< Bind array
     std::string     columns_[LEASE_COLUMNS];///< Column names
     std::vector<uint8_t> duid_;         ///< Client identification
-    uint8_t         duid_buffer_[DUID_MAX_LEN]; ///< Buffer form of DUID
+    uint8_t         duid_buffer_[DUID::MAX_DUID_LEN]; ///< Buffer form of DUID
     unsigned long   duid_length_;       ///< Length of the DUID
     my_bool         error_[LEASE_COLUMNS]; ///< Error indicators
     MYSQL_TIME      expire_;            ///< Lease expiry time
@@ -1222,7 +1213,8 @@ void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
         checkError(status, stindex, "unable to fetch results");
     } else if (status == MYSQL_DATA_TRUNCATED) {
         // Data truncated - throw an exception indicating what was at fault
-        isc_throw(DataTruncated, "returned data truncated column affected: "
+        isc_throw(DataTruncated, text_statements_[stindex]
+                  << " returned truncated data: columns affected are "
                   << exchange->getErrorColumns());
     }
 }
