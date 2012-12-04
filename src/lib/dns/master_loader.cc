@@ -64,45 +64,88 @@ public:
         }
         size_t count = 0;
         while (ok_ && count < count_limit) {
-            // Skip all EOLNs (empty lines) and finish on EOF
-            bool empty = true;
-            do {
-                const MasterToken& empty_token(lexer_.getNextToken());
-                if (empty_token.getType() == MasterToken::END_OF_FILE) {
-                    // TODO: Check if this is the last source, possibly pop
+            try {
+                // Skip all EOLNs (empty lines) and finish on EOF
+                bool empty = true;
+                do {
+                    const MasterToken& empty_token(lexer_.getNextToken());
+                    if (empty_token.getType() == MasterToken::END_OF_FILE) {
+                        // TODO: Check if this is the last source, possibly pop
+                        return (true);
+                    }
+                    empty = empty_token.getType() == MasterToken::END_OF_LINE;
+                } while (empty);
+                // Return the last token, as it was not empty
+                lexer_.ungetToken();
+
+                const MasterToken::StringRegion
+                    name_string(lexer_.getNextToken(MasterToken::QSTRING).
+                                getStringRegion());
+                // TODO $ handling
+                const Name name(name_string.beg, name_string.len,
+                                &zone_origin_);
+                // TODO: Some more flexibility. We don't allow omitting
+                // anything yet
+
+                // The parameters
+                const RRTTL ttl(getString());
+                const RRClass rrclass(getString());
+                const RRType rrtype(getString());
+
+                // TODO: Some more validation?
+                if (rrclass != zone_class_) {
+                    // It doesn't really matter much what type of exception
+                    // we throw, we catch it just below.
+                    isc_throw(isc::BadValue, "Class mismatch: " << rrclass <<
+                              "vs. " << zone_class_);
+                }
+
+                const rdata::RdataPtr data(rdata::createRdata(rrtype, rrclass,
+                                                              lexer_,
+                                                              &zone_origin_,
+                                                              options_,
+                                                              callbacks_));
+                // In case we get NULL, it means there was error creating
+                // the Rdata. The errors should have been reported by
+                // callbacks_ already. We need to decide if we want to continue
+                // or not.
+                if (data != rdata::RdataPtr()) {
+                    add_callback_(name, rrclass, rrtype, ttl, data);
+
+                    // Good, we loaded another one
+                    ++count;
+                } else if (!(options_ & MANY_ERRORS)) {
                     return (true);
                 }
-                empty = empty_token.getType() == MasterToken::END_OF_LINE;
-            } while (empty);
-            // Return the last token, as it was not empty
-            lexer_.ungetToken();
-
-            const MasterToken::StringRegion
-                name_string(lexer_.getNextToken(MasterToken::QSTRING).
-                            getStringRegion());
-            // TODO $ handling
-            const Name name(name_string.beg, name_string.len, &zone_origin_);
-            // TODO: Some more flexibility. We don't allow omitting anything yet
-
-            // The parameters
-            const RRTTL ttl(getString());
-            const RRClass rrclass(getString());
-            const RRType rrtype(getString());
-
-            const rdata::RdataPtr data(rdata::createRdata(rrtype, rrclass,
-                                                          lexer_,
-                                                          &zone_origin_,
-                                                          options_,
-                                                          callbacks_));
-            // In case we get NULL, it means there was error creating
-            // the Rdata. The errors should have been reported by
-            // callbacks_ already, so we just need to not report the RR
-            if (data != rdata::RdataPtr()) {
-                add_callback_(name, rrclass, rrtype, ttl, data);
-
-                // Good, we loaded another one
-                ++count;
-            };
+            } catch (const isc::Exception& e) {
+                // TODO: Do we want to list expected exceptions here instead?
+                callbacks_.error(lexer_.getSourceName(),
+                                 lexer_.getSourceLine(),
+                                 e.what());
+                if (options_ & MANY_ERRORS) {
+                    // We want to continue. Try to read until the end of line
+                    bool end = false;
+                    do {
+                        const MasterToken& token(lexer_.getNextToken());
+                        switch (token.getType()) {
+                            case MasterToken::END_OF_FILE:
+                                // TODO: Try pop in case this is not the only
+                                // source
+                                return (true);
+                            case MasterToken::END_OF_LINE:
+                                end = true;
+                                break;
+                            default:
+                                // Do nothing. This is just to make compiler
+                                // happy
+                                break;
+                        }
+                    } while (!end);
+                } else {
+                    // We abort on first error. We are therefore done.
+                    return (true);
+                }
+            }
         }
         // When there was a fatal error and ok is false, we say we are done.
         return (!ok_);
