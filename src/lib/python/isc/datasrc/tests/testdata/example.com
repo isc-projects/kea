@@ -1,5 +1,3 @@
-;; This is the source of a zone stored in test.sqlite3.  It's provided
-;; for reference purposes only.
 example.com.         1000  IN  SOA a.dns.example.com. mail.example.com. 1 1 1 1 1
 example.com.         1000  IN  NS  a.dns.example.com.
 example.com.         1000  IN  NS  b.dns.example.com.
