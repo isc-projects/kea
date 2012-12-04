@@ -152,9 +152,7 @@ libdns___include_HEADERS = \
 	exceptions.h \
 	labelsequence.h \
 	message.h \
-	master_lexer.h \
 	masterload.h \
-	master_lexer.h \
 	master_lexer.h \
 	master_loader.h \
 	master_loader_callbacks.h \
