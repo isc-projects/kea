@@ -19,20 +19,24 @@ import isc.dns
 import os
 import unittest
 
-TESTDATA_PATH = os.environ['TESTDATA_PATH'] + os.sep
-TESTDATA_WRITE_PATH = os.environ['TESTDATA_WRITE_PATH'] + os.sep
+TESTDATA_PATH = os.environ['TESTDATA_PATH']
+TESTDATA_WRITE_PATH = os.environ['TESTDATA_WRITE_PATH']
 
-READ_ZONE_DB_FILE = TESTDATA_PATH + "example.com.sqlite3"
-WRITE_ZONE_DB_FILE = TESTDATA_WRITE_PATH + "rwtest.sqlite3.copied"
+ZONE_FILE = TESTDATA_PATH + '/example.com'
 
-READ_ZONE_DB_CONFIG = "{ \"database_file\": \"" + READ_ZONE_DB_FILE + "\" }"
-WRITE_ZONE_DB_CONFIG = "{ \"database_file\": \"" + WRITE_ZONE_DB_FILE + "\"}"
+DB_FILE = TESTDATA_WRITE_PATH + '/zoneloadertest.sqlite3'
+DB_CLIENT_CONFIG = '{ "database_file": "' + DB_FILE + '"}'
 
 class ZoneLoaderTests(unittest.TestCase):
     def setUp(self):
         self.test_name = isc.dns.Name("example.com")
-        self.test_file = "foo.txt"
-        self.client = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
+        self.test_file = ZONE_FILE
+        self.client = isc.datasrc.DataSourceClient("sqlite3", DB_CLIENT_CONFIG)
+
+    def tearDown(self):
+        # Delete the database after each test
+        if os.path.exists(DB_FILE):
+            os.unlink(DB_FILE)
 
     def test_bad_constructor(self):
         self.assertRaises(TypeError, isc.datasrc.ZoneLoader)
@@ -48,15 +52,20 @@ class ZoneLoaderTests(unittest.TestCase):
 
     def test_load_file(self):
         #self.assertRaises(TypeError, isc.datasrc.ZoneLoader());
+        result, _ = self.client.find_zone(self.test_name)
+        self.assertEqual(self.client.NOTFOUND, result)
+
+        # Create loader and load the zone
         loader = isc.datasrc.ZoneLoader(self.client, self.test_name, self.test_file)
-        # This would currently loop
-        #loader.load()
+        loader.load()
+        # Not really checking content for now, just check the zone exists now
+        result, _ = self.client.find_zone(self.test_name)
+        self.assertEqual(self.client.SUCCESS, result)
 
     def test_bad_file(self):
         #self.assertRaises(TypeError, isc.datasrc.ZoneLoader());
         loader = isc.datasrc.ZoneLoader(self.client, self.test_name, "no such file")
-        # This would currently loop
-        #loader.load()
+        self.assertRaises(isc.datasrc.MasterFileError, loader.load)
 
     def test_exception(self):
         # Just check if masterfileerror is subclass of datasrc.Error
