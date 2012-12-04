@@ -36,7 +36,7 @@ using namespace master_lexer_internal;
 
 
 struct MasterLexer::MasterLexerImpl {
-    MasterLexerImpl() : source_(NULL), token_(Token::NOT_STARTED),
+    MasterLexerImpl() : source_(NULL), token_(MasterToken::NOT_STARTED),
                         paren_count_(0), last_was_eol_(false),
                         has_previous_(false),
                         previous_paren_count_(0),
@@ -82,7 +82,7 @@ struct MasterLexer::MasterLexerImpl {
 
     std::vector<InputSourcePtr> sources_;
     InputSource* source_;       // current source (NULL if sources_ is empty)
-    Token token_;               // currently recognized token (set by a state)
+    MasterToken token_;         // currently recognized token (set by a state)
     std::vector<char> data_;    // placeholder for string data
 
     // These are used in states, and defined here only as a placeholder.
@@ -165,9 +165,8 @@ MasterLexer::getSourceLine() const {
     return (impl_->sources_.back()->getCurrentLine());
 }
 
-const MasterLexer::Token&
+const MasterToken&
 MasterLexer::getNextToken(Options options) {
-    // If the source is not available
     if (impl_->source_ == NULL) {
         isc_throw(isc::InvalidOperation, "No source to read tokens from");
     }
@@ -178,7 +177,7 @@ MasterLexer::getNextToken(Options options) {
     impl_->has_previous_ = true;
     // Reset the token now. This is to check a token was actually produced.
     // This is debugging aid.
-    impl_->token_ = Token(Token::NO_TOKEN_PRODUCED);
+    impl_->token_ = MasterToken(MasterToken::NO_TOKEN_PRODUCED);
     // And get the token
 
     // This actually handles EOF internally too.
@@ -188,8 +187,62 @@ MasterLexer::getNextToken(Options options) {
     }
     // Make sure a token was produced. Since this Can Not Happen, we assert
     // here instead of throwing.
-    assert(impl_->token_.getType() != Token::ERROR ||
-           impl_->token_.getErrorCode() != Token::NO_TOKEN_PRODUCED);
+    assert(impl_->token_.getType() != MasterToken::ERROR ||
+           impl_->token_.getErrorCode() != MasterToken::NO_TOKEN_PRODUCED);
+    return (impl_->token_);
+}
+
+namespace {
+inline MasterLexer::Options
+optionsForTokenType(MasterToken::Type expect) {
+    switch (expect) {
+    case MasterToken::STRING:
+        return (MasterLexer::NONE);
+    case MasterToken::QSTRING:
+        return (MasterLexer::QSTRING);
+    case MasterToken::NUMBER:
+        return (MasterLexer::NUMBER);
+    default:
+        isc_throw(InvalidParameter,
+                  "expected type for getNextToken not supported: " << expect);
+    }
+}
+}
+
+const MasterToken&
+MasterLexer::getNextToken(MasterToken::Type expect, bool eol_ok) {
+    // Get the next token, specifying an appropriate option corresponding to
+    // the expected type.  The result should be set in impl_->token_.
+    getNextToken(optionsForTokenType(expect));
+
+    if (impl_->token_.getType() == MasterToken::ERROR) {
+        if (impl_->token_.getErrorCode() == MasterToken::NUMBER_OUT_OF_RANGE) {
+            ungetToken();
+        }
+        throw LexerError(__FILE__, __LINE__, impl_->token_);
+    }
+
+    const bool is_eol_like =
+        (impl_->token_.getType() == MasterToken::END_OF_LINE ||
+         impl_->token_.getType() == MasterToken::END_OF_FILE);
+    if (eol_ok && is_eol_like) {
+        return (impl_->token_);
+    }
+    if (impl_->token_.getType() == MasterToken::STRING &&
+        expect == MasterToken::QSTRING) {
+        return (impl_->token_);
+    }
+    if (impl_->token_.getType() != expect) {
+        ungetToken();
+        if (is_eol_like) {
+            throw LexerError(__FILE__, __LINE__,
+                             MasterToken(MasterToken::UNEXPECTED_END));
+        }
+        assert(expect == MasterToken::NUMBER);
+        throw LexerError(__FILE__, __LINE__,
+                         MasterToken(MasterToken::BAD_NUMBER));
+    }
+
     return (impl_->token_);
 }
 
@@ -212,16 +265,17 @@ const char* const error_text[] = {
     "unexpected end of input",  // UNEXPECTED_END
     "unbalanced quotes",        // UNBALANCED_QUOTES
     "no token produced",        // NO_TOKEN_PRODUCED
-    "number out of range"       // NUMBER_OUT_OF_RANGE
+    "number out of range",      // NUMBER_OUT_OF_RANGE
+    "not a valid number"        // BAD_NUMBER
 };
 const size_t error_text_max_count = sizeof(error_text) / sizeof(error_text[0]);
 } // end unnamed namespace
 
 std::string
-MasterLexer::Token::getErrorText() const {
+MasterToken::getErrorText() const {
     if (type_ != ERROR) {
         isc_throw(InvalidOperation,
-                  "Token::getErrorText() for non error type");
+                  "MasterToken::getErrorText() for non error type");
     }
 
     // The class integrity ensures the following:
@@ -234,14 +288,12 @@ namespace master_lexer_internal {
 // Note that these need to be defined here so that they can refer to
 // the details of MasterLexerImpl.
 
-typedef MasterLexer::Token Token; // convenience shortcut
-
 bool
 State::wasLastEOL(const MasterLexer& lexer) const {
     return (lexer.impl_->last_was_eol_);
 }
 
-const MasterLexer::Token&
+const MasterToken&
 State::getToken(const MasterLexer& lexer) const {
     return (lexer.impl_->token_);
 }
@@ -271,7 +323,7 @@ public:
         if (c != '\n') {
             getLexerImpl(lexer)->source_->ungetChar();
         }
-        getLexerImpl(lexer)->token_ = Token(Token::END_OF_LINE);
+        getLexerImpl(lexer)->token_ = MasterToken(MasterToken::END_OF_LINE);
         getLexerImpl(lexer)->last_was_eol_ = true;
     }
 };
@@ -342,24 +394,24 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
         if (c == InputSource::END_OF_STREAM) {
             lexerimpl.last_was_eol_ = false;
             if (paren_count != 0) {
-                lexerimpl.token_ = Token(Token::UNBALANCED_PAREN);
+                lexerimpl.token_ = MasterToken(MasterToken::UNBALANCED_PAREN);
                 paren_count = 0; // reset to 0; this helps in lenient mode.
                 return (NULL);
             }
-            lexerimpl.token_ = Token(Token::END_OF_FILE);
+            lexerimpl.token_ = MasterToken(MasterToken::END_OF_FILE);
             return (NULL);
         } else if (c == ' ' || c == '\t') {
             // If requested and we are not in (), recognize the initial space.
             if (lexerimpl.last_was_eol_ && paren_count == 0 &&
                 (options & MasterLexer::INITIAL_WS) != 0) {
                 lexerimpl.last_was_eol_ = false;
-                lexerimpl.token_ = Token(Token::INITIAL_WS);
+                lexerimpl.token_ = MasterToken(MasterToken::INITIAL_WS);
                 return (NULL);
             }
         } else if (c == '\n') {
             lexerimpl.last_was_eol_ = true;
             if (paren_count == 0) { // we don't recognize EOL if we are in ()
-                lexerimpl.token_ = Token(Token::END_OF_LINE);
+                lexerimpl.token_ = MasterToken(MasterToken::END_OF_LINE);
                 return (NULL);
             }
         } else if (c == '\r') {
@@ -375,7 +427,7 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
         } else if (c == ')') {
             lexerimpl.last_was_eol_ = false;
             if (paren_count == 0) {
-                lexerimpl.token_ = Token(Token::UNBALANCED_PAREN);
+                lexerimpl.token_ = MasterToken(MasterToken::UNBALANCED_PAREN);
                 return (NULL);
             }
             --paren_count;
@@ -407,7 +459,7 @@ String::handle(MasterLexer& lexer) const {
         if (getLexerImpl(lexer)->isTokenEnd(c, escaped)) {
             getLexerImpl(lexer)->source_->ungetChar();
             getLexerImpl(lexer)->token_ =
-                MasterLexer::Token(&data.at(0), data.size());
+                MasterToken(&data.at(0), data.size());
             return;
         }
         escaped = (c == '\\' && !escaped);
@@ -417,7 +469,7 @@ String::handle(MasterLexer& lexer) const {
 
 void
 QString::handle(MasterLexer& lexer) const {
-    MasterLexer::Token& token = getLexerImpl(lexer)->token_;
+    MasterToken& token = getLexerImpl(lexer)->token_;
     std::vector<char>& data = getLexerImpl(lexer)->data_;
     data.clear();
 
@@ -425,7 +477,7 @@ QString::handle(MasterLexer& lexer) const {
     while (true) {
         const int c = getLexerImpl(lexer)->source_->getChar();
         if (c == InputSource::END_OF_STREAM) {
-            token = Token(Token::UNEXPECTED_END);
+            token = MasterToken(MasterToken::UNEXPECTED_END);
             return;
         } else if (c == '"') {
             if (escaped) {
@@ -434,12 +486,12 @@ QString::handle(MasterLexer& lexer) const {
                 escaped = false;
                 data.back() = '"';
             } else {
-                token = MasterLexer::Token(&data.at(0), data.size(), true);
+                token = MasterToken(&data.at(0), data.size(), true);
                 return;
             }
         } else if (c == '\n' && !escaped) {
             getLexerImpl(lexer)->source_->ungetChar();
-            token = Token(Token::UNBALANCED_QUOTES);
+            token = MasterToken(MasterToken::UNBALANCED_QUOTES);
             return;
         } else {
             escaped = (c == '\\' && !escaped);
@@ -450,7 +502,7 @@ QString::handle(MasterLexer& lexer) const {
 
 void
 Number::handle(MasterLexer& lexer) const {
-    MasterLexer::Token& token = getLexerImpl(lexer)->token_;
+    MasterToken& token = getLexerImpl(lexer)->token_;
 
     // It may yet turn out to be a string, so we first
     // collect all the data
@@ -470,15 +522,14 @@ Number::handle(MasterLexer& lexer) const {
                 try {
                     const uint32_t number32 =
                         boost::lexical_cast<uint32_t, const char*>(&data[0]);
-                    token = MasterLexer::Token(number32);
+                    token = MasterToken(number32);
                 } catch (const boost::bad_lexical_cast&) {
                     // Since we already know we have only digits,
                     // range should be the only possible problem.
-                    token = Token(Token::NUMBER_OUT_OF_RANGE);
+                    token = MasterToken(MasterToken::NUMBER_OUT_OF_RANGE);
                 }
             } else {
-                token = MasterLexer::Token(&data.at(0),
-                                           data.size());
+                token = MasterToken(&data.at(0), data.size());
             }
             return;
         }
