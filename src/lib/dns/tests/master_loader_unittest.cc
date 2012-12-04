@@ -79,8 +79,8 @@ public:
         ofstream out(filename.c_str(),
                      std::ios_base::out | std::ios_base::trunc);
         ASSERT_FALSE(out.fail());
-        out << "example.org. 3600 IN SOA ns1.example.org.filename "
-            "admin.example.org.filename 1234 3600 1800 2419200 7200" << endl;
+        out << "example.org. 3600 IN SOA ns1.example.org. "
+            "admin.example.org. 1234 3600 1800 2419200 7200" << endl;
         out << line << endl;
         out << "correct 3600    IN  A 192.0.2.2" << endl;
         out.close();
