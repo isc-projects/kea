@@ -23,6 +23,7 @@
 #include <stdint.h>
 
 #include <string>
+#include <sstream>
 #include <vector>
 
 namespace isc {
@@ -85,43 +86,20 @@ public:
     /// \c InvalidRdataText is thrown if the method cannot process the
     /// parameter data.
     explicit TXTLikeImpl(const std::string& txtstr) {
-        // TBD: this is a simple, incomplete implementation that only supports
-        // a single character-string.
-
-        size_t length = txtstr.size();
-        size_t pos_begin = 0;
-
-        if (length > 1 && txtstr[0] == '"' && txtstr[length - 1] == '"') {
-            pos_begin = 1;
-            length -= 2;
-        }
-
-        if (length > MAX_CHARSTRING_LEN) {
-            isc_throw(CharStringTooLong, RRType(typeCode) <<
-                      " RDATA construction from text:"
-                      " string length is too long: " << length);
-        }
-
-        // TBD: right now, we don't support escaped characters
-        if (txtstr.find('\\') != string::npos) {
-            isc_throw(InvalidRdataText, RRType(typeCode) <<
-                      " RDATA from text:"
-                      " escaped character is currently not supported: " <<
-                      txtstr);
-        }
-
-        std::vector<uint8_t> data;
-        data.reserve(length + 1);
-        data.push_back(length);
-        data.insert(data.end(), txtstr.begin() + pos_begin,
-                    txtstr.begin() + pos_begin + length);
-        string_list_.push_back(data);
+        std::istringstream ss(txtstr);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
+        buildFromTextHelper(lexer);
     }
 
-    TXTLikeImpl(MasterLexer& lexer, const Name*,
-                MasterLoader::Options,
+    TXTLikeImpl(MasterLexer& lexer, const Name*, MasterLoader::Options,
                 MasterLoaderCallbacks&)
     {
+        buildFromTextHelper(lexer);
+    }
+
+private:
+    void buildFromTextHelper(MasterLexer& lexer) {
         while (true) {
             const MasterToken& token = lexer.getNextToken(
                 MasterToken::QSTRING, true);
@@ -135,6 +113,7 @@ public:
         lexer.ungetToken();
     }
 
+public:
     /// \brief The copy constructor.
     ///
     /// Trivial for now, we could've used the default one.
