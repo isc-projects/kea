@@ -25,6 +25,10 @@
 
 #include <boost/bind.hpp>
 
+#include <string>
+#include <sstream>
+#include <vector>
+
 using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
@@ -77,7 +81,6 @@ protected:
     const TXT_LIKE rdata_txt_like;
     const TXT_LIKE rdata_txt_like_empty;
     const TXT_LIKE rdata_txt_like_quoted;
-    ConstRdataPtr rdata_txt_like_fromwire;
 };
 
 // The list of types we want to test.
@@ -96,24 +99,21 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
     ss << "\"Test-String\\\"\"\n";
     this->lexer.pushSource(ss);
 
-    // Rdata to compare, created from wire
-    this->rdata_txt_like_fromwire =
+    // commonly used Rdata to compare below, created from wire
+    ConstRdataPtr const rdata =
         this->rdataFactoryFromFile(RRTYPE<TypeParam>(),
                                    RRClass("IN"), "rdata_txt_fromWire1");
 
     // normal case is covered in toWireBuffer.
-    EXPECT_EQ(0, this->rdata_txt_like.compare(*this->rdata_txt_like_fromwire));
+    EXPECT_EQ(0, this->rdata_txt_like.compare(*rdata));
     EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
-                           this->loader_cb).compare(
-                               *this->rdata_txt_like_fromwire));
+                           this->loader_cb).compare(*rdata));
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // surrounding double-quotes shouldn't change the result.
-    EXPECT_EQ(0, this->rdata_txt_like_quoted.compare(
-                  *this->rdata_txt_like_fromwire));
+    EXPECT_EQ(0, this->rdata_txt_like_quoted.compare(*rdata));
     EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
-                           this->loader_cb).compare(
-                               *this->rdata_txt_like_fromwire));
+                           this->loader_cb).compare(*rdata));
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // Null character-string.
@@ -158,6 +158,43 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
     EXPECT_THROW(TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
                            this->loader_cb), MasterLexer::LexerError);
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
+}
+
+TYPED_TEST(Rdata_TXT_LIKE_Test, createMultiStringsFromText) {
+    // Tests for "from text" variants construction with various forms of
+    // multi character-strings.
+
+    std::vector<std::string > texts;
+    texts.push_back("\"Test-String\" \"Test-String\""); // most common form
+    texts.push_back("\"Test-String\"\"Test-String\"");  // no space between'em
+    texts.push_back("\"Test-String\" Test-String");  // no '"' for one
+    texts.push_back("\"Test-String\"Test-String"); // and no space either
+    texts.push_back("Test-String \"Test-String\""); // no '"' for the other
+
+    std::stringstream ss;
+    for (std::vector<std::string >::const_iterator it = texts.begin();
+         it != texts.end(); ++it) {
+        ss << *it << "\n";
+    }
+    this->lexer.pushSource(ss);
+
+    // The corresponding Rdata built from wire to compare in the checks below.
+    ConstRdataPtr const rdata =
+        this->rdataFactoryFromFile(RRTYPE<TypeParam>(),
+                                   RRClass("IN"), "rdata_txt_fromWire3.wire");
+
+    // Confirm we can construct the Rdata from the test text, both from
+    // std::string and with lexer, and that matches the from-wire data.
+    for (std::vector<std::string >::const_iterator it = texts.begin();
+         it != texts.end(); ++it) {
+        SCOPED_TRACE(*it);
+        EXPECT_EQ(0, TypeParam(*it).compare(*rdata));
+
+        EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+                               this->loader_cb).compare(*rdata));
+        EXPECT_EQ(MasterToken::END_OF_LINE,
+                  this->lexer.getNextToken().getType());
+    }
 }
 
 void
