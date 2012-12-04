@@ -31,7 +31,7 @@ import sys
 # new_rdata_factory_users.
 #
 # Example:
-#     new_rdata_factory_users = [('a', 'in'), ('a', 'ch')]
+#     new_rdata_factory_users = [('a', 'in'), ('a', 'ch'), ('soa', 'generic')]
 new_rdata_factory_users = []
 
 re_typecode = re.compile('([\da-z]+)_(\d+)')
@@ -284,10 +284,13 @@ def generate_rrparam(fileprefix, basemtime):
 
         # By default, we use OldRdataFactory (see bug #2497). If you
         # want to pick RdataFactory for a particular type, add it to
-        # new_rdata_factory_users.
-        if ((type_txt.lower(), class_txt.lower()) in new_rdata_factory_users) or \
-                ((class_txt.lower() == 'in') and \
-                     ((type_txt.lower(), 'generic') in new_rdata_factory_users)):
+        # new_rdata_factory_users.  Note that we explicitly generate (for
+        # optimization) class-independent ("generic") factories for class IN
+        # for optimization.
+        if (((type_txt.lower(), class_txt.lower()) in
+             new_rdata_factory_users) or
+            ((class_txt.lower() == 'in') and
+             ((type_txt.lower(), 'generic') in new_rdata_factory_users))):
             rdf_class = 'RdataFactory'
         else:
             rdf_class = 'OldRdataFactory'
