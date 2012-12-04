@@ -24,6 +24,7 @@
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
 
+#include <datasrc/memory/segment_object_holder.h>
 #include <datasrc/memory/rdata_serialization.h>
 #include <datasrc/memory/rdataset.h>
 
@@ -39,6 +40,7 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc::memory;
 using namespace isc::testutils;
+using isc::datasrc::memory::detail::SegmentObjectHolder;
 using boost::lexical_cast;
 
 namespace {
@@ -112,7 +114,7 @@ TEST_F(RdataSetTest, create) {
     RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
                                           ConstRRsetPtr());
     checkRdataSet(*rdataset, true, false);
-    RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
+    RdataSet::destroy(mem_sgmt_, rdataset, RRClass::IN());
 }
 
 TEST_F(RdataSetTest, getNext) {
@@ -131,7 +133,62 @@ TEST_F(RdataSetTest, getNext) {
     rdataset->next = rdataset;
     EXPECT_EQ(rdataset, static_cast<const RdataSet*>(rdataset)->getNext());
 
-    RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
+    RdataSet::destroy(mem_sgmt_, rdataset, RRClass::IN());
+}
+
+TEST_F(RdataSetTest, find) {
+    // Create some RdataSets and make a chain of them.
+    SegmentObjectHolder<RdataSet, RRClass> holder1(
+        mem_sgmt_,
+        RdataSet::create(mem_sgmt_, encoder_, a_rrset_, ConstRRsetPtr()),
+        RRClass::IN());
+    ConstRRsetPtr aaaa_rrset =
+        textToRRset("www.example.com. 1076895760 IN AAAA 2001:db8::1");
+    SegmentObjectHolder<RdataSet, RRClass> holder2(
+        mem_sgmt_,
+        RdataSet::create(mem_sgmt_, encoder_, aaaa_rrset, ConstRRsetPtr()),
+        RRClass::IN());
+    ConstRRsetPtr sigonly_rrset =
+        textToRRset("www.example.com. 1076895760 IN RRSIG "
+                    "TXT 5 2 3600 20120814220826 20120715220826 "
+                    "1234 example.com. FAKE");
+    SegmentObjectHolder<RdataSet, RRClass> holder3(
+        mem_sgmt_,
+        RdataSet::create(mem_sgmt_, encoder_, ConstRRsetPtr(), sigonly_rrset),
+        RRClass::IN());
+
+    RdataSet* rdataset_a = holder1.get();
+    RdataSet* rdataset_aaaa = holder2.get();
+    RdataSet* rdataset_sigonly = holder3.get();
+    RdataSet* rdataset_null = NULL;
+    rdataset_a->next = rdataset_aaaa;
+    rdataset_aaaa->next = rdataset_sigonly;
+
+    // If a non-RRSIG part of rdataset exists for the given type, it will be
+    // returned regardless of the value of sigonly_ok.  If it's RRSIG-only
+    // rdataset, it returns non NULL iff sigonly_ok is explicitly set to true.
+    EXPECT_EQ(rdataset_aaaa, RdataSet::find(rdataset_a, RRType::AAAA()));
+    EXPECT_EQ(rdataset_aaaa, RdataSet::find(rdataset_a, RRType::AAAA(), true));
+    EXPECT_EQ(rdataset_aaaa, RdataSet::find(rdataset_a, RRType::AAAA(), false));
+
+    EXPECT_EQ(rdataset_null, RdataSet::find(rdataset_a, RRType::TXT()));
+    EXPECT_EQ(rdataset_sigonly, RdataSet::find(rdataset_a, RRType::TXT(),
+                                               true));
+    EXPECT_EQ(rdataset_null, RdataSet::find(rdataset_a, RRType::TXT(), false));
+
+    // Same tests for the const version of find().
+    const RdataSet* rdataset_a_const = holder1.get();
+    EXPECT_EQ(rdataset_aaaa, RdataSet::find(rdataset_a_const, RRType::AAAA()));
+    EXPECT_EQ(rdataset_aaaa, RdataSet::find(rdataset_a_const, RRType::AAAA(),
+                                            true));
+    EXPECT_EQ(rdataset_aaaa, RdataSet::find(rdataset_a_const, RRType::AAAA(),
+                                            false));
+
+    EXPECT_EQ(rdataset_null, RdataSet::find(rdataset_a_const, RRType::TXT()));
+    EXPECT_EQ(rdataset_sigonly, RdataSet::find(rdataset_a_const, RRType::TXT(),
+                                               true));
+    EXPECT_EQ(rdataset_null, RdataSet::find(rdataset_a_const, RRType::TXT(),
+                                            false));
 }
 
 // A helper function to create an RRset containing the given number of
@@ -154,7 +211,7 @@ TEST_F(RdataSetTest, createManyRRs) {
                                           ConstRRsetPtr());
     EXPECT_EQ(8191, rdataset->getRdataCount());
     EXPECT_EQ(0, rdataset->getSigRdataCount());
-    RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
+    RdataSet::destroy(mem_sgmt_, rdataset, RRClass::IN());
 
     // Exceeding that will result in an exception.
     EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_,
@@ -173,7 +230,7 @@ TEST_F(RdataSetTest, createWithRRSIG) {
     RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
                                           rrsig_rrset_);
     checkRdataSet(*rdataset, true, true);
-    RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
+    RdataSet::destroy(mem_sgmt_, rdataset, RRClass::IN());
 
     // Unusual case: TTL doesn't match.  This implementation accepts that,
     // using the TTL of the covered RRset.
@@ -183,7 +240,7 @@ TEST_F(RdataSetTest, createWithRRSIG) {
                                    "20120715220826 1234 example.com. FAKE"));
     rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_, rrsig_badttl);
     checkRdataSet(*rdataset, true, true);
-    RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
+    RdataSet::destroy(mem_sgmt_, rdataset, RRClass::IN());
 }
 
 // A helper function to create an RRSIG RRset containing the given number of
@@ -218,21 +275,21 @@ TEST_F(RdataSetTest, createManyRRSIGs) {
     RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
                                           getRRSIGWithRdataCount(7));
     EXPECT_EQ(7, rdataset->getSigRdataCount());
-    RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
+    RdataSet::destroy(mem_sgmt_, rdataset, RRClass::IN());
 
     // 8 would cause overflow in the normal 3-bit field if there were no extra
     // count field.
     rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
                                 getRRSIGWithRdataCount(8));
     EXPECT_EQ(8, rdataset->getSigRdataCount());
-    RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
+    RdataSet::destroy(mem_sgmt_, rdataset, RRClass::IN());
 
     // Up to 2^16-1 RRSIGs are allowed (although that would be useless
     // in practice)
     rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
                                 getRRSIGWithRdataCount(65535));
     EXPECT_EQ(65535, rdataset->getSigRdataCount());
-    RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
+    RdataSet::destroy(mem_sgmt_, rdataset, RRClass::IN());
 
     // Exceeding this limit will result in an exception.
     EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
@@ -250,7 +307,7 @@ TEST_F(RdataSetTest, createWithRRSIGOnly) {
     RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, ConstRRsetPtr(),
                                           rrsig_rrset_);
     checkRdataSet(*rdataset, false, true);
-    RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
+    RdataSet::destroy(mem_sgmt_, rdataset, RRClass::IN());
 }
 
 TEST_F(RdataSetTest, badCeate) {

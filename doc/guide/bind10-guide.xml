@@ -784,7 +784,24 @@ as a dependency earlier -->
         <note>
           <para>The install step may require superuser privileges.</para>
         </note>
-
+        <para>
+	  If required, run <command>ldconfig</command> as root with
+	  <filename>/usr/local/lib</filename> (or with ${prefix}/lib if
+	  configured with --prefix) in
+	  <filename>/etc/ld.so.conf</filename> (or the relevant linker
+	  cache configuration file for your OS):
+	  <screen>$ <userinput>ldconfig</userinput></screen>
+        </para>
+        <note>
+          <para>
+	    If you do not run <command>ldconfig</command> where it is
+	    required, you may see errors like the following:
+            <screen>
+	      program: error while loading shared libraries: libb10-something.so.1:
+	      cannot open shared object file: No such file or directory
+	    </screen>
+	  </para>
+        </note>
       </section>
 
   <!-- TODO: tests -->

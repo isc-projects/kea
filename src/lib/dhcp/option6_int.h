@@ -89,7 +89,7 @@ public:
         // Depending on the data type length we use different utility functions
         // writeUint16 or writeUint32 which write the data in the network byte
         // order to the provided buffer. The same functions can be safely used
-        // for either unsiged or signed integers so there is not need to create
+        // for either unsigned or signed integers so there is not need to create
         // special cases for intX_t types.
         switch (OptionDataTypeTraits<T>::len) {
         case 1:
@@ -104,7 +104,7 @@ public:
         default:
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
-        LibDHCP::packOptions6(buf, options_);
+        packOptions(buf);
     }
 
     /// @brief Parses received buffer
@@ -128,7 +128,7 @@ public:
         // Depending on the data type length we use different utility functions
         // readUint16 or readUint32 which read the data laid in the network byte
         // order from the provided buffer. The same functions can be safely used
-        // for either unsiged or signed integers so there is not need to create
+        // for either unsigned or signed integers so there is not need to create
         // special cases for intX_t types.
         int data_size_len = OptionDataTypeTraits<T>::len;
         switch (data_size_len) {
@@ -149,7 +149,7 @@ public:
         // of clang complain about unresolved reference to
         // OptionDataTypeTraits structure during linking.
         begin += data_size_len;
-        LibDHCP::unpackOptions6(OptionBuffer(begin, end), options_);
+        unpackOptions(OptionBuffer(begin, end));
     }
 
     /// @brief Set option value.

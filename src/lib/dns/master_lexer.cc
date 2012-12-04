@@ -19,6 +19,7 @@
 #include <dns/master_lexer_state.h>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <bitset>
 #include <cassert>
@@ -30,7 +31,7 @@ namespace dns {
 
 namespace {
 typedef boost::shared_ptr<master_lexer_internal::InputSource> InputSourcePtr;
-}
+} // end unnamed namespace
 using namespace master_lexer_internal;
 
 
@@ -210,10 +211,11 @@ const char* const error_text[] = {
     "unbalanced parentheses",   // UNBALANCED_PAREN
     "unexpected end of input",  // UNEXPECTED_END
     "unbalanced quotes",        // UNBALANCED_QUOTES
-    "no token produced"         // NO_TOKEN_PRODUCED
+    "no token produced",        // NO_TOKEN_PRODUCED
+    "number out of range"       // NUMBER_OUT_OF_RANGE
 };
 const size_t error_text_max_count = sizeof(error_text) / sizeof(error_text[0]);
-}
+} // end unnamed namespace
 
 std::string
 MasterLexer::Token::getErrorText() const {
@@ -288,6 +290,13 @@ public:
     virtual void handle(MasterLexer& lexer) const;
 };
 
+class Number : public State {
+public:
+    Number() {}
+    virtual ~Number() {}
+    virtual void handle(MasterLexer& lexer) const;
+};
+
 // We use a common instance of a each state in a singleton-like way to save
 // construction overhead.  They are not singletons in its strict sense as
 // we don't prohibit direct construction of these objects.  But that doesn't
@@ -296,7 +305,8 @@ public:
 const CRLF CRLF_STATE;
 const String STRING_STATE;
 const QString QSTRING_STATE;
-}
+const Number NUMBER_STATE;
+} // end unnamed namespace
 
 const State&
 State::getInstance(ID state_id) {
@@ -307,6 +317,8 @@ State::getInstance(ID state_id) {
         return (STRING_STATE);
     case QString:
         return (QSTRING_STATE);
+    case Number:
+        return (NUMBER_STATE);
     }
 
     // This is a bug of the caller, and this method is only expected to be
@@ -367,6 +379,11 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
                 return (NULL);
             }
             --paren_count;
+        } else if ((options & MasterLexer::NUMBER) != 0 &&isdigit(c)) {
+            lexerimpl.last_was_eol_ = false;
+            // this character will be handled in the number state
+            lexerimpl.source_->ungetChar();
+            return (&NUMBER_STATE);
         } else {
             // this character will be handled in the string state
             lexerimpl.source_->ungetChar();
@@ -428,6 +445,48 @@ QString::handle(MasterLexer& lexer) const {
             escaped = (c == '\\' && !escaped);
             data.push_back(c);
         }
+    }
+}
+
+void
+Number::handle(MasterLexer& lexer) const {
+    MasterLexer::Token& token = getLexerImpl(lexer)->token_;
+
+    // It may yet turn out to be a string, so we first
+    // collect all the data
+    bool digits_only = true;
+    std::vector<char>& data = getLexerImpl(lexer)->data_;
+    data.clear();
+    bool escaped = false;
+
+    while (true) {
+        const int c = getLexerImpl(lexer)->skipComment(
+            getLexerImpl(lexer)->source_->getChar(), escaped);
+        if (getLexerImpl(lexer)->isTokenEnd(c, escaped)) {
+            getLexerImpl(lexer)->source_->ungetChar();
+            if (digits_only) {
+                // Close the string for lexical_cast
+                data.push_back('\0');
+                try {
+                    const uint32_t number32 =
+                        boost::lexical_cast<uint32_t, const char*>(&data[0]);
+                    token = MasterLexer::Token(number32);
+                } catch (const boost::bad_lexical_cast&) {
+                    // Since we already know we have only digits,
+                    // range should be the only possible problem.
+                    token = Token(Token::NUMBER_OUT_OF_RANGE);
+                }
+            } else {
+                token = MasterLexer::Token(&data.at(0),
+                                           data.size());
+            }
+            return;
+        }
+        if (!isdigit(c)) {
+            digits_only = false;
+        }
+        escaped = (c == '\\' && !escaped);
+        data.push_back(c);
     }
 }
 

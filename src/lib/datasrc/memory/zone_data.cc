@@ -49,7 +49,7 @@ rdataSetDeleter(RRClass rrclass, util::MemorySegment* mem_sgmt,
          rdataset = rdataset_next)
     {
         rdataset_next = rdataset->getNext();
-        RdataSet::destroy(*mem_sgmt, rrclass, rdataset);
+        RdataSet::destroy(*mem_sgmt, rdataset, rrclass);
     }
 }
 
