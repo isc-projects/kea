@@ -118,6 +118,38 @@ PyObject* ZoneLoader_load(PyObject* po_self, PyObject*) {
     }
 }
 
+PyObject* ZoneLoader_loadIncremental(PyObject* po_self, PyObject* args) {
+    s_ZoneLoader* self = static_cast<s_ZoneLoader*>(po_self);
+
+    int limit;
+    if (!PyArg_ParseTuple(args, "i", &limit)) {
+        return (NULL);
+    }
+    if (limit < 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "load_incremental argument must be positive");
+        return (NULL);
+    }
+    try {
+        const bool complete = self->cppobj->loadIncremental(limit);
+        if (complete) {
+            Py_RETURN_TRUE;
+        } else {
+            Py_RETURN_FALSE;
+        }
+    } catch (const isc::datasrc::MasterFileError& mfe) {
+        PyErr_SetString(getDataSourceException("MasterFileError"), mfe.what());
+        return (NULL);
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unexpected exception");
+        return (NULL);
+    }
+}
+
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -133,6 +165,7 @@ PyMethodDef ZoneLoader_methods[] = {
     { "find_all", ZoneLoader_find_all, METH_VARARGS, ZoneLoader_findAll_doc },
 */
     { "load", ZoneLoader_load, METH_NOARGS, ZoneLoader_load_doc },
+    { "load_incremental", ZoneLoader_loadIncremental, METH_VARARGS, ZoneLoader_loadIncremental_doc },
     { NULL, NULL, 0, NULL }
 };
 
