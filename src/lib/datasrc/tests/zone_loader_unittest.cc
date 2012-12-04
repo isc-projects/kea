@@ -288,7 +288,7 @@ TEST_F(ZoneLoaderTest, classMismatch) {
 // Load an unsigned zone, all at once
 TEST_F(ZoneLoaderTest, loadUnsigned) {
     ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
-                      TEST_DATA_DIR "root.zone");
+                      TEST_DATA_DIR "/root.zone");
     // It gets the updater directly in the constructor
     ASSERT_EQ(1, destination_client_.provided_updaters_.size());
     EXPECT_EQ(Name::ROOT_NAME(), destination_client_.provided_updaters_[0]);
@@ -377,8 +377,10 @@ TEST_F(ZoneLoaderTest, loadSigned) {
 
 // Test it throws when there's no such file
 TEST_F(ZoneLoaderTest, loadNoSuchFile) {
-    EXPECT_THROW(ZoneLoader(destination_client_, Name::ROOT_NAME(),
-                            "This file does not exist"), MasterFileError);
+    ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
+                      "This file does not exist");
+    EXPECT_THROW(loader.load(), MasterFileError);
+    EXPECT_FALSE(destination_client_.commit_called_);
 }
 
 // And it also throws when there's a syntax error in the master file
