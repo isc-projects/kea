@@ -121,7 +121,7 @@ TEST_F(OptionDataTypesTest, writeAddress) {
     // Encode an IPv6 address 2001:db8:1::1 in wire format.
     // This will be used as reference data to validate if
     // an IPv6 address is stored in a buffer properly.
-    const char data[] = {
+    const uint8_t data[] = {
         0x20, 0x01, 0x0d, 0xb8, 0x0, 0x1, 0x0, 0x0,
         0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1
     };
@@ -316,7 +316,7 @@ TEST_F(OptionDataTypesTest, readInt) {
 // types are correctly written to a buffer.
 TEST_F(OptionDataTypesTest, writeInt) {
     // Prepare the reference buffer.
-    const char data[] = {
+    const uint8_t data[] = {
         0x7F, // 127
         0x03, 0xFF, // 1023
         0x00, 0x00, 0x10, 0x00, // 4096
