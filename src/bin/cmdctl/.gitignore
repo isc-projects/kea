@@ -1,10 +1,10 @@
+/b10-certgen
+/b10-certgen.1
 /b10-cmdctl
+/b10-cmdctl.8
+/cmdctl-certfile.pem
+/cmdctl-keyfile.pem
 /cmdctl.py
 /cmdctl.spec
 /cmdctl.spec.pre
 /run_b10-cmdctl.sh
-/b10-cmdctl.8
-/cmdctl-keyfile.pem
-/cmdctl-certfile.pem
-/b10-certgen
-/b10-certgen.1
