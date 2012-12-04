@@ -287,7 +287,7 @@ LibDHCP::initStdOptionDefs6() {
         // option class to handle it so we simply return binary
         // option type for now.
         // @todo implement a class to handle AUTH option.
-        { "AUTH", D6O_AUTH, D6O_AUTH, OPT_BINARY_TYPE, false },
+        { "AUTH", D6O_AUTH, OPT_BINARY_TYPE, false },
         { "unicast", D6O_UNICAST, OPT_IPV6_ADDRESS_TYPE, false },
         { "status-code", D6O_STATUS_CODE, OPT_RECORD_TYPE, false },
         { "rapid-commit", D6O_RAPID_COMMIT, OPT_EMPTY_TYPE, false },
