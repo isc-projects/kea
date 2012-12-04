@@ -154,6 +154,10 @@ libdns___include_HEADERS = \
 	message.h \
 	master_lexer.h \
 	masterload.h \
+	master_lexer.h \
+	master_lexer.h \
+	master_loader.h \
+	master_loader_callbacks.h \
 	messagerenderer.h \
 	name.h \
 	question.h \
