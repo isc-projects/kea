@@ -52,6 +52,11 @@ TXT::TXT(InputBuffer& buffer, size_t rdata_len) :
     impl_(new TXTImpl(buffer, rdata_len))
 {}
 
+TXT::TXT(MasterLexer& lexer, const Name* origin,
+         MasterLoader::Options options, MasterLoaderCallbacks& callbacks) :
+    impl_(new TXTImpl(lexer, origin, options, callbacks))
+{}
+
 TXT::TXT(const std::string& txtstr) :
     impl_(new TXTImpl(txtstr))
 {}

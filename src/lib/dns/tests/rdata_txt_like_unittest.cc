@@ -23,6 +23,8 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/bind.hpp>
+
 using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
@@ -47,10 +49,17 @@ const uint8_t wiredata_txt_like[] = {
 
 const uint8_t wiredata_nulltxt[] = { 0 };
 
+// For lexer-based constructor
+void
+dummyCallback(const string&, size_t, const string&) {
+}
+
 template<class TXT_LIKE>
 class Rdata_TXT_LIKE_Test : public RdataTest {
 protected:
     Rdata_TXT_LIKE_Test() :
+        callback(boost::bind(&dummyCallback, _1, _2, _3)),
+        loader_cb(callback, callback),
         wiredata_longesttxt(256, 'a'),
         rdata_txt_like("Test-String"),
         rdata_txt_like_empty("\"\""),
@@ -59,10 +68,16 @@ protected:
         wiredata_longesttxt[0] = 255; // adjust length
     }
 
+private:
+    const MasterLoaderCallbacks::IssueCallback callback;
+
+protected:
+    MasterLoaderCallbacks loader_cb;
     vector<uint8_t> wiredata_longesttxt;
     const TXT_LIKE rdata_txt_like;
     const TXT_LIKE rdata_txt_like_empty;
     const TXT_LIKE rdata_txt_like_quoted;
+    ConstRdataPtr rdata_txt_like_fromwire;
 };
 
 // The list of types we want to test.
@@ -71,10 +86,27 @@ typedef testing::Types<generic::TXT, generic::SPF> Implementations;
 TYPED_TEST_CASE(Rdata_TXT_LIKE_Test, Implementations);
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
+    std::stringstream ss;
+    ss << "Test-String\n";
+    ss << "\"Test-String\"\n";   // explicitly surrounded by '"'s
+    this->lexer.pushSource(ss);
+
     // normal case is covered in toWireBuffer.
+    this->rdata_txt_like_fromwire =
+        this->rdataFactoryFromFile(RRTYPE<TypeParam>(),
+                                   RRClass("IN"), "rdata_txt_fromWire1");
+    EXPECT_EQ(0, this->rdata_txt_like.compare(*this->rdata_txt_like_fromwire));
+    EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+                           this->loader_cb).compare(
+                               *this->rdata_txt_like_fromwire));
+    EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // surrounding double-quotes shouldn't change the result.
-    EXPECT_EQ(0, this->rdata_txt_like.compare(this->rdata_txt_like_quoted));
+    EXPECT_EQ(0, this->rdata_txt_like_quoted.compare(
+                  *this->rdata_txt_like_fromwire));
+    EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+                           this->loader_cb).compare(
+                               *this->rdata_txt_like_fromwire));
 
     // Null character-string.
     this->obuffer.clear();
