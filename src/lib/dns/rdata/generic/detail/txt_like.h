@@ -79,17 +79,20 @@ public:
 
     /// \brief Constructor from string.
     ///
-    /// <b>Exceptions</b>
-    ///
-    /// \c CharStringTooLong is thrown if the parameter string length exceeds
-    /// maximum.
-    /// \c InvalidRdataText is thrown if the method cannot process the
-    /// parameter data.
+    /// \throw CharStringTooLong the parameter string length exceeds maximum.
+    /// \throw InvalidRdataText the method cannot process the parameter data
     explicit TXTLikeImpl(const std::string& txtstr) {
         std::istringstream ss(txtstr);
         MasterLexer lexer;
         lexer.pushSource(ss);
-        buildFromTextHelper(lexer);
+
+        try {
+            buildFromTextHelper(lexer);
+        } catch (const MasterLexer::LexerError& ex) {
+            isc_throw(InvalidRdataText, "Failed to construct " <<
+                      RRType(typeCode) << " RDATA from " << txtstr << ": "
+                      << ex.what());
+        }
     }
 
     TXTLikeImpl(MasterLexer& lexer, const Name*, MasterLoader::Options,
