@@ -48,5 +48,5 @@ libb10_dhcpsrv_la_CXXFLAGS += -Wno-unused-parameter
 endif
 
 # Distribute MySQL schema creation script and backend documentation
-EXTRA_DIST = dhcpdb_create.mysql database_backends.dox
+EXTRA_DIST = dhcpdb_create.mysql database_backends.dox libdhcpsrv.dox
 dist_pkgdata_DATA = dhcpdb_create.mysql
