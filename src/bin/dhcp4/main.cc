@@ -17,6 +17,7 @@
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <log/logger_support.h>
+#include <log/logger_manager.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -113,6 +114,10 @@ main(int argc, char* argv[]) {
                 LOG_ERROR(dhcp4_logger, DHCP4_SESSION_FAIL).arg(ex.what());
                 // Let's continue. It is useful to have the ability to run
                 // DHCP server in stand-alone mode, e.g. for testing
+                // We do need to make sure logging is no longer buffered
+                // since then it would not print until dhcp6 is stopped
+                isc::log::LoggerManager log_manager;
+                log_manager.process();
             }
         } else {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_STANDALONE);
