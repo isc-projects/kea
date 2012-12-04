@@ -59,18 +59,23 @@ ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
 ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
                        const char* filename) :
     updater_(destination.getUpdater(zone_name, true, false)),
-    loader_(new MasterLoader(filename, zone_name,
-                             // TODO: Maybe we should have getClass() on the
-                             // data source?
-                             updater_->getFinder().getClass(),
-                             createMasterLoaderCallbacks(zone_name,
-                                             updater_->getFinder().getClass(),
-                                             &loaded_ok_),
-                             createMasterLoaderAddCallback(*updater_))),
     complete_(false),
     loaded_ok_(true)
 {
-
+    if (updater_ == ZoneUpdaterPtr()) {
+        isc_throw(DataSourceError, "Zone " << zone_name << " not found in "
+                  "destination data source, can't fill it with data");
+    } else {
+        loader_.reset(new
+                      MasterLoader(filename, zone_name,
+                                   // TODO: Maybe we should have getClass()
+                                   // on the data source?
+                                   updater_->getFinder().getClass(),
+                                   createMasterLoaderCallbacks(zone_name,
+                                       updater_->getFinder().getClass(),
+                                       &loaded_ok_),
+                                   createMasterLoaderAddCallback(*updater_)));
+    }
 }
 
 namespace {
