@@ -154,16 +154,10 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
 
     // The escape character makes the double quote a part of character-string,
     // so this is invalid input and should be rejected.
-    EXPECT_THROW(TypeParam("\"Test-String\\\""), InvalidRdataText);
+    EXPECT_THROW(TypeParam("\"Test-String\\\""), MasterLexer::LexerError);
     EXPECT_THROW(TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
                            this->loader_cb), MasterLexer::LexerError);
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
-
-    // Terminating double-quote is provided, so this is valid, but in this
-    // version of implementation we reject escaped characters.
-    EXPECT_THROW(TypeParam("\"Test-String\\\"\""), InvalidRdataText);
-    TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
-              this->loader_cb);
 }
 
 void
