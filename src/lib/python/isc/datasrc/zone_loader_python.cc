@@ -50,8 +50,11 @@ namespace {
 // The s_* Class simply covers one instantiation of the object
 class s_ZoneLoader : public PyObject {
 public:
-    s_ZoneLoader() : cppobj(NULL) {};
+    s_ZoneLoader() : cppobj(NULL), client(NULL) {};
     ZoneLoader* cppobj;
+    // a zoneloader should not survive its associated client,
+    // so add a ref to it at init
+    PyObject* client;
 };
 
 // Shortcut type which would be convenient for adding class variables safely.
@@ -66,6 +69,8 @@ ZoneLoader_init(PyObject* po_self, PyObject* args, PyObject*) {
     char* master_file;
     if (PyArg_ParseTuple(args, "O!O!s", &datasourceclient_type, &po_ds_client, &name_type, &po_name, &master_file)) {
         try {
+            Py_INCREF(po_ds_client);
+            self->client = po_ds_client;
             self->cppobj = new ZoneLoader(PyDataSourceClient_ToDataSourceClient(po_ds_client), PyName_ToName(po_name), master_file);
             return (0);
         } catch (const isc::datasrc::MasterFileError& mfe) {
@@ -89,6 +94,9 @@ ZoneLoader_destroy(PyObject* po_self) {
     s_ZoneLoader* self = static_cast<s_ZoneLoader*>(po_self);
     delete self->cppobj;
     self->cppobj = NULL;
+    if (self->client != NULL) {
+        Py_DECREF(self->client);
+    }
     Py_TYPE(self)->tp_free(self);
 }
 
