@@ -447,6 +447,10 @@ OptionPtr Dhcpv6Srv::handleIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid, 
     // but different wording below)
     if (!subnet) {
         // Create empty IA_NA option with IAID matching the request.
+        // Note that we don't use OptionDefinition class to create this option.
+        // This is because we prefer using a constructor of Option6IA that
+        // initializes IAID. Otherwise we would have to use setIAID() after
+        // creation of the option which has some performance implications.
         boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
 
         // Insert status code NoAddrsAvail.
@@ -488,6 +492,8 @@ OptionPtr Dhcpv6Srv::handleIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid, 
                                                       hint, fake_allocation);
 
     // Create IA_NA that we will put in the response.
+    // Do not use OptionDefinition to create option's instance so
+    // as we can initialize IAID using a constructor.
     boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
 
     if (lease) {
