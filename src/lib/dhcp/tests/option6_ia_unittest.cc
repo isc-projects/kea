@@ -119,6 +119,9 @@ TEST_F(Option6IATest, simple) {
     EXPECT_EQ(2345, ia->getT1());
     EXPECT_EQ(3456, ia->getT2());
 
+    ia->setIAID(890);
+    EXPECT_EQ(890, ia->getIAID());
+
     EXPECT_NO_THROW(
         delete ia;
     );
