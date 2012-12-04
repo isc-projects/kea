@@ -1,4 +1,4 @@
-SUBDIRS = .
+SUBDIRS = . testdata
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
