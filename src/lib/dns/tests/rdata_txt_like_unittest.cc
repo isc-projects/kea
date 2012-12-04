@@ -17,10 +17,11 @@
 #include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/rdataclass.h>
-#include <gtest/gtest.h>
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+
+#include <gtest/gtest.h>
 
 using isc::UnitTestUtil;
 using namespace std;
@@ -28,6 +29,7 @@ using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
 
+namespace {
 
 template<class T>
 class RRTYPE : public RRType {
@@ -38,36 +40,30 @@ public:
 template<> RRTYPE<generic::TXT>::RRTYPE() : RRType(RRType::TXT()) {}
 template<> RRTYPE<generic::SPF>::RRTYPE() : RRType(RRType::SPF()) {}
 
-namespace {
 const uint8_t wiredata_txt_like[] = {
-    sizeof("Test String") - 1,
-    'T', 'e', 's', 't', ' ', 'S', 't', 'r', 'i', 'n', 'g'
+    sizeof("Test-String") - 1,
+    'T', 'e', 's', 't', '-', 'S', 't', 'r', 'i', 'n', 'g'
 };
 
 const uint8_t wiredata_nulltxt[] = { 0 };
-vector<uint8_t> wiredata_longesttxt(256, 'a');
 
 template<class TXT_LIKE>
 class Rdata_TXT_LIKE_Test : public RdataTest {
 protected:
-    Rdata_TXT_LIKE_Test() {
+    Rdata_TXT_LIKE_Test() :
+        wiredata_longesttxt(256, 'a'),
+        rdata_txt_like("Test-String"),
+        rdata_txt_like_empty("\"\""),
+        rdata_txt_like_quoted("\"Test-String\"")
+    {
         wiredata_longesttxt[0] = 255; // adjust length
     }
 
-    static const TXT_LIKE rdata_txt_like;
-    static const TXT_LIKE rdata_txt_like_empty;
-    static const TXT_LIKE rdata_txt_like_quoted;
+    vector<uint8_t> wiredata_longesttxt;
+    const TXT_LIKE rdata_txt_like;
+    const TXT_LIKE rdata_txt_like_empty;
+    const TXT_LIKE rdata_txt_like_quoted;
 };
-
-template<class TXT_LIKE>
-const TXT_LIKE Rdata_TXT_LIKE_Test<TXT_LIKE>::rdata_txt_like("Test String");
-
-template<class TXT_LIKE>
-const TXT_LIKE Rdata_TXT_LIKE_Test<TXT_LIKE>::rdata_txt_like_empty("");
-
-template<class TXT_LIKE>
-const TXT_LIKE Rdata_TXT_LIKE_Test<TXT_LIKE>::rdata_txt_like_quoted
-                                                          ("\"Test String\"");
 
 // The list of types we want to test.
 typedef testing::Types<generic::TXT, generic::SPF> Implementations;
@@ -94,18 +90,19 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         this->obuffer.getData(),
                         this->obuffer.getLength(),
-                        &wiredata_longesttxt[0], wiredata_longesttxt.size());
+                        &this->wiredata_longesttxt[0],
+                        this->wiredata_longesttxt.size());
 
     // Too long text for a valid character-string.
     EXPECT_THROW(TypeParam(string(256, 'a')), CharStringTooLong);
 
     // The escape character makes the double quote a part of character-string,
     // so this is invalid input and should be rejected.
-    EXPECT_THROW(TypeParam("\"Test String\\\""), InvalidRdataText);
+    EXPECT_THROW(TypeParam("\"Test-String\\\""), InvalidRdataText);
 
     // Terminating double-quote is provided, so this is valid, but in this
     // version of implementation we reject escaped characters.
-    EXPECT_THROW(TypeParam("\"Test String\\\"\""), InvalidRdataText);
+    EXPECT_THROW(TypeParam("\"Test-String\\\"\""), InvalidRdataText);
 }
 
 void
@@ -129,13 +126,15 @@ makeLargest(vector<uint8_t>& data) {
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {
     EXPECT_EQ(0, this->rdata_txt_like.compare(
-                  *this->rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
-                                        "rdata_txt_fromWire1")));
+                  *this->rdataFactoryFromFile(RRTYPE<TypeParam>(),
+                                              RRClass("IN"),
+                                              "rdata_txt_fromWire1")));
 
     // Empty character string
     EXPECT_EQ(0, this->rdata_txt_like_empty.compare(
-                  *this->rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
-                                        "rdata_txt_fromWire2.wire")));
+                  *this->rdataFactoryFromFile(RRTYPE<TypeParam>(),
+                                              RRClass("IN"),
+                                              "rdata_txt_fromWire2.wire")));
 
     // Multiple character strings
     this->obuffer.clear();
@@ -188,7 +187,7 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {
 TYPED_TEST(Rdata_TXT_LIKE_Test, createFromLexer) {
     EXPECT_EQ(0, this->rdata_txt_like.compare(
         *test::createRdataUsingLexer(RRTYPE<TypeParam>(), RRClass::IN(),
-                                     "Test String")));
+                                     "Test-String")));
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, toWireBuffer) {
@@ -208,7 +207,7 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, toWireRenderer) {
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, toText) {
-    EXPECT_EQ("\"Test String\"", this->rdata_txt_like.toText());
+    EXPECT_EQ("\"Test-String\"", this->rdata_txt_like.toText());
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, assignment) {
