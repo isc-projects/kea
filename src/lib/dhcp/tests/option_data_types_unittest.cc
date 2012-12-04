@@ -88,6 +88,30 @@ TEST_F(OptionDataTypesTest, readAddress) {
     // Check that the read address matches address that
     // we used as input.
     EXPECT_EQ(address.toText(), address_out.toText());
+
+    // Check that an attempt to read the buffer as IPv6 address
+    // causes an error as the IPv6 address needs at least 16 bytes
+    // long buffer.
+    EXPECT_THROW(
+        OptionDataTypeUtil::readAddress(buf, AF_INET6),
+        isc::dhcp::BadDataTypeCast
+    );
+
+    buf.clear();
+
+    // Do another test like this for IPv6 address.
+    address = asiolink::IOAddress("2001:db8:1:0::1");
+    writeAddress(address, buf);
+    EXPECT_NO_THROW(address_out = OptionDataTypeUtil::readAddress(buf, AF_INET6));
+    EXPECT_EQ(address.toText(), address_out.toText());
+
+    // Truncate the buffer and expect an error to be reported when
+    // trying to read it.
+    buf.resize(buf.size() - 1);
+    EXPECT_THROW(
+        OptionDataTypeUtil::readAddress(buf, AF_INET6),
+        isc::dhcp::BadDataTypeCast
+    );
 }
 
 // The goal of this test is to verify that an IPv6 address
@@ -114,6 +138,18 @@ TEST_F(OptionDataTypesTest, writeAddress) {
     ASSERT_EQ(buf_in.size(), buf_out.size());
     // And finally compare them.
     EXPECT_TRUE(std::equal(buf_in.begin(), buf_in.end(), buf_out.begin()));
+
+    buf_out.clear();
+
+    // Do similar test for IPv4 address.
+    address = asiolink::IOAddress("192.168.0.1");
+    ASSERT_NO_THROW(OptionDataTypeUtil::writeAddress(address, buf_out));
+    ASSERT_EQ(4, buf_out.size());
+    // Verify that the IP address has been written correctly.
+    EXPECT_EQ(192, buf_out[0]);
+    EXPECT_EQ(168, buf_out[1]);
+    EXPECT_EQ(0, buf_out[2]);
+    EXPECT_EQ(1, buf_out[3]);
 }
 
 // The purpose of this test is to verify that binary data represented
@@ -196,6 +232,14 @@ TEST_F(OptionDataTypesTest, readInt) {
         valueUint8 = OptionDataTypeUtil::readInt<uint8_t>(buf);
     );
     EXPECT_EQ(129, valueUint8);
+
+    // Try to read 16-bit value from a buffer holding 8-bit value.
+    // This should result in an exception.
+    EXPECT_THROW(
+        OptionDataTypeUtil::readInt<uint16_t>(buf),
+        isc::dhcp::BadDataTypeCast
+    );
+
     // Clear the buffer for the next check we are going to do.
     buf.clear();
 
@@ -206,6 +250,14 @@ TEST_F(OptionDataTypesTest, readInt) {
         valueUint16 = OptionDataTypeUtil::readInt<uint16_t>(buf);
     );
     EXPECT_EQ(1234, valueUint16);
+
+    // Try to read 32-bit value from a buffer holding 16-bit value.
+    // This should result in an exception.
+    EXPECT_THROW(
+        OptionDataTypeUtil::readInt<uint32_t>(buf),
+        isc::dhcp::BadDataTypeCast
+    );
+
     buf.clear();
 
     // Test uint32_t value.
@@ -226,6 +278,13 @@ TEST_F(OptionDataTypesTest, readInt) {
     EXPECT_EQ(-65, valueInt8);
     buf.clear();
 
+    // Try to read 16-bit value from a buffer holding 8-bit value.
+    // This should result in an exception.
+    EXPECT_THROW(
+        OptionDataTypeUtil::readInt<int16_t>(buf),
+        isc::dhcp::BadDataTypeCast
+    );
+
     // Test int16_t value.
     writeInt<int16_t>(2345, buf);
     int32_t valueInt16 = 0;
@@ -235,6 +294,13 @@ TEST_F(OptionDataTypesTest, readInt) {
     EXPECT_EQ(2345, valueInt16);
     buf.clear();
 
+    // Try to read 32-bit value from a buffer holding 16-bit value.
+    // This should result in an exception.
+    EXPECT_THROW(
+        OptionDataTypeUtil::readInt<int32_t>(buf),
+        isc::dhcp::BadDataTypeCast
+    );
+
     // Test int32_t value.
     writeInt<int32_t>(-16543, buf);
     int32_t valueInt32 = 0;
@@ -242,6 +308,7 @@ TEST_F(OptionDataTypesTest, readInt) {
         valueInt32 = OptionDataTypeUtil::readInt<int32_t>(buf);
     );
     EXPECT_EQ(-16543, valueInt32);
+
     buf.clear();
 }
 
