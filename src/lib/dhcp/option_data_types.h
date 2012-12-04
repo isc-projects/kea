@@ -225,11 +225,13 @@ public:
     /// @return data type size or zero for variable length types.
     static int getDataTypeLen(const OptionDataType data_type);
 
-    /// @brief Read IPv4 or IPv6 addres from a buffer.
+    /// @brief Read IPv4 or IPv6 address from a buffer.
     ///
     /// @param buf input buffer.
     /// @param family address family: AF_INET or AF_INET6.
     /// 
+    /// @throw isc::dhcp::BadDataTypeCast when the data being read
+    /// is truncated.
     /// @return address being read.
     static asiolink::IOAddress readAddress(const std::vector<uint8_t>& buf,
                                            const short family);
@@ -252,6 +254,9 @@ public:
     /// @brief Read boolean value from a buffer.
     ///
     /// @param buf input buffer.
+    ///
+    /// @throw isc::dhcp::BadDataTypeCast when the data being read
+    /// is truncated or the value is invalid (neither 1 nor 0).
     /// @return boolean value read from a buffer.
     static bool readBool(const std::vector<uint8_t>& buf);
 
@@ -268,6 +273,9 @@ public:
     ///
     /// @param buf input buffer.
     /// @tparam integer type of the returned value.
+    ///
+    /// @throw isc::dhcp::BadDataTypeCast when the data in the buffer
+    /// is truncated.
     /// @return integer value being read.
     template<typename T>
     static T readInt(const std::vector<uint8_t>& buf) {
