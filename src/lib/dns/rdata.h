@@ -502,7 +502,7 @@ RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
 /// most of syntax and semantics errors of the input (reported as exceptions),
 /// calls the corresponding callback specified by the \c callbacks parameters,
 /// and returns a NULL smart pointer.  If the caller rather wants to get
-/// an exception in these cases, it can use pass a callback that internally
+/// an exception in these cases, it can pass a callback that internally
 /// throws on error.  Some critical exceptions such as \c std::bad_alloc are
 /// still propagated to the upper layer as it doesn't make sense to try
 /// recovery from such a situation within this function.
