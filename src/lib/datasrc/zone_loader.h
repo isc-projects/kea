@@ -140,7 +140,7 @@ private:
     /// \brief The destination zone updater
     const ZoneUpdaterPtr updater_;
     /// \brief The master loader (for the loader mode)
-    const boost::scoped_ptr<isc::dns::MasterLoader> loader_;
+    boost::scoped_ptr<isc::dns::MasterLoader> loader_;
     /// \brief Indicator if loading was completed
     bool complete_;
     /// \brief Was the loading successful?
