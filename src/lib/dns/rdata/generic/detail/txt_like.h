@@ -113,7 +113,14 @@ private:
             string_list_.push_back(std::vector<uint8_t>());
             strToCharString(token.getStringRegion(), string_list_.back());
         }
+
+        // Let upper layer handle eol/eof.
         lexer.ungetToken();
+
+        if (string_list_.empty()) {
+            isc_throw(InvalidRdataText, "Failed to construct" <<
+                      RRType(typeCode) << " RDATA: empty input");
+        }
     }
 
 public:

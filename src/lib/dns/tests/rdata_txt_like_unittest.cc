@@ -199,6 +199,14 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createMultiStringsFromText) {
     }
 }
 
+TYPED_TEST(Rdata_TXT_LIKE_Test, fromTextEmpty) {
+    // If the input text doesn't contain any character-string, it should be
+    // rejected
+    EXPECT_THROW(TypeParam(""), InvalidRdataText);
+    EXPECT_THROW(TypeParam(" "), InvalidRdataText); // even with a space
+    EXPECT_THROW(TypeParam("(\n)"), InvalidRdataText); // or multi-line with ()
+}
+
 void
 makeLargest(vector<uint8_t>& data) {
     uint8_t ch = 0;
@@ -331,8 +339,8 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, compare) {
 
     EXPECT_EQ(TypeParam(txt1).compare(TypeParam(txt1)), 0);
 
-    EXPECT_LT(TypeParam("").compare(TypeParam(txt1)), 0);
-    EXPECT_GT(TypeParam(txt1).compare(TypeParam("")), 0);
+    EXPECT_LT(TypeParam("\"\"").compare(TypeParam(txt1)), 0);
+    EXPECT_GT(TypeParam(txt1).compare(TypeParam("\"\"")), 0);
 
     EXPECT_LT(TypeParam(txt1).compare(TypeParam(txt2)), 0);
     EXPECT_GT(TypeParam(txt2).compare(TypeParam(txt1)), 0);
