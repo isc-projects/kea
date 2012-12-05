@@ -116,7 +116,7 @@ public:
         return (new DebugParser(param_name));
     }
 
-protected:
+private:
     /// name of the parsed parameter
     std::string param_name_;
 
@@ -187,7 +187,7 @@ public:
         storage_ = storage;
     }
 
-protected:
+private:
     /// pointer to the storage, where parsed value will be stored
     Uint32Storage* storage_;
 
@@ -257,7 +257,7 @@ public:
         storage_ = storage;
     }
 
-protected:
+private:
     /// pointer to the storage, where parsed value will be stored
     StringStorage* storage_;
 
@@ -319,7 +319,7 @@ public:
         return (new InterfaceListConfigParser(param_name));
     }
 
-protected:
+private:
     /// contains list of network interfaces
     vector<string> interfaces_;
 };
@@ -440,7 +440,7 @@ public:
         return (new PoolParser(param_name));
     }
 
-protected:
+private:
     /// @brief pointer to the actual Pools storage
     ///
     /// That is typically a storage somewhere in Subnet parser
@@ -546,7 +546,7 @@ public:
         CfgMgr::instance().addSubnet6(subnet);
     }
 
-protected:
+private:
 
     /// @brief creates parsers for entries in subnet definition
     ///
