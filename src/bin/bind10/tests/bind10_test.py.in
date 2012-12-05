@@ -1791,6 +1791,9 @@ class TestBossComponents(unittest.TestCase):
         self.assertFalse(53 in bob.components)
         bob.register_process(53, component)
         self.assertTrue(53 in bob.components)
+        self.assertEqual(bob.components[53].name(), 'test')
+        self.assertEqual(bob.components[53].pid(), 53)
+        self.assertEqual(bob.components[53].address(), 'Test')
 
     def test_start_simple(self):
         '''Test simple process startup.'''
