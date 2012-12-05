@@ -1893,6 +1893,8 @@ class TestBossComponents(unittest.TestCase):
                     raise Exception('bufsize != 1')
                 if flags != socket.MSG_DONTWAIT:
                     raise Exception('flags != socket.MSG_DONTWAIT')
+                # after 15 recv()s, throw a socket.error with EAGAIN to
+                # get _socket_data() to save back what's been read.
                 if self.throw and self.i > 15:
                     raise socket.error(errno.EAGAIN, 'Try again')
                 if self.i >= len(self.buf):
