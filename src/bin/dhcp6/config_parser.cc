@@ -752,9 +752,14 @@ DhcpConfigParser* createGlobalDhcpConfigParser(const std::string& config_id) {
 ConstElementPtr
 configureDhcp6Server(Dhcpv6Srv& , ConstElementPtr config_set) {
     if (!config_set) {
-        isc_throw(Dhcp6ConfigError,
-                  "Null pointer is passed to configuration parser");
+        ConstElementPtr answer = isc::config::createAnswer(1,
+                                 string("Can't parse NULL config"));
+        return (answer);
     }
+
+    /// Let's wipe previous configuration defaults
+    uint32_defaults.clear();
+    string_defaults.clear();
 
     /// @todo: append most essential info here (like "2 new subnets configured")
     string config_details;
