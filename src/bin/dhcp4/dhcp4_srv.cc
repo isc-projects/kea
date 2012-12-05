@@ -17,8 +17,8 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
-#include <asiolink/io_address.h>
 #include <dhcp/option4_addrlst.h>
+#include <asiolink/io_address.h>
 
 using namespace isc;
 using namespace isc::asiolink;

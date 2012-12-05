@@ -14,9 +14,6 @@
 
 #include <config.h>
 
-#include <cassert>
-#include <iostream>
-
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
 #include <cc/session.h>
@@ -29,6 +26,8 @@
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
+#include <cassert>
+#include <iostream>
 
 using namespace isc::asiolink;
 using namespace isc::cc;
@@ -126,7 +125,7 @@ void ControlledDhcpv4Srv::establishSession() {
 
     /// Integrate the asynchronous I/O model of BIND 10 configuration
     /// control with the "select" model of the DHCP server.  This is
-    /// fully explained in \ref dhcpv4Session.
+    /// fully explained in \ref dhcp4-session.
     int ctrl_socket = cc_session_->getSocketDesc();
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_CCSESSION_STARTED)
               .arg(ctrl_socket);
