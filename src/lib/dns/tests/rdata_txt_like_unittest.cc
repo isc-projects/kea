@@ -89,10 +89,17 @@ typedef testing::Types<generic::TXT, generic::SPF> Implementations;
 TYPED_TEST_CASE(Rdata_TXT_LIKE_Test, Implementations);
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
+    // Below we check the behavior for the "from text" constructors, both
+    // from std::string and with MasterLexer.  The underlying implementation
+    // is the same, so both should work exactly same, but we confirm both
+    // cases.
+
+    // test input for the lexer version
     std::stringstream ss;
     ss << "Test-String\n";
     ss << "\"Test-String\"\n";   // explicitly surrounded by '"'s
-    ss << "\"\"\n";              // empty string
+    ss << "(\n\"Test-String\")\n";   // multi-line text with ()
+    ss << "\"\"\n";              // empty string (note: still valid char-str)
     ss << string(255, 'a') << "\n"; // Longest possible character-string.
     ss << string(256, 'a') << "\n"; // char-string too long
     ss << "\"Test-String\\\"\n";    // unbalanced quote
@@ -104,7 +111,9 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
         this->rdataFactoryFromFile(RRTYPE<TypeParam>(),
                                    RRClass("IN"), "rdata_txt_fromWire1");
 
-    // normal case is covered in toWireBuffer.
+    // normal case is covered in toWireBuffer.  First check the std::string
+    // case, then with MasterLexer.  For the latter, we need to read and skip
+    // '\n'.  These apply to most of the other cases below.
     EXPECT_EQ(0, this->rdata_txt_like.compare(*rdata));
     EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
                            this->loader_cb).compare(*rdata));
@@ -112,6 +121,12 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
 
     // surrounding double-quotes shouldn't change the result.
     EXPECT_EQ(0, this->rdata_txt_like_quoted.compare(*rdata));
+    EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+                           this->loader_cb).compare(*rdata));
+    EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
+
+    // multi-line input with ()
+    EXPECT_EQ(0, TypeParam("(\n\"Test-String\")").compare(*rdata));
     EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
                            this->loader_cb).compare(*rdata));
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
