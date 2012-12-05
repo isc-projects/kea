@@ -759,6 +759,7 @@ class MockBobSimple(BoB):
         # Set which process has been started
         self.started_process_name = None
         self.started_process_args = None
+        self.started_process_env = None
 
     def _make_mock_process_info(self, name, args, c_channel_env,
                                 dev_null_stdout=False, dev_null_stderr=False):
@@ -769,6 +770,7 @@ class MockBobSimple(BoB):
                       address=None):
         self.started_process_name = name
         self.started_process_args = args
+        self.started_process_env = c_channel_env
         return None
 
 class TestStartStopProcessesBob(unittest.TestCase):
@@ -1815,53 +1817,59 @@ class TestBossComponents(unittest.TestCase):
     def test_start_auth(self):
         '''Test that b10-auth is started.'''
         bob = MockBobSimple()
-        bob.c_channel_env = {}
+        bob.c_channel_env = {'FOO': 'an env string'}
 
         # non-verbose case
         bob.verbose = False
         bob.start_auth()
         self.assertEqual('b10-auth', bob.started_process_name)
         self.assertEqual(['b10-auth'], bob.started_process_args)
+        self.assertEqual({'FOO': 'an env string'}, bob.started_process_env)
 
         # verbose case
         bob.verbose = True
         bob.start_auth()
         self.assertEqual('b10-auth', bob.started_process_name)
         self.assertEqual(['b10-auth', '-v'], bob.started_process_args)
+        self.assertEqual({'FOO': 'an env string'}, bob.started_process_env)
 
     def test_start_resolver(self):
         '''Test that b10-resolver is started.'''
         bob = MockBobSimple()
-        bob.c_channel_env = {}
+        bob.c_channel_env = {'BAR': 'an env string'}
 
         # non-verbose case
         bob.verbose = False
         bob.start_resolver()
         self.assertEqual('b10-resolver', bob.started_process_name)
         self.assertEqual(['b10-resolver'], bob.started_process_args)
+        self.assertEqual({'BAR': 'an env string'}, bob.started_process_env)
 
         # verbose case
         bob.verbose = True
         bob.start_resolver()
         self.assertEqual('b10-resolver', bob.started_process_name)
         self.assertEqual(['b10-resolver', '-v'], bob.started_process_args)
+        self.assertEqual({'BAR': 'an env string'}, bob.started_process_env)
 
     def test_start_cmdctl(self):
         '''Test that b10-cmdctl is started.'''
         bob = MockBobSimple()
-        bob.c_channel_env = {}
+        bob.c_channel_env = {'BAZ': 'an env string'}
 
         # non-verbose case
         bob.verbose = False
         bob.start_cmdctl()
         self.assertEqual('b10-cmdctl', bob.started_process_name)
         self.assertEqual(['b10-cmdctl'], bob.started_process_args)
+        self.assertEqual({'BAZ': 'an env string'}, bob.started_process_env)
 
         # verbose case
         bob.verbose = True
         bob.start_cmdctl()
         self.assertEqual('b10-cmdctl', bob.started_process_name)
         self.assertEqual(['b10-cmdctl', '-v'], bob.started_process_args)
+        self.assertEqual({'BAZ': 'an env string'}, bob.started_process_env)
 
         # with port
         bob.verbose = True
@@ -1869,6 +1877,7 @@ class TestBossComponents(unittest.TestCase):
         bob.start_cmdctl()
         self.assertEqual('b10-cmdctl', bob.started_process_name)
         self.assertEqual(['b10-cmdctl', '--port=9353', '-v'], bob.started_process_args)
+        self.assertEqual({'BAZ': 'an env string'}, bob.started_process_env)
 
     def test_socket_data(self):
         '''Test that BoB._socket_data works as expected.'''
