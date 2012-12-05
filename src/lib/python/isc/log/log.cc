@@ -172,12 +172,11 @@ init(PyObject*, PyObject* args, PyObject* arg_keywords) {
     const char* severity("INFO");
     bool buffer = false;
     int dbglevel(0);
-    const char* keywords[] = { "name", "severity", "debuglevel", "file",
-                               "buffer", NULL};
+    const char* const keywords[] = { "name", "severity", "debuglevel", "file",
+                                     "buffer", NULL };
     if (!PyArg_ParseTupleAndKeywords(args, arg_keywords, "s|sizb",
                                      const_cast<char**>(keywords), &root,
-                                     &severity, &dbglevel, &file,
-                                     &buffer)) {
+                                     &severity, &dbglevel, &file, &buffer)) {
         return (NULL);
     }
 
