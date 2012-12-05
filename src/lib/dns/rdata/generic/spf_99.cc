@@ -76,9 +76,9 @@ SPF::SPF(InputBuffer& buffer, size_t rdata_len) :
 ///
 /// \param lexer A \c MasterLexer object parsing a master file for this
 /// RDATA.
-SPF::SPF(MasterLexer& lexer, const Name* origin,
-         MasterLoader::Options options, MasterLoaderCallbacks& callbacks) :
-    impl_(new SPFImpl(lexer, origin, options, callbacks))
+SPF::SPF(MasterLexer& lexer, const Name*, MasterLoader::Options,
+         MasterLoaderCallbacks&) :
+    impl_(new SPFImpl(lexer))
 {}
 
 /// \brief Constructor from string.

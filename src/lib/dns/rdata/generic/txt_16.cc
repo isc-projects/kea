@@ -62,9 +62,9 @@ TXT::TXT(InputBuffer& buffer, size_t rdata_len) :
 ///
 /// \param lexer A \c MasterLexer object parsing a master file for this
 /// RDATA.
-TXT::TXT(MasterLexer& lexer, const Name* origin,
-         MasterLoader::Options options, MasterLoaderCallbacks& callbacks) :
-    impl_(new TXTImpl(lexer, origin, options, callbacks))
+TXT::TXT(MasterLexer& lexer, const Name*, MasterLoader::Options,
+         MasterLoaderCallbacks&) :
+    impl_(new TXTImpl(lexer))
 {}
 
 TXT::TXT(const std::string& txtstr) :
