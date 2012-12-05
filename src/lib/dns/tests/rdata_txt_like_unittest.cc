@@ -94,11 +94,15 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
     // is the same, so both should work exactly same, but we confirm both
     // cases.
 
+    const std::string multi_line = "(\n \"Test-String\" )";
+    const std::string escaped_txt = "Test\\045Strin\\g";
+
     // test input for the lexer version
     std::stringstream ss;
     ss << "Test-String\n";
     ss << "\"Test-String\"\n";   // explicitly surrounded by '"'s
-    ss << "(\n \"Test-String\" )\n";   // multi-line text with ()
+    ss << multi_line << "\n";   // multi-line text with ()
+    ss << escaped_txt << "\n";   // using the two types of escape with '\'
     ss << "\"\"\n";              // empty string (note: still valid char-str)
     ss << string(255, 'a') << "\n"; // Longest possible character-string.
     ss << string(256, 'a') << "\n"; // char-string too long
@@ -126,7 +130,13 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // multi-line input with ()
-    EXPECT_EQ(0, TypeParam("(\n \"Test-String\" )").compare(*rdata));
+    EXPECT_EQ(0, TypeParam(multi_line).compare(*rdata));
+    EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+                           this->loader_cb).compare(*rdata));
+    EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
+
+    // for the same data using escape
+    EXPECT_EQ(0, TypeParam(escaped_txt).compare(*rdata));
     EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
                            this->loader_cb).compare(*rdata));
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
