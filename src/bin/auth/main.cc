@@ -256,7 +256,7 @@ main(int argc, char* argv[]) {
 
     // If we haven't registered callback for data sources, this will be just
     // no-op.
-    if (config_session) {
+    if (config_session != NULL) {
         config_session->removeRemoteConfig("data_sources");
     }
 
