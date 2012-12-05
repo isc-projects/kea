@@ -12,6 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
+#include <util/buffer.h>
+#include <dns/exceptions.h>
+#include <dns/messagerenderer.h>
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
+#include <dns/master_lexer.h>
+#include <dns/master_loader.h>
+
 #include <stdint.h>
 #include <string.h>
 
@@ -19,14 +28,6 @@
 
 #include <arpa/inet.h> // XXX: for inet_pton/ntop(), not exist in C++ standards
 #include <sys/socket.h> // for AF_INET/AF_INET6
-
-#include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
-#include <dns/exceptions.h>
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
 
 using namespace std;
 using namespace isc::util;
@@ -39,6 +40,16 @@ AAAA::AAAA(const std::string& addrstr) {
         isc_throw(InvalidRdataText,
                   "IN/AAAA RDATA construction from text failed: "
                   "Address cannot be converted: " << addrstr);
+    }
+}
+
+AAAA::AAAA(MasterLexer& lexer, const Name*,
+           MasterLoader::Options, MasterLoaderCallbacks&)
+{
+    const MasterToken& token = lexer.getNextToken(MasterToken::STRING);
+    if (inet_pton(AF_INET6, token.getStringRegion().beg, &addr_) != 1) {
+        isc_throw(InvalidRdataText, "Failed to convert '"
+                  << token.getString() << "' to IN/AAAA RDATA");
     }
 }
 

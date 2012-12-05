@@ -90,6 +90,13 @@ public:
     /// the region.  On the other hand, it is not ensured that the string
     /// is nul-terminated.  So the usual string manipulation API may not work
     /// as expected.
+    ///
+    /// The `MasterLexer` implementation ensures that there are at least
+    /// len + 1 bytes of valid memory region starting from beg, and that
+    /// beg[len] is \0.  This means the application can use the bytes as a
+    /// validly nul-terminated C string if there is no intermediate nul
+    /// character.  Note also that due to this property beg is always non
+    /// NULL; for an empty string len will be set to 0 and beg[0] is \0.
     struct StringRegion {
         const char* beg;        ///< The start address of the string
         size_t len;             ///< The length of the string in bytes
