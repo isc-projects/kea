@@ -66,8 +66,16 @@ SPF::SPF(InputBuffer& buffer, size_t rdata_len) :
     impl_(new SPFImpl(buffer, rdata_len))
 {}
 
-
-/// \brief Constructor from TBD
+/// \brief Constructor using the master lexer.
+///
+/// This implementation only uses the \c lexer parameters; others are
+/// ignored.
+///
+/// \throw CharStringTooLong the parameter string length exceeds maximum.
+/// \throw InvalidRdataText the method cannot process the parameter data
+///
+/// \param lexer A \c MasterLexer object parsing a master file for this
+/// RDATA.
 SPF::SPF(MasterLexer& lexer, const Name* origin,
          MasterLoader::Options options, MasterLoaderCallbacks& callbacks) :
     impl_(new SPFImpl(lexer, origin, options, callbacks))
