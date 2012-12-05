@@ -88,9 +88,14 @@ public:
 
         try {
             buildFromTextHelper(lexer);
+            if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+                isc_throw(InvalidRdataText, "Failed to construct " <<
+                          RRType(typeCode) << " RDATA from '" << txtstr <<
+                          "': extra new line");
+            }
         } catch (const MasterLexer::LexerError& ex) {
             isc_throw(InvalidRdataText, "Failed to construct " <<
-                      RRType(typeCode) << " RDATA from " << txtstr << ": "
+                      RRType(typeCode) << " RDATA from '" << txtstr << "': "
                       << ex.what());
         }
     }

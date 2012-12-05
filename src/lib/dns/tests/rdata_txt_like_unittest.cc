@@ -98,7 +98,7 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
     std::stringstream ss;
     ss << "Test-String\n";
     ss << "\"Test-String\"\n";   // explicitly surrounded by '"'s
-    ss << "(\n\"Test-String\")\n";   // multi-line text with ()
+    ss << "(\n \"Test-String\" )\n";   // multi-line text with ()
     ss << "\"\"\n";              // empty string (note: still valid char-str)
     ss << string(255, 'a') << "\n"; // Longest possible character-string.
     ss << string(256, 'a') << "\n"; // char-string too long
@@ -126,7 +126,7 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // multi-line input with ()
-    EXPECT_EQ(0, TypeParam("(\n\"Test-String\")").compare(*rdata));
+    EXPECT_EQ(0, TypeParam("(\n \"Test-String\" )").compare(*rdata));
     EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
                            this->loader_cb).compare(*rdata));
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
@@ -212,6 +212,14 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createMultiStringsFromText) {
         EXPECT_EQ(MasterToken::END_OF_LINE,
                   this->lexer.getNextToken().getType());
     }
+}
+
+TYPED_TEST(Rdata_TXT_LIKE_Test, createFromTextExtra) {
+    // This is for the std::string version only: the input must end with EOF;
+    // an extra new-line will result in an exception.
+    EXPECT_THROW(TypeParam("\"Test-String\"\n"), InvalidRdataText);
+    // Same if there's a space before '\n'
+    EXPECT_THROW(TypeParam("\"Test-String\" \n"), InvalidRdataText);
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, fromTextEmpty) {
