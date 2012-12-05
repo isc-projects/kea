@@ -32,8 +32,6 @@
 #include <log/logger_specification.h>
 #include <log/log_buffer.h>
 
-#include <boost/scoped_ptr.hpp>
-
 using namespace std;
 
 namespace isc {

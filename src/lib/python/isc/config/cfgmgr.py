@@ -224,9 +224,12 @@ class ConfigManager:
 
     def check_logging_config(self, config):
         if self.log_module_name in config:
+            # If there is logging config, apply it.
             ccsession.default_logconfig_handler(config[self.log_module_name],
                                                 self.log_config_data)
         else:
+            # If there is no logging config, we still need to trigger the
+            # handler, so make it use defaults (and flush any buffered logs)
             ccsession.default_logconfig_handler({}, self.log_config_data)
 
     def notify_boss(self):

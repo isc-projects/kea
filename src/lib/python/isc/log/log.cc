@@ -278,13 +278,13 @@ PyMethodDef methods[] = {
         "Arguments:\n"
         "name: root logger name\n"
         "severity (optional): one of 'DEBUG', 'INFO', 'WARN', 'ERROR' or "
-        "'FATAL')\n"
+        "'FATAL'\n"
         "debuglevel (optional): a debug level (integer in the range 0-99) "
         "file (optional): a file name of a dictionary with message text "
         "translations\n"
         "buffer (optional), boolean, when True, causes all log messages "
         "to be stored internally until log_config_update is called, at "
-        "which pointed they shall be logged."},
+        "which point they shall be logged."},
     {"resetUnitTestRootLogger", resetUnitTestRootLogger, METH_VARARGS,
         "Resets the configuration of the root logger to that set by the "
         "B10_XXX environment variables.  It is aimed at unit tests, where "

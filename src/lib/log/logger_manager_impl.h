@@ -142,7 +142,6 @@ private:
     /// flushed (which is done at the end of \c ProcessSpecification().
     ///
     /// \param logger Log4cplus logger to which the appender must be attached.
-    /// \param opt Output options for this appender.
     static void createBufferAppender(log4cplus::Logger& logger);
 
     /// \brief Set default layout and severity for root logger

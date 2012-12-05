@@ -15,6 +15,7 @@
 #include <log/log_buffer.h>
 #include <log4cplus/loglevel.h>
 
+#include <boost/scoped_ptr.hpp>
 namespace isc {
 namespace log {
 
@@ -26,17 +27,17 @@ LogBuffer& getLogBuffer() {
     return (*log_buffer);
 }
 
-LogBuffer::LogBuffer() {
-    flushed_ = false;
-}
-
 LogBuffer::~LogBuffer() {
     // If there is anything left in the buffer,
     // it means no reconfig has been done, and
     // we can assume the logging system was either
     // never setup, or broke while doing so.
     // So dump all that is left to stdout
-    flush_stdout();
+    try {
+        flushStdout();
+    } catch (...) {
+        // Ok if we can't even seem to dump to stdout, never mind.
+    }
 }
 
 void
@@ -45,11 +46,16 @@ LogBuffer::add(const log4cplus::spi::InternalLoggingEvent& event) {
         isc_throw(LogBufferAddAfterFlush,
                   "Internal log buffer has been flushed already");
     }
-    stored_.push_back(log4cplus::spi::InternalLoggingEvent(event));
+    // get a clone, and put the pointer in a shared_pt
+    std::auto_ptr<log4cplus::spi::InternalLoggingEvent> event_aptr =
+        event.clone();
+    boost::shared_ptr<log4cplus::spi::InternalLoggingEvent> event_sptr(
+        event_aptr.release());
+    stored_.push_back(event_sptr);
 }
 
 void
-LogBuffer::flush_stdout() {
+LogBuffer::flushStdout() {
     // This does not show a bit of information normal log messages
     // do, so perhaps we should try and setup a new logger here
     // However, as this is called from a destructor, it may not
@@ -58,28 +64,33 @@ LogBuffer::flush_stdout() {
     // settings were).
     // So we print a slightly shortened format (it really only excludes
     // the time and the pid)
-    std::vector<log4cplus::spi::InternalLoggingEvent>::const_iterator it;
+    LoggerEventPtrList::const_iterator it;
     const log4cplus::LogLevelManager& manager =
         log4cplus::getLogLevelManager();
     for (it = stored_.begin(); it != stored_.end(); ++it) {
-        std::cout << manager.toString(it->getLogLevel()) << " " <<
-                     "[" << it->getLoggerName() << "] " <<
-                     it->getMessage() << std::endl;
+        std::cout << manager.toString((*it)->getLogLevel()) << " " <<
+                     "[" << (*it)->getLoggerName() << "] " <<
+                     (*it)->getMessage() << std::endl;
     }
     stored_.clear();
 }
 
 void
 LogBuffer::flush() {
-    for (size_t i = 0; i < stored_.size(); ++i) {
-        const log4cplus::spi::InternalLoggingEvent event(stored_.at(i));
+    LoggerEventPtrList::const_iterator it;
+    for (it = stored_.begin(); it != stored_.end(); ++it) {
         log4cplus::Logger logger =
-            log4cplus::Logger::getInstance(event.getLoggerName());
+            log4cplus::Logger::getInstance((*it)->getLoggerName());
 
-        logger.log(event.getLogLevel(), event.getMessage());
+        logger.log((*it)->getLogLevel(), (*it)->getMessage());
     }
     stored_.clear();
     flushed_ = true;
+}
+
+size_t
+LogBuffer::getBufferSize() const {
+    return (stored_.size());
 }
 
 void
