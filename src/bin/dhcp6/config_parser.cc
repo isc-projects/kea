@@ -134,7 +134,7 @@ protected:
 /// in its base class, \ref DhcpConfigParser.
 ///
 /// For overview of usability of this generic purpose parser, see
-/// \ref dhcpv6-config-inherit page.
+/// \ref dhcp6-config-inherit page.
 class Uint32Parser : public DhcpConfigParser {
 public:
 
@@ -147,7 +147,7 @@ public:
     /// @brief builds parameter value
     ///
     /// Parses configuration entry and stores it in a storage. See
-    /// \ref setStorage() for details.
+    /// \ref Uint32Parser::setStorage() for details.
     ///
     /// @param value pointer to the content of parsed values
     virtual void build(ConstElementPtr value) {
@@ -180,7 +180,7 @@ public:
 
     /// @brief sets storage for value of this parameter
     ///
-    /// See \ref dhcpv6-config-inherit for details.
+    /// See \ref dhcp6-config-inherit for details.
     ///
     /// @param storage pointer to the storage container
     void setStorage(Uint32Storage* storage) {
@@ -208,7 +208,7 @@ protected:
 /// in its base class, \ref DhcpConfigParser.
 ///
 /// For overview of usability of this generic purpose parser, see
-/// \ref dhcpv6-config-inherit page.
+/// \ref dhcp6-config-inherit page.
 class StringParser : public DhcpConfigParser {
 public:
 
@@ -250,7 +250,7 @@ public:
 
     /// @brief sets storage for value of this parameter
     ///
-    /// See \ref dhcpv6-config-inherit for details.
+    /// See \ref dhcp6-config-inherit for details.
     ///
     /// @param storage pointer to the storage container
     void setStorage(StringStorage* storage) {
@@ -286,9 +286,10 @@ public:
     /// "interface" parameter only. All other types will throw exception.
     ///
     /// @param param_name name of the configuration parameter being parsed
+    /// @throw BadValue if supplied parameter name is not "interface"
     InterfaceListConfigParser(const std::string& param_name) {
         if (param_name != "interface") {
-            isc_throw(NotImplemented, "Internal error. Interface configuration "
+            isc_throw(BadValue, "Internal error. Interface configuration "
                       "parser called for the wrong parameter: " << param_name);
         }
     }
@@ -347,6 +348,8 @@ public:
     /// This method parses the actual list of interfaces.
     /// No validation is done at this stage, everything is interpreted as
     /// interface name.
+    /// @param pools_list list of pools defined for a subnet
+    /// @throw BadValue if storage was not specified (setStorage() not called)
     void build(ConstElementPtr pools_list) {
         // setStorage() should have been called before build
         if (!pools_) {
@@ -416,7 +419,7 @@ public:
 
     /// @brief sets storage for value of this parameter
     ///
-    /// See \ref dhcpv6-config-inherit for details.
+    /// See \ref dhcp6-config-inherit for details.
     ///
     /// @param storage pointer to the storage container
     void setStorage(PoolStorage* storage) {
@@ -551,6 +554,7 @@ protected:
     ///
     /// @param config_id name od the entry
     /// @return parser object for specified entry name
+    /// @throw NotImplemented if trying to create a parser for unknown config element
     DhcpConfigParser* createSubnet6ConfigParser(const std::string& config_id) {
         FactoryMap factories;
 
@@ -589,6 +593,7 @@ protected:
     ///
     /// @param name name of the parameter
     /// @return triplet with the parameter name
+    /// @throw Dhcp6ConfigError when requested parameter is not present
     Triplet<uint32_t> getParam(const std::string& name) {
         uint32_t value = 0;
         bool found = false;
@@ -695,6 +700,7 @@ public:
 ///
 /// @param config_id pointer to received global configuration entry
 /// @return parser for specified global DHCPv6 parameter
+/// @throw NotImplemented if trying to create a parser for unknown config element
 DhcpConfigParser* createGlobalDhcpConfigParser(const std::string& config_id) {
     FactoryMap factories;
 
@@ -742,6 +748,7 @@ DhcpConfigParser* createGlobalDhcpConfigParser(const std::string& config_id) {
 ///
 /// @param config_set a new configuration for DHCPv6 server
 /// @return answer that contains result of reconfiguration
+/// @throw Dhcp6ConfigError if trying to create a parser for NULL config
 ConstElementPtr
 configureDhcp6Server(Dhcpv6Srv& , ConstElementPtr config_set) {
     if (!config_set) {
