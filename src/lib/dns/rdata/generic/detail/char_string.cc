@@ -41,20 +41,17 @@ decimalToNumber(const char* s, const char* s_end) {
         isc_throw(InvalidRdataText, "Escaped digits too short");
     }
 
-    // Make a nul-terminated copy of the 'DDD' for lexical_cast
-    char buf[4];
-    std::memcpy(buf, s, 3);
-    buf[3] = 0;
-
+    const std::string num_str(s, s + 3);
     try {
-        const int i = boost::lexical_cast<int>(buf);
+        const int i = boost::lexical_cast<int>(num_str);
         if (i > 255) {
-            isc_throw(InvalidRdataText, "Escaped digits too large: " << buf);
+            isc_throw(InvalidRdataText, "Escaped digits too large: "
+                      << num_str);
         }
         return (i);
     } catch (const boost::bad_lexical_cast&) {
         isc_throw(InvalidRdataText,
-                  "Invalid form for escaped digits: " << buf);
+                  "Invalid form for escaped digits: " << num_str);
     }
 }
 }
