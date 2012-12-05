@@ -69,7 +69,7 @@ public:
     /// \throw DataSourceError in case the zone does not exist in destination.
     ///     This class does not support creating brand new zones, only loading
     ///     data into them. In case a new zone is needed, it must be created
-    ///     beforehead.
+    ///     beforehand.
     /// \throw DataSourceError in case of other (possibly low-level) errors,
     ///     such as read-only data source or database error.
     ZoneLoader(DataSourceClient& destination, const isc::dns::Name& zone_name,
@@ -86,13 +86,13 @@ public:
     /// \param source The data source from which the data would be read.
     /// \throw InvalidParameter in case the class of destination and source
     ///     differs.
+    /// \throw NotImplemented in case the source data source client doesn't
+    ///     provide an iterator.
     /// \throw DataSourceError in case the zone does not exist in destination.
     ///     This class does not support creating brand new zones, only loading
     ///     data into them. In case a new zone is needed, it must be created
-    ///     beforehead.
+    ///     beforehand.
     /// \throw DataSourceError in case the zone does not exist in the source.
-    /// \throw NotImplemented in case the source data source client doesn't
-    ///     provide an iterator.
     /// \throw DataSourceError in case of other (possibly low-level) errors,
     ///     such as read-only data source or database error.
     ZoneLoader(DataSourceClient& destination, const isc::dns::Name& zone_name,
@@ -139,7 +139,7 @@ private:
     const ZoneIteratorPtr iterator_;
     /// \brief The destination zone updater
     const ZoneUpdaterPtr updater_;
-    /// \brief The master loader (for the loader mode)
+    /// \brief The master loader (for the master file mode)
     boost::scoped_ptr<isc::dns::MasterLoader> loader_;
     /// \brief Indicator if loading was completed
     bool complete_;

@@ -99,7 +99,7 @@ copyRRsets(const ZoneUpdaterPtr& destination, const ZoneIteratorPtr& source,
     return (false); // Not yet, there may be more
 }
 
-}
+} // end unnamed namespace
 
 bool
 ZoneLoader::loadIncremental(size_t limit) {
@@ -132,5 +132,5 @@ ZoneLoader::loadIncremental(size_t limit) {
     }
 }
 
-}
-}
+} // end namespace datasrc
+} // end namespace isc
