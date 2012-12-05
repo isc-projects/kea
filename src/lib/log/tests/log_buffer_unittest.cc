@@ -23,6 +23,7 @@
 #include <log4cplus/loggingmacros.h>
 #include <log4cplus/logger.h>
 #include <log4cplus/nullappender.h>
+#include <log4cplus/spi/loggingevent.h>
 
 using namespace isc::log;
 
@@ -41,16 +42,16 @@ protected:
     ~LogBufferTest() {
         // If any log messages are left, we don't care, get rid of them,
         // by flushing them to a null appender
+        // Given the 'messages should not get lost' approach of the logging
+        // system, not flushing them to a null appender would cause them
+        // to be dumped to stdout as the test is destroyed, making
+        // unnecessarily messy test output.
         log4cplus::SharedAppenderPtr null_appender(
             new log4cplus::NullAppender());
         logger.removeAllAppenders();
         logger.addAppender(null_appender);
         buffer1.flush();
         buffer2.flush();
-    }
-
-    void checkBufferedSize(const LogBuffer& buffer, size_t expected) const {
-        ASSERT_EQ(expected, buffer.stored_.size());
     }
 
     LogBuffer buffer1;
@@ -63,28 +64,28 @@ protected:
 // Test that log events are indeed stored, and that they are
 // flushed to the new appenders of their logger
 TEST_F(LogBufferTest, flush) {
-    checkBufferedSize(buffer1, 0);
-    checkBufferedSize(buffer2, 0);
+    ASSERT_EQ(0, buffer1.getBufferSize());
+    ASSERT_EQ(0, buffer2.getBufferSize());
 
     // Create a Logger, log a few messages with the first appender
     logger.addAppender(appender1);
     LOG4CPLUS_INFO(logger, "Foo");
-    checkBufferedSize(buffer1, 1);
+    ASSERT_EQ(1, buffer1.getBufferSize());
     LOG4CPLUS_INFO(logger, "Foo");
-    checkBufferedSize(buffer1, 2);
+    ASSERT_EQ(2, buffer1.getBufferSize());
     LOG4CPLUS_INFO(logger, "Foo");
-    checkBufferedSize(buffer1, 3);
+    ASSERT_EQ(3, buffer1.getBufferSize());
 
     // Second buffer should still be empty
-    checkBufferedSize(buffer2, 0);
+    ASSERT_EQ(0, buffer2.getBufferSize());
 
     // Replace the appender by the second one, and call flush;
     // this should cause all events to be moved to the second buffer
     logger.removeAllAppenders();
     logger.addAppender(appender2);
     buffer1.flush();
-    checkBufferedSize(buffer1, 0);
-    checkBufferedSize(buffer2, 3);
+    ASSERT_EQ(0, buffer1.getBufferSize());
+    ASSERT_EQ(3, buffer2.getBufferSize());
 }
 
 // Once flushed, logging new messages with the same buffer should fail
@@ -93,13 +94,38 @@ TEST_F(LogBufferTest, addAfterFlush) {
     buffer1.flush();
     EXPECT_THROW(LOG4CPLUS_INFO(logger, "Foo"), LogBufferAddAfterFlush);
     // It should not have been added
-    checkBufferedSize(buffer1, 0);
+    ASSERT_EQ(0, buffer1.getBufferSize());
 
     // But logging should work again as long as a different buffer is used
     logger.removeAllAppenders();
     logger.addAppender(appender2);
     LOG4CPLUS_INFO(logger, "Foo");
-    checkBufferedSize(buffer2, 1);
+    ASSERT_EQ(1, buffer2.getBufferSize());
+}
+
+TEST_F(LogBufferTest, addDirectly) {
+    // A few direct calls
+    log4cplus::spi::InternalLoggingEvent event("buffer",
+                                               log4cplus::INFO_LOG_LEVEL,
+                                               "Bar", "file", 123);
+    buffer1.add(event);
+    ASSERT_EQ(1, buffer1.getBufferSize());
+
+    // Do one from a smaller scope to make sure destruction doesn't harm
+    {
+        log4cplus::spi::InternalLoggingEvent event2("buffer",
+                                                    log4cplus::INFO_LOG_LEVEL,
+                                                    "Bar", "file", 123);
+        buffer1.add(event2);
+    }
+    ASSERT_EQ(2, buffer1.getBufferSize());
+
+    // And flush them to the next
+    logger.removeAllAppenders();
+    logger.addAppender(appender2);
+    buffer1.flush();
+    ASSERT_EQ(0, buffer1.getBufferSize());
+    ASSERT_EQ(2, buffer2.getBufferSize());
 }
 
 }
