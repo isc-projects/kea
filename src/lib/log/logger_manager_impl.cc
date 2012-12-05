@@ -148,8 +148,7 @@ LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
 }
 
 void
-LoggerManagerImpl::createBufferAppender(log4cplus::Logger& logger)
-{
+LoggerManagerImpl::createBufferAppender(log4cplus::Logger& logger) {
     log4cplus::SharedAppenderPtr bufferapp(new BufferAppender(getLogBuffer()));
     bufferapp->setName("buffer");
     logger.addAppender(bufferapp);
