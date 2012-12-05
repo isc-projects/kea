@@ -93,7 +93,7 @@ public:
     void process() {
         // empty iterator; set defaults
         const LoggerSpecification spec;
-        processSpecification(spec);
+        process(spec);
     }
 
     /// \brief Run-Time Initialization
