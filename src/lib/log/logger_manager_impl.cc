@@ -70,11 +70,10 @@ LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
     // Set the additive flag.
     logger.setAdditivity(spec.getAdditive());
 
-    // Replace all appenders for this logger.
-    logger.removeAllAppenders();
-
     // Output options given?
     if (spec.optionCount() > 0) {
+        // Replace all appenders for this logger.
+        logger.removeAllAppenders();
 
         // Now process output specifications.
         for (LoggerSpecification::const_iterator i = spec.begin();
@@ -102,10 +101,6 @@ LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
                           i->destination);
             }
         }
-    } else {
-        // If no output options are given, use a default appender
-        OutputOption opt;
-        createConsoleAppender(logger, opt);
     }
     // Should anything be left in the buffer, this is the time to flush it.
     getLogBuffer().flush();
