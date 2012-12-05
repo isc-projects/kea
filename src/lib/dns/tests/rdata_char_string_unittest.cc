@@ -52,7 +52,7 @@ protected:
 MasterToken::StringRegion
 createStringRegion(const std::string& str) {
     MasterToken::StringRegion region;
-    region.beg = &str[0];       // note this works even if str is empty
+    region.beg = &str[0]; // note std ensures this works even if str is empty
     region.len = str.size();
     return (region);
 }
