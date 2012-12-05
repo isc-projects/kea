@@ -19,7 +19,7 @@
 
 #include <log4cplus/logger.h>
 #include <log4cplus/spi/loggingevent.h>
-#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace log {
@@ -36,6 +36,10 @@ public:
         isc::Exception(file, line, what)
     {}
 };
+
+/// Convenience typedef for a list of logger events
+typedef std::vector<boost::shared_ptr<log4cplus::spi::InternalLoggingEvent> >
+    LoggerEventPtrList;
 
 /// \brief Buffering class for logging event
 ///
@@ -58,13 +62,12 @@ public:
 /// If the LogBuffer instance is destroyed before being flushed, it will
 /// dump any event it has left to stdout.
 class LogBuffer {
-    // For testing purposes, we make this a friend class, so that
-    // it can inspect the stored_ vector
-    friend class LogBufferTest;
 
 public:
-    LogBuffer();
+    LogBuffer() : flushed_(false) {};
+
     ~LogBuffer();
+
     /// \brief add the given event to the list of stored events
     ///
     /// This is called by the BufferAppender.
@@ -73,10 +76,27 @@ public:
     /// \exception LogBufferAddAfterFlush if this method is called
     ///            when \c flush() has been called previously
     void add(const log4cplus::spi::InternalLoggingEvent& event);
+
+    /// \brief Flush all stored events to their loggers
+    ///
+    /// All events are replayed to their loggers (which should have
+    /// other appenders when this is called.
+    /// Once this method has been called, no more events can be
+    /// added trough calls to \c add(); if \c add() is called after flush(),
+    /// an exception will be raised.
     void flush();
+
+    /// \brief Returns number of stored events
+    ///
+    /// Mostly for testing purposes
+    size_t getBufferSize() const;
 private:
-    void flush_stdout();
-    std::vector<log4cplus::spi::InternalLoggingEvent> stored_;
+    /// \brief Simplified flush() to stdout
+    ///
+    /// Used in the desctructor; all remainging stored events are
+    /// printed to stdout, in case flush() was never called.
+    void flushStdout();
+    LoggerEventPtrList stored_;
     bool flushed_;
 };
 
@@ -97,6 +117,7 @@ public:
     /// that can be reached using \c getLogBuffer()
     BufferAppender(LogBuffer& buffer) : buffer_(buffer) {}
     virtual void close() {}
+protected:
     virtual void append(const log4cplus::spi::InternalLoggingEvent& event);
 private:
     LogBuffer& buffer_;

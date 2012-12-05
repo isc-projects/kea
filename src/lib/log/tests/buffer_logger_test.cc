@@ -20,9 +20,11 @@
 
 using namespace isc::log;
 
+namespace {
 void usage() {
     std::cout << "Usage: buffer_logger_test [-n]" << std::endl;
 }
+} // end unnamed namespace
 
 /// \brief Test InitLogger
 ///

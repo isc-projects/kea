@@ -368,7 +368,9 @@ specification is processed (even an empty one), the buffered log messages will
 be flushed according to the specification. Note that if this option is used,
 the program SHOULD call one of the LoggerManager's process() calls. If the
 program exits before this is done, all log messages are dumped in a shortened
-format to stdout (so that no messages get lost).
+format to stdout (so that no messages get lost). If you are using the built-in
+logging configuration handling in ModuleCCSession, this is automatically
+handled.
 
 Variant #2, Used by Unit Tests
 ------------------------------
