@@ -30,7 +30,7 @@ namespace isc {
 namespace log {
 
 class LogBufferTest : public ::testing::Test {
-public:
+protected:
     LogBufferTest() : appender1(new BufferAppender(buffer1)),
                       appender2(new BufferAppender(buffer2)),
                       logger(log4cplus::Logger::getInstance("buffer"))
@@ -49,7 +49,7 @@ public:
         buffer2.flush();
     }
 
-    void checkBufferedSize(LogBuffer& buffer, size_t expected) {
+    void checkBufferedSize(const LogBuffer& buffer, size_t expected) const {
         ASSERT_EQ(expected, buffer.stored_.size());
     }
 
