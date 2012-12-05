@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,25 +12,21 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+// We want UINT32_MAX macro to be defined in stdint.h
+#define __STDC_LIMIT_MACROS
+
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
+#include <config/ccsession.h>
+#include <dhcp/cfgmgr.h>
+#include <dhcp4/config_parser.h>
+#include <dhcp4/dhcp4_log.h>
+
 #include <stdint.h>
 #include <iostream>
 #include <vector>
 #include <map>
-#include <boost/foreach.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
-#include <asiolink/io_address.h>
-#include <cc/data.h>
-#include <config/ccsession.h>
-#include <log/logger_support.h>
-#include <dhcp/triplet.h>
-#include <dhcp/pool.h>
-#include <dhcp/subnet.h>
-#include <dhcp/cfgmgr.h>
-#include <dhcp4/config_parser.h>
-#include <dhcp4/dhcp4_log.h>
 
 using namespace std;
 using namespace isc::data;
@@ -43,16 +39,10 @@ namespace dhcp {
 typedef pair<string, ConstElementPtr> ConfigPair;
 
 /// @brief a factory method that will create a parser for a given element name
-typedef DhcpConfigParser* ParserFactory(const std::string& config_id);
+typedef Dhcp4ConfigParser* ParserFactory(const std::string& config_id);
 
 /// @brief a collection of factories that creates parsers for specified element names
 typedef std::map<std::string, ParserFactory*> FactoryMap;
-
-/// @brief a collection of elements that store uint32 values (e.g. renew-timer = 900)
-typedef std::map<string, uint32_t> Uint32Storage;
-
-/// @brief a collection of elements that store string values
-typedef std::map<string, string> StringStorage;
 
 /// @brief a collection of pools
 ///
@@ -72,12 +62,12 @@ StringStorage string_defaults;
 /// will accept any configuration and will just print it out
 /// on commit. Useful for debugging existing configurations and
 /// adding new ones.
-class DebugParser : public DhcpConfigParser {
+class DebugParser : public Dhcp4ConfigParser {
 public:
 
     /// @brief Constructor
     ///
-    /// See \ref DhcpConfigParser class for details.
+    /// See \ref Dhcp4ConfigParser class for details.
     ///
     /// @param param_name name of the parsed parameter
     DebugParser(const std::string& param_name)
@@ -86,7 +76,7 @@ public:
 
     /// @brief builds parameter value
     ///
-    /// See \ref DhcpConfigParser class for details.
+    /// See \ref Dhcp4ConfigParser class for details.
     ///
     /// @param new_config pointer to the new configuration
     virtual void build(ConstElementPtr new_config) {
@@ -100,7 +90,7 @@ public:
     /// This is a method required by base class. It pretends to apply the
     /// configuration, but in fact it only prints the parameter out.
     ///
-    /// See \ref DhcpConfigParser class for details.
+    /// See \ref Dhcp4ConfigParser class for details.
     virtual void commit() {
         // Debug message. The whole DebugParser class is used only for parser
         // debugging, and is not used in production code. It is very convenient
@@ -112,11 +102,11 @@ public:
     /// @brief factory that constructs DebugParser objects
     ///
     /// @param param_name name of the parameter to be parsed
-    static DhcpConfigParser* Factory(const std::string& param_name) {
+    static Dhcp4ConfigParser* Factory(const std::string& param_name) {
         return (new DebugParser(param_name));
     }
 
-protected:
+private:
     /// name of the parsed parameter
     std::string param_name_;
 
@@ -131,11 +121,11 @@ protected:
 /// (uint32_defaults). If used in smaller scopes (e.g. to parse parameters
 /// in subnet config), it can be pointed to a different storage, using
 /// setStorage() method. This class follows the parser interface, laid out
-/// in its base class, \ref DhcpConfigParser.
+/// in its base class, \ref Dhcp4ConfigParser.
 ///
 /// For overview of usability of this generic purpose parser, see
-/// \ref dhcpv4-config-inherit page.
-class Uint32Parser : public DhcpConfigParser {
+/// \ref dhcp4-config-inherit page.
+class Uint32Parser : public Dhcp4ConfigParser {
 public:
 
     /// @brief constructor for Uint32Parser
@@ -150,13 +140,30 @@ public:
     /// \ref setStorage() for details.
     ///
     /// @param value pointer to the content of parsed values
+    /// @throw BadValue if supplied value could not be base to uint32_t
     virtual void build(ConstElementPtr value) {
+        int64_t check;
+        string x = value->str();
         try {
-            value_ = boost::lexical_cast<uint32_t>(value->str());
+            check = boost::lexical_cast<int64_t>(x);
         } catch (const boost::bad_lexical_cast &) {
             isc_throw(BadValue, "Failed to parse value " << value->str()
                       << " as unsigned 32-bit integer.");
         }
+        if (check > UINT32_MAX) {
+            isc_throw(BadValue, "Value " << value->str() << "is too large"
+                      << " for unsigned 32-bit integer.");
+        }
+        if (check < 0) {
+            isc_throw(BadValue, "Value " << value->str() << "is negative."
+                      << " Only 0 or larger are allowed for unsigned 32-bit integer.");
+        }
+
+        // value is small enough to fit
+        value_ = static_cast<uint32_t>(check);
+
+        /// @todo: check if there is no such name in the map. Otherwise
+        /// the insert will fail silently
         storage_->insert(pair<string, uint32_t>(param_name_, value_));
     }
 
@@ -166,7 +173,7 @@ public:
     /// is not commited anywhere. Higher level parsers are expected to
     /// use values stored in the storage, e.g. renew-timer for a given
     /// subnet is stored in subnet-specific storage. It is not commited
-    /// here, but is rather used by \ref Subnet4Parser when constructing
+    /// here, but is rather used by \ref Subnet4ConfigParser when constructing
     /// the subnet.
     virtual void commit() {
     }
@@ -174,13 +181,13 @@ public:
     /// @brief factory that constructs Uint32Parser objects
     ///
     /// @param param_name name of the parameter to be parsed
-    static DhcpConfigParser* Factory(const std::string& param_name) {
+    static Dhcp4ConfigParser* Factory(const std::string& param_name) {
         return (new Uint32Parser(param_name));
     }
 
     /// @brief sets storage for value of this parameter
     ///
-    /// See \ref dhcpv4-config-inherit for details.
+    /// See \ref dhcp4-config-inherit for details.
     ///
     /// @param storage pointer to the storage container
     void setStorage(Uint32Storage* storage) {
@@ -205,11 +212,11 @@ protected:
 /// (string_defaults). If used in smaller scopes (e.g. to parse parameters
 /// in subnet config), it can be pointed to a different storage, using
 /// setStorage() method. This class follows the parser interface, laid out
-/// in its base class, \ref DhcpConfigParser.
+/// in its base class, \ref Dhcp4ConfigParser.
 ///
 /// For overview of usability of this generic purpose parser, see
-/// \ref dhcpv4-config-inherit page.
-class StringParser : public DhcpConfigParser {
+/// \ref dhcp4-config-inherit page.
+class StringParser : public Dhcp4ConfigParser {
 public:
 
     /// @brief constructor for StringParser
@@ -227,6 +234,8 @@ public:
     virtual void build(ConstElementPtr value) {
         value_ = value->str();
         boost::erase_all(value_, "\"");
+        /// @todo: check if there is no such name in the map. Otherwise
+        /// the insert will fail silently
         storage_->insert(pair<string, string>(param_name_, value_));
     }
 
@@ -244,13 +253,13 @@ public:
     /// @brief factory that constructs StringParser objects
     ///
     /// @param param_name name of the parameter to be parsed
-    static DhcpConfigParser* Factory(const std::string& param_name) {
+    static Dhcp4ConfigParser* Factory(const std::string& param_name) {
         return (new StringParser(param_name));
     }
 
     /// @brief sets storage for value of this parameter
     ///
-    /// See \ref dhcpv4-config-inherit for details.
+    /// See \ref dhcp4-config-inherit for details.
     ///
     /// @param storage pointer to the storage container
     void setStorage(StringStorage* storage) {
@@ -277,7 +286,7 @@ protected:
 /// designates all interfaces.
 ///
 /// It is useful for parsing Dhcp4/interface parameter.
-class InterfaceListConfigParser : public DhcpConfigParser {
+class InterfaceListConfigParser : public Dhcp4ConfigParser {
 public:
 
     /// @brief constructor
@@ -286,17 +295,18 @@ public:
     /// "interface" parameter only. All other types will throw exception.
     ///
     /// @param param_name name of the configuration parameter being parsed
+    /// @throw BadValue if supplied parameter name is not "interface"
     InterfaceListConfigParser(const std::string& param_name) {
         if (param_name != "interface") {
-            isc_throw(NotImplemented, "Internal error. Interface configuration "
+            isc_throw(BadValue, "Internal error. Interface configuration "
                       "parser called for the wrong parameter: " << param_name);
         }
     }
 
     /// @brief parses parameters value
     ///
-    /// Parses configuration entry (list of parameters) and stores it in
-    /// storage. See \ref setStorage() for details.
+    /// Parses configuration entry (list of parameters) and adds each element
+    /// to the interfaces list.
     ///
     /// @param value pointer to the content of parsed values
     virtual void build(ConstElementPtr value) {
@@ -314,7 +324,7 @@ public:
     /// @brief factory that constructs InterfaceListConfigParser objects
     ///
     /// @param param_name name of the parameter to be parsed
-    static DhcpConfigParser* Factory(const std::string& param_name) {
+    static Dhcp4ConfigParser* Factory(const std::string& param_name) {
         return (new InterfaceListConfigParser(param_name));
     }
 
@@ -333,7 +343,7 @@ protected:
 /// before build(). Otherwise exception will be thrown.
 ///
 /// It is useful for parsing Dhcp4/subnet4[X]/pool parameters.
-class PoolParser : public DhcpConfigParser {
+class PoolParser : public Dhcp4ConfigParser {
 public:
 
     /// @brief constructor.
@@ -347,10 +357,13 @@ public:
     /// This method parses the actual list of interfaces.
     /// No validation is done at this stage, everything is interpreted as
     /// interface name.
+    /// @param pools_list list of pools defined for a subnet
+    /// @throw InvalidOperation if storage was not specified (setStorage() not called)
+    /// @throw Dhcp4ConfigError when pool parsing fails
     void build(ConstElementPtr pools_list) {
         // setStorage() should have been called before build
         if (!pools_) {
-            isc_throw(NotImplemented, "Parser logic error. No pool storage set,"
+            isc_throw(InvalidOperation, "Parser logic error. No pool storage set,"
                       " but pool parser asked to parse pools");
         }
 
@@ -416,7 +429,7 @@ public:
 
     /// @brief sets storage for value of this parameter
     ///
-    /// See \ref dhcpv4-config-inherit for details.
+    /// See \ref dhcp4-config-inherit for details.
     ///
     /// @param storage pointer to the storage container
     void setStorage(PoolStorage* storage) {
@@ -433,7 +446,7 @@ public:
     /// @brief factory that constructs PoolParser objects
     ///
     /// @param param_name name of the parameter to be parsed
-    static DhcpConfigParser* Factory(const std::string& param_name) {
+    static Dhcp4ConfigParser* Factory(const std::string& param_name) {
         return (new PoolParser(param_name));
     }
 
@@ -449,7 +462,7 @@ protected:
 ///
 /// This class parses the whole subnet definition. It creates parsers
 /// for received configuration parameters as needed.
-class Subnet4ConfigParser : public DhcpConfigParser {
+class Subnet4ConfigParser : public Dhcp4ConfigParser {
 public:
 
     /// @brief constructor
@@ -469,22 +482,22 @@ public:
 
             // if this is an Uint32 parser, tell it to store the values
             // in values_, rather than in global storage
-            boost::shared_ptr<Uint32Parser> uintParser =
+            boost::shared_ptr<Uint32Parser> uint_parser =
                 boost::dynamic_pointer_cast<Uint32Parser>(parser);
-            if (uintParser) {
-                uintParser->setStorage(&uint32_values_);
+            if (uint_parser) {
+                uint_parser->setStorage(&uint32_values_);
             } else {
 
-                boost::shared_ptr<StringParser> stringParser =
+                boost::shared_ptr<StringParser> string_parser =
                     boost::dynamic_pointer_cast<StringParser>(parser);
-                if (stringParser) {
-                    stringParser->setStorage(&string_values_);
+                if (string_parser) {
+                    string_parser->setStorage(&string_values_);
                 } else {
 
-                    boost::shared_ptr<PoolParser> poolParser =
+                    boost::shared_ptr<PoolParser> pool_parser =
                         boost::dynamic_pointer_cast<PoolParser>(parser);
-                    if (poolParser) {
-                        poolParser->setStorage(&pools_);
+                    if (pool_parser) {
+                        pool_parser->setStorage(&pools_);
                     }
                 }
             }
@@ -502,6 +515,7 @@ public:
     /// storing the values that are actually consumed here. Pool definitions
     /// created in other parsers are used here and added to newly created Subnet4
     /// objects. Subnet4 are then added to DHCP CfgMgr.
+    /// @throw Dhcp4ConfigError if there are any issues encountered during commit
     void commit() {
 
         StringStorage::const_iterator it = string_values_.find("subnet");
@@ -549,7 +563,8 @@ protected:
     ///
     /// @param config_id name od the entry
     /// @return parser object for specified entry name
-    DhcpConfigParser* createSubnet4ConfigParser(const std::string& config_id) {
+    /// @throw NotImplemented if trying to create a parser for unknown config element
+    Dhcp4ConfigParser* createSubnet4ConfigParser(const std::string& config_id) {
         FactoryMap factories;
 
         factories.insert(pair<string, ParserFactory*>(
@@ -585,6 +600,7 @@ protected:
     ///
     /// @param name name of the parameter
     /// @return triplet with the parameter name
+    /// @throw Dhcp4ConfigError when requested parameter is not present
     Triplet<uint32_t> getParam(const std::string& name) {
         uint32_t value = 0;
         bool found = false;
@@ -627,7 +643,7 @@ protected:
 /// This is a wrapper parser that handles the whole list of Subnet4
 /// definitions. It iterates over all entries and creates Subnet4ConfigParser
 /// for each entry.
-class Subnets4ListConfigParser : public DhcpConfigParser {
+class Subnets4ListConfigParser : public Dhcp4ConfigParser {
 public:
 
     /// @brief constructor
@@ -676,7 +692,7 @@ public:
     /// @brief Returns Subnet4ListConfigParser object
     /// @param param_name name of the parameter
     /// @return Subnets4ListConfigParser object
-    static DhcpConfigParser* Factory(const std::string& param_name) {
+    static Dhcp4ConfigParser* Factory(const std::string& param_name) {
         return (new Subnets4ListConfigParser(param_name));
     }
 
@@ -691,7 +707,8 @@ public:
 ///
 /// @param config_id pointer to received global configuration entry
 /// @return parser for specified global DHCPv4 parameter
-DhcpConfigParser* createGlobalDhcpConfigParser(const std::string& config_id) {
+/// @throw NotImplemented if trying to create a parser for unknown config element
+Dhcp4ConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
     FactoryMap factories;
 
     factories.insert(pair<string, ParserFactory*>(
@@ -723,24 +740,17 @@ DhcpConfigParser* createGlobalDhcpConfigParser(const std::string& config_id) {
 
 /// @brief configures DHCPv4 server
 ///
-/// This function is called every time a new configuration is received. The extra
-/// parameter is a reference to DHCPv4 server component. It is currently not used
-/// and CfgMgr::instance() is accessed instead.
-///
-/// This method does not throw. It catches all exceptions and returns them as
-/// reconfiguration statuses. It may return the following response codes:
-/// 0 - configuration successful
-/// 1 - malformed configuration (parsing failed)
-/// 2 - logical error (parsing was successful, but the values are invalid)
-///
-/// @param config_set a new configuration for DHCPv4 server
-/// @return answer that contains result of reconfiguration
 isc::data::ConstElementPtr
 configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
     if (!config_set) {
-        isc_throw(Dhcp4ConfigError,
-                  "Null pointer is passed to configuration parser");
+        ConstElementPtr answer = isc::config::createAnswer(1,
+                                 string("Can't parse NULL config"));
+        return (answer);
     }
+
+    /// Let's wipe previous configuration defaults
+    uint32_defaults.clear();
+    string_defaults.clear();
 
     /// @todo: append most essential info here (like "2 new subnets configured")
     string config_details;
@@ -751,7 +761,7 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
     try {
         BOOST_FOREACH(ConfigPair config_pair, config_set->mapValue()) {
 
-            ParserPtr parser(createGlobalDhcpConfigParser(config_pair.first));
+            ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first));
             parser->build(config_pair.second);
             parsers.push_back(parser);
         }

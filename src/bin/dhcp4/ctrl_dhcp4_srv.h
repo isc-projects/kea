@@ -34,7 +34,7 @@ namespace dhcp {
 /// embedded environments.
 ///
 /// For detailed explanation or relations between main(), ControlledDhcpv4Srv,
-/// Dhcpv4Srv and other classes, see \ref dhcpv4Session.
+/// Dhcpv4Srv and other classes, see \ref dhcp4-session.
 class ControlledDhcpv4Srv : public isc::dhcp::Dhcpv4Srv {
 public:
 
@@ -66,7 +66,7 @@ public:
 
     /// @brief Session callback, processes received commands.
     ///
-    /// @param command_id text represenation of the command (e.g. "shutdown")
+    /// @param command text represenation of the command (e.g. "shutdown")
     /// @param args optional parameters
     ///
     /// @return status of the command
