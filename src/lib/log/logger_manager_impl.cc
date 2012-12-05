@@ -48,18 +48,19 @@ LoggerManagerImpl::processInit() {
     initRootLogger();
 }
 
+// Flush the LogBuffer at the end of processing a new specification
+void
+LoggerManagerImpl::processEnd() {
+    getLogBuffer().flush();
+}
+
 // Process logging specification.  Set up the common states then dispatch to
 // add output specifications.
 void
 LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
     log4cplus::Logger logger;
     // If this is an 'empty' specification, just set the root logger
-    if (spec.getName() == "") {
-        logger = log4cplus::Logger::getInstance(getRootLoggerName());
-    } else {
-        logger = log4cplus::Logger::getInstance(
-                                   expandLoggerName(spec.getName()));
-    }
+    logger = log4cplus::Logger::getInstance(expandLoggerName(spec.getName()));
 
     // Set severity level according to specification entry.
     logger.setLogLevel(LoggerLevelImpl::convertFromBindLevel(
@@ -100,8 +101,6 @@ LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
             }
         }
     }
-    // Should anything be left in the buffer, this is the time to flush it.
-    getLogBuffer().flush();
 }
 
 // Console appender - log to either stdout or stderr.

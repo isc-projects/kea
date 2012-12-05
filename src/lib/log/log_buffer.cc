@@ -16,6 +16,8 @@
 #include <log4cplus/loglevel.h>
 
 #include <boost/scoped_ptr.hpp>
+#include <iostream>
+
 namespace isc {
 namespace log {
 
