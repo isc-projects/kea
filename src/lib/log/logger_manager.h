@@ -59,12 +59,8 @@ public:
     template <typename T>
     void process(T start, T finish) {
         processInit();
-        if (start == finish) {
-            process();
-        } else {
-            for (T i = start; i != finish; ++i) {
-                processSpecification(*i);
-            }
+        for (T i = start; i != finish; ++i) {
+            processSpecification(*i);
         }
         processEnd();
     }
@@ -91,9 +87,8 @@ public:
     /// but it turns out there are no logging specifications to
     /// handle.
     void process() {
-        // empty iterator; set defaults
-        const LoggerSpecification spec;
-        process(spec);
+        processInit();
+        processEnd();
     }
 
     /// \brief Run-Time Initialization
