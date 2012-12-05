@@ -15,10 +15,10 @@
 #ifndef DHCPV4_SRV_H
 #define DHCPV4_SRV_H
 
-#include <boost/noncopyable.hpp>
 #include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/option.h>
+#include <boost/noncopyable.hpp>
 #include <iostream>
 
 namespace isc {
@@ -34,11 +34,11 @@ namespace dhcp {
 /// appropriate responses.
 ///
 /// This class does not support any controlling mechanisms directly.
-/// See derived \ref ControlledDhcv4Srv class for support for
+/// See derived \ref ControlledDhcpv4Srv class for support for
 /// command and configuration updates over msgq.
 ///
 /// For detailed explanation or relations between main(), ControlledDhcpv4Srv,
-/// Dhcpv4Srv and other classes, see \ref dhcpv4Session.
+/// Dhcpv4Srv and other classes, see \ref dhcp4-session.
 class Dhcpv4Srv : public boost::noncopyable {
 
     public:

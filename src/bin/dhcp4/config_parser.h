@@ -12,9 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <string>
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
+#include <string>
 
 #ifndef DHCP4_CONFIG_PARSER_H
 #define DHCP4_CONFIG_PARSER_H
@@ -27,21 +27,34 @@ namespace dhcp {
 
 class Dhcpv4Srv;
 
+/// @brief a collection of elements that store uint32 values (e.g. renew-timer = 900)
+typedef std::map<std::string, uint32_t> Uint32Storage;
+
+/// @brief a collection of elements that store string values
+typedef std::map<std::string, std::string> StringStorage;
+
 /// An exception that is thrown if an error occurs while configuring an
 /// \c Dhcpv4Srv object.
 class Dhcp4ConfigError : public isc::Exception {
 public:
 
-/// @brief constructor
-///
-/// @param file name of the file, where exception occurred
-/// @param line line of the file, where exception occurred
-/// @param what text description of the issue that caused exception
-Dhcp4ConfigError(const char* file, size_t line, const char* what) :
-    isc::Exception(file, line, what) {}
+    /// @brief constructor
+    ///
+    /// @param file name of the file, where exception occurred
+    /// @param line line of the file, where exception occurred
+    /// @param what text description of the issue that caused exception
+    Dhcp4ConfigError(const char* file, size_t line, const char* what)
+        : isc::Exception(file, line, what) {}
 };
 
-class DhcpConfigParser {
+/// @brief Base abstract class for all DHCPv4 parsers
+///
+/// Each instance of a class derived from this class parses one specific config
+/// element. Sometimes elements are simple (e.g. a string) and sometimes quite
+/// complex (e.g. a subnet). In such case, it is likely that a parser will
+/// spawn child parsers to parse child elements in the configuration.
+/// @todo: Merge this class with DhcpConfigParser in src/bin/dhcp6
+class Dhcp4ConfigParser {
     ///
     /// \name Constructors and Destructor
     ///
@@ -50,17 +63,21 @@ class DhcpConfigParser {
     /// pure base class.
     //@{
 private:
-    DhcpConfigParser(const DhcpConfigParser& source);
-    DhcpConfigParser& operator=(const DhcpConfigParser& source);
+
+    // Private construtor and assignment operator assures that nobody
+    // will be able to copy or assign a parser. There are no defined
+    // bodies for them.
+    Dhcp4ConfigParser(const Dhcp4ConfigParser& source);
+    Dhcp4ConfigParser& operator=(const Dhcp4ConfigParser& source);
 protected:
     /// \brief The default constructor.
     ///
     /// This is intentionally defined as \c protected as this base class should
     /// never be instantiated (except as part of a derived class).
-    DhcpConfigParser() {}
+    Dhcp4ConfigParser() {}
 public:
     /// The destructor.
-    virtual ~DhcpConfigParser() {}
+    virtual ~Dhcp4ConfigParser() {}
     //@}
 
     /// \brief Prepare configuration value.
@@ -107,7 +124,7 @@ public:
 };
 
 /// @brief a pointer to configuration parser
-typedef boost::shared_ptr<DhcpConfigParser> ParserPtr;
+typedef boost::shared_ptr<Dhcp4ConfigParser> ParserPtr;
 
 /// @brief a collection of parsers
 ///
@@ -115,7 +132,7 @@ typedef boost::shared_ptr<DhcpConfigParser> ParserPtr;
 typedef std::vector<ParserPtr> ParserCollection;
 
 
-/// \brief Configure an \c Dhcpv4Srv object with a set of configuration values.
+/// \brief Configure DHCPv4 server (\c Dhcpv4Srv) with a set of configuration values.
 ///
 /// This function parses configuration information stored in \c config_set
 /// and configures the \c server by applying the configuration to it.
@@ -126,22 +143,22 @@ typedef std::vector<ParserPtr> ParserCollection;
 ///
 /// If a syntax or semantics level error happens during the configuration
 /// (such as malformed configuration or invalid configuration parameter),
-/// this function throws an exception of class \c Dhcp4ConfigError.
-/// If the given configuration requires resource allocation and it fails,
-/// a corresponding standard exception will be thrown.
-/// Other exceptions may also be thrown, depending on the implementation of
-/// the underlying derived class of \c Dhcp4ConfigError.
-/// In any case the strong guarantee is provided as described above except
-/// in the very rare cases where the \c commit() method of a parser throws
-/// an exception.  If that happens this function converts the exception
-/// into a \c FatalError exception and rethrows it.  This exception is
-/// expected to be caught at the highest level of the application to terminate
-/// the program gracefully.
+/// this function returns appropriate error code.
 ///
-/// \param server The \c Dhcpv4Srv object to be configured.
-/// \param config_set A JSON style configuration to apply to \c server.
+/// This function is called every time a new configuration is received. The extra
+/// parameter is a reference to DHCPv4 server component. It is currently not used
+/// and CfgMgr::instance() is accessed instead.
+///
+/// This method does not throw. It catches all exceptions and returns them as
+/// reconfiguration statuses. It may return the following response codes:
+/// 0 - configuration successful
+/// 1 - malformed configuration (parsing failed)
+/// 2 - logical error (parsing was successful, but the values are invalid)
+///
+/// @param config_set a new configuration (JSON) for DHCPv4 server
+/// @return answer that contains result of reconfiguration
 isc::data::ConstElementPtr
-configureDhcp4Server(Dhcpv4Srv& server,
+configureDhcp4Server(Dhcpv4Srv&,
                      isc::data::ConstElementPtr config_set);
 
 }; // end of isc::dhcp namespace

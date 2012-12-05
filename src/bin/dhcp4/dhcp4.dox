@@ -15,8 +15,6 @@ DHCPv4 server component does not support direct traffic (relayed
 only), as support for transmission to hosts without IPv4 address
 assigned is not implemented in IfaceMgr yet.
 
-DHCPv4 server component does not use BIND10 logging yet.
-
 @section dhcp4-session BIND10 message queue integration
 
 DHCPv4 server component is now integrated with BIND10 message queue.
