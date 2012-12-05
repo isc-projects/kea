@@ -1611,24 +1611,34 @@ class TestBossComponents(unittest.TestCase):
         bob._make_process_info = bob._make_mock_process_info
 
         global attempts
+        global tsec
         attempts = 0
+        tsec = 0
         tmp_time = time.time
+        tmp_sleep = time.sleep
         def _my_time():
             global attempts
+            global tsec
             attempts += 1
-            return tmp_time()
+            return tsec
+        def _my_sleep(nsec):
+            global tsec
+            tsec += nsec
         time.time = _my_time
+        time.sleep = _my_sleep
 
         with self.assertRaises(bind10_src.CChannelConnectError):
             # An exception will be thrown here when it eventually times
             # out.
             pi = bob.start_msgq()
 
-        # 1 second of attempts every 0.1 seconds should result in at
-        # least 5 attempts
-        self.assertGreater(attempts, 5)
+        # 1 second of attempts every 0.1 seconds should result in 10
+        # attempts. 1 attempt happens at the start. 2 more attempts seem
+        # to happen inside start_msgq().
+        self.assertEqual(attempts, 13)
 
         time.time = tmp_time
+        time.sleep = tmp_sleep
 
     def test_start_cfgmgr(self):
         '''Test that b10-cfgmgr is started.'''
