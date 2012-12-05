@@ -32,6 +32,22 @@ namespace detail {
 /// be the bare char basis.
 typedef std::vector<uint8_t> CharString;
 
+/// \brief Convert a DNS character-string into corresponding binary data.
+///
+/// This helper function takes a string object that is expected to be a
+/// textual representation of a valid DNS character-string, and dumps
+/// the corresponding binary sequence in the given placeholder (passed
+/// via the \c result parameter).  It handles escape notations of
+/// character-strings with a backslash ('\'), and checks the length
+/// restriction.
+///
+/// \throw CharStringTooLong The resulting binary data are too large for a
+/// valid character-string.
+/// \throw InvalidRdataText Other syntax errors.
+///
+/// \brief str_region A string that represents a character-string.
+/// \brief result A placeholder vector where the resulting data are to be
+/// stored.  Expected to be empty, but it's not checked.
 void strToCharString(const MasterToken::StringRegion& str_region,
                      CharString& result);
 
