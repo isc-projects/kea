@@ -1965,6 +1965,7 @@ class TestBossComponents(unittest.TestCase):
         self.assertTrue(bob.started)
         self.assertFalse(bob.killed)
         self.assertTrue(bob.runnable)
+        self.assertEqual({}, bob.c_channel_env)
 
         # Case where starting components fails. We check that
         # kill_started_components() is called right after, and
@@ -1976,6 +1977,13 @@ class TestBossComponents(unittest.TestCase):
         self.assertTrue(bob.started)
         self.assertTrue(bob.killed)
         self.assertFalse(bob.runnable)
+        self.assertEqual({}, bob.c_channel_env)
+
+        # Check if msgq_socket_file is carried over
+        bob = MockBobStartup(False)
+        bob.msgq_socket_file = 'foo'
+        r = bob.startup()
+        self.assertEqual({'BIND10_MSGQ_SOCKET_FILE': 'foo'}, bob.c_channel_env)
 
 class SocketSrvTest(unittest.TestCase):
     """
