@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "memory_segment_test.h"
+#include "zone_table_segment_test.h"
 
 // NOTE: this faked_nsec3 inclusion (and all related code below)
 // was ported during #2109 for the convenience of implementing #2218
@@ -25,7 +26,10 @@
 #include <datasrc/memory/zone_finder.h>
 #include <datasrc/memory/zone_data_updater.h>
 #include <datasrc/memory/rdata_serialization.h>
+#include <datasrc/memory/zone_table_segment.h>
+#include <datasrc/memory/memory_client.h>
 #include <datasrc/data_source.h>
+#include <datasrc/client.h>
 #include <testutils/dnsmessage_test.h>
 
 #include <boost/foreach.hpp>
@@ -1560,6 +1564,23 @@ TEST_F(InMemoryZoneFinderNSEC3Test, RRSIGOnly) {
                      "20120814220826 20120715220826 1234 example.com. FAKE"));
     EXPECT_THROW(zone_finder_.findNSEC3(Name("n8.example.org"), false),
                  DataSourceError);
+}
+
+// \brief testcase for #2503 (Problem in inmem NSEC3 denial of existence
+// handling)
+TEST_F(InMemoryZoneFinderNSEC3Test, findNSEC3MissingOrigin) {
+     shared_ptr<ZoneTableSegment> ztable_segment(
+          new ZoneTableSegmentTest(class_, mem_sgmt_));
+     InMemoryClient client(ztable_segment, class_);
+     Name name("ok.ok.ok.ok.nsec3.tjeb.nl.");
+
+     client.load(name, TEST_DATA_DIR "/2503-test.zone");
+     DataSourceClient::FindResult result(client.findZone(name));
+
+     // Check for a non-existing name
+     Name search_name("nonexist.ok.ok.ok.ok.nsec3.tjeb.nl.");
+     ZoneFinder::FindNSEC3Result find_result(
+          result.zone_finder->findNSEC3(search_name, true));
 }
 
 }
