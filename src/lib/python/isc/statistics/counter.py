@@ -217,10 +217,14 @@ class _Counter():
         """enables incrementing/decrementing counters"""
         self._disabled = False
 
-    def _incrementer(self, identifier, step=1):
-        """A per-zone incrementer for counter_name. Locks the
-        thread because it is considered to be invoked by a
-        multi-threading caller."""
+    def inc(self, *args):
+        """A incrementer for per-zone counter. Locks the thread
+        because it is considered to be invoked by a multi-threading
+        caller. isc.cc.data.DataNotFoundError is raised when
+        incrementing the counter of the item undefined in the spec
+        file."""
+        identifier = '/'.join(args)
+        step = 1
         if self._disabled: return
         with self._rlock:
             _inc_counter(self._statistics_data,
