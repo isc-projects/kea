@@ -1649,15 +1649,32 @@ class TestBossComponents(unittest.TestCase):
     def test_start_cfgmgr(self):
         '''Test that b10-cfgmgr is started.'''
         class DummySession():
+            def __init__(self):
+                self._tries = 0
             def group_recvmsg(self):
-                return (None, None)
+                self._tries += 1
+                # return running on the 3rd try onwards
+                if self._tries >= 3:
+                    return ({'running': 'ConfigManager'}, None)
+                else:
+                    return ({}, None)
+
         bob = MockBobSimple()
         bob.c_channel_env = {}
         bob.cc_session = DummySession()
-        bob.run_under_unittests = True
+        bob.run_under_unittests = False
+        bob.wait_time = 5
 
         # use the MockProcessInfo creator
         bob._make_process_info = bob._make_mock_process_info
+
+        global attempts
+        attempts = 0
+        self._tmp_sleep = time.sleep
+        def _my_sleep(nsec):
+            global attempts
+            attempts += 1
+        time.sleep = _my_sleep
 
         # defaults
         pi = bob.start_cfgmgr()
@@ -1667,6 +1684,10 @@ class TestBossComponents(unittest.TestCase):
 
         # this is set by ProcessInfo.spawn()
         self.assertEqual(42147, pi.pid)
+
+        # check that 2 attempts were made. on the 3rd attempt,
+        # process_running() returns that ConfigManager is running.
+        self.assertEqual(attempts, 2)
 
         # data_path is specified
         bob.data_path = '/var/lib/test'
