@@ -112,20 +112,18 @@ in separate zonemgr process.
       <varname>master_addr</varname> (the zone master to transfer from),
       <varname>master_port</varname> (defaults to 53),
       <varname>use_ixfr</varname> (defaults to false), and
-      <varname>tsig_key</varname> (optional TSIG key to use).
-      The <varname>tsig_key</varname> is specified using a full string
-      colon-delimited name:key:algorithm representation (e.g.
-      <quote>foo.example.org:EvABsfU2h7uofnmqaRCrhHunGsd=:hmac-sha1</quote>).
+      <varname>tsig_key</varname> (optional TSIG key name to use).
+      The <varname>tsig_key</varname> is specified using a name that
+      corresponds to one of the TSIG keys configured in the global
+      TSIG key ring (/tsig_keys/keys).</quote>).
     </para>
 <!-- TODO: document this better -->
-<!-- TODO: the tsig_key format may change -->
 
     <para>
       (The site-wide <varname>master_addr</varname> and
       <varname>master_port</varname> configurations are deprecated;
       use the <varname>zones</varname> list configuration instead.)
     </para>
-<!-- NOTE: also tsig_key but not mentioning since so short lived. -->
 
 <!-- TODO: formating -->
     <para>

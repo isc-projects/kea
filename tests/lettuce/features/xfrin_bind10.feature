@@ -79,7 +79,7 @@ Feature: Xfrin
     When I send bind10 the following commands:
     """
     config add tsig_keys/keys "example.key.:c2VjcmV0"
-    config set Xfrin/zones[0]/tsig_key  "example.key.:c2VjcmV0"
+    config set Xfrin/zones[0]/tsig_key  "example.key."
     config commit
     """
 
