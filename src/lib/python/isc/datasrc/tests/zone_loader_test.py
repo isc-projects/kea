@@ -26,10 +26,12 @@ TESTDATA_PATH = os.environ['TESTDATA_PATH']
 TESTDATA_WRITE_PATH = os.environ['TESTDATA_WRITE_PATH']
 
 ZONE_FILE = TESTDATA_PATH + '/example.com'
-
+STATIC_ZONE_FILE = '../../../../datasrc/static.zone'
+SOURCE_DB_FILE = TESTDATA_PATH + '/example.com.source.sqlite3'
 ORIG_DB_FILE = TESTDATA_PATH + '/example.com.sqlite3'
 DB_FILE = TESTDATA_WRITE_PATH + '/zoneloadertest.sqlite3'
 DB_CLIENT_CONFIG = '{ "database_file": "' + DB_FILE + '"}'
+DB_SOURCE_CLIENT_CONFIG = '{ "database_file": "' + SOURCE_DB_FILE + '"}'
 
 ORIG_SOA_TXT = 'example.com. 3600 IN SOA master.example.com. ' +\
                'admin.example.com. 1234 3600 1800 2419200 7200\n'
@@ -59,7 +61,7 @@ class ZoneLoaderTests(unittest.TestCase):
 
     def check_zone_soa(self, soa_txt):
         """
-        Check that the given RRset exists and matches the expected string
+        Check that the given SOA RR exists and matches the expected string
         """
         result, finder = self.client.find_zone(self.test_name)
         self.assertEqual(self.client.SUCCESS, result)
@@ -67,21 +69,27 @@ class ZoneLoaderTests(unittest.TestCase):
         self.assertEqual(finder.SUCCESS, result)
         self.assertEqual(soa_txt, rrset.to_text())
 
-    def test_load_file(self):
+    def check_load(self, loader):
         self.check_zone_soa(ORIG_SOA_TXT)
-
-        # Create loader and load the zone
-        loader = isc.datasrc.ZoneLoader(self.client, self.test_name, self.test_file)
         loader.load()
-
         self.check_zone_soa(NEW_SOA_TXT)
 
-    def test_load_incremental(self):
-        self.check_zone_soa(ORIG_SOA_TXT)
+        # And after that, it should throw
+        self.assertRaises(isc.dns.InvalidOperation, loader.load)
 
-        # Create loader and load the zone
-        loader = isc.datasrc.ZoneLoader(self.client, self.test_name, self.test_file)
+    def test_load_from_file(self):
+        loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
+                                        self.test_file)
+        self.check_load(loader)
 
+    def test_load_from_client(self):
+        source_client = isc.datasrc.DataSourceClient('sqlite3',
+                                                     DB_SOURCE_CLIENT_CONFIG)
+        loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
+                                        source_client)
+        self.check_load(loader)
+
+    def check_load_incremental(self, loader):
         # New zone has 8 RRs
         # After 5, it should return False
         self.assertFalse(loader.load_incremental(5))
@@ -94,13 +102,73 @@ class ZoneLoaderTests(unittest.TestCase):
         self.check_zone_soa(NEW_SOA_TXT)
 
         # And after that, it should throw
-        self.assertRaises(isc.datasrc.Error, loader.load_incremental, 5)
+        self.assertRaises(isc.dns.InvalidOperation, loader.load_incremental, 5)
+
+    def test_load_from_file_incremental(self):
+        # Create loader and load the zone
+        loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
+                                        self.test_file)
+        self.check_load_incremental(loader)
+
+    def test_load_from_client_incremental(self):
+        source_client = isc.datasrc.DataSourceClient('sqlite3',
+                                                     DB_SOURCE_CLIENT_CONFIG)
+        loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
+                                        source_client)
+        self.check_load_incremental(loader)
 
     def test_bad_file(self):
         self.check_zone_soa(ORIG_SOA_TXT)
-        loader = isc.datasrc.ZoneLoader(self.client, self.test_name, "no such file")
+        loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
+                                        'no such file')
         self.assertRaises(isc.datasrc.MasterFileError, loader.load)
         self.check_zone_soa(ORIG_SOA_TXT)
+
+    def test_bad_file_incremental(self):
+        self.check_zone_soa(ORIG_SOA_TXT)
+        loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
+                                        'no such file')
+        self.assertRaises(isc.datasrc.MasterFileError,
+                          loader.load_incremental, 1)
+        self.check_zone_soa(ORIG_SOA_TXT)
+
+    def test_no_such_zone_in_target(self):
+        self.assertRaises(isc.datasrc.Error, isc.datasrc.ZoneLoader,
+                          self.client, isc.dns.Name("unknownzone"),
+                          self.test_file)
+
+    def test_no_such_zone_in_source(self):
+        source_client = isc.datasrc.DataSourceClient('sqlite3',
+                                                     DB_SOURCE_CLIENT_CONFIG)
+        self.assertRaises(isc.datasrc.Error, isc.datasrc.ZoneLoader,
+                          self.client, isc.dns.Name("unknownzone"),
+                          source_client)
+
+    def test_no_ds_load_support(self):
+        # This may change in the future, but atm, the in-mem ds does
+        # not support the API the zone loader uses (it has direct load calls)
+        inmem_client = isc.datasrc.DataSourceClient('memory',
+                                                    '{ "type": "memory" }');
+        self.assertRaises(isc.datasrc.NotImplemented,
+                          isc.datasrc.ZoneLoader,
+                          inmem_client, self.test_name, self.test_file)
+
+    def test_wrong_class_from_file(self):
+        # If the file has wrong class, it is not detected until load time
+        loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
+                                        self.test_file + '.ch')
+        self.assertRaises(isc.datasrc.MasterFileError, loader.load)
+
+    def test_wrong_class_from_client(self):
+        # For ds->ds loading, wrong class is detected upon construction
+        # Need a bit of the extended setup for CH source client
+        clientlist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.CH())
+        clientlist.configure('[ { "type": "static", "params": "' +
+                             STATIC_ZONE_FILE +'" } ]', False)
+        source_client, _, _ = clientlist.find(isc.dns.Name("bind."),
+                                              False, False)
+        self.assertRaises(isc.dns.InvalidParameter, isc.datasrc.ZoneLoader,
+                          self.client, isc.dns.Name("bind."), source_client)
 
     def test_exception(self):
         # Just check if masterfileerror is subclass of datasrc.Error

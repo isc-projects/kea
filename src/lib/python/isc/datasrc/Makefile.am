@@ -36,6 +36,7 @@ EXTRA_DIST += finder_inc.cc
 EXTRA_DIST += iterator_inc.cc
 EXTRA_DIST += updater_inc.cc
 EXTRA_DIST += journal_reader_inc.cc
+EXTRA_DIST += zone_loader_inc.cc
 
 CLEANDIRS = __pycache__
 
