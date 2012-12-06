@@ -253,16 +253,16 @@ class Counter():
             isc.config.module_spec_from_file(spec_file_name).\
             get_statistics_spec()
         if self._perzone_prefix in \
-                isc.config.spec_name_list(self._statistics_spec):
+                isc.config.spec_name_list(self._statistics._spec):
             self._zones_item_list = isc.config.spec_name_list(
                 isc.config.find_spec_part(
-                    self._statistics_spec, self._perzone_prefix)\
+                    self._statistics._spec, self._perzone_prefix)\
                     ['named_set_item_spec']['map_item_spec'])
 
     def clear_counters(self):
         """clears all statistics data"""
         with self._rlock:
-            self._statistics_data = {}
+            self._statistics._data = {}
 
     def disable(self):
         """disables incrementing/decrementing counters"""
@@ -282,8 +282,8 @@ class Counter():
         step = 1
         if self._disabled: return
         with self._rlock:
-            _inc_counter(self._statistics_data,
-                         self._statistics_spec,
+            _inc_counter(self._statistics._data,
+                         self._statistics._spec,
                          identifier, step)
 
     def dec(self, *args):
@@ -332,8 +332,8 @@ class Counter():
             # set the end time
             _stop_timer(
                 start_time,
-                self._statistics_data,
-                self._statistics_spec,
+                self._statistics._data,
+                self._statistics._spec,
                 identifier)
             # delete the started timer
             del isc.cc.data.find(
@@ -347,14 +347,14 @@ class Counter():
         counter. If there is no counts, then it returns an empty
         dictionary."""
         # entire copy
-        statistics_data = self._statistics_data.copy()
+        statistics_data = self._statistics._data.copy()
         # If self.statistics_data contains nothing of zone name, it
         # returns an empty dict.
         if self._perzone_prefix not in statistics_data:
             return statistics_data
         zones = statistics_data[self._perzone_prefix]
         # Start calculation for '_SERVER_' counts
-        zones_spec = isc.config.find_spec_part(self._statistics_spec,
+        zones_spec = isc.config.find_spec_part(self._statistics._spec,
                                                self._perzone_prefix)
         zones_attrs = zones_spec['item_default'][self._entire_server]
         zones_data = {}
