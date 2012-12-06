@@ -82,7 +82,7 @@ public:
     /// All events are replayed to their loggers (which should have
     /// other appenders when this is called.
     /// Once this method has been called, no more events can be
-    /// added trough calls to \c add(); if \c add() is called after flush(),
+    /// added through calls to \c add(); if \c add() is called after flush(),
     /// an exception will be raised.
     void flush();
 
