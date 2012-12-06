@@ -109,9 +109,6 @@ VERBOSE_MODE = False
 XFROUT_DNS_HEADER_SIZE = 12     # protocol constant
 XFROUT_MAX_MESSAGE_SIZE = 65535 # ditto
 
-# setup statistics counter
-Counter.init(SPECFILE_LOCATION)
-
 # borrowed from xfrin.py @ #1298.  We should eventually unify it.
 def format_zone_str(zone_name, zone_class):
     """Helper function to format a zone name and class as a string of
