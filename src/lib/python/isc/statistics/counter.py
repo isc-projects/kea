@@ -139,36 +139,6 @@ def _stop_timer(start_time, element, spec, identifier):
                     delta.microseconds * 1E-6, 6)
     _set_counter(element, spec, identifier, sec)
 
-class Counter():
-    """A counter class"""
-    # container of a counter object
-    _COUNTER = None
-
-    @classmethod
-    def init(cls, spec_file_name):
-        """A creator method for a counter class. It creates a counter
-        object by the module name of the given spec file. An argument is a
-        specification file name."""
-        if isinstance(cls._COUNTER, _Counter):
-            # already loaded
-            return cls._COUNTER
-        # create an instance once
-        cls._COUNTER = _Counter(spec_file_name)
-        # set methods in Counter
-        for (k, v) in cls._COUNTER._to_global.items():
-            setattr(Counter, k, v)
-        return cls._COUNTER
-
-    # These method are dummies for isc.notify.notify_out.
-    @staticmethod
-    def inc_notifyoutv4(arg):
-        """An empty method to be disclosed"""
-        pass
-    @staticmethod
-    def inc_notifyoutv6(arg):
-        """An empty method to be disclosed"""
-        pass
-
 class _Counter():
     """A module for holding all statistics counters of modules. The
     counter numbers can be accessed by the accesseers defined
