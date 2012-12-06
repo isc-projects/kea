@@ -125,14 +125,8 @@ class TestBasicMethods(unittest.TestCase):
         """ use Thread"""
         number = 3    # number of the threads
         cycle = 10000 # number of counting per thread
-        statistics_data = {}
         counter_name = "counter"
         timer_name = "seconds"
-        statistics_spec = \
-            isc.config.module_spec_from_file(self.TEST_SPECFILE_LOCATION)\
-            .get_statistics_spec()
-        self.counter._statistics_data = statistics_data
-        self.counter._statistics_spec = statistics_spec
         start_time = counter._start_timer()
         start_functor(number, cycle, self.counter._incrementer,
                       counter_name)
