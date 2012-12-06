@@ -193,30 +193,10 @@ class _Counter():
     _perzone_prefix = 'zones'
 
     def __init__(self, spec_file_name):
-        # for exporting to the global scope
-        self._to_global = {}
-        self._statistics_spec = {}
-        self._statistics_data = {}
         self._zones_item_list = []
-        self._xfrrunning_names = []
-        self._unixsocket_names = []
         self._start_time = {}
         self._disabled = False
         self._rlock = threading.RLock()
-        self._module_spec = \
-            isc.config.module_spec_from_file(spec_file_name)
-        self._statistics_spec = \
-            self._module_spec.get_statistics_spec()
-        self._parse_stats_spec()
-        self._create_perzone_functors()
-        self._create_perzone_timer_functors()
-        self._create_xfrrunning_functors()
-        self._create_unixsocket_functors()
-        self._create_ipsocket_functors()
-        self._to_global['clear_counters'] = self.clear_counters
-        self._to_global['disable'] = self.disable
-        self._to_global['enable'] = self.enable
-        self._to_global['dump_statistics'] = self.dump_statistics
         if self._perzone_prefix in \
                 isc.config.spec_name_list(self._statistics_spec):
             self._zones_item_list = isc.config.spec_name_list(
