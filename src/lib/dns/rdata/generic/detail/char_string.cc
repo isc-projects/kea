@@ -86,7 +86,7 @@ strToCharString(const MasterToken::StringRegion& str_region,
     }
     if (result.size() > MAX_CHARSTRING_LEN + 1) { // '+ 1' due to the len field
         isc_throw(CharStringTooLong, "character-string is too long: " <<
-                  result.size() << " bytes");
+                  (result.size() - 1) << "(+1) characters");
     }
     result[0] = result.size() - 1;
 }
