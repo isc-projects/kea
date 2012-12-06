@@ -1569,6 +1569,10 @@ TEST_F(InMemoryZoneFinderNSEC3Test, RRSIGOnly) {
 // \brief testcase for #2503 (Problem in inmem NSEC3 denial of existence
 // handling)
 TEST_F(InMemoryZoneFinderNSEC3Test, findNSEC3MissingOrigin) {
+     // Set back the default hash calculator.
+     DefaultNSEC3HashCreator creator;
+     setNSEC3HashCreator(&creator);
+
      shared_ptr<ZoneTableSegment> ztable_segment(
           new ZoneTableSegmentTest(class_, mem_sgmt_));
      InMemoryClient client(ztable_segment, class_);
