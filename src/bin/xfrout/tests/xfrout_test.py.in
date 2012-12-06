@@ -1217,7 +1217,6 @@ class MyUnixSockServer(UnixSockServer):
         self._common_init()
         self._cc = MyCCSession()
         self.update_config_data(self._cc.get_full_config())
-        self._counters = {}
         self._counter = xfrout.Counter(xfrout.SPECFILE_LOCATION)
 
 class TestUnixSockServer(unittest.TestCase):
