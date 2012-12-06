@@ -86,30 +86,27 @@ TEST(IOAddressTest, fromBytes) {
     EXPECT_EQ(addr.toText(), IOAddress("192.0.2.3").toText());
 }
 
-TEST(IOAddressTest, toBytes) {
-
+TEST(IOAddressTest, toBytesV4) {
     // Address and network byte-order representation of the address.
     const char* V4STRING = "192.0.2.1";
     uint8_t V4[] = {0xc0, 0x00, 0x02, 0x01};
 
+    std::vector<uint8_t> actual = IOAddress(V4STRING).toBytes();
+    ASSERT_EQ(sizeof(V4), actual.size());
+    EXPECT_TRUE(std::equal(actual.begin(), actual.end(), V4));
+}
+
+TEST(IOAddressTest, toBytesV6) {
+    // Address and network byte-order representation of the address.
     const char* V6STRING = "2001:db8:1::dead:beef";
     uint8_t V6[] = {
         0x20, 0x01, 0x0d, 0xb8, 0x00, 0x01, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef 
     };
 
-
-    // Do the V4 check.
-    IOAddress v4address(V4STRING);
-    std::vector<uint8_t> v4bytes = v4address.toBytes();
-    EXPECT_EQ(sizeof(V4), v4bytes.size());
-    EXPECT_TRUE(std::equal(v4bytes.begin(), v4bytes.end(), &V4[0]));
-
-    // Do the same for V6.
-    IOAddress v6address(V6STRING);
-    std::vector<uint8_t> v6bytes = v6address.toBytes();
-    EXPECT_EQ(sizeof(V6), v6bytes.size());
-    EXPECT_TRUE(std::equal(v6bytes.begin(), v6bytes.end(), &V6[0]));
+    std::vector<uint8_t> actual = IOAddress(V6STRING).toBytes();
+    ASSERT_EQ(sizeof(V6), actual.size());
+    EXPECT_TRUE(std::equal(actual.begin(), actual.end(), V6));
 }
 
 TEST(IOAddressTest, isV4) {
