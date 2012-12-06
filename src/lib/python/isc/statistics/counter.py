@@ -245,9 +245,12 @@ class _Counter():
                          self._statistics._spec,
                          identifier, step)
 
-    def _getter(self, identifier):
-        """A getter method for perzone counters"""
-        return _get_counter(self._statistics_data, identifier)
+    def get(self, *args):
+        """A getter method for counters. It returns the current number
+        of the specified counter.  isc.cc.data.DataNotFoundError is
+        raised when the counter doesn't have a number yet."""
+        identifier = '/'.join(args)
+        return _get_counter(self._statistics._data, identifier)
 
     def _starttimer(self, identifier):
         """Sets the value returned from _start_timer() as a value of
