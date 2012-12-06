@@ -248,6 +248,10 @@ class Counter():
         self._disabled = False
         self._rlock = threading.RLock()
         if not spec_file_name: return
+        # change the default statistics spec
+        self._statistics._spec = \
+            isc.config.module_spec_from_file(spec_file_name).\
+            get_statistics_spec()
         if self._perzone_prefix in \
                 isc.config.spec_name_list(self._statistics_spec):
             self._zones_item_list = isc.config.spec_name_list(
