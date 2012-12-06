@@ -56,10 +56,13 @@ class TestBasicMethods(unittest.TestCase):
         self.counter.clear_counters()
 
     def test_clear_counters(self):
-        self.counter._statistics_data = {'counter': 1}
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.counter.get, 'counter')
+        self.counter.inc('counter')
+        self.assertEqual(self.counter.get('counter'), 1)
         self.counter.clear_counters()
-        self.assertEqual(self.counter._statistics_data,
-                         {})
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.counter.get, 'counter')
 
     def test_enablediable(self):
         self.assertFalse(self.counter._disabled)
