@@ -93,6 +93,7 @@ public:
     /// \param rdata An NSEC3PARAM RDATA that specifies the NSEC3 parameters
     /// to be stored.
     static NSEC3Data* create(util::MemorySegment& mem_sgmt,
+                             const dns::Name& zone_name,
                              const dns::rdata::generic::NSEC3PARAM& rdata);
 
     /// \brief Allocate and construct \c NSEC3Data from NSEC3 Rdata.
@@ -107,6 +108,7 @@ public:
     /// \param rdata An NSEC3 RDATA that specifies the NSEC3 parameters
     /// to be stored.
     static NSEC3Data* create(util::MemorySegment& mem_sgmt,
+                             const dns::Name& zone_name,
                              const dns::rdata::generic::NSEC3& rdata);
 
     /// \brief Destruct and deallocate \c NSEC3Data.
@@ -193,8 +195,10 @@ public:
 
 private:
     // Common subroutine for the public versions of create().
-    static NSEC3Data* create(util::MemorySegment& mem_sgmt, uint8_t hashalg,
-                             uint8_t flags, uint16_t iterations,
+    static NSEC3Data* create(util::MemorySegment& mem_sgmt,
+                             const dns::Name& zone_name,
+                             uint8_t hashalg, uint8_t flags,
+                             uint16_t iterations,
                              const std::vector<uint8_t>& salt);
 
     /// \brief The constructor.
