@@ -1,0 +1,10 @@
+ok.ok.ok.ok.dnssec.tjeb.nl.	600	IN	SOA	ns2.tjeb.nl. tjeb.tjeb.nl. 2012120601 28800 7200 604800 18000
+ok.ok.ok.ok.dnssec.tjeb.nl.	600	IN	A	178.18.82.80
+ok.ok.ok.ok.dnssec.tjeb.nl.	3600	IN	DNSKEY	256 3 5 AwEAAag7J/qxkLI1keftNSKe0fqa2mU1GaeZGQoOSgVZvJAMh6LK9F1NMmWP2MeaeJvfTkmZs2UggGnFjkb7QQygrZnfxxCOVu5fG8x3Na5Z7jAdMgVfuJ1FTmsi2Bj4W/+b3fuvv/eVGqlEsFdth+sGA+BKH9mdBwmt+aXJf9gohXpx ;{id = 34791 (zsk), size = 1024b}
+ok.ok.ok.ok.dnssec.tjeb.nl.	600	IN	NS	ns2.tjeb.nl.
+ok.ok.ok.ok.dnssec.tjeb.nl.	18000	IN	NSEC	ok.ok.ok.ok.dnssec.tjeb.nl. A NS SOA RRSIG NSEC DNSKEY
+ok.ok.ok.ok.dnssec.tjeb.nl.	600	IN	RRSIG	SOA 5 7 600 20200101000000 20120627091929 34791 ok.ok.ok.ok.dnssec.tjeb.nl. Z+LjS0NtrUkOje1PZht8a3TylxEKabDltJSye3NO/n6tE9268S5EqQ6r0nZ0hO78c9r4lYxMlvnfyTAj/5rR/zdApCS0EnpQenVyvwagIAVdIcNqpZxr7i/tFmOvxyQK3NRhWqH83WhNwqRE1E4thUfNovtyscSLR+TOhuEBKlg=
+ok.ok.ok.ok.dnssec.tjeb.nl.	600	IN	RRSIG	A 5 7 600 20200101000000 20120627091929 34791 ok.ok.ok.ok.dnssec.tjeb.nl. oYbwX46pDyaTNIeZByyLnUVc4RNgFmGeUuJ4sn0aIqrX6UqfNJwJpZiCspcyBRBNIZye6ypVNFD9RUHesrELHjFOAustg86GFws1jeEoDbi4W6wmeNQqiUfnyaqME3rHD9WE7I99Nqiyp8ZEBseem/SIOCsEXxPLrhoAL+Fa1+s=
+ok.ok.ok.ok.dnssec.tjeb.nl.	600	IN	RRSIG	NS 5 7 600 20200101000000 20120627091929 34791 ok.ok.ok.ok.dnssec.tjeb.nl. KBRov1y79yN75feRo2Bv5B+UpmDAyEr/kTgWgL9dYtkuQXvT7Y1Lg5jhcFmyrAkpYud70i5Un2DEUtmnI2oUR7XUh1RDnMQZRgKkaDXNXj5D379hLxpD2jtN+A311ShReaM4laj44UiDzu0pjGtrDT7BY1c4Qb5XI0RLyI0VKSs=
+ok.ok.ok.ok.dnssec.tjeb.nl.	3600	IN	RRSIG	DNSKEY 5 7 3600 20200101000000 20120627091929 34791 ok.ok.ok.ok.dnssec.tjeb.nl. NriwgSl8QskWiQMlIPzn3WvWQwfQDy8pnJ4U2qlOjWFeJ4wH7DS/P5BDh9+JXjKamh5Bdy2umSf1uY1BeodSP+Ga4yKxNb1sigGbToYGDsbLP1NfPPq6uijl5nRhqBQAAzjCmyU9sm6GUr/CyOpSTTxtFjosXZQ1t1GFya6Tgho=
+ok.ok.ok.ok.dnssec.tjeb.nl.	18000	IN	RRSIG	NSEC 5 7 18000 20200101000000 20120627091929 34791 ok.ok.ok.ok.dnssec.tjeb.nl. ijT2etFxkmNLMdbugWsIrnPuJqxdPPO/ilWUb0ZapcuwtqV4mTZCalUlb3KSpcczHPfyClF7WvMEKdluLrX55TPKEBxx1AIdOduhwSTxCxgZpOp4LFIR3rg5hTH9bupEUvbFPWU8RX5oX0GLE0V/EpfNYpHOtvvG3rnegwynML4=
