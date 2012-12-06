@@ -340,16 +340,47 @@ LibDHCP::initStdOptionDefs6() {
         // Some of the options comprise a "record" of data fields so
         // we have to add those fields here.
         switch(params[i].code) {
-        case D6O_IA_NA:
-        case D6O_IA_PD:
-            for (int j = 0; j < 3; ++j) {
-                definition->addRecordField(OPT_UINT32_TYPE);
-            }
+        case D6O_CLIENT_FQDN:
+            definition->addRecordField(OPT_UINT8_TYPE);
+            definition->addRecordField(OPT_FQDN_TYPE);
+            break;
+        case D6O_GEOCONF_CIVIC:
+            definition->addRecordField(OPT_UINT8_TYPE);
+            definition->addRecordField(OPT_UINT16_TYPE);
+            definition->addRecordField(OPT_BINARY_TYPE);
             break;
         case D6O_IAADDR:
             definition->addRecordField(OPT_IPV6_ADDRESS_TYPE);
             definition->addRecordField(OPT_UINT32_TYPE);
             definition->addRecordField(OPT_UINT32_TYPE);
+            break;
+        case D6O_IA_NA:
+            definition->addRecordField(OPT_UINT32_TYPE);
+            definition->addRecordField(OPT_UINT32_TYPE);
+            definition->addRecordField(OPT_UINT32_TYPE);
+            break;
+        case D6O_IA_PD:
+            definition->addRecordField(OPT_UINT32_TYPE);
+            definition->addRecordField(OPT_UINT32_TYPE);
+            definition->addRecordField(OPT_UINT32_TYPE);
+            break;
+        case D6O_IAPREFIX:
+            definition->addRecordField(OPT_UINT32_TYPE);
+            definition->addRecordField(OPT_UINT32_TYPE);
+            definition->addRecordField(OPT_UINT8_TYPE);
+            definition->addRecordField(OPT_BINARY_TYPE);
+            break;
+        case D6O_LQ_QUERY:
+            definition->addRecordField(OPT_UINT8_TYPE);
+            definition->addRecordField(OPT_IPV6_ADDRESS_TYPE);
+            break;
+        case D6O_LQ_RELAY_DATA:
+            definition->addRecordField(OPT_IPV6_ADDRESS_TYPE);
+            definition->addRecordField(OPT_BINARY_TYPE);
+            break;
+        case D6O_REMOTE_ID:
+            definition->addRecordField(OPT_UINT32_TYPE);
+            definition->addRecordField(OPT_BINARY_TYPE);
             break;
         case D6O_STATUS_CODE:
             definition->addRecordField(OPT_UINT16_TYPE);
@@ -361,33 +392,6 @@ LibDHCP::initStdOptionDefs6() {
             break;
         case D6O_VENDOR_OPTS:
             definition->addRecordField(OPT_UINT32_TYPE);
-            definition->addRecordField(OPT_BINARY_TYPE);
-            break;
-        case D6O_IAPREFIX:
-            definition->addRecordField(OPT_UINT32_TYPE);
-            definition->addRecordField(OPT_UINT32_TYPE);
-            definition->addRecordField(OPT_UINT8_TYPE);
-            definition->addRecordField(OPT_BINARY_TYPE);
-            break;
-        case D6O_GEOCONF_CIVIC:
-            definition->addRecordField(OPT_UINT8_TYPE);
-            definition->addRecordField(OPT_UINT16_TYPE);
-            definition->addRecordField(OPT_BINARY_TYPE);
-            break;
-        case D6O_REMOTE_ID:
-            definition->addRecordField(OPT_UINT32_TYPE);
-            definition->addRecordField(OPT_BINARY_TYPE);
-            break;
-        case D6O_CLIENT_FQDN:
-            definition->addRecordField(OPT_UINT8_TYPE);
-            definition->addRecordField(OPT_FQDN_TYPE);
-            break;
-        case D6O_LQ_QUERY:
-            definition->addRecordField(OPT_UINT8_TYPE);
-            definition->addRecordField(OPT_IPV6_ADDRESS_TYPE);
-            break;
-        case D6O_LQ_RELAY_DATA:
-            definition->addRecordField(OPT_IPV6_ADDRESS_TYPE);
             definition->addRecordField(OPT_BINARY_TYPE);
             break;
         default:
