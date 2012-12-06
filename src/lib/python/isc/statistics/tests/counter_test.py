@@ -167,8 +167,16 @@ class BaseTestCounter():
         # Idempotency check
         self.assertEqual(self.counter.dump_statistics(),
                          self._statistics_data)
-        self.assertTrue(self._module_spec.validate_statistics(
-                False, self._statistics_data))
+        if self.TEST_SPECFILE_LOCATION:
+            self.assertTrue(isc.config.module_spec_from_file(
+                    self.TEST_SPECFILE_LOCATION).validate_statistics(
+                    False, self._statistics_data))
+        else:
+            self.assertTrue(isc.config.ModuleSpec(
+                    {'module_name': 'Foo',
+                     'statistics': self.counter._statistics._spec}
+                    ).validate_statistics(
+                    False, self._statistics_data))
 
     def test_perzone_counters(self):
         # for per-zone counters
