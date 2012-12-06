@@ -170,6 +170,100 @@ class BaseTestCounter():
         self.assertTrue(self._module_spec.validate_statistics(
                 False, self._statistics_data))
 
+    def test_perzone_counters(self):
+        # for per-zone counters
+        for name in self.counter._zones_item_list:
+            args = (self._perzone_prefix, TEST_ZONE_NAME_STR, name)
+            if name.find('time_to_') == 0:
+                self.counter.start(*args)
+                self.counter.stop(*args)
+                self.assertGreater(self.counter.get(*args), 0)
+                sec = self.counter.get(*args)
+                for zone_str in (self._entire_server, TEST_ZONE_NAME_STR):
+                    isc.cc.data.set(self._statistics_data,
+                                    '%s/%s/%s' % (args[0], zone_str, name), sec)
+                # twice exec stopper, then second is not changed
+                self.counter.stop(*args)
+                self.assertEqual(self.counter.get(*args), sec)
+            else:
+                self.counter.inc(*args)
+                self.assertEqual(self.counter.get(*args), 1)
+                # checks disable/enable
+                self.counter.disable()
+                self.counter.inc(*args)
+                self.assertEqual(self.counter.get(*args), 1)
+                self.counter.enable()
+                self.counter.inc(*args)
+                self.assertEqual(self.counter.get(*args), 2)
+                for zone_str in (self._entire_server, TEST_ZONE_NAME_STR):
+                    isc.cc.data.set(self._statistics_data,
+                                    '%s/%s/%s' % (args[0], zone_str, name), 2)
+        self.check_dump_statistics()
+
+    def test_xfrrunning_counters(self):
+        # for counters of xfer running
+        _suffix = 'xfr_running'
+        _xfrrunning_names = \
+            isc.config.spec_name_list(self.counter._statistics._spec,
+                                      "", True)
+        for name in _xfrrunning_names:
+            if name.find(_suffix) != 1: continue
+            args = name.split('/')
+            self.counter.inc(*args)
+            self.assertEqual(self.counter.get(*args), 1)
+            self.counter.dec(*args)
+            self.assertEqual(self.counter.get(*args), 0)
+            # checks disable/enable
+            self.counter.disable()
+            self.counter.inc(*args)
+            self.assertEqual(self.counter.get(*args), 0)
+            self.counter.enable()
+            self.counter.inc(*args)
+            self.assertEqual(self.counter.get(*args), 1)
+            self.counter.disable()
+            self.counter.dec(*args)
+            self.assertEqual(self.counter.get(*args), 1)
+            self.counter.enable()
+            self.counter.dec(*args)
+            self.assertEqual(self.counter.get(*args), 0)
+            self._statistics_data[name] = 0
+        self.check_dump_statistics()
+
+    def test_socket_counters(self):
+        # for ipsocket/unixsocket counters
+        _prefix = 'socket/'
+        _socket_names = \
+            isc.config.spec_name_list(self.counter._statistics._spec,
+                                      "", True)
+        for name in _socket_names:
+            if name.find(_prefix) != 0: continue
+            args = name.split('/')
+            self.counter.inc(*args)
+            self.assertEqual(self.counter.get(*args), 1)
+            # checks disable/enable
+            self.counter.disable()
+            self.counter.inc(*args)
+            self.assertEqual(self.counter.get(*args), 1)
+            self.counter.enable()
+            self.counter.inc(*args)
+            self.assertEqual(self.counter.get(*args), 2)
+            isc.cc.data.set(
+                self._statistics_data, '/'.join(args), 2)
+        self.check_dump_statistics()
+
+    def test_undefined_item(self):
+        # test DataNotFoundError raising when specifying item defined
+        # in the specfile
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.counter.inc, '__undefined__')
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.counter.dec, '__undefined__')
+        self.counter.start('__undefined__')
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.counter.stop, '__undefined__')
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.counter.get, '__undefined__')
+
 class TestCounter1(unittest.TestCase, BaseTestCounter):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
     def setUp(self):
