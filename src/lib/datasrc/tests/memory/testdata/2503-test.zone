@@ -1,0 +1,12 @@
+ok.ok.ok.ok.nsec3.tjeb.nl.	600	IN	SOA	ns2.tjeb.nl. tjeb.tjeb.nl. 2012120602 28800 7200 604800 18000
+ok.ok.ok.ok.nsec3.tjeb.nl.	600	IN	A	178.18.82.80
+ok.ok.ok.ok.nsec3.tjeb.nl.	3600	IN	DNSKEY	256 3 7 AwEAAcVaFlRylmfW8CiGTWpSvom6cxuqsEJeteXR+YrCrCuriTu8P6ou/43/db9ooybB62JuREvoosmjtf0i7tZIAUFh87c1+3JTdra+W4WcCNYNEZW1I41J/OjMEOwKVxH2V1GgZGThrNgvZj7xqeusG2fP0DScDO3/gBr9PJGi9JTD ;{id = 56765 (zsk), size = 1024b}
+ok.ok.ok.ok.nsec3.tjeb.nl.	600	IN	NS	ns2.tjeb.nl.
+ok.ok.ok.ok.nsec3.tjeb.nl.	3600	IN	NSEC3PARAM	1 0 5 beef
+ok.ok.ok.ok.nsec3.tjeb.nl.	600	IN	RRSIG		SOA 7 7 600 20150101000000 20110520094818 56765 ok.ok.ok.ok.nsec3.tjeb.nl. S7kx8CgkvczbZzJRzG9JiUa5JdEwPdJCniVPcCqUfQVbF6Lfe/iPbLBBguWZJDcPNCm1txvzz8tuYf0z2dziAxQefWPnh7Y1ABZSft1X19L9kz6QGcsxcAvw039t3aX8fyTmiAU1nUthj5u6UdUqGVdxla4RdpipfN2zXNAJ64E=
+ok.ok.ok.ok.nsec3.tjeb.nl.	600	IN	RRSIG		A 7 7 600 20150101000000 20110520094818 56765 ok.ok.ok.ok.nsec3.tjeb.nl. TrBhFbKGkp427sPnhtT9andQlnfKjY9DE8U++rdbXfY30aKssN/Mb/M0HK+RBlBDUsL9YbkG6XU345zkIWBIqxHBf0wJuVd3vYggDikyNhrtGtS0sJCHKrX/Im5gMVWeN6m47Mp8LWK2yFJeOdGEn5BLfyhnPpYO4/te52FyboI=
+ok.ok.ok.ok.nsec3.tjeb.nl.	600	IN	RRSIG		NS 7 7 600 20150101000000 20110520094818 56765 ok.ok.ok.ok.nsec3.tjeb.nl. YcTwEpjPxxDyM+d0hG3pfYavfbOKFxUqY0jyZ3dcns5uEelmgi/7D5yGbE8Dq0OzWFyR5sjBf4+7WGqNJwY+fSmbXOzaqfmVMtSC3R068GDd6NrXs4WfrjfYOeajwCuseB3L89fofy/7EfJbcQVA7JUEBjPBH2RXu8dgXNuLghk=
+ok.ok.ok.ok.nsec3.tjeb.nl.	3600	IN	RRSIG		DNSKEY 7 7 3600 20150101000000 20110520094818 56765 ok.ok.ok.ok.nsec3.tjeb.nl. ZcJ1DpuiJfisbYu/24q1EC1IwP6j0TDPcxFMNHUeU7m0N0lAgk2S0tM//qhMPkBygN3VgHa9yhnxhIvct3amBxTZh9VcFz66vMmzCuEpWPB3aHRPIhltUGDNGi8H6UtUmX/RKuX23WloaG9Wnh8FBX0RJKkW6R3JLgWD4EJkF78=
+ok.ok.ok.ok.nsec3.tjeb.nl.	3600	IN	RRSIG		NSEC3PARAM 7 7 3600 20150101000000 20110520094818 56765 ok.ok.ok.ok.nsec3.tjeb.nl. QhxpZzlG8/NUvZXzgGOzKeJCir+58m/rlZn3IARO54XXtzfd6fNSJHT+SMpD2PdzonblqhUqbqxucQNpjuVxIocIUIAcCj2F0K1oxxknIFr/j+XIaB4plsrRH7yPUYnym6xAUMcQRxob5FjYYc2vXjHRHF8M0qeEjyrNP8m7keU=
+tv3jp54nve7jfnhvba54uc031shjv2d3.ok.ok.ok.ok.nsec3.tjeb.nl.	18000	   IN  NSEC3		   1 0 5 beef  tv3jp54nve7jfnhvba54uc031shjv2d3 A NS SOA RRSIG DNSKEY NSEC3PARAM
+tv3jp54nve7jfnhvba54uc031shjv2d3.ok.ok.ok.ok.nsec3.tjeb.nl.	18000	   IN  RRSIG		   NSEC3 7 8 18000 20150101000000 20110520094818 56765 ok.ok.ok.ok.nsec3.tjeb.nl. p7WlTLC3CatciKMkDNvXeKCXCNHstR2c/Mu62EXBHL1jrNuSx1S8crOGYFzELNtSA7paTO6/Uc8U7xRdf3IUb517obQCEVrpPyp4YTxlg8YwgAe5azklW11aYkW4E/nqsXUQnWieiuEWwTPYdVZLnrnu7NxH+IA+uGHHP689xPY=
