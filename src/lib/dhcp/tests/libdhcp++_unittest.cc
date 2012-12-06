@@ -69,8 +69,8 @@ public:
                              const std::type_info& expected_type) {
         // Get all option definitions, we will use them to extract
         // the definition for a particular option code.
-        // We don't have to initialize option deinitions here because they
-        // are initialized in the class'es constructor.
+        // We don't have to initialize option definitions here because they
+        // are initialized in the class's constructor.
         OptionDefContainer options = LibDHCP::getOptionDefs(Option::V6);
         // Get the container index #1. This one allows for searching
         // option definitions using option code.

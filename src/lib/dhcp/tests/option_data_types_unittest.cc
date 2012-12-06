@@ -216,6 +216,9 @@ TEST_F(OptionDataTypesTest, writeBool) {
     // 'true' value being written.
     ASSERT_NO_THROW(OptionDataTypeUtil::writeBool(false, buf));
     ASSERT_EQ(2, buf.size());
+    // Check that the first value has not changed.
+    EXPECT_EQ(buf[0], 1);
+    // Check the the second value is correct.
     EXPECT_EQ(buf[1], 0);
 }
 
@@ -330,17 +333,11 @@ TEST_F(OptionDataTypesTest, writeInt) {
     // integer value. Eventually the buffer holds all values and should
     // match with the reference buffer.
     std::vector<uint8_t> buf;
-    // Write uint8_t
     ASSERT_NO_THROW(OptionDataTypeUtil::writeInt<uint8_t>(127, buf));
-    // Write uint16_t
     ASSERT_NO_THROW(OptionDataTypeUtil::writeInt<uint16_t>(1023, buf));
-    // Write uint32_t
     ASSERT_NO_THROW(OptionDataTypeUtil::writeInt<uint32_t>(4096, buf));
-    // Write int32_t
     ASSERT_NO_THROW(OptionDataTypeUtil::writeInt<int32_t>(-1024, buf));
-    // Write int16_t
     ASSERT_NO_THROW(OptionDataTypeUtil::writeInt<int16_t>(512, buf));
-    // Write int8_t
     ASSERT_NO_THROW(OptionDataTypeUtil::writeInt<int8_t>(-127, buf));
 
     // Make sure that the buffer has the same size as the reference
@@ -372,10 +369,8 @@ TEST_F(OptionDataTypesTest, readFqdn) {
 
     // Read the buffer as FQDN and verify its correctness.
     std::string fqdn;
-    size_t len = 0;
-    EXPECT_NO_THROW(fqdn = OptionDataTypeUtil::readFqdn(buf, len));
+    EXPECT_NO_THROW(fqdn = OptionDataTypeUtil::readFqdn(buf));
     EXPECT_EQ("mydomain.example.com.", fqdn);
-    EXPECT_EQ(len, buf.size());
 
     // By resizing the buffer we simulate truncation. The first
     // length field (8) indicate that the first label's size is
@@ -383,14 +378,14 @@ TEST_F(OptionDataTypesTest, readFqdn) {
     // fails.
     buf.resize(5);
     EXPECT_THROW(
-        OptionDataTypeUtil::readFqdn(buf, len),
+        OptionDataTypeUtil::readFqdn(buf),
         isc::dhcp::BadDataTypeCast
     );
 
     // Another special case: provide an empty buffer.
     buf.clear();
     EXPECT_THROW(
-        OptionDataTypeUtil::readFqdn(buf, len),
+        OptionDataTypeUtil::readFqdn(buf),
         isc::dhcp::BadDataTypeCast
     );
 }

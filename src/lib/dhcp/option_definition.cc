@@ -90,7 +90,7 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
 
         case OPT_UINT8_TYPE:
             return (array_type_ ? factoryGeneric(u, type, begin, end) :
-                    factoryInteger<uint8_t>(u, type, begin, end));;
+                    factoryInteger<uint8_t>(u, type, begin, end));
 
         case OPT_INT8_TYPE:
             return (array_type_ ? factoryGeneric(u, type, begin, end) :
@@ -113,27 +113,44 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                     factoryInteger<int32_t>(u, type, begin, end));
 
         case OPT_IPV4_ADDRESS_TYPE:
+            // If definition specifies that an option is an array
+            // of IPv4 addresses we return an instance of specialized
+            // class (OptionAddrLst4). For non-array types there is no
+            // specialized class yet implemented so we drop through
+            // to return an instance of OptionCustom.
             if (array_type_) {
                 return (factoryAddrList4(type, begin, end));
             }
             break;
 
         case OPT_IPV6_ADDRESS_TYPE:
+            // Handle array type only here (see comments for
+            // OPT_IPV4_ADDRESS_TYPE case).
             if (array_type_) {
                 return (factoryAddrList6(type, begin, end));
             }
             break;
 
         default:
-            if (u == Option::V6 &&
-                (code_ == D6O_IA_NA || code_ == D6O_IA_PD) &&
-                haveIA6Format()) {
-                return (factoryIA6(type, begin, end));
+            if (u == Option::V6) {
+                if ((code_ == D6O_IA_NA || code_ == D6O_IA_PD) &&
+                    haveIA6Format()) {
+                    // Return Option6IA instance for IA_PD and IA_NA option
+                    // types only. We don't want to return Option6IA for other
+                    // options that comprise 3 UINT32 data fields because
+                    // Option6IA accessors' and modifiers' names are derived
+                    // from the IA_NA and IA_PD options' field names: IAID,
+                    // T1, T2. Using functions such as getIAID, getT1 etc. for
+                    // options other than IA_NA and IA_PD would be bad practice
+                    // and cause confusion.
+                    return (factoryIA6(type, begin, end));
 
-            } else if (u == Option::V6 &&
-                       code_ == D6O_IAADDR &&
-                       haveIAAddr6Format()) {
-                return (factoryIAAddr6(type, begin, end));
+                } else if (code_ == D6O_IAADDR && haveIAAddr6Format()) {
+                    // Rerurn Option6IAAddr option instance for the IAADDR
+                    // option only for the same reasons as described in
+                    // for IA_NA and IA_PD above.
+                    return (factoryIAAddr6(type, begin, end));
+                }
             }
         }
         return (OptionPtr(new OptionCustom(*this, u, OptionBuffer(begin, end))));
