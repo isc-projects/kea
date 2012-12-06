@@ -279,7 +279,7 @@ class TestNotifyOut(unittest.TestCase):
         self.assertTrue(ret)
         self.assertEqual(socket.AF_INET, example_com_info.sock_family)
         self.assertEqual(self._notify._counter.get(
-                'zones', 'example.net.', 'notifyoutv4'), 0)
+                'zones', 'example.net.', 'notifyoutv4'), 1)
         self.assertEqual(self._notify._counter.get(
                 'zones', 'example.net.', 'notifyoutv6'), 0)
 
@@ -300,7 +300,7 @@ class TestNotifyOut(unittest.TestCase):
         self.assertEqual(self._notify._counter.get(
                 'zones', 'example.net.', 'notifyoutv4'), 0)
         self.assertEqual(self._notify._counter.get(
-                'zones', 'example.net.', 'notifyoutv6'), 0)
+                'zones', 'example.net.', 'notifyoutv6'), 1)
 
     def test_send_notify_message_with_bogus_address(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
