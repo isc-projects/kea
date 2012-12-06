@@ -1,3 +1,9 @@
+4XX.	[func]		tomek
+	b10-dhcp4: DHCPv4 server is now able to parse configuration. It
+	is possible to specify IPv4 subnets with dynamic pools within
+	them. Although configuration is accepted, it is not used yet. This
+	will be implemented shortly.
+
 492.	[func]		tomek
 	libdhcpsrv: The DHCP Configuration Manager is now able to store
 	information about IPv4 subnets and pools. It is still not possible
