@@ -1727,7 +1727,6 @@ class TestBossComponents(unittest.TestCase):
         def _my_sleep(nsec):
             global attempts
             attempts += 1
-            return tmp_sleep(nsec)
         time.sleep = _my_sleep
 
         thrown = False
