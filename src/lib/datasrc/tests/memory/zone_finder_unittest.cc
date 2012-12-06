@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "memory_segment_test.h"
+#include "zone_table_segment_test.h"
 
 // NOTE: this faked_nsec3 inclusion (and all related code below)
 // was ported during #2109 for the convenience of implementing #2218
@@ -25,7 +26,10 @@
 #include <datasrc/memory/zone_finder.h>
 #include <datasrc/memory/zone_data_updater.h>
 #include <datasrc/memory/rdata_serialization.h>
+#include <datasrc/memory/zone_table_segment.h>
+#include <datasrc/memory/memory_client.h>
 #include <datasrc/data_source.h>
+#include <datasrc/client.h>
 #include <testutils/dnsmessage_test.h>
 
 #include <boost/foreach.hpp>
@@ -1424,6 +1428,24 @@ TEST_F(InMemoryZoneFinderTest, findOrphanRRSIG) {
     addToZoneData(ns_rrset);
     findTest(Name("www.nodname.example.org"), RRType::A(),
              ZoneFinder::DELEGATION, true, ns_rrset);
+}
+
+// \brief testcase for #2504 (Problem in inmem NSEC denial of existence
+// handling)
+TEST_F(InMemoryZoneFinderTest, NSECNonExistentTest) {
+    shared_ptr<ZoneTableSegment> ztable_segment(
+         new ZoneTableSegmentTest(class_, mem_sgmt_));
+    InMemoryClient client(ztable_segment, class_);
+    Name name("ok.ok.ok.ok.dnssec.tjeb.nl.");
+
+    client.load(name, TEST_DATA_DIR "/2504-test.zone");
+    DataSourceClient::FindResult result(client.findZone(name));
+
+    // Check for a non-existing name
+    Name search_name("nonexist.ok.ok.ok.ok.dnssec.tjeb.nl.");
+    ZoneFinderContextPtr find_result(
+        result.zone_finder->find(search_name,
+                                 RRType::A(), ZoneFinder::FIND_DNSSEC));
 }
 
 /// \brief NSEC3 specific tests fixture for the InMemoryZoneFinder class
