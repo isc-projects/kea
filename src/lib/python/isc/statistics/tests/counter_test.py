@@ -148,17 +148,10 @@ class TestBasicMethods(unittest.TestCase):
 class BaseTestCounter():
 
     def setUp(self):
-        self._module_spec = isc.config.module_spec_from_file(
-            self.TEST_SPECFILE_LOCATION)
         self._statistics_data = {}
         self.counter = counter.Counter(self.TEST_SPECFILE_LOCATION)
         self._entire_server    = self.counter._entire_server
         self._perzone_prefix   = self.counter._perzone_prefix
-        self._xfrrunning_names = self.counter._xfrrunning_names
-        self._unixsocket_names = self.counter._unixsocket_names
-        self._ipsocket_names = self.counter._ipsocket_names
-        self._zones_item_list   = self.counter._zones_item_list
-        self._started = threading.Event()
 
     def tearDown(self):
         self.counter.clear_counters()
