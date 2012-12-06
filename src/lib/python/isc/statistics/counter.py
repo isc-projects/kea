@@ -231,11 +231,19 @@ class _Counter():
                          self._statistics_spec,
                          identifier, step)
 
-    def _decrementer(self, identifier, step=-1):
-        """A decrementer for axfr or ixfr running. Locks the
-        thread because it is considered to be invoked by a
-        multi-threading caller."""
-        self._incrementer(identifier, step)
+    def dec(self, *args):
+        """A decrementer for axfr or ixfr running. Locks the thread
+        because it is considered to be invoked by a multi-threading
+        caller. isc.cc.data.DataNotFoundError is raised when
+        decrementing the counter of the item undefined in the spec
+        file."""
+        identifier = '/'.join(args)
+        step = -1
+        if self._disabled: return
+        with self._rlock:
+            _inc_counter(self._statistics._data,
+                         self._statistics._spec,
+                         identifier, step)
 
     def _getter(self, identifier):
         """A getter method for perzone counters"""
