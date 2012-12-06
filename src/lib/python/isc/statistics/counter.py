@@ -139,7 +139,7 @@ def _stop_timer(start_time, element, spec, identifier):
                     delta.microseconds * 1E-6, 6)
     _set_counter(element, spec, identifier, sec)
 
-class _Counter():
+class Counter():
     """A module for holding all statistics counters of modules. The
     counter numbers can be accessed by the accesseers defined
     according to a spec file. In this class, the structure of per-zone
@@ -192,11 +192,12 @@ class _Counter():
     # zone names are contained under this dirname in the spec file.
     _perzone_prefix = 'zones'
 
-    def __init__(self, spec_file_name):
+    def __init__(self, spec_file_name=None):
         self._zones_item_list = []
         self._start_time = {}
         self._disabled = False
         self._rlock = threading.RLock()
+        if not spec_file_name: return
         if self._perzone_prefix in \
                 isc.config.spec_name_list(self._statistics_spec):
             self._zones_item_list = isc.config.spec_name_list(
