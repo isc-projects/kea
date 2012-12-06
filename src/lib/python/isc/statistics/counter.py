@@ -139,6 +139,54 @@ def _stop_timer(start_time, element, spec, identifier):
                     delta.microseconds * 1E-6, 6)
     _set_counter(element, spec, identifier, sec)
 
+class _Statistics():
+    """Statistics data set"""
+    # default statistics data
+    _data = {}
+    # default statistics spec used in case of the specfile omitted in
+    # Counter()
+    _spec = [
+      {
+        "item_name": "zones",
+        "item_type": "named_set",
+        "item_optional": False,
+        "item_default": {
+          "_SERVER_" : {
+            "notifyoutv4" : 0,
+            "notifyoutv6" : 0
+          }
+        },
+        "item_title": "Zone names",
+        "item_description": "Zone names",
+        "named_set_item_spec": {
+          "item_name": "zonename",
+          "item_type": "map",
+          "item_optional": False,
+          "item_default": {},
+          "item_title": "Zone name",
+          "item_description": "Zone name",
+          "map_item_spec": [
+            {
+              "item_name": "notifyoutv4",
+              "item_type": "integer",
+              "item_optional": False,
+              "item_default": 0,
+              "item_title": "IPv4 notifies",
+              "item_description": "Number of IPv4 notifies per zone name sent out"
+            },
+            {
+              "item_name": "notifyoutv6",
+              "item_type": "integer",
+              "item_optional": False,
+              "item_default": 0,
+              "item_title": "IPv6 notifies",
+              "item_description": "Number of IPv6 notifies per zone name sent out"
+            }
+          ]
+        }
+      }
+    ]
+
 class Counter():
     """A module for holding all statistics counters of modules. The
     counter numbers can be accessed by the accesseers defined
@@ -191,6 +239,8 @@ class Counter():
     _entire_server = '_SERVER_'
     # zone names are contained under this dirname in the spec file.
     _perzone_prefix = 'zones'
+    # default statistics data set
+    _statistics = _Statistics()
 
     def __init__(self, spec_file_name=None):
         self._zones_item_list = []
