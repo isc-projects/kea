@@ -247,32 +247,12 @@ class _Counter():
         self._to_global['disable'] = self.disable
         self._to_global['enable'] = self.enable
         self._to_global['dump_statistics'] = self.dump_statistics
-
-    def _parse_stats_spec(self):
-        """Gets each list of names on statistics spec"""
         if self._perzone_prefix in \
                 isc.config.spec_name_list(self._statistics_spec):
             self._zones_item_list = isc.config.spec_name_list(
                 isc.config.find_spec_part(
                     self._statistics_spec, self._perzone_prefix)\
                     ['named_set_item_spec']['map_item_spec'])
-        self._xfrrunning_names = [
-            n for n in isc.config.spec_name_list\
-                (self._statistics_spec) \
-                if n.find('xfr_running') == 1 \
-                or n.find('xfr_deferred') == 1 \
-                or n.find('soa_in_progress') == 0 ]
-        self._unixsocket_names = [ \
-            n.split('/')[-1] for n in \
-                isc.config.spec_name_list(
-                self._statistics_spec, "", True) \
-                if n.find('socket/unixdomain/') == 0 ]
-        self._ipsocket_names = [ \
-            (n.split('/')[-3], n.split('/')[-1]) for n in \
-                isc.config.spec_name_list(
-                self._statistics_spec, "", True) \
-                if n.find('socket/ipv4/tcp/') == 0 \
-                or n.find('socket/ipv6/tcp/') == 0 ]
 
     def clear_counters(self):
         """clears all statistics data"""
