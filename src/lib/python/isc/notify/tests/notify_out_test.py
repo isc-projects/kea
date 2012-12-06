@@ -112,7 +112,7 @@ class TestNotifyOut(unittest.TestCase):
         com_ch_info.notify_slaves.append(('1.1.1.1', 5353))
 
     def tearDown(self):
-        Counter.clear_counters()
+        self._notify._counter.clear_counters()
 
     def test_send_notify(self):
         notify_out._MAX_NOTIFY_NUM = 2
@@ -274,8 +274,10 @@ class TestNotifyOut(unittest.TestCase):
                                                     ('192.0.2.1', 53))
         self.assertTrue(ret)
         self.assertEqual(socket.AF_INET, example_com_info.sock_family)
-        self.assertGreater(Counter.get_notifyoutv4('example.net.'), 0)
-        self.assertEqual(Counter.get_notifyoutv6('example.net.'), 0)
+        self.assertEqual(self._notify._counter.get(
+                'zones', 'example.net.', 'notifyoutv4'), 0)
+        self.assertEqual(self._notify._counter.get(
+                'zones', 'example.net.', 'notifyoutv6'), 0)
 
     def test_send_notify_message_udp_ipv6(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
@@ -287,8 +289,10 @@ class TestNotifyOut(unittest.TestCase):
                                                     ('2001:db8::53', 53))
         self.assertTrue(ret)
         self.assertEqual(socket.AF_INET6, example_com_info.sock_family)
-        self.assertEqual(Counter.get_notifyoutv4('example.net.'), 0)
-        self.assertGreater(Counter.get_notifyoutv6('example.net.'), 0)
+        self.assertEqual(self._notify._counter.get(
+                'zones', 'example.net.', 'notifyoutv4'), 0)
+        self.assertEqual(self._notify._counter.get(
+                'zones', 'example.net.', 'notifyoutv6'), 0)
 
     def test_send_notify_message_with_bogus_address(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
