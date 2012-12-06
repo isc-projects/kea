@@ -252,9 +252,10 @@ class _Counter():
         identifier = '/'.join(args)
         return _get_counter(self._statistics._data, identifier)
 
-    def _starttimer(self, identifier):
+    def start(self, *args):
         """Sets the value returned from _start_timer() as a value of
         the identifier in the self._start_time which is dict-type"""
+        identifier = '/'.join(args)
         isc.cc.data.set(self._start_time, identifier, _start_timer())
 
     def _stoptimer(self, identifier):
