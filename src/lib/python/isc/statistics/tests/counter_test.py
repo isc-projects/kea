@@ -33,15 +33,15 @@ def setup_functor(event, cycle, functor, *args):
     event.wait()
     for i in range(cycle): functor(*args)
 
-def start_functor(number, cycle, functor, *args):
+def start_functor(concurrency, number, functor, *args):
     """Creates the threads of the number and makes them start. Sets
     the event and waits until these threads are finished."""
     threads = []
     event = threading.Event()
-    for i in range(number):
+    for i in range(concurrency):
         threads.append(threading.Thread(\
                 target=setup_functor, \
-                    args=(event, cycle, functor,) + args))
+                    args=(event, number, functor,) + args))
     for th in threads: th.start()
     event.set()
     for th in threads: th.join()
@@ -123,12 +123,12 @@ class TestBasicMethods(unittest.TestCase):
 
     def test_rasing_incrementers(self):
         """ use Thread"""
-        number = 3    # number of the threads
-        cycle = 10000 # number of counting per thread
+        concurrency = 3    # number of the threads
+        number = 10000     # number of counting per thread
         counter_name = "counter"
         timer_name = "seconds"
         start_time = counter._start_timer()
-        start_functor(number, cycle, self.counter.inc,
+        start_functor(concurrency, number, self.counter.inc,
                       counter_name)
         counter._stop_timer(start_time,
                             self.counter._statistics._data,
@@ -137,7 +137,7 @@ class TestBasicMethods(unittest.TestCase):
         self.assertEqual(
             counter._get_counter(self.counter._statistics._data,
                                  counter_name),
-            number * cycle)
+            concurrency * number)
         self.assertGreater(
             counter._get_counter(self.counter._statistics._data,
                                  timer_name), 0)
