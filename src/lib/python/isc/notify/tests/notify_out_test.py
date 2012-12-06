@@ -92,23 +92,6 @@ class TestZoneNotifyInfo(unittest.TestCase):
         temp_info.prepare_notify_out()
         self.assertIsNone(temp_info.get_current_notify_target())
 
-class DummyNotifyOutCounter:
-    _notifiesv4 = []
-    _notifiesv6 = []
-    def inc_notifyoutv4(self, arg):
-        self._notifiesv4.append(arg)
-    def inc_notifyoutv6(self, arg):
-        self._notifiesv6.append(arg)
-    def get_notifyoutv4(self, arg):
-        return self._notifiesv4.count(arg)
-    def get_notifyoutv6(self, arg):
-        return self._notifiesv6.count(arg)
-    def clear_counters(self):
-        self._notifiesv4 = []
-        self._notifiesv6 = []
-
-notify_out.Counter = DummyNotifyOutCounter()
-Counter = notify_out.Counter
 
 class TestNotifyOut(unittest.TestCase):
     def setUp(self):
