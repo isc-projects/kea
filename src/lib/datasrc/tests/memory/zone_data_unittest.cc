@@ -85,11 +85,16 @@ protected:
 // Shared by both test cases using NSEC3 and NSEC3PARAM Rdata
 template <typename RdataType>
 void
-checkNSEC3Data(MemorySegmentTest& mem_sgmt, const RdataType& expect_rdata) {
-    NSEC3Data* nsec3_data = NSEC3Data::create(mem_sgmt, expect_rdata);
+checkNSEC3Data(MemorySegmentTest& mem_sgmt,
+               const Name& zone_name,
+               const RdataType& expect_rdata)
+{
+    NSEC3Data* nsec3_data = NSEC3Data::create(mem_sgmt, zone_name,
+                                              expect_rdata);
 
-    // Internal tree should be created and empty.
-    EXPECT_EQ(0, nsec3_data->getNSEC3Tree().getNodeCount());
+    // Internal tree should be created and must contain just the origin
+    // node.
+    EXPECT_EQ(1, nsec3_data->getNSEC3Tree().getNodeCount());
 
     EXPECT_EQ(expect_rdata.getHashalg(), nsec3_data->hashalg);
     EXPECT_EQ(expect_rdata.getFlags(), nsec3_data->flags);
@@ -117,18 +122,18 @@ checkFindRdataSet(const ZoneTree& tree, const Name& name, RRType type,
 TEST_F(ZoneDataTest, createNSEC3Data) {
     // Create an NSEC3Data object from various types of RDATA (of NSEC3PARAM
     // and of NSEC3), check if the resulting parameters match.
-    checkNSEC3Data(mem_sgmt_, param_rdata_); // one 'usual' form of params
-    checkNSEC3Data(mem_sgmt_, param_rdata_nosalt_); // empty salt
-    checkNSEC3Data(mem_sgmt_, param_rdata_largesalt_); // max-len salt
+    checkNSEC3Data(mem_sgmt_, zname_, param_rdata_); // one 'usual' form
+    checkNSEC3Data(mem_sgmt_, zname_, param_rdata_nosalt_); // empty salt
+    checkNSEC3Data(mem_sgmt_, zname_, param_rdata_largesalt_); // max-len salt
 
     // Same concepts of the tests, using NSEC3 RDATA.
-    checkNSEC3Data(mem_sgmt_, nsec3_rdata_);
-    checkNSEC3Data(mem_sgmt_, nsec3_rdata_nosalt_);
-    checkNSEC3Data(mem_sgmt_, nsec3_rdata_largesalt_);
+    checkNSEC3Data(mem_sgmt_, zname_, nsec3_rdata_);
+    checkNSEC3Data(mem_sgmt_, zname_, nsec3_rdata_nosalt_);
+    checkNSEC3Data(mem_sgmt_, zname_, nsec3_rdata_largesalt_);
 }
 
 TEST_F(ZoneDataTest, addNSEC3) {
-    nsec3_data_ = NSEC3Data::create(mem_sgmt_, param_rdata_);
+    nsec3_data_ = NSEC3Data::create(mem_sgmt_, zname_, param_rdata_);
 
     ZoneNode* node = NULL;
     nsec3_data_->insertName(mem_sgmt_, nsec3_rrset_->getName(), &node);
@@ -161,7 +166,8 @@ TEST_F(ZoneDataTest, exceptionSafetyOnCreate) {
     // will fail due to bad_alloc.  It shouldn't cause memory leak
     // (that would be caught in TearDown()).
     mem_sgmt_.setThrowCount(2);
-    EXPECT_THROW(NSEC3Data::create(mem_sgmt_, param_rdata_), std::bad_alloc);
+    EXPECT_THROW(NSEC3Data::create(mem_sgmt_, zname_, param_rdata_),
+                 std::bad_alloc);
 
     // allocate() will throw on the insertion of the origin node.
     mem_sgmt_.setThrowCount(2);
@@ -214,7 +220,7 @@ TEST_F(ZoneDataTest, getSetNSEC3Data) {
 
     // Set a new one.  The set method should return NULL.  The get method
     // should return the new one.
-    NSEC3Data* nsec3_data = NSEC3Data::create(mem_sgmt_, param_rdata_);
+    NSEC3Data* nsec3_data = NSEC3Data::create(mem_sgmt_, zname_, param_rdata_);
     NSEC3Data* old_nsec3_data = zone_data_->setNSEC3Data(nsec3_data);
     EXPECT_EQ(static_cast<NSEC3Data*>(NULL), old_nsec3_data);
     EXPECT_EQ(nsec3_data, zone_data_->getNSEC3Data());
@@ -222,7 +228,7 @@ TEST_F(ZoneDataTest, getSetNSEC3Data) {
 
     // Replace an existing one with a yet another one.
     // We're responsible for destroying the old one.
-    NSEC3Data* nsec3_data2 = NSEC3Data::create(mem_sgmt_, nsec3_rdata_);
+    NSEC3Data* nsec3_data2 = NSEC3Data::create(mem_sgmt_, zname_, nsec3_rdata_);
     old_nsec3_data = zone_data_->setNSEC3Data(nsec3_data2);
     EXPECT_EQ(nsec3_data, old_nsec3_data);
     EXPECT_EQ(nsec3_data2, zone_data_->getNSEC3Data());
