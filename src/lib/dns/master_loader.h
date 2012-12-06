@@ -39,6 +39,7 @@ public:
         DEFAULT = 0,       ///< Nothing special.
         MANY_ERRORS = 1    ///< Lenient mode.
     };
+
     /// \brief Constructor
     ///
     /// This creates a master loader and provides it with all
@@ -69,6 +70,7 @@ public:
                  const MasterLoaderCallbacks& callbacks,
                  const AddRRCallback& add_callback,
                  Options options = DEFAULT);
+
     /// \brief Destructor
     ~MasterLoader();
 
@@ -84,6 +86,7 @@ public:
     /// \throw isc::InvalidOperation when called after loading was done
     ///     already.
     bool loadIncremental(size_t count_limit);
+
     /// \brief Load everything
     ///
     /// This simply calls loadIncremental until the loading is done.
