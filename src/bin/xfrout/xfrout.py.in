@@ -169,6 +169,9 @@ class XfroutSession():
         self.ClientClass = client_class # parameterize this for testing
         self._soa = None # will be set in _xfrout_setup or in tests
         self._jnl_reader = None # will be set to a reader for IXFR
+        # Creation of self.counter should be done before of
+        # invoking self._handle()
+        self._counter = Counter(SPECFILE_LOCATION)
         self._handle()
 
     def create_tsig_ctx(self, tsig_record, tsig_key_ring):
@@ -272,7 +275,7 @@ class XfroutSession():
             return None, None
         elif acl_result == REJECT:
             # count rejected Xfr request by each zone name
-            Counter.inc_xfrrej(zone_name.to_text())
+            self._counter.inc('zones', zone_name.to_text(), 'xfrrej')
             logger.debug(DBG_XFROUT_TRACE, XFROUT_QUERY_REJECTED,
                          self._request_type, format_addrinfo(self._remote),
                          format_zone_str(zone_name, zone_class))
@@ -524,25 +527,25 @@ class XfroutSession():
         try:
             # increment Xfr starts by RRType
             if self._request_type == RRType.AXFR():
-                Counter.inc_axfr_running()
+                self._counter.inc('axfr_running')
             else:
-                Counter.inc_ixfr_running()
+                self._counter.inc('ixfr_running')
             logger.info(XFROUT_XFR_TRANSFER_STARTED, self._request_typestr,
                         format_addrinfo(self._remote), zone_str)
             self._reply_xfrout_query(msg, sock_fd)
         except Exception as err:
             # count unixsockets send errors
-            Counter.inc_unixsocket_senderr()
+            self._counter.inc('socket', 'unixdomain', 'senderr')
             logger.error(XFROUT_XFR_TRANSFER_ERROR, self._request_typestr,
                     format_addrinfo(self._remote), zone_str, err)
         finally:
             # decrement Xfr starts by RRType
             if self._request_type == RRType.AXFR():
-                Counter.dec_axfr_running()
+                self._counter.dec('axfr_running')
             else:
-                Counter.dec_ixfr_running()
+                self._counter.dec('ixfr_running')
         # count done Xfr requests by each zone name
-        Counter.inc_xfrreqdone(zone_name.to_text())
+        self._counter.inc('zones', zone_name.to_text(), 'xfrreqdone')
         logger.info(XFROUT_XFR_TRANSFER_DONE, self._request_typestr,
                     format_addrinfo(self._remote), zone_str)
 
@@ -656,13 +659,14 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         self._remove_unused_sock_file(sock_file)
         self._sock_file = sock_file
         socketserver_mixin.NoPollMixIn.__init__(self)
+        self._counter = Counter(SPECFILE_LOCATION)
         try:
             ThreadingUnixStreamServer.__init__(self, sock_file, \
                                                    handle_class)
         except:
-            Counter.inc_unixsocket_openfail()
+            self._counter.inc('socket', 'unixdomain', 'openfail')
         else:
-            Counter.inc_unixsocket_open()
+            self._counter.inc('socket', 'unixdomain', 'open')
         self._shutdown_event = shutdown_event
         self._write_sock, self._read_sock = socket.socketpair()
         self._common_init()
@@ -679,7 +683,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
             return super().server_bind()
         except:
             # count bind failed unixsockets
-            Counter.inc_unixsocket_bindfail()
+            self._counter.inc('socket', 'unixdomain', 'bindfail')
             raise
 
     def get_request(self):
@@ -691,11 +695,11 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
             # ThreadingUnixStreamServer
             ret = super().get_request()
             # count successfully accepted unixsockets
-            Counter.inc_unixsocket_accept()
+            self._counter.inc('socket', 'unixdomain', 'accept')
             return ret
         except:
             # count failed accepted unixsockets
-            Counter.inc_unixsocket_acceptfail()
+            self._counter.inc('socket', 'unixdomain', 'acceptfail')
             raise
 
     def _common_init(self):
@@ -765,7 +769,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
                     break
             except Exception as pre:
                 # count unixsockets receive errors
-                Counter.inc_unixsocket_recverr()
+                self._counter.inc('socket', 'unixdomain', 'recverr')
                 logger.error(XFROUT_PROCESS_REQUEST_ERROR, pre)
                 break
 
@@ -892,7 +896,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         super().shutdown() # call the shutdown() of class socketserver_mixin.NoPollMixIn
         try:
             # count closed unixsockets
-            Counter.inc_unixsocket_close()
+            self._counter.inc('socket', 'unixdomain', 'close')
             os.unlink(self._sock_file)
         except Exception as e:
             logger.error(XFROUT_REMOVE_UNIX_SOCKET_FILE_ERROR, self._sock_file, str(e))
@@ -995,6 +999,7 @@ class XfroutServer:
         isc.server_common.tsig_keyring.init_keyring(self._cc)
         self._start_xfr_query_listener()
         self._start_notifier()
+        self._counter = Counter(SPECFILE_LOCATION)
 
     def _start_xfr_query_listener(self):
         '''Start a new thread to accept xfr query. '''
@@ -1090,7 +1095,7 @@ class XfroutServer:
             # The log level is here set to debug in order to avoid
             # that a log becomes too verbose. Because the b10-stats
             # daemon is periodically asking to the b10-xfrout daemon.
-            answer = create_answer(0, Counter.dump_statistics())
+            answer = create_answer(0, self._counter.dump_statistics())
             logger.debug(DBG_XFROUT_TRACE, \
                              XFROUT_RECEIVED_GETSTATS_COMMAND, \
                              str(answer))
