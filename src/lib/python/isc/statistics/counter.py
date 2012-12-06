@@ -258,26 +258,33 @@ class _Counter():
         identifier = '/'.join(args)
         isc.cc.data.set(self._start_time, identifier, _start_timer())
 
-    def _stoptimer(self, identifier):
+    def stop(self, *args):
         """Sets duration time between corresponding time in
         self._start_time and current time into the value of the
         identifier. It deletes corresponding time in self._start_time
-        after setting is successfully done. If DataNotFoundError is
-        raised while invoking _stop_timer(), it stops setting and
-        ignores the exception."""
+        after setting is successfully done. In case of stopping the
+        timer which has never been started, it raises and does
+        nothing. But in case of stopping the time which isn't defined
+        in the spec file, it raises DataNotFoundError"""
+        identifier = '/'.join(args)
         try:
+            start_time = isc.cc.data.find(self._start_time,
+                                          identifier)
+        except isc.cc.data.DataNotFoundError:
+            # do not set the end time if the timer isn't started
+            pass
+        else:
+            # set the end time
             _stop_timer(
-                isc.cc.data.find(self._start_time, identifier),
+                start_time,
                 self._statistics_data,
                 self._statistics_spec,
                 identifier)
+            # delete the started timer
             del isc.cc.data.find(
                 self._start_time,
                 '/'.join(identifier.split('/')[0:-1]))\
                 [identifier.split('/')[-1]]
-        except isc.cc.data.DataNotFoundError:
-            # do not set end time if it's not started
-            pass
 
     def dump_statistics(self):
         """Calculates an entire server counts, and returns statistics
