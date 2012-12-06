@@ -128,18 +128,18 @@ class TestBasicMethods(unittest.TestCase):
         counter_name = "counter"
         timer_name = "seconds"
         start_time = counter._start_timer()
-        start_functor(number, cycle, self.counter._incrementer,
+        start_functor(number, cycle, self.counter.inc,
                       counter_name)
         counter._stop_timer(start_time,
-                            statistics_data,
-                            statistics_spec,
+                            self.counter._statistics._data,
+                            self.counter._statistics._spec,
                             timer_name)
         self.assertEqual(
-            counter._get_counter(statistics_data,
+            counter._get_counter(self.counter._statistics._data,
                                  counter_name),
             number * cycle)
         self.assertGreater(
-            counter._get_counter(statistics_data,
+            counter._get_counter(self.counter._statistics._data,
                                  timer_name), 0)
 
 class BaseTestCounter():
