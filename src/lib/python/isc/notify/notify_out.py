@@ -128,7 +128,7 @@ class NotifyOut:
     notify message to its slaves). notify service can be started by
     calling  dispatcher(), and it can be stopped by calling shutdown()
     in another thread. '''
-    def __init__(self, datasrc_file, counter_handler=None, verbose=True):
+    def __init__(self, datasrc_file, verbose=True):
         self._notify_infos = {} # key is (zone_name, zone_class)
         self._waiting_zones = []
         self._notifying_zones = []
