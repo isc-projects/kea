@@ -264,6 +264,13 @@ class BaseTestCounter():
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self.counter.get, '__undefined__')
 
+class TestCounter0(unittest.TestCase, BaseTestCounter):
+    TEST_SPECFILE_LOCATION = None
+    def setUp(self):
+        BaseTestCounter.setUp(self)
+    def tearDown(self):
+        BaseTestCounter.tearDown(self)
+
 class TestCounter1(unittest.TestCase, BaseTestCounter):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
     def setUp(self):
