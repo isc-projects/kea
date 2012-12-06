@@ -127,7 +127,16 @@ OptionCustom::createBuffers() {
     std::vector<OptionBuffer> buffers;
 
     OptionDataType data_type = definition_.getType();
+    // This function is called when an empty data buffer has been
+    // passed to the constructor. In such cases values for particular
+    // data fields will be set using modifier functions but for now
+    // we need to initialize a set of buffers that are specified
+    // for an option by its definition. Since there is no data yet,
+    // we are going to fill these buffers with default values.
     if (data_type == OPT_RECORD_TYPE) {
+        // For record types we need to iterate over all data fields
+        // specified in option definition and create corresponding
+        // buffers for each of them.
         const OptionDefinition::RecordFieldsCollection fields =
             definition_.getRecordFields();
 
@@ -135,28 +144,52 @@ OptionCustom::createBuffers() {
              field != fields.end(); ++field) {
             OptionBuffer buf;
 
+            // For data types that have a fixed size we can use the
+            // utility function to get the buffer's size.
             size_t data_size = OptionDataTypeUtil::getDataTypeLen(*field);
 
+            // For variable data sizes the utility function returns zero.
+            // It is ok for string values because the default string
+            // is 'empty'. However for FQDN the empty value is not valid
+            // so we initialize it to '.'.
             if (data_size == 0 &&
                 *field == OPT_FQDN_TYPE) {
                 OptionDataTypeUtil::writeFqdn(".", buf);
             } else {
+                // At this point we can resize the buffer. Note that
+                // for string values we are setting the empty buffer
+                // here.
                 buf.resize(data_size);
             }
+            // We have the buffer with default value prepared so we
+            // add it to the set of buffers.
             buffers.push_back(buf);
         }
     } else if (!definition_.getArrayType() &&
                data_type != OPT_EMPTY_TYPE) {
+        // For either 'empty' options we don't have to create any buffers
+        // for obvious reason. For arrays we also don't create any buffers
+        // yet because the set of fields that belong to the array is open
+        // ended so we can't allocate required buffers until we know how
+        // many of them are needed.
+        // For non-arrays we have a single value being held by the option
+        // so we have to allocate exactly one buffer.
         OptionBuffer buf;
         size_t data_size = OptionDataTypeUtil::getDataTypeLen(data_type);
         if (data_size == 0 &&
             data_type == OPT_FQDN_TYPE) {
             OptionDataTypeUtil::writeFqdn(".", buf);
         } else {
+            // Note that if our option holds a string value then
+            // we are making empty buffer here.
             buf.resize(data_size);
         }
+        // Add a buffer that we have created and leave.
         buffers.push_back(buf);
     }
+    // The 'swap' is used here because we want to make sure that we
+    // don't touch buffers_ until we successfully allocate all
+    // buffers to be stored there.
     std::swap(buffers, buffers_);
 }
 
@@ -193,8 +226,12 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
                 // to obtain the length of the data is to read the FQDN. The
                 // utility function will return the size of the buffer on success.
                 if (*field == OPT_FQDN_TYPE) {
-                    OptionDataTypeUtil::readFqdn(OptionBuffer(data, data_buf.end()),
-                                                 data_size);
+                    std::string fqdn =
+                        OptionDataTypeUtil::readFqdn(OptionBuffer(data, data_buf.end()));
+                    // The size of the buffer holding an FQDN is always
+                    // 1 byte larger than the size of the string
+                    // representation of this FQDN.
+                    data_size = fqdn.size() + 1;
                 } else {
                     // In other case we are dealing with string or binary value
                     // which size can't be determined. Thus we consume the
@@ -248,8 +285,12 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
                 // a buffer so we have to actually read the FQDN from a buffer
                 // to get it.
                 if (data_type == OPT_FQDN_TYPE) {
-                    OptionDataTypeUtil::readFqdn(OptionBuffer(data, data_buf.end()),
-                                                 data_size);
+                    std::string fqdn =
+                        OptionDataTypeUtil::readFqdn(OptionBuffer(data, data_buf.end()));
+                    // The size of the buffer holding an FQDN is always
+                    // 1 byte larger than the size of the string
+                    // representation of this FQDN.
+                    data_size = fqdn.size() + 1;
                 }
                 // We don't perform other checks for data types that can't be
                 // used together with array indicator such as strings, empty field
@@ -275,8 +316,12 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
             if (data_size == 0) {
                 // For FQDN we get the size by actually reading the FQDN.
                 if (data_type == OPT_FQDN_TYPE) {
-                    OptionDataTypeUtil::readFqdn(OptionBuffer(data, data_buf.end()),
-                                                 data_size);
+                    std::string fqdn =
+                        OptionDataTypeUtil::readFqdn(OptionBuffer(data, data_buf.end()));
+                    // The size of the buffer holding an FQDN is always
+                    // 1 bytes larger than the size of the string
+                    // representation of this FQDN.
+                    data_size = fqdn.size() + 1;
                 } else {
                     data_size = std::distance(data, data_buf.end());
                 }
@@ -454,8 +499,7 @@ OptionCustom::writeBoolean(const bool value, const uint32_t index) {
 std::string
 OptionCustom::readFqdn(const uint32_t index) const {
     checkIndex(index);
-    size_t len = 0;
-    return (OptionDataTypeUtil::readFqdn(buffers_[index], len));
+    return (OptionDataTypeUtil::readFqdn(buffers_[index]));
 }
 
 void

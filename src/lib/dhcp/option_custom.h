@@ -200,7 +200,7 @@ public:
     /// @return read integer value.
     template<typename T>
     T readInteger(const uint32_t index = 0) const {
-        // Check thet tha index is not out of range.
+        // Check that the index is not out of range.
         checkIndex(index);
         // Check that T points to a valid integer type and this type
         // is consistent with an option definition.

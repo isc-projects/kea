@@ -686,11 +686,11 @@ TEST_F(OptionCustomTest, recordData) {
     };
 
     OptionBuffer buf;
-    // Initialize field 0.
+    // Initialize field 0 to 8712.
     writeInt<uint16_t>(8712, buf);
     // Initialize field 1 to 'true'
     buf.push_back(static_cast<unsigned short>(1));
-    // Initialize field 2.
+    // Initialize field 2 to 'mydomain.example.com'.
     buf.insert(buf.end(), fqdn_data, fqdn_data + sizeof(fqdn_data));
     // Initialize field 3 to IPv4 address.
     writeAddress(IOAddress("192.168.0.1"), buf);
@@ -700,18 +700,12 @@ TEST_F(OptionCustomTest, recordData) {
     writeString("ABCD", buf);
 
     boost::scoped_ptr<OptionCustom> option;
-    try {
-        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end()));
-    } catch (const Exception& ex) {
-        std::cout << ex.what() << std::endl;
-    }
-
     ASSERT_NO_THROW(
          option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end()));
     );
     ASSERT_TRUE(option);
 
-    // We should have 5 data fields.
+    // We should have 6 data fields.
     ASSERT_EQ(6, option->getDataFieldsNum());
 
     // Verify value in the field 0.
@@ -739,7 +733,7 @@ TEST_F(OptionCustomTest, recordData) {
     ASSERT_NO_THROW(value4 = option->readAddress(4));
     EXPECT_EQ("2001:db8:1::1", value4.toText());
 
-    // Verify value in the field 4.
+    // Verify value in the field 5.
     std::string value5;
     ASSERT_NO_THROW(value5 = option->readString(5));
     EXPECT_EQ("ABCD", value5);
@@ -880,7 +874,7 @@ TEST_F(OptionCustomTest, setUint32Data) {
     EXPECT_EQ(1234, value);
 }
 
-// The purpose of this test is to verify that an opton comprising
+// The purpose of this test is to verify that an option comprising
 // single IPv4 address can be created and that this address can
 // be overriden by a new value.
 TEST_F(OptionCustomTest, setIpv4AddressData) {

@@ -368,7 +368,7 @@ OptionPtr Dhcpv6Srv::createStatusCode(uint16_t code, const std::string& text) {
     assert(option_status);
 
     // Set status code to 'code' (0 - means data field #0).
-    option_status->writeInteger<uint16_t>(code, 0);
+    option_status->writeInteger(code, 0);
     // Set a message (1 - means data field #1).
     option_status->writeString(text, 1);
     return (option_status);
