@@ -333,77 +333,6 @@ class _Counter():
             # do not set end time if it's not started
             pass
 
-    def _create_perzone_functors(self):
-        """Creates increment method of each per-zone counter based on
-        the spec file. Incrementer can be accessed by name
-        "inc_${item_name}".Incrementers are passed to the
-        XfrinConnection class as counter handlers."""
-        for item in self._zones_item_list:
-            if item.find('time_to_') == 0: continue
-            def __incrementer(zone_name, counter_name=item, step=1):
-                """A per-zone incrementer for counter_name."""
-                self._incrementer(
-                    '%s/%s/%s' % \
-                        (self._perzone_prefix, zone_name, counter_name),
-                    step)
-            def __getter(zone_name, counter_name=item):
-                """A getter method for perzone counters"""
-                return self._getter(
-                    '%s/%s/%s' % \
-                        (self._perzone_prefix, zone_name, counter_name))
-            self._to_global['inc_%s' % item] = __incrementer
-            self._to_global['get_%s' % item] = __getter
-
-    def _create_perzone_timer_functors(self):
-        """Creates timer method of each per-zone counter based on the
-        spec file. Starter of the timer can be accessed by the name
-        "start_${item_name}".  Stopper of the timer can be accessed by
-        the name "stop_${item_name}".  These starter and stopper are
-        passed to the XfrinConnection class as timer handlers."""
-        for item in self._zones_item_list:
-            if item.find('time_to_') == -1: continue
-            def __getter(zone_name, counter_name=item):
-                """A getter method for perzone timer. A zone name in
-                string is required in argument."""
-                return self._getter(
-                    '%s/%s/%s' % \
-                        (self._perzone_prefix, zone_name, counter_name))
-            def __starttimer(zone_name, counter_name=item):
-                """A starter method for perzone timer. A zone name in
-                string is required in argument."""
-                self._starttimer(
-                    '%s/%s/%s' % \
-                        (self._perzone_prefix, zone_name, counter_name))
-            def __stoptimer(zone_name, counter_name=item):
-                """A stopper method for perzone timer. A zone name in
-                string is required in argument."""
-                self._stoptimer(
-                    '%s/%s/%s' % \
-                        (self._perzone_prefix, zone_name, counter_name))
-            self._to_global['start_%s' % item] = __starttimer
-            self._to_global['stop_%s' % item] = __stoptimer
-            self._to_global['get_%s' % item] = __getter
-
-    def _create_xfrrunning_functors(self):
-        """Creates increment/decrement method of (a|i)xfr_running
-        based on the spec file. Incrementer can be accessed by name
-        "inc_${item_name}". Decrementer can be accessed by name
-        "dec_${item_name}". Both of them are passed to the
-        XfroutSession as counter handlers."""
-        for item in self._xfrrunning_names:
-            def __incrementer(counter_name=item, step=1):
-                """A incrementer for axfr or ixfr running."""
-                self._incrementer(counter_name, step)
-            def __decrementer(counter_name=item, step=-1):
-                """A decrementer for axfr or ixfr running."""
-                self._decrementer(counter_name, step)
-            def __getter(counter_name=item):
-                """A getter method for xfr_running counters"""
-                return self._getter(counter_name)
-            self._to_global['inc_%s' % item] = __incrementer
-            self._to_global['dec_%s' % item] = __decrementer
-            self._to_global['get_%s' % item] = __getter
-
     def dump_statistics(self):
         """Calculates an entire server counts, and returns statistics
         data format to send out the stats module including each
@@ -435,38 +364,4 @@ class _Counter():
             statistics_data[self._perzone_prefix],
             **zones_data)
         return statistics_data
-
-    def _create_unixsocket_functors(self):
-        """Creates increment method of unixsocket socket. Incrementer
-        can be accessed by name "inc_unixsocket_${item_name}"."""
-        for item in self._unixsocket_names:
-            def __incrementer(counter_name=item, step=1):
-                """A incrementer for unix socket counter"""
-                self._incrementer(
-                    'socket/unixdomain/%s' % counter_name,
-                    step)
-            def __getter(counter_name=item):
-                """A getter method for unix socket counter"""
-                return self._getter(
-                    'socket/unixdomain/%s' % counter_name)
-            self._to_global['inc_unixsocket_%s' % item] = __incrementer
-            self._to_global['get_unixsocket_%s' % item] = __getter
-
-    def _create_ipsocket_functors(self):
-        """Creates increment method of ip socket. Incrementer can be
-        accessed by name "inc_ipv4socket_${item_name}" for ipv4 or
-        "inc_ipv6socket_${item_name}" for ipv6."""
-        for item in self._ipsocket_names:
-            # item should be tuple-type
-            def __incrementer(counter_name=item, step=1):
-                """A incrementer for ip socket counter"""
-                self._incrementer(
-                    'socket/%s/tcp/%s' % counter_name,
-                    step)
-            def __getter(counter_name=item):
-                """A getter method for ip socket counter"""
-                return self._getter(
-                    'socket/%s/tcp/%s' % counter_name)
-            self._to_global['inc_%ssocket_%s' % item] = __incrementer
-            self._to_global['get_%ssocket_%s' % item] = __getter
 
