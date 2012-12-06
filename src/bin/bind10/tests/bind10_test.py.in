@@ -1233,15 +1233,15 @@ class TestBossComponents(unittest.TestCase):
         }
         self._tmp_time = None
         self._tmp_sleep = None
-        self._tmp_ccsession = None
+        self._tmp_module_cc_session = None
 
     def tearDown(self):
         if self._tmp_time is not None:
             time.time = self._tmp_time
         if self._tmp_sleep is not None:
             time.sleep = self._tmp_sleep
-        if self._tmp_ccsession is not None:
-            isc.config.ModuleCCSession = self._tmp_ccsession
+        if self._tmp_module_cc_session is not None:
+            isc.config.ModuleCCSession = self._tmp_module_cc_session
 
     def __unary_hook(self, param):
         """
@@ -1782,7 +1782,7 @@ class TestBossComponents(unittest.TestCase):
             def start(self):
                 self.started = True
         bob = MockBobSimple()
-        self._tmp_ccsession = isc.config.ModuleCCSession
+        self._tmp_module_cc_session = isc.config.ModuleCCSession
         isc.config.ModuleCCSession = DummySession
 
         bob.start_ccsession({})
