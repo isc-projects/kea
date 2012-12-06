@@ -1234,6 +1234,7 @@ class TestBossComponents(unittest.TestCase):
         self._tmp_time = None
         self._tmp_sleep = None
         self._tmp_module_cc_session = None
+        self._tmp_cc_session = None
 
     def tearDown(self):
         if self._tmp_time is not None:
@@ -1242,6 +1243,8 @@ class TestBossComponents(unittest.TestCase):
             time.sleep = self._tmp_sleep
         if self._tmp_module_cc_session is not None:
             isc.config.ModuleCCSession = self._tmp_module_cc_session
+        if self._tmp_cc_session is not None:
+            isc.cc.Session = self._tmp_cc_session
 
     def __unary_hook(self, param):
         """
@@ -1997,6 +2000,17 @@ class TestBossComponents(unittest.TestCase):
             def kill_started_components(self):
                 self.killed = True
 
+        class DummySession():
+            def __init__(self, socket_file):
+                raise isc.cc.session.SessionError('This is the expected case.')
+
+        class DummySessionSocketExists():
+            def __init__(self, socket_file):
+                # simulate that connect passes
+                return
+
+        isc.cc.Session = DummySession
+
         # All is well case, where all components are started
         # successfully. We check that the actual call to
         # start_all_components() is made, and BoB.runnable is true.
@@ -2025,6 +2039,14 @@ class TestBossComponents(unittest.TestCase):
         bob.msgq_socket_file = 'foo'
         r = bob.startup()
         self.assertEqual({'BIND10_MSGQ_SOCKET_FILE': 'foo'}, bob.c_channel_env)
+
+        # Check the case when socket file already exists
+        isc.cc.Session = DummySessionSocketExists
+        bob = MockBobStartup(False)
+        r = bob.startup()
+        self.assertIn('already running', r)
+
+        # isc.cc.Session is restored during tearDown().
 
 class SocketSrvTest(unittest.TestCase):
     """
