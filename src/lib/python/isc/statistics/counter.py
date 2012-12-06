@@ -21,42 +21,40 @@ invoked in each module like b10-xfrin or b10-xfrout after importing
 this module.
 
   from isc.statistics import Counter
-  Counter.init(SPECFILE_LOCATION)
+  self.counter = Counter(/path/to/foo.spec)
 
-The first argument of Counter.init() is required, which is the
+The first argument of Counter() can be specified, which is the
 location of the specification file like src/bin/xfrout/xfrout.spec. If
 this initial preparation is done, statistics counters can be accessed
 from each module. For example, in case that the item `xfrreqdone` is
-defined in statistics_spec in xfrout.spec, the following methods can
-be dynamically created: Counter.inc_xfrreqdone(),
-Counter.get_xfrreqdone(). Since these methods requires the string of
-the zone name in the first argument, in the b10-xfrout,
+defined in statistics_spec in xfrout.spec, the following methods is
+callable. Since these methods requires the string of the zone name in
+the first argument, in the b10-xfrout,
 
-  Counter.inc_xfrreqdone(zone_name)
+  self.counter.inc('zones', zone_name, 'xfrreqdone')
 
-then the xfrreqdone counter corresponding to zone_name was
+then the counter for xfrreqdone corresponding to zone_name was
 incremented. For getting the current number of this counter, we can do
 this,
 
-  number = Counter.get_xfrreqdone(zone_name)
+  number = self.counter.get('zones', zone_name, 'xfrreqdone')
 
 then the current number was obtained and set in the above variable
 `number`. Such a getter method would be mainly used for unittesting.
-In other example, regarding the item `axfr_running`,
-the decrementer method is also created:
-Counter.dec_axfr_running(). This method is used for decrementing the
+In other example, regarding the item `axfr_running`, the decrementer
+method is also callable.  This method is used for decrementing the
 counter number.  Regarding the item `axfr_running`, an argument like
 zone name is not required.
 
-  Counter.dec_axfr_running()
+  self.counter.dec('axfr_running')
 
-These accessors are effective in other module. For example, in case
+These methods are effective in other module. For example, in case
 that this module `counter.py` is once imported in such a main module
 as b10-xfrout, Regarding the item `notifyoutv4`, the incrementer
-inc_notifyoutv4() can be invoked via other module like notify_out.py,
+as the following can be invoked via other module like notify_out.py,
 which is firstly imported in the main module.
 
-  Counter.inc_notifyoutv4(zone_name)
+  self.counter.inc('zones', zone_name, 'notifyoutv4')
 
 In this example this is for incrementing the counter of the item
 notifyoutv4. Thus, such statement can be also written in the other
@@ -64,11 +62,8 @@ library like isc.notify.notify_out. If this module `counter.py` isn't
 imported in the main module but imported in such a library module as
 isc.notify.notify_out, in this example, empty methods would be
 invoked, which is directly defined in `counter.py`.
-
-Other accessors can be also defined in such individual class in
-future. For adding or modifying such accessor, we need to implement in
-`counter.py`.
 """
+
 import threading
 import isc.config
 from datetime import datetime
