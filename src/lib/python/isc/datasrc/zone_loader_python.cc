@@ -22,26 +22,16 @@
 
 #include <util/python/pycppwrapper_util.h>
 
-#include <datasrc/client.h>
-#include <datasrc/database.h>
-#include <datasrc/data_source.h>
-#include <datasrc/sqlite3_accessor.h>
-#include <datasrc/iterator.h>
-#include <datasrc/zone.h>
 #include <datasrc/zone_loader.h>
-
 #include <dns/python/name_python.h>
-//#include <dns/python/rrset_python.h>
-//#include <dns/python/rrclass_python.h>
-//#include <dns/python/rrtype_python.h>
 #include <dns/python/pydnspp_common.h>
+#include <exceptions/exceptions.h>
 
 #include "client_python.h"
 #include "datasrc.h"
 #include "zone_loader_inc.cc"
 
 using namespace std;
-using namespace isc::util::python;
 using namespace isc::dns::python;
 using namespace isc::datasrc;
 using namespace isc::datasrc::python;
@@ -57,34 +47,50 @@ public:
     PyObject* client;
 };
 
-// Shortcut type which would be convenient for adding class variables safely.
-typedef CPPPyObjectContainer<s_ZoneLoader, ZoneLoader> ZoneLoaderContainer;
-
 // General creation and destruction
 int
 ZoneLoader_init(PyObject* po_self, PyObject* args, PyObject*) {
     s_ZoneLoader* self = static_cast<s_ZoneLoader*>(po_self);
-    PyObject *po_ds_client;
-    PyObject *po_name;
+    PyObject *po_target_client = NULL;
+    PyObject *po_source_client = NULL;
+    PyObject *po_name = NULL;
     char* master_file;
-    if (PyArg_ParseTuple(args, "O!O!s", &datasourceclient_type, &po_ds_client, &name_type, &po_name, &master_file)) {
-        try {
-            Py_INCREF(po_ds_client);
-            self->client = po_ds_client;
-            self->cppobj = new ZoneLoader(PyDataSourceClient_ToDataSourceClient(po_ds_client), PyName_ToName(po_name), master_file);
-            return (0);
-        } catch (const isc::datasrc::MasterFileError& mfe) {
-            PyErr_SetString(getDataSourceException("MasterFileError"), mfe.what());
-        } catch (const isc::datasrc::DataSourceError& dse) {
-            PyErr_SetString(getDataSourceException("Error"), dse.what());
-        } catch (const isc::NotImplemented& ni) {
-            PyErr_SetString(getDataSourceException("NotImplemented"), ni.what());
-        } catch (const std::exception& stde) {
-            PyErr_SetString(getDataSourceException("Error"), stde.what());
-        } catch (...) {
-            PyErr_SetString(getDataSourceException("Error"),
-                            "Unexpected exception");
+    if (!PyArg_ParseTuple(args, "O!O!s", &datasourceclient_type,
+                          &po_target_client, &name_type, &po_name,
+                          &master_file) &&
+        !PyArg_ParseTuple(args, "O!O!O!", &datasourceclient_type,
+                          &po_target_client, &name_type, &po_name,
+                          &datasourceclient_type, &po_source_client)
+       ) {
+        return (-1);
+    }
+    PyErr_Clear();
+    try {
+        Py_INCREF(po_target_client);
+        self->client = po_target_client;
+        if (po_source_client != NULL) {
+            self->cppobj = new ZoneLoader(
+                PyDataSourceClient_ToDataSourceClient(po_target_client),
+                PyName_ToName(po_name),
+                PyDataSourceClient_ToDataSourceClient(po_source_client));
+        } else {
+            self->cppobj = new ZoneLoader(
+                PyDataSourceClient_ToDataSourceClient(po_target_client),
+                PyName_ToName(po_name),
+                master_file);
         }
+        return (0);
+    } catch (const isc::InvalidParameter& ivp) {
+        PyErr_SetString(po_InvalidParameter, ivp.what());
+    } catch (const isc::datasrc::DataSourceError& dse) {
+        PyErr_SetString(getDataSourceException("Error"), dse.what());
+    } catch (const isc::NotImplemented& ni) {
+        PyErr_SetString(getDataSourceException("NotImplemented"), ni.what());
+    } catch (const std::exception& stde) {
+        PyErr_SetString(getDataSourceException("Error"), stde.what());
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unexpected exception");
     }
     return (-1);
 }
@@ -105,8 +111,14 @@ PyObject* ZoneLoader_load(PyObject* po_self, PyObject*) {
     try {
         self->cppobj->load();
         Py_RETURN_NONE;
+    } catch (const isc::InvalidOperation& ivo) {
+        PyErr_SetString(po_InvalidOperation, ivo.what());
+        return (NULL);
     } catch (const isc::datasrc::MasterFileError& mfe) {
         PyErr_SetString(getDataSourceException("MasterFileError"), mfe.what());
+        return (NULL);
+    } catch (const isc::datasrc::DataSourceError& dse) {
+        PyErr_SetString(getDataSourceException("Error"), dse.what());
         return (NULL);
     } catch (const std::exception& exc) {
         PyErr_SetString(getDataSourceException("Error"), exc.what());
@@ -137,8 +149,14 @@ PyObject* ZoneLoader_loadIncremental(PyObject* po_self, PyObject* args) {
         } else {
             Py_RETURN_FALSE;
         }
+    } catch (const isc::InvalidOperation& ivo) {
+        PyErr_SetString(po_InvalidOperation, ivo.what());
+        return (NULL);
     } catch (const isc::datasrc::MasterFileError& mfe) {
         PyErr_SetString(getDataSourceException("MasterFileError"), mfe.what());
+        return (NULL);
+    } catch (const isc::datasrc::DataSourceError& dse) {
+        PyErr_SetString(getDataSourceException("Error"), dse.what());
         return (NULL);
     } catch (const std::exception& exc) {
         PyErr_SetString(getDataSourceException("Error"), exc.what());
@@ -157,15 +175,9 @@ PyObject* ZoneLoader_loadIncremental(PyObject* po_self, PyObject* args) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef ZoneLoader_methods[] = {
-/*
-    { "get_origin", ZoneLoader_getOrigin, METH_NOARGS,
-       ZoneLoader_getOrigin_doc },
-    { "get_class", ZoneLoader_getClass, METH_NOARGS, ZoneLoader_getClass_doc },
-    { "find", ZoneLoader_find, METH_VARARGS, ZoneLoader_find_doc },
-    { "find_all", ZoneLoader_find_all, METH_VARARGS, ZoneLoader_findAll_doc },
-*/
     { "load", ZoneLoader_load, METH_NOARGS, ZoneLoader_load_doc },
-    { "load_incremental", ZoneLoader_loadIncremental, METH_VARARGS, ZoneLoader_loadIncremental_doc },
+    { "load_incremental", ZoneLoader_loadIncremental, METH_VARARGS,
+      ZoneLoader_loadIncremental_doc },
     { NULL, NULL, 0, NULL }
 };
 
@@ -224,8 +236,6 @@ PyTypeObject zone_loader_type = {
     NULL,                               // tp_del
     0                                   // tp_version_tag
 };
-
-PyObject* po_MasterFileError;
 
 } // namespace python
 } // namespace datasrc
