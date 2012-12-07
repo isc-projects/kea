@@ -20,6 +20,8 @@
 #include <dns/rrttl.h>
 #include <dns/rdata.h>
 
+#include <testutils/dnsmessage_test.h>
+
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -42,7 +44,20 @@ public:
     virtual void addRRset(const isc::dns::AbstractRRset& rrset) {
         ASSERT_FALSE(expected_rrsets_.empty());
 
-        EXPECT_EQ(expected_rrsets_.front().get()->toText(), rrset.toText());
+        // As the rrsetCheck requires a shared pointer, we need to create
+        // a copy.
+        isc::dns::RRsetPtr copy(new isc::dns::BasicRRset(rrset.getName(),
+                                                         rrset.getClass(),
+                                                         rrset.getType(),
+                                                         rrset.getTTL()));
+        EXPECT_FALSE(rrset.getRRsig()) << "Unexpected RRSIG on rrset, not "
+            "copying. Following check will likely fail as a result.";
+        for (isc::dns::RdataIteratorPtr it(rrset.getRdataIterator());
+             !it->isLast(); it->next()) {
+            copy->addRdata(it->getCurrent());
+        }
+
+        isc::testutils::rrsetCheck(expected_rrsets_.front(), copy);
         // And remove this RRset, as it has been used.
         expected_rrsets_.pop_front();
     }
