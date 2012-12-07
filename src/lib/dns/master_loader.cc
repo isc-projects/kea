@@ -83,7 +83,8 @@ public:
 
     // Get a string token. Handle it as error if it is not string.
     const string getString() {
-        return (lexer_.getNextToken(MasterToken::QSTRING).getString());
+        lexer_.getNextToken(MasterToken::QSTRING).getString(string_token_);
+        return (string_token_);
     }
 
     bool loadIncremental(size_t count_limit);
@@ -98,6 +99,7 @@ private:
     const std::string master_file_;
     bool initialized_;
     bool ok_;
+    std::string string_token_;
 public:
     bool complete_;
 };
@@ -127,7 +129,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             // Return the last token, as it was not empty
             lexer_.ungetToken();
 
-            const MasterToken::StringRegion
+            const MasterToken::StringRegion&
                 name_string(lexer_.getNextToken(MasterToken::QSTRING).
                             getStringRegion());
             // TODO $ handling
