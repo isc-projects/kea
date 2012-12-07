@@ -83,7 +83,7 @@ public:
 
     // Get a string token. Handle it as error if it is not string.
     const string getString() {
-        lexer_.getNextToken(MasterToken::QSTRING).getString(string_token_);
+        lexer_.getNextToken(MasterToken::STRING).getString(string_token_);
         return (string_token_);
     }
 
