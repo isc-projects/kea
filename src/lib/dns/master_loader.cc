@@ -63,8 +63,15 @@ public:
     void pushSource(const std::string& filename) {
         std::string error;
         if (!lexer_.pushSource(filename.c_str(), &error)) {
-            reportError("", 0, error);
-            ok_ = false;
+            if (initialized_) {
+                // $INCLUDE file
+                reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
+                            error);
+            } else {
+                // Top-level file
+                reportError("", 0, error);
+                ok_ = false;
+            }
         }
         initialized_ = true;
     }
