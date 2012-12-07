@@ -1,3 +1,7 @@
+518.	[func]		stephen
+	Extend DHCP MySQL backend to handle IPv4 addresses.
+	(Trac #2404, git ce7db48d3ff5d5aad12b1da5e67ae60073cb2607)
+
 517.	[func]		stephen
 	Added IOAddress::toBytes() to get byte representation of address.
 	Also added convenience methods for V4/V6 address determination.
