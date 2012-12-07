@@ -58,7 +58,7 @@ public:
     /// This resets the hierachy of loggers back to their defaults.  This means
     /// that all non-root loggers (if they exist) are set to NOT_SET, and the
     /// root logger reset to logging informational messages.
-    static void processInit();
+    void processInit();
 
     /// \brief Process Specification
     ///
@@ -70,7 +70,7 @@ public:
     /// \brief End Processing
     ///
     /// Terminates the processing of the logging specifications.
-    static void processEnd();
+    void processEnd();
 
     /// \brief Implementation-specific initialization
     ///
@@ -136,9 +136,8 @@ private:
     /// \brief Create buffered appender
     ///
     /// Appends an object to the logger that will store the log events sent
-    /// to the logger in the singleton \c LogBuffer instance. These log
-    /// messages are replayed to the logger when the LogBuffer instance is
-    /// flushed (which is done at the end of \c ProcessSpecification().
+    /// to the logger. These log messages are replayed to the logger in
+    /// processEnd().
     ///
     /// \param logger Log4cplus logger to which the appender must be attached.
     static void createBufferAppender(log4cplus::Logger& logger);
@@ -175,6 +174,25 @@ private:
     ///
     /// \param appender Appender for which this pattern is to be set.
     static void setSyslogAppenderLayout(log4cplus::SharedAppenderPtr& appender);
+
+    /// \brief Store all buffer appenders
+    ///
+    /// When processing a new specification, this method can be used
+    /// to keep a list of the buffer appenders; the caller can then
+    /// process the specification, and call \c flushBufferAppenders()
+    /// to flush and clear the list
+    void storeBufferAppenders();
+
+    /// \brief Flush the stored buffer appenders
+    ///
+    /// This flushes the list of buffer appenders stored in
+    /// \c storeBufferAppenders(), and clears it
+    void flushBufferAppenders();
+
+    /// Only used between processInit() and processEnd(), to temporarily
+    /// store the buffer appenders in order to flush them after
+    /// processSpecification() calls have been completed
+    std::vector<log4cplus::SharedAppenderPtr> buffer_appender_store_;
 };
 
 } // namespace log

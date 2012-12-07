@@ -22,14 +22,6 @@ namespace isc {
 namespace log {
 namespace internal {
 
-LogBuffer& getLogBuffer() {
-    static boost::scoped_ptr<LogBuffer> log_buffer(NULL);
-    if (!log_buffer) {
-        log_buffer.reset(new LogBuffer);
-    }
-    return (*log_buffer);
-}
-
 LogBuffer::~LogBuffer() {
     // If there is anything left in the buffer,
     // it means no reconfig has been done, and
