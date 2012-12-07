@@ -26,13 +26,13 @@
 #include <string>
 #include <vector>
 #include <list>
-#include <fstream>
+#include <sstream>
 
 using namespace isc::dns;
 using std::vector;
 using std::string;
 using std::list;
-using std::ofstream;
+using std::stringstream;
 using std::endl;
 
 namespace {
@@ -67,8 +67,8 @@ public:
         rrsets_.push_back(rrset);
     }
 
-    void setLoader(const char* file, const Name& origin, const RRClass rrclass,
-                   const MasterLoader::Options options)
+    void setLoader(const char* file, const Name& origin,
+                   const RRClass& rrclass, const MasterLoader::Options options)
     {
         loader_.reset(new MasterLoader(file, origin, rrclass, callbacks_,
                                        boost::bind(&MasterLoaderTest::addRRset,
@@ -76,15 +76,22 @@ public:
                                        options));
     }
 
-    void prepareBrokenZone(const string& filename, const string& line) {
-        ofstream out(filename.c_str(),
-                     std::ios_base::out | std::ios_base::trunc);
-        ASSERT_FALSE(out.fail());
-        out << "example.org. 3600 IN SOA ns1.example.org. "
-            "admin.example.org. 1234 3600 1800 2419200 7200" << endl;
-        out << line << endl;
-        out << "correct 3600    IN  A 192.0.2.2" << endl;
-        out.close();
+    void setLoader(std::istream& stream, const Name& origin,
+                   const RRClass& rrclass, const MasterLoader::Options options)
+    {
+        loader_.reset(new MasterLoader(stream, origin, rrclass, callbacks_,
+                                       boost::bind(&MasterLoaderTest::addRRset,
+                                                   this, _1, _2, _3, _4, _5),
+                                       options));
+    }
+
+    string prepareZone(const string& line) {
+        string result;
+        result += "example.org. 3600 IN SOA ns1.example.org. "
+            "admin.example.org. 1234 3600 1800 2419200 7200\n";
+        result += line + "\n";
+        result += "correct 3600    IN  A 192.0.2.2\n";
+        return (result);
     }
 
     void clear() {
@@ -129,6 +136,21 @@ TEST_F(MasterLoaderTest, basicLoad) {
             "1234 3600 1800 2419200 7200");
     checkRR("example.org", RRType::NS(), "ns1.example.org.");
     checkRR("www.example.org", RRType::A(), "192.0.2.1");
+}
+
+// Check it works the same when created based on a stream, not filename
+TEST_F(MasterLoaderTest, streamConstructor) {
+    stringstream zone_stream(prepareZone(""));
+    setLoader(zone_stream, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+
+    EXPECT_TRUE(errors_.empty());
+    EXPECT_TRUE(warnings_.empty());
+    checkRR("example.org", RRType::SOA(), "ns1.example.org. "
+            "admin.example.org. 1234 3600 1800 2419200 7200");
+    checkRR("correct.example.org", RRType::A(), "192.0.2.2");
 }
 
 // Try loading data incrementally.
@@ -193,15 +215,15 @@ struct ErrorCase {
 // Test a broken zone is handled properly. We test several problems,
 // both in strict and lenient mode.
 TEST_F(MasterLoaderTest, brokenZone) {
-    const string filename(TEST_DATA_BUILDDIR "/broken.zone");
     for (const ErrorCase* ec = error_cases; ec->line != NULL; ++ec) {
         SCOPED_TRACE(ec->problem);
-        prepareBrokenZone(filename, ec->line);
+        const string zone(prepareZone(ec->line));
 
         {
             SCOPED_TRACE("Strict mode");
             clear();
-            setLoader(filename.c_str(), Name("example.org."), RRClass::IN(),
+            stringstream zone_stream(zone);
+            setLoader(zone_stream, Name("example.org."), RRClass::IN(),
                       MasterLoader::DEFAULT);
             loader_->load();
             EXPECT_EQ(1, errors_.size());
@@ -217,7 +239,8 @@ TEST_F(MasterLoaderTest, brokenZone) {
         {
             SCOPED_TRACE("Lenient mode");
             clear();
-            setLoader(filename.c_str(), Name("example.org."), RRClass::IN(),
+            stringstream zone_stream(zone);
+            setLoader(zone_stream, Name("example.org."), RRClass::IN(),
                       MasterLoader::MANY_ERRORS);
             loader_->load();
             EXPECT_EQ(1, errors_.size());
@@ -236,6 +259,11 @@ TEST_F(MasterLoaderTest, emptyCallback) {
     EXPECT_THROW(MasterLoader(TEST_DATA_SRCDIR "/example.org",
                               Name("example.org"), RRClass::IN(), callbacks_,
                               AddRRCallback()), isc::InvalidParameter);
+    // And the same with the second constructor
+    stringstream ss("");
+    EXPECT_THROW(MasterLoader(ss, Name("example.org"), RRClass::IN(),
+                              callbacks_, AddRRCallback()),
+                 isc::InvalidParameter);
 }
 
 // Check it throws when we try to load after loading was complete.
