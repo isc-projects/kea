@@ -53,17 +53,11 @@ const uint8_t wiredata_txt_like[] = {
 
 const uint8_t wiredata_nulltxt[] = { 0 };
 
-// For lexer-based constructor
-void
-dummyCallback(const string&, size_t, const string&) {
-}
-
 template<class TXT_LIKE>
 class Rdata_TXT_LIKE_Test : public RdataTest {
 protected:
     Rdata_TXT_LIKE_Test() :
-        callback(boost::bind(&dummyCallback, _1, _2, _3)),
-        loader_cb(callback, callback),
+        loader_cb(MasterLoaderCallbacks::getNullCallbacks()),
         wiredata_longesttxt(256, 'a'),
         rdata_txt_like("Test-String"),
         rdata_txt_like_empty("\"\""),
@@ -71,9 +65,6 @@ protected:
     {
         wiredata_longesttxt[0] = 255; // adjust length
     }
-
-private:
-    const MasterLoaderCallbacks::IssueCallback callback;
 
 protected:
     MasterLoaderCallbacks loader_cb;
