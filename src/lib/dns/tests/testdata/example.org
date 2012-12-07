@@ -7,7 +7,8 @@ example.org.        3600    IN  SOA ( ; The SOA, split across lines for testing
     2419200
     7200
     )
-example.org.        3600    IN  NS ns1.example.org.
+; Check it accepts quoted name too
+"\101xample.org."        3600    IN  NS ns1.example.org.
 
 
 ; Some empty lines here. They are to make sure the loader can skip them.
