@@ -86,107 +86,7 @@ public:
         return (lexer_.getNextToken(MasterToken::QSTRING).getString());
     }
 
-    bool loadIncremental(size_t count_limit) {
-        if (complete_) {
-            isc_throw(isc::InvalidOperation,
-                      "Trying to load when already loaded");
-        }
-        if (!initialized_) {
-            pushSource(master_file_);
-        }
-        size_t count = 0;
-        while (ok_ && count < count_limit) {
-            try {
-                // Skip all EOLNs (empty lines) and finish on EOF
-                bool empty = true;
-                do {
-                    const MasterToken& empty_token(lexer_.getNextToken());
-                    if (empty_token.getType() == MasterToken::END_OF_FILE) {
-                        // TODO: Check if this is the last source, possibly pop
-                        return (true);
-                    }
-                    empty = empty_token.getType() == MasterToken::END_OF_LINE;
-                } while (empty);
-                // Return the last token, as it was not empty
-                lexer_.ungetToken();
-
-                const MasterToken::StringRegion
-                    name_string(lexer_.getNextToken(MasterToken::QSTRING).
-                                getStringRegion());
-                // TODO $ handling
-                const Name name(name_string.beg, name_string.len,
-                                &zone_origin_);
-                // TODO: Some more flexibility. We don't allow omitting
-                // anything yet
-
-                // The parameters
-                const RRTTL ttl(getString());
-                const RRClass rrclass(getString());
-                const RRType rrtype(getString());
-
-                // TODO: Some more validation?
-                if (rrclass != zone_class_) {
-                    // It doesn't really matter much what type of exception
-                    // we throw, we catch it just below.
-                    isc_throw(isc::BadValue, "Class mismatch: " << rrclass <<
-                              "vs. " << zone_class_);
-                }
-
-                const rdata::RdataPtr data(rdata::createRdata(rrtype, rrclass,
-                                                              lexer_,
-                                                              &zone_origin_,
-                                                              options_,
-                                                              callbacks_));
-                // In case we get NULL, it means there was error creating
-                // the Rdata. The errors should have been reported by
-                // callbacks_ already. We need to decide if we want to continue
-                // or not.
-                if (data != rdata::RdataPtr()) {
-                    add_callback_(name, rrclass, rrtype, ttl, data);
-
-                    // Good, we loaded another one
-                    ++count;
-                } else if ((options_ & MANY_ERRORS) == 0) {
-                    ok_ = false;
-                    complete_ = true;
-                    // We don't have the exact error here, but it was reported
-                    // by the error callback.
-                    isc_throw(MasterLoaderError, "Invalid RR data");
-                }
-            } catch (const MasterLoaderError&) {
-                // This is a hack. We exclude the MasterLoaderError from the
-                // below case. Once we restrict the below to some smaller
-                // exception, we should remove this.
-                throw;
-            } catch (const isc::Exception& e) {
-                // TODO: Once we do #2518, catch only the DNSTextError here,
-                // not isc::Exception. The rest should be just simply
-                // propagated.
-                reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
-                            e.what());
-                // We want to continue. Try to read until the end of line
-                bool end = false;
-                do {
-                    const MasterToken& token(lexer_.getNextToken());
-                    switch (token.getType()) {
-                        case MasterToken::END_OF_FILE:
-                            // TODO: Try pop in case this is not the only
-                            // source
-                            return (true);
-                        case MasterToken::END_OF_LINE:
-                            end = true;
-                            break;
-                        default:
-                            // Do nothing. This is just to make compiler
-                            // happy
-                            break;
-                    }
-                } while (!end);
-            }
-        }
-        // When there was a fatal error and ok is false, we say we are done.
-        return (!ok_);
-    }
+    bool loadIncremental(size_t count_limit);
 
 private:
     MasterLexer lexer_;
@@ -201,6 +101,109 @@ private:
 public:
     bool complete_;
 };
+
+bool
+MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
+    if (complete_) {
+        isc_throw(isc::InvalidOperation,
+                  "Trying to load when already loaded");
+    }
+    if (!initialized_) {
+        pushSource(master_file_);
+    }
+    size_t count = 0;
+    while (ok_ && count < count_limit) {
+        try {
+            // Skip all EOLNs (empty lines) and finish on EOF
+            bool empty = true;
+            do {
+                const MasterToken& empty_token(lexer_.getNextToken());
+                if (empty_token.getType() == MasterToken::END_OF_FILE) {
+                    // TODO: Check if this is the last source, possibly pop
+                    return (true);
+                }
+                empty = empty_token.getType() == MasterToken::END_OF_LINE;
+            } while (empty);
+            // Return the last token, as it was not empty
+            lexer_.ungetToken();
+
+            const MasterToken::StringRegion
+                name_string(lexer_.getNextToken(MasterToken::QSTRING).
+                            getStringRegion());
+            // TODO $ handling
+            const Name name(name_string.beg, name_string.len,
+                            &zone_origin_);
+            // TODO: Some more flexibility. We don't allow omitting
+            // anything yet
+
+            // The parameters
+            const RRTTL ttl(getString());
+            const RRClass rrclass(getString());
+            const RRType rrtype(getString());
+
+            // TODO: Some more validation?
+            if (rrclass != zone_class_) {
+                // It doesn't really matter much what type of exception
+                // we throw, we catch it just below.
+                isc_throw(isc::BadValue, "Class mismatch: " << rrclass <<
+                          "vs. " << zone_class_);
+            }
+
+            const rdata::RdataPtr data(rdata::createRdata(rrtype, rrclass,
+                                                          lexer_,
+                                                          &zone_origin_,
+                                                          options_,
+                                                          callbacks_));
+            // In case we get NULL, it means there was error creating
+            // the Rdata. The errors should have been reported by
+            // callbacks_ already. We need to decide if we want to continue
+            // or not.
+            if (data != rdata::RdataPtr()) {
+                add_callback_(name, rrclass, rrtype, ttl, data);
+
+                // Good, we loaded another one
+                ++count;
+            } else if ((options_ & MANY_ERRORS) == 0) {
+                ok_ = false;
+                complete_ = true;
+                // We don't have the exact error here, but it was reported
+                // by the error callback.
+                isc_throw(MasterLoaderError, "Invalid RR data");
+            }
+        } catch (const MasterLoaderError&) {
+            // This is a hack. We exclude the MasterLoaderError from the
+            // below case. Once we restrict the below to some smaller
+            // exception, we should remove this.
+            throw;
+        } catch (const isc::Exception& e) {
+            // TODO: Once we do #2518, catch only the DNSTextError here,
+            // not isc::Exception. The rest should be just simply
+            // propagated.
+            reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
+                        e.what());
+            // We want to continue. Try to read until the end of line
+            bool end = false;
+            do {
+                const MasterToken& token(lexer_.getNextToken());
+                switch (token.getType()) {
+                    case MasterToken::END_OF_FILE:
+                        // TODO: Try pop in case this is not the only
+                        // source
+                        return (true);
+                    case MasterToken::END_OF_LINE:
+                        end = true;
+                        break;
+                    default:
+                        // Do nothing. This is just to make compiler
+                        // happy
+                        break;
+                }
+            } while (!end);
+        }
+    }
+    // When there was a fatal error and ok is false, we say we are done.
+    return (!ok_);
+}
 
 MasterLoader::MasterLoader(const char* master_file,
                            const Name& zone_origin,
