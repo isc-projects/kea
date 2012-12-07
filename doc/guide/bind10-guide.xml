@@ -472,7 +472,7 @@ var/
       <title>Packages</title>
 
       <para>
-        Some operating systems or softare package vendors may
+        Some operating systems or software package vendors may
         provide ready-to-use, pre-built software packages for
         the BIND 10 suite.
         Installing a pre-built package means you do not need to
@@ -2157,7 +2157,7 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
 	you indicate that the system is not usable without the
 	component and if such component fails, the system shuts
 	down no matter when the failure happened.  This is the
-	behaviour of the core components (the ones you can't turn
+	behavior of the core components (the ones you can't turn
 	off), but you can declare any other components as core as
 	well if you wish (but you can turn these off, they just
 	can't fail).
