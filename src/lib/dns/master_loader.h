@@ -37,7 +37,8 @@ public:
     /// \brief Options how the parsing should work.
     enum Options {
         DEFAULT = 0,       ///< Nothing special.
-        MANY_ERRORS = 1    ///< Lenient mode.
+        MANY_ERRORS = 1    ///< Lenient mode (see documentation of MasterLoader
+                           ///  constructor).
     };
 
     /// \brief Constructor
