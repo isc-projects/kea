@@ -225,7 +225,7 @@ createBuiltinVersionResponse(const qid_t qid, vector<uint8_t>& data) {
     message.setHeaderFlag(Message::HEADERFLAG_AA);
     RRsetPtr rrset_version = RRsetPtr(new RRset(version_name, RRClass::CH(),
                                                 RRType::TXT(), RRTTL(0)));
-    rrset_version->addRdata(generic::TXT(PACKAGE_STRING));
+    rrset_version->addRdata(generic::TXT("\"" PACKAGE_STRING "\""));
     message.addRRset(Message::SECTION_ANSWER, rrset_version);
 
     RRsetPtr rrset_version_ns = RRsetPtr(new RRset(apex_name, RRClass::CH(),
