@@ -31,7 +31,7 @@ libb10_log_la_SOURCES += message_initializer.cc message_initializer.h
 libb10_log_la_SOURCES += message_reader.cc message_reader.h
 libb10_log_la_SOURCES += message_types.h
 libb10_log_la_SOURCES += output_option.cc output_option.h
-libb10_log_la_SOURCES += log_buffer.cc log_buffer.h
+libb10_log_la_SOURCES += log_buffer_impl.cc log_buffer_impl.h
 
 EXTRA_DIST  = README
 EXTRA_DIST += logimpl_messages.mes
