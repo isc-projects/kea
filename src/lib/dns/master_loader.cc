@@ -44,6 +44,7 @@ public:
         master_file_(master_file),
         initialized_(false),
         ok_(true),
+        many_errors_((options & MANY_ERRORS) != 0),
         complete_(false)
     {}
 
@@ -51,7 +52,7 @@ public:
                      const std::string& reason)
     {
         callbacks_.error(filename, line, reason);
-        if (!(options_ & MANY_ERRORS)) {
+        if (!many_errors_) {
             // In case we don't have the lenient mode, every error is fatal
             // and we throw
             ok_ = false;
@@ -97,9 +98,10 @@ private:
     AddRRCallback add_callback_;
     MasterLoader::Options options_;
     const std::string master_file_;
+    std::string string_token_;
     bool initialized_;
     bool ok_;
-    std::string string_token_;
+    const bool many_errors_;
 public:
     bool complete_;
 };
@@ -165,7 +167,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
 
                 // Good, we loaded another one
                 ++count;
-            } else if ((options_ & MANY_ERRORS) == 0) {
+            } else if (!many_errors_) {
                 ok_ = false;
                 complete_ = true;
                 // We don't have the exact error here, but it was reported
