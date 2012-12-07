@@ -190,7 +190,7 @@ MasterLoader::~MasterLoader() {
 
 bool
 MasterLoader::loadIncremental(size_t count_limit) {
-    bool result = impl_->loadIncremental(count_limit);
+    const bool result = impl_->loadIncremental(count_limit);
     impl_->complete_ = result;
     return (result);
 }
