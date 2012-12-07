@@ -82,12 +82,15 @@ public:
                                        options));
     }
 
-    string prepareZone(const string& line) {
+    string prepareZone(const string& line, bool include_last) {
         string result;
         result += "example.org. 3600 IN SOA ns1.example.org. "
             "admin.example.org. 1234 3600 1800 2419200 7200\n";
-        result += line + "\n";
-        result += "correct 3600    IN  A 192.0.2.2\n";
+        result += line;
+        if (include_last) {
+            result += "\n";
+            result += "correct 3600    IN  A 192.0.2.2\n";
+        }
         return (result);
     }
 
@@ -139,7 +142,7 @@ TEST_F(MasterLoaderTest, basicLoad) {
 
 // Check it works the same when created based on a stream, not filename
 TEST_F(MasterLoaderTest, streamConstructor) {
-    stringstream zone_stream(prepareZone(""));
+    stringstream zone_stream(prepareZone("", true));
     setLoader(zone_stream, Name("example.org."), RRClass::IN(),
               MasterLoader::MANY_ERRORS);
 
@@ -221,7 +224,7 @@ struct ErrorCase {
 TEST_F(MasterLoaderTest, brokenZone) {
     for (const ErrorCase* ec = error_cases; ec->line != NULL; ++ec) {
         SCOPED_TRACE(ec->problem);
-        const string zone(prepareZone(ec->line));
+        const string zone(prepareZone(ec->line, true));
 
         {
             SCOPED_TRACE("Strict mode");
@@ -253,6 +256,24 @@ TEST_F(MasterLoaderTest, brokenZone) {
                     "admin.example.org. 1234 3600 1800 2419200 7200");
             // This one is below the error one.
             checkRR("correct.example.org", RRType::A(), "192.0.2.2");
+            EXPECT_TRUE(rrsets_.empty());
+        }
+
+        {
+            SCOPED_TRACE("Error at EOF");
+            // This case is interesting only in the lenient mode.
+            const string zoneEOF(prepareZone(ec->line, false));
+            clear();
+            stringstream zone_stream(zoneEOF);
+            setLoader(zone_stream, Name("example.org."), RRClass::IN(),
+                      MasterLoader::MANY_ERRORS);
+            EXPECT_NO_THROW(loader_->load());
+            EXPECT_EQ(1, errors_.size());
+            // FIXME: The invalid rdata generates a warning.
+            // And we may want to generate warning ourself here too.
+            // EXPECT_TRUE(warnings_.empty());
+            checkRR("example.org", RRType::SOA(), "ns1.example.org. "
+                    "admin.example.org. 1234 3600 1800 2419200 7200");
             EXPECT_TRUE(rrsets_.empty());
         }
     }
