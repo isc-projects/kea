@@ -1,3 +1,66 @@
+517.	[func]		stephen
+	Added IOAddress::toBytes() to get byte representation of address.
+	Also added convenience methods for V4/V6 address determination.
+	(Trac #2396, git c23f87e8ac3ea781b38d688f8f7b58539f85e35a)
+
+516.	[bug]		marcin
+	Fixed 'make distcheck' failure when running perfdhcp unit tests.
+	The unit tests used to read files from the folder specified
+	with the path relative to current folder, thus when the test was
+	run from a different folder the files could not be found.
+	(Trac #2479, git 4e8325e1b309f1d388a3055ec1e1df98c377f383)
+
+515.	[bug]		jinmei
+	The in-memory data source now accepts an RRSIG provided without
+	a covered RRset in loading.  A subsequent query for its owner name
+	of the covered type would generally result in NXRRSET; if the
+	covered RRset is of type NSEC3, the corresponding NSEC3 processing
+	would result in SERVFAIL.
+	(Trac #2420, git 6744c100953f6def5500bcb4bfc330b9ffba0f5f)
+
+514.	[bug]		jelte
+	b10-msgq now handles socket errors more gracefully when sending data
+	to clients. It no longer exits with 'broken pipe' errors, and is
+	also better at resending data on temporary error codes from send().
+	(Trac #2398, git 9f6b45ee210a253dca608848a58c824ff5e0d234)
+
+513.	[func]		marcin
+	Implemented the OptionCustom class for DHCPv4 and DHCPv6.
+	This class represents an option which has a defined
+	structure: a set of data fields of specific types and order.
+	It is used to represent those options that can't be
+	represented by any other specialized class.
+	(Trac #2312, git 28d885b457dda970d9aecc5de018ec1120143a10)
+
+512.	[func]		jelte
+	Added a new tool b10-certgen, to check and update the self-signed
+	SSL certificate used by b10-cmdctl. The original certificate
+	provided has been removed, and a fresh one is generated upon first
+	build. See the b10-certgen manpage for information on how to update
+	existing installed certificates.
+	(Trac #1044, git 510773dd9057ccf6caa8241e74a7a0b34ca971ab)
+
+511.	[bug]		stephen
+	Fixed a race condition in the DHCP tests whereby the test program
+	spawned a subprocess and attempted to read (without waiting) from
+	the interconnecting pipe before the subprocess had written
+	anything.  The lack of output was being interpreted as a test
+	failure.
+	(Trac #2410, git f53e65cdceeb8e6da4723730e4ed0a17e4646579)
+
+510.	[func]		marcin
+	DHCP option instances can be created using a collection of strings.
+	Each string represents a value of a particular data field within
+	an option. The data field values, given as strings, are validated
+	against the actual types of option fields specified in the options
+	definitions.
+	(Trac #2490, git 56cfd6612fcaeae9acec4a94e1e5f1a88142c44d)
+
+509.	[func]		muks
+	Log messages now include the pid of the process that logged the
+	message.
+	(Trac #1745, git fc8bbf3d438e8154e7c2bdd322145a7f7854dc6a)
+
 508.	[bug]		stephen
 	Split the DHCP library into two directories, each with its own
 	Makefile.  This properly solves the problem whereby a "make"

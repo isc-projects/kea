@@ -1219,7 +1219,7 @@ TEST_F(InMemoryZoneFinderTest, loadFromIterator) {
     // purpose of this test, so it should just succeed.
     db_client = unittest::createSQLite3Client(
         class_, origin_, TEST_DATA_BUILDDIR "/contexttest.sqlite3.copied",
-        TEST_DATA_DIR "/contexttest.zone");
+        TEST_DATA_DIR "/contexttest-almost-obsolete.zone");
     zone_finder_.load(*db_client->getIterator(origin_));
 
     // just checking a couple of RRs in the new version of zone.

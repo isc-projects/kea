@@ -34,13 +34,42 @@
 #include <dns/rdataclass.h>
 
 using namespace std;
-using namespace boost;
 
 using namespace isc::util;
-using namespace isc::dns::rdata; 
+using namespace isc::dns::rdata;
 
 namespace isc {
 namespace dns {
+
+namespace rdata {
+
+RdataPtr
+AbstractRdataFactory::create(MasterLexer& lexer, const Name*,
+                             MasterLoader::Options,
+                             MasterLoaderCallbacks&) const
+{
+    std::string s;
+
+    while (true) {
+        const MasterToken& token = lexer.getNextToken();
+        if ((token.getType() == MasterToken::END_OF_FILE) ||
+            (token.getType() == MasterToken::END_OF_LINE)) {
+            lexer.ungetToken(); // let the upper layer handle the end-of token
+            break;
+        }
+
+        if (!s.empty()) {
+            s += " ";
+        }
+
+        s += token.getString();
+    }
+
+    return (create(s));
+}
+
+} // end of namespace isc::dns::rdata
+
 namespace {
 ///
 /// The following function and class are a helper to define case-insensitive
@@ -161,8 +190,10 @@ typedef map<RRTypeClass, RdataFactoryPtr> RdataFactoryMap;
 typedef map<RRType, RdataFactoryPtr> GenericRdataFactoryMap;
 
 template <typename T>
-class RdataFactory : public AbstractRdataFactory {
+class OldRdataFactory : public AbstractRdataFactory {
 public:
+    using AbstractRdataFactory::create;
+
     virtual RdataPtr create(const string& rdata_str) const
     {
         return (RdataPtr(new T(rdata_str)));
@@ -176,6 +207,18 @@ public:
     virtual RdataPtr create(const Rdata& source) const
     {
         return (RdataPtr(new T(dynamic_cast<const T&>(source))));
+    }
+};
+
+template <typename T>
+class RdataFactory : public OldRdataFactory<T> {
+public:
+    using OldRdataFactory<T>::create;
+
+    virtual RdataPtr create(MasterLexer& lexer, const Name* origin,
+                            MasterLoader::Options options,
+                            MasterLoaderCallbacks& callbacks) const {
+        return (RdataPtr(new T(lexer, origin, options, callbacks)));
     }
 };
 
@@ -305,7 +348,7 @@ namespace {
 /// This could be simplified using strncasecmp(), but unfortunately it's not
 /// included in <cstring>.  To be as much as portable within the C++ standard
 /// we take the "in house" approach here.
-/// 
+///
 bool CICharEqual(char c1, char c2) {
     return (tolower(static_cast<unsigned char>(c1)) ==
             tolower(static_cast<unsigned char>(c2)));
@@ -468,6 +511,27 @@ RRParamRegistry::codeToClassText(uint16_t code) const {
                                                      impl_->code2classmap));
 }
 
+namespace {
+inline const AbstractRdataFactory*
+findRdataFactory(RRParamRegistryImpl* reg_impl,
+                 const RRType& rrtype, const RRClass& rrclass)
+{
+    RdataFactoryMap::const_iterator found;
+    found = reg_impl->rdata_factories.find(RRTypeClass(rrtype, rrclass));
+    if (found != reg_impl->rdata_factories.end()) {
+        return (found->second.get());
+    }
+
+    GenericRdataFactoryMap::const_iterator genfound =
+        reg_impl->genericrdata_factories.find(rrtype);
+    if (genfound != reg_impl->genericrdata_factories.end()) {
+        return (genfound->second.get());
+    }
+
+    return (NULL);
+}
+}
+
 RdataPtr
 RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
                              const std::string& rdata_string)
@@ -475,16 +539,10 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
     // If the text indicates that it's rdata of an "unknown" type (beginning
     // with '\# n'), parse it that way. (TBD)
 
-    RdataFactoryMap::const_iterator found;
-    found = impl_->rdata_factories.find(RRTypeClass(rrtype, rrclass));
-    if (found != impl_->rdata_factories.end()) {
-        return (found->second->create(rdata_string));
-    }
-
-    GenericRdataFactoryMap::const_iterator genfound =
-        impl_->genericrdata_factories.find(rrtype);
-    if (genfound != impl_->genericrdata_factories.end()) {
-        return (genfound->second->create(rdata_string));
+    const AbstractRdataFactory* factory =
+        findRdataFactory(impl_, rrtype, rrclass);
+    if (factory != NULL) {
+        return (factory->create(rdata_string));
     }
 
     return (RdataPtr(new generic::Generic(rdata_string)));
@@ -494,16 +552,10 @@ RdataPtr
 RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
                              InputBuffer& buffer, size_t rdata_len)
 {
-    RdataFactoryMap::const_iterator found =
-        impl_->rdata_factories.find(RRTypeClass(rrtype, rrclass));
-    if (found != impl_->rdata_factories.end()) {
-        return (found->second->create(buffer, rdata_len));
-    }
-
-    GenericRdataFactoryMap::const_iterator genfound =
-        impl_->genericrdata_factories.find(rrtype);
-    if (genfound != impl_->genericrdata_factories.end()) {
-        return (genfound->second->create(buffer, rdata_len));
+    const AbstractRdataFactory* factory =
+        findRdataFactory(impl_, rrtype, rrclass);
+    if (factory != NULL) {
+        return (factory->create(buffer, rdata_len));
     }
 
     return (RdataPtr(new generic::Generic(buffer, rdata_len)));
@@ -513,20 +565,29 @@ RdataPtr
 RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
                              const Rdata& source)
 {
-    RdataFactoryMap::const_iterator found =
-        impl_->rdata_factories.find(RRTypeClass(rrtype, rrclass));
-    if (found != impl_->rdata_factories.end()) {
-        return (found->second->create(source));
-    }
-
-    GenericRdataFactoryMap::const_iterator genfound =
-        impl_->genericrdata_factories.find(rrtype);
-    if (genfound != impl_->genericrdata_factories.end()) {
-        return (genfound->second->create(source));
+    const AbstractRdataFactory* factory =
+        findRdataFactory(impl_, rrtype, rrclass);
+    if (factory != NULL) {
+        return (factory->create(source));
     }
 
     return (RdataPtr(new rdata::generic::Generic(
                          dynamic_cast<const generic::Generic&>(source))));
+}
+
+RdataPtr
+RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
+                             MasterLexer& lexer, const Name* name,
+                             MasterLoader::Options options,
+                             MasterLoaderCallbacks& callbacks)
+{
+    const AbstractRdataFactory* factory =
+        findRdataFactory(impl_, rrtype, rrclass);
+    if (factory != NULL) {
+        return (factory->create(lexer, name, options, callbacks));
+    }
+
+    return (RdataPtr(new generic::Generic(lexer, name, options, callbacks)));
 }
 }
 }

@@ -705,7 +705,6 @@ fi
 AC_SUBST(BOTAN_LDFLAGS)
 AC_SUBST(BOTAN_LIBS)
 AC_SUBST(BOTAN_INCLUDES)
-
 # Even though chances are high we already performed a real compilation check
 # in the search for the right (pkg)config data, we try again here, to
 # be sure.
@@ -1309,7 +1308,7 @@ AC_CONFIG_FILES([Makefile
                  tests/tools/badpacket/tests/Makefile
                  tests/tools/perfdhcp/Makefile
                  tests/tools/perfdhcp/tests/Makefile
-                 tests/tools/perfdhcp/templates/Makefile
+                 tests/tools/perfdhcp/tests/testdata/Makefile
                  dns++.pc
                ])
 AC_OUTPUT([doc/version.ent

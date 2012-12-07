@@ -43,7 +43,9 @@ ERROR [example.beta] LOG_BAD_DESTINATION unrecognized log destination: beta_erro
 WARN  [example.beta] LOG_BAD_STREAM bad log console output stream: beta_warn
 INFO  [example.beta] LOG_READ_ERROR error reading from message file beta: info
 .
-./logger_example -c stdout | cut -d' ' -f3- | diff $tempfile -
+./logger_example -c stdout | \
+    sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' | \
+    cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 echo -n "2. Severity filter:"
@@ -53,7 +55,9 @@ ERROR [example] LOG_READING_LOCAL_FILE reading local message file dummy/file
 FATAL [example.beta] LOG_BAD_SEVERITY unrecognized log severity: beta_fatal
 ERROR [example.beta] LOG_BAD_DESTINATION unrecognized log destination: beta_error
 .
-./logger_example -c stdout -s error | cut -d' ' -f3- | diff $tempfile -
+./logger_example -c stdout -s error | \
+    sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' | \
+    cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 echo -n "3. Debug level:"
@@ -72,7 +76,9 @@ WARN  [example.beta] LOG_BAD_STREAM bad log console output stream: beta_warn
 INFO  [example.beta] LOG_READ_ERROR error reading from message file beta: info
 DEBUG [example.beta] LOG_BAD_SEVERITY unrecognized log severity: beta/25
 .
-./logger_example -c stdout -s debug -d 25 | cut -d' ' -f3- | diff $tempfile -
+./logger_example -c stdout -s debug -d 25 | \
+    sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' | \
+    cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 if [ $failcount -eq 0 ]; then

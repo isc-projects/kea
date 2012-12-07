@@ -114,6 +114,16 @@ TEST_F(Rdata_AFSDB_Test, createFromWire) {
                  DNSMessageFORMERR);
 }
 
+TEST_F(Rdata_AFSDB_Test, createFromLexer) {
+    EXPECT_EQ(0, rdata_afsdb.compare(
+        *test::createRdataUsingLexer(RRType::AFSDB(), RRClass::IN(),
+                                     afsdb_text)));
+
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::AFSDB(), RRClass::IN(),
+                                             "1root.example.com."));
+}
+
 TEST_F(Rdata_AFSDB_Test, toWireBuffer) {
     // construct actual data
     rdata_afsdb.toWire(obuffer);

@@ -28,7 +28,9 @@
 
 // BEGIN_RDATA_NAMESPACE
 
+namespace detail {
 template<class Type, uint16_t typeCode> class TXTLikeImpl;
+}
 
 /// \brief \c rdata::SPF class represents the SPF RDATA as defined %in
 /// RFC4408.
@@ -65,7 +67,7 @@ public:
     const std::vector<std::vector<uint8_t> >& getString() const;
 
 private:
-    typedef TXTLikeImpl<SPF, 99> SPFImpl;
+    typedef isc::dns::rdata::generic::detail::TXTLikeImpl<SPF, 99> SPFImpl;
     SPFImpl* impl_;
 };
 
