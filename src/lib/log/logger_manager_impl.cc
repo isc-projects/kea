@@ -30,7 +30,7 @@
 #include <log/log_messages.h>
 #include <log/logger_name.h>
 #include <log/logger_specification.h>
-#include <log/log_buffer.h>
+#include <log/log_buffer_impl.h>
 
 using namespace std;
 
@@ -44,6 +44,8 @@ namespace log {
 // explicitly reset the logging severity.)
 void
 LoggerManagerImpl::processInit() {
+    storeBufferAppenders();
+
     log4cplus::Logger::getDefaultHierarchy().resetConfiguration();
     initRootLogger();
 }
@@ -51,16 +53,15 @@ LoggerManagerImpl::processInit() {
 // Flush the LogBuffer at the end of processing a new specification
 void
 LoggerManagerImpl::processEnd() {
-    getLogBuffer().flush();
+    flushBufferAppenders();
 }
 
 // Process logging specification.  Set up the common states then dispatch to
 // add output specifications.
 void
 LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
-    log4cplus::Logger logger;
-    // If this is an 'empty' specification, just set the root logger
-    logger = log4cplus::Logger::getInstance(expandLoggerName(spec.getName()));
+    log4cplus::Logger logger = log4cplus::Logger::getInstance(
+                                   expandLoggerName(spec.getName()));
 
     // Set severity level according to specification entry.
     logger.setLogLevel(LoggerLevelImpl::convertFromBindLevel(
@@ -141,7 +142,7 @@ LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
 
 void
 LoggerManagerImpl::createBufferAppender(log4cplus::Logger& logger) {
-    log4cplus::SharedAppenderPtr bufferapp(new BufferAppender(getLogBuffer()));
+    log4cplus::SharedAppenderPtr bufferapp(new internal::BufferAppender());
     bufferapp->setName("buffer");
     logger.addAppender(bufferapp);
     // Since we do not know at what level the loggers will end up
@@ -238,6 +239,31 @@ void LoggerManagerImpl::setSyslogAppenderLayout(
     // Finally the text of the message
     auto_ptr<log4cplus::Layout> layout(new log4cplus::PatternLayout(pattern));
     appender->setLayout(layout);
+}
+
+void LoggerManagerImpl::storeBufferAppenders() {
+    // Walk through all loggers, and find any buffer appenders there
+    log4cplus::LoggerList loggers = log4cplus::Logger::getCurrentLoggers();
+    log4cplus::LoggerList::iterator it;
+    for (it = loggers.begin(); it != loggers.end(); ++it) {
+        log4cplus::SharedAppenderPtr buffer_appender =
+            it->getAppender("buffer");
+        if (buffer_appender) {
+            buffer_appender_store_.push_back(buffer_appender);
+        }
+    }
+}
+
+void LoggerManagerImpl::flushBufferAppenders() {
+    std::vector<log4cplus::SharedAppenderPtr> copy;
+    buffer_appender_store_.swap(copy);
+
+    std::vector<log4cplus::SharedAppenderPtr>::iterator it;
+    for (it = copy.begin(); it != copy.end(); ++it) {
+        internal::BufferAppender* app =
+            dynamic_cast<internal::BufferAppender*>(it->get());
+        app->flush();
+    }
 }
 
 } // namespace log
