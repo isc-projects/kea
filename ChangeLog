@@ -1,3 +1,8 @@
+517.	[func]		stephen
+	Added IOAddress::toBytes() to get byte representation of address.
+	Also added convenience methods for V4/V6 address determination.
+	(Trac #2396, git c23f87e8ac3ea781b38d688f8f7b58539f85e35a)
+
 516.	[bug]		marcin
 	Fixed 'make distcheck' failure when running perfdhcp unit tests.
 	The unit tests used to read files from the folder specified
