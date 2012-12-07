@@ -770,9 +770,6 @@ public:
     //@{
     /// \brief Return pointer to this RRset's RRSIG RRset
     ///
-    /// \exception NotImplemented Always thrown.  Associated RRSIG RRsets are
-    ///            not supported in this class.
-    ///
     /// \return Null pointer, as this class does not support RRSIG records.
     virtual RRsetPtr getRRsig() const {
         return (RRsetPtr());
