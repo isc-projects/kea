@@ -25,6 +25,15 @@ namespace dns {
 class Name;
 class RRClass;
 
+/// \brief Error while loading by MasterLoader without specifying the
+///     MANY_ERRORS option.
+class MasterLoaderError : public isc::Exception {
+public:
+    MasterLoaderError(const char* file, size_t line, const char* what) :
+        Exception(file, line, what)
+    {}
+};
+
 /// \brief A class able to load DNS master files
 ///
 /// This class is able to produce a stream of RRs from a master file.
@@ -100,6 +109,9 @@ public:
     ///     It returns true if the loading is done.
     /// \throw isc::InvalidOperation when called after loading was done
     ///     already.
+    /// \throw MasterLoaderError when there's an error in the input master
+    ///     file and the MANY_ERRORS is not specified. It never throws this
+    ///     in case MANY_ERRORS is specified.
     bool loadIncremental(size_t count_limit);
 
     /// \brief Load everything
@@ -107,6 +119,9 @@ public:
     /// This simply calls loadIncremental until the loading is done.
     /// \throw isc::InvalidOperation when called after loading was done
     ///     already.
+    /// \throw MasterLoaderError when there's an error in the input master
+    ///     file and the MANY_ERRORS is not specified. It never throws this
+    ///     in case MANY_ERRORS is specified.
     void load() {
         while (!loadIncremental(1000)) { // 1000 = arbitrary largish number
             // Body intentionally left blank
