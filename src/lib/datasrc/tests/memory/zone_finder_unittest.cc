@@ -1436,13 +1436,13 @@ TEST_F(InMemoryZoneFinderTest, NSECNonExistentTest) {
     shared_ptr<ZoneTableSegment> ztable_segment(
          new ZoneTableSegmentTest(class_, mem_sgmt_));
     InMemoryClient client(ztable_segment, class_);
-    Name name("ok.ok.ok.ok.dnssec.tjeb.nl.");
+    Name name("example.com.");
 
     client.load(name, TEST_DATA_DIR "/2504-test.zone");
     DataSourceClient::FindResult result(client.findZone(name));
 
     // Check for a non-existing name
-    Name search_name("nonexist.ok.ok.ok.ok.dnssec.tjeb.nl.");
+    Name search_name("nonexist.example.com.");
     ZoneFinderContextPtr find_result(
         result.zone_finder->find(search_name,
                                  RRType::A(), ZoneFinder::FIND_DNSSEC));
