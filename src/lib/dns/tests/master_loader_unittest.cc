@@ -40,23 +40,19 @@ class MasterLoaderTest : public ::testing::Test {
 public:
     MasterLoaderTest() :
         callbacks_(boost::bind(&MasterLoaderTest::callback, this,
-                               true, _1, _2, _3),
+                               &errors_, _1, _2, _3),
                    boost::bind(&MasterLoaderTest::callback, this,
-                               false, _1, _2, _3))
+                               &warnings_, _1, _2, _3))
     {}
 
     /// Concatenate file, line, and reason, and add it to either errors
     /// or warnings
-    void callback(bool error, const std::string& file, size_t line,
+    void callback(vector<string>* target, const std::string& file, size_t line,
                   const std::string reason)
     {
         std::stringstream ss;
         ss << reason << " [" << file << ":" << line << "]";
-        if (error) {
-            errors_.push_back(ss.str());
-        } else {
-            warnings_.push_back(ss.str());
-        }
+        target->push_back(ss.str());
     }
 
     void addRRset(const Name& name, const RRClass& rrclass,
