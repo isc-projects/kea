@@ -48,7 +48,7 @@ public:
     /// Concatenate file, line, and reason, and add it to either errors
     /// or warnings
     void callback(vector<string>* target, const std::string& file, size_t line,
-                  const std::string reason)
+                  const std::string& reason)
     {
         std::stringstream ss;
         ss << reason << " [" << file << ":" << line << "]";
