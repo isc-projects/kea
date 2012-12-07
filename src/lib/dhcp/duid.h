@@ -91,6 +91,11 @@ public:
     /// @brief Maximum size of a client ID
     ///
     /// This is the same as the maximum size of the underlying DUID.
+    ///
+    /// @note RFC 2131 does not specify an upper length of a client ID, the
+    ///       value chosen here just being that of the underlying DUID.  For
+    ///       some backend database, there may be a possible (minor)
+    ///       performance enhancement if this were smaller.
     static const size_t MAX_CLIENT_ID_LEN = DUID::MAX_DUID_LEN;
 
     /// @brief Constructor based on vector<uint8_t>

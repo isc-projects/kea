@@ -110,7 +110,7 @@ public:
     /// @brief Returns an IPv4 lease for specified IPv4 address
     ///
     /// This method return a lease that is associated with a given address.
-    /// For other query types (by hardware addr, by DUID) there can be
+    /// For other query types (by hardware addr, by Client ID) there can be
     /// several leases in different subnets (e.g. for mobile clients that
     /// got address in different subnets). However, for a single address
     /// there can be only one lease, so this method returns a pointer to
