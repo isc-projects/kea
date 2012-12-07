@@ -23,20 +23,30 @@
 
 namespace isc {
 namespace dns {
+class Name;
+class RRClass;
+class RRType;
+class RRTTL;
+namespace rdata {
+class Rdata;
+typedef boost::shared_ptr<Rdata> RdataPtr;
+}
 
-class AbstractRRset;
-typedef boost::shared_ptr<AbstractRRset> RRsetPtr;
-
-/// \brief Type of callback to add a RRset.
+/// \brief Type of callback to add a RR.
 ///
 /// This type of callback is used by the loader to report another loaded
-/// RRset. The RRset is no longer preserved by the loader and is fully
+/// RR. The Rdata is no longer preserved by the loader and is fully
 /// owned by the callback.
 ///
-/// \param RRset The rrset to add. It does not contain the accompanying
-///     RRSIG (if the zone is signed), they are reported with separate
-///     calls to the callback.
-typedef boost::function<void(const RRsetPtr& rrset)> AddRRsetCallback;
+/// \param name The domain name where the RR belongs.
+/// \param rrclass The class of the RR.
+/// \param rrtype Type of the RR.
+/// \param rrttl Time to live of the RR.
+/// \param rdata The actual carried data of the RR.
+typedef boost::function<void(const Name& name, const RRClass& rrclass,
+                             const RRType& rrtype, const RRTTL& rrttl,
+                             const rdata::RdataPtr& rdata)>
+    AddRRCallback;
 
 /// \brief Set of issue callbacks for a loader.
 ///

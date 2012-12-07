@@ -58,7 +58,7 @@ createMasterLoaderCallbacks(const isc::dns::Name& name,
 /// \param updater The zone updater to use.
 /// \return The callback to be passed to MasterLoader.
 /// \throw std::bad_alloc when allocation fails.
-isc::dns::AddRRsetCallback
+isc::dns::AddRRCallback
 createMasterLoaderAddCallback(ZoneUpdater& updater);
 
 }
