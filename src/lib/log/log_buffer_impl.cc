@@ -12,14 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <log/log_buffer.h>
-#include <log4cplus/loglevel.h>
+#include <log/log_buffer_impl.h>
 
+#include <log4cplus/loglevel.h>
 #include <boost/scoped_ptr.hpp>
 #include <iostream>
 
 namespace isc {
 namespace log {
+namespace internal {
 
 LogBuffer& getLogBuffer() {
     static boost::scoped_ptr<LogBuffer> log_buffer(NULL);
@@ -100,5 +101,6 @@ BufferAppender::append(const log4cplus::spi::InternalLoggingEvent& event) {
     buffer_.add(event);
 }
 
+} // end namespace internal
 } // end namespace log
 } // end namespace isc
