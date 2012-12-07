@@ -119,7 +119,7 @@ public:
 
                     // Good, we loaded another one
                     ++count;
-                } else if (!(options_ & MANY_ERRORS)) {
+                } else if ((options_ & MANY_ERRORS) == 0) {
                     return (true);
                 }
             } catch (const isc::Exception& e) {
@@ -127,7 +127,7 @@ public:
                 callbacks_.error(lexer_.getSourceName(),
                                  lexer_.getSourceLine(),
                                  e.what());
-                if (options_ & MANY_ERRORS) {
+                if ((options_ & MANY_ERRORS) != 0) {
                     // We want to continue. Try to read until the end of line
                     bool end = false;
                     do {
