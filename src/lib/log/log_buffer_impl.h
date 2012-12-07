@@ -85,6 +85,7 @@ public:
     /// Once this method has been called, no more events can be
     /// added trough calls to \c add(); if \c add() is called after flush(),
     /// an exception will be raised.
+    /// If flush for any reason fails, the remaining events are dropped.
     void flush();
 
     /// \brief Returns number of stored events

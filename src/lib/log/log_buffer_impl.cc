@@ -16,7 +16,7 @@
 
 #include <log4cplus/loglevel.h>
 #include <boost/scoped_ptr.hpp>
-#include <iostream>
+#include <cstdio>
 
 namespace isc {
 namespace log {
@@ -65,23 +65,24 @@ LogBuffer::flushStdout() {
     // be a good idea; as we can't reliably know whether in what
     // state the logger instance is now (or what the specific logger's
     // settings were).
-    // So we print a slightly shortened format (it really only excludes
-    // the time and the pid)
+    // So we print a raw format (it excludes the time and the pid, and
+    // it prints severity as a number)
     LoggerEventPtrList::const_iterator it;
-    const log4cplus::LogLevelManager& manager =
-        log4cplus::getLogLevelManager();
     for (it = stored_.begin(); it != stored_.end(); ++it) {
-        std::cout << manager.toString((*it)->getLogLevel()) << " " <<
-                     "[" << (*it)->getLoggerName() << "] " <<
-                     (*it)->getMessage() << std::endl;
+        std::printf("Severity=%d [%s]: %s\n", (*it)->getLogLevel(),
+                    (*it)->getLoggerName().c_str(),
+                    (*it)->getMessage().c_str());
     }
     stored_.clear();
 }
 
 void
 LogBuffer::flush() {
+    LoggerEventPtrList stored_copy;
+    stored_.swap(stored_copy);
+
     LoggerEventPtrList::const_iterator it;
-    for (it = stored_.begin(); it != stored_.end(); ++it) {
+    for (it = stored_copy.begin(); it != stored_copy.end(); ++it) {
         log4cplus::Logger logger =
             log4cplus::Logger::getInstance((*it)->getLoggerName());
 
