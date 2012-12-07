@@ -199,12 +199,11 @@ public:
 
     /// @brief Returns backend name.
     ///
-    /// As there is no variation, in this case we return the type of the
-    /// backend.
+    /// For now, memfile can only store data in memory.
     ///
     /// @return Name of the backend.
     virtual std::string getName() const {
-        return ("memfile");
+        return ("memory");
     }
 
     /// @brief Returns description of the backend.
