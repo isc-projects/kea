@@ -30,7 +30,7 @@
 #include <log/log_messages.h>
 #include <log/logger_name.h>
 #include <log/logger_specification.h>
-#include <log/log_buffer.h>
+#include <log/log_buffer_impl.h>
 
 using namespace std;
 
@@ -51,7 +51,7 @@ LoggerManagerImpl::processInit() {
 // Flush the LogBuffer at the end of processing a new specification
 void
 LoggerManagerImpl::processEnd() {
-    getLogBuffer().flush();
+    internal::getLogBuffer().flush();
 }
 
 // Process logging specification.  Set up the common states then dispatch to
@@ -141,7 +141,8 @@ LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
 
 void
 LoggerManagerImpl::createBufferAppender(log4cplus::Logger& logger) {
-    log4cplus::SharedAppenderPtr bufferapp(new BufferAppender(getLogBuffer()));
+    log4cplus::SharedAppenderPtr bufferapp(
+        new internal::BufferAppender(internal::getLogBuffer()));
     bufferapp->setName("buffer");
     logger.addAppender(bufferapp);
     // Since we do not know at what level the loggers will end up
