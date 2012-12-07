@@ -41,6 +41,7 @@ static uint8_t hinfo_rdata[] = {0x07,0x50,0x65,0x6e,0x74,0x69,0x75,0x6d,0x05,
 static const char *hinfo_str = "\"Pentium\" \"Linux\"";
 static const char *hinfo_str1 = "\"Pen\\\"tium\" \"Linux\"";
 
+static const char *hinfo_str_equal = "\"Pentium\"\"Linux\"";
 static const char *hinfo_str_small1 = "\"Lentium\" \"Linux\"";
 static const char *hinfo_str_small2 = "\"Pentium\" \"Kinux\"";
 static const char *hinfo_str_large1 = "\"Qentium\" \"Linux\"";
@@ -57,8 +58,11 @@ TEST_F(Rdata_HINFO_Test, createFromText) {
 }
 
 TEST_F(Rdata_HINFO_Test, badText) {
-    // Fields must be seperated by spaces
-    EXPECT_THROW(const HINFO hinfo("\"Pentium\"\"Linux\""), InvalidRdataText);
+    // Only 2 fields must exist
+    EXPECT_THROW(const HINFO hinfo("\"Pentium\"\"Linux\"\"Computer\""),
+                 InvalidRdataText);
+    EXPECT_THROW(const HINFO hinfo("\"Pentium\" \"Linux\" \"Computer\""),
+                 InvalidRdataText);
     // Field cannot be missing
     EXPECT_THROW(const HINFO hinfo("Pentium"), InvalidRdataText);
     // The <character-string> cannot exceed 255 characters
@@ -75,6 +79,23 @@ TEST_F(Rdata_HINFO_Test, createFromWire) {
     HINFO hinfo(input_buffer, sizeof(hinfo_rdata));
     EXPECT_EQ(string("Pentium"), hinfo.getCPU());
     EXPECT_EQ(string("Linux"), hinfo.getOS());
+}
+
+TEST_F(Rdata_HINFO_Test, createFromLexer) {
+    HINFO rdata_hinfo(hinfo_str);
+    EXPECT_EQ(0, rdata_hinfo.compare(
+        *test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
+                                     hinfo_str)));
+    EXPECT_EQ(0, rdata_hinfo.compare(
+        *test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
+                                     "\"Pentium\"\"Linux\"")));
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
+                                             "\"Pentium\"\"Linux\""
+                                             "\"Computer\""));
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
+                                             "\"Pentium\" \"Linux\" "
+                                             "\"Computer\""));
 }
 
 TEST_F(Rdata_HINFO_Test, toText) {
@@ -107,6 +128,7 @@ TEST_F(Rdata_HINFO_Test, compare) {
     HINFO hinfo_large2(hinfo_str_large2);
 
     EXPECT_EQ(0, hinfo.compare(HINFO(hinfo_str)));
+    EXPECT_EQ(0, hinfo.compare(HINFO(hinfo_str_equal)));
     EXPECT_EQ(1, hinfo.compare(HINFO(hinfo_str_small1)));
     EXPECT_EQ(1, hinfo.compare(HINFO(hinfo_str_small2)));
     EXPECT_EQ(-1, hinfo.compare(HINFO(hinfo_str_large1)));

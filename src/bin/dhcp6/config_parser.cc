@@ -698,11 +698,8 @@ private:
             // We have exactly one option definition for the particular option code
             // use it to create the option instance.
             const OptionDefinitionPtr& def = *(range.first);
-            // getFactory should never return NULL pointer.
-            Option::Factory* factory = def->getFactory();
-            assert(factory != NULL);
             try {
-                OptionPtr option = factory(Option::V6, option_code, binary);
+                OptionPtr option = def->optionFactory(Option::V6, option_code, binary);
                 Subnet::OptionDescriptor desc(option, false);
                 option_descriptor_.option = option;
                 option_descriptor_.persistent = false;

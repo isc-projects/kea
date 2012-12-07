@@ -63,6 +63,16 @@ TEST_F(Rdata_DHCID_Test, createFromWire) {
     // TBD: more tests
 }
 
+TEST_F(Rdata_DHCID_Test, createFromLexer) {
+    EXPECT_EQ(0, rdata_dhcid.compare(
+        *test::createRdataUsingLexer(RRType::DHCID(), RRClass::IN(),
+                                     string_dhcid)));
+
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::DHCID(), RRClass::IN(),
+                                             "00"));
+}
+
 TEST_F(Rdata_DHCID_Test, toWireRenderer) {
     rdata_dhcid.toWire(renderer);
 
