@@ -124,7 +124,8 @@ TEST_F(MasterLoaderTest, basicLoad) {
     EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
 
-    checkRR("example.org", RRType::SOA(), "ns1.example.org. admin.example.org. "
+    checkRR("example.org", RRType::SOA(),
+            "ns1.example.org. admin.example.org. "
             "1234 3600 1800 2419200 7200");
     checkRR("example.org", RRType::NS(), "ns1.example.org.");
     checkRR("www.example.org", RRType::A(), "192.0.2.1");
@@ -140,7 +141,8 @@ TEST_F(MasterLoaderTest, incrementalLoad) {
     EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
 
-    checkRR("example.org", RRType::SOA(), "ns1.example.org. admin.example.org. "
+    checkRR("example.org", RRType::SOA(),
+            "ns1.example.org. admin.example.org. "
             "1234 3600 1800 2419200 7200");
     checkRR("example.org", RRType::NS(), "ns1.example.org.");
 
@@ -176,9 +178,9 @@ TEST_F(MasterLoaderTest, invalidFile) {
 }
 
 struct ErrorCase {
-    const char* line;
-    const char* problem;
-} error_cases[] = {
+    const char* const line;
+    const char* const problem;
+} const error_cases[] = {
     { "www...   3600    IN  A   192.0.2.1", "Invalid name" },
     { "www      FORTNIGHT   IN  A   192.0.2.1", "Invalid TTL" },
     { "www      3600    XX  A   192.0.2.1", "Invalid class" },
