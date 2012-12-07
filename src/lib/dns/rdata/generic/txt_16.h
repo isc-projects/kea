@@ -28,7 +28,9 @@
 
 // BEGIN_RDATA_NAMESPACE
 
+namespace detail {
 template<class Type, uint16_t typeCode> class TXTLikeImpl;
+}
 
 class TXT : public Rdata {
 public:
@@ -39,7 +41,7 @@ public:
     ~TXT();
 
 private:
-    typedef TXTLikeImpl<TXT, 16> TXTImpl;
+    typedef isc::dns::rdata::generic::detail::TXTLikeImpl<TXT, 16> TXTImpl;
     TXTImpl* impl_;
 };
 
