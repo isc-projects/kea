@@ -160,7 +160,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             // the Rdata. The errors should have been reported by
             // callbacks_ already. We need to decide if we want to continue
             // or not.
-            if (data != rdata::RdataPtr()) {
+            if (data) {
                 add_callback_(name, rrclass, rrtype, ttl, data);
 
                 // Good, we loaded another one
