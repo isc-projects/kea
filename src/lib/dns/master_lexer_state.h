@@ -17,6 +17,8 @@
 
 #include <dns/master_lexer.h>
 
+#include <boost/function.hpp>
+
 namespace isc {
 namespace dns {
 
@@ -41,10 +43,10 @@ namespace master_lexer_internal {
 /// state, so it makes more sense to separate the interface for the transition
 /// from the initial state.
 ///
-/// When an object of a specific state class completes the session, it
-/// normally sets the identified token in the lexer, and returns NULL;
-/// if more transition is necessary, it returns a pointer to the next state
-/// object.
+/// If the whole lexer transition is completed within start(), it sets the
+/// identified token and returns NULL; otherwise it returns a pointer to
+/// an object of a specific state class that completes the session
+/// on the call of handle().
 ///
 /// As is usual in the state design pattern, the \c State class is made
 /// a friend class of \c MasterLexer and can refer to its internal details.
@@ -67,7 +69,7 @@ public:
     /// tokenization session.  The lexer passes a reference to itself
     /// and options given in \c getNextToken().
     ///
-    /// \throw InputSource::ReadError Unexpected I/O error
+    /// \throw MasterLexer::ReadError Unexpected I/O error
     /// \throw std::bad_alloc Internal resource allocation failure
     ///
     /// \param lexer The lexer object that holds the main context.
@@ -80,16 +82,16 @@ public:
     /// \brief Handle the process of one specific state.
     ///
     /// This method is expected to be called on the object returned by
-    /// start(), and keep called on the returned object until NULL is
-    /// returned.  The call chain will form the complete state transition.
+    /// start(). In the usual state transition design pattern, it would
+    /// return the next state. But as we noticed, we never have another
+    /// state, so we simplify it by not returning anything instead of
+    /// returning NULL every time.
     ///
-    /// \throw InputSource::ReadError Unexpected I/O error
+    /// \throw MasterLexer::ReadError Unexpected I/O error
     /// \throw std::bad_alloc Internal resource allocation failure
     ///
     /// \param lexer The lexer object that holds the main context.
-    /// \return A pointer to the next state object or NULL if the transition
-    /// is completed.
-    virtual const State* handle(MasterLexer& lexer) const = 0;
+    virtual void handle(MasterLexer& lexer) const = 0;
 
     /// \brief Types of states.
     ///
@@ -99,7 +101,8 @@ public:
     enum ID {
         CRLF,                  ///< Just seen a carriage-return character
         String,                ///< Handling a string token
-        QString                ///< Handling a quoted string token
+        QString,               ///< Handling a quoted string token
+        Number                 ///< Handling a number
     };
 
     /// \brief Returns a \c State instance of the given state.
@@ -116,7 +119,7 @@ public:
     /// purposes.
     ///@{
     bool wasLastEOL(const MasterLexer& lexer) const;
-    const MasterLexer::Token& getToken(const MasterLexer& lexer) const;
+    const MasterToken& getToken(const MasterLexer& lexer) const;
     size_t getParenCount(const MasterLexer& lexer) const;
     ///@}
 

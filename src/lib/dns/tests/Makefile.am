@@ -36,6 +36,7 @@ run_unittests_SOURCES += opcode_unittest.cc
 run_unittests_SOURCES += rcode_unittest.cc
 run_unittests_SOURCES += rdata_unittest.h rdata_unittest.cc
 run_unittests_SOURCES += rdatafields_unittest.cc
+run_unittests_SOURCES += rdata_char_string_unittest.cc
 run_unittests_SOURCES += rdata_in_a_unittest.cc rdata_in_aaaa_unittest.cc
 run_unittests_SOURCES += rdata_ns_unittest.cc rdata_soa_unittest.cc
 run_unittests_SOURCES += rdata_txt_like_unittest.cc
@@ -71,6 +72,7 @@ run_unittests_SOURCES += tsigerror_unittest.cc
 run_unittests_SOURCES += tsigkey_unittest.cc
 run_unittests_SOURCES += tsigrecord_unittest.cc
 run_unittests_SOURCES += character_string_unittest.cc
+run_unittests_SOURCES += master_loader_callbacks_test.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 # We shouldn't need to include BOTAN_LIBS here, but there

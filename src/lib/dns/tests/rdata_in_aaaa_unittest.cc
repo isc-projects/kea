@@ -66,6 +66,12 @@ TEST_F(Rdata_IN_AAAA_Test, createFromWire) {
                  DNSMessageFORMERR);
 }
 
+TEST_F(Rdata_IN_AAAA_Test, createFromLexer) {
+    EXPECT_EQ(0, rdata_in_aaaa.compare(
+        *test::createRdataUsingLexer(RRType::AAAA(), RRClass::IN(),
+                                     "2001:db8::1234")));
+}
+
 TEST_F(Rdata_IN_AAAA_Test, toWireBuffer) {
     rdata_in_aaaa.toWire(obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,

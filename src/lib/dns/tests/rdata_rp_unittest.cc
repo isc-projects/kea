@@ -106,6 +106,17 @@ TEST_F(Rdata_RP_Test, createFromParams) {
     EXPECT_EQ(text_name, generic::RP(mailbox_name, text_name).getText());
 }
 
+TEST_F(Rdata_RP_Test, createFromLexer) {
+    EXPECT_EQ(0, rdata_rp.compare(
+        *test::createRdataUsingLexer(RRType::RP(), RRClass::IN(),
+                                     "root.example.com. "
+                                     "rp-text.example.com.")));
+
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::RP(), RRClass::IN(),
+                                             "mailbox.example.com."));
+}
+
 TEST_F(Rdata_RP_Test, toWireBuffer) {
     // construct expected data
     UnitTestUtil::readWireData("rdata_rp_toWire1.wire", expected_wire);

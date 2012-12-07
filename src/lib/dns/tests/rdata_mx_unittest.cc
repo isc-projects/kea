@@ -62,6 +62,16 @@ TEST_F(Rdata_MX_Test, createFromWire) {
     // TBD: more tests
 }
 
+TEST_F(Rdata_MX_Test, createFromLexer) {
+    EXPECT_EQ(0, rdata_mx.compare(
+        *test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
+                                     "10 mx.example.com")));
+
+    // Exceptions cause NULL to be returned.
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
+                                             "10 mx. example.com"));
+}
+
 TEST_F(Rdata_MX_Test, toWireRenderer) {
     renderer.writeName(Name("example.com"));
     rdata_mx.toWire(renderer);

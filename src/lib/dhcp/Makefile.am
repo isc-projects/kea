@@ -21,8 +21,9 @@ libb10_dhcp___la_SOURCES += iface_mgr_linux.cc
 libb10_dhcp___la_SOURCES += iface_mgr_sun.cc
 libb10_dhcp___la_SOURCES += libdhcp++.cc libdhcp++.h
 libb10_dhcp___la_SOURCES += option.cc option.h
-libb10_dhcp___la_SOURCES += option_data_types.h
+libb10_dhcp___la_SOURCES += option_data_types.cc option_data_types.h
 libb10_dhcp___la_SOURCES += option_definition.cc option_definition.h
+libb10_dhcp___la_SOURCES += option_custom.cc option_custom.h
 libb10_dhcp___la_SOURCES += option6_ia.cc option6_ia.h
 libb10_dhcp___la_SOURCES += option6_iaaddr.cc option6_iaaddr.h
 libb10_dhcp___la_SOURCES += option6_addrlst.cc option6_addrlst.h
@@ -39,7 +40,7 @@ libb10_dhcp___la_LIBADD   = $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 libb10_dhcp___la_LIBADD  += $(top_builddir)/src/lib/util/libb10-util.la
 libb10_dhcp___la_LDFLAGS  = -no-undefined -version-info 2:0:0
 
-EXTRA_DIST  = README
+EXTRA_DIST  = README libdhcp++.dox
 
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the

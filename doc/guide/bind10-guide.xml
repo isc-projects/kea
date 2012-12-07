@@ -425,11 +425,12 @@ var/
         </listitem>
 
         <listitem>
-          <para>In another console, enable the authoritative DNS service
-            (by using the <command>bindctl</command> utility to configure
-            the <command>b10-auth</command> component to run):
-            <screen>$ <userinput>bindctl</userinput></screen>
-            (Login with the provided default username and password.)
+          <para>DNS and DHCP components are not started in the default
+	    configuration.  In another console, enable the authoritative
+	    DNS service (by using the <command>bindctl</command> utility
+	    to configure the <command>b10-auth</command> component to
+	    run): <screen>$ <userinput>bindctl</userinput></screen>
+	    (Login with the provided default username and password.)
             <screen>
 &gt; <userinput>config add Boss/components b10-auth</userinput>
 &gt; <userinput>config set Boss/components/b10-auth/special auth</userinput>
@@ -471,7 +472,7 @@ var/
       <title>Packages</title>
 
       <para>
-        Some operating systems or softare package vendors may
+        Some operating systems or software package vendors may
         provide ready-to-use, pre-built software packages for
         the BIND 10 suite.
         Installing a pre-built package means you do not need to
@@ -783,7 +784,24 @@ as a dependency earlier -->
         <note>
           <para>The install step may require superuser privileges.</para>
         </note>
-
+        <para>
+	  If required, run <command>ldconfig</command> as root with
+	  <filename>/usr/local/lib</filename> (or with ${prefix}/lib if
+	  configured with --prefix) in
+	  <filename>/etc/ld.so.conf</filename> (or the relevant linker
+	  cache configuration file for your OS):
+	  <screen>$ <userinput>ldconfig</userinput></screen>
+        </para>
+        <note>
+          <para>
+	    If you do not run <command>ldconfig</command> where it is
+	    required, you may see errors like the following:
+            <screen>
+	      program: error while loading shared libraries: libb10-something.so.1:
+	      cannot open shared object file: No such file or directory
+	    </screen>
+	  </para>
+        </note>
       </section>
 
   <!-- TODO: tests -->
@@ -2139,7 +2157,7 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
 	you indicate that the system is not usable without the
 	component and if such component fails, the system shuts
 	down no matter when the failure happened.  This is the
-	behaviour of the core components (the ones you can't turn
+	behavior of the core components (the ones you can't turn
 	off), but you can declare any other components as core as
 	well if you wish (but you can turn these off, they just
 	can't fail).
