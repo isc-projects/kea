@@ -95,12 +95,6 @@ const size_t ADDRESS6_TEXT_MAX_LEN = 39;
 /// @brief Maximum size of a hardware address.
 const size_t HWADDR_MAX_LEN = 20;
 
-/// @brief Number of columns in Lease4 table
-const size_t LEASE4_COLUMNS = 6;
-
-/// @brief Number of columns in Lease6 table
-const size_t LEASE6_COLUMNS = 9;
-
 /// @brief MySQL True/False constants
 ///
 /// Declare typed values so as to avoid problems of data conversion.  These
@@ -279,10 +273,10 @@ public:
 /// in all MySqlLeaseMgr::xxx4() calls where it is used.
 
 class MySqlLease4Exchange : public MySqlLeaseExchange {
-public:
-    /// @brief Set number of columns in this lease structure
-    static const size_t LEASE_COLUMNS = LEASE4_COLUMNS;
+    /// @brief Set number of database columns for this lease structure
+    static const size_t LEASE_COLUMNS = 6;
 
+public:
     /// @brief Constructor
     ///
     /// The initialization of the variables here is only to satisfy cppcheck -
@@ -512,8 +506,8 @@ private:
 /// in all MySqlLeaseMgr::xxx6() calls where it is used.
 
 class MySqlLease6Exchange : public MySqlLeaseExchange {
-    /// @brief Set number of columns in this lease structure
-    static const size_t LEASE_COLUMNS = LEASE6_COLUMNS;
+    /// @brief Set number of database columns for this lease structure
+    static const size_t LEASE_COLUMNS = 9;
 
 public:
     /// @brief Constructor
@@ -535,7 +529,7 @@ public:
         columns_[6] = "lease_type";
         columns_[7] = "iaid";
         columns_[8] = "prefix_len";
-        BOOST_STATIC_ASSERT(5 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
     }
 
     /// @brief Create MYSQL_BIND objects for Lease6 Pointer
