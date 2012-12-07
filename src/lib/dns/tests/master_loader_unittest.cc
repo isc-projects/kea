@@ -208,6 +208,11 @@ struct ErrorCase {
     { "www      3600    IN  A   bad_ip", "Invalid Rdata" },
     { "www      3600    IN", "Unexpected EOLN" },
     { "www      3600    CH  TXT nothing", "Class mismatch" },
+    { "www      \"3600\"  IN  A   192.0.2.1", "Quoted TTL" },
+    { "www      3600    \"IN\"  A   192.0.2.1", "Quoted class" },
+    { "www      3600    IN  \"A\"   192.0.2.1", "Quoted type" },
+    { "unbalanced)paren 3600    IN  A   192.0.2.1", "Token error 1" },
+    { "www  3600    unbalanced)paren    A   192.0.2.1", "Token error 2" },
     { NULL, NULL }
 };
 
