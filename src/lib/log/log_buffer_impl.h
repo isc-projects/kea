@@ -107,26 +107,32 @@ private:
 /// This class can be set as an Appender for log4cplus loggers
 ///
 /// When logging an event, it will not actually log anything, but
-/// merely add it to the singleton LogBuffer instance
+/// merely add it to its internal LogBuffer
 class BufferAppender : public log4cplus::Appender {
 public:
     /// \brief Constructor
     ///
-    /// \note Only a reference to the LogBuffer is stored, so
-    /// this buffer must remain in scope during the lifetime of
-    /// the appender. In general, only one buffer would be needed,
-    /// and for that purpose there is the singleton instance
-    /// that can be reached using \c getLogBuffer()
-    BufferAppender(LogBuffer& buffer) : buffer_(buffer) {}
+    /// Constructs a BufferAppender with its own LogBuffer instance
+    BufferAppender() {}
     virtual void close() {}
+
+    /// \brief Flush the internal buffer
+    void flush() {
+        buffer_.flush();
+    }
+
+    /// \brief Access to the internal log buffer
+    ///
+    /// This is mostly for testing
+    LogBuffer& getLogBuffer() {
+        return (buffer_);
+    }
+
 protected:
     virtual void append(const log4cplus::spi::InternalLoggingEvent& event);
 private:
-    LogBuffer& buffer_;
+    LogBuffer buffer_;
 };
-
-/// \brief Getter for the singleton instance of the log buffer
-LogBuffer& getLogBuffer();
 
 } // end namespace internal
 } // end namespace log
