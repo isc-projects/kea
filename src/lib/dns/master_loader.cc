@@ -45,11 +45,24 @@ public:
         complete_(false)
     {}
 
+    void reportError(const std::string& filename, size_t line,
+                     const std::string& reason)
+    {
+        callbacks_.error(filename, line, reason);
+        if (!(options_ & MANY_ERRORS)) {
+            // In case we don't have the lenient mode, every error is fatal
+            // and we throw
+            ok_ = false;
+            complete_ = true;
+            isc_throw(MasterLoaderError, reason.c_str());
+        }
+    }
+
     void pushSource(const std::string& filename) {
         std::string error;
         if (!lexer_.pushSource(filename.c_str(), &error)) {
+            reportError("", 0, error);
             ok_ = false;
-            callbacks_.error("", 0, error);
         }
         initialized_ = true;
     }
@@ -125,36 +138,41 @@ public:
                     // Good, we loaded another one
                     ++count;
                 } else if ((options_ & MANY_ERRORS) == 0) {
-                    return (true);
+                    ok_ = false;
+                    complete_ = true;
+                    // We don't have the exact error here, but it was reported
+                    // by the error callback.
+                    isc_throw(MasterLoaderError, "Invalid RR data");
                 }
+            } catch (const MasterLoaderError&) {
+                // This is a hack. We exclude the MasterLoaderError from the
+                // below case. Once we restrict the below to some smaller
+                // exception, we should remove this.
+                throw;
             } catch (const isc::Exception& e) {
-                // TODO: Do we want to list expected exceptions here instead?
-                callbacks_.error(lexer_.getSourceName(),
-                                 lexer_.getSourceLine(),
-                                 e.what());
-                if ((options_ & MANY_ERRORS) != 0) {
-                    // We want to continue. Try to read until the end of line
-                    bool end = false;
-                    do {
-                        const MasterToken& token(lexer_.getNextToken());
-                        switch (token.getType()) {
-                            case MasterToken::END_OF_FILE:
-                                // TODO: Try pop in case this is not the only
-                                // source
-                                return (true);
-                            case MasterToken::END_OF_LINE:
-                                end = true;
-                                break;
-                            default:
-                                // Do nothing. This is just to make compiler
-                                // happy
-                                break;
-                        }
-                    } while (!end);
-                } else {
-                    // We abort on first error. We are therefore done.
-                    return (true);
-                }
+                // TODO: Once we do #2518, catch only the DNSTextError here,
+                // not isc::Exception. The rest should be just simply
+                // propagated.
+                reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
+                            e.what());
+                // We want to continue. Try to read until the end of line
+                bool end = false;
+                do {
+                    const MasterToken& token(lexer_.getNextToken());
+                    switch (token.getType()) {
+                        case MasterToken::END_OF_FILE:
+                            // TODO: Try pop in case this is not the only
+                            // source
+                            return (true);
+                        case MasterToken::END_OF_LINE:
+                            end = true;
+                            break;
+                        default:
+                            // Do nothing. This is just to make compiler
+                            // happy
+                            break;
+                    }
+                } while (!end);
             }
         }
         // When there was a fatal error and ok is false, we say we are done.

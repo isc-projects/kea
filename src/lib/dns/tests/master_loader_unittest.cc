@@ -225,8 +225,8 @@ TEST_F(MasterLoaderTest, brokenZone) {
             stringstream zone_stream(zone);
             setLoader(zone_stream, Name("example.org."), RRClass::IN(),
                       MasterLoader::DEFAULT);
-            loader_->load();
-            EXPECT_EQ(1, errors_.size());
+            EXPECT_THROW(loader_->load(), MasterLoaderError);
+            EXPECT_EQ(1, errors_.size()) << errors_[0];
             EXPECT_TRUE(warnings_.empty());
 
             checkRR("example.org", RRType::SOA(), "ns1.example.org. "
@@ -242,7 +242,7 @@ TEST_F(MasterLoaderTest, brokenZone) {
             stringstream zone_stream(zone);
             setLoader(zone_stream, Name("example.org."), RRClass::IN(),
                       MasterLoader::MANY_ERRORS);
-            loader_->load();
+            EXPECT_NO_THROW(loader_->load());
             EXPECT_EQ(1, errors_.size());
             EXPECT_TRUE(warnings_.empty());
             checkRR("example.org", RRType::SOA(), "ns1.example.org. "
