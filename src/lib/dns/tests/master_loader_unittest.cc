@@ -35,6 +35,7 @@ using std::list;
 using std::ofstream;
 using std::endl;
 
+namespace {
 class MasterLoaderTest : public ::testing::Test {
 public:
     MasterLoaderTest() :
@@ -242,4 +243,5 @@ TEST_F(MasterLoaderTest, loadTwice) {
 
     loader_->load();
     EXPECT_THROW(loader_->load(), isc::InvalidOperation);
+}
 }
