@@ -51,6 +51,12 @@ public:
             ok_ = false;
             callbacks_.error("", 0, error);
         }
+        initialized_ = true;
+    }
+
+    void pushStreamSource(std::istream& stream) {
+        lexer_.pushSource(stream);
+        initialized_ = true;
     }
 
     // Get a string token. Handle it as error if it is not string.
@@ -65,7 +71,6 @@ public:
         }
         if (!initialized_) {
             pushSource(master_file_);
-            initialized_ = true;
         }
         size_t count = 0;
         while (ok_ && count < count_limit) {
@@ -182,6 +187,21 @@ MasterLoader::MasterLoader(const char* master_file,
     }
     impl_ = new MasterLoaderImpl(master_file, zone_origin,
                                  zone_class, callbacks, add_callback, options);
+}
+
+MasterLoader::MasterLoader(std::istream& stream,
+                           const Name& zone_origin,
+                           const RRClass& zone_class,
+                           const MasterLoaderCallbacks& callbacks,
+                           const AddRRCallback& add_callback,
+                           Options options)
+{
+    if (add_callback.empty()) {
+        isc_throw(isc::InvalidParameter, "Empty add RR callback");
+    }
+    impl_ = new MasterLoaderImpl("", zone_origin, zone_class, callbacks,
+                                 add_callback, options);
+    impl_->pushStreamSource(stream);
 }
 
 MasterLoader::~MasterLoader() {

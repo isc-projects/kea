@@ -71,6 +71,20 @@ public:
                  const AddRRCallback& add_callback,
                  Options options = DEFAULT);
 
+    /// \brief Constructor from a stream
+    ///
+    /// This is a constructor very similar to the previous one. The only
+    /// difference is it doesn't take a filename, but an input stream
+    /// to read the data from. It is expected to be mostly used in tests,
+    /// but it is public as it may possibly be useful for other currently
+    /// unknown purposes.
+    MasterLoader(std::istream& input,
+                 const Name& zone_origin,
+                 const RRClass& zone_class,
+                 const MasterLoaderCallbacks& callbacks,
+                 const AddRRCallback& add_callback,
+                 Options options = DEFAULT);
+
     /// \brief Destructor
     ~MasterLoader();
 
