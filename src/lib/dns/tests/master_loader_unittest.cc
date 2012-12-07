@@ -199,8 +199,8 @@ TEST_F(MasterLoaderTest, invalidFile) {
 }
 
 struct ErrorCase {
-    const char* const line;
-    const char* const problem;
+    const char* const line;    // The broken line in master file
+    const char* const problem; // Description of the problem for SCOPED_TRACE
 } const error_cases[] = {
     { "www...   3600    IN  A   192.0.2.1", "Invalid name" },
     { "www      FORTNIGHT   IN  A   192.0.2.1", "Invalid TTL" },
