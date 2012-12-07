@@ -11,7 +11,7 @@ request	msg_counter_request		Request statistics	=
 	dnssec_ok	MSG_REQUEST_DNSSEC_OK	Number of requests with "DNSSEC OK" (DO) bit was set received by the b10-auth server.
 	;
 opcode	msg_counter_opcode		OpCode statistics	=
-	query		MSG_OPCODE_QUERY		Number of OpCode=Query requests received by the b10-auth server.
+	query		MSG_OPCODE_QUERY	Number of OpCode=Query requests received by the b10-auth server.
 	iquery		MSG_OPCODE_IQUERY	Number of OpCode=IQuery requests received by the b10-auth server.
 	status		MSG_OPCODE_STATUS	Number of OpCode=Status requests received by the b10-auth server.
 	notify		MSG_OPCODE_NOTIFY	Number of OpCode=Notify requests received by the b10-auth server.
