@@ -18,6 +18,7 @@
 #include <dns/rrset.h>
 #include <dns/rrclass.h>
 #include <dns/name.h>
+#include <dns/rdata.h>
 
 #include <gtest/gtest.h>
 #include <boost/bind.hpp>
@@ -105,8 +106,10 @@ public:
 
         EXPECT_EQ(Name(name), current->getName());
         ASSERT_EQ(type, current->getType());
+        EXPECT_EQ(RRClass::IN(), current->getClass());
         ASSERT_EQ(1, current->getRdataCount());
-        EXPECT_EQ(data, current->getRdataIterator()->getCurrent().toText());
+        EXPECT_EQ(0, isc::dns::rdata::createRdata(type, RRClass::IN(), data)->
+                  compare(current->getRdataIterator()->getCurrent()));
     }
 
     MasterLoaderCallbacks callbacks_;
