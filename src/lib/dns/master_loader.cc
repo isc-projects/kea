@@ -96,7 +96,7 @@ private:
     const RRClass zone_class_;
     MasterLoaderCallbacks callbacks_;
     AddRRCallback add_callback_;
-    MasterLoader::Options options_;
+    const MasterLoader::Options options_;
     const std::string master_file_;
     std::string string_token_;
     bool initialized_;
