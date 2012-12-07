@@ -110,26 +110,18 @@ ZoneLoader::loadIncremental(size_t limit) {
 
     if (iterator_ == ZoneIteratorPtr()) {
         assert(loader_.get() != NULL);
-        if (loader_->loadIncremental(limit)) {
-            complete_ = true;
-            if (!loaded_ok_) {
-                isc_throw(MasterFileError, "Error while loading master file");
-            } else {
-                updater_->commit();
-            }
-            return (true);
-        } else {
-            return (false);
+        complete_ = loader_->loadIncremental(limit);
+        if (complete_ && !loaded_ok_) {
+            isc_throw(MasterFileError, "Error while loading master file");
         }
     } else {
-        if (copyRRsets(updater_, iterator_, limit)) {
-            updater_->commit();
-            complete_ = true;
-            return (true);
-        } else {
-            return (false);
-        }
+        complete_ = copyRRsets(updater_, iterator_, limit);
     }
+
+    if (complete_) {
+        updater_->commit();
+    }
+    return (complete_);
 }
 
 } // end namespace datasrc
