@@ -66,6 +66,10 @@ public:
     /// \param zone_class The class of zone to be expected inside the
     ///     master file.
     /// \param callbacks The callbacks by which it should report problems.
+    ///     Usually, the callback carries a filename and line number of the
+    ///     input where the problem happens. There's a special case of empty
+    ///     filename and zero line in case the opening of the top-level master
+    ///     file fails.
     /// \param add_callback The callback which would be called with each
     ///     loaded RR.
     /// \param options Options for the parsing, which is bitwise-or of
