@@ -40,7 +40,7 @@ libb10_dhcp___la_LIBADD   = $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 libb10_dhcp___la_LIBADD  += $(top_builddir)/src/lib/util/libb10-util.la
 libb10_dhcp___la_LDFLAGS  = -no-undefined -version-info 2:0:0
 
-EXTRA_DIST  = README
+EXTRA_DIST  = README libdhcp++.dox
 
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the

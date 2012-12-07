@@ -1,3 +1,10 @@
+516.	[bug]		marcin
+	Fixed 'make distcheck' failure when running perfdhcp unit tests.
+	The unit tests used to read files from the folder specified
+	with the path relative to current folder, thus when the test was
+	run from a different folder the files could not be found.
+	(Trac #2479, git 4e8325e1b309f1d388a3055ec1e1df98c377f383)
+
 515.	[bug]		jinmei
 	The in-memory data source now accepts an RRSIG provided without
 	a covered RRset in loading.  A subsequent query for its owner name
