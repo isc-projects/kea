@@ -18,7 +18,7 @@
 #include <log/macros.h>
 #include <log/logger_support.h>
 #include <log/log_messages.h>
-#include <log/log_buffer.h>
+#include <log/log_buffer_impl.h>
 
 #include <log4cplus/loggingmacros.h>
 #include <log4cplus/logger.h>
@@ -26,6 +26,7 @@
 #include <log4cplus/spi/loggingevent.h>
 
 using namespace isc::log;
+using namespace isc::log::internal;
 
 namespace isc {
 namespace log {

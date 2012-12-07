@@ -23,6 +23,7 @@
 
 namespace isc {
 namespace log {
+namespace internal {
 
 /// \brief Buffer add after flush
 ///
@@ -126,6 +127,7 @@ private:
 /// \brief Getter for the singleton instance of the log buffer
 LogBuffer& getLogBuffer();
 
+} // end namespace internal
 } // end namespace log
 } // end namespace isc
 
