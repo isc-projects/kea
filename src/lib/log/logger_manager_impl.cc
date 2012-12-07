@@ -58,9 +58,8 @@ LoggerManagerImpl::processEnd() {
 // add output specifications.
 void
 LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
-    log4cplus::Logger logger;
-    // If this is an 'empty' specification, just set the root logger
-    logger = log4cplus::Logger::getInstance(expandLoggerName(spec.getName()));
+    log4cplus::Logger logger = log4cplus::Logger::getInstance(
+                                   expandLoggerName(spec.getName()));
 
     // Set severity level according to specification entry.
     logger.setLogLevel(LoggerLevelImpl::convertFromBindLevel(
