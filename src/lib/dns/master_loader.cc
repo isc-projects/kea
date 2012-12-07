@@ -20,6 +20,8 @@
 #include <dns/rrtype.h>
 #include <dns/rdata.h>
 
+#include <string>
+
 using std::string;
 
 namespace isc {
