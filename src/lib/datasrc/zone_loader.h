@@ -133,6 +133,11 @@ public:
     /// \throw DataSourceError in case some error (possibly low-level) happens.
     /// \throw MasterFileError when the master_file is badly formatted or some
     ///     similar problem is found when loading the master file.
+    /// \note If the limit is exactly the number of RRs available to be loaded,
+    ///     the method still returns false and true'll be returned on the next
+    ///     call (which will load 0 RRs). This is because the end of iterator or
+    ///     master file is detected when reading past the end, not when the last
+    ///     one is read.
     bool loadIncremental(size_t limit);
 private:
     /// \brief The iterator used as source of data in case of the copy mode.
