@@ -3,14 +3,18 @@
 ;; in query tests.
 ;;
 
-example.com. 3600 IN SOA . . 0 0 0 0 0
+example.com. 3600 IN SOA . . 5 0 0 0 0
 example.com. 3600 IN NS glue.delegation.example.com.
 example.com. 3600 IN NS noglue.example.com.
 example.com. 3600 IN NS example.net.
+example.com. 3600 IN RRSIG NS 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 example.com. 3600 IN DS 57855 5 1 B6DCD485719ADCA18E5F3D48A2331627FDD3 636B
 glue.delegation.example.com. 3600 IN A 192.0.2.153
+glue.delegation.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 glue.delegation.example.com. 3600 IN AAAA 2001:db8::53
+glue.delegation.example.com. 3600 IN RRSIG AAAA 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 noglue.example.com. 3600 IN A 192.0.2.53
+noglue.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 delegation.example.com. 3600 IN NS glue.delegation.example.com.
 delegation.example.com. 3600 IN NS noglue.example.com.
 delegation.example.com. 3600 IN NS cname.example.com.
@@ -21,6 +25,7 @@ mx.example.com. 3600 IN MX 10 www.example.com.
 mx.example.com. 3600 IN MX 20 mailer.example.org.
 mx.example.com. 3600 IN MX 30 mx.delegation.example.com.
 www.example.com. 3600 IN A 192.0.2.80
+www.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 cname.example.com. 3600 IN CNAME www.example.com.
 cnamenxdom.example.com. 3600 IN CNAME nxdomain.example.com.
 ;; CNAME Leading out of zone
