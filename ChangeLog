@@ -1,3 +1,8 @@
+519.	[bug]		muks
+	Fixed a problem in inmem NSEC lookup which caused assert failures
+	in some cases.
+	(Trac #2504, git 835553eb309d100b062051f7ef18422d2e8e3ae4)
+
 518.	[func]		stephen
 	Extend DHCP MySQL backend to handle IPv4 addresses.
 	(Trac #2404, git ce7db48d3ff5d5aad12b1da5e67ae60073cb2607)
