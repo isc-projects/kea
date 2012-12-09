@@ -1446,6 +1446,9 @@ TEST_F(InMemoryZoneFinderTest, NSECNonExistentTest) {
     ZoneFinderContextPtr find_result(
         result.zone_finder->find(search_name,
                                  RRType::A(), ZoneFinder::FIND_DNSSEC));
+    // We don't find the domain, but find() must complete (not throw or
+    // assert).
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, find_result->code);
 }
 
 /// \brief NSEC3 specific tests fixture for the InMemoryZoneFinder class
