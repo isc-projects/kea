@@ -193,7 +193,8 @@ class ZonemgrRefresh:
     def zone_handle_notify(self, zone_name_class, master):
         """Handle zone notify"""
         if (self._zone_not_exist(zone_name_class)):
-            logger.error(ZONEMGR_UNKNOWN_ZONE_NOTIFIED, zone_name_class[0], zone_name_class[1])
+            logger.error(ZONEMGR_UNKNOWN_ZONE_NOTIFIED, zone_name_class[0],
+                         zone_name_class[1], master)
             raise ZonemgrException("[b10-zonemgr] Notified zone (%s, %s) "
                                    "doesn't belong to zonemgr" % zone_name_class)
         self._set_zone_notifier_master(zone_name_class, master)

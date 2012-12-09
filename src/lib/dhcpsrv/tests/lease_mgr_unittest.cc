@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,8 @@
 
 #include <iostream>
 #include <sstream>
+
+#include <time.h>
 
 using namespace std;
 using namespace isc;
@@ -236,16 +238,12 @@ public:
 };
 
 namespace {
-// empty class for now, but may be extended once Addr6 becomes bigger
-class LeaseMgrTest : public ::testing::Test {
-public:
-    LeaseMgrTest() {
-    }
-};
 
-// This test checks if the LeaseMgr can be instantiated and that it
-// parses parameters string properly.
-TEST_F(LeaseMgrTest, getParameter) {
+/// @brief getParameter test
+///
+/// This test checks if the LeaseMgr can be instantiated and that it
+/// parses parameters string properly.
+TEST(LeaseMgr, getParameter) {
 
     LeaseMgr::ParameterMap pmap;
     pmap[std::string("param1")] = std::string("value1");
@@ -261,36 +259,368 @@ TEST_F(LeaseMgrTest, getParameter) {
 // are purely virtual, so we would only call ConcreteLeaseMgr methods.
 // Those methods are just stubs that do not return anything.
 
+/// @brief Lease4 Constructor Test
+///
+/// Lease4 is also defined in lease_mgr.h, so is tested in this file as well.
+// This test checks if the Lease4 structure can be instantiated correctly
+TEST(Lease4, Lease4Constructor) {
+
+    // Random values for the tests
+    const uint8_t HWADDR[] = {0x08, 0x00, 0x2b, 0x02, 0x3f, 0x4e};
+    std::vector<uint8_t> hwaddr(HWADDR, HWADDR + sizeof(HWADDR));
+
+    const uint8_t CLIENTID[] = {0x17, 0x34, 0xe2, 0xff, 0x09, 0x92, 0x54};
+    std::vector<uint8_t> clientid_vec(CLIENTID, CLIENTID + sizeof(CLIENTID));
+    ClientId clientid(clientid_vec);
+
+    // ...and a time
+    const time_t current_time = time(NULL);
+
+    // Other random constants. 
+    const uint32_t SUBNET_ID = 42;
+    const uint32_t VALID_LIFETIME = 500;
+
+    // We want to check that various addresses work, so let's iterate over
+    // these.
+    const uint32_t ADDRESS[] = {
+        0x00000000, 0x01020304, 0x7fffffff, 0x80000000, 0x80000001, 0xffffffff
+    };
+
+    for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
+
+        // Create the lease
+        Lease4 lease(ADDRESS[i], HWADDR, sizeof(HWADDR),
+                     CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, current_time,
+                     SUBNET_ID);
+
+        EXPECT_EQ(ADDRESS[i], static_cast<uint32_t>(lease.addr_));
+        EXPECT_EQ(0, lease.ext_);
+        EXPECT_TRUE(hwaddr == lease.hwaddr_);
+        EXPECT_TRUE(clientid == *lease.client_id_);
+        EXPECT_EQ(0, lease.t1_);
+        EXPECT_EQ(0, lease.t2_);
+        EXPECT_EQ(VALID_LIFETIME, lease.valid_lft_);
+        EXPECT_EQ(current_time, lease.cltt_);
+        EXPECT_EQ(SUBNET_ID, lease.subnet_id_);
+        EXPECT_FALSE(lease.fixed_);
+        EXPECT_TRUE(lease.hostname_.empty());
+        EXPECT_FALSE(lease.fqdn_fwd_);
+        EXPECT_FALSE(lease.fqdn_rev_);
+        EXPECT_TRUE(lease.comments_.empty());
+    }
+}
+
+/// @brief Lease4 Equality Test
+///
+/// Checks that the operator==() correctly compares two leases for equality.
+/// As operator!=() is also defined for this class, every check on operator==()
+/// is followed by the reverse check on operator!=().
+TEST(Lease4, OperatorEquals) {
+
+    // Random values for the tests
+    const uint32_t ADDRESS = 0x01020304;
+    const uint8_t HWADDR[] = {0x08, 0x00, 0x2b, 0x02, 0x3f, 0x4e};
+    std::vector<uint8_t> hwaddr(HWADDR, HWADDR + sizeof(HWADDR));
+    const uint8_t CLIENTID[] = {0x17, 0x34, 0xe2, 0xff, 0x09, 0x92, 0x54};
+    std::vector<uint8_t> clientid_vec(CLIENTID, CLIENTID + sizeof(CLIENTID));
+    ClientId clientid(clientid_vec);
+    const time_t current_time = time(NULL);
+    const uint32_t SUBNET_ID = 42;
+    const uint32_t VALID_LIFETIME = 500;
+
+    // Check when the leases are equal.
+    Lease4 lease1(ADDRESS, HWADDR, sizeof(HWADDR),
+                  CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, current_time,
+                  SUBNET_ID);
+    Lease4 lease2(ADDRESS, HWADDR, sizeof(HWADDR),
+                  CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, current_time,
+                  SUBNET_ID);
+    EXPECT_TRUE(lease1 == lease2);
+    EXPECT_FALSE(lease1 != lease2);
+
+    // Now vary individual fields in a lease and check that the leases compare
+    // not equal in every case.
+    lease1.addr_ = IOAddress(ADDRESS + 1);
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.addr_ = lease2.addr_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    ++lease1.ext_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.ext_ = lease2.ext_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    ++lease1.hwaddr_[0];
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.hwaddr_ = lease2.hwaddr_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    ++clientid_vec[0];
+    lease1.client_id_.reset(new ClientId(clientid_vec));
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    --clientid_vec[0];
+    lease1.client_id_.reset(new ClientId(clientid_vec));
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    ++lease1.t1_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.t1_ = lease2.t1_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    ++lease1.t2_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.t2_ = lease2.t2_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    ++lease1.valid_lft_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.valid_lft_ = lease2.valid_lft_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    ++lease1.cltt_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.cltt_ = lease2.cltt_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    ++lease1.subnet_id_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.subnet_id_ = lease2.subnet_id_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    lease1.fixed_ = !lease1.fixed_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.fixed_ = lease2.fixed_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    lease1.hostname_ += string("Something random");
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.hostname_ = lease2.hostname_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    lease1.fqdn_fwd_ = !lease1.fqdn_fwd_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.fqdn_fwd_ = lease2.fqdn_fwd_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    lease1.fqdn_rev_ = !lease1.fqdn_rev_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.fqdn_rev_ = lease2.fqdn_rev_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    lease1.comments_ += string("Something random");
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.comments_ = lease2.comments_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+}
+
+
+
 // Lease6 is also defined in lease_mgr.h, so is tested in this file as well.
 // This test checks if the Lease6 structure can be instantiated correctly
 TEST(Lease6, Lease6Constructor) {
 
-    IOAddress addr("2001:db8:1::456");
+    // check a variety of addresses with different bits set.
+    const char* ADDRESS[] = {
+        "::", "::1", "2001:db8:1::456",
+        "7fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+        "8000::", "8000::1",
+        "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+    };
 
+    // Other values
     uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
     DuidPtr duid(new DUID(llt, sizeof(llt)));
-
     uint32_t iaid = 7; // just a number
-
     SubnetID subnet_id = 8; // just another number
 
-    Lease6Ptr x(new Lease6(Lease6::LEASE_IA_NA, addr,
-                           duid, iaid, 100, 200, 50, 80,
-                           subnet_id));
+    for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
+        IOAddress addr(ADDRESS[i]);
+        Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr,
+                               duid, iaid, 100, 200, 50, 80,
+                               subnet_id));
 
-    EXPECT_TRUE(x->addr_ == addr);
-    EXPECT_TRUE(*x->duid_ == *duid);
-    EXPECT_TRUE(x->iaid_ == iaid);
-    EXPECT_TRUE(x->subnet_id_ == subnet_id);
-    EXPECT_TRUE(x->type_ == Lease6::LEASE_IA_NA);
-    EXPECT_TRUE(x->preferred_lft_ == 100);
-    EXPECT_TRUE(x->valid_lft_ == 200);
-    EXPECT_TRUE(x->t1_ == 50);
-    EXPECT_TRUE(x->t2_ == 80);
+        EXPECT_TRUE(lease->addr_ == addr);
+        EXPECT_TRUE(*lease->duid_ == *duid);
+        EXPECT_TRUE(lease->iaid_ == iaid);
+        EXPECT_TRUE(lease->subnet_id_ == subnet_id);
+        EXPECT_TRUE(lease->type_ == Lease6::LEASE_IA_NA);
+        EXPECT_TRUE(lease->preferred_lft_ == 100);
+        EXPECT_TRUE(lease->valid_lft_ == 200);
+        EXPECT_TRUE(lease->t1_ == 50);
+        EXPECT_TRUE(lease->t2_ == 80);
+    }
 
     // Lease6 must be instantiated with a DUID, not with NULL pointer
+    IOAddress addr(ADDRESS[0]);
     EXPECT_THROW(new Lease6(Lease6::LEASE_IA_NA, addr,
                             DuidPtr(), iaid, 100, 200, 50, 80,
                             subnet_id), InvalidOperation);
+}
+
+/// @brief Lease6 Equality Test
+///
+/// Checks that the operator==() correctly compares two leases for equality.
+/// As operator!=() is also defined for this class, every check on operator==()
+/// is followed by the reverse check on operator!=().
+TEST(Lease6, OperatorEquals) {
+
+    // check a variety of addressemas with different bits set.
+    const IOAddress addr("2001:db8:1::456");
+    uint8_t duid_array[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
+    DuidPtr duid(new DUID(duid_array, sizeof(duid_array)));
+    uint32_t iaid = 7; // just a number
+    SubnetID subnet_id = 8; // just another number
+
+    // Check for equality.
+    Lease6 lease1(Lease6::LEASE_IA_NA, addr, duid, iaid, 100, 200, 50, 80,
+                               subnet_id);
+    Lease6 lease2(Lease6::LEASE_IA_NA, addr, duid, iaid, 100, 200, 50, 80,
+                               subnet_id);
+    EXPECT_TRUE(lease1 == lease2);
+    EXPECT_FALSE(lease1 != lease2);
+
+    // Go through and alter all the fields one by one
+
+    lease1.addr_ = IOAddress("::1");
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.addr_ = lease2.addr_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    lease1.type_ = Lease6::LEASE_IA_PD;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.type_ = lease2.type_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    ++lease1.prefixlen_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.prefixlen_ = lease2.prefixlen_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    ++lease1.iaid_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.iaid_ = lease2.iaid_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    ++duid_array[0];
+    lease1.duid_.reset(new DUID(duid_array, sizeof(duid_array)));
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    --duid_array[0];
+    lease1.duid_.reset(new DUID(duid_array, sizeof(duid_array)));
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    ++lease1.preferred_lft_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.preferred_lft_ = lease2.preferred_lft_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    ++lease1.valid_lft_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.valid_lft_ = lease2.valid_lft_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    ++lease1.t1_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.t1_ = lease2.t1_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    ++lease1.t2_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.t2_ = lease2.t2_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    ++lease1.cltt_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.cltt_ = lease2.cltt_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    ++lease1.subnet_id_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.subnet_id_ = lease2.subnet_id_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    lease1.fixed_ = !lease1.fixed_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.fixed_ = lease2.fixed_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    lease1.hostname_ += string("Something random");
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.hostname_ = lease2.hostname_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    lease1.fqdn_fwd_ = !lease1.fqdn_fwd_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.fqdn_fwd_ = lease2.fqdn_fwd_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    lease1.fqdn_rev_ = !lease1.fqdn_rev_;
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.fqdn_rev_ = lease2.fqdn_rev_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
+
+    lease1.comments_ += string("Something random");
+    EXPECT_FALSE(lease1 == lease2);
+    EXPECT_TRUE(lease1 != lease2);
+    lease1.comments_ = lease2.comments_;
+    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
+    EXPECT_FALSE(lease1 != lease2); // ... leases equal
 }
 }; // end of anonymous namespace

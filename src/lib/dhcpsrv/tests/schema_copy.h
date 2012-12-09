@@ -25,7 +25,9 @@ namespace {
 // by semicolons, and the strings must end with a comma.  The final line
 // statement must be NULL (not in quotes)
 
-// THIS MUST BE KEPT UP TO DATE AND UPDATED IF THE SCHEMA CHANGES
+// NOTE: This file mirrors the schema in src/lib/dhcpsrv/dhcpdb_create.mysql.
+//       If this file is altered, please ensure that any change is compatible
+//       with the schema in dhcpdb_create.mysql.
 
 // Deletion of existing tables.
 
@@ -44,13 +46,13 @@ const char* create_statement[] = {
         "address INT UNSIGNED PRIMARY KEY NOT NULL,"
         "hwaddr VARBINARY(20),"
         "client_id VARBINARY(128),"
-        "lease_time INT UNSIGNED,"
+        "valid_lifetime INT UNSIGNED,"
         "expire TIMESTAMP,"
         "subnet_id INT UNSIGNED"
         ") ENGINE = INNODB",
 
     "CREATE TABLE lease6 ("
-        "address VARCHAR(40) PRIMARY KEY NOT NULL,"
+        "address VARCHAR(39) PRIMARY KEY NOT NULL,"
         "duid VARBINARY(128),"
         "valid_lifetime INT UNSIGNED,"
         "expire TIMESTAMP,"
@@ -75,7 +77,7 @@ const char* create_statement[] = {
         "minor INT"
         ")",
 
-    "INSERT INTO schema_version VALUES (0, 1)",
+    "INSERT INTO schema_version VALUES (1, 0)",
 
     NULL
 };

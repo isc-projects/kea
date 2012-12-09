@@ -1,9 +1,9 @@
 #
 # various kinds of TXT RDATA stored in an input buffer
 #
-# Valid RDATA for "Test String"
+# Valid RDATA for "Test-String"
 #
 # RDLENGHT=12 bytes
  00 0c
-#    T  e  s  t     S  t  r  i  n  g
- 0b 54 65 73 74 20 53 74 72 69 6e 67
+#    T  e  s  t  -  S  t  r  i  n  g
+ 0b 54 65 73 74 2d 53 74 72 69 6e 67
