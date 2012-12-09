@@ -1,6 +1,7 @@
-SUBDIRS = .
+SUBDIRS = . testdata
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_srcdir)/testdata\"
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
@@ -9,6 +10,9 @@ AM_LDFLAGS = -static
 endif
 
 CLEANFILES = *.gcno *.gcda
+# The test[1-5].hex are created by the TestControl.PacketTemplates
+# unit tests and have to be removed.
+CLEANFILES += test1.hex test2.hex test3.hex test4.hex test5.hex
 
 TESTS_ENVIRONMENT = \
         $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)

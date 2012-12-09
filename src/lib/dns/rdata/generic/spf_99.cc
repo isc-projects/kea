@@ -24,17 +24,16 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
+/// This class implements the basic interfaces inherited from the abstract
+/// \c rdata::Rdata class. The semantics of the class is provided by
+/// a copy of instantiated TXTLikeImpl class common to both TXT and SPF.
+#include <dns/rdata/generic/detail/txt_like.h>
+
 using namespace std;
 using namespace isc::util;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
-
-/// This class implements the basic interfaces inherited from the abstract
-/// \c rdata::Rdata class. The semantics of the class is provided by
-/// a copy of instantiated TXTLikeImpl class common to both TXT and SPF.
-
-#include <dns/rdata/generic/detail/txt_like.h>
 
 /// \brief The assignment operator
 ///
@@ -65,6 +64,21 @@ SPF::~SPF() {
 /// standard exception will be thrown.
 SPF::SPF(InputBuffer& buffer, size_t rdata_len) :
     impl_(new SPFImpl(buffer, rdata_len))
+{}
+
+/// \brief Constructor using the master lexer.
+///
+/// This implementation only uses the \c lexer parameters; others are
+/// ignored.
+///
+/// \throw CharStringTooLong the parameter string length exceeds maximum.
+/// \throw InvalidRdataText the method cannot process the parameter data
+///
+/// \param lexer A \c MasterLexer object parsing a master file for this
+/// RDATA.
+SPF::SPF(MasterLexer& lexer, const Name*, MasterLoader::Options,
+         MasterLoaderCallbacks&) :
+    impl_(new SPFImpl(lexer))
 {}
 
 /// \brief Constructor from string.

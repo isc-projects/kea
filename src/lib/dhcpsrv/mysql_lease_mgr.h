@@ -27,18 +27,22 @@ namespace dhcp {
 
 // Define the current database schema values
 
-const uint32_t CURRENT_VERSION_VERSION = 0;
-const uint32_t CURRENT_VERSION_MINOR = 1;
+const uint32_t CURRENT_VERSION_VERSION = 1;
+const uint32_t CURRENT_VERSION_MINOR = 0;
 
 
-// Forward declaration of the Lease6 exchange object.  This class is defined
+// Forward declaration of the Lease exchange objects.  These classes are defined
 // in the .cc file.
+class MySqlLease4Exchange;
 class MySqlLease6Exchange;
 
 
 /// @brief MySQL Lease Manager
 ///
-/// This is a concrete API for the backend for the MySQL database.
+/// This class provides the \ref isc::dhcp::LeaseMgr interface to the MySQL
+/// database.  Use of this backend presupposes that a MySQL database is
+/// available and that the Kea schema has been created within it.
+
 class MySqlLeaseMgr : public LeaseMgr {
 public:
     /// @brief Constructor
@@ -68,7 +72,7 @@ public:
     /// @brief Destructor (closes database)
     virtual ~MySqlLeaseMgr();
 
-    /// @brief Adds an IPv4 lease.
+    /// @brief Adds an IPv4 lease
     ///
     /// @param lease lease to be added
     ///
@@ -79,7 +83,7 @@ public:
     ///        failed.
     virtual bool addLease(const Lease4Ptr& lease);
 
-    /// @brief Adds an IPv6 lease.
+    /// @brief Adds an IPv6 lease
     ///
     /// @param lease lease to be added
     ///
@@ -106,7 +110,7 @@ public:
     /// @brief Returns an IPv4 lease for specified IPv4 address
     ///
     /// This method return a lease that is associated with a given address.
-    /// For other query types (by hardware addr, by DUID) there can be
+    /// For other query types (by hardware addr, by Client ID) there can be
     /// several leases in different subnets (e.g. for mobile clients that
     /// got address in different subnets). However, for a single address
     /// there can be only one lease, so this method returns a pointer to
@@ -115,6 +119,12 @@ public:
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
+    ///
+    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
+    ///        fit into the space allocated for the result.  This indicates a
+    ///        programming error.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
 
 
@@ -128,6 +138,12 @@ public:
     /// @param hwaddr hardware address of the client
     ///
     /// @return lease collection
+    ///
+    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
+    ///        fit into the space allocated for the result.  This indicates a
+    ///        programming error.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual Lease4Collection getLease4(const HWAddr& hwaddr) const;
 
     /// @brief Returns existing IPv4 leases for specified hardware address
@@ -140,6 +156,12 @@ public:
     /// @param subnet_id identifier of the subnet that lease must belong to
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
+    ///
+    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
+    ///        fit into the space allocated for the result.  This indicates a
+    ///        programming error.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual Lease4Ptr getLease4(const HWAddr& hwaddr,
                                 SubnetID subnet_id) const;
 
@@ -153,6 +175,12 @@ public:
     /// @param clientid client identifier
     ///
     /// @return lease collection
+    ///
+    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
+    ///        fit into the space allocated for the result.  This indicates a
+    ///        programming error.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual Lease4Collection getLease4(const ClientId& clientid) const;
 
     /// @brief Returns existing IPv4 lease for specified client-id
@@ -164,6 +192,12 @@ public:
     /// @param subnet_id identifier of the subnet that lease must belong to
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
+    ///
+    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
+    ///        fit into the space allocated for the result.  This indicates a
+    ///        programming error.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual Lease4Ptr getLease4(const ClientId& clientid,
                                 SubnetID subnet_id) const;
 
@@ -179,6 +213,9 @@ public:
     ///
     /// @throw isc::BadValue record retrieved from database had an invalid
     ///        lease type field.
+    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
+    ///        fit into the space allocated for the result.  This indicates a
+    ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const;
@@ -194,6 +231,14 @@ public:
     /// @param iaid IA identifier
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
+    ///
+    /// @throw isc::BadValue record retrieved from database had an invalid
+    ///        lease type field.
+    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
+    ///        fit into the space allocated for the result.  This indicates a
+    ///        programming error.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual Lease6Collection getLease6(const DUID& duid,
                                        uint32_t iaid) const;
 
@@ -204,17 +249,34 @@ public:
     /// @param subnet_id subnet id of the subnet the lease belongs to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
+    ///
+    /// @throw isc::BadValue record retrieved from database had an invalid
+    ///        lease type field.
+    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
+    ///        fit into the space allocated for the result.  This indicates a
+    ///        programming error.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual Lease6Ptr getLease6(const DUID& duid, uint32_t iaid,
                                 SubnetID subnet_id) const;
 
     /// @brief Updates IPv4 lease.
     ///
+    /// Updates the record of the lease in the database (as identified by the
+    /// address) with the data in the passed lease object.
+    ///
     /// @param lease4 The lease to be updated.
     ///
-    /// If no such lease is present, an exception will be thrown.
+    /// @throw isc::dhcp::NoSuchLease Attempt to update a lease that did not
+    ///        exist.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual void updateLease4(const Lease4Ptr& lease4);
 
     /// @brief Updates IPv6 lease.
+    ///
+    /// Updates the record of the lease in the database (as identified by the
+    /// address) with the data in the passed lease object.
     ///
     /// @param lease6 The lease to be updated.
     ///
@@ -226,12 +288,23 @@ public:
 
     /// @brief Deletes an IPv4 lease.
     ///
+    /// @todo Merge with deleteLease6: it is possible to determine whether
+    ///       an address is V4 or V6 from the IOAddress argument, so there
+    ///       is no need for separate V4 or V6 methods.
+    ///
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
+    ///
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual bool deleteLease4(const isc::asiolink::IOAddress& addr);
 
     /// @brief Deletes an IPv6 lease.
+    ///
+    /// @todo Merge with deleteLease4: it is possible to determine whether
+    ///       an address is V4 or V6 from the IOAddress argument, so there
+    ///       is no need for separate V4 or V6 methods.
     ///
     /// @param addr IPv6 address of the lease to be deleted.
     ///
@@ -343,12 +416,20 @@ public:
     ///
     /// The contents of the enum are indexes into the list of SQL statements
     enum StatementIndex {
+        DELETE_LEASE4,              // Delete from lease4 by address
         DELETE_LEASE6,              // Delete from lease6 by address
+        GET_LEASE4_ADDR,            // Get lease4 by address
+        GET_LEASE4_CLIENTID,        // Get lease4 by client ID
+        GET_LEASE4_CLIENTID_SUBID,  // Get lease4 by client ID & subnet ID
+        GET_LEASE4_HWADDR,          // Get lease4 by HW address
+        GET_LEASE4_HWADDR_SUBID,    // Get lease4 by HW address & subnet ID
         GET_LEASE6_ADDR,            // Get lease6 by address
         GET_LEASE6_DUID_IAID,       // Get lease6 by DUID and IAID
-        GET_LEASE6_DUID_IAID_SUBID, // Get lease6 by DUID, IAID and Subnet ID
+        GET_LEASE6_DUID_IAID_SUBID, // Get lease6 by DUID, IAID and subnet ID
         GET_VERSION,                // Obtain version number
+        INSERT_LEASE4,              // Add entry to lease4 table
         INSERT_LEASE6,              // Add entry to lease6 table
+        UPDATE_LEASE4,              // Update a Lease4 entry
         UPDATE_LEASE6,              // Update a Lease6 entry
         NUM_STATEMENTS              // Number of statements
     };
@@ -389,25 +470,150 @@ private:
     /// @throw DbOpenError Error opening the database
     void openDatabase();
 
-    /// @brief Binds Parameters and Executes
+    /// @brief Add Lease Common Code
     ///
-    /// This method abstracts a lot of common processing from the getXxxx()
-    /// methods.  It binds the parameters passed to it to the appropriate
-    /// prepared statement, and binds the variables in the exchange6 object to
-    /// the output parameters of the statement.  It then executes the prepared
-    /// statement.
+    /// This method performs the common actions for both flavours (V4 and V6)
+    /// of the addLease method.  It binds the contents of the lease object to
+    /// the prepared statement and adds it to the database.
     ///
-    /// The data can be retrieved using mysql_stmt_fetch and the getLeaseData()
-    /// method on the exchange6 object.
+    /// @param stindex Index of statemnent being executed
+    /// @param bind MYSQL_BIND array that has been created for the type
+    ///        of lease in question.
     ///
-    /// @param stindex Index of prepared statement to be executed
-    /// @param inbind Array of MYSQL_BIND objects representing the parameters.
-    ///        (Note that the number is determined by the number of parameters
-    ///        in the statement.)
+    /// @return true if the lease was added, false if it was not added because
+    ///         a lease with that address already exists in the database.
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    void bind6AndExecute(StatementIndex stindex, MYSQL_BIND* inbind) const;
+    bool addLeaseCommon(StatementIndex stindex, std::vector<MYSQL_BIND>& bind);
+
+    /// @brief Get Lease Collection Common Code
+    ///
+    /// This method performs the common actions for obtaining multiple leases
+    /// from the database.
+    ///
+    /// @param stindex Index of statement being executed
+    /// @param bind MYSQL_BIND array for input parameters
+    /// @param exchange Exchange object to use
+    /// @param lease LeaseCollection object returned.  Note that any leases in
+    ///        the collection when this method is called are not erased: the
+    ///        new data is appended to the end.
+    /// @param single If true, only a single data item is to be retrieved.
+    ///        If more than one is present, a MultipleRecords exception will
+    ///        be thrown.
+    ///
+    /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
+    /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
+    ///        from the database where only one was expected.
+    template <typename Exchange, typename LeaseCollection>
+    void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
+                            Exchange& exchange, LeaseCollection& result,
+                            bool single = false) const;
+
+    /// @brief Get Lease Collection
+    ///
+    /// Gets a collection of Lease4 objects.  This is just an interface to
+    /// the get lease collection common code.
+    ///
+    /// @param stindex Index of statement being executed
+    /// @param bind MYSQL_BIND array for input parameters
+    /// @param lease LeaseCollection object returned.  Note that any leases in
+    ///        the collection when this method is called are not erased: the
+    ///        new data is appended to the end.
+    ///
+    /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
+    /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
+    ///        from the database where only one was expected.
+    void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
+                            Lease4Collection& result) const {
+        getLeaseCollection(stindex, bind, exchange4_, result);
+    }
+
+    /// @brief Get Lease Collection
+    ///
+    /// Gets a collection of Lease6 objects.  This is just an interface to
+    /// the get lease collection common code.
+    ///
+    /// @param stindex Index of statement being executed
+    /// @param bind MYSQL_BIND array for input parameters
+    /// @param lease LeaseCollection object returned.  Note that any existing
+    ///        data in the collection is erased first.
+    ///
+    /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
+    /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
+    ///        from the database where only one was expected.
+    void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
+                            Lease6Collection& result) const {
+        getLeaseCollection(stindex, bind, exchange6_, result);
+    }
+
+    /// @brief Get Lease4 Common Code
+    ///
+    /// This method performs the common actions for the various getLease4()
+    /// methods.  It acts as an interface to the getLeaseCollection() method,
+    /// but retrieveing only a single lease.
+    ///
+    /// @param stindex Index of statement being executed
+    /// @param bind MYSQL_BIND array for input parameters
+    /// @param lease Lease4 object returned
+    void getLease(StatementIndex stindex, MYSQL_BIND* bind,
+                  Lease4Ptr& result) const;
+
+    /// @brief Get Lease6 Common Code
+    ///
+    /// This method performs the common actions for the various getLease46)
+    /// methods.  It acts as an interface to the getLeaseCollection() method,
+    /// but retrieveing only a single lease.
+    ///
+    /// @param stindex Index of statement being executed
+    /// @param bind MYSQL_BIND array for input parameters
+    /// @param lease Lease6 object returned
+    void getLease(StatementIndex stindex, MYSQL_BIND* bind,
+                   Lease6Ptr& result) const;
+
+    /// @brief Update lease common code
+    ///
+    /// Holds the common code for updating a lease.  It binds the parameters
+    /// to the prepared statement, executes it, then checks how many rows
+    /// were affected.
+    ///
+    /// @param stindex Index of prepared statement to be executed
+    /// @param bind Array of MYSQL_BIND objects representing the parameters.
+    ///        (Note that the number is determined by the number of parameters
+    ///        in the statement.)
+    /// @param lease Pointer to the lease object whose record is being updated.
+    ///
+    /// @throw NoSuchLease Could not update a lease because no lease matches
+    ///        the address given.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
+    template <typename LeasePtr>
+    void updateLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind,
+                           const LeasePtr& lease);
+
+    /// @brief Delete lease common code
+    ///
+    /// Holds the common code for deleting a lease.  It binds the parameters
+    /// to the prepared statement, executes the statement and checks to
+    /// see how many rows were deleted.
+    ///
+    /// @param stindex Index of prepared statement to be executed
+    /// @param bind Array of MYSQL_BIND objects representing the parameters.
+    ///        (Note that the number is determined by the number of parameters
+    ///        in the statement.)
+    ///
+    /// @return true if one or more rows were deleted, false if none were
+    ///         deleted.
+    ///
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
+    bool deleteLease(StatementIndex stindex, MYSQL_BIND* bind);
 
     /// @brief Check Error and Throw Exception
     ///
@@ -433,14 +639,15 @@ private:
 
     // Members
 
-    /// Used for transfer of data to/from the database. This is a pointed-to
-    /// object as its contents may change in "const" calls, while the rest
-    /// of this object does not.  (At alternative would be to declare it as
-    /// "mutable".)
-    boost::scoped_ptr<MySqlLease6Exchange> exchange6_;
+    /// The exchange objects are used for transfer of data to/from the database.
+    /// They are pointed-to objects as the contents may change in "const" calls,
+    /// while the rest of this object does not.  (At alternative would be to
+    /// declare them as "mutable".)
+    boost::scoped_ptr<MySqlLease4Exchange> exchange4_; ///< Exchange object
+    boost::scoped_ptr<MySqlLease6Exchange> exchange6_; ///< Exchange object
     MYSQL*              mysql_;                 ///< MySQL context object
-    std::vector<std::string> text_statements_;  ///< Raw text of statements
     std::vector<MYSQL_STMT*> statements_;       ///< Prepared statements
+    std::vector<std::string> text_statements_;  ///< Raw text of statements
 };
 
 }; // end of isc::dhcp namespace

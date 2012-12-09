@@ -38,7 +38,7 @@ class RdataTest(unittest.TestCase):
         self.assertRaises(InvalidRdataText, Rdata, RRType("A"), RRClass("IN"),
                           "Invalid Rdata Text")
         self.assertRaises(CharStringTooLong, Rdata, RRType("TXT"),
-                          RRClass("IN"), ' ' * 256)
+                          RRClass("IN"), 'x' * 256)
         self.assertRaises(InvalidRdataLength, Rdata, RRType("TXT"),
                           RRClass("IN"), bytes(65536))
         self.assertRaises(DNSMessageFORMERR, Rdata, RRType("TXT"),
