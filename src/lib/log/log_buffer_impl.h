@@ -42,10 +42,11 @@ public:
 typedef std::vector<boost::shared_ptr<log4cplus::spi::InternalLoggingEvent> >
     LoggerEventPtrList;
 
-/// \brief Buffering class for logging event
+/// \brief Buffering Logger Appender
 ///
-/// This class is used to store logging events; it simply keeps any
-/// event that is passed to \c add(), and will replay them to the
+/// This class can be set as an Appender for log4cplus loggers,
+/// and is used to store logging events; it simply keeps any
+/// event that is passed to \c append(), and will replay them to the
 /// logger that they were originally created for when \c flush() is
 /// called.
 ///
@@ -58,80 +59,48 @@ typedef std::vector<boost::shared_ptr<log4cplus::spi::InternalLoggingEvent> >
 /// consistent place, and are not lost.
 ///
 /// Given this goal, this class has an extra check; it will raise
-/// an exception if \c add() is called after flush().
+/// an exception if \c append() is called after flush().
 ///
 /// If the LogBuffer instance is destroyed before being flushed, it will
 /// dump any event it has left to stdout.
-class LogBuffer {
-
-public:
-    LogBuffer() : flushed_(false) {};
-
-    ~LogBuffer();
-
-    /// \brief add the given event to the list of stored events
-    ///
-    /// This is called by the BufferAppender.
-    ///
-    /// \param event The event to store
-    /// \exception LogBufferAddAfterFlush if this method is called
-    ///            when \c flush() has been called previously
-    void add(const log4cplus::spi::InternalLoggingEvent& event);
-
-    /// \brief Flush all stored events to their loggers
-    ///
-    /// All events are replayed to their loggers (which should have
-    /// other appenders when this is called.
-    /// Once this method has been called, no more events can be
-    /// added through calls to \c add(); if \c add() is called after flush(),
-    /// an exception will be raised.
-    /// If flush for any reason fails, the remaining events are dropped.
-    void flush();
-
-    /// \brief Returns number of stored events
-    ///
-    /// Mostly for testing purposes
-    size_t getBufferSize() const;
-private:
-    /// \brief Simplified flush() to stdout
-    ///
-    /// Used in the desctructor; all remainging stored events are
-    /// printed to stdout, in case flush() was never called.
-    void flushStdout();
-    LoggerEventPtrList stored_;
-    bool flushed_;
-};
-
-/// \brief Log4cplus appender for our buffer
-///
-/// This class can be set as an Appender for log4cplus loggers
-///
-/// When logging an event, it will not actually log anything, but
-/// merely add it to its internal LogBuffer
 class BufferAppender : public log4cplus::Appender {
 public:
     /// \brief Constructor
     ///
-    /// Constructs a BufferAppender with its own LogBuffer instance
-    BufferAppender() {}
+    /// Constructs a BufferAppender that buffers log evens
+    BufferAppender() : flushed_(false) {}
+
+    /// \brief Destructor
+    ///
+    /// Any remaining events are flushed to stdout (there should
+    /// only be any events remaining if flush() was never called)
+    ~BufferAppender();
+
+    /// \brief Close the appender
+    ///
+    /// This class has no specialized handling for this method
     virtual void close() {}
 
     /// \brief Flush the internal buffer
-    void flush() {
-        buffer_.flush();
-    }
-
-    /// \brief Access to the internal log buffer
     ///
-    /// This is mostly for testing
-    LogBuffer& getLogBuffer() {
-        return (buffer_);
-    }
+    /// Events that have been stored (after calls to \c append()
+    /// are replayed to the logger. Should only be called after
+    /// new appenders have been set to the logger.
+    void flush();
+
+    /// \brief Returns the number of stored logging events
+    ///
+    /// Mainly useful for testing
+    size_t getBufferSize() const;
 
 protected:
     virtual void append(const log4cplus::spi::InternalLoggingEvent& event);
 private:
-    LogBuffer buffer_;
+    /// \brief Helper for the destructor, flush events to stdout
+    void flushStdout();
+
+    LoggerEventPtrList stored_;
+    bool flushed_;
 };
 
 } // end namespace internal

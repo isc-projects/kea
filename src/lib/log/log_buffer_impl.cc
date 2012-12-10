@@ -22,7 +22,7 @@ namespace isc {
 namespace log {
 namespace internal {
 
-LogBuffer::~LogBuffer() {
+BufferAppender::~BufferAppender() {
     // If there is anything left in the buffer,
     // it means no reconfig has been done, and
     // we can assume the logging system was either
@@ -36,21 +36,7 @@ LogBuffer::~LogBuffer() {
 }
 
 void
-LogBuffer::add(const log4cplus::spi::InternalLoggingEvent& event) {
-    if (flushed_) {
-        isc_throw(LogBufferAddAfterFlush,
-                  "Internal log buffer has been flushed already");
-    }
-    // get a clone, and put the pointer in a shared_pt
-    std::auto_ptr<log4cplus::spi::InternalLoggingEvent> event_aptr =
-        event.clone();
-    boost::shared_ptr<log4cplus::spi::InternalLoggingEvent> event_sptr(
-        event_aptr.release());
-    stored_.push_back(event_sptr);
-}
-
-void
-LogBuffer::flushStdout() {
+BufferAppender::flushStdout() {
     // This does not show a bit of information normal log messages
     // do, so perhaps we should try and setup a new logger here
     // However, as this is called from a destructor, it may not
@@ -69,7 +55,7 @@ LogBuffer::flushStdout() {
 }
 
 void
-LogBuffer::flush() {
+BufferAppender::flush() {
     LoggerEventPtrList stored_copy;
     stored_.swap(stored_copy);
 
@@ -80,18 +66,26 @@ LogBuffer::flush() {
 
         logger.log((*it)->getLogLevel(), (*it)->getMessage());
     }
-    stored_.clear();
     flushed_ = true;
 }
 
 size_t
-LogBuffer::getBufferSize() const {
+BufferAppender::getBufferSize() const {
     return (stored_.size());
 }
 
 void
 BufferAppender::append(const log4cplus::spi::InternalLoggingEvent& event) {
-    buffer_.add(event);
+    if (flushed_) {
+        isc_throw(LogBufferAddAfterFlush,
+                  "Internal log buffer has been flushed already");
+    }
+    // get a clone, and put the pointer in a shared_pt
+    std::auto_ptr<log4cplus::spi::InternalLoggingEvent> event_aptr =
+        event.clone();
+    boost::shared_ptr<log4cplus::spi::InternalLoggingEvent> event_sptr(
+        event_aptr.release());
+    stored_.push_back(event_sptr);
 }
 
 } // end namespace internal
