@@ -165,7 +165,7 @@ struct Lease4 {
     ///
     /// @todo Should this be a pointer to a client ID or the ID itself?
     ///       Compare with the DUID in the Lease6 structure.
-    boost::shared_ptr<ClientId> client_id_;
+    ClientIdPtr client_id_;
 
     /// @brief Renewal timer
     ///
