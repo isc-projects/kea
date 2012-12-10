@@ -117,6 +117,7 @@ libb10_dns___la_SOURCES += rrparamregistry.h
 libb10_dns___la_SOURCES += rrset.h rrset.cc
 libb10_dns___la_SOURCES += rrttl.h rrttl.cc
 libb10_dns___la_SOURCES += rrtype.cc
+libb10_dns___la_SOURCES += rrcollator.h rrcollator.cc
 libb10_dns___la_SOURCES += question.h question.cc
 libb10_dns___la_SOURCES += serial.h serial.cc
 libb10_dns___la_SOURCES += tsig.h tsig.cc
