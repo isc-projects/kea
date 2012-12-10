@@ -76,7 +76,7 @@ RECORD_DECL(vendorClassRecords, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 // vendor-opts
 RECORD_DECL(vendorOptsRecords, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 
-// Stdandard DHCPv6 option definitions.
+/// Stdandard DHCPv6 option definitions.
 static const OptionDefParams OPTION_DEF_PARAMS6[] = {
     { "clientid", D6O_CLIENTID, OPT_BINARY_TYPE, false },
     { "serverid", D6O_SERVERID, OPT_BINARY_TYPE, false },
@@ -93,7 +93,7 @@ static const OptionDefParams OPTION_DEF_PARAMS6[] = {
     // option class to handle it so we simply return binary
     // option type for now.
     // @todo implement a class to handle AUTH option.
-    { "AUTH", D6O_AUTH, OPT_BINARY_TYPE, false },
+    { "auth", D6O_AUTH, OPT_BINARY_TYPE, false },
     { "unicast", D6O_UNICAST, OPT_IPV6_ADDRESS_TYPE, false },
     { "status-code", D6O_STATUS_CODE, OPT_RECORD_TYPE, false,
       RECORD_DEF(statusCodeRecords) },
@@ -146,9 +146,10 @@ static const OptionDefParams OPTION_DEF_PARAMS6[] = {
     // critical right now.
 };
 
+/// Number of option definitions defined.
 const int OPTION_DEF_PARAMS_SIZE6  =
     sizeof(OPTION_DEF_PARAMS6) / sizeof(OPTION_DEF_PARAMS6[0]);
 
-};
+}; // anonymous namespace
 
 #endif // STD_OPTION_DEFS_H
