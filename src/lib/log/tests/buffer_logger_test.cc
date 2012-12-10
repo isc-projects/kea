@@ -22,7 +22,7 @@ using namespace isc::log;
 
 namespace {
 void usage() {
-    std::cout << "Usage: buffer_logger_test [-n]" << std::endl;
+    std::cout << "Usage: buffer_logger_test [-nv]" << std::endl;
 }
 } // end unnamed namespace
 
@@ -52,10 +52,10 @@ main(int argc, char** argv) {
         }
     }
 
-    // Note, level is INFO, so DEBUG should normally not show
-    // up. Unless process is never called (at which point it
-    // will end up in the dump at the end).
-    initLogger("buffertest", isc::log::INFO, 0, NULL, true);
+    // Note, level is set to DEBUG here, but back to INFO
+    // in process(), so when flushing to stdout (-n), the DEBUG
+    // message should show up
+    initLogger("buffertest", isc::log::DEBUG, 99, NULL, true);
     Logger logger("log");
     // No need for file interprocess locking in this test
     logger.setInterprocessSync(new isc::util::InterprocessSyncNull("logger"));
