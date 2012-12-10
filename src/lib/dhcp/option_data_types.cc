@@ -236,11 +236,9 @@ OptionDataTypeUtil::writeFqdn(const std::string& fqdn,
         isc::dns::Name name(fqdn);
         isc::dns::LabelSequence labels(name);
         if (labels.getDataLength() > 0) {
-            buf.resize(buf.size() + labels.getDataLength());
             size_t read_len = 0;
             const uint8_t* data = labels.getData(&read_len);
-            memcpy(static_cast<void*>(&buf[buf.size() - read_len]),
-                   data, read_len);
+            buf.insert(buf.end(), data, data + read_len);
         }
     } catch (const isc::Exception& ex) {
         isc_throw(BadDataTypeCast, ex.what());
