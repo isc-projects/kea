@@ -43,8 +43,6 @@ BufferAppender::flushStdout() {
     // be a good idea; as we can't reliably know whether in what
     // state the logger instance is now (or what the specific logger's
     // settings were).
-    // So we print a raw format (it excludes the time and the pid, and
-    // it prints severity as a number)
     LogEventList::iterator it;
     for (it = stored_.begin(); it != stored_.end(); ++it) {
         const std::string level(it->first);

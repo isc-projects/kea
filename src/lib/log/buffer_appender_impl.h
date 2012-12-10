@@ -43,7 +43,7 @@ typedef boost::shared_ptr<log4cplus::spi::InternalLoggingEvent> LogEventPtr;
 
 /// Convenience typedef for a pair string/logeventptr, the string representing
 /// the logger level, as returned by LogLevelManager::toString() at the
-/// time of logging
+/// time of initial logging
 typedef std::pair<std::string, LogEventPtr> LevelAndEvent;
 
 /// Convenience typedef for a vector of LevelAndEvent instances
@@ -68,8 +68,8 @@ typedef std::vector<LevelAndEvent> LogEventList;
 /// Given this goal, this class has an extra check; it will raise
 /// an exception if \c append() is called after flush().
 ///
-/// If the LogBuffer instance is destroyed before being flushed, it will
-/// dump any event it has left to stdout.
+/// If the BufferAppender instance is destroyed before being flushed,
+/// it will dump any event it has left to stdout.
 class BufferAppender : public log4cplus::Appender {
 public:
     /// \brief Constructor
@@ -81,7 +81,7 @@ public:
     ///
     /// Any remaining events are flushed to stdout (there should
     /// only be any events remaining if flush() was never called)
-    ~BufferAppender();
+    virtual ~BufferAppender();
 
     /// \brief Close the appender
     ///

@@ -31,10 +31,21 @@ using namespace isc::log::internal;
 namespace isc {
 namespace log {
 
-class LogBufferTest : public ::testing::Test {
+/// \brief Specialized test class
+///
+/// In order to test append() somewhat directly, this
+/// class implements one more method (addEvent)
+class TestBufferAppender : public BufferAppender {
+public:
+    void addEvent(const log4cplus::spi::InternalLoggingEvent& event) {
+        append(event);
+    }
+};
+
+class BufferAppenderTest : public ::testing::Test {
 protected:
-    LogBufferTest() : buffer_appender1(new BufferAppender()),
-                      buffer_appender2(new BufferAppender()),
+    BufferAppenderTest() : buffer_appender1(new TestBufferAppender()),
+                      buffer_appender2(new TestBufferAppender()),
                       appender1(buffer_appender1),
                       appender2(buffer_appender2),
                       logger(log4cplus::Logger::getInstance("buffer"))
@@ -42,7 +53,7 @@ protected:
         logger.setLogLevel(log4cplus::TRACE_LOG_LEVEL);
     }
 
-    ~LogBufferTest() {
+    ~BufferAppenderTest() {
         // If any log messages are left, we don't care, get rid of them,
         // by flushing them to a null appender
         // Given the 'messages should not get lost' approach of the logging
@@ -57,10 +68,8 @@ protected:
         buffer_appender2->flush();
     }
 
-    //LogBuffer buffer_appender1->
-    //LogBuffer buffer_appender2->
-    BufferAppender* buffer_appender1;
-    BufferAppender* buffer_appender2;
+    TestBufferAppender* buffer_appender1;
+    TestBufferAppender* buffer_appender2;
     log4cplus::SharedAppenderPtr appender1;
     log4cplus::SharedAppenderPtr appender2;
     log4cplus::Logger logger;
@@ -68,7 +77,7 @@ protected:
 
 // Test that log events are indeed stored, and that they are
 // flushed to the new appenders of their logger
-TEST_F(LogBufferTest, flush) {
+TEST_F(BufferAppenderTest, flush) {
     ASSERT_EQ(0, buffer_appender1->getBufferSize());
     ASSERT_EQ(0, buffer_appender2->getBufferSize());
 
@@ -94,7 +103,7 @@ TEST_F(LogBufferTest, flush) {
 }
 
 // Once flushed, logging new messages with the same buffer should fail
-TEST_F(LogBufferTest, addAfterFlush) {
+TEST_F(BufferAppenderTest, addAfterFlush) {
     logger.addAppender(appender1);
     buffer_appender1->flush();
     EXPECT_THROW(LOG4CPLUS_INFO(logger, "Foo"), LogBufferAddAfterFlush);
@@ -108,13 +117,12 @@ TEST_F(LogBufferTest, addAfterFlush) {
     ASSERT_EQ(1, buffer_appender2->getBufferSize());
 }
 
-/*
-TEST_F(LogBufferTest, addDirectly) {
+TEST_F(BufferAppenderTest, addDirectly) {
     // A few direct calls
     log4cplus::spi::InternalLoggingEvent event("buffer",
                                                log4cplus::INFO_LOG_LEVEL,
                                                "Bar", "file", 123);
-    buffer_appender1->append(event);
+    buffer_appender1->addEvent(event);
     ASSERT_EQ(1, buffer_appender1->getBufferSize());
 
     // Do one from a smaller scope to make sure destruction doesn't harm
@@ -122,7 +130,7 @@ TEST_F(LogBufferTest, addDirectly) {
         log4cplus::spi::InternalLoggingEvent event2("buffer",
                                                     log4cplus::INFO_LOG_LEVEL,
                                                     "Bar", "file", 123);
-        buffer_appender1->append(event2);
+        buffer_appender1->addEvent(event2);
     }
     ASSERT_EQ(2, buffer_appender1->getBufferSize());
 
@@ -133,7 +141,6 @@ TEST_F(LogBufferTest, addDirectly) {
     ASSERT_EQ(0, buffer_appender1->getBufferSize());
     ASSERT_EQ(2, buffer_appender2->getBufferSize());
 }
-*/
 
 }
 }
