@@ -50,7 +50,7 @@ LoggerManagerImpl::processInit() {
     initRootLogger();
 }
 
-// Flush the LogBuffer at the end of processing a new specification
+// Flush the BufferAppenders at the end of processing a new specification
 void
 LoggerManagerImpl::processEnd() {
     flushBufferAppenders();
