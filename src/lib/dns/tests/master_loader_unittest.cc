@@ -128,7 +128,9 @@ TEST_F(MasterLoaderTest, basicLoad) {
     setLoader(TEST_DATA_SRCDIR "/example.org", Name("example.org."),
               RRClass::IN(), MasterLoader::MANY_ERRORS);
 
+    EXPECT_FALSE(loader_->loadedSucessfully());
     loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
 
     EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
@@ -146,7 +148,9 @@ TEST_F(MasterLoaderTest, streamConstructor) {
     setLoader(zone_stream, Name("example.org."), RRClass::IN(),
               MasterLoader::MANY_ERRORS);
 
+    EXPECT_FALSE(loader_->loadedSucessfully());
     loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
 
     EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
@@ -160,7 +164,9 @@ TEST_F(MasterLoaderTest, incrementalLoad) {
     setLoader(TEST_DATA_SRCDIR "/example.org", Name("example.org."),
               RRClass::IN(), MasterLoader::MANY_ERRORS);
 
+    EXPECT_FALSE(loader_->loadedSucessfully());
     EXPECT_FALSE(loader_->loadIncremental(2));
+    EXPECT_FALSE(loader_->loadedSucessfully());
 
     EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
@@ -175,6 +181,7 @@ TEST_F(MasterLoaderTest, incrementalLoad) {
 
     // Load the rest.
     EXPECT_TRUE(loader_->loadIncremental(20));
+    EXPECT_TRUE(loader_->loadedSucessfully());
 
     EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
@@ -232,7 +239,9 @@ TEST_F(MasterLoaderTest, brokenZone) {
             stringstream zone_stream(zone);
             setLoader(zone_stream, Name("example.org."), RRClass::IN(),
                       MasterLoader::DEFAULT);
+            EXPECT_FALSE(loader_->loadedSucessfully());
             EXPECT_THROW(loader_->load(), MasterLoaderError);
+            EXPECT_FALSE(loader_->loadedSucessfully());
             EXPECT_EQ(1, errors_.size()) << errors_[0];
             EXPECT_TRUE(warnings_.empty());
 
@@ -249,7 +258,9 @@ TEST_F(MasterLoaderTest, brokenZone) {
             stringstream zone_stream(zone);
             setLoader(zone_stream, Name("example.org."), RRClass::IN(),
                       MasterLoader::MANY_ERRORS);
+            EXPECT_FALSE(loader_->loadedSucessfully());
             EXPECT_NO_THROW(loader_->load());
+            EXPECT_FALSE(loader_->loadedSucessfully());
             EXPECT_EQ(1, errors_.size());
             EXPECT_TRUE(warnings_.empty());
             checkRR("example.org", RRType::SOA(), "ns1.example.org. "
@@ -267,7 +278,9 @@ TEST_F(MasterLoaderTest, brokenZone) {
             stringstream zone_stream(zoneEOF);
             setLoader(zone_stream, Name("example.org."), RRClass::IN(),
                       MasterLoader::MANY_ERRORS);
+            EXPECT_FALSE(loader_->loadedSucessfully());
             EXPECT_NO_THROW(loader_->load());
+            EXPECT_FALSE(loader_->loadedSucessfully());
             EXPECT_EQ(1, errors_.size());
             // FIXME: The invalid rdata generates a warning.
             // And we may want to generate warning ourself here too.
