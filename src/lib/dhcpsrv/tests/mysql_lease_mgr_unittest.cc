@@ -469,7 +469,7 @@ public:
     ///
     /// @param leases Vector of pointers to leases
     template <typename T>
-    void checkLeasesDifferent(const std::vector<T> leases) const {
+    void checkLeasesDifferent(const std::vector<T>& leases) const {
 
         // Check they were created
         for (int i = 0; i < leases.size(); ++i) {
