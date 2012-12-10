@@ -1701,7 +1701,7 @@ class TestBossComponents(unittest.TestCase):
                     return ({}, None)
 
         bob = MockBobSimple()
-        bob.c_channel_env = {}
+        bob.c_channel_env = {'TESTENV': 'A test string'}
         bob.cc_session = DummySession()
         bob.wait_time = 5
 
@@ -1720,7 +1720,7 @@ class TestBossComponents(unittest.TestCase):
         pi = bob.start_cfgmgr()
         self.assertEqual('b10-cfgmgr', pi.name)
         self.assertEqual(['b10-cfgmgr'], pi.args)
-        self.assertEqual({}, pi.env)
+        self.assertEqual({'TESTENV': 'A test string'}, pi.env)
 
         # this is set by ProcessInfo.spawn()
         self.assertEqual(42147, pi.pid)
@@ -1736,7 +1736,7 @@ class TestBossComponents(unittest.TestCase):
         self.assertEqual(['b10-cfgmgr',
                           '--data-path=/var/lib/test'],
                          pi.args)
-        self.assertEqual({}, pi.env)
+        self.assertEqual({'TESTENV': 'A test string'}, pi.env)
 
         # this is set by ProcessInfo.spawn()
         self.assertEqual(42147, pi.pid)
@@ -1749,7 +1749,7 @@ class TestBossComponents(unittest.TestCase):
                           '--data-path=/var/lib/test',
                           '--config-filename=foo.cfg'],
                          pi.args)
-        self.assertEqual({}, pi.env)
+        self.assertEqual({'TESTENV': 'A test string'}, pi.env)
 
         # this is set by ProcessInfo.spawn()
         self.assertEqual(42147, pi.pid)
@@ -1763,7 +1763,7 @@ class TestBossComponents(unittest.TestCase):
                           '--config-filename=foo.cfg',
                           '--clear-config'],
                          pi.args)
-        self.assertEqual({}, pi.env)
+        self.assertEqual({'TESTENV': 'A test string'}, pi.env)
 
         # this is set by ProcessInfo.spawn()
         self.assertEqual(42147, pi.pid)
@@ -1863,12 +1863,12 @@ class TestBossComponents(unittest.TestCase):
         bob.start_simple('/bin/true')
         self.assertEqual('/bin/true', bob.started_process_name)
         self.assertEqual(args, bob.started_process_args)
-        self.assertEqual({}, bob.started_process_env)
+        self.assertEqual({'TESTENV': 'A test string'}, bob.started_process_env)
 
     def test_start_simple(self):
         '''Test simple process startup.'''
         bob = MockBobSimple()
-        bob.c_channel_env = {}
+        bob.c_channel_env = {'TESTENV': 'A test string'}
 
         # non-verbose case
         self._start_simple_helper(bob, False)
