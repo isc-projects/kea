@@ -58,6 +58,7 @@ public:
         initialized_(false),
         ok_(true),
         many_errors_((options & MANY_ERRORS) != 0),
+        source_count_(0),
         complete_(false),
         seen_error_(false)
     {}
@@ -90,11 +91,18 @@ public:
             }
         }
         initialized_ = true;
+        ++source_count_;
+    }
+
+    bool popSource() {
+        lexer_.popSource();
+        return (--source_count_ != 0);
     }
 
     void pushStreamSource(std::istream& stream) {
         lexer_.pushSource(stream);
         initialized_ = true;
+        ++source_count_;
     }
 
     // Get a string token. Handle it as error if it is not string.
@@ -159,6 +167,7 @@ private:
     bool ok_;                   // Is it OK to continue loading?
     const bool many_errors_;    // Are many errors allowed (or should we abort
                                 // on the first)
+    size_t source_count_;       // How many sources are currently pushed.
 public:
     bool complete_;             // All work done.
     bool seen_error_;           // Was there at least one error during the
@@ -185,8 +194,13 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             do {
                 const MasterToken& empty_token(lexer_.getNextToken());
                 if (empty_token.getType() == MasterToken::END_OF_FILE) {
-                    // TODO: Check if this is the last source, possibly pop
-                    return (true);
+                    if (!popSource()) {
+                        return (true);
+                    } else {
+                        // We try to read a token from the popped source
+                        // So retry the loop
+                        continue;
+                    }
                 }
                 empty = empty_token.getType() == MasterToken::END_OF_LINE;
             } while (empty);
