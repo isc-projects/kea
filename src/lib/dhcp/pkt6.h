@@ -127,7 +127,7 @@ public:
     /// Returns message type (e.g. 1 = SOLICIT)
     ///
     /// @return message type
-    uint8_t getType() { return (msg_type_); }
+    uint8_t getType() const { return (msg_type_); }
 
     /// Sets message type (e.g. 1 = SOLICIT)
     ///
@@ -180,7 +180,9 @@ public:
     /// @brief Returns remote address
     ///
     /// @return remote address
-    const isc::asiolink::IOAddress& getRemoteAddr() { return (remote_addr_); }
+    const isc::asiolink::IOAddress& getRemoteAddr() const {
+        return (remote_addr_);
+    }
 
     /// @brief Sets local address.
     ///
@@ -190,7 +192,9 @@ public:
     /// @brief Returns local address.
     ///
     /// @return local address
-    const isc::asiolink::IOAddress& getLocalAddr() { return (local_addr_); }
+    const isc::asiolink::IOAddress& getLocalAddr() const {
+        return (local_addr_);
+    }
 
     /// @brief Sets local port.
     ///
@@ -200,7 +204,7 @@ public:
     /// @brief Returns local port.
     ///
     /// @return local port
-    uint16_t getLocalPort() { return (local_port_); }
+    uint16_t getLocalPort() const { return (local_port_); }
 
     /// @brief Sets remote port.
     ///
@@ -210,7 +214,7 @@ public:
     /// @brief Returns remote port.
     ///
     /// @return remote port
-    uint16_t getRemotePort() { return (remote_port_); }
+    uint16_t getRemotePort() const { return (remote_port_); }
 
     /// @brief Sets interface index.
     ///

@@ -367,7 +367,7 @@ public:
     /// @brief Returns remote address
     ///
     /// @return remote address
-    const isc::asiolink::IOAddress& getRemoteAddr() {
+    const isc::asiolink::IOAddress& getRemoteAddr() const {
         return (remote_addr_);
     }
 
@@ -381,7 +381,7 @@ public:
     /// @brief Returns local address.
     ///
     /// @return local address
-    const isc::asiolink::IOAddress& getLocalAddr() {
+    const isc::asiolink::IOAddress& getLocalAddr() const {
         return (local_addr_);
     }
 
@@ -393,7 +393,7 @@ public:
     /// @brief Returns local port.
     ///
     /// @return local port
-    uint16_t getLocalPort() { return (local_port_); }
+    uint16_t getLocalPort() const { return (local_port_); }
 
     /// @brief Sets remote port.
     ///
@@ -403,7 +403,7 @@ public:
     /// @brief Returns remote port.
     ///
     /// @return remote port
-    uint16_t getRemotePort() { return (remote_port_); }
+    uint16_t getRemotePort() const { return (remote_port_); }
 
     /// @brief Update packet timestamp.
     ///

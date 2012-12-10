@@ -228,7 +228,7 @@ Pkt4::setHWAddr(uint8_t hType, uint8_t hlen,
         isc_throw(OutOfRange, "Hardware address (len=" << hlen
                   << " too long. Max " << MAX_CHADDR_LEN << " supported.");
     }
-    if ( (macAddr.size() == 0) && (hlen > 0) ) {
+    if (macAddr.empty() && (hlen > 0) ) {
         isc_throw(OutOfRange, "Invalid HW Address specified");
     }
 
