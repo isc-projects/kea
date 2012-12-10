@@ -144,7 +144,7 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
 
     OptionBuffer buf;
     if (!array_type_ && type_ != OPT_RECORD_TYPE) {
-        if (values.size() == 0) {
+        if (values.empty()) {
             isc_throw(InvalidOptionValue, "no option value specified");
         }
         writeToBuffer(values[0], type_, buf);
