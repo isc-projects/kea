@@ -169,19 +169,11 @@ public:
 
     /// @brief Deletes a lease.
     ///
-    /// @param addr IPv4 address of the lease to be deleted.
+    /// @param addr Address of the lease to be deleted. (This can be either
+    ///        a V4 address or a V6 address.)
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    virtual bool deleteLease4(const isc::asiolink::IOAddress&) {
-        return (false);
-    }
-
-    /// @brief Deletes a lease.
-    ///
-    /// @param addr IPv4 address of the lease to be deleted.
-    ///
-    /// @return true if deletion was successful, false if no such lease exists
-    virtual bool deleteLease6(const isc::asiolink::IOAddress&) {
+    virtual bool deleteLease(const isc::asiolink::IOAddress&) {
         return (false);
     }
 
