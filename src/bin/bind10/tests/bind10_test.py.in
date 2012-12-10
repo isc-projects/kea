@@ -1611,7 +1611,8 @@ class TestBossComponents(unittest.TestCase):
         and times out eventually.'''
         bob = MockBobSimple()
         bob.c_channel_env = {}
-        # keep the timeout small for the test to complete quickly
+        # set the timeout to an arbitrary pre-determined value (which
+        # code below depends on)
         bob.msgq_timeout = 1
         bob._run_under_unittests = False
 
@@ -1651,9 +1652,10 @@ class TestBossComponents(unittest.TestCase):
             # out.
             pi = bob.start_msgq()
 
-        # 1 second of attempts every 0.1 seconds should result in 10
-        # attempts. 1 attempt happens at the start. 2 more attempts seem
-        # to happen inside start_msgq().
+        # time.time() should be called 12 times within the while loop:
+        # starting from 0, and 11 more times from 0.1 to 1.1. There's
+        # another call to time.time() outside the loop, which makes it
+        # 13.
         self.assertEqual(attempts, 13)
 
         # group_subscribe() should not have been called here.
@@ -1765,7 +1767,8 @@ class TestBossComponents(unittest.TestCase):
         bob = MockBobSimple()
         bob.c_channel_env = {}
         bob.cc_session = DummySession()
-        # keep the wait time small for the test to complete quickly
+        # set wait_time to an arbitrary pre-determined value (which code
+        # below depends on)
         bob.wait_time = 2
 
         # use the MockProcessInfo creator
@@ -1959,7 +1962,10 @@ class TestBossComponents(unittest.TestCase):
                 if flags != socket.MSG_DONTWAIT:
                     raise Exception('flags != socket.MSG_DONTWAIT')
                 # after 15 recv()s, throw a socket.error with EAGAIN to
-                # get _socket_data() to save back what's been read.
+                # get _socket_data() to save back what's been read. The
+                # number 15 is arbitrarily chosen, but the checks then
+                # depend on this being 15, i.e., if you adjust this
+                # number, you may have to adjust the checks below too.
                 if self.throw and self.i > 15:
                     raise socket.error(errno.EAGAIN, 'Try again')
                 if self.i >= len(self.buf):
