@@ -45,8 +45,8 @@ public:
 class BufferAppenderTest : public ::testing::Test {
 protected:
     BufferAppenderTest() : buffer_appender1(new TestBufferAppender()),
-                      buffer_appender2(new TestBufferAppender()),
                       appender1(buffer_appender1),
+                      buffer_appender2(new TestBufferAppender()),
                       appender2(buffer_appender2),
                       logger(log4cplus::Logger::getInstance("buffer"))
     {
@@ -69,8 +69,8 @@ protected:
     }
 
     TestBufferAppender* buffer_appender1;
-    TestBufferAppender* buffer_appender2;
     log4cplus::SharedAppenderPtr appender1;
+    TestBufferAppender* buffer_appender2;
     log4cplus::SharedAppenderPtr appender2;
     log4cplus::Logger logger;
 };
