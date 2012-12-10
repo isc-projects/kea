@@ -22,6 +22,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_int_array.h>
 #include <dhcp/option_definition.h>
+#include <dhcp/std_option_defs.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 
@@ -265,140 +266,16 @@ void
 LibDHCP::initStdOptionDefs6() {
     v6option_defs_.clear();
 
-    struct OptionParams {
-        std::string name;
-        uint16_t code;
-        OptionDataType type;
-        bool array;
-    };
-    OptionParams params[] = {
-        { "clientid", D6O_CLIENTID, OPT_BINARY_TYPE, false },
-        { "serverid", D6O_SERVERID, OPT_BINARY_TYPE, false },
-        { "ia-na", D6O_IA_NA, OPT_RECORD_TYPE, false },
-        { "ia-ta", D6O_IA_TA, OPT_UINT32_TYPE, false },
-        { "iaaddr", D6O_IAADDR, OPT_RECORD_TYPE, false },
-        { "oro", D6O_ORO, OPT_UINT16_TYPE, true },
-        { "preference", D6O_PREFERENCE, OPT_UINT8_TYPE, false },
-        { "elapsed-time", D6O_ELAPSED_TIME, OPT_UINT16_TYPE, false },
-        { "relay-msg", D6O_RELAY_MSG, OPT_BINARY_TYPE, false },
-        // Unfortunatelly the AUTH option contains a 64-bit data field
-        // called 'replay-detection' that can't be added as a record
-        // field to a custom option. Also, there is no dedicated
-        // option class to handle it so we simply return binary
-        // option type for now.
-        // @todo implement a class to handle AUTH option.
-        { "AUTH", D6O_AUTH, OPT_BINARY_TYPE, false },
-        { "unicast", D6O_UNICAST, OPT_IPV6_ADDRESS_TYPE, false },
-        { "status-code", D6O_STATUS_CODE, OPT_RECORD_TYPE, false },
-        { "rapid-commit", D6O_RAPID_COMMIT, OPT_EMPTY_TYPE, false },
-        { "user-class", D6O_USER_CLASS, OPT_BINARY_TYPE, false },
-        { "vendor-class", D6O_VENDOR_CLASS, OPT_RECORD_TYPE, false },
-        { "vendor-opts", D6O_VENDOR_OPTS, OPT_RECORD_TYPE, false },
-        { "interface-id", D6O_INTERFACE_ID, OPT_BINARY_TYPE, false },
-        { "reconf-msg", D6O_RECONF_MSG, OPT_UINT8_TYPE, false },
-        { "reconf-accept", D6O_RECONF_ACCEPT, OPT_EMPTY_TYPE, false },
-        { "sip-server-dns", D6O_SIP_SERVERS_DNS, OPT_FQDN_TYPE, true },
-        { "sip-server-addr", D6O_SIP_SERVERS_ADDR, OPT_IPV6_ADDRESS_TYPE, true },
-        { "dns-servers", D6O_NAME_SERVERS, OPT_IPV6_ADDRESS_TYPE, true },
-        { "domain-search", D6O_DOMAIN_SEARCH, OPT_FQDN_TYPE, true },
-        { "ia-pd", D6O_IA_PD, OPT_RECORD_TYPE, false },
-        { "iaprefix", D6O_IAPREFIX, OPT_RECORD_TYPE, false },
-        { "nis-servers", D6O_NIS_SERVERS, OPT_IPV6_ADDRESS_TYPE, true },
-        { "nisp-servers", D6O_NISP_SERVERS, OPT_IPV6_ADDRESS_TYPE, true },
-        { "nis-domain-name", D6O_NIS_DOMAIN_NAME, OPT_FQDN_TYPE, true },
-        { "nisp-domain-name", D6O_NISP_DOMAIN_NAME, OPT_FQDN_TYPE, true },
-        { "sntp-servers", D6O_SNTP_SERVERS, OPT_IPV6_ADDRESS_TYPE, true },
-        { "information-refresh-time", D6O_INFORMATION_REFRESH_TIME,
-          OPT_UINT32_TYPE, false },
-        { "bcmcs-server-dns", D6O_BCMCS_SERVER_D, OPT_FQDN_TYPE, true },
-        { "bcmcs-server-addr", D6O_BCMCS_SERVER_A, OPT_IPV6_ADDRESS_TYPE, true },
-        { "geoconf-civic", D6O_GEOCONF_CIVIC, OPT_RECORD_TYPE, false },
-        { "remote-id", D6O_REMOTE_ID, OPT_RECORD_TYPE, false },
-        { "subscriber-id", D6O_SUBSCRIBER_ID, OPT_BINARY_TYPE, false },
-        { "client-fqdn", D6O_CLIENT_FQDN, OPT_RECORD_TYPE, false },
-        { "pana-agent", D6O_PANA_AGENT, OPT_IPV6_ADDRESS_TYPE, true },
-        { "new-posix-timezone", D6O_NEW_POSIX_TIMEZONE, OPT_STRING_TYPE, false },
-        { "new-tzdb-timezone", D6O_NEW_TZDB_TIMEZONE, OPT_STRING_TYPE, false },
-        { "ero", D6O_ERO, OPT_UINT16_TYPE, true },
-        { "lq-query", D6O_LQ_QUERY, OPT_RECORD_TYPE, false },
-        { "client-data", D6O_CLIENT_DATA, OPT_EMPTY_TYPE, false },
-        { "clt-time", D6O_CLT_TIME, OPT_UINT32_TYPE, false },
-        { "lq-relay-data", D6O_LQ_RELAY_DATA, OPT_RECORD_TYPE, false },
-        { "lq-client-link", D6O_LQ_CLIENT_LINK, OPT_IPV6_ADDRESS_TYPE, true }
+    for (int i = 0; i < OPTION_DEF_PARAMS_SIZE6; ++i) {
+        OptionDefinitionPtr definition(new OptionDefinition(OPTION_DEF_PARAMS6[i].name,
+                                                            OPTION_DEF_PARAMS6[i].code,
+                                                            OPTION_DEF_PARAMS6[i].type,
+                                                            OPTION_DEF_PARAMS6[i].array));
 
-        // @todo There is still a bunch of options for which we have to provide
-        // definitions but we don't do it because they are not really
-        // critical right now.
-    };
-    const int params_size = sizeof(params) / sizeof(params[0]);
-
-    for (int i = 0; i < params_size; ++i) {
-        OptionDefinitionPtr definition(new OptionDefinition(params[i].name,
-                                                            params[i].code,
-                                                            params[i].type,
-                                                            params[i].array));
-        // Some of the options comprise a "record" of data fields so
-        // we have to add those fields here.
-        switch(params[i].code) {
-        case D6O_CLIENT_FQDN:
-            definition->addRecordField(OPT_UINT8_TYPE);
-            definition->addRecordField(OPT_FQDN_TYPE);
-            break;
-        case D6O_GEOCONF_CIVIC:
-            definition->addRecordField(OPT_UINT8_TYPE);
-            definition->addRecordField(OPT_UINT16_TYPE);
-            definition->addRecordField(OPT_BINARY_TYPE);
-            break;
-        case D6O_IAADDR:
-            definition->addRecordField(OPT_IPV6_ADDRESS_TYPE);
-            definition->addRecordField(OPT_UINT32_TYPE);
-            definition->addRecordField(OPT_UINT32_TYPE);
-            break;
-        case D6O_IA_NA:
-            definition->addRecordField(OPT_UINT32_TYPE);
-            definition->addRecordField(OPT_UINT32_TYPE);
-            definition->addRecordField(OPT_UINT32_TYPE);
-            break;
-        case D6O_IA_PD:
-            definition->addRecordField(OPT_UINT32_TYPE);
-            definition->addRecordField(OPT_UINT32_TYPE);
-            definition->addRecordField(OPT_UINT32_TYPE);
-            break;
-        case D6O_IAPREFIX:
-            definition->addRecordField(OPT_UINT32_TYPE);
-            definition->addRecordField(OPT_UINT32_TYPE);
-            definition->addRecordField(OPT_UINT8_TYPE);
-            definition->addRecordField(OPT_BINARY_TYPE);
-            break;
-        case D6O_LQ_QUERY:
-            definition->addRecordField(OPT_UINT8_TYPE);
-            definition->addRecordField(OPT_IPV6_ADDRESS_TYPE);
-            break;
-        case D6O_LQ_RELAY_DATA:
-            definition->addRecordField(OPT_IPV6_ADDRESS_TYPE);
-            definition->addRecordField(OPT_BINARY_TYPE);
-            break;
-        case D6O_REMOTE_ID:
-            definition->addRecordField(OPT_UINT32_TYPE);
-            definition->addRecordField(OPT_BINARY_TYPE);
-            break;
-        case D6O_STATUS_CODE:
-            definition->addRecordField(OPT_UINT16_TYPE);
-            definition->addRecordField(OPT_STRING_TYPE);
-            break;
-        case D6O_VENDOR_CLASS:
-            definition->addRecordField(OPT_UINT32_TYPE);
-            definition->addRecordField(OPT_BINARY_TYPE);
-            break;
-        case D6O_VENDOR_OPTS:
-            definition->addRecordField(OPT_UINT32_TYPE);
-            definition->addRecordField(OPT_BINARY_TYPE);
-            break;
-        default:
-            // The default case is intentionally left empty
-            // as it does not need any processing.
-            ;
+        for (int rec = 0; rec < OPTION_DEF_PARAMS6[i].records_size; ++rec) {
+            definition->addRecordField(OPTION_DEF_PARAMS6[i].records[rec]);
         }
+
         try {
             definition->validate();
         } catch (const Exception& ex) {
