@@ -1791,16 +1791,11 @@ class TestBossComponents(unittest.TestCase):
             attempts += 1
         time.sleep = _my_sleep
 
-        thrown = False
-        # An exception will be thrown here when it eventually times out.
-        try:
-            pi = bob.start_cfgmgr()
-        except bind10_src.ProcessStartError as e:
-            thrown = True
-
         # We just check that an exception was thrown, and that several
         # attempts were made to connect.
-        self.assertTrue(thrown)
+        with self.assertRaises(bind10_src.ProcessStartError):
+            pi = bob.start_cfgmgr()
+
         # 2 seconds of attempts every 1 second should result in 2 attempts
         self.assertEqual(attempts, 2)
 
