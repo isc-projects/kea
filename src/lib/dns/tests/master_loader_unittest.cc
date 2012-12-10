@@ -299,4 +299,12 @@ TEST_F(MasterLoaderTest, loadTwice) {
     loader_->load();
     EXPECT_THROW(loader_->load(), isc::InvalidOperation);
 }
+
+// Load 0 items should be rejected
+TEST_F(MasterLoaderTest, loadZero) {
+    setLoader(TEST_DATA_SRCDIR "/example.org", Name("example.org."),
+              RRClass::IN(), MasterLoader::MANY_ERRORS);
+    EXPECT_THROW(loader_->loadIncremental(0), isc::InvalidParameter);
+}
+
 }
