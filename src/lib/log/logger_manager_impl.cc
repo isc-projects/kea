@@ -262,7 +262,7 @@ void LoggerManagerImpl::flushBufferAppenders() {
     for (it = copy.begin(); it != copy.end(); ++it) {
         internal::BufferAppender* app =
             dynamic_cast<internal::BufferAppender*>(it->get());
-        assert(app != NULL;
+        assert(app != NULL);
         app->flush();
     }
 }
