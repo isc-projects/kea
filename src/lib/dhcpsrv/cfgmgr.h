@@ -43,6 +43,7 @@ namespace dhcp {
 /// Below is a sketch of configuration inheritance (not implemented yet).
 /// Let's investigate the following configuration:
 ///
+/// @code
 /// preferred-lifetime 500;
 /// valid-lifetime 1000;
 /// subnet6 2001:db8:1::/48 {
@@ -52,6 +53,8 @@ namespace dhcp {
 ///     valid-lifetime 2000;
 ///     pool6 2001::db8:2::1 - 2001::db8:2::ff;
 /// };
+/// @endcode
+///
 /// Parameters defined in a global scope are applicable to everything until
 /// they are overwritten in a smaller scope, in this case subnet6.
 /// In the example above, the first subnet6 has preferred lifetime of 500s

@@ -339,7 +339,7 @@ public:
     /// @brief parses parameters value
     ///
     /// Parses configuration entry (list of parameters) and stores it in
-    /// storage. See \ref setStorage() for details.
+    /// storage.
     ///
     /// @param value pointer to the content of parsed values
     virtual void build(ConstElementPtr value) {
