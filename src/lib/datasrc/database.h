@@ -1393,6 +1393,8 @@ public:
     ///     should use it as a ZoneFinder only.
     virtual FindResult findZone(const isc::dns::Name& name) const;
 
+    virtual bool createZone(const isc::dns::Name&);
+
     /// \brief Get the zone iterator
     ///
     /// The iterator allows going through the whole zone content. If the

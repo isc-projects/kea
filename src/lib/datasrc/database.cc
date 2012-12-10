@@ -43,6 +43,30 @@ using boost::scoped_ptr;
 
 namespace isc {
 namespace datasrc {
+// RAII-style transaction holder; roll back the transaction unless explicitely committed
+namespace {
+class TransactionHolder {
+public:
+    TransactionHolder(DatabaseAccessor& accessor) : accessor_(accessor),
+                                                    committed_(false)
+    {
+        accessor_.startTransaction();
+    }
+    ~TransactionHolder() {
+        if (!committed_) {
+            accessor_.rollback();
+        }
+    }
+    void commit() {
+        accessor_.commit();
+        committed_ = true;
+    }
+private:
+    DatabaseAccessor& accessor_;
+    bool committed_;
+};
+} // end unnamed namespace
+
 
 DatabaseClient::DatabaseClient(RRClass rrclass,
                                boost::shared_ptr<DatabaseAccessor>
@@ -78,6 +102,18 @@ DatabaseClient::findZone(const Name& name) const {
     }
     // No, really nothing
     return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
+}
+
+bool
+DatabaseClient::createZone(const Name& name) {
+    TransactionHolder transaction(*accessor_);
+    std::pair<bool, int> zone(accessor_->getZone(name.toText()));
+    if (zone.first) {
+        return (false);
+    }
+    accessor_->addZone(name.toText());
+    transaction.commit();
+    return (true);
 }
 
 DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseAccessor> accessor,
