@@ -667,6 +667,42 @@ TEST_F(SQLite3Create, creationtest) {
     ASSERT_TRUE(isReadable(SQLITE_NEW_DBFILE));
 }
 
+// Test addZone works. This is done on the 'createtest' fixture so we
+// can easily be sure it does not exist yet.
+TEST_F(SQLite3Create, addZone) {
+    // Need shared_ptr for the getAllRecords at the end of the test
+    boost::shared_ptr<SQLite3Accessor> accessor(
+        new SQLite3Accessor(SQLITE_NEW_DBFILE, "IN"));
+
+    const std::string zone_name("example.com");
+    const std::pair<bool, int> zone_info(accessor->getZone(zone_name));
+    ASSERT_FALSE(zone_info.first);
+
+    // Calling addZone without transaction should fail
+    ASSERT_THROW(accessor->addZone(zone_name), DataSourceError);
+
+    // Add the zone. Since it does not exist yet, it should return true
+    accessor->startTransaction();
+    const int new_zone_id = accessor->addZone(zone_name);
+    accessor->commit();
+
+    // Calling addZone again should return the same zone id
+    accessor->startTransaction();
+    ASSERT_EQ(new_zone_id, accessor->addZone(zone_name));
+    accessor->rollback();
+
+    // Check that it exists now, but has no records at this point
+    const std::pair<bool, int> zone_info2(accessor->getZone(zone_name));
+    ASSERT_TRUE(zone_info2.first);
+    ASSERT_EQ(new_zone_id, zone_info2.second);
+
+    DatabaseAccessor::IteratorContextPtr context =
+        accessor->getAllRecords(zone_info2.second);
+    string data[DatabaseAccessor::COLUMN_COUNT];
+    ASSERT_NE(DatabaseAccessor::IteratorContextPtr(), context);
+    EXPECT_FALSE(context->getNext(data));
+}
+
 TEST_F(SQLite3Create, emptytest) {
     ASSERT_FALSE(isReadable(SQLITE_NEW_DBFILE));
 

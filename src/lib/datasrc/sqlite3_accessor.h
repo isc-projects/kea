@@ -131,6 +131,31 @@ public:
      */
     virtual std::pair<bool, int> getZone(const std::string& name) const;
 
+    /**
+     * \brief Add a zone
+     *
+     * This implements the addZone from DatabaseAccessor and adds an (empty)
+     * zone into the zones table. If the zone exists already, nothing is done,
+     * and the id of the existing zone is returned. Otherwise, the zone is
+     * created, and its id is returned (unless it raises an exception).
+     *
+     * The class of the newly created zone is the class passed at construction
+     * time of the accessor.
+     *
+     * Because this method performs a lookup and probably an assert, it
+     * requires a transaction has been started (with \c beginTransaction)
+     * by the caller.
+     *
+     * \exception DataSourceError if no transaction is active, or if there
+     *                            is an SQLite3 error when performing the
+     *                            queries.
+     *
+     * \param zone_name The origin name of the zone to add
+     * \return the id of the zone (either an existing one if the zone exists
+     *         already, or the id of the newly created zone).
+     */
+    virtual int addZone(const std::string& zone_name);
+
     /** \brief Look up all resource records for a name
      *
      * This implements the getRecords() method from DatabaseAccessor
