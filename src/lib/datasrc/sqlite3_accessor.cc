@@ -624,21 +624,18 @@ SQLite3Accessor::addZone(const std::string& name) {
                   "data source without transaction");
     }
 
-    // First check if the zone exists, if it does, do nothing and
-    // return false
-    std::pair<bool, int> getzone_result = getZone(name);
-    if (getzone_result.first) {
-        return (getzone_result.second);
-    }
-
     StatementProcessor proc(*dbparameters_, ADD_ZONE, "add zone");
     proc.bindText(1, name.c_str(), SQLITE_TRANSIENT);
     proc.bindText(2, class_.c_str(), SQLITE_TRANSIENT);
     proc.exec();
 
     // There are tricks to getting this in one go, but it is safer
-    // to do a new lookup
-    getzone_result = getZone(name);
+    // to do a new lookup (sqlite3_last_insert_rowid is unsafe
+    // regarding threads and triggers). This requires two
+    // statements, and is unpredictable in the case a zone is added
+    // twice, but this method assumes the caller does not do that
+    // anyway
+    std::pair<bool, int> getzone_result = getZone(name);
     assert(getzone_result.first);
     return (getzone_result.second);
 }

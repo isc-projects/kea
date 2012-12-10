@@ -180,14 +180,12 @@ public:
     /// \brief Add a new zone to the database
     ///
     /// This method creates a new (and empty) zone in the database.
-    /// If a zone with the given name exists already, its zone_id value is
-    /// returned. Otherwise it is created, and the newly created zone_id
-    /// is returned.
     ///
-    /// Given the above, implementations should first do a lookup for the
-    /// given zone, and return the id if it exists.
+    /// Like for addRecordToZone, implementations are not required to
+    /// check for the existence of the given zone name, it is the
+    /// responsibility of the caller to do so.
     ///
-    /// Callers must start a transaction before calling this method,
+    /// Callers must also start a transaction before calling this method,
     /// implementations may throw DataSourceError if this has not been done.
     /// Callers should also expect DataSourceErrors for other potential
     /// problems.
@@ -1393,7 +1391,18 @@ public:
     ///     should use it as a ZoneFinder only.
     virtual FindResult findZone(const isc::dns::Name& name) const;
 
-    virtual bool createZone(const isc::dns::Name&);
+    /// \brief Create a zone in the database
+    ///
+    /// This method implements \c DataSourceClient::createZone()
+    ///
+    /// It starts a transaction, checks if the zone exists, and if it
+    /// does not, creates it, commits, and returns true. If the zone
+    /// does exist already, it does nothing (except abort the transaction)
+    /// and returns false.
+    ///
+    /// \param name The (fully qualified) name of the zone to create
+    /// \return True if the zone was added, false if it already existed
+    virtual bool createZone(const isc::dns::Name& name);
 
     /// \brief Get the zone iterator
     ///
