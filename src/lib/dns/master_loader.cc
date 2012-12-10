@@ -22,12 +22,23 @@
 
 #include <string>
 #include <memory>
+#include <strings.h>
 
 using std::string;
 using std::auto_ptr;
 
 namespace isc {
 namespace dns {
+
+// An internal exception, used to control the code flow in case of errors.
+// It is thrown during the loading and caught later, not to be propagated
+// outside of the file.
+class InternalException : public isc::Exception {
+public:
+    InternalException(const char* filename, size_t line, const char* what) :
+        Exception(filename, line, what)
+    {}
+};
 
 class MasterLoader::MasterLoaderImpl {
 public:
@@ -94,6 +105,28 @@ public:
 
     bool loadIncremental(size_t count_limit);
 
+    void handleDirective(const char* directive, size_t length) {
+        // We use strncasecmp, because there seems to be no reasonable
+        // way to compare strings case-insensitive in C++
+
+        // Warning: The order of compared strings does matter. The length
+        // parameter applies to the first one only.
+        if (strncasecmp(directive, "INCLUDE", length)) {
+
+        } else if (strncasecmp(directive, "ORIGIN", length)) {
+            // TODO: Implement
+            isc_throw(isc::NotImplemented,
+                      "Origin directive not implemented yet");
+        } else if (strncasecmp(directive, "TTL", length)) {
+            // TODO: Implement
+            isc_throw(isc::NotImplemented,
+                      "TTL directive not implemented yet");
+        } else {
+            isc_throw(InternalException, "Unknown directive '" <<
+                      string(directive, directive + length) << "'");
+        }
+    }
+
 private:
     MasterLexer lexer_;
     const Name zone_origin_;
@@ -144,7 +177,19 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             const MasterToken::StringRegion&
                 name_string(lexer_.getNextToken(MasterToken::QSTRING).
                             getStringRegion());
-            // TODO $ handling
+
+            if (name_string.len > 0 && name_string.beg[0] == '$') {
+                // This should have either thrown (and the error handler
+                // will read up until the end of line) or read until the
+                // end of line.
+
+                // Exclude the $ from the string on this point.
+                handleDirective(name_string.beg + 1, name_string.len - 1);
+                // So, get to the next line, there's nothing more interesting
+                // in this one.
+                continue;
+            }
+
             const Name name(name_string.beg, name_string.len,
                             &zone_origin_);
             // TODO: Some more flexibility. We don't allow omitting
