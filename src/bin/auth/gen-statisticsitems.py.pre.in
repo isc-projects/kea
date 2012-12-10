@@ -24,6 +24,7 @@ import re
 import sys
 import json
 from xml.etree import ElementTree
+from xml.dom.minidom import parseString
 
 item_list = []
 localstatedir = '@@LOCALSTATEDIR@@'
@@ -33,7 +34,7 @@ pre_suffix = '.pre'
 
 xmldocument_command_name = 'b10-auth'
 
-def need_generate(filepath, mtime):
+def need_generate(filepath, prepath, mtime):
     '''Check if we need to generate the specified file.
 
     To avoid unnecessary compilation, we skip (re)generating the file when
@@ -42,7 +43,7 @@ def need_generate(filepath, mtime):
     '''
     if os.path.exists(filepath) and\
         (os.path.getmtime(filepath) > mtime and
-         os.path.getmtime(filepath) > os.path.getmtime(filepath+pre_suffix)):
+         os.path.getmtime(filepath) > os.path.getmtime(prepath)):
         return False
     return True
 
@@ -72,29 +73,31 @@ def import_definitions():
     global item_list
 
     items_definition_file = srcdir + os.sep + 'statistics_msg_items.def'
-    item_definition = open(items_definition_file, 'r')
+    with open(items_definition_file, 'r') as item_definition:
+        re_splitter = re.compile('\t+')
+        l = item_list
+        lp = None
+        for line in item_definition.readlines():
+            element = re_splitter.split(line.rstrip())
+            # pop first element if it is empty to skip indent
+            if element[0] == '':
+                element.pop(0)
 
-    re_splitter = re.compile('\t+')
-    l = item_list
-    lp = None
-    for line in item_definition.readlines():
-        element = re_splitter.split(line.rstrip())
-        if element[0] == '':
-            element.pop(0)
-
-        if element[-1] == '=':
-            l.append({'name': element[0], 'child': [], 'index': element[1],
-                      'description': element[2], 'parent': lp})
-            lp = l
-            l = l[-1]['child']
-        elif element[-1] == ';':
-            l = lp
-            lp = l[-1]['parent']
-        else:
-            l.append({'name': element[0], 'child': None, 'index': element[1],
-                      'description': element[2], 'parent': lp})
-
-    item_definition.close()
+            # last element is '=': a branch node definition.
+            if element[-1] == '=':
+                l.append({'name': element[0], 'child': [], 'index': element[1],
+                          'description': element[2], 'parent': lp})
+                lp = l
+                l = l[-1]['child']
+            # last element is ';': end of a branch node.
+            elif element[-1] == ';':
+                l = lp
+                lp = l[-1]['parent']
+            # otherwise, a leaf node definition.
+            else:
+                l.append({'name': element[0], 'child': None,
+                          'index': element[1], 'description': element[2],
+                          'parent': lp})
     return os.path.getmtime(items_definition_file)
 
 def generate_specfile(specfile, def_mtime):
@@ -102,13 +105,12 @@ def generate_specfile(specfile, def_mtime):
     If the specfile is newer than both skeleton and def_mtime, file generation
     will be skipped.
 
-    This method reads the content of skeleton and replaces
-    <!-- ### STATISTICS DATA PLACEHOLDER ### --> with statistics items
-    definition. LOCALSTATEDIR is also expanded.
+    This method reads the content of skeleton and append statistics items
+    definition into { "module_spec": { "statistics": } }. 
+    LOCALSTATEDIR is also expanded.
 
     Returns nothing.
     '''
-    global item_list
 
     def convert_list(items, prefix=''):
         spec_list = []
@@ -160,18 +162,18 @@ def generate_specfile(specfile, def_mtime):
             },
         }]
 
-    if need_generate(builddir+os.sep+specfile, def_mtime):
-        stats_pre = open(builddir+os.sep+specfile+pre_suffix, 'r')
-        stats_pre_json = \
-            json.loads(stats_pre.read().replace('@@LOCAL'+'STATEDIR@@',
-                                                localstatedir))
-        stats_pre.close()
+    if need_generate(builddir+os.sep+specfile,
+                     builddir+os.sep+specfile+pre_suffix, def_mtime):
+        with open(builddir+os.sep+specfile+pre_suffix, 'r') as stats_pre:
+            # split LOCALSTATEDIR to avoid substitution
+            stats_pre_json = \
+                json.loads(stats_pre.read().replace('@@LOCAL'+'STATEDIR@@',
+                                                    localstatedir))
         stats_pre_json['module_spec']['statistics'] = statistics_spec_list
         statistics_spec_json = json.dumps(stats_pre_json, sort_keys=True,
                                           indent=2)
-        stats_spec = open(builddir+os.sep+specfile, 'w')
-        stats_spec.write(statistics_spec_json)
-        stats_spec.close()
+        with open(builddir+os.sep+specfile, 'w') as stats_spec:
+            stats_spec.write(statistics_spec_json)
     else:
         print('skip generating ' + specfile)
     return
@@ -187,12 +189,24 @@ def generate_docfile(docfile, def_mtime):
 
     Returns nothing.
     '''
-    global item_list
-
     def convert_list(items, tree, prefix=''):
+        '''
+        Build XML tree from items.
+            <varlistentry>
+              <term>##item_full_name##</term>
+              <listitem>
+              <simpara>
+              ##item_description##
+              </simpara>
+              </listitem>
+            <varlistentry>
+        xmldocument_command_name in item_description is surrounded with
+        <command>.
+        '''
         for item in items:
             full_item_name = prefix + item['name']
             if item['child'] is None:
+                # the item is a leaf node: build varlistentry
                 child_element = ElementTree.SubElement(tree, 'varlistentry')
                 term = ElementTree.SubElement(child_element, 'term')
                 term.text = full_item_name
@@ -200,35 +214,47 @@ def generate_docfile(docfile, def_mtime):
                 sim_para = ElementTree.SubElement(list_item, 'simpara')
                 sim_para.text = ''
                 prev = None
+                # put xmldocument_command_name in <command> node
                 for word in item['description'].split():
                     if word == xmldocument_command_name:
                         command = ElementTree.SubElement(sim_para, 'command')
                         command.text = word
-                        para_tail = command
-                        command.tail = ' '
+                        command.tail = ''
                         prev = command
                     else:
                         if prev is None:
                             sim_para.text += word + ' '
                         else:
                             prev.tail += word + ' '
+                sim_para.text = sim_para.text.rstrip()
+                if not prev is None:
+                    prev.tail = prev.tail.rstrip()
             else:
+                # the item is a branch node: call myself for child nodes
                 convert_list(item['child'], tree, full_item_name + '.')
         return
 
-    if need_generate(builddir+os.sep+docfile, def_mtime):
-        doc_pre = open(srcdir+os.sep+docfile+pre_suffix, 'r')
-        doc_pre_xml = doc_pre.read().replace('@@LOCAL'+'STATEDIR@@',
-                                             localstatedir)
-        doc_pre.close
+    if need_generate(builddir+os.sep+docfile,
+                     srcdir+os.sep+docfile+pre_suffix, def_mtime):
+        with open(srcdir+os.sep+docfile+pre_suffix, 'r') as doc_pre:
+            # split LOCALSTATEDIR to avoid substitution
+            doc_pre_xml = doc_pre.read().replace('@@LOCAL'+'STATEDIR@@',
+                                                 localstatedir)
 
         variable_tree = ElementTree.Element('variablelist')
         convert_list(item_list, variable_tree)
-        doc = open(builddir+os.sep+docfile, 'w')
-        doc.write(doc_pre_xml.replace(
-            '<!-- ### STATISTICS DATA PLACEHOLDER ### -->',
-            str(ElementTree.tostring(variable_tree))))
-        doc.close()
+        pretty_xml = \
+            parseString(ElementTree.tostring(variable_tree)).toprettyxml()
+        # remove XML declaration
+        pretty_xml = re.sub('<\?xml[^?]+\?>', '', pretty_xml)
+        # remove extra whitespaces inside <command> and <term>
+        pretty_xml = \
+            re.sub(r'<(command|term)>\s+([^<\s]+)\s+</\1>', r'<\1>\2</\1>',
+                   pretty_xml)
+        with open(builddir+os.sep+docfile, 'w') as doc:
+            doc.write(doc_pre_xml.replace(
+                '<!-- ### STATISTICS DATA PLACEHOLDER ### -->',
+                pretty_xml))
     else:
         print('skip generating ' + docfile)
     return
@@ -247,8 +273,6 @@ def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
 
     Returns nothing.
     '''
-    global item_list
-
     msg_counter_types = 'enum MSGCounterType {\n'
     item_names =  ['// using -1 as counter_id to state it is not a '
                    + 'counter item\n']
@@ -290,39 +314,38 @@ def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
     item_decls = msg_counter_types
     item_defs = ''.join(item_names)
 
-    if need_generate(builddir+os.sep+itemsfile, def_mtime):
-        statistics_items_h_pre = open(srcdir+os.sep+itemsfile+pre_suffix, 'r')
-        items_pre = statistics_items_h_pre.read()
-        statistics_items_h_pre.close
+    if need_generate(builddir+os.sep+itemsfile,
+                     srcdir+os.sep+itemsfile+pre_suffix, def_mtime):
+        with open(srcdir+os.sep+itemsfile+pre_suffix, 'r') \
+            as statistics_items_h_pre:
+            items_pre = statistics_items_h_pre.read()
 
-        statistics_items_h = open(builddir+os.sep+itemsfile, 'w')
-        statistics_items_h.write(items_pre.replace(
-            '// ### STATISTICS ITEMS DECLARATION ###', item_decls))
-        statistics_items_h.close()
+        with open(builddir+os.sep+itemsfile, 'w') as statistics_items_h:
+            statistics_items_h.write(items_pre.replace(
+                '// ### STATISTICS ITEMS DECLARATION ###', item_decls))
     else:
         print('skip generating ' + itemsfile)
 
-    if need_generate(builddir+os.sep+ccfile, def_mtime):
-        statistics_cc_pre = open(srcdir+os.sep+ccfile+pre_suffix, 'r')
-        items_pre = statistics_cc_pre.read()
-        statistics_cc_pre.close
+    if need_generate(builddir+os.sep+ccfile,
+                     srcdir+os.sep+ccfile+pre_suffix, def_mtime):
+        with open(srcdir+os.sep+ccfile+pre_suffix, 'r') as statistics_cc_pre:
+            items_pre = statistics_cc_pre.read()
 
-        statistics_cc = open(builddir+os.sep+ccfile, 'w')
-        statistics_cc.write(items_pre.replace(
-            '// ### STATISTICS ITEMS DEFINITION ###', item_defs))
-        statistics_cc.close()
+        with open(builddir+os.sep+ccfile, 'w') as statistics_cc:
+            statistics_cc.write(items_pre.replace(
+                '// ### STATISTICS ITEMS DEFINITION ###', item_defs))
     else:
         print('skip generating ' + ccfile)
 
-    if need_generate(builddir+os.sep+utfile, def_mtime):
-        statistics_ut_cc_pre = open(srcdir+os.sep+utfile+pre_suffix, 'r')
-        items_pre = statistics_ut_cc_pre.read()
-        statistics_ut_cc_pre.close
+    if need_generate(builddir+os.sep+utfile,
+                     srcdir+os.sep+utfile+pre_suffix, def_mtime):
+        with open(srcdir+os.sep+utfile+pre_suffix, 'r') \
+            as statistics_ut_cc_pre:
+            items_pre = statistics_ut_cc_pre.read()
 
-        statistics_ut_cc = open(builddir+os.sep+utfile, 'w')
-        statistics_ut_cc.write(items_pre.replace(
-            '// ### STATISTICS ITEMS DEFINITION ###', item_defs))
-        statistics_ut_cc.close()
+        with open(builddir+os.sep+utfile, 'w') as statistics_ut_cc:
+            statistics_ut_cc.write(items_pre.replace(
+                '// ### STATISTICS ITEMS DEFINITION ###', item_defs))
     else:
         print('skip generating ' + utfile)
 
