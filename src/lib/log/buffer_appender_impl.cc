@@ -43,7 +43,7 @@ BufferAppender::flushStdout() {
     // be a good idea; as we can't reliably know whether in what
     // state the logger instance is now (or what the specific logger's
     // settings were).
-    LogEventList::iterator it;
+    LogEventList::const_iterator it;
     for (it = stored_.begin(); it != stored_.end(); ++it) {
         const std::string level(it->first);
         LogEventPtr event(it->second);
