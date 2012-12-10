@@ -30,7 +30,7 @@
 #include <utility>
 #include <vector>
 
-/// @file dhcp/lease_mgr.h
+/// @file lease_mgr.h
 /// @brief An abstract API for lease database
 ///
 /// This file contains declarations of Lease4, Lease6 and LeaseMgr classes.

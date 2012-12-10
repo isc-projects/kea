@@ -525,7 +525,7 @@ protected:
 
     /// collection of options present in this message
     ///
-    /// @warnig This protected member is accessed by derived
+    /// @warning This protected member is accessed by derived
     /// classes directly. One of such derived classes is
     /// @ref perfdhcp::PerfPkt4. The impact on derived clasess'
     /// behavior must be taken into consideration before making

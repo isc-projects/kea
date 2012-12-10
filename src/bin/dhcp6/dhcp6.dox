@@ -16,13 +16,13 @@
 
  DHCPv6 server component does not use BIND10 logging yet.
 
- @section dhcpv6-session BIND10 message queue integration
+ @section dhcpv6Session BIND10 message queue integration
 
  DHCPv4 server component is now integrated with BIND10 message queue.
  It follows the same principle as DHCPv4. See \ref dhcpv4Session for
  details.
 
- @section dhcpv6-config-parser Configuration Parser in DHCPv6
+ @section dhcpv6ConfigParser Configuration Parser in DHCPv6
 
  b10-dhcp6 component uses BIND10 cfgmgr for commands and configuration. During
  initial configuration (See \ref
@@ -49,7 +49,7 @@
  elements and creates parsers for a given scope. This process may be repeated
  (sort of) recursively.
 
- @section dhcpv6-config-inherit DHCPv6 Configuration Inheritance
+ @section dhcpv6ConfigInherit DHCPv6 Configuration Inheritance
 
  One notable useful feature of DHCP configuration is its parameter inheritance.
  For example, renew-timer value may be specified at a global scope and it then

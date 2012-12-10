@@ -23,9 +23,9 @@
  * - @subpage dhcpv4
  *   - @subpage dhcpv4Session
  * - @subpage dhcpv6
- *   - @subpage dhcpv6-session
- *   - @subpage dhcpv6-config-parser
- *   - @subpage dhcpv6-config-inherit
+ *   - @subpage dhcpv6Session
+ *   - @subpage dhcpv6ConfigParser
+ *   - @subpage dhcpv6ConfigInherit
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpIfaceMgr
