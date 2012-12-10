@@ -1687,6 +1687,26 @@ class TestBossComponents(unittest.TestCase):
         # isc.cc.Session, time.time() and time.sleep() are restored
         # during tearDown().
 
+    def _start_cfgmgr_helper(self, bob, data_path, filename, clear_config):
+        expect_args = ['b10-cfgmgr']
+        if data_path is not None:
+            bob.data_path = data_path
+            expect_args.append('--data-path=' + data_path)
+        if filename is not None:
+            bob.config_filename = filename
+            expect_args.append('--config-filename=' + filename)
+        if clear_config:
+            bob.clear_config = clear_config
+            expect_args.append('--clear-config')
+
+        pi = bob.start_cfgmgr()
+        self.assertEqual('b10-cfgmgr', pi.name)
+        self.assertEqual(expect_args, pi.args)
+        self.assertEqual({'TESTENV': 'A test string'}, pi.env)
+
+        # this is set by ProcessInfo.spawn()
+        self.assertEqual(42147, pi.pid)
+
     def test_start_cfgmgr(self):
         '''Test that b10-cfgmgr is started.'''
         class DummySession():
@@ -1717,56 +1737,24 @@ class TestBossComponents(unittest.TestCase):
         time.sleep = _my_sleep
 
         # defaults
-        pi = bob.start_cfgmgr()
-        self.assertEqual('b10-cfgmgr', pi.name)
-        self.assertEqual(['b10-cfgmgr'], pi.args)
-        self.assertEqual({'TESTENV': 'A test string'}, pi.env)
-
-        # this is set by ProcessInfo.spawn()
-        self.assertEqual(42147, pi.pid)
+        self._start_cfgmgr_helper(bob, None, None, False)
 
         # check that 2 attempts were made. on the 3rd attempt,
         # process_running() returns that ConfigManager is running.
         self.assertEqual(attempts, 2)
 
         # data_path is specified
-        bob.data_path = '/var/lib/test'
-        pi = bob.start_cfgmgr()
-        self.assertEqual('b10-cfgmgr', pi.name)
-        self.assertEqual(['b10-cfgmgr',
-                          '--data-path=/var/lib/test'],
-                         pi.args)
-        self.assertEqual({'TESTENV': 'A test string'}, pi.env)
+        self._start_cfgmgr_helper(bob, '/var/lib/test', None, False)
 
-        # this is set by ProcessInfo.spawn()
-        self.assertEqual(42147, pi.pid)
+        # config_filename is specified. Because `bob` is not
+        # reconstructed, data_path is retained from the last call to
+        # _start_cfgmgr_helper().
+        self._start_cfgmgr_helper(bob, '/var/lib/test', 'foo.cfg', False)
 
-        # config_filename is specified
-        bob.config_filename = 'foo.cfg'
-        pi = bob.start_cfgmgr()
-        self.assertEqual('b10-cfgmgr', pi.name)
-        self.assertEqual(['b10-cfgmgr',
-                          '--data-path=/var/lib/test',
-                          '--config-filename=foo.cfg'],
-                         pi.args)
-        self.assertEqual({'TESTENV': 'A test string'}, pi.env)
-
-        # this is set by ProcessInfo.spawn()
-        self.assertEqual(42147, pi.pid)
-
-        # clear_config is specified
-        bob.clear_config = True
-        pi = bob.start_cfgmgr()
-        self.assertEqual('b10-cfgmgr', pi.name)
-        self.assertEqual(['b10-cfgmgr',
-                          '--data-path=/var/lib/test',
-                          '--config-filename=foo.cfg',
-                          '--clear-config'],
-                         pi.args)
-        self.assertEqual({'TESTENV': 'A test string'}, pi.env)
-
-        # this is set by ProcessInfo.spawn()
-        self.assertEqual(42147, pi.pid)
+        # clear_config is specified. Because `bob` is not reconstructed,
+        # data_path and config_filename are retained from the last call
+        # to _start_cfgmgr_helper().
+        self._start_cfgmgr_helper(bob, '/var/lib/test', 'foo.cfg', True)
 
     def test_start_cfgmgr_timeout(self):
         '''Test that b10-cfgmgr startup attempts connections several times
