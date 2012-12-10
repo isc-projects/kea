@@ -1246,10 +1246,12 @@ class ZoneInfo:
                 raise XfrinZoneInfoException(errmsg)
 
     def set_tsig_key_name(self, tsig_key_str):
-        """Set the tsig_key for this zone, given a TSIG key string
-           representation. If tsig_key_str is None, no TSIG key will
-           be set. Raises XfrinZoneInfoException if tsig_key_str cannot
-           be parsed. TODO UPDATE"""
+        """Set the name of the tsig_key for this zone. If tsig_key_str
+           is None, no TSIG key will be used. This name is used to
+           find the TSIG key to use for transfers in the global TSIG
+           key ring.
+           Raises XfrinZoneInfoException if tsig_key_str is not a valid
+           (dns) name."""
         if tsig_key_str is None:
             self.tsig_key_name = None
         else:
