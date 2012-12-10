@@ -312,6 +312,22 @@ protected:
     /// @throw BadValue Universe is not V6.
     virtual void pack6(isc::util::OutputBuffer& buf);
 
+    /// @brief Store option's header in a buffer.
+    ///
+    /// This method writes option's header into a buffer in the
+    /// on-wire format. The universe set for the particular option
+    /// is used to determine whether option code and length are
+    /// stored as 2-byte (for DHCPv6) or single-byte (for DHCPv4)
+    /// values. For DHCPv4 options, this method checks if the
+    /// length does not exceed 255 bytes and throws exception if
+    /// it does.
+    /// This method is used by derived classes to pack option's
+    /// header into a buffer. This method should not be called
+    /// directly by other classes.
+    ///
+    /// @param [out] buf output buffer.
+    void packHeader(isc::util::OutputBuffer& buf);
+
     /// @brief Store sub options in a buffer.
     ///
     /// This method stores all sub-options defined for a particular
