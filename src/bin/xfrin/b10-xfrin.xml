@@ -115,7 +115,7 @@ in separate zonemgr process.
       <varname>tsig_key</varname> (optional TSIG key name to use).
       The <varname>tsig_key</varname> is specified using a name that
       corresponds to one of the TSIG keys configured in the global
-      TSIG key ring (/tsig_keys/keys).</quote>).
+      TSIG key ring (<quote>/tsig_keys/keys</quote>).
     </para>
 <!-- TODO: document this better -->
 
