@@ -17,7 +17,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
 #include <dhcp/option6_iaaddr.h>
-#include <dhcp/option6_int.h>
+#include <dhcp/option_int.h>
 #include <util/buffer.h>
 
 #include <boost/pointer_cast.hpp>
@@ -31,13 +31,13 @@ using namespace isc::util;
 
 namespace {
 
-/// @brief Option6Int test class.
-class Option6IntTest : public ::testing::Test {
+/// @brief OptionInt test class.
+class OptionIntTest : public ::testing::Test {
 public:
     /// @brief Constructor.
     ///
     /// Initializes the option buffer with some data.
-    Option6IntTest(): buf_(255), out_buf_(255) {
+    OptionIntTest(): buf_(255), out_buf_(255) {
         for (int i = 0; i < 255; i++) {
             buf_[i] = 255 - i;
         }
@@ -52,12 +52,12 @@ public:
     template<typename T>
     void basicTest8() {
         // Create option that conveys single 8 bit integer value.
-        boost::shared_ptr<Option6Int<T> > opt;
+        boost::shared_ptr<OptionInt<T> > opt;
         // Initialize buffer with this value.
         buf_[0] = 0xa1;
         // Constructor may throw in case provided buffer is too short.
         ASSERT_NO_THROW(
-            opt = boost::shared_ptr<Option6Int<T> >(new Option6Int<T>(D6O_PREFERENCE,
+            opt = boost::shared_ptr<OptionInt<T> >(new OptionInt<T>(D6O_PREFERENCE,
                                                                       buf_.begin(),
                                                                       buf_.end()))
         );
@@ -96,13 +96,13 @@ public:
     template<typename T>
     void basicTest16() {
         // Create option that conveys single 16-bit integer value.
-        boost::shared_ptr<Option6Int<T> > opt;
+        boost::shared_ptr<OptionInt<T> > opt;
         // Initialize buffer with uint16_t value.
         buf_[0] = 0xa1;
         buf_[1] = 0xa2;
         // Constructor may throw in case provided buffer is too short.
         ASSERT_NO_THROW(
-            opt = boost::shared_ptr<Option6Int<T> >(new Option6Int<T>(D6O_ELAPSED_TIME,
+            opt = boost::shared_ptr<OptionInt<T> >(new OptionInt<T>(D6O_ELAPSED_TIME,
                                                                       buf_.begin(),
                                                                       buf_.end()))
         );
@@ -141,7 +141,7 @@ public:
     template<typename T>
     void basicTest32() {
         // Create option that conveys single 32-bit integer value.
-        boost::shared_ptr<Option6Int<T> > opt;
+        boost::shared_ptr<OptionInt<T> > opt;
         // Initialize buffer with 32-bit integer value.
         buf_[0] = 0xa1;
         buf_[1] = 0xa2;
@@ -149,7 +149,7 @@ public:
         buf_[3] = 0xa4;
         // Constructor may throw in case provided buffer is too short.
         ASSERT_NO_THROW(
-                        opt = boost::shared_ptr<Option6Int<T> >(new Option6Int<T>(D6O_CLT_TIME,
+                        opt = boost::shared_ptr<OptionInt<T> >(new OptionInt<T>(D6O_CLT_TIME,
                                                                                   buf_.begin(),
                                                                                   buf_.end()))
                         );
@@ -187,45 +187,45 @@ public:
 /// convey unsigned value. We should maybe extend these tests for
 /// signed types too.
 
-TEST_F(Option6IntTest, useInvalidType) {
+TEST_F(OptionIntTest, useInvalidType) {
     EXPECT_THROW(
-        boost::scoped_ptr<Option6Int<bool> >(new Option6Int<bool>(D6O_ELAPSED_TIME, 10)),
+        boost::scoped_ptr<OptionInt<bool> >(new OptionInt<bool>(D6O_ELAPSED_TIME, 10)),
         InvalidDataType
     );
 
     EXPECT_THROW(
-        boost::scoped_ptr<Option6Int<int64_t> >(new Option6Int<int64_t>(D6O_ELAPSED_TIME, 10)),
+        boost::scoped_ptr<OptionInt<int64_t> >(new OptionInt<int64_t>(D6O_ELAPSED_TIME, 10)),
         InvalidDataType
     );
 
 }
 
-TEST_F(Option6IntTest, basicUint8) {
+TEST_F(OptionIntTest, basicUint8) {
     basicTest8<uint8_t>();
 }
 
-TEST_F(Option6IntTest, basicUint16) {
+TEST_F(OptionIntTest, basicUint16) {
     basicTest16<uint16_t>();
 }
 
-TEST_F(Option6IntTest, basicUint32) {
+TEST_F(OptionIntTest, basicUint32) {
     basicTest32<uint32_t>();
 }
 
-TEST_F(Option6IntTest, basicInt8) {
+TEST_F(OptionIntTest, basicInt8) {
     basicTest8<int8_t>();
 }
 
-TEST_F(Option6IntTest, basicInt16) {
+TEST_F(OptionIntTest, basicInt16) {
     basicTest16<int16_t>();
 }
 
-TEST_F(Option6IntTest, basicInt32) {
+TEST_F(OptionIntTest, basicInt32) {
     basicTest32<int32_t>();
 }
 
-TEST_F(Option6IntTest, setValueUint8) {
-    boost::shared_ptr<Option6Int<uint8_t> > opt(new Option6Int<uint8_t>(D6O_PREFERENCE, 123));
+TEST_F(OptionIntTest, setValueUint8) {
+    boost::shared_ptr<OptionInt<uint8_t> > opt(new OptionInt<uint8_t>(D6O_PREFERENCE, 123));
     // Check if constructor intitialized the option value correctly.
     EXPECT_EQ(123, opt->getValue());
     // Override the value.
@@ -237,8 +237,8 @@ TEST_F(Option6IntTest, setValueUint8) {
     EXPECT_EQ(111, opt->getValue());
 }
 
-TEST_F(Option6IntTest, setValueInt8) {
-    boost::shared_ptr<Option6Int<int8_t> > opt(new Option6Int<int8_t>(D6O_PREFERENCE, -123));
+TEST_F(OptionIntTest, setValueInt8) {
+    boost::shared_ptr<OptionInt<int8_t> > opt(new OptionInt<int8_t>(D6O_PREFERENCE, -123));
     // Check if constructor intitialized the option value correctly.
     EXPECT_EQ(-123, opt->getValue());
     // Override the value.
@@ -251,8 +251,8 @@ TEST_F(Option6IntTest, setValueInt8) {
 }
 
 
-TEST_F(Option6IntTest, setValueUint16) {
-    boost::shared_ptr<Option6Int<uint16_t> > opt(new Option6Int<uint16_t>(D6O_ELAPSED_TIME, 123));
+TEST_F(OptionIntTest, setValueUint16) {
+    boost::shared_ptr<OptionInt<uint16_t> > opt(new OptionInt<uint16_t>(D6O_ELAPSED_TIME, 123));
     // Check if constructor intitialized the option value correctly.
     EXPECT_EQ(123, opt->getValue());
     // Override the value.
@@ -264,8 +264,8 @@ TEST_F(Option6IntTest, setValueUint16) {
     EXPECT_EQ(0x0102, opt->getValue());
 }
 
-TEST_F(Option6IntTest, setValueInt16) {
-    boost::shared_ptr<Option6Int<int16_t> > opt(new Option6Int<int16_t>(D6O_ELAPSED_TIME, -16500));
+TEST_F(OptionIntTest, setValueInt16) {
+    boost::shared_ptr<OptionInt<int16_t> > opt(new OptionInt<int16_t>(D6O_ELAPSED_TIME, -16500));
     // Check if constructor intitialized the option value correctly.
     EXPECT_EQ(-16500, opt->getValue());
     // Override the value.
@@ -277,8 +277,8 @@ TEST_F(Option6IntTest, setValueInt16) {
     EXPECT_EQ(-20100, opt->getValue());
 }
 
-TEST_F(Option6IntTest, setValueUint32) {
-    boost::shared_ptr<Option6Int<uint32_t> > opt(new Option6Int<uint32_t>(D6O_CLT_TIME, 123));
+TEST_F(OptionIntTest, setValueUint32) {
+    boost::shared_ptr<OptionInt<uint32_t> > opt(new OptionInt<uint32_t>(D6O_CLT_TIME, 123));
     // Check if constructor intitialized the option value correctly.
     EXPECT_EQ(123, opt->getValue());
     // Override the value.
@@ -290,8 +290,8 @@ TEST_F(Option6IntTest, setValueUint32) {
     EXPECT_EQ(0x01020304, opt->getValue());
 }
 
-TEST_F(Option6IntTest, setValueint32) {
-    boost::shared_ptr<Option6Int<int32_t> > opt(new Option6Int<int32_t>(D6O_CLT_TIME, -120100));
+TEST_F(OptionIntTest, setValueint32) {
+    boost::shared_ptr<OptionInt<int32_t> > opt(new OptionInt<int32_t>(D6O_CLT_TIME, -120100));
     // Check if constructor intitialized the option value correctly.
     EXPECT_EQ(-120100, opt->getValue());
     // Override the value.
@@ -303,12 +303,12 @@ TEST_F(Option6IntTest, setValueint32) {
     EXPECT_EQ(-125000, opt->getValue());
 }
 
-TEST_F(Option6IntTest, packSuboptions) {
+TEST_F(OptionIntTest, packSuboptions) {
     // option code is really uint16_t, but using uint8_t
     // for easier conversion to uint8_t array.
     uint8_t opt_code = 80;
 
-    boost::shared_ptr<Option6Int<uint32_t> > opt(new Option6Int<uint32_t>(opt_code, 0x01020304));
+    boost::shared_ptr<OptionInt<uint32_t> > opt(new OptionInt<uint32_t>(opt_code, 0x01020304));
     OptionPtr sub1(new Option(Option::V6, 0xcafe));
 
     boost::shared_ptr<Option6IAAddr> addr1(
@@ -347,7 +347,7 @@ TEST_F(Option6IntTest, packSuboptions) {
 }
 
 
-TEST_F(Option6IntTest, unpackSuboptions) {
+TEST_F(OptionIntTest, unpackSuboptions) {
     // option code is really uint16_t, but using uint8_t
     // for easier conversion to uint8_t array.
     const uint8_t opt_code = 80;
@@ -373,10 +373,10 @@ TEST_F(Option6IntTest, unpackSuboptions) {
 
     memcpy(&buf_[0], expected, sizeof(expected));
 
-    boost::shared_ptr<Option6Int<uint16_t> > opt;
+    boost::shared_ptr<OptionInt<uint16_t> > opt;
     EXPECT_NO_THROW(
         opt = boost::shared_ptr<
-            Option6Int<uint16_t> >(new Option6Int<uint16_t>(opt_code, buf_.begin() + 4,
+            OptionInt<uint16_t> >(new OptionInt<uint16_t>(opt_code, buf_.begin() + 4,
                                                             buf_.begin() + sizeof(expected)));
     );
     ASSERT_TRUE(opt);

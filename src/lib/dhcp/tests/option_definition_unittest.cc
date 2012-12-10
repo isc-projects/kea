@@ -21,10 +21,10 @@
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
-#include <dhcp/option6_int.h>
 #include <dhcp/option6_int_array.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
+#include <dhcp/option_int.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/pointer_cast.hpp>
@@ -578,10 +578,10 @@ TEST_F(OptionDefinitionTest, uint8) {
     ASSERT_NO_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, D6O_PREFERENCE, OptionBuffer(1, 1));
     );
-    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6Int<uint8_t>));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(OptionInt<uint8_t>));
     // Validate the value.
-    boost::shared_ptr<Option6Int<uint8_t> > option_cast_v6 =
-        boost::static_pointer_cast<Option6Int<uint8_t> >(option_v6);
+    boost::shared_ptr<OptionInt<uint8_t> > option_cast_v6 =
+        boost::static_pointer_cast<OptionInt<uint8_t> >(option_v6);
     EXPECT_EQ(1, option_cast_v6->getValue());
 
     // Try to provide zero-length buffer. Expect exception.
@@ -606,10 +606,10 @@ TEST_F(OptionDefinitionTest, uint8Tokenized) {
     ASSERT_NO_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, D6O_PREFERENCE, values);
     );
-    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6Int<uint8_t>));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(OptionInt<uint8_t>));
     // Validate the value.
-    boost::shared_ptr<Option6Int<uint8_t> > option_cast_v6 =
-        boost::static_pointer_cast<Option6Int<uint8_t> >(option_v6);
+    boost::shared_ptr<OptionInt<uint8_t> > option_cast_v6 =
+        boost::static_pointer_cast<OptionInt<uint8_t> >(option_v6);
     EXPECT_EQ(123, option_cast_v6->getValue());
 
     // @todo Add more cases for DHCPv4
@@ -629,10 +629,10 @@ TEST_F(OptionDefinitionTest, uint16) {
     ASSERT_NO_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, D6O_ELAPSED_TIME, buf);
     );
-    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6Int<uint16_t>));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(OptionInt<uint16_t>));
     // Validate the value.
-    boost::shared_ptr<Option6Int<uint16_t> > option_cast_v6 =
-        boost::static_pointer_cast<Option6Int<uint16_t> >(option_v6);
+    boost::shared_ptr<OptionInt<uint16_t> > option_cast_v6 =
+        boost::static_pointer_cast<OptionInt<uint16_t> >(option_v6);
     EXPECT_EQ(0x0102, option_cast_v6->getValue());
 
     // Try to provide zero-length buffer. Expect exception.
@@ -658,10 +658,10 @@ TEST_F(OptionDefinitionTest, uint16Tokenized) {
     ASSERT_NO_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, D6O_ELAPSED_TIME, values);
     );
-    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6Int<uint16_t>));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(OptionInt<uint16_t>));
     // Validate the value.
-    boost::shared_ptr<Option6Int<uint16_t> > option_cast_v6 =
-        boost::static_pointer_cast<Option6Int<uint16_t> >(option_v6);
+    boost::shared_ptr<OptionInt<uint16_t> > option_cast_v6 =
+        boost::static_pointer_cast<OptionInt<uint16_t> >(option_v6);
     EXPECT_EQ(1234, option_cast_v6->getValue());
 
     // @todo Add more cases for DHCPv4
@@ -683,10 +683,10 @@ TEST_F(OptionDefinitionTest, uint32) {
     ASSERT_NO_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, D6O_CLT_TIME, buf);
     );
-    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6Int<uint32_t>));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(OptionInt<uint32_t>));
     // Validate the value.
-    boost::shared_ptr<Option6Int<uint32_t> > option_cast_v6 =
-        boost::static_pointer_cast<Option6Int<uint32_t> >(option_v6);
+    boost::shared_ptr<OptionInt<uint32_t> > option_cast_v6 =
+        boost::static_pointer_cast<OptionInt<uint32_t> >(option_v6);
     EXPECT_EQ(0x01020304, option_cast_v6->getValue());
 
     // Try to provide too short buffer. Expect exception.
@@ -711,10 +711,10 @@ TEST_F(OptionDefinitionTest, uint32Tokenized) {
     ASSERT_NO_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, D6O_CLT_TIME, values);
     );
-    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6Int<uint32_t>));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(OptionInt<uint32_t>));
     // Validate the value.
-    boost::shared_ptr<Option6Int<uint32_t> > option_cast_v6 =
-        boost::static_pointer_cast<Option6Int<uint32_t> >(option_v6);
+    boost::shared_ptr<OptionInt<uint32_t> > option_cast_v6 =
+        boost::static_pointer_cast<OptionInt<uint32_t> >(option_v6);
     EXPECT_EQ(123456, option_cast_v6->getValue());
 
     // @todo Add more cases for DHCPv4
