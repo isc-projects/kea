@@ -209,7 +209,7 @@ OptionDataTypeUtil::writeBool(const bool value,
 std::string
 OptionDataTypeUtil::readString(const std::vector<uint8_t>& buf) {
     std::string value;
-    if (buf.size() > 0) {
+    if (!buf.empty()) {
         value.insert(value.end(), buf.begin(), buf.end());
     }
     return (value);

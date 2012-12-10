@@ -111,10 +111,10 @@ public:
     /// We return a copy of our list. Although this includes overhead,
     /// it also makes this list safe to use after this option object
     /// is no longer available. As options are expected to hold only
-    /// a couple (1-3) addresses, the overhead is not that big.
+    /// a few (1-3) addresses, the overhead is not that big.
     ///
     /// @return address container with addresses
-    AddressContainer getAddresses() { return addrs_; };
+    AddressContainer getAddresses() const { return addrs_; };
 
     /// @brief Sets addresses list.
     ///
