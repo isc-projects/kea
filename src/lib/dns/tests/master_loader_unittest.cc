@@ -223,6 +223,9 @@ struct ErrorCase {
     { "www      3600    IN  \"A\"   192.0.2.1", "Quoted type" },
     { "unbalanced)paren 3600    IN  A   192.0.2.1", "Token error 1" },
     { "www  3600    unbalanced)paren    A   192.0.2.1", "Token error 2" },
+    // Check the unknown directive. The rest looks like ordinary RR,
+    // so we see the $ is actually special.
+    { "$UNKNOWN 3600    IN  A   192.0.2.1", "Unknown $ directive" },
     { NULL, NULL }
 };
 
@@ -242,7 +245,7 @@ TEST_F(MasterLoaderTest, brokenZone) {
             EXPECT_FALSE(loader_->loadedSucessfully());
             EXPECT_THROW(loader_->load(), MasterLoaderError);
             EXPECT_FALSE(loader_->loadedSucessfully());
-            EXPECT_EQ(1, errors_.size()) << errors_[0];
+            EXPECT_EQ(1, errors_.size());
             EXPECT_TRUE(warnings_.empty());
 
             checkRR("example.org", RRType::SOA(), "ns1.example.org. "
