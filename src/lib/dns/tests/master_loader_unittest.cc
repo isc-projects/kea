@@ -160,15 +160,15 @@ TEST_F(MasterLoaderTest, include) {
         SCOPED_TRACE(*include);
         // Prepare input source that has no other content than just the
         // include of the real master file.
-        const string include_str = string(*include) + " " + TEST_DATA_SRCDIR +
-            "/example.org\n";
+        const string include_str = "$" + string(*include) + " " +
+            TEST_DATA_SRCDIR + "/example.org\n";
         stringstream ss(include_str);
         setLoader(ss, Name("example.org."), RRClass::IN(),
                   MasterLoader::MANY_ERRORS);
 
         loader_->load();
         EXPECT_TRUE(loader_->loadedSucessfully());
-        EXPECT_TRUE(errors_.empty());
+        EXPECT_TRUE(errors_.empty()) << errors_[0];
         EXPECT_TRUE(warnings_.empty());
 
         checkBasicRRs();
