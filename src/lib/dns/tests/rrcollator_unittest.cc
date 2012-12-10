@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
+
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrcollator.h>
@@ -34,7 +36,11 @@ namespace {
 typedef RRCollator::AddRRsetCallback AddRRsetCallback;
 
 void
-addRRset(const RRsetPtr& rrset, vector<ConstRRsetPtr>* to_append) {
+addRRset(const RRsetPtr& rrset, vector<ConstRRsetPtr>* to_append,
+         const bool* do_throw) {
+    if (*do_throw) {
+        isc_throw(isc::Unexpected, "faked failure");
+    }
     to_append->push_back(rrset);
 }
 
@@ -42,7 +48,8 @@ class RRCollatorTest : public ::testing::Test {
 protected:
     RRCollatorTest() :
         origin_("example.com"), rrclass_(RRClass::IN()), rrttl_(3600),
-        collator_(boost::bind(addRRset, _1, &rrsets_)),
+        throw_from_callback_(false),
+        collator_(boost::bind(addRRset, _1, &rrsets_, &throw_from_callback_)),
         rr_callback_(collator_.getCallback())
     {
         a_rdata1_ = createRdata(RRType::A(), rrclass_, "192.0.2.1");
@@ -90,6 +97,7 @@ protected:
     const RRTTL rrttl_;
     vector<ConstRRsetPtr> rrsets_;
     RdataPtr a_rdata1_, a_rdata2_, txt_rdata_, sig_rdata1_, sig_rdata2_;
+    bool throw_from_callback_;
     RRCollator collator_;
     AddRRCallback rr_callback_;
     vector<ConstRdataPtr> rdatas_; // placeholder for expected data
@@ -170,6 +178,23 @@ TEST_F(RRCollatorTest, addRRSIGs) {
 TEST_F(RRCollatorTest, emptyFinish) {
     collator_.finish();
     EXPECT_TRUE(rrsets_.empty());
+}
+
+TEST_F(RRCollatorTest, throwFromCallback) {
+    // Adding an A RR
+    rr_callback_(origin_, rrclass_, RRType::A(), rrttl_, a_rdata1_);
+
+    // Adding a TXT RR, which would trigger RRset callback, but in this test
+    // it throws.  The added TXT RR will be effectively lost.
+    throw_from_callback_ = true;
+    EXPECT_THROW(rr_callback_(origin_, rrclass_, RRType::TXT(), rrttl_,
+                              txt_rdata_), isc::Unexpected);
+
+    // We'll only see the A RR.
+    throw_from_callback_ = false;
+    collator_.finish();
+    rdatas_.push_back(a_rdata1_);
+    checkRRset(origin_, rrclass_, RRType::A(), rrttl_, rdatas_);
 }
 
 }
