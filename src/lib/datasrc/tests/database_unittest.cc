@@ -334,6 +334,7 @@ public:
         isc_throw(isc::NotImplemented,
                   "This test database knows nothing about NSEC3 nor order");
     }
+
 private:
     const std::string database_name_;
 
@@ -4095,6 +4096,28 @@ TYPED_TEST(DatabaseClientTest, findNSEC3) {
 
     // The rest is in the function, it is shared with in-memory tests
     performNSEC3Test(*finder, true);
+}
+
+TYPED_TEST(DatabaseClientTest, createZone) {
+    const Name new_name("example.com");
+    const DataSourceClient::FindResult
+        zone(this->client_->findZone(new_name));
+    ASSERT_EQ(result::NOTFOUND, zone.code);
+    // The mock implementation does not do createZone,
+    // in which case it should throw NotImplemented (from
+    // the base class)
+    if(this->is_mock_) {
+        ASSERT_THROW(this->client_->createZone(new_name), isc::NotImplemented);
+    } else {
+        // But in the real case, it should work and return true
+        ASSERT_TRUE(this->client_->createZone(new_name));
+        const DataSourceClient::FindResult
+            zone2(this->client_->findZone(new_name));
+        ASSERT_EQ(result::SUCCESS, zone2.code);
+        // And the second call should return false since
+        // it already exists
+        ASSERT_FALSE(this->client_->createZone(new_name));
+    }
 }
 
 }

@@ -378,6 +378,20 @@ public:
         isc_throw(isc::NotImplemented,
                   "Data source doesn't support getZoneCount");
     }
+
+    // It first checks if the specified name of the zone exists.  If it
+    // exists it returns false; otherwise it adds information of the
+    // new zone in backend-dependent manner and returns true.
+    // The DB-based version of this method would perform the check and add in
+    // a single transaction.
+    //
+    // Throws on any unexpected failure.
+    // Default implementation throws isc::NotImplemented
+
+    virtual bool createZone(const dns::Name&) {
+        isc_throw(isc::NotImplemented,
+                  "Data source doesn't support addZone");
+    };
 };
 }
 }
