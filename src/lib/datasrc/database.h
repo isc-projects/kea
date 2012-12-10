@@ -177,6 +177,26 @@ public:
     ///     an opaque handle.
     virtual std::pair<bool, int> getZone(const std::string& name) const = 0;
 
+    /// \brief Add a new zone to the database
+    ///
+    /// This method creates a new (and empty) zone in the database.
+    /// If a zone with the given name exists already, its zone_id value is
+    /// returned. Otherwise it is created, and the newly created zone_id
+    /// is returned.
+    ///
+    /// Given the above, implementations should first do a lookup for the
+    /// given zone, and return the id if it exists.
+    ///
+    /// Callers must start a transaction before calling this method,
+    /// implementations may throw DataSourceError if this has not been done.
+    /// Callers should also expect DataSourceErrors for other potential
+    /// problems.
+    ///
+    /// \param name The (fully qualified) domain name of the zone to add.
+    /// \return The internal zone id of the zone (whether is existed already
+    ///         or was created by this call).
+    virtual int addZone(const std::string& name) = 0;
+
     /// \brief This holds the internal context of ZoneIterator for databases
     ///
     /// While the ZoneIterator implementation from DatabaseClient does all the
