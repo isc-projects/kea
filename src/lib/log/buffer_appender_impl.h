@@ -38,9 +38,16 @@ public:
     {}
 };
 
-/// Convenience typedef for a list of logger events
-typedef std::vector<boost::shared_ptr<log4cplus::spi::InternalLoggingEvent> >
-    LoggerEventPtrList;
+/// Convenience typedef for a pointer to a log event
+typedef boost::shared_ptr<log4cplus::spi::InternalLoggingEvent> LogEventPtr;
+
+/// Convenience typedef for a pair string/logeventptr, the string representing
+/// the logger level, as returned by LogLevelManager::toString() at the
+/// time of logging
+typedef std::pair<std::string, LogEventPtr> LevelAndEvent;
+
+/// Convenience typedef for a vector of LevelAndEvent instances
+typedef std::vector<LevelAndEvent> LogEventList;
 
 /// \brief Buffering Logger Appender
 ///
@@ -99,7 +106,7 @@ private:
     /// \brief Helper for the destructor, flush events to stdout
     void flushStdout();
 
-    LoggerEventPtrList stored_;
+    LogEventList stored_;
     bool flushed_;
 };
 

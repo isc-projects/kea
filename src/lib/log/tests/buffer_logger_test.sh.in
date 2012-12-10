@@ -46,9 +46,9 @@ passfail $?
 
 echo -n  "   - Buffer excluding process() call: "
 cat > $tempfile << .
-Severity=20000 [buffertest.log]: LOG_BAD_SEVERITY unrecognized log severity: info
-Severity=10000 [buffertest.log]: LOG_BAD_DESTINATION unrecognized log destination: debug-50
-Severity=20000 [buffertest.log]: LOG_BAD_SEVERITY unrecognized log severity: info
+INFO [buffertest.log]: LOG_BAD_SEVERITY unrecognized log severity: info
+DEBUG [buffertest.log]: LOG_BAD_DESTINATION unrecognized log destination: debug-50
+INFO [buffertest.log]: LOG_BAD_SEVERITY unrecognized log severity: info
 .
 ./buffer_logger_test -n 2>&1 | diff $tempfile -
 passfail $?
