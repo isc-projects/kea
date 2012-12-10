@@ -45,26 +45,29 @@ BufferAppender::flushStdout() {
     // settings were).
     // So we print a raw format (it excludes the time and the pid, and
     // it prints severity as a number)
-    LoggerEventPtrList::const_iterator it;
+    LogEventList::iterator it;
     for (it = stored_.begin(); it != stored_.end(); ++it) {
-        std::printf("Severity=%d [%s]: %s\n", (*it)->getLogLevel(),
-                    (*it)->getLoggerName().c_str(),
-                    (*it)->getMessage().c_str());
+        const std::string level(it->first);
+        LogEventPtr event(it->second);
+        std::printf("%s [%s]: %s\n", level.c_str(),
+                    event->getLoggerName().c_str(),
+                    event->getMessage().c_str());
     }
     stored_.clear();
 }
 
 void
 BufferAppender::flush() {
-    LoggerEventPtrList stored_copy;
+    LogEventList stored_copy;
     stored_.swap(stored_copy);
 
-    LoggerEventPtrList::const_iterator it;
+    LogEventList::const_iterator it;
     for (it = stored_copy.begin(); it != stored_copy.end(); ++it) {
+        LogEventPtr event(it->second);
         log4cplus::Logger logger =
-            log4cplus::Logger::getInstance((*it)->getLoggerName());
+            log4cplus::Logger::getInstance(event->getLoggerName());
 
-        logger.log((*it)->getLogLevel(), (*it)->getMessage());
+        logger.log(event->getLogLevel(), event->getMessage());
     }
     flushed_ = true;
 }
@@ -80,12 +83,14 @@ BufferAppender::append(const log4cplus::spi::InternalLoggingEvent& event) {
         isc_throw(LogBufferAddAfterFlush,
                   "Internal log buffer has been flushed already");
     }
-    // get a clone, and put the pointer in a shared_pt
+    // get a clone, and put the pointer in a shared_ptr in the list
     std::auto_ptr<log4cplus::spi::InternalLoggingEvent> event_aptr =
         event.clone();
-    boost::shared_ptr<log4cplus::spi::InternalLoggingEvent> event_sptr(
-        event_aptr.release());
-    stored_.push_back(event_sptr);
+    // Also store the string representation of the log level, to be
+    // used in flushStdout if necessary
+    stored_.push_back(LevelAndEvent(
+                log4cplus::LogLevelManager().toString(event.getLogLevel()),
+                LogEventPtr(event_aptr.release())));
 }
 
 } // end namespace internal
