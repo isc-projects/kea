@@ -48,15 +48,15 @@ class OptionDefinition;
 /// @brief Pointer to option definition object.
 typedef boost::shared_ptr<OptionDefinition> OptionDefinitionPtr;
 
-/// @brief Forward declaration to Option6Int.
+/// @brief Forward declaration to OptionInt.
 ///
-/// This forward declaration is needed to access Option6Int class
+/// This forward declaration is needed to access OptionInt class
 /// without having to include option6_int.h header. This is because
 /// this header includes libdhcp++.h and this causes circular
 /// inclusion between libdhcp++.h, option_definition.h and
 /// option6_int.h.
 template<typename T>
-class Option6Int;
+class OptionInt;
 
 /// @brief Forward declaration to Option6IntArray.
 ///
@@ -354,7 +354,7 @@ public:
     static OptionPtr factoryInteger(Option::Universe, uint16_t type,
                                     OptionBufferConstIter begin,
                                     OptionBufferConstIter end) {
-        OptionPtr option(new Option6Int<T>(type, begin, end));
+        OptionPtr option(new OptionInt<T>(type, begin, end));
         return (option);
     }
 
