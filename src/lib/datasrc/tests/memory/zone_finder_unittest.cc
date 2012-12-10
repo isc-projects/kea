@@ -1585,6 +1585,10 @@ TEST_F(InMemoryZoneFinderNSEC3Test, findNSEC3MissingOrigin) {
      Name search_name("nonexist.ok.ok.ok.ok.nsec3.tjeb.nl.");
      ZoneFinder::FindNSEC3Result find_result(
           result.zone_finder->findNSEC3(search_name, true));
+     // findNSEC3() must have completed (not throw or assert). Because
+     // the find was recursive, it always must find something and return
+     // true.
+     EXPECT_TRUE(find_result.matched);
 }
 
 }
