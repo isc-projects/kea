@@ -30,7 +30,7 @@
 #include <log/log_messages.h>
 #include <log/logger_name.h>
 #include <log/logger_specification.h>
-#include <log/log_buffer_impl.h>
+#include <log/buffer_appender_impl.h>
 
 using namespace std;
 

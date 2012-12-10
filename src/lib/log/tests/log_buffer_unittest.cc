@@ -18,7 +18,7 @@
 #include <log/macros.h>
 #include <log/logger_support.h>
 #include <log/log_messages.h>
-#include <log/log_buffer_impl.h>
+#include <log/buffer_appender_impl.h>
 
 #include <log4cplus/loggingmacros.h>
 #include <log4cplus/logger.h>
