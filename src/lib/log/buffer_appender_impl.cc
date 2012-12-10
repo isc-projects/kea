@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <log/log_buffer_impl.h>
+#include <log/buffer_appender_impl.h>
 
 #include <log4cplus/loglevel.h>
 #include <boost/scoped_ptr.hpp>
