@@ -91,7 +91,7 @@ run_unittests_SOURCES += logger_specification_unittest.cc
 run_unittests_SOURCES += message_dictionary_unittest.cc
 run_unittests_SOURCES += message_reader_unittest.cc
 run_unittests_SOURCES += output_option_unittest.cc
-run_unittests_SOURCES += log_buffer_unittest.cc
+run_unittests_SOURCES += buffer_appender_unittest.cc
 nodist_run_unittests_SOURCES = log_test_messages.cc log_test_messages.h
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS)
