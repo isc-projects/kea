@@ -82,7 +82,7 @@ public:
                                        options));
     }
 
-    string prepareZone(const string& line, bool include_last) {
+    static string prepareZone(const string& line, bool include_last) {
         string result;
         result += "example.org. 3600 IN SOA ns1.example.org. "
             "admin.example.org. 1234 3600 1800 2419200 7200\n";
@@ -108,7 +108,7 @@ public:
         rrsets_.pop_front();
 
         EXPECT_EQ(Name(name), current->getName());
-        ASSERT_EQ(type, current->getType());
+        EXPECT_EQ(type, current->getType());
         EXPECT_EQ(RRClass::IN(), current->getClass());
         ASSERT_EQ(1, current->getRdataCount());
         EXPECT_EQ(0, isc::dns::rdata::createRdata(type, RRClass::IN(), data)->
