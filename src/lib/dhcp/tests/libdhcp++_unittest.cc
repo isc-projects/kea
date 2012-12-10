@@ -20,8 +20,8 @@
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
-#include <dhcp/option6_int.h>
 #include <dhcp/option6_int_array.h>
+#include <dhcp/option_int.h>
 #include <dhcp/option_custom.h>
 #include <util/buffer.h>
 
@@ -314,8 +314,8 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     // Option with code 8 is OPTION_ELAPSED_TIME. This option is
     // represented by Option6Int<uint16_t> value that holds single
     // uint16_t value.
-    boost::shared_ptr<Option6Int<uint16_t> > opt_elapsed_time =
-        boost::dynamic_pointer_cast<Option6Int<uint16_t> >(x->second);
+    boost::shared_ptr<OptionInt<uint16_t> > opt_elapsed_time =
+        boost::dynamic_pointer_cast<OptionInt<uint16_t> >(x->second);
     // This value will be NULL if cast was unsuccessful. This is the case
     // when returned option has different type than expected.
     ASSERT_TRUE(opt_elapsed_time);
@@ -627,7 +627,7 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_IA_NA, buf, typeid(Option6IA));
 
     LibDhcpTest::testStdOptionDefs6(D6O_IA_TA, buf,
-                                    typeid(Option6Int<uint32_t>));
+                                    typeid(OptionInt<uint32_t>));
 
     LibDhcpTest::testStdOptionDefs6(D6O_IAADDR, buf, typeid(Option6IAAddr));
 
@@ -635,10 +635,10 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     typeid(Option6IntArray<uint16_t>));
 
     LibDhcpTest::testStdOptionDefs6(D6O_PREFERENCE, buf,
-                                    typeid(Option6Int<uint8_t>));
+                                    typeid(OptionInt<uint8_t>));
 
     LibDhcpTest::testStdOptionDefs6(D6O_ELAPSED_TIME, buf,
-                                    typeid(Option6Int<uint16_t>));
+                                    typeid(OptionInt<uint16_t>));
 
     LibDhcpTest::testStdOptionDefs6(D6O_RELAY_MSG, buf, typeid(Option));
 
@@ -656,7 +656,7 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_INTERFACE_ID, buf, typeid(Option));
 
     LibDhcpTest::testStdOptionDefs6(D6O_RECONF_MSG, buf,
-                                    typeid(Option6Int<uint8_t>));
+                                    typeid(OptionInt<uint8_t>));
 
     LibDhcpTest::testStdOptionDefs6(D6O_RECONF_ACCEPT, buf, typeid(Option));
 
@@ -692,7 +692,7 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     typeid(Option6AddrLst));
 
     LibDhcpTest::testStdOptionDefs6(D6O_INFORMATION_REFRESH_TIME,
-                                    buf, typeid(Option6Int<uint32_t>));
+                                    buf, typeid(OptionInt<uint32_t>));
 
     LibDhcpTest::testStdOptionDefs6(D6O_BCMCS_SERVER_D, fqdn_buf,
                                     typeid(OptionCustom));
@@ -730,7 +730,7 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_CLIENT_DATA, buf, typeid(Option));
 
     LibDhcpTest::testStdOptionDefs6(D6O_CLT_TIME, buf,
-                                    typeid(Option6Int<uint32_t>));
+                                    typeid(OptionInt<uint32_t>));
 
     LibDhcpTest::testStdOptionDefs6(D6O_LQ_RELAY_DATA, buf,
                                     typeid(OptionCustom));
