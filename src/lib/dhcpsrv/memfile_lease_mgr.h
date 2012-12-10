@@ -68,16 +68,6 @@ public:
     /// @return a collection of leases
     virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
 
-    /// @brief Returns existing IPv4 lease for specific address and subnet
-    ///
-    /// @todo Not implemented yet
-    /// @param addr address of the searched lease
-    /// @param subnet_id ID of the subnet the lease must belong to
-    ///
-    /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr,
-                                SubnetID subnet_id) const;
-
     /// @brief Returns existing IPv4 leases for specified hardware address.
     ///
     /// @todo Not implemented yet

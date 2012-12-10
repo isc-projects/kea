@@ -1274,24 +1274,6 @@ MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
 }
 
 
-Lease4Ptr
-MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr,
-                         SubnetID subnet_id) const {
-
-    // As the address is the unique primary key of the lease4 table, there can
-    // only be one lease with a given address.  Therefore we will get that
-    // lease and do the filtering on subnet ID here.
-    Lease4Ptr result = getLease4(addr);
-    if (result && (result->subnet_id_ != subnet_id)) {
-
-        // Lease found but IDs do not match.  Return null pointer
-        result.reset();
-    }
-
-    return (result);
-}
-
-
 Lease4Collection
 MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
     // Set up the WHERE clause value
