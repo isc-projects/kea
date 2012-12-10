@@ -617,7 +617,7 @@ SQLite3Accessor::getZone(const std::string& name) const {
 }
 
 int
-SQLite3Accessor::addZone(const std::string& zone_name) {
+SQLite3Accessor::addZone(const std::string& name) {
     // Transaction should have been started by the caller
     if (!dbparameters_->in_transaction) {
         isc_throw(DataSourceError, "performing addZone on SQLite3 "
@@ -626,19 +626,19 @@ SQLite3Accessor::addZone(const std::string& zone_name) {
 
     // First check if the zone exists, if it does, do nothing and
     // return false
-    std::pair<bool, int> getzone_result = getZone(zone_name);
+    std::pair<bool, int> getzone_result = getZone(name);
     if (getzone_result.first) {
         return (getzone_result.second);
     }
 
     StatementProcessor proc(*dbparameters_, ADD_ZONE, "add zone");
-    proc.bindText(1, zone_name.c_str(), SQLITE_TRANSIENT);
+    proc.bindText(1, name.c_str(), SQLITE_TRANSIENT);
     proc.bindText(2, class_.c_str(), SQLITE_TRANSIENT);
     proc.exec();
 
     // There are tricks to getting this in one go, but it is safer
     // to do a new lookup
-    getzone_result = getZone(zone_name);
+    getzone_result = getZone(name);
     assert(getzone_result.first);
     return (getzone_result.second);
 }

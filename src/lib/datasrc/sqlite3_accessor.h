@@ -150,11 +150,11 @@ public:
      *                            is an SQLite3 error when performing the
      *                            queries.
      *
-     * \param zone_name The origin name of the zone to add
+     * \param name The origin name of the zone to add
      * \return the id of the zone (either an existing one if the zone exists
      *         already, or the id of the newly created zone).
      */
-    virtual int addZone(const std::string& zone_name);
+    virtual int addZone(const std::string& name);
 
     /** \brief Look up all resource records for a name
      *
