@@ -105,19 +105,38 @@ public:
 
     bool loadIncremental(size_t count_limit);
 
+    void doInclude() {
+        // First, get the filename to include
+        const MasterToken::StringRegion
+            filename(lexer_.getNextToken(MasterLexer::QSTRING).
+                     getStringRegion());
+
+        // TODO: Handle the case where there's Name after the
+        // filename, meaning origin. Once $ORIGIN handling is
+        // done, it should be interconnected somehow.
+
+        // Push the filename. We abuse the fact that filename
+        // may not contain '\0' anywhere in it, so we can
+        // freely use the filename.beg directly.
+        pushSource(filename.beg);
+
+        // TODO: Eat any extra tokens at the end of line (they
+        // should not be here, of course).
+    }
+
     void handleDirective(const char* directive, size_t length) {
         // We use strncasecmp, because there seems to be no reasonable
         // way to compare strings case-insensitive in C++
 
         // Warning: The order of compared strings does matter. The length
         // parameter applies to the first one only.
-        if (strncasecmp(directive, "INCLUDE", length)) {
-
-        } else if (strncasecmp(directive, "ORIGIN", length)) {
+        if (strncasecmp(directive, "INCLUDE", length) == 0) {
+            doInclude();
+        } else if (strncasecmp(directive, "ORIGIN", length) == 0) {
             // TODO: Implement
             isc_throw(isc::NotImplemented,
                       "Origin directive not implemented yet");
-        } else if (strncasecmp(directive, "TTL", length)) {
+        } else if (strncasecmp(directive, "TTL", length) == 0) {
             // TODO: Implement
             isc_throw(isc::NotImplemented,
                       "TTL directive not implemented yet");
