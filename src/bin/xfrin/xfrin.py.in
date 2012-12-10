@@ -34,6 +34,7 @@ from isc.datasrc import DataSourceClient, ZoneFinder
 import isc.net.parse
 from isc.xfrin.diff import Diff
 from isc.server_common.auth_command import auth_loadzone_command
+from isc.server_common.tsig_keyring import init_keyring, get_keyring
 from isc.log_messages.xfrin_messages import *
 
 isc.log.init("b10-xfrin")
@@ -72,8 +73,6 @@ XFROUT_MODULE_NAME = 'Xfrout'
 
 # Remote module and identifiers (according to their spec files)
 ZONE_MANAGER_MODULE_NAME = 'Zonemgr'
-TSIG_KEYS_MODULE_NAME = 'tsig_keys'
-TSIG_KEYS_IDENTIFIER = 'keys'
 
 REFRESH_FROM_ZONEMGR = 'refresh_from_zonemgr'
 
@@ -1265,24 +1264,12 @@ class ZoneInfo:
     def get_tsig_key(self):
         if self.tsig_key_name is None:
             return None
-        key_strings, _ = self._module_cc.get_remote_config_value(
-                                  TSIG_KEYS_MODULE_NAME,
-                                  TSIG_KEYS_IDENTIFIER)
-        # Find the TSIG key in the keyring
-        for possible_key_string in key_strings:
-            try:
-                key = TSIGKey(possible_key_string)
-            except InvalidParameter as ipe:
-                # In theory, bad keys should never end up here (but be refused
-                # by the validator for TSIG keys config. However,
-                # should they do, we simply log and ignore them
-                logger.error(XFRIN_BAD_TSIG_KEY_STRING, possible_key_string)
-            if key.get_key_name() == self.tsig_key_name:
-                return key
-        logger.error(XFRIN_TSIG_KEY_NOT_FOUND, self.tsig_key_name.to_text())
-        errmsg = "TSIG key not found in keyring: " +\
-                 self.tsig_key_name.to_text()
-        raise XfrinZoneInfoException(errmsg)
+        result, key = get_keyring().find(self.tsig_key_name)
+        if result != isc.dns.TSIGKeyRing.SUCCESS:
+            raise XfrinZoneInfoException("TSIG key not found in keyring: " +
+                                         self.tsig_key_name.to_text())
+        else:
+            return key
 
     def set_use_ixfr(self, use_ixfr):
         """Set use_ixfr. If set to True, it will use
@@ -1337,7 +1324,7 @@ class Xfrin:
         self.config_handler(config_data)
         self._module_cc.add_remote_config(AUTH_SPECFILE_LOCATION,
                                           self._auth_config_handler)
-        self._module_cc.add_remote_config_by_name(TSIG_KEYS_MODULE_NAME)
+        init_keyring(self._module_cc)
 
     def _cc_check_command(self):
         '''This is a straightforward wrapper for cc.check_command,

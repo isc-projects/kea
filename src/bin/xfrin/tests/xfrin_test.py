@@ -26,6 +26,7 @@ from xfrin import *
 import xfrin
 from isc.xfrin.diff import Diff
 import isc.log
+from isc.server_common.tsig_keyring import init_keyring, get_keyring
 # If we use any python library that is basically a wrapper for
 # a library we use as well (like sqlite3 in our datasources),
 # we must make sure we import ours first; If we have special
@@ -139,10 +140,12 @@ class MockCC(MockModuleCCSession):
         if identifier == "zones/use_ixfr":
             return False
 
+    def add_remote_config_by_name(self, name, callback):
+        pass
+
     def get_remote_config_value(self, module, identifier):
         if module == 'tsig_keys' and identifier == 'keys':
-            return (['example.com.key.:EvAAsfU2h7uofnmqaTCrhHunGsc=',
-                     'bad.key.:EvAAsfU2h7uofnmqaTCrhHu' ], True)
+            return (['example.com.key.:EvAAsfU2h7uofnmqaTCrhHunGsc='], True)
         else:
             raise Exception('MockCC requested for unknown config value ' +
                             + module + "/" + identifier)
@@ -237,6 +240,7 @@ class MockXfrin(Xfrin):
     def _cc_setup(self):
         self._tsig_key = None
         self._module_cc = MockCC()
+        init_keyring(self._module_cc)
         pass
 
     def _get_db_file(self):
