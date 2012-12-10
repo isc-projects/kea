@@ -115,6 +115,14 @@ public:
                   compare(current->getRdataIterator()->getCurrent()));
     }
 
+    void checkBasicRRs() {
+        checkRR("example.org", RRType::SOA(),
+                "ns1.example.org. admin.example.org. "
+                "1234 3600 1800 2419200 7200");
+        checkRR("example.org", RRType::NS(), "ns1.example.org.");
+        checkRR("www.example.org", RRType::A(), "192.0.2.1");
+    }
+
     MasterLoaderCallbacks callbacks_;
     boost::scoped_ptr<MasterLoader> loader_;
     vector<string> errors_;
@@ -135,11 +143,36 @@ TEST_F(MasterLoaderTest, basicLoad) {
     EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
 
-    checkRR("example.org", RRType::SOA(),
-            "ns1.example.org. admin.example.org. "
-            "1234 3600 1800 2419200 7200");
-    checkRR("example.org", RRType::NS(), "ns1.example.org.");
-    checkRR("www.example.org", RRType::A(), "192.0.2.1");
+    checkBasicRRs();
+}
+
+// Test the $INCLUDE directive
+TEST_F(MasterLoaderTest, include) {
+    // Test various cases of include
+    const char* includes[] = {
+        "include",
+        "INCLUDE",
+        "Include",
+        "InCluDe",
+        NULL
+    };
+    for (const char** include = includes; *include != NULL; ++include) {
+        SCOPED_TRACE(*include);
+        // Prepare input source that has no other content than just the
+        // include of the real master file.
+        const string include_str = string(*include) + " " + TEST_DATA_SRCDIR +
+            "/example.org\n";
+        stringstream ss(include_str);
+        setLoader(ss, Name("example.org."), RRClass::IN(),
+                  MasterLoader::MANY_ERRORS);
+
+        loader_->load();
+        EXPECT_TRUE(loader_->loadedSucessfully());
+        EXPECT_TRUE(errors_.empty());
+        EXPECT_TRUE(warnings_.empty());
+
+        checkBasicRRs();
+    }
 }
 
 // Check it works the same when created based on a stream, not filename
