@@ -158,20 +158,21 @@ TEST_F(MasterLoaderTest, include) {
     };
     for (const char** include = includes; *include != NULL; ++include) {
         SCOPED_TRACE(*include);
-        // Prepare input source that has no other content than just the
-        // include of the real master file.
+        // Prepare input source that has the include and some more data
+        // below (to see it returns back to the original source).
         const string include_str = "$" + string(*include) + " " +
-            TEST_DATA_SRCDIR + "/example.org\n";
+            TEST_DATA_SRCDIR + "/example.org\nwww 3600 IN AAAA 2001:db8::1\n";
         stringstream ss(include_str);
         setLoader(ss, Name("example.org."), RRClass::IN(),
                   MasterLoader::MANY_ERRORS);
 
         loader_->load();
         EXPECT_TRUE(loader_->loadedSucessfully());
-        EXPECT_TRUE(errors_.empty()) << errors_[0];
+        EXPECT_TRUE(errors_.empty());
         EXPECT_TRUE(warnings_.empty());
 
         checkBasicRRs();
+        checkRR("www.example.org", RRType::AAAA(), "2001:db8::1");
     }
 }
 
