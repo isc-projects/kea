@@ -15,6 +15,8 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/name.h>
+#include <dns/master_loader.h>
+#include <dns/master_loader_callbacks.h>
 #include <dns/rrclass.h>
 #include <dns/rrcollator.h>
 #include <dns/rdata.h>
@@ -25,6 +27,7 @@
 
 #include <boost/bind.hpp>
 
+#include <sstream>
 #include <vector>
 
 using std::vector;
@@ -192,6 +195,20 @@ TEST_F(RRCollatorTest, throwFromCallback) {
 
     // We'll only see the A RR.
     throw_from_callback_ = false;
+    collator_.finish();
+    rdatas_.push_back(a_rdata1_);
+    checkRRset(origin_, rrclass_, RRType::A(), rrttl_, rdatas_);
+}
+
+TEST_F(RRCollatorTest, withMasterLoader) {
+    // Test a simple case with MasterLoader.  There shouldn't be anything
+    // special, but that's the mainly intended usage of the collator, so we
+    // check it explicitly.
+    std::istringstream ss("example.com. 3600 IN A 192.0.2.1\n");
+    MasterLoader loader(ss, origin_, rrclass_,
+                        MasterLoaderCallbacks::getNullCallbacks(),
+                        collator_.getCallback());
+    loader.load();
     collator_.finish();
     rdatas_.push_back(a_rdata1_);
     checkRRset(origin_, rrclass_, RRType::A(), rrttl_, rdatas_);
