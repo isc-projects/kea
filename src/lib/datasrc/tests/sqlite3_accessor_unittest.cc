@@ -681,15 +681,10 @@ TEST_F(SQLite3Create, addZone) {
     // Calling addZone without transaction should fail
     ASSERT_THROW(accessor->addZone(zone_name), DataSourceError);
 
-    // Add the zone. Since it does not exist yet, it should return true
+    // Add the zone. Returns the new zone id
     accessor->startTransaction();
     const int new_zone_id = accessor->addZone(zone_name);
     accessor->commit();
-
-    // Calling addZone again should return the same zone id
-    accessor->startTransaction();
-    ASSERT_EQ(new_zone_id, accessor->addZone(zone_name));
-    accessor->rollback();
 
     // Check that it exists now, but has no records at this point
     const std::pair<bool, int> zone_info2(accessor->getZone(zone_name));

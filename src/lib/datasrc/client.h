@@ -379,15 +379,24 @@ public:
                   "Data source doesn't support getZoneCount");
     }
 
-    // It first checks if the specified name of the zone exists.  If it
-    // exists it returns false; otherwise it adds information of the
-    // new zone in backend-dependent manner and returns true.
-    // The DB-based version of this method would perform the check and add in
-    // a single transaction.
-    //
-    // Throws on any unexpected failure.
-    // Default implementation throws isc::NotImplemented
-
+    /// \brief Create a zone in the database
+    ///
+    /// Creates a new (empty) zone in the data source backend, which
+    /// can subsequently be filled with data (through getUpdater()).
+    ///
+    /// \note This is a tentative API, and this method is likely to change
+    /// or be removed in the near future.
+    ///
+    /// Apart from the two exceptions mentioned below, in theory this
+    /// call can throw anything, depending on the implementation of
+    /// the datasource backend.
+    ///
+    /// \throw NotImplemented If the datasource backend does not support
+    ///                       direct zone creation.
+    /// \throw DataSourceError If something goes wrong in the data source
+    ///                        while creating the zone.
+    /// \param name The (fully qualified) name of the zone to create
+    /// \return True if the zone was added, false if it already existed
     virtual bool createZone(const dns::Name&) {
         isc_throw(isc::NotImplemented,
                   "Data source doesn't support addZone");

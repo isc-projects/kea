@@ -135,24 +135,23 @@ public:
      * \brief Add a zone
      *
      * This implements the addZone from DatabaseAccessor and adds an (empty)
-     * zone into the zones table. If the zone exists already, nothing is done,
-     * and the id of the existing zone is returned. Otherwise, the zone is
-     * created, and its id is returned (unless it raises an exception).
+     * zone into the zones table. If the zone exists already, it is still
+     * added, so the caller should make sure this does not happen (by making
+     * sure the zone does not exist). In the case of duplicate addition,
+     * it is undefined which zone id is returned.
      *
      * The class of the newly created zone is the class passed at construction
      * time of the accessor.
      *
-     * Because this method performs a lookup and probably an assert, it
-     * requires a transaction has been started (with \c beginTransaction)
-     * by the caller.
+     * This method requires a transaction has been started (with
+     * \c beginTransaction) by the caller.
      *
      * \exception DataSourceError if no transaction is active, or if there
      *                            is an SQLite3 error when performing the
      *                            queries.
      *
      * \param name The origin name of the zone to add
-     * \return the id of the zone (either an existing one if the zone exists
-     *         already, or the id of the newly created zone).
+     * \return the id of the zone that has been added
      */
     virtual int addZone(const std::string& name);
 
