@@ -217,7 +217,11 @@ class BoB:
         self.cmdctl_port = cmdctl_port
         self.wait_time = wait_time
         self.msgq_timeout = 5
-        self.run_under_unittests = False
+
+        # _run_under_unittests is only meant to be used when testing. It
+        # bypasses execution of some code to help with testing.
+        self._run_under_unittests = False
+
         self._component_configurator = isc.bind10.component.Configurator(self,
             isc.bind10.special_component.get_specials())
         # The priorities here make them start in the correct order. First
@@ -437,7 +441,7 @@ class BoB:
         cc_connect_start = time.time()
         while self.cc_session is None:
             # if we are run under unittests, break
-            if self.run_under_unittests:
+            if self._run_under_unittests:
                 break
 
             # if we have been trying for "a while" give up
