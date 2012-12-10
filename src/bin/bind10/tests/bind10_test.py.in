@@ -1595,7 +1595,7 @@ class TestBossComponents(unittest.TestCase):
         '''Test that b10-msgq is started.'''
         bob = MockBobSimple()
         bob.c_channel_env = {'FOO': 'an env string'}
-        bob.run_under_unittests = True
+        bob._run_under_unittests = True
 
         # use the MockProcessInfo creator
         bob._make_process_info = bob._make_mock_process_info
@@ -1613,7 +1613,7 @@ class TestBossComponents(unittest.TestCase):
         bob.c_channel_env = {}
         # keep the timeout small for the test to complete quickly
         bob.msgq_timeout = 1
-        bob.run_under_unittests = False
+        bob._run_under_unittests = False
 
         # use the MockProcessInfo creator
         bob._make_process_info = bob._make_mock_process_info
