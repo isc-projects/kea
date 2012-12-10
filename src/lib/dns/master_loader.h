@@ -132,6 +132,16 @@ public:
         }
     }
 
+    /// \brief Was the loading successful?
+    ///
+    /// \return true if and only if the loading was complete (after a call of
+    ///     load or after loadIncremental returned true) and there was no
+    ///     error. In other cases, return false.
+    /// \note While this method works even before the loading is complete (by
+    ///     returning false in that case), it is meant to be called only after
+    ///     finishing the load.
+    bool loadedSucessfully() const;
+
 private:
     class MasterLoaderImpl;
     MasterLoaderImpl* impl_;
