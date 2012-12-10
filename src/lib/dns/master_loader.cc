@@ -108,6 +108,9 @@ public:
 
 bool
 MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
+    if (count_limit == 0) {
+        isc_throw(isc::InvalidParameter, "Count limit set to 0");
+    }
     if (complete_) {
         isc_throw(isc::InvalidOperation,
                   "Trying to load when already loaded");
