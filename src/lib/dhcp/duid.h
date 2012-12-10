@@ -114,6 +114,9 @@ public:
     bool operator!=(const ClientId& other) const;
 };
 
+/// @brief Shared pointer to a Client ID.
+typedef boost::shared_ptr<ClientId> ClientIdPtr;
+
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 

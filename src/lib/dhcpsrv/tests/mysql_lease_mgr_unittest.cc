@@ -230,8 +230,8 @@ public:
     ///
     /// @param address Address to use for the initialization
     ///
-    /// @return Lease4Ptr.  This will not point to anything if the initialization
-    ///         failed (e.g. unknown address).
+    /// @return Lease4Ptr.  This will not point to anything if the
+    ///         initialization failed (e.g. unknown address).
     Lease4Ptr initializeLease4(std::string address) {
         Lease4Ptr lease(new Lease4());
 
@@ -251,7 +251,7 @@ public:
         // Set other parameters.  For historical reasons, address 0 is not used.
         if (address == straddress4_[0]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x08);
-            lease->client_id_ = boost::shared_ptr<ClientId>(
+            lease->client_id_ = ClientIdPtr(
                 new ClientId(vector<uint8_t>(8, 0x42)));
             lease->valid_lft_ = 8677;
             lease->cltt_ = 168256;
@@ -259,7 +259,7 @@ public:
 
         } else if (address == straddress4_[1]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x19);
-            lease->client_id_ = boost::shared_ptr<ClientId>(
+            lease->client_id_ = ClientIdPtr(
                 new ClientId(vector<uint8_t>(8, 0x53)));
             lease->valid_lft_ = 3677;
             lease->cltt_ = 123456;
@@ -267,7 +267,7 @@ public:
 
         } else if (address == straddress4_[2]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x2a);
-            lease->client_id_ = boost::shared_ptr<ClientId>(
+            lease->client_id_ = ClientIdPtr(
                 new ClientId(vector<uint8_t>(8, 0x64)));
             lease->valid_lft_ = 5412;
             lease->cltt_ = 234567;
@@ -275,7 +275,7 @@ public:
 
         } else if (address == straddress4_[3]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x19);      // Same as lease 1
-            lease->client_id_ = boost::shared_ptr<ClientId>(
+            lease->client_id_ = ClientIdPtr(
                 new ClientId(vector<uint8_t>(8, 0x75)));
 
             // The times used in the next tests are deliberately restricted - we
@@ -289,7 +289,7 @@ public:
         } else if (address == straddress4_[4]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x4c);
             // Same ClientId as straddr4_[1]
-            lease->client_id_ = boost::shared_ptr<ClientId>(
+            lease->client_id_ = ClientIdPtr(
                 new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
             lease->valid_lft_ = 7736;
             lease->cltt_ = 222456;
@@ -298,7 +298,7 @@ public:
         } else if (address == straddress4_[5]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x19);      // Same as lease 1
             // Same ClientId and IAID as straddress4_1
-            lease->client_id_ = boost::shared_ptr<ClientId>(
+            lease->client_id_ = ClientIdPtr(
                 new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
             lease->valid_lft_ = 7832;
             lease->cltt_ = 227476;
@@ -307,7 +307,7 @@ public:
         } else if (address == straddress4_[6]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x6e);
             // Same ClientId as straddress4_1
-            lease->client_id_ = boost::shared_ptr<ClientId>(
+            lease->client_id_ = ClientIdPtr(
                 new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
             lease->valid_lft_ = 1832;
             lease->cltt_ = 627476;
@@ -315,7 +315,7 @@ public:
 
         } else if (address == straddress4_[7]) {
             lease->hwaddr_ = vector<uint8_t>();             // Empty
-            lease->client_id_ = boost::shared_ptr<ClientId>(
+            lease->client_id_ = ClientIdPtr(
                 new ClientId(vector<uint8_t>()));           // Empty
             lease->valid_lft_ = 7975;
             lease->cltt_ = 213876;
