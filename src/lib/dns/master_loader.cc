@@ -21,8 +21,10 @@
 #include <dns/rdata.h>
 
 #include <string>
+#include <memory>
 
 using std::string;
+using std::auto_ptr;
 
 namespace isc {
 namespace dns {
@@ -236,9 +238,12 @@ MasterLoader::MasterLoader(std::istream& stream,
     if (add_callback.empty()) {
         isc_throw(isc::InvalidParameter, "Empty add RR callback");
     }
-    impl_ = new MasterLoaderImpl("", zone_origin, zone_class, callbacks,
-                                 add_callback, options);
-    impl_->pushStreamSource(stream);
+    auto_ptr<MasterLoaderImpl> impl(new MasterLoaderImpl("", zone_origin,
+                                                         zone_class, callbacks,
+                                                         add_callback,
+                                                         options));
+    impl->pushStreamSource(stream);
+    impl_ = impl.release();
 }
 
 MasterLoader::~MasterLoader() {
