@@ -94,19 +94,6 @@ public:
     ///        failed.
     virtual bool addLease(const Lease6Ptr& lease);
 
-    /// @brief Return IPv4 lease for specified IPv4 address and subnet_id
-    ///
-    /// This method is used to get a lease for specific subnet_id. There can be
-    /// at most one lease for any given subnet, so this method returns a single
-    /// pointer.
-    ///
-    /// @param addr address of the sought lease
-    /// @param subnet_id ID of the subnet the lease must belong to
-    ///
-    /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr,
-                                SubnetID subnet_id) const;
-
     /// @brief Returns an IPv4 lease for specified IPv4 address
     ///
     /// This method return a lease that is associated with a given address.
