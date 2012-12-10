@@ -44,7 +44,7 @@ struct OptionDefParams {
     uint16_t code;            // option code
     OptionDataType type;      // data type
     bool array;               // is array
-    OptionDataType *records;  // record fields
+    OptionDataType* records;  // record fields
     size_t records_size;      // number of fields in a record
 };
 
