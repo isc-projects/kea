@@ -47,12 +47,14 @@ public:
         initialized_(false),
         ok_(true),
         many_errors_((options & MANY_ERRORS) != 0),
-        complete_(false)
+        complete_(false),
+        seen_error_(false)
     {}
 
     void reportError(const std::string& filename, size_t line,
                      const std::string& reason)
     {
+        seen_error_ = true;
         callbacks_.error(filename, line, reason);
         if (!many_errors_) {
             // In case we don't have the lenient mode, every error is fatal
@@ -102,10 +104,13 @@ private:
     const std::string master_file_;
     std::string string_token_;
     bool initialized_;
-    bool ok_;
-    const bool many_errors_;
+    bool ok_;                   // Is it OK to continue loading?
+    const bool many_errors_;    // Are many errors allowed (or should we abort
+                                // on the first)
 public:
-    bool complete_;
+    bool complete_;             // All work done.
+    bool seen_error_;           // Was there at least one error during the
+                                // load?
 };
 
 bool
@@ -172,12 +177,15 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
 
                 // Good, we loaded another one
                 ++count;
-            } else if (!many_errors_) {
-                ok_ = false;
-                complete_ = true;
-                // We don't have the exact error here, but it was reported
-                // by the error callback.
-                isc_throw(MasterLoaderError, "Invalid RR data");
+            } else {
+                seen_error_ = true;
+                if (!many_errors_) {
+                    ok_ = false;
+                    complete_ = true;
+                    // We don't have the exact error here, but it was reported
+                    // by the error callback.
+                    isc_throw(MasterLoaderError, "Invalid RR data");
+                }
             }
         } catch (const MasterLoaderError&) {
             // This is a hack. We exclude the MasterLoaderError from the
@@ -255,6 +263,11 @@ MasterLoader::loadIncremental(size_t count_limit) {
     const bool result = impl_->loadIncremental(count_limit);
     impl_->complete_ = result;
     return (result);
+}
+
+bool
+MasterLoader::loadedSucessfully() const {
+    return (impl_->complete_ && !impl_->seen_error_);
 }
 
 } // end namespace dns
