@@ -282,9 +282,8 @@ TEST_F(MasterLoaderTest, brokenZone) {
             EXPECT_NO_THROW(loader_->load());
             EXPECT_FALSE(loader_->loadedSucessfully());
             EXPECT_EQ(1, errors_.size());
-            // FIXME: The invalid rdata generates a warning.
-            // And we may want to generate warning ourself here too.
-            // EXPECT_TRUE(warnings_.empty());
+            // The unexpected EOF warning
+            EXPECT_EQ(1, warnings_.size());
             checkRR("example.org", RRType::SOA(), "ns1.example.org. "
                     "admin.example.org. 1234 3600 1800 2419200 7200");
             EXPECT_TRUE(rrsets_.empty());
