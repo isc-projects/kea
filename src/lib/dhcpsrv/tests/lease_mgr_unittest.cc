@@ -73,16 +73,6 @@ public:
         return (Lease4Ptr());
     }
 
-    /// @brief Returns existing IPv4 lease for specific address and subnet
-    /// @param addr address of the searched lease
-    /// @param subnet_id ID of the subnet the lease must belong to
-    ///
-    /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress&,
-                                SubnetID) const {
-        return (Lease4Ptr());
-    }
-
     /// @brief Returns existing IPv4 leases for specified hardware address.
     ///
     /// Although in the usual case there will be only one lease, for mobile

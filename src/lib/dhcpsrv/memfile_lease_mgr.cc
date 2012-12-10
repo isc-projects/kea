@@ -49,11 +49,6 @@ Lease4Collection Memfile_LeaseMgr::getLease4(const HWAddr& ) const {
     return (Lease4Collection());
 }
 
-Lease4Ptr Memfile_LeaseMgr::getLease4(const isc::asiolink::IOAddress&,
-                                      SubnetID) const {
-    return (Lease4Ptr());
-}
-
 Lease4Ptr Memfile_LeaseMgr::getLease4(const HWAddr&,
                                       SubnetID) const {
     return (Lease4Ptr());

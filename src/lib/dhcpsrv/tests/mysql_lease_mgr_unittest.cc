@@ -796,45 +796,6 @@ TEST_F(MySqlLeaseMgrTest, basicLease6) {
     detailCompareLease(leases[2], l_returned);
 }
 
-/// @brief Check GetLease4 methods - access by Address and SubnetID
-///
-/// Adds leases to the database and checks that they can be accessed via
-/// a the hardware address
-TEST_F(MySqlLeaseMgrTest, getLease4AddressSubnetId) {
-    // Get the leases to be used for the test.
-    vector<Lease4Ptr> leases = createLeases4();
-    const SubnetID lease1_subnetid = leases[1]->subnet_id_;
-
-    // Generate a Subnet ID known to be invalid - one more than the maximum
-    // Subnet ID in all the leases.
-    SubnetID invalid_subnetid = 0;
-    for (int i = 0; i < leases.size(); ++i) {
-        invalid_subnetid = max(invalid_subnetid, leases[i]->subnet_id_);
-    }
-    ++invalid_subnetid;
-
-
-    // Add just one to the database.
-    EXPECT_TRUE(lmptr_->addLease(leases[1]));
-
-    // Look for a known lease with a valid Subnet ID
-    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1], lease1_subnetid);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    // Look for a lease known to be in the database with an invalid Subnet ID
-    l_returned = lmptr_->getLease4(ioaddress4_[1], invalid_subnetid);
-    EXPECT_FALSE(l_returned);
-
-    // Look for a lease known not to be in the database with a valid Subnet ID
-    l_returned = lmptr_->getLease4(ioaddress4_[2], lease1_subnetid);
-    EXPECT_FALSE(l_returned);
-
-    // Look for a lease known not to be in the database with and invalid
-    l_returned = lmptr_->getLease4(ioaddress4_[2], invalid_subnetid);
-    EXPECT_FALSE(l_returned);
-}
-
 /// @brief Check GetLease4 methods - access by Hardware Address
 ///
 /// Adds leases to the database and checks that they can be accessed via
