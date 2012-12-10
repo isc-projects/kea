@@ -274,6 +274,11 @@ public:
         }
     }
 
+    virtual int addZone(const std::string&) {
+        isc_throw(isc::NotImplemented,
+                  "This database datasource can't add zones");
+    }
+
     virtual boost::shared_ptr<DatabaseAccessor> clone() {
         // This accessor is stateless, so we can simply return a new instance.
         return (boost::shared_ptr<DatabaseAccessor>(new NopAccessor));
@@ -1780,7 +1785,7 @@ doFindAllTestResult(ZoneFinder& finder, const isc::dns::Name& name,
               expected_name, result->rrset->getName());
 }
 
-// When asking for an RRset where RRs somehow have different TTLs, it should 
+// When asking for an RRset where RRs somehow have different TTLs, it should
 // convert to the lowest one.
 TEST_F(MockDatabaseClientTest, ttldiff) {
     ZoneIteratorPtr it(this->client_->getIterator(Name("example.org")));
