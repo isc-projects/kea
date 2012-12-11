@@ -400,7 +400,7 @@ public:
     virtual bool createZone(const dns::Name&) {
         isc_throw(isc::NotImplemented,
                   "Data source doesn't support addZone");
-    };
+    }
 };
 }
 }
