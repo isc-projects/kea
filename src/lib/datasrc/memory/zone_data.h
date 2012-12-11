@@ -372,7 +372,7 @@ public:
     ///
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
     /// \c ZoneData is allocated.
-    /// \param name The zone origin.
+    /// \param zone_origin The zone origin.
     static ZoneData* create(util::MemorySegment& mem_sgmt,
                             const dns::Name& zone_origin);
 
