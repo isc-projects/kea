@@ -12,15 +12,18 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <datasrc/master_loader_callbacks.h>
 #include <datasrc/memory/zone_data_loader.h>
 #include <datasrc/memory/zone_data_updater.h>
 #include <datasrc/memory/logger.h>
 #include <datasrc/memory/segment_object_holder.h>
 #include <datasrc/memory/util_internal.h>
 
+#include <dns/master_loader.h>
+#include <dns/rrcollator.h>
 #include <dns/rdataclass.h>
 #include <dns/rrset.h>
-#include <dns/masterload.h>
+#include <dns/rrcollator.h>
 
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
@@ -181,18 +184,25 @@ loadZoneDataInternal(util::MemorySegment& mem_sgmt,
     return (holder.release());
 }
 
-// A wrapper for dns::masterLoad used by loadZoneData() below.  Essentially it
-// converts the two callback types.  Note the mostly redundant wrapper of
+// A wrapper for dns::MasterLoader used by loadZoneData() below.  Essentially
+// it converts the two callback types.  Note the mostly redundant wrapper of
 // boost::bind.  It converts function<void(ConstRRsetPtr)> to
-// function<void(RRsetPtr)> (masterLoad() expects the latter).  SunStudio
+// function<void(RRsetPtr)> (MasterLoader expects the latter).  SunStudio
 // doesn't seem to do this conversion if we just pass 'callback'.
 void
-masterLoadWrapper(const char* const filename, const Name& origin,
-                  const RRClass& zone_class, LoadCallback callback)
+masterLoaderWrapper(const char* const filename, const Name& origin,
+                    const RRClass& zone_class, LoadCallback callback)
 {
+    bool load_ok = false;       // (we don't use it)
+    dns::RRCollator collator(boost::bind(callback, _1));
+
     try {
-        masterLoad(filename, origin, zone_class, boost::bind(callback, _1));
-    } catch (MasterLoadError& e) {
+        dns::MasterLoader(filename, origin, zone_class,
+                          createMasterLoaderCallbacks(origin, zone_class,
+                                                      &load_ok),
+                          collator.getCallback()).load();
+        collator.finish();
+    } catch (const dns::MasterLoaderError& e) {
         isc_throw(ZoneLoaderException, e.what());
     }
 }
@@ -215,7 +225,7 @@ loadZoneData(util::MemorySegment& mem_sgmt,
              const std::string& zone_file)
 {
      return (loadZoneDataInternal(mem_sgmt, rrclass, zone_name,
-                                 boost::bind(masterLoadWrapper,
+                                 boost::bind(masterLoaderWrapper,
                                              zone_file.c_str(),
                                              zone_name, rrclass,
                                              _1)));
