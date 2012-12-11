@@ -33,6 +33,22 @@ using namespace std;
 using namespace isc::dhcp;
 using namespace isc::util;
 
+namespace {
+
+/// @brief A structure comprising values that are passed to
+/// OptionDefinition constructor.
+///
+/// This structure is used by functions that initialize
+/// option definitions for standard options (V4 and V6).
+struct OptionParams {
+    std::string name;
+    uint16_t code;
+    OptionDataType type;
+    bool array;
+};
+
+}
+
 // static array with factories for options
 std::map<unsigned short, Option::Factory*> LibDHCP::v4factories_;
 
@@ -259,7 +275,32 @@ void LibDHCP::OptionFactoryRegister(Option::Universe u,
 
 void
 LibDHCP::initStdOptionDefs4() {
-    isc_throw(isc::NotImplemented, "initStdOptionDefs4 is not implemented");
+    v4option_defs_.clear();
+
+    // Now let's add all option definitions.
+    for (int i = 0; i < OPTION_DEF_PARAMS_SIZE4; ++i) {
+        OptionDefinitionPtr definition(new OptionDefinition(OPTION_DEF_PARAMS4[i].name,
+                                                            OPTION_DEF_PARAMS4[i].code,
+                                                            OPTION_DEF_PARAMS4[i].type,
+                                                            OPTION_DEF_PARAMS4[i].array));
+
+        for (int rec = 0; rec < OPTION_DEF_PARAMS4[i].records_size; ++rec) {
+            definition->addRecordField(OPTION_DEF_PARAMS4[i].records[rec]);
+        }
+
+        // Sanity check if the option is valid.
+        try {
+            definition->validate();
+        } catch (const Exception& ex) {
+            // This is unlikely event that validation fails and may
+            // be only caused by programming error. To guarantee the
+            // data consistency we clear all option definitions that
+            // have been added so far and pass the exception forward.
+            v4option_defs_.clear();
+            throw;
+        }
+        v4option_defs_.push_back(definition);
+    }
 }
 
 void
