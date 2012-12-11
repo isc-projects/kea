@@ -1,4 +1,4 @@
-522.	[func]		jelte
+522.	[func]*		jelte
 	Configuration of TSIG keys for b10-xfrin has changed; instead of
 	specifying the full TSIG key (<name>:<base64>:<algo>) it now expects
 	just the name, and uses the global TSIG Key Ring like all the other
