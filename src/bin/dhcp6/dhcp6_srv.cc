@@ -433,7 +433,7 @@ void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 
         // perhaps this should be logged on some higher level? This is most likely
         // configuration bug.
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_SUBNET_SELECTION_FAILED);
+        LOG_ERROR(dhcp6_logger, DHCP6_SUBNET_SELECTION_FAILED);
     } else {
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_SUBNET_SELECTED)
             .arg(subnet->toText());
@@ -451,6 +451,7 @@ void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     if (opt_duid) {
         duid = DuidPtr(new DUID(opt_duid->getData()));
     } else {
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLIENTID_MISSING);
         // Let's drop the message. This client is not sane.
         isc_throw(RFCViolation, "Mandatory client-id is missing in received message");
     }
@@ -624,7 +625,7 @@ void Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply) {
 
         // perhaps this should be logged on some higher level? This is most likely
         // configuration bug.
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_SUBNET_SELECTION_FAILED);
+        LOG_ERROR(dhcp6_logger, DHCP6_SUBNET_SELECTION_FAILED);
     } else {
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_SUBNET_SELECTED)
             .arg(subnet->toText());
