@@ -117,15 +117,29 @@ public:
     void doInclude() {
         // First, get the filename to include
         const MasterToken::StringRegion
-            filename(lexer_.getNextToken(MasterToken::QSTRING).
-                     getStringRegion());
-
-        // TODO: Handle Origin
+            filename_tok(lexer_.getNextToken(MasterToken::QSTRING).
+                         getStringRegion());
 
         // Push the filename. We abuse the fact that filename
         // may not contain '\0' anywhere in it, so we can
         // freely use the filename.beg directly.
-        pushSource(filename.beg);
+        string filename(filename_tok.beg);
+
+        // There could be an origin (or maybe not). So try looking
+        const MasterToken name_tok(lexer_.getNextToken(MasterToken::QSTRING,
+                                                       true));
+
+        if (name_tok.getType() == MasterToken::QSTRING ||
+            name_tok.getType() == MasterToken::STRING) {
+            // TODO: Handle the origin. Once we complete #2427.
+        } else {
+            // We return the newline there. This is because after we pop
+            // the source, we want to call eatUntilEOL and this would
+            // eat to the next one.
+            lexer_.ungetToken();
+        }
+
+        pushSource(filename);
     }
 
     void handleDirective(const char* directive, size_t length) {
