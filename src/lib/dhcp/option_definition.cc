@@ -17,10 +17,10 @@
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
-#include <dhcp/option6_int_array.h>
-#include <dhcp/option_int.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
+#include <dhcp/option_int.h>
+#include <dhcp/option_int_array.h>
 #include <util/encode/hex.h>
 
 using namespace std;

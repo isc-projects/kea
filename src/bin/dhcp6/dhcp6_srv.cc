@@ -23,8 +23,8 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaaddr.h>
-#include <dhcp/option6_int_array.h>
 #include <dhcp/option_custom.h>
+#include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
@@ -327,8 +327,8 @@ void Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer)
 
     // Client requests some options using ORO option. Try to
     // get this option from client's message.
-    boost::shared_ptr<Option6IntArray<uint16_t> > option_oro =
-        boost::dynamic_pointer_cast<Option6IntArray<uint16_t> >(question->getOption(D6O_ORO));
+    boost::shared_ptr<OptionIntArray<uint16_t> > option_oro =
+        boost::dynamic_pointer_cast<OptionIntArray<uint16_t> >(question->getOption(D6O_ORO));
     // Option ORO not found. Don't do anything then.
     if (!option_oro) {
         return;

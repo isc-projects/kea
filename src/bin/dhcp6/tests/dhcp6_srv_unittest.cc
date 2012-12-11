@@ -22,7 +22,7 @@
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
-#include <dhcp/option6_int_array.h>
+#include <dhcp/option_int_array.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -351,8 +351,8 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
 
     // Let's now request option with code 1000.
     // We expect that server will include this option in its reply.
-    boost::shared_ptr<Option6IntArray<uint16_t> >
-        option_oro(new Option6IntArray<uint16_t>(D6O_ORO));
+    boost::shared_ptr<OptionIntArray<uint16_t> >
+        option_oro(new OptionIntArray<uint16_t>(D6O_ORO));
     // Create vector with two option codes.
     std::vector<uint16_t> codes(2);
     codes[0] = 1000;

@@ -21,10 +21,10 @@
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
-#include <dhcp/option6_int_array.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_int.h>
+#include <dhcp/option_int_array.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/pointer_cast.hpp>
@@ -740,9 +740,9 @@ TEST_F(OptionDefinitionTest, uint16Array) {
     EXPECT_NO_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, opt_code, buf);
     );
-    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6IntArray<uint16_t>));
-    boost::shared_ptr<Option6IntArray<uint16_t> > option_cast_v6 =
-        boost::static_pointer_cast<Option6IntArray<uint16_t> >(option_v6);
+    ASSERT_TRUE(typeid(*option_v6) == typeid(OptionIntArray<uint16_t>));
+    boost::shared_ptr<OptionIntArray<uint16_t> > option_cast_v6 =
+        boost::static_pointer_cast<OptionIntArray<uint16_t> >(option_v6);
     // Get the values from the initiated options and validate.
     std::vector<uint16_t> values = option_cast_v6->getValues();
     for (int i = 0; i < values.size(); ++i) {
@@ -782,9 +782,9 @@ TEST_F(OptionDefinitionTest, uint16ArrayTokenized) {
     EXPECT_NO_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, opt_code, str_values);
     );
-    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6IntArray<uint16_t>));
-    boost::shared_ptr<Option6IntArray<uint16_t> > option_cast_v6 =
-        boost::static_pointer_cast<Option6IntArray<uint16_t> >(option_v6);
+    ASSERT_TRUE(typeid(*option_v6) == typeid(OptionIntArray<uint16_t>));
+    boost::shared_ptr<OptionIntArray<uint16_t> > option_cast_v6 =
+        boost::static_pointer_cast<OptionIntArray<uint16_t> >(option_v6);
     // Get the values from the initiated options and validate.
     std::vector<uint16_t> values = option_cast_v6->getValues();
     EXPECT_EQ(12345, values[0]);
@@ -813,9 +813,9 @@ TEST_F(OptionDefinitionTest, uint32Array) {
     EXPECT_NO_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, opt_code, buf);
     );
-    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6IntArray<uint32_t>));
-    boost::shared_ptr<Option6IntArray<uint32_t> > option_cast_v6 =
-        boost::static_pointer_cast<Option6IntArray<uint32_t> >(option_v6);
+    ASSERT_TRUE(typeid(*option_v6) == typeid(OptionIntArray<uint32_t>));
+    boost::shared_ptr<OptionIntArray<uint32_t> > option_cast_v6 =
+        boost::static_pointer_cast<OptionIntArray<uint32_t> >(option_v6);
     // Get the values from the initiated options and validate.
     std::vector<uint32_t> values = option_cast_v6->getValues();
     for (int i = 0; i < values.size(); ++i) {
@@ -858,9 +858,9 @@ TEST_F(OptionDefinitionTest, uint32ArrayTokenized) {
     EXPECT_NO_THROW(
         option_v6 = opt_def.optionFactory(Option::V6, opt_code, str_values);
     );
-    ASSERT_TRUE(typeid(*option_v6) == typeid(Option6IntArray<uint32_t>));
-    boost::shared_ptr<Option6IntArray<uint32_t> > option_cast_v6 =
-        boost::static_pointer_cast<Option6IntArray<uint32_t> >(option_v6);
+    ASSERT_TRUE(typeid(*option_v6) == typeid(OptionIntArray<uint32_t>));
+    boost::shared_ptr<OptionIntArray<uint32_t> > option_cast_v6 =
+        boost::static_pointer_cast<OptionIntArray<uint32_t> >(option_v6);
     // Get the values from the initiated options and validate.
     std::vector<uint32_t> values = option_cast_v6->getValues();
     EXPECT_EQ(123456, values[0]);
