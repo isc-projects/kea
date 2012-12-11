@@ -25,7 +25,7 @@ namespace {
 /// @param name name of the array being declared.
 /// @param types data types of fields that belong to the record.
 #ifndef RECORD_DECL
-#define RECORD_DECL(name, types...) static const OptionDataType name[] = { types }
+#define RECORD_DECL(name, types...) const OptionDataType name[] = { types }
 #endif
 
 /// @brief A pair of values: one pointing to the array holding types of
@@ -59,7 +59,7 @@ struct OptionDefParams {
 RECORD_DECL(FQDN_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_STRING_TYPE);
 
 /// @brief Definitions of standard DHCPv4 options.
-static const OptionDefParams OPTION_DEF_PARAMS4[] = {
+const OptionDefParams OPTION_DEF_PARAMS4[] = {
     { "subnet-mask", DHO_SUBNET_MASK, OPT_IPV4_ADDRESS_TYPE, false },
     { "time-offset", DHO_TIME_OFFSET, OPT_UINT32_TYPE, false },
     { "routers", DHO_ROUTERS, OPT_IPV4_ADDRESS_TYPE, true },
@@ -222,7 +222,7 @@ RECORD_DECL(VENDOR_CLASS_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 RECORD_DECL(VENDOR_OPTS_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 
 /// Standard DHCPv6 option definitions.
-static const OptionDefParams OPTION_DEF_PARAMS6[] = {
+const OptionDefParams OPTION_DEF_PARAMS6[] = {
     { "clientid", D6O_CLIENTID, OPT_BINARY_TYPE, false },
     { "serverid", D6O_SERVERID, OPT_BINARY_TYPE, false },
     { "ia-na", D6O_IA_NA, OPT_RECORD_TYPE, false, RECORD_DEF(IA_NA_RECORDS) },
