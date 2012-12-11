@@ -75,7 +75,7 @@ public:
                                                           buf_.begin() + opt_len))
         );
 
-        EXPECT_EQ(Option::V6, opt->getUniverse());
+        EXPECT_EQ(u, opt->getUniverse());
         EXPECT_EQ(opt_code, opt->getType());
         // Option should return the collection of int8_t or uint8_t values that
         // we can match with the buffer we used to create the option.
@@ -100,15 +100,26 @@ public:
         // Data length is 10 bytes.
         EXPECT_EQ(10, opt->len() - opt->getHeaderLen());
         EXPECT_EQ(opt_code, opt->getType());
-        // The total length is 10 bytes for data and 4 bytes for header.
-        ASSERT_EQ(14, out_buf_.getLength());
 
         // Check if pack worked properly:
         InputBuffer out(out_buf_.getData(), out_buf_.getLength());
-        // if option type is correct
-        EXPECT_EQ(opt_code, out.readUint16());
-        // if option length is correct
-        EXPECT_EQ(10, out.readUint16());
+
+        if (u == Option::V4) {
+            // The total length is 10 bytes for data and 2 bytes for a header.
+            ASSERT_EQ(12, out_buf_.getLength());
+            // if option type is correct
+            EXPECT_EQ(opt_code, out.readUint8());
+            // if option length is correct
+            EXPECT_EQ(10, out.readUint8());
+        } else {
+            // The total length is 10 bytes for data and 4 bytes for a header.
+            ASSERT_EQ(14, out_buf_.getLength());
+            // if option type is correct
+            EXPECT_EQ(opt_code, out.readUint16());
+            // if option length is correct
+            EXPECT_EQ(10, out.readUint16());
+        }
+
         // if data is correct
         std::vector<uint8_t> out_data;
         ASSERT_NO_THROW(out.readVector(out_data, opt_len));
@@ -172,15 +183,25 @@ public:
         // Data length is 20 bytes.
         EXPECT_EQ(20, opt->len() - opt->getHeaderLen());
         EXPECT_EQ(opt_code, opt->getType());
-        // The total length is 20 bytes for data and 4 bytes for header.
-        ASSERT_EQ(24, out_buf_.getLength());
 
         // Check if pack worked properly:
         InputBuffer out(out_buf_.getData(), out_buf_.getLength());
-        // if option type is correct
-        EXPECT_EQ(opt_code, out.readUint16());
-        // if option length is correct
-        EXPECT_EQ(20, out.readUint16());
+
+        if (u == Option::V4) {
+            // The total length is 20 bytes for data and 2 bytes for a header.
+            ASSERT_EQ(22, out_buf_.getLength());
+            // if option type is correct
+            EXPECT_EQ(opt_code, out.readUint8());
+            // if option length is correct
+            EXPECT_EQ(20, out.readUint8());
+        } else {
+            // The total length is 20 bytes for data and 4 bytes for a header.
+            ASSERT_EQ(24, out_buf_.getLength());
+            // if option type is correct
+            EXPECT_EQ(opt_code, out.readUint16());
+            // if option length is correct
+            EXPECT_EQ(20, out.readUint16());
+        }
         // if data is correct
         std::vector<uint8_t> out_data;
         ASSERT_NO_THROW(out.readVector(out_data, opt_len));
@@ -246,15 +267,26 @@ public:
         // Data length is 40 bytes.
         EXPECT_EQ(40, opt->len() - opt->getHeaderLen());
         EXPECT_EQ(opt_code, opt->getType());
-        // The total length is 40 bytes for data and 4 bytes for header.
-        ASSERT_EQ(44, out_buf_.getLength());
 
         // Check if pack worked properly:
         InputBuffer out(out_buf_.getData(), out_buf_.getLength());
-        // if option type is correct
-        EXPECT_EQ(opt_code, out.readUint16());
-        // if option length is correct
-        EXPECT_EQ(40, out.readUint16());
+
+        if (u == Option::V4) {
+            // The total length is 40 bytes for data and 2 bytes for a header.
+            ASSERT_EQ(42, out_buf_.getLength());
+            // if option type is correct
+            EXPECT_EQ(opt_code, out.readUint8());
+            // if option length is correct
+            EXPECT_EQ(40, out.readUint8());
+        } else {
+            // The total length is 40 bytes for data and 4 bytes for a header.
+            ASSERT_EQ(44, out_buf_.getLength());
+            // if option type is correct
+            EXPECT_EQ(opt_code, out.readUint16());
+            // if option length is correct
+            EXPECT_EQ(40, out.readUint16());
+        }
+
         // if data is correct
         std::vector<uint8_t> out_data;
         ASSERT_NO_THROW(out.readVector(out_data, opt_len));
@@ -290,24 +322,48 @@ TEST_F(OptionIntArrayTest, useInvalidType) {
 
 }
 
+TEST_F(OptionIntArrayTest, bufferToUint8V4) {
+    bufferToIntTest8<uint8_t>(Option::V4);
+}
+
 TEST_F(OptionIntArrayTest, bufferToUint8V6) {
     bufferToIntTest8<uint8_t>(Option::V6);
+}
+
+TEST_F(OptionIntArrayTest, bufferToInt8V4) {
+    bufferToIntTest8<int8_t>(Option::V4);
 }
 
 TEST_F(OptionIntArrayTest, bufferToInt8V6) {
     bufferToIntTest8<int8_t>(Option::V6);
 }
 
+TEST_F(OptionIntArrayTest, bufferToUint16V4) {
+    bufferToIntTest16<uint16_t>(Option::V4);
+}
+
 TEST_F(OptionIntArrayTest, bufferToUint16V6) {
     bufferToIntTest16<uint16_t>(Option::V6);
+}
+
+TEST_F(OptionIntArrayTest, bufferToInt16V4) {
+    bufferToIntTest16<int16_t>(Option::V4);
 }
 
 TEST_F(OptionIntArrayTest, bufferToInt16V6) {
     bufferToIntTest16<int16_t>(Option::V6);
 }
 
+TEST_F(OptionIntArrayTest, bufferToUint32V4) {
+    bufferToIntTest32<uint32_t>(Option::V4);
+}
+
 TEST_F(OptionIntArrayTest, bufferToUint32V6) {
     bufferToIntTest32<uint32_t>(Option::V6);
+}
+
+TEST_F(OptionIntArrayTest, bufferToInt32V4) {
+    bufferToIntTest32<int32_t>(Option::V4);
 }
 
 TEST_F(OptionIntArrayTest, bufferToInt32V6) {

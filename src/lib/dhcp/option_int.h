@@ -171,7 +171,7 @@ public:
     /// @return length of this option
     virtual uint16_t len() {
         // Calculate the length of the header.
-        uint16_t length = (universe_ == Option::V4) ? OPTION4_HDR_LEN : OPTION6_HDR_LEN;
+        uint16_t length = (getUniverse() == Option::V4) ? OPTION4_HDR_LEN : OPTION6_HDR_LEN;
         // The data length is equal to size of T.
         length += sizeof(T);;
         // length of all suboptions
