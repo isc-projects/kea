@@ -22,12 +22,23 @@
 
 #include <string>
 #include <memory>
+#include <strings.h>
 
 using std::string;
 using std::auto_ptr;
 
 namespace isc {
 namespace dns {
+
+// An internal exception, used to control the code flow in case of errors.
+// It is thrown during the loading and caught later, not to be propagated
+// outside of the file.
+class InternalException : public isc::Exception {
+public:
+    InternalException(const char* filename, size_t line, const char* what) :
+        Exception(filename, line, what)
+    {}
+};
 
 class MasterLoader::MasterLoaderImpl {
 public:
@@ -47,6 +58,7 @@ public:
         initialized_(false),
         ok_(true),
         many_errors_((options & MANY_ERRORS) != 0),
+        source_count_(0),
         complete_(false),
         seen_error_(false)
     {}
@@ -69,9 +81,7 @@ public:
         std::string error;
         if (!lexer_.pushSource(filename.c_str(), &error)) {
             if (initialized_) {
-                // $INCLUDE file
-                reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
-                            error);
+                isc_throw(InternalException, error.c_str());
             } else {
                 // Top-level file
                 reportError("", 0, error);
@@ -79,11 +89,21 @@ public:
             }
         }
         initialized_ = true;
+        ++source_count_;
+    }
+
+    bool popSource() {
+        if (--source_count_ == 0) {
+            return (false);
+        }
+        lexer_.popSource();
+        return (true);
     }
 
     void pushStreamSource(std::istream& stream) {
         lexer_.pushSource(stream);
         initialized_ = true;
+        ++source_count_;
     }
 
     // Get a string token. Handle it as error if it is not string.
@@ -93,6 +113,85 @@ public:
     }
 
     bool loadIncremental(size_t count_limit);
+
+    void doInclude() {
+        // First, get the filename to include
+        const MasterToken::StringRegion
+            filename_tok(lexer_.getNextToken(MasterToken::QSTRING).
+                         getStringRegion());
+
+        // Push the filename. We abuse the fact that filename
+        // may not contain '\0' anywhere in it, so we can
+        // freely use the filename.beg directly.
+        string filename(filename_tok.beg);
+
+        // There could be an origin (or maybe not). So try looking
+        const MasterToken name_tok(lexer_.getNextToken(MasterToken::QSTRING,
+                                                       true));
+
+        if (name_tok.getType() == MasterToken::QSTRING ||
+            name_tok.getType() == MasterToken::STRING) {
+            // TODO: Handle the origin. Once we complete #2427.
+        } else {
+            // We return the newline there. This is because after we pop
+            // the source, we want to call eatUntilEOL and this would
+            // eat to the next one.
+            lexer_.ungetToken();
+        }
+
+        pushSource(filename);
+    }
+
+    void handleDirective(const char* directive, size_t length) {
+        // We use strncasecmp, because there seems to be no reasonable
+        // way to compare strings case-insensitive in C++
+
+        // Warning: The order of compared strings does matter. The length
+        // parameter applies to the first one only.
+        if (strncasecmp(directive, "INCLUDE", length) == 0) {
+            doInclude();
+        } else if (strncasecmp(directive, "ORIGIN", length) == 0) {
+            // TODO: Implement
+            isc_throw(isc::NotImplemented,
+                      "Origin directive not implemented yet");
+        } else if (strncasecmp(directive, "TTL", length) == 0) {
+            // TODO: Implement
+            isc_throw(isc::NotImplemented,
+                      "TTL directive not implemented yet");
+        } else {
+            isc_throw(InternalException, "Unknown directive '" <<
+                      string(directive, directive + length) << "'");
+        }
+    }
+
+    void eatUntilEOL(bool reportExtra) {
+        // We want to continue. Try to read until the end of line
+        for (;;) {
+            const MasterToken& token(lexer_.getNextToken());
+            switch (token.getType()) {
+                case MasterToken::END_OF_FILE:
+                    callbacks_.warning(lexer_.getSourceName(),
+                                       lexer_.getSourceLine(),
+                                       "Unexpected end ond of file");
+                    // We don't pop here. The End of file will stay there,
+                    // and we'll handle it in the next iteration of
+                    // loadIncremental properly.
+                    return;
+                case MasterToken::END_OF_LINE:
+                    // Found the end of the line. Good.
+                    return;
+                default:
+                    // Some other type of token.
+                    if (reportExtra) {
+                        reportExtra = false;
+                        reportError(lexer_.getSourceName(),
+                                    lexer_.getSourceLine(),
+                                    "Extra tokens at the end of line");
+                    }
+                    break;
+            }
+        }
+    }
 
 private:
     MasterLexer lexer_;
@@ -107,6 +206,7 @@ private:
     bool ok_;                   // Is it OK to continue loading?
     const bool many_errors_;    // Are many errors allowed (or should we abort
                                 // on the first)
+    size_t source_count_;       // How many sources are currently pushed.
 public:
     bool complete_;             // All work done.
     bool seen_error_;           // Was there at least one error during the
@@ -133,8 +233,15 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             do {
                 const MasterToken& empty_token(lexer_.getNextToken());
                 if (empty_token.getType() == MasterToken::END_OF_FILE) {
-                    // TODO: Check if this is the last source, possibly pop
-                    return (true);
+                    if (!popSource()) {
+                        return (true);
+                    } else {
+                        // We try to read a token from the popped source
+                        // So retry the loop, but first, make sure the source
+                        // is at EOL
+                        eatUntilEOL(true);
+                        continue;
+                    }
                 }
                 empty = empty_token.getType() == MasterToken::END_OF_LINE;
             } while (empty);
@@ -144,7 +251,19 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             const MasterToken::StringRegion&
                 name_string(lexer_.getNextToken(MasterToken::QSTRING).
                             getStringRegion());
-            // TODO $ handling
+
+            if (name_string.len > 0 && name_string.beg[0] == '$') {
+                // This should have either thrown (and the error handler
+                // will read up until the end of line) or read until the
+                // end of line.
+
+                // Exclude the $ from the string on this point.
+                handleDirective(name_string.beg + 1, name_string.len - 1);
+                // So, get to the next line, there's nothing more interesting
+                // in this one.
+                continue;
+            }
+
             const Name name(name_string.beg, name_string.len,
                             &zone_origin_);
             // TODO: Some more flexibility. We don't allow omitting
@@ -199,27 +318,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             // propagated.
             reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
                         e.what());
-            // We want to continue. Try to read until the end of line
-            bool end = false;
-            do {
-                const MasterToken& token(lexer_.getNextToken());
-                switch (token.getType()) {
-                    case MasterToken::END_OF_FILE:
-                        callbacks_.warning(lexer_.getSourceName(),
-                                           lexer_.getSourceLine(),
-                                           "File does not end with newline");
-                        // TODO: Try pop in case this is not the only
-                        // source
-                        return (true);
-                    case MasterToken::END_OF_LINE:
-                        end = true;
-                        break;
-                    default:
-                        // Do nothing. This is just to make compiler
-                        // happy
-                        break;
-                }
-            } while (!end);
+            eatUntilEOL(false);
         }
     }
     // When there was a fatal error and ok is false, we say we are done.
