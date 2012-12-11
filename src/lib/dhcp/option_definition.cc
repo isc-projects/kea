@@ -19,6 +19,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_int.h>
 #include <dhcp/option6_int_array.h>
+#include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
 #include <util/encode/hex.h>
 
@@ -78,53 +79,81 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                                 OptionBufferConstIter begin,
                                 OptionBufferConstIter end) const {
     validate();
-    
+
     try {
-        if (type_ == OPT_BINARY_TYPE) {
-            return (factoryGeneric(u, type, begin, end));
-
-        } else if (type_ == OPT_IPV6_ADDRESS_TYPE && array_type_) {
-            return (factoryAddrList6(type, begin, end));
-
-        } else if (type_ == OPT_IPV4_ADDRESS_TYPE && array_type_) {
-            return (factoryAddrList4(type, begin, end));
-
-        } else if (type_ == OPT_EMPTY_TYPE) {
+        switch(type_) {
+        case OPT_EMPTY_TYPE:
             return (factoryEmpty(u, type));
 
-        } else if (u == Option::V6 &&
-                   code_ == D6O_IA_NA &&
-                   haveIA6Format()) {
-            return (factoryIA6(type, begin, end));
+        case OPT_BINARY_TYPE:
+            return (factoryGeneric(u, type, begin, end));
 
-        } else if (u == Option::V6 &&
-                   code_ == D6O_IAADDR &&
-                   haveIAAddr6Format()) {
-            return (factoryIAAddr6(type, begin, end));
+        case OPT_UINT8_TYPE:
+            return (array_type_ ? factoryGeneric(u, type, begin, end) :
+                    factoryInteger<uint8_t>(u, type, begin, end));
 
-        } else if (type_ == OPT_UINT8_TYPE) {
+        case OPT_INT8_TYPE:
+            return (array_type_ ? factoryGeneric(u, type, begin, end) :
+                    factoryInteger<int8_t>(u, type, begin, end));
+
+        case OPT_UINT16_TYPE:
+            return (array_type_ ? factoryIntegerArray<uint16_t>(type, begin, end) :
+                    factoryInteger<uint16_t>(u, type, begin, end));
+
+        case OPT_INT16_TYPE:
+            return (array_type_ ? factoryIntegerArray<uint16_t>(type, begin, end) :
+                    factoryInteger<int16_t>(u, type, begin, end));
+
+        case OPT_UINT32_TYPE:
+            return (array_type_ ? factoryIntegerArray<uint32_t>(type, begin, end) :
+                    factoryInteger<uint32_t>(u, type, begin, end));
+
+        case OPT_INT32_TYPE:
+            return (array_type_ ? factoryIntegerArray<uint32_t>(type, begin, end) :
+                    factoryInteger<int32_t>(u, type, begin, end));
+
+        case OPT_IPV4_ADDRESS_TYPE:
+            // If definition specifies that an option is an array
+            // of IPv4 addresses we return an instance of specialized
+            // class (OptionAddrLst4). For non-array types there is no
+            // specialized class yet implemented so we drop through
+            // to return an instance of OptionCustom.
             if (array_type_) {
-                return (factoryGeneric(u, type, begin, end));
-            } else {
-                return (factoryInteger<uint8_t>(u, type, begin, end));
+                return (factoryAddrList4(type, begin, end));
             }
+            break;
 
-        } else if (type_ == OPT_UINT16_TYPE) {
+        case OPT_IPV6_ADDRESS_TYPE:
+            // Handle array type only here (see comments for
+            // OPT_IPV4_ADDRESS_TYPE case).
             if (array_type_) {
-                return (factoryIntegerArray<uint16_t>(type, begin, end));
-            } else {
-                return (factoryInteger<uint16_t>(u, type, begin, end));
+                return (factoryAddrList6(type, begin, end));
             }
+            break;
 
-        } else if (type_ == OPT_UINT32_TYPE) {
-            if (array_type_) {
-                return (factoryIntegerArray<uint32_t>(type, begin, end));
-            } else {
-                return (factoryInteger<uint32_t>(u, type, begin, end));
+        default:
+            if (u == Option::V6) {
+                if ((code_ == D6O_IA_NA || code_ == D6O_IA_PD) &&
+                    haveIA6Format()) {
+                    // Return Option6IA instance for IA_PD and IA_NA option
+                    // types only. We don't want to return Option6IA for other
+                    // options that comprise 3 UINT32 data fields because
+                    // Option6IA accessors' and modifiers' names are derived
+                    // from the IA_NA and IA_PD options' field names: IAID,
+                    // T1, T2. Using functions such as getIAID, getT1 etc. for
+                    // options other than IA_NA and IA_PD would be bad practice
+                    // and cause confusion.
+                    return (factoryIA6(type, begin, end));
+
+                } else if (code_ == D6O_IAADDR && haveIAAddr6Format()) {
+                    // Rerurn Option6IAAddr option instance for the IAADDR
+                    // option only for the same reasons as described in
+                    // for IA_NA and IA_PD above.
+                    return (factoryIAAddr6(type, begin, end));
+                }
             }
-
         }
-        return (factoryGeneric(u, type, begin, end));
+        return (OptionPtr(new OptionCustom(*this, u, OptionBuffer(begin, end))));
 
     } catch (const Exception& ex) {
         isc_throw(InvalidOptionValue, ex.what());
@@ -144,7 +173,7 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
 
     OptionBuffer buf;
     if (!array_type_ && type_ != OPT_RECORD_TYPE) {
-        if (values.size() == 0) {
+        if (values.empty()) {
             isc_throw(InvalidOptionValue, "no option value specified");
         }
         writeToBuffer(values[0], type_, buf);
