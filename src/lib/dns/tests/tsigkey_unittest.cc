@@ -251,6 +251,15 @@ TEST_F(TSIGKeyRingTest, find) {
     const TSIGKeyRing::FindResult result3 = keyring.find(key_name, md5_name);
     EXPECT_EQ(TSIGKeyRing::NOTFOUND, result3.code);
     EXPECT_EQ(static_cast<const TSIGKey*>(NULL), result3.key);
+
+    // But with just the name it should work
+    const TSIGKeyRing::FindResult result4(keyring.find(key_name));
+    EXPECT_EQ(TSIGKeyRing::SUCCESS, result1.code);
+    EXPECT_EQ(key_name, result1.key->getKeyName());
+    EXPECT_EQ(TSIGKey::HMACSHA256_NAME(), result1.key->getAlgorithmName());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, secret, secret_len,
+                        result1.key->getSecret(),
+                        result1.key->getSecretLength());
 }
 
 TEST_F(TSIGKeyRingTest, findFromSome) {
