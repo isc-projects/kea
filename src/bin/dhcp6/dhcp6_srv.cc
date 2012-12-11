@@ -583,6 +583,12 @@ OptionPtr Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         // Insert status code NoAddrsAvail.
         ia_rsp->addOption(createStatusCode(STATUS_NoAddrsAvail,
                           "Sorry, no known leases for this duid/iaid."));
+
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_UNKNOWN_RENEW)
+            .arg(duid->toText())
+            .arg(ia->getIAID())
+            .arg(subnet->toText());
+
         return (ia_rsp);
     }
 
