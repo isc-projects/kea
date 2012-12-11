@@ -348,13 +348,17 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     EXPECT_TRUE(x == options.end()); // option 32000 not found */
 }
 
-
+/// V4 Options being used to test pack/unpack operations.
+/// These are variable length options only so as there
+/// is no restriction on the data length being carried by them.
+/// For simplicity, we assign data of the length 3 for each
+/// of them.
 static uint8_t v4Opts[] = {
-    12,  3, 0,   1,  2,
-    13,  3, 10, 11, 12,
-    14,  3, 20, 21, 22,
-    254, 3, 30, 31, 32,
-    128, 3, 40, 41, 42
+    12,  3, 0,   1,  2, // Hostname
+    60,  3, 10, 11, 12, // Class Id
+    14,  3, 20, 21, 22, // Merit Dump File
+    254, 3, 30, 31, 32, // Reserved
+    128, 3, 40, 41, 42  // Vendor specific
 };
 
 TEST_F(LibDhcpTest, packOptions4) {
@@ -368,7 +372,7 @@ TEST_F(LibDhcpTest, packOptions4) {
     }
 
     OptionPtr opt1(new Option(Option::V4, 12, payload[0]));
-    OptionPtr opt2(new Option(Option::V4, 13, payload[1]));
+    OptionPtr opt2(new Option(Option::V4, 60, payload[1]));
     OptionPtr opt3(new Option(Option::V4, 14, payload[2]));
     OptionPtr opt4(new Option(Option::V4,254, payload[3]));
     OptionPtr opt5(new Option(Option::V4,128, payload[4]));
@@ -405,9 +409,9 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     EXPECT_EQ(5, x->second->len()); // total option length 5
     EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4Opts+2, 3)); // data len=3
 
-    x = options.find(13);
-    ASSERT_FALSE(x == options.end()); // option 1 should exist
-    EXPECT_EQ(13, x->second->getType());  // this should be option 13
+    x = options.find(60);
+    ASSERT_FALSE(x == options.end()); // option 2 should exist
+    EXPECT_EQ(60, x->second->getType());  // this should be option 60
     ASSERT_EQ(3, x->second->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->second->len()); // total option length 5
     EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4Opts+7, 3)); // data len=3

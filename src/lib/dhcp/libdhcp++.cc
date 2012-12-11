@@ -65,10 +65,12 @@ const OptionDefContainer&
 LibDHCP::getOptionDefs(const Option::Universe u) {
     switch (u) {
     case Option::V4:
-        initStdOptionDefs4();
+        if (v4option_defs_.empty()) {
+            initStdOptionDefs4();
+        }
         return (v4option_defs_);
     case Option::V6:
-        if (v6option_defs_.size() == 0) {
+        if (v6option_defs_.empty()) {
             initStdOptionDefs6();
         }
         return (v6option_defs_);
@@ -192,8 +194,10 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
             continue;
 
         if (offset + 1 >= buf.size()) {
+            // opt_type must be cast to integer so as it is not treated as
+            // unsigned char value (a number is presented in error message).
             isc_throw(OutOfRange, "Attempt to parse truncated option "
-                      << opt_type);
+                      << static_cast<int>(opt_type));
         }
 
         uint8_t opt_len =  buf[offset++];
@@ -203,12 +207,41 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
                       << "-byte long buffer.");
         }
 
+        // Get the list of stdandard option definitions.
+        OptionDefContainer option_defs = LibDHCP::getOptionDefs(Option::V4);
+        // Get the search index #1. It allows to search for option definitions
+        // using option code.
+        const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
+        // Get all options with the particular option code. Note that option code
+        // is non-unique within this container however at this point we expect
+        // to get one option definition with the particular code. If more are
+        // returned we report an error.
+        const OptionDefContainerTypeRange& range = idx.equal_range(opt_type);
+        // Get the number of returned option definitions for the option code.
+        size_t num_defs = distance(range.first, range.second);
+
+
         OptionPtr opt;
-        switch(opt_type) {
-        default:
+        if (num_defs > 1) {
+            // Multiple options of the same code are not supported right now!
+            isc_throw(isc::Unexpected, "Internal error: multiple option definitions"
+                      " for option type " << static_cast<int>(opt_type)
+                      << " returned. Currently it is not supported to initialize"
+                      << " multiple option definitions for the same option code."
+                      << " This will be supported once support for option spaces"
+                      << " is implemented");
+        } else if (num_defs == 0) {
             opt = OptionPtr(new Option(Option::V4, opt_type,
-                                       buf.begin()+offset,
-                                       buf.begin()+offset+opt_len));
+                                       buf.begin() + offset,
+                                       buf.begin() + offset + opt_len));
+        } else {
+            // The option definition has been found. Use it to create
+            // the option instance from the provided buffer chunk.
+            const OptionDefinitionPtr& def = *(range.first);
+            assert(def);
+            opt = def->optionFactory(Option::V4, opt_type,
+                                     buf.begin() + offset,
+                                     buf.begin() + offset + opt_len);
         }
 
         options.insert(std::make_pair(opt_type, opt));
