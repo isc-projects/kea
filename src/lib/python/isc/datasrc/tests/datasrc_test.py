@@ -200,7 +200,7 @@ class DataSrcClient(unittest.TestCase):
                   ])
         # For RRSIGS, we can't add the fake data through the API, so we
         # simply pass no rdata at all (which is skipped by the check later)
-        
+
         # Since we passed separate_rrs = True to get_iterator, we get several
         # sets of RRSIGs, one for each TTL
         add_rrset(expected_rrset_list, name, rrclass,
@@ -633,6 +633,53 @@ class DataSrcUpdater(unittest.TestCase):
         iterator = dsc.get_iterator(isc.dns.Name("example.com."))
         self.assertEqual(None, iterator.get_soa())
         self.assertEqual(None, iterator.get_next_rrset())
+
+    def test_create_zone_args(self):
+        dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
+
+        self.assertRaises(TypeError, dsc.create_zone)
+        self.assertRaises(TypeError, dsc.create_zone, 1)
+        self.assertRaises(TypeError, dsc.create_zone, None)
+        self.assertRaises(TypeError, dsc.create_zone, "foo.")
+        self.assertRaises(TypeError, dsc.create_zone,
+                          isc.dns.Name("example.org"), 1)
+
+    def test_create_zone(self):
+        dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
+        # Note, using example.org here, which should not exist
+        zone_name = isc.dns.Name("example.org")
+        self.assertIsNone(dsc.get_updater(zone_name, True))
+        self.assertRaises(isc.datasrc.Error, dsc.get_iterator, zone_name)
+
+        self.assertTrue(dsc.create_zone(zone_name))
+
+        # should exist now, we should be able to get an updater
+        # and currently it should be empty
+        self.assertIsNotNone(dsc.get_updater(zone_name, True))
+        iterator = dsc.get_iterator(zone_name)
+        self.assertEqual(None, iterator.get_soa())
+        self.assertEqual(None, iterator.get_next_rrset())
+
+        # Trying to create it again should return False
+        self.assertFalse(dsc.create_zone(zone_name))
+
+    def test_create_zone_locked(self):
+        zone_name = isc.dns.Name("example.org")
+        dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
+        updater = dsc.get_updater(isc.dns.Name("example.com"), True)
+
+        # Should fail since db is locked
+        self.assertRaises(isc.datasrc.Error, dsc.create_zone, zone_name)
+
+        # Cancel updater, then create should succeed
+        updater = None
+        self.assertTrue(dsc.create_zone(zone_name))
+
+    def test_create_zone_not_implemented(self):
+        mem_cfg = '{ "type": "memory", "class": "IN", "zones": [] }';
+        dsc = isc.datasrc.DataSourceClient("memory", mem_cfg)
+        self.assertRaises(isc.datasrc.NotImplemented, dsc.create_zone,
+                          isc.dns.Name("example.com"))
 
 class JournalWrite(unittest.TestCase):
     def setUp(self):
