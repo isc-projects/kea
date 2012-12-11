@@ -90,6 +90,7 @@ public:
     ///
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
     /// \c NSEC3Data is allocated.
+    /// \param zone_name The zone name.
     /// \param rdata An NSEC3PARAM RDATA that specifies the NSEC3 parameters
     /// to be stored.
     static NSEC3Data* create(util::MemorySegment& mem_sgmt,
@@ -105,6 +106,7 @@ public:
     ///
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
     /// \c NSEC3Data is allocated.
+    /// \param zone_name The zone name.
     /// \param rdata An NSEC3 RDATA that specifies the NSEC3 parameters
     /// to be stored.
     static NSEC3Data* create(util::MemorySegment& mem_sgmt,
