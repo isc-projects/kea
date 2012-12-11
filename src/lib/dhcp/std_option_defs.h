@@ -25,7 +25,7 @@ namespace {
 /// @param name name of the array being declared.
 /// @param types data types of fields that belong to the record.
 #ifndef RECORD_DECL
-#define RECORD_DECL(name, types...) static OptionDataType name[] = { types }
+#define RECORD_DECL(name, types...) static const OptionDataType name[] = { types }
 #endif
 
 /// @brief A pair of values: one pointing to the array holding types of
@@ -47,6 +47,151 @@ struct OptionDefParams {
     OptionDataType* records;  // record fields
     size_t records_size;      // number of fields in a record
 };
+
+// fqdn option record fields.
+//
+// Note that the flags field indicates the type of domain
+// name encoding. There is a choice between deprecated
+// ASCII encoding and compressed encoding described in
+// RFC 1035, section 3.1. The latter could be handled
+// by OPT_FQDN_TYPE but we can't use it here because
+// clients may request ASCII encoding.
+RECORD_DECL(FQDN_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_STRING_TYPE)
+
+/// @brief Definitions of standard DHCPv4 options.
+static const OptionDefParams OPTION_DEF_PARAMS4[] = {
+    { "subnet-mask", DHO_SUBNET_MASK, OPT_IPV4_ADDRESS_TYPE, false },
+    { "time-offset", DHO_TIME_OFFSET, OPT_UINT32_TYPE, false },
+    { "routers", DHO_ROUTERS, OPT_IPV4_ADDRESS_TYPE, true },
+    { "time-servers", DHO_TIME_SERVERS, OPT_IPV4_ADDRESS_TYPE, true },
+    { "name-servers", DHO_NAME_SERVERS, OPT_IPV4_ADDRESS_TYPE,
+      false },
+    { "domain-name-servers", DHO_DOMAIN_NAME_SERVERS,
+      OPT_IPV4_ADDRESS_TYPE, true },
+    { "log-servers", DHO_LOG_SERVERS, OPT_IPV4_ADDRESS_TYPE, true },
+    { "cookie-servers", DHO_COOKIE_SERVERS, OPT_IPV4_ADDRESS_TYPE,
+      true },
+    { "lpr-servers", DHO_LPR_SERVERS, OPT_IPV4_ADDRESS_TYPE, true },
+    { "impress-servers", DHO_IMPRESS_SERVERS, OPT_IPV4_ADDRESS_TYPE, true },
+    { "resource-location-servers", DHO_RESOURCE_LOCATION_SERVERS,
+      OPT_IPV4_ADDRESS_TYPE, true },
+    { "host-name", DHO_HOST_NAME, OPT_STRING_TYPE, false },
+    { "boot-size", DHO_BOOT_SIZE, OPT_UINT16_TYPE, false },
+    { "merit-dump", DHO_MERIT_DUMP, OPT_STRING_TYPE, false },
+    { "domain-name", DHO_DOMAIN_NAME, OPT_FQDN_TYPE, false },
+    { "swap-server", DHO_SWAP_SERVER, OPT_IPV4_ADDRESS_TYPE, false },
+    { "root-path", DHO_ROOT_PATH, OPT_STRING_TYPE, false },
+    { "extensions-path", DHO_EXTENSIONS_PATH, OPT_STRING_TYPE,
+      false },
+    { "ip-forwarding", DHO_IP_FORWARDING, OPT_BOOLEAN_TYPE, false },
+    { "non-local-source-routing", DHO_NON_LOCAL_SOURCE_ROUTING,
+      OPT_BOOLEAN_TYPE, false },
+    { "policy-filter", DHO_POLICY_FILTER, OPT_IPV4_ADDRESS_TYPE, true },
+    { "max-dgram-reassembly", DHO_MAX_DGRAM_REASSEMBLY,
+      OPT_UINT16_TYPE, false },
+    { "default-ip-ttl", DHO_DEFAULT_IP_TTL, OPT_UINT8_TYPE, false },
+    { "path-mtu-aging-timeout", DHO_PATH_MTU_AGING_TIMEOUT,
+      OPT_UINT32_TYPE, false },
+    { "path-mtu-plateau-table", DHO_PATH_MTU_PLATEAU_TABLE,
+      OPT_UINT16_TYPE, true },
+    { "interface-mtu", DHO_INTERFACE_MTU, OPT_UINT16_TYPE, false },
+    { "all-subnets-local", DHO_ALL_SUBNETS_LOCAL,
+      OPT_BOOLEAN_TYPE, false },
+    { "broadcast-address", DHO_BROADCAST_ADDRESS,
+      OPT_IPV4_ADDRESS_TYPE, false },
+    { "perform-mask-discovery", DHO_PERFORM_MASK_DISCOVERY,
+      OPT_BOOLEAN_TYPE, false },
+    { "mask-supplier", DHO_MASK_SUPPLIER, OPT_BOOLEAN_TYPE, false },
+    { "router-discovery", DHO_ROUTER_DISCOVERY,
+      OPT_BOOLEAN_TYPE, false },
+    { "router-solicitation-address", DHO_ROUTER_SOLICITATION_ADDRESS,
+      OPT_IPV4_ADDRESS_TYPE, false },
+    { "static-routes", DHO_STATIC_ROUTES,
+      OPT_IPV4_ADDRESS_TYPE, true },
+    { "trailer-encapsulation", DHO_TRAILER_ENCAPSULATION,
+      OPT_BOOLEAN_TYPE, false },
+    { "arp-cache-timeout", DHO_ARP_CACHE_TIMEOUT,
+      OPT_UINT32_TYPE, false },
+    { "ieee802-3-encapsulation", DHO_IEEE802_3_ENCAPSULATION,
+      OPT_BOOLEAN_TYPE, false },
+    { "default-tcp-ttl", DHO_DEFAULT_TCP_TTL, OPT_UINT8_TYPE, false },
+    { "tcp-keepalive-internal", DHO_TCP_KEEPALIVE_INTERVAL,
+      OPT_UINT32_TYPE, false },
+    { "tcp-keepalive-garbage", DHO_TCP_KEEPALIVE_GARBAGE,
+      OPT_BOOLEAN_TYPE, false },
+    { "nis-domain", DHO_NIS_DOMAIN, OPT_STRING_TYPE, false },
+    { "nis-servers", DHO_NIS_SERVERS, OPT_IPV4_ADDRESS_TYPE, true },
+    { "ntp-servers", DHO_NTP_SERVERS, OPT_IPV4_ADDRESS_TYPE, true },
+    { "vendor-encapsulated-options", DHO_VENDOR_ENCAPSULATED_OPTIONS,
+      OPT_BINARY_TYPE, false },
+    { "netbios-name-servers", DHO_NETBIOS_NAME_SERVERS,
+      OPT_IPV4_ADDRESS_TYPE, true },
+    { "netbios-dd-server", DHO_NETBIOS_DD_SERVER,
+      OPT_IPV4_ADDRESS_TYPE, true },
+    { "netbios-node-type", DHO_NETBIOS_NODE_TYPE,
+      OPT_UINT8_TYPE, false },
+    { "netbios-scope", DHO_NETBIOS_SCOPE, OPT_STRING_TYPE, false },
+    { "font-servers", DHO_FONT_SERVERS, OPT_IPV4_ADDRESS_TYPE, true },
+    { "x-display-manager", DHO_X_DISPLAY_MANAGER,
+      OPT_IPV4_ADDRESS_TYPE, true },
+    { "dhcp-requested-address", DHO_DHCP_REQUESTED_ADDRESS,
+      OPT_IPV4_ADDRESS_TYPE, false },
+    { "dhcp-lease-time", DHO_DHCP_LEASE_TIME, OPT_UINT32_TYPE, false },
+    { "dhcp-option-overload", DHO_DHCP_OPTION_OVERLOAD,
+      OPT_UINT8_TYPE, false },
+    { "dhcp-message-type", DHO_DHCP_MESSAGE_TYPE, OPT_UINT8_TYPE, false },
+    { "dhcp-server-identifier", DHO_DHCP_SERVER_IDENTIFIER,
+      OPT_IPV4_ADDRESS_TYPE, false },
+    { "dhcp-parameter-request-list", DHO_DHCP_PARAMETER_REQUEST_LIST,
+      OPT_UINT8_TYPE, true },
+    { "dhcp-message", DHO_DHCP_MESSAGE, OPT_STRING_TYPE, false },
+    { "dhcp-max-message-size", DHO_DHCP_MAX_MESSAGE_SIZE,
+      OPT_UINT16_TYPE, false },
+    { "dhcp-renewal-time", DHO_DHCP_RENEWAL_TIME, OPT_UINT32_TYPE, false },
+    { "dhcp-rebinding-time", DHO_DHCP_REBINDING_TIME,
+      OPT_UINT32_TYPE, false },
+    { "vendor-class-identifier", DHO_VENDOR_CLASS_IDENTIFIER,
+      OPT_BINARY_TYPE, false },
+    { "dhcp-client-identifier", DHO_DHCP_CLIENT_IDENTIFIER,
+      OPT_BINARY_TYPE, false },
+    { "nwip-domain-name", DHO_NWIP_DOMAIN_NAME, OPT_STRING_TYPE, false },
+    { "nwip-suboptions", DHO_NWIP_SUBOPTIONS, OPT_BINARY_TYPE, false },
+    { "user-class", DHO_USER_CLASS, OPT_BINARY_TYPE, false },
+    { "fqdn", DHO_FQDN, OPT_RECORD_TYPE, false, RECORD_DEF(FQDN_RECORDS) },
+    { "dhcp-agent-options", DHO_DHCP_AGENT_OPTIONS,
+      OPT_BINARY_TYPE, false },
+    // Unfortunatelly the AUTHENTICATE option contains a 64-bit
+    // data field called 'replay-detection' that can't be added
+    // as a record field to a custom option. Also, there is no
+    // dedicated option class to handle it so we simply return
+    // binary option type for now.
+    // @todo implement a class to handle AUTH option.
+    { "authenticate", DHO_AUTHENTICATE, OPT_BINARY_TYPE, false },
+    { "client-last-transaction-time", DHO_CLIENT_LAST_TRANSACTION_TIME,
+      OPT_UINT32_TYPE, false },
+    { "associated-ip", DHO_ASSOCIATED_IP, OPT_IPV4_ADDRESS_TYPE, true },
+    { "subnet-selection", DHO_SUBNET_SELECTION,
+      OPT_IPV4_ADDRESS_TYPE, false },
+    // The following options need a special encoding of data
+    // being carried by them. Therefore, there is no way they can
+    // be handled by OptionCustom. We may need to implement
+    // dedicated classes to handle them. Until that happens
+    // let's treat them as 'binary' options.
+    { "domain-search", DHO_DOMAIN_SEARCH, OPT_BINARY_TYPE, false },
+    { "vivco-suboptions", DHO_VIVCO_SUBOPTIONS,
+      OPT_BINARY_TYPE, false },
+    { "vivso-suboptions", DHO_VIVSO_SUBOPTIONS, OPT_BINARY_TYPE,
+      false }
+
+        // @todo add definitions for all remaning options.
+};
+
+/// Number of option definitions defined.
+const int OPTION_DEF_PARAMS_SIZE4  =
+    sizeof(OPTION_DEF_PARAMS4) / sizeof(OPTION_DEF_PARAMS4[0]);
+
+
+/// Start Definition of DHCPv6 options
 
 // client-fqdn
 RECORD_DECL(clientFqdnRecords, OPT_UINT8_TYPE, OPT_FQDN_TYPE);
@@ -76,7 +221,7 @@ RECORD_DECL(vendorClassRecords, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 // vendor-opts
 RECORD_DECL(vendorOptsRecords, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 
-/// Stdandard DHCPv6 option definitions.
+/// Standard DHCPv6 option definitions.
 static const OptionDefParams OPTION_DEF_PARAMS6[] = {
     { "clientid", D6O_CLIENTID, OPT_BINARY_TYPE, false },
     { "serverid", D6O_SERVERID, OPT_BINARY_TYPE, false },
