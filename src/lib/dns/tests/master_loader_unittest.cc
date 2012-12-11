@@ -319,4 +319,23 @@ TEST_F(MasterLoaderTest, loadZero) {
     EXPECT_THROW(loader_->loadIncremental(0), isc::InvalidParameter);
 }
 
+// Test there's a warning when the file terminates without end of
+// line.
+TEST_F(MasterLoaderTest, noEOLN) {
+    // No \n at the end
+    const string input("example.org. 3600 IN SOA ns1.example.org. "
+                       "admin.example.org. 1234 3600 1800 2419200 7200");
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty()) << errors_[0];
+    // There should be one warning about the EOLN
+    EXPECT_EQ(1, warnings_.size());
+    checkRR("example.org", RRType::SOA(), "ns1.example.org. "
+            "admin.example.org. 1234 3600 1800 2419200 7200");
+}
+
 }
