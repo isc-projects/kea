@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef OPTION6_INT_ARRAY_H
-#define OPTION6_INT_ARRAY_H
+#ifndef OPTION_INT_ARRAY_H
+#define OPTION_INT_ARRAY_H
 
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
@@ -25,9 +25,9 @@
 namespace isc {
 namespace dhcp {
 
-/// This template class represents DHCPv6 option with array of
-/// integer values. The type of the elements in the array can be
-/// any of the following:
+/// This template class represents DHCP (v4 or v6) option with an
+/// array of integer values. The type of the elements in the array
+/// can be any of the following:
 /// - uint8_t,
 /// - uint16_t,
 /// - uint32_t,
@@ -43,7 +43,7 @@ namespace dhcp {
 ///
 /// @param T data field type (see above).
 template<typename T>
-class Option6IntArray: public Option {
+class OptionIntArray: public Option {
 
 public:
 
@@ -55,7 +55,7 @@ public:
     ///
     /// @throw isc::dhcp::InvalidDataType if data field type provided
     /// as template parameter is not a supported integer type.
-    Option6IntArray(uint16_t type)
+    OptionIntArray(uint16_t type)
         : Option(Option::V6, type),
           values_(0) {
         if (!OptionDataTypeTraits<T>::integer_type) {
@@ -72,7 +72,7 @@ public:
     /// is not multiple of size of the data type in bytes.
     /// @throw isc::dhcp::InvalidDataType if data field type provided
     /// as template parameter is not a supported integer type.
-    Option6IntArray(uint16_t type, const OptionBuffer& buf)
+    OptionIntArray(uint16_t type, const OptionBuffer& buf)
         : Option(Option::V6, type) {
         if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(dhcp::InvalidDataType, "non-integer type");
@@ -94,7 +94,7 @@ public:
     /// is not multiple of size of the data type in bytes.
     /// @throw isc::dhcp::InvalidDataType if data field type provided
     /// as template parameter is not a supported integer type.
-    Option6IntArray(uint16_t type, OptionBufferConstIter begin,
+    OptionIntArray(uint16_t type, OptionBufferConstIter begin,
                     OptionBufferConstIter end)
         : Option(Option::V6, type) {
         if (!OptionDataTypeTraits<T>::integer_type) {
@@ -225,4 +225,4 @@ private:
 } // isc::dhcp namespace
 } // isc namespace
 
-#endif // OPTION6_INT_ARRAY_H
+#endif // OPTION_INT_ARRAY_H

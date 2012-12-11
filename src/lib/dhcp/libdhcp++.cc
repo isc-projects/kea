@@ -20,8 +20,8 @@
 #include <dhcp/option.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
-#include <dhcp/option6_int_array.h>
 #include <dhcp/option_definition.h>
+#include <dhcp/option_int_array.h>
 #include <dhcp/std_option_defs.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
