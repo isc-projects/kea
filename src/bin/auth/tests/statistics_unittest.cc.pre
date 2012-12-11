@@ -100,6 +100,15 @@ checkCounters(const isc::data::ConstElementPtr counters,
     }
 }
 
+void
+buildSkeletonMessage(MessageAttributes& msgattrs) {
+    msgattrs.setRequestIPVersion(MessageAttributes::IP_VERSION_IPV4);
+    msgattrs.setRequestTransportProtocol(MessageAttributes::TRANSPORT_UDP);
+    msgattrs.setRequestOpCode(Opcode::QUERY());
+    msgattrs.setRequestEDNS0(true);
+    msgattrs.setRequestDO(true);
+}
+
 TEST_F(CountersTest, invalidParameter) {
     MessageAttributes msgattrs;
 
@@ -128,11 +137,7 @@ TEST_F(CountersTest, incrementResponse) {
     for (int i = 0; i < 2; ++i) {
         const bool responded = i & 1;
 
-        msgattrs.setRequestIPVersion(MessageAttributes::IP_VERSION_IPV4);
-        msgattrs.setRequestTransportProtocol(MessageAttributes::TRANSPORT_UDP);
-        msgattrs.setRequestOpCode(Opcode::QUERY());
-        msgattrs.setRequestEDNS0(true);
-        msgattrs.setRequestDO(true);
+        buildSkeletonMessage(msgattrs);
 
         response.setRcode(Rcode::REFUSED());
         response.addQuestion(Question(Name("example.com"),
@@ -177,11 +182,9 @@ TEST_F(CountersTest, incrementProtocolType) {
             MessageAttributes::TRANSPORT_UDP :
             MessageAttributes::TRANSPORT_TCP;
 
+        buildSkeletonMessage(msgattrs);
         msgattrs.setRequestIPVersion(af);
         msgattrs.setRequestTransportProtocol(proto);
-        msgattrs.setRequestOpCode(Opcode::QUERY());
-        msgattrs.setRequestEDNS0(true);
-        msgattrs.setRequestDO(true);
 
         response.setRcode(Rcode::REFUSED());
         response.addQuestion(Question(Name("example.com"),
@@ -230,10 +233,7 @@ TEST_F(CountersTest, incrementDO) {
     //     true
     for (int i = 0; i < 2; ++i) {
         const bool is_dnssec_ok = i & 1;
-        msgattrs.setRequestIPVersion(MessageAttributes::IP_VERSION_IPV4);
-        msgattrs.setRequestTransportProtocol(MessageAttributes::TRANSPORT_UDP);
-        msgattrs.setRequestOpCode(Opcode::QUERY());
-        msgattrs.setRequestEDNS0(true);
+        buildSkeletonMessage(msgattrs);
         msgattrs.setRequestDO(is_dnssec_ok);
 
         response.setRcode(Rcode::REFUSED());
@@ -273,11 +273,8 @@ TEST_F(CountersTest, incrementEDNS) {
     int count_req_edns0 = 0, count_res_edns0 = 0;
     for (int i = 0; i < 2; ++i) {
         const bool is_edns0 = i & 1;
-        msgattrs.setRequestIPVersion(MessageAttributes::IP_VERSION_IPV4);
-        msgattrs.setRequestTransportProtocol(MessageAttributes::TRANSPORT_UDP);
-        msgattrs.setRequestOpCode(Opcode::QUERY());
+        buildSkeletonMessage(msgattrs);
         msgattrs.setRequestEDNS0(is_edns0);
-        msgattrs.setRequestDO(true);
 
         if (!is_edns0) {
             ConstEDNSPtr edns = EDNSPtr(new EDNS(0));
@@ -331,11 +328,7 @@ TEST_F(CountersTest, incrementTSIG) {
     for (int i = 0; i < 3; ++i) {
         const bool is_tsig = (i == 2) ? true : i & 1;
         const bool is_badsig = i & 2;
-        msgattrs.setRequestIPVersion(MessageAttributes::IP_VERSION_IPV4);
-        msgattrs.setRequestTransportProtocol(MessageAttributes::TRANSPORT_UDP);
-        msgattrs.setRequestOpCode(Opcode::QUERY());
-        msgattrs.setRequestEDNS0(true);
-        msgattrs.setRequestDO(true);
+        buildSkeletonMessage(msgattrs);
         msgattrs.setRequestSig(is_tsig, is_badsig);
 
         response.setRcode(Rcode::REFUSED());
@@ -387,11 +380,8 @@ TEST_F(CountersTest, incrementOpcode) {
          i <= e;
          ++i)
     {
-        msgattrs.setRequestIPVersion(MessageAttributes::IP_VERSION_IPV4);
-        msgattrs.setRequestTransportProtocol(MessageAttributes::TRANSPORT_UDP);
+        buildSkeletonMessage(msgattrs);
         msgattrs.setRequestOpCode(Opcode(i));
-        msgattrs.setRequestEDNS0(true);
-        msgattrs.setRequestDO(true);
         msgattrs.setRequestSig(false, false);
 
         response.setRcode(Rcode::REFUSED());
@@ -445,11 +435,8 @@ TEST_F(CountersTest, incrementRcode) {
          i <= e;
          ++i)
     {
-        msgattrs.setRequestIPVersion(MessageAttributes::IP_VERSION_IPV4);
-        msgattrs.setRequestTransportProtocol(MessageAttributes::TRANSPORT_UDP);
+        buildSkeletonMessage(msgattrs);
         msgattrs.setRequestOpCode(Opcode::IQUERY());
-        msgattrs.setRequestEDNS0(true);
-        msgattrs.setRequestDO(true);
         msgattrs.setRequestSig(false, false);
 
         response.setRcode(Rcode(i));
@@ -508,11 +495,8 @@ TEST_F(CountersTest, incrementTruncated) {
     int count_truncated = 0;
     for (int i = 0; i < 2; ++i) {
         const bool is_truncated = i & 1;
-        msgattrs.setRequestIPVersion(MessageAttributes::IP_VERSION_IPV4);
-        msgattrs.setRequestTransportProtocol(MessageAttributes::TRANSPORT_UDP);
+        buildSkeletonMessage(msgattrs);
         msgattrs.setRequestOpCode(Opcode::IQUERY());
-        msgattrs.setRequestEDNS0(true);
-        msgattrs.setRequestDO(true);
         msgattrs.setRequestSig(false, false);
         msgattrs.setResponseTruncated(is_truncated);
 
@@ -554,11 +538,7 @@ TEST_F(CountersTest, incrementQryAuthAnsAndNoAuthAns) {
     int count_authans = 0, count_noauthans = 0;
     for (int i = 0; i < 2; ++i) {
         const bool is_aa_set = i & 1;
-        msgattrs.setRequestIPVersion(MessageAttributes::IP_VERSION_IPV4);
-        msgattrs.setRequestTransportProtocol(MessageAttributes::TRANSPORT_UDP);
-        msgattrs.setRequestOpCode(Opcode::QUERY());
-        msgattrs.setRequestEDNS0(true);
-        msgattrs.setRequestDO(true);
+        buildSkeletonMessage(msgattrs);
         msgattrs.setRequestSig(false, false);
 
         response.setRcode(Rcode::SERVFAIL());
