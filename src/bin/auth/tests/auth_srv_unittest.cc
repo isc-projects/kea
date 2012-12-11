@@ -1157,6 +1157,33 @@ TEST_F(AuthSrvTest,
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }
 
+TEST_F(AuthSrvTest, queryCounterTruncTest) {
+    // use CONFIG_TESTDB for large-rdata.example.com.
+    updateDatabase(&server, CONFIG_TESTDB);
+
+    // The counters should be initialized to 0.
+    ConstElementPtr stats_init = server.getStatistics()->
+        get("zones")->get("_SERVER_");
+    expectCounterItem(stats_init, "responses", 0);
+    expectCounterItem(stats_init, "qryauthans", 0);
+    expectCounterItem(stats_init->get("response"), "truncated", 0);
+
+    // Create UDP message and process.
+    // large-rdata.example.com. TXT; expect it exceeds 512 octet
+    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
+                                       default_qid, Name("large-rdata.example.com."),
+                                       RRClass::IN(), RRType::TXT());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
+
+    ConstElementPtr stats_after = server.getStatistics()->
+        get("zones")->get("_SERVER_");
+    expectCounterItem(stats_after, "responses", 1);
+    expectCounterItem(stats_after, "qryauthans", 1);
+    expectCounterItem(stats_after->get("rcode"), "noerror", 1);
+    expectCounterItem(stats_after->get("response"), "truncated", 1);
+}
 // Submit UDP normal query and check query counter
 TEST_F(AuthSrvTest, queryCounterUDPNormal) {
     // Create UDP message and process.
@@ -1242,10 +1269,7 @@ TEST_F(AuthSrvTest, queryCounterTCPNormal) {
     createRequestPacket(request_message, IPPROTO_TCP);
     server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
-    // After processing the TCP query, these counters should be incremented:
-    //   request.tcp, opcode.query, rcode.refused, response
-    // and these counters should not be incremented:
-    //   request.udp
+
     ConstElementPtr stats_after = server.getStatistics()->
         get("zones")->get("_SERVER_");
     expectCounterItem(stats_after->get("request"), "udp", 0);
