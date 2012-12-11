@@ -1,3 +1,17 @@
+520.	[func]		jelte
+	The system no longer prints initial log messages to stdout
+	regardless of what logging configuration is present, but it
+	temporarily stores any log messages until the configuration is
+	processed. If there is no specific configuration, or if the
+	configuration cannot be accessed, it will still fall back to stdout.
+	Note that there are still a few instances where output is printed,
+	these shall be addressed separately.
+	Note also that, currently, in case it falls back to stdout (such as
+	when it cannot connect to b10-cfgmgr), all log messages are always
+	printed (including debug messages), regardless of whether -v was
+	used. This shall also be addressed in a future change.
+	(Trac #2445, git 74a0abe5a6d10b28e4a3e360e87b129c232dea68)
+
 519.	[bug]		muks
 	Fixed a problem in inmem NSEC lookup which caused assert failures
 	when a non-existent domain was queried, which was a sub-domain of
