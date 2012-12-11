@@ -88,6 +88,21 @@ Return Value(s): A tuple containing a result value and a ZoneFinder object or\n\
 None\n\
 ";
 
+const char* const DataSourceClient_createZone_doc = "\
+create_zone(name) -> boolean\n\
+\n\
+Creates a new (empty) zone in the data source backend.\n\
+\n\
+Datasources can throw isc.NotImplemented\n\
+\n\
+Any other internal error will be raised as an isc.datasrc.Error exception\n\
+\n\
+Parameters:\n\
+  name       A (fully qualified) domain name for the zone to be created.\n\
+\n\
+Return Value(s): True if the zone has been created, False if it already existed\n\
+";
+
 const char* const DataSourceClient_getIterator_doc = "\
 get_iterator(name, separate_rrs=False) -> ZoneIterator\n\
 \n\
