@@ -157,7 +157,7 @@ public:
             isc_throw(BadValue, "Failed to parse value " << value->str()
                       << " as unsigned 32-bit integer.");
         }
-        storage_->insert(pair<string, uint32_t>(param_name_, value_));
+        (*storage_)[param_name_] = value_;
     }
 
     /// @brief does nothing
@@ -227,7 +227,7 @@ public:
     virtual void build(ConstElementPtr value) {
         value_ = value->str();
         boost::erase_all(value_, "\"");
-        storage_->insert(pair<string, string>(param_name_, value_));
+        (*storage_)[param_name_] = value_;
     }
 
     /// @brief does nothing
@@ -756,10 +756,6 @@ configureDhcp6Server(Dhcpv6Srv& , ConstElementPtr config_set) {
                                  string("Can't parse NULL config"));
         return (answer);
     }
-
-    /// Let's wipe previous configuration defaults
-    uint32_defaults.clear();
-    string_defaults.clear();
 
     /// @todo: append most essential info here (like "2 new subnets configured")
     string config_details;
