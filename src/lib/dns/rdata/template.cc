@@ -34,6 +34,11 @@ using namespace isc::util;
 // If you added member functions specific to this derived class, you'll need
 // to implement them here, of course.
 
+MyType::MyType(MasterLexer& lexer, const Name* origin,
+               MasterLoader::Options options, MasterLoaderCallbacks& callbacks)
+{
+}
+
 MyType::MyType(const string& type_str) {
 }
 

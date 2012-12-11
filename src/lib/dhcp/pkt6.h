@@ -15,13 +15,16 @@
 #ifndef PKT6_H
 #define PKT6_H
 
-#include <iostream>
-#include <time.h>
-#include <boost/shared_ptr.hpp>
-#include <boost/shared_array.hpp>
+#include <asiolink/io_address.h>
+#include <dhcp/option.h>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include "asiolink/io_address.h"
-#include "dhcp/option.h"
+#include <boost/shared_array.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <iostream>
+
+#include <time.h>
 
 namespace isc {
 

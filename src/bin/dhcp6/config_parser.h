@@ -12,12 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <string>
-#include <exceptions/exceptions.h>
-#include <cc/data.h>
-
 #ifndef DHCP6_CONFIG_PARSER_H
 #define DHCP6_CONFIG_PARSER_H
+
+#include <cc/data.h>
+#include <exceptions/exceptions.h>
+
+#include <string>
 
 namespace isc {
 namespace dhcp {

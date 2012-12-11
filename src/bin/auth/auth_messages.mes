@@ -47,10 +47,15 @@ available. It is issued during server startup is an indication that
 the initialization is proceeding normally.
 
 % AUTH_CONFIG_LOAD_FAIL load of configuration failed: %1
-An attempt to configure the server with information from the configuration
-database during the startup sequence has failed. (The reason for
-the failure is given in the message.) The server will continue its
-initialization although it may not be configured in the desired way.
+An attempt to configure the server with information from the
+configuration database during the startup sequence has failed.  The
+server will continue its initialization although it may not be
+configured in the desired way.  The reason for the failure is given in
+the message.  One common reason is that the server failed to acquire a
+socket bound to a privileged port (53 for DNS).  In that case the
+reason in the log message should show something like "permission
+denied", and the solution would be to restart BIND 10 as a super
+(root) user.
 
 % AUTH_CONFIG_UPDATE_FAIL update of configuration failed: %1
 At attempt to update the configuration the server with information
@@ -92,6 +97,16 @@ after logging this message.
 This debug message is issued when the separate thread for maintaining data
 source clients successfully loaded the named zone of the named class as a
 result of the 'loadzone' command.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE_NOCACHE skipped loading zone %1/%2 due to no in-memory cache
+This debug message is issued when the separate thread for maintaining data
+source clients received a command to reload a zone but skipped it because
+the specified zone is not loaded in-memory (but served from an underlying
+data source).  This could happen if the loadzone command is manually issued
+by a user but the zone name is misspelled, but a more likely cause is
+that the command is sent from another BIND 10 module (such as xfrin or DDNS).
+In the latter case it can be simply ignored because there is no need
+for explicit reloading.
 
 % AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_CONFIG_ERROR Error in data source configuration: %1
 The thread for maintaining data source clients has received a command to

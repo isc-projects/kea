@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "memory_segment_test.h"
+#include "zone_table_segment_test.h"
 
 // NOTE: this faked_nsec3 inclusion (and all related code below)
 // was ported during #2109 for the convenience of implementing #2218
@@ -25,7 +26,10 @@
 #include <datasrc/memory/zone_finder.h>
 #include <datasrc/memory/zone_data_updater.h>
 #include <datasrc/memory/rdata_serialization.h>
+#include <datasrc/memory/zone_table_segment.h>
+#include <datasrc/memory/memory_client.h>
 #include <datasrc/data_source.h>
+#include <datasrc/client.h>
 #include <testutils/dnsmessage_test.h>
 
 #include <boost/foreach.hpp>
@@ -1358,6 +1362,95 @@ TEST_F(InMemoryZoneFinderTest, findNSEC3ForBadZone) {
                  DataSourceError);
 }
 
+TEST_F(InMemoryZoneFinderTest, findOrphanRRSIG) {
+    // Make the zone "NSEC signed"
+    addToZoneData(rr_nsec_);
+    const ZoneFinder::FindResultFlags expected_flags =
+        ZoneFinder::RESULT_NSEC_SIGNED;
+
+    // Add A for ns.example.org, and RRSIG-only covering TXT for the same name.
+    // query for the TXT should result in NXRRSET.
+    addToZoneData(rr_ns_a_);
+    updater_.add(ConstRRsetPtr(),
+                 textToRRset(
+                     "ns.example.org. 300 IN RRSIG TXT 5 3 300 20120814220826 "
+                     "20120715220826 1234 example.com. FAKE"));
+    findTest(Name("ns.example.org"), RRType::TXT(),
+             ZoneFinder::NXRRSET, true, ConstRRsetPtr(), expected_flags);
+
+    // Add RRSIG-only covering NSEC.  This shouldn't be returned when NSEC is
+    // requested, whether it's for NXRRSET or NXDOMAIN
+    updater_.add(ConstRRsetPtr(),
+                 textToRRset(
+                     "ns.example.org. 300 IN RRSIG NSEC 5 3 300 "
+                     "20120814220826 20120715220826 1234 example.com. FAKE"));
+    // The added RRSIG for NSEC could be used for NXRRSET but shouldn't
+    findTest(Name("ns.example.org"), RRType::TXT(),
+             ZoneFinder::NXRRSET, true, ConstRRsetPtr(),
+             expected_flags, NULL, ZoneFinder::FIND_DNSSEC);
+    // The added RRSIG for NSEC could be used for NXDOMAIN but shouldn't
+    findTest(Name("nz.example.org"), RRType::A(),
+             ZoneFinder::NXDOMAIN, true, rr_nsec_,
+             expected_flags, NULL, ZoneFinder::FIND_DNSSEC);
+
+    // RRSIG-only CNAME shouldn't be accidentally confused with real CNAME.
+    updater_.add(ConstRRsetPtr(),
+                 textToRRset(
+                     "nocname.example.org. 300 IN RRSIG CNAME 5 3 300 "
+                     "20120814220826 20120715220826 1234 example.com. FAKE"));
+    findTest(Name("nocname.example.org"), RRType::A(),
+             ZoneFinder::NXRRSET, true, ConstRRsetPtr(), expected_flags);
+
+    // RRSIG-only for NS wouldn't invoke delegation anyway, but we check this
+    // case explicitly.
+    updater_.add(ConstRRsetPtr(),
+                 textToRRset(
+                     "nodelegation.example.org. 300 IN RRSIG NS 5 3 300 "
+                     "20120814220826 20120715220826 1234 example.com. FAKE"));
+    findTest(Name("nodelegation.example.org"), RRType::A(),
+             ZoneFinder::NXRRSET, true, ConstRRsetPtr(), expected_flags);
+    findTest(Name("www.nodelegation.example.org"), RRType::A(),
+             ZoneFinder::NXDOMAIN, true, ConstRRsetPtr(), expected_flags);
+
+    // Same for RRSIG-only for DNAME
+    updater_.add(ConstRRsetPtr(),
+                 textToRRset(
+                     "nodname.example.org. 300 IN RRSIG DNAME 5 3 300 "
+                     "20120814220826 20120715220826 1234 example.com. FAKE"));
+    findTest(Name("www.nodname.example.org"), RRType::A(),
+             ZoneFinder::NXDOMAIN, true, ConstRRsetPtr(), expected_flags);
+    // If we have a delegation NS at this node, it will be a bit trickier,
+    // because the zonecut processing actually takes place at the node.
+    // But the RRSIG-only for DNAME shouldn't confuse the process and the NS
+    // should win.
+    ConstRRsetPtr ns_rrset =
+        textToRRset("nodname.example.org. 300 IN NS ns.nodname.example.org.");
+    addToZoneData(ns_rrset);
+    findTest(Name("www.nodname.example.org"), RRType::A(),
+             ZoneFinder::DELEGATION, true, ns_rrset);
+}
+
+// \brief testcase for #2504 (Problem in inmem NSEC denial of existence
+// handling)
+TEST_F(InMemoryZoneFinderTest, NSECNonExistentTest) {
+    shared_ptr<ZoneTableSegment> ztable_segment(
+         new ZoneTableSegmentTest(class_, mem_sgmt_));
+    InMemoryClient client(ztable_segment, class_);
+    Name name("example.com.");
+
+    client.load(name, TEST_DATA_DIR "/2504-test.zone");
+    DataSourceClient::FindResult result(client.findZone(name));
+
+    // Check for a non-existing name
+    Name search_name("nonexist.example.com.");
+    ZoneFinderContextPtr find_result(
+        result.zone_finder->find(search_name,
+                                 RRType::A(), ZoneFinder::FIND_DNSSEC));
+    // We don't find the domain, but find() must complete (not throw or
+    // assert).
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, find_result->code);
+}
+
 /// \brief NSEC3 specific tests fixture for the InMemoryZoneFinder class
 class InMemoryZoneFinderNSEC3Test : public InMemoryZoneFinderTest {
 public:
@@ -1481,4 +1574,17 @@ TEST_F(InMemoryZoneFinderNSEC3Test, findNSEC3Walk) {
         }
     }
 }
+
+TEST_F(InMemoryZoneFinderNSEC3Test, RRSIGOnly) {
+    // add an RRSIG-only NSEC3 to the NSEC3 space, and try to find it; it
+    // should result in an exception.
+    const string n8_hash = "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";
+    updater_.add(ConstRRsetPtr(),
+                 textToRRset(
+                     n8_hash + ".example.org. 300 IN RRSIG NSEC3 5 3 300 "
+                     "20120814220826 20120715220826 1234 example.com. FAKE"));
+    EXPECT_THROW(zone_finder_.findNSEC3(Name("n8.example.org"), false),
+                 DataSourceError);
+}
+
 }

@@ -13,18 +13,23 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <iostream>
+
+#include <config/ccsession.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option6_ia.h>
+#include <dhcp6/config_parser.h>
+#include <dhcp6/dhcp6_srv.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/subnet.h>
+
+#include <boost/foreach.hpp>
+#include <gtest/gtest.h>
+
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
 #include <arpa/inet.h>
-#include <gtest/gtest.h>
-
-#include <dhcp6/dhcp6_srv.h>
-#include <dhcp6/config_parser.h>
-#include <config/ccsession.h>
-#include <dhcp/subnet.h>
-#include <dhcp/cfgmgr.h>
 
 using namespace std;
 using namespace isc;
@@ -37,16 +42,15 @@ namespace {
 
 class Dhcp6ParserTest : public ::testing::Test {
 public:
-    Dhcp6ParserTest()
-    :rcode_(-1) {
-        // Open port 0 means to not do anything at all. We don't want to
+    Dhcp6ParserTest() :rcode_(-1), srv_(0) {
+        // srv_(0) means to not open any sockets. We don't want to
         // deal with sockets here, just check if configuration handling
         // is sane.
-        srv_ = new Dhcpv6Srv(0);
     }
 
     ~Dhcp6ParserTest() {
-        delete srv_;
+        // Reset configuration database after each test.
+        resetConfiguration();
     };
 
     /// @brief Create the simple configuration with single option.
@@ -60,6 +64,24 @@ public:
     /// param value.
     std::string createConfigWithOption(const std::string& param_value,
                                        const std::string& parameter) {
+        std::map<std::string, std::string> params;
+        if (parameter == "name") {
+            params["name"] = param_value;
+            params["code"] = "80";
+            params["data"] = "AB CDEF0105";
+        } else if (parameter == "code") {
+            params["name"] = "option_foo";
+            params["code"] = param_value;
+            params["data"] = "AB CDEF0105";
+        } else if (parameter == "data") {
+            params["name"] = "option_foo";
+            params["code"] = "80";
+            params["data"] = param_value;
+        }
+        return (createConfigWithOption(params));
+    }
+
+    std::string createConfigWithOption(const std::map<std::string, std::string>& params) {
         std::ostringstream stream;
         stream << "{ \"interface\": [ \"all\" ],"
             "\"preferred-lifetime\": 3000,"
@@ -69,27 +91,72 @@ public:
             "    \"pool\": [ \"2001:db8:1::/80\" ],"
             "    \"subnet\": \"2001:db8:1::/64\", "
             "    \"option-data\": [ {";
-        if (parameter == "name") {
-            stream <<
-                "          \"name\": \"" << param_value << "\","
-                "          \"code\": 80,"
-                "          \"data\": \"AB CDEF0105\"";
-        } else if (parameter == "code") {
-            stream <<
-                "          \"name\": \"option_foo\","
-                "          \"code\": " << param_value << ","
-                "          \"data\": \"AB CDEF0105\"";
-        } else if (parameter == "data") {
-            stream <<
-                "          \"name\": \"option_foo\","
-                "          \"code\": 80,"
-                "          \"data\": \"" << param_value << "\"";
+        bool first = true;
+        typedef std::pair<std::string, std::string> ParamPair;
+        BOOST_FOREACH(ParamPair param, params) {
+            if (!first) {
+                stream << ", ";
+            } else {
+                first = false;
+            }
+            if (param.first == "name") {
+                stream << "\"name\": \"" << param.second << "\"";
+            } else if (param.first == "code") {
+                stream << "\"code\": " << param.second << "";
+            } else if (param.first == "data") {
+                stream << "\"data\": \"" << param.second << "\"";
+            }
         }
         stream <<
             "        } ]"
             " } ],"
             "\"valid-lifetime\": 4000 }";
         return (stream.str());
+    }
+
+    /// @brief Reset configuration database.
+    ///
+    /// This function resets configuration data base by
+    /// removing all subnets and option-data. Reset must
+    /// be performed after each test to make sure that
+    /// contents of the database do not affect result of
+    /// subsequent tests.
+    void resetConfiguration() {
+        ConstElementPtr status;
+
+        string config = "{ \"interface\": [ \"all\" ],"
+            "\"preferred-lifetime\": 3000,"
+            "\"rebind-timer\": 2000, "
+            "\"renew-timer\": 1000, "
+            "\"valid-lifetime\": 4000, "
+            "\"subnet6\": [ ], "
+            "\"option-data\": [ ] }";
+
+        try {
+            ElementPtr json = Element::fromJSON(config);
+            status = configureDhcp6Server(srv_, json);
+        } catch (const std::exception& ex) {
+            FAIL() << "Fatal error: unable to reset configuration database"
+                   << " after the test. The following configuration was used"
+                   << " to reset database: " << std::endl
+                   << config << std::endl
+                   << " and the following error message was returned:"
+                   << ex.what() << std::endl;
+        }
+
+
+        // returned value should be 0 (configuration success)
+        if (!status) {
+            FAIL() << "Fatal error: unable to reset configuration database"
+                   << " after the test. Configuration function returned"
+                   << " NULL pointer" << std::endl;
+        }
+        comment_ = parseAnswer(rcode_, status);
+        if (rcode_ != 0) {
+            FAIL() << "Fatal error: unable to reset configuration database"
+                   << " after the test. Configuration function returned"
+                   << " error code " << rcode_ << std::endl;
+        }
     }
 
     /// @brief Test invalid option parameter value.
@@ -107,7 +174,7 @@ public:
         ConstElementPtr x;
         std::string config = createConfigWithOption(param_value, parameter);
         ElementPtr json = Element::fromJSON(config);
-        EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+        EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
         ASSERT_TRUE(x);
         comment_ = parseAnswer(rcode_, x);
         ASSERT_EQ(1, rcode_);
@@ -153,7 +220,7 @@ public:
         EXPECT_TRUE(memcmp(expected_data, data, expected_data_len));
     }
 
-    Dhcpv6Srv* srv_;
+    Dhcpv6Srv srv_;
 
     int rcode_;
     ConstElementPtr comment_;
@@ -166,7 +233,7 @@ TEST_F(Dhcp6ParserTest, version) {
 
     ConstElementPtr x;
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_,
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_,
                     Element::fromJSON("{\"version\": 0}")));
 
     // returned value must be 0 (configuration accepted)
@@ -181,7 +248,7 @@ TEST_F(Dhcp6ParserTest, bogusCommand) {
 
     ConstElementPtr x;
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_,
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_,
                     Element::fromJSON("{\"bogus\": 5}")));
 
     // returned value must be 1 (configuration parse error)
@@ -197,7 +264,7 @@ TEST_F(Dhcp6ParserTest, emptySubnet) {
 
     ConstElementPtr status;
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(*srv_,
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
                     Element::fromJSON("{ \"interface\": [ \"all\" ],"
                                       "\"preferred-lifetime\": 3000,"
                                       "\"rebind-timer\": 2000, "
@@ -229,7 +296,7 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // check if returned status is OK
     ASSERT_TRUE(status);
@@ -268,7 +335,7 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value should be 0 (configuration success)
     ASSERT_TRUE(status);
@@ -301,7 +368,7 @@ TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value must be 2 (values error)
     // as the pool does not belong to that subnet
@@ -329,7 +396,7 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
 
     // returned value must be 1 (configuration parse error)
     ASSERT_TRUE(x);
@@ -371,7 +438,7 @@ TEST_F(Dhcp6ParserTest, optionDataDefaults) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
@@ -446,7 +513,7 @@ TEST_F(Dhcp6ParserTest, optionDataInSingleSubnet) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
@@ -512,7 +579,7 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
@@ -630,7 +697,7 @@ TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
     std::string config = createConfigWithOption("0a0b0C0D", "data");
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json));
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
@@ -656,6 +723,60 @@ TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
     };
     // Check if option is valid in terms of code and carried data.
     testOption(*range.first, 80, foo_expected, sizeof(foo_expected));
+}
+
+// Verify that specific option object is returned for standard
+// option which has dedicated option class derived from Option.
+TEST_F(Dhcp6ParserTest, stdOptionData) {
+    ConstElementPtr x;
+    std::map<std::string, std::string> params;
+    params["name"] = "OPTION_IA_NA";
+    // Option code 3 means OPTION_IA_NA.
+    params["code"] = "3";
+    params["data"] = "ABCDEF01 02030405 06070809";
+
+    std::string config = createConfigWithOption(params);
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet);
+    const Subnet::OptionContainer& options = subnet->getOptions();
+    ASSERT_EQ(1, options.size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+              Subnet::OptionContainerTypeIndex::const_iterator> range =
+        idx.equal_range(D6O_IA_NA);
+    // Expect single option with the code equal to IA_NA option code.
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    // The actual pointer to the option is held in the option field
+    // in the structure returned.
+    OptionPtr option = range.first->option;
+    ASSERT_TRUE(option);
+    // Option object returned for here is expected to be Option6IA
+    // which is derived from Option. This class is dedicated to
+    // represent standard option IA_NA.
+    boost::shared_ptr<Option6IA> optionIA =
+        boost::dynamic_pointer_cast<Option6IA>(option);
+    // If cast is unsuccessful than option returned was of a
+    // differnt type than Option6IA. This is wrong.
+    ASSERT_TRUE(optionIA);
+    // If cast was successful we may use accessors exposed by
+    // Option6IA to validate that the content of this option
+    // has been set correctly.
+    EXPECT_EQ(0xABCDEF01, optionIA->getIAID());
+    EXPECT_EQ(0x02030405, optionIA->getT1());
+    EXPECT_EQ(0x06070809, optionIA->getT2());
 }
 
 };

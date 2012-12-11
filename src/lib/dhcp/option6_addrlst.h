@@ -12,12 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef OPTION6_ADDRLST_H_
-#define OPTION6_ADDRLST_H_
+#ifndef OPTION6_ADDRLST_H
+#define OPTION6_ADDRLST_H
 
-#include <vector>
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
+
+#include <vector>
 
 namespace isc {
 namespace dhcp {
@@ -96,4 +97,4 @@ protected:
 } // isc::dhcp namespace
 } // isc namespace
 
-#endif /* OPTION_ADDRLST_H_ */
+#endif // OPTION_ADDRLST_H

@@ -15,9 +15,9 @@
 #ifndef DHCP6_LOG_H
 #define DHCP6_LOG_H
 
-#include <log/macros.h>
-#include <log/logger_support.h>
 #include <dhcp6/dhcp6_messages.h>
+#include <log/logger_support.h>
+#include <log/macros.h>
 
 namespace isc {
 namespace dhcp {

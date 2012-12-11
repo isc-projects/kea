@@ -216,6 +216,14 @@ createNSEC3RRset(const ZoneNode* node, const RRClass& rrclass) {
      assert(rdataset != NULL);
      assert(rdataset->type == RRType::NSEC3());
 
+     // Check for the rare case of RRSIG-only record; in theory it could exist
+     // but we simply consider it broken for NSEC3.
+     if (rdataset->getRdataCount() == 0) {
+         uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+         isc_throw(DataSourceError, "Broken zone: RRSIG-only NSEC3 record at "
+                   << node->getAbsoluteLabels(labels_buf) << "/" << rrclass);
+     }
+
     // Create the RRset.  Note the DNSSEC flag: NSEC3 implies DNSSEC.
     return (createTreeNodeRRset(node, rdataset, rrclass,
                                 ZoneFinder::FIND_DNSSEC));
@@ -297,8 +305,16 @@ getClosestNSEC(const ZoneData& zone_data,
     }
 
     const ZoneNode* prev_node;
-    while ((prev_node = zone_data.getZoneTree().previousNode(node_path))
-           != NULL) {
+    if (node_path.getLastComparisonResult().getRelation() ==
+        NameComparisonResult::SUBDOMAIN) {
+         // In case the search ended as a sub-domain, the previous node
+         // is already at the top of node_path.
+         prev_node = node_path.getLastComparedNode();
+    } else {
+         prev_node = zone_data.getZoneTree().previousNode(node_path);
+    }
+
+    while (prev_node != NULL) {
         if (!prev_node->isEmpty()) {
             const RdataSet* found =
                 RdataSet::find(prev_node->getData(), RRType::NSEC());
@@ -306,6 +322,7 @@ getClosestNSEC(const ZoneData& zone_data,
                 return (ConstNodeRRset(prev_node, found));
             }
         }
+        prev_node = zone_data.getZoneTree().previousNode(node_path);
     }
     // This must be impossible and should be an internal bug.
     // See the description at the method declaration.
@@ -627,7 +644,10 @@ private:
             // This can be a bit more optimized, but unless we have many
             // requested types the effect is probably marginal.  For now we
             // keep it simple.
-            if (std::find(type_beg, type_end, rdset->type) != type_end) {
+            // Check for getRdataCount is necessary not to include RRSIG-only
+            // records accidentally (should be rare, but possible).
+            if (std::find(type_beg, type_end, rdset->type) != type_end &&
+                rdset->getRdataCount() > 0) {
                 result->push_back(createTreeNodeRRset(node, rdset, rrclass_,
                                                       options, real_name));
             }

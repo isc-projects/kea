@@ -24,6 +24,7 @@
 
 #include <functional>
 #include <string>
+#include <vector>
 
 #include <exceptions/exceptions.h>
 
@@ -103,6 +104,19 @@ public:
     /// \return AF_INET for IPv4 or AF_INET6 for IPv6.
     short getFamily() const;
 
+    /// \brief Convenience function to check for an IPv4 address
+    ///
+    /// \return true if the address is a V4 address
+    bool isV4() const {
+        return (asio_address_.is_v4());
+    }
+
+    /// \brief Convenience function to check for an IPv6 address
+    ///
+    /// \return true if the address is a V6 address
+    bool isV6() const {
+        return (asio_address_.is_v6());
+    }
 
     /// \brief Creates an address from over wire data.
     ///
@@ -110,8 +124,13 @@ public:
     /// \param data pointer to first char of data
     ///
     /// \return Created IOAddress object
-    static IOAddress
-    from_bytes(short family, const uint8_t* data);
+    static IOAddress fromBytes(short family, const uint8_t* data);
+
+    /// \brief Return address as set of bytes
+    ///
+    /// \return Contents of the address as a set of bytes in network-byte
+    ///         order.
+    std::vector<uint8_t> toBytes() const;
 
     /// \brief Compare addresses for equality
     ///

@@ -68,6 +68,13 @@ e.example.org. 	      	      3600 IN NS	ns2.example.org.
 *.wild.example.org.	      3600 IN A		192.0.2.15
 a.*.emptywild.example.org.    3600 IN AAAA	2001:db8::2
 
+;; One of the additional records actually only has RRSIG, which should
+;; be ignored.
+f.example.org. 	      	      3600 IN MX 5 mx1.f.example.org.
+f.example.org. 	      	      3600 IN MX 10 mx2.f.example.org.
+mx1.f.example.org.     	      3600 IN RRSIG A 5 3 3600 20150420235959 20051021000000 40430 example.org. FAKEFAKE
+mx2.f.example.org.     	      3600 IN A 192.0.2.16
+
 ;; additional for an answer RRset (MX) as a result of wildcard
 ;; expansion
 *.wildmx.example.org. 3600 IN MX 1 mx1.example.org.
