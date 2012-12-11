@@ -51,7 +51,7 @@ namespace {
         if (name == TSIGKey::HMACSHA512_NAME()) {
             return (isc::cryptolink::SHA512);
         }
- 
+
         return (isc::cryptolink::UNKNOWN_HASH);
     }
 }
@@ -267,6 +267,16 @@ TSIGKeyRing::add(const TSIGKey& key) {
 TSIGKeyRing::Result
 TSIGKeyRing::remove(const Name& key_name) {
     return (impl_->keys.erase(key_name) == 1 ? SUCCESS : NOTFOUND);
+}
+
+TSIGKeyRing::FindResult
+TSIGKeyRing::find(const Name& key_name) const {
+    TSIGKeyRingImpl::TSIGKeyMap::const_iterator found =
+        impl_->keys.find(key_name);
+    if (found == impl_->keys.end()) {
+        return (FindResult(NOTFOUND, NULL));
+    }
+    return (FindResult(SUCCESS, &((*found).second)));
 }
 
 TSIGKeyRing::FindResult

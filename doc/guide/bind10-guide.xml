@@ -758,7 +758,7 @@ as a dependency earlier -->
           If the configure fails, it may be due to missing or old
           dependencies.
         </para>
-        
+
         <note>
           <para>For notes on configuring and building DHCPv6 with MySQL see <xref linkend="dhcp6-install">.</xref></para>
         </note>
@@ -1841,10 +1841,8 @@ config set /Boss/components/b10-zonemgr/kind dispensable
         <para>
           The key ring lives in the configuration in "tsig_keys/keys". Most of
           the system uses the keys from there &mdash; ACLs, authoritative server to
-          sign responses to signed queries, and <command>b10-xfrout</command>
-          to sign transfers. The <command>b10-xfrin</command> uses its own
-          configuration for keys, but that will be fixed in Trac ticket
-          <ulink url="http://bind10.isc.org/ticket/1351">#1351</ulink>.
+          sign responses to signed queries, and <command>b10-xfrin</command>
+          and <command>b10-xfrout</command> to sign transfers.
         </para>
 
         <para>
@@ -2719,6 +2717,15 @@ TODO
 
       (We assume there has been no zone configuration before).
       </para>
+    </section>
+
+    <section>
+        <title>TSIG</title>
+        If you want to use TSIG for incoming transfers, a system wide TSIG
+        key ring must be configured (see <xref linkend="tsig-key-ring"/>).
+        To specify a key to use, set tsig_key value to the name of the key
+        to use from the key ring.
+&gt; <userinput>config set Xfrin/zones[0]/tsig_key "<option>example.key</option>"</userinput>
     </section>
 
     <section>
