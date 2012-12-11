@@ -57,9 +57,10 @@ public:
     /// \brief The constructor.
     ///
     /// \throw None
-    MessageAttributes() : req_opcode_(Opcode::RESERVED15_CODE) {
-        reset();
-    }
+    MessageAttributes() : req_ip_version_(0), req_transport_protocol_(0),
+                          req_opcode_(Opcode::RESERVED15_CODE),
+                          bit_attributes_()
+    {}
 
     /// \brief Get request opcode.
     /// \return opcode of a request
@@ -167,15 +168,6 @@ public:
     /// \throw None
     void setResponseTruncated(const bool is_truncated) {
         bit_attributes_[RES_IS_TRUNCATED] = is_truncated;
-    }
-
-    /// \brief Reset attributes.
-    /// \throw None
-    void reset() {
-        req_ip_version_ = 0;
-        req_transport_protocol_ = 0;
-        req_opcode_ = Opcode(Opcode::RESERVED15_CODE);
-        bit_attributes_.reset();
     }
 };
 
