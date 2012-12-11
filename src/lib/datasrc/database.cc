@@ -43,7 +43,8 @@ using boost::scoped_ptr;
 
 namespace isc {
 namespace datasrc {
-// RAII-style transaction holder; roll back the transaction unless explicitely committed
+// RAII-style transaction holder; roll back the transaction unless explicitly
+// committed
 namespace {
 class TransactionHolder {
 public:
