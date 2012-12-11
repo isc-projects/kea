@@ -796,11 +796,14 @@ TEST_F(Dhcpv6SrvTest, RenewBasic) {
     boost::scoped_ptr<NakedDhcpv6Srv> srv;
     ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv(0)) );
 
-    IOAddress addr("2001:db8:1:1::cafe:babe");
+    const IOAddress addr("2001:db8:1:1::cafe:babe");
     const uint32_t iaid = 234;
 
-    // generate client-id also duid_
+    // Generate client-id also duid_
     OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(addr));
 
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
@@ -809,11 +812,12 @@ TEST_F(Dhcpv6SrvTest, RenewBasic) {
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
-    // check that the lease is really in the database
+    // Check that the lease is really in the database
     Lease6Ptr l = LeaseMgrFactory::instance().getLease6(addr);
     ASSERT_TRUE(l);
 
-    // Check that T1, T2, preferred, valid and cltt really
+    // Check that T1, T2, preferred, valid and cltt really set and not using
+    // previous (500, 501, etc.) values
     EXPECT_NE(l->t1_, subnet_->getT1());
     EXPECT_NE(l->t2_, subnet_->getT2());
     EXPECT_NE(l->preferred_lft_, subnet_->getPreferred());
@@ -825,38 +829,37 @@ TEST_F(Dhcpv6SrvTest, RenewBasic) {
     req->setRemoteAddr(IOAddress("fe80::abcd"));
     boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
 
-    ASSERT_TRUE(subnet_->inPool(addr));
     OptionPtr renewed_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(renewed_addr_opt);
     req->addOption(ia);
     req->addOption(clientid);
 
-    // server-id is mandatory in RENEW
+    // Server-id is mandatory in RENEW
     req->addOption(srv->getServerID());
 
     // Pass it to the server and hope for a REPLY
     Pkt6Ptr reply = srv->processRenew(req);
 
-    // check if we get response at all
+    // Check if we get response at all
     checkResponse(reply, DHCPV6_REPLY, 1234);
 
     OptionPtr tmp = reply->getOption(D6O_IA_NA);
     ASSERT_TRUE(tmp);
 
-    // check that IA_NA was returned and that there's an address included
+    // Check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(reply, 234, subnet_->getT1(),
                                                            subnet_->getT2());
 
-    // check that we've got the address we requested
+    // Check that we've got the address we requested
     checkIAAddr(addr_opt, addr, subnet_->getPreferred(), subnet_->getValid());
 
-    // check DUIDs
+    // Check DUIDs
     checkServerId(reply, srv->getServerID());
     checkClientId(reply, clientid);
 
-    // check that the lease is really in the database
+    // Check that the lease is really in the database
     l = checkLease(duid_, reply->getOption(D6O_IA_NA), addr_opt);
-    EXPECT_TRUE(l);
+    ASSERT_TRUE(l);
 
     // Check that T1, T2, preferred, valid and cltt were really updated
     EXPECT_EQ(l->t1_, subnet_->getT1());
@@ -864,10 +867,10 @@ TEST_F(Dhcpv6SrvTest, RenewBasic) {
     EXPECT_EQ(l->preferred_lft_, subnet_->getPreferred());
     EXPECT_EQ(l->valid_lft_, subnet_->getValid());
 
-    // checking for CLTT is a bit tricky if we want to avoid off by 1 errors
+    // Checking for CLTT is a bit tricky if we want to avoid off by 1 errors
     int32_t cltt = static_cast<int32_t>(l->cltt_);
     int32_t expected = static_cast<int32_t>(time(NULL));
-    // 1 >= difference between cltt and expected
+    // equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease6(addr_opt->getAddress()));
@@ -886,18 +889,22 @@ TEST_F(Dhcpv6SrvTest, RenewBasic) {
 // - returned REPLY message has IA that includes STATUS-CODE
 // - No lease in LeaseMgr
 TEST_F(Dhcpv6SrvTest, RenewReject) {
+
     boost::scoped_ptr<NakedDhcpv6Srv> srv;
     ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv(0)) );
 
-    IOAddress addr("2001:db8:1:1::dead");
+    const IOAddress addr("2001:db8:1:1::dead");
     const uint32_t transid = 1234;
     const uint32_t valid_iaid = 234;
     const uint32_t bogus_iaid = 456;
 
-    // generate client-id also duid_
+    // Quick sanity check that the address we're about to use is ok
+    ASSERT_TRUE(subnet_->inPool(addr));
+
+    // GenerateClientId() also sets duid_
     OptionPtr clientid = generateClientId();
 
-    // check that the lease is really in the database
+    // Check that the lease is NOT in the database
     Lease6Ptr l = LeaseMgrFactory::instance().getLease6(addr);
     ASSERT_FALSE(l);
 
@@ -906,13 +913,12 @@ TEST_F(Dhcpv6SrvTest, RenewReject) {
     req->setRemoteAddr(IOAddress("fe80::abcd"));
     boost::shared_ptr<Option6IA> ia = generateIA(bogus_iaid, 1500, 3000);
 
-    ASSERT_TRUE(subnet_->inPool(addr));
     OptionPtr renewed_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(renewed_addr_opt);
     req->addOption(ia);
     req->addOption(clientid);
 
-    // server-id is mandatory in RENEW
+    // Server-id is mandatory in RENEW
     req->addOption(srv->getServerID());
 
     // Case 1: No lease known to server
@@ -971,7 +977,6 @@ TEST_F(Dhcpv6SrvTest, RenewReject) {
     ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(ia);
     checkRejectedIA_NA(ia, STATUS_NoAddrsAvail);
-
 
     lease = LeaseMgrFactory::instance().getLease6(addr);
     ASSERT_TRUE(lease);

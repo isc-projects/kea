@@ -22,6 +22,11 @@ successfully established a session with the BIND 10 control channel.
 This debug message is issued just before the IPv6 DHCP server attempts
 to establish a session with the BIND 10 control channel.
 
+% DHCP6_CLIENTID_MISSING mandatory client-id option is missing, message from %1 dropped
+This error message indicates that received message does not include
+mandatory client-id option that is necessary for address assignment,
+so the message is being dropped. This likely indicates a buggy client.
+
 % DHCP6_COMMAND_RECEIVED received command %1, arguments: %2
 A debug message listing the command (and possible arguments) received
 from the BIND 10 control system by the IPv6 DHCP server.
@@ -82,10 +87,11 @@ received REQUEST) a lease for a given client. There may be many reasons for
 such failure. Each specific failure is logged in a separate log entry.
 
 % DHCP6_REQUIRED_OPTIONS_CHECK_FAIL %1 message received from %2 failed the following check: %3
-This message indicates that received message has invalid number of options:
-mandatory client-id option is missing, server-id forbidden in that particular
-type of message is present, there is more than one instance of client-id
-or server-id etc. Exact reason for rejecting the packed is printed.
+This message indicates that received DHCPv6 packet is invalid.  This may be due
+to a number of reasons, e.g. the mandatory client-id option is missing,
+the server-id forbidden in that particular type of message is present,
+there is more than one instance of client-id or server-id present,
+etc. The exact reason for rejecting the packet is included in the message.
 
 % DHCP6_NOT_RUNNING IPv6 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
