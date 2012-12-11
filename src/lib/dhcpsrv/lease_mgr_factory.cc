@@ -43,17 +43,17 @@ LeaseMgrFactory::getLeaseMgrPtr() {
 }
 
 LeaseMgr::ParameterMap
-LeaseMgrFactory::parse(const std::string& dbconfig) {
+LeaseMgrFactory::parse(const std::string& dbaccess) {
     LeaseMgr::ParameterMap mapped_tokens;
 
-    if (!dbconfig.empty()) {
+    if (!dbaccess.empty()) {
         vector<string> tokens;
 
         // We need to pass a string to is_any_of, not just char*. Otherwise
         // there are cryptic warnings on Debian6 running g++ 4.4 in
         // /usr/include/c++/4.4/bits/stl_algo.h:2178 "array subscript is above
         // array bounds"
-        boost::split(tokens, dbconfig, boost::is_any_of( string("\t ") ));
+        boost::split(tokens, dbaccess, boost::is_any_of( string("\t ") ));
         BOOST_FOREACH(std::string token, tokens) {
             size_t pos = token.find("=");
             if (pos != string::npos) {
@@ -70,12 +70,39 @@ LeaseMgrFactory::parse(const std::string& dbconfig) {
     return (mapped_tokens);
 }
 
+std::string
+LeaseMgrFactory::redactedAccessString(const LeaseMgr::ParameterMap& parameters) {
+    // Reconstruct the access string
+    std::string access = "";
+    for (LeaseMgr::ParameterMap::const_iterator i = parameters.begin();
+         i != parameters.end(); ++i) {
+
+        // Separate second and subsequent tokens.
+        if (!access.empty()) {
+            access += " ";
+        }
+
+        // Append name of parameter
+        access += i->first;
+        access += "=";
+
+        // Redact the password
+        if (i->first == std::string("password")) {
+            access += "*****";
+        } else {
+            access += i->second;
+        }
+    }
+
+    return (access);
+}
+
 void
-LeaseMgrFactory::create(const std::string& dbconfig) {
+LeaseMgrFactory::create(const std::string& dbaccess) {
     const std::string type = "type";
 
     // Is "type" present?
-    LeaseMgr::ParameterMap parameters = parse(dbconfig);
+    LeaseMgr::ParameterMap parameters = parse(dbaccess);
     if (parameters.find(type) == parameters.end()) {
         isc_throw(InvalidParameter, "Database configuration parameters do not "
                   "contain the 'type' keyword");
@@ -94,7 +121,7 @@ LeaseMgrFactory::create(const std::string& dbconfig) {
     }
 
     // Get here on no match
-    isc_throw(InvalidType, "Database configuration parameter 'type' does "
+    isc_throw(InvalidType, "Database access parameter 'type' does "
               "not specify a supported database backend");
 }
 
