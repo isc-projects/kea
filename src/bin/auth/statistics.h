@@ -77,43 +77,44 @@ public:
                           bit_attributes_()
     {}
 
-    /// \brief Get request opcode.
-    /// \return opcode of a request
+    /// \brief Return request opcode.
+    /// \return opcode of the request
     /// \throw None
     const Opcode& getRequestOpCode() const {
         return (req_opcode_);
     }
 
     /// \brief Set request opcode.
+    /// \param opcode Opcode of the request
     /// \throw None
     void setRequestOpCode(const Opcode& opcode) {
         req_opcode_ = opcode;
     }
 
-    /// \brief Get IP version carrying a request.
-    /// \return IP version carrying a request
+    /// \brief Return IP version carrying the request.
+    /// \return IP version carrying the request
     /// \throw None
     IPVersion getRequestIPVersion() const {
         return (req_ip_version_);
     }
 
-    /// \brief Set IP version carrying a request.
-    /// \param ip_version IP_VERSION_IPV4 or IP_VERSION_IPV6
+    /// \brief Set IP version carrying the request.
+    /// \param ip_version IP version carrying the request
     /// \throw None
     void setRequestIPVersion(const IPVersion ip_version) {
         assert(ip_version != IP_VERSION_UNSPEC);
         req_ip_version_ = ip_version;
     }
 
-    /// \brief Get transport protocol carrying a request.
-    /// \return Transport protocol carrying a request
+    /// \brief Return transport protocol carrying the request.
+    /// \return Transport protocol carrying the request
     /// \throw None
     TransportProtocol getRequestTransportProtocol() const {
         return (req_transport_protocol_);
     }
 
-    /// \brief Set transport protocol carrying a request.
-    /// \param transport_protocol TRANSPORT_UDP or TRANSPORT_TCP
+    /// \brief Set transport protocol carrying the request.
+    /// \param transport_protocol Transport protocol carrying the request
     /// \throw None
     void setRequestTransportProtocol(
         const TransportProtocol transport_protocol)
@@ -122,51 +123,51 @@ public:
         req_transport_protocol_ = transport_protocol;
     }
 
-    /// \brief Get request is EDNS version 0.
-    /// \return true if EDNS version 0
+    /// \brief Return EDNS attribute of the request.
+    /// \return true if EDNS version of the request is 0
     /// \throw None
     bool getRequestEDNS0() const {
         return (bit_attributes_[REQ_IS_EDNS_0]);
     }
 
-    /// \brief Set request EDNS attributes.
-    /// \param is_edns_0 true if request is EDNS version 0
+    /// \brief Set EDNS attribute of the request.
+    /// \param is_edns_0 true if EDNS version of the request is 0
     /// \throw None
     void setRequestEDNS0(const bool is_edns_0) {
         bit_attributes_[REQ_IS_EDNS_0] = is_edns_0;
     }
 
-    /// \brief Get request DNSSEC OK (DO) bit.
-    /// \return true if DNSSEC OK (DO) bit is set
+    /// \brief Return DNSSEC OK (DO) bit of the request.
+    /// \return true if DNSSEC OK (DO) bit of the request is set
     /// \throw None
     bool getRequestDO() const {
         return (bit_attributes_[REQ_IS_DNSSEC_OK]);
     }
 
-    /// \brief Set request DNSSEC OK (DO) bit.
-    /// \param is_dnssec_ok true if DNSSEC OK (DO) bit is set
+    /// \brief Set DNSSEC OK (DO) bit of the request.
+    /// \param is_dnssec_ok true if DNSSEC OK (DO) bit of the request is set
     /// \throw None
     void setRequestDO(const bool is_dnssec_ok) {
         bit_attributes_[REQ_IS_DNSSEC_OK] = is_dnssec_ok;
     }
 
-    /// \brief Get request TSIG signed.
-    /// \return true if request is TSIG signed
+    /// \brief Return TSIG attribute of the request.
+    /// \return true if the request is TSIG signed
     /// \throw None
     bool getRequestSigTSIG() const {
         return (bit_attributes_[REQ_IS_TSIG]);
     }
 
-    /// \brief Get request signature is bad.
-    /// \return true if request signature is bad
+    /// \brief Return the status of the signature of the request.
+    /// \return true if the signature of the request is bad
     /// \throw None
     bool getRequestSigBadSig() const {
         return (bit_attributes_[REQ_IS_BADSIG]);
     }
 
-    /// \brief Set request TSIG attributes.
-    /// \param is_tsig true if request is TSIG signed
-    /// \param is_badsig true if request signature is bad
+    /// \brief Set TSIG attributes of the request.
+    /// \param is_tsig true if the request is TSIG signed
+    /// \param is_badsig true if the signature of the request is bad
     /// \throw None
     void setRequestSig(const bool is_tsig, const bool is_badsig) {
         assert(!(!is_tsig && is_badsig));
@@ -174,14 +175,14 @@ public:
         bit_attributes_[REQ_IS_BADSIG] = is_badsig;
     }
 
-    /// \brief Get if the response is truncated.
+    /// \brief Return TC (truncated) bit of the response.
     /// \return true if the response is truncated
     /// \throw None
     bool getResponseTruncated() const {
         return (bit_attributes_[RES_IS_TRUNCATED]);
     }
 
-    /// \brief Set if the response is truncated.
+    /// \brief Set TC (truncated) bit of the response.
     /// \param is_truncated true if the response is truncated
     /// \throw None
     void setResponseTruncated(const bool is_truncated) {
