@@ -17,6 +17,7 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcp/option4_addrlst.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
@@ -61,14 +62,18 @@ public:
     /// option has been initialized correctly.
     ///
     /// @param code option code.
-    /// @param bug buffer to be used to create option instance.
+    /// @param begin iterator pointing a begining of a buffer to
+    /// be used to create option instance.
+    /// @param end iterator pointing an end of a buffer to be
+    /// used to create option instance.
     /// @param expected_type type of the option created by the
     /// factory function returned by the option definition.
     static void testStdOptionDefs4(const uint16_t code,
-                                   const OptionBuffer& buf,
+                                   const OptionBufferConstIter begin,
+                                   const OptionBufferConstIter end,
                                    const std::type_info& expected_type) {
         // Use V4 universe.
-        testStdOptionDefs(Option::V4, code, buf, expected_type);
+        testStdOptionDefs(Option::V4, code, begin, end, expected_type);
     }
 
     /// @brief Test DHCPv6 option definition.
@@ -77,14 +82,18 @@ public:
     /// option has been initialized correctly.
     ///
     /// @param code option code.
-    /// @param bug buffer to be used to create option instance.
+    /// @param begin iterator pointing a begining of a buffer to
+    /// be used to create option instance.
+    /// @param end iterator pointing an end of a buffer to be
+    /// used to create option instance.
     /// @param expected_type type of the option created by the
     /// factory function returned by the option definition.
     static void testStdOptionDefs6(const uint16_t code,
-                                   const OptionBuffer& buf,
+                                   const OptionBufferConstIter begin,
+                                   const OptionBufferConstIter end,
                                    const std::type_info& expected_type) {
         // Use V6 universe.
-        testStdOptionDefs(Option::V6, code, buf, expected_type);
+        testStdOptionDefs(Option::V6, code, begin, end, expected_type);
     }
 private:
 
@@ -94,12 +103,16 @@ private:
     /// option has been initialized correctly.
     ///
     /// @param code option code.
-    /// @param bug buffer to be used to create option instance.
+    /// @param begin iterator pointing a begining of a buffer to
+    /// be used to create option instance.
+    /// @param end iterator pointing an end of a buffer to be
+    /// used to create option instance.
     /// @param expected_type type of the option created by the
     /// factory function returned by the option definition.
     static void testStdOptionDefs(const Option::Universe u,
                                   const uint16_t code,
-                                  const OptionBuffer& buf,
+                                  const OptionBufferConstIter begin,
+                                  const OptionBufferConstIter end,
                                   const std::type_info& expected_type) {
         // Get all option definitions, we will use them to extract
         // the definition for a particular option code.
@@ -125,8 +138,8 @@ private:
         ASSERT_NO_THROW(def->validate());
         OptionPtr option;
         // Create the option.
-        ASSERT_NO_THROW(option = def->optionFactory(u, code, buf))
-            << "Option creation failed to option code " << code;
+        ASSERT_NO_THROW(option = def->optionFactory(u, code, begin, end))
+            << "Option creation failed for option code " << code;
         // Make sure it is not NULL.
         ASSERT_TRUE(option);
         // And the actual object type is the one that we expect.
@@ -435,157 +448,228 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     // Create a buffer that holds dummy option data.
     // It will be used to create most of the options.
     std::vector<uint8_t> buf(48, 1);
+    OptionBufferConstIter begin = buf.begin();
+    OptionBufferConstIter end = buf.begin();
 
-    LibDhcpTest::testStdOptionDefs4(DHO_SUBNET_MASK, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_TIME_OFFSET, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_ROUTERS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_TIME_SERVERS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_NAME_SERVERS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_DOMAIN_NAME_SERVERS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_LOG_SERVERS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_COOKIE_SERVERS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_LPR_SERVERS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_IMPRESS_SERVERS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_RESOURCE_LOCATION_SERVERS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_HOST_NAME, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_BOOT_SIZE, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_MERIT_DUMP, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_DOMAIN_NAME, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_SWAP_SERVER, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_ROOT_PATH, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_EXTENSIONS_PATH, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_IP_FORWARDING, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_NON_LOCAL_SOURCE_ROUTING, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_POLICY_FILTER, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_MAX_DGRAM_REASSEMBLY, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_MAX_DGRAM_REASSEMBLY, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_DEFAULT_IP_TTL, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_PATH_MTU_AGING_TIMEOUT, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_PATH_MTU_PLATEAU_TABLE, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_INTERFACE_MTU, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_ALL_SUBNETS_LOCAL, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_BROADCAST_ADDRESS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_PERFORM_MASK_DISCOVERY, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_MASK_SUPPLIER, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_ROUTER_DISCOVERY, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_ROUTER_SOLICITATION_ADDRESS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_STATIC_ROUTES, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_TRAILER_ENCAPSULATION, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_ARP_CACHE_TIMEOUT, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_IEEE802_3_ENCAPSULATION, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_DEFAULT_TCP_TTL, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_TCP_KEEPALIVE_INTERVAL, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_TCP_KEEPALIVE_GARBAGE, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_NIS_DOMAIN, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_NIS_SERVERS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_NTP_SERVERS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_VENDOR_ENCAPSULATED_OPTIONS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_NETBIOS_NAME_SERVERS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_NETBIOS_DD_SERVER, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_NETBIOS_NODE_TYPE, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_NETBIOS_SCOPE, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_FONT_SERVERS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_X_DISPLAY_MANAGER, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_REQUESTED_ADDRESS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_LEASE_TIME, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_OPTION_OVERLOAD, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_MESSAGE_TYPE, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_SERVER_IDENTIFIER, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_PARAMETER_REQUEST_LIST, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_MESSAGE, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_MAX_MESSAGE_SIZE, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_RENEWAL_TIME, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_REBINDING_TIME, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_VENDOR_CLASS_IDENTIFIER, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_CLIENT_IDENTIFIER, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_NWIP_DOMAIN_NAME, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_NWIP_SUBOPTIONS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_USER_CLASS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_FQDN, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_AGENT_OPTIONS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_AUTHENTICATE, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_CLIENT_LAST_TRANSACTION_TIME, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_ASSOCIATED_IP, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_SUBNET_SELECTION, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_DOMAIN_SEARCH, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_VIVCO_SUBOPTIONS, buf,
-                                    typeid(OptionCustom));
-    LibDhcpTest::testStdOptionDefs4(DHO_VIVSO_SUBOPTIONS, buf,
+    LibDhcpTest::testStdOptionDefs4(DHO_SUBNET_MASK, begin, end,
                                     typeid(OptionCustom));
 
+    LibDhcpTest::testStdOptionDefs4(DHO_TIME_OFFSET, begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
 
+    LibDhcpTest::testStdOptionDefs4(DHO_ROUTERS, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_TIME_SERVERS, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NAME_SERVERS, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DOMAIN_NAME_SERVERS, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_LOG_SERVERS, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_COOKIE_SERVERS, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_LPR_SERVERS, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_IMPRESS_SERVERS, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_RESOURCE_LOCATION_SERVERS, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_HOST_NAME, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_BOOT_SIZE, begin, begin + 2,
+                                    typeid(OptionInt<uint16_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_MERIT_DUMP, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DOMAIN_NAME, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_SWAP_SERVER, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_ROOT_PATH, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_EXTENSIONS_PATH, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_IP_FORWARDING, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NON_LOCAL_SOURCE_ROUTING, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_POLICY_FILTER, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_MAX_DGRAM_REASSEMBLY, begin, begin + 2,
+                                    typeid(OptionInt<uint16_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DEFAULT_IP_TTL, begin, begin + 1,
+                                    typeid(OptionInt<uint8_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_PATH_MTU_AGING_TIMEOUT, begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_PATH_MTU_PLATEAU_TABLE, begin, begin + 10,
+                                    typeid(OptionIntArray<uint16_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_INTERFACE_MTU, begin, begin + 2,
+                                    typeid(OptionInt<uint16_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_ALL_SUBNETS_LOCAL, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_BROADCAST_ADDRESS, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_PERFORM_MASK_DISCOVERY, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_MASK_SUPPLIER, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_ROUTER_DISCOVERY, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_ROUTER_SOLICITATION_ADDRESS, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_STATIC_ROUTES, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_TRAILER_ENCAPSULATION, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_ARP_CACHE_TIMEOUT, begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_IEEE802_3_ENCAPSULATION, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DEFAULT_TCP_TTL, begin, begin + 1,
+                                    typeid(OptionInt<uint8_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_TCP_KEEPALIVE_INTERVAL, begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_TCP_KEEPALIVE_GARBAGE, begin, begin + 1,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NIS_DOMAIN, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NIS_SERVERS, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NTP_SERVERS, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_VENDOR_ENCAPSULATED_OPTIONS, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NETBIOS_NAME_SERVERS, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NETBIOS_DD_SERVER, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NETBIOS_NODE_TYPE, begin, begin + 1,
+                                    typeid(OptionInt<uint8_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NETBIOS_SCOPE, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_FONT_SERVERS, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_X_DISPLAY_MANAGER, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_REQUESTED_ADDRESS, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_LEASE_TIME, begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_OPTION_OVERLOAD, begin, begin + 1,
+                                    typeid(OptionInt<uint8_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_MESSAGE_TYPE, begin, begin + 1,
+                                    typeid(OptionInt<uint8_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_SERVER_IDENTIFIER, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_PARAMETER_REQUEST_LIST, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_MESSAGE, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_MAX_MESSAGE_SIZE, begin, begin + 2,
+                                    typeid(OptionInt<uint16_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_RENEWAL_TIME, begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_REBINDING_TIME, begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_VENDOR_CLASS_IDENTIFIER, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_CLIENT_IDENTIFIER, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NWIP_DOMAIN_NAME, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NWIP_SUBOPTIONS, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_USER_CLASS, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_FQDN, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_AGENT_OPTIONS, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_AUTHENTICATE, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_CLIENT_LAST_TRANSACTION_TIME,
+                                    begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_ASSOCIATED_IP, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_SUBNET_SELECTION, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DOMAIN_SEARCH, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_VIVCO_SUBOPTIONS, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_VIVSO_SUBOPTIONS, begin, end,
+                                    typeid(Option));
 }
 
 // Test that definitions of standard options have been initialized
@@ -598,6 +682,8 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     // Create a buffer that holds dummy option data.
     // It will be used to create most of the options.
     std::vector<uint8_t> buf(48, 1);
+    OptionBufferConstIter begin = buf.begin();
+    OptionBufferConstIter end = buf.end();
 
     // Prepare buffer holding an array of FQDNs.
     const char data[] = {
@@ -620,122 +706,144 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                            fqdn_buf.end());
 
     // The actual test starts here for all supported option codes.
-    LibDhcpTest::testStdOptionDefs6(D6O_CLIENTID, buf, typeid(Option));
+    LibDhcpTest::testStdOptionDefs6(D6O_CLIENTID, begin, end,
+                                    typeid(Option));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_SERVERID, buf, typeid(Option));
+    LibDhcpTest::testStdOptionDefs6(D6O_SERVERID, begin, end,
+                                    typeid(Option));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_IA_NA, buf, typeid(Option6IA));
+    LibDhcpTest::testStdOptionDefs6(D6O_IA_NA, begin, end,
+                                    typeid(Option6IA));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_IA_TA, buf,
+    LibDhcpTest::testStdOptionDefs6(D6O_IA_TA, begin, begin + 4,
                                     typeid(OptionInt<uint32_t>));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_IAADDR, buf, typeid(Option6IAAddr));
+    LibDhcpTest::testStdOptionDefs6(D6O_IAADDR, begin, end,
+                                    typeid(Option6IAAddr));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_ORO, buf,
+    LibDhcpTest::testStdOptionDefs6(D6O_ORO, begin, end,
                                     typeid(OptionIntArray<uint16_t>));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_PREFERENCE, buf,
+    LibDhcpTest::testStdOptionDefs6(D6O_PREFERENCE, begin, begin + 1,
                                     typeid(OptionInt<uint8_t>));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_ELAPSED_TIME, buf,
+    LibDhcpTest::testStdOptionDefs6(D6O_ELAPSED_TIME, begin, begin + 2,
                                     typeid(OptionInt<uint16_t>));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_RELAY_MSG, buf, typeid(Option));
+    LibDhcpTest::testStdOptionDefs6(D6O_RELAY_MSG, begin, end,
+                                    typeid(Option));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_STATUS_CODE, buf, typeid(OptionCustom));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_RAPID_COMMIT, buf, typeid(Option));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_USER_CLASS, buf, typeid(Option));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_CLASS, buf,
+    LibDhcpTest::testStdOptionDefs6(D6O_STATUS_CODE, begin, end,
                                     typeid(OptionCustom));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_OPTS, buf, typeid(OptionCustom));
+    LibDhcpTest::testStdOptionDefs6(D6O_RAPID_COMMIT, begin, end,
+                                    typeid(Option));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_INTERFACE_ID, buf, typeid(Option));
+    LibDhcpTest::testStdOptionDefs6(D6O_USER_CLASS, begin, end,
+                                    typeid(Option));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_RECONF_MSG, buf,
+    LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_CLASS, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_OPTS, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_INTERFACE_ID, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_RECONF_MSG, begin, begin + 1,
                                     typeid(OptionInt<uint8_t>));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_RECONF_ACCEPT, buf, typeid(Option));
+    LibDhcpTest::testStdOptionDefs6(D6O_RECONF_ACCEPT, begin, end,
+                                    typeid(Option));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_SIP_SERVERS_DNS, fqdn_buf,
+    LibDhcpTest::testStdOptionDefs6(D6O_SIP_SERVERS_DNS, fqdn_buf.begin(),
+                                    fqdn_buf.end(),
                                     typeid(OptionCustom));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_SIP_SERVERS_ADDR, buf,
+    LibDhcpTest::testStdOptionDefs6(D6O_SIP_SERVERS_ADDR, begin, end,
                                     typeid(Option6AddrLst));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_NAME_SERVERS, buf,
+    LibDhcpTest::testStdOptionDefs6(D6O_NAME_SERVERS, begin, end,
                                     typeid(Option6AddrLst));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_DOMAIN_SEARCH, fqdn_buf,
+    LibDhcpTest::testStdOptionDefs6(D6O_DOMAIN_SEARCH, fqdn_buf.begin(),
+                                    fqdn_buf.end(), typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_IA_PD, begin, end,
+                                    typeid(Option6IA));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_IAPREFIX, begin, end,
                                     typeid(OptionCustom));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_IA_PD, buf, typeid(Option6IA));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_IAPREFIX, buf, typeid(OptionCustom));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_NIS_SERVERS, buf,
+    LibDhcpTest::testStdOptionDefs6(D6O_NIS_SERVERS, begin, end,
                                     typeid(Option6AddrLst));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_NISP_SERVERS, buf,
+    LibDhcpTest::testStdOptionDefs6(D6O_NISP_SERVERS, begin, end,
                                     typeid(Option6AddrLst));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_NIS_DOMAIN_NAME, fqdn_buf,
+    LibDhcpTest::testStdOptionDefs6(D6O_NIS_DOMAIN_NAME, fqdn_buf.begin(),
+                                    fqdn_buf.end(),
                                     typeid(OptionCustom));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_NISP_DOMAIN_NAME, fqdn_buf,
+    LibDhcpTest::testStdOptionDefs6(D6O_NISP_DOMAIN_NAME, fqdn_buf.begin(),
+                                    fqdn_buf.end(),
                                     typeid(OptionCustom));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_SNTP_SERVERS, buf,
+    LibDhcpTest::testStdOptionDefs6(D6O_SNTP_SERVERS, begin, end,
                                     typeid(Option6AddrLst));
 
     LibDhcpTest::testStdOptionDefs6(D6O_INFORMATION_REFRESH_TIME,
-                                    buf, typeid(OptionInt<uint32_t>));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_BCMCS_SERVER_D, fqdn_buf,
-                                    typeid(OptionCustom));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_BCMCS_SERVER_A, buf,
-                                    typeid(Option6AddrLst));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_GEOCONF_CIVIC, buf,
-                                    typeid(OptionCustom));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_REMOTE_ID, buf, typeid(OptionCustom));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_SUBSCRIBER_ID, buf,typeid(Option));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_CLIENT_FQDN, client_fqdn_buf,
-                                    typeid(OptionCustom));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_PANA_AGENT, buf,
-                                    typeid(Option6AddrLst));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_PANA_AGENT, buf,
-                                    typeid(Option6AddrLst));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_NEW_POSIX_TIMEZONE, buf,
-                                    typeid(OptionCustom));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_NEW_TZDB_TIMEZONE, buf,
-                                    typeid(OptionCustom));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_ERO, buf,
-                                    typeid(OptionIntArray<uint16_t>));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_LQ_QUERY, buf, typeid(OptionCustom));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_CLIENT_DATA, buf, typeid(Option));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_CLT_TIME, buf,
+                                    begin, begin + 4,
                                     typeid(OptionInt<uint32_t>));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_LQ_RELAY_DATA, buf,
+    LibDhcpTest::testStdOptionDefs6(D6O_BCMCS_SERVER_D, fqdn_buf.begin(),
+                                    fqdn_buf.end(),
                                     typeid(OptionCustom));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_LQ_CLIENT_LINK, buf,
+    LibDhcpTest::testStdOptionDefs6(D6O_BCMCS_SERVER_A, begin, end,
+                                    typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_GEOCONF_CIVIC, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_REMOTE_ID, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_SUBSCRIBER_ID, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_CLIENT_FQDN, client_fqdn_buf.begin(),
+                                    client_fqdn_buf.end(), typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_PANA_AGENT, begin, end,
+                                    typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_PANA_AGENT, begin, end,
+                                    typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_NEW_POSIX_TIMEZONE, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_NEW_TZDB_TIMEZONE, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_ERO, begin, end,
+                                    typeid(OptionIntArray<uint16_t>));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_LQ_QUERY, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_CLIENT_DATA, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_CLT_TIME, begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_LQ_RELAY_DATA, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_LQ_CLIENT_LINK, begin, end,
                                     typeid(Option6AddrLst));
 }
 
