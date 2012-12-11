@@ -254,12 +254,12 @@ TEST_F(TSIGKeyRingTest, find) {
 
     // But with just the name it should work
     const TSIGKeyRing::FindResult result4(keyring.find(key_name));
-    EXPECT_EQ(TSIGKeyRing::SUCCESS, result1.code);
-    EXPECT_EQ(key_name, result1.key->getKeyName());
-    EXPECT_EQ(TSIGKey::HMACSHA256_NAME(), result1.key->getAlgorithmName());
+    EXPECT_EQ(TSIGKeyRing::SUCCESS, result4.code);
+    EXPECT_EQ(key_name, result4.key->getKeyName());
+    EXPECT_EQ(TSIGKey::HMACSHA256_NAME(), result4.key->getAlgorithmName());
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, secret, secret_len,
-                        result1.key->getSecret(),
-                        result1.key->getSecretLength());
+                        result4.key->getSecret(),
+                        result4.key->getSecretLength());
 }
 
 TEST_F(TSIGKeyRingTest, findFromSome) {
