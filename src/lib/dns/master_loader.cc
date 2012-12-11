@@ -207,7 +207,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
                     case MasterToken::END_OF_FILE:
                         callbacks_.warning(lexer_.getSourceName(),
                                            lexer_.getSourceLine(),
-                                           "Unexpected end ond of file");
+                                           "File does not end with newline");
                         // TODO: Try pop in case this is not the only
                         // source
                         return (true);
