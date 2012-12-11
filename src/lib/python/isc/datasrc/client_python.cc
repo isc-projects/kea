@@ -92,6 +92,38 @@ DataSourceClient_findZone(PyObject* po_self, PyObject* args) {
 }
 
 PyObject*
+DataSourceClient_createZone(PyObject* po_self, PyObject* args) {
+    s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
+    PyObject *name;
+    if (PyArg_ParseTuple(args, "O!", &name_type, &name)) {
+        try {
+            const bool result = self->client->createZone(PyName_ToName(name));
+            if (result) {
+                Py_RETURN_TRUE;
+            } else {
+                Py_RETURN_FALSE;
+            }
+        } catch (const DataSourceError& dse) {
+            PyErr_SetString(getDataSourceException("Error"), dse.what());
+            return (NULL);
+        } catch (const isc::NotImplemented& ni) {
+            PyErr_SetString(getDataSourceException("NotImplemented"),
+                            ni.what());
+            return (NULL);
+        } catch (const std::exception& exc) {
+            PyErr_SetString(getDataSourceException("Error"), exc.what());
+            return (NULL);
+        } catch (...) {
+            PyErr_SetString(getDataSourceException("Error"),
+                            "Unexpected exception");
+            return (NULL);
+        }
+    } else {
+        return (NULL);
+    }
+}
+
+PyObject*
 DataSourceClient_getIterator(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     PyObject* name_obj;
@@ -230,6 +262,8 @@ DataSourceClient_getJournalReader(PyObject* po_self, PyObject* args) {
 PyMethodDef DataSourceClient_methods[] = {
     { "find_zone", DataSourceClient_findZone, METH_VARARGS,
       DataSourceClient_findZone_doc },
+    { "create_zone", DataSourceClient_createZone, METH_VARARGS,
+      DataSourceClient_createZone_doc },
     { "get_iterator",
       DataSourceClient_getIterator, METH_VARARGS,
       DataSourceClient_getIterator_doc },
