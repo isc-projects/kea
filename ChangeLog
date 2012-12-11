@@ -1,6 +1,7 @@
 519.	[bug]		muks
 	Fixed a problem in inmem NSEC lookup which caused assert failures
-	in some cases.
+	when a non-existent domain was queried, which was a sub-domain of
+	a domain that existed.
 	(Trac #2504, git 835553eb309d100b062051f7ef18422d2e8e3ae4)
 
 518.	[func]		stephen
