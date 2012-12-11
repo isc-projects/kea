@@ -48,9 +48,10 @@ public:
     /// @warning this function does not perform type check. Make
     /// sure that only int8_t or uint8_t type is used.
     ///
+    /// @param u universe (v4 or V6).
     /// @tparam T int8_t or uint8_t.
     template<typename T>
-    void bufferToIntTest8() {
+    void bufferToIntTest8(const Option::Universe u) {
         // Create option that conveys array of multiple uint8_t or int8_t values.
         // In fact there is no need to use this template class for array
         // of uint8_t values because Option class is sufficient - it
@@ -63,14 +64,14 @@ public:
 
         // Constructor throws exception if provided buffer is empty.
         EXPECT_THROW(
-            OptionIntArray<T>(opt_code, buf_.begin(), buf_.begin()),
+            OptionIntArray<T>(u, opt_code, buf_.begin(), buf_.begin()),
             isc::OutOfRange
         );
 
         // Provided buffer is not empty so it should not throw exception.
         ASSERT_NO_THROW(
             opt = boost::shared_ptr<
-                OptionIntArray<T> >(new OptionIntArray<T>(opt_code, buf_.begin(),
+                OptionIntArray<T> >(new OptionIntArray<T>(u, opt_code, buf_.begin(),
                                                           buf_.begin() + opt_len))
         );
 
@@ -120,9 +121,10 @@ public:
     /// @warning this function does not perform type check. Make
     /// sure that only int16_t or uint16_t type is used.
     ///
+    /// @param u universe (V4 or V6).
     /// @tparam T int16_t or uint16_t.
     template<typename T>
-    void bufferToIntTest16() {
+    void bufferToIntTest16(const Option::Universe u) {
         // Create option that conveys array of multiple uint16_t or int16_t values.
         boost::shared_ptr<OptionIntArray<T> > opt;
         const int opt_len = 20;
@@ -130,25 +132,25 @@ public:
 
         // Constructor throws exception if provided buffer is empty.
         EXPECT_THROW(
-            OptionIntArray<T>(opt_code, buf_.begin(), buf_.begin()),
+            OptionIntArray<T>(u, opt_code, buf_.begin(), buf_.begin()),
             isc::OutOfRange
         );
 
         // Constructor throws exception if provided buffer's length is not
         // multiple of 2-bytes.
         EXPECT_THROW(
-            OptionIntArray<T>(opt_code, buf_.begin(), buf_.begin() + 5),
+            OptionIntArray<T>(u, opt_code, buf_.begin(), buf_.begin() + 5),
             isc::OutOfRange
         );
 
         // Now the buffer length is correct.
         ASSERT_NO_THROW(
             opt = boost::shared_ptr<
-                OptionIntArray<T> >(new OptionIntArray<T>(opt_code, buf_.begin(),
+                OptionIntArray<T> >(new OptionIntArray<T>(u, opt_code, buf_.begin(),
                                                           buf_.begin() + opt_len))
         );
 
-        EXPECT_EQ(Option::V6, opt->getUniverse());
+        EXPECT_EQ(u, opt->getUniverse());
         EXPECT_EQ(opt_code, opt->getType());
         // Option should return vector of uint16_t values which should be
         // constructed from the buffer we provided.
@@ -191,9 +193,10 @@ public:
     /// @warning this function does not perform type check. Make
     /// sure that only int32_t or uint32_t type is used.
     ///
+    /// @param u universe (V4 or V6)
     /// @tparam T int32_t or uint32_t.
     template<typename T>
-    void bufferToIntTest32() {
+    void bufferToIntTest32(const Option::Universe u) {
         // Create option that conveys array of multiple uint16_t values.
         boost::shared_ptr<OptionIntArray<T> > opt;
         const int opt_len = 40;
@@ -201,25 +204,25 @@ public:
 
         // Constructor throws exception if provided buffer is empty.
         EXPECT_THROW(
-            OptionIntArray<T>(opt_code, buf_.begin(), buf_.begin()),
+            OptionIntArray<T>(u, opt_code, buf_.begin(), buf_.begin()),
             isc::OutOfRange
         );
 
         // Constructor throws exception if provided buffer's length is not
         // multiple of 4-bytes.
         EXPECT_THROW(
-            OptionIntArray<T>(opt_code, buf_.begin(), buf_.begin() + 9),
+            OptionIntArray<T>(u, opt_code, buf_.begin(), buf_.begin() + 9),
             isc::OutOfRange
         );
 
         // Now the buffer length is correct.
         ASSERT_NO_THROW(
             opt = boost::shared_ptr<
-                OptionIntArray<T> >(new OptionIntArray<T>(opt_code, buf_.begin(),
+                OptionIntArray<T> >(new OptionIntArray<T>(u, opt_code, buf_.begin(),
                                                           buf_.begin() + opt_len))
         );
 
-        EXPECT_EQ(Option::V6, opt->getUniverse());
+        EXPECT_EQ(u, opt->getUniverse());
         EXPECT_EQ(opt_code, opt->getType());
         // Option should return vector of uint32_t values which should be
         // constructed from the buffer we provided.
@@ -272,47 +275,50 @@ TEST_F(OptionIntArrayTest, useInvalidType) {
     const uint16_t opt_code = 80;
     EXPECT_THROW(
         boost::scoped_ptr<
-            OptionIntArray<bool> >(new OptionIntArray<bool>(opt_code, OptionBuffer(5))),
+            OptionIntArray<bool> >(new OptionIntArray<bool>(Option::V6, opt_code,
+                                                            OptionBuffer(5))),
         InvalidDataType
     );
 
     EXPECT_THROW(
         boost::scoped_ptr<
-            OptionIntArray<int64_t> >(new OptionIntArray<int64_t>(opt_code,
+            OptionIntArray<int64_t> >(new OptionIntArray<int64_t>(Option::V6,
+                                                                  opt_code,
                                                                   OptionBuffer(10))),
         InvalidDataType
     );
 
 }
 
-TEST_F(OptionIntArrayTest, bufferToUint8) {
-    bufferToIntTest8<uint8_t>();
+TEST_F(OptionIntArrayTest, bufferToUint8V6) {
+    bufferToIntTest8<uint8_t>(Option::V6);
 }
 
-TEST_F(OptionIntArrayTest, bufferToInt8) {
-    bufferToIntTest8<int8_t>();
+TEST_F(OptionIntArrayTest, bufferToInt8V6) {
+    bufferToIntTest8<int8_t>(Option::V6);
 }
 
-TEST_F(OptionIntArrayTest, bufferToUint16) {
-    bufferToIntTest16<uint16_t>();
+TEST_F(OptionIntArrayTest, bufferToUint16V6) {
+    bufferToIntTest16<uint16_t>(Option::V6);
 }
 
-TEST_F(OptionIntArrayTest, bufferToInt16) {
-    bufferToIntTest16<int16_t>();
+TEST_F(OptionIntArrayTest, bufferToInt16V6) {
+    bufferToIntTest16<int16_t>(Option::V6);
 }
 
-TEST_F(OptionIntArrayTest, bufferToUint32) {
-    bufferToIntTest32<uint32_t>();
+TEST_F(OptionIntArrayTest, bufferToUint32V6) {
+    bufferToIntTest32<uint32_t>(Option::V6);
 }
 
-TEST_F(OptionIntArrayTest, bufferToInt32) {
-    bufferToIntTest32<int32_t>();
+TEST_F(OptionIntArrayTest, bufferToInt32V6) {
+    bufferToIntTest32<int32_t>(Option::V6);
 }
 
 TEST_F(OptionIntArrayTest, setValuesUint8) {
     const uint16_t opt_code = 100;
     // Create option with empty vector of values.
-    boost::shared_ptr<OptionIntArray<uint8_t> > opt(new OptionIntArray<uint8_t>(opt_code));
+    boost::shared_ptr<OptionIntArray<uint8_t> >
+        opt(new OptionIntArray<uint8_t>(Option::V6, opt_code));
     // Initialize vector with some data and pass to the option.
     std::vector<uint8_t> values;
     for (int i = 0; i < 10; ++i) {
@@ -330,7 +336,8 @@ TEST_F(OptionIntArrayTest, setValuesUint8) {
 TEST_F(OptionIntArrayTest, setValuesInt8) {
     const uint16_t opt_code = 100;
     // Create option with empty vector of values.
-    boost::shared_ptr<OptionIntArray<int8_t> > opt(new OptionIntArray<int8_t>(opt_code));
+    boost::shared_ptr<OptionIntArray<int8_t> >
+        opt(new OptionIntArray<int8_t>(Option::V6, opt_code));
     // Initialize vector with some data and pass to the option.
     std::vector<int8_t> values;
     for (int i = 0; i < 10; ++i) {
@@ -348,7 +355,8 @@ TEST_F(OptionIntArrayTest, setValuesInt8) {
 TEST_F(OptionIntArrayTest, setValuesUint16) {
     const uint16_t opt_code = 101;
     // Create option with empty vector of values.
-    boost::shared_ptr<OptionIntArray<uint16_t> > opt(new OptionIntArray<uint16_t>(opt_code));
+    boost::shared_ptr<OptionIntArray<uint16_t> >
+        opt(new OptionIntArray<uint16_t>(Option::V6, opt_code));
     // Initialize vector with some data and pass to the option.
     std::vector<uint16_t> values;
     for (int i = 0; i < 10; ++i) {
@@ -366,7 +374,8 @@ TEST_F(OptionIntArrayTest, setValuesUint16) {
 TEST_F(OptionIntArrayTest, setValuesInt16) {
     const uint16_t opt_code = 101;
     // Create option with empty vector of values.
-    boost::shared_ptr<OptionIntArray<int16_t> > opt(new OptionIntArray<int16_t>(opt_code));
+    boost::shared_ptr<OptionIntArray<int16_t> >
+        opt(new OptionIntArray<int16_t>(Option::V6, opt_code));
     // Initialize vector with some data and pass to the option.
     std::vector<int16_t> values;
     for (int i = 0; i < 10; ++i) {
@@ -384,7 +393,8 @@ TEST_F(OptionIntArrayTest, setValuesInt16) {
 TEST_F(OptionIntArrayTest, setValuesUint32) {
     const uint32_t opt_code = 101;
     // Create option with empty vector of values.
-    boost::shared_ptr<OptionIntArray<uint32_t> > opt(new OptionIntArray<uint32_t>(opt_code));
+    boost::shared_ptr<OptionIntArray<uint32_t> >
+        opt(new OptionIntArray<uint32_t>(Option::V6, opt_code));
     // Initialize vector with some data and pass to the option.
     std::vector<uint32_t> values;
     for (int i = 0; i < 10; ++i) {
@@ -402,7 +412,8 @@ TEST_F(OptionIntArrayTest, setValuesUint32) {
 TEST_F(OptionIntArrayTest, setValuesInt32) {
     const uint32_t opt_code = 101;
     // Create option with empty vector of values.
-    boost::shared_ptr<OptionIntArray<int32_t> > opt(new OptionIntArray<int32_t>(opt_code));
+    boost::shared_ptr<OptionIntArray<int32_t> >
+        opt(new OptionIntArray<int32_t>(Option::V6, opt_code));
     // Initialize vector with some data and pass to the option.
     std::vector<int32_t> values;
     for (int i = 0; i < 10; ++i) {

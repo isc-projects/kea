@@ -361,6 +361,7 @@ public:
 
     /// @brief Factory function to create option with array of integer values.
     ///
+    /// @param universe (V4 or V6).
     /// @param type option type.
     /// @param begin iterator pointing to the beginning of the buffer.
     /// @param end iterator pointing to the end of the buffer.
@@ -368,10 +369,11 @@ public:
     ///
     /// @throw isc::OutOfRange if provided option buffer length is invalid.
     template<typename T>
-    static OptionPtr factoryIntegerArray(uint16_t type,
+    static OptionPtr factoryIntegerArray(Option::Universe u,
+                                         uint16_t type,
                                          OptionBufferConstIter begin,
                                          OptionBufferConstIter end) {
-        OptionPtr option(new OptionIntArray<T>(type, begin, end));
+        OptionPtr option(new OptionIntArray<T>(u, type, begin, end));
         return (option);
     }
 
