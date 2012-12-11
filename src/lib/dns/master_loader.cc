@@ -93,8 +93,11 @@ public:
     }
 
     bool popSource() {
+        if (--source_count_ == 0) {
+            return (false);
+        }
         lexer_.popSource();
-        return (--source_count_ != 0);
+        return (true);
     }
 
     void pushStreamSource(std::istream& stream) {
@@ -117,17 +120,12 @@ public:
             filename(lexer_.getNextToken(MasterToken::QSTRING).
                      getStringRegion());
 
-        // TODO: Handle the case where there's Name after the
-        // filename, meaning origin. Once $ORIGIN handling is
-        // done, it should be interconnected somehow.
+        // TODO: Handle Origin
 
         // Push the filename. We abuse the fact that filename
         // may not contain '\0' anywhere in it, so we can
         // freely use the filename.beg directly.
         pushSource(filename.beg);
-
-        // TODO: Eat any extra tokens at the end of line (they
-        // should not be here, of course).
     }
 
     void handleDirective(const char* directive, size_t length) {
@@ -149,6 +147,35 @@ public:
         } else {
             isc_throw(InternalException, "Unknown directive '" <<
                       string(directive, directive + length) << "'");
+        }
+    }
+
+    void eatUntilEOL(bool reportExtra) {
+        // We want to continue. Try to read until the end of line
+        for (;;) {
+            const MasterToken& token(lexer_.getNextToken());
+            switch (token.getType()) {
+                case MasterToken::END_OF_FILE:
+                    callbacks_.warning(lexer_.getSourceName(),
+                                       lexer_.getSourceLine(),
+                                       "Unexpected end ond of file");
+                    // We don't pop here. The End of file will stay there,
+                    // and we'll handle it in the next iteration of
+                    // loadIncremental properly.
+                    return;
+                case MasterToken::END_OF_LINE:
+                    // Found the end of the line. Good.
+                    return;
+                default:
+                    // Some other type of token.
+                    if (reportExtra) {
+                        reportExtra = false;
+                        reportError(lexer_.getSourceName(),
+                                    lexer_.getSourceLine(),
+                                    "Extra tokens at the end of line");
+                    }
+                    break;
+            }
         }
     }
 
@@ -196,7 +223,9 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
                         return (true);
                     } else {
                         // We try to read a token from the popped source
-                        // So retry the loop
+                        // So retry the loop, but first, make sure the source
+                        // is at EOL
+                        eatUntilEOL(true);
                         continue;
                     }
                 }
@@ -274,29 +303,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             // propagated.
             reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
                         e.what());
-            // We want to continue. Try to read until the end of line
-            bool end = false;
-            do {
-                const MasterToken& token(lexer_.getNextToken());
-                switch (token.getType()) {
-                    case MasterToken::END_OF_FILE:
-                        callbacks_.warning(lexer_.getSourceName(),
-                                           lexer_.getSourceLine(),
-                                           "Unexpected end ond of file");
-                        if (!popSource()) {
-                            return (true);
-                        }
-                        // Else: fall through, the popped source is
-                        // at the end of line currently
-                    case MasterToken::END_OF_LINE:
-                        end = true;
-                        break;
-                    default:
-                        // Do nothing. This is just to make compiler
-                        // happy
-                        break;
-                }
-            } while (!end);
+            eatUntilEOL(false);
         }
     }
     // When there was a fatal error and ok is false, we say we are done.
