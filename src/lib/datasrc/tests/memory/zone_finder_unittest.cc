@@ -1576,13 +1576,13 @@ TEST_F(InMemoryZoneFinderNSEC3Test, findNSEC3MissingOrigin) {
      shared_ptr<ZoneTableSegment> ztable_segment(
           new ZoneTableSegmentTest(class_, mem_sgmt_));
      InMemoryClient client(ztable_segment, class_);
-     Name name("ok.ok.ok.ok.nsec3.tjeb.nl.");
+     Name name("example.com.");
 
      client.load(name, TEST_DATA_DIR "/2503-test.zone");
      DataSourceClient::FindResult result(client.findZone(name));
 
      // Check for a non-existing name
-     Name search_name("nonexist.ok.ok.ok.ok.nsec3.tjeb.nl.");
+     Name search_name("nonexist.example.com.");
      ZoneFinder::FindNSEC3Result find_result(
           result.zone_finder->findNSEC3(search_name, true));
      // findNSEC3() must have completed (not throw or assert). Because
