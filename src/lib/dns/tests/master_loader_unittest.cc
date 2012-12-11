@@ -336,15 +336,15 @@ TEST_F(MasterLoaderTest, brokenZone) {
         {
             SCOPED_TRACE("Error at EOF");
             // This case is interesting only in the lenient mode.
-            const string zoneEOF(prepareZone(ec->line, false));
             clear();
+            const string zoneEOF(prepareZone(ec->line, false));
             stringstream zone_stream(zoneEOF);
             setLoader(zone_stream, Name("example.org."), RRClass::IN(),
                       MasterLoader::MANY_ERRORS);
             EXPECT_FALSE(loader_->loadedSucessfully());
             EXPECT_NO_THROW(loader_->load());
             EXPECT_FALSE(loader_->loadedSucessfully());
-            EXPECT_EQ(1, errors_.size());
+            EXPECT_EQ(1, errors_.size()) << errors_[0] << "\n" << errors_[1];
             // The unexpected EOF warning
             EXPECT_EQ(1, warnings_.size());
             checkRR("example.org", RRType::SOA(), "ns1.example.org. "
@@ -352,6 +352,28 @@ TEST_F(MasterLoaderTest, brokenZone) {
             EXPECT_TRUE(rrsets_.empty());
         }
     }
+}
+
+// Check that a garbage after the include generates an error, but not fatal
+// one (in lenient mode) and we can recover.
+TEST_F(MasterLoaderTest, includeWithGarbage) {
+    // Include an origin (example.org) because we expect it to be handled
+    // soon and we don't want it to break here.
+    const string include_str("$INCLUDE " TEST_DATA_SRCDIR
+                             "/example.org example.org bunch of other stuff\n"
+                             "www 3600 IN AAAA 2001:db8::1\n");
+    stringstream zone_stream(include_str);
+    setLoader(zone_stream, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    EXPECT_NO_THROW(loader_->load());
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    ASSERT_EQ(1, errors_.size());
+    // It says something about extra tokens at the end
+    EXPECT_NE(string::npos, errors_[0].find("Extra"));
+    EXPECT_TRUE(warnings_.empty());
+    checkBasicRRs();
+    checkRR("www.example.org", RRType::AAAA(), "2001:db8::1");
 }
 
 // Test the constructor rejects empty add callback.
