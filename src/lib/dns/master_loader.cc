@@ -162,6 +162,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
                 isc_throw(isc::BadValue, "Class mismatch: " << rrclass <<
                           "vs. " << zone_class_);
             }
+            // TODO: Check if it is SOA, it should be at the origin.
 
             const rdata::RdataPtr data(rdata::createRdata(rrtype, rrclass,
                                                           lexer_,
