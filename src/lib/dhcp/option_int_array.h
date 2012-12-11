@@ -116,8 +116,9 @@ public:
     /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
     /// because it is checked in a constructor.
     void pack(isc::util::OutputBuffer& buf) {
-        buf.writeUint16(type_);
-        buf.writeUint16(len() - OPTION6_HDR_LEN);
+        // Pack option header.
+        packHeader(buf);
+        // Pack option data.
         for (int i = 0; i < values_.size(); ++i) {
             // Depending on the data type length we use different utility functions
             // writeUint16 or writeUint32 which write the data in the network byte
@@ -211,7 +212,8 @@ public:
     ///
     /// @return length of this option
     virtual uint16_t len() {
-        uint16_t length = OPTION6_HDR_LEN + values_.size() * sizeof(T);
+        uint16_t length = (getUniverse() == Option::V4) ? OPTION4_HDR_LEN : OPTION6_HDR_LEN;
+        length += values_.size() * sizeof(T);
         // length of all suboptions
         for (Option::OptionCollection::iterator it = options_.begin();
              it != options_.end();
