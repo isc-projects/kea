@@ -20,6 +20,7 @@
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 #include <dns/rdata.h>
+#include <dns/master_lexer.h>
 
 #include <gtest/gtest.h>
 
@@ -40,12 +41,20 @@ protected:
     /// This is an RDATA object of some "unknown" RR type so that it can be
     /// used to test the compare() method against a well-known RR type.
     RdataPtr rdata_nomatch;
+    MasterLexer lexer;
 };
+
+namespace test {
+RdataPtr
+createRdataUsingLexer(const RRType& rrtype, const RRClass& rrclass,
+                      const std::string& str);
+}
+
 }
 }
 }
 #endif // RDATA_UNITTEST_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

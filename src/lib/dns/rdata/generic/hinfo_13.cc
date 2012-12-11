@@ -39,11 +39,22 @@ using namespace isc::dns::characterstr;
 
 HINFO::HINFO(const std::string& hinfo_str) {
     string::const_iterator input_iterator = hinfo_str.begin();
-    cpu_ = getNextCharacterString(hinfo_str, input_iterator);
 
-    skipLeftSpaces(hinfo_str, input_iterator);
+    bool quoted;
+    cpu_ = getNextCharacterString(hinfo_str, input_iterator, &quoted);
+
+    skipLeftSpaces(hinfo_str, input_iterator, quoted);
 
     os_ = getNextCharacterString(hinfo_str, input_iterator);
+
+    // Skip whitespace at the end.
+    while (input_iterator < hinfo_str.end() && isspace(*input_iterator)) {
+        ++input_iterator;
+    }
+    if (input_iterator < hinfo_str.end()) {
+        isc_throw(InvalidRdataText,
+                  "Invalid HINFO text format: too many fields.");
+    }
 }
 
 HINFO::HINFO(InputBuffer& buffer, size_t rdata_len) {
@@ -108,16 +119,17 @@ HINFO::getOS() const {
 
 void
 HINFO::skipLeftSpaces(const std::string& input_str,
-                      std::string::const_iterator& input_iterator)
+                      std::string::const_iterator& input_iterator,
+                      bool optional)
 {
     if (input_iterator >= input_str.end()) {
         isc_throw(InvalidRdataText,
-                  "Invalid HINFO text format, field is missing.");
+                  "Invalid HINFO text format: field is missing.");
     }
 
-    if (!isspace(*input_iterator)) {
+    if (!isspace(*input_iterator) && !optional) {
         isc_throw(InvalidRdataText,
-            "Invalid HINFO text format, fields are not separated by space.");
+            "Invalid HINFO text format: fields are not separated by space.");
     }
     // Skip white spaces
     while (input_iterator < input_str.end() && isspace(*input_iterator)) {

@@ -1,0 +1,11 @@
+example.edu.	3600	IN	SOA	ns1.example.edu. admin.example.edu. 1234 3600 1800 2419200 7200
+example.edu.	3600	IN	NS	ns1.example.edu.
+example.edu.	3600	IN	NS	ns2.example.edu.
+example.edu.	3600	IN	MX	10 mail.example.edu.
+www.example.edu.	3600	IN	A	192.0.2.1
+ns1.example.edu.	3600	IN	A	192.0.2.3
+ns2.example.edu.	3600	IN	A	192.0.2.4
+
+;; DNAME + NS (non-apex) throws ZoneDataUpdater::AddError
+ns1.example.edu.        3600    IN DNAME    foo.example.edu.
+ns1.example.edu.        3600    IN NS       bar.example.edu.

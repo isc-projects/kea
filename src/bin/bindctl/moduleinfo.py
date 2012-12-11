@@ -221,7 +221,8 @@ class ModuleInfo:
 
     def module_help(self):
         """Prints the help info for this module to stdout"""
-        print("Module ", self, "\nAvailable commands:")
+        print("Module " + str(self))
+        print("Available commands:")
         for k in self.commands.values():
             n = k.get_name()
             if len(n) >= CONST_BINDCTL_HELP_INDENT_WIDTH:

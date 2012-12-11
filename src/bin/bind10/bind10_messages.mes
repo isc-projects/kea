@@ -82,6 +82,21 @@ the boss process will try to force them).
 A debug message. The configurator is about to perform one task of the plan it
 is currently executing on the named component.
 
+% BIND10_CONNECTING_TO_CC_FAIL failed to connect to configuration/command channel; try -v to see output from msgq
+The boss process tried to connect to the communication channel for
+commands and configuration updates during initialization, but it
+failed.  This is a fatal startup error, and process will soon
+terminate after some cleanup.  There can be several reasons for the
+failure, but the most likely cause is that the msgq daemon failed to
+start, and the most likely cause of the msgq failure is that it
+doesn't have a permission to create a socket file for the
+communication.  To confirm that, you can see debug messages from msgq
+by starting BIND 10 with the -v command line option.  If it indicates
+permission problem for msgq, make sure the directory where the socket
+file is to be created is writable for the msgq process.  Note that if
+you specify the -u option to change process users, the directory must
+be writable for that user.
+
 % BIND10_INVALID_STATISTICS_DATA invalid specification of statistics data specified
 An error was encountered when the boss module specified
 statistics data which is invalid for the boss specification file.
@@ -93,11 +108,6 @@ and continue running as the specified user, but the user is unknown.
 % BIND10_KILLING_ALL_PROCESSES killing all started processes
 The boss module was not able to start every process it needed to start
 during startup, and will now kill the processes that did get started.
-
-% BIND10_KILL_PROCESS killing process %1
-The boss module is sending a kill signal to process with the given name,
-as part of the process of killing all started processes during a failed
-startup, as described for BIND10_KILLING_ALL_PROCESSES
 
 % BIND10_LOST_SOCKET_CONSUMER consumer %1 of sockets disconnected, considering all its sockets closed
 A connection from one of the applications which requested a socket was

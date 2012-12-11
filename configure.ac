@@ -64,25 +64,9 @@ AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
 # Linker options
 
-# check -R and -Wl,-R rather than gcc specific -rpath to be as portable
-# as possible.
-AC_MSG_CHECKING([whether -R flag is available in linker])
-LDFLAGS_SAVED="$LDFLAGS"
-LDFLAGS="$LDFLAGS -R/usr/lib"
-AC_TRY_LINK([],[],
-    [ AC_MSG_RESULT(yes)
-        rpath_flag=-R
-    ],[ AC_MSG_RESULT(no)
-        AC_MSG_CHECKING([whether -Wl,-R flag is available in linker])
-        LDFLAGS="$LDFLAGS_SAVED -Wl,-R"
-        AC_TRY_LINK([], [],
-            [ AC_MSG_RESULT(yes)
-                rpath_flag=-Wl,-R
-            ],[ AC_MSG_RESULT(no)
-                 rpath_flag=no
-            ])
-    ])
-LDFLAGS=$LDFLAGS_SAVED
+# check -R, "-Wl,-R" or -rpath (we share the AX function defined in
+#  examples/m4)
+AX_ISC_RPATH
 
 # Compiler dependent settings: define some mandatory CXXFLAGS here.
 # We also use a separate variable B10_CXXFLAGS.  This will (and should) be
@@ -332,10 +316,10 @@ fi
 # modules, we embed the path to the modules when possible.  We do this even
 # when the path is known in the common operational environment (e.g. when
 # it's stored in a common "hint" file) for simplicity.
-if test $rpath_flag != no; then
+if test "x$ISC_RPATH_FLAG" != "x"; then
 	python_rpath=
 	for flag in ${PYTHON_LDFLAGS}; do
-		python_rpath="${python_rpath} `echo $flag | sed -ne "s/^\(\-L\)/${rpath_flag}/p"`"
+		python_rpath="${python_rpath} `echo $flag | sed -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
 	done
 	PYTHON_LDFLAGS="${PYTHON_LDFLAGS} ${python_rpath}"
 fi
@@ -701,10 +685,10 @@ for flag in ${BOTAN_LIBS}; do
 done
 
 # See python_rpath for some info on why we do this
-if test $rpath_flag != no; then
+if test "x$ISC_RPATH_FLAG" != "x"; then
     BOTAN_RPATH=
     for flag in ${BOTAN_LIBS}; do
-            BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne "s/^\(\-L\)/${rpath_flag}/p"`"
+            BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
     done
 AC_SUBST(BOTAN_RPATH)
 
@@ -721,7 +705,6 @@ fi
 AC_SUBST(BOTAN_LDFLAGS)
 AC_SUBST(BOTAN_LIBS)
 AC_SUBST(BOTAN_INCLUDES)
-
 # Even though chances are high we already performed a real compilation check
 # in the search for the right (pkg)config data, we try again here, to
 # be sure.
@@ -748,6 +731,60 @@ AC_LINK_IFELSE(
 )
 CPPFLAGS=$CPPFLAGS_SAVED
 LIBS=$LIBS_SAVED
+
+# Check for MySql.  The path to the mysql_config program is given with
+# the --with-mysql-config (default to /usr/bin/mysql-config).  By default,
+# the software is not built with MySQL support enabled.
+mysql_config="no"
+AC_ARG_WITH([dhcp-mysql],
+  AC_HELP_STRING([--with-dhcp-mysql=PATH],
+    [path to the MySQL 'mysql_config' script (MySQL is used for the DHCP database)]),
+    [mysql_config="$withval"])
+
+if test "${mysql_config}" = "yes" ; then
+    MYSQL_CONFIG="/usr/bin/mysql_config"
+elif test "${mysql_config}" != "no" ; then
+    MYSQL_CONFIG="${withval}"
+fi
+
+if test "$MYSQL_CONFIG" != "" ; then
+    if test -d "$MYSQL_CONFIG" -o ! -x "$MYSQL_CONFIG" ; then
+        AC_MSG_ERROR([--with-dhcp-mysql should point to a mysql_config program])
+    fi
+
+    MYSQL_CPPFLAGS=`$MYSQL_CONFIG --cflags`
+    MYSQL_LIBS=`$MYSQL_CONFIG --libs`
+
+    AC_SUBST(MYSQL_CPPFLAGS)
+    AC_SUBST(MYSQL_LIBS)
+
+    # Check that a simple program using MySQL functions can compile and link.
+    CPPFLAGS_SAVED="$CPPFLAGS"
+    LIBS_SAVED="$LIBS"
+
+    CPPFLAGS="$MYSQL_CPPFLAGS $CPPFLAGS"
+    LIBS="$MYSQL_LIBS $LIBS"
+
+    AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM([#include <mysql.h>],
+                             [MYSQL mysql_handle;
+                              (void) mysql_init(&mysql_handle);
+                             ])],
+            [AC_MSG_RESULT([checking for MySQL headers and library... yes])],
+            [AC_MSG_RESULT([checking for MySQL headers and library... no])
+             AC_MSG_ERROR([Needs MySQL library])]
+    )
+
+    CPPFLAGS=$CPPFLAGS_SAVED
+    LIBS=$LIBS_SAVED
+
+    # Note that MYSQL is present in the config.h file
+    AC_DEFINE([HAVE_MYSQL], [1], [MySQL is present])
+fi
+
+# ... and at the shell level, so Makefile.am can take action depending on this.
+AM_CONDITIONAL(HAVE_MYSQL, test "$MYSQL_CONFIG" != "")
+
 
 # Check for log4cplus
 log4cplus_path="yes"
@@ -866,10 +903,11 @@ AC_SUBST(MULTITHREADING_FLAG)
 #
 GTEST_LDFLAGS=
 GTEST_LDADD=
-# TODO: set DISTCHECK_GTEST_CONFIGURE_FLAG for --with-gtest too
 DISTCHECK_GTEST_CONFIGURE_FLAG=
 
 if test "x$enable_gtest" = "xyes" ; then
+
+    DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest=$gtest_path"
 
     if test -n "$with_gtest_source" ; then
 
@@ -1226,6 +1264,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/benchmarks/Makefile
                  src/lib/dhcp/Makefile
                  src/lib/dhcp/tests/Makefile
+                 src/lib/dhcpsrv/Makefile
+                 src/lib/dhcpsrv/tests/Makefile
                  src/lib/exceptions/Makefile
                  src/lib/exceptions/tests/Makefile
                  src/lib/datasrc/Makefile
@@ -1269,7 +1309,7 @@ AC_CONFIG_FILES([Makefile
                  tests/tools/badpacket/tests/Makefile
                  tests/tools/perfdhcp/Makefile
                  tests/tools/perfdhcp/tests/Makefile
-                 tests/tools/perfdhcp/templates/Makefile
+                 tests/tools/perfdhcp/tests/testdata/Makefile
                  dns++.pc
                ])
 AC_OUTPUT([doc/version.ent
@@ -1437,6 +1477,18 @@ dnl includes too
                  ${LOG4CPLUS_LIBS}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
+END
+
+# Avoid confusion on DNS/DHCP and only mention MySQL if it
+# were specified on the command line.
+if test "$MYSQL_CPPFLAGS" != "" ; then
+cat >> config.report << END
+  MySQL:         $MYSQL_CPPFLAGS
+                 $MYSQL_LIBS
+END
+fi
+
+cat >> config.report << END
 
 Features:
   $enable_features

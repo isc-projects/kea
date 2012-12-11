@@ -364,16 +364,24 @@ class TestConfigCommands(unittest.TestCase):
         socket_err_output = io.StringIO()
         sys.stdout = socket_err_output
         self.assertEqual(1, self.tool.run())
-        self.assertEqual("Failed to send request, the connection is closed\n",
-                         socket_err_output.getvalue())
+
+        # First few lines may be some kind of heading, or a warning that
+        # Python readline is unavailable, so we do a sub-string check.
+        self.assertIn("Failed to send request, the connection is closed",
+                      socket_err_output.getvalue())
+
         socket_err_output.close()
 
         # validate log message for http.client.CannotSendRequest
         cannot_send_output = io.StringIO()
         sys.stdout = cannot_send_output
         self.assertEqual(1, self.tool.run())
-        self.assertEqual("Can not send request, the connection is busy\n",
-                         cannot_send_output.getvalue())
+
+        # First few lines may be some kind of heading, or a warning that
+        # Python readline is unavailable, so we do a sub-string check.
+        self.assertIn("Can not send request, the connection is busy",
+                      cannot_send_output.getvalue())
+
         cannot_send_output.close()
 
     def test_apply_cfg_command_int(self):

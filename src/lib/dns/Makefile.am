@@ -21,6 +21,8 @@ EXTRA_DIST += rdata/ch_3/a_1.cc
 EXTRA_DIST += rdata/ch_3/a_1.h
 EXTRA_DIST += rdata/generic/cname_5.cc
 EXTRA_DIST += rdata/generic/cname_5.h
+EXTRA_DIST += rdata/generic/detail/char_string.cc
+EXTRA_DIST += rdata/generic/detail/char_string.h
 EXTRA_DIST += rdata/generic/detail/nsec_bitmap.cc
 EXTRA_DIST += rdata/generic/detail/nsec_bitmap.h
 EXTRA_DIST += rdata/generic/detail/nsec3param_common.cc
@@ -82,6 +84,8 @@ EXTRA_DIST += rdata/in_1/srv_33.h
 #EXTRA_DIST += rdata/template.cc
 #EXTRA_DIST += rdata/template.h
 
+noinst_SCRIPTS = gen-rdatacode.py
+
 # auto-generate by gen-rdatacode.py:
 BUILT_SOURCES = rrclass.h rrtype.h rrparamregistry.cc
 BUILT_SOURCES += rdataclass.h rdataclass.cc
@@ -93,9 +97,11 @@ libb10_dns___la_LDFLAGS = -no-undefined -version-info 2:0:0
 libb10_dns___la_SOURCES =
 libb10_dns___la_SOURCES += edns.h edns.cc
 libb10_dns___la_SOURCES += exceptions.h exceptions.cc
+libb10_dns___la_SOURCES += master_lexer_inputsource.h master_lexer_inputsource.cc
 libb10_dns___la_SOURCES += labelsequence.h labelsequence.cc
 libb10_dns___la_SOURCES += masterload.h masterload.cc
 libb10_dns___la_SOURCES += master_lexer.h master_lexer.cc
+libb10_dns___la_SOURCES += master_lexer_state.h
 libb10_dns___la_SOURCES += message.h message.cc
 libb10_dns___la_SOURCES += messagerenderer.h messagerenderer.cc
 libb10_dns___la_SOURCES += name.h name.cc
@@ -117,6 +123,10 @@ libb10_dns___la_SOURCES += tsigerror.h tsigerror.cc
 libb10_dns___la_SOURCES += tsigkey.h tsigkey.cc
 libb10_dns___la_SOURCES += tsigrecord.h tsigrecord.cc
 libb10_dns___la_SOURCES += character_string.h character_string.cc
+libb10_dns___la_SOURCES += master_loader_callbacks.h
+libb10_dns___la_SOURCES += master_loader.h
+libb10_dns___la_SOURCES += rdata/generic/detail/char_string.h
+libb10_dns___la_SOURCES += rdata/generic/detail/char_string.cc
 libb10_dns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
 libb10_dns___la_SOURCES += rdata/generic/detail/nsec_bitmap.cc
 libb10_dns___la_SOURCES += rdata/generic/detail/nsec3param_common.cc
@@ -138,7 +148,7 @@ rrclass.h: rrclass-placeholder.h
 rrtype.h: rrtype-placeholder.h
 rrparamregistry.cc: rrparamregistry-placeholder.cc
 rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: Makefile
-	./gen-rdatacode.py
+	$(PYTHON) ./gen-rdatacode.py
 
 libdns___includedir = $(includedir)/$(PACKAGE_NAME)/dns
 libdns___include_HEADERS = \
@@ -146,8 +156,10 @@ libdns___include_HEADERS = \
 	exceptions.h \
 	labelsequence.h \
 	message.h \
-	master_lexer.h \
 	masterload.h \
+	master_lexer.h \
+	master_loader.h \
+	master_loader_callbacks.h \
 	messagerenderer.h \
 	name.h \
 	question.h \

@@ -29,7 +29,8 @@ bool isDigit(char c) {
 
 std::string
 characterstr::getNextCharacterString(const std::string& input_str,
-                              std::string::const_iterator& input_iterator)
+                              std::string::const_iterator& input_iterator,
+                              bool* quoted)
 {
     string result;
 
@@ -117,6 +118,10 @@ characterstr::getNextCharacterString(const std::string& input_str,
 
     if (quotes_separated && !quotes_paired) {
         isc_throw(InvalidRdataText, "The quotes are not paired");
+    }
+
+    if (quoted != NULL) {
+        *quoted = quotes_separated;
     }
 
     return (result);

@@ -13,21 +13,26 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <sstream>
-#include <fstream>
-#include <string.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/select.h>
+
+// This must be included before udp_endpoint.h
 #include <asio.hpp>
 
+#include <asiolink/io_error.h>
+#include <asiolink/udp_endpoint.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
-#include <asiolink/udp_endpoint.h>
-#include <asiolink/io_error.h>
 #include <util/io/pktinfo_utilities.h>
+
+
+#include <fstream>
+#include <sstream>
+
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <sys/select.h>
 
 using namespace std;
 using namespace isc::asiolink;
@@ -244,6 +249,15 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
 
             // skip IPv4 addresses
             if (addr->getFamily() != AF_INET6) {
+                continue;
+            }
+
+            // Bind link-local addresses only. Otherwise we bind several sockets
+            // on interfaces that have several global addresses. For examples
+            // with interface with 2 global addresses, we would bind 3 sockets
+            // (one for link-local and two for global). That would result in
+            // getting each message 3 times.
+            if (!addr->getAddress().to_v6().is_link_local()){
                 continue;
             }
 
@@ -1084,9 +1098,9 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
     pkt->updateTimestamp();
 
-    pkt->setLocalAddr(IOAddress::from_bytes(AF_INET6,
+    pkt->setLocalAddr(IOAddress::fromBytes(AF_INET6,
                       reinterpret_cast<const uint8_t*>(&to_addr)));
-    pkt->setRemoteAddr(IOAddress::from_bytes(AF_INET6,
+    pkt->setRemoteAddr(IOAddress::fromBytes(AF_INET6,
                        reinterpret_cast<const uint8_t*>(&from.sin6_addr)));
     pkt->setRemotePort(ntohs(from.sin6_port));
     pkt->setIndex(ifindex);

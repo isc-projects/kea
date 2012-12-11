@@ -86,6 +86,13 @@ TEST_F(Rdata_NSEC3PARAM_Test, createFromWire) {
     }
 }
 
+TEST_F(Rdata_NSEC3PARAM_Test, createFromLexer) {
+    const generic::NSEC3PARAM rdata_nsec3param(nsec3param_txt);
+    EXPECT_EQ(0, rdata_nsec3param.compare(
+        *test::createRdataUsingLexer(RRType::NSEC3PARAM(), RRClass::IN(),
+                                     nsec3param_txt)));
+}
+
 TEST_F(Rdata_NSEC3PARAM_Test, toWireRenderer) {
     renderer.skip(2);
     const generic::NSEC3PARAM rdata_nsec3param(nsec3param_txt);

@@ -12,14 +12,16 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef OPTION_H_
-#define OPTION_H_
+#ifndef OPTION_H
+#define OPTION_H
 
-#include <string>
-#include <map>
-#include <vector>
-#include <boost/shared_ptr.hpp>
 #include <util/buffer.h>
+
+#include <boost/shared_ptr.hpp>
+
+#include <map>
+#include <string>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
@@ -78,9 +80,11 @@ public:
     /// @param u universe of the option (V4 or V6)
     /// @param type option-type
     /// @param buf option-buffer
-    /// @throw isc::InvalidOperation if there is no factory function
-    /// registered for specified option type.
+    ///
     /// @return instance of option.
+    ///
+    /// @throw isc::InvalidOperation if there is no factory function
+    ///        registered for specified option type.
     static OptionPtr factory(Option::Universe u,
                              uint16_t type,
                              const OptionBuffer& buf);
@@ -95,9 +99,11 @@ public:
     ///
     /// @param u universe of the option (V4 or V6)
     /// @param type option-type
-    /// @throw isc::InvalidOperation if there is no factory function
-    /// registered for specified option type.
+    ///
     /// @return instance of option.
+    ///
+    /// @throw isc::InvalidOperation if there is no factory function
+    ///        registered for specified option type.
     static OptionPtr factory(Option::Universe u, uint16_t type) {
         return factory(u, type, OptionBuffer());
     }
@@ -113,7 +119,7 @@ public:
     /// This constructor takes vector<uint8_t>& which is used in cases
     /// when content of the option will be copied and stored within
     /// option object. V4 Options follow that approach already.
-    /// TODO Migrate V6 options to that approach.
+    /// @todo Migrate V6 options to that approach.
     ///
     /// @param u specifies universe (V4 or V6)
     /// @param type option type (0-255 for V4 and 0-65535 for V6)
@@ -125,7 +131,7 @@ public:
     /// This contructor is similar to the previous one, but it does not take
     /// the whole vector<uint8_t>, but rather subset of it.
     ///
-    /// TODO: This can be templated to use different containers, not just
+    /// @todo This can be templated to use different containers, not just
     /// vector. Prototype should look like this:
     /// template<typename InputIterator> Option(Universe u, uint16_t type,
     /// InputIterator first, InputIterator last);
@@ -154,19 +160,24 @@ public:
     /// byte after stored option (that is useful for writing options one after
     /// another). Used in DHCPv6 options.
     ///
-    /// TODO: Migrate DHCPv6 code to pack(OutputBuffer& buf) version
+    /// @todo Migrate DHCPv6 code to pack(OutputBuffer& buf) version
     ///
     /// @param buf pointer to a buffer
+    ///
+    /// @throw BadValue Universe of the option is neither V4 nor V6.
     virtual void pack(isc::util::OutputBuffer& buf);
 
     /// @brief Writes option in a wire-format to a buffer.
     ///
     /// Method will throw if option storing fails for some reason.
     ///
-    /// TODO Once old (DHCPv6) implementation is rewritten,
+    /// @todo Once old (DHCPv6) implementation is rewritten,
     /// unify pack4() and pack6() and rename them to just pack().
     ///
     /// @param buf output buffer (option will be stored there)
+    ///
+    /// @throw OutOfRange Option type is greater than 255.
+    /// @throw BadValue Universe is not V4.
     virtual void pack4(isc::util::OutputBuffer& buf);
 
     /// @brief Parses received buffer.
@@ -240,21 +251,21 @@ public:
 
     /// @brief Returns content of first byte.
     ///
-    /// @exception OutOfRange Thrown if the option has a length of 0.
+    /// @throw isc::OutOfRange Thrown if the option has a length of 0.
     ///
     /// @return value of the first byte
     uint8_t getUint8();
 
     /// @brief Returns content of first word.
     ///
-    /// @exception OutOfRange Thrown if the option has a length less than 2.
+    /// @throw isc::OutOfRange Thrown if the option has a length less than 2.
     ///
     /// @return uint16_t value stored on first two bytes
     uint16_t getUint16();
 
     /// @brief Returns content of first double word.
     ///
-    /// @exception OutOfRange Thrown if the option has a length less than 4.
+    /// @throw isc::OutOfRange Thrown if the option has a length less than 4.
     ///
     /// @return uint32_t value stored on first four bytes
     uint32_t getUint32();
@@ -297,7 +308,38 @@ protected:
     /// defined suboptions. Version for building DHCPv4 options.
     ///
     /// @param buf output buffer (built options will be stored here)
+    ///
+    /// @throw BadValue Universe is not V6.
     virtual void pack6(isc::util::OutputBuffer& buf);
+
+    /// @brief Store sub options in a buffer.
+    ///
+    /// This method stores all sub-options defined for a particular
+    /// option in a on-wire format in output buffer provided.
+    /// This function is called by pack function in this class or
+    /// derived classes that override pack.
+    ///
+    /// @param [out] buf output buffer.
+    ///
+    /// @todo The set of exceptions thrown by this function depend on
+    /// exceptions thrown by pack methods invoked on objects
+    /// representing sub options. We should consider whether to aggregate
+    /// those into one exception which can be documented here.
+    void packOptions(isc::util::OutputBuffer& buf);
+
+    /// @brief Builds a collection of sub options from the buffer.
+    ///
+    /// This method parses the provided buffer and builds a collection
+    /// of objects representing sub options. This function may throw
+    /// different exceptions when option assembly fails.
+    ///
+    /// @param buf buffer to be parsed.
+    ///
+    /// @todo The set of exceptions thrown by this function depend on
+    /// exceptions thrown by unpack methods invoked on objects
+    /// representing sub options. We should consider whether to aggregate
+    /// those into one exception which can be documented here.
+    void unpackOptions(const OptionBuffer& buf);
 
     /// @brief A private method used for option correctness.
     ///
@@ -318,11 +360,11 @@ protected:
     /// collection for storing suboptions
     OptionCollection options_;
 
-    /// TODO: probably 2 different containers have to be used for v4 (unique
+    /// @todo probably 2 different containers have to be used for v4 (unique
     /// options) and v6 (options with the same type can repeat)
 };
 
 } // namespace isc::dhcp
 } // namespace isc
 
-#endif
+#endif // OPTION_H

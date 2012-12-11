@@ -17,10 +17,17 @@
 #include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/rdataclass.h>
-#include <gtest/gtest.h>
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+
+#include <gtest/gtest.h>
+
+#include <boost/bind.hpp>
+
+#include <string>
+#include <sstream>
+#include <vector>
 
 using isc::UnitTestUtil;
 using namespace std;
@@ -28,6 +35,7 @@ using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
 
+namespace {
 
 template<class T>
 class RRTYPE : public RRType {
@@ -38,36 +46,42 @@ public:
 template<> RRTYPE<generic::TXT>::RRTYPE() : RRType(RRType::TXT()) {}
 template<> RRTYPE<generic::SPF>::RRTYPE() : RRType(RRType::SPF()) {}
 
-namespace {
 const uint8_t wiredata_txt_like[] = {
-    sizeof("Test String") - 1,
-    'T', 'e', 's', 't', ' ', 'S', 't', 'r', 'i', 'n', 'g'
+    sizeof("Test-String") - 1,
+    'T', 'e', 's', 't', '-', 'S', 't', 'r', 'i', 'n', 'g'
 };
 
 const uint8_t wiredata_nulltxt[] = { 0 };
-vector<uint8_t> wiredata_longesttxt(256, 'a');
+
+// For lexer-based constructor
+void
+dummyCallback(const string&, size_t, const string&) {
+}
 
 template<class TXT_LIKE>
 class Rdata_TXT_LIKE_Test : public RdataTest {
 protected:
-    Rdata_TXT_LIKE_Test() {
+    Rdata_TXT_LIKE_Test() :
+        callback(boost::bind(&dummyCallback, _1, _2, _3)),
+        loader_cb(callback, callback),
+        wiredata_longesttxt(256, 'a'),
+        rdata_txt_like("Test-String"),
+        rdata_txt_like_empty("\"\""),
+        rdata_txt_like_quoted("\"Test-String\"")
+    {
         wiredata_longesttxt[0] = 255; // adjust length
     }
 
-    static const TXT_LIKE rdata_txt_like;
-    static const TXT_LIKE rdata_txt_like_empty;
-    static const TXT_LIKE rdata_txt_like_quoted;
+private:
+    const MasterLoaderCallbacks::IssueCallback callback;
+
+protected:
+    MasterLoaderCallbacks loader_cb;
+    vector<uint8_t> wiredata_longesttxt;
+    const TXT_LIKE rdata_txt_like;
+    const TXT_LIKE rdata_txt_like_empty;
+    const TXT_LIKE rdata_txt_like_quoted;
 };
-
-template<class TXT_LIKE>
-const TXT_LIKE Rdata_TXT_LIKE_Test<TXT_LIKE>::rdata_txt_like("Test String");
-
-template<class TXT_LIKE>
-const TXT_LIKE Rdata_TXT_LIKE_Test<TXT_LIKE>::rdata_txt_like_empty("");
-
-template<class TXT_LIKE>
-const TXT_LIKE Rdata_TXT_LIKE_Test<TXT_LIKE>::rdata_txt_like_quoted
-                                                          ("\"Test String\"");
 
 // The list of types we want to test.
 typedef testing::Types<generic::TXT, generic::SPF> Implementations;
@@ -75,37 +89,155 @@ typedef testing::Types<generic::TXT, generic::SPF> Implementations;
 TYPED_TEST_CASE(Rdata_TXT_LIKE_Test, Implementations);
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
-    // normal case is covered in toWireBuffer.
+    // Below we check the behavior for the "from text" constructors, both
+    // from std::string and with MasterLexer.  The underlying implementation
+    // is the same, so both should work exactly same, but we confirm both
+    // cases.
+
+    const std::string multi_line = "(\n \"Test-String\" )";
+    const std::string escaped_txt = "Test\\045Strin\\g";
+
+    // test input for the lexer version
+    std::stringstream ss;
+    ss << "Test-String\n";
+    ss << "\"Test-String\"\n";   // explicitly surrounded by '"'s
+    ss << multi_line << "\n";   // multi-line text with ()
+    ss << escaped_txt << "\n";   // using the two types of escape with '\'
+    ss << "\"\"\n";              // empty string (note: still valid char-str)
+    ss << string(255, 'a') << "\n"; // Longest possible character-string.
+    ss << string(256, 'a') << "\n"; // char-string too long
+    ss << "\"Test-String\\\"\n";    // unbalanced quote
+    ss << "\"Test-String\\\"\"\n";
+    this->lexer.pushSource(ss);
+
+    // commonly used Rdata to compare below, created from wire
+    ConstRdataPtr const rdata =
+        this->rdataFactoryFromFile(RRTYPE<TypeParam>(),
+                                   RRClass("IN"), "rdata_txt_fromWire1");
+
+    // normal case is covered in toWireBuffer.  First check the std::string
+    // case, then with MasterLexer.  For the latter, we need to read and skip
+    // '\n'.  These apply to most of the other cases below.
+    EXPECT_EQ(0, this->rdata_txt_like.compare(*rdata));
+    EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+                           this->loader_cb).compare(*rdata));
+    EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // surrounding double-quotes shouldn't change the result.
-    EXPECT_EQ(0, this->rdata_txt_like.compare(this->rdata_txt_like_quoted));
+    EXPECT_EQ(0, this->rdata_txt_like_quoted.compare(*rdata));
+    EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+                           this->loader_cb).compare(*rdata));
+    EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
+
+    // multi-line input with ()
+    EXPECT_EQ(0, TypeParam(multi_line).compare(*rdata));
+    EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+                           this->loader_cb).compare(*rdata));
+    EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
+
+    // for the same data using escape
+    EXPECT_EQ(0, TypeParam(escaped_txt).compare(*rdata));
+    EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+                           this->loader_cb).compare(*rdata));
+    EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // Null character-string.
     this->obuffer.clear();
-    TypeParam(string("")).toWire(this->obuffer);
+    TypeParam(string("\"\"")).toWire(this->obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(),
-                        this->obuffer.getLength(),
+                        this->obuffer.getData(), this->obuffer.getLength(),
                         wiredata_nulltxt, sizeof(wiredata_nulltxt));
+    this->obuffer.clear();
+    TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS, this->loader_cb).
+        toWire(this->obuffer);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        this->obuffer.getData(), this->obuffer.getLength(),
+                        wiredata_nulltxt, sizeof(wiredata_nulltxt));
+    EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // Longest possible character-string.
     this->obuffer.clear();
     TypeParam(string(255, 'a')).toWire(this->obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(),
-                        this->obuffer.getLength(),
-                        &wiredata_longesttxt[0], wiredata_longesttxt.size());
+                        this->obuffer.getData(), this->obuffer.getLength(),
+                        &this->wiredata_longesttxt[0],
+                        this->wiredata_longesttxt.size());
+    this->obuffer.clear();
+    TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS, this->loader_cb).
+        toWire(this->obuffer);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        this->obuffer.getData(), this->obuffer.getLength(),
+                        &this->wiredata_longesttxt[0],
+                        this->wiredata_longesttxt.size());
+    EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // Too long text for a valid character-string.
     EXPECT_THROW(TypeParam(string(256, 'a')), CharStringTooLong);
+    EXPECT_THROW(TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+                           this->loader_cb), CharStringTooLong);
+    EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // The escape character makes the double quote a part of character-string,
     // so this is invalid input and should be rejected.
-    EXPECT_THROW(TypeParam("\"Test String\\\""), InvalidRdataText);
+    EXPECT_THROW(TypeParam("\"Test-String\\\""), InvalidRdataText);
+    EXPECT_THROW(TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+                           this->loader_cb), MasterLexer::LexerError);
+    EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
+}
 
-    // Terminating double-quote is provided, so this is valid, but in this
-    // version of implementation we reject escaped characters.
-    EXPECT_THROW(TypeParam("\"Test String\\\"\""), InvalidRdataText);
+TYPED_TEST(Rdata_TXT_LIKE_Test, createMultiStringsFromText) {
+    // Tests for "from text" variants construction with various forms of
+    // multi character-strings.
+
+    std::vector<std::string > texts;
+    texts.push_back("\"Test-String\" \"Test-String\""); // most common form
+    texts.push_back("\"Test-String\"\"Test-String\"");  // no space between'em
+    texts.push_back("\"Test-String\" Test-String");  // no '"' for one
+    texts.push_back("\"Test-String\"Test-String"); // and no space either
+    texts.push_back("Test-String \"Test-String\""); // no '"' for the other
+    // This one currently doesn't work
+    //texts.push_back("Test-String\"Test-String\""); // and no space either
+
+    std::stringstream ss;
+    for (std::vector<std::string >::const_iterator it = texts.begin();
+         it != texts.end(); ++it) {
+        ss << *it << "\n";
+    }
+    this->lexer.pushSource(ss);
+
+    // The corresponding Rdata built from wire to compare in the checks below.
+    ConstRdataPtr const rdata =
+        this->rdataFactoryFromFile(RRTYPE<TypeParam>(),
+                                   RRClass("IN"), "rdata_txt_fromWire3.wire");
+
+    // Confirm we can construct the Rdata from the test text, both from
+    // std::string and with lexer, and that matches the from-wire data.
+    for (std::vector<std::string >::const_iterator it = texts.begin();
+         it != texts.end(); ++it) {
+        SCOPED_TRACE(*it);
+        EXPECT_EQ(0, TypeParam(*it).compare(*rdata));
+
+        EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+                               this->loader_cb).compare(*rdata));
+        EXPECT_EQ(MasterToken::END_OF_LINE,
+                  this->lexer.getNextToken().getType());
+    }
+}
+
+TYPED_TEST(Rdata_TXT_LIKE_Test, createFromTextExtra) {
+    // This is for the std::string version only: the input must end with EOF;
+    // an extra new-line will result in an exception.
+    EXPECT_THROW(TypeParam("\"Test-String\"\n"), InvalidRdataText);
+    // Same if there's a space before '\n'
+    EXPECT_THROW(TypeParam("\"Test-String\" \n"), InvalidRdataText);
+}
+
+TYPED_TEST(Rdata_TXT_LIKE_Test, fromTextEmpty) {
+    // If the input text doesn't contain any character-string, it should be
+    // rejected
+    EXPECT_THROW(TypeParam(""), InvalidRdataText);
+    EXPECT_THROW(TypeParam(" "), InvalidRdataText); // even with a space
+    EXPECT_THROW(TypeParam("(\n)"), InvalidRdataText); // or multi-line with ()
 }
 
 void
@@ -129,13 +261,15 @@ makeLargest(vector<uint8_t>& data) {
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {
     EXPECT_EQ(0, this->rdata_txt_like.compare(
-                  *this->rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
-                                        "rdata_txt_fromWire1")));
+                  *this->rdataFactoryFromFile(RRTYPE<TypeParam>(),
+                                              RRClass("IN"),
+                                              "rdata_txt_fromWire1")));
 
     // Empty character string
     EXPECT_EQ(0, this->rdata_txt_like_empty.compare(
-                  *this->rdataFactoryFromFile(RRTYPE<TypeParam>(), RRClass("IN"),
-                                        "rdata_txt_fromWire2.wire")));
+                  *this->rdataFactoryFromFile(RRTYPE<TypeParam>(),
+                                              RRClass("IN"),
+                                              "rdata_txt_fromWire2.wire")));
 
     // Multiple character strings
     this->obuffer.clear();
@@ -185,6 +319,12 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {
                  DNSMessageFORMERR);
 }
 
+TYPED_TEST(Rdata_TXT_LIKE_Test, createFromLexer) {
+    EXPECT_EQ(0, this->rdata_txt_like.compare(
+        *test::createRdataUsingLexer(RRTYPE<TypeParam>(), RRClass::IN(),
+                                     "Test-String")));
+}
+
 TYPED_TEST(Rdata_TXT_LIKE_Test, toWireBuffer) {
     this->rdata_txt_like.toWire(this->obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
@@ -202,7 +342,7 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, toWireRenderer) {
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, toText) {
-    EXPECT_EQ("\"Test String\"", this->rdata_txt_like.toText());
+    EXPECT_EQ("\"Test-String\"", this->rdata_txt_like.toText());
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, assignment) {
@@ -232,8 +372,8 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, compare) {
 
     EXPECT_EQ(TypeParam(txt1).compare(TypeParam(txt1)), 0);
 
-    EXPECT_LT(TypeParam("").compare(TypeParam(txt1)), 0);
-    EXPECT_GT(TypeParam(txt1).compare(TypeParam("")), 0);
+    EXPECT_LT(TypeParam("\"\"").compare(TypeParam(txt1)), 0);
+    EXPECT_GT(TypeParam(txt1).compare(TypeParam("\"\"")), 0);
 
     EXPECT_LT(TypeParam(txt1).compare(TypeParam(txt2)), 0);
     EXPECT_GT(TypeParam(txt2).compare(TypeParam(txt1)), 0);
