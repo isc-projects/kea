@@ -28,7 +28,8 @@
 	(Trac #2445, git 74a0abe5a6d10b28e4a3e360e87b129c232dea68)
 
 519.	[bug]		muks
-	Fixed a problem in inmem NSEC lookup which caused assert failures
+	Fixed a problem in inmem NSEC lookup which caused returning an
+	incorrect NSEC record or (in rare cases) assert failures
 	when a non-existent domain was queried, which was a sub-domain of
 	a domain that existed.
 	(Trac #2504, git 835553eb309d100b062051f7ef18422d2e8e3ae4)
