@@ -39,11 +39,25 @@ using isc::dns::Opcode;
 /// This class holds some attributes related to a DNS message
 /// for statistics data collection.
 class MessageAttributes {
+public:
+    /// \brief IP version of DNS message.
+    enum IPVersion {
+        IP_VERSION_UNSPEC,          // (initial value; internal use only)
+        IP_VERSION_IPV4,            ///< IPv4 message
+        IP_VERSION_IPV6             ///< IPv6 message
+    };
+
+    /// \brief Transport protocol of DNS message.
+    enum TransportProtocol {
+        TRANSPORT_UNSPEC,           // (initial value; internal use only)
+        TRANSPORT_UDP,              ///< UDP message
+        TRANSPORT_TCP               ///< TCP message
+    };
 private:
     // request attributes
-    int req_ip_version_;            // IP version
-    int req_transport_protocol_;    // Transport layer protocol
-    Opcode req_opcode_;   // OpCode
+    IPVersion req_ip_version_;                 // IP version
+    TransportProtocol req_transport_protocol_; // Transport layer protocol
+    Opcode req_opcode_;                        // OpCode
     enum BitAttributes {
         REQ_IS_EDNS_0,              // EDNS ver.0
         REQ_IS_DNSSEC_OK,           // DNSSEC OK (DO) bit is set
@@ -57,7 +71,8 @@ public:
     /// \brief The constructor.
     ///
     /// \throw None
-    MessageAttributes() : req_ip_version_(0), req_transport_protocol_(0),
+    MessageAttributes() : req_ip_version_(IP_VERSION_UNSPEC),
+                          req_transport_protocol_(TRANSPORT_UNSPEC),
                           req_opcode_(Opcode::RESERVED15_CODE),
                           bit_attributes_()
     {}
@@ -76,31 +91,34 @@ public:
     }
 
     /// \brief Get IP version carrying a request.
-    /// \return IP version carrying a request (AF_INET or AF_INET6)
+    /// \return IP version carrying a request
     /// \throw None
-    int getRequestIPVersion() const {
+    IPVersion getRequestIPVersion() const {
         return (req_ip_version_);
     }
 
     /// \brief Set IP version carrying a request.
-    /// \param ip_version AF_INET or AF_INET6
+    /// \param ip_version IP_VERSION_IPV4 or IP_VERSION_IPV6
     /// \throw None
-    void setRequestIPVersion(const int ip_version) {
+    void setRequestIPVersion(const IPVersion ip_version) {
+        assert(ip_version != IP_VERSION_UNSPEC);
         req_ip_version_ = ip_version;
     }
 
     /// \brief Get transport protocol carrying a request.
     /// \return Transport protocol carrying a request
-    ///         (IPPROTO_UDP or IPPROTO_TCP)
     /// \throw None
-    int getRequestTransportProtocol() const {
+    TransportProtocol getRequestTransportProtocol() const {
         return (req_transport_protocol_);
     }
 
     /// \brief Set transport protocol carrying a request.
-    /// \param transport_protocol IPPROTO_UDP or IPPROTO_TCP
+    /// \param transport_protocol TRANSPORT_UDP or TRANSPORT_TCP
     /// \throw None
-    void setRequestTransportProtocol(const int transport_protocol) {
+    void setRequestTransportProtocol(
+        const TransportProtocol transport_protocol)
+    {
+        assert(transport_protocol != TRANSPORT_UNSPEC);
         req_transport_protocol_ = transport_protocol;
     }
 
@@ -193,6 +211,7 @@ class Counters : boost::noncopyable {
 private:
     // counter for DNS message attributes
     isc::statistics::Counter server_msg_counter_;
+
     void incRequest(const MessageAttributes& msgattrs);
     void incResponse(const MessageAttributes& msgattrs,
                      const isc::dns::Message& response);
