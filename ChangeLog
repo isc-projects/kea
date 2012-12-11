@@ -1,3 +1,12 @@
+522.	[func]		jelte
+	Configuration of TSIG keys for b10-xfrin has changed; instead of
+	specifying the full TSIG key (<name>:<base64>:<algo>) it now expects
+	just the name, and uses the global TSIG Key Ring like all the other
+	components (configuration list /tsig_keys/keys).
+	Note: this is not automatically updated, so if you use TSIG in
+	xfrin, you need to update your configuration.
+	(Trac #1351, git e65b7b36f60f14b7abe083da411e6934cdfbae7a)
+
 521.	[func]		marcin
 	Implemented definitions for DHCPv6 standard options identified
 	by codes up to 48. These definitions are now used by the DHCPv6
