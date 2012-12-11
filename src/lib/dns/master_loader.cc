@@ -81,9 +81,7 @@ public:
         std::string error;
         if (!lexer_.pushSource(filename.c_str(), &error)) {
             if (initialized_) {
-                // $INCLUDE file
-                reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
-                            error);
+                isc_throw(InternalException, error.c_str());
             } else {
                 // Top-level file
                 reportError("", 0, error);
@@ -116,7 +114,7 @@ public:
     void doInclude() {
         // First, get the filename to include
         const MasterToken::StringRegion
-            filename(lexer_.getNextToken(MasterLexer::QSTRING).
+            filename(lexer_.getNextToken(MasterToken::QSTRING).
                      getStringRegion());
 
         // TODO: Handle the case where there's Name after the
