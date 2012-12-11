@@ -66,21 +66,21 @@ public:
     /// @note When called, the current lease manager is <b>always</b> destroyed
     ///       and a new one created - even if the parameters are the same.
     ///
-    /// dbconfig is a generic way of passing parameters. Parameters are passed
+    /// dbaccess is a generic way of passing parameters. Parameters are passed
     /// in the "name=value" format, separated by spaces.  The data MUST include
     /// a keyword/value pair of the form "type=dbtype" giving the database
     /// type, e.q. "mysql" or "sqlite3".
     ///
-    /// @param dbconfig Database configuration parameters.  These are in
-    ///        the form of "keyword=value" pairs, separated by spaces. These
-    ///        are back-end specific, although must include the "type" keyword
-    ///        which gives the backend in use.
+    /// @param dbaccess Database access parameters.  These are in the form of
+    ///        "keyword=value" pairs, separated by spaces. They are backend-
+    ///        -end specific, although must include the "type" keyword which
+    ///        gives the backend in use.
     ///
-    /// @throw isc::InvalidParameter dbconfig string does not contain the "type"
+    /// @throw isc::InvalidParameter dbaccess string does not contain the "type"
     ///        keyword.
-    /// @throw isc::dhcp::InvalidType The "type" keyword in dbconfig does not
+    /// @throw isc::dhcp::InvalidType The "type" keyword in dbaccess does not
     ///        identify a supported backend.
-    static void create(const std::string& dbconfig);
+    static void create(const std::string& dbaccess);
 
     /// @brief Destroy lease manager
     ///
@@ -89,7 +89,7 @@ public:
     /// lease manager is available.
     static void destroy();
 
-    /// @brief Return Current Lease Manager
+    /// @brief Return current lease manager
     ///
     /// Returns an instance of the "current" lease manager.  An exception
     /// will be thrown if none is available.
@@ -98,15 +98,26 @@ public:
     ///        create() to create one before calling this method.
     static LeaseMgr& instance();
 
-    /// @brief Parse Database Parameters
+    /// @brief Parse database access string
     ///
     /// Parses the string of "keyword=value" pairs and separates them
     /// out into the map.
     ///
-    /// @param dbconfig Database configuration string
+    /// @param dbaccess Database access string.
     ///
     /// @return std::map<std::string, std::string> Map of keyword/value pairs.
-    static LeaseMgr::ParameterMap parse(const std::string& dbconfig);
+    static LeaseMgr::ParameterMap parse(const std::string& dbaccess);
+
+    /// @brief Redact database access string
+    ///
+    /// Takes the database parameters and returns a database access string
+    /// passwords replaced by asterisks. This string is used in log messages.
+    ///
+    /// @param dbaccess Database access parameters (output of "parse").
+    ///
+    /// @return Redacted database access string.
+    static std::string redactedAccessString(
+            const LeaseMgr::ParameterMap& parameters);
 
 private:
     /// @brief Hold pointer to lease manager
