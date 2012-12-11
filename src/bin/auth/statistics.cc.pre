@@ -31,23 +31,22 @@ using namespace isc::auth::statistics;
 
 namespace {
 
-/// \brief Fill ItemTreePtr with given counter.
+/// \brief Fill isc::data::ElementPtr with given counter.
 /// \param counter Counter which stores values to fill
 /// \param type_tree CounterSpec corresponding to counter for building item
 ///                  name
-/// \param trees ItemTreePtr to be filled in; caller has ownership of
-///              ItemTreePtr
+/// \param trees isc::data::ElementPtr to be filled in; caller has ownership of
+///              isc::data::ElementPtr
 void
 fillNodes(const Counter& counter,
           const struct isc::auth::statistics::CounterSpec type_tree[],
-          isc::auth::statistics::Counters::ItemTreePtr& trees)
+          isc::data::ElementPtr& trees)
 {
     using namespace isc::data;
 
     for (int i = 0; type_tree[i].name != NULL; ++i) {
         if (type_tree[i].sub_counters != NULL) {
-            isc::auth::statistics::Counters::ItemTreePtr sub_counters =
-                Element::createMap();
+            isc::data::ElementPtr sub_counters = Element::createMap();
             trees->set(type_tree[i].name, sub_counters);
             fillNodes(counter, type_tree[i].sub_counters, sub_counters);
         } else {
@@ -242,16 +241,16 @@ Counters::inc(const MessageAttributes& msgattrs, const Message& response,
     }
 }
 
-Counters::ItemTreePtr
+Counters::ConstItemTreePtr
 Counters::get() const {
     using namespace isc::data;
 
-    Counters::ItemTreePtr item_tree = Element::createMap();
+    isc::data::ElementPtr item_tree = Element::createMap();
 
-    Counters::ItemTreePtr zones = Element::createMap();
+    isc::data::ElementPtr zones = Element::createMap();
     item_tree->set("zones", zones);
 
-    Counters::ItemTreePtr server = Element::createMap();
+    isc::data::ElementPtr server = Element::createMap();
     fillNodes(server_msg_counter_, msg_counter_tree, server);
     zones->set("_SERVER_", server);
 
