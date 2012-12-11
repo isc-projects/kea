@@ -338,6 +338,7 @@ class BoB:
         """
         logger.info(BIND10_KILLING_ALL_PROCESSES)
         self.__kill_children(True)
+        self.components = {}
 
     def _read_bind10_config(self):
         """
