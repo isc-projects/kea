@@ -12,16 +12,17 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <string.h>
-#include <stdint.h>
-#include <arpa/inet.h>
-#include <sstream>
-#include <iomanip>
-#include "exceptions/exceptions.h"
-#include "util/io_utilities.h"
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option.h>
+#include <exceptions/exceptions.h>
+#include <util/io_utilities.h>
 
-#include "dhcp/option.h"
-#include "dhcp/libdhcp++.h"
+#include <iomanip>
+#include <sstream>
+
+#include <arpa/inet.h>
+#include <stdint.h>
+#include <string.h>
 
 using namespace std;
 using namespace isc::util;
@@ -61,14 +62,14 @@ Option::Option(Universe u, uint16_t type, OptionBufferConstIter first,
 void
 Option::check() {
     if ( (universe_ != V4) && (universe_ != V6) ) {
-        isc_throw(BadValue, "Invalid universe type specified."
+        isc_throw(BadValue, "Invalid universe type specified. "
                   << "Only V4 and V6 are allowed.");
     }
 
     if (universe_ == V4) {
 
         if (type_ > 255) {
-            isc_throw(OutOfRange, "DHCPv4 Option type " << type_ << " is too big."
+            isc_throw(OutOfRange, "DHCPv4 Option type " << type_ << " is too big. "
                       << "For DHCPv4 allowed type range is 0..255");
         } else if (data_.size() > 255) {
             isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big.");
@@ -86,20 +87,21 @@ void Option::pack(isc::util::OutputBuffer& buf) {
     switch (universe_) {
     case V6:
         return (pack6(buf));
+
     case V4:
         return (pack4(buf));
+
     default:
-        isc_throw(BadValue, "Failed to pack " << type_ << " option. Do not "
-                  << "use this method for options other than DHCPv6.");
+        isc_throw(BadValue, "Failed to pack " << type_ << " option as the "
+                  << "universe type is unknown.");
     }
 }
 
 void
 Option::pack4(isc::util::OutputBuffer& buf) {
-    switch (universe_) {
-    case V4: {
+    if (universe_ == V4) {
         if (len() > 255) {
-            isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big."
+            isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big. "
                       << "At most 255 bytes are supported.");
             /// TODO Larger options can be stored as separate instances
             /// of DHCPv4 options. Clients MUST concatenate them.
@@ -108,38 +110,65 @@ Option::pack4(isc::util::OutputBuffer& buf) {
 
         buf.writeUint8(type_);
         buf.writeUint8(len() - getHeaderLen());
+        if (!data_.empty()) {
+            buf.writeData(&data_[0], data_.size());
+        }
 
-        buf.writeData(&data_[0], data_.size());
+        packOptions(buf);
 
-        LibDHCP::packOptions(buf, options_);
-        return;
+    } else {
+        isc_throw(BadValue, "Invalid universe type " << universe_);
     }
-    case V6:
-        /// TODO: Do we need a sanity check for option size here?
-        buf.writeUint16(type_);
-        buf.writeUint16(len() - getHeaderLen());
 
-        LibDHCP::packOptions(buf, options_);
-        return;
-    default:
-        isc_throw(OutOfRange, "Invalid universe type" << universe_);
-    }
+    return;
 }
 
 void Option::pack6(isc::util::OutputBuffer& buf) {
-    buf.writeUint16(type_);
-    buf.writeUint16(len() - getHeaderLen());
+    if (universe_ == V6) {
+        buf.writeUint16(type_);
+        buf.writeUint16(len() - getHeaderLen());
+        if (!data_.empty()) {
+            buf.writeData(&data_[0], data_.size());
+        }
 
-    if (! data_.empty()) {
-        buf.writeData(&data_[0], data_.size());
+        packOptions(buf);
+    } else {
+        isc_throw(BadValue, "Invalid universe type " << universe_);
     }
+    return;
+}
 
-    return LibDHCP::packOptions6(buf, options_);
+void
+Option::packOptions(isc::util::OutputBuffer& buf) {
+    switch (universe_) {
+    case V4:
+        LibDHCP::packOptions(buf, options_);
+        return;
+    case V6:
+        LibDHCP::packOptions6(buf, options_);
+        return;
+    default:
+        isc_throw(isc::BadValue, "Invalid universe type " << universe_);
+    }
 }
 
 void Option::unpack(OptionBufferConstIter begin,
                     OptionBufferConstIter end) {
     data_ = OptionBuffer(begin, end);
+}
+
+void
+Option::unpackOptions(const OptionBuffer& buf) {
+    switch (universe_) {
+    case V4:
+        LibDHCP::unpackOptions4(buf, options_);
+        return;
+    case V6:
+        LibDHCP::unpackOptions6(buf, options_);
+        return;
+    default:
+        isc_throw(isc::BadValue, "Invalid universe type " << universe_);
+    }
 }
 
 uint16_t Option::len() {

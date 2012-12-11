@@ -13,16 +13,19 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <iostream>
-#include <sstream>
-#include <arpa/inet.h>
+
+#include <asiolink/io_address.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/option.h>
+#include <dhcp/pkt6.h>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 
-#include <asiolink/io_address.h>
-#include <dhcp/option.h>
-#include <dhcp/pkt6.h>
-#include <dhcp/dhcp6.h>
+#include <iostream>
+#include <sstream>
+
+#include <arpa/inet.h>
 
 using namespace std;
 using namespace isc;

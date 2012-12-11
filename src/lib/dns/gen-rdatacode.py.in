@@ -24,6 +24,17 @@ from os.path import getmtime
 import re
 import sys
 
+# new_rdata_factory_users[] is a list of tuples of the form (rrtype,
+# rrclass). Items in the list use the (new) RdataFactory class, and
+# items which are not in the list use OldRdataFactory class.
+# Note: rrtype and rrclass must be specified in lowercase in
+# new_rdata_factory_users.
+#
+# Example:
+#     new_rdata_factory_users = [('a', 'in'), ('a', 'ch'), ('soa', 'generic')]
+new_rdata_factory_users = [('aaaa', 'in'), ('txt', 'generic'),
+                           ('spf', 'generic')]
+
 re_typecode = re.compile('([\da-z]+)_(\d+)')
 classcode2txt = {}
 typecode2txt = {}
@@ -116,6 +127,9 @@ class AbstractMessageRenderer;\n\n'''
     explicit ''' + type_utxt + '''(const std::string& type_str);
     ''' + type_utxt + '''(isc::util::InputBuffer& buffer, size_t rdata_len);
     ''' + type_utxt + '''(const ''' + type_utxt + '''& other);
+    ''' + type_utxt + '''(
+        MasterLexer& lexer, const Name* name,
+        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
     virtual std::string toText() const;
     virtual void toWire(isc::util::OutputBuffer& buffer) const;
     virtual void toWire(AbstractMessageRenderer& renderer) const;
@@ -203,17 +217,33 @@ def generate_rdatadef(file, basemtime):
     rdata_deffile.write(class_definitions)
     rdata_deffile.close()
 
-def generate_rdatahdr(file, declarations, basemtime):
+def generate_rdatahdr(file, heading, declarations, basemtime):
     if not need_generate(file, basemtime):
         print('skip generating ' + file);
         return
+    heading += '''
+#ifndef DNS_RDATACLASS_H
+#define DNS_RDATACLASS_H 1
+
+#include <dns/master_loader.h>
+
+namespace isc {
+namespace dns {
+class Name;
+class MasterLexer;
+class MasterLoaderCallbacks;
+}
+}
+'''
     declarations += '''
+#endif // DNS_RDATACLASS_H
+
 // Local Variables:
 // mode: c++
 // End:
 '''
     rdata_header = open(file, 'w')
-    rdata_header.write(heading_txt)
+    rdata_header.write(heading)
     rdata_header.write(declarations)
     rdata_header.close()
 
@@ -271,15 +301,29 @@ def generate_rrparam(fileprefix, basemtime):
         class_utxt = class_tuple[1].upper()
         indent = ' ' * 8
         typeandclassparams += indent
+
+        # By default, we use OldRdataFactory (see bug #2497). If you
+        # want to pick RdataFactory for a particular type, add it to
+        # new_rdata_factory_users.  Note that we explicitly generate (for
+        # optimization) class-independent ("generic") factories for class IN
+        # for optimization.
+        if (((type_txt.lower(), class_txt.lower()) in
+             new_rdata_factory_users) or
+            ((class_txt.lower() == 'in') and
+             ((type_txt.lower(), 'generic') in new_rdata_factory_users))):
+            rdf_class = 'RdataFactory'
+        else:
+            rdf_class = 'OldRdataFactory'
+
         if class_tuple[1] != 'generic':
             typeandclassparams += 'add("' + type_utxt + '", '
             typeandclassparams += str(type_code) + ', "' + class_utxt
             typeandclassparams += '", ' + str(class_code)
-            typeandclassparams += ', RdataFactoryPtr(new RdataFactory<'
+            typeandclassparams += ', RdataFactoryPtr(new ' + rdf_class + '<'
             typeandclassparams += class_txt + '::' + type_utxt + '>()));\n'
         else:
             typeandclassparams += 'add("' + type_utxt + '", ' + str(type_code)
-            typeandclassparams += ', RdataFactoryPtr(new RdataFactory<'
+            typeandclassparams += ', RdataFactoryPtr(new ' + rdf_class + '<'
             typeandclassparams += class_txt + '::' + type_utxt + '>()));\n'
 
     rrparam_temp = open(placeholder, 'r')
@@ -296,8 +340,8 @@ if __name__ == "__main__":
     try:
         import_definitions(classcode2txt, typecode2txt, typeandclass)
         generate_rdatadef('@builddir@/rdataclass.cc', rdatadef_mtime)
-        generate_rdatahdr('@builddir@/rdataclass.h', rdata_declarations,
-                          rdatahdr_mtime)
+        generate_rdatahdr('@builddir@/rdataclass.h', heading_txt,
+                          rdata_declarations, rdatahdr_mtime)
         generate_typeclasscode('rrtype', rdatahdr_mtime, typecode2txt, 'Type')
         generate_typeclasscode('rrclass', classdir_mtime,
                                classcode2txt, 'Class')

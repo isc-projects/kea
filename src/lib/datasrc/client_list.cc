@@ -14,12 +14,14 @@
 
 
 #include "client_list.h"
+#include "exceptions.h"
 #include "client.h"
 #include "factory.h"
 #include "memory/memory_client.h"
 #include "memory/zone_table_segment.h"
 #include "memory/zone_writer.h"
 #include "memory/zone_data_loader.h"
+#include "memory/zone_data_updater.h"
 #include "logger.h"
 #include <dns/masterload.h>
 #include <util/memory_segment_local.h>
@@ -37,6 +39,7 @@ using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
 using isc::datasrc::memory::InMemoryClient;
 using isc::datasrc::memory::ZoneTableSegment;
+using isc::datasrc::memory::ZoneDataUpdater;
 
 namespace isc {
 namespace datasrc {
@@ -175,9 +178,9 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                         try {
                             cache->load(origin,
                                         paramConf->get(*it)->stringValue());
-                        } catch (const isc::dns::MasterLoadError& mle) {
-                            LOG_ERROR(logger, DATASRC_MASTERLOAD_ERROR)
-                                .arg(mle.what());
+                        } catch (const ZoneLoaderException& e) {
+                            LOG_ERROR(logger, DATASRC_LOAD_FROM_FILE_ERROR)
+                                .arg(origin).arg(e.what());
                         }
                     } else {
                         ZoneIteratorPtr iterator;
@@ -192,7 +195,12 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                             isc_throw(isc::Unexpected, "Got NULL iterator "
                                       "for zone " << origin);
                         }
-                        cache->load(origin, *iterator);
+                        try {
+                            cache->load(origin, *iterator);
+                        } catch (const ZoneLoaderException& e) {
+                            LOG_ERROR(logger, DATASRC_LOAD_FROM_ITERATOR_ERROR)
+                                .arg(origin).arg(e.what());
+                        }
                     }
                 }
             }

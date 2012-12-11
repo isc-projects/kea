@@ -59,6 +59,7 @@ run_unittests_SOURCES += zonetable_unittest.cc
 run_unittests_SOURCES += zone_finder_context_unittest.cc
 run_unittests_SOURCES += faked_nsec3.h faked_nsec3.cc
 run_unittests_SOURCES += client_list_unittest.cc
+run_unittests_SOURCES += master_loader_callbacks_test.cc
 
 # We need the actual module implementation in the tests (they are not part
 # of libdatasrc)
@@ -93,6 +94,7 @@ endif
 
 EXTRA_DIST =  testdata/brokendb.sqlite3
 EXTRA_DIST += testdata/contexttest.zone
+EXTRA_DIST += testdata/contexttest-almost-obsolete.zone
 EXTRA_DIST += testdata/diffs.sqlite3
 EXTRA_DIST += testdata/duplicate_rrset.zone
 EXTRA_DIST += testdata/example2.com

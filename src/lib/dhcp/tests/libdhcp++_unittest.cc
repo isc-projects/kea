@@ -13,15 +13,23 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <iostream>
-#include <sstream>
-#include <arpa/inet.h>
-#include <gtest/gtest.h>
-#include <util/buffer.h>
+
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
-#include "config.h"
+#include <dhcp/option6_addrlst.h>
+#include <dhcp/option6_ia.h>
+#include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_int.h>
+#include <dhcp/option6_int_array.h>
+#include <util/buffer.h>
+
+#include <gtest/gtest.h>
+
+#include <iostream>
+#include <sstream>
+
+#include <arpa/inet.h>
 
 using namespace std;
 using namespace isc;
@@ -31,8 +39,7 @@ using namespace isc::util;
 namespace {
 class LibDhcpTest : public ::testing::Test {
 public:
-    LibDhcpTest() {
-    }
+    LibDhcpTest() { }
 
     /// @brief Generic factory function to create any option.
     ///
@@ -46,17 +53,62 @@ public:
         Option* option = new Option(u, type, buf);
         return OptionPtr(option);
     }
+
+    /// @brief Test option option definition.
+    ///
+    /// This function tests if option definition for standard
+    /// option has been initialized correctly.
+    ///
+    /// @param code option code.
+    /// @param bug buffer to be used to create option instance.
+    /// @param expected_type type of the option created by the
+    /// factory function returned by the option definition.
+    static void testStdOptionDefs6(const uint16_t code,
+                             const OptionBuffer& buf,
+                             const std::type_info& expected_type) {
+        // Get all option definitions, we will use them to extract
+        // the definition for a particular option code.
+        // We don't have to initialize option deinitions here because they
+        // are initialized in the class'es constructor.
+        OptionDefContainer options = LibDHCP::getOptionDefs(Option::V6);
+        // Get the container index #1. This one allows for searching
+        // option definitions using option code.
+        const OptionDefContainerTypeIndex& idx = options.get<1>();
+        // Get 'all' option definitions for a particular option code.
+        // For standard options we expect that the range returned
+        // will contain single option as their codes are unique.
+        OptionDefContainerTypeRange range = idx.equal_range(code);
+        ASSERT_EQ(1, std::distance(range.first, range.second));
+        // If we have single option definition returned, the
+        // first iterator holds it.
+        OptionDefinitionPtr def = *(range.first);
+        // It should not happen that option definition is NULL but
+        // let's make sure (test should take things like that into
+        // account).
+        ASSERT_TRUE(def);
+        // Check that option definition is valid.
+        ASSERT_NO_THROW(def->validate());
+        OptionPtr option;
+        // Create the option.
+        ASSERT_NO_THROW(option = def->optionFactory(Option::V6, code, buf));
+        // Make sure it is not NULL.
+        ASSERT_TRUE(option);
+        // And the actual object type is the one that we expect.
+        // Note that for many options there are dedicated classes
+        // derived from Option class to represent them.
+        EXPECT_TRUE(typeid(*option) == expected_type);
+    }
 };
 
 static const uint8_t packed[] = {
-    0, 12, 0, 5, 100, 101, 102, 103, 104, // opt1 (9 bytes)
-    0, 13, 0, 3, 105, 106, 107, // opt2 (7 bytes)
-    0, 14, 0, 2, 108, 109, // opt3 (6 bytes)
-    1,  0, 0, 4, 110, 111, 112, 113, // opt4 (8 bytes)
-    1,  1, 0, 1, 114 // opt5 (5 bytes)
+    0, 1, 0, 5, 100, 101, 102, 103, 104, // CLIENT_ID (9 bytes)
+    0, 2, 0, 3, 105, 106, 107, // SERVER_ID (7 bytes)
+    0, 14, 0, 0, // RAPID_COMMIT (0 bytes)
+    0,  6, 0, 4, 108, 109, 110, 111, // ORO (8 bytes)
+    0,  8, 0, 2, 112, 113 // ELAPSED_TIME (6 bytes)
 };
 
-TEST(LibDhcpTest, optionFactory) {
+TEST_F(LibDhcpTest, optionFactory) {
     OptionBuffer buf;
     // Factory functions for specific options must be registered before
     // they can be used to create options instances. Otherwise exception
@@ -128,7 +180,7 @@ TEST(LibDhcpTest, optionFactory) {
                            opt_clientid->getData().begin()));
 }
 
-TEST(LibDhcpTest, packOptions6) {
+TEST_F(LibDhcpTest, packOptions6) {
     OptionBuffer buf(512);
     isc::dhcp::Option::OptionCollection opts; // list of options
 
@@ -137,11 +189,11 @@ TEST(LibDhcpTest, packOptions6) {
         buf[i]=i+100;
     }
 
-    OptionPtr opt1(new Option(Option::V6, 12, buf.begin() + 0, buf.begin() + 5));
-    OptionPtr opt2(new Option(Option::V6, 13, buf.begin() + 5, buf.begin() + 8));
-    OptionPtr opt3(new Option(Option::V6, 14, buf.begin() + 8, buf.begin() + 10));
-    OptionPtr opt4(new Option(Option::V6,256, buf.begin() + 10,buf.begin() + 14));
-    OptionPtr opt5(new Option(Option::V6,257, buf.begin() + 14,buf.begin() + 15));
+    OptionPtr opt1(new Option(Option::V6, 1, buf.begin() + 0, buf.begin() + 5));
+    OptionPtr opt2(new Option(Option::V6, 2, buf.begin() + 5, buf.begin() + 8));
+    OptionPtr opt3(new Option(Option::V6, 14, buf.begin() + 8, buf.begin() + 8));
+    OptionPtr opt4(new Option(Option::V6, 6, buf.begin() + 8, buf.begin() + 12));
+    OptionPtr opt5(new Option(Option::V6, 8, buf.begin() + 12, buf.begin() + 14));
 
     opts.insert(pair<int, OptionPtr >(opt1->getType(), opt1));
     opts.insert(pair<int, OptionPtr >(opt1->getType(), opt2));
@@ -152,11 +204,11 @@ TEST(LibDhcpTest, packOptions6) {
     OutputBuffer assembled(512);
 
     EXPECT_NO_THROW(LibDHCP::packOptions6(assembled, opts));
-    EXPECT_EQ(35, assembled.getLength()); // options should take 35 bytes
-    EXPECT_EQ(0, memcmp(assembled.getData(), packed, 35) );
+    EXPECT_EQ(sizeof(packed), assembled.getLength());
+    EXPECT_EQ(0, memcmp(assembled.getData(), packed, sizeof(packed)));
 }
 
-TEST(LibDhcpTest, unpackOptions6) {
+TEST_F(LibDhcpTest, unpackOptions6) {
 
     // just couple of random options
     // Option is used as a simple option implementation
@@ -165,55 +217,85 @@ TEST(LibDhcpTest, unpackOptions6) {
     isc::dhcp::Option::OptionCollection options; // list of options
 
     OptionBuffer buf(512);
-    memcpy(&buf[0], packed, 35);
+    memcpy(&buf[0], packed, sizeof(packed));
 
     EXPECT_NO_THROW ({
-        LibDHCP::unpackOptions6(OptionBuffer(buf.begin(), buf.begin()+35), options);
+            LibDHCP::unpackOptions6(OptionBuffer(buf.begin(), buf.begin() + sizeof(packed)),
+                                    options);
     });
 
     EXPECT_EQ(options.size(), 5); // there should be 5 options
 
-    isc::dhcp::Option::OptionCollection::const_iterator x = options.find(12);
+    isc::dhcp::Option::OptionCollection::const_iterator x = options.find(1);
     ASSERT_FALSE(x == options.end()); // option 1 should exist
-    EXPECT_EQ(12, x->second->getType());  // this should be option 12
+    EXPECT_EQ(1, x->second->getType());  // this should be option 1
     ASSERT_EQ(9, x->second->len()); // it should be of length 9
-    EXPECT_EQ(0, memcmp(&x->second->getData()[0], packed+4, 5)); // data len=5
+    ASSERT_EQ(5, x->second->getData().size());
+    EXPECT_EQ(0, memcmp(&x->second->getData()[0], packed + 4, 5)); // data len=5
 
-    x = options.find(13);
-    ASSERT_FALSE(x == options.end()); // option 13 should exist
-    EXPECT_EQ(13, x->second->getType());  // this should be option 13
+        x = options.find(2);
+    ASSERT_FALSE(x == options.end()); // option 2 should exist
+    EXPECT_EQ(2, x->second->getType());  // this should be option 2
     ASSERT_EQ(7, x->second->len()); // it should be of length 7
-    EXPECT_EQ(0, memcmp(&x->second->getData()[0], packed+13, 3)); // data len=3
+    ASSERT_EQ(3, x->second->getData().size());
+    EXPECT_EQ(0, memcmp(&x->second->getData()[0], packed + 13, 3)); // data len=3
 
     x = options.find(14);
-    ASSERT_FALSE(x == options.end()); // option 3 should exist
+    ASSERT_FALSE(x == options.end()); // option 14 should exist
     EXPECT_EQ(14, x->second->getType());  // this should be option 14
-    ASSERT_EQ(6, x->second->len()); // it should be of length 6
-    EXPECT_EQ(0, memcmp(&x->second->getData()[0], packed+20, 2)); // data len=2
+    ASSERT_EQ(4, x->second->len()); // it should be of length 4
+    EXPECT_EQ(0, x->second->getData().size()); // data len = 0
 
-    x = options.find(256);
-    ASSERT_FALSE(x == options.end()); // option 256 should exist
-    EXPECT_EQ(256, x->second->getType());  // this should be option 256
-    ASSERT_EQ(8, x->second->len()); // it should be of length 7
-    EXPECT_EQ(0, memcmp(&x->second->getData()[0], packed+26, 4)); // data len=4
+    x = options.find(6);
+    ASSERT_FALSE(x == options.end()); // option 6 should exist
+    EXPECT_EQ(6, x->second->getType());  // this should be option 6
+    ASSERT_EQ(8, x->second->len()); // it should be of length 8
+    // Option with code 6 is the OPTION_ORO. This option is
+    // represented by the Option6IntArray<uint16_t> class which
+    // comprises the set of uint16_t values. We need to cast the
+    // returned pointer to this type to get values stored in it.
+    boost::shared_ptr<Option6IntArray<uint16_t> > opt_oro =
+        boost::dynamic_pointer_cast<Option6IntArray<uint16_t> >(x->second);
+    // This value will be NULL if cast was unsuccessful. This is the case
+    // when returned option has different type than expected.
+    ASSERT_TRUE(opt_oro);
+    // Get set of uint16_t values.
+    std::vector<uint16_t> opts = opt_oro->getValues();
+    // Prepare the refrence data.
+    std::vector<uint16_t> expected_opts;
+    expected_opts.push_back(0x6C6D); // equivalent to: 108, 109
+    expected_opts.push_back(0x6E6F); // equivalent to 110, 111
+    ASSERT_EQ(expected_opts.size(), opts.size());
+    // Validated if option has been unpacked correctly.
+    EXPECT_TRUE(std::equal(expected_opts.begin(), expected_opts.end(),
+                           opts.begin()));
 
-    x = options.find(257);
-    ASSERT_FALSE(x == options.end()); // option 257 should exist
-    EXPECT_EQ(257, x->second->getType());  // this should be option 257
-    ASSERT_EQ(5, x->second->len()); // it should be of length 5
-    EXPECT_EQ(0, memcmp(&x->second->getData()[0], packed+34, 1)); // data len=1
+    x = options.find(8);
+    ASSERT_FALSE(x == options.end()); // option 8 should exist
+    EXPECT_EQ(8, x->second->getType());  // this should be option 8
+    ASSERT_EQ(6, x->second->len()); // it should be of length 9
+    // Option with code 8 is OPTION_ELAPSED_TIME. This option is
+    // represented by Option6Int<uint16_t> value that holds single
+    // uint16_t value.
+    boost::shared_ptr<Option6Int<uint16_t> > opt_elapsed_time =
+        boost::dynamic_pointer_cast<Option6Int<uint16_t> >(x->second);
+    // This value will be NULL if cast was unsuccessful. This is the case
+    // when returned option has different type than expected.
+    ASSERT_TRUE(opt_elapsed_time);
+    // Returned value should be equivalent to two byte values: 112, 113
+    EXPECT_EQ(0x7071, opt_elapsed_time->getValue());
 
     x = options.find(0);
     EXPECT_TRUE(x == options.end()); // option 0 not found
 
-    x = options.find(1); // 1 is htons(256) on little endians. Worth checking
+    x = options.find(256); // 256 is htons(1) on little endians. Worth checking
     EXPECT_TRUE(x == options.end()); // option 1 not found
 
-    x = options.find(2);
+    x = options.find(7);
     EXPECT_TRUE(x == options.end()); // option 2 not found
 
     x = options.find(32000);
-    EXPECT_TRUE(x == options.end()); // option 32000 not found
+    EXPECT_TRUE(x == options.end()); // option 32000 not found */
 }
 
 
@@ -225,7 +307,7 @@ static uint8_t v4Opts[] = {
     128, 3, 40, 41, 42
 };
 
-TEST(LibDhcpTest, packOptions4) {
+TEST_F(LibDhcpTest, packOptions4) {
 
     vector<uint8_t> payload[5];
     for (int i = 0; i < 5; i++) {
@@ -257,7 +339,7 @@ TEST(LibDhcpTest, packOptions4) {
 
 }
 
-TEST(LibDhcpTest, unpackOptions4) {
+TEST_F(LibDhcpTest, unpackOptions4) {
 
     vector<uint8_t> packed(v4Opts, v4Opts + sizeof(v4Opts));
     isc::dhcp::Option::OptionCollection options; // list of options
@@ -309,6 +391,32 @@ TEST(LibDhcpTest, unpackOptions4) {
 
     x = options.find(2);
     EXPECT_TRUE(x == options.end()); // option 2 not found
+}
+
+// Test that definitions of standard options have been initialized
+// correctly.
+// @todo Only limited number of option definitions are now created
+// This test have to be extended once all option definitions are
+// created.
+TEST_F(LibDhcpTest, stdOptionDefs6) {
+    LibDhcpTest::testStdOptionDefs6(D6O_CLIENTID, OptionBuffer(14, 1),
+                                     typeid(Option));
+    LibDhcpTest::testStdOptionDefs6(D6O_SERVERID, OptionBuffer(14, 1),
+                                     typeid(Option));
+    LibDhcpTest::testStdOptionDefs6(D6O_IA_NA, OptionBuffer(12, 1),
+                                     typeid(Option6IA));
+    LibDhcpTest::testStdOptionDefs6(D6O_IAADDR, OptionBuffer(24, 1),
+                                     typeid(Option6IAAddr));
+    LibDhcpTest::testStdOptionDefs6(D6O_ORO, OptionBuffer(10, 1),
+                                     typeid(Option6IntArray<uint16_t>));
+    LibDhcpTest::testStdOptionDefs6(D6O_ELAPSED_TIME, OptionBuffer(2, 1),
+                                     typeid(Option6Int<uint16_t>));
+    LibDhcpTest::testStdOptionDefs6(D6O_STATUS_CODE, OptionBuffer(10, 1),
+                                     typeid(Option));
+    LibDhcpTest::testStdOptionDefs6(D6O_RAPID_COMMIT, OptionBuffer(),
+                                     typeid(Option));
+    LibDhcpTest::testStdOptionDefs6(D6O_NAME_SERVERS, OptionBuffer(32, 1),
+                                     typeid(Option6AddrLst));
 }
 
 }

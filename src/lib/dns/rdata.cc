@@ -12,6 +12,20 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
+
+#include <util/buffer.h>
+
+#include <dns/name.h>
+#include <dns/messagerenderer.h>
+#include <dns/master_lexer.h>
+#include <dns/rdata.h>
+#include <dns/rrparamregistry.h>
+#include <dns/rrtype.h>
+
+#include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
+
 #include <algorithm>
 #include <cctype>
 #include <string>
@@ -23,16 +37,6 @@
 
 #include <stdint.h>
 #include <string.h>
-
-#include <boost/lexical_cast.hpp>
-#include <boost/shared_ptr.hpp>
-
-#include <util/buffer.h>
-#include <dns/name.h>
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rrparamregistry.h>
-#include <dns/rrtype.h>
 
 using namespace std;
 using boost::lexical_cast;
@@ -65,7 +69,7 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
     RdataPtr rdata =
         RRParamRegistry::getRegistry().createRdata(rrtype, rrclass, buffer,
                                                    len);
-                                                   
+
     if (buffer.getPosition() - old_pos != len) {
         isc_throw(InvalidRdataLength, "RDLENGTH mismatch: " <<
                   buffer.getPosition() - old_pos << " != " << len);
@@ -79,6 +83,94 @@ createRdata(const RRType& rrtype, const RRClass& rrclass, const Rdata& source)
 {
     return (RRParamRegistry::getRegistry().createRdata(rrtype, rrclass,
                                                        source));
+}
+
+namespace {
+void
+fromtextError(bool& error_issued, const MasterLexer& lexer,
+              MasterLoaderCallbacks& callbacks,
+              const MasterToken* token, const char* reason)
+{
+    // Don't be too noisy if there are many issues for single RDATA
+    if (error_issued) {
+        return;
+    }
+    error_issued = true;
+
+    if (token == NULL) {
+        callbacks.error(lexer.getSourceName(), lexer.getSourceLine(),
+                        "createRdata from text failed: " + string(reason));
+        return;
+    }
+
+    switch (token->getType()) {
+    case MasterToken::STRING:
+    case MasterToken::QSTRING:
+        callbacks.error(lexer.getSourceName(), lexer.getSourceLine(),
+                        "createRdata from text failed near '" +
+                        token->getString() + "': " + string(reason));
+        break;
+    case MasterToken::ERROR:
+        callbacks.error(lexer.getSourceName(), lexer.getSourceLine(),
+                        "createRdata from text failed: " +
+                        token->getErrorText());
+        break;
+    default:
+        // This case shouldn't happen based on how we use MasterLexer in
+        // createRdata(), so we could assert() that here.  But since it
+        // depends on detailed behavior of other classes, we treat the case
+        // in a bit less harsh way.
+        isc_throw(Unexpected, "bug: createRdata() saw unexpected token type");
+    }
+}
+}
+
+RdataPtr
+createRdata(const RRType& rrtype, const RRClass& rrclass,
+            MasterLexer& lexer, const Name* origin,
+            MasterLoader::Options options,
+            MasterLoaderCallbacks& callbacks)
+{
+    RdataPtr rdata;
+
+    bool error_issued = false;
+    try {
+        rdata = RRParamRegistry::getRegistry().createRdata(
+            rrtype, rrclass, lexer, origin, options, callbacks);
+    } catch (const MasterLexer::LexerError& error) {
+        fromtextError(error_issued, lexer, callbacks, &error.token_, "");
+    } catch (const Exception& ex) {
+        // Catching all isc::Exception is too broad, but right now we don't
+        // have better granularity.  When we complete #2518 we can make this
+        // finer.
+        fromtextError(error_issued, lexer, callbacks, NULL, ex.what());
+    }
+    // Other exceptions mean a serious implementation bug or fatal system
+    // error; it doesn't make sense to catch and try to recover from them
+    // here.  Just propagate.
+
+    // Consume to end of line / file.
+    // Call callback via fromtextError once if there was an error.
+    do {
+        const MasterToken& token = lexer.getNextToken();
+        switch (token.getType()) {
+        case MasterToken::END_OF_LINE:
+            return (rdata);
+        case MasterToken::END_OF_FILE:
+            callbacks.warning(lexer.getSourceName(), lexer.getSourceLine(),
+                              "file does not end with newline");
+            return (rdata);
+        default:
+            rdata.reset();      // we'll return NULL
+            fromtextError(error_issued, lexer, callbacks, &token,
+                          "extra input text");
+            // Continue until we see EOL or EOF
+        }
+    } while (true);
+
+    // We shouldn't reach here
+    assert(false);
+    return (RdataPtr()); // add explicit return to silence some compilers
 }
 
 int
@@ -119,7 +211,8 @@ Generic::Generic(isc::util::InputBuffer& buffer, size_t rdata_len) {
     impl_ = new GenericImpl(data);
 }
 
-Generic::Generic(const std::string& rdata_string) {
+void
+Generic::constructHelper(const std::string& rdata_string) {
     istringstream iss(rdata_string);
     string unknown_mark;
     iss >> unknown_mark;
@@ -178,6 +271,34 @@ Generic::Generic(const std::string& rdata_string) {
     }
 
     impl_ = new GenericImpl(data);
+}
+
+Generic::Generic(const std::string& rdata_string) {
+    constructHelper(rdata_string);
+}
+
+Generic::Generic(MasterLexer& lexer, const Name*,
+                 MasterLoader::Options,
+                 MasterLoaderCallbacks&)
+{
+    std::string s;
+
+    while (true) {
+        const MasterToken& token = lexer.getNextToken();
+        if ((token.getType() == MasterToken::END_OF_FILE) ||
+            (token.getType() == MasterToken::END_OF_LINE)) {
+            lexer.ungetToken(); // let the upper layer handle the end-of token
+            break;
+        }
+
+        if (!s.empty()) {
+            s += " ";
+        }
+
+        s += token.getString();
+    }
+
+    constructHelper(s);
 }
 
 Generic::~Generic() {

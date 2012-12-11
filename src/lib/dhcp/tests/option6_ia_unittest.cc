@@ -13,17 +13,19 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <iostream>
-#include <sstream>
-
-#include <arpa/inet.h>
-#include <gtest/gtest.h>
 
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <util/buffer.h>
+
+#include <gtest/gtest.h>
+
+#include <iostream>
+#include <sstream>
+
+#include <arpa/inet.h>
 
 using namespace std;
 using namespace isc;
@@ -204,7 +206,7 @@ TEST_F(Option6IATest, suboptions_unpack) {
 
     Option6IA* ia = 0;
     EXPECT_NO_THROW({
-            ia = new Option6IA(D6O_IA_NA, buf_.begin() + 4, buf_.begin() + sizeof(expected));
+        ia = new Option6IA(D6O_IA_NA, buf_.begin() + 4, buf_.begin() + sizeof(expected));
     });
     ASSERT_TRUE(ia);
 

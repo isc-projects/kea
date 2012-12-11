@@ -15,6 +15,8 @@
 #include "interprocess_sync_file.h"
 
 #include <string>
+#include <cerrno>
+#include <cstring>
 
 #include <stdlib.h>
 #include <string.h>
@@ -68,8 +70,8 @@ InterprocessSyncFile::do_lock(int cmd, short l_type) {
 
         if (fd_ == -1) {
             isc_throw(InterprocessSyncFileError,
-                      "Unable to use interprocess sync lockfile: " +
-                      lockfile_path);
+                      "Unable to use interprocess sync lockfile ("
+                      << std::strerror(errno) << "): " << lockfile_path);
         }
     }
 

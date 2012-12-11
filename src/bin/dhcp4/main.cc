@@ -13,13 +13,14 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <iostream>
-
-#include <boost/lexical_cast.hpp>
 
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <log/logger_support.h>
+
+#include <boost/lexical_cast.hpp>
+
+#include <iostream>
 
 using namespace isc::dhcp;
 using namespace std;

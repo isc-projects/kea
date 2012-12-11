@@ -12,16 +12,61 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef OPTION_DEFINITION_H_
-#define OPTION_DEFINITION_H_
+#ifndef OPTION_DEFINITION_H
+#define OPTION_DEFINITION_H
 
-#include <dhcp/option_data_types.h>
-#include <dhcp/option6_int.h>
-#include <dhcp/option6_int_array.h>
 #include <dhcp/option.h>
+#include <dhcp/option_data_types.h>
+
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Exception to be thrown when invalid option value has been
+/// specified for a particular option definition.
+class InvalidOptionValue : public Exception {
+public:
+    InvalidOptionValue(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief Exception to be thrown when option definition is invalid.
+class MalformedOptionDefinition : public Exception {
+public:
+    MalformedOptionDefinition(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief Forward declaration to OptionDefinition.
+class OptionDefinition;
+
+/// @brief Pointer to option definition object.
+typedef boost::shared_ptr<OptionDefinition> OptionDefinitionPtr;
+
+/// @brief Forward declaration to Option6Int.
+///
+/// This forward declaration is needed to access Option6Int class
+/// without having to include option6_int.h header. This is because
+/// this header includes libdhcp++.h and this causes circular
+/// inclusion between libdhcp++.h, option_definition.h and
+/// option6_int.h.
+template<typename T>
+class Option6Int;
+
+/// @brief Forward declaration to Option6IntArray.
+///
+/// This forward declaration is needed to access Option6IntArray class
+/// without having to include option6_int_array.h header. This is because
+/// this header includes libdhcp++.h and this causes circular
+/// inclusion between libdhcp++.h, option_definition.h and
+/// option6_int_array.h.
+template<typename T>
+class Option6IntArray;
 
 /// @brief Base class representing a DHCP option definition.
 ///
@@ -81,72 +126,11 @@ namespace dhcp {
 class OptionDefinition {
 public:
 
-    /// Data types of DHCP option fields.
-    enum DataType {
-        EMPTY_TYPE,
-        BOOLEAN_TYPE,
-        INT8_TYPE,
-        INT16_TYPE,
-        INT32_TYPE,
-        UINT8_TYPE,
-        UINT16_TYPE,
-        UINT32_TYPE,
-        IPV4_ADDRESS_TYPE,
-        IPV6_ADDRESS_TYPE,
-        STRING_TYPE,
-        FQDN_TYPE,
-        RECORD_TYPE,
-        UNKNOWN_TYPE
-    };
-
     /// List of fields within the record.
-    typedef std::vector<DataType> RecordFieldsCollection;
+    typedef std::vector<OptionDataType> RecordFieldsCollection;
     /// Const iterator for record data fields.
-    typedef std::vector<DataType>::const_iterator RecordFieldsConstIter;
+    typedef std::vector<OptionDataType>::const_iterator RecordFieldsConstIter;
 
-private:
-
-    /// @brief Utility class for operations on DataTypes.
-    ///
-    /// This class is implemented as the singleton because the list of
-    /// supported data types need only be loaded only once into memory as it
-    /// can persist for all option definitions.
-    ///
-    /// @todo This class can be extended to return the string value
-    /// representing the data type from the enum value.
-    class DataTypeUtil {
-    public:
-
-        /// @brief Return the sole instance of this class.
-        ///
-        /// @return instance of this class.
-        static DataTypeUtil& instance() {
-            static DataTypeUtil instance;
-            return (instance);
-        }
-
-        /// @brief Convert type given as string value to option data type.
-        ///
-        /// @param data_type_name data type string.
-        ///
-        /// @return option data type.
-        DataType getDataType(const std::string& data_type_name);
-
-    private:
-        /// @brief Private constructor.
-        ///
-        /// Constructor initializes the internal data structures, e.g.
-        /// mapping between data type name and the corresponding enum.
-        /// This constructor is private to ensure that exactly one
-        /// instance of this class can be created using \ref instance
-        /// function.
-        DataTypeUtil();
-
-        /// Map of data types, maps name of the type to enum value.
-        std::map<std::string, DataType> data_types_;
-    };
-
-public:
     /// @brief Constructor.
     ///
     /// @param name option name.
@@ -168,7 +152,7 @@ public:
     /// option fields are the array.
     OptionDefinition(const std::string& name,
                      const uint16_t code,
-                     const DataType type,
+                     const OptionDataType type,
                      const bool array_type = false);
 
     /// @brief Adds data field to the record.
@@ -185,7 +169,7 @@ public:
     ///
     /// @throw isc::InvalidOperation if option type is not set to RECORD_TYPE.
     /// @throw isc::BadValue if specified invalid data type.
-    void addRecordField(const DataType data_type);
+    void addRecordField(const OptionDataType data_type);
 
     /// @brief Return array type indicator.
     ///
@@ -200,11 +184,6 @@ public:
     /// @return option code.
     uint16_t getCode() const { return (code_); }
 
-    /// @brief Return factory function for the given definition.
-    ///
-    /// @return pointer to factory function.
-    Option::Factory* getFactory() const;
-
     /// @brief Return option name.
     ///
     /// @return option name.
@@ -218,13 +197,11 @@ public:
     /// @brief Return option data type.
     ///
     /// @return option data type.
-    DataType getType() const { return (type_); };
+    OptionDataType getType() const { return (type_); };
 
     /// @brief Check if the option definition is valid.
     ///
-    /// @throw isc::OutOfRange if invalid option type was specified.
-    /// @throw isc::BadValue if invalid option name was specified,
-    /// e.g. empty or containing spaces.
+    /// @throw MalformedOptionDefinition option definition is invalid.
     void validate() const;
 
     /// @brief Check if specified format is IA_NA option format.
@@ -237,101 +214,163 @@ public:
     /// @return true if specified format is IAADDR option format.
     bool haveIAAddr6Format() const;
 
-    /// @brief Factory to create option with address list.
+    /// @brief Option factory.
     ///
-    /// @param u universe (must be V4).
+    /// This function creates an instance of DHCP option using
+    /// provided chunk of buffer. This function may be used to
+    /// create option which is to be sent in the outgoing packet.
+    ///
+    /// @param u option universe (V4 or V6).
     /// @param type option type.
-    /// @param buf option buffer with a list of IPv4 addresses.
+    /// @param begin beginning of the option buffer.
+    /// @param end end of the option buffer.
     ///
-    /// @throw isc::OutOfRange if length of the provided option buffer
-    /// is not multiple of IPV4 address length.
-    static OptionPtr factoryAddrList4(Option::Universe u, uint16_t type,
-                                      const OptionBuffer& buf);
+    /// @return instance of the DHCP option.
+    /// @throw MalformedOptionDefinition if option definition is invalid.
+    /// @throw InvalidOptionValue if data for the option is invalid.
+    OptionPtr optionFactory(Option::Universe u, uint16_t type,
+                            OptionBufferConstIter begin,
+                            OptionBufferConstIter end) const;
+
+    /// @brief Option factory.
+    ///
+    /// This function creates an instance of DHCP option using
+    /// whole provided buffer. This function may be used to
+    /// create option which is to be sent in the outgoing packet.
+    ///
+    /// @param u option universe (V4 or V6).
+    /// @param type option type.
+    /// @param buf option buffer.
+    ///
+    /// @return instance of the DHCP option.
+    /// @throw MalformedOptionDefinition if option definition is invalid.
+    /// @throw InvalidOptionValue if data for the option is invalid.
+    OptionPtr optionFactory(Option::Universe u, uint16_t type,
+                            const OptionBuffer& buf) const;
+
+    /// @brief Option factory.
+    ///
+    /// This function creates an instance of DHCP option using the vector
+    /// of strings which carry data values for option data fields.
+    /// The order of values in the vector corresponds to the order of data
+    /// fields in the option. The supplied string values are cast to
+    /// their actual data types which are determined based on the
+    /// option definition. If cast fails due to type mismatch, an exception
+    /// is thrown. This factory function can be used to create option
+    /// instance when user specified option value in the <b>comma separated
+    /// values</b> format in the configuration database. Provided string
+    /// must be tokenized into the vector of string values and this vector
+    /// can be supplied to this function.
+    ///
+    /// @param u option universe (V4 or V6).
+    /// @param type option type.
+    /// @param values a vector of values to be used to set data for an option.
+    ///
+    /// @return instance of the DHCP option.
+    /// @throw MalformedOptionDefinition if option definition is invalid.
+    /// @throw InvalidOptionValue if data for the option is invalid.
+    OptionPtr optionFactory(Option::Universe u, uint16_t type,
+                            const std::vector<std::string>& values) const;
 
     /// @brief Factory to create option with address list.
     ///
-    /// @param u universe (must be V6).
     /// @param type option type.
-    /// @param buf option buffer with a list of IPv6 addresses.
+    /// @param begin iterator pointing to the beginning of the buffer
+    /// with a list of IPv4 addresses.
+    /// @param end iterator pointing to the end of the buffer with
+    /// a list of IPv4 addresses.
+    ///
+    /// @throw isc::OutOfRange if length of the provided option buffer
+    /// is not multiple of IPV4 address length.
+    static OptionPtr factoryAddrList4(uint16_t type,
+                                      OptionBufferConstIter begin,
+                                      OptionBufferConstIter end);
+
+    /// @brief Factory to create option with address list.
+    ///
+    /// @param type option type.
+    /// @param begin iterator pointing to the beginning of the buffer
+    /// with a list of IPv6 addresses.
+    /// @param end iterator pointing to the end of the buffer with
+    /// a list of IPv6 addresses.
     ///
     /// @throw isc::OutOfaRange if length of provided option buffer
     /// is not multiple of IPV6 address length.
-    static OptionPtr factoryAddrList6(Option::Universe u, uint16_t type,
-                                      const OptionBuffer& buf);
+    static OptionPtr factoryAddrList6(uint16_t type,
+                                      OptionBufferConstIter begin,
+                                      OptionBufferConstIter end);
 
     /// @brief Empty option factory.
     ///
     /// @param u universe (V6 or V4).
     /// @param type option type.
-    /// @param buf option buffer (must be empty).
-    static OptionPtr factoryEmpty(Option::Universe u, uint16_t type,
-                                  const OptionBuffer& buf);
+    static OptionPtr factoryEmpty(Option::Universe u, uint16_t type);
 
     /// @brief Factory to create generic option.
     ///
     /// @param u universe (V6 or V4).
     /// @param type option type.
-    /// @param buf option buffer.
+    /// @param begin iterator pointing to the beginning of the buffer.
+    /// @param end iterator pointing to the end of the buffer.
     static OptionPtr factoryGeneric(Option::Universe u, uint16_t type,
-                                    const OptionBuffer& buf);
+                                    OptionBufferConstIter begin,
+                                    OptionBufferConstIter end);
 
     /// @brief Factory for IA-type of option.
     ///
-    /// @param u universe (must be V6).
     /// @param type option type.
-    /// @param buf option buffer.
+    /// @param begin iterator pointing to the beginning of the buffer.
+    /// @param end iterator pointing to the end of the buffer.
     ///
     /// @throw isc::OutOfRange if provided option buffer is too short or
     /// too long. Expected size is 12 bytes.
     /// @throw isc::BadValue if specified universe value is not V6.
-    static OptionPtr factoryIA6(Option::Universe u, uint16_t type,
-                                const OptionBuffer& buf);
+    static OptionPtr factoryIA6(uint16_t type,
+                                OptionBufferConstIter begin,
+                                OptionBufferConstIter end);
 
     /// @brief Factory for IAADDR-type of option.
     ///
-    /// @param u universe (must be V6).
     /// @param type option type.
-    /// @param buf option buffer.
+    /// @param begin iterator pointing to the beginning of the buffer.
+    /// @param end iterator pointing to the end of the buffer.
     ///
     /// @throw isc::OutOfRange if provided option buffer is too short or
     /// too long. Expected size is 24 bytes.
     /// @throw isc::BadValue if specified universe value is not V6.
-    static OptionPtr factoryIAAddr6(Option::Universe u, uint16_t type,
-                                const OptionBuffer& buf);
+    static OptionPtr factoryIAAddr6(uint16_t type,
+                                    OptionBufferConstIter begin,
+                                    OptionBufferConstIter end);
 
     /// @brief Factory function to create option with integer value.
     ///
     /// @param type option type.
-    /// @param buf option buffer.
+    /// @param begin iterator pointing to the beginning of the buffer.
+    /// @param end iterator pointing to the end of the buffer.
     /// @tparam T type of the data field (must be one of the uintX_t or intX_t).
     ///
     /// @throw isc::OutOfRange if provided option buffer length is invalid.
     template<typename T>
-    static OptionPtr factoryInteger(Option::Universe, uint16_t type, const OptionBuffer& buf) {
-        if (buf.size() > sizeof(T)) {
-            isc_throw(isc::OutOfRange, "provided option buffer is too large, expected: "
-                      << sizeof(T) << " bytes");
-        }
-        OptionPtr option(new Option6Int<T>(type, buf.begin(), buf.end()));
+    static OptionPtr factoryInteger(Option::Universe, uint16_t type,
+                                    OptionBufferConstIter begin,
+                                    OptionBufferConstIter end) {
+        OptionPtr option(new Option6Int<T>(type, begin, end));
         return (option);
     }
 
     /// @brief Factory function to create option with array of integer values.
     ///
     /// @param type option type.
-    /// @param buf option buffer.
+    /// @param begin iterator pointing to the beginning of the buffer.
+    /// @param end iterator pointing to the end of the buffer.
     /// @tparam T type of the data field (must be one of the uintX_t or intX_t).
     ///
     /// @throw isc::OutOfRange if provided option buffer length is invalid.
     template<typename T>
-    static OptionPtr factoryIntegerArray(Option::Universe, uint16_t type, const OptionBuffer& buf) {
-        if (buf.size() == 0) {
-            isc_throw(isc::OutOfRange, "option buffer length must be greater than zero");
-        } else if (buf.size() % OptionDataTypes<T>::len != 0) {
-            isc_throw(isc::OutOfRange, "option buffer length must be multiple of "
-                      << OptionDataTypes<T>::len << " bytes");
-        }
-        OptionPtr option(new Option6IntArray<T>(type, buf.begin(), buf.end()));
+    static OptionPtr factoryIntegerArray(uint16_t type,
+                                         OptionBufferConstIter begin,
+                                         OptionBufferConstIter end) {
+        OptionPtr option(new Option6IntArray<T>(type, begin, end));
         return (option);
     }
 
@@ -346,14 +385,48 @@ private:
     /// @param first_type type of the first data field.
     ///
     /// @return true if actual option format matches expected format.
-    bool haveIAx6Format(const OptionDefinition::DataType first_type) const;
+    bool haveIAx6Format(const OptionDataType first_type) const;
 
     /// @brief Check if specified type matches option definition type.
     ///
     /// @return true if specified type matches option definition type.
-    inline bool haveType(const DataType type) const {
+    inline bool haveType(const OptionDataType type) const {
         return (type == type_);
     }
+
+    /// @brief Perform lexical cast of the value and validate its range.
+    ///
+    /// This function performs lexical cast of a string value to integer
+    /// or boolean value and checks if the resulting value is within a
+    /// range of a target type. Note that range checks are not performed
+    /// on boolean values. The target type should be one of the supported
+    /// integer types or bool.
+    ///
+    /// @param value_str input value given as string.
+    /// @tparam T target type for lexical cast.
+    ///
+    /// @return cast value.
+    /// @throw BadDataTypeCast if cast was not successful.
+    template<typename T>
+    T lexicalCastWithRangeCheck(const std::string& value_str) const;
+
+    /// @brief Write the string value into the provided buffer.
+    ///
+    /// This method writes the given value to the specified buffer.
+    /// The provided string value may represent data of different types.
+    /// The actual data type is specified with the second argument.
+    /// Based on a value of this argument, this function will first
+    /// try to cast the string value to the particular data type and
+    /// if it is successful it will store the data in the buffer
+    /// in a binary format.
+    ///
+    /// @param value string representation of the value to be written.
+    /// @param type the actual data type to be stored.
+    /// @param [in, out] buf buffer where the value is to be stored.
+    ///
+    /// @throw BadDataTypeCast if data write was unsuccessful.
+    void writeToBuffer(const std::string& value, const OptionDataType type,
+                       OptionBuffer& buf) const;
 
     /// @brief Sanity check universe value.
     ///
@@ -362,14 +435,14 @@ private:
     ///
     /// @throw isc::BadValue if expected universe and actual universe don't match.
    static inline void sanityCheckUniverse(const Option::Universe expected_universe,
-                                          const Option::Universe actual_universe); 
+                                          const Option::Universe actual_universe);
 
     /// Option name.
     std::string name_;
     /// Option code.
     uint16_t code_;
     /// Option data type.
-    DataType type_;
+    OptionDataType type_;
     /// Indicates wheter option is a single value or array.
     bool array_type_;
     /// Collection of data fields within the record.
@@ -377,7 +450,56 @@ private:
 };
 
 
+/// @brief Multi index container for DHCP option definitions.
+///
+/// This container allows to search for DHCP option definition
+/// using two indexes:
+/// - sequenced: used to access elements in the order they have
+/// been added to the container
+/// - option code: used to search defintions of options
+/// with a specified option code (aka option type).
+/// Note that this container can hold multiple options with the
+/// same code. For this reason, the latter index can be used to
+/// obtain a range of options for a particular option code.
+///
+/// @todo: need an index to search options using option space name
+/// once option spaces are implemented.
+typedef boost::multi_index_container<
+    // Container comprises elements of OptionDefinition type.
+    OptionDefinitionPtr,
+    // Here we start enumerating various indexes.
+    boost::multi_index::indexed_by<
+        // Sequenced index allows accessing elements in the same way
+        // as elements in std::list. Sequenced is an index #0.
+        boost::multi_index::sequenced<>,
+        // Start definition of index #1.
+        boost::multi_index::hashed_non_unique<
+            // Use option type as the index key. The type is held
+            // in OptionDefinition object so we have to call
+            // OptionDefinition::getCode to retrieve this key
+            // for each element. The option code is non-unique so
+            // multiple elements with the same option code can
+            // be returned by this index.
+            boost::multi_index::const_mem_fun<
+                OptionDefinition,
+                uint16_t,
+                &OptionDefinition::getCode
+            >
+        >
+    >
+> OptionDefContainer;
+
+/// Type of the index #1 - option type.
+typedef OptionDefContainer::nth_index<1>::type OptionDefContainerTypeIndex;
+/// Pair of iterators to represent the range of options definitions
+///  having the same option type value. The first element in this pair
+///  represents the begining of the range, the second element
+///  represents the end.
+typedef std::pair<OptionDefContainerTypeIndex::const_iterator,
+                  OptionDefContainerTypeIndex::const_iterator> OptionDefContainerTypeRange;
+
+
 } // namespace isc::dhcp
 } // namespace isc
 
-#endif
+#endif // OPTION_DEFINITION_H

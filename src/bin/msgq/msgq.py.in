@@ -127,6 +127,7 @@ class MsgQ:
         self.subs = SubscriptionManager()
         self.lnames = {}
         self.sendbuffs = {}
+        self.running = False
 
     def setup_poller(self):
         """Set up the poll thing.  Internal function."""
@@ -178,6 +179,8 @@ class MsgQ:
             if os.path.exists(self.socket_file):
                 os.remove(self.socket_file)
             self.listen_socket.close()
+            sys.stderr.write("[b10-msgq] failed to setup listener on %s: %s\n"
+                             % (self.socket_file, str(e)))
             raise e
 
         if self.poller:
@@ -313,6 +316,8 @@ class MsgQ:
         elif cmd == 'ping':
             # Command for testing purposes
             self.process_command_ping(sock, routing, data)
+        elif cmd == 'stop':
+            self.stop()
         else:
             sys.stderr.write("[b10-msgq] Invalid command: %s\n" % cmd)
 
@@ -334,14 +339,34 @@ class MsgQ:
         self.send_prepared_msg(sock, self.preparemsg(env, msg))
 
     def __send_data(self, sock, data):
+        """
+        Send a piece of data to the given socket.
+        Parameters:
+        sock: The socket to send to
+        data: The list of bytes to send
+        Returns:
+        An integer or None. If an integer (which can be 0), it signals
+        the number of bytes sent. If None, the socket appears to have
+        been closed on the other end, and it has been killed on this
+        side too.
+        """
         try:
             # We set the socket nonblocking, MSG_DONTWAIT doesn't exist
             # on some OSes
             sock.setblocking(0)
             return sock.send(data)
         except socket.error as e:
-            if e.errno == errno.EAGAIN or e.errno == errno.EWOULDBLOCK:
+            if e.errno in [ errno.EAGAIN,
+                            errno.EWOULDBLOCK,
+                            errno.EINTR ]:
                 return 0
+            elif e.errno in [ errno.EPIPE,
+                              errno.ECONNRESET,
+                              errno.ENOBUFS ]:
+                print("[b10-msgq] " + errno.errorcode[e.errno] +
+                      " on send, dropping message and closing connection")
+                self.kill_socket(sock.fileno(), sock)
+                return None
             else:
                 raise e
         finally:
@@ -354,20 +379,12 @@ class MsgQ:
         if fileno in self.sendbuffs:
             amount_sent = 0
         else:
-            try:
-                amount_sent = self.__send_data(sock, msg)
-            except socket.error as sockerr:
-                # in the case the other side seems gone, kill the socket
-                # and drop the send action
-                if sockerr.errno == errno.EPIPE:
-                    print("[b10-msgq] SIGPIPE on send, dropping message " +
-                          "and closing connection")
-                    self.kill_socket(fileno, sock)
-                    return
-                else:
-                    raise
+            amount_sent = self.__send_data(sock, msg)
+            if amount_sent is None:
+                # Socket has been killed, drop the send
+                return
 
-        # Still something to send
+        # Still something to send, add it to outgoing queue
         if amount_sent < len(msg):
             now = time.clock()
             # Append it to buffer (but check the data go away)
@@ -392,17 +409,18 @@ class MsgQ:
         (_, msg) = self.sendbuffs[fileno]
         sock = self.sockets[fileno]
         amount_sent = self.__send_data(sock, msg)
-        # Keep the rest
-        msg = msg[amount_sent:]
-        if len(msg) == 0:
-            # If there's no more, stop requesting for write availability
-            if self.poller:
-                self.poller.register(fileno, select.POLLIN)
+        if amount_sent is not None:
+            # Keep the rest
+            msg = msg[amount_sent:]
+            if len(msg) == 0:
+                # If there's no more, stop requesting for write availability
+                if self.poller:
+                    self.poller.register(fileno, select.POLLIN)
+                else:
+                    self.delete_kqueue_socket(sock, True)
+                del self.sendbuffs[fileno]
             else:
-                self.delete_kqueue_socket(sock, True)
-            del self.sendbuffs[fileno]
-        else:
-            self.sendbuffs[fileno] = (time.clock(), msg)
+                self.sendbuffs[fileno] = (time.clock(), msg)
 
     def newlname(self):
         """Generate a unique connection identifier for this socket.
@@ -456,6 +474,7 @@ class MsgQ:
 
     def run(self):
         """Process messages.  Forever.  Mostly."""
+        self.running = True
 
         if self.poller:
             self.run_poller()
@@ -463,8 +482,10 @@ class MsgQ:
             self.run_kqueue()
 
     def run_poller(self):
-        while True:
+        while self.running:
             try:
+                # Poll with a timeout so that every once in a while,
+                # the loop checks for self.running.
                 events = self.poller.poll()
             except select.error as err:
                 if err.args[0] == errno.EINTR:
@@ -478,11 +499,15 @@ class MsgQ:
                 else:
                     if event & select.POLLOUT:
                         self.__process_write(fd)
-                    if event & select.POLLIN:
+                    elif event & select.POLLIN:
                         self.process_socket(fd)
+                    else:
+                        print("[b10-msgq] Error: Unknown even in run_poller()")
 
     def run_kqueue(self):
-        while True:
+        while self.running:
+            # Check with a timeout so that every once in a while,
+            # the loop checks for self.running.
             events = self.kqueue.control(None, 10)
             if not events:
                 raise RuntimeError('serve: kqueue returned no events')
@@ -499,6 +524,9 @@ class MsgQ:
                     elif event.flags & select.KQ_EV_EOF:
                         self.kill_socket(event.ident,
                                          self.sockets[event.ident])
+
+    def stop(self):
+        self.running = False
 
     def shutdown(self):
         """Stop the MsgQ master."""
@@ -543,9 +571,10 @@ if __name__ == "__main__":
 
     msgq = MsgQ(options.msgq_socket_file, options.verbose)
 
-    setup_result = msgq.setup()
-    if setup_result:
-        sys.stderr.write("[b10-msgq] Error on startup: %s\n" % setup_result)
+    try:
+        msgq.setup()
+    except Exception as e:
+        sys.stderr.write("[b10-msgq] Error on startup: %s\n" % str(e))
         sys.exit(1)
 
     try:
