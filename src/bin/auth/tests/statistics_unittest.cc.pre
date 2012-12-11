@@ -317,19 +317,21 @@ TEST_F(CountersTest, incrementTSIG) {
     std::map<std::string, int> expect;
 
     // Test these patterns:
-    //      signature  badsig
-    //     -------------------
-    //      (none)     false
-    //      TSIG       false
-    //      TSIG       true
+    //      request signature  badsig   response signature
+    //     -----------------------------------------------
+    //      (none)             false    (none)
+    //      TSIG               false    TSIG
+    //      TSIG               true     (none)
     //
     // badsig can't be true if the message does not have signature.
     int count_req_tsig = 0, count_res_tsig = 0, count_badsig = 0;
     for (int i = 0; i < 3; ++i) {
-        const bool is_tsig = (i == 2) ? true : i & 1;
+        const bool is_req_tsig = (i == 2) ? true : i & 1;
+        const bool is_res_tsig = i & 1;
         const bool is_badsig = i & 2;
         buildSkeletonMessage(msgattrs);
-        msgattrs.setRequestSig(is_tsig, is_badsig);
+        msgattrs.setRequestSig(is_req_tsig, is_badsig);
+        msgattrs.setResponseSigTSIG(is_res_tsig);
 
         response.setRcode(Rcode::REFUSED());
         response.addQuestion(Question(Name("example.com"),
@@ -339,11 +341,11 @@ TEST_F(CountersTest, incrementTSIG) {
         // don't increment response counters if signature is bad
         counters.inc(msgattrs, response, !is_badsig);
 
-        if (is_tsig) {
+        if (is_req_tsig) {
             ++count_req_tsig;
-            if (!is_badsig) {
-                ++count_res_tsig;
-            }
+        }
+        if (is_res_tsig) {
+            ++count_res_tsig;
         }
         if (is_badsig) {
             ++count_badsig;
