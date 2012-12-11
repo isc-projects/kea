@@ -1,3 +1,9 @@
+521.	[func]		marcin
+	Implemented definitions for DHCPv6 standard options identified
+	by codes up to 48. These definitions are now used by the DHCPv6
+	server to create instances of options being sent to a client.
+	(Trac #2491, git 0a4faa07777189ed9c25211987a1a9b574015a95)
+
 520.	[func]		jelte
 	The system no longer prints initial log messages to stdout
 	regardless of what logging configuration is present, but it
