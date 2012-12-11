@@ -1234,31 +1234,11 @@ TEST_F(AuthSrvTest, queryCounterUDPNormalWithDNSSEC) {
 
     ConstElementPtr stats_after = server.getStatistics()->
         get("zones")->get("_SERVER_");
-    expectCounterItem(stats_after->get("request"), "v4", 1);
-    expectCounterItem(stats_after->get("request"), "v6", 0);
-    expectCounterItem(stats_after->get("request"), "udp", 1);
-    expectCounterItem(stats_after->get("request"), "tcp", 0);
     expectCounterItem(stats_after->get("request"), "edns0", 1);
-    expectCounterItem(stats_after->get("request"), "badednsver", 0);
-    expectCounterItem(stats_after->get("request"), "tsig", 0);
-    expectCounterItem(stats_after->get("request"), "sig0", 0);
-    expectCounterItem(stats_after->get("request"), "badsig", 0);
     expectCounterItem(stats_after->get("request"), "dnssec_ok", 1);
-    expectCounterItem(stats_after->get("opcode"), "query", 1);
-    expectCounterItem(stats_after, "responses", 1);
-    expectCounterItem(stats_after->get("response"), "truncated", 0);
     // XXX: with the current implementation, EDNS0 is omitted in
     // makeErrorMessage.
     expectCounterItem(stats_after->get("response"), "edns0", 0);
-    expectCounterItem(stats_after->get("response"), "tsig", 0);
-    expectCounterItem(stats_after->get("response"), "sig0", 0);
-    expectCounterItem(stats_after->get("rcode"), "refused", 1);
-    expectCounterItem(stats_after, "qrysuccess", 0);
-    expectCounterItem(stats_after, "qryauthans", 0);
-    expectCounterItem(stats_after, "qrynoauthans", 1);
-    expectCounterItem(stats_after, "qryreferral", 0);
-    expectCounterItem(stats_after, "qrynxrrset", 0);
-    expectCounterItem(stats_after, "authqryrej", 1);
 }
 
 // Submit TCP normal query and check query counter
