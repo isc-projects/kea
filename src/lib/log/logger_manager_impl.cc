@@ -145,6 +145,9 @@ LoggerManagerImpl::createBufferAppender(log4cplus::Logger& logger) {
     log4cplus::SharedAppenderPtr bufferapp(new internal::BufferAppender());
     bufferapp->setName("buffer");
     logger.addAppender(bufferapp);
+    // Since we do not know at what level the loggers will end up
+    // running, set it to the highest for now
+    logger.setLogLevel(log4cplus::TRACE_LOG_LEVEL);
 }
 
 // Syslog appender.
