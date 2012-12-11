@@ -923,6 +923,7 @@ TEST_F(AuthSrvTest, TSIGSigned) {
     expectCounterItem(stats_after->get("request"), "badsig", 0);
     expectCounterItem(stats_after, "responses", 1);
     expectCounterItem(stats_after, "qryauthans", 1);
+    expectCounterItem(stats_after->get("response"), "tsig", 1);
 }
 
 // Same test emulating the UDPServer class behavior (defined in libasiolink).

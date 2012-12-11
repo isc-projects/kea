@@ -467,6 +467,7 @@ makeErrorMessage(MessageRenderer& renderer, Message& message,
     RendererHolder holder(renderer, &buffer, stats_attrs);
     if (tsig_context.get() != NULL) {
         message.toWire(renderer, *tsig_context);
+        stats_attrs.setResponseSigTSIG(true);
     } else {
         message.toWire(renderer);
     }
@@ -687,6 +688,7 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message,
     renderer_.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
     if (tsig_context.get() != NULL) {
         message.toWire(renderer_, *tsig_context);
+        stats_attrs.setResponseSigTSIG(true);
     } else {
         message.toWire(renderer_);
     }
@@ -818,6 +820,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     RendererHolder holder(renderer_, &buffer, stats_attrs);
     if (tsig_context.get() != NULL) {
         message.toWire(renderer_, *tsig_context);
+        stats_attrs.setResponseSigTSIG(true);
     } else {
         message.toWire(renderer_);
     }

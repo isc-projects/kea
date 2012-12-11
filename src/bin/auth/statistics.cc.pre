@@ -174,8 +174,7 @@ Counters::incResponse(const MessageAttributes& msgattrs,
     }
 
     // response TSIG
-    if (msgattrs.getRequestSigTSIG()) {
-        // assume response is TSIG signed if request is TSIG signed
+    if (msgattrs.getResponseSigTSIG()) {
         server_msg_counter_.inc(MSG_RESPONSE_TSIG);
     }
 

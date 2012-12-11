@@ -59,11 +59,12 @@ private:
     TransportProtocol req_transport_protocol_; // Transport layer protocol
     Opcode req_opcode_;                        // OpCode
     enum BitAttributes {
-        REQ_IS_EDNS_0,              // EDNS ver.0
-        REQ_IS_DNSSEC_OK,           // DNSSEC OK (DO) bit is set
-        REQ_IS_TSIG,                // signed with valid TSIG
-        REQ_IS_BADSIG,              // signed but bad signature
-        RES_IS_TRUNCATED,           // DNS message is truncated
+        REQ_IS_EDNS_0,              // request is EDNS ver.0
+        REQ_IS_DNSSEC_OK,           // DNSSEC OK (DO) bit is set in request
+        REQ_IS_TSIG,                // request is signed with valid TSIG
+        REQ_IS_BADSIG,              // request is signed but bad signature
+        RES_IS_TRUNCATED,           // response is truncated
+        RES_IS_TSIG_SIGNED,         // response is TSIG signed
         BIT_ATTRIBUTES_TYPES
     };
     std::bitset<BIT_ATTRIBUTES_TYPES> bit_attributes_;
@@ -71,10 +72,10 @@ public:
     /// \brief The constructor.
     ///
     /// \throw None
-    MessageAttributes() : req_ip_version_(IP_VERSION_UNSPEC),
-                          req_transport_protocol_(TRANSPORT_UNSPEC),
-                          req_opcode_(Opcode::RESERVED15_CODE),
-                          bit_attributes_()
+    MessageAttributes() :
+        req_ip_version_(IP_VERSION_UNSPEC),
+        req_transport_protocol_(TRANSPORT_UNSPEC),
+        req_opcode_(Opcode::RESERVED15_CODE), bit_attributes_()
     {}
 
     /// \brief Return request opcode.
@@ -187,6 +188,20 @@ public:
     /// \throw None
     void setResponseTruncated(const bool is_truncated) {
         bit_attributes_[RES_IS_TRUNCATED] = is_truncated;
+    }
+
+    /// \brief Return TSIG attributes of the response.
+    /// \return true if the response is TSIG signed
+    /// \throw None
+    bool getResponseSigTSIG() const {
+        return (bit_attributes_[RES_IS_TSIG_SIGNED]);
+    }
+
+    /// \brief Set TSIG attributes of the response.
+    /// \param is_tsig_signed true if the response is TSIG signed
+    /// \throw None
+    void setResponseSigTSIG(const bool is_tsig_signed) {
+        bit_attributes_[RES_IS_TSIG_SIGNED] = is_tsig_signed;
     }
 };
 
