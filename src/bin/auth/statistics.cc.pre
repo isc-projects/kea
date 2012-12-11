@@ -24,19 +24,6 @@
 
 #include <statistics/counter.h>
 
-#include <algorithm>
-#include <cctype>
-#include <cassert>
-#include <string>
-#include <sstream>
-#include <iostream>
-
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-
 using namespace isc::dns;
 using namespace isc::auth;
 using namespace isc::statistics;
@@ -132,16 +119,16 @@ Counters::Counters() :
 void
 Counters::incRequest(const MessageAttributes& msgattrs) {
     // protocols carrying request
-    if (msgattrs.getRequestIPVersion() == AF_INET) {
-        server_msg_counter_.inc(MSG_REQUEST_IPV4);
-    } else if (msgattrs.getRequestIPVersion() == AF_INET6) {
-        server_msg_counter_.inc(MSG_REQUEST_IPV6);
-    }
-    if (msgattrs.getRequestTransportProtocol() == IPPROTO_UDP) {
-        server_msg_counter_.inc(MSG_REQUEST_UDP);
-    } else if (msgattrs.getRequestTransportProtocol() == IPPROTO_TCP) {
-        server_msg_counter_.inc(MSG_REQUEST_TCP);
-    }
+    server_msg_counter_.inc(
+        msgattrs.getRequestIPVersion() ==
+            MessageAttributes::IP_VERSION_IPV4 ?
+            MSG_REQUEST_IPV4 :
+            MSG_REQUEST_IPV6);
+    server_msg_counter_.inc(
+        msgattrs.getRequestTransportProtocol() ==
+            MessageAttributes::TRANSPORT_UDP ?
+            MSG_REQUEST_UDP :
+            MSG_REQUEST_TCP);
 
     // request TSIG
     if (msgattrs.getRequestSigTSIG()) {
