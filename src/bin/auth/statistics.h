@@ -230,7 +230,7 @@ public:
     ///        item_value is an integer.
     /// \endverbatim
     ///
-    typedef isc::data::ElementPtr ItemTreePtr;
+    typedef isc::data::ConstElementPtr ConstItemTreePtr;
 
     /// \brief The constructor.
     ///
@@ -262,7 +262,7 @@ public:
     ///
     /// \throw std::bad_alloc Internal resource allocation fails
     ///
-    ItemTreePtr get() const;
+    ConstItemTreePtr get() const;
 };
 
 } // namespace statistics
