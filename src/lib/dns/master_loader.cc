@@ -285,9 +285,11 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
                         callbacks_.warning(lexer_.getSourceName(),
                                            lexer_.getSourceLine(),
                                            "Unexpected end ond of file");
-                        // TODO: Try pop in case this is not the only
-                        // source
-                        return (true);
+                        if (!popSource()) {
+                            return (true);
+                        }
+                        // Else: fall through, the popped source is
+                        // at the end of line currently
                     case MasterToken::END_OF_LINE:
                         end = true;
                         break;
