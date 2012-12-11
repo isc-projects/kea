@@ -51,12 +51,13 @@ public:
     ///
     /// Creates option with empty values vector.
     ///
+    /// @param u universe (V4 or V6).
     /// @param type option type.
     ///
     /// @throw isc::dhcp::InvalidDataType if data field type provided
     /// as template parameter is not a supported integer type.
-    OptionIntArray(uint16_t type)
-        : Option(Option::V6, type),
+    OptionIntArray(const Option::Universe u, const uint16_t type)
+        : Option(u, type),
           values_(0) {
         if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(dhcp::InvalidDataType, "non-integer type");
@@ -65,6 +66,7 @@ public:
 
     /// @brief Constructor.
     ///
+    /// @param u universe (V4 or V6).
     /// @param type option type.
     /// @param buf buffer with option data (must not be empty).
     ///
@@ -72,8 +74,9 @@ public:
     /// is not multiple of size of the data type in bytes.
     /// @throw isc::dhcp::InvalidDataType if data field type provided
     /// as template parameter is not a supported integer type.
-    OptionIntArray(uint16_t type, const OptionBuffer& buf)
-        : Option(Option::V6, type) {
+    OptionIntArray(const Option::Universe u, const uint16_t type,
+                   const OptionBuffer& buf)
+        : Option(u, type) {
         if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
@@ -86,6 +89,7 @@ public:
     /// may throw exception if \ref unpack function throws during buffer
     /// parsing.
     ///
+    /// @param u universe (V4 or V6).
     /// @param type option type.
     /// @param begin iterator to first byte of option data.
     /// @param end iterator to end of option data (first byte after option end).
@@ -94,9 +98,9 @@ public:
     /// is not multiple of size of the data type in bytes.
     /// @throw isc::dhcp::InvalidDataType if data field type provided
     /// as template parameter is not a supported integer type.
-    OptionIntArray(uint16_t type, OptionBufferConstIter begin,
-                    OptionBufferConstIter end)
-        : Option(Option::V6, type) {
+    OptionIntArray(const Option::Universe u, const uint16_t type,
+                   OptionBufferConstIter begin, OptionBufferConstIter end)
+        : Option(u, type) {
         if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }

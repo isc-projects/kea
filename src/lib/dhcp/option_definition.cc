@@ -97,19 +97,19 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                     factoryInteger<int8_t>(u, type, begin, end));
 
         case OPT_UINT16_TYPE:
-            return (array_type_ ? factoryIntegerArray<uint16_t>(type, begin, end) :
+            return (array_type_ ? factoryIntegerArray<uint16_t>(u, type, begin, end) :
                     factoryInteger<uint16_t>(u, type, begin, end));
 
         case OPT_INT16_TYPE:
-            return (array_type_ ? factoryIntegerArray<uint16_t>(type, begin, end) :
+            return (array_type_ ? factoryIntegerArray<uint16_t>(u, type, begin, end) :
                     factoryInteger<int16_t>(u, type, begin, end));
 
         case OPT_UINT32_TYPE:
-            return (array_type_ ? factoryIntegerArray<uint32_t>(type, begin, end) :
+            return (array_type_ ? factoryIntegerArray<uint32_t>(u, type, begin, end) :
                     factoryInteger<uint32_t>(u, type, begin, end));
 
         case OPT_INT32_TYPE:
-            return (array_type_ ? factoryIntegerArray<uint32_t>(type, begin, end) :
+            return (array_type_ ? factoryIntegerArray<uint32_t>(u, type, begin, end) :
                     factoryInteger<int32_t>(u, type, begin, end));
 
         case OPT_IPV4_ADDRESS_TYPE:
