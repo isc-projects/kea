@@ -352,7 +352,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     // Let's now request option with code 1000.
     // We expect that server will include this option in its reply.
     boost::shared_ptr<OptionIntArray<uint16_t> >
-        option_oro(new OptionIntArray<uint16_t>(D6O_ORO));
+        option_oro(new OptionIntArray<uint16_t>(Option::V6, D6O_ORO));
     // Create vector with two option codes.
     std::vector<uint16_t> codes(2);
     codes[0] = 1000;
