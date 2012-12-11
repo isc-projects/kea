@@ -25,7 +25,7 @@ namespace {
 /// @param name name of the array being declared.
 /// @param types data types of fields that belong to the record.
 #ifndef RECORD_DECL
-#define RECORD_DECL(name, types...) static OptionDataType name[] = { types }
+#define RECORD_DECL(name, types...) static const OptionDataType name[] = { types }
 #endif
 
 /// @brief A pair of values: one pointing to the array holding types of
@@ -40,12 +40,12 @@ using namespace isc::dhcp;
 
 /// @brief Parameters being used to make up an option definition.
 struct OptionDefParams {
-    const char* name;         // option name
-    uint16_t code;            // option code
-    OptionDataType type;      // data type
-    bool array;               // is array
-    OptionDataType* records;  // record fields
-    size_t records_size;      // number of fields in a record
+    const char* name;              // option name
+    uint16_t code;                 // option code
+    OptionDataType type;           // data type
+    bool array;                    // is array
+    const OptionDataType* records; // record fields
+    size_t records_size;           // number of fields in a record
 };
 
 // fqdn option record fields.
@@ -194,40 +194,40 @@ const int OPTION_DEF_PARAMS_SIZE4  =
 /// Start Definition of DHCPv6 options
 
 // client-fqdn
-RECORD_DECL(clientFqdnRecords, OPT_UINT8_TYPE, OPT_FQDN_TYPE);
+RECORD_DECL(CLIENT_FQDN_RECORDS, OPT_UINT8_TYPE, OPT_FQDN_TYPE);
 // geoconf-civic
-RECORD_DECL(geoconfCivicRecords, OPT_UINT8_TYPE, OPT_UINT16_TYPE,
+RECORD_DECL(GEOCONF_CIVIC_RECORDS, OPT_UINT8_TYPE, OPT_UINT16_TYPE,
             OPT_BINARY_TYPE);
 // iaddr
-RECORD_DECL(iaaddrRecords, OPT_IPV6_ADDRESS_TYPE, OPT_UINT32_TYPE,
+RECORD_DECL(IAADDR_RECORDS, OPT_IPV6_ADDRESS_TYPE, OPT_UINT32_TYPE,
             OPT_UINT32_TYPE);
 // ia-na
-RECORD_DECL(ianaRecords, OPT_UINT32_TYPE, OPT_UINT32_TYPE, OPT_UINT32_TYPE);
+RECORD_DECL(IA_NA_RECORDS, OPT_UINT32_TYPE, OPT_UINT32_TYPE, OPT_UINT32_TYPE);
 // ia-pd
-RECORD_DECL(iapdRecords, OPT_UINT32_TYPE, OPT_UINT32_TYPE, OPT_UINT32_TYPE);
+RECORD_DECL(IA_PD_RECORDS, OPT_UINT32_TYPE, OPT_UINT32_TYPE, OPT_UINT32_TYPE);
 // ia-prefix
-RECORD_DECL(iaPrefixRecords, OPT_UINT32_TYPE, OPT_UINT32_TYPE,
+RECORD_DECL(IA_PREFIX_RECORDS, OPT_UINT32_TYPE, OPT_UINT32_TYPE,
             OPT_UINT8_TYPE, OPT_BINARY_TYPE);
 // lq-query
-RECORD_DECL(lqQueryRecords, OPT_UINT8_TYPE, OPT_IPV6_ADDRESS_TYPE);
+RECORD_DECL(LQ_QUERY_RECORDS, OPT_UINT8_TYPE, OPT_IPV6_ADDRESS_TYPE);
 // lq-relay-data
-RECORD_DECL(lqRelayData, OPT_IPV6_ADDRESS_TYPE, OPT_BINARY_TYPE);
+RECORD_DECL(LQ_RELAY_DATA_RECORDS, OPT_IPV6_ADDRESS_TYPE, OPT_BINARY_TYPE);
 // remote-id
-RECORD_DECL(remoteIdRecords, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
+RECORD_DECL(REMOTE_ID_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 // status-code
-RECORD_DECL(statusCodeRecords, OPT_UINT16_TYPE, OPT_STRING_TYPE);
+RECORD_DECL(STATUS_CODE_RECORDS, OPT_UINT16_TYPE, OPT_STRING_TYPE);
 // vendor-class
-RECORD_DECL(vendorClassRecords, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
+RECORD_DECL(VENDOR_CLASS_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 // vendor-opts
-RECORD_DECL(vendorOptsRecords, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
+RECORD_DECL(VENDOR_OPTS_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 
 /// Standard DHCPv6 option definitions.
 static const OptionDefParams OPTION_DEF_PARAMS6[] = {
     { "clientid", D6O_CLIENTID, OPT_BINARY_TYPE, false },
     { "serverid", D6O_SERVERID, OPT_BINARY_TYPE, false },
-    { "ia-na", D6O_IA_NA, OPT_RECORD_TYPE, false, RECORD_DEF(ianaRecords) },
+    { "ia-na", D6O_IA_NA, OPT_RECORD_TYPE, false, RECORD_DEF(IA_NA_RECORDS) },
     { "ia-ta", D6O_IA_TA, OPT_UINT32_TYPE, false },
-    { "iaaddr", D6O_IAADDR, OPT_RECORD_TYPE, false, RECORD_DEF(iaaddrRecords) },
+    { "iaaddr", D6O_IAADDR, OPT_RECORD_TYPE, false, RECORD_DEF(IAADDR_RECORDS) },
     { "oro", D6O_ORO, OPT_UINT16_TYPE, true },
     { "preference", D6O_PREFERENCE, OPT_UINT8_TYPE, false },
     { "elapsed-time", D6O_ELAPSED_TIME, OPT_UINT16_TYPE, false },
@@ -241,13 +241,13 @@ static const OptionDefParams OPTION_DEF_PARAMS6[] = {
     { "auth", D6O_AUTH, OPT_BINARY_TYPE, false },
     { "unicast", D6O_UNICAST, OPT_IPV6_ADDRESS_TYPE, false },
     { "status-code", D6O_STATUS_CODE, OPT_RECORD_TYPE, false,
-      RECORD_DEF(statusCodeRecords) },
+      RECORD_DEF(STATUS_CODE_RECORDS) },
     { "rapid-commit", D6O_RAPID_COMMIT, OPT_EMPTY_TYPE, false },
     { "user-class", D6O_USER_CLASS, OPT_BINARY_TYPE, false },
     { "vendor-class", D6O_VENDOR_CLASS, OPT_RECORD_TYPE, false,
-      RECORD_DEF(vendorClassRecords) },
+      RECORD_DEF(VENDOR_CLASS_RECORDS) },
     { "vendor-opts", D6O_VENDOR_OPTS, OPT_RECORD_TYPE, false,
-      RECORD_DEF(vendorOptsRecords) },
+      RECORD_DEF(VENDOR_OPTS_RECORDS) },
     { "interface-id", D6O_INTERFACE_ID, OPT_BINARY_TYPE, false },
     { "reconf-msg", D6O_RECONF_MSG, OPT_UINT8_TYPE, false },
     { "reconf-accept", D6O_RECONF_ACCEPT, OPT_EMPTY_TYPE, false },
@@ -255,9 +255,9 @@ static const OptionDefParams OPTION_DEF_PARAMS6[] = {
     { "sip-server-addr", D6O_SIP_SERVERS_ADDR, OPT_IPV6_ADDRESS_TYPE, true },
     { "dns-servers", D6O_NAME_SERVERS, OPT_IPV6_ADDRESS_TYPE, true },
     { "domain-search", D6O_DOMAIN_SEARCH, OPT_FQDN_TYPE, true },
-    { "ia-pd", D6O_IA_PD, OPT_RECORD_TYPE, false, RECORD_DEF(iapdRecords) },
+    { "ia-pd", D6O_IA_PD, OPT_RECORD_TYPE, false, RECORD_DEF(IA_PD_RECORDS) },
     { "iaprefix", D6O_IAPREFIX, OPT_RECORD_TYPE, false,
-      RECORD_DEF(iaPrefixRecords) },
+      RECORD_DEF(IA_PREFIX_RECORDS) },
     { "nis-servers", D6O_NIS_SERVERS, OPT_IPV6_ADDRESS_TYPE, true },
     { "nisp-servers", D6O_NISP_SERVERS, OPT_IPV6_ADDRESS_TYPE, true },
     { "nis-domain-name", D6O_NIS_DOMAIN_NAME, OPT_FQDN_TYPE, true },
@@ -268,22 +268,22 @@ static const OptionDefParams OPTION_DEF_PARAMS6[] = {
     { "bcmcs-server-dns", D6O_BCMCS_SERVER_D, OPT_FQDN_TYPE, true },
     { "bcmcs-server-addr", D6O_BCMCS_SERVER_A, OPT_IPV6_ADDRESS_TYPE, true },
     { "geoconf-civic", D6O_GEOCONF_CIVIC, OPT_RECORD_TYPE, false,
-      RECORD_DEF(geoconfCivicRecords) },
+      RECORD_DEF(GEOCONF_CIVIC_RECORDS) },
     { "remote-id", D6O_REMOTE_ID, OPT_RECORD_TYPE, false,
-      RECORD_DEF(remoteIdRecords) },
+      RECORD_DEF(REMOTE_ID_RECORDS) },
     { "subscriber-id", D6O_SUBSCRIBER_ID, OPT_BINARY_TYPE, false },
     { "client-fqdn", D6O_CLIENT_FQDN, OPT_RECORD_TYPE, false,
-      RECORD_DEF(clientFqdnRecords) },
+      RECORD_DEF(CLIENT_FQDN_RECORDS) },
     { "pana-agent", D6O_PANA_AGENT, OPT_IPV6_ADDRESS_TYPE, true },
     { "new-posix-timezone", D6O_NEW_POSIX_TIMEZONE, OPT_STRING_TYPE, false },
     { "new-tzdb-timezone", D6O_NEW_TZDB_TIMEZONE, OPT_STRING_TYPE, false },
     { "ero", D6O_ERO, OPT_UINT16_TYPE, true },
     { "lq-query", D6O_LQ_QUERY, OPT_RECORD_TYPE, false,
-      RECORD_DEF(lqQueryRecords) },
+      RECORD_DEF(LQ_QUERY_RECORDS) },
     { "client-data", D6O_CLIENT_DATA, OPT_EMPTY_TYPE, false },
     { "clt-time", D6O_CLT_TIME, OPT_UINT32_TYPE, false },
     { "lq-relay-data", D6O_LQ_RELAY_DATA, OPT_RECORD_TYPE, false,
-      RECORD_DEF(lqRelayData) },
+      RECORD_DEF(LQ_RELAY_DATA_RECORDS) },
     { "lq-client-link", D6O_LQ_CLIENT_LINK, OPT_IPV6_ADDRESS_TYPE, true }
 
     // @todo There is still a bunch of options for which we have to provide
