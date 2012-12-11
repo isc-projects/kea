@@ -12,9 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// We want UINT32_MAX macro to be defined in stdint.h
-#define __STDC_LIMIT_MACROS
-
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
@@ -22,8 +19,7 @@
 #include <dhcp/cfgmgr.h>
 #include <dhcp4/config_parser.h>
 #include <dhcp4/dhcp4_log.h>
-
-#include <stdint.h>
+#include <limits>
 #include <iostream>
 #include <vector>
 #include <map>
@@ -150,7 +146,7 @@ public:
             isc_throw(BadValue, "Failed to parse value " << value->str()
                       << " as unsigned 32-bit integer.");
         }
-        if (check > UINT32_MAX) {
+        if (check > std::numeric_limits<uint32_t>::max()) {
             isc_throw(BadValue, "Value " << value->str() << "is too large"
                       << " for unsigned 32-bit integer.");
         }
@@ -162,9 +158,7 @@ public:
         // value is small enough to fit
         value_ = static_cast<uint32_t>(check);
 
-        /// @todo: check if there is no such name in the map. Otherwise
-        /// the insert will fail silently
-        storage_->insert(pair<string, uint32_t>(param_name_, value_));
+        (*storage_)[param_name_] = value_;
     }
 
     /// @brief does nothing
@@ -194,7 +188,7 @@ public:
         storage_ = storage;
     }
 
-protected:
+private:
     /// pointer to the storage, where parsed value will be stored
     Uint32Storage* storage_;
 
@@ -234,9 +228,8 @@ public:
     virtual void build(ConstElementPtr value) {
         value_ = value->str();
         boost::erase_all(value_, "\"");
-        /// @todo: check if there is no such name in the map. Otherwise
-        /// the insert will fail silently
-        storage_->insert(pair<string, string>(param_name_, value_));
+
+        (*storage_)[param_name_] = value_;
     }
 
     /// @brief does nothing
@@ -266,7 +259,7 @@ public:
         storage_ = storage;
     }
 
-protected:
+private:
     /// pointer to the storage, where parsed value will be stored
     StringStorage* storage_;
 
@@ -328,7 +321,7 @@ public:
         return (new InterfaceListConfigParser(param_name));
     }
 
-protected:
+private:
     /// contains list of network interfaces
     vector<string> interfaces_;
 };
@@ -450,7 +443,7 @@ public:
         return (new PoolParser(param_name));
     }
 
-protected:
+private:
     /// @brief pointer to the actual Pools storage
     ///
     /// That is typically a storage somewhere in Subnet parser
@@ -555,7 +548,7 @@ public:
         CfgMgr::instance().addSubnet4(subnet);
     }
 
-protected:
+private:
 
     /// @brief creates parsers for entries in subnet definition
     ///
@@ -567,18 +560,11 @@ protected:
     Dhcp4ConfigParser* createSubnet4ConfigParser(const std::string& config_id) {
         FactoryMap factories;
 
-        factories.insert(pair<string, ParserFactory*>(
-                             "valid-lifetime", Uint32Parser::Factory));
-        factories.insert(pair<string, ParserFactory*>(
-                             "renew-timer", Uint32Parser::Factory));
-        factories.insert(pair<string, ParserFactory*>(
-                             "rebind-timer", Uint32Parser::Factory));
-
-        factories.insert(pair<string, ParserFactory*>(
-                             "subnet", StringParser::Factory));
-
-        factories.insert(pair<string, ParserFactory*>(
-                             "pool", PoolParser::Factory));
+        factories["valid-lifetime"] = Uint32Parser::Factory;
+        factories["renew-timer"] = Uint32Parser::Factory;
+        factories["rebind-timer"] = Uint32Parser::Factory;
+        factories["subnet"] = StringParser::Factory;
+        factories["pool"] = PoolParser::Factory;
 
         FactoryMap::iterator f = factories.find(config_id);
         if (f == factories.end()) {
@@ -711,20 +697,12 @@ public:
 Dhcp4ConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
     FactoryMap factories;
 
-    factories.insert(pair<string, ParserFactory*>(
-                         "valid-lifetime", Uint32Parser::Factory));
-    factories.insert(pair<string, ParserFactory*>(
-                         "renew-timer", Uint32Parser::Factory));
-    factories.insert(pair<string, ParserFactory*>(
-                         "rebind-timer", Uint32Parser::Factory));
-
-    factories.insert(pair<string, ParserFactory*>(
-                         "interface", InterfaceListConfigParser::Factory));
-    factories.insert(pair<string, ParserFactory*>(
-                         "subnet4", Subnets4ListConfigParser::Factory));
-
-    factories.insert(pair<string, ParserFactory*>(
-                         "version", StringParser::Factory));
+    factories["valid-lifetime"] = Uint32Parser::Factory;
+    factories["renew-timer"] = Uint32Parser::Factory;
+    factories["rebind-timer"] = Uint32Parser::Factory;
+    factories["interface"] = InterfaceListConfigParser::Factory;
+    factories["subnet4"] = Subnets4ListConfigParser::Factory;
+    factories["version"] = StringParser::Factory;
 
     FactoryMap::iterator f = factories.find(config_id);
     if (f == factories.end()) {
@@ -738,8 +716,6 @@ Dhcp4ConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
     return (f->second(config_id));
 }
 
-/// @brief configures DHCPv4 server
-///
 isc::data::ConstElementPtr
 configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
     if (!config_set) {
@@ -747,10 +723,6 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
                                  string("Can't parse NULL config"));
         return (answer);
     }
-
-    /// Let's wipe previous configuration defaults
-    uint32_defaults.clear();
-    string_defaults.clear();
 
     /// @todo: append most essential info here (like "2 new subnets configured")
     string config_details;

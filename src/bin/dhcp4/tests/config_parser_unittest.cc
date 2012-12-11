@@ -98,7 +98,7 @@ TEST_F(Dhcp4ParserTest, version) {
 
 /// The goal of this test is to verify that the code accepts only
 /// valid commands and malformed or unsupported parameters are rejected.
-TEST_F(Dhcp4ParserTest, bogus_command) {
+TEST_F(Dhcp4ParserTest, bogusCommand) {
 
     ConstElementPtr x;
 
@@ -133,7 +133,7 @@ TEST_F(Dhcp4ParserTest, emptySubnet) {
 
 /// The goal of this test is to verify if defined subnet uses global
 /// parameter timer definitions.
-TEST_F(Dhcp4ParserTest, subnet_global_defaults) {
+TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
 
     ConstElementPtr status;
 
