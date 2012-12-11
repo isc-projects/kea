@@ -90,11 +90,11 @@ public:
     ///
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
     /// \c NSEC3Data is allocated.
-    /// \param zone_name The zone name.
+    /// \param zone_origin The zone origin.
     /// \param rdata An NSEC3PARAM RDATA that specifies the NSEC3 parameters
     /// to be stored.
     static NSEC3Data* create(util::MemorySegment& mem_sgmt,
-                             const dns::Name& zone_name,
+                             const dns::Name& zone_origin,
                              const dns::rdata::generic::NSEC3PARAM& rdata);
 
     /// \brief Allocate and construct \c NSEC3Data from NSEC3 Rdata.
@@ -106,11 +106,11 @@ public:
     ///
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
     /// \c NSEC3Data is allocated.
-    /// \param zone_name The zone name.
+    /// \param zone_origin The zone origin.
     /// \param rdata An NSEC3 RDATA that specifies the NSEC3 parameters
     /// to be stored.
     static NSEC3Data* create(util::MemorySegment& mem_sgmt,
-                             const dns::Name& zone_name,
+                             const dns::Name& zone_origin,
                              const dns::rdata::generic::NSEC3& rdata);
 
     /// \brief Destruct and deallocate \c NSEC3Data.
@@ -198,7 +198,7 @@ public:
 private:
     // Common subroutine for the public versions of create().
     static NSEC3Data* create(util::MemorySegment& mem_sgmt,
-                             const dns::Name& zone_name,
+                             const dns::Name& zone_origin,
                              uint8_t hashalg, uint8_t flags,
                              uint16_t iterations,
                              const std::vector<uint8_t>& salt);
@@ -372,9 +372,9 @@ public:
     ///
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
     /// \c ZoneData is allocated.
-    /// \param name The zone name.
+    /// \param name The zone origin.
     static ZoneData* create(util::MemorySegment& mem_sgmt,
-                            const dns::Name& zone_name);
+                            const dns::Name& zone_origin);
 
     /// \brief Destruct and deallocate \c ZoneData.
     ///
