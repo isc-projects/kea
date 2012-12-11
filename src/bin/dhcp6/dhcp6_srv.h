@@ -213,8 +213,8 @@ protected:
     /// @brief Renews specific IA_NA option
     ///
     /// Generates response to IA_NA. This typically includes finding a lease that
-    /// corresponds to the received address. If no such lease is found, IA_NA
-    /// response is generates with appropriate status code.
+    /// corresponds to the received address. If no such lease is found, an IA_NA
+    /// response is generated with an appropriate status code.
     ///
     /// @param subnet subnet the sender belongs to
     /// @param duid client's duid
@@ -255,6 +255,7 @@ protected:
     ///
     /// It supports addresses (IA_NA) only. It does NOT support temporary
     /// addresses (IA_TA) nor prefixes (IA_PD).
+    /// @todo: Extend this method once TA and PD becomes supported
     ///
     /// @param question client's message (with requested IA_NA)
     /// @param answer server's message (IA_NA options will be added here)
