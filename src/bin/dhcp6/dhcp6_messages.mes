@@ -201,3 +201,15 @@ which the DHCPv6 server has not been configured. The cause is most likely due
 to a misconfiguration of the server. The packet processing will continue, but
 the response will only contain generic configuration parameters and no
 addresses or prefixes.
+
+% DHCP6_UNKNOWN_RENEW received RENEW from client (duid=%1, iaid=%2) in subnet %3
+This warning message is printed when client attempts to renew a lease, but no
+such lease is known by the server. This typically means that client attempts to
+use its lease past its lifetime, e.g. due to time adjustment or poor support
+for sleep/recovery. Properly implemented client will recover from such case
+(it should restart lease allocation process after receiving a negative reply
+from the server). Alternatively, it may mean that the server lost its
+database recently and does not recognize its well behaving clients. This
+is likely the case if you see many such messages. Clients will recover from
+this, but they will likely get another IP addresses and experience brief
+service interruption.
