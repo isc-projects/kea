@@ -801,12 +801,23 @@ TEST_F(Dhcpv6SrvTest, StatusCode) {
     ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv(0)) );
 
     // a dummy content for client-id
-    uint8_t expected[] = {0x0, 0x3, 0x41, 0x42, 0x43, 0x44, 0x45};
-    OptionBuffer exp(expected, expected + sizeof(expected));
-
+    uint8_t expected[] = {
+        0x0, 0xD, // option code = 14
+        0x0, 0x7, // option length = 7
+        0x0, 0x3, // status code = 3
+        0x41, 0x42, 0x43, 0x44, 0x45 // string value ABCDE
+    };
+    // Create the option.
     OptionPtr status = srv->createStatusCode(3, "ABCDE");
-
-    EXPECT_TRUE(status->getData() == exp);
+    // Allocate an output buffer. We will store the option
+    // in wire format here.
+    OutputBuffer buf(sizeof(expected));
+    // Prepare the wire format.
+    ASSERT_NO_THROW(status->pack(buf));
+    // Check that the option buffer has valid length (option header + data).
+    ASSERT_EQ(sizeof(expected), buf.getLength());
+    // Verify the contents of the option.
+    EXPECT_EQ(0, memcmp(expected, buf.getData(), sizeof(expected)));
 }
 
 // This test verifies if the selectSubnet() method works as expected.

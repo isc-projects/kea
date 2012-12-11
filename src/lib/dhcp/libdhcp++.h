@@ -42,7 +42,18 @@ public:
     /// @param u universe of the options (V4 or V6).
     ///
     /// @return collection of option definitions.
-    static const OptionDefContainer& getOptionDefs(Option::Universe u);
+    static const OptionDefContainer& getOptionDefs(const Option::Universe u);
+
+    /// @brief Return the first option definition matching a
+    /// particular option code.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param code option code.
+    ///
+    /// @return reference to an option definition being requested
+    /// or NULL pointer if option definition has not been found.
+    static OptionDefinitionPtr getOptionDef(const Option::Universe u,
+                                            const uint16_t code);
 
     /// @brief Factory function to create instance of option.
     ///

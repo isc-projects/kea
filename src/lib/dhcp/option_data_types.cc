@@ -13,6 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcp/option_data_types.h>
+#include <dns/labelsequence.h>
+#include <dns/name.h>
 #include <util/encode/hex.h>
 
 namespace isc {
@@ -207,9 +209,46 @@ OptionDataTypeUtil::writeBool(const bool value,
 }
 
 std::string
+OptionDataTypeUtil::readFqdn(const std::vector<uint8_t>& buf) {
+    // If buffer is empty emit an error.
+    if (buf.empty()) {
+        isc_throw(BadDataTypeCast, "unable to read FQDN from a buffer."
+                  << " The buffer is empty.");
+    }
+    // Set up an InputBuffer so as we can use isc::dns::Name object to get the FQDN.
+    isc::util::InputBuffer in_buf(static_cast<const void*>(&buf[0]), buf.size());
+    try {
+        // Try to create an object from the buffer. If exception is thrown
+        // it means that the buffer doesn't hold a valid domain name (invalid
+        // syntax).
+        isc::dns::Name name(in_buf);
+        return (name.toText());
+    } catch (const isc::Exception& ex) {
+        // Unable to convert the data in the buffer into FQDN.
+        isc_throw(BadDataTypeCast, ex.what());
+    }
+}
+
+void
+OptionDataTypeUtil::writeFqdn(const std::string& fqdn,
+                              std::vector<uint8_t>& buf) {
+    try {
+        isc::dns::Name name(fqdn);
+        isc::dns::LabelSequence labels(name);
+        if (labels.getDataLength() > 0) {
+            size_t read_len = 0;
+            const uint8_t* data = labels.getData(&read_len);
+            buf.insert(buf.end(), data, data + read_len);
+        }
+    } catch (const isc::Exception& ex) {
+        isc_throw(BadDataTypeCast, ex.what());
+    }
+}
+
+std::string
 OptionDataTypeUtil::readString(const std::vector<uint8_t>& buf) {
     std::string value;
-    if (buf.size() > 0) {
+    if (!buf.empty()) {
         value.insert(value.end(), buf.begin(), buf.end());
     }
     return (value);
