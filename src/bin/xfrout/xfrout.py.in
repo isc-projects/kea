@@ -38,7 +38,7 @@ import isc.server_common.tsig_keyring
 
 from isc.log_messages.xfrout_messages import *
 
-isc.log.init("b10-xfrout")
+isc.log.init("b10-xfrout", buffer=True)
 logger = isc.log.Logger("xfrout")
 
 # Pending system-wide debug level definitions, the ones we

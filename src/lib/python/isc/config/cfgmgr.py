@@ -34,7 +34,7 @@ import bind10_config
 import isc.log
 from isc.log_messages.cfgmgr_messages import *
 
-logger = isc.log.Logger("cfgmgr")
+logger = isc.log.Logger("cfgmgr", buffer=True)
 
 class ConfigManagerDataReadError(Exception):
     """This exception is thrown when there is an error while reading
@@ -224,8 +224,13 @@ class ConfigManager:
 
     def check_logging_config(self, config):
         if self.log_module_name in config:
+            # If there is logging config, apply it.
             ccsession.default_logconfig_handler(config[self.log_module_name],
                                                 self.log_config_data)
+        else:
+            # If there is no logging config, we still need to trigger the
+            # handler, so make it use defaults (and flush any buffered logs)
+            ccsession.default_logconfig_handler({}, self.log_config_data)
 
     def notify_boss(self):
         """Notifies the Boss module that the Config Manager is running"""
@@ -313,11 +318,11 @@ class ConfigManager:
             self.config = ConfigManagerData.read_from_file(self.data_path,
                                                            self.\
                                                            database_filename)
-            self.check_logging_config(self.config.data);
         except ConfigManagerDataEmpty:
             # ok, just start with an empty config
             self.config = ConfigManagerData(self.data_path,
                                             self.database_filename)
+        self.check_logging_config(self.config.data);
 
     def write_config(self):
         """Write the current configuration to the file specificied at init()"""
