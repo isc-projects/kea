@@ -20,9 +20,9 @@
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
-#include <dhcp/option6_int_array.h>
-#include <dhcp/option_int.h>
 #include <dhcp/option_custom.h>
+#include <dhcp/option_int.h>
+#include <dhcp/option_int_array.h>
 #include <util/buffer.h>
 
 #include <gtest/gtest.h>
@@ -288,11 +288,11 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     EXPECT_EQ(6, x->second->getType());  // this should be option 6
     ASSERT_EQ(8, x->second->len()); // it should be of length 8
     // Option with code 6 is the OPTION_ORO. This option is
-    // represented by the Option6IntArray<uint16_t> class which
+    // represented by the OptionIntArray<uint16_t> class which
     // comprises the set of uint16_t values. We need to cast the
     // returned pointer to this type to get values stored in it.
-    boost::shared_ptr<Option6IntArray<uint16_t> > opt_oro =
-        boost::dynamic_pointer_cast<Option6IntArray<uint16_t> >(x->second);
+    boost::shared_ptr<OptionIntArray<uint16_t> > opt_oro =
+        boost::dynamic_pointer_cast<OptionIntArray<uint16_t> >(x->second);
     // This value will be NULL if cast was unsuccessful. This is the case
     // when returned option has different type than expected.
     ASSERT_TRUE(opt_oro);
@@ -632,7 +632,7 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_IAADDR, buf, typeid(Option6IAAddr));
 
     LibDhcpTest::testStdOptionDefs6(D6O_ORO, buf,
-                                    typeid(Option6IntArray<uint16_t>));
+                                    typeid(OptionIntArray<uint16_t>));
 
     LibDhcpTest::testStdOptionDefs6(D6O_PREFERENCE, buf,
                                     typeid(OptionInt<uint8_t>));
@@ -723,7 +723,7 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     typeid(OptionCustom));
 
     LibDhcpTest::testStdOptionDefs6(D6O_ERO, buf,
-                                    typeid(Option6IntArray<uint16_t>));
+                                    typeid(OptionIntArray<uint16_t>));
 
     LibDhcpTest::testStdOptionDefs6(D6O_LQ_QUERY, buf, typeid(OptionCustom));
 
