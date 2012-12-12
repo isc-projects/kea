@@ -18,6 +18,7 @@
 #include <dns/master_loader_callbacks.h>
 #include <dns/rrset.h>
 
+#include <boost/noncopyable.hpp>
 #include <boost/function.hpp>
 
 namespace isc {
@@ -44,7 +45,12 @@ namespace dns {
 /// single RRset.  In fact, it can only collate RRs that are consecutive
 /// in the original stream; once it encounters an RR of a different RRset,
 /// any subsequent RRs of the previous RRset will form a separate RRset object.
-class RRCollator {
+///
+/// This class is non-copyable; it's partially for the convenience of internal
+/// implementation details, but it actually doesn't make sense to copy
+/// an object of this class, if not harmful, for the intended usage of
+/// the class.
+class RRCollator : boost::noncopyable {
 public:
     /// \brief
     typedef boost::function<void(const RRsetPtr& rrset)> AddRRsetCallback;
