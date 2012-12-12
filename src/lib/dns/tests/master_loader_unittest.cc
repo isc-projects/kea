@@ -407,6 +407,25 @@ TEST_F(MasterLoaderTest, ttlDirective) {
     checkRR("a2.example.org", RRType::A(), "192.0.2.3", RRTTL(3600));
 }
 
+TEST_F(MasterLoaderTest, ttlFromSOA) {
+    // No $TTL, and the SOA doesn't have an explicit TTL field.  Its minimum
+    // TTL field will be used as the RR's TTL, and it'll be used as the
+    // default TTL for others.
+    stringstream zone_stream("example.org. IN SOA . . 0 0 0 0 1800\n"
+                             "a.example.org. IN A 192.0.2.1\n");
+    setLoader(zone_stream, Name("example.org."), RRClass::IN(),
+              MasterLoader::DEFAULT);
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    checkRR("example.org", RRType::SOA(), ". . 0 0 0 0 1800", RRTTL(1800));
+    checkRR("a.example.org", RRType::A(), "192.0.2.1", RRTTL(1800));
+
+    // The use of SOA minimum TTL should have caused a warning.
+    EXPECT_EQ(1, warnings_.size());
+    EXPECT_EQ(0, warnings_.at(0).find(
+                  "no TTL specified; using SOA MINTTL instead"));
+}
+
 // Test the constructor rejects empty add callback.
 TEST_F(MasterLoaderTest, emptyCallback) {
     EXPECT_THROW(MasterLoader(TEST_DATA_SRCDIR "/example.org",
