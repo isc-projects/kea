@@ -150,10 +150,11 @@ TEST_F(MasterLoaderTest, basicLoad) {
 TEST_F(MasterLoaderTest, include) {
     // Test various cases of include
     const char* includes[] = {
-        "include",
-        "INCLUDE",
-        "Include",
-        "InCluDe",
+        "$include",
+        "$INCLUDE",
+        "$Include",
+        "$InCluDe",
+        "\"$INCLUDE\"",
         NULL
     };
     for (const char** include = includes; *include != NULL; ++include) {
@@ -162,7 +163,7 @@ TEST_F(MasterLoaderTest, include) {
         clear();
         // Prepare input source that has the include and some more data
         // below (to see it returns back to the original source).
-        const string include_str = "$" + string(*include) + " " +
+        const string include_str = string(*include) + " " +
             TEST_DATA_SRCDIR + "/example.org\nwww 3600 IN AAAA 2001:db8::1\n";
         stringstream ss(include_str);
         setLoader(ss, Name("example.org."), RRClass::IN(),
