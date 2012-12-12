@@ -17,6 +17,7 @@
 #include <dns/rrtype.h>
 #include <dns/rrset.h>
 #include <dns/rrclass.h>
+#include <dns/rrttl.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
 
@@ -102,7 +103,8 @@ public:
 
     // Check the next RR in the ones produced by the loader
     // Other than passed arguments are checked to be the default for the tests
-    void checkRR(const string& name, const RRType& type, const string& data) {
+    void checkRR(const string& name, const RRType& type, const string& data,
+                 const RRTTL& rrttl = RRTTL(3600)) {
         ASSERT_FALSE(rrsets_.empty());
         RRsetPtr current = rrsets_.front();
         rrsets_.pop_front();
@@ -110,6 +112,7 @@ public:
         EXPECT_EQ(Name(name), current->getName());
         EXPECT_EQ(type, current->getType());
         EXPECT_EQ(RRClass::IN(), current->getClass());
+        EXPECT_EQ(rrttl, current->getTTL());
         ASSERT_EQ(1, current->getRdataCount());
         EXPECT_EQ(0, isc::dns::rdata::createRdata(type, RRClass::IN(), data)->
                   compare(current->getRdataIterator()->getCurrent()));
@@ -375,6 +378,19 @@ TEST_F(MasterLoaderTest, includeWithGarbage) {
     EXPECT_TRUE(warnings_.empty());
     checkBasicRRs();
     checkRR("www.example.org", RRType::AAAA(), "2001:db8::1");
+}
+
+// Test for "$TTL"
+TEST_F(MasterLoaderTest, ttlDirective) {
+    // Set the default TTL with $TTL followed by an RR omitting the TTL
+    const string input("$TTL 1800\n"
+                       "example.org. IN A 192.0.2.1\n");
+    stringstream zone_stream(input);
+    setLoader(zone_stream, Name("example.org."), RRClass::IN(),
+              MasterLoader::DEFAULT);
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    checkRR("example.org", RRType::A(), "192.0.2.1", RRTTL(1800));
 }
 
 // Test the constructor rejects empty add callback.
