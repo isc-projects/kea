@@ -15,6 +15,7 @@
 #include <dns/master_loader.h>
 #include <dns/master_lexer.h>
 #include <dns/name.h>
+#include <dns/rdataclass.h>
 #include <dns/rrttl.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
@@ -139,12 +140,16 @@ public:
         pushSource(filename);
     }
 
-    void setDefaultTTL(const string& ttl_txt) {
+    void setDefaultTTL(const RRTTL& ttl) {
         if (!default_ttl_) {
-            default_ttl_.reset(new RRTTL(ttl_txt));
+            default_ttl_.reset(new RRTTL(ttl));
         } else {
-            *default_ttl_ = RRTTL(ttl_txt);
+            *default_ttl_ = ttl;
         }
+    }
+
+    void setDefaultTTL(const string& ttl_txt) {
+        setDefaultTTL(RRTTL(ttl_txt));
         eatUntilEOL(true);
     }
 
@@ -302,15 +307,6 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             const RRClass rrclass(rrparam_token.getString());
             const RRType rrtype(getString());
 
-            // If the TTL is not yet determined, complete it.
-            if (!current_ttl_) {
-                if (default_ttl_) {
-                    setCurrentTTL(*default_ttl_);
-                } // TBD: else: try SOA min TTL for default, then error
-            } else if (!explicit_ttl && default_ttl_) {
-                setCurrentTTL(*default_ttl_);
-            }
-
             // TODO: Some more validation?
             if (rrclass != zone_class_) {
                 // It doesn't really matter much what type of exception
@@ -330,6 +326,25 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             // callbacks_ already. We need to decide if we want to continue
             // or not.
             if (data) {
+                // If the TTL is not yet determined, complete it.
+                if (!current_ttl_ && !default_ttl_) {
+                    if (rrtype == RRType::SOA()) {
+                        callbacks_.warning(lexer_.getSourceName(),
+                                           lexer_.getSourceLine(),
+                                           "no TTL specified; "
+                                           "using SOA MINTTL instead");
+                        const uint32_t ttl_val =
+                            dynamic_cast<const rdata::generic::SOA&>(*data).
+                            getMinimum();
+                        setDefaultTTL(RRTTL(ttl_val));
+                        setCurrentTTL(*default_ttl_);
+                    }
+                } else if (!explicit_ttl && default_ttl_) {
+                    setCurrentTTL(*default_ttl_);
+                } else if (!explicit_ttl) {
+                    ;           // warn it
+                }               // else, explicit_ttl, that's used
+
                 add_callback_(name, rrclass, rrtype, *current_ttl_, data);
 
                 // Good, we loaded another one
