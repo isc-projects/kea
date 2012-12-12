@@ -63,12 +63,27 @@ public:
 
     /// \brief Constructor.
     ///
+    /// If the optional issue_callback parameter is given, it will be used
+    /// to report any errors and non fatal warnings found in the collator's
+    /// operation.  By default special callbacks that do nothing are used.
+    ///
+    /// \note Since the \c RRCollator does not have any information on the
+    /// source of the given RRs (which is normally a DNS master file in the
+    /// intended usage) it cannot provide the actual source name or the line
+    /// number via the callback.  Instead, it passes a special string of
+    /// "<unknown source>" for the source name and the line number of 0 via
+    /// the callback.
+    ///
     /// \throw std::bad_alloc Internal memory allocation fails.  This should
     /// be very rare.
     ///
     /// \param callback The callback functor to be called for each collated
     /// RRset.
-    RRCollator(const AddRRsetCallback& callback);
+    /// \param issue_callback The callbacks to be called on any issue found
+    /// in the collator.
+    RRCollator(const AddRRsetCallback& callback,
+               const MasterLoaderCallbacks& issue_callback =
+               MasterLoaderCallbacks::getNullCallbacks());
 
     /// \brief Destructor.
     ///
@@ -85,7 +100,7 @@ public:
 
     /// \brief Call the callback on the remaining RRset, if any.
     ///
-    /// This method is expected to be called that it's supposed all RRs have
+    /// This method is expected to be called when it's supposed all RRs have
     /// been passed to this class object.  Since there is no explicit
     /// indicator of the end of the stream, the user of this class needs to
     /// explicitly call this method to call the callback for the last buffered

@@ -31,7 +31,10 @@ using namespace rdata;
 
 class RRCollator::Impl {
 public:
-    Impl(const AddRRsetCallback& callback) : callback_(callback) {}
+    Impl(const AddRRsetCallback& callback,
+         const MasterLoaderCallbacks& issue_callback) :
+        callback_(callback), issue_callback_(issue_callback)
+    {}
 
     void addRR(const Name& name, const RRClass& rrclass,
                const RRType& rrtype, const RRTTL& rrttl,
@@ -39,6 +42,8 @@ public:
 
     RRsetPtr current_rrset_;
     AddRRsetCallback callback_;
+private:
+    MasterLoaderCallbacks issue_callback_;
 };
 
 namespace {
@@ -75,13 +80,20 @@ RRCollator::Impl::addRR(const Name& name, const RRClass& rrclass,
         current_rrset_ = RRsetPtr(new RRset(name, rrclass, rrtype, rrttl));
     } else if (current_rrset_->getTTL() != rrttl) {
         // RRs with different TTLs are given.  Smaller TTL should win.
-        current_rrset_->setTTL(std::min(current_rrset_->getTTL(), rrttl));
+        const RRTTL min_ttl(std::min(current_rrset_->getTTL(), rrttl));
+        issue_callback_.warning("<unknown source>", 0,
+                                "Different TTLs for the same RRset: " +
+                                name.toText(true) + "/" +
+                                rrclass.toText() + "/" + rrtype.toText() +
+                                ", set to " + min_ttl.toText());
+        current_rrset_->setTTL(min_ttl);
     }
     current_rrset_->addRdata(rdata);
 }
 
-RRCollator::RRCollator(const AddRRsetCallback& callback) :
-    impl_(new Impl(callback))
+RRCollator::RRCollator(const AddRRsetCallback& callback,
+                       const MasterLoaderCallbacks& issue_callback) :
+    impl_(new Impl(callback, issue_callback))
 {}
 
 RRCollator::~RRCollator() {
