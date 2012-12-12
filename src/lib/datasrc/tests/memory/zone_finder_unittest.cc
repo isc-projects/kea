@@ -1430,6 +1430,27 @@ TEST_F(InMemoryZoneFinderTest, findOrphanRRSIG) {
              ZoneFinder::DELEGATION, true, ns_rrset);
 }
 
+// \brief testcase for #2504 (Problem in inmem NSEC denial of existence
+// handling)
+TEST_F(InMemoryZoneFinderTest, NSECNonExistentTest) {
+    shared_ptr<ZoneTableSegment> ztable_segment(
+         new ZoneTableSegmentTest(class_, mem_sgmt_));
+    InMemoryClient client(ztable_segment, class_);
+    Name name("example.com.");
+
+    client.load(name, TEST_DATA_DIR "/2504-test.zone");
+    DataSourceClient::FindResult result(client.findZone(name));
+
+    // Check for a non-existing name
+    Name search_name("nonexist.example.com.");
+    ZoneFinderContextPtr find_result(
+        result.zone_finder->find(search_name,
+                                 RRType::A(), ZoneFinder::FIND_DNSSEC));
+    // We don't find the domain, but find() must complete (not throw or
+    // assert).
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, find_result->code);
+}
+
 /// \brief NSEC3 specific tests fixture for the InMemoryZoneFinder class
 class InMemoryZoneFinderNSEC3Test : public InMemoryZoneFinderTest {
 public:

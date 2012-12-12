@@ -170,6 +170,12 @@ class TSIGKeyRingTest(unittest.TestCase):
         self.assertEqual(TSIGKey.HMACSHA256_NAME, key.get_algorithm_name())
         self.assertEqual(self.secret, key.get_secret())
 
+        (code, key) = self.keyring.find(self.key_name)
+        self.assertEqual(TSIGKeyRing.SUCCESS, code)
+        self.assertEqual(self.key_name, key.get_key_name())
+        self.assertEqual(TSIGKey.HMACSHA256_NAME, key.get_algorithm_name())
+        self.assertEqual(self.secret, key.get_secret())
+
         (code, key) = self.keyring.find(Name('different-key.example'),
                                         self.sha256_name)
         self.assertEqual(TSIGKeyRing.NOTFOUND, code)

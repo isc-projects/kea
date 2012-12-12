@@ -39,7 +39,7 @@ import isc.util.process
 import isc.log
 from isc.log_messages.stats_httpd_messages import *
 
-isc.log.init("b10-stats-httpd")
+isc.log.init("b10-stats-httpd", buffer=True)
 logger = isc.log.Logger("stats-httpd")
 
 # Some constants for debug levels.
@@ -609,7 +609,7 @@ if __name__ == "__main__":
             help="enable maximum debug logging")
         (options, args) = parser.parse_args()
         if options.verbose:
-            isc.log.init("b10-stats-httpd", "DEBUG", 99)
+            isc.log.init("b10-stats-httpd", "DEBUG", 99, buffer=True)
         stats_httpd = StatsHttpd()
         stats_httpd.start()
     except OptionValueError as ove:

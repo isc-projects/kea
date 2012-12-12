@@ -25,6 +25,7 @@ import bind10_src
 import unittest
 import sys
 import os
+import os.path
 import copy
 import signal
 import socket
@@ -34,6 +35,7 @@ import isc
 import isc.log
 import isc.bind10.socket_cache
 import errno
+import random
 
 from isc.testutils.parse_args import TestOptParser, OptsError
 from isc.testutils.ccsession_mock import MockModuleCCSession
@@ -366,6 +368,53 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(creator, bob._socket_cache._creator)
         self.assertRaises(ValueError, bob.set_creator, creator)
 
+    def test_socket_srv(self):
+        """Tests init_socket_srv() and remove_socket_srv() work as expected."""
+        bob = BoB()
+
+        self.assertIsNone(bob._srv_socket)
+        self.assertIsNone(bob._tmpdir)
+        self.assertIsNone(bob._socket_path)
+
+        bob.init_socket_srv()
+
+        self.assertIsNotNone(bob._srv_socket)
+        self.assertNotEqual(-1, bob._srv_socket.fileno())
+        self.assertEqual(os.path.join(bob._tmpdir, 'sockcreator'),
+                         bob._srv_socket.getsockname())
+
+        self.assertIsNotNone(bob._tmpdir)
+        self.assertTrue(os.path.isdir(bob._tmpdir))
+        self.assertIsNotNone(bob._socket_path)
+        self.assertTrue(os.path.exists(bob._socket_path))
+
+        # Check that it's possible to connect to the socket file (this
+        # only works if the socket file exists and the server listens on
+        # it).
+        s = socket.socket(socket.AF_UNIX)
+        try:
+            s.connect(bob._socket_path)
+            can_connect = True
+            s.close()
+        except socket.error as e:
+            can_connect = False
+
+        self.assertTrue(can_connect)
+
+        bob.remove_socket_srv()
+
+        self.assertEqual(-1, bob._srv_socket.fileno())
+        self.assertFalse(os.path.exists(bob._socket_path))
+        self.assertFalse(os.path.isdir(bob._tmpdir))
+
+        # These should not fail either:
+
+        # second call
+        bob.remove_socket_srv()
+
+        bob._srv_socket = None
+        bob.remove_socket_srv()
+
     def test_init_alternate_socket(self):
         bob = BoB("alt_socket_file")
         self.assertEqual(bob.verbose, False)
@@ -461,6 +510,22 @@ class TestBoB(unittest.TestCase):
         self.assertEqual({'command': ['shutdown', {'pid': 42}]},
                          bob.cc_session.msg)
 
+# Mock class for testing BoB's usage of ProcessInfo
+class MockProcessInfo:
+    def __init__(self, name, args, env={}, dev_null_stdout=False,
+                 dev_null_stderr=False):
+        self.name = name
+        self.args = args
+        self.env = env
+        self.dev_null_stdout = dev_null_stdout
+        self.dev_null_stderr = dev_null_stderr
+        self.process = None
+        self.pid = None
+
+    def spawn(self):
+        # set some pid (only used for testing that it is not None anymore)
+        self.pid = 42147
+
 # Class for testing the BoB without actually starting processes.
 # This is used for testing the start/stop components routines and
 # the BoB commands.
@@ -490,6 +555,7 @@ class MockBob(BoB):
         self.c_channel_env = {}
         self.components = { }
         self.creator = False
+        self.get_process_exit_status_called = False
 
         class MockSockCreator(isc.bind10.component.Component):
             def __init__(self, process, boss, kind, address=None, params=None):
@@ -660,6 +726,52 @@ class MockBob(BoB):
         if self.cmdctl:
             del self.components[12]
         self.cmdctl = False
+
+    def _get_process_exit_status(self):
+        if self.get_process_exit_status_called:
+            return (0, 0)
+        self.get_process_exit_status_called = True
+        return (53, 0)
+
+    def _get_process_exit_status_unknown_pid(self):
+        if self.get_process_exit_status_called:
+            return (0, 0)
+        self.get_process_exit_status_called = True
+        return (42, 0)
+
+    def _get_process_exit_status_raises_oserror_echild(self):
+        raise OSError(errno.ECHILD, 'Mock error')
+
+    def _get_process_exit_status_raises_oserror_other(self):
+        raise OSError(0, 'Mock error')
+
+    def _get_process_exit_status_raises_other(self):
+        raise Exception('Mock error')
+
+    def _make_mock_process_info(self, name, args, c_channel_env,
+                                dev_null_stdout=False, dev_null_stderr=False):
+        return MockProcessInfo(name, args, c_channel_env,
+                               dev_null_stdout, dev_null_stderr)
+
+class MockBobSimple(BoB):
+    def __init__(self):
+        BoB.__init__(self)
+        # Set which process has been started
+        self.started_process_name = None
+        self.started_process_args = None
+        self.started_process_env = None
+
+    def _make_mock_process_info(self, name, args, c_channel_env,
+                                dev_null_stdout=False, dev_null_stderr=False):
+        return MockProcessInfo(name, args, c_channel_env,
+                               dev_null_stdout, dev_null_stderr)
+
+    def start_process(self, name, args, c_channel_env, port=None,
+                      address=None):
+        self.started_process_name = name
+        self.started_process_args = args
+        self.started_process_env = c_channel_env
+        return None
 
 class TestStartStopProcessesBob(unittest.TestCase):
     """
@@ -930,6 +1042,9 @@ class MockComponent:
         self.pid = lambda: pid
         self.address = lambda: address
         self.restarted = False
+        self.forceful = False
+        self.running = True
+        self.has_failed = False
 
     def get_restart_time(self):
         return 0                # arbitrary dummy value
@@ -937,6 +1052,15 @@ class MockComponent:
     def restart(self, now):
         self.restarted = True
         return True
+
+    def is_running(self):
+        return self.running
+
+    def failed(self, status):
+        return self.has_failed
+
+    def kill(self, forceful):
+        self.forceful = forceful
 
 class TestBossCmd(unittest.TestCase):
     def test_ping(self):
@@ -1107,6 +1231,20 @@ class TestBossComponents(unittest.TestCase):
                 'process': 'cat'
             }
         }
+        self._tmp_time = None
+        self._tmp_sleep = None
+        self._tmp_module_cc_session = None
+        self._tmp_cc_session = None
+
+    def tearDown(self):
+        if self._tmp_time is not None:
+            time.time = self._tmp_time
+        if self._tmp_sleep is not None:
+            time.sleep = self._tmp_sleep
+        if self._tmp_module_cc_session is not None:
+            isc.config.ModuleCCSession = self._tmp_module_cc_session
+        if self._tmp_cc_session is not None:
+            isc.cc.Session = self._tmp_cc_session
 
     def __unary_hook(self, param):
         """
@@ -1324,14 +1462,618 @@ class TestBossComponents(unittest.TestCase):
         bob._component_configurator._components['test'] = (None, component)
         self.__setup_restart(bob, component)
         self.assertTrue(component.restarted)
-        self.assertFalse(component in bob.components_to_restart)
+        self.assertNotIn(component, bob.components_to_restart)
 
         # Remove the component from the configuration.  It won't be restarted
         # even if scheduled, nor will remain in the to-be-restarted list.
         del bob._component_configurator._components['test']
         self.__setup_restart(bob, component)
         self.assertFalse(component.restarted)
-        self.assertFalse(component in bob.components_to_restart)
+        self.assertNotIn(component, bob.components_to_restart)
+
+    def test_get_processes(self):
+        '''Test that procsses are returned correctly, sorted by pid.'''
+        bob = MockBob()
+
+        pids = list(range(0, 20))
+        random.shuffle(pids)
+
+        for i in range(0, 20):
+            pid = pids[i]
+            component = MockComponent('test' + str(pid), pid,
+                                      'Test' + str(pid))
+            bob.components[pid] = component
+
+        process_list = bob.get_processes()
+        self.assertEqual(20, len(process_list))
+
+        last_pid = -1
+        for process in process_list:
+            pid = process[0]
+            self.assertLessEqual(last_pid, pid)
+            last_pid = pid
+            self.assertEqual([pid, 'test' + str(pid), 'Test' + str(pid)],
+                             process)
+
+    def _test_reap_children_helper(self, runnable, is_running, failed):
+        '''Construct a BoB instance, set various data in it according to
+        passed args and check if the component was added to the list of
+        components to restart.'''
+        bob = MockBob()
+        bob.runnable = runnable
+
+        component = MockComponent('test', 53)
+        component.running = is_running
+        component.has_failed = failed
+        bob.components[53] = component
+
+        self.assertNotIn(component, bob.components_to_restart)
+
+        bob.reap_children()
+
+        if runnable and is_running and not failed:
+            self.assertIn(component, bob.components_to_restart)
+        else:
+            self.assertEqual([], bob.components_to_restart)
+
+    def test_reap_children(self):
+        '''Test that children are queued to be restarted when they ask for it.'''
+        # test various combinations of 3 booleans
+        # (BoB.runnable, component.is_running(), component.failed())
+        self._test_reap_children_helper(False, False, False)
+        self._test_reap_children_helper(False, False, True)
+        self._test_reap_children_helper(False, True,  False)
+        self._test_reap_children_helper(False, True,  True)
+        self._test_reap_children_helper(True,  False, False)
+        self._test_reap_children_helper(True,  False, True)
+        self._test_reap_children_helper(True,  True,  False)
+        self._test_reap_children_helper(True,  True,  True)
+
+        # setup for more tests below
+        bob = MockBob()
+        bob.runnable = True
+        component = MockComponent('test', 53)
+        bob.components[53] = component
+
+        # case where the returned pid is unknown to us. nothing should
+        # happpen then.
+        bob.get_process_exit_status_called = False
+        bob._get_process_exit_status = bob._get_process_exit_status_unknown_pid
+        bob.components_to_restart = []
+        # this should do nothing as the pid is unknown
+        bob.reap_children()
+        self.assertEqual([], bob.components_to_restart)
+
+        # case where bob._get_process_exit_status() raises OSError with
+        # errno.ECHILD
+        bob._get_process_exit_status = \
+            bob._get_process_exit_status_raises_oserror_echild
+        bob.components_to_restart = []
+        # this should catch and handle the OSError
+        bob.reap_children()
+        self.assertEqual([], bob.components_to_restart)
+
+        # case where bob._get_process_exit_status() raises OSError with
+        # errno other than ECHILD
+        bob._get_process_exit_status = \
+            bob._get_process_exit_status_raises_oserror_other
+        with self.assertRaises(OSError):
+            bob.reap_children()
+
+        # case where bob._get_process_exit_status() raises something
+        # other than OSError
+        bob._get_process_exit_status = \
+            bob._get_process_exit_status_raises_other
+        with self.assertRaises(Exception):
+            bob.reap_children()
+
+    def test_kill_started_components(self):
+        '''Test that started components are killed.'''
+        bob = MockBob()
+
+        component = MockComponent('test', 53, 'Test')
+        bob.components[53] = component
+
+        self.assertEqual([[53, 'test', 'Test']], bob.get_processes())
+        bob.kill_started_components()
+        self.assertEqual([], bob.get_processes())
+        self.assertTrue(component.forceful)
+
+    def _start_msgq_helper(self, bob, verbose):
+        bob.verbose = verbose
+        pi = bob.start_msgq()
+        self.assertEqual('b10-msgq', pi.name)
+        self.assertEqual(['b10-msgq'], pi.args)
+        self.assertTrue(pi.dev_null_stdout)
+        self.assertEqual(pi.dev_null_stderr, not verbose)
+        self.assertEqual({'FOO': 'an env string'}, pi.env)
+
+        # this is set by ProcessInfo.spawn()
+        self.assertEqual(42147, pi.pid)
+
+    def test_start_msgq(self):
+        '''Test that b10-msgq is started.'''
+        bob = MockBobSimple()
+        bob.c_channel_env = {'FOO': 'an env string'}
+        bob._run_under_unittests = True
+
+        # use the MockProcessInfo creator
+        bob._make_process_info = bob._make_mock_process_info
+
+        # non-verbose case
+        self._start_msgq_helper(bob, False)
+
+        # verbose case
+        self._start_msgq_helper(bob, True)
+
+    def test_start_msgq_timeout(self):
+        '''Test that b10-msgq startup attempts connections several times
+        and times out eventually.'''
+        bob = MockBobSimple()
+        bob.c_channel_env = {}
+        # set the timeout to an arbitrary pre-determined value (which
+        # code below depends on)
+        bob.msgq_timeout = 1
+        bob._run_under_unittests = False
+
+        # use the MockProcessInfo creator
+        bob._make_process_info = bob._make_mock_process_info
+
+        global attempts
+        global tsec
+        attempts = 0
+        tsec = 0
+        self._tmp_time = time.time
+        self._tmp_sleep = time.sleep
+        def _my_time():
+            global attempts
+            global tsec
+            attempts += 1
+            return tsec
+        def _my_sleep(nsec):
+            global tsec
+            tsec += nsec
+        time.time = _my_time
+        time.sleep = _my_sleep
+
+        global cc_sub
+        cc_sub = None
+        class DummySessionAlwaysFails():
+            def __init__(self, socket_file):
+                raise isc.cc.session.SessionError('Connection fails')
+            def group_subscribe(self, s):
+                global cc_sub
+                cc_sub = s
+
+        isc.cc.Session = DummySessionAlwaysFails
+
+        with self.assertRaises(bind10_src.CChannelConnectError):
+            # An exception will be thrown here when it eventually times
+            # out.
+            pi = bob.start_msgq()
+
+        # time.time() should be called 12 times within the while loop:
+        # starting from 0, and 11 more times from 0.1 to 1.1. There's
+        # another call to time.time() outside the loop, which makes it
+        # 13.
+        self.assertEqual(attempts, 13)
+
+        # group_subscribe() should not have been called here.
+        self.assertIsNone(cc_sub)
+
+        global cc_socket_file
+        cc_socket_file = None
+        cc_sub = None
+        class DummySession():
+            def __init__(self, socket_file):
+                global cc_socket_file
+                cc_socket_file = socket_file
+            def group_subscribe(self, s):
+                global cc_sub
+                cc_sub = s
+
+        isc.cc.Session = DummySession
+
+        # reset values
+        attempts = 0
+        tsec = 0
+
+        pi = bob.start_msgq()
+
+        # just one attempt, but 2 calls to time.time()
+        self.assertEqual(attempts, 2)
+
+        self.assertEqual(cc_socket_file, bob.msgq_socket_file)
+        self.assertEqual(cc_sub, 'Boss')
+
+        # isc.cc.Session, time.time() and time.sleep() are restored
+        # during tearDown().
+
+    def _start_cfgmgr_helper(self, bob, data_path, filename, clear_config):
+        expect_args = ['b10-cfgmgr']
+        if data_path is not None:
+            bob.data_path = data_path
+            expect_args.append('--data-path=' + data_path)
+        if filename is not None:
+            bob.config_filename = filename
+            expect_args.append('--config-filename=' + filename)
+        if clear_config:
+            bob.clear_config = clear_config
+            expect_args.append('--clear-config')
+
+        pi = bob.start_cfgmgr()
+        self.assertEqual('b10-cfgmgr', pi.name)
+        self.assertEqual(expect_args, pi.args)
+        self.assertEqual({'TESTENV': 'A test string'}, pi.env)
+
+        # this is set by ProcessInfo.spawn()
+        self.assertEqual(42147, pi.pid)
+
+    def test_start_cfgmgr(self):
+        '''Test that b10-cfgmgr is started.'''
+        class DummySession():
+            def __init__(self):
+                self._tries = 0
+            def group_recvmsg(self):
+                self._tries += 1
+                # return running on the 3rd try onwards
+                if self._tries >= 3:
+                    return ({'running': 'ConfigManager'}, None)
+                else:
+                    return ({}, None)
+
+        bob = MockBobSimple()
+        bob.c_channel_env = {'TESTENV': 'A test string'}
+        bob.cc_session = DummySession()
+        bob.wait_time = 5
+
+        # use the MockProcessInfo creator
+        bob._make_process_info = bob._make_mock_process_info
+
+        global attempts
+        attempts = 0
+        self._tmp_sleep = time.sleep
+        def _my_sleep(nsec):
+            global attempts
+            attempts += 1
+        time.sleep = _my_sleep
+
+        # defaults
+        self._start_cfgmgr_helper(bob, None, None, False)
+
+        # check that 2 attempts were made. on the 3rd attempt,
+        # process_running() returns that ConfigManager is running.
+        self.assertEqual(attempts, 2)
+
+        # data_path is specified
+        self._start_cfgmgr_helper(bob, '/var/lib/test', None, False)
+
+        # config_filename is specified. Because `bob` is not
+        # reconstructed, data_path is retained from the last call to
+        # _start_cfgmgr_helper().
+        self._start_cfgmgr_helper(bob, '/var/lib/test', 'foo.cfg', False)
+
+        # clear_config is specified. Because `bob` is not reconstructed,
+        # data_path and config_filename are retained from the last call
+        # to _start_cfgmgr_helper().
+        self._start_cfgmgr_helper(bob, '/var/lib/test', 'foo.cfg', True)
+
+    def test_start_cfgmgr_timeout(self):
+        '''Test that b10-cfgmgr startup attempts connections several times
+        and times out eventually.'''
+        class DummySession():
+            def group_recvmsg(self):
+                return (None, None)
+        bob = MockBobSimple()
+        bob.c_channel_env = {}
+        bob.cc_session = DummySession()
+        # set wait_time to an arbitrary pre-determined value (which code
+        # below depends on)
+        bob.wait_time = 2
+
+        # use the MockProcessInfo creator
+        bob._make_process_info = bob._make_mock_process_info
+
+        global attempts
+        attempts = 0
+        self._tmp_sleep = time.sleep
+        def _my_sleep(nsec):
+            global attempts
+            attempts += 1
+        time.sleep = _my_sleep
+
+        # We just check that an exception was thrown, and that several
+        # attempts were made to connect.
+        with self.assertRaises(bind10_src.ProcessStartError):
+            pi = bob.start_cfgmgr()
+
+        # 2 seconds of attempts every 1 second should result in 2 attempts
+        self.assertEqual(attempts, 2)
+
+        # time.sleep() is restored during tearDown().
+
+    def test_start_ccsession(self):
+        '''Test that CC session is started.'''
+        class DummySession():
+            def __init__(self, specfile, config_handler, command_handler,
+                         socket_file):
+                self.specfile = specfile
+                self.config_handler = config_handler
+                self.command_handler = command_handler
+                self.socket_file = socket_file
+                self.started = False
+            def start(self):
+                self.started = True
+        bob = MockBobSimple()
+        self._tmp_module_cc_session = isc.config.ModuleCCSession
+        isc.config.ModuleCCSession = DummySession
+
+        bob.start_ccsession({})
+        self.assertEqual(bind10_src.SPECFILE_LOCATION, bob.ccs.specfile)
+        self.assertEqual(bob.config_handler, bob.ccs.config_handler)
+        self.assertEqual(bob.command_handler, bob.ccs.command_handler)
+        self.assertEqual(bob.msgq_socket_file, bob.ccs.socket_file)
+        self.assertTrue(bob.ccs.started)
+
+        # isc.config.ModuleCCSession is restored during tearDown().
+
+    def test_start_process(self):
+        '''Test that processes can be started.'''
+        bob = MockBob()
+
+        # use the MockProcessInfo creator
+        bob._make_process_info = bob._make_mock_process_info
+
+        pi = bob.start_process('Test Process', ['/bin/true'], {})
+        self.assertEqual('Test Process', pi.name)
+        self.assertEqual(['/bin/true'], pi.args)
+        self.assertEqual({}, pi.env)
+
+        # this is set by ProcessInfo.spawn()
+        self.assertEqual(42147, pi.pid)
+
+    def test_register_process(self):
+        '''Test that processes can be registered with BoB.'''
+        bob = MockBob()
+        component = MockComponent('test', 53, 'Test')
+
+        self.assertFalse(53 in bob.components)
+        bob.register_process(53, component)
+        self.assertTrue(53 in bob.components)
+        self.assertEqual(bob.components[53].name(), 'test')
+        self.assertEqual(bob.components[53].pid(), 53)
+        self.assertEqual(bob.components[53].address(), 'Test')
+
+    def _start_simple_helper(self, bob, verbose):
+        bob.verbose = verbose
+
+        args = ['/bin/true']
+        if verbose:
+            args.append('-v')
+
+        bob.start_simple('/bin/true')
+        self.assertEqual('/bin/true', bob.started_process_name)
+        self.assertEqual(args, bob.started_process_args)
+        self.assertEqual({'TESTENV': 'A test string'}, bob.started_process_env)
+
+    def test_start_simple(self):
+        '''Test simple process startup.'''
+        bob = MockBobSimple()
+        bob.c_channel_env = {'TESTENV': 'A test string'}
+
+        # non-verbose case
+        self._start_simple_helper(bob, False)
+
+        # verbose case
+        self._start_simple_helper(bob, True)
+
+    def _start_auth_helper(self, bob, verbose):
+        bob.verbose = verbose
+
+        args = ['b10-auth']
+        if verbose:
+            args.append('-v')
+
+        bob.start_auth()
+        self.assertEqual('b10-auth', bob.started_process_name)
+        self.assertEqual(args, bob.started_process_args)
+        self.assertEqual({'FOO': 'an env string'}, bob.started_process_env)
+
+    def test_start_auth(self):
+        '''Test that b10-auth is started.'''
+        bob = MockBobSimple()
+        bob.c_channel_env = {'FOO': 'an env string'}
+
+        # non-verbose case
+        self._start_auth_helper(bob, False)
+
+        # verbose case
+        self._start_auth_helper(bob, True)
+
+    def _start_resolver_helper(self, bob, verbose):
+        bob.verbose = verbose
+
+        args = ['b10-resolver']
+        if verbose:
+            args.append('-v')
+
+        bob.start_resolver()
+        self.assertEqual('b10-resolver', bob.started_process_name)
+        self.assertEqual(args, bob.started_process_args)
+        self.assertEqual({'BAR': 'an env string'}, bob.started_process_env)
+
+    def test_start_resolver(self):
+        '''Test that b10-resolver is started.'''
+        bob = MockBobSimple()
+        bob.c_channel_env = {'BAR': 'an env string'}
+
+        # non-verbose case
+        self._start_resolver_helper(bob, False)
+
+        # verbose case
+        self._start_resolver_helper(bob, True)
+
+    def _start_cmdctl_helper(self, bob, verbose, port = None):
+        bob.verbose = verbose
+
+        args = ['b10-cmdctl']
+
+        if port is not None:
+            bob.cmdctl_port = port
+            args.append('--port=9353')
+
+        if verbose:
+            args.append('-v')
+
+        bob.start_cmdctl()
+        self.assertEqual('b10-cmdctl', bob.started_process_name)
+        self.assertEqual(args, bob.started_process_args)
+        self.assertEqual({'BAZ': 'an env string'}, bob.started_process_env)
+
+    def test_start_cmdctl(self):
+        '''Test that b10-cmdctl is started.'''
+        bob = MockBobSimple()
+        bob.c_channel_env = {'BAZ': 'an env string'}
+
+        # non-verbose case
+        self._start_cmdctl_helper(bob, False)
+
+        # verbose case
+        self._start_cmdctl_helper(bob, True)
+
+        # with port, non-verbose case
+        self._start_cmdctl_helper(bob, False, 9353)
+
+        # with port, verbose case
+        self._start_cmdctl_helper(bob, True, 9353)
+
+    def test_socket_data(self):
+        '''Test that BoB._socket_data works as expected.'''
+        class MockSock:
+            def __init__(self, fd, throw):
+                self.fd = fd
+                self.throw = throw
+                self.buf = b'Hello World.\nYou are so nice today.\nXX'
+                self.i = 0
+
+            def recv(self, bufsize, flags = 0):
+                if bufsize != 1:
+                    raise Exception('bufsize != 1')
+                if flags != socket.MSG_DONTWAIT:
+                    raise Exception('flags != socket.MSG_DONTWAIT')
+                # after 15 recv()s, throw a socket.error with EAGAIN to
+                # get _socket_data() to save back what's been read. The
+                # number 15 is arbitrarily chosen, but the checks then
+                # depend on this being 15, i.e., if you adjust this
+                # number, you may have to adjust the checks below too.
+                if self.throw and self.i > 15:
+                    raise socket.error(errno.EAGAIN, 'Try again')
+                if self.i >= len(self.buf):
+                    return b'';
+                t = self.i
+                self.i += 1
+                return self.buf[t:t+1]
+
+            def close(self):
+                return
+
+        class MockBobSocketData(BoB):
+            def __init__(self, throw):
+                self._unix_sockets = {42: (MockSock(42, throw), b'')}
+                self.requests = []
+                self.dead = []
+
+            def socket_request_handler(self, previous, sock):
+                self.requests.append({sock.fd: previous})
+
+            def socket_consumer_dead(self, sock):
+                self.dead.append(sock.fd)
+
+        # Case where we get data every time we call recv()
+        bob = MockBobSocketData(False)
+        bob._socket_data(42)
+        self.assertEqual(bob.requests,
+                         [{42: b'Hello World.'},
+                          {42: b'You are so nice today.'}])
+        self.assertEqual(bob.dead, [42])
+        self.assertEqual({}, bob._unix_sockets)
+
+        # Case where socket.recv() raises EAGAIN. In this case, the
+        # routine is supposed to save what it has back to
+        # BoB._unix_sockets.
+        bob = MockBobSocketData(True)
+        bob._socket_data(42)
+        self.assertEqual(bob.requests, [{42: b'Hello World.'}])
+        self.assertFalse(bob.dead)
+        self.assertEqual(len(bob._unix_sockets), 1)
+        self.assertEqual(bob._unix_sockets[42][1], b'You')
+
+    def test_startup(self):
+        '''Test that BoB.startup() handles failures properly.'''
+        class MockBobStartup(BoB):
+            def __init__(self, throw):
+                self.throw = throw
+                self.started = False
+                self.killed = False
+                self.msgq_socket_file = None
+                self.curproc = 'myproc'
+                self.runnable = False
+
+            def start_all_components(self):
+                self.started = True
+                if self.throw:
+                    raise Exception('Assume starting components has failed.')
+
+            def kill_started_components(self):
+                self.killed = True
+
+        class DummySession():
+            def __init__(self, socket_file):
+                raise isc.cc.session.SessionError('This is the expected case.')
+
+        class DummySessionSocketExists():
+            def __init__(self, socket_file):
+                # simulate that connect passes
+                return
+
+        isc.cc.Session = DummySession
+
+        # All is well case, where all components are started
+        # successfully. We check that the actual call to
+        # start_all_components() is made, and BoB.runnable is true.
+        bob = MockBobStartup(False)
+        r = bob.startup()
+        self.assertIsNone(r)
+        self.assertTrue(bob.started)
+        self.assertFalse(bob.killed)
+        self.assertTrue(bob.runnable)
+        self.assertEqual({}, bob.c_channel_env)
+
+        # Case where starting components fails. We check that
+        # kill_started_components() is called right after, and
+        # BoB.runnable is not modified.
+        bob = MockBobStartup(True)
+        r = bob.startup()
+        # r contains an error message
+        self.assertEqual(r, 'Unable to start myproc: Assume starting components has failed.')
+        self.assertTrue(bob.started)
+        self.assertTrue(bob.killed)
+        self.assertFalse(bob.runnable)
+        self.assertEqual({}, bob.c_channel_env)
+
+        # Check if msgq_socket_file is carried over
+        bob = MockBobStartup(False)
+        bob.msgq_socket_file = 'foo'
+        r = bob.startup()
+        self.assertEqual({'BIND10_MSGQ_SOCKET_FILE': 'foo'}, bob.c_channel_env)
+
+        # Check the case when socket file already exists
+        isc.cc.Session = DummySessionSocketExists
+        bob = MockBobStartup(False)
+        r = bob.startup()
+        self.assertIn('already running', r)
+
+        # isc.cc.Session is restored during tearDown().
 
 class SocketSrvTest(unittest.TestCase):
     """
@@ -1562,6 +2304,25 @@ class TestFunctions(unittest.TestCase):
 
         # second call should not assert anyway
         bind10_src.remove_lock_files()
+
+    def test_get_signame(self):
+        # just test with some samples
+        signame = bind10_src.get_signame(signal.SIGTERM)
+        self.assertEqual('SIGTERM', signame)
+        signame = bind10_src.get_signame(signal.SIGKILL)
+        self.assertEqual('SIGKILL', signame)
+        # 59426 is hopefully an unused signal on most platforms
+        signame = bind10_src.get_signame(59426)
+        self.assertEqual('Unknown signal 59426', signame)
+
+    def test_fatal_signal(self):
+        self.assertIsNone(bind10_src.boss_of_bind)
+        bind10_src.boss_of_bind = BoB()
+        bind10_src.boss_of_bind.runnable = True
+        bind10_src.fatal_signal(signal.SIGTERM, None)
+        # Now, runnable must be False
+        self.assertFalse(bind10_src.boss_of_bind.runnable)
+        bind10_src.boss_of_bind = None
 
 if __name__ == '__main__':
     # store os.environ for test_unchanged_environment

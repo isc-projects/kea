@@ -770,7 +770,7 @@ class TXT(RR):
 
     nstring = 1
     stringlen = None
-    string = 'Test String'
+    string = 'Test-String'
 
     def dump(self, f):
         stringlen_list = []

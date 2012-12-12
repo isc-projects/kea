@@ -17,6 +17,7 @@
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
 #include <log/logger_support.h>
+#include <log/logger_manager.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -103,9 +104,10 @@ main(int argc, char* argv[]) {
     }
 
     // Initialize logging.  If verbose, we'll use maximum verbosity.
+    // If standalone is enabled, do not buffer initial log messages
     isc::log::initLogger(DHCP6_NAME,
                          (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
-                         isc::log::MAX_DEBUG_LEVEL, NULL);
+                         isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone);
     LOG_INFO(dhcp6_logger, DHCP6_STARTING);
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_START_INFO)
               .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no")
@@ -119,8 +121,12 @@ main(int argc, char* argv[]) {
                 server.establishSession();
             } catch (const std::exception& ex) {
                 LOG_ERROR(dhcp6_logger, DHCP6_SESSION_FAIL).arg(ex.what());
-                // Let's continue. It is useful to have the ability to run 
+                // Let's continue. It is useful to have the ability to run
                 // DHCP server in stand-alone mode, e.g. for testing
+                // We do need to make sure logging is no longer buffered
+                // since then it would not print until dhcp6 is stopped
+                isc::log::LoggerManager log_manager;
+                log_manager.process();
             }
         } else {
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_STANDALONE);

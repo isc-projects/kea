@@ -166,17 +166,23 @@ reset(PyObject*, PyObject*) {
 }
 
 PyObject*
-init(PyObject*, PyObject* args) {
+init(PyObject*, PyObject* args, PyObject* arg_keywords) {
     const char* root;
     const char* file(NULL);
     const char* severity("INFO");
+    bool buffer = false;
     int dbglevel(0);
-    if (!PyArg_ParseTuple(args, "s|siz", &root, &severity, &dbglevel, &file)) {
+    const char* const keywords[] = { "name", "severity", "debuglevel", "file",
+                                     "buffer", NULL };
+    if (!PyArg_ParseTupleAndKeywords(args, arg_keywords, "s|sizb",
+                                     const_cast<char**>(keywords), &root,
+                                     &severity, &dbglevel, &file, &buffer)) {
         return (NULL);
     }
 
     try {
-        LoggerManager::init(root, getSeverity(severity), dbglevel, file);
+        LoggerManager::init(root, getSeverity(severity), dbglevel, file,
+                            buffer);
     }
     catch (const std::exception& e) {
         PyErr_SetString(PyExc_RuntimeError, e.what());
@@ -266,12 +272,19 @@ PyMethodDef methods[] = {
         "need to call it. It returns None if the message does not exist."},
     {"reset", reset, METH_NOARGS,
         "Reset all logging. For testing purposes only, do not use."},
-    {"init", init, METH_VARARGS,
+    {"init", reinterpret_cast<PyCFunction>(init), METH_VARARGS | METH_KEYWORDS,
         "Run-time initialization. You need to call this before you do any "
         "logging, to configure the root logger name. You may also provide "
-        "logging severity (one of 'DEBUG', 'INFO', 'WARN', 'ERROR' or "
-        "'FATAL'), a debug level (integer in the range 0-99) and a file name "
-        "of a dictionary with message text translations."},
+        "Arguments:\n"
+        "name: root logger name\n"
+        "severity (optional): one of 'DEBUG', 'INFO', 'WARN', 'ERROR' or "
+        "'FATAL'\n"
+        "debuglevel (optional): a debug level (integer in the range 0-99) "
+        "file (optional): a file name of a dictionary with message text "
+        "translations\n"
+        "buffer (optional), boolean, when True, causes all log messages "
+        "to be stored internally until log_config_update is called, at "
+        "which point they shall be logged."},
     {"resetUnitTestRootLogger", resetUnitTestRootLogger, METH_VARARGS,
         "Resets the configuration of the root logger to that set by the "
         "B10_XXX environment variables.  It is aimed at unit tests, where "
@@ -655,7 +668,7 @@ PyTypeObject logger_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash 
+    NULL,                               // tp_hash
     NULL,                               // tp_call
     NULL,                               // tp_str
     NULL,                               // tp_getattro

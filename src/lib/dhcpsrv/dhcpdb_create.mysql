@@ -34,7 +34,7 @@ CREATE TABLE lease4 (
     address INT UNSIGNED PRIMARY KEY NOT NULL,  # IPv4 address
     hwaddr VARBINARY(20),                       # Hardware address
     client_id VARBINARY(128),                   # Client ID
-    lease_time INT UNSIGNED,                    # Length of the lease (seconds)
+    valid_lifetime INT UNSIGNED,                # Length of the lease (seconds)
     expire TIMESTAMP,                           # Expiration time of the lease
     subnet_id INT UNSIGNED                      # Subnet identification
     ) ENGINE = INNODB;
@@ -43,7 +43,7 @@ CREATE TABLE lease4 (
 # N.B. The use of a VARCHAR for the address is temporary for development:
 # it will eventually be replaced by BINARY(16).
 CREATE TABLE lease6 (
-    address VARCHAR(40) PRIMARY KEY NOT NULL,   # IPv6 address
+    address VARCHAR(39) PRIMARY KEY NOT NULL,   # IPv6 address
     duid VARBINARY(128),                        # DUID
     valid_lifetime INT UNSIGNED,                # Length of the lease (seconds)
     expire TIMESTAMP,                           # Expiration time of the lease
@@ -72,12 +72,17 @@ COMMIT;
 # This table is only modified during schema upgrades.  For historical reasons
 # (related to the names of the columns in the BIND 10 DNS database file), the
 # first column is called "version" and not "major".
+#
+# NOTE: this MUST be kept in step with src/lib/dhcpsrv/tests/schema_copy.h,
+#       which defines the schema for the unit tests.  If you are updating
+#       the version number, the schema has changed: please ensure that
+#       schema_copy.h has been updated as well.
 CREATE TABLE schema_version (
     version INT PRIMARY KEY NOT NULL,       # Major version number
     minor INT                               # Minor version number
     );
 START TRANSACTION;
-INSERT INTO schema_version VALUES (0, 1);
+INSERT INTO schema_version VALUES (1, 0);
 COMMIT;
 
 # Notes:

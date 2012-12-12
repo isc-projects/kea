@@ -33,14 +33,16 @@ libb10_dhcp___la_SOURCES += option6_int_array.h
 libb10_dhcp___la_SOURCES += dhcp6.h dhcp4.h
 libb10_dhcp___la_SOURCES += pkt6.cc pkt6.h
 libb10_dhcp___la_SOURCES += pkt4.cc pkt4.h
+libb10_dhcp___la_SOURCES += std_option_defs.h
 
 libb10_dhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
 libb10_dhcp___la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libb10_dhcp___la_LIBADD   = $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
+libb10_dhcp___la_LIBADD  += $(top_builddir)/src/lib/dns/libb10-dns++.la
 libb10_dhcp___la_LIBADD  += $(top_builddir)/src/lib/util/libb10-util.la
 libb10_dhcp___la_LDFLAGS  = -no-undefined -version-info 2:0:0
 
-EXTRA_DIST  = README
+EXTRA_DIST  = README libdhcp++.dox
 
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
