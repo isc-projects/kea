@@ -138,12 +138,12 @@ TEST_F(RRCollatorTest, basicCases) {
                rdatas_);
 
     // Tell the collator we are done, then we'll see the last RR as an RRset.
-    collator_.finish();
+    collator_.flush();
     checkRRset(Name("txt.example.com"), RRClass::CH(), RRType::TXT(), rrttl_,
                rdatas_);
 
-    // Redundant finish() will be no-op.
-    collator_.finish();
+    // Redundant flush() will be no-op.
+    collator_.flush();
     EXPECT_TRUE(rrsets_.empty());
 }
 
@@ -154,7 +154,7 @@ TEST_F(RRCollatorTest, minTTLFirst) {
     rr_callback_(origin_, rrclass_, RRType::A(), RRTTL(20), a_rdata2_);
     rdatas_.push_back(a_rdata1_);
     rdatas_.push_back(a_rdata2_);
-    collator_.finish();
+    collator_.flush();
     checkRRset(origin_, rrclass_, RRType::A(), RRTTL(10), rdatas_);
 }
 
@@ -165,7 +165,7 @@ TEST_F(RRCollatorTest, maxTTLFirst) {
     rr_callback_(origin_, rrclass_, RRType::A(), RRTTL(10), a_rdata2_);
     rdatas_.push_back(a_rdata1_);
     rdatas_.push_back(a_rdata2_);
-    collator_.finish();
+    collator_.flush();
     checkRRset(origin_, rrclass_, RRType::A(), RRTTL(10), rdatas_);
 }
 
@@ -178,8 +178,8 @@ TEST_F(RRCollatorTest, addRRSIGs) {
     checkRRset(origin_, rrclass_, RRType::RRSIG(), rrttl_, rdatas_);
 }
 
-TEST_F(RRCollatorTest, emptyFinish) {
-    collator_.finish();
+TEST_F(RRCollatorTest, emptyFlush) {
+    collator_.flush();
     EXPECT_TRUE(rrsets_.empty());
 }
 
@@ -195,7 +195,7 @@ TEST_F(RRCollatorTest, throwFromCallback) {
 
     // We'll only see the A RR.
     throw_from_callback_ = false;
-    collator_.finish();
+    collator_.flush();
     rdatas_.push_back(a_rdata1_);
     checkRRset(origin_, rrclass_, RRType::A(), rrttl_, rdatas_);
 }
@@ -209,7 +209,7 @@ TEST_F(RRCollatorTest, withMasterLoader) {
                         MasterLoaderCallbacks::getNullCallbacks(),
                         collator_.getCallback());
     loader.load();
-    collator_.finish();
+    collator_.flush();
     rdatas_.push_back(a_rdata1_);
     checkRRset(origin_, rrclass_, RRType::A(), rrttl_, rdatas_);
 }

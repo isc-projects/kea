@@ -200,7 +200,7 @@ masterLoaderWrapper(const char* const filename, const Name& origin,
                           createMasterLoaderCallbacks(origin, zone_class,
                                                       &load_ok),
                           collator.getCallback()).load();
-        collator.finish();
+        collator.flush();
     } catch (const dns::MasterLoaderError& e) {
         isc_throw(ZoneLoaderException, e.what());
     }

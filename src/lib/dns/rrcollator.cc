@@ -95,7 +95,7 @@ RRCollator::getCallback() {
 }
 
 void
-RRCollator::finish() {
+RRCollator::flush() {
     if (impl_->current_rrset_) {
         impl_->callback_(impl_->current_rrset_);
         impl_->current_rrset_.reset();
