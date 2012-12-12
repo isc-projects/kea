@@ -16,6 +16,7 @@
 
 #include <string>
 
+#include <boost/static_assert.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <exceptions/exceptions.h>
@@ -110,6 +111,16 @@ Serial
 SOA::getSerial() const {
     InputBuffer b(numdata_, sizeof(numdata_));
     return (Serial(b.readUint32()));
+}
+
+uint32_t
+SOA::getMinimum() const {
+    // Make sure the buffer access is safe.
+    BOOST_STATIC_ASSERT(sizeof(numdata_) ==
+                        sizeof(uint32_t) * 4 + sizeof(uint32_t));
+
+    InputBuffer b(&numdata_[sizeof(uint32_t) * 4], sizeof(uint32_t));
+    return (b.readUint32());
 }
 
 string
