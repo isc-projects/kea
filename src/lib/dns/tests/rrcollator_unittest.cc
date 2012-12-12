@@ -53,20 +53,17 @@ protected:
         origin_("example.com"), rrclass_(RRClass::IN()), rrttl_(3600),
         throw_from_callback_(false),
         collator_(boost::bind(addRRset, _1, &rrsets_, &throw_from_callback_)),
-        rr_callback_(collator_.getCallback())
-    {
-        a_rdata1_ = createRdata(RRType::A(), rrclass_, "192.0.2.1");
-        a_rdata2_ = createRdata(RRType::A(), rrclass_, "192.0.2.2");
-
-        txt_rdata_ = createRdata(RRType::TXT(), rrclass_, "test");
-
-        sig_rdata1_ = createRdata(RRType::RRSIG(), rrclass_,
-                                  "A 5 3 3600 20000101000000 20000201000000 "
-                                  "12345 example.com. FAKE\n");
-        sig_rdata2_ = createRdata(RRType::RRSIG(), rrclass_,
-                                  "NS 5 3 3600 20000101000000 20000201000000 "
-                                  "12345 example.com. FAKE\n");
-    }
+        rr_callback_(collator_.getCallback()),
+        a_rdata1_(createRdata(RRType::A(), rrclass_, "192.0.2.1")),
+        a_rdata2_(createRdata(RRType::A(), rrclass_, "192.0.2.2")),
+        txt_rdata_(createRdata(RRType::TXT(), rrclass_, "test")),
+        sig_rdata1_(createRdata(RRType::RRSIG(), rrclass_,
+                                "A 5 3 3600 20000101000000 20000201000000 "
+                                "12345 example.com. FAKE\n")),
+        sig_rdata2_(createRdata(RRType::RRSIG(), rrclass_,
+                                "NS 5 3 3600 20000101000000 20000201000000 "
+                                "12345 example.com. FAKE\n"))
+    {}
 
     void checkRRset(const Name& expected_name, const RRClass& expected_class,
                     const RRType& expected_type, const RRTTL& expected_ttl,
@@ -99,10 +96,10 @@ protected:
     const RRClass rrclass_;
     const RRTTL rrttl_;
     vector<ConstRRsetPtr> rrsets_;
-    RdataPtr a_rdata1_, a_rdata2_, txt_rdata_, sig_rdata1_, sig_rdata2_;
     bool throw_from_callback_;
     RRCollator collator_;
     AddRRCallback rr_callback_;
+    const RdataPtr a_rdata1_, a_rdata2_, txt_rdata_, sig_rdata1_, sig_rdata2_;
     vector<ConstRdataPtr> rdatas_; // placeholder for expected data
 };
 
