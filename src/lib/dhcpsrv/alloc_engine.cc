@@ -67,7 +67,7 @@ AllocEngine::IterativeAllocator::pickAddress(const Subnet6Ptr& subnet,
 
     const Pool6Collection& pools = subnet->getPools();
 
-    if (pools.size() == 0) {
+    if (pools.empty()) {
         isc_throw(AllocFailed, "No pools defined in selected subnet");
     }
 

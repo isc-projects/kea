@@ -18,6 +18,7 @@
 #include <dhcp/pkt4.h>
 #include <exceptions/exceptions.h>
 
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 
@@ -224,7 +225,7 @@ Pkt4::setHWAddr(uint8_t hType, uint8_t hlen,
                 const std::vector<uint8_t>& macAddr) {
     /// TODO Rewrite this once support for client-identifier option
     /// is implemented (ticket 1228?)
-    if (hlen>MAX_CHADDR_LEN) {
+    if (hlen > MAX_CHADDR_LEN) {
         isc_throw(OutOfRange, "Hardware address (len=" << hlen
                   << " too long. Max " << MAX_CHADDR_LEN << " supported.");
     }
@@ -234,8 +235,8 @@ Pkt4::setHWAddr(uint8_t hType, uint8_t hlen,
 
     htype_ = hType;
     hlen_ = hlen;
-    memset(chaddr_, 0, MAX_CHADDR_LEN);
-    memcpy(chaddr_, &macAddr[0], hlen);
+    std::copy(&macAddr[0], &macAddr[hlen], &chaddr_[0]);
+    std::fill(&chaddr_[hlen], &chaddr_[MAX_CHADDR_LEN], 0);
 }
 
 void
@@ -244,8 +245,8 @@ Pkt4::setSname(const uint8_t* sname, size_t snameLen /*= MAX_SNAME_LEN*/) {
         isc_throw(OutOfRange, "sname field (len=" << snameLen
                   << ") too long, Max " << MAX_SNAME_LEN << " supported.");
     }
-    memset(sname_, 0, MAX_SNAME_LEN);
-    memcpy(sname_, sname, snameLen);
+    std::copy(&sname[0], &sname[snameLen], &sname_[0]);
+    std::fill(&sname_[snameLen], &sname_[MAX_SNAME_LEN], 0);
 
     // no need to store snameLen as any empty space is filled with 0s
 }
@@ -256,8 +257,8 @@ Pkt4::setFile(const uint8_t* file, size_t fileLen /*= MAX_FILE_LEN*/) {
         isc_throw(OutOfRange, "file field (len=" << fileLen
                   << ") too long, Max " << MAX_FILE_LEN << " supported.");
     }
-    memset(file_, 0, MAX_FILE_LEN);
-    memcpy(file_, file, fileLen);
+    std::copy(&file[0], &file[fileLen], &file_[0]);
+    std::fill(&file_[fileLen], &file_[MAX_FILE_LEN], 0);
 
     // no need to store fileLen as any empty space is filled with 0s
 }
