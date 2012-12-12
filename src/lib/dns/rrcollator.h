@@ -52,7 +52,13 @@ namespace dns {
 /// the class.
 class RRCollator : boost::noncopyable {
 public:
-    /// \brief
+    /// \brief Callback functor type for \c RRCollator.
+    ///
+    /// This type of callback is given to an \c RRCollator object on its
+    /// construction, and will be called for each collated RRset built in
+    /// the \c RRCollator.
+    ///
+    /// \param rrset The collated RRset.
     typedef boost::function<void(const RRsetPtr& rrset)> AddRRsetCallback;
 
     /// \brief Constructor.
