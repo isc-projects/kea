@@ -4103,6 +4103,7 @@ TYPED_TEST(DatabaseClientTest, createZone) {
     const DataSourceClient::FindResult
         zone(this->client_->findZone(new_name));
     ASSERT_EQ(result::NOTFOUND, zone.code);
+
     // The mock implementation does not do createZone,
     // in which case it should throw NotImplemented (from
     // the base class)
@@ -4118,6 +4119,36 @@ TYPED_TEST(DatabaseClientTest, createZone) {
         // it already exists
         ASSERT_FALSE(this->client_->createZone(new_name));
     }
+}
+
+TYPED_TEST(DatabaseClientTest, createZoneRollbackOnLocked) {
+    // skip test for mock
+    if (this->is_mock_) {
+        return;
+    }
+
+    const Name new_name("example.com");
+    isc::datasrc::ZoneUpdaterPtr updater =
+        this->client_->getUpdater(isc::dns::Name(this->zname_), true);
+    ASSERT_THROW(this->client_->createZone(new_name), DataSourceError);
+    // createZone started a transaction as well, but since it failed,
+    // it should have been rolled back. Roll back the other one as
+    // well, and the next attempt should succeed
+    updater.reset();
+    ASSERT_TRUE(this->client_->createZone(new_name));
+}
+
+TYPED_TEST(DatabaseClientTest, createZoneRollbackOnExists) {
+    // skip test for mock
+    if (this->is_mock_) {
+        return;
+    }
+
+    const Name new_name("example.com");
+    ASSERT_FALSE(this->client_->createZone(this->zname_));
+    // createZone started a transaction, but since it failed,
+    // it should have been rolled back, and the next attempt should succeed
+    ASSERT_TRUE(this->client_->createZone(new_name));
 }
 
 }
