@@ -14,9 +14,11 @@
 
 #include <exceptions/exceptions.h>
 
+// include this first to check the header is self-contained.
+#include <dns/rrcollator.h>
+
 #include <dns/name.h>
 #include <dns/rdataclass.h>
-#include <dns/rrcollator.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
