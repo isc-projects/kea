@@ -237,6 +237,11 @@ TEST_F(RRCollatorTest, throwFromCallback) {
     checkRRset(origin_, rrclass_, RRType::A(), rrttl_, rdatas_);
 }
 
+TEST_F(RRCollatorTest, emptyCallback) {
+    const AddRRsetCallback empty_callback;
+    EXPECT_THROW(RRCollator collator(empty_callback), isc::InvalidParameter);
+}
+
 TEST_F(RRCollatorTest, withMasterLoader) {
     // Test a simple case with MasterLoader.  There shouldn't be anything
     // special, but that's the mainly intended usage of the collator, so we
