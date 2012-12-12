@@ -12,14 +12,18 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RDATA_H
-#define __RDATA_H 1
+#ifndef RDATA_H
+#define RDATA_H 1
 
-#include <stdint.h>
+#include <dns/master_lexer.h>
+#include <dns/master_loader.h>
+#include <dns/master_loader_callbacks.h>
+
+#include <exceptions/exceptions.h>
 
 #include <boost/shared_ptr.hpp>
 
-#include <exceptions/exceptions.h>
+#include <stdint.h>
 
 namespace isc {
 namespace util {
@@ -279,6 +283,11 @@ public:
     /// \param rdata_len The length in buffer of the \c Rdata.  In bytes.
     Generic(isc::util::InputBuffer& buffer, size_t rdata_len);
 
+    /// \brief Constructor from master lexer.
+    ///
+    Generic(MasterLexer& lexer, const Name* name,
+            MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
+
     ///
     /// \brief The destructor.
     virtual ~Generic();
@@ -367,7 +376,10 @@ public:
     /// \return > 0 if \c this would be sorted after \c other.
     virtual int compare(const Rdata& other) const;
     //@}
+
 private:
+    void constructHelper(const std::string& rdata_string);
+
     GenericImpl* impl_;
 };
 
@@ -472,6 +484,53 @@ RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
 /// \c Rdata object.
 RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                      const Rdata& source);
+
+/// \brief Create RDATA of a given pair of RR type and class using the
+/// master lexer.
+///
+/// This is a more generic form of factory from textual RDATA, and is mainly
+/// intended to be used internally by the master file parser (\c MasterLoader)
+/// of this library.
+///
+/// The \c lexer is expected to be at the beginning of textual RDATA of the
+/// specified type and class.  This function (and its underlying Rdata
+/// implementations) extracts necessary tokens from the lexer and constructs
+/// the RDATA from them.
+///
+/// Due to the intended usage of this version, this function handles error
+/// cases quite differently from other versions.  It internally catches
+/// most of syntax and semantics errors of the input (reported as exceptions),
+/// calls the corresponding callback specified by the \c callbacks parameters,
+/// and returns a NULL smart pointer.  If the caller rather wants to get
+/// an exception in these cases, it can pass a callback that internally
+/// throws on error.  Some critical exceptions such as \c std::bad_alloc are
+/// still propagated to the upper layer as it doesn't make sense to try
+/// recovery from such a situation within this function.
+///
+/// Whether or not the creation succeeds, this function updates the lexer
+/// until it reaches either the end of line or file, starting from the end of
+/// the RDATA text (or the point of failure if the parsing fails in the
+/// middle of it).  The caller can therefore assume it's ready for reading
+/// the next data (which is normally a subsequent RR in the zone file) on
+/// return, whether or not this function succeeds.
+///
+/// \param rrtype An \c RRType object specifying the type/class pair.
+/// \param rrclass An \c RRClass object specifying the type/class pair.
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
+/// \param origin If non NULL, specifies the origin of any domain name fields
+/// of the RDATA that are non absolute.
+/// \param options Master loader options controlling how to deal with errors
+/// or non critical issues in the parsed RDATA.
+/// \param callbacks Callback to be called when an error or non critical issue
+/// is found.
+/// \return An \c RdataPtr object pointing to the created
+/// \c Rdata object.  Will be NULL if parsing fails.
+RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
+                     MasterLexer& lexer, const Name* origin,
+                     MasterLoader::Options options,
+                     MasterLoaderCallbacks& callbacks);
+
 //@}
 
 ///
@@ -509,8 +568,8 @@ int compareNames(const Name& n1, const Name& n2);
 } // end of namespace "rdata"
 }
 }
-#endif  // __RDATA_H
+#endif  // RDATA_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

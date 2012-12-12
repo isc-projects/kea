@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef _ISC_FAKESESSION_H
-#define _ISC_FAKESESSION_H 1
+#ifndef ISC_FAKESESSION_H
+#define ISC_FAKESESSION_H 1
 
 #include <string>
 
@@ -111,7 +111,7 @@ private:
 } // namespace cc
 } // namespace isc
 
-#endif // _ISC_FAKESESSION_H
+#endif // ISC_FAKESESSION_H
 
 // Local Variables:
 // mode: c++

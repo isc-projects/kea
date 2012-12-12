@@ -18,7 +18,6 @@
 #include <bench/benchmark_util.h>
 
 #include <util/buffer.h>
-#include <util/threads/lock.h>
 
 #include <dns/message.h>
 #include <dns/name.h>
@@ -33,6 +32,7 @@
 #include <auth/auth_srv.h>
 #include <auth/auth_config.h>
 #include <auth/datasrc_config.h>
+#include <auth/datasrc_clients_mgr.h>
 #include <auth/query.h>
 
 #include <asiodns/asiodns.h>
@@ -127,9 +127,9 @@ public:
                           OutputBuffer& buffer) :
         QueryBenchMark(queries, query_message, buffer)
     {
-        isc::util::thread::Mutex::Locker locker(
-                server_->getDataSrcClientListMutex());
-        server_->swapDataSrcClientLists(
+        // Note: setDataSrcClientLists() may be deprecated, but until then
+        // we use it because we want to be synchronized with the server.
+        server_->getDataSrcClientsMgr().setDataSrcClientLists(
             configureDataSource(
                 Element::fromJSON("{\"IN\":"
                                   "  [{\"type\": \"sqlite3\","
@@ -148,9 +148,7 @@ public:
                          OutputBuffer& buffer) :
         QueryBenchMark(queries, query_message, buffer)
     {
-        isc::util::thread::Mutex::Locker locker(
-                server_->getDataSrcClientListMutex());
-        server_->swapDataSrcClientLists(
+        server_->getDataSrcClientsMgr().setDataSrcClientLists(
             configureDataSource(
                 Element::fromJSON("{\"IN\":"
                                   "  [{\"type\": \"MasterFiles\","

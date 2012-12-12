@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef _ISC_CRYPTO_H
-#define _ISC_CRYPTO_H
+#ifndef ISC_CRYPTO_H
+#define ISC_CRYPTO_H
 
 #include <string>
 #include <util/buffer.h>
@@ -205,4 +205,4 @@ private:
 } // namespace cryptolink
 } // namespace isc
 
-#endif // _ISC_CRYPTO_H
+#endif // ISC_CRYPTO_H

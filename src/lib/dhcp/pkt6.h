@@ -15,13 +15,16 @@
 #ifndef PKT6_H
 #define PKT6_H
 
-#include <iostream>
-#include <time.h>
-#include <boost/shared_ptr.hpp>
-#include <boost/shared_array.hpp>
+#include <asiolink/io_address.h>
+#include <dhcp/option.h>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include "asiolink/io_address.h"
-#include "dhcp/option.h"
+#include <boost/shared_array.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <iostream>
+
+#include <time.h>
 
 namespace isc {
 
@@ -124,7 +127,7 @@ public:
     /// Returns message type (e.g. 1 = SOLICIT)
     ///
     /// @return message type
-    uint8_t getType() { return (msg_type_); }
+    uint8_t getType() const { return (msg_type_); }
 
     /// Sets message type (e.g. 1 = SOLICIT)
     ///
@@ -144,18 +147,27 @@ public:
     /// Adds an option to this packet.
     ///
     /// @param opt option to be added.
-    void addOption(OptionPtr opt);
+    void addOption(const OptionPtr& opt);
 
     /// @brief Returns the first option of specified type.
     ///
     /// Returns the first option of specified type. Note that in DHCPv6 several
     /// instances of the same option are allowed (and frequently used).
-    /// See getOptions().
+    /// Also see \ref getOptions().
     ///
     /// @param type option type we are looking for
     ///
     /// @return pointer to found option (or NULL)
     OptionPtr getOption(uint16_t type);
+
+    /// @brief Returns all instances of specified type.
+    ///
+    /// Returns all instances of options of the specified type. DHCPv6 protocol
+    /// allows (and uses frequently) multiple instances.
+    ///
+    /// @param type option type we are looking for
+    /// @return instance of option collection with requested options
+    isc::dhcp::Option::OptionCollection getOptions(uint16_t type);
 
     /// Attempts to delete first suboption of requested type
     ///
@@ -243,8 +255,6 @@ public:
     /// @return interface name
     void setIface(const std::string& iface ) { iface_ = iface; };
 
-    /// TODO Need to implement getOptions() as well
-
     /// collection of options present in this message
     ///
     /// @warning This protected member is accessed by derived
@@ -262,6 +272,34 @@ public:
     /// just after receiving it.
     /// @throw isc::Unexpected if timestamp update failed
     void updateTimestamp();
+
+    /// @brief Return textual type of packet.
+    ///
+    /// Returns the name of valid packet received by the server (e.g. SOLICIT).
+    /// If the packet is unknown - or if it is a valid DHCP packet but not one
+    /// expected to be received by the server (such as an ADVERTISE), the string
+    /// "UNKNOWN" is returned.  This method is used in debug messages.
+    ///
+    /// As the operation of the method does not depend on any server state, it
+    /// is declared static. There is also non-static getName() method that
+    /// works on Pkt6 objects.
+    ///
+    /// @param type DHCPv6 packet type
+    ///
+    /// @return Pointer to "const" string containing the packet name.
+    ///         Note that this string is statically allocated and MUST NOT
+    ///         be freed by the caller.
+    static const char* getName(uint8_t type);
+
+    /// @brief returns textual representation of packet type.
+    ///
+    /// This method requires an object. There is also static version, which
+    /// requires one parameter (type).
+    ///
+    /// @return Pointer to "const" string containing packet name.
+    ///         Note that this string is statically allocated and MUST NOT
+    ///         be freed by the caller.
+    const char* getName() const;
 
 protected:
     /// Builds on wire packet for TCP transmission.

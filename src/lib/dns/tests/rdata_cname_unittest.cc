@@ -87,6 +87,12 @@ TEST_F(Rdata_CNAME_Test, createFromWire) {
                  InvalidRdataLength);
 }
 
+TEST_F(Rdata_CNAME_Test, createFromLexer) {
+    EXPECT_EQ(0, rdata_cname.compare(
+        *test::createRdataUsingLexer(RRType::CNAME(), RRClass::IN(),
+                                     "cn.example.com")));
+}
+
 TEST_F(Rdata_CNAME_Test, toWireBuffer) {
     rdata_cname.toWire(obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,

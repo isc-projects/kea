@@ -12,11 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __DHCP4_LOG__H
-#define __DHCP4_LOG__H
+#ifndef DHCP4_LOG_H
+#define DHCP4_LOG_H
 
-#include <log/macros.h>
 #include <log/logger_support.h>
+#include <log/macros.h>
 #include <dhcp4/dhcp4_messages.h>
 
 namespace isc {
@@ -56,4 +56,4 @@ extern isc::log::Logger dhcp4_logger;
 } // namespace dhcp4
 } // namespace isc
 
-#endif // __DHCP4_LOG__H
+#endif // DHCP4_LOG_H

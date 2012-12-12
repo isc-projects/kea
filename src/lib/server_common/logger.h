@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __SERVER_COMMON_LOGGER_H
-#define __SERVER_COMMON_LOGGER_H
+#ifndef SERVER_COMMON_LOGGER_H
+#define SERVER_COMMON_LOGGER_H
 
 #include <log/macros.h>
 #include <server_common/server_common_messages.h>

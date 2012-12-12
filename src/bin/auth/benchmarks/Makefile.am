@@ -15,7 +15,7 @@ query_bench_SOURCES = query_bench.cc
 query_bench_SOURCES += ../query.h  ../query.cc
 query_bench_SOURCES += ../auth_srv.h ../auth_srv.cc
 query_bench_SOURCES += ../auth_config.h ../auth_config.cc
-query_bench_SOURCES += ../statistics.h ../statistics.cc
+query_bench_SOURCES += ../statistics.h ../statistics.cc ../statistics_items.h
 query_bench_SOURCES += ../auth_log.h ../auth_log.cc
 query_bench_SOURCES += ../datasrc_config.h ../datasrc_config.cc
 
@@ -34,7 +34,6 @@ query_bench_LDADD += $(top_builddir)/src/lib/nsas/libb10-nsas.la
 query_bench_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 query_bench_LDADD += $(top_builddir)/src/lib/server_common/libb10-server-common.la
 query_bench_LDADD += $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
-query_bench_LDADD += $(top_builddir)/src/lib/statistics/libb10-statistics.la
 query_bench_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 query_bench_LDADD += $(SQLITE_LIBS)
 

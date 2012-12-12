@@ -12,16 +12,17 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <stdint.h>
-#include <arpa/inet.h>
-#include <sstream>
-#include "exceptions/exceptions.h"
+#include <asiolink/io_address.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option6_addrlst.h>
+#include <exceptions/exceptions.h>
+#include <util/io_utilities.h>
 
-#include "asiolink/io_address.h"
-#include "util/io_utilities.h"
-#include "dhcp/libdhcp++.h"
-#include "dhcp/option6_addrlst.h"
-#include "dhcp/dhcp6.h"
+#include <sstream>
+
+#include <arpa/inet.h>
+#include <stdint.h>
 
 using namespace std;
 using namespace isc;
@@ -83,7 +84,7 @@ void Option6AddrLst::unpack(OptionBufferConstIter begin,
                   << " is not divisible by 16.");
     }
     while (begin != end) {
-        addrs_.push_back(IOAddress::from_bytes(AF_INET6, &(*begin)));
+        addrs_.push_back(IOAddress::fromBytes(AF_INET6, &(*begin)));
         begin += V6ADDRESS_LEN;
     }
 }

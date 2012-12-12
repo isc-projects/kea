@@ -12,6 +12,20 @@ AC_CONFIG_MACRO_DIR([m4macros])
 # Checks for programs.
 AC_PROG_CXX
 
+# Enable low-performing debugging facilities? This option optionally
+# enables some debugging aids that perform slowly and hence aren't built
+# by default.
+AC_ARG_ENABLE([debug],
+  AS_HELP_STRING([--enable-debug],
+    [enable debugging (default is no)]),
+  [case "${enableval}" in
+    yes) debug_enabled=yes ;;
+    no)  debug_enabled=no ;;
+    *)   AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+  esac],[debug_enabled=no])
+AM_CONDITIONAL([DEBUG_ENABLED], [test x$debug_enabled = xyes])
+AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable low-performing debugging facilities?])])
+
 # Libtool configuration
 #
 
@@ -50,25 +64,109 @@ AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
 # Linker options
 
-# check -R and -Wl,-R rather than gcc specific -rpath to be as portable
-# as possible.
-AC_MSG_CHECKING([whether -R flag is available in linker])
-LDFLAGS_SAVED="$LDFLAGS"
-LDFLAGS="$LDFLAGS -R/usr/lib"
-AC_TRY_LINK([],[],
-    [ AC_MSG_RESULT(yes)
-        rpath_flag=-R
-    ],[ AC_MSG_RESULT(no)
-        AC_MSG_CHECKING([whether -Wl,-R flag is available in linker])
-        LDFLAGS="$LDFLAGS_SAVED -Wl,-R"
-        AC_TRY_LINK([], [],
-            [ AC_MSG_RESULT(yes)
-                rpath_flag=-Wl,-R
-            ],[ AC_MSG_RESULT(no)
-                 rpath_flag=no
-            ])
-    ])
-LDFLAGS=$LDFLAGS_SAVED
+# check -R, "-Wl,-R" or -rpath (we share the AX function defined in
+#  examples/m4)
+AX_ISC_RPATH
+
+# Compiler dependent settings: define some mandatory CXXFLAGS here.
+# We also use a separate variable B10_CXXFLAGS.  This will (and should) be
+# used as the default value for each specific AM_CXXFLAGS:
+# AM_CXXFLAGS = $(B10_CXXFLAGS)
+# AM_CXXFLAGS += ... # add module specific flags
+# We need this so that we can disable some specific compiler warnings per
+# module basis; since AM_CXXFLAGS are placed before CXXFLAGS, and since
+# gcc's -Wno-XXX option must be specified after -Wall or -Wextra, we cannot
+# specify the default warning flags in CXXFLAGS and let specific modules
+# "override" the default.
+
+# This may be used to try linker flags.
+AC_DEFUN([BIND10_CXX_TRY_FLAG], [
+  AC_MSG_CHECKING([whether $CXX supports $1])
+
+  bind10_save_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS $1"
+
+  AC_LINK_IFELSE([AC_LANG_SOURCE([int main(void){ return 0;}])],
+                 [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
+  CXXFLAGS="$bind10_save_CXXFLAGS"
+
+  if test "x$bind10_cxx_flag" = "xyes"; then
+    ifelse([$2], , :, [$2])
+  else
+    ifelse([$3], , :, [$3])
+  fi
+
+  AC_MSG_RESULT([$bind10_cxx_flag])
+])
+
+# SunStudio compiler requires special compiler options for boost
+# (http://blogs.sun.com/sga/entry/boost_mini_howto)
+if test "$SUNCXX" = "yes"; then
+CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
+MULTITHREADING_FLAG="-mt"
+fi
+
+# Newer versions of clang++ promotes "unused driver arguments" warnings to
+# a fatal error with -Werror, causing build failure.  Since we use multiple
+# compilers on multiple systems, this can easily happen due to settings for
+# non clang++ environments that could be just ignored otherwise.  It can also
+# happen if clang++ is used via ccache.  So, although probably suboptimal,
+# we suppress this particular warning.  Note that it doesn't weaken checks
+# on the source code.
+if test "$CLANGPP" = "yes"; then
+	B10_CXXFLAGS="$B10_CXXFLAGS -Qunused-arguments"
+fi
+
+BIND10_CXX_TRY_FLAG([-Wno-missing-field-initializers],
+	[WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG="-Wno-missing-field-initializers"])
+AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
+
+# gcc specific settings:
+if test "X$GXX" = "Xyes"; then
+B10_CXXFLAGS="$B10_CXXFLAGS -Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+case "$host" in
+*-solaris*)
+	MULTITHREADING_FLAG=-pthreads
+	# In Solaris, IN6ADDR_ANY_INIT and IN6ADDR_LOOPBACK_INIT need -Wno-missing-braces
+	B10_CXXFLAGS="$B10_CXXFLAGS -Wno-missing-braces"
+	;;
+*)
+	MULTITHREADING_FLAG=-pthread
+	;;
+esac
+
+# Don't use -Werror if configured not to
+AC_ARG_WITH(werror,
+    AC_HELP_STRING([--with-werror], [Compile using -Werror (default=yes)]),
+    [
+     case "${withval}" in
+         yes) with_werror=1 ;;
+         no)  with_werror=0 ;;
+         *)   AC_MSG_ERROR(bad value ${withval} for --with-werror) ;;
+     esac],
+     [with_werror=1])
+
+werror_ok=0
+
+# Certain versions of gcc (g++) have a bug that incorrectly warns about
+# the use of anonymous name spaces even if they're closed in a single
+# translation unit.  For these versions we have to disable -Werror.
+if test $with_werror = 1; then
+   CXXFLAGS_SAVED="$CXXFLAGS"
+   CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
+   AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
+   AC_TRY_COMPILE([namespace { class Foo {}; }
+   namespace isc {class Bar {Foo foo_;};} ],,
+	[AC_MSG_RESULT(no)
+	 werror_ok=1
+	 B10_CXXFLAGS="$B10_CXXFLAGS -Werror"],
+	[AC_MSG_RESULT(yes)])
+   CXXFLAGS="$CXXFLAGS_SAVED"
+fi
+
+fi				dnl GXX = yes
+
+AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
 
 # allow building programs with static link.  we need to make it selective
 # because loadable modules cannot be statically linked.
@@ -103,6 +201,10 @@ case "$host" in
 	CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
 	# "now" binding is necessary to prevent deadlocks in C++ static initialization code
 	LDFLAGS="$LDFLAGS -z now"
+	# Destroying locked mutexes, condition variables being waited
+	# on, etc. are undefined behavior on Solaris, so we set it as
+	# such here.
+	AC_DEFINE([HAS_UNDEFINED_PTHREAD_BEHAVIOR], [1], [Does this platform have some undefined pthreads behavior?])
 	;;
 *-apple-darwin*)
 	# Starting with OSX 10.7 (Lion) we must choose which IPv6 API to use
@@ -214,10 +316,10 @@ fi
 # modules, we embed the path to the modules when possible.  We do this even
 # when the path is known in the common operational environment (e.g. when
 # it's stored in a common "hint" file) for simplicity.
-if test $rpath_flag != no; then
+if test "x$ISC_RPATH_FLAG" != "x"; then
 	python_rpath=
 	for flag in ${PYTHON_LDFLAGS}; do
-		python_rpath="${python_rpath} `echo $flag | sed -ne "s/^\(\-L\)/${rpath_flag}/p"`"
+		python_rpath="${python_rpath} `echo $flag | sed -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
 	done
 	PYTHON_LDFLAGS="${PYTHON_LDFLAGS} ${python_rpath}"
 fi
@@ -256,95 +358,11 @@ fi
 
 # TODO: check for _sqlite3.py module
 
-# Compiler dependent settings: define some mandatory CXXFLAGS here.
-# We also use a separate variable B10_CXXFLAGS.  This will (and should) be
-# used as the default value for each specific AM_CXXFLAGS:
-# AM_CXXFLAGS = $(B10_CXXFLAGS)
-# AM_CXXFLAGS += ... # add module specific flags
-# We need this so that we can disable some specific compiler warnings per
-# module basis; since AM_CXXFLAGS are placed before CXXFLAGS, and since
-# gcc's -Wno-XXX option must be specified after -Wall or -Wextra, we cannot
-# specify the default warning flags in CXXFLAGS and let specific modules
-# "override" the default.
-
-# This may be used to try linker flags.
-AC_DEFUN([BIND10_CXX_TRY_FLAG], [
-  AC_MSG_CHECKING([whether $CXX supports $1])
-
-  bind10_save_CXXFLAGS="$CXXFLAGS"
-  CXXFLAGS="$CXXFLAGS $1"
-
-  AC_LINK_IFELSE([AC_LANG_SOURCE([int main(void){ return 0;}])],
-                 [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
-  CXXFLAGS="$bind10_save_CXXFLAGS"
-
-  if test "x$bind10_cxx_flag" = "xyes"; then
-    ifelse([$2], , :, [$2])
-  else
-    ifelse([$3], , :, [$3])
-  fi
-
-  AC_MSG_RESULT([$bind10_cxx_flag])
-])
-
-# SunStudio compiler requires special compiler options for boost
-# (http://blogs.sun.com/sga/entry/boost_mini_howto)
-if test "$SUNCXX" = "yes"; then
-CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
-MULTITHREADING_FLAG="-mt"
-fi
-
-BIND10_CXX_TRY_FLAG([-Wno-missing-field-initializers],
-	[WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG="-Wno-missing-field-initializers"])
-AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
-
-# gcc specific settings:
-if test "X$GXX" = "Xyes"; then
-B10_CXXFLAGS="-Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
-case "$host" in
-*-solaris*)
-	MULTITHREADING_FLAG=-pthreads
-	# In Solaris, IN6ADDR_ANY_INIT and IN6ADDR_LOOPBACK_INIT need -Wno-missing-braces
-	B10_CXXFLAGS="$B10_CXXFLAGS -Wno-missing-braces"
-	;;
-*)
-	MULTITHREADING_FLAG=-pthread
-	;;
-esac
-
-# Don't use -Werror if configured not to
-AC_ARG_WITH(werror,
-    AC_HELP_STRING([--with-werror], [Compile using -Werror (default=yes)]),
-    [
-     case "${withval}" in
-         yes) with_werror=1 ;;
-         no)  with_werror=0 ;;
-         *)   AC_MSG_ERROR(bad value ${withval} for --with-werror) ;;
-     esac],
-     [with_werror=1])
-
-werror_ok=0
-
-# Certain versions of gcc (g++) have a bug that incorrectly warns about
-# the use of anonymous name spaces even if they're closed in a single
-# translation unit.  For these versions we have to disable -Werror.
-if test $with_werror = 1; then
-   CXXFLAGS_SAVED="$CXXFLAGS"
-   CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
-   AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
-   AC_TRY_COMPILE([namespace { class Foo {}; }
-   namespace isc {class Bar {Foo foo_;};} ],,
-	[AC_MSG_RESULT(no)
-	 werror_ok=1
-	 B10_CXXFLAGS="$B10_CXXFLAGS -Werror"],
-	[AC_MSG_RESULT(yes)])
-   CXXFLAGS="$CXXFLAGS_SAVED"
-fi
-
+# (g++ only check)
 # Python 3.2 has an unused parameter in one of its headers. This
 # has been reported, but not fixed as of yet, so we check if we need
 # to set -Wno-unused-parameter.
-if test $werror_ok = 1; then
+if test "X$GXX" = "Xyes" -a $werror_ok = 1; then
 	CPPFLAGS_SAVED="$CPPFLAGS"
 	CPPFLAGS=${PYTHON_INCLUDES}
 	CXXFLAGS_SAVED="$CXXFLAGS"
@@ -369,10 +387,6 @@ if test $werror_ok = 1; then
 	CXXFLAGS="$CXXFLAGS_SAVED"
 	CPPFLAGS="$CPPFLAGS_SAVED"
 fi
-
-fi				dnl GXX = yes
-
-AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then
@@ -671,10 +685,10 @@ for flag in ${BOTAN_LIBS}; do
 done
 
 # See python_rpath for some info on why we do this
-if test $rpath_flag != no; then
+if test "x$ISC_RPATH_FLAG" != "x"; then
     BOTAN_RPATH=
     for flag in ${BOTAN_LIBS}; do
-            BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne "s/^\(\-L\)/${rpath_flag}/p"`"
+            BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
     done
 AC_SUBST(BOTAN_RPATH)
 
@@ -691,7 +705,6 @@ fi
 AC_SUBST(BOTAN_LDFLAGS)
 AC_SUBST(BOTAN_LIBS)
 AC_SUBST(BOTAN_INCLUDES)
-
 # Even though chances are high we already performed a real compilation check
 # in the search for the right (pkg)config data, we try again here, to
 # be sure.
@@ -718,6 +731,60 @@ AC_LINK_IFELSE(
 )
 CPPFLAGS=$CPPFLAGS_SAVED
 LIBS=$LIBS_SAVED
+
+# Check for MySql.  The path to the mysql_config program is given with
+# the --with-mysql-config (default to /usr/bin/mysql-config).  By default,
+# the software is not built with MySQL support enabled.
+mysql_config="no"
+AC_ARG_WITH([dhcp-mysql],
+  AC_HELP_STRING([--with-dhcp-mysql=PATH],
+    [path to the MySQL 'mysql_config' script (MySQL is used for the DHCP database)]),
+    [mysql_config="$withval"])
+
+if test "${mysql_config}" = "yes" ; then
+    MYSQL_CONFIG="/usr/bin/mysql_config"
+elif test "${mysql_config}" != "no" ; then
+    MYSQL_CONFIG="${withval}"
+fi
+
+if test "$MYSQL_CONFIG" != "" ; then
+    if test -d "$MYSQL_CONFIG" -o ! -x "$MYSQL_CONFIG" ; then
+        AC_MSG_ERROR([--with-dhcp-mysql should point to a mysql_config program])
+    fi
+
+    MYSQL_CPPFLAGS=`$MYSQL_CONFIG --cflags`
+    MYSQL_LIBS=`$MYSQL_CONFIG --libs`
+
+    AC_SUBST(MYSQL_CPPFLAGS)
+    AC_SUBST(MYSQL_LIBS)
+
+    # Check that a simple program using MySQL functions can compile and link.
+    CPPFLAGS_SAVED="$CPPFLAGS"
+    LIBS_SAVED="$LIBS"
+
+    CPPFLAGS="$MYSQL_CPPFLAGS $CPPFLAGS"
+    LIBS="$MYSQL_LIBS $LIBS"
+
+    AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM([#include <mysql.h>],
+                             [MYSQL mysql_handle;
+                              (void) mysql_init(&mysql_handle);
+                             ])],
+            [AC_MSG_RESULT([checking for MySQL headers and library... yes])],
+            [AC_MSG_RESULT([checking for MySQL headers and library... no])
+             AC_MSG_ERROR([Needs MySQL library])]
+    )
+
+    CPPFLAGS=$CPPFLAGS_SAVED
+    LIBS=$LIBS_SAVED
+
+    # Note that MYSQL is present in the config.h file
+    AC_DEFINE([HAVE_MYSQL], [1], [MySQL is present])
+fi
+
+# ... and at the shell level, so Makefile.am can take action depending on this.
+AM_CONDITIONAL(HAVE_MYSQL, test "$MYSQL_CONFIG" != "")
+
 
 # Check for log4cplus
 log4cplus_path="yes"
@@ -836,10 +903,11 @@ AC_SUBST(MULTITHREADING_FLAG)
 #
 GTEST_LDFLAGS=
 GTEST_LDADD=
-# TODO: set DISTCHECK_GTEST_CONFIGURE_FLAG for --with-gtest too
 DISTCHECK_GTEST_CONFIGURE_FLAG=
 
 if test "x$enable_gtest" = "xyes" ; then
+
+    DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest=$gtest_path"
 
     if test -n "$with_gtest_source" ; then
 
@@ -1055,6 +1123,13 @@ AM_COND_IF([ENABLE_LOGGER_CHECKS], [AC_DEFINE([ENABLE_LOGGER_CHECKS], [1], [Chec
 AC_PATH_PROG(VALGRIND, valgrind, no)
 AM_CONDITIONAL(HAVE_VALGRIND, test "x$VALGRIND" != "xno")
 
+# Also check for valgrind headers
+# We could consider adding them to the source code tree, as this
+# is the encouraged method of using them; they are BSD-licensed.
+# However, until we find that this is a problem, we just use
+# the system-provided ones, if available
+AC_CHECK_HEADERS(valgrind/valgrind.h, [AC_DEFINE([HAVE_VALGRIND_HEADERS], [1], [Check valgrind headers])])
+
 found_valgrind="not found"
 if test "x$VALGRIND" != "xno"; then
    found_valgrind="found"
@@ -1093,6 +1168,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/bindctl/Makefile
                  src/bin/bindctl/tests/Makefile
                  src/bin/cfgmgr/Makefile
+                 src/bin/cfgmgr/local_plugins/Makefile
                  src/bin/cfgmgr/plugins/Makefile
                  src/bin/cfgmgr/plugins/tests/Makefile
                  src/bin/cfgmgr/tests/Makefile
@@ -1188,6 +1264,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/benchmarks/Makefile
                  src/lib/dhcp/Makefile
                  src/lib/dhcp/tests/Makefile
+                 src/lib/dhcpsrv/Makefile
+                 src/lib/dhcpsrv/tests/Makefile
                  src/lib/exceptions/Makefile
                  src/lib/exceptions/tests/Makefile
                  src/lib/datasrc/Makefile
@@ -1231,7 +1309,7 @@ AC_CONFIG_FILES([Makefile
                  tests/tools/badpacket/tests/Makefile
                  tests/tools/perfdhcp/Makefile
                  tests/tools/perfdhcp/tests/Makefile
-                 tests/tools/perfdhcp/templates/Makefile
+                 tests/tools/perfdhcp/tests/testdata/Makefile
                  dns++.pc
                ])
 AC_OUTPUT([doc/version.ent
@@ -1261,6 +1339,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/zonemgr/tests/zonemgr_test
            src/bin/zonemgr/run_b10-zonemgr.sh
            src/bin/sysinfo/sysinfo.py
+           src/bin/sysinfo/run_sysinfo.sh
            src/bin/stats/stats.py
            src/bin/stats/stats_httpd.py
            src/bin/bind10/bind10_src.py
@@ -1297,6 +1376,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/log/tests/console_test.sh
            src/lib/log/tests/destination_test.sh
            src/lib/log/tests/init_logger_test.sh
+           src/lib/log/tests/buffer_logger_test.sh
            src/lib/log/tests/local_file_test.sh
            src/lib/log/tests/logger_lock_test.sh
            src/lib/log/tests/severity_test.sh
@@ -1339,6 +1419,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/loadzone/run_loadzone.sh
            chmod +x src/bin/loadzone/tests/correct/correct_test.sh
            chmod +x src/bin/loadzone/tests/error/error_test.sh
+           chmod +x src/bin/sysinfo/run_sysinfo.sh
            chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/tests/msgq_test
@@ -1397,11 +1478,24 @@ dnl includes too
                  ${LOG4CPLUS_LIBS}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
+END
+
+# Avoid confusion on DNS/DHCP and only mention MySQL if it
+# were specified on the command line.
+if test "$MYSQL_CPPFLAGS" != "" ; then
+cat >> config.report << END
+  MySQL:         $MYSQL_CPPFLAGS
+                 $MYSQL_LIBS
+END
+fi
+
+cat >> config.report << END
 
 Features:
   $enable_features
 
 Developer:
+  Enable Debugging: $debug_enabled
   Google Tests: $enable_gtest
   Valgrind: $found_valgrind
   C++ Code Coverage: $USE_LCOV

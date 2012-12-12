@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __UTIL_IO_FD_H
-#define __UTIL_IO_FD_H 1
+#ifndef UTIL_IO_FD_H
+#define UTIL_IO_FD_H 1
 
 #include <unistd.h>
 
@@ -58,4 +58,4 @@ read_data(const int fd, void *buffer, const size_t length);
 }
 }
 
-#endif // __UTIL_IO_FD_H
+#endif // UTIL_IO_FD_H

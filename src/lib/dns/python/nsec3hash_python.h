@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_NSEC3HASH_H
-#define __PYTHON_NSEC3HASH_H 1
+#ifndef PYTHON_NSEC3HASH_H
+#define PYTHON_NSEC3HASH_H 1
 
 #include <Python.h>
 
@@ -40,7 +40,7 @@ bool initModulePart_NSEC3Hash(PyObject* mod);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_NSEC3HASH_H
+#endif // PYTHON_NSEC3HASH_H
 
 // Local Variables:
 // mode: c++

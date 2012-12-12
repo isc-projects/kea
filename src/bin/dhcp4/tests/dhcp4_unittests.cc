@@ -12,9 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <stdio.h>
-#include <gtest/gtest.h>
 #include <log/logger_support.h>
+
+#include <gtest/gtest.h>
 
 int
 main(int argc, char* argv[]) {

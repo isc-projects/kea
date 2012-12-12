@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __NSAS_ENTRY_H
-#define __NSAS_ENTRY_H
+#ifndef NSAS_ENTRY_H
+#define NSAS_ENTRY_H
 
 #include <boost/enable_shared_from_this.hpp>
 #include <iostream>
@@ -135,4 +135,4 @@ private:
 } // namespace isc
 
 
-#endif // __NSAS_ENTRY_H
+#endif // NSAS_ENTRY_H

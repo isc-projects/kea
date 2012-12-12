@@ -33,11 +33,13 @@ class CharacterString {
 public:
     CharacterString(const string& str){
         string::const_iterator it = str.begin();
-        characterStr_ = getNextCharacterString(str, it);
+        characterStr_ = getNextCharacterString(str, it, &is_quoted_);
     }
     const string& str() const { return characterStr_; }
+    bool quoted() const { return (is_quoted_); }
 private:
     string characterStr_;
+    bool is_quoted_;
 };
 
 TEST(CharacterStringTest, testNormalCase) {
@@ -47,14 +49,17 @@ TEST(CharacterStringTest, testNormalCase) {
     // Test <character-string> that separated by space
     CharacterString cstr2("foo bar");
     EXPECT_EQ(string("foo"), cstr2.str());
+    EXPECT_FALSE(cstr2.quoted());
 
     // Test <character-string> that separated by quotes
     CharacterString cstr3("\"foo bar\"");
     EXPECT_EQ(string("foo bar"), cstr3.str());
+    EXPECT_TRUE(cstr3.quoted());
 
     // Test <character-string> that not separate by quotes but ended with quotes
     CharacterString cstr4("foo\"");
     EXPECT_EQ(string("foo\""), cstr4.str());
+    EXPECT_FALSE(cstr4.quoted());
 }
 
 TEST(CharacterStringTest, testBadCase) {

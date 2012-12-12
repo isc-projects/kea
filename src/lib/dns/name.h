@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __NAME_H
-#define __NAME_H 1
+#ifndef NAME_H
+#define NAME_H 1
 
 #include <stdint.h>
 
@@ -102,6 +102,17 @@ public:
 class IncompleteName : public NameParserException {
 public:
     IncompleteName(const char* file, size_t line, const char* what) :
+        NameParserException(file, line, what) {}
+};
+
+/// \brief Thrown when origin is NULL and is needed.
+///
+/// The exception is thrown when the Name constructor for master file
+/// is used, the provided data is relative and the origin parameter is
+/// set to NULL.
+class MissingNameOrigin : public NameParserException {
+public:
+    MissingNameOrigin(const char* file, size_t line, const char* what) :
         NameParserException(file, line, what) {}
 };
 
@@ -261,6 +272,37 @@ public:
     /// \param namestr A string representation of the name to be constructed.
     /// \param downcase Whether to convert upper case alphabets to lower case.
     explicit Name(const std::string& namestr, bool downcase = false);
+
+    /// \brief Constructor for master file parser
+    ///
+    /// This acts similar to the above. But the data is passed as raw C-string
+    /// instead of wrapped-up C++ std::string.
+    ///
+    /// Also, when the origin is non-NULL and the name_data is not ending with
+    /// a dot, it is considered relative and the origin is appended to it.
+    ///
+    /// If the name_data is equal to "@", the content of origin is copied.
+    ///
+    /// \param name_data The raw data of the name.
+    /// \param data_len How many bytes in name_data is valid and considered
+    ///     part of the name.
+    /// \param origin If non-NULL, it is taken as the origin to complete
+    ///     relative names.
+    /// \param downcase Whether to convert upper case letters to lower case.
+    /// \throw NameParserException or any of its descendants in case the
+    ///     input data is invalid.
+    /// \throw isc::InvalidParameter In case name_data is NULL or data_len is
+    ///     0.
+    /// \throw std::bad_alloc In case allocation fails.
+    /// \note This constructor is specially designed for the use of master
+    ///     file parser. It mimics the behaviour of names in the master file
+    ///     and accepts raw data. It is not recommended to be used by anything
+    ///     else.
+    /// \todo Should we make it private and the parser a friend, to hide the
+    ///     constructor?
+    Name(const char* name_data, size_t data_len, const Name* origin,
+         bool downcase = false);
+
     /// Constructor from wire-format %data.
     ///
     /// The \c buffer parameter normally stores a complete DNS message
@@ -724,7 +766,7 @@ operator<<(std::ostream& os, const Name& name);
 
 }
 }
-#endif // __NAME_H
+#endif // NAME_H
 
 // Local Variables:
 // mode: c++

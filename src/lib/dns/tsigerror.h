@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __TSIGERROR_H
-#define __TSIGERROR_H 1
+#ifndef TSIGERROR_H
+#define TSIGERROR_H 1
 
 #include <ostream>
 #include <string>
@@ -331,7 +331,7 @@ std::ostream& operator<<(std::ostream& os, const TSIGError& tsig_error);
 }
 }
 
-#endif  // __TSIGERROR_H
+#endif  // TSIGERROR_H
 
 // Local Variables:
 // mode: c++

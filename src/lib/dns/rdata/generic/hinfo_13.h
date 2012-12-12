@@ -46,10 +46,17 @@ public:
 private:
     /// Skip the left whitespaces of the input string
     ///
+    /// If \c optional argument is \c true and no spaces occur at the
+    /// current location, then nothing happens. If \c optional is
+    /// \c false and no spaces occur at the current location, then
+    /// the \c InvalidRdataText exception is thrown.
+    ///
     /// \param input_str The input string
     /// \param input_iterator From which the skipping started
+    /// \param optional If true, the spaces are optionally skipped.
     void skipLeftSpaces(const std::string& input_str,
-                        std::string::const_iterator& input_iterator);
+                        std::string::const_iterator& input_iterator,
+                        bool optional);
 
     /// Helper template function for toWire()
     ///

@@ -13,17 +13,19 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <iostream>
-#include <sstream>
-
-#include <arpa/inet.h>
-#include <gtest/gtest.h>
 
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <util/buffer.h>
+
+#include <gtest/gtest.h>
+
+#include <iostream>
+#include <sstream>
+
+#include <arpa/inet.h>
 
 using namespace std;
 using namespace isc;
@@ -107,7 +109,13 @@ TEST_F(Option6IATest, basic) {
 }
 
 TEST_F(Option6IATest, simple) {
-    Option6IA * ia = new Option6IA(D6O_IA_NA, 1234);
+    Option6IA* ia = new Option6IA(D6O_IA_NA, 1234);
+
+    // Check that the values are really different than what we are about
+    // to set them to.
+    EXPECT_NE(2345, ia->getT1());
+    EXPECT_NE(3456, ia->getT2());
+
     ia->setT1(2345);
     ia->setT2(3456);
 
@@ -116,6 +124,9 @@ TEST_F(Option6IATest, simple) {
     EXPECT_EQ(1234, ia->getIAID());
     EXPECT_EQ(2345, ia->getT1());
     EXPECT_EQ(3456, ia->getT2());
+
+    ia->setIAID(890);
+    EXPECT_EQ(890, ia->getIAID());
 
     EXPECT_NO_THROW(
         delete ia;
@@ -204,7 +215,7 @@ TEST_F(Option6IATest, suboptions_unpack) {
 
     Option6IA* ia = 0;
     EXPECT_NO_THROW({
-            ia = new Option6IA(D6O_IA_NA, buf_.begin() + 4, buf_.begin() + sizeof(expected));
+        ia = new Option6IA(D6O_IA_NA, buf_.begin() + 4, buf_.begin() + sizeof(expected));
     });
     ASSERT_TRUE(ia);
 

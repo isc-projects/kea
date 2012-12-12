@@ -138,7 +138,7 @@ zone, or, if this error appears without the administrator giving transfer
 commands, it can indicate an error in the program, as it should not have
 initiated transfers of unknown zones on its own.
 
-% ZONEMGR_UNKNOWN_ZONE_NOTIFIED notified zone %1 (class %2) is not known to the zone manager
+% ZONEMGR_UNKNOWN_ZONE_NOTIFIED notified zone %1/%2 from %3 is not known to the zone manager
 A NOTIFY was received but the zone that was the subject of the operation
 is not being managed by the zone manager.  This may indicate an error
 in the program (as the operation should not have been initiated if this

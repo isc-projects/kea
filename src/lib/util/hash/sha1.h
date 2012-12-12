@@ -30,8 +30,8 @@
  *      without express or implied warranty of any kind.
  */
 
-#ifndef _SHA1_H_
-#define _SHA1_H_
+#ifndef SHA1_H
+#define SHA1_H
 
 #include <stdint.h>
 

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_EDNS_H
-#define __PYTHON_EDNS_H 1
+#ifndef PYTHON_EDNS_H
+#define PYTHON_EDNS_H 1
 
 #include <Python.h>
 
@@ -57,7 +57,7 @@ const EDNS& PyEDNS_ToEDNS(const PyObject* edns_obj);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_EDNS_H
+#endif // PYTHON_EDNS_H
 
 // Local Variables:
 // mode: c++

@@ -13,12 +13,11 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <cc/data.h>
-#include "auth_srv.h"
 #include "datasrc_config.h"
 
 // This is a trivial specialization for the commonly used version.
 // Defined in .cc to avoid accidental creation of multiple copies.
-AuthSrv::DataSrcClientListsPtr
+isc::datasrc::ClientListMapPtr
 configureDataSource(const isc::data::ConstElementPtr& config) {
     return (configureDataSourceGeneric<
             isc::datasrc::ConfigurableClientList>(config));

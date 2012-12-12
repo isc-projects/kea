@@ -84,8 +84,7 @@
     </para>
 
     <para>
-      This guide covers the experimental prototype of
-      BIND 10 version &__VERSION__;.
+      This guide covers BIND 10 version &__VERSION__;.
     </para>
 
     <section>
@@ -168,8 +167,8 @@
         However, these processes are started, stopped, and maintained
         by a single command, <command>bind10</command>.
         This command starts a master process which will start other
-        processes as needed.
-        The processes started by the <command>bind10</command>
+        required processes and other processes when configured.
+        The processes that may be started by the <command>bind10</command>
         command have names starting with "b10-", including:
       </para>
 
@@ -285,8 +284,7 @@
       </para>
 
       <para>
-        These are ran by <command>bind10</command>
-        and do not need to be manually started independently.
+        These do not need to be manually started independently.
       </para>
 
     </section>
@@ -367,6 +365,106 @@ var/
 
   </chapter>
 
+  <chapter id="quickstart">
+    <title>Quick start</title>
+
+    <para>
+        This quickly covers the standard steps for installing
+        and deploying BIND 10.
+        For further details, full customizations, and troubleshooting,
+        see the respective chapters in the BIND 10 guide.
+    </para>
+
+    <section id="quick-start-auth-dns">
+      <title>Quick start guide for authoritative DNS service</title>
+
+      <orderedlist>
+
+        <listitem>
+          <simpara>
+            Install required run-time and build dependencies.
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara>
+            Download the BIND 10 source tar file from
+            <ulink url="ftp://ftp.isc.org/isc/bind10/"/>.
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <para>Extract the tar file:
+          <screen>$ <userinput>gzcat bind10-<replaceable>VERSION</replaceable>.tar.gz | tar -xvf -</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Go into the source and run configure:
+            <screen>$ <userinput>cd bind10-<replaceable>VERSION</replaceable></userinput>
+  $ <userinput>./configure</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Build it:
+            <screen>$ <userinput>make</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Install it as root (to default /usr/local):
+            <screen>$ <userinput>make install</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Start the server (as root):
+            <screen>$ <userinput>/usr/local/sbin/bind10</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>DNS and DHCP components are not started in the default
+	    configuration.  In another console, enable the authoritative
+	    DNS service (by using the <command>bindctl</command> utility
+	    to configure the <command>b10-auth</command> component to
+	    run): <screen>$ <userinput>bindctl</userinput></screen>
+	    (Login with the provided default username and password.)
+            <screen>
+&gt; <userinput>config add Boss/components b10-auth</userinput>
+&gt; <userinput>config set Boss/components/b10-auth/special auth</userinput>
+&gt; <userinput>config set Boss/components/b10-auth/kind needed</userinput>
+&gt; <userinput>config commit</userinput>
+&gt; <userinput>quit</userinput>
+            </screen>
+          </para>
+        </listitem>
+
+        <listitem>
+         <para>Test it; for example:
+            <screen>$ <userinput>dig @127.0.0.1 -c CH -t TXT version.bind</userinput></screen>
+         </para>
+        </listitem>
+
+        <listitem>
+          <para>Load desired zone file(s), for example:
+            <screen>$ <userinput>b10-loadzone <replaceable>your.zone.example.org</replaceable></userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <simpara>
+            Test the new zone.
+          </simpara>
+        </listitem>
+
+      </orderedlist>
+
+    </section>
+
+  </chapter>
+
   <chapter id="installation">
     <title>Installation</title>
 
@@ -374,7 +472,7 @@ var/
       <title>Packages</title>
 
       <para>
-        Some operating systems or softare package vendors may
+        Some operating systems or software package vendors may
         provide ready-to-use, pre-built software packages for
         the BIND 10 suite.
         Installing a pre-built package means you do not need to
@@ -514,90 +612,6 @@ as a dependency earlier -->
 
     </section>
 
-    <section id="quickstart">
-      <title>Quick start</title>
-      <note>
-        <simpara>
-          This quickly covers the standard steps for installing
-          and deploying BIND 10 as an authoritative name server using
-          its defaults. For troubleshooting, full customizations and further
-          details, see the respective chapters in the BIND 10 guide.
-        </simpara>
-      </note>
-
-      <para>
-        To quickly get started with BIND 10, follow these steps.
-      </para>
-
-      <orderedlist>
-
-        <listitem>
-          <simpara>
-            Install required run-time and build dependencies.
-          </simpara>
-        </listitem>
-
-        <listitem>
-          <simpara>
-            Download the BIND 10 source tar file from
-            <ulink url="ftp://ftp.isc.org/isc/bind10/"/>.
-          </simpara>
-        </listitem>
-
-        <listitem>
-          <para>Extract the tar file:
-          <screen>$ <userinput>gzcat bind10-<replaceable>VERSION</replaceable>.tar.gz | tar -xvf -</userinput></screen>
-          </para>
-        </listitem>
-
-        <listitem>
-          <para>Go into the source and run configure:
-            <screen>$ <userinput>cd bind10-<replaceable>VERSION</replaceable></userinput>
-  $ <userinput>./configure</userinput></screen>
-          </para>
-        </listitem>
-
-        <listitem>
-          <para>Build it:
-            <screen>$ <userinput>make</userinput></screen>
-          </para>
-        </listitem>
-
-        <listitem>
-          <para>Install it (to default /usr/local):
-            <screen>$ <userinput>make install</userinput></screen>
-          </para>
-        </listitem>
-
-        <listitem>
-          <para>Start the server:
-            <screen>$ <userinput>/usr/local/sbin/bind10</userinput></screen>
-          </para>
-        </listitem>
-
-        <listitem>
-<!-- TODO: this is wrong; b10-auth is not started by default any more -->
-         <para>Test it; for example:
-            <screen>$ <userinput>dig @127.0.0.1 -c CH -t TXT authors.bind</userinput></screen>
-         </para>
-        </listitem>
-
-        <listitem>
-          <para>Load desired zone file(s), for example:
-            <screen>$ <userinput>b10-loadzone <replaceable>your.zone.example.org</replaceable></userinput></screen>
-          </para>
-        </listitem>
-
-        <listitem>
-          <simpara>
-            Test the new zone.
-          </simpara>
-        </listitem>
-
-      </orderedlist>
-
-    </section>
-
     <section id="install">
       <title>Installation from source</title>
       <para>
@@ -674,7 +688,7 @@ as a dependency earlier -->
       </section>
 
 
-      <section>
+      <section id="configure">
         <title>Configure before the build</title>
         <para>
           BIND 10 uses the GNU Build System to discover build environment
@@ -745,6 +759,9 @@ as a dependency earlier -->
           dependencies.
         </para>
 
+        <note>
+          <para>For notes on configuring and building DHCPv6 with MySQL see <xref linkend="dhcp6-install">.</xref></para>
+        </note>
       </section>
 
       <section>
@@ -767,7 +784,24 @@ as a dependency earlier -->
         <note>
           <para>The install step may require superuser privileges.</para>
         </note>
-
+        <para>
+	  If required, run <command>ldconfig</command> as root with
+	  <filename>/usr/local/lib</filename> (or with ${prefix}/lib if
+	  configured with --prefix) in
+	  <filename>/etc/ld.so.conf</filename> (or the relevant linker
+	  cache configuration file for your OS):
+	  <screen>$ <userinput>ldconfig</userinput></screen>
+        </para>
+        <note>
+          <para>
+	    If you do not run <command>ldconfig</command> where it is
+	    required, you may see errors like the following:
+            <screen>
+	      program: error while loading shared libraries: libb10-something.so.1:
+	      cannot open shared object file: No such file or directory
+	    </screen>
+	  </para>
+        </note>
       </section>
 
   <!-- TODO: tests -->
@@ -820,16 +854,26 @@ as a dependency earlier -->
       <command>b10-cmdctl</command> for administration tools to
       communicate with the system, and
       <command>b10-stats</command> for statistics collection.
+      The DNS and DHCP servers are not started by default.
+      The configuration of components to start is covered in
+      <xref linkend="bind10.components"/>.
     </para>
 
     <section id="start">
       <title>Starting BIND 10</title>
       <para>
-        To start the BIND 10 service, simply run <command>bind10</command>.
+        To start the BIND 10 service, simply run <command>bind10</command>
+        as root.
+        It will run in the foreground and your shell prompt will not
+        be available. It will output various log messages as it starts up
+        and is used.
         Run it with the <option>--verbose</option> switch to
         get additional debugging or diagnostic output.
       </para>
-<!-- TODO: note it doesn't go into background -->
+
+<!-- TODO: user switch -->
+
+<!-- TODO:  example:  nohup /usr/local/sbin/bind10 1>bind10.log 2>&1 -->
 
       <note>
         <para>
@@ -840,156 +884,6 @@ as a dependency earlier -->
         </para>
       </note>
 
-    </section>
-    <section id="bind10.config">
-      <title>Configuration to start processes</title>
-
-      <para>
-	The processes to be used can be configured for
-	<command>bind10</command> to start, with the exception
-	of the required <command>b10-sockcreator</command>,
-	<command>b10-msgq</command> and <command>b10-cfgmgr</command>
-	components.
-	The configuration is in the <varname>Boss/components</varname>
-	section. Each element represents one component, which is
-	an abstraction of a process.
-      </para>
-
-      <para>
-	To add a process to the set, let's say the resolver (which
-	is not started by default), you would do this:
-        <screen>&gt; <userinput>config add Boss/components b10-resolver</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/special resolver</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/kind needed</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/priority 10</userinput>
-&gt; <userinput>config commit</userinput></screen></para>
-
-      <para>
-	Now, what it means. We add an entry called
-	<quote>b10-resolver</quote>. It is both a name used to
-	reference this component in the configuration and the name
-	of the process to start. Then we set some parameters on
-	how to start it.
-      </para>
-
-      <para>
-	The <varname>special</varname> setting is for components
-	that need some kind of special care during startup or
-	shutdown. Unless specified, the component is started in a
-	usual way. This is the list of components that need to be
-	started in a special way, with the value of special used
-	for them:
-<!-- TODO: this still doesn't explain why they are special -->
-        <table>
-          <title>Special startup components</title>
-          <tgroup cols='3' align='left'>
-          <colspec colname='component'/>
-          <colspec colname='special'/>
-          <colspec colname='description'/>
-          <thead><row><entry>Component</entry><entry>Special</entry><entry>Description</entry></row></thead>
-          <tbody>
-            <row><entry>b10-auth</entry><entry>auth</entry><entry>Authoritative DNS server</entry></row>
-            <row><entry>b10-resolver</entry><entry>resolver</entry><entry>DNS resolver</entry></row>
-            <row><entry>b10-cmdctl</entry><entry>cmdctl</entry><entry>Command control (remote control interface)</entry></row>
-            <!-- TODO Either add xfrin and xfrout as well or clean up the workarounds in boss before the release -->
-          </tbody>
-          </tgroup>
-        </table>
-      </para>
-
-      <para>
-	The <varname>kind</varname> specifies how a failure of the
-	component should be handled.  If it is set to
-	<quote>dispensable</quote> (the default unless you set
-	something else), it will get started again if it fails. If
-	it is set to <quote>needed</quote> and it fails at startup,
-	the whole <command>bind10</command> shuts down and exits
-	with an error exit code. But if it fails some time later, it
-	is just started again. If you set it to <quote>core</quote>,
-	you indicate that the system is not usable without the
-	component and if such component fails, the system shuts
-	down no matter when the failure happened.  This is the
-	behaviour of the core components (the ones you can't turn
-	off), but you can declare any other components as core as
-	well if you wish (but you can turn these off, they just
-	can't fail).
-      </para>
-
-      <para>
-	The <varname>priority</varname> defines order in which the
-	components should start.  The ones with higher numbers are
-	started sooner than the ones with lower ones. If you don't
-	set it, 0 (zero) is used as the priority.  Usually, leaving
-	it at the default is enough.
-      </para>
-
-      <para>
-        There are other parameters we didn't use in our example.
-        One of them is <varname>address</varname>. It is the address
-        used by the component on the <command>b10-msgq</command>
-        message bus. The special components already know their
-        address, but the usual ones don't. The address is by
-        convention the thing after <emphasis>b10-</emphasis>, with
-        the first letter capitalized (eg. <command>b10-stats</command>
-        would have <quote>Stats</quote> as its address).
-<!-- TODO: this should be simplified so we don't even have to document it -->
-      </para>
-
-<!-- TODO: what does "The special components already know their
-address, but the usual ones don't." mean? -->
-
-<!-- TODO: document params when is enabled -->
-
-      <para>
-	The last one is <varname>process</varname>. It is the name
-	of the process to be started.  It defaults to the name of
-	the component if not set, but you can use this to override
-	it. (The special components also already know their
-        executable name.)
-      </para>
-
-      <!-- TODO Add parameters when they work, not implemented yet-->
-
-      <note>
-        <para>
-          The configuration is quite powerful, but that includes
-          a lot of space for mistakes. You could turn off the
-          <command>b10-cmdctl</command>, but then you couldn't
-          change it back the usual way, as it would require it to
-          be running (you would have to find and edit the configuration
-          directly).  Also, some modules might have dependencies:
-          <command>b10-stats-httpd</command> needs
-          <command>b10-stats</command>, <command>b10-xfrout</command>
-          needs <command>b10-auth</command> to be running, etc.
-
-<!-- TODO: should we define dependencies? -->
-
-        </para>
-        <para>
-          In short, you should think twice before disabling something here.
-        </para>
-      </note>
-      <para>
-        It is possible to start some components multiple times (currently
-        <command>b10-auth</command> and <command>b10-resolver</command>).
-        You might want to do that to gain more performance (each one uses only
-        single core). Just put multiple entries under different names, like
-        this, with the same config:
-        <screen>&gt; <userinput>config add Boss/components b10-resolver-2</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver-2/special resolver</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver-2/kind needed</userinput>
-&gt; <userinput>config commit</userinput></screen>
-      </para>
-      <para>
-        However, this is work in progress and the support is not yet complete.
-        For example, each resolver will have its own cache, each authoritative
-        server will keep its own copy of in-memory data and there could be
-        problems with locking the sqlite database, if used. The configuration
-        might be changed to something more convenient in future.
-	Other components don't expect such a situation, so it would
-	probably not do what you want. Such support is yet to be
-	implemented.
-      </para>
     </section>
 
   </chapter>
@@ -1046,7 +940,7 @@ address, but the usual ones don't." mean? -->
 <!-- TODO -->
       <note>
         <para>
-          The development prototype release only provides
+          The current release only provides
           <command>bindctl</command> as a user interface to
           <command>b10-cmdctl</command>.
           Upcoming releases will provide another interactive command-line
@@ -1268,11 +1162,19 @@ TODO
     <title>Control and configure user interface</title>
 
     <note><para>
-      For this development prototype release, <command>bindctl</command>
+      For the current release, <command>bindctl</command>
       is the only user interface. It is expected that upcoming
       releases will provide another interactive command-line
       interface and a web-based interface for controlling and
       configuring BIND 10.
+    </para></note>
+
+    <note><para>
+      <command>bindctl</command> has an internal command history, as
+      well as tab-completion for most of the commands and arguments.
+      However, these are only enabled if the python readline module
+      is available on the system. If not, neither of these
+      features will be supported.
     </para></note>
 
     <para>
@@ -1284,22 +1186,590 @@ TODO
       communicate to any other components directly.
     </para>
 
-<!-- TODO: explain and show interface -->
+    <section id="bindctl_commandline_options">
+        <title>bindctl command-line options</title>
+        <variablelist>
+          <varlistentry>
+            <term>-a <replaceable>&lt;address&gt;</replaceable>, --address=<replaceable>&lt;address&gt;</replaceable></term>
+            <listitem>
+              <simpara>
+                  IP address that BIND 10's <command>b10-cmdctl</command>
+                  module is listening on. By default, this is 127.0.0.1.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>-c <replaceable>&lt;certificate file&gt;</replaceable>, --certificate-chain=<replaceable>&lt;certificate file&gt;</replaceable></term>
+            <listitem>
+              <simpara>
+                  PEM-formatted server certificate file. When this option is
+                  given, <command>bindctl</command> will verify the server
+                  certificate using the given file as the root of the
+                  certificate chain. If not specified, <command>bindctl
+                  </command> does not validate the certificate.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--csv-file-dir=<replaceable>&lt;csv file&gt;</replaceable></term>
+            <listitem>
+              <simpara>
+                  <command>bindctl</command> stores the username and
+                  password for logging in in a file called
+                  <filename>default_user.csv</filename>;
+                  this option specifies the directory where this file is
+                  stored and read from. When not specified,
+                  <filename>~/.bind10/</filename> is used.
+                  <note>Currently, this file contains an unencrypted password.</note>
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>-h, --help</term>
+            <listitem>
+              <simpara>
+                  Shows a short overview of the command-line options of
+                  <command>bindctl</command>, and exits.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--version</term>
+            <listitem>
+              <simpara>
+                  Shows the version of <command>bindctl</command>, and exits.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>-p <replaceable>&lt;port number&gt;</replaceable>, --port=<replaceable>&lt;port number&gt;</replaceable></term>
+            <listitem>
+              <simpara>
+                  Port number that BIND 10's <command>b10-cmdctl</command>
+                  module is listening on. By default, this is port 8080.
+              </simpara>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+    </section>
 
-    <para>
-      Configuration changes are actually commands to
-      <command>b10-cfgmgr</command>. So when <command>bindctl</command>
-      sends a configuration, it is sent to <command>b10-cmdctl</command>
-      (over a HTTPS connection); then <command>b10-cmdctl</command>
-      sends the command (over a <command>b10-msgq</command> command
-      channel) to <command>b10-cfgmgr</command> which then stores
-      the details and relays (over a <command>b10-msgq</command> command
-      channel) the configuration on to the specified module.
-    </para>
+    <section id="bindctl_general_syntax">
+        <title>General syntax of bindctl commands</title>
+        The <command>bindctl</command> tool is an interactive
+        command-line tool, with dynamic commands depending on the
+        BIND 10 modules that are running. There are a number of
+        fixed commands that have no module and that are always
+        available.
 
-    <para>
-    </para>
+        The general syntax of a command is
 
+        <screen><userinput>&lt;module&gt; &lt;command&gt; <replaceable>[argument(s)]</replaceable></userinput></screen>
+
+        For example, the Boss module has a 'shutdown' command to shut down
+        BIND 10, with an optional argument 'help':
+
+        <screen>&gt; <userinput>Boss shutdown help</userinput>
+Command  shutdown 	(Shut down BIND 10)
+		help (Get help for command)
+This command has no parameters
+        </screen>
+        There are no mandatory arguments, only the optional 'help'.
+    </section>
+
+    <section id="bindctl_help">
+        <title>Bindctl help</title>
+        <command>help</command> is both a command and an option that is available to all other commands. When run as a command directly, it shows the available modules.
+        <screen>&gt; <userinput>help</userinput>
+usage: &lt;module name&gt; &lt;command name&gt; [param1 = value1 [, param2 = value2]]
+Type Tab character to get the hint of module/command/parameters.
+Type "help(? h)" for help on bindctl.
+Type "&lt;module_name&gt; help" for help on the specific module.
+Type "&lt;module_name&gt; &lt;command_name&gt; help" for help on the specific command.
+
+Available module names:
+<emphasis>(list of modules)</emphasis>
+        </screen>
+
+        When 'help' is used as a command to a module, it shows the supported commands for the module; for example:
+        <screen>&gt; <userinput>Boss help</userinput>
+Module  Boss 	Master process
+Available commands:
+    help        Get help for module.
+    shutdown    Shut down BIND 10
+    ping        Ping the boss process
+    show_processes
+            List the running BIND 10 processes
+        </screen>
+
+    And when added to a module command, it shows the description and parameters of that specific command; for example:
+    <screen>&gt; <userinput>Auth loadzone help</userinput>
+Command  loadzone 	((Re)load a specified zone)
+		help (Get help for command)
+Parameters:
+    class (string, optional)
+    origin (string, mandatory)
+    </screen>
+
+    </section>
+
+    <section id="bindctl_command_arguments">
+        <title>Command arguments</title>
+        <simpara>
+            Commands can have arguments, which can be either optional or
+            mandatory. They can be specified by name
+            (e.g. <command><replaceable>&lt;command&gt;</replaceable> <replaceable>&lt;argument name&gt;=&lt;argument value&gt;</replaceable></command>), or positionally,
+            (e.g. <command><replaceable>&lt;command&gt;</replaceable> <replaceable>&lt;argument value 1&gt;</replaceable> <replaceable>&lt;argument value 2&gt;</replaceable></command>).
+        </simpara>
+        <simpara>
+            <command><replaceable>&lt;command&gt;</replaceable> <replaceable>help</replaceable></command>
+            shows the arguments a command supports and which of those are
+            mandatory, and in which order the arguments are expected if
+            positional arguments are used.
+        </simpara>
+        <simpara>
+            For example, the <command>loadzone</command> command of the Auth
+            module, as shown in the last example of the previous section, has
+            two arguments, one of which is optional. The positional arguments in
+            this case are class first and origin second; for example:
+            <screen>&gt; <userinput>Auth loadzone IN example.com.</userinput></screen>
+            But since the class is optional (defaulting to IN), leaving it out
+            works as well:
+            <screen>&gt; <userinput>Auth loadzone example.com.</userinput></screen>
+        </simpara>
+        <simpara>
+            The arguments can also be provided with their names, in which
+            case the order does not matter:
+            <screen>&gt; <userinput>Auth loadzone origin="example.com." class="IN"</userinput></screen>
+        </simpara>
+    </section>
+
+    <section id="bindctl_module_commands">
+        <title>Module commands</title>
+        Each module has its own set of commands (if any), which will only be
+        available if the module is running. For instance, the
+        Auth module has a <command>loadzone</command> command.
+        The commands a module provides are documented in
+        this guide in the section of that module or in the module's
+        corresponding manual page.
+    </section>
+
+    <section>
+        <title>Configuration commands</title>
+        Configuration commands are used to view and change the configuration
+        of BIND 10 and its modules. Module configuration is only shown if
+        that module is running, but similar to commands, there are a number
+        of top-level configuration items that are always available (for
+        instance <varname>tsig_keys</varname> and
+        <varname>data_sources</varname>).
+
+        Configuration changes (set, unset, add and remove) are done locally
+        first, and have no immediate effect. The changes can be viewed with
+        <command>config diff</command>, and either reverted
+        (<command>config revert</command>), or committed
+        (<command>config commit</command>).
+        In the latter case, all local changes are submitted
+        to the configuration manager, which verifies them, and if they are
+        accepted, applied and saved in persistent storage.
+
+        When identifying items in configuration commands, the format is
+        <screen><userinput>Module/example/item</userinput></screen>
+        Sub-elements of names, lists and sets (see <xref linkend=
+        "bindctl_configuration_data_types"/>) are separated with the '/'
+        character, and list indices are identified with [<replaceable>&lt;index&gt;</replaceable>]; for example:
+
+        <screen><userinput>Module/example/list[2]/foo</userinput></screen>
+
+        <section id="bindctl_configuration_command_list">
+        <title>List of configuration commands</title>
+        The following configuration commands are available:
+        <variablelist>
+          <varlistentry>
+            <term>show [all] [item name]</term>
+            <listitem>
+              <simpara>
+                Shows the current configuration of the given item. If 'all'
+                is given, it will recurse through the entire set, and show
+                every nested value.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>show_json [item name]</term>
+            <listitem>
+              <simpara>
+                Shows the full configuration of the given item in JSON format.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>add &lt;item name&gt; [value]</term>
+            <listitem>
+              <simpara>
+                Add an entry to configuration list or a named set (see <xref
+                linkend="bindctl_configuration_data_types"/>).
+                When adding to a list, the command has one optional
+                argument, a value to add to the list. The value must
+                be in correct JSON and complete. When adding to a
+                named set, it has one mandatory parameter (the name to
+                add), and an optional parameter value, similar to when
+                adding to a list. In either case, when no value is
+                given, an entry will be constructed with default
+                values.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>remove</term>
+            <listitem>
+              <simpara>
+                Remove an item from a configuration list or a named set.
+                When removing an item for a list, either the index needs to
+                be specified, or the complete value of the element to remove
+                must be specified (in JSON format).
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>set &lt;item name&gt; &lt;value&gt;</term>
+            <listitem>
+              <simpara>
+                  Directly set the value of the given item to the given value.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>unset &lt;item name&gt;</term>
+            <listitem>
+              <simpara>
+                  Remove any user-specified value for the given item.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>diff</term>
+            <listitem>
+              <simpara>
+                  Show all current local changes that have not been
+                  committed yet.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>revert</term>
+            <listitem>
+              <simpara>
+                  Revert all local changes without committing them.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>commit</term>
+            <listitem>
+              <simpara>
+                  Send all local changes to the configuration manager, which
+                  will validate them, and apply them if validation succeeds.
+              </simpara>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>go</term>
+            <listitem>
+              <simpara>
+                  Go to a specific configuration part, similar to the 'cd'
+                  command in a shell.
+                  <note>There are a number of problems with the current
+                  implementation of go within <command>bindctl</command>,
+                  and we recommend not using it for general cases.</note>
+              </simpara>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </section>
+
+      <section id="bindctl_configuration_data_types">
+        <title>Configuration data types</title>
+        Configuration data can be of different types, which can be modified
+        in ways that depend on the types. There are a few syntax
+        restrictions on these types, but only basic ones. Modules may impose
+        additional restrictions on the values of elements.
+        <variablelist>
+            <varlistentry>
+                <term>integer</term>
+                <listitem>
+                    <simpara>
+                        A basic integer; can be set directly with <command>config set</command>, to any integer value.
+                    </simpara>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>real</term>
+                <listitem>
+                    <simpara>
+                        A basic floating point number; can be set directly with <command>config set</command>, to any floating point value.
+                    </simpara>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>boolean</term>
+                <listitem>
+                    <simpara>
+                        A basic boolean value; can be set directly with <command>config set</command>, to either <command>true</command> or <command>false</command>.
+                    </simpara>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>string</term>
+                <listitem>
+                    <simpara>
+                        A basic string value; can be set directly with <command>config set,</command> so any string. Double quotation marks are optional.
+                    </simpara>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>null</term>
+                <listitem>
+                    <simpara>
+                        This is a special type representing 'no value at all'; usable in compound structures that have optional elements that are not set.
+                    </simpara>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>maps</term>
+                <listitem>
+                    <simpara>
+                        Maps are (pre-defined) compound collections of other
+                        elements of any other type. They are not usually
+                        modified directly, but their elements are. Every
+                        top-level element for a module is a map containing
+                        the configuration values for that map, which can
+                        themselves be maps again. For instance, the Auth
+                        module configuration is a map containing the
+                        elements '<varname>listen_on</varname>' (list) and '<varname>tcp_recv_timeout</varname>'
+                        (integer). When changing one of its values, they can
+                        be modified directly with <command>config set
+                        Auth/tcp_recv_timeout 3000</command>.
+                    </simpara>
+                    <simpara>
+                        Some map entries are optional. If they are, and
+                        currently have a value, the value can be unset by
+                        using either <command>config unset
+                        <replaceable>&lt;item name&gt;</replaceable>
+                        </command> or <command>config set
+                        <replaceable>&lt;item name&gt;</replaceable>
+                        null</command>.
+
+                    </simpara>
+                    <simpara>
+                        Maps <emphasis>can</emphasis> be modified as a whole,
+                        but using the full JSON representation of
+                        the entire map to set.
+
+                        Since this involves a lot of text, this is usually
+                        not recommended.
+                    </simpara>
+                    <simpara>
+                        Another example is the Logging virtual module, which
+                        is, like any module, a map, but it only contains one
+                        element: a list of loggers. Normally, an
+                        administrator would only modify that list (or its
+                        elements) directly, but it is possible to set the
+                        entire map in one command; for example:
+                        <command> config set Logging { "loggers": [] } </command>
+                    </simpara>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>list</term>
+                <listitem>
+                    <simpara>
+                        A list is a compound list of other elements of the
+                        same type. Elements can be added with <command>config
+                        add <replaceable>&lt;list name&gt; [value]</replaceable></command>, and removed with
+                        <command>config remove <replaceable>&lt;list name&gt; [value]</replaceable></command> or
+                        <command>config remove <replaceable>&lt;list name&gt;</replaceable><replaceable>&lt;index&gt;</replaceable></command>.
+                        The index is of the form <emphasis>square bracket, number,
+                        square bracket</emphasis> (e.g.
+                        <command>[0]</command>), and it immediately follows
+                        the list name (there is no separator or space
+                        between them). List indices start with 0 for the
+                        first element.
+                    </simpara>
+                    <simpara>
+                        For addition, if the value is omitted, an entry with
+                        default values will be added. For removal, either
+                        the index or the full value (in JSON format) needs
+                        to be specified.
+                    </simpara>
+                    <simpara>
+                        Lists can also be used with
+                        <command>config set</command>,
+                        but like maps, only by specifying the
+                        entire list value in JSON format.
+                    </simpara>
+                    <simpara>
+                        For example, this command shows the port number used for the second element of the list <varname>listen_on</varname> in the Auth module:
+                        <command> config show Auth/listen_on[1]/port</command>
+                    </simpara>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>named set</term>
+                <listitem>
+                    <simpara>
+                        Named sets are similar to lists, in that they are
+                        sets of elements of the same type, but they are not
+                        indexed by numbers, but by strings.
+                    </simpara>
+                    <simpara>
+                        Values can be added with
+                        <command>config add <replaceable>&lt;item name&gt; &lt;string&gt; [value]</replaceable></command>
+                        where 'string' is the name of the element. If 'value'
+                        is ommitted, default values will be used. Elements
+                        can be removed with <command>config remove
+                        <replaceable>&lt;item
+                        name&gt; &lt;string&gt;</replaceable></command>
+                    </simpara>
+                    <simpara>
+                        Elements in a named set can be addressed similarly
+                        to maps.
+                    </simpara>
+                    <simpara>
+                        For example, the <command>Boss/components</command>
+                        elements is a named set;
+                        adding, showing, and then removing an element
+                        can be done with the following three commands (note
+                        the '/'-character versus the space before
+                        'example_module'):
+                    </simpara>
+                    <simpara>
+                        <command>config add Boss/components example_module</command>
+                    </simpara>
+                    <simpara>
+                        <command>config show Boss/components/example_module</command>
+                    </simpara>
+                    <simpara>
+                        <command>config remove Boss/components example_module</command>
+                    </simpara>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>any</term>
+                <listitem>
+                    <simpara>
+                        The 'any' type is a special type that can have any
+                        form. Apart from that, it must consist of elements as
+                        described in this chapter, there is no restriction
+                        on which element types are used. This type is used
+                        in places where different data formats could be
+                        used. Element modification commands depend on the
+                        actual type of the value. For instance, if the value
+                        of an 'any' element is a list, <command>config add
+                        </command> and <command>config remove</command> work
+                        as for other lists.
+                    </simpara>
+                </listitem>
+            </varlistentry>
+        </variablelist>
+      </section>
+    </section>
+
+    <section>
+        <title>The execute command</title>
+        The <command>execute</command> command executes a set of commands,
+        either from a file
+        or from a pre-defined set. Currently, the only predefined set is
+        <command>init_authoritative_server</command>, which adds
+        <command>b10-auth</command>, <command>b10-xfrin</command>, and
+        <command>b10-xfrout</command> to the set of components to be
+        started by BIND 10. This
+        pre-defined set does not commit the changes, so these modules do not
+        show up for commands or configuration until the user enters
+        <command>config commit</command> after
+        <command>execute init_authoritative_server</command>. For example:
+
+        <screen>&gt; <userinput>execute init_authoritative_server</userinput></screen>
+
+        <screen>&gt; <userinput>execute file /tmp/example_commands</userinput></screen>
+
+        The optional argument <command>show</command> displays the exact set of
+        commands that would be executed; for example:
+
+        <screen>&gt; <userinput>execute init_authoritative_server show</userinput>
+!echo adding Authoritative server component
+config add /Boss/components b10-auth
+config set /Boss/components/b10-auth/kind needed
+config set /Boss/components/b10-auth/special auth
+!echo adding Xfrin component
+config add /Boss/components b10-xfrin
+config set /Boss/components/b10-xfrin/address Xfrin
+config set /Boss/components/b10-xfrin/kind dispensable
+!echo adding Xfrout component
+config add /Boss/components b10-xfrout
+config set /Boss/components/b10-xfrout/address Xfrout
+config set /Boss/components/b10-xfrout/kind dispensable
+!echo adding Zone Manager component
+config add /Boss/components b10-zonemgr
+config set /Boss/components/b10-zonemgr/address Zonemgr
+config set /Boss/components/b10-zonemgr/kind dispensable
+!echo Components added. Please enter "config commit" to
+!echo finalize initial setup and run the components.
+        </screen>
+
+        The optional <command>show</command> argument may also be used when
+        executing a script from a file; for example:
+
+        <screen>&gt; <userinput>execute file /tmp/example_commands show</userinput></screen>
+
+        <section id="bindctl_execute_directives">
+            <title>Execute directives</title>
+            Within sets of commands to be run with the <command>execute</command>
+            command, a number of directives are supported:
+            <variablelist>
+              <varlistentry>
+                <term>!echo <replaceable>&lt;string&gt;</replaceable></term>
+                <listitem>
+                  <simpara>
+                      Prints the given string to <command>bindctl</command>'s
+                      output.
+                  </simpara>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>!verbose on</term>
+                <listitem>
+                  <simpara>
+                      Enables verbose mode; all following commands that are to
+                      be executed are also printed.
+                  </simpara>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>!verbose off</term>
+                <listitem>
+                  <simpara>
+                      Disables verbose mode; following commands that are to
+                      be executed are no longer printed.
+                  </simpara>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+        </section>
+
+        <section id="bindctl_execute_notes">
+            <title>Notes on execute scripts</title>
+            Within scripts, you can add or remove modules with the normal
+            configuration commands for <command>Boss/components</command>.
+            However, as module
+            configuration and commands do not show up until the module is
+            running, it is currently not possible to add a module and set
+            its configuration in one script. This will be addressed in the
+            future, but for now the only option is to add and configure
+            modules in separate commands and execute scripts.
+        </section>
+    </section>
   </chapter>
 
   <chapter id="common">
@@ -1371,10 +1841,8 @@ TODO
         <para>
           The key ring lives in the configuration in "tsig_keys/keys". Most of
           the system uses the keys from there &mdash; ACLs, authoritative server to
-          sign responses to signed queries, and <command>b10-xfrout</command>
-          to sign transfers. The <command>b10-xfrin</command> uses its own
-          configuration for keys, but that will be fixed in Trac ticket
-          <ulink url="http://bind10.isc.org/ticket/1351">#1351</ulink>.
+          sign responses to signed queries, and <command>b10-xfrin</command>
+          and <command>b10-xfrout</command> to sign transfers.
         </para>
 
         <para>
@@ -1599,6 +2067,185 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
     </section>
   </chapter>
 
+  <chapter id="bind10.config">
+    <title>bind10 Control and Configuration</title>
+
+    <para>
+      This chapter explains how to control and configure the
+      <command>bind10</command> parent.
+      The startup of this resident process that runs the BIND 10
+      daemons is covered in <xref linkend="bind10"/>.
+    </para>
+
+    <section id="bind10.shutdown">
+      <title>Stopping bind10</title>
+      <para>
+        The BIND 10 suite may be shut down by stopping the
+        parent <command>bind10</command> process. This may be done
+        by running the <userinput>Boss shutdown</userinput> command
+        at the <command>bindctl</command> prompt.
+      </para>
+    </section>
+
+    <section id="bind10.components">
+      <title>Configuration to start processes</title>
+
+      <para>
+	The processes to be used can be configured for
+	<command>bind10</command> to start, with the exception
+	of the required <command>b10-sockcreator</command>,
+	<command>b10-msgq</command> and <command>b10-cfgmgr</command>
+	components.
+	The configuration is in the <varname>Boss/components</varname>
+	section. Each element represents one component, which is
+	an abstraction of a process.
+      </para>
+
+      <para>
+	To add a process to the set, let's say the resolver (which
+	is not started by default), you would do this:
+        <screen>&gt; <userinput>config add Boss/components b10-resolver</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver/special resolver</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver/kind needed</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver/priority 10</userinput>
+&gt; <userinput>config commit</userinput></screen></para>
+
+      <para>
+	Now, what it means. We add an entry called
+	<quote>b10-resolver</quote>. It is both a name used to
+	reference this component in the configuration and the name
+	of the process to start. Then we set some parameters on
+	how to start it.
+      </para>
+
+      <para>
+	The <varname>special</varname> setting is for components
+	that need some kind of special care during startup or
+	shutdown. Unless specified, the component is started in a
+	usual way. This is the list of components that need to be
+	started in a special way, with the value of special used
+	for them:
+<!-- TODO: this still doesn't explain why they are special -->
+        <table>
+          <title>Special startup components</title>
+          <tgroup cols='3' align='left'>
+          <colspec colname='component'/>
+          <colspec colname='special'/>
+          <colspec colname='description'/>
+          <thead><row><entry>Component</entry><entry>Special</entry><entry>Description</entry></row></thead>
+          <tbody>
+            <row><entry>b10-auth</entry><entry>auth</entry><entry>Authoritative DNS server</entry></row>
+            <row><entry>b10-resolver</entry><entry>resolver</entry><entry>DNS resolver</entry></row>
+            <row><entry>b10-cmdctl</entry><entry>cmdctl</entry><entry>Command control (remote control interface)</entry></row>
+            <!-- TODO Either add xfrin and xfrout as well or clean up the workarounds in boss before the release -->
+          </tbody>
+          </tgroup>
+        </table>
+      </para>
+
+      <para>
+	The <varname>kind</varname> specifies how a failure of the
+	component should be handled.  If it is set to
+	<quote>dispensable</quote> (the default unless you set
+	something else), it will get started again if it fails. If
+	it is set to <quote>needed</quote> and it fails at startup,
+	the whole <command>bind10</command> shuts down and exits
+	with an error exit code. But if it fails some time later, it
+	is just started again. If you set it to <quote>core</quote>,
+	you indicate that the system is not usable without the
+	component and if such component fails, the system shuts
+	down no matter when the failure happened.  This is the
+	behavior of the core components (the ones you can't turn
+	off), but you can declare any other components as core as
+	well if you wish (but you can turn these off, they just
+	can't fail).
+      </para>
+
+      <para>
+	The <varname>priority</varname> defines order in which the
+	components should start.  The ones with higher numbers are
+	started sooner than the ones with lower ones. If you don't
+	set it, 0 (zero) is used as the priority.  Usually, leaving
+	it at the default is enough.
+      </para>
+
+      <para>
+        There are other parameters we didn't use in our example.
+        One of them is <varname>address</varname>. It is the address
+        used by the component on the <command>b10-msgq</command>
+        message bus. The special components already know their
+        address, but the usual ones don't. The address is by
+        convention the thing after <emphasis>b10-</emphasis>, with
+        the first letter capitalized (eg. <command>b10-stats</command>
+        would have <quote>Stats</quote> as its address).
+<!-- TODO: this should be simplified so we don't even have to document it -->
+      </para>
+
+<!-- TODO: what does "The special components already know their
+address, but the usual ones don't." mean? -->
+
+<!-- TODO: document params when is enabled -->
+
+      <para>
+	The last one is <varname>process</varname>. It is the name
+	of the process to be started.  It defaults to the name of
+	the component if not set, but you can use this to override
+	it. (The special components also already know their
+        executable name.)
+      </para>
+
+      <!-- TODO Add parameters when they work, not implemented yet-->
+
+      <note>
+        <para>
+          The configuration is quite powerful, but that includes
+          a lot of space for mistakes. You could turn off the
+          <command>b10-cmdctl</command>, but then you couldn't
+          change it back the usual way, as it would require it to
+          be running (you would have to find and edit the configuration
+          directly).  Also, some modules might have dependencies:
+          <command>b10-stats-httpd</command> needs
+          <command>b10-stats</command>, <command>b10-xfrout</command>
+          needs <command>b10-auth</command> to be running, etc.
+
+<!-- TODO: should we define dependencies? -->
+
+        </para>
+        <para>
+          In short, you should think twice before disabling something here.
+        </para>
+      </note>
+      <para>
+        It is possible to start some components multiple times (currently
+        <command>b10-auth</command> and <command>b10-resolver</command>).
+        You might want to do that to gain more performance (each one uses only
+        single core). Just put multiple entries under different names, like
+        this, with the same config:
+        <screen>&gt; <userinput>config add Boss/components b10-resolver-2</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver-2/special resolver</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver-2/kind needed</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+      <para>
+        However, this is work in progress and the support is not yet complete.
+        For example, each resolver will have its own cache, each authoritative
+        server will keep its own copy of in-memory data and there could be
+        problems with locking the sqlite database, if used. The configuration
+        might be changed to something more convenient in future.
+	Other components don't expect such a situation, so it would
+	probably not do what you want. Such support is yet to be
+	implemented.
+      </para>
+
+      <para>
+        The running processes started by <command>bind10</command>
+        may be listed by running <userinput>Boss show_processes</userinput>
+        using <command>bindctl</command>.
+      </para>
+
+    </section>
+  </chapter>
+
   <chapter id="authserver">
     <title>Authoritative Server</title>
 
@@ -1660,8 +2307,7 @@ can use various data source backends.
       By default, this is empty.
 
       <note><simpara>
-        In this development version, currently this is only used for the
-        memory data source.
+        Currently this is only used for the memory data source.
         Only the IN class is supported at this time.
         By default, the memory data source is disabled.
         Also, currently the zone file must be canonical such as
@@ -1739,7 +2385,7 @@ can use various data source backends.
       (it defaults to <quote>memory</quote>).
 
       <note><simpara>
-        In this development version, currently this only supports the
+        Currently this only supports the
         IN class and the memory data source.
       </simpara></note>
               </simpara>
@@ -1797,7 +2443,7 @@ can use various data source backends.
       </para>
 
       <note><para>
-        In the development prototype release, <command>b10-auth</command>
+        In the current release, <command>b10-auth</command>
         can serve data from a SQLite3 data source backend and from master
         files.
         Upcoming versions will be able to use multiple different
@@ -1997,7 +2643,7 @@ can use various data source backends.
 
       <note>
       <para>
-        In the development prototype release, only the SQLite3 back
+        In the current release, only the SQLite3 back
         end is used by <command>b10-loadzone</command>.
         By default, it stores the zone data in
         <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>
@@ -2074,12 +2720,21 @@ TODO
     </section>
 
     <section>
+        <title>TSIG</title>
+        If you want to use TSIG for incoming transfers, a system wide TSIG
+        key ring must be configured (see <xref linkend="tsig-key-ring"/>).
+        To specify a key to use, set tsig_key value to the name of the key
+        to use from the key ring.
+&gt; <userinput>config set Xfrin/zones[0]/tsig_key "<option>example.key</option>"</userinput>
+    </section>
+
+    <section>
       <title>Enabling IXFR</title>
       <para>
         As noted above, <command>b10-xfrin</command> uses AXFR for
         zone transfers by default.  To enable IXFR for zone transfers
-        for a particular zone, set the <userinput>use_ixfr</userinput>
-        configuration parameter to <userinput>true</userinput>.
+        for a particular zone, set the <varname>use_ixfr</varname>
+        configuration parameter to <quote>true</quote>.
         In the above example of configuration sequence, you'll need
         to add the following before performing <userinput>commit</userinput>:
       <screen>&gt; <userinput>config set Xfrin/zones[0]/use_ixfr true</userinput></screen>
@@ -2338,7 +2993,8 @@ what is XfroutClient xfr_client??
         underlying data source storing the zone data be writable.
         In the current implementation this means the zone must be stored
         in an SQLite3-based data source.
-	Also, in this development version, the <command>b10-ddns</command>
+<!-- TODO -->
+	Also, in this current version, the <command>b10-ddns</command>
 	component configures itself with the data source referring to the
         <varname>database_file</varname> configuration parameter of
         <command>b10-auth</command>.
@@ -2694,20 +3350,20 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
     <note>
       <para>
-        As of December 2011, both DHCPv4 and DHCPv6 components are
-        skeleton servers. That means that while they are capable of
-        performing DHCP configuration, they are not fully functional
-        yet. In particular, neither has functional lease
-        databases. This means that they will assign the same, fixed,
+        As of November 2012, the DHCPv4 component is a
+        skeleton server. That means that while it is capable of
+        performing DHCP configuration, it is not fully functional.
+        In particular, it does not have a functional lease
+        database. This means that they will assign the same, fixed,
         hardcoded addresses to any client that will ask. See <xref
-        linkend="dhcp4-limit"/> and <xref linkend="dhcp6-limit"/> for
+        linkend="dhcp4-limit"/> for a
         detailed description.
       </para>
     </note>
 
     <section id="dhcp4-usage">
       <title>DHCPv4 Server Usage</title>
-      <para>BIND 10 provides the DHCPv4 server component since December
+      <para>BIND 10 has provided the DHCPv4 server component since December
       2011. It is a skeleton server and can be described as an early
       prototype that is not fully functional yet. It is mature enough
       to conduct first tests in lab environment, but it has
@@ -2724,10 +3380,8 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 &gt; <userinput>config commit</userinput></screen></para>
 
        <para>
-         To shutdown running <command>b10-dhcp4</command>, please use the
+         To stop running <command>b10-dhcp4</command>, please use the
          following command:
-         <screen>&gt; <userinput>Dhcp4 shutdown</userinput></screen>
-         or
          <screen>&gt; <userinput>config remove Boss/components b10-dhcp4</userinput>
 &gt; <userinput>config commit</userinput></screen></para>
 
@@ -2913,8 +3567,8 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
             <simpara><command>b10-dhcp4</command> does not support
             BOOTP. That is a design choice. This limitation is
             permanent. If you have legacy nodes that can't use DHCP and
-            require BOOTP support, please use latest version of ISC DHCP
-            <ulink url="http://www.isc.org/software/dhcp"/>.</simpara>
+            require BOOTP support, please use the latest version of ISC DHCP
+            via <ulink url="http://www.isc.org/software/dhcp"/>.</simpara>
           </listitem>
           <listitem>
             <simpara>Interface detection is currently working on Linux
@@ -2945,8 +3599,8 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
 
   <chapter id="dhcp6">
     <title>DHCPv6 Server</title>
-    <para>Dynamic Host Configuration Protocol for IPv6 (DHCPv6) is
-    specified in RFC3315. BIND 10 provides DHCPv6 server implementation
+    <para>The Dynamic Host Configuration Protocol for IPv6 (DHCPv6) is
+    specified in RFC3315. BIND 10 provides a DHCPv6 server implementation
     that is described in this chapter. For a description of the DHCPv4
     server implementation, see <xref linkend="dhcp4"/>.
     </para>
@@ -2958,32 +3612,92 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
     url="https://lists.isc.org/mailman/listinfo/bind10-dev">BIND 10
     developers mailing list</ulink>.</para>
 
-    <para>The DHCPv4 and DHCPv6 components in BIND 10 architecture are
-    internally code named <quote>Kea</quote>.</para>
-
     <note>
       <para>
-        As of December 2011, both DHCPv4 and DHCPv6 components are
-        skeleton servers. That means that while they are capable of
-        performing DHCP configuration, they are not fully functional
-        yet. In particular, neither has functional lease
-        databases. This means that they will assign the same, fixed,
-        hardcoded addresses to any client that will ask. See <xref
-        linkend="dhcp4-limit"/> and <xref linkend="dhcp6-limit"/> for
-        detailed description.
+        As of November 2012, the DHCPv6 component is partially functioning,
+        having the following capabilities:
       </para>
+      <itemizedlist>
+          <listitem>
+            <simpara>DHCPv6 server able to allocate leases (but not renew them).</simpara>
+          </listitem>
+          <listitem>
+            <simpara>Some configuration available through the BIND 10 configuration mechanism.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>Lease storage in a MySQL database.</simpara>
+          </listitem>
+      </itemizedlist>
     </note>
+
+    <section id="dhcp6-install">
+      <title>DHCPv6 Server Build and Installation</title>
+      <para>
+      DHCPv6 is part of the BIND 10 suite of programs and is built as part of
+      the build of BIND 10.  With the use of MySQL, some additional
+      installation steps are needed:
+      </para>
+      <section>
+        <title>Install MySQL</title>
+        <para>
+          Install MySQL according to the instructions for your system.  The client development
+          libraries must be installed.
+        </para>
+      </section>
+      <section>
+        <title>Build and Install BIND 10</title>
+        <para>
+          Build and install BIND 10 as described in <xref linkend="installation"/>, with
+          the following modification: to enable the MySQL database code, the
+          "configure" step (see <xref linkend="configure"/>), specify the location of the
+          MySQL configuration program "mysql_config" with the "--with-mysql-config" switch,
+          i.e.
+          <screen><userinput>./configure [other-options] --with-dhcp-mysql</userinput></screen>
+          ...if MySQL was installed in the default location, or:
+          <screen><userinput>./configure [other-options] --with-dhcp-mysql=<replaceable>&lt;path-to-mysql_config&gt;</replaceable></userinput></screen>
+          ...if not.
+        </para>
+      </section>
+      <section>
+        <title>Create MySQL Database and BIND 10 User</title>
+        <para>
+          The next task is to create both the DHCPv6 lease database and the user under which the DHCPv6 server will
+          access it.  Although the intention is to have the name of the database and the user configurable,
+          at the moment they are hard-coded as "kea", as is the associated password.  ("kea" is an internal
+          code name for BIND 10 DHCP.) There are a number of steps required:
+        </para>
+        <para>
+          1. Log into MySQL as "root":
+          <screen>$ <userinput>mysql -u root -p</userinput>
+Enter password:<userinput/>
+   :<userinput/>
+mysql></screen>
+        </para>
+        <para>
+          2. Create the database:
+          <screen>mysql> <userinput>CREATE DATABASE kea;</userinput></screen>
+        </para>
+         <para>
+          3. Create the database tables:
+          <screen>mysql> <userinput>CONNECT kea;</userinput>
+mysql> <userinput>SOURCE <replaceable>&lt;path-to-bind10&gt;</replaceable>/share/bind10-devel/dhcpdb_create.mysql</userinput></screen>
+        </para>
+         <para>
+          4. Create the user under which BIND 10 will access the database and grant it access to the database tables:
+          <screen>mysql> <userinput>CREATE USER 'kea'@'localhost' IDENTIFIED BY 'kea';</userinput>
+mysql> <userinput>GRANT ALL ON kea.* TO 'kea'@'localhost';</userinput></screen>
+        </para>
+        <para>
+          5. Exit MySQL:
+          <screen>mysql> <userinput>quit</userinput>
+Bye<userinput/>
+$</screen>
+       </para>
+     </section>
+   </section>
 
     <section id="dhcp6-usage">
       <title>DHCPv6 Server Usage</title>
-      <para>
-        BIND 10 provides the DHCPv6 server component since September
-        2011. It is a skeleton server and can be described as an early
-        prototype that is not fully functional yet. It is mature
-        enough to conduct first tests in lab environment, but it has
-        significant limitations. See <xref linkend="dhcp6-limit"/> for
-        details.
-      </para>
 
       <para>
         <command>b10-dhcp6</command> is a BIND 10 component and is being
@@ -2995,10 +3709,8 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
       </para>
 
        <para>
-         To shutdown running <command>b10-dhcp6</command>, please use the
+         To stop running <command>b10-dhcp6</command>, use the
          following command:
-         <screen>&gt; <userinput>Dhcp6 shutdown</userinput></screen>
-         or
          <screen>&gt; <userinput>config remove Boss/components b10-dhcp6</userinput>
 &gt; <userinput>config commit</userinput></screen>
        </para>
@@ -3007,12 +3719,11 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
         During start-up the server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
         are up, running, are not loopback, are multicast-capable, and
-        have IPv6 address assigned.
-
-        The server will then listen to incoming traffic. Currently
-        supported client messages are SOLICIT and REQUEST. The server
+        have IPv6 address assigned. It will then listen to incoming traffic. The
+        currently supported client messages are SOLICIT and REQUEST. The server
         will respond to them with ADVERTISE and REPLY, respectively.
-
+      </para>
+      <para>
         Since the DHCPv6 server opens privileged ports, it requires root
         access. Make sure you run this daemon as root.
       </para>
@@ -3022,11 +3733,10 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
     <section id="dhcp6-config">
       <title>DHCPv6 Server Configuration</title>
       <para>
-        Once the server is started, it can be configured. To view the
+        Once the server has been started, it can be configured. To view the
         current configuration, use the following command in <command>bindctl</command>:
-        <screen>
-          &gt; <userinput>config show Dhcp6</userinput></screen>
-        When starting Dhcp6 daemon for the first time, the default configuration
+        <screen>&gt; <userinput>config show Dhcp6</userinput></screen>
+        When starting the Dhcp6 daemon for the first time, the default configuration
         will be available. It will look similar to this:
         <screen>
 &gt; <userinput>config show Dhcp6</userinput>
@@ -3045,14 +3755,14 @@ Dhcp6/subnet6	         []     list    (default)</screen>
         <screen>
 &gt; <userinput>config set Dhcp6/valid-lifetime 7200</userinput>
 &gt; <userinput>config commit</userinput></screen>
-        Please note that most Dhcp6 parameters are of global scope
+        Most Dhcp6 parameters are of global scope
         and apply to all defined subnets, unless they are overridden on a
         per-subnet basis.
       </para>
 
       <para>
-        The essential role of DHCPv6 server is address assignment. The server
-        has to be configured with at least one subnet and one pool of dynamic
+        The essential role of a DHCPv6 server is address assignment. For this,
+        the server has to be configured with at least one subnet and one pool of dynamic
         addresses to be managed. For example, assume that the server
         is connected to a network segment that uses the 2001:db8:1::/64
         prefix. The Administrator of that network has decided that addresses from range
@@ -3068,7 +3778,7 @@ Dhcp6/subnet6	         []     list    (default)</screen>
         enclosed in square brackets, even though only one range of addresses
         is specified.</para>
         <para>It is possible to define more than one pool in a
-        subnet: continuing the previous example, further assume that 
+        subnet: continuing the previous example, further assume that
         2001:db8:1:0:5::/80 should be also be managed by the server. It could be written as
         2001:db8:1:0:5:: to 2001:db8:1::5:ffff:ffff:ffff, but typing so many 'f's
         is cumbersome. It can be expressed more simply as 2001:db8:1:0:5::/80. Both
@@ -3104,24 +3814,49 @@ Dhcp6/subnet6	         []     list    (default)</screen>
         2001:db8:: address may be assigned as well. If you want to avoid this,
         please use min-max notation.
       </para>
-
       <para>
-        Note: Although configuration is now accepted, it is not internally used
-        by they server yet.  At this stage of development, the only way to alter
-        server configuration is to modify its source code. To do so, please edit
-        src/bin/dhcp6/dhcp6_srv.cc file, modify the following parameters and
-        recompile:
+        Options can also be configured: the following commands configure
+        the DNS-SERVERS option for all subnets with the following addresses:
+        2001:db8:1::1 and 2001:db8:1::2
         <screen>
-const std::string HARDCODED_LEASE = "2001:db8:1::1234:abcd";
-const uint32_t HARDCODED_T1 = 1500; // in seconds
-const uint32_t HARDCODED_T2 = 2600; // in seconds
-const uint32_t HARDCODED_PREFERRED_LIFETIME = 3600; // in seconds
-const uint32_t HARDCODED_VALID_LIFETIME = 7200; // in seconds
-const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</screen>
-
-        Lease database and configuration support is planned for 2012.
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/name "dns-servers"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/code 23</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/data "2001 0DB8 0001 0000 0000 0000</userinput>
+        <userinput>0000 0001 2001 0DB8 0001 0000 0000 0000 0000 0002"</userinput>
+&gt; <userinput>config commit</userinput>
+        </screen>
+       (The value for the setting of the "data" element is split across two
+        lines in this document for clarity: when entering the command, all the
+        string should be entered on the same line.)
       </para>
-
+      <para>
+        Currently the only way to set option data is to specify the
+        data as a string of hexadecimal digits.  It is planned to allow
+        alternative ways of specifying the data as a comma-separated list,
+        e.g. "2001:db8:1::1,2001:db8:1::2".
+      </para>
+      <para>
+        As with global settings, it is also possible to override options on a
+        per-subnet basis, e.g.  the following commands override the global DNS
+        servers option for a particular subnet, setting a single DNS server with
+        address 2001:db8:1::3.
+        <screen>
+&gt; <userinput>config add Dhcp6/subnet6[0]/option-data</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/name "dns-servers"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/code 23</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/data "2001 0DB8 0001 0000</userinput>
+        <userinput>0000 0000 0000 0003"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        (As before, the setting of the "data" element has been split across two
+        lines for clarity.)
+      </para>
+      <note>
+        <para>
+          With this version of BIND 10, there are a number of known limitations
+          and problems in the DHCPv6 server. See <xref linkend="dhcp6-limit"/>.
+        </para>
+      </note>
     </section>
 
     <section id="dhcp6-std">
@@ -3142,30 +3877,39 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</screen>
 
     <section id="dhcp6-limit">
       <title>DHCPv6 Server Limitations</title>
-      <para> These are the current limitations of the DHCPv6 server
+      <para> These are the current limitations and known problems
+      with the the DHCPv6 server
       software. Most of them are reflections of the early stage of
       development and should be treated as <quote>not implemented
       yet</quote>, rather than actual limitations.</para>
       <para>
       <itemizedlist>
         <listitem>
-          <simpara>Relayed traffic is not supported.</simpara>
+          <para>The DHCPv6 server has only been tested on Debian
+          operating systems.  There are known problems with the
+          handling of packets in CentOS and RHEL.</para>
         </listitem>
         <listitem>
-          <simpara><command>b10-dhcp6</command> provides a single,
-          fixed, hardcoded lease to any client that asks. There is no
-          lease manager implemented. If two clients request addresses,
-          they will both get the same fixed address.</simpara>
+          <para>Relayed traffic is not supported.</para>
+        </listitem>
+       <listitem>
+          <para><command>b10-dhcp6</command> only supports
+          a limited number of configuration options.</para>
         </listitem>
         <listitem>
-          <simpara><command>b10-dhcp6</command> does not support any
-            configuration mechanisms yet. The whole configuration is
-            currently hardcoded. The only way to tweak configuration
-            is to directly modify source code. See see <xref
-            linkend="dhcp6-config"/> for details.</simpara>
+          <para>
+            On startup, the DHCPv6 server does not get the full configuration from
+            BIND 10.  To remedy this, after starting BIND 10, modify any parameter
+            and commit the changes, e.g.
+            <screen>
+&gt; <userinput>config show Dhcp6/renew-timer</userinput>
+Dhcp6/renew-timer	1000	integer	(default)
+&gt; <userinput>config set Dhcp6/renew-timer 1001</userinput>
+&gt; <userinput>config commit</userinput></screen>
+          </para>
         </listitem>
         <listitem>
-          <simpara>Upon start, the server will open sockets on all
+          <para>Upon start, the server will open sockets on all
           interfaces that are not loopback, are up, running and are
           multicast capable and have IPv6 address.  Support for
           multiple interfaces is not coded in reception routines yet,
@@ -3173,34 +3917,29 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</screen>
           interfaces and <command>b10-dhcp6</command> happens to
           listen on wrong interface, the easiest way to work around
           this problem is to turn down other interfaces. This
-          limitation will be fixed shortly.</simpara>
+          limitation will be fixed shortly.</para>
         </listitem>
         <listitem>
-          <simpara>ORO (Option Request Option, a list of options
-          requested by a client) is currently ignored and server
-          assigns DNS SERVER option.</simpara>
+          <para>ORO (Option Request Option, a list of options
+          requested by a client) is currently unsupported.</para>
         </listitem>
         <listitem>
-          <simpara>Temporary addresses are not supported yet.</simpara>
+          <para>Temporary addresses are not supported.</para>
         </listitem>
         <listitem>
-          <simpara>Prefix delegation is not supported yet.</simpara>
+          <para>Prefix delegation is not supported.</para>
         </listitem>
         <listitem>
-          <simpara>Address renewal (RENEW), rebinding (REBIND),
+          <para>Address renewal (RENEW), rebinding (REBIND),
           confirmation (CONFIRM), duplication report (DECLINE) and
-          release (RELEASE) are not supported yet.</simpara>
+          release (RELEASE) are not supported.</para>
         </listitem>
         <listitem>
-          <simpara>DNS Update is not supported yet.</simpara>
+          <para>DNS Update is not supported.</para>
         </listitem>
         <listitem>
-          <simpara>Interface detection is currently working on Linux
-          only. See <xref linkend="iface-detect"/> for details.</simpara>
-        </listitem>
-        <listitem>
-          <simpara>-v (verbose) command line option is currently the
-          default, and cannot be disabled.</simpara>
+          <para>Interface detection is currently working on Linux
+          only. See <xref linkend="iface-detect"/> for details.</para>
         </listitem>
       </itemizedlist>
       </para>
@@ -3210,38 +3949,53 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</screen>
 
   <chapter id="libdhcp">
     <title>libdhcp++ library</title>
-    <para>libdhcp++ is a common library written in C++ that handles
-    many DHCP-related tasks, like DHCPv4 and DHCPv6 packets parsing,
-    manipulation and assembly, option parsing, manipulation and
-    assembly, network interface detection and socket operations, like
-    socket creations, data transmission and reception and socket
-    closing.
+    <para>
+      libdhcp++ is a common library written in C++ that handles
+      many DHCP-related tasks, including
+      <itemizedlist>
+        <listitem>
+          <simpara>DHCPv4 and DHCPv6 packets parsing, manipulation and assembly</simpara>
+        </listitem>
+        <listitem>
+          <simpara>Option parsing, manipulation and assembly</simpara>
+        </listitem>
+        <listitem>
+          <simpara>Network interface detection</simpara>
+        </listitem>
+        <listitem>
+          <simpara>Socket operations such as creation, data transmission and reception and socket closing.</simpara>
+        </listitem>
+      </itemizedlist>
     </para>
 
     <para>
     While this library is currently used by
     <command>b10-dhcp4</command> and <command>b10-dhcp6</command>
-    only, it is designed to be portable, universal library useful for
+    only, it is designed to be a portable, universal library, useful for
     any kind of DHCP-related software.
     </para>
 
+<!-- TODO: point to doxygen docs -->
+
     <section id="iface-detect">
       <title>Interface detection</title>
-      <para>Both DHCPv4 and DHCPv6 components share network
+      <para>Both the DHCPv4 and DHCPv6 components share network
       interface detection routines. Interface detection is
       currently only supported on Linux systems.</para>
 
-      <para>For non-Linux systems, there is currently stub
-      implementation provided. Interface manager detects loopback
+      <para>For non-Linux systems, there is currently a stub
+      implementation provided. The interface manager detects loopback
       interfaces only as their name (lo or lo0) can be easily predicted.
       Please contact the BIND 10 development team if you are interested
       in running DHCP components on systems other than Linux.</para>
     </section>
 
+<!--
     <section id="packet-handling">
       <title>DHCPv4/DHCPv6 packet handling</title>
       <para>TODO: Describe packet handling here, with pointers to wiki</para>
     </section>
+-->
 
   </chapter>
 
@@ -3748,7 +4502,7 @@ Logging/loggers	[]	list
 <!-- TODO: adding the empty loggers makes no sense -->
         <para>
 
-          <screen><userinput>&gt; config add Logging/loggers</userinput>
+          <screen>&gt; <userinput>config add Logging/loggers</userinput>
 &gt; <userinput>config show Logging</userinput>
 Logging/loggers/	list	(modified)
 </screen>

@@ -12,16 +12,17 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <asiolink/io_address.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option6_iaaddr.h>
+#include <exceptions/exceptions.h>
+#include <util/io_utilities.h>
+
+#include <sstream>
+
 #include <stdint.h>
 #include <arpa/inet.h>
-#include <sstream>
-#include "exceptions/exceptions.h"
-
-#include "dhcp/libdhcp++.h"
-#include "dhcp/option6_iaaddr.h"
-#include "dhcp/dhcp6.h"
-#include "asiolink/io_address.h"
-#include "util/io_utilities.h"
 
 using namespace std;
 using namespace isc::asiolink;
@@ -58,7 +59,7 @@ void Option6IAAddr::pack(isc::util::OutputBuffer& buf) {
     buf.writeUint32(valid_);
 
     // parse suboption (there shouldn't be any for IAADDR)
-    LibDHCP::packOptions6(buf, options_);
+    packOptions(buf);
 }
 
 void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
@@ -68,7 +69,7 @@ void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
     }
 
     // 16 bytes: IPv6 address
-    addr_ = IOAddress::from_bytes(AF_INET6, &(*begin));
+    addr_ = IOAddress::fromBytes(AF_INET6, &(*begin));
     begin += V6ADDRESS_LEN;
 
     preferred_ = readUint32( &(*begin) );
@@ -76,7 +77,8 @@ void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
 
     valid_ = readUint32( &(*begin) );
     begin += sizeof(uint32_t);
-    LibDHCP::unpackOptions6(OptionBuffer(begin, end), options_);
+
+    unpackOptions(OptionBuffer(begin, end));
 }
 
 std::string Option6IAAddr::toText(int indent /* =0 */) {

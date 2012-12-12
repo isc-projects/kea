@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 
 #include <util/unittests/resource.h>
+#include <util/unittests/check_valgrind.h>
 
 using namespace isc::log;
 
@@ -43,10 +44,12 @@ TEST(MessageInitializerTest2, MessageLoadTest) {
     // test for its presence and bypass the test if not available.
 #ifdef EXPECT_DEATH
     // Adding one more should take us over the limit.
-    EXPECT_DEATH({
-        isc::util::unittests::dontCreateCoreDumps();
+    if (!isc::util::unittests::runningOnValgrind()) {
+        EXPECT_DEATH({
+            isc::util::unittests::dontCreateCoreDumps();
 
-        MessageInitializer initializer2(values);
-      }, ".*");
+            MessageInitializer initializer2(values);
+          }, ".*");
+    }
 #endif
 }

@@ -18,7 +18,9 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/option.h>
+
 #include <boost/noncopyable.hpp>
+
 #include <iostream>
 
 namespace isc {

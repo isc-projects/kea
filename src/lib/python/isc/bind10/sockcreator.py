@@ -16,6 +16,7 @@
 import socket
 import struct
 import os
+import errno
 import copy
 import subprocess
 import copy
@@ -36,16 +37,16 @@ class CreatorError(Exception):
     passed to the __init__ function.
     """
 
-    def __init__(self, message, fatal, errno=None):
+    def __init__(self, message, fatal, error_num=None):
         """
         Creates the exception. The message argument is the usual string.
         The fatal one tells if the error is fatal (eg. the creator crashed)
-        and errno is the errno value returned from socket creator, if
+        and error_num is the errno value returned from socket creator, if
         applicable.
         """
         Exception.__init__(self, message)
         self.fatal = fatal
-        self.errno = errno
+        self.errno = error_num
 
 class Parser:
     """
@@ -94,6 +95,13 @@ class Parser:
             self.__socket = None
             raise CreatorError(str(se), True)
 
+    def __addrport_str(self, address, port):
+        '''Convert a pair of IP address and port to common form for logging.'''
+        if address.family == socket.AF_INET:
+            return str(address) + ':' + str(port)
+        else:
+            return '[' + str(address) + ']:' + str(port)
+
     def get_socket(self, address, port, socktype):
         """
         Asks the socket creator process to create a socket. Pass an address
@@ -136,9 +144,9 @@ class Parser:
             elif answer == b'E':
                 # There was an error, read the error as well
                 error = self.__socket.recv(1)
-                errno = struct.unpack('i',
-                                      self.__read_all(len(struct.pack('i',
-                                                                      0))))
+                rcv_errno = struct.unpack('i',
+                                          self.__read_all(len(struct.pack('i',
+                                                                          0))))
                 if error == b'S':
                     cause = 'socket'
                 elif error == b'B':
@@ -147,10 +155,22 @@ class Parser:
                     self.__socket = None
                     logger.fatal(BIND10_SOCKCREATOR_BAD_CAUSE, error)
                     raise CreatorError('Unknown error cause' + str(answer), True)
-                logger.error(BIND10_SOCKET_ERROR, cause, errno[0],
-                             os.strerror(errno[0]))
-                raise CreatorError('Error creating socket on ' + cause, False,
-                                   errno[0])
+                logger.error(BIND10_SOCKET_ERROR, cause, rcv_errno[0],
+                             os.strerror(rcv_errno[0]))
+
+                # Provide as detailed information as possible on the error,
+                # as error related to socket creation is a common operation
+                # trouble.  In particular, we are intentionally very verbose
+                # if it fails due to "permission denied" so the administrator
+                # can easily identify what is wrong and how to fix it.
+                addrport = self.__addrport_str(address, port)
+                error_text = 'Error creating socket on ' + cause + \
+                    ' to be bound to ' + addrport + ': ' + \
+                    os.strerror(rcv_errno[0])
+                if rcv_errno[0] == errno.EACCES:
+                    error_text += ' - probably need to restart BIND 10 ' + \
+                        'as a super user'
+                raise CreatorError(error_text, False, rcv_errno[0])
             else:
                 self.__socket = None
                 logger.fatal(BIND10_SOCKCREATOR_BAD_RESPONSE, answer)
@@ -214,9 +234,14 @@ class Creator(Parser):
                                 socket.SOCK_STREAM)
         env = copy.deepcopy(os.environ)
         env['PATH'] = path
+        # We explicitly set close_fs to True; it's False by default before
+        # Python 3.2.  If we don't close the remaining FDs, the copy of
+        # 'local' will prevent the child process from terminating when
+        # the parent process died abruptly.
         self.__process = subprocess.Popen(['b10-sockcreator'], env=env,
                                           stdin=remote.fileno(),
                                           stdout=remote2.fileno(),
+                                          close_fds=True,
                                           preexec_fn=self.__preexec_work)
         remote.close()
         remote2.close()

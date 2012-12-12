@@ -12,11 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <vector>
-#include <exceptions/exceptions.h>
-#include <stdint.h>
-#include <util/io_utilities.h>
 #include <dhcp/duid.h>
+#include <exceptions/exceptions.h>
+#include <util/io_utilities.h>
+
+#include <iomanip>
+#include <sstream>
+#include <vector>
+
+#include <stdint.h>
 
 namespace isc {
 namespace dhcp {
@@ -29,7 +33,7 @@ DUID::DUID(const std::vector<uint8_t>& duid) {
     }
 }
 
-DUID::DUID(const uint8_t * data, size_t len) {
+DUID::DUID(const uint8_t* data, size_t len) {
     if (len > MAX_DUID_LEN) {
         isc_throw(OutOfRange, "DUID too large");
     }
@@ -53,36 +57,51 @@ DUID::DUIDType DUID::getType() const {
     }
 }
 
-bool DUID::operator == (const DUID& other) const {
+std::string DUID::toText() const {
+    std::stringstream tmp;
+    tmp << std::hex;
+    bool delim = false;
+    for (std::vector<uint8_t>::const_iterator it = duid_.begin();
+         it != duid_.end(); ++it) {
+        if (delim) {
+            tmp << ":";
+        }
+        tmp << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(*it);
+        delim = true;
+    }
+    return (tmp.str());
+}
+
+bool DUID::operator==(const DUID& other) const {
     return (this->duid_ == other.duid_);
 }
 
-bool DUID::operator != (const DUID& other) const {
+bool DUID::operator!=(const DUID& other) const {
     return (this->duid_ != other.duid_);
 }
 
-/// constructor based on vector<uint8_t>
+// Constructor based on vector<uint8_t>
 ClientId::ClientId(const std::vector<uint8_t>& clientid)
-    :DUID(clientid) {
+    : DUID(clientid) {
 }
 
-/// constructor based on C-style data
+// Constructor based on C-style data
 ClientId::ClientId(const uint8_t *clientid, size_t len)
-    :DUID(clientid, len) {
+    : DUID(clientid, len) {
 }
 
-/// @brief returns a copy of client-id data
+// Returns a copy of client-id data
 const std::vector<uint8_t> ClientId::getClientId() const {
     return (duid_);
 }
 
-// compares two client-ids
-bool ClientId::operator == (const ClientId& other) const {
+// Compares two client-ids
+bool ClientId::operator==(const ClientId& other) const {
     return (this->duid_ == other.duid_);
 }
 
-// compares two client-ids
-bool ClientId::operator != (const ClientId& other) const {
+// Compares two client-ids
+bool ClientId::operator!=(const ClientId& other) const {
     return (this->duid_ != other.duid_);
 }
 

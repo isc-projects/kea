@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_RRTYPE_H
-#define __PYTHON_RRTYPE_H 1
+#ifndef PYTHON_RRTYPE_H
+#define PYTHON_RRTYPE_H 1
 
 #include <Python.h>
 
@@ -61,7 +61,7 @@ const RRType& PyRRType_ToRRType(const PyObject* rrtype_obj);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_RRTYPE_H
+#endif // PYTHON_RRTYPE_H
 
 // Local Variables:
 // mode: c++

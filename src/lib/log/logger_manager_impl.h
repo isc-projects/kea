@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LOGGER_MANAGER_IMPL_H
-#define __LOGGER_MANAGER_IMPL_H
+#ifndef LOGGER_MANAGER_IMPL_H
+#define LOGGER_MANAGER_IMPL_H
 
 #include <string>
 
@@ -51,15 +51,14 @@ class LoggerManagerImpl {
 public:
 
     /// \brief Constructor
-    LoggerManagerImpl()
-    {}
+    LoggerManagerImpl() {}
 
     /// \brief Initialize Processing
     ///
     /// This resets the hierachy of loggers back to their defaults.  This means
     /// that all non-root loggers (if they exist) are set to NOT_SET, and the
     /// root logger reset to logging informational messages.
-    static void processInit();
+    void processInit();
 
     /// \brief Process Specification
     ///
@@ -71,8 +70,7 @@ public:
     /// \brief End Processing
     ///
     /// Terminates the processing of the logging specifications.
-    static void processEnd()
-    {}
+    void processEnd();
 
     /// \brief Implementation-specific initialization
     ///
@@ -87,8 +85,11 @@ public:
     ///
     /// \param severity Severity to be associated with this logger
     /// \param dbglevel Debug level associated with the root logger
+    /// \param buffer If true, all log messages will be buffered until one of
+    ///        the \c process() methods is called. If false, initial logging
+    ///        shall go to the default output (i.e. stdout)
     static void init(isc::log::Severity severity = isc::log::INFO,
-                     int dbglevel = 0);
+                     int dbglevel = 0, bool buffer = false);
 
     /// \brief Reset logging
     ///
@@ -132,15 +133,27 @@ private:
     static void createSyslogAppender(log4cplus::Logger& logger,
                                      const OutputOption& opt);
 
+    /// \brief Create buffered appender
+    ///
+    /// Appends an object to the logger that will store the log events sent
+    /// to the logger. These log messages are replayed to the logger in
+    /// processEnd().
+    ///
+    /// \param logger Log4cplus logger to which the appender must be attached.
+    static void createBufferAppender(log4cplus::Logger& logger);
+
     /// \brief Set default layout and severity for root logger
     ///
-    /// Initializes the root logger to BIND 10 defaults - console output and
-    /// the passed severity/debug level.
+    /// Initializes the root logger to BIND 10 defaults - console or buffered
+    /// output and the passed severity/debug level.
     ///
     /// \param severity Severity of messages that the logger should output.
     /// \param dbglevel Debug level if severity = DEBUG
+    /// \param buffer If true, all log messages will be buffered until one of
+    ///        the \c process() methods is called. If false, initial logging
+    ///        shall go to the default output (i.e. stdout)
     static void initRootLogger(isc::log::Severity severity = isc::log::INFO,
-                               int dbglevel = 0);
+                               int dbglevel = 0, bool buffer = false);
 
     /// \brief Set layout for console appender
     ///
@@ -161,9 +174,28 @@ private:
     ///
     /// \param appender Appender for which this pattern is to be set.
     static void setSyslogAppenderLayout(log4cplus::SharedAppenderPtr& appender);
+
+    /// \brief Store all buffer appenders
+    ///
+    /// When processing a new specification, this method can be used
+    /// to keep a list of the buffer appenders; the caller can then
+    /// process the specification, and call \c flushBufferAppenders()
+    /// to flush and clear the list
+    void storeBufferAppenders();
+
+    /// \brief Flush the stored buffer appenders
+    ///
+    /// This flushes the list of buffer appenders stored in
+    /// \c storeBufferAppenders(), and clears it
+    void flushBufferAppenders();
+
+    /// Only used between processInit() and processEnd(), to temporarily
+    /// store the buffer appenders in order to flush them after
+    /// processSpecification() calls have been completed
+    std::vector<log4cplus::SharedAppenderPtr> buffer_appender_store_;
 };
 
 } // namespace log
 } // namespace isc
 
-#endif // __LOGGER_MANAGER_IMPL_H
+#endif // LOGGER_MANAGER_IMPL_H

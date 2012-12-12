@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_RCODE_H
-#define __PYTHON_RCODE_H 1
+#ifndef PYTHON_RCODE_H
+#define PYTHON_RCODE_H 1
 
 #include <Python.h>
 
@@ -57,7 +57,7 @@ const Rcode& PyRcode_ToRcode(const PyObject* rcode_obj);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_RCODE_H
+#endif // PYTHON_RCODE_H
 
 // Local Variables:
 // mode: c++

@@ -46,8 +46,8 @@ setLoggingInitialized(bool state) {
 
 void
 initLogger(const string& root, isc::log::Severity severity, int dbglevel,
-    const char* file) {
-    LoggerManager::init(root, severity, dbglevel, file);
+           const char* file, bool buffer) {
+    LoggerManager::init(root, severity, dbglevel, file, buffer);
 }
 
 } // namespace log

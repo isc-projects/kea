@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_SOCKETSESSIONFORWARDER_H
-#define __PYTHON_SOCKETSESSIONFORWARDER_H 1
+#ifndef PYTHON_SOCKETSESSIONFORWARDER_H
+#define PYTHON_SOCKETSESSIONFORWARDER_H 1
 
 #include <Python.h>
 
@@ -38,7 +38,7 @@ bool initModulePart_SocketSessionForwarder(PyObject* mod);
 } // namespace io
 } // namespace util
 } // namespace isc
-#endif // __PYTHON_SOCKETSESSIONFORWARDER_H
+#endif // PYTHON_SOCKETSESSIONFORWARDER_H
 
 // Local Variables:
 // mode: c++

@@ -13,14 +13,18 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <iostream>
-#include <sstream>
-#include <arpa/inet.h>
-#include <gtest/gtest.h>
-#include <exceptions/exceptions.h>
-#include <boost/scoped_ptr.hpp>
+
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
+#include <exceptions/exceptions.h>
+
+#include <boost/scoped_ptr.hpp>
+#include <gtest/gtest.h>
+
+#include <iostream>
+#include <sstream>
+
+#include <arpa/inet.h>
 
 using namespace std;
 using namespace isc;
@@ -164,6 +168,14 @@ TEST(ClientIdTest, operators) {
     EXPECT_FALSE(*id1 != *id4);
     EXPECT_TRUE(*id1 != *id2);
     EXPECT_TRUE(*id1 != *id3);
+}
+
+// Test checks if the toText() returns valid texual representation
+TEST(ClientIdTest, toText) {
+    uint8_t data1[] = {0, 1, 2, 3, 4, 0xff, 0xfe};
+
+    DUID duid(data1, sizeof(data1));
+    EXPECT_EQ("00:01:02:03:04:ff:fe", duid.toText());
 }
 
 } // end of anonymous namespace

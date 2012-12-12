@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "thread.h"
-#include "lock.h"
+#include "sync.h"
 
 #include <memory>
 #include <string>

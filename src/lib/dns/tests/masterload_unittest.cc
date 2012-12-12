@@ -307,14 +307,18 @@ TEST_F(MasterLoadTest, loadNonAtopSOA) {
                  MasterLoadError);
 }
 
+// Load TTL with units
+TEST_F(MasterLoadTest, loadUnitTTL) {
+    stringstream rr_stream2("example.com. 1D IN A 192.0.2.1");
+    masterLoad(rr_stream2, origin, zclass, callback);
+    EXPECT_EQ(1, results.size());
+    EXPECT_EQ(0, results[0]->getRdataIterator()->getCurrent().compare(
+                  *rdata::createRdata(RRType::A(), zclass, "192.0.2.1")));
+}
+
 TEST_F(MasterLoadTest, loadBadRRText) {
     rr_stream << "example..com. 3600 IN A 192.0.2.1"; // bad owner name
     EXPECT_THROW(masterLoad(rr_stream, origin, zclass, callback),
-                 MasterLoadError);
-
-    // currently we only support numeric TTLs
-    stringstream rr_stream2("example.com. 1D IN A 192.0.2.1");
-    EXPECT_THROW(masterLoad(rr_stream2, origin, zclass, callback),
                  MasterLoadError);
 
     // bad RR class text

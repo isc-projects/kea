@@ -13,16 +13,19 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <iostream>
-#include <sstream>
-#include <arpa/inet.h>
+
+#include <asiolink/io_address.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/option.h>
+#include <dhcp/pkt6.h>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 
-#include <asiolink/io_address.h>
-#include <dhcp/option.h>
-#include <dhcp/pkt6.h>
-#include <dhcp/dhcp6.h>
+#include <iostream>
+#include <sstream>
+
+#include <arpa/inet.h>
 
 using namespace std;
 using namespace isc;
@@ -167,6 +170,8 @@ TEST_F(Pkt6Test, packUnpack) {
     delete clone;
 }
 
+// This test verifies that options can be added (addOption()), retrieved
+// (getOption(), getOptions()) and deleted (delOption()).
 TEST_F(Pkt6Test, addGetDelOptions) {
     Pkt6* parent = new Pkt6(DHCPV6_SOLICIT, random() );
 
@@ -187,6 +192,25 @@ TEST_F(Pkt6Test, addGetDelOptions) {
     // now there are 2 options of type 2
     parent->addOption(opt3);
 
+    Option::OptionCollection options = parent->getOptions(2);
+    EXPECT_EQ(2, options.size()); // there should be 2 instances
+
+    // both options must be of type 2 and there must not be
+    // any other type returned
+    for (Option::OptionCollection::const_iterator x= options.begin();
+         x != options.end(); ++x) {
+        EXPECT_EQ(2, x->second->getType());
+    }
+
+    // Try to get a single option. Normally for singular options
+    // it is better to use getOption(), but getOptions() must work
+    // as well
+    options = parent->getOptions(1);
+    ASSERT_EQ(1, options.size());
+
+    EXPECT_EQ(1, (*options.begin()).second->getType());
+    EXPECT_EQ(opt1, options.begin()->second);
+
     // let's delete one of them
     EXPECT_EQ(true, parent->delOption(2));
 
@@ -201,6 +225,10 @@ TEST_F(Pkt6Test, addGetDelOptions) {
 
     // let's try to delete - should fail
     EXPECT_TRUE(false ==  parent->delOption(2));
+
+    // Finally try to get a non-existent option
+    options = parent->getOptions(1234);
+    EXPECT_EQ(0, options.size());
 
     delete parent;
 }
@@ -230,5 +258,53 @@ TEST_F(Pkt6Test, Timestamp) {
     // Duration should be positive or zero.
     EXPECT_TRUE(ts_period.length().total_microseconds() >= 0);
 }
+
+// This test verifies that getName() method returns proper
+// packet type names.
+TEST_F(Pkt6Test, getName) {
+    // Check all possible packet types
+    for (int itype = 0; itype < 256; ++itype) {
+        uint8_t type = itype;
+
+        switch (type) {
+        case DHCPV6_CONFIRM:
+            EXPECT_STREQ("CONFIRM", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_DECLINE:
+            EXPECT_STREQ("DECLINE", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_INFORMATION_REQUEST:
+            EXPECT_STREQ("INFORMATION_REQUEST",
+                         Pkt6::getName(type));
+            break;
+
+        case DHCPV6_REBIND:
+            EXPECT_STREQ("REBIND", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_RELEASE:
+            EXPECT_STREQ("RELEASE", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_RENEW:
+            EXPECT_STREQ("RENEW", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_REQUEST:
+            EXPECT_STREQ("REQUEST", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_SOLICIT:
+            EXPECT_STREQ("SOLICIT", Pkt6::getName(type));
+            break;
+
+        default:
+            EXPECT_STREQ("UNKNOWN", Pkt6::getName(type));
+        }
+    }
+}
+
 
 }

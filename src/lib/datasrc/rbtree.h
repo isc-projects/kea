@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef _RBTREE_H
-#define _RBTREE_H 1
+#ifndef RBTREE_H
+#define RBTREE_H 1
 
 //! \file datasrc/rbtree.h
 ///
@@ -1986,7 +1986,7 @@ RBTree<T>::dumpDotHelper(std::ostream& os, const RBNode<T>* node,
 }
 }
 
-#endif  // _RBTREE_H
+#endif  // RBTREE_H
 
 // Local Variables:
 // mode: c++

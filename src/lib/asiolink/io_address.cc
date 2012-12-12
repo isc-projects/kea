@@ -61,7 +61,7 @@ IOAddress::toText() const {
 }
 
 IOAddress
-IOAddress::from_bytes(short family, const uint8_t* data) {
+IOAddress::fromBytes(short family, const uint8_t* data) {
     if (data == NULL) {
         isc_throw(BadValue, "NULL pointer received.");
     } else
@@ -74,6 +74,21 @@ IOAddress::from_bytes(short family, const uint8_t* data) {
     char addr_str[INET6_ADDRSTRLEN];
     inet_ntop(family, data, addr_str, INET6_ADDRSTRLEN);
     return IOAddress(string(addr_str));
+}
+
+std::vector<uint8_t>
+IOAddress::toBytes() const {
+    if (asio_address_.is_v4()) {
+        const asio::ip::address_v4::bytes_type bytes4 =
+            asio_address_.to_v4().to_bytes();
+        return (std::vector<uint8_t>(bytes4.begin(), bytes4.end()));
+    }
+
+    // Not V4 address, so must be a V6 address (else we could never construct
+    // this object).
+    const asio::ip::address_v6::bytes_type bytes6 =
+        asio_address_.to_v6().to_bytes();
+    return (std::vector<uint8_t>(bytes6.begin(), bytes6.end()));
 }
 
 short
