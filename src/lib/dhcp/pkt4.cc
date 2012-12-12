@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -79,6 +79,9 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
         isc_throw(OutOfRange, "Truncated DHCPv4 packet (len=" << len
                   << ") received, at least " << DHCPV4_PKT_HDR_LEN
                   << " is expected.");
+
+    } else if (data == NULL) {
+        isc_throw(InvalidParameter, "data buffer passed to Pkt4 is NULL");
     }
 
     data_.resize(len);
@@ -159,7 +162,7 @@ Pkt4::unpack() {
         // this is *NOT* DHCP packet. It does not have any DHCPv4 options. In
         // particular, it does not have magic cookie, a 4 byte sequence that
         // differentiates between DHCP and BOOTP packets.
-        isc_throw(InvalidOperation, "Recevied BOOTP packet. BOOTP is not supported.");
+        isc_throw(InvalidOperation, "Received BOOTP packet. BOOTP is not supported.");
     }
 
     if (bufferIn.getLength() - bufferIn.getPosition() < 4) {
@@ -179,8 +182,8 @@ Pkt4::unpack() {
     bufferIn.readVector(optsBuffer, opts_len);
     LibDHCP::unpackOptions4(optsBuffer, options_);
 
-    // TODO: check will need to be called separately, so hooks can be called after
-    // packet is parsed, but before its content is verified
+    // @todo check will need to be called separately, so hooks can be called
+    // after the packet is parsed, but before its content is verified
     check();
 }
 
@@ -188,8 +191,9 @@ void Pkt4::check() {
     boost::shared_ptr<Option> typeOpt = getOption(DHO_DHCP_MESSAGE_TYPE);
     if (typeOpt) {
         uint8_t msg_type = typeOpt->getUint8();
-        if (msg_type>DHCPLEASEACTIVE) {
-            isc_throw(BadValue, "Invalid DHCP message type received:" << msg_type);
+        if (msg_type > DHCPLEASEACTIVE) {
+            isc_throw(BadValue, "Invalid DHCP message type received: "
+                      << msg_type);
         }
         msg_type_ = msg_type;
 
@@ -222,20 +226,20 @@ Pkt4::toText() {
 
 void
 Pkt4::setHWAddr(uint8_t hType, uint8_t hlen,
-                const std::vector<uint8_t>& macAddr) {
-    /// TODO Rewrite this once support for client-identifier option
+                const std::vector<uint8_t>& mac_addr) {
+    /// @todo Rewrite this once support for client-identifier option
     /// is implemented (ticket 1228?)
     if (hlen > MAX_CHADDR_LEN) {
         isc_throw(OutOfRange, "Hardware address (len=" << hlen
                   << " too long. Max " << MAX_CHADDR_LEN << " supported.");
-    }
-    if (macAddr.empty() && (hlen > 0) ) {
+
+    } else if (mac_addr.empty() && (hlen > 0) ) {
         isc_throw(OutOfRange, "Invalid HW Address specified");
     }
 
     htype_ = hType;
     hlen_ = hlen;
-    std::copy(&macAddr[0], &macAddr[hlen], &chaddr_[0]);
+    std::copy(&mac_addr[0], &mac_addr[hlen], &chaddr_[0]);
     std::fill(&chaddr_[hlen], &chaddr_[MAX_CHADDR_LEN], 0);
 }
 
@@ -244,11 +248,15 @@ Pkt4::setSname(const uint8_t* sname, size_t snameLen /*= MAX_SNAME_LEN*/) {
     if (snameLen > MAX_SNAME_LEN) {
         isc_throw(OutOfRange, "sname field (len=" << snameLen
                   << ") too long, Max " << MAX_SNAME_LEN << " supported.");
+
+    } else if (sname == NULL) {
+        isc_throw(InvalidParameter, "Invalid sname specified");
     }
+
     std::copy(&sname[0], &sname[snameLen], &sname_[0]);
     std::fill(&sname_[snameLen], &sname_[MAX_SNAME_LEN], 0);
 
-    // no need to store snameLen as any empty space is filled with 0s
+    // No need to store snameLen as any empty space is filled with 0s
 }
 
 void
@@ -256,11 +264,15 @@ Pkt4::setFile(const uint8_t* file, size_t fileLen /*= MAX_FILE_LEN*/) {
     if (fileLen > MAX_FILE_LEN) {
         isc_throw(OutOfRange, "file field (len=" << fileLen
                   << ") too long, Max " << MAX_FILE_LEN << " supported.");
+
+    } else if (file == NULL) {
+        isc_throw(InvalidParameter, "Invalid file name specified");
     }
+
     std::copy(&file[0], &file[fileLen], &file_[0]);
     std::fill(&file_[fileLen], &file_[MAX_FILE_LEN], 0);
 
-    // no need to store fileLen as any empty space is filled with 0s
+    // No need to store fileLen as any empty space is filled with 0s
 }
 
 uint8_t
@@ -273,6 +285,7 @@ Pkt4::DHCPTypeToBootpType(uint8_t dhcpType) {
     case DHCPINFORM:
     case DHCPLEASEQUERY:
         return (BOOTREQUEST);
+
     case DHCPACK:
     case DHCPNAK:
     case DHCPOFFER:
@@ -280,6 +293,7 @@ Pkt4::DHCPTypeToBootpType(uint8_t dhcpType) {
     case DHCPLEASEUNKNOWN:
     case DHCPLEASEACTIVE:
         return (BOOTREPLY);
+
     default:
         isc_throw(OutOfRange, "Invalid message type: "
                   << static_cast<int>(dhcpType) );
@@ -288,7 +302,7 @@ Pkt4::DHCPTypeToBootpType(uint8_t dhcpType) {
 
 void
 Pkt4::addOption(boost::shared_ptr<Option> opt) {
-    // check for uniqueness (DHCPv4 options must be unique)
+    // Check for uniqueness (DHCPv4 options must be unique)
     if (getOption(opt->getType())) {
         isc_throw(BadValue, "Option " << opt->getType()
                   << " already present in this message.");
@@ -299,7 +313,7 @@ Pkt4::addOption(boost::shared_ptr<Option> opt) {
 boost::shared_ptr<isc::dhcp::Option>
 Pkt4::getOption(uint8_t type) {
     Option::OptionCollection::const_iterator x = options_.find(type);
-    if (x!=options_.end()) {
+    if (x != options_.end()) {
         return (*x).second;
     }
     return boost::shared_ptr<isc::dhcp::Option>(); // NULL
