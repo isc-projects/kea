@@ -116,14 +116,8 @@ public:
 
     void doInclude() {
         // First, get the filename to include
-        const MasterToken::StringRegion
-            filename_tok(lexer_.getNextToken(MasterToken::QSTRING).
-                         getStringRegion());
-
-        // Push the filename. We abuse the fact that filename
-        // may not contain '\0' anywhere in it, so we can
-        // freely use the filename.beg directly.
-        string filename(filename_tok.beg);
+        const string
+            filename(lexer_.getNextToken(MasterToken::QSTRING).getString());
 
         // There could be an origin (or maybe not). So try looking
         const MasterToken name_tok(lexer_.getNextToken(MasterToken::QSTRING,
