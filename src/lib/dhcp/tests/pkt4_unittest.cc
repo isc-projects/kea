@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -416,6 +416,11 @@ TEST(Pkt4Test, sname) {
 
         delete pkt;
     }
+
+    // Check that a null argument generates an exception.
+    Pkt4 pkt4(DHCPOFFER, 1234);
+    EXPECT_THROW(pkt4.setSname(NULL, Pkt4::MAX_SNAME_LEN), InvalidParameter);
+    EXPECT_THROW(pkt4.setSname(NULL, 0), InvalidParameter);
 }
 
 TEST(Pkt4Test, file) {
@@ -451,6 +456,10 @@ TEST(Pkt4Test, file) {
         delete pkt;
     }
 
+    // Check that a null argument generates an exception.
+    Pkt4 pkt4(DHCPOFFER, 1234);
+    EXPECT_THROW(pkt4.setFile(NULL, Pkt4::MAX_FILE_LEN), InvalidParameter);
+    EXPECT_THROW(pkt4.setFile(NULL, 0), InvalidParameter);
 }
 
 static uint8_t v4Opts[] = {
