@@ -725,29 +725,6 @@ TEST_F(SQLite3Create, addZoneDifferentClass) {
     EXPECT_EQ(new_zone_id_CH, accessor->getZone(zone_name).second);
 }
 
-// Test addZone fails correctly if the entire db is locked
-TEST_F(SQLite3Create, addZoneWhileLocked) {
-    const std::string zone_name("example.com.");
-
-    boost::shared_ptr<SQLite3Accessor> accessor(
-        new SQLite3Accessor(SQLITE_NEW_DBFILE, "IN"));
-    accessor->startTransaction();
-
-    // Manually make an exclusive lock
-    sqlite3* db;
-    ASSERT_EQ(SQLITE_OK, sqlite3_open(SQLITE_NEW_DBFILE, &db));
-    sqlite3_exec(db, "BEGIN EXCLUSIVE TRANSACTION", NULL, NULL, NULL);
-
-    // addZone should throw exception that it is locket
-    ASSERT_THROW(accessor->addZone(zone_name), DataSourceError);
-
-    sqlite3_exec(db, "ROLLBACK TRANSACTION", NULL, NULL, NULL);
-
-    // Despite commit, zone should not exist
-    accessor->commit();
-    EXPECT_FALSE(accessor->getZone(zone_name).first);
-}
-
 TEST_F(SQLite3Create, emptytest) {
     ASSERT_FALSE(isReadable(SQLITE_NEW_DBFILE));
 
@@ -1619,4 +1596,24 @@ TEST_F(SQLite3Update, addDiffWithUpdate) {
 
     checkDiffs(expected_stored, accessor->getDiffs(zone_id, 1234, 1300));
 }
+
+TEST_F(SQLite3Update, addZoneWhileLocked) {
+    const std::string existing_zone = "example.com.";
+    const std::string new_zone = "example2.com.";
+
+    // Start 'replacing' an existing zone, it should lock the db
+    zone_id = accessor->startUpdateZone(existing_zone, true).second;
+
+    // addZone should throw an exception that it is locked
+    another_accessor->startTransaction();
+    EXPECT_THROW(another_accessor->addZone(new_zone), DataSourceError);
+    // Commit should do nothing, but not fail
+    another_accessor->commit();
+
+    // New zone should not exist
+    EXPECT_FALSE(accessor->getZone(new_zone).first);
+
+    accessor->rollback();
+}
+
 } // end anonymous namespace
