@@ -4106,7 +4106,7 @@ TYPED_TEST(DatabaseClientTest, createZone) {
     // The mock implementation does not do createZone,
     // in which case it should throw NotImplemented (from
     // the base class)
-    if(this->is_mock_) {
+    if (this->is_mock_) {
         ASSERT_THROW(this->client_->createZone(new_name), isc::NotImplemented);
     } else {
         // But in the real case, it should work and return true
