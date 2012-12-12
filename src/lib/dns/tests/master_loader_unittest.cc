@@ -389,15 +389,22 @@ TEST_F(MasterLoaderTest, includeWithGarbage) {
 
 // Test for "$TTL"
 TEST_F(MasterLoaderTest, ttlDirective) {
+    stringstream zone_stream;
+
     // Set the default TTL with $TTL followed by an RR omitting the TTL
-    const string input("$TTL 1800\n"
-                       "example.org. IN A 192.0.2.1\n");
-    stringstream zone_stream(input);
+    zone_stream << "$TTL 1800\nexample.org. IN A 192.0.2.1\n";
+    // $TTL can be quoted.  Also testing the case of $TTL being changed.
+    zone_stream << "\"$TTL\" 100\na1.example.org. IN A 192.0.2.2\n";
+    // Extended TTL form is accepted.
+    zone_stream << "$TTL 1H\na2.example.org. IN A 192.0.2.3\n";
+
     setLoader(zone_stream, Name("example.org."), RRClass::IN(),
               MasterLoader::DEFAULT);
     loader_->load();
     EXPECT_TRUE(loader_->loadedSucessfully());
     checkRR("example.org", RRType::A(), "192.0.2.1", RRTTL(1800));
+    checkRR("a1.example.org", RRType::A(), "192.0.2.2", RRTTL(100));
+    checkRR("a2.example.org", RRType::A(), "192.0.2.3", RRTTL(3600));
 }
 
 // Test the constructor rejects empty add callback.

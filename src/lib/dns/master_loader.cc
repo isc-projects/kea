@@ -142,8 +142,9 @@ public:
     void setDefaultTTL(const string& ttl_txt) {
         if (!default_ttl_) {
             default_ttl_.reset(new RRTTL(ttl_txt));
+        } else {
+            *default_ttl_ = RRTTL(ttl_txt);
         }
-        //setCurrentTTL(*default_ttl_);
         eatUntilEOL(true);
     }
 
@@ -288,9 +289,12 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
 
             // The parameters
             MasterToken rrparam_token = lexer_.getNextToken();
+
+            bool explicit_ttl = false;
             if (rrparam_token.getType() == MasterToken::STRING) {
                 // Try TTL
                 if (setCurrentTTL(rrparam_token.getString())) {
+                    explicit_ttl = true;
                     rrparam_token = lexer_.getNextToken();
                 }
             }
@@ -303,6 +307,8 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
                 if (default_ttl_) {
                     setCurrentTTL(*default_ttl_);
                 } // TBD: else: try SOA min TTL for default, then error
+            } else if (!explicit_ttl && default_ttl_) {
+                setCurrentTTL(*default_ttl_);
             }
 
             // TODO: Some more validation?
