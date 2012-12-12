@@ -53,6 +53,17 @@ The asynchronous I/O code encountered an error when trying to send data to
 the specified address on the given protocol.  The number of the system
 error that caused the problem is given in the message.
 
+% ASIODNS_UDP_SYNC_SEND_FAIL Error sending UDP packet to %1: %2
+The low-level ASIO library reported an error when trying to send a UDP
+packet in synchronous UDP mode. This can be any error reported by send_to(),
+and can indicate problems such as too high a load on the network, or a
+problem in the underlying library or system.
+This packet is dropped and will not be sent, but service should resume
+normally.
+If you see a single occurrence of this message, it probably does not
+indicate any significant problem, but if it is logged often, it is probably
+a good idea to inspect your network traffic.
+
 % ASIODNS_UNKNOWN_ORIGIN unknown origin for ASIO error code %1 (protocol: %2, address %3)
 An internal consistency check on the origin of a message from the
 asynchronous I/O module failed. This may indicate an internal error;
