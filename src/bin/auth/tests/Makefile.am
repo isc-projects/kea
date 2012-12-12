@@ -78,8 +78,11 @@ run_unittests_LDADD += $(top_builddir)/src/lib/config/tests/libfake_session.la
 run_unittests_LDADD += $(GTEST_LDADD)
 run_unittests_LDADD += $(SQLITE_LIBS)
 
+EXTRA_DIST = statisticsitems.py
+
 check-local:
 	B10_FROM_BUILD=${abs_top_builddir} ./run_unittests
+	$(PYTHON) ./statisticsitems.py $(top_builddir)/src/bin/auth/b10-auth.xml
 
 noinst_PROGRAMS = run_unittests
 
