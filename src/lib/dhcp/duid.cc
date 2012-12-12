@@ -33,7 +33,7 @@ DUID::DUID(const std::vector<uint8_t>& duid) {
     }
 }
 
-DUID::DUID(const uint8_t * data, size_t len) {
+DUID::DUID(const uint8_t* data, size_t len) {
     if (len > MAX_DUID_LEN) {
         isc_throw(OutOfRange, "DUID too large");
     }
@@ -72,36 +72,36 @@ std::string DUID::toText() const {
     return (tmp.str());
 }
 
-bool DUID::operator == (const DUID& other) const {
+bool DUID::operator==(const DUID& other) const {
     return (this->duid_ == other.duid_);
 }
 
-bool DUID::operator != (const DUID& other) const {
+bool DUID::operator!=(const DUID& other) const {
     return (this->duid_ != other.duid_);
 }
 
-/// constructor based on vector<uint8_t>
+// Constructor based on vector<uint8_t>
 ClientId::ClientId(const std::vector<uint8_t>& clientid)
-    :DUID(clientid) {
+    : DUID(clientid) {
 }
 
-/// constructor based on C-style data
+// Constructor based on C-style data
 ClientId::ClientId(const uint8_t *clientid, size_t len)
-    :DUID(clientid, len) {
+    : DUID(clientid, len) {
 }
 
-/// @brief returns a copy of client-id data
+// Returns a copy of client-id data
 const std::vector<uint8_t> ClientId::getClientId() const {
     return (duid_);
 }
 
-// compares two client-ids
-bool ClientId::operator == (const ClientId& other) const {
+// Compares two client-ids
+bool ClientId::operator==(const ClientId& other) const {
     return (this->duid_ == other.duid_);
 }
 
-// compares two client-ids
-bool ClientId::operator != (const ClientId& other) const {
+// Compares two client-ids
+bool ClientId::operator!=(const ClientId& other) const {
     return (this->duid_ != other.duid_);
 }
 

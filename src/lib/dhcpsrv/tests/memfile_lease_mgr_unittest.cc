@@ -53,7 +53,7 @@ TEST_F(MemfileLeaseMgrTest, getTypeAndName) {
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
 
     EXPECT_EQ(std::string("memfile"), lease_mgr->getType());
-    EXPECT_EQ(std::string("memfile"), lease_mgr->getName());
+    EXPECT_EQ(std::string("memory"), lease_mgr->getName());
 }
 
 // Checks that adding/getting/deleting a Lease6 object works.

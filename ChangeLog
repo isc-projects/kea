@@ -1,3 +1,55 @@
+522.	[func]*		jelte
+	Configuration of TSIG keys for b10-xfrin has changed; instead of
+	specifying the full TSIG key (<name>:<base64>:<algo>) it now expects
+	just the name, and uses the global TSIG Key Ring like all the other
+	components (configuration list /tsig_keys/keys).
+	Note: this is not automatically updated, so if you use TSIG in
+	xfrin, you need to update your configuration.
+	(Trac #1351, git e65b7b36f60f14b7abe083da411e6934cdfbae7a)
+
+521.	[func]		marcin
+	Implemented definitions for DHCPv6 standard options identified
+	by codes up to 48. These definitions are now used by the DHCPv6
+	server to create instances of options being sent to a client.
+	(Trac #2491, git 0a4faa07777189ed9c25211987a1a9b574015a95)
+
+520.	[func]		jelte
+	The system no longer prints initial log messages to stdout
+	regardless of what logging configuration is present, but it
+	temporarily stores any log messages until the configuration is
+	processed. If there is no specific configuration, or if the
+	configuration cannot be accessed, it will still fall back to stdout.
+	Note that there are still a few instances where output is printed,
+	these shall be addressed separately.
+	Note also that, currently, in case it falls back to stdout (such as
+	when it cannot connect to b10-cfgmgr), all log messages are always
+	printed (including debug messages), regardless of whether -v was
+	used. This shall also be addressed in a future change.
+	(Trac #2445, git 74a0abe5a6d10b28e4a3e360e87b129c232dea68)
+
+519.	[bug]		muks
+	Fixed a problem in inmem NSEC lookup which caused returning an
+	incorrect NSEC record or (in rare cases) assert failures
+	when a non-existent domain was queried, which was a sub-domain of
+	a domain that existed.
+	(Trac #2504, git 835553eb309d100b062051f7ef18422d2e8e3ae4)
+
+518.	[func]		stephen
+	Extend DHCP MySQL backend to handle IPv4 addresses.
+	(Trac #2404, git ce7db48d3ff5d5aad12b1da5e67ae60073cb2607)
+
+517.	[func]		stephen
+	Added IOAddress::toBytes() to get byte representation of address.
+	Also added convenience methods for V4/V6 address determination.
+	(Trac #2396, git c23f87e8ac3ea781b38d688f8f7b58539f85e35a)
+
+516.	[bug]		marcin
+	Fixed 'make distcheck' failure when running perfdhcp unit tests.
+	The unit tests used to read files from the folder specified
+	with the path relative to current folder, thus when the test was
+	run from a different folder the files could not be found.
+	(Trac #2479, git 4e8325e1b309f1d388a3055ec1e1df98c377f383)
+
 515.	[bug]		jinmei
 	The in-memory data source now accepts an RRSIG provided without
 	a covered RRset in loading.  A subsequent query for its owner name

@@ -10,6 +10,9 @@ AM_LDFLAGS = -static
 endif
 
 CLEANFILES = *.gcno *.gcda
+# The test[1-5].hex are created by the TestControl.PacketTemplates
+# unit tests and have to be removed.
+CLEANFILES += test1.hex test2.hex test3.hex test4.hex test5.hex
 
 TESTS_ENVIRONMENT = \
         $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)

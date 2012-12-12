@@ -305,8 +305,16 @@ getClosestNSEC(const ZoneData& zone_data,
     }
 
     const ZoneNode* prev_node;
-    while ((prev_node = zone_data.getZoneTree().previousNode(node_path))
-           != NULL) {
+    if (node_path.getLastComparisonResult().getRelation() ==
+        NameComparisonResult::SUBDOMAIN) {
+         // In case the search ended as a sub-domain, the previous node
+         // is already at the top of node_path.
+         prev_node = node_path.getLastComparedNode();
+    } else {
+         prev_node = zone_data.getZoneTree().previousNode(node_path);
+    }
+
+    while (prev_node != NULL) {
         if (!prev_node->isEmpty()) {
             const RdataSet* found =
                 RdataSet::find(prev_node->getData(), RRType::NSEC());
@@ -314,6 +322,7 @@ getClosestNSEC(const ZoneData& zone_data,
                 return (ConstNodeRRset(prev_node, found));
             }
         }
+        prev_node = zone_data.getZoneTree().previousNode(node_path);
     }
     // This must be impossible and should be an internal bug.
     // See the description at the method declaration.

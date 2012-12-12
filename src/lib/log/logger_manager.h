@@ -76,6 +76,21 @@ public:
         processEnd();
     }
 
+    /// \brief Process 'empty' specification
+    ///
+    /// This will disable any existing output options, and set
+    /// the logging to go to the built-in default (stdout).
+    /// If the logger has been initialized with buffering enabled,
+    /// all log messages up to now shall be printed to stdout.
+    ///
+    /// This is mainly useful in scenarios where buffering is needed,
+    /// but it turns out there are no logging specifications to
+    /// handle.
+    void process() {
+        processInit();
+        processEnd();
+    }
+
     /// \brief Run-Time Initialization
     ///
     /// Performs run-time initialization of the logger system, in particular
@@ -91,13 +106,18 @@ public:
     /// \param dbglevel Debug severity (ignored if "severity" is not "DEBUG")
     /// \param file Name of the local message file.  This must be NULL if there
     ///        is no local message file.
+    /// \param buffer If true, all log messages will be buffered until one of
+    ///        the \c process() methods is called. If false, initial logging
+    ///        shall go to the default output (i.e. stdout)
     static void init(const std::string& root,
                     isc::log::Severity severity = isc::log::INFO,
-                    int dbglevel = 0, const char* file = NULL);
+                    int dbglevel = 0, const char* file = NULL,
+                    bool buffer = false);
 
     /// \brief Reset logging
     ///
-    /// Resets logging to whatever was set in the call to init().
+    /// Resets logging to whatever was set in the call to init(), expect for
+    /// the buffer option.
     static void reset();
 
     /// \brief Read local message file

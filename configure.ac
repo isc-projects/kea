@@ -903,10 +903,11 @@ AC_SUBST(MULTITHREADING_FLAG)
 #
 GTEST_LDFLAGS=
 GTEST_LDADD=
-# TODO: set DISTCHECK_GTEST_CONFIGURE_FLAG for --with-gtest too
 DISTCHECK_GTEST_CONFIGURE_FLAG=
 
 if test "x$enable_gtest" = "xyes" ; then
+
+    DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest=$gtest_path"
 
     if test -n "$with_gtest_source" ; then
 
@@ -1375,6 +1376,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/log/tests/console_test.sh
            src/lib/log/tests/destination_test.sh
            src/lib/log/tests/init_logger_test.sh
+           src/lib/log/tests/buffer_logger_test.sh
            src/lib/log/tests/local_file_test.sh
            src/lib/log/tests/logger_lock_test.sh
            src/lib/log/tests/severity_test.sh

@@ -287,7 +287,9 @@ PyMethodDef TSIGKeyRing_methods[] = {
       METH_VARARGS,
       "Remove a TSIGKey for the given name from the TSIGKeyRing." },
     { "find", reinterpret_cast<PyCFunction>(TSIGKeyRing_find), METH_VARARGS,
-      "Find a TSIGKey for the given name in the TSIGKeyRing. "
+      "Find a TSIGKey for the given name in the TSIGKeyRing. Optional "
+      "second argument is an algorithm, in which case it only returns "
+      "a key if both match.\n"
       "It returns a tuple of (result_code, key)." },
     { NULL, NULL, 0, NULL }
 };
@@ -362,13 +364,16 @@ TSIGKeyRing_remove(const s_TSIGKeyRing* self, PyObject* args) {
 PyObject*
 TSIGKeyRing_find(const s_TSIGKeyRing* self, PyObject* args) {
     PyObject* key_name;
-    PyObject* algorithm_name;
+    PyObject* algorithm_name = NULL;
 
-    if (PyArg_ParseTuple(args, "O!O!", &name_type, &key_name,
+    if (PyArg_ParseTuple(args, "O!|O!", &name_type, &key_name,
                          &name_type, &algorithm_name)) {
-        const TSIGKeyRing::FindResult result =
-            self->cppobj->find(PyName_ToName(key_name),
-                               PyName_ToName(algorithm_name));
+        // Can't init TSIGKeyRing::FindResult without actual result,
+        // so use ternary operator
+        TSIGKeyRing::FindResult result = (algorithm_name == NULL) ?
+                    self->cppobj->find(PyName_ToName(key_name)) :
+                    self->cppobj->find(PyName_ToName(key_name),
+                                       PyName_ToName(algorithm_name));
         if (result.key != NULL) {
             s_TSIGKey* key = PyObject_New(s_TSIGKey, &tsigkey_type);
             if (key == NULL) {

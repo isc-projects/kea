@@ -24,6 +24,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_int_array.h>
+#include <dhcp/option_custom.h>
 #include <dhcp/pkt6.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
@@ -348,13 +349,29 @@ void Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer)
 }
 
 OptionPtr Dhcpv6Srv::createStatusCode(uint16_t code, const std::string& text) {
+    // @todo This function uses OptionCustom class to manage contents
+    // of the data fields. Since this this option is frequently used
+    // it may be good to implement dedicated class to avoid performance
+    // impact.
 
-    // @todo: Implement Option6_StatusCode and rewrite this code here
-    vector<uint8_t> data(text.c_str(), text.c_str() + text.length());
-    data.insert(data.begin(), static_cast<uint8_t>(code % 256));
-    data.insert(data.begin(), static_cast<uint8_t>(code >> 8));
-    OptionPtr status(new Option(Option::V6, D6O_STATUS_CODE, data));
-    return (status);
+    // Get the definition of the option holding status code.
+    OptionDefinitionPtr status_code_def =
+        LibDHCP::getOptionDef(Option::V6, D6O_STATUS_CODE);
+    // This definition is assumed to be initialized in LibDHCP.
+    assert(status_code_def);
+
+    // As there is no dedicated class to represent Status Code
+    // the OptionCustom class should be returned here.
+    boost::shared_ptr<OptionCustom> option_status =
+        boost::dynamic_pointer_cast<
+            OptionCustom>(status_code_def->optionFactory(Option::V6, D6O_STATUS_CODE));
+    assert(option_status);
+
+    // Set status code to 'code' (0 - means data field #0).
+    option_status->writeInteger(code, 0);
+    // Set a message (1 - means data field #1).
+    option_status->writeString(text, 1);
+    return (option_status);
 }
 
 Subnet6Ptr Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
@@ -430,6 +447,10 @@ OptionPtr Dhcpv6Srv::handleIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid, 
     // but different wording below)
     if (!subnet) {
         // Create empty IA_NA option with IAID matching the request.
+        // Note that we don't use OptionDefinition class to create this option.
+        // This is because we prefer using a constructor of Option6IA that
+        // initializes IAID. Otherwise we would have to use setIAID() after
+        // creation of the option which has some performance implications.
         boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
 
         // Insert status code NoAddrsAvail.
@@ -471,6 +492,8 @@ OptionPtr Dhcpv6Srv::handleIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid, 
                                                       hint, fake_allocation);
 
     // Create IA_NA that we will put in the response.
+    // Do not use OptionDefinition to create option's instance so
+    // as we can initialize IAID using a constructor.
     boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
 
     if (lease) {
