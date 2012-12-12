@@ -63,6 +63,8 @@ public:
 
     /// \brief Constructor.
     ///
+    /// \c callback must not be an empty functor.
+    ///
     /// If the optional issue_callback parameter is given, it will be used
     /// to report any errors and non fatal warnings found in the collator's
     /// operation.  By default special callbacks that do nothing are used.
@@ -74,6 +76,7 @@ public:
     /// "<unknown source>" for the source name and the line number of 0 via
     /// the callback.
     ///
+    /// \throw isc::InvalidParameter Empty RRset callback is given.
     /// \throw std::bad_alloc Internal memory allocation fails.  This should
     /// be very rare.
     ///
