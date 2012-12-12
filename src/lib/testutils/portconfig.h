@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ISC_TESTUTILS_PORTCONFIG_H
-#define __ISC_TESTUTILS_PORTCONFIG_H
+#ifndef ISC_TESTUTILS_PORTCONFIG_H
+#define ISC_TESTUTILS_PORTCONFIG_H
 
 #include <gtest/gtest.h>
 #include <cc/data.h>
@@ -186,4 +186,4 @@ invalidListenAddressConfig(Server& server) {
 }
 }
 
-#endif  // __ISC_TESTUTILS_PORTCONFIG_H
+#endif  // ISC_TESTUTILS_PORTCONFIG_H

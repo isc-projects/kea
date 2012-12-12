@@ -13,8 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 
-#ifndef __DATASRC_SQLITE3_ACCESSOR_H
-#define __DATASRC_SQLITE3_ACCESSOR_H
+#ifndef DATASRC_SQLITE3_ACCESSOR_H
+#define DATASRC_SQLITE3_ACCESSOR_H
 
 #include <datasrc/database.h>
 #include <datasrc/data_source.h>
@@ -291,7 +291,7 @@ extern "C" void destroyInstance(DataSourceClient* instance);
 }
 }
 
-#endif  // __DATASRC_SQLITE3_CONNECTION_H
+#endif  // DATASRC_SQLITE3_ACCESSOR_H
 
 // Local Variables:
 // mode: c++

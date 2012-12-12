@@ -37,6 +37,15 @@ init_logger_test_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 init_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 init_logger_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
+noinst_PROGRAMS += buffer_logger_test
+buffer_logger_test_SOURCES = buffer_logger_test.cc
+buffer_logger_test_CPPFLAGS = $(AM_CPPFLAGS)
+buffer_logger_test_LDFLAGS = $(AM_LDFLAGS)
+buffer_logger_test_LDADD  = $(top_builddir)/src/lib/log/libb10-log.la
+buffer_logger_test_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+buffer_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+buffer_logger_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
+
 noinst_PROGRAMS += logger_lock_test
 logger_lock_test_SOURCES = logger_lock_test.cc
 nodist_logger_lock_test_SOURCES = log_test_messages.cc log_test_messages.h
@@ -82,11 +91,13 @@ run_unittests_SOURCES += logger_specification_unittest.cc
 run_unittests_SOURCES += message_dictionary_unittest.cc
 run_unittests_SOURCES += message_reader_unittest.cc
 run_unittests_SOURCES += output_option_unittest.cc
+run_unittests_SOURCES += buffer_appender_unittest.cc
 nodist_run_unittests_SOURCES = log_test_messages.cc log_test_messages.h
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS)
 run_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 run_unittests_LDADD    = $(AM_LDADD)
+run_unittests_LDADD    +=  $(LOG4CPLUS_LIBS)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)
 
 # logging initialization tests.  These are put in separate programs to
@@ -124,6 +135,15 @@ check-local:
 	$(SHELL) $(abs_builddir)/console_test.sh
 	$(SHELL) $(abs_builddir)/destination_test.sh
 	$(SHELL) $(abs_builddir)/init_logger_test.sh
+	$(SHELL) $(abs_builddir)/buffer_logger_test.sh
 	$(SHELL) $(abs_builddir)/local_file_test.sh
 	$(SHELL) $(abs_builddir)/logger_lock_test.sh
 	$(SHELL) $(abs_builddir)/severity_test.sh
+
+noinst_SCRIPTS  = console_test.sh
+noinst_SCRIPTS += destination_test.sh
+noinst_SCRIPTS += init_logger_test.sh
+noinst_SCRIPTS += buffer_logger_test.sh
+noinst_SCRIPTS += local_file_test.sh
+noinst_SCRIPTS += logger_lock_test.sh
+noinst_SCRIPTS += severity_test.sh

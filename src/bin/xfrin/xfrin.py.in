@@ -34,9 +34,10 @@ from isc.datasrc import DataSourceClient, ZoneFinder
 import isc.net.parse
 from isc.xfrin.diff import Diff
 from isc.server_common.auth_command import auth_loadzone_command
+from isc.server_common.tsig_keyring import init_keyring, get_keyring
 from isc.log_messages.xfrin_messages import *
 
-isc.log.init("b10-xfrin")
+isc.log.init("b10-xfrin", buffer=True)
 logger = isc.log.Logger("xfrin")
 
 # Pending system-wide debug level definitions, the ones we
@@ -69,7 +70,10 @@ AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + "/auth.spec"
 
 AUTH_MODULE_NAME = 'Auth'
 XFROUT_MODULE_NAME = 'Xfrout'
+
+# Remote module and identifiers (according to their spec files)
 ZONE_MANAGER_MODULE_NAME = 'Zonemgr'
+
 REFRESH_FROM_ZONEMGR = 'refresh_from_zonemgr'
 
 # Constants for debug levels.
@@ -797,7 +801,7 @@ class XfrinConnection(asyncore.dispatcher):
         Check there's a signature at the last message.
         """
         if self._tsig_ctx is not None:
-            if not self._tsig_ctx.last_has_signature():
+            if not self._tsig_ctx.last_had_signature():
                 raise XfrinProtocolError('TSIG verify fail: no TSIG on last '+
                                          'message')
 
@@ -1179,7 +1183,7 @@ class ZoneInfo:
 
         self.set_master_port(config_data.get('master_port'))
         self.set_zone_class(config_data.get('class'))
-        self.set_tsig_key(config_data.get('tsig_key'))
+        self.set_tsig_key_name(config_data.get('tsig_key'))
         self.set_use_ixfr(config_data.get('use_ixfr'))
 
     def set_name(self, name_str):
@@ -1240,20 +1244,32 @@ class ZoneInfo:
                 errmsg = "invalid zone class: " + zone_class_str
                 raise XfrinZoneInfoException(errmsg)
 
-    def set_tsig_key(self, tsig_key_str):
-        """Set the tsig_key for this zone, given a TSIG key string
-           representation. If tsig_key_str is None, no TSIG key will
-           be set. Raises XfrinZoneInfoException if tsig_key_str cannot
-           be parsed."""
+    def set_tsig_key_name(self, tsig_key_str):
+        """Set the name of the tsig_key for this zone. If tsig_key_str
+           is None, no TSIG key will be used. This name is used to
+           find the TSIG key to use for transfers in the global TSIG
+           key ring.
+           Raises XfrinZoneInfoException if tsig_key_str is not a valid
+           (dns) name."""
         if tsig_key_str is None:
-            self.tsig_key = None
+            self.tsig_key_name = None
         else:
+            # can throw a number of exceptions but it is just one
+            # call, so Exception should be OK here
             try:
-                self.tsig_key = TSIGKey(tsig_key_str)
-            except InvalidParameter as ipe:
-                logger.error(XFRIN_BAD_TSIG_KEY_STRING, tsig_key_str)
-                errmsg = "bad TSIG key string: " + tsig_key_str
-                raise XfrinZoneInfoException(errmsg)
+                self.tsig_key_name = Name(tsig_key_str)
+            except Exception as exc:
+                raise XfrinZoneInfoException("Bad TSIG key name: " + str(exc))
+
+    def get_tsig_key(self):
+        if self.tsig_key_name is None:
+            return None
+        result, key = get_keyring().find(self.tsig_key_name)
+        if result != isc.dns.TSIGKeyRing.SUCCESS:
+            raise XfrinZoneInfoException("TSIG key not found in keyring: " +
+                                         self.tsig_key_name.to_text())
+        else:
+            return key
 
     def set_use_ixfr(self, use_ixfr):
         """Set use_ixfr. If set to True, it will use
@@ -1308,6 +1324,7 @@ class Xfrin:
         self.config_handler(config_data)
         self._module_cc.add_remote_config(AUTH_SPECFILE_LOCATION,
                                           self._auth_config_handler)
+        init_keyring(self._module_cc)
 
     def _cc_check_command(self):
         '''This is a straightforward wrapper for cc.check_command,
@@ -1468,7 +1485,7 @@ class Xfrin:
                                                rrclass,
                                                self._get_db_file(),
                                                master_addr,
-                                               zone_info.tsig_key, request_type,
+                                               zone_info.get_tsig_key(), request_type,
                                                True)
                         answer = create_answer(ret[0], ret[1])
                     else:
@@ -1491,7 +1508,7 @@ class Xfrin:
                 tsig_key = None
                 request_type = RRType.AXFR()
                 if zone_info:
-                    tsig_key = zone_info.tsig_key
+                    tsig_key = zone_info.get_tsig_key()
                     if zone_info.use_ixfr:
                         request_type = RRType.IXFR()
                 db_file = args.get('db_file') or self._get_db_file()

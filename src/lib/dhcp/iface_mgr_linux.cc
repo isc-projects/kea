@@ -31,18 +31,17 @@
 
 #if defined(OS_LINUX)
 
+#include <asiolink/io_address.h>
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
+#include <util/io/sockaddr_util.h>
+
+#include <boost/array.hpp>
+#include <boost/static_assert.hpp>
 
 #include <stdint.h>
 #include <net/if.h>
 #include <linux/rtnetlink.h>
-#include <boost/array.hpp>
-#include <boost/static_assert.hpp>
-#include <dhcp/iface_mgr.h>
-#include <exceptions/exceptions.h>
-#include <asiolink/io_address.h>
-#include <util/io/sockaddr_util.h>
 
 using namespace std;
 using namespace isc;
@@ -125,7 +124,7 @@ const static size_t RCVBUF_SIZE = 32768;
 
 /// @brief Opens netlink socket and initializes handle structure.
 ///
-/// @exception Unexpected Thrown if socket configuration fails.
+/// @throw isc::Unexpected Thrown if socket configuration fails.
 void Netlink::rtnl_open_socket() {
 
     fd_ = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
@@ -303,7 +302,7 @@ void Netlink::ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info) {
 
             memcpy(addr, RTA_DATA(rta_tb[IFLA_ADDRESS]),
                    ifa->ifa_family==AF_INET?V4ADDRESS_LEN:V6ADDRESS_LEN);
-            IOAddress a = IOAddress::from_bytes(ifa->ifa_family, addr);
+            IOAddress a = IOAddress::fromBytes(ifa->ifa_family, addr);
             iface.addAddress(a);
 
             /// TODO: Read lifetimes of configured IPv6 addresses

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RANGE_UTIL_H_
-#define __RANGE_UTIL_H_ 1
+#ifndef RANGE_UTIL_H
+#define RANGE_UTIL_H 1
 
 #include <stdlib.h>
 #include <algorithm>
@@ -41,16 +41,17 @@ isRangeZero(Iterator begin, Iterator end) {
 
 /// @brief Fill in specified range with a random data.
 ///
-/// Make sure that random number generator is initialized properly. Otherwise you
-/// will get a the same pseudo-random sequence after every start of your process.
-/// Calling srand() is enough. This method uses default rand(), which is usually
-/// a LCG pseudo-random number generator, so it is not suitable for security
-/// purposes. Please get a decent PRNG implementation, like mersene twister, if
-/// you are doing anything related with security.
+/// Make sure that random number generator is initialized
+/// properly. Otherwise you will get a the same pseudo-random sequence
+/// after every start of your process.  Calling srand() is enough. This
+/// method uses default rand(), which is usually a LCG pseudo-random
+/// number generator, so it is not suitable for security
+/// purposes. Please get a decent PRNG implementation, like mersene
+/// twister, if you are doing anything related with security.
 ///
-/// PRNG initialization is left out of this function on purpose. It may be
-/// initialized to specific value on purpose, e.g. to repeat exactly the same
-/// sequence in a test.
+/// PRNG initialization is left out of this function on purpose. It may
+/// be initialized to specific value on purpose, e.g. to repeat exactly
+/// the same sequence in a test.
 ///
 /// @param begin
 /// @param end
@@ -65,4 +66,4 @@ fillRandom(Iterator begin, Iterator end) {
 } // end of isc::util namespace
 } // end of isc namespace
 
-#endif  // __PKTINFO_UTIL_H_
+#endif  // RANGE_UTIL_H

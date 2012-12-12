@@ -12,15 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <string>
-#include <exceptions/exceptions.h>
-#include <cc/data.h>
-
 #ifndef DHCP6_CONFIG_PARSER_H
 #define DHCP6_CONFIG_PARSER_H
 
 /// @todo: This header file and its .cc counterpart are very similar between
-/// DHCPv4 and DHCPv6. They should be merged. A ticket #2355.
+/// DHCPv4 and DHCPv6. They should be merged. See ticket #2355.
+
+#include <cc/data.h>
+#include <exceptions/exceptions.h>
+#include <string>
 
 namespace isc {
 namespace dhcp {

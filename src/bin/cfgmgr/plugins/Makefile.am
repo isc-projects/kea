@@ -3,7 +3,7 @@ SUBDIRS = tests
 EXTRA_DIST = README logging.spec tsig_keys.spec
 
 datasrc.spec: datasrc.spec.pre
-	$(SED) -e "s|@@PKGDATADIR@@|$(pkgdatadir)|;s|@@LOCALSTATEDIR@@|$(localstatedir)|" datasrc.spec.pre >$@
+	$(SED) -e "s|@@STATIC_ZONE_FILE@@|$(pkgdatadir)/static.zone|;s|@@SQLITE3_DATABASE_FILE@@|$(localstatedir)/$(PACKAGE)/zone.sqlite3|" datasrc.spec.pre >$@
 
 config_plugindir = @prefix@/share/@PACKAGE@/config_plugins
 config_plugin_DATA = logging.spec tsig_keys.spec datasrc.spec

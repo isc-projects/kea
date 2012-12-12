@@ -12,11 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <dhcp/pkt4.h>
-#include <dhcp/libdhcp++.h>
-#include <dhcp/dhcp4.h>
-#include <exceptions/exceptions.h>
 #include <asiolink/io_address.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/pkt4.h>
+#include <exceptions/exceptions.h>
+
 #include <iostream>
 #include <sstream>
 

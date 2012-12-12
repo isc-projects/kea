@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __NSAS_TYPES_H
-#define __NSAS_TYPES_H
+#ifndef NSAS_TYPES_H
+#define NSAS_TYPES_H
 
 /// \file nsas_types.h
 /// \brief Nameserver Address Store Types
@@ -44,4 +44,4 @@ enum AddressFamily {
 }
 }
 
-#endif // __NSAS_TYPES_H
+#endif // NSAS_TYPES_H

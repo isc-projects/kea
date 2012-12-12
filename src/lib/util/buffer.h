@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __BUFFER_H
-#define __BUFFER_H 1
+#ifndef BUFFER_H
+#define BUFFER_H 1
 
 #include <stdlib.h>
 #include <cstring>
@@ -535,7 +535,7 @@ typedef boost::shared_ptr<OutputBuffer> OutputBufferPtr;
 
 } // namespace util
 } // namespace isc
-#endif  // __BUFFER_H
+#endif  // BUFFER_H
 
 // Local Variables:
 // mode: c++

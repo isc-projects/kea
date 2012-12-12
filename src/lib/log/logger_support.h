@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __LOGGER_SUPPORT_H
-#define __LOGGER_SUPPORT_H
+#ifndef LOGGER_SUPPORT_H
+#define LOGGER_SUPPORT_H
 
 #include <unistd.h>
 
@@ -61,11 +61,15 @@ void setLoggingInitialized(bool state = true);
 /// \param severity Severity at which to log
 /// \param dbglevel Debug severity (ignored if "severity" is not "DEBUG")
 /// \param file Name of the local message file.
+/// \param buffer If true, all log messages will be buffered until one of
+///        the \c process() methods is called. If false, initial logging
+///        shall go to the default output (i.e. stdout)
 void initLogger(const std::string& root,
                 isc::log::Severity severity = isc::log::INFO,
-                int dbglevel = 0, const char* file = NULL);
+                int dbglevel = 0, const char* file = NULL,
+                bool buffer = false);
 
 } // namespace log
 } // namespace isc
 
-#endif // __LOGGER_SUPPORT_H
+#endif // LOGGER_SUPPORT_H

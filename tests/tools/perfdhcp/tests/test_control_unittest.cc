@@ -185,6 +185,18 @@ public:
         return ("");
     }
 
+    /// \brief Get full path to a file in testdata directory.
+    ///
+    /// \param filename filename being appended to absolute
+    /// path to testdata directory
+    ///
+    /// \return full path to a file in testdata directory.
+    std::string getFullPath(const std::string& filename) const {
+        std::ostringstream stream;
+        stream << TEST_DATA_DIR << "/" << filename;
+        return (stream.str());
+    }
+
     /// \brief Match requested options in the buffer with given list.
     ///
     /// This method iterates through options provided in the buffer
@@ -925,8 +937,8 @@ TEST_F(TestControlTest, Packet4Exchange) {
     // Use templates for this test.
     processCmdLine("perfdhcp -l " + loopback_iface
                    + " -r 100 -R 20 -n 20 -D 10% -L 10547"
-                   + " -T ../templates/discover-example.hex"
-                   + " -T ../templates/request4-example.hex"
+                   + " -T " + getFullPath("discover-example.hex")
+                   + " -T " + getFullPath("request4-example.hex")
                    + " 127.0.0.1");
     // The number iterations is restricted by the percentage of
     // dropped packets (-D 10%). We also have to bump up the number
@@ -967,8 +979,8 @@ TEST_F(TestControlTest, Packet6Exchange) {
     use_templates = true;
     processCmdLine("perfdhcp -l " + loopback_iface
                    + " -6 -r 100 -n 10 -R 20 -D 3 -L 10547"
-                   + " -T ../templates/solicit-example.hex"
-                   + " -T ../templates/request6-example.hex ::1");
+                   + " -T " + getFullPath("solicit-example.hex")
+                   + " -T " + getFullPath("request6-example.hex ::1"));
     // For the first 3 packets we are simulating responses from server.
     // For other packets we don't so packet as 4,5,6 will be dropped and
     // then test should be interrupted and actual number of iterations will
@@ -981,9 +993,9 @@ TEST_F(TestControlTest, Packet6Exchange) {
 
 TEST_F(TestControlTest, PacketTemplates) {
     std::vector<uint8_t> template1(256);
-    std::string file1("../templates/test1.hex");
+    std::string file1("test1.hex");
     std::vector<uint8_t> template2(233);
-    std::string file2("../templates/test2.hex");
+    std::string file2("test2.hex");
     for (int i = 0; i < template1.size(); ++i) {
         template1[i] = static_cast<uint8_t>(random() % 256);
     }
@@ -1011,7 +1023,7 @@ TEST_F(TestControlTest, PacketTemplates) {
     EXPECT_TRUE(std::equal(template2.begin(), template2.end(), buf2.begin()));
 
     // Try to read template file with odd number of digits.
-    std::string file3("../templates/test3.hex");
+    std::string file3("test3.hex");
     // Size of the file is 2 times larger than binary data size and it is always
     // even number. Substracting 1 makes file size odd.
     ASSERT_TRUE(createTemplateFile(file3, template1, template1.size() * 2 - 1));
@@ -1021,7 +1033,7 @@ TEST_F(TestControlTest, PacketTemplates) {
     EXPECT_THROW(tc.initPacketTemplates(), isc::OutOfRange);
 
     // Try to read empty file.
-    std::string file4("../templates/test4.hex");
+    std::string file4("test4.hex");
     ASSERT_TRUE(createTemplateFile(file4, template2, 0));
     ASSERT_NO_THROW(
         processCmdLine("perfdhcp -l 127.0.0.1 -T " + file4 + " all")
@@ -1029,7 +1041,7 @@ TEST_F(TestControlTest, PacketTemplates) {
     EXPECT_THROW(tc.initPacketTemplates(), isc::OutOfRange);
 
     // Try reading file with non hexadecimal characters.
-    std::string file5("../templates/test5.hex");
+    std::string file5("test5.hex");
     ASSERT_TRUE(createTemplateFile(file5, template1, template1.size() * 2, true));
     ASSERT_NO_THROW(
         processCmdLine("perfdhcp -l 127.0.0.1 -T " + file5 + " all")

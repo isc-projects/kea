@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ASIOLINK_INTERVAL_TIMER_H
-#define __ASIOLINK_INTERVAL_TIMER_H 1
+#ifndef ASIOLINK_INTERVAL_TIMER_H
+#define ASIOLINK_INTERVAL_TIMER_H 1
 
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
@@ -130,4 +130,4 @@ private:
 
 } // namespace asiolink
 } // namespace isc
-#endif // __ASIOLINK_INTERVAL_TIMER_H
+#endif // ASIOLINK_INTERVAL_TIMER_H

@@ -12,13 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <dhcp/dhcp4.h>
-#include <dhcp/pkt4.h>
-#include <dhcp/iface_mgr.h>
-#include <dhcp4/dhcp4_srv.h>
-#include <dhcp4/dhcp4_log.h>
-#include <dhcp/option4_addrlst.h>
 #include <asiolink/io_address.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp/iface_mgr.h>
+#include <dhcp/option4_addrlst.h>
+#include <dhcp/pkt4.h>
+#include <dhcp4/dhcp4_log.h>
+#include <dhcp4/dhcp4_srv.h>
 
 using namespace isc;
 using namespace isc::asiolink;

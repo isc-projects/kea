@@ -49,7 +49,7 @@ rdataSetDeleter(RRClass rrclass, util::MemorySegment* mem_sgmt,
          rdataset = rdataset_next)
     {
         rdataset_next = rdataset->getNext();
-        RdataSet::destroy(*mem_sgmt, rrclass, rdataset);
+        RdataSet::destroy(*mem_sgmt, rdataset, rrclass);
     }
 }
 
@@ -61,21 +61,28 @@ nullDeleter(RdataSet* rdataset_head) {
 
 NSEC3Data*
 NSEC3Data::create(util::MemorySegment& mem_sgmt,
+                  const Name& zone_origin,
                   const generic::NSEC3PARAM& rdata)
 {
-    return (NSEC3Data::create(mem_sgmt, rdata.getHashalg(), rdata.getFlags(),
+    return (NSEC3Data::create(mem_sgmt, zone_origin,
+                              rdata.getHashalg(), rdata.getFlags(),
                               rdata.getIterations(), rdata.getSalt()));
 }
 
 NSEC3Data*
-NSEC3Data::create(util::MemorySegment& mem_sgmt, const generic::NSEC3& rdata) {
-    return (NSEC3Data::create(mem_sgmt, rdata.getHashalg(), rdata.getFlags(),
+NSEC3Data::create(util::MemorySegment& mem_sgmt,
+                  const Name& zone_origin,
+                  const generic::NSEC3& rdata)
+{
+    return (NSEC3Data::create(mem_sgmt, zone_origin,
+                              rdata.getHashalg(), rdata.getFlags(),
                               rdata.getIterations(), rdata.getSalt()));
 }
 
 NSEC3Data*
-NSEC3Data::create(util::MemorySegment& mem_sgmt, uint8_t hashalg,
-                  uint8_t flags, uint16_t iterations,
+NSEC3Data::create(util::MemorySegment& mem_sgmt,
+                  const Name& zone_origin,
+                  uint8_t hashalg, uint8_t flags, uint16_t iterations,
                   const std::vector<uint8_t>& salt)
 {
     // NSEC3Data allocation can throw.  To avoid leaking the tree, we manage
@@ -86,6 +93,11 @@ NSEC3Data::create(util::MemorySegment& mem_sgmt, uint8_t hashalg,
     detail::SegmentObjectHolder<ZoneTree, RdataSetDeleterType> holder(
         mem_sgmt, ZoneTree::create(mem_sgmt, true),
         boost::bind(nullDeleter, _1));
+
+    ZoneTree* tree = holder.get();
+    const ZoneTree::Result result =
+        tree->insert(mem_sgmt, zone_origin, NULL);
+    assert(result == ZoneTree::SUCCESS);
 
     const size_t salt_len = salt.size();
 

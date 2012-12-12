@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_DATASRC_H
-#define __PYTHON_DATASRC_H 1
+#ifndef PYTHON_DATASRC_H
+#define PYTHON_DATASRC_H 1
 
 #include <Python.h>
 
@@ -43,7 +43,7 @@ extern PyObject* getDataSourceException(const char* ex_name);
 } // namespace datasrc
 } // namespace isc
 
-#endif // __PYTHON_ACL_DNS_H
+#endif // PYTHON_DATASRC_H
 
 // Local Variables:
 // mode: c++

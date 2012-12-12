@@ -35,7 +35,7 @@
 
  This method iterates over list of received configuration elements and creates a
  list of parsers for each received entry. Parser is an object that is derived
- from a \ref isc::dhcp::Dhcp6ConfigParser class. Once a parser is created
+ from a \ref isc::dhcp::DhcpConfigParser class. Once a parser is created
  (constructor), its value is set (using build() method). Once all parsers are
  build, the configuration is then applied ("commited") and commit() method is
  called.
@@ -51,7 +51,7 @@
 
  @section dhcp6-config-inherit DHCPv6 Configuration Inheritance
 
- One notable useful features of DHCP configuration is its parameter inheritance.
+ One notable useful feature of DHCP configuration is its parameter inheritance.
  For example, renew-timer value may be specified at a global scope and it then
  applies to all subnets. However, some subnets may have it overwritten with more
  specific values that takes precedence over global values that are considered
@@ -75,5 +75,7 @@
  those parameters may be used thousands times per second, so its use must be as
  simple as possible. In fact, currently the code has to call Subnet6->getT1() and
  do not implement any fancy inheritance logic.
+
+ @todo Add section about setting up options and their definitions with bindctl.
 
  */

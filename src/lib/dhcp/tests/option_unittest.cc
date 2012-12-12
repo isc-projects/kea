@@ -13,17 +13,19 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+
+#include <dhcp/dhcp6.h>
+#include <dhcp/option.h>
+#include <exceptions/exceptions.h>
+#include <util/buffer.h>
+
+#include <boost/shared_ptr.hpp>
+#include <gtest/gtest.h>
+
 #include <iostream>
 #include <sstream>
 
 #include <arpa/inet.h>
-#include <gtest/gtest.h>
-#include <boost/shared_ptr.hpp>
-#include <exceptions/exceptions.h>
-#include <util/buffer.h>
-
-#include "dhcp/dhcp6.h"
-#include "dhcp/option.h"
 
 using namespace std;
 using namespace isc;
@@ -521,5 +523,28 @@ TEST_F(OptionTest, setData) {
     test_data = static_cast<const uint8_t*>(outBuf_.getData());
     EXPECT_TRUE(0 == memcmp(&buf_[0], test_data + opt1->getHeaderLen(),
                             buf_.size()));
+}
+
+// This test verifies that options can be compared using equal() method.
+TEST_F(OptionTest, equal) {
+
+    // five options with varying lengths
+    OptionPtr opt1(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 1));
+    OptionPtr opt2(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 2));
+    OptionPtr opt3(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 3));
+
+    // the same content as opt2, but different type
+    OptionPtr opt4(new Option(Option::V6, 1, buf_.begin(), buf_.begin() + 2));
+
+    // another instance with the same type and content as opt2
+    OptionPtr opt5(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 2));
+
+    EXPECT_TRUE(opt1->equal(opt1));
+
+    EXPECT_FALSE(opt1->equal(opt2));
+    EXPECT_FALSE(opt1->equal(opt3));
+    EXPECT_FALSE(opt1->equal(opt4));
+
+    EXPECT_TRUE(opt2->equal(opt5));
 }
 }

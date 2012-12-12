@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_RDATA_H
-#define __PYTHON_RDATA_H 1
+#ifndef PYTHON_RDATA_H
+#define PYTHON_RDATA_H 1
 
 #include <Python.h>
 
@@ -61,7 +61,7 @@ const isc::dns::rdata::Rdata& PyRdata_ToRdata(const PyObject* rdata_obj);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_RDATA_H
+#endif // PYTHON_RDATA_H
 
 // Local Variables:
 // mode: c++

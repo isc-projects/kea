@@ -12,16 +12,23 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __TXT_LIKE_H
-#define __TXT_LIKE_H 1
+#ifndef TXT_LIKE_H
+#define TXT_LIKE_H 1
+
+#include <dns/master_lexer.h>
+#include <dns/rdata/generic/detail/char_string.h>
 
 #include <stdint.h>
 
 #include <string>
+#include <sstream>
 #include <vector>
 
-using namespace std;
-using namespace isc::util;
+namespace isc {
+namespace dns {
+namespace rdata {
+namespace generic {
+namespace detail {
 
 /// \brief \c rdata::TXTLikeImpl class represents the TXT-like RDATA for TXT
 /// and SPF types.
@@ -41,7 +48,7 @@ public:
     ///
     /// \c InvalidRdataLength is thrown if rdata_len exceeds the maximum.
     /// \c DNSMessageFORMERR is thrown if the RR is misformed.
-    TXTLikeImpl(InputBuffer& buffer, size_t rdata_len) {
+    TXTLikeImpl(util::InputBuffer& buffer, size_t rdata_len) {
         if (rdata_len > MAX_RDLENGTH) {
             isc_throw(InvalidRdataLength, "RDLENGTH too large: " << rdata_len);
         }
@@ -59,7 +66,7 @@ public:
                           " RDATA: character string length is too large: " <<
                           static_cast<int>(len));
             }
-            vector<uint8_t> data(len + 1);
+            std::vector<uint8_t> data(len + 1);
             data[0] = len;
             buffer.readData(&data[0] + 1, len);
             string_list_.push_back(data);
@@ -70,46 +77,61 @@ public:
 
     /// \brief Constructor from string.
     ///
-    /// <b>Exceptions</b>
-    ///
-    /// \c CharStringTooLong is thrown if the parameter string length exceeds
-    /// maximum.
-    /// \c InvalidRdataText is thrown if the method cannot process the
-    /// parameter data.
+    /// \throw CharStringTooLong the parameter string length exceeds maximum.
+    /// \throw InvalidRdataText the method cannot process the parameter data
     explicit TXTLikeImpl(const std::string& txtstr) {
-        // TBD: this is a simple, incomplete implementation that only supports
-        // a single character-string.
+        std::istringstream ss(txtstr);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
 
-        size_t length = txtstr.size();
-        size_t pos_begin = 0;
-
-        if (length > 1 && txtstr[0] == '"' && txtstr[length - 1] == '"') {
-            pos_begin = 1;
-            length -= 2;
+        try {
+            buildFromTextHelper(lexer);
+            if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+                isc_throw(InvalidRdataText, "Failed to construct " <<
+                          RRType(typeCode) << " RDATA from '" << txtstr <<
+                          "': extra new line");
+            }
+        } catch (const MasterLexer::LexerError& ex) {
+            isc_throw(InvalidRdataText, "Failed to construct " <<
+                      RRType(typeCode) << " RDATA from '" << txtstr << "': "
+                      << ex.what());
         }
-
-        if (length > MAX_CHARSTRING_LEN) {
-            isc_throw(CharStringTooLong, RRType(typeCode) <<
-                      " RDATA construction from text:"
-                      " string length is too long: " << length);
-        }
-
-        // TBD: right now, we don't support escaped characters
-        if (txtstr.find('\\') != string::npos) {
-            isc_throw(InvalidRdataText, RRType(typeCode) <<
-                      " RDATA from text:"
-                      " escaped character is currently not supported: " <<
-                      txtstr);
-        }
-
-        vector<uint8_t> data;
-        data.reserve(length + 1);
-        data.push_back(length);
-        data.insert(data.end(), txtstr.begin() + pos_begin,
-                    txtstr.begin() + pos_begin + length);
-        string_list_.push_back(data);
     }
 
+    /// \brief Constructor using the master lexer.
+    ///
+    /// \throw CharStringTooLong the parameter string length exceeds maximum.
+    /// \throw InvalidRdataText the method cannot process the parameter data
+    ///
+    /// \param lexer A \c MasterLexer object parsing a master file for this
+    /// RDATA.
+    TXTLikeImpl(MasterLexer& lexer) {
+        buildFromTextHelper(lexer);
+    }
+
+private:
+    void buildFromTextHelper(MasterLexer& lexer) {
+        while (true) {
+            const MasterToken& token = lexer.getNextToken(
+                MasterToken::QSTRING, true);
+            if (token.getType() != MasterToken::STRING &&
+                token.getType() != MasterToken::QSTRING) {
+                break;
+            }
+            string_list_.push_back(std::vector<uint8_t>());
+            strToCharString(token.getStringRegion(), string_list_.back());
+        }
+
+        // Let upper layer handle eol/eof.
+        lexer.ungetToken();
+
+        if (string_list_.empty()) {
+            isc_throw(InvalidRdataText, "Failed to construct" <<
+                      RRType(typeCode) << " RDATA: empty input");
+        }
+    }
+
+public:
     /// \brief The copy constructor.
     ///
     /// Trivial for now, we could've used the default one.
@@ -122,9 +144,9 @@ public:
     ///
     /// \param buffer An output buffer to store the wire data.
     void
-    toWire(OutputBuffer& buffer) const {
-        for (vector<vector<uint8_t> >::const_iterator it =
-                                                          string_list_.begin();
+    toWire(util::OutputBuffer& buffer) const {
+        for (std::vector<std::vector<uint8_t> >::const_iterator it =
+                 string_list_.begin();
              it != string_list_.end();
              ++it)
         {
@@ -139,8 +161,8 @@ public:
     /// to.
     void
     toWire(AbstractMessageRenderer& renderer) const {
-        for (vector<vector<uint8_t> >::const_iterator it =
-                                                          string_list_.begin();
+        for (std::vector<std::vector<uint8_t> >::const_iterator it =
+                 string_list_.begin();
              it != string_list_.end();
              ++it)
         {
@@ -151,14 +173,14 @@ public:
     /// \brief Convert the TXT-like data to a string.
     ///
     /// \return A \c string object that represents the TXT-like data.
-    string
+    std::string
     toText() const {
-        string s;
+        std::string s;
 
         // XXX: this implementation is not entirely correct.  for example, it
         // should escape double-quotes if they appear in the character string.
-        for (vector<vector<uint8_t> >::const_iterator it =
-                                                          string_list_.begin();
+        for (std::vector<std::vector<uint8_t> >::const_iterator it =
+                 string_list_.begin();
              it != string_list_.end();
              ++it)
         {
@@ -189,7 +211,7 @@ public:
         OutputBuffer this_buffer(0);
         toWire(this_buffer);
         uint8_t const* const this_data = (uint8_t const*)this_buffer.getData();
-        size_t this_len = this_buffer.getLength();
+        const size_t this_len = this_buffer.getLength();
 
         OutputBuffer other_buffer(0);
         other.toWire(other_buffer);
@@ -214,11 +236,14 @@ private:
     std::vector<std::vector<uint8_t> > string_list_;
 };
 
-// END_RDATA_NAMESPACE
-// END_ISC_NAMESPACE
+}      // namespace detail
+}      // namespace generic
+}      // namespace rdata
+}      // namespace dns
+}      // namespace isc
 
-#endif //  __TXT_LIKE_H
+#endif //  TXT_LIKE_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

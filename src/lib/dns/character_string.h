@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __CHARACTER_STRING_H
-#define __CHARACTER_STRING_H
+#ifndef CHARACTER_STRING_H
+#define CHARACTER_STRING_H
 
 #include <string>
 #include <exceptions/exceptions.h>
@@ -39,9 +39,12 @@ namespace characterstr {
     /// \param input_iterator The iterator from which to start extracting,
     ///        the iterator will be updated to new position after the function
     ///        is returned
+    /// \param quoted If not \c NULL, returns \c true at this address if
+    ///        the string is quoted, \cfalse otherwise
     /// \return A std::string that contains the extracted <character-string>
     std::string getNextCharacterString(const std::string& input_str,
-                                       std::string::const_iterator& input_iterator);
+                                       std::string::const_iterator& input_iterator,
+                                       bool* quoted = NULL);
 
     /// Get a <character-string> from a input buffer
     ///
@@ -54,4 +57,4 @@ namespace characterstr {
 } // namespace dns
 } // namespace isc
 
-#endif // __CHARACTER_STRING_H
+#endif // CHARACTER_STRING_H

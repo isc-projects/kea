@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RECURSIVE_QUERY_H
-#define __RECURSIVE_QUERY_H 1
+#ifndef RECURSIVE_QUERY_H
+#define RECURSIVE_QUERY_H 1
 
 #include <util/buffer.h>
 #include <asiodns/dns_service.h>
@@ -52,6 +52,26 @@ private:
     std::vector<uint32_t>   rtt_;   ///< Stored round-trip times
 };
 
+typedef std::vector<std::pair<std::string, uint16_t> > AddressVector;
+
+/// \brief A Running query
+///
+/// This base class represents an active running query object;
+/// i.e. an outstanding query to an authoritative name server or
+/// upstream server (when running in forwarder mode).
+///
+/// It can not be instantiated directly, but is created by
+/// RecursiveQuery::resolve() and RecursiveQuery::forward().
+///
+/// Its only public method is its destructor, and that should in theory
+/// not be called either except in some unit tests. Instances should
+/// delete themselves when the query is finished.
+class AbstractRunningQuery {
+protected:
+    AbstractRunningQuery() {};
+public:
+    virtual ~AbstractRunningQuery() {};
+};
 
 /// \brief Recursive Query
 ///
@@ -126,8 +146,8 @@ public:
     /// \param question The question being answered <qname/qclass/qtype>
     /// \param callback Callback object. See
     ///        \c ResolverInterface::Callback for more information
-    void resolve(const isc::dns::QuestionPtr& question,
-                 const isc::resolve::ResolverInterface::CallbackPtr callback);
+    AbstractRunningQuery* resolve(const isc::dns::QuestionPtr& question,
+        const isc::resolve::ResolverInterface::CallbackPtr callback);
 
 
     /// \brief Initiates resolving for the given question.
@@ -142,10 +162,17 @@ public:
     /// \param buffer An output buffer into which the intermediate responses will
     ///        be copied.
     /// \param server A pointer to the \c DNSServer object handling the client
-    void resolve(const isc::dns::Question& question,
-                 isc::dns::MessagePtr answer_message,
-                 isc::util::OutputBufferPtr buffer,
-                 DNSServer* server);
+    /// \return A pointer to the active AbstractRunningQuery object
+    ///         created by this call (if any); this object should delete
+    ///         itself in normal circumstances, and can normally be ignored
+    ///         by the caller, but a pointer is returned for use-cases
+    ///         such as unit tests.
+    ///         Returns NULL if the data was found internally and no actual
+    ///         query was sent.
+    AbstractRunningQuery* resolve(const isc::dns::Question& question,
+                          isc::dns::MessagePtr answer_message,
+                          isc::util::OutputBufferPtr buffer,
+                          DNSServer* server);
 
     /// \brief Initiates forwarding for the given query.
     ///
@@ -158,7 +185,11 @@ public:
     /// \param server Server object that handles receipt and processing of the
     ///               received messages.
     /// \param callback callback object
-    void forward(isc::dns::ConstMessagePtr query_message,
+    /// \return A pointer to the active ForwardQuery created by this call;
+    ///         this object should delete itself in normal circumstances,
+    ///         and can normally be ignored by the caller, but a pointer
+    ///         is returned for use-cases such as unit tests.
+    AbstractRunningQuery* forward(isc::dns::ConstMessagePtr query_message,
                  isc::dns::MessagePtr answer_message,
                  isc::util::OutputBufferPtr buffer,
                  DNSServer* server,
@@ -195,4 +226,4 @@ private:
 
 }      // namespace asiodns
 }      // namespace isc
-#endif // __RECURSIVE_QUERY_H
+#endif // RECURSIVE_QUERY_H

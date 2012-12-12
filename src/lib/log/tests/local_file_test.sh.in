@@ -51,7 +51,9 @@ FATAL [example.beta] LOG_BAD_SEVERITY unrecognized log severity: beta_fatal
 ERROR [example.beta] LOG_BAD_DESTINATION unrecognized log destination: beta_error
 WARN  [example.beta] LOG_BAD_STREAM bad log console output stream: beta_warn
 .
-./logger_example -c stdout -s warn $localmes | cut -d' ' -f3- | diff $tempfile -
+./logger_example -c stdout -s warn $localmes | \
+    sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' | \
+    cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 echo -n "2. Report error if unable to read local message file:"
@@ -66,7 +68,9 @@ ERROR [example.beta] LOG_BAD_DESTINATION unrecognized log destination: beta_erro
 WARN  [example.beta] LOG_BAD_STREAM bad log console output stream: beta_warn
 .
 rm -f $localmes
-./logger_example -c stdout -s warn $localmes | cut -d' ' -f3- | diff $tempfile -
+./logger_example -c stdout -s warn $localmes | \
+    sed -e 's/\[\([a-z0-9\.]\{1,\}\)\/\([0-9]\{1,\}\)\]/[\1]/' | \
+    cut -d' ' -f3- | diff $tempfile -
 passfail $?
 
 if [ $failcount -eq 0 ]; then

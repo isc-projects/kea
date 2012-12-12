@@ -1,0 +1,22 @@
+{
+    "version": 2,
+    "Logging": {
+        "loggers": [ {
+            "debuglevel": 99,
+            "severity": "DEBUG",
+            "name": "*"
+        } ]
+    },
+    "Auth": {
+        "listen_on": [ {
+            "port": 47806,
+            "address": "127.0.0.1"
+        } ]
+    },
+    "Boss": {
+        "components": {
+            "b10-auth": { "kind": "needed", "special": "auth" },
+            "b10-cmdctl": { "special": "cmdctl", "kind": "needed" }
+        }
+    }
+}

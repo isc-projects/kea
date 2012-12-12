@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __NAME_INTERNAL_H
-#define __NAME_INTERNAL_H 1
+#ifndef NAME_INTERNAL_H
+#define NAME_INTERNAL_H 1
 
 // This is effectively a "private" namespace for the Name class implementation,
 // but exposed publicly so the definitions in it can be shared with other
@@ -36,7 +36,7 @@ extern const uint8_t maptolower[];
 } // end of name
 } // end of dns
 } // end of isc
-#endif // __NAME_INTERNAL_H
+#endif // NAME_INTERNAL_H
 
 // Local Variables:
 // mode: c++

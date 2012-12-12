@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __DUMMY_IO_CB_H
-#define __DUMMY_IO_CB_H
+#ifndef DUMMY_IO_CB_H
+#define DUMMY_IO_CB_H
 
 #include <iostream>
 
@@ -59,4 +59,4 @@ public:
 } // namespace asiolink
 } // namespace isc
 
-#endif // __DUMMY_IO_CB_H
+#endif // DUMMY_IO_CB_H

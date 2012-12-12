@@ -12,15 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <stdint.h>
-#include <arpa/inet.h>
-#include <sstream>
-
-#include <exceptions/exceptions.h>
+#include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_ia.h>
-#include <dhcp/dhcp6.h>
+#include <exceptions/exceptions.h>
 #include <util/io_utilities.h>
+
+#include <arpa/inet.h>
+#include <sstream>
+#include <stdint.h>
 
 using namespace std;
 using namespace isc::util;
@@ -29,7 +29,7 @@ namespace isc {
 namespace dhcp {
 
 Option6IA::Option6IA(uint16_t type, uint32_t iaid)
-    :Option(Option::V6, type), iaid_(iaid) {
+    :Option(Option::V6, type), iaid_(iaid), t1_(0), t2_(0) {
 }
 
 Option6IA::Option6IA(uint16_t type, OptionBufferConstIter begin, OptionBufferConstIter end)
@@ -44,7 +44,7 @@ void Option6IA::pack(isc::util::OutputBuffer& buf) {
     buf.writeUint32(t1_);
     buf.writeUint32(t2_);
 
-    LibDHCP::packOptions6(buf, options_);
+    packOptions(buf);
 }
 
 void Option6IA::unpack(OptionBufferConstIter begin,
@@ -62,7 +62,7 @@ void Option6IA::unpack(OptionBufferConstIter begin,
     t2_ = readUint32( &(*begin) );
     begin += sizeof(uint32_t);
 
-    LibDHCP::unpackOptions6(OptionBuffer(begin, end), options_);
+    unpackOptions(OptionBuffer(begin, end));
 }
 
 std::string Option6IA::toText(int indent /* = 0*/) {

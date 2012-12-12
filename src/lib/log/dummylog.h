@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef _ISC_DUMMYLOG_H
-#define _ISC_DUMMYLOG_H 1
+#ifndef ISC_DUMMYLOG_H
+#define ISC_DUMMYLOG_H 1
 
 #include <string>
 
@@ -58,4 +58,4 @@ void dlog(const std::string& message, bool error_flag=false);
 }
 }
 
-#endif // _ISC_DUMMYLOG_H
+#endif // ISC_DUMMYLOG_H

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RESOLVER_H
-#define __RESOLVER_H 1
+#ifndef RESOLVER_H
+#define RESOLVER_H 1
 
 #include <string>
 #include <vector>
@@ -266,7 +266,7 @@ private:
     isc::cache::ResolverCache* cache_;
 };
 
-#endif // __RESOLVER_H
+#endif // RESOLVER_H
 
 // Local Variables:
 // mode: c++
