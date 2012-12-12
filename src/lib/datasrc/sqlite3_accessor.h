@@ -98,7 +98,7 @@ public:
     /// \brief Destructor
     ///
     /// Closes the database.
-    ~SQLite3Accessor();
+    virtual ~SQLite3Accessor();
 
     /// This implementation internally opens a new sqlite3 database for the
     /// same file name specified in the constructor of the original accessor.
