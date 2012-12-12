@@ -23,7 +23,6 @@
 #include <dns/rrcollator.h>
 #include <dns/rdataclass.h>
 #include <dns/rrset.h>
-#include <dns/rrcollator.h>
 
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
