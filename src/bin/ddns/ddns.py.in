@@ -45,7 +45,7 @@ import os.path
 import signal
 import socket
 
-isc.log.init("b10-ddns")
+isc.log.init("b10-ddns", buffer=True)
 logger = isc.log.Logger("ddns")
 TRACE_BASIC = logger.DBGLVL_TRACE_BASIC
 

@@ -993,9 +993,9 @@ TEST_F(TestControlTest, Packet6Exchange) {
 
 TEST_F(TestControlTest, PacketTemplates) {
     std::vector<uint8_t> template1(256);
-    std::string file1(getFullPath("test1.hex"));
+    std::string file1("test1.hex");
     std::vector<uint8_t> template2(233);
-    std::string file2(getFullPath("test2.hex"));
+    std::string file2("test2.hex");
     for (int i = 0; i < template1.size(); ++i) {
         template1[i] = static_cast<uint8_t>(random() % 256);
     }
@@ -1023,7 +1023,7 @@ TEST_F(TestControlTest, PacketTemplates) {
     EXPECT_TRUE(std::equal(template2.begin(), template2.end(), buf2.begin()));
 
     // Try to read template file with odd number of digits.
-    std::string file3(getFullPath("test3.hex"));
+    std::string file3("test3.hex");
     // Size of the file is 2 times larger than binary data size and it is always
     // even number. Substracting 1 makes file size odd.
     ASSERT_TRUE(createTemplateFile(file3, template1, template1.size() * 2 - 1));
@@ -1033,7 +1033,7 @@ TEST_F(TestControlTest, PacketTemplates) {
     EXPECT_THROW(tc.initPacketTemplates(), isc::OutOfRange);
 
     // Try to read empty file.
-    std::string file4(getFullPath("test4.hex"));
+    std::string file4("test4.hex");
     ASSERT_TRUE(createTemplateFile(file4, template2, 0));
     ASSERT_NO_THROW(
         processCmdLine("perfdhcp -l 127.0.0.1 -T " + file4 + " all")
@@ -1041,7 +1041,7 @@ TEST_F(TestControlTest, PacketTemplates) {
     EXPECT_THROW(tc.initPacketTemplates(), isc::OutOfRange);
 
     // Try reading file with non hexadecimal characters.
-    std::string file5(getFullPath("test5.hex"));
+    std::string file5("test5.hex");
     ASSERT_TRUE(createTemplateFile(file5, template1, template1.size() * 2, true));
     ASSERT_NO_THROW(
         processCmdLine("perfdhcp -l 127.0.0.1 -T " + file5 + " all")

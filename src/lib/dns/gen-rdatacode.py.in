@@ -32,7 +32,8 @@ import sys
 #
 # Example:
 #     new_rdata_factory_users = [('a', 'in'), ('a', 'ch'), ('soa', 'generic')]
-new_rdata_factory_users = [('aaaa', 'in')]
+new_rdata_factory_users = [('aaaa', 'in'), ('txt', 'generic'),
+                           ('spf', 'generic')]
 
 re_typecode = re.compile('([\da-z]+)_(\d+)')
 classcode2txt = {}

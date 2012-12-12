@@ -43,7 +43,7 @@ The master port as read from the configuration is not a valid port number.
 
 % XFRIN_BAD_TSIG_KEY_STRING bad TSIG key string: %1
 The TSIG key string as read from the configuration does not represent
-a valid TSIG key.
+a valid TSIG key. The key is ignored.
 
 % XFRIN_BAD_ZONE_CLASS Invalid zone class: %1
 The zone class as read from the configuration is not a valid DNS class.
@@ -159,6 +159,13 @@ bytes: Full size of the transfer data on the wire.
 run time: Time (in seconds) the complete axfr took
 
 bytes/second: Transfer speed
+
+% XFRIN_TSIG_KEY_NOT_FOUND TSIG key not found in key ring: %1
+An attempt to start a transfer with TSIG was made, but the configured TSIG
+key name was not found in the TSIG key ring (configuration option
+tsig_keys/keys). The transfer is aborted. The key name that could not be
+found is shown in the log message. Check the configuration and the
+TSIG key ring.
 
 % XFRIN_UNKNOWN_ERROR unknown error: %1
 An uncaught exception was raised while running the xfrin daemon. The

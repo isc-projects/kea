@@ -338,7 +338,8 @@ Variant #1, Used by Production Programs
 ---------------------------------------
 void isc::log::initLogger(const std::string& root,
                           isc::log::Severity severity = isc::log::INFO,
-                          int dbglevel = 0, const char* file = NULL);
+                          int dbglevel = 0, const char* file = NULL,
+                          bool buffer = false);
 
 This is the call that should be used by production programs:
 
@@ -359,6 +360,17 @@ file
 The name of a local message file.  This will be read and its definitions used
 to replace the compiled-in text of the messages.
 
+buffer
+If set to true, initial log messages will be internally buffered, until the
+first time a logger specification is processed. This way the program can
+use logging before even processing its logging configuration. As soon as any
+specification is processed (even an empty one), the buffered log messages will
+be flushed according to the specification. Note that if this option is used,
+the program SHOULD call one of the LoggerManager's process() calls (if you
+are using the built-in logging configuration handling in ModuleCCSession,
+this is automatically handled). If the program exits before this is done,
+all log messages are dumped in a raw format to stdout (so that no messages
+get lost).
 
 Variant #2, Used by Unit Tests
 ------------------------------

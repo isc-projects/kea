@@ -8,6 +8,17 @@
   the abstract isc::dhcp::LeaseMgr class.  This provides methods to
   create, retrieve, modify and delete leases in the database.
 
+  There are currently two available Lease Managers, MySQL and Memfile:
+
+  - The MySQL lease manager uses the freely available MySQL as its backend
+  database.  This is not included in BIND 10 DHCP by default:
+  the --with-dhcp-mysql switch must be supplied to "configure" for support
+  to be compiled into the software.
+  - Memfile is an in-memory lease database, with (currently) nothing being
+  written to persistent storage.  The long-term plans for the backend do
+  include the ability to store this on disk, but it is currently a
+  low-priority item.
+
   @section dhcpdb-instantiation Instantiation of Lease Managers
 
   A lease manager is instantiated through the LeaseMgrFactory class.  This
@@ -32,6 +43,8 @@
 
   - <b>type</b> - specifies the type of database backend.  The following values
   for the type keyword are supported:
+     - <B>memfile</b> - In-memory database.  Nothing is written to any
+       external storage, so this should not be used in production.
      - <b>mysql</b> - Use MySQL as the database
 
   The following sections list the database-specific keywords:
