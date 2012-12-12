@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
+
 #include <dns/name.h>
 #include <dns/rdataclass.h>
 #include <dns/rrcollator.h>
@@ -34,7 +36,11 @@ public:
     Impl(const AddRRsetCallback& callback,
          const MasterLoaderCallbacks& issue_callback) :
         callback_(callback), issue_callback_(issue_callback)
-    {}
+    {
+        if (!callback_) {
+            isc_throw(InvalidParameter, "Empty add RRset callback");
+        }
+    }
 
     void addRR(const Name& name, const RRClass& rrclass,
                const RRType& rrtype, const RRTTL& rrttl,
