@@ -44,6 +44,5 @@ DataSourceClient::createZone(const dns::Name&) {
               "Data source doesn't support addZone");
 }
 
-
 } // end namespace datasrc
 } // end namespace isc

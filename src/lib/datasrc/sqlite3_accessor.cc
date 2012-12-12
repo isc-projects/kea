@@ -625,6 +625,9 @@ SQLite3Accessor::addZone(const std::string& name) {
     }
 
     StatementProcessor proc(*dbparameters_, ADD_ZONE, "add zone");
+    // note: using TRANSIENT here, STATIC would be slightly more
+    // efficient, but TRANSIENT is safer and performance is not
+    // as important in this specific code path.
     proc.bindText(1, name.c_str(), SQLITE_TRANSIENT);
     proc.bindText(2, class_.c_str(), SQLITE_TRANSIENT);
     proc.exec();
