@@ -1,3 +1,8 @@
+524.	[func]		tomek
+	b10-dhcp6 is now able to handle RENEW messages. Leases are
+	renewed and REPLY responses are sent back to clients.
+	(Trac #2325, git 7f6c9d057cc0a7a10f41ce7da9c8565b9ee85246)
+
 523.	[bug]		muks
 	Fixed a problem in inmem NSEC3 lookup (for, instance when using a
 	zone with no non-apex names) which caused exceptions when the zone
