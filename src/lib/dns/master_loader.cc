@@ -144,6 +144,7 @@ public:
             default_ttl_.reset(new RRTTL(ttl_txt));
         }
         //setCurrentTTL(*default_ttl_);
+        eatUntilEOL(true);
     }
 
     void setCurrentTTL(const RRTTL& ttl) {

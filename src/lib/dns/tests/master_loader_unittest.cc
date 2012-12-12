@@ -270,27 +270,31 @@ TEST_F(MasterLoaderTest, invalidFile) {
 
 struct ErrorCase {
     const char* const line;    // The broken line in master file
+    const char* const reason;  // If non NULL, the reason string
     const char* const problem; // Description of the problem for SCOPED_TRACE
 } const error_cases[] = {
-    { "www...   3600    IN  A   192.0.2.1", "Invalid name" },
-    { "www      FORTNIGHT   IN  A   192.0.2.1", "Invalid TTL" },
-    { "www      3600    XX  A   192.0.2.1", "Invalid class" },
-    { "www      3600    IN  A   bad_ip", "Invalid Rdata" },
-    { "www      3600    IN", "Unexpected EOLN" },
-    { "www      3600    CH  TXT nothing", "Class mismatch" },
-    { "www      \"3600\"  IN  A   192.0.2.1", "Quoted TTL" },
-    { "www      3600    \"IN\"  A   192.0.2.1", "Quoted class" },
-    { "www      3600    IN  \"A\"   192.0.2.1", "Quoted type" },
-    { "unbalanced)paren 3600    IN  A   192.0.2.1", "Token error 1" },
-    { "www  3600    unbalanced)paren    A   192.0.2.1", "Token error 2" },
+    { "www...   3600    IN  A   192.0.2.1", NULL, "Invalid name" },
+    { "www      FORTNIGHT   IN  A   192.0.2.1", NULL, "Invalid TTL" },
+    { "www      3600    XX  A   192.0.2.1", NULL, "Invalid class" },
+    { "www      3600    IN  A   bad_ip", NULL, "Invalid Rdata" },
+    { "www      3600    IN", NULL, "Unexpected EOLN" },
+    { "www      3600    CH  TXT nothing", NULL, "Class mismatch" },
+    { "www      \"3600\"  IN  A   192.0.2.1", NULL, "Quoted TTL" },
+    { "www      3600    \"IN\"  A   192.0.2.1", NULL, "Quoted class" },
+    { "www      3600    IN  \"A\"   192.0.2.1", NULL, "Quoted type" },
+    { "unbalanced)paren 3600    IN  A   192.0.2.1", NULL, "Token error 1" },
+    { "www  3600    unbalanced)paren    A   192.0.2.1", NULL,
+      "Token error 2" },
     // Check the unknown directive. The rest looks like ordinary RR,
     // so we see the $ is actually special.
-    { "$UNKNOWN 3600    IN  A   192.0.2.1", "Unknown $ directive" },
-    { "$INCLUDE", "Missing include path" },
-    { "$INCLUDE /file/not/found", "Include file not found" },
-    { "$INCLUDE /file/not/found and here goes bunch of garbage",
+    { "$UNKNOWN 3600    IN  A   192.0.2.1", NULL, "Unknown $ directive" },
+    { "$INCLUDE", NULL, "Missing include path" },
+    { "$INCLUDE /file/not/found", NULL, "Include file not found" },
+    { "$INCLUDE /file/not/found and here goes bunch of garbage", NULL,
         "Include file not found and garbage at the end of line" },
-    { NULL, NULL }
+    { "$TTL 100 extra-garbage", "Extra tokens at the end of line",
+      "$TTL with extra token" },
+    { NULL, NULL, NULL }
 };
 
 // Test a broken zone is handled properly. We test several problems,
@@ -310,6 +314,9 @@ TEST_F(MasterLoaderTest, brokenZone) {
             EXPECT_THROW(loader_->load(), MasterLoaderError);
             EXPECT_FALSE(loader_->loadedSucessfully());
             EXPECT_EQ(1, errors_.size());
+            if (ec->reason != NULL) {
+                EXPECT_EQ(0, errors_.at(0).find(ec->reason));
+            }
             EXPECT_TRUE(warnings_.empty());
 
             checkRR("example.org", RRType::SOA(), "ns1.example.org. "
