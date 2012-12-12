@@ -22,10 +22,11 @@
 
 #include <string>
 #include <memory>
-#include <strings.h>
+#include <boost/algorithm/string/predicate.hpp> // for iequals
 
 using std::string;
 using std::auto_ptr;
+using boost::algorithm::iequals;
 
 namespace isc {
 namespace dns {
@@ -137,18 +138,13 @@ public:
     }
 
     void handleDirective(const char* directive, size_t length) {
-        // We use strncasecmp, because there seems to be no reasonable
-        // way to compare strings case-insensitive in C++
-
-        // Warning: The order of compared strings does matter. The length
-        // parameter applies to the first one only.
-        if (strncasecmp(directive, "INCLUDE", length) == 0) {
+        if (iequals(directive, "INCLUDE")) {
             doInclude();
-        } else if (strncasecmp(directive, "ORIGIN", length) == 0) {
+        } else if (iequals(directive, "ORIGIN")) {
             // TODO: Implement
             isc_throw(isc::NotImplemented,
                       "Origin directive not implemented yet");
-        } else if (strncasecmp(directive, "TTL", length) == 0) {
+        } else if (iequals(directive, "TTL")) {
             // TODO: Implement
             isc_throw(isc::NotImplemented,
                       "TTL directive not implemented yet");
