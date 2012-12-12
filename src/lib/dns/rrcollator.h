@@ -78,7 +78,7 @@ public:
     /// impossible to predict how this class is used (to see if it's a very
     /// rare case where propagating an exception from a destructor is
     /// justified).  Instead, the application needs to make sure that
-    /// \c finish() is called before the object of this class is destroyed.
+    /// \c flush() is called before the object of this class is destroyed.
     ///
     /// \throw None
     ~RRCollator();
@@ -96,7 +96,7 @@ public:
     ///
     /// It propagates any exception thrown from the callback; otherwise it
     /// doesn't throw anything.
-    void finish();
+    void flush();
 
     /// \brief Return \c MasterLoader compatible callback.
     ///
