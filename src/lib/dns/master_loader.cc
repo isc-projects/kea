@@ -20,6 +20,8 @@
 #include <dns/rrtype.h>
 #include <dns/rdata.h>
 
+#include <boost/scoped_ptr.hpp>
+
 #include <string>
 #include <memory>
 #include <boost/algorithm/string/predicate.hpp> // for iequals
@@ -137,6 +139,30 @@ public:
         pushSource(filename);
     }
 
+    void setDefaultTTL(const string& ttl_txt) {
+        if (!default_ttl_) {
+            default_ttl_.reset(new RRTTL(ttl_txt));
+        }
+        //setCurrentTTL(*default_ttl_);
+    }
+
+    void setCurrentTTL(const RRTTL& ttl) {
+        if (!current_ttl_) {
+            current_ttl_.reset(new RRTTL(ttl));
+        } else {
+            *current_ttl_ = ttl;
+        }
+    }
+
+    bool setCurrentTTL(const string& ttl_txt) {
+        try {
+            setCurrentTTL(RRTTL(ttl_txt));
+            return (true);
+        } catch (const InvalidRRTTL&) {
+            return (false);
+        }
+    }
+
     void handleDirective(const char* directive, size_t length) {
         if (iequals(directive, "INCLUDE")) {
             doInclude();
@@ -145,9 +171,7 @@ public:
             isc_throw(isc::NotImplemented,
                       "Origin directive not implemented yet");
         } else if (iequals(directive, "TTL")) {
-            // TODO: Implement
-            isc_throw(isc::NotImplemented,
-                      "TTL directive not implemented yet");
+            setDefaultTTL(getString());
         } else {
             isc_throw(InternalException, "Unknown directive '" <<
                       string(directive, directive + length) << "'");
@@ -189,6 +213,8 @@ private:
     const RRClass zone_class_;
     MasterLoaderCallbacks callbacks_;
     AddRRCallback add_callback_;
+    boost::scoped_ptr<RRTTL> default_ttl_;
+    boost::scoped_ptr<RRTTL> current_ttl_;
     const MasterLoader::Options options_;
     const std::string master_file_;
     std::string string_token_;
@@ -260,9 +286,23 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             // anything yet
 
             // The parameters
-            const RRTTL ttl(getString());
-            const RRClass rrclass(getString());
+            MasterToken rrparam_token = lexer_.getNextToken();
+            if (rrparam_token.getType() == MasterToken::STRING) {
+                // Try TTL
+                if (setCurrentTTL(rrparam_token.getString())) {
+                    rrparam_token = lexer_.getNextToken();
+                }
+            }
+
+            const RRClass rrclass(rrparam_token.getString());
             const RRType rrtype(getString());
+
+            // If the TTL is not yet determined, complete it.
+            if (!current_ttl_) {
+                if (default_ttl_) {
+                    setCurrentTTL(*default_ttl_);
+                } // TBD: else: try SOA min TTL for default, then error
+            }
 
             // TODO: Some more validation?
             if (rrclass != zone_class_) {
@@ -283,7 +323,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             // callbacks_ already. We need to decide if we want to continue
             // or not.
             if (data) {
-                add_callback_(name, rrclass, rrtype, ttl, data);
+                add_callback_(name, rrclass, rrtype, *current_ttl_, data);
 
                 // Good, we loaded another one
                 ++count;
