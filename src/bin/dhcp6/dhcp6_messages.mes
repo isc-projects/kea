@@ -22,6 +22,11 @@ successfully established a session with the BIND 10 control channel.
 This debug message is issued just before the IPv6 DHCP server attempts
 to establish a session with the BIND 10 control channel.
 
+% DHCP6_CLIENTID_MISSING mandatory client-id option is missing, message from %1 dropped
+This error message indicates that the received message is being dropped
+because it does not include the mandatory client-id option necessary for
+address assignment.  The most likely cause is a problem with the client.
+
 % DHCP6_COMMAND_RECEIVED received command %1, arguments: %2
 A debug message listing the command (and possible arguments) received
 from the BIND 10 control system by the IPv6 DHCP server.
@@ -80,6 +85,13 @@ and incicates successful operation.
 This message indicates that the server failed to grant (in response to
 received REQUEST) a lease for a given client. There may be many reasons for
 such failure. Each specific failure is logged in a separate log entry.
+
+% DHCP6_REQUIRED_OPTIONS_CHECK_FAIL %1 message received from %2 failed the following check: %3
+This message indicates that received DHCPv6 packet is invalid.  This may be due
+to a number of reasons, e.g. the mandatory client-id option is missing,
+the server-id forbidden in that particular type of message is present,
+there is more than one instance of client-id or server-id present,
+etc. The exact reason for rejecting the packet is included in the message.
 
 % DHCP6_NOT_RUNNING IPv6 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
@@ -189,3 +201,18 @@ which the DHCPv6 server has not been configured. The cause is most likely due
 to a misconfiguration of the server. The packet processing will continue, but
 the response will only contain generic configuration parameters and no
 addresses or prefixes.
+
+% DHCP6_UNKNOWN_RENEW received RENEW from client (duid=%1, iaid=%2) in subnet %3
+This warning message is printed when client attempts to renew a lease,
+but no such lease is known by the server. It typically means that
+client has attempted to use its lease past its lifetime: causes of this
+include a adjustment of the clients date/time setting or poor support
+for sleep/recovery. A properly implemented client will recover from such
+a situation by restarting the lease allocation process after receiving
+a negative reply from the server.
+
+An alternative cause could be that the server has lost its database
+recently and does not recognize its well-behaving clients. This is more
+probable if you see many such messages. Clients will recover from this,
+but they will most likely get a different IP addresses and experience
+a brief service interruption.
