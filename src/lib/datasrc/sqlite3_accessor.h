@@ -119,9 +119,9 @@ public:
 
     /// \brief Add a zone
     ///
-    /// This implements the addZone from DatabaseAccessor and adds an (empty)
-    /// zone into the zones table. If the zone exists already, it is still
-    /// added, so the caller should make sure this does not happen (by making
+    /// This implements the addZone from DatabaseAccessor and adds a zone
+    /// into the zones table. If the zone exists already, it is still added,
+    /// so the caller should make sure this does not happen (by making
     /// sure the zone does not exist). In the case of duplicate addition,
     /// it is undefined which zone id is returned.
     ///
