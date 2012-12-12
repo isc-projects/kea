@@ -1,0 +1,79 @@
+/**
+@page libdhcp libdhcp++
+
+@section libdhcpIntro Libdhcp++ Library Introduction
+
+libdhcp++ is an all-purpose DHCP-manipulation library, written in
+C++. It offers packet parsing and assembly, DHCPv4 and DHCPv6
+options parsing and ssembly, interface detection (currently on
+Linux systems only) and socket operations. It is a generic purpose library that
+can be used by server, client, relay, performance tools and other DHCP-related
+tools. For server specific library, see \ref libdhcpsrv. Please do not
+add any server-specific code to libdhcp++ and use \ref libdhcpsrv instead.
+
+The following classes for packet manipulation are implemented:
+
+- isc::dhcp::Pkt4 - represents DHCPv4 packet.
+- isc::dhcp::Pkt6 - represents DHCPv6 packet.
+
+There are two pointer types defined: Pkt4Ptr and Pkt6Ptr. They are
+smart pointer and are using boost::shared_ptr. There are not const
+versions defined, as we assume that hooks can modify any aspect of
+the packet at almost any stage of processing.
+
+Both packets use collection of Option objects to represent DHCPv4
+and DHCPv6 options. The base class -- Option -- can be used to
+represent generic option that contains collection of
+bytes. Depending on if the option is instantiated as v4 or v6
+option, it will adjust its header (DHCPv4 options use 1 octet for
+type and 1 octet for length, while DHCPv6 options use 2 bytes for
+each).
+
+There are many specialized classes that are intended to handle options with
+specific content:
+- isc::dhcp::Option4AddrLst -- DHCPv4 option, contains one or more IPv4 addresses;
+- isc::dhcp::Option6AddrLst -- DHCPv6 option, contains one or more IPv6 addresses;
+- isc::dhcp::Option6IAAddr -- DHCPv6 option, represents IAADDR_OPTION (an option that
+                    contains IPv6 address with extra parameters);
+- isc::dhcp::Option6IA -- DHCPv6 option used to store IA_NA and its suboptions.
+
+All options can store sub-options (i.e. options that are stored within option
+rather than in a message directly). This functionality is commonly used in
+DHCPv6, but is rarely used in DHCPv4. isc::dhcp::Option::addOption(),
+isc::dhcp::Option::delOption(), isc::dhcp::Option::getOption() can be used
+for that purpose.
+
+@section libdhcpIfaceMgr Interface Manager
+
+Interface Manager (or IfaceMgr) is an abstraction layer about low-level
+network operations. In particlar, it provides information about existing
+network interfaces See isc::dhcp::IfaceMgr::Iface class and
+isc::dhcp::IfaceMgr::detectIfaces() and isc::dhcp::IfaceMgr::getIface().
+
+Currently there is interface detection is implemented in Linux only. There
+are plans to implement such support for other OSes, but they remain low
+priority for now.
+
+Generic parts of the code are isc::dhcp::IfaceMgr class in
+src/lib/dhcp/iface_mgr.cc file. OS-specific code is located in separate
+files, e.g. iface_mgr_linux.cc. Such separation should be maintained when
+additional code will be developed.
+
+For systems that interface detection is not supported on, there is a stub
+mechanism implemented. It assumes that interface name is read from a text
+file. This is a temporary solution and will be removed as soon as proper
+interface detection is implemented. It is not going to be developed further.
+To use this feature, store interfaces.txt file. It uses a simple syntax.
+Each line represents an interface name, followed by IPv4 or IPv6 address
+that follows it. This is usually link-local IPv6 address that the server
+should bind to. In theory this mechanism also supports IPv4, but it was
+never tested. The code currently supports only a single interface defined
+that way.
+
+Another useful methods are dedicated to transmission
+(isc::dhcp::IfaceMgr::send(), 2 overloads) and reception
+(isc::dhcp::IfaceMgr::receive4() and isc::dhcp::IfaceMgr::receive6()).
+Note that receive4() and receive6() methods may return NULL, e.g.
+when timeout is reached or if dhcp daemon receives a signal.
+
+*/

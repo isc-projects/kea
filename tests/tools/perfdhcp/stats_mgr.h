@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __STATS_MGR_H
-#define __STATS_MGR_H
+#ifndef STATS_MGR_H
+#define STATS_MGR_H
 
 #include <iostream>
 #include <map>
@@ -1300,4 +1300,4 @@ private:
 } // namespace perfdhcp
 } // namespace isc
 
-#endif // __STATS_MGR_H
+#endif // STATS_MGR_H

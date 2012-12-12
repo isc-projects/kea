@@ -15,11 +15,11 @@
 #ifndef CTRL_DHCPV4_SRV_H
 #define CTRL_DHCPV4_SRV_H
 
-#include <dhcp4/dhcp4_srv.h>
 #include <asiolink/asiolink.h>
+#include <cc/data.h>
 #include <cc/session.h>
 #include <config/ccsession.h>
-#include <cc/data.h>
+#include <dhcp4/dhcp4_srv.h>
 
 namespace isc {
 namespace dhcp {

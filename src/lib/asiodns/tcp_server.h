@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __TCP_SERVER_H
-#define __TCP_SERVER_H 1
+#ifndef TCP_SERVER_H
+#define TCP_SERVER_H 1
 
 #ifndef ASIO_HPP
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
@@ -147,4 +147,4 @@ private:
 
 } // namespace asiodns
 } // namespace isc
-#endif // __TCP_SERVER_H
+#endif // TCP_SERVER_H

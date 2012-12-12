@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef _ISC_RESOLVE_H
-#define _ISC_RESOLVE_H 1
+#ifndef ISC_RESOLVE_H
+#define ISC_RESOLVE_H 1
 
 /// This file includes all other libresolve headers, and provides
 /// several helper functions used in resolving.

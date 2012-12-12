@@ -12,72 +12,86 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <datasrc/memory/zone_table_segment.h>
-#include <gtest/gtest.h>
+#include <datasrc/memory/zone_writer_local.h>
+#include <datasrc/memory/zone_table_segment_local.h>
+#include <util/memory_segment_local.h>
 
+#include <gtest/gtest.h>
+#include <boost/scoped_ptr.hpp>
+
+using namespace isc::dns;
 using namespace isc::datasrc::memory;
 using namespace isc::data;
 using namespace isc::util;
 using namespace std;
+using boost::scoped_ptr;
 
 namespace {
 
 class ZoneTableSegmentTest : public ::testing::Test {
 protected:
     ZoneTableSegmentTest() :
-        config_(Element::fromJSON("{}")),
-        segment_(ZoneTableSegment::create((*config_.get())))
+        ztable_segment_(ZoneTableSegment::create(isc::data::NullElement(),
+                                                 RRClass::IN()))
     {}
 
-    ~ZoneTableSegmentTest() {
-        if (segment_ != NULL) {
-            ZoneTableSegment::destroy(segment_);
-        }
-    }
-
     void TearDown() {
-        // Catch any future leaks here.
-        const MemorySegment& mem_sgmt = segment_->getMemorySegment();
-        EXPECT_TRUE(mem_sgmt.allMemoryDeallocated());
-
-        ZoneTableSegment::destroy(segment_);
-        segment_ = NULL;
+        ZoneTableSegment::destroy(ztable_segment_);
+        ztable_segment_ = NULL;
     }
 
-    const ElementPtr config_;
-    ZoneTableSegment* segment_;
+    ZoneTableSegment* ztable_segment_;
 };
 
 
 TEST_F(ZoneTableSegmentTest, create) {
     // By default, a local zone table segment is created.
-    EXPECT_NE(static_cast<void*>(NULL), segment_);
+    EXPECT_NE(static_cast<void*>(NULL), ztable_segment_);
 }
 
 // Helper function to check const and non-const methods.
 template <typename TS, typename TH, typename TT>
 void
-testGetHeader(ZoneTableSegment* segment) {
-    TH& header = static_cast<TS*>(segment)->getHeader();
+testGetHeader(ZoneTableSegment* ztable_segment) {
+    TH& header = static_cast<TS*>(ztable_segment)->getHeader();
 
-    // The zone table is unset.
+    // The zone table must be set.
     TT* table = header.getTable();
-    EXPECT_EQ(static_cast<void*>(NULL), table);
+    EXPECT_NE(static_cast<void*>(NULL), table);
 }
 
 TEST_F(ZoneTableSegmentTest, getHeader) {
     // non-const version.
-    testGetHeader<ZoneTableSegment, ZoneTableHeader, ZoneTable>(segment_);
+    testGetHeader<ZoneTableSegment, ZoneTableHeader, ZoneTable>
+        (ztable_segment_);
 
     // const version.
     testGetHeader<const ZoneTableSegment, const ZoneTableHeader,
-                  const ZoneTable>(segment_);
+                  const ZoneTable>(ztable_segment_);
 }
 
 TEST_F(ZoneTableSegmentTest, getMemorySegment) {
     // This doesn't do anything fun except test the API.
-    MemorySegment& mem_sgmt = segment_->getMemorySegment();
-    EXPECT_TRUE(mem_sgmt.allMemoryDeallocated());
+    MemorySegment& mem_sgmt = ztable_segment_->getMemorySegment();
+    mem_sgmt.allMemoryDeallocated(); // use mem_sgmt
+}
+
+ZoneData*
+loadAction(MemorySegment&) {
+    // The function won't be called, so this is OK
+    return (NULL);
+}
+
+// Test we can get a writer.
+TEST_F(ZoneTableSegmentTest, getZoneWriter) {
+    scoped_ptr<ZoneWriter>
+        writer(ztable_segment_->getZoneWriter(loadAction, Name("example.org"),
+                                              RRClass::IN()));
+    // We have to get something
+    EXPECT_NE(static_cast<void*>(NULL), writer.get());
+    // And for now, it should be the local writer
+    EXPECT_NE(static_cast<void*>(NULL),
+              dynamic_cast<ZoneWriterLocal*>(writer.get()));
 }
 
 } // anonymous namespace

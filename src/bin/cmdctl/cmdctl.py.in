@@ -49,7 +49,7 @@ from hashlib import sha1
 from isc.util import socketserver_mixin
 from isc.log_messages.cmdctl_messages import *
 
-isc.log.init("b10-cmdctl")
+isc.log.init("b10-cmdctl", buffer=True)
 logger = isc.log.Logger("cmdctl")
 
 # Debug level for communication with BIND10

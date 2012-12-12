@@ -57,32 +57,32 @@ Element::toWire(std::ostream& ss) const {
 }
 
 bool
-Element::getValue(long int&) {
+Element::getValue(long int&) const {
     return (false);
 }
 
 bool
-Element::getValue(double&) {
+Element::getValue(double&) const {
     return (false);
 }
 
 bool
-Element::getValue(bool&) {
+Element::getValue(bool&) const {
     return (false);
 }
 
 bool
-Element::getValue(std::string&) {
+Element::getValue(std::string&) const {
     return (false);
 }
 
 bool
-Element::getValue(std::vector<ConstElementPtr>&) {
+Element::getValue(std::vector<ConstElementPtr>&) const {
     return (false);
 }
 
 bool
-Element::getValue(std::map<std::string, ConstElementPtr>&) {
+Element::getValue(std::map<std::string, ConstElementPtr>&) const {
     return (false);
 }
 
@@ -167,7 +167,7 @@ Element::find(const std::string&) const {
 }
 
 bool
-Element::find(const std::string&, ConstElementPtr) const {
+Element::find(const std::string&, ConstElementPtr&) const {
     return (false);
 }
 
@@ -812,7 +812,7 @@ MapElement::set(const std::string& key, ConstElementPtr value) {
 }
 
 bool
-MapElement::find(const std::string& id, ConstElementPtr t) const {
+MapElement::find(const std::string& id, ConstElementPtr& t) const {
     try {
         ConstElementPtr p = find(id);
         if (p) {

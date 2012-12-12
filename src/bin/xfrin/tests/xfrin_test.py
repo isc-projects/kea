@@ -26,6 +26,7 @@ from xfrin import *
 import xfrin
 from isc.xfrin.diff import Diff
 import isc.log
+from isc.server_common.tsig_keyring import init_keyring, get_keyring
 # If we use any python library that is basically a wrapper for
 # a library we use as well (like sqlite3 in our datasources),
 # we must make sure we import ours first; If we have special
@@ -139,6 +140,16 @@ class MockCC(MockModuleCCSession):
         if identifier == "zones/use_ixfr":
             return False
 
+    def add_remote_config_by_name(self, name, callback):
+        pass
+
+    def get_remote_config_value(self, module, identifier):
+        if module == 'tsig_keys' and identifier == 'keys':
+            return (['example.com.key.:EvAAsfU2h7uofnmqaTCrhHunGsc='], True)
+        else:
+            raise Exception('MockCC requested for unknown config value ' +
+                            + module + "/" + identifier)
+
     def remove_remote_config(self, module_name):
         pass
 
@@ -229,6 +240,7 @@ class MockXfrin(Xfrin):
     def _cc_setup(self):
         self._tsig_key = None
         self._module_cc = MockCC()
+        init_keyring(self._module_cc)
         pass
 
     def _get_db_file(self):
@@ -570,7 +582,7 @@ class TestXfrinIXFRAdd(TestXfrinState):
         # difference, starting with removing that SOA.
         self.conn._diff.add_data(self.ns_rrset) # put some dummy change
         self.conn._tsig_ctx = MockTSIGContext(TSIG_KEY)
-        self.conn._tsig_ctx.last_has_signature = lambda: False
+        self.conn._tsig_ctx.last_had_signature = lambda: False
         # First, push a starting SOA inside. This should be OK, nothing checked
         # yet.
         self.state.handle_rr(self.conn, self.begin_soa)
@@ -821,7 +833,7 @@ class TestAXFR(TestXfrinConnection):
         mock_ctx = MockTSIGContext(key)
         mock_ctx.error = error
         if not has_last_signature:
-            mock_ctx.last_has_signature = lambda: False
+            mock_ctx.last_had_signature = lambda: False
         return mock_ctx
 
     def __match_exception(self, expected_exception, expected_msg, expression):
@@ -2427,9 +2439,10 @@ class TestXfrin(unittest.TestCase):
             self.assertEqual(str(zone_info.master_addr), zone_config['master_addr'])
             self.assertEqual(zone_info.master_port, zone_config['master_port'])
             if 'tsig_key' in zone_config:
-                self.assertEqual(zone_info.tsig_key.to_text(), TSIGKey(zone_config['tsig_key']).to_text())
+                self.assertEqual(zone_info.tsig_key_name.to_text(),
+                                 Name(zone_config['tsig_key']).to_text())
             else:
-                self.assertIsNone(zone_info.tsig_key)
+                self.assertIsNone(zone_info.tsig_key_name)
             if 'use_ixfr' in zone_config and\
                zone_config.get('use_ixfr'):
                 self.assertTrue(zone_info.use_ixfr)
@@ -2562,7 +2575,7 @@ class TestXfrin(unittest.TestCase):
                   { 'name': 'test2.example.',
                     'master_addr': '192.0.2.9',
                     'master_port': 53,
-                    'tsig_key': 'badkey'
+                    'tsig_key': 'badkey..'
                   }
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
@@ -2581,13 +2594,14 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(self.xfr.config_handler(config)['result'][0], 0)
         self._check_zones_config(config)
 
-    def common_ixfr_setup(self, xfr_mode, use_ixfr):
+    def common_ixfr_setup(self, xfr_mode, use_ixfr, tsig_key_str = None):
         # This helper method explicitly sets up a zone configuration with
         # use_ixfr, and invokes either retransfer or refresh.
         # Shared by some of the following test cases.
         config = {'zones': [
                 {'name': 'example.com.',
                  'master_addr': '192.0.2.1',
+                 'tsig_key': tsig_key_str,
                  'use_ixfr': use_ixfr}]}
         self.assertEqual(self.xfr.config_handler(config)['result'][0], 0)
         self.assertEqual(self.xfr.command_handler(xfr_mode,
@@ -2602,6 +2616,34 @@ class TestXfrin(unittest.TestCase):
         # Same for refresh
         self.common_ixfr_setup('refresh', True)
         self.assertEqual(RRType.IXFR(), self.xfr.xfrin_started_request_type)
+
+    def test_command_handler_retransfer_with_tsig(self):
+        self.common_ixfr_setup('retransfer', False, 'example.com.key')
+        self.assertEqual(RRType.AXFR(), self.xfr.xfrin_started_request_type)
+
+    def test_command_handler_retransfer_with_tsig_bad_key(self):
+        # bad keys should not reach xfrin, but should they somehow,
+        # they are ignored (and result in 'key not found' + error log).
+        self.assertRaises(XfrinZoneInfoException, self.common_ixfr_setup,
+                          'retransfer', False, 'bad.key')
+
+    def test_command_handler_retransfer_with_tsig_unknown_key(self):
+        self.assertRaises(XfrinZoneInfoException, self.common_ixfr_setup,
+                          'retransfer', False, 'no.such.key')
+
+    def test_command_handler_refresh_with_tsig(self):
+        self.common_ixfr_setup('refresh', False, 'example.com.key')
+        self.assertEqual(RRType.AXFR(), self.xfr.xfrin_started_request_type)
+
+    def test_command_handler_refresh_with_tsig_bad_key(self):
+        # bad keys should not reach xfrin, but should they somehow,
+        # they are ignored (and result in 'key not found' + error log).
+        self.assertRaises(XfrinZoneInfoException, self.common_ixfr_setup,
+                          'refresh', False, 'bad.key')
+
+    def test_command_handler_refresh_with_tsig_unknown_key(self):
+        self.assertRaises(XfrinZoneInfoException, self.common_ixfr_setup,
+                          'refresh', False, 'no.such.key')
 
     def test_command_handler_retransfer_ixfr_disabled(self):
         # Similar to the previous case, but explicitly disabled.  AXFR should

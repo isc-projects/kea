@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include "memory_segment_test.h"
+
 #include <exceptions/exceptions.h>
 
 #include <util/memory_segment_local.h>
@@ -34,27 +36,6 @@ using namespace isc::datasrc::memory;
 using namespace isc::datasrc::memory::detail;
 
 namespace {
-// Memory segment specified for tests.  It normally behaves like a "local"
-// memory segment.  If "throw count" is set to non 0 via setThrowCount(),
-// it continues the normal behavior up to the specified number of calls to
-// allocate(), and throws an exception at the next call.
-class TestMemorySegment : public isc::util::MemorySegmentLocal {
-public:
-    TestMemorySegment() : throw_count_(0) {}
-    virtual void* allocate(size_t size) {
-        if (throw_count_ > 0) {
-            if (--throw_count_ == 0) {
-                throw std::bad_alloc();
-            }
-        }
-        return (isc::util::MemorySegmentLocal::allocate(size));
-    }
-    void setThrowCount(size_t count) { throw_count_ = count; }
-
-private:
-    size_t throw_count_;
-};
-
 class ZoneTableTest : public ::testing::Test {
 protected:
     ZoneTableTest() : zclass_(RRClass::IN()),
@@ -65,17 +46,17 @@ protected:
     {}
     ~ZoneTableTest() {
         if (zone_table != NULL) {
-            ZoneTable::destroy(mem_sgmt_, zone_table, zclass_);
+            ZoneTable::destroy(mem_sgmt_, zone_table);
         }
     }
     void TearDown() {
-        ZoneTable::destroy(mem_sgmt_, zone_table, zclass_);
+        ZoneTable::destroy(mem_sgmt_, zone_table);
         zone_table = NULL;
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated()); // catch any leak here.
     }
     const RRClass zclass_;
     const Name zname1, zname2, zname3;
-    TestMemorySegment mem_sgmt_;
+    test::MemorySegmentTest mem_sgmt_;
     ZoneTable* zone_table;
 };
 

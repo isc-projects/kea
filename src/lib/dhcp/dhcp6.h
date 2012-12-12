@@ -105,10 +105,11 @@ extern const int dhcpv6_type_name_max;
 
 /* DUID type definitions (RFC3315 section 9).
  */
-#define DUID_LLT        1
-#define DUID_EN         2
-#define DUID_LL         3
-#define DUID_UUID       4
+// see isc::dhcp::DUID::DUIDType enum in dhcp/duid.h
+// #define DUID_LLT        1
+// #define DUID_EN         2
+// #define DUID_LL         3
+// #define DUID_UUID       4
 
 // Define hardware types
 // Taken from http://www.iana.org/assignments/arp-parameters/
@@ -190,4 +191,4 @@ extern const int dhcpv6_type_name_max;
 #define IRT_DEFAULT     86400
 #define IRT_MINIMUM     600
 
-#endif
+#endif /* DHCP6_H */

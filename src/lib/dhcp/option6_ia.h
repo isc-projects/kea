@@ -12,11 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef OPTION_IA_H_
-#define OPTION_IA_H_
+#ifndef OPTION_IA_H
+#define OPTION_IA_H
+
+#include <dhcp/option.h>
 
 #include <stdint.h>
-#include "option.h"
 
 namespace isc {
 namespace dhcp {
@@ -67,12 +68,17 @@ public:
     /// Sets T1 timer.
     ///
     /// @param t1 t1 value to be set
-    void setT1(uint32_t t1) { t1_=t1; }
+    void setT1(uint32_t t1) { t1_ = t1; }
 
     /// Sets T2 timer.
     ///
     /// @param t2 t2 value to be set
-    void setT2(uint32_t t2) { t2_=t2; }
+    void setT2(uint32_t t2) { t2_ = t2; }
+
+    /// Sets Identity Association Identifier.
+    ///
+    /// @param iaid IAID value to be set
+    void setIAID(uint32_t iaid) { iaid_ = iaid; }
 
     /// Returns IA identifier.
     ///
@@ -112,4 +118,4 @@ protected:
 } // isc::dhcp namespace
 } // isc namespace
 
-#endif /* OPTION_IA_H_ */
+#endif // OPTION_IA_H

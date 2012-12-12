@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RESOLVER_LOG__H
-#define __RESOLVER_LOG__H
+#ifndef RESOLVER_LOG_H
+#define RESOLVER_LOG_H
 
 #include <log/macros.h>
 #include "resolver_messages.h"
@@ -46,4 +46,4 @@ const int RESOLVER_DBG_DETAIL = DBGLVL_TRACE_DETAIL_DATA;
 /// space.
 extern isc::log::Logger resolver_logger;
 
-#endif // __RESOLVER_LOG__H
+#endif // RESOLVER_LOG_H

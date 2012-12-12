@@ -12,10 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ASIOLINK_H
-#define __ASIOLINK_H
+#ifndef ASIOLINK_H
+#define ASIOLINK_H
 
 #include <string>
 #include <sys/socket.h>
 
-#endif // __ASIOLINK_H
+#endif // ASIOLINK_H

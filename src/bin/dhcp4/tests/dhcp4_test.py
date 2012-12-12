@@ -45,11 +45,30 @@ class TestDhcpv4Daemon(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def readPipe(self, pipe_fd):
+        """
+        Reads bytes from a pipe and returns a character string.  If nothing is
+        read, or if there is an error, an empty string is returned.
+
+        pipe_fd - Pipe file descriptor to read
+        """
+        try:
+            data = os.read(pipe_fd, 16384)
+            # Make sure we have a string
+            if (data is None):
+                data = ""
+            else:
+                data = str(data)
+        except OSError:
+            data = ""
+
+        return data
+
     def runCommand(self, params, wait=1):
         """
-        This method runs dhcp4 and returns a tuple: (returncode, stdout, stderr)
+        This method runs a command and returns a tuple: (returncode, stdout, stderr)
         """
-        ## @todo: Convert this into generic method and reuse it in dhcp6
+        ## @todo: Convert this into generic method and reuse it in dhcp4 and dhcp6
 
         print("Running command: %s" % (" ".join(params)))
 
@@ -89,45 +108,47 @@ class TestDhcpv4Daemon(unittest.TestCase):
         fl = fcntl.fcntl(fd, fcntl.F_GETFL)
         fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
-        # There's potential problem if b10-dhcp4 prints out more
-        # than 16kB of text
-        try:
-            output = os.read(self.stdout_pipes[0], 16384)
-        except OSError:
-            print("No data available from stdout")
-            output = ""
+        # As we don't know how long the subprocess will take to start and
+        # produce output, we'll loop and sleep for 250 ms between each
+        # iteration.  To avoid an infinite loop, we'll loop for a maximum
+        # of five seconds: that should be enough.
+        for count in range(20):
+            # Read something from stderr and stdout (these reads don't block).
+            output = self.readPipe(self.stdout_pipes[0])
+            error  = self.readPipe(self.stderr_pipes[0])
 
-        # read can return None. Make sure we have a string
-        if (output is None):
-            output = ""
+            # If the process has already exited, or if it has output something,
+            # quit the loop now.
+            if pi.process.poll() is not None or len(error) > 0 or len(output) > 0:
+                break
 
-        try:
-            error = os.read(self.stderr_pipes[0], 16384)
-        except OSError:
-            print("No data available on stderr")
-            error = ""
+            # Process still running, try again in 250 ms.
+            time.sleep(0.25)
 
-        # read can return None. Make sure we have a string
-        if (error is None):
-            error = ""
-
-
-        try:
-            if (not pi.process.poll()):
-                # let's be nice at first...
+        # Exited loop, kill the process if it is still running
+        if pi.process.poll() is None:
+            try:
                 pi.process.terminate()
-        except OSError:
-            print("Ignoring failed kill attempt. Process is dead already.")
+            except OSError:
+                print("Ignoring failed kill attempt. Process is dead already.")
 
         # call this to get returncode, process should be dead by now
         rc = pi.process.wait()
 
         # Clean up our stdout/stderr munging.
         os.dup2(self.stdout_old, sys.stdout.fileno())
+        os.close(self.stdout_old)
         os.close(self.stdout_pipes[0])
 
         os.dup2(self.stderr_old, sys.stderr.fileno())
+        os.close(self.stderr_old)
         os.close(self.stderr_pipes[0])
+
+        # Free up resources (file descriptors) from the ProcessInfo object
+        # TODO: For some reason, this gives an error if the process has ended,
+        #       although it does cause all descriptors still allocated to the
+        #       object to be freed.
+        pi = None
 
         print ("Process finished, return code=%d, stdout=%d bytes, stderr=%d bytes"
                % (rc, len(output), len(error)) )

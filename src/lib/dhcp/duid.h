@@ -12,11 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <stdint.h>
-#include <unistd.h>
-#include <vector>
+#ifndef DUID_H
+#define DUID_H
+
 #include <asiolink/io_address.h>
 
+#include <vector>
+
+#include <stdint.h>
+#include <unistd.h>
 
 namespace isc {
 namespace dhcp {
@@ -41,13 +45,13 @@ class DUID {
         DUID_MAX          ///< not a real type, just maximum defined value + 1
     } DUIDType;
 
-    /// @brief creates a DUID
+    /// @brief Constructor from vector
     DUID(const std::vector<uint8_t>& duid);
 
-    /// @brief creates a DUID
-    DUID(const uint8_t *duid, size_t len);
+    /// @brief Constructor from array and array size
+    DUID(const uint8_t* duid, size_t len);
 
-    /// @brief returns a const reference to the actual DUID value
+    /// @brief Returns a const reference to the actual DUID value
     ///
     /// Note: For safety reasons, this method returns a copy of data as
     /// otherwise the reference would be only valid as long as the object that
@@ -56,43 +60,61 @@ class DUID {
     /// (e.g. storeSelf()) that will avoid data copying.
     const std::vector<uint8_t> getDuid() const;
 
-    /// @brief returns DUID type
+    /// @brief Returns the DUID type
     DUIDType getType() const;
 
-    // compares two DUIDs
-    bool operator == (const DUID& other) const;
+    /// @brief Returns textual representation of a DUID (e.g. 00:01:02:03:ff)
+    std::string toText() const;
 
-    // compares two DUIDs
-    bool operator != (const DUID& other) const;
+    /// @brief Compares two DUIDs for equality
+    bool operator==(const DUID& other) const;
+
+    /// @brief Compares two DUIDs for inequality
+    bool operator!=(const DUID& other) const;
 
  protected:
-    /// the actual content of the DUID
+    /// The actual content of the DUID
     std::vector<uint8_t> duid_;
 };
+
+/// @brief Shared pointer to a DUID
+typedef boost::shared_ptr<DUID> DuidPtr;
+
+
 
 /// @brief Holds Client identifier or client IPv4 address
 ///
 /// This class is intended to be a generic IPv4 client identifier. It can hold
 /// a client-id
 class ClientId : DUID {
- public:
+public:
+    /// @brief Maximum size of a client ID
+    ///
+    /// This is the same as the maximum size of the underlying DUID.
+    ///
+    /// @note RFC 2131 does not specify an upper length of a client ID, the
+    ///       value chosen here just being that of the underlying DUID.  For
+    ///       some backend database, there may be a possible (minor)
+    ///       performance enhancement if this were smaller.
+    static const size_t MAX_CLIENT_ID_LEN = DUID::MAX_DUID_LEN;
 
-    /// constructor based on vector<uint8_t>
+    /// @brief Constructor based on vector<uint8_t>
     ClientId(const std::vector<uint8_t>& clientid);
 
-    /// constructor based on C-style data
-    ClientId(const uint8_t *clientid, size_t len);
+    /// @brief Constructor based on array and array size
+    ClientId(const uint8_t* clientid, size_t len);
 
-    /// @brief returns reference to the client-id data
-    ///
+    /// @brief Returns reference to the client-id data
     const std::vector<uint8_t> getClientId() const;
 
-    // compares two client-ids
-    bool operator == (const ClientId& other) const;
+    /// @brief Compares two client-ids for equality
+    bool operator==(const ClientId& other) const;
 
-    // compares two client-ids
-    bool operator != (const ClientId& other) const;
+    /// @brief Compares two client-ids for inequality
+    bool operator!=(const ClientId& other) const;
 };
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
+
+#endif /* DUID_H */

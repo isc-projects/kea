@@ -13,13 +13,15 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <iostream>
-
-#include <boost/lexical_cast.hpp>
 
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
 #include <log/logger_support.h>
+#include <log/logger_manager.h>
+
+#include <boost/lexical_cast.hpp>
+
+#include <iostream>
 
 using namespace isc::dhcp;
 using namespace std;
@@ -34,6 +36,16 @@ using namespace std;
 /// Dhcpv6Srv and other classes, see \ref dhcpv6Session.
 
 namespace {
+// @todo: Replace the next line by extraction from configuration parameters
+// This is the "dbconfig" string for the MySQL database.  It is likely
+// that a long-term solution will be to create the instance of the lease manager
+// somewhere other than the Dhcpv6Srv constructor, to give time to extract
+// the connection string from the configuration database.
+#ifdef HAVE_MYSQL
+const char* DBCONFIG = "type=mysql name=kea user=kea password=kea host=localhost";
+#else
+const char* DBCONFIG = "type=memfile";
+#endif
 
 const char* const DHCP6_NAME = "b10-dhcp6";
 
@@ -92,9 +104,10 @@ main(int argc, char* argv[]) {
     }
 
     // Initialize logging.  If verbose, we'll use maximum verbosity.
+    // If standalone is enabled, do not buffer initial log messages
     isc::log::initLogger(DHCP6_NAME,
                          (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
-                         isc::log::MAX_DEBUG_LEVEL, NULL);
+                         isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone);
     LOG_INFO(dhcp6_logger, DHCP6_STARTING);
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_START_INFO)
               .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no")
@@ -102,14 +115,18 @@ main(int argc, char* argv[]) {
 
     int ret = EXIT_SUCCESS;
     try {
-        ControlledDhcpv6Srv server(port_number);
+        ControlledDhcpv6Srv server(port_number, DBCONFIG);
         if (!stand_alone) {
             try {
                 server.establishSession();
             } catch (const std::exception& ex) {
                 LOG_ERROR(dhcp6_logger, DHCP6_SESSION_FAIL).arg(ex.what());
-                // Let's continue. It is useful to have the ability to run 
+                // Let's continue. It is useful to have the ability to run
                 // DHCP server in stand-alone mode, e.g. for testing
+                // We do need to make sure logging is no longer buffered
+                // since then it would not print until dhcp6 is stopped
+                isc::log::LoggerManager log_manager;
+                log_manager.process();
             }
         } else {
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_STANDALONE);

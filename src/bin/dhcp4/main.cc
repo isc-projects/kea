@@ -13,13 +13,15 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <iostream>
-
-#include <boost/lexical_cast.hpp>
 
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <log/logger_support.h>
+#include <log/logger_manager.h>
+
+#include <boost/lexical_cast.hpp>
+
+#include <iostream>
 
 using namespace isc::dhcp;
 using namespace std;
@@ -92,9 +94,10 @@ main(int argc, char* argv[]) {
     }
 
     // Initialize logging.  If verbose, we'll use maximum verbosity.
+    // If standalone is enabled, do not buffer initial log messages
     isc::log::initLogger(DHCP4_NAME,
                          (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
-                         isc::log::MAX_DEBUG_LEVEL, NULL);
+                         isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone);
     LOG_INFO(dhcp4_logger, DHCP4_STARTING);
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_START_INFO)
               .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no")
@@ -111,6 +114,10 @@ main(int argc, char* argv[]) {
                 LOG_ERROR(dhcp4_logger, DHCP4_SESSION_FAIL).arg(ex.what());
                 // Let's continue. It is useful to have the ability to run
                 // DHCP server in stand-alone mode, e.g. for testing
+                // We do need to make sure logging is no longer buffered
+                // since then it would not print until dhcp6 is stopped
+                isc::log::LoggerManager log_manager;
+                log_manager.process();
             }
         } else {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_STANDALONE);

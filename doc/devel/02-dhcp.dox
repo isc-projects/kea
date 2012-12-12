@@ -1,74 +1,60 @@
 /**
- * @page libdhcp libdhcp++
+ * @page dhcpv4 DHCPv4 Server Component
  *
- * @section libdhcpIntro Libdhcp++ Library Introduction
+ * BIND10 offers DHCPv4 server implementation. It is implemented as
+ * b10-dhcp4 component.  Its primary code is located in
+ * isc::dhcp::Dhcpv4Srv class. It uses \ref libdhcp extensively,
+ * especially isc::dhcp::Pkt4, isc::dhcp::Option and
+ * isc::dhcp::IfaceMgr classes. Currently this code offers skeleton
+ * functionality, i.e. it is able to receive and process incoming
+ * requests and trasmit responses. However, it does not have database
+ * management, so it returns only one, hardcoded lease to whoever asks
+ * for it.
  *
- * libdhcp++ is an all-purpose DHCP-manipulation library, written in
- * C++. It offers packet parsing and assembly, DHCPv4 and DHCPv6
- * options parsing and ssembly, interface detection (currently on
- * Linux systems only) and socket operations. Following classes are
- * implemented:
+ * DHCPv4 server component does not support direct traffic (relayed
+ * only), as support for transmission to hosts without IPv4 address
+ * assigned is not implemented in IfaceMgr yet.
  *
- * - isc::dhcp::Pkt4 - represents DHCPv4 packet.
- * - isc::dhcp::Pkt6 - represents DHCPv6 packet.
+ * DHCPv4 server component does not use BIND10 logging yet.
  *
- * There are two pointer types defined: Pkt4Ptr and Pkt6Ptr. They are
- * smart pointer and are using boost::shared_ptr. There are not const
- * versions defined, as we assume that hooks can modify any aspect of
- * the packet at almost any stage of processing.
+ * @section dhcpv4Session BIND10 message queue integration
  *
- * Both packets use collection of Option objects to represent DHCPv4
- * and DHCPv6 options. The base class -- Option -- can be used to
- * represent generic option that contains collection of
- * bytes. Depending on if the option is instantiated as v4 or v6
- * option, it will adjust its header (DHCPv4 options use 1 octet for
- * type and 1 octet for length, while DHCPv6 options use 2 bytes for
- * each).
+ * DHCPv4 server component is now integrated with BIND10 message queue.
+ * The integration is performed by establishSession() and disconnectSession()
+ * functions in isc::dhcp::ControlledDhcpv4Srv class. main() method deifined
+ * in the src/bin/dhcp4/main.cc file instantiates isc::dhcp::ControlledDhcpv4Srv
+ * class that establishes connection with msgq and install necessary handlers
+ * for receiving commands and configuration updates. It is derived from
+ * a base isc::dhcp::Dhcpv4Srv class that implements DHCPv4 server functionality,
+ * without any controlling mechanisms.
  *
- * There are many specialized classes that are intended to handle options with
- * specific content:
- * - isc::dhcp::Option4AddrLst -- DHCPv4 option, contains one or more IPv4 addresses;
- * - isc::dhcp::Option6AddrLst -- DHCPv6 option, contains one or more IPv6 addresses;
- * - isc::dhcp::Option6IAAddr -- DHCPv6 option, represents IAADDR_OPTION (an option that
- *                     contains IPv6 address with extra parameters);
- * - isc::dhcp::Option6IA -- DHCPv6 option used to store IA_NA and its suboptions.
+ * ControlledDhcpv4Srv instantiates several components to make management
+ * session possible. In particular, isc::cc::Session cc_session
+ * object uses ASIO for establishing connection. It registers its socket
+ * in isc::asiolink::IOService io_service object. Typically, other components
+ * (e.g. auth or resolver) that use ASIO for their communication, register their
+ * other sockets in the
+ * same io_service and then just call io_service.run() method that does
+ * not return, until one of the callback decides that it is time to shut down
+ * the whole component cal calls io_service.stop(). DHCPv4 works in a
+ * different way. It does receive messages using select()
+ * (see isc::dhcp::IfaceMgr::receive4()), which is incompatible with ASIO.
+ * To solve this problem, socket descriptor is extracted from cc_session
+ * object and is passed to IfaceMgr by using isc::dhcp::IfaceMgr::set_session_socket().
+ * IfaceMgr then uses this socket in its select() call. If there is some
+ * data to be read, it calls registered callback that is supposed to
+ * read and process incoming data.
  *
- * All options can store sub-options (i.e. options that are stored within option
- * rather than in a message directly). This functionality is commonly used in
- * DHCPv6, but is rarely used in DHCPv4. isc::dhcp::Option::addOption(),
- * isc::dhcp::Option::delOption(), isc::dhcp::Option::getOption() can be used
- * for that purpose.
+ * This somewhat complicated approach is needed for a simple reason. In
+ * embedded deployments there will be no message queue. Not referring directly
+ * to anything related to message queue in isc::dhcp::Dhcpv4Srv and
+ * isc::dhcp::IfaceMgr classes brings in two benefits. First, the can
+ * be used with and without message queue. Second benefit is related to the
+ * first one: \ref libdhcp is supposed to be simple and robust and not require
+ * many dependencies. One notable example of a use case that benefits from
+ * this approach is a perfdhcp tool. Finally, the idea is that it should be
+ * possible to instantiate Dhcpv4Srv object directly, thus getting a server
+ * that does not support msgq. That is useful for embedded environments.
+ * It may also be useful in validation.
  *
- * @section libdhcpIfaceMgr Interface Manager
- *
- * Interface Manager (or IfaceMgr) is an abstraction layer about low-level
- * network operations. In particlar, it provides information about existing
- * network interfaces See isc::dhcp::IfaceMgr::Iface class and
- * isc::dhcp::IfaceMgr::detectIfaces() and isc::dhcp::IfaceMgr::getIface().
- *
- * Currently there is interface detection is implemented in Linux only. There
- * are plans to implement such support for other OSes, but they remain low
- * priority for now.
- *
- * Generic parts of the code are isc::dhcp::IfaceMgr class in
- * src/lib/dhcp/iface_mgr.cc file. OS-specific code is located in separate
- * files, e.g. iface_mgr_linux.cc. Such separation should be maintained when
- * additional code will be developed.
- *
- * For systems that interface detection is not supported on, there is a stub
- * mechanism implemented. It assumes that interface name is read from a text
- * file. This is a temporary solution and will be removed as soon as proper
- * interface detection is implemented. It is not going to be developed further.
- * To use this feature, store interfaces.txt file. It uses a simple syntax.
- * Each line represents an interface name, followed by IPv4 or IPv6 address
- * that follows it. This is usually link-local IPv6 address that the server
- * should bind to. In theory this mechanism also supports IPv4, but it was
- * never tested. The code currently supports only a single interface defined
- * that way.
- *
- * Another useful methods are dedicated to transmission
- * (isc::dhcp::IfaceMgr::send(), 2 overloads) and reception
- * (isc::dhcp::IfaceMgr::receive4() and isc::dhcp::IfaceMgr::receive6()).
- * Note that receive4() and receive6() methods may return NULL, e.g.
- * when timeout is reached or if dhcp daemon receives a signal.
  */

@@ -12,16 +12,19 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef OPTION4_ADDRLST_H_
-#define OPTION4_ADDRLST_H_
+#ifndef OPTION4_ADDRLST_H
+#define OPTION4_ADDRLST_H
 
-#include <string>
-#include <map>
-#include <vector>
-#include <boost/shared_ptr.hpp>
-#include <boost/shared_array.hpp>
-#include <util/buffer.h>
+#include <asiolink/io_address.h>
 #include <dhcp/option.h>
+#include <util/buffer.h>
+
+#include <boost/shared_array.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <map>
+#include <string>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
@@ -161,4 +164,4 @@ protected:
 } // namespace isc::dhcp
 } // namespace isc
 
-#endif
+#endif // OPTION4_ADDRLST_H

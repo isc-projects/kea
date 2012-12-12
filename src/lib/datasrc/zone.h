@@ -12,13 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ZONE_H
-#define __ZONE_H 1
+#ifndef ZONE_H
+#define ZONE_H 1
 
 #include <dns/name.h>
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
 
+#include <datasrc/exceptions.h>
 #include <datasrc/result.h>
 
 #include <utility>
@@ -31,10 +32,10 @@ namespace datasrc {
 ///
 /// This is thrown when a method is called for a name or RRset which
 /// is not in or below the zone.
-class OutOfZone : public Exception {
+class OutOfZone : public ZoneException {
 public:
     OutOfZone(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        ZoneException(file, line, what) {}
 };
 
 /// \brief The base class to search a zone for RRsets
@@ -1065,7 +1066,7 @@ typedef boost::shared_ptr<ZoneJournalReader> ZoneJournalReaderPtr;
 } // end of datasrc
 } // end of isc
 
-#endif  // __ZONE_H
+#endif  // ZONE_H
 
 // Local Variables:
 // mode: c++

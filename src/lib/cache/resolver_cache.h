@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RESOLVER_CACHE_H
-#define __RESOLVER_CACHE_H
+#ifndef RESOLVER_CACHE_H
+#define RESOLVER_CACHE_H
 
 #include <map>
 #include <string>
@@ -319,5 +319,5 @@ private:
 } // namespace cache
 } // namespace isc
 
-#endif // __RESOLVER_CACHE_H
+#endif // RESOLVER_CACHE_H
 

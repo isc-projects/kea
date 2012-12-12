@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __MESSAGE_ENTRY_H
-#define __MESSAGE_ENTRY_H
+#ifndef MESSAGE_ENTRY_H
+#define MESSAGE_ENTRY_H
 
 #include <vector>
 #include <dns/message.h>
@@ -199,5 +199,5 @@ typedef boost::shared_ptr<MessageEntry> MessageEntryPtr;
 } // namespace cache
 } // namespace isc
 
-#endif // __MESSAGE_ENTRY_H
+#endif // MESSAGE_ENTRY_H
 

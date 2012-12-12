@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __PYTHON_NAME_H
-#define __PYTHON_NAME_H 1
+#ifndef PYTHON_NAME_H
+#define PYTHON_NAME_H 1
 
 #include <Python.h>
 
@@ -74,7 +74,7 @@ const Name& PyName_ToName(const PyObject* name_obj);
 } // namespace python
 } // namespace dns
 } // namespace isc
-#endif // __PYTHON_NAME_H
+#endif // PYTHON_NAME_H
 
 // Local Variables:
 // mode: c++

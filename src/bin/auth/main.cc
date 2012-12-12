@@ -18,7 +18,6 @@
 
 #include <util/buffer.h>
 #include <util/io/socketsession.h>
-#include <util/threads/lock.h>
 
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -36,6 +35,8 @@
 #include <auth/auth_srv.h>
 #include <auth/auth_log.h>
 #include <auth/datasrc_config.h>
+#include <auth/datasrc_clients_mgr.h>
+
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 #include <log/logger_support.h>
@@ -93,32 +94,23 @@ datasrcConfigHandler(AuthSrv* server, bool* first_time,
                      const isc::config::ConfigData&)
 {
     assert(server != NULL);
-    if (config->contains("classes")) {
-        AuthSrv::DataSrcClientListsPtr lists;
 
-        if (*first_time) {
-            // HACK: The default is not passed to the handler in the first
-            // callback. This one will get the default (or, current value).
-            // Further updates will work the usual way.
-            assert(config_session != NULL);
-            *first_time = false;
-            lists = configureDataSource(
-                config_session->getRemoteConfigValue("data_sources",
-                                                     "classes"));
-        } else {
-            lists = configureDataSource(config->get("classes"));
-        }
+    // Note: remote config handler is requested to be exception free.
+    // While the code below is not 100% exception free, such an exception
+    // is really fatal and the server should actually stop.  So we don't
+    // bother to catch them; the exception would be propagated to the
+    // top level of the server and terminate it.
 
-        // Replace the server's lists.  The returned lists will be stored
-        // in a local variable 'lists', and will be destroyed outside of
-        // the temporary block for the lock scope.  That way we can minimize
-        // the range of the critical section.
-        {
-            isc::util::thread::Mutex::Locker locker(
-                server->getDataSrcClientListMutex());
-            lists = server->swapDataSrcClientLists(lists);
-        }
-        // The previous lists are destroyed here.
+    if (*first_time) {
+        // HACK: The default is not passed to the handler in the first
+        // callback. This one will get the default (or, current value).
+        // Further updates will work the usual way.
+        assert(config_session != NULL);
+        *first_time = false;
+        server->getDataSrcClientsMgr().reconfigure(
+            config_session->getRemoteConfigValue("data_sources", "classes"));
+    } else if (config->contains("classes")) {
+        server->getDataSrcClientsMgr().reconfigure(config->get("classes"));
     }
 }
 
@@ -155,7 +147,7 @@ main(int argc, char* argv[]) {
     // Initialize logging.  If verbose, we'll use maximum verbosity.
     isc::log::initLogger(AUTH_NAME,
                          (verbose ? isc::log::DEBUG : isc::log::INFO),
-                         isc::log::MAX_DEBUG_LEVEL, NULL);
+                         isc::log::MAX_DEBUG_LEVEL, NULL, true);
 
     int ret = 0;
 
@@ -264,7 +256,9 @@ main(int argc, char* argv[]) {
 
     // If we haven't registered callback for data sources, this will be just
     // no-op.
-    config_session->removeRemoteConfig("data_sources");
+    if (config_session != NULL) {
+        config_session->removeRemoteConfig("data_sources");
+    }
 
     delete xfrin_session;
     delete config_session;

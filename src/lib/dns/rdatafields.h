@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __RDATAFIELDS_H
-#define __RDATAFIELDS_H 1
+#ifndef RDATAFIELDS_H
+#define RDATAFIELDS_H 1
 
 #include <stdint.h>
 
@@ -420,7 +420,7 @@ private:
 }
 }
 }
-#endif  // __RDATAFIELDS_H
+#endif  // RDATAFIELDS_H
 
 // Local Variables:
 // mode: c++

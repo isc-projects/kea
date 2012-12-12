@@ -18,8 +18,8 @@
 
 #include <ostream>
 
-#ifndef __OPCODE_H
-#define __OPCODE_H 1
+#ifndef OPCODE_H
+#define OPCODE_H 1
 
 namespace isc {
 namespace dns {

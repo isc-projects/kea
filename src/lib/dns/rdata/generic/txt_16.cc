@@ -23,14 +23,13 @@
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/rdata/generic/detail/txt_like.h>
 
 using namespace std;
 using namespace isc::util;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
-
-#include <dns/rdata/generic/detail/txt_like.h>
 
 TXT&
 TXT::operator=(const TXT& source) {
@@ -51,6 +50,21 @@ TXT::~TXT() {
 
 TXT::TXT(InputBuffer& buffer, size_t rdata_len) :
     impl_(new TXTImpl(buffer, rdata_len))
+{}
+
+/// \brief Constructor using the master lexer.
+///
+/// This implementation only uses the \c lexer parameters; others are
+/// ignored.
+///
+/// \throw CharStringTooLong the parameter string length exceeds maximum.
+/// \throw InvalidRdataText the method cannot process the parameter data
+///
+/// \param lexer A \c MasterLexer object parsing a master file for this
+/// RDATA.
+TXT::TXT(MasterLexer& lexer, const Name*, MasterLoader::Options,
+         MasterLoaderCallbacks&) :
+    impl_(new TXTImpl(lexer))
 {}
 
 TXT::TXT(const std::string& txtstr) :

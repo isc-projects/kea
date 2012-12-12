@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __MESSAGERENDERER_H
-#define __MESSAGERENDERER_H 1
+#ifndef MESSAGERENDERER_H
+#define MESSAGERENDERER_H 1
 
 #include <util/buffer.h>
 
@@ -397,7 +397,7 @@ private:
 };
 }
 }
-#endif // __MESSAGERENDERER_H
+#endif // MESSAGERENDERER_H
 
 // Local Variables: 
 // mode: c++

@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __IO_FETCH_H
-#define __IO_FETCH_H 1
+#ifndef IO_FETCH_H
+#define IO_FETCH_H 1
 
 #include <config.h>
 
@@ -229,4 +229,4 @@ private:
 } // namespace asiodns
 } // namespace isc
 
-#endif // __IO_FETCH_H
+#endif // IO_FETCH_H

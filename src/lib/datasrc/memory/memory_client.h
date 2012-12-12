@@ -22,6 +22,8 @@
 #include <datasrc/memory/zone_table.h>
 #include <datasrc/memory/zone_data.h>
 
+#include <boost/shared_ptr.hpp>
+
 #include <string>
 
 namespace isc {
@@ -33,6 +35,8 @@ class RRsetList;
 
 namespace datasrc {
 namespace memory {
+
+class ZoneTableSegment;
 
 /// \brief A data source client that holds all necessary data in memory.
 ///
@@ -60,7 +64,7 @@ public:
     /// This constructor internally involves resource allocation, and if
     /// it fails, a corresponding standard exception will be thrown.
     /// It never throws an exception otherwise.
-    InMemoryClient(util::MemorySegment& mem_sgmt,
+    InMemoryClient(boost::shared_ptr<ZoneTableSegment> ztable_segment,
                    isc::dns::RRClass rrclass);
 
     /// The destructor.
@@ -83,11 +87,11 @@ public:
     /// current content. The masterfile parsing ability is kind of limited,
     /// see isc::dns::masterLoad.
     ///
-    /// This throws isc::dns::MasterLoadError if there is problem with loading
-    /// (missing file, malformed, it contains different zone, etc - see
-    /// isc::dns::masterLoad for details).
+    /// This throws isc::dns::MasterLoadError or AddError if there are
+    /// problems with loading (missing file, malformed data, unexpected
+    /// zone, etc. - see isc::dns::masterLoad for details).
     ///
-    /// In case of internal problems, OutOfZone, NullRRset or AssertError could
+    /// In case of internal problems, NullRRset or AssertError could
     /// be thrown, but they should not be expected. Exceptions caused by
     /// allocation may be thrown as well.
     ///
@@ -139,40 +143,6 @@ public:
     /// zone from a file before.
     const std::string getFileName(const isc::dns::Name& zone_name) const;
 
-    /// \brief RRset is NULL exception.
-    ///
-    /// This is thrown if the provided RRset parameter is NULL.
-    struct NullRRset : public InvalidParameter {
-        NullRRset(const char* file, size_t line, const char* what) :
-            InvalidParameter(file, line, what)
-        { }
-    };
-
-    /// \brief Zone is empty exception.
-    ///
-    /// This is thrown if we have an empty zone created as a result of
-    /// load().
-    struct EmptyZone : public InvalidParameter {
-        EmptyZone(const char* file, size_t line, const char* what) :
-            InvalidParameter(file, line, what)
-        { }
-    };
-
-    /// \brief General failure exception for \c add().
-    ///
-    /// This is thrown against general error cases in adding an RRset
-    /// to the zone.
-    ///
-    /// Note: this exception would cover cases for \c OutOfZone or
-    /// \c NullRRset.  We'll need to clarify and unify the granularity
-    /// of exceptions eventually.  For now, exceptions are added as
-    /// developers see the need for it.
-    struct AddError : public InvalidParameter {
-        AddError(const char* file, size_t line, const char* what) :
-            InvalidParameter(file, line, what)
-        { }
-    };
-
     /// Returns a \c ZoneFinder result that best matches the given name.
     ///
     /// This derived version of the method never throws an exception.
@@ -210,14 +180,20 @@ public:
                      uint32_t end_serial) const;
 
 private:
-    // TODO: Do we still need the PImpl if nobody should manipulate this class
-    // directly any more (it should be handled through DataSourceClient)?
-    class InMemoryClientImpl;
-    InMemoryClientImpl* impl_;
+    // Some type aliases
+    typedef DomainTree<std::string> FileNameTree;
+    typedef DomainTreeNode<std::string> FileNameNode;
 
-    // A helper internal class used by load().  It maintains some intermediate
-    // states while loading RRs of the zone.
-    class Loader;
+    // Common process for zone load. Registers filename internally and
+    // adds the ZoneData to the ZoneTable.
+    result::Result loadInternal(const isc::dns::Name& zone_name,
+                                const std::string& filename,
+                                ZoneData* zone_data);
+
+    boost::shared_ptr<ZoneTableSegment> ztable_segment_;
+    const isc::dns::RRClass rrclass_;
+    unsigned int zone_count_;
+    FileNameTree* file_name_tree_;
 };
 
 } // namespace memory

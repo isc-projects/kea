@@ -20,8 +20,8 @@
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/config_parser.h>
 #include <config/ccsession.h>
-#include <dhcp/subnet.h>
-#include <dhcp/cfgmgr.h>
+#include <dhcpsrv/subnet.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>

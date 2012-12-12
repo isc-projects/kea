@@ -15,26 +15,59 @@
 #ifndef DHCPV6_SRV_H
 #define DHCPV6_SRV_H
 
-#include <boost/noncopyable.hpp>
 #include <dhcp/dhcp6.h>
-#include <dhcp/pkt6.h>
+#include <dhcp/duid.h>
 #include <dhcp/option.h>
+#include <dhcp/option6_ia.h>
+#include <dhcp/option_definition.h>
+#include <dhcp/pkt6.h>
+#include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/subnet.h>
+
+#include <boost/noncopyable.hpp>
+
 #include <iostream>
 
 namespace isc {
-
 namespace dhcp {
+
+/// An exception that is thrown if a DHCPv6 protocol violation occurs while
+/// processing a message (e.g. a mandatory option is missing)
+class RFCViolation : public isc::Exception {
+public:
+
+/// @brief constructor
+///
+/// @param file name of the file, where exception occurred
+/// @param line line of the file, where exception occurred
+/// @param what text description of the issue that caused exception
+RFCViolation(const char* file, size_t line, const char* what) :
+    isc::Exception(file, line, what) {}
+};
+
+
+
 /// @brief DHCPv6 server service.
 ///
-/// This singleton class represents DHCPv6 server. It contains all
+/// This class represents DHCPv6 server. It contains all
 /// top-level methods and routines necessary for server operation.
 /// In particular, it instantiates IfaceMgr, loads or generates DUID
 /// that is going to be used as server-identifier, receives incoming
 /// packets, processes them, manages leases assignment and generates
 /// appropriate responses.
+///
+/// @note Only one instance of this class is instantated as it encompasses
+///       the whole operation of the server.  Nothing, however, enforces the
+///       singleton status of the object.
 class Dhcpv6Srv : public boost::noncopyable {
 
 public:
+    /// @brief defines if certain option may, must or must not appear
+    typedef enum {
+        FORBIDDEN,
+        MANDATORY,
+        OPTIONAL
+    } RequirementLevel;
 
     /// @brief Minimum length of a MAC address to be used in DUID generation.
     static const size_t MIN_MAC_LEN = 6;
@@ -47,12 +80,15 @@ public:
     /// old or create new DUID.
     ///
     /// @param port port on will all sockets will listen
-    Dhcpv6Srv(uint16_t port = DHCP6_SERVER_PORT);
+    /// @param dbconfig Lease manager configuration string.  The default
+    ///        of the "memfile" manager is used for testing.
+    Dhcpv6Srv(uint16_t port = DHCP6_SERVER_PORT,
+            const char* dbconfig = "type=memfile");
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();
 
-    /// @brief Returns server-intentifier option
+    /// @brief Returns server-intentifier option.
     ///
     /// @return server-id option
     OptionPtr getServerID() { return serverid_; }
@@ -70,24 +106,20 @@ public:
     /// @brief Instructs the server to shut down.
     void shutdown();
 
-    /// @brief Return textual type of packet received by server
-    ///
-    /// Returns the name of valid packet received by the server (e.g. SOLICIT).
-    /// If the packet is unknown - or if it is a valid DHCP packet but not one
-    /// expected to be received by the server (such as an ADVERTISE), the string
-    /// "UNKNOWN" is returned.  This method is used in debug messages.
-    ///
-    /// As the operation of the method does not depend on any server state, it
-    /// is declared static.
-    ///
-    /// @param type DHCPv4 packet type
-    ///
-    /// @return Pointer to "const" string containing the packet name.
-    ///         Note that this string is statically allocated and MUST NOT
-    ///         be freed by the caller.
-    static const char* serverReceivedPacketName(uint8_t type);
-
 protected:
+
+    /// @brief verifies if specified packet meets RFC requirements
+    ///
+    /// Checks if mandatory option is really there, that forbidden option
+    /// is not there, and that client-id or server-id appears only once.
+    ///
+    /// @param pkt packet to be checked
+    /// @param clientid expectation regarding client-id option
+    /// @param serverid expectation regarding server-id option
+    /// @throw RFCViolation if any issues are detected
+    void sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
+                     RequirementLevel serverid);
+
     /// @brief Processes incoming SOLICIT and returns response.
     ///
     /// Processes received SOLICIT message and verifies that its sender
@@ -147,7 +179,51 @@ protected:
     /// @param infRequest message received from client
     Pkt6Ptr processInfRequest(const Pkt6Ptr& infRequest);
 
-    /// @brief Copies required options from client message to server answer
+    /// @brief Creates status-code option.
+    ///
+    /// @param code status code value (see RFC3315)
+    /// @param text textual explanation (will be sent in status code option)
+    /// @return status-code option
+    OptionPtr createStatusCode(uint16_t code, const std::string& text);
+
+    /// @brief Selects a subnet for a given client's packet.
+    ///
+    /// @param question client's message
+    /// @return selected subnet (or NULL if no suitable subnet was found)
+    isc::dhcp::Subnet6Ptr selectSubnet(const Pkt6Ptr& question);
+
+    /// @brief Processes IA_NA option (and assigns addresses if necessary).
+    ///
+    /// Generates response to IA_NA. This typically includes selecting (and
+    /// allocating a lease in case of REQUEST) a lease and creating
+    /// IAADDR option. In case of allocation failure, it may contain
+    /// status code option with non-zero status, denoting cause of the
+    /// allocation failure.
+    ///
+    /// @param subnet subnet the client is connected to
+    /// @param duid client's duid
+    /// @param question client's message (typically SOLICIT or REQUEST)
+    /// @param ia pointer to client's IA_NA option (client's request)
+    /// @return IA_NA option (server's response)
+    OptionPtr assignIA_NA(const isc::dhcp::Subnet6Ptr& subnet,
+                          const isc::dhcp::DuidPtr& duid,
+                          isc::dhcp::Pkt6Ptr question,
+                          boost::shared_ptr<Option6IA> ia);
+
+    /// @brief Renews specific IA_NA option
+    ///
+    /// Generates response to IA_NA. This typically includes finding a lease that
+    /// corresponds to the received address. If no such lease is found, an IA_NA
+    /// response is generated with an appropriate status code.
+    ///
+    /// @param subnet subnet the sender belongs to
+    /// @param duid client's duid
+    /// @param question client's message
+    /// @param ia IA_NA option that is being renewed
+    OptionPtr renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                         Pkt6Ptr question, boost::shared_ptr<Option6IA> ia);
+
+    /// @brief Copies required options from client message to server answer.
     ///
     /// Copies options that must appear in any server response (ADVERTISE, REPLY)
     /// to client's messages (SOLICIT, REQUEST, RENEW, REBIND, DECLINE, RELEASE).
@@ -170,8 +246,6 @@ protected:
     /// @brief Appends requested options to server's answer.
     ///
     /// Appends options requested by client to the server's answer.
-    /// TODO: This method is currently a stub. It just appends DNS-SERVERS
-    /// option.
     ///
     /// @param question client's message
     /// @param answer server's message (options will be added here)
@@ -179,13 +253,23 @@ protected:
 
     /// @brief Assigns leases.
     ///
-    /// TODO: This method is currently a stub. It just appends one
-    /// hardcoded lease. It supports addresses (IA_NA) only. It does NOT
-    /// support temporary addresses (IA_TA) nor prefixes (IA_PD).
+    /// It supports addresses (IA_NA) only. It does NOT support temporary
+    /// addresses (IA_TA) nor prefixes (IA_PD).
+    /// @todo: Extend this method once TA and PD becomes supported
     ///
     /// @param question client's message (with requested IA_NA)
     /// @param answer server's message (IA_NA options will be added here)
     void assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer);
+
+    /// @brief Attempts to renew received addresses
+    ///
+    /// It iterates through received IA_NA options and attempts to renew
+    /// received addresses. If no such leases are found, proper status
+    /// code is added to reply message. Renewed addresses are added
+    /// as IA_NA/IAADDR to reply packet.
+    /// @param renew client's message asking for renew
+    /// @param reply server's response
+    void renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply);
 
     /// @brief Sets server-identifier.
     ///
@@ -199,10 +283,17 @@ protected:
     ///         interfaces for new DUID generation are detected.
     void setServerID();
 
-    /// server DUID (to be sent in server-identifier option)
+private:
+    /// @brief Allocation Engine.
+    /// Pointer to the allocation engine that we are currently using
+    /// It must be a pointer, because we will support changing engines
+    /// during normal operation (e.g. to use different allocators)
+    boost::shared_ptr<AllocEngine> alloc_engine_;
+
+    /// Server DUID (to be sent in server-identifier option)
     boost::shared_ptr<isc::dhcp::Option> serverid_;
 
-    /// indicates if shutdown is in progress. Setting it to true will
+    /// Indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
 };

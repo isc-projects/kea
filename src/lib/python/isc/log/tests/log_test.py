@@ -56,6 +56,28 @@ class Manager(unittest.TestCase):
         # ignore errors like missing file?
         isc.log.init("root", "INFO", 0, "/no/such/file");
 
+    def test_init_keywords(self):
+        isc.log.init(name="root", severity="DEBUG", debuglevel=50, file=None,
+                     buffer=True)
+        # unknown keyword
+        self.assertRaises(TypeError, isc.log.init, name="root", foo="bar")
+        # Replace the values for each keyword by a wrong type, one by one
+        self.assertRaises(TypeError, isc.log.init, name=1,
+                          severity="DEBUG", debuglevel=50, file=None,
+                          buffer=True)
+        self.assertRaises(TypeError, isc.log.init, name="root",
+                          severity=2, debuglevel=50, file=None,
+                          buffer=True)
+        self.assertRaises(TypeError, isc.log.init, name="root",
+                          severity="DEBUG", debuglevel="50", file=None,
+                          buffer=True)
+        self.assertRaises(TypeError, isc.log.init, name="root",
+                          severity="DEBUG", debuglevel=50, file=1,
+                          buffer=True)
+        self.assertRaises(TypeError, isc.log.init, name="root",
+                          severity="DEBUG", debuglevel=50, file=None,
+                          buffer=None)
+
     def test_log_config_update(self):
         log_spec = json.dumps(isc.config.module_spec_from_file(path_search('logging.spec', bind10_config.PLUGIN_PATHS)).get_full_spec())
 

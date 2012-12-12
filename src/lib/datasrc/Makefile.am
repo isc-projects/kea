@@ -26,6 +26,7 @@ lib_LTLIBRARIES = libb10-datasrc.la
 libb10_datasrc_la_SOURCES = data_source.h
 libb10_datasrc_la_SOURCES += rbnode_rrset.h
 libb10_datasrc_la_SOURCES += rbtree.h
+libb10_datasrc_la_SOURCES += exceptions.h
 libb10_datasrc_la_SOURCES += zonetable.h zonetable.cc
 libb10_datasrc_la_SOURCES += zone.h zone_finder.cc zone_finder_context.cc
 libb10_datasrc_la_SOURCES += result.h
@@ -35,6 +36,8 @@ libb10_datasrc_la_SOURCES += database.h database.cc
 libb10_datasrc_la_SOURCES += factory.h factory.cc
 libb10_datasrc_la_SOURCES += client_list.h client_list.cc
 libb10_datasrc_la_SOURCES += memory_datasrc.h memory_datasrc.cc
+libb10_datasrc_la_SOURCES += master_loader_callbacks.h
+libb10_datasrc_la_SOURCES += master_loader_callbacks.cc
 nodist_libb10_datasrc_la_SOURCES = datasrc_messages.h datasrc_messages.cc
 libb10_datasrc_la_LDFLAGS = -no-undefined -version-info 1:0:1
 

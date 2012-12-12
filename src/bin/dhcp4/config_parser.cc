@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config/ccsession.h>
-#include <dhcp/cfgmgr.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcp4/config_parser.h>
 #include <dhcp4/dhcp4_log.h>
 #include <boost/foreach.hpp>

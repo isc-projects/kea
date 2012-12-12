@@ -13,12 +13,30 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/memory/zone_table_segment_local.h>
+#include "zone_writer_local.h"
 
+using namespace isc::dns;
 using namespace isc::util;
 
 namespace isc {
 namespace datasrc {
 namespace memory {
+
+ZoneTableSegmentLocal::ZoneTableSegmentLocal(const RRClass& rrclass) :
+    ZoneTableSegment(rrclass),
+    header_(ZoneTable::create(mem_sgmt_, rrclass))
+{
+}
+
+ZoneTableSegmentLocal::~ZoneTableSegmentLocal() {
+    // Explicitly clear the contained data, and check memory
+    // leak.  assert() (with abort on failure) may be too harsh, but
+    // it's probably better to find more leaks initially.  Once it's stabilized
+    // we should probably revisit it.
+
+    ZoneTable::destroy(mem_sgmt_, header_.getTable());
+    assert(mem_sgmt_.allMemoryDeallocated());
+}
 
 // After more methods' definitions are added here, it would be a good
 // idea to move getHeader() and getMemorySegment() definitions to the
@@ -36,6 +54,14 @@ ZoneTableSegmentLocal::getHeader() const {
 MemorySegment&
 ZoneTableSegmentLocal::getMemorySegment() {
      return (mem_sgmt_);
+}
+
+ZoneWriter*
+ZoneTableSegmentLocal::getZoneWriter(const LoadAction& load_action,
+                                     const dns::Name& name,
+                                     const dns::RRClass& rrclass)
+{
+    return (new ZoneWriterLocal(this, load_action, name, rrclass));
 }
 
 } // namespace memory

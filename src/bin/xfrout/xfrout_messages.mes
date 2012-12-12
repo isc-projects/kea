@@ -107,10 +107,6 @@ received from the configuration manager.
 The xfrout daemon received a command on the command channel that
 NOTIFY packets should be sent for the given zone.
 
-% XFROUT_RECEIVED_GETSTATS_COMMAND received command to get statistics data
-The xfrout daemon received a command on the command channel that
-statistics data should be sent to the stats daemon.
-
 % XFROUT_PARSE_QUERY_ERROR error parsing query: %1
 There was a parse error while reading an incoming query. The parse
 error is shown in the log message. A remote client sent a packet we
@@ -150,6 +146,10 @@ The xfrout process rejected (by REFUSED rcode) a request to transfer zone to
 given host. This is because of ACLs.  The %2 represents the IP
 address and port of the peer requesting the transfer, and the %3
 represents the zone name and class.
+
+% XFROUT_RECEIVED_GETSTATS_COMMAND received command to get statistics data
+The xfrout daemon received a command on the command channel that
+statistics data should be sent to the stats daemon.
 
 % XFROUT_RECEIVED_SHUTDOWN_COMMAND shutdown command received
 The xfrout daemon received a shutdown command from the command channel
