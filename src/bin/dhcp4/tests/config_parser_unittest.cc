@@ -252,7 +252,7 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
 /// and properly err of out of range values. As we can't call Uint32Parser
 /// directly, we are exploiting the fact that it is used to parse global
 /// parameter renew-timer and the results are stored in uint32_defaults.
-TEST_F(Dhcp4ParserTest, Uint32Parser) {
+TEST_F(Dhcp4ParserTest, DISABLED_Uint32Parser) {
 
     ConstElementPtr status;
 
