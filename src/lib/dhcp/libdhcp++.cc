@@ -33,22 +33,6 @@ using namespace std;
 using namespace isc::dhcp;
 using namespace isc::util;
 
-namespace {
-
-/// @brief A structure comprising values that are passed to
-/// OptionDefinition constructor.
-///
-/// This structure is used by functions that initialize
-/// option definitions for standard options (V4 and V6).
-struct OptionParams {
-    std::string name;
-    uint16_t code;
-    OptionDataType type;
-    bool array;
-};
-
-}
-
 // static array with factories for options
 std::map<unsigned short, Option::Factory*> LibDHCP::v4factories_;
 
