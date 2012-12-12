@@ -186,8 +186,8 @@ public:
     /// responsibility of the caller to do so.
     ///
     /// Callers must also start a transaction before calling this method,
-    /// implementations may throw DataSourceError if this has not been done.
-    /// Callers should also expect DataSourceErrors for other potential
+    /// implementations should throw DataSourceError if this has not been
+    /// done. Callers should also expect DataSourceErrors for other potential
     /// problems.
     ///
     /// \param name The (fully qualified) domain name of the zone to add.
@@ -1399,9 +1399,6 @@ public:
     /// does not, creates it, commits, and returns true. If the zone
     /// does exist already, it does nothing (except abort the transaction)
     /// and returns false.
-    ///
-    /// \param name The (fully qualified) name of the zone to create
-    /// \return True if the zone was added, false if it already existed
     virtual bool createZone(const isc::dns::Name& name);
 
     /// \brief Get the zone iterator
