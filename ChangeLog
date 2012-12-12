@@ -1,3 +1,9 @@
+523.	[bug]		muks
+	Fixed a problem in inmem NSEC3 lookup (for, instance when using a
+	zone with no non-apex names) which caused exceptions when the zone
+	origin was not added as an explicit NSEC3 record.
+	(Trac #2503, git 6fe86386be0e7598633fe35999112c1a6e3b0370)
+
 522.	[func]*		jelte
 	Configuration of TSIG keys for b10-xfrin has changed; instead of
 	specifying the full TSIG key (<name>:<base64>:<algo>) it now expects
