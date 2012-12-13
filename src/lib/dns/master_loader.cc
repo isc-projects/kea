@@ -68,20 +68,6 @@ public:
         warn_rfc1035_ttl_(true)
     {}
 
-    void reportError(const std::string& filename, size_t line,
-                     const std::string& reason)
-    {
-        seen_error_ = true;
-        callbacks_.error(filename, line, reason);
-        if (!many_errors_) {
-            // In case we don't have the lenient mode, every error is fatal
-            // and we throw
-            ok_ = false;
-            complete_ = true;
-            isc_throw(MasterLoaderError, reason.c_str());
-        }
-    }
-
     void pushSource(const std::string& filename) {
         std::string error;
         if (!lexer_.pushSource(filename.c_str(), &error)) {
@@ -97,6 +83,29 @@ public:
         ++source_count_;
     }
 
+    void pushStreamSource(std::istream& stream) {
+        lexer_.pushSource(stream);
+        initialized_ = true;
+        ++source_count_;
+    }
+
+    bool loadIncremental(size_t count_limit);
+
+private:
+    void reportError(const std::string& filename, size_t line,
+                     const std::string& reason)
+    {
+        seen_error_ = true;
+        callbacks_.error(filename, line, reason);
+        if (!many_errors_) {
+            // In case we don't have the lenient mode, every error is fatal
+            // and we throw
+            ok_ = false;
+            complete_ = true;
+            isc_throw(MasterLoaderError, reason.c_str());
+        }
+    }
+
     bool popSource() {
         if (--source_count_ == 0) {
             return (false);
@@ -105,19 +114,11 @@ public:
         return (true);
     }
 
-    void pushStreamSource(std::istream& stream) {
-        lexer_.pushSource(stream);
-        initialized_ = true;
-        ++source_count_;
-    }
-
     // Get a string token. Handle it as error if it is not string.
     const string getString() {
         lexer_.getNextToken(MasterToken::STRING).getString(string_token_);
         return (string_token_);
     }
-
-    bool loadIncremental(size_t count_limit);
 
     void doInclude() {
         // First, get the filename to include
@@ -169,6 +170,42 @@ public:
         } catch (const InvalidRRTTL&) {
             return (false);
         }
+    }
+
+    // Determine the TTL of the current RR based on the given parsing context.
+    //
+    // explicit_ttl is true iff the TTL is explicitly specified for that RR
+    // (in which case current_ttl_ is set to that TTL).
+    // rrtype is the type of the current RR, and rdata is its RDATA.  They
+    // only matter if the type is SOA and no available TTL is known.  In this
+    // case the minimum TTL of the SOA will be used as the TTL of that SOA
+    // and the default TTL for subsequent RRs.
+    const RRTTL& getCurrentTTL(bool explicit_ttl, const RRType& rrtype,
+                               const rdata::ConstRdataPtr& rdata) {
+        if (!current_ttl_ && !default_ttl_) {
+            if (rrtype == RRType::SOA()) {
+                callbacks_.warning(lexer_.getSourceName(),
+                                   lexer_.getSourceLine(),
+                                   "no TTL specified; "
+                                   "using SOA MINTTL instead");
+                const uint32_t ttl_val =
+                    dynamic_cast<const rdata::generic::SOA&>(*rdata).
+                    getMinimum();
+                setDefaultTTL(RRTTL(ttl_val));
+                setCurrentTTL(*default_ttl_);
+            }
+        } else if (!explicit_ttl && default_ttl_) {
+            setCurrentTTL(*default_ttl_);
+        } else if (!explicit_ttl && warn_rfc1035_ttl_) {
+            // Omitted (class and) TTL values are default to the last
+            // explicitly stated values (RFC 1035, Sec. 5.1).
+            callbacks_.warning(lexer_.getSourceName(),
+                               lexer_.getSourceLine(),
+                               "using RFC1035 TTL semantics");
+            warn_rfc1035_ttl_ = false; // we only warn about this once
+        }
+        assert(current_ttl_);
+        return (*current_ttl_);
     }
 
     void handleDirective(const char* directive, size_t length) {
@@ -319,41 +356,19 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             }
             // TODO: Check if it is SOA, it should be at the origin.
 
-            const rdata::RdataPtr data(rdata::createRdata(rrtype, rrclass,
-                                                          lexer_,
-                                                          &zone_origin_,
-                                                          options_,
-                                                          callbacks_));
+            const rdata::RdataPtr rdata(rdata::createRdata(rrtype, rrclass,
+                                                           lexer_,
+                                                           &zone_origin_,
+                                                           options_,
+                                                           callbacks_));
             // In case we get NULL, it means there was error creating
             // the Rdata. The errors should have been reported by
             // callbacks_ already. We need to decide if we want to continue
             // or not.
-            if (data) {
-                // If the TTL is not yet determined, complete it.
-                if (!current_ttl_ && !default_ttl_) {
-                    if (rrtype == RRType::SOA()) {
-                        callbacks_.warning(lexer_.getSourceName(),
-                                           lexer_.getSourceLine(),
-                                           "no TTL specified; "
-                                           "using SOA MINTTL instead");
-                        const uint32_t ttl_val =
-                            dynamic_cast<const rdata::generic::SOA&>(*data).
-                            getMinimum();
-                        setDefaultTTL(RRTTL(ttl_val));
-                        setCurrentTTL(*default_ttl_);
-                    }
-                } else if (!explicit_ttl && default_ttl_) {
-                    setCurrentTTL(*default_ttl_);
-                } else if (!explicit_ttl && warn_rfc1035_ttl_) {
-                    // Omitted (class and) TTL values are default to the last
-                    // explicitly stated values (RFC 1035, Sec. 5.1).
-                    callbacks_.warning(lexer_.getSourceName(),
-                                       lexer_.getSourceLine(),
-                                       "using RFC1035 TTL semantics");
-                    warn_rfc1035_ttl_ = false; // we only warn about it once
-                }
-
-                add_callback_(name, rrclass, rrtype, *current_ttl_, data);
+            if (rdata) {
+                add_callback_(name, rrclass, rrtype,
+                              getCurrentTTL(explicit_ttl, rrtype, rdata),
+                              rdata);
 
                 // Good, we loaded another one
                 ++count;
