@@ -63,7 +63,6 @@ public:
         initialized_(false),
         ok_(true),
         many_errors_((options & MANY_ERRORS) != 0),
-        source_count_(0),
         complete_(false),
         seen_error_(false)
     {}
@@ -94,11 +93,10 @@ public:
             }
         }
         initialized_ = true;
-        ++source_count_;
     }
 
     bool popSource() {
-        if (--source_count_ == 0) {
+        if (lexer_.getSourceCount() == 1) {
             return (false);
         }
         lexer_.popSource();
@@ -108,7 +106,6 @@ public:
     void pushStreamSource(std::istream& stream) {
         lexer_.pushSource(stream);
         initialized_ = true;
-        ++source_count_;
     }
 
     // Get a string token. Handle it as error if it is not string.
@@ -200,7 +197,6 @@ private:
     bool ok_;                   // Is it OK to continue loading?
     const bool many_errors_;    // Are many errors allowed (or should we abort
                                 // on the first)
-    size_t source_count_;       // How many sources are currently pushed.
 public:
     bool complete_;             // All work done.
     bool seen_error_;           // Was there at least one error during the
