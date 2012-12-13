@@ -4129,7 +4129,7 @@ TYPED_TEST(DatabaseClientTest, createZoneRollbackOnLocked) {
 
     const Name new_name("example.com");
     isc::datasrc::ZoneUpdaterPtr updater =
-        this->client_->getUpdater(isc::dns::Name(this->zname_), true);
+        this->client_->getUpdater(this->zname_, true);
     ASSERT_THROW(this->client_->createZone(new_name), DataSourceError);
     // createZone started a transaction as well, but since it failed,
     // it should have been rolled back. Roll back the other one as
