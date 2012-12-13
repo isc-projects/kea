@@ -470,7 +470,7 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
     asio::error_code err_code;
     // If remote address is broadcast address we have to
     // allow this on the socket.
-    if (remote_addr.getAddress().is_v4() &&
+    if (remote_addr.isV4() &&
         (remote_addr == IOAddress(DHCP_IPV4_BROADCAST_ADDRESS))) {
         // Socket has to be open prior to setting the broadcast
         // option. Otherwise set_option will complain about
@@ -557,9 +557,7 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
         addr6.sin6_scope_id = if_nametoindex(iface.getName().c_str());
     }
 
-    memcpy(&addr6.sin6_addr,
-           addr.getAddress().to_v6().to_bytes().data(),
-           sizeof(addr6.sin6_addr));
+    memcpy(&addr6.sin6_addr, &addr.toBytes()[0], sizeof(addr6.sin6_addr));
 #ifdef HAVE_SA_LEN
     addr6.sin6_len = sizeof(addr6);
 #endif
@@ -661,7 +659,7 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
     to.sin6_family = AF_INET6;
     to.sin6_port = htons(pkt->getRemotePort());
     memcpy(&to.sin6_addr,
-           pkt->getRemoteAddr().getAddress().to_v6().to_bytes().data(),
+           &pkt->getRemoteAddr().toBytes()[0],
            16);
     to.sin6_scope_id = pkt->getIndex();
 
