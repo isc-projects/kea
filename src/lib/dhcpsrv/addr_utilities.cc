@@ -169,19 +169,23 @@ namespace dhcp {
 
 isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefix,
                                             uint8_t len) {
-    if (prefix.getFamily() == AF_INET) {
-        return firstAddrInPrefix4(prefix, len);
+    if (prefix.isV4()) {
+        return (firstAddrInPrefix4(prefix, len));
+
     } else {
-        return firstAddrInPrefix6(prefix, len);
+        return (firstAddrInPrefix6(prefix, len));
+
     }
 }
 
 isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix,
                                            uint8_t len) {
-    if (prefix.getFamily() == AF_INET) {
-        return lastAddrInPrefix4(prefix, len);
+    if (prefix.isV4()) {
+        return (lastAddrInPrefix4(prefix, len));
+
     } else {
-        return lastAddrInPrefix6(prefix, len);
+        return (lastAddrInPrefix6(prefix, len));
+
     }
 }
 
