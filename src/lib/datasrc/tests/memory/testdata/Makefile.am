@@ -30,4 +30,5 @@ EXTRA_DIST += example.org-wildcard-dname.zone
 EXTRA_DIST += example.org-wildcard-ns.zone
 EXTRA_DIST += example.org-wildcard-nsec3.zone
 
+EXTRA_DIST += 2503-test.zone
 EXTRA_DIST += 2504-test.zone

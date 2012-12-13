@@ -23,6 +23,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_int.h>
 #include <dhcp/option6_int_array.h>
+#include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
 #include <exceptions/exceptions.h>
 
@@ -883,7 +884,7 @@ TEST_F(OptionDefinitionTest, utf8StringTokenized) {
         option_v6 = opt_def.optionFactory(Option::V6, opt_code, values);
     );
     ASSERT_TRUE(option_v6);
-    ASSERT_TRUE(typeid(*option_v6) == typeid(Option));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(OptionCustom));
     std::vector<uint8_t> data = option_v6->getData();
     std::vector<uint8_t> ref_data(values[0].c_str(), values[0].c_str()
                                   + values[0].length());

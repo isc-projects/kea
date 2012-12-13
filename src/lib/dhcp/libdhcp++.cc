@@ -22,6 +22,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_int_array.h>
 #include <dhcp/option_definition.h>
+#include <dhcp/std_option_defs.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 
@@ -45,7 +46,7 @@ OptionDefContainer LibDHCP::v4option_defs_;
 OptionDefContainer LibDHCP::v6option_defs_;
 
 const OptionDefContainer&
-LibDHCP::getOptionDefs(Option::Universe u) {
+LibDHCP::getOptionDefs(const Option::Universe u) {
     switch (u) {
     case Option::V4:
         initStdOptionDefs4();
@@ -58,6 +59,17 @@ LibDHCP::getOptionDefs(Option::Universe u) {
     default:
         isc_throw(isc::BadValue, "invalid universe " << u << " specified");
     }
+}
+
+OptionDefinitionPtr
+LibDHCP::getOptionDef(const Option::Universe u, const uint16_t code) {
+    const OptionDefContainer& defs = getOptionDefs(u);
+    const OptionDefContainerTypeIndex& idx = defs.get<1>();
+    const OptionDefContainerTypeRange& range = idx.equal_range(code);
+    if (range.first != range.second) {
+        return (*range.first);
+    }
+    return (OptionDefinitionPtr());
 }
 
 OptionPtr
@@ -254,52 +266,16 @@ void
 LibDHCP::initStdOptionDefs6() {
     v6option_defs_.clear();
 
-    struct OptionParams {
-        std::string name;
-        uint16_t code;
-        OptionDataType type;
-        bool array;
-    };
-    OptionParams params[] = {
-        { "CLIENTID", D6O_CLIENTID, OPT_BINARY_TYPE, false },
-        { "SERVERID", D6O_SERVERID, OPT_BINARY_TYPE, false },
-        { "IA_NA", D6O_IA_NA, OPT_RECORD_TYPE, false },
-        { "IAADDR", D6O_IAADDR, OPT_RECORD_TYPE, false },
-        { "ORO", D6O_ORO, OPT_UINT16_TYPE, true },
-        { "ELAPSED_TIME", D6O_ELAPSED_TIME, OPT_UINT16_TYPE, false },
-        { "STATUS_CODE", D6O_STATUS_CODE, OPT_RECORD_TYPE, false },
-        { "RAPID_COMMIT", D6O_RAPID_COMMIT, OPT_EMPTY_TYPE, false },
-        { "DNS_SERVERS", D6O_NAME_SERVERS, OPT_IPV6_ADDRESS_TYPE, true },
-        { "IA_PD", D6O_IA_PD, OPT_RECORD_TYPE, false }
-    };
-    const int params_size = sizeof(params) / sizeof(params[0]);
+    for (int i = 0; i < OPTION_DEF_PARAMS_SIZE6; ++i) {
+        OptionDefinitionPtr definition(new OptionDefinition(OPTION_DEF_PARAMS6[i].name,
+                                                            OPTION_DEF_PARAMS6[i].code,
+                                                            OPTION_DEF_PARAMS6[i].type,
+                                                            OPTION_DEF_PARAMS6[i].array));
 
-    for (int i = 0; i < params_size; ++i) {
-        OptionDefinitionPtr definition(new OptionDefinition(params[i].name,
-                                                            params[i].code,
-                                                            params[i].type,
-                                                            params[i].array));
-        switch(params[i].code) {
-        case D6O_IA_NA:
-        case D6O_IA_PD:
-            for (int j = 0; j < 3; ++j) {
-                definition->addRecordField(OPT_UINT32_TYPE);
-            }
-            break;
-        case D6O_IAADDR:
-            definition->addRecordField(OPT_IPV6_ADDRESS_TYPE);
-            definition->addRecordField(OPT_UINT32_TYPE);
-            definition->addRecordField(OPT_UINT32_TYPE);
-            break;
-        case D6O_STATUS_CODE:
-            definition->addRecordField(OPT_UINT16_TYPE);
-            definition->addRecordField(OPT_STRING_TYPE);
-            break;
-        default:
-            // The default case is intentionally left empty
-            // as it does not need any processing.
-            ;
+        for (int rec = 0; rec < OPTION_DEF_PARAMS6[i].records_size; ++rec) {
+            definition->addRecordField(OPTION_DEF_PARAMS6[i].records[rec]);
         }
+
         try {
             definition->validate();
         } catch (const Exception& ex) {

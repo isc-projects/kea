@@ -68,6 +68,8 @@ public:
     ///
     /// @param command Text represenation of the command (e.g. "shutdown")
     /// @param args Optional parameters
+    /// @param command text represenation of the command (e.g. "shutdown")
+    /// @param args optional parameters
     ///
     /// @return status of the command
     static isc::data::ConstElementPtr

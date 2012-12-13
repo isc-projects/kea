@@ -246,7 +246,7 @@ public:
     /// @throw MalformedOptionDefinition if option definition is invalid.
     /// @throw InvalidOptionValue if data for the option is invalid.
     OptionPtr optionFactory(Option::Universe u, uint16_t type,
-                            const OptionBuffer& buf) const;
+                            const OptionBuffer& buf = OptionBuffer()) const;
 
     /// @brief Option factory.
     ///

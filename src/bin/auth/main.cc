@@ -147,7 +147,7 @@ main(int argc, char* argv[]) {
     // Initialize logging.  If verbose, we'll use maximum verbosity.
     isc::log::initLogger(AUTH_NAME,
                          (verbose ? isc::log::DEBUG : isc::log::INFO),
-                         isc::log::MAX_DEBUG_LEVEL, NULL);
+                         isc::log::MAX_DEBUG_LEVEL, NULL, true);
 
     int ret = 0;
 
@@ -256,7 +256,9 @@ main(int argc, char* argv[]) {
 
     // If we haven't registered callback for data sources, this will be just
     // no-op.
-    config_session->removeRemoteConfig("data_sources");
+    if (config_session != NULL) {
+        config_session->removeRemoteConfig("data_sources");
+    }
 
     delete xfrin_session;
     delete config_session;

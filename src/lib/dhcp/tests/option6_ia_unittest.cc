@@ -109,7 +109,13 @@ TEST_F(Option6IATest, basic) {
 }
 
 TEST_F(Option6IATest, simple) {
-    Option6IA * ia = new Option6IA(D6O_IA_NA, 1234);
+    Option6IA* ia = new Option6IA(D6O_IA_NA, 1234);
+
+    // Check that the values are really different than what we are about
+    // to set them to.
+    EXPECT_NE(2345, ia->getT1());
+    EXPECT_NE(3456, ia->getT2());
+
     ia->setT1(2345);
     ia->setT2(3456);
 
@@ -118,6 +124,9 @@ TEST_F(Option6IATest, simple) {
     EXPECT_EQ(1234, ia->getIAID());
     EXPECT_EQ(2345, ia->getT1());
     EXPECT_EQ(3456, ia->getT2());
+
+    ia->setIAID(890);
+    EXPECT_EQ(890, ia->getIAID());
 
     EXPECT_NO_THROW(
         delete ia;

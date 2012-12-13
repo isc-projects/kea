@@ -15,9 +15,11 @@
 #ifndef DHCP6_CONFIG_PARSER_H
 #define DHCP6_CONFIG_PARSER_H
 
+/// @todo: This header file and its .cc counterpart are very similar between
+/// DHCPv4 and DHCPv6. They should be merged. See ticket #2355.
+
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
-
 #include <string>
 
 namespace isc {
@@ -30,15 +32,22 @@ class Dhcpv6Srv;
 class Dhcp6ConfigError : public isc::Exception {
 public:
 
-/// @brief constructor
-///
-/// @param file name of the file, where exception occurred
-/// @param line line of the file, where exception occurred
-/// @param what text description of the issue that caused exception
-Dhcp6ConfigError(const char* file, size_t line, const char* what) :
-    isc::Exception(file, line, what) {}
+    /// @brief constructor
+    ///
+    /// @param file name of the file, where exception occurred
+    /// @param line line of the file, where exception occurred
+    /// @param what text description of the issue that caused exception
+    Dhcp6ConfigError(const char* file, size_t line, const char* what)
+        : isc::Exception(file, line, what) {}
 };
 
+/// @brief Base abstract class for all DHCPv6 parsers
+///
+/// Each instance of a class derived from this class parses one specific config
+/// element. Sometimes elements are simple (e.g. a string) and sometimes quite
+/// complex (e.g. a subnet). In such case, it is likely that a parser will
+/// spawn child parsers to parse child elements in the configuration.
+/// @todo: Merge this class with Dhcp4ConfigParser in src/bin/dhcp4
 class DhcpConfigParser {
     ///
     /// \name Constructors and Destructor
