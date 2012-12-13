@@ -43,7 +43,7 @@ public:
     {}
 };
 
-}
+} // end unnamed namespace
 
 class MasterLoader::MasterLoaderImpl {
 public:
