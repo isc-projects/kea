@@ -225,11 +225,13 @@ public:
     /// @return data type size or zero for variable length types.
     static int getDataTypeLen(const OptionDataType data_type);
 
-    /// @brief Read IPv4 or IPv6 addres from a buffer.
+    /// @brief Read IPv4 or IPv6 address from a buffer.
     ///
     /// @param buf input buffer.
     /// @param family address family: AF_INET or AF_INET6.
     /// 
+    /// @throw isc::dhcp::BadDataTypeCast when the data being read
+    /// is truncated.
     /// @return address being read.
     static asiolink::IOAddress readAddress(const std::vector<uint8_t>& buf,
                                            const short family);
@@ -252,6 +254,9 @@ public:
     /// @brief Read boolean value from a buffer.
     ///
     /// @param buf input buffer.
+    ///
+    /// @throw isc::dhcp::BadDataTypeCast when the data being read
+    /// is truncated or the value is invalid (neither 1 nor 0).
     /// @return boolean value read from a buffer.
     static bool readBool(const std::vector<uint8_t>& buf);
 
@@ -268,6 +273,9 @@ public:
     ///
     /// @param buf input buffer.
     /// @tparam integer type of the returned value.
+    ///
+    /// @throw isc::dhcp::BadDataTypeCast when the data in the buffer
+    /// is truncated.
     /// @return integer value being read.
     template<typename T>
     static T readInt(const std::vector<uint8_t>& buf) {
@@ -276,7 +284,12 @@ public:
                       " by readInteger is unsupported integer type");
         }
 
-        assert(buf.size() == OptionDataTypeTraits<T>::len);
+        if (buf.size() < OptionDataTypeTraits<T>::len) {
+            isc_throw(isc::dhcp::BadDataTypeCast,
+                      "failed to read an integer value from a buffer"
+                      << " - buffer is truncated.");
+        }
+
         T value;
         switch (OptionDataTypeTraits<T>::len) {
         case 1:
@@ -331,6 +344,33 @@ public:
             ;
         }
     }
+
+    /// @brief Read FQDN from a buffer as a string value.
+    ///
+    /// The format of an FQDN within a buffer complies with RFC1035,
+    /// section 3.1.
+    ///
+    /// @param buf input buffer holding a FQDN.
+    ///
+    /// @throw BadDataTypeCast if a FQDN stored within a buffer is
+    /// invalid (e.g. empty, contains invalid characters, truncated).
+    /// @return fully qualified domain name in a text form.
+    static std::string readFqdn(const std::vector<uint8_t>& buf);
+
+    /// @brief Append FQDN into a buffer.
+    ///
+    /// This method appends the Fully Qualified Domain Name (FQDN)
+    /// represented as string value into a buffer. The format of
+    /// the FQDN being stored into a buffer complies with RFC1035,
+    /// section 3.1.
+    ///
+    /// @param fqdn fully qualified domain name to be written.
+    /// @param [out] buf output buffer.
+    ///
+    /// @throw isc::dhcp::BadDataTypeCast if provided FQDN
+    /// is invalid.
+    static void writeFqdn(const std::string& fqdn,
+                          std::vector<uint8_t>& buf);
 
     /// @brief Read string value from a buffer.
     ///

@@ -143,7 +143,7 @@ main(int argc, char* argv[]) {
     // temporary initLogger() code.  If verbose, we'll use maximum verbosity.
     isc::log::initLogger(RESOLVER_NAME,
                          (verbose ? isc::log::DEBUG : isc::log::INFO),
-                         isc::log::MAX_DEBUG_LEVEL, NULL);
+                         isc::log::MAX_DEBUG_LEVEL, NULL, true);
 
     // Print the starting message
     string cmdline = argv[0];
@@ -177,7 +177,7 @@ main(int argc, char* argv[]) {
 
         isc::cache::ResolverCache cache;
         resolver->setCache(cache);
-        
+
         // TODO priming query, remove root from direct
         // Fake a priming query result here (TODO2 how to flag non-expiry?)
         // propagation to runningquery. And check for forwarder mode?
@@ -185,21 +185,21 @@ main(int argc, char* argv[]) {
                                             isc::dns::Name("."),
                                             isc::dns::RRClass::IN(),
                                             isc::dns::RRType::NS()));
-        isc::dns::RRsetPtr root_ns_rrset(new isc::dns::RRset(isc::dns::Name("."), 
+        isc::dns::RRsetPtr root_ns_rrset(new isc::dns::RRset(isc::dns::Name("."),
                                          isc::dns::RRClass::IN(),
                                          isc::dns::RRType::NS(),
                                          isc::dns::RRTTL(8888)));
         root_ns_rrset->addRdata(isc::dns::rdata::createRdata(isc::dns::RRType::NS(),
                                                              isc::dns::RRClass::IN(),
                                                              "l.root-servers.net."));
-        isc::dns::RRsetPtr root_a_rrset(new isc::dns::RRset(isc::dns::Name("l.root-servers.net"), 
+        isc::dns::RRsetPtr root_a_rrset(new isc::dns::RRset(isc::dns::Name("l.root-servers.net"),
                                         isc::dns::RRClass::IN(),
                                         isc::dns::RRType::A(),
                                         isc::dns::RRTTL(8888)));
         root_a_rrset->addRdata(isc::dns::rdata::createRdata(isc::dns::RRType::A(),
                                                              isc::dns::RRClass::IN(),
                                                              "199.7.83.42"));
-        isc::dns::RRsetPtr root_aaaa_rrset(new isc::dns::RRset(isc::dns::Name("l.root-servers.net"), 
+        isc::dns::RRsetPtr root_aaaa_rrset(new isc::dns::RRset(isc::dns::Name("l.root-servers.net"),
                                         isc::dns::RRClass::IN(),
                                         isc::dns::RRType::AAAA(),
                                         isc::dns::RRTTL(8888)));
@@ -216,7 +216,7 @@ main(int argc, char* argv[]) {
         cache.update(root_ns_rrset);
         cache.update(root_a_rrset);
         cache.update(root_aaaa_rrset);
-        
+
         DNSService dns_service(io_service, checkin, lookup, answer);
         resolver->setDNSService(dns_service);
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_SERVICE_CREATED);

@@ -20,9 +20,11 @@
  * - @subpage DataScrubbing
  *
  * @section DHCP
- * - @subpage dhcpv4
+ * - @subpage dhcp4
  *   - @subpage dhcpv4Session
- * - @subpage dhcpv6
+ *   - @subpage dhcpv4ConfigParser
+ *   - @subpage dhcpv4ConfigInherit
+ * - @subpage dhcp6
  *   - @subpage dhcpv6Session
  *   - @subpage dhcpv6ConfigParser
  *   - @subpage dhcpv6ConfigInherit
@@ -33,7 +35,7 @@
  *   - @subpage leasemgr
  *   - @subpage cfgmgr
  *   - @subpage allocengine
- * - @subpage dhcp-database-backends
+ * - @subpage dhcpDatabaseBackends
  * - @subpage perfdhcpInternals
  *
  * @section misc Miscellaneous topics

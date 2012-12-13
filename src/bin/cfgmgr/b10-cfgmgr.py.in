@@ -27,7 +27,7 @@ import glob
 import os.path
 import imp
 import isc.log
-isc.log.init("b10-cfgmgr")
+isc.log.init("b10-cfgmgr", buffer=True)
 from isc.config.cfgmgr import ConfigManager, ConfigManagerDataReadError, logger
 from isc.log_messages.cfgmgr_messages import *
 

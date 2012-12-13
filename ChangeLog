@@ -1,6 +1,55 @@
+525.	[func]		tomek
+	b10-dhcp4: DHCPv4 server is now able to parse configuration. It
+	is possible to specify IPv4 subnets with dynamic pools within
+	them. Although configuration is accepted, it is not used yet. This
+	will be implemented shortly.
+	(Trac #2270, git de29c07129d41c96ee0d5eebdd30a1ea7fb9ac8a)
+
+524.	[func]		tomek
+	b10-dhcp6 is now able to handle RENEW messages. Leases are
+	renewed and REPLY responses are sent back to clients.
+	(Trac #2325, git 7f6c9d057cc0a7a10f41ce7da9c8565b9ee85246)
+
+523.	[bug]		muks
+	Fixed a problem in inmem NSEC3 lookup (for, instance when using a
+	zone with no non-apex names) which caused exceptions when the zone
+	origin was not added as an explicit NSEC3 record.
+	(Trac #2503, git 6fe86386be0e7598633fe35999112c1a6e3b0370)
+
+522.	[func]*		jelte
+	Configuration of TSIG keys for b10-xfrin has changed; instead of
+	specifying the full TSIG key (<name>:<base64>:<algo>) it now expects
+	just the name, and uses the global TSIG Key Ring like all the other
+	components (configuration list /tsig_keys/keys).
+	Note: this is not automatically updated, so if you use TSIG in
+	xfrin, you need to update your configuration.
+	(Trac #1351, git e65b7b36f60f14b7abe083da411e6934cdfbae7a)
+
+521.	[func]		marcin
+	Implemented definitions for DHCPv6 standard options identified
+	by codes up to 48. These definitions are now used by the DHCPv6
+	server to create instances of options being sent to a client.
+	(Trac #2491, git 0a4faa07777189ed9c25211987a1a9b574015a95)
+
+520.	[func]		jelte
+	The system no longer prints initial log messages to stdout
+	regardless of what logging configuration is present, but it
+	temporarily stores any log messages until the configuration is
+	processed. If there is no specific configuration, or if the
+	configuration cannot be accessed, it will still fall back to stdout.
+	Note that there are still a few instances where output is printed,
+	these shall be addressed separately.
+	Note also that, currently, in case it falls back to stdout (such as
+	when it cannot connect to b10-cfgmgr), all log messages are always
+	printed (including debug messages), regardless of whether -v was
+	used. This shall also be addressed in a future change.
+	(Trac #2445, git 74a0abe5a6d10b28e4a3e360e87b129c232dea68)
+
 519.	[bug]		muks
-	Fixed a problem in inmem NSEC lookup which caused assert failures
-	in some cases.
+	Fixed a problem in inmem NSEC lookup which caused returning an
+	incorrect NSEC record or (in rare cases) assert failures
+	when a non-existent domain was queried, which was a sub-domain of
+	a domain that existed.
 	(Trac #2504, git 835553eb309d100b062051f7ef18422d2e8e3ae4)
 
 518.	[func]		stephen

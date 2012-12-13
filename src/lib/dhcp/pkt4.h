@@ -269,7 +269,7 @@ public:
     ///
     /// @param hType hardware type (will be sent in htype field)
     /// @param hlen hardware length (will be sent in hlen field)
-    /// @param macAddr pointer to hardware address
+    /// @param mac_addr pointer to hardware address
     void setHWAddr(uint8_t hType, uint8_t hlen,
                    const std::vector<uint8_t>& mac_addr);
 

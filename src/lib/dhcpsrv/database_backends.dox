@@ -1,5 +1,5 @@
 /**
-  @page dhcp-database-backends DHCP Database Back-Ends
+  @page dhcpDatabaseBackends DHCP Database Back-Ends
 
   All DHCP lease data is stored in some form of database, the interface
   to this being through the Lease Manager.

@@ -106,6 +106,17 @@ TEST_F(OptionCustomTest, constructor) {
 
     EXPECT_EQ(Option::V4, option->getUniverse());
     EXPECT_EQ(232, option->getType());
+
+    // Try to create an option using 'empty data' constructor
+    OptionDefinition opt_def3("OPTION_FOO", 1000, "uint32");
+
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def3, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    EXPECT_EQ(Option::V6, option->getUniverse());
+    EXPECT_EQ(1000, option->getType());
 }
 
 // The purpose of this test is to verify that 'empty' option definition can
@@ -113,9 +124,10 @@ TEST_F(OptionCustomTest, constructor) {
 TEST_F(OptionCustomTest, emptyData) {
     OptionDefinition opt_def("OPTION_FOO", 232, "empty");
 
+    OptionBuffer buf;
     boost::scoped_ptr<OptionCustom> option;
     ASSERT_NO_THROW(
-        option.reset(new OptionCustom(opt_def, Option::V4, OptionBuffer()));
+        option.reset(new OptionCustom(opt_def, Option::V4, buf.begin(), buf.end()));
     );
     ASSERT_TRUE(option);
 
@@ -159,8 +171,10 @@ TEST_F(OptionCustomTest, binaryData) {
     EXPECT_TRUE(std::equal(buf_in.begin(), buf_in.end(), buf_out.begin()));
 
     // Check that option with "no data" is rejected.
+    buf_in.clear();
     EXPECT_THROW(
-        option.reset(new OptionCustom(opt_def, Option::V4, OptionBuffer())),
+        option.reset(new OptionCustom(opt_def, Option::V4, buf_in.begin(),
+                                      buf_in.end())),
         isc::OutOfRange
     );
 }
@@ -197,9 +211,43 @@ TEST_F(OptionCustomTest, booleanData) {
     EXPECT_FALSE(value);
 
     // Check that the option with "no data" is rejected.
+    buf.clear();
     EXPECT_THROW(
-        option.reset(new OptionCustom(opt_def, Option::V6, OptionBuffer())),
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end())),
         isc::OutOfRange
+    );
+}
+
+// The purpose of this test is to verify that the data from a buffer
+// can be read as FQDN.
+TEST_F(OptionCustomTest, fqdnData) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "fqdn");
+
+    const char data[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0,
+    };
+
+    std::vector<uint8_t> buf(data, data + sizeof(data));
+
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end()));
+    );
+    ASSERT_TRUE(option);
+
+    ASSERT_EQ(1, option->getDataFieldsNum());
+
+    std::string domain0 = option->readFqdn(0);
+    EXPECT_EQ("mydomain.example.com.", domain0);
+
+    // Check that the option with truncated data can't be created.
+    EXPECT_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6,
+                                      buf.begin(), buf.begin() + 4)),
+        isc::dhcp::BadDataTypeCast
     );
 }
 
@@ -338,6 +386,7 @@ TEST_F(OptionCustomTest, ipv6AddressData) {
     );
 }
 
+
 // The purpose of this test is to verify that the option definition comprising
 // string value can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, stringData) {
@@ -365,8 +414,9 @@ TEST_F(OptionCustomTest, stringData) {
     EXPECT_EQ("hello world!", value);
 
     // Check that option will not be created if empty buffer is provided.
+    buf.clear();
     EXPECT_THROW(
-        option.reset(new OptionCustom(opt_def, Option::V6, OptionBuffer())),
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end())),
         isc::OutOfRange
     );
 }
@@ -419,8 +469,9 @@ TEST_F(OptionCustomTest, booleanDataArray) {
 
     // Check that empty buffer can't be used to create option holding
     // array of boolean values.
+    buf.clear();
     EXPECT_THROW(
-         option.reset(new OptionCustom(opt_def, Option::V6, OptionBuffer())),
+         option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end())),
          isc::OutOfRange
     );
 }
@@ -472,7 +523,6 @@ TEST_F(OptionCustomTest, uint32DataArray) {
                                       buf.begin() + 3)),
         isc::OutOfRange
     );
-
 }
 
 // The purpose of this test is to verify that the option definition comprising
@@ -575,6 +625,45 @@ TEST_F(OptionCustomTest, ipv6AddressDataArray) {
     );
 }
 
+// The purpose of this test is to verify that the option comprising
+// an array of FQDN values can be created from a buffer which holds
+// multiple FQDN values encoded as described in the RFC1035, section
+// 3.1
+TEST_F(OptionCustomTest, fqdnDataArray) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "fqdn", true);
+
+    const char data[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0,
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0
+    };
+
+    // Create a buffer that holds two FQDNs.
+    std::vector<uint8_t> buf(data, data + sizeof(data));
+
+    // Create an option from using a buffer.
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf));
+    );
+    ASSERT_TRUE(option);
+
+    // We expect that two FQDN values have been extracted
+    // from a buffer.
+    ASSERT_EQ(2, option->getDataFieldsNum());
+
+    // Validate both values.
+    std::string domain0 = option->readFqdn(0);
+    EXPECT_EQ("mydomain.example.com.", domain0);
+
+    std::string domain1 = option->readFqdn(1);
+    EXPECT_EQ("example.com.", domain1);
+}
+
 // The purpose of this test is to verify that the option definition comprising
 // a record of various data fields can be used to create an instance of
 // custom option.
@@ -584,20 +673,30 @@ TEST_F(OptionCustomTest, recordData) {
     OptionDefinition opt_def("OPTION_FOO", 1000, "record");
     ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
     ASSERT_NO_THROW(opt_def.addRecordField("boolean"));
+    ASSERT_NO_THROW(opt_def.addRecordField("fqdn"));
     ASSERT_NO_THROW(opt_def.addRecordField("ipv4-address"));
     ASSERT_NO_THROW(opt_def.addRecordField("ipv6-address"));
     ASSERT_NO_THROW(opt_def.addRecordField("string"));
 
+    const char fqdn_data[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0,
+    };
+
     OptionBuffer buf;
-    // Initialize field 0.
+    // Initialize field 0 to 8712.
     writeInt<uint16_t>(8712, buf);
     // Initialize field 1 to 'true'
     buf.push_back(static_cast<unsigned short>(1));
-    // Initialize field 2 to IPv4 address.
+    // Initialize field 2 to 'mydomain.example.com'.
+    buf.insert(buf.end(), fqdn_data, fqdn_data + sizeof(fqdn_data));
+    // Initialize field 3 to IPv4 address.
     writeAddress(IOAddress("192.168.0.1"), buf);
-    // Initialize field 3 to IPv6 address.
+    // Initialize field 4 to IPv6 address.
     writeAddress(IOAddress("2001:db8:1::1"), buf);
-    // Initialize field 4 to string value.
+    // Initialize field 5 to string value.
     writeString("ABCD", buf);
 
     boost::scoped_ptr<OptionCustom> option;
@@ -606,8 +705,8 @@ TEST_F(OptionCustomTest, recordData) {
     );
     ASSERT_TRUE(option);
 
-    // We should have 5 data fields.
-    ASSERT_EQ(5, option->getDataFieldsNum());
+    // We should have 6 data fields.
+    ASSERT_EQ(6, option->getDataFieldsNum());
 
     // Verify value in the field 0.
     uint16_t value0 = 0;
@@ -620,19 +719,24 @@ TEST_F(OptionCustomTest, recordData) {
     EXPECT_TRUE(value1);
 
     // Verify value in the field 2.
-    IOAddress value2("127.0.0.1");
-    ASSERT_NO_THROW(value2 = option->readAddress(2));
-    EXPECT_EQ("192.168.0.1", value2.toText());
+    std::string value2 = "";
+    ASSERT_NO_THROW(value2 = option->readFqdn(2));
+    EXPECT_EQ("mydomain.example.com.", value2);
 
     // Verify value in the field 3.
-    IOAddress value3("::1");
+    IOAddress value3("127.0.0.1");
     ASSERT_NO_THROW(value3 = option->readAddress(3));
-    EXPECT_EQ("2001:db8:1::1", value3.toText());
+    EXPECT_EQ("192.168.0.1", value3.toText());
 
     // Verify value in the field 4.
-    std::string value4;
-    ASSERT_NO_THROW(value4 = option->readString(4));
-    EXPECT_EQ("ABCD", value4);
+    IOAddress value4("::1");
+    ASSERT_NO_THROW(value4 = option->readAddress(4));
+    EXPECT_EQ("2001:db8:1::1", value4.toText());
+
+    // Verify value in the field 5.
+    std::string value5;
+    ASSERT_NO_THROW(value5 = option->readString(5));
+    EXPECT_EQ("ABCD", value5);
 }
 
 // The purpose of this test is to verify that truncated buffer
@@ -681,6 +785,413 @@ TEST_F(OptionCustomTest, recordDataTruncated) {
         option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 17)),
         isc::OutOfRange
     );
+}
+
+// The purpose of this test is to verify that an option comprising
+// single data field with binary data can be used and that this
+// binary data is properly initialized to a default value. This
+// test also checks that it is possible to override this default
+// value.
+TEST_F(OptionCustomTest, setBinaryData) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "binary");
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // Get the default binary value.
+    OptionBuffer buf;
+    ASSERT_NO_THROW(option->readBinary());
+    // The buffer is by default empty.
+    EXPECT_TRUE(buf.empty());
+    // Prepare input buffer with some dummy data.
+    OptionBuffer buf_in(10);
+    for (int i = 0; i < buf_in.size(); ++i) {
+        buf_in[i] = i;
+    }
+    // Try to override the default binary buffer.
+    ASSERT_NO_THROW(option->writeBinary(buf_in));
+    // And check that it has been actually overriden.
+    ASSERT_NO_THROW(buf = option->readBinary());
+    ASSERT_EQ(buf_in.size(), buf.size());
+    EXPECT_TRUE(std::equal(buf_in.begin(), buf_in.end(), buf.begin()));
+}
+
+// The purpose of this test is to verify that an option comprising
+// single boolean data field can be created and that its default
+// value can be overriden by a new value.
+TEST_F(OptionCustomTest, setBooleanData) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "boolean");
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+    // Check that the default boolean value is false.
+    bool value = false;
+    ASSERT_NO_THROW(value = option->readBoolean());
+    EXPECT_FALSE(value);
+    // Check that we can override the default value.
+    ASSERT_NO_THROW(option->writeBoolean(true));
+    // Finally, check that it has been actually overriden.
+    ASSERT_NO_THROW(value = option->readBoolean());
+    EXPECT_TRUE(value);
+}
+
+/// The purpose of this test is to verify that the data field value
+/// can be overriden by a new value.
+TEST_F(OptionCustomTest, setUint32Data) {
+    // Create a definition of an option that holds single
+    // uint32 value.
+    OptionDefinition opt_def("OPTION_FOO", 1000, "uint32");
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // The default value for integer data fields is 0.
+    uint32_t value = 0;
+    ASSERT_NO_THROW(option->readInteger<uint32_t>());
+    EXPECT_EQ(0, value);
+
+    // Try to set the data field value to something different
+    // than 0.
+    ASSERT_NO_THROW(option->writeInteger<uint32_t>(1234));
+
+    // Verify that it has been set.
+    ASSERT_NO_THROW(value = option->readInteger<uint32_t>());
+    EXPECT_EQ(1234, value);
+}
+
+// The purpose of this test is to verify that an option comprising
+// single IPv4 address can be created and that this address can
+// be overriden by a new value.
+TEST_F(OptionCustomTest, setIpv4AddressData) {
+    OptionDefinition opt_def("OPTION_FOO", 232, "ipv4-address");
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V4));
+    );
+    ASSERT_TRUE(option);
+
+    asiolink::IOAddress address("127.0.0.1");
+    ASSERT_NO_THROW(address = option->readAddress());
+    EXPECT_EQ("0.0.0.0", address.toText());
+
+    EXPECT_NO_THROW(option->writeAddress(IOAddress("192.168.0.1")));
+
+    EXPECT_NO_THROW(address = option->readAddress());
+    EXPECT_EQ("192.168.0.1", address.toText());
+}
+
+// The purpose of this test is to verify that an opton comprising
+// single IPv6 address can be created and that this address can
+// be overriden by a new value.
+TEST_F(OptionCustomTest, setIpv6AddressData) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "ipv6-address");
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    asiolink::IOAddress address("::1");
+    ASSERT_NO_THROW(address = option->readAddress());
+    EXPECT_EQ("::", address.toText());
+
+    EXPECT_NO_THROW(option->writeAddress(IOAddress("2001:db8:1::1")));
+
+    EXPECT_NO_THROW(address = option->readAddress());
+    EXPECT_EQ("2001:db8:1::1", address.toText());
+}
+
+// The purpose of this test is to verify that an option comprising
+// single string value can be created and that this value
+// is initialized to the default value. Also, this test checks that
+// this value can be overwritten by a new value.
+TEST_F(OptionCustomTest, setStringData) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "string");
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // Get the default value of the option.
+    std::string value;
+    ASSERT_NO_THROW(value = option->readString());
+    // By default the string data field is empty.
+    EXPECT_TRUE(value.empty());
+    // Write some text to this field.
+    ASSERT_NO_THROW(option->writeString("hello world"));
+    // Check that it has been actually written.
+    EXPECT_NO_THROW(value = option->readString());
+    EXPECT_EQ("hello world", value);
+}
+
+/// The purpose of this test is to verify that an option comprising
+/// a default FQDN value can be created and that this value can be
+/// overriden after the option has been created.
+TEST_F(OptionCustomTest, setFqdnData) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "fqdn");
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+    // Read a default FQDN value from the option.
+    std::string fqdn;
+    ASSERT_NO_THROW(fqdn = option->readFqdn());
+    EXPECT_EQ(".", fqdn);
+    // Try override the default FQDN value.
+    ASSERT_NO_THROW(option->writeFqdn("example.com"));
+    // Check that the value has been actually overriden.
+    ASSERT_NO_THROW(fqdn = option->readFqdn());
+    EXPECT_EQ("example.com.", fqdn);
+}
+
+// The purpose of this test is to verify that an option carrying
+// an array of boolean values can be created with no values
+// initially and that values can be later added to it.
+TEST_F(OptionCustomTest, setBooleanDataArray) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "boolean", true);
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // Initially, the array should contain no values.
+    ASSERT_EQ(0, option->getDataFieldsNum());
+
+    // Add some boolean values to it.
+    ASSERT_NO_THROW(option->addArrayDataField(true));
+    ASSERT_NO_THROW(option->addArrayDataField(false));
+    ASSERT_NO_THROW(option->addArrayDataField(true));
+
+    // Verify that the new data fields can be added.
+    bool value0 = false;
+    ASSERT_NO_THROW(value0 = option->readBoolean(0));
+    EXPECT_TRUE(value0);
+    bool value1 = true;
+    ASSERT_NO_THROW(value1 = option->readBoolean(1));
+    EXPECT_FALSE(value1);
+    bool value2 = false;
+    ASSERT_NO_THROW(value2 = option->readBoolean(2));
+    EXPECT_TRUE(value2);
+}
+
+// The purpose of this test is to verify that am option carying
+// an array of 16-bit signed integer values can be created with
+// no values initially and that the values can be later added to it.
+TEST_F(OptionCustomTest, setUint16DataArray) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "uint16", true);
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // Initially, the array should contain no values.
+    ASSERT_EQ(0, option->getDataFieldsNum());
+
+    // Add 3 new data fields holding integer values.
+    ASSERT_NO_THROW(option->addArrayDataField<uint16_t>(67));
+    ASSERT_NO_THROW(option->addArrayDataField<uint16_t>(876));
+    ASSERT_NO_THROW(option->addArrayDataField<uint16_t>(32222));
+
+    // We should now have 3 data fields.
+    ASSERT_EQ(3, option->getDataFieldsNum());
+
+    // Check that the values have been correctly set.
+    uint16_t value0;
+    ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
+    EXPECT_EQ(67, value0);
+    uint16_t value1;
+    ASSERT_NO_THROW(value1 = option->readInteger<uint16_t>(1));
+    EXPECT_EQ(876, value1);
+    uint16_t value2;
+    ASSERT_NO_THROW(value2 = option->readInteger<uint16_t>(2));
+    EXPECT_EQ(32222, value2);
+}
+
+/// The purpose of this test is to verify that an option comprising
+/// array of IPv4 address can be created with no addresses and that
+/// multiple IPv4 addresses can be added to it after creation.
+TEST_F(OptionCustomTest, setIpv4AddressDataArray) {
+    OptionDefinition opt_def("OPTION_FOO", 232, "ipv4-address", true);
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V4));
+    );
+    ASSERT_TRUE(option);
+
+    // Expect that the array does not contain any data fields yet.
+    ASSERT_EQ(0, option->getDataFieldsNum());
+
+    // Add 3 IPv4 addresses.
+    ASSERT_NO_THROW(option->addArrayDataField(IOAddress("192.168.0.1")));
+    ASSERT_NO_THROW(option->addArrayDataField(IOAddress("192.168.0.2")));
+    ASSERT_NO_THROW(option->addArrayDataField(IOAddress("192.168.0.3")));
+
+    ASSERT_EQ(3, option->getDataFieldsNum());
+
+    // Check that all IP addresses have been set correctly.
+    IOAddress address0("127.0.0.1");
+    ASSERT_NO_THROW(address0 = option->readAddress(0));
+    EXPECT_EQ("192.168.0.1", address0.toText());
+    IOAddress address1("127.0.0.1");
+    ASSERT_NO_THROW(address1 = option->readAddress(1));
+    EXPECT_EQ("192.168.0.2", address1.toText());
+    IOAddress address2("127.0.0.1");
+    ASSERT_NO_THROW(address2 = option->readAddress(2));
+    EXPECT_EQ("192.168.0.3", address2.toText());
+
+    // Add invalid address (IPv6 instead of IPv4).
+    EXPECT_THROW(
+        option->addArrayDataField(IOAddress("2001:db8:1::1")),
+        isc::dhcp::BadDataTypeCast
+    );
+}
+
+/// The purpose of this test is to verify that an option comprising
+/// array of IPv6 address can be created with no addresses and that
+/// multiple IPv6 addresses can be added to it after creation.
+TEST_F(OptionCustomTest, setIpv6AddressDataArray) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "ipv6-address", true);
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // Initially, the array does not contain any data fields.
+    ASSERT_EQ(0, option->getDataFieldsNum());
+
+    // Add 3 new IPv6 addresses into the array.
+    ASSERT_NO_THROW(option->addArrayDataField(IOAddress("2001:db8:1::1")));
+    ASSERT_NO_THROW(option->addArrayDataField(IOAddress("2001:db8:1::2")));
+    ASSERT_NO_THROW(option->addArrayDataField(IOAddress("2001:db8:1::3")));
+
+    // We should have now 3 addresses added.
+    ASSERT_EQ(3, option->getDataFieldsNum());
+
+    // Check that they have correct values set.
+    IOAddress address0("::1");
+    ASSERT_NO_THROW(address0 = option->readAddress(0));
+    EXPECT_EQ("2001:db8:1::1", address0.toText());
+    IOAddress address1("::1");
+    ASSERT_NO_THROW(address1 = option->readAddress(1));
+    EXPECT_EQ("2001:db8:1::2", address1.toText());
+    IOAddress address2("::1");
+    ASSERT_NO_THROW(address2 = option->readAddress(2));
+    EXPECT_EQ("2001:db8:1::3", address2.toText());
+
+    // Add invalid address (IPv4 instead of IPv6).
+    EXPECT_THROW(
+        option->addArrayDataField(IOAddress("192.168.0.1")),
+        isc::dhcp::BadDataTypeCast
+    );
+}
+
+TEST_F(OptionCustomTest, setRecordData) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "record");
+
+    ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
+    ASSERT_NO_THROW(opt_def.addRecordField("boolean"));
+    ASSERT_NO_THROW(opt_def.addRecordField("fqdn"));
+    ASSERT_NO_THROW(opt_def.addRecordField("ipv4-address"));
+    ASSERT_NO_THROW(opt_def.addRecordField("ipv6-address"));
+    ASSERT_NO_THROW(opt_def.addRecordField("string"));
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // The number of elements should be equal to number of elements
+    // in the record.
+    ASSERT_EQ(6, option->getDataFieldsNum());
+
+    // Check that the default values have been correctly set.
+    uint16_t value0;
+    ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
+    EXPECT_EQ(0, value0);
+    bool value1 = true;
+    ASSERT_NO_THROW(value1 = option->readBoolean(1));
+    EXPECT_FALSE(value1);
+    std::string value2;
+    ASSERT_NO_THROW(value2 = option->readFqdn(2));
+    EXPECT_EQ(".", value2);
+    IOAddress value3("127.0.0.1");
+    ASSERT_NO_THROW(value3 = option->readAddress(3));
+    EXPECT_EQ("0.0.0.0", value3.toText());
+    IOAddress value4("2001:db8:1::1");
+    ASSERT_NO_THROW(value4 = option->readAddress(4));
+    EXPECT_EQ("::", value4.toText());
+    std::string value5 = "xyz";
+    ASSERT_NO_THROW(value5 = option->readString(5));
+    EXPECT_TRUE(value5.empty());
+
+    // Override each value with a new value.
+    ASSERT_NO_THROW(option->writeInteger<uint16_t>(1234, 0));
+    ASSERT_NO_THROW(option->writeBoolean(true, 1));
+    ASSERT_NO_THROW(option->writeFqdn("example.com", 2));
+    ASSERT_NO_THROW(option->writeAddress(IOAddress("192.168.0.1"), 3));
+    ASSERT_NO_THROW(option->writeAddress(IOAddress("2001:db8:1::100"), 4));
+    ASSERT_NO_THROW(option->writeString("hello world", 5));
+
+    // Check that the new values have been correctly set.
+    ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
+    EXPECT_EQ(1234, value0);
+    ASSERT_NO_THROW(value1 = option->readBoolean(1));
+    EXPECT_TRUE(value1);
+    ASSERT_NO_THROW(value2 = option->readFqdn(2));
+    EXPECT_EQ("example.com.", value2);
+    ASSERT_NO_THROW(value3 = option->readAddress(3));
+    EXPECT_EQ("192.168.0.1", value3.toText());
+    ASSERT_NO_THROW(value4 = option->readAddress(4));
+    EXPECT_EQ("2001:db8:1::100", value4.toText());
+    ASSERT_NO_THROW(value5 = option->readString(5));
+    EXPECT_EQ(value5, "hello world");
 }
 
 // The purpose of this test is to verify that pack function for
@@ -900,7 +1411,5 @@ TEST_F(OptionCustomTest, invalidIndex) {
     EXPECT_THROW(option->readInteger<uint32_t>(10), isc::OutOfRange);
     EXPECT_THROW(option->readInteger<uint32_t>(11), isc::OutOfRange);
 }
-
-
 
 } // anonymous namespace
