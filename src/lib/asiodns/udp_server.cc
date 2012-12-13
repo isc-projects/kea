@@ -304,6 +304,11 @@ UDPServer::operator()(asio::error_code ec, size_t length) {
         CORO_YIELD data_->socket_->async_send_to(
             buffer(data_->respbuf_->getData(), data_->respbuf_->getLength()),
             *data_->sender_, *this);
+        if (ec) {
+            LOG_ERROR(logger, ASIODNS_UDP_ASYNC_SEND_FAIL).
+                      arg(data_->sender_->address().to_string()).
+                      arg(ec.message());
+        }
     }
 }
 
