@@ -20,6 +20,8 @@
 
 #include <dns/tests/unittest_util.h>
 
+#include <boost/scoped_ptr.hpp>
+
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
@@ -83,6 +85,25 @@ TEST_F(RRTTLTest, fromText) {
     EXPECT_THROW(RRTTL("-1"), InvalidRRTTL); // must be positive
     EXPECT_THROW(RRTTL("1.1"), InvalidRRTTL); // must be integer
     EXPECT_THROW(RRTTL("4294967296"), InvalidRRTTL); // must be 32-bit
+}
+
+TEST_F(RRTTLTest, createFromText) {
+    // If placeholder is NULL, a new RRTTL object is allocated
+    boost::scoped_ptr<RRTTL> ttl_ptr;
+    ttl_ptr.reset(RRTTL::createFromText("3600", NULL));
+    ASSERT_TRUE(ttl_ptr);
+    EXPECT_EQ(RRTTL(3600), *ttl_ptr);
+
+    // If placeholder is non NULL, it will be overwritten
+    RRTTL ttl(3600);
+    EXPECT_NE(static_cast<RRTTL*>(NULL), RRTTL::createFromText("1800", &ttl));
+    EXPECT_EQ(RRTTL(1800), ttl);
+
+    // If text parsing fails, NULL is returned; if placeholder is given,
+    // it will be intact.
+    EXPECT_EQ(static_cast<RRTTL*>(NULL), RRTTL::createFromText("bad", NULL));
+    EXPECT_EQ(static_cast<RRTTL*>(NULL), RRTTL::createFromText("bad", &ttl));
+    EXPECT_EQ(RRTTL(1800), ttl);
 }
 
 void
