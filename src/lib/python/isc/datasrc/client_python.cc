@@ -97,8 +97,7 @@ DataSourceClient_createZone(PyObject* po_self, PyObject* args) {
     PyObject* name;
     if (PyArg_ParseTuple(args, "O!", &name_type, &name)) {
         try {
-            const bool result = self->client->createZone(PyName_ToName(name));
-            if (result) {
+            if (self->client->createZone(PyName_ToName(name))) {
                 Py_RETURN_TRUE;
             } else {
                 Py_RETURN_FALSE;
