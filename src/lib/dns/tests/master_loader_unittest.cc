@@ -297,8 +297,26 @@ struct ErrorCase {
         "Include file not found and garbage at the end of line" },
     { "$TTL 100 extra-garbage", "Extra tokens at the end of line",
       "$TTL with extra token" },
+    { "$TTL", "unexpected end of input", "missing TTL" },
+    { "$TTL No-ttl", "Unknown unit used: N in: No-ttl", "bad TTL" },
+    { "$TTL \"100\"", "invalid TTL: \"100\"", "bad TTL, quoted" },
+    { "$TT 100", "Unknown directive 'TT'", "bad directive, too short" },
+    { "$TTLLIKE 100", "Unknown directive 'TTLLIKE'", "bad directive, extra" },
     { NULL, NULL, NULL }
 };
+
+// A commonly used helper to check callback message.
+void
+checkCallbackMessage(const string& actual_msg, const string& expected_msg,
+                     size_t expected_line) {
+    // The actual message should begin with the expected message.
+    EXPECT_EQ(0, actual_msg.find(expected_msg)) << "actual message: "
+                                                << actual_msg;
+
+    // and it should end with "...:<line_num>]"
+    const string line_desc = ":" + lexical_cast<string>(expected_line) + "]";
+    EXPECT_EQ(actual_msg.size() - line_desc.size(), actual_msg.find(line_desc));
+}
 
 // Test a broken zone is handled properly. We test several problems,
 // both in strict and lenient mode.
@@ -318,7 +336,7 @@ TEST_F(MasterLoaderTest, brokenZone) {
             EXPECT_FALSE(loader_->loadedSucessfully());
             EXPECT_EQ(1, errors_.size());
             if (ec->reason != NULL) {
-                EXPECT_EQ(0, errors_.at(0).find(ec->reason));
+                checkCallbackMessage(errors_.at(0), ec->reason, 2);
             }
             EXPECT_TRUE(warnings_.empty());
 
@@ -397,29 +415,20 @@ TEST_F(MasterLoaderTest, ttlDirective) {
     // Set the default TTL with $TTL followed by an RR omitting the TTL
     zone_stream << "$TTL 1800\nexample.org. IN A 192.0.2.1\n";
     // $TTL can be quoted.  Also testing the case of $TTL being changed.
-    zone_stream << "\"$TTL\" 100\na1.example.org. IN A 192.0.2.2\n";
+    zone_stream << "\"$TTL\" 100\na.example.org. IN A 192.0.2.2\n";
     // Extended TTL form is accepted.
-    zone_stream << "$TTL 1H\na2.example.org. IN A 192.0.2.3\n";
+    zone_stream << "$TTL 1H\nb.example.org. IN A 192.0.2.3\n";
+    // Matching is case insensitive.
+    zone_stream << "$tTl 360\nc.example.org. IN A 192.0.2.3\n";
 
     setLoader(zone_stream, Name("example.org."), RRClass::IN(),
               MasterLoader::DEFAULT);
     loader_->load();
     EXPECT_TRUE(loader_->loadedSucessfully());
     checkRR("example.org", RRType::A(), "192.0.2.1", RRTTL(1800));
-    checkRR("a1.example.org", RRType::A(), "192.0.2.2", RRTTL(100));
-    checkRR("a2.example.org", RRType::A(), "192.0.2.3", RRTTL(3600));
-}
-
-// A commonly used helper to check callback message.
-void
-checkCallbackMessage(const string& actual_msg, const string& expected_msg,
-                     size_t expected_line) {
-    // The actual message should begin with the expected message.
-    EXPECT_EQ(0, actual_msg.find(expected_msg));
-
-    // and it should end with "...:<line_num>]"
-    const string line_desc = ":" + lexical_cast<string>(expected_line) + "]";
-    EXPECT_EQ(actual_msg.size() - line_desc.size(), actual_msg.find(line_desc));
+    checkRR("a.example.org", RRType::A(), "192.0.2.2", RRTTL(100));
+    checkRR("b.example.org", RRType::A(), "192.0.2.3", RRTTL(3600));
+    checkRR("c.example.org", RRType::A(), "192.0.2.3", RRTTL(360));
 }
 
 TEST_F(MasterLoaderTest, ttlFromSOA) {
@@ -440,7 +449,6 @@ TEST_F(MasterLoaderTest, ttlFromSOA) {
     checkCallbackMessage(warnings_.at(0),
                          "no TTL specified; using SOA MINTTL instead", 1);
 }
-
 
 TEST_F(MasterLoaderTest, ttlFromPrevious) {
     // No available default TTL.  2nd and 3rd RR will use the TTL of the

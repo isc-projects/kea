@@ -142,6 +142,7 @@ private:
         pushSource(filename);
     }
 
+    // Set/reset the default TTL.  Either from $TTL or SOA minimum TTL.
     void setDefaultTTL(const RRTTL& ttl) {
         if (!default_ttl_) {
             default_ttl_.reset(new RRTTL(ttl));
@@ -150,11 +151,8 @@ private:
         }
     }
 
-    void setDefaultTTL(const string& ttl_txt) {
-        setDefaultTTL(RRTTL(ttl_txt));
-        eatUntilEOL(true);
-    }
-
+    // Set/reset the TTL currently being used.  This can be used the last
+    // resort TTL when no other TTL is known for an RR.
     void setCurrentTTL(const RRTTL& ttl) {
         if (!current_ttl_) {
             current_ttl_.reset(new RRTTL(ttl));
@@ -163,6 +161,10 @@ private:
         }
     }
 
+    // Try to set/reset the current TTL from a candidate TTL.  It's possible
+    // it does not actually represent a TTL (which is not immediately
+    // considered an error).  Return true iff it's recognized as a valid TTL
+    // (and only in which case the current TTL is set).
     bool setCurrentTTL(const string& ttl_txt) {
         try {
             setCurrentTTL(RRTTL(ttl_txt));
@@ -225,7 +227,8 @@ private:
             isc_throw(isc::NotImplemented,
                       "Origin directive not implemented yet");
         } else if (iequals(directive, "TTL")) {
-            setDefaultTTL(getString());
+            setDefaultTTL(RRTTL(getString()));
+            eatUntilEOL(true);
         } else {
             isc_throw(InternalException, "Unknown directive '" <<
                       string(directive, directive + length) << "'");
@@ -267,8 +270,12 @@ private:
     const RRClass zone_class_;
     MasterLoaderCallbacks callbacks_;
     AddRRCallback add_callback_;
-    boost::scoped_ptr<RRTTL> default_ttl_;
-    boost::scoped_ptr<RRTTL> current_ttl_;
+    boost::scoped_ptr<RRTTL> default_ttl_; // Default TTL of RRs used when
+                                           // unspecified.  If NULL no default
+                                           // is known.
+    boost::scoped_ptr<RRTTL> current_ttl_; // The TTL used most recently.
+                                           // Initially set to NULL.  Once set
+                                           // always non NULL.
     const MasterLoader::Options options_;
     const std::string master_file_;
     std::string string_token_;
