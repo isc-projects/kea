@@ -36,11 +36,11 @@ AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress&
     // First we copy the whole address as 16 bytes.
     if (addr.isV4()) {
         // IPv4
-        std::memcpy(packed, addr.getAddress().to_v4().to_bytes().data(), 4);
+        std::memcpy(packed, &addr.toBytes()[0], 4);
         len = 4;
     } else {
         // IPv6
-        std::memcpy(packed, addr.getAddress().to_v6().to_bytes().data(), 16);
+        std::memcpy(packed, &addr.toBytes()[0], 16);
         len = 16;
     }
 

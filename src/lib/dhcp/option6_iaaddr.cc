@@ -52,8 +52,7 @@ void Option6IAAddr::pack(isc::util::OutputBuffer& buf) {
     buf.writeUint16(len() - getHeaderLen());
 
 
-    buf.writeData(addr_.getAddress().to_v6().to_bytes().data(),
-                  isc::asiolink::V6ADDRESS_LEN);
+    buf.writeData(&addr_.toBytes()[0], isc::asiolink::V6ADDRESS_LEN);
 
     buf.writeUint32(preferred_);
     buf.writeUint32(valid_);
