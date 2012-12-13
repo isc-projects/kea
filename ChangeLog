@@ -1,3 +1,9 @@
+526.	[bug]		syephen
+	Miscellaneous fixes to DHCP code including rationalisation of
+	some methods in LeaseMgr and resolving some Doxygen/cppcheck
+	issues.
+	(Trac #2546, git 0140368ed066c722e5d11d7f9cf1c01462cf7e13)
+
 525.	[func]		tomek
 	b10-dhcp4: DHCPv4 server is now able to parse configuration. It
 	is possible to specify IPv4 subnets with dynamic pools within
