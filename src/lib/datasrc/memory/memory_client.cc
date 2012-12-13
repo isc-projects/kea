@@ -209,14 +209,20 @@ private:
     RdataIteratorPtr rdata_iterator_;
     bool separate_rrs_;
     bool ready_;
+    bool examined_rrsigs_;
+    // In case there's nsec3 namespace in the zone, it is represented the same
+    // way as the usual namespace. So we reuse the iterator implementation for
+    // it.
+    ZoneIteratorPtr nsec3_namespace_;
 public:
     MemoryIterator(const RRClass& rrclass,
-                   const ZoneTree& tree, const Name& origin,
-                   bool separate_rrs) :
+                   const ZoneTree& tree, const NSEC3Data* nsec3_data,
+                   const Name& origin, bool separate_rrs) :
         rrclass_(rrclass),
         tree_(tree),
         separate_rrs_(separate_rrs),
-        ready_(true)
+        ready_(true),
+        examined_rrsigs_(false)
     {
         // Find the first node (origin) and preserve the node chain for future
         // searches
@@ -235,10 +241,25 @@ public:
                 rdata_iterator_ = rrset_->getRdataIterator();
             }
         }
+
+        // If we have the NSEC3 namespace, get an iterator for it so we can
+        // delegate to it later.
+        if (nsec3_data != NULL) {
+            nsec3_namespace_ =
+                ZoneIteratorPtr(new MemoryIterator(rrclass,
+                                                   nsec3_data->getNSEC3Tree(),
+                                                   NULL, origin,
+                                                   separate_rrs));
+        }
     }
 
     virtual ConstRRsetPtr getNextRRset() {
         if (!ready_) {
+            // We are done iterating. But in case there's the nsec3 one,
+            // iterate through that one.
+            if (nsec3_namespace_ != ZoneIteratorPtr()) {
+                return (nsec3_namespace_->getNextRRset());
+            }
             isc_throw(Unexpected, "Iterating past the zone end");
         }
         /*
@@ -259,13 +280,19 @@ public:
                     rrset_.reset(new TreeNodeRRset(rrclass_,
                                                    node_, set_node_, true));
                     rdata_iterator_ = rrset_->getRdataIterator();
+                    examined_rrsigs_ = false;
                 }
             }
         }
         if (node_ == NULL) {
             // That's all, folks
             ready_ = false;
-            return (ConstRRsetPtr());
+            if (nsec3_namespace_ != ZoneIteratorPtr()) {
+                // In case we have the NSEC3 namespace, get one from there.
+                return (nsec3_namespace_->getNextRRset());
+            } else {
+                return (ConstRRsetPtr());
+            }
         }
 
         if (separate_rrs_) {
@@ -273,10 +300,24 @@ public:
             // 'current' rdata
             RRsetPtr result(new RRset(rrset_->getName(),
                                       rrset_->getClass(),
-                                      rrset_->getType(),
+                                      // If we are looking into the signature,
+                                      // we need to adjust the type too.
+                                      examined_rrsigs_ ? RRType::RRSIG() :
+                                          rrset_->getType(),
                                       rrset_->getTTL()));
             result->addRdata(rdata_iterator_->getCurrent());
             rdata_iterator_->next();
+            if (!examined_rrsigs_ && rdata_iterator_->isLast()) {
+                // We got to the last RR of the RRset, but we need to look at
+                // the signatures too, if there are any.
+                examined_rrsigs_ = true;
+                const ConstRRsetPtr rrsig = rrset_->getRRsig();
+                if (rrsig != ConstRRsetPtr()) {
+                    rrset_ = rrsig;
+                    rdata_iterator_ = rrsig->getRdataIterator();
+                } // else - no RRSIG. rdata_iterator_ stays at last, next
+                  // condition applies
+            }
             if (rdata_iterator_->isLast()) {
                 // all used up, next.
                 set_node_ = set_node_->getNext();
@@ -286,6 +327,7 @@ public:
                     rrset_.reset(new TreeNodeRRset(rrclass_,
                                                    node_, set_node_, true));
                     rdata_iterator_ = rrset_->getRdataIterator();
+                    examined_rrsigs_ = false;
                 }
             }
             return (result);
@@ -317,7 +359,8 @@ InMemoryClient::getIterator(const Name& name, bool separate_rrs) const {
 
     return (ZoneIteratorPtr(new MemoryIterator(
                                 getClass(),
-                                result.zone_data->getZoneTree(), name,
+                                result.zone_data->getZoneTree(),
+                                result.zone_data->getNSEC3Data(), name,
                                 separate_rrs)));
 }
 

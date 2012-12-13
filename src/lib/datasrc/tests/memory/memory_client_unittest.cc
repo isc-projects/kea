@@ -690,6 +690,25 @@ TEST_F(MemoryClientTest, getIteratorSeparateRRs) {
     EXPECT_EQ(ConstRRsetPtr(), iterator2->getNextRRset());
 }
 
+// Test we get RRSIGs and NSEC3s too for iterating with separate RRs
+TEST_F(MemoryClientTest, getIteratorSeparateSigned) {
+    client_->load(Name("example.org"),
+                       TEST_DATA_DIR "/example.org-nsec3-signed.zone");
+    ZoneIteratorPtr iterator(client_->getIterator(Name("example.org"), true));
+    bool seen_rrsig = false, seen_nsec3 = false;
+    for (ConstRRsetPtr rrset = iterator->getNextRRset();
+         rrset != ConstRRsetPtr(); rrset = iterator->getNextRRset()) {
+        if (rrset->getType() == RRType::RRSIG()) {
+            seen_rrsig = true;
+        } else if (rrset->getType() == RRType::NSEC3()) {
+            seen_nsec3 = true;
+        }
+    }
+
+    EXPECT_TRUE(seen_rrsig);
+    EXPECT_TRUE(seen_nsec3);
+}
+
 TEST_F(MemoryClientTest, getIteratorGetSOAThrowsNotImplemented) {
     client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
     ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
