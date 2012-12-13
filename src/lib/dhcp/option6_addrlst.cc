@@ -49,7 +49,7 @@ Option6AddrLst::Option6AddrLst(uint16_t type, OptionBufferConstIter begin,
 
 void
 Option6AddrLst::setAddress(const isc::asiolink::IOAddress& addr) {
-    if (addr.getFamily() != AF_INET6) {
+    if (!addr.isV6()) {
         isc_throw(BadValue, "Can't store non-IPv6 address in Option6AddrLst option");
     }
 
