@@ -380,7 +380,8 @@ PyDataSourceClient_ToDataSourceClient(PyObject* client_obj) {
         isc_throw(PyCPPWrapperException,
                   "obj argument NULL in Name PyObject conversion");
     }
-    const s_DataSourceClient* client = static_cast<const s_DataSourceClient*>(client_obj);
+    const s_DataSourceClient* client =
+        static_cast<const s_DataSourceClient*>(client_obj);
     return (*client->client);
 }
 
