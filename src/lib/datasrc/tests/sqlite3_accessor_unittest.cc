@@ -1610,10 +1610,9 @@ TEST_F(SQLite3Update, addZoneWhileLocked) {
     // Commit should do nothing, but not fail
     another_accessor->commit();
 
+    accessor->rollback();
     // New zone should not exist
     EXPECT_FALSE(accessor->getZone(new_zone).first);
-
-    accessor->rollback();
 }
 
 } // end anonymous namespace
