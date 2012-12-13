@@ -31,6 +31,8 @@ using boost::algorithm::iequals;
 namespace isc {
 namespace dns {
 
+namespace {
+
 // An internal exception, used to control the code flow in case of errors.
 // It is thrown during the loading and caught later, not to be propagated
 // outside of the file.
@@ -40,6 +42,8 @@ public:
         Exception(filename, line, what)
     {}
 };
+
+}
 
 class MasterLoader::MasterLoaderImpl {
 public:
