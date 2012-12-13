@@ -1,0 +1,15 @@
+example.org.        3600    IN  SOA ( ; The SOA, split across lines for testing
+    ns1.example.org.
+    admin.example.org.
+    1234
+    3600
+    1800
+    2419200
+    7200
+    )
+; Check it accepts quoted name too
+"\101xample.org."        3600    IN  NS ns1.example.org.
+
+
+; Some empty lines here. They are to make sure the loader can skip them.
+www                 3600    IN  A 192.0.2.1 ; Test a relative name as well.
