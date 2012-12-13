@@ -72,7 +72,7 @@ void Option6AddrLst::pack(isc::util::OutputBuffer& buf) {
 
     for (AddressContainer::const_iterator addr=addrs_.begin();
          addr!=addrs_.end(); ++addr) {
-        buf.writeData(addr->getAddress().to_v6().to_bytes().data(), V6ADDRESS_LEN);
+        buf.writeData(&addr->toBytes()[0], V6ADDRESS_LEN);
     }
 }
 
