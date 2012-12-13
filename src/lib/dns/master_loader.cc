@@ -182,10 +182,14 @@ private:
     // and the default TTL for subsequent RRs.
     const RRTTL& getCurrentTTL(bool explicit_ttl, const RRType& rrtype,
                                const rdata::ConstRdataPtr& rdata) {
+        // We've completed parsing the full of RR, and the lexer is already
+        // positioned at the next line.  If we need to call callback,
+        // we need to adjust the line number.
+        const size_t current_line = lexer_.getSourceLine() - 1;
+
         if (!current_ttl_ && !default_ttl_) {
             if (rrtype == RRType::SOA()) {
-                callbacks_.warning(lexer_.getSourceName(),
-                                   lexer_.getSourceLine(),
+                callbacks_.warning(lexer_.getSourceName(), current_line,
                                    "no TTL specified; "
                                    "using SOA MINTTL instead");
                 const uint32_t ttl_val =
@@ -193,14 +197,19 @@ private:
                     getMinimum();
                 setDefaultTTL(RRTTL(ttl_val));
                 setCurrentTTL(*default_ttl_);
+            } else {
+                // On catching the exception we'll try to reach EOL again,
+                // so we need to unget it now.
+                lexer_.ungetToken();
+                throw InternalException(__FILE__, __LINE__,
+                                        "no TTL specified; load rejected");
             }
         } else if (!explicit_ttl && default_ttl_) {
             setCurrentTTL(*default_ttl_);
         } else if (!explicit_ttl && warn_rfc1035_ttl_) {
             // Omitted (class and) TTL values are default to the last
             // explicitly stated values (RFC 1035, Sec. 5.1).
-            callbacks_.warning(lexer_.getSourceName(),
-                               lexer_.getSourceLine(),
+            callbacks_.warning(lexer_.getSourceName(), current_line,
                                "using RFC1035 TTL semantics");
             warn_rfc1035_ttl_ = false; // we only warn about this once
         }
@@ -231,7 +240,7 @@ private:
                 case MasterToken::END_OF_FILE:
                     callbacks_.warning(lexer_.getSourceName(),
                                        lexer_.getSourceLine(),
-                                       "Unexpected end ond of file");
+                                       "Unexpected end end of file");
                     // We don't pop here. The End of file will stay there,
                     // and we'll handle it in the next iteration of
                     // loadIncremental properly.
