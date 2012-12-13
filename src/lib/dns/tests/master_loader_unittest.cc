@@ -22,7 +22,9 @@
 #include <dns/rdata.h>
 
 #include <gtest/gtest.h>
+
 #include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <string>
@@ -36,6 +38,7 @@ using std::string;
 using std::list;
 using std::stringstream;
 using std::endl;
+using boost::lexical_cast;
 
 namespace {
 class MasterLoaderTest : public ::testing::Test {
@@ -407,6 +410,18 @@ TEST_F(MasterLoaderTest, ttlDirective) {
     checkRR("a2.example.org", RRType::A(), "192.0.2.3", RRTTL(3600));
 }
 
+// A commonly used helper to check callback message.
+void
+checkCallbackMessage(const string& actual_msg, const string& expected_msg,
+                     size_t expected_line) {
+    // The actual message should begin with the expected message.
+    EXPECT_EQ(0, actual_msg.find(expected_msg));
+
+    // and it should end with "...:<line_num>]"
+    const string line_desc = ":" + lexical_cast<string>(expected_line) + "]";
+    EXPECT_EQ(actual_msg.size() - line_desc.size(), actual_msg.find(line_desc));
+}
+
 TEST_F(MasterLoaderTest, ttlFromSOA) {
     // No $TTL, and the SOA doesn't have an explicit TTL field.  Its minimum
     // TTL field will be used as the RR's TTL, and it'll be used as the
@@ -422,9 +437,10 @@ TEST_F(MasterLoaderTest, ttlFromSOA) {
 
     // The use of SOA minimum TTL should have caused a warning.
     EXPECT_EQ(1, warnings_.size());
-    EXPECT_EQ(0, warnings_.at(0).find(
-                  "no TTL specified; using SOA MINTTL instead"));
+    checkCallbackMessage(warnings_.at(0),
+                         "no TTL specified; using SOA MINTTL instead", 1);
 }
+
 
 TEST_F(MasterLoaderTest, ttlFromPrevious) {
     // No available default TTL.  2nd and 3rd RR will use the TTL of the
@@ -441,7 +457,66 @@ TEST_F(MasterLoaderTest, ttlFromPrevious) {
     checkRR("c.example.org", RRType::A(), "192.0.2.3", RRTTL(1800));
 
     EXPECT_EQ(1, warnings_.size());
-    EXPECT_EQ(0, warnings_.at(0).find("using RFC1035 TTL semantics"));
+    checkCallbackMessage(warnings_.at(0), "using RFC1035 TTL semantics", 2);
+}
+
+TEST_F(MasterLoaderTest, ttlFromPreviousSOA) {
+    // Mixture of the previous two cases: SOA has explicit TTL, followed by
+    // an RR without an explicit TTL.  In this case the minimum TTL won't be
+    // recognized as the "default TTL".
+    stringstream zone_stream("example.org. 100 IN SOA . . 0 0 0 0 1800\n"
+                             "a.example.org. IN A 192.0.2.1\n");
+    setLoader(zone_stream, Name("example.org."), RRClass::IN(),
+              MasterLoader::DEFAULT);
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+
+    checkRR("example.org", RRType::SOA(), ". . 0 0 0 0 1800", RRTTL(100));
+    checkRR("a.example.org", RRType::A(), "192.0.2.1", RRTTL(100));
+
+    EXPECT_EQ(1, warnings_.size());
+    checkCallbackMessage(warnings_.at(0), "using RFC1035 TTL semantics", 2);
+}
+
+TEST_F(MasterLoaderTest, ttlUnknown) {
+    // No available TTL is known for the first RR.
+    stringstream zone_stream("a.example.org. IN A 192.0.2.1\n");
+    setLoader(zone_stream, Name("example.org."), RRClass::IN(),
+              MasterLoader::DEFAULT);
+    EXPECT_THROW(loader_->load(), MasterLoaderError);
+}
+
+TEST_F(MasterLoaderTest, ttlUnknownAndContinue) {
+    stringstream zone_stream("a.example.org. IN A 192.0.2.1\n"
+                             "b.example.org. 1800 IN A 192.0.2.2\n");
+    setLoader(zone_stream, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+    loader_->load();
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    checkRR("b.example.org", RRType::A(), "192.0.2.2", RRTTL(1800));
+
+    EXPECT_TRUE(warnings_.empty());
+    EXPECT_EQ(1, errors_.size());
+    checkCallbackMessage(errors_.at(0), "no TTL specified; load rejected", 1);
+}
+
+TEST_F(MasterLoaderTest, ttlUnknownAndEOF) {
+    // Similar to the previous case, but the input will be abruptly terminated
+    // after the offending RR.  This will cause an additional warning.
+    stringstream zone_stream("a.example.org. IN A 192.0.2.1");
+    setLoader(zone_stream, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+    loader_->load();
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_TRUE(rrsets_.empty());
+
+    EXPECT_EQ(1, errors_.size());
+    checkCallbackMessage(errors_.at(0), "no TTL specified; load rejected", 1);
+
+    // RDATA implementation can complain about it, too.  To be independent of
+    // its details, we focus on the very last warning.
+    EXPECT_FALSE(warnings_.empty());
+    checkCallbackMessage(*warnings_.rbegin(), "Unexpected end end of file", 1);
 }
 
 // Test the constructor rejects empty add callback.
