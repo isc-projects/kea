@@ -36,6 +36,7 @@ libdhcpsrv_unittests_SOURCES += memfile_lease_mgr_unittest.cc
 if HAVE_MYSQL
 libdhcpsrv_unittests_SOURCES += mysql_lease_mgr_unittest.cc
 endif
+libdhcpsrv_unittests_SOURCES += option_space_unittest.cc
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
 libdhcpsrv_unittests_SOURCES += schema_copy.h
 libdhcpsrv_unittests_SOURCES += subnet_unittest.cc

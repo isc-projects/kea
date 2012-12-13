@@ -27,6 +27,7 @@ libb10_dhcpsrv_la_SOURCES += memfile_lease_mgr.cc memfile_lease_mgr.h
 if HAVE_MYSQL
 libb10_dhcpsrv_la_SOURCES += mysql_lease_mgr.cc mysql_lease_mgr.h
 endif
+libb10_dhcpsrv_la_SOURCES += option_space.cc option_space.h
 libb10_dhcpsrv_la_SOURCES += pool.cc pool.h
 libb10_dhcpsrv_la_SOURCES += subnet.cc subnet.h
 libb10_dhcpsrv_la_SOURCES += triplet.h
