@@ -213,7 +213,7 @@ bool IfaceMgr::openSockets4(const uint16_t port) {
              ++addr) {
 
             // Skip IPv6 addresses
-            if (addr->getFamily() != AF_INET) {
+            if (!addr->isV4()) {
                 continue;
             }
 
@@ -248,7 +248,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
              ++addr) {
 
             // skip IPv4 addresses
-            if (addr->getFamily() != AF_INET6) {
+            if (!addr->isV6()) {
                 continue;
             }
 
@@ -356,12 +356,13 @@ int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,
     if (!iface) {
         isc_throw(BadValue, "There is no " << ifname << " interface present.");
     }
-    switch (addr.getFamily()) {
-    case AF_INET:
+    if (addr.isV4()) {
         return openSocket4(*iface, addr, port);
-    case AF_INET6:
+
+    } else if (addr.isV6()) {
         return openSocket6(*iface, addr, port);
-    default:
+
+    } else {
         isc_throw(BadValue, "Failed to detect family of address: "
                   << addr.toText());
     }
@@ -798,7 +799,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
              s != socket_collection.end(); ++s) {
 
             // Only deal with IPv4 addresses.
-            if (s->addr_.getFamily() == AF_INET) {
+            if (s->addr_.isV4()) {
                 names << s->sockfd_ << "(" << iface->getName() << ") ";
 
                 // Add this socket to listening set
@@ -951,7 +952,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
              s != socket_collection.end(); ++s) {
 
             // Only deal with IPv4 addresses.
-            if (s->addr_.getFamily() == AF_INET6) {
+            if (s->addr_.isV6()) {
                 names << s->sockfd_ << "(" << iface->getName() << ") ";
 
                 // Add this socket to listening set
