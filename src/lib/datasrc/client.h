@@ -20,8 +20,6 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <exceptions/exceptions.h>
-
 #include <datasrc/zone.h>
 
 /// \file
@@ -225,15 +223,7 @@ public:
     ///                     adjusted to the lowest one found.
     /// \return Pointer to the iterator.
     virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name,
-                                        bool separate_rrs = false) const {
-        // This is here to both document the parameter in doxygen (therefore it
-        // needs a name) and avoid unused parameter warning.
-        static_cast<void>(name);
-        static_cast<void>(separate_rrs);
-
-        isc_throw(isc::NotImplemented,
-                  "Data source doesn't support iteration");
-    }
+                                        bool separate_rrs = false) const;
 
     /// Return an updater to make updates to a specific zone.
     ///
@@ -368,16 +358,36 @@ public:
     /// This is an optional convenience method, currently only implemented
     /// by the InMemory datasource. By default, it throws NotImplemented
     ///
+    /// \note This is a tentative API, and this method is likely to change
+    /// or be removed in the near future. For that reason, it currently
+    /// provides a default implementation that throws NotImplemented.
+    ///
     /// \exception NotImplemented Thrown if this method is not supported
     ///            by the datasource
     ///
-    /// \note This is a tentative API, and this method may likely to be
-    ///       removed in the near future.
     /// \return The number of zones known to this datasource
-    virtual unsigned int getZoneCount() const {
-        isc_throw(isc::NotImplemented,
-                  "Data source doesn't support getZoneCount");
-    }
+    virtual unsigned int getZoneCount() const;
+
+    /// \brief Create a zone in the database
+    ///
+    /// Creates a new (empty) zone in the data source backend, which
+    /// can subsequently be filled with data (through getUpdater()).
+    ///
+    /// \note This is a tentative API, and this method is likely to change
+    /// or be removed in the near future. For that reason, it currently
+    /// provides a default implementation that throws NotImplemented.
+    ///
+    /// Apart from the two exceptions mentioned below, in theory this
+    /// call can throw anything, depending on the implementation of
+    /// the datasource backend.
+    ///
+    /// \throw NotImplemented If the datasource backend does not support
+    ///                       direct zone creation.
+    /// \throw DataSourceError If something goes wrong in the data source
+    ///                        while creating the zone.
+    /// \param name The (fully qualified) name of the zone to create
+    /// \return True if the zone was added, false if it already existed
+    virtual bool createZone(const dns::Name& name);
 };
 }
 }

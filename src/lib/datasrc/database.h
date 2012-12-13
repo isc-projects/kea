@@ -177,6 +177,24 @@ public:
     ///     an opaque handle.
     virtual std::pair<bool, int> getZone(const std::string& name) const = 0;
 
+    /// \brief Add a new zone to the database
+    ///
+    /// This method creates a new (and empty) zone in the database.
+    ///
+    /// Like for addRecordToZone, implementations are not required to
+    /// check for the existence of the given zone name, it is the
+    /// responsibility of the caller to do so.
+    ///
+    /// Callers must also start a transaction before calling this method,
+    /// implementations should throw DataSourceError if this has not been
+    /// done. Callers should also expect DataSourceErrors for other potential
+    /// problems.
+    ///
+    /// \param name The (fully qualified) domain name of the zone to add.
+    /// \return The internal zone id of the zone (whether is existed already
+    ///         or was created by this call).
+    virtual int addZone(const std::string& name) = 0;
+
     /// \brief This holds the internal context of ZoneIterator for databases
     ///
     /// While the ZoneIterator implementation from DatabaseClient does all the
@@ -1372,6 +1390,16 @@ public:
     ///     may return something else and it may change in future versions), it
     ///     should use it as a ZoneFinder only.
     virtual FindResult findZone(const isc::dns::Name& name) const;
+
+    /// \brief Create a zone in the database
+    ///
+    /// This method implements \c DataSourceClient::createZone()
+    ///
+    /// It starts a transaction, checks if the zone exists, and if it
+    /// does not, creates it, commits, and returns true. If the zone
+    /// does exist already, it does nothing (except abort the transaction)
+    /// and returns false.
+    virtual bool createZone(const isc::dns::Name& name);
 
     /// \brief Get the zone iterator
     ///
