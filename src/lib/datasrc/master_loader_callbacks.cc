@@ -48,6 +48,19 @@ logWarning(const isc::dns::Name& name, const isc::dns::RRClass& rrclass,
         arg(name).arg(rrclass).arg(reason);
 }
 
+void
+addRR(const isc::dns::Name& name, const isc::dns::RRClass& rrclass,
+      const isc::dns::RRType& type, const isc::dns::RRTTL& ttl,
+      const isc::dns::rdata::RdataPtr& data, ZoneUpdater* updater)
+{
+    // We get description of one RR. The updater takes RRset, so we
+    // wrap it up and push there. It should collate the RRsets of the
+    // same name and type together, since the addRRset should "merge".
+    isc::dns::BasicRRset rrset(name, rrclass, type, ttl);
+    rrset.addRdata(data);
+    updater->addRRset(rrset);
+}
+
 }
 
 isc::dns::MasterLoaderCallbacks
@@ -61,12 +74,9 @@ createMasterLoaderCallbacks(const isc::dns::Name& name,
                                                         rrclass, _1, _2, _3)));
 }
 
-isc::dns::AddRRsetCallback
+isc::dns::AddRRCallback
 createMasterLoaderAddCallback(ZoneUpdater& updater) {
-    return (boost::bind(&ZoneUpdater::addRRset, &updater,
-                        // The callback provides a shared pointer, we
-                        // need the object. This bind unpacks the object.
-                        boost::bind(&isc::dns::RRsetPtr::operator*, _1)));
+    return (boost::bind(addRR, _1, _2, _3, _4, _5, &updater));
 }
 
 }

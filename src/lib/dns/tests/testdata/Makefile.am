@@ -170,6 +170,7 @@ EXTRA_DIST += tsig_verify1.spec tsig_verify2.spec tsig_verify3.spec
 EXTRA_DIST += tsig_verify4.spec tsig_verify5.spec tsig_verify6.spec
 EXTRA_DIST += tsig_verify7.spec tsig_verify8.spec tsig_verify9.spec
 EXTRA_DIST += tsig_verify10.spec
+EXTRA_DIST += example.org
 
 .spec.wire:
 	$(PYTHON) $(top_builddir)/src/lib/util/python/gen_wiredata.py -o $@ $<
