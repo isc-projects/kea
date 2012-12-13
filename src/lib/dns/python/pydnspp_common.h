@@ -28,6 +28,7 @@ namespace dns {
 namespace python {
 // For our 'general' isc::Exceptions
 extern PyObject* po_IscException;
+extern PyObject* po_InvalidOperation;
 extern PyObject* po_InvalidParameter;
 
 // For our own isc::dns::Exception
