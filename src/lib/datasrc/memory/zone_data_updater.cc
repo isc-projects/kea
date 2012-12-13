@@ -233,7 +233,7 @@ ZoneDataUpdater::setupNSEC3(const ConstRRsetPtr rrset) {
 
     NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
     if (nsec3_data == NULL) {
-        nsec3_data = NSEC3Data::create(mem_sgmt_, nsec3_rdata);
+        nsec3_data = NSEC3Data::create(mem_sgmt_, zone_name_, nsec3_rdata);
         zone_data_.setNSEC3Data(nsec3_data);
         zone_data_.setSigned(true);
     } else {

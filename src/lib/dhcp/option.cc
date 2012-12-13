@@ -314,6 +314,10 @@ void Option::setData(const OptionBufferConstIter first,
     std::copy(first, last, data_.begin());
 }
 
+bool Option::equal(const OptionPtr& other) const {
+    return ( (getType() == other->getType()) &&
+             (getData() == other->getData()) );
+}
 
 Option::~Option() {
 

@@ -219,7 +219,7 @@ public:
     ///
     /// @return pointer to actual data (or reference to an empty vector
     ///         if there is no data)
-    virtual const OptionBuffer& getData() { return (data_); }
+    virtual const OptionBuffer& getData() const { return (data_); }
 
     /// Adds a sub-option.
     ///
@@ -302,6 +302,19 @@ public:
 
     /// just to force that every option has virtual dtor
     virtual ~Option();
+
+    /// @brief Checks if two options are equal
+    ///
+    /// Equality verifies option type and option content. Care should
+    /// be taken when using this method. Implementation for derived
+    /// classes should be provided when this method is expected to be
+    /// used. It is safe in general, as the first check (different types)
+    /// will detect differences between base Option and derived
+    /// objects.
+    ///
+    /// @param other the other option
+    /// @return true if both options are equal
+    virtual bool equal(const OptionPtr& other) const;
 
 protected:
     /// Builds raw (over-wire) buffer of this option, including all

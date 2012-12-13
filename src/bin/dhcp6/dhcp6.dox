@@ -1,5 +1,5 @@
 /**
- @page dhcpv6 DHCPv6 Server Component
+ @page dhcp6 DHCPv6 Server Component
 
  BIND10 offers DHCPv6 server implementation. It is implemented as
  b10-dhcp6 component. Its primary code is located in

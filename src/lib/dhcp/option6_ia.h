@@ -68,12 +68,17 @@ public:
     /// Sets T1 timer.
     ///
     /// @param t1 t1 value to be set
-    void setT1(uint32_t t1) { t1_=t1; }
+    void setT1(uint32_t t1) { t1_ = t1; }
 
     /// Sets T2 timer.
     ///
     /// @param t2 t2 value to be set
-    void setT2(uint32_t t2) { t2_=t2; }
+    void setT2(uint32_t t2) { t2_ = t2; }
+
+    /// Sets Identity Association Identifier.
+    ///
+    /// @param iaid IAID value to be set
+    void setIAID(uint32_t iaid) { iaid_ = iaid; }
 
     /// Returns IA identifier.
     ///
