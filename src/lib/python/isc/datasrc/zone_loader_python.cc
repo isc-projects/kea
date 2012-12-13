@@ -106,7 +106,8 @@ ZoneLoader_destroy(PyObject* po_self) {
     Py_TYPE(self)->tp_free(self);
 }
 
-PyObject* ZoneLoader_load(PyObject* po_self, PyObject*) {
+PyObject*
+ZoneLoader_load(PyObject* po_self, PyObject*) {
     s_ZoneLoader* self = static_cast<s_ZoneLoader*>(po_self);
     try {
         self->cppobj->load();
@@ -130,7 +131,8 @@ PyObject* ZoneLoader_load(PyObject* po_self, PyObject*) {
     }
 }
 
-PyObject* ZoneLoader_loadIncremental(PyObject* po_self, PyObject* args) {
+PyObject*
+ZoneLoader_loadIncremental(PyObject* po_self, PyObject* args) {
     s_ZoneLoader* self = static_cast<s_ZoneLoader*>(po_self);
 
     int limit;
