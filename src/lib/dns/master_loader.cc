@@ -64,7 +64,8 @@ public:
         many_errors_((options & MANY_ERRORS) != 0),
         source_count_(0),
         complete_(false),
-        seen_error_(false)
+        seen_error_(false),
+        warn_rfc1035_ttl_(true)
     {}
 
     void reportError(const std::string& filename, size_t line,
@@ -234,6 +235,8 @@ public:
     bool complete_;             // All work done.
     bool seen_error_;           // Was there at least one error during the
                                 // load?
+    bool warn_rfc1035_ttl_;     // should warn if implicit TTL determination
+                                // from the previous RR is used.
 };
 
 bool
@@ -341,9 +344,14 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
                     }
                 } else if (!explicit_ttl && default_ttl_) {
                     setCurrentTTL(*default_ttl_);
-                } else if (!explicit_ttl) {
-                    ;           // warn it
-                }               // else, explicit_ttl, that's used
+                } else if (!explicit_ttl && warn_rfc1035_ttl_) {
+                    // Omitted (class and) TTL values are default to the last
+                    // explicitly stated values (RFC 1035, Sec. 5.1).
+                    callbacks_.warning(lexer_.getSourceName(),
+                                       lexer_.getSourceLine(),
+                                       "using RFC1035 TTL semantics");
+                    warn_rfc1035_ttl_ = false; // we only warn about it once
+                }
 
                 add_callback_(name, rrclass, rrtype, *current_ttl_, data);
 
