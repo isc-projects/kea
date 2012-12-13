@@ -78,7 +78,8 @@ enum StatementID {
     ADD_NSEC3_RECORD = 19,
     DEL_ZONE_NSEC3_RECORDS = 20,
     DEL_NSEC3_RECORD = 21,
-    NUM_STATEMENTS = 22
+    ADD_ZONE = 22,
+    NUM_STATEMENTS = 23
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -161,7 +162,10 @@ const char* const text_statements[NUM_STATEMENTS] = {
     "DELETE FROM nsec3 WHERE zone_id=?1",
     // DEL_NSEC3_RECORD: delete specified NSEC3-related records
     "DELETE FROM nsec3 WHERE zone_id=?1 AND hash=?2 "
-    "AND rdtype=?3 AND rdata=?4"
+    "AND rdtype=?3 AND rdata=?4",
+
+    // ADD_ZONE: add a zone to the zones table
+    "INSERT INTO zones (name, rdclass) VALUES (?1, ?2)" // ADD_ZONE
 };
 
 struct SQLite3Parameters {
@@ -610,6 +614,33 @@ SQLite3Accessor::getZone(const std::string& name) const {
               sqlite3_errmsg(dbparameters_->db_));
     // Compilers might not realize isc_throw always throws
     return (std::pair<bool, int>(false, 0));
+}
+
+int
+SQLite3Accessor::addZone(const std::string& name) {
+    // Transaction should have been started by the caller
+    if (!dbparameters_->in_transaction) {
+        isc_throw(DataSourceError, "performing addZone on SQLite3 "
+                  "data source without transaction");
+    }
+
+    StatementProcessor proc(*dbparameters_, ADD_ZONE, "add zone");
+    // note: using TRANSIENT here, STATIC would be slightly more
+    // efficient, but TRANSIENT is safer and performance is not
+    // as important in this specific code path.
+    proc.bindText(1, name.c_str(), SQLITE_TRANSIENT);
+    proc.bindText(2, class_.c_str(), SQLITE_TRANSIENT);
+    proc.exec();
+
+    // There are tricks to getting this in one go, but it is safer
+    // to do a new lookup (sqlite3_last_insert_rowid is unsafe
+    // regarding threads and triggers). This requires two
+    // statements, and is unpredictable in the case a zone is added
+    // twice, but this method assumes the caller does not do that
+    // anyway
+    std::pair<bool, int> getzone_result = getZone(name);
+    assert(getzone_result.first);
+    return (getzone_result.second);
 }
 
 namespace {
