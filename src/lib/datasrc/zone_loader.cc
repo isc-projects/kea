@@ -110,7 +110,11 @@ ZoneLoader::loadIncremental(size_t limit) {
 
     if (iterator_ == ZoneIteratorPtr()) {
         assert(loader_.get() != NULL);
-        complete_ = loader_->loadIncremental(limit);
+        try {
+            complete_ = loader_->loadIncremental(limit);
+        } catch (const isc::dns::MasterLoaderError& e) {
+            isc_throw(MasterFileError, e.getMessage().c_str());
+        }
         if (complete_ && !loaded_ok_) {
             isc_throw(MasterFileError, "Error while loading master file");
         }
