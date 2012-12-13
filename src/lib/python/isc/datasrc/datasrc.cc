@@ -190,8 +190,7 @@ initModulePart_ZoneLoader(PyObject* mod) {
         return (false);
     }
     void* p = &zone_loader_type;
-    if (PyModule_AddObject(mod, "ZoneLoader",
-                           static_cast<PyObject*>(p)) < 0) {
+    if (PyModule_AddObject(mod, "ZoneLoader", static_cast<PyObject*>(p)) < 0) {
         return (false);
     }
     Py_INCREF(&zone_loader_type);
@@ -286,8 +285,8 @@ PyInit_datasrc(void) {
         PyObjectContainer(po_DataSourceError).installToModule(mod, "Error");
         po_MasterFileError = PyErr_NewException("isc.datasrc.MasterFileError",
                                                 po_DataSourceError, NULL);
-        PyObjectContainer(po_MasterFileError).installToModule(mod,
-                                                "MasterFileError");
+        PyObjectContainer(po_MasterFileError).
+            installToModule(mod, "MasterFileError");
         po_OutOfZone = PyErr_NewException("isc.datasrc.OutOfZone", NULL, NULL);
         PyObjectContainer(po_OutOfZone).installToModule(mod, "OutOfZone");
         po_NotImplemented = PyErr_NewException("isc.datasrc.NotImplemented",
