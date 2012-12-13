@@ -426,6 +426,24 @@ TEST_F(MasterLoaderTest, ttlFromSOA) {
                   "no TTL specified; using SOA MINTTL instead"));
 }
 
+TEST_F(MasterLoaderTest, ttlFromPrevious) {
+    // No available default TTL.  2nd and 3rd RR will use the TTL of the
+    // 1st RR.  This will result in a warning, but only for the first time.
+    stringstream zone_stream("a.example.org. 1800 IN A 192.0.2.1\n"
+                             "b.example.org. IN A 192.0.2.2\n"
+                             "c.example.org. IN A 192.0.2.3\n");
+    setLoader(zone_stream, Name("example.org."), RRClass::IN(),
+              MasterLoader::DEFAULT);
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    checkRR("a.example.org", RRType::A(), "192.0.2.1", RRTTL(1800));
+    checkRR("b.example.org", RRType::A(), "192.0.2.2", RRTTL(1800));
+    checkRR("c.example.org", RRType::A(), "192.0.2.3", RRTTL(1800));
+
+    EXPECT_EQ(1, warnings_.size());
+    EXPECT_EQ(0, warnings_.at(0).find("using RFC1035 TTL semantics"));
+}
+
 // Test the constructor rejects empty add callback.
 TEST_F(MasterLoaderTest, emptyCallback) {
     EXPECT_THROW(MasterLoader(TEST_DATA_SRCDIR "/example.org",
