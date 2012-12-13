@@ -94,7 +94,7 @@ DataSourceClient_findZone(PyObject* po_self, PyObject* args) {
 PyObject*
 DataSourceClient_createZone(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
-    PyObject *name;
+    PyObject* name;
     if (PyArg_ParseTuple(args, "O!", &name_type, &name)) {
         try {
             const bool result = self->client->createZone(PyName_ToName(name));
