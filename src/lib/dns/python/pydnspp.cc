@@ -777,6 +777,10 @@ PyInit_pydnspp(void) {
     po_IscException = PyErr_NewException("pydnspp.IscException", NULL, NULL);
     PyModule_AddObject(mod, "IscException", po_IscException);
 
+    po_InvalidOperation = PyErr_NewException("pydnspp.InvalidOperation",
+                                             NULL, NULL);
+    PyModule_AddObject(mod, "InvalidOperation", po_InvalidOperation);
+
     po_InvalidParameter = PyErr_NewException("pydnspp.InvalidParameter",
                                              NULL, NULL);
     PyModule_AddObject(mod, "InvalidParameter", po_InvalidParameter);
