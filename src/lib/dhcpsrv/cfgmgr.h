@@ -17,6 +17,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
+#include <dhcpsrv/option_space.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
 #include <util/buffer.h>
@@ -76,6 +77,36 @@ public:
     /// CfgMgr is a singleton and this method is the only way of
     /// accessing it.
     static CfgMgr& instance();
+
+    /// @brief Adds new DHCPv4 option space to the collection.
+    ///
+    /// @param space option space to be added.
+    ///
+    /// @throw isc::dhcp::InvalidOptionSpace invalid option space
+    /// has been specified.
+    void addOptionSpace4(const OptionSpacePtr& space);
+
+    /// @brief Adds new DHCPv6 option space to the collection.
+    ///
+    /// @param space option space to be added.
+    ///
+    /// @throw isc::dhcp::InvalidOptionSpace invalid option space
+    /// has been specified.
+    void addOptionSpace6(const OptionSpacePtr& space);
+
+    /// @brief Return option spaces for DHCPv4.
+    ///
+    /// @return A collection of option spaces.
+    const OptionSpaceCollection& getOptionSpaces4() const {
+        return (spaces4_);
+    }
+
+    /// @brief Return option spaces for DHCPv6.
+    ///
+    /// @return A collection of option spaces.
+    const OptionSpaceCollection& getOptionSpaces6() const {
+        return (spaces6_);
+    }
 
     /// @brief get IPv6 subnet by address
     ///
@@ -169,6 +200,12 @@ protected:
     /// pattern will use calling inRange() method on each subnet until
     /// a match is found.
     Subnet4Collection subnets4_;
+
+    /// @brief Container for defined DHCPv6 option spaces.
+    OptionSpaceCollection spaces6_;
+
+    /// @brief Container for defined DHCPv4 option spaces.
+    OptionSpaceCollection spaces4_;
 };
 
 } // namespace isc::dhcp
