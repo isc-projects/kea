@@ -283,6 +283,8 @@ struct ErrorCase {
     // Check the unknown directive. The rest looks like ordinary RR,
     // so we see the $ is actually special.
     { "$UNKNOWN 3600    IN  A   192.0.2.1", "Unknown $ directive" },
+    { "$INCLUD " TEST_DATA_SRCDIR "/example.org", "Include too short" },
+    { "$INCLUDES " TEST_DATA_SRCDIR "/example.org", "Include too short" },
     { "$INCLUDE", "Missing include path" },
     { "$INCLUDE /file/not/found", "Include file not found" },
     { "$INCLUDE /file/not/found and here goes bunch of garbage",
