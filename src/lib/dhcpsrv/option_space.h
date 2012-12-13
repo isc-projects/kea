@@ -15,15 +15,28 @@
 #ifndef OPTION_SPACE_H
 #define OPTION_SPACE_H
 
+#include <exceptions/exceptions.h>
 #include <boost/shared_ptr.hpp>
+#include <map>
 #include <string>
 
 namespace isc {
 namespace dhcp {
 
-class OptionSpace;
+/// @brief Exception to be thrown when invalid option space
+/// is specified.
+class InvalidOptionSpace : public Exception {
+public:
+    InvalidOptionSpace(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
+/// OptionSpace forward declaration.
+class OptionSpace;
+/// A pointer to OptionSpace object.
 typedef boost::shared_ptr<OptionSpace> OptionSpacePtr;
+/// A collection of option spaces.
+typedef std::map<std::string, OptionSpacePtr> OptionSpaceCollection;
 
 /// @brief Option code space.
 ///
