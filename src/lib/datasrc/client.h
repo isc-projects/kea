@@ -368,7 +368,7 @@ public:
     /// \return The number of zones known to this datasource
     virtual unsigned int getZoneCount() const;
 
-    /// \brief Create a zone in the database
+    /// \brief Create a zone in the data source
     ///
     /// Creates a new (empty) zone in the data source backend, which
     /// can subsequently be filled with data (through getUpdater()).
