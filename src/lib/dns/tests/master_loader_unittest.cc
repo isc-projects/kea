@@ -419,7 +419,9 @@ TEST_F(MasterLoaderTest, ttlDirective) {
     // Extended TTL form is accepted.
     zone_stream << "$TTL 1H\nb.example.org. IN A 192.0.2.3\n";
     // Matching is case insensitive.
-    zone_stream << "$tTl 360\nc.example.org. IN A 192.0.2.3\n";
+    zone_stream << "$tTl 360\nc.example.org. IN A 192.0.2.4\n";
+    // Maximum allowable TTL
+    zone_stream << "$TTL 2147483647\nd.example.org. IN A 192.0.2.5\n";
 
     setLoader(zone_stream, Name("example.org."), RRClass::IN(),
               MasterLoader::DEFAULT);
@@ -428,7 +430,8 @@ TEST_F(MasterLoaderTest, ttlDirective) {
     checkRR("example.org", RRType::A(), "192.0.2.1", RRTTL(1800));
     checkRR("a.example.org", RRType::A(), "192.0.2.2", RRTTL(100));
     checkRR("b.example.org", RRType::A(), "192.0.2.3", RRTTL(3600));
-    checkRR("c.example.org", RRType::A(), "192.0.2.3", RRTTL(360));
+    checkRR("c.example.org", RRType::A(), "192.0.2.4", RRTTL(360));
+    checkRR("d.example.org", RRType::A(), "192.0.2.5", RRTTL(2147483647));
 }
 
 TEST_F(MasterLoaderTest, ttlFromSOA) {
@@ -525,6 +528,36 @@ TEST_F(MasterLoaderTest, ttlUnknownAndEOF) {
     // its details, we focus on the very last warning.
     EXPECT_FALSE(warnings_.empty());
     checkCallbackMessage(*warnings_.rbegin(), "Unexpected end end of file", 1);
+}
+
+TEST_F(MasterLoaderTest, ttlOverflow) {
+    stringstream zone_stream;
+    zone_stream << "example.org. IN SOA . . 0 0 0 0 2147483648\n";
+    zone_stream << "$TTL 3600\n"; // reset to an in-range value
+    zone_stream << "$TTL 2147483649\n" << "a.example.org. IN A 192.0.2.1\n";
+    zone_stream << "$TTL 3600\n"; // reset to an in-range value
+    zone_stream << "b.example.org. 2147483650 IN A 192.0.2.2\n";
+    setLoader(zone_stream, Name("example.org."), RRClass::IN(),
+              MasterLoader::DEFAULT);
+
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_EQ(3, rrsets_.size());
+
+    checkRR("example.org", RRType::SOA(), ". . 0 0 0 0 2147483648", RRTTL(0));
+    checkRR("a.example.org", RRType::A(), "192.0.2.1", RRTTL(0));
+    checkRR("b.example.org", RRType::A(), "192.0.2.2", RRTTL(0));
+
+    EXPECT_EQ(4, warnings_.size());
+    checkCallbackMessage(warnings_.at(1),
+                         "TTL 2147483648 > MAXTTL, setting to 0 per RFC2181",
+                         1);
+    checkCallbackMessage(warnings_.at(2),
+                         "TTL 2147483649 > MAXTTL, setting to 0 per RFC2181",
+                         3);
+    checkCallbackMessage(warnings_.at(3),
+                         "TTL 2147483650 > MAXTTL, setting to 0 per RFC2181",
+                         6);
 }
 
 // Test the constructor rejects empty add callback.
