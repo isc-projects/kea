@@ -374,6 +374,17 @@ wrapDataSourceClient(DataSourceClient* client,
     return (container.release());
 }
 
+DataSourceClient&
+PyDataSourceClient_ToDataSourceClient(PyObject* client_obj) {
+    if (client_obj == NULL) {
+        isc_throw(PyCPPWrapperException,
+                  "obj argument NULL in Name PyObject conversion");
+    }
+    const s_DataSourceClient* client =
+        static_cast<const s_DataSourceClient*>(client_obj);
+    return (*client->client);
+}
+
 } // namespace python
 } // namespace datasrc
 } // namespace isc
