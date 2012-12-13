@@ -30,8 +30,8 @@ STATIC_ZONE_FILE = '../../../../datasrc/static.zone'
 SOURCE_DB_FILE = TESTDATA_PATH + '/example.com.source.sqlite3'
 ORIG_DB_FILE = TESTDATA_PATH + '/example.com.sqlite3'
 DB_FILE = TESTDATA_WRITE_PATH + '/zoneloadertest.sqlite3'
-DB_CLIENT_CONFIG = '{ "database_file": "' + DB_FILE + '"}'
-DB_SOURCE_CLIENT_CONFIG = '{ "database_file": "' + SOURCE_DB_FILE + '"}'
+DB_CLIENT_CONFIG = '{ "database_file": "' + DB_FILE + '" }'
+DB_SOURCE_CLIENT_CONFIG = '{ "database_file": "' + SOURCE_DB_FILE + '" }'
 
 ORIG_SOA_TXT = 'example.com. 3600 IN SOA master.example.com. ' +\
                'admin.example.com. 1234 3600 1800 2419200 7200\n'
