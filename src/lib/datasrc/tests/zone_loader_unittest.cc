@@ -327,8 +327,6 @@ TEST_F(ZoneLoaderTest, loadUnsignedIncremental) {
     // Not committed yet, we didn't complete the loading
     EXPECT_FALSE(destination_client_.commit_called_);
 
-    // This is unusual, but allowed. Check it doesn't do anything
-    loader.loadIncremental(0);
     EXPECT_EQ(10, destination_client_.rrsets_.size());
     EXPECT_FALSE(destination_client_.commit_called_);
 
