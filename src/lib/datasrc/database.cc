@@ -43,6 +43,42 @@ using boost::scoped_ptr;
 
 namespace isc {
 namespace datasrc {
+// RAII-style transaction holder; roll back the transaction unless explicitly
+// committed
+namespace {
+class TransactionHolder {
+public:
+    TransactionHolder(DatabaseAccessor& accessor) : accessor_(accessor),
+                                                    committed_(false)
+    {
+        accessor_.startTransaction();
+    }
+    ~TransactionHolder() {
+        if (!committed_) {
+            try {
+                accessor_.rollback();
+            } catch (const DataSourceError& e) {
+                // We generally expect that rollback always succeeds, and
+                // it should in fact succeed in a way we execute it.  But
+                // as the public API allows rollback() to fail and
+                // throw, we should expect it.  Obviously we cannot re-throw
+                // it.  The best we can do is to log it as a critical error.
+                logger.error(DATASRC_DATABASE_TRANSACTION_ROLLBACKFAIL).
+                            arg(accessor_.getDBName()).
+                            arg(e.what());
+            }
+        }
+    }
+    void commit() {
+        accessor_.commit();
+        committed_ = true;
+    }
+private:
+    DatabaseAccessor& accessor_;
+    bool committed_;
+};
+} // end unnamed namespace
+
 
 DatabaseClient::DatabaseClient(RRClass rrclass,
                                boost::shared_ptr<DatabaseAccessor>
@@ -78,6 +114,18 @@ DatabaseClient::findZone(const Name& name) const {
     }
     // No, really nothing
     return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
+}
+
+bool
+DatabaseClient::createZone(const Name& name) {
+    TransactionHolder transaction(*accessor_);
+    std::pair<bool, int> zone(accessor_->getZone(name.toText()));
+    if (zone.first) {
+        return (false);
+    }
+    accessor_->addZone(name.toText());
+    transaction.commit();
+    return (true);
 }
 
 DatabaseClient::Finder::Finder(boost::shared_ptr<DatabaseAccessor> accessor,
@@ -1349,11 +1397,8 @@ public:
                 logger.info(DATASRC_DATABASE_UPDATER_ROLLBACK)
                     .arg(zone_name_).arg(zone_class_).arg(db_name_);
             } catch (const DataSourceError& e) {
-                // We generally expect that rollback always succeeds, and
-                // it should in fact succeed in a way we execute it.  But
-                // as the public API allows rollback() to fail and
-                // throw, we should expect it.  Obviously we cannot re-throw
-                // it.  The best we can do is to log it as a critical error.
+                // See The destructor ~TransactionHolder() for the
+                // reason to catch this.
                 logger.error(DATASRC_DATABASE_UPDATER_ROLLBACKFAIL)
                     .arg(zone_name_).arg(zone_class_).arg(db_name_)
                     .arg(e.what());

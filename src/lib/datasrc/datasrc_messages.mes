@@ -216,6 +216,16 @@ to find any invalid data and fix it.
 No match (not even a wildcard) was found in the named data source for the given
 name/type/class in the data source.
 
+% DATASRC_DATABASE_TRANSACTION_ROLLBACKFAIL failed to roll back transaction on %1: %2
+A transaction on the database was rolled back without committing the
+changes to the database, but the rollback itself unexpectedly fails.
+The higher level implementation does not expect it to fail, so this means
+either a serious operational error in the underlying data source (such as a
+system failure of a database) or software bug in the underlying data source
+implementation.  In either case if this message is logged the administrator
+should carefully examine the underlying data source to see what exactly
+happens and whether the data is still valid.
+
 % DATASRC_DATABASE_UPDATER_COMMIT updates committed for '%1/%2' on %3
 Debug information.  A set of updates to a zone has been successfully
 committed to the corresponding database backend.  The zone name,
