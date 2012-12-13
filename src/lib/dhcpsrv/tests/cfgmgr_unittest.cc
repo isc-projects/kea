@@ -112,4 +112,70 @@ TEST_F(CfgMgrTest, subnet6) {
     EXPECT_EQ(Subnet6Ptr(), cfg_mgr.getSubnet6(IOAddress("4000::123")));
 }
 
+// This test verifies that new DHCPv4 option spaces can be added to
+// the configuration manager and that duplicated option space is
+// rejected.
+TEST_F(CfgMgrTest, optionSpace4) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    // Create some option spaces.
+    OptionSpacePtr space1(new OptionSpace("isc", false));
+    OptionSpacePtr space2(new OptionSpace("xyz", true));
+
+    // Add option spaces with different names and expect they
+    // are accepted.
+    ASSERT_NO_THROW(cfg_mgr.addOptionSpace4(space1));
+    ASSERT_NO_THROW(cfg_mgr.addOptionSpace4(space2));
+
+    // Validate that the option spaces have been added correctly.
+    const OptionSpaceCollection& spaces = cfg_mgr.getOptionSpaces4();
+
+    ASSERT_EQ(2, spaces.size());
+    EXPECT_FALSE(spaces.find("isc") == spaces.end());
+    EXPECT_FALSE(spaces.find("xyz") == spaces.end());
+
+    // Create another option space with the name that duplicates
+    // the existing option space.
+    OptionSpacePtr space3(new OptionSpace("isc", true));
+    // Expect that the duplicate option space is rejected.
+    ASSERT_THROW(
+        cfg_mgr.addOptionSpace4(space3), isc::dhcp::InvalidOptionSpace
+    );
+
+    // @todo decode if a duplicate vendor space is allowed.
+}
+
+// This test verifies that new DHCPv6 option spaces can be added to
+// the configuration manager and that duplicated option space is
+// rejected.
+TEST_F(CfgMgrTest, optionSpace6) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    // Create some option spaces.
+    OptionSpacePtr space1(new OptionSpace("isc", false));
+    OptionSpacePtr space2(new OptionSpace("xyz", true));
+
+    // Add option spaces with different names and expect they
+    // are accepted.
+    ASSERT_NO_THROW(cfg_mgr.addOptionSpace6(space1));
+    ASSERT_NO_THROW(cfg_mgr.addOptionSpace6(space2));
+
+    // Validate that the option spaces have been added correctly.
+    const OptionSpaceCollection& spaces = cfg_mgr.getOptionSpaces6();
+
+    ASSERT_EQ(2, spaces.size());
+    EXPECT_FALSE(spaces.find("isc") == spaces.end());
+    EXPECT_FALSE(spaces.find("xyz") == spaces.end());
+
+    // Create another option space with the name that duplicates
+    // the existing option space.
+    OptionSpacePtr space3(new OptionSpace("isc", true));
+    // Expect that the duplicate option space is rejected.
+    ASSERT_THROW(
+        cfg_mgr.addOptionSpace6(space3), isc::dhcp::InvalidOptionSpace
+    );
+
+    // @todo decide if a duplicate vendor space is allowed.
+}
+
 } // end of anonymous namespace
