@@ -57,9 +57,14 @@ Unit units[] = {
 namespace isc {
 namespace dns {
 
-RRTTL::RRTTL(const std::string& ttlstr) {
+namespace {
+bool
+parseTTLStr(const string& ttlstr, uint32_t& ttlval, string* error_txt) {
     if (ttlstr.empty()) {
-        isc_throw(InvalidRRTTL, "Empty TTL string");
+        if (error_txt != NULL) {
+            *error_txt = "Empty TTL string";
+        }
+        return (false);
     }
     // We use a larger data type during the computation. This is because
     // some compilers don't fail when out of range, so we check the range
@@ -80,8 +85,10 @@ RRTTL::RRTTL(const std::string& ttlstr) {
             if (unit == end) {
                 if (units_mode) {
                     // We had some units before. The last one is missing unit.
-                    isc_throw(InvalidRRTTL, "Missing the last unit: " <<
-                              ttlstr);
+                    if (error_txt != NULL) {
+                        *error_txt = "Missing the last unit: " + ttlstr;
+                    }
+                    return (false);
                 } else {
                     // Case without any units at all. Just convert and store
                     // it.
@@ -102,12 +109,18 @@ RRTTL::RRTTL(const std::string& ttlstr) {
                 }
             }
             if (!found) {
-                isc_throw(InvalidRRTTL, "Unknown unit used: " << *unit <<
-                          " in: " << ttlstr);
+                if (error_txt != NULL) {
+                    *error_txt = "Unknown unit used: " +
+                        boost::lexical_cast<string>(*unit) + " in: " + ttlstr;
+                }
+                return (false);
             }
             // Now extract the number.
             if (unit == pos) {
-                isc_throw(InvalidRRTTL, "Missing number in TTL: " << ttlstr);
+                if (error_txt != NULL) {
+                    *error_txt = "Missing number in TTL: " + ttlstr;
+                }
+                return (false);
             }
             const int64_t value = boost::lexical_cast<int64_t>(string(pos,
                                                                       unit));
@@ -118,21 +131,52 @@ RRTTL::RRTTL(const std::string& ttlstr) {
             // there's no need to continue).
             if (value < 0 || value > 0xffffffff || val < 0 ||
                 val > 0xffffffff) {
-                isc_throw(InvalidRRTTL, "Part of TTL out of range: " <<
-                          ttlstr);
+                if (error_txt != NULL) {
+                    *error_txt = "Part of TTL out of range: "  + ttlstr;
+                }
+                return (false);
             }
             // Move to after the unit.
             pos = unit + 1;
         }
     } catch (const boost::bad_lexical_cast&) {
-        isc_throw(InvalidRRTTL, "invalid TTL: " << ttlstr);
+        if (error_txt != NULL) {
+            *error_txt = "invalid TTL: " + ttlstr;
+        }
+        return (false);
     }
 
     if (val >= 0 && val <= 0xffffffff) {
-        ttlval_ = val;
+        ttlval = val;
     } else {
-        isc_throw(InvalidRRTTL, "TTL out of range: " << ttlstr);
+        if (error_txt != NULL) {
+            *error_txt = "TTL out of range: " + ttlstr;
+        }
+        return (false);
     }
+
+    return (true);
+}
+}
+
+RRTTL::RRTTL(const std::string& ttlstr) {
+    string error_txt;
+    if (!parseTTLStr(ttlstr, ttlval_, &error_txt)) {
+        isc_throw(InvalidRRTTL, error_txt);
+    }
+}
+
+RRTTL*
+RRTTL::createFromText(const string& ttlstr, RRTTL* placeholder) {
+    uint32_t ttlval;
+    if (parseTTLStr(ttlstr, ttlval, NULL)) {
+        if (placeholder != NULL) {
+            *placeholder = RRTTL(ttlval);
+            return (placeholder);
+        }
+        return (new RRTTL(ttlval));
+    }
+    return (NULL);
 }
 
 RRTTL::RRTTL(InputBuffer& buffer) {

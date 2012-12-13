@@ -187,18 +187,23 @@ private:
         }
     }
 
-    // Try to set/reset the current TTL from a candidate TTL.  It's possible
+    // Try to set/reset the current TTL from candidate TTL text.  It's possible
     // it does not actually represent a TTL (which is not immediately
     // considered an error).  Return true iff it's recognized as a valid TTL
     // (and only in which case the current TTL is set).
     bool setCurrentTTL(const string& ttl_txt) {
-        try {
-            setCurrentTTL(RRTTL(ttl_txt));
+        // We use the factory version instead of RRTTL constructor as we
+        // need to expect cases where ttl_txt does not actually represent a TTL
+        // but an RR class or type.
+        RRTTL* ttl = RRTTL::createFromText(ttl_txt, current_ttl_.get());
+        if (ttl != NULL) {
+            if (!current_ttl_) {
+                current_ttl_.reset(ttl);
+            }
             limitTTL(*current_ttl_, false);
             return (true);
-        } catch (const InvalidRRTTL&) {
-            return (false);
         }
+        return (false);
     }
 
     // Determine the TTL of the current RR based on the given parsing context.
