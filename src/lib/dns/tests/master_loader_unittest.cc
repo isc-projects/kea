@@ -201,7 +201,7 @@ TEST_F(MasterLoaderTest, origin) {
         const string input =
             "@  1H  IN  A   192.0.2.1\n" +
             directive + " sub.example.org.\n"
-            "www    1H  IN  A   192.0.2.1\n" +
+            "\"www\"    1H  IN  A   192.0.2.1\n" +
             // Relative name in the origin
             directive + " relative\n"
             "@  1H  IN  A   192.0.2.1\n"
