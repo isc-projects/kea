@@ -382,11 +382,25 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
 
             const Name name(name_string.beg, name_string.len,
                             &zone_origin_);
-            // TODO: Some more flexibility. We don't allow omitting
-            // anything yet
+
+            // Find TTL, class and type.  Both TTL and class are
+            // optional and may occur in any order if they exist. TTL
+            // and class come before type which must exist.
+            //
+            // [<TTL>] [<class>] <type> <RDATA>
+            // [<class>] [<TTL>] <type> <RDATA>
 
             // The parameters
             MasterToken rrparam_token = lexer_.getNextToken();
+
+            boost::scoped_ptr<RRClass> rrclass;
+            try {
+                rrclass.reset(new RRClass(rrparam_token.getString()));
+                rrparam_token = lexer_.getNextToken();
+            } catch (InvalidRRClass& e) {
+                // If it's not an rrclass here, continue and try again
+                // after the TTL below.
+            }
 
             bool explicit_ttl = false;
             if (rrparam_token.getType() == MasterToken::STRING) {
@@ -397,19 +411,31 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
                 }
             }
 
-            const RRClass rrclass(rrparam_token.getString());
+            if (!rrclass) {
+                try {
+                    rrclass.reset(new RRClass(rrparam_token.getString()));
+                    rrparam_token = lexer_.getNextToken();
+                } catch (InvalidRRClass& e) {
+                    // If it's not an rrclass here, use the zone's class.
+                    rrclass.reset(new RRClass(zone_class_));
+                }
+            }
+
+            // Return the last token
+            lexer_.ungetToken();
+
             const RRType rrtype(getString());
 
             // TODO: Some more validation?
-            if (rrclass != zone_class_) {
+            if (*rrclass != zone_class_) {
                 // It doesn't really matter much what type of exception
                 // we throw, we catch it just below.
-                isc_throw(isc::BadValue, "Class mismatch: " << rrclass <<
+                isc_throw(isc::BadValue, "Class mismatch: " << *rrclass <<
                           "vs. " << zone_class_);
             }
             // TODO: Check if it is SOA, it should be at the origin.
 
-            const rdata::RdataPtr rdata(rdata::createRdata(rrtype, rrclass,
+            const rdata::RdataPtr rdata(rdata::createRdata(rrtype, *rrclass,
                                                            lexer_,
                                                            &zone_origin_,
                                                            options_,
@@ -419,7 +445,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             // callbacks_ already. We need to decide if we want to continue
             // or not.
             if (rdata) {
-                add_callback_(name, rrclass, rrtype,
+                add_callback_(name, *rrclass, rrtype,
                               getCurrentTTL(explicit_ttl, rrtype, rdata),
                               rdata);
 
