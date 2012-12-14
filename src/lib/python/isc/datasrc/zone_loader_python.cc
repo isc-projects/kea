@@ -35,16 +35,19 @@ using namespace std;
 using namespace isc::dns::python;
 using namespace isc::datasrc;
 using namespace isc::datasrc::python;
+using namespace isc::util::python;
 
 namespace {
 // The s_* Class simply covers one instantiation of the object
 class s_ZoneLoader : public PyObject {
 public:
-    s_ZoneLoader() : cppobj(NULL), client(NULL) {};
+    s_ZoneLoader() : cppobj(NULL), target_client(NULL), source_client(NULL)
+        {};
     ZoneLoader* cppobj;
-    // a zoneloader should not survive its associated client,
+    // a zoneloader should not survive its associated client(s),
     // so add a ref to it at init
-    PyObject* client;
+    PyObject* target_client;
+    PyObject* source_client;
 };
 
 // General creation and destruction
@@ -70,19 +73,27 @@ ZoneLoader_init(PyObject* po_self, PyObject* args, PyObject*) {
     }
     PyErr_Clear();
     try {
+        // The associated objects must be alive during the lifetime
+        // of this instance, so incref them (through a container in case
+        // of exceptions in this method)
         Py_INCREF(po_target_client);
-        self->client = po_target_client;
+        PyObjectContainer target_client(po_target_client);
         if (po_source_client != NULL) {
+            // See above
+            Py_INCREF(po_source_client);
+            PyObjectContainer source_client(po_source_client);
             self->cppobj = new ZoneLoader(
                 PyDataSourceClient_ToDataSourceClient(po_target_client),
                 PyName_ToName(po_name),
                 PyDataSourceClient_ToDataSourceClient(po_source_client));
+            self->source_client = source_client.release();
         } else {
             self->cppobj = new ZoneLoader(
                 PyDataSourceClient_ToDataSourceClient(po_target_client),
                 PyName_ToName(po_name),
                 master_file);
         }
+        self->target_client = target_client.release();
         return (0);
     } catch (const isc::InvalidParameter& ivp) {
         PyErr_SetString(po_InvalidParameter, ivp.what());
@@ -104,8 +115,11 @@ ZoneLoader_destroy(PyObject* po_self) {
     s_ZoneLoader* self = static_cast<s_ZoneLoader*>(po_self);
     delete self->cppobj;
     self->cppobj = NULL;
-    if (self->client != NULL) {
-        Py_DECREF(self->client);
+    if (self->target_client != NULL) {
+        Py_DECREF(self->target_client);
+    }
+    if (self->source_client != NULL) {
+        Py_DECREF(self->source_client);
     }
     Py_TYPE(self)->tp_free(self);
 }
