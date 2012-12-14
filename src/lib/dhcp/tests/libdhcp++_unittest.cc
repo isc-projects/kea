@@ -150,7 +150,8 @@ private:
     }
 };
 
-static const uint8_t packed[] = {
+// The DHCPv6 options in the wire format, used by multiple tests.
+const uint8_t v6packed[] = {
     0, 1, 0, 5, 100, 101, 102, 103, 104, // CLIENT_ID (9 bytes)
     0, 2, 0, 3, 105, 106, 107, // SERVER_ID (7 bytes)
     0, 14, 0, 0, // RAPID_COMMIT (0 bytes)
@@ -254,8 +255,8 @@ TEST_F(LibDhcpTest, packOptions6) {
     OutputBuffer assembled(512);
 
     EXPECT_NO_THROW(LibDHCP::packOptions6(assembled, opts));
-    EXPECT_EQ(sizeof(packed), assembled.getLength());
-    EXPECT_EQ(0, memcmp(assembled.getData(), packed, sizeof(packed)));
+    EXPECT_EQ(sizeof(v6packed), assembled.getLength());
+    EXPECT_EQ(0, memcmp(assembled.getData(), v6packed, sizeof(v6packed)));
 }
 
 TEST_F(LibDhcpTest, unpackOptions6) {
@@ -267,10 +268,10 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     isc::dhcp::Option::OptionCollection options; // list of options
 
     OptionBuffer buf(512);
-    memcpy(&buf[0], packed, sizeof(packed));
+    memcpy(&buf[0], v6packed, sizeof(v6packed));
 
     EXPECT_NO_THROW ({
-            LibDHCP::unpackOptions6(OptionBuffer(buf.begin(), buf.begin() + sizeof(packed)),
+            LibDHCP::unpackOptions6(OptionBuffer(buf.begin(), buf.begin() + sizeof(v6packed)),
                                     options);
     });
 
@@ -281,14 +282,14 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     EXPECT_EQ(1, x->second->getType());  // this should be option 1
     ASSERT_EQ(9, x->second->len()); // it should be of length 9
     ASSERT_EQ(5, x->second->getData().size());
-    EXPECT_EQ(0, memcmp(&x->second->getData()[0], packed + 4, 5)); // data len=5
+    EXPECT_EQ(0, memcmp(&x->second->getData()[0], v6packed + 4, 5)); // data len=5
 
         x = options.find(2);
     ASSERT_FALSE(x == options.end()); // option 2 should exist
     EXPECT_EQ(2, x->second->getType());  // this should be option 2
     ASSERT_EQ(7, x->second->len()); // it should be of length 7
     ASSERT_EQ(3, x->second->getData().size());
-    EXPECT_EQ(0, memcmp(&x->second->getData()[0], packed + 13, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->second->getData()[0], v6packed + 13, 3)); // data len=3
 
     x = options.find(14);
     ASSERT_FALSE(x == options.end()); // option 14 should exist
@@ -316,7 +317,7 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     expected_opts.push_back(0x6C6D); // equivalent to: 108, 109
     expected_opts.push_back(0x6E6F); // equivalent to 110, 111
     ASSERT_EQ(expected_opts.size(), opts.size());
-    // Validated if option has been unpacked correctly.
+    // Validated if option has been un packed correctly.
     EXPECT_TRUE(std::equal(expected_opts.begin(), expected_opts.end(),
                            opts.begin()));
 
@@ -395,11 +396,11 @@ TEST_F(LibDhcpTest, packOptions4) {
 
 TEST_F(LibDhcpTest, unpackOptions4) {
 
-    vector<uint8_t> packed(v4Opts, v4Opts + sizeof(v4Opts));
+    vector<uint8_t> v4packed(v4Opts, v4Opts + sizeof(v4Opts));
     isc::dhcp::Option::OptionCollection options; // list of options
 
     ASSERT_NO_THROW(
-        LibDHCP::unpackOptions4(packed, options);
+        LibDHCP::unpackOptions4(v4packed, options);
     );
 
     isc::dhcp::Option::OptionCollection::const_iterator x = options.find(12);
