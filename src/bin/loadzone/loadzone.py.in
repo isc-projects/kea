@@ -18,10 +18,18 @@
 import sys
 sys.path.append('@@PYTHONPATH@@')
 from optparse import OptionParser
+from isc.dns import *
 import isc.log
+from isc.log_messages.loadzone_messages import *
 
-isc.log.init("b10-loadzone", buffer=True)
+isc.log.init("b10-loadzone", buffer=False)
 logger = isc.log.Logger("loadzone")
+
+class BadArgument(Exception):
+    '''An exception indicating an error in command line argument.
+
+    '''
+    pass
 
 def set_cmd_options(parser):
     '''Helper function to set command-line options.
@@ -35,13 +43,32 @@ class LoadZoneRunner:
 
     '''
     def __init__(self, command_args):
+        self.__command_args = command_args
+
+        # These are essentially private, and defined as "protected" for the
+        # convenience of tests inspecting them
+        self._zone_class = None
+        self._zone_name = None
+
+    def _parse_args(self):
         usage_txt = 'usage: %prog [options] zonename zonefile'
         parser = OptionParser(usage=usage_txt)
         set_cmd_options(parser)
-        (options, args) = parser.parse_args(args=command_args)
+        (options, args) = parser.parse_args(args=self.__command_args)
+        if len(args) != 2:
+            raise BadArgument('Unexpected number of arguments: %d (must be 2)'
+                              % (len(args)))
+        try:
+            self._zone_name = Name(args[0])
+        except Exception as ex: # too broad, but there's no better granurality
+            raise BadArgument("Invalid zone name '" + args[0] + "': " +
+                              str(ex))
 
     def run(self):
-        pass
+        try:
+            self._parse_args()
+        except BadArgument as ex:
+            logger.error(LOADZONE_ARGUMENT_ERROR, ex)
 
 if '__main__' == __name__:
     runner = LoadZoneRunner(sys.argv[1:])

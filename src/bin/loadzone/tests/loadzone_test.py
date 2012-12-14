@@ -17,21 +17,43 @@
 
 import unittest
 from loadzone import *
+from isc.dns import *
 import isc.log
+
+TEST_ZONE_NAME = Name('example.org')
 
 class TestLoadZoneRunner(unittest.TestCase):
     def setUp(self):
-        pass
+        # default command line arguments
+        self.__args = ['example.org', 'example.zone']
+        self.__runner = LoadZoneRunner(self.__args)
 
     def tearDown(self):
         pass
 
-    def test_dummy(self):
+    def test_init(self):
         '''
         Test the old socket file is removed (if any) and a new socket
         is created when the ddns server is created.
         '''
-        runner = LoadZoneRunner(['-h', 'example.org', 'example.zone'])
+        self.assertIsNone(self.__runner._zone_class)
+        self.assertIsNone(self.__runner._zone_name)
+
+    def test_parse_args(self):
+        self.__runner._parse_args()
+        self.assertEqual(TEST_ZONE_NAME, self.__runner._zone_name)
+
+    def test_parse_bad_args(self):
+        # There must be exactly 2 non-option arguments: zone name and zone file
+        self.assertRaises(BadArgument, LoadZoneRunner([])._parse_args)
+        self.assertRaises(BadArgument, LoadZoneRunner(['example'])._parse_args)
+        self.assertRaises(BadArgument, LoadZoneRunner(self.__args + ['0']).
+                          _parse_args)
+
+        # Bad zone name
+        self.assertRaises(BadArgument,
+                          LoadZoneRunner(['bad..name', 'example.zone']).
+                          _parse_args)
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()
