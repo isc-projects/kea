@@ -920,7 +920,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
             } else {
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                           DATASRC_DATABASE_FOUND_RRSET).
-                    arg(accessor_->getDBName()).arg(wti->second);
+                    arg(accessor_->getDBName()).arg(*wti->second);
             }
         }
         // Found an RR matching the query, so return it.  (Note that this
