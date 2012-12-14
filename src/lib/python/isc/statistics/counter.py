@@ -13,17 +13,17 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-"""BIND 10 Statistics counter module
+"""BIND 10 Statistics counters module
 
 This module handles the statistics counters for BIND 10 modules.  For
 using the module `counter.py`, firstly the init() method should be
 invoked in each module like b10-xfrin or b10-xfrout after importing
 this module.
 
-  from isc.statistics import Counter
-  self.counter = Counter(/path/to/foo.spec)
+  from isc.statistics import Counters
+  self.counters = Counters(/path/to/foo.spec)
 
-The first argument of Counter() can be specified, which is the
+The first argument of Counters() can be specified, which is the
 location of the specification file like src/bin/xfrout/xfrout.spec. If
 this initial preparation is done, statistics counters can be accessed
 from each module. For example, in case that the item `xfrreqdone` is
@@ -31,13 +31,13 @@ defined in statistics_spec in xfrout.spec, the following methods is
 callable. Since these methods requires the string of the zone name in
 the first argument, in the b10-xfrout,
 
-  self.counter.inc('zones', zone_name, 'xfrreqdone')
+  self.counters.inc('zones', zone_name, 'xfrreqdone')
 
 then the counter for xfrreqdone corresponding to zone_name was
 incremented. For getting the current number of this counter, we can do
 this,
 
-  number = self.counter.get('zones', zone_name, 'xfrreqdone')
+  number = self.counters.get('zones', zone_name, 'xfrreqdone')
 
 then the current number was obtained and set in the above variable
 `number`. Such a getter method would be mainly used for unittesting.
@@ -46,7 +46,7 @@ method is also callable.  This method is used for decrementing the
 counter number.  Regarding the item `axfr_running`, an argument like
 zone name is not required.
 
-  self.counter.dec('axfr_running')
+  self.counters.dec('axfr_running')
 
 These methods are effective in other module. For example, in case
 that this module `counter.py` is once imported in such a main module
@@ -54,7 +54,7 @@ as b10-xfrout, Regarding the item `notifyoutv4`, the incrementer
 as the following can be invoked via other module like notify_out.py,
 which is firstly imported in the main module.
 
-  self.counter.inc('zones', zone_name, 'notifyoutv4')
+  self.counters.inc('zones', zone_name, 'notifyoutv4')
 
 In this example this is for incrementing the counter of the item
 notifyoutv4. Thus, such statement can be also written in the other
@@ -139,7 +139,7 @@ class _Statistics():
     # default statistics data
     _data = {}
     # default statistics spec used in case of the specfile omitted in
-    # Counter()
+    # Counters()
     _spec = [
       {
         "item_name": "zones",
@@ -182,7 +182,7 @@ class _Statistics():
       }
     ]
 
-class Counter():
+class Counters():
     """A module for holding all statistics counters of modules. The
     counter numbers can be accessed by the accesseers defined
     according to a spec file. In this class, the structure of per-zone
