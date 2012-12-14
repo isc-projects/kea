@@ -169,16 +169,16 @@ class BaseTestCounters():
     def tearDown(self):
         self.counters.clear_all()
 
-    def check_dump_statistics(self):
+    def check_get_statistics(self):
         """Checks no differences between the value returned from
-        dump_statistics() and locally collected statistics data. Also
+        get_statistics() and locally collected statistics data. Also
         checks the result isn't changed even after the method is
         invoked twice. Finally checks it is valid for the the
         statistics spec."""
-        self.assertEqual(self.counters.dump_statistics(),
+        self.assertEqual(self.counters.get_statistics(),
                          self._statistics_data)
         # Idempotency check
-        self.assertEqual(self.counters.dump_statistics(),
+        self.assertEqual(self.counters.get_statistics(),
                          self._statistics_data)
         if self.TEST_SPECFILE_LOCATION:
             self.assertTrue(isc.config.module_spec_from_file(
@@ -219,7 +219,7 @@ class BaseTestCounters():
                 for zone_str in (self._entire_server, TEST_ZONE_NAME_STR):
                     isc.cc.data.set(self._statistics_data,
                                     '%s/%s/%s' % (args[0], zone_str, name), 2)
-        self.check_dump_statistics()
+        self.check_get_statistics()
 
     def test_xfrrunning_counters(self):
         # for counters of xfer running
@@ -248,7 +248,7 @@ class BaseTestCounters():
             self.counters.dec(*args)
             self.assertEqual(self.counters.get(*args), 0)
             self._statistics_data[name] = 0
-        self.check_dump_statistics()
+        self.check_get_statistics()
 
     def test_socket_counters(self):
         # for ipsocket/unixsocket counters
@@ -270,7 +270,7 @@ class BaseTestCounters():
             self.assertEqual(self.counters.get(*args), 2)
             isc.cc.data.set(
                 self._statistics_data, '/'.join(args), 2)
-        self.check_dump_statistics()
+        self.check_get_statistics()
 
     def test_undefined_item(self):
         # test DataNotFoundError raising when specifying item defined
