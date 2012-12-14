@@ -67,14 +67,21 @@ class LoadZoneRunner:
                               str(ex))
 
     def _do_load(self):
-        datasrc_client = DataSourceClient(self._datasrc_type,
-                                          self._datasrc_config)
-        created = datasrc_client.create_zone(self._zone_name)
-        if created:
-            logger.info(LOADZONE_ZONE_CREATED, self._zone_name,
-                        self._zone_class)
-        loader = ZoneLoader(datasrc_client, self._zone_name, self._zone_file)
-        loader.load()
+        try:
+            datasrc_client = DataSourceClient(self._datasrc_type,
+                                              self._datasrc_config)
+            created = datasrc_client.create_zone(self._zone_name)
+            if created:
+                logger.info(LOADZONE_ZONE_CREATED, self._zone_name,
+                            self._zone_class)
+            loader = ZoneLoader(datasrc_client, self._zone_name,
+                                self._zone_file)
+            loader.load()
+            return
+        except Exception as ex:
+            logger.error(LOADZONE_LOAD_ERROR, self._zone_name,
+                         self._zone_class, ex)
+            raise ex
 
     def run(self):
         try:

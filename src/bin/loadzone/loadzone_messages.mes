@@ -19,3 +19,5 @@
 % LOADZONE_ARGUMENT_ERROR Error in command line arguments: %1
 
 % LOADZONE_ZONE_CREATED Zone %1/%2 does not exist in the data source, newly created
+
+% LOADZONE_LOAD_ERROR Failed to load zone %1/%2: %3
