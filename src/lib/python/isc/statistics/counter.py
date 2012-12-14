@@ -84,8 +84,7 @@ def _add_counter(element, spec, identifier):
     # check whether spec and identifier are correct
     isc.config.find_spec_part(spec, identifier)
     # examine spec of the top-level item first
-    spec_ = isc.config.find_spec_part(
-        spec, '%s' % identifier.split('/')[0])
+    spec_ = isc.config.find_spec_part(spec, identifier.split('/')[0])
     if spec_['item_type'] == 'named_set' and \
             spec_['named_set_item_spec']['item_type'] ==  'map':
         map_spec = spec_['named_set_item_spec']['map_item_spec']
