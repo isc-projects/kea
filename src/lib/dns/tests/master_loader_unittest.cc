@@ -121,6 +121,7 @@ public:
                 "1234 3600 1800 2419200 7200");
         checkRR("example.org", RRType::NS(), "ns1.example.org.");
         checkRR("www.example.org", RRType::A(), "192.0.2.1");
+        checkRR("www.example.org", RRType::AAAA(), "2001:db8::1");
     }
 
     void checkARR(const string& name) {
