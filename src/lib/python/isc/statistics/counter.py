@@ -183,10 +183,20 @@ class _Statistics():
     ]
 
 class Counters():
-    """A module for holding all statistics counters of modules. The
-    counter numbers can be accessed by the accesseers defined
-    according to a spec file. In this class, the structure of per-zone
-    counters is assumed to be like this:
+    """A class for holding and manipulating all statistics counters
+    for a module.  A counters object is created by specifying a spec
+    file of the module in argument.  According to statistics
+    specification in the spec file, a counter value can be incremented
+    or decremented or obtained. Method as inc() or dec() or get() is
+    useful for this.  On the other hand, time data in a counters
+    object can be handled. The timer can be started and stopped. Then
+    duration time can be obtained. Method as start_timer() and
+    stop_timer() and get() is useful for this. Saved counters can be
+    cleared by the method clear_all(). Manipulating counters and
+    timers can be enabled or disabled.  if disabled, the value is not
+    changed even if such methods is invoked.  Including per-zone
+    counters, a list of counters which can be handled in the class are
+    like the following:
 
         zones/example.com./notifyoutv4
         zones/example.com./notifyoutv6
