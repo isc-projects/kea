@@ -17,3 +17,5 @@
 # messages are in the correct order.
 
 % LOADZONE_ARGUMENT_ERROR Error in command line arguments: %1
+
+% LOADZONE_ZONE_CREATED Zone %1/%2 does not exist in the data source, newly created

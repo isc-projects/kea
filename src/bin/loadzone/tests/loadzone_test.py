@@ -29,6 +29,7 @@ READ_ZONE_DB_FILE = TESTDATA_PATH + "rwtest.sqlite3" # original, to be copied
 LOCAL_TESTDATA_PATH = os.environ['LOCAL_TESTDATA_PATH'] + os.sep
 READ_ZONE_DB_FILE = TESTDATA_PATH + "rwtest.sqlite3" # original, to be copied
 NEW_ZONE_TXT_FILE = LOCAL_TESTDATA_PATH + "example.org.zone"
+ALT_NEW_ZONE_TXT_FILE = TESTDATA_PATH + "example.com.zone"
 TESTDATA_WRITE_PATH = os.environ['TESTDATA_WRITE_PATH'] + os.sep
 WRITE_ZONE_DB_FILE = TESTDATA_WRITE_PATH + "rwtest.sqlite3.copied"
 TEST_ZONE_NAME = Name('example.org')
@@ -39,6 +40,9 @@ ORIG_SOA_TXT = 'example.org. 3600 IN SOA ns1.example.org. ' +\
     'admin.example.org. 1234 3600 1800 2419200 7200\n'
 NEW_SOA_TXT = 'example.org. 3600 IN SOA ns.example.org. ' +\
     'admin.example.org. 1235 3600 1800 2419200 7200\n'
+# This is the brandnew SOA for a newly created zone
+ALT_NEW_SOA_TXT = 'example.com. 3600 IN SOA ns.example.com. ' +\
+    'admin.example.com. 1234 3600 1800 2419200 7200\n'
 
 class TestLoadZoneRunner(unittest.TestCase):
     def setUp(self):
@@ -75,26 +79,45 @@ class TestLoadZoneRunner(unittest.TestCase):
                           LoadZoneRunner(['bad..name', 'example.zone']).
                           _parse_args)
 
-    def check_zone_soa(self, soa_txt):
-        "Check that the given SOA RR exists and matches the expected string"
-
-        client = DataSourceClient('sqlite3', DATASRC_CONFIG)
-        result, finder = client.find_zone(TEST_ZONE_NAME)
-        self.assertEqual(client.SUCCESS, result)
-        result, rrset, _ = finder.find(TEST_ZONE_NAME, RRType.SOA())
-        self.assertEqual(finder.SUCCESS, result)
-        self.assertEqual(soa_txt, rrset.to_text())
-
-    def test_load_update(self):
-        '''successful case to loading new contents to an existing zone.'''
+    def __common_load_setup(self):
         self.__runner._zone_class = RRClass.IN()
         self.__runner._zone_name = TEST_ZONE_NAME
         self.__runner._zone_file = NEW_ZONE_TXT_FILE
         self.__runner._datasrc_type = 'sqlite3'
         self.__runner._datasrc_config = DATASRC_CONFIG
-        self.check_zone_soa(ORIG_SOA_TXT)
+
+    def __check_zone_soa(self, soa_txt, zone_name=TEST_ZONE_NAME):
+        """Check that the given SOA RR exists and matches the expected string
+
+        If soa_txt is None, the zone is expected to be non-existent.
+
+        """
+
+        client = DataSourceClient('sqlite3', DATASRC_CONFIG)
+        result, finder = client.find_zone(zone_name)
+        if soa_txt is None:
+            self.assertEqual(client.NOTFOUND, result)
+            return
+        self.assertEqual(client.SUCCESS, result)
+        result, rrset, _ = finder.find(zone_name, RRType.SOA())
+        self.assertEqual(finder.SUCCESS, result)
+        self.assertEqual(soa_txt, rrset.to_text())
+
+    def test_load_update(self):
+        '''successful case to loading new contents to an existing zone.'''
+        self.__common_load_setup()
+        self.__check_zone_soa(ORIG_SOA_TXT)
         self.__runner._do_load()
-        self.check_zone_soa(NEW_SOA_TXT)
+        self.__check_zone_soa(NEW_SOA_TXT)
+
+    def test_create_and_load(self):
+        '''successful case to loading contents to a new zone (created).'''
+        self.__common_load_setup()
+        self.__runner._zone_name = Name('example.com')
+        self.__runner._zone_file = ALT_NEW_ZONE_TXT_FILE
+        self.__check_zone_soa(None, zone_name=Name('example.com'))
+        self.__runner._do_load()
+        self.__check_zone_soa(ALT_NEW_SOA_TXT, zone_name=Name('example.com'))
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()
