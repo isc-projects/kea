@@ -72,6 +72,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertEqual('example.zone', self.__runner._zone_file)
         self.assertEqual(DATASRC_CONFIG, self.__runner._datasrc_config)
         self.assertEqual('sqlite3', self.__runner._datasrc_type) # default
+        self.assertEqual(RRClass.IN(), self.__runner._zone_class) # default
 
     def test_parse_bad_args(self):
         # -c cannot be omitted (right now)
@@ -90,6 +91,15 @@ class TestLoadZoneRunner(unittest.TestCase):
         # Bad zone name
         self.assertRaises(BadArgument,
                           LoadZoneRunner(copt + ['bad..name', 'example.zone']).
+                          _parse_args)
+
+        # Bad class name
+        self.assertRaises(BadArgument,
+                          LoadZoneRunner(copt + ['-C', 'badclass']).
+                          _parse_args)
+        # Unsupported class
+        self.assertRaises(BadArgument,
+                          LoadZoneRunner(copt + ['-C', 'CH']).
                           _parse_args)
 
     def __common_load_setup(self):
