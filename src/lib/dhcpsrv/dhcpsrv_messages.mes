@@ -24,11 +24,73 @@ This informational message is logged when a DHCP server (either V4 or V6) is
 about to open a memory file lease database.  The parameters of the connection
 are logged.
 
+% DHCPSRV_MYSQL_ADD_ADDR4 adding IPv4 lease with address %1
+A debug message issued when the server is about to add an IPv4 lease
+with the specified address to the MySQL backend database.
+
+% DHCPSRV_MYSQL_ADD_ADDR6 adding IPv6 lease with address %1
+A debug message issued when the server is about to add an IPv6 lease
+with the specified address to the MySQL backend database.
+
 % DHCPSRV_MYSQL_DB opening MySQL lease database: %1
 This informational message is logged when a DHCP server (either V4 or V6) is
 about to open a MySQL lease database.  The parameters of the connection
 including database name and username needed to access it (but not the
 password if any) are logged.
+
+% DHCPSRV_MYSQL_DELETE_ADDR deleting lease for address %1
+A debug message issued when the server is attempting to delete
+a lease for the specified address from the database for the specified address.
+
+% DHCPSRV_MYSQL_GET_ADDR4 obtaining IPv4 lease for address %1
+A debug message issued when the server is attempting to obtain an
+IPv4 lease from the database for the specified address.
+
+% DHCPSRV_MYSQL_GET_ADDR6 obtaining IPv6 lease for address %1
+A debug message issued when the server is attempting to obtain an
+IPv6 lease from the database for the specified address.
+
+% DHCPSRV_MYSQL_GET_CLIENTID obtaining IPv4 leases for client ID %1
+A debug message issued when the server is attempting to obtain a set of
+IPv4 leases from the database for a client with the specified client
+identification.
+
+% DHCPSRV_MYSQL_GET_HWADDR obtaining IPv4 leases for hardware address %1
+A debug message issued when the server is attempting to obtain a set of
+IPv4 leases from the database for a client with the specified hardware
+address.
+
+% DHCPSRV_MYSQL_GET_IAID_DUID obtaining IPv4 leases for IAID %1 and DUID %2
+A debug message issued when the server is attempting to obtain a set of IPv6
+lease from the database for a client with the specified IAID (Identity Association ID) and
+DUID (DHCP Unique Identifier).
+
+% DHCPSRV_MYSQL_GET_IAID_SUBID_DUID obtaining IPv4 leases for IAID %1, Subnet ID %2 and DUID %3
+A debug message issued when the server is attempting to obtain an IPv6 lease
+from the database for a client with the specified IAID (Identity Association ID),
+Subnet ID and DUID (DHCP Unique Identifier).
+
+% DHCPSRV_MYSQL_GET_SUBID_CLIENTID obtaining IPv4 lease for subnet ID %1 and client ID %2
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the database for a client with the specified subnet ID and
+client ID.
+
+% DHCPSRV_MYSQL_GET_SUBID_HWADDR obtaining IPv4 lease for subnet ID %1 and hardware address %2
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the database for a client with the specified subnet ID and
+hardware address.
+
+% DHCPSRV_MYSQL_GET_VERSION obtaining schema version information
+A debug message issued when the server is about to obtain schema version
+information from the database.
+
+% DHCPSRV_MYSQL_UPDATE_ADDR4 updating IPv4 lease for address %1
+A debug message issued when the server is attempting to update
+IPv4 lease from the database for the specified address.
+
+% DHCPSRV_MYSQL_UPDATE_ADDR6 updating IPv6 lease for address %1
+A debug message issued when the server is attempting to update
+IPv6 lease from the database for the specified address.
 
 % DHCPSRV_NOTYPE_DB no 'type' keyword to determine database backend: %1
 This is an error message, logged when an attempt has been made to access a

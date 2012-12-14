@@ -55,7 +55,19 @@ std::string LeaseMgr::getParameter(const std::string& name) const {
 }
 
 std::string
-Lease6::toText() {
+Lease4::toText() const {
+    ostringstream stream;
+
+    stream << "Address:       " << addr_.toText() << "\n"
+           << "Valid life:    " << valid_lft_ << "\n"
+           << "Cltt:          " << cltt_ << "\n"
+           << "Subnet ID:     " << subnet_id_ << "\n";
+
+    return (stream.str());
+}
+
+std::string
+Lease6::toText() const {
     ostringstream stream;
 
     stream << "Type:          " << static_cast<int>(type_) << " (";

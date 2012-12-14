@@ -222,11 +222,16 @@ struct Lease4 {
           comments_()
     {}
 
-    /// @brief Default Constructor
+    /// @brief Default constructor
     ///
     /// Initialize fields that don't have a default constructor.
     Lease4() : addr_(0), fixed_(false), fqdn_fwd_(false), fqdn_rev_(false)
     {}
+
+    /// @brief Convert lease to printable form
+    ///
+    /// @return Textual represenation of lease data
+    std::string toText() const;
 
     /// @brief Compare two leases for equality
     ///
@@ -377,7 +382,7 @@ struct Lease6 {
     /// @brief Convert Lease6 to Printable Form
     ///
     /// @return String form of the lease
-    std::string toText();
+    std::string toText() const;
 
     /// @brief Compare two leases for equality
     ///
