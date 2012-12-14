@@ -127,7 +127,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.__common_load_setup()
         self.__runner._datasrc_config = "invalid config"
         self.__check_zone_soa(ORIG_SOA_TXT)
-        self.assertRaises(isc.datasrc.Error, self.__runner._do_load)
+        self.assertRaises(LoadFailure, self.__runner._do_load)
         self.__check_zone_soa(ORIG_SOA_TXT) # no change to the zone
 
     def test_load_fail_badzone(self):
@@ -136,7 +136,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.__runner._zone_file = \
             LOCAL_TESTDATA_PATH + '/broken-example.org.zone'
         self.__check_zone_soa(ORIG_SOA_TXT)
-        self.assertRaises(isc.datasrc.MasterFileError, self.__runner._do_load)
+        self.assertRaises(LoadFailure, self.__runner._do_load)
         self.__check_zone_soa(ORIG_SOA_TXT)
 
     def test_load_fail_noloader(self):
@@ -145,8 +145,18 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.__runner._datasrc_type = 'memory'
         self.__runner._datasrc_config = '{"type": "memory"}'
         self.__check_zone_soa(ORIG_SOA_TXT)
-        self.assertRaises(isc.datasrc.NotImplemented, self.__runner._do_load)
+        self.assertRaises(LoadFailure, self.__runner._do_load)
         self.__check_zone_soa(ORIG_SOA_TXT)
+
+    def test_load_fail_create_cancel(self):
+        '''Load attempt fails and new creation of zone is canceled'''
+        self.__common_load_setup()
+        self.__runner._zone_name = Name('example.com')
+        self.__runner._zone_file = 'no-such-file'
+        self.__check_zone_soa(None, zone_name=Name('example.com'))
+        self.assertRaises(LoadFailure, self.__runner._do_load)
+        # _do_load() should have once created the zone but then canceled it.
+        self.__check_zone_soa(None, zone_name=Name('example.com'))
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()

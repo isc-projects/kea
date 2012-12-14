@@ -32,6 +32,12 @@ class BadArgument(Exception):
     '''
     pass
 
+class LoadFailure(Exception):
+    '''An exception indicating failure in loading operation.
+
+    '''
+    pass
+
 def set_cmd_options(parser):
     '''Helper function to set command-line options.
 
@@ -66,7 +72,31 @@ class LoadZoneRunner:
             raise BadArgument("Invalid zone name '" + args[0] + "': " +
                               str(ex))
 
+    def __cancel_create(self):
+        '''sqlite3-only hack: delete the zone just created on load failure.
+
+        This should eventually be done via generic datasrc API, but right now
+        we don't have that interface.  Leaving the zone in this situation
+        is too bad, so we handle it with a workaround.
+
+        '''
+        if self._datasrc_type is not 'sqlite3':
+            return
+
+        import sqlite3          # we need the module only here
+        import json
+
+        # If we are here, the following should basically succeed; since
+        # this is considered a temporary workaround we don't bother to catch
+        # and recover rare failure cases.
+        dbfile = json.loads(self._datasrc_config)['database_file']
+        with sqlite3.connect(dbfile) as conn:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM zones WHERE name = ?",
+                        [self._zone_name.to_text()])
+
     def _do_load(self):
+        created = False
         try:
             datasrc_client = DataSourceClient(self._datasrc_type,
                                               self._datasrc_config)
@@ -79,15 +109,23 @@ class LoadZoneRunner:
             loader.load()
             return
         except Exception as ex:
-            logger.error(LOADZONE_LOAD_ERROR, self._zone_name,
-                         self._zone_class, ex)
-            raise ex
+            # release any remaining lock held in the client/loader
+            loader, datasrc_client = None, None
+            if created:
+                self.__cancel_create()
+                logger.error(LOADZONE_CANCEL_CREATE_ZONE, self._zone_name,
+                             self._zone_class)
+            raise LoadFailure(str(ex))
 
     def run(self):
         try:
             self._parse_args()
+            self._do_load()
         except BadArgument as ex:
             logger.error(LOADZONE_ARGUMENT_ERROR, ex)
+        except LoadFailure as ex:
+            logger.error(LOADZONE_LOAD_ERROR, self._zone_name,
+                         self._zone_class, ex)
         return 0
 
 if '__main__' == __name__:
