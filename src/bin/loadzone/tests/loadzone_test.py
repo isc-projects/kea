@@ -49,7 +49,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         shutil.copyfile(READ_ZONE_DB_FILE, WRITE_ZONE_DB_FILE)
 
         # default command line arguments
-        self.__args = ['example.org', 'example.zone']
+        self.__args = ['-c', DATASRC_CONFIG, 'example.org', 'example.zone']
         self.__runner = LoadZoneRunner(self.__args)
 
     def tearDown(self):
@@ -69,17 +69,27 @@ class TestLoadZoneRunner(unittest.TestCase):
     def test_parse_args(self):
         self.__runner._parse_args()
         self.assertEqual(TEST_ZONE_NAME, self.__runner._zone_name)
+        self.assertEqual('example.zone', self.__runner._zone_file)
+        self.assertEqual(DATASRC_CONFIG, self.__runner._datasrc_config)
+        self.assertEqual('sqlite3', self.__runner._datasrc_type) # default
 
     def test_parse_bad_args(self):
+        # -c cannot be omitted (right now)
+        self.assertRaises(BadArgument,
+                          LoadZoneRunner(['example', 'example.zone']).
+                          _parse_args)
+
         # There must be exactly 2 non-option arguments: zone name and zone file
-        self.assertRaises(BadArgument, LoadZoneRunner([])._parse_args)
-        self.assertRaises(BadArgument, LoadZoneRunner(['example'])._parse_args)
+        copt = ['-c', '0']
+        self.assertRaises(BadArgument, LoadZoneRunner(copt)._parse_args)
+        self.assertRaises(BadArgument, LoadZoneRunner(copt + ['example']).
+                          _parse_args)
         self.assertRaises(BadArgument, LoadZoneRunner(self.__args + ['0']).
                           _parse_args)
 
         # Bad zone name
         self.assertRaises(BadArgument,
-                          LoadZoneRunner(['bad..name', 'example.zone']).
+                          LoadZoneRunner(copt + ['bad..name', 'example.zone']).
                           _parse_args)
 
     def __common_load_setup(self):
