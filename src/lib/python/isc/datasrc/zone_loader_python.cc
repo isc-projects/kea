@@ -62,6 +62,10 @@ ZoneLoader_init(PyObject* po_self, PyObject* args, PyObject*) {
                           &po_target_client, &name_type, &po_name,
                           &datasourceclient_type, &po_source_client)
        ) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Invalid arguments to ZoneLoader constructor, "
+                        "expects isc.datasrc.DataSourceClient, isc.dns.Name, "
+                        "and either a string or another DataSourceClient");
         return (-1);
     }
     PyErr_Clear();
@@ -145,8 +149,7 @@ ZoneLoader_loadIncremental(PyObject* po_self, PyObject* args) {
         return (NULL);
     }
     try {
-        const bool complete = self->cppobj->loadIncremental(limit);
-        if (complete) {
+        if (self->cppobj->loadIncremental(limit)) {
             Py_RETURN_TRUE;
         } else {
             Py_RETURN_FALSE;
