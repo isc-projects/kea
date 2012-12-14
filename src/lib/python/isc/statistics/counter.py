@@ -290,33 +290,26 @@ class Counters():
         with self._rlock:
             self._disabled = False
 
-    def inc(self, *args):
+    def inc(self, *args, step=1):
         """A incrementer for per-zone counter. Locks the thread
         because it is considered to be invoked by a multi-threading
         caller. isc.cc.data.DataNotFoundError is raised when
         incrementing the counter of the item undefined in the spec
         file."""
         identifier = _concat(*args)
-        step = 1
         with self._rlock:
             if self._disabled: return
             _inc_counter(self._statistics._data,
                          self._statistics._spec,
                          identifier, step)
 
-    def dec(self, *args):
+    def dec(self, *args, step=-1):
         """A decrementer for axfr or ixfr running. Locks the thread
         because it is considered to be invoked by a multi-threading
         caller. isc.cc.data.DataNotFoundError is raised when
         decrementing the counter of the item undefined in the spec
         file."""
-        identifier = _concat(*args)
-        step = -1
-        with self._rlock:
-            if self._disabled: return
-            _inc_counter(self._statistics._data,
-                         self._statistics._spec,
-                         identifier, step)
+        self.inc(*args, step=step)
 
     def get(self, *args):
         """A getter method for counters. It returns the current number
