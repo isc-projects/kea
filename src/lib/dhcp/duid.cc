@@ -95,6 +95,16 @@ const std::vector<uint8_t> ClientId::getClientId() const {
     return (duid_);
 }
 
+// Returns the Client ID in text form
+std::string ClientId::toText() const {
+
+    // As DUID is a private base class of ClientId, we can't access
+    // its public toText() method through inheritance: instead we
+    // need the interface of a ClientId::toText() that calls the
+    // equivalent method in the base class.
+    return (DUID::toText());
+}
+
 // Compares two client-ids
 bool ClientId::operator==(const ClientId& other) const {
     return (this->duid_ == other.duid_);
