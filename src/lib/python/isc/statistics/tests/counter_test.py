@@ -53,14 +53,14 @@ class TestBasicMethods(unittest.TestCase):
         self.counters = counter.Counters(self.TEST_SPECFILE_LOCATION)
 
     def tearDown(self):
-        self.counters.clear_counters()
+        self.counters.clear_all()
 
     def test_clear_counters(self):
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self.counters.get, 'counter')
         self.counters.inc('counter')
         self.assertEqual(self.counters.get('counter'), 1)
-        self.counters.clear_counters()
+        self.counters.clear_all()
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self.counters.get, 'counter')
 
@@ -167,7 +167,7 @@ class BaseTestCounters():
         self._perzone_prefix   = self.counters._perzone_prefix
 
     def tearDown(self):
-        self.counters.clear_counters()
+        self.counters.clear_all()
 
     def check_dump_statistics(self):
         """Checks no differences between the value returned from
