@@ -134,6 +134,11 @@ def _stop_timer(start_time, element, spec, identifier):
                     delta.microseconds * 1E-6, 6)
     _set_counter(element, spec, identifier, sec)
 
+def _concat(*args, sep='/'):
+    """Concatenates words in args with a separator('/')
+    """
+    return sep.join(args)
+
 class _Statistics():
     """Statistics data set"""
     # default statistics data
@@ -291,7 +296,7 @@ class Counters():
         caller. isc.cc.data.DataNotFoundError is raised when
         incrementing the counter of the item undefined in the spec
         file."""
-        identifier = '/'.join(args)
+        identifier = _concat(*args)
         step = 1
         with self._rlock:
             if self._disabled: return
@@ -305,7 +310,7 @@ class Counters():
         caller. isc.cc.data.DataNotFoundError is raised when
         decrementing the counter of the item undefined in the spec
         file."""
-        identifier = '/'.join(args)
+        identifier = _concat(*args)
         step = -1
         with self._rlock:
             if self._disabled: return
@@ -317,13 +322,13 @@ class Counters():
         """A getter method for counters. It returns the current number
         of the specified counter.  isc.cc.data.DataNotFoundError is
         raised when the counter doesn't have a number yet."""
-        identifier = '/'.join(args)
+        identifier = _concat(*args)
         return _get_counter(self._statistics._data, identifier)
 
     def start(self, *args):
         """Sets the value returned from _start_timer() as a value of
         the identifier in the self._start_time which is dict-type"""
-        identifier = '/'.join(args)
+        identifier = _concat(*args)
         with self._rlock:
             if self._disabled: return
             isc.cc.data.set(self._start_time, identifier, _start_timer())
@@ -336,7 +341,7 @@ class Counters():
         timer which has never been started, it raises and does
         nothing. But in case of stopping the time which isn't defined
         in the spec file, it raises DataNotFoundError"""
-        identifier = '/'.join(args)
+        identifier = _concat(*args)
         with self._rlock:
             if self._disabled: return
             try:
@@ -355,7 +360,7 @@ class Counters():
                 # delete the started timer
                 del isc.cc.data.find(
                     self._start_time,
-                    '/'.join(identifier.split('/')[0:-1]))\
+                    _concat(*identifier.split('/')[0:-1]))\
                     [identifier.split('/')[-1]]
 
     def dump_statistics(self):
