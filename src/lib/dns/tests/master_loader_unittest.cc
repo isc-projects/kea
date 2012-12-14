@@ -123,6 +123,10 @@ public:
         checkRR("www.example.org", RRType::A(), "192.0.2.1");
     }
 
+    void checkARR(const string& name) {
+        checkRR(name, RRType::A(), "192.0.2.1");
+    }
+
     MasterLoaderCallbacks callbacks_;
     boost::scoped_ptr<MasterLoader> loader_;
     vector<string> errors_;
@@ -176,6 +180,46 @@ TEST_F(MasterLoaderTest, include) {
 
         checkBasicRRs();
         checkRR("www.example.org", RRType::AAAA(), "2001:db8::1");
+    }
+}
+
+TEST_F(MasterLoaderTest, origin) {
+    // Varius forms of the directive
+    const char* origins[] = {
+        "$origin",
+        "$ORIGIN",
+        "$Origin",
+        "$OrigiN",
+        "\"$ORIGIN\"",
+        NULL
+    };
+    for (const char** origin = origins; *origin != NULL; ++origin) {
+        SCOPED_TRACE(*origin);
+
+        clear();
+        const string directive = *origin;
+        const string input =
+            "@  1H  IN  A   192.0.2.1\n" +
+            directive + " sub.example.org.\n"
+            "www    1H  IN  A   192.0.2.1\n" +
+            // Relative name in the origin
+            directive + " relative\n"
+            "@  1H  IN  A   192.0.2.1\n"
+            // Origin is _not_ used here (absolute name)
+            "noorigin.example.org.  60M IN  A   192.0.2.1\n";
+        stringstream ss(input);
+        setLoader(ss, Name("example.org."), RRClass::IN(),
+                  MasterLoader::MANY_ERRORS);
+
+        loader_->load();
+        EXPECT_TRUE(loader_->loadedSucessfully());
+        EXPECT_TRUE(errors_.empty());
+        EXPECT_TRUE(warnings_.empty());
+
+        checkARR("example.org");
+        checkARR("www.sub.example.org");
+        checkARR("relative.sub.example.org");
+        checkARR("noorigin.example.org");
     }
 }
 
