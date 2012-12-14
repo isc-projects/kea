@@ -94,7 +94,10 @@ class ZoneLoaderTests(unittest.TestCase):
         loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
                                         self.test_file)
         # Explicitely delete the objects here, so we trigger wrong
-        # DECREF calls
+        # DECREF calls, should there be any (best effort, if
+        # there are leaked references for these objects themselves,
+        # it still won't fail)
+        self.client = None
         self.client = None
         self.test_name = None
         self.test_file = None
@@ -108,7 +111,9 @@ class ZoneLoaderTests(unittest.TestCase):
         loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
                                         source_client)
         # Explicitely delete the objects here, so we trigger wrong
-        # DECREF calls
+        # DECREF calls, should there be any (best effort, if
+        # there are leaked references for these objects themselves,
+        # it still won't fail)
         self.client = None
         self.test_name = None
         source_client = None
@@ -164,11 +169,20 @@ class ZoneLoaderTests(unittest.TestCase):
                           self.test_file)
 
     def test_no_such_zone_in_source(self):
+        # Reuse a zone that exists in target but not in source
+        zone_name = isc.dns.Name("sql1.example.com")
         source_client = isc.datasrc.DataSourceClient('sqlite3',
                                                      DB_SOURCE_CLIENT_CONFIG)
+
+        # make sure the zone exists in the target
+        found, _ = self.client.find_zone(zone_name)
+        self.assertEqual(self.client.SUCCESS, found)
+        # And that it does not in the source
+        found, _ = source_client.find_zone(zone_name)
+        self.assertNotEqual(source_client.SUCCESS, found)
+
         self.assertRaises(isc.datasrc.Error, isc.datasrc.ZoneLoader,
-                          self.client, isc.dns.Name("unknownzone"),
-                          source_client)
+                          self.client, zone_name, source_client)
 
     def test_no_ds_load_support(self):
         # This may change in the future, but atm, the in-mem ds does
