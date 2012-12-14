@@ -404,6 +404,11 @@ public:
     /// \throw isc::InvalidOperation Called with no pushed source.
     void popSource();
 
+    /// \brief Get number of sources inside the lexer.
+    ///
+    /// This method never throws.
+    size_t getSourceCount() const;
+
     /// \brief Return the name of the current input source name.
     ///
     /// If it's a file, it will be the C string given at the corresponding

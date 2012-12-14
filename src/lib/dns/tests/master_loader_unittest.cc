@@ -115,6 +115,14 @@ public:
                   compare(current->getRdataIterator()->getCurrent()));
     }
 
+    void checkBasicRRs() {
+        checkRR("example.org", RRType::SOA(),
+                "ns1.example.org. admin.example.org. "
+                "1234 3600 1800 2419200 7200");
+        checkRR("example.org", RRType::NS(), "ns1.example.org.");
+        checkRR("www.example.org", RRType::A(), "192.0.2.1");
+    }
+
     MasterLoaderCallbacks callbacks_;
     boost::scoped_ptr<MasterLoader> loader_;
     vector<string> errors_;
@@ -135,11 +143,60 @@ TEST_F(MasterLoaderTest, basicLoad) {
     EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
 
-    checkRR("example.org", RRType::SOA(),
-            "ns1.example.org. admin.example.org. "
-            "1234 3600 1800 2419200 7200");
-    checkRR("example.org", RRType::NS(), "ns1.example.org.");
-    checkRR("www.example.org", RRType::A(), "192.0.2.1");
+    checkBasicRRs();
+}
+
+// Test the $INCLUDE directive
+TEST_F(MasterLoaderTest, include) {
+    // Test various cases of include
+    const char* includes[] = {
+        "$include",
+        "$INCLUDE",
+        "$Include",
+        "$InCluDe",
+        "\"$INCLUDE\"",
+        NULL
+    };
+    for (const char** include = includes; *include != NULL; ++include) {
+        SCOPED_TRACE(*include);
+
+        clear();
+        // Prepare input source that has the include and some more data
+        // below (to see it returns back to the original source).
+        const string include_str = string(*include) + " " +
+            TEST_DATA_SRCDIR + "/example.org\nwww 3600 IN AAAA 2001:db8::1\n";
+        stringstream ss(include_str);
+        setLoader(ss, Name("example.org."), RRClass::IN(),
+                  MasterLoader::MANY_ERRORS);
+
+        loader_->load();
+        EXPECT_TRUE(loader_->loadedSucessfully());
+        EXPECT_TRUE(errors_.empty());
+        EXPECT_TRUE(warnings_.empty());
+
+        checkBasicRRs();
+        checkRR("www.example.org", RRType::AAAA(), "2001:db8::1");
+    }
+}
+
+// Test the source is correctly popped even after error
+TEST_F(MasterLoaderTest, popAfterError) {
+    const string include_str = "$include " TEST_DATA_SRCDIR
+        "/broken.zone\nwww 3600 IN AAAA 2001:db8::1\n";
+    stringstream ss(include_str);
+    // We don't test without MANY_ERRORS, we want to see what happens
+    // after the error.
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_EQ(1, errors_.size()); // For the broken RR
+    EXPECT_EQ(1, warnings_.size()); // For missing EOLN
+
+    // The included file doesn't contain anything usable, but the
+    // line after the include should be there.
+    checkRR("www.example.org", RRType::AAAA(), "2001:db8::1");
 }
 
 // Check it works the same when created based on a stream, not filename
@@ -223,6 +280,15 @@ struct ErrorCase {
     { "www      3600    IN  \"A\"   192.0.2.1", "Quoted type" },
     { "unbalanced)paren 3600    IN  A   192.0.2.1", "Token error 1" },
     { "www  3600    unbalanced)paren    A   192.0.2.1", "Token error 2" },
+    // Check the unknown directive. The rest looks like ordinary RR,
+    // so we see the $ is actually special.
+    { "$UNKNOWN 3600    IN  A   192.0.2.1", "Unknown $ directive" },
+    { "$INCLUD " TEST_DATA_SRCDIR "/example.org", "Include too short" },
+    { "$INCLUDES " TEST_DATA_SRCDIR "/example.org", "Include too long" },
+    { "$INCLUDE", "Missing include path" },
+    { "$INCLUDE /file/not/found", "Include file not found" },
+    { "$INCLUDE /file/not/found and here goes bunch of garbage",
+        "Include file not found and garbage at the end of line" },
     { NULL, NULL }
 };
 
@@ -242,7 +308,7 @@ TEST_F(MasterLoaderTest, brokenZone) {
             EXPECT_FALSE(loader_->loadedSucessfully());
             EXPECT_THROW(loader_->load(), MasterLoaderError);
             EXPECT_FALSE(loader_->loadedSucessfully());
-            EXPECT_EQ(1, errors_.size()) << errors_[0];
+            EXPECT_EQ(1, errors_.size());
             EXPECT_TRUE(warnings_.empty());
 
             checkRR("example.org", RRType::SOA(), "ns1.example.org. "
@@ -273,15 +339,15 @@ TEST_F(MasterLoaderTest, brokenZone) {
         {
             SCOPED_TRACE("Error at EOF");
             // This case is interesting only in the lenient mode.
-            const string zoneEOF(prepareZone(ec->line, false));
             clear();
+            const string zoneEOF(prepareZone(ec->line, false));
             stringstream zone_stream(zoneEOF);
             setLoader(zone_stream, Name("example.org."), RRClass::IN(),
                       MasterLoader::MANY_ERRORS);
             EXPECT_FALSE(loader_->loadedSucessfully());
             EXPECT_NO_THROW(loader_->load());
             EXPECT_FALSE(loader_->loadedSucessfully());
-            EXPECT_EQ(1, errors_.size());
+            EXPECT_EQ(1, errors_.size()) << errors_[0] << "\n" << errors_[1];
             // The unexpected EOF warning
             EXPECT_EQ(1, warnings_.size());
             checkRR("example.org", RRType::SOA(), "ns1.example.org. "
@@ -289,6 +355,28 @@ TEST_F(MasterLoaderTest, brokenZone) {
             EXPECT_TRUE(rrsets_.empty());
         }
     }
+}
+
+// Check that a garbage after the include generates an error, but not fatal
+// one (in lenient mode) and we can recover.
+TEST_F(MasterLoaderTest, includeWithGarbage) {
+    // Include an origin (example.org) because we expect it to be handled
+    // soon and we don't want it to break here.
+    const string include_str("$INCLUDE " TEST_DATA_SRCDIR
+                             "/example.org example.org bunch of other stuff\n"
+                             "www 3600 IN AAAA 2001:db8::1\n");
+    stringstream zone_stream(include_str);
+    setLoader(zone_stream, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    EXPECT_NO_THROW(loader_->load());
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    ASSERT_EQ(1, errors_.size());
+    // It says something about extra tokens at the end
+    EXPECT_NE(string::npos, errors_[0].find("Extra"));
+    EXPECT_TRUE(warnings_.empty());
+    checkBasicRRs();
+    checkRR("www.example.org", RRType::AAAA(), "2001:db8::1");
 }
 
 // Test the constructor rejects empty add callback.
