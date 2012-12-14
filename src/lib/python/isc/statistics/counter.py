@@ -81,11 +81,8 @@ def _add_counter(element, spec, identifier):
         return isc.cc.data.find(element, identifier)
     except isc.cc.data.DataNotFoundError:
         pass
-    try:
-        isc.config.find_spec_part(spec, identifier)
-    except isc.cc.data.DataNotFoundError:
-        # spec or identifier is wrong
-        raise
+    # check whether spec and identifier are correct
+    isc.config.find_spec_part(spec, identifier)
     # examine spec of the top-level item first
     spec_ = isc.config.find_spec_part(
         spec, '%s' % identifier.split('/')[0])
