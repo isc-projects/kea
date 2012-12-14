@@ -212,7 +212,7 @@ bool IfaceMgr::openSockets4(const uint16_t port) {
              addr != addrs.end();
              ++addr) {
 
-            // Skip IPv6 addresses
+            // Skip all but V4 addresses.
             if (!addr->isV4()) {
                 continue;
             }
@@ -247,7 +247,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
              addr != addrs.end();
              ++addr) {
 
-            // skip IPv4 addresses
+            // Skip all but V6 addresses.
             if (!addr->isV6()) {
                 continue;
             }
@@ -949,7 +949,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         for (SocketCollection::const_iterator s = socket_collection.begin();
              s != socket_collection.end(); ++s) {
 
-            // Only deal with IPv4 addresses.
+            // Only deal with IPv6 addresses.
             if (s->addr_.isV6()) {
                 names << s->sockfd_ << "(" << iface->getName() << ") ";
 
