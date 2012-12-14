@@ -177,8 +177,8 @@ private:
         limitTTL(*default_ttl_, post_parsing);
     }
 
-    // Set/reset the TTL currently being used.  This can be used the last
-    // resort TTL when no other TTL is known for an RR.
+    // Set/reset the TTL currently being used.  This can be used as the
+    // last resort TTL when no other TTL is known for an RR.
     void setCurrentTTL(const RRTTL& ttl) {
         if (!current_ttl_) {
             current_ttl_.reset(new RRTTL(ttl));
