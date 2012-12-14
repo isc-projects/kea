@@ -337,19 +337,18 @@ class Counters():
                                               identifier)
             except isc.cc.data.DataNotFoundError:
                 # do not set the end time if the timer isn't started
-                pass
-            else:
-                # set the end time
-                _stop_timer(
-                    start_time,
-                    self._statistics._data,
-                    self._statistics._spec,
-                    identifier)
-                # delete the started timer
-                del isc.cc.data.find(
-                    self._start_time,
-                    _concat(*identifier.split('/')[0:-1]))\
-                    [identifier.split('/')[-1]]
+                return
+            # set the end time
+            _stop_timer(
+                start_time,
+                self._statistics._data,
+                self._statistics._spec,
+                identifier)
+            # delete the started timer
+            del isc.cc.data.find(
+                self._start_time,
+                _concat(*identifier.split('/')[0:-1]))\
+                [identifier.split('/')[-1]]
 
     def dump_statistics(self):
         """Calculates an entire server counts, and returns statistics
