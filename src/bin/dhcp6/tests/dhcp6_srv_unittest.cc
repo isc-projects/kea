@@ -936,7 +936,7 @@ TEST_F(Dhcpv6SrvTest, RenewReject) {
     // Check that IA_NA was returned and that there's an address included
     ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(ia);
-    checkRejectedIA_NA(ia, STATUS_NoAddrsAvail);
+    checkIA_NAStatusCode(ia, STATUS_NoBinding);
 
     // Check that there is no lease added
     l = LeaseMgrFactory::instance().getLease6(addr);
@@ -960,7 +960,7 @@ TEST_F(Dhcpv6SrvTest, RenewReject) {
     // Check that IA_NA was returned and that there's an address included
     ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(ia);
-    checkRejectedIA_NA(ia, STATUS_NoAddrsAvail);
+    checkIA_NAStatusCode(ia, STATUS_NoBinding);
 
     // There is a iaid mis-match, so server should respond that there is
     // no such address to renew.
@@ -979,7 +979,7 @@ TEST_F(Dhcpv6SrvTest, RenewReject) {
     // Check that IA_NA was returned and that there's an address included
     ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(ia);
-    checkRejectedIA_NA(ia, STATUS_NoAddrsAvail);
+    checkIA_NAStatusCode(ia, STATUS_NoBinding);
 
     lease = LeaseMgrFactory::instance().getLease6(addr);
     ASSERT_TRUE(lease);
