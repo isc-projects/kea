@@ -333,6 +333,10 @@ struct ErrorCase {
     { "$INCLUDE /file/not/found", "Include file not found" },
     { "$INCLUDE /file/not/found and here goes bunch of garbage",
         "Include file not found and garbage at the end of line" },
+    { "$ORIGIN", "Missing origin name" },
+    { "$ORIGIN invalid...name", "Invalid name for origin" },
+    { "$ORIGI name.", "$ORIGIN too short" },
+    { "$ORIGINAL name.", "$ORIGIN too long" },
     { NULL, NULL }
 };
 
@@ -421,6 +425,22 @@ TEST_F(MasterLoaderTest, includeWithGarbage) {
     EXPECT_TRUE(warnings_.empty());
     checkBasicRRs();
     checkRR("www.example.org", RRType::AAAA(), "2001:db8::1");
+}
+
+// Check we error about garbage at the end of $ORIGIN line (but the line works).
+TEST_F(MasterLoaderTest, originWithGarbage) {
+    const string origin_str = "$ORIGIN www More garbage here\n"
+        "@  1H  IN  A   192.0.2.1\n";
+    stringstream ss(origin_str);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+    EXPECT_NO_THROW(loader_->load());
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    ASSERT_EQ(1, errors_.size());
+    // It says something about extra tokens at the end
+    EXPECT_NE(string::npos, errors_[0].find("Extra"));
+    EXPECT_TRUE(warnings_.empty());
+    checkARR("www.example.org");
 }
 
 // Test the constructor rejects empty add callback.
