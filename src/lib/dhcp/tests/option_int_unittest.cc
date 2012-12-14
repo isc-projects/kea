@@ -457,7 +457,10 @@ TEST_F(OptionIntTest, unpackSuboptions4) {
         0x01, 0x02, 0x03, 0x04, // data, uint32_t value = 0x01020304
         TEST_OPT_CODE + 1, 0x4, 0x01, 0x01, 0x01, 0x01 // suboption
     };
-    // Copy the data to a vector so as we can pas it to the
+    // Make sure that the buffer size is sufficient to copy the
+    // elements from the array.
+    ASSERT_GE(buf_.size(), sizeof(expected));
+    // Copy the data to a vector so as we can pass it to the
     // OptionInt's constructor.
     memcpy(&buf_[0], expected, sizeof(expected));
 
@@ -513,6 +516,9 @@ TEST_F(OptionIntTest, unpackSuboptions6) {
     };
     ASSERT_EQ(38, sizeof(expected));
 
+    // Make sure that the buffer's size is sufficient to
+    // copy the elements from the array.
+    ASSERT_GE(buf_.size(), sizeof(expected));
     memcpy(&buf_[0], expected, sizeof(expected));
 
     boost::shared_ptr<OptionInt<uint16_t> > opt;
