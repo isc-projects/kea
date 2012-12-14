@@ -47,6 +47,13 @@ class ZoneLoaderTests(unittest.TestCase):
         # Make a fresh copy of the database
         shutil.copy(ORIG_DB_FILE, DB_FILE)
 
+    def tearDown(self):
+        # We can only create 1 loader at a time (it locks the db), and it
+        # may not be destroyed immediately if there is an exception in a
+        # test. So the tests that do create one should put it in self, and
+        # we make sure to invalidate it here.
+        self.loader = None
+
     def test_bad_constructor(self):
         self.assertRaises(TypeError, isc.datasrc.ZoneLoader)
         self.assertRaises(TypeError, isc.datasrc.ZoneLoader, 1)
@@ -69,98 +76,95 @@ class ZoneLoaderTests(unittest.TestCase):
         self.assertEqual(finder.SUCCESS, result)
         self.assertEqual(soa_txt, rrset.to_text())
 
-    def check_load(self, loader):
+    def check_load(self):
         self.check_zone_soa(ORIG_SOA_TXT)
-        loader.load()
+        self.loader.load()
         self.check_zone_soa(NEW_SOA_TXT)
 
         # And after that, it should throw
-        self.assertRaises(isc.dns.InvalidOperation, loader.load)
+        self.assertRaises(isc.dns.InvalidOperation, self.loader.load)
 
     def test_load_from_file(self):
-        loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
-                                        self.test_file)
-        self.check_load(loader)
+        self.loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
+                                             self.test_file)
+        self.check_load()
 
     def test_load_from_client(self):
         source_client = isc.datasrc.DataSourceClient('sqlite3',
                                                      DB_SOURCE_CLIENT_CONFIG)
-        loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
-                                        source_client)
-        self.check_load(loader)
+        self.loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
+                                             source_client)
+        self.check_load()
 
     def test_load_from_file_checkrefs(self):
         # A test to see the refcount is increased properly
-        loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
-                                        self.test_file)
-        # Explicitely delete the objects here, so we trigger wrong
-        # DECREF calls, should there be any (best effort, if
-        # there are leaked references for these objects themselves,
-        # it still won't fail)
+        self.loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
+                                             self.test_file)
+        # Explicitely delete the objects here, so we trigger bad reference
+        # counting (best effort, if there are leaked references for these
+        # objects themselves, it still won't fail)
         self.client = None
         self.client = None
         self.test_name = None
         self.test_file = None
-        loader.load()
-        loader = None
+        self.loader.load()
 
     def test_load_from_client_checkrefs(self):
         # A test to see the refcount is increased properly
         source_client = isc.datasrc.DataSourceClient('sqlite3',
                                                      DB_SOURCE_CLIENT_CONFIG)
-        loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
-                                        source_client)
-        # Explicitely delete the objects here, so we trigger wrong
-        # DECREF calls, should there be any (best effort, if
-        # there are leaked references for these objects themselves,
-        # it still won't fail)
+        self.loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
+                                             source_client)
+        # Explicitely delete the objects here, so we trigger bad reference
+        # counting (best effort, if there are leaked references for these
+        # objects themselves, it still won't fail)
         self.client = None
         self.test_name = None
         source_client = None
-        loader.load()
-        loader = None
+        self.loader.load()
 
-    def check_load_incremental(self, loader):
+    def check_load_incremental(self):
         # New zone has 8 RRs
         # After 5, it should return False
-        self.assertFalse(loader.load_incremental(5))
+        self.assertFalse(self.loader.load_incremental(5))
         # New zone should not have been loaded yet
         self.check_zone_soa(ORIG_SOA_TXT)
 
         # After 5 more, it should return True (only having read 3)
-        self.assertTrue(loader.load_incremental(5))
+        self.assertTrue(self.loader.load_incremental(5))
         # New zone should now be loaded
         self.check_zone_soa(NEW_SOA_TXT)
 
         # And after that, it should throw
-        self.assertRaises(isc.dns.InvalidOperation, loader.load_incremental, 5)
+        self.assertRaises(isc.dns.InvalidOperation,
+                          self.loader.load_incremental, 5)
 
     def test_load_from_file_incremental(self):
         # Create loader and load the zone
-        loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
-                                        self.test_file)
-        self.check_load_incremental(loader)
+        self.loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
+                                             self.test_file)
+        self.check_load_incremental()
 
     def test_load_from_client_incremental(self):
         source_client = isc.datasrc.DataSourceClient('sqlite3',
                                                      DB_SOURCE_CLIENT_CONFIG)
-        loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
-                                        source_client)
-        self.check_load_incremental(loader)
+        self.loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
+                                             source_client)
+        self.check_load_incremental()
 
     def test_bad_file(self):
         self.check_zone_soa(ORIG_SOA_TXT)
-        loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
-                                        'no such file')
-        self.assertRaises(isc.datasrc.MasterFileError, loader.load)
+        self.loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
+                                             'no such file')
+        self.assertRaises(isc.datasrc.MasterFileError, self.loader.load)
         self.check_zone_soa(ORIG_SOA_TXT)
 
     def test_bad_file_incremental(self):
         self.check_zone_soa(ORIG_SOA_TXT)
-        loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
-                                        'no such file')
+        self.loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
+                                             'no such file')
         self.assertRaises(isc.datasrc.MasterFileError,
-                          loader.load_incremental, 1)
+                          self.loader.load_incremental, 1)
         self.check_zone_soa(ORIG_SOA_TXT)
 
     def test_no_such_zone_in_target(self):
@@ -195,9 +199,9 @@ class ZoneLoaderTests(unittest.TestCase):
 
     def test_wrong_class_from_file(self):
         # If the file has wrong class, it is not detected until load time
-        loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
-                                        self.test_file + '.ch')
-        self.assertRaises(isc.datasrc.MasterFileError, loader.load)
+        self.loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
+                                             self.test_file + '.ch')
+        self.assertRaises(isc.datasrc.MasterFileError, self.loader.load)
 
     def test_wrong_class_from_client(self):
         # For ds->ds loading, wrong class is detected upon construction
