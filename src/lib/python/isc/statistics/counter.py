@@ -277,11 +277,13 @@ class Counters():
 
     def disable(self):
         """disables incrementing/decrementing counters"""
-        self._disabled = True
+        with self._rlock:
+            self._disabled = True
 
     def enable(self):
         """enables incrementing/decrementing counters"""
-        self._disabled = False
+        with self._rlock:
+            self._disabled = False
 
     def inc(self, *args):
         """A incrementer for per-zone counter. Locks the thread
@@ -291,8 +293,8 @@ class Counters():
         file."""
         identifier = '/'.join(args)
         step = 1
-        if self._disabled: return
         with self._rlock:
+            if self._disabled: return
             _inc_counter(self._statistics._data,
                          self._statistics._spec,
                          identifier, step)
@@ -305,8 +307,8 @@ class Counters():
         file."""
         identifier = '/'.join(args)
         step = -1
-        if self._disabled: return
         with self._rlock:
+            if self._disabled: return
             _inc_counter(self._statistics._data,
                          self._statistics._spec,
                          identifier, step)
@@ -322,7 +324,9 @@ class Counters():
         """Sets the value returned from _start_timer() as a value of
         the identifier in the self._start_time which is dict-type"""
         identifier = '/'.join(args)
-        isc.cc.data.set(self._start_time, identifier, _start_timer())
+        with self._rlock:
+            if self._disabled: return
+            isc.cc.data.set(self._start_time, identifier, _start_timer())
 
     def stop(self, *args):
         """Sets duration time between corresponding time in
@@ -333,24 +337,26 @@ class Counters():
         nothing. But in case of stopping the time which isn't defined
         in the spec file, it raises DataNotFoundError"""
         identifier = '/'.join(args)
-        try:
-            start_time = isc.cc.data.find(self._start_time,
-                                          identifier)
-        except isc.cc.data.DataNotFoundError:
-            # do not set the end time if the timer isn't started
-            pass
-        else:
-            # set the end time
-            _stop_timer(
-                start_time,
-                self._statistics._data,
-                self._statistics._spec,
-                identifier)
-            # delete the started timer
-            del isc.cc.data.find(
-                self._start_time,
-                '/'.join(identifier.split('/')[0:-1]))\
-                [identifier.split('/')[-1]]
+        with self._rlock:
+            if self._disabled: return
+            try:
+                start_time = isc.cc.data.find(self._start_time,
+                                              identifier)
+            except isc.cc.data.DataNotFoundError:
+                # do not set the end time if the timer isn't started
+                pass
+            else:
+                # set the end time
+                _stop_timer(
+                    start_time,
+                    self._statistics._data,
+                    self._statistics._spec,
+                    identifier)
+                # delete the started timer
+                del isc.cc.data.find(
+                    self._start_time,
+                    '/'.join(identifier.split('/')[0:-1]))\
+                    [identifier.split('/')[-1]]
 
     def dump_statistics(self):
         """Calculates an entire server counts, and returns statistics
