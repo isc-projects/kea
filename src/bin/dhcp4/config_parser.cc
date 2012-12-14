@@ -819,35 +819,36 @@ public:
     void build(ConstElementPtr subnet) {
 
         BOOST_FOREACH(ConfigPair param, subnet->mapValue()) {
-
             ParserPtr parser(createSubnet4ConfigParser(param.first));
+            // The actual type of the parser is unknown here. We have to discover
+            // the parser type here to invoke the corresponding setStorage function
+            // on it.  We discover parser type by trying to cast the parser to various
+            // parser types and checking which one was successful. For this one
+            // a setStorage and build methods are invoked.
 
-            // if this is an Uint32 parser, tell it to store the values
-            // in values_, rather than in global storage
-            boost::shared_ptr<Uint32Parser> uint_parser =
-                boost::dynamic_pointer_cast<Uint32Parser>(parser);
-            if (uint_parser) {
-                uint_parser->setStorage(&uint32_values_);
-            } else {
-
-                boost::shared_ptr<StringParser> string_parser =
-                    boost::dynamic_pointer_cast<StringParser>(parser);
-                if (string_parser) {
-                    string_parser->setStorage(&string_values_);
-                } else {
-
-                    boost::shared_ptr<PoolParser> pool_parser =
-                        boost::dynamic_pointer_cast<PoolParser>(parser);
-                    if (pool_parser) {
-                        pool_parser->setStorage(&pools_);
-                    }
-                }
+            // Try uint32 type parser.
+            if (buildParser<Uint32Parser, Uint32Storage >(parser, uint32_values_,
+                                                          param.second)) {
+                // Storage set, build invoked on the parser, proceed with
+                // next configuration element.
+                continue;
             }
-
-            parser->build(param.second);
-            parsers_.push_back(parser);
+            // Try string type parser.
+            if (buildParser<StringParser, StringStorage >(parser, string_values_,
+                                                          param.second)) {
+                continue;
+            }
+            // Try pools parser.
+            if (buildParser<PoolParser, PoolStorage >(parser, pools_,
+                                                      param.second)) {
+                continue;
+            }
+            // Try option data parser.
+            if (buildParser<OptionDataListParser, OptionStorage >(parser, options_,
+                                                                  param.second)) {
+                continue;
+            }
         }
-
         // Ok, we now have subnet parsed
     }
 
@@ -859,6 +860,10 @@ public:
     /// objects. Subnet4 are then added to DHCP CfgMgr.
     /// @throw Dhcp4ConfigError if there are any issues encountered during commit
     void commit() {
+        // Invoke commit on all sub-data parsers.
+        BOOST_FOREACH(ParserPtr parser, parsers_) {
+            parser->commit();
+        }
 
         StringStorage::const_iterator it = string_values_.find("subnet");
         if (it == string_values_.end()) {
@@ -894,10 +899,57 @@ public:
             subnet->addPool4(*it);
         }
 
+        const Subnet::OptionContainer& options = subnet->getOptions();
+        const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+
+        // Add subnet specific options.
+        BOOST_FOREACH(Subnet::OptionDescriptor desc, options_) {
+            Subnet::OptionContainerTypeRange range = idx.equal_range(desc.option->getType());
+            if (std::distance(range.first, range.second) > 0) {
+                LOG_WARN(dhcp4_logger, DHCP4_CONFIG_OPTION_DUPLICATE)
+                    .arg(desc.option->getType()).arg(addr.toText());
+            }
+            subnet->addOption(desc.option);
+        }
+
         CfgMgr::instance().addSubnet4(subnet);
     }
 
 private:
+
+    /// @brief Set storage for a parser and invoke build.
+    ///
+    /// This helper method casts the provided parser pointer to the specified
+    /// type. If the cast is successful it sets the corresponding storage for
+    /// this parser, invokes build on it and saves the parser.
+    ///
+    /// @tparam T parser type to which parser argument should be cast.
+    /// @tparam Y storage type for the specified parser type.
+    /// @param parser parser on which build must be invoked.
+    /// @param storage reference to a storage that will be set for a parser.
+    /// @param subnet subnet element read from the configuration and being parsed.
+    /// @return true if parser pointer was successfully cast to specialized
+    /// parser type provided as Y.
+    template<typename T, typename Y>
+    bool buildParser(const ParserPtr& parser, Y& storage, const ConstElementPtr& subnet) {
+        // We need to cast to T in order to set storage for the parser.
+        boost::shared_ptr<T> cast_parser = boost::dynamic_pointer_cast<T>(parser);
+        // It is common that this cast is not successful because we try to cast to all
+        // supported parser types as we don't know the type of a parser in advance.
+        if (cast_parser) {
+            // Cast, successful so we go ahead with setting storage and actual parse.
+            cast_parser->setStorage(&storage);
+            parser->build(subnet);
+            parsers_.push_back(parser);
+            // We indicate that cast was successful so as the calling function
+            // may skip attempts to cast to other parser types and proceed to
+            // next element.
+            return (true);
+        }
+        // It was not successful. Indicate that another parser type
+        // should be tried.
+        return (false);
+    }
 
     /// @brief creates parsers for entries in subnet definition
     ///
@@ -968,6 +1020,9 @@ private:
 
     /// storage for pools belonging to this subnet
     PoolStorage pools_;
+
+    /// storage for options belonging to this subnet
+    OptionStorage options_;
 
     /// parsers are stored here
     ParserCollection parsers_;
@@ -1051,6 +1106,7 @@ Dhcp4ConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
     factories["rebind-timer"] = Uint32Parser::Factory;
     factories["interface"] = InterfaceListConfigParser::Factory;
     factories["subnet4"] = Subnets4ListConfigParser::Factory;
+    factories["option-data"] = OptionDataListParser::Factory;
     factories["version"] = StringParser::Factory;
 
     FactoryMap::iterator f = factories.find(config_id);

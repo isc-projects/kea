@@ -44,6 +44,11 @@ change is committed by the administrator.
 This is an informational message reporting that the configuration has
 been extended to include the specified IPv4 subnet.
 
+% DHCP4_CONFIG_OPTION_DUPLICATE multiple options with the code: %1 added to the subnet: %2
+This warning message is issued on attempt to configure multiple options with the
+same option code for the particular subnet. Adding multiple options is uncommon
+for DHCPv4, yet it is not prohibited.
+
 % DHCP4_CONFIG_COMPLETE DHCPv4 server has completed configuration: %1
 This is an informational message announcing the successful processing of a
 new configuration. it is output during server startup, and when an updated
