@@ -331,7 +331,7 @@ struct ErrorCase {
     { "$INCLUDES " TEST_DATA_SRCDIR "/example.org", "Include too long" },
     { "$INCLUDE", "Missing include path" },
     { "$INCLUDE /file/not/found", "Include file not found" },
-    { "$INCLUDE /file/not/found and here goes bunch of garbage",
+    { "$INCLUDE /file/not/found example.org. and here goes bunch of garbage",
         "Include file not found and garbage at the end of line" },
     { "$ORIGIN", "Missing origin name" },
     { "$ORIGIN invalid...name", "Invalid name for origin" },
@@ -411,7 +411,7 @@ TEST_F(MasterLoaderTest, includeWithGarbage) {
     // Include an origin (example.org) because we expect it to be handled
     // soon and we don't want it to break here.
     const string include_str("$INCLUDE " TEST_DATA_SRCDIR
-                             "/example.org example.org bunch of other stuff\n"
+                             "/example.org example.org. bunch of other stuff\n"
                              "www 3600 IN AAAA 2001:db8::1\n");
     stringstream zone_stream(include_str);
     setLoader(zone_stream, Name("example.org."), RRClass::IN(),

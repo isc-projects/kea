@@ -128,7 +128,12 @@ public:
 
         if (name_tok.getType() == MasterToken::QSTRING ||
             name_tok.getType() == MasterToken::STRING) {
-            // TODO: Handle the origin. Once we complete #2427.
+            // There's an optional name, meaning origin. Extract it
+            // and store.
+            const MasterToken::StringRegion&
+                name_string(name_tok.getStringRegion());
+            active_origin_ = Name(name_string.beg, name_string.len,
+                                  &active_origin_);
         } else {
             // We return the newline there. This is because after we pop
             // the source, we want to call eatUntilEOL and this would
