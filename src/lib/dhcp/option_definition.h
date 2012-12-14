@@ -50,21 +50,21 @@ typedef boost::shared_ptr<OptionDefinition> OptionDefinitionPtr;
 
 /// @brief Forward declaration to OptionInt.
 ///
-/// This forward declaration is needed to access OptionInt class
-/// without having to include option_int.h header. This is because
-/// this header includes libdhcp++.h and this causes circular
-/// inclusion between libdhcp++.h, option_definition.h and
+/// This forward declaration is needed to access the OptionInt class without
+/// having to include the option_int.h header file. It is required because
+/// this header includes libdhcp++.h, and including option_int.h would cause
+/// circular inclusion between libdhcp++.h, option_definition.h and
 /// option6_int.h.
 template<typename T>
 class OptionInt;
 
 /// @brief Forward declaration to OptionIntArray.
 ///
-/// This forward declaration is needed to access OptionIntArray class
-/// without having to include option_int_array.h header. This is because
-/// this header includes libdhcp++.h and this causes circular
-/// inclusion between libdhcp++.h, option_definition.h and
-/// option_int_array.h.
+/// This forward declaration is needed to access the OptionIntArray class
+/// without having to include the option_int_array.h header file. It is
+/// required because this header includes libdhcp++.h, and including
+/// option_int_array.h would cause circular inclusion between libdhcp++.h,
+/// option_definition.h and option_int_array.h.
 template<typename T>
 class OptionIntArray;
 
