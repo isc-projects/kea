@@ -19,6 +19,7 @@ import sys
 sys.path.append('@@PYTHONPATH@@')
 from optparse import OptionParser
 from isc.dns import *
+from isc.datasrc import *
 import isc.log
 from isc.log_messages.loadzone_messages import *
 
@@ -49,6 +50,7 @@ class LoadZoneRunner:
         # convenience of tests inspecting them
         self._zone_class = None
         self._zone_name = None
+        self._zone_file = None
 
     def _parse_args(self):
         usage_txt = 'usage: %prog [options] zonename zonefile'
@@ -64,15 +66,23 @@ class LoadZoneRunner:
             raise BadArgument("Invalid zone name '" + args[0] + "': " +
                               str(ex))
 
+    def _do_load(self):
+        datasrc_client = DataSourceClient(self._datasrc_type,
+                                          self._datasrc_config)
+        loader = ZoneLoader(datasrc_client, self._zone_name, self._zone_file)
+        loader.load()
+
     def run(self):
         try:
             self._parse_args()
         except BadArgument as ex:
             logger.error(LOADZONE_ARGUMENT_ERROR, ex)
+        return 0
 
 if '__main__' == __name__:
     runner = LoadZoneRunner(sys.argv[1:])
-    runner.run()
+    ret = runner.run()
+    sys.exit(ret)
 
 ## Local Variables:
 ## mode: python

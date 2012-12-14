@@ -18,12 +18,32 @@
 import unittest
 from loadzone import *
 from isc.dns import *
+from isc.datasrc import *
 import isc.log
+import os
+import shutil
 
+# Some common test parameters
+TESTDATA_PATH = os.environ['TESTDATA_PATH'] + os.sep
+READ_ZONE_DB_FILE = TESTDATA_PATH + "rwtest.sqlite3" # original, to be copied
+LOCAL_TESTDATA_PATH = os.environ['LOCAL_TESTDATA_PATH'] + os.sep
+READ_ZONE_DB_FILE = TESTDATA_PATH + "rwtest.sqlite3" # original, to be copied
+NEW_ZONE_TXT_FILE = LOCAL_TESTDATA_PATH + "example.org.zone"
+TESTDATA_WRITE_PATH = os.environ['TESTDATA_WRITE_PATH'] + os.sep
+WRITE_ZONE_DB_FILE = TESTDATA_WRITE_PATH + "rwtest.sqlite3.copied"
 TEST_ZONE_NAME = Name('example.org')
+DATASRC_CONFIG = '{"database_file": "' + WRITE_ZONE_DB_FILE + '"}'
+
+# before/after SOAs: different in mname and serial
+ORIG_SOA_TXT = 'example.org. 3600 IN SOA ns1.example.org. ' +\
+    'admin.example.org. 1234 3600 1800 2419200 7200\n'
+NEW_SOA_TXT = 'example.org. 3600 IN SOA ns.example.org. ' +\
+    'admin.example.org. 1235 3600 1800 2419200 7200\n'
 
 class TestLoadZoneRunner(unittest.TestCase):
     def setUp(self):
+        shutil.copyfile(READ_ZONE_DB_FILE, WRITE_ZONE_DB_FILE)
+
         # default command line arguments
         self.__args = ['example.org', 'example.zone']
         self.__runner = LoadZoneRunner(self.__args)
@@ -54,6 +74,27 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertRaises(BadArgument,
                           LoadZoneRunner(['bad..name', 'example.zone']).
                           _parse_args)
+
+    def check_zone_soa(self, soa_txt):
+        "Check that the given SOA RR exists and matches the expected string"
+
+        client = DataSourceClient('sqlite3', DATASRC_CONFIG)
+        result, finder = client.find_zone(TEST_ZONE_NAME)
+        self.assertEqual(client.SUCCESS, result)
+        result, rrset, _ = finder.find(TEST_ZONE_NAME, RRType.SOA())
+        self.assertEqual(finder.SUCCESS, result)
+        self.assertEqual(soa_txt, rrset.to_text())
+
+    def test_load_update(self):
+        '''successful case to loading new contents to an existing zone.'''
+        self.__runner._zone_class = RRClass.IN()
+        self.__runner._zone_name = TEST_ZONE_NAME
+        self.__runner._zone_file = NEW_ZONE_TXT_FILE
+        self.__runner._datasrc_type = 'sqlite3'
+        self.__runner._datasrc_config = DATASRC_CONFIG
+        self.check_zone_soa(ORIG_SOA_TXT)
+        self.__runner._do_load()
+        self.check_zone_soa(NEW_SOA_TXT)
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()
