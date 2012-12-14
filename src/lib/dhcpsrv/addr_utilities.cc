@@ -168,7 +168,7 @@ namespace isc {
 namespace dhcp {
 
 isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefix,
-                                            uint8_t len) {
+                                           uint8_t len) {
     if (prefix.isV4()) {
         return (firstAddrInPrefix4(prefix, len));
 
