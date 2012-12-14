@@ -42,8 +42,16 @@ def set_cmd_options(parser):
     '''Helper function to set command-line options.
 
     '''
+    parser.add_option("-c", "--datasrc-conf", dest="conf", action="store",
+                      help="""(Mandatory) configuration of datasrc to load
+the zone in.  Example:
+'{"database_file": "/path/to/dbfile/db.sqlite3"}'""",
+                      metavar='CONFIG')
+    parser.add_option("-t", "--datasrc-type", dest="datasrc_type",
+                      action="store", default='sqlite3',
+                      help="type of data source (e.g., 'sqlite3')")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
-            help="display more about what is going on")
+                      help="display more about what is going on")
 
 class LoadZoneRunner:
     '''TBD
@@ -57,12 +65,20 @@ class LoadZoneRunner:
         self._zone_class = None
         self._zone_name = None
         self._zone_file = None
+        self._datasrc_config = None
+        self._datasrc_type = None
 
     def _parse_args(self):
         usage_txt = 'usage: %prog [options] zonename zonefile'
         parser = OptionParser(usage=usage_txt)
         set_cmd_options(parser)
         (options, args) = parser.parse_args(args=self.__command_args)
+
+        if options.conf is None:
+            raise BadArgument('data source config option cannot be omitted')
+        self._datasrc_config = options.conf
+        self._datasrc_type = options.datasrc_type
+
         if len(args) != 2:
             raise BadArgument('Unexpected number of arguments: %d (must be 2)'
                               % (len(args)))
@@ -71,6 +87,7 @@ class LoadZoneRunner:
         except Exception as ex: # too broad, but there's no better granurality
             raise BadArgument("Invalid zone name '" + args[0] + "': " +
                               str(ex))
+        self._zone_file = args[1]
 
     def __cancel_create(self):
         '''sqlite3-only hack: delete the zone just created on load failure.
