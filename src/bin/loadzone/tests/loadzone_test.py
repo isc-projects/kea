@@ -49,7 +49,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         shutil.copyfile(READ_ZONE_DB_FILE, WRITE_ZONE_DB_FILE)
 
         # default command line arguments
-        self.__args = ['-c', DATASRC_CONFIG, 'example.org', 'example.zone']
+        self.__args = ['-c', DATASRC_CONFIG, 'example.org', NEW_ZONE_TXT_FILE]
         self.__runner = LoadZoneRunner(self.__args)
 
     def tearDown(self):
@@ -69,7 +69,7 @@ class TestLoadZoneRunner(unittest.TestCase):
     def test_parse_args(self):
         self.__runner._parse_args()
         self.assertEqual(TEST_ZONE_NAME, self.__runner._zone_name)
-        self.assertEqual('example.zone', self.__runner._zone_file)
+        self.assertEqual(NEW_ZONE_TXT_FILE, self.__runner._zone_file)
         self.assertEqual(DATASRC_CONFIG, self.__runner._datasrc_config)
         self.assertEqual('sqlite3', self.__runner._datasrc_type) # default
         self.assertEqual(RRClass.IN(), self.__runner._zone_class) # default
@@ -177,6 +177,31 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertRaises(LoadFailure, self.__runner._do_load)
         # _do_load() should have once created the zone but then canceled it.
         self.__check_zone_soa(None, zone_name=Name('example.com'))
+
+    def test_run_success(self):
+        '''Check for the top-level method.
+
+        Detailed behavior is tested in other tests.  We only check the
+        return value of run(), and the zone is successfully loaded.
+
+        '''
+        self.__check_zone_soa(ORIG_SOA_TXT)
+        self.assertEqual(0, self.__runner.run())
+        self.__check_zone_soa(NEW_SOA_TXT)
+
+    def test_run_fail(self):
+        '''Check for the top-level method, failure case.
+
+        Similar to the success test, but loading will fail, and return
+        value should be 1.
+
+        '''
+        runner = LoadZoneRunner(['-c', DATASRC_CONFIG, 'example.org',
+                                 LOCAL_TESTDATA_PATH +
+                                 '/broken-example.org.zone'])
+        self.__check_zone_soa(ORIG_SOA_TXT)
+        self.assertEqual(1, runner.run())
+        self.__check_zone_soa(ORIG_SOA_TXT)
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()

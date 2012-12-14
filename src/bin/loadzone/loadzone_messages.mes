@@ -23,3 +23,5 @@
 % LOADZONE_LOAD_ERROR Failed to load zone %1/%2: %3
 
 % LOADZONE_CANCEL_CREATE_ZONE Creation of new zone %1/%2 was canceled
+
+% LOADZONE_UNEXPECTED_FAILURE Unexpected exception: ex
