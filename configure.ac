@@ -1177,8 +1177,6 @@ AC_CONFIG_FILES([Makefile
                  src/bin/dbutil/tests/testdata/Makefile
                  src/bin/loadzone/Makefile
                  src/bin/loadzone/tests/Makefile
-                 src/bin/loadzone/tests/correct/Makefile
-                 src/bin/loadzone/tests/error/Makefile
                  src/bin/msgq/Makefile
                  src/bin/msgq/tests/Makefile
                  src/bin/auth/Makefile
