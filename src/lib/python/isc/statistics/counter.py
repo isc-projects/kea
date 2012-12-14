@@ -270,7 +270,7 @@ class Counters():
                     self._statistics._spec, self._perzone_prefix)\
                     ['named_set_item_spec']['map_item_spec'])
 
-    def clear_counters(self):
+    def clear_all(self):
         """clears all statistics data"""
         with self._rlock:
             self._statistics._data = {}
