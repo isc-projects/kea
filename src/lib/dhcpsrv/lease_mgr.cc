@@ -46,6 +46,14 @@ Lease6::Lease6(LeaseType type, const isc::asiolink::IOAddress& addr,
     cltt_ = time(NULL);
 }
 
+bool Lease6::expired() const {
+
+    // Let's use int64 to avoid problems with negative/large uint32 values
+    int64_t expire_time = cltt_ + valid_lft_;
+    return (expire_time < time(NULL));
+}
+
+
 std::string LeaseMgr::getParameter(const std::string& name) const {
     ParameterMap::const_iterator param = parameters_.find(name);
     if (param == parameters_.end()) {
