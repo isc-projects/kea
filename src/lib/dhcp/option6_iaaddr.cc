@@ -51,7 +51,10 @@ void Option6IAAddr::pack(isc::util::OutputBuffer& buf) {
     // length without 4-byte option header
     buf.writeUint16(len() - getHeaderLen());
 
-
+    if (!addr_.isV6()) {
+        isc_throw(isc::BadValue, addr_.toText()
+                  << " is not an IPv6 address");
+    }
     buf.writeData(&addr_.toBytes()[0], isc::asiolink::V6ADDRESS_LEN);
 
     buf.writeUint32(preferred_);
