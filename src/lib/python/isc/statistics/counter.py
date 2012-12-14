@@ -313,7 +313,7 @@ class Counters():
         identifier = _concat(*args)
         return _get_counter(self._statistics._data, identifier)
 
-    def start(self, *args):
+    def start_timer(self, *args):
         """Sets the value returned from _start_timer() as a value of
         the identifier in the self._start_time which is dict-type"""
         identifier = _concat(*args)
@@ -321,7 +321,7 @@ class Counters():
             if self._disabled: return
             isc.cc.data.set(self._start_time, identifier, _start_timer())
 
-    def stop(self, *args):
+    def stop_timer(self, *args):
         """Sets duration time in seconds between corresponding date
         time in self._start_time and current date time into the value
         of the identifier. It deletes corresponding time in

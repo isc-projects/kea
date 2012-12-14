@@ -196,15 +196,15 @@ class BaseTestCounters():
         for name in self.counters._zones_item_list:
             args = (self._perzone_prefix, TEST_ZONE_NAME_STR, name)
             if name.find('time_to_') == 0:
-                self.counters.start(*args)
-                self.counters.stop(*args)
+                self.counters.start_timer(*args)
+                self.counters.stop_timer(*args)
                 self.assertGreater(self.counters.get(*args), 0)
                 sec = self.counters.get(*args)
                 for zone_str in (self._entire_server, TEST_ZONE_NAME_STR):
                     isc.cc.data.set(self._statistics_data,
                                     '%s/%s/%s' % (args[0], zone_str, name), sec)
                 # twice exec stopper, then second is not changed
-                self.counters.stop(*args)
+                self.counters.stop_timer(*args)
                 self.assertEqual(self.counters.get(*args), sec)
             else:
                 self.counters.inc(*args)
@@ -279,9 +279,9 @@ class BaseTestCounters():
                           self.counters.inc, '__undefined__')
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self.counters.dec, '__undefined__')
-        self.counters.start('__undefined__')
+        self.counters.start_timer('__undefined__')
         self.assertRaises(isc.cc.data.DataNotFoundError,
-                          self.counters.stop, '__undefined__')
+                          self.counters.stop_timer, '__undefined__')
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self.counters.get, '__undefined__')
 
