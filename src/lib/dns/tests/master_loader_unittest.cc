@@ -471,6 +471,40 @@ TEST_F(MasterLoaderTest, ttlFromPrevious) {
     checkCallbackMessage(warnings_.at(0), "using RFC1035 TTL semantics", 2);
 }
 
+TEST_F(MasterLoaderTest, ttlClassTypeOrder) {
+    // We test the order and lack of TTL, class and type.  Both TTL and
+    // class are optional and may occur in any order if they exist. TTL
+    // and class come before type which must exist.
+    //
+    // [<TTL>] [<class>] <type> <RDATA>
+    // [<class>] [<TTL>] <type> <RDATA>
+
+    stringstream zone_stream;
+    // <TTL> <class> <type> <RDATA>
+    zone_stream << "a.example.org. 1800 IN A 192.0.2.1\n";
+    // <type> <RDATA>
+    zone_stream << "b.example.org. A 192.0.2.2\n";
+    // <class> <TTL> <type> <RDATA>
+    zone_stream << "c.example.org. IN 3600 A 192.0.2.3\n";
+    // <TTL> <type> <RDATA>
+    zone_stream << "d.example.org. 7200 A 192.0.2.4\n";
+    // <class> <type> <RDATA>
+    zone_stream << "e.example.org. IN A 192.0.2.5\n";
+
+    setLoader(zone_stream, Name("example.org."), RRClass::IN(),
+              MasterLoader::DEFAULT);
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    checkRR("a.example.org", RRType::A(), "192.0.2.1", RRTTL(1800));
+    checkRR("b.example.org", RRType::A(), "192.0.2.2", RRTTL(1800));
+    checkRR("c.example.org", RRType::A(), "192.0.2.3", RRTTL(3600));
+    checkRR("d.example.org", RRType::A(), "192.0.2.4", RRTTL(7200));
+    checkRR("e.example.org", RRType::A(), "192.0.2.5", RRTTL(7200));
+
+    EXPECT_EQ(1, warnings_.size());
+    checkCallbackMessage(warnings_.at(0), "using RFC1035 TTL semantics", 2);
+}
+
 TEST_F(MasterLoaderTest, ttlFromPreviousSOA) {
     // Mixture of the previous two cases: SOA has explicit TTL, followed by
     // an RR without an explicit TTL.  In this case the minimum TTL won't be
