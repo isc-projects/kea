@@ -397,7 +397,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             try {
                 rrclass.reset(new RRClass(rrparam_token.getString()));
                 rrparam_token = lexer_.getNextToken();
-            } catch (const InvalidRRClass& e) {
+            } catch (const InvalidRRClass&) {
                 // If it's not an rrclass here, continue and try again
                 // after the TTL below.
             }
@@ -415,7 +415,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
                 try {
                     rrclass.reset(new RRClass(rrparam_token.getString()));
                     rrparam_token = lexer_.getNextToken();
-                } catch (const InvalidRRClass& e) {
+                } catch (const InvalidRRClass&) {
                     // If it's not an rrclass here, use the zone's class.
                     rrclass.reset(new RRClass(zone_class_));
                 }
