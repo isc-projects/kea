@@ -140,7 +140,7 @@ private:
     ///
     /// @throw std::bad alloc if system went out of memory.
     /// @throw MalformedOptionDefinition if any of the definitions
-    /// is incorrect. This is programming error.
+    /// are incorrect. This is programming error.
     static void initStdOptionDefs4();
 
     /// Initialize standard DHCPv6 option definitions.

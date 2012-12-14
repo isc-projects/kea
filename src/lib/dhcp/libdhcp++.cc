@@ -102,31 +102,35 @@ LibDHCP::optionFactory(Option::Universe u,
 size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
                                isc::dhcp::Option::OptionCollection& options) {
     size_t offset = 0;
-    size_t end = buf.size();
+    size_t length = buf.size();
 
-    while (offset +4 <= end) {
-        uint16_t opt_type = buf[offset] * 256 + buf[offset + 1];
+    // Get the list of stdandard option definitions.
+    const OptionDefContainer& option_defs = LibDHCP::getOptionDefs(Option::V6);
+    // Get the search index #1. It allows to search for option definitions
+    // using option code.
+    const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
+
+    // The buffer being read comprises a set of options, each starting with
+    // a two-byte type code and a two-byte length field.
+    while (offset + 4 <= length) {
+        uint16_t opt_type = isc::util::readUint16(&buf[offset]);
         offset += 2;
-        uint16_t opt_len = buf[offset] * 256 + buf[offset + 1];
+        uint16_t opt_len = isc::util::readUint16(&buf[offset]);
         offset += 2;
 
-        if (offset + opt_len > end) {
+        if (offset + opt_len > length) {
             // @todo: consider throwing exception here.
             return (offset);
         }
 
-        // Get the list of stdandard option definitions.
-        OptionDefContainer option_defs = LibDHCP::getOptionDefs(Option::V6);
-        // Get the search index #1. It allows to search for option definitions
-        // using option code.
-        const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
-        // Get all options with the particular option code. Note that option code
-        // is non-unique within this container however at this point we expect
-        // to get one option definition with the particular code. If more are
-        // returned we report an error.
+        // Get all definitions with the particular option code. Note that option
+        // code is non-unique within this container however at this point we
+        // expect to get one option definition with the particular code. If more
+        // are returned we report an error.
         const OptionDefContainerTypeRange& range = idx.equal_range(opt_type);
         // Get the number of returned option definitions for the option code.
         size_t num_defs = distance(range.first, range.second);
+
         OptionPtr opt;
         if (num_defs > 1) {
             // Multiple options of the same code are not supported right now!
@@ -164,7 +168,14 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
                                  isc::dhcp::Option::OptionCollection& options) {
     size_t offset = 0;
 
-    // 2 byte - header of DHCPv4 option
+    // Get the list of stdandard option definitions.
+    const OptionDefContainer& option_defs = LibDHCP::getOptionDefs(Option::V4);
+    // Get the search index #1. It allows to search for option definitions
+    // using option code.
+    const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
+
+    // The buffer being read comprises a set of options, each starting with
+    // a one-byte type code and a one-byte length field.
     while (offset + 1 <= buf.size()) {
         uint8_t opt_type = buf[offset++];
 
@@ -191,19 +202,13 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
                       << "-byte long buffer.");
         }
 
-        // Get the list of stdandard option definitions.
-        OptionDefContainer option_defs = LibDHCP::getOptionDefs(Option::V4);
-        // Get the search index #1. It allows to search for option definitions
-        // using option code.
-        const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
-        // Get all options with the particular option code. Note that option code
+        // Get all definitions with the particular option code. Note that option code
         // is non-unique within this container however at this point we expect
         // to get one option definition with the particular code. If more are
         // returned we report an error.
         const OptionDefContainerTypeRange& range = idx.equal_range(opt_type);
         // Get the number of returned option definitions for the option code.
         size_t num_defs = distance(range.first, range.second);
-
 
         OptionPtr opt;
         if (num_defs > 1) {

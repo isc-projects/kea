@@ -544,11 +544,6 @@ TEST(Pkt4Test, unpackOptions) {
     boost::shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
                                 expectedFormat.size()));
 
-    try {
-        pkt->unpack();
-    } catch (const Exception& ex) {
-        std::cout << ex.what() << std::endl;
-    }
     EXPECT_NO_THROW(
         pkt->unpack()
     );
