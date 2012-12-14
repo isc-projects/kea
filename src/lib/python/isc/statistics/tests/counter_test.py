@@ -142,6 +142,22 @@ class TestBasicMethods(unittest.TestCase):
             counter._get_counter(self.counters._statistics._data,
                                  timer_name), 0)
 
+    def test_concat(self):
+        # only strings
+        a = ( 'a','b','c','d' )
+        self.assertEqual('a/b/c/d', counter._concat(*a))
+        self.assertEqual('aTbTcTd', counter._concat(*a, sep='T'))
+        self.assertEqual('a\\b\\c\\d', counter._concat(*a, sep='\\'))
+        # mixed with other types
+        b = a + (1,)
+        self.assertRaises(TypeError, counter._concat, *b)
+        b = a + (1.1,)
+        self.assertRaises(TypeError, counter._concat, *b)
+        b = a + ([],)
+        self.assertRaises(TypeError, counter._concat, *b)
+        b = a + ({},)
+        self.assertRaises(TypeError, counter._concat, *b)
+
 class BaseTestCounters():
 
     def setUp(self):
