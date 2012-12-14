@@ -55,6 +55,7 @@ public:
                      MasterLoader::Options options) :
         lexer_(),
         zone_origin_(zone_origin),
+        active_origin_(zone_origin),
         zone_class_(zone_class),
         callbacks_(callbacks),
         add_callback_(add_callback),
@@ -138,13 +139,23 @@ public:
         pushSource(filename);
     }
 
+    void doOrigin() {
+        // Parse and create the new origin. It is relative to the previous
+        // one.
+        const MasterToken::StringRegion&
+            name_string(lexer_.getNextToken(MasterToken::QSTRING).
+                        getStringRegion());
+        active_origin_ = Name(name_string.beg, name_string.len,
+                              &active_origin_);
+        // Make sure there's the EOLN
+        eatUntilEOL(true);
+    }
+
     void handleDirective(const char* directive, size_t length) {
         if (iequals(directive, "INCLUDE")) {
             doInclude();
         } else if (iequals(directive, "ORIGIN")) {
-            // TODO: Implement
-            isc_throw(isc::NotImplemented,
-                      "Origin directive not implemented yet");
+            doOrigin();
         } else if (iequals(directive, "TTL")) {
             // TODO: Implement
             isc_throw(isc::NotImplemented,
@@ -187,6 +198,8 @@ public:
 private:
     MasterLexer lexer_;
     const Name zone_origin_;
+    Name active_origin_; // The origin used during parsing
+                         // (modifiable by $ORIGIN)
     const RRClass zone_class_;
     MasterLoaderCallbacks callbacks_;
     AddRRCallback add_callback_;
@@ -255,7 +268,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             }
 
             const Name name(name_string.beg, name_string.len,
-                            &zone_origin_);
+                            &active_origin_);
             // TODO: Some more flexibility. We don't allow omitting
             // anything yet
 
@@ -275,7 +288,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
 
             const rdata::RdataPtr data(rdata::createRdata(rrtype, rrclass,
                                                           lexer_,
-                                                          &zone_origin_,
+                                                          &active_origin_,
                                                           options_,
                                                           callbacks_));
             // In case we get NULL, it means there was error creating
