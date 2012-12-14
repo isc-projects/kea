@@ -365,8 +365,10 @@ class Counters():
         dictionary."""
         # entire copy
         statistics_data = self._statistics._data.copy()
-        # If self.statistics_data contains nothing of zone name, it
-        # returns an empty dict.
+        # If there is no 'zones' found in statistics_data,
+        # i.e. statistics_data contains no per-zone counter, it just
+        # returns statistics_data because calculating total counts
+        # across the zone names isn't necessary.
         if self._perzone_prefix not in statistics_data:
             return statistics_data
         zones = statistics_data[self._perzone_prefix]
