@@ -344,11 +344,19 @@ class Counters():
                 self._statistics._data,
                 self._statistics._spec,
                 identifier)
-            # delete the started timer
-            del isc.cc.data.find(
-                self._start_time,
-                _concat(*identifier.split('/')[0:-1]))\
-                [identifier.split('/')[-1]]
+            # A datetime value of once used timer should be deleted
+            # for a future use.
+            # Here, names of branch and leaf are obtained from a
+            # string of identifier. The branch name is equivalent to
+            # the position of datetime to be deleted and the leaf name
+            # is equivalent to the value of datetime to be deleted.
+            (branch, leaf) = identifier.rsplit('/', 1)
+            # Then map of branch is obtained from self._start_time by
+            # using isc.cc.data.find().
+            branch_map = isc.cc.data.find(self._start_time, branch)
+            # Finally a value of the leaf name is deleted from the
+            # map.
+            del branch_map[leaf]
 
     def dump_statistics(self):
         """Calculates an entire server counts, and returns statistics
