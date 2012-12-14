@@ -126,16 +126,21 @@ private:
         // For standard options we expect that the range returned
         // will contain single option as their codes are unique.
         OptionDefContainerTypeRange range = idx.equal_range(code);
-        ASSERT_EQ(1, std::distance(range.first, range.second));
+        ASSERT_EQ(1, std::distance(range.first, range.second))
+            << "Standard option definition for the code " << code
+            << " has not been found.";
         // If we have single option definition returned, the
         // first iterator holds it.
         OptionDefinitionPtr def = *(range.first);
         // It should not happen that option definition is NULL but
         // let's make sure (test should take things like that into
         // account).
-        ASSERT_TRUE(def);
+        ASSERT_TRUE(def) << "Option definition for the code "
+                         << code << " is NULL.";
         // Check that option definition is valid.
-        ASSERT_NO_THROW(def->validate());
+        ASSERT_NO_THROW(def->validate())
+            << "Option definition for the option code " << code
+            << " is invalid";
         OptionPtr option;
         // Create the option.
         ASSERT_NO_THROW(option = def->optionFactory(u, code, begin, end))
