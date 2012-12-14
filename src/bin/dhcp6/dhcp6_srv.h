@@ -212,16 +212,38 @@ protected:
 
     /// @brief Renews specific IA_NA option
     ///
-    /// Generates response to IA_NA. This typically includes finding a lease that
-    /// corresponds to the received address. If no such lease is found, an IA_NA
-    /// response is generated with an appropriate status code.
+    /// Generates response to IA_NA in Renew. This typically includes finding a
+    /// lease that corresponds to the received address. If no such lease is
+    /// found, an IA_NA response is generated with an appropriate status code.
     ///
     /// @param subnet subnet the sender belongs to
     /// @param duid client's duid
     /// @param question client's message
     /// @param ia IA_NA option that is being renewed
+    /// @return IA_NA option (server's response)
     OptionPtr renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
                          Pkt6Ptr question, boost::shared_ptr<Option6IA> ia);
+
+    /// @brief Releases specific IA_NA option
+    ///
+    /// Generates response to IA_NA in Release message. This covers finding and
+    /// removal of a lease that corresponds to the received address. If no such
+    /// lease is found, an IA_NA response is generated with an appropriate
+    /// status code.
+    ///
+    /// As RFC3315 requires to also send global (one for the whole message),
+    /// this method may update passed general_status. It is set to SUCCESS
+    /// when message processing begins, but may be update to some error code
+    /// if release process fails.
+    ///
+    /// @param duid client's duid
+    /// @param question client's message
+    /// @param general_status a global status (it may be updated in case of errors)
+    /// @param ia IA_NA option that is being renewed
+    /// @return IA_NA option (server's response)
+    OptionPtr releaseIA_NA(const DuidPtr& duid, Pkt6Ptr question,
+                           int& general_status,
+                           boost::shared_ptr<Option6IA> ia);
 
     /// @brief Copies required options from client message to server answer.
     ///
@@ -270,6 +292,17 @@ protected:
     /// @param renew client's message asking for renew
     /// @param reply server's response
     void renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply);
+
+    /// @brief Attempts to release received addresses
+    ///
+    /// It iterates through received IA_NA options and attempts to release
+    /// received addresses. If no such leases are found, or the lease fails
+    /// proper checks (e.g. belongs to someone else), a proper status
+    /// code is added to reply message. Released addresses are not added
+    /// to REPLY packet, just its IA_NA containers.
+    /// @param release client's message asking to release
+    /// @param reply server's response
+    void releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply);
 
     /// @brief Sets server-identifier.
     ///
