@@ -358,7 +358,7 @@ class Counters():
             # map.
             del branch_map[leaf]
 
-    def dump_statistics(self):
+    def get_statistics(self):
         """Calculates an entire server counts, and returns statistics
         data format to send out the stats module including each
         counter. If there is no counts, then it returns an empty
