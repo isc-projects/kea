@@ -1,4 +1,9 @@
-526.	[bug]		syephen
+5XX.	[func]		tomek
+	b10-dhcp6: Support for RELEASE message has been added. Clients
+	are now able to release their non-temporary IPv6 addresses.
+	(Trac #2326, git TBD)
+
+526.	[bug]		stephen
 	Miscellaneous fixes to DHCP code including rationalisation of
 	some methods in LeaseMgr and resolving some Doxygen/cppcheck
 	issues.

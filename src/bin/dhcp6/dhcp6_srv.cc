@@ -436,6 +436,8 @@ void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 
     // We need to allocate addresses for all IA_NA options in the client's
     // question (i.e. SOLICIT or REQUEST) message.
+    // @todo add support for IA_TA
+    // @todo add support for IA_PD
 
     // We need to select a subnet the client is connected in.
     Subnet6Ptr subnet = selectSubnet(question);
@@ -640,6 +642,8 @@ void Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply) {
 
     // We need to renew addresses for all IA_NA options in the client's
     // RENEW message.
+    // @todo add support for IA_TA
+    // @todo add support for IA_PD
 
     // We need to select a subnet the client is connected in.
     Subnet6Ptr subnet = selectSubnet(renew);
@@ -688,10 +692,168 @@ void Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply) {
             break;
         }
     }
-
-
-
 }
+
+void Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply) {
+
+    // We need to release addresses for all IA_NA options in the client's
+    // RELEASE message.
+    // @todo Add support for IA_TA
+    // @todo Add support for IA_PD
+    // @todo Consider supporting more than one address in a single IA_NA.
+    // That was envisaged by RFC3315, but it never happened. The only
+    // software that supports that is Dibbler, but its author seriously doubts
+    // if anyone is really using it. Clients that want more than one address
+    // just include more instances of IA_NA options.
+
+    // Let's find client's DUID. Client is supposed to include its client-id
+    // option almost all the time (the only exception is an anonymous inf-request,
+    // but that is mostly a theoretical case). Our allocation engine needs DUID
+    // and will refuse to allocate anything to anonymous clients.
+    OptionPtr opt_duid = release->getOption(D6O_CLIENTID);
+    if (!opt_duid) {
+        // This should not happen. We have checked this before.
+        reply->addOption(createStatusCode(STATUS_UnspecFail,
+                         "You did not include mandatory client-id"));
+        return;
+    }
+    DuidPtr duid(new DUID(opt_duid->getData()));
+
+    int general_status = STATUS_Success;
+    for (Option::OptionCollection::iterator opt = release->options_.begin();
+         opt != release->options_.end(); ++opt) {
+        switch (opt->second->getType()) {
+        case D6O_IA_NA: {
+            OptionPtr answer_opt = releaseIA_NA(duid, release, general_status,
+                                   boost::dynamic_pointer_cast<Option6IA>(opt->second));
+            if (answer_opt) {
+                reply->addOption(answer_opt);
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    }
+
+    // To be pedantic, we should also include status code in the top-level
+    // scope, not just in each IA_NA. See RFC3315, section 18.2.6.
+    // This behavior will likely go away in RFC3315bis.
+    reply->addOption(createStatusCode(general_status,
+                     "Summary status for all processed IA_NAs"));
+}
+
+OptionPtr Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, Pkt6Ptr question,
+                                  int& general_status,
+                                  boost::shared_ptr<Option6IA> ia) {
+    // Release can be done in one of two ways:
+    // Approach 1: extract address from client's IA_NA and see if it belongs
+    // to this particular client.
+    // Approach 2: find a subnet for this client, get a lease for
+    // this subnet/duid/iaid and check if its content matches to what the
+    // client is asking us to release.
+    //
+    // This method implements approach 1.
+
+    // That's our response
+    boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
+
+    boost::shared_ptr<Option6IAAddr> release_addr = boost::dynamic_pointer_cast<Option6IAAddr>
+        (ia->getOption(D6O_IAADDR));
+    if (!release_addr) {
+        ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
+                                           "You did not include address in your RELEASE"));
+        general_status = STATUS_NoBinding;
+        return (ia_rsp);
+    }
+
+    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(release_addr->getAddress());
+
+    if (!lease) {
+        // client releasing a lease that we don't know about.
+
+        // Insert status code NoAddrsAvail.
+        ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
+                          "Sorry, no known leases for this duid/iaid, can't release."));
+        general_status = STATUS_NoBinding;
+
+        LOG_WARN(dhcp6_logger, DHCP6_UNKNOWN_RELEASE)
+            .arg(duid->toText())
+            .arg(ia->getIAID());
+
+        return (ia_rsp);
+    }
+
+    if (!lease->duid_) {
+        // Something is gravely wrong here. We do have a lease, but it does not
+        // have mandatory DUID information attached. Someone was messing with our
+        // database.
+
+        LOG_ERROR(dhcp6_logger, DHCP6_DB_ERROR_LEASE6_WITHOUT_DUID)
+            .arg(release_addr->getAddress().toText());
+
+        general_status = STATUS_UnspecFail;
+        ia_rsp->addOption(createStatusCode(STATUS_UnspecFail,
+                          "Database consistency check failed when trying to RELEASE"));
+        return (ia_rsp);
+    }
+
+    if (*duid != *(lease->duid_)) {
+        // Sorry, it's not your address. You can't release it.
+
+        LOG_WARN(dhcp6_logger, DHCP6_RELEASE_FAIL_WRONG_DUID)
+            .arg(release_addr->getAddress().toText())
+            .arg(duid->toText())
+            .arg(lease->duid_->toText());
+
+        general_status = STATUS_NoBinding;
+        ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
+                          "This address does not belong to you, you can't release it"));
+        return (ia_rsp);
+    }
+
+    if (ia->getIAID() != lease->iaid_) {
+        // This address belongs to this client, but to a different IA
+        LOG_WARN(dhcp6_logger, DHCP6_RELEASE_FAIL_WRONG_IAID)
+            .arg(release_addr->getAddress().toText())
+            .arg(duid->toText())
+            .arg(ia->getIAID())
+            .arg(lease->iaid_);
+        ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
+                          "This is your address, but you used wrong IAID"));
+        general_status = STATUS_NoBinding;
+        return (ia_rsp);
+    }
+
+    // It is not necessary if the address matches as we used getLease6(addr)
+    // method that is supposed to return a proper lease.
+
+    // Ok, we've passed all checks. Let's release this address.
+
+    if (!LeaseMgrFactory::instance().deleteLease(lease->addr_)) {
+        ia_rsp->addOption(createStatusCode(STATUS_UnspecFail,
+                          "Server failed to release a lease"));
+
+        LOG_ERROR(dhcp6_logger, DHCP6_RELEASE_FAIL)
+            .arg(lease->addr_.toText())
+            .arg(duid->toText())
+            .arg(lease->iaid_);
+        general_status = STATUS_UnspecFail;
+
+        return (ia_rsp);
+    } else {
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_RELEASE)
+            .arg(lease->addr_.toText())
+            .arg(duid->toText())
+            .arg(lease->iaid_);
+
+        ia_rsp->addOption(createStatusCode(STATUS_Success,
+                          "Lease released. Thank you, please come again."));
+
+        return (ia_rsp);
+    }
+}
+
 
 Pkt6Ptr Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
@@ -751,8 +913,16 @@ Pkt6Ptr Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
 }
 
 Pkt6Ptr Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
-    /// @todo: Implement this
+
+    sanityCheck(release, MANDATORY, MANDATORY);
+
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, release->getTransid()));
+
+    copyDefaultOptions(release, reply);
+    appendDefaultOptions(release, reply);
+
+    releaseLeases(release, reply);
+
     return reply;
 }
 
