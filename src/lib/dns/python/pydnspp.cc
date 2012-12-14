@@ -266,32 +266,35 @@ initModulePart_Name(PyObject* mod) {
 
     // Add the exceptions to the module
     po_EmptyLabel = PyErr_NewException("pydnspp.EmptyLabel", NULL, NULL);
-    PyModule_AddObject(mod, "EmptyLabel", po_EmptyLabel);
+    PyObjectContainer(po_EmptyLabel).installToModule(mod, "EmptyLabel");
 
     po_TooLongName = PyErr_NewException("pydnspp.TooLongName", NULL, NULL);
-    PyModule_AddObject(mod, "TooLongName", po_TooLongName);
+    PyObjectContainer(po_TooLongName).installToModule(mod, "TooLongName");
 
     po_TooLongLabel = PyErr_NewException("pydnspp.TooLongLabel", NULL, NULL);
-    PyModule_AddObject(mod, "TooLongLabel", po_TooLongLabel);
+    PyObjectContainer(po_TooLongLabel).installToModule(mod, "TooLongLabel");
 
     po_BadLabelType = PyErr_NewException("pydnspp.BadLabelType", NULL, NULL);
-    PyModule_AddObject(mod, "BadLabelType", po_BadLabelType);
+    PyObjectContainer(po_BadLabelType).installToModule(mod, "BadLabelType");
 
     po_BadEscape = PyErr_NewException("pydnspp.BadEscape", NULL, NULL);
-    PyModule_AddObject(mod, "BadEscape", po_BadEscape);
+    PyObjectContainer(po_BadEscape).installToModule(mod, "BadEscape");
 
-    po_IncompleteName = PyErr_NewException("pydnspp.IncompleteName", NULL, NULL);
-    PyModule_AddObject(mod, "IncompleteName", po_IncompleteName);
+    po_IncompleteName = PyErr_NewException("pydnspp.IncompleteName", NULL,
+                                           NULL);
+    PyObjectContainer(po_IncompleteName).installToModule(mod, "IncompleteName");
 
     po_InvalidBufferPosition =
         PyErr_NewException("pydnspp.InvalidBufferPosition", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidBufferPosition", po_InvalidBufferPosition);
+    PyObjectContainer(po_InvalidBufferPosition).installToModule(
+        mod, "InvalidBufferPosition");
 
     // This one could have gone into the message_python.cc file, but is
     // already needed here.
     po_DNSMessageFORMERR = PyErr_NewException("pydnspp.DNSMessageFORMERR",
                                               NULL, NULL);
-    PyModule_AddObject(mod, "DNSMessageFORMERR", po_DNSMessageFORMERR);
+    PyObjectContainer(po_DNSMessageFORMERR).installToModule(
+        mod, "DNSMessageFORMERR");
 
     return (true);
 }
@@ -418,16 +421,18 @@ initModulePart_Rdata(PyObject* mod) {
     // Add the exceptions to the class
     po_InvalidRdataLength = PyErr_NewException("pydnspp.InvalidRdataLength",
                                                NULL, NULL);
-    PyModule_AddObject(mod, "InvalidRdataLength", po_InvalidRdataLength);
+    PyObjectContainer(po_InvalidRdataLength).installToModule(
+        mod, "InvalidRdataLength");
 
     po_InvalidRdataText = PyErr_NewException("pydnspp.InvalidRdataText",
                                              NULL, NULL);
-    PyModule_AddObject(mod, "InvalidRdataText", po_InvalidRdataText);
+    PyObjectContainer(po_InvalidRdataText).installToModule(
+        mod, "InvalidRdataText");
 
     po_CharStringTooLong = PyErr_NewException("pydnspp.CharStringTooLong",
                                               NULL, NULL);
-    PyModule_AddObject(mod, "CharStringTooLong", po_CharStringTooLong);
-
+    PyObjectContainer(po_CharStringTooLong).installToModule(
+        mod, "CharStringTooLong");
 
     return (true);
 }
@@ -436,12 +441,13 @@ bool
 initModulePart_RRClass(PyObject* mod) {
     po_InvalidRRClass = PyErr_NewException("pydnspp.InvalidRRClass",
                                            NULL, NULL);
-    Py_INCREF(po_InvalidRRClass);
-    PyModule_AddObject(mod, "InvalidRRClass", po_InvalidRRClass);
+    PyObjectContainer(po_InvalidRRClass).installToModule(
+        mod, "InvalidRRClass");
+
     po_IncompleteRRClass = PyErr_NewException("pydnspp.IncompleteRRClass",
                                               NULL, NULL);
-    Py_INCREF(po_IncompleteRRClass);
-    PyModule_AddObject(mod, "IncompleteRRClass", po_IncompleteRRClass);
+    PyObjectContainer(po_IncompleteRRClass).installToModule(
+        mod, "IncompleteRRClass");
 
     if (PyType_Ready(&rrclass_type) < 0) {
         return (false);
@@ -456,7 +462,7 @@ initModulePart_RRClass(PyObject* mod) {
 bool
 initModulePart_RRset(PyObject* mod) {
     po_EmptyRRset = PyErr_NewException("pydnspp.EmptyRRset", NULL, NULL);
-    PyModule_AddObject(mod, "EmptyRRset", po_EmptyRRset);
+    PyObjectContainer(po_EmptyRRset).installToModule(mod, "EmptyRRset");
 
     // NameComparisonResult
     if (PyType_Ready(&rrset_type) < 0) {
@@ -472,10 +478,12 @@ initModulePart_RRset(PyObject* mod) {
 bool
 initModulePart_RRTTL(PyObject* mod) {
     po_InvalidRRTTL = PyErr_NewException("pydnspp.InvalidRRTTL", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidRRTTL", po_InvalidRRTTL);
+    PyObjectContainer(po_InvalidRRTTL).installToModule(mod, "InvalidRRTTL");
+
     po_IncompleteRRTTL = PyErr_NewException("pydnspp.IncompleteRRTTL",
                                             NULL, NULL);
-    PyModule_AddObject(mod, "IncompleteRRTTL", po_IncompleteRRTTL);
+    PyObjectContainer(po_IncompleteRRTTL).installToModule(
+        mod, "IncompleteRRTTL");
 
     if (PyType_Ready(&rrttl_type) < 0) {
         return (false);
@@ -491,10 +499,12 @@ bool
 initModulePart_RRType(PyObject* mod) {
     // Add the exceptions to the module
     po_InvalidRRType = PyErr_NewException("pydnspp.InvalidRRType", NULL, NULL);
-    PyModule_AddObject(mod, "InvalidRRType", po_InvalidRRType);
+    PyObjectContainer(po_InvalidRRType).installToModule(mod, "InvalidRRType");
+
     po_IncompleteRRType = PyErr_NewException("pydnspp.IncompleteRRType",
                                              NULL, NULL);
-    PyModule_AddObject(mod, "IncompleteRRType", po_IncompleteRRType);
+    PyObjectContainer(po_IncompleteRRType).installToModule(
+        mod, "IncompleteRRType");
 
     if (PyType_Ready(&rrtype_type) < 0) {
         return (false);
@@ -775,15 +785,17 @@ PyInit_pydnspp(void) {
 
     // Add the exceptions to the class
     po_IscException = PyErr_NewException("pydnspp.IscException", NULL, NULL);
-    PyModule_AddObject(mod, "IscException", po_IscException);
+    PyObjectContainer(po_IscException).installToModule(mod, "IscException");
 
     po_InvalidOperation = PyErr_NewException("pydnspp.InvalidOperation",
                                              NULL, NULL);
-    PyModule_AddObject(mod, "InvalidOperation", po_InvalidOperation);
+    PyObjectContainer(po_InvalidOperation).installToModule(
+        mod, "InvalidOperation");
 
     po_InvalidParameter = PyErr_NewException("pydnspp.InvalidParameter",
                                              NULL, NULL);
-    PyModule_AddObject(mod, "InvalidParameter", po_InvalidParameter);
+    PyObjectContainer(po_InvalidParameter).installToModule(
+        mod, "InvalidParameter");
 
     // for each part included above, we call its specific initializer
 
