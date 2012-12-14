@@ -317,7 +317,7 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     expected_opts.push_back(0x6C6D); // equivalent to: 108, 109
     expected_opts.push_back(0x6E6F); // equivalent to 110, 111
     ASSERT_EQ(expected_opts.size(), opts.size());
-    // Validated if option has been un packed correctly.
+    // Validated if option has been unpacked correctly.
     EXPECT_TRUE(std::equal(expected_opts.begin(), expected_opts.end(),
                            opts.begin()));
 
