@@ -1,0 +1,40 @@
+# Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+$NAMESPACE isc::dhcp
+
+% DHCPSRV_INVALID_ACCESS invalid database access string: %1
+This is logged when an attempt has been made to parse a database access string
+and the attempt ended in error.  The access string in question - which should
+be of the form 'keyword=value keyword=value...' is included in the message.
+
+% DHCPSRV_MEMFILE_DB opening memory file lease database: %1
+This informational message is logged when a DHCP server (either V4 or V6) is
+about to open a memory file lease database.  The parameters of the connection
+are logged.
+
+% DHCPSRV_MYSQL_DB opening MySQL lease database: %1
+This informational message is logged when a DHCP server (either V4 or V6) is
+about to open a MySQL lease database.  The parameters of the connection
+including database name and username needed to access it (but not the
+password if any) are logged.
+
+% DHCPSRV_NOTYPE_DB no 'type' keyword to determine database backend: %1
+This is an error message, logged when an attempt has been made to access a
+database backend, but where no 'type' keyword has been included in the access
+string.  The access string (less any passwords) is included in the message.
+
+% DHCPSRV_UNKNOWN_DB unknown database type: %1
+The database access string specified a database type (given in the message)
+that is unknown to the software.  This is a configuration error.
