@@ -16,9 +16,9 @@
 """BIND 10 Statistics counters module
 
 This module handles the statistics counters for BIND 10 modules.  For
-using the module `counter.py`, firstly the init() method should be
-invoked in each module like b10-xfrin or b10-xfrout after importing
-this module.
+using the module `counter.py`, firstly a counters object should be
+created in each module like b10-xfrin or b10-xfrout after importing
+this module. A spec file can be specified in argument when creating.
 
   from isc.statistics import Counters
   self.counters = Counters(/path/to/foo.spec)
