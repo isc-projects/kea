@@ -50,8 +50,9 @@ the zone in.  Example:
     parser.add_option("-t", "--datasrc-type", dest="datasrc_type",
                       action="store", default='sqlite3',
                       help="type of data source (e.g., 'sqlite3')")
-    parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
-                      help="display more about what is going on")
+    parser.add_option("-C", "--class", dest="zone_class", action="store",
+                      default='IN',
+                      help="RR class of the zone; currently must be 'IN'")
 
 class LoadZoneRunner:
     '''TBD
@@ -78,6 +79,13 @@ class LoadZoneRunner:
             raise BadArgument('data source config option cannot be omitted')
         self._datasrc_config = options.conf
         self._datasrc_type = options.datasrc_type
+        try:
+            self._zone_class = RRClass(options.zone_class)
+        except isc.dns.InvalidRRClass as ex:
+            raise BadArgument('Invalid zone class: ' + str(ex))
+        if self._zone_class != RRClass.IN():
+            raise BadArgument("RR class is not supported: " +
+                              str(self._zone_class))
 
         if len(args) != 2:
             raise BadArgument('Unexpected number of arguments: %d (must be 2)'
