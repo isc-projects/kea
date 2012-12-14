@@ -20,6 +20,9 @@ endif
 	echo Running test: $$pytest ; \
 	B10_FROM_SOURCE=$(abs_top_srcdir) \
 	$(LIBRARY_PATH_PLACEHOLDER) \
+	TESTDATA_PATH=$(abs_top_srcdir)/src/lib/testutils/testdata \
+	LOCAL_TESTDATA_PATH=$(srcdir)/testdata \
+	TESTDATA_WRITE_PATH=$(builddir) \
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/bin/loadzone:$(abs_top_builddir)/src/lib/dns/python/.libs:$(abs_top_builddir)/src/lib/util/io/.libs \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
