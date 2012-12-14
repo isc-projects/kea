@@ -322,13 +322,13 @@ class Counters():
             isc.cc.data.set(self._start_time, identifier, _start_timer())
 
     def stop(self, *args):
-        """Sets duration time between corresponding time in
-        self._start_time and current time into the value of the
-        identifier. It deletes corresponding time in self._start_time
-        after setting is successfully done. In case of stopping the
-        timer which has never been started, it raises and does
-        nothing. But in case of stopping the time which isn't defined
-        in the spec file, it raises DataNotFoundError"""
+        """Sets duration time in seconds between corresponding date
+        time in self._start_time and current date time into the value
+        of the identifier. It deletes corresponding time in
+        self._start_time after setting is successfully done. In case
+        of stopping the timer which has never been started, it raises
+        and does nothing. But in case of stopping the time which isn't
+        defined in the spec file, it raises DataNotFoundError"""
         identifier = _concat(*args)
         with self._rlock:
             if self._disabled: return
