@@ -1,6 +1,9 @@
 PYCOVERAGE_RUN=@PYCOVERAGE_RUN@
 PYTESTS = loadzone_test.py
+
 EXTRA_DIST = $(PYTESTS)
+EXTRA_DIST += testdata/example.org.zone
+EXTRA_DIST += testdata/broken-example.org.zone
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.

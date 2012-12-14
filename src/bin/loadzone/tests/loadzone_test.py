@@ -53,7 +53,10 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.__runner = LoadZoneRunner(self.__args)
 
     def tearDown(self):
-        pass
+        # Delete the used DB file; if some of the tests unexpectedly fail
+        # unexpectedly in the middle of updating the DB, a lock could stay
+        # there and would affect the other tests that would otherwise succeed.
+        os.unlink(WRITE_ZONE_DB_FILE)
 
     def test_init(self):
         '''
@@ -118,6 +121,32 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.__check_zone_soa(None, zone_name=Name('example.com'))
         self.__runner._do_load()
         self.__check_zone_soa(ALT_NEW_SOA_TXT, zone_name=Name('example.com'))
+
+    def test_load_fail_badconfig(self):
+        '''Load attempt fails due to broken datasrc config.'''
+        self.__common_load_setup()
+        self.__runner._datasrc_config = "invalid config"
+        self.__check_zone_soa(ORIG_SOA_TXT)
+        self.assertRaises(isc.datasrc.Error, self.__runner._do_load)
+        self.__check_zone_soa(ORIG_SOA_TXT) # no change to the zone
+
+    def test_load_fail_badzone(self):
+        '''Load attempt fails due to broken zone file.'''
+        self.__common_load_setup()
+        self.__runner._zone_file = \
+            LOCAL_TESTDATA_PATH + '/broken-example.org.zone'
+        self.__check_zone_soa(ORIG_SOA_TXT)
+        self.assertRaises(isc.datasrc.MasterFileError, self.__runner._do_load)
+        self.__check_zone_soa(ORIG_SOA_TXT)
+
+    def test_load_fail_noloader(self):
+        '''Load attempt fails because loading isn't supported'''
+        self.__common_load_setup()
+        self.__runner._datasrc_type = 'memory'
+        self.__runner._datasrc_config = '{"type": "memory"}'
+        self.__check_zone_soa(ORIG_SOA_TXT)
+        self.assertRaises(isc.datasrc.NotImplemented, self.__runner._do_load)
+        self.__check_zone_soa(ORIG_SOA_TXT)
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()
