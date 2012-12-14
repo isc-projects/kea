@@ -55,7 +55,9 @@ the zone in.  Example:
                       help="RR class of the zone; currently must be 'IN'")
 
 class LoadZoneRunner:
-    '''TBD
+    '''Main logic for the loadzone.
+
+    This is implemented as a class mainly for the convenience of tests.
 
     '''
     def __init__(self, command_args):
@@ -146,12 +148,15 @@ class LoadZoneRunner:
         try:
             self._parse_args()
             self._do_load()
+            return 0
         except BadArgument as ex:
             logger.error(LOADZONE_ARGUMENT_ERROR, ex)
         except LoadFailure as ex:
             logger.error(LOADZONE_LOAD_ERROR, self._zone_name,
                          self._zone_class, ex)
-        return 0
+        except Exception as ex:
+            logger.error(LOADZONE_UNEXPECTED_FAILURE, ex)
+        return 1
 
 if '__main__' == __name__:
     runner = LoadZoneRunner(sys.argv[1:])
