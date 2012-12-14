@@ -56,6 +56,8 @@ public:
         lexer_(),
         zone_origin_(zone_origin),
         active_origin_(zone_origin),
+        last_name_(Name::ROOT_NAME()), // Initialize with something,
+                                       // we don't care
         zone_class_(zone_class),
         callbacks_(callbacks),
         add_callback_(add_callback),
@@ -64,6 +66,7 @@ public:
         initialized_(false),
         ok_(true),
         many_errors_((options & MANY_ERRORS) != 0),
+        seen_name_(false),
         complete_(false),
         seen_error_(false)
     {}
@@ -205,6 +208,7 @@ private:
     const Name zone_origin_;
     Name active_origin_; // The origin used during parsing
                          // (modifiable by $ORIGIN)
+    Name last_name_;     // Last seen name during the parsing.
     const RRClass zone_class_;
     MasterLoaderCallbacks callbacks_;
     AddRRCallback add_callback_;
@@ -215,6 +219,7 @@ private:
     bool ok_;                   // Is it OK to continue loading?
     const bool many_errors_;    // Are many errors allowed (or should we abort
                                 // on the first)
+    bool seen_name_;            // Did we parse at least one name?
 public:
     bool complete_;             // All work done.
     bool seen_error_;           // Was there at least one error during the
@@ -236,11 +241,26 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
     size_t count = 0;
     while (ok_ && count < count_limit) {
         try {
+            MasterToken initial_token(MasterToken::NO_TOKEN_PRODUCED);
             // Skip all EOLNs (empty lines) and finish on EOF
-            bool empty = true;
             do {
-                const MasterToken& empty_token(lexer_.getNextToken());
-                if (empty_token.getType() == MasterToken::END_OF_FILE) {
+                initial_token = lexer_.getNextToken(MasterLexer::QSTRING |
+                                                    MasterLexer::INITIAL_WS);
+                if (initial_token.getType() == MasterToken::INITIAL_WS) {
+                    // The INITIAL_WS is interesting only if something is
+                    // after it. So peek there and if there's EOLN or EOF,
+                    // ignore it.
+                    const MasterToken& peek_token(lexer_.getNextToken());
+                    if (peek_token.getType() == MasterToken::END_OF_LINE ||
+                        peek_token.getType() == MasterToken::END_OF_FILE) {
+                        initial_token = peek_token;
+                    } else {
+                        // It is something interesting. Return it back and
+                        // keep the whitespace.
+                        lexer_.ungetToken();
+                    }
+                }
+                if (initial_token.getType() == MasterToken::END_OF_FILE) {
                     if (!popSource()) {
                         return (true);
                     } else {
@@ -251,29 +271,45 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
                         continue;
                     }
                 }
-                empty = empty_token.getType() == MasterToken::END_OF_LINE;
-            } while (empty);
-            // Return the last token, as it was not empty
-            lexer_.ungetToken();
+            } while (initial_token.getType() == MasterToken::END_OF_LINE ||
+                     initial_token.getType() == MasterToken::END_OF_FILE);
 
-            const MasterToken::StringRegion&
-                name_string(lexer_.getNextToken(MasterToken::QSTRING).
-                            getStringRegion());
+            if (initial_token.getType() == MasterToken::QSTRING ||
+                initial_token.getType() == MasterToken::STRING) {
+                // If it is name (or directive), handle it.
+                const MasterToken::StringRegion&
+                    name_string(initial_token.getStringRegion());
 
-            if (name_string.len > 0 && name_string.beg[0] == '$') {
-                // This should have either thrown (and the error handler
-                // will read up until the end of line) or read until the
-                // end of line.
+                if (name_string.len > 0 && name_string.beg[0] == '$') {
+                    // This should have either thrown (and the error handler
+                    // will read up until the end of line) or read until the
+                    // end of line.
 
-                // Exclude the $ from the string on this point.
-                handleDirective(name_string.beg + 1, name_string.len - 1);
-                // So, get to the next line, there's nothing more interesting
-                // in this one.
-                continue;
+                    // Exclude the $ from the string on this point.
+                    handleDirective(name_string.beg + 1, name_string.len - 1);
+                    // So, get to the next line, there's nothing more interesting
+                    // in this one.
+                    continue;
+                }
+
+                last_name_ = Name(name_string.beg, name_string.len,
+                                  &active_origin_);
+                seen_name_ = true;
+            } else if (initial_token.getType() == MasterToken::INITIAL_WS) {
+                // This means the same name as previous.
+                if (!seen_name_) {
+                    isc_throw(InternalException, "No previous name to use in "
+                              "place of initial whitespace");
+                }
+            } else if (initial_token.getType() == MasterToken::ERROR) {
+                // Error token here.
+                isc_throw(InternalException, initial_token.getErrorText());
+            } else {
+                // Some other token (what could that be?)
+                isc_throw(InternalException, "Parser got confused (unexpected "
+                          "token " << initial_token.getType() << ")");
             }
 
-            const Name name(name_string.beg, name_string.len,
-                            &active_origin_);
             // TODO: Some more flexibility. We don't allow omitting
             // anything yet
 
@@ -301,7 +337,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             // callbacks_ already. We need to decide if we want to continue
             // or not.
             if (data) {
-                add_callback_(name, rrclass, rrtype, ttl, data);
+                add_callback_(last_name_, rrclass, rrtype, ttl, data);
 
                 // Good, we loaded another one
                 ++count;
