@@ -92,6 +92,22 @@ addClassVariable(PyTypeObject& c, const char* name, PyObject* obj) {
     }
     return (PyDict_SetItemString(c.tp_dict, name, obj));
 }
+
+bool
+initClass(PyTypeObject& type, const char* name, PyObject* mod) {
+    // We initialize the static description object with PyType_Ready(),
+    // then add it to the module. This is not just a check! (leaving
+    // this out results in segmentation faults)
+    //
+    if (PyType_Ready(&type) < 0 ||
+        PyModule_AddObject(mod, name,
+                           reinterpret_cast<PyObject*>(&type)) < 0) {
+        return (false);
+    }
+    Py_INCREF(&type);
+    return (true);
+}
+
 }
 }
 }

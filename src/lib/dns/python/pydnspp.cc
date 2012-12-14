@@ -65,21 +65,13 @@ namespace {
 
 bool
 initModulePart_EDNS(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    //
     // After the type has been initialized, we initialize any exceptions
     // that are defined in the wrapper for this class, and add constants
     // to the type, if any
 
-    if (PyType_Ready(&edns_type) < 0) {
+    if (!initClass(edns_type, "EDNS", mod)) {
         return (false);
     }
-    Py_INCREF(&edns_type);
-    void* p = &edns_type;
-    PyModule_AddObject(mod, "EDNS", static_cast<PyObject*>(p));
-
     addClassVariable(edns_type, "SUPPORTED_VERSION",
                      Py_BuildValue("B", EDNS::SUPPORTED_VERSION));
 
@@ -88,14 +80,9 @@ initModulePart_EDNS(PyObject* mod) {
 
 bool
 initModulePart_Message(PyObject* mod) {
-    if (PyType_Ready(&message_type) < 0) {
+    if (!initClass(message_type, "Message", mod)) {
         return (false);
     }
-    void* p = &message_type;
-    if (PyModule_AddObject(mod, "Message", static_cast<PyObject*>(p)) < 0) {
-        return (false);
-    }
-    Py_INCREF(&message_type);
 
     try {
         //
@@ -186,18 +173,15 @@ initModulePart_Message(PyObject* mod) {
 
 bool
 initModulePart_MessageRenderer(PyObject* mod) {
-    if (PyType_Ready(&messagerenderer_type) < 0) {
+    if (!initClass(messagerenderer_type, "MessageRenderer", mod)) {
         return (false);
     }
-    Py_INCREF(&messagerenderer_type);
 
     addClassVariable(messagerenderer_type, "CASE_INSENSITIVE",
                      Py_BuildValue("I", MessageRenderer::CASE_INSENSITIVE));
     addClassVariable(messagerenderer_type, "CASE_SENSITIVE",
                      Py_BuildValue("I", MessageRenderer::CASE_SENSITIVE));
 
-    PyModule_AddObject(mod, "MessageRenderer",
-                       reinterpret_cast<PyObject*>(&messagerenderer_type));
 
     return (true);
 }
@@ -208,10 +192,10 @@ initModulePart_Name(PyObject* mod) {
     //
     // NameComparisonResult
     //
-    if (PyType_Ready(&name_comparison_result_type) < 0) {
+    if (!initClass(name_comparison_result_type,
+                   "NameComparisonResult", mod)) {
         return (false);
     }
-    Py_INCREF(&name_comparison_result_type);
 
     // Add the enums to the module
     po_NameRelation = Py_BuildValue("{i:s,i:s,i:s,i:s}",
@@ -231,17 +215,13 @@ initModulePart_Name(PyObject* mod) {
     addClassVariable(name_comparison_result_type, "COMMONANCESTOR",
                      Py_BuildValue("I", NameComparisonResult::COMMONANCESTOR));
 
-    PyModule_AddObject(mod, "NameComparisonResult",
-        reinterpret_cast<PyObject*>(&name_comparison_result_type));
 
     //
     // Name
     //
-
-    if (PyType_Ready(&name_type) < 0) {
+    if (!initClass(name_type, "Name", mod)) {
         return (false);
     }
-    Py_INCREF(&name_type);
 
     // Add the constants to the module
     addClassVariable(name_type, "MAX_WIRE",
@@ -260,8 +240,6 @@ initModulePart_Name(PyObject* mod) {
     addClassVariable(name_type, "ROOT_NAME",
                      createNameObject(Name::ROOT_NAME()));
 
-    PyModule_AddObject(mod, "Name",
-                       reinterpret_cast<PyObject*>(&name_type));
 
 
     // Add the exceptions to the module
@@ -301,13 +279,7 @@ initModulePart_Name(PyObject* mod) {
 
 bool
 initModulePart_Opcode(PyObject* mod) {
-    if (PyType_Ready(&opcode_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&opcode_type);
-    void* p = &opcode_type;
-    if (PyModule_AddObject(mod, "Opcode", static_cast<PyObject*>(p)) != 0) {
-        Py_DECREF(&opcode_type);
+    if (!initClass(opcode_type, "Opcode", mod)) {
         return (false);
     }
 
@@ -349,25 +321,17 @@ initModulePart_Opcode(PyObject* mod) {
 
 bool
 initModulePart_Question(PyObject* mod) {
-    if (PyType_Ready(&question_type) < 0) {
+    if (!initClass(question_type, "Question", mod)) {
         return (false);
     }
-    Py_INCREF(&question_type);
-    PyModule_AddObject(mod, "Question",
-                       reinterpret_cast<PyObject*>(&question_type));
 
+    Py_INCREF(&question_type);
     return (true);
 }
 
 bool
 initModulePart_Rcode(PyObject* mod) {
-    if (PyType_Ready(&rcode_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&rcode_type);
-    void* p = &rcode_type;
-    if (PyModule_AddObject(mod, "Rcode", static_cast<PyObject*>(p)) != 0) {
-        Py_DECREF(&rcode_type);
+    if (!initClass(rcode_type, "Rcode", mod)) {
         return (false);
     }
 
@@ -411,12 +375,9 @@ initModulePart_Rcode(PyObject* mod) {
 
 bool
 initModulePart_Rdata(PyObject* mod) {
-    if (PyType_Ready(&rdata_type) < 0) {
+    if (!initClass(rdata_type, "Rdata", mod)) {
         return (false);
     }
-    Py_INCREF(&rdata_type);
-    PyModule_AddObject(mod, "Rdata",
-                       reinterpret_cast<PyObject*>(&rdata_type));
 
     // Add the exceptions to the class
     po_InvalidRdataLength = PyErr_NewException("pydnspp.InvalidRdataLength",
@@ -439,6 +400,10 @@ initModulePart_Rdata(PyObject* mod) {
 
 bool
 initModulePart_RRClass(PyObject* mod) {
+    if (!initClass(rrclass_type, "RRClass", mod)) {
+        return (false);
+    }
+
     po_InvalidRRClass = PyErr_NewException("pydnspp.InvalidRRClass",
                                            NULL, NULL);
     PyObjectContainer(po_InvalidRRClass).installToModule(
@@ -449,34 +414,27 @@ initModulePart_RRClass(PyObject* mod) {
     PyObjectContainer(po_IncompleteRRClass).installToModule(
         mod, "IncompleteRRClass");
 
-    if (PyType_Ready(&rrclass_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&rrclass_type);
-    PyModule_AddObject(mod, "RRClass",
-                       reinterpret_cast<PyObject*>(&rrclass_type));
-
     return (true);
 }
 
 bool
 initModulePart_RRset(PyObject* mod) {
-    po_EmptyRRset = PyErr_NewException("pydnspp.EmptyRRset", NULL, NULL);
-    PyObjectContainer(po_EmptyRRset).installToModule(mod, "EmptyRRset");
-
-    // NameComparisonResult
-    if (PyType_Ready(&rrset_type) < 0) {
+    if (!initClass(rrset_type, "RRset", mod)) {
         return (false);
     }
-    Py_INCREF(&rrset_type);
-    PyModule_AddObject(mod, "RRset",
-                       reinterpret_cast<PyObject*>(&rrset_type));
+
+    po_EmptyRRset = PyErr_NewException("pydnspp.EmptyRRset", NULL, NULL);
+    PyObjectContainer(po_EmptyRRset).installToModule(mod, "EmptyRRset");
 
     return (true);
 }
 
 bool
 initModulePart_RRTTL(PyObject* mod) {
+    if (!initClass(rrttl_type, "RRTTL", mod)) {
+        return (false);
+    }
+
     po_InvalidRRTTL = PyErr_NewException("pydnspp.InvalidRRTTL", NULL, NULL);
     PyObjectContainer(po_InvalidRRTTL).installToModule(mod, "InvalidRRTTL");
 
@@ -485,19 +443,15 @@ initModulePart_RRTTL(PyObject* mod) {
     PyObjectContainer(po_IncompleteRRTTL).installToModule(
         mod, "IncompleteRRTTL");
 
-    if (PyType_Ready(&rrttl_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&rrttl_type);
-    PyModule_AddObject(mod, "RRTTL",
-                       reinterpret_cast<PyObject*>(&rrttl_type));
-
     return (true);
 }
 
 bool
 initModulePart_RRType(PyObject* mod) {
-    // Add the exceptions to the module
+    if (!initClass(rrtype_type, "RRType", mod)) {
+        return (false);
+    }
+
     po_InvalidRRType = PyErr_NewException("pydnspp.InvalidRRType", NULL, NULL);
     PyObjectContainer(po_InvalidRRType).installToModule(mod, "InvalidRRType");
 
@@ -506,38 +460,23 @@ initModulePart_RRType(PyObject* mod) {
     PyObjectContainer(po_IncompleteRRType).installToModule(
         mod, "IncompleteRRType");
 
-    if (PyType_Ready(&rrtype_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&rrtype_type);
-    PyModule_AddObject(mod, "RRType",
-                       reinterpret_cast<PyObject*>(&rrtype_type));
-
     return (true);
 }
 
 bool
 initModulePart_Serial(PyObject* mod) {
-    if (PyType_Ready(&serial_type) < 0) {
+    if (!initClass(serial_type, "Serial", mod)) {
         return (false);
     }
-    Py_INCREF(&serial_type);
-    PyModule_AddObject(mod, "Serial",
-                       reinterpret_cast<PyObject*>(&serial_type));
 
     return (true);
 }
 
 bool
 initModulePart_TSIGError(PyObject* mod) {
-    if (PyType_Ready(&tsigerror_type) < 0) {
+    if (!initClass(tsigerror_type, "TSIGError", mod)) {
         return (false);
     }
-    void* p = &tsigerror_type;
-    if (PyModule_AddObject(mod, "TSIGError", static_cast<PyObject*>(p)) < 0) {
-        return (false);
-    }
-    Py_INCREF(&tsigerror_type);
 
     try {
         // Constant class variables
@@ -605,14 +544,9 @@ initModulePart_TSIGError(PyObject* mod) {
 
 bool
 initModulePart_TSIGKey(PyObject* mod) {
-    if (PyType_Ready(&tsigkey_type) < 0) {
+    if (!initClass(tsigkey_type, "TSIGKey", mod)) {
         return (false);
     }
-    void* p = &tsigkey_type;
-    if (PyModule_AddObject(mod, "TSIGKey", static_cast<PyObject*>(p)) != 0) {
-        return (false);
-    }
-    Py_INCREF(&tsigkey_type);
 
     try {
         // Constant class variables
@@ -645,14 +579,7 @@ initModulePart_TSIGKey(PyObject* mod) {
 
 bool
 initModulePart_TSIGKeyRing(PyObject* mod) {
-    if (PyType_Ready(&tsigkeyring_type) < 0) {
-        return (false);
-    }
-    Py_INCREF(&tsigkeyring_type);
-    void* p = &tsigkeyring_type;
-    if (PyModule_AddObject(mod, "TSIGKeyRing",
-                           static_cast<PyObject*>(p)) != 0) {
-        Py_DECREF(&tsigkeyring_type);
+    if (!initClass(tsigkeyring_type, "TSIGKeyRing", mod)) {
         return (false);
     }
 
@@ -668,15 +595,9 @@ initModulePart_TSIGKeyRing(PyObject* mod) {
 
 bool
 initModulePart_TSIGContext(PyObject* mod) {
-    if (PyType_Ready(&tsigcontext_type) < 0) {
+    if (!initClass(tsigcontext_type, "TSIGContext", mod)) {
         return (false);
     }
-    void* p = &tsigcontext_type;
-    if (PyModule_AddObject(mod, "TSIGContext",
-                           static_cast<PyObject*>(p)) < 0) {
-        return (false);
-    }
-    Py_INCREF(&tsigcontext_type);
 
     try {
         // Class specific exceptions
@@ -717,28 +638,18 @@ initModulePart_TSIGContext(PyObject* mod) {
 
 bool
 initModulePart_TSIG(PyObject* mod) {
-    if (PyType_Ready(&tsig_type) < 0) {
+    if (!initClass(tsig_type, "TSIG", mod)) {
         return (false);
     }
-    void* p = &tsig_type;
-    if (PyModule_AddObject(mod, "TSIG", static_cast<PyObject*>(p)) < 0) {
-        return (false);
-    }
-    Py_INCREF(&tsig_type);
 
     return (true);
 }
 
 bool
 initModulePart_TSIGRecord(PyObject* mod) {
-    if (PyType_Ready(&tsigrecord_type) < 0) {
+    if (!initClass(tsigrecord_type, "TSIGRecord", mod)) {
         return (false);
     }
-    void* p = &tsigrecord_type;
-    if (PyModule_AddObject(mod, "TSIGRecord", static_cast<PyObject*>(p)) < 0) {
-        return (false);
-    }
-    Py_INCREF(&tsigrecord_type);
 
     try {
         // Constant class variables
