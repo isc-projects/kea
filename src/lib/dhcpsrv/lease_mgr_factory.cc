@@ -14,6 +14,7 @@
 
 #include "config.h"
 
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
 #ifdef HAVE_MYSQL
@@ -61,6 +62,7 @@ LeaseMgrFactory::parse(const std::string& dbaccess) {
                 string value = token.substr(pos + 1);
                 mapped_tokens.insert(make_pair(name, value));
             } else {
+                LOG_ERROR(dhcpsrv_logger, DHCPSRV_INVALID_ACCESS).arg(dbaccess);
                 isc_throw(InvalidParameter, "Cannot parse " << token
                           << ", expected format is name=value");
             }
@@ -101,26 +103,36 @@ void
 LeaseMgrFactory::create(const std::string& dbaccess) {
     const std::string type = "type";
 
-    // Is "type" present?
+    // Parse the access string and create a redacted string for logging.
     LeaseMgr::ParameterMap parameters = parse(dbaccess);
+    std::string redacted = redactedAccessString(parameters);
+
+    // Is "type" present?
     if (parameters.find(type) == parameters.end()) {
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_NOTYPE_DB).arg(dbaccess);
         isc_throw(InvalidParameter, "Database configuration parameters do not "
                   "contain the 'type' keyword");
     }
 
+
     // Yes, check what it is.
 #ifdef HAVE_MYSQL
     if (parameters[type] == string("mysql")) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_MYSQL_DB)
+            .arg(redacted);
         getLeaseMgrPtr().reset(new MySqlLeaseMgr(parameters));
         return;
     }
 #endif
     if (parameters[type] == string("memfile")) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_MEMFILE_DB)
+            .arg(redacted);
         getLeaseMgrPtr().reset(new Memfile_LeaseMgr(parameters));
         return;
     }
 
     // Get here on no match
+    LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg(parameters[type]);
     isc_throw(InvalidType, "Database access parameter 'type' does "
               "not specify a supported database backend");
 }
