@@ -443,6 +443,30 @@ TEST_F(MasterLoaderTest, originWithGarbage) {
     checkARR("www.example.org");
 }
 
+// Test we can pass both file to include and the origin to switch
+TEST_F(MasterLoaderTest, includeAndOrigin) {
+    // First, switch origin to something else, so we can check it is
+    // switched back.
+    const string include_string = "$ORIGIN www\n"
+        "@  1H  IN  A   192.0.2.1\n"
+        // Then include the file with data and switch origin back
+        "$INCLUDE " TEST_DATA_SRCDIR "/example.org example.org.\n"
+        // Another RR to see the switch survives after we exit include
+        "www    1H  IN  A   192.0.2.1\n";
+    stringstream ss(include_string);
+    setLoader(ss, Name("example.org"), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+    // Successfully load the data
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+    EXPECT_TRUE(warnings_.empty());
+    // And check it's the correct data
+    checkARR("www.example.org");
+    checkBasicRRs();
+    checkARR("www.example.org");
+}
+
 // Test the constructor rejects empty add callback.
 TEST_F(MasterLoaderTest, emptyCallback) {
     EXPECT_THROW(MasterLoader(TEST_DATA_SRCDIR "/example.org",
