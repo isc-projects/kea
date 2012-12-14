@@ -248,6 +248,12 @@ class Counters():
     _statistics = _Statistics()
 
     def __init__(self, spec_file_name=None):
+        """A constructor for the Counters class. A path of the spec
+        file can be specified in argument. Statistics data based on
+        statistics spec can be accumulated if specified. If omitted,
+        default statistics spec is used. Default statistics spec is
+        defined in other hidden class _Statistics().
+        """
         self._zones_item_list = []
         self._start_time = {}
         self._disabled = False
