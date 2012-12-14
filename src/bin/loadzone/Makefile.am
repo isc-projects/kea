@@ -1,8 +1,13 @@
-SUBDIRS = . tests/correct tests/error
+#SUBDIRS = . tests/correct tests/error  <= TBD: clean this up later
+SUBDIRS = . tests
 bin_SCRIPTS = b10-loadzone
+# tentative setup: clean this up:
+bin_SCRIPTS += b10-loadzone-ng
 noinst_SCRIPTS = run_loadzone.sh
 
 CLEANFILES = b10-loadzone
+# tentative setup: clean this up:
+CLEANFILES += b10-loadzone-ng
 
 man_MANS = b10-loadzone.8
 DISTCLEANFILES = $(man_MANS)
@@ -25,6 +30,11 @@ b10-loadzone: b10-loadzone.py
 	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" \
 	       -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" \
 	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" b10-loadzone.py >$@
+	chmod a+x $@
+
+# tentatively named "-ng".
+b10-loadzone-ng: loadzone.py
+	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" loadzone.py >$@
 	chmod a+x $@
 
 EXTRA_DIST += tests/normal/README
