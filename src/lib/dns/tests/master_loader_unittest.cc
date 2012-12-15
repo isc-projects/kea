@@ -185,7 +185,7 @@ TEST_F(MasterLoaderTest, include) {
 }
 
 TEST_F(MasterLoaderTest, origin) {
-    // Varius forms of the directive
+    // Various forms of the directive
     const char* origins[] = {
         "$origin",
         "$ORIGIN",
