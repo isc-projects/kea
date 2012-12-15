@@ -29,3 +29,5 @@
 % LOADZONE_LOADING Loaded %1 RRs into %2/%3, continued
 
 % LOADZONE_DONE Load zone %1/%2 completed
+
+% LOADZONE_POSTLOAD_ISSUE New version of zone %1/%2 has an issue: %3

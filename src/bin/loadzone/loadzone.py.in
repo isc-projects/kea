@@ -204,6 +204,28 @@ class LoadZoneRunner:
                              self._zone_class)
             raise LoadFailure(str(ex))
 
+    def _post_load_checks(self):
+        '''Perform minimal validity checks on the loaded zone.
+
+        We do this ourselves because the underlying library currently
+        doesn't do any checks.  Once the library support post-load validation
+        this check should be removed.
+
+        '''
+        datasrc_client = DataSourceClient(self._datasrc_type,
+                                          self._datasrc_config)
+        _, finder = datasrc_client.find_zone(self._zone_name) # should succeed
+        result = finder.find(self._zone_name, RRType.SOA())[0]
+        if result is not finder.SUCCESS:
+            self._post_load_warning('zone has no SOA')
+        result = finder.find(self._zone_name, RRType.NS())[0]
+        if result is not finder.SUCCESS:
+            self._post_load_warning('zone has no NS')
+
+    def _post_load_warning(self, msg):
+        logger.warn(LOADZONE_POSTLOAD_ISSUE, self._zone_name,
+                    self._zone_class, msg)
+
     def run(self):
         '''Top-level method, simply calling other helpers'''
 
@@ -211,6 +233,7 @@ class LoadZoneRunner:
             self._parse_args()
             self._do_load()
             logger.info(LOADZONE_DONE, self._zone_name, self._zone_class)
+            self._post_load_checks()
             return 0
         except BadArgument as ex:
             logger.error(LOADZONE_ARGUMENT_ERROR, ex)
