@@ -23,7 +23,13 @@ from isc.datasrc import *
 import isc.log
 from isc.log_messages.loadzone_messages import *
 
-isc.log.init("b10-loadzone", buffer=False)
+# These are needed for logger settings
+import bind10_config
+import json
+from isc.config import module_spec_from_file
+from isc.config.ccsession import path_search
+
+isc.log.init("b10-loadzone")
 logger = isc.log.Logger("loadzone")
 
 class BadArgument(Exception):
@@ -47,6 +53,10 @@ def set_cmd_options(parser):
 the zone in.  Example:
 '{"database_file": "/path/to/dbfile/db.sqlite3"}'""",
                       metavar='CONFIG')
+    parser.add_option("-d", "--debug", dest="debug_level",
+                      action="store", default=None,
+                      help="enable debug logs with the specified level",
+                      metavar='DEBUG_LEVEL')
     parser.add_option("-t", "--datasrc-type", dest="datasrc_type",
                       action="store", default='sqlite3',
                       help="type of data source (e.g., 'sqlite3')")
@@ -65,6 +75,19 @@ class LoadZoneRunner:
         self.__load_iteration_limit = 100000 # arbitrary choice for now
         self.__loaded_rrs = 0
 
+        # system-wide log configuration.  We need to configure logging this
+        # way so that the logging policy applies to underlying libraries, too.
+        self.__log_spec = json.dumps(isc.config.module_spec_from_file(
+                path_search('logging.spec', bind10_config.PLUGIN_PATHS)).
+                                     get_full_spec())
+        # "severity" and "debuglevel" are the tunable parameters, which will
+        # be set in _config_log().
+        self.__log_conf_base = {"loggers":
+                                    [{"name": "*",
+                                      "output_options":
+                                          [{"output": "stdout",
+                                            "destination": "console"}]}]}
+
         # These are essentially private, and defined as "protected" for the
         # convenience of tests inspecting them
         self._zone_class = None
@@ -72,6 +95,21 @@ class LoadZoneRunner:
         self._zone_file = None
         self._datasrc_config = None
         self._datasrc_type = None
+        self._log_severity = 'INFO'
+        self._log_debuglevel = 0
+
+        self._config_log()
+
+    def _config_log(self):
+        '''Configure logging policy.
+
+        This is essentially private, but defined as "protected" for tests.
+
+        '''
+        self.__log_conf_base['loggers'][0]['severity'] = self._log_severity
+        self.__log_conf_base['loggers'][0]['debuglevel'] = self._log_debuglevel
+        isc.log.log_config_update(json.dumps(self.__log_conf_base),
+                                  self.__log_spec)
 
     def _parse_args(self):
         '''Parse command line options and other arguments.
@@ -80,10 +118,17 @@ class LoadZoneRunner:
 
         '''
 
-        usage_txt = 'usage: %prog [options] zonename zonefile'
+        usage_txt = \
+            'usage: %prog [options] -c datasrc_config zonename zonefile'
         parser = OptionParser(usage=usage_txt)
         set_cmd_options(parser)
         (options, args) = parser.parse_args(args=self.__command_args)
+
+        # Configure logging policy as early as possible
+        if options.debug_level is not None:
+            self._log_severity = 'DEBUG'
+            self._log_debuglevel = int(options.debug_level)
+        self._config_log()
 
         if options.conf is None:
             raise BadArgument('data source config option cannot be omitted')
