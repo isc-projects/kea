@@ -21,10 +21,15 @@ Some semantics error in command line arguments or options to b10-loadzone
 is detected.  b10-loadzone does effectively nothing and immediately
 terminates.
 
-% LOADZONE_ZONE_CREATED Zone %1/%2 does not exist in the data source, newly created
-The specified zone to b10-loadzone to load does not exist in the
-specified data source.  b10-loadzone has created a new empty zone
-in the data source.
+% LOADZONE_CANCEL_CREATE_ZONE Creation of new zone %1/%2 was canceled
+b10-loadzone has created a new zone in the data source (see
+LOADZONE_ZONE_CREATED), but the loading operation has subsequently
+failed.  The newly created zone has been removed from the data source,
+so that the data source will go back to the original state.
+
+% LOADZONE_DONE Load zone %1/%2 completed
+b10-loadzone has successfully loaded the specified zone.  If there was
+an old version of the zone in the data source, it is now deleted.
 
 % LOADZONE_LOAD_ERROR Failed to load zone %1/%2: %3
 Loading a zone by b10-loadzone fails for some reason in the middle of
@@ -34,11 +39,13 @@ in the zone file.  When this happens, the RRs loaded so far are
 effectively deleted from the zone, and the old version (if exists)
 will still remain valid for operations.
 
-% LOADZONE_CANCEL_CREATE_ZONE Creation of new zone %1/%2 was canceled
-b10-loadzone has created a new zone in the data source (see
-LOADZONE_ZONE_CREATED), but the loading operation has subsequently
-failed.  The newly created zone has been removed from the data source,
-so that the data source will go back to the original state.
+% LOADZONE_POSTLOAD_ISSUE New version of zone %1/%2 has an issue: %3
+b10-loadzone detected a problem after a successful load of zone:
+either or both of SOA and NS records are missing at the zone origin.
+In the current implementation the load will not be canceled for such
+problems.  The operator will need to fix the issues and reload the
+zone; otherwise applications (such as b10-auth) that use this data
+source will not work as expected.
 
 % LOADZONE_UNEXPECTED_FAILURE Unexpected exception: %1
 b10-loadzone encounters an unexpected failure and terminates itself.
@@ -47,14 +54,7 @@ data source library, so it's advisable to submit a bug report if
 this message is logged.  The incomplete attempt of loading should
 have been cleanly canceled in this case, too.
 
-% LOADZONE_DONE Load zone %1/%2 completed
-b10-loadzone has successfully loaded the specified zone.  If there was
-an old version of the zone in the data source, it is now deleted.
-
-% LOADZONE_POSTLOAD_ISSUE New version of zone %1/%2 has an issue: %3
-b10-loadzone detected a problem after a successful load of zone:
-either or both of SOA and NS records are missing at the zone origin.
-In the current implementation the load will not be canceled for such
-problems.  The operator will need to fix the issues and reload the
-zone; otherwise applications (such as b10-auth) that use this data
-source will not work as expected.
+% LOADZONE_ZONE_CREATED Zone %1/%2 does not exist in the data source, newly created
+The specified zone to b10-loadzone to load does not exist in the
+specified data source.  b10-loadzone has created a new empty zone
+in the data source.
