@@ -449,7 +449,6 @@ var/
 
         <listitem>
           <para>Load desired zone file(s), for example:
-	    
             <screen>$ <userinput>b10-loadzone <replaceable>-c '{"database_file": "/usr/local/var/bind10/zone.sqlite3"}'</replaceable> <replaceable>your.zone.example.org</replaceable> <replaceable>your.zone.file</replaceable></userinput></screen>
           </para>
         </listitem>
