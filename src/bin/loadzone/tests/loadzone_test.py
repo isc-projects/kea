@@ -67,7 +67,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertIsNone(self.__runner._zone_file)
         self.assertIsNone(self.__runner._datasrc_config)
         self.assertIsNone(self.__runner._datasrc_type)
-        self.assertIsNone(self.__runner._load_iteration_limit)
+        self.assertEqual(10000, self.__runner._load_iteration_limit)
         self.assertEqual('INFO', self.__runner._log_severity)
         self.assertEqual(0, self.__runner._log_debuglevel)
 

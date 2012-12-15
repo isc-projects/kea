@@ -33,6 +33,11 @@ from isc.config.ccsession import path_search
 isc.log.init("b10-loadzone")
 logger = isc.log.Logger("loadzone")
 
+# The default value for the interval of progress report in terms of the
+# number of RRs loaded in that interval.  Arbitrary choice, but intended to
+# be reasonably small to handle emergency exit.
+LOAD_INTERVAL_DEFAULT = 10000
+
 class BadArgument(Exception):
     '''An exception indicating an error in command line argument.
 
@@ -59,7 +64,7 @@ the zone in.  Example:
                       help="enable debug logs with the specified level")
     parser.add_option("-i", "--report-interval", dest="report_interval",
                       type='int', action="store",
-                      default=10000, # arbitrary choice
+                      default=LOAD_INTERVAL_DEFAULT,
                       help="""report logs progress per specified number of RRs
 (specify 0 to suppress report) [default: %default]""")
     parser.add_option("-t", "--datasrc-type", dest="datasrc_type",
@@ -103,7 +108,7 @@ class LoadZoneRunner:
         self._datasrc_type = None
         self._log_severity = 'INFO'
         self._log_debuglevel = 0
-        self._load_iteration_limit = None
+        self._load_iteration_limit = LOAD_INTERVAL_DEFAULT
 
         self._config_log()
 
@@ -217,11 +222,13 @@ class LoadZoneRunner:
                                 self._zone_file)
             self.__start_time = time.time()
             if self._load_iteration_limit > 0:
-                while not loader.load_incremental(self._load_iteration_limit):
-                    self.__loaded_rrs += self._load_iteration_limit
-                    self._report_progress(self.__loaded_rrs)
+                limit = self._load_iteration_limit
             else:
-                loader.load()
+                limit = LOAD_INTERVAL_DEFAULT
+            while not loader.load_incremental(limit):
+                self.__loaded_rrs += self._load_iteration_limit
+                if self._load_iteration_limit > 0:
+                    self._report_progress(self.__loaded_rrs)
         except Exception as ex:
             # release any remaining lock held in the client/loader
             loader, datasrc_client = None, None
