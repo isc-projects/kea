@@ -18,6 +18,7 @@
 import sys
 sys.path.append('@@PYTHONPATH@@')
 import time
+import signal
 from optparse import OptionParser
 from isc.dns import *
 from isc.datasrc import *
@@ -85,6 +86,7 @@ class LoadZoneRunner:
     def __init__(self, command_args):
         self.__command_args = command_args
         self.__loaded_rrs = 0
+        self.__interrupted = False # will be set to True on receiving signal
 
         # system-wide log configuration.  We need to configure logging this
         # way so that the logging policy applies to underlying libraries, too.
@@ -199,6 +201,11 @@ class LoadZoneRunner:
                         [self._zone_name.to_text()])
 
     def _report_progress(self, loaded_rrs):
+        '''Dump the current progress report to stdout.
+
+        This is essentially private, but defined as "protected" for tests.
+
+        '''
         elapsed = time.time() - self.__start_time
         sys.stdout.write("\r" + (80 * " "))
         sys.stdout.write("\r%d RRs loaded in %.2f seconds" %
@@ -225,10 +232,13 @@ class LoadZoneRunner:
                 limit = self._load_iteration_limit
             else:
                 limit = LOAD_INTERVAL_DEFAULT
-            while not loader.load_incremental(limit):
+            while (not self.__interrupted and
+                   not loader.load_incremental(limit)):
                 self.__loaded_rrs += self._load_iteration_limit
                 if self._load_iteration_limit > 0:
                     self._report_progress(self.__loaded_rrs)
+            if self.__interrupted:
+                raise LoadFailure('loading interrupted by signal')
         except Exception as ex:
             # release any remaining lock held in the client/loader
             loader, datasrc_client = None, None
@@ -260,10 +270,18 @@ class LoadZoneRunner:
         logger.warn(LOADZONE_POSTLOAD_ISSUE, self._zone_name,
                     self._zone_class, msg)
 
+    def _set_signal_handlers(self):
+        signal.signal(signal.SIGINT, self._interrupt_handler)
+        signal.signal(signal.SIGTERM, self._interrupt_handler)
+
+    def _interrupt_handler(self, signal, frame):
+        self.__interrupted = True
+
     def run(self):
         '''Top-level method, simply calling other helpers'''
 
         try:
+            self._set_signal_handlers()
             self._parse_args()
             self._do_load()
             logger.info(LOADZONE_DONE, self._zone_name, self._zone_class)
