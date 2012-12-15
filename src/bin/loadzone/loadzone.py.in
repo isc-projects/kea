@@ -85,7 +85,7 @@ class LoadZoneRunner:
         self.__log_conf_base = {"loggers":
                                     [{"name": "*",
                                       "output_options":
-                                          [{"output": "stdout",
+                                          [{"output": "stderr",
                                             "destination": "console"}]}]}
 
         # These are essentially private, and defined as "protected" for the
