@@ -17,6 +17,7 @@
 
 import sys
 sys.path.append('@@PYTHONPATH@@')
+import time
 from optparse import OptionParser
 from isc.dns import *
 from isc.datasrc import *
@@ -193,8 +194,10 @@ class LoadZoneRunner:
                         [self._zone_name.to_text()])
 
     def _report_progress(self, loaded_rrs):
-        logger.info(LOADZONE_LOADING, loaded_rrs,
-                    self._zone_name, self._zone_class)
+        elapsed = time.time() - self.__start_time
+        sys.stdout.write("\r" + (80 * " "))
+        sys.stdout.write("\r%d RRs loaded in %.2f seconds" %
+                         (loaded_rrs, elapsed))
 
     def _do_load(self):
         '''Main part of the load logic.
@@ -212,6 +215,7 @@ class LoadZoneRunner:
                             self._zone_class)
             loader = ZoneLoader(datasrc_client, self._zone_name,
                                 self._zone_file)
+            self.__start_time = time.time()
             if self._load_iteration_limit > 0:
                 while not loader.load_incremental(self._load_iteration_limit):
                     self.__loaded_rrs += self._load_iteration_limit
