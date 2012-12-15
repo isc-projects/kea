@@ -125,6 +125,8 @@ class TestLoadZoneRunner(unittest.TestCase):
         """Check that the given SOA RR exists and matches the expected string
 
         If soa_txt is None, the zone is expected to be non-existent.
+        Otherwise, if soa_txt is False, the zone should exist but SOA is
+        expected to be missing.
 
         """
 
@@ -135,8 +137,11 @@ class TestLoadZoneRunner(unittest.TestCase):
             return
         self.assertEqual(client.SUCCESS, result)
         result, rrset, _ = finder.find(zone_name, RRType.SOA())
-        self.assertEqual(finder.SUCCESS, result)
-        self.assertEqual(soa_txt, rrset.to_text())
+        if soa_txt:
+            self.assertEqual(finder.SUCCESS, result)
+            self.assertEqual(soa_txt, rrset.to_text())
+        else:
+            self.assertEqual(finder.NXRRSET, result)
 
     def test_load_update(self):
         '''successful case to loading new contents to an existing zone.'''
@@ -189,6 +194,39 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertRaises(LoadFailure, self.__runner._do_load)
         # _do_load() should have once created the zone but then canceled it.
         self.__check_zone_soa(None, zone_name=Name('example.com'))
+
+    def __common_post_load_setup(self, zone_file):
+        '''Common setup procedure for post load tests.'''
+        # replace the LoadZoneRunner's original _post_load_warning() for
+        # inspection
+        self.__warnings = []
+        self.__runner._post_load_warning = \
+            lambda msg: self.__warnings.append(msg)
+
+        # perform load and invoke checks
+        self.__common_load_setup()
+        self.__runner._zone_file = zone_file
+        self.__check_zone_soa(ORIG_SOA_TXT)
+        self.__runner._do_load()
+        self.__runner._post_load_checks()
+
+    def test_load_fail_create_cancel(self):
+        '''Load succeeds but warns about missing SOA, should cause warn'''
+        self.__common_load_setup()
+        self.__common_post_load_setup(LOCAL_TESTDATA_PATH +
+                                      '/example-nosoa.org.zone')
+        self.__check_zone_soa(False)
+        self.assertEqual(1, len(self.__warnings))
+        self.assertEqual('zone has no SOA', self.__warnings[0])
+
+    def test_load_fail_create_cancel(self):
+        '''Load succeeds but warns about missing NS, should cause warn'''
+        self.__common_load_setup()
+        self.__common_post_load_setup(LOCAL_TESTDATA_PATH +
+                                      '/example-nons.org.zone')
+        self.__check_zone_soa(NEW_SOA_TXT)
+        self.assertEqual(1, len(self.__warnings))
+        self.assertEqual('zone has no NS', self.__warnings[0])
 
     def test_run_success(self):
         '''Check for the top-level method.

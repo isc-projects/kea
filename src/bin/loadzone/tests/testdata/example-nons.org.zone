@@ -1,0 +1,10 @@
+;; Intentionally missing SOA for testing post-load checks
+example.org.    3600    IN  SOA (
+		ns.example.org.
+		admin.example.org.
+		1235
+		3600		;1H
+		1800		;30M
+		2419200
+		7200)
+ns.example.org.	3600    IN  A 192.0.2.1
