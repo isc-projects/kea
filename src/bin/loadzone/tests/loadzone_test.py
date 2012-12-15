@@ -60,11 +60,15 @@ class TestLoadZoneRunner(unittest.TestCase):
 
     def test_init(self):
         '''
-        Test the old socket file is removed (if any) and a new socket
-        is created when the ddns server is created.
+        Checks initial class attributes
         '''
         self.assertIsNone(self.__runner._zone_class)
         self.assertIsNone(self.__runner._zone_name)
+        self.assertIsNone(self.__runner._zone_file)
+        self.assertIsNone(self.__runner._datasrc_config)
+        self.assertIsNone(self.__runner._datasrc_type)
+        self.assertEqual('INFO', self.__runner._log_severity)
+        self.assertEqual(0, self.__runner._log_debuglevel)
 
     def test_parse_args(self):
         self.__runner._parse_args()
@@ -73,6 +77,14 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertEqual(DATASRC_CONFIG, self.__runner._datasrc_config)
         self.assertEqual('sqlite3', self.__runner._datasrc_type) # default
         self.assertEqual(RRClass.IN(), self.__runner._zone_class) # default
+        self.assertEqual('INFO', self.__runner._log_severity) # default
+        self.assertEqual(0, self.__runner._log_debuglevel)
+
+    def test_set_loglevel(self):
+        runner = LoadZoneRunner(['-d', '1'] + self.__args)
+        runner._parse_args()
+        self.assertEqual('DEBUG', runner._log_severity)
+        self.assertEqual(1, runner._log_debuglevel)
 
     def test_parse_bad_args(self):
         # -c cannot be omitted (right now)
@@ -205,4 +217,7 @@ class TestLoadZoneRunner(unittest.TestCase):
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()
+    # Disable the internal logging setup so the test output won't be too
+    # verbose by default.
+    LoadZoneRunner._config_log = lambda x: None
     unittest.main()
