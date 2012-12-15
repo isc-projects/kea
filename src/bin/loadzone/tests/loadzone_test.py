@@ -67,6 +67,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertIsNone(self.__runner._zone_file)
         self.assertIsNone(self.__runner._datasrc_config)
         self.assertIsNone(self.__runner._datasrc_type)
+        self.assertIsNone(self.__runner._load_iteration_limit)
         self.assertEqual('INFO', self.__runner._log_severity)
         self.assertEqual(0, self.__runner._log_debuglevel)
 
@@ -76,6 +77,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertEqual(NEW_ZONE_TXT_FILE, self.__runner._zone_file)
         self.assertEqual(DATASRC_CONFIG, self.__runner._datasrc_config)
         self.assertEqual('sqlite3', self.__runner._datasrc_type) # default
+        self.assertEqual(10000, self.__runner._load_iteration_limit) # default
         self.assertEqual(RRClass.IN(), self.__runner._zone_class) # default
         self.assertEqual('INFO', self.__runner._log_severity) # default
         self.assertEqual(0, self.__runner._log_debuglevel)
@@ -92,8 +94,9 @@ class TestLoadZoneRunner(unittest.TestCase):
                           LoadZoneRunner(['example', 'example.zone']).
                           _parse_args)
 
+        copt = ['-c', '0']      # template for the mandatory -c option
+
         # There must be exactly 2 non-option arguments: zone name and zone file
-        copt = ['-c', '0']
         self.assertRaises(BadArgument, LoadZoneRunner(copt)._parse_args)
         self.assertRaises(BadArgument, LoadZoneRunner(copt + ['example']).
                           _parse_args)
@@ -114,12 +117,24 @@ class TestLoadZoneRunner(unittest.TestCase):
                           LoadZoneRunner(copt + ['-C', 'CH']).
                           _parse_args)
 
+        # bad debug level
+        args = copt + ['example.org', 'example.zone'] # otherwise valid args
+        self.assertRaises(BadArgument,
+                          LoadZoneRunner(['-d', '-10'] + args)._parse_args)
+
+        # bad report interval
+        self.assertRaises(BadArgument,
+                          LoadZoneRunner(['-i', '-5'] + args)._parse_args)
+
     def __common_load_setup(self):
         self.__runner._zone_class = RRClass.IN()
         self.__runner._zone_name = TEST_ZONE_NAME
         self.__runner._zone_file = NEW_ZONE_TXT_FILE
         self.__runner._datasrc_type = 'sqlite3'
         self.__runner._datasrc_config = DATASRC_CONFIG
+        self.__runner._load_iteration_limit = 1
+        self.__reports = []
+        self.__runner._report_progress = lambda x: self.__reports.append(x)
 
     def __check_zone_soa(self, soa_txt, zone_name=TEST_ZONE_NAME):
         """Check that the given SOA RR exists and matches the expected string
@@ -148,7 +163,25 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.__common_load_setup()
         self.__check_zone_soa(ORIG_SOA_TXT)
         self.__runner._do_load()
+        # In this test setup every loaded RR will be reported, and there will
+        # be 3 RRs
+        self.assertEqual([1, 2, 3], self.__reports)
         self.__check_zone_soa(NEW_SOA_TXT)
+
+    def test_load_update_skipped_report(self):
+        '''successful loading, with reports for every 2 RRs'''
+        self.__common_load_setup()
+        self.__runner._load_iteration_limit = 2
+        self.__runner._do_load()
+        self.assertEqual([2], self.__reports)
+
+    def test_load_update_no_report(self):
+        '''successful loading, without progress reports'''
+        self.__common_load_setup()
+        self.__runner._load_iteration_limit = 0
+        self.__runner._do_load()
+        self.assertEqual([], self.__reports) # no report
+        self.__check_zone_soa(NEW_SOA_TXT)   # but load is completed
 
     def test_create_and_load(self):
         '''successful case to loading contents to a new zone (created).'''
