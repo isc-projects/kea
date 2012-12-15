@@ -54,15 +54,21 @@ the zone in.  Example:
 '{"database_file": "/path/to/dbfile/db.sqlite3"}'""",
                       metavar='CONFIG')
     parser.add_option("-d", "--debug", dest="debug_level",
-                      action="store", default=None,
-                      help="enable debug logs with the specified level",
-                      metavar='DEBUG_LEVEL')
+                      type='int', action="store", default=None,
+                      help="enable debug logs with the specified level")
+    parser.add_option("-i", "--report-interval", dest="report_interval",
+                      type='int', action="store",
+                      default=10000, # arbitrary choice
+                      help="""report logs progress per specified number of RRs
+(specify 0 to suppress report) [default: %default]""")
     parser.add_option("-t", "--datasrc-type", dest="datasrc_type",
                       action="store", default='sqlite3',
-                      help="type of data source (e.g., 'sqlite3')")
+                      help="""type of data source (e.g., 'sqlite3')\n
+[default: %default]""")
     parser.add_option("-C", "--class", dest="zone_class", action="store",
                       default='IN',
-                      help="RR class of the zone; currently must be 'IN'")
+                      help="""RR class of the zone; currently must be 'IN'
+[default: %default]""")
 
 class LoadZoneRunner:
     '''Main logic for the loadzone.
@@ -72,7 +78,6 @@ class LoadZoneRunner:
     '''
     def __init__(self, command_args):
         self.__command_args = command_args
-        self.__load_iteration_limit = 100000 # arbitrary choice for now
         self.__loaded_rrs = 0
 
         # system-wide log configuration.  We need to configure logging this
@@ -97,6 +102,7 @@ class LoadZoneRunner:
         self._datasrc_type = None
         self._log_severity = 'INFO'
         self._log_debuglevel = 0
+        self._load_iteration_limit = None
 
         self._config_log()
 
@@ -127,7 +133,12 @@ class LoadZoneRunner:
         # Configure logging policy as early as possible
         if options.debug_level is not None:
             self._log_severity = 'DEBUG'
+            # optparse performs type check
             self._log_debuglevel = int(options.debug_level)
+            if self._log_debuglevel < 0:
+                raise BadArgument(
+                    'Invalid debug level (must be non negative): %d' %
+                    self._log_debuglevel)
         self._config_log()
 
         if options.conf is None:
@@ -141,6 +152,12 @@ class LoadZoneRunner:
         if self._zone_class != RRClass.IN():
             raise BadArgument("RR class is not supported: " +
                               str(self._zone_class))
+
+        self._load_iteration_limit = int(options.report_interval)
+        if self._load_iteration_limit < 0:
+            raise BadArgument(
+                'Invalid report interval (must be non negative): %d' %
+                self._load_iteration_limit)
 
         if len(args) != 2:
             raise BadArgument('Unexpected number of arguments: %d (must be 2)'
@@ -175,6 +192,10 @@ class LoadZoneRunner:
             cur.execute("DELETE FROM zones WHERE name = ?",
                         [self._zone_name.to_text()])
 
+    def _report_progress(self, loaded_rrs):
+        logger.info(LOADZONE_LOADING, loaded_rrs,
+                    self._zone_name, self._zone_class)
+
     def _do_load(self):
         '''Main part of the load logic.
 
@@ -191,10 +212,12 @@ class LoadZoneRunner:
                             self._zone_class)
             loader = ZoneLoader(datasrc_client, self._zone_name,
                                 self._zone_file)
-            while not loader.load_incremental(self.__load_iteration_limit):
-                self.__loaded_rrs += self.__load_iteration_limit
-                logger.info(LOADZONE_LOADING, self.__loaded_rrs,
-                            self._zone_name, self._zone_class)
+            if self._load_iteration_limit > 0:
+                while not loader.load_incremental(self._load_iteration_limit):
+                    self.__loaded_rrs += self._load_iteration_limit
+                    self._report_progress(self.__loaded_rrs)
+            else:
+                loader.load()
         except Exception as ex:
             # release any remaining lock held in the client/loader
             loader, datasrc_client = None, None
