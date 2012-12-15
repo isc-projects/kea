@@ -243,7 +243,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.__runner._do_load()
         self.__runner._post_load_checks()
 
-    def test_load_fail_create_cancel(self):
+    def test_load_post_check_fail_soa(self):
         '''Load succeeds but warns about missing SOA, should cause warn'''
         self.__common_load_setup()
         self.__common_post_load_setup(LOCAL_TESTDATA_PATH +
@@ -252,7 +252,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertEqual(1, len(self.__warnings))
         self.assertEqual('zone has no SOA', self.__warnings[0])
 
-    def test_load_fail_create_cancel(self):
+    def test_load_post_check_fail_ns(self):
         '''Load succeeds but warns about missing NS, should cause warn'''
         self.__common_load_setup()
         self.__common_post_load_setup(LOCAL_TESTDATA_PATH +
@@ -260,6 +260,43 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.__check_zone_soa(NEW_SOA_TXT)
         self.assertEqual(1, len(self.__warnings))
         self.assertEqual('zone has no NS', self.__warnings[0])
+
+    def __interrupt_progress(self, loaded_rrs):
+        '''A helper emulating a signal in the middle of loading.
+
+        On the second progress report, it internally invokes the signal
+        handler to see if it stops the loading.
+
+        '''
+        self.__reports.append(loaded_rrs)
+        if len(self.__reports) == 2:
+            self.__runner._interrupt_handler()
+
+    def test_load_interrupted(self):
+        '''Load attempt fails due to signal interruption'''
+        self.__common_load_setup()
+        self.__runner._report_progress = lambda x: self.__interrupt_progress(x)
+        # The interrupting _report_progress() will terminate the loading
+        # in the middle.  the number of reports is smaller, and the zone
+        # won't be changed.
+        self.assertRaises(LoadFailure, self.__runner._do_load)
+        self.assertEqual([1, 2], self.__reports)
+        self.__check_zone_soa(ORIG_SOA_TXT)
+
+    def test_load_interrupted_create_cancel(self):
+        '''Load attempt for a new zone fails due to signal interruption
+
+        It cancels the zone creation.
+
+        '''
+        self.__common_load_setup()
+        self.__runner._report_progress = lambda x: self.__interrupt_progress(x)
+        self.__runner._zone_name = Name('example.com')
+        self.__runner._zone_file = ALT_NEW_ZONE_TXT_FILE
+        self.__check_zone_soa(None, zone_name=Name('example.com'))
+        self.assertRaises(LoadFailure, self.__runner._do_load)
+        self.assertEqual([1, 2], self.__reports)
+        self.__check_zone_soa(None, zone_name=Name('example.com'))
 
     def test_run_success(self):
         '''Check for the top-level method.
@@ -291,4 +328,7 @@ if __name__== "__main__":
     # Disable the internal logging setup so the test output won't be too
     # verbose by default.
     LoadZoneRunner._config_log = lambda x: None
+
+    # Cancel signal handlers so we can stop tests when they hang
+    LoadZoneRunner._set_signal_handlers = lambda x: None
     unittest.main()
