@@ -24,7 +24,7 @@
 
 % LOADZONE_CANCEL_CREATE_ZONE Creation of new zone %1/%2 was canceled
 
-% LOADZONE_UNEXPECTED_FAILURE Unexpected exception: ex
+% LOADZONE_UNEXPECTED_FAILURE Unexpected exception: %1
 
 % LOADZONE_LOADING Loaded %1 RRs into %2/%3, continued
 
