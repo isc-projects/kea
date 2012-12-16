@@ -1,4 +1,4 @@
-526.	[bug]		syephen
+526.	[bug]		stephen
 	Miscellaneous fixes to DHCP code including rationalisation of
 	some methods in LeaseMgr and resolving some Doxygen/cppcheck
 	issues.
