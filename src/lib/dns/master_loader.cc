@@ -69,6 +69,7 @@ public:
         initialized_(false),
         ok_(true),
         many_errors_((options & MANY_ERRORS) != 0),
+        previous_name_(false),
         complete_(false),
         seen_error_(false)
     {}
@@ -101,6 +102,7 @@ public:
         // Store the current status, so we can recover it upon popSource
         include_info_.push_back(IncludeInfo(active_origin_, last_name_));
         initialized_ = true;
+        previous_name_ = false;
     }
 
     bool popSource() {
@@ -117,6 +119,7 @@ public:
         active_origin_ = info.first;
         last_name_ = info.second;
         include_info_.pop_back();
+        previous_name_ = false;
         return (true);
     }
 
@@ -238,6 +241,8 @@ private:
     // in that file.
     typedef pair<Name, shared_ptr<Name> > IncludeInfo;
     vector<IncludeInfo> include_info_;
+    bool previous_name_; // True if there was a previous name in this file
+                         // (false at the beginning or after an $INCLUDE line)
 public:
     bool complete_;             // All work done.
     bool seen_error_;           // Was there at least one error during the
@@ -312,11 +317,17 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
 
                 last_name_.reset(new Name(name_string.beg, name_string.len,
                                           &active_origin_));
+                previous_name_ = true;
             } else if (initial_token.getType() == MasterToken::INITIAL_WS) {
                 // This means the same name as previous.
                 if (last_name_.get() == NULL) {
                     isc_throw(InternalException, "No previous name to use in "
                               "place of initial whitespace");
+                } else if (!previous_name_) {
+                    callbacks_.warning(lexer_.getSourceName(),
+                                       lexer_.getSourceLine(),
+                                       "Ambiguous previous name previous name "
+                                       "for initial whitespace");
                 }
             } else if (initial_token.getType() == MasterToken::ERROR) {
                 // Error token here.
