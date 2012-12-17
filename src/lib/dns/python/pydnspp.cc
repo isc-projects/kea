@@ -383,8 +383,8 @@ initModulePart_Rdata(PyObject* mod) {
 
     // Add the exceptions to the class
     try {
-        po_InvalidRdataLength = PyErr_NewException("pydnspp.InvalidRdataLength",
-                                                   NULL, NULL);
+        po_InvalidRdataLength =
+            PyErr_NewException("pydnspp.InvalidRdataLength", NULL, NULL);
         PyObjectContainer(po_InvalidRdataLength).installToModule(
             mod, "InvalidRdataLength");
 
