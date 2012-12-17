@@ -99,9 +99,9 @@ initClass(PyTypeObject& type, const char* name, PyObject* mod) {
     // then add it to the module. This is not just a check! (leaving
     // this out results in segmentation faults)
     //
+    void* p = &type;
     if (PyType_Ready(&type) < 0 ||
-        PyModule_AddObject(mod, name,
-                           reinterpret_cast<PyObject*>(&type)) < 0) {
+        PyModule_AddObject(mod, name, static_cast<PyObject*>(p)) < 0) {
         return (false);
     }
     Py_INCREF(&type);
