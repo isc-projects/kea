@@ -479,7 +479,7 @@ TEST_F(MasterLoaderTest, ttlFromPrevious) {
     checkCallbackMessage(warnings_.at(0), "using RFC1035 TTL semantics", 2);
 }
 
-TEST_F(MasterLoaderTest, ttlClassTypeOrder) {
+TEST_F(MasterLoaderTest, RRParamsOrdering) {
     // We test the order and existence of TTL, class and type. See
     // MasterLoader::MasterLoaderImpl::parseRRParams() for ordering.
 
