@@ -173,7 +173,7 @@ private:
 
         // If we couldn't parse TTL earlier in the stream (above), try
         // again at current location.
-        if (!explicit_ttl && rrclass &&
+        if (!explicit_ttl &&
             setCurrentTTL(rrparam_token.getString())) {
             explicit_ttl = true;
             rrparam_token = lexer_.getNextToken(MasterToken::STRING);
