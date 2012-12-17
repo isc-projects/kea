@@ -405,10 +405,9 @@ MasterLoader::MasterLoaderImpl::handleInitialToken() {
             isc_throw(InternalException, "No previous name to use in "
                       "place of initial whitespace");
         } else if (!previous_name_) {
-            callbacks_.warning(lexer_.getSourceName(),
-                               lexer_.getSourceLine(),
-                               "Ambiguous previous name previous name for "
-                               "use in place of initial whitespace");
+            callbacks_.warning(lexer_.getSourceName(), lexer_.getSourceLine(),
+                               "Ambiguous previous name for use in place of "
+                               "initial whitespace");
         }
         return (next_token);
     } else if (initial_token.getType() == MasterToken::STRING ||
