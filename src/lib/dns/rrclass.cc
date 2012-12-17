@@ -60,6 +60,12 @@ RRClass::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint16(classcode_);
 }
 
+bool
+RRClass::fromText(const std::string& class_str) {
+     return (RRParamRegistry::getRegistry().textToClassCode(class_str,
+                                                            classcode_));
+}
+
 ostream&
 operator<<(ostream& os, const RRClass& rrclass) {
     os << rrclass.toText();
