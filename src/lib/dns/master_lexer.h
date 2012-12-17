@@ -54,7 +54,8 @@ public:
         END_OF_LINE, ///< End of line detected
         END_OF_FILE, ///< End of file detected
         INITIAL_WS,  ///< White spaces at the beginning of a line after an
-                     ///< end of line (if asked for detecting it)
+                     ///< end of line or at the beginning of file (if asked
+                     //   for detecting it)
         NOVALUE_TYPE_MAX = INITIAL_WS, ///< Max integer corresponding to
                                        /// no-value (type only) types.
                                        /// Mainly for internal use.
