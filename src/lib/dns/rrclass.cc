@@ -31,7 +31,11 @@ namespace isc {
 namespace dns {
 
 RRClass::RRClass(const std::string& classstr) {
-    classcode_ = RRParamRegistry::getRegistry().textToClassCode(classstr);
+     if (!RRParamRegistry::getRegistry().textToClassCode(classstr,
+                                                         classcode_)) {
+          isc_throw(InvalidRRClass,
+                    "Unrecognized RR parameter string: " + classstr);
+     }
 }
 
 RRClass::RRClass(InputBuffer& buffer) {

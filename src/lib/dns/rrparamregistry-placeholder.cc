@@ -421,14 +421,15 @@ removeParam(uint16_t code, MC& codemap, MS& stringmap) {
     return (false);
 }
 
-template <typename PT, typename MS, typename ET>
-inline uint16_t
-textToCode(const string& code_str, MS& stringmap) {
+template <typename PT, typename MS>
+inline bool
+textToCode(const string& code_str, MS& stringmap, uint16_t& class_code) {
     typename MS::const_iterator found;
 
     found = stringmap.find(code_str);
     if (found != stringmap.end()) {
-        return (found->second->code_);
+        class_code = found->second->code_;
+        return (true);
     }
 
     size_t l = code_str.size();
@@ -441,10 +442,12 @@ textToCode(const string& code_str, MS& stringmap) {
                                           l - PT::UNKNOWN_PREFIXLEN()));
         iss >> dec >> code;
         if (iss.rdstate() == ios::eofbit && code <= PT::MAX_CODE) {
-            return (code);
+            class_code = code;
+            return (true);
         }
     }
-    isc_throw(ET, "Unrecognized RR parameter string: " + code_str);
+
+    return (false);
 }
 
 template <typename PT, typename MC>
@@ -477,8 +480,15 @@ RRParamRegistry::removeType(uint16_t code) {
 
 uint16_t
 RRParamRegistry::textToTypeCode(const string& type_string) const {
-    return (textToCode<RRTypeParam, StrRRTypeMap,
-            InvalidRRType>(type_string, impl_->str2typemap));
+    uint16_t code;
+
+    if (!textToCode<RRTypeParam, StrRRTypeMap>
+        (type_string, impl_->str2typemap, code)) {
+         isc_throw(InvalidRRType,
+                   "Unrecognized RR parameter string: " + type_string);
+    }
+
+    return (code);
 }
 
 string
@@ -499,10 +509,12 @@ RRParamRegistry::removeClass(uint16_t code) {
                                                        impl_->str2classmap));
 }
 
-uint16_t
-RRParamRegistry::textToClassCode(const string& class_string) const {
-    return (textToCode<RRClassParam, StrRRClassMap,
-            InvalidRRClass>(class_string, impl_->str2classmap));
+bool
+RRParamRegistry::textToClassCode(const string& class_string,
+                                 uint16_t& class_code) const
+{
+    return (textToCode<RRClassParam, StrRRClassMap>
+            (class_string, impl_->str2classmap, class_code));
 }
 
 string
