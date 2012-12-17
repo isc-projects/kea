@@ -243,36 +243,48 @@ initModulePart_Name(PyObject* mod) {
 
 
     // Add the exceptions to the module
-    po_EmptyLabel = PyErr_NewException("pydnspp.EmptyLabel", NULL, NULL);
-    PyObjectContainer(po_EmptyLabel).installToModule(mod, "EmptyLabel");
+    try {
+        po_EmptyLabel = PyErr_NewException("pydnspp.EmptyLabel", NULL, NULL);
+        PyObjectContainer(po_EmptyLabel).installToModule(mod, "EmptyLabel");
 
-    po_TooLongName = PyErr_NewException("pydnspp.TooLongName", NULL, NULL);
-    PyObjectContainer(po_TooLongName).installToModule(mod, "TooLongName");
+        po_TooLongName = PyErr_NewException("pydnspp.TooLongName", NULL, NULL);
+        PyObjectContainer(po_TooLongName).installToModule(mod, "TooLongName");
 
-    po_TooLongLabel = PyErr_NewException("pydnspp.TooLongLabel", NULL, NULL);
-    PyObjectContainer(po_TooLongLabel).installToModule(mod, "TooLongLabel");
+        po_TooLongLabel = PyErr_NewException("pydnspp.TooLongLabel", NULL, NULL);
+        PyObjectContainer(po_TooLongLabel).installToModule(mod, "TooLongLabel");
 
-    po_BadLabelType = PyErr_NewException("pydnspp.BadLabelType", NULL, NULL);
-    PyObjectContainer(po_BadLabelType).installToModule(mod, "BadLabelType");
+        po_BadLabelType = PyErr_NewException("pydnspp.BadLabelType", NULL, NULL);
+        PyObjectContainer(po_BadLabelType).installToModule(mod, "BadLabelType");
 
-    po_BadEscape = PyErr_NewException("pydnspp.BadEscape", NULL, NULL);
-    PyObjectContainer(po_BadEscape).installToModule(mod, "BadEscape");
+        po_BadEscape = PyErr_NewException("pydnspp.BadEscape", NULL, NULL);
+        PyObjectContainer(po_BadEscape).installToModule(mod, "BadEscape");
 
-    po_IncompleteName = PyErr_NewException("pydnspp.IncompleteName", NULL,
-                                           NULL);
-    PyObjectContainer(po_IncompleteName).installToModule(mod, "IncompleteName");
+        po_IncompleteName = PyErr_NewException("pydnspp.IncompleteName", NULL,
+                                               NULL);
+        PyObjectContainer(po_IncompleteName).installToModule(mod, "IncompleteName");
 
-    po_InvalidBufferPosition =
-        PyErr_NewException("pydnspp.InvalidBufferPosition", NULL, NULL);
-    PyObjectContainer(po_InvalidBufferPosition).installToModule(
-        mod, "InvalidBufferPosition");
+        po_InvalidBufferPosition =
+            PyErr_NewException("pydnspp.InvalidBufferPosition", NULL, NULL);
+        PyObjectContainer(po_InvalidBufferPosition).installToModule(
+            mod, "InvalidBufferPosition");
 
-    // This one could have gone into the message_python.cc file, but is
-    // already needed here.
-    po_DNSMessageFORMERR = PyErr_NewException("pydnspp.DNSMessageFORMERR",
-                                              NULL, NULL);
-    PyObjectContainer(po_DNSMessageFORMERR).installToModule(
-        mod, "DNSMessageFORMERR");
+        // This one could have gone into the message_python.cc file, but is
+        // already needed here.
+        po_DNSMessageFORMERR = PyErr_NewException("pydnspp.DNSMessageFORMERR",
+                                                  NULL, NULL);
+        PyObjectContainer(po_DNSMessageFORMERR).installToModule(
+            mod, "DNSMessageFORMERR");
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in Name initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in Name initialization");
+        return (false);
+    }
 
     return (true);
 }
@@ -321,12 +333,7 @@ initModulePart_Opcode(PyObject* mod) {
 
 bool
 initModulePart_Question(PyObject* mod) {
-    if (!initClass(question_type, "Question", mod)) {
-        return (false);
-    }
-
-    Py_INCREF(&question_type);
-    return (true);
+    return (initClass(question_type, "Question", mod));
 }
 
 bool
@@ -380,20 +387,32 @@ initModulePart_Rdata(PyObject* mod) {
     }
 
     // Add the exceptions to the class
-    po_InvalidRdataLength = PyErr_NewException("pydnspp.InvalidRdataLength",
-                                               NULL, NULL);
-    PyObjectContainer(po_InvalidRdataLength).installToModule(
-        mod, "InvalidRdataLength");
+    try {
+        po_InvalidRdataLength = PyErr_NewException("pydnspp.InvalidRdataLength",
+                                                   NULL, NULL);
+        PyObjectContainer(po_InvalidRdataLength).installToModule(
+            mod, "InvalidRdataLength");
 
-    po_InvalidRdataText = PyErr_NewException("pydnspp.InvalidRdataText",
-                                             NULL, NULL);
-    PyObjectContainer(po_InvalidRdataText).installToModule(
-        mod, "InvalidRdataText");
+        po_InvalidRdataText = PyErr_NewException("pydnspp.InvalidRdataText",
+                                                 NULL, NULL);
+        PyObjectContainer(po_InvalidRdataText).installToModule(
+            mod, "InvalidRdataText");
 
-    po_CharStringTooLong = PyErr_NewException("pydnspp.CharStringTooLong",
-                                              NULL, NULL);
-    PyObjectContainer(po_CharStringTooLong).installToModule(
-        mod, "CharStringTooLong");
+        po_CharStringTooLong = PyErr_NewException("pydnspp.CharStringTooLong",
+                                                  NULL, NULL);
+        PyObjectContainer(po_CharStringTooLong).installToModule(
+            mod, "CharStringTooLong");
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in Rdata initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in Rdata initialization");
+        return (false);
+    }
 
     return (true);
 }
@@ -404,15 +423,27 @@ initModulePart_RRClass(PyObject* mod) {
         return (false);
     }
 
-    po_InvalidRRClass = PyErr_NewException("pydnspp.InvalidRRClass",
-                                           NULL, NULL);
-    PyObjectContainer(po_InvalidRRClass).installToModule(
-        mod, "InvalidRRClass");
+    try {
+        po_InvalidRRClass = PyErr_NewException("pydnspp.InvalidRRClass",
+                                               NULL, NULL);
+        PyObjectContainer(po_InvalidRRClass).installToModule(
+            mod, "InvalidRRClass");
 
-    po_IncompleteRRClass = PyErr_NewException("pydnspp.IncompleteRRClass",
-                                              NULL, NULL);
-    PyObjectContainer(po_IncompleteRRClass).installToModule(
-        mod, "IncompleteRRClass");
+        po_IncompleteRRClass = PyErr_NewException("pydnspp.IncompleteRRClass",
+                                                  NULL, NULL);
+        PyObjectContainer(po_IncompleteRRClass).installToModule(
+            mod, "IncompleteRRClass");
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in RRClass initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in RRClass initialization");
+        return (false);
+    }
 
     return (true);
 }
@@ -423,8 +454,20 @@ initModulePart_RRset(PyObject* mod) {
         return (false);
     }
 
-    po_EmptyRRset = PyErr_NewException("pydnspp.EmptyRRset", NULL, NULL);
-    PyObjectContainer(po_EmptyRRset).installToModule(mod, "EmptyRRset");
+    try {
+        po_EmptyRRset = PyErr_NewException("pydnspp.EmptyRRset", NULL, NULL);
+        PyObjectContainer(po_EmptyRRset).installToModule(mod, "EmptyRRset");
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in RRset initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in RRset initialization");
+        return (false);
+    }
 
     return (true);
 }
@@ -435,13 +478,27 @@ initModulePart_RRTTL(PyObject* mod) {
         return (false);
     }
 
-    po_InvalidRRTTL = PyErr_NewException("pydnspp.InvalidRRTTL", NULL, NULL);
-    PyObjectContainer(po_InvalidRRTTL).installToModule(mod, "InvalidRRTTL");
+    try {
+        po_InvalidRRTTL = PyErr_NewException("pydnspp.InvalidRRTTL",
+                                             NULL, NULL);
+        PyObjectContainer(po_InvalidRRTTL).installToModule(mod,
+                                                           "InvalidRRTTL");
 
-    po_IncompleteRRTTL = PyErr_NewException("pydnspp.IncompleteRRTTL",
-                                            NULL, NULL);
-    PyObjectContainer(po_IncompleteRRTTL).installToModule(
-        mod, "IncompleteRRTTL");
+        po_IncompleteRRTTL = PyErr_NewException("pydnspp.IncompleteRRTTL",
+                                                NULL, NULL);
+        PyObjectContainer(po_IncompleteRRTTL).installToModule(
+            mod, "IncompleteRRTTL");
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in RRTTL initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in RRTTL initialization");
+        return (false);
+    }
 
     return (true);
 }
@@ -452,24 +509,34 @@ initModulePart_RRType(PyObject* mod) {
         return (false);
     }
 
-    po_InvalidRRType = PyErr_NewException("pydnspp.InvalidRRType", NULL, NULL);
-    PyObjectContainer(po_InvalidRRType).installToModule(mod, "InvalidRRType");
+    try {
+        po_InvalidRRType = PyErr_NewException("pydnspp.InvalidRRType",
+                                              NULL, NULL);
+        PyObjectContainer(po_InvalidRRType).installToModule(mod,
+                                                            "InvalidRRType");
 
-    po_IncompleteRRType = PyErr_NewException("pydnspp.IncompleteRRType",
-                                             NULL, NULL);
-    PyObjectContainer(po_IncompleteRRType).installToModule(
-        mod, "IncompleteRRType");
+        po_IncompleteRRType = PyErr_NewException("pydnspp.IncompleteRRType",
+                                                 NULL, NULL);
+        PyObjectContainer(po_IncompleteRRType).installToModule(
+            mod, "IncompleteRRType");
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in RRType initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in RRType initialization");
+        return (false);
+    }
 
     return (true);
 }
 
 bool
 initModulePart_Serial(PyObject* mod) {
-    if (!initClass(serial_type, "Serial", mod)) {
-        return (false);
-    }
-
-    return (true);
+    return (initClass(serial_type, "Serial", mod));
 }
 
 bool
@@ -638,11 +705,7 @@ initModulePart_TSIGContext(PyObject* mod) {
 
 bool
 initModulePart_TSIG(PyObject* mod) {
-    if (!initClass(tsig_type, "TSIG", mod)) {
-        return (false);
-    }
-
-    return (true);
+    return (initClass(tsig_type, "TSIG", mod));
 }
 
 bool
@@ -694,19 +757,31 @@ PyInit_pydnspp(void) {
         return (NULL);
     }
 
-    // Add the exceptions to the class
-    po_IscException = PyErr_NewException("pydnspp.IscException", NULL, NULL);
-    PyObjectContainer(po_IscException).installToModule(mod, "IscException");
+    try {
+        // Add the exceptions to the class
+        po_IscException = PyErr_NewException("pydnspp.IscException", NULL, NULL);
+        PyObjectContainer(po_IscException).installToModule(mod, "IscException");
 
-    po_InvalidOperation = PyErr_NewException("pydnspp.InvalidOperation",
-                                             NULL, NULL);
-    PyObjectContainer(po_InvalidOperation).installToModule(
-        mod, "InvalidOperation");
+        po_InvalidOperation = PyErr_NewException("pydnspp.InvalidOperation",
+                                                 NULL, NULL);
+        PyObjectContainer(po_InvalidOperation).installToModule(
+            mod, "InvalidOperation");
 
-    po_InvalidParameter = PyErr_NewException("pydnspp.InvalidParameter",
-                                             NULL, NULL);
-    PyObjectContainer(po_InvalidParameter).installToModule(
-        mod, "InvalidParameter");
+        po_InvalidParameter = PyErr_NewException("pydnspp.InvalidParameter",
+                                                 NULL, NULL);
+        PyObjectContainer(po_InvalidParameter).installToModule(
+            mod, "InvalidParameter");
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in pydnspp initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in pydnspp initialization");
+        return (NULL);
+    }
 
     // for each part included above, we call its specific initializer
 
