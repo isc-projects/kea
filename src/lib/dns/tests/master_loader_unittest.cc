@@ -789,9 +789,8 @@ TEST_F(MasterLoaderTest, noPreviousName) {
     loader_->load();
     EXPECT_FALSE(loader_->loadedSucessfully());
     EXPECT_EQ(1, errors_.size());
-    checkCallbackMessage(errors_.at(0),
-                         "x",
-                         1);
+    checkCallbackMessage(errors_.at(0), "No previous name to use in place of "
+                         "initial whitespace", 1);
     EXPECT_TRUE(warnings_.empty());
 }
 

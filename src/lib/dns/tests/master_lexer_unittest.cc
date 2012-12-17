@@ -238,10 +238,8 @@ TEST_F(MasterLexerTest, ungetToken) {
 // Check ungetting token without overriding the start method. We also
 // check it works well with changing options between the calls.
 TEST_F(MasterLexerTest, ungetRealOptions) {
-    ss << "\n    \n";
+    ss << "    \n";
     lexer.pushSource(ss);
-    // Skip the first newline
-    EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
 
     // If we call it the usual way, it skips up to the newline and returns
     // it

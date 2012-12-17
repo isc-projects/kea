@@ -37,7 +37,7 @@ using namespace master_lexer_internal;
 
 struct MasterLexer::MasterLexerImpl {
     MasterLexerImpl() : source_(NULL), token_(MasterToken::NOT_STARTED),
-                        paren_count_(0), last_was_eol_(false),
+                        paren_count_(0), last_was_eol_(true),
                         has_previous_(false),
                         previous_paren_count_(0),
                         previous_was_eol_(false)
