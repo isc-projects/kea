@@ -250,7 +250,8 @@ private:
             // Omitted (class and) TTL values are default to the last
             // explicitly stated values (RFC 1035, Sec. 5.1).
             callbacks_.warning(lexer_.getSourceName(), current_line,
-                               "using RFC1035 TTL semantics");
+                               "using RFC1035 TTL semantics; default to the "
+                               "last explicitly stated TTL");
             warn_rfc1035_ttl_ = false; // we only warn about this once
         }
         assert(current_ttl_);
