@@ -152,7 +152,8 @@ private:
         // [<class>] [<TTL>] <type> <RDATA>
         MasterToken rrparam_token = lexer_.getNextToken(MasterToken::STRING);
 
-        // Try TTL
+        // named-signzone outputs TTL first, so try parsing it in order
+        // first.
         if (setCurrentTTL(rrparam_token.getString())) {
             explicit_ttl = true;
             rrparam_token = lexer_.getNextToken(MasterToken::STRING);
@@ -170,11 +171,14 @@ private:
             rrclass.reset(new RRClass(zone_class_));
         }
 
+        // If we couldn't parse TTL earlier in the stream (above), try
+        // again at current location.
         if (!explicit_ttl && rrclass &&
             setCurrentTTL(rrparam_token.getString())) {
             explicit_ttl = true;
             rrparam_token = lexer_.getNextToken(MasterToken::STRING);
         }
+
         if (*rrclass != zone_class_) {
             // It doesn't really matter much what type of exception
             // we throw, we catch it just below.
@@ -182,6 +186,7 @@ private:
                       "vs. " << zone_class_);
         }
 
+        // Return the current string token's value as the RRType.
         return (RRType(rrparam_token.getString()));
     }
 
