@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef OPTION6_INT_H
-#define OPTION6_INT_H
+#ifndef OPTION_INT_H
+#define OPTION_INT_H
 
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
@@ -25,7 +25,7 @@
 namespace isc {
 namespace dhcp {
 
-/// This template class represents DHCPv6 option with single value.
+/// This template class represents DHCP option with single value.
 /// This value is of integer type and can be any of the following:
 /// - uint8_t,
 /// - uint16_t,
@@ -36,18 +36,19 @@ namespace dhcp {
 ///
 /// @param T data field type (see above).
 template<typename T>
-class Option6Int: public Option {
+class OptionInt: public Option {
 
 public:
     /// @brief Constructor.
     ///
+    /// @param u universe (V4 or V6)
     /// @param type option type.
     /// @param value option value.
     ///
     /// @throw isc::dhcp::InvalidDataType if data field type provided
     /// as template parameter is not a supported integer type.
-    Option6Int(uint16_t type, T value)
-        : Option(Option::V6, type), value_(value) {
+    OptionInt(Option::Universe u, uint16_t type, T value)
+        : Option(u, type), value_(value) {
         if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
@@ -59,6 +60,7 @@ public:
     /// may throw exception if \ref unpack function throws during buffer
     /// parsing.
     ///
+    /// @param u universe (V4 or V6)
     /// @param type option type.
     /// @param begin iterator to first byte of option data.
     /// @param end iterator to end of option data (first byte after option end).
@@ -66,9 +68,9 @@ public:
     /// @throw isc::OutOfRange if provided buffer is shorter than data size.
     /// @throw isc::dhcp::InvalidDataType if data field type provided
     /// as template parameter is not a supported integer type.
-    Option6Int(uint16_t type, OptionBufferConstIter begin,
+    OptionInt(Option::Universe u, uint16_t type, OptionBufferConstIter begin,
                OptionBufferConstIter end)
-        : Option(Option::V6, type) {
+        : Option(u, type) {
         if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
@@ -84,8 +86,8 @@ public:
     /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
     /// because it is checked in a constructor.
     void pack(isc::util::OutputBuffer& buf) {
-        buf.writeUint16(type_);
-        buf.writeUint16(len() - OPTION6_HDR_LEN);
+        // Pack option header.
+        packHeader(buf);
         // Depending on the data type length we use different utility functions
         // writeUint16 or writeUint32 which write the data in the network byte
         // order to the provided buffer. The same functions can be safely used
@@ -168,7 +170,10 @@ public:
     ///
     /// @return length of this option
     virtual uint16_t len() {
-        uint16_t length = OPTION6_HDR_LEN + sizeof(T);
+        // Calculate the length of the header.
+        uint16_t length = (getUniverse() == Option::V4) ? OPTION4_HDR_LEN : OPTION6_HDR_LEN;
+        // The data length is equal to size of T.
+        length += sizeof(T);;
         // length of all suboptions
         for (Option::OptionCollection::iterator it = options_.begin();
              it != options_.end();
@@ -186,4 +191,4 @@ private:
 } // isc::dhcp namespace
 } // isc namespace
 
-#endif // OPTION6_INT_H
+#endif // OPTION_INT_H
