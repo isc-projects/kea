@@ -442,8 +442,8 @@ MasterLoader::MasterLoaderImpl::handleInitialToken() {
             return (initial_token);
         } else {
             // We try to read a token from the popped source
-            // So retry the loop, but first, make sure the source
-            // is at EOL
+            // So continue to the next line of that source, but first, make
+            // sure the source is at EOL
             eatUntilEOL(true);
             return (MasterToken(MasterToken::END_OF_LINE));
         }
