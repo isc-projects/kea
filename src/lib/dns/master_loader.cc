@@ -133,50 +133,51 @@ public:
 
     bool loadIncremental(size_t count_limit);
 
-    void doInclude() {
-        // First, get the filename to include
-        const string
-            filename(lexer_.getNextToken(MasterToken::QSTRING).getString());
-
-        // There could be an origin (or maybe not). So try looking
-        const MasterToken name_tok(lexer_.getNextToken(MasterToken::QSTRING,
-                                                       true));
+    void doOrigin(bool is_optional) {
+        // Parse and create the new origin. It is relative to the previous
+        // one.
+        const MasterToken&
+            name_tok(lexer_.getNextToken(MasterToken::QSTRING, is_optional));
 
         if (name_tok.getType() == MasterToken::QSTRING ||
             name_tok.getType() == MasterToken::STRING) {
-            // There's an optional name, meaning origin. Extract it
-            // and store.
+
             const MasterToken::StringRegion&
                 name_string(name_tok.getStringRegion());
             active_origin_ = Name(name_string.beg, name_string.len,
                                   &active_origin_);
         } else {
-            // We return the newline there. This is because after we pop
-            // the source, we want to call eatUntilEOL and this would
-            // eat to the next one.
+            // If it is not optional, we must not get anything but
+            // a string token.
+            assert(is_optional);
+
+            // We return the newline there. This is because we want to
+            // behave the same if there is or isn't the name, leaving the
+            // newline there.
             lexer_.ungetToken();
         }
-
-        pushSource(filename);
     }
 
-    void doOrigin() {
-        // Parse and create the new origin. It is relative to the previous
-        // one.
-        const MasterToken::StringRegion&
-            name_string(lexer_.getNextToken(MasterToken::QSTRING).
-                        getStringRegion());
-        active_origin_ = Name(name_string.beg, name_string.len,
-                              &active_origin_);
-        // Make sure there's the EOLN
-        eatUntilEOL(true);
+    void doInclude() {
+        // First, get the filename to include
+        const string
+            filename(lexer_.getNextToken(MasterToken::QSTRING).getString());
+
+        // There optionally can be an origin, that applies before the include.
+        doOrigin(true);
+
+        pushSource(filename);
     }
 
     void handleDirective(const char* directive, size_t length) {
         if (iequals(directive, "INCLUDE")) {
             doInclude();
         } else if (iequals(directive, "ORIGIN")) {
-            doOrigin();
+            doOrigin(false);
+            // The doOrigin doesn't do the cleanup of the line. This is
+            // because it's shared with the doInclude and that one can't do
+            // it.
+            eatUntilEOL(true);
         } else if (iequals(directive, "TTL")) {
             // TODO: Implement
             isc_throw(isc::NotImplemented,
