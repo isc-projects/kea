@@ -46,7 +46,7 @@ class ZoneLoaderTests(unittest.TestCase):
         self.test_file = ZONE_FILE
         self.client = isc.datasrc.DataSourceClient("sqlite3", DB_CLIENT_CONFIG)
         # Make a fresh copy of the database
-        shutil.copy(ORIG_DB_FILE, DB_FILE)
+        shutil.copyfile(ORIG_DB_FILE, DB_FILE)
         # Some tests set source client; if so, check refcount in
         # tearDown, since most tests don't, set it to None by default.
         self.source_client = None
