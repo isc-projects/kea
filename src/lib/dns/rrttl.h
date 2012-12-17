@@ -61,7 +61,7 @@ public:
 class RRTTL {
 public:
     ///
-    /// \name Constructors and Destructor
+    /// \name Constructors, Factory and Destructor
     ///
     /// Note: We use the default copy constructor and the default copy
     /// assignment operator intentionally.
@@ -72,6 +72,7 @@ public:
     ///
     /// \param ttlval An 32-bit integer of the RRTTL.
     explicit RRTTL(uint32_t ttlval) : ttlval_(ttlval) {}
+
     /// Constructor from a string.
     ///
     /// It accepts either a decimal number, specifying number of seconds. Or,
@@ -87,6 +88,7 @@ public:
     /// \throw InvalidRRTTL in case the string is not recognized as valid
     ///     TTL representation.
     explicit RRTTL(const std::string& ttlstr);
+
     /// Constructor from wire-format data.
     ///
     /// The \c buffer parameter normally stores a complete DNS message
@@ -98,6 +100,35 @@ public:
     ///
     /// \param buffer A buffer storing the wire format data.
     explicit RRTTL(isc::util::InputBuffer& buffer);
+
+    /// A separate factory of RRTTL from text.
+    ///
+    /// This static method is similar to the constructor that takes a string
+    /// object, but works as a factory and reports parsing failure in return
+    /// value.  Normally the constructor version should suffice, but in some
+    /// cases the caller may have to expect mixture of valid and invalid input,
+    /// and may want to minimize the overhead of possible exception handling.
+    /// This version is provided for such purpose.
+    ///
+    /// When the \c placeholder parameter is NULL, it creates a new RRTTL
+    /// object, allocating memory for it; the caller is responsible for
+    /// releasing the memory using the \c delete operator.  If \c placeholder
+    /// is non NULL, it will override the placeholder object with an RRTTL
+    /// corresponding to the given text and return a pointer to the placeholder
+    /// object.  This way, the caller can also minimize the overhead of memory
+    /// allocation if it needs to call this method many times.
+    ///
+    /// If the given text does not represent a valid RRTTL, it returns NULL;
+    /// if \c placeholder is non NULL, it will be intact.
+    ///
+    /// This function never throws the \c InvalidRRTTL exception.
+    ///
+    /// \param ttlstr A string representation of the \c RRTTL.
+    /// \param placeholder If non NULL, an RRTTL object to be overridden
+    /// with an RRTTL for \c ttlstr.
+    /// \return A pointer to the created or overridden RRTTL object.
+    static RRTTL* createFromText(const std::string& ttlstr,
+                                 RRTTL* placeholder);
     ///
     //@}
 
