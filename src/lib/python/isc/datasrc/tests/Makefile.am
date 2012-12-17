@@ -7,6 +7,7 @@ EXTRA_DIST = $(PYTESTS)
 
 EXTRA_DIST += testdata/brokendb.sqlite3
 EXTRA_DIST += testdata/example.com.sqlite3
+EXTRA_DIST += testdata/example.com.source.sqlite3
 EXTRA_DIST += testdata/newschema.sqlite3
 EXTRA_DIST += testdata/oldschema.sqlite3
 EXTRA_DIST += testdata/new_minor_schema.sqlite3
