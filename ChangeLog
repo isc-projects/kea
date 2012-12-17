@@ -1,4 +1,10 @@
-526.	[bug]		syephen
+5XX.	[func]		tomek
+	b10-dhcp6: Added support for expired leases. Leases for IPv6
+	addresses that are past their valid lifetime may be recycled, i.e.
+	rellocated to other clients if needed.
+	(Trac #2327, git TBD)
+
+526.	[bug]		stephen
 	Miscellaneous fixes to DHCP code including rationalisation of
 	some methods in LeaseMgr and resolving some Doxygen/cppcheck
 	issues.
