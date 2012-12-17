@@ -23,10 +23,12 @@
 #include <string>
 #include <memory>
 #include <boost/algorithm/string/predicate.hpp> // for iequals
+#include <boost/scoped_ptr.hpp>
 
 using std::string;
 using std::auto_ptr;
 using boost::algorithm::iequals;
+using boost::scoped_ptr;
 
 namespace isc {
 namespace dns {
@@ -56,8 +58,6 @@ public:
         lexer_(),
         zone_origin_(zone_origin),
         active_origin_(zone_origin),
-        last_name_(Name::ROOT_NAME()), // Initialize with something,
-                                       // we don't care
         zone_class_(zone_class),
         callbacks_(callbacks),
         add_callback_(add_callback),
@@ -66,7 +66,6 @@ public:
         initialized_(false),
         ok_(true),
         many_errors_((options & MANY_ERRORS) != 0),
-        seen_name_(false),
         complete_(false),
         seen_error_(false)
     {}
@@ -208,7 +207,7 @@ private:
     const Name zone_origin_;
     Name active_origin_; // The origin used during parsing
                          // (modifiable by $ORIGIN)
-    Name last_name_;     // Last seen name during the parsing.
+    scoped_ptr<Name> last_name_; // Last seen name (for INITAL_WS handling)
     const RRClass zone_class_;
     MasterLoaderCallbacks callbacks_;
     AddRRCallback add_callback_;
@@ -219,7 +218,6 @@ private:
     bool ok_;                   // Is it OK to continue loading?
     const bool many_errors_;    // Are many errors allowed (or should we abort
                                 // on the first)
-    bool seen_name_;            // Did we parse at least one name?
 public:
     bool complete_;             // All work done.
     bool seen_error_;           // Was there at least one error during the
@@ -292,12 +290,11 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
                     continue;
                 }
 
-                last_name_ = Name(name_string.beg, name_string.len,
-                                  &active_origin_);
-                seen_name_ = true;
+                last_name_.reset(new Name(name_string.beg, name_string.len,
+                                          &active_origin_));
             } else if (initial_token.getType() == MasterToken::INITIAL_WS) {
                 // This means the same name as previous.
-                if (!seen_name_) {
+                if (last_name_.get() == NULL) {
                     isc_throw(InternalException, "No previous name to use in "
                               "place of initial whitespace");
                 }
@@ -337,7 +334,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             // callbacks_ already. We need to decide if we want to continue
             // or not.
             if (data) {
-                add_callback_(last_name_, rrclass, rrtype, ttl, data);
+                add_callback_(*last_name_, rrclass, rrtype, ttl, data);
 
                 // Good, we loaded another one
                 ++count;
