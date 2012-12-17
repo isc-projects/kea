@@ -145,7 +145,7 @@ private:
 
     // Upper limit check when recognizing a specific TTL value from the
     // zone file ($TTL, the RR's TTL field, or the SOA minimum).  RFC2181
-    // Section 8 limits the range of TTL values to unsigned 32-bit integers,
+    // Section 8 limits the range of TTL values to 2^31-1 (0x7fffffff),
     // and prohibits transmitting a TTL field exceeding this range.  We
     // guarantee that by limiting the value at the time of zone
     // parsing/loading, following what BIND 9 does.  Resetting it to 0
@@ -166,8 +166,10 @@ private:
         }
     }
 
-    // Set/reset the default TTL.  Either from $TTL or SOA minimum TTL.
-    // see LimitTTL() for parameter post_parsing.
+    // Set/reset the default TTL.  This should be from either $TTL or SOA
+    // minimum TTL (it's the caller's responsibility; this method doesn't
+    // care about where it comes from).  see LimitTTL() for parameter
+    // post_parsing.
     void setDefaultTTL(const RRTTL& ttl, bool post_parsing) {
         if (!default_ttl_) {
             default_ttl_.reset(new RRTTL(ttl));
@@ -177,7 +179,7 @@ private:
         limitTTL(*default_ttl_, post_parsing);
     }
 
-    // Set/reset the TTL currently being used.  This can be used the last
+    // Set/reset the TTL currently being used.  This can be used as the last
     // resort TTL when no other TTL is known for an RR.
     void setCurrentTTL(const RRTTL& ttl) {
         if (!current_ttl_) {
