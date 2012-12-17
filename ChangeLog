@@ -1,3 +1,11 @@
+527.	[bug]		jelte
+	Fixed a bug in the synchronous UDP server code where unexpected
+	errors from ASIO or the system libraries could cause b10-auth to
+	stop. In asynchronous mode these errors would be ignored
+	completely. Both types have been updated to report the problem with
+	an ERROR log message, drop the packet, and continue service.
+	(Trac #2494, git db92f30af10e6688a7dc117b254cb821e54a6d95)
+
 526.	[bug]		stephen
 	Miscellaneous fixes to DHCP code including rationalisation of
 	some methods in LeaseMgr and resolving some Doxygen/cppcheck
