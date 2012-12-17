@@ -46,6 +46,11 @@ public:
                                &warnings_, _1, _2, _3))
     {}
 
+    void TearDown() {
+        // Check there are no more RRs we didn't expect
+        EXPECT_TRUE(rrsets_.empty());
+    }
+
     /// Concatenate file, line, and reason, and add it to either errors
     /// or warnings
     void callback(vector<string>* target, const std::string& file, size_t line,
@@ -289,6 +294,7 @@ TEST_F(MasterLoaderTest, incrementalLoad) {
     EXPECT_TRUE(warnings_.empty());
 
     checkRR("www.example.org", RRType::A(), "192.0.2.1");
+    checkRR("www.example.org", RRType::AAAA(), "2001:db8::1");
 }
 
 // Try loading from file that doesn't exist. There should be single error
@@ -325,6 +331,7 @@ struct ErrorCase {
     { "www      3600    IN  \"A\"   192.0.2.1", "Quoted type" },
     { "unbalanced)paren 3600    IN  A   192.0.2.1", "Token error 1" },
     { "www  3600    unbalanced)paren    A   192.0.2.1", "Token error 2" },
+    { ")www     3600    IN  A   192.0.2.1", "Token error 3" },
     // Check the unknown directive. The rest looks like ordinary RR,
     // so we see the $ is actually special.
     { "$UNKNOWN 3600    IN  A   192.0.2.1", "Unknown $ directive" },
@@ -336,6 +343,8 @@ struct ErrorCase {
         "Include file not found and garbage at the end of line" },
     { "$ORIGIN", "Missing origin name" },
     { "$ORIGIN invalid...name", "Invalid name for origin" },
+    { "$ORIGIN )brokentoken", "Broken token in origin" },
+    { "$ORIGIN example.org. garbage", "Garbage after origin" },
     { "$ORIGI name.", "$ORIGIN too short" },
     { "$ORIGINAL name.", "$ORIGIN too long" },
     { NULL, NULL }
@@ -468,6 +477,24 @@ TEST_F(MasterLoaderTest, includeAndOrigin) {
     checkARR("www.example.org");
 }
 
+// Like above, but the origin after include is bogus. The whole line should
+// be rejected.
+TEST_F(MasterLoaderTest, includeAndBadOrigin) {
+    const string include_string =
+        "$INCLUDE " TEST_DATA_SRCDIR "/example.org example..org.\n"
+        // Another RR to see the switch survives after we exit include
+        "www    1H  IN  A   192.0.2.1\n";
+    stringstream ss(include_string);
+    setLoader(ss, Name("example.org"), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+    loader_->load();
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_EQ(1, errors_.size());
+    EXPECT_TRUE(warnings_.empty());
+    // And check it's the correct data
+    checkARR("www.example.org");
+}
+
 // Check the origin doesn't get outside of the included file.
 TEST_F(MasterLoaderTest, includeOriginRestore) {
     const string include_string = "$INCLUDE " TEST_DATA_SRCDIR "/origincheck.txt\n"
@@ -523,6 +550,9 @@ TEST_F(MasterLoaderTest, loadTwice) {
 
     loader_->load();
     EXPECT_THROW(loader_->load(), isc::InvalidOperation);
+    // Don't check them, they are not interesting, so suppress the error
+    // at TearDown
+    rrsets_.clear();
 }
 
 // Load 0 items should be rejected
@@ -549,6 +579,19 @@ TEST_F(MasterLoaderTest, noEOLN) {
     EXPECT_EQ(1, warnings_.size());
     checkRR("example.org", RRType::SOA(), "ns1.example.org. "
             "admin.example.org. 1234 3600 1800 2419200 7200");
+}
+
+// Test it rejects when we don't have the previous name to use in place of
+// initial whitespace
+TEST_F(MasterLoaderTest, noPreviousName) {
+    const string input("    1H  IN  A   192.0.2.1\n");
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+    loader_->load();
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_EQ(1, errors_.size());
+    EXPECT_TRUE(warnings_.empty());
 }
 
 }
