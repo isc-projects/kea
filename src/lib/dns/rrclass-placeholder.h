@@ -181,6 +181,20 @@ public:
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer in which the RRClass is to be stored.
     void toWire(isc::util::OutputBuffer& buffer) const;
+
+    /// \brief Assign this \c RRClass from string.
+    ///
+    /// This method assigns this \c RRClass from the string
+    /// representation passed in \c class_str. For the format of this
+    /// string, see the <code>RRClass(const std::string&)</code>
+    /// constructor.
+    ///
+    /// If the conversion from string passes, true is
+    /// returned. Otherwise false is returned.
+    ///
+    /// \param class_str A string representation of the \c RRClass
+    /// \return true if \c class_str was valid, false otherwise.
+    bool fromText(const std::string& class_str);
     //@}
 
     ///
