@@ -468,6 +468,23 @@ TEST_F(MasterLoaderTest, includeAndOrigin) {
     checkARR("www.example.org");
 }
 
+// Check the origin doesn't get outside of the included file.
+TEST_F(MasterLoaderTest, includeOriginRestore) {
+    const string include_string = "$INCLUDE " TEST_DATA_SRCDIR "/origincheck.txt\n"
+        "@  1H  IN  A   192.0.2.1\n";
+    stringstream ss(include_string);
+    setLoader(ss, Name("example.org"), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+    // Successfully load the data
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+    EXPECT_TRUE(warnings_.empty());
+    // And check it's the correct data
+    checkARR("www.example.org");
+    checkARR("example.org");
+}
+
 // Test the constructor rejects empty add callback.
 TEST_F(MasterLoaderTest, emptyCallback) {
     EXPECT_THROW(MasterLoader(TEST_DATA_SRCDIR "/example.org",
