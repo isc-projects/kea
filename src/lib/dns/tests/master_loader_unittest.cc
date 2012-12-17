@@ -478,7 +478,7 @@ TEST_F(MasterLoaderTest, includeOriginRestore) {
     // Successfully load the data
     loader_->load();
     EXPECT_TRUE(loader_->loadedSucessfully());
-    EXPECT_TRUE(errors_.empty());
+    EXPECT_TRUE(errors_.empty()) << errors_[0];
     EXPECT_TRUE(warnings_.empty());
     // And check it's the correct data
     checkARR("www.example.org");
