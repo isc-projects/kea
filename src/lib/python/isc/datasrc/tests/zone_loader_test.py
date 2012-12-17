@@ -67,7 +67,7 @@ class ZoneLoaderTests(unittest.TestCase):
         if self.loader is not None:
             self.assertEqual(2, sys.getrefcount(self.test_name))
             self.assertEqual(3, sys.getrefcount(self.client))
-            if (self.source_client is not None):
+            if self.source_client is not None:
                 self.assertEqual(3, sys.getrefcount(self.source_client))
         self.loader = None
 
@@ -75,7 +75,7 @@ class ZoneLoaderTests(unittest.TestCase):
         # of its arguments should be back to their originals
         self.assertEqual(2, sys.getrefcount(self.test_name))
         self.assertEqual(2, sys.getrefcount(self.client))
-        if (self.source_client is not None):
+        if self.source_client is not None:
             self.assertEqual(2, sys.getrefcount(self.source_client))
 
     def test_bad_constructor(self):
