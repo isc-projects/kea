@@ -15,10 +15,13 @@
 #include <dns/master_loader.h>
 #include <dns/master_lexer.h>
 #include <dns/name.h>
+#include <dns/rdataclass.h>
 #include <dns/rrttl.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 #include <dns/rdata.h>
+
+#include <boost/scoped_ptr.hpp>
 
 #include <string>
 #include <memory>
@@ -58,6 +61,7 @@ public:
                      const MasterLoaderCallbacks& callbacks,
                      const AddRRCallback& add_callback,
                      MasterLoader::Options options) :
+        MAX_TTL(0x7fffffff),
         lexer_(),
         zone_origin_(zone_origin),
         active_origin_(zone_origin),
@@ -71,22 +75,9 @@ public:
         many_errors_((options & MANY_ERRORS) != 0),
         previous_name_(false),
         complete_(false),
-        seen_error_(false)
+        seen_error_(false),
+        warn_rfc1035_ttl_(true)
     {}
-
-    void reportError(const std::string& filename, size_t line,
-                     const std::string& reason)
-    {
-        seen_error_ = true;
-        callbacks_.error(filename, line, reason);
-        if (!many_errors_) {
-            // In case we don't have the lenient mode, every error is fatal
-            // and we throw
-            ok_ = false;
-            complete_ = true;
-            isc_throw(MasterLoaderError, reason.c_str());
-        }
-    }
 
     void pushSource(const std::string& filename) {
         std::string error;
@@ -103,6 +94,28 @@ public:
         include_info_.push_back(IncludeInfo(active_origin_, last_name_));
         initialized_ = true;
         previous_name_ = false;
+    }
+
+    void pushStreamSource(std::istream& stream) {
+        lexer_.pushSource(stream);
+        initialized_ = true;
+    }
+
+    bool loadIncremental(size_t count_limit);
+
+private:
+    void reportError(const std::string& filename, size_t line,
+                     const std::string& reason)
+    {
+        seen_error_ = true;
+        callbacks_.error(filename, line, reason);
+        if (!many_errors_) {
+            // In case we don't have the lenient mode, every error is fatal
+            // and we throw
+            ok_ = false;
+            complete_ = true;
+            isc_throw(MasterLoaderError, reason.c_str());
+        }
     }
 
     bool popSource() {
@@ -123,18 +136,11 @@ public:
         return (true);
     }
 
-    void pushStreamSource(std::istream& stream) {
-        lexer_.pushSource(stream);
-        initialized_ = true;
-    }
-
     // Get a string token. Handle it as error if it is not string.
     const string getString() {
         lexer_.getNextToken(MasterToken::STRING).getString(string_token_);
         return (string_token_);
     }
-
-    bool loadIncremental(size_t count_limit);
 
     MasterToken handleInitialToken();
 
@@ -174,6 +180,114 @@ public:
         pushSource(filename);
     }
 
+    // Upper limit check when recognizing a specific TTL value from the
+    // zone file ($TTL, the RR's TTL field, or the SOA minimum).  RFC2181
+    // Section 8 limits the range of TTL values to unsigned 32-bit integers,
+    // and prohibits transmitting a TTL field exceeding this range.  We
+    // guarantee that by limiting the value at the time of zone
+    // parsing/loading, following what BIND 9 does.  Resetting it to 0
+    // at this point may not be exactly what the RFC states, but the end
+    // result would be the same.  Again, we follow the BIND 9's behavior here.
+    //
+    // post_parsing is true iff this method is called after parsing the entire
+    // RR and the lexer is positioned at the next line.  It's just for
+    // calculating the accurate source line when callback is necessary.
+    void limitTTL(RRTTL& ttl, bool post_parsing) {
+        if (ttl > MAX_TTL) {
+            const size_t src_line = lexer_.getSourceLine() -
+                (post_parsing ? 1 : 0);
+            callbacks_.warning(lexer_.getSourceName(), src_line,
+                               "TTL " + ttl.toText() + " > MAXTTL, "
+                               "setting to 0 per RFC2181");
+            ttl = RRTTL(0);
+        }
+    }
+
+    // Set/reset the default TTL.  Either from $TTL or SOA minimum TTL.
+    // see LimitTTL() for parameter post_parsing.
+    void setDefaultTTL(const RRTTL& ttl, bool post_parsing) {
+        if (!default_ttl_) {
+            default_ttl_.reset(new RRTTL(ttl));
+        } else {
+            *default_ttl_ = ttl;
+        }
+        limitTTL(*default_ttl_, post_parsing);
+    }
+
+    // Set/reset the TTL currently being used.  This can be used the last
+    // resort TTL when no other TTL is known for an RR.
+    void setCurrentTTL(const RRTTL& ttl) {
+        if (!current_ttl_) {
+            current_ttl_.reset(new RRTTL(ttl));
+        } else {
+            *current_ttl_ = ttl;
+        }
+    }
+
+    // Try to set/reset the current TTL from candidate TTL text.  It's possible
+    // it does not actually represent a TTL (which is not immediately
+    // considered an error).  Return true iff it's recognized as a valid TTL
+    // (and only in which case the current TTL is set).
+    bool setCurrentTTL(const string& ttl_txt) {
+        // We use the factory version instead of RRTTL constructor as we
+        // need to expect cases where ttl_txt does not actually represent a TTL
+        // but an RR class or type.
+        RRTTL* ttl = RRTTL::createFromText(ttl_txt, current_ttl_.get());
+        if (ttl != NULL) {
+            if (!current_ttl_) {
+                current_ttl_.reset(ttl);
+            }
+            limitTTL(*current_ttl_, false);
+            return (true);
+        }
+        return (false);
+    }
+
+    // Determine the TTL of the current RR based on the given parsing context.
+    //
+    // explicit_ttl is true iff the TTL is explicitly specified for that RR
+    // (in which case current_ttl_ is set to that TTL).
+    // rrtype is the type of the current RR, and rdata is its RDATA.  They
+    // only matter if the type is SOA and no available TTL is known.  In this
+    // case the minimum TTL of the SOA will be used as the TTL of that SOA
+    // and the default TTL for subsequent RRs.
+    const RRTTL& getCurrentTTL(bool explicit_ttl, const RRType& rrtype,
+                               const rdata::ConstRdataPtr& rdata) {
+        // We've completed parsing the full of RR, and the lexer is already
+        // positioned at the next line.  If we need to call callback,
+        // we need to adjust the line number.
+        const size_t current_line = lexer_.getSourceLine() - 1;
+
+        if (!current_ttl_ && !default_ttl_) {
+            if (rrtype == RRType::SOA()) {
+                callbacks_.warning(lexer_.getSourceName(), current_line,
+                                   "no TTL specified; "
+                                   "using SOA MINTTL instead");
+                const uint32_t ttl_val =
+                    dynamic_cast<const rdata::generic::SOA&>(*rdata).
+                    getMinimum();
+                setDefaultTTL(RRTTL(ttl_val), true);
+                setCurrentTTL(*default_ttl_);
+            } else {
+                // On catching the exception we'll try to reach EOL again,
+                // so we need to unget it now.
+                lexer_.ungetToken();
+                throw InternalException(__FILE__, __LINE__,
+                                        "no TTL specified; load rejected");
+            }
+        } else if (!explicit_ttl && default_ttl_) {
+            setCurrentTTL(*default_ttl_);
+        } else if (!explicit_ttl && warn_rfc1035_ttl_) {
+            // Omitted (class and) TTL values are default to the last
+            // explicitly stated values (RFC 1035, Sec. 5.1).
+            callbacks_.warning(lexer_.getSourceName(), current_line,
+                               "using RFC1035 TTL semantics");
+            warn_rfc1035_ttl_ = false; // we only warn about this once
+        }
+        assert(current_ttl_);
+        return (*current_ttl_);
+    }
+
     void handleDirective(const char* directive, size_t length) {
         if (iequals(directive, "INCLUDE")) {
             doInclude();
@@ -183,10 +297,10 @@ public:
             // because it's shared with the doInclude and that one can't do
             // it.
             eatUntilEOL(true);
-        } else if (iequals(directive, "TTL")) {
             // TODO: Implement
-            isc_throw(isc::NotImplemented,
-                      "TTL directive not implemented yet");
+        } else if (iequals(directive, "TTL")) {
+            setDefaultTTL(RRTTL(getString()), false);
+            eatUntilEOL(true);
         } else {
             isc_throw(InternalException, "Unknown directive '" <<
                       string(directive, directive + length) << "'");
@@ -223,6 +337,11 @@ public:
     }
 
 private:
+    // RFC2181 Section 8 specifies TTLs are unsigned 32-bit integer,
+    // effectively limiting the maximum value to 2^32-1.  This constant
+    // represent a TTL of the max value.
+    const RRTTL MAX_TTL;
+
     MasterLexer lexer_;
     const Name zone_origin_;
     Name active_origin_; // The origin used during parsing
@@ -231,6 +350,12 @@ private:
     const RRClass zone_class_;
     MasterLoaderCallbacks callbacks_;
     AddRRCallback add_callback_;
+    boost::scoped_ptr<RRTTL> default_ttl_; // Default TTL of RRs used when
+                                           // unspecified.  If NULL no default
+                                           // is known.
+    boost::scoped_ptr<RRTTL> current_ttl_; // The TTL used most recently.
+                                           // Initially set to NULL.  Once set
+                                           // always non NULL.
     const MasterLoader::Options options_;
     const std::string master_file_;
     std::string string_token_;
@@ -249,6 +374,8 @@ public:
     bool complete_;             // All work done.
     bool seen_error_;           // Was there at least one error during the
                                 // load?
+    bool warn_rfc1035_ttl_;     // should warn if implicit TTL determination
+                                // from the previous RR is used.
 };
 
 // A helper method of loadIncremental, parsing the first token of a new line.
@@ -366,8 +493,18 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             // anything yet
 
             // The parameters
-            const RRTTL ttl(next_token.getString());
-            const RRClass rrclass(getString());
+            MasterToken rrparam_token = next_token;
+
+            bool explicit_ttl = false;
+            if (rrparam_token.getType() == MasterToken::STRING) {
+                // Try TTL
+                if (setCurrentTTL(rrparam_token.getString())) {
+                    explicit_ttl = true;
+                    rrparam_token = lexer_.getNextToken();
+                }
+            }
+
+            const RRClass rrclass(rrparam_token.getString());
             const RRType rrtype(getString());
 
             // TODO: Some more validation?
@@ -379,7 +516,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             }
             // TODO: Check if it is SOA, it should be at the origin.
 
-            const rdata::RdataPtr data(rdata::createRdata(rrtype, rrclass,
+            const rdata::RdataPtr rdata(rdata::createRdata(rrtype, rrclass,
                                                           lexer_,
                                                           &active_origin_,
                                                           options_,
@@ -388,9 +525,10 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             // the Rdata. The errors should have been reported by
             // callbacks_ already. We need to decide if we want to continue
             // or not.
-            if (data) {
-                add_callback_(*last_name_, rrclass, rrtype, ttl, data);
-
+            if (rdata) {
+                add_callback_(*last_name_, rrclass, rrtype,
+                              getCurrentTTL(explicit_ttl, rrtype, rdata),
+                              rdata);
                 // Good, we loaded another one
                 ++count;
             } else {
