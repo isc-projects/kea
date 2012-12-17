@@ -258,7 +258,7 @@ TEST(Lease4, Lease4Constructor) {
     // ...and a time
     const time_t current_time = time(NULL);
 
-    // Other random constants. 
+    // Other random constants.
     const uint32_t SUBNET_ID = 42;
     const uint32_t VALID_LIFETIME = 500;
 
@@ -605,4 +605,29 @@ TEST(Lease6, OperatorEquals) {
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 }
+
+// Checks if lease expiration is calculated properly
+TEST(Lease6, Lease6Expired) {
+    const IOAddress addr("2001:db8:1::456");
+    const uint8_t duid_array[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
+    const DuidPtr duid(new DUID(duid_array, sizeof(duid_array)));
+    const uint32_t iaid = 7; // just a number
+    const SubnetID subnet_id = 8; // just another number
+    Lease6 lease(Lease6::LEASE_IA_NA, addr, duid, iaid, 100, 200, 50, 80,
+                               subnet_id);
+
+    // case 1: a second before expiration
+    lease.cltt_ = time(NULL) - 100;
+    lease.valid_lft_ = 101;
+    EXPECT_FALSE(lease.expired());
+
+    // case 2: the lease will expire after this second is concluded
+    lease.cltt_ = time(NULL) - 101;
+    EXPECT_FALSE(lease.expired());
+
+    // case 3: the lease is expired
+    lease.cltt_ = time(NULL) - 102;
+    EXPECT_TRUE(lease.expired());
+}
+
 }; // end of anonymous namespace
