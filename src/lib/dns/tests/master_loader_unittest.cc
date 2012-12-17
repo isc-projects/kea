@@ -478,11 +478,30 @@ TEST_F(MasterLoaderTest, includeOriginRestore) {
     // Successfully load the data
     loader_->load();
     EXPECT_TRUE(loader_->loadedSucessfully());
-    EXPECT_TRUE(errors_.empty()) << errors_[0];
+    EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
     // And check it's the correct data
     checkARR("www.example.org");
     checkARR("example.org");
+}
+
+// Check we restore the last name for initial whitespace when returning from
+// include. But we do produce a warning if there's one just ofter the include.
+TEST_F(MasterLoaderTest, includeAndInitialWS) {
+    const string include_string = "xyz  1H  IN  A   192.0.2.1\n"
+        "$INCLUDE " TEST_DATA_SRCDIR "/example.org\n"
+        "   1H  IN  A   192.0.2.1\n";
+    stringstream ss(include_string);
+    setLoader(ss, Name("example.org"), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+    // Successfully load the data
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+    EXPECT_EQ(1, warnings_.size());
+    checkARR("xyz.example.org");
+    checkBasicRRs();
+    checkARR("xyz.example.org");
 }
 
 // Test the constructor rejects empty add callback.
