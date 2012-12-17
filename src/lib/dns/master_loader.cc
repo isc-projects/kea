@@ -22,13 +22,16 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 #include <boost/algorithm/string/predicate.hpp> // for iequals
-#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
 using std::string;
 using std::auto_ptr;
+using std::vector;
+using std::pair;
 using boost::algorithm::iequals;
-using boost::scoped_ptr;
+using boost::shared_ptr;
 
 namespace isc {
 namespace dns {
@@ -95,6 +98,8 @@ public:
                 ok_ = false;
             }
         }
+        // Store the current status, so we can recover it upon popSource
+        include_info_.push_back(IncludeInfo(active_origin_, last_name_));
         initialized_ = true;
     }
 
@@ -103,6 +108,15 @@ public:
             return (false);
         }
         lexer_.popSource();
+        // Restore original origin and last seen name
+
+        // We move in tandem, there's an extra item included during the
+        // initialization, so we can never run out of them
+        assert(!include_info_.empty());
+        const IncludeInfo& info(include_info_.back());
+        active_origin_ = info.first;
+        last_name_ = info.second;
+        include_info_.pop_back();
         return (true);
     }
 
@@ -207,7 +221,7 @@ private:
     const Name zone_origin_;
     Name active_origin_; // The origin used during parsing
                          // (modifiable by $ORIGIN)
-    scoped_ptr<Name> last_name_; // Last seen name (for INITAL_WS handling)
+    shared_ptr<Name> last_name_; // Last seen name (for INITAL_WS handling)
     const RRClass zone_class_;
     MasterLoaderCallbacks callbacks_;
     AddRRCallback add_callback_;
@@ -218,6 +232,11 @@ private:
     bool ok_;                   // Is it OK to continue loading?
     const bool many_errors_;    // Are many errors allowed (or should we abort
                                 // on the first)
+    // Some info about the outer files from which we include.
+    // The first one is current origin, the second is the last seen name
+    // in that file.
+    typedef pair<Name, shared_ptr<Name> > IncludeInfo;
+    vector<IncludeInfo> include_info_;
 public:
     bool complete_;             // All work done.
     bool seen_error_;           // Was there at least one error during the
