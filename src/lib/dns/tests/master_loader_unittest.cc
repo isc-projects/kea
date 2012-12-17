@@ -480,12 +480,8 @@ TEST_F(MasterLoaderTest, ttlFromPrevious) {
 }
 
 TEST_F(MasterLoaderTest, ttlClassTypeOrder) {
-    // We test the order and lack of TTL, class and type.  Both TTL and
-    // class are optional and may occur in any order if they exist. TTL
-    // and class come before type which must exist.
-    //
-    // [<TTL>] [<class>] <type> <RDATA>
-    // [<class>] [<TTL>] <type> <RDATA>
+    // We test the order and existence of TTL, class and type. See
+    // MasterLoader::MasterLoaderImpl::parseRRParams() for ordering.
 
     stringstream zone_stream;
     // <TTL> <class> <type> <RDATA>
