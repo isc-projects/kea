@@ -280,6 +280,8 @@ struct ErrorCase {
     { "www      FORTNIGHT   IN  A   192.0.2.1", NULL, "Invalid TTL" },
     { "www      3600    XX  A   192.0.2.1", NULL, "Invalid class" },
     { "www      3600    IN  A   bad_ip", NULL, "Invalid Rdata" },
+
+    // Parameter ordering errors
     { "www      IN      A   3600 192.168.2.7",
       "createRdata from text failed: IN/A RDATA construction from text failed",
       "Incorrect order of class, TTL and type" },
@@ -292,6 +294,31 @@ struct ErrorCase {
     { "www      A       3600 IN  192.168.2.8",
       "createRdata from text failed: IN/A RDATA construction from text failed",
       "Incorrect order of class, TTL and type" },
+
+    // Missing type and Rdata
+    { "www", "unexpected end of input", "Missing type and Rdata" },
+    { "www 3600", "unexpected end of input", "Missing type and Rdata" },
+    { "www IN", "unexpected end of input", "Missing type and Rdata" },
+    { "www 3600 IN", "unexpected end of input", "Missing type and Rdata" },
+    { "www IN 3600", "unexpected end of input", "Missing type and Rdata" },
+
+    // Missing Rdata
+    { "www A",
+      "createRdata from text failed: IN/A RDATA construction from text failed",
+      "Missing Rdata" },
+    { "www 3600 A",
+      "createRdata from text failed: IN/A RDATA construction from text failed",
+      "Missing Rdata" },
+    { "www IN A",
+      "createRdata from text failed: IN/A RDATA construction from text failed",
+      "Missing Rdata" },
+    { "www 3600 IN A",
+      "createRdata from text failed: IN/A RDATA construction from text failed",
+      "Missing Rdata" },
+    { "www IN 3600 A",
+      "createRdata from text failed: IN/A RDATA construction from text failed",
+      "Missing Rdata" },
+
     { "www      3600    IN", NULL, "Unexpected EOLN" },
     { "www      3600    CH  TXT nothing", NULL, "Class mismatch" },
     { "www      \"3600\"  IN  A   192.0.2.1", NULL, "Quoted TTL" },
