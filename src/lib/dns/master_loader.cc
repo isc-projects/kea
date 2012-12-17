@@ -179,13 +179,17 @@ private:
         limitTTL(*default_ttl_, post_parsing);
     }
 
-    // Set/reset the TTL currently being used.  This can be used as the last
-    // resort TTL when no other TTL is known for an RR.
-    void setCurrentTTL(const RRTTL& ttl) {
+    // Set/reset the TTL currently being used to the default TTL.
+    // This can be used as the last resort TTL when no other TTL is known for
+    // an RR.  The caller should guarantee that the default TTL has been
+    // defined by the time of this method call.  Note that this method doesn't
+    // have to call limitTTL(); it was already applied to the stored default
+    // TTL.
+    void setCurrentTTLToDefault() {
         if (!current_ttl_) {
-            current_ttl_.reset(new RRTTL(ttl));
+            current_ttl_.reset(new RRTTL(*default_ttl_));
         } else {
-            *current_ttl_ = ttl;
+            *current_ttl_ = *default_ttl_;
         }
     }
 
@@ -232,7 +236,7 @@ private:
                     dynamic_cast<const rdata::generic::SOA&>(*rdata).
                     getMinimum();
                 setDefaultTTL(RRTTL(ttl_val), true);
-                setCurrentTTL(*default_ttl_);
+                setCurrentTTLToDefault();
             } else {
                 // On catching the exception we'll try to reach EOL again,
                 // so we need to unget it now.
@@ -241,7 +245,7 @@ private:
                                         "no TTL specified; load rejected");
             }
         } else if (!explicit_ttl && default_ttl_) {
-            setCurrentTTL(*default_ttl_);
+            setCurrentTTLToDefault();
         } else if (!explicit_ttl && warn_rfc1035_ttl_) {
             // Omitted (class and) TTL values are default to the last
             // explicitly stated values (RFC 1035, Sec. 5.1).
