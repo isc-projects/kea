@@ -69,12 +69,12 @@ const OptionDefParams OPTION_DEF_PARAMS4[] = {
     { "routers", DHO_ROUTERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF },
     { "time-servers", DHO_TIME_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF },
     { "name-servers", DHO_NAME_SERVERS, OPT_IPV4_ADDRESS_TYPE,
-      false },
+      false, NO_RECORD_DEF },
     { "domain-name-servers", DHO_DOMAIN_NAME_SERVERS,
       OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF },
     { "log-servers", DHO_LOG_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF },
     { "cookie-servers", DHO_COOKIE_SERVERS, OPT_IPV4_ADDRESS_TYPE,
-      true },
+      true, NO_RECORD_DEF },
     { "lpr-servers", DHO_LPR_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF },
     { "impress-servers", DHO_IMPRESS_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF },
     { "resource-location-servers", DHO_RESOURCE_LOCATION_SERVERS,
@@ -86,7 +86,7 @@ const OptionDefParams OPTION_DEF_PARAMS4[] = {
     { "swap-server", DHO_SWAP_SERVER, OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF },
     { "root-path", DHO_ROOT_PATH, OPT_STRING_TYPE, false, NO_RECORD_DEF },
     { "extensions-path", DHO_EXTENSIONS_PATH, OPT_STRING_TYPE,
-      false },
+      false, NO_RECORD_DEF },
     { "ip-forwarding", DHO_IP_FORWARDING, OPT_BOOLEAN_TYPE, false, NO_RECORD_DEF },
     { "non-local-source-routing", DHO_NON_LOCAL_SOURCE_ROUTING,
       OPT_BOOLEAN_TYPE, false, NO_RECORD_DEF },
@@ -185,7 +185,7 @@ const OptionDefParams OPTION_DEF_PARAMS4[] = {
     { "vivco-suboptions", DHO_VIVCO_SUBOPTIONS,
       OPT_BINARY_TYPE, false, NO_RECORD_DEF },
     { "vivso-suboptions", DHO_VIVSO_SUBOPTIONS, OPT_BINARY_TYPE,
-      false }
+      false, NO_RECORD_DEF }
 
         // @todo add definitions for all remaning options.
 };
