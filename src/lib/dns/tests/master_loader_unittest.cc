@@ -569,8 +569,8 @@ TEST_F(MasterLoaderTest, includeAndInitialWS) {
     EXPECT_TRUE(errors_.empty());
     EXPECT_EQ(1, warnings_.size());
     checkCallbackMessage(warnings_.at(0),
-                         "Ambiguous previous name previous name for use in "
-                         "place of initial whitespace", 3);
+                         "Ambiguous previous name for use in place of initial"
+                         " whitespace", 3);
     checkARR("xyz.example.org");
     checkBasicRRs();
     checkARR("xyz.example.org");
