@@ -70,7 +70,7 @@ enum OptionDataType {
 /// @brief Trait class for data types supported in DHCP option definitions.
 ///
 /// This is useful to check whether the type specified as template parameter
-/// is supported by classes like Option6Int, Option6IntArray and some template
+/// is supported by classes like OptionInt, OptionIntArray and some template
 /// factory functions in OptionDefinition class.
 template<typename T>
 struct OptionDataTypeTraits {
