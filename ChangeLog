@@ -1,3 +1,10 @@
+528.	[func]		marcin
+	Implemented definitions for DHCPv4 option definitions identified
+	by option codes: 1 to 63, 77, 81-82, 90-92, 118-119, 124-125.
+	These definitions are now used by the DHCPv4 server to parse
+	options received from a client.
+	(Trac #2526, git 50a73567e8067fdbe4405b7ece5b08948ef87f98)
+
 527.	[bug]		jelte
 	Fixed a bug in the synchronous UDP server code where unexpected
 	errors from ASIO or the system libraries could cause b10-auth to
