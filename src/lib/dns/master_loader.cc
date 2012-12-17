@@ -143,6 +143,11 @@ private:
         pushSource(filename);
     }
 
+    // A helper method for loadIncremental(). It parses part of an RR
+    // until it finds the RR type field.  If TTL or RR class is
+    // specified before the RR type, it also recognizes and validates
+    // them.  explicit_ttl will be set to true if this method finds a
+    // valid TTL field.
     RRType parseRRParams(bool& explicit_ttl) {
         // Find TTL, class and type.  Both TTL and class are
         // optional and may occur in any order if they exist. TTL
