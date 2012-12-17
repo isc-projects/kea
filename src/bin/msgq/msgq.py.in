@@ -31,6 +31,7 @@ import select
 import random
 from optparse import OptionParser, OptionValueError
 import isc.util.process
+import isc.log
 
 import isc.cc
 
@@ -562,6 +563,16 @@ if __name__ == "__main__":
                       type="string", default=None,
                       help="UNIX domain socket file the msgq daemon will use")
     (options, args) = parser.parse_args()
+
+    # Init logging, according to the parameters.
+    # FIXME: Do proper logger configuration, this is just a hack
+    sev = 'INFO'
+    if options.verbose:
+        sev = 'DEBUG'
+    LOG_FILE = os.path.join("@localstatedir@", "@PACKAGE_NAME@",
+                            "msgq.log").replace("${prefix}", "@prefix@")
+    isc.log.init("b10-msgq", buffer=False, severity=sev, debuglevel=99,
+                 file=LOG_FILE)
 
     signal.signal(signal.SIGTERM, signal_handler)
 
