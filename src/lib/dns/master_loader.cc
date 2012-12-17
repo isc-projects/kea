@@ -275,7 +275,7 @@ private:
                 case MasterToken::END_OF_FILE:
                     callbacks_.warning(lexer_.getSourceName(),
                                        lexer_.getSourceLine(),
-                                       "Unexpected end end of file");
+                                       "Unexpected end of file");
                     // We don't pop here. The End of file will stay there,
                     // and we'll handle it in the next iteration of
                     // loadIncremental properly.
