@@ -136,6 +136,8 @@ public:
 
     bool loadIncremental(size_t count_limit);
 
+    MasterToken handleInitialToken();
+
     void doOrigin(bool is_optional) {
         // Parse and create the new origin. It is relative to the previous
         // one.
@@ -249,6 +251,92 @@ public:
                                 // load?
 };
 
+// A helper method of loadIncremental, parsing the first token of a new line.
+// If it looks like an RR, detect its owner name and return a string token for
+// the next field of the RR.
+// Otherwise, return either END_OF_LINE or END_OF_FILE token depending on
+// whether the loader continues to the next line or completes the load,
+// respectively.  Other corner cases including $-directive handling is done
+// here.
+// For unexpected errors, it throws an exception, which will be handled in
+// loadIncremental.
+MasterToken
+MasterLoader::MasterLoaderImpl::handleInitialToken() {
+    const MasterToken& initial_token =
+        lexer_.getNextToken(MasterLexer::QSTRING | MasterLexer::INITIAL_WS);
+
+    // The most likely case is INITIAL_WS, and then string/qstring.  We
+    // handle them first.
+    if (initial_token.getType() == MasterToken::INITIAL_WS) {
+        const MasterToken& next_token = lexer_.getNextToken();
+        if (next_token.getType() == MasterToken::END_OF_LINE) {
+            return (next_token); // blank line
+        } else if (next_token.getType() == MasterToken::END_OF_FILE) {
+            lexer_.ungetToken(); // handle it in the next iteration.
+            eatUntilEOL(true);  // effectively warn about the unexpected EOF.
+            return (MasterToken(MasterToken::END_OF_LINE));
+        }
+
+        // This means the same name as previous.
+        if (last_name_.get() == NULL) {
+            isc_throw(InternalException, "No previous name to use in "
+                      "place of initial whitespace");
+        } else if (!previous_name_) {
+            callbacks_.warning(lexer_.getSourceName(),
+                               lexer_.getSourceLine(),
+                               "Ambiguous previous name previous name for "
+                               "use in place of initial whitespace");
+        }
+        return (next_token);
+    } else if (initial_token.getType() == MasterToken::STRING ||
+               initial_token.getType() == MasterToken::QSTRING) {
+        // If it is name (or directive), handle it.
+        const MasterToken::StringRegion&
+            name_string(initial_token.getStringRegion());
+
+        if (name_string.len > 0 && name_string.beg[0] == '$') {
+            // This should have either thrown (and the error handler
+            // will read up until the end of line) or read until the
+            // end of line.
+
+            // Exclude the $ from the string on this point.
+            handleDirective(name_string.beg + 1, name_string.len - 1);
+            // So, get to the next line, there's nothing more interesting
+            // in this one.
+            return (MasterToken(MasterToken::END_OF_LINE));
+        }
+
+        // This should be an RR, starting with an owner name.  Construct the
+        // name, and some string token should follow.
+        last_name_.reset(new Name(name_string.beg, name_string.len,
+                                  &active_origin_));
+        previous_name_ = true;
+        return (lexer_.getNextToken(MasterToken::STRING));
+    }
+
+    switch (initial_token.getType()) { // handle less common cases
+    case MasterToken::END_OF_FILE:
+        if (!popSource()) {
+            return (initial_token);
+        } else {
+            // We try to read a token from the popped source
+            // So retry the loop, but first, make sure the source
+            // is at EOL
+            eatUntilEOL(true);
+            return (MasterToken(MasterToken::END_OF_LINE));
+        }
+    case MasterToken::END_OF_LINE:
+        return (initial_token); // empty line
+    case MasterToken::ERROR:
+        // Error token here.
+        isc_throw(InternalException, initial_token.getErrorText());
+    default:
+        // Some other token (what could that be?)
+        isc_throw(InternalException, "Parser got confused (unexpected "
+                  "token " << initial_token.getType() << ")");
+    }
+}
+
 bool
 MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
     if (count_limit == 0) {
@@ -264,85 +352,21 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
     size_t count = 0;
     while (ok_ && count < count_limit) {
         try {
-            MasterToken initial_token(MasterToken::NO_TOKEN_PRODUCED);
-            // Skip all EOLNs (empty lines) and finish on EOF
-            do {
-                initial_token = lexer_.getNextToken(MasterLexer::QSTRING |
-                                                    MasterLexer::INITIAL_WS);
-                if (initial_token.getType() == MasterToken::INITIAL_WS) {
-                    // The INITIAL_WS is interesting only if something is
-                    // after it. So peek there and if there's EOLN or EOF,
-                    // ignore it.
-                    const MasterToken& peek_token(lexer_.getNextToken());
-                    if (peek_token.getType() == MasterToken::END_OF_LINE ||
-                        peek_token.getType() == MasterToken::END_OF_FILE) {
-                        initial_token = peek_token;
-                    } else {
-                        // It is something interesting. Return it back and
-                        // keep the whitespace.
-                        lexer_.ungetToken();
-                    }
-                }
-                if (initial_token.getType() == MasterToken::END_OF_FILE) {
-                    if (!popSource()) {
-                        return (true);
-                    } else {
-                        // We try to read a token from the popped source
-                        // So retry the loop, but first, make sure the source
-                        // is at EOL
-                        eatUntilEOL(true);
-                        continue;
-                    }
-                }
-            } while (initial_token.getType() == MasterToken::END_OF_LINE ||
-                     initial_token.getType() == MasterToken::END_OF_FILE);
-
-            if (initial_token.getType() == MasterToken::QSTRING ||
-                initial_token.getType() == MasterToken::STRING) {
-                // If it is name (or directive), handle it.
-                const MasterToken::StringRegion&
-                    name_string(initial_token.getStringRegion());
-
-                if (name_string.len > 0 && name_string.beg[0] == '$') {
-                    // This should have either thrown (and the error handler
-                    // will read up until the end of line) or read until the
-                    // end of line.
-
-                    // Exclude the $ from the string on this point.
-                    handleDirective(name_string.beg + 1, name_string.len - 1);
-                    // So, get to the next line, there's nothing more interesting
-                    // in this one.
-                    continue;
-                }
-
-                last_name_.reset(new Name(name_string.beg, name_string.len,
-                                          &active_origin_));
-                previous_name_ = true;
-            } else if (initial_token.getType() == MasterToken::INITIAL_WS) {
-                // This means the same name as previous.
-                if (last_name_.get() == NULL) {
-                    isc_throw(InternalException, "No previous name to use in "
-                              "place of initial whitespace");
-                } else if (!previous_name_) {
-                    callbacks_.warning(lexer_.getSourceName(),
-                                       lexer_.getSourceLine(),
-                                       "Ambiguous previous name previous name "
-                                       "for initial whitespace");
-                }
-            } else if (initial_token.getType() == MasterToken::ERROR) {
-                // Error token here.
-                isc_throw(InternalException, initial_token.getErrorText());
-            } else {
-                // Some other token (what could that be?)
-                isc_throw(InternalException, "Parser got confused (unexpected "
-                          "token " << initial_token.getType() << ")");
+            const MasterToken next_token = handleInitialToken();
+            if (next_token.getType() == MasterToken::END_OF_FILE) {
+                return (true);  // we are done
+            } else if (next_token.getType() == MasterToken::END_OF_LINE) {
+                continue;       // nothing more to do in this line
             }
+            // We are going to parse an RR, have known the owner name,
+            // and are now seeing the next string token in the rest of the RR.
+            assert(next_token.getType() == MasterToken::STRING);
 
             // TODO: Some more flexibility. We don't allow omitting
             // anything yet
 
             // The parameters
-            const RRTTL ttl(getString());
+            const RRTTL ttl(next_token.getString());
             const RRClass rrclass(getString());
             const RRType rrtype(getString());
 
