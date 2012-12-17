@@ -293,11 +293,7 @@ private:
             doInclude();
         } else if (iequals(directive, "ORIGIN")) {
             doOrigin(false);
-            // The doOrigin doesn't do the cleanup of the line. This is
-            // because it's shared with the doInclude and that one can't do
-            // it.
             eatUntilEOL(true);
-            // TODO: Implement
         } else if (iequals(directive, "TTL")) {
             setDefaultTTL(RRTTL(getString()), false);
             eatUntilEOL(true);

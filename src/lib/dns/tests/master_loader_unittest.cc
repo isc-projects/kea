@@ -342,18 +342,24 @@ struct ErrorCase {
     // Check the unknown directive. The rest looks like ordinary RR,
     // so we see the $ is actually special.
     { "$UNKNOWN 3600    IN  A   192.0.2.1", NULL, "Unknown $ directive" },
-    { "$INCLUD " TEST_DATA_SRCDIR "/example.org", NULL, "Include too short" },
-    { "$INCLUDES " TEST_DATA_SRCDIR "/example.org", NULL, "Include too long" },
-    { "$INCLUDE", NULL, "Missing include path" },
+    { "$INCLUD " TEST_DATA_SRCDIR "/example.org", "Unknown directive 'INCLUD'",
+        "Include too short" },
+    { "$INCLUDES " TEST_DATA_SRCDIR "/example.org",
+        "Unknown directive 'INCLUDES'", "Include too long" },
+    { "$INCLUDE", "unexpected end of input", "Missing include path" },
+    // The following two error messages are system dependant, omitting
     { "$INCLUDE /file/not/found", NULL, "Include file not found" },
     { "$INCLUDE /file/not/found example.org. and here goes bunch of garbage",
         NULL, "Include file not found and garbage at the end of line" },
-    { "$ORIGIN", NULL, "Missing origin name" },
-    { "$ORIGIN invalid...name", NULL, "Invalid name for origin" },
-    { "$ORIGIN )brokentoken", NULL, "Broken token in origin" },
-    { "$ORIGIN example.org. garbage", NULL, "Garbage after origin" },
-    { "$ORIGI name.", NULL, "$ORIGIN too short" },
-    { "$ORIGINAL name.", NULL, "$ORIGIN too long" },
+    { "$ORIGIN", "unexpected end of input", "Missing origin name" },
+    { "$ORIGIN invalid...name", "duplicate period in invalid...name",
+        "Invalid name for origin" },
+    { "$ORIGIN )brokentoken", "unbalanced parentheses",
+        "Broken token in origin" },
+    { "$ORIGIN example.org. garbage", "Extra tokens at the end of line",
+        "Garbage after origin" },
+    { "$ORIGI name.", "Unknown directive 'ORIGI'", "$ORIGIN too short" },
+    { "$ORIGINAL name.", "Unknown directive 'ORIGINAL'", "$ORIGIN too long" },
     { "$TTL 100 extra-garbage", "Extra tokens at the end of line",
       "$TTL with extra token" },
     { "$TTL", "unexpected end of input", "missing TTL" },
@@ -375,7 +381,9 @@ checkCallbackMessage(const string& actual_msg, const string& expected_msg,
 
     // and it should end with "...:<line_num>]"
     const string line_desc = ":" + lexical_cast<string>(expected_line) + "]";
-    EXPECT_EQ(actual_msg.size() - line_desc.size(), actual_msg.find(line_desc));
+    EXPECT_EQ(actual_msg.size() - line_desc.size(),
+              actual_msg.find(line_desc)) << "Expected on line " <<
+        expected_line;
 }
 
 // Test a broken zone is handled properly. We test several problems,
@@ -461,6 +469,7 @@ TEST_F(MasterLoaderTest, includeWithGarbage) {
     EXPECT_NO_THROW(loader_->load());
     EXPECT_FALSE(loader_->loadedSucessfully());
     ASSERT_EQ(1, errors_.size());
+    checkCallbackMessage(errors_.at(0), "Extra tokens at the end of line", 1);
     // It says something about extra tokens at the end
     EXPECT_NE(string::npos, errors_[0].find("Extra"));
     EXPECT_TRUE(warnings_.empty());
@@ -479,8 +488,7 @@ TEST_F(MasterLoaderTest, originWithGarbage) {
     EXPECT_NO_THROW(loader_->load());
     EXPECT_FALSE(loader_->loadedSucessfully());
     ASSERT_EQ(1, errors_.size());
-    // It says something about extra tokens at the end
-    EXPECT_NE(string::npos, errors_[0].find("Extra"));
+    checkCallbackMessage(errors_.at(0), "Extra tokens at the end of line", 1);
     EXPECT_TRUE(warnings_.empty());
     checkARR("www.example.org");
 }
@@ -522,6 +530,8 @@ TEST_F(MasterLoaderTest, includeAndBadOrigin) {
     loader_->load();
     EXPECT_FALSE(loader_->loadedSucessfully());
     EXPECT_EQ(1, errors_.size());
+    checkCallbackMessage(errors_.at(0), "duplicate period in example..org.",
+                         1);
     EXPECT_TRUE(warnings_.empty());
     // And check it's the correct data
     checkARR("www.example.org");
@@ -558,6 +568,9 @@ TEST_F(MasterLoaderTest, includeAndInitialWS) {
     EXPECT_TRUE(loader_->loadedSucessfully());
     EXPECT_TRUE(errors_.empty());
     EXPECT_EQ(1, warnings_.size());
+    checkCallbackMessage(warnings_.at(0),
+                         "Ambiguous previous name previous name for use in "
+                         "place of initial whitespace", 3);
     checkARR("xyz.example.org");
     checkBasicRRs();
     checkARR("xyz.example.org");
@@ -776,6 +789,9 @@ TEST_F(MasterLoaderTest, noPreviousName) {
     loader_->load();
     EXPECT_FALSE(loader_->loadedSucessfully());
     EXPECT_EQ(1, errors_.size());
+    checkCallbackMessage(errors_.at(0),
+                         "x",
+                         1);
     EXPECT_TRUE(warnings_.empty());
 }
 
