@@ -187,11 +187,7 @@ initModulePart_MessageRenderer(PyObject* mod) {
 }
 
 bool
-initModulePart_Name(PyObject* mod) {
-
-    //
-    // NameComparisonResult
-    //
+initModulePart_NameComparisonResult(PyObject* mod) {
     if (!initClass(name_comparison_result_type,
                    "NameComparisonResult", mod)) {
         return (false);
@@ -215,10 +211,11 @@ initModulePart_Name(PyObject* mod) {
     addClassVariable(name_comparison_result_type, "COMMONANCESTOR",
                      Py_BuildValue("I", NameComparisonResult::COMMONANCESTOR));
 
+    return (true);
+}
 
-    //
-    // Name
-    //
+bool
+initModulePart_Name(PyObject* mod) {
     if (!initClass(name_type, "Name", mod)) {
         return (false);
     }
@@ -239,8 +236,6 @@ initModulePart_Name(PyObject* mod) {
 
     addClassVariable(name_type, "ROOT_NAME",
                      createNameObject(Name::ROOT_NAME()));
-
-
 
     // Add the exceptions to the module
     try {
@@ -784,6 +779,10 @@ PyInit_pydnspp(void) {
     }
 
     // for each part included above, we call its specific initializer
+
+    if (!initModulePart_NameComparisonResult(mod)) {
+        return (NULL);
+    }
 
     if (!initModulePart_Name(mod)) {
         return (NULL);
