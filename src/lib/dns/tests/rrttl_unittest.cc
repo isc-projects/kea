@@ -273,6 +273,10 @@ TEST_F(RRTTLTest, gthan) {
     EXPECT_FALSE(ttl_small > ttl_large);
 }
 
+TEST_F(RRTTLTest, maxTTL) {
+    EXPECT_EQ((1 << 31) - 1, RRTTL::MAX()::getValue());
+}
+
 // test operator<<.  We simply confirm it appends the result of toText().
 TEST_F(RRTTLTest, LeftShiftOperator) {
     ostringstream oss;
