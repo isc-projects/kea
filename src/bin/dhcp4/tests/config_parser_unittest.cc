@@ -23,6 +23,7 @@
 #include <config/ccsession.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <boost/foreach.hpp>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -77,6 +78,87 @@ public:
         resetConfiguration();
         delete srv_;
     };
+
+    /// @brief Create the simple configuration with single option.
+    ///
+    /// This function allows to set one of the parameters that configure
+    /// option value. These parameters are: "name", "code" and "data".
+    ///
+    /// @param param_value string holiding option parameter value to be
+    /// injected into the configuration string.
+    /// @param parameter name of the parameter to be configured with
+    /// param value.
+    std::string createConfigWithOption(const std::string& param_value,
+                                       const std::string& parameter) {
+        std::map<std::string, std::string> params;
+        if (parameter == "name") {
+            params["name"] = param_value;
+            params["code"] = "56";
+            params["data"] = "AB CDEF0105";
+        } else if (parameter == "code") {
+            params["name"] = "option_foo";
+            params["code"] = param_value;
+            params["data"] = "AB CDEF0105";
+        } else if (parameter == "data") {
+            params["name"] = "option_foo";
+            params["code"] = "56";
+            params["data"] = param_value;
+        }
+        return (createConfigWithOption(params));
+    }
+
+    std::string createConfigWithOption(const std::map<std::string, std::string>& params) {
+        std::ostringstream stream;
+        stream << "{ \"interface\": [ \"all\" ],"
+            "\"rebind-timer\": 2000, "
+            "\"renew-timer\": 1000, "
+            "\"subnet4\": [ { "
+            "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+            "    \"subnet\": \"192.0.2.0/24\", "
+            "    \"option-data\": [ {";
+        bool first = true;
+        typedef std::pair<std::string, std::string> ParamPair;
+        BOOST_FOREACH(ParamPair param, params) {
+            if (!first) {
+                stream << ", ";
+            } else {
+                first = false;
+            }
+            if (param.first == "name") {
+                stream << "\"name\": \"" << param.second << "\"";
+            } else if (param.first == "code") {
+                stream << "\"code\": " << param.second << "";
+            } else if (param.first == "data") {
+                stream << "\"data\": \"" << param.second << "\"";
+            }
+        }
+        stream <<
+            "        } ]"
+            " } ],"
+            "\"valid-lifetime\": 4000 }";
+        return (stream.str());
+    }
+
+    /// @brief Test invalid option parameter value.
+    ///
+    /// This test function constructs the simple configuration
+    /// string and injects invalid option configuration into it.
+    /// It expects that parser will fail with provided option code.
+    ///
+    /// @param param_value string holding invalid option parameter value
+    /// to be injected into configuration string.
+    /// @param parameter name of the parameter to be configured with
+    /// param_value (can be any of "name", "code", "data")
+    void testInvalidOptionParam(const std::string& param_value,
+                                const std::string& parameter) {
+        ConstElementPtr x;
+        std::string config = createConfigWithOption(param_value, parameter);
+        ElementPtr json = Element::fromJSON(config);
+        EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+        ASSERT_TRUE(x);
+        comment_ = parseAnswer(rcode_, x);
+        ASSERT_EQ(1, rcode_);
+    }
 
     /// @brief Test option against given code and data.
     ///
@@ -535,6 +617,99 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
 
     const uint8_t foo2_expected[] = { 0xFF };
     testOption(*range2.first, 23, foo2_expected, sizeof(foo2_expected));
+}
+
+// Verify that empty option name is rejected in the configuration.
+TEST_F(Dhcp4ParserTest, optionNameEmpty) {
+    // Empty option names not allowed.
+    testInvalidOptionParam("", "name");
+}
+
+// Verify that empty option name with spaces is rejected
+// in the configuration.
+TEST_F(Dhcp4ParserTest, optionNameSpaces) {
+    // Spaces in option names not allowed.
+    testInvalidOptionParam("option foo", "name");
+}
+
+// Verify that negative option code is rejected in the configuration.
+TEST_F(Dhcp4ParserTest, optionCodeNegative) {
+    // Check negative option code -4. This should fail too.
+    testInvalidOptionParam("-4", "code");
+}
+
+// Verify that out of bounds option code is rejected in the configuration.
+TEST_F(Dhcp4ParserTest, optionCodeNonUint8) {
+    // The valid option codes are uint16_t values so passing
+    // uint16_t maximum value incremented by 1 should result
+    // in failure.
+    testInvalidOptionParam("257", "code");
+}
+
+// Verify that zero option code is rejected in the configuration.
+TEST_F(Dhcp4ParserTest, optionCodeZero) {
+    // Option code 0 is reserved and should not be accepted
+    // by configuration parser.
+    testInvalidOptionParam("0", "code");
+}
+
+// Verify that option data which contains non hexadecimal characters
+// is rejected by the configuration.
+TEST_F(Dhcp4ParserTest, optionDataInvalidChar) {
+    // Option code 0 is reserved and should not be accepted
+    // by configuration parser.
+    testInvalidOptionParam("01020R", "data");
+}
+
+// Verify that option data containins '0x' prefix is rejected
+// by the configuration.
+TEST_F(Dhcp4ParserTest, optionDataUnexpectedPrefix) {
+    // Option code 0 is reserved and should not be accepted
+    // by configuration parser.
+    testInvalidOptionParam("0x0102", "data");
+}
+
+// Verify that option data consisting od an odd number of
+// hexadecimal digits is rejected in the configuration.
+TEST_F(Dhcp4ParserTest, optionDataOddLength) {
+    // Option code 0 is reserved and should not be accepted
+    // by configuration parser.
+    testInvalidOptionParam("123", "data");
+}
+
+// Verify that either lower or upper case characters are allowed
+// to specify the option data.
+TEST_F(Dhcp4ParserTest, optionDataLowerCase) {
+    ConstElementPtr x;
+    std::string config = createConfigWithOption("0a0b0C0D", "data");
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    ASSERT_TRUE(subnet);
+    const Subnet::OptionContainer& options = subnet->getOptions();
+    ASSERT_EQ(1, options.size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+              Subnet::OptionContainerTypeIndex::const_iterator> range =
+        idx.equal_range(56);
+    // Expect single option with the code equal to 100.
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    const uint8_t foo_expected[] = {
+        0x0A, 0x0B, 0x0C, 0x0D
+    };
+    // Check if option is valid in terms of code and carried data.
+    testOption(*range.first, 56, foo_expected, sizeof(foo_expected));
 }
 
 /// This test checks if Uint32Parser can really parse the whole range

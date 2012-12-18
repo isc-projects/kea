@@ -1076,7 +1076,6 @@ public:
         // used: Subnet4ConfigParser
 
         BOOST_FOREACH(ConstElementPtr subnet, subnets_list->listValue()) {
-
             ParserPtr parser(new Subnet4ConfigParser("subnet"));
             parser->build(subnet);
             subnets_.push_back(parser);
@@ -1166,7 +1165,7 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
         }
     } catch (const isc::Exception& ex) {
         ConstElementPtr answer = isc::config::createAnswer(1,
-                                 string("Configuration parsing failed:") + ex.what());
+                                 string("Configuration parsing failed: ") + ex.what());
         return (answer);
     } catch (...) {
         // for things like bad_cast in boost::lexical_cast
@@ -1181,7 +1180,7 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
     }
     catch (const isc::Exception& ex) {
         ConstElementPtr answer = isc::config::createAnswer(2,
-                                 string("Configuration commit failed:") + ex.what());
+                                 string("Configuration commit failed: ") + ex.what());
         return (answer);
     } catch (...) {
         // for things like bad_cast in boost::lexical_cast
