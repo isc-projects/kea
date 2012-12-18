@@ -912,6 +912,27 @@ public:
             subnet->addOption(desc.option);
         }
 
+        // Check all global options and add them to the subnet object if
+        // they have been configured in the global scope. If they have been
+        // configured in the subnet scope we don't add global option because
+        // the one configured in the subnet scope always takes precedence.
+        BOOST_FOREACH(Subnet::OptionDescriptor desc, option_defaults) {
+            // Get all options specified locally in the subnet and having
+            // code equal to global option's code.
+            Subnet::OptionContainerTypeRange range = idx.equal_range(desc.option->getType());
+            // @todo: In the future we will be searching for options using either
+            // an option code or namespace. Currently we have only the option
+            // code available so if there is at least one option found with the
+            // specific code we don't add the globally configured option.
+            // @todo with this code the first globally configured option
+            // with the given code will be added to a subnet. We may
+            // want to issue a warning about dropping the configuration of
+            // a global option if one already exsists.
+            if (std::distance(range.first, range.second) == 0) {
+                subnet->addOption(desc.option);
+            }
+        }
+
         CfgMgr::instance().addSubnet4(subnet);
     }
 
@@ -966,6 +987,7 @@ private:
         factories["rebind-timer"] = Uint32Parser::Factory;
         factories["subnet"] = StringParser::Factory;
         factories["pool"] = PoolParser::Factory;
+        factories["option-data"] = OptionDataListParser::Factory;
 
         FactoryMap::iterator f = factories.find(config_id);
         if (f == factories.end()) {
