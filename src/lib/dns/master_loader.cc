@@ -149,8 +149,10 @@ private:
     // and prohibits transmitting a TTL field exceeding this range.  We
     // guarantee that by limiting the value at the time of zone
     // parsing/loading, following what BIND 9 does.  Resetting it to 0
-    // at this point may not be exactly what the RFC states, but the end
-    // result would be the same.  Again, we follow the BIND 9's behavior here.
+    // at this point may not be exactly what the RFC states (depending on
+    // the meaning of 'received'), but the end result would be the same (i.e.,
+    // the guarantee on transmission).  Again, we follow the BIND 9's behavior
+    // here.
     //
     // post_parsing is true iff this method is called after parsing the entire
     // RR and the lexer is positioned at the next line.  It's just for
