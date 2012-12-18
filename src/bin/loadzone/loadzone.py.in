@@ -61,7 +61,7 @@ Example: '{"database_file": "/path/to/dbfile/db.sqlite3"}'""",
                       metavar='CONFIG')
     parser.add_option("-d", "--debug", dest="debug_level",
                       type='int', action="store", default=None,
-                      help="enable debug logs with the specified level")
+                      help="enable debug logs with the specified level [0-99]")
     parser.add_option("-i", "--report-interval", dest="report_interval",
                       type='int', action="store",
                       default=LOAD_INTERVAL_DEFAULT,
