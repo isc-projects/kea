@@ -1,3 +1,16 @@
+529.	[func]*		team
+	The in-memory data source now uses a more complete master file
+	parser to load textual zone files.  As of this change it supports
+	multi-line RR representation and more complete support for escaped
+	and quoted strings.  It also produces more helpful log when there
+	is an error in the zone file.  It will be enhanced as more
+	specific tasks in the #2368 meta ticket are completed.  The new
+	parser is generally upper compatible to the previous one, but due
+	to the tighter checks some input that has been accepted so far
+	could now be rejected, so it's advisable to check if you use
+	textual zone files directly loaded to memory.
+	(Trac #2470, git c4cf36691115c15440b65cac16f1c7fcccc69521)
+
 528.	[func]		marcin
 	Implemented definitions for DHCPv4 option definitions identified
 	by option codes: 1 to 63, 77, 81-82, 90-92, 118-119, 124-125.
