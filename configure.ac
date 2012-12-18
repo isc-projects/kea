@@ -1350,7 +1350,6 @@ AC_OUTPUT([doc/version.ent
            src/bin/bindctl/tests/bindctl_test
            src/bin/loadzone/run_loadzone.sh
            src/bin/loadzone/tests/correct/correct_test.sh
-           src/bin/loadzone/b10-loadzone.py
            src/bin/loadzone/loadzone.py
            src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            src/bin/usermgr/b10-cmdctl-usermgr.py
