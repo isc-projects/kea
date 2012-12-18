@@ -1,0 +1,5 @@
+; We change the origin here. We want to check it is not propagated
+; outside of the included file.
+$ORIGIN www.example.org.
+
+@   1H  IN  A   192.0.2.1
