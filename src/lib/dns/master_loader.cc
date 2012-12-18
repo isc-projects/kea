@@ -180,20 +180,6 @@ private:
         limitTTL(*default_ttl_, post_parsing);
     }
 
-    // Set/reset the TTL currently being used to the default TTL.
-    // This can be used as the last resort TTL when no other TTL is known for
-    // an RR.  The caller should guarantee that the default TTL has been
-    // defined by the time of this method call.  Note that this method doesn't
-    // have to call limitTTL(); it was already applied to the stored default
-    // TTL.
-    void setCurrentTTLToDefault() {
-        if (!current_ttl_) {
-            current_ttl_.reset(new RRTTL(*default_ttl_));
-        } else {
-            *current_ttl_ = *default_ttl_;
-        }
-    }
-
     // Try to set/reset the current TTL from candidate TTL text.  It's possible
     // it does not actually represent a TTL (which is not immediately
     // considered an error).  Return true iff it's recognized as a valid TTL
@@ -202,11 +188,9 @@ private:
         // We use the factory version instead of RRTTL constructor as we
         // need to expect cases where ttl_txt does not actually represent a TTL
         // but an RR class or type.
-        RRTTL* ttl = RRTTL::createFromText(ttl_txt, current_ttl_.get());
-        if (ttl != NULL) {
-            if (!current_ttl_) {
-                current_ttl_.reset(ttl);
-            }
+        const MaybeRRTTL maybe_ttl = RRTTL::createFromText(ttl_txt);
+        if (maybe_ttl) {
+            current_ttl_ = maybe_ttl;
             limitTTL(*current_ttl_, false);
             return (true);
         }
@@ -237,7 +221,7 @@ private:
                     dynamic_cast<const rdata::generic::SOA&>(*rdata).
                     getMinimum();
                 setDefaultTTL(RRTTL(ttl_val), true);
-                setCurrentTTLToDefault();
+                current_ttl_ = *default_ttl_;
             } else {
                 // On catching the exception we'll try to reach EOL again,
                 // so we need to unget it now.
@@ -246,7 +230,7 @@ private:
                                         "no TTL specified; load rejected");
             }
         } else if (!explicit_ttl && default_ttl_) {
-            setCurrentTTLToDefault();
+            current_ttl_ = *default_ttl_;
         } else if (!explicit_ttl && warn_rfc1035_ttl_) {
             // Omitted (class and) TTL values are default to the last
             // explicitly stated values (RFC 1035, Sec. 5.1).
@@ -313,9 +297,8 @@ private:
     boost::scoped_ptr<RRTTL> default_ttl_; // Default TTL of RRs used when
                                            // unspecified.  If NULL no default
                                            // is known.
-    boost::scoped_ptr<RRTTL> current_ttl_; // The TTL used most recently.
-                                           // Initially set to NULL.  Once set
-                                           // always non NULL.
+    MaybeRRTTL current_ttl_; // The TTL used most recently.  Initially unset.
+                             // Once set always stores a valid RRTTL.
     const MasterLoader::Options options_;
     const std::string master_file_;
     std::string string_token_;
