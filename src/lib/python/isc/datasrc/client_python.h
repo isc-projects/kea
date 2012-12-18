@@ -44,6 +44,17 @@ wrapDataSourceClient(DataSourceClient* client,
                      LifeKeeper>& life_keeper = boost::shared_ptr<ClientList::
                      FindResult::LifeKeeper>());
 
+/// \brief Returns a reference to the DataSourceClient object contained
+///        in the given Python object.
+///
+/// \note The given object MUST be of type DataSourceClient; this can be
+///       checked with the right call to ParseTuple("O!")
+///
+/// \param client_obj Python object holding the DataSourceClient
+/// \return reference to the DataSourceClient object
+DataSourceClient&
+PyDataSourceClient_ToDataSourceClient(PyObject* client_obj);
+
 } // namespace python
 } // namespace datasrc
 } // namespace isc
