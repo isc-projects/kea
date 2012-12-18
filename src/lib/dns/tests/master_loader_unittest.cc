@@ -527,7 +527,7 @@ TEST_F(MasterLoaderTest, ttlUnknownAndEOF) {
     // RDATA implementation can complain about it, too.  To be independent of
     // its details, we focus on the very last warning.
     EXPECT_FALSE(warnings_.empty());
-    checkCallbackMessage(*warnings_.rbegin(), "Unexpected end end of file", 1);
+    checkCallbackMessage(*warnings_.rbegin(), "Unexpected end of file", 1);
 }
 
 TEST_F(MasterLoaderTest, ttlOverflow) {
