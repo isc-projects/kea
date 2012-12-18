@@ -192,34 +192,6 @@ TaggedStatement tagged_statements[] = {
     {MySqlLeaseMgr::NUM_STATEMENTS, NULL}
 };
 
-/// @brief Produce string representation of hardware address
-///
-/// Returns a string containing the hardware address. This is only used for
-/// logging.
-///
-/// @note Six characters is an arbitrary length, chosen to provide a
-///       suitably wide string.
-///
-/// @todo Create a "hardware address" class of which this will be a member.
-///
-/// @param hwaddr Hardware address to convert to string form
-///
-/// @return String form of the hardware address.
-std::string
-hardwareAddressString(const LeaseMgr::HWAddr& hwaddr) {
-    std::ostringstream stream;
-
-    for (size_t i = 0; i < hwaddr.size(); ++i) {
-        if (i > 0) {
-            stream << ":";
-        }
-        stream << std::setw(2) << std::setfill('0')
-               << static_cast<unsigned int>(hwaddr[i]);
-    }
-
-    return (stream.str());
-}
-
 };  // Anonymous namespace
 
 

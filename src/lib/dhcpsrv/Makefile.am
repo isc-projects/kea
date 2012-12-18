@@ -34,6 +34,7 @@ libb10_dhcpsrv_la_SOURCES += addr_utilities.cc addr_utilities.h
 libb10_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
 libb10_dhcpsrv_la_SOURCES += dhcpsrv_log.cc dhcpsrv_log.h
 libb10_dhcpsrv_la_SOURCES += cfgmgr.cc cfgmgr.h
+libb10_dhcpsrv_la_SOURCES += hwaddr.cc hwaddr.h
 libb10_dhcpsrv_la_SOURCES += lease_mgr.cc lease_mgr.h
 libb10_dhcpsrv_la_SOURCES += lease_mgr_factory.cc lease_mgr_factory.h
 libb10_dhcpsrv_la_SOURCES += memfile_lease_mgr.cc memfile_lease_mgr.h
