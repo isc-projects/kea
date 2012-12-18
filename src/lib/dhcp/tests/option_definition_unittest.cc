@@ -207,10 +207,9 @@ TEST_F(OptionDefinitionTest, ipv6AddressArray) {
     // Write addresses to the buffer.
     OptionBuffer buf(addrs.size() * asiolink::V6ADDRESS_LEN);
     for (int i = 0; i < addrs.size(); ++i) {
-        asio::ip::address_v6::bytes_type addr_bytes =
-            addrs[i].getAddress().to_v6().to_bytes();
-        ASSERT_EQ(asiolink::V6ADDRESS_LEN, addr_bytes.size());
-        std::copy(addr_bytes.begin(), addr_bytes.end(),
+        const std::vector<uint8_t>& vec = addrs[i].toBytes();
+        ASSERT_EQ(asiolink::V6ADDRESS_LEN, vec.size());
+        std::copy(vec.begin(), vec.end(),
                   buf.begin() + i * asiolink::V6ADDRESS_LEN);
     }
     // Create DHCPv6 option from this buffer. Once option is created it is
@@ -306,10 +305,9 @@ TEST_F(OptionDefinitionTest, ipv4AddressArray) {
     // Write addresses to the buffer.
     OptionBuffer buf(addrs.size() * asiolink::V4ADDRESS_LEN);
     for (int i = 0; i < addrs.size(); ++i) {
-        asio::ip::address_v4::bytes_type addr_bytes =
-            addrs[i].getAddress().to_v4().to_bytes();
-        ASSERT_EQ(asiolink::V4ADDRESS_LEN, addr_bytes.size());
-        std::copy(addr_bytes.begin(), addr_bytes.end(),
+        const std::vector<uint8_t> vec = addrs[i].toBytes();
+        ASSERT_EQ(asiolink::V4ADDRESS_LEN, vec.size());
+        std::copy(vec.begin(), vec.end(),
                   buf.begin() + i * asiolink::V4ADDRESS_LEN);
     }
     // Create DHCPv6 option from this buffer. Once option is created it is
@@ -512,11 +510,10 @@ TEST_F(OptionDefinitionTest, recordIAAddr6) {
     OptionPtr option_v6;
     asiolink::IOAddress addr_v6("2001:0db8::ff00:0042:8329");
     OptionBuffer buf(asiolink::V6ADDRESS_LEN);
-    ASSERT_TRUE(addr_v6.getAddress().is_v6());
-    asio::ip::address_v6::bytes_type addr_bytes =
-        addr_v6.getAddress().to_v6().to_bytes();
-    ASSERT_EQ(asiolink::V6ADDRESS_LEN, addr_bytes.size());
-    std::copy(addr_bytes.begin(), addr_bytes.end(), buf.begin());
+    ASSERT_TRUE(addr_v6.isV6());
+    const std::vector<uint8_t>& vec = addr_v6.toBytes();
+    ASSERT_EQ(asiolink::V6ADDRESS_LEN, vec.size());
+    std::copy(vec.begin(), vec.end(), buf.begin());
 
     for (int i = 0; i < option6_iaaddr_len - asiolink::V6ADDRESS_LEN; ++i) {
         buf.push_back(i);
