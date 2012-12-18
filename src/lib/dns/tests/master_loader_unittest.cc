@@ -50,6 +50,11 @@ public:
                                &warnings_, _1, _2, _3))
     {}
 
+    void TearDown() {
+        // Check there are no more RRs we didn't expect
+        EXPECT_TRUE(rrsets_.empty());
+    }
+
     /// Concatenate file, line, and reason, and add it to either errors
     /// or warnings
     void callback(vector<string>* target, const std::string& file, size_t line,
@@ -127,6 +132,11 @@ public:
                 "1234 3600 1800 2419200 7200");
         checkRR("example.org", RRType::NS(), "ns1.example.org.");
         checkRR("www.example.org", RRType::A(), "192.0.2.1");
+        checkRR("www.example.org", RRType::AAAA(), "2001:db8::1");
+    }
+
+    void checkARR(const string& name) {
+        checkRR(name, RRType::A(), "192.0.2.1");
     }
 
     MasterLoaderCallbacks callbacks_;
@@ -182,6 +192,66 @@ TEST_F(MasterLoaderTest, include) {
 
         checkBasicRRs();
         checkRR("www.example.org", RRType::AAAA(), "2001:db8::1");
+    }
+}
+
+// A commonly used helper to check callback message.
+void
+checkCallbackMessage(const string& actual_msg, const string& expected_msg,
+                     size_t expected_line) {
+    // The actual message should begin with the expected message.
+    EXPECT_EQ(0, actual_msg.find(expected_msg)) << "actual message: " <<
+                                                actual_msg << " expected: " <<
+                                                expected_msg;
+
+    // and it should end with "...:<line_num>]"
+    const string line_desc = ":" + lexical_cast<string>(expected_line) + "]";
+    EXPECT_EQ(actual_msg.size() - line_desc.size(),
+              actual_msg.find(line_desc)) << "Expected on line " <<
+        expected_line;
+}
+
+TEST_F(MasterLoaderTest, origin) {
+    // Various forms of the directive
+    const char* origins[] = {
+        "$origin",
+        "$ORIGIN",
+        "$Origin",
+        "$OrigiN",
+        "\"$ORIGIN\"",
+        NULL
+    };
+    for (const char** origin = origins; *origin != NULL; ++origin) {
+        SCOPED_TRACE(*origin);
+
+        clear();
+        const string directive = *origin;
+        const string input =
+            "@  1H  IN  A   192.0.2.1\n" +
+            directive + " sub.example.org.\n"
+            "\"www\"    1H  IN  A   192.0.2.1\n" +
+            // Relative name in the origin
+            directive + " relative\n"
+            "@  1H  IN  A   192.0.2.1\n"
+            // Origin is _not_ used here (absolute name)
+            "noorigin.example.org.  60M IN  A   192.0.2.1\n";
+        stringstream ss(input);
+        setLoader(ss, Name("example.org."), RRClass::IN(),
+                  MasterLoader::MANY_ERRORS);
+
+        loader_->load();
+        EXPECT_TRUE(loader_->loadedSucessfully());
+        EXPECT_TRUE(errors_.empty());
+        // There's a relative origin in it, we warn about that.
+        EXPECT_EQ(1, warnings_.size());
+        checkCallbackMessage(warnings_.at(0),
+                             "The new origin is relative, did you really mean "
+                             "relative.sub.example.org.?", 4);
+
+        checkARR("example.org");
+        checkARR("www.sub.example.org");
+        checkARR("relative.sub.example.org");
+        checkARR("noorigin.example.org");
     }
 }
 
@@ -250,6 +320,7 @@ TEST_F(MasterLoaderTest, incrementalLoad) {
     EXPECT_TRUE(warnings_.empty());
 
     checkRR("www.example.org", RRType::A(), "192.0.2.1");
+    checkRR("www.example.org", RRType::AAAA(), "2001:db8::1");
 }
 
 // Try loading from file that doesn't exist. There should be single error
@@ -330,12 +401,24 @@ struct ErrorCase {
     // Check the unknown directive. The rest looks like ordinary RR,
     // so we see the $ is actually special.
     { "$UNKNOWN 3600    IN  A   192.0.2.1", NULL, "Unknown $ directive" },
-    { "$INCLUD " TEST_DATA_SRCDIR "/example.org", NULL, "Include too short" },
-    { "$INCLUDES " TEST_DATA_SRCDIR "/example.org", NULL, "Include too long" },
-    { "$INCLUDE", NULL, "Missing include path" },
+    { "$INCLUD " TEST_DATA_SRCDIR "/example.org", "Unknown directive 'INCLUD'",
+        "Include too short" },
+    { "$INCLUDES " TEST_DATA_SRCDIR "/example.org",
+        "Unknown directive 'INCLUDES'", "Include too long" },
+    { "$INCLUDE", "unexpected end of input", "Missing include path" },
+    // The following two error messages are system dependant, omitting
     { "$INCLUDE /file/not/found", NULL, "Include file not found" },
-    { "$INCLUDE /file/not/found and here goes bunch of garbage", NULL,
-        "Include file not found and garbage at the end of line" },
+    { "$INCLUDE /file/not/found example.org. and here goes bunch of garbage",
+        NULL, "Include file not found and garbage at the end of line" },
+    { "$ORIGIN", "unexpected end of input", "Missing origin name" },
+    { "$ORIGIN invalid...name", "duplicate period in invalid...name",
+        "Invalid name for origin" },
+    { "$ORIGIN )brokentoken", "unbalanced parentheses",
+        "Broken token in origin" },
+    { "$ORIGIN example.org. garbage", "Extra tokens at the end of line",
+        "Garbage after origin" },
+    { "$ORIGI name.", "Unknown directive 'ORIGI'", "$ORIGIN too short" },
+    { "$ORIGINAL name.", "Unknown directive 'ORIGINAL'", "$ORIGIN too long" },
     { "$TTL 100 extra-garbage", "Extra tokens at the end of line",
       "$TTL with extra token" },
     { "$TTL", "unexpected end of input", "missing TTL" },
@@ -345,19 +428,6 @@ struct ErrorCase {
     { "$TTLLIKE 100", "Unknown directive 'TTLLIKE'", "bad directive, extra" },
     { NULL, NULL, NULL }
 };
-
-// A commonly used helper to check callback message.
-void
-checkCallbackMessage(const string& actual_msg, const string& expected_msg,
-                     size_t expected_line) {
-    // The actual message should begin with the expected message.
-    EXPECT_EQ(0, actual_msg.find(expected_msg)) << "actual message: "
-                                                << actual_msg;
-
-    // and it should end with "...:<line_num>]"
-    const string line_desc = ":" + lexical_cast<string>(expected_line) + "]";
-    EXPECT_EQ(actual_msg.size() - line_desc.size(), actual_msg.find(line_desc));
-}
 
 // Test a broken zone is handled properly. We test several problems,
 // both in strict and lenient mode.
@@ -433,7 +503,7 @@ TEST_F(MasterLoaderTest, includeWithGarbage) {
     // Include an origin (example.org) because we expect it to be handled
     // soon and we don't want it to break here.
     const string include_str("$INCLUDE " TEST_DATA_SRCDIR
-                             "/example.org example.org bunch of other stuff\n"
+                             "/example.org example.org. bunch of other stuff\n"
                              "www 3600 IN AAAA 2001:db8::1\n");
     stringstream zone_stream(include_str);
     setLoader(zone_stream, Name("example.org."), RRClass::IN(),
@@ -442,11 +512,111 @@ TEST_F(MasterLoaderTest, includeWithGarbage) {
     EXPECT_NO_THROW(loader_->load());
     EXPECT_FALSE(loader_->loadedSucessfully());
     ASSERT_EQ(1, errors_.size());
+    checkCallbackMessage(errors_.at(0), "Extra tokens at the end of line", 1);
     // It says something about extra tokens at the end
     EXPECT_NE(string::npos, errors_[0].find("Extra"));
     EXPECT_TRUE(warnings_.empty());
     checkBasicRRs();
     checkRR("www.example.org", RRType::AAAA(), "2001:db8::1");
+}
+
+// Check we error about garbage at the end of $ORIGIN line (but the line
+// works).
+TEST_F(MasterLoaderTest, originWithGarbage) {
+    const string origin_str = "$ORIGIN www.example.org. More garbage here\n"
+        "@  1H  IN  A   192.0.2.1\n";
+    stringstream ss(origin_str);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+    EXPECT_NO_THROW(loader_->load());
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    ASSERT_EQ(1, errors_.size());
+    checkCallbackMessage(errors_.at(0), "Extra tokens at the end of line", 1);
+    EXPECT_TRUE(warnings_.empty());
+    checkARR("www.example.org");
+}
+
+// Test we can pass both file to include and the origin to switch
+TEST_F(MasterLoaderTest, includeAndOrigin) {
+    // First, switch origin to something else, so we can check it is
+    // switched back.
+    const string include_string = "$ORIGIN www.example.org.\n"
+        "@  1H  IN  A   192.0.2.1\n"
+        // Then include the file with data and switch origin back
+        "$INCLUDE " TEST_DATA_SRCDIR "/example.org example.org.\n"
+        // Another RR to see the switch survives after we exit include
+        "www    1H  IN  A   192.0.2.1\n";
+    stringstream ss(include_string);
+    setLoader(ss, Name("example.org"), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+    // Successfully load the data
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+    EXPECT_TRUE(warnings_.empty());
+    // And check it's the correct data
+    checkARR("www.example.org");
+    checkBasicRRs();
+    checkARR("www.example.org");
+}
+
+// Like above, but the origin after include is bogus. The whole line should
+// be rejected.
+TEST_F(MasterLoaderTest, includeAndBadOrigin) {
+    const string include_string =
+        "$INCLUDE " TEST_DATA_SRCDIR "/example.org example..org.\n"
+        // Another RR to see the switch survives after we exit include
+        "www    1H  IN  A   192.0.2.1\n";
+    stringstream ss(include_string);
+    setLoader(ss, Name("example.org"), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+    loader_->load();
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_EQ(1, errors_.size());
+    checkCallbackMessage(errors_.at(0), "duplicate period in example..org.",
+                         1);
+    EXPECT_TRUE(warnings_.empty());
+    // And check it's the correct data
+    checkARR("www.example.org");
+}
+
+// Check the origin doesn't get outside of the included file.
+TEST_F(MasterLoaderTest, includeOriginRestore) {
+    const string include_string = "$INCLUDE " TEST_DATA_SRCDIR "/origincheck.txt\n"
+        "@  1H  IN  A   192.0.2.1\n";
+    stringstream ss(include_string);
+    setLoader(ss, Name("example.org"), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+    // Successfully load the data
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+    EXPECT_TRUE(warnings_.empty());
+    // And check it's the correct data
+    checkARR("www.example.org");
+    checkARR("example.org");
+}
+
+// Check we restore the last name for initial whitespace when returning from
+// include. But we do produce a warning if there's one just ofter the include.
+TEST_F(MasterLoaderTest, includeAndInitialWS) {
+    const string include_string = "xyz  1H  IN  A   192.0.2.1\n"
+        "$INCLUDE " TEST_DATA_SRCDIR "/example.org\n"
+        "   1H  IN  A   192.0.2.1\n";
+    stringstream ss(include_string);
+    setLoader(ss, Name("example.org"), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+    // Successfully load the data
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+    EXPECT_EQ(1, warnings_.size());
+    checkCallbackMessage(warnings_.at(0),
+                         "Owner name omitted around $INCLUDE, the result might "
+                         "not be as expected", 3);
+    checkARR("xyz.example.org");
+    checkBasicRRs();
+    checkARR("xyz.example.org");
 }
 
 // Test for "$TTL"
@@ -598,7 +768,8 @@ TEST_F(MasterLoaderTest, ttlUnknownAndEOF) {
     // RDATA implementation can complain about it, too.  To be independent of
     // its details, we focus on the very last warning.
     EXPECT_FALSE(warnings_.empty());
-    checkCallbackMessage(*warnings_.rbegin(), "Unexpected end of file", 1);
+    checkCallbackMessage(*warnings_.rbegin(), "File does not end with newline",
+                         1);
 }
 
 TEST_F(MasterLoaderTest, ttlOverflow) {
@@ -650,6 +821,9 @@ TEST_F(MasterLoaderTest, loadTwice) {
 
     loader_->load();
     EXPECT_THROW(loader_->load(), isc::InvalidOperation);
+    // Don't check them, they are not interesting, so suppress the error
+    // at TearDown
+    rrsets_.clear();
 }
 
 // Load 0 items should be rejected
@@ -671,10 +845,44 @@ TEST_F(MasterLoaderTest, noEOLN) {
 
     loader_->load();
     EXPECT_TRUE(loader_->loadedSucessfully());
-    EXPECT_TRUE(errors_.empty()) << errors_[0];
+    EXPECT_TRUE(errors_.empty());
     // There should be one warning about the EOLN
     EXPECT_EQ(1, warnings_.size());
     checkRR("example.org", RRType::SOA(), "ns1.example.org. "
             "admin.example.org. 1234 3600 1800 2419200 7200");
 }
+
+// Test it rejects when we don't have the previous name to use in place of
+// initial whitespace
+TEST_F(MasterLoaderTest, noPreviousName) {
+    const string input("    1H  IN  A   192.0.2.1\n");
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+    loader_->load();
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_EQ(1, errors_.size());
+    checkCallbackMessage(errors_.at(0), "No previous name to use in place of "
+                         "initial whitespace", 1);
+    EXPECT_TRUE(warnings_.empty());
+}
+
+// Check we warn if the first RR in an included file has omitted name
+TEST_F(MasterLoaderTest, previousInInclude) {
+    const string input("www 1H  IN  A   192.0.2.1\n"
+                       "$INCLUDE " TEST_DATA_SRCDIR "/omitcheck.txt\n");
+    stringstream ss(input);
+    setLoader(ss, Name("example.org"), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+    // There should be one warning about the EOLN
+    EXPECT_EQ(1, warnings_.size());
+    checkCallbackMessage(warnings_.at(0), "Owner name omitted around "
+                         "$INCLUDE, the result might not be as expected", 1);
+    checkARR("www.example.org");
+    checkARR("www.example.org");
+}
+
 }
