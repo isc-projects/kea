@@ -569,8 +569,8 @@ TEST_F(MasterLoaderTest, includeAndInitialWS) {
     EXPECT_TRUE(errors_.empty());
     EXPECT_EQ(1, warnings_.size());
     checkCallbackMessage(warnings_.at(0),
-                         "Ambiguous previous name for use in place of initial"
-                         " whitespace", 3);
+                         "Owner name omitted around $INCLUDE, the result might "
+                         "not be as expected", 3);
     checkARR("xyz.example.org");
     checkBasicRRs();
     checkARR("xyz.example.org");
@@ -772,7 +772,7 @@ TEST_F(MasterLoaderTest, noEOLN) {
 
     loader_->load();
     EXPECT_TRUE(loader_->loadedSucessfully());
-    EXPECT_TRUE(errors_.empty()) << errors_[0];
+    EXPECT_TRUE(errors_.empty());
     // There should be one warning about the EOLN
     EXPECT_EQ(1, warnings_.size());
     checkRR("example.org", RRType::SOA(), "ns1.example.org. "
@@ -792,6 +792,24 @@ TEST_F(MasterLoaderTest, noPreviousName) {
     checkCallbackMessage(errors_.at(0), "No previous name to use in place of "
                          "initial whitespace", 1);
     EXPECT_TRUE(warnings_.empty());
+}
+
+// Check we warn if the first RR in an included file has omitted name
+TEST_F(MasterLoaderTest, previousInInclude) {
+    const string input("www 1H  IN  A   192.0.2.1\n"
+                       "$INCLUDE " TEST_DATA_SRCDIR "/omitcheck.txt\n");
+    stringstream ss(input);
+    setLoader(ss, Name("example.org"), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+    // There should be one warning about the EOLN
+    EXPECT_EQ(1, warnings_.size());
+    checkCallbackMessage(warnings_.at(0), "Owner name omitted around "
+                         "$INCLUDE, the result might not be as expected", 1);
+    checkARR("www.example.org");
+    checkARR("www.example.org");
 }
 
 }
