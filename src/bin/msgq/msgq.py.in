@@ -32,6 +32,7 @@ import random
 from optparse import OptionParser, OptionValueError
 import isc.util.process
 import isc.log
+from isc.log_messages.msgq_messages import *
 
 import isc.cc
 
