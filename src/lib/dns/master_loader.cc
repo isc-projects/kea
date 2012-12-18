@@ -157,6 +157,13 @@ private:
                 name_string(name_tok.getStringRegion());
             active_origin_ = Name(name_string.beg, name_string.len,
                                   &active_origin_);
+            if (name_string.len > 0 &&
+                name_string.beg[name_string.len - 1] != '.') {
+                callbacks_.warning(lexer_.getSourceName(),
+                                   lexer_.getSourceLine(),
+                                   "The new origin is relative, did you really"
+                                   " mean " + active_origin_.toText() + "?");
+            }
         } else {
             // If it is not optional, we must not get anything but
             // a string token.
