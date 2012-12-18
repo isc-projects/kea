@@ -2,7 +2,7 @@ SUBDIRS = . tests
 
 # old data, should be removed in the near future once conversion is done
 pythondir = $(pyexecdir)/isc/datasrc
-python_PYTHON = __init__.py master.py sqlite3_ds.py
+python_PYTHON = __init__.py sqlite3_ds.py
 
 
 # new data
