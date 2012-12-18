@@ -36,7 +36,7 @@ libb10_dhcpsrv_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libb10_dhcpsrv_la_LIBADD   = $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 libb10_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 libb10_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/util/libb10-util.la
-libb10_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 2:0:0
+libb10_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 3:0:0
 if HAVE_MYSQL
 libb10_dhcpsrv_la_LDFLAGS += $(MYSQL_LIBS)
 endif
