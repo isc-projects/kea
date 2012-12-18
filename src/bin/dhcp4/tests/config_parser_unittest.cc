@@ -74,6 +74,7 @@ public:
     }
 
     ~Dhcp4ParserTest() {
+        resetConfiguration();
         delete srv_;
     };
 
@@ -115,6 +116,50 @@ public:
         // Verify that the data is correct. However do not verify suboptions.
         const uint8_t* data = static_cast<const uint8_t*>(buf.getData());
         EXPECT_TRUE(memcmp(expected_data, data, expected_data_len));
+    }
+
+    /// @brief Reset configuration database.
+    ///
+    /// This function resets configuration data base by
+    /// removing all subnets and option-data. Reset must
+    /// be performed after each test to make sure that
+    /// contents of the database do not affect result of
+    /// subsequent tests.
+    void resetConfiguration() {
+        ConstElementPtr status;
+
+        string config = "{ \"interface\": [ \"all\" ],"
+            "\"rebind-timer\": 2000, "
+            "\"renew-timer\": 1000, "
+            "\"valid-lifetime\": 4000, "
+            "\"subnet4\": [ ], "
+            "\"option-data\": [ ] }";
+
+        try {
+            ElementPtr json = Element::fromJSON(config);
+            status = configureDhcp4Server(*srv_, json);
+        } catch (const std::exception& ex) {
+            FAIL() << "Fatal error: unable to reset configuration database"
+                   << " after the test. The following configuration was used"
+                   << " to reset database: " << std::endl
+                   << config << std::endl
+                   << " and the following error message was returned:"
+                   << ex.what() << std::endl;
+        }
+
+
+        // returned value should be 0 (configuration success)
+        if (!status) {
+            FAIL() << "Fatal error: unable to reset configuration database"
+                   << " after the test. Configuration function returned"
+                   << " NULL pointer" << std::endl;
+        }
+        comment_ = parseAnswer(rcode_, status);
+        if (rcode_ != 0) {
+            FAIL() << "Fatal error: unable to reset configuration database"
+                   << " after the test. Configuration function returned"
+                   << " error code " << rcode_ << std::endl;
+        }
     }
 
     Dhcpv4Srv* srv_;
@@ -299,12 +344,12 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
         "    \"name\": \"option_foo\","
-        "    \"code\": 100,"
+        "    \"code\": 56,"
         "    \"data\": \"AB CDEF0105\""
         " },"
         " {"
         "    \"name\": \"option_foo2\","
-        "    \"code\": 101,"
+        "    \"code\": 23,"
         "    \"data\": \"01\""
         " } ],"
         "\"subnet4\": [ { "
@@ -333,30 +378,164 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
     // code so we get the range.
     std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
               Subnet::OptionContainerTypeIndex::const_iterator> range =
-        idx.equal_range(100);
+        idx.equal_range(56);
+    // Expect single option with the code equal to 56.
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    const uint8_t foo_expected[] = {
+        0xAB, 0xCD, 0xEF, 0x01, 0x05
+    };
+    // Check if option is valid in terms of code and carried data.
+    testOption(*range.first, 56, foo_expected, sizeof(foo_expected));
+
+    range = idx.equal_range(23);
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    // Do another round of testing with second option.
+    const uint8_t foo2_expected[] = {
+        0x01
+    };
+    testOption(*range.first, 23, foo2_expected, sizeof(foo2_expected));
+}
+
+// Goal of this test is to verify options configuration
+// for a single subnet. In particular this test checks
+// that local options configuration overrides global
+// option setting.
+TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
+    ConstElementPtr x;
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"option-data\": [ {"
+        "      \"name\": \"option_foo\","
+        "      \"code\": 56,"
+        "      \"data\": \"AB\""
+        " } ],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"option-data\": [ {"
+        "          \"name\": \"option_foo\","
+        "          \"code\": 56,"
+        "          \"data\": \"AB CDEF0105\""
+        "        },"
+        "        {"
+        "          \"name\": \"option_foo2\","
+        "          \"code\": 23,"
+        "          \"data\": \"01\""
+        "        } ]"
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.24"));
+    ASSERT_TRUE(subnet);
+    const Subnet::OptionContainer& options = subnet->getOptions();
+    ASSERT_EQ(2, options.size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+              Subnet::OptionContainerTypeIndex::const_iterator> range =
+        idx.equal_range(56);
     // Expect single option with the code equal to 100.
     ASSERT_EQ(1, std::distance(range.first, range.second));
     const uint8_t foo_expected[] = {
         0xAB, 0xCD, 0xEF, 0x01, 0x05
     };
     // Check if option is valid in terms of code and carried data.
-    testOption(*range.first, 100, foo_expected, sizeof(foo_expected));
+    testOption(*range.first, 56, foo_expected, sizeof(foo_expected));
 
-    range = idx.equal_range(101);
+    range = idx.equal_range(23);
     ASSERT_EQ(1, std::distance(range.first, range.second));
     // Do another round of testing with second option.
     const uint8_t foo2_expected[] = {
         0x01
     };
-    testOption(*range.first, 101, foo2_expected, sizeof(foo2_expected));
-
-    // Check that options with other option codes are not returned.
-    for (uint16_t code = 102; code < 110; ++code) {
-        range = idx.equal_range(code);
-        EXPECT_EQ(0, std::distance(range.first, range.second));
-    }
+    testOption(*range.first, 23, foo2_expected, sizeof(foo2_expected));
 }
 
+// Goal of this test is to verify options configuration
+// for multiple subnets.
+TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
+    ConstElementPtr x;
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"option-data\": [ {"
+        "          \"name\": \"option_foo\","
+        "          \"code\": 56,"
+        "          \"data\": \"0102030405060708090A\""
+        "        } ]"
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
+        "    \"subnet\": \"192.0.3.0/24\", "
+        "    \"option-data\": [ {"
+        "          \"name\": \"option_foo2\","
+        "          \"code\": 23,"
+        "          \"data\": \"FF\""
+        "        } ]"
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    Subnet4Ptr subnet1 = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.100"));
+    ASSERT_TRUE(subnet1);
+    const Subnet::OptionContainer& options1 = subnet1->getOptions();
+    ASSERT_EQ(1, options1.size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const Subnet::OptionContainerTypeIndex& idx1 = options1.get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+              Subnet::OptionContainerTypeIndex::const_iterator> range1 =
+        idx1.equal_range(56);
+    // Expect single option with the code equal to 56.
+    ASSERT_EQ(1, std::distance(range1.first, range1.second));
+    const uint8_t foo_expected[] = {
+        0x01, 0x02, 0x03, 0x04, 0x05,
+        0x06, 0x07, 0x08, 0x09, 0x0A
+    };
+    // Check if option is valid in terms of code and carried data.
+    testOption(*range1.first, 56, foo_expected, sizeof(foo_expected));
+
+    // Test another subnet in the same way.
+    Subnet4Ptr subnet2 = CfgMgr::instance().getSubnet4(IOAddress("192.0.3.102"));
+    ASSERT_TRUE(subnet2);
+    const Subnet::OptionContainer& options2 = subnet2->getOptions();
+    ASSERT_EQ(1, options2.size());
+
+    const Subnet::OptionContainerTypeIndex& idx2 = options2.get<1>();
+    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+              Subnet::OptionContainerTypeIndex::const_iterator> range2 =
+        idx2.equal_range(23);
+    ASSERT_EQ(1, std::distance(range2.first, range2.second));
+
+    const uint8_t foo2_expected[] = { 0xFF };
+    testOption(*range2.first, 23, foo2_expected, sizeof(foo2_expected));
+}
 
 /// This test checks if Uint32Parser can really parse the whole range
 /// and properly err of out of range values. As we can't call Uint32Parser
