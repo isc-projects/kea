@@ -28,6 +28,7 @@ LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/data
 endif
 
 # test using command-line arguments, so use check-local target instead of TESTS
+# We need to define B10_FROM_BUILD for datasrc loadable modules
 check-local:
 if ENABLE_PYTHON_COVERAGE
 	touch $(abs_top_srcdir)/.coverage
