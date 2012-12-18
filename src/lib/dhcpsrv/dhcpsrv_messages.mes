@@ -28,6 +28,10 @@ with the specified address to the memory file backend database.
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the memory file backend database.
 
+% DHCPSRV_MEMFILE_COMMIT commiting to memory file database
+The code has issued a commit call.  For the memory file database, this is
+a no-op.
+
 % DHCPSRV_MEMFILE_DB opening memory file lease database: %1
 This informational message is logged when a DHCP server (either V4 or
 V6) is about to open a memory file lease database.  The parameters of
@@ -81,6 +85,10 @@ subnet ID and hardware address.
 A debug message issued when the server is about to obtain schema version
 information from the memory file database.
 
+% DHCPSRV_MEMFILE_ROLLBACK rolling back memory file database
+The code has issued a rollback call.  For the memory file database, this is
+a no-op.
+
 % DHCPSRV_MEMFILE_UPDATE_ADDR4 updating IPv4 lease for address %1
 A debug message issued when the server is attempting to update IPv4
 lease from the memory file database for the specified address.
@@ -96,6 +104,11 @@ with the specified address to the MySQL backend database.
 % DHCPSRV_MYSQL_ADD_ADDR6 adding IPv6 lease with address %1
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the MySQL backend database.
+
+% DHCPSRV_MYSQL_COMMIT commiting to MySQl database
+The code has issued a commit call.  All outstanding transactions will be
+committed to the database.  Note that depending on the MySQL settings,
+the commital may not include a write to disk.
 
 % DHCPSRV_MYSQL_DB opening MySQL lease database: %1
 This informational message is logged when a DHCP server (either V4 or
@@ -148,6 +161,10 @@ and hardware address.
 % DHCPSRV_MYSQL_GET_VERSION obtaining schema version information
 A debug message issued when the server is about to obtain schema version
 information from the MySQL database.
+
+% DHCPSRV_MYSQL_ROLLBACK rolling back MySQL database
+The code has issued a rollback call.  All outstanding transaction will
+be rolled back and not committed to the database.
 
 % DHCPSRV_MYSQL_UPDATE_ADDR4 updating IPv4 lease for address %1
 A debug message issued when the server is attempting to update IPv4
