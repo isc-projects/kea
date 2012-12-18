@@ -120,33 +120,6 @@ class ZoneLoaderTests(unittest.TestCase):
                                              self.source_client)
         self.check_load()
 
-    def Xtest_load_from_file_checkrefs(self):
-        # A test to see the refcount is increased properly
-        self.loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
-                                             self.test_file)
-        # Explicitely delete the objects here, so we trigger bad reference
-        # counting (best effort, if there are leaked references for these
-        # objects themselves, it still won't fail)
-        self.client = None
-        self.client = None
-        self.test_name = None
-        self.test_file = None
-        self.loader.load()
-
-    def Xtest_load_from_client_checkrefs(self):
-        # A test to see the refcount is increased properly
-        source_client = isc.datasrc.DataSourceClient('sqlite3',
-                                                     DB_SOURCE_CLIENT_CONFIG)
-        self.loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
-                                             source_client)
-        # Explicitely delete the objects here, so we trigger bad reference
-        # counting (best effort, if there are leaked references for these
-        # objects themselves, it still won't fail)
-        self.client = None
-        self.test_name = None
-        source_client = None
-        self.loader.load()
-
     def check_load_incremental(self):
         # New zone has 8 RRs
         # After 5, it should return False
