@@ -20,6 +20,7 @@ datasrc_la_SOURCES += updater_python.cc updater_python.h
 datasrc_la_SOURCES += journal_reader_python.cc journal_reader_python.h
 datasrc_la_SOURCES += configurableclientlist_python.cc
 datasrc_la_SOURCES += configurableclientlist_python.h
+datasrc_la_SOURCES += zone_loader_python.cc zone_loader_python.h
 
 datasrc_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 datasrc_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
@@ -35,6 +36,7 @@ EXTRA_DIST += finder_inc.cc
 EXTRA_DIST += iterator_inc.cc
 EXTRA_DIST += updater_inc.cc
 EXTRA_DIST += journal_reader_inc.cc
+EXTRA_DIST += zone_loader_inc.cc
 
 CLEANDIRS = __pycache__
 
