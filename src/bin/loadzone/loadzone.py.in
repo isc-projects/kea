@@ -231,6 +231,9 @@ class LoadZoneRunner:
             if self._load_iteration_limit > 0:
                 limit = self._load_iteration_limit
             else:
+                # configured limit value of 0 has a special meaning of
+                # "no report".  but we still do it incrementally so we won't
+                # delay catching signals too long.
                 limit = LOAD_INTERVAL_DEFAULT
             while (not self.__interrupted and
                    not loader.load_incremental(limit)):
