@@ -56,9 +56,8 @@ def set_cmd_options(parser):
 
     '''
     parser.add_option("-c", "--datasrc-conf", dest="conf", action="store",
-                      help="""(Mandatory) configuration of datasrc to load
-the zone in.  Example:
-'{"database_file": "/path/to/dbfile/db.sqlite3"}'""",
+                      help="""configuration of datasrc to load the zone in.
+Example: '{"database_file": "/path/to/dbfile/db.sqlite3"}'""",
                       metavar='CONFIG')
     parser.add_option("-d", "--debug", dest="debug_level",
                       type='int', action="store", default=None,
@@ -149,10 +148,10 @@ class LoadZoneRunner:
                     self._log_debuglevel)
         self._config_log()
 
-        if options.conf is None:
-            raise BadArgument('data source config option cannot be omitted')
-        self._datasrc_config = options.conf
         self._datasrc_type = options.datasrc_type
+        self._datasrc_config = options.conf
+        if options.conf is None:
+            self._datasrc_config = self._get_datasrc_config(self._datasrc_type)
         try:
             self._zone_class = RRClass(options.zone_class)
         except isc.dns.InvalidRRClass as ex:
@@ -176,6 +175,27 @@ class LoadZoneRunner:
             raise BadArgument("Invalid zone name '" + args[0] + "': " +
                               str(ex))
         self._zone_file = args[1]
+
+    def _get_datasrc_config(self, datasrc_type):
+        ''''Return the default data source configuration of given type.
+
+        Right now, it only supports SQLite3, and hardcodes the syntax
+        of the default configuration.  It's a kind of workaround to balance
+        convenience of users and minimizing hardcoding of data source
+        specific logic in the entire tool.  In future this should be
+        more sophisticated.
+
+        This is essentially a private helper method for _parse_arg(),
+        but defined as "protected" so tests can use it directly.
+
+        '''
+        if datasrc_type != 'sqlite3':
+            raise BadArgument('default config is not available for ' +
+                              datasrc_type)
+
+        default_db_file = bind10_config.DATA_PATH + '/zone.sqlite3'
+        logger.info(LOADZONE_SQLITE3_USING_DEFAULT_CONFIG, default_db_file)
+        return '{"database_file": "' + default_db_file + '"}'
 
     def __cancel_create(self):
         '''sqlite3-only hack: delete the zone just created on load failure.
