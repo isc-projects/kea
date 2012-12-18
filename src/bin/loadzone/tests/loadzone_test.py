@@ -67,7 +67,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertIsNone(self.__runner._zone_file)
         self.assertIsNone(self.__runner._datasrc_config)
         self.assertIsNone(self.__runner._datasrc_type)
-        self.assertEqual(10000, self.__runner._load_iteration_limit)
+        self.assertEqual(10000, self.__runner._report_interval)
         self.assertEqual('INFO', self.__runner._log_severity)
         self.assertEqual(0, self.__runner._log_debuglevel)
 
@@ -77,7 +77,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertEqual(NEW_ZONE_TXT_FILE, self.__runner._zone_file)
         self.assertEqual(DATASRC_CONFIG, self.__runner._datasrc_config)
         self.assertEqual('sqlite3', self.__runner._datasrc_type) # default
-        self.assertEqual(10000, self.__runner._load_iteration_limit) # default
+        self.assertEqual(10000, self.__runner._report_interval) # default
         self.assertEqual(RRClass.IN(), self.__runner._zone_class) # default
         self.assertEqual('INFO', self.__runner._log_severity) # default
         self.assertEqual(0, self.__runner._log_debuglevel)
@@ -132,7 +132,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.__runner._zone_file = NEW_ZONE_TXT_FILE
         self.__runner._datasrc_type = 'sqlite3'
         self.__runner._datasrc_config = DATASRC_CONFIG
-        self.__runner._load_iteration_limit = 1
+        self.__runner._report_interval = 1
         self.__reports = []
         self.__runner._report_progress = lambda x: self.__reports.append(x)
 
@@ -171,14 +171,14 @@ class TestLoadZoneRunner(unittest.TestCase):
     def test_load_update_skipped_report(self):
         '''successful loading, with reports for every 2 RRs'''
         self.__common_load_setup()
-        self.__runner._load_iteration_limit = 2
+        self.__runner._report_interval = 2
         self.__runner._do_load()
         self.assertEqual([2], self.__reports)
 
     def test_load_update_no_report(self):
         '''successful loading, without progress reports'''
         self.__common_load_setup()
-        self.__runner._load_iteration_limit = 0
+        self.__runner._report_interval = 0
         self.__runner._do_load()
         self.assertEqual([], self.__reports) # no report
         self.__check_zone_soa(NEW_SOA_TXT)   # but load is completed
