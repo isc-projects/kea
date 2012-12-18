@@ -41,8 +41,14 @@ const int DHCPSRV_DBG_RESULTS = DBGLVL_TRACE_BASIC_DATA;
 
 /// @brief Additional information
 ///
+/// Record detailed tracing. This is generally reserved for tracing access to
+/// the lease database.
+const int DHCPSRV_DBG_TRACE_DETAIL = DBGLVL_TRACE_DETAIL;
+
+/// @brief Additional information
+///
 /// Record detailed (and verbose) data on the server.
-const int DHCPSRV_DBG_RTT = DBGLVL_TRACE_DETAIL_DATA;
+const int DHCPSRV_DBG_TRACE_DETAIL_DATA = DBGLVL_TRACE_DETAIL_DATA;
 
 ///@}
 
