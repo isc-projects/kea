@@ -20,6 +20,7 @@ from loadzone import *
 from isc.dns import *
 from isc.datasrc import *
 import isc.log
+import bind10_config
 import os
 import shutil
 
@@ -89,42 +90,49 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertEqual(1, runner._log_debuglevel)
 
     def test_parse_bad_args(self):
-        # -c cannot be omitted (right now)
-        self.assertRaises(BadArgument,
-                          LoadZoneRunner(['example', 'example.zone']).
-                          _parse_args)
-
-        copt = ['-c', '0']      # template for the mandatory -c option
-
         # There must be exactly 2 non-option arguments: zone name and zone file
-        self.assertRaises(BadArgument, LoadZoneRunner(copt)._parse_args)
-        self.assertRaises(BadArgument, LoadZoneRunner(copt + ['example']).
+        self.assertRaises(BadArgument, LoadZoneRunner([])._parse_args)
+        self.assertRaises(BadArgument, LoadZoneRunner(['example']).
                           _parse_args)
         self.assertRaises(BadArgument, LoadZoneRunner(self.__args + ['0']).
                           _parse_args)
 
         # Bad zone name
+        args = ['example.org', 'example.zone'] # otherwise valid args
         self.assertRaises(BadArgument,
-                          LoadZoneRunner(copt + ['bad..name', 'example.zone']).
+                          LoadZoneRunner(['bad..name', 'example.zone'] + args).
                           _parse_args)
 
         # Bad class name
         self.assertRaises(BadArgument,
-                          LoadZoneRunner(copt + ['-C', 'badclass']).
+                          LoadZoneRunner(['-C', 'badclass'] + args).
                           _parse_args)
         # Unsupported class
         self.assertRaises(BadArgument,
-                          LoadZoneRunner(copt + ['-C', 'CH']).
-                          _parse_args)
+                          LoadZoneRunner(['-C', 'CH'] + args)._parse_args)
 
         # bad debug level
-        args = copt + ['example.org', 'example.zone'] # otherwise valid args
         self.assertRaises(BadArgument,
                           LoadZoneRunner(['-d', '-10'] + args)._parse_args)
 
         # bad report interval
         self.assertRaises(BadArgument,
                           LoadZoneRunner(['-i', '-5'] + args)._parse_args)
+
+        # -c cannot be omitted unless it's type sqlite3 (right now)
+        self.assertRaises(BadArgument,
+                          LoadZoneRunner(['-t', 'memory'] + args)._parse_args)
+
+    def test_get_datasrc_config(self):
+        # For sqlite3, we use the config with the well-known DB file.
+        expected_conf = \
+            '{"database_file": "' + bind10_config.DATA_PATH + '/zone.sqlite3"}'
+        self.assertEqual(expected_conf,
+                         self.__runner._get_datasrc_config('sqlite3'))
+
+        # For other types, config must be given by hand for now
+        self.assertRaises(BadArgument, self.__runner._get_datasrc_config,
+                          'memory')
 
     def __common_load_setup(self):
         self.__runner._zone_class = RRClass.IN()

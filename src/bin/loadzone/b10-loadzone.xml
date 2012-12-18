@@ -44,11 +44,11 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>b10-loadzone</command>
+      <arg><option>-c <replaceable class="parameter">datasrc_config</replaceable></option></arg>
       <arg><option>-d <replaceable class="parameter">debug_level</replaceable></option></arg>
       <arg><option>-i <replaceable class="parameter">report_interval</replaceable></option></arg>
       <arg><option>-t <replaceable class="parameter">datasrc_type</replaceable></option></arg>
       <arg><option>-C <replaceable class="parameter">zone_class</replaceable></option></arg>
-      <arg choice="req">-c <replaceable class="parameter">datasrc_config</replaceable></arg>
       <arg choice="req">zone name</arg>
       <arg choice="req">zone file</arg>
     </cmdsynopsis>
@@ -110,6 +110,27 @@
     <title>ARGUMENTS</title>
 
     <variablelist>
+      <varlistentry>
+        <term>-c <replaceable class="parameter">datasrc_config</replaceable></term>
+        <listitem><para>
+          Specifies configuration of the data source in the JSON
+          format.  The configuration contents depend on the type of
+	  the data source, and that's the same as what would be
+	  specified for the BIND 10 servers (see the data source
+          configuration section of the BIND 10 guide).  For example,
+	  for an SQLite3 data source, it would look like
+	  '{"database_file": "path-to-sqlite3-db-file"}'.
+	  <note>
+	    <simpara>For SQLite3 data source with the default DB file,
+	      this option can be omitted; in other cases including
+	      for any other types of data sources when supported,
+	      this option is currently mandatory in practice.
+	      In a future version it will be possible to retrieve the
+	      configuration from the BIND 10 server configuration (if
+	      it exists).
+	  </simpara></note>
+        </para></listitem>
+      </varlistentry>
 
       <varlistentry>
         <term>-d <replaceable class="parameter">debug_level</replaceable> </term>
@@ -150,24 +171,6 @@
 	  Currently, only class IN is supported (which is the default
           of this option) due to limitation of the underlying data
           source implementation.
-        </para></listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>-c <replaceable class="parameter">datasrc_config</replaceable></term>
-        <listitem><para>
-          Specifies configuration of the data source in the JSON
-          format.  The configuration contents depend on the type of
-	  the data source, and that's the same as what would be
-	  specified for the BIND 10 servers (see the data source
-          configuration section of the BIND 10 guide).  For example,
-	  for an SQLite3 data source, it would look like
-	  '{"database_file": "path-to-sqlite3-db-file"}'.
-	  <note>
-	    <simpara>This option currently cannot be omitted.  In a future
-              version it will be possible to retrieve the configuration from
-              the BIND 10 server configuration (if it exists).
-	  </simpara></note>
         </para></listitem>
       </varlistentry>
 
@@ -233,7 +236,8 @@
       responsibility to fix the errors and reload it.  When the
       library is updated with the post load checks, it will be more
       sophisticated and the such zone won't be successfully loaded.
-
+    </para>
+    <para>
       There are some other issues noted in the DESCRIPTION section.
     </para>
   </refsect1>

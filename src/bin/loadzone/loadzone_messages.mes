@@ -65,3 +65,8 @@ have been cleanly canceled in this case, too.
 The specified zone to b10-loadzone to load does not exist in the
 specified data source.  b10-loadzone has created a new empty zone
 in the data source.
+
+% LOADZONE_SQLITE3_USING_DEFAULT_CONFIG Using default configuration with SQLite3 DB file %1
+The SQLite3 data source is specified as the data source type without a
+data source configuration.  b10-loadzone uses the default
+configuration with the default DB file for the BIND 10 system.
