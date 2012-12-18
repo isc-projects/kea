@@ -25,16 +25,12 @@
 
 #include <gtest/gtest.h>
 
-#include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
 
-#include <string>
 #include <sstream>
 #include <vector>
 
-using std::string;
 using std::vector;
-using boost::lexical_cast;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
@@ -54,14 +50,9 @@ addRRset(const RRsetPtr& rrset, vector<ConstRRsetPtr>* to_append,
 class RRCollatorTest : public ::testing::Test {
 protected:
     RRCollatorTest() :
-        issue_callbacks_(boost::bind(&RRCollatorTest::issueCallback, this,
-                                     _1, _2, _3, true),
-                         boost::bind(&RRCollatorTest::issueCallback, this,
-                                     _1, _2, _3, false)),
         origin_("example.com"), rrclass_(RRClass::IN()), rrttl_(3600),
         throw_from_callback_(false),
-        collator_(boost::bind(addRRset, _1, &rrsets_, &throw_from_callback_),
-                  issue_callbacks_),
+        collator_(boost::bind(addRRset, _1, &rrsets_, &throw_from_callback_)),
         rr_callback_(collator_.getCallback()),
         a_rdata1_(createRdata(RRType::A(), rrclass_, "192.0.2.1")),
         a_rdata2_(createRdata(RRType::A(), rrclass_, "192.0.2.2")),
@@ -73,12 +64,6 @@ protected:
                                 "NS 5 3 3600 20000101000000 20000201000000 "
                                 "12345 example.com. FAKE\n"))
     {}
-
-    virtual void TearDown() {
-        // (The current implementation of) RRCollator should never report an
-        // error.
-        EXPECT_TRUE(errors_.empty());
-    }
 
     void checkRRset(const Name& expected_name, const RRClass& expected_class,
                     const RRType& expected_type, const RRTTL& expected_ttl,
@@ -107,20 +92,6 @@ protected:
         rrsets_.clear();
     }
 
-    void issueCallback(const string& src_name, size_t src_line,
-                       const string& reason, bool is_error) {
-        const string msg(src_name + ":" + lexical_cast<string>(src_line) +
-                         ": " + reason);
-        if (is_error) {
-            errors_.push_back(msg);
-        } else {
-            warnings_.push_back(msg);
-        }
-    }
-
-private:
-    MasterLoaderCallbacks issue_callbacks_;
-protected:
     const Name origin_;
     const RRClass rrclass_;
     const RRTTL rrttl_;
@@ -130,7 +101,6 @@ protected:
     AddRRCallback rr_callback_;
     const RdataPtr a_rdata1_, a_rdata2_, txt_rdata_, sig_rdata1_, sig_rdata2_;
     vector<ConstRdataPtr> rdatas_; // placeholder for expected data
-    vector<string> warnings_, errors_;
 };
 
 TEST_F(RRCollatorTest, basicCases) {
@@ -164,9 +134,6 @@ TEST_F(RRCollatorTest, basicCases) {
     checkRRset(Name("txt.example.com"), rrclass_, RRType::TXT(), rrttl_,
                rdatas_);
 
-    // There should have been no warnings.
-    EXPECT_EQ(0, warnings_.size());
-
     // Tell the collator we are done, then we'll see the last RR as an RRset.
     collator_.flush();
     checkRRset(Name("txt.example.com"), RRClass::CH(), RRType::TXT(), rrttl_,
@@ -180,16 +147,12 @@ TEST_F(RRCollatorTest, basicCases) {
 TEST_F(RRCollatorTest, minTTLFirst) {
     // RRs of the same RRset but has different TTLs.  The first RR has
     // the smaller TTL, which should be used for the TTL of the RRset.
-    // There should be a warning callback about this.
     rr_callback_(origin_, rrclass_, RRType::A(), RRTTL(10), a_rdata1_);
     rr_callback_(origin_, rrclass_, RRType::A(), RRTTL(20), a_rdata2_);
     rdatas_.push_back(a_rdata1_);
     rdatas_.push_back(a_rdata2_);
     collator_.flush();
     checkRRset(origin_, rrclass_, RRType::A(), RRTTL(10), rdatas_);
-    EXPECT_EQ(1, warnings_.size());
-    EXPECT_EQ("<unknown source>:0: Different TTLs for the same RRset: "
-              "example.com/IN/A, set to 10", warnings_.at(0));
 }
 
 TEST_F(RRCollatorTest, maxTTLFirst) {
@@ -201,9 +164,6 @@ TEST_F(RRCollatorTest, maxTTLFirst) {
     rdatas_.push_back(a_rdata2_);
     collator_.flush();
     checkRRset(origin_, rrclass_, RRType::A(), RRTTL(10), rdatas_);
-    EXPECT_EQ(1, warnings_.size());
-    EXPECT_EQ("<unknown source>:0: Different TTLs for the same RRset: "
-              "example.com/IN/A, set to 10", warnings_.at(0));
 }
 
 TEST_F(RRCollatorTest, addRRSIGs) {
@@ -237,25 +197,16 @@ TEST_F(RRCollatorTest, throwFromCallback) {
     checkRRset(origin_, rrclass_, RRType::A(), rrttl_, rdatas_);
 }
 
-TEST_F(RRCollatorTest, emptyCallback) {
-    const AddRRsetCallback empty_callback;
-    EXPECT_THROW(RRCollator collator(empty_callback), isc::InvalidParameter);
-}
-
 TEST_F(RRCollatorTest, withMasterLoader) {
     // Test a simple case with MasterLoader.  There shouldn't be anything
     // special, but that's the mainly intended usage of the collator, so we
-    // check it explicitly.  Also, this test uses a different local collator,
-    // just for checking it works with omitting the issue callback (using
-    // the default).
-    RRCollator collator(boost::bind(addRRset, _1, &rrsets_,
-                                    &throw_from_callback_));
+    // check it explicitly.
     std::istringstream ss("example.com. 3600 IN A 192.0.2.1\n");
     MasterLoader loader(ss, origin_, rrclass_,
                         MasterLoaderCallbacks::getNullCallbacks(),
-                        collator.getCallback());
+                        collator_.getCallback());
     loader.load();
-    collator.flush();
+    collator_.flush();
     rdatas_.push_back(a_rdata1_);
     checkRRset(origin_, rrclass_, RRType::A(), rrttl_, rdatas_);
 }
