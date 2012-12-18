@@ -1,6 +1,4 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
-# old tests, TODO remove or change to use new API?
-#PYTESTS = master_test.py
 PYTESTS =  datasrc_test.py sqlite3_ds_test.py
 PYTESTS += clientlist_test.py zone_loader_test.py
 EXTRA_DIST = $(PYTESTS)
