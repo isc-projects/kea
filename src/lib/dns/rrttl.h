@@ -271,11 +271,16 @@ public:
     /// \name Protocol constants
     ///
     //@{
-    /// \brief Max allowable value for TTLs, as defined in RFC2181, Sec. 8.
+    /// \brief The TTL of the max allowable value, per RFC2181 Section 8.
+    ///
+    /// The max value is the largest unsigned 31 bit integer, 2^31-1.
     ///
     /// \note At the moment an RRTTL object can have a value larger than
     /// this limit.  We may revisit it in a future version.
-    static const uint32_t MAX_TTL = 0x7fffffff;
+    static const RRTTL MAX() {
+        static const RRTTL max_ttl(0x7fffffff);
+        return (max_ttl);
+    }
     //@}
 
 private:

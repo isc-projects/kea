@@ -57,10 +57,6 @@ Unit units[] = {
 namespace isc {
 namespace dns {
 
-// The actual definition of a static const member, in case it's address is
-// needed.
-const uint32_t RRTTL::MAX_TTL;
-
 namespace {
 bool
 parseTTLStr(const string& ttlstr, uint32_t& ttlval, string* error_txt) {

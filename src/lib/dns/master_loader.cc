@@ -157,7 +157,7 @@ private:
     // RR and the lexer is positioned at the next line.  It's just for
     // calculating the accurate source line when callback is necessary.
     void limitTTL(RRTTL& ttl, bool post_parsing) {
-        if (ttl.getValue() > RRTTL::MAX_TTL) {
+        if (ttl > RRTTL::MAX()) {
             const size_t src_line = lexer_.getSourceLine() -
                 (post_parsing ? 1 : 0);
             callbacks_.warning(lexer_.getSourceName(), src_line,
