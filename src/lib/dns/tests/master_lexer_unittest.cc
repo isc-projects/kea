@@ -238,10 +238,8 @@ TEST_F(MasterLexerTest, ungetToken) {
 // Check ungetting token without overriding the start method. We also
 // check it works well with changing options between the calls.
 TEST_F(MasterLexerTest, ungetRealOptions) {
-    ss << "\n    \n";
+    ss << "    \n";
     lexer.pushSource(ss);
-    // Skip the first newline
-    EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
 
     // If we call it the usual way, it skips up to the newline and returns
     // it
@@ -250,6 +248,22 @@ TEST_F(MasterLexerTest, ungetRealOptions) {
     // Now we return it. If we call it again, but with different options,
     // we get the initial whitespace.
     lexer.ungetToken();
+    EXPECT_EQ(MasterToken::INITIAL_WS,
+              lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
+}
+
+// Check the initial whitespace is found even in the first line of included
+// file
+TEST_F(MasterLexerTest, includeAndInitialWS) {
+    ss << "    \n";
+    lexer.pushSource(ss);
+
+    stringstream ss2;
+    ss2 << "    \n";
+
+    EXPECT_EQ(MasterToken::INITIAL_WS,
+              lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
+    lexer.pushSource(ss2);
     EXPECT_EQ(MasterToken::INITIAL_WS,
               lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
 }
