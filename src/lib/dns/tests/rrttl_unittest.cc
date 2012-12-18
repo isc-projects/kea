@@ -20,6 +20,8 @@
 
 #include <dns/tests/unittest_util.h>
 
+#include <boost/scoped_ptr.hpp>
+
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
@@ -83,6 +85,17 @@ TEST_F(RRTTLTest, fromText) {
     EXPECT_THROW(RRTTL("-1"), InvalidRRTTL); // must be positive
     EXPECT_THROW(RRTTL("1.1"), InvalidRRTTL); // must be integer
     EXPECT_THROW(RRTTL("4294967296"), InvalidRRTTL); // must be 32-bit
+}
+
+TEST_F(RRTTLTest, createFromText) {
+    // It returns an actual RRTT iff the given text is recognized as a
+    // valid RR TTL.
+    MaybeRRTTL maybe_ttl = RRTTL::createFromText("3600");
+    EXPECT_TRUE(maybe_ttl);
+    EXPECT_EQ(RRTTL(3600), *maybe_ttl);
+
+    maybe_ttl = RRTTL::createFromText("bad");
+    EXPECT_FALSE(maybe_ttl);
 }
 
 void
@@ -250,6 +263,10 @@ TEST_F(RRTTLTest, gthan) {
 
     EXPECT_FALSE(ttl_small.gthan(ttl_large));
     EXPECT_FALSE(ttl_small > ttl_large);
+}
+
+TEST_F(RRTTLTest, maxTTL) {
+    EXPECT_EQ((1u << 31) - 1, RRTTL::MAX().getValue());
 }
 
 // test operator<<.  We simply confirm it appends the result of toText().
