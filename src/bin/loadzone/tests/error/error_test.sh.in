@@ -32,42 +32,52 @@ status=0
 
 echo "PYTHON PATH: $PYTHONPATH"
 
-echo "Test no \$ORIGIN error in zone file"
-${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  ${TEST_FILE_PATH}/originerr1.db 1> /dev/null 2> error.out
-${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  ${TEST_FILE_PATH}/originerr2.db 1> /dev/null 2>> error.out
+# This error cannot happen for the new loadzone as it requires the origin
+# as a command line argument.
+#echo "Test no \$ORIGIN error in zone file"
+#${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'zone.sqlite3'"}' ${TEST_FILE_PATH}/originerr1.db 1> /dev/null 2> error.out
+#${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'zone.sqlite3'"}' ${TEST_FILE_PATH}/originerr2.db 1> /dev/null 2>> error.out
 
 echo "Test: key word TTL spell error"
-${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  ${TEST_FILE_PATH}/keyerror1.db 1> /dev/null 2>> error.out
+${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'zone.sqlite3'"}' \
+	com. ${TEST_FILE_PATH}/keyerror1.db 1> /dev/null 2>> error.out
 
 echo "Test: key word ORIGIN spell error"
-${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  ${TEST_FILE_PATH}/keyerror2.db 1> /dev/null 2>> error.out
+${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'zone.sqlite3'"}' com. \
+	${TEST_FILE_PATH}/keyerror2.db 1> /dev/null 2>> error.out
 
 echo "Test: key INCLUDE spell error"
-${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  ${TEST_FILE_PATH}/keyerror3.db 1> /dev/null 2>> error.out
+${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'zone.sqlite3'"}' com. \
+	${TEST_FILE_PATH}/keyerror3.db 1> /dev/null 2>> error.out
 
 echo "Test: include formal error, miss filename"
-${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  ${TEST_FILE_PATH}/formerr1.db 1> /dev/null 2>>error.out
+${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'zone.sqlite3'"}' com. \
+	${TEST_FILE_PATH}/formerr1.db 1> /dev/null 2>>error.out
 
 echo "Test: include form error, domain is not absolute"
-${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  ${TEST_FILE_PATH}/formerr2.db 1> /dev/null 2>> error.out
+${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'zone.sqlite3'"}' com. \
+	${TEST_FILE_PATH}/formerr2.db 1> /dev/null 2>> error.out
 
 echo "Test: TTL form error, no ttl value"
-${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  ${TEST_FILE_PATH}/formerr3.db 1> /dev/null 2>> error.out
+${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'zone.sqlite3'"}' com. \
+	${TEST_FILE_PATH}/formerr3.db 1> /dev/null 2>> error.out
 
 echo "Test: TTL form error, ttl value error"
-${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  ${TEST_FILE_PATH}/formerr4.db 1> /dev/null 2>> error.out
+${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'zone.sqlite3'"}' com. ${TEST_FILE_PATH}/formerr4.db 1> /dev/null 2>> error.out
 
 echo "Test: rr form error, no type"
-${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  ${TEST_FILE_PATH}/formerr5.db 1> /dev/null 2>> error.out
+${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'zone.sqlite3'"}' com. \
+	${TEST_FILE_PATH}/formerr5.db 1> /dev/null 2>> error.out
 
 echo "Test: zone file is bogus"
 # since bogusfile doesn't exist anyway, we *don't* specify the directory
-${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  bogusfile 1> /dev/null 2>> error.out
+${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'zone.sqlite3'"}' . \
+	bogusfile 1> /dev/null 2>> error.out
 
 diff error.out ${TEST_FILE_PATH}/error.known || status=1
 
 echo "Clean tmp file."
-rm -f error.out
+#rm -f error.out
 rm -f zone.sqlite3
 
 echo "I:exit status:$status"
