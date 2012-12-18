@@ -193,12 +193,12 @@ masterLoaderWrapper(const char* const filename, const Name& origin,
                     const RRClass& zone_class, LoadCallback callback)
 {
     bool load_ok = false;       // (we don't use it)
-    const MasterLoaderCallbacks issue_callbacks =
-        createMasterLoaderCallbacks(origin, zone_class, &load_ok);
-    dns::RRCollator collator(boost::bind(callback, _1), issue_callbacks);
+    dns::RRCollator collator(boost::bind(callback, _1));
 
     try {
-        dns::MasterLoader(filename, origin, zone_class, issue_callbacks,
+        dns::MasterLoader(filename, origin, zone_class,
+                          createMasterLoaderCallbacks(origin, zone_class,
+                                                      &load_ok),
                           collator.getCallback()).load();
         collator.flush();
     } catch (const dns::MasterLoaderError& e) {
