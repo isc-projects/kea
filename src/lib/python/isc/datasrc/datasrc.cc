@@ -29,6 +29,7 @@
 #include "updater_python.h"
 #include "journal_reader_python.h"
 #include "configurableclientlist_python.h"
+#include "zone_loader_python.h"
 
 #include <util/python/pycppwrapper_util.h>
 #include <dns/python/pydnspp_common.h>
@@ -181,6 +182,23 @@ initModulePart_ZoneIterator(PyObject* mod) {
 }
 
 bool
+initModulePart_ZoneLoader(PyObject* mod) {
+    // We initialize the static description object with PyType_Ready(),
+    // then add it to the module. This is not just a check! (leaving
+    // this out results in segmentation faults)
+    if (PyType_Ready(&zone_loader_type) < 0) {
+        return (false);
+    }
+    void* p = &zone_loader_type;
+    if (PyModule_AddObject(mod, "ZoneLoader", static_cast<PyObject*>(p)) < 0) {
+        return (false);
+    }
+    Py_INCREF(&zone_loader_type);
+
+    return (true);
+}
+
+bool
 initModulePart_ZoneUpdater(PyObject* mod) {
     // We initialize the static description object with PyType_Ready(),
     // then add it to the module. This is not just a check! (leaving
@@ -234,8 +252,9 @@ initModulePart_ZoneJournalReader(PyObject* mod) {
 }
 
 PyObject* po_DataSourceError;
-PyObject* po_OutOfZone;
+PyObject* po_MasterFileError;
 PyObject* po_NotImplemented;
+PyObject* po_OutOfZone;
 
 PyModuleDef iscDataSrc = {
     { PyObject_HEAD_INIT(NULL) NULL, 0, NULL},
@@ -257,6 +276,26 @@ PyMODINIT_FUNC
 PyInit_datasrc(void) {
     PyObject* mod = PyModule_Create(&iscDataSrc);
     if (mod == NULL) {
+        return (NULL);
+    }
+
+    try {
+        po_DataSourceError = PyErr_NewException("isc.datasrc.Error", NULL,
+                                                NULL);
+        PyObjectContainer(po_DataSourceError).installToModule(mod, "Error");
+        po_MasterFileError = PyErr_NewException("isc.datasrc.MasterFileError",
+                                                po_DataSourceError, NULL);
+        PyObjectContainer(po_MasterFileError).
+            installToModule(mod, "MasterFileError");
+        po_OutOfZone = PyErr_NewException("isc.datasrc.OutOfZone", NULL, NULL);
+        PyObjectContainer(po_OutOfZone).installToModule(mod, "OutOfZone");
+        po_NotImplemented = PyErr_NewException("isc.datasrc.NotImplemented",
+                                               NULL, NULL);
+        PyObjectContainer(po_NotImplemented).installToModule(mod,
+                                                             "NotImplemented");
+
+    } catch (...) {
+        Py_DECREF(mod);
         return (NULL);
     }
 
@@ -290,17 +329,7 @@ PyInit_datasrc(void) {
         return (NULL);
     }
 
-    try {
-        po_DataSourceError = PyErr_NewException("isc.datasrc.Error", NULL,
-                                                NULL);
-        PyObjectContainer(po_DataSourceError).installToModule(mod, "Error");
-        po_OutOfZone = PyErr_NewException("isc.datasrc.OutOfZone", NULL, NULL);
-        PyObjectContainer(po_OutOfZone).installToModule(mod, "OutOfZone");
-        po_NotImplemented = PyErr_NewException("isc.datasrc.NotImplemented",
-                                               NULL, NULL);
-        PyObjectContainer(po_NotImplemented).installToModule(mod,
-                                                             "NotImplemented");
-    } catch (...) {
+    if (!initModulePart_ZoneLoader(mod)) {
         Py_DECREF(mod);
         return (NULL);
     }

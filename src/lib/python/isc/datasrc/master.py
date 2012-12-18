@@ -182,7 +182,7 @@ def records(input):
 
         if paren == 1 or not record:
             continue
-        
+
         ret = ' '.join(record)
         record = []
         oldsize = size
