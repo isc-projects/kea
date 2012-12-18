@@ -293,7 +293,7 @@ public:
     ///
     /// \note At the moment an RRTTL object can have a value larger than
     /// this limit.  We may revisit it in a future version.
-    static const RRTTL& MAX() {
+    static const RRTTL& MAX_TTL() {
         static const RRTTL max_ttl(0x7fffffff);
         return (max_ttl);
     }
