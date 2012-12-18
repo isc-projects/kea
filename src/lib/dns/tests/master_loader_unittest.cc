@@ -195,6 +195,22 @@ TEST_F(MasterLoaderTest, include) {
     }
 }
 
+// A commonly used helper to check callback message.
+void
+checkCallbackMessage(const string& actual_msg, const string& expected_msg,
+                     size_t expected_line) {
+    // The actual message should begin with the expected message.
+    EXPECT_EQ(0, actual_msg.find(expected_msg)) << "actual message: " <<
+                                                actual_msg << " expected: " <<
+                                                expected_msg;
+
+    // and it should end with "...:<line_num>]"
+    const string line_desc = ":" + lexical_cast<string>(expected_line) + "]";
+    EXPECT_EQ(actual_msg.size() - line_desc.size(),
+              actual_msg.find(line_desc)) << "Expected on line " <<
+        expected_line;
+}
+
 TEST_F(MasterLoaderTest, origin) {
     // Various forms of the directive
     const char* origins[] = {
@@ -226,7 +242,11 @@ TEST_F(MasterLoaderTest, origin) {
         loader_->load();
         EXPECT_TRUE(loader_->loadedSucessfully());
         EXPECT_TRUE(errors_.empty());
-        EXPECT_TRUE(warnings_.empty());
+        // There's a relative origin in it, we warn about that.
+        EXPECT_EQ(1, warnings_.size());
+        checkCallbackMessage(warnings_.at(0),
+                             "The new origin is relative, did you really mean "
+                             "relative.sub.example.org.?", 4);
 
         checkARR("example.org");
         checkARR("www.sub.example.org");
@@ -370,22 +390,6 @@ struct ErrorCase {
     { NULL, NULL, NULL }
 };
 
-// A commonly used helper to check callback message.
-void
-checkCallbackMessage(const string& actual_msg, const string& expected_msg,
-                     size_t expected_line) {
-    // The actual message should begin with the expected message.
-    EXPECT_EQ(0, actual_msg.find(expected_msg)) << "actual message: " <<
-                                                actual_msg << " expected: " <<
-                                                expected_msg;
-
-    // and it should end with "...:<line_num>]"
-    const string line_desc = ":" + lexical_cast<string>(expected_line) + "]";
-    EXPECT_EQ(actual_msg.size() - line_desc.size(),
-              actual_msg.find(line_desc)) << "Expected on line " <<
-        expected_line;
-}
-
 // Test a broken zone is handled properly. We test several problems,
 // both in strict and lenient mode.
 TEST_F(MasterLoaderTest, brokenZone) {
@@ -480,7 +484,7 @@ TEST_F(MasterLoaderTest, includeWithGarbage) {
 // Check we error about garbage at the end of $ORIGIN line (but the line
 // works).
 TEST_F(MasterLoaderTest, originWithGarbage) {
-    const string origin_str = "$ORIGIN www More garbage here\n"
+    const string origin_str = "$ORIGIN www.example.org. More garbage here\n"
         "@  1H  IN  A   192.0.2.1\n";
     stringstream ss(origin_str);
     setLoader(ss, Name("example.org."), RRClass::IN(),
@@ -497,7 +501,7 @@ TEST_F(MasterLoaderTest, originWithGarbage) {
 TEST_F(MasterLoaderTest, includeAndOrigin) {
     // First, switch origin to something else, so we can check it is
     // switched back.
-    const string include_string = "$ORIGIN www\n"
+    const string include_string = "$ORIGIN www.example.org.\n"
         "@  1H  IN  A   192.0.2.1\n"
         // Then include the file with data and switch origin back
         "$INCLUDE " TEST_DATA_SRCDIR "/example.org example.org.\n"
