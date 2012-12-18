@@ -262,7 +262,7 @@ class LoadZoneRunner:
             if self.__interrupted:
                 raise LoadFailure('loading interrupted by signal')
 
-            # On successfully completion, add final '\n' to the progress
+            # On successful completion, add final '\n' to the progress
             # report output (on failure don't bother to make it prettier).
             if (self._report_interval > 0 and
                 self.__loaded_rrs >= self._report_interval):
