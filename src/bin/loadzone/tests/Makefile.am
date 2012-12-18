@@ -15,6 +15,7 @@ LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/cryp
 endif
 
 # test using command-line arguments, so use check-local target instead of TESTS
+# We need to define B10_FROM_BUILD for datasrc loadable modules
 check-local:
 if ENABLE_PYTHON_COVERAGE
 	touch $(abs_top_srcdir)/.coverage
@@ -24,6 +25,7 @@ endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	B10_FROM_SOURCE=$(abs_top_srcdir) \
+	B10_FROM_BUILD=$(abs_top_builddir) \
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	TESTDATA_PATH=$(abs_top_srcdir)/src/lib/testutils/testdata \
 	LOCAL_TESTDATA_PATH=$(srcdir)/testdata \
