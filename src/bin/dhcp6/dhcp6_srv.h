@@ -231,10 +231,10 @@ protected:
     /// lease is found, an IA_NA response is generated with an appropriate
     /// status code.
     ///
-    /// As RFC3315 requires to also send global (one for the whole message),
-    /// this method may update passed general_status. It is set to SUCCESS
-    /// when message processing begins, but may be update to some error code
-    /// if release process fails.
+    /// As RFC 3315 requires that a single status code be sent for the whole message,
+    /// this method may update the passed general_status: it is set to SUCCESS when
+    /// message processing begins, but may be updated to some error code if the
+    /// release process fails.
     ///
     /// @param duid client's duid
     /// @param question client's message
