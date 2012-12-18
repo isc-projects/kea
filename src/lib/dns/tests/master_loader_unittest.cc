@@ -608,5 +608,4 @@ TEST_F(MasterLoaderTest, noEOLN) {
     checkRR("example.org", RRType::SOA(), "ns1.example.org. "
             "admin.example.org. 1234 3600 1800 2419200 7200");
 }
-
 }
