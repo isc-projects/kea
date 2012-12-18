@@ -88,6 +88,8 @@ public:
     /// injected into the configuration string.
     /// @param parameter name of the parameter to be configured with
     /// param value.
+    /// @return configuration string containing custom values of parameters
+    /// describing an option.
     std::string createConfigWithOption(const std::string& param_value,
                                        const std::string& parameter) {
         std::map<std::string, std::string> params;
@@ -107,6 +109,14 @@ public:
         return (createConfigWithOption(params));
     }
 
+    /// @brief Create simple configuration with single option.
+    ///
+    /// This function creates a configuration for a single option with
+    /// custom values for all parameters that describe the option.
+    ///
+    /// @params params map holding parameters and their values.
+    /// @return configuration string containing custom values of parameters
+    /// describing an option.
     std::string createConfigWithOption(const std::map<std::string, std::string>& params) {
         std::ostringstream stream;
         stream << "{ \"interface\": [ \"all\" ],"
