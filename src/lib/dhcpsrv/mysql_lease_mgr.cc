@@ -1719,6 +1719,7 @@ MySqlLeaseMgr::getVersion() const {
 
 void
 MySqlLeaseMgr::commit() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_MYSQL_COMMIT);
     if (mysql_commit(mysql_) != 0) {
         isc_throw(DbOperationError, "commit failed: " << mysql_error(mysql_));
     }
@@ -1727,6 +1728,7 @@ MySqlLeaseMgr::commit() {
 
 void
 MySqlLeaseMgr::rollback() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_MYSQL_ROLLBACK);
     if (mysql_rollback(mysql_) != 0) {
         isc_throw(DbOperationError, "rollback failed: " << mysql_error(mysql_));
     }

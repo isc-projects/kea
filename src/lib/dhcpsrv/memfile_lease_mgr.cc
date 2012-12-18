@@ -161,8 +161,10 @@ std::string Memfile_LeaseMgr::getDescription() const {
 
 void
 Memfile_LeaseMgr::commit() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_MEMFILE_COMMIT);
 }
 
 void
 Memfile_LeaseMgr::rollback() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_MEMFILE_ROLLBACK);
 }
