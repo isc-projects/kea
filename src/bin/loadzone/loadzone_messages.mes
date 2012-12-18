@@ -27,9 +27,16 @@ LOADZONE_ZONE_CREATED), but the loading operation has subsequently
 failed.  The newly created zone has been removed from the data source,
 so that the data source will go back to the original state.
 
-% LOADZONE_DONE Load zone %1/%2 completed
+% LOADZONE_DONE Loadded (at least) %1 RRs into zone %2/%3 in %4 seconds
 b10-loadzone has successfully loaded the specified zone.  If there was
 an old version of the zone in the data source, it is now deleted.
+It also prints (a lower bound of) the number of RRs that have been loaded
+and the time spent for the loading.  Due to a limitation of the
+current implementation of the underlying library however, it cannot show the
+exact number of the loaded RRs; it's counted for every N-th RR where N
+is the value of the -i command line option.  So, for smaller zones that
+don't even contain N RRs, the reported value will be 0.  This will be
+improved in a future version.
 
 % LOADZONE_LOAD_ERROR Failed to load zone %1/%2: %3
 Loading a zone by b10-loadzone fails for some reason in the middle of

@@ -284,7 +284,9 @@ class LoadZoneRunner:
             self._set_signal_handlers()
             self._parse_args()
             self._do_load()
-            logger.info(LOADZONE_DONE, self._zone_name, self._zone_class)
+            total_elapsed_txt = "%.2f" % (time.time() - self.__start_time)
+            logger.info(LOADZONE_DONE, self.__loaded_rrs, self._zone_name,
+                        self._zone_class, total_elapsed_txt)
             self._post_load_checks()
             return 0
         except BadArgument as ex:
