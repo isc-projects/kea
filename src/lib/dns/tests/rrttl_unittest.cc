@@ -266,7 +266,7 @@ TEST_F(RRTTLTest, gthan) {
 }
 
 TEST_F(RRTTLTest, maxTTL) {
-    EXPECT_EQ((1u << 31) - 1, RRTTL::MAX().getValue());
+    EXPECT_EQ((1u << 31) - 1, RRTTL::MAX_TTL().getValue());
 }
 
 // test operator<<.  We simply confirm it appends the result of toText().
