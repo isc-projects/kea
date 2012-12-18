@@ -15,9 +15,11 @@
 #ifndef RRTTL_H
 #define RRTTL_H 1
 
-#include <stdint.h>
-
 #include <exceptions/exceptions.h>
+
+#include <boost/optional.hpp>
+
+#include <stdint.h>
 
 namespace isc {
 namespace util {
@@ -29,6 +31,16 @@ namespace dns {
 
 // forward declarations
 class AbstractMessageRenderer;
+
+class RRTTL;                    // forward declaration to define MaybeRRTTL
+
+/// \brief A shortcut for a compound type to represent RRTTL-or-not.
+///
+/// A value of this type can be interpreted in a boolean context, whose
+/// value is \c true if and only if it contains a valid RRTTL object.
+/// And, if it contains a valid RRTTL object, its value is accessible
+/// using \c operator*, just like a bare pointer to \c RRTTL.
+typedef boost::optional<RRTTL> MaybeRRTTL;
 
 ///
 /// \brief A standard DNS module exception that is thrown if an RRTTL object
@@ -61,7 +73,7 @@ public:
 class RRTTL {
 public:
     ///
-    /// \name Constructors and Destructor
+    /// \name Constructors, Factory and Destructor
     ///
     /// Note: We use the default copy constructor and the default copy
     /// assignment operator intentionally.
@@ -72,6 +84,7 @@ public:
     ///
     /// \param ttlval An 32-bit integer of the RRTTL.
     explicit RRTTL(uint32_t ttlval) : ttlval_(ttlval) {}
+
     /// Constructor from a string.
     ///
     /// It accepts either a decimal number, specifying number of seconds. Or,
@@ -87,6 +100,7 @@ public:
     /// \throw InvalidRRTTL in case the string is not recognized as valid
     ///     TTL representation.
     explicit RRTTL(const std::string& ttlstr);
+
     /// Constructor from wire-format data.
     ///
     /// The \c buffer parameter normally stores a complete DNS message
@@ -98,6 +112,39 @@ public:
     ///
     /// \param buffer A buffer storing the wire format data.
     explicit RRTTL(isc::util::InputBuffer& buffer);
+
+    /// A separate factory of RRTTL from text.
+    ///
+    /// This static method is similar to the constructor that takes a string
+    /// object, but works as a factory and reports parsing failure in the
+    /// form of the return value.  Normally the constructor version should
+    /// suffice, but in some cases the caller may have to expect mixture of
+    /// valid and invalid input, and may want to minimize the overhead of
+    /// possible exception handling.   This version is provided for such
+    /// purpose.
+    ///
+    /// If the given text represents a valid RRTTL, it returns a \c MaybeRRTTL
+    /// object that stores a corresponding \c RRTTL object, which is
+    /// accessible via \c operator*().  In this case the returned object will
+    /// be interpreted as \c true in a boolean context.  If the given text
+    /// does not represent a valid RRTTL, it returns a \c MaybeRRTTL object
+    /// which is interpreted as \c false in a boolean context.
+    ///
+    /// One main purpose of this function is to minimize the overhead
+    /// when the given text does not represent a valid RR TTL.  For this
+    /// reason this function intentionally omits the capability of delivering
+    /// details reason for the parse failure, such as in the \c want()
+    /// string when exception is thrown from the constructor (it will
+    /// internally require a creation of string object, which is relatively
+    /// expensive).  If such detailed information is necessary, the constructor
+    /// version should be used to catch the resulting exception.
+    ///
+    /// This function never throws the \c InvalidRRTTL exception.
+    ///
+    /// \param ttlstr A string representation of the \c RRTTL.
+    /// \return An MaybeRRTTL object either storing an RRTTL object for
+    /// the given text or a \c false value.
+    static MaybeRRTTL createFromText(const std::string& ttlstr);
     ///
     //@}
 
@@ -234,6 +281,22 @@ public:
     /// Same as \c gthan()
     bool operator>(const RRTTL& other) const
     { return (ttlval_ > other.ttlval_); }
+    //@}
+
+    ///
+    /// \name Protocol constants
+    ///
+    //@{
+    /// \brief The TTL of the max allowable value, per RFC2181 Section 8.
+    ///
+    /// The max value is the largest unsigned 31 bit integer, 2^31-1.
+    ///
+    /// \note At the moment an RRTTL object can have a value larger than
+    /// this limit.  We may revisit it in a future version.
+    static const RRTTL& MAX() {
+        static const RRTTL max_ttl(0x7fffffff);
+        return (max_ttl);
+    }
     //@}
 
 private:
