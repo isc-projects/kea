@@ -713,6 +713,10 @@ void Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply) {
     OptionPtr opt_duid = release->getOption(D6O_CLIENTID);
     if (!opt_duid) {
         // This should not happen. We have checked this before.
+        // see sanityCheck() called from processRelease()
+        LOG_WARN(dhcp6_logger, DHCP6_RELEASE_MISSING_CLIENTID)
+            .arg(release->getRemoteAddr().toText());
+
         reply->addOption(createStatusCode(STATUS_UnspecFail,
                          "You did not include mandatory client-id"));
         return;
@@ -731,8 +735,11 @@ void Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply) {
             }
             break;
         }
+        // @todo: add support for IA_PD
+        // @todo: add support for IA_TA
         default:
-            break;
+            // remaining options are stateless and thus ignored in this context
+            ;
         }
     }
 
@@ -777,7 +784,7 @@ OptionPtr Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, Pkt6Ptr question,
                           "Sorry, no known leases for this duid/iaid, can't release."));
         general_status = STATUS_NoBinding;
 
-        LOG_WARN(dhcp6_logger, DHCP6_UNKNOWN_RELEASE)
+        LOG_INFO(dhcp6_logger, DHCP6_UNKNOWN_RELEASE)
             .arg(duid->toText())
             .arg(ia->getIAID());
 
@@ -789,7 +796,7 @@ OptionPtr Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, Pkt6Ptr question,
         // have mandatory DUID information attached. Someone was messing with our
         // database.
 
-        LOG_ERROR(dhcp6_logger, DHCP6_DB_ERROR_LEASE6_WITHOUT_DUID)
+        LOG_ERROR(dhcp6_logger, DHCP6_LEASE_WITHOUT_DUID)
             .arg(release_addr->getAddress().toText());
 
         general_status = STATUS_UnspecFail;
@@ -825,8 +832,8 @@ OptionPtr Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, Pkt6Ptr question,
         return (ia_rsp);
     }
 
-    // It is not necessary if the address matches as we used getLease6(addr)
-    // method that is supposed to return a proper lease.
+    // It is not necessary to check if the address matches as we used
+    // getLease6(addr) method that is supposed to return a proper lease.
 
     // Ok, we've passed all checks. Let's release this address.
 
