@@ -127,6 +127,7 @@ MasterLexer::pushSource(const char* filename, std::string* error) {
 
     impl_->source_ = impl_->sources_.back().get();
     impl_->has_previous_ = false;
+    impl_->last_was_eol_ = true;
     return (true);
 }
 
@@ -135,6 +136,7 @@ MasterLexer::pushSource(std::istream& input) {
     impl_->sources_.push_back(InputSourcePtr(new InputSource(input)));
     impl_->source_ = impl_->sources_.back().get();
     impl_->has_previous_ = false;
+    impl_->last_was_eol_ = true;
 }
 
 void

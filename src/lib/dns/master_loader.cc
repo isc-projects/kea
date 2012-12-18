@@ -406,8 +406,8 @@ MasterLoader::MasterLoaderImpl::handleInitialToken() {
                       "place of initial whitespace");
         } else if (!previous_name_) {
             callbacks_.warning(lexer_.getSourceName(), lexer_.getSourceLine(),
-                               "Ambiguous previous name for use in place of "
-                               "initial whitespace");
+                               "Owner name omitted around $INCLUDE, the result "
+                               "might not be as expected");
         }
         return (next_token);
     } else if (initial_token.getType() == MasterToken::STRING ||

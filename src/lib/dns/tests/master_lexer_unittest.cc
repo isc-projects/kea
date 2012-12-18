@@ -252,6 +252,22 @@ TEST_F(MasterLexerTest, ungetRealOptions) {
               lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
 }
 
+// Check the initial whitespace is found even in the first line of included
+// file
+TEST_F(MasterLexerTest, includeAndInitialWS) {
+    ss << "    \n";
+    lexer.pushSource(ss);
+
+    stringstream ss2;
+    ss2 << "    \n";
+
+    EXPECT_EQ(MasterToken::INITIAL_WS,
+              lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
+    lexer.pushSource(ss2);
+    EXPECT_EQ(MasterToken::INITIAL_WS,
+              lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
+}
+
 // Test only one token can be ungotten
 TEST_F(MasterLexerTest, ungetTwice) {
     ss << "\n";
