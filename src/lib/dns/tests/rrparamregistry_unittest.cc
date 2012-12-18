@@ -157,10 +157,6 @@ TEST_F(RRParamRegistryTest, addRemoveFactory) {
                      RRType(test_type_code)));
 }
 
-void
-dummyCallback(const string&, size_t, const string&) {
-}
-
 RdataPtr
 createRdataHelper(const std::string& str) {
     boost::scoped_ptr<AbstractRdataFactory> rdf(new TestRdataFactory);
@@ -169,9 +165,7 @@ createRdataHelper(const std::string& str) {
     MasterLexer lexer;
     lexer.pushSource(ss);
 
-    const MasterLoaderCallbacks::IssueCallback callback
-        (boost::bind(&dummyCallback, _1, _2, _3));
-    MasterLoaderCallbacks callbacks(callback, callback);
+    MasterLoaderCallbacks callbacks(MasterLoaderCallbacks::getNullCallbacks());
     const Name origin("example.org.");
 
     return (rdf->create(lexer, &origin,

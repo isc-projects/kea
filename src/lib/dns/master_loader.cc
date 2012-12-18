@@ -22,10 +22,10 @@
 #include <dns/rdata.h>
 
 #include <boost/scoped_ptr.hpp>
+#include <boost/algorithm/string/predicate.hpp> // for iequals
 
 #include <string>
 #include <memory>
-#include <boost/algorithm/string/predicate.hpp> // for iequals
 
 using std::string;
 using std::auto_ptr;
