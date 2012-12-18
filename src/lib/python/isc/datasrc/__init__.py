@@ -2,7 +2,7 @@ import sys
 import os
 
 # The datasource factory loader uses dlopen, as does python
-# for its modules. Some dynamic linkers do not play nice if 
+# for its modules. Some dynamic linkers do not play nice if
 # modules are not loaded with RTLD_GLOBAL, a symptom of which
 # is that exceptions are not recognized by type. So to make
 # sure this doesn't happen, we temporarily set RTLD_GLOBAL
@@ -31,5 +31,4 @@ else:
 sys.setdlopenflags(flags)
 
 from isc.datasrc.sqlite3_ds import *
-from isc.datasrc.master import *
 
