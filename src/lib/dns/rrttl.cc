@@ -59,7 +59,7 @@ namespace dns {
 
 namespace {
 bool
-parseTTLStr(const string& ttlstr, uint32_t& ttlval, string* error_txt) {
+parseTTLString(const string& ttlstr, uint32_t& ttlval, string* error_txt) {
     if (ttlstr.empty()) {
         if (error_txt != NULL) {
             *error_txt = "Empty TTL string";
@@ -161,22 +161,18 @@ parseTTLStr(const string& ttlstr, uint32_t& ttlval, string* error_txt) {
 
 RRTTL::RRTTL(const std::string& ttlstr) {
     string error_txt;
-    if (!parseTTLStr(ttlstr, ttlval_, &error_txt)) {
+    if (!parseTTLString(ttlstr, ttlval_, &error_txt)) {
         isc_throw(InvalidRRTTL, error_txt);
     }
 }
 
-RRTTL*
-RRTTL::createFromText(const string& ttlstr, RRTTL* placeholder) {
+MaybeRRTTL
+RRTTL::createFromText(const string& ttlstr) {
     uint32_t ttlval;
-    if (parseTTLStr(ttlstr, ttlval, NULL)) {
-        if (placeholder != NULL) {
-            *placeholder = RRTTL(ttlval);
-            return (placeholder);
-        }
-        return (new RRTTL(ttlval));
+    if (parseTTLString(ttlstr, ttlval, NULL)) {
+        return (MaybeRRTTL(ttlval));
     }
-    return (NULL);
+    return (MaybeRRTTL());
 }
 
 RRTTL::RRTTL(InputBuffer& buffer) {
