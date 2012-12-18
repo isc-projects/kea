@@ -1,3 +1,5 @@
+SUBDIRS = . correct error
+
 PYCOVERAGE_RUN=@PYCOVERAGE_RUN@
 PYTESTS = loadzone_test.py
 
