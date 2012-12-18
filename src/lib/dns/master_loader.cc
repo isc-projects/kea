@@ -52,7 +52,6 @@ public:
                      const MasterLoaderCallbacks& callbacks,
                      const AddRRCallback& add_callback,
                      MasterLoader::Options options) :
-        MAX_TTL(0x7fffffff),
         lexer_(),
         zone_origin_(zone_origin),
         zone_class_(zone_class),
@@ -158,7 +157,7 @@ private:
     // RR and the lexer is positioned at the next line.  It's just for
     // calculating the accurate source line when callback is necessary.
     void limitTTL(RRTTL& ttl, bool post_parsing) {
-        if (ttl > MAX_TTL) {
+        if (ttl.getValue() > RRTTL::MAX_TTL) {
             const size_t src_line = lexer_.getSourceLine() -
                 (post_parsing ? 1 : 0);
             callbacks_.warning(lexer_.getSourceName(), src_line,
@@ -306,11 +305,6 @@ private:
     }
 
 private:
-    // RFC2181 Section 8 specifies TTLs are unsigned 32-bit integer,
-    // effectively limiting the maximum value to 2^32-1.  This constant
-    // represent a TTL of the max value.
-    const RRTTL MAX_TTL;
-
     MasterLexer lexer_;
     const Name zone_origin_;
     const RRClass zone_class_;
