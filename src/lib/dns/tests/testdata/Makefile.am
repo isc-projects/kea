@@ -172,6 +172,8 @@ EXTRA_DIST += tsig_verify7.spec tsig_verify8.spec tsig_verify9.spec
 EXTRA_DIST += tsig_verify10.spec
 EXTRA_DIST += example.org
 EXTRA_DIST += broken.zone
+EXTRA_DIST += origincheck.txt
+EXTRA_DIST += omitcheck.txt
 
 .spec.wire:
 	$(PYTHON) $(top_builddir)/src/lib/util/python/gen_wiredata.py -o $@ $<

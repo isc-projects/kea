@@ -30,20 +30,21 @@ AllocEngine::IterativeAllocator::IterativeAllocator()
 
 isc::asiolink::IOAddress
 AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress& addr) {
+    // Get a buffer holding an address.
+    const std::vector<uint8_t>& vec = addr.toBytes();
+    // Get the address length.
+    const int len = vec.size();
+
+    // Since the same array will be used to hold the IPv4 and IPv6
+    // address we have to make sure that the size of the array
+    // we allocate will work for both types of address.
+    BOOST_STATIC_ASSERT(V4ADDRESS_LEN <= V6ADDRESS_LEN);
     uint8_t packed[V6ADDRESS_LEN];
-    int len;
 
-    // First we copy the whole address as 16 bytes.
-    if (addr.getFamily()==AF_INET) {
-        // IPv4
-        std::memcpy(packed, addr.getAddress().to_v4().to_bytes().data(), 4);
-        len = 4;
-    } else {
-        // IPv6
-        std::memcpy(packed, addr.getAddress().to_v6().to_bytes().data(), 16);
-        len = 16;
-    }
+    // Copy the address. It can be either V4 or V6.
+    std::memcpy(packed, &vec[0], len);
 
+    // Increase the address.
     for (int i = len - 1; i >= 0; --i) {
         ++packed[i];
         if (packed[i] != 0) {
