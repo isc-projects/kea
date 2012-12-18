@@ -43,6 +43,7 @@ namespace dhcp {
 /// Below is a sketch of configuration inheritance (not implemented yet).
 /// Let's investigate the following configuration:
 ///
+/// @code
 /// preferred-lifetime 500;
 /// valid-lifetime 1000;
 /// subnet6 2001:db8:1::/48 {
@@ -52,6 +53,8 @@ namespace dhcp {
 ///     valid-lifetime 2000;
 ///     pool6 2001::db8:2::1 - 2001::db8:2::ff;
 /// };
+/// @endcode
+///
 /// Parameters defined in a global scope are applicable to everything until
 /// they are overwritten in a smaller scope, in this case subnet6.
 /// In the example above, the first subnet6 has preferred lifetime of 500s
@@ -101,9 +104,9 @@ public:
     /// needed is a dynamic server reconfiguration - a use case that is not
     /// planned to be supported any time soon.
 
-    /// @brief removes all subnets
+    /// @brief removes all IPv6 subnets
     ///
-    /// This method removes all existing subnets. It is used during
+    /// This method removes all existing IPv6 subnets. It is used during
     /// reconfiguration - old configuration is wiped and new definitions
     /// are used to recreate subnets.
     ///
@@ -111,9 +114,7 @@ public:
     /// between old and new configuration is tricky. For example: is
     /// 2000::/64 and 2000::/48 the same subnet or is it something
     /// completely new?
-    void deleteSubnets6() {
-        subnets6_.clear();
-    }
+    void deleteSubnets6();
 
     /// @brief get IPv4 subnet by address
     ///
@@ -130,7 +131,16 @@ public:
     void addSubnet4(const Subnet4Ptr& subnet);
 
     /// @brief removes all IPv4 subnets
-    void removeSubnets4();
+    ///
+    /// This method removes all existing IPv4 subnets. It is used during
+    /// reconfiguration - old configuration is wiped and new definitions
+    /// are used to recreate subnets.
+    ///
+    /// @todo Implement more intelligent approach. Note that comparison
+    /// between old and new configuration is tricky. For example: is
+    /// 192.0.2.0/23 and 192.0.2.0/24 the same subnet or is it something
+    /// completely new?
+    void deleteSubnets4();
 protected:
 
     /// @brief Protected constructor.

@@ -88,22 +88,14 @@ TEST_F(RRTTLTest, fromText) {
 }
 
 TEST_F(RRTTLTest, createFromText) {
-    // If placeholder is NULL, a new RRTTL object is allocated
-    boost::scoped_ptr<RRTTL> ttl_ptr;
-    ttl_ptr.reset(RRTTL::createFromText("3600", NULL));
-    ASSERT_TRUE(ttl_ptr);
-    EXPECT_EQ(RRTTL(3600), *ttl_ptr);
+    // It returns an actual RRTT iff the given text is recognized as a
+    // valid RR TTL.
+    MaybeRRTTL maybe_ttl = RRTTL::createFromText("3600");
+    EXPECT_TRUE(maybe_ttl);
+    EXPECT_EQ(RRTTL(3600), *maybe_ttl);
 
-    // If placeholder is non NULL, it will be overwritten
-    RRTTL ttl(3600);
-    EXPECT_NE(static_cast<RRTTL*>(NULL), RRTTL::createFromText("1800", &ttl));
-    EXPECT_EQ(RRTTL(1800), ttl);
-
-    // If text parsing fails, NULL is returned; if placeholder is given,
-    // it will be intact.
-    EXPECT_EQ(static_cast<RRTTL*>(NULL), RRTTL::createFromText("bad", NULL));
-    EXPECT_EQ(static_cast<RRTTL*>(NULL), RRTTL::createFromText("bad", &ttl));
-    EXPECT_EQ(RRTTL(1800), ttl);
+    maybe_ttl = RRTTL::createFromText("bad");
+    EXPECT_FALSE(maybe_ttl);
 }
 
 void
@@ -271,6 +263,10 @@ TEST_F(RRTTLTest, gthan) {
 
     EXPECT_FALSE(ttl_small.gthan(ttl_large));
     EXPECT_FALSE(ttl_small > ttl_large);
+}
+
+TEST_F(RRTTLTest, maxTTL) {
+    EXPECT_EQ((1u << 31) - 1, RRTTL::MAX().getValue());
 }
 
 // test operator<<.  We simply confirm it appends the result of toText().

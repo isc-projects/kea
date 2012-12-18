@@ -30,7 +30,7 @@
 #include <utility>
 #include <vector>
 
-/// @file dhcp/lease_mgr.h
+/// @file lease_mgr.h
 /// @brief An abstract API for lease database
 ///
 /// This file contains declarations of Lease4, Lease6 and LeaseMgr classes.
@@ -118,32 +118,6 @@ struct Lease4 {
     /// @brief Maximum size of a hardware address
     static const size_t HWADDR_MAX = 20;
 
-    /// @brief Constructor
-    ///
-    /// @param addr IPv4 address as unsigned 32-bit integer in network byte
-    ///        order.
-    /// @param hwaddr Hardware address buffer
-    /// @param hwaddr_len Length of hardware address buffer
-    /// @param clientid Client identification buffer
-    /// @param clientid_len Length of client identification buffer
-    /// @param valid_lft Lifetime of the lease
-    /// @param cltt Client last transmission time
-    /// @param subnet_id Subnet identification
-    Lease4(uint32_t addr, const uint8_t* hwaddr, size_t hwaddr_len,
-           const uint8_t* clientid, size_t clientid_len, uint32_t valid_lft,
-           time_t cltt, uint32_t subnet_id)
-        : addr_(addr), ext_(0), hwaddr_(hwaddr, hwaddr + hwaddr_len),
-          client_id_(new ClientId(clientid, clientid_len)), t1_(0), t2_(0),
-          valid_lft_(valid_lft), cltt_(cltt), subnet_id_(subnet_id),
-          fixed_(false), hostname_(), fqdn_fwd_(false), fqdn_rev_(false),
-          comments_()
-    {}
-
-    /// @brief Default Constructor
-    ///
-    /// Initialize fields that don't have a default constructor.
-    Lease4() : addr_(0) {}
-
 
     /// IPv4 address
     isc::asiolink::IOAddress addr_;
@@ -165,7 +139,7 @@ struct Lease4 {
     ///
     /// @todo Should this be a pointer to a client ID or the ID itself?
     ///       Compare with the DUID in the Lease6 structure.
-    boost::shared_ptr<ClientId> client_id_;
+    ClientIdPtr client_id_;
 
     /// @brief Renewal timer
     ///
@@ -227,6 +201,33 @@ struct Lease4 {
     /// system administrator.
     std::string comments_;
 
+    /// @brief Constructor
+    ///
+    /// @param addr IPv4 address as unsigned 32-bit integer in network byte
+    ///        order.
+    /// @param hwaddr Hardware address buffer
+    /// @param hwaddr_len Length of hardware address buffer
+    /// @param clientid Client identification buffer
+    /// @param clientid_len Length of client identification buffer
+    /// @param valid_lft Lifetime of the lease
+    /// @param cltt Client last transmission time
+    /// @param subnet_id Subnet identification
+    Lease4(uint32_t addr, const uint8_t* hwaddr, size_t hwaddr_len,
+           const uint8_t* clientid, size_t clientid_len, uint32_t valid_lft,
+           time_t cltt, uint32_t subnet_id)
+        : addr_(addr), ext_(0), hwaddr_(hwaddr, hwaddr + hwaddr_len),
+          client_id_(new ClientId(clientid, clientid_len)), t1_(0), t2_(0),
+          valid_lft_(valid_lft), cltt_(cltt), subnet_id_(subnet_id),
+          fixed_(false), hostname_(), fqdn_fwd_(false), fqdn_rev_(false),
+          comments_()
+    {}
+
+    /// @brief Default Constructor
+    ///
+    /// Initialize fields that don't have a default constructor.
+    Lease4() : addr_(0), fixed_(false), fqdn_fwd_(false), fqdn_rev_(false)
+    {}
+
     /// @brief Compare two leases for equality
     ///
     /// @param other lease6 object with which to compare
@@ -264,11 +265,6 @@ struct Lease6 {
         LEASE_IA_TA, /// the lease contains temporary IPv6 address
         LEASE_IA_PD  /// the lease contains IPv6 prefix (for prefix delegation)
     } LeaseType;
-
-    /// @brief Constructor
-    Lease6(LeaseType type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
-           uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
-           uint32_t t2, SubnetID subnet_id, uint8_t prefixlen_ = 0);
 
     /// @brief IPv6 address
     ///
@@ -367,9 +363,16 @@ struct Lease6 {
     /// @todo: Add DHCPv6 failover related fields here
 
     /// @brief Constructor
+    Lease6(LeaseType type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
+           uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
+           uint32_t t2, SubnetID subnet_id, uint8_t prefixlen_ = 0);
+
+    /// @brief Constructor
     ///
     /// Initialize fields that don't have a default constructor.
-    Lease6() : addr_("::") {}
+    Lease6() : addr_("::"), type_(LEASE_IA_NA), fixed_(false), fqdn_fwd_(false),
+               fqdn_rev_(false)
+    {}
 
     /// @brief Convert Lease6 to Printable Form
     ///
@@ -442,19 +445,6 @@ public:
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
     virtual bool addLease(const Lease6Ptr& lease) = 0;
-
-    /// @brief Returns IPv4 lease for specified IPv4 address and subnet_id
-    ///
-    /// This method is used to get a lease for specific subnet_id. There can be
-    /// at most one lease for any given subnet, so this method returns a single
-    /// pointer.
-    ///
-    /// @param addr address of the searched lease
-    /// @param subnet_id ID of the subnet the lease must belong to
-    ///
-    /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr,
-                                SubnetID subnet_id) const = 0;
 
     /// @brief Returns an IPv4 lease for specified IPv4 address
     ///
@@ -568,17 +558,11 @@ public:
 
     /// @brief Deletes a lease.
     ///
-    /// @param addr IPv4 address of the lease to be deleted.
+    /// @param addr Address of the lease to be deleted. (This can be IPv4 or
+    ///        IPv6.)
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    virtual bool deleteLease4(const isc::asiolink::IOAddress& addr) = 0;
-
-    /// @brief Deletes a lease.
-    ///
-    /// @param addr IPv6 address of the lease to be deleted.
-    ///
-    /// @return true if deletion was successful, false if no such lease exists
-    virtual bool deleteLease6(const isc::asiolink::IOAddress& addr) = 0;
+    virtual bool deleteLease(const isc::asiolink::IOAddress& addr) = 0;
 
     /// @brief Return backend type
     ///

@@ -152,7 +152,7 @@ public:
     /// @brief returns option universe (V4 or V6)
     ///
     /// @return universe type
-    Universe  getUniverse() { return universe_; };
+    Universe  getUniverse() const { return universe_; };
 
     /// @brief Writes option in wire-format to a buffer.
     ///
@@ -197,7 +197,7 @@ public:
     /// Returns option type (0-255 for DHCPv4, 0-65535 for DHCPv6)
     ///
     /// @return option type
-    uint16_t getType() { return (type_); }
+    uint16_t getType() const { return (type_); }
 
     /// Returns length of the complete option (data length + DHCPv4/DHCPv6
     /// option header)
@@ -219,7 +219,7 @@ public:
     ///
     /// @return pointer to actual data (or reference to an empty vector
     ///         if there is no data)
-    virtual const OptionBuffer& getData() { return (data_); }
+    virtual const OptionBuffer& getData() const { return (data_); }
 
     /// Adds a sub-option.
     ///
@@ -303,6 +303,19 @@ public:
     /// just to force that every option has virtual dtor
     virtual ~Option();
 
+    /// @brief Checks if two options are equal
+    ///
+    /// Equality verifies option type and option content. Care should
+    /// be taken when using this method. Implementation for derived
+    /// classes should be provided when this method is expected to be
+    /// used. It is safe in general, as the first check (different types)
+    /// will detect differences between base Option and derived
+    /// objects.
+    ///
+    /// @param other the other option
+    /// @return true if both options are equal
+    virtual bool equal(const OptionPtr& other) const;
+
 protected:
     /// Builds raw (over-wire) buffer of this option, including all
     /// defined suboptions. Version for building DHCPv4 options.
@@ -311,6 +324,22 @@ protected:
     ///
     /// @throw BadValue Universe is not V6.
     virtual void pack6(isc::util::OutputBuffer& buf);
+
+    /// @brief Store option's header in a buffer.
+    ///
+    /// This method writes option's header into a buffer in the
+    /// on-wire format. The universe set for the particular option
+    /// is used to determine whether option code and length are
+    /// stored as 2-byte (for DHCPv6) or single-byte (for DHCPv4)
+    /// values. For DHCPv4 options, this method checks if the
+    /// length does not exceed 255 bytes and throws exception if
+    /// it does.
+    /// This method is used by derived classes to pack option's
+    /// header into a buffer. This method should not be called
+    /// directly by other classes.
+    ///
+    /// @param [out] buf output buffer.
+    void packHeader(isc::util::OutputBuffer& buf);
 
     /// @brief Store sub options in a buffer.
     ///

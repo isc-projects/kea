@@ -1587,4 +1587,29 @@ TEST_F(InMemoryZoneFinderNSEC3Test, RRSIGOnly) {
                  DataSourceError);
 }
 
+// \brief testcase for #2503 (Problem in inmem NSEC3 denial of existence
+// handling)
+TEST_F(InMemoryZoneFinderNSEC3Test, findNSEC3MissingOrigin) {
+     // Set back the default hash calculator.
+     DefaultNSEC3HashCreator creator;
+     setNSEC3HashCreator(&creator);
+
+     shared_ptr<ZoneTableSegment> ztable_segment(
+          new ZoneTableSegmentTest(class_, mem_sgmt_));
+     InMemoryClient client(ztable_segment, class_);
+     Name name("example.com.");
+
+     client.load(name, TEST_DATA_DIR "/2503-test.zone");
+     DataSourceClient::FindResult result(client.findZone(name));
+
+     // Check for a non-existing name
+     Name search_name("nonexist.example.com.");
+     ZoneFinder::FindNSEC3Result find_result(
+          result.zone_finder->findNSEC3(search_name, true));
+     // findNSEC3() must have completed (not throw or assert). Because
+     // the find was recursive, it always must find something and return
+     // true.
+     EXPECT_TRUE(find_result.matched);
+}
+
 }

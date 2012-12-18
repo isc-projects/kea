@@ -49,11 +49,6 @@ Lease4Collection Memfile_LeaseMgr::getLease4(const HWAddr& ) const {
     return (Lease4Collection());
 }
 
-Lease4Ptr Memfile_LeaseMgr::getLease4(const isc::asiolink::IOAddress&,
-                                      SubnetID) const {
-    return (Lease4Ptr());
-}
-
 Lease4Ptr Memfile_LeaseMgr::getLease4(const HWAddr&,
                                       SubnetID) const {
     return (Lease4Ptr());
@@ -102,18 +97,21 @@ void Memfile_LeaseMgr::updateLease6(const Lease6Ptr& ) {
 
 }
 
-bool Memfile_LeaseMgr::deleteLease4(const isc::asiolink::IOAddress&) {
-    return (false);
-}
-
-bool Memfile_LeaseMgr::deleteLease6(const isc::asiolink::IOAddress& addr) {
-    Lease6Storage::iterator l = storage6_.find(addr);
-    if (l == storage6_.end()) {
-        // no such lease
+bool Memfile_LeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
+    if (addr.isV4()) {
+        // V4 not implemented yet
         return (false);
+
     } else {
-        storage6_.erase(l);
-        return (true);
+        // V6 lease
+        Lease6Storage::iterator l = storage6_.find(addr);
+        if (l == storage6_.end()) {
+            // No such lease
+            return (false);
+        } else {
+            storage6_.erase(l);
+            return (true);
+        }
     }
 }
 

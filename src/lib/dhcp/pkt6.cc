@@ -81,13 +81,6 @@ Pkt6::pack() {
 
 bool
 Pkt6::packUDP() {
-
-    // TODO: Once OutputBuffer is used here, some thing like this
-    // will be used. Yikes! That's ugly.
-    // bufferOut_.writeData(ciaddr_.getAddress().to_v6().to_bytes().data(), 16);
-    // It is better to implement a method in IOAddress that extracts
-    // vector<uint8_t>
-
     try {
         // DHCPv6 header: message-type (1 octect) + transaction id (3 octets)
         bufferOut_.writeUint8(msg_type_);
@@ -172,17 +165,30 @@ Pkt6::toText() {
     return tmp.str();
 }
 
-boost::shared_ptr<isc::dhcp::Option>
+OptionPtr
 Pkt6::getOption(uint16_t opt_type) {
     isc::dhcp::Option::OptionCollection::const_iterator x = options_.find(opt_type);
     if (x!=options_.end()) {
         return (*x).second;
     }
-    return boost::shared_ptr<isc::dhcp::Option>(); // NULL
+    return OptionPtr(); // NULL
+}
+
+isc::dhcp::Option::OptionCollection
+Pkt6::getOptions(uint16_t opt_type) {
+    isc::dhcp::Option::OptionCollection found;
+
+    for (Option::OptionCollection::const_iterator x = options_.begin();
+         x != options_.end(); ++x) {
+        if (x->first == opt_type) {
+            found.insert(make_pair(opt_type, x->second));
+        }
+    }
+    return (found);
 }
 
 void
-Pkt6::addOption(boost::shared_ptr<Option> opt) {
+Pkt6::addOption(const OptionPtr& opt) {
     options_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(), opt));
 }
 
@@ -205,6 +211,52 @@ Pkt6::updateTimestamp() {
     timestamp_ = boost::posix_time::microsec_clock::universal_time();
 }
 
+const char*
+Pkt6::getName(uint8_t type) {
+    static const char* CONFIRM = "CONFIRM";
+    static const char* DECLINE = "DECLINE";
+    static const char* INFORMATION_REQUEST = "INFORMATION_REQUEST";
+    static const char* REBIND = "REBIND";
+    static const char* RELEASE = "RELEASE";
+    static const char* RENEW = "RENEW";
+    static const char* REQUEST = "REQUEST";
+    static const char* SOLICIT = "SOLICIT";
+    static const char* UNKNOWN = "UNKNOWN";
+
+    switch (type) {
+    case DHCPV6_CONFIRM:
+        return (CONFIRM);
+
+    case DHCPV6_DECLINE:
+        return (DECLINE);
+
+    case DHCPV6_INFORMATION_REQUEST:
+        return (INFORMATION_REQUEST);
+
+    case DHCPV6_REBIND:
+        return (REBIND);
+
+    case DHCPV6_RELEASE:
+        return (RELEASE);
+
+    case DHCPV6_RENEW:
+        return (RENEW);
+
+    case DHCPV6_REQUEST:
+        return (REQUEST);
+
+    case DHCPV6_SOLICIT:
+        return (SOLICIT);
+
+    default:
+        ;
+    }
+    return (UNKNOWN);
+}
+
+const char* Pkt6::getName() const {
+    return (getName(getType()));
+}
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

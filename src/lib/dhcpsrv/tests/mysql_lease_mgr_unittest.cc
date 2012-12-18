@@ -230,8 +230,8 @@ public:
     ///
     /// @param address Address to use for the initialization
     ///
-    /// @return Lease4Ptr.  This will not point to anything if the initialization
-    ///         failed (e.g. unknown address).
+    /// @return Lease4Ptr.  This will not point to anything if the
+    ///         initialization failed (e.g. unknown address).
     Lease4Ptr initializeLease4(std::string address) {
         Lease4Ptr lease(new Lease4());
 
@@ -251,7 +251,7 @@ public:
         // Set other parameters.  For historical reasons, address 0 is not used.
         if (address == straddress4_[0]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x08);
-            lease->client_id_ = boost::shared_ptr<ClientId>(
+            lease->client_id_ = ClientIdPtr(
                 new ClientId(vector<uint8_t>(8, 0x42)));
             lease->valid_lft_ = 8677;
             lease->cltt_ = 168256;
@@ -259,7 +259,7 @@ public:
 
         } else if (address == straddress4_[1]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x19);
-            lease->client_id_ = boost::shared_ptr<ClientId>(
+            lease->client_id_ = ClientIdPtr(
                 new ClientId(vector<uint8_t>(8, 0x53)));
             lease->valid_lft_ = 3677;
             lease->cltt_ = 123456;
@@ -267,7 +267,7 @@ public:
 
         } else if (address == straddress4_[2]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x2a);
-            lease->client_id_ = boost::shared_ptr<ClientId>(
+            lease->client_id_ = ClientIdPtr(
                 new ClientId(vector<uint8_t>(8, 0x64)));
             lease->valid_lft_ = 5412;
             lease->cltt_ = 234567;
@@ -275,7 +275,7 @@ public:
 
         } else if (address == straddress4_[3]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x19);      // Same as lease 1
-            lease->client_id_ = boost::shared_ptr<ClientId>(
+            lease->client_id_ = ClientIdPtr(
                 new ClientId(vector<uint8_t>(8, 0x75)));
 
             // The times used in the next tests are deliberately restricted - we
@@ -289,7 +289,7 @@ public:
         } else if (address == straddress4_[4]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x4c);
             // Same ClientId as straddr4_[1]
-            lease->client_id_ = boost::shared_ptr<ClientId>(
+            lease->client_id_ = ClientIdPtr(
                 new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
             lease->valid_lft_ = 7736;
             lease->cltt_ = 222456;
@@ -298,7 +298,7 @@ public:
         } else if (address == straddress4_[5]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x19);      // Same as lease 1
             // Same ClientId and IAID as straddress4_1
-            lease->client_id_ = boost::shared_ptr<ClientId>(
+            lease->client_id_ = ClientIdPtr(
                 new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
             lease->valid_lft_ = 7832;
             lease->cltt_ = 227476;
@@ -307,7 +307,7 @@ public:
         } else if (address == straddress4_[6]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x6e);
             // Same ClientId as straddress4_1
-            lease->client_id_ = boost::shared_ptr<ClientId>(
+            lease->client_id_ = ClientIdPtr(
                 new ClientId(vector<uint8_t>(8, 0x53)));    // Same as lease 1
             lease->valid_lft_ = 1832;
             lease->cltt_ = 627476;
@@ -315,7 +315,7 @@ public:
 
         } else if (address == straddress4_[7]) {
             lease->hwaddr_ = vector<uint8_t>();             // Empty
-            lease->client_id_ = boost::shared_ptr<ClientId>(
+            lease->client_id_ = ClientIdPtr(
                 new ClientId(vector<uint8_t>()));           // Empty
             lease->valid_lft_ = 7975;
             lease->cltt_ = 213876;
@@ -708,7 +708,8 @@ TEST_F(MySqlLeaseMgrTest, checkVersion) {
 
 /// @brief Basic Lease4 Checks
 ///
-/// Checks that the addLease, getLease4 (by address) and deleteLease4 works.
+/// Checks that the addLease, getLease4 (by address) and deleteLease (with an
+/// IPv4 address) works.
 TEST_F(MySqlLeaseMgrTest, basicLease4) {
     // Get the leases to be used for the test.
     vector<Lease4Ptr> leases = createLeases4();
@@ -740,10 +741,10 @@ TEST_F(MySqlLeaseMgrTest, basicLease4) {
 
     // Delete a lease, check that it's gone, and that we can't delete it
     // a second time.
-    EXPECT_TRUE(lmptr_->deleteLease4(ioaddress4_[1]));
+    EXPECT_TRUE(lmptr_->deleteLease(ioaddress4_[1]));
     l_returned = lmptr_->getLease4(ioaddress4_[1]);
     EXPECT_FALSE(l_returned);
-    EXPECT_FALSE(lmptr_->deleteLease4(ioaddress4_[1]));
+    EXPECT_FALSE(lmptr_->deleteLease(ioaddress4_[1]));
 
     // Check that the second address is still there.
     l_returned = lmptr_->getLease4(ioaddress4_[2]);
@@ -753,7 +754,8 @@ TEST_F(MySqlLeaseMgrTest, basicLease4) {
 
 /// @brief Basic Lease6 Checks
 ///
-/// Checks that the addLease, getLease6 (by address) and deleteLease6 works.
+/// Checks that the addLease, getLease6 (by address) and deleteLease (with an
+/// IPv6 address) works.
 TEST_F(MySqlLeaseMgrTest, basicLease6) {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
@@ -785,54 +787,15 @@ TEST_F(MySqlLeaseMgrTest, basicLease6) {
 
     // Delete a lease, check that it's gone, and that we can't delete it
     // a second time.
-    EXPECT_TRUE(lmptr_->deleteLease6(ioaddress6_[1]));
+    EXPECT_TRUE(lmptr_->deleteLease(ioaddress6_[1]));
     l_returned = lmptr_->getLease6(ioaddress6_[1]);
     EXPECT_FALSE(l_returned);
-    EXPECT_FALSE(lmptr_->deleteLease6(ioaddress6_[1]));
+    EXPECT_FALSE(lmptr_->deleteLease(ioaddress6_[1]));
 
     // Check that the second address is still there.
     l_returned = lmptr_->getLease6(ioaddress6_[2]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[2], l_returned);
-}
-
-/// @brief Check GetLease4 methods - access by Address and SubnetID
-///
-/// Adds leases to the database and checks that they can be accessed via
-/// a the hardware address
-TEST_F(MySqlLeaseMgrTest, getLease4AddressSubnetId) {
-    // Get the leases to be used for the test.
-    vector<Lease4Ptr> leases = createLeases4();
-    const SubnetID lease1_subnetid = leases[1]->subnet_id_;
-
-    // Generate a Subnet ID known to be invalid - one more than the maximum
-    // Subnet ID in all the leases.
-    SubnetID invalid_subnetid = 0;
-    for (int i = 0; i < leases.size(); ++i) {
-        invalid_subnetid = max(invalid_subnetid, leases[i]->subnet_id_);
-    }
-    ++invalid_subnetid;
-
-
-    // Add just one to the database.
-    EXPECT_TRUE(lmptr_->addLease(leases[1]));
-
-    // Look for a known lease with a valid Subnet ID
-    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1], lease1_subnetid);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    // Look for a lease known to be in the database with an invalid Subnet ID
-    l_returned = lmptr_->getLease4(ioaddress4_[1], invalid_subnetid);
-    EXPECT_FALSE(l_returned);
-
-    // Look for a lease known not to be in the database with a valid Subnet ID
-    l_returned = lmptr_->getLease4(ioaddress4_[2], lease1_subnetid);
-    EXPECT_FALSE(l_returned);
-
-    // Look for a lease known not to be in the database with and invalid
-    l_returned = lmptr_->getLease4(ioaddress4_[2], invalid_subnetid);
-    EXPECT_FALSE(l_returned);
 }
 
 /// @brief Check GetLease4 methods - access by Hardware Address
@@ -896,7 +859,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSize) {
         Lease4Collection returned = lmptr_->getLease4(leases[1]->hwaddr_);
         ASSERT_EQ(1, returned.size());
         detailCompareLease(leases[1], *returned.begin());
-        (void) lmptr_->deleteLease4(leases[1]->addr_);
+        (void) lmptr_->deleteLease(leases[1]->addr_);
     }
 
     // Expect some problem when accessing a lease that had too long a hardware
@@ -954,7 +917,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
     // "multiple records" exception. (We expect there to be only one record
     // with that combination, so getting them via getLeaseX() (as opposed
     // to getLeaseXCollection() should throw an exception.)
-    EXPECT_TRUE(lmptr_->deleteLease4(leases[2]->addr_));
+    EXPECT_TRUE(lmptr_->deleteLease(leases[2]->addr_));
     leases[1]->addr_ = leases[2]->addr_;
     EXPECT_TRUE(lmptr_->addLease(leases[1]));
     EXPECT_THROW(returned = lmptr_->getLease4(leases[1]->hwaddr_,
@@ -964,7 +927,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
     // Delete all leases in the database
     for (int i = 0; ADDRESS4[i] != NULL; ++i) {
         IOAddress addr(ADDRESS4[i]);
-        (void) lmptr_->deleteLease4(addr);
+        (void) lmptr_->deleteLease(addr);
     }
 }
 
@@ -986,7 +949,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetIdSize) {
                                                leases[1]->subnet_id_);
         ASSERT_TRUE(returned);
         detailCompareLease(leases[1], returned);
-        (void) lmptr_->deleteLease4(leases[1]->addr_);
+        (void) lmptr_->deleteLease(leases[1]->addr_);
     }
 
     // Expect some error when getting a lease with too long a hardware
@@ -1069,7 +1032,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSize) {
         Lease4Collection returned = lmptr_->getLease4(*leases[1]->client_id_);
         ASSERT_TRUE(returned.size() == 1);
         detailCompareLease(leases[1], *returned.begin());
-        (void) lmptr_->deleteLease4(leases[1]->addr_);
+        (void) lmptr_->deleteLease(leases[1]->addr_);
     }
 
     // Don't bother to check client IDs longer than the maximum -
@@ -1179,7 +1142,7 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSize) {
                                                       leases[1]->iaid_);
         EXPECT_EQ(1, returned.size());
         detailCompareLease(leases[1], *returned.begin());
-        (void) lmptr_->deleteLease6(leases[1]->addr_);
+        (void) lmptr_->deleteLease(leases[1]->addr_);
     }
 
     // Don't bother to check DUIDs longer than the maximum - these cannot be
@@ -1245,7 +1208,7 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
                                                leases[1]->subnet_id_);
         ASSERT_TRUE(returned);
         detailCompareLease(leases[1], returned);
-        (void) lmptr_->deleteLease6(leases[1]->addr_);
+        (void) lmptr_->deleteLease(leases[1]->addr_);
     }
 
     // Don't bother to check DUIDs longer than the maximum - these cannot be
@@ -1293,7 +1256,7 @@ TEST_F(MySqlLeaseMgrTest, updateLease4) {
     detailCompareLease(leases[1], l_returned);
 
     // Try updating a lease not in the database.
-    lmptr_->deleteLease4(ioaddress4_[2]);
+    lmptr_->deleteLease(ioaddress4_[2]);
     EXPECT_THROW(lmptr_->updateLease4(leases[2]), isc::dhcp::NoSuchLease);
 }
 

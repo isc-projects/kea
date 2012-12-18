@@ -26,8 +26,8 @@ namespace dhcp {
 
 /// @brief returns a first address in a given prefix
 ///
-/// Example: For 2001:db8:1::deaf:beef and length /120 the function will return
-/// 2001:db8:1::dead:be00. See also @ref lastAddrInPrefix.
+/// Example: For 2001:db8:1\::deaf:beef and length /120 the function will return
+/// 2001:db8:1\::dead:be00. See also @ref lastAddrInPrefix.
 ///
 /// @todo It currently works for v6 only and will throw if v4 address is passed.
 ///
@@ -40,8 +40,8 @@ isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefi
 
 /// @brief returns a last address in a given prefix
 ///
-/// Example: For 2001:db8:1::deaf:beef and length /112 the function will return
-/// 2001:db8:1::dead:ffff. See also @ref firstAddrInPrefix.
+/// Example: For 2001:db8:1\::deaf:beef and length /112 the function will return
+/// 2001:db8:1\::dead:ffff. See also @ref firstAddrInPrefix.
 ///
 /// @todo It currently works for v6 only and will throw if v4 address is passed.
 ///

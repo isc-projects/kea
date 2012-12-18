@@ -149,6 +149,11 @@ MasterLexer::popSource() {
     impl_->has_previous_ = false;
 }
 
+size_t
+MasterLexer::getSourceCount() const {
+    return (impl_->sources_.size());
+}
+
 std::string
 MasterLexer::getSourceName() const {
     if (impl_->sources_.empty()) {

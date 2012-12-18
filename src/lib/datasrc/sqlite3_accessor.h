@@ -34,13 +34,11 @@ class RRClass;
 
 namespace datasrc {
 
-/**
- * \brief Low-level database error
- *
- * This exception is thrown when the SQLite library complains about something.
- * It might mean corrupt database file, invalid request or that something is
- * rotten in the library.
- */
+/// \brief Low-level database error
+///
+/// This exception is thrown when the SQLite library complains about something.
+/// It might mean corrupt database file, invalid request or that something is
+/// rotten in the library.
 class SQLite3Error : public DataSourceError {
 public:
     SQLite3Error(const char* file, size_t line, const char* what) :
@@ -53,24 +51,20 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-/**
- * \brief Too Much Data
- *
- * Thrown if a query expecting a certain number of rows back returned too
- * many rows.
- */
+/// \brief Too Much Data
+///
+/// Thrown if a query expecting a certain number of rows back returned too
+/// many rows.
 class TooMuchData : public DataSourceError {
 public:
     TooMuchData(const char* file, size_t line, const char* what) :
         DataSourceError(file, line, what) {}
 };
 
-/**
- * \brief Too Little Data
- *
- * Thrown if a query expecting a certain number of rows back returned too
- * few rows (including none).
- */
+/// \brief Too Little Data
+///
+/// Thrown if a query expecting a certain number of rows back returned too
+/// few rows (including none).
 class TooLittleData : public DataSourceError {
 public:
     TooLittleData(const char* file, size_t line, const char* what) :
@@ -79,70 +73,83 @@ public:
 
 struct SQLite3Parameters;
 
-/**
- * \brief Concrete implementation of DatabaseAccessor for SQLite3 databases
- *
- * This opens one database file with our schema and serves data from there.
- * According to the design, it doesn't interpret the data in any way, it just
- * provides unified access to the DB.
- */
+/// \brief Concrete implementation of DatabaseAccessor for SQLite3 databases
+///
+/// This opens one database file with our schema and serves data from there.
+/// According to the design, it doesn't interpret the data in any way, it just
+/// provides unified access to the DB.
 class SQLite3Accessor : public DatabaseAccessor,
     public boost::enable_shared_from_this<SQLite3Accessor> {
 public:
-    /**
-     * \brief Constructor
-     *
-     * This opens the database and becomes ready to serve data from there.
-     *
-     * \exception SQLite3Error will be thrown if the given database file
-     * doesn't work (it is broken, doesn't exist and can't be created, etc).
-     *
-     * \param filename The database file to be used.
-     * \param rrclass Textual representation of RR class ("IN", "CH", etc),
-     *     specifying which class of data it should serve (while the database
-     *     file can contain multiple classes of data, a single accessor can
-     *     work with only one class).
-     */
+    /// \brief Constructor
+    ///
+    /// This opens the database and becomes ready to serve data from there.
+    ///
+    /// \exception SQLite3Error will be thrown if the given database file
+    /// doesn't work (it is broken, doesn't exist and can't be created, etc).
+    ///
+    /// \param filename The database file to be used.
+    /// \param rrclass Textual representation of RR class ("IN", "CH", etc),
+    ///    specifying which class of data it should serve (while the database
+    ///    file can contain multiple classes of data, a single accessor can
+    ///    work with only one class).
     SQLite3Accessor(const std::string& filename, const std::string& rrclass);
 
-    /**
-     * \brief Destructor
-     *
-     * Closes the database.
-     */
-    ~SQLite3Accessor();
+    /// \brief Destructor
+    ///
+    /// Closes the database.
+    virtual ~SQLite3Accessor();
 
     /// This implementation internally opens a new sqlite3 database for the
     /// same file name specified in the constructor of the original accessor.
     virtual boost::shared_ptr<DatabaseAccessor> clone();
 
-    /**
-     * \brief Look up a zone
-     *
-     * This implements the getZone from DatabaseAccessor and looks up a zone
-     * in the data. It looks for a zone with the exact given origin and class
-     * passed to the constructor.
-     *
-     * \exception SQLite3Error if something about the database is broken.
-     *
-     * \param name The (fully qualified) domain name of zone to look up
-     * \return The pair contains if the lookup was successful in the first
-     *     element and the zone id in the second if it was.
-     */
+    /// \brief Look up a zone
+    ///
+    /// This implements the getZone from DatabaseAccessor and looks up a zone
+    /// in the data. It looks for a zone with the exact given origin and class
+    /// passed to the constructor.
+    ///
+    /// \exception SQLite3Error if something about the database is broken.
+    ///
+    /// \param name The (fully qualified) domain name of zone to look up
+    /// \return The pair contains if the lookup was successful in the first
+    ///    element and the zone id in the second if it was.
     virtual std::pair<bool, int> getZone(const std::string& name) const;
 
-    /** \brief Look up all resource records for a name
-     *
-     * This implements the getRecords() method from DatabaseAccessor
-     *
-     * \exception SQLite3Error if there is an sqlite3 error when performing
-     *                         the query
-     *
-     * \param name the name to look up
-     * \param id the zone id, as returned by getZone()
-     * \param subdomains Match subdomains instead of the name.
-     * \return Iterator that contains all records with the given name
-     */
+    /// \brief Add a zone
+    ///
+    /// This implements the addZone from DatabaseAccessor and adds a zone
+    /// into the zones table. If the zone exists already, it is still added,
+    /// so the caller should make sure this does not happen (by making
+    /// sure the zone does not exist). In the case of duplicate addition,
+    /// it is undefined which zone id is returned.
+    ///
+    /// The class of the newly created zone is the class passed at construction
+    /// time of the accessor.
+    ///
+    /// This method requires a transaction has been started (with
+    /// \c beginTransaction) by the caller.
+    ///
+    /// \exception DataSourceError if no transaction is active, or if there
+    ///                           is an SQLite3 error when performing the
+    ///                           queries.
+    ///
+    /// \param name The origin name of the zone to add
+    /// \return the id of the zone that has been added
+    virtual int addZone(const std::string& name);
+
+    /// \brief Look up all resource records for a name
+    ///
+    /// This implements the getRecords() method from DatabaseAccessor
+    ///
+    /// \exception SQLite3Error if there is an sqlite3 error when performing
+    ///                        the query
+    ///
+    /// \param name the name to look up
+    /// \param id the zone id, as returned by getZone()
+    /// \param subdomains Match subdomains instead of the name.
+    /// \return Iterator that contains all records with the given name
     virtual IteratorContextPtr getRecords(const std::string& name,
                                           int id,
                                           bool subdomains = false) const;
@@ -155,35 +162,33 @@ public:
     virtual IteratorContextPtr getNSEC3Records(const std::string& hash,
                                                int id) const;
 
-    /** \brief Look up all resource records for a zone
-     *
-     * This implements the getRecords() method from DatabaseAccessor
-     *
-     * \exception SQLite3Error if there is an sqlite3 error when performing
-     *                         the query
-     *
-     * \param id the zone id, as returned by getZone()
-     * \return Iterator that contains all records in the given zone
-     */
+    /// \brief Look up all resource records for a zone
+    ///
+    /// This implements the getRecords() method from DatabaseAccessor
+    ///
+    /// \exception SQLite3Error if there is an sqlite3 error when performing
+    ///                        the query
+    ///
+    /// \param id the zone id, as returned by getZone()
+    /// \return Iterator that contains all records in the given zone
     virtual IteratorContextPtr getAllRecords(int id) const;
 
-    /** \brief Creates an iterator context for a set of differences.
-     *
-     * Implements the getDiffs() method from DatabaseAccessor
-     *
-     * \exception NoSuchSerial if either of the versions do not exist in
-     *            the difference table.
-     * \exception SQLite3Error if there is an sqlite3 error when performing
-     *            the query
-     *
-     * \param id The ID of the zone, returned from getZone().
-     * \param start The SOA serial number of the version of the zone from
-     *        which the difference sequence should start.
-     * \param end The SOA serial number of the version of the zone at which
-     *        the difference sequence should end.
-     *
-     * \return Iterator containing difference records.
-     */
+    /// \brief Creates an iterator context for a set of differences.
+    ///
+    /// Implements the getDiffs() method from DatabaseAccessor
+    ///
+    /// \exception NoSuchSerial if either of the versions do not exist in
+    ///           the difference table.
+    /// \exception SQLite3Error if there is an sqlite3 error when performing
+    ///           the query
+    ///
+    /// \param id The ID of the zone, returned from getZone().
+    /// \param start The SOA serial number of the version of the zone from
+    ///       which the difference sequence should start.
+    /// \param end The SOA serial number of the version of the zone at which
+    ///       the difference sequence should end.
+    ///
+    /// \return Iterator containing difference records.
     virtual IteratorContextPtr
     getDiffs(int id, uint32_t start, uint32_t end) const;
 

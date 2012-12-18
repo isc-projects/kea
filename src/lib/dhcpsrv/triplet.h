@@ -37,7 +37,7 @@ public:
     ///
     /// Typically: uint32_t to Triplet assignment. It is very convenient
     /// to be able to simply write Triplet<uint32_t> x = 7;
-    Triplet<T> operator=(T other) {
+    Triplet<T>& operator=(T other) {
         min_ = other;
         default_ = other;
         max_ = other;
