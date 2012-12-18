@@ -208,6 +208,22 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
         }
     }
 
+    // Hint is in the pool but is not available. Search the pool until first of
+    // the following occurs:
+    // - we find a free address
+    // - we find an address for which the lease has expired
+    // - we exhaust number of tries
+    //
+    // @todo: Current code does not handle pool exhaustion well. It will be
+    // improved. Current problems:
+    // 1. with attempts set to too large value (e.g. 1000) and a small pool (e.g.
+    // 10 addresses), we will iterate over it 100 times before giving up
+    // 2. attempts 0 mean unlimited (this is really UINT_MAX, not infinite)
+    // 3. the whole concept of infinite attempts is just asking for infinite loop
+    // We may consider some form or reference counting (this pool has X addresses
+    // left), but this has one major problem. We exactly control allocation
+    // moment, but we currently do not control expiration time at all
+
     unsigned int i = attempts_;
     do {
         IOAddress candidate = allocator_->pickAddress(subnet, duid, hint);
@@ -216,9 +232,9 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
         /// implemented
 
         Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(candidate);
-        // there's no existing lease for selected candidate, so it is
-        // free. Let's allocate it.
         if (!existing) {
+            // there's no existing lease for selected candidate, so it is
+            // free. Let's allocate it.
             Lease6Ptr lease = createLease(subnet, duid, iaid, candidate,
                                           fake_allocation);
             if (lease) {
@@ -274,7 +290,7 @@ Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
     if (!fake_allocation) {
         // for REQUEST we do update the lease
         LeaseMgrFactory::instance().updateLease6(expired);
-    } 
+    }
 
     // We do nothing for SOLICIT. We'll just update database when
     // the client gets back to us with REQUEST message.
