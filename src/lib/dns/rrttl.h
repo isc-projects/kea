@@ -267,6 +267,17 @@ public:
     { return (ttlval_ > other.ttlval_); }
     //@}
 
+    ///
+    /// \name Protocol constants
+    ///
+    //@{
+    /// \brief Max allowable value for TTLs, as defined in RFC2181, Sec. 8.
+    ///
+    /// \note At the moment an RRTTL object can have a value larger than
+    /// this limit.  We may revisit it in a future version.
+    static const uint32_t MAX_TTL = 0x7fffffff;
+    //@}
+
 private:
     uint32_t ttlval_;
 };
