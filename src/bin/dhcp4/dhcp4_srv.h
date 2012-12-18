@@ -36,7 +36,7 @@ namespace dhcp {
 /// appropriate responses.
 ///
 /// This class does not support any controlling mechanisms directly.
-/// See derived \ref ControlledDhcv4Srv class for support for
+/// See the derived \ref ControlledDhcpv4Srv class for support for
 /// command and configuration updates over msgq.
 ///
 /// For detailed explanation or relations between main(), ControlledDhcpv4Srv,

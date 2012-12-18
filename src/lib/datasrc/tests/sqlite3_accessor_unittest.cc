@@ -667,6 +667,64 @@ TEST_F(SQLite3Create, creationtest) {
     ASSERT_TRUE(isReadable(SQLITE_NEW_DBFILE));
 }
 
+// Test addZone works. This is done on the 'createtest' fixture so we
+// can easily be sure it does not exist yet.
+TEST_F(SQLite3Create, addZone) {
+    // Need shared_ptr for the getAllRecords at the end of the test
+    boost::shared_ptr<SQLite3Accessor> accessor(
+        new SQLite3Accessor(SQLITE_NEW_DBFILE, "IN"));
+
+    const std::string zone_name("example.com");
+    EXPECT_FALSE(accessor->getZone(zone_name).first);
+
+    // Calling addZone without transaction should fail
+    EXPECT_THROW(accessor->addZone(zone_name), DataSourceError);
+
+    // Add the zone. Returns the new zone id
+    accessor->startTransaction();
+    const int new_zone_id = accessor->addZone(zone_name);
+    accessor->commit();
+
+    // Check that it exists now, but has no records at this point
+    const std::pair<bool, int> zone_info(accessor->getZone(zone_name));
+    ASSERT_TRUE(zone_info.first);
+    EXPECT_EQ(new_zone_id, zone_info.second);
+
+    DatabaseAccessor::IteratorContextPtr context =
+        accessor->getAllRecords(zone_info.second);
+    string data[DatabaseAccessor::COLUMN_COUNT];
+    EXPECT_NE(DatabaseAccessor::IteratorContextPtr(), context);
+    EXPECT_FALSE(context->getNext(data));
+}
+
+// Test addZone does not get confused with different classes
+TEST_F(SQLite3Create, addZoneDifferentClass) {
+    const std::string zone_name("example.com.");
+
+    // Add IN zone
+    boost::shared_ptr<SQLite3Accessor> accessor(
+        new SQLite3Accessor(SQLITE_NEW_DBFILE, "IN"));
+    accessor->startTransaction();
+    const int new_zone_id_IN = accessor->addZone(zone_name);
+    accessor->commit();
+
+    // Add CH zone
+    accessor.reset(new SQLite3Accessor(SQLITE_NEW_DBFILE, "CH"));
+    accessor->startTransaction();
+    const int new_zone_id_CH = accessor->addZone(zone_name);
+    accessor->commit();
+
+    // id's should differ
+    ASSERT_NE(new_zone_id_IN, new_zone_id_CH);
+
+    // Reopen the database for both classes, and make sure
+    // we get the right zone id on searches
+    accessor.reset(new SQLite3Accessor(SQLITE_NEW_DBFILE, "IN"));
+    EXPECT_EQ(new_zone_id_IN, accessor->getZone(zone_name).second);
+    accessor.reset(new SQLite3Accessor(SQLITE_NEW_DBFILE, "CH"));
+    EXPECT_EQ(new_zone_id_CH, accessor->getZone(zone_name).second);
+}
+
 TEST_F(SQLite3Create, emptytest) {
     ASSERT_FALSE(isReadable(SQLITE_NEW_DBFILE));
 
@@ -1538,4 +1596,23 @@ TEST_F(SQLite3Update, addDiffWithUpdate) {
 
     checkDiffs(expected_stored, accessor->getDiffs(zone_id, 1234, 1300));
 }
+
+TEST_F(SQLite3Update, addZoneWhileLocked) {
+    const std::string existing_zone = "example.com.";
+    const std::string new_zone = "example2.com.";
+
+    // Start 'replacing' an existing zone, it should lock the db
+    zone_id = accessor->startUpdateZone(existing_zone, true).second;
+
+    // addZone should throw an exception that it is locked
+    another_accessor->startTransaction();
+    EXPECT_THROW(another_accessor->addZone(new_zone), DataSourceError);
+    // Commit should do nothing, but not fail
+    another_accessor->commit();
+
+    accessor->rollback();
+    // New zone should not exist
+    EXPECT_FALSE(accessor->getZone(new_zone).first);
+}
+
 } // end anonymous namespace

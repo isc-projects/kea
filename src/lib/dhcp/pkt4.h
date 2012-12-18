@@ -89,7 +89,7 @@ public:
     /// reasonable value. This method is expected to grow significantly.
     /// It makes sense to separate unpack() and check() for testing purposes.
     ///
-    /// TODO: It is called from unpack() directly. It should be separated.
+    /// @todo It is called from unpack() directly. It should be separated.
     ///
     /// Method will throw exception if anomaly is found.
     void check();
@@ -262,16 +262,16 @@ public:
     /// @brief Sets hardware address.
     ///
     /// Sets parameters of hardware address. hlen specifies
-    /// length of macAddr buffer. Content of macAddr buffer
+    /// length of mac_addr buffer. Content of mac_addr buffer
     /// will be copied to appropriate field.
     ///
-    /// Note: macAddr must be a buffer of at least hlen bytes.
+    /// Note: mac_addr must be a buffer of at least hlen bytes.
     ///
     /// @param hType hardware type (will be sent in htype field)
     /// @param hlen hardware length (will be sent in hlen field)
-    /// @param macAddr pointer to hardware address
+    /// @param mac_addr pointer to hardware address
     void setHWAddr(uint8_t hType, uint8_t hlen,
-                   const std::vector<uint8_t>& macAddr);
+                   const std::vector<uint8_t>& mac_addr);
 
     /// Returns htype field
     ///
@@ -367,7 +367,7 @@ public:
     /// @brief Returns remote address
     ///
     /// @return remote address
-    const isc::asiolink::IOAddress& getRemoteAddr() {
+    const isc::asiolink::IOAddress& getRemoteAddr() const {
         return (remote_addr_);
     }
 
@@ -381,7 +381,7 @@ public:
     /// @brief Returns local address.
     ///
     /// @return local address
-    const isc::asiolink::IOAddress& getLocalAddr() {
+    const isc::asiolink::IOAddress& getLocalAddr() const {
         return (local_addr_);
     }
 
@@ -393,7 +393,7 @@ public:
     /// @brief Returns local port.
     ///
     /// @return local port
-    uint16_t getLocalPort() { return (local_port_); }
+    uint16_t getLocalPort() const { return (local_port_); }
 
     /// @brief Sets remote port.
     ///
@@ -403,7 +403,7 @@ public:
     /// @brief Returns remote port.
     ///
     /// @return remote port
-    uint16_t getRemotePort() { return (remote_port_); }
+    uint16_t getRemotePort() const { return (remote_port_); }
 
     /// @brief Update packet timestamp.
     ///
@@ -519,13 +519,13 @@ protected:
     std::vector<uint8_t> data_;
 
     /// message type (e.g. 1=DHCPDISCOVER)
-    /// TODO: this will eventually be replaced with DHCP Message Type
+    /// @todo this will eventually be replaced with DHCP Message Type
     /// option (option 53)
     uint8_t msg_type_;
 
     /// collection of options present in this message
     ///
-    /// @warnig This protected member is accessed by derived
+    /// @warning This protected member is accessed by derived
     /// classes directly. One of such derived classes is
     /// @ref perfdhcp::PerfPkt4. The impact on derived clasess'
     /// behavior must be taken into consideration before making

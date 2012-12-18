@@ -94,19 +94,6 @@ public:
     ///        failed.
     virtual bool addLease(const Lease6Ptr& lease);
 
-    /// @brief Return IPv4 lease for specified IPv4 address and subnet_id
-    ///
-    /// This method is used to get a lease for specific subnet_id. There can be
-    /// at most one lease for any given subnet, so this method returns a single
-    /// pointer.
-    ///
-    /// @param addr address of the sought lease
-    /// @param subnet_id ID of the subnet the lease must belong to
-    ///
-    /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr,
-                                SubnetID subnet_id) const;
-
     /// @brief Returns an IPv4 lease for specified IPv4 address
     ///
     /// This method return a lease that is associated with a given address.
@@ -286,33 +273,16 @@ public:
     ///        failed.
     virtual void updateLease6(const Lease6Ptr& lease6);
 
-    /// @brief Deletes an IPv4 lease.
+    /// @brief Deletes a lease.
     ///
-    /// @todo Merge with deleteLease6: it is possible to determine whether
-    ///       an address is V4 or V6 from the IOAddress argument, so there
-    ///       is no need for separate V4 or V6 methods.
-    ///
-    /// @param addr IPv4 address of the lease to be deleted.
+    /// @param addr Address of the lease to be deleted.  This can be an IPv4
+    ///             address or an IPv6 address.
     ///
     /// @return true if deletion was successful, false if no such lease exists
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual bool deleteLease4(const isc::asiolink::IOAddress& addr);
-
-    /// @brief Deletes an IPv6 lease.
-    ///
-    /// @todo Merge with deleteLease4: it is possible to determine whether
-    ///       an address is V4 or V6 from the IOAddress argument, so there
-    ///       is no need for separate V4 or V6 methods.
-    ///
-    /// @param addr IPv6 address of the lease to be deleted.
-    ///
-    /// @return true if deletion was successful, false if no such lease exists
-    ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    virtual bool deleteLease6(const isc::asiolink::IOAddress& addr);
+    virtual bool deleteLease(const isc::asiolink::IOAddress& addr);
 
     /// @brief Return backend type
     ///
@@ -613,7 +583,7 @@ private:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    bool deleteLease(StatementIndex stindex, MYSQL_BIND* bind);
+    bool deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind);
 
     /// @brief Check Error and Throw Exception
     ///

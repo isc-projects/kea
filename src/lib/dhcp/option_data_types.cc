@@ -146,27 +146,8 @@ OptionDataTypeUtil::readAddress(const std::vector<uint8_t>& buf,
 void
 OptionDataTypeUtil::writeAddress(const asiolink::IOAddress& address,
                                  std::vector<uint8_t>& buf) {
-    // @todo There is a ticket 2396 submitted, which adds the
-    // functionality to return a buffer representation of
-    // IOAddress. If so, this function can be simplified.
-    if (address.getAddress().is_v4()) {
-        asio::ip::address_v4::bytes_type addr_bytes =
-            address.getAddress().to_v4().to_bytes();
-        // Increase the buffer size by the size of IPv4 address.
-        buf.resize(buf.size() + addr_bytes.size());
-        std::copy_backward(addr_bytes.begin(), addr_bytes.end(),
-                           buf.end());
-    } else if (address.getAddress().is_v6()) {
-        asio::ip::address_v6::bytes_type addr_bytes =
-            address.getAddress().to_v6().to_bytes();
-        // Incresase the buffer size by the size of IPv6 address.
-        buf.resize(buf.size() + addr_bytes.size());
-        std::copy_backward(addr_bytes.begin(), addr_bytes.end(),
-                           buf.end());
-    } else {
-        isc_throw(BadDataTypeCast, "the address " << address.toText()
-                  << " is neither valid IPv4 not IPv6 address.");
-    }
+    const std::vector<uint8_t>& vec = address.toBytes();
+    buf.insert(buf.end(), vec.begin(), vec.end());
 }
 
 void

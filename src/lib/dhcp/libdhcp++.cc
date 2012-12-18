@@ -20,8 +20,8 @@
 #include <dhcp/option.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
-#include <dhcp/option6_int_array.h>
 #include <dhcp/option_definition.h>
+#include <dhcp/option_int_array.h>
 #include <dhcp/std_option_defs.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
@@ -49,10 +49,12 @@ const OptionDefContainer&
 LibDHCP::getOptionDefs(const Option::Universe u) {
     switch (u) {
     case Option::V4:
-        initStdOptionDefs4();
+        if (v4option_defs_.empty()) {
+            initStdOptionDefs4();
+        }
         return (v4option_defs_);
     case Option::V6:
-        if (v6option_defs_.size() == 0) {
+        if (v6option_defs_.empty()) {
             initStdOptionDefs6();
         }
         return (v6option_defs_);
@@ -100,31 +102,35 @@ LibDHCP::optionFactory(Option::Universe u,
 size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
                                isc::dhcp::Option::OptionCollection& options) {
     size_t offset = 0;
-    size_t end = buf.size();
+    size_t length = buf.size();
 
-    while (offset +4 <= end) {
-        uint16_t opt_type = buf[offset] * 256 + buf[offset + 1];
+    // Get the list of stdandard option definitions.
+    const OptionDefContainer& option_defs = LibDHCP::getOptionDefs(Option::V6);
+    // Get the search index #1. It allows to search for option definitions
+    // using option code.
+    const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
+
+    // The buffer being read comprises a set of options, each starting with
+    // a two-byte type code and a two-byte length field.
+    while (offset + 4 <= length) {
+        uint16_t opt_type = isc::util::readUint16(&buf[offset]);
         offset += 2;
-        uint16_t opt_len = buf[offset] * 256 + buf[offset + 1];
+        uint16_t opt_len = isc::util::readUint16(&buf[offset]);
         offset += 2;
 
-        if (offset + opt_len > end) {
+        if (offset + opt_len > length) {
             // @todo: consider throwing exception here.
             return (offset);
         }
 
-        // Get the list of stdandard option definitions.
-        OptionDefContainer option_defs = LibDHCP::getOptionDefs(Option::V6);
-        // Get the search index #1. It allows to search for option definitions
-        // using option code.
-        const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
-        // Get all options with the particular option code. Note that option code
-        // is non-unique within this container however at this point we expect
-        // to get one option definition with the particular code. If more are
-        // returned we report an error.
+        // Get all definitions with the particular option code. Note that option
+        // code is non-unique within this container however at this point we
+        // expect to get one option definition with the particular code. If more
+        // are returned we report an error.
         const OptionDefContainerTypeRange& range = idx.equal_range(opt_type);
         // Get the number of returned option definitions for the option code.
         size_t num_defs = distance(range.first, range.second);
+
         OptionPtr opt;
         if (num_defs > 1) {
             // Multiple options of the same code are not supported right now!
@@ -162,7 +168,14 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
                                  isc::dhcp::Option::OptionCollection& options) {
     size_t offset = 0;
 
-    // 2 byte - header of DHCPv4 option
+    // Get the list of stdandard option definitions.
+    const OptionDefContainer& option_defs = LibDHCP::getOptionDefs(Option::V4);
+    // Get the search index #1. It allows to search for option definitions
+    // using option code.
+    const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
+
+    // The buffer being read comprises a set of options, each starting with
+    // a one-byte type code and a one-byte length field.
     while (offset + 1 <= buf.size()) {
         uint8_t opt_type = buf[offset++];
 
@@ -176,8 +189,10 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
             continue;
 
         if (offset + 1 >= buf.size()) {
+            // opt_type must be cast to integer so as it is not treated as
+            // unsigned char value (a number is presented in error message).
             isc_throw(OutOfRange, "Attempt to parse truncated option "
-                      << opt_type);
+                      << static_cast<int>(opt_type));
         }
 
         uint8_t opt_len =  buf[offset++];
@@ -187,12 +202,35 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
                       << "-byte long buffer.");
         }
 
+        // Get all definitions with the particular option code. Note that option code
+        // is non-unique within this container however at this point we expect
+        // to get one option definition with the particular code. If more are
+        // returned we report an error.
+        const OptionDefContainerTypeRange& range = idx.equal_range(opt_type);
+        // Get the number of returned option definitions for the option code.
+        size_t num_defs = distance(range.first, range.second);
+
         OptionPtr opt;
-        switch(opt_type) {
-        default:
+        if (num_defs > 1) {
+            // Multiple options of the same code are not supported right now!
+            isc_throw(isc::Unexpected, "Internal error: multiple option definitions"
+                      " for option type " << static_cast<int>(opt_type)
+                      << " returned. Currently it is not supported to initialize"
+                      << " multiple option definitions for the same option code."
+                      << " This will be supported once support for option spaces"
+                      << " is implemented");
+        } else if (num_defs == 0) {
             opt = OptionPtr(new Option(Option::V4, opt_type,
-                                       buf.begin()+offset,
-                                       buf.begin()+offset+opt_len));
+                                       buf.begin() + offset,
+                                       buf.begin() + offset + opt_len));
+        } else {
+            // The option definition has been found. Use it to create
+            // the option instance from the provided buffer chunk.
+            const OptionDefinitionPtr& def = *(range.first);
+            assert(def);
+            opt = def->optionFactory(Option::V4, opt_type,
+                                     buf.begin() + offset,
+                                     buf.begin() + offset + opt_len);
         }
 
         options.insert(std::make_pair(opt_type, opt));
@@ -259,7 +297,32 @@ void LibDHCP::OptionFactoryRegister(Option::Universe u,
 
 void
 LibDHCP::initStdOptionDefs4() {
-    isc_throw(isc::NotImplemented, "initStdOptionDefs4 is not implemented");
+    v4option_defs_.clear();
+
+    // Now let's add all option definitions.
+    for (int i = 0; i < OPTION_DEF_PARAMS_SIZE4; ++i) {
+        OptionDefinitionPtr definition(new OptionDefinition(OPTION_DEF_PARAMS4[i].name,
+                                                            OPTION_DEF_PARAMS4[i].code,
+                                                            OPTION_DEF_PARAMS4[i].type,
+                                                            OPTION_DEF_PARAMS4[i].array));
+
+        for (int rec = 0; rec < OPTION_DEF_PARAMS4[i].records_size; ++rec) {
+            definition->addRecordField(OPTION_DEF_PARAMS4[i].records[rec]);
+        }
+
+        // Sanity check if the option is valid.
+        try {
+            definition->validate();
+        } catch (const Exception& ex) {
+            // This is unlikely event that validation fails and may
+            // be only caused by programming error. To guarantee the
+            // data consistency we clear all option definitions that
+            // have been added so far and pass the exception forward.
+            v4option_defs_.clear();
+            throw;
+        }
+        v4option_defs_.push_back(definition);
+    }
 }
 
 void

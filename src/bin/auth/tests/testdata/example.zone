@@ -55,11 +55,11 @@ t.example.com. 3600 IN NSEC b.*.t.example.com. A NSEC RRSIG
 ;; (.no.example.com. (qname, NXDOMAIN)
 ;; ).no.example.com. (exist)
 ;; *.no.example.com. (best possible wildcard, not exist)
-).no.example.com. 3600 IN AAAA 2001:db8::53
+\).no.example.com. 3600 IN AAAA 2001:db8::53
 ;; NSEC records.
 example.com. 3600 IN NSEC cname.example.com. NS SOA NSEC RRSIG
-mx.example.com. 3600 IN NSEC ).no.example.com. MX NSEC RRSIG
-).no.example.com. 3600 IN NSEC nz.no.example.com. AAAA NSEC RRSIG
+mx.example.com. 3600 IN NSEC \).no.example.com. MX NSEC RRSIG
+\).no.example.com. 3600 IN NSEC nz.no.example.com. AAAA NSEC RRSIG
 ;; We'll also test the case where a single NSEC proves both NXDOMAIN and the
 ;; non existence of wildcard.  The following records will be used for that
 ;; test.

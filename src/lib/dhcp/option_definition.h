@@ -48,25 +48,25 @@ class OptionDefinition;
 /// @brief Pointer to option definition object.
 typedef boost::shared_ptr<OptionDefinition> OptionDefinitionPtr;
 
-/// @brief Forward declaration to Option6Int.
+/// @brief Forward declaration to OptionInt.
 ///
-/// This forward declaration is needed to access Option6Int class
-/// without having to include option6_int.h header. This is because
-/// this header includes libdhcp++.h and this causes circular
-/// inclusion between libdhcp++.h, option_definition.h and
+/// This forward declaration is needed to access the OptionInt class without
+/// having to include the option_int.h header file. It is required because
+/// this header includes libdhcp++.h, and including option_int.h would cause
+/// circular inclusion between libdhcp++.h, option_definition.h and
 /// option6_int.h.
 template<typename T>
-class Option6Int;
+class OptionInt;
 
-/// @brief Forward declaration to Option6IntArray.
+/// @brief Forward declaration to OptionIntArray.
 ///
-/// This forward declaration is needed to access Option6IntArray class
-/// without having to include option6_int_array.h header. This is because
-/// this header includes libdhcp++.h and this causes circular
-/// inclusion between libdhcp++.h, option_definition.h and
-/// option6_int_array.h.
+/// This forward declaration is needed to access the OptionIntArray class
+/// without having to include the option_int_array.h header file. It is
+/// required because this header includes libdhcp++.h, and including
+/// option_int_array.h would cause circular inclusion between libdhcp++.h,
+/// option_definition.h and option_int_array.h.
 template<typename T>
-class Option6IntArray;
+class OptionIntArray;
 
 /// @brief Base class representing a DHCP option definition.
 ///
@@ -344,6 +344,7 @@ public:
 
     /// @brief Factory function to create option with integer value.
     ///
+    /// @param u universe (V4 or V6).
     /// @param type option type.
     /// @param begin iterator pointing to the beginning of the buffer.
     /// @param end iterator pointing to the end of the buffer.
@@ -351,15 +352,16 @@ public:
     ///
     /// @throw isc::OutOfRange if provided option buffer length is invalid.
     template<typename T>
-    static OptionPtr factoryInteger(Option::Universe, uint16_t type,
+    static OptionPtr factoryInteger(Option::Universe u, uint16_t type,
                                     OptionBufferConstIter begin,
                                     OptionBufferConstIter end) {
-        OptionPtr option(new Option6Int<T>(type, begin, end));
+        OptionPtr option(new OptionInt<T>(u, type, begin, end));
         return (option);
     }
 
     /// @brief Factory function to create option with array of integer values.
     ///
+    /// @param universe (V4 or V6).
     /// @param type option type.
     /// @param begin iterator pointing to the beginning of the buffer.
     /// @param end iterator pointing to the end of the buffer.
@@ -367,10 +369,11 @@ public:
     ///
     /// @throw isc::OutOfRange if provided option buffer length is invalid.
     template<typename T>
-    static OptionPtr factoryIntegerArray(uint16_t type,
+    static OptionPtr factoryIntegerArray(Option::Universe u,
+                                         uint16_t type,
                                          OptionBufferConstIter begin,
                                          OptionBufferConstIter end) {
-        OptionPtr option(new Option6IntArray<T>(type, begin, end));
+        OptionPtr option(new OptionIntArray<T>(u, type, begin, end));
         return (option);
     }
 

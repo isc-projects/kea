@@ -299,10 +299,16 @@ UDPServer::operator()(asio::error_code ec, size_t length) {
         // Begin an asynchronous send, and then yield.  When the
         // send completes, we will resume immediately after this point
         // (though we have nothing further to do, so the coroutine
-        // will simply exit at that time).
+        // will simply exit at that time, after reporting an error if
+        // there was one).
         CORO_YIELD data_->socket_->async_send_to(
             buffer(data_->respbuf_->getData(), data_->respbuf_->getLength()),
             *data_->sender_, *this);
+        if (ec) {
+            LOG_ERROR(logger, ASIODNS_UDP_ASYNC_SEND_FAIL).
+                      arg(data_->sender_->address().to_string()).
+                      arg(ec.message());
+        }
     }
 }
 

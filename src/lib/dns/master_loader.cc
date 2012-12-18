@@ -22,10 +22,10 @@
 #include <dns/rdata.h>
 
 #include <boost/scoped_ptr.hpp>
+#include <boost/algorithm/string/predicate.hpp> // for iequals
 
 #include <string>
 #include <memory>
-#include <boost/algorithm/string/predicate.hpp> // for iequals
 
 using std::string;
 using std::auto_ptr;
@@ -33,6 +33,8 @@ using boost::algorithm::iequals;
 
 namespace isc {
 namespace dns {
+
+namespace {
 
 // An internal exception, used to control the code flow in case of errors.
 // It is thrown during the loading and caught later, not to be propagated
@@ -44,6 +46,8 @@ public:
     {}
 };
 
+} // end unnamed namespace
+
 class MasterLoader::MasterLoaderImpl {
 public:
     MasterLoaderImpl(const char* master_file,
@@ -52,7 +56,6 @@ public:
                      const MasterLoaderCallbacks& callbacks,
                      const AddRRCallback& add_callback,
                      MasterLoader::Options options) :
-        MAX_TTL(0x7fffffff),
         lexer_(),
         zone_origin_(zone_origin),
         zone_class_(zone_class),
@@ -63,7 +66,6 @@ public:
         initialized_(false),
         ok_(true),
         many_errors_((options & MANY_ERRORS) != 0),
-        source_count_(0),
         complete_(false),
         seen_error_(false),
         warn_rfc1035_ttl_(true)
@@ -81,13 +83,11 @@ public:
             }
         }
         initialized_ = true;
-        ++source_count_;
     }
 
     void pushStreamSource(std::istream& stream) {
         lexer_.pushSource(stream);
         initialized_ = true;
-        ++source_count_;
     }
 
     bool loadIncremental(size_t count_limit);
@@ -108,7 +108,7 @@ private:
     }
 
     bool popSource() {
-        if (--source_count_ == 0) {
+        if (lexer_.getSourceCount() == 1) {
             return (false);
         }
         lexer_.popSource();
@@ -195,18 +195,20 @@ private:
 
     // Upper limit check when recognizing a specific TTL value from the
     // zone file ($TTL, the RR's TTL field, or the SOA minimum).  RFC2181
-    // Section 8 limits the range of TTL values to unsigned 32-bit integers,
+    // Section 8 limits the range of TTL values to 2^31-1 (0x7fffffff),
     // and prohibits transmitting a TTL field exceeding this range.  We
     // guarantee that by limiting the value at the time of zone
     // parsing/loading, following what BIND 9 does.  Resetting it to 0
-    // at this point may not be exactly what the RFC states, but the end
-    // result would be the same.  Again, we follow the BIND 9's behavior here.
+    // at this point may not be exactly what the RFC states (depending on
+    // the meaning of 'received'), but the end result would be the same (i.e.,
+    // the guarantee on transmission).  Again, we follow the BIND 9's behavior
+    // here.
     //
     // post_parsing is true iff this method is called after parsing the entire
     // RR and the lexer is positioned at the next line.  It's just for
     // calculating the accurate source line when callback is necessary.
     void limitTTL(RRTTL& ttl, bool post_parsing) {
-        if (ttl > MAX_TTL) {
+        if (ttl > RRTTL::MAX()) {
             const size_t src_line = lexer_.getSourceLine() -
                 (post_parsing ? 1 : 0);
             callbacks_.warning(lexer_.getSourceName(), src_line,
@@ -216,8 +218,10 @@ private:
         }
     }
 
-    // Set/reset the default TTL.  Either from $TTL or SOA minimum TTL.
-    // see LimitTTL() for parameter post_parsing.
+    // Set/reset the default TTL.  This should be from either $TTL or SOA
+    // minimum TTL (it's the caller's responsibility; this method doesn't
+    // care about where it comes from).  see LimitTTL() for parameter
+    // post_parsing.
     void setDefaultTTL(const RRTTL& ttl, bool post_parsing) {
         if (!default_ttl_) {
             default_ttl_.reset(new RRTTL(ttl));
@@ -225,16 +229,6 @@ private:
             *default_ttl_ = ttl;
         }
         limitTTL(*default_ttl_, post_parsing);
-    }
-
-    // Set/reset the TTL currently being used.  This can be used as the
-    // last resort TTL when no other TTL is known for an RR.
-    void setCurrentTTL(const RRTTL& ttl) {
-        if (!current_ttl_) {
-            current_ttl_.reset(new RRTTL(ttl));
-        } else {
-            *current_ttl_ = ttl;
-        }
     }
 
     // Try to set/reset the current TTL from candidate TTL text.  It's possible
@@ -245,11 +239,9 @@ private:
         // We use the factory version instead of RRTTL constructor as we
         // need to expect cases where ttl_txt does not actually represent a TTL
         // but an RR class or type.
-        RRTTL* ttl = RRTTL::createFromText(ttl_txt, current_ttl_.get());
-        if (ttl != NULL) {
-            if (!current_ttl_) {
-                current_ttl_.reset(ttl);
-            }
+        const MaybeRRTTL maybe_ttl = RRTTL::createFromText(ttl_txt);
+        if (maybe_ttl) {
+            current_ttl_ = maybe_ttl;
             limitTTL(*current_ttl_, false);
             return (true);
         }
@@ -280,7 +272,7 @@ private:
                     dynamic_cast<const rdata::generic::SOA&>(*rdata).
                     getMinimum();
                 setDefaultTTL(RRTTL(ttl_val), true);
-                setCurrentTTL(*default_ttl_);
+                current_ttl_ = *default_ttl_;
             } else {
                 // On catching the exception we'll try to reach EOL again,
                 // so we need to unget it now.
@@ -289,12 +281,13 @@ private:
                                         "no TTL specified; load rejected");
             }
         } else if (!explicit_ttl && default_ttl_) {
-            setCurrentTTL(*default_ttl_);
+            current_ttl_ = *default_ttl_;
         } else if (!explicit_ttl && warn_rfc1035_ttl_) {
             // Omitted (class and) TTL values are default to the last
             // explicitly stated values (RFC 1035, Sec. 5.1).
             callbacks_.warning(lexer_.getSourceName(), current_line,
-                               "using RFC1035 TTL semantics");
+                               "using RFC1035 TTL semantics; default to the "
+                               "last explicitly stated TTL");
             warn_rfc1035_ttl_ = false; // we only warn about this once
         }
         assert(current_ttl_);
@@ -325,7 +318,7 @@ private:
                 case MasterToken::END_OF_FILE:
                     callbacks_.warning(lexer_.getSourceName(),
                                        lexer_.getSourceLine(),
-                                       "Unexpected end end of file");
+                                       "Unexpected end of file");
                     // We don't pop here. The End of file will stay there,
                     // and we'll handle it in the next iteration of
                     // loadIncremental properly.
@@ -347,11 +340,6 @@ private:
     }
 
 private:
-    // RFC2181 Section 8 specifies TTLs are unsigned 32-bit integer,
-    // effectively limiting the maximum value to 2^32-1.  This constant
-    // represent a TTL of the max value.
-    const RRTTL MAX_TTL;
-
     MasterLexer lexer_;
     const Name zone_origin_;
     const RRClass zone_class_;
@@ -360,9 +348,8 @@ private:
     boost::scoped_ptr<RRTTL> default_ttl_; // Default TTL of RRs used when
                                            // unspecified.  If NULL no default
                                            // is known.
-    boost::scoped_ptr<RRTTL> current_ttl_; // The TTL used most recently.
-                                           // Initially set to NULL.  Once set
-                                           // always non NULL.
+    MaybeRRTTL current_ttl_; // The TTL used most recently.  Initially unset.
+                             // Once set always stores a valid RRTTL.
     const MasterLoader::Options options_;
     const std::string master_file_;
     std::string string_token_;
@@ -370,7 +357,6 @@ private:
     bool ok_;                   // Is it OK to continue loading?
     const bool many_errors_;    // Are many errors allowed (or should we abort
                                 // on the first)
-    size_t source_count_;       // How many sources are currently pushed.
 public:
     bool complete_;             // All work done.
     bool seen_error_;           // Was there at least one error during the

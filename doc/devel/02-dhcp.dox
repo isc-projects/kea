@@ -19,7 +19,7 @@
  *
  * @section dhcpv4Session BIND10 message queue integration
  *
- * DHCPv4 server component is now integrated with BIND10 message queue.
+ * DHCPv4 server component is now integrated with the BIND10 message queue.
  * The integration is performed by establishSession() and disconnectSession()
  * functions in isc::dhcp::ControlledDhcpv4Srv class. main() method deifined
  * in the src/bin/dhcp4/main.cc file instantiates isc::dhcp::ControlledDhcpv4Srv

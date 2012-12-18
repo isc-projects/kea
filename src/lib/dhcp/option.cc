@@ -100,6 +100,40 @@ void Option::pack(isc::util::OutputBuffer& buf) {
 void
 Option::pack4(isc::util::OutputBuffer& buf) {
     if (universe_ == V4) {
+        // Write a header.
+        packHeader(buf);
+        // Write data.
+        if (!data_.empty()) {
+            buf.writeData(&data_[0], data_.size());
+        }
+        // Write sub-options.
+        packOptions(buf);
+    } else {
+        isc_throw(BadValue, "Invalid universe type " << universe_);
+    }
+
+    return;
+}
+
+void Option::pack6(isc::util::OutputBuffer& buf) {
+    if (universe_ == V6) {
+        // Write a header.
+        packHeader(buf);
+        // Write data.
+        if (!data_.empty()) {
+            buf.writeData(&data_[0], data_.size());
+        }
+        // Write sub-options.
+        packOptions(buf);
+    } else {
+        isc_throw(BadValue, "Invalid universe type " << universe_);
+    }
+    return;
+}
+
+void
+Option::packHeader(isc::util::OutputBuffer& buf) {
+    if (universe_ == V4) {
         if (len() > 255) {
             isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big. "
                       << "At most 255 bytes are supported.");
@@ -110,32 +144,11 @@ Option::pack4(isc::util::OutputBuffer& buf) {
 
         buf.writeUint8(type_);
         buf.writeUint8(len() - getHeaderLen());
-        if (!data_.empty()) {
-            buf.writeData(&data_[0], data_.size());
-        }
-
-        packOptions(buf);
 
     } else {
-        isc_throw(BadValue, "Invalid universe type " << universe_);
-    }
-
-    return;
-}
-
-void Option::pack6(isc::util::OutputBuffer& buf) {
-    if (universe_ == V6) {
         buf.writeUint16(type_);
         buf.writeUint16(len() - getHeaderLen());
-        if (!data_.empty()) {
-            buf.writeData(&data_[0], data_.size());
-        }
-
-        packOptions(buf);
-    } else {
-        isc_throw(BadValue, "Invalid universe type " << universe_);
     }
-    return;
 }
 
 void
@@ -314,6 +327,10 @@ void Option::setData(const OptionBufferConstIter first,
     std::copy(first, last, data_.begin());
 }
 
+bool Option::equal(const OptionPtr& other) const {
+    return ( (getType() == other->getType()) &&
+             (getData() == other->getData()) );
+}
 
 Option::~Option() {
 

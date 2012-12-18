@@ -172,7 +172,7 @@ public:
                     // Use option type as the index key. The type is held
                     // in OptionPtr object so we have to call Option::getType
                     // to retrieve this key for each element.
-                    boost::multi_index::mem_fun<
+                    boost::multi_index::const_mem_fun<
                         Option,
                         uint16_t,
                         &Option::getType

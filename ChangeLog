@@ -1,3 +1,42 @@
+528.	[func]		marcin
+	Implemented definitions for DHCPv4 option definitions identified
+	by option codes: 1 to 63, 77, 81-82, 90-92, 118-119, 124-125.
+	These definitions are now used by the DHCPv4 server to parse
+	options received from a client.
+	(Trac #2526, git 50a73567e8067fdbe4405b7ece5b08948ef87f98)
+
+527.	[bug]		jelte
+	Fixed a bug in the synchronous UDP server code where unexpected
+	errors from ASIO or the system libraries could cause b10-auth to
+	stop. In asynchronous mode these errors would be ignored
+	completely. Both types have been updated to report the problem with
+	an ERROR log message, drop the packet, and continue service.
+	(Trac #2494, git db92f30af10e6688a7dc117b254cb821e54a6d95)
+
+526.	[bug]		stephen
+	Miscellaneous fixes to DHCP code including rationalisation of
+	some methods in LeaseMgr and resolving some Doxygen/cppcheck
+	issues.
+	(Trac #2546, git 0140368ed066c722e5d11d7f9cf1c01462cf7e13)
+
+525.	[func]		tomek
+	b10-dhcp4: DHCPv4 server is now able to parse configuration. It
+	is possible to specify IPv4 subnets with dynamic pools within
+	them. Although configuration is accepted, it is not used yet. This
+	will be implemented shortly.
+	(Trac #2270, git de29c07129d41c96ee0d5eebdd30a1ea7fb9ac8a)
+
+524.	[func]		tomek
+	b10-dhcp6 is now able to handle RENEW messages. Leases are
+	renewed and REPLY responses are sent back to clients.
+	(Trac #2325, git 7f6c9d057cc0a7a10f41ce7da9c8565b9ee85246)
+
+523.	[bug]		muks
+	Fixed a problem in inmem NSEC3 lookup (for, instance when using a
+	zone with no non-apex names) which caused exceptions when the zone
+	origin was not added as an explicit NSEC3 record.
+	(Trac #2503, git 6fe86386be0e7598633fe35999112c1a6e3b0370)
+
 522.	[func]*		jelte
 	Configuration of TSIG keys for b10-xfrin has changed; instead of
 	specifying the full TSIG key (<name>:<base64>:<algo>) it now expects

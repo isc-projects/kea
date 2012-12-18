@@ -60,8 +60,10 @@ TEST_F(MasterLexerTest, preOpen) {
 }
 
 TEST_F(MasterLexerTest, pushStream) {
+    EXPECT_EQ(0, lexer.getSourceCount());
     lexer.pushSource(ss);
     EXPECT_EQ(expected_stream_name, lexer.getSourceName());
+    EXPECT_EQ(1, lexer.getSourceCount());
 
     // From the point of view of this test, we only have to check (though
     // indirectly) getSourceLine calls InputSource::getCurrentLine.  It should
@@ -70,18 +72,22 @@ TEST_F(MasterLexerTest, pushStream) {
 
     // By popping it the stack will be empty again.
     lexer.popSource();
+    EXPECT_EQ(0, lexer.getSourceCount());
     checkEmptySource(lexer);
 }
 
 TEST_F(MasterLexerTest, pushFile) {
     // We use zone file (-like) data, but in this test that actually doesn't
     // matter.
+    EXPECT_EQ(0, lexer.getSourceCount());
     EXPECT_TRUE(lexer.pushSource(TEST_DATA_SRCDIR "/masterload.txt"));
+    EXPECT_EQ(1, lexer.getSourceCount());
     EXPECT_EQ(TEST_DATA_SRCDIR "/masterload.txt", lexer.getSourceName());
     EXPECT_EQ(1, lexer.getSourceLine());
 
     lexer.popSource();
     checkEmptySource(lexer);
+    EXPECT_EQ(0, lexer.getSourceCount());
 
     // If we give a non NULL string pointer, its content will be intact
     // if pushSource succeeds.

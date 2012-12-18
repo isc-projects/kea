@@ -38,16 +38,8 @@ public:
     /// @param [out] buf output buffer.
     void writeAddress(const asiolink::IOAddress& address,
                       std::vector<uint8_t>& buf) {
-        short family = address.getFamily();
-        if (family == AF_INET) {
-            asio::ip::address_v4::bytes_type buf_addr =
-                address.getAddress().to_v4().to_bytes();
-            buf.insert(buf.end(), buf_addr.begin(), buf_addr.end());
-        } else if (family == AF_INET6) {
-            asio::ip::address_v6::bytes_type buf_addr =
-                address.getAddress().to_v6().to_bytes();
-            buf.insert(buf.end(), buf_addr.begin(), buf_addr.end());
-        }
+        const std::vector<uint8_t>& vec = address.toBytes();
+        buf.insert(buf.end(), vec.begin(), vec.end());
     }
 
     /// @brief Write integer (signed or unsigned) into a buffer.
