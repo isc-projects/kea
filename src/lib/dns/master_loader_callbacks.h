@@ -122,6 +122,16 @@ public:
         warning_(source_name, source_line, reason);
     }
 
+    /// \brief Return a callbacks instance with null callbacks
+    ///
+    /// This is a convenience wrapper to generate a
+    /// \c MasterLoaderCallbacks object with both callbacks being nothing.
+    /// This will be useful for applications that only need to run
+    /// \c MasterLoader and get the end result.
+    ///
+    /// \throw None
+    static MasterLoaderCallbacks getNullCallbacks();
+
 private:
     IssueCallback error_, warning_;
 };

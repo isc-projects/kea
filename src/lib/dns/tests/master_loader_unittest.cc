@@ -330,6 +330,8 @@ struct ErrorCase {
     // Check the unknown directive. The rest looks like ordinary RR,
     // so we see the $ is actually special.
     { "$UNKNOWN 3600    IN  A   192.0.2.1", NULL, "Unknown $ directive" },
+    { "$INCLUD " TEST_DATA_SRCDIR "/example.org", NULL, "Include too short" },
+    { "$INCLUDES " TEST_DATA_SRCDIR "/example.org", NULL, "Include too long" },
     { "$INCLUDE", NULL, "Missing include path" },
     { "$INCLUDE /file/not/found", NULL, "Include file not found" },
     { "$INCLUDE /file/not/found and here goes bunch of garbage", NULL,
@@ -596,7 +598,7 @@ TEST_F(MasterLoaderTest, ttlUnknownAndEOF) {
     // RDATA implementation can complain about it, too.  To be independent of
     // its details, we focus on the very last warning.
     EXPECT_FALSE(warnings_.empty());
-    checkCallbackMessage(*warnings_.rbegin(), "Unexpected end end of file", 1);
+    checkCallbackMessage(*warnings_.rbegin(), "Unexpected end of file", 1);
 }
 
 TEST_F(MasterLoaderTest, ttlOverflow) {
@@ -675,5 +677,4 @@ TEST_F(MasterLoaderTest, noEOLN) {
     checkRR("example.org", RRType::SOA(), "ns1.example.org. "
             "admin.example.org. 1234 3600 1800 2419200 7200");
 }
-
 }

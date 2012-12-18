@@ -274,6 +274,11 @@ public:
         }
     }
 
+    virtual int addZone(const std::string&) {
+        isc_throw(isc::NotImplemented,
+                  "This database datasource can't add zones");
+    }
+
     virtual boost::shared_ptr<DatabaseAccessor> clone() {
         // This accessor is stateless, so we can simply return a new instance.
         return (boost::shared_ptr<DatabaseAccessor>(new NopAccessor));
@@ -329,6 +334,7 @@ public:
         isc_throw(isc::NotImplemented,
                   "This test database knows nothing about NSEC3 nor order");
     }
+
 private:
     const std::string database_name_;
 
@@ -1780,7 +1786,7 @@ doFindAllTestResult(ZoneFinder& finder, const isc::dns::Name& name,
               expected_name, result->rrset->getName());
 }
 
-// When asking for an RRset where RRs somehow have different TTLs, it should 
+// When asking for an RRset where RRs somehow have different TTLs, it should
 // convert to the lowest one.
 TEST_F(MockDatabaseClientTest, ttldiff) {
     ZoneIteratorPtr it(this->client_->getIterator(Name("example.org")));
@@ -4090,6 +4096,59 @@ TYPED_TEST(DatabaseClientTest, findNSEC3) {
 
     // The rest is in the function, it is shared with in-memory tests
     performNSEC3Test(*finder, true);
+}
+
+TYPED_TEST(DatabaseClientTest, createZone) {
+    const Name new_name("example.com");
+    const DataSourceClient::FindResult
+        zone(this->client_->findZone(new_name));
+    ASSERT_EQ(result::NOTFOUND, zone.code);
+
+    // The mock implementation does not do createZone,
+    // in which case it should throw NotImplemented (from
+    // the base class)
+    if (this->is_mock_) {
+        ASSERT_THROW(this->client_->createZone(new_name), isc::NotImplemented);
+    } else {
+        // But in the real case, it should work and return true
+        ASSERT_TRUE(this->client_->createZone(new_name));
+        const DataSourceClient::FindResult
+            zone2(this->client_->findZone(new_name));
+        ASSERT_EQ(result::SUCCESS, zone2.code);
+        // And the second call should return false since
+        // it already exists
+        ASSERT_FALSE(this->client_->createZone(new_name));
+    }
+}
+
+TYPED_TEST(DatabaseClientTest, createZoneRollbackOnLocked) {
+    // skip test for mock
+    if (this->is_mock_) {
+        return;
+    }
+
+    const Name new_name("example.com");
+    isc::datasrc::ZoneUpdaterPtr updater =
+        this->client_->getUpdater(this->zname_, true);
+    ASSERT_THROW(this->client_->createZone(new_name), DataSourceError);
+    // createZone started a transaction as well, but since it failed,
+    // it should have been rolled back. Roll back the other one as
+    // well, and the next attempt should succeed
+    updater.reset();
+    ASSERT_TRUE(this->client_->createZone(new_name));
+}
+
+TYPED_TEST(DatabaseClientTest, createZoneRollbackOnExists) {
+    // skip test for mock
+    if (this->is_mock_) {
+        return;
+    }
+
+    const Name new_name("example.com");
+    ASSERT_FALSE(this->client_->createZone(this->zname_));
+    // createZone started a transaction, but since it failed,
+    // it should have been rolled back, and the next attempt should succeed
+    ASSERT_TRUE(this->client_->createZone(new_name));
 }
 
 }

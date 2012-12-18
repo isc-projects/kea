@@ -120,10 +120,10 @@ TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
     EXPECT_FALSE(y);
 
     // should return false - there's no such address
-    EXPECT_FALSE(lease_mgr->deleteLease6(IOAddress("2001:db8:1::789")));
+    EXPECT_FALSE(lease_mgr->deleteLease(IOAddress("2001:db8:1::789")));
 
     // this one should succeed
-    EXPECT_TRUE(lease_mgr->deleteLease6(IOAddress("2001:db8:1::456")));
+    EXPECT_TRUE(lease_mgr->deleteLease(IOAddress("2001:db8:1::456")));
 
     // after the lease is deleted, it should really be gone
     x = lease_mgr->getLease6(IOAddress("2001:db8:1::456"));

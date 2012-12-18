@@ -60,4 +60,8 @@ TEST_F(ClientTest, defaultGetZoneCount) {
     EXPECT_THROW(client_.getZoneCount(), isc::NotImplemented);
 }
 
+TEST_F(ClientTest, defaultCreateZone) {
+    EXPECT_THROW(client_.createZone(Name("example.com.")), isc::NotImplemented);
+}
+
 }

@@ -1274,24 +1274,6 @@ MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
 }
 
 
-Lease4Ptr
-MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr,
-                         SubnetID subnet_id) const {
-
-    // As the address is the unique primary key of the lease4 table, there can
-    // only be one lease with a given address.  Therefore we will get that
-    // lease and do the filtering on subnet ID here.
-    Lease4Ptr result = getLease4(addr);
-    if (result && (result->subnet_id_ != subnet_id)) {
-
-        // Lease found but IDs do not match.  Return null pointer
-        result.reset();
-    }
-
-    return (result);
-}
-
-
 Lease4Collection
 MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
     // Set up the WHERE clause value
@@ -1573,12 +1555,13 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     updateLeaseCommon(stindex, &bind[0], lease);
 }
 
-// Delete lease methods.  As with other groups of methods, these comprise
-// a per-type method that sets up the relevant MYSQL_BIND array and a
-// common method than handles the common processing.
+// Delete lease methods.  Similar to other groups of methods, these comprise
+// a per-type method that sets up the relevant MYSQL_BIND array (in this
+// case, a single method for both V4 and V6 addresses) and a common method that
+// handles the common processing.
 
 bool
-MySqlLeaseMgr::deleteLease(StatementIndex stindex, MYSQL_BIND* bind) {
+MySqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind) {
 
     // Bind the input parameters to the statement
     int status = mysql_stmt_bind_param(statements_[stindex], bind);
@@ -1595,42 +1578,34 @@ MySqlLeaseMgr::deleteLease(StatementIndex stindex, MYSQL_BIND* bind) {
 
 
 bool
-MySqlLeaseMgr::deleteLease4(const isc::asiolink::IOAddress& addr) {
+MySqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
 
-    uint32_t addr4 = static_cast<uint32_t>(addr);
+    if (addr.isV4()) {
+        uint32_t addr4 = static_cast<uint32_t>(addr);
 
-    // See the earlier description of the use of "const_cast" when accessing
-    // the address for an explanation of the reason.
-    inbind[0].buffer_type = MYSQL_TYPE_LONG;
-    inbind[0].buffer = reinterpret_cast<char*>(&addr4);
-    inbind[0].is_unsigned = MLM_TRUE;
+        inbind[0].buffer_type = MYSQL_TYPE_LONG;
+        inbind[0].buffer = reinterpret_cast<char*>(&addr4);
+        inbind[0].is_unsigned = MLM_TRUE;
 
-    return (deleteLease(DELETE_LEASE4, inbind));
-}
+        return (deleteLeaseCommon(DELETE_LEASE4, inbind));
 
+    } else {
+        std::string addr6 = addr.toText();
+        unsigned long addr6_length = addr6.size();
 
-bool
-MySqlLeaseMgr::deleteLease6(const isc::asiolink::IOAddress& addr) {
+        // See the earlier description of the use of "const_cast" when accessing
+        // the address for an explanation of the reason.
+        inbind[0].buffer_type = MYSQL_TYPE_STRING;
+        inbind[0].buffer = const_cast<char*>(addr6.c_str());
+        inbind[0].buffer_length = addr6_length;
+        inbind[0].length = &addr6_length;
 
-    // Set up the WHERE clause value
-    MYSQL_BIND inbind[1];
-    memset(inbind, 0, sizeof(inbind));
-
-    std::string addr6 = addr.toText();
-    unsigned long addr6_length = addr6.size();
-
-    // See the earlier description of the use of "const_cast" when accessing
-    // the address for an explanation of the reason.
-    inbind[0].buffer_type = MYSQL_TYPE_STRING;
-    inbind[0].buffer = const_cast<char*>(addr6.c_str());
-    inbind[0].buffer_length = addr6_length;
-    inbind[0].length = &addr6_length;
-
-    return (deleteLease(DELETE_LEASE6, inbind));
+        return (deleteLeaseCommon(DELETE_LEASE6, inbind));
+    }
 }
 
 // Miscellaneous database methods.

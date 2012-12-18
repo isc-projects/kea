@@ -88,6 +88,35 @@ Return Value(s): A tuple containing a result value and a ZoneFinder object or\n\
 None\n\
 ";
 
+const char* const DataSourceClient_createZone_doc = "\
+create_zone(name) -> bool\n\
+\n\
+Create a zone in the data source.\n\
+\n\
+Creates a new (empty) zone in the data source backend, which can\n\
+subsequently be filled with data (through get_updater()).\n\
+\n\
+Note: This is a tentative API, and this method is likely to change or\n\
+be removed in the near future. For that reason, it currently provides\n\
+a default implementation that throws NotImplemented.\n\
+\n\
+Apart from the two exceptions mentioned below, in theory this call can\n\
+throw anything, depending on the implementation of the datasource\n\
+backend.\n\
+\n\
+Exceptions:\n\
+  NotImplemented If the datasource backend does not support direct\n\
+             zone creation.\n\
+  DataSourceError If something goes wrong in the data source while\n\
+             creating the zone.\n\
+\n\
+Parameters:\n\
+  name       The (fully qualified) name of the zone to create\n\
+\n\
+Return Value(s): True if the zone was added, False if it already\n\
+existed\n\
+";
+
 const char* const DataSourceClient_getIterator_doc = "\
 get_iterator(name, separate_rrs=False) -> ZoneIterator\n\
 \n\

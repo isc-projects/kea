@@ -174,7 +174,6 @@ public:
     /// @brief Read a buffer as FQDN.
     ///
     /// @param index buffer index.
-    /// @param [out] len number of bytes read from a buffer.
     ///
     /// @throw isc::OutOfRange if buffer index is out of range.
     /// @throw isc::dhcp::BadDataTypeCast if a buffer being read
@@ -246,7 +245,7 @@ public:
     /// @brief Write a string value into a buffer.
     ///
     /// @param text the string value to be written.
-    /// @param buffer index.
+    /// @param index buffer index.
     void writeString(const std::string& text,
                      const uint32_t index = 0);
 

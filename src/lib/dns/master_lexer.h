@@ -87,8 +87,7 @@ public:
     ///
     /// Any character can be stored in the valid range of the region.
     /// In particular, there can be a nul character (\0) in the middle of
-    /// the region.  On the other hand, it is not ensured that the string
-    /// is nul-terminated.  So the usual string manipulation API may not work
+    /// the region.  So the usual string manipulation API may not work
     /// as expected.
     ///
     /// The `MasterLexer` implementation ensures that there are at least
@@ -404,6 +403,11 @@ public:
     ///
     /// \throw isc::InvalidOperation Called with no pushed source.
     void popSource();
+
+    /// \brief Get number of sources inside the lexer.
+    ///
+    /// This method never throws.
+    size_t getSourceCount() const;
 
     /// \brief Return the name of the current input source name.
     ///
