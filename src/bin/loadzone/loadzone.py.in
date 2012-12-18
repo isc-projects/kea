@@ -110,7 +110,7 @@ class LoadZoneRunner:
         self._datasrc_type = None
         self._log_severity = 'INFO'
         self._log_debuglevel = 0
-        self._load_iteration_limit = LOAD_INTERVAL_DEFAULT
+        self._report_interval = LOAD_INTERVAL_DEFAULT
 
         self._config_log()
 
@@ -161,11 +161,11 @@ class LoadZoneRunner:
             raise BadArgument("RR class is not supported: " +
                               str(self._zone_class))
 
-        self._load_iteration_limit = int(options.report_interval)
-        if self._load_iteration_limit < 0:
+        self._report_interval = int(options.report_interval)
+        if self._report_interval < 0:
             raise BadArgument(
                 'Invalid report interval (must be non negative): %d' %
-                self._load_iteration_limit)
+                self._report_interval)
 
         if len(args) != 2:
             raise BadArgument('Unexpected number of arguments: %d (must be 2)'
@@ -228,17 +228,16 @@ class LoadZoneRunner:
             loader = ZoneLoader(datasrc_client, self._zone_name,
                                 self._zone_file)
             self.__start_time = time.time()
-            if self._load_iteration_limit > 0:
-                limit = self._load_iteration_limit
+            if self._report_interval > 0:
+                limit = self._report_interval
             else:
-                # configured limit value of 0 has a special meaning of
-                # "no report".  but we still do it incrementally so we won't
-                # delay catching signals too long.
+                # Even if progress report is suppressed, we still load
+                # incrementally so we won't delay catching signals too long.
                 limit = LOAD_INTERVAL_DEFAULT
             while (not self.__interrupted and
                    not loader.load_incremental(limit)):
-                self.__loaded_rrs += self._load_iteration_limit
-                if self._load_iteration_limit > 0:
+                self.__loaded_rrs += self._report_interval
+                if self._report_interval > 0:
                     self._report_progress(self.__loaded_rrs)
             if self.__interrupted:
                 raise LoadFailure('loading interrupted by signal')
