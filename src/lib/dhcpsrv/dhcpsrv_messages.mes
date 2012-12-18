@@ -14,6 +14,52 @@
 
 $NAMESPACE isc::dhcp
 
+% DHCPSRV_CFGMGR_ADD_SUBNET4 adding subnet %1
+A debug message reported when the DHCP configuration manager is adding the
+specified IPv4 subnet to its database.
+
+% DHCPSRV_CFGMGR_ADD_SUBNET6 adding subnet %1
+A debug message reported when the DHCP configuration manager is adding the
+specified IPv6 subnet to its database.
+
+% DHCPSRV_CFGMGR_DELETE_SUBNET4 deleting all IPv4 subnets
+A debug message noting that the DHCP configuration manager has deleted all IPv4
+subnets in its database.
+
+% DHCPSRV_CFGMGR_DELETE_SUBNET6 deleting all IPv6 subnets
+A debug message noting that the DHCP configuration manager has deleted all IPv6
+subnets in its database.
+
+% DHCPSRV_CFGMGR_NO_SUBNET4 no suitable subnet is defined for address hint %1
+This debug message is output when the DHCP configuration manager has received
+a request for an IPv4 subnet for the specified address, but no such
+subnet exists.
+
+% DHCPSRV_CFGMGR_NO_SUBNET6 no suitable subnet is defined for address hint %1
+This debug message is output when the DHCP configuration manager has received
+a request for an IPv6 subnet for the specified address, but no such
+subnet exists.
+
+% DHCPSRV_CFGMGR_ONLY_SUBNET4 retrieved subnet %1 for address hint %2
+This is a debug message reporting that the DHCP configuration manager has
+returned the specified IPv4 subnet when given the address hint specified
+because it is the only subnet defined.
+
+% DHCPSRV_CFGMGR_ONLY_SUBNET6 retrieved subnet %1 for address hint %2
+This is a debug message reporting that the DHCP configuration manager has
+returned the specified IPv6 subnet when given the address hint specified
+because it is the only subnet defined.
+
+% DHCPSRV_CFGMGR_SUBNET4 retrieved subnet %1 for address hint %2
+This is a debug message reporting that the DHCP configuration manager has
+returned the specified IPv4 subnet when given the address hint specified
+as the address is within the subnet.
+
+% DHCPSRV_CFGMGR_SUBNET6 retrieved subnet %1 for address hint %2
+This is a debug message reporting that the DHCP configuration manager has
+returned the specified IPv6 subnet when given the address hint specified
+as the address is within the subnet.
+
 % DHCPSRV_INVALID_ACCESS invalid database access string: %1
 This is logged when an attempt has been made to parse a database access string
 and the attempt ended in error.  The access string in question - which
