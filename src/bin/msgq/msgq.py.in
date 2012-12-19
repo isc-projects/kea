@@ -37,6 +37,10 @@ from isc.log_messages.msgq_messages import *
 import isc.cc
 
 isc.util.process.rename()
+logger = isc.log.Logger("msgq")
+TRACE_START = logger.DBGLVL_START_SHUT
+TRACE_BASIC = logger.DBGLVL_TRACE_BASIC
+TRACE_DETAIL = logger.DBGLVL_TRACE_DETAIL
 
 # This is the version that gets displayed to the user.
 # The VERSION string consists of the module name, the module version
@@ -53,11 +57,11 @@ class SubscriptionManager:
         """Add a subscription."""
         target = ( group, instance )
         if target in self.subscriptions:
-            print("[b10-msgq] Appending to existing target")
+            logger.debug(TRACE_BASIC, MSGQ_SUBS_APPEND_TARGET, group, instance)
             if socket not in self.subscriptions[target]:
                 self.subscriptions[target].append(socket)
         else:
-            print("[b10-msgq] Creating new target")
+            logger.debug(TRACE_BASIC, MSGQ_SUBS_NEW_TARGET, group, instance)
             self.subscriptions[target] = [ socket ]
 
     def unsubscribe(self, group, instance, socket):
@@ -164,9 +168,7 @@ class MsgQ:
 
     def setup_listener(self):
         """Set up the listener socket.  Internal function."""
-        if self.verbose:
-            sys.stdout.write("[b10-msgq] Setting up socket at %s\n" %
-                             self.socket_file)
+        logger.debug(TRACE_BASIC, MSGQ_LISTENER_SETUP, self.socket_file)
 
         self.listen_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
@@ -181,8 +183,7 @@ class MsgQ:
             if os.path.exists(self.socket_file):
                 os.remove(self.socket_file)
             self.listen_socket.close()
-            sys.stderr.write("[b10-msgq] failed to setup listener on %s: %s\n"
-                             % (self.socket_file, str(e)))
+            logger.fatal(MSGQ_LISTENER_FAILED, self.socket_file, e)
             raise e
 
         if self.poller:
@@ -199,8 +200,7 @@ class MsgQ:
         self.setup_poller()
         self.setup_listener()
 
-        if self.verbose:
-            sys.stdout.write("[b10-msgq] Listening\n")
+        logger.debug(TRACE_START, MSGQ_LISTENER_STARTED);
 
         self.runnable = True
 
@@ -228,7 +228,7 @@ class MsgQ:
     def process_socket(self, fd):
         """Process a read on a socket."""
         if not fd in self.sockets:
-            sys.stderr.write("[b10-msgq] Got read on Strange Socket fd %d\n" % fd)
+            logger.error(MSGQ_READ_UNKNOWN_FD, fd)
             return
         sock = self.sockets[fd]
 #        sys.stderr.write("[b10-msgq] Got read on fd %d\n" %fd)
@@ -245,7 +245,7 @@ class MsgQ:
         del self.sockets[fd]
         if fd in self.sendbuffs:
             del self.sendbuffs[fd]
-        sys.stderr.write("[b10-msgq] Closing socket fd %d\n" % fd)
+        logger.debug(TRACE_BASIC, MSGQ_SOCK_CLOSE, fd)
 
     def getbytes(self, fd, sock, length):
         """Get exactly the requested bytes, or raise an exception if
@@ -288,14 +288,14 @@ class MsgQ:
             routing, data = self.read_packet(fd, sock)
         except MsgQReceiveError as err:
             self.kill_socket(fd, sock)
-            sys.stderr.write("[b10-msgq] Receive error: %s\n" % err)
+            logger.error(MSGQ_RECV_ERR, fd, err)
             return
 
         try:
             routingmsg = isc.cc.message.from_wire(routing)
         except DecodeError as err:
             self.kill_socket(fd, sock)
-            sys.stderr.write("[b10-msgq] Routing decode error: %s\n" % err)
+            logger.error(MSGQ_HDR_DECODE_ERR, fd, err)
             return
 
         self.process_command(fd, sock, routingmsg, data)
@@ -303,9 +303,7 @@ class MsgQ:
     def process_command(self, fd, sock, routing, data):
         """Process a single command.  This will split out into one of the
            other functions."""
-        # TODO: A print statement got removed here (one that prints the
-        # routing envelope). When we have logging with multiple levels,
-        # we might want to re-add that on a high debug verbosity.
+        logger.debug(TRACE_DETAIL, MSGQ_RECV_HDR, routing)
         cmd = routing["type"]
         if cmd == 'send':
             self.process_command_send(sock, routing, data)
@@ -321,7 +319,7 @@ class MsgQ:
         elif cmd == 'stop':
             self.stop()
         else:
-            sys.stderr.write("[b10-msgq] Invalid command: %s\n" % cmd)
+            logger.error(MSGQ_INVALID_CMD, cmd)
 
     def preparemsg(self, env, msg = None):
         if type(env) == dict:
@@ -365,8 +363,8 @@ class MsgQ:
             elif e.errno in [ errno.EPIPE,
                               errno.ECONNRESET,
                               errno.ENOBUFS ]:
-                print("[b10-msgq] " + errno.errorcode[e.errno] +
-                      " on send, dropping message and closing connection")
+                logger.error(MSGQ_SEND_ERR, sock.fileno(),
+                             errno.errorcode[e.errno])
                 self.kill_socket(sock.fileno(), sock)
                 return None
             else:
@@ -493,7 +491,7 @@ class MsgQ:
                 if err.args[0] == errno.EINTR:
                     events = []
                 else:
-                    sys.stderr.write("[b10-msgq] Error with poll(): %s\n" % err)
+                    logger.error(MSGQ_POLL_ERR, err)
                     break
             for (fd, event) in events:
                 if fd == self.listen_socket.fileno():
@@ -504,7 +502,7 @@ class MsgQ:
                     elif event & select.POLLIN:
                         self.process_socket(fd)
                     else:
-                        print("[b10-msgq] Error: Unknown even in run_poller()")
+                        logger.error(MSGQ_POLL_UNKNOWN_EVENT, event)
 
     def run_kqueue(self):
         while self.running:
@@ -572,21 +570,19 @@ if __name__ == "__main__":
         sev = 'DEBUG'
     LOG_FILE = os.path.join("@localstatedir@", "@PACKAGE_NAME@",
                             "msgq.log").replace("${prefix}", "@prefix@")
-    isc.log.init("b10-msgq", buffer=False, severity=sev, debuglevel=99,
-                 file=LOG_FILE)
+    isc.log.init("b10-msgq", buffer=False, severity=sev, debuglevel=99)
 
     signal.signal(signal.SIGTERM, signal_handler)
 
     # Announce startup.
-    if options.verbose:
-        sys.stdout.write("[b10-msgq] %s\n" % VERSION)
+    logger.debug(TRACE_START, MSGQ_START, VERSION)
 
     msgq = MsgQ(options.msgq_socket_file, options.verbose)
 
     try:
         msgq.setup()
     except Exception as e:
-        sys.stderr.write("[b10-msgq] Error on startup: %s\n" % str(e))
+        logger.fatal(MSGQ_START_FAIL, e)
         sys.exit(1)
 
     try:
