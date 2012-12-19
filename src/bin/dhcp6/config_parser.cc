@@ -858,13 +858,13 @@ public:
 
             // Try uint32 type parser.
             if (!buildParser<Uint32Parser, Uint32Storage >(parser, uint32_values_,
-                                                           param.second) ||
+                                                           param.second) &&
                 // Try string type parser.
                 !buildParser<StringParser, StringStorage >(parser, string_values_,
-                                                           param.second) ||
+                                                           param.second) &&
                 // Try pool parser.
                 !buildParser<PoolParser, PoolStorage >(parser, pools_,
-                                                       param.second) ||
+                                                       param.second) &&
                 // Try option data parser.
                 !buildParser<OptionDataListParser, OptionStorage >(parser, options_,
                                                                    param.second)) {
