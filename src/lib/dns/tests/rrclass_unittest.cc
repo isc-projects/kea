@@ -96,15 +96,12 @@ TEST_F(RRClassTest, toText) {
     EXPECT_EQ("CLASS65000", RRClass(65000).toText());
 }
 
-TEST_F(RRClassTest, fromText) {
-    RRClass frc(1);
-    EXPECT_EQ("IN", frc.toText());
-    EXPECT_TRUE(frc.fromText("CH"));
-    EXPECT_EQ("CH", frc.toText());
-    EXPECT_FALSE(frc.fromText("ZZ"));
-    EXPECT_EQ("CH", frc.toText());
-    EXPECT_TRUE(frc.fromText("IN"));
-    EXPECT_EQ("IN", frc.toText());
+TEST_F(RRClassTest, createFromText) {
+    MaybeRRClass rrclass("IN");
+    EXPECT_TRUE(rrclass);
+    EXPECT_EQ("IN", rrclass->toText());
+    EXPECT_TRUE(RRClass::createFromText("CH"));
+    EXPECT_FALSE(RRClass::createFromText("ZZ"));
 }
 
 TEST_F(RRClassTest, toWireBuffer) {
