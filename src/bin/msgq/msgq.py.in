@@ -287,8 +287,8 @@ class MsgQ:
         try:
             routing, data = self.read_packet(fd, sock)
         except MsgQReceiveError as err:
-            self.kill_socket(fd, sock)
             logger.error(MSGQ_RECV_ERR, fd, err)
+            self.kill_socket(fd, sock)
             return
 
         try:
@@ -491,7 +491,7 @@ class MsgQ:
                 if err.args[0] == errno.EINTR:
                     events = []
                 else:
-                    logger.error(MSGQ_POLL_ERR, err)
+                    logger.fatal(MSGQ_POLL_ERR, err)
                     break
             for (fd, event) in events:
                 if fd == self.listen_socket.fileno():
@@ -502,7 +502,7 @@ class MsgQ:
                     elif event & select.POLLIN:
                         self.process_socket(fd)
                     else:
-                        logger.error(MSGQ_POLL_UNKNOWN_EVENT, event)
+                        logger.error(MSGQ_POLL_UNKNOWN_EVENT, fd, event)
 
     def run_kqueue(self):
         while self.running:
