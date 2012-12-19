@@ -18,8 +18,8 @@ SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 rm -f */zone.sqlite3
-${B10_LOADZONE} -o . -d @builddir@/nsx1/zone.sqlite3 @builddir@/nsx1/root.db
-${B10_LOADZONE} -o root-servers.nil -d @builddir@/nsx1/zone.sqlite3 \
+${B10_LOADZONE} -i 1 -c '{"database_file": "@builddir@/nsx1/zone.sqlite3"}' . @builddir@/nsx1/root.db
+${B10_LOADZONE} -i 1 -c '{"database_file": "@builddir@/nsx1/zone.sqlite3"}' root-servers.nil \
 	@builddir@/nsx1/root-servers.nil.db
-${B10_LOADZONE} -o com -d @builddir@/nsx1/zone.sqlite3 @builddir@/nsx1/com.db
-${B10_LOADZONE} -o net -d @builddir@/nsx1/zone.sqlite3 @builddir@/nsx1/net.db
+${B10_LOADZONE} -i 1 -c '{"database_file": "@builddir@/nsx1/zone.sqlite3"}' com @builddir@/nsx1/com.db
+${B10_LOADZONE} -i 1 -c '{"database_file": "@builddir@/nsx1/zone.sqlite3"}' net @builddir@/nsx1/net.db
