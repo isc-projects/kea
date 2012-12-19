@@ -26,5 +26,8 @@ endif
 # TODO: maybe use TESTS?
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
-	echo Running test: correct_test.sh 
+	echo Running test: correct_test.sh
+	B10_FROM_SOURCE=$(abs_top_srcdir) \
+	B10_FROM_BUILD=$(abs_top_builddir) \
+	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/bin/loadzone:$(abs_top_builddir)/src/lib/dns/python/.libs \
 	$(LIBRARY_PATH_PLACEHOLDER) $(SHELL) $(abs_builddir)/correct_test.sh
