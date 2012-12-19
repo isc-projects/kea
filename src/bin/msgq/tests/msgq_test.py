@@ -10,6 +10,7 @@ import errno
 import threading
 import isc.cc
 import collections
+import isc.log
 
 #
 # Currently only the subscription part and some sending is implemented...
@@ -457,4 +458,5 @@ class SendNonblock(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    isc.log.resetUnitTestRootLogger()
     unittest.main()
