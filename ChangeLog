@@ -1,3 +1,9 @@
+531.	[func]		tomek
+	b10-dhcp6: Added support for expired leases. Leases for IPv6
+	addresses that are past their valid lifetime may be recycled, i.e.
+	rellocated to other clients if needed.
+	(Trac #2327, git 62a23854f619349d319d02c3a385d9bc55442d5e)
+
 530.	[func]*		team
 	b10-loadzone was fully overhauled.  It now uses C++-based zone
 	parser and loader library, performing stricter checks, having
