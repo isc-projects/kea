@@ -22,5 +22,5 @@ SUBTEST_TOP=${TEST_TOP}/bindctl
 cp ${SUBTEST_TOP}/nsx1/b10-config.db.template ${SUBTEST_TOP}/nsx1/b10-config.db
 
 rm -f ${SUBTEST_TOP}/*/zone.sqlite3
-${B10_LOADZONE} -o . -d ${SUBTEST_TOP}/nsx1/zone.sqlite3 \
-	${SUBTEST_TOP}//nsx1/root.db
+${B10_LOADZONE} -c '{"database_file": "'${SUBTEST_TOP}/nsx1/zone.sqlite3'"}' \
+	. ${SUBTEST_TOP}//nsx1/root.db

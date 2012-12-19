@@ -18,7 +18,7 @@
 PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
 export PYTHON_EXEC
 
-PYTHONPATH=@abs_top_builddir@/src/lib/python/isc/log_messages:@abs_top_srcdir@/src/lib/python:@abs_top_builddir@/src/lib/python
+PYTHONPATH=@abs_top_builddir@/src/lib/python/isc/log_messages:@abs_top_srcdir@/src/lib/python:@abs_top_builddir@/src/lib/python:$PYTHONPATH
 export PYTHONPATH
 
 LOADZONE_PATH=@abs_top_builddir@/src/bin/loadzone
@@ -28,28 +28,28 @@ TEST_OUTPUT_PATH=@abs_top_builddir@/src/bin/loadzone//tests/correct
 status=0
 echo "Loadzone include. from include.db file"
 cd ${TEST_FILE_PATH}
-${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 include.db >> /dev/null
+${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'${TEST_OUTPUT_PATH}/zone.sqlite3'"}' include. include.db >> /dev/null
 
 echo "loadzone  ttl1. from ttl1.db file"
-${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 ttl1.db >> /dev/null
+${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'${TEST_OUTPUT_PATH}/zone.sqlite3'"}' ttl1. ttl1.db >> /dev/null
 
 echo "loadzone ttl2. from ttl2.db file"
-${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 ttl2.db >> /dev/null
+${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'${TEST_OUTPUT_PATH}/zone.sqlite3'"}' ttl2. ttl2.db >> /dev/null
 
 echo "loadzone mix1. from mix1.db"
-${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 mix1.db >> /dev/null
+${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'${TEST_OUTPUT_PATH}/zone.sqlite3'"}' mix1. mix1.db >> /dev/null
 
 echo "loadzone mix2. from mix2.db"
-${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 mix2.db >> /dev/null
+${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'${TEST_OUTPUT_PATH}/zone.sqlite3'"}' mix2. mix2.db >> /dev/null
 
 echo "loadzone ttlext. from ttlext.db"
-${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 ttlext.db >> /dev/null
+${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'${TEST_OUTPUT_PATH}/zone.sqlite3'"}' ttlext. ttlext.db >> /dev/null
 
 echo "loadzone example.com. from example.db"
-${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 example.db >> /dev/null
+${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'${TEST_OUTPUT_PATH}/zone.sqlite3'"}' example.com. example.db >> /dev/null
 
 echo "loadzone comment.example.com. from comment.db"
-${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 comment.db >> /dev/null
+${LOADZONE_PATH}/b10-loadzone -c '{"database_file": "'${TEST_OUTPUT_PATH}/zone.sqlite3'"}' comment.example.com. comment.db >> /dev/null
 
 echo "I:test master file \$INCLUDE semantics"
 echo "I:test master file BIND 8 compatibility TTL and \$TTL semantics"
