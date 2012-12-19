@@ -22,8 +22,11 @@ import signal
 from optparse import OptionParser
 from isc.dns import *
 from isc.datasrc import *
+import isc.util.process
 import isc.log
 from isc.log_messages.loadzone_messages import *
+
+isc.util.process.rename()
 
 # These are needed for logger settings
 import bind10_config
