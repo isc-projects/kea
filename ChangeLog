@@ -1,3 +1,5 @@
+bind10-1.0.0-beta released on December 20, 2012
+
 531.	[func]		tomek
 	b10-dhcp6: Added support for expired leases. Leases for IPv6
 	addresses that are past their valid lifetime may be recycled, i.e.
