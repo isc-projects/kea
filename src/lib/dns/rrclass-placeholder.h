@@ -22,6 +22,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <boost/optional.hpp>
+
 namespace isc {
 namespace util {
 class InputBuffer;
@@ -32,6 +34,16 @@ namespace dns {
 
 // forward declarations
 class AbstractMessageRenderer;
+
+class RRClass; // forward declaration to define MaybeRRClass.
+
+/// \brief A shortcut for a compound type to represent RRClass-or-not.
+///
+/// A value of this type can be interpreted in a boolean context, whose
+/// value is \c true if and only if it contains a valid RRClass object.
+/// And, if it contains a valid RRClass object, its value is accessible
+/// using \c operator*, just like a bare pointer to \c RRClass.
+typedef boost::optional<RRClass> MaybeRRClass;
 
 ///
 /// \brief A standard DNS module exception that is thrown if an RRClass object
@@ -136,6 +148,45 @@ public:
     ///
     /// \param buffer A buffer storing the wire format data.
     explicit RRClass(isc::util::InputBuffer& buffer);
+
+    /// A separate factory of RRClass from text.
+    ///
+    /// This static method is similar to the constructor that takes a
+    /// string object, but works as a factory and reports parsing
+    /// failure in the form of the return value.  Normally the
+    /// constructor version should suffice, but in some cases the caller
+    /// may have to expect mixture of valid and invalid input, and may
+    /// want to minimize the overhead of possible exception handling.
+    /// This version is provided for such purpose.
+    ///
+    /// For the format of the \c class_str argument, see the
+    /// <code>RRClass(const std::string&)</code> constructor.
+    ///
+    /// If the given text represents a valid RRClass, it returns a
+    /// \c MaybeRRClass object that stores a corresponding \c RRClass
+    /// object, which is accessible via \c operator*().  In this case
+    /// the returned object will be interpreted as \c true in a boolean
+    /// context.  If the given text does not represent a valid RRClass,
+    /// it returns a \c MaybeRRClass object which is interpreted as
+    /// \c false in a boolean context.
+    ///
+    /// One main purpose of this function is to minimize the overhead
+    /// when the given text does not represent a valid RR class.  For
+    /// this reason this function intentionally omits the capability of
+    /// delivering details reason for the parse failure, such as in the
+    /// \c want() string when exception is thrown from the constructor
+    /// (it will internally require a creation of string object, which
+    /// is relatively expensive).  If such detailed information is
+    /// necessary, the constructor version should be used to catch the
+    /// resulting exception.
+    ///
+    /// This function never throws the \c InvalidRRClass exception.
+    ///
+    /// \param class_str A string representation of the \c RRClass.
+    /// \return A MaybeRRClass object either storing an RRClass object
+    /// for the given text or a \c false value.
+    static MaybeRRClass createFromText(const std::string& class_str);
+
     ///
     /// We use the default copy constructor intentionally.
     //@}
@@ -181,20 +232,6 @@ public:
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer in which the RRClass is to be stored.
     void toWire(isc::util::OutputBuffer& buffer) const;
-
-    /// \brief Assign this \c RRClass from string.
-    ///
-    /// This method assigns this \c RRClass from the string
-    /// representation passed in \c class_str. For the format of this
-    /// string, see the <code>RRClass(const std::string&)</code>
-    /// constructor.
-    ///
-    /// If the conversion from string passes, true is
-    /// returned. Otherwise false is returned.
-    ///
-    /// \param class_str A string representation of the \c RRClass
-    /// \return true if \c class_str was valid, false otherwise.
-    bool fromText(const std::string& class_str);
     //@}
 
     ///
