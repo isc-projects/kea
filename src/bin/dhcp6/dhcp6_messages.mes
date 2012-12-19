@@ -47,9 +47,9 @@ This is an informational message reporting that the configuration has
 been extended to include the specified subnet.
 
 % DHCP6_CONFIG_OPTION_DUPLICATE multiple options with the code: %1 added to the subnet: %2
-This warning message is issued on attempt to configure multiple options with the
+This warning message is issued on an attempt to configure multiple options with the
 same option code for the particular subnet. Adding multiple options is uncommon
-for DHCPv6, yet it is not prohibited.
+for DHCPv6, but it is not prohibited.
 
 % DHCP6_CONFIG_START DHCPv6 server is processing the following configuration: %1
 This is a debug message that is issued every time the server receives a
