@@ -458,5 +458,6 @@ class SendNonblock(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    isc.log.init("b10-msgq")
     isc.log.resetUnitTestRootLogger()
     unittest.main()
