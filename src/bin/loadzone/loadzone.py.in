@@ -245,6 +245,9 @@ class LoadZoneRunner:
             if created:
                 logger.info(LOADZONE_ZONE_CREATED, self._zone_name,
                             self._zone_class)
+            else:
+                logger.info(LOADZONE_ZONE_UPDATING, self._zone_name,
+                            self._zone_class)
             loader = ZoneLoader(datasrc_client, self._zone_name,
                                 self._zone_file)
             self.__start_time = time.time()

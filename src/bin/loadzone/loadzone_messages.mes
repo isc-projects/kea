@@ -70,3 +70,12 @@ in the data source.
 The SQLite3 data source is specified as the data source type without a
 data source configuration.  b10-loadzone uses the default
 configuration with the default DB file for the BIND 10 system.
+
+% LOADZONE_ZONE_UPDATING Started updating zone %1/%2 with removing old data (this can take a while)
+b10-loadzone started loading a new version of the zone as specified,
+beginning with removing the current contents of the zone (in a
+transaction, so the removal won't take effect until and unless the entire
+load is completed successfully).  If the old version of the zone is large,
+this can take time, such as a few minutes or more, without any visible
+feedback.  This is not a problem as long as the b10-loadzone process
+is working at a moderate load.
