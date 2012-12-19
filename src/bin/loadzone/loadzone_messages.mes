@@ -54,6 +54,11 @@ problems.  The operator will need to fix the issues and reload the
 zone; otherwise applications (such as b10-auth) that use this data
 source will not work as expected.
 
+% LOADZONE_SQLITE3_USING_DEFAULT_CONFIG Using default configuration with SQLite3 DB file %1
+The SQLite3 data source is specified as the data source type without a
+data source configuration.  b10-loadzone uses the default
+configuration with the default DB file for the BIND 10 system.
+
 % LOADZONE_UNEXPECTED_FAILURE Unexpected exception: %1
 b10-loadzone encounters an unexpected failure and terminates itself.
 This is generally a bug of b10-loadzone itself or the underlying
@@ -65,11 +70,6 @@ have been cleanly canceled in this case, too.
 The specified zone to b10-loadzone to load does not exist in the
 specified data source.  b10-loadzone has created a new empty zone
 in the data source.
-
-% LOADZONE_SQLITE3_USING_DEFAULT_CONFIG Using default configuration with SQLite3 DB file %1
-The SQLite3 data source is specified as the data source type without a
-data source configuration.  b10-loadzone uses the default
-configuration with the default DB file for the BIND 10 system.
 
 % LOADZONE_ZONE_UPDATING Started updating zone %1/%2 with removing old data (this can take a while)
 b10-loadzone started loading a new version of the zone as specified,
