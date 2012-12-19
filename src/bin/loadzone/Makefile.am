@@ -55,3 +55,8 @@ EXTRA_DIST += tests/normal/sql1.example.com
 EXTRA_DIST += tests/normal/sql1.example.com.signed
 EXTRA_DIST += tests/normal/sql2.example.com
 EXTRA_DIST += tests/normal/sql2.example.com.signed
+
+CLEANDIRS = __pycache__
+
+clean-local:
+	rm -rf $(CLEANDIRS)
