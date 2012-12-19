@@ -99,11 +99,11 @@ is a normal operation during client shutdown.
 
 % DHCP6_RELEASE_FAIL failed to remove lease for address %1 for duid=%2, iaid=%3
 This error message indicates that the software failed to remove a
-lease from the lease database.  It indicates a likely database operation error:
-resolution will most likely require administrator intervention (e.g. check
-if DHCP process has sufficient privileges to update the database). It may
-also be triggered in a lease was manually removed from the database during
-RELEASE message processing.
+lease from the lease database.  It probably due to an error during a
+database operation: resolution will most likely require administrator
+intervention (e.g. check if DHCP process has sufficient privileges to
+update the database). It may also be triggered if a lease was manually
+removed from the database during RELEASE message processing.
 
 % DHCP6_RELEASE_FAIL_WRONG_DUID client (duid=%2) tried to release address %2, but it belongs to client (duid=%3)
 This warning message indicates that client tried to release an address
