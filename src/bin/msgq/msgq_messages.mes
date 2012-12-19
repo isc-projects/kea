@@ -19,31 +19,28 @@
 # <topsrcdir>/tools/reorder_message_file.py to make sure the
 # messages are in the correct order.
 
-% MSGQ_SUBS_NEW_TARGET Creating new target for subscription to group '%1' for instance '%2'
-Debug
-
-% MSGQ_SUBS_APPEND_TARGET Appending to existing target for subscription to group '%1' for instance '%2'
-Debug
-
-% MSGQ_LISTENER_SETUP Starting to listen on socket file '%1'
-Debug
+% MSGQ_HDR_DECODE_ERR Error decoding header received from socket %1: %2
+Error
 
 % MSGQ_LISTENER_FAILED Failed to initialize listener on socket file '%1': %2
 Fatal
 
+% MSGQ_LISTENER_SETUP Starting to listen on socket file '%1'
+Debug
+
 % MSGQ_LISTENER_STARTED Successfully started to listen
 Debug
+
+% MSGQ_POLL_ERR Error while polling for events: %1
+Error
+
+% MSGQ_POLL_UNKNOWN_EVENT Got an unknown event from the poller: %1
+Error
 
 % MSGQ_READ_UNKNOWN_FD Got read on strange socket %1
 Error, ignoring
 
-% MSGQ_SOCK_CLOSE Closing socket fd %1
-Debug
-
 % MSGQ_RECV_ERR Error reading from socket %1: %2
-Error
-
-% MSGQ_HDR_DECODE_ERR Error decoding header received from socket %1: %2
 Error
 
 % MSGQ_RECV_HDR Received header: %1
@@ -55,13 +52,16 @@ Error
 % MSGQ_SEND_ERR Error while sending to socket %1: %2
 Error
 
-% MSGQ_POLL_ERR Error while polling for events: %1
-Error
-
-% MSGQ_POLL_UNKNOWN_EVENT Got an unknown event from the poller: %1
-Error
+% MSGQ_SOCK_CLOSE Closing socket fd %1
+Debug
 
 % MSGQ_START Msgq version %1 starting
 Debug
 
 % MSGQ_START_FAIL Error during startup: %1
+
+% MSGQ_SUBS_APPEND_TARGET Appending to existing target for subscription to group '%1' for instance '%2'
+Debug
+
+% MSGQ_SUBS_NEW_TARGET Creating new target for subscription to group '%1' for instance '%2'
+Debug
