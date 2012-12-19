@@ -1,5 +1,14 @@
 bind10-1.0.0-beta released on December 20, 2012
 
+532.	[func]		marcin
+	Implemented configuration of DHCPv4 option values using
+	the configuration manager. In order to set values for the
+	data fields carried by a particular option, the user
+	specifies a string of hexadecimal digits that is converted
+	to binary data and stored in the option buffer. A more
+	user-friendly way of specifying option content is planned.
+	(Trac #2544, git fed1aab5a0f813c41637807f8c0c5f8830d71942)
+
 531.	[func]		tomek
 	b10-dhcp6: Added support for expired leases. Leases for IPv6
 	addresses that are past their valid lifetime may be recycled, i.e.
