@@ -144,14 +144,14 @@ public:
                    << ex.what() << std::endl;
         }
 
-
-        // returned value should be 0 (configuration success)
+        // status object must not be NULL
         if (!status) {
             FAIL() << "Fatal error: unable to reset configuration database"
                    << " after the test. Configuration function returned"
                    << " NULL pointer" << std::endl;
         }
         comment_ = parseAnswer(rcode_, status);
+        // returned value should be 0 (configuration success)
         if (rcode_ != 0) {
             FAIL() << "Fatal error: unable to reset configuration database"
                    << " after the test. Configuration function returned"
@@ -215,9 +215,10 @@ public:
             ASSERT_EQ(buf.getLength() - option_desc.option->getHeaderLen(),
                       expected_data_len);
         }
-        // Verify that the data is correct. However do not verify suboptions.
+        // Verify that the data is correct. Do not verify suboptions and a header.
         const uint8_t* data = static_cast<const uint8_t*>(buf.getData());
-        EXPECT_TRUE(memcmp(expected_data, data, expected_data_len));
+        EXPECT_EQ(0, memcmp(expected_data, data + option_desc.option->getHeaderLen(),
+                            expected_data_len));
     }
 
     Dhcpv6Srv srv_;
