@@ -1176,8 +1176,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/dbutil/tests/Makefile
                  src/bin/dbutil/tests/testdata/Makefile
                  src/bin/loadzone/Makefile
-                 src/bin/loadzone/tests/correct/Makefile
-                 src/bin/loadzone/tests/error/Makefile
+                 src/bin/loadzone/tests/Makefile
                  src/bin/msgq/Makefile
                  src/bin/msgq/tests/Makefile
                  src/bin/auth/Makefile
@@ -1352,6 +1351,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/loadzone/tests/correct/correct_test.sh
            src/bin/loadzone/tests/error/error_test.sh
            src/bin/loadzone/b10-loadzone.py
+           src/bin/loadzone/loadzone.py
            src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            src/bin/usermgr/b10-cmdctl-usermgr.py
            src/bin/msgq/msgq.py

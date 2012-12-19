@@ -1,0 +1,11 @@
+example.org.    3600    IN  SOA (
+		ns.example.org.
+		admin.example.org.
+		1235
+		3600		;1H
+		1800		;30M
+		2419200
+		7200)
+example.org.    3600    IN  NS ns.example.org.
+ns.example.org.	3600    IN  A 192.0.2.1
+bad..name.example.org. 3600 IN AAAA 2001:db8::1
