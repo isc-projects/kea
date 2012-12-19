@@ -5,7 +5,7 @@ noinst_SCRIPTS = run_loadzone.sh
 nodist_pylogmessage_PYTHON = $(PYTHON_LOGMSGPKG_DIR)/work/loadzone_messages.py
 pylogmessagedir = $(pyexecdir)/isc/log_messages/
 
-CLEANFILES = b10-loadzone
+CLEANFILES = b10-loadzone loadzone.pyc
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/loadzone_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/loadzone_messages.pyc
 
