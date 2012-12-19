@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>March 26, 2012</date>
+    <date>December 15, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -36,7 +36,7 @@
 
   <docinfo>
     <copyright>
-      <year>2010</year>
+      <year>2012</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -44,9 +44,13 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>b10-loadzone</command>
-      <arg><option>-d <replaceable class="parameter">database</replaceable></option></arg>
-      <arg><option>-o <replaceable class="parameter">origin</replaceable></option></arg>
-      <arg choice="req">filename</arg>
+      <arg><option>-c <replaceable class="parameter">datasrc_config</replaceable></option></arg>
+      <arg><option>-d <replaceable class="parameter">debug_level</replaceable></option></arg>
+      <arg><option>-i <replaceable class="parameter">report_interval</replaceable></option></arg>
+      <arg><option>-t <replaceable class="parameter">datasrc_type</replaceable></option></arg>
+      <arg><option>-C <replaceable class="parameter">zone_class</replaceable></option></arg>
+      <arg choice="req">zone name</arg>
+      <arg choice="req">zone file</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -66,8 +70,6 @@
     $ORIGIN is followed by a domain name, and sets the the origin
     that will be used for relative domain names in subsequent records.
     $INCLUDE is followed by a filename to load.
-<!-- TODO: and optionally a
-    domain name used to set the relative domain name origin. -->
     The previous origin is restored after the file is included.
 <!-- the current domain name is also restored -->
     $TTL is followed by a time-to-live value which is used
@@ -75,11 +77,31 @@
     </para>
 
     <para>
+      If the specified zone does not exist in the specified data
+      source, <command>b10-loadzone</command> will first create a
+      new empty zone in the data source, then fill it with the RRs
+      given in the specified master zone file.  In this case, if
+      loading fails for some reason, the creation of the new zone
+      is also canceled.
+      <note><simpara>
+	Due to an implementation limitation, the current version
+	does not make the zone creation and subsequent loading an
+	atomic operation; an empty zone will be visible and used by
+	other application (e.g., the <command>b10-auth</command>
+	authoritative server) while loading.  If this is an issue,
+	make sure the initial loading of a new zone is done before
+	starting other BIND 10 applications.
+      </simpara></note>
+    </para>
+
+    <para>
       When re-loading an existing zone, the prior version is completely
       removed.  While the new version of the zone is being loaded, the old
       version remains accessible to queries.  After the new version is
       completely loaded, the old version is swapped out and replaced
-      with the new one in a single operation.
+      with the new one in a single operation.  If loading fails for
+      some reason, the loaded RRs will be effectively deleted, and the
+      old version will still remain accessible for other applications.
     </para>
 
   </refsect1>
@@ -88,21 +110,82 @@
     <title>ARGUMENTS</title>
 
     <variablelist>
-
       <varlistentry>
-        <term>-d <replaceable class="parameter">database</replaceable> </term>
+        <term>-c <replaceable class="parameter">datasrc_config</replaceable></term>
         <listitem><para>
-          Defines the filename for the database.
-	  The default is
-	  <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>.
-<!-- TODO: fix filename -->
+          Specifies configuration of the data source in the JSON
+          format.  The configuration contents depend on the type of
+	  the data source, and that's the same as what would be
+	  specified for the BIND 10 servers (see the data source
+          configuration section of the BIND 10 guide).  For example,
+	  for an SQLite3 data source, it would look like
+	  '{"database_file": "path-to-sqlite3-db-file"}'.
+	  <note>
+	    <simpara>For SQLite3 data source with the default DB file,
+	      this option can be omitted; in other cases including
+	      for any other types of data sources when supported,
+	      this option is currently mandatory in practice.
+	      In a future version it will be possible to retrieve the
+	      configuration from the BIND 10 server configuration (if
+	      it exists).
+	  </simpara></note>
         </para></listitem>
       </varlistentry>
 
       <varlistentry>
-        <term>-o <replaceable class="parameter">origin</replaceable></term>
+        <term>-d <replaceable class="parameter">debug_level</replaceable> </term>
         <listitem><para>
-          Defines the default origin for the zone file records.
+	    Enable dumping debug level logging with the specified
+	    level.  By default, only log messages at the severity of
+	    informational or higher levels will be produced.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-i <replaceable class="parameter">report_interval</replaceable></term>
+        <listitem><para>
+          Specifies the interval of status update by the number of RRs
+	  loaded in the interval.
+	  The <command>b10-loadzone</command> tool periodically
+          reports the progress of loading with the total number of
+          loaded RRs and elapsed time.  This option specifies the
+	  interval of the reports.  If set to 0, status reports will
+          be suppressed.  The default is 10,000.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-t <replaceable class="parameter">datasrc_type</replaceable></term>
+        <listitem><para>
+          Specifies the type of data source to store the zone.
+	  Currently, only the "sqlite3" type is supported (which is
+          the default of this option), which means the SQLite3 data
+          source.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-C <replaceable class="parameter">zone_class</replaceable></term>
+        <listitem><para>
+          Specifies the RR class of the zone.
+	  Currently, only class IN is supported (which is the default
+          of this option) due to limitation of the underlying data
+          source implementation.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><replaceable class="parameter">zone name</replaceable></term>
+        <listitem><para>
+          The name of the zone to create or update.  This must be a valid DNS
+	  domain name.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><replaceable class="parameter">zone file</replaceable></term>
+        <listitem><para>
+          A path to the master zone file to be loaded.
         </para></listitem>
       </varlistentry>
 
@@ -131,8 +214,31 @@
   <refsect1>
     <title>AUTHORS</title>
     <para>
-      The <command>b10-loadzone</command> tool was initial written
-      by Evan Hunt of ISC.
+      A prior version of the <command>b10-loadzone</command> tool was
+      written by Evan Hunt of ISC.
+      The new version that this manual refers to was rewritten from
+      the scratch by the BIND 10 development team in around December 2012.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>BUGS</title>
+    <para>
+      As of the initial implementation, the underlying library that
+      this tool uses does not fully validate the loaded zone; for
+      example, loading will succeed even if it doesn't have the SOA or
+      NS record at its origin name.  Such checks will be implemented
+      in a near future version, but until then, the
+      <command>b10-loadzone</command> performs the existence of the
+      SOA and NS records by itself.  However, <command>b10-loadzone</command>
+      only warns about it, and does not cancel the load itself.
+      If this warning message is produced, it's the user's
+      responsibility to fix the errors and reload it.  When the
+      library is updated with the post load checks, it will be more
+      sophisticated and the such zone won't be successfully loaded.
+    </para>
+    <para>
+      There are some other issues noted in the DESCRIPTION section.
     </para>
   </refsect1>
 </refentry><!--
