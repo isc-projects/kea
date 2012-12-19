@@ -18,7 +18,7 @@
 PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
 export PYTHON_EXEC
 
-PYTHONPATH=@abs_top_builddir@/src/lib/python/isc/log_messages:@abs_top_builddir@/src/lib/python
+PYTHONPATH=@abs_top_builddir@/src/lib/python/isc/log_messages:@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/lib/dns/python/.libs
 export PYTHONPATH
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
@@ -31,6 +31,14 @@ fi
 
 BIND10_MSGQ_SOCKET_FILE=@abs_top_builddir@/msgq_socket
 export BIND10_MSGQ_SOCKET_FILE
+
+# For bind10_config
+B10_FROM_SOURCE=@abs_top_srcdir@
+export B10_FROM_SOURCE
+
+# For data source loadable modules
+B10_FROM_BUILD=@abs_top_builddir@
+export B10_FROM_BUILD
 
 LOADZONE_PATH=@abs_top_builddir@/src/bin/loadzone
 exec ${LOADZONE_PATH}/b10-loadzone "$@"
