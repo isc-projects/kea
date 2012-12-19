@@ -131,6 +131,7 @@ public:
             if (!first) {
                 stream << ", ";
             } else {
+                // cppcheck-suppress unreadVariable
                 first = false;
             }
             if (param.first == "name") {
