@@ -50,6 +50,11 @@ change is committed by the administrator.
 A debug message indicating that the IPv4 DHCP server has received an
 updated configuration from the BIND 10 configuration system.
 
+% DHCP4_CONFIG_OPTION_DUPLICATE multiple options with the code: %1 added to the subnet: %2
+This warning message is issued on an attempt to configure multiple options with the
+same option code for the particular subnet. Adding multiple options is uncommon
+for DHCPv4, but it is not prohibited.
+
 % DHCP4_NOT_RUNNING IPv4 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
 IPv4 DHCP server but it is not running.
