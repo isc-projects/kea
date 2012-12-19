@@ -503,7 +503,7 @@ var/
           </listitem>
           <listitem>
           <simpara>
-            <filename>etc/bind10-devel/</filename> &mdash;
+            <filename>etc/bind10/</filename> &mdash;
             configuration files.
           </simpara>
           </listitem>
@@ -515,7 +515,7 @@ var/
           </listitem>
           <listitem>
             <simpara>
-              <filename>libexec/bind10-devel/</filename> &mdash;
+              <filename>libexec/bind10/</filename> &mdash;
               executables that a user wouldn't normally run directly and
               are not run independently.
               These are the BIND 10 modules which are daemons started by
@@ -530,13 +530,13 @@ var/
           </listitem>
           <listitem>
             <simpara>
-              <filename>share/bind10-devel/</filename> &mdash;
+              <filename>share/bind10/</filename> &mdash;
               configuration specifications.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <filename>share/doc/bind10-devel/</filename> &mdash;
+              <filename>share/doc/bind10/</filename> &mdash;
               this guide and other supplementary documentation.
             </simpara>
           </listitem>
@@ -548,7 +548,7 @@ var/
           </listitem>
           <listitem>
             <simpara>
-              <filename>var/bind10-devel/</filename> &mdash;
+              <filename>var/bind10/</filename> &mdash;
               data source and configuration databases.
             </simpara>
           </listitem>
@@ -910,7 +910,7 @@ as a dependency earlier -->
         Administrators do not communicate directly with the
         <command>b10-msgq</command> daemon.
         By default, BIND 10 uses a UNIX domain socket file named
-        <filename>/usr/local/var/bind10-devel/msg_socket</filename>
+        <filename>/usr/local/var/bind10/msg_socket</filename>
         for this interprocess communication.
       </para>
 
@@ -972,7 +972,7 @@ config changes are actually commands to cfgmgr
 <!-- TODO: what about command line switch to change this? -->
       <para>
         The stored configuration file is at
-        <filename>/usr/local/var/bind10-devel/b10-config.db</filename>.
+        <filename>/usr/local/var/bind10/b10-config.db</filename>.
         (The directory is what was defined at build configure time for
         <option>--localstatedir</option>.
         The default is <filename>/usr/local/var/</filename>.)
@@ -1065,13 +1065,13 @@ but you might wanna check with likun
     <para>The HTTPS server requires a private key,
       such as a RSA PRIVATE KEY.
       The default location is at
-      <filename>/usr/local/etc/bind10-devel/cmdctl-keyfile.pem</filename>.
+      <filename>/usr/local/etc/bind10/cmdctl-keyfile.pem</filename>.
       (A sample key is at
-      <filename>/usr/local/share/bind10-devel/cmdctl-keyfile.pem</filename>.)
+      <filename>/usr/local/share/bind10/cmdctl-keyfile.pem</filename>.)
       It also uses a certificate located at
-      <filename>/usr/local/etc/bind10-devel/cmdctl-certfile.pem</filename>.
+      <filename>/usr/local/etc/bind10/cmdctl-certfile.pem</filename>.
       (A sample certificate is at
-      <filename>/usr/local/share/bind10-devel/cmdctl-certfile.pem</filename>.)
+      <filename>/usr/local/share/bind10/cmdctl-certfile.pem</filename>.)
       This may be a self-signed certificate or purchased from a
       certification authority.
     </para>
@@ -1107,11 +1107,11 @@ but that is a single file, maybe this should go back to that format?
     <para>
       The <command>b10-cmdctl</command> daemon also requires
       the user account file located at
-      <filename>/usr/local/etc/bind10-devel/cmdctl-accounts.csv</filename>.
+      <filename>/usr/local/etc/bind10/cmdctl-accounts.csv</filename>.
       This comma-delimited file lists the accounts with a user name,
       hashed password, and salt.
       (A sample file is at
-      <filename>/usr/local/share/bind10-devel/cmdctl-accounts.csv</filename>.
+      <filename>/usr/local/share/bind10/cmdctl-accounts.csv</filename>.
       It contains the user named <quote>root</quote> with the password
       <quote>bind10</quote>.)
     </para>
@@ -1141,14 +1141,14 @@ or accounts database -->
         The configuration items for <command>b10-cmdctl</command> are:
         <varname>accounts_file</varname> which defines the path to the
         user accounts database (the default is
-        <filename>/usr/local/etc/bind10-devel/cmdctl-accounts.csv</filename>);
+        <filename>/usr/local/etc/bind10/cmdctl-accounts.csv</filename>);
         <varname>cert_file</varname> which defines the path to the
         PEM certificate file (the default is
-        <filename>/usr/local/etc/bind10-devel/cmdctl-certfile.pem</filename>);
+        <filename>/usr/local/etc/bind10/cmdctl-certfile.pem</filename>);
         and
 	<varname>key_file</varname> which defines the path to the
 	PEM private key file (the default is
-        <filename>/usr/local/etc/bind10-devel/cmdctl-keyfile.pem</filename>).
+        <filename>/usr/local/etc/bind10/cmdctl-keyfile.pem</filename>).
       </para>
 
     </section>
@@ -2459,7 +2459,7 @@ can use various data source backends.
         data source &mdash; one that serves things like
         <quote>AUTHORS.BIND.</quote>. The IN class contains single SQLite3
         data source with database file located at
-        <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>.
+        <filename>/usr/local/var/bind10/zone.sqlite3</filename>.
       </para>
 
       <para>
@@ -3673,7 +3673,7 @@ mysql></screen>
          <para>
           3. Create the database tables:
           <screen>mysql> <userinput>CONNECT kea;</userinput>
-mysql> <userinput>SOURCE <replaceable>&lt;path-to-bind10&gt;</replaceable>/share/bind10-devel/dhcpdb_create.mysql</userinput></screen>
+mysql> <userinput>SOURCE <replaceable>&lt;path-to-bind10&gt;</replaceable>/share/bind10/dhcpdb_create.mysql</userinput></screen>
         </para>
          <para>
           4. Create the user under which BIND 10 will access the database and grant it access to the database tables:
