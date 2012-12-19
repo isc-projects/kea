@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>June 20, 2012</date>
+    <date>December 18, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -157,11 +157,21 @@
       incoming TCP connections, in milliseconds. If the query
       is not sent within this time, the connection is closed.
       Setting this to 0 will disable TCP timeouts completely.
+      The default is 5000 (five seconds).
     </para>
 
 <!-- TODO: formating -->
     <para>
       The configuration commands are:
+    </para>
+
+    <para>
+      <command>getstats</command> tells <command>b10-auth</command>
+      to report its defined statistics data in JSON format.
+      It will not report about unused counters.
+      This is used by the
+      <citerefentry><refentrytitle>b10-stats</refentrytitle><manvolnum>8</manvolnum></citerefentry> daemon.
+      (The <command>sendstats</command> command is deprecated.)
     </para>
 
     <para>
@@ -181,18 +191,33 @@
     </para>
 
     <para>
-      <command>sendstats</command> tells <command>b10-auth</command>
-      to send its statistics data to
-      <citerefentry><refentrytitle>b10-stats</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      immediately.
-    </para>
-
-    <para>
       <command>shutdown</command> exits <command>b10-auth</command>.
       This has an optional <varname>pid</varname> argument to
       select the process ID to stop.
       (Note that the BIND 10 boss process may restart this service
       if configured.)
+    </para>
+
+    <para>
+      <command>start_ddns_forwarder</command> starts (or restarts) the
+      internal forwarding of DDNS Update messages.
+      This is used by the
+      <citerefentry><refentrytitle>b10-ddns</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      daemon to tell <command>b10-auth</command> that DDNS Update
+      messages can be forwarded.
+      <note><simpara>This is not expected to be called by administrators;
+        it will be removed as a public command in the future.</simpara></note>
+    </para>
+
+    <para>
+      <command>stop_ddns_forwarder</command> stops the internal
+      forwarding of DDNS Update messages.
+      This is used by the
+      <citerefentry><refentrytitle>b10-ddns</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      daemon to tell <command>b10-auth</command> that DDNS Update
+      messages should not be forwarded.
+      <note><simpara>This is not expected to be called by administrators;
+        it will be removed as a public command in the future.</simpara></note>
     </para>
 
   </refsect1>
@@ -242,6 +267,9 @@
     <para>
       <citerefentry>
         <refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-ddns</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>b10-loadzone</refentrytitle><manvolnum>8</manvolnum>
