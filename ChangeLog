@@ -1,3 +1,5 @@
+bind10-1.0.0-beta released on December 20, 2012
+
 531.	[func]		tomek
 	b10-dhcp6: Added support for expired leases. Leases for IPv6
 	addresses that are past their valid lifetime may be recycled, i.e.
@@ -19,16 +21,17 @@
 	(Trac #2380, git 689b015753a9e219bc90af0a0b818ada26cc5968)
 
 529.	[func]*		team
-	The in-memory data source now uses a more complete master file
-	parser to load textual zone files.  As of this change it supports
-	multi-line RR representation and more complete support for escaped
-	and quoted strings.  It also produces more helpful log when there
-	is an error in the zone file.  It will be enhanced as more
-	specific tasks in the #2368 meta ticket are completed.  The new
-	parser is generally upper compatible to the previous one, but due
-	to the tighter checks some input that has been accepted so far
-	could now be rejected, so it's advisable to check if you use
-	textual zone files directly loaded to memory.
+	The in-memory data source now uses a more complete master
+	file parser to load textual zone files.  As of this change
+	it supports multi-line RR representation and more complete
+	support for escaped and quoted strings.  It also produces
+	more helpful log messages when there is an error in the zone
+	file.  It will be enhanced as more specific tasks in the
+	#2368 meta ticket are completed.  The new parser is generally
+	backward compatible to the previous one, but due to the
+	tighter checks some input that has been accepted so far
+	could now be rejected, so it's advisable to check if you
+	use textual zone files directly loaded to memory.
 	(Trac #2470, git c4cf36691115c15440b65cac16f1c7fcccc69521)
 
 528.	[func]		marcin
