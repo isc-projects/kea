@@ -1,3 +1,17 @@
+530.	[func]*		team
+	b10-loadzone was fully overhauled.  It now uses C++-based zone
+	parser and loader library, performing stricter checks, having
+	more complete support for master file formats, producing more
+	helpful logs, is more extendable for various types of data
+	sources, and yet much faster than the old version.  In
+	functionality the new version should be generally backwards
+	compatible to the old version, but there are some
+	incompatibilities: name fields of RDATA (in NS, SOA, etc) must
+	be absolute for now; due to the stricter checks some input that was
+	(incorrectly) accepted by the old version may now be rejected;
+	command line options and arguments are not compatible.
+	(Trac #2380, git 689b015753a9e219bc90af0a0b818ada26cc5968)
+
 529.	[func]*		team
 	The in-memory data source now uses a more complete master file
 	parser to load textual zone files.  As of this change it supports
