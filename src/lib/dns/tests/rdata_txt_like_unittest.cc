@@ -334,6 +334,24 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, toWireRenderer) {
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, toText) {
     EXPECT_EQ("\"Test-String\"", this->rdata_txt_like.toText());
+    EXPECT_EQ("\"\"", this->rdata_txt_like_empty.toText());
+    EXPECT_EQ("\"Test-String\"", this->rdata_txt_like_quoted.toText());
+
+    // Check escape behavior
+    const TypeParam double_quotes("Test-String\"Test-String\"");
+    EXPECT_EQ("\"Test-String\\\"Test-String\\\"\"", double_quotes.toText());
+    const TypeParam semicolon("Test-String\\;Test-String");
+    EXPECT_EQ("\"Test-String\\;Test-String\"", semicolon.toText());
+    const TypeParam backslash("Test-String\\\\Test-String");
+    EXPECT_EQ("\"Test-String\\\\Test-String\"", backslash.toText());
+    const TypeParam before_x20("Test-String\\031Test-String");
+    EXPECT_EQ("\"Test-String\\031Test-String\"", before_x20.toText());
+    const TypeParam from_x20_to_x7e("\"Test-String ~ Test-String\"");
+    EXPECT_EQ("\"Test-String ~ Test-String\"", from_x20_to_x7e.toText());
+    const TypeParam from_x20_to_x7e_2("Test-String\\032\\126\\032Test-String");
+    EXPECT_EQ("\"Test-String ~ Test-String\"", from_x20_to_x7e_2.toText());
+    const TypeParam after_x7e("Test-String\\127Test-String");
+    EXPECT_EQ("\"Test-String\\127Test-String\"", after_x7e.toText());
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, assignment) {
