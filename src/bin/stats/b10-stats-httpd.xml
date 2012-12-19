@@ -103,7 +103,7 @@
   <refsect1>
     <title>FILES</title>
     <para>
-      <filename>/usr/local/share/bind10-devel/stats-httpd.spec</filename>
+      <filename>/usr/local/share/bind10/stats-httpd.spec</filename>
       <!--TODO: The filename should be computed from prefix-->
       &mdash; the spec file of <command>b10-stats-httpd</command>. This file
       contains configurable settings
@@ -115,17 +115,17 @@
       how to configure the settings.
     </para>
     <para>
-      <filename>/usr/local/share/bind10-devel/stats-httpd-xml.tpl</filename>
+      <filename>/usr/local/share/bind10/stats-httpd-xml.tpl</filename>
       <!--TODO: The filename should be computed from prefix-->
       &mdash; the template file of XML document.
     </para>
     <para>
-      <filename>/usr/local/share/bind10-devel/stats-httpd-xsd.tpl</filename>
+      <filename>/usr/local/share/bind10/stats-httpd-xsd.tpl</filename>
       <!--TODO: The filename should be computed from prefix-->
       &mdash; the template file of XSD document.
     </para>
     <para>
-      <filename>/usr/local/share/bind10-devel/stats-httpd-xsl.tpl</filename>
+      <filename>/usr/local/share/bind10/stats-httpd-xsl.tpl</filename>
       <!--TODO: The filename should be computed from prefix-->
       &mdash; the template file of XSL document.
     </para>
