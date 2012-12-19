@@ -177,8 +177,6 @@ public:
     toText() const {
         std::string s;
 
-        // XXX: this implementation is not entirely correct.  for example, it
-        // should escape double-quotes if they appear in the character string.
         for (std::vector<std::vector<uint8_t> >::const_iterator it =
                  string_list_.begin();
              it != string_list_.end();
@@ -188,7 +186,22 @@ public:
                 s.push_back(' ');
             }
             s.push_back('"');
-            s.insert(s.end(), (*it).begin() + 1, (*it).end());
+            for (std::vector<uint8_t>::const_iterator c_it =
+                   (*it).begin() + 1;
+                 c_it != (*it).end();
+                 ++c_it) {
+                if ((*c_it < 0x20) || (*c_it >= 0x7f)) {
+                    s.push_back('\\');
+                    s.push_back(0x30 + ((*c_it / 100) % 10));
+                    s.push_back(0x30 + ((*c_it / 10) % 10));
+                    s.push_back(0x30 + (*c_it % 10));
+                    continue;
+                }
+                if ((*c_it == '"') || (*c_it == ';') || (*c_it == '\\')) {
+                    s.push_back('\\');
+                }
+                s.push_back(*c_it);
+            }
             s.push_back('"');
         }
 
