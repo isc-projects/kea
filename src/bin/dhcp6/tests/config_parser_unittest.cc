@@ -81,7 +81,9 @@ public:
         return (createConfigWithOption(params));
     }
 
-    std::string createConfigWithOption(const std::map<std::string, std::string>& params) {
+    std::string createConfigWithOption(const std::map<std::string,
+                                       std::string>& params)
+    {
         std::ostringstream stream;
         stream << "{ \"interface\": [ \"all\" ],"
             "\"preferred-lifetime\": 3000,"
