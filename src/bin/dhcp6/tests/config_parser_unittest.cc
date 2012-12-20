@@ -382,11 +382,12 @@ TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
-    // returned value must be 2 (values error)
+    // returned value must be 1 (values error)
     // as the pool does not belong to that subnet
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
-    EXPECT_EQ(2, rcode_);
+
+    EXPECT_EQ(1, rcode_);
 }
 
 // Goal of this test is to verify if pools can be defined

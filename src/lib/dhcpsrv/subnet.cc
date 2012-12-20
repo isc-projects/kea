@@ -148,10 +148,10 @@ void Subnet6::addPool6(const Pool6Ptr& pool) {
 
     if (!inRange(first_addr) || !inRange(last_addr)) {
         isc_throw(BadValue, "Pool6 (" << first_addr.toText() << "-" << last_addr.toText()
-                  << " does not belong in this (" << prefix_ << "/" << prefix_len_
+                  << ") does not belong in this (" << prefix_.toText()
+                  << "/" << static_cast<int>(prefix_len_)
                   << ") subnet6");
     }
-
     /// @todo: Check that pools do not overlap
 
     pools_.push_back(pool);
