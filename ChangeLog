@@ -1,5 +1,14 @@
 bind10-1.0.0-beta released on December 20, 2012
 
+533.	[build]*		jreed
+	Changed the package name in configure.ac from bind10-devel
+	to bind10. This means the default sub-directories for
+	etc, include, libexec, share, share/doc, and var are changed.
+	If upgrading from a previous version, you may need to move
+	and update your configurations or change references for the
+	old locations.
+	(git bf53fbd4e92ae835280d49fbfdeeebd33e0ce3f2)
+
 532.	[func]		marcin
 	Implemented configuration of DHCPv4 option values using
 	the configuration manager. In order to set values for the
