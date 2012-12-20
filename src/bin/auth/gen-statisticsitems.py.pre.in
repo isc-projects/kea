@@ -106,7 +106,7 @@ def generate_specfile(specfile, def_mtime):
     will be skipped.
 
     This method reads the content of skeleton and append statistics items
-    definition into { "module_spec": { "statistics": } }. 
+    definition into { "module_spec": { "statistics": } }.
     LOCALSTATEDIR is also expanded.
 
     Returns nothing.
