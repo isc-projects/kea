@@ -225,8 +225,8 @@ protected:
             // IPv6 address that are unique. That particular key is a member
             // of the Lease6 structure, is of type IOAddress and can be accessed
             // by doing &Lease6::addr_
-            boost::multi_index::ordered_unique< 
-                boost::multi_index::member<Lease6, isc::asiolink::IOAddress, &Lease6::addr_> 
+            boost::multi_index::ordered_unique<
+                boost::multi_index::member<Lease, isc::asiolink::IOAddress, &Lease::addr_>
             >
         >
     > Lease6Storage; // Let the whole contraption be called Lease6Storage.
@@ -238,4 +238,3 @@ protected:
 }; // end of isc namespace
 
 #endif // MEMFILE_LEASE_MGR
-
