@@ -891,7 +891,7 @@ public:
         Subnet4Ptr subnet(new Subnet4(addr, len, t1, t2, valid));
 
         for (PoolStorage::iterator it = pools_.begin(); it != pools_.end(); ++it) {
-            subnet->addPool4(*it);
+            subnet->addPool(*it);
         }
 
         const Subnet::OptionContainer& options = subnet->getOptions();
