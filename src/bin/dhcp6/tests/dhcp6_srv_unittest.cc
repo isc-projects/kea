@@ -71,7 +71,7 @@ public:
         subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 48, 1000,
                                          2000, 3000, 4000));
         pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
-        subnet_->addPool6(pool_);
+        subnet_->addPool(pool_);
 
         CfgMgr::instance().addSubnet6(subnet_);
     }

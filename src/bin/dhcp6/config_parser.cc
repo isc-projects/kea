@@ -922,7 +922,7 @@ public:
         Subnet6Ptr subnet(new Subnet6(addr, len, t1, t2, pref, valid));
 
         for (PoolStorage::iterator it = pools_.begin(); it != pools_.end(); ++it) {
-            subnet->addPool6(*it);
+            subnet->addPool(*it);
         }
 
         const Subnet::OptionContainer& options = subnet->getOptions();

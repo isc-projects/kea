@@ -63,7 +63,7 @@ public:
         subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
         pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1::10"),
                                    IOAddress("2001:db8:1::20")));
-        subnet_->addPool6(pool_);
+        subnet_->addPool(pool_);
         cfg_mgr.addSubnet6(subnet_);
 
         factory_.create("type=memfile");
@@ -280,7 +280,7 @@ TEST_F(AllocEngineTest, IterativeAllocator_manyPools) {
         Pool6Ptr pool(new Pool6(Pool6::TYPE_IA, IOAddress(min.str()),
                                 IOAddress(max.str())));
         // cout << "Adding pool: " << min.str() << "-" << max.str() << endl;
-        subnet_->addPool6(pool);
+        subnet_->addPool(pool);
     }
 
     int total = 17 + 8*9; // first pool (::10 - ::20) has 17 addresses in it,
@@ -334,7 +334,7 @@ TEST_F(AllocEngineTest, smallPool) {
     // Create configuration similar to other tests, but with a single address pool
     subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
     pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, addr, addr)); // just a single address
-    subnet_->addPool6(pool_);
+    subnet_->addPool(pool_);
     cfg_mgr.addSubnet6(subnet_);
 
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
@@ -370,7 +370,7 @@ TEST_F(AllocEngineTest, outOfAddresses) {
     // Create configuration similar to other tests, but with a single address pool
     subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
     pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, addr, addr)); // just a single address
-    subnet_->addPool6(pool_);
+    subnet_->addPool(pool_);
     cfg_mgr.addSubnet6(subnet_);
 
     // Just a different duid
@@ -401,7 +401,7 @@ TEST_F(AllocEngineTest, solicitReuseExpiredLease) {
     // Create configuration similar to other tests, but with a single address pool
     subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
     pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, addr, addr)); // just a single address
-    subnet_->addPool6(pool_);
+    subnet_->addPool(pool_);
     cfg_mgr.addSubnet6(subnet_);
 
     // Just a different duid
@@ -444,7 +444,7 @@ TEST_F(AllocEngineTest, requestReuseExpiredLease) {
     // Create configuration similar to other tests, but with a single address pool
     subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
     pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, addr, addr)); // just a single address
-    subnet_->addPool6(pool_);
+    subnet_->addPool(pool_);
     cfg_mgr.addSubnet6(subnet_);
 
     // Let's create an expired lease

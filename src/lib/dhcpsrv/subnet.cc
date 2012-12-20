@@ -71,7 +71,7 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
     }
 }
 
-void Subnet4::addPool4(const Pool4Ptr& pool) {
+void Subnet::addPool(const PoolPtr& pool) {
     IOAddress first_addr = pool->getFirstAddress();
     IOAddress last_addr = pool->getLastAddress();
 
@@ -86,9 +86,16 @@ void Subnet4::addPool4(const Pool4Ptr& pool) {
     pools_.push_back(pool);
 }
 
-Pool4Ptr Subnet4::getPool4(const isc::asiolink::IOAddress& hint /* = IOAddress("::")*/ ) {
-    Pool4Ptr candidate;
-    for (Pool4Collection::iterator pool = pools_.begin(); pool != pools_.end(); ++pool) {
+PoolPtr Subnet::getPool(isc::asiolink::IOAddress hint) {
+    if (dynamic_cast<Subnet6*>(this)) {
+        if (hint.toText() == "::") {
+            hint = IOAddress("0.0.0.0");
+        }
+    }
+
+
+    PoolPtr candidate;
+    for (PoolCollection::iterator pool = pools_.begin(); pool != pools_.end(); ++pool) {
 
         // if we won't find anything better, then let's just use the first pool
         if (!candidate) {
@@ -104,6 +111,7 @@ Pool4Ptr Subnet4::getPool4(const isc::asiolink::IOAddress& hint /* = IOAddress("
     return (candidate);
 }
 
+
 void
 Subnet4::validateOption(const OptionPtr& option) const {
     if (!option) {
@@ -113,14 +121,14 @@ Subnet4::validateOption(const OptionPtr& option) const {
     }
 }
 
-bool Subnet4::inPool(const isc::asiolink::IOAddress& addr) const {
+bool Subnet::inPool(const isc::asiolink::IOAddress& addr) const {
 
     // Let's start with checking if it even belongs to that subnet.
     if (!inRange(addr)) {
         return (false);
     }
 
-    for (Pool4Collection::const_iterator pool = pools_.begin(); pool != pools_.end(); ++pool) {
+    for (PoolCollection::const_iterator pool = pools_.begin(); pool != pools_.end(); ++pool) {
         if ((*pool)->inRange(addr)) {
             return (true);
         }
@@ -142,39 +150,6 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
     }
 }
 
-void Subnet6::addPool6(const Pool6Ptr& pool) {
-    IOAddress first_addr = pool->getFirstAddress();
-    IOAddress last_addr = pool->getLastAddress();
-
-    if (!inRange(first_addr) || !inRange(last_addr)) {
-        isc_throw(BadValue, "Pool6 (" << first_addr.toText() << "-" << last_addr.toText()
-                  << " does not belong in this (" << prefix_ << "/" << prefix_len_
-                  << ") subnet6");
-    }
-
-    /// @todo: Check that pools do not overlap
-
-    pools_.push_back(pool);
-}
-
-Pool6Ptr Subnet6::getPool6(const isc::asiolink::IOAddress& hint /* = IOAddress("::")*/ ) {
-    Pool6Ptr candidate;
-    for (Pool6Collection::iterator pool = pools_.begin(); pool != pools_.end(); ++pool) {
-
-        // if we won't find anything better, then let's just use the first pool
-        if (!candidate) {
-            candidate = *pool;
-        }
-
-        // if the client provided a pool and there's a pool that hint is valid in,
-        // then let's use that pool
-        if ((*pool)->inRange(hint)) {
-            return (*pool);
-        }
-    }
-    return (candidate);
-}
-
 void
 Subnet6::validateOption(const OptionPtr& option) const {
     if (!option) {
@@ -182,22 +157,6 @@ Subnet6::validateOption(const OptionPtr& option) const {
     } else if (option->getUniverse() != Option::V6) {
         isc_throw(isc::BadValue, "expected V6 option to be added to the subnet");
     }
-}
-
-bool Subnet6::inPool(const isc::asiolink::IOAddress& addr) const {
-
-    // Let's start with checking if it even belongs to that subnet.
-    if (!inRange(addr)) {
-        return (false);
-    }
-
-    for (Pool6Collection::const_iterator pool = pools_.begin(); pool != pools_.end(); ++pool) {
-        if ((*pool)->inRange(addr)) {
-            return (true);
-        }
-    }
-    // there's no pool that address belongs to
-    return (false);
 }
 
 } // end of isc::dhcp namespace
