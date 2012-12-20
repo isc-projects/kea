@@ -46,6 +46,7 @@ pkglibexec_PROGRAMS = b10-dhcp6
 
 b10_dhcp6_SOURCES  = main.cc
 b10_dhcp6_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
+b10_dhcp6_SOURCES += dbaccess_parser.cc dbaccess_parser.h
 b10_dhcp6_SOURCES += config_parser.cc config_parser.h
 b10_dhcp6_SOURCES += dhcp6_log.cc dhcp6_log.h
 b10_dhcp6_SOURCES += dhcp6_srv.cc dhcp6_srv.h
