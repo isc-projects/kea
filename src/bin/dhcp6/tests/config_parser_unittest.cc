@@ -69,14 +69,22 @@ public:
             params["name"] = param_value;
             params["code"] = "80";
             params["data"] = "AB CDEF0105";
+            params["csv-format"] = "False";
         } else if (parameter == "code") {
             params["name"] = "option_foo";
             params["code"] = param_value;
             params["data"] = "AB CDEF0105";
+            params["csv-format"] = "False";
         } else if (parameter == "data") {
             params["name"] = "option_foo";
             params["code"] = "80";
             params["data"] = param_value;
+            params["csv-format"] = "False";
+        } else if (parameter == "csv-format") {
+            params["name"] = "option_foo";
+            params["code"] = "80";
+            params["data"] = "AB CDEF0105";
+            params["csv-format"] = param_value;
         }
         return (createConfigWithOption(params));
     }
@@ -103,9 +111,11 @@ public:
             if (param.first == "name") {
                 stream << "\"name\": \"" << param.second << "\"";
             } else if (param.first == "code") {
-                stream << "\"code\": " << param.second << "";
+                stream << "\"code\": " << param.second;;
             } else if (param.first == "data") {
                 stream << "\"data\": \"" << param.second << "\"";
+            } else if (param.first == "csv-format") {
+                stream << "\"csv-format\": " << param.second;
             }
         }
         stream <<
@@ -425,12 +435,14 @@ TEST_F(Dhcp6ParserTest, optionDataDefaults) {
         "\"option-data\": [ {"
         "    \"name\": \"option_foo\","
         "    \"code\": 100,"
-        "    \"data\": \"AB CDEF0105\""
+        "    \"data\": \"AB CDEF0105\","
+        "    \"csv-format\": False"
         " },"
         " {"
         "    \"name\": \"option_foo2\","
         "    \"code\": 101,"
-        "    \"data\": \"01\""
+        "    \"data\": \"01\","
+        "    \"csv-format\": False"
         " } ],"
         "\"subnet6\": [ { "
         "    \"pool\": [ \"2001:db8:1::/80\" ],"
@@ -504,12 +516,14 @@ TEST_F(Dhcp6ParserTest, optionDataInSingleSubnet) {
         "    \"option-data\": [ {"
         "          \"name\": \"option_foo\","
         "          \"code\": 100,"
-        "          \"data\": \"AB CDEF0105\""
+        "          \"data\": \"AB CDEF0105\","
+        "          \"csv-format\": False"
         "        },"
         "        {"
         "          \"name\": \"option_foo2\","
         "          \"code\": 101,"
-        "          \"data\": \"01\""
+        "          \"data\": \"01\","
+        "          \"csv-format\": False"
         "        } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }";
@@ -566,7 +580,8 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
         "    \"option-data\": [ {"
         "          \"name\": \"option_foo\","
         "          \"code\": 100,"
-        "          \"data\": \"0102030405060708090A\""
+        "          \"data\": \"0102030405060708090A\","
+        "          \"csv-format\": False"
         "        } ]"
         " },"
         " {"
@@ -575,7 +590,8 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
         "    \"option-data\": [ {"
         "          \"name\": \"option_foo2\","
         "          \"code\": 101,"
-        "          \"data\": \"FFFEFDFCFB\""
+        "          \"data\": \"FFFEFDFCFB\","
+        "          \"csv-format\": False"
         "        } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }";
@@ -703,6 +719,7 @@ TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
+    std::cout << comment_->str() << std::endl;
     ASSERT_EQ(0, rcode_);
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
@@ -737,6 +754,7 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     // Option code 3 means OPTION_IA_NA.
     params["code"] = "3";
     params["data"] = "ABCDEF01 02030405 06070809";
+    params["csv-format"] = "False";
 
     std::string config = createConfigWithOption(params);
     ElementPtr json = Element::fromJSON(config);
