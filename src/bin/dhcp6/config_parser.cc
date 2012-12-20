@@ -53,6 +53,8 @@ typedef DhcpConfigParser* ParserFactory(const std::string& config_id);
 /// @brief a collection of factories that create parsers for specified element names
 typedef std::map<std::string, ParserFactory*> FactoryMap;
 
+typedef std::map<string, bool> BooleanStorage;
+
 /// @brief a collection of elements that store uint32 values (e.g. renew-timer = 900)
 typedef std::map<string, uint32_t> Uint32Storage;
 
@@ -78,6 +80,7 @@ StringStorage string_defaults;
 
 /// @brief Global storage for options that will be used as defaults.
 OptionStorage option_defaults;
+
 
 /// @brief a dummy configuration parser
 ///
@@ -135,6 +138,34 @@ private:
 
     /// pointer to the actual value of the parameter
     ConstElementPtr value_;
+};
+
+class BooleanParser : public DhcpConfigParser {
+public:
+
+    BooleanParser(const std::string& param_name)
+        : storage_(NULL), param_name_(param_name) {
+    }
+
+    virtual void build(ConstElementPtr value) {
+        std::cout << value->str() << std::endl;
+    }
+
+    virtual void commit() { }
+
+    static DhcpConfigParser* Factory(const std::string& param_name) {
+        return (new BooleanParser(param_name));
+    }
+
+    void setStorage(BooleanStorage* storage) {
+        storage_ = storage;
+    }
+
+private:
+    BooleanStorage* storage_;
+
+    std::string param_name_;
+
 };
 
 /// @brief Configuration parser for uint32 parameters
@@ -561,6 +592,13 @@ public:
                     value_parser->setStorage(&string_values_);
                     parser = value_parser;
                 }
+            } else if (param.first == "csv-format") {
+                boost::shared_ptr<BooleanParser>
+                    value_parser(dynamic_cast<BooleanParser*>(BooleanParser::Factory(param.first)));
+                if (value_parser) {
+                    value_parser->setStorage(&boolean_values_);
+                    parser = value_parser;
+                }
             } else {
                 isc_throw(Dhcp6ConfigError,
                           "Parser error: option-data parameter not supported: "
@@ -745,6 +783,7 @@ private:
     Uint32Storage uint32_values_;
     /// Storage for string values (e.g. option name or data).
     StringStorage string_values_;
+    BooleanStorage boolean_values_;
     /// Pointer to options storage. This storage is provided by
     /// the calling class and is shared by all OptionDataParser objects.
     OptionStorage* options_;
