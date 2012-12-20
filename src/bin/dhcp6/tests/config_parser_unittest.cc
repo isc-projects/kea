@@ -753,8 +753,8 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     params["name"] = "OPTION_IA_NA";
     // Option code 3 means OPTION_IA_NA.
     params["code"] = "3";
-    params["data"] = "ABCDEF01 02030405 06070809";
-    params["csv-format"] = "False";
+    params["data"] = "12345, 6789, 1516";
+    params["csv-format"] = "True";
 
     std::string config = createConfigWithOption(params);
     ElementPtr json = Element::fromJSON(config);
@@ -762,6 +762,7 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
+    std::cout << comment_->str() << std::endl;
     ASSERT_EQ(0, rcode_);
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
@@ -795,9 +796,9 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     // If cast was successful we may use accessors exposed by
     // Option6IA to validate that the content of this option
     // has been set correctly.
-    EXPECT_EQ(0xABCDEF01, optionIA->getIAID());
-    EXPECT_EQ(0x02030405, optionIA->getT1());
-    EXPECT_EQ(0x06070809, optionIA->getT2());
+    EXPECT_EQ(12345, optionIA->getIAID());
+    EXPECT_EQ(6789, optionIA->getT1());
+    EXPECT_EQ(1516, optionIA->getT2());
 }
 
 };
