@@ -22,6 +22,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <util/encode/hex.h>
+#include <util/strutil.h>
 
 using namespace std;
 using namespace isc::util;
@@ -176,10 +177,10 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
         if (values.empty()) {
             isc_throw(InvalidOptionValue, "no option value specified");
         }
-        writeToBuffer(values[0], type_, buf);
+        writeToBuffer(util::str::trim(values[0]), type_, buf);
     } else if (array_type_ && type_ != OPT_RECORD_TYPE) {
         for (size_t i = 0; i < values.size(); ++i) {
-            writeToBuffer(values[i], type_, buf);
+            writeToBuffer(util::str::trim(values[i]), type_, buf);
         }
     } else if (type_ == OPT_RECORD_TYPE) {
         const RecordFieldsCollection& records = getRecordFields();
@@ -189,7 +190,8 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                       << " provided.");
         }
         for (size_t i = 0; i < records.size(); ++i) {
-            writeToBuffer(values[i], records[i], buf);
+            writeToBuffer(util::str::trim(values[i]),
+                          records[i], buf);
         }
     }
     return (optionFactory(u, type, buf.begin(), buf.end()));
