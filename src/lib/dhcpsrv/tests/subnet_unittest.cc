@@ -61,28 +61,28 @@ TEST(Subnet4Test, Pool4InSubnet4) {
 
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3));
 
-    Pool4Ptr pool1(new Pool4(IOAddress("192.1.2.0"), 25));
-    Pool4Ptr pool2(new Pool4(IOAddress("192.1.2.128"), 26));
-    Pool4Ptr pool3(new Pool4(IOAddress("192.1.2.192"), 30));
+    PoolPtr pool1(new Pool4(IOAddress("192.1.2.0"), 25));
+    PoolPtr pool2(new Pool4(IOAddress("192.1.2.128"), 26));
+    PoolPtr pool3(new Pool4(IOAddress("192.1.2.192"), 30));
 
-    subnet->addPool4(pool1);
+    subnet->addPool(pool1);
 
     // If there's only one pool, get that pool
-    Pool4Ptr mypool = subnet->getPool4();
+    PoolPtr mypool = subnet->getPool();
     EXPECT_EQ(mypool, pool1);
 
 
-    subnet->addPool4(pool2);
-    subnet->addPool4(pool3);
+    subnet->addPool(pool2);
+    subnet->addPool(pool3);
 
     // If there are more than one pool and we didn't provide hint, we
     // should get the first pool
-    mypool = subnet->getPool4();
+    mypool = subnet->getPool();
 
     EXPECT_EQ(mypool, pool1);
 
     // If we provide a hint, we should get a pool that this hint belongs to
-    mypool = subnet->getPool4(IOAddress("192.1.2.195"));
+    mypool = subnet->getPool(IOAddress("192.1.2.195"));
 
     EXPECT_EQ(mypool, pool3);
 
@@ -94,16 +94,16 @@ TEST(Subnet4Test, Subnet4_Pool4_checks) {
 
     // this one is in subnet
     Pool4Ptr pool1(new Pool4(IOAddress("192.255.0.0"), 16));
-    subnet->addPool4(pool1);
+    subnet->addPool(pool1);
 
     // this one is larger than the subnet!
     Pool4Ptr pool2(new Pool4(IOAddress("193.0.0.0"), 24));
 
-    EXPECT_THROW(subnet->addPool4(pool2), BadValue);
+    EXPECT_THROW(subnet->addPool(pool2), BadValue);
 
     // this one is totally out of blue
     Pool4Ptr pool3(new Pool4(IOAddress("1.2.3.4"), 16));
-    EXPECT_THROW(subnet->addPool4(pool3), BadValue);
+    EXPECT_THROW(subnet->addPool(pool3), BadValue);
 }
 
 TEST(Subnet4Test, addInvalidOption) {
@@ -130,7 +130,7 @@ TEST(Subnet4Test, inRangeinPool) {
 
     // this one is in subnet
     Pool4Ptr pool1(new Pool4(IOAddress("192.2.0.0"), 16));
-    subnet->addPool4(pool1);
+    subnet->addPool(pool1);
 
     // 192.1.1.1 belongs to the subnet...
     EXPECT_TRUE(subnet->inRange(IOAddress("192.1.1.1")));
@@ -205,28 +205,28 @@ TEST(Subnet6Test, Pool6InSubnet6) {
 
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
 
-    Pool6Ptr pool1(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
-    Pool6Ptr pool2(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:2::"), 64));
-    Pool6Ptr pool3(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:3::"), 64));
+    PoolPtr pool1(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
+    PoolPtr pool2(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:2::"), 64));
+    PoolPtr pool3(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:3::"), 64));
 
-    subnet->addPool6(pool1);
+    subnet->addPool(pool1);
 
     // If there's only one pool, get that pool
-    Pool6Ptr mypool = subnet->getPool6();
+    PoolPtr mypool = subnet->getPool();
     EXPECT_EQ(mypool, pool1);
 
 
-    subnet->addPool6(pool2);
-    subnet->addPool6(pool3);
+    subnet->addPool(pool2);
+    subnet->addPool(pool3);
 
     // If there are more than one pool and we didn't provide hint, we
     // should get the first pool
-    mypool = subnet->getPool6();
+    mypool = subnet->getPool();
 
     EXPECT_EQ(mypool, pool1);
 
     // If we provide a hint, we should get a pool that this hint belongs to
-    mypool = subnet->getPool6(IOAddress("2001:db8:1:3::dead:beef"));
+    mypool = subnet->getPool(IOAddress("2001:db8:1:3::dead:beef"));
 
     EXPECT_EQ(mypool, pool3);
 }
@@ -237,21 +237,21 @@ TEST(Subnet6Test, Subnet6_Pool6_checks) {
 
     // this one is in subnet
     Pool6Ptr pool1(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
-    subnet->addPool6(pool1);
+    subnet->addPool(pool1);
 
     // this one is larger than the subnet!
     Pool6Ptr pool2(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::"), 48));
 
-    EXPECT_THROW(subnet->addPool6(pool2), BadValue);
+    EXPECT_THROW(subnet->addPool(pool2), BadValue);
 
 
     // this one is totally out of blue
     Pool6Ptr pool3(new Pool6(Pool6::TYPE_IA, IOAddress("3000::"), 16));
-    EXPECT_THROW(subnet->addPool6(pool3), BadValue);
+    EXPECT_THROW(subnet->addPool(pool3), BadValue);
 
 
     Pool6Ptr pool4(new Pool6(Pool6::TYPE_IA, IOAddress("4001:db8:1::"), 80));
-    EXPECT_THROW(subnet->addPool6(pool4), BadValue);
+    EXPECT_THROW(subnet->addPool(pool4), BadValue);
 }
 
 TEST(Subnet6Test, addOptions) {
@@ -404,7 +404,7 @@ TEST(Subnet6Test, inRangeinPool) {
     // this one is in subnet
     Pool6Ptr pool1(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::10"),
                              IOAddress("2001:db8::20")));
-    subnet->addPool6(pool1);
+    subnet->addPool(pool1);
 
     // 192.1.1.1 belongs to the subnet...
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::1")));

@@ -58,7 +58,7 @@ AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress&
 
 
 isc::asiolink::IOAddress
-AllocEngine::IterativeAllocator::pickAddress(const Subnet6Ptr& subnet,
+AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
                                              const DuidPtr&,
                                              const IOAddress&) {
 
@@ -67,14 +67,14 @@ AllocEngine::IterativeAllocator::pickAddress(const Subnet6Ptr& subnet,
     // perhaps restaring the server).
     IOAddress last = subnet->getLastAllocated();
 
-    const Pool6Collection& pools = subnet->getPools();
+    const PoolCollection& pools = subnet->getPools();
 
     if (pools.empty()) {
         isc_throw(AllocFailed, "No pools defined in selected subnet");
     }
 
     // first we need to find a pool the last address belongs to.
-    Pool6Collection::const_iterator it;
+    PoolCollection::const_iterator it;
     for (it = pools.begin(); it != pools.end(); ++it) {
         if ((*it)->inRange(last)) {
             break;
@@ -124,9 +124,9 @@ AllocEngine::HashedAllocator::HashedAllocator()
 
 
 isc::asiolink::IOAddress
-AllocEngine::HashedAllocator::pickAddress(const Subnet6Ptr&,
-                                             const DuidPtr&,
-                                             const IOAddress&) {
+AllocEngine::HashedAllocator::pickAddress(const SubnetPtr&,
+                                          const DuidPtr&,
+                                          const IOAddress&) {
     isc_throw(NotImplemented, "Hashed allocator is not implemented");
 }
 
@@ -137,9 +137,9 @@ AllocEngine::RandomAllocator::RandomAllocator()
 
 
 isc::asiolink::IOAddress
-AllocEngine::RandomAllocator::pickAddress(const Subnet6Ptr&,
-                                             const DuidPtr&,
-                                             const IOAddress&) {
+AllocEngine::RandomAllocator::pickAddress(const SubnetPtr&,
+                                          const DuidPtr&,
+                                          const IOAddress&) {
     isc_throw(NotImplemented, "Random allocator is not implemented");
 }
 
@@ -191,7 +191,7 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
             /// implemented
 
             // the hint is valid and not currently used, let's create a lease for it
-            Lease6Ptr lease = createLease(subnet, duid, iaid, hint, fake_allocation);
+            Lease6Ptr lease = createLease6(subnet, duid, iaid, hint, fake_allocation);
 
             // It can happen that the lease allocation failed (we could have lost
             // the race condition. That means that the hint is lo longer usable and
@@ -235,7 +235,7 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
         if (!existing) {
             // there's no existing lease for selected candidate, so it is
             // free. Let's allocate it.
-            Lease6Ptr lease = createLease(subnet, duid, iaid, candidate,
+            Lease6Ptr lease = createLease6(subnet, duid, iaid, candidate,
                                           fake_allocation);
             if (lease) {
                 return (lease);
@@ -300,11 +300,11 @@ Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
     return (expired);
 }
 
-Lease6Ptr AllocEngine::createLease(const Subnet6Ptr& subnet,
-                                   const DuidPtr& duid,
-                                   uint32_t iaid,
-                                   const IOAddress& addr,
-                                   bool fake_allocation /*= false */ ) {
+Lease6Ptr AllocEngine::createLease6(const Subnet6Ptr& subnet,
+                                    const DuidPtr& duid,
+                                    uint32_t iaid,
+                                    const IOAddress& addr,
+                                    bool fake_allocation /*= false */ ) {
 
     Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, duid, iaid,
                                subnet->getPreferred(), subnet->getValid(),
