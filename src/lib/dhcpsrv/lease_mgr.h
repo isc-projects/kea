@@ -108,38 +108,19 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-/// @brief Structure that holds a lease for IPv4 address
+/// @brief a common structure for IPv4 and IPv6 leases
 ///
-/// For performance reasons it is a simple structure, not a class. If we chose
-/// make it a class, all fields would have to made private and getters/setters
-/// would be required. As this is a critical part of the code that will be used
-/// extensively, direct access is warranted.
-struct Lease4 {
-    /// @brief Maximum size of a hardware address
-    static const size_t HWADDR_MAX = 20;
+/// This structure holds all information that is common between IPv4 and IPv6
+/// leases.
+struct Lease {
 
+    Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
+          uint32_t valid_lft, SubnetID subnet_id, time_t cltt);
 
-    /// IPv4 address
+    /// @brief IPv4 ot IPv6 address
+    ///
+    /// IPv4, IPv6 address or, in the case of a prefix delegation, the prefix.
     isc::asiolink::IOAddress addr_;
-
-    /// @brief Address extension
-    ///
-    /// It is envisaged that in some cases IPv4 address will be accompanied
-    /// with some additional data. One example of such use are Address + Port
-    /// solutions (or Port-restricted Addresses), where several clients may get
-    /// the same address, but different port ranges. This feature is not
-    /// expected to be widely used.  Under normal circumstances, the value
-    /// should be 0.
-    uint32_t ext_;
-
-    /// @brief Hardware address
-    std::vector<uint8_t> hwaddr_;
-
-    /// @brief Client identifier
-    ///
-    /// @todo Should this be a pointer to a client ID or the ID itself?
-    ///       Compare with the DUID in the Lease6 structure.
-    ClientIdPtr client_id_;
 
     /// @brief Renewal timer
     ///
@@ -201,6 +182,46 @@ struct Lease4 {
     /// system administrator.
     std::string comments_;
 
+    /// @brief Convert Lease to Printable Form
+    ///
+    /// @return String form of the lease
+    virtual std::string toText() const = 0;
+
+    /// @brief returns true if the lease is expired
+    /// @return true if the lease is expired
+    bool expired() const;
+
+};
+
+/// @brief Structure that holds a lease for IPv4 address
+///
+/// For performance reasons it is a simple structure, not a class. If we chose
+/// make it a class, all fields would have to made private and getters/setters
+/// would be required. As this is a critical part of the code that will be used
+/// extensively, direct access is warranted.
+struct Lease4 : public Lease {
+    /// @brief Maximum size of a hardware address
+    static const size_t HWADDR_MAX = 20;
+
+    /// @brief Address extension
+    ///
+    /// It is envisaged that in some cases IPv4 address will be accompanied
+    /// with some additional data. One example of such use are Address + Port
+    /// solutions (or Port-restricted Addresses), where several clients may get
+    /// the same address, but different port ranges. This feature is not
+    /// expected to be widely used.  Under normal circumstances, the value
+    /// should be 0.
+    uint32_t ext_;
+
+    /// @brief Hardware address
+    std::vector<uint8_t> hwaddr_;
+
+    /// @brief Client identifier
+    ///
+    /// @todo Should this be a pointer to a client ID or the ID itself?
+    ///       Compare with the DUID in the Lease6 structure.
+    ClientIdPtr client_id_;
+
     /// @brief Constructor
     ///
     /// @param addr IPv4 address as unsigned 32-bit integer in network byte
@@ -215,18 +236,16 @@ struct Lease4 {
     Lease4(uint32_t addr, const uint8_t* hwaddr, size_t hwaddr_len,
            const uint8_t* clientid, size_t clientid_len, uint32_t valid_lft,
            time_t cltt, uint32_t subnet_id)
-        : addr_(addr), ext_(0), hwaddr_(hwaddr, hwaddr + hwaddr_len),
-          client_id_(new ClientId(clientid, clientid_len)), t1_(0), t2_(0),
-          valid_lft_(valid_lft), cltt_(cltt), subnet_id_(subnet_id),
-          fixed_(false), hostname_(), fqdn_fwd_(false), fqdn_rev_(false),
-          comments_()
-    {}
+        : Lease(addr, 0, 0, valid_lft, subnet_id, cltt),
+        ext_(0), hwaddr_(hwaddr, hwaddr + hwaddr_len),
+        client_id_(new ClientId(clientid, clientid_len)) {
+    }
 
     /// @brief Default Constructor
     ///
     /// Initialize fields that don't have a default constructor.
-    Lease4() : addr_(0), fixed_(false), fqdn_fwd_(false), fqdn_rev_(false)
-    {}
+    Lease4() : Lease(0, 0, 0, 0, 0, 0) {
+    }
 
     /// @brief Compare two leases for equality
     ///
@@ -239,6 +258,11 @@ struct Lease4 {
     bool operator!=(const Lease4& other) const {
         return (!operator==(other));
     }
+
+    /// @brief Convert Lease to Printable Form
+    ///
+    /// @return String form of the lease
+    virtual std::string toText() const;
 
     /// @todo: Add DHCPv4 failover related fields here
 };
@@ -257,7 +281,7 @@ typedef std::vector<Lease4Ptr> Lease4Collection;
 /// make it a class, all fields would have to made private and getters/setters
 /// would be required. As this is a critical part of the code that will be used
 /// extensively, direct access is warranted.
-struct Lease6 {
+struct Lease6 : public Lease {
 
     /// @brief Type of lease contents
     typedef enum {
@@ -265,11 +289,6 @@ struct Lease6 {
         LEASE_IA_TA, /// the lease contains temporary IPv6 address
         LEASE_IA_PD  /// the lease contains IPv6 prefix (for prefix delegation)
     } LeaseType;
-
-    /// @brief IPv6 address
-    ///
-    /// IPv6 address or, in the case of a prefix delegation, the prefix.
-    isc::asiolink::IOAddress addr_;
 
     /// @brief Lease type
     ///
@@ -297,69 +316,6 @@ struct Lease6 {
     /// assigned or renewed (cltt), expressed in seconds.
     uint32_t preferred_lft_;
 
-    /// @brief valid lifetime
-    ///
-    /// This parameter specifies the valid lifetime since the lease waa
-    /// assigned/renewed (cltt), expressed in seconds.
-    uint32_t valid_lft_;
-
-    /// @brief T1 timer
-    ///
-    /// Specifies renewal time. Although technically it is a property of the
-    /// IA container and not the address itself, since our data model does not
-    /// define a separate IA entity, we are keeping it in the lease. In the
-    /// case of multiple addresses/prefixes for the same IA, each must have
-    /// consistent T1 and T2 values. This is specified in seconds since cltt.
-    /// The value will also be useful for failover to calculate the next
-    /// expected client transmission time.
-    uint32_t t1_;
-
-    /// @brief T2 timer
-    ///
-    /// Specifies rebinding time. Although technically it is a property of the
-    /// IA container and not the address itself, since our data model does not
-    /// define a separate IA entity, we are keeping it in the lease. In the
-    /// case of multiple addresses/prefixes for the same IA, each must have
-    /// consistent T1 and T2 values. This is specified in seconds since cltt.
-    uint32_t t2_;
-
-    /// @brief Client last transmission time
-    ///
-    /// Specifies a timestamp giving the time when the last transmission from a
-    /// client was received.
-    time_t cltt_;
-
-    /// @brief Subnet identifier
-    ///
-    /// Specifies the identification of the subnet to which the lease belongs.
-    SubnetID subnet_id_;
-
-    /// @brief Fixed lease?
-    ///
-    /// Fixed leases are kept after they are released/expired.
-    bool fixed_;
-
-    /// @brief Client hostname
-    ///
-    /// This field may be empty
-    std::string hostname_;
-
-    /// @brief Forward zone updated?
-    ///
-    /// Set true if the DNS AAAA record for this lease has been updated.
-    bool fqdn_fwd_;
-
-    /// @brief Reverse zone updated?
-    ///
-    /// Set true if the DNS PTR record for this lease has been updated.
-    bool fqdn_rev_;
-
-    /// @brief Lease comments
-    ///
-    /// Currently not used. It may be used for keeping comments made by the
-    /// system administrator.
-    std::string comments_;
-
     /// @todo: Add DHCPv6 failover related fields here
 
     /// @brief Constructor
@@ -370,18 +326,9 @@ struct Lease6 {
     /// @brief Constructor
     ///
     /// Initialize fields that don't have a default constructor.
-    Lease6() : addr_("::"), type_(LEASE_IA_NA), fixed_(false), fqdn_fwd_(false),
-               fqdn_rev_(false)
-    {}
-
-    /// @brief Convert Lease6 to Printable Form
-    ///
-    /// @return String form of the lease
-    std::string toText();
-
-    /// @brief returns true if the lease is expired
-    /// @return true if the lease is expired
-    bool expired() const;
+    Lease6() : Lease(isc::asiolink::IOAddress("::"), 0, 0, 0, 0, 0),
+        type_(LEASE_IA_NA) {
+    }
 
     /// @brief Compare two leases for equality
     ///
@@ -394,6 +341,11 @@ struct Lease6 {
     bool operator!=(const Lease6& other) const {
         return (!operator==(other));
     }
+
+    /// @brief Convert Lease to Printable Form
+    ///
+    /// @return String form of the lease
+    virtual std::string toText() const;
 };
 
 /// @brief Pointer to a Lease6 structure.
