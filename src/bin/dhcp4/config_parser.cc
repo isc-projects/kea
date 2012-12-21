@@ -59,6 +59,12 @@ typedef Dhcp4ConfigParser* ParserFactory(const std::string& config_id);
 /// @brief a collection of factories that creates parsers for specified element names
 typedef std::map<std::string, ParserFactory*> FactoryMap;
 
+/// @brief a collection of elements that store uint32 values (e.g. renew-timer = 900)
+typedef std::map<std::string, uint32_t> Uint32Storage;
+
+/// @brief a collection of elements that store string values
+typedef std::map<std::string, std::string> StringStorage;
+
 /// @brief Storage for parsed boolean values.
 typedef std::map<string, bool> BooleanStorage;
 
