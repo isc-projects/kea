@@ -763,7 +763,6 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
-    std::cout << comment_->str() << std::endl;
     ASSERT_EQ(0, rcode_);
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
