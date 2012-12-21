@@ -86,6 +86,7 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
 // Commit the changes - reopen the database with the new parameters
 void
 DbAccessParser::commit() {
+    std::cout << "DB_ACCESS_PARSER_COMMIT: " << dbaccess_ << "\n";
 }
 
 };  // namespace dhcp

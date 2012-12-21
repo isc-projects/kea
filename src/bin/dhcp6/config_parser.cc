@@ -17,6 +17,7 @@
 #include <config/ccsession.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp6/config_parser.h>
+#include <dhcp6/dbaccess_parser.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/pool.h>
@@ -1185,6 +1186,8 @@ DhcpConfigParser* createGlobalDhcpConfigParser(const std::string& config_id) {
 
     factories.insert(pair<string, ParserFactory*>(
                          "version", StringParser::Factory));
+    factories.insert(pair<string, ParserFactory*>(
+                         "lease-database", DbAccessParser::factory));
 
     FactoryMap::iterator f = factories.find(config_id);
     if (f == factories.end()) {
