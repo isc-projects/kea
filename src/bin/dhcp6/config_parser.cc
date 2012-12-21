@@ -858,9 +858,14 @@ private:
         std::vector<uint8_t> binary;
         std::vector<std::string> data_tokens;
         if (csv_format) {
+            // If the option data is specified as a string of comma
+            // separated values then we need to split this string into
+            // individual values - each value will be used to initialize
+            // one data field of an option.
             data_tokens = isc::util::str::tokens(option_data, ",");
         } else {
-            // Transform string of hexadecimal digits into binary format.
+            // Otherwise, the option data is specified as a string of
+            // hexadecimal digits that we have to turn into binary format.
             try {
                 isc::util::encode::decodeHex(option_data, binary);
             } catch (...) {
