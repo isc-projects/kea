@@ -568,8 +568,6 @@ if __name__ == "__main__":
     sev = 'INFO'
     if options.verbose:
         sev = 'DEBUG'
-    LOG_FILE = os.path.join("@localstatedir@", "@PACKAGE_NAME@",
-                            "msgq.log").replace("${prefix}", "@prefix@")
     isc.log.init("b10-msgq", buffer=False, severity=sev, debuglevel=99)
 
     signal.signal(signal.SIGTERM, signal_handler)
