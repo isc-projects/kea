@@ -1172,7 +1172,8 @@ TEST_F(AuthSrvTest, queryCounterTruncTest) {
     // Create UDP message and process.
     // large-rdata.example.com. TXT; expect it exceeds 512 octet
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
-                                       default_qid, Name("large-rdata.example.com."),
+                                       default_qid,
+                                       Name("large-rdata.example.com."),
                                        RRClass::IN(), RRType::TXT());
     createRequestPacket(request_message, IPPROTO_UDP);
     server.processMessage(*io_message, *parse_message, *response_obuffer,
