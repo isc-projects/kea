@@ -19,6 +19,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <util/encode/hex.h>
+#include <util/strutil.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
@@ -703,6 +704,13 @@ public:
                     value_parser->setStorage(&string_values_);
                     parser = value_parser;
                 }
+            } else if (param.first == "csv-format") {
+                boost::shared_ptr<BooleanParser>
+                    value_parser(dynamic_cast<BooleanParser*>(BooleanParser::Factory(param.first)));
+                if (value_parser) {
+                    value_parser->setStorage(&boolean_values_);
+                    parser = value_parser;
+                }
             } else {
                 isc_throw(Dhcp4ConfigError,
                           "Parser error: option-data parameter not supported: "
@@ -806,16 +814,27 @@ private:
         }
 
         // Get option data from the configuration database ('data' field).
-        // Option data is specified by the user as case insensitive string
-        // of hexadecimal digits for each option.
-        std::string option_data = getStringParam("data");
+        const std::string option_data = getStringParam("data");
+        const bool csv_format = getBooleanParam("csv-format");
         // Transform string of hexadecimal digits into binary format.
         std::vector<uint8_t> binary;
-        try {
-            util::encode::decodeHex(option_data, binary);
-        } catch (...) {
-            isc_throw(Dhcp4ConfigError, "Parser error: option data is not a valid"
-                      << " string of hexadecimal digits: " << option_data);
+        std::vector<std::string> data_tokens;
+
+        if (csv_format) {
+            // If the option data is specified as a string of comma
+            // separated values then we need to split this string into
+            // individual values - each value will be used to initialize
+            // one data field of an option.
+            data_tokens = isc::util::str::tokens(option_data, ",");
+        } else {
+            // Otherwise, the option data is specified as a string of
+            // hexadecimal digits that we have to turn into binary format.
+            try {
+                util::encode::decodeHex(option_data, binary);
+            } catch (...) {
+                isc_throw(Dhcp4ConfigError, "Parser error: option data is not a valid"
+                          << " string of hexadecimal digits: " << option_data);
+            }
         }
         // Get all existing DHCPv4 option definitions. The one that matches
         // our option will be picked and used to create it.
@@ -835,6 +854,13 @@ private:
                       << " for the same option code. This will be supported once"
                       << " there option spaces are implemented.");
         } else if (num_defs == 0) {
+            if (csv_format) {
+                isc_throw(Dhcp4ConfigError, "the CSV option data format can be"
+                          " used to specify values for an option that has a"
+                          " definition. The option with code " << option_code
+                          << " does not have a definition.");
+            }
+
             // @todo We have a limited set of option definitions intiialized at the moment.
             // In the future we want to initialize option definitions for all options.
             // Consequently an error will be issued if an option definition does not exist
@@ -852,7 +878,9 @@ private:
             // use it to create the option instance.
             const OptionDefinitionPtr& def = *(range.first);
             try {
-                OptionPtr option = def->optionFactory(Option::V4, option_code, binary);
+                OptionPtr option = csv_format ?
+                    def->optionFactory(Option::V4, option_code, data_tokens) :
+                    def->optionFactory(Option::V4, option_code, binary);
                 Subnet::OptionDescriptor desc(option, false);
                 option_descriptor_.option = option;
                 option_descriptor_.persistent = false;
@@ -890,10 +918,27 @@ private:
         return (param->second);
     }
 
+    /// @brief Get a parameter from the boolean values storage.
+    ///
+    /// @param param_id parameter identifier.
+    ///
+    /// @throw isc::dhcp::Dhcp6ConfigError if a parameter has not been found.
+    /// @return a value of the boolean parameter.
+    bool getBooleanParam(const std::string& param_id) const {
+        BooleanStorage::const_iterator param = boolean_values_.find(param_id);
+        if (param == boolean_values_.end()) {
+            isc_throw(isc::dhcp::Dhcp4ConfigError, "parser error: option-data parameter"
+                      << " '" << param_id << "' not specified");
+        }
+        return (param->second);
+    }
+
     /// Storage for uint32 values (e.g. option code).
     Uint32Storage uint32_values_;
     /// Storage for string values (e.g. option name or data).
     StringStorage string_values_;
+    /// Storage for boolean values.
+    BooleanStorage boolean_values_;
     /// Pointer to options storage. This storage is provided by
     /// the calling class and is shared by all OptionDataParser objects.
     OptionStorage* options_;
