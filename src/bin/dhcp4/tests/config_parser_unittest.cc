@@ -35,12 +35,6 @@ using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::config;
 
-namespace isc {
-namespace dhcp {
-extern Uint32Storage uint32_defaults;
-}
-}
-
 namespace {
 
 class Dhcp4ParserTest : public ::testing::Test {
@@ -55,7 +49,9 @@ public:
 
     // Checks if global parameter of name have expected_value
     void checkGlobalUint32(string name, uint32_t expected_value) {
-        Uint32Storage::const_iterator it = uint32_defaults.find(name);
+        const std::map<std::string, uint32_t>& uint32_defaults = getUint32Defaults();
+        std::map<std::string, uint32_t>::const_iterator it =
+            uint32_defaults.find(name);
         if (it == uint32_defaults.end()) {
             ADD_FAILURE() << "Expected uint32 with name " << name
                           << " not found";
@@ -728,6 +724,8 @@ TEST_F(Dhcp4ParserTest, optionDataLowerCase) {
 /// and properly err of out of range values. As we can't call Uint32Parser
 /// directly, we are exploiting the fact that it is used to parse global
 /// parameter renew-timer and the results are stored in uint32_defaults.
+/// We get the uint32_defaults using a getUint32Defaults functions which
+/// is defined only to access the values from this test.
 TEST_F(Dhcp4ParserTest, DISABLED_Uint32Parser) {
 
     ConstElementPtr status;
