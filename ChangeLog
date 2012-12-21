@@ -1,3 +1,10 @@
+535.	[bug]		jelte
+	The log4cplus internal logging mechanism has been disabled, and no
+	output from the log4cplus library itself should be printed to
+	stderr anymore. This output can be enabled by using the
+	compile-time option --enable-debug.
+	(Trac #1081, db55f102b30e76b72b134cbd77bd183cd01f95c0)
+
 534.	[func]*			vorner
 	The b10-msgq now uses the same logging format as the rest
 	of the system. However, it still doesn't obey the common
