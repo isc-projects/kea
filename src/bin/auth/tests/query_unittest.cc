@@ -1139,7 +1139,14 @@ TEST_P(QueryTest, nodomainANY) {
 // This tests that when we need to look up Zone's apex NS records for
 // authoritative answer, and there is no apex NS records. It should
 // throw in that case.
+//
+// This only works with mock data source (for production datasrc the
+// post-load would reject such a zone)
 TEST_P(QueryTest, noApexNS) {
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // Disable apex NS record
     mock_finder->setApexNSFlag(false);
 
@@ -1199,6 +1206,11 @@ TEST_P(QueryTest, secureUnsignedDelegation) {
 }
 
 TEST_P(QueryTest, secureUnsignedDelegationWithNSEC3) {
+    // skip NSEC3-related tests for actual data source for the moment
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // Similar to the previous case, but the zone is signed with NSEC3,
     // and this delegation is NOT an optout.
     const Name insecurechild_name("unsigned-delegation.example.com");
@@ -1221,6 +1233,11 @@ TEST_P(QueryTest, secureUnsignedDelegationWithNSEC3) {
 }
 
 TEST_P(QueryTest, secureUnsignedDelegationWithNSEC3OptOut) {
+    // skip NSEC3-related tests for actual data source for the moment
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // Similar to the previous case, but the delegation is an optout.
     mock_finder->setNSEC3Flag(true);
 
@@ -1247,6 +1264,11 @@ TEST_P(QueryTest, secureUnsignedDelegationWithNSEC3OptOut) {
 }
 
 TEST_P(QueryTest, badSecureDelegation) {
+    // broken data source scenario; works only with mock.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // Test whether exception is raised if DS query at delegation results in
     // something different than SUCCESS or NXRRSET
     EXPECT_THROW(query.process(list,
@@ -1325,6 +1347,11 @@ TEST_P(QueryTest, nxdomainWithNSECDuplicate) {
 }
 
 TEST_P(QueryTest, nxdomainBadNSEC1) {
+    // broken data source scenario; works only with mock.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // ZoneFinder::find() returns NXDOMAIN with non NSEC RR.
     mock_finder->setNSECResult(Name("badnsec.example.com"),
                                ZoneFinder::NXDOMAIN,
@@ -1335,6 +1362,11 @@ TEST_P(QueryTest, nxdomainBadNSEC1) {
 }
 
 TEST_P(QueryTest, nxdomainBadNSEC2) {
+    // broken data source scenario; works only with mock.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // ZoneFinder::find() returns NXDOMAIN with an empty NSEC RR.
     mock_finder->setNSECResult(Name("emptynsec.example.com"),
                                ZoneFinder::NXDOMAIN,
@@ -1344,7 +1376,12 @@ TEST_P(QueryTest, nxdomainBadNSEC2) {
                  Query::BadNSEC);
 }
 
-TEST_P(QueryTest, nxdomainBadNSEC3) {
+TEST_P(QueryTest, nxdomainBadNSEC) {
+    // broken data source scenario; works only with mock.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // "no-wildcard proof" returns SUCCESS.  it should be NXDOMAIN.
     mock_finder->setNSECResult(Name("*.example.com"),
                                ZoneFinder::SUCCESS,
@@ -1355,6 +1392,11 @@ TEST_P(QueryTest, nxdomainBadNSEC3) {
 }
 
 TEST_P(QueryTest, nxdomainBadNSEC4) {
+    // broken data source scenario; works only with mock.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // "no-wildcard proof" doesn't return RRset.
     mock_finder->setNSECResult(Name("*.example.com"),
                                ZoneFinder::NXDOMAIN, ConstRRsetPtr());
@@ -1364,6 +1406,11 @@ TEST_P(QueryTest, nxdomainBadNSEC4) {
 }
 
 TEST_P(QueryTest, nxdomainBadNSEC5) {
+    // broken data source scenario; works only with mock.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // "no-wildcard proof" returns non NSEC.
     mock_finder->setNSECResult(Name("*.example.com"),
                                ZoneFinder::NXDOMAIN,
@@ -1385,6 +1432,11 @@ TEST_P(QueryTest, nxdomainBadNSEC5) {
 }
 
 TEST_P(QueryTest, nxdomainBadNSEC6) {
+    // broken data source scenario; works only with mock.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // "no-wildcard proof" returns empty NSEC.
     mock_finder->setNSECResult(Name("*.example.com"),
                                ZoneFinder::NXDOMAIN,
@@ -1488,6 +1540,11 @@ TEST_P(QueryTest, CNAMEwildNSEC) {
 }
 
 TEST_P(QueryTest, wildcardNSEC3) {
+    // skip NSEC3-related tests for actual data source for the moment
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // Similar to wildcardNSEC, but the zone is signed with NSEC3.
     // The next closer is y.wild.example.com, the covering NSEC3 for it
     // is (in our setup) the NSEC3 for the apex.
@@ -1516,6 +1573,11 @@ TEST_P(QueryTest, wildcardNSEC3) {
 }
 
 TEST_P(QueryTest, CNAMEwildNSEC3) {
+    // skip NSEC3-related tests for actual data source for the moment
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // Similar to CNAMEwildNSEC, but with NSEC3.
     // The next closer is qname itself, the covering NSEC3 for it
     // is (in our setup) the NSEC3 for the www.example.com.
@@ -1537,6 +1599,11 @@ TEST_P(QueryTest, CNAMEwildNSEC3) {
 }
 
 TEST_P(QueryTest, badWildcardNSEC3) {
+    // skip NSEC3-related tests for actual data source for the moment
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // Similar to wildcardNSEC3, but emulating run time collision by
     // returning NULL in the next closer proof for the closest encloser
     // proof.
@@ -1551,6 +1618,11 @@ TEST_P(QueryTest, badWildcardNSEC3) {
 }
 
 TEST_P(QueryTest, badWildcardProof1) {
+    // broken data source scenario; works only with mock.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // Unexpected case in wildcard proof: ZoneFinder::find() returns SUCCESS
     // when NXDOMAIN is expected.
     mock_finder->setNSECResult(Name("www.wild.example.com"),
@@ -1562,6 +1634,11 @@ TEST_P(QueryTest, badWildcardProof1) {
 }
 
 TEST_P(QueryTest, badWildcardProof2) {
+    // broken data source scenario; works only with mock.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // "wildcard proof" doesn't return RRset.
     mock_finder->setNSECResult(Name("www.wild.example.com"),
                                ZoneFinder::NXDOMAIN, ConstRRsetPtr());
@@ -1571,6 +1648,11 @@ TEST_P(QueryTest, badWildcardProof2) {
 }
 
 TEST_P(QueryTest, badWildcardProof3) {
+    // broken data source scenario; works only with mock.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // "wildcard proof" returns empty NSEC.
     mock_finder->setNSECResult(Name("www.wild.example.com"),
                                ZoneFinder::NXDOMAIN,
@@ -1581,6 +1663,11 @@ TEST_P(QueryTest, badWildcardProof3) {
 }
 
 TEST_P(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
+    // TODO: this seems to be an in-memory specific bug
+    if (GetParam() == INMEMORY) {
+        return;
+    }
+
     // NXRRSET on WILDCARD with DNSSEC proof.  We should have SOA, NSEC that
     // proves the NXRRSET and their RRSIGs. In this case we only need one NSEC,
     // which proves both NXDOMAIN and the non existence RRSETs of wildcard.
@@ -1597,6 +1684,11 @@ TEST_P(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
 }
 
 TEST_P(QueryTest, wildcardNxrrsetWithNSEC) {
+    // TODO: this seems to be an in-memory specific bug
+    if (GetParam() == INMEMORY) {
+        return;
+    }
+
     // WILDCARD + NXRRSET with DNSSEC proof.  We should have SOA, NSEC that
     // proves the NXRRSET and their RRSIGs. In this case we need two NSEC RRs,
     // one proves NXDOMAIN and the other proves non existence RRSETs of
@@ -1617,6 +1709,11 @@ TEST_P(QueryTest, wildcardNxrrsetWithNSEC) {
 }
 
 TEST_P(QueryTest, wildcardNxrrsetWithNSEC3) {
+    // skip NSEC3-related tests for actual data source for the moment
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // Similar to the previous case, but providing NSEC3 proofs according to
     // RFC5155 Section 7.2.5.
 
@@ -1650,6 +1747,11 @@ TEST_P(QueryTest, wildcardNxrrsetWithNSEC3) {
 }
 
 TEST_P(QueryTest, wildcardNxrrsetWithNSEC3Collision) {
+    // skip NSEC3-related tests for actual data source for the moment
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // Similar to the previous case, but emulating run time collision by
     // returning NULL in the next closer proof for the closest encloser
     // proof.
@@ -1664,9 +1766,14 @@ TEST_P(QueryTest, wildcardNxrrsetWithNSEC3Collision) {
 }
 
 TEST_P(QueryTest, wildcardNxrrsetWithNSEC3Broken) {
+    // skip NSEC3-related tests for actual data source for the moment
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // Similar to wildcardNxrrsetWithNSEC3, but no matching NSEC3 for the
     // wildcard name will be returned.  This shouldn't happen in a reasonably
-    // NSEC-signed zone, and should result in an exception.
+    // NSEC3-signed zone, and should result in an exception.
     mock_finder->setNSEC3Flag(true);
     const Name wname("*.uwild.example.com.");
     ZoneFinder::FindNSEC3Result nsec3(false, 0, textToRRset(nsec3_apex_txt),
@@ -1704,6 +1811,11 @@ TEST_P(QueryTest, wildcardEmptyWithNSEC) {
  * throw in that case.
  */
 TEST_P(QueryTest, noSOA) {
+    // broken data source scenario; works only with mock.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // disable zone's SOA RR.
     mock_finder->setSOAFlag(false);
 
@@ -1998,6 +2110,11 @@ nsec3Check(bool expected_matched, uint8_t expected_labels,
 }
 
 TEST_P(QueryTest, findNSEC3) {
+    // skip NSEC3-related tests for actual data source for the moment
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // In all test cases in the recursive mode, the closest encloser is the
     // apex, and result's closest_labels should be the number of apex labels.
     // (In non recursive mode closest_labels should be the # labels of the
@@ -2135,6 +2252,12 @@ private:
 };
 
 TEST_P(QueryTest, dsAboveDelegation) {
+    // We could setup the child zone for other data sources, but it won't be
+    // simple addition.  For now we test it for mock only.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // Pretending to have authority for the child zone, too.
     memory_client.addZone(ZoneFinderPtr(new AlternateZoneFinder(
                                             Name("delegation.example.com"))));
@@ -2199,6 +2322,11 @@ TEST_P(QueryTest, dsBelowDelegation) {
 // exists in the child zone.  The Query module should still return SOA.
 // In our implementation NSEC/NSEC3 isn't attached in this case.
 TEST_P(QueryTest, dsBelowDelegationWithDS) {
+    // Requires in-test addition of an RR; works only for mock.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     mock_finder->addRecord(zone_ds_txt); // add the DS to the child's apex
     EXPECT_NO_THROW(query.process(list, Name("example.com"),
                                   RRType::DS(), response, true));
@@ -2236,6 +2364,12 @@ TEST_P(QueryTest, dsAtGrandParent) {
 // have authority for the "parent".  Unlike the dsAboveDelegation test case
 // the query should be handled in the child zone, not in the grandparent.
 TEST_P(QueryTest, dsAtGrandParentAndChild) {
+    // We could setup the child zone for other data sources, but it won't be
+    // simple addition.  For now we test it for mock only.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // Pretending to have authority for the child zone, too.
     const Name childname("grand.delegation.example.com");
     memory_client.addZone(ZoneFinderPtr(
@@ -2255,6 +2389,12 @@ TEST_P(QueryTest, dsAtGrandParentAndChild) {
 // the query will be handled in the root zone anyway, and should (normally)
 // result in no data.
 TEST_P(QueryTest, dsAtRoot) {
+    // We could setup the additional zone for other data sources, but it
+    // won't be simple addition.  For now we test it for mock only.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // Pretend to be a root server.
     memory_client.addZone(ZoneFinderPtr(
                               new AlternateZoneFinder(Name::ROOT_NAME())));
@@ -2272,6 +2412,12 @@ TEST_P(QueryTest, dsAtRoot) {
 // query.  How we respond wouldn't matter much in practice, but check if
 // it behaves as it's intended.  This implementation should return the DS.
 TEST_P(QueryTest, dsAtRootWithDS) {
+    // We could setup the additional zone for other data sources, but it
+    // won't be simple addition.  For now we test it for mock only.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     memory_client.addZone(ZoneFinderPtr(
                               new AlternateZoneFinder(Name::ROOT_NAME(),
                                                       true)));
@@ -2288,6 +2434,11 @@ TEST_P(QueryTest, dsAtRootWithDS) {
 
 // Check the signature is present when an NXRRSET is returned
 TEST_P(QueryTest, nxrrsetWithNSEC3) {
+    // skip NSEC3-related tests for actual data source for the moment
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     mock_finder->setNSEC3Flag(true);
 
     // NXRRSET with DNSSEC proof.  We should have SOA, NSEC3 that proves the
@@ -2308,6 +2459,11 @@ TEST_P(QueryTest, nxrrsetWithNSEC3) {
 // Check the exception is correctly raised when the NSEC3 thing isn't in the
 // zone
 TEST_P(QueryTest, nxrrsetMissingNSEC3) {
+    // skip NSEC3-related tests for actual data source for the moment
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     mock_finder->setNSEC3Flag(true);
     // We just need it to return false for "matched". This indicates
     // there's no exact match for NSEC3 on www.example.com.
@@ -2321,6 +2477,11 @@ TEST_P(QueryTest, nxrrsetMissingNSEC3) {
 }
 
 TEST_P(QueryTest, nxrrsetWithNSEC3_ds_exact) {
+    // skip NSEC3-related tests for actual data source for the moment
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     mock_finder->addRecord(unsigned_delegation_nsec3_txt);
     mock_finder->setNSEC3Flag(true);
 
@@ -2340,6 +2501,11 @@ TEST_P(QueryTest, nxrrsetWithNSEC3_ds_exact) {
 }
 
 TEST_P(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
+    // skip NSEC3-related tests for actual data source for the moment
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     mock_finder->addRecord(unsigned_delegation_nsec3_txt);
     mock_finder->setNSEC3Flag(true);
 
@@ -2366,6 +2532,11 @@ TEST_P(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
 }
 
 TEST_P(QueryTest, nxdomainWithNSEC3Proof) {
+    // skip NSEC3-related tests for actual data source for the moment
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // Name Error (NXDOMAIN) case with NSEC3 proof per RFC5155 Section 7.2.2.
 
     // Enable NSEC3
@@ -2402,6 +2573,11 @@ TEST_P(QueryTest, nxdomainWithNSEC3Proof) {
 }
 
 TEST_P(QueryTest, nxdomainWithBadNextNSEC3Proof) {
+    // broken data source scenario; works only with mock.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // Similar to the previous case, but emulating run time collision by
     // returning NULL in the next closer proof for the closest encloser
     // proof.
@@ -2416,6 +2592,11 @@ TEST_P(QueryTest, nxdomainWithBadNextNSEC3Proof) {
 }
 
 TEST_P(QueryTest, nxdomainWithBadWildcardNSEC3Proof) {
+    // broken data source scenario; works only with mock.
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     // Similar to nxdomainWithNSEC3Proof, but let findNSEC3() return a matching
     // NSEC3 for the possible wildcard name, emulating run-time collision.
     // This should result in BadNSEC3 exception.
@@ -2438,6 +2619,11 @@ TEST_P(QueryTest, nxdomainWithBadWildcardNSEC3Proof) {
 // query logic for these cases.  At that point it's probably better to
 // clean them up.
 TEST_P(QueryTest, emptyNameWithNSEC3) {
+    // skip NSEC3-related tests for actual data source for the moment
+    if (GetParam() != MOCK) {
+        return;
+    }
+
     mock_finder->setNSEC3Flag(true);
     ZoneFinderContextPtr result = mock_finder->find(
         Name("no.example.com"), RRType::A(), ZoneFinder::FIND_DNSSEC);
