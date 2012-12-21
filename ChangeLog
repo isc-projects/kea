@@ -1,3 +1,10 @@
+534.	[func]*			vorner
+	The b10-msgq now uses the same logging format as the rest
+	of the system. However, it still doesn't obey the common
+	configuration, as due to technical issues it is not able
+	to read it yet.
+	(git 9e6e821c0a33aab0cd0e70e51059d9a2761f76bb)
+
 bind10-1.0.0-beta released on December 20, 2012
 
 533.	[build]*		jreed
