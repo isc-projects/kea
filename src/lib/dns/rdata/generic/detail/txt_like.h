@@ -191,6 +191,7 @@ public:
                  c_it != (*it).end();
                  ++c_it) {
                 if ((*c_it < 0x20) || (*c_it >= 0x7f)) {
+                    // convert to escaped \xxx (decimal) format
                     s.push_back('\\');
                     s.push_back('0' + ((*c_it / 100) % 10));
                     s.push_back('0' + ((*c_it / 10) % 10));
