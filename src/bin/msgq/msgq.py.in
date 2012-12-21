@@ -565,6 +565,7 @@ if __name__ == "__main__":
 
     # Init logging, according to the parameters.
     # FIXME: Do proper logger configuration, this is just a hack
+    # This is #2582
     sev = 'INFO'
     if options.verbose:
         sev = 'DEBUG'
