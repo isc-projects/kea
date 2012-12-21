@@ -85,6 +85,7 @@ config commit
 quit
 ' | $RUN_BINDCTL \
 	--csv-file-dir=$BINDCTL_CSV_DIR 2>&1 > /dev/null || status=1
+sleep 2
 $DIG +norec @10.53.0.1 -p 53210 ns.example.com. A >dig.out.$n || status=1
 # perform a simple check on the output (digcomp would be too much for this)
 grep 192.0.2.1 dig.out.$n > /dev/null || status=1
@@ -118,6 +119,7 @@ config commit
 quit
 " | $RUN_BINDCTL \
 	--csv-file-dir=$BINDCTL_CSV_DIR > bindctl.out.$n || status=1
+sleep 2
 $DIG +norec @10.53.0.1 -p 53210 ns.example.com. A >dig.out.$n || status=1
 grep 192.0.2.2 dig.out.$n > /dev/null || status=1
 if [ $status != 0 ]; then echo "I:failed"; fi
@@ -148,6 +150,7 @@ quit
 ' | $RUN_BINDCTL \
 	--csv-file-dir=$BINDCTL_CSV_DIR 2>&1 > /dev/null || status=1
 done
+sleep 2
 $DIG +norec @10.53.0.1 -p 53210 ns.example.com. A >dig.out.$n || status=1
 grep 192.0.2.2 dig.out.$n > /dev/null || status=1
 if [ $status != 0 ]; then echo "I:failed"; fi
@@ -183,6 +186,7 @@ quit
 ' | $RUN_BINDCTL \
 	--csv-file-dir=$BINDCTL_CSV_DIR 2>&1 > /dev/null || status=1
 done
+sleep 2
 $DIG +norec @10.53.0.1 -p 53210 ns.example.com. A >dig.out.$n || status=1
 grep 192.0.2.2 dig.out.$n > /dev/null || status=1
 if [ $status != 0 ]; then echo "I:failed"; fi
