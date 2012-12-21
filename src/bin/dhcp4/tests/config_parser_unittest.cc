@@ -92,14 +92,22 @@ public:
             params["name"] = param_value;
             params["code"] = "56";
             params["data"] = "AB CDEF0105";
+            params["csv-format"] = "False";
         } else if (parameter == "code") {
             params["name"] = "option_foo";
             params["code"] = param_value;
             params["data"] = "AB CDEF0105";
+            params["csv-format"] = "False";
         } else if (parameter == "data") {
             params["name"] = "option_foo";
             params["code"] = "56";
             params["data"] = param_value;
+            params["csv-format"] = "False";
+        } else if (parameter == "csv-format") {
+            params["name"] = "option_foo";
+            params["code"] = "56";
+            params["data"] = "AB CDEF0105";
+            params["csv-format"] = param_value;
         }
         return (createConfigWithOption(params));
     }
@@ -136,6 +144,8 @@ public:
                 stream << "\"code\": " << param.second << "";
             } else if (param.first == "data") {
                 stream << "\"data\": \"" << param.second << "\"";
+            } else if (param.first == "csv-format") {
+                stream << "\"csv-format\": " << param.second;
             }
         }
         stream <<
@@ -435,12 +445,14 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
         "\"option-data\": [ {"
         "    \"name\": \"option_foo\","
         "    \"code\": 56,"
-        "    \"data\": \"AB CDEF0105\""
+        "    \"data\": \"AB CDEF0105\","
+        "    \"csv-format\": False"
         " },"
         " {"
         "    \"name\": \"option_foo2\","
         "    \"code\": 23,"
-        "    \"data\": \"01\""
+        "    \"data\": \"01\","
+        "    \"csv-format\": False"
         " } ],"
         "\"subnet4\": [ { "
         "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
@@ -498,7 +510,8 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
         "\"option-data\": [ {"
         "      \"name\": \"option_foo\","
         "      \"code\": 56,"
-        "      \"data\": \"AB\""
+        "      \"data\": \"AB\","
+        "      \"csv-format\": False"
         " } ],"
         "\"subnet4\": [ { "
         "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
@@ -506,12 +519,14 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
         "    \"option-data\": [ {"
         "          \"name\": \"option_foo\","
         "          \"code\": 56,"
-        "          \"data\": \"AB CDEF0105\""
+        "          \"data\": \"AB CDEF0105\","
+        "          \"csv-format\": False"
         "        },"
         "        {"
         "          \"name\": \"option_foo2\","
         "          \"code\": 23,"
-        "          \"data\": \"01\""
+        "          \"data\": \"01\","
+        "          \"csv-format\": False"
         "        } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }";
@@ -567,7 +582,8 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
         "    \"option-data\": [ {"
         "          \"name\": \"option_foo\","
         "          \"code\": 56,"
-        "          \"data\": \"0102030405060708090A\""
+        "          \"data\": \"0102030405060708090A\","
+        "          \"csv-format\": False"
         "        } ]"
         " },"
         " {"
@@ -576,7 +592,8 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
         "    \"option-data\": [ {"
         "          \"name\": \"option_foo2\","
         "          \"code\": 23,"
-        "          \"data\": \"FF\""
+        "          \"data\": \"FF\","
+        "          \"csv-format\": False"
         "        } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }";
