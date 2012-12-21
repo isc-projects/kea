@@ -28,12 +28,6 @@ namespace dhcp {
 
 class Dhcpv4Srv;
 
-/// @brief a collection of elements that store uint32 values (e.g. renew-timer = 900)
-typedef std::map<std::string, uint32_t> Uint32Storage;
-
-/// @brief a collection of elements that store string values
-typedef std::map<std::string, std::string> StringStorage;
-
 /// An exception that is thrown if an error occurs while configuring an
 /// @c Dhcpv4Srv object.
 class Dhcp4ConfigError : public isc::Exception {
@@ -69,7 +63,8 @@ public:
 /// reconfiguration statuses. It may return the following response codes:
 /// 0 - configuration successful
 /// 1 - malformed configuration (parsing failed)
-/// 2 - logical error (parsing was successful, but the values are invalid)
+/// 2 - commit failed (parsing was successful, but failed to store the
+/// values in to server's configuration)
 ///
 /// @param config_set a new configuration (JSON) for DHCPv4 server
 /// @return answer that contains result of reconfiguration
