@@ -240,7 +240,7 @@ Element::createMap() {
 //
 namespace {
 bool
-char_in(const char c, const char *chars) {
+char_in(const int c, const char *chars) {
     for (size_t i = 0; i < strlen(chars); ++i) {
         if (chars[i] == c) {
             return (true);
@@ -251,7 +251,7 @@ char_in(const char c, const char *chars) {
 
 void
 skip_chars(std::istream &in, const char *chars, int& line, int& pos) {
-    char c = in.peek();
+    int c = in.peek();
     while (char_in(c, chars) && c != EOF) {
         if (c == '\n') {
             ++line;
@@ -273,7 +273,7 @@ void
 skip_to(std::istream &in, const std::string& file, int& line,
         int& pos, const char* chars, const char* may_skip="")
 {
-    char c = in.get();
+    int c = in.get();
     ++pos;
     while (c != EOF) {
         if (c == '\n') {
@@ -296,7 +296,7 @@ skip_to(std::istream &in, const std::string& file, int& line,
             --pos;
             return;
         } else {
-            throwJSONError(std::string("'") + c + "' read, one of \"" + chars + "\" expected", file, line, pos);
+            throwJSONError(std::string("'") + std::string(1, c) + "' read, one of \"" + chars + "\" expected", file, line, pos);
         }
     }
     throwJSONError(std::string("EOF read, one of \"") + chars + "\" expected", file, line, pos);
@@ -308,9 +308,8 @@ std::string
 str_from_stringstream(std::istream &in, const std::string& file, const int line,
                       int& pos) throw (JSONError)
 {
-    char c;
     std::stringstream ss;
-    c = in.get();
+    int c = in.get();
     ++pos;
     if (c == '"') {
         c = in.get();
@@ -354,7 +353,7 @@ str_from_stringstream(std::istream &in, const std::string& file, const int line,
             in.get();
             ++pos;
         }
-        ss << c;
+        ss.put(c);
         c = in.get();
         ++pos;
     }
@@ -461,7 +460,7 @@ ElementPtr
 from_stringstream_list(std::istream &in, const std::string& file, int& line,
                        int& pos)
 {
-    char c = 0;
+    int c = 0;
     ElementPtr list = Element::createList();
     ConstElementPtr cur_list_element;
 
@@ -484,7 +483,7 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
 {
     ElementPtr map = Element::createMap();
     skip_chars(in, WHITESPACE, line, pos);
-    char c = in.peek();
+    int c = in.peek();
     if (c == EOF) {
         throwJSONError(std::string("Unterminated map, <string> or } expected"), file, line, pos);
     } else if (c == '}') {
@@ -578,7 +577,7 @@ ElementPtr
 Element::fromJSON(std::istream &in, const std::string& file, int& line,
                   int& pos) throw(JSONError)
 {
-    char c = 0;
+    int c = 0;
     ElementPtr element;
     bool el_read = false;
     skip_chars(in, WHITESPACE, line, pos);
@@ -633,7 +632,7 @@ Element::fromJSON(std::istream &in, const std::string& file, int& line,
             case EOF:
                 break;
             default:
-                throwJSONError(std::string("error: unexpected character ") + c, file, line, pos);
+                throwJSONError(std::string("error: unexpected character ") + std::string(1, c), file, line, pos);
                 break;
         }
     }
