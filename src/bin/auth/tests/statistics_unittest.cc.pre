@@ -175,10 +175,10 @@ TEST_F(CountersTest, incrementProtocolType) {
     //      ipv6   tcp
     int count_v4 = 0, count_v6 = 0, count_udp = 0, count_tcp = 0;
     for (int i = 0; i < 4; ++i) {
-        const enum MessageAttributes::IPVersion af = i & 1 ?
+        const enum MessageAttributes::IPVersion af = (i & 1) != 0 ?
             MessageAttributes::IP_VERSION_IPV4 :
             MessageAttributes::IP_VERSION_IPV6;
-        const enum MessageAttributes::TransportProtocol proto = i & 2 ?
+        const enum MessageAttributes::TransportProtocol proto = (i & 2) != 0 ?
             MessageAttributes::TRANSPORT_UDP :
             MessageAttributes::TRANSPORT_TCP;
 
@@ -326,9 +326,9 @@ TEST_F(CountersTest, incrementTSIG) {
     // badsig can't be true if the message does not have signature.
     int count_req_tsig = 0, count_res_tsig = 0, count_badsig = 0;
     for (int i = 0; i < 3; ++i) {
-        const bool is_req_tsig = (i == 2) ? true : i & 1;
-        const bool is_res_tsig = i & 1;
-        const bool is_badsig = i & 2;
+        const bool is_req_tsig = (i == 2) ? true : (i & 1) != 0;
+        const bool is_res_tsig = (i & 1) != 0;
+        const bool is_badsig = (i & 2) != 0;
         buildSkeletonMessage(msgattrs);
         msgattrs.setRequestSig(is_req_tsig, is_badsig);
         msgattrs.setResponseSigTSIG(is_res_tsig);
