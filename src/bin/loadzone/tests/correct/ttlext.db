@@ -1,12 +1,16 @@
 $ORIGIN ttlext.
-@			IN SOA	ns hostmaster (
+; this needs #2500
+;@			IN SOA	ns hostmaster (
+@			IN SOA	ns.ttlext. hostmaster.ttlext. (
 				1        ; serial
 				3600
 				1800
 				1814400
 				3
 				)
-			NS	ns
+; this needs #2390
+;			NS	ns
+			NS	ns.ttlext.
 ns			A	10.53.0.1
 a			TXT	"soa minttl 3"
 b		2S	TXT	"explicit ttl 2"
