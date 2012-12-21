@@ -184,24 +184,7 @@ public:
                 s.push_back(' ');
             }
             s.push_back('"');
-            for (std::vector<uint8_t>::const_iterator c_it =
-                   (*it).begin() + 1;
-                 c_it != (*it).end();
-                 ++c_it) {
-                const uint8_t ch = *c_it;
-                if ((ch < 0x20) || (ch >= 0x7f)) {
-                    // convert to escaped \xxx (decimal) format
-                    s.push_back('\\');
-                    s.push_back('0' + ((ch / 100) % 10));
-                    s.push_back('0' + ((ch / 10) % 10));
-                    s.push_back('0' + (ch % 10));
-                    continue;
-                }
-                if ((ch == '"') || (ch == ';') || (ch == '\\')) {
-                    s.push_back('\\');
-                }
-                s.push_back(ch);
-            }
+            s.append(charStringToString(*it));
             s.push_back('"');
         }
 
