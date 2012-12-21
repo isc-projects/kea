@@ -158,10 +158,9 @@ TEST_F(DbAccessParserTest, validTypeMemfile) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    DbAccessParser parser;
+    DbAccessParser parser("lease-database");
     EXPECT_NO_THROW(parser.build(json_elements));
     string dbaccess = parser.getDbAccessString();
-
     checkAccessString("Valid memfile", dbaccess, config);
 }
 
@@ -178,10 +177,9 @@ TEST_F(DbAccessParserTest, validTypeMysql) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    DbAccessParser parser;
+    DbAccessParser parser("lease-database");
     EXPECT_NO_THROW(parser.build(json_elements));
     string dbaccess = parser.getDbAccessString();
-
     checkAccessString("Valid mysql", dbaccess, config);
 }
 
@@ -197,7 +195,7 @@ TEST_F(DbAccessParserTest, missingTypeKeyword) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    DbAccessParser parser;
+    DbAccessParser parser("lease-database");
     EXPECT_THROW(parser.build(json_elements), TypeKeywordMissing);
 }
 
@@ -215,8 +213,126 @@ TEST_F(DbAccessParserTest, badTypeKeyword) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    DbAccessParser parser;
+    DbAccessParser parser("lease-database");
     EXPECT_THROW(parser.build(json_elements), BadValue);
+}
+
+// Check that the factory function works.
+TEST_F(DbAccessParserTest, factory) {
+    const char* config[] = {"type", "memfile",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    // Check that the parser is built through the factory.
+    boost::scoped_ptr<DhcpConfigParser> parser(
+        DbAccessParser::factory("lease-database"));
+    EXPECT_NO_THROW(parser->build(json_elements));
+
+    // Access the "raw" parser.
+    DbAccessParser* dbap = dynamic_cast<DbAccessParser*>(parser.get());
+    EXPECT_NE(static_cast<DbAccessParser*>(NULL), dbap);
+    string dbaccess = dbap->getDbAccessString();
+    checkAccessString("Valid mysql", dbaccess, config);
+}
+
+// Check reconfiguration.  Checks that incremental changes applied to the
+// database configuration are incremental.
+TEST_F(DbAccessParserTest, incrementalChanges) {
+    const char* config1[] = {"type", "memfile",
+                             NULL};
+
+    // Applying config2 will cause a wholesale change.
+    const char* config2[] = {"type",     "mysql",
+                             "host",     "erewhon",
+                             "user",     "kea",
+                             "password", "keapassword",
+                             "name",     "keatest",
+                             NULL};
+
+    // Applying incremental2 should cause a change to config3.
+    const char* incremental2[] = {"user",     "me",
+                                  "password", "meagain",
+                                  NULL};
+    const char* config3[] = {"type",     "mysql",
+                             "host",     "erewhon",
+                             "user",     "me",
+                             "password", "meagain",
+                             "name",     "keatest",
+                             NULL};
+
+    // incremental3 will cause an exception.  There should be no change
+    // to the returned value.
+    const char* incremental3[] = {"type",     "invalid",
+                                  "user",     "you",
+                                  "password", "youagain",
+                                  NULL};
+
+    // incremental4 is a compatible change and should cause a transition
+    // to config4.
+    const char* incremental4[] = {"user",     "them",
+                                  "password", "themagain",
+                                  NULL};
+    const char* config4[] = {"type",     "mysql",
+                             "host",     "erewhon",
+                             "user",     "them",
+                             "password", "themagain",
+                             "name",     "keatest",
+                             NULL};
+
+    DbAccessParser parser("lease-database");
+
+    // First configuration string should cause a representation of that string
+    // to be held.
+    string json_config = toJson(config1);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    EXPECT_NO_THROW(parser.build(json_elements));
+    string dbaccess = parser.getDbAccessString();
+    checkAccessString("Initial configuration", dbaccess, config1);
+
+    // Applying a wholesale change will cause the access string to change
+    // to a representation of the new configuration.
+    json_config = toJson(config2);
+    json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    EXPECT_NO_THROW(parser.build(json_elements));
+    dbaccess = parser.getDbAccessString();
+    checkAccessString("Subsequent configuration", dbaccess, config2);
+
+    // Applying an incremental change will cause the representation to change
+    // incrementally.
+    json_config = toJson(incremental2);
+    json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    EXPECT_NO_THROW(parser.build(json_elements));
+    dbaccess = parser.getDbAccessString();
+    checkAccessString("Incremental configuration", dbaccess, config3);
+
+    // Applying the next incremental change should cause an exception to be
+    // thrown and there be no change to the access string.
+    json_config = toJson(incremental3);
+    json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    EXPECT_THROW(parser.build(json_elements), BadValue);
+    dbaccess = parser.getDbAccessString();
+    checkAccessString("Incompatible incremental change", dbaccess, config3);
+
+    // Applying an incremental change will cause the representation to change
+    // incrementally.
+    json_config = toJson(incremental4);
+    json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    EXPECT_NO_THROW(parser.build(json_elements));
+    dbaccess = parser.getDbAccessString();
+    checkAccessString("Compatible incremental change", dbaccess, config4);
 }
 
 };  // Anonymous namespace
