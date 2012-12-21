@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <algorithm>
 #include <iostream>
 
@@ -21,6 +23,7 @@
 #include <log4cplus/consoleappender.h>
 #include <log4cplus/fileappender.h>
 #include <log4cplus/syslogappender.h>
+#include <log4cplus/helpers/loglog.h>
 
 #include <log/logger.h>
 #include <log/logger_support.h>
@@ -195,6 +198,13 @@ void LoggerManagerImpl::initRootLogger(isc::log::Severity severity,
                                        int dbglevel, bool buffer)
 {
     log4cplus::Logger::getDefaultHierarchy().resetConfiguration();
+
+    // Disable log4cplus' own logging, unless --enable-debug was
+    // specified to configure. Note that this does not change
+    // LogLog's levels (that is still just INFO).
+#ifndef ENABLE_DEBUG
+    log4cplus::helpers::LogLog::getLogLog()->setQuietMode(true);
+#endif
 
     // Set the log4cplus root to not output anything - effectively we are
     // ignoring it.
