@@ -190,18 +190,19 @@ public:
                    (*it).begin() + 1;
                  c_it != (*it).end();
                  ++c_it) {
-                if ((*c_it < 0x20) || (*c_it >= 0x7f)) {
+                const uint8_t ch = *c_it;
+                if ((ch < 0x20) || (ch >= 0x7f)) {
                     // convert to escaped \xxx (decimal) format
                     s.push_back('\\');
-                    s.push_back('0' + ((*c_it / 100) % 10));
-                    s.push_back('0' + ((*c_it / 10) % 10));
-                    s.push_back('0' + (*c_it % 10));
+                    s.push_back('0' + ((ch / 100) % 10));
+                    s.push_back('0' + ((ch / 10) % 10));
+                    s.push_back('0' + (ch % 10));
                     continue;
                 }
-                if ((*c_it == '"') || (*c_it == ';') || (*c_it == '\\')) {
+                if ((ch == '"') || (ch == ';') || (ch == '\\')) {
                     s.push_back('\\');
                 }
-                s.push_back(*c_it);
+                s.push_back(ch);
             }
             s.push_back('"');
         }
