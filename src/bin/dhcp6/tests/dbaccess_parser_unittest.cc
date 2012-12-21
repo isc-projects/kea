@@ -44,6 +44,9 @@ public:
     /// value, keyword, value, ... and terminated by a NULL, return a string
     /// that represents the JSON map for the keywords and values.
     ///
+    /// E.g. given the array of strings: alpha, one, beta, two, NULL, it would
+    /// return the string '{ "alpha": "one", "beta": "two" }'
+    ///
     /// @param keyval Array of "const char*" strings in the order keyword,
     ///        value, keyword, value ...  A NULL entry terminates the list.
     ///
@@ -147,7 +150,7 @@ public:
 };
 
 // Check that the parser works with a simple configuration.
-TEST_F(DbAccessParserTest, validMemfile) {
+TEST_F(DbAccessParserTest, validTypeMemfile) {
     const char* config[] = {"type", "memfile",
                             NULL};
 
@@ -162,8 +165,8 @@ TEST_F(DbAccessParserTest, validMemfile) {
     checkAccessString("Valid memfile", dbaccess, config);
 }
 
-// Check that it works with a valid MySQL configuration
-TEST_F(DbAccessParserTest, validMySql) {
+// Check that the parser works with a valid MySQL configuration
+TEST_F(DbAccessParserTest, validTypeMysql) {
     const char* config[] = {"type",     "mysql",
                             "host",     "erewhon",
                             "user",     "kea",
@@ -180,6 +183,40 @@ TEST_F(DbAccessParserTest, validMySql) {
     string dbaccess = parser.getDbAccessString();
 
     checkAccessString("Valid mysql", dbaccess, config);
+}
+
+// A missing 'type' keyword should cause an exception to be thrown.
+TEST_F(DbAccessParserTest, missingTypeKeyword) {
+    const char* config[] = {"host",     "erewhon",
+                            "user",     "kea",
+                            "password", "keapassword",
+                            "name",     "keatest",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    DbAccessParser parser;
+    EXPECT_THROW(parser.build(json_elements), TypeKeywordMissing);
+}
+
+// If the value of the "type" keyword is unknown, a BadValue exception should
+// be thrown.
+TEST_F(DbAccessParserTest, badTypeKeyword) {
+    const char* config[] = {"type",     "invalid",
+                            "host",     "erewhon",
+                            "user",     "kea",
+                            "password", "keapassword",
+                            "name",     "keatest",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    DbAccessParser parser;
+    EXPECT_THROW(parser.build(json_elements), BadValue);
 }
 
 };  // Anonymous namespace
