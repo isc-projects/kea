@@ -91,6 +91,7 @@ TEST(Element, from_and_to_json) {
     sv.push_back("-1");
     sv.push_back("-1.234");
     sv.push_back("-123.456");
+    sv.push_back("\"\xFF\"");
 
     BOOST_FOREACH(const std::string& s, sv) {
         // test << operator, which uses Element::str()
