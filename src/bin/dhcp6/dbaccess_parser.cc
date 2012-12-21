@@ -33,6 +33,25 @@ typedef pair<string, ConstElementPtr> ConfigPair;
 // Parse the configuration and check that the various keywords are consistent.
 void
 DbAccessParser::build(isc::data::ConstElementPtr config_value) {
+    const ConfigPairMap& config_map = config_value->mapValue();
+
+    // Check if the "type" keyword exists and thrown an exception if not.
+    ConfigPairMap::const_iterator type_ptr = config_map.find("type");
+    if (type_ptr == config_map.end()) {
+        isc_throw(TypeKeywordMissing, "lease database access parameters must "
+                  "include the keyword 'type' to determine type of database "
+                  "to be accessed");
+    }
+
+    // Check if the 'type; keyword known and throw an exception if not.
+    string dbtype = type_ptr->second->stringValue();
+    if ((dbtype != "memfile") && (dbtype != "mysql")) {
+        isc_throw(BadValue, "unknown backend database type: " << dbtype);
+    }
+
+    /// @todo Log a warning if the type is memfile and there are other keywords.
+    ///       This will be done when the module is moved to libdhcpsrv
+
 
     // All OK, build up the access string
     dbaccess_ = "";
