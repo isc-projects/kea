@@ -41,35 +41,24 @@ public:
         : isc::Exception(file, line, what) {}
 };
 
-
-/// \brief Configure an \c Dhcpv6Srv object with a set of configuration values.
+/// @brief Configures DHCPv6 server
 ///
-/// This function parses configuration information stored in \c config_set
-/// and configures the \c server by applying the configuration to it.
-/// It provides the strong exception guarantee as long as the underlying
-/// derived class implementations of \c DhcpConfigParser meet the assumption,
-/// that is, it ensures that either configuration is fully applied or the
-/// state of the server is intact.
+/// This function is called every time a new configuration is received. The extra
+/// parameter is a reference to DHCPv6 server component. It is currently not used
+/// and CfgMgr::instance() is accessed instead.
 ///
-/// If a syntax or semantics level error happens during the configuration
-/// (such as malformed configuration or invalid configuration parameter),
-/// this function throws an exception of class \c Dhcp6ConfigError.
-/// If the given configuration requires resource allocation and it fails,
-/// a corresponding standard exception will be thrown.
-/// Other exceptions may also be thrown, depending on the implementation of
-/// the underlying derived class of \c Dhcp6ConfigError.
-/// In any case the strong guarantee is provided as described above except
-/// in the very rare cases where the \c commit() method of a parser throws
-/// an exception.  If that happens this function converts the exception
-/// into a \c FatalError exception and rethrows it.  This exception is
-/// expected to be caught at the highest level of the application to terminate
-/// the program gracefully.
+/// This method does not throw. It catches all exceptions and returns them as
+/// reconfiguration statuses. It may return the following response codes:
+/// 0 - configuration successful
+/// 1 - malformed configuration (parsing failed)
+/// 2 - commit failed (parsing was successful, but the values could not be
+/// stored in the configuration).
 ///
-/// \param server The \c Dhcpv6Srv object to be configured.
-/// \param config_set A JSON style configuration to apply to \c server.
+/// @param config_set a new configuration for DHCPv6 server
+/// @return answer that contains result of the reconfiguration
+/// @throw Dhcp6ConfigError if trying to create a parser for NULL config
 isc::data::ConstElementPtr
-configureDhcp6Server(Dhcpv6Srv& server,
-                     isc::data::ConstElementPtr config_set);
+configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set);
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
