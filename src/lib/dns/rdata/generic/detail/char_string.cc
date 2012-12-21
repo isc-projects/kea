@@ -91,6 +91,29 @@ strToCharString(const MasterToken::StringRegion& str_region,
     result[0] = result.size() - 1;
 }
 
+std::string
+charStringToString(const CharString& char_string) {
+    std::string s;
+    for (CharString::const_iterator it = char_string.begin() + 1;
+         it != char_string.end(); ++it) {
+        const uint8_t ch = *it;
+        if ((ch < 0x20) || (ch >= 0x7f)) {
+            // convert to escaped \xxx (decimal) format
+            s.push_back('\\');
+            s.push_back('0' + ((ch / 100) % 10));
+            s.push_back('0' + ((ch / 10) % 10));
+            s.push_back('0' + (ch % 10));
+            continue;
+        }
+        if ((ch == '"') || (ch == ';') || (ch == '\\')) {
+            s.push_back('\\');
+        }
+        s.push_back(ch);
+    }
+
+    return (s);
+}
+
 } // end of detail
 } // end of generic
 } // end of rdata
