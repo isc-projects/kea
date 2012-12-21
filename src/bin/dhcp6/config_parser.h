@@ -28,7 +28,7 @@ namespace dhcp {
 class Dhcpv6Srv;
 
 /// An exception that is thrown if an error occurs while configuring an
-/// \c Dhcpv6Srv object.
+/// @c Dhcpv6Srv object.
 class Dhcp6ConfigError : public isc::Exception {
 public:
 
@@ -54,9 +54,10 @@ public:
 /// 2 - commit failed (parsing was successful, but the values could not be
 /// stored in the configuration).
 ///
-/// @param config_set a new configuration for DHCPv6 server
-/// @return answer that contains result of the reconfiguration
-/// @throw Dhcp6ConfigError if trying to create a parser for NULL config
+/// @param server DHCPv6 server object.
+/// @param config_set a new configuration for DHCPv6 server.
+/// @return answer that contains result of the reconfiguration.
+/// @throw Dhcp6ConfigError if trying to create a parser for NULL config.
 isc::data::ConstElementPtr
 configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set);
 
