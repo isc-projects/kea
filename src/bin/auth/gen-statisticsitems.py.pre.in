@@ -105,7 +105,7 @@ def generate_specfile(specfile, def_mtime):
     If the specfile is newer than both skeleton and def_mtime, file generation
     will be skipped.
 
-    This method reads the content of skeleton and append statistics items
+    This method reads the content of skeleton and appends statistics items
     definition into { "module_spec": { "statistics": } }.
     LOCALSTATEDIR is also expanded.
 
