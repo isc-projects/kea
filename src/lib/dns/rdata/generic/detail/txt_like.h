@@ -178,9 +178,7 @@ public:
         std::string s;
 
         for (std::vector<std::vector<uint8_t> >::const_iterator it =
-                 string_list_.begin();
-             it != string_list_.end();
-             ++it)
+                 string_list_.begin(); it != string_list_.end(); ++it)
         {
             if (!s.empty()) {
                 s.push_back(' ');
