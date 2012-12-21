@@ -60,7 +60,7 @@ the corresponding socket is dropped.
 % MSGQ_RECV_HDR Received header: %1
 Debug message. This message includes the whole routing header of a packet.
 
-% MSGQ_RECV_INVALID_CMD Received invalid command: %1
+% MSGQ_INVALID_CMD Received invalid command: %1
 An unknown command listed in the log has been received. It is ignored. This
 indicates either a programmer error (eg. a typo in the command name) or
 incompatible version of a module and message queue daemon.
