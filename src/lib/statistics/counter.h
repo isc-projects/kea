@@ -52,7 +52,7 @@ public:
         if (items == 0) {
             isc_throw(isc::InvalidParameter, "Items must not be 0");
         }
-    };
+    }
 
     /// \brief Increment a counter item specified with \a type.
     ///
@@ -65,7 +65,7 @@ public:
         }
         ++counters_.at(type);
         return;
-    };
+    }
 
     /// \brief Get the value of a counter item specified with \a type.
     ///
@@ -77,7 +77,7 @@ public:
             isc_throw(isc::OutOfRange, "Counter type is out of range");
         }
         return (counters_.at(type));
-    };
+    }
 };
 
 }   // namespace statistics
