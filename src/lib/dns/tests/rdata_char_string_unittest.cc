@@ -26,6 +26,7 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 using isc::dns::rdata::generic::detail::CharString;
 using isc::dns::rdata::generic::detail::strToCharString;
+using isc::dns::rdata::generic::detail::charStringToString;
 using isc::util::unittests::matchWireData;
 
 namespace {
@@ -142,6 +143,63 @@ TEST_F(CharStringTest, badDDD) {
     // Short buffer
     EXPECT_THROW(strToCharString(createStringRegion("\\42"), chstr),
                  InvalidRdataText);
+}
+
+TEST_F(CharStringTest, charStringToString) {
+    const uint8_t double_quotes_buf[] = {
+        sizeof("Test\"Test\"") - 1,
+        'T', 'e', 's', 't', '"', 'T', 'e', 's', 't', '"'
+    };
+    const CharString double_quotes
+        (double_quotes_buf, double_quotes_buf + sizeof(double_quotes_buf));
+    EXPECT_EQ("Test\\\"Test\\\"",
+              charStringToString(double_quotes));
+
+    const uint8_t semicolon_buf[] = {
+        sizeof("Test;Test") - 1,
+        'T', 'e', 's', 't', ';', 'T', 'e', 's', 't'
+    };
+    const CharString semicolon
+        (semicolon_buf, semicolon_buf + sizeof(semicolon_buf));
+    EXPECT_EQ("Test\\;Test",
+              charStringToString(semicolon));
+
+    const uint8_t backslash_buf[] = {
+        sizeof("Test\\Test") - 1,
+        'T', 'e', 's', 't', '\\', 'T', 'e', 's', 't'
+    };
+    const CharString backslash
+        (backslash_buf, backslash_buf + sizeof(backslash_buf));
+    EXPECT_EQ("Test\\\\Test",
+              charStringToString(backslash));
+
+    const uint8_t before_x20_buf[] = {
+        sizeof("Test\x1fTest") - 1,
+        'T', 'e', 's', 't', 0x1f, 'T', 'e', 's', 't'
+    };
+    const CharString before_x20
+        (before_x20_buf, before_x20_buf + sizeof(before_x20_buf));
+    EXPECT_EQ("Test\\031Test",
+              charStringToString(before_x20));
+
+    const uint8_t from_x20_to_x7e_buf[] = {
+        sizeof("Test ~ Test") - 1,
+        'T', 'e', 's', 't', ' ', '~', ' ', 'T', 'e', 's', 't'
+    };
+    const CharString from_x20_to_x7e
+        (from_x20_to_x7e_buf,
+         from_x20_to_x7e_buf + sizeof(from_x20_to_x7e_buf));
+    EXPECT_EQ("Test ~ Test",
+              charStringToString(from_x20_to_x7e));
+
+    const uint8_t after_0x7e_buf[] = {
+        sizeof("Test\x7fTest") - 1,
+        'T', 'e', 's', 't', 0x7f, 'T', 'e', 's', 't'
+    };
+    const CharString after_0x7e
+        (after_0x7e_buf, after_0x7e_buf + sizeof(after_0x7e_buf));
+    EXPECT_EQ("Test\\127Test",
+              charStringToString(after_0x7e));
 }
 
 } // unnamed namespace
