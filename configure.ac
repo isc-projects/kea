@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20120817, bind10-dev@isc.org)
+AC_INIT(bind10, 20121219, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE([foreign])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])dnl be backward compatible
@@ -1176,8 +1176,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/dbutil/tests/Makefile
                  src/bin/dbutil/tests/testdata/Makefile
                  src/bin/loadzone/Makefile
+                 src/bin/loadzone/tests/Makefile
                  src/bin/loadzone/tests/correct/Makefile
-                 src/bin/loadzone/tests/error/Makefile
                  src/bin/msgq/Makefile
                  src/bin/msgq/tests/Makefile
                  src/bin/auth/Makefile
@@ -1350,8 +1350,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/bindctl/tests/bindctl_test
            src/bin/loadzone/run_loadzone.sh
            src/bin/loadzone/tests/correct/correct_test.sh
-           src/bin/loadzone/tests/error/error_test.sh
-           src/bin/loadzone/b10-loadzone.py
+           src/bin/loadzone/loadzone.py
            src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            src/bin/usermgr/b10-cmdctl-usermgr.py
            src/bin/msgq/msgq.py
@@ -1418,7 +1417,6 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/bindctl/run_bindctl.sh
            chmod +x src/bin/loadzone/run_loadzone.sh
            chmod +x src/bin/loadzone/tests/correct/correct_test.sh
-           chmod +x src/bin/loadzone/tests/error/error_test.sh
            chmod +x src/bin/sysinfo/run_sysinfo.sh
            chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            chmod +x src/bin/msgq/run_msgq.sh

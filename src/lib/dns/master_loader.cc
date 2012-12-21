@@ -79,7 +79,7 @@ public:
         warn_rfc1035_ttl_(true)
     {}
 
-    void pushSource(const std::string& filename) {
+    void pushSource(const std::string& filename, const Name& current_origin) {
         std::string error;
         if (!lexer_.pushSource(filename.c_str(), &error)) {
             if (initialized_) {
@@ -91,7 +91,7 @@ public:
             }
         }
         // Store the current status, so we can recover it upon popSource
-        include_info_.push_back(IncludeInfo(active_origin_, last_name_));
+        include_info_.push_back(IncludeInfo(current_origin, last_name_));
         initialized_ = true;
         previous_name_ = false;
     }
@@ -182,9 +182,18 @@ private:
             filename(lexer_.getNextToken(MasterToken::QSTRING).getString());
 
         // There optionally can be an origin, that applies before the include.
+        // We need to save the currently active origin before calling
+        // doOrigin(), because it would update active_origin_ while we need
+        // to pass the active origin before recognizing the new origin to
+        // pushSource.  Note: RFC 1035 is not really clear on this: it reads
+        // "regardless of changes... within the included file", but the new
+        // origin is not really specified "within the included file".
+        // Nevertheless, this behavior is probably more likely to be the
+        // intent of the RFC, and it's compatible with BIND 9.
+        const Name current_origin = active_origin_;
         doOrigin(true);
 
-        pushSource(filename);
+        pushSource(filename, current_origin);
     }
 
     // A helper method for loadIncremental(). It parses part of an RR
@@ -512,7 +521,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
                   "Trying to load when already loaded");
     }
     if (!initialized_) {
-        pushSource(master_file_);
+        pushSource(master_file_, active_origin_);
     }
     size_t count = 0;
     while (ok_ && count < count_limit) {

@@ -544,7 +544,7 @@ TEST_F(MasterLoaderTest, includeAndOrigin) {
         "@  1H  IN  A   192.0.2.1\n"
         // Then include the file with data and switch origin back
         "$INCLUDE " TEST_DATA_SRCDIR "/example.org example.org.\n"
-        // Another RR to see the switch survives after we exit include
+        // Another RR to see we fall back to the previous origin.
         "www    1H  IN  A   192.0.2.1\n";
     stringstream ss(include_string);
     setLoader(ss, Name("example.org"), RRClass::IN(),
@@ -557,7 +557,7 @@ TEST_F(MasterLoaderTest, includeAndOrigin) {
     // And check it's the correct data
     checkARR("www.example.org");
     checkBasicRRs();
-    checkARR("www.example.org");
+    checkARR("www.www.example.org");
 }
 
 // Like above, but the origin after include is bogus. The whole line should
@@ -582,7 +582,8 @@ TEST_F(MasterLoaderTest, includeAndBadOrigin) {
 
 // Check the origin doesn't get outside of the included file.
 TEST_F(MasterLoaderTest, includeOriginRestore) {
-    const string include_string = "$INCLUDE " TEST_DATA_SRCDIR "/origincheck.txt\n"
+    const string include_string =
+        "$INCLUDE " TEST_DATA_SRCDIR "/origincheck.txt\n"
         "@  1H  IN  A   192.0.2.1\n";
     stringstream ss(include_string);
     setLoader(ss, Name("example.org"), RRClass::IN(),

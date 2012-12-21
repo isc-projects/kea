@@ -291,7 +291,8 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::decode(
                 isc_throw(BadValue, "Too many " << algorithm
                           << " padding characters: " << input);
             }
-        } else if (ch < 0 || !isspace(ch)) {
+        } else if (!(ch > 0 && isspace(ch))) {
+            // see the note for DecodeNormalizer::skipSpaces() above for ch > 0
             break;
         }
         ++srit;
