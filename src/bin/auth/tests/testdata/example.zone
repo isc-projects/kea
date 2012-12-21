@@ -3,12 +3,14 @@
 ;; in query tests.
 ;;
 
-example.com. 3600 IN SOA . . 5 0 0 0 0
+example.com. 3600 IN SOA . . 0 0 0 0 0
+example.com. 3600 IN RRSIG SOA 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 example.com. 3600 IN NS glue.delegation.example.com.
 example.com. 3600 IN NS noglue.example.com.
 example.com. 3600 IN NS example.net.
 example.com. 3600 IN RRSIG NS 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
-example.com. 3600 IN DS 57855 5 1 B6DCD485719ADCA18E5F3D48A2331627FDD3 636B
+;; This is used only for pathological case
+;;example.com. 3600 IN DS 57855 5 1 B6DCD485719ADCA18E5F3D48A2331627FDD3 636B
 glue.delegation.example.com. 3600 IN A 192.0.2.153
 glue.delegation.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 glue.delegation.example.com. 3600 IN AAAA 2001:db8::53
@@ -21,6 +23,7 @@ delegation.example.com. 3600 IN NS cname.example.com.
 delegation.example.com. 3600 IN NS example.org.
 ;; Borrowed from the RFC4035
 delegation.example.com. 3600 IN DS 57855 5 1 B6DCD485719ADCA18E5F3D48A2331627FDD3 636B
+delegation.example.com. 3600 IN RRSIG DS 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 mx.example.com. 3600 IN MX 10 www.example.com.
 mx.example.com. 3600 IN MX 20 mailer.example.org.
 mx.example.com. 3600 IN MX 30 mx.delegation.example.com.
@@ -40,9 +43,13 @@ cnamemx.example.com. 3600 IN MX 10 cnamemailer.example.com.
 mx.delegation.example.com. 3600 IN A 192.0.2.100
 ;; Wildcards
 *.wild.example.com. 3600 IN A 192.0.2.7
+*.wild.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 *.wild.example.com. 3600 IN NSEC www.example.com. A NSEC RRSIG
+*.wild.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 *.cnamewild.example.com. 3600 IN CNAME www.example.org.
+*.cnamewild.example.com. 3600 IN RRSIG CNAME 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 *.cnamewild.example.com. 3600 IN NSEC delegation.example.com. CNAME NSEC RRSIG
+*.cnamewild.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 ;; Wildcard_nxrrset
 *.uwild.example.com. 3600 IN A 192.0.2.9
 *.uwild.example.com. 3600 IN NSEC www.uwild.example.com. A NSEC RRSIG
@@ -51,8 +58,10 @@ www.uwild.example.com. 3600 IN NSEC *.wild.example.com. A NSEC RRSIG
 ;; Wildcard empty
 b.*.t.example.com. 3600 IN A 192.0.2.13
 b.*.t.example.com. 3600 IN NSEC *.uwild.example.com. A NSEC RRSIG
+b.*.t.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 t.example.com. 3600 IN A 192.0.2.15
 t.example.com. 3600 IN NSEC b.*.t.example.com. A NSEC RRSIG
+t.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 ;; Used in NXDOMAIN proof test.  We are going to test some unusual case where
 ;; the best possible wildcard is below the "next domain" of the NSEC RR that
 ;; proves the NXDOMAIN, i.e.,
@@ -63,8 +72,12 @@ t.example.com. 3600 IN NSEC b.*.t.example.com. A NSEC RRSIG
 \).no.example.com. 3600 IN AAAA 2001:db8::53
 ;; NSEC records.
 example.com. 3600 IN NSEC cname.example.com. NS SOA NSEC RRSIG
+example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+
 mx.example.com. 3600 IN NSEC \).no.example.com. MX NSEC RRSIG
+mx.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 \).no.example.com. 3600 IN NSEC nz.no.example.com. AAAA NSEC RRSIG
+\).no.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 ;; We'll also test the case where a single NSEC proves both NXDOMAIN and the
 ;; non existence of wildcard.  The following records will be used for that
 ;; test.
@@ -75,43 +88,48 @@ mx.example.com. 3600 IN NSEC \).no.example.com. MX NSEC RRSIG
 nz.no.example.com. 3600 IN AAAA 2001:db8::5300
 nz.no.example.com. 3600 IN NSEC noglue.example.com. AAAA NSEC RRSIG
 noglue.example.com. 3600 IN NSEC nonsec.example.com. A
+noglue.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 
 ;; NSEC for the normal NXRRSET case
 www.example.com. 3600 IN NSEC example.com. A NSEC RRSIG
+www.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 
 ;; Authoritative data without NSEC
 nonsec.example.com. 3600 IN A 192.0.2.0
 
 ;; NSEC3 RRs.  You may also need to add mapping to MockZoneFinder::hash_map_.
-0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.com. 3600 IN NSEC3 1 1 12 aabbccdd 2t7b4g4vsa5smi47k61mv5bv1a22bojr NS SOA NSEC3PARAM RRSIG
-0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.com. 3600 IN RRSIG NSEC3 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
-q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN NSEC3 1 1 12 aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG
-q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN RRSIG NSEC3 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+;; 0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.com. 3600 IN NSEC3 1 1 12 aabbccdd 2t7b4g4vsa5smi47k61mv5bv1a22bojr NS SOA NSEC3PARAM RRSIG
+;; 0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.com. 3600 IN RRSIG NSEC3 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+;; q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN NSEC3 1 1 12 aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG
+;; q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN RRSIG NSEC3 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 
 ;; NSEC3 for wild.example.com (used in wildcard tests, will be added on
 ;; demand not to confuse other tests)
-ji6neoaepv8b5o6k4ev33abha8ht9fgc.example.com. 3600 IN NSEC3 1 1 12 aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en
+;; ji6neoaepv8b5o6k4ev33abha8ht9fgc.example.com. 3600 IN NSEC3 1 1 12 aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en
 
 ;; NSEC3 for cnamewild.example.com (used in wildcard tests, will be added on
 ;; demand not to confuse other tests)
-k8udemvp1j2f7eg6jebps17vp3n8i58h.example.com. 3600 IN NSEC3 1 1 12 aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en
+;; k8udemvp1j2f7eg6jebps17vp3n8i58h.example.com. 3600 IN NSEC3 1 1 12 aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en
 
 ;; NSEC3 for *.uwild.example.com (will be added on demand not to confuse
 ;; other tests)
-b4um86eghhds6nea196smvmlo4ors995.example.com. 3600 IN NSEC3 1 1 12 aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG
+;; b4um86eghhds6nea196smvmlo4ors995.example.com. 3600 IN NSEC3 1 1 12 aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG
 ;; NSEC3 for uwild.example.com. (will be added on demand)
-t644ebqk9bibcna874givr6joj62mlhv.example.com. 3600 IN NSEC3 1 1 12 aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG
+;; t644ebqk9bibcna874givr6joj62mlhv.example.com. 3600 IN NSEC3 1 1 12 aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG
 
 ;; (Secure) delegation data; Delegation with DS record
 signed-delegation.example.com. 3600 IN NS ns.example.net.
 signed-delegation.example.com. 3600 IN DS 12345 8 2 764501411DE58E8618945054A3F620B36202E115D015A7773F4B78E0F952CECA
+signed-delegation.example.com. 3600 IN RRSIG DS 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 
 ;; (Secure) delegation data; Delegation without DS record (and both NSEC
 ;; and NSEC3 denying its existence)
 unsigned-delegation.example.com. 3600 IN NS ns.example.net.
 unsigned-delegation.example.com. 3600 IN NSEC unsigned-delegation-optout.example.com. NS RRSIG NSEC
+unsigned-delegation.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+
 ;; This one will be added on demand
-q81r598950igr1eqvc60aedlq66425b5.example.com. 3600 IN NSEC3 1 1 12 aabbccdd 0p9mhaveqvm6t7vbl5lop2u3t2rp3tom NS RRSIG
+; q81r598950igr1eqvc60aedlq66425b5.example.com. 3600 IN NSEC3 1 1 12 aabbccdd 0p9mhaveqvm6t7vbl5lop2u3t2rp3tom NS RRSIG
 
 ;; Delegation without DS record, and no direct matching NSEC3 record
 unsigned-delegation-optout.example.com. 3600 IN NS ns.example.net.
