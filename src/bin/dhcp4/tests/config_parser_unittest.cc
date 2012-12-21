@@ -389,9 +389,9 @@ TEST_F(Dhcp4ParserTest, poolOutOfSubnet) {
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
-    // returned value must be 2 (values error)
+    // returned value must be 1 (values error)
     // as the pool does not belong to that subnet
-    checkResult(status, 2);
+    checkResult(status, 1);
 }
 
 // Goal of this test is to verify if pools can be defined
