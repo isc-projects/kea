@@ -55,7 +55,7 @@ public:
         if (items == 0) {
             isc_throw(isc::InvalidParameter, "Items must not be 0");
         }
-    };
+    }
     void addElement(const std::string& name) {
         // throw if the element already exists
         if (dictionary_.count(name) != 0) {
@@ -66,16 +66,16 @@ public:
         // Create a new Counter and add to the map
         dictionary_.insert(
             DictionaryMap::value_type(name, CounterPtr(new Counter(items_))));
-    };
+    }
     void deleteElement(const std::string& name) {
-        size_t result = dictionary_.erase(name);
+        const size_t result = dictionary_.erase(name);
         if (result != 1) {
             // If an element with specified name does not exist, throw
             // isc::OutOfRange.
             isc_throw(isc::OutOfRange,
                       "Element " << name << " does not exist");
         }
-    };
+    }
     Counter& getElement(const std::string& name) {
         DictionaryMap::const_iterator i = dictionary_.find(name);
         if (i != dictionary_.end()) {
@@ -87,10 +87,10 @@ public:
             isc_throw(isc::OutOfRange,
                       "Element " << name << " does not exist");
         }
-    };
+    }
     Counter& operator[](const std::string& name) {
         return (getElement(name));
-    };
+    }
     /// \brief \c ConstIterator is a constant iterator that provides an
     /// interface for enumerating name of zones stored in CounterDictionary.
     ///
@@ -142,10 +142,10 @@ public:
 
     ConstIterator begin() const {
         return (CounterDictionary::ConstIterator(dictionary_.begin()));
-    };
+    }
     ConstIterator end() const {
         return (CounterDictionary::ConstIterator(dictionary_.end()));
-    };
+    }
 
     typedef ConstIterator const_iterator;
 };
