@@ -1,0 +1,88 @@
+# Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# No namespace declaration - these constants go in the global namespace
+# of the ddns messages python module.
+
+# When you add a message to this file, it is a good idea to run
+# <topsrcdir>/tools/reorder_message_file.py to make sure the
+# messages are in the correct order.
+
+% MSGQ_HDR_DECODE_ERR Error decoding header received from socket %1: %2
+The socket with mentioned file descriptor sent a packet. However, it was not
+possible to decode the routing header of the packet. The packet is ignored.
+This may be caused by a programmer error (one of the components sending invalid
+data) or possibly by incompatible version of msgq and the component (but that's
+unlikely, as the protocol is not changed often).
+
+% MSGQ_LISTENER_FAILED Failed to initialize listener on socket file '%1': %2
+The message queue daemon tried to listen on a file socket (the path is in the
+message), but it failed. The error from the operating system is logged.
+
+% MSGQ_LISTENER_SETUP Starting to listen on socket file '%1'
+Debug message. The listener is trying to open a listening socket.
+
+% MSGQ_LISTENER_STARTED Successfully started to listen
+Debug message. The message queue successfully opened a listening socket and
+waits for incoming connections.
+
+% MSGQ_POLL_ERR Error while polling for events: %1
+A low-level error happened when waiting for events, the error is logged. The
+reason for this varies, but it usually means the system is short on some
+resources.
+
+% MSGQ_POLL_UNKNOWN_EVENT Got an unknown event from the poller for fd %1: %2
+An unknown event got out from the poll() system call. This should generally not
+happen and it is either a programmer error or OS bug. The event is ignored. The
+number noted as the event is the raw encoded value, which might be useful to
+the authors when figuring the problem out.
+
+% MSGQ_READ_UNKNOWN_FD Got read on strange socket %1
+The OS reported a file descriptor is ready to read. But the daemon doesn't know
+the mentioned file descriptor, which is either a programmer error or OS bug.
+The read event is ignored.
+
+% MSGQ_RECV_ERR Error reading from socket %1: %2
+There was a low-level error when reading from a socket. The error is logged and
+the corresponding socket is dropped.
+
+% MSGQ_RECV_HDR Received header: %1
+Debug message. This message includes the whole routing header of a packet.
+
+% MSGQ_INVALID_CMD Received invalid command: %1
+An unknown command listed in the log has been received. It is ignored. This
+indicates either a programmer error (eg. a typo in the command name) or
+incompatible version of a module and message queue daemon.
+
+% MSGQ_SEND_ERR Error while sending to socket %1: %2
+There was a low-level error when sending data to a socket. The error is logged
+and the corresponding socket is dropped.
+
+% MSGQ_SOCK_CLOSE Closing socket fd %1
+Debug message. Closing the mentioned socket.
+
+% MSGQ_START Msgq version %1 starting
+Debug message. The message queue is starting up.
+
+% MSGQ_START_FAIL Error during startup: %1
+There was an error during early startup of the daemon. More concrete error is
+in the log. The daemon terminates as a result.
+
+% MSGQ_SUBS_APPEND_TARGET Appending to existing target for subscription to group '%1' for instance '%2'
+Debug message. Creating a new subscription by appending it to already existing
+data structure.
+
+% MSGQ_SUBS_NEW_TARGET Creating new target for subscription to group '%1' for instance '%2'
+Debug message. Creating a new subscription. Also creating a new data structure
+to hold it.
