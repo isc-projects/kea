@@ -7,16 +7,20 @@ DHCP. BIND 10 is written in C++ and Python and provides a modular
 environment for serving, maintaining, and developing DNS and DHCP.
 
 This release includes the bind10 master process, b10-msgq message
-bus, b10-auth authoritative DNS server (with SQLite3 and in-memory
-backends), b10-resolver recursive or forwarding DNS server, b10-cmdctl
-remote control daemon, b10-cfgmgr configuration manager, b10-xfrin
-AXFR inbound service, b10-xfrout outgoing AXFR service, b10-zonemgr
-secondary manager, b10-stats statistics collection and reporting
-daemon, b10-stats-httpd for HTTP access to XML-formatted stats,
-b10-host DNS lookup utility, and a new libdns++ library for C++
-with a python wrapper. BIND 10 also provides experimental DHCPv4
-and DHCPv6 servers, b10-dhcp4 and b10-dhcp6, a portable DHCP library,
-libdhcp++, and a DHCP benchmarking tool, perfdhcp.
+bus, b10-cmdctl remote control daemon, b10-cfgmgr configuration
+manager, b10-stats statistics collection and reporting daemon, and
+b10-stats-httpd for HTTP access to XML-formatted stats.
+
+For DNS services, it provides the b10-auth authoritative DNS server
+(with SQLite3 and in-memory backends), b10-resolver recursive or
+forwarding DNS server, b10-xfrin IXFR/AXFR inbound service, b10-xfrout
+outgoing IXFR/AXFR service, b10-zonemgr secondary manager, libdns++
+library for C++ with a python wrapper, and many tests and example
+programs.
+
+BIND 10 also provides experimental DHCPv4 and DHCPv6 servers,
+b10-dhcp4 and b10-dhcp6, a portable DHCP library, libdhcp++, and
+a DHCP benchmarking tool, perfdhcp.
 
 Documentation is included with the source. See doc/guide/bind10-guide.txt
 (or bind10-guide.html) for installation instructions.  The
