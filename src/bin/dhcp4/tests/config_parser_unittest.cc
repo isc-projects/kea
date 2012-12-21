@@ -17,9 +17,10 @@
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 
+#include <config/ccsession.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/config_parser.h>
-#include <config/ccsession.h>
+#include <dhcp/option4_addrlst.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <boost/foreach.hpp>
@@ -735,6 +736,64 @@ TEST_F(Dhcp4ParserTest, optionDataLowerCase) {
     };
     // Check if option is valid in terms of code and carried data.
     testOption(*range.first, 56, foo_expected, sizeof(foo_expected));
+}
+
+// Verify that specific option object is returned for standard
+// option which has dedicated option class derived from Option.
+TEST_F(Dhcp4ParserTest, stdOptionData) {
+    ConstElementPtr x;
+    std::map<std::string, std::string> params;
+    params["name"] = "nis-servers";
+    // Option code 41 means nis-servers.
+    params["code"] = "41";
+    // Specify option values in a CSV (user friendly) format.
+    params["data"] = "192.0.2.10, 192.0.2.1, 192.0.2.3";
+    params["csv-format"] = "True";
+
+    std::string config = createConfigWithOption(params);
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    ASSERT_TRUE(subnet);
+    const Subnet::OptionContainer& options = subnet->getOptions();
+    ASSERT_EQ(1, options.size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+              Subnet::OptionContainerTypeIndex::const_iterator> range =
+        idx.equal_range(DHO_NIS_SERVERS);
+    // Expect single option with the code equal to NIS_SERVERS option code.
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    // The actual pointer to the option is held in the option field
+    // in the structure returned.
+    OptionPtr option = range.first->option;
+    ASSERT_TRUE(option);
+    // Option object returned for here is expected to be Option6IA
+    // which is derived from Option. This class is dedicated to
+    // represent standard option IA_NA.
+    boost::shared_ptr<Option4AddrLst> option_addrs =
+        boost::dynamic_pointer_cast<Option4AddrLst>(option);
+    // If cast is unsuccessful than option returned was of a
+    // differnt type than Option6IA. This is wrong.
+    ASSERT_TRUE(option_addrs);
+
+    // Get addresses from the option.
+    Option4AddrLst::AddressContainer addrs = option_addrs->getAddresses();
+    // Verify that the addresses have been configured correctly.
+    ASSERT_EQ(3, addrs.size());
+    EXPECT_EQ("192.0.2.10", addrs[0].toText());
+    EXPECT_EQ("192.0.2.1", addrs[1].toText());
+    EXPECT_EQ("192.0.2.3", addrs[2].toText());
 }
 
 /// This test checks if Uint32Parser can really parse the whole range
