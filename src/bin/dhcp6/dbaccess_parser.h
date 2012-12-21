@@ -47,7 +47,9 @@ public:
 
     /// @brief Default constructor
     ///
-    DbAccessParser()
+    /// @param param_name Name of the configuration parameter being parsed.
+    DbAccessParser(const std::string& param_name)
+        : dbaccess_(), param_name_(param_name), values_()
     {}
 
     /// The destructor.
@@ -69,6 +71,8 @@ public:
     /// @param config_value The configuration value for the "lease-database"
     ///        identifier.
     ///
+    /// @throw isc::BadValue The 'type' keyword contains an unknown database
+    ///        type.
     /// @throw isc::dhcp::MissingTypeKeyword The 'type' keyword is missing from
     ///        the list of database access keywords.
     virtual void build(isc::data::ConstElementPtr config_value);
@@ -82,6 +86,13 @@ public:
     /// The result is undefined otherwise.
     virtual void commit();
 
+    /// @brief Factory method to create parser
+    ///
+    /// Creates an instance of this parser.
+    static DhcpConfigParser* factory(const std::string& param_name) {
+        return (new DbAccessParser(param_name));
+    }
+
     /// @brief Get database access string
     ///
     /// Used in testing to check that the configuration information has been
@@ -92,6 +103,9 @@ public:
 
 private:
     std::string     dbaccess_;      ///< Database access string
+    std::string     param_name_;    ///< Parameter name
+    std::map<std::string, std::string> values_;
+                                    ///< Stored parameter values
 };
 
 };  // namespace dhcp

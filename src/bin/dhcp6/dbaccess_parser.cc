@@ -26,25 +26,43 @@ using namespace isc::data;
 namespace isc {
 namespace dhcp {
 
-/// @brief an auxiliary type used for storing an element name and its parser
 typedef map<string, ConstElementPtr> ConfigPairMap;
 typedef pair<string, ConstElementPtr> ConfigPair;
+typedef map<string, string> StringPairMap;
+typedef pair<string, string> StringPair;
 
 // Parse the configuration and check that the various keywords are consistent.
 void
 DbAccessParser::build(isc::data::ConstElementPtr config_value) {
     const ConfigPairMap& config_map = config_value->mapValue();
 
-    // Check if the "type" keyword exists and thrown an exception if not.
-    ConfigPairMap::const_iterator type_ptr = config_map.find("type");
-    if (type_ptr == config_map.end()) {
+    // To cope with incremental updates, the strategy is:
+    // 1. Take a copy of the stored keyword/value pairs.
+    // 2. Update the copy with the passed keywords.
+    // 3. Perform validation checks on the updated keyword/value pairs.
+    // 4. If all is OK, update the stored keyword/value pairs.
+    // 5. Construct the updated database access string.
+
+    // 1. Take a copy of the stored keyword/value pairs.
+    map<string, string> values_copy = values_;
+
+    // 2. Update the copy with the passed keywords.
+    BOOST_FOREACH(ConfigPair param, config_value->mapValue()) {
+        values_copy[param.first] = param.second->stringValue();
+    }
+
+    // 3. Perform validation checks on the updated set of keyword/values.
+    //
+    // a. Check if the "type" keyword exists and thrown an exception if not.
+    StringPairMap::const_iterator type_ptr = values_copy.find("type");
+    if (type_ptr == values_copy.end()) {
         isc_throw(TypeKeywordMissing, "lease database access parameters must "
                   "include the keyword 'type' to determine type of database "
                   "to be accessed");
     }
 
-    // Check if the 'type; keyword known and throw an exception if not.
-    string dbtype = type_ptr->second->stringValue();
+    // b. Check if the 'type; keyword known and throw an exception if not.
+    string dbtype = type_ptr->second;
     if ((dbtype != "memfile") && (dbtype != "mysql")) {
         isc_throw(BadValue, "unknown backend database type: " << dbtype);
     }
@@ -52,15 +70,16 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
     /// @todo Log a warning if the type is memfile and there are other keywords.
     ///       This will be done when the module is moved to libdhcpsrv
 
+    // 4. If all is OK, update the stored keyword/value pairs.
+    values_ = values_copy;
 
-    // All OK, build up the access string
+    // 5. Construct the updated database access string.
     dbaccess_ = "";
-    BOOST_FOREACH(ConfigPair param, config_value->mapValue()) {
+    BOOST_FOREACH(StringPair keyval, values_) {
         if (! dbaccess_.empty()) {
             dbaccess_ += std::string(" ");
         }
-        dbaccess_ += (param.first + std::string("=") +
-                      param.second->stringValue());
+        dbaccess_ += (keyval.first + std::string("=") + keyval.second);
     }
 }
 
