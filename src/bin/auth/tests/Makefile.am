@@ -87,6 +87,8 @@ BUILT_SOURCES = testdata/example-base.zone example_base_inc.cc
 BUILT_SOURCES += testdata/example-nsec3-inc.zone example_nsec3_inc.cc
 BUILT_SOURCES += testdata/example-base.sqlite3
 
+EXTRA_DIST = gen-query-testdata.py
+
 CLEANFILES += example_base_inc.cc example_nsec3_inc.cc
 
 testdata/example-base.zone example_base_inc.cc: testdata/query_testzone_data.txt
