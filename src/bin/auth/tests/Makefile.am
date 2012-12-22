@@ -92,11 +92,12 @@ EXTRA_DIST = gen-query-testdata.py
 CLEANFILES += example_base_inc.cc example_nsec3_inc.cc
 
 testdata/example-base.zone example_base_inc.cc: testdata/query_testzone_data.txt
-	$(PYTHON) ./gen-query-testdata.py testdata/query_testzone_data.txt \
+	$(PYTHON) $(srcdir)/gen-query-testdata.py \
+		testdata/query_testzone_data.txt \
 		testdata/example-base.zone example_base_inc.cc
 
 testdata/example-nsec3-inc.zone example_nsec3_inc.cc: testdata/query_testzone_data_nsec3.txt
-	$(PYTHON) ./gen-query-testdata.py \
+	$(PYTHON) $(srcdir)/gen-query-testdata.py \
 		testdata/query_testzone_data_nsec3.txt \
 		testdata/example-nsec3-inc.zone example_nsec3_inc.cc
 
