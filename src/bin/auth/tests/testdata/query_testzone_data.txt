@@ -111,8 +111,12 @@ mx.delegation.example.com. 3600 IN A 192.0.2.100
 *.uwild.example.com. 3600 IN A 192.0.2.9
 #var=nsec_wild_txt_nxrrset
 *.uwild.example.com. 3600 IN NSEC www.uwild.example.com. A NSEC RRSIG
+#var=
+*.uwild.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 #var=wild_txt_next
 www.uwild.example.com. 3600 IN A 192.0.2.11
+#var=
+www.uwild.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 #var=nsec_wild_txt_next
 www.uwild.example.com. 3600 IN NSEC *.wild.example.com. A NSEC RRSIG
 ## Wildcard empty
