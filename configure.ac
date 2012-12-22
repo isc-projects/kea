@@ -1358,6 +1358,8 @@ AC_OUTPUT([doc/version.ent
            src/bin/msgq/run_msgq.sh
            src/bin/auth/auth.spec.pre
            src/bin/auth/spec_config.h.pre
+           src/bin/auth/tests/testdata/example.zone
+           src/bin/auth/tests/testdata/example-nsec3.zone
            src/bin/dhcp4/spec_config.h.pre
            src/bin/dhcp6/spec_config.h.pre
            src/bin/tests/process_rename_test.py

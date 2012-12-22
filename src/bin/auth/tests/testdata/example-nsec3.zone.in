@@ -1,0 +1,7 @@
+;;
+;; This is a complete (but crafted and somewhat broken) zone file used
+;; in query tests including NSEC3 records, making the zone is "NSEC3 signed".
+;;
+
+$INCLUDE @abs_builddir@/example-base.zone
+$INCLUDE @abs_builddir@/example-nsec3-inc.zone

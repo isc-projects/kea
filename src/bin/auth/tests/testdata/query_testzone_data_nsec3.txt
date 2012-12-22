@@ -1,0 +1,11 @@
+## See query_testzone_data.txt for general notes.
+
+## NSEC3 RRs.  You may also need to add mapping to MockZoneFinder::hash_map_.
+#var=nsec3_apex_txt
+0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.com. 3600 IN NSEC3 1 1 12 aabbccdd 2t7b4g4vsa5smi47k61mv5bv1a22bojr NS SOA NSEC3PARAM RRSIG
+#var=nsec3_apex_rrsig_txt
+0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.com. 3600 IN RRSIG NSEC3 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+#var=nsec3_www_txt
+q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN NSEC3 1 1 12 aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG
+#var=nsec3_www_rrsig_txt
+q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN RRSIG NSEC3 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
