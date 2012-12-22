@@ -26,6 +26,7 @@
 #include <dns/message.h>
 #include <dns/master_loader.h>
 #include <dns/name.h>
+#include <dns/nsec3hash.h>
 #include <dns/opcode.h>
 #include <dns/rcode.h>
 #include <dns/rrcollator.h>
@@ -51,7 +52,7 @@ using namespace isc::testutils;
 
 namespace {
 
-// Simple wrapper for a sincle data source client.
+// Simple wrapper for a single data source client.
 // The list simply delegates all the answers to the single
 // client.
 class SingletonList : public ClientList {
@@ -158,44 +159,14 @@ textToRRset(const string& text_rrset, const Name& origin = Name::ROOT_NAME()) {
     return (rrset);
 }
 
-// This is a mock Zone Finder class for testing.
-// It is a derived class of ZoneFinder for the convenient of tests.
-// Its find() method emulates the common behavior of protocol compliant
-// ZoneFinder classes, but simplifies some minor cases and also supports broken
-// behavior.
-// For simplicity, most names are assumed to be "in zone"; delegations
-// to child zones are identified by the existence of non origin NS records.
-// Another special name is "dname.example.com".  Query names under this name
-// will result in DNAME.
-// This mock zone doesn't handle empty non terminal nodes (if we need to test
-// such cases find() should have specialized code for it).
-class MockZoneFinder : public ZoneFinder {
+// Setup for faked NSEC3 hash used throughout this test.
+class TestNSEC3Hash : public NSEC3Hash {
+private:
+    typedef map<Name, string> NSEC3HashMap;
+    typedef NSEC3HashMap::value_type NSEC3HashPair;
+    NSEC3HashMap hash_map_;
 public:
-    MockZoneFinder() :
-        origin_(Name("example.com")),
-        bad_signed_delegation_name_("bad-delegation.example.com"),
-        dname_name_("dname.example.com"),
-        has_SOA_(true),
-        has_apex_NS_(true),
-        rrclass_(RRClass::IN()),
-        include_rrsig_anyway_(false),
-        use_nsec3_(false),
-        nsec_name_(origin_),
-        nsec3_fake_(NULL),
-        nsec3_name_(NULL)
-    {
-        RRCollator collator(boost::bind(&MockZoneFinder::loadRRset, this, _1));
-        MasterLoader loader(TEST_OWN_DATA_DIR "/example-nsec3.zone",
-                            origin_, rrclass_,
-                            MasterLoaderCallbacks::getNullCallbacks(),
-                            collator.getCallback());
-        loader.load();
-
-        empty_nsec_rrset_ = ConstRRsetPtr(new RRset(Name::ROOT_NAME(),
-                                                    RRClass::IN(),
-                                                    RRType::NSEC(),
-                                                    RRTTL(3600)));
-
+    TestNSEC3Hash() {
         // (Faked) NSEC3 hash map.  For convenience we use hardcoded built-in
         // map instead of calculating and using actual hash.
         // The used hash values are borrowed from RFC5155 examples (they are
@@ -240,6 +211,79 @@ public:
             "t644ebqk9bibcna874givr6joj62mlhv";
         hash_map_[Name("www1.uwild.example.com")] =
             "q04jkcevqvmu85r014c7dkba38o0ji6r"; // a bit larger than H(www)
+    }
+    virtual string calculate(const Name& name) const {
+        const NSEC3HashMap::const_iterator found = hash_map_.find(name);
+        if (found != hash_map_.end()) {
+            return (found->second);
+        }
+        isc_throw(isc::Unexpected, "unexpected name for NSEC3 test: "
+                  << name);
+    }
+    virtual bool match(const rdata::generic::NSEC3PARAM&) const {
+        return (true);
+    }
+    virtual bool match(const rdata::generic::NSEC3&) const {
+        return (true);
+    }
+};
+
+class TestNSEC3HashCreator : public isc::dns::NSEC3HashCreator {
+public:
+    TestNSEC3HashCreator() {}
+    virtual isc::dns::NSEC3Hash*
+    create(const isc::dns::rdata::generic::NSEC3PARAM&) const {
+        return (new TestNSEC3Hash);
+    }
+
+    virtual isc::dns::NSEC3Hash*
+    create(const isc::dns::rdata::generic::NSEC3&) const {
+        return (new TestNSEC3Hash);
+    }
+
+    virtual isc::dns::NSEC3Hash*
+    create(uint8_t, uint16_t, const uint8_t*, size_t) const {
+        return (new TestNSEC3Hash);
+    }
+};
+
+// This is a mock Zone Finder class for testing.
+// It is a derived class of ZoneFinder for the convenient of tests.
+// Its find() method emulates the common behavior of protocol compliant
+// ZoneFinder classes, but simplifies some minor cases and also supports broken
+// behavior.
+// For simplicity, most names are assumed to be "in zone"; delegations
+// to child zones are identified by the existence of non origin NS records.
+// Another special name is "dname.example.com".  Query names under this name
+// will result in DNAME.
+// This mock zone doesn't handle empty non terminal nodes (if we need to test
+// such cases find() should have specialized code for it).
+class MockZoneFinder : public ZoneFinder {
+public:
+    MockZoneFinder() :
+        origin_(Name("example.com")),
+        bad_signed_delegation_name_("bad-delegation.example.com"),
+        dname_name_("dname.example.com"),
+        has_SOA_(true),
+        has_apex_NS_(true),
+        rrclass_(RRClass::IN()),
+        include_rrsig_anyway_(false),
+        use_nsec3_(false),
+        nsec_name_(origin_),
+        nsec3_fake_(NULL),
+        nsec3_name_(NULL)
+    {
+        RRCollator collator(boost::bind(&MockZoneFinder::loadRRset, this, _1));
+        MasterLoader loader(TEST_OWN_DATA_DIR "/example-nsec3.zone",
+                            origin_, rrclass_,
+                            MasterLoaderCallbacks::getNullCallbacks(),
+                            collator.getCallback());
+        loader.load();
+
+        empty_nsec_rrset_ = ConstRRsetPtr(new RRset(Name::ROOT_NAME(),
+                                                    RRClass::IN(),
+                                                    RRType::NSEC(),
+                                                    RRTTL(3600)));
     }
     virtual isc::dns::Name getOrigin() const { return (origin_); }
     virtual isc::dns::RRClass getClass() const { return (rrclass_); }
@@ -402,9 +446,7 @@ private:
     // Enabled when not NULL
     const FindNSEC3Result* nsec3_fake_;
     const Name* nsec3_name_;
-public:
-    // Public, to allow tests looking up the right names for something
-    map<Name, string> hash_map_;
+    TestNSEC3Hash nsec3_hash_;
 };
 
 // A helper function that generates a new RRset based on "wild_rrset",
@@ -464,7 +506,7 @@ MockZoneFinder::findNSEC3(const Name& name, bool recursive) {
     // For brevity, we assume several things below: maps should have an
     // expected entry when operator[] is used; maps are not empty.
     for (int i = 0; i < labels; ++i) {
-        const string hlabel = hash_map_[name.split(i, labels - i)];
+        const string hlabel = nsec3_hash_.calculate(name.split(i, labels - i));
         if (hlabel.empty()) {
             isc_throw(isc::Unexpected, "findNSEC3() hash failure for " <<
                       name.split(i, labels - i));
@@ -781,12 +823,21 @@ protected:
                              "noglue.example.com. 3600 IN RRSIG " +
                              getCommonRRSIGText("A"))
     {
+        // Set up the faked hash calculator.
+        const TestNSEC3HashCreator creator;
+        setNSEC3HashCreator(&creator);
+
         response.setRcode(Rcode::NOERROR());
         response.setOpcode(Opcode::QUERY());
         // create and add a matching zone.
         mock_finder = new MockZoneFinder();
         memory_client.addZone(ZoneFinderPtr(mock_finder));
     }
+    ~QueryTest() {
+        // Make sure we reset the hash creator to the default
+        setNSEC3HashCreator(NULL);
+    }
+
     MockZoneFinder* mock_finder;
     // We use InMemoryClient here. We could have some kind of mock client
     // here, but historically, the Query supported only InMemoryClient
@@ -805,6 +856,7 @@ protected:
     const uint16_t query_code;
     const string ns_addrs_and_sig_txt; // convenient shortcut
     Query query;
+    TestNSEC3Hash nsec3_hash_;
 };
 
 // We test the in-memory and SQLite3 data source implementations.  SQLite3
@@ -1081,7 +1133,7 @@ TEST_P(QueryTest, secureUnsignedDelegationWithNSEC3) {
                   NULL,
                   (string(unsigned_delegation_txt) +
                    string(unsigned_delegation_nsec3_txt) +
-                   mock_finder->hash_map_[insecurechild_name] +
+                   nsec3_hash_.calculate(insecurechild_name) +
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3")).c_str(),
                   NULL);
@@ -1108,11 +1160,11 @@ TEST_P(QueryTest, secureUnsignedDelegationWithNSEC3OptOut) {
                   NULL,
                   (string(unsigned_delegation_txt) +
                    string(nsec3_apex_txt) +
-                   mock_finder->hash_map_[mock_finder->getOrigin()] +
+                   nsec3_hash_.calculate(mock_finder->getOrigin()) +
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3") + "\n" +
                    string(nsec3_www_txt) +
-                   mock_finder->hash_map_[Name("www.example.com")] +
+                   nsec3_hash_.calculate(Name("www.example.com")) +
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3")).c_str(),
                   NULL);
@@ -1433,7 +1485,7 @@ TEST_P(QueryTest, wildcardNSEC3) {
                    getCommonRRSIGText("NS") + "\n" +
                    // NSEC3 for the wildcard proof and its RRSIG
                    string(nsec3_apex_txt) +
-                   mock_finder->hash_map_[Name("example.com.")] +
+                   nsec3_hash_.calculate(Name("example.com.")) +
                    string(".example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("NSEC3")).c_str(),
                   NULL, // we are not interested in additionals in this test
@@ -1459,7 +1511,7 @@ TEST_P(QueryTest, CNAMEwildNSEC3) {
                    string("www.cnamewild.example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("CNAME") + "\n").c_str(),
                   (string(nsec3_www_txt) +
-                   mock_finder->hash_map_[Name("www.example.com.")] +
+                   nsec3_hash_.calculate(Name("www.example.com.")) +
                    string(".example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("NSEC3")).c_str(),
                   NULL, // we are not interested in additionals in this test
@@ -1598,17 +1650,17 @@ TEST_P(QueryTest, wildcardNxrrsetWithNSEC3) {
                    getCommonRRSIGText("SOA") + "\n" +
                    // NSEC3 for the closest encloser + its RRSIG
                    string(nsec3_uwild_txt) +
-                   mock_finder->hash_map_[Name("uwild.example.com.")] +
+                   nsec3_hash_.calculate(Name("uwild.example.com.")) +
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3") + "\n" +
                    // NSEC3 for the next closer + its RRSIG
                    string(nsec3_www_txt) +
-                   mock_finder->hash_map_[Name("www.example.com.")] +
+                   nsec3_hash_.calculate(Name("www.example.com.")) +
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3") + "\n" +
                    // NSEC3 for the wildcard + its RRSIG
                    string(nsec3_wild_txt) +
-                   mock_finder->hash_map_[Name("*.uwild.example.com.")] +
+                   nsec3_hash_.calculate(Name("*.uwild.example.com.")) +
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3")).c_str(),
                   NULL, mock_finder->getOrigin());
@@ -2318,7 +2370,7 @@ TEST_P(QueryTest, nxrrsetWithNSEC3) {
                   (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec3_www_txt) + "\n" +
-                   mock_finder->hash_map_[Name("www.example.com.")] +
+                   nsec3_hash_.calculate(Name("www.example.com.")) +
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3") + "\n").c_str(),
                   NULL, mock_finder->getOrigin());
@@ -2361,8 +2413,8 @@ TEST_P(QueryTest, nxrrsetWithNSEC3_ds_exact) {
                   (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(unsigned_delegation_nsec3_txt) + "\n" +
-                   mock_finder->
-                        hash_map_[Name("unsigned-delegation.example.com.")] +
+                   nsec3_hash_.calculate(
+                       Name("unsigned-delegation.example.com.")) +
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3") + "\n").c_str(),
                   NULL, mock_finder->getOrigin());
@@ -2388,12 +2440,12 @@ TEST_P(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
                   (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec3_apex_txt) + "\n" +
-                   mock_finder->hash_map_[Name("example.com.")] +
+                   nsec3_hash_.calculate(Name("example.com.")) +
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3") + "\n" +
                    string(unsigned_delegation_nsec3_txt) + "\n" +
-                   mock_finder->
-                        hash_map_[Name("unsigned-delegation.example.com.")] +
+                   nsec3_hash_.calculate(
+                       Name("unsigned-delegation.example.com.")) +
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3") + "\n").c_str(),
                   NULL, mock_finder->getOrigin());
@@ -2423,18 +2475,18 @@ TEST_P(QueryTest, nxdomainWithNSEC3Proof) {
                    getCommonRRSIGText("SOA") + "\n" +
                    // NSEC3 for the closest encloser + its RRSIG
                    string(nsec3_apex_txt) + "\n" +
-                   mock_finder->hash_map_[mock_finder->getOrigin()] +
+                   nsec3_hash_.calculate(mock_finder->getOrigin()) +
                    string(".example.com. 3600 IN RRSIG ") +
                    getCommonRRSIGText("NSEC3") + "\n" +
                    // NSEC3 for the next closer + its RRSIG
                    string(nsec3_uwild_txt) + "\n" +
-                   mock_finder->hash_map_[Name("uwild.example.com")] +
+                   nsec3_hash_.calculate(Name("uwild.example.com")) +
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3") + "\n" +
                    // NSEC3 for the wildcard + its RRSIG
                    string(unsigned_delegation_nsec3_txt) +
-                   mock_finder->hash_map_[
-                       Name("unsigned-delegation.example.com")] +
+                   nsec3_hash_.calculate(
+                       Name("unsigned-delegation.example.com")) +
                    ".example.com. 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC3")).c_str(),
                   NULL, mock_finder->getOrigin());
