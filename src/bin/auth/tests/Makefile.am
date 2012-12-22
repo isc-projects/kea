@@ -7,7 +7,7 @@ AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DAUTH_OBJ_DIR=\"$(abs_top_builddir)/src/bin/auth\"
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_top_srcdir)/src/lib/testutils/testdata\"
-AM_CPPFLAGS += -DTEST_OWN_DATA_DIR=\"$(abs_top_srcdir)/src/bin/auth/tests/testdata\"
+AM_CPPFLAGS += -DTEST_OWN_DATA_DIR=\"$(abs_builddir)/testdata\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/testutils/testdata\"
 AM_CPPFLAGS += -DDSRC_DIR=\"$(abs_top_builddir)/src/lib/datasrc\"
 AM_CPPFLAGS += -DPLUGIN_DATA_PATH=\"$(abs_top_builddir)/src/bin/cfgmgr/plugins\"
@@ -80,6 +80,28 @@ run_unittests_LDADD += $(top_builddir)/src/lib/config/tests/libfake_session.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 run_unittests_LDADD += $(GTEST_LDADD)
 run_unittests_LDADD += $(SQLITE_LIBS)
+
+# The following are definitions for auto-generating test data for query
+# tests.
+BUILT_SOURCES = testdata/example-base.zone example_base_inc.cc
+BUILT_SOURCES += testdata/example-nsec3-inc.zone example_nsec3_inc.cc
+BUILT_SOURCES += testdata/example-base.sqlite3
+
+CLEANFILES += example_base_inc.cc example_nsec3_inc.cc
+
+testdata/example-base.zone example_base_inc.cc: testdata/query_testzone_data.txt
+	$(PYTHON) ./gen-query-testdata.py testdata/query_testzone_data.txt \
+		testdata/example-base.zone example_base_inc.cc
+
+testdata/example-nsec3-inc.zone example_nsec3_inc.cc: testdata/query_testzone_data_nsec3.txt
+	$(PYTHON) ./gen-query-testdata.py \
+		testdata/query_testzone_data_nsec3.txt \
+		testdata/example-nsec3-inc.zone example_nsec3_inc.cc
+
+testdata/example-base.sqlite3: testdata/example-base.zone
+	$(SHELL) $(top_builddir)/src/bin/loadzone/run_loadzone.sh \
+		-c "{\"database_file\": \"$(builddir)/testdata/example-base.sqlite3\"}" \
+		example.com testdata/example-base.zone
 
 check-local:
 	B10_FROM_BUILD=${abs_top_builddir} ./run_unittests

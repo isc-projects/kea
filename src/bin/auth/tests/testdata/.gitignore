@@ -6,3 +6,8 @@
 /shortanswer_fromWire.wire
 /simplequery_fromWire.wire
 /simpleresponse_fromWire.wire
+/example-base.zone
+/example-nsec3-inc.zone
+/example-base.sqlite3
+/example-nsec3.zone
+/example-base.zone

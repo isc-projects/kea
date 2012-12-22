@@ -1,144 +1,222 @@
-;;
-;; This is a complete (but crafted and somewhat broken) zone file used
-;; in query tests.
-;;
+## This file defines a set of RRs commonly used in query tests.
+## It's a sequence of the following pattern:
+## #var=<var_name>
+## RR_1
+## RR_2
+## ..
+## RR_n
+##
+## where var_name is a string that can be used as a variable name in a
+## C/C++ source file or an empty string.  RR_x is a single-line
+## textual representation of an arbitrary DNS RR.
+##
+## If var_name is non empty, the generator script will define a C
+## variable of C-string type for that set of RRs so that it can be referred
+## to in the test source file.
+##
+## These RRs will be loaded into in-memory data source in that order.
+## Note that it may impose stricter restriction on the order of RRs.
+## In general, each RRset of the same name and type and its RRSIG (if
+## any) is expected to be grouped.
+##
+## Lines beginning with '##' or empty lines will be ignored by the
+## generator script.
 
+#var=soa_txt
 example.com. 3600 IN SOA . . 0 0 0 0 0
-example.com. 3600 IN RRSIG SOA 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+#var=zone_ns_txt
 example.com. 3600 IN NS glue.delegation.example.com.
 example.com. 3600 IN NS noglue.example.com.
 example.com. 3600 IN NS example.net.
+
+#var=
+example.com. 3600 IN RRSIG SOA 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 example.com. 3600 IN RRSIG NS 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
-;; This is used only for pathological case
-;;example.com. 3600 IN DS 57855 5 1 B6DCD485719ADCA18E5F3D48A2331627FDD3 636B
-glue.delegation.example.com. 3600 IN A 192.0.2.153
-glue.delegation.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
-glue.delegation.example.com. 3600 IN AAAA 2001:db8::53
-glue.delegation.example.com. 3600 IN RRSIG AAAA 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
-noglue.example.com. 3600 IN A 192.0.2.53
+
+#var=
 noglue.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+
+#var=ns_addrs_txt
+noglue.example.com. 3600 IN A 192.0.2.53
+glue.delegation.example.com. 3600 IN A 192.0.2.153
+glue.delegation.example.com. 3600 IN AAAA 2001:db8::53
+
+#var=
+glue.delegation.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+glue.delegation.example.com. 3600 IN RRSIG AAAA 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+
+#var=delegation_txt
 delegation.example.com. 3600 IN NS glue.delegation.example.com.
 delegation.example.com. 3600 IN NS noglue.example.com.
 delegation.example.com. 3600 IN NS cname.example.com.
 delegation.example.com. 3600 IN NS example.org.
-;; Borrowed from the RFC4035
-delegation.example.com. 3600 IN DS 57855 5 1 B6DCD485719ADCA18E5F3D48A2331627FDD3 636B
+
+#var=
 delegation.example.com. 3600 IN RRSIG DS 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+
+## Borrowed from the RFC4035
+#var=delegation_ds_txt
+delegation.example.com. 3600 IN DS 57855 5 1 B6DCD485719ADCA18E5F3D48A2331627FDD3 636B
+#var=mx_txt
 mx.example.com. 3600 IN MX 10 www.example.com.
 mx.example.com. 3600 IN MX 20 mailer.example.org.
 mx.example.com. 3600 IN MX 30 mx.delegation.example.com.
+#var=www_a_txt
 www.example.com. 3600 IN A 192.0.2.80
+
+#var=
 www.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+
+#var=cname_txt
 cname.example.com. 3600 IN CNAME www.example.com.
+#var=cname_nxdom_txt
 cnamenxdom.example.com. 3600 IN CNAME nxdomain.example.com.
-;; CNAME Leading out of zone
+## CNAME Leading out of zone
+#var=cname_out_txt
 cnameout.example.com. 3600 IN CNAME www.example.org.
-;; The DNAME to do tests against
+## The DNAME to do tests against
+#var=dname_txt
 dname.example.com. 3600 IN DNAME somethinglong.dnametarget.example.com.
-;; Some data at the dname node (allowed by RFC 2672)
+## Some data at the dname node (allowed by RFC 2672)
+#var=dname_a_txt
 dname.example.com. 3600 IN A 192.0.2.5
-;; The rest of data won't be referenced from the test cases.
+## This is not inside the zone, this is created at runtime
+## www.dname.example.com. 3600 IN CNAME www.somethinglong.dnametarget.example.com.
+## The rest of data won't be referenced from the test cases.
+#var=other_zone_rrs
 cnamemailer.example.com. 3600 IN CNAME www.example.com.
 cnamemx.example.com. 3600 IN MX 10 cnamemailer.example.com.
 mx.delegation.example.com. 3600 IN A 192.0.2.100
-;; Wildcards
+## Wildcards
+#var=wild_txt
 *.wild.example.com. 3600 IN A 192.0.2.7
-*.wild.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+#var=nsec_wild_txt
 *.wild.example.com. 3600 IN NSEC www.example.com. A NSEC RRSIG
-*.wild.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
-*.cnamewild.example.com. 3600 IN CNAME www.example.org.
-*.cnamewild.example.com. 3600 IN RRSIG CNAME 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
-*.cnamewild.example.com. 3600 IN NSEC delegation.example.com. CNAME NSEC RRSIG
-*.cnamewild.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
-;; Wildcard_nxrrset
-*.uwild.example.com. 3600 IN A 192.0.2.9
-*.uwild.example.com. 3600 IN NSEC www.uwild.example.com. A NSEC RRSIG
-www.uwild.example.com. 3600 IN A 192.0.2.11
-www.uwild.example.com. 3600 IN NSEC *.wild.example.com. A NSEC RRSIG
-;; Wildcard empty
-b.*.t.example.com. 3600 IN A 192.0.2.13
-b.*.t.example.com. 3600 IN NSEC *.uwild.example.com. A NSEC RRSIG
-b.*.t.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
-t.example.com. 3600 IN A 192.0.2.15
-t.example.com. 3600 IN NSEC b.*.t.example.com. A NSEC RRSIG
-t.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
-;; Used in NXDOMAIN proof test.  We are going to test some unusual case where
-;; the best possible wildcard is below the "next domain" of the NSEC RR that
-;; proves the NXDOMAIN, i.e.,
-;; mx.example.com. (exist)
-;; (.no.example.com. (qname, NXDOMAIN)
-;; ).no.example.com. (exist)
-;; *.no.example.com. (best possible wildcard, not exist)
-\).no.example.com. 3600 IN AAAA 2001:db8::53
-;; NSEC records.
-example.com. 3600 IN NSEC cname.example.com. NS SOA NSEC RRSIG
-example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 
+#var=
+*.wild.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+*.wild.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+
+#var=cnamewild_txt
+*.cnamewild.example.com. 3600 IN CNAME www.example.org.
+#var=nsec_cnamewild_txt
+*.cnamewild.example.com. 3600 IN NSEC delegation.example.com. CNAME NSEC RRSIG
+
+#var=
+*.cnamewild.example.com. 3600 IN RRSIG CNAME 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+*.cnamewild.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+
+## Wildcard_nxrrset
+#var=wild_txt_nxrrset
+*.uwild.example.com. 3600 IN A 192.0.2.9
+#var=nsec_wild_txt_nxrrset
+*.uwild.example.com. 3600 IN NSEC www.uwild.example.com. A NSEC RRSIG
+#var=wild_txt_next
+www.uwild.example.com. 3600 IN A 192.0.2.11
+#var=nsec_wild_txt_next
+www.uwild.example.com. 3600 IN NSEC *.wild.example.com. A NSEC RRSIG
+## Wildcard empty
+#var=empty_txt
+b.*.t.example.com. 3600 IN A 192.0.2.13
+#var=nsec_empty_txt
+b.*.t.example.com. 3600 IN NSEC *.uwild.example.com. A NSEC RRSIG
+
+#var=
+b.*.t.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+
+#var=empty_prev_txt
+t.example.com. 3600 IN A 192.0.2.15
+#var=nsec_empty_prev_txt
+t.example.com. 3600 IN NSEC b.*.t.example.com. A NSEC RRSIG
+
+#var=
+t.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+
+## Used in NXDOMAIN proof test.  We are going to test some unusual case where
+## the best possible wildcard is below the "next domain" of the NSEC RR that
+## proves the NXDOMAIN, i.e.,
+## mx.example.com. (exist)
+## (.no.example.com. (qname, NXDOMAIN)
+## ).no.example.com. (exist)
+## *.no.example.com. (best possible wildcard, not exist)
+#var=no_txt
+\).no.example.com. 3600 IN AAAA 2001:db8::53
+## NSEC records.
+#var=nsec_apex_txt
+example.com. 3600 IN NSEC cname.example.com. NS SOA NSEC RRSIG
+#var=
+example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+#var=nsec_mx_txt
 mx.example.com. 3600 IN NSEC \).no.example.com. MX NSEC RRSIG
+
+#var=
 mx.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
+
+#var=nsec_no_txt
 \).no.example.com. 3600 IN NSEC nz.no.example.com. AAAA NSEC RRSIG
+
+#var=
 \).no.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
-;; We'll also test the case where a single NSEC proves both NXDOMAIN and the
-;; non existence of wildcard.  The following records will be used for that
-;; test.
-;; ).no.example.com. (exist, whose NSEC proves everything)
-;; *.no.example.com. (best possible wildcard, not exist)
-;; nx.no.example.com. (NXDOMAIN)
-;; nz.no.example.com. (exist)
+
+## We'll also test the case where a single NSEC proves both NXDOMAIN and the
+## non existence of wildcard.  The following records will be used for that
+## test.
+## ).no.example.com. (exist, whose NSEC proves everything)
+## *.no.example.com. (best possible wildcard, not exist)
+## nx.no.example.com. (NXDOMAIN)
+## nz.no.example.com. (exist)
+#var=nz_txt
 nz.no.example.com. 3600 IN AAAA 2001:db8::5300
+#var=nsec_nz_txt
 nz.no.example.com. 3600 IN NSEC noglue.example.com. AAAA NSEC RRSIG
+#var=nsec_nxdomain_txt
 noglue.example.com. 3600 IN NSEC nonsec.example.com. A
+
+#var=
 noglue.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 
-;; NSEC for the normal NXRRSET case
+## NSEC for the normal NXRRSET case
+#var=nsec_www_txt
 www.example.com. 3600 IN NSEC example.com. A NSEC RRSIG
+
+#var=
 www.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 
-;; Authoritative data without NSEC
+## Authoritative data without NSEC
+#var=nonsec_a_txt
 nonsec.example.com. 3600 IN A 192.0.2.0
 
-;; NSEC3 RRs.  You may also need to add mapping to MockZoneFinder::hash_map_.
-;; 0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.com. 3600 IN NSEC3 1 1 12 aabbccdd 2t7b4g4vsa5smi47k61mv5bv1a22bojr NS SOA NSEC3PARAM RRSIG
-;; 0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.com. 3600 IN RRSIG NSEC3 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
-;; q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN NSEC3 1 1 12 aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG
-;; q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN RRSIG NSEC3 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
-
-;; NSEC3 for wild.example.com (used in wildcard tests, will be added on
-;; demand not to confuse other tests)
-;; ji6neoaepv8b5o6k4ev33abha8ht9fgc.example.com. 3600 IN NSEC3 1 1 12 aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en
-
-;; NSEC3 for cnamewild.example.com (used in wildcard tests, will be added on
-;; demand not to confuse other tests)
-;; k8udemvp1j2f7eg6jebps17vp3n8i58h.example.com. 3600 IN NSEC3 1 1 12 aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en
-
-;; NSEC3 for *.uwild.example.com (will be added on demand not to confuse
-;; other tests)
-;; b4um86eghhds6nea196smvmlo4ors995.example.com. 3600 IN NSEC3 1 1 12 aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG
-;; NSEC3 for uwild.example.com. (will be added on demand)
-;; t644ebqk9bibcna874givr6joj62mlhv.example.com. 3600 IN NSEC3 1 1 12 aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG
-
-;; (Secure) delegation data; Delegation with DS record
+## (Secure) delegation data; Delegation with DS record
+#var=signed_delegation_txt
 signed-delegation.example.com. 3600 IN NS ns.example.net.
+#var=signed_delegation_ds_txt
 signed-delegation.example.com. 3600 IN DS 12345 8 2 764501411DE58E8618945054A3F620B36202E115D015A7773F4B78E0F952CECA
+
+#var=
 signed-delegation.example.com. 3600 IN RRSIG DS 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 
-;; (Secure) delegation data; Delegation without DS record (and both NSEC
-;; and NSEC3 denying its existence)
+## (Secure) delegation data; Delegation without DS record (and both NSEC
+## and NSEC3 denying its existence)
+#var=unsigned_delegation_txt
 unsigned-delegation.example.com. 3600 IN NS ns.example.net.
+#var=unsigned_delegation_nsec_txt
 unsigned-delegation.example.com. 3600 IN NSEC unsigned-delegation-optout.example.com. NS RRSIG NSEC
+
+#var=
 unsigned-delegation.example.com. 3600 IN RRSIG NSEC 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 
-;; This one will be added on demand
-; q81r598950igr1eqvc60aedlq66425b5.example.com. 3600 IN NSEC3 1 1 12 aabbccdd 0p9mhaveqvm6t7vbl5lop2u3t2rp3tom NS RRSIG
-
-;; Delegation without DS record, and no direct matching NSEC3 record
+## Delegation without DS record, and no direct matching NSEC3 record
+#var=unsigned_delegation_optout_txt
 unsigned-delegation-optout.example.com. 3600 IN NS ns.example.net.
+#var=unsigned_delegation_optout_nsec_txt
 unsigned-delegation-optout.example.com. 3600 IN NSEC *.uwild.example.com. NS RRSIG NSEC
 
-;; (Secure) delegation data; Delegation where the DS lookup will raise an
-;; exception.
+## (Secure) delegation data; Delegation where the DS lookup will raise an
+## exception.
+#var=bad_delegation_txt
 bad-delegation.example.com. 3600 IN NS ns.example.net.
 
-;; Delegation from an unsigned parent.  There's no DS, and there's no NSEC
-;; or NSEC3 that proves it.
+## Delegation from an unsigned parent.  There's no DS, and there's no NSEC
+## or NSEC3 that proves it.
+#var=nosec_delegation_txt
 nosec-delegation.example.com. 3600 IN NS ns.nosec.example.net.

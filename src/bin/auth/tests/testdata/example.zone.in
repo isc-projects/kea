@@ -1,0 +1,6 @@
+;;
+;; This is a complete (but crafted and somewhat broken) zone file used
+;; in query tests, excluding NSEC3 records.
+;;
+
+$INCLUDE @abs_builddir@/example-base.zone

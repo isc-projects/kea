@@ -24,9 +24,11 @@
 
 #include <dns/masterload.h>
 #include <dns/message.h>
+#include <dns/master_loader.h>
 #include <dns/name.h>
 #include <dns/opcode.h>
 #include <dns/rcode.h>
+#include <dns/rrcollator.h>
 #include <dns/rrttl.h>
 #include <dns/rrtype.h>
 #include <dns/rdataclass.h>
@@ -79,150 +81,21 @@ private:
     DataSourceClient& client_;
 };
 
+// These are commonly used data (auto-generated).  There are some exceptional
+// data that are only used in a limited scenario, which are defined separately
+// below.
+#include <auth/tests/example_base_inc.cc>
+#include <auth/tests/example_nsec3_inc.cc>
 
-// This is the content of the mock zone (see below).
-// It's a sequence of textual RRs that is supposed to be parsed by
-// dns::masterLoad().  Some of the RRs are also used as the expected
-// data in specific tests, in which case they are referenced via specific
-// local variables (such as soa_txt).
-//
-// For readability consistency, all strings are placed in a separate line,
-// even if they are very short and can reasonably fit in a single line with
-// the corresponding variable.  For example, we write
-// const char* const foo_txt =
-//  "foo.example.com. 3600 IN AAAA 2001:db8::1\n";
-// instead of
-// const char* const foo_txt = "foo.example.com. 3600 IN AAAA 2001:db8::1\n";
-const char* const soa_txt =
-    "example.com. 3600 IN SOA . . 0 0 0 0 0\n";
-const char* const zone_ns_txt =
-    "example.com. 3600 IN NS glue.delegation.example.com.\n"
-    "example.com. 3600 IN NS noglue.example.com.\n"
-    "example.com. 3600 IN NS example.net.\n";
+// This is used only in one pathological test case.
 const char* const zone_ds_txt =
     "example.com. 3600 IN DS 57855 5 1 "
         "B6DCD485719ADCA18E5F3D48A2331627FDD3 636B\n";
-const char* const ns_addrs_txt =
-    "glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
-    "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n"
-    "noglue.example.com. 3600 IN A 192.0.2.53\n";
-const char* const delegation_txt =
-    "delegation.example.com. 3600 IN NS glue.delegation.example.com.\n"
-    "delegation.example.com. 3600 IN NS noglue.example.com.\n"
-    "delegation.example.com. 3600 IN NS cname.example.com.\n"
-    "delegation.example.com. 3600 IN NS example.org.\n";
-// Borrowed from the RFC4035
-const char* const delegation_ds_txt =
-    "delegation.example.com. 3600 IN DS 57855 5 1 "
-        "B6DCD485719ADCA18E5F3D48A2331627FDD3 636B\n";
-const char* const mx_txt =
-    "mx.example.com. 3600 IN MX 10 www.example.com.\n"
-    "mx.example.com. 3600 IN MX 20 mailer.example.org.\n"
-    "mx.example.com. 3600 IN MX 30 mx.delegation.example.com.\n";
-const char* const www_a_txt =
-    "www.example.com. 3600 IN A 192.0.2.80\n";
-const char* const cname_txt =
-    "cname.example.com. 3600 IN CNAME www.example.com.\n";
-const char* const cname_nxdom_txt =
-    "cnamenxdom.example.com. 3600 IN CNAME nxdomain.example.com.\n";
-// CNAME Leading out of zone
-const char* const cname_out_txt =
-    "cnameout.example.com. 3600 IN CNAME www.example.org.\n";
-// The DNAME to do tests against
-const char* const dname_txt =
-    "dname.example.com. 3600 IN DNAME "
-    "somethinglong.dnametarget.example.com.\n";
-// Some data at the dname node (allowed by RFC 2672)
-const char* const dname_a_txt =
-    "dname.example.com. 3600 IN A 192.0.2.5\n";
+
 // This is not inside the zone, this is created at runtime
 const char* const synthetized_cname_txt =
     "www.dname.example.com. 3600 IN CNAME "
     "www.somethinglong.dnametarget.example.com.\n";
-// The rest of data won't be referenced from the test cases.
-const char* const other_zone_rrs =
-    "cnamemailer.example.com. 3600 IN CNAME www.example.com.\n"
-    "cnamemx.example.com. 3600 IN MX 10 cnamemailer.example.com.\n"
-    "mx.delegation.example.com. 3600 IN A 192.0.2.100\n";
-// Wildcards
-const char* const wild_txt =
-    "*.wild.example.com. 3600 IN A 192.0.2.7\n";
-const char* const nsec_wild_txt =
-    "*.wild.example.com. 3600 IN NSEC www.example.com. A NSEC RRSIG\n";
-const char* const cnamewild_txt =
-    "*.cnamewild.example.com. 3600 IN CNAME www.example.org.\n";
-const char* const nsec_cnamewild_txt =
-    "*.cnamewild.example.com. 3600 IN NSEC "
-    "delegation.example.com. CNAME NSEC RRSIG\n";
-// Wildcard_nxrrset
-const char* const wild_txt_nxrrset =
-    "*.uwild.example.com. 3600 IN A 192.0.2.9\n";
-const char* const nsec_wild_txt_nxrrset =
-    "*.uwild.example.com. 3600 IN NSEC www.uwild.example.com. A NSEC RRSIG\n";
-const char* const wild_txt_next =
-    "www.uwild.example.com. 3600 IN A 192.0.2.11\n";
-const char* const nsec_wild_txt_next =
-    "www.uwild.example.com. 3600 IN NSEC *.wild.example.com. A NSEC RRSIG\n";
-// Wildcard empty
-const char* const empty_txt =
-    "b.*.t.example.com. 3600 IN A 192.0.2.13\n";
-const char* const nsec_empty_txt =
-    "b.*.t.example.com. 3600 IN NSEC *.uwild.example.com. A NSEC RRSIG\n";
-const char* const empty_prev_txt =
-    "t.example.com. 3600 IN A 192.0.2.15\n";
-const char* const nsec_empty_prev_txt =
-    "t.example.com. 3600 IN NSEC b.*.t.example.com. A NSEC RRSIG\n";
-// Used in NXDOMAIN proof test.  We are going to test some unusual case where
-// the best possible wildcard is below the "next domain" of the NSEC RR that
-// proves the NXDOMAIN, i.e.,
-// mx.example.com. (exist)
-// (.no.example.com. (qname, NXDOMAIN)
-// ).no.example.com. (exist)
-// *.no.example.com. (best possible wildcard, not exist)
-const char* const no_txt =
-    ").no.example.com. 3600 IN AAAA 2001:db8::53\n";
-// NSEC records.
-const char* const nsec_apex_txt =
-    "example.com. 3600 IN NSEC cname.example.com. NS SOA NSEC RRSIG\n";
-const char* const nsec_mx_txt =
-    "mx.example.com. 3600 IN NSEC ).no.example.com. MX NSEC RRSIG\n";
-const char* const nsec_no_txt =
-    ").no.example.com. 3600 IN NSEC nz.no.example.com. AAAA NSEC RRSIG\n";
-// We'll also test the case where a single NSEC proves both NXDOMAIN and the
-// non existence of wildcard.  The following records will be used for that
-// test.
-// ).no.example.com. (exist, whose NSEC proves everything)
-// *.no.example.com. (best possible wildcard, not exist)
-// nx.no.example.com. (NXDOMAIN)
-// nz.no.example.com. (exist)
-const char* const nz_txt =
-    "nz.no.example.com. 3600 IN AAAA 2001:db8::5300\n";
-const char* const nsec_nz_txt =
-    "nz.no.example.com. 3600 IN NSEC noglue.example.com. AAAA NSEC RRSIG\n";
-const char* const nsec_nxdomain_txt =
-    "noglue.example.com. 3600 IN NSEC nonsec.example.com. A\n";
-
-// NSEC for the normal NXRRSET case
-const char* const nsec_www_txt =
-    "www.example.com. 3600 IN NSEC example.com. A NSEC RRSIG\n";
-
-// Authoritative data without NSEC
-const char* const nonsec_a_txt =
-    "nonsec.example.com. 3600 IN A 192.0.2.0\n";
-
-// NSEC3 RRs.  You may also need to add mapping to MockZoneFinder::hash_map_.
-const string nsec3_apex_txt =
-    "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.com. 3600 IN NSEC3 1 1 12 "
-    "aabbccdd 2t7b4g4vsa5smi47k61mv5bv1a22bojr NS SOA NSEC3PARAM RRSIG\n";
-const string nsec3_apex_rrsig_txt =
-    "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.com. 3600 IN RRSIG NSEC3 5 3 "
-    "3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE";
-const string nsec3_www_txt =
-    "q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN NSEC3 1 1 12 "
-    "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
-const string nsec3_www_rrsig_txt =
-    "q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN RRSIG NSEC3 5 3 "
-    "3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE";
 
 // NSEC3 for wild.example.com (used in wildcard tests, will be added on
 // demand not to confuse other tests)
@@ -246,41 +119,12 @@ const char* const nsec3_uwild_txt =
     "t644ebqk9bibcna874givr6joj62mlhv.example.com. 3600 IN NSEC3 1 1 12 "
     "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
 
-// (Secure) delegation data; Delegation with DS record
-const char* const signed_delegation_txt =
-    "signed-delegation.example.com. 3600 IN NS ns.example.net.\n";
-const char* const signed_delegation_ds_txt =
-    "signed-delegation.example.com. 3600 IN DS 12345 8 2 "
-    "764501411DE58E8618945054A3F620B36202E115D015A7773F4B78E0F952CECA\n";
-
 // (Secure) delegation data; Delegation without DS record (and both NSEC
 // and NSEC3 denying its existence)
-const char* const unsigned_delegation_txt =
-    "unsigned-delegation.example.com. 3600 IN NS ns.example.net.\n";
-const char* const unsigned_delegation_nsec_txt =
-    "unsigned-delegation.example.com. 3600 IN NSEC "
-    "unsigned-delegation-optout.example.com. NS RRSIG NSEC\n";
 // This one will be added on demand
 const char* const unsigned_delegation_nsec3_txt =
     "q81r598950igr1eqvc60aedlq66425b5.example.com. 3600 IN NSEC3 1 1 12 "
     "aabbccdd 0p9mhaveqvm6t7vbl5lop2u3t2rp3tom NS RRSIG\n";
-
-// Delegation without DS record, and no direct matching NSEC3 record
-const char* const unsigned_delegation_optout_txt =
-    "unsigned-delegation-optout.example.com. 3600 IN NS ns.example.net.\n";
-const char* const unsigned_delegation_optout_nsec_txt =
-    "unsigned-delegation-optout.example.com. 3600 IN NSEC "
-    "*.uwild.example.com. NS RRSIG NSEC\n";
-
-// (Secure) delegation data; Delegation where the DS lookup will raise an
-// exception.
-const char* const bad_delegation_txt =
-    "bad-delegation.example.com. 3600 IN NS ns.example.net.\n";
-
-// Delegation from an unsigned parent.  There's no DS, and there's no NSEC
-// or NSEC3 that proves it.
-const char* const nosec_delegation_txt =
-    "nosec-delegation.example.com. 3600 IN NS ns.nosec.example.net.\n";
 
 // A helper function that generates a textual representation of RRSIG RDATA
 // for the given covered type.  The resulting RRSIG may not necessarily make
@@ -340,26 +184,12 @@ public:
         nsec3_fake_(NULL),
         nsec3_name_(NULL)
     {
-        stringstream zone_stream;
-        zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
-            delegation_txt << delegation_ds_txt << mx_txt << www_a_txt <<
-            cname_txt << cname_nxdom_txt << cname_out_txt << dname_txt <<
-            dname_a_txt << other_zone_rrs << no_txt << nz_txt <<
-            nsec_apex_txt << nsec_mx_txt << nsec_no_txt << nsec_nz_txt <<
-            nsec_nxdomain_txt << nsec_www_txt << nonsec_a_txt <<
-            wild_txt << nsec_wild_txt << cnamewild_txt << nsec_cnamewild_txt <<
-            wild_txt_nxrrset << nsec_wild_txt_nxrrset << wild_txt_next <<
-            nsec_wild_txt_next << empty_txt << nsec_empty_txt <<
-            empty_prev_txt << nsec_empty_prev_txt <<
-            nsec3_apex_txt << nsec3_www_txt <<
-            signed_delegation_txt << signed_delegation_ds_txt <<
-            unsigned_delegation_txt << unsigned_delegation_nsec_txt <<
-            unsigned_delegation_optout_txt <<
-            unsigned_delegation_optout_nsec_txt <<
-            bad_delegation_txt << nosec_delegation_txt;
-
-        masterLoad(zone_stream, origin_, rrclass_,
-                   boost::bind(&MockZoneFinder::loadRRset, this, _1));
+        RRCollator collator(boost::bind(&MockZoneFinder::loadRRset, this, _1));
+        MasterLoader loader(TEST_OWN_DATA_DIR "/example-nsec3.zone",
+                            origin_, rrclass_,
+                            MasterLoaderCallbacks::getNullCallbacks(),
+                            collator.getCallback());
+        loader.load();
 
         empty_nsec_rrset_ = ConstRRsetPtr(new RRset(Name::ROOT_NAME(),
                                                     RRClass::IN(),
@@ -513,6 +343,13 @@ private:
     };
 
     void loadRRset(RRsetPtr rrset) {
+        // For simplicity we dynamically generate RRSIGs and add them below.
+        // The RRSIG RDATA should be consistent with that defined in the
+        // zone file.
+        if (rrset->getType() == RRType::RRSIG()) {
+            return;
+        }
+
         if (rrset->getType() == RRType::NSEC3()) {
             // NSEC3 should go to the dedicated table
             nsec3_domains_[rrset->getName()][rrset->getType()] = rrset;
@@ -900,12 +737,12 @@ enum DataSrcType {
 
 boost::shared_ptr<ClientList>
 createDataSrcClientList(DataSrcType type, DataSourceClient& client) {
+    boost::shared_ptr<ConfigurableClientList> list;
     switch (type) {
     case MOCK:
         return (boost::shared_ptr<ClientList>(new SingletonList(client)));
     case INMEMORY:
-        boost::shared_ptr<ConfigurableClientList> list(
-            new ConfigurableClientList(RRClass::IN()));
+        list.reset(new ConfigurableClientList(RRClass::IN()));
         list->configure(isc::data::Element::fromJSON(
                             "[{\"type\": \"MasterFiles\","
                             "  \"cache-enable\": true, "
@@ -2126,7 +1963,7 @@ TEST_P(QueryTest, findNSEC3) {
     {
         SCOPED_TRACE("apex, non recursive");
         nsec3Check(true, expected_closest_labels,
-                   nsec3_apex_txt + "\n" + nsec3_apex_rrsig_txt,
+                   string(nsec3_apex_txt) + "\n" + nsec3_apex_rrsig_txt,
                    mock_finder->findNSEC3(Name("example.com"), false));
     }
 
@@ -2134,7 +1971,7 @@ TEST_P(QueryTest, findNSEC3) {
     {
         SCOPED_TRACE("apex, recursive");
         nsec3Check(true, expected_closest_labels,
-                   nsec3_apex_txt + "\n" + nsec3_apex_rrsig_txt,
+                   string(nsec3_apex_txt) + "\n" + nsec3_apex_rrsig_txt,
                    mock_finder->findNSEC3(Name("example.com"), true));
     }
 
@@ -2143,7 +1980,7 @@ TEST_P(QueryTest, findNSEC3) {
     {
         SCOPED_TRACE("nxdomain, non recursive");
         nsec3Check(false, 4,
-                   nsec3_www_txt + "\n" + nsec3_www_rrsig_txt,
+                   string(nsec3_www_txt) + "\n" + nsec3_www_rrsig_txt,
                    mock_finder->findNSEC3(Name("nxdomain.example.com"),
                                           false));
     }
@@ -2153,7 +1990,7 @@ TEST_P(QueryTest, findNSEC3) {
     {
         SCOPED_TRACE("nxdomain, recursive");
         nsec3Check(true, expected_closest_labels,
-                   nsec3_apex_txt + "\n" + nsec3_apex_rrsig_txt + "\n" +
+                   string(nsec3_apex_txt) + "\n" + nsec3_apex_rrsig_txt + "\n" +
                    nsec3_www_txt + "\n" + nsec3_www_rrsig_txt,
                    mock_finder->findNSEC3(Name("nxdomain.example.com"), true));
     }
@@ -2163,7 +2000,7 @@ TEST_P(QueryTest, findNSEC3) {
     {
         SCOPED_TRACE("nxdomain, next closer != qname");
         nsec3Check(true, expected_closest_labels,
-                   nsec3_apex_txt + "\n" + nsec3_apex_rrsig_txt + "\n" +
+                   string(nsec3_apex_txt) + "\n" + nsec3_apex_rrsig_txt + "\n" +
                    nsec3_www_txt + "\n" + nsec3_www_rrsig_txt,
                    mock_finder->findNSEC3(Name("nx.domain.example.com"),
                                           true));
@@ -2173,14 +2010,14 @@ TEST_P(QueryTest, findNSEC3) {
     {
         SCOPED_TRACE("largest");
         nsec3Check(false, 4,
-                   nsec3_apex_txt + "\n" + nsec3_apex_rrsig_txt,
+                   string(nsec3_apex_txt) + "\n" + nsec3_apex_rrsig_txt,
                    mock_finder->findNSEC3(Name("nxdomain2.example.com"),
                                           false));
     }
     {
         SCOPED_TRACE("smallest");
         nsec3Check(false, 4,
-                   nsec3_www_txt + "\n" + nsec3_www_rrsig_txt,
+                   string(nsec3_www_txt) + "\n" + nsec3_www_rrsig_txt,
                    mock_finder->findNSEC3(Name("nxdomain3.example.com"),
                                           false));
     }
