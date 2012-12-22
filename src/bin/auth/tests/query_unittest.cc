@@ -748,7 +748,7 @@ createDataSrcClientList(DataSrcType type, DataSourceClient& client) {
                             "[{\"type\": \"MasterFiles\","
                             "  \"cache-enable\": true, "
                             "  \"params\": {\"example.com\": \"" +
-                            string(TEST_OWN_DATA_DIR "/example.zone") +
+                            string(TEST_OWN_DATA_BUILDDIR "/example.zone") +
                             "\"}}]"), true);
         return (list);
     case SQLITE3:
@@ -758,7 +758,8 @@ createDataSrcClientList(DataSrcType type, DataSourceClient& client) {
                             "  \"cache-enable\": false, "
                             "  \"cache-zones\": [], "
                             "  \"params\": {\"database_file\": \"" +
-                            string(TEST_OWN_DATA_DIR "/example-base.sqlite3") +
+                            string(TEST_OWN_DATA_BUILDDIR
+                                   "/example-base.sqlite3") +
                             "\"}}]"), true);
          return (list);
     }
