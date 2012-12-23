@@ -15,7 +15,7 @@ the "m4" subdirectory as a template for your own project.  The key is
 to call the AX_ISC_BIND10 function (as the sample configure.ac does)
 from your configure.ac.  Then it will check the availability of
 necessary stuff and set some corresponding AC variables.  You can then
-use the resulting variables in your Makefile.in or Makefile.ac.
+use the resulting variables in your Makefile.in or Makefile.am.
 
 If you use automake, don't forget adding the following line to the top
 level Makefile.am:
