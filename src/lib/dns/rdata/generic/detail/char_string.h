@@ -49,8 +49,8 @@ typedef std::vector<uint8_t> CharString;
 /// \brief str_region A string that represents a character-string.
 /// \brief result A placeholder vector where the resulting data are to be
 /// stored.  Expected to be empty, but it's not checked.
-void strToCharString(const MasterToken::StringRegion& str_region,
-                     CharString& result);
+void stringToCharString(const MasterToken::StringRegion& str_region,
+                        CharString& result);
 
 /// \brief Convert a CharString into a textual DNS character-string.
 ///
