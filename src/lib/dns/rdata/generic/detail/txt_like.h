@@ -119,7 +119,7 @@ private:
                 break;
             }
             string_list_.push_back(std::vector<uint8_t>());
-            strToCharString(token.getStringRegion(), string_list_.back());
+            stringToCharString(token.getStringRegion(), string_list_.back());
         }
 
         // Let upper layer handle eol/eof.

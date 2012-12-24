@@ -57,8 +57,8 @@ decimalToNumber(const char* s, const char* s_end) {
 }
 
 void
-strToCharString(const MasterToken::StringRegion& str_region,
-                CharString& result)
+stringToCharString(const MasterToken::StringRegion& str_region,
+                   CharString& result)
 {
     // make a space for the 1-byte length field; filled in at the end
     result.push_back(0);
