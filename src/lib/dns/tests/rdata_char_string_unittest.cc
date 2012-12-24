@@ -145,61 +145,30 @@ TEST_F(CharStringTest, badDDD) {
                  InvalidRdataText);
 }
 
+const struct TestData {
+    const char *data;
+    const char *expected;
+} conversion_data[] = {
+    {"Test\"Test", "Test\\\"Test"},
+    {"Test;Test", "Test\\;Test"},
+    {"Test\\Test", "Test\\\\Test"},
+    {"Test\x1fTest", "Test\\031Test"},
+    {"Test ~ Test", "Test ~ Test"},
+    {"Test\x7fTest", "Test\\127Test"},
+    {NULL, NULL}
+};
+
 TEST_F(CharStringTest, charStringToString) {
-    const uint8_t double_quotes_buf[] = {
-        sizeof("Test\"Test\"") - 1,
-        'T', 'e', 's', 't', '"', 'T', 'e', 's', 't', '"'
-    };
-    const CharString double_quotes
-        (double_quotes_buf, double_quotes_buf + sizeof(double_quotes_buf));
-    EXPECT_EQ("Test\\\"Test\\\"",
-              charStringToString(double_quotes));
-
-    const uint8_t semicolon_buf[] = {
-        sizeof("Test;Test") - 1,
-        'T', 'e', 's', 't', ';', 'T', 'e', 's', 't'
-    };
-    const CharString semicolon
-        (semicolon_buf, semicolon_buf + sizeof(semicolon_buf));
-    EXPECT_EQ("Test\\;Test",
-              charStringToString(semicolon));
-
-    const uint8_t backslash_buf[] = {
-        sizeof("Test\\Test") - 1,
-        'T', 'e', 's', 't', '\\', 'T', 'e', 's', 't'
-    };
-    const CharString backslash
-        (backslash_buf, backslash_buf + sizeof(backslash_buf));
-    EXPECT_EQ("Test\\\\Test",
-              charStringToString(backslash));
-
-    const uint8_t before_x20_buf[] = {
-        sizeof("Test\x1fTest") - 1,
-        'T', 'e', 's', 't', 0x1f, 'T', 'e', 's', 't'
-    };
-    const CharString before_x20
-        (before_x20_buf, before_x20_buf + sizeof(before_x20_buf));
-    EXPECT_EQ("Test\\031Test",
-              charStringToString(before_x20));
-
-    const uint8_t from_x20_to_x7e_buf[] = {
-        sizeof("Test ~ Test") - 1,
-        'T', 'e', 's', 't', ' ', '~', ' ', 'T', 'e', 's', 't'
-    };
-    const CharString from_x20_to_x7e
-        (from_x20_to_x7e_buf,
-         from_x20_to_x7e_buf + sizeof(from_x20_to_x7e_buf));
-    EXPECT_EQ("Test ~ Test",
-              charStringToString(from_x20_to_x7e));
-
-    const uint8_t after_0x7e_buf[] = {
-        sizeof("Test\x7fTest") - 1,
-        'T', 'e', 's', 't', 0x7f, 'T', 'e', 's', 't'
-    };
-    const CharString after_0x7e
-        (after_0x7e_buf, after_0x7e_buf + sizeof(after_0x7e_buf));
-    EXPECT_EQ("Test\\127Test",
-              charStringToString(after_0x7e));
+    for (const TestData* cur = conversion_data; cur->data != NULL; ++cur) {
+        uint8_t idata[32];
+        size_t length = std::strlen(cur->data);
+        // length (1 byte) + string (length bytes)
+        assert(sizeof(idata) > length);
+        idata[0] = static_cast<uint8_t>(length);
+        std::memcpy(idata + 1, cur->data, length);
+        const CharString test_data(idata, idata + length + 1);
+        EXPECT_EQ(cur->expected, charStringToString(test_data));
+    }
 }
 
 } // unnamed namespace
