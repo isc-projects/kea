@@ -25,7 +25,7 @@
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using isc::dns::rdata::generic::detail::CharString;
-using isc::dns::rdata::generic::detail::strToCharString;
+using isc::dns::rdata::generic::detail::stringToCharString;
 using isc::dns::rdata::generic::detail::charStringToString;
 using isc::util::unittests::matchWireData;
 
@@ -61,19 +61,19 @@ createStringRegion(const std::string& str) {
 TEST_F(CharStringTest, normalConversion) {
     uint8_t tmp[3];             // placeholder for expected sequence
 
-    strToCharString(str_region, chstr);
+    stringToCharString(str_region, chstr);
     matchWireData(test_charstr, sizeof(test_charstr), &chstr[0], chstr.size());
 
     // Empty string
     chstr.clear();
-    strToCharString(createStringRegion(""), chstr);
+    stringToCharString(createStringRegion(""), chstr);
     tmp[0] = 0;
     matchWireData(tmp, 1, &chstr[0], chstr.size());
 
     // Possible largest char string
     chstr.clear();
     std::string long_str(255, 'x');
-    strToCharString(createStringRegion(long_str), chstr);
+    stringToCharString(createStringRegion(long_str), chstr);
     std::vector<uint8_t> expected;
     expected.push_back(255);    // len of char string
     expected.insert(expected.end(), long_str.begin(), long_str.end());
@@ -84,32 +84,32 @@ TEST_F(CharStringTest, normalConversion) {
     chstr.clear();
     long_str.at(254) = '\\';    // replace the last 'x' with '\'
     long_str.append("120");     // 'x' = 120
-    strToCharString(createStringRegion(long_str), chstr);
+    stringToCharString(createStringRegion(long_str), chstr);
     matchWireData(&expected[0], expected.size(), &chstr[0], chstr.size());
 
     // Escaped '\'
     chstr.clear();
     tmp[0] = 1;
     tmp[1] = '\\';
-    strToCharString(createStringRegion("\\\\"), chstr);
+    stringToCharString(createStringRegion("\\\\"), chstr);
     matchWireData(tmp, 2, &chstr[0], chstr.size());
 
     // Boundary values for \DDD
     chstr.clear();
     tmp[0] = 1;
     tmp[1] = 0;
-    strToCharString(createStringRegion("\\000"), chstr);
+    stringToCharString(createStringRegion("\\000"), chstr);
     matchWireData(tmp, 2, &chstr[0], chstr.size());
 
     chstr.clear();
-    strToCharString(createStringRegion("\\255"), chstr);
+    stringToCharString(createStringRegion("\\255"), chstr);
     tmp[0] = 1;
     tmp[1] = 255;
     matchWireData(tmp, 2, &chstr[0], chstr.size());
 
     // Another digit follows DDD; it shouldn't cause confusion
     chstr.clear();
-    strToCharString(createStringRegion("\\2550"), chstr);
+    stringToCharString(createStringRegion("\\2550"), chstr);
     tmp[0] = 2;                 // string len is now 2
     tmp[2] = '0';
     matchWireData(tmp, 3, &chstr[0], chstr.size());
@@ -117,13 +117,13 @@ TEST_F(CharStringTest, normalConversion) {
 
 TEST_F(CharStringTest, badConversion) {
     // string cannot exceed 255 bytes
-    EXPECT_THROW(strToCharString(createStringRegion(std::string(256, 'a')),
-                                 chstr),
+    EXPECT_THROW(stringToCharString(createStringRegion(std::string(256, 'a')),
+                                    chstr),
                  CharStringTooLong);
 
     // input string ending with (non escaped) '\'
     chstr.clear();
-    EXPECT_THROW(strToCharString(createStringRegion("foo\\"), chstr),
+    EXPECT_THROW(stringToCharString(createStringRegion("foo\\"), chstr),
                  InvalidRdataText);
 }
 
@@ -131,17 +131,17 @@ TEST_F(CharStringTest, badDDD) {
     // Check various type of bad form of \DDD
 
     // Not a number
-    EXPECT_THROW(strToCharString(createStringRegion("\\1a2"), chstr),
+    EXPECT_THROW(stringToCharString(createStringRegion("\\1a2"), chstr),
                  InvalidRdataText);
-    EXPECT_THROW(strToCharString(createStringRegion("\\12a"), chstr),
+    EXPECT_THROW(stringToCharString(createStringRegion("\\12a"), chstr),
                  InvalidRdataText);
 
     // Not in the range of uint8_t
-    EXPECT_THROW(strToCharString(createStringRegion("\\256"), chstr),
+    EXPECT_THROW(stringToCharString(createStringRegion("\\256"), chstr),
                  InvalidRdataText);
 
     // Short buffer
-    EXPECT_THROW(strToCharString(createStringRegion("\\42"), chstr),
+    EXPECT_THROW(stringToCharString(createStringRegion("\\42"), chstr),
                  InvalidRdataText);
 }
 
