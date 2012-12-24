@@ -226,9 +226,6 @@ const char* const TEST_RECORDS[][5] = {
     {"invalidrdata2.example.org.", "A", "3600", "", "192.0.2.1"},
     {"invalidrdata2.example.org.", "RRSIG", "3600", "", "Nonsense"},
 
-    // TXT-like rdata that should be escaped
-    {"escapetxt.example.org.", "TXT", "3600", "", "Hello~World\\;\\\""},
-
     {NULL, NULL, NULL, NULL, NULL},
 };
 
@@ -2003,15 +2000,6 @@ TYPED_TEST(DatabaseClientTest, find) {
                this->qtype_, this->qtype_, isc::dns::RRTTL(360),
                ZoneFinder::SUCCESS, this->expected_rdatas_,
                this->expected_sig_rdatas_);
-
-    this->expected_rdatas_.clear();
-    this->expected_sig_rdatas_.clear();
-    this->expected_rdatas_.push_back("Hello~World\\;\\\"");
-    doFindTest(*finder, isc::dns::Name("escapetxt.example.org."),
-               isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
-               this->rrttl_,
-               ZoneFinder::SUCCESS,
-               this->expected_rdatas_, this->expected_sig_rdatas_);
 
     this->expected_rdatas_.clear();
     this->expected_sig_rdatas_.clear();
