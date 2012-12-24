@@ -24,7 +24,7 @@ namespace dns {
 void
 RRsetCollection::loaderCallback(const std::string&, size_t, const std::string&)
 {
-     // We just ignore errors and warnings.
+     // We just ignore callbacks for errors and warnings.
 }
 
 void
