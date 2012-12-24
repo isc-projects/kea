@@ -60,34 +60,10 @@ TEST_F(RRsetCollectionTest, findBase) {
     EXPECT_NE(static_cast<AbstractRRset*>(NULL), rrset);
 }
 
-TEST_F(RRsetCollectionTest, findConst) {
+template <typename T, typename TP>
+void doFind(T& collection, const RRClass& rrclass) {
     // Test the find() that returns ConstRRsetPtr
-    const RRsetCollection& ccln = collection;
-    ConstRRsetPtr rrset = ccln.find(Name("www.example.org"), rrclass,
-                                    RRType::A());
-    EXPECT_TRUE(rrset);
-    EXPECT_EQ(RRType::A(), rrset->getType());
-    EXPECT_EQ(RRTTL(3600), rrset->getTTL());
-    EXPECT_EQ(RRClass("IN"), rrset->getClass());
-    EXPECT_EQ(Name("www.example.org"), rrset->getName());
-
-    // foo.example.org doesn't exist
-    rrset = ccln.find(Name("foo.example.org"), rrclass, RRType::A());
-    EXPECT_FALSE(rrset);
-
-    // www.example.org exists, but not with MX
-    rrset = ccln.find(Name("www.example.org"), rrclass, RRType::MX());
-    EXPECT_FALSE(rrset);
-
-    // www.example.org exists, with AAAA
-    rrset = ccln.find(Name("www.example.org"), rrclass, RRType::AAAA());
-    EXPECT_TRUE(rrset);
-}
-
-TEST_F(RRsetCollectionTest, find) {
-    // Test the find() that returns ConstRRsetPtr
-    RRsetPtr rrset = collection.find(Name("www.example.org"), rrclass,
-                                     RRType::A());
+    TP rrset = collection.find(Name("www.example.org"), rrclass, RRType::A());
     EXPECT_TRUE(rrset);
     EXPECT_EQ(RRType::A(), rrset->getType());
     EXPECT_EQ(RRTTL(3600), rrset->getTTL());
@@ -105,6 +81,17 @@ TEST_F(RRsetCollectionTest, find) {
     // www.example.org exists, with AAAA
     rrset = collection.find(Name("www.example.org"), rrclass, RRType::AAAA());
     EXPECT_TRUE(rrset);
+}
+
+TEST_F(RRsetCollectionTest, findConst) {
+    // Test the find() that returns ConstRRsetPtr
+    const RRsetCollection& ccln = collection;
+    doFind<const RRsetCollection, ConstRRsetPtr>(ccln, rrclass);
+}
+
+TEST_F(RRsetCollectionTest, find) {
+    // Test the find() that returns RRsetPtr
+    doFind<RRsetCollection, RRsetPtr>(collection, rrclass);
 }
 
 TEST_F(RRsetCollectionTest, addAndRemove) {
