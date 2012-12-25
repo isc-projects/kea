@@ -18,48 +18,12 @@ Feature: Querying feature
         And bind10 module Xfrin should not be running
         And bind10 module StatsHttpd should not be running
 
+        And wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
+
         When I query statistics zones of bind10 module Auth
         last bindctl output should not contain "error"
-        Then the statistics counter v4 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter v6 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter udp in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter tcp in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badednsver in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter dnssec_ok in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter query in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter iquery in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter status in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter notify in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter update in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter responses for the zone _SERVER_ should be 0
-        Then the statistics counter truncated in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter qrysuccess for the zone _SERVER_ should be 0
-        Then the statistics counter qryauthans for the zone _SERVER_ should be 0
-        Then the statistics counter qrynoauthans for the zone _SERVER_ should be 0
-        Then the statistics counter qryreferral for the zone _SERVER_ should be 0
-        Then the statistics counter qrynxrrset for the zone _SERVER_ should be 0
-        Then the statistics counter authqryrej for the zone _SERVER_ should be 0
-        Then the statistics counter noerror in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter formerr in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter servfail in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notimp in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter refused in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notauth in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notzone in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter badvers in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category rcode for the zone _SERVER_ should be 0
+        Then the statistics counters are 0 in category .Auth.zones
 
         A query for www.example.org should have rcode NOERROR
         The last query response should have flags qr aa rd
@@ -87,46 +51,15 @@ Feature: Querying feature
 
         When I query statistics zones of bind10 module Auth
         last bindctl output should not contain "error"
-        Then the statistics counter v4 in the category request for the zone _SERVER_ should be 1
-        Then the statistics counter v6 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter udp in the category request for the zone _SERVER_ should be 1
-        Then the statistics counter tcp in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badednsver in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter dnssec_ok in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter query in the category opcode for the zone _SERVER_ should be 1
-        Then the statistics counter iquery in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter status in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter notify in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter update in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter responses for the zone _SERVER_ should be 1
-        Then the statistics counter truncated in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter qrysuccess for the zone _SERVER_ should be 1
-        Then the statistics counter qryauthans for the zone _SERVER_ should be 1
-        Then the statistics counter qrynoauthans for the zone _SERVER_ should be 0
-        Then the statistics counter qryreferral for the zone _SERVER_ should be 0
-        Then the statistics counter qrynxrrset for the zone _SERVER_ should be 0
-        Then the statistics counter authqryrej for the zone _SERVER_ should be 0
-        Then the statistics counter noerror in the category rcode for the zone _SERVER_ should be 1
-        Then the statistics counter formerr in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter servfail in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notimp in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter refused in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notauth in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notzone in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter badvers in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category rcode for the zone _SERVER_ should be 0
+        Then the statistics counters are 0 in category .Auth.zones except for the following items
+          | item_name              | item_value |
+          | _SERVER_.request.v4    |          1 |
+          | _SERVER_.request.udp   |          1 |
+          | _SERVER_.opcode.query  |          1 |
+          | _SERVER_.responses     |          1 |
+          | _SERVER_.qrysuccess    |          1 |
+          | _SERVER_.qryauthans    |          1 |
+          | _SERVER_.rcode.noerror |          1 |
 
 
         # Repeat of the above
@@ -156,46 +89,15 @@ Feature: Querying feature
 
         When I query statistics zones of bind10 module Auth
         last bindctl output should not contain "error"
-        Then the statistics counter v4 in the category request for the zone _SERVER_ should be 2
-        Then the statistics counter v6 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter udp in the category request for the zone _SERVER_ should be 2
-        Then the statistics counter tcp in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badednsver in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter dnssec_ok in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter query in the category opcode for the zone _SERVER_ should be 2
-        Then the statistics counter iquery in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter status in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter notify in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter update in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter responses for the zone _SERVER_ should be 2
-        Then the statistics counter truncated in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter qrysuccess for the zone _SERVER_ should be 2
-        Then the statistics counter qryauthans for the zone _SERVER_ should be 2
-        Then the statistics counter qrynoauthans for the zone _SERVER_ should be 0
-        Then the statistics counter qryreferral for the zone _SERVER_ should be 0
-        Then the statistics counter qrynxrrset for the zone _SERVER_ should be 0
-        Then the statistics counter authqryrej for the zone _SERVER_ should be 0
-        Then the statistics counter noerror in the category rcode for the zone _SERVER_ should be 2
-        Then the statistics counter formerr in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter servfail in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notimp in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter refused in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notauth in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notzone in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter badvers in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category rcode for the zone _SERVER_ should be 0
+        Then the statistics counters are 0 in category .Auth.zones except for the following items
+          | item_name              | item_value |
+          | _SERVER_.request.v4    |          2 |
+          | _SERVER_.request.udp   |          2 |
+          | _SERVER_.opcode.query  |          2 |
+          | _SERVER_.responses     |          2 |
+          | _SERVER_.qrysuccess    |          2 |
+          | _SERVER_.qryauthans    |          2 |
+          | _SERVER_.rcode.noerror |          2 |
 
         # And now query something completely different
         A query for nosuchname.example.org should have rcode NXDOMAIN
@@ -213,46 +115,16 @@ Feature: Querying feature
 
         When I query statistics zones of bind10 module Auth
         last bindctl output should not contain "error"
-        Then the statistics counter v4 in the category request for the zone _SERVER_ should be 3
-        Then the statistics counter v6 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter udp in the category request for the zone _SERVER_ should be 3
-        Then the statistics counter tcp in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badednsver in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter dnssec_ok in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter query in the category opcode for the zone _SERVER_ should be 3
-        Then the statistics counter iquery in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter status in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter notify in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter update in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter responses for the zone _SERVER_ should be 3
-        Then the statistics counter truncated in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter qrysuccess for the zone _SERVER_ should be 2
-        Then the statistics counter qryauthans for the zone _SERVER_ should be 3
-        Then the statistics counter qrynoauthans for the zone _SERVER_ should be 0
-        Then the statistics counter qryreferral for the zone _SERVER_ should be 0
-        Then the statistics counter qrynxrrset for the zone _SERVER_ should be 0
-        Then the statistics counter authqryrej for the zone _SERVER_ should be 0
-        Then the statistics counter noerror in the category rcode for the zone _SERVER_ should be 2
-        Then the statistics counter formerr in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter servfail in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxdomain in the category rcode for the zone _SERVER_ should be 1
-        Then the statistics counter notimp in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter refused in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notauth in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notzone in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter badvers in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category rcode for the zone _SERVER_ should be 0
+        Then the statistics counters are 0 in category .Auth.zones except for the following items
+          | item_name               | item_value |
+          | _SERVER_.request.v4     |          3 |
+          | _SERVER_.request.udp    |          3 |
+          | _SERVER_.opcode.query   |          3 |
+          | _SERVER_.responses      |          3 |
+          | _SERVER_.qrysuccess     |          2 |
+          | _SERVER_.qryauthans     |          3 |
+          | _SERVER_.rcode.noerror  |          2 |
+          | _SERVER_.rcode.nxdomain |          1 |
 
     Scenario: ANY query
         Given I have bind10 running with configuration example.org.inmem.config
@@ -268,48 +140,12 @@ Feature: Querying feature
         And bind10 module Xfrin should not be running
         And bind10 module StatsHttpd should not be running
 
+        And wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
+
         When I query statistics zones of bind10 module Auth
         last bindctl output should not contain "error"
-        Then the statistics counter v4 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter v6 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter udp in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter tcp in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badednsver in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter dnssec_ok in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter query in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter iquery in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter status in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter notify in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter update in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter responses for the zone _SERVER_ should be 0
-        Then the statistics counter truncated in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter qrysuccess for the zone _SERVER_ should be 0
-        Then the statistics counter qryauthans for the zone _SERVER_ should be 0
-        Then the statistics counter qrynoauthans for the zone _SERVER_ should be 0
-        Then the statistics counter qryreferral for the zone _SERVER_ should be 0
-        Then the statistics counter qrynxrrset for the zone _SERVER_ should be 0
-        Then the statistics counter authqryrej for the zone _SERVER_ should be 0
-        Then the statistics counter noerror in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter formerr in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter servfail in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notimp in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter refused in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notauth in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notzone in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter badvers in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category rcode for the zone _SERVER_ should be 0
+        Then the statistics counters are 0 in category .Auth.zones
 
         A query for example.org type ANY should have rcode NOERROR
         The last query response should have flags qr aa rd
@@ -335,46 +171,15 @@ Feature: Querying feature
 
         When I query statistics zones of bind10 module Auth
         last bindctl output should not contain "error"
-        Then the statistics counter v4 in the category request for the zone _SERVER_ should be 1
-        Then the statistics counter v6 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter udp in the category request for the zone _SERVER_ should be 1
-        Then the statistics counter tcp in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badednsver in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter dnssec_ok in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter query in the category opcode for the zone _SERVER_ should be 1
-        Then the statistics counter iquery in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter status in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter notify in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter update in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter responses for the zone _SERVER_ should be 1
-        Then the statistics counter truncated in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter qrysuccess for the zone _SERVER_ should be 1
-        Then the statistics counter qryauthans for the zone _SERVER_ should be 1
-        Then the statistics counter qrynoauthans for the zone _SERVER_ should be 0
-        Then the statistics counter qryreferral for the zone _SERVER_ should be 0
-        Then the statistics counter qrynxrrset for the zone _SERVER_ should be 0
-        Then the statistics counter authqryrej for the zone _SERVER_ should be 0
-        Then the statistics counter noerror in the category rcode for the zone _SERVER_ should be 1
-        Then the statistics counter formerr in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter servfail in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notimp in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter refused in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notauth in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notzone in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter badvers in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category rcode for the zone _SERVER_ should be 0
+        Then the statistics counters are 0 in category .Auth.zones except for the following items
+          | item_name              | item_value |
+          | _SERVER_.request.v4    |          1 |
+          | _SERVER_.request.udp   |          1 |
+          | _SERVER_.opcode.query  |          1 |
+          | _SERVER_.responses     |          1 |
+          | _SERVER_.qrysuccess    |          1 |
+          | _SERVER_.qryauthans    |          1 |
+          | _SERVER_.rcode.noerror |          1 |
 
     Scenario: Delegation query for unsigned child zone
         Given I have bind10 running with configuration example.org.inmem.config
@@ -382,48 +187,12 @@ Feature: Querying feature
         And wait for bind10 stderr message CMDCTL_STARTED
         And wait for bind10 stderr message AUTH_SERVER_STARTED
 
+        And wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
+
         When I query statistics zones of bind10 module Auth
         last bindctl output should not contain "error"
-        Then the statistics counter v4 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter v6 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter udp in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter tcp in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badednsver in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter dnssec_ok in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter query in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter iquery in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter status in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter notify in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter update in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter responses for the zone _SERVER_ should be 0
-        Then the statistics counter truncated in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter qrysuccess for the zone _SERVER_ should be 0
-        Then the statistics counter qryauthans for the zone _SERVER_ should be 0
-        Then the statistics counter qrynoauthans for the zone _SERVER_ should be 0
-        Then the statistics counter qryreferral for the zone _SERVER_ should be 0
-        Then the statistics counter qrynxrrset for the zone _SERVER_ should be 0
-        Then the statistics counter authqryrej for the zone _SERVER_ should be 0
-        Then the statistics counter noerror in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter formerr in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter servfail in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notimp in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter refused in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notauth in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notzone in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter badvers in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category rcode for the zone _SERVER_ should be 0
+        Then the statistics counters are 0 in category .Auth.zones
 
         A dnssec query for www.sub.example.org type AAAA should have rcode NOERROR
         The last query response should have flags qr rd
@@ -445,46 +214,18 @@ Feature: Querying feature
 
         When I query statistics zones of bind10 module Auth
         last bindctl output should not contain "error"
-        Then the statistics counter v4 in the category request for the zone _SERVER_ should be 1
-        Then the statistics counter v6 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter udp in the category request for the zone _SERVER_ should be 1
-        Then the statistics counter tcp in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category request for the zone _SERVER_ should be 1
-        Then the statistics counter badednsver in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter dnssec_ok in the category request for the zone _SERVER_ should be 1
-        Then the statistics counter query in the category opcode for the zone _SERVER_ should be 1
-        Then the statistics counter iquery in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter status in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter notify in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter update in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter responses for the zone _SERVER_ should be 1
-        Then the statistics counter truncated in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category response for the zone _SERVER_ should be 1
-        Then the statistics counter tsig in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter qrysuccess for the zone _SERVER_ should be 0
-        Then the statistics counter qryauthans for the zone _SERVER_ should be 0
-        Then the statistics counter qrynoauthans for the zone _SERVER_ should be 1
-        Then the statistics counter qryreferral for the zone _SERVER_ should be 1
-        Then the statistics counter qrynxrrset for the zone _SERVER_ should be 0
-        Then the statistics counter authqryrej for the zone _SERVER_ should be 0
-        Then the statistics counter noerror in the category rcode for the zone _SERVER_ should be 1
-        Then the statistics counter formerr in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter servfail in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notimp in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter refused in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notauth in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notzone in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter badvers in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category rcode for the zone _SERVER_ should be 0
+        Then the statistics counters are 0 in category .Auth.zones except for the following items
+          | item_name                  | item_value |
+          | _SERVER_.request.v4        |          1 |
+          | _SERVER_.request.udp       |          1 |
+          | _SERVER_.request.edns0     |          1 |
+          | _SERVER_.request.dnssec_ok |          1 |
+          | _SERVER_.opcode.query      |          1 |
+          | _SERVER_.responses         |          1 |
+          | _SERVER_.response.edns0    |          1 |
+          | _SERVER_.qrynoauthans      |          1 |
+          | _SERVER_.qryreferral       |          1 |
+          | _SERVER_.rcode.noerror     |          1 |
 
     Scenario: SSHFP query
         # We are testing one more RR type for a normal successful case
@@ -501,94 +242,30 @@ Feature: Querying feature
         And bind10 module Xfrin should not be running
         And bind10 module StatsHttpd should not be running
 
+        And wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
+
         When I query statistics zones of bind10 module Auth
         last bindctl output should not contain "error"
-        Then the statistics counter v4 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter v6 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter udp in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter tcp in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badednsver in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter dnssec_ok in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter query in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter iquery in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter status in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter notify in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter update in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter responses for the zone _SERVER_ should be 0
-        Then the statistics counter truncated in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter qrysuccess for the zone _SERVER_ should be 0
-        Then the statistics counter qryauthans for the zone _SERVER_ should be 0
-        Then the statistics counter qrynoauthans for the zone _SERVER_ should be 0
-        Then the statistics counter qryreferral for the zone _SERVER_ should be 0
-        Then the statistics counter qrynxrrset for the zone _SERVER_ should be 0
-        Then the statistics counter authqryrej for the zone _SERVER_ should be 0
-        Then the statistics counter noerror in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter formerr in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter servfail in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notimp in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter refused in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notauth in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notzone in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter badvers in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category rcode for the zone _SERVER_ should be 0
+        Then the statistics counters are 0 in category .Auth.zones
 
         A query for example.org type SSHFP should have rcode NOERROR
         The last query response should have ancount 0
 
+        And wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
+
         When I query statistics zones of bind10 module Auth
         last bindctl output should not contain "error"
-        Then the statistics counter v4 in the category request for the zone _SERVER_ should be 1
-        Then the statistics counter v6 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter udp in the category request for the zone _SERVER_ should be 1
-        Then the statistics counter tcp in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badednsver in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter dnssec_ok in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter query in the category opcode for the zone _SERVER_ should be 1
-        Then the statistics counter iquery in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter status in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter notify in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter update in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter responses for the zone _SERVER_ should be 1
-        Then the statistics counter truncated in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter qrysuccess for the zone _SERVER_ should be 0
-        Then the statistics counter qryauthans for the zone _SERVER_ should be 1
-        Then the statistics counter qrynoauthans for the zone _SERVER_ should be 0
-        Then the statistics counter qryreferral for the zone _SERVER_ should be 0
-        Then the statistics counter qrynxrrset for the zone _SERVER_ should be 1
-        Then the statistics counter authqryrej for the zone _SERVER_ should be 0
-        Then the statistics counter noerror in the category rcode for the zone _SERVER_ should be 1
-        Then the statistics counter formerr in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter servfail in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notimp in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter refused in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notauth in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notzone in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter badvers in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category rcode for the zone _SERVER_ should be 0
+        Then the statistics counters are 0 in category .Auth.zones except for the following items
+          | item_name              | item_value |
+          | _SERVER_.request.v4    |          1 |
+          | _SERVER_.request.udp   |          1 |
+          | _SERVER_.opcode.query  |          1 |
+          | _SERVER_.responses     |          1 |
+          | _SERVER_.qryauthans    |          1 |
+          | _SERVER_.qrynxrrset    |          1 |
+          | _SERVER_.rcode.noerror |          1 |
 
         A query for shell.example.org type SSHFP should have rcode NOERROR
         The last query response should have ancount 1
@@ -602,43 +279,13 @@ Feature: Querying feature
 
         When I query statistics zones of bind10 module Auth
         last bindctl output should not contain "error"
-        Then the statistics counter v4 in the category request for the zone _SERVER_ should be 2
-        Then the statistics counter v6 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter udp in the category request for the zone _SERVER_ should be 2
-        Then the statistics counter tcp in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badednsver in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter badsig in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter dnssec_ok in the category request for the zone _SERVER_ should be 0
-        Then the statistics counter query in the category opcode for the zone _SERVER_ should be 2
-        Then the statistics counter iquery in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter status in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter notify in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter update in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category opcode for the zone _SERVER_ should be 0
-        Then the statistics counter responses for the zone _SERVER_ should be 2
-        Then the statistics counter truncated in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter edns0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter tsig in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter sig0 in the category response for the zone _SERVER_ should be 0
-        Then the statistics counter qrysuccess for the zone _SERVER_ should be 1
-        Then the statistics counter qryauthans for the zone _SERVER_ should be 2
-        Then the statistics counter qrynoauthans for the zone _SERVER_ should be 0
-        Then the statistics counter qryreferral for the zone _SERVER_ should be 0
-        Then the statistics counter qrynxrrset for the zone _SERVER_ should be 1
-        Then the statistics counter authqryrej for the zone _SERVER_ should be 0
-        Then the statistics counter noerror in the category rcode for the zone _SERVER_ should be 2
-        Then the statistics counter formerr in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter servfail in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notimp in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter refused in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxdomain in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter yxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter nxrrset in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notauth in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter notzone in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter badvers in the category rcode for the zone _SERVER_ should be 0
-        Then the statistics counter other in the category rcode for the zone _SERVER_ should be 0
+        Then the statistics counters are 0 in category .Auth.zones except for the following items
+          | item_name              | item_value |
+          | _SERVER_.request.v4    |          2 |
+          | _SERVER_.request.udp   |          2 |
+          | _SERVER_.opcode.query  |          2 |
+          | _SERVER_.responses     |          2 |
+          | _SERVER_.qrysuccess    |          1 |
+          | _SERVER_.qryauthans    |          2 |
+          | _SERVER_.qrynxrrset    |          1 |
+          | _SERVER_.rcode.noerror |          2 |
