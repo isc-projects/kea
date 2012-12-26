@@ -103,9 +103,11 @@ public:
 
     /// \brief Set IP version carrying the request.
     /// \param ip_version IP version carrying the request
-    /// \throw None
+    /// \throw isc::InvalidParameter ip_version is invalid
     void setRequestIPVersion(const IPVersionType ip_version) {
-        assert(ip_version != IP_VERSION_UNSPEC);
+        if (ip_version == IP_VERSION_UNSPEC) {
+            isc_throw(isc::InvalidParameter, "Invalid IP version");
+        }
         req_ip_version_ = ip_version;
     }
 
@@ -118,11 +120,13 @@ public:
 
     /// \brief Set transport protocol carrying the request.
     /// \param transport_protocol Transport protocol carrying the request
-    /// \throw None
+    /// \throw isc::InvalidParameter transport_protocol is invalid
     void setRequestTransportProtocol(
         const TransportProtocolType transport_protocol)
     {
-        assert(transport_protocol != TRANSPORT_UNSPEC);
+        if (transport_protocol == TRANSPORT_UNSPEC) {
+            isc_throw(isc::InvalidParameter, "Invalid transport protocol");
+        }
         req_transport_protocol_ = transport_protocol;
     }
 
