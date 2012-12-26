@@ -75,7 +75,7 @@ public:
     /// \returns A pointer to the RRset if found, \c NULL otherwise.
     virtual const isc::dns::AbstractRRset* find
         (const isc::dns::Name& name, const isc::dns::RRType& rrtype,
-	 const isc::dns::RRClass& rrclass)
+         const isc::dns::RRClass& rrclass)
         const;
 
     isc::dns::RRsetPtr find(const isc::dns::Name& name,
