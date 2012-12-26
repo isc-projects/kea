@@ -1,5 +1,10 @@
 ## See query_testzone_data.txt for general notes.
 
+## NSEC3PARAM.  This is needed for database-based data source to
+## signal the zone is NSEC3-signed
+#var=
+example.com. 3600 IN NSEC3PARAM 1 1 12 aabbccdd
+
 ## NSEC3 RRs.  You may also need to add mapping to MockZoneFinder::hash_map_.
 #var=nsec3_apex_txt
 0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.com. 3600 IN NSEC3 1 1 12 aabbccdd 2t7b4g4vsa5smi47k61mv5bv1a22bojr NS SOA NSEC3PARAM RRSIG

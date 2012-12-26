@@ -86,6 +86,7 @@ run_unittests_LDADD += $(SQLITE_LIBS)
 BUILT_SOURCES = testdata/example-base.zone example_base_inc.cc
 BUILT_SOURCES += testdata/example-nsec3-inc.zone example_nsec3_inc.cc
 BUILT_SOURCES += testdata/example-base.sqlite3
+BUILT_SOURCES += testdata/example-nsec3.sqlite3
 
 EXTRA_DIST = gen-query-testdata.py
 
@@ -105,6 +106,11 @@ testdata/example-base.sqlite3: testdata/example-base.zone
 	$(SHELL) $(top_builddir)/src/bin/loadzone/run_loadzone.sh \
 		-c "{\"database_file\": \"$(builddir)/testdata/example-base.sqlite3\"}" \
 		example.com testdata/example-base.zone
+
+testdata/example-nsec3.sqlite3: testdata/example-nsec3.zone
+	$(SHELL) $(top_builddir)/src/bin/loadzone/run_loadzone.sh \
+		-c "{\"database_file\": \"$(builddir)/testdata/example-nsec3.sqlite3\"}" \
+		example.com testdata/example-nsec3.zone
 
 check-local:
 	B10_FROM_BUILD=${abs_top_builddir} ./run_unittests
