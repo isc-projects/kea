@@ -18,12 +18,11 @@ Feature: Querying feature
         And bind10 module Xfrin should not be running
         And bind10 module StatsHttpd should not be running
 
-        And wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
-
-        When I query statistics zones of bind10 module Auth
-        last bindctl output should not contain "error"
-        Then the statistics counters are 0 in category .Auth.zones
+        Then I query statistics zones of bind10 module Auth
+        And last bindctl output should not contain "error"
+        The statistics counters are 0 in category .Auth.zones._SERVER_
 
         A query for www.example.org should have rcode NOERROR
         The last query response should have flags qr aa rd
@@ -46,20 +45,19 @@ Feature: Querying feature
         ns2.example.org.        3600    IN      A       192.0.2.4
         """
 
-        And wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
-
-        When I query statistics zones of bind10 module Auth
-        last bindctl output should not contain "error"
-        Then the statistics counters are 0 in category .Auth.zones except for the following items
-          | item_name              | item_value |
-          | _SERVER_.request.v4    |          1 |
-          | _SERVER_.request.udp   |          1 |
-          | _SERVER_.opcode.query  |          1 |
-          | _SERVER_.responses     |          1 |
-          | _SERVER_.qrysuccess    |          1 |
-          | _SERVER_.qryauthans    |          1 |
-          | _SERVER_.rcode.noerror |          1 |
+        Then I query statistics zones of bind10 module Auth
+        And last bindctl output should not contain "error"
+        The statistics counters are 0 in category .Auth.zones._SERVER_ except for the following items
+          | item_name     | item_value |
+          | request.v4    |          1 |
+          | request.udp   |          1 |
+          | opcode.query  |          1 |
+          | responses     |          1 |
+          | qrysuccess    |          1 |
+          | qryauthans    |          1 |
+          | rcode.noerror |          1 |
 
 
         # Repeat of the above
@@ -84,20 +82,19 @@ Feature: Querying feature
         ns2.example.org.        3600    IN      A       192.0.2.4
         """
 
-        And wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
-
-        When I query statistics zones of bind10 module Auth
-        last bindctl output should not contain "error"
-        Then the statistics counters are 0 in category .Auth.zones except for the following items
-          | item_name              | item_value |
-          | _SERVER_.request.v4    |          2 |
-          | _SERVER_.request.udp   |          2 |
-          | _SERVER_.opcode.query  |          2 |
-          | _SERVER_.responses     |          2 |
-          | _SERVER_.qrysuccess    |          2 |
-          | _SERVER_.qryauthans    |          2 |
-          | _SERVER_.rcode.noerror |          2 |
+        Then I query statistics zones of bind10 module Auth
+        And last bindctl output should not contain "error"
+        The statistics counters are 0 in category .Auth.zones._SERVER_ except for the following items
+          | item_name     | item_value |
+          | request.v4    |          2 |
+          | request.udp   |          2 |
+          | opcode.query  |          2 |
+          | responses     |          2 |
+          | qrysuccess    |          2 |
+          | qryauthans    |          2 |
+          | rcode.noerror |          2 |
 
         # And now query something completely different
         A query for nosuchname.example.org should have rcode NXDOMAIN
@@ -110,21 +107,20 @@ Feature: Querying feature
         example.org.            3600    IN      SOA     ns1.example.org. admin.example.org. 1234 3600 1800 2419200 7200
         """
 
-        And wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
-
-        When I query statistics zones of bind10 module Auth
-        last bindctl output should not contain "error"
-        Then the statistics counters are 0 in category .Auth.zones except for the following items
-          | item_name               | item_value |
-          | _SERVER_.request.v4     |          3 |
-          | _SERVER_.request.udp    |          3 |
-          | _SERVER_.opcode.query   |          3 |
-          | _SERVER_.responses      |          3 |
-          | _SERVER_.qrysuccess     |          2 |
-          | _SERVER_.qryauthans     |          3 |
-          | _SERVER_.rcode.noerror  |          2 |
-          | _SERVER_.rcode.nxdomain |          1 |
+        Then I query statistics zones of bind10 module Auth
+        And last bindctl output should not contain "error"
+        The statistics counters are 0 in category .Auth.zones._SERVER_ except for the following items
+          | item_name      | item_value |
+          | request.v4     |          3 |
+          | request.udp    |          3 |
+          | opcode.query   |          3 |
+          | responses      |          3 |
+          | qrysuccess     |          2 |
+          | qryauthans     |          3 |
+          | rcode.noerror  |          2 |
+          | rcode.nxdomain |          1 |
 
     Scenario: ANY query
         Given I have bind10 running with configuration example.org.inmem.config
@@ -140,12 +136,11 @@ Feature: Querying feature
         And bind10 module Xfrin should not be running
         And bind10 module StatsHttpd should not be running
 
-        And wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
-
-        When I query statistics zones of bind10 module Auth
-        last bindctl output should not contain "error"
-        Then the statistics counters are 0 in category .Auth.zones
+        Then I query statistics zones of bind10 module Auth
+        And last bindctl output should not contain "error"
+        The statistics counters are 0 in category .Auth.zones._SERVER_
 
         A query for example.org type ANY should have rcode NOERROR
         The last query response should have flags qr aa rd
@@ -166,20 +161,19 @@ Feature: Querying feature
         mail.example.org.       3600    IN      A       192.0.2.10
         """
 
-        And wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
-
-        When I query statistics zones of bind10 module Auth
-        last bindctl output should not contain "error"
-        Then the statistics counters are 0 in category .Auth.zones except for the following items
-          | item_name              | item_value |
-          | _SERVER_.request.v4    |          1 |
-          | _SERVER_.request.udp   |          1 |
-          | _SERVER_.opcode.query  |          1 |
-          | _SERVER_.responses     |          1 |
-          | _SERVER_.qrysuccess    |          1 |
-          | _SERVER_.qryauthans    |          1 |
-          | _SERVER_.rcode.noerror |          1 |
+        Then I query statistics zones of bind10 module Auth
+        And last bindctl output should not contain "error"
+        The statistics counters are 0 in category .Auth.zones._SERVER_ except for the following items
+          | item_name     | item_value |
+          | request.v4    |          1 |
+          | request.udp   |          1 |
+          | opcode.query  |          1 |
+          | responses     |          1 |
+          | qrysuccess    |          1 |
+          | qryauthans    |          1 |
+          | rcode.noerror |          1 |
 
     Scenario: Delegation query for unsigned child zone
         Given I have bind10 running with configuration example.org.inmem.config
@@ -187,12 +181,11 @@ Feature: Querying feature
         And wait for bind10 stderr message CMDCTL_STARTED
         And wait for bind10 stderr message AUTH_SERVER_STARTED
 
-        And wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
-
-        When I query statistics zones of bind10 module Auth
-        last bindctl output should not contain "error"
-        Then the statistics counters are 0 in category .Auth.zones
+        Then I query statistics zones of bind10 module Auth
+        And last bindctl output should not contain "error"
+        The statistics counters are 0 in category .Auth.zones._SERVER_
 
         A dnssec query for www.sub.example.org type AAAA should have rcode NOERROR
         The last query response should have flags qr rd
@@ -209,23 +202,22 @@ Feature: Querying feature
         ns.sub.example.org.	3600	IN	A	192.0.2.101
         """
 
-        And wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
-
-        When I query statistics zones of bind10 module Auth
-        last bindctl output should not contain "error"
-        Then the statistics counters are 0 in category .Auth.zones except for the following items
-          | item_name                  | item_value |
-          | _SERVER_.request.v4        |          1 |
-          | _SERVER_.request.udp       |          1 |
-          | _SERVER_.request.edns0     |          1 |
-          | _SERVER_.request.dnssec_ok |          1 |
-          | _SERVER_.opcode.query      |          1 |
-          | _SERVER_.responses         |          1 |
-          | _SERVER_.response.edns0    |          1 |
-          | _SERVER_.qrynoauthans      |          1 |
-          | _SERVER_.qryreferral       |          1 |
-          | _SERVER_.rcode.noerror     |          1 |
+        Then I query statistics zones of bind10 module Auth
+        And last bindctl output should not contain "error"
+        The statistics counters are 0 in category .Auth.zones._SERVER_ except for the following items
+          | item_name         | item_value |
+          | request.v4        |          1 |
+          | request.udp       |          1 |
+          | request.edns0     |          1 |
+          | request.dnssec_ok |          1 |
+          | opcode.query      |          1 |
+          | responses         |          1 |
+          | response.edns0    |          1 |
+          | qrynoauthans      |          1 |
+          | qryreferral       |          1 |
+          | rcode.noerror     |          1 |
 
     Scenario: SSHFP query
         # We are testing one more RR type for a normal successful case
@@ -242,30 +234,28 @@ Feature: Querying feature
         And bind10 module Xfrin should not be running
         And bind10 module StatsHttpd should not be running
 
-        And wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
-
-        When I query statistics zones of bind10 module Auth
-        last bindctl output should not contain "error"
-        Then the statistics counters are 0 in category .Auth.zones
+        Then I query statistics zones of bind10 module Auth
+        And last bindctl output should not contain "error"
+        The statistics counters are 0 in category .Auth.zones._SERVER_
 
         A query for example.org type SSHFP should have rcode NOERROR
         The last query response should have ancount 0
 
-        And wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
-
-        When I query statistics zones of bind10 module Auth
-        last bindctl output should not contain "error"
-        Then the statistics counters are 0 in category .Auth.zones except for the following items
-          | item_name              | item_value |
-          | _SERVER_.request.v4    |          1 |
-          | _SERVER_.request.udp   |          1 |
-          | _SERVER_.opcode.query  |          1 |
-          | _SERVER_.responses     |          1 |
-          | _SERVER_.qryauthans    |          1 |
-          | _SERVER_.qrynxrrset    |          1 |
-          | _SERVER_.rcode.noerror |          1 |
+        Then I query statistics zones of bind10 module Auth
+        And last bindctl output should not contain "error"
+        The statistics counters are 0 in category .Auth.zones._SERVER_ except for the following items
+          | item_name     | item_value |
+          | request.v4    |          1 |
+          | request.udp   |          1 |
+          | opcode.query  |          1 |
+          | responses     |          1 |
+          | qryauthans    |          1 |
+          | qrynxrrset    |          1 |
+          | rcode.noerror |          1 |
 
         A query for shell.example.org type SSHFP should have rcode NOERROR
         The last query response should have ancount 1
@@ -274,18 +264,17 @@ Feature: Querying feature
         shell.example.org.      3600    IN      SSHFP   2 1 123456789abcdef67890123456789abcdef67890
         """
 
-        And wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
-
-        When I query statistics zones of bind10 module Auth
-        last bindctl output should not contain "error"
-        Then the statistics counters are 0 in category .Auth.zones except for the following items
-          | item_name              | item_value |
-          | _SERVER_.request.v4    |          2 |
-          | _SERVER_.request.udp   |          2 |
-          | _SERVER_.opcode.query  |          2 |
-          | _SERVER_.responses     |          2 |
-          | _SERVER_.qrysuccess    |          1 |
-          | _SERVER_.qryauthans    |          2 |
-          | _SERVER_.qrynxrrset    |          1 |
-          | _SERVER_.rcode.noerror |          2 |
+        Then I query statistics zones of bind10 module Auth
+        And last bindctl output should not contain "error"
+        The statistics counters are 0 in category .Auth.zones._SERVER_ except for the following items
+          | item_name     | item_value |
+          | request.v4    |          2 |
+          | request.udp   |          2 |
+          | opcode.query  |          2 |
+          | responses     |          2 |
+          | qrysuccess    |          1 |
+          | qryauthans    |          2 |
+          | qrynxrrset    |          1 |
+          | rcode.noerror |          2 |
