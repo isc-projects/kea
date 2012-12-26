@@ -50,7 +50,9 @@ public:
     /// \brief Add an RRset to the collection.
     ///
     /// Does not do any validation whether \c rrset belongs to a
-    /// particular zone or not.
+    /// particular zone or not. It throws an \c isc::InvalidParameter
+    /// exception if an rrset with the same class, type and name already
+    /// exists.
     void addRRset(isc::dns::RRsetPtr rrset);
 
     /// \brief Remove an RRset from the collection.
