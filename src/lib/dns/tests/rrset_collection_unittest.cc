@@ -129,6 +129,11 @@ doAddAndRemove(RRsetCollection& collection, const RRClass& rrclass) {
     // The collection must not be empty.
     EXPECT_NE(collection.end(), collection.begin());
 
+    // Adding a duplicate RRset must throw.
+    EXPECT_THROW({
+        collection.addRRset(rrset);
+    }, isc::InvalidParameter);
+
     // Remove foo.example.org/A
     collection.removeRRset(Name("foo.example.org"), rrclass, RRType::A());
 
