@@ -33,8 +33,6 @@ namespace isc {
 namespace auth {
 namespace statistics {
 
-using isc::dns::Opcode;
-
 /// \brief DNS Message attributes for statistics.
 ///
 /// This class holds some attributes related to a DNS message
@@ -56,9 +54,9 @@ public:
     };
 private:
     // request attributes
-    IPVersion req_ip_version_;                 // IP version
-    TransportProtocol req_transport_protocol_; // Transport layer protocol
-    boost::optional<Opcode> req_opcode_;       // OpCode
+    IPVersion req_ip_version_;                      // IP version
+    TransportProtocol req_transport_protocol_;      // Transport layer protocol
+    boost::optional<isc::dns::Opcode> req_opcode_;  // OpCode
     enum BitAttributes {
         REQ_IS_EDNS_0,              // request is EDNS ver.0
         REQ_IS_DNSSEC_OK,           // DNSSEC OK (DO) bit is set in request
@@ -82,7 +80,7 @@ public:
     /// \brief Return request opcode.
     /// \return opcode of the request
     /// \throw isc::InvalidOperation Opcode is not set
-    const Opcode& getRequestOpCode() const {
+    const isc::dns::Opcode& getRequestOpCode() const {
         if (req_opcode_) {
             return (req_opcode_.get());
         } else {
@@ -93,7 +91,7 @@ public:
     /// \brief Set request opcode.
     /// \param opcode Opcode of the request
     /// \throw None
-    void setRequestOpCode(const Opcode& opcode) {
+    void setRequestOpCode(const isc::dns::Opcode& opcode) {
         req_opcode_ = opcode;
     }
 
