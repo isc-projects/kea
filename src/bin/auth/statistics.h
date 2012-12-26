@@ -23,6 +23,7 @@
 #include <statistics/counter.h>
 
 #include <boost/noncopyable.hpp>
+#include <boost/optional.hpp>
 
 #include <bitset>
 
@@ -57,7 +58,7 @@ private:
     // request attributes
     IPVersion req_ip_version_;                 // IP version
     TransportProtocol req_transport_protocol_; // Transport layer protocol
-    Opcode req_opcode_;                        // OpCode
+    boost::optional<Opcode> req_opcode_;       // OpCode
     enum BitAttributes {
         REQ_IS_EDNS_0,              // request is EDNS ver.0
         REQ_IS_DNSSEC_OK,           // DNSSEC OK (DO) bit is set in request
@@ -74,15 +75,19 @@ public:
     /// \throw None
     MessageAttributes() :
         req_ip_version_(IP_VERSION_UNSPEC),
-        req_transport_protocol_(TRANSPORT_UNSPEC),
-        req_opcode_(Opcode::RESERVED15_CODE), bit_attributes_()
+        req_transport_protocol_(TRANSPORT_UNSPEC), req_opcode_(boost::none),
+        bit_attributes_()
     {}
 
     /// \brief Return request opcode.
     /// \return opcode of the request
-    /// \throw None
+    /// \throw isc::InvalidOperation Opcode is not set
     const Opcode& getRequestOpCode() const {
-        return (req_opcode_);
+        if (req_opcode_) {
+            return (req_opcode_.get());
+        } else {
+            isc_throw(isc::InvalidOperation, "Opcode is not set");
+        }
     }
 
     /// \brief Set request opcode.
