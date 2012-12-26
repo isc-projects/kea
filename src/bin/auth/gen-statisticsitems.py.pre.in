@@ -227,7 +227,7 @@ def generate_docfile(docfile, def_mtime):
                         else:
                             prev.tail += word + ' '
                 sim_para.text = sim_para.text.rstrip()
-                if not prev is None:
+                if prev is not None:
                     prev.tail = prev.tail.rstrip()
             else:
                 # the item is a branch node: call myself for child nodes
