@@ -117,8 +117,11 @@ protected:
         }
 
         virtual bool equals(Iter& other) {
-            const DnsIter& other_real = dynamic_cast<DnsIter&>(other);
-            return (iter_ == other_real.iter_);
+            const DnsIter* other_real = dynamic_cast<DnsIter*>(&other);
+            if (other_real == NULL) {
+                return (false);
+            }
+            return (iter_ == other_real->iter_);
         }
 
     private:
