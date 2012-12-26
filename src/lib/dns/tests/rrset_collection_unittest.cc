@@ -135,8 +135,9 @@ TEST_F(RRsetCollectionTest, addAndRemove) {
 }
 
 TEST_F(RRsetCollectionTest, iteratorTest) {
+    // The collection must not be empty.
     RRsetCollection::iterator iter = collection.begin();
-    EXPECT_TRUE(iter != collection.end());
+    EXPECT_NE(collection.end(), iter);
 
     // Here, we just count the records and do some basic tests on them.
     size_t count = 0;
