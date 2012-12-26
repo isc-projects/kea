@@ -183,10 +183,12 @@ TEST_F(CountersTest, incrementProtocolType) {
     //      ipv6        tcp
     int count_v4 = 0, count_v6 = 0, count_udp = 0, count_tcp = 0;
     for (int i = 0; i < 4; ++i) {
-        const enum MessageAttributes::IPVersion ipversion = (i & 1) != 0 ?
+        const enum MessageAttributes::IPVersionType ipversion =
+            (i & 1) != 0 ?
             MessageAttributes::IP_VERSION_IPV4 :
             MessageAttributes::IP_VERSION_IPV6;
-        const enum MessageAttributes::TransportProtocol proto = (i & 2) != 0 ?
+        const enum MessageAttributes::TransportProtocolType proto =
+            (i & 2) != 0 ?
             MessageAttributes::TRANSPORT_UDP :
             MessageAttributes::TRANSPORT_TCP;
 

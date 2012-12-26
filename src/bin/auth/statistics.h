@@ -40,22 +40,22 @@ namespace statistics {
 class MessageAttributes {
 public:
     /// \brief IP version of DNS message.
-    enum IPVersion {
+    enum IPVersionType {
         IP_VERSION_UNSPEC,          // (initial value; internal use only)
         IP_VERSION_IPV4,            ///< IPv4 message
         IP_VERSION_IPV6             ///< IPv6 message
     };
 
     /// \brief Transport protocol of DNS message.
-    enum TransportProtocol {
+    enum TransportProtocolType {
         TRANSPORT_UNSPEC,           // (initial value; internal use only)
         TRANSPORT_UDP,              ///< UDP message
         TRANSPORT_TCP               ///< TCP message
     };
 private:
     // request attributes
-    IPVersion req_ip_version_;                      // IP version
-    TransportProtocol req_transport_protocol_;      // Transport layer protocol
+    IPVersionType req_ip_version_;                  // IP version
+    TransportProtocolType req_transport_protocol_;  // Transport layer protocol
     boost::optional<isc::dns::Opcode> req_opcode_;  // OpCode
     enum BitAttributes {
         REQ_IS_EDNS_0,              // request is EDNS ver.0
@@ -98,14 +98,14 @@ public:
     /// \brief Return IP version carrying the request.
     /// \return IP version carrying the request
     /// \throw None
-    IPVersion getRequestIPVersion() const {
+    IPVersionType getRequestIPVersion() const {
         return (req_ip_version_);
     }
 
     /// \brief Set IP version carrying the request.
     /// \param ip_version IP version carrying the request
     /// \throw None
-    void setRequestIPVersion(const IPVersion ip_version) {
+    void setRequestIPVersion(const IPVersionType ip_version) {
         assert(ip_version != IP_VERSION_UNSPEC);
         req_ip_version_ = ip_version;
     }
@@ -113,7 +113,7 @@ public:
     /// \brief Return transport protocol carrying the request.
     /// \return Transport protocol carrying the request
     /// \throw None
-    TransportProtocol getRequestTransportProtocol() const {
+    TransportProtocolType getRequestTransportProtocol() const {
         return (req_transport_protocol_);
     }
 
@@ -121,7 +121,7 @@ public:
     /// \param transport_protocol Transport protocol carrying the request
     /// \throw None
     void setRequestTransportProtocol(
-        const TransportProtocol transport_protocol)
+        const TransportProtocolType transport_protocol)
     {
         assert(transport_protocol != TRANSPORT_UNSPEC);
         req_transport_protocol_ = transport_protocol;
