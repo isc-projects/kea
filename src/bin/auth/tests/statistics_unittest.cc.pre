@@ -112,20 +112,16 @@ buildSkeletonMessage(MessageAttributes& msgattrs) {
 TEST_F(CountersTest, invalidParameter) {
     MessageAttributes msgattrs;
 
-    // Note: Not all systems have EXPECT_DEATH.  As it is a macro we can just
-    // test for its presence and bypass the test if not available.
-#ifdef EXPECT_DEATH
     // Passing *_UNSPEC should trigger an assertion failure.
     // Note that we just check that it dies - we don't check what message is
     // output.
-    EXPECT_DEATH(
+    EXPECT_DEATH_IF_SUPPORTED(
         msgattrs.setRequestIPVersion(MessageAttributes::IP_VERSION_UNSPEC),
         ".*");
-    EXPECT_DEATH(
+    EXPECT_DEATH_IF_SUPPORTED(
         msgattrs.setRequestTransportProtocol(
             MessageAttributes::TRANSPORT_UNSPEC),
         ".*");
-#endif
 }
 
 TEST_F(CountersTest, incrementResponse) {
