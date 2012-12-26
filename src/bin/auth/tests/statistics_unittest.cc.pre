@@ -112,16 +112,15 @@ buildSkeletonMessage(MessageAttributes& msgattrs) {
 TEST_F(CountersTest, invalidParameter) {
     MessageAttributes msgattrs;
 
-    // Passing *_UNSPEC should trigger an assertion failure.
-    // Note that we just check that it dies - we don't check what message is
-    // output.
-    EXPECT_DEATH_IF_SUPPORTED(
+    // Passing *_UNSPEC should trigger throwing an exception
+    // isc::InvalidParameter.
+    EXPECT_THROW(
         msgattrs.setRequestIPVersion(MessageAttributes::IP_VERSION_UNSPEC),
-        ".*");
-    EXPECT_DEATH_IF_SUPPORTED(
+        isc::InvalidParameter);
+    EXPECT_THROW(
         msgattrs.setRequestTransportProtocol(
             MessageAttributes::TRANSPORT_UNSPEC),
-        ".*");
+        isc::InvalidParameter);
 }
 
 TEST_F(CountersTest, invalidOperationForGetRequestOpCode) {
