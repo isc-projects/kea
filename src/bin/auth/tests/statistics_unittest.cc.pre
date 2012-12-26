@@ -163,15 +163,15 @@ TEST_F(CountersTest, incrementProtocolType) {
     std::map<std::string, int> expect;
 
     // Test these patterns:
-    //      af     protocol
+    //      ipversion   protocol
     //     -----------------
-    //      ipv4   udp
-    //      ipv6   udp
-    //      ipv4   tcp
-    //      ipv6   tcp
+    //      ipv4        udp
+    //      ipv6        udp
+    //      ipv4        tcp
+    //      ipv6        tcp
     int count_v4 = 0, count_v6 = 0, count_udp = 0, count_tcp = 0;
     for (int i = 0; i < 4; ++i) {
-        const enum MessageAttributes::IPVersion af = (i & 1) != 0 ?
+        const enum MessageAttributes::IPVersion ipversion = (i & 1) != 0 ?
             MessageAttributes::IP_VERSION_IPV4 :
             MessageAttributes::IP_VERSION_IPV6;
         const enum MessageAttributes::TransportProtocol proto = (i & 2) != 0 ?
@@ -179,7 +179,7 @@ TEST_F(CountersTest, incrementProtocolType) {
             MessageAttributes::TRANSPORT_TCP;
 
         buildSkeletonMessage(msgattrs);
-        msgattrs.setRequestIPVersion(af);
+        msgattrs.setRequestIPVersion(ipversion);
         msgattrs.setRequestTransportProtocol(proto);
 
         response.setRcode(Rcode::REFUSED());
@@ -189,7 +189,7 @@ TEST_F(CountersTest, incrementProtocolType) {
 
         counters.inc(msgattrs, response, true);
 
-        if (af == MessageAttributes::IP_VERSION_IPV4) {
+        if (ipversion == MessageAttributes::IP_VERSION_IPV4) {
             ++count_v4;
         } else {
             ++count_v6;
