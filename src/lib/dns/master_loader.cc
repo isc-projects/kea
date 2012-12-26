@@ -210,7 +210,7 @@ private:
             // after the RR class below.
         }
 
-        MaybeRRClass rrclass =
+        const MaybeRRClass rrclass =
             RRClass::createFromText(rrparam_token.getString());
         if (rrclass) {
             if (rrclass != zone_class_) {
@@ -224,8 +224,7 @@ private:
 
         // If we couldn't parse TTL earlier in the stream (above), try
         // again at current location.
-        if (!explicit_ttl &&
-            setCurrentTTL(rrparam_token.getString())) {
+        if (!explicit_ttl && setCurrentTTL(rrparam_token.getString())) {
             explicit_ttl = true;
             rrparam_token = lexer_.getNextToken(MasterToken::STRING);
         }
