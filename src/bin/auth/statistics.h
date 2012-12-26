@@ -73,8 +73,7 @@ public:
     /// \throw None
     MessageAttributes() :
         req_ip_version_(IP_VERSION_UNSPEC),
-        req_transport_protocol_(TRANSPORT_UNSPEC), req_opcode_(boost::none),
-        bit_attributes_()
+        req_transport_protocol_(TRANSPORT_UNSPEC)
     {}
 
     /// \brief Return request opcode.
