@@ -40,7 +40,7 @@ public:
 TEST_F(RRsetCollectionTest, findBase) {
     // Test the find() that returns isc::dns::AbstractRRset*
     const AbstractRRset* rrset = collection.find(Name("www.example.org"),
-                                                 RRType::A());
+                                                 RRType::A(), rrclass);
     EXPECT_NE(static_cast<AbstractRRset*>(NULL), rrset);
     EXPECT_EQ(RRType::A(), rrset->getType());
     EXPECT_EQ(RRTTL(3600), rrset->getTTL());
@@ -48,15 +48,15 @@ TEST_F(RRsetCollectionTest, findBase) {
     EXPECT_EQ(Name("www.example.org"), rrset->getName());
 
     // foo.example.org doesn't exist
-    rrset = collection.find(Name("foo.example.org"), RRType::A());
+    rrset = collection.find(Name("foo.example.org"), RRType::A(), rrclass);
     EXPECT_EQ(static_cast<AbstractRRset*>(NULL), rrset);
 
     // www.example.org exists, but not with MX
-    rrset = collection.find(Name("www.example.org"), RRType::MX());
+    rrset = collection.find(Name("www.example.org"), RRType::MX(), rrclass);
     EXPECT_EQ(static_cast<AbstractRRset*>(NULL), rrset);
 
     // www.example.org exists, with AAAA
-    rrset = collection.find(Name("www.example.org"), RRType::AAAA());
+    rrset = collection.find(Name("www.example.org"), RRType::AAAA(), rrclass);
     EXPECT_NE(static_cast<AbstractRRset*>(NULL), rrset);
 }
 
