@@ -441,7 +441,7 @@ def check_statistics(step, counter, category, zone, gtltbt, number, upper):
     else:
         assert int(found) == int(number), msg
 
-@step('the statistics counters are 0 in category (\S+)( except for the' + \
+@step('statistics counters are 0 in category (\S+)( except for the' + \
           ' following items)?')
 def check_statistics_items(step, category, has_except_for):
     """
