@@ -39,7 +39,8 @@ RRsetCollection::addRRset(const Name& name, const RRClass& rrclass,
 
 void
 RRsetCollection::addRRset(RRsetPtr rrset) {
-    const CollectionKey key(rrset->getName(), rrset->getType());
+    const CollectionKey key(rrset->getClass(), rrset->getType(),
+                            rrset->getName());
     rrsets_.insert(std::pair<CollectionKey, RRsetPtr>(key, rrset));
 }
 
@@ -57,8 +58,9 @@ RRsetCollection::RRsetCollection(const char* filename, const Name& origin,
 }
 
 const AbstractRRset*
-RRsetCollection::find(const Name& name, const RRType& rrtype) const {
-    const CollectionKey key(name, rrtype);
+RRsetCollection::find(const Name& name, const RRType& rrtype,
+                      const RRClass& rrclass) const {
+    const CollectionKey key(rrclass, rrtype, name);
     CollectionMap::const_iterator it = rrsets_.find(key);
     if (it != rrsets_.end()) {
         return (&(*it->second));
@@ -67,8 +69,9 @@ RRsetCollection::find(const Name& name, const RRType& rrtype) const {
 }
 
 RRsetPtr
-RRsetCollection::find(const Name& name, const RRClass&, const RRType& rrtype) {
-    const CollectionKey key(name, rrtype);
+RRsetCollection::find(const Name& name, const RRClass& rrclass,
+                      const RRType& rrtype) {
+    const CollectionKey key(rrclass, rrtype, name);
     CollectionMap::iterator it = rrsets_.find(key);
     if (it != rrsets_.end()) {
         return (it->second);
@@ -77,10 +80,10 @@ RRsetCollection::find(const Name& name, const RRClass&, const RRType& rrtype) {
 }
 
 ConstRRsetPtr
-RRsetCollection::find(const Name& name, const RRClass&,
+RRsetCollection::find(const Name& name, const RRClass& rrclass,
                       const RRType& rrtype) const
 {
-    const CollectionKey key(name, rrtype);
+    const CollectionKey key(rrclass, rrtype, name);
     CollectionMap::const_iterator it = rrsets_.find(key);
     if (it != rrsets_.end()) {
         return (it->second);
@@ -89,10 +92,10 @@ RRsetCollection::find(const Name& name, const RRClass&,
 }
 
 void
-RRsetCollection::removeRRset(const Name& name, const RRClass&,
+RRsetCollection::removeRRset(const Name& name, const RRClass& rrclass,
                              const RRType& rrtype)
 {
-    const CollectionKey key(name, rrtype);
+    const CollectionKey key(rrclass, rrtype, name);
     rrsets_.erase(key);
 }
 
