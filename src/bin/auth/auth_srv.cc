@@ -254,8 +254,7 @@ public:
                        OutputBuffer& buffer,
                        auto_ptr<TSIGContext> tsig_context,
                        MessageAttributes& stats_attrs);
-    bool processUpdate(const IOMessage& io_message,
-                       MessageAttributes& stats_attrs);
+    bool processUpdate(const IOMessage& io_message);
 
     IOService io_service_;
 
@@ -596,7 +595,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
                                                tsig_context, stats_attrs);
         } else if (opcode == Opcode::UPDATE()) {
             if (impl_->ddns_forwarder_) {
-                send_answer = impl_->processUpdate(io_message, stats_attrs);
+                send_answer = impl_->processUpdate(io_message);
             } else {
                 makeErrorMessage(impl_->renderer_, message, buffer,
                                  Rcode::NOTIMP(), stats_attrs, tsig_context);
@@ -828,8 +827,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
 }
 
 bool
-AuthSrvImpl::processUpdate(const IOMessage& io_message,
-                           MessageAttributes&)
+AuthSrvImpl::processUpdate(const IOMessage& io_message)
 {
     // Push the update request to a separate process via the forwarder.
     // On successful push, the request shouldn't be responded from b10-auth,
