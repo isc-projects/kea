@@ -1872,7 +1872,7 @@ tsig_keys/keys[0]   "example.key.:c2VjcmV0" string  (modified)
         Each rule is a name-value mapping (a dictionary, in the JSON
         terminology). Each rule must contain exactly one mapping called
         "action", which describes what should happen if the rule applies.
-        There may be more mappings, calld matches, which describe the
+        There may be more mappings, called matches, which describe the
         conditions under which the rule applies.
       </para>
 
