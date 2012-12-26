@@ -31,6 +31,10 @@ namespace dns {
 class RRsetCollection : public RRsetCollectionBase {
 public:
     /// \brief Constructor.
+    RRsetCollection()
+    {}
+
+    /// \brief Constructor.
     ///
     /// The \c origin and \c rrclass arguments are required for the zone
     /// loading, but \c RRsetCollection itself does not do any
