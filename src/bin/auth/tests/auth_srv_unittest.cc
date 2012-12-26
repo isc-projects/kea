@@ -1158,7 +1158,11 @@ TEST_F(AuthSrvTest,
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }
 
+#ifdef USE_STATIC_LINK
+TEST_F(AuthSrvTest, DISABLED_queryCounterTruncTest) {
+#else
 TEST_F(AuthSrvTest, queryCounterTruncTest) {
+#endif
     // use CONFIG_TESTDB for large-rdata.example.com.
     updateDatabase(&server, CONFIG_TESTDB);
 
