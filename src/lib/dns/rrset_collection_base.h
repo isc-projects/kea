@@ -46,9 +46,11 @@ public:
     ///
     /// \param name The name of the RRset to search for.
     /// \param rrtype The type of the RRset to search for.
+    /// \param rrclass The class of the RRset to search for.
     /// \returns A pointer to the RRset if found, \c NULL otherwise.
-    virtual const isc::dns::AbstractRRset* find(const isc::dns::Name& name,
-                                                const isc::dns::RRType& rrtype)
+    virtual const isc::dns::AbstractRRset* find
+        (const isc::dns::Name& name, const isc::dns::RRType& rrtype,
+	 const isc::dns::RRClass& rrclass)
         const = 0;
 
 protected:

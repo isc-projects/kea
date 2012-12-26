@@ -18,7 +18,9 @@
 #include <dns/rrset_collection_base.h>
 #include <dns/rrclass.h>
 
-#include <utility>
+#include <boost/tuple/tuple.hpp>
+#include <boost/tuple/tuple_comparison.hpp>
+
 #include <map>
 
 namespace isc {
@@ -63,9 +65,11 @@ public:
     ///
     /// \param name The name of the RRset to search for.
     /// \param rrtype The type of the RRset to search for.
+    /// \param rrclass The class of the RRset to search for.
     /// \returns A pointer to the RRset if found, \c NULL otherwise.
-    virtual const isc::dns::AbstractRRset* find(const isc::dns::Name& name,
-                                                const isc::dns::RRType& rrtype)
+    virtual const isc::dns::AbstractRRset* find
+        (const isc::dns::Name& name, const isc::dns::RRType& rrtype,
+	 const isc::dns::RRClass& rrclass)
         const;
 
     isc::dns::RRsetPtr find(const isc::dns::Name& name,
@@ -82,7 +86,8 @@ private:
                   const isc::dns::rdata::RdataPtr& data);
     void loaderCallback(const std::string&, size_t, const std::string&);
 
-    typedef std::pair<isc::dns::Name, isc::dns::RRType> CollectionKey;
+    typedef boost::tuple<isc::dns::RRClass, isc::dns::RRType, isc::dns::Name>
+        CollectionKey;
     typedef std::map<CollectionKey, isc::dns::RRsetPtr> CollectionMap;
 
     CollectionMap rrsets_;
