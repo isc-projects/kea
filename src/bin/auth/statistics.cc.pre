@@ -151,8 +151,15 @@ Counters::incRequest(const MessageAttributes& msgattrs) {
     }
 
     // OPCODE
-    server_msg_counter_.inc(
-        opcode_to_msgcounter[msgattrs.getRequestOpCode().getCode()]);
+    try {
+        server_msg_counter_.inc(
+            opcode_to_msgcounter[msgattrs.getRequestOpCode().getCode()]);
+    } catch (const isc::InvalidOperation& ex) {
+        // The exception will be thrown if OpCode is not set
+        //  (e.g. message is short).
+        // Increment MSG_OPCODE_OTHER.
+        server_msg_counter_.inc(MSG_OPCODE_OTHER);
+    }
 }
 
 void
@@ -191,39 +198,47 @@ Counters::incResponse(const MessageAttributes& msgattrs,
         server_msg_counter_.inc(MSG_REQUEST_BADEDNSVER);
     }
 
-    if (msgattrs.getRequestOpCode() == Opcode::QUERY()) {
-        // compound attributes
-        const unsigned int answer_rrs =
-            response.getRRCount(Message::SECTION_ANSWER);
-        const bool is_aa_set = response.getHeaderFlag(Message::HEADERFLAG_AA);
+    try {
+        if (msgattrs.getRequestOpCode() == Opcode::QUERY()) {
+            // compound attributes
+            const unsigned int answer_rrs =
+                response.getRRCount(Message::SECTION_ANSWER);
+            const bool is_aa_set =
+                response.getHeaderFlag(Message::HEADERFLAG_AA);
 
-        if (is_aa_set) {
-            // QryAuthAns
-            server_msg_counter_.inc(MSG_QRYAUTHANS);
-        } else {
-            // QryNoAuthAns
-            server_msg_counter_.inc(MSG_QRYNOAUTHANS);
-        }
-
-        if (rcode == Rcode::NOERROR_CODE) {
-            if (answer_rrs > 0) {
-                // QrySuccess
-                server_msg_counter_.inc(MSG_QRYSUCCESS);
+            if (is_aa_set) {
+                // QryAuthAns
+                server_msg_counter_.inc(MSG_QRYAUTHANS);
             } else {
-                if (is_aa_set) {
-                    // QryNxrrset
-                    server_msg_counter_.inc(MSG_QRYNXRRSET);
+                // QryNoAuthAns
+                server_msg_counter_.inc(MSG_QRYNOAUTHANS);
+            }
+
+            if (rcode == Rcode::NOERROR_CODE) {
+                if (answer_rrs > 0) {
+                    // QrySuccess
+                    server_msg_counter_.inc(MSG_QRYSUCCESS);
                 } else {
-                    // QryReferral
-                    server_msg_counter_.inc(MSG_QRYREFERRAL);
+                    if (is_aa_set) {
+                        // QryNxrrset
+                        server_msg_counter_.inc(MSG_QRYNXRRSET);
+                    } else {
+                        // QryReferral
+                        server_msg_counter_.inc(MSG_QRYREFERRAL);
+                    }
+                }
+            } else if (rcode == Rcode::REFUSED_CODE) {
+                if (!response.getHeaderFlag(Message::HEADERFLAG_RD)) {
+                    // AuthRej
+                    server_msg_counter_.inc(MSG_QRYREJECT);
                 }
             }
-        } else if (rcode == Rcode::REFUSED_CODE) {
-            if (!response.getHeaderFlag(Message::HEADERFLAG_RD)) {
-                // AuthRej
-                server_msg_counter_.inc(MSG_QRYREJECT);
-            }
         }
+    } catch (const isc::InvalidOperation& ex) {
+        // The exception will be thrown if OpCode is not set
+        //  (e.g. message is short).
+        // Do not increment the counters above since they are incremented
+        // only if Opcode is Query.
     }
 }
 

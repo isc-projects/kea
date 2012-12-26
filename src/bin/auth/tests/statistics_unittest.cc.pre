@@ -124,6 +124,18 @@ TEST_F(CountersTest, invalidParameter) {
         ".*");
 }
 
+TEST_F(CountersTest, invalidOperationForGetRequestOpCode) {
+    MessageAttributes msgattrs;
+
+    // getRequestOpCode() will throw isc::InvalidOperation when called before
+    // opcode is set with setRequestOpCode().
+    EXPECT_THROW(msgattrs.getRequestOpCode(), isc::InvalidOperation);
+
+    msgattrs.setRequestOpCode(Opcode::QUERY());
+    // getRequestOpCode() will not throw at this point.
+    EXPECT_NO_THROW(msgattrs.getRequestOpCode());
+}
+
 TEST_F(CountersTest, incrementResponse) {
     Message response(Message::RENDER);
     MessageAttributes msgattrs;
