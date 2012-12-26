@@ -18,6 +18,8 @@
 
 #include <gtest/gtest.h>
 
+#include <list>
+
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace std;
@@ -176,6 +178,79 @@ TEST_F(RRsetCollectionTest, iteratorTest) {
 
     // example.org master file has SOA, NS, A, AAAA
     EXPECT_EQ(4, count);
+}
+
+// This is a dummy class which is used in iteratorCompareDifferent test
+// to compare iterators from different RRsetCollectionBase
+// implementations.
+class MyRRsetCollection : public RRsetCollectionBase {
+public:
+    MyRRsetCollection()
+    {}
+
+    virtual const isc::dns::AbstractRRset* find
+        (const isc::dns::Name&, const isc::dns::RRType&,
+         const isc::dns::RRClass&)
+        const
+    {
+        return (NULL);
+    }
+
+    typedef std::list<isc::dns::RRset> MyCollection;
+
+protected:
+    class MyIter : public RRsetCollectionBase::Iter {
+    public:
+        MyIter(MyCollection::iterator& iter) :
+            iter_(iter)
+        {}
+
+        virtual const isc::dns::AbstractRRset& getValue() {
+            return (*iter_);
+        }
+
+        virtual IterPtr getNext() {
+            MyCollection::iterator it = iter_;
+            it++;
+            return (RRsetCollectionBase::IterPtr(new MyIter(it)));
+        }
+
+        virtual bool equals(Iter& other) {
+            const MyIter* other_real = dynamic_cast<MyIter*>(&other);
+            if (other_real == NULL) {
+                return (false);
+            }
+            return (iter_ == other_real->iter_);
+        }
+
+    private:
+        MyCollection::iterator iter_;
+    };
+
+    virtual RRsetCollectionBase::IterPtr getBeginning() {
+        MyCollection::iterator it = dummy_list_.begin();
+        return (RRsetCollectionBase::IterPtr(new MyIter(it)));
+    }
+
+    virtual RRsetCollectionBase::IterPtr getEnd() {
+        MyCollection::iterator it = dummy_list_.end();
+        return (RRsetCollectionBase::IterPtr(new MyIter(it)));
+    }
+
+private:
+    MyCollection dummy_list_;
+};
+
+TEST_F(RRsetCollectionTest, iteratorCompareDifferent) {
+    // Create objects of two different RRsetCollectionBase
+    // implementations.
+    RRsetCollection cln1;
+    MyRRsetCollection cln2;
+
+    // Comparing two iterators from different RRsetCollectionBase
+    // implementations must not throw.
+    EXPECT_NE(cln2.begin(), cln1.begin());
+    EXPECT_NE(cln1.end(), cln2.end());
 }
 
 } // namespace
