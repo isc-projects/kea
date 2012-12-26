@@ -126,6 +126,9 @@ doAddAndRemove(RRsetCollection& collection, const RRClass& rrclass) {
     EXPECT_EQ(RRClass("IN"), rrset_found->getClass());
     EXPECT_EQ(Name("foo.example.org"), rrset_found->getName());
 
+    // The collection must not be empty.
+    EXPECT_NE(collection.end(), collection.begin());
+
     // Remove foo.example.org/A
     collection.removeRRset(Name("foo.example.org"), rrclass, RRType::A());
 
@@ -137,6 +140,19 @@ doAddAndRemove(RRsetCollection& collection, const RRClass& rrclass) {
 
 TEST_F(RRsetCollectionTest, addAndRemove) {
     doAddAndRemove(collection, rrclass);
+}
+
+TEST_F(RRsetCollectionTest, empty) {
+    RRsetCollection cln;
+
+    // Here, cln is empty.
+    EXPECT_EQ(cln.end(), cln.begin());
+
+    doAddAndRemove(cln, rrclass);
+
+    // cln should be empty again here, after the add and remove
+    // operations.
+    EXPECT_EQ(cln.end(), cln.begin());
 }
 
 TEST_F(RRsetCollectionTest, iteratorTest) {
