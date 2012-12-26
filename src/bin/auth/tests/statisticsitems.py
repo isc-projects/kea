@@ -62,7 +62,7 @@ Example:
         </variablelist>
     </refsect1>
 """
-def testXMLfile(xmlfilepath):
+def test_xml_file(xmlfilepath):
     xmltree = ElementTree.parse(xmlfilepath)
     root = xmltree.getroot()
     # find <refsect1> which has <title> of 'STATISTICS DATA'
@@ -88,4 +88,4 @@ def testXMLfile(xmlfilepath):
 
 if __name__ == "__main__":
     xmlfilepath = sys.argv[1]
-    testXMLfile(xmlfilepath)
+    test_xml_file(xmlfilepath)
