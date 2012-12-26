@@ -97,7 +97,7 @@ TEST_F(RRClassTest, toText) {
 }
 
 TEST_F(RRClassTest, createFromText) {
-    MaybeRRClass rrclass("IN");
+    const MaybeRRClass rrclass("IN");
     EXPECT_TRUE(rrclass);
     EXPECT_EQ("IN", rrclass->toText());
     EXPECT_TRUE(RRClass::createFromText("CH"));
