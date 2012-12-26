@@ -82,7 +82,7 @@ EXTRA_DIST = statisticsitems.py
 
 check-local:
 	B10_FROM_BUILD=${abs_top_builddir} ./run_unittests
-	$(PYTHON) ./statisticsitems.py $(top_builddir)/src/bin/auth/b10-auth.xml
+	$(PYTHON) $(srcdir)/statisticsitems.py $(top_builddir)/src/bin/auth/b10-auth.xml
 
 noinst_PROGRAMS = run_unittests
 
