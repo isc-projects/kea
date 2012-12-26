@@ -104,7 +104,8 @@ TEST_F(RRsetCollectionTest, find) {
     doFind<RRsetCollection, RRsetPtr>(collection, rrclass);
 }
 
-TEST_F(RRsetCollectionTest, addAndRemove) {
+void
+doAddAndRemove(RRsetCollection& collection, const RRClass& rrclass) {
     // foo.example.org/A doesn't exist
     RRsetPtr rrset_found = collection.find(Name("foo.example.org"), rrclass,
                                            RRType::A());
@@ -132,6 +133,10 @@ TEST_F(RRsetCollectionTest, addAndRemove) {
     rrset_found = collection.find(Name("foo.example.org"), rrclass,
                                   RRType::A());
     EXPECT_FALSE(rrset_found);
+}
+
+TEST_F(RRsetCollectionTest, addAndRemove) {
+    doAddAndRemove(collection, rrclass);
 }
 
 TEST_F(RRsetCollectionTest, iteratorTest) {
