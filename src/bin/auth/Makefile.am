@@ -29,7 +29,7 @@ EXTRA_DIST = $(man_MANS) b10-auth.xml
 if GENERATE_DOCS
 
 b10-auth.8: b10-auth.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-auth.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(builddir)/b10-auth.xml
 
 else
 
