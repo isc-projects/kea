@@ -58,6 +58,11 @@ TEST_F(RRsetCollectionTest, findBase) {
     // www.example.org exists, with AAAA
     rrset = collection.find(Name("www.example.org"), RRType::AAAA(), rrclass);
     EXPECT_NE(static_cast<AbstractRRset*>(NULL), rrset);
+
+    // www.example.org with AAAA does not exist in RRClass::CH()
+    rrset = collection.find(Name("www.example.org"), RRType::AAAA(),
+                            RRClass::CH());
+    EXPECT_EQ(static_cast<AbstractRRset*>(NULL), rrset);
 }
 
 template <typename T, typename TP>
@@ -81,6 +86,11 @@ void doFind(T& collection, const RRClass& rrclass) {
     // www.example.org exists, with AAAA
     rrset = collection.find(Name("www.example.org"), rrclass, RRType::AAAA());
     EXPECT_TRUE(rrset);
+
+    // www.example.org with AAAA does not exist in RRClass::CH()
+    rrset = collection.find(Name("www.example.org"), RRClass::CH(),
+                            RRType::AAAA());
+    EXPECT_FALSE(rrset);
 }
 
 TEST_F(RRsetCollectionTest, findConst) {
