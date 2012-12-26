@@ -16,7 +16,11 @@
 #include <dns/master_loader_callbacks.h>
 #include <dns/master_loader.h>
 
+#include <exceptions/exceptions.h>
+
 #include <boost/bind.hpp>
+
+using namespace isc;
 
 namespace isc {
 namespace dns {
@@ -41,6 +45,13 @@ void
 RRsetCollection::addRRset(RRsetPtr rrset) {
     const CollectionKey key(rrset->getClass(), rrset->getType(),
                             rrset->getName());
+    CollectionMap::const_iterator it = rrsets_.find(key);
+    if (it != rrsets_.end()) {
+        isc_throw(InvalidParameter,
+                  "RRset for " << rrset->getName() << "/" << rrset->getClass()
+                  << " with type " << rrset->getType() << " already exists");
+    }
+
     rrsets_.insert(std::pair<CollectionKey, RRsetPtr>(key, rrset));
 }
 
