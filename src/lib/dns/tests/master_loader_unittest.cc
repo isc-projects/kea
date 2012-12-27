@@ -391,7 +391,8 @@ struct ErrorCase {
       "Missing Rdata" },
 
     { "www      3600    IN", NULL, "Unexpected EOLN" },
-    { "www      3600    CH  TXT nothing", NULL, "Class mismatch" },
+    { "www      3600    CH  TXT nothing", "Class mismatch: CH vs. IN",
+      "Class mismatch" },
     { "www      \"3600\"  IN  A   192.0.2.1", NULL, "Quoted TTL" },
     { "www      3600    \"IN\"  A   192.0.2.1", NULL, "Quoted class" },
     { "www      3600    IN  \"A\"   192.0.2.1", NULL, "Quoted type" },

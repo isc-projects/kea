@@ -214,8 +214,8 @@ private:
             RRClass::createFromText(rrparam_token.getString());
         if (rrclass) {
             if (*rrclass != zone_class_) {
-                isc_throw(InternalException, "Class mismatch: " << rrclass <<
-                          "vs. " << zone_class_);
+                isc_throw(InternalException, "Class mismatch: " << *rrclass <<
+                          " vs. " << zone_class_);
             }
             rrparam_token = lexer_.getNextToken(MasterToken::STRING);
         }
