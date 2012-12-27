@@ -394,8 +394,11 @@ private:
         if (rrset->getType() == RRType::RRSIG()) {
             return;
         }
+
+        // NSEC3PARAM is not used in the mock data source (and it would confuse
+        // non-NSEC3 test cases).
         if (rrset->getType() == RRType::NSEC3PARAM()) {
-            return;             // XXX this is hack
+            return;
         }
 
         if (rrset->getType() == RRType::NSEC3()) {
