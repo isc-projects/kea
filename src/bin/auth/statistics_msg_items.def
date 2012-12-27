@@ -29,7 +29,7 @@ qrysuccess	MSG_QRYSUCCESS			Number of queries received by the b10-auth server re
 qryauthans	MSG_QRYAUTHANS			Number of queries received by the b10-auth server resulted in authoritative answer.
 qrynoauthans	MSG_QRYNOAUTHANS		Number of queries received by the b10-auth server resulted in non-authoritative answer.
 qryreferral	MSG_QRYREFERRAL			Number of queries received by the b10-auth server resulted in referral answer.
-qrynxrrset	MSG_QRYNXRRSET			Number of queries received by the b10-auth server resulted in NoError but the number of answer RR == 0.
+qrynxrrset	MSG_QRYNXRRSET			Number of queries received by the b10-auth server resulted in NoError and AA bit is set in the response, but the number of answer RR == 0.
 authqryrej	MSG_QRYREJECT			Number of authoritative queries rejected by the b10-auth server.
 rcode		msg_counter_rcode	Rcode statistics	=
 	noerror		MSG_RCODE_NOERROR	Number of requests received by the b10-auth server resulted in RCODE = 0 (NoError).
