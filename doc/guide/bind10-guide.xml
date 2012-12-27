@@ -3871,7 +3871,7 @@ Dhcp6/subnet6	         []     list    (default)</screen>
     <section id="dhcp6-limit">
       <title>DHCPv6 Server Limitations</title>
       <para> These are the current limitations and known problems
-      with the the DHCPv6 server
+      with the DHCPv6 server
       software. Most of them are reflections of the early stage of
       development and should be treated as <quote>not implemented
       yet</quote>, rather than actual limitations.</para>
@@ -4156,7 +4156,7 @@ specify module-wide logging and see what appears...
           If there are multiple logger specifications in the
           configuration that might match a particular logger, the
           specification with the more specific logger name takes
-          precedence. For example, if there are entries for for
+          precedence. For example, if there are entries for
           both <quote>*</quote> and <quote>Resolver</quote>, the
           resolver module &mdash; and all libraries it uses &mdash;
           will log messages according to the configuration in the
