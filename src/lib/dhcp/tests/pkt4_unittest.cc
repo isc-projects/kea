@@ -643,6 +643,23 @@ TEST(Pkt4Test, Timestamp) {
     EXPECT_TRUE(ts_period.length().total_microseconds() >= 0);
 }
 
+TEST(Pkt4Test, hwaddr) {
+    scoped_ptr<Pkt4> pkt(new Pkt4(DHCPOFFER, 1234));
+    const uint8_t hw[] = { 2, 4, 6, 8, 10, 12 }; // MAC
+    const uint8_t hw_type = 123; // hardware type
 
+    HWAddrPtr hwaddr(new HWAddr(hw, sizeof(hw), hw_type));
+
+    // setting NULL hardware address is not allowed
+    EXPECT_THROW(pkt->setHWAddr(HWAddrPtr()), BadValue);
+
+    pkt->setHWAddr(hwaddr);
+
+    EXPECT_EQ(hw_type, pkt->getHtype());
+
+    EXPECT_EQ(sizeof(hw), pkt->getHlen());
+
+    EXPECT_TRUE(hwaddr == pkt->getHWAddr());
+}
 
 } // end of anonymous namespace
