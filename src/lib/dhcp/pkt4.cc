@@ -40,8 +40,7 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
       local_port_(DHCP4_SERVER_PORT),
       remote_port_(DHCP4_CLIENT_PORT),
       op_(DHCPTypeToBootpType(msg_type)),
-      htype_(HTYPE_ETHER),
-      hlen_(0),
+      hwaddr_(new HWAddr()),
       hops_(0),
       transid_(transid),
       secs_(0),
@@ -53,7 +52,6 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
       bufferOut_(DHCPV4_PKT_HDR_LEN),
       msg_type_(msg_type)
 {
-    memset(chaddr_, 0, MAX_CHADDR_LEN);
     memset(sname_, 0, MAX_SNAME_LEN);
     memset(file_, 0, MAX_FILE_LEN);
 }
@@ -66,6 +64,7 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       local_port_(DHCP4_SERVER_PORT),
       remote_port_(DHCP4_CLIENT_PORT),
       op_(BOOTREQUEST),
+      hwaddr_(new HWAddr()),
       transid_(0),
       secs_(0),
       flags_(0),
@@ -105,9 +104,15 @@ Pkt4::len() {
 
 bool
 Pkt4::pack() {
+    if (!hwaddr_) {
+        isc_throw(InvalidOperation, "Can't build Pkt4 packet. HWAddr not set.");
+    }
+
+    size_t hw_len = hwaddr_->hwaddr_.size();
+
     bufferOut_.writeUint8(op_);
-    bufferOut_.writeUint8(htype_);
-    bufferOut_.writeUint8(hlen_);
+    bufferOut_.writeUint8(hwaddr_->htype_);
+    bufferOut_.writeUint8(hw_len < 16 ? hw_len : 16);
     bufferOut_.writeUint8(hops_);
     bufferOut_.writeUint32(transid_);
     bufferOut_.writeUint16(secs_);
@@ -116,7 +121,22 @@ Pkt4::pack() {
     bufferOut_.writeUint32(yiaddr_);
     bufferOut_.writeUint32(siaddr_);
     bufferOut_.writeUint32(giaddr_);
-    bufferOut_.writeData(chaddr_, MAX_CHADDR_LEN);
+
+
+    if (hw_len <=16) {
+        // write up to 16 bytes of the hardware address (CHADDR field is 16
+        // bytes long in DHCPv4 message).
+        bufferOut_.writeData(&hwaddr_->hwaddr_[0], (hw_len<16?hw_len:16) );
+        hw_len = 16 - hw_len;
+    } else {
+        hw_len = 16;
+    }
+
+    // write (len) bytes of padding
+    vector<uint8_t> zeros(hw_len, 0);
+    bufferOut_.writeData(&zeros[0], hw_len);
+    // bufferOut_.writeData(chaddr_, MAX_CHADDR_LEN);
+
     bufferOut_.writeData(sname_, MAX_SNAME_LEN);
     bufferOut_.writeData(file_, MAX_FILE_LEN);
 
@@ -145,8 +165,8 @@ Pkt4::unpack() {
     }
 
     op_ = bufferIn.readUint8();
-    htype_ = bufferIn.readUint8();
-    hlen_ = bufferIn.readUint8();
+    uint8_t htype = bufferIn.readUint8();
+    uint8_t hlen = bufferIn.readUint8();
     hops_ = bufferIn.readUint8();
     transid_ = bufferIn.readUint32();
     secs_ = bufferIn.readUint16();
@@ -155,9 +175,15 @@ Pkt4::unpack() {
     yiaddr_ = IOAddress(bufferIn.readUint32());
     siaddr_ = IOAddress(bufferIn.readUint32());
     giaddr_ = IOAddress(bufferIn.readUint32());
-    bufferIn.readData(chaddr_, MAX_CHADDR_LEN);
+
+    vector<uint8_t> hw_addr(MAX_CHADDR_LEN, 0);
+    bufferIn.readVector(hw_addr, MAX_CHADDR_LEN);
     bufferIn.readData(sname_, MAX_SNAME_LEN);
     bufferIn.readData(file_, MAX_FILE_LEN);
+
+    hw_addr.resize(hlen);
+
+    hwaddr_ = HWAddrPtr(new HWAddr(hw_addr, htype));
 
     if (bufferIn.getLength() == bufferIn.getPosition()) {
         // this is *NOT* DHCP packet. It does not have any DHCPv4 options. In
@@ -239,10 +265,7 @@ Pkt4::setHWAddr(uint8_t hType, uint8_t hlen,
         isc_throw(OutOfRange, "Invalid HW Address specified");
     }
 
-    htype_ = hType;
-    hlen_ = hlen;
-    std::copy(&mac_addr[0], &mac_addr[hlen], &chaddr_[0]);
-    std::fill(&chaddr_[hlen], &chaddr_[MAX_CHADDR_LEN], 0);
+    hwaddr_ = HWAddrPtr(new HWAddr(mac_addr, hType));
 }
 
 void
@@ -300,6 +323,23 @@ Pkt4::DHCPTypeToBootpType(uint8_t dhcpType) {
         isc_throw(OutOfRange, "Invalid message type: "
                   << static_cast<int>(dhcpType) );
     }
+}
+
+uint8_t
+Pkt4::getHtype() const {
+    if (!hwaddr_) {
+        isc_throw(InvalidOperation, "Can't get HType. HWAddr not defined");
+    }
+    return (hwaddr_->htype_);
+}
+
+uint8_t
+Pkt4::getHlen() const {
+    if (!hwaddr_) {
+        isc_throw(InvalidOperation, "Can't get HType. HWAddr not defined");
+    }
+    uint8_t len = hwaddr_->hwaddr_.size();
+    return (len <= 16 ? len : 16);
 }
 
 void

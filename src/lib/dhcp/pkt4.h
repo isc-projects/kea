@@ -18,6 +18,7 @@
 #include <asiolink/io_address.h>
 #include <util/buffer.h>
 #include <dhcp/option.h>
+#include <dhcp/hwaddr.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_ptr.hpp>
@@ -277,23 +278,17 @@ public:
     ///
     /// @return hardware type
     uint8_t
-    getHtype() const { return (htype_); };
+    getHtype() const;
 
     /// Returns hlen field
     ///
     /// @return hardware address length
     uint8_t
-    getHlen() const { return (hlen_); };
+    getHlen() const;
 
-    /// @brief Returns chaddr field.
-    ///
-    /// Note: This is 16 bytes long field. It doesn't have to be
-    /// null-terminated. Do no use strlen() or similar on it.
-    ///
-    /// @return pointer to hardware address
-    const uint8_t*
-    getChaddr() const { return (chaddr_); };
-
+    /// @brief returns hardware address information
+    /// @return hardware address structure
+    HWAddrPtr getHWAddr() const { return (hwaddr_); }
 
     /// @brief Returns reference to output buffer.
     ///
@@ -454,11 +449,11 @@ protected:
     /// type is kept in message type option).
     uint8_t op_;
 
-    /// link-layer address type
-    uint8_t htype_;
-
-    /// link-layer address length
-    uint8_t hlen_;
+    /// @brief link-layer address and hardware information
+    /// represents 3 fields: htype (hardware type, 1 byte), hlen (length of the
+    /// hardware address, up to 16) and chaddr (hardware address field,
+    /// 16 bytes)
+    HWAddrPtr hwaddr_;
 
     /// Number of relay agents traversed
     uint8_t hops_;
@@ -483,9 +478,6 @@ protected:
 
     /// giaddr field (32 bits): Gateway IP address
     isc::asiolink::IOAddress giaddr_;
-
-    /// Hardware address field (16 bytes)
-    uint8_t chaddr_[MAX_CHADDR_LEN];
 
     /// sname field (64 bytes)
     uint8_t sname_[MAX_SNAME_LEN];
