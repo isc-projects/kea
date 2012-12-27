@@ -274,6 +274,13 @@ public:
     void setHWAddr(uint8_t hType, uint8_t hlen,
                    const std::vector<uint8_t>& mac_addr);
 
+    /// @brief Sets hardware address
+    ///
+    /// Sets hardware address, based on existing HWAddr structure
+    /// @param addr already filled in HWAddr structure
+    /// @throw BadValue if addr is null
+    void setHWAddr(const HWAddrPtr& addr);
+
     /// Returns htype field
     ///
     /// @return hardware type

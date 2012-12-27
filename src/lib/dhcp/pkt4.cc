@@ -269,6 +269,14 @@ Pkt4::setHWAddr(uint8_t hType, uint8_t hlen,
 }
 
 void
+Pkt4::setHWAddr(const HWAddrPtr& addr) {
+    if (!addr) {
+        isc_throw(BadValue, "Setting hw address to NULL is forbidden");
+    }
+    hwaddr_ = addr;
+}
+
+void
 Pkt4::setSname(const uint8_t* sname, size_t snameLen /*= MAX_SNAME_LEN*/) {
     if (snameLen > MAX_SNAME_LEN) {
         isc_throw(OutOfRange, "sname field (len=" << snameLen
