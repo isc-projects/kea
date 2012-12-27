@@ -392,6 +392,10 @@ public:
     /// corresponding number as the type code in \c type_code;
     /// otherwise, it returns false and \c type_code is untouched.
     ///
+    /// We return \c false and avoid simply throwing an exception in the
+    /// case of an error so that the code is performant in some
+    /// situations.
+    ///
     /// \param type_string The textual representation of the RR type.
     /// \param type_code Returns the RR type code in this argument.
     /// \return true if conversion is successful, false otherwise.
@@ -426,6 +430,10 @@ public:
     /// true with the corresponding number as the class code in
     /// \c class_code; otherwise, it returns false and \c class_code is
     /// untouched.
+    ///
+    /// We return \c false and avoid simply throwing an exception in the
+    /// case of an error so that the code is performant in some
+    /// situations.
     ///
     /// \param class_string The textual representation of the RR class.
     /// \param class_code Returns the RR class code in this argument.
