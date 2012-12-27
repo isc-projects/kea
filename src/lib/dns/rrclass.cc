@@ -30,10 +30,10 @@ using namespace isc::util;
 namespace isc {
 namespace dns {
 
-RRClass::RRClass(const std::string& classstr) {
-    if (!RRParamRegistry::getRegistry().textToClassCode(classstr, classcode_)) {
+RRClass::RRClass(const std::string& class_str) {
+    if (!RRParamRegistry::getRegistry().textToClassCode(class_str, classcode_)) {
         isc_throw(InvalidRRClass,
-                  "Unrecognized RR parameter string: " + classstr);
+                  "Unrecognized RR parameter string: " + class_str);
     }
 }
 
