@@ -1,5 +1,6 @@
-CLEANFILES = *.wire
-CLEANFILES += example-base.zone example-nsec3-inc.zone example-base.sqlite3
+CLEANFILES = *.wire *.copied
+CLEANFILES += example-base.zone example-nsec3-inc.zone
+CLEANFILES += example-base.sqlite3 example-nsec3.sqlite3	
 
 BUILT_SOURCES = badExampleQuery_fromWire.wire examplequery_fromWire.wire
 BUILT_SOURCES += iqueryresponse_fromWire.wire multiquestion_fromWire.wire
