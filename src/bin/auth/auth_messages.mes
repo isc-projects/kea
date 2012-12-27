@@ -141,7 +141,7 @@ The specific problem is printed in the log message.
 The thread for maintaining data source clients has received a command to
 reconfigure, and has now started this process.
 
-% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_SUCCESS data source reconfiguration completed succesfully
+% AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_SUCCESS data source reconfiguration completed successfully
 The thread for maintaining data source clients has finished reconfiguring
 the data source clients, and is now running with the new configuration.
 
@@ -169,7 +169,7 @@ probably better to stop and restart it.
 
 % AUTH_DATA_SOURCE data source database file: %1
 This is a debug message produced by the authoritative server when it accesses a
-datebase data source, listing the file that is being accessed.
+database data source, listing the file that is being accessed.
 
 % AUTH_DNS_SERVICES_CREATED DNS services created
 This is a debug message indicating that the component that will handling
@@ -184,7 +184,7 @@ reason for the failure is given in the message.) The server will drop the
 packet.
 
 % AUTH_INVALID_STATISTICS_DATA invalid specification of statistics data specified
-An error was encountered when the authoritiative server specified
+An error was encountered when the authoritative server specified
 statistics data which is invalid for the auth specification file.
 
 % AUTH_LOAD_TSIG loading TSIG keys
@@ -208,7 +208,7 @@ requests to b10-ddns) to handle it, but it failed.  The authoritative
 server returns SERVFAIL to the client on behalf of the separate
 process.  The error could be configuration mismatch between b10-auth
 and the recipient component, or it may be because the requests are
-coming too fast and the receipient process cannot keep up with the
+coming too fast and the recipient process cannot keep up with the
 rate, or some system level failure.  In either case this means the
 BIND 10 system is not working as expected, so the administrator should
 look into the cause and address the issue.  The log message includes
