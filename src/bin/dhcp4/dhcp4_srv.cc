@@ -188,9 +188,7 @@ void Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     answer->setHops(question->getHops());
 
     // copy MAC address
-    vector<uint8_t> mac(question->getChaddr(),
-                        question->getChaddr() + Pkt4::MAX_CHADDR_LEN);
-    answer->setHWAddr(question->getHtype(), question->getHlen(), mac);
+    answer->setHWAddr(question->getHWAddr());
 
     // relay address
     answer->setGiaddr(question->getGiaddr());
