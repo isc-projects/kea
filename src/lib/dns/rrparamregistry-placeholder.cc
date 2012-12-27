@@ -423,12 +423,12 @@ removeParam(uint16_t code, MC& codemap, MS& stringmap) {
 
 template <typename PT, typename MS>
 inline bool
-textToCode(const string& code_str, MS& stringmap, uint16_t& class_code) {
+textToCode(const string& code_str, MS& stringmap, uint16_t& ret_code) {
     typename MS::const_iterator found;
 
     found = stringmap.find(code_str);
     if (found != stringmap.end()) {
-        class_code = found->second->code_;
+        ret_code = found->second->code_;
         return (true);
     }
 
@@ -442,7 +442,7 @@ textToCode(const string& code_str, MS& stringmap, uint16_t& class_code) {
                                           l - PT::UNKNOWN_PREFIXLEN()));
         iss >> dec >> code;
         if (iss.rdstate() == ios::eofbit && code <= PT::MAX_CODE) {
-            class_code = code;
+            ret_code = code;
             return (true);
         }
     }
