@@ -220,7 +220,7 @@ TEST(Pkt4Test, fixedFields) {
     EXPECT_EQ(dummyGiaddr.toText(), pkt->getGiaddr().toText());
 
     // chaddr is always 16 bytes long and contains link-layer addr (MAC)
-    EXPECT_EQ(0, memcmp(dummyChaddr, pkt->getChaddr(), 16));
+    EXPECT_EQ(0, memcmp(dummyChaddr, &pkt->getHWAddr()->hwaddr_[0], 16));
 
     EXPECT_EQ(0, memcmp(dummySname, &pkt->getSname()[0], 64));
 
@@ -282,7 +282,7 @@ TEST(Pkt4Test, fixedFieldsUnpack) {
     EXPECT_EQ(string("255.255.255.255"), pkt->getGiaddr().toText());
 
     // chaddr is always 16 bytes long and contains link-layer addr (MAC)
-    EXPECT_EQ(0, memcmp(dummyChaddr, pkt->getChaddr(), Pkt4::MAX_CHADDR_LEN));
+    EXPECT_EQ(0, memcmp(dummyChaddr, &pkt->getHWAddr()->hwaddr_[0], dummyHlen));
 
     ASSERT_EQ(static_cast<size_t>(Pkt4::MAX_SNAME_LEN), pkt->getSname().size());
     EXPECT_EQ(0, memcmp(dummySname, &pkt->getSname()[0], Pkt4::MAX_SNAME_LEN));
@@ -321,7 +321,7 @@ TEST(Pkt4Test, hwAddr) {
         pkt->setHWAddr(255-macLen*10, // just weird htype
                        macLen,
                        mac);
-        EXPECT_EQ(0, memcmp(expectedChaddr, pkt->getChaddr(),
+        EXPECT_EQ(0, memcmp(expectedChaddr, &pkt->getHWAddr()->hwaddr_[0],
                             Pkt4::MAX_CHADDR_LEN));
 
         EXPECT_NO_THROW(
