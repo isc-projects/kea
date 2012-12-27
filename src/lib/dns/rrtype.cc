@@ -32,7 +32,10 @@ namespace isc {
 namespace dns {
 
 RRType::RRType(const std::string& typestr) {
-    typecode_ = RRParamRegistry::getRegistry().textToTypeCode(typestr);
+    if (!RRParamRegistry::getRegistry().textToTypeCode(typestr, typecode_)) {
+        isc_throw(InvalidRRType,
+                  "Unrecognized RR parameter string: " + typestr);
+    }
 }
 
 RRType::RRType(InputBuffer& buffer) {
