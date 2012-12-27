@@ -478,17 +478,12 @@ RRParamRegistry::removeType(uint16_t code) {
                                                      impl_->str2typemap));
 }
 
-uint16_t
-RRParamRegistry::textToTypeCode(const string& type_string) const {
-    uint16_t code;
-
-    if (!textToCode<RRTypeParam, StrRRTypeMap>
-        (type_string, impl_->str2typemap, code)) {
-         isc_throw(InvalidRRType,
-                   "Unrecognized RR parameter string: " + type_string);
-    }
-
-    return (code);
+bool
+RRParamRegistry::textToTypeCode(const string& type_string,
+                                uint16_t& type_code) const
+{
+    return (textToCode<RRTypeParam, StrRRTypeMap>
+            (type_string, impl_->str2typemap, type_code));
 }
 
 string
