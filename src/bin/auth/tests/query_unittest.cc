@@ -840,13 +840,20 @@ protected:
         setNSEC3HashCreator(NULL);
     }
 
-    void enableNSEC3() {
+    void enableNSEC3(const vector<string>& rrsets_to_add) {
         boost::shared_ptr<ConfigurableClientList> new_list;
         switch (GetParam()) {
         case MOCK:
             mock_finder->setNSEC3Flag(true);
+            for (vector<string>::const_iterator it = rrsets_to_add.begin();
+                 it != rrsets_to_add.end();
+                 ++it) {
+                mock_finder->addRecord(*it);
+            }
             break;
         case INMEMORY:
+            // dynamic addition is not yet supported for in-memory
+            ASSERT_TRUE(rrsets_to_add.empty());
             new_list.reset(new ConfigurableClientList(RRClass::IN()));
             new_list->configure(isc::data::Element::fromJSON(
                                     "[{\"type\": \"MasterFiles\","
@@ -871,11 +878,38 @@ protected:
                                     string(TEST_OWN_DATA_DIR
                                            "/example-nsec3.sqlite3.copied") +
                                     "\"}}]"), true);
+
+            const Name origin("example.com");
+            ZoneUpdaterPtr updater =
+                new_list->find(origin, true, false).dsrc_client_->
+                getUpdater(origin, false);
+            for (vector<string>::const_iterator it = rrsets_to_add.begin();
+                 it != rrsets_to_add.end();
+                 ++it) {
+                ConstRRsetPtr rrset = textToRRset(*it);
+                updater->addRRset(*rrset);
+                updater->addRRset(*createRRSIG(rrset));
+            }
+            updater->commit();
+
             list_ = new_list;
             break;
         }
     }
 
+private:
+    // A helper for enableNSEC3, creating an RRSIG RRset for the corresponding
+    // non-sig RRset, using the commonly used parameters.
+    static ConstRRsetPtr createRRSIG(ConstRRsetPtr rrset) {
+        RRsetPtr sig_rrset(new RRset(rrset->getName(), rrset->getClass(),
+                                     RRType::RRSIG(), rrset->getTTL()));
+        sig_rrset->addRdata(generic::RRSIG(
+                                getCommonRRSIGText(rrset->getType().
+                                                   toText())));
+        return (sig_rrset);
+    }
+
+protected:
     MockZoneFinder* mock_finder;
     // We use InMemoryClient here. We could have some kind of mock client
     // here, but historically, the Query supported only InMemoryClient
@@ -893,6 +927,7 @@ protected:
     const string ns_addrs_and_sig_txt; // convenient shortcut
     Query query;
     TestNSEC3Hash nsec3_hash_;
+    vector<string> rrsets_to_add_;
 private:
     const TestNSEC3HashCreator nsec3hash_creator_;
 };
@@ -1179,7 +1214,7 @@ TEST_P(QueryTest, secureUnsignedDelegationWithNSEC3) {
 
 TEST_P(QueryTest, secureUnsignedDelegationWithNSEC3OptOut) {
     // Similar to the previous case, but the delegation is an optout.
-    enableNSEC3();
+    enableNSEC3(rrsets_to_add_);
 
     query.process(*list_,
                   Name("foo.unsigned-delegation.example.com"),
@@ -1493,19 +1528,20 @@ TEST_P(QueryTest, CNAMEwildNSEC) {
 }
 
 TEST_P(QueryTest, wildcardNSEC3) {
-    // skip NSEC3-related tests for actual data source for the moment
-    if (GetParam() != MOCK) {
+    // This test requires incremental update to the zone; unavailable for
+    // in-memory.
+    if (GetParam() == INMEMORY) {
         return;
     }
 
     // Similar to wildcardNSEC, but the zone is signed with NSEC3.
     // The next closer is y.wild.example.com, the covering NSEC3 for it
     // is (in our setup) the NSEC3 for the apex.
-    mock_finder->setNSEC3Flag(true);
-
-    // This is NSEC3 for wild.example.com, which will be used in the middle
+    //
+    // Adding NSEC3 for wild.example.com, which will be used in the middle
     // of identifying the next closer name.
-    mock_finder->addRecord(nsec3_atwild_txt);
+    rrsets_to_add_.push_back(nsec3_atwild_txt);
+    enableNSEC3(rrsets_to_add_);
 
     query.process(*list_, Name("x.y.wild.example.com"), RRType::A(),
                   response, true);
@@ -1527,15 +1563,15 @@ TEST_P(QueryTest, wildcardNSEC3) {
 
 TEST_P(QueryTest, CNAMEwildNSEC3) {
     // skip NSEC3-related tests for actual data source for the moment
-    if (GetParam() != MOCK) {
+    if (GetParam() == INMEMORY) {
         return;
     }
 
     // Similar to CNAMEwildNSEC, but with NSEC3.
     // The next closer is qname itself, the covering NSEC3 for it
     // is (in our setup) the NSEC3 for the www.example.com.
-    mock_finder->setNSEC3Flag(true);
-    mock_finder->addRecord(nsec3_atcnamewild_txt);
+    rrsets_to_add_.push_back(nsec3_atcnamewild_txt);
+    enableNSEC3(rrsets_to_add_);
 
     query.process(*list_, Name("www.cnamewild.example.com"),
                   RRType::A(), response, true);
@@ -1552,7 +1588,8 @@ TEST_P(QueryTest, CNAMEwildNSEC3) {
 }
 
 TEST_P(QueryTest, badWildcardNSEC3) {
-    // broken data source scenario; works only with mock.
+    // This test requires incremental update to the zone; unavailable for
+    // in-memory.
     if (GetParam() != MOCK) {
         return;
     }
@@ -1662,17 +1699,18 @@ TEST_P(QueryTest, wildcardNxrrsetWithNSEC) {
 }
 
 TEST_P(QueryTest, wildcardNxrrsetWithNSEC3) {
-    // skip NSEC3-related tests for actual data source for the moment
-    if (GetParam() != MOCK) {
+    // This test requires incremental update to the zone; unavailable for
+    // in-memory.
+    if (GetParam() == INMEMORY) {
         return;
     }
 
     // Similar to the previous case, but providing NSEC3 proofs according to
     // RFC5155 Section 7.2.5.
 
-    mock_finder->addRecord(nsec3_wild_txt);
-    mock_finder->addRecord(nsec3_uwild_txt);
-    mock_finder->setNSEC3Flag(true);
+    rrsets_to_add_.push_back(nsec3_wild_txt);
+    rrsets_to_add_.push_back(nsec3_uwild_txt);
+    enableNSEC3(rrsets_to_add_);
 
     query.process(*list_, Name("www1.uwild.example.com"),
                   RRType::TXT(), response, true);
@@ -2389,7 +2427,7 @@ TEST_P(QueryTest, dsAtRootWithDS) {
 
 // Check the signature is present when an NXRRSET is returned
 TEST_P(QueryTest, nxrrsetWithNSEC3) {
-    enableNSEC3();
+    enableNSEC3(rrsets_to_add_);
 
     // NXRRSET with DNSSEC proof.  We should have SOA, NSEC3 that proves the
     // NXRRSET and their RRSIGs.
@@ -2427,13 +2465,14 @@ TEST_P(QueryTest, nxrrsetMissingNSEC3) {
 }
 
 TEST_P(QueryTest, nxrrsetWithNSEC3_ds_exact) {
-    // skip NSEC3-related tests for actual data source for the moment
-    if (GetParam() != MOCK) {
+    // This test requires incremental update to the zone; unavailable for
+    // in-memory.
+    if (GetParam() == INMEMORY) {
         return;
     }
 
-    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
-    mock_finder->setNSEC3Flag(true);
+    rrsets_to_add_.push_back(unsigned_delegation_nsec3_txt);
+    enableNSEC3(rrsets_to_add_);
 
     // This delegation has no DS, but does have a matching NSEC3 record
     // (See RFC5155 section 7.2.4)
@@ -2451,13 +2490,14 @@ TEST_P(QueryTest, nxrrsetWithNSEC3_ds_exact) {
 }
 
 TEST_P(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
-    // skip NSEC3-related tests for actual data source for the moment
-    if (GetParam() != MOCK) {
+    // This test requires incremental update to the zone; unavailable for
+    // in-memory.
+    if (GetParam() == INMEMORY) {
         return;
     }
 
-    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
-    mock_finder->setNSEC3Flag(true);
+    rrsets_to_add_.push_back(unsigned_delegation_nsec3_txt);
+    enableNSEC3(rrsets_to_add_);
 
     // This delegation has no DS, and no directly matching NSEC3 record
     // So the response should contain closest encloser proof (and the
@@ -2482,19 +2522,20 @@ TEST_P(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
 }
 
 TEST_P(QueryTest, nxdomainWithNSEC3Proof) {
-    // skip NSEC3-related tests for actual data source for the moment
-    if (GetParam() != MOCK) {
+    // This test requires incremental update to the zone; unavailable for
+    // in-memory.
+    if (GetParam() == INMEMORY) {
         return;
     }
 
     // Name Error (NXDOMAIN) case with NSEC3 proof per RFC5155 Section 7.2.2.
 
-    // Enable NSEC3
-    mock_finder->setNSEC3Flag(true);
     // This will be the covering NSEC3 for the next closer
-    mock_finder->addRecord(nsec3_uwild_txt);
+    rrsets_to_add_.push_back(nsec3_uwild_txt);
     // This will be the covering NSEC3 for the possible wildcard
-    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
+    rrsets_to_add_.push_back(unsigned_delegation_nsec3_txt);
+    // Enable NSEC3
+    enableNSEC3(rrsets_to_add_);
 
     query.process(*list_, Name("nxdomain.example.com"), qtype,
                   response, true);
@@ -2569,7 +2610,7 @@ TEST_P(QueryTest, nxdomainWithBadWildcardNSEC3Proof) {
 // query logic for these cases.  At that point it's probably better to
 // clean them up.
 TEST_P(QueryTest, emptyNameWithNSEC3) {
-    enableNSEC3();
+    enableNSEC3(rrsets_to_add_);
     const Name qname("no.example.com");
     ASSERT_TRUE(list_->find(qname).finder_);
     ZoneFinderContextPtr result =
