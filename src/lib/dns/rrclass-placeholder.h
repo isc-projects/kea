@@ -135,8 +135,8 @@ public:
     /// If the given string is not recognized as a valid representation of
     /// an RR class, an exception of class \c InvalidRRClass will be thrown.
     ///
-    /// \param classstr A string representation of the \c RRClass
-    explicit RRClass(const std::string& classstr);
+    /// \param class_str A string representation of the \c RRClass
+    explicit RRClass(const std::string& class_str);
     /// Constructor from wire-format data.
     ///
     /// The \c buffer parameter normally stores a complete DNS message

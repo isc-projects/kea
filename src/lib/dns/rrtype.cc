@@ -31,10 +31,10 @@ using isc::dns::RRType;
 namespace isc {
 namespace dns {
 
-RRType::RRType(const std::string& typestr) {
-    if (!RRParamRegistry::getRegistry().textToTypeCode(typestr, typecode_)) {
+RRType::RRType(const std::string& type_str) {
+    if (!RRParamRegistry::getRegistry().textToTypeCode(type_str, typecode_)) {
         isc_throw(InvalidRRType,
-                  "Unrecognized RR parameter string: " + typestr);
+                  "Unrecognized RR parameter string: " + type_str);
     }
 }
 
