@@ -87,12 +87,15 @@ void Subnet::addPool(const PoolPtr& pool) {
 }
 
 PoolPtr Subnet::getPool(isc::asiolink::IOAddress hint) {
-    if (dynamic_cast<Subnet6*>(this)) {
-        if (hint.toText() == "::") {
-            hint = IOAddress("0.0.0.0");
-        }
-    }
 
+    // This is an ugly workaround for having the ability to have default value
+    // for both protocol families. The alternative to this would be to define
+    // getPool() as pure virtual and have Subnet4 and Subnet6 provide their
+    // own methods. Those two implementation would only differ by a default
+    // value, so it would just include duplicate code.
+    if (dynamic_cast<Subnet6*>(this) && hint.toText() == "::") {
+        hint = IOAddress("0.0.0.0");
+    }
 
     PoolPtr candidate;
     for (PoolCollection::iterator pool = pools_.begin(); pool != pools_.end(); ++pool) {
