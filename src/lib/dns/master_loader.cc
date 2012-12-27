@@ -214,9 +214,7 @@ private:
             RRClass::createFromText(rrparam_token.getString());
         if (rrclass) {
             if (*rrclass != zone_class_) {
-                // It doesn't really matter much what type of exception
-                // we throw, we catch it just below.
-                isc_throw(isc::BadValue, "Class mismatch: " << rrclass <<
+                isc_throw(InternalException, "Class mismatch: " << rrclass <<
                           "vs. " << zone_class_);
             }
             rrparam_token = lexer_.getNextToken(MasterToken::STRING);
