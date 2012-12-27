@@ -213,7 +213,7 @@ private:
         const MaybeRRClass rrclass =
             RRClass::createFromText(rrparam_token.getString());
         if (rrclass) {
-            if (rrclass != zone_class_) {
+            if (*rrclass != zone_class_) {
                 // It doesn't really matter much what type of exception
                 // we throw, we catch it just below.
                 isc_throw(isc::BadValue, "Class mismatch: " << rrclass <<
