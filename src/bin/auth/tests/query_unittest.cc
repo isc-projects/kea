@@ -275,7 +275,7 @@ public:
         nsec3_name_(NULL)
     {
         RRCollator collator(boost::bind(&MockZoneFinder::loadRRset, this, _1));
-        MasterLoader loader(TEST_OWN_DATA_DIR "/example-nsec3.zone",
+        MasterLoader loader(TEST_OWN_DATA_BUILDDIR "/example-nsec3.zone",
                             origin_, rrclass_,
                             MasterLoaderCallbacks::getNullCallbacks(),
                             collator.getCallback());
@@ -859,15 +859,15 @@ protected:
                                     "[{\"type\": \"MasterFiles\","
                                     "  \"cache-enable\": true, "
                                     "  \"params\": {\"example.com\": \"" +
-                                    string(TEST_OWN_DATA_DIR
+                                    string(TEST_OWN_DATA_BUILDDIR
                                            "/example-nsec3.zone") +
                                     "\"}}]"), true);
             list_ = new_list;
             break;
         case SQLITE3:
-            ASSERT_EQ(0, std::system(INSTALL_PROG " -c " TEST_OWN_DATA_DIR
+            ASSERT_EQ(0, std::system(INSTALL_PROG " -c " TEST_OWN_DATA_BUILDDIR
                                      "/example-nsec3.sqlite3 "
-                                     TEST_OWN_DATA_DIR
+                                     TEST_OWN_DATA_BUILDDIR
                                      "/example-nsec3.sqlite3.copied"));
             new_list.reset(new ConfigurableClientList(RRClass::IN()));
             new_list->configure(isc::data::Element::fromJSON(
@@ -875,7 +875,7 @@ protected:
                                     "  \"cache-enable\": false, "
                                     "  \"cache-zones\": [], "
                                     "  \"params\": {\"database_file\": \"" +
-                                    string(TEST_OWN_DATA_DIR
+                                    string(TEST_OWN_DATA_BUILDDIR
                                            "/example-nsec3.sqlite3.copied") +
                                     "\"}}]"), true);
 
