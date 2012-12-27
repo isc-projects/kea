@@ -420,15 +420,15 @@ public:
     /// corresponding integer code.  If a mapping is found, it returns
     /// true with the associated class code in \c class_code; otherwise,
     /// if the given string is in the form of "CLASSnnnn", it returns
-    /// true with the corresponding number as the class code in \c
-    /// class_code; otherwise, it returns false and \c class_code is
+    /// true with the corresponding number as the class code in
+    /// \c class_code; otherwise, it returns false and \c class_code is
     /// untouched.
     ///
     /// \param class_string The textual representation of the RR class.
     /// \param class_code Returns the RR class code in this argument.
     /// \return true if conversion is successful, false otherwise.
     bool textToClassCode(const std::string& class_string,
-			 uint16_t& class_code) const;
+                         uint16_t& class_code) const;
 
     /// \brief Convert class code into its textual representation.
     ///
