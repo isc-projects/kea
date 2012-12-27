@@ -269,8 +269,6 @@ public:
     /// \param response DNS response message.
     /// \param done DNS response was sent to the client.
     ///
-    /// \throw std::bad_alloc Internal resource allocation fails
-    ///
     void inc(const MessageAttributes& msgattrs,
              const isc::dns::Message& response, const bool done);
 
