@@ -79,7 +79,7 @@ such failure. Each specific failure is logged in a separate log entry.
 % DHCP6_LEASE_ALLOC lease %1 has been allocated (client duid=%2, iaid=%3)
 This debug message indicates that the server successfully granted (in
 response to client's REQUEST message) a lease. This is a normal behavior
-and incicates successful operation.
+and indicates successful operation.
 
 % DHCP6_LEASE_ALLOC_FAIL failed to grant a lease for client duid=%1, iaid=%2
 This message indicates that the server failed to grant (in response to
@@ -121,7 +121,7 @@ a received OFFER packet as UNKNOWN).
 
 % DHCP6_PACKET_RECEIVE_FAIL error on attempt to receive packet: %1
 The IPv6 DHCP server tried to receive a packet but an error
-occured during this attempt. The reason for the error is included in
+occurred during this attempt. The reason for the error is included in
 the message.
 
 % DHCP6_PACKET_SEND_FAIL failed to send DHCPv6 packet: %1
