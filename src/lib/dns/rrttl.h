@@ -133,7 +133,7 @@ public:
     /// One main purpose of this function is to minimize the overhead
     /// when the given text does not represent a valid RR TTL.  For this
     /// reason this function intentionally omits the capability of delivering
-    /// details reason for the parse failure, such as in the \c want()
+    /// a detailed reason for the parse failure, such as in the \c want()
     /// string when exception is thrown from the constructor (it will
     /// internally require a creation of string object, which is relatively
     /// expensive).  If such detailed information is necessary, the constructor
