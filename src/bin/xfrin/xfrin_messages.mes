@@ -24,7 +24,7 @@ The serial fields of the first and last SOAs of AXFR (including AXFR-style
 IXFR) are not the same.  According to RFC 5936 these two SOAs must be the
 "same" (not only for the serial), but it is still not clear what the
 receiver should do if this condition does not hold.  There was a discussion
-about this at the IETF dnsext wg:
+about this at the IETF dnsext working group:
 http://www.ietf.org/mail-archive/web/dnsext/current/msg07908.html
 and the general feeling seems that it would be better to reject the
 transfer if a mismatch is detected.  On the other hand, also as noted
@@ -61,10 +61,10 @@ There was an error opening a connection to the master. The error is
 shown in the log message.
 
 % XFRIN_GOT_INCREMENTAL_RESP got incremental response for %1
-In an attempt of IXFR processing, the begenning SOA of the first difference
+In an attempt of IXFR processing, the beginning SOA of the first difference
 (following the initial SOA that specified the final SOA for all the
 differences) was found.  This means a connection for xfrin tried IXFR
-and really aot a response for incremental updates.
+and really got a response for incremental updates.
 
 % XFRIN_GOT_NONINCREMENTAL_RESP got nonincremental response for %1
 Non incremental transfer was detected at the "first data" of a transfer,
@@ -149,16 +149,16 @@ daemon will now shut down.
 The AXFR transfer of the given zone was successful.
 The provided information contains the following values:
 
-messages: Number of overhead DNS messages in the transfer
+messages: Number of overhead DNS messages in the transfer.
 
 records: Number of Resource Records in the full transfer, excluding the
 final SOA record that marks the end of the AXFR.
 
 bytes: Full size of the transfer data on the wire.
 
-run time: Time (in seconds) the complete axfr took
+run time: Time (in seconds) the complete axfr took.
 
-bytes/second: Transfer speed
+bytes/second: Transfer speed.
 
 % XFRIN_TSIG_KEY_NOT_FOUND TSIG key not found in key ring: %1
 An attempt to start a transfer with TSIG was made, but the configured TSIG

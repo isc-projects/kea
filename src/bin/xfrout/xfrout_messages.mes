@@ -70,7 +70,7 @@ AXFR-style IXFR.
 
 % XFROUT_IXFR_NO_ZONE IXFR client %1, %2: zone not found with journal
 The requested zone in IXFR was not found in the data source
-even though the xfrout daemon sucessfully found the SOA RR of the zone
+even though the xfrout daemon successfully found the SOA RR of the zone
 in the data source.  This can happen if the administrator removed the
 zone from the data source within the small duration between these
 operations, but it's more likely to be a bug or broken data source.
@@ -84,7 +84,7 @@ NOTAUTH.
 An IXFR request was received, but the client's SOA version is the same as
 or newer than that of the server.  The xfrout server responds to the
 request with the answer section being just one SOA of that version.
-Note: as of this wrting the 'newer version' cannot be identified due to
+Note: as of this writing the 'newer version' cannot be identified due to
 the lack of support for the serial number arithmetic.  This will soon
 be implemented.
 
@@ -206,7 +206,7 @@ xfrout daemon process is still running. This xfrout daemon (the one
 printing this message) will not start.
 
 % XFROUT_XFR_TRANSFER_CHECK_ERROR %1 client %2: check for transfer of %3 failed: %4
-Pre-response check for an incomding XFR request failed unexpectedly.
+Pre-response check for an incoming XFR request failed unexpectedly.
 The most likely cause of this is that some low level error in the data
 source, but it may also be other general (more unlikely) errors such
 as memory shortage.  Some detail of the error is also included in the
