@@ -84,9 +84,6 @@ NOTAUTH.
 An IXFR request was received, but the client's SOA version is the same as
 or newer than that of the server.  The xfrout server responds to the
 request with the answer section being just one SOA of that version.
-Note: as of this writing the 'newer version' cannot be identified due to
-the lack of support for the serial number arithmetic.  This will soon
-be implemented.
 
 % XFROUT_MODULECC_SESSION_ERROR error encountered by configuration/command module: %1
 There was a problem in the lower level module handling configuration and
