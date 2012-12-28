@@ -231,6 +231,22 @@ protected:
         >
     > Lease6Storage; // Let the whole contraption be called Lease6Storage.
 
+    typedef boost::multi_index_container< // this is a multi-index container...
+    Lease4Ptr, // it will hold shared_ptr to leases6
+        boost::multi_index::indexed_by< // and will be sorted by
+            // IPv6 address that are unique. That particular key is a member
+            // of the Lease6 structure, is of type IOAddress and can be accessed
+            // by doing &Lease6::addr_
+            boost::multi_index::ordered_unique<
+                boost::multi_index::member<Lease, isc::asiolink::IOAddress, &Lease::addr_>
+            >
+        >
+    > Lease4Storage; // Let the whole contraption be called Lease6Storage.
+
+    /// @brief stores IPv4 leases
+    Lease4Storage storage4_;
+
+    /// @brief stores IPv6 leases
     Lease6Storage storage6_;
 };
 

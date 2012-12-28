@@ -17,6 +17,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
+#include <dhcp/hwaddr.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_mgr.h>
 
@@ -182,13 +183,15 @@ protected:
     ///
     /// @param subnet subnet the allocation should come from
     /// @param clientid Client identifier
+    /// @param hwaddr client's hardware address info
     /// @param hint a hint that the client provided
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for DISCOVER that is not really allocated (true)
     /// @return Allocated IPv4 lease (or NULL if allocation failed)
     Lease4Ptr
     allocateAddress4(const SubnetPtr& subnet,
-                     const DuidPtr& clientid,
+                     const ClientIdPtr& clientid,
+                     const HWAddrPtr& hwaddr,
                      const isc::asiolink::IOAddress& hint,
                      bool fake_allocation);
 
@@ -224,12 +227,14 @@ private:
     ///
     /// @param subnet subnet the lease is allocated from
     /// @param clientid client identifier
+    /// @param hwaddr client's hardware address
     /// @param addr an address that was selected and is confirmed to be available
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for DISCOVER that is not really allocated (true)
     /// @return allocated lease (or NULL in the unlikely case of the lease just
     ///        becomed unavailable)
-    Lease4Ptr createLease4(const Subnet4Ptr& subnet, const DuidPtr& clientid,
+    Lease4Ptr createLease4(const SubnetPtr& subnet, const DuidPtr& clientid,
+                           const HWAddrPtr& hwaddr,
                            const isc::asiolink::IOAddress& addr,
                            bool fake_allocation = false);
 
@@ -260,12 +265,14 @@ private:
     /// @param expired old, expired lease
     /// @param subnet subnet the lease is allocated from
     /// @param clientid client identifier
+    /// @param hwaddr client's hardware address
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for DISCOVER that is not really allocated (true)
     /// @return refreshed lease
     /// @throw BadValue if trying to recycle lease that is still valid
-    Lease4Ptr reuseExpiredLease(Lease4Ptr& expired, const Subnet4Ptr& subnet,
-                                const DuidPtr& clientid,
+    Lease4Ptr reuseExpiredLease(Lease4Ptr& expired, const SubnetPtr& subnet,
+                                const ClientIdPtr& clientid,
+                                const HWAddrPtr& hwaddr,
                                 bool fake_allocation = false);
 
     /// @brief reuses expired IPv6 lease
