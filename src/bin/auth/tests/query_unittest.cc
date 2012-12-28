@@ -797,6 +797,12 @@ createDataSrcClientList(DataSrcType type, DataSourceClient& client) {
                             "\"}}]"), true);
         return (list);
     case SQLITE3:
+        // The copy should succeed; if it failed we should notice it in
+        // test cases.
+        std::system(INSTALL_PROG " -c " TEST_OWN_DATA_BUILDDIR
+                    "/example-base.sqlite3 "
+                    TEST_OWN_DATA_BUILDDIR
+                    "/example-base.sqlite3.copied");
         list.reset(new ConfigurableClientList(RRClass::IN()));
         list->configure(isc::data::Element::fromJSON(
                             "[{\"type\": \"sqlite3\","
@@ -804,7 +810,7 @@ createDataSrcClientList(DataSrcType type, DataSourceClient& client) {
                             "  \"cache-zones\": [], "
                             "  \"params\": {\"database_file\": \"" +
                             string(TEST_OWN_DATA_BUILDDIR
-                                   "/example-base.sqlite3") +
+                                   "/example-base.sqlite3.copied") +
                             "\"}}]"), true);
          return (list);
     default:
@@ -855,15 +861,10 @@ protected:
         switch (GetParam()) {
         case MOCK:
             mock_finder->setNSEC3Flag(true);
-            for (vector<string>::const_iterator it = rrsets_to_add.begin();
-                 it != rrsets_to_add.end();
-                 ++it) {
-                mock_finder->addRecord(*it);
-            }
+            addRRsets(*list_, rrsets_to_add);
             break;
         case INMEMORY:
-            // dynamic addition is not yet supported for in-memory
-            ASSERT_TRUE(rrsets_to_add.empty());
+            addRRsets(*list_, rrsets_to_add);
             new_list.reset(new ConfigurableClientList(RRClass::IN()));
             new_list->configure(isc::data::Element::fromJSON(
                                     "[{\"type\": \"MasterFiles\","
@@ -888,10 +889,33 @@ protected:
                                     string(TEST_OWN_DATA_BUILDDIR
                                            "/example-nsec3.sqlite3.copied") +
                                     "\"}}]"), true);
+            addRRsets(*new_list, rrsets_to_add);
+            list_ = new_list;
+            break;
+        }
+    }
 
+    // A helper to add some RRsets to the test zone in the middle of a test
+    // case.
+    void addRRsets(ClientList& list, const vector<string>& rrsets_to_add) {
+        switch (GetParam()) {
+        case MOCK:
+            // directly add them to the mock data source; ignore the passed
+            // list.
+            for (vector<string>::const_iterator it = rrsets_to_add.begin();
+                 it != rrsets_to_add.end();
+                 ++it) {
+                mock_finder->addRecord(*it);
+            }
+            break;
+        case INMEMORY:
+            // dynamic addition is not yet supported for in-memory
+            ASSERT_TRUE(rrsets_to_add.empty());
+            break;
+        case SQLITE3:
             const Name origin("example.com");
             ZoneUpdaterPtr updater =
-                new_list->find(origin, true, false).dsrc_client_->
+                list.find(origin, true, false).dsrc_client_->
                 getUpdater(origin, false);
             for (vector<string>::const_iterator it = rrsets_to_add.begin();
                  it != rrsets_to_add.end();
@@ -901,8 +925,6 @@ protected:
                 updater->addRRset(*createRRSIG(rrset));
             }
             updater->commit();
-
-            list_ = new_list;
             break;
         }
     }
@@ -2290,12 +2312,14 @@ TEST_P(QueryTest, dsBelowDelegation) {
 // exists in the child zone.  The Query module should still return SOA.
 // In our implementation NSEC/NSEC3 isn't attached in this case.
 TEST_P(QueryTest, dsBelowDelegationWithDS) {
-    // Requires in-test addition of an RR; works only for mock.
-    if (GetParam() != MOCK) {
+    // This test requires incremental update to the zone; unavailable for
+    // in-memory.
+    if (GetParam() == INMEMORY) {
         return;
     }
 
-    mock_finder->addRecord(zone_ds_txt); // add the DS to the child's apex
+    rrsets_to_add_.push_back(zone_ds_txt);
+    addRRsets(*list_, rrsets_to_add_);
     EXPECT_NO_THROW(query.process(*list_, Name("example.com"),
                                   RRType::DS(), response, true));
 
