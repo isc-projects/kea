@@ -448,9 +448,10 @@ public:
         time_t cltt = 0;
         MySqlLeaseMgr::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
 
+        // note that T1 and T2 are not stored
         return (Lease4Ptr(new Lease4(addr4_, hwaddr_buffer_, hwaddr_length_,
                                      client_id_buffer_, client_id_length_,
-                                     valid_lifetime_, cltt, subnet_id_)));
+                                     valid_lifetime_, 0, 0, cltt, subnet_id_)));
     }
 
     /// @brief Return columns in error

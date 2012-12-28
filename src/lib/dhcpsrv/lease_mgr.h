@@ -233,10 +233,10 @@ struct Lease4 : public Lease {
     /// @param valid_lft Lifetime of the lease
     /// @param cltt Client last transmission time
     /// @param subnet_id Subnet identification
-    Lease4(uint32_t addr, const uint8_t* hwaddr, size_t hwaddr_len,
+    Lease4(const isc::asiolink::IOAddress& addr, const uint8_t* hwaddr, size_t hwaddr_len,
            const uint8_t* clientid, size_t clientid_len, uint32_t valid_lft,
-           time_t cltt, uint32_t subnet_id)
-        : Lease(addr, 0, 0, valid_lft, subnet_id, cltt),
+           uint32_t t1, uint32_t t2, time_t cltt, uint32_t subnet_id)
+        : Lease(addr, t1, t2, valid_lft, subnet_id, cltt),
         ext_(0), hwaddr_(hwaddr, hwaddr + hwaddr_len),
         client_id_(new ClientId(clientid, clientid_len)) {
     }
@@ -370,6 +370,7 @@ typedef std::vector<Lease6Ptr> Lease6Collection;
 class LeaseMgr {
 public:
     /// Client hardware address
+    /// @todo: migrate to HWAddr structure
     typedef std::vector<uint8_t> HWAddr;
 
     /// Database configuration parameter map

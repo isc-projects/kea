@@ -39,9 +39,14 @@ namespace {
 class CfgMgrTest : public ::testing::Test {
 public:
     CfgMgrTest() {
+        // make sure we start with a clean configuration
+        CfgMgr::instance().deleteSubnets4();
+        CfgMgr::instance().deleteSubnets6();
     }
 
     ~CfgMgrTest() {
+        // clean up after the test
+        CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().deleteSubnets6();
     }
 };
