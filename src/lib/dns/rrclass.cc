@@ -33,7 +33,7 @@ namespace dns {
 RRClass::RRClass(const std::string& class_str) {
     if (!RRParamRegistry::getRegistry().textToClassCode(class_str, classcode_)) {
         isc_throw(InvalidRRClass,
-                  "Unrecognized RR parameter string: " + class_str);
+                  "Unrecognized RR class string: " + class_str);
     }
 }
 
