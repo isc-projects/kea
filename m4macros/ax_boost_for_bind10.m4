@@ -19,8 +19,10 @@ dnl   AC_SUBST(BOOST_INCLUDES)
 dnl
 dnl And possibly sets:
 dnl   CPPFLAGS_BOOST_THREADCONF should be added to CPPFLAGS by caller
-dnl   BOOST_OFFSET_PTR_WOULDFAIL set to yes if offset_ptr would cause build
-dnl                              error; otherwise set to no
+dnl   BOOST_OFFSET_PTR_WOULDFAIL set to "yes" if offset_ptr would cause build
+dnl                              error; otherwise set to "no"
+dnl   BOOST_NUMERIC_CAST_WOULDFAIL set to "yes" if numeric_cast would cause
+dnl                                build error; otherwise set to "no"
 dnl
 
 AC_DEFUN([AX_BOOST_FOR_BIND10], [
@@ -80,6 +82,18 @@ AC_TRY_COMPILE([
  BOOST_OFFSET_PTR_WOULDFAIL=no],
 [AC_MSG_RESULT(no)
  BOOST_OFFSET_PTR_WOULDFAIL=yes])
+
+# Detect build failure case known to happen with Boost installed via
+# FreeBSD ports
+AC_MSG_CHECKING([Boost numeric_cast compiles])
+AC_TRY_COMPILE([
+#include <boost/numeric/conversion/cast.hpp>
+],[
+return (boost::numeric_cast<short>(0));
+],[AC_MSG_RESULT(yes)
+   BOOST_NUMERIC_CAST_WOULDFAIL=no],
+  [AC_MSG_RESULT(no)
+   BOOST_NUMERIC_CAST_WOULDFAIL=yes])
 
 AC_SUBST(BOOST_INCLUDES)
 
