@@ -34,7 +34,7 @@ namespace dns {
 RRType::RRType(const std::string& type_str) {
     if (!RRParamRegistry::getRegistry().textToTypeCode(type_str, typecode_)) {
         isc_throw(InvalidRRType,
-                  "Unrecognized RR parameter string: " + type_str);
+                  "Unrecognized RR type string: " + type_str);
     }
 }
 
