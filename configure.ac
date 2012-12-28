@@ -853,7 +853,7 @@ if test "$BOOST_NUMERIC_CAST_WOULDFAIL" = "yes" -a X"$with_werror" = X1 -a $CLAN
 fi
 
 # Add some default CPP flags needed for Boost, identified by the AX macro.
-CPPFLAGS="$CPPFLAGS_SAVES $CPPFLAGS_BOOST_THREADCONF"
+CPPFLAGS="$CPPFLAGS $CPPFLAGS_BOOST_THREADCONF"
 
 # I can't get some of the #include <asio.hpp> right without this
 # TODO: find the real cause of asio/boost wanting pthreads
