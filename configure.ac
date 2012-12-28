@@ -166,8 +166,6 @@ fi
 
 fi				dnl GXX = yes
 
-AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
-
 # allow building programs with static link.  we need to make it selective
 # because loadable modules cannot be statically linked.
 AC_ARG_ENABLE([static-link],
