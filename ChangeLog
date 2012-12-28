@@ -1,3 +1,14 @@
+536.	[build]		jinmei
+	Detect a build issue on FreeBSD with g++ 4.2 and Boost installed via
+	FreeBSD ports at ./configure time.  This seems to be a bug of
+	FreeBSD	ports setup and has been reported to the maintainer:
+	http://www.freebsd.org/cgi/query-pr.cgi?pr=174753
+	Until it's fixed, you need to build BIND 10 for FreeBSD that has
+	this problem with specifying --without-werror, with clang++
+	(development version), or with manually extracted Boost header
+	files (no compiled Boost library is necessary).
+	(Trac #1991, git 6b045bcd1f9613e3835551cdebd2616ea8319a36)
+
 535.	[bug]		jelte
 	The log4cplus internal logging mechanism has been disabled, and no
 	output from the log4cplus library itself should be printed to
