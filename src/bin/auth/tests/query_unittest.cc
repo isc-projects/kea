@@ -830,10 +830,6 @@ protected:
         // Set up the faked hash calculator.
         setNSEC3HashCreator(&nsec3hash_creator_);
 
-        // Configure data source clients after setting NSEC3 hash in case
-        // there's dependency.
-        list_ = createDataSrcClientList(GetParam(), memory_client);
-
         response.setRcode(Rcode::NOERROR());
         response.setOpcode(Opcode::QUERY());
         // create and add a matching zone.
@@ -841,7 +837,15 @@ protected:
         memory_client.addZone(ZoneFinderPtr(mock_finder));
     }
 
-    ~QueryTest() {
+    virtual void SetUp() {
+        // Configure data source clients after setting NSEC3 hash in case
+        // there's dependency.
+        // We do this here, not in the constructor, so this doesn't happen
+        // for derived test class.
+        list_ = createDataSrcClientList(GetParam(), memory_client);
+    }
+
+    virtual ~QueryTest() {
         // Make sure we reset the hash creator to the default
         setNSEC3HashCreator(NULL);
     }
@@ -947,6 +951,19 @@ INSTANTIATE_TEST_CASE_P(, QueryTest,
                                           , SQLITE3
 #endif
                             ));
+
+// This inherit the QueryTest cases except for the parameterized setup;
+// it's intended to be used selected test cases that only work for mock
+// data sources either because of some limitation or because of the type of
+// tests (relying on a "broken" data source behavior that can't happen with
+// production data source implementations).
+class QueryTestForMockOnly : public QueryTest {
+protected:
+    // Override SetUp() to avoid parameterized setup
+    virtual void SetUp() {
+        list_ = createDataSrcClientList(MOCK, memory_client);
+    }
+};
 
 // A wrapper to check resulting response message commonly used in
 // tests below.
@@ -1071,7 +1088,8 @@ TEST_P(QueryTest, apexNSMatch) {
 
 // test type any query logic
 TEST_P(QueryTest, exactAnyMatch) {
-    // there's a bug in the in-memory data source and this doesn't work
+    // This is an in-memory specific bug (#2585), until it's fixed we
+    // tentatively skip the test for in-memory
     if (GetParam() == INMEMORY) {
         return;
     }
@@ -1128,11 +1146,7 @@ TEST_P(QueryTest, nodomainANY) {
 //
 // This only works with mock data source (for production datasrc the
 // post-load would reject such a zone)
-TEST_P(QueryTest, noApexNS) {
-    if (GetParam() != MOCK) {
-        return;
-    }
-
+TEST_F(QueryTestForMockOnly, noApexNS) {
     // Disable apex NS record
     mock_finder->setApexNSFlag(false);
 
@@ -1192,22 +1206,23 @@ TEST_P(QueryTest, secureUnsignedDelegation) {
 }
 
 TEST_P(QueryTest, secureUnsignedDelegationWithNSEC3) {
-    // skip NSEC3-related tests for actual data source for the moment
-    if (GetParam() != MOCK) {
+    // This test requires incremental update to the zone; unavailable for
+    // in-memory.
+    if (GetParam() == INMEMORY) {
         return;
     }
 
     // Similar to the previous case, but the zone is signed with NSEC3,
     // and this delegation is NOT an optout.
-    const Name insecurechild_name("unsigned-delegation.example.com");
-    mock_finder->setNSEC3Flag(true);
-    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
+    rrsets_to_add_.push_back(unsigned_delegation_nsec3_txt);
+    enableNSEC3(rrsets_to_add_);
 
     query.process(*list_,
                   Name("foo.unsigned-delegation.example.com"),
                   qtype, response, true);
 
     // The response should contain the NS and matching NSEC3 with its RRSIG
+    const Name insecurechild_name("unsigned-delegation.example.com");
     responseCheck(response, Rcode::NOERROR(), 0, 0, 3, 0,
                   NULL,
                   (string(unsigned_delegation_txt) +
@@ -1244,11 +1259,8 @@ TEST_P(QueryTest, secureUnsignedDelegationWithNSEC3OptOut) {
                   NULL);
 }
 
-TEST_P(QueryTest, badSecureDelegation) {
-    // broken data source scenario; works only with mock.
-    if (GetParam() != MOCK) {
-        return;
-    }
+TEST_F(QueryTestForMockOnly, badSecureDelegation) {
+    // This is a broken data source scenario; works only with mock.
 
     // Test whether exception is raised if DS query at delegation results in
     // something different than SUCCESS or NXRRSET
@@ -1294,7 +1306,7 @@ TEST_P(QueryTest, nxdomainWithNSEC) {
 
 TEST_P(QueryTest, nxdomainWithNSEC2) {
     // there seems to be a bug in the SQLite3 (or database in general) data
-    // source and this doesn't work.
+    // source and this doesn't work (Trac #2586).
     if (GetParam() == SQLITE3) {
         return;
     }
@@ -1321,7 +1333,7 @@ TEST_P(QueryTest, nxdomainWithNSEC2) {
 TEST_P(QueryTest, nxdomainWithNSECDuplicate) {
     // there seems to be a bug in the SQLite3 (or database in general) data
     // source and this doesn't work.  This is probably the same type of bug
-    // as nxdomainWithNSEC2
+    // as nxdomainWithNSEC2 (Trac #2586).
     if (GetParam() == SQLITE3) {
         return;
     }
@@ -1340,11 +1352,8 @@ TEST_P(QueryTest, nxdomainWithNSECDuplicate) {
                   NULL, mock_finder->getOrigin());
 }
 
-TEST_P(QueryTest, nxdomainBadNSEC1) {
-    // broken data source scenario; works only with mock.
-    if (GetParam() != MOCK) {
-        return;
-    }
+TEST_F(QueryTestForMockOnly, nxdomainBadNSEC1) {
+    // This is a broken data source scenario; works only with mock.
 
     // ZoneFinder::find() returns NXDOMAIN with non NSEC RR.
     mock_finder->setNSECResult(Name("badnsec.example.com"),
@@ -1355,11 +1364,8 @@ TEST_P(QueryTest, nxdomainBadNSEC1) {
                  std::bad_cast);
 }
 
-TEST_P(QueryTest, nxdomainBadNSEC2) {
-    // broken data source scenario; works only with mock.
-    if (GetParam() != MOCK) {
-        return;
-    }
+TEST_F(QueryTestForMockOnly, nxdomainBadNSEC2) {
+    // This is a broken data source scenario; works only with mock.
 
     // ZoneFinder::find() returns NXDOMAIN with an empty NSEC RR.
     mock_finder->setNSECResult(Name("emptynsec.example.com"),
@@ -1370,11 +1376,8 @@ TEST_P(QueryTest, nxdomainBadNSEC2) {
                  Query::BadNSEC);
 }
 
-TEST_P(QueryTest, nxdomainBadNSEC) {
-    // broken data source scenario; works only with mock.
-    if (GetParam() != MOCK) {
-        return;
-    }
+TEST_F(QueryTestForMockOnly, nxdomainBadNSEC) {
+    // This is a broken data source scenario; works only with mock.
 
     // "no-wildcard proof" returns SUCCESS.  it should be NXDOMAIN.
     mock_finder->setNSECResult(Name("*.example.com"),
@@ -1385,11 +1388,8 @@ TEST_P(QueryTest, nxdomainBadNSEC) {
                  Query::BadNSEC);
 }
 
-TEST_P(QueryTest, nxdomainBadNSEC4) {
-    // broken data source scenario; works only with mock.
-    if (GetParam() != MOCK) {
-        return;
-    }
+TEST_F(QueryTestForMockOnly, nxdomainBadNSEC4) {
+    // This is a broken data source scenario; works only with mock.
 
     // "no-wildcard proof" doesn't return RRset.
     mock_finder->setNSECResult(Name("*.example.com"),
@@ -1399,11 +1399,8 @@ TEST_P(QueryTest, nxdomainBadNSEC4) {
                  Query::BadNSEC);
 }
 
-TEST_P(QueryTest, nxdomainBadNSEC5) {
-    // broken data source scenario; works only with mock.
-    if (GetParam() != MOCK) {
-        return;
-    }
+TEST_F(QueryTestForMockOnly, nxdomainBadNSEC5) {
+    // This is a broken data source scenario; works only with mock.
 
     // "no-wildcard proof" returns non NSEC.
     mock_finder->setNSECResult(Name("*.example.com"),
@@ -1425,11 +1422,8 @@ TEST_P(QueryTest, nxdomainBadNSEC5) {
                   NULL, mock_finder->getOrigin());
 }
 
-TEST_P(QueryTest, nxdomainBadNSEC6) {
-    // broken data source scenario; works only with mock.
-    if (GetParam() != MOCK) {
-        return;
-    }
+TEST_F(QueryTestForMockOnly, nxdomainBadNSEC6) {
+    // This is a broken data source scenario; works only with mock.
 
     // "no-wildcard proof" returns empty NSEC.
     mock_finder->setNSECResult(Name("*.example.com"),
@@ -1568,7 +1562,8 @@ TEST_P(QueryTest, wildcardNSEC3) {
 }
 
 TEST_P(QueryTest, CNAMEwildNSEC3) {
-    // skip NSEC3-related tests for actual data source for the moment
+    // This test requires incremental update to the zone; unavailable for
+    // in-memory.
     if (GetParam() == INMEMORY) {
         return;
     }
@@ -1593,12 +1588,8 @@ TEST_P(QueryTest, CNAMEwildNSEC3) {
                   mock_finder->getOrigin());
 }
 
-TEST_P(QueryTest, badWildcardNSEC3) {
-    // This test requires incremental update to the zone; unavailable for
-    // in-memory.
-    if (GetParam() != MOCK) {
-        return;
-    }
+TEST_F(QueryTestForMockOnly, badWildcardNSEC3) {
+    // This is a broken data source scenario; works only with mock.
 
     // Similar to wildcardNSEC3, but emulating run time collision by
     // returning NULL in the next closer proof for the closest encloser
@@ -1613,11 +1604,8 @@ TEST_P(QueryTest, badWildcardNSEC3) {
                  Query::BadNSEC3);
 }
 
-TEST_P(QueryTest, badWildcardProof1) {
-    // broken data source scenario; works only with mock.
-    if (GetParam() != MOCK) {
-        return;
-    }
+TEST_F(QueryTestForMockOnly, badWildcardProof1) {
+    // This is a broken data source scenario; works only with mock.
 
     // Unexpected case in wildcard proof: ZoneFinder::find() returns SUCCESS
     // when NXDOMAIN is expected.
@@ -1629,11 +1617,8 @@ TEST_P(QueryTest, badWildcardProof1) {
                  Query::BadNSEC);
 }
 
-TEST_P(QueryTest, badWildcardProof2) {
-    // broken data source scenario; works only with mock.
-    if (GetParam() != MOCK) {
-        return;
-    }
+TEST_F(QueryTestForMockOnly, badWildcardProof2) {
+    // This is a broken data source scenario; works only with mock.
 
     // "wildcard proof" doesn't return RRset.
     mock_finder->setNSECResult(Name("www.wild.example.com"),
@@ -1643,11 +1628,8 @@ TEST_P(QueryTest, badWildcardProof2) {
                  Query::BadNSEC);
 }
 
-TEST_P(QueryTest, badWildcardProof3) {
-    // broken data source scenario; works only with mock.
-    if (GetParam() != MOCK) {
-        return;
-    }
+TEST_F(QueryTestForMockOnly, badWildcardProof3) {
+    // This is a broken data source scenario; works only with mock.
 
     // "wildcard proof" returns empty NSEC.
     mock_finder->setNSECResult(Name("www.wild.example.com"),
@@ -1659,7 +1641,8 @@ TEST_P(QueryTest, badWildcardProof3) {
 }
 
 TEST_P(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
-    // TODO: this seems to be an in-memory specific bug
+    // This is an in-memory specific bug (#2585), until it's fixed we
+    // tentatively skip the test for in-memory
     if (GetParam() == INMEMORY) {
         return;
     }
@@ -1680,7 +1663,8 @@ TEST_P(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
 }
 
 TEST_P(QueryTest, wildcardNxrrsetWithNSEC) {
-    // TODO: this seems to be an in-memory specific bug
+    // This is an in-memory specific bug (#2585), until it's fixed we
+    // tentatively skip the test for in-memory
     if (GetParam() == INMEMORY) {
         return;
     }
@@ -1743,11 +1727,8 @@ TEST_P(QueryTest, wildcardNxrrsetWithNSEC3) {
                   NULL, mock_finder->getOrigin());
 }
 
-TEST_P(QueryTest, wildcardNxrrsetWithNSEC3Collision) {
-    // broken data source scenario; works only with mock.
-    if (GetParam() != MOCK) {
-        return;
-    }
+TEST_F(QueryTestForMockOnly, wildcardNxrrsetWithNSEC3Collision) {
+    // This is a broken data source scenario; works only with mock.
 
     // Similar to the previous case, but emulating run time collision by
     // returning NULL in the next closer proof for the closest encloser
@@ -1762,11 +1743,8 @@ TEST_P(QueryTest, wildcardNxrrsetWithNSEC3Collision) {
                  Query::BadNSEC3);
 }
 
-TEST_P(QueryTest, wildcardNxrrsetWithNSEC3Broken) {
-    // broken data source scenario; works only with mock.
-    if (GetParam() != MOCK) {
-        return;
-    }
+TEST_F(QueryTestForMockOnly, wildcardNxrrsetWithNSEC3Broken) {
+    // This is a broken data source scenario; works only with mock.
 
     // Similar to wildcardNxrrsetWithNSEC3, but no matching NSEC3 for the
     // wildcard name will be returned.  This shouldn't happen in a reasonably
@@ -1807,11 +1785,8 @@ TEST_P(QueryTest, wildcardEmptyWithNSEC) {
  * This tests that when there's no SOA and we need a negative answer. It should
  * throw in that case.
  */
-TEST_P(QueryTest, noSOA) {
-    // broken data source scenario; works only with mock.
-    if (GetParam() != MOCK) {
-        return;
-    }
+TEST_F(QueryTestForMockOnly, noSOA) {
+    // This is a broken data source scenario; works only with mock.
 
     // disable zone's SOA RR.
     mock_finder->setSOAFlag(false);
@@ -2106,12 +2081,9 @@ nsec3Check(bool expected_matched, uint8_t expected_labels,
                 actual_rrsets.end());
 }
 
-TEST_P(QueryTest, findNSEC3) {
+TEST_F(QueryTestForMockOnly, findNSEC3) {
     // This test is intended to test the mock data source behavior; no need
     // to do it for others.
-    if (GetParam() != MOCK) {
-        return;
-    }
 
     // In all test cases in the recursive mode, the closest encloser is the
     // apex, and result's closest_labels should be the number of apex labels.
@@ -2250,12 +2222,9 @@ private:
     const bool have_ds_;
 };
 
-TEST_P(QueryTest, dsAboveDelegation) {
+TEST_F(QueryTestForMockOnly, dsAboveDelegation) {
     // We could setup the child zone for other data sources, but it won't be
     // simple addition.  For now we test it for mock only.
-    if (GetParam() != MOCK) {
-        return;
-    }
 
     // Pretending to have authority for the child zone, too.
     memory_client.addZone(ZoneFinderPtr(new AlternateZoneFinder(
@@ -2362,12 +2331,9 @@ TEST_P(QueryTest, dsAtGrandParent) {
 // side and should result in no data with SOA.  Note that the server doesn't
 // have authority for the "parent".  Unlike the dsAboveDelegation test case
 // the query should be handled in the child zone, not in the grandparent.
-TEST_P(QueryTest, dsAtGrandParentAndChild) {
+TEST_F(QueryTestForMockOnly, dsAtGrandParentAndChild) {
     // We could setup the child zone for other data sources, but it won't be
     // simple addition.  For now we test it for mock only.
-    if (GetParam() != MOCK) {
-        return;
-    }
 
     // Pretending to have authority for the child zone, too.
     const Name childname("grand.delegation.example.com");
@@ -2387,12 +2353,9 @@ TEST_P(QueryTest, dsAtGrandParentAndChild) {
 // DS query for the root name (quite pathological).  Since there's no "parent",
 // the query will be handled in the root zone anyway, and should (normally)
 // result in no data.
-TEST_P(QueryTest, dsAtRoot) {
+TEST_F(QueryTestForMockOnly, dsAtRoot) {
     // We could setup the additional zone for other data sources, but it
     // won't be simple addition.  For now we test it for mock only.
-    if (GetParam() != MOCK) {
-        return;
-    }
 
     // Pretend to be a root server.
     memory_client.addZone(ZoneFinderPtr(
@@ -2410,12 +2373,9 @@ TEST_P(QueryTest, dsAtRoot) {
 // Even more pathological case: A faked root zone actually has its own DS
 // query.  How we respond wouldn't matter much in practice, but check if
 // it behaves as it's intended.  This implementation should return the DS.
-TEST_P(QueryTest, dsAtRootWithDS) {
+TEST_F(QueryTestForMockOnly, dsAtRootWithDS) {
     // We could setup the additional zone for other data sources, but it
     // won't be simple addition.  For now we test it for mock only.
-    if (GetParam() != MOCK) {
-        return;
-    }
 
     memory_client.addZone(ZoneFinderPtr(
                               new AlternateZoneFinder(Name::ROOT_NAME(),
@@ -2452,11 +2412,8 @@ TEST_P(QueryTest, nxrrsetWithNSEC3) {
 
 // Check the exception is correctly raised when the NSEC3 thing isn't in the
 // zone
-TEST_P(QueryTest, nxrrsetMissingNSEC3) {
-    // broken data source scenario; works only with mock.
-    if (GetParam() != MOCK) {
-        return;
-    }
+TEST_F(QueryTestForMockOnly, nxrrsetMissingNSEC3) {
+    // This is a broken data source scenario; works only with mock.
 
     mock_finder->setNSEC3Flag(true);
     // We just need it to return false for "matched". This indicates
@@ -2569,11 +2526,8 @@ TEST_P(QueryTest, nxdomainWithNSEC3Proof) {
                   NULL, mock_finder->getOrigin());
 }
 
-TEST_P(QueryTest, nxdomainWithBadNextNSEC3Proof) {
-    // broken data source scenario; works only with mock.
-    if (GetParam() != MOCK) {
-        return;
-    }
+TEST_F(QueryTestForMockOnly, nxdomainWithBadNextNSEC3Proof) {
+    // This is a broken data source scenario; works only with mock.
 
     // Similar to the previous case, but emulating run time collision by
     // returning NULL in the next closer proof for the closest encloser
@@ -2588,11 +2542,8 @@ TEST_P(QueryTest, nxdomainWithBadNextNSEC3Proof) {
                  Query::BadNSEC3);
 }
 
-TEST_P(QueryTest, nxdomainWithBadWildcardNSEC3Proof) {
-    // broken data source scenario; works only with mock.
-    if (GetParam() != MOCK) {
-        return;
-    }
+TEST_F(QueryTestForMockOnly, nxdomainWithBadWildcardNSEC3Proof) {
+    // This is a broken data source scenario; works only with mock.
 
     // Similar to nxdomainWithNSEC3Proof, but let findNSEC3() return a matching
     // NSEC3 for the possible wildcard name, emulating run-time collision.
