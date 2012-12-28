@@ -85,15 +85,25 @@ AC_TRY_COMPILE([
 
 # Detect build failure case known to happen with Boost installed via
 # FreeBSD ports
-AC_MSG_CHECKING([Boost numeric_cast compiles])
-AC_TRY_COMPILE([
-#include <boost/numeric/conversion/cast.hpp>
-],[
-return (boost::numeric_cast<short>(0));
-],[AC_MSG_RESULT(yes)
-   BOOST_NUMERIC_CAST_WOULDFAIL=no],
-  [AC_MSG_RESULT(no)
-   BOOST_NUMERIC_CAST_WOULDFAIL=yes])
+if test "X$GXX" = "Xyes"; then
+   CXXFLAGS_SAVED="$CXXFLAGS"
+   CXXFLAGS="$CXXFLAGS -Werror"
+
+   AC_MSG_CHECKING([Boost numeric_cast compiles with -Werror])
+   AC_TRY_COMPILE([
+   #include <boost/numeric/conversion/cast.hpp>
+   ],[
+   return (boost::numeric_cast<short>(0));
+   ],[AC_MSG_RESULT(yes)
+      BOOST_NUMERIC_CAST_WOULDFAIL=no],
+   [AC_MSG_RESULT(no)
+    BOOST_NUMERIC_CAST_WOULDFAIL=yes])
+
+   CXXFLAGS="$CXXFLAGS_SAVED"
+else
+  # This doesn't matter for non-g++
+  BOOST_NUMERIC_CAST_WOULDFAIL=no
+fi
 
 AC_SUBST(BOOST_INCLUDES)
 

@@ -846,8 +846,8 @@ if test "$BOOST_OFFSET_PTR_FAILURE" = "yes"; then
 fi
 
 # There's a known bug in FreeBSD ports for Boost that would trigger a false
-# warning in build.
-if test "$BOOST_NUMERIC_CAST_WOULDFAIL" = "yes"; then
+# warning in build with g++ and -Werror
+if test "$BOOST_NUMERIC_CAST_WOULDFAIL" = "yes" -a X"$with_werror" = X1; then
     AC_MSG_ERROR([Failed to compile a required header file.  If you are using FreeBSD and Boost installed via ports, retry with specifying --without-werror.  See the ChangeLog entry for Trac no. 1991 for more details.])
 fi
 
