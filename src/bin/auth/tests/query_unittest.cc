@@ -807,6 +807,9 @@ createDataSrcClientList(DataSrcType type, DataSourceClient& client) {
                                    "/example-base.sqlite3") +
                             "\"}}]"), true);
          return (list);
+    default:
+        isc_throw(isc::Unexpected,
+                  "Unexpected data source type, should be a bug in test code");
     }
 }
 
