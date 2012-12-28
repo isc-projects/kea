@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcpsrv/memfile_lease_mgr.h>
+#include <exceptions/exceptions.h>
 
 #include <iostream>
 
@@ -27,8 +28,13 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
 Memfile_LeaseMgr::~Memfile_LeaseMgr() {
 }
 
-bool Memfile_LeaseMgr::addLease(const Lease4Ptr&) {
-    return (false);
+bool Memfile_LeaseMgr::addLease(const Lease4Ptr& lease) {
+    if (getLease4(lease->addr_)) {
+        // there is a lease with specified address already
+        return (false);
+    }
+    storage4_.insert(lease);
+    return (true);
 }
 
 bool Memfile_LeaseMgr::addLease(const Lease6Ptr& lease) {
@@ -40,27 +46,51 @@ bool Memfile_LeaseMgr::addLease(const Lease6Ptr& lease) {
     return (true);
 }
 
-Lease4Ptr Memfile_LeaseMgr::getLease4(const isc::asiolink::IOAddress&) const {
-    return (Lease4Ptr());
+Lease4Ptr Memfile_LeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
+    Lease4Storage::iterator l = storage4_.find(addr);
+    if (l == storage4_.end()) {
+        return (Lease4Ptr());
+    } else {
+        return (*l);
+    }
 }
 
 Lease4Collection Memfile_LeaseMgr::getLease4(const HWAddr& ) const {
+    isc_throw(NotImplemented, "getLease4(HWaddr x) method not implemented yet");
     return (Lease4Collection());
 }
 
-Lease4Ptr Memfile_LeaseMgr::getLease4(const HWAddr&,
-                                      SubnetID) const {
+Lease4Ptr Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr,
+                                      SubnetID id) const {
+    Lease4Storage::iterator l;
+    for (l = storage4_.begin(); l != storage4_.end(); ++l) {
+        if ( ((*l)->hwaddr_ == hwaddr) &&
+             ((*l)->subnet_id_ == id)) {
+            return (*l);
+        }
+    }
+
+    // not found
     return (Lease4Ptr());
 }
 
 
-Lease4Ptr Memfile_LeaseMgr::getLease4(const ClientId&,
-                                      SubnetID) const {
+Lease4Ptr Memfile_LeaseMgr::getLease4(const ClientId& client_id,
+                                      SubnetID subnet_id) const {
+    Lease4Storage::iterator l;
+    for (l = storage4_.begin(); l != storage4_.end(); ++l) {
+        if ( (*(*l)->client_id_ == client_id) &&
+             ((*l)->subnet_id_ == subnet_id)) {
+            return (*l);
+        }
+    }
+
+    // not found
     return (Lease4Ptr());
 }
 
 Lease4Collection Memfile_LeaseMgr::getLease4(const ClientId& ) const {
-    return (Lease4Collection());
+    isc_throw(NotImplemented, "getLease4(ClientId) not implemented");
 }
 
 Lease6Ptr Memfile_LeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
@@ -98,11 +128,18 @@ void Memfile_LeaseMgr::updateLease6(const Lease6Ptr& ) {
 
 bool Memfile_LeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
     if (addr.isV4()) {
-        // V4 not implemented yet
-        return (false);
+        // v4 lease
+        Lease4Storage::iterator l = storage4_.find(addr);
+        if (l == storage4_.end()) {
+            // No such lease
+            return (false);
+        } else {
+            storage4_.erase(l);
+            return (true);
+        }
 
     } else {
-        // V6 lease
+        // v6 lease
         Lease6Storage::iterator l = storage6_.find(addr);
         if (l == storage6_.end()) {
             // No such lease

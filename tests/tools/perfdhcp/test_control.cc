@@ -1414,9 +1414,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     setDefaults4(socket, pkt4);
 
     // Set hardware address
-    const uint8_t* chaddr = offer_pkt4->getChaddr();
-    std::vector<uint8_t> mac_address(chaddr, chaddr + HW_ETHER_LEN);
-    pkt4->setHWAddr(HTYPE_ETHER, mac_address.size(), mac_address);
+    pkt4->setHWAddr(offer_pkt4->getHWAddr());
     // Set elapsed time.
     uint32_t elapsed_time = getElapsedTime<Pkt4Ptr>(discover_pkt4, offer_pkt4);
     pkt4->setSecs(static_cast<uint16_t>(elapsed_time / 1000));
@@ -1461,8 +1459,10 @@ TestControl::sendRequest4(const TestControlSocket& socket,
                                   transid));
 
      // Set hardware address from OFFER packet received.
-    const uint8_t* chaddr = offer_pkt4->getChaddr();
-    std::vector<uint8_t> mac_address(chaddr, chaddr + HW_ETHER_LEN);
+    HWAddrPtr hwaddr = offer_pkt4->getHWAddr();
+    std::vector<uint8_t> mac_address(HW_ETHER_LEN, 0);
+    uint8_t hw_len = hwaddr->hwaddr_.size();
+    memcpy(&mac_address[0], &hwaddr->hwaddr_[0], hw_len > 16 ? 16 : hw_len);
     pkt4->writeAt(rand_offset, mac_address.begin(), mac_address.end());
 
     // Set elapsed time.
