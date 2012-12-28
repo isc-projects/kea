@@ -848,7 +848,7 @@ fi
 # There's a known bug in FreeBSD ports for Boost that would trigger a false
 # warning in build with g++ and -Werror (we exclude clang++ explicitly to
 # avoid unexpected false positives).
-if test "$BOOST_NUMERIC_CAST_WOULDFAIL" = "yes" -a X"$with_werror" = X1 -a $CLANGPP = "no"; then
+if test "$BOOST_NUMERIC_CAST_WOULDFAIL" = "yes" -a X"$werror_ok" = X1 -a $CLANGPP = "no"; then
     AC_MSG_ERROR([Failed to compile a required header file.  If you are using FreeBSD and Boost installed via ports, retry with specifying --without-werror.  See the ChangeLog entry for Trac no. 1991 for more details.])
 fi
 
