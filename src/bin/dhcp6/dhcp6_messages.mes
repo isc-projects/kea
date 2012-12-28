@@ -67,9 +67,9 @@ other information.
 
 % DHCP6_LEASE_ADVERT lease %1 advertised (client duid=%2, iaid=%3)
 This debug message indicates that the server successfully advertised
-a lease. It is up to the client to choose one server out of othe advertised
-and continue allocation with that server. This is a normal behavior and
-indicates successful operation.
+a lease. It is up to the client to choose one server out of the
+advertised servers and continue allocation with that server. This
+is a normal behavior and indicates successful operation.
 
 % DHCP6_LEASE_ADVERT_FAIL failed to advertise a lease for client duid=%1, iaid=%2
 This message indicates that the server failed to advertise (in response to
