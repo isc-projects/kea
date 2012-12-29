@@ -18,7 +18,7 @@
 This is a supplemental script to generate various forms of test data
 from a unified source file.
 
-Usage: python gen-query-testdata.py source_file output-zonefile output--cc-file
+Usage: python gen-query-testdata.py source_file output-cc-file
 
 The usage doesn't matter much, though, because it's expected to be invoked
 from Makefile, and that would be only use case of this script.
@@ -27,11 +27,12 @@ from Makefile, and that would be only use case of this script.
 import sys
 import re
 
-# Skip lines starting with '##' (comments) or empty lines
-re_skip = re.compile('(^##)|(^\s*$)')
-
 # Markup for variable definition
-re_start_rr = re.compile('^#var=(.*)')
+re_start_rr = re.compile('^;var=(.*)')
+
+# Skip lines starting with ';' (comments) or empty lines.  re_start_rr
+# will also match this expression, so it should be checked first.
+re_skip = re.compile('(^;)|(^\s*$)')
 
 def parse_input(input_file):
     '''Build an internal list of RR data from the input source file.
@@ -48,14 +49,14 @@ def parse_input(input_file):
     rrs = None
     with open(input_file) as f:
         for line in f:
-            if re_skip.match(line):
-                continue
             m = re_start_rr.match(line)
             if m:
                 if rrs is not None:
                     result.append((rr_varname, rrs))
                 rrs = []
                 rr_varname = m.group(1)
+            elif re_skip.match(line):
+                continue
             else:
                 rrs.append(line.rstrip('\n'))
 
@@ -88,17 +89,10 @@ def generate_variables(out_file, rrsets_data):
                                      for rr in rrs]))
                 out.write(';\n')
 
-def generate_zonefile(out_file, rrsets_data):
-    '''Generate a DNS zone file for the given set of RRs.'''
-    with open(out_file, 'w') as out:
-        for (_, rrs) in rrsets_data:
-            out.write('\n'.join(rrs) + '\n')
-
 if __name__ == "__main__":
-    if len(sys.argv) < 4:
-        sys.stderr.write('gen-query-testdata.py require 3 args\n')
+    if len(sys.argv) < 3:
+        sys.stderr.write('gen-query-testdata.py require 2 args\n')
         sys.exit(1)
     rrsets_data = parse_input(sys.argv[1])
-    generate_zonefile(sys.argv[2], rrsets_data)
-    generate_variables(sys.argv[3], rrsets_data)
+    generate_variables(sys.argv[2], rrsets_data)
 
