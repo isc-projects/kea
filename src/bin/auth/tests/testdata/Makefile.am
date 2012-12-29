@@ -1,5 +1,4 @@
 CLEANFILES = *.wire *.copied
-CLEANFILES += example-base.zone example-nsec3-inc.zone
 CLEANFILES += example-base.sqlite3 example-nsec3.sqlite3
 
 BUILT_SOURCES = badExampleQuery_fromWire.wire examplequery_fromWire.wire
@@ -26,7 +25,7 @@ EXTRA_DIST += example.com
 EXTRA_DIST += example.zone
 EXTRA_DIST += example.sqlite3
 
-EXTRA_DIST += query_testzone_data.txt query_testzone_data_nsec3.txt
+EXTRA_DIST += example-base.zone example-nsec3-inc.zone
 
 .spec.wire:
 	$(PYTHON) $(top_builddir)/src/lib/util/python/gen_wiredata.py -o $@ $<
