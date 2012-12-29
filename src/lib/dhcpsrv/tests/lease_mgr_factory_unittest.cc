@@ -80,15 +80,45 @@ TEST_F(LeaseMgrFactoryTest, parseInvalid) {
 ///
 /// Checks that the redacted configuration string includes the password only
 /// as a set of asterisks.
-TEST(LeaseMgr, redactAccessString) {
+TEST_F(LeaseMgrFactoryTest, redactAccessString) {
 
-    // To check the redacted string, break it down into its component
-    // parameters and check the results.
-    LeaseMgr::ParameterMap parameters = LeaseMgrFactory::parse(
-        "user=me password=forbidden name=kea type=mysql");
+    LeaseMgr::ParameterMap parameters =
+        LeaseMgrFactory::parse("user=me password=forbidden name=kea type=mysql");
+    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ("me", parameters["user"]);
+    EXPECT_EQ("forbidden", parameters["password"]);
+    EXPECT_EQ("kea", parameters["name"]);
+    EXPECT_EQ("mysql", parameters["type"]);
+
+    // Redact the result.  To check, break the redacted string down into its
+    // components.
     std::string redacted = LeaseMgrFactory::redactedAccessString(parameters);
+    parameters = LeaseMgrFactory::parse(redacted);
 
-    // ... and break the redacted string down into its components.
+    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ("me", parameters["user"]);
+    EXPECT_EQ("*****", parameters["password"]);
+    EXPECT_EQ("kea", parameters["name"]);
+    EXPECT_EQ("mysql", parameters["type"]);
+}
+
+/// @brief redactConfigString test - empty password
+///
+/// Checks that the redacted configuration string includes the password only
+/// as a set of asterisks, even if the password is null.
+TEST_F(LeaseMgrFactoryTest, redactAccessStringEmptyPassword) {
+
+    LeaseMgr::ParameterMap parameters =
+        LeaseMgrFactory::parse("user=me name=kea type=mysql password=");
+    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ("me", parameters["user"]);
+    EXPECT_EQ("", parameters["password"]);
+    EXPECT_EQ("kea", parameters["name"]);
+    EXPECT_EQ("mysql", parameters["type"]);
+
+    // Redact the result.  To check, break the redacted string down into its
+    // components.
+    std::string redacted = LeaseMgrFactory::redactedAccessString(parameters);
     parameters = LeaseMgrFactory::parse(redacted);
 
     EXPECT_EQ(4, parameters.size());
@@ -97,9 +127,15 @@ TEST(LeaseMgr, redactAccessString) {
     EXPECT_EQ("kea", parameters["name"]);
     EXPECT_EQ("mysql", parameters["type"]);
 
-    // Do the same, but check it works for an empty password.
-    parameters = LeaseMgrFactory::parse(
-        "user=me password=forbidden name=kea type=mysql");
+    // ... and again to check that the position of the empty password in the
+    // string does not matter.
+    parameters = LeaseMgrFactory::parse("user=me password= name=kea type=mysql");
+    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ("me", parameters["user"]);
+    EXPECT_EQ("", parameters["password"]);
+    EXPECT_EQ("kea", parameters["name"]);
+    EXPECT_EQ("mysql", parameters["type"]);
+
     redacted = LeaseMgrFactory::redactedAccessString(parameters);
     parameters = LeaseMgrFactory::parse(redacted);
 
@@ -108,10 +144,24 @@ TEST(LeaseMgr, redactAccessString) {
     EXPECT_EQ("*****", parameters["password"]);
     EXPECT_EQ("kea", parameters["name"]);
     EXPECT_EQ("mysql", parameters["type"]);
+}
 
-    // Do the same, but check it works in the absence of a password token
-    parameters = LeaseMgrFactory::parse("user=me name=kea type=mysql");
-    redacted = LeaseMgrFactory::redactedAccessString(parameters);
+/// @brief redactConfigString test - no password
+///
+/// Checks that the redacted configuration string excludes the password if there
+/// was no password to begion with.
+TEST_F(LeaseMgrFactoryTest, redactAccessStringNoPassword) {
+
+    LeaseMgr::ParameterMap parameters =
+        LeaseMgrFactory::parse("user=me name=kea type=mysql");
+    EXPECT_EQ(3, parameters.size());
+    EXPECT_EQ("me", parameters["user"]);
+    EXPECT_EQ("kea", parameters["name"]);
+    EXPECT_EQ("mysql", parameters["type"]);
+
+    // Redact the result.  To check, break the redacted string down into its
+    // components.
+    std::string redacted = LeaseMgrFactory::redactedAccessString(parameters);
     parameters = LeaseMgrFactory::parse(redacted);
 
     EXPECT_EQ(3, parameters.size());

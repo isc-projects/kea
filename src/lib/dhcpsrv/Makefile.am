@@ -12,9 +12,9 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 dhcpsrv_messages.h dhcpsrv_messages.cc: dhcpsrv_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/dhcpsrv/dhcpsrv_messages.mes
 
-# Tell Automake that the nsas_messages.{cc,h} source files are created in the build
-# process, so it must create these before doing anything else.  Although they
-# are a dependency of the library (so will be created from the message file
+# Tell Automake that the dhcpsrv_messages.{cc,h} source files are created in the
+# build process, so it must create these before doing anything else.  Although
+# they are a dependency of the library (so will be created from the message file
 # anyway), there is no guarantee as to exactly _when_ in the build they will be
 # created.  As the .h file is included in other sources file (so must be
 # present when they are compiled), the safest option is to create it first.
