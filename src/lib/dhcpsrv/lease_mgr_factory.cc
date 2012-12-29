@@ -54,7 +54,7 @@ LeaseMgrFactory::parse(const std::string& dbaccess) {
         // there are cryptic warnings on Debian6 running g++ 4.4 in
         // /usr/include/c++/4.4/bits/stl_algo.h:2178 "array subscript is above
         // array bounds"
-        boost::split(tokens, dbaccess, boost::is_any_of( string("\t ") ));
+        boost::split(tokens, dbaccess, boost::is_any_of(string("\t ")));
         BOOST_FOREACH(std::string token, tokens) {
             size_t pos = token.find("=");
             if (pos != string::npos) {
