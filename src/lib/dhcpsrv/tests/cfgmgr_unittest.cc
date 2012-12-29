@@ -58,7 +58,7 @@ TEST_F(CfgMgrTest, subnet4) {
     Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
 
     // There shouldn't be any subnet configured at this stage
-    EXPECT_EQ(Subnet4Ptr(), cfg_mgr.getSubnet4(IOAddress("192.0.2.0")));
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.0")));
 
     cfg_mgr.addSubnet4(subnet1);
 
@@ -75,13 +75,13 @@ TEST_F(CfgMgrTest, subnet4) {
     EXPECT_EQ(subnet2, cfg_mgr.getSubnet4(IOAddress("192.0.2.85")));
 
     // Try to find an address that does not belong to any subnet
-    EXPECT_EQ(Subnet4Ptr(), cfg_mgr.getSubnet4(IOAddress("192.0.2.192")));
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.192")));
 
     // Check that deletion of the subnets works.
     cfg_mgr.deleteSubnets4();
-    EXPECT_EQ(Subnet4Ptr(), cfg_mgr.getSubnet4(IOAddress("192.0.2.191")));
-    EXPECT_EQ(Subnet4Ptr(), cfg_mgr.getSubnet4(IOAddress("192.0.2.15")));
-    EXPECT_EQ(Subnet4Ptr(), cfg_mgr.getSubnet4(IOAddress("192.0.2.85")));
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.191")));
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.15")));
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.85")));
 }
 
 // This test verifies if the configuration manager is able to hold and return
@@ -95,7 +95,7 @@ TEST_F(CfgMgrTest, subnet6) {
     Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
 
     // There shouldn't be any subnet configured at this stage
-    EXPECT_EQ(Subnet6Ptr(), cfg_mgr.getSubnet6(IOAddress("2000::1")));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("2000::1")));
 
     cfg_mgr.addSubnet6(subnet1);
 
@@ -111,13 +111,13 @@ TEST_F(CfgMgrTest, subnet6) {
 
     EXPECT_EQ(subnet3, cfg_mgr.getSubnet6(IOAddress("4000::123")));
     EXPECT_EQ(subnet2, cfg_mgr.getSubnet6(IOAddress("3000::dead:beef")));
-    EXPECT_EQ(Subnet6Ptr(), cfg_mgr.getSubnet6(IOAddress("5000::1")));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("5000::1")));
 
     // Check that deletion of the subnets works.
     cfg_mgr.deleteSubnets6();
-    EXPECT_EQ(Subnet6Ptr(), cfg_mgr.getSubnet6(IOAddress("200::123")));
-    EXPECT_EQ(Subnet6Ptr(), cfg_mgr.getSubnet6(IOAddress("3000::123")));
-    EXPECT_EQ(Subnet6Ptr(), cfg_mgr.getSubnet6(IOAddress("4000::123")));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("200::123")));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("3000::123")));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("4000::123")));
 }
 
 } // end of anonymous namespace

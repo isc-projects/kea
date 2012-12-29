@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __HWADDR_H
-#define __HWADDR_H
+#ifndef HWADDR_H
+#define HWADDR_H
 
 #include <string>
 #include <vector>
@@ -30,9 +30,6 @@ typedef std::vector<uint8_t> HWAddr;
 /// Returns a string containing the hardware address. This is only used for
 /// logging.
 ///
-/// @note Six characters is an arbitrary length, chosen to provide a
-///       suitably wide string.
-///
 /// @todo Create a "hardware address" class of which this will be a member.
 ///
 /// @param hwaddr Hardware address to convert to string form
@@ -44,4 +41,4 @@ hardwareAddressString(const HWAddr& hwaddr);
 };  // namespace dhcp
 };  // namespace isc
 
-#endif // __HWADDR_H
+#endif // HWADDR_H
