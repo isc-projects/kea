@@ -91,20 +91,26 @@ EXTRA_DIST = gen-query-testdata.py
 
 CLEANFILES += example_base_inc.cc example_nsec3_inc.cc
 
-example_base_inc.cc: $(srcdir)/testdata/example-base.zone
+example_base_inc.cc: $(srcdir)/testdata/example-base-inc.zone
 	$(PYTHON) $(srcdir)/gen-query-testdata.py \
-		$(srcdir)/testdata/example-base.zone example_base_inc.cc
+		$(srcdir)/testdata/example-base-inc.zone example_base_inc.cc
 
 example_nsec3_inc.cc: $(srcdir)/testdata/example-nsec3-inc.zone
 	$(PYTHON) $(srcdir)/gen-query-testdata.py \
 		$(srcdir)/testdata/example-nsec3-inc.zone example_nsec3_inc.cc
 
 testdata/example-base.sqlite3: testdata/example-base.zone
+	$(top_srcdir)/install-sh -c \
+		$(srcdir)/testdata/example-common-inc-template.zone \
+		testdata/example-common-inc.zone
 	$(SHELL) $(top_builddir)/src/bin/loadzone/run_loadzone.sh \
 		-c "{\"database_file\": \"$(builddir)/testdata/example-base.sqlite3\"}" \
 		example.com testdata/example-base.zone
 
 testdata/example-nsec3.sqlite3: testdata/example-nsec3.zone
+	$(top_srcdir)/install-sh -c \
+		$(srcdir)/testdata/example-common-inc-template.zone \
+		testdata/example-common-inc.zone
 	$(SHELL) $(top_builddir)/src/bin/loadzone/run_loadzone.sh \
 		-c "{\"database_file\": \"$(builddir)/testdata/example-nsec3.sqlite3\"}" \
 		example.com testdata/example-nsec3.zone
