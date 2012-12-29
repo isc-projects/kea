@@ -40,6 +40,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdlib>
+#include <fstream>
 #include <map>
 #include <sstream>
 #include <vector>
@@ -831,7 +832,10 @@ protected:
                              "glue.delegation.example.com. 3600 IN RRSIG " +
                              getCommonRRSIGText("AAAA") + "\n" +
                              "noglue.example.com. 3600 IN RRSIG " +
-                             getCommonRRSIGText("A"))
+                             getCommonRRSIGText("A")),
+        base_zone_file(TEST_OWN_DATA_BUILDDIR "/example-base.zone"),
+        nsec3_zone_file(TEST_OWN_DATA_BUILDDIR "/example-nsec3.zone"),
+        common_zone_file(TEST_OWN_DATA_BUILDDIR "/example-common-inc.zone")
     {
         // Set up the faked hash calculator.
         setNSEC3HashCreator(&nsec3hash_creator_);
@@ -844,10 +848,16 @@ protected:
     }
 
     virtual void SetUp() {
-        // Configure data source clients after setting NSEC3 hash in case
+        // clear the commonly included zone file.
+        ASSERT_EQ(0, std::system(INSTALL_PROG " -c " TEST_OWN_DATA_DIR
+                                 "/example-common-inc-template.zone "
+                                 TEST_OWN_DATA_BUILDDIR
+                                 "/example-common-inc.zone"));
+
+        // We create data source clients here, not in the constructor, so this
+        // doesn't happen for derived test class.  This also ensures the
+        // data source clients are configured after setting NSEC3 hash in case
         // there's dependency.
-        // We do this here, not in the constructor, so this doesn't happen
-        // for derived test class.
         list_ = createDataSrcClientList(GetParam(), memory_client);
     }
 
@@ -861,19 +871,10 @@ protected:
         switch (GetParam()) {
         case MOCK:
             mock_finder->setNSEC3Flag(true);
-            addRRsets(*list_, rrsets_to_add);
+            addRRsets(rrsets_to_add, *list_, "");
             break;
         case INMEMORY:
-            addRRsets(*list_, rrsets_to_add);
-            new_list.reset(new ConfigurableClientList(RRClass::IN()));
-            new_list->configure(isc::data::Element::fromJSON(
-                                    "[{\"type\": \"MasterFiles\","
-                                    "  \"cache-enable\": true, "
-                                    "  \"params\": {\"example.com\": \"" +
-                                    string(TEST_OWN_DATA_BUILDDIR
-                                           "/example-nsec3.zone") +
-                                    "\"}}]"), true);
-            list_ = new_list;
+            addRRsets(rrsets_to_add, *list_, nsec3_zone_file);
             break;
         case SQLITE3:
             ASSERT_EQ(0, std::system(INSTALL_PROG " -c " TEST_OWN_DATA_BUILDDIR
@@ -889,15 +890,21 @@ protected:
                                     string(TEST_OWN_DATA_BUILDDIR
                                            "/example-nsec3.sqlite3.copied") +
                                     "\"}}]"), true);
-            addRRsets(*new_list, rrsets_to_add);
+            addRRsets(rrsets_to_add, *new_list, "");
             list_ = new_list;
             break;
         }
     }
 
     // A helper to add some RRsets to the test zone in the middle of a test
-    // case.
-    void addRRsets(ClientList& list, const vector<string>& rrsets_to_add) {
+    // case.  The detailed behavior is quite different depending on the
+    // data source type, and not all parameters are used in all cases.
+    void addRRsets(const vector<string>& rrsets_to_add, ClientList& list,
+                   const string& zone_file)
+    {
+        boost::shared_ptr<ConfigurableClientList> new_list;
+        ofstream ofs;
+
         switch (GetParam()) {
         case MOCK:
             // directly add them to the mock data source; ignore the passed
@@ -909,8 +916,25 @@ protected:
             }
             break;
         case INMEMORY:
-            // dynamic addition is not yet supported for in-memory
-            ASSERT_TRUE(rrsets_to_add.empty());
+            // dump the RRsets to be added to the placeholder of commonly
+            // included zone file (removing any existing contents) and do
+            // full reconfiguration.
+            ofs.open(common_zone_file.c_str(), ios_base::trunc);
+            for (vector<string>::const_iterator it = rrsets_to_add.begin();
+                 it != rrsets_to_add.end();
+                 ++it) {
+                ofs << *it << "\n";
+                ofs << createRRSIG(textToRRset(*it))->toText() << "\n";
+            }
+            ofs.close();
+
+            new_list.reset(new ConfigurableClientList(RRClass::IN()));
+            new_list->configure(isc::data::Element::fromJSON(
+                                    "[{\"type\": \"MasterFiles\","
+                                    "  \"cache-enable\": true, "
+                                    "  \"params\": {\"example.com\": \"" +
+                                    zone_file + "\"}}]"), true);
+            list_ = new_list;
             break;
         case SQLITE3:
             const Name origin("example.com");
@@ -960,7 +984,10 @@ protected:
     Query query;
     TestNSEC3Hash nsec3_hash_;
     vector<string> rrsets_to_add_;
+    const string base_zone_file;
 private:
+    const string nsec3_zone_file;
+    const string common_zone_file;
     const TestNSEC3HashCreator nsec3hash_creator_;
 };
 
@@ -1228,12 +1255,6 @@ TEST_P(QueryTest, secureUnsignedDelegation) {
 }
 
 TEST_P(QueryTest, secureUnsignedDelegationWithNSEC3) {
-    // This test requires incremental update to the zone; unavailable for
-    // in-memory.
-    if (GetParam() == INMEMORY) {
-        return;
-    }
-
     // Similar to the previous case, but the zone is signed with NSEC3,
     // and this delegation is NOT an optout.
     rrsets_to_add_.push_back(unsigned_delegation_nsec3_txt);
@@ -1550,12 +1571,6 @@ TEST_P(QueryTest, CNAMEwildNSEC) {
 }
 
 TEST_P(QueryTest, wildcardNSEC3) {
-    // This test requires incremental update to the zone; unavailable for
-    // in-memory.
-    if (GetParam() == INMEMORY) {
-        return;
-    }
-
     // Similar to wildcardNSEC, but the zone is signed with NSEC3.
     // The next closer is y.wild.example.com, the covering NSEC3 for it
     // is (in our setup) the NSEC3 for the apex.
@@ -1584,12 +1599,6 @@ TEST_P(QueryTest, wildcardNSEC3) {
 }
 
 TEST_P(QueryTest, CNAMEwildNSEC3) {
-    // This test requires incremental update to the zone; unavailable for
-    // in-memory.
-    if (GetParam() == INMEMORY) {
-        return;
-    }
-
     // Similar to CNAMEwildNSEC, but with NSEC3.
     // The next closer is qname itself, the covering NSEC3 for it
     // is (in our setup) the NSEC3 for the www.example.com.
@@ -1711,12 +1720,6 @@ TEST_P(QueryTest, wildcardNxrrsetWithNSEC) {
 }
 
 TEST_P(QueryTest, wildcardNxrrsetWithNSEC3) {
-    // This test requires incremental update to the zone; unavailable for
-    // in-memory.
-    if (GetParam() == INMEMORY) {
-        return;
-    }
-
     // Similar to the previous case, but providing NSEC3 proofs according to
     // RFC5155 Section 7.2.5.
 
@@ -2312,14 +2315,8 @@ TEST_P(QueryTest, dsBelowDelegation) {
 // exists in the child zone.  The Query module should still return SOA.
 // In our implementation NSEC/NSEC3 isn't attached in this case.
 TEST_P(QueryTest, dsBelowDelegationWithDS) {
-    // This test requires incremental update to the zone; unavailable for
-    // in-memory.
-    if (GetParam() == INMEMORY) {
-        return;
-    }
-
     rrsets_to_add_.push_back(zone_ds_txt);
-    addRRsets(*list_, rrsets_to_add_);
+    addRRsets(rrsets_to_add_, *list_, base_zone_file);
     EXPECT_NO_THROW(query.process(*list_, Name("example.com"),
                                   RRType::DS(), response, true));
 
@@ -2452,12 +2449,6 @@ TEST_F(QueryTestForMockOnly, nxrrsetMissingNSEC3) {
 }
 
 TEST_P(QueryTest, nxrrsetWithNSEC3_ds_exact) {
-    // This test requires incremental update to the zone; unavailable for
-    // in-memory.
-    if (GetParam() == INMEMORY) {
-        return;
-    }
-
     rrsets_to_add_.push_back(unsigned_delegation_nsec3_txt);
     enableNSEC3(rrsets_to_add_);
 
@@ -2477,12 +2468,6 @@ TEST_P(QueryTest, nxrrsetWithNSEC3_ds_exact) {
 }
 
 TEST_P(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
-    // This test requires incremental update to the zone; unavailable for
-    // in-memory.
-    if (GetParam() == INMEMORY) {
-        return;
-    }
-
     rrsets_to_add_.push_back(unsigned_delegation_nsec3_txt);
     enableNSEC3(rrsets_to_add_);
 
@@ -2509,12 +2494,6 @@ TEST_P(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
 }
 
 TEST_P(QueryTest, nxdomainWithNSEC3Proof) {
-    // This test requires incremental update to the zone; unavailable for
-    // in-memory.
-    if (GetParam() == INMEMORY) {
-        return;
-    }
-
     // Name Error (NXDOMAIN) case with NSEC3 proof per RFC5155 Section 7.2.2.
 
     // This will be the covering NSEC3 for the next closer
