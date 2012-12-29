@@ -37,6 +37,12 @@ example.com. 3600 IN NS example.net.
 example.com. 3600 IN RRSIG SOA 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 example.com. 3600 IN RRSIG NS 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 
+;; Note: the position of the next RR is tricky.  It's placed here to
+;; be grouped with the subsequent A RR of the name.  But we also want
+;; to group the A RR with other RRs of a different owner name, so the RRSIG
+;; cannot be placed after the A RR.  The empty 'var=' specification is
+;; not necessary here, but in case we want to reorganize the ordering
+;; (in which case it's more likely to be needed), we keep it here.
 ;var=
 noglue.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE
 
