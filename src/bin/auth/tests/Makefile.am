@@ -83,8 +83,7 @@ run_unittests_LDADD += $(SQLITE_LIBS)
 
 # The following are definitions for auto-generating test data for query
 # tests.
-BUILT_SOURCES = testdata/example-base.zone example_base_inc.cc
-BUILT_SOURCES += testdata/example-nsec3-inc.zone example_nsec3_inc.cc
+BUILT_SOURCES = example_base_inc.cc example_nsec3_inc.cc
 BUILT_SOURCES += testdata/example-base.sqlite3
 BUILT_SOURCES += testdata/example-nsec3.sqlite3
 
@@ -92,15 +91,13 @@ EXTRA_DIST = gen-query-testdata.py
 
 CLEANFILES += example_base_inc.cc example_nsec3_inc.cc
 
-testdata/example-base.zone example_base_inc.cc: testdata/query_testzone_data.txt
+example_base_inc.cc: $(srcdir)/testdata/example-base.zone
 	$(PYTHON) $(srcdir)/gen-query-testdata.py \
-		$(srcdir)/testdata/query_testzone_data.txt \
-		testdata/example-base.zone example_base_inc.cc
+		$(srcdir)/testdata/example-base.zone example_base_inc.cc
 
-testdata/example-nsec3-inc.zone example_nsec3_inc.cc: testdata/query_testzone_data_nsec3.txt
+example_nsec3_inc.cc: $(srcdir)/testdata/example-nsec3-inc.zone
 	$(PYTHON) $(srcdir)/gen-query-testdata.py \
-		$(srcdir)/testdata/query_testzone_data_nsec3.txt \
-		testdata/example-nsec3-inc.zone example_nsec3_inc.cc
+		$(srcdir)/testdata/example-nsec3-inc.zone example_nsec3_inc.cc
 
 testdata/example-base.sqlite3: testdata/example-base.zone
 	$(SHELL) $(top_builddir)/src/bin/loadzone/run_loadzone.sh \
