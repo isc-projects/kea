@@ -2342,11 +2342,15 @@ class TestFunctions(unittest.TestCase):
         self.assertFalse(os.path.exists(self.lockfile_testpath))
         os.mkdir(self.lockfile_testpath)
         self.assertTrue(os.path.isdir(self.lockfile_testpath))
+        self.__isfile_orig = bind10_src.os.path.isfile
+        self.__unlink_orig = bind10_src.os.unlink
 
     def tearDown(self):
         os.rmdir(self.lockfile_testpath)
         self.assertFalse(os.path.isdir(self.lockfile_testpath))
         os.environ["B10_LOCKFILE_DIR_FROM_BUILD"] = "@abs_top_builddir@"
+        bind10_src.os.path.isfile = self.__isfile_orig
+        bind10_src.os.unlink = self.__unlink_orig
 
     def test_remove_lock_files(self):
         os.environ["B10_LOCKFILE_DIR_FROM_BUILD"] = self.lockfile_testpath
@@ -2369,6 +2373,28 @@ class TestFunctions(unittest.TestCase):
 
         # second call should not assert anyway
         bind10_src.remove_lock_files()
+
+    def test_remove_lock_files_fail(self):
+        # Permission error on unlink is ignored; other exceptions are really
+        # unexpected and propagated.
+        def __raising_unlink(unused, ex):
+            raise ex
+
+        bind10_src.os.path.isfile = lambda _: True
+        os_error = OSError()
+        bind10_src.os.unlink = lambda f: __raising_unlink(f, os_error)
+
+        os_error.errno = errno.EPERM
+        bind10_src.remove_lock_files() # no disruption
+
+        os_error.errno = errno.EACCES
+        bind10_src.remove_lock_files() # no disruption
+
+        os_error.errno = errno.ENOENT
+        self.assertRaises(OSError, bind10_src.remove_lock_files)
+
+        bind10_src.os.unlink = lambda f: __raising_unlink(f, Exception('bad'))
+        self.assertRaises(Exception, bind10_src.remove_lock_files)
 
     def test_get_signame(self):
         # just test with some samples
