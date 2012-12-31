@@ -575,6 +575,9 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     checkClientId(reply, clientid);
 }
 
+/// @todo: Add a test that client sends hint that is in pool, but currently
+/// being used by a different client.
+
 // This test checks that the server is offering different addresses to different
 // clients in ADVERTISEs. Please note that ADVERTISE is not a guarantee that such
 // and address will be assigned. Had the pool was very small and contained only

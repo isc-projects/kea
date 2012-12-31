@@ -22,6 +22,8 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
 
+#include <dhcpsrv/tests/test_utils.h>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -29,11 +31,13 @@
 #include <iostream>
 #include <sstream>
 #include <map>
+#include <time.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 
 namespace {
 
@@ -107,26 +111,6 @@ TEST_F(AllocEngineTest, constructor) {
     ASSERT_NO_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
 }
 
-/// @todo: This method is taken from mysql_lease_mgr_utilities.cc from ticket
-/// #2342. Get rid of one instance once the code is merged
-void
-detailCompareLease6(const Lease6Ptr& first, const Lease6Ptr& second) {
-    EXPECT_EQ(first->type_, second->type_);
-
-    // Compare address strings - odd things happen when they are different
-    // as the EXPECT_EQ appears to call the operator uint32_t() function,
-    // which causes an exception to be thrown for IPv6 addresses.
-    EXPECT_EQ(first->addr_.toText(), second->addr_.toText());
-    EXPECT_EQ(first->prefixlen_, second->prefixlen_);
-    EXPECT_EQ(first->iaid_, second->iaid_);
-    EXPECT_TRUE(*first->duid_ == *second->duid_);
-    EXPECT_EQ(first->preferred_lft_, second->preferred_lft_);
-    EXPECT_EQ(first->valid_lft_, second->valid_lft_);
-    EXPECT_EQ(first->cltt_, second->cltt_);
-    EXPECT_EQ(first->subnet_id_, second->subnet_id_);
-}
-
-
 // This test checks if the simple allocation can succeed
 TEST_F(AllocEngineTest, simpleAlloc) {
     boost::scoped_ptr<AllocEngine> engine;
@@ -147,7 +131,7 @@ TEST_F(AllocEngineTest, simpleAlloc) {
     ASSERT_TRUE(from_mgr);
 
     // Now check that the lease in LeaseMgr has the same parameters
-    detailCompareLease6(lease, from_mgr);
+    detailCompareLease(lease, from_mgr);
 }
 
 // This test checks if the fake allocation (for SOLICIT) can succeed
@@ -195,7 +179,7 @@ TEST_F(AllocEngineTest, allocWithValidHint) {
     ASSERT_TRUE(from_mgr);
 
     // Now check that the lease in LeaseMgr has the same parameters
-    detailCompareLease6(lease, from_mgr);
+    detailCompareLease(lease, from_mgr);
 }
 
 // This test checks if the allocation with a hint that is in range,
@@ -234,7 +218,7 @@ TEST_F(AllocEngineTest, allocWithUsedHint) {
     ASSERT_TRUE(from_mgr);
 
     // Now check that the lease in LeaseMgr has the same parameters
-    detailCompareLease6(lease, from_mgr);
+    detailCompareLease(lease, from_mgr);
 }
 
 // This test checks if the allocation with a hint that is out the blue
@@ -264,7 +248,7 @@ TEST_F(AllocEngineTest, allocBogusHint) {
     ASSERT_TRUE(from_mgr);
 
     // Now check that the lease in LeaseMgr has the same parameters
-    detailCompareLease6(lease, from_mgr);
+    detailCompareLease(lease, from_mgr);
 }
 
 // This test verifies that the allocator picks addresses that belong to the
@@ -335,6 +319,158 @@ TEST_F(AllocEngineTest, IterativeAllocator_manyPools) {
     }
 
     delete alloc;
+}
+
+// This test checks if really small pools are working
+TEST_F(AllocEngineTest, smallPool) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    IOAddress addr("2001:db8:1::ad");
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.deleteSubnets6(); // Get rid of the default test configuration
+
+    // Create configuration similar to other tests, but with a single address pool
+    subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+    pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, addr, addr)); // just a single address
+    subnet_->addPool6(pool_);
+    cfg_mgr.addSubnet6(subnet_);
+
+    Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
+                                               false);
+
+    // Check that we got that single lease
+    ASSERT_TRUE(lease);
+
+    EXPECT_EQ("2001:db8:1::ad", lease->addr_.toText());
+
+    // do all checks on the lease
+    checkLease6(lease);
+
+    // Check that the lease is indeed in LeaseMgr
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+}
+
+// This test checks if all addresses in a pool are currently used, the attempt
+// to find out a new lease fails.
+TEST_F(AllocEngineTest, outOfAddresses) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    IOAddress addr("2001:db8:1::ad");
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.deleteSubnets6(); // Get rid of the default test configuration
+
+    // Create configuration similar to other tests, but with a single address pool
+    subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+    pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, addr, addr)); // just a single address
+    subnet_->addPool6(pool_);
+    cfg_mgr.addSubnet6(subnet_);
+
+    // Just a different duid
+    DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
+    const uint32_t other_iaid = 3568;
+    Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, other_duid, other_iaid,
+                               501, 502, 503, 504, subnet_->getID(), 0));
+    lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // There is just a single address in the pool and allocated it to someone
+    // else, so the allocation should fail
+
+    EXPECT_THROW(engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),false),
+                 AllocFailed);
+}
+
+// This test checks if an expired lease can be reused in SOLICIT (fake allocation)
+TEST_F(AllocEngineTest, solicitReuseExpiredLease) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    IOAddress addr("2001:db8:1::ad");
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.deleteSubnets6(); // Get rid of the default test configuration
+
+    // Create configuration similar to other tests, but with a single address pool
+    subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+    pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, addr, addr)); // just a single address
+    subnet_->addPool6(pool_);
+    cfg_mgr.addSubnet6(subnet_);
+
+    // Just a different duid
+    DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
+    const uint32_t other_iaid = 3568;
+    Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, other_duid, other_iaid,
+                               501, 502, 503, 504, subnet_->getID(), 0));
+    lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
+    lease->valid_lft_ = 495; // Lease was valid for 495 seconds
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // CASE 1: Asking for any address
+    lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
+                                     true);
+    // Check that we got that single lease
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr.toText(), lease->addr_.toText());
+
+    // Do all checks on the lease (if subnet-id, preferred/valid times are ok etc.)
+    checkLease6(lease);
+
+    // CASE 2: Asking specifically for this address
+    lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress(addr.toText()),
+                                     true);
+    // Check that we got that single lease
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr.toText(), lease->addr_.toText());
+}
+
+// This test checks if an expired lease can be reused in REQUEST (actual allocation)
+TEST_F(AllocEngineTest, requestReuseExpiredLease) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    IOAddress addr("2001:db8:1::ad");
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.deleteSubnets6(); // Get rid of the default test configuration
+
+    // Create configuration similar to other tests, but with a single address pool
+    subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+    pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, addr, addr)); // just a single address
+    subnet_->addPool6(pool_);
+    cfg_mgr.addSubnet6(subnet_);
+
+    // Let's create an expired lease
+    DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
+    const uint32_t other_iaid = 3568;
+    const SubnetID other_subnetid = 999;
+    Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, other_duid, other_iaid,
+                               501, 502, 503, 504, other_subnetid, 0));
+    lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
+    lease->valid_lft_ = 495; // Lease was valid for 495 seconds
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // A client comes along, asking specifically for this address
+    lease = engine->allocateAddress6(subnet_, duid_, iaid_,
+                                     IOAddress(addr.toText()), false);
+
+    // Check that he got that single lease
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr.toText(), lease->addr_.toText());
+
+    // Check that the lease is indeed updated in LeaseMgr
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(addr);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
 }
 
 }; // end of anonymous namespace
