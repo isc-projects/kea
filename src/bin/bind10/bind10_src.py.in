@@ -1206,7 +1206,19 @@ def remove_lock_files():
     for f in lockfiles:
         fname = lpath + '/' + f
         if os.path.isfile(fname):
-            os.unlink(fname)
+            try:
+                os.unlink(fname)
+            except OSError as e:
+                # We catch and ignore permission related error on unlink.
+                # This can happen if bind10 started with -u, created a lock
+                # file as a privileged user, but the directory is not writable
+                # for the changed user.  This setup will cause immediate
+                # start failure, and we leave verbose error message including
+                # the leftover lock file, so it should be acceptable to ignore
+                # it (note that it doesn't make sense to log this event at
+                # this poitn)
+                if e.errno != errno.EPERM and e.errno != errno.EACCES:
+                    raise
 
     return
 
