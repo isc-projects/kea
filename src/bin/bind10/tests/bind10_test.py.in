@@ -2078,8 +2078,10 @@ class TestBossComponents(unittest.TestCase):
 
             def start_all_components(self):
                 self.started = True
-                if self.throw:
+                if self.throw is True:
                     raise Exception('Assume starting components has failed.')
+                elif self.throw:
+                    raise self.throw
 
             def kill_started_components(self):
                 self.killed = True
@@ -2123,6 +2125,12 @@ class TestBossComponents(unittest.TestCase):
         bob.msgq_socket_file = 'foo'
         r = bob.startup()
         self.assertEqual({'BIND10_MSGQ_SOCKET_FILE': 'foo'}, bob.c_channel_env)
+
+        # Check failure of changing user results in a different message
+        bob = MockBobStartup(bind10_src.ChangeUserError('failed to chusr'))
+        r = bob.startup()
+        self.assertIn('failed to chusr', r)
+        self.assertTrue(bob.killed)
 
         # Check the case when socket file already exists
         isc.cc.Session = DummySessionSocketExists
