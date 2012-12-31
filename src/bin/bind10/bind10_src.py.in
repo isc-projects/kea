@@ -269,6 +269,21 @@ class BoB:
         # Update the configuration
         self._component_configurator.reconfigure(comps)
 
+    def change_user(self):
+        '''Change the user and group to those specified on construction.
+
+        This method is expected to be called by a component on initial
+        startup when the system is ready to switch the user and group
+        (i.e., once all components that need the privilege of the original
+        user have started).
+        '''
+        if self.gid is not None:
+            logger.info(BIND10_SETGID, self.gid)
+            posix.setgid(self.gid)
+        if self.uid is not None:
+            logger.info(BIND10_SETUID, self.uid)
+            posix.setuid(self.uid)
+
     def config_handler(self, new_config):
         # If this is initial update, don't do anything now, leave it to startup
         if not self.runnable:
