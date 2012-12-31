@@ -61,7 +61,7 @@ A debug message indicating that the IPv6 DHCP server has received an
 updated configuration from the BIND 10 configuration system.
 
 % DHCP6_DB_BACKEND_STARTED lease database started (type: %1, name: %2)
-This informational message is printed every time DHCPv6 is started.
+This informational message is printed every time DHCPv6 server is started.
 It indicates what database backend type is being to store lease and
 other information.
 

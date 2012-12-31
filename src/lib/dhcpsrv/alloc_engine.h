@@ -195,6 +195,28 @@ protected:
                      const isc::asiolink::IOAddress& hint,
                      bool fake_allocation);
 
+    /// @brief Renews a IPv4 lease
+    ///
+    /// Since both request and renew are implemented in DHCPv4 as sending
+    /// REQUEST packet, it is difficult to easily distinguish between those
+    /// cases. Therefore renew for DHCPv4 is done in allocation engine.
+    /// This method is also used when client crashed/rebooted and tries
+    /// to get a new lease. It thinks that it gets a new lease, but in fact
+    /// we are only renewing still valid lease for that client.
+    ///
+    /// @param subnet subnet the client is attached to
+    /// @param clientid client identifier
+    /// @param hwaddr client's hardware address
+    /// @param lease lease to be renewed
+    /// @param renewed lease (typically the same passed as lease parameter)
+    ///        or NULL if the lease cannot be renewed
+    Lease4Ptr
+    renewLease4(const SubnetPtr& subnet,
+                const ClientIdPtr& clientid,
+                const HWAddrPtr& hwaddr,
+                const Lease4Ptr& lease,
+                bool fake_allocation /* = false */);
+
     /// @brief Allocates an IPv6 lease
     ///
     /// This method uses currently selected allocator to pick an address from

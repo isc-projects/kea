@@ -35,6 +35,9 @@ public:
     // Hardware type
     uint8_t htype_;
 
+    /// @brief Returns textual representation of a client-id (e.g. 00:01:02:03)
+    std::string toText() const;
+
     /// @brief Compares two hardware addresses for equality
     bool operator==(const HWAddr& other) const;
 

@@ -29,6 +29,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/utils.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
 
@@ -73,6 +74,7 @@ public:
         pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
         subnet_->addPool(pool_);
 
+        CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().addSubnet6(subnet_);
     }
 
