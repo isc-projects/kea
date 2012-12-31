@@ -103,6 +103,19 @@ VERSION = "bind10 20110223 (BIND 10 @PACKAGE_VERSION@)"
 # This is for boot_time of Boss
 _BASETIME = time.gmtime()
 
+# Detailed error message commonly used on startup failure, possibly due to
+# permission issue regarding log lock file.  We dump verbose message because
+# it may not be clear exactly what to do if it simply says
+# "failed to open <filename>: permission denied"
+NOTE_ON_LOCK_FILE = """\
+TIP: if this is about permission error for a lock file, check if the directory
+of the file is writable for the user of the bind10 process; often you need
+to start bind10 as a super user.  Also, if you specify the -u option to
+change the user and group, the directory must be writable for the group,
+and the created lock file must be writable for that user. Finally, make sure
+the lock file is not left in the directly before restarting.
+"""
+
 class ProcessInfoError(Exception): pass
 
 class ChangeUserError(Exception):
@@ -681,6 +694,9 @@ class BoB:
         try:
             self.c_channel_env = c_channel_env
             self.start_all_components()
+        except ChangeUserError as e:
+            self.kill_started_components()
+            return str(e) + '; ' + NOTE_ON_LOCK_FILE.replace('\n', ' ')
         except Exception as e:
             self.kill_started_components()
             return "Unable to start " + self.curproc + ": " + str(e)
@@ -1208,13 +1224,7 @@ def main():
     except RuntimeError as e:
         sys.stderr.write('ERROR: failed to write the initial log: %s\n' %
                          str(e))
-        sys.stderr.write("""\
-TIP: if this is about permission error for a lock file, check if the directory
-of the file is writable for the user of the bind10 process; often you need
-to start bind10 as a super user.  Also, if you specify the -u option to
-change the user and group, the directory must be writable for the group,
-and the created lock file must be writable for that user.
-""")
+        sys.stderr.write(NOTE_ON_LOCK_FILE)
         sys.exit(1)
 
     # Check user ID.
