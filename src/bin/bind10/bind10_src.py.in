@@ -105,6 +105,16 @@ _BASETIME = time.gmtime()
 
 class ProcessInfoError(Exception): pass
 
+class ChangeUserError(Exception):
+    '''Exception raised when setuid/setgid fails.
+
+    When raised, it's expected to be propagated via underlying component
+    management modules to the top level so that it will help provide useful
+    fatal error message.
+
+    '''
+    pass
+
 class ProcessInfo:
     """Information about a process"""
 
@@ -206,8 +216,8 @@ class BoB:
         # restart. Components manage their own restart schedule now
         self.components_to_restart = []
         self.runnable = False
-        self.uid = setuid
-        self.gid = setgid
+        self.__uid = setuid
+        self.__gid = setgid
         self.username = username
         self.verbose = verbose
         self.nokill = nokill
@@ -277,12 +287,22 @@ class BoB:
         (i.e., once all components that need the privilege of the original
         user have started).
         '''
-        if self.gid is not None:
-            logger.info(BIND10_SETGID, self.gid)
-            posix.setgid(self.gid)
-        if self.uid is not None:
-            logger.info(BIND10_SETUID, self.uid)
-            posix.setuid(self.uid)
+        try:
+            if self.__gid is not None:
+                logger.info(BIND10_SETGID, self.__gid)
+                posix.setgid(self.__gid)
+        except Exception as ex:
+            raise ChangeUserError('failed to change group: ' + str(ex))
+
+        try:
+            if self.__uid is not None:
+                posix.setuid(self.__uid)
+                # We use one-shot logger after setuid here.  This will
+                # detect any permission issue regarding logging due to the
+                # result of setuid at the earliest opportunity.
+                isc.log.Logger("boss").info(BIND10_SETUID, self.__uid)
+        except Exception as ex:
+            raise ChangeUserError('failed to change user: ' + str(ex))
 
     def config_handler(self, new_config):
         # If this is initial update, don't do anything now, leave it to startup
@@ -593,7 +613,7 @@ class BoB:
             are pure speculation.  As with the auth daemon, they should be
             read from the configuration database.
         """
-        if self.uid is not None and self.__started:
+        if self.__uid is not None and self.__started:
             logger.warn(BIND10_START_AS_NON_ROOT_RESOLVER)
         self.curproc = "b10-resolver"
         # XXX: this must be read from the configuration manager in the future

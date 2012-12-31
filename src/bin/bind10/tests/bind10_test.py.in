@@ -342,12 +342,16 @@ class TestCacheCommands(unittest.TestCase):
 
 class TestBoB(unittest.TestCase):
     def setUp(self):
+        # Save original values that may be tweaked in some tests
         self.__orig_setgid = bind10_src.posix.setgid
         self.__orig_setuid = bind10_src.posix.setuid
+        self.__orig_logger_class = isc.log.Logger
 
     def tearDown(self):
+        # Restore original values saved in setUp()
         bind10_src.posix.setgid = self.__orig_setgid
         bind10_src.posix.setuid = self.__orig_setuid
+        isc.log.Logger = self.__orig_logger_class
 
     def test_init(self):
         bob = BoB()
@@ -357,7 +361,6 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.ccs, None)
         self.assertEqual(bob.components, {})
         self.assertEqual(bob.runnable, False)
-        self.assertEqual(bob.uid, None)
         self.assertEqual(bob.username, None)
         self.assertIsNone(bob._socket_cache)
 
@@ -379,12 +382,34 @@ class TestBoB(unittest.TestCase):
         self.assertIsNone(self.__gid_set)
         self.assertIsNone(self.__uid_set)
 
-        bob.gid = 4200
-        bob.uid = 42
-        bob.change_user()
+        BoB(setuid=42, setgid=4200).change_user()
         # This time, it get's called
         self.assertEqual(4200, self.__gid_set)
         self.assertEqual(42, self.__uid_set)
+
+        def raising_set_xid(gid_or_uid):
+            ex = OSError()
+            ex.errno, ex.strerror = errno.EPERM, 'Operation not permitted'
+            raise ex
+
+        # Let setgid raise an exception
+        bind10_src.posix.setgid = raising_set_xid
+        bind10_src.posix.setuid = self.__setuid
+        self.assertRaises(bind10_src.ChangeUserError,
+                          BoB(setuid=42, setgid=4200).change_user)
+
+        # Let setuid raise an exception
+        bind10_src.posix.setgid = self.__setgid
+        bind10_src.posix.setuid = raising_set_xid
+        self.assertRaises(bind10_src.ChangeUserError,
+                          BoB(setuid=42, setgid=4200).change_user)
+
+        # Let initial log output after setuid raise an exception
+        bind10_src.posix.setgid = self.__setgid
+        bind10_src.posix.setuid = self.__setuid
+        isc.log.Logger = raising_set_xid
+        self.assertRaises(bind10_src.ChangeUserError,
+                          BoB(setuid=42, setgid=4200).change_user)
 
     def test_set_creator(self):
         """
@@ -456,7 +481,6 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.ccs, None)
         self.assertEqual(bob.components, {})
         self.assertEqual(bob.runnable, False)
-        self.assertEqual(bob.uid, None)
         self.assertEqual(bob.username, None)
 
     def test_command_handler(self):
