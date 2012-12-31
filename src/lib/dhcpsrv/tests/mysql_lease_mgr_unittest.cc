@@ -17,6 +17,7 @@
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
+#include <dhcpsrv/tests/test_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -29,6 +30,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace std;
 
 namespace {
@@ -536,48 +538,6 @@ public:
     vector<string>  straddress6_;   ///< String forms of IPv6 addresses
     vector<IOAddress> ioaddress6_;  ///< IOAddress forms of IPv6 addresses
 };
-
-///@{
-/// @brief Test Utilities
-///
-/// The follow are a set of functions used during the tests.
-
-/// @brief Compare two Lease4 structures for equality
-void
-detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second) {
-    // Compare address strings.  Comparison of address objects is not used, as
-    // odd things happen when they are different: the EXPECT_EQ macro appears to
-    // call the operator uint32_t() function, which causes an exception to be
-    // thrown for IPv6 addresses.
-    EXPECT_EQ(first->addr_.toText(), second->addr_.toText());
-    EXPECT_TRUE(first->hwaddr_ == second->hwaddr_);
-    EXPECT_TRUE(*first->client_id_ == *second->client_id_);
-    EXPECT_EQ(first->valid_lft_, second->valid_lft_);
-    EXPECT_EQ(first->cltt_, second->cltt_);
-    EXPECT_EQ(first->subnet_id_, second->subnet_id_);
-}
-
-/// @brief Compare two Lease6 structures for equality
-void
-detailCompareLease(const Lease6Ptr& first, const Lease6Ptr& second) {
-    EXPECT_EQ(first->type_, second->type_);
-
-    // Compare address strings.  Comparison of address objects is not used, as
-    // odd things happen when they are different: the EXPECT_EQ macro appears to
-    // call the operator uint32_t() function, which causes an exception to be
-    // thrown for IPv6 addresses.
-    EXPECT_EQ(first->addr_.toText(), second->addr_.toText());
-    EXPECT_EQ(first->prefixlen_, second->prefixlen_);
-    EXPECT_EQ(first->iaid_, second->iaid_);
-    EXPECT_TRUE(*first->duid_ == *second->duid_);
-    EXPECT_EQ(first->preferred_lft_, second->preferred_lft_);
-    EXPECT_EQ(first->valid_lft_, second->valid_lft_);
-    EXPECT_EQ(first->cltt_, second->cltt_);
-    EXPECT_EQ(first->subnet_id_, second->subnet_id_);
-}
-
-///@}
-
 
 /// @brief Check that database can be opened
 ///
