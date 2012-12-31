@@ -341,6 +341,14 @@ class TestCacheCommands(unittest.TestCase):
 
 
 class TestBoB(unittest.TestCase):
+    def setUp(self):
+        self.__orig_setgid = bind10_src.posix.setgid
+        self.__orig_setuid = bind10_src.posix.setuid
+
+    def tearDown(self):
+        bind10_src.posix.setgid = self.__orig_setgid
+        bind10_src.posix.setuid = self.__orig_setuid
+
     def test_init(self):
         bob = BoB()
         self.assertEqual(bob.verbose, False)
@@ -352,6 +360,31 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.uid, None)
         self.assertEqual(bob.username, None)
         self.assertIsNone(bob._socket_cache)
+
+    def __setgid(self, gid):
+        self.__gid_set = gid
+
+    def __setuid(self, uid):
+        self.__uid_set = uid
+
+    def test_change_user(self):
+        bind10_src.posix.setgid = self.__setgid
+        bind10_src.posix.setuid = self.__setuid
+
+        self.__gid_set = None
+        self.__uid_set = None
+        bob = BoB()
+        bob.change_user()
+        # No gid/uid set in boss, nothing called.
+        self.assertIsNone(self.__gid_set)
+        self.assertIsNone(self.__uid_set)
+
+        bob.gid = 4200
+        bob.uid = 42
+        bob.change_user()
+        # This time, it get's called
+        self.assertEqual(4200, self.__gid_set)
+        self.assertEqual(42, self.__uid_set)
 
     def test_set_creator(self):
         """
