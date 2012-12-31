@@ -526,7 +526,7 @@ protected:
     ///
     /// @warning This protected member is accessed by derived
     /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt4. The impact on derived clasess'
+    /// @ref perfdhcp::PerfPkt4. The impact on derived classes'
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.

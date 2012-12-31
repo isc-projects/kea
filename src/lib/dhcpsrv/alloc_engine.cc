@@ -16,7 +16,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 
 #include <cstring>
-
+#include <vector>
 #include <string.h>
 
 using namespace isc::asiolink;
@@ -278,17 +278,31 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
     if (existing) {
         // we have a lease already. This is a returning client, probably after
         // his reboot.
-        return (existing);
+
+        existing = renewLease4(subnet, clientid, hwaddr, existing, fake_allocation);
+
+        if (existing) {
+            return (existing);
+        }
+
+        // If renewal failed (e.g. the lease no longer matches current configuration)
+        // let's continue allocation process
     }
 
-    existing = LeaseMgrFactory::instance().getLease4(*clientid, subnet->getID());
-    if (existing) {
-        // we have a lease already. This is a returning client, probably after
-        // his reboot.
+    if (clientid) {
+        existing = LeaseMgrFactory::instance().getLease4(*clientid, subnet->getID());
+        if (existing) {
+            // we have a lease already. This is a returning client, probably after
+            // his reboot.
 
-        // @todo: produce a warning. We haven't found him using MAC address, but
-        // we found him using client-id
-        return (existing);
+            existing = renewLease4(subnet, clientid, hwaddr, existing, fake_allocation);
+
+            // @todo: produce a warning. We haven't found him using MAC address, but
+            // we found him using client-id
+            if (existing) {
+                return (existing);
+            }
+        }
     }
 
     // check if the hint is in pool and is available
@@ -366,6 +380,28 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
 
     isc_throw(AllocFailed, "Failed to allocate address after " << attempts_
               << " tries");
+}
+
+Lease4Ptr AllocEngine::renewLease4(const SubnetPtr& subnet,
+                                   const ClientIdPtr& clientid,
+                                   const HWAddrPtr& hwaddr,
+                                   const Lease4Ptr& lease,
+                                   bool fake_allocation /* = false */) {
+
+    lease->subnet_id_ = subnet->getID();
+    lease->hwaddr_ = hwaddr->hwaddr_;
+    lease->client_id_ = clientid;
+    lease->cltt_ = time(NULL);
+    lease->t1_ = subnet->getT1();
+    lease->t2_ = subnet->getT2();
+    lease->valid_lft_ = subnet->getValid();
+
+    if (!fake_allocation) {
+        // for REQUEST we do update the lease
+        LeaseMgrFactory::instance().updateLease4(lease);
+    }
+
+    return (lease);
 }
 
 Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
@@ -494,10 +530,17 @@ Lease4Ptr AllocEngine::createLease4(const SubnetPtr& subnet,
         isc_throw(BadValue, "Can't create a lease with NULL HW address");
     }
     time_t now = time(NULL);
+
+    // @todo: remove this kludge after ticket #2590 is implemented
+    std::vector<uint8_t> local_copy;
+    if (clientid) {
+        local_copy = clientid->getDuid();
+    }
+
     Lease4Ptr lease(new Lease4(addr, &hwaddr->hwaddr_[0], hwaddr->hwaddr_.size(),
-                               &clientid->getDuid()[0], clientid->getDuid().size(),
-                               subnet->getValid(), subnet->getT1(), subnet->getT2(),
-                               now, subnet->getID()));
+                               &local_copy[0], local_copy.size(), subnet->getValid(),
+                               subnet->getT1(), subnet->getT2(), now,
+                               subnet->getID()));
 
     if (!fake_allocation) {
         // That is a real (REQUEST) allocation

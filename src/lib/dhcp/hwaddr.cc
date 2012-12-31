@@ -14,6 +14,9 @@
 
 #include <dhcp/hwaddr.h>
 #include <dhcp/dhcp4.h>
+#include <iomanip>
+#include <sstream>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
@@ -28,6 +31,22 @@ HWAddr::HWAddr(const uint8_t* hwaddr, size_t len, uint8_t htype)
 
 HWAddr::HWAddr(const std::vector<uint8_t>& hwaddr, uint8_t htype)
     :hwaddr_(hwaddr), htype_(htype) {
+}
+
+std::string HWAddr::toText() const {
+    std::stringstream tmp;
+    tmp << "type=" << htype_ << " ";
+    tmp << std::hex;
+    bool delim = false;
+    for (std::vector<uint8_t>::const_iterator it = hwaddr_.begin();
+         it != hwaddr_.end(); ++it) {
+        if (delim) {
+            tmp << ":";
+        }
+        tmp << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(*it);
+        delim = true;
+    }
+    return (tmp.str());
 }
 
 bool HWAddr::operator==(const HWAddr& other) const {
