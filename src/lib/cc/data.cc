@@ -308,7 +308,7 @@ std::string
 str_from_stringstream(std::istream &in, const std::string& file, const int line,
                       int& pos) throw (JSONError)
 {
-    char c = 0;
+    char c;
     std::stringstream ss;
     c = in.get();
     ++pos;
@@ -390,7 +390,7 @@ number_from_stringstream(std::istream &in, int& pos) {
 // value is larger than an int can handle)
 ElementPtr
 from_stringstream_number(std::istream &in, int &pos) {
-    long int i = 0;
+    long int i;
     double d = 0.0;
     bool is_double = false;
     char *endptr;

@@ -496,12 +496,12 @@ private:
 ///
 /// This parser parses configuration entries that specify value of
 /// a single option. These entries include option name, option code
-/// and data carried by the option. If parsing is successful than an
+/// and data carried by the option. If parsing is successful then an
 /// instance of an option is created and added to the storage provided
 /// by the calling class.
 ///
 /// @todo This class parses and validates the option name. However it is
-/// not used anywhere util support for option spaces is implemented
+/// not used anywhere until support for option spaces is implemented
 /// (see tickets #2319, #2314). When option spaces are implemented
 /// there will be a way to reference the particular option using
 /// its type (code) or option name.
@@ -857,26 +857,21 @@ public:
             // a setStorage and build methods are invoked.
 
             // Try uint32 type parser.
-            if (buildParser<Uint32Parser, Uint32Storage >(parser, uint32_values_,
-                                                          param.second)) {
-                // Storage set, build invoked on the parser, proceed with
-                // next configuration element.
-                continue;
-            }
-            // Try string type parser.
-            if (buildParser<StringParser, StringStorage >(parser, string_values_,
-                                                          param.second)) {
-                continue;
-            }
-            // Try pools parser.
-            if (buildParser<PoolParser, PoolStorage >(parser, pools_,
-                                                      param.second)) {
-                continue;
-            }
-            // Try option data parser.
-            if (buildParser<OptionDataListParser, OptionStorage >(parser, options_,
-                                                                  param.second)) {
-                continue;
+            if (!buildParser<Uint32Parser, Uint32Storage >(parser, uint32_values_,
+                                                           param.second) &&
+                // Try string type parser.
+                !buildParser<StringParser, StringStorage >(parser, string_values_,
+                                                           param.second) &&
+                // Try pool parser.
+                !buildParser<PoolParser, PoolStorage >(parser, pools_,
+                                                       param.second) &&
+                // Try option data parser.
+                !buildParser<OptionDataListParser, OptionStorage >(parser, options_,
+                                                                   param.second)) {
+                // Appropriate parsers are created in the createSubnet6ConfigParser
+                // and they should be limited to those that we check here for. Thus,
+                // if we fail to find a matching parser here it is a programming error.
+                isc_throw(Dhcp6ConfigError, "failed to find suitable parser");
             }
         }
         // Ok, we now have subnet parsed
