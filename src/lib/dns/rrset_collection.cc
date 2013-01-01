@@ -68,6 +68,19 @@ RRsetCollection::RRsetCollection(const char* filename, const Name& origin,
     loader.load();
 }
 
+RRsetCollection::RRsetCollection(std::istream& input_stream, const Name& origin,
+                                 const RRClass& rrclass)
+{
+    MasterLoaderCallbacks callbacks
+        (boost::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3),
+         boost::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3));
+    MasterLoader loader(input_stream, origin, rrclass, callbacks,
+                        boost::bind(&RRsetCollection::addRRset,
+                                    this, _1, _2, _3, _4, _5),
+                        MasterLoader::DEFAULT);
+    loader.load();
+}
+
 const AbstractRRset*
 RRsetCollection::find(const Name& name, const RRType& rrtype,
                       const RRClass& rrclass) const {
