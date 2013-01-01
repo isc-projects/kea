@@ -53,6 +53,9 @@ public:
          const isc::dns::RRClass& rrclass)
         const = 0;
 
+    /// \brief Destructor
+    virtual ~RRsetCollectionBase() {}
+
 protected:
     class Iter; // forward declaration
     typedef boost::shared_ptr<Iter> IterPtr;
