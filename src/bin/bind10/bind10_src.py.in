@@ -626,8 +626,6 @@ class BoB:
             are pure speculation.  As with the auth daemon, they should be
             read from the configuration database.
         """
-        if self.__uid is not None and self.__started:
-            logger.warn(BIND10_START_AS_NON_ROOT_RESOLVER)
         self.curproc = "b10-resolver"
         # XXX: this must be read from the configuration manager in the future
         resargs = ['b10-resolver']
