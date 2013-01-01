@@ -31,8 +31,7 @@ namespace dns {
 class RRsetCollection : public RRsetCollectionBase {
 public:
     /// \brief Constructor.
-    RRsetCollection()
-    {}
+    RRsetCollection() {}
 
     /// \brief Constructor.
     ///
@@ -46,6 +45,9 @@ public:
     /// the master file format (which may or may not form a valid zone).
     RRsetCollection(const char* filename, const isc::dns::Name& origin,
                     const isc::dns::RRClass& rrclass);
+
+    /// \brief Destructor
+    virtual ~RRsetCollection() {}
 
     /// \brief Add an RRset to the collection.
     ///
