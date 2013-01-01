@@ -129,7 +129,7 @@ doAddAndRemove(RRsetCollection& collection, const RRClass& rrclass) {
     EXPECT_EQ(Name("foo.example.org"), rrset_found->getName());
 
     // The collection must not be empty.
-    EXPECT_NE(collection.end(), collection.begin());
+    EXPECT_TRUE(collection.end() != collection.begin());
 
     // Adding a duplicate RRset must throw.
     EXPECT_THROW({
@@ -153,18 +153,18 @@ TEST_F(RRsetCollectionTest, empty) {
     RRsetCollection cln;
 
     // Here, cln is empty.
-    EXPECT_EQ(cln.end(), cln.begin());
+    EXPECT_TRUE(cln.end() == cln.begin());
 
     doAddAndRemove(cln, rrclass);
 
     // cln should be empty again here, after the add and remove
     // operations.
-    EXPECT_EQ(cln.end(), cln.begin());
+    EXPECT_TRUE(cln.end() == cln.begin());
 }
 
 TEST_F(RRsetCollectionTest, iteratorTest) {
     // The collection must not be empty.
-    EXPECT_NE(collection.end(), collection.begin());
+    EXPECT_TRUE(collection.end() != collection.begin());
 
     // Here, we just count the records and do some basic tests on them.
     size_t count = 0;
@@ -249,8 +249,8 @@ TEST_F(RRsetCollectionTest, iteratorCompareDifferent) {
 
     // Comparing two iterators from different RRsetCollectionBase
     // implementations must not throw.
-    EXPECT_NE(cln2.begin(), cln1.begin());
-    EXPECT_NE(cln1.end(), cln2.end());
+    EXPECT_TRUE(cln2.begin() != cln1.begin());
+    EXPECT_TRUE(cln1.end() != cln2.end());
 }
 
 } // namespace
