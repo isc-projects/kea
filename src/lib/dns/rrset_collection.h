@@ -43,7 +43,22 @@ public:
     ///
     /// \param filename Name of a file containing a collection of RRs in
     /// the master file format (which may or may not form a valid zone).
+    /// \param origin The zone origin.
+    /// \param rrclass The zone class.
     RRsetCollection(const char* filename, const isc::dns::Name& origin,
+                    const isc::dns::RRClass& rrclass);
+
+    /// \brief Constructor.
+    ///
+    /// This constructor is similar to the previous one, but instead of
+    /// taking a filename to load a zone from, it takes an input
+    /// stream. The constructor throws MasterLoaderError if there is an
+    /// error during loading.
+    ///
+    /// \param input_stream The input stream to load from.
+    /// \param origin The zone origin.
+    /// \param rrclass The zone class.
+    RRsetCollection(std::istream& input_stream, const isc::dns::Name& origin,
                     const isc::dns::RRClass& rrclass);
 
     /// \brief Destructor
