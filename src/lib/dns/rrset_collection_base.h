@@ -58,11 +58,26 @@ public:
 
 protected:
     class Iter; // forward declaration
+
+    /// \brief Wraps Iter with a reference count.
     typedef boost::shared_ptr<Iter> IterPtr;
 
+    /// \brief A helper iterator interface for \c RRsetCollectionBase.
+    ///
+    /// This is a protected iterator class that is a helper interface
+    /// used by the public iterator.  Derived classes of
+    /// \c RRsetCollectionBase are supposed to implement this class and
+    /// the \c getBeginning() and \c getEnd() methods, so that the
+    /// public interator interface can be provided. This is a forward
+    /// iterator only.
     class Iter {
     public:
+        /// \brief Returns the \c AbstractRRset currently pointed to by
+        /// the iterator.
         virtual const isc::dns::AbstractRRset& getValue() = 0;
+
+        /// \brief Returns an \c IterPtr wrapping an Iter pointing to
+        /// the next \c AbstractRRset in sequence in the collection.
         virtual IterPtr getNext() = 0;
 
         /// \brief Check if another iterator is equal to this one.
@@ -77,10 +92,19 @@ protected:
         virtual bool equals(Iter& other) = 0;
     };
 
+    /// \brief Returns an \c IterPtr wrapping an Iter pointing to the
+    /// beginning of the collection.
     virtual IterPtr getBeginning() = 0;
+
+    /// \brief Returns an \c IterPtr wrapping an Iter pointing past the
+    /// end of the collection.
     virtual IterPtr getEnd() = 0;
 
 public:
+    /// \brief A forward \c std::iterator for \c RRsetCollectionBase.
+    ///
+    /// It behaves like a \c std::iterator forward iterator, so please
+    /// see its documentation for usage.
     class iterator : std::iterator<std::forward_iterator_tag,
                                    const isc::dns::AbstractRRset>
     {
@@ -116,10 +140,14 @@ public:
         IterPtr iter_;
     };
 
+    /// \brief Returns an iterator pointing to the beginning of the
+    /// collection.
     iterator begin() {
       return iterator(getBeginning());
     }
 
+    /// \brief Returns an iterator pointing past the end of the
+    /// collection.
     iterator end() {
       return iterator(getEnd());
     }
