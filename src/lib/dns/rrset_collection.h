@@ -52,9 +52,12 @@ public:
     /// \brief Add an RRset to the collection.
     ///
     /// Does not do any validation whether \c rrset belongs to a
-    /// particular zone or not. It throws an \c isc::InvalidParameter
-    /// exception if an rrset with the same class, type and name already
-    /// exists.
+    /// particular zone or not. A reference to \c rrset is taken in an
+    /// internally managed \c shared_ptr, so even if the caller's
+    /// \c RRsetPtr is destroyed, the RRset it wrapped is still alive
+    /// and managed by the \c RRsetCollection. It throws an
+    /// \c isc::InvalidParameter exception if an rrset with the same
+    /// class, type and name already exists.
     void addRRset(isc::dns::RRsetPtr rrset);
 
     /// \brief Remove an RRset from the collection.
