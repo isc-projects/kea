@@ -64,6 +64,16 @@ protected:
     public:
         virtual const isc::dns::AbstractRRset& getValue() = 0;
         virtual IterPtr getNext() = 0;
+
+        /// \brief Check if another iterator is equal to this one.
+        ///
+        /// Returns \c true if this iterator is equal to \c other,
+        /// \c false otherwise. Note that if \c other is not the same
+        /// type as \c this, or cannot be compared meaningfully, the
+        /// method must return \c false.
+        ///
+        /// \param other The other iterator to compare against.
+        /// \returns \c true if equal, \c false otherwise.
         virtual bool equals(Iter& other) = 0;
     };
 
