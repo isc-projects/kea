@@ -39,16 +39,20 @@ typedef boost::shared_ptr<OptionSpace> OptionSpacePtr;
 /// A collection of option spaces.
 typedef std::map<std::string, OptionSpacePtr> OptionSpaceCollection;
 
-/// @brief Option code space.
+/// @brief DHCP option space.
 ///
 /// This class represents single option space. The option spaces are used
 /// to group DHCP options having unique option codes. The special type
-/// of the option space is so called "vendor option space". It groups
-/// sub-options being sent within Vendor Encapsulated Options. These are
-/// option with code 43 for DHCPv4 and option with code 17 for DHCPv6.
-/// The option spaces are assigned to option instances represented by
-/// isc::dhcp::Option and other classes derived from it. Each particular
-/// option may belong to multiple option spaces.
+/// of the option space is so called "vendor specific option space".
+/// It groups sub-options being sent within Vendor Encapsulated Options.
+/// For DHCPv4 it is the option with code 43. The option spaces are
+/// assigned to option instances represented by isc::dhcp::Option and
+/// other classes derived from it. Each particular option may belong to
+/// multiple option spaces.
+/// This class may be used to represent any DHCPv4 option space. In theory
+/// this class can be also used to represent non-vendor specific DHCPv6
+/// option space but this is disencouraged. For DHCPv6 option spaces the
+/// OptionSpace6 class should be used instead.
 class OptionSpace {
 public:
 
@@ -56,7 +60,7 @@ public:
     ///
     /// @param name option space name.
     /// @param vendor_space boolean value that indicates that the object
-    /// describes the vendor space.
+    /// describes the vendor specific option space.
     ///
     /// @throw isc::dhcp::InvalidOptionSpace if given option space name
     /// contains invalid characters or is empty. This constructor uses
@@ -74,13 +78,13 @@ public:
     /// @return option space name.
     const std::string& getName() const { return (name_); }
 
-    /// @brief Check if option space is a vendor space.
+    /// @brief Check if option space is vendor specific.
     ///
     /// @return boolean value that indicates if the object describes
-    /// the vendor space.
+    /// the vendor specific option space.
     bool isVendorSpace() const { return (vendor_space_); }
 
-    /// @brief Mark option space as vendor space.
+    /// @brief Mark option space as vendor specific.
     void setVendorSpace() {
         vendor_space_ = true;
     }
@@ -104,14 +108,21 @@ private:
 
 };
 
-/// @brief DHCPv6 option space.
+/// @brief DHCPv6 option space with enterprise number assigned.
 ///
-/// This class extends the base class with support for enterprise numbers.
+/// This class extends the base class with the support for enterprise numbers.
 /// The enterprise numbers are assigned by IANA to various organizations
 /// and they are carried as uint32_t integers in DHCPv6 Vendor Specific
 /// Information Options (VSIO). For more information refer to RFC3315.
 /// All option spaces that group VSIO options must have enterprise number
 /// set. It can be set using a constructor or \ref setVendorSpace function.
+/// The extra functionality of this class (enterprise numbers) allows to
+/// represent DHCPv6 vendor-specific option spaces but this class is also
+/// intended to be used for all other DHCPv6 option spaces. That way all
+/// DHCPv6 option spaces can be stored in the container holding OptionSpace6
+/// objects. Also, it is easy to mark vendor-specific option space as non-vendor
+/// specific option space (and the other way around) without a need to cast
+/// between OptionSpace and OptionSpace6 types.
 class OptionSpace6 : public OptionSpace {
 public:
 
@@ -120,6 +131,11 @@ public:
     /// This constructor marks option space as non-vendor specific.
     ///
     /// @param name option space name.
+    ///
+    /// @throw isc::dhcp::InvalidOptionSpace if given option space name
+    /// contains invalid characters or is empty. This constructor uses
+    /// \ref OptionSpace::validateName function to check that the specified
+    /// name is correct.
     OptionSpace6(const std::string& name);
 
     /// @brief Constructor for vendor-specific options.
@@ -129,6 +145,11 @@ public:
     ///
     /// @param name option space name.
     /// @param enterprise_number enterprise number.
+    ///
+    /// @throw isc::dhcp::InvalidOptionSpace if given option space name
+    /// contains invalid characters or is empty. This constructor uses
+    /// \ref OptionSpace::validateName function to check that the specified
+    /// name is correct.
     OptionSpace6(const std::string& name, const uint32_t enterprise_number);
 
     /// @brief Return enterprise number for the option space.
@@ -136,7 +157,7 @@ public:
     /// @return enterprise number.
     uint32_t getEnterpriseNumber() const { return (enterprise_number_); }
 
-    /// @brief Mark option space as VSIO option space.
+    /// @brief Mark option space as vendor specific.
     ///
     /// @param enterprise_number enterprise number.
     void setVendorSpace(const uint32_t enterprise_number);
