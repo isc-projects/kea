@@ -172,6 +172,8 @@ libdns___include_HEADERS = \
 	rdata.h \
 	rrparamregistry.h \
 	rrset.h \
+	rrset_collection_base.h \
+	rrset_collection.h \
 	rrttl.h \
 	tsigkey.h
 # Purposely not installing these headers:
