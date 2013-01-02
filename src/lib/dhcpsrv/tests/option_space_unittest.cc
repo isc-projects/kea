@@ -83,6 +83,9 @@ TEST(OptionSpaceTest, validateName) {
                               '\\', '|', '<','>', ',', '.', '?', '~', '`' };
     for (int i = 0; i < sizeof(specials); ++i) {
         std::ostringstream stream;
+        // Concatenate valid option space name: "abc" with an invalid character.
+        // That way we get option space names like: "abc!", "abc$" etc. It is
+        // expected that the validating function fails form them.
         stream << "abc" << specials[i];
         EXPECT_FALSE(OptionSpace::validateName(stream.str()))
             << "Test failed for special character '" << specials[i] << "'.";
