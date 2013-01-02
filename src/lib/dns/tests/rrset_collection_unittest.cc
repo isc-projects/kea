@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 
 #include <list>
+#include <fstream>
 
 using namespace isc::dns;
 using namespace isc::dns::rdata;
@@ -38,6 +39,21 @@ public:
     const Name origin;
     RRsetCollection collection;
 };
+
+TEST_F(RRsetCollectionTest, istreamConstructor) {
+    std::ifstream fs(TEST_DATA_SRCDIR "/example.org");
+    RRsetCollection collection2(fs, origin, rrclass);
+
+    RRsetCollectionBase::iterator iter = collection.begin();
+    RRsetCollectionBase::iterator iter2 = collection2.begin();
+    while (iter != collection.end()) {
+         EXPECT_TRUE(iter2 != collection2.end());
+         EXPECT_EQ((*iter).toText(), (*iter2).toText());
+         ++iter;
+         ++iter2;
+    }
+    EXPECT_TRUE(iter2 == collection2.end());
+}
 
 TEST_F(RRsetCollectionTest, findBase) {
     // Test the find() that returns isc::dns::AbstractRRset*
