@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -68,6 +68,23 @@ public:
     /// @return boolean value that indicates if the object describes
     /// the vendor space.
     bool isVendorSpace() const { return (vendor_space_); }
+
+    /// @brief Mark option space as vendor space or non-vendor space.
+    ///
+    /// @param a boolean value indicating that this option space is
+    /// a vendor space (true) or non-vendor space (false).
+    void setVendorSpace(const bool vendor_space) {
+        vendor_space_ = vendor_space;
+    }
+
+    /// @brief Checks that the provided option space name is valid.
+    ///
+    /// It is expected that option space name consists of upper or
+    /// lower case letters or digits. All other characters are
+    /// prohibited.
+    ///
+    /// @param name option space name to be validated.
+    static bool validateName(const std::string& name);
 
 private:
     std::string name_;  ///< Holds option space name.
