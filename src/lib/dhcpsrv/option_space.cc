@@ -48,14 +48,14 @@ OptionSpace6::OptionSpace6(const std::string& name)
 }
 
 OptionSpace6::OptionSpace6(const std::string& name,
-                           const uint32_t enterprise_id)
+                           const uint32_t enterprise_number)
     : OptionSpace(name, true),
-      enterprise_number_(enterprise_id) {
+      enterprise_number_(enterprise_number) {
 }
 
 void
-OptionSpace6::setVendorSpace(const uint32_t enterprise_id) {
-    enterprise_number_ = enterprise_id;
+OptionSpace6::setVendorSpace(const uint32_t enterprise_number) {
+    enterprise_number_ = enterprise_number;
     OptionSpace::setVendorSpace();
 }
 
