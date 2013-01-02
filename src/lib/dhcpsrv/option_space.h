@@ -18,6 +18,7 @@
 #include <exceptions/exceptions.h>
 #include <boost/shared_ptr.hpp>
 #include <map>
+#include <stdint.h>
 #include <string>
 
 namespace isc {
@@ -63,6 +64,11 @@ public:
     /// correct.
     OptionSpace(const std::string& name, const bool vendor_space = false);
 
+    /// @brief Mark option space as non-vendor space.
+    void clearVendorSpace() {
+        vendor_space_ = false;
+    }
+
     /// @brief Return option space name.
     ///
     /// @return option space name.
@@ -74,12 +80,9 @@ public:
     /// the vendor space.
     bool isVendorSpace() const { return (vendor_space_); }
 
-    /// @brief Mark option space as vendor space or non-vendor space.
-    ///
-    /// @param vendor_space a boolean value indicating that this option
-    /// space is a vendor space (true) or non-vendor space (false).
-    void setVendorSpace(const bool vendor_space) {
-        vendor_space_ = vendor_space;
+    /// @brief Mark option space as vendor space.
+    void setVendorSpace() {
+        vendor_space_ = true;
     }
 
     /// @brief Checks that the provided option space name is valid.
@@ -99,6 +102,48 @@ private:
 
     bool vendor_space_; ///< Is this the vendor space?
 
+};
+
+/// @brief DHCPv6 option space.
+///
+/// This class extends the base class with support for enterprise numbers.
+/// The enterprise numbers are assigned by IANA to various organizations
+/// and they are carried as uint32_t integers in DHCPv6 Vendor Specific
+/// Information Options (VSIO). For more information refer to RFC3315.
+/// All option spaces that group VSIO options must have enterprise number
+/// set. It can be set using a constructor or \ref setVendorSpace function.
+class OptionSpace6 : public OptionSpace {
+public:
+
+    /// @brief Constructor for non-vendor-specific options.
+    ///
+    /// This constructor marks option space as non-vendor specific.
+    ///
+    /// @param name option space name.
+    OptionSpace6(const std::string& name);
+
+    /// @brief Constructor for vendor-specific options.
+    ///
+    /// This constructor marks option space as vendor specific and sets
+    /// enterprise number to a given value.
+    ///
+    /// @param name option space name.
+    /// @param enterprise_number enterprise number.
+    OptionSpace6(const std::string& name, const uint32_t enterprise_number);
+
+    /// @brief Return enterprise number for the option space.
+    ///
+    /// @return enterprise number.
+    uint32_t getEnterpriseNumber() const { return (enterprise_number_); }
+
+    /// @brief Mark option space as VSIO option space.
+    ///
+    /// @param enterprise_number enterprise number.
+    void setVendorSpace(const uint32_t enterprise_number);
+
+private:
+    
+    uint32_t enterprise_number_; ///< IANA assigned enterprise number.
 };
 
 } // namespace isc::dhcp
