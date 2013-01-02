@@ -31,8 +31,7 @@ namespace dns {
 class RRsetCollection : public RRsetCollectionBase {
 public:
     /// \brief Constructor.
-    RRsetCollection()
-    {}
+    RRsetCollection() {}
 
     /// \brief Constructor.
     ///
@@ -44,15 +43,36 @@ public:
     ///
     /// \param filename Name of a file containing a collection of RRs in
     /// the master file format (which may or may not form a valid zone).
+    /// \param origin The zone origin.
+    /// \param rrclass The zone class.
     RRsetCollection(const char* filename, const isc::dns::Name& origin,
                     const isc::dns::RRClass& rrclass);
+
+    /// \brief Constructor.
+    ///
+    /// This constructor is similar to the previous one, but instead of
+    /// taking a filename to load a zone from, it takes an input
+    /// stream. The constructor throws MasterLoaderError if there is an
+    /// error during loading.
+    ///
+    /// \param input_stream The input stream to load from.
+    /// \param origin The zone origin.
+    /// \param rrclass The zone class.
+    RRsetCollection(std::istream& input_stream, const isc::dns::Name& origin,
+                    const isc::dns::RRClass& rrclass);
+
+    /// \brief Destructor
+    virtual ~RRsetCollection() {}
 
     /// \brief Add an RRset to the collection.
     ///
     /// Does not do any validation whether \c rrset belongs to a
-    /// particular zone or not. It throws an \c isc::InvalidParameter
-    /// exception if an rrset with the same class, type and name already
-    /// exists.
+    /// particular zone or not. A reference to \c rrset is taken in an
+    /// internally managed \c shared_ptr, so even if the caller's
+    /// \c RRsetPtr is destroyed, the RRset it wrapped is still alive
+    /// and managed by the \c RRsetCollection. It throws an
+    /// \c isc::InvalidParameter exception if an rrset with the same
+    /// class, type and name already exists.
     void addRRset(isc::dns::RRsetPtr rrset);
 
     /// \brief Remove an RRset from the collection.
