@@ -13,55 +13,55 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-"""BIND 10 Statistics counters module
+"""BIND 10 statistics counters module
 
 This module handles the statistics counters for BIND 10 modules.  For
-using the module `counter.py`, firstly a counters object should be
-created in each module like b10-xfrin or b10-xfrout after importing
-this module. A spec file can be specified in argument when creating.
+using the module `counter.py`, first a counters object should be created
+in each module (like b10-xfrin or b10-xfrout) after importing this
+module. A spec file can be specified as an argument when creating the
+counters object:
 
   from isc.statistics import Counters
-  self.counters = Counters(/path/to/foo.spec)
+  self.counters = Counters("/path/to/foo.spec")
 
-The first argument of Counters() can be specified, which is the
-location of the specification file like src/bin/xfrout/xfrout.spec. If
-this initial preparation is done, statistics counters can be accessed
-from each module. For example, in case that the item `xfrreqdone` is
-defined in statistics_spec in xfrout.spec, the following methods is
-callable. Since these methods requires the string of the zone name in
-the first argument, in the b10-xfrout,
+The first argument of Counters() can be specified, which is the location
+of the specification file (like src/bin/xfrout/xfrout.spec). If Counters
+is constructed this way, statistics counters can be accessed from each
+module. For example, in case that the item `xfrreqdone` is defined in
+statistics_spec in xfrout.spec, the following methods are
+callable. Since these methods require the string of the zone name in the
+first argument, if we have the following code in b10-xfrout:
 
   self.counters.inc('zones', zone_name, 'xfrreqdone')
 
-then the counter for xfrreqdone corresponding to zone_name was
-incremented. For getting the current number of this counter, we can do
-this,
+then the counter for xfrreqdone corresponding to zone_name is
+incremented. For getting the current number of this counter, we can use
+the following code:
 
   number = self.counters.get('zones', zone_name, 'xfrreqdone')
 
-then the current number was obtained and set in the above variable
-`number`. Such a getter method would be mainly used for unittesting.
-In other example, regarding the item `axfr_running`, the decrementer
-method is also callable.  This method is used for decrementing the
-counter number.  Regarding the item `axfr_running`, an argument like
-zone name is not required.
+then the current count is obtained and set in the variable
+`number`. Such a getter method would be mainly used for unit-testing.
+As other example, for the item `axfr_running`, the decrementer method is
+also callable.  This method is used for decrementing a counter.  For the
+item `axfr_running`, an argument like zone name is not required:
 
   self.counters.dec('axfr_running')
 
-These methods are effective in other module. For example, in case
-that this module `counter.py` is once imported in such a main module
-as b10-xfrout, Regarding the item `notifyoutv4`, the incrementer
-as the following can be invoked via other module like notify_out.py,
-which is firstly imported in the main module.
+These methods are effective in other modules. For example, in case that
+this module `counter.py` is once imported in a main module such as
+b10-xfrout, then for the item `notifyoutv4`, the `inc()` method can be
+invoked in another module such as notify_out.py, which is firstly
+imported in the main module.
 
   self.counters.inc('zones', zone_name, 'notifyoutv4')
 
 In this example this is for incrementing the counter of the item
-notifyoutv4. Thus, such statement can be also written in the other
+`notifyoutv4`. Thus, such statement can be also written in another
 library like isc.notify.notify_out. If this module `counter.py` isn't
 imported in the main module but imported in such a library module as
-isc.notify.notify_out, in this example, empty methods would be
-invoked, which is directly defined in `counter.py`.
+isc.notify.notify_out, in this example, empty methods would be invoked,
+which is directly defined in `counter.py`.
 """
 
 import threading
@@ -71,12 +71,12 @@ from datetime import datetime
 # static internal functions
 def _add_counter(element, spec, identifier):
     """Returns value of the identifier if the identifier is in the
-    element. Otherwise, sets a default value from the spec then
+    element. Otherwise, sets a default value from the spec and
     returns it. If the top-level type of the identifier is named_set
     and the second-level type is map, it sets a set of default values
     under the level and then returns the default value of the
-    identifier. Raises DataNotFoundError if the element is invalid for
-    spec."""
+    identifier. This method raises DataNotFoundError if the element is
+    invalid for spec."""
     try:
         return isc.cc.data.find(element, identifier)
     except isc.cc.data.DataNotFoundError:
@@ -138,8 +138,8 @@ class _Statistics():
     """Statistics data set"""
     # default statistics data
     _data = {}
-    # default statistics spec used in case of the specfile omitted in
-    # Counters()
+    # default statistics spec used in case the specfile is omitted when
+    # constructing a Counters() object
     _spec = [
       {
         "item_name": "zones",
@@ -184,19 +184,19 @@ class _Statistics():
 
 class Counters():
     """A class for holding and manipulating all statistics counters
-    for a module.  A counters object is created by specifying a spec
+    for a module.  A Counters object may be created by specifying a spec
     file of the module in argument.  According to statistics
-    specification in the spec file, a counter value can be incremented
-    or decremented or obtained. Method as inc() or dec() or get() is
-    useful for this.  On the other hand, time data in a counters
-    object can be handled. The timer can be started and stopped. Then
-    duration time can be obtained. Method as start_timer() and
-    stop_timer() and get() is useful for this. Saved counters can be
+    specification in the spec file, a counter value can be incremented,
+    decremented or obtained. Methods such as inc(), dec() and get() are
+    useful for this.  Counters objects also have timer functionality.
+    The timer can be started and stopped, and the duration between
+    start and stop can be obtained. Methods such as start_timer(),
+    stop_timer() and get() are useful for this. Saved counters can be
     cleared by the method clear_all(). Manipulating counters and
-    timers can be enabled or disabled.  if disabled, the value is not
-    changed even if such methods is invoked.  Including per-zone
-    counters, a list of counters which can be handled in the class are
-    like the following:
+    timers can be temporarily disabled.  If disabled, counter values are
+    not changed even if methods to update them are invoked.  Including
+    per-zone counters, a list of counters which can be handled in the
+    class are like the following:
 
         zones/example.com./notifyoutv4
         zones/example.com./notifyoutv6
@@ -248,11 +248,12 @@ class Counters():
     _statistics = _Statistics()
 
     def __init__(self, spec_file_name=None):
-        """A constructor for the Counters class. A path of the spec
-        file can be specified in argument. Statistics data based on
-        statistics spec can be accumulated if specified. If omitted,
-        default statistics spec is used. Default statistics spec is
-        defined in other hidden class _Statistics().
+        """A constructor for the Counters class. A path to the spec file
+        can be specified in spec_file_name. Statistics data based on
+        statistics spec can be accumulated if spec_file_name is
+        specified. If omitted, a default statistics spec is used. The
+        default statistics spec is defined in a hidden class named
+        _Statistics().
         """
         self._zones_item_list = []
         self._start_time = {}
@@ -290,7 +291,7 @@ class Counters():
         because it is considered to be invoked by a multi-threading
         caller. isc.cc.data.DataNotFoundError is raised when
         incrementing the counter of the item undefined in the spec
-        file."""
+        file. step must not be specified by the caller."""
         identifier = _concat(*args)
         with self._rlock:
             if self._disabled: return
@@ -303,7 +304,7 @@ class Counters():
         because it is considered to be invoked by a multi-threading
         caller. isc.cc.data.DataNotFoundError is raised when
         decrementing the counter of the item undefined in the spec
-        file."""
+        file. step must not be specified by the caller."""
         self.inc(*args, step=step)
 
     def get(self, *args):
@@ -359,9 +360,9 @@ class Counters():
             del branch_map[leaf]
 
     def get_statistics(self):
-        """Calculates an entire server counts, and returns statistics
-        data format to send out the stats module including each
-        counter. If there is no counts, then it returns an empty
+        """Calculates an entire server's counts, and returns statistics
+        data in a format to send out to the stats module, including each
+        counter. If nothing is counted yet, then it returns an empty
         dictionary."""
         # entire copy
         statistics_data = self._statistics._data.copy()
@@ -386,9 +387,8 @@ class Counters():
             if  sum_ > 0:
                 _set_counter(zones_data, zones_spec,
                              id_str, sum_)
-        # insert entire-sever counts
+        # insert entire-server counts
         statistics_data[self._perzone_prefix] = dict(
             statistics_data[self._perzone_prefix],
             **zones_data)
         return statistics_data
-
