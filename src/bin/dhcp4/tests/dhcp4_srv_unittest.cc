@@ -709,10 +709,10 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     ASSERT_NO_THROW( srv.reset(new NakedDhcpv4Srv(0)) );
 
     const IOAddress addr("192.0.2.106");
-    uint32_t temp_t1 = 50;
-    uint32_t temp_t2 = 75;
-    uint32_t temp_valid = 100;
-    time_t temp_timestamp = time(NULL) - 10;
+    const uint32_t temp_t1 = 50;
+    const uint32_t temp_t2 = 75;
+    const uint32_t temp_valid = 100;
+    const time_t temp_timestamp = time(NULL) - 10;
 
     // Generate client-id also duid_
     OptionPtr clientid = generateClientId();
@@ -810,5 +810,178 @@ TEST_F(Dhcpv4SrvTest, sanityCheck) {
 }
 
 // @todo: write tests for RELEASE
+// This test verifies that incoming (positive) RELEASE can be handled properly,
+// that a REPLY is generated, that the response has status code and that the
+// lease is indeed removed from the database.
+//
+// expected:
+// - returned REPLY message has copy of client-id
+// - returned REPLY message has server-id
+// - returned REPLY message has IA that does not include an IAADDR
+// - lease is actually removed from LeaseMgr
+TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW( srv.reset(new NakedDhcpv4Srv(0)) );
+
+    const IOAddress addr("192.0.2.106");
+    const uint32_t temp_t1 = 50;
+    const uint32_t temp_t2 = 75;
+    const uint32_t temp_valid = 100;
+    const time_t temp_timestamp = time(NULL) - 10;
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(addr));
+
+    // let's create a lease and put it in the LeaseMgr
+    uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
+    Lease4Ptr used(new Lease4(addr, mac_addr, sizeof(mac_addr),
+                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              temp_valid, temp_t1, temp_t2, temp_timestamp,
+                              subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database
+    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // Let's create a RELEASE
+    // Generate client-id also duid_
+    Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
+    rel->setRemoteAddr(addr);
+    rel->setYiaddr(addr);
+    rel->addOption(clientid);
+    rel->addOption(srv->getServerID());
+    rel->setHWAddr(hw);
+
+    // Pass it to the server and hope for a REPLY
+    // Note: this is no response to RELEASE in DHCPv4
+    EXPECT_NO_THROW(srv->processRelease(rel));
+
+    // The lease should be gone from LeaseMgr
+    l = LeaseMgrFactory::instance().getLease4(addr);
+    EXPECT_FALSE(l);
+
+    // Try to get the lease by hardware address
+    // @todo: Uncomment this once trac2592 is implemented
+    // Lease4Collection leases = LeaseMgrFactory::instance().getLease4(hw->hwaddr_);
+    // EXPECT_EQ(leases.size(), 0);
+
+    // Try to get it by hw/subnet_id compination
+    l = LeaseMgrFactory::instance().getLease4(hw->hwaddr_, subnet_->getID());
+    EXPECT_FALSE(l);
+
+    // Try by client-id
+    // @todo: Uncomment this once trac2592 is implemented
+    //Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*client_id_);
+    //EXPECT_EQ(leases.size(), 0);
+
+    // Try by client-id/subnet-id
+    l = LeaseMgrFactory::instance().getLease4(*client_id_, subnet_->getID());
+    EXPECT_FALSE(l);
+
+    // Ok, the lease is *really* not there.
+}
+
+// This test verifies that incoming (invalid) RELEASE can be handled properly.
+//
+// This test checks 3 scenarios:
+// 1. there is no such lease at all
+// 2. there is such a lease, but it is assigned to a different IAID
+// 3. there is such a lease, but it belongs to a different client
+//
+// expected:
+// - returned REPLY message has copy of client-id
+// - returned REPLY message has server-id
+// - returned REPLY message has IA that includes STATUS-CODE
+// - No lease in LeaseMgr
+TEST_F(Dhcpv4SrvTest, ReleaseReject) {
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW( srv.reset(new NakedDhcpv4Srv(0)) );
+
+    const IOAddress addr("192.0.2.106");
+    const uint32_t t1 = 50;
+    const uint32_t t2 = 75;
+    const uint32_t valid = 100;
+    const time_t timestamp = time(NULL) - 10;
+
+    // let's create a lease and put it in the LeaseMgr
+    uint8_t bogus_mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr bogus_hw(new HWAddr(bogus_mac_addr, sizeof(bogus_mac_addr), HTYPE_ETHER));
+    OptionPtr bogus_clientid = generateClientId(7); // different length
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(addr));
+
+    // Let's create a RELEASE
+    // Generate client-id also duid_
+    Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
+    rel->setRemoteAddr(addr);
+    rel->setYiaddr(addr);
+    rel->addOption(clientid);
+    rel->addOption(srv->getServerID());
+    rel->setHWAddr(bogus_hw);
+
+    // Case 1: No lease known to server
+    SCOPED_TRACE("CASE 1: Lease is not known to the server");
+
+    // There is nothing to check here. The lease is not there and server does
+    // not send anything back. This case is enumerated here just for keeping
+    // parity with similar test in DHCPv6.
+    EXPECT_NO_THROW(srv->processRelease(rel));
+
+    // CASE 2: Lease is known and belongs to this client, but to a different client-id
+    SCOPED_TRACE("CASE 2: Lease is known and belongs to this client, but uses different HW addr");
+
+    // Let's create a lease and put it in the LeaseMgr
+    uint8_t mac_addr[] = { 0, 0x1, 0x2, 0x3, 0x4, 0x5};
+    HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
+    Lease4Ptr used(new Lease4(addr, mac_addr, sizeof(mac_addr),
+                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              valid, t1, t2, timestamp, subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+    // Check that the lease is really in the database
+    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    rel->setHWAddr(bogus_hw);
+
+    EXPECT_NO_THROW(srv->processRelease(rel));
+
+    // Check that the lease was not removed (due to hardware address mis-match)
+    l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // CASE 3: Lease belongs to a client with different client-id
+    SCOPED_TRACE("CASE 3: Lease belongs to a client with different client-id");
+
+    rel->setHWAddr(hw); // proper HW address this time
+    rel->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    rel->addOption(bogus_clientid); // but invalid client-id
+
+    OptionPtr x = rel->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+
+    EXPECT_NO_THROW(srv->processRelease(rel));
+
+    // Check that the lease is still there
+    l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // Final sanity check. Verify that with valid hw and client-id release is working
+    rel->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    rel->addOption(clientid);
+
+    EXPECT_NO_THROW(srv->processRelease(rel));
+
+    l = LeaseMgrFactory::instance().getLease4(addr);
+    EXPECT_FALSE(l);
+
+}
 
 } // end of anonymous namespace
