@@ -530,6 +530,12 @@ TEST(Pkt4Test, options) {
     EXPECT_EQ(0, memcmp(ptr, v4Opts, sizeof(v4Opts)));
     EXPECT_EQ(DHO_END, static_cast<uint8_t>(*(ptr + sizeof(v4Opts))));
 
+    // delOption() checks
+    EXPECT_TRUE(pkt->getOption(12)); // Sanity check: option 12 is still there
+    EXPECT_TRUE(pkt->delOption(12)); // We should be able to remove it
+    EXPECT_FALSE(pkt->getOption(12)); // It should not be there anymore
+    EXPECT_FALSE(pkt->delOption(12)); // And removal should fail
+
     EXPECT_NO_THROW(
         delete pkt;
     );

@@ -369,6 +369,16 @@ Pkt4::getOption(uint8_t type) {
     return boost::shared_ptr<isc::dhcp::Option>(); // NULL
 }
 
+bool
+Pkt4::delOption(uint8_t type) {
+    isc::dhcp::Option::OptionCollection::iterator x = options_.find(type);
+    if (x!=options_.end()) {
+        options_.erase(x);
+        return (true); // delete successful
+    }
+    return (false); // can't find option to be deleted
+}
+
 void
 Pkt4::updateTimestamp() {
     timestamp_ = boost::posix_time::microsec_clock::universal_time();
