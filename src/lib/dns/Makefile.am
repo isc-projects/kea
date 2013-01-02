@@ -95,6 +95,7 @@ lib_LTLIBRARIES = libb10-dns++.la
 libb10_dns___la_LDFLAGS = -no-undefined -version-info 2:0:0
 
 libb10_dns___la_SOURCES =
+libb10_dns___la_SOURCES += dns_fwd.h
 libb10_dns___la_SOURCES += edns.h edns.cc
 libb10_dns___la_SOURCES += exceptions.h exceptions.cc
 libb10_dns___la_SOURCES += master_lexer_inputsource.h master_lexer_inputsource.cc
@@ -129,6 +130,7 @@ libb10_dns___la_SOURCES += master_loader_callbacks.h master_loader_callbacks.cc
 libb10_dns___la_SOURCES += master_loader.h
 libb10_dns___la_SOURCES += rrset_collection_base.h
 libb10_dns___la_SOURCES += rrset_collection.h rrset_collection.cc
+libb10_dns___la_SOURCES += zone_checker.h zone_checker.cc
 libb10_dns___la_SOURCES += rdata/generic/detail/char_string.h
 libb10_dns___la_SOURCES += rdata/generic/detail/char_string.cc
 libb10_dns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
