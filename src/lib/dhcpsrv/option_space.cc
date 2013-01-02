@@ -42,5 +42,22 @@ OptionSpace::validateName(const std::string& name) {
     return (false);
 }
 
+OptionSpace6::OptionSpace6(const std::string& name)
+    : OptionSpace(name),
+      enterprise_number_(0) {
+}
+
+OptionSpace6::OptionSpace6(const std::string& name,
+                           const uint32_t enterprise_id)
+    : OptionSpace(name, true),
+      enterprise_number_(enterprise_id) {
+}
+
+void
+OptionSpace6::setVendorSpace(const uint32_t enterprise_id) {
+    enterprise_number_ = enterprise_id;
+    OptionSpace::setVendorSpace();
+}
+
 } // end of isc::dhcp namespace
 } // end of isc namespace
