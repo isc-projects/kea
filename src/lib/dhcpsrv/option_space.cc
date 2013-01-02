@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,12 +13,30 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcpsrv/option_space.h>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 namespace isc {
 namespace dhcp {
 
 OptionSpace::OptionSpace(const std::string& name, const bool vendor_space)
     : name_(name), vendor_space_(vendor_space) {
+    if (!validateName(name_)) {
+        isc_throw(InvalidOptionSpace, "Invalid option space name "
+                  << name_);
+    }
+}
+
+bool
+OptionSpace::validateName(const std::string& name) {
+    if (boost::algorithm::all(name, boost::is_from_range('a', 'z') ||
+                              boost::is_from_range('A', 'Z') ||
+                              boost::is_digit() ||
+                              boost::is_any_of("-_")) &&
+        !name.empty()) {
+        return (true);
+    }
+    return (false);
 }
 
 } // end of isc::dhcp namespace
