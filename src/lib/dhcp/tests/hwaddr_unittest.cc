@@ -90,4 +90,14 @@ TEST(HWAddrTest, operators) {
     EXPECT_TRUE(*hw4 != *hw5);
 }
 
+TEST(HWAddrTest, toText) {
+    uint8_t data[] = {0, 1, 2, 3, 4, 5}; // last digit different
+    uint8_t htype = 15;
+
+    HWAddrPtr hw(new HWAddr(data, sizeof(data), htype));
+
+    EXPECT_EQ("hwtype=15 00:01:02:03:04:05", hw->toText());
+
+}
+
 } // end of anonymous namespace
