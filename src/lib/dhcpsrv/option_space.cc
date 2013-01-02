@@ -21,6 +21,7 @@ namespace dhcp {
 
 OptionSpace::OptionSpace(const std::string& name, const bool vendor_space)
     : name_(name), vendor_space_(vendor_space) {
+    //  Check that provided option space name is valid.
     if (!validateName(name_)) {
         isc_throw(InvalidOptionSpace, "Invalid option space name "
                   << name_);
@@ -29,6 +30,8 @@ OptionSpace::OptionSpace(const std::string& name, const bool vendor_space)
 
 bool
 OptionSpace::validateName(const std::string& name) {
+    // Allowed digits are: lower or upper case letters, digits,
+    // underscores and dashes. Empty option spaces are not allowed.
     if (boost::algorithm::all(name, boost::is_from_range('a', 'z') ||
                               boost::is_from_range('A', 'Z') ||
                               boost::is_digit() ||

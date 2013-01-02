@@ -56,6 +56,11 @@ public:
     /// @param name option space name.
     /// @param vendor_space boolean value that indicates that the object
     /// describes the vendor space.
+    ///
+    /// @throw isc::dhcp::InvalidOptionSpace if given option space name
+    /// contains invalid characters or is empty. This constructor uses
+    /// \ref validateName function to check that the specified name is
+    /// correct.
     OptionSpace(const std::string& name, const bool vendor_space = false);
 
     /// @brief Return option space name.
@@ -71,8 +76,8 @@ public:
 
     /// @brief Mark option space as vendor space or non-vendor space.
     ///
-    /// @param a boolean value indicating that this option space is
-    /// a vendor space (true) or non-vendor space (false).
+    /// @param vendor_space a boolean value indicating that this option
+    /// space is a vendor space (true) or non-vendor space (false).
     void setVendorSpace(const bool vendor_space) {
         vendor_space_ = vendor_space;
     }
@@ -80,10 +85,13 @@ public:
     /// @brief Checks that the provided option space name is valid.
     ///
     /// It is expected that option space name consists of upper or
-    /// lower case letters or digits. All other characters are
-    /// prohibited.
+    /// lower case letters or digits. Also, it may contain underscores
+    /// or dashes. Other characters are prohibited. The empty option
+    /// space names are invalid.
     ///
     /// @param name option space name to be validated.
+    ///
+    /// @return true if the option space is valid, else it returns false.
     static bool validateName(const std::string& name);
 
 private:
