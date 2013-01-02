@@ -325,6 +325,11 @@ public:
     boost::shared_ptr<Option>
     getOption(uint8_t opt_type);
 
+    /// @brief Deletes specified option
+    /// @param type option type to be deleted
+    /// @return true if anything was deleted, false otherwise
+    bool delOption(uint8_t type);
+
     /// @brief Returns interface name.
     ///
     /// Returns interface name over which packet was received or is
