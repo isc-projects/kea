@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <string>
+#include <sstream>
 #include <vector>
 
 using isc::Unexpected;
@@ -39,20 +40,27 @@ using namespace isc::dns::rdata;
 
 namespace {
 
+const char* const soa_txt = "ns.example.com. root.example.com. 0 0 0 0 0";
+const char* const ns_txt1 = "ns.example.com.";
+const char* const ns_a_txt1 = "192.0.2.1";
+const char* const ns_txt2 = "ns2.example.com.";
+const char* const ns_a_txt2 = "192.0.2.2";
+
 class ZoneCheckerTest : public ::testing::Test {
 protected:
     ZoneCheckerTest() :
         zname_("example.com"), zclass_(RRClass::IN()),
+        soa_(new RRset(zname_, zclass_, RRType::SOA(), RRTTL(60))),
+        ns_(new RRset(zname_, zclass_, RRType::NS(), RRTTL(60))),
         callbacks_(boost::bind(&ZoneCheckerTest::callback, this, _1, true),
                    boost::bind(&ZoneCheckerTest::callback, this, _1, false))
     {
-        soa_ = RRsetPtr(new RRset(zname_, zclass_, RRType::SOA(), RRTTL(60)));
-        soa_->addRdata(generic::SOA(
-                           "ns.example.com. root.example.com. 0 0 0 0 0"));
-        ns_ = RRsetPtr(new RRset(zname_, zclass_, RRType::NS(), RRTTL(60)));
-        ns_->addRdata(generic::NS("ns.example.com"));
-        ns_->addRdata(generic::NS("ns2.example.com"));
-        rrsets_.reset(new RRsetCollection);
+        std::stringstream ss;
+        ss << "example.com. 60 IN SOA " << soa_txt << "\n";
+        ss << "example.com. 60 IN NS " << ns_txt1 << "\n";
+        ss << "ns.example.com. 60 IN A " << ns_a_txt1 << "\n";
+        ss << "ns2.example.com. 60 IN A " << ns_a_txt2 << "\n";
+        rrsets_.reset(new RRsetCollection(ss, zname_, zclass_));
     }
 
     void callback(const std::string& reason, bool is_error) {
@@ -85,9 +93,9 @@ protected:
 
     const Name zname_;
     const RRClass zclass_;
+    boost::scoped_ptr<RRsetCollection> rrsets_;
     RRsetPtr soa_;
     RRsetPtr ns_;
-    boost::scoped_ptr<RRsetCollection> rrsets_;
     std::vector<std::string> errors_;
     std::vector<std::string> warns_;
     std::vector<std::string> expected_errors_;
@@ -97,7 +105,13 @@ protected:
 
 TEST_F(ZoneCheckerTest, checkGood) {
     // Checking a valid case.  No errors or warnings should be reported.
-    rrsets_->addRRset(soa_);
+    EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
+    checkIssues();
+
+    // Multiple NS RRs are okay.
+    rrsets_->removeRRset(zname_, zclass_, RRType::NS());
+    ns_->addRdata(generic::NS(ns_txt1));
+    ns_->addRdata(generic::NS(ns_txt2));
     rrsets_->addRRset(ns_);
     EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
     checkIssues();
@@ -105,13 +119,14 @@ TEST_F(ZoneCheckerTest, checkGood) {
 
 TEST_F(ZoneCheckerTest, checkSOA) {
     // If the zone has no SOA it triggers an error.
-    rrsets_->addRRset(ns_);
+    rrsets_->removeRRset(zname_, zclass_, RRType::SOA());
     EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
     expected_errors_.push_back("zone example.com/IN has 0 SOA records");
     checkIssues();
 
     // If there are more than 1 SOA RR, it's also an error.
     errors_.clear();
+    soa_->addRdata(generic::SOA(soa_txt));
     soa_->addRdata(generic::SOA("ns2.example.com. . 0 0 0 0 0"));
     rrsets_->addRRset(soa_);
     EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
@@ -137,7 +152,7 @@ TEST_F(ZoneCheckerTest, checkSOA) {
 
 TEST_F(ZoneCheckerTest, checkNS) {
     // If the zone has no NS at origin it triggers an error.
-    rrsets_->addRRset(soa_);
+    rrsets_->removeRRset(zname_, zclass_, RRType::NS());
     EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
     expected_errors_.push_back("zone example.com/IN has no NS records");
     checkIssues();
