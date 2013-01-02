@@ -35,7 +35,7 @@ HWAddr::HWAddr(const std::vector<uint8_t>& hwaddr, uint8_t htype)
 
 std::string HWAddr::toText() const {
     std::stringstream tmp;
-    tmp << "type=" << htype_ << " ";
+    tmp << "hwtype=" << static_cast<int>(htype_) << " ";
     tmp << std::hex;
     bool delim = false;
     for (std::vector<uint8_t>::const_iterator it = hwaddr_.begin();
