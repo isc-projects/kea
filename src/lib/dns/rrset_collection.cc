@@ -15,6 +15,7 @@
 #include <dns/rrset_collection.h>
 #include <dns/master_loader_callbacks.h>
 #include <dns/master_loader.h>
+#include <dns/rrcollator.h>
 
 #include <exceptions/exceptions.h>
 
@@ -32,16 +33,6 @@ RRsetCollection::loaderCallback(const std::string&, size_t, const std::string&)
 }
 
 void
-RRsetCollection::addRRset(const Name& name, const RRClass& rrclass,
-                          const RRType& rrtype, const RRTTL& rrttl,
-                          const rdata::RdataPtr& data)
-{
-    RRsetPtr rrset(new BasicRRset(name, rrclass, rrtype, rrttl));
-    rrset->addRdata(data);
-    addRRset(rrset);
-}
-
-void
 RRsetCollection::addRRset(RRsetPtr rrset) {
     const CollectionKey key(rrset->getClass(), rrset->getType(),
                             rrset->getName());
@@ -55,41 +46,32 @@ RRsetCollection::addRRset(RRsetPtr rrset) {
     rrsets_.insert(std::pair<CollectionKey, RRsetPtr>(key, rrset));
 }
 
-RRsetCollection::RRsetCollection(const char* filename, const Name& origin,
-                                 const RRClass& rrclass)
+template<typename T>
+void
+RRsetCollection::constructHelper(T source, const isc::dns::Name& origin,
+                                 const isc::dns::RRClass& rrclass)
 {
+    RRCollator collator(boost::bind(&RRsetCollection::addRRset, this, _1));
     MasterLoaderCallbacks callbacks
         (boost::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3),
          boost::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3));
-    MasterLoader loader(filename, origin, rrclass, callbacks,
-                        boost::bind(&RRsetCollection::addRRset,
-                                    this, _1, _2, _3, _4, _5),
+    MasterLoader loader(source, origin, rrclass, callbacks,
+                        collator.getCallback(),
                         MasterLoader::DEFAULT);
     loader.load();
+    collator.flush();
+}
+
+RRsetCollection::RRsetCollection(const char* filename, const Name& origin,
+                                 const RRClass& rrclass)
+{
+    constructHelper<const char*>(filename, origin, rrclass);
 }
 
 RRsetCollection::RRsetCollection(std::istream& input_stream, const Name& origin,
                                  const RRClass& rrclass)
 {
-    MasterLoaderCallbacks callbacks
-        (boost::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3),
-         boost::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3));
-    MasterLoader loader(input_stream, origin, rrclass, callbacks,
-                        boost::bind(&RRsetCollection::addRRset,
-                                    this, _1, _2, _3, _4, _5),
-                        MasterLoader::DEFAULT);
-    loader.load();
-}
-
-const AbstractRRset*
-RRsetCollection::find(const Name& name, const RRType& rrtype,
-                      const RRClass& rrclass) const {
-    const CollectionKey key(rrclass, rrtype, name);
-    CollectionMap::const_iterator it = rrsets_.find(key);
-    if (it != rrsets_.end()) {
-        return (&(*it->second));
-    }
-    return (NULL);
+    constructHelper<std::istream&>(input_stream, origin, rrclass);
 }
 
 RRsetPtr
@@ -115,12 +97,19 @@ RRsetCollection::find(const Name& name, const RRClass& rrclass,
     return (ConstRRsetPtr());
 }
 
-void
+bool
 RRsetCollection::removeRRset(const Name& name, const RRClass& rrclass,
                              const RRType& rrtype)
 {
     const CollectionKey key(rrclass, rrtype, name);
-    rrsets_.erase(key);
+
+    CollectionMap::iterator it = rrsets_.find(key);
+    if (it == rrsets_.end()) {
+        return (false);
+    }
+
+    rrsets_.erase(it);
+    return (true);
 }
 
 RRsetCollectionBase::IterPtr
