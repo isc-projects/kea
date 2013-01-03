@@ -15,6 +15,7 @@
 #include <dns/rrset_collection.h>
 #include <dns/master_loader_callbacks.h>
 #include <dns/master_loader.h>
+#include <dns/rrcollator.h>
 
 #include <exceptions/exceptions.h>
 
@@ -29,16 +30,6 @@ void
 RRsetCollection::loaderCallback(const std::string&, size_t, const std::string&)
 {
      // We just ignore callbacks for errors and warnings.
-}
-
-void
-RRsetCollection::addRRset(const Name& name, const RRClass& rrclass,
-                          const RRType& rrtype, const RRTTL& rrttl,
-                          const rdata::RdataPtr& data)
-{
-    RRsetPtr rrset(new BasicRRset(name, rrclass, rrtype, rrttl));
-    rrset->addRdata(data);
-    addRRset(rrset);
 }
 
 void
@@ -60,14 +51,15 @@ void
 RRsetCollection::constructHelper(T source, const isc::dns::Name& origin,
                                  const isc::dns::RRClass& rrclass)
 {
+    RRCollator collator(boost::bind(&RRsetCollection::addRRset, this, _1));
     MasterLoaderCallbacks callbacks
         (boost::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3),
          boost::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3));
     MasterLoader loader(source, origin, rrclass, callbacks,
-                        boost::bind(&RRsetCollection::addRRset,
-                                    this, _1, _2, _3, _4, _5),
+                        collator.getCallback(),
                         MasterLoader::DEFAULT);
     loader.load();
+    collator.flush();
 }
 
 RRsetCollection::RRsetCollection(const char* filename, const Name& origin,
