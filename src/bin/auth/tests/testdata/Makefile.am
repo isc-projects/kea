@@ -27,6 +27,7 @@ EXTRA_DIST += example.zone
 EXTRA_DIST += example.sqlite3
 
 EXTRA_DIST += example-base-inc.zone example-nsec3-inc.zone
+EXTRA_DIST += example-common-inc-template.zone
 
 .spec.wire:
 	$(PYTHON) $(top_builddir)/src/lib/util/python/gen_wiredata.py -o $@ $<
