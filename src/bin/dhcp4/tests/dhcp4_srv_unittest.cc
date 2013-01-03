@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/option.h>
 #include <dhcp4/dhcp4_srv.h>
+#include <dhcp4/dhcp4_log.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -36,7 +37,6 @@ using namespace isc::dhcp;
 using namespace isc::asiolink;
 
 namespace {
-const char* const INTERFACE_FILE = "interfaces.txt";
 
 class NakedDhcpv4Srv: public Dhcpv4Srv {
     // "naked" DHCPv4 server, exposes internal fields
@@ -88,7 +88,11 @@ public:
         EXPECT_TRUE(a->getYiaddr().toText() != "0.0.0.0");
     }
 
-    // Generate client-id option
+    // Generate client-id option of specified length
+    // Ids with different lengths are sufficent to generate
+    // unique ids. If more fine grained control is required,
+    // tests generate client-ids on their own.
+    // Sets client_id_ field.
     OptionPtr generateClientId(size_t size = 4) {
 
         OptionBuffer clnt_id(size);
@@ -101,6 +105,15 @@ public:
         return (OptionPtr(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
                                      clnt_id.begin(),
                                      clnt_id.begin() + size)));
+    }
+
+    HWAddrPtr generateHWAddr(size_t size = 6) {
+        const uint8_t hw_type = 123; // just a fake number (typically 6=HTYPE_ETHER, see dhcp4.h)
+        OptionBuffer mac(size);
+        for (int i = 0; i < size; ++i) {
+            mac[i] = 50 + i;
+        }
+        return (HWAddrPtr(new HWAddr(mac, hw_type)));
     }
 
     // Check that address was returned from proper range, that its lease
@@ -210,6 +223,8 @@ public:
     ClientIdPtr client_id_;
 };
 
+// Sanity check. Verifies that both Dhcpv4Srv and its derived
+// class NakedDhcpv4Srv can be instantiated and destroyed.
 TEST_F(Dhcpv4SrvTest, basic) {
     // nothing to test. DHCPv4_srv instance is created
     // in test fixture. It is destroyed in destructor
@@ -231,12 +246,17 @@ TEST_F(Dhcpv4SrvTest, basic) {
     });
     EXPECT_TRUE(naked_srv->getServerID());
 
-    delete srv;
-
-
-
+    delete naked_srv;
 }
 
+// Verifies that received DISCOVER can be processed correctly,
+// that the OFFER message generated in response is valid and
+// contains necessary options.
+//
+// Note: this test focuses on the packet correctness. There
+// are other tests that verify correctness of the allocation
+// engine. See DiscoverBasic, DiscoverHint, DiscoverNoClientId
+// and DiscoverInvalidHint.
 TEST_F(Dhcpv4SrvTest, processDiscover) {
     NakedDhcpv4Srv* srv = new NakedDhcpv4Srv(0);
     vector<uint8_t> mac(6);
@@ -253,26 +273,26 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
     pkt->setRemoteAddr(IOAddress("192.0.2.56"));
     pkt->setGiaddr(IOAddress("192.0.2.67"));
 
-    // let's make it a relayed message
+    // Let's make it a relayed message
     pkt->setHops(3);
     pkt->setRemotePort(DHCP4_SERVER_PORT);
 
-    // should not throw
+    // Should not throw
     EXPECT_NO_THROW(
         offer = srv->processDiscover(pkt);
     );
 
-    // should return something
+    // Should return something
     ASSERT_TRUE(offer);
 
     EXPECT_EQ(DHCPOFFER, offer->getType());
 
-    // this is relayed message. It should be sent back to relay address.
+    // This is relayed message. It should be sent back to relay address.
     EXPECT_EQ(pkt->getGiaddr(), offer->getRemoteAddr());
 
     MessageCheck(pkt, offer);
 
-    // now repeat the test for directly sent message
+    // Now repeat the test for directly sent message
     pkt->setHops(0);
     pkt->setGiaddr(IOAddress("0.0.0.0"));
     pkt->setRemotePort(DHCP4_CLIENT_PORT);
@@ -281,12 +301,12 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
         offer = srv->processDiscover(pkt);
     );
 
-    // should return something
+    // Should return something
     ASSERT_TRUE(offer);
 
     EXPECT_EQ(DHCPOFFER, offer->getType());
 
-    // this is direct message. It should be sent back to origin, not
+    // This is direct message. It should be sent back to origin, not
     // to relay.
     EXPECT_EQ(pkt->getRemoteAddr(), offer->getRemoteAddr());
 
@@ -295,6 +315,13 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
     delete srv;
 }
 
+// Verifies that received REQUEST can be processed correctly,
+// that the ACK message generated in response is valid and
+// contains necessary options.
+//
+// Note: this test focuses on the packet correctness. There
+// are other tests that verify correctness of the allocation
+// engine. See RequestBasic.
 TEST_F(Dhcpv4SrvTest, processRequest) {
     NakedDhcpv4Srv* srv = new NakedDhcpv4Srv(0);
     vector<uint8_t> mac(6);
@@ -588,11 +615,11 @@ TEST_F(Dhcpv4SrvTest, DiscoverInvalidHint) {
 /// being used by a different client.
 
 // This test checks that the server is offering different addresses to different
-// clients in ADVERTISEs. Please note that ADVERTISE is not a guarantee that such
-// and address will be assigned. Had the pool was very small and contained only
+// clients in OFFERs. Please note that OFFER is not a guarantee that such
+// an address will be assigned. Had the pool was very small and contained only
 // 2 addresses, the third client would get the same advertise as the first one
 // and this is a correct behavior. It is REQUEST that will fail for the third
-// client. ADVERTISE is basically saying "if you send me a request, you will
+// client. OFFER is basically saying "if you send me a request, you will
 // probably get an address like this" (there are no guarantees).
 TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
@@ -651,17 +678,21 @@ TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
     cout << "Offered address to client3=" << addr3.toText() << endl;
 }
 
-// This test verifies that incoming DISCOVER can be handled properly, that an
-// OFFER is generated, that the response has an address and that address
+// This test verifies that incoming REQUEST can be handled properly, that an
+// ACK is generated, that the response has an address and that address
 // really belongs to the configured pool.
 //
-// constructed very simple DISCOVER message with:
+// constructed a single REQUEST message with:
 // - client-id option
+// - hwaddr information
+// - requested address (that the client received in DISCOVER/OFFER exchange)
 //
-// expected returned OFFER message:
+// expected returned ACK message:
 // - copy of client-id
 // - server-id
-// - offered address
+// - assigned address
+//
+// Test verifies that the lease is actually in the database.
 TEST_F(Dhcpv4SrvTest, RequestBasic) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW( srv.reset(new NakedDhcpv4Srv(0)) );
@@ -695,7 +726,102 @@ TEST_F(Dhcpv4SrvTest, RequestBasic) {
     LeaseMgrFactory::instance().deleteLease(l->addr_);
 }
 
-// This test verifies that incoming (positive) RENEW can be handled properly, that a
+// This test verifies that incoming REQUEST can be handled properly, that an
+// ACK is generated, that the response has an address and that address
+// really belongs to the configured pool.
+//
+// constructed 3 REQUEST messages with:
+// - client-id option (differs between messages)
+// - hwaddr information (differs between messages)
+//
+// expected returned ACK message:
+// - copy of client-id
+// - server-id
+// - assigned address (different for each client)
+TEST_F(Dhcpv4SrvTest, ManyRequests) {
+
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW( srv.reset(new NakedDhcpv4Srv(0)) );
+
+    const IOAddress req_addr1("192.0.2.105");
+    const IOAddress req_addr2("192.0.2.101");
+    const IOAddress req_addr3("192.0.2.109");
+    const IOAddress relay("192.0.2.1");
+
+    Pkt4Ptr req1 = Pkt4Ptr(new Pkt4(DHCPOFFER, 1234));
+    Pkt4Ptr req2 = Pkt4Ptr(new Pkt4(DHCPOFFER, 2345));
+    Pkt4Ptr req3 = Pkt4Ptr(new Pkt4(DHCPOFFER, 3456));
+
+    req1->setRemoteAddr(relay);
+    req2->setRemoteAddr(relay);
+    req3->setRemoteAddr(relay);
+
+    req1->setYiaddr(req_addr1);
+    req2->setYiaddr(req_addr2);
+    req3->setYiaddr(req_addr3);
+
+    req1->setHWAddr(generateHWAddr(6));
+    req2->setHWAddr(generateHWAddr(7));
+    req3->setHWAddr(generateHWAddr(8));
+
+    // different client-id sizes
+    OptionPtr clientid1 = generateClientId(4); // length 4
+    OptionPtr clientid2 = generateClientId(5); // length 5
+    OptionPtr clientid3 = generateClientId(6); // length 6
+
+    req1->addOption(clientid1);
+    req2->addOption(clientid2);
+    req3->addOption(clientid3);
+
+    // Pass it to the server and get an advertise
+    Pkt4Ptr ack1 = srv->processRequest(req1);
+    Pkt4Ptr ack2 = srv->processRequest(req2);
+    Pkt4Ptr ack3 = srv->processRequest(req3);
+
+    // check if we get response at all
+    checkResponse(ack1, DHCPACK, 1234);
+    checkResponse(ack2, DHCPACK, 2345);
+    checkResponse(ack3, DHCPACK, 3456);
+
+    IOAddress addr1 = ack1->getYiaddr();
+    IOAddress addr2 = ack2->getYiaddr();
+    IOAddress addr3 = ack3->getYiaddr();
+
+    // Check that every client received the address it requested
+    EXPECT_EQ(req_addr1.toText(), addr1.toText());
+    EXPECT_EQ(req_addr2.toText(), addr2.toText());
+    EXPECT_EQ(req_addr3.toText(), addr3.toText());
+
+    // Check that the assigned address is indeed from the configured pool
+    checkAddressParams(ack1, subnet_);
+    checkAddressParams(ack2, subnet_);
+    checkAddressParams(ack3, subnet_);
+
+    // check DUIDs
+    checkServerId(ack1, srv->getServerID());
+    checkServerId(ack2, srv->getServerID());
+    checkServerId(ack3, srv->getServerID());
+    checkClientId(ack1, clientid1);
+    checkClientId(ack2, clientid2);
+    checkClientId(ack3, clientid3);
+
+    // Check that leases are in the database
+    Lease4Ptr l = checkLease(ack1, clientid1, req1->getHWAddr(), addr1);
+    EXPECT_TRUE(l);
+    l = checkLease(ack2, clientid2, req2->getHWAddr(), addr2);
+    l = checkLease(ack3, clientid3, req3->getHWAddr(), addr3);
+
+    // Finally check that the addresses offered are different
+    EXPECT_NE(addr1.toText(), addr2.toText());
+    EXPECT_NE(addr2.toText(), addr3.toText());
+    EXPECT_NE(addr3.toText(), addr1.toText());
+    cout << "Offered address to client1=" << addr1.toText() << endl;
+    cout << "Offered address to client2=" << addr2.toText() << endl;
+    cout << "Offered address to client3=" << addr3.toText() << endl;
+}
+
+
+// This test verifies that incoming (positive) REQUEST/Renewing can be handled properly, that a
 // REPLY is generated, that the response has an address and that address
 // really belongs to the configured pool and that lease is actually renewed.
 //
@@ -744,6 +870,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
     req->setRemoteAddr(IOAddress(addr));
     req->setYiaddr(addr);
+    req->setCiaddr(addr); // client's address
 
     req->addOption(clientid);
     req->addOption(srv->getServerID());
@@ -809,16 +936,9 @@ TEST_F(Dhcpv4SrvTest, sanityCheck) {
                  RFCViolation);
 }
 
-// @todo: write tests for RELEASE
-// This test verifies that incoming (positive) RELEASE can be handled properly,
-// that a REPLY is generated, that the response has status code and that the
-// lease is indeed removed from the database.
-//
-// expected:
-// - returned REPLY message has copy of client-id
-// - returned REPLY message has server-id
-// - returned REPLY message has IA that does not include an IAADDR
-// - lease is actually removed from LeaseMgr
+// This test verifies that incoming (positive) RELEASE can be handled properly.
+// As there is no REPLY in DHCPv4, the only thing to verify here is that
+// the lease is indeed removed from the database.
 TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW( srv.reset(new NakedDhcpv4Srv(0)) );
@@ -892,12 +1012,6 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
 // 1. there is no such lease at all
 // 2. there is such a lease, but it is assigned to a different IAID
 // 3. there is such a lease, but it belongs to a different client
-//
-// expected:
-// - returned REPLY message has copy of client-id
-// - returned REPLY message has server-id
-// - returned REPLY message has IA that includes STATUS-CODE
-// - No lease in LeaseMgr
 TEST_F(Dhcpv4SrvTest, ReleaseReject) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW( srv.reset(new NakedDhcpv4Srv(0)) );
@@ -936,7 +1050,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseReject) {
     // parity with similar test in DHCPv6.
     EXPECT_NO_THROW(srv->processRelease(rel));
 
-    // CASE 2: Lease is known and belongs to this client, but to a different client-id
+    // CASE 2: Lease is known and belongs to this client, but to a different hardware
     SCOPED_TRACE("CASE 2: Lease is known and belongs to this client, but uses different HW addr");
 
     // Let's create a lease and put it in the LeaseMgr
@@ -973,15 +1087,16 @@ TEST_F(Dhcpv4SrvTest, ReleaseReject) {
     l = LeaseMgrFactory::instance().getLease4(addr);
     ASSERT_TRUE(l);
 
-    // Final sanity check. Verify that with valid hw and client-id release is working
+    // Final sanity check. Verify that with valid hw and client-id release is successful
     rel->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
     rel->addOption(clientid);
 
+    // It should work this time
     EXPECT_NO_THROW(srv->processRelease(rel));
 
+    // Check that the lease is not there
     l = LeaseMgrFactory::instance().getLease4(addr);
     EXPECT_FALSE(l);
-
 }
 
 } // end of anonymous namespace
