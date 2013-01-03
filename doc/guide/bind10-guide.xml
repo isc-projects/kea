@@ -3343,23 +3343,21 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
     <note>
       <para>
-        As of November 2012, the DHCPv4 component is a
-        skeleton server. That means that while it is capable of
-        performing DHCP configuration, it is not fully functional.
-        In particular, it does not have a functional lease
-        database. This means that they will assign the same, fixed,
-        hardcoded addresses to any client that will ask. See <xref
-        linkend="dhcp4-limit"/> for a
-        detailed description.
+        As of January 2013, the DHCPv4 component is a work in progress.
+        That means that while it is capable of performing DHCP configuration,
+        it is not fully functional.  The server is able to offer,
+        assign, renew, release and reuse expired leases, but some of the
+        options are not configurable yet. In particular Router option is hardcoded.
+        This means that the server is not really usable in actual deployments
+        yet. See <xref linkend="dhcp4-limit"/> for a detailed description.
       </para>
     </note>
 
     <section id="dhcp4-usage">
       <title>DHCPv4 Server Usage</title>
       <para>BIND 10 has provided the DHCPv4 server component since December
-      2011. It is a skeleton server and can be described as an early
-      prototype that is not fully functional yet. It is mature enough
-      to conduct first tests in lab environment, but it has
+      2011. It is current experimental implementation and is not fully functional
+      yet. It is mature enough to conduct tests in lab environment, but it has
       significant limitations. See <xref linkend="dhcp4-limit"/> for
       details.
       </para>
@@ -3480,9 +3478,10 @@ Dhcp4/subnet4	         []     list    (default)</screen>
       </para>
 
       <para>
-        Note: Although configuration is now accepted, it is not internally used
-        by they server yet.  At this stage of development, the only way to alter
-        server configuration is to modify its source code. To do so, please edit
+        Note: Although configuration is now accepted, some parts of it is not internally used
+        by they server yet. Address pools are used, but option definitons are not.
+        The only way to alter some options (e.g. Router Option or DNS servers and Domain name)
+        is to modify source code. To do so, please edit
         src/bin/dhcp6/dhcp4_srv.cc file, modify the following parameters and
         recompile:
         <screen>
@@ -3533,20 +3532,6 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
             communication).</simpara>
           </listitem>
           <listitem>
-            <simpara><command>b10-dhcp4</command> provides a single,
-            fixed, hardcoded lease to any client that asks.  There is
-            no lease manager implemented. If two clients request
-            addresses, they will both get the same fixed
-            address.</simpara>
-          </listitem>
-          <listitem>
-            <simpara><command>b10-dhcp4</command> does not support any
-            configuration mechanisms yet. The whole configuration is
-            currently hardcoded. The only way to tweak configuration
-            is to directly modify source code. See see <xref
-            linkend="dhcp4-config"/> for details.</simpara>
-          </listitem>
-          <listitem>
             <simpara>Upon start, the server will open sockets on all
             interfaces that are not loopback, are up and running and
             have IPv4 address.</simpara>
@@ -3574,9 +3559,9 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
             sending ICMP echo request.</simpara>
           </listitem>
           <listitem>
-            <simpara>Address renewal (RENEW), rebinding (REBIND),
-            confirmation (CONFIRM), duplication report (DECLINE) and
-            release (RELEASE) are not supported yet.</simpara>
+            <simpara>Address rebinding (REQUEST/Rebinding), confirmation
+            (CONFIRM) and duplication report (DECLINE) are not supported
+            yet.</simpara>
           </listitem>
           <listitem>
             <simpara>DNS Update is not supported yet.</simpara>
