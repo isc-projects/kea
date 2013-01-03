@@ -582,7 +582,7 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
 
 // This test checks that the server is offering different addresses to different
 // clients in ADVERTISEs. Please note that ADVERTISE is not a guarantee that such
-// and address will be assigned. Had the pool was very small and contained only
+// an address will be assigned. Had the pool was very small and contained only
 // 2 addresses, the third client would get the same advertise as the first one
 // and this is a correct behavior. It is REQUEST that will fail for the third
 // client. ADVERTISE is basically saying "if you send me a request, you will
