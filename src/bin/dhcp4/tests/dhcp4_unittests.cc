@@ -13,14 +13,23 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <log/logger_support.h>
-
+#include <dhcp4/dhcp4_log.h>
 #include <gtest/gtest.h>
 
 int
 main(int argc, char* argv[]) {
 
     ::testing::InitGoogleTest(&argc, argv);
+
     isc::log::initLogger();
+
+    // Uncomment those to get much more verbose tests
+    /*
+    isc::log::initLogger("b10-dhcp4",
+                         isc::log::DEBUG,
+                         isc::log::MAX_DEBUG_LEVEL, NULL, false);
+    isc::dhcp::dhcp4_logger.setSeverity(isc::log::DEBUG, 99);
+    */
 
     int result = RUN_ALL_TESTS();
 

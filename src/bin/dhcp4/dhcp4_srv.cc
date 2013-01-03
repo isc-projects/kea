@@ -310,9 +310,9 @@ void Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         // with IAADDR suboption.
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, fake_allocation?
                   DHCP4_LEASE_ADVERT:DHCP4_LEASE_ALLOC)
+            .arg(lease->addr_.toText())
             .arg(client_id?client_id->toText():"(no client-id)")
-            .arg(hwaddr?hwaddr->toText():"(no hwaddr info)")
-            .arg(hint.toText());
+            .arg(hwaddr?hwaddr->toText():"(no hwaddr info)");
 
         answer->setYiaddr(lease->addr_);
 
