@@ -95,7 +95,8 @@ private:
 /// \c error() method of \c callbacks, and non critical issues are reported
 /// via its \c warn() method.
 ///
-/// Specific checks performed by this function is as follows:
+/// Specific checks performed by this function is as follows.  Failure of
+/// a check is considered a critical error unless noted otherwise:
 /// - There is exactly one SOA RR at the zone apex.
 /// - There is at least one NS RR at the zone apex.
 /// - For each apex NS record, if the NS name (the RDATA of the record) is
