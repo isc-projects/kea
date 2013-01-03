@@ -1,0 +1,7 @@
+;;
+;; This is a complete (but crafted and somewhat broken) zone file used
+;; in query tests.
+;;
+
+$INCLUDE @abs_srcdir@/example-base-inc.zone
+$INCLUDE @abs_builddir@/example-common-inc.zone
