@@ -809,8 +809,8 @@ OptionPtr Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, Pkt6Ptr question,
         // Sorry, it's not your address. You can't release it.
 
         LOG_WARN(dhcp6_logger, DHCP6_RELEASE_FAIL_WRONG_DUID)
-            .arg(release_addr->getAddress().toText())
             .arg(duid->toText())
+            .arg(release_addr->getAddress().toText())
             .arg(lease->duid_->toText());
 
         general_status = STATUS_NoBinding;
@@ -822,10 +822,10 @@ OptionPtr Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, Pkt6Ptr question,
     if (ia->getIAID() != lease->iaid_) {
         // This address belongs to this client, but to a different IA
         LOG_WARN(dhcp6_logger, DHCP6_RELEASE_FAIL_WRONG_IAID)
-            .arg(release_addr->getAddress().toText())
             .arg(duid->toText())
-            .arg(ia->getIAID())
+            .arg(release_addr->getAddress().toText())
             .arg(lease->iaid_);
+            .arg(ia->getIAID())
         ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
                           "This is your address, but you used wrong IAID"));
         general_status = STATUS_NoBinding;

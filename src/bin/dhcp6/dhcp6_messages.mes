@@ -105,14 +105,14 @@ intervention (e.g. check if DHCP process has sufficient privileges to
 update the database). It may also be triggered if a lease was manually
 removed from the database during RELEASE message processing.
 
-% DHCP6_RELEASE_FAIL_WRONG_DUID client (duid=%2) tried to release address %2, but it belongs to client (duid=%3)
+% DHCP6_RELEASE_FAIL_WRONG_DUID client (duid=%1) tried to release address %2, but it belongs to client (duid=%3)
 This warning message indicates that client tried to release an address
 that belongs to a different client. This should not happen in normal
 circumstances and may indicate a misconfiguration of the client.  However,
 since the client releasing the address will stop using it anyway, there
 is a good chance that the situation will correct itself.
 
-% DHCP6_RELEASE_FAIL_WRONG_IAID client (duid=%2) tried to release address %2, but it used wrong IAID (expected %4, but got %3)
+% DHCP6_RELEASE_FAIL_WRONG_IAID client (duid=%1) tried to release address %2, but it used wrong IAID (expected %3, but got %4)
 This warning message indicates that client tried to release an address
 that does belong to it, but the address was expected to be in a different
 IA (identity association) container. This probably means that the client's
