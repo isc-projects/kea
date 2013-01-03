@@ -31,6 +31,10 @@ namespace dns {
 class RRsetCollection : public RRsetCollectionBase {
 public:
     /// \brief Constructor.
+    ///
+    /// This constructor creates an empty collection without any data in
+    /// it. RRsets can be added to the collection with the \c addRRset()
+    /// method.
     RRsetCollection() {}
 
     /// \brief Constructor.
