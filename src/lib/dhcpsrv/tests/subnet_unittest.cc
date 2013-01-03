@@ -427,6 +427,31 @@ TEST(Subnet6Test, addPersistentOption) {
     EXPECT_EQ(0, options.size());
 }
 
+TEST(Subnet6Test, getOptionSingle) {
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 56, 1, 2, 3, 4));
+
+    // Add 10 options to a "dhcp6" option space in the subnet.
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(subnet->addOption(option, false, "dhcp6"));
+    }
+
+    // Check that we can get each added option descriptor using
+    // individually.
+    for (uint16_t code = 100; code < 110; ++code) {
+        std::ostringstream stream;
+        // First, try the invalid option space name.
+        Subnet::OptionDescriptor desc = subnet->getOptionSingle("isc", code);
+        // Returned descriptor should contain NULL option ptr.
+        EXPECT_FALSE(desc.option);
+        // Now, try the valid option space.
+        desc = subnet->getOptionSingle("dhcp6", code);
+        // Test that the option code matches the expected code.
+        ASSERT_TRUE(desc.option);
+        EXPECT_EQ(code, desc.option->getType());
+    }
+}
+
 // This test verifies that inRange() and inPool() methods work properly.
 TEST(Subnet6Test, inRangeinPool) {
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));

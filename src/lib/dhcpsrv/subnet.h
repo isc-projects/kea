@@ -264,7 +264,7 @@ public:
         return (t2_);
     }
 
-    /// @brief Return a collection of options.
+    /// @brief Return a collection of option descriptors.
     ///
     /// @param option_space name of the option space
     ///
@@ -272,6 +272,15 @@ public:
     /// The returned reference is valid as long as the Subnet object which
     /// returned it still exists.
     const OptionContainer& getOptions(const std::string& option_space) const;
+
+    /// @brief Return single option descriptor.
+    ///
+    /// @param option_space name of the option space.
+    ///
+    /// @return option descriptor found for the specified option space
+    /// and option code.
+    OptionDescriptor getOptionSingle(const std::string& option_space,
+                                     const uint16_t option_code);
 
     /// @brief returns the last address that was tried from this pool
     ///
