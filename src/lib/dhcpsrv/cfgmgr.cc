@@ -34,6 +34,10 @@ CfgMgr::addOptionDef(const OptionDefinitionPtr& def,
     // This will be implemented when #2313 is merged.
     if (option_space.empty()) {
         isc_throw(BadValue, "option space name must not be empty");
+    } else if (option_space == "dhcp4" || option_space == "dhcp6") {
+        isc_throw(BadValue, "unable to override definition of option"
+                  << " in standard option space '" << option_space
+                  << "'.");
     } else if (!def) {
         isc_throw(MalformedOptionDefinition, "option definition must not be NULL");
     } else if (getOptionDef(option_space, def->getCode())) {

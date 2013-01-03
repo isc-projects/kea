@@ -156,6 +156,22 @@ TEST_F(CfgMgrTest, getOptionDef) {
     ASSERT_FALSE(def);
 }
 
+// This test verifies that the function that adds new option definition
+// throws exceptions when arguments are invalid.
+TEST_F(CfgMgrTest, addOptionDefNegative) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    OptionDefinitionPtr def(new OptionDefinition("option-foo", 100, "uint16"));
+
+    // Try reserved option space names.
+    ASSERT_THROW(cfg_mgr.addOptionDef(def, "dhcp4"), isc::BadValue);
+    ASSERT_THROW(cfg_mgr.addOptionDef(def, "dhcp6"), isc::BadValue);
+    // Try empty option space name.
+    ASSERT_THROW(cfg_mgr.addOptionDef(def, ""), isc::BadValue);
+    // Try NULL option definition.
+    ASSERT_THROW(cfg_mgr.addOptionDef(OptionDefinitionPtr(), "isc"),
+                 isc::dhcp::MalformedOptionDefinition);
+}
+
 // This test verifies if the configuration manager is able to hold and return
 // valid leases
 TEST_F(CfgMgrTest, subnet4) {
