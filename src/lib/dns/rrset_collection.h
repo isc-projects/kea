@@ -109,10 +109,16 @@ public:
          const isc::dns::RRClass& rrclass)
         const;
 
+    /// \brief Find a matching RRset in the collection.
+    ///
+    /// See above for a description of the method and arguments.
     isc::dns::RRsetPtr find(const isc::dns::Name& name,
                             const isc::dns::RRClass& rrclass,
                             const isc::dns::RRType& rrtype);
 
+    /// \brief Find a matching RRset in the collection (const variant).
+    ///
+    /// See above for a description of the method and arguments.
     isc::dns::ConstRRsetPtr find(const isc::dns::Name& name,
                                  const isc::dns::RRClass& rrclass,
                                  const isc::dns::RRType& rrtype) const;
