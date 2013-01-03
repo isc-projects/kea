@@ -161,6 +161,12 @@ checkNSNames(const Name& zone_name, const RRClass& zone_class,
                 assert(false);
             }
         }
+        if (zone_rrsets.find(ns_name, RRType::CNAME(), zone_class) != NULL) {
+            callbacks.error("zone " + zoneText(zone_name, zone_class) +
+                            ": NS '" + ns_name.toText(true) + "' is a CNAME " +
+                            "(illegal per RFC2181)");
+            continue;
+        }
         if (zone_rrsets.find(ns_name, RRType::A(), zone_class) == NULL &&
             zone_rrsets.find(ns_name, RRType::AAAA(), zone_class) == NULL) {
             callbacks.warn("zone " + zoneText(zone_name, zone_class) +
