@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -39,6 +39,14 @@ public:
 class MalformedOptionDefinition : public Exception {
 public:
     MalformedOptionDefinition(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief Exception to be thrown when the particular option definition
+/// duplicates existing option definition.
+class DuplicateOptionDefinition : public Exception {
+public:
+    DuplicateOptionDefinition(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
