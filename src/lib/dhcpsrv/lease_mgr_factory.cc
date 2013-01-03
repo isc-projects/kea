@@ -74,21 +74,23 @@ LeaseMgrFactory::parse(const std::string& dbaccess) {
 
 std::string
 LeaseMgrFactory::redactedAccessString(const LeaseMgr::ParameterMap& parameters) {
-    // Reconstruct the access string
-    std::string access = "";
+    // Reconstruct the access string: start of with an empty string, then
+    // work through all the parameters in the original string and add them.
+    std::string access;
     for (LeaseMgr::ParameterMap::const_iterator i = parameters.begin();
          i != parameters.end(); ++i) {
 
-        // Separate second and subsequent tokens.
+        // Separate second and subsequent tokens are preceded by a space.
         if (!access.empty()) {
             access += " ";
         }
 
-        // Append name of parameter
+        // Append name of parameter...
         access += i->first;
         access += "=";
 
-        // Redact the password
+        // ... and the value, except in the case of the password, where a
+        // redacted value is appended.
         if (i->first == std::string("password")) {
             access += "*****";
         } else {
