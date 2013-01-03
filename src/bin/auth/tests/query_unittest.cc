@@ -835,7 +835,8 @@ protected:
                              getCommonRRSIGText("A")),
         base_zone_file(TEST_OWN_DATA_BUILDDIR "/example-base.zone"),
         nsec3_zone_file(TEST_OWN_DATA_BUILDDIR "/example-nsec3.zone"),
-        common_zone_file(TEST_OWN_DATA_BUILDDIR "/example-common-inc.zone")
+        common_zone_file(TEST_OWN_DATA_BUILDDIR "/example-common-inc.zone"),
+        rrsets_added_(false)
     {
         // Set up the faked hash calculator.
         setNSEC3HashCreator(&nsec3hash_creator_);
@@ -899,6 +900,11 @@ protected:
     // A helper to add some RRsets to the test zone in the middle of a test
     // case.  The detailed behavior is quite different depending on the
     // data source type, and not all parameters are used in all cases.
+    //
+    // Note: due to limitation of its implementation, this method doesn't
+    // work correctly for in-memory if called more than once.  This condition
+    // is explicitly checked so any accidental violation would be noted as a
+    // test failure.
     void addRRsets(const vector<string>& rrsets_to_add, ClientList& list,
                    const string& zone_file)
     {
@@ -916,6 +922,9 @@ protected:
             }
             break;
         case INMEMORY:
+            ASSERT_FALSE(rrsets_added_);
+            rrsets_added_ = true;
+
             // dump the RRsets to be added to the placeholder of commonly
             // included zone file (removing any existing contents) and do
             // full reconfiguration.
@@ -989,6 +998,7 @@ private:
     const string nsec3_zone_file;
     const string common_zone_file;
     const TestNSEC3HashCreator nsec3hash_creator_;
+    bool rrsets_added_;
 };
 
 // We test the in-memory and SQLite3 data source implementations.  SQLite3
