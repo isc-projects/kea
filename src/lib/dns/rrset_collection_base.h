@@ -41,16 +41,16 @@ public:
     /// \brief Find a matching RRset in the collection.
     ///
     /// Returns the RRset in the collection that exactly matches the
-    /// given \c name and \c rrtype.  If no matching RRset is found,
-    /// \c NULL is returned.
+    /// given \c name, \c rrclass and \c rrtype.  If no matching RRset
+    /// is found, \c NULL is returned.
     ///
     /// \param name The name of the RRset to search for.
     /// \param rrtype The type of the RRset to search for.
     /// \param rrclass The class of the RRset to search for.
-    /// \returns A pointer to the RRset if found, \c NULL otherwise.
-    virtual const isc::dns::AbstractRRset* find
-        (const isc::dns::Name& name, const isc::dns::RRType& rrtype,
-         const isc::dns::RRClass& rrclass)
+    /// \returns The RRset if found, \c NULL otherwise.
+    virtual isc::dns::ConstRRsetPtr find
+        (const isc::dns::Name& name, const isc::dns::RRClass& rrclass,
+         const isc::dns::RRType& rrtype)
         const = 0;
 
     /// \brief Destructor
@@ -105,11 +105,11 @@ public:
     ///
     /// It behaves like a \c std::iterator forward iterator, so please
     /// see its documentation for usage.
-    class iterator : std::iterator<std::forward_iterator_tag,
+    class Iterator : std::iterator<std::forward_iterator_tag,
                                    const isc::dns::AbstractRRset>
     {
     public:
-        explicit iterator(IterPtr iter) :
+        explicit Iterator(IterPtr iter) :
             iter_(iter)
         {}
 
@@ -117,22 +117,22 @@ public:
             return (iter_->getValue());
         }
 
-        iterator& operator++() {
+        Iterator& operator++() {
             iter_ = iter_->getNext();
             return (*this);
         }
 
-        iterator operator++(int) {
-            iterator tmp(iter_);
+        Iterator operator++(int) {
+            Iterator tmp(iter_);
             ++*this;
             return (tmp);
         }
 
-        bool operator==(const iterator& other) const {
+        bool operator==(const Iterator& other) const {
             return (iter_->equals(*other.iter_));
         }
 
-        bool operator!=(const iterator& other) const {
+        bool operator!=(const Iterator& other) const {
             return (!iter_->equals(*other.iter_));
         }
 
@@ -142,14 +142,14 @@ public:
 
     /// \brief Returns an iterator pointing to the beginning of the
     /// collection.
-    iterator begin() {
-      return iterator(getBeginning());
+    Iterator begin() {
+      return Iterator(getBeginning());
     }
 
     /// \brief Returns an iterator pointing past the end of the
     /// collection.
-    iterator end() {
-      return iterator(getEnd());
+    Iterator end() {
+      return Iterator(getEnd());
     }
 };
 
