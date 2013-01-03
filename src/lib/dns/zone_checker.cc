@@ -64,10 +64,10 @@ zoneText(const Name& zone_name, const RRClass& zone_class) {
 void
 checkSOA(const Name& zone_name, const RRClass& zone_class,
          const RRsetCollectionBase& zone_rrsets, CallbackWrapper& callback) {
-    const AbstractRRset* rrset =
-        zone_rrsets.find(zone_name, RRType::SOA(), zone_class);
+    ConstRRsetPtr rrset =
+        zone_rrsets.find(zone_name, zone_class, RRType::SOA());
     size_t count = 0;
-    if (rrset != NULL) {
+    if (rrset) {
         for (RdataIteratorPtr rit = rrset->getRdataIterator();
              !rit->isLast();
              rit->next(), ++count) {
@@ -91,7 +91,7 @@ checkSOA(const Name& zone_name, const RRClass& zone_class,
 // DNAME.  Note that DNAME works on the origin but not on the name itself,
 // while delegation works on the name itself (but the NS at the origin is not
 // delegation).
-const AbstractRRset*
+ConstRRsetPtr
 findZoneCut(const Name& zone_name, const RRClass& zone_class,
             const RRsetCollectionBase& zone_rrsets, const Name& target_name) {
     const unsigned int origin_count = zone_name.getLabelCount();
@@ -102,19 +102,19 @@ findZoneCut(const Name& zone_name, const RRClass& zone_class,
         const Name& mid_name = (l == target_count) ? target_name :
             target_name.split(target_count - l);
 
-        const AbstractRRset* found = NULL;
+        ConstRRsetPtr found;
         if (l != origin_count &&
-            (found = zone_rrsets.find(mid_name, RRType::NS(), zone_class)) !=
+            (found = zone_rrsets.find(mid_name, zone_class, RRType::NS())) !=
             NULL) {
             return (found);
         }
         if (l != target_count &&
-            (found = zone_rrsets.find(mid_name, RRType::DNAME(), zone_class))
+            (found = zone_rrsets.find(mid_name, zone_class, RRType::DNAME()))
             != NULL) {
             return (found);
         }
     }
-    return (NULL);
+    return (ConstRRsetPtr());
 }
 
 // Check if each "in-zone" NS name has an address record, identifying some
@@ -122,13 +122,13 @@ findZoneCut(const Name& zone_name, const RRClass& zone_class,
 void
 checkNSNames(const Name& zone_name, const RRClass& zone_class,
              const RRsetCollectionBase& zone_rrsets,
-             const AbstractRRset& ns_rrset, CallbackWrapper& callbacks) {
-    if (ns_rrset.getRdataCount() == 0) {
+             ConstRRsetPtr ns_rrset, CallbackWrapper& callbacks) {
+    if (ns_rrset->getRdataCount() == 0) {
         // this should be an implementation bug, not an operational error.
         isc_throw(Unexpected, "Zone checker found an empty NS RRset");
     }
 
-    for (RdataIteratorPtr rit = ns_rrset.getRdataIterator();
+    for (RdataIteratorPtr rit = ns_rrset->getRdataIterator();
          !rit->isLast();
          rit->next()) {
         const rdata::generic::NS* ns_data =
@@ -145,9 +145,9 @@ checkNSNames(const Name& zone_name, const RRClass& zone_class,
         }
 
         // Check if there's a zone cut between the origin and the NS name.
-        const AbstractRRset* cut_rrset = findZoneCut(zone_name, zone_class,
-                                                     zone_rrsets, ns_name);
-        if (cut_rrset != NULL) {
+        ConstRRsetPtr cut_rrset = findZoneCut(zone_name, zone_class,
+                                              zone_rrsets, ns_name);
+        if (cut_rrset) {
             if  (cut_rrset->getType() == RRType::NS()) {
                 continue; // delegation; making the NS name "out of zone".
             } else if (cut_rrset->getType() == RRType::DNAME()) {
@@ -161,14 +161,14 @@ checkNSNames(const Name& zone_name, const RRClass& zone_class,
                 assert(false);
             }
         }
-        if (zone_rrsets.find(ns_name, RRType::CNAME(), zone_class) != NULL) {
+        if (zone_rrsets.find(ns_name, zone_class, RRType::CNAME()) != NULL) {
             callbacks.error("zone " + zoneText(zone_name, zone_class) +
                             ": NS '" + ns_name.toText(true) + "' is a CNAME " +
                             "(illegal per RFC2181)");
             continue;
         }
-        if (zone_rrsets.find(ns_name, RRType::A(), zone_class) == NULL &&
-            zone_rrsets.find(ns_name, RRType::AAAA(), zone_class) == NULL) {
+        if (zone_rrsets.find(ns_name, zone_class, RRType::A()) == NULL &&
+            zone_rrsets.find(ns_name, zone_class, RRType::AAAA()) == NULL) {
             callbacks.warn("zone " + zoneText(zone_name, zone_class) +
                            ": NS has no address records (A or AAAA)");
         }
@@ -178,14 +178,14 @@ checkNSNames(const Name& zone_name, const RRClass& zone_class,
 void
 checkNS(const Name& zone_name, const RRClass& zone_class,
         const RRsetCollectionBase& zone_rrsets, CallbackWrapper& callbacks) {
-    const AbstractRRset* rrset =
-        zone_rrsets.find(zone_name, RRType::NS(), zone_class);
+    ConstRRsetPtr rrset =
+        zone_rrsets.find(zone_name, zone_class, RRType::NS());
     if (rrset == NULL) {
         callbacks.error("zone " + zoneText(zone_name, zone_class) +
                         ": has no NS records");
         return;
     }
-    checkNSNames(zone_name, zone_class, zone_rrsets, *rrset, callbacks);
+    checkNSNames(zone_name, zone_class, zone_rrsets, rrset, callbacks);
 }
 }
 
