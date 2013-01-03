@@ -21,6 +21,7 @@
 #include <dns/rrset.h>
 #include <dns/rrset_collection_base.h>
 
+#include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <string>
@@ -32,30 +33,6 @@ namespace isc {
 namespace dns {
 
 namespace {
-// This helper class is a trivial wrapper of ZoneCheckerCallbacks, and
-// remembers it if an error happens at least once.
-class CallbackWrapper {
-public:
-    CallbackWrapper(const ZoneCheckerCallbacks& callbacks) :
-        callbacks_(callbacks), has_error_(false)
-    {}
-
-    void error(const string& reason) {
-        has_error_ = true;
-        callbacks_.error(reason);
-    }
-
-    void warn(const string& reason) {
-        callbacks_.warn(reason);
-    }
-
-    bool hasError() const { return (has_error_); }
-
-private:
-    ZoneCheckerCallbacks callbacks_;
-    bool has_error_;
-};
-
 std::string
 zoneText(const Name& zone_name, const RRClass& zone_class) {
     return (zone_name.toText(true) + "/" + zone_class.toText());
@@ -63,7 +40,8 @@ zoneText(const Name& zone_name, const RRClass& zone_class) {
 
 void
 checkSOA(const Name& zone_name, const RRClass& zone_class,
-         const RRsetCollectionBase& zone_rrsets, CallbackWrapper& callback) {
+         const RRsetCollectionBase& zone_rrsets,
+         ZoneCheckerCallbacks& callback) {
     ConstRRsetPtr rrset =
         zone_rrsets.find(zone_name, zone_class, RRType::SOA());
     size_t count = 0;
@@ -122,7 +100,7 @@ findZoneCut(const Name& zone_name, const RRClass& zone_class,
 void
 checkNSNames(const Name& zone_name, const RRClass& zone_class,
              const RRsetCollectionBase& zone_rrsets,
-             ConstRRsetPtr ns_rrset, CallbackWrapper& callbacks) {
+             ConstRRsetPtr ns_rrset, ZoneCheckerCallbacks& callbacks) {
     if (ns_rrset->getRdataCount() == 0) {
         // this should be an implementation bug, not an operational error.
         isc_throw(Unexpected, "Zone checker found an empty NS RRset");
@@ -177,7 +155,8 @@ checkNSNames(const Name& zone_name, const RRClass& zone_class,
 
 void
 checkNS(const Name& zone_name, const RRClass& zone_class,
-        const RRsetCollectionBase& zone_rrsets, CallbackWrapper& callbacks) {
+        const RRsetCollectionBase& zone_rrsets,
+        ZoneCheckerCallbacks& callbacks) {
     ConstRRsetPtr rrset =
         zone_rrsets.find(zone_name, zone_class, RRType::NS());
     if (rrset == NULL) {
@@ -187,18 +166,35 @@ checkNS(const Name& zone_name, const RRClass& zone_class,
     }
     checkNSNames(zone_name, zone_class, zone_rrsets, rrset, callbacks);
 }
+
+// The following two are simple wrapper of checker callbacks so checkZone()
+// can also remember any critical errors.
+void
+errorWrapper(const string& reason, ZoneCheckerCallbacks& callbacks,
+             bool* had_error) {
+    *had_error = true;
+    callbacks.error(reason);
+}
+
+void
+warnWrapper(const string& reason, ZoneCheckerCallbacks& callbacks) {
+    callbacks.warn(reason);
+}
 }
 
 bool
 checkZone(const Name& zone_name, const RRClass& zone_class,
           const RRsetCollectionBase& zone_rrsets,
           const ZoneCheckerCallbacks& callbacks) {
-    CallbackWrapper my_callbacks(callbacks);
+    bool had_error = false;
+    ZoneCheckerCallbacks my_callbacks(
+        boost::bind(errorWrapper, _1, callbacks, &had_error),
+        boost::bind(warnWrapper, _1, callbacks));
 
     checkSOA(zone_name, zone_class, zone_rrsets, my_callbacks);
     checkNS(zone_name, zone_class, zone_rrsets, my_callbacks);
 
-    return (!my_callbacks.hasError());
+    return (!had_error);
 }
 
 } // end namespace dns
