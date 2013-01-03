@@ -77,6 +77,10 @@ public:
     /// and managed by the \c RRsetCollection. It throws an
     /// \c isc::InvalidParameter exception if an rrset with the same
     /// class, type and name already exists.
+    ///
+    /// Callers must not modify the RRset after adding it to the
+    /// collection, as the rrset is indexed internally by the
+    /// collection.
     void addRRset(isc::dns::RRsetPtr rrset);
 
     /// \brief Remove an RRset from the collection.
