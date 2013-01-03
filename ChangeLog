@@ -1,3 +1,8 @@
+537.	[func]		tomek
+	b10-dhcp6: Support for RELEASE message has been added. Clients
+	are now able to release their non-temporary IPv6 addresses.
+	(Trac #2326, git 0974318566abe08d0702ddd185156842c6642424)
+
 536.	[build]		jinmei
 	Detect a build issue on FreeBSD with g++ 4.2 and Boost installed via
 	FreeBSD ports at ./configure time.  This seems to be a bug of
