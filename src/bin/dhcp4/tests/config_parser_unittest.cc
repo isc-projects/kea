@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -461,7 +461,7 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
 
     Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
-    const Subnet::OptionContainer& options = subnet->getOptions();
+    const Subnet::OptionContainer& options = subnet->getOptions("dhcp4");
     ASSERT_EQ(2, options.size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -529,7 +529,7 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
 
     Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.24"));
     ASSERT_TRUE(subnet);
-    const Subnet::OptionContainer& options = subnet->getOptions();
+    const Subnet::OptionContainer& options = subnet->getOptions("dhcp4");
     ASSERT_EQ(2, options.size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -594,7 +594,7 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
 
     Subnet4Ptr subnet1 = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.100"));
     ASSERT_TRUE(subnet1);
-    const Subnet::OptionContainer& options1 = subnet1->getOptions();
+    const Subnet::OptionContainer& options1 = subnet1->getOptions("dhcp4");
     ASSERT_EQ(1, options1.size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -618,7 +618,7 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     // Test another subnet in the same way.
     Subnet4Ptr subnet2 = CfgMgr::instance().getSubnet4(IOAddress("192.0.3.102"));
     ASSERT_TRUE(subnet2);
-    const Subnet::OptionContainer& options2 = subnet2->getOptions();
+    const Subnet::OptionContainer& options2 = subnet2->getOptions("dhcp4");
     ASSERT_EQ(1, options2.size());
 
     const Subnet::OptionContainerTypeIndex& idx2 = options2.get<1>();
@@ -703,7 +703,7 @@ TEST_F(Dhcp4ParserTest, optionDataLowerCase) {
 
     Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
     ASSERT_TRUE(subnet);
-    const Subnet::OptionContainer& options = subnet->getOptions();
+    const Subnet::OptionContainer& options = subnet->getOptions("dhcp4");
     ASSERT_EQ(1, options.size());
 
     // Get the search index. Index #1 is to search using option code.

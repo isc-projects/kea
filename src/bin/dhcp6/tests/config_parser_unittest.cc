@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -449,7 +449,7 @@ TEST_F(Dhcp6ParserTest, optionDataDefaults) {
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
     ASSERT_TRUE(subnet);
-    const Subnet::OptionContainer& options = subnet->getOptions();
+    const Subnet::OptionContainer& options = subnet->getOptions("dhcp6");
     ASSERT_EQ(2, options.size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -524,7 +524,7 @@ TEST_F(Dhcp6ParserTest, optionDataInSingleSubnet) {
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
     ASSERT_TRUE(subnet);
-    const Subnet::OptionContainer& options = subnet->getOptions();
+    const Subnet::OptionContainer& options = subnet->getOptions("dhcp6");
     ASSERT_EQ(2, options.size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -590,7 +590,7 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
 
     Subnet6Ptr subnet1 = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
     ASSERT_TRUE(subnet1);
-    const Subnet::OptionContainer& options1 = subnet1->getOptions();
+    const Subnet::OptionContainer& options1 = subnet1->getOptions("dhcp6");
     ASSERT_EQ(1, options1.size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -614,7 +614,7 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     // Test another subnet in the same way.
     Subnet6Ptr subnet2 = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:2::4"));
     ASSERT_TRUE(subnet2);
-    const Subnet::OptionContainer& options2 = subnet2->getOptions();
+    const Subnet::OptionContainer& options2 = subnet2->getOptions("dhcp6");
     ASSERT_EQ(1, options2.size());
 
     const Subnet::OptionContainerTypeIndex& idx2 = options2.get<1>();
@@ -708,7 +708,7 @@ TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
     ASSERT_TRUE(subnet);
-    const Subnet::OptionContainer& options = subnet->getOptions();
+    const Subnet::OptionContainer& options = subnet->getOptions("dhcp6");
     ASSERT_EQ(1, options.size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -749,7 +749,7 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
     ASSERT_TRUE(subnet);
-    const Subnet::OptionContainer& options = subnet->getOptions();
+    const Subnet::OptionContainer& options = subnet->getOptions("dhcp6");
     ASSERT_EQ(1, options.size());
 
     // Get the search index. Index #1 is to search using option code.
