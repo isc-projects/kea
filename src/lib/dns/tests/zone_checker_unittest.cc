@@ -113,10 +113,6 @@ TEST_F(ZoneCheckerTest, checkGood) {
     EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
     checkIssues();
 
-    // We can omit callbacks, in which case the default constructor for
-    // the callbacks is used, meaning callbacks are no-op.
-    EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_));
-
     // Multiple NS RRs are okay.
     rrsets_->removeRRset(zname_, zclass_, RRType::NS());
     ns_->addRdata(generic::NS(ns_txt1));
@@ -131,6 +127,13 @@ TEST_F(ZoneCheckerTest, checkSOA) {
     rrsets_->removeRRset(zname_, zclass_, RRType::SOA());
     EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
     expected_errors_.push_back("zone example.com/IN: has 0 SOA records");
+    checkIssues();
+
+    // If null callback is specified, checkZone() only returns the final
+    // result.
+    ZoneCheckerCallbacks noerror_callbacks(
+        NULL, boost::bind(&ZoneCheckerTest::callback, this, _1, false));
+    EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, noerror_callbacks));
     checkIssues();
 
     // If there are more than 1 SOA RR, it's also an error.
@@ -188,6 +191,13 @@ TEST_F(ZoneCheckerTest, checkNSData) {
     rrsets_->removeRRset(ns_name, zclass_, RRType::A());
     EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
     expected_warns_.push_back("zone example.com/IN: NS has no address");
+    checkIssues();
+
+    // Same check, but disabling warning callback.  Same result, but without
+    // the warning.
+    ZoneCheckerCallbacks nowarn_callbacks(
+        boost::bind(&ZoneCheckerTest::callback, this, _1, true), NULL);
+    EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, nowarn_callbacks));
     checkIssues();
 
     // A tricky case: if the name matches a wildcard, it should technically
