@@ -87,6 +87,38 @@ checkSOA(const Name& zone_name, const RRClass& zone_class,
     }
 }
 
+// Check if a target name is beyond zone cut, either due to delegation or
+// DNAME.  Note that DNAME works on the origin but on the name itself, while
+// delegation works on the name itself (but the NS at the origin is not
+// delegation).
+const AbstractRRset*
+findZoneCut(const Name& zone_name, const RRClass& zone_class,
+            const RRsetCollectionBase& zone_rrsets, const Name& target_name) {
+    const unsigned int origin_count = zone_name.getLabelCount();
+    const unsigned int target_count = target_name.getLabelCount();
+    assert(origin_count <= target_count);
+
+    for (unsigned int l = origin_count; l <= target_count; ++l) {
+        const Name& mid_name = (l == target_count) ? target_name :
+            target_name.split(target_count - l);
+
+        const AbstractRRset* found = NULL;
+        if (l != origin_count &&
+            (found = zone_rrsets.find(mid_name, RRType::NS(), zone_class)) !=
+            NULL) {
+            return (found);
+        }
+        if (l != target_count &&
+            (found = zone_rrsets.find(mid_name, RRType::DNAME(), zone_class))
+            != NULL) {
+            return (found);
+        }
+    }
+    return (NULL);
+}
+
+// Check if each "in-zone" NS name has an address record, identifying some
+// error cases.
 void
 checkNSNames(const Name& zone_name, const RRClass& zone_class,
              const RRsetCollectionBase& zone_rrsets,
@@ -109,7 +141,25 @@ checkNSNames(const Name& zone_name, const RRClass& zone_class,
             ns_name.compare(zone_name).getRelation();
         if (reln != NameComparisonResult::EQUAL &&
             reln != NameComparisonResult::SUBDOMAIN) {
-            continue;
+            continue;           // not in the zone.  we can ignore it.
+        }
+
+        // Check if there's a zone cut between the origin and the NS name.
+        const AbstractRRset* cut_rrset = findZoneCut(zone_name, zone_class,
+                                                     zone_rrsets, ns_name);
+        if (cut_rrset != NULL) {
+            if  (cut_rrset->getType() == RRType::NS()) {
+                continue; // delegation; making the NS name "out of zone".
+            } else if (cut_rrset->getType() == RRType::DNAME()) {
+                callbacks.error("zone " + zoneText(zone_name, zone_class) +
+                                ": NS '" + ns_name.toText(true) + "' is " +
+                                "below a DNAME '" +
+                                cut_rrset->getName().toText(true) +
+                                "' (illegal per RFC6672)");
+                continue;
+            } else {
+                assert(false);
+            }
         }
         if (zone_rrsets.find(ns_name, RRType::A(), zone_class) == NULL &&
             zone_rrsets.find(ns_name, RRType::AAAA(), zone_class) == NULL) {
