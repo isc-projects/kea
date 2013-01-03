@@ -88,8 +88,8 @@ checkSOA(const Name& zone_name, const RRClass& zone_class,
 }
 
 // Check if a target name is beyond zone cut, either due to delegation or
-// DNAME.  Note that DNAME works on the origin but on the name itself, while
-// delegation works on the name itself (but the NS at the origin is not
+// DNAME.  Note that DNAME works on the origin but not on the name itself,
+// while delegation works on the name itself (but the NS at the origin is not
 // delegation).
 const AbstractRRset*
 findZoneCut(const Name& zone_name, const RRClass& zone_class,
