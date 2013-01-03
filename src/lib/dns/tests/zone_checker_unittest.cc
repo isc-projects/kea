@@ -77,12 +77,17 @@ protected:
         EXPECT_EQ(expected_errors_.size(), errors_.size());
         for (int i = 0; i < std::min(expected_errors_.size(), errors_.size());
              ++i) {
-            EXPECT_EQ(expected_errors_[i], errors_[i]);
+            // The actual message should begin with the expected message.
+            EXPECT_EQ(0, errors_[0].find(expected_errors_[0]))
+                << "actual message: " << errors_[0] << " expected: " <<
+                expected_errors_[0];
         }
         EXPECT_EQ(expected_warns_.size(), warns_.size());
         for (int i = 0; i < std::min(expected_warns_.size(), warns_.size());
              ++i) {
-            EXPECT_EQ(expected_warns_[i], warns_[i]);
+            EXPECT_EQ(0, warns_[0].find(expected_warns_[0]))
+                << "actual message: " << warns_[0] << " expected: " <<
+                expected_warns_[0];
         }
 
         errors_.clear();
@@ -121,7 +126,7 @@ TEST_F(ZoneCheckerTest, checkSOA) {
     // If the zone has no SOA it triggers an error.
     rrsets_->removeRRset(zname_, zclass_, RRType::SOA());
     EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
-    expected_errors_.push_back("zone example.com/IN has 0 SOA records");
+    expected_errors_.push_back("zone example.com/IN: has 0 SOA records");
     checkIssues();
 
     // If there are more than 1 SOA RR, it's also an error.
@@ -130,7 +135,7 @@ TEST_F(ZoneCheckerTest, checkSOA) {
     soa_->addRdata(generic::SOA("ns2.example.com. . 0 0 0 0 0"));
     rrsets_->addRRset(soa_);
     EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
-    expected_errors_.push_back("zone example.com/IN has 2 SOA records");
+    expected_errors_.push_back("zone example.com/IN: has 2 SOA records");
     checkIssues();
 
     // If the SOA RRset is "empty", it's treated as an implementation
@@ -154,7 +159,7 @@ TEST_F(ZoneCheckerTest, checkNS) {
     // If the zone has no NS at origin it triggers an error.
     rrsets_->removeRRset(zname_, zclass_, RRType::NS());
     EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
-    expected_errors_.push_back("zone example.com/IN has no NS records");
+    expected_errors_.push_back("zone example.com/IN: has no NS records");
     checkIssues();
 
     // Check two buggy cases like the SOA tests
@@ -169,6 +174,41 @@ TEST_F(ZoneCheckerTest, checkNS) {
     rrsets_->addRRset(ns_);
     EXPECT_THROW(checkZone(zname_, zclass_, *rrsets_, callbacks_), Unexpected);
     checkIssues();              // no error/warning should be reported
+}
+
+TEST_F(ZoneCheckerTest, checkNSData) {
+    const Name ns_name("ns.example.com");
+
+    // If a ("in-bailiwick") NS name doesn't have an address record, it's
+    // reported as a warning.
+    rrsets_->removeRRset(ns_name, zclass_, RRType::A());
+    EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
+    expected_warns_.push_back("zone example.com/IN: NS has no address");
+    checkIssues();
+
+    // It doesn't have to be A.  An AAAA is enough.
+    RRsetPtr aaaa(new RRset(ns_name, zclass_, RRType::AAAA(), RRTTL(60)));
+    aaaa->addRdata(in::AAAA("2001:db8::1"));
+    rrsets_->addRRset(aaaa);
+    EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
+    checkIssues();
+
+    // Or it doesn't matter if the NS name is "out of bailiwick".
+    rrsets_->removeRRset(zname_, zclass_, RRType::NS());
+    ns_.reset(new RRset(zname_, zclass_, RRType::NS(), RRTTL(60)));
+    ns_->addRdata(generic::NS("ns.example.org"));
+    rrsets_->addRRset(ns_);
+    EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
+    checkIssues();
+
+    // Note that if the NS name is the origin name, it should be checked
+    rrsets_->removeRRset(zname_, zclass_, RRType::NS());
+    ns_.reset(new RRset(zname_, zclass_, RRType::NS(), RRTTL(60)));
+    ns_->addRdata(generic::NS(zname_));
+    rrsets_->addRRset(ns_);
+    EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
+    expected_warns_.push_back("zone example.com/IN: NS has no address");
+    checkIssues();
 }
 
 }

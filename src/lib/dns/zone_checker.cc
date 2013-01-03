@@ -82,34 +82,54 @@ checkSOA(const Name& zone_name, const RRClass& zone_class,
         }
     }
     if (count != 1) {
-        callback.error("zone " + zoneText(zone_name, zone_class) + " has " +
+        callback.error("zone " + zoneText(zone_name, zone_class) + ": has " +
                        lexical_cast<string>(count) + " SOA records");
     }
 }
 
 void
-checkNS(const Name& zone_name, const RRClass& zone_class,
-         const RRsetCollectionBase& zone_rrsets, CallbackWrapper& callback) {
-    const AbstractRRset* rrset =
-        zone_rrsets.find(zone_name, RRType::NS(), zone_class);
-    if (rrset == NULL) {
-        callback.error("zone " + zoneText(zone_name, zone_class) +
-                       " has no NS records");
-        return;
-    }
-    if (rrset->getRdataCount() == 0) {
+checkNSNames(const Name& zone_name, const RRClass& zone_class,
+             const RRsetCollectionBase& zone_rrsets,
+             const AbstractRRset& ns_rrset, CallbackWrapper& callbacks) {
+    if (ns_rrset.getRdataCount() == 0) {
         // this should be an implementation bug, not an operational error.
         isc_throw(Unexpected, "Zone checker found an empty NS RRset");
     }
 
-    for (RdataIteratorPtr rit = rrset->getRdataIterator();
+    for (RdataIteratorPtr rit = ns_rrset.getRdataIterator();
          !rit->isLast();
          rit->next()) {
-        if (dynamic_cast<const rdata::generic::NS*>(&rit->getCurrent()) ==
-            NULL) {
+        const rdata::generic::NS* ns_data =
+            dynamic_cast<const rdata::generic::NS*>(&rit->getCurrent());
+        if (ns_data == NULL) {
             isc_throw(Unexpected, "Zone checker found bad RDATA in NS");
         }
+        const Name& ns_name = ns_data->getNSName();
+        const NameComparisonResult::NameRelation reln =
+            ns_name.compare(zone_name).getRelation();
+        if (reln != NameComparisonResult::EQUAL &&
+            reln != NameComparisonResult::SUBDOMAIN) {
+            continue;
+        }
+        if (zone_rrsets.find(ns_name, RRType::A(), zone_class) == NULL &&
+            zone_rrsets.find(ns_name, RRType::AAAA(), zone_class) == NULL) {
+            callbacks.warn("zone " + zoneText(zone_name, zone_class) +
+                           ": NS has no address records (A or AAAA)");
+        }
     }
+}
+
+void
+checkNS(const Name& zone_name, const RRClass& zone_class,
+        const RRsetCollectionBase& zone_rrsets, CallbackWrapper& callbacks) {
+    const AbstractRRset* rrset =
+        zone_rrsets.find(zone_name, RRType::NS(), zone_class);
+    if (rrset == NULL) {
+        callbacks.error("zone " + zoneText(zone_name, zone_class) +
+                        ": has no NS records");
+        return;
+    }
+    checkNSNames(zone_name, zone_class, zone_rrsets, *rrset, callbacks);
 }
 }
 
@@ -117,12 +137,12 @@ bool
 checkZone(const Name& zone_name, const RRClass& zone_class,
           const RRsetCollectionBase& zone_rrsets,
           const ZoneCheckerCallbacks& callbacks) {
-    CallbackWrapper my_callback(callbacks);
+    CallbackWrapper my_callbacks(callbacks);
 
-    checkSOA(zone_name, zone_class, zone_rrsets, my_callback);
-    checkNS(zone_name, zone_class, zone_rrsets, my_callback);
+    checkSOA(zone_name, zone_class, zone_rrsets, my_callbacks);
+    checkNS(zone_name, zone_class, zone_rrsets, my_callbacks);
 
-    return (!my_callback.hasError());
+    return (!my_callbacks.hasError());
 }
 
 } // end namespace dns
