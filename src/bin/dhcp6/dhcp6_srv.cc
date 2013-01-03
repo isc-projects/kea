@@ -824,8 +824,8 @@ OptionPtr Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, Pkt6Ptr question,
         LOG_WARN(dhcp6_logger, DHCP6_RELEASE_FAIL_WRONG_IAID)
             .arg(duid->toText())
             .arg(release_addr->getAddress().toText())
-            .arg(lease->iaid_);
-            .arg(ia->getIAID())
+            .arg(lease->iaid_)
+            .arg(ia->getIAID());
         ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
                           "This is your address, but you used wrong IAID"));
         general_status = STATUS_NoBinding;
