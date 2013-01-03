@@ -44,8 +44,8 @@ TEST_F(RRsetCollectionTest, istreamConstructor) {
     std::ifstream fs(TEST_DATA_SRCDIR "/example.org");
     RRsetCollection collection2(fs, origin, rrclass);
 
-    RRsetCollectionBase::iterator iter = collection.begin();
-    RRsetCollectionBase::iterator iter2 = collection2.begin();
+    RRsetCollectionBase::Iterator iter = collection.begin();
+    RRsetCollectionBase::Iterator iter2 = collection2.begin();
     while (iter != collection.end()) {
          EXPECT_TRUE(iter2 != collection2.end());
          EXPECT_EQ((*iter).toText(), (*iter2).toText());
@@ -184,7 +184,7 @@ TEST_F(RRsetCollectionTest, iteratorTest) {
 
     // Here, we just count the records and do some basic tests on them.
     size_t count = 0;
-    for (RRsetCollection::iterator it = collection.begin();
+    for (RRsetCollection::Iterator it = collection.begin();
          it != collection.end(); ++it) {
          ++count;
          const AbstractRRset& rrset = *it;
