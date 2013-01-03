@@ -15,8 +15,8 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 """\
-This is a supplemental script to generate various forms of test data
-from a unified source file.
+This is a supplemental script to auto generate test data in the form of
+C++ source code from a DNS zone file.
 
 Usage: python gen-query-testdata.py source_file output-cc-file
 
