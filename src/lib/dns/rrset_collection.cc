@@ -115,12 +115,19 @@ RRsetCollection::find(const Name& name, const RRClass& rrclass,
     return (ConstRRsetPtr());
 }
 
-void
+bool
 RRsetCollection::removeRRset(const Name& name, const RRClass& rrclass,
                              const RRType& rrtype)
 {
     const CollectionKey key(rrclass, rrtype, name);
-    rrsets_.erase(key);
+
+    CollectionMap::iterator it = rrsets_.find(key);
+    if (it == rrsets_.end()) {
+        return (false);
+    }
+
+    rrsets_.erase(it);
+    return (true);
 }
 
 RRsetCollectionBase::IterPtr
