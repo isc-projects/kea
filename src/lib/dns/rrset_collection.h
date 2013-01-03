@@ -118,6 +118,9 @@ public:
                                  const isc::dns::RRType& rrtype) const;
 
 private:
+    template<typename T>
+    void constructHelper(T source, const isc::dns::Name& origin,
+                         const isc::dns::RRClass& rrclass);
     void addRRset(const isc::dns::Name& name, const isc::dns::RRClass& rrclass,
                   const isc::dns::RRType& rrtype, const isc::dns::RRTTL& rrttl,
                   const isc::dns::rdata::RdataPtr& data);

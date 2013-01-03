@@ -55,30 +55,31 @@ RRsetCollection::addRRset(RRsetPtr rrset) {
     rrsets_.insert(std::pair<CollectionKey, RRsetPtr>(key, rrset));
 }
 
-RRsetCollection::RRsetCollection(const char* filename, const Name& origin,
-                                 const RRClass& rrclass)
+template<typename T>
+void
+RRsetCollection::constructHelper(T source, const isc::dns::Name& origin,
+                                 const isc::dns::RRClass& rrclass)
 {
     MasterLoaderCallbacks callbacks
         (boost::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3),
          boost::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3));
-    MasterLoader loader(filename, origin, rrclass, callbacks,
+    MasterLoader loader(source, origin, rrclass, callbacks,
                         boost::bind(&RRsetCollection::addRRset,
                                     this, _1, _2, _3, _4, _5),
                         MasterLoader::DEFAULT);
     loader.load();
 }
 
+RRsetCollection::RRsetCollection(const char* filename, const Name& origin,
+                                 const RRClass& rrclass)
+{
+    constructHelper<const char*>(filename, origin, rrclass);
+}
+
 RRsetCollection::RRsetCollection(std::istream& input_stream, const Name& origin,
                                  const RRClass& rrclass)
 {
-    MasterLoaderCallbacks callbacks
-        (boost::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3),
-         boost::bind(&RRsetCollection::loaderCallback, this, _1, _2, _3));
-    MasterLoader loader(input_stream, origin, rrclass, callbacks,
-                        boost::bind(&RRsetCollection::addRRset,
-                                    this, _1, _2, _3, _4, _5),
-                        MasterLoader::DEFAULT);
-    loader.load();
+    constructHelper<std::istream&>(input_stream, origin, rrclass);
 }
 
 const AbstractRRset*
