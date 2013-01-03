@@ -85,6 +85,22 @@ Subnet::getOptions(const std::string& option_space) const {
     return (options->second);
 }
 
+Subnet::OptionDescriptor
+Subnet::getOptionSingle(const std::string& option_space,
+                        const uint16_t option_code) {
+    const OptionContainer& options = getOptions(option_space);
+    if (options.empty()) {
+        return (OptionDescriptor(false));
+    }
+    const OptionContainerTypeIndex& idx = options.get<1>();
+    const OptionContainerTypeRange& range = idx.equal_range(option_code);
+    if (std::distance(range.first, range.second) == 0) {
+        return (OptionDescriptor(false));
+    }
+
+    return (*range.first);
+}
+
 std::string Subnet::toText() const {
     std::stringstream tmp;
     tmp << prefix_.toText() << "/" << static_cast<unsigned int>(prefix_len_);
