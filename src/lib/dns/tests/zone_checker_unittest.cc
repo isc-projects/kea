@@ -113,6 +113,10 @@ TEST_F(ZoneCheckerTest, checkGood) {
     EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
     checkIssues();
 
+    // We can omit callbacks, in which case the default constructor for
+    // the callbacks is used, meaning callbacks are no-op.
+    EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_));
+
     // Multiple NS RRs are okay.
     rrsets_->removeRRset(zname_, zclass_, RRType::NS());
     ns_->addRdata(generic::NS(ns_txt1));
@@ -186,7 +190,19 @@ TEST_F(ZoneCheckerTest, checkNSData) {
     expected_warns_.push_back("zone example.com/IN: NS has no address");
     checkIssues();
 
+    // A tricky case: if the name matches a wildcard, it should technically
+    // be considered valid, but this checker doesn't check that far and still
+    // warns.
+    RRsetPtr wild(new RRset(Name("*.example.com"), zclass_, RRType::A(),
+                            RRTTL(0)));
+    wild->addRdata(in::A("192.0.2.255"));
+    rrsets_->addRRset(wild);
+    EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
+    expected_warns_.push_back("zone example.com/IN: NS has no address");
+    checkIssues();
+
     // If there's a CNAME at the name instead, it's an error.
+    rrsets_->removeRRset(Name("*.example.com"), zclass_, RRType::A());
     RRsetPtr cname(new RRset(ns_name, zclass_, RRType::CNAME(), RRTTL(60)));
     cname->addRdata(generic::CNAME("cname.example.com"));
     rrsets_->addRRset(cname);
