@@ -43,9 +43,118 @@ public:
 
     ~CfgMgrTest() {
         CfgMgr::instance().deleteSubnets6();
+        CfgMgr::instance().deleteOptionDefs();
     }
 };
 
+// This test verifies that multiple option definitions can be added
+// under different option spaces.
+TEST_F(CfgMgrTest, getOptionDefs) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    // Create a set of option definitions with codes between 100 and 109.
+    for (uint16_t code = 100; code < 110; ++code) {
+        std::ostringstream option_name;
+        // Option name is unique, e.g. option-100, option-101 etc.
+        option_name << "option-" << code;
+        OptionDefinitionPtr def(new OptionDefinition(option_name.str(), code,
+                                                     "uint16"));
+        // Add option definition to "isc" option space.
+        // Option codes are not duplicated so expect no error
+        // when adding them.
+        ASSERT_NO_THROW(cfg_mgr.addOptionDef(def, "isc"));
+    }
+
+    // Create a set of option definitions with codes between 105 and 114 and
+    // add them to the different option space.
+    for (uint16_t code = 105; code < 115; ++code) {
+        std::ostringstream option_name;
+        option_name << "option-" << code;
+        OptionDefinitionPtr def(new OptionDefinition(option_name.str(), code,
+                                                     "uint16"));
+        ASSERT_NO_THROW(cfg_mgr.addOptionDef(def, "abcde"));
+    }
+
+    // Sanity check that all 10 option definitions are there.
+    const OptionDefContainer& option_defs1 = cfg_mgr.getOptionDefs("isc");
+    ASSERT_EQ(10, option_defs1.size());
+
+    // Iterate over all option definitions and check that they have
+    // valid codes. Also, their order should be the same as they
+    // were added (codes 100-109).
+    uint16_t code = 100;
+    for (OptionDefContainer::const_iterator it = option_defs1.begin();
+         it != option_defs1.end(); ++it, ++code) {
+        OptionDefinitionPtr def(*it);
+        ASSERT_TRUE(def);
+        EXPECT_EQ(code, def->getCode());
+    }
+
+    // Sanity check that all 10 option definitions are there.
+    const OptionDefContainer& option_defs2 = cfg_mgr.getOptionDefs("abcde");
+    ASSERT_EQ(10, option_defs2.size());
+
+    // Check that the option codes are valid.
+    code = 105;
+    for (OptionDefContainer::const_iterator it = option_defs2.begin();
+         it != option_defs2.end(); ++it, ++code) {
+        OptionDefinitionPtr def(*it);
+        ASSERT_TRUE(def);
+        EXPECT_EQ(code, def->getCode());
+    }
+
+    // Let's make one more check that the empty set is returned when
+    // invalid option space is used.
+    const OptionDefContainer& option_defs3 = cfg_mgr.getOptionDefs("non-existing");
+    ASSERT_TRUE(option_defs3.empty());
+}
+
+// This test verifies that single option definition is correctly
+// returned with getOptionDef function.
+TEST_F(CfgMgrTest, getOptionDef) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    // Create a set of option definitions with codes between 100 and 109.
+    for (uint16_t code = 100; code < 110; ++code) {
+        std::ostringstream option_name;
+        // Option name is unique, e.g. option-100, option-101 etc.
+        option_name << "option-" << code;
+        OptionDefinitionPtr def(new OptionDefinition(option_name.str(), code,
+                                                     "uint16"));
+        // Add option definition to "isc" option space.
+        // Option codes are not duplicated so expect no error
+        // when adding them.
+        ASSERT_NO_THROW(cfg_mgr.addOptionDef(def, "isc"));
+    }
+
+    // Create a set of option definitions with codes between 105 and 114 and
+    // add them to the different option space.
+    for (uint16_t code = 105; code < 115; ++code) {
+        std::ostringstream option_name;
+        option_name << "option-" << code;
+        OptionDefinitionPtr def(new OptionDefinition(option_name.str(), code,
+                                                     "uint16"));
+        ASSERT_NO_THROW(cfg_mgr.addOptionDef(def, "abcde"));
+    }
+
+    // Try to get option definitions one by one using all codes
+    // that we expect to be there.
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionDefinitionPtr def = cfg_mgr.getOptionDef("isc", code);
+        ASSERT_TRUE(def);
+        EXPECT_EQ(code, def->getCode());
+    }
+
+    // Check that the option codes are valid.
+    for (uint16_t code = 105; code < 115; ++code) {
+        OptionDefinitionPtr def = cfg_mgr.getOptionDef("abcde", code);
+        ASSERT_TRUE(def);
+        EXPECT_EQ(code, def->getCode());
+    }
+
+    // Try to query the option definition from an non-existing
+    // option space and expect NULL pointer.
+    OptionDefinitionPtr def = cfg_mgr.getOptionDef("non-existing", 56);
+    ASSERT_FALSE(def);
+}
 
 // This test verifies if the configuration manager is able to hold and return
 // valid leases
@@ -79,7 +188,6 @@ TEST_F(CfgMgrTest, subnet4) {
 
 // This test verifies if the configuration manager is able to hold and return
 // valid leases
-
 TEST_F(CfgMgrTest, subnet6) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
 

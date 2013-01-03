@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,13 +21,52 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-
-
-
 CfgMgr&
 CfgMgr::instance() {
     static CfgMgr cfg_mgr;
     return (cfg_mgr);
+}
+
+void
+CfgMgr::addOptionDef(const OptionDefinitionPtr& def,
+                     const std::string& option_space) {
+    // @todo we need better validation of the provided option space name here.
+    // This will be implemented when #2313 is merged.
+    if (option_space.empty()) {
+        isc_throw(BadValue, "option space name must not be empty");
+    } else if (!def) {
+        isc_throw(MalformedOptionDefinition, "option definition must not be NULL");
+    } else if (getOptionDef(option_space, def->getCode())) {
+        isc_throw(DuplicateOptionDefinition, "option definition already added"
+                  << " to option space " << option_space);
+    }
+    option_def_spaces_[option_space].push_back(def);
+}
+
+const OptionDefContainer&
+CfgMgr::getOptionDefs(const std::string& option_space) const {
+    const std::map<std::string, OptionDefContainer>::const_iterator& defs =
+        option_def_spaces_.find(option_space);
+    if (defs == option_def_spaces_.end()) {
+        static OptionDefContainer empty_container;
+        return (empty_container);
+    }
+    return (defs->second);
+}
+
+OptionDefinitionPtr
+CfgMgr::getOptionDef(const std::string& option_space,
+                     const uint16_t option_code) const {
+    const OptionDefContainer& defs = getOptionDefs(option_space);
+    if (defs.empty()) {
+        return (OptionDefinitionPtr());
+    }
+    const OptionDefContainerTypeIndex& idx = defs.get<1>();
+    const OptionDefContainerTypeRange& range = idx.equal_range(option_code);
+    if (std::distance(range.first, range.second) == 0) {
+        return (OptionDefinitionPtr());
+    }
+    return (*range.first);
 }
 
 Subnet6Ptr
@@ -99,6 +138,10 @@ void CfgMgr::addSubnet4(const Subnet4Ptr& subnet) {
     /// @todo: Check that this new subnet does not cross boundaries of any
     /// other already defined subnet.
     subnets4_.push_back(subnet);
+}
+
+void CfgMgr::deleteOptionDefs() {
+    option_def_spaces_.clear();
 }
 
 void CfgMgr::deleteSubnets4() {

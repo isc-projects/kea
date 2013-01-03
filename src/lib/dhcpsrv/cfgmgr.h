@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
+#include <dhcp/option_definition.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
 #include <util/buffer.h>
@@ -77,6 +78,34 @@ public:
     /// accessing it.
     static CfgMgr& instance();
 
+    /// @brief Add new option definition.
+    ///
+    /// @param def option definition to be added.
+    ///
+    /// @throw isc::dhcp::DuplicateOptionDefinition when the particular
+    /// option definition already exists.
+    void addOptionDef(const OptionDefinitionPtr& def,
+                      const std::string& option_space);
+
+    /// @brief Return option definitions for particular option space.
+    ///
+    /// @param option_space option space.
+    ///
+    /// @return collection of option definitions for a particular
+    /// option space.
+    const OptionDefContainer&
+    getOptionDefs(const std::string& option_space) const;
+
+    /// @brief Return option definition for a particular option space and code.
+    ///
+    /// @param option_space option space.
+    /// @param option_code option code.
+    ///
+    /// @return an option definition or NULL pointer if option definition
+    /// has not been found.
+    OptionDefinitionPtr getOptionDef(const std::string& option_space,
+                                     const uint16_t option_code) const;
+
     /// @brief get IPv6 subnet by address
     ///
     /// Finds a matching subnet, based on an address. This can be used
@@ -86,6 +115,8 @@ public:
     ///    (for directly connected clients)
     ///
     /// @param hint an address that belongs to a searched subnet
+    ///
+    /// @return a subnet object
     Subnet6Ptr getSubnet6(const isc::asiolink::IOAddress& hint);
 
     /// @brief get IPv6 subnet by interface-id
@@ -93,11 +124,18 @@ public:
     /// Another possibility to find a subnet is based on interface-id.
     ///
     /// @param interface_id content of interface-id option returned by a relay
+    ///
+    /// @return a subnet object
     /// @todo This method is not currently supported.
     Subnet6Ptr getSubnet6(OptionPtr interface_id);
 
     /// @brief adds an IPv6 subnet
+    ///
+    /// @param subnet new subnet to be added.
     void addSubnet6(const Subnet6Ptr& subnet);
+
+    /// @brief Delete all option definitions.
+    void deleteOptionDefs();
 
     /// @todo: Add subnet6 removal routines. Currently it is not possible
     /// to remove subnets. The only case where subnet6 removal would be
@@ -125,6 +163,8 @@ public:
     ///    (for directly connected clients)
     ///
     /// @param hint an address that belongs to a searched subnet
+    ///
+    /// @return a subnet object
     Subnet4Ptr getSubnet4(const isc::asiolink::IOAddress& hint);
 
     /// @brief adds a subnet4
@@ -169,6 +209,11 @@ protected:
     /// pattern will use calling inRange() method on each subnet until
     /// a match is found.
     Subnet4Collection subnets4_;
+
+private:
+
+    /// A map containing option definitions for different option spaces.
+    std::map<std::string, OptionDefContainer> option_def_spaces_;
 };
 
 } // namespace isc::dhcp
