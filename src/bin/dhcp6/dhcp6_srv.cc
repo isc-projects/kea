@@ -808,7 +808,7 @@ OptionPtr Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, Pkt6Ptr question,
     if (*duid != *(lease->duid_)) {
         // Sorry, it's not your address. You can't release it.
 
-        LOG_WARN(dhcp6_logger, DHCP6_RELEASE_FAIL_WRONG_DUID)
+        LOG_INFO(dhcp6_logger, DHCP6_RELEASE_FAIL_WRONG_DUID)
             .arg(duid->toText())
             .arg(release_addr->getAddress().toText())
             .arg(lease->duid_->toText());
