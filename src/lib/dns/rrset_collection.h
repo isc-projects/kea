@@ -87,7 +87,10 @@ public:
     ///
     /// RRset(s) matching the \c name, \c rrclass and \c rrtype are
     /// removed from the collection.
-    void removeRRset(const isc::dns::Name& name,
+    ///
+    /// \returns \c true if a matching RRset was deleted, \c false if no
+    /// such RRset exists.
+    bool removeRRset(const isc::dns::Name& name,
                      const isc::dns::RRClass& rrclass,
                      const isc::dns::RRType& rrtype);
 
