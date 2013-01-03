@@ -86,7 +86,8 @@ public:
     /// option definition already exists.
     /// @throw isc::dhcp::MalformedOptionDefinition when the pointer to
     /// an option definition is NULL.
-    /// @throw isc::BadValue when the option space name is empty.
+    /// @throw isc::BadValue when the option space name is empty or
+    /// option space name is one of reserved names: dhcp4 or dhcp6.
     void addOptionDef(const OptionDefinitionPtr& def,
                       const std::string& option_space);
 
