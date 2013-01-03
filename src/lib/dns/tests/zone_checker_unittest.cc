@@ -186,14 +186,33 @@ TEST_F(ZoneCheckerTest, checkNSData) {
     expected_warns_.push_back("zone example.com/IN: NS has no address");
     checkIssues();
 
+    // If there's a CNAME at the name instead, it's an error.
+    RRsetPtr cname(new RRset(ns_name, zclass_, RRType::CNAME(), RRTTL(60)));
+    cname->addRdata(generic::CNAME("cname.example.com"));
+    rrsets_->addRRset(cname);
+    EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
+    expected_errors_.push_back("zone example.com/IN: NS 'ns.example.com' is "
+                               "a CNAME (illegal per RFC2181)");
+    checkIssues();
+
     // It doesn't have to be A.  An AAAA is enough.
+    rrsets_->removeRRset(ns_name, zclass_, RRType::CNAME());
     RRsetPtr aaaa(new RRset(ns_name, zclass_, RRType::AAAA(), RRTTL(60)));
     aaaa->addRdata(in::AAAA("2001:db8::1"));
     rrsets_->addRRset(aaaa);
     EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
     checkIssues();
 
-    // Or it doesn't matter if the NS name is "out of bailiwick".
+    // Coexisting CNAME makes it error (CNAME with other record is itself
+    // invalid, but it's a different issue in this context)
+    rrsets_->addRRset(cname);
+    EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
+    expected_errors_.push_back("zone example.com/IN: NS 'ns.example.com' is "
+                               "a CNAME (illegal per RFC2181)");
+    checkIssues();
+
+    // It doesn't matter if the NS name is "out of bailiwick".
+    rrsets_->removeRRset(ns_name, zclass_, RRType::CNAME());
     rrsets_->removeRRset(zname_, zclass_, RRType::NS());
     ns_.reset(new RRset(zname_, zclass_, RRType::NS(), RRTTL(60)));
     ns_->addRdata(generic::NS("ns.example.org"));
