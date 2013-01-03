@@ -45,27 +45,39 @@ CfgMgr::addOptionDef(const OptionDefinitionPtr& def,
 
 const OptionDefContainer&
 CfgMgr::getOptionDefs(const std::string& option_space) const {
+    // Get all option definitions for the particular option space.
     const std::map<std::string, OptionDefContainer>::const_iterator& defs =
         option_def_spaces_.find(option_space);
+    // If there are no option definitions for the particular option space
+    // then return empty container.
     if (defs == option_def_spaces_.end()) {
         static OptionDefContainer empty_container;
         return (empty_container);
     }
+    // If option definitions found, return them.
     return (defs->second);
 }
 
 OptionDefinitionPtr
 CfgMgr::getOptionDef(const std::string& option_space,
                      const uint16_t option_code) const {
+    // Get a reference to option definitions for a particular option space.
     const OptionDefContainer& defs = getOptionDefs(option_space);
+    // If there are no matching option definitions then return the empty pointer.
     if (defs.empty()) {
         return (OptionDefinitionPtr());
     }
+    // If there are some option definitions for a particular option space
+    // use an option code to get the one we want.
     const OptionDefContainerTypeIndex& idx = defs.get<1>();
     const OptionDefContainerTypeRange& range = idx.equal_range(option_code);
+    // If there is no definition that matches option code, return empty pointer.
     if (std::distance(range.first, range.second) == 0) {
         return (OptionDefinitionPtr());
     }
+    // If there is more than one definition matching an option code, return
+    // the first one. This should not happen because we check for duplicates
+    // when addOptionDef is called.
     return (*range.first);
 }
 
