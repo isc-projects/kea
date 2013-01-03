@@ -31,6 +31,10 @@ namespace dns {
 class RRsetCollection : public RRsetCollectionBase {
 public:
     /// \brief Constructor.
+    ///
+    /// This constructor creates an empty collection without any data in
+    /// it. RRsets can be added to the collection with the \c addRRset()
+    /// method.
     RRsetCollection() {}
 
     /// \brief Constructor.
@@ -73,43 +77,49 @@ public:
     /// and managed by the \c RRsetCollection. It throws an
     /// \c isc::InvalidParameter exception if an rrset with the same
     /// class, type and name already exists.
+    ///
+    /// Callers must not modify the RRset after adding it to the
+    /// collection, as the rrset is indexed internally by the
+    /// collection.
     void addRRset(isc::dns::RRsetPtr rrset);
 
     /// \brief Remove an RRset from the collection.
     ///
     /// RRset(s) matching the \c name, \c rrclass and \c rrtype are
     /// removed from the collection.
-    void removeRRset(const isc::dns::Name& name,
+    ///
+    /// \returns \c true if a matching RRset was deleted, \c false if no
+    /// such RRset exists.
+    bool removeRRset(const isc::dns::Name& name,
                      const isc::dns::RRClass& rrclass,
                      const isc::dns::RRType& rrtype);
 
     /// \brief Find a matching RRset in the collection.
     ///
     /// Returns the RRset in the collection that exactly matches the
-    /// given \c name and \c rrtype.  If no matching RRset is found,
-    /// \c NULL is returned.
+    /// given \c name, \c rrclass and \c rrtype.  If no matching RRset
+    /// is found, \c NULL is returned.
     ///
     /// \param name The name of the RRset to search for.
-    /// \param rrtype The type of the RRset to search for.
     /// \param rrclass The class of the RRset to search for.
-    /// \returns A pointer to the RRset if found, \c NULL otherwise.
-    virtual const isc::dns::AbstractRRset* find
-        (const isc::dns::Name& name, const isc::dns::RRType& rrtype,
-         const isc::dns::RRClass& rrclass)
-        const;
+    /// \param rrtype The type of the RRset to search for.
+    /// \returns The RRset if found, \c NULL otherwise.
+    virtual isc::dns::ConstRRsetPtr find(const isc::dns::Name& name,
+                                         const isc::dns::RRClass& rrclass,
+                                         const isc::dns::RRType& rrtype) const;
 
+    /// \brief Find a matching RRset in the collection (non-const
+    /// variant).
+    ///
+    /// See above for a description of the method and arguments.
     isc::dns::RRsetPtr find(const isc::dns::Name& name,
                             const isc::dns::RRClass& rrclass,
                             const isc::dns::RRType& rrtype);
 
-    isc::dns::ConstRRsetPtr find(const isc::dns::Name& name,
-                                 const isc::dns::RRClass& rrclass,
-                                 const isc::dns::RRType& rrtype) const;
-
 private:
-    void addRRset(const isc::dns::Name& name, const isc::dns::RRClass& rrclass,
-                  const isc::dns::RRType& rrtype, const isc::dns::RRTTL& rrttl,
-                  const isc::dns::rdata::RdataPtr& data);
+    template<typename T>
+    void constructHelper(T source, const isc::dns::Name& origin,
+                         const isc::dns::RRClass& rrclass);
     void loaderCallback(const std::string&, size_t, const std::string&);
 
     typedef boost::tuple<isc::dns::RRClass, isc::dns::RRType, isc::dns::Name>
