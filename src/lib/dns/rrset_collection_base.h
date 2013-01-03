@@ -41,16 +41,16 @@ public:
     /// \brief Find a matching RRset in the collection.
     ///
     /// Returns the RRset in the collection that exactly matches the
-    /// given \c name and \c rrtype.  If no matching RRset is found,
-    /// \c NULL is returned.
+    /// given \c name, \c rrclass and \c rrtype.  If no matching RRset
+    /// is found, \c NULL is returned.
     ///
     /// \param name The name of the RRset to search for.
     /// \param rrtype The type of the RRset to search for.
     /// \param rrclass The class of the RRset to search for.
-    /// \returns A pointer to the RRset if found, \c NULL otherwise.
-    virtual const isc::dns::AbstractRRset* find
-        (const isc::dns::Name& name, const isc::dns::RRType& rrtype,
-         const isc::dns::RRClass& rrclass)
+    /// \returns The RRset if found, \c NULL otherwise.
+    virtual isc::dns::ConstRRsetPtr find
+        (const isc::dns::Name& name, const isc::dns::RRClass& rrclass,
+         const isc::dns::RRType& rrtype)
         const = 0;
 
     /// \brief Destructor

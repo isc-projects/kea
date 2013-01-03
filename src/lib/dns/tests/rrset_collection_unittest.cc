@@ -55,34 +55,6 @@ TEST_F(RRsetCollectionTest, istreamConstructor) {
     EXPECT_TRUE(iter2 == collection2.end());
 }
 
-TEST_F(RRsetCollectionTest, findBase) {
-    // Test the find() that returns isc::dns::AbstractRRset*
-    const AbstractRRset* rrset = collection.find(Name("www.example.org"),
-                                                 RRType::A(), rrclass);
-    EXPECT_NE(static_cast<AbstractRRset*>(NULL), rrset);
-    EXPECT_EQ(RRType::A(), rrset->getType());
-    EXPECT_EQ(RRTTL(3600), rrset->getTTL());
-    EXPECT_EQ(RRClass("IN"), rrset->getClass());
-    EXPECT_EQ(Name("www.example.org"), rrset->getName());
-
-    // foo.example.org doesn't exist
-    rrset = collection.find(Name("foo.example.org"), RRType::A(), rrclass);
-    EXPECT_EQ(static_cast<AbstractRRset*>(NULL), rrset);
-
-    // www.example.org exists, but not with MX
-    rrset = collection.find(Name("www.example.org"), RRType::MX(), rrclass);
-    EXPECT_EQ(static_cast<AbstractRRset*>(NULL), rrset);
-
-    // www.example.org exists, with AAAA
-    rrset = collection.find(Name("www.example.org"), RRType::AAAA(), rrclass);
-    EXPECT_NE(static_cast<AbstractRRset*>(NULL), rrset);
-
-    // www.example.org with AAAA does not exist in RRClass::CH()
-    rrset = collection.find(Name("www.example.org"), RRType::AAAA(),
-                            RRClass::CH());
-    EXPECT_EQ(static_cast<AbstractRRset*>(NULL), rrset);
-}
-
 template <typename T, typename TP>
 void doFind(T& collection, const RRClass& rrclass) {
     // Test the find() that returns ConstRRsetPtr
@@ -211,12 +183,10 @@ public:
     MyRRsetCollection()
     {}
 
-    virtual const isc::dns::AbstractRRset* find
-        (const isc::dns::Name&, const isc::dns::RRType&,
-         const isc::dns::RRClass&)
-        const
-    {
-        return (NULL);
+    virtual isc::dns::ConstRRsetPtr find(const isc::dns::Name&,
+                                         const isc::dns::RRClass&,
+                                         const isc::dns::RRType&) const {
+        return (ConstRRsetPtr());
     }
 
     typedef std::list<isc::dns::RRset> MyCollection;

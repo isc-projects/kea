@@ -74,17 +74,6 @@ RRsetCollection::RRsetCollection(std::istream& input_stream, const Name& origin,
     constructHelper<std::istream&>(input_stream, origin, rrclass);
 }
 
-const AbstractRRset*
-RRsetCollection::find(const Name& name, const RRType& rrtype,
-                      const RRClass& rrclass) const {
-    const CollectionKey key(rrclass, rrtype, name);
-    CollectionMap::const_iterator it = rrsets_.find(key);
-    if (it != rrsets_.end()) {
-        return (&(*it->second));
-    }
-    return (NULL);
-}
-
 RRsetPtr
 RRsetCollection::find(const Name& name, const RRClass& rrclass,
                       const RRType& rrtype) {
