@@ -160,6 +160,7 @@ libdns___includedir = $(includedir)/$(PACKAGE_NAME)/dns
 libdns___include_HEADERS = \
 	edns.h \
 	exceptions.h \
+	dns_fwd.h \
 	labelsequence.h \
 	message.h \
 	masterload.h \
@@ -177,7 +178,8 @@ libdns___include_HEADERS = \
 	rrset_collection_base.h \
 	rrset_collection.h \
 	rrttl.h \
-	tsigkey.h
+	tsigkey.h \
+	zone_checker.h
 # Purposely not installing these headers:
 # name_internal.h: used only internally, and not actually DNS specific
 # rdata/*/detail/*.h: these are internal use only
