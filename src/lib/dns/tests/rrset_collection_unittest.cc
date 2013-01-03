@@ -152,13 +152,20 @@ doAddAndRemove(RRsetCollection& collection, const RRClass& rrclass) {
         collection.addRRset(rrset);
     }, isc::InvalidParameter);
 
-    // Remove foo.example.org/A
-    collection.removeRRset(Name("foo.example.org"), rrclass, RRType::A());
+    // Remove foo.example.org/A, which should pass
+    bool exists = collection.removeRRset(Name("foo.example.org"),
+                                         rrclass, RRType::A());
+    EXPECT_TRUE(exists);
 
     // foo.example.org/A should not exist now
     rrset_found = collection.find(Name("foo.example.org"), rrclass,
                                   RRType::A());
     EXPECT_FALSE(rrset_found);
+
+    // Removing foo.example.org/A should fail now
+    exists = collection.removeRRset(Name("foo.example.org"),
+                                    rrclass, RRType::A());
+    EXPECT_FALSE(exists);
 }
 
 TEST_F(RRsetCollectionTest, addAndRemove) {
