@@ -211,4 +211,93 @@ TEST_F(ZoneCheckerTest, checkNSData) {
     checkIssues();
 }
 
+TEST_F(ZoneCheckerTest, checkNSWithDelegation) {
+    // Tests various cases where there's a zone cut due to delegation between
+    // the zone origin and the NS name.  In each case the NS name doesn't have
+    // an address record.
+    const Name ns_name("ns.child.example.com");
+
+    // Zone cut due to delegation in the middle; the check for the address
+    // record should be skipped.
+    rrsets_->removeRRset(zname_, zclass_, RRType::NS());
+    ns_.reset(new RRset(zname_, zclass_, RRType::NS(), RRTTL(60)));
+    ns_->addRdata(generic::NS(ns_name));
+    rrsets_->addRRset(ns_);
+    RRsetPtr child_ns(new RRset(Name("child.example.com"), zclass_,
+                                RRType::NS(), RRTTL(60)));
+    child_ns->addRdata(generic::NS("ns.example.org"));
+    rrsets_->addRRset(child_ns);
+    EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
+    checkIssues();
+
+    // Zone cut at the NS name.  Same result.
+    rrsets_->removeRRset(child_ns->getName(), zclass_, RRType::NS());
+    child_ns.reset(new RRset(ns_name, zclass_, RRType::NS(), RRTTL(60)));
+    child_ns->addRdata(generic::NS("ns.example.org"));
+    rrsets_->addRRset(child_ns);
+    EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
+    checkIssues();
+
+    // Zone cut below the NS name.  The check applies.
+    rrsets_->removeRRset(child_ns->getName(), zclass_, RRType::NS());
+    child_ns.reset(new RRset(Name("another.ns.child.example.com"), zclass_,
+                             RRType::NS(), RRTTL(60)));
+    child_ns->addRdata(generic::NS("ns.example.org"));
+    rrsets_->addRRset(child_ns);
+    EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
+    expected_warns_.push_back("zone example.com/IN: NS has no address");
+    checkIssues();
+}
+
+TEST_F(ZoneCheckerTest, checkNSWithDNAME) {
+    // Similar to the above case, but the zone cut is due to DNAME.  This is
+    // an invalid configuration.
+    const Name ns_name("ns.child.example.com");
+
+    // Zone cut due to DNAME at the zone origin.  This is an invalid case.
+    rrsets_->removeRRset(zname_, zclass_, RRType::NS());
+    ns_.reset(new RRset(zname_, zclass_, RRType::NS(), RRTTL(60)));
+    ns_->addRdata(generic::NS(ns_name));
+    rrsets_->addRRset(ns_);
+    RRsetPtr dname(new RRset(zname_, zclass_, RRType::DNAME(), RRTTL(60)));
+    dname->addRdata(generic::DNAME("example.org"));
+    rrsets_->addRRset(dname);
+    EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
+    expected_errors_.push_back("zone example.com/IN: NS 'ns.child.example.com'"
+                               " is below a DNAME 'example.com'");
+    checkIssues();
+
+    // Zone cut due to DNAME in the middle.  Same result.
+    rrsets_->removeRRset(zname_, zclass_, RRType::DNAME());
+    dname.reset(new RRset(Name("child.example.com"), zclass_, RRType::DNAME(),
+                          RRTTL(60)));
+    dname->addRdata(generic::DNAME("example.org"));
+    rrsets_->addRRset(dname);
+    EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
+    expected_errors_.push_back("zone example.com/IN: NS 'ns.child.example.com'"
+                               " is below a DNAME 'child.example.com'");
+    checkIssues();
+
+    // A tricky case: there's also an NS at the name that has DNAME.  It's
+    // prohibited per RFC6672 so we could say it's "undefined".  Nevertheless,
+    // this implementation prefers the NS and skips further checks.
+    ns_.reset(new RRset(Name("child.example.com"), zclass_, RRType::NS(),
+                        RRTTL(60)));
+    ns_->addRdata(generic::NS("ns.example.org"));
+    rrsets_->addRRset(ns_);
+    EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
+    checkIssues();
+
+    // Zone cut due to DNAME at the NS name.  In this case DNAME doesn't
+    // affect the NS name, so it should result in "no address record" warning.
+    rrsets_->removeRRset(dname->getName(), zclass_, RRType::DNAME());
+    rrsets_->removeRRset(ns_->getName(), zclass_, RRType::NS());
+    dname.reset(new RRset(ns_name, zclass_, RRType::DNAME(), RRTTL(60)));
+    dname->addRdata(generic::DNAME("example.org"));
+    rrsets_->addRRset(dname);
+    EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
+    expected_warns_.push_back("zone example.com/IN: NS has no address");
+    checkIssues();
+}
+
 }
