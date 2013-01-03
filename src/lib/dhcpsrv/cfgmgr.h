@@ -84,6 +84,9 @@ public:
     ///
     /// @throw isc::dhcp::DuplicateOptionDefinition when the particular
     /// option definition already exists.
+    /// @throw isc::dhcp::MalformedOptionDefinition when the pointer to
+    /// an option definition is NULL.
+    /// @throw isc::BadValue when the option space name is empty.
     void addOptionDef(const OptionDefinitionPtr& def,
                       const std::string& option_space);
 
