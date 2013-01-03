@@ -34,18 +34,14 @@ public:
     /// Its parameter indicates the reason for the corresponding issue.
     typedef boost::function<void(const std::string& reason)> IssueCallback;
 
-    /// \brief Default constructor.
+    /// \brief Constructor.
     ///
-    /// This is a convenient shortcut to specify callbacks that do nothing.
-    /// If, for example, the caller of \c checkZone() is only interested in
-    /// the final result, it can use this constructor.
-    ///
-    /// \throw none
-    ZoneCheckerCallbacks() :
-        error_callback_(nullCallback), warn_callback_(nullCallback)
-    {}
-
-    /// \brief Constructor with callbacks.
+    /// Either or both of the callbacks can be empty, in which case the
+    /// corresponding callback will be effectively no-operation.  This can be
+    /// used, for example, when the caller of \c checkZone() is only
+    /// interested in the final result.  Note that a \c NULL pointer will be
+    /// implicitly converted to an empty functor object, so passing \c NULL
+    /// suffices.
     ///
     /// \throw none
     ///
@@ -63,7 +59,11 @@ public:
     /// thrown from the callback.
     ///
     /// \param reason Textual representation of the reason for the error.
-    void error(const std::string& reason) { error_callback_(reason); }
+    void error(const std::string& reason) {
+        if (!error_callback_.empty()) {
+            error_callback_(reason);
+        }
+    }
 
     /// \brief Call the callback for a non critical issue.
     ///
@@ -71,11 +71,12 @@ public:
     /// thrown from the callback.
     ///
     /// \param reason Textual representation of the reason for the issue.
-    void warn(const std::string& reason) { warn_callback_(reason); }
+    void warn(const std::string& reason) {
+        if (!warn_callback_.empty())
+            warn_callback_(reason);
+    }
 
 private:
-    static void nullCallback(const std::string&) {}
-
     IssueCallback error_callback_;
     IssueCallback warn_callback_;
 };
@@ -150,7 +151,7 @@ private:
 bool
 checkZone(const Name& zone_name, const RRClass& zone_class,
           const RRsetCollectionBase& zone_rrsets,
-          const ZoneCheckerCallbacks& callbacks = ZoneCheckerCallbacks());
+          const ZoneCheckerCallbacks& callbacks);
 
 } // namespace dns
 } // namespace isc
