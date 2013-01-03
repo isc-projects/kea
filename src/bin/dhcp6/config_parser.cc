@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -925,7 +925,7 @@ public:
             subnet->addPool6(*it);
         }
 
-        const Subnet::OptionContainer& options = subnet->getOptions();
+        const Subnet::OptionContainer& options = subnet->getOptions("dhcp6");
         const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
 
         // Add subnet specific options.
@@ -935,7 +935,7 @@ public:
                 LOG_WARN(dhcp6_logger, DHCP6_CONFIG_OPTION_DUPLICATE)
                     .arg(desc.option->getType()).arg(addr.toText());
             }
-            subnet->addOption(desc.option);
+            subnet->addOption(desc.option, false, "dhcp6");
         }
 
         // Check all global options and add them to the subnet object if
@@ -945,6 +945,8 @@ public:
         BOOST_FOREACH(Subnet::OptionDescriptor desc, option_defaults) {
             // Get all options specified locally in the subnet and having
             // code equal to global option's code.
+            const Subnet::OptionContainer& options = subnet->getOptions("dhcp6");
+            const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
             Subnet::OptionContainerTypeRange range = idx.equal_range(desc.option->getType());
             // @todo: In the future we will be searching for options using either
             // an option code or namespace. Currently we have only the option
@@ -955,7 +957,7 @@ public:
             // want to issue a warning about dropping the configuration of
             // a global option if one already exsists.
             if (std::distance(range.first, range.second) == 0) {
-                subnet->addOption(desc.option);
+                subnet->addOption(desc.option, false, "dhcp6");
             }
         }
 

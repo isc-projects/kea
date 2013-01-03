@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -340,7 +340,7 @@ void Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer)
     // Get the list of options that client requested.
     const std::vector<uint16_t>& requested_opts = option_oro->getValues();
     // Get the list of options configured for a subnet.
-    const Subnet::OptionContainer& options = subnet->getOptions();
+    const Subnet::OptionContainer& options = subnet->getOptions("dhcp6");
     const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
     // Try to match requested options with those configured for a subnet.
     // If match is found, append configured option to the answer message.
