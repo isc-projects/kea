@@ -48,6 +48,17 @@ public:
     {}
 };
 
+/// \brief Exception thrown when the zone doesn't validate.
+///
+/// This is thrown by the ZoneLoader when the zone is loaded, but it
+/// doesn't pass basic sanity checks.
+class ZoneContentError : public DataSourceError {
+public:
+    ZoneContentError(const char* file, size_t line, const char* what) :
+        DataSourceError(file, line, what)
+    {}
+};
+
 /// \brief Class to load data into a data source client.
 ///
 /// This is a small wrapper class that is able to load data into a data source.
@@ -107,6 +118,7 @@ public:
     /// \throw DataSourceError in case some error (possibly low-level) happens.
     /// \throw MasterFileError when the master_file is badly formatted or some
     ///     similar problem is found when loading the master file.
+    /// \throw ZoneContentError when the zone doesn't pass sanity check.
     void load() {
         while (!loadIncremental(1000)) { // 1000 is arbitrary largish number
             // Body intentionally left blank.
@@ -123,6 +135,11 @@ public:
     /// pauses in the loading for some purposes (for example reporting
     /// progress).
     ///
+    /// After the last RR is loaded, a sanity check of the zone is performed by
+    /// isc::dns::validateZone. It reports errors and warnings by logging them
+    /// directly. If there are any errors, a ZoneContentError exception is
+    /// thrown.
+    ///
     /// \param limit The maximum allowed number of RRs to be loaded during this
     ///     call.
     /// \return True in case the loading is completed, false if there's more
@@ -133,6 +150,7 @@ public:
     /// \throw DataSourceError in case some error (possibly low-level) happens.
     /// \throw MasterFileError when the master_file is badly formatted or some
     ///     similar problem is found when loading the master file.
+    /// \throw ZoneContentError when the zone doesn't pass sanity check.
     /// \note If the limit is exactly the number of RRs available to be loaded,
     ///     the method still returns false and true'll be returned on the next
     ///     call (which will load 0 RRs). This is because the end of iterator or
