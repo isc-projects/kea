@@ -45,6 +45,7 @@ pydnspp_la_LDFLAGS = $(PYTHON_LDFLAGS)
 EXTRA_DIST = tsigerror_python_inc.cc
 EXTRA_DIST += message_python_inc.cc
 EXTRA_DIST += nsec3hash_python_inc.cc
+EXTRA_DIST += rrset_collection_python_inc.cc
 
 # Python prefers .so, while some OSes (specifically MacOS) use a different
 # suffix for dynamic objects.  -module is necessary to work this around.
