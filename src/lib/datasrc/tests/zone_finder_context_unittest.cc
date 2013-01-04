@@ -435,4 +435,23 @@ TEST_P(ZoneFinderContextTest, getAdditionalWithRRSIGOnly) {
                 result_sets_.begin(), result_sets_.end());
 }
 
+TEST(ZoneFinderContextSQLite3Test, escapedText) {
+    // This test checks that TXTLike data, when written to a database,
+    // is escaped correctly before stored in the database. The actual
+    // escaping is done in the toText() method of TXTLike objects, but
+    // we check anyway if this also carries over to the ZoneUpdater.
+    RRClass zclass(RRClass::IN());
+    Name zname("example.org");
+    stringstream ss("escaped.example.org. 3600 IN TXT Hello~World\\;\\\"");
+    DataSourceClientPtr client = createSQLite3Client(zclass, zname, ss);
+    ZoneFinderPtr finder = client->findZone(zname).zone_finder;
+
+    // If there is no escaping, the following will throw an exception
+    // when it tries to construct a TXT RRset using the data from the
+    // database.
+    ZoneFinderContextPtr ctx = finder->find(Name("escaped.example.org"),
+                                            RRType::TXT());
+    EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
+}
+
 }
