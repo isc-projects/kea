@@ -452,6 +452,8 @@ TEST(ZoneFinderContextSQLite3Test, escapedText) {
     ZoneFinderContextPtr ctx = finder->find(Name("escaped.example.org"),
                                             RRType::TXT());
     EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
+    EXPECT_EQ("escaped.example.org. 3600 IN TXT \"Hello~World\\;\\\"\"\n",
+              ctx->rrset->toText());
 }
 
 }
