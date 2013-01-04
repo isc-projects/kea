@@ -147,6 +147,11 @@ public:
         : storage_(NULL),
           param_name_(param_name),
           value_(false) {
+        // Empty parameter name is invalid.
+        if (param_name_.empty()) {
+            isc_throw(isc::dhcp::Dhcp4ConfigError, "parser logic error:"
+                      << "empty parameter name provided");
+        }
     }
 
     /// @brief Parse a boolean value.
@@ -184,7 +189,7 @@ public:
     ///
     /// @param param_name name of the parameter for which the
     ///        parser is created.
-    static Dhcp4ConfigParser* Factory(const std::string& param_name) {
+    static Dhcp4ConfigParser* factory(const std::string& param_name) {
         return (new BooleanParser(param_name));
     }
 
@@ -226,6 +231,11 @@ public:
     Uint32Parser(const std::string& param_name)
         : storage_(&uint32_defaults),
           param_name_(param_name) {
+        // Empty parameter name is invalid.
+        if (param_name_.empty()) {
+            isc_throw(Dhcp4ConfigError, "parser logic error:"
+                      << "empty parameter name provided");
+        }
     }
 
     /// @brief Parses configuration configuration parameter as uint32_t.
@@ -235,7 +245,7 @@ public:
     ///        or the parameter name is empty.
     virtual void build(ConstElementPtr value) {
         if (param_name_.empty()) {
-            isc_throw(BadValue, "parser logic error:"
+            isc_throw(Dhcp4ConfigError, "parser logic error:"
                       << "empty parameter name provided");
         }
 
@@ -272,7 +282,7 @@ public:
     /// @brief factory that constructs Uint32Parser objects
     ///
     /// @param param_name name of the parameter to be parsed
-    static Dhcp4ConfigParser* Factory(const std::string& param_name) {
+    static Dhcp4ConfigParser* factory(const std::string& param_name) {
         return (new Uint32Parser(param_name));
     }
 
@@ -314,6 +324,11 @@ public:
     /// @param param_name name of the configuration parameter being parsed
     StringParser(const std::string& param_name)
         :storage_(&string_defaults), param_name_(param_name) {
+        // Empty parameter name is invalid.
+        if (param_name_.empty()) {
+            isc_throw(Dhcp4ConfigError, "parser logic error:"
+                      << "empty parameter name provided");
+        }
     }
 
     /// @brief parses parameter value
@@ -339,7 +354,7 @@ public:
     /// @brief factory that constructs StringParser objects
     ///
     /// @param param_name name of the parameter to be parsed
-    static Dhcp4ConfigParser* Factory(const std::string& param_name) {
+    static Dhcp4ConfigParser* factory(const std::string& param_name) {
         return (new StringParser(param_name));
     }
 
@@ -410,7 +425,7 @@ public:
     /// @brief factory that constructs InterfaceListConfigParser objects
     ///
     /// @param param_name name of the parameter to be parsed
-    static Dhcp4ConfigParser* Factory(const std::string& param_name) {
+    static Dhcp4ConfigParser* factory(const std::string& param_name) {
         return (new InterfaceListConfigParser(param_name));
     }
 
@@ -537,7 +552,7 @@ public:
     /// @brief factory that constructs PoolParser objects
     ///
     /// @param param_name name of the parameter to be parsed
-    static Dhcp4ConfigParser* Factory(const std::string& param_name) {
+    static Dhcp4ConfigParser* factory(const std::string& param_name) {
         return (new PoolParser(param_name));
     }
 
@@ -602,28 +617,28 @@ public:
             ParserPtr parser;
             if (param.first == "name") {
                 boost::shared_ptr<StringParser>
-                    name_parser(dynamic_cast<StringParser*>(StringParser::Factory(param.first)));
+                    name_parser(dynamic_cast<StringParser*>(StringParser::factory(param.first)));
                 if (name_parser) {
                     name_parser->setStorage(&string_values_);
                     parser = name_parser;
                 }
             } else if (param.first == "code") {
                 boost::shared_ptr<Uint32Parser>
-                    code_parser(dynamic_cast<Uint32Parser*>(Uint32Parser::Factory(param.first)));
+                    code_parser(dynamic_cast<Uint32Parser*>(Uint32Parser::factory(param.first)));
                 if (code_parser) {
                     code_parser->setStorage(&uint32_values_);
                     parser = code_parser;
                 }
             } else if (param.first == "data") {
                 boost::shared_ptr<StringParser>
-                    value_parser(dynamic_cast<StringParser*>(StringParser::Factory(param.first)));
+                    value_parser(dynamic_cast<StringParser*>(StringParser::factory(param.first)));
                 if (value_parser) {
                     value_parser->setStorage(&string_values_);
                     parser = value_parser;
                 }
             } else if (param.first == "csv-format") {
                 boost::shared_ptr<BooleanParser>
-                    value_parser(dynamic_cast<BooleanParser*>(BooleanParser::Factory(param.first)));
+                    value_parser(dynamic_cast<BooleanParser*>(BooleanParser::factory(param.first)));
                 if (value_parser) {
                     value_parser->setStorage(&boolean_values_);
                     parser = value_parser;
@@ -926,7 +941,7 @@ public:
     /// @param param_name param name.
     ///
     /// @return DhcpConfigParser object.
-    static Dhcp4ConfigParser* Factory(const std::string& param_name) {
+    static Dhcp4ConfigParser* factory(const std::string& param_name) {
         return (new OptionDataListParser(param_name));
     }
 
@@ -1059,18 +1074,32 @@ private:
             isc_throw(Dhcp4ConfigError,
                       "Mandatory subnet definition in subnet missing");
         }
+        // Remove any spaces or tabs.
         string subnet_txt = it->second;
         boost::erase_all(subnet_txt, " ");
         boost::erase_all(subnet_txt, "\t");
 
+        // The subnet format is prefix/len. We are going to extract
+        // the prefix portion of a subnet string to create IOAddress
+        // object from it. IOAddress will be passed to the Subnet's
+        // constructor later on. In order to extract the prefix we
+        // need to get all characters preceding "/".
         size_t pos = subnet_txt.find("/");
         if (pos == string::npos) {
             isc_throw(Dhcp4ConfigError,
                       "Invalid subnet syntax (prefix/len expected):" << it->second);
         }
+
+        // Try to create the address object. It also validates that
+        // the address syntax is ok.
         IOAddress addr(subnet_txt.substr(0, pos));
         uint8_t len = boost::lexical_cast<unsigned int>(subnet_txt.substr(pos + 1));
 
+        // Get all 'time' parameters using inheritance.
+        // If the subnet-specific value is defined then use it, else
+        // use the global value. The global value must always be
+        // present. If it is not, it is an internal error and exception
+        // is thrown.
         Triplet<uint32_t> t1 = getParam("renew-timer");
         Triplet<uint32_t> t2 = getParam("rebind-timer");
         Triplet<uint32_t> valid = getParam("valid-lifetime");
@@ -1133,12 +1162,12 @@ private:
     Dhcp4ConfigParser* createSubnet4ConfigParser(const std::string& config_id) {
         FactoryMap factories;
 
-        factories["valid-lifetime"] = Uint32Parser::Factory;
-        factories["renew-timer"] = Uint32Parser::Factory;
-        factories["rebind-timer"] = Uint32Parser::Factory;
-        factories["subnet"] = StringParser::Factory;
-        factories["pool"] = PoolParser::Factory;
-        factories["option-data"] = OptionDataListParser::Factory;
+        factories["valid-lifetime"] = Uint32Parser::factory;
+        factories["renew-timer"] = Uint32Parser::factory;
+        factories["rebind-timer"] = Uint32Parser::factory;
+        factories["subnet"] = StringParser::factory;
+        factories["pool"] = PoolParser::factory;
+        factories["option-data"] = OptionDataListParser::factory;
 
         FactoryMap::iterator f = factories.find(config_id);
         if (f == factories.end()) {
@@ -1257,7 +1286,7 @@ public:
     /// @brief Returns Subnet4ListConfigParser object
     /// @param param_name name of the parameter
     /// @return Subnets4ListConfigParser object
-    static Dhcp4ConfigParser* Factory(const std::string& param_name) {
+    static Dhcp4ConfigParser* factory(const std::string& param_name) {
         return (new Subnets4ListConfigParser(param_name));
     }
 
@@ -1282,13 +1311,13 @@ namespace dhcp {
 Dhcp4ConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
     FactoryMap factories;
 
-    factories["valid-lifetime"] = Uint32Parser::Factory;
-    factories["renew-timer"] = Uint32Parser::Factory;
-    factories["rebind-timer"] = Uint32Parser::Factory;
-    factories["interface"] = InterfaceListConfigParser::Factory;
-    factories["subnet4"] = Subnets4ListConfigParser::Factory;
-    factories["option-data"] = OptionDataListParser::Factory;
-    factories["version"] = StringParser::Factory;
+    factories["valid-lifetime"] = Uint32Parser::factory;
+    factories["renew-timer"] = Uint32Parser::factory;
+    factories["rebind-timer"] = Uint32Parser::factory;
+    factories["interface"] = InterfaceListConfigParser::factory;
+    factories["subnet4"] = Subnets4ListConfigParser::factory;
+    factories["option-data"] = OptionDataListParser::factory;
+    factories["version"] = StringParser::factory;
 
     FactoryMap::iterator f = factories.find(config_id);
     if (f == factories.end()) {
@@ -1327,12 +1356,12 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
     ParserCollection dependent_parsers;
 
     // The subnet parsers implement data inheritance by directly
-    // accesing global storages. For this reason the global data
+    // accessing global storage. For this reason the global data
     // parsers must store the parsed data into global storages
-    // immediatelly. This may cause data inconsistency if the
-    // parsing operation fails after the global storage have been
-    // already modified. We need to preserve the original global
-    // data here so as we can rollback changes when an error occurs.
+    // immediately. This may cause data inconsistency if the
+    // parsing operation fails after the global storage has been
+    // modified. We need to preserve the original global data here
+    // so as we can rollback changes when an error occurs.
     Uint32Storage uint32_local(uint32_defaults);
     StringStorage string_local(string_defaults);
     OptionStorage option_local(option_defaults);
@@ -1345,11 +1374,11 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
 
     try {
 
-        // Iterate over all independent parsers first (all but subnet6)
+        // Iterate over all independent parsers first (all but subnet4)
         // and try to parse the data.
         BOOST_FOREACH(ConfigPair config_pair, config_set->mapValue()) {
-            ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first));
             if (config_pair.first != "subnet4") {
+                ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first));
                 independent_parsers.push_back(parser);
                 parser->build(config_pair.second);
                 // The commit operation here may modify the global storage
@@ -1361,8 +1390,8 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
 
         // Process dependent configuration data.
         BOOST_FOREACH(ConfigPair config_pair, config_set->mapValue()) {
-            ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first));
             if (config_pair.first == "subnet4") {
+                ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first));
                 dependent_parsers.push_back(parser);
                 parser->build(config_pair.second);
             }

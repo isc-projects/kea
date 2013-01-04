@@ -56,7 +56,8 @@ public:
     /// @brief Create the simple configuration with single option.
     ///
     /// This function allows to set one of the parameters that configure
-    /// option value. These parameters are: "name", "code" and "data".
+    /// option value. These parameters are: "name", "code", "data" and
+    /// "csv-format".
     ///
     /// @param param_value string holiding option parameter value to be
     /// injected into the configuration string.
@@ -720,7 +721,6 @@ TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
-    std::cout << comment_->str() << std::endl;
     ASSERT_EQ(0, rcode_);
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
