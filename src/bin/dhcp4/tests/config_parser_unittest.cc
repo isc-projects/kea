@@ -78,7 +78,8 @@ public:
     /// @brief Create the simple configuration with single option.
     ///
     /// This function allows to set one of the parameters that configure
-    /// option value. These parameters are: "name", "code" and "data".
+    /// option value. These parameters are: "name", "code", "data" and
+    /// "csv-format".
     ///
     /// @param param_value string holiding option parameter value to be
     /// injected into the configuration string.
