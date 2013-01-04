@@ -118,3 +118,4 @@ EXTRA_DIST += testdata/new_minor_schema.sqlite3
 EXTRA_DIST += testdata/newschema.sqlite3
 EXTRA_DIST += testdata/oldschema.sqlite3
 EXTRA_DIST += testdata/static.zone
+EXTRA_DIST += testdata/novalidate.zone

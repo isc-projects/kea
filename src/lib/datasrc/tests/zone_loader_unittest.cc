@@ -392,4 +392,23 @@ TEST_F(ZoneLoaderTest, loadSyntaxError) {
     EXPECT_FALSE(destination_client_.commit_called_);
 }
 
+// Test there's validation of the data in the zone loader.
+TEST_F(ZoneLoaderTest, loadValidation) {
+    ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
+                      TEST_DATA_DIR "/novalidate.zone");
+    EXPECT_THROW(loader.loadIncremental(10), ZoneContentError);
+    // The messages go to the log. We don't have an easy way to examine them.
+    EXPECT_FALSE(destination_client_.commit_called_);
+}
+
+// The same test, but for copying from other data source
+TEST_F(ZoneLoaderTest, copyValidation) {
+    prepareSource(Name::ROOT_NAME(), "novalidate.zone");
+    ZoneLoader loader(destination_client_, Name::ROOT_NAME(), source_client_);
+
+    EXPECT_THROW(loader.loadIncremental(10), ZoneContentError);
+    // The messages go to the log. We don't have an easy way to examine them.
+    EXPECT_FALSE(destination_client_.commit_called_);
+}
+
 }
