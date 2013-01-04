@@ -216,6 +216,7 @@ public:
     /// @param option option instance.
     /// @param persistent if true, send an option regardless if client
     /// requested it or not.
+    /// @param option_space name of the option space to add an option to.
     ///
     /// @throw isc::BadValue if invalid option provided.
     void addOption(OptionPtr& option, bool persistent,
@@ -255,7 +256,7 @@ public:
 
     /// @brief Return a collection of option descriptors.
     ///
-    /// @param option_space name of the option space
+    /// @param option_space name of the option space.
     ///
     /// @return reference to collection of options configured for a subnet.
     /// The returned reference is valid as long as the Subnet object which
@@ -265,6 +266,7 @@ public:
     /// @brief Return single option descriptor.
     ///
     /// @param option_space name of the option space.
+    /// @param option_code code of the option to be returned.
     ///
     /// @return option descriptor found for the specified option space
     /// and option code.
