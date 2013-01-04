@@ -234,6 +234,7 @@ RRsetCollection_init(PyObject* po_self, PyObject* args, PyObject*) {
             return (0);
         } else if (PyArg_ParseTuple(args, "y*O!O!", &py_buf, &name_type,
                                     &po_name,&rrclass_type, &po_rrclass)) {
+            PyErr_Clear();      // clear the error for the first ParseTuple
             const char* const cp = static_cast<const char*>(py_buf.buf);
             std::istringstream iss(string(cp, cp + py_buf.len));
             self->cppobj =
@@ -241,6 +242,7 @@ RRsetCollection_init(PyObject* po_self, PyObject* args, PyObject*) {
                                     PyRRClass_ToRRClass(po_rrclass));
             return (0);
         } else if (PyArg_ParseTuple(args, "")) {
+            PyErr_Clear();      // clear the error for the second ParseTuple
             self->cppobj = new RRsetCollection;
             return (0);
         }
