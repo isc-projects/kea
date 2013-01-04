@@ -113,7 +113,7 @@ public:
     /// Takes the database parameters and returns a database access string
     /// passwords replaced by asterisks. This string is used in log messages.
     ///
-    /// @param dbaccess Database access parameters (output of "parse").
+    /// @param parameters Database access parameters (output of "parse").
     ///
     /// @return Redacted database access string.
     static std::string redactedAccessString(
