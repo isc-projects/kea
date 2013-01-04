@@ -217,6 +217,7 @@ protected:
 private:
 
     /// A map containing option definitions for different option spaces.
+    /// The map key holds an option space name.
     std::map<std::string, OptionDefContainer> option_def_spaces_;
 };
 

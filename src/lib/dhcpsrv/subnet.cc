@@ -63,12 +63,6 @@ Subnet::delOptions() {
 }
 
 const Subnet::OptionContainer&
-Subnet::emptyOptionContainer() {
-    static OptionContainer container;
-    return (container);
-}
-
-const Subnet::OptionContainer&
 Subnet::getOptions(const std::string& option_space) const {
     // Search the map to get the options container for the particular
     // option space.
@@ -78,7 +72,9 @@ Subnet::getOptions(const std::string& option_space) const {
     // has been configured for this option space yet. Thus we have to
     // return an empty container to the caller.
     if (options == option_spaces_.end()) {
-        return (emptyOptionContainer());
+        // The default constructor creates an empty container.
+        static OptionContainer container;
+        return (container);
     }
     // We found some option container for the option space specified.
     // Let's return a const reference to it.
