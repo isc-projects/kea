@@ -224,17 +224,6 @@ public:
     /// @brief Delete all options configured for the subnet.
     void delOptions();
 
-    /// @brief Return a reference to an empty option container.
-    ///
-    /// The empty option container is returned when no other
-    /// suitable container can be found. For example, this is
-    /// the case when trying to get a set of options for the
-    /// particular option space that has no options configured
-    /// for the subnet.
-    ///
-    /// @return reference to the empty option container.
-    static const OptionContainer& emptyOptionContainer();
-
     /// @brief checks if the specified address is in pools
     ///
     /// Note the difference between inSubnet() and inPool(). For a given
