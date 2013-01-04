@@ -19,8 +19,13 @@
 #include <datasrc/data_source.h>
 #include <datasrc/iterator.h>
 #include <datasrc/zone.h>
+#include <datasrc/logger.h>
+#include <datasrc/rrset_collection.h>
 
 #include <dns/rrset.h>
+#include <dns/zone_checker.h>
+
+#include <boost/bind.hpp>
 
 using isc::dns::Name;
 using isc::dns::ConstRRsetPtr;
@@ -99,6 +104,22 @@ copyRRsets(const ZoneUpdaterPtr& destination, const ZoneIteratorPtr& source,
     return (false); // Not yet, there may be more
 }
 
+void
+logWarning(const dns::Name* zone_name, const dns::RRClass* rrclass,
+           const std::string& reason)
+{
+    LOG_WARN(logger, DATASRC_VALIDATE_WARNING).arg(*zone_name).arg(*rrclass).
+        arg(reason);
+}
+
+void
+logError(const dns::Name* zone_name, const dns::RRClass* rrclass,
+         const std::string& reason)
+{
+    LOG_ERROR(logger, DATASRC_VALIDATE_ERROR).arg(*zone_name).arg(*rrclass).
+        arg(reason);
+}
+
 } // end unnamed namespace
 
 bool
@@ -123,6 +144,19 @@ ZoneLoader::loadIncremental(size_t limit) {
     }
 
     if (complete_) {
+        // Everything is loaded. Perform some basic sanity checks on the zone.
+        RRsetCollection collection(updater_);
+        dns::Name zone_name(updater_->getFinder().getOrigin());
+        dns::RRClass zone_class(updater_->getFinder().getClass());
+        dns::ZoneCheckerCallbacks
+            callbacks(boost::bind(&logError, &zone_name, &zone_class, _1),
+                      boost::bind(&logWarning, &zone_name, &zone_class, _1));
+        if (!dns::checkZone(zone_name, zone_class, collection, callbacks)) {
+            // Validation failed.
+            loaded_ok_ = false;
+            isc_throw(ZoneContentError, "Errors found when validating zone " <<
+                      zone_name << "/" << zone_class);
+        }
         updater_->commit();
     }
     return (complete_);
