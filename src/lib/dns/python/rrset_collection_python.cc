@@ -352,7 +352,7 @@ PyMethodDef RRsetCollection_methods[] = {
 // This defines the complete type for reflection in python and
 // parsing of PyObject* to s_RRsetCollection
 // Most of the functions are not actually implemented and NULL here.
-PyTypeObject rrsetcollection_type = {
+PyTypeObject rrset_collection_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "dns.RRsetCollection",
     sizeof(s_RRsetCollection),                 // tp_basicsize
@@ -408,15 +408,15 @@ initModulePart_RRsetCollection(PyObject* mod) {
     // We initialize the static description object with PyType_Ready(),
     // then add it to the module. This is not just a check! (leaving
     // this out results in segmentation faults)
-    if (PyType_Ready(&rrsetcollection_type) < 0) {
+    if (PyType_Ready(&rrset_collection_type) < 0) {
         return (false);
     }
-    void* p = &rrsetcollection_type;
+    void* p = &rrset_collection_type;
     if (PyModule_AddObject(mod, "RRsetCollection",
                            static_cast<PyObject*>(p)) < 0) {
         return (false);
     }
-    Py_INCREF(&rrsetcollection_type);
+    Py_INCREF(&rrset_collection_type);
 
     return (true);
 }
