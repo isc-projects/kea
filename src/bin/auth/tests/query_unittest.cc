@@ -862,6 +862,15 @@ protected:
         list_ = createDataSrcClientList(GetParam(), memory_client);
     }
 
+    virtual void TearDown() {
+        // make sure to clear the commonly included zone file to prevent
+        // any remaining contents from affecting the next test.
+        ASSERT_EQ(0, std::system(INSTALL_PROG " -c " TEST_OWN_DATA_DIR
+                                 "/example-common-inc-template.zone "
+                                 TEST_OWN_DATA_BUILDDIR
+                                 "/example-common-inc.zone"));
+    }
+
     virtual ~QueryTest() {
         // Make sure we reset the hash creator to the default
         setNSEC3HashCreator(NULL);
