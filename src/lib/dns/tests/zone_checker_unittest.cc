@@ -64,6 +64,8 @@ protected:
     }
 
 public:
+    // This one is passed to boost::bind.  Some compilers seem to require
+    // it be public.
     void callback(const std::string& reason, bool is_error) {
         if (is_error) {
             errors_.push_back(reason);
