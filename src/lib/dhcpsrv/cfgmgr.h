@@ -81,6 +81,7 @@ public:
     /// @brief Add new option definition.
     ///
     /// @param def option definition to be added.
+    /// @param option_space name of the option space to add definition to.
     ///
     /// @throw isc::dhcp::DuplicateOptionDefinition when the particular
     /// option definition already exists.
