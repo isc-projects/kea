@@ -63,6 +63,7 @@ protected:
         rrsets_.reset(new RRsetCollection(ss, zname_, zclass_));
     }
 
+public:
     void callback(const std::string& reason, bool is_error) {
         if (is_error) {
             errors_.push_back(reason);
@@ -71,6 +72,7 @@ protected:
         }
     }
 
+protected:
     // Check stored issue messages with expected ones.  Clear vectors so
     // the caller can check other cases.
     void checkIssues() {
