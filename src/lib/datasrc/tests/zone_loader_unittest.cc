@@ -82,9 +82,9 @@ public:
 // and this way, it is much simpler.
 class Updater : public ZoneUpdater {
 public:
-    Updater(MockClient* client) :
+    Updater(MockClient* client, const Name& name) :
         client_(client),
-        finder_(client_->rrclass_)
+        finder_(client_->rrclass_, name)
     {}
     virtual ZoneFinder& getFinder() {
         return (finder_);
@@ -105,14 +105,15 @@ private:
     MockClient* client_;
     class Finder : public ZoneFinder {
     public:
-        Finder(const RRClass& rrclass) :
-            class_(rrclass)
+        Finder(const RRClass& rrclass, const Name& name) :
+            class_(rrclass),
+            name_(name)
         {}
         virtual RRClass getClass() const {
             return (class_);
         }
         virtual Name getOrigin() const {
-            isc_throw(isc::NotImplemented, "Method not used in tests");
+            return (name_);
         }
         virtual shared_ptr<Context> find(const Name&, const RRType&,
                                          const FindOptions)
@@ -130,6 +131,7 @@ private:
         }
     private:
         const RRClass class_;
+        const Name name_;
     } finder_;
 };
 
@@ -144,7 +146,7 @@ MockClient::getUpdater(const Name& name, bool replace, bool journaling) const {
     // const_cast is bad. But the const on getUpdater seems wrong in the first
     // place, since updater will be modifying the data there. And the updater
     // wants to store data into the client so we can examine it later.
-    return (ZoneUpdaterPtr(new Updater(const_cast<MockClient*>(this))));
+    return (ZoneUpdaterPtr(new Updater(const_cast<MockClient*>(this), name)));
 }
 
 class ZoneLoaderTest : public ::testing::Test {
