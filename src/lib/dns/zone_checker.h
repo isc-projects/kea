@@ -59,7 +59,7 @@ public:
     /// thrown from the callback.
     ///
     /// \param reason Textual representation of the reason for the error.
-    void error(const std::string& reason) {
+    void error(const std::string& reason) const {
         if (!error_callback_.empty()) {
             error_callback_(reason);
         }
@@ -71,7 +71,7 @@ public:
     /// thrown from the callback.
     ///
     /// \param reason Textual representation of the reason for the issue.
-    void warn(const std::string& reason) {
+    void warn(const std::string& reason) const {
         if (!warn_callback_.empty())
             warn_callback_(reason);
     }
