@@ -167,18 +167,13 @@ checkNS(const Name& zone_name, const RRClass& zone_class,
     checkNSNames(zone_name, zone_class, zone_rrsets, rrset, callbacks);
 }
 
-// The following two are simple wrapper of checker callbacks so checkZone()
+// The following is a simple wrapper of checker callback so checkZone()
 // can also remember any critical errors.
 void
 errorWrapper(const string& reason, const ZoneCheckerCallbacks* callbacks,
              bool* had_error) {
     *had_error = true;
     callbacks->error(reason);
-}
-
-void
-warnWrapper(const string& reason, const ZoneCheckerCallbacks* callbacks) {
-    callbacks->warn(reason);
 }
 }
 
@@ -189,7 +184,7 @@ checkZone(const Name& zone_name, const RRClass& zone_class,
     bool had_error = false;
     ZoneCheckerCallbacks my_callbacks(
         boost::bind(errorWrapper, _1, &callbacks, &had_error),
-        boost::bind(warnWrapper, _1, &callbacks));
+        boost::bind(&ZoneCheckerCallbacks::warn, &callbacks, _1));
 
     checkSOA(zone_name, zone_class, zone_rrsets, my_callbacks);
     checkNS(zone_name, zone_class, zone_rrsets, my_callbacks);
