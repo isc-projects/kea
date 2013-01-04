@@ -42,7 +42,7 @@ public:
                const RdataPtr& rdata);
 
     RRsetPtr current_rrset_;
-    AddRRsetCallback callback_;
+    const AddRRsetCallback callback_;
 };
 
 namespace {
