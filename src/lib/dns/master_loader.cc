@@ -393,7 +393,7 @@ private:
     shared_ptr<Name> last_name_; // Last seen name (for INITAL_WS handling)
     const RRClass zone_class_;
     MasterLoaderCallbacks callbacks_;
-    AddRRCallback add_callback_;
+    const AddRRCallback add_callback_;
     boost::scoped_ptr<RRTTL> default_ttl_; // Default TTL of RRs used when
                                            // unspecified.  If NULL no default
                                            // is known.
