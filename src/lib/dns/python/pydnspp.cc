@@ -50,6 +50,7 @@
 #include "rrset_python.h"
 #include "rrttl_python.h"
 #include "rrtype_python.h"
+#include "rrset_collection_python.h"
 #include "serial_python.h"
 #include "tsigerror_python.h"
 #include "tsigkey_python.h"
@@ -861,6 +862,14 @@ PyInit_pydnspp(void) {
     }
 
     if (!initModulePart_TSIGContext(mod)) {
+        return (NULL);
+    }
+
+    if (!initModulePart_RRsetCollectionBase(mod)) {
+        return (NULL);
+    }
+
+    if (!initModulePart_RRsetCollection(mod)) {
         return (NULL);
     }
 

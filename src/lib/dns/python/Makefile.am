@@ -25,6 +25,8 @@ libb10_pydnspp_la_SOURCES += tsigrecord_python.cc tsigrecord_python.h
 libb10_pydnspp_la_SOURCES += tsig_python.cc tsig_python.h
 libb10_pydnspp_la_SOURCES += edns_python.cc edns_python.h
 libb10_pydnspp_la_SOURCES += message_python.cc message_python.h
+libb10_pydnspp_la_SOURCES += rrset_collection_python.cc
+libb10_pydnspp_la_SOURCES += rrset_collection_python.h
 
 libb10_pydnspp_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 libb10_pydnspp_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
