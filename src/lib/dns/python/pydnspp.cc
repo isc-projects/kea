@@ -57,6 +57,9 @@
 #include "tsig_python.h"
 #include "tsig_rdata_python.h"
 #include "tsigrecord_python.h"
+#include "zone_checker_python.h"
+
+#include "zone_checker_python_inc.cc"
 
 using namespace isc::dns;
 using namespace isc::dns::python;
@@ -729,6 +732,11 @@ initModulePart_TSIGRecord(PyObject* mod) {
     return (true);
 }
 
+PyMethodDef methods[] = {
+    { "check_zone", internal::pyCheckZone, METH_VARARGS, dns_checkZone_doc },
+    { NULL, NULL, 0, NULL }
+};
+
 PyModuleDef pydnspp = {
     { PyObject_HEAD_INIT(NULL) NULL, 0, NULL},
     "pydnspp",
@@ -738,13 +746,13 @@ PyModuleDef pydnspp = {
     "and OutputBuffer for instance), and others may be necessary, but "
     "were not up to now.",
     -1,
-    NULL,
+    methods,
     NULL,
     NULL,
     NULL,
     NULL
 };
-}
+} // unnamed namespace
 
 PyMODINIT_FUNC
 PyInit_pydnspp(void) {
