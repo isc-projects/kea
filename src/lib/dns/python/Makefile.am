@@ -27,6 +27,7 @@ libb10_pydnspp_la_SOURCES += edns_python.cc edns_python.h
 libb10_pydnspp_la_SOURCES += message_python.cc message_python.h
 libb10_pydnspp_la_SOURCES += rrset_collection_python.cc
 libb10_pydnspp_la_SOURCES += rrset_collection_python.h
+libb10_pydnspp_la_SOURCES += zone_checker_python.cc zone_checker_python.h
 
 libb10_pydnspp_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 libb10_pydnspp_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)

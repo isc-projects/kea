@@ -19,6 +19,7 @@ PYTESTS += tsig_rdata_python_test.py
 PYTESTS += tsigerror_python_test.py
 PYTESTS += tsigkey_python_test.py
 PYTESTS += tsigrecord_python_test.py
+PYTESTS += zone_checker_python_test.py
 
 EXTRA_DIST = $(PYTESTS)
 EXTRA_DIST += testutil.py
