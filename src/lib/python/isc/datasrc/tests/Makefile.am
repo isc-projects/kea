@@ -1,15 +1,18 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
-# old tests, TODO remove or change to use new API?
-#PYTESTS = master_test.py
-PYTESTS =  datasrc_test.py sqlite3_ds_test.py clientlist_test.py
+PYTESTS =  datasrc_test.py sqlite3_ds_test.py
+PYTESTS += clientlist_test.py zone_loader_test.py
 EXTRA_DIST = $(PYTESTS)
 
 EXTRA_DIST += testdata/brokendb.sqlite3
 EXTRA_DIST += testdata/example.com.sqlite3
+EXTRA_DIST += testdata/example.com.source.sqlite3
 EXTRA_DIST += testdata/newschema.sqlite3
 EXTRA_DIST += testdata/oldschema.sqlite3
 EXTRA_DIST += testdata/new_minor_schema.sqlite3
+EXTRA_DIST += testdata/example.com
+EXTRA_DIST += testdata/example.com.ch
 CLEANFILES = $(abs_builddir)/rwtest.sqlite3.copied
+CLEANFILES += $(abs_builddir)/zoneloadertest.sqlite3
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
@@ -24,6 +27,7 @@ LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/data
 endif
 
 # test using command-line arguments, so use check-local target instead of TESTS
+# We need to define B10_FROM_BUILD for datasrc loadable modules
 check-local:
 if ENABLE_PYTHON_COVERAGE
 	touch $(abs_top_srcdir)/.coverage

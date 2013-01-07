@@ -58,14 +58,12 @@ void
 OptionCustom::addArrayDataField(const asiolink::IOAddress& address) {
     checkArrayType();
 
-    if ((address.getFamily() == AF_INET &&
-         definition_.getType() != OPT_IPV4_ADDRESS_TYPE) ||
-        (address.getFamily() == AF_INET6 &&
-         definition_.getType() != OPT_IPV6_ADDRESS_TYPE)) {
+    if ((address.isV4() && definition_.getType() != OPT_IPV4_ADDRESS_TYPE) ||
+        (address.isV6() && definition_.getType() != OPT_IPV6_ADDRESS_TYPE)) {
         isc_throw(BadDataTypeCast, "invalid address specified "
                   << address.toText() << ". Expected a valid IPv"
-                  << (definition_.getType() == OPT_IPV4_ADDRESS_TYPE ? "4" : "6")
-                  << " address.");
+                  << (definition_.getType() == OPT_IPV4_ADDRESS_TYPE ?
+                      "4" : "6") << " address.");
     }
 
     OptionBuffer buf;
@@ -454,10 +452,8 @@ OptionCustom::writeAddress(const asiolink::IOAddress& address,
 
     checkIndex(index);
 
-    if ((address.getFamily() == AF_INET &&
-         buffers_[index].size() != V4ADDRESS_LEN) ||
-        (address.getFamily() == AF_INET6 &&
-         buffers_[index].size() != V6ADDRESS_LEN)) {
+    if ((address.isV4() && buffers_[index].size() != V4ADDRESS_LEN) ||
+        (address.isV6() && buffers_[index].size() != V6ADDRESS_LEN)) {
         isc_throw(BadDataTypeCast, "invalid address specified "
                   << address.toText() << ". Expected a valid IPv"
                   << (buffers_[index].size() == V4ADDRESS_LEN ? "4" : "6")

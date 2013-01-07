@@ -32,11 +32,13 @@ using namespace isc::dns::rdata;
 
 namespace {
 class Rdata_SOA_Test : public RdataTest {
-    // there's nothing to specialize
+protected:
+    Rdata_SOA_Test() : rdata_soa(Name("ns.example.com"),
+                                 Name("root.example.com"),
+                                 2010012601, 3600, 300, 3600000, 1200)
+    {}
+    const generic::SOA rdata_soa;
 };
-
-const generic::SOA rdata_soa(Name("ns.example.com"), Name("root.example.com"),
-                             2010012601, 3600, 300, 3600000, 1200);
 
 TEST_F(Rdata_SOA_Test, createFromText) {
     //TBD
@@ -84,6 +86,15 @@ TEST_F(Rdata_SOA_Test, toText) {
 
 TEST_F(Rdata_SOA_Test, getSerial) {
     EXPECT_EQ(2010012601, rdata_soa.getSerial().getValue());
+}
+
+TEST_F(Rdata_SOA_Test, getMinimum) {
+    EXPECT_EQ(1200, rdata_soa.getMinimum());
+
+    // Also check with a very large number (with the MSB being 1).
+    EXPECT_EQ(2154848336u, generic::SOA(Name("ns.example.com"),
+                                        Name("root.example.com"),
+                                        0, 0, 0, 0, 0x80706050).getMinimum());
 }
 
 }

@@ -15,6 +15,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcp/option_int.h>
 #include <dhcp/pkt4.h>
 #include <exceptions/exceptions.h>
 
@@ -188,9 +189,10 @@ Pkt4::unpack() {
 }
 
 void Pkt4::check() {
-    boost::shared_ptr<Option> typeOpt = getOption(DHO_DHCP_MESSAGE_TYPE);
+    boost::shared_ptr<OptionInt<uint8_t> > typeOpt =
+        boost::dynamic_pointer_cast<OptionInt<uint8_t> >(getOption(DHO_DHCP_MESSAGE_TYPE));
     if (typeOpt) {
-        uint8_t msg_type = typeOpt->getUint8();
+        uint8_t msg_type = typeOpt->getValue();
         if (msg_type > DHCPLEASEACTIVE) {
             isc_throw(BadValue, "Invalid DHCP message type received: "
                       << msg_type);

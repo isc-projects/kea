@@ -86,7 +86,7 @@ Option4AddrLst::pack4(isc::util::OutputBuffer& buf) {
 }
 
 void Option4AddrLst::setAddress(const isc::asiolink::IOAddress& addr) {
-    if (addr.getFamily() != AF_INET) {
+    if (!addr.isV4()) {
         isc_throw(BadValue, "Can't store non-IPv4 address in "
                   << "Option4AddrLst option");
     }
@@ -107,7 +107,7 @@ void Option4AddrLst::setAddresses(const AddressContainer& addrs) {
 
 
 void Option4AddrLst::addAddress(const isc::asiolink::IOAddress& addr) {
-    if (addr.getFamily() != AF_INET) {
+    if (!addr.isV4()) {
         isc_throw(BadValue, "Can't store non-IPv4 address in "
                   << "Option4AddrLst option");
     }

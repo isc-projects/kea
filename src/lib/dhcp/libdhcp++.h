@@ -138,9 +138,9 @@ private:
     /// The method creates option definitions for all DHCPv4 options.
     /// Currently this function is not implemented.
     ///
-    /// @todo implemend this function.
-    ///
-    /// @throw isc::NotImplemeneted
+    /// @throw std::bad alloc if system went out of memory.
+    /// @throw MalformedOptionDefinition if any of the definitions
+    /// are incorrect. This is programming error.
     static void initStdOptionDefs4();
 
     /// Initialize standard DHCPv6 option definitions.
@@ -149,7 +149,7 @@ private:
     ///
     /// @throw std::bad_alloc if system went out of memory.
     /// @throw MalformedOptionDefinition if any of the definitions
-    /// is incorect. This is a programming error.
+    /// is incorrect. This is a programming error.
     static void initStdOptionDefs6();
 
     /// pointers to factories that produce DHCPv6 options

@@ -53,8 +53,11 @@ isc::asiolink::IOAddress firstAddrInPrefix6(const isc::asiolink::IOAddress& pref
     }
 
     // First we copy the whole address as 16 bytes.
+    // We don't check that it is a valid IPv6 address and thus has
+    // the required length because it is already checked by
+    // the calling function.
     uint8_t packed[V6ADDRESS_LEN];
-    memcpy(packed, prefix.getAddress().to_v6().to_bytes().data(), 16);
+    memcpy(packed, &prefix.toBytes()[0], V6ADDRESS_LEN);
 
     // If the length is divisible by 8, it is simple. We just zero out the host
     // part. Otherwise we need to handle the byte that has to be partially
@@ -95,6 +98,9 @@ isc::asiolink::IOAddress firstAddrInPrefix4(const isc::asiolink::IOAddress& pref
         isc_throw(isc::BadValue, "Too large netmask. 0..32 is allowed in IPv4");
     }
 
+    // We don't check that it is a valid IPv4 address and thus has
+    // a required length of 4 bytes because it has been already
+    // checked by the calling function.
     uint32_t addr = prefix;
     return (IOAddress(addr & (~bitMask4[len])));
 }
@@ -132,7 +138,7 @@ isc::asiolink::IOAddress lastAddrInPrefix6(const isc::asiolink::IOAddress& prefi
 
     // First we copy the whole address as 16 bytes.
     uint8_t packed[V6ADDRESS_LEN];
-    memcpy(packed, prefix.getAddress().to_v6().to_bytes().data(), 16);
+    memcpy(packed, &prefix.toBytes()[0], 16);
 
     // if the length is divisible by 8, it is simple. We just fill the host part
     // with ones. Otherwise we need to handle the byte that has to be partially
@@ -168,20 +174,24 @@ namespace isc {
 namespace dhcp {
 
 isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefix,
-                                            uint8_t len) {
-    if (prefix.getFamily() == AF_INET) {
-        return firstAddrInPrefix4(prefix, len);
+                                           uint8_t len) {
+    if (prefix.isV4()) {
+        return (firstAddrInPrefix4(prefix, len));
+
     } else {
-        return firstAddrInPrefix6(prefix, len);
+        return (firstAddrInPrefix6(prefix, len));
+
     }
 }
 
 isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix,
                                            uint8_t len) {
-    if (prefix.getFamily() == AF_INET) {
-        return lastAddrInPrefix4(prefix, len);
+    if (prefix.isV4()) {
+        return (lastAddrInPrefix4(prefix, len));
+
     } else {
-        return lastAddrInPrefix6(prefix, len);
+        return (lastAddrInPrefix6(prefix, len));
+
     }
 }
 

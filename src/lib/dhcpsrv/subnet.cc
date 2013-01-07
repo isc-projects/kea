@@ -30,8 +30,8 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
     :id_(getNextID()), prefix_(prefix), prefix_len_(len), t1_(t1),
      t2_(t2), valid_(valid_lifetime),
      last_allocated_(lastAddrInPrefix(prefix, len)) {
-    if ( (prefix.getFamily() == AF_INET6 && len > 128) ||
-         (prefix.getFamily() == AF_INET && len > 32) ) {
+    if ((prefix.isV6() && len > 128) ||
+        (prefix.isV4() && len > 32)) {
         isc_throw(BadValue, "Invalid prefix length specified for subnet: " << len);
     }
 }
@@ -65,7 +65,7 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t2,
                  const Triplet<uint32_t>& valid_lifetime)
     :Subnet(prefix, length, t1, t2, valid_lifetime) {
-    if (prefix.getFamily() != AF_INET) {
+    if (!prefix.isV4()) {
         isc_throw(BadValue, "Non IPv4 prefix " << prefix.toText()
                   << " specified in subnet4");
     }
@@ -136,7 +136,7 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& valid_lifetime)
     :Subnet(prefix, length, t1, t2, valid_lifetime),
      preferred_(preferred_lifetime){
-    if (prefix.getFamily() != AF_INET6) {
+    if (!prefix.isV6()) {
         isc_throw(BadValue, "Non IPv6 prefix " << prefix.toText()
                   << " specified in subnet6");
     }
