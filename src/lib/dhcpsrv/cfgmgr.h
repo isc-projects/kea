@@ -88,7 +88,8 @@ public:
     /// @throw isc::dhcp::MalformedOptionDefinition when the pointer to
     /// an option definition is NULL.
     /// @throw isc::BadValue when the option space name is empty or
-    /// option space name is one of reserved names: dhcp4 or dhcp6.
+    /// when trying to override the standard option (in dhcp4 or dhcp6
+    /// option space).
     void addOptionDef(const OptionDefinitionPtr& def,
                       const std::string& option_space);
 
@@ -186,6 +187,7 @@ public:
     /// 192.0.2.0/23 and 192.0.2.0/24 the same subnet or is it something
     /// completely new?
     void deleteSubnets4();
+
 protected:
 
     /// @brief Protected constructor.
@@ -217,9 +219,16 @@ protected:
 
 private:
 
+    /// A map containing option definitions for various option spaces.
+    /// They key of this map is the name of the option space. The
+    /// value is the the option container holding option definitions
+    /// for the particular option space.
+    typedef std::map<std::string, OptionDefContainer> OptionDefsMap;
+
     /// A map containing option definitions for different option spaces.
     /// The map key holds an option space name.
-    std::map<std::string, OptionDefContainer> option_def_spaces_;
+    OptionDefsMap option_def_spaces_;
+
 };
 
 } // namespace isc::dhcp
