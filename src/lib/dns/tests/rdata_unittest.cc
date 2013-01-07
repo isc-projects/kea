@@ -60,10 +60,6 @@ RdataTest::rdataFactoryFromFile(const RRType& rrtype, const RRClass& rrclass,
 
 namespace test {
 
-void
-dummyCallback(const string&, size_t, const string&) {
-}
-
 RdataPtr
 createRdataUsingLexer(const RRType& rrtype, const RRClass& rrclass,
                       const std::string& str)
@@ -72,9 +68,8 @@ createRdataUsingLexer(const RRType& rrtype, const RRClass& rrclass,
     MasterLexer lexer;
     lexer.pushSource(ss);
 
-    const MasterLoaderCallbacks::IssueCallback callback
-        (boost::bind(&dummyCallback, _1, _2, _3));
-    MasterLoaderCallbacks callbacks(callback, callback);
+    MasterLoaderCallbacks callbacks =
+        MasterLoaderCallbacks::getNullCallbacks();
     const Name origin("example.org.");
 
     return (createRdata(rrtype, rrclass, lexer, &origin,

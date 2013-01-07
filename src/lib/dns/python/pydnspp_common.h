@@ -28,6 +28,7 @@ namespace dns {
 namespace python {
 // For our 'general' isc::Exceptions
 extern PyObject* po_IscException;
+extern PyObject* po_InvalidOperation;
 extern PyObject* po_InvalidParameter;
 
 // For our own isc::dns::Exception
@@ -46,6 +47,18 @@ extern PyObject* po_DNSMessageBADVERS;
 int readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence);
 
 int addClassVariable(PyTypeObject& c, const char* name, PyObject* obj);
+
+/// \brief Initialize a wrapped class type, and add to module
+///
+/// The type object is initalized, and its refcount is increased after
+/// successful addition to the module.
+///
+/// \param type The type object to initialize
+/// \param name The python name of the class to add
+/// \param mod The python module to add the class to
+///
+/// \return true on success, false on failure
+bool initClass(PyTypeObject& type, const char* name, PyObject* mod);
 
 // Short term workaround for unifying the return type of tp_hash
 #if PY_MINOR_VERSION < 2

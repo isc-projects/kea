@@ -920,7 +920,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
             } else {
                 LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                           DATASRC_DATABASE_FOUND_RRSET).
-                    arg(accessor_->getDBName()).arg(wti->second);
+                    arg(accessor_->getDBName()).arg(*wti->second);
             }
         }
         // Found an RR matching the query, so return it.  (Note that this
@@ -1745,7 +1745,7 @@ public:
                 arg(zone_).arg(rrclass_).arg(accessor_->getDBName());
             return (rrset);
         } catch (const Exception& ex) {
-            LOG_ERROR(logger, DATASRC_DATABASE_JOURNALREADR_BADDATA).
+            LOG_ERROR(logger, DATASRC_DATABASE_JOURNALREADER_BADDATA).
                 arg(zone_).arg(rrclass_).arg(accessor_->getDBName()).
                 arg(begin_).arg(end_).arg(ex.what());
             isc_throw(DataSourceError, "Failed to create RRset from diff on "

@@ -81,7 +81,7 @@ addRRset(ZoneUpdaterPtr updater, ConstRRsetPtr rrset) {
 }
 
 DataSourceClientPtr
-createSQLite3Client(RRClass zclass, const Name& zname) {
+createSQLite3Client(RRClass zclass, const Name& zname, stringstream& ss) {
     // We always begin with an empty template SQLite3 DB file and install
     // the zone data from the zone file to ensure both cases have the
     // same test data.
@@ -93,12 +93,17 @@ createSQLite3Client(RRClass zclass, const Name& zname) {
     // Note that neither updater nor SQLite3 accessor checks this condition,
     // so this should succeed.
     ZoneUpdaterPtr updater = client->getUpdater(zname, false);
-    stringstream ss("ns.example.com. 3600 IN A 192.0.2.7");
     masterLoad(ss, Name::ROOT_NAME(), zclass,
                boost::bind(addRRset, updater, _1));
     updater->commit();
 
     return (client);
+}
+
+DataSourceClientPtr
+createSQLite3ClientWithNS(RRClass zclass, const Name& zname) {
+    stringstream ss("ns.example.com. 3600 IN A 192.0.2.7");
+    return (createSQLite3Client(zclass, zname, ss));
 }
 
 // The test class.  Its parameterized so we can share the test scnearios
@@ -134,7 +139,7 @@ protected:
 // We test the in-memory and SQLite3 data source implementations.
 INSTANTIATE_TEST_CASE_P(, ZoneFinderContextTest,
                         ::testing::Values(createInMemoryClient,
-                                          createSQLite3Client));
+                                          createSQLite3ClientWithNS));
 
 TEST_P(ZoneFinderContextTest, getAdditionalAuthNS) {
     ZoneFinderContextPtr ctx = finder_->find(qzone_, RRType::NS());
@@ -428,6 +433,27 @@ TEST_P(ZoneFinderContextTest, getAdditionalWithRRSIGOnly) {
     ctx->getAdditional(REQUESTED_BOTH, result_sets_);
     rrsetsCheck("mx2.f.example.org. 3600 IN A 192.0.2.16\n",
                 result_sets_.begin(), result_sets_.end());
+}
+
+TEST(ZoneFinderContextSQLite3Test, escapedText) {
+    // This test checks that TXTLike data, when written to a database,
+    // is escaped correctly before stored in the database. The actual
+    // escaping is done in the toText() method of TXTLike objects, but
+    // we check anyway if this also carries over to the ZoneUpdater.
+    RRClass zclass(RRClass::IN());
+    Name zname("example.org");
+    stringstream ss("escaped.example.org. 3600 IN TXT Hello~World\\;\\\"");
+    DataSourceClientPtr client = createSQLite3Client(zclass, zname, ss);
+    ZoneFinderPtr finder = client->findZone(zname).zone_finder;
+
+    // If there is no escaping, the following will throw an exception
+    // when it tries to construct a TXT RRset using the data from the
+    // database.
+    ZoneFinderContextPtr ctx = finder->find(Name("escaped.example.org"),
+                                            RRType::TXT());
+    EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
+    EXPECT_EQ("escaped.example.org. 3600 IN TXT \"Hello~World\\;\\\"\"\n",
+              ctx->rrset->toText());
 }
 
 }

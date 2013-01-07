@@ -190,13 +190,16 @@ TEST_F(MasterLexerStateTest, unbalancedParentheses) {
 }
 
 TEST_F(MasterLexerStateTest, startToComment) {
-    // Begin with 'start', skip space, then encounter a comment.  Skip
+    // Begin with 'start', detect space, then encounter a comment.  Skip
     // the rest of the line, and recognize the new line.  Note that the
     // second ';' is simply ignored.
     ss << "  ;a;\n";
     ss << ";a;";           // Likewise, but the comment ends with EOF.
     lexer.pushSource(ss);
 
+    // Initial whitespace (asked for in common_options)
+    EXPECT_EQ(s_null, State::start(lexer, common_options));
+    EXPECT_EQ(Token::INITIAL_WS, s_crlf.getToken(lexer).getType());
     // Comment ending with EOL
     EXPECT_EQ(s_null, State::start(lexer, common_options));
     EXPECT_EQ(Token::END_OF_LINE, s_crlf.getToken(lexer).getType());

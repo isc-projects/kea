@@ -190,7 +190,7 @@
       To update an expired certificate in BIND 10 that has been installed to
       /usr/local:
       <screen>
-$> cd /usr/local/etc/bind10-devel/
+$> cd /usr/local/etc/bind10/
 
 $> b10-certgen
 cmdctl-certfile.pem failed to verify: certificate has expired

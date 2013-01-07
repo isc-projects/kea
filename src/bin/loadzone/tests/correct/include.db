@@ -1,13 +1,17 @@
 $ORIGIN include.   ; initialize origin
 $TTL 300
-@			IN SOA	ns hostmaster (
+; this needs #2500
+;@			IN SOA	ns hostmaster (
+@			IN SOA	ns.include. hostmaster.include. (
 				1        ; serial
 				3600
 				1800
 				1814400
 				3600
 				)
-			NS	ns
+; this needs #2390
+;			NS	ns
+			NS	ns.include.
 
 ns			A	127.0.0.1
 

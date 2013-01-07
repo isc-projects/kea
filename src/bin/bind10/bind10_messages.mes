@@ -154,7 +154,7 @@ The boss module received the given signal.
 % BIND10_RESTART_COMPONENT_SKIPPED Skipped restarting a component %1
 The boss module tried to restart a component after it failed (crashed)
 unexpectedly, but the boss then found that the component had been removed
-from its local configuration of components to run.  This is an unusal
+from its local configuration of components to run.  This is an unusual
 situation but can happen if the administrator removes the component from
 the configuration after the component's crash and before the restart time.
 The boss module simply skipped restarting that module, and the whole system
@@ -262,7 +262,7 @@ indicated OS API function with given error.
 The boss forwards a request for a socket to the socket creator.
 
 % BIND10_STARTED_CC started configuration/command session
-Debug message given when BIND 10 has successfull started the object that
+Debug message given when BIND 10 has successfully started the object that
 handles configuration and commands.
 
 % BIND10_STARTED_PROCESS started %1

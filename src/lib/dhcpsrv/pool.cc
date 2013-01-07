@@ -34,7 +34,7 @@ Pool4::Pool4(const isc::asiolink::IOAddress& first,
              const isc::asiolink::IOAddress& last)
     :Pool(first, last) {
     // check if specified address boundaries are sane
-    if (first.getFamily() != AF_INET || last.getFamily() != AF_INET) {
+    if (!first.isV4() || !last.isV4()) {
         isc_throw(BadValue, "Invalid Pool4 address boundaries: not IPv4");
     }
 
@@ -48,7 +48,7 @@ Pool4::Pool4(const isc::asiolink::IOAddress& prefix,
     :Pool(prefix, IOAddress("0.0.0.0")) {
 
     // check if the prefix is sane
-    if (prefix.getFamily() != AF_INET) {
+    if (!prefix.isV4()) {
         isc_throw(BadValue, "Invalid Pool4 address boundaries: not IPv4");
     }
 
@@ -67,7 +67,7 @@ Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
     :Pool(first, last), type_(type), prefix_len_(0) {
 
     // check if specified address boundaries are sane
-    if (first.getFamily() != AF_INET6 || last.getFamily() != AF_INET6) {
+    if (!first.isV6() || !last.isV6()) {
         isc_throw(BadValue, "Invalid Pool6 address boundaries: not IPv6");
     }
 
@@ -98,7 +98,7 @@ Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& prefix,
      type_(type), prefix_len_(prefix_len) {
 
     // check if the prefix is sane
-    if (prefix.getFamily() != AF_INET6) {
+    if (!prefix.isV6()) {
         isc_throw(BadValue, "Invalid Pool6 address boundaries: not IPv6");
     }
 

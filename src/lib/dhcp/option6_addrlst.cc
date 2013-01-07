@@ -49,7 +49,7 @@ Option6AddrLst::Option6AddrLst(uint16_t type, OptionBufferConstIter begin,
 
 void
 Option6AddrLst::setAddress(const isc::asiolink::IOAddress& addr) {
-    if (addr.getFamily() != AF_INET6) {
+    if (!addr.isV6()) {
         isc_throw(BadValue, "Can't store non-IPv6 address in Option6AddrLst option");
     }
 
@@ -72,7 +72,13 @@ void Option6AddrLst::pack(isc::util::OutputBuffer& buf) {
 
     for (AddressContainer::const_iterator addr=addrs_.begin();
          addr!=addrs_.end(); ++addr) {
-        buf.writeData(addr->getAddress().to_v6().to_bytes().data(), V6ADDRESS_LEN);
+        if (!addr->isV6()) {
+            isc_throw(isc::BadValue, addr->toText()
+                      << " is not an IPv6 address");
+        }
+        // If an address is IPv6 address it should have assumed
+        // length of V6ADDRESS_LEN.
+        buf.writeData(&addr->toBytes()[0], V6ADDRESS_LEN);
     }
 }
 
@@ -104,8 +110,7 @@ std::string Option6AddrLst::toText(int indent /* =0 */) {
 }
 
 uint16_t Option6AddrLst::len() {
-
-    return (OPTION6_HDR_LEN + addrs_.size()*V6ADDRESS_LEN);
+    return (OPTION6_HDR_LEN + addrs_.size() * V6ADDRESS_LEN);
 }
 
 } // end of namespace isc::dhcp
