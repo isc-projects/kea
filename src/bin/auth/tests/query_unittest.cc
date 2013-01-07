@@ -799,11 +799,13 @@ createDataSrcClientList(DataSrcType type, DataSourceClient& client) {
         return (list);
     case SQLITE3:
         // The copy should succeed; if it failed we should notice it in
-        // test cases.
-        std::system(INSTALL_PROG " -c " TEST_OWN_DATA_BUILDDIR
-                    "/example-base.sqlite3 "
-                    TEST_OWN_DATA_BUILDDIR
-                    "/example-base.sqlite3.copied");
+        // test cases.  However, we check the return value to avoid problems
+        // in some glibcs where "system()" is annotated with the "warn unused
+        // result" attribute.
+        EXPECT_EQ(0, std::system(INSTALL_PROG " -c " TEST_OWN_DATA_BUILDDIR
+                                 "/example-base.sqlite3 "
+                                 TEST_OWN_DATA_BUILDDIR
+                                 "/example-base.sqlite3.copied"));
         list.reset(new ConfigurableClientList(RRClass::IN()));
         list->configure(isc::data::Element::fromJSON(
                             "[{\"type\": \"sqlite3\","
