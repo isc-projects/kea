@@ -129,7 +129,7 @@ TEST_F(CfgMgrTest, getOptionDef) {
     // add them to the different option space.
     for (uint16_t code = 105; code < 115; ++code) {
         std::ostringstream option_name;
-        option_name << "option-" << code;
+        option_name << "option-other-" << code;
         OptionDefinitionPtr def(new OptionDefinition(option_name.str(), code,
                                                      "uint16"));
         ASSERT_NO_THROW(cfg_mgr.addOptionDef(def, "abcde"));
@@ -140,6 +140,12 @@ TEST_F(CfgMgrTest, getOptionDef) {
     for (uint16_t code = 100; code < 110; ++code) {
         OptionDefinitionPtr def = cfg_mgr.getOptionDef("isc", code);
         ASSERT_TRUE(def);
+        // Check that the option name is in the format of 'option-[code]'.
+        // That way we make sure that the options that have the same codes
+        // within different option spaces are different.
+        std::ostringstream option_name;
+        option_name << "option-" << code;
+        EXPECT_EQ(option_name.str(), def->getName());
         EXPECT_EQ(code, def->getCode());
     }
 
@@ -147,20 +153,44 @@ TEST_F(CfgMgrTest, getOptionDef) {
     for (uint16_t code = 105; code < 115; ++code) {
         OptionDefinitionPtr def = cfg_mgr.getOptionDef("abcde", code);
         ASSERT_TRUE(def);
+        // Check that the option name is in the format of 'option-other-[code]'.
+        // That way we make sure that the options that have the same codes
+        // within different option spaces are different.
+        std::ostringstream option_name;
+        option_name << "option-other-" << code;
+        EXPECT_EQ(option_name.str(), def->getName());
+
         EXPECT_EQ(code, def->getCode());
     }
+
+    // Check that an option definition can be added to the standard
+    // (dhcp4 and dhcp6) option spaces when the option code is not
+    // reserved by the standard option.
+    OptionDefinitionPtr def6(new OptionDefinition("option-foo", 79, "uint16"));
+    EXPECT_NO_THROW(cfg_mgr.addOptionDef(def6, "dhcp6"));
+
+    OptionDefinitionPtr def4(new OptionDefinition("option-foo", 222, "uint16"));
+    EXPECT_NO_THROW(cfg_mgr.addOptionDef(def4, "dhcp4"));
 
     // Try to query the option definition from an non-existing
     // option space and expect NULL pointer.
     OptionDefinitionPtr def = cfg_mgr.getOptionDef("non-existing", 56);
-    ASSERT_FALSE(def);
+    EXPECT_FALSE(def);
+
+    // Try to get the non-existing option definition from an
+    // existing option space.
+    EXPECT_FALSE(cfg_mgr.getOptionDef("isc", 56));
+
 }
 
 // This test verifies that the function that adds new option definition
 // throws exceptions when arguments are invalid.
 TEST_F(CfgMgrTest, addOptionDefNegative) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
-    OptionDefinitionPtr def(new OptionDefinition("option-foo", 100, "uint16"));
+    // The option code 65 is reserved for standard options either in
+    // DHCPv4 or DHCPv6. Thus we expect that adding an option to this
+    // option space fails.
+    OptionDefinitionPtr def(new OptionDefinition("option-foo", 65, "uint16"));
 
     // Try reserved option space names.
     ASSERT_THROW(cfg_mgr.addOptionDef(def, "dhcp4"), isc::BadValue);
@@ -170,6 +200,10 @@ TEST_F(CfgMgrTest, addOptionDefNegative) {
     // Try NULL option definition.
     ASSERT_THROW(cfg_mgr.addOptionDef(OptionDefinitionPtr(), "isc"),
                  isc::dhcp::MalformedOptionDefinition);
+    // Try adding option definition twice and make sure that it
+    // fails on the second attempt.
+    ASSERT_NO_THROW(cfg_mgr.addOptionDef(def, "isc"));
+    EXPECT_THROW(cfg_mgr.addOptionDef(def, "isc"), DuplicateOptionDefinition);
 }
 
 // This test verifies if the configuration manager is able to hold and return

@@ -82,8 +82,8 @@ Subnet::getOptions(const std::string& option_space) const {
 }
 
 Subnet::OptionDescriptor
-Subnet::getOptionSingle(const std::string& option_space,
-                        const uint16_t option_code) {
+Subnet::getOptionDescriptor(const std::string& option_space,
+                            const uint16_t option_code) {
     const OptionContainer& options = getOptions(option_space);
     if (options.empty()) {
         return (OptionDescriptor(false));

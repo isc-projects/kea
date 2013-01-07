@@ -500,6 +500,9 @@ typedef boost::multi_index_container<
     >
 > OptionDefContainer;
 
+/// Pointer to an option definition container.
+typedef boost::shared_ptr<OptionDefContainer> OptionDefContainerPtr;
+
 /// Type of the index #1 - option type.
 typedef OptionDefContainer::nth_index<1>::type OptionDefContainerTypeIndex;
 /// Pair of iterators to represent the range of options definitions
