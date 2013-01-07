@@ -328,21 +328,21 @@ class Counters():
         return _get_counter(self._statistics._data, identifier)
 
     def start_timer(self, *args):
-        """Sets the value returned from _start_timer() as a value of
-        the identifier in the self._start_time which is dict-type"""
+        """Starts a timer which is identified by args and keeps it
+        running until stop_timer() is called. It's also considered to
+        be called from multi-threads."""
         identifier = _concat(*args)
         with self._rlock:
             if self._disabled: return
             isc.cc.data.set(self._start_time, identifier, _start_timer())
 
     def stop_timer(self, *args):
-        """Sets duration time in seconds between corresponding date
-        time in self._start_time and current date time into the value
-        of the identifier. It deletes corresponding time in
-        self._start_time after setting is successfully done. In case
-        of stopping the timer which has never been started, it raises
-        and does nothing. But in case of stopping the time which isn't
-        defined in the spec file, it raises DataNotFoundError"""
+        """Stops a timer which is identified by args.  It's also
+        considered to be called from multi-threads.  If the timer
+        isn't started by start_timer() yet, it raises no
+        exception. However if args aren't defined in the spec file, it
+        raises DataNotFoundError.
+        """
         identifier = _concat(*args)
         with self._rlock:
             if self._disabled: return
