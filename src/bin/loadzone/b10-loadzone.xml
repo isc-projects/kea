@@ -67,7 +67,7 @@
 
     <para>
     Some control entries (aka directives) are supported.
-    $ORIGIN is followed by a domain name, and sets the the origin
+    $ORIGIN is followed by a domain name, and sets the origin
     that will be used for relative domain names in subsequent records.
     $INCLUDE is followed by a filename to load.
     The previous origin is restored after the file is included.

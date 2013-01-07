@@ -14,6 +14,7 @@
 
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
+#include <stdint.h>
 #include <string>
 
 #ifndef DHCP4_CONFIG_PARSER_H

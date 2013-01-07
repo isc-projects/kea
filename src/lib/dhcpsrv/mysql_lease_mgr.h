@@ -15,6 +15,7 @@
 #ifndef MYSQL_LEASE_MGR_H
 #define MYSQL_LEASE_MGR_H
 
+#include <dhcpsrv/hwaddr.h>
 #include <dhcpsrv/lease_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
