@@ -88,7 +88,7 @@ public:
     /// RRset(s) matching the \c name, \c rrclass and \c rrtype are
     /// removed from the collection.
     ///
-    /// \returns \c true if a matching RRset was deleted, \c false if no
+    /// \return \c true if a matching RRset was deleted, \c false if no
     /// such RRset exists.
     bool removeRRset(const isc::dns::Name& name,
                      const isc::dns::RRClass& rrclass,
@@ -103,7 +103,7 @@ public:
     /// \param name The name of the RRset to search for.
     /// \param rrclass The class of the RRset to search for.
     /// \param rrtype The type of the RRset to search for.
-    /// \returns The RRset if found, \c NULL otherwise.
+    /// \return The RRset if found, \c NULL otherwise.
     virtual isc::dns::ConstRRsetPtr find(const isc::dns::Name& name,
                                          const isc::dns::RRClass& rrclass,
                                          const isc::dns::RRType& rrtype) const;
