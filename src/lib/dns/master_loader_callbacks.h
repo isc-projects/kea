@@ -100,7 +100,7 @@ public:
     /// If the caller of the loader wants to abort, it is possible to throw
     /// from the callback, which aborts the load.
     void error(const std::string& source_name, size_t source_line,
-               const std::string& reason)
+               const std::string& reason) const
     {
         error_(source_name, source_line, reason);
     }
@@ -117,7 +117,7 @@ public:
     /// may be false positives), it is possible to throw from inside the
     /// callback.
     void warning(const std::string& source_name, size_t source_line,
-                 const std::string& reason)
+                 const std::string& reason) const
     {
         warning_(source_name, source_line, reason);
     }
@@ -133,7 +133,7 @@ public:
     static MasterLoaderCallbacks getNullCallbacks();
 
 private:
-    IssueCallback error_, warning_;
+    const IssueCallback error_, warning_;
 };
 
 }
