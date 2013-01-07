@@ -270,8 +270,8 @@ public:
     ///
     /// @return option descriptor found for the specified option space
     /// and option code.
-    OptionDescriptor getOptionSingle(const std::string& option_space,
-                                     const uint16_t option_code);
+    OptionDescriptor getOptionDescriptor(const std::string& option_space,
+                                         const uint16_t option_code);
 
     /// @brief returns the last address that was tried from this pool
     ///

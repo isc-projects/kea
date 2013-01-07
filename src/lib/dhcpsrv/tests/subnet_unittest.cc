@@ -441,11 +441,11 @@ TEST(Subnet6Test, getOptionSingle) {
     for (uint16_t code = 100; code < 110; ++code) {
         std::ostringstream stream;
         // First, try the invalid option space name.
-        Subnet::OptionDescriptor desc = subnet->getOptionSingle("isc", code);
+        Subnet::OptionDescriptor desc = subnet->getOptionDescriptor("isc", code);
         // Returned descriptor should contain NULL option ptr.
         EXPECT_FALSE(desc.option);
         // Now, try the valid option space.
-        desc = subnet->getOptionSingle("dhcp6", code);
+        desc = subnet->getOptionDescriptor("dhcp6", code);
         // Test that the option code matches the expected code.
         ASSERT_TRUE(desc.option);
         EXPECT_EQ(code, desc.option->getType());

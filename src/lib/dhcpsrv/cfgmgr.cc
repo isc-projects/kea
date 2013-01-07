@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <asiolink/io_address.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 
 using namespace isc::asiolink;
@@ -34,23 +35,36 @@ CfgMgr::addOptionDef(const OptionDefinitionPtr& def,
     // This will be implemented when #2313 is merged.
     if (option_space.empty()) {
         isc_throw(BadValue, "option space name must not be empty");
-    } else if (option_space == "dhcp4" || option_space == "dhcp6") {
-        isc_throw(BadValue, "unable to override definition of option"
-                  << " in standard option space '" << option_space
-                  << "'.");
     } else if (!def) {
+        // Option definition must point to a valid object.
         isc_throw(MalformedOptionDefinition, "option definition must not be NULL");
+
     } else if (getOptionDef(option_space, def->getCode())) {
+        // Option definition must not be overriden.
         isc_throw(DuplicateOptionDefinition, "option definition already added"
                   << " to option space " << option_space);
+
+    } else if ((option_space == "dhcp4" &&
+                LibDHCP::isStandardOption(Option::V4, def->getCode())) ||
+               (option_space == "dhcp6" &&
+                LibDHCP::isStandardOption(Option::V6, def->getCode()))) {
+        // We must not override standard (assigned) option. The standard options
+        // belong to dhcp4 or dhcp6 option space.
+        isc_throw(BadValue, "unable to override definition of option '"
+                  << def->getCode() << "' in standard option space '"
+                  << option_space << "'.");
+
     }
+    // Actually add the definition to the option space.
     option_def_spaces_[option_space].push_back(def);
 }
 
 const OptionDefContainer&
 CfgMgr::getOptionDefs(const std::string& option_space) const {
+    // @todo Validate the option space once the #2313 is implemented.
+
     // Get all option definitions for the particular option space.
-    const std::map<std::string, OptionDefContainer>::const_iterator& defs =
+    const OptionDefsMap::const_iterator& defs =
         option_def_spaces_.find(option_space);
     // If there are no option definitions for the particular option space
     // then return empty container.
@@ -65,6 +79,8 @@ CfgMgr::getOptionDefs(const std::string& option_space) const {
 OptionDefinitionPtr
 CfgMgr::getOptionDef(const std::string& option_space,
                      const uint16_t option_code) const {
+    // @todo Validate the option space once the #2313 is implemented.
+
     // Get a reference to option definitions for a particular option space.
     const OptionDefContainer& defs = getOptionDefs(option_space);
     // If there are no matching option definitions then return the empty pointer.
