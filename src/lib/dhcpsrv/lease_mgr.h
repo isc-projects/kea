@@ -18,6 +18,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
+#include <dhcpsrv/hwaddr.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
 
@@ -25,6 +26,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <fstream>
+#include <iostream>
 #include <map>
 #include <string>
 #include <utility>
@@ -60,8 +62,6 @@
 ///
 /// Nevertheless, we hope to have failover protocol eventually implemented in
 /// the Kea.
-
-#include <iostream>
 
 namespace isc {
 namespace dhcp {
@@ -222,11 +222,16 @@ struct Lease4 {
           comments_()
     {}
 
-    /// @brief Default Constructor
+    /// @brief Default constructor
     ///
     /// Initialize fields that don't have a default constructor.
     Lease4() : addr_(0), fixed_(false), fqdn_fwd_(false), fqdn_rev_(false)
     {}
+
+    /// @brief Convert lease to printable form
+    ///
+    /// @return Textual represenation of lease data
+    std::string toText() const;
 
     /// @brief Compare two leases for equality
     ///
@@ -377,7 +382,11 @@ struct Lease6 {
     /// @brief Convert Lease6 to Printable Form
     ///
     /// @return String form of the lease
-    std::string toText();
+    std::string toText() const;
+
+    /// @brief returns true if the lease is expired
+    /// @return true if the lease is expired
+    bool expired() const;
 
     /// @brief Compare two leases for equality
     ///
@@ -413,9 +422,6 @@ typedef std::vector<Lease6Ptr> Lease6Collection;
 /// see the documentation of those classes for details.
 class LeaseMgr {
 public:
-    /// Client hardware address
-    typedef std::vector<uint8_t> HWAddr;
-
     /// Database configuration parameter map
     typedef std::map<std::string, std::string> ParameterMap;
 
@@ -470,7 +476,7 @@ public:
     /// @param hwaddr hardware address of the client
     ///
     /// @return lease collection
-    virtual Lease4Collection getLease4(const HWAddr& hwaddr) const = 0;
+    virtual Lease4Collection getLease4(const isc::dhcp::HWAddr& hwaddr) const = 0;
 
     /// @brief Returns existing IPv4 leases for specified hardware address
     ///        and a subnet
@@ -482,7 +488,7 @@ public:
     /// @param subnet_id identifier of the subnet that lease must belong to
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
-    virtual Lease4Ptr getLease4(const HWAddr& hwaddr,
+    virtual Lease4Ptr getLease4(const isc::dhcp::HWAddr& hwaddr,
                                 SubnetID subnet_id) const = 0;
 
     /// @brief Returns existing IPv4 lease for specified client-id

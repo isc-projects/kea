@@ -6,3 +6,13 @@
 /shortanswer_fromWire.wire
 /simplequery_fromWire.wire
 /simpleresponse_fromWire.wire
+/example-base.sqlite3
+/example-base.sqlite3.copied
+/example-base.zone
+/example-base.zone
+/example-common-inc.zone
+/example-nsec3-inc.zone
+/example-nsec3.sqlite3
+/example-nsec3.sqlite3.copied
+/example-nsec3.zone
+/example.zone

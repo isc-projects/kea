@@ -14,15 +14,13 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 
 using namespace isc::asiolink;
 using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
-
-
-
 
 CfgMgr&
 CfgMgr::instance() {
@@ -42,6 +40,9 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
     // The server does not need to have a global address (using just link-local
     // is ok for DHCPv6 server) from the pool it serves.
     if ((subnets6_.size() == 1) && hint.getAddress().to_v6().is_link_local()) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                  DHCPSRV_CFGMGR_ONLY_SUBNET6)
+                  .arg(subnets6_[0]->toText()).arg(hint.toText());
         return (subnets6_[0]);
     }
 
@@ -49,11 +50,16 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
     for (Subnet6Collection::iterator subnet = subnets6_.begin();
          subnet != subnets6_.end(); ++subnet) {
         if ((*subnet)->inRange(hint)) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                      DHCPSRV_CFGMGR_SUBNET6)
+                      .arg((*subnet)->toText()).arg(hint.toText());
             return (*subnet);
         }
     }
 
     // sorry, we don't support that subnet
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_NO_SUBNET6)
+              .arg(hint.toText());
     return (Subnet6Ptr());
 }
 
@@ -65,6 +71,8 @@ Subnet6Ptr CfgMgr::getSubnet6(OptionPtr /*interfaceId*/) {
 void CfgMgr::addSubnet6(const Subnet6Ptr& subnet) {
     /// @todo: Check that this new subnet does not cross boundaries of any
     /// other already defined subnet.
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_SUBNET6)
+              .arg(subnet->toText());
     subnets6_.push_back(subnet);
 }
 
@@ -80,6 +88,9 @@ CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint) {
     // The server does not need to have a global address (using just link-local
     // is ok for DHCPv6 server) from the pool it serves.
     if (subnets4_.size() == 1) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                  DHCPSRV_CFGMGR_ONLY_SUBNET4)
+                  .arg(subnets4_[0]->toText()).arg(hint.toText());
         return (subnets4_[0]);
     }
 
@@ -87,25 +98,34 @@ CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint) {
     for (Subnet4Collection::iterator subnet = subnets4_.begin();
          subnet != subnets4_.end(); ++subnet) {
         if ((*subnet)->inRange(hint)) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                      DHCPSRV_CFGMGR_SUBNET4)
+                      .arg((*subnet)->toText()).arg(hint.toText());
             return (*subnet);
         }
     }
 
     // sorry, we don't support that subnet
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_NO_SUBNET4)
+              .arg(hint.toText());
     return (Subnet4Ptr());
 }
 
 void CfgMgr::addSubnet4(const Subnet4Ptr& subnet) {
     /// @todo: Check that this new subnet does not cross boundaries of any
     /// other already defined subnet.
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_SUBNET4)
+              .arg(subnet->toText());
     subnets4_.push_back(subnet);
 }
 
 void CfgMgr::deleteSubnets4() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_DELETE_SUBNET4);
     subnets4_.clear();
 }
 
 void CfgMgr::deleteSubnets6() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_DELETE_SUBNET6);
     subnets6_.clear();
 }
 

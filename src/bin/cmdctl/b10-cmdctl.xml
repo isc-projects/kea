@@ -147,21 +147,21 @@
       <varname>accounts_file</varname> defines the path to the
       user accounts database.
       The default is
-      <filename>/usr/local/etc/bind10-devel/cmdctl-accounts.csv</filename>.
+      <filename>/usr/local/etc/bind10/cmdctl-accounts.csv</filename>.
     </para>
 
     <para>
       <varname>cert_file</varname> defines the path to the
       PEM certificate file.
       The default is
-      <filename>/usr/local/etc/bind10-devel/cmdctl-certfile.pem</filename>.
+      <filename>/usr/local/etc/bind10/cmdctl-certfile.pem</filename>.
     </para>
 
     <para>
       <varname>key_file</varname> defines the path to the PEM private key
       file.
       The default is
-      <filename>/usr/local/etc/bind10-devel/cmdctl-keyfile.pem</filename>.
+      <filename>/usr/local/etc/bind10/cmdctl-keyfile.pem</filename>.
     </para>
 
 <!-- TODO: formating -->
@@ -187,17 +187,17 @@
 <!-- TODO: permissions -->
 <!-- TODO: what about multiple accounts? -->
 <!-- TODO: shouldn't the password file name say cmdctl in it? -->
-    <para><filename>/usr/local/etc/bind10-devel/cmdctl-accounts.csv</filename>
+    <para><filename>/usr/local/etc/bind10/cmdctl-accounts.csv</filename>
       &mdash; account database containing the name, hashed password,
       and the salt.
     </para>
 <!-- TODO: replace /usr/local -->
 <!-- TODO: permissions -->
 <!-- TODO: shouldn't have both in same file, will be configurable -->
-    <para><filename>/usr/local/etc/bind10-devel/cmdctl-keyfile.pem</filename>
+    <para><filename>/usr/local/etc/bind10/cmdctl-keyfile.pem</filename>
       &mdash; contains the Private key.
     </para>
-    <para><filename>/usr/local/etc/bind10-devel/cmdctl-certfile.pem</filename>
+    <para><filename>/usr/local/etc/bind10/cmdctl-certfile.pem</filename>
       &mdash; contains the Certificate.
     </para>
   </refsect1>

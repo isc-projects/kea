@@ -219,26 +219,21 @@ private:
             // after the RR class below.
         }
 
-        boost::scoped_ptr<RRClass> rrclass;
-        try {
-            rrclass.reset(new RRClass(rrparam_token.getString()));
+        const MaybeRRClass rrclass =
+            RRClass::createFromText(rrparam_token.getString());
+        if (rrclass) {
+            if (*rrclass != zone_class_) {
+                isc_throw(InternalException, "Class mismatch: " << *rrclass <<
+                          " vs. " << zone_class_);
+            }
             rrparam_token = lexer_.getNextToken(MasterToken::STRING);
-        } catch (const InvalidRRClass&) {
-            // If it's not an rrclass here, use the zone's class.
-            rrclass.reset(new RRClass(zone_class_));
         }
 
         // If we couldn't parse TTL earlier in the stream (above), try
         // again at current location.
-        if (!explicit_ttl &&
-            setCurrentTTL(rrparam_token.getString())) {
+        if (!explicit_ttl && setCurrentTTL(rrparam_token.getString())) {
             explicit_ttl = true;
             rrparam_token = lexer_.getNextToken(MasterToken::STRING);
-        }
-
-        if (*rrclass != zone_class_) {
-            isc_throw(InternalException, "Class mismatch: " << *rrclass <<
-                      "vs. " << zone_class_);
         }
 
         // Return the current string token's value as the RRType.

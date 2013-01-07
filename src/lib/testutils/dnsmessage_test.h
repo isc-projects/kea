@@ -208,10 +208,9 @@ pullSigs(std::vector<isc::dns::ConstRRsetPtr>& rrsets,
 {
     for (ITERATOR it = begin; it != end; ++it) {
         rrsets.push_back(*it);
-        text += (*it)->toText();
+        text += (*it)->toText(); // this will include RRSIG, if attached.
         if ((*it)->getRRsig()) {
             rrsets.push_back((*it)->getRRsig());
-            text += (*it)->getRRsig()->toText();
         }
     }
 }
