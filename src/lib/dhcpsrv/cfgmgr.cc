@@ -55,11 +55,17 @@ CfgMgr::addOptionDef(const OptionDefinitionPtr& def,
                   << option_space << "'.");
 
     }
-    // Actually add the definition to the option space.
-    option_def_spaces_[option_space].push_back(def);
+    // Get existing option definitions for the option space.
+    OptionDefContainerPtr defs = getOptionDefs(option_space);
+    // getOptionDefs always returns a valid pointer to
+    // the container. Let's make an assert to make sure.
+    assert(defs);
+    // Actually add the new definition.
+    defs->push_back(def);
+    option_def_spaces_[option_space] = defs;
 }
 
-const OptionDefContainer&
+OptionDefContainerPtr
 CfgMgr::getOptionDefs(const std::string& option_space) const {
     // @todo Validate the option space once the #2313 is implemented.
 
@@ -69,8 +75,7 @@ CfgMgr::getOptionDefs(const std::string& option_space) const {
     // If there are no option definitions for the particular option space
     // then return empty container.
     if (defs == option_def_spaces_.end()) {
-        static OptionDefContainer empty_container;
-        return (empty_container);
+        return (OptionDefContainerPtr(new OptionDefContainer()));
     }
     // If option definitions found, return them.
     return (defs->second);
@@ -82,14 +87,14 @@ CfgMgr::getOptionDef(const std::string& option_space,
     // @todo Validate the option space once the #2313 is implemented.
 
     // Get a reference to option definitions for a particular option space.
-    const OptionDefContainer& defs = getOptionDefs(option_space);
+    OptionDefContainerPtr defs = getOptionDefs(option_space);
     // If there are no matching option definitions then return the empty pointer.
-    if (defs.empty()) {
+    if (!defs || defs->empty()) {
         return (OptionDefinitionPtr());
     }
     // If there are some option definitions for a particular option space
     // use an option code to get the one we want.
-    const OptionDefContainerTypeIndex& idx = defs.get<1>();
+    const OptionDefContainerTypeIndex& idx = defs->get<1>();
     const OptionDefContainerTypeRange& range = idx.equal_range(option_code);
     // If there is no definition that matches option code, return empty pointer.
     if (std::distance(range.first, range.second) == 0) {

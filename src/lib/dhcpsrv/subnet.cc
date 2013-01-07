@@ -54,7 +54,14 @@ Subnet::addOption(OptionPtr& option, bool persistent,
         isc_throw(isc::BadValue, "option space name must not be empty");
     }
     validateOption(option);
-    option_spaces_[option_space].push_back(OptionDescriptor(option, persistent));
+
+    OptionContainerPtr container = getOptionDescriptors(option_space);
+    // getOptionDescriptors is expected to return the pointer to the
+    // valid container. Let's make sure it does by performing an assert.
+    assert(container);
+    // Actually add the new descriptor.
+    container->push_back(OptionDescriptor(option, persistent));
+    option_spaces_[option_space] = container;
 }
 
 void
@@ -62,19 +69,18 @@ Subnet::delOptions() {
     option_spaces_.clear();
 }
 
-const Subnet::OptionContainer&
-Subnet::getOptions(const std::string& option_space) const {
+Subnet::OptionContainerPtr
+Subnet::getOptionDescriptors(const std::string& option_space) const {
     // Search the map to get the options container for the particular
     // option space.
-    const std::map<std::string, OptionContainer>::const_iterator& options =
+    const OptionSpacesPtr::const_iterator& options =
         option_spaces_.find(option_space);
     // If the option space has not been found it means that no option
     // has been configured for this option space yet. Thus we have to
     // return an empty container to the caller.
     if (options == option_spaces_.end()) {
         // The default constructor creates an empty container.
-        static OptionContainer container;
-        return (container);
+        return (OptionContainerPtr(new OptionContainer()));
     }
     // We found some option container for the option space specified.
     // Let's return a const reference to it.
@@ -84,11 +90,11 @@ Subnet::getOptions(const std::string& option_space) const {
 Subnet::OptionDescriptor
 Subnet::getOptionDescriptor(const std::string& option_space,
                             const uint16_t option_code) {
-    const OptionContainer& options = getOptions(option_space);
-    if (options.empty()) {
+    OptionContainerPtr options = getOptionDescriptors(option_space);
+    if (!options || options->empty()) {
         return (OptionDescriptor(false));
     }
-    const OptionContainerTypeIndex& idx = options.get<1>();
+    const OptionContainerTypeIndex& idx = options->get<1>();
     const OptionContainerTypeRange& range = idx.equal_range(option_code);
     if (std::distance(range.first, range.second) == 0) {
         return (OptionDescriptor(false));

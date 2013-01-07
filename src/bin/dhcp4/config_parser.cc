@@ -894,8 +894,8 @@ public:
             subnet->addPool4(*it);
         }
 
-        const Subnet::OptionContainer& options = subnet->getOptions("dhcp4");
-        const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+        Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
+        const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
 
         // Add subnet specific options.
         BOOST_FOREACH(Subnet::OptionDescriptor desc, options_) {
@@ -914,8 +914,8 @@ public:
         BOOST_FOREACH(Subnet::OptionDescriptor desc, option_defaults) {
             // Get all options specified locally in the subnet and having
             // code equal to global option's code.
-            const Subnet::OptionContainer& options = subnet->getOptions("dhcp4");
-            const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+            Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
+            const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
             Subnet::OptionContainerTypeRange range = idx.equal_range(desc.option->getType());
             // @todo: In the future we will be searching for options using either
             // an option code or namespace. Currently we have only the option

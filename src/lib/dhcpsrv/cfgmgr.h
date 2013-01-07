@@ -97,9 +97,10 @@ public:
     ///
     /// @param option_space option space.
     ///
-    /// @return collection of option definitions for a particular
-    /// option space.
-    const OptionDefContainer&
+    /// @return pointer to the collection of option definitions for
+    /// the particular option space. The option collection is empty
+    /// if no option exists for the option space specified.
+    OptionDefContainerPtr
     getOptionDefs(const std::string& option_space) const;
 
     /// @brief Return option definition for a particular option space and code.
@@ -223,7 +224,7 @@ private:
     /// They key of this map is the name of the option space. The
     /// value is the the option container holding option definitions
     /// for the particular option space.
-    typedef std::map<std::string, OptionDefContainer> OptionDefsMap;
+    typedef std::map<std::string, OptionDefContainerPtr> OptionDefsMap;
 
     /// A map containing option definitions for different option spaces.
     /// The map key holds an option space name.
