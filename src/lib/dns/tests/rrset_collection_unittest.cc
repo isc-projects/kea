@@ -201,7 +201,7 @@ protected:
 
         virtual IterPtr getNext() {
             MyCollection::iterator it = iter_;
-            it++;
+            ++it;
             return (RRsetCollectionBase::IterPtr(new MyIter(it)));
         }
 
