@@ -26,7 +26,8 @@ BUILT_SOURCES = dhcpsrv_messages.h dhcpsrv_messages.cc
 # But older GCC compilers don't have the flag.
 AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
-CLEANFILES = *.gcno *.gcda
+# Make sure the generated files are deleted in a "clean" operation
+CLEANFILES = *.gcno *.gcda dhcpsrv_messages.h dhcpsrv_messages.cc
 
 lib_LTLIBRARIES = libb10-dhcpsrv.la
 libb10_dhcpsrv_la_SOURCES  =
@@ -63,6 +64,9 @@ if USE_CLANGPP
 libb10_dhcpsrv_la_CXXFLAGS += -Wno-unused-parameter
 endif
 
+# The message file should be in the distribution
+EXTRA_DIST = dhcpsrv_messages.mes
+
 # Distribute MySQL schema creation script and backend documentation
-EXTRA_DIST = dhcpdb_create.mysql database_backends.dox libdhcpsrv.dox
+EXTRA_DIST += dhcpdb_create.mysql database_backends.dox libdhcpsrv.dox
 dist_pkgdata_DATA = dhcpdb_create.mysql
