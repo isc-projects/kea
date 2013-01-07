@@ -25,7 +25,7 @@ import isc.config
 TEST_ZONE_NAME_STR = "example.com."
 TESTDATA_SRCDIR = os.getenv("TESTDATASRCDIR")
 
-from isc.statistics import counter
+from isc.statistics import counters
 
 def setup_functor(event, cycle, functor, *args):
     """Waits until the event is started, and then invokes the functor
@@ -50,7 +50,7 @@ class TestBasicMethods(unittest.TestCase):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
 
     def setUp(self):
-        self.counters = counter.Counters(self.TEST_SPECFILE_LOCATION)
+        self.counters = counters.Counters(self.TEST_SPECFILE_LOCATION)
 
     def tearDown(self):
         self.counters.clear_all()
@@ -74,16 +74,16 @@ class TestBasicMethods(unittest.TestCase):
     def test_add_counter_normal(self):
         element = {'counter' : 1}
         self.assertEqual(\
-            counter._add_counter(element, [], 'counter'), 1)
+            counters._add_counter(element, [], 'counter'), 1)
 
     def test_add_counter_wrongspec(self):
         self.assertRaises(isc.cc.data.DataNotFoundError,
-                          counter._add_counter,
+                          counters._add_counter,
                           {}, [], 'counter')
 
     def test_add_counter_empty(self):
         self.assertEqual(\
-            counter._add_counter(
+            counters._add_counter(
                 {},
                 [ { 'item_name' : 'counter',
                     'item_type' : 'integer',
@@ -106,20 +106,20 @@ class TestBasicMethods(unittest.TestCase):
                                   'item_default': 0 } ]}
                    }]
         self.assertEqual(\
-            counter._add_counter(elem, spec, 'dirs/foo/counter1'), 0)
+            counters._add_counter(elem, spec, 'dirs/foo/counter1'), 0)
         self.assertEqual(\
-            counter._add_counter(elem, spec, 'dirs/bar/counter2'), 0)
+            counters._add_counter(elem, spec, 'dirs/bar/counter2'), 0)
 
     def test_timer(self):
-        t1 = counter._start_timer()
+        t1 = counters._start_timer()
         t2 = t1 - timedelta(seconds=1)
         self.assertEqual((t1 - t2).seconds, 1)
         elem = {}
         spec = [{ 'item_name': 'time',
                   'item_type': 'real',
                   'item_default': 0.0 }]
-        counter._stop_timer(t2, elem, spec, 'time')
-        self.assertGreater(counter._get_counter(elem,'time'), 1)
+        counters._stop_timer(t2, elem, spec, 'time')
+        self.assertGreater(counters._get_counter(elem,'time'), 1)
 
     def test_rasing_incrementers(self):
         """ use Thread"""
@@ -127,42 +127,42 @@ class TestBasicMethods(unittest.TestCase):
         number = 10000     # number of counting per thread
         counter_name = "counter"
         timer_name = "seconds"
-        start_time = counter._start_timer()
+        start_time = counters._start_timer()
         start_functor(concurrency, number, self.counters.inc,
                       counter_name)
-        counter._stop_timer(start_time,
+        counters._stop_timer(start_time,
                             self.counters._statistics._data,
                             self.counters._statistics._spec,
                             timer_name)
         self.assertEqual(
-            counter._get_counter(self.counters._statistics._data,
+            counters._get_counter(self.counters._statistics._data,
                                  counter_name),
             concurrency * number)
         self.assertGreater(
-            counter._get_counter(self.counters._statistics._data,
+            counters._get_counter(self.counters._statistics._data,
                                  timer_name), 0)
 
     def test_concat(self):
         # only strings
         a = ( 'a','b','c','d' )
-        self.assertEqual('a/b/c/d', counter._concat(*a))
-        self.assertEqual('aTbTcTd', counter._concat(*a, sep='T'))
-        self.assertEqual('a\\b\\c\\d', counter._concat(*a, sep='\\'))
+        self.assertEqual('a/b/c/d', counters._concat(*a))
+        self.assertEqual('aTbTcTd', counters._concat(*a, sep='T'))
+        self.assertEqual('a\\b\\c\\d', counters._concat(*a, sep='\\'))
         # mixed with other types
         b = a + (1,)
-        self.assertRaises(TypeError, counter._concat, *b)
+        self.assertRaises(TypeError, counters._concat, *b)
         b = a + (1.1,)
-        self.assertRaises(TypeError, counter._concat, *b)
+        self.assertRaises(TypeError, counters._concat, *b)
         b = a + ([],)
-        self.assertRaises(TypeError, counter._concat, *b)
+        self.assertRaises(TypeError, counters._concat, *b)
         b = a + ({},)
-        self.assertRaises(TypeError, counter._concat, *b)
+        self.assertRaises(TypeError, counters._concat, *b)
 
 class BaseTestCounters():
 
     def setUp(self):
         self._statistics_data = {}
-        self.counters = counter.Counters(self.TEST_SPECFILE_LOCATION)
+        self.counters = counters.Counters(self.TEST_SPECFILE_LOCATION)
         self._entire_server    = self.counters._entire_server
         self._perzone_prefix   = self.counters._perzone_prefix
 
