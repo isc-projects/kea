@@ -47,9 +47,9 @@ This is an informational message reporting that the configuration has
 been extended to include the specified subnet.
 
 % DHCP6_CONFIG_OPTION_DUPLICATE multiple options with the code: %1 added to the subnet: %2
-This warning message is issued on attempt to configure multiple options with the
+This warning message is issued on an attempt to configure multiple options with the
 same option code for the particular subnet. Adding multiple options is uncommon
-for DHCPv6, yet it is not prohibited.
+for DHCPv6, but it is not prohibited.
 
 % DHCP6_CONFIG_START DHCPv6 server is processing the following configuration: %1
 This is a debug message that is issued every time the server receives a
@@ -65,11 +65,18 @@ This informational message is printed every time DHCPv6 is started.
 It indicates what database backend type is being to store lease and
 other information.
 
+% DHCP6_LEASE_WITHOUT_DUID lease for address %1 does not have a DUID
+This error message indicates a database consistency failure. The lease
+database has an entry indicating that the given address is in use,
+but the lease does not contain any client identification. This is most
+likely due to a software error: please raise a bug report. As a temporary
+workaround, manually remove the lease entry from the database.
+
 % DHCP6_LEASE_ADVERT lease %1 advertised (client duid=%2, iaid=%3)
 This debug message indicates that the server successfully advertised
-a lease. It is up to the client to choose one server out of othe advertised
-and continue allocation with that server. This is a normal behavior and
-indicates successful operation.
+a lease. It is up to the client to choose one server out of the
+advertised servers and continue allocation with that server. This
+is a normal behavior and indicates successful operation.
 
 % DHCP6_LEASE_ADVERT_FAIL failed to advertise a lease for client duid=%1, iaid=%2
 This message indicates that the server failed to advertise (in response to
@@ -79,19 +86,43 @@ such failure. Each specific failure is logged in a separate log entry.
 % DHCP6_LEASE_ALLOC lease %1 has been allocated (client duid=%2, iaid=%3)
 This debug message indicates that the server successfully granted (in
 response to client's REQUEST message) a lease. This is a normal behavior
-and incicates successful operation.
+and indicates successful operation.
 
 % DHCP6_LEASE_ALLOC_FAIL failed to grant a lease for client duid=%1, iaid=%2
 This message indicates that the server failed to grant (in response to
 received REQUEST) a lease for a given client. There may be many reasons for
 such failure. Each specific failure is logged in a separate log entry.
 
-% DHCP6_REQUIRED_OPTIONS_CHECK_FAIL %1 message received from %2 failed the following check: %3
-This message indicates that received DHCPv6 packet is invalid.  This may be due
-to a number of reasons, e.g. the mandatory client-id option is missing,
-the server-id forbidden in that particular type of message is present,
-there is more than one instance of client-id or server-id present,
-etc. The exact reason for rejecting the packet is included in the message.
+% DHCP6_RELEASE address %1 belonging to client duid=%2, iaid=%3 was released properly.
+This debug message indicates that an address was released properly. It
+is a normal operation during client shutdown.
+
+% DHCP6_RELEASE_FAIL failed to remove lease for address %1 for duid=%2, iaid=%3
+This error message indicates that the software failed to remove a
+lease from the lease database.  It probably due to an error during a
+database operation: resolution will most likely require administrator
+intervention (e.g. check if DHCP process has sufficient privileges to
+update the database). It may also be triggered if a lease was manually
+removed from the database during RELEASE message processing.
+
+% DHCP6_RELEASE_FAIL_WRONG_DUID client (duid=%1) tried to release address %2, but it belongs to client (duid=%3)
+This warning message indicates that client tried to release an address
+that belongs to a different client. This should not happen in normal
+circumstances and may indicate a misconfiguration of the client.  However,
+since the client releasing the address will stop using it anyway, there
+is a good chance that the situation will correct itself.
+
+% DHCP6_RELEASE_FAIL_WRONG_IAID client (duid=%1) tried to release address %2, but it used wrong IAID (expected %3, but got %4)
+This warning message indicates that client tried to release an address
+that does belong to it, but the address was expected to be in a different
+IA (identity association) container. This probably means that the client's
+support for multiple addresses is flawed.
+
+% DHCP6_RELEASE_MISSING_CLIENTID client (address=%1) sent RELEASE message without mandatory client-id
+This warning message indicates that client sent RELEASE message without
+mandatory client-id option. This is most likely caused by a buggy client
+(or a relay that malformed forwarded message). This request will not be
+processed and a response with error status code will be sent back.
 
 % DHCP6_NOT_RUNNING IPv6 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
@@ -128,7 +159,7 @@ a received OFFER packet as UNKNOWN).
 
 % DHCP6_PACKET_RECEIVE_FAIL error on attempt to receive packet: %1
 The IPv6 DHCP server tried to receive a packet but an error
-occured during this attempt. The reason for the error is included in
+occurred during this attempt. The reason for the error is included in
 the message.
 
 % DHCP6_PACKET_SEND_FAIL failed to send DHCPv6 packet: %1
@@ -148,6 +179,13 @@ as a hint for possible requested address.
 
 % DHCP6_QUERY_DATA received packet length %1, data length %2, data is %3
 A debug message listing the data received from the client or relay.
+
+% DHCP6_REQUIRED_OPTIONS_CHECK_FAIL %1 message received from %2 failed the following check: %3
+This message indicates that received DHCPv6 packet is invalid.  This may be due
+to a number of reasons, e.g. the mandatory client-id option is missing,
+the server-id forbidden in that particular type of message is present,
+there is more than one instance of client-id or server-id present,
+etc. The exact reason for rejecting the packet is included in the message.
 
 % DHCP6_RESPONSE_DATA responding with packet type %1 data is %2
 A debug message listing the data returned to the client.
@@ -216,3 +254,8 @@ recently and does not recognize its well-behaving clients. This is more
 probable if you see many such messages. Clients will recover from this,
 but they will most likely get a different IP addresses and experience
 a brief service interruption.
+
+% DHCP6_UNKNOWN_RELEASE received RELEASE from unknown client (duid=%1, iaid=%2)
+This warning message is printed when client attempts to release a lease,
+but no such lease is known by the server. See DHCP6_UNKNOWN_RENEW for
+possible reasons for such behavior.

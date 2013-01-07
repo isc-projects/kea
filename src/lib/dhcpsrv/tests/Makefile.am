@@ -40,6 +40,7 @@ libdhcpsrv_unittests_SOURCES += pool_unittest.cc
 libdhcpsrv_unittests_SOURCES += schema_copy.h
 libdhcpsrv_unittests_SOURCES += subnet_unittest.cc
 libdhcpsrv_unittests_SOURCES += triplet_unittest.cc
+libdhcpsrv_unittests_SOURCES += test_utils.cc test_utils.h
 
 libdhcpsrv_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 if HAVE_MYSQL
