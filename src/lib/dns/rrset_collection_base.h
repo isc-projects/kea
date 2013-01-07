@@ -47,7 +47,7 @@ public:
     /// \param name The name of the RRset to search for.
     /// \param rrtype The type of the RRset to search for.
     /// \param rrclass The class of the RRset to search for.
-    /// \returns The RRset if found, \c NULL otherwise.
+    /// \return The RRset if found, \c NULL otherwise.
     virtual isc::dns::ConstRRsetPtr find
         (const isc::dns::Name& name, const isc::dns::RRClass& rrclass,
          const isc::dns::RRType& rrtype)
@@ -88,7 +88,7 @@ protected:
         /// method must return \c false.
         ///
         /// \param other The other iterator to compare against.
-        /// \returns \c true if equal, \c false otherwise.
+        /// \return \c true if equal, \c false otherwise.
         virtual bool equals(Iter& other) = 0;
     };
 
