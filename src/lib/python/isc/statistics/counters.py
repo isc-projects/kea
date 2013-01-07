@@ -303,19 +303,21 @@ class Counters():
                          identifier, step)
 
     def inc(self, *args):
-        """A incrementer for per-zone counter. Locks the thread
-        because it is considered to be invoked by a multi-threading
+        """A incrementer for a counter. Locks the thread because it is
+        considered to be invoked by a multi-threading
         caller. isc.cc.data.DataNotFoundError is raised when
         incrementing the counter of the item undefined in the spec
-        file."""
+        file. It calls internally a common helper function
+        _incdec()"""
         return self._incdec(*args)
 
     def dec(self, *args):
-        """A decrementer for axfr or ixfr running. Locks the thread
-        because it is considered to be invoked by a multi-threading
+        """A decrementer for a counter. Locks the thread because it is
+        considered to be invoked by a multi-threading
         caller. isc.cc.data.DataNotFoundError is raised when
         decrementing the counter of the item undefined in the spec
-        file."""
+        file. It calls internally a common helper function
+        _incdec()"""
         return self._incdec(*args, step=-1)
 
     def get(self, *args):
