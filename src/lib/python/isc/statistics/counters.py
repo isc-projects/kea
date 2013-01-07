@@ -130,7 +130,9 @@ def _stop_timer(start_time, element, spec, identifier):
     _set_counter(element, spec, identifier, sec)
 
 def _concat(*args, sep='/'):
-    """Concatenates words in args with a separator('/')
+    """A helper function that is used to generate an identifier for
+    statistics item names. It concatenates words in args with a
+    separator('/')
     """
     return sep.join(args)
 
