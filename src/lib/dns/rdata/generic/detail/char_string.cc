@@ -57,8 +57,8 @@ decimalToNumber(const char* s, const char* s_end) {
 }
 
 void
-strToCharString(const MasterToken::StringRegion& str_region,
-                CharString& result)
+stringToCharString(const MasterToken::StringRegion& str_region,
+                   CharString& result)
 {
     // make a space for the 1-byte length field; filled in at the end
     result.push_back(0);
@@ -89,6 +89,29 @@ strToCharString(const MasterToken::StringRegion& str_region,
                   (result.size() - 1) << "(+1) characters");
     }
     result[0] = result.size() - 1;
+}
+
+std::string
+charStringToString(const CharString& char_string) {
+    std::string s;
+    for (CharString::const_iterator it = char_string.begin() + 1;
+         it != char_string.end(); ++it) {
+        const uint8_t ch = *it;
+        if ((ch < 0x20) || (ch >= 0x7f)) {
+            // convert to escaped \xxx (decimal) format
+            s.push_back('\\');
+            s.push_back('0' + ((ch / 100) % 10));
+            s.push_back('0' + ((ch / 10) % 10));
+            s.push_back('0' + (ch % 10));
+            continue;
+        }
+        if ((ch == '"') || (ch == ';') || (ch == '\\')) {
+            s.push_back('\\');
+        }
+        s.push_back(ch);
+    }
+
+    return (s);
 }
 
 } // end of detail

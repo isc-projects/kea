@@ -160,7 +160,7 @@
 	    <citerefentry><refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
             daemon to use.
             The default is
-            <filename>/usr/local/var/bind10-devel/msg_socket</filename>.
+            <filename>/usr/local/var/bind10/msg_socket</filename>.
 <!-- @localstatedir@/@PACKAGE_NAME@/msg_socket -->
            </para>
          </listitem>
