@@ -47,12 +47,12 @@ TEST_F(RRsetCollectionTest, istreamConstructor) {
     RRsetCollectionBase::Iterator iter = collection.begin();
     RRsetCollectionBase::Iterator iter2 = collection2.begin();
     while (iter != collection.end()) {
-         EXPECT_TRUE(iter2 != collection2.end());
+         ASSERT_TRUE(iter2 != collection2.end());
          EXPECT_EQ((*iter).toText(), (*iter2).toText());
          ++iter;
          ++iter2;
     }
-    EXPECT_TRUE(iter2 == collection2.end());
+    ASSERT_TRUE(iter2 == collection2.end());
 }
 
 template <typename T, typename TP>
