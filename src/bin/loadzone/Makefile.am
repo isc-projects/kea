@@ -1,12 +1,17 @@
-SUBDIRS = . tests/correct tests/error
+SUBDIRS = . tests
 bin_SCRIPTS = b10-loadzone
 noinst_SCRIPTS = run_loadzone.sh
 
-CLEANFILES = b10-loadzone
+nodist_pylogmessage_PYTHON = $(PYTHON_LOGMSGPKG_DIR)/work/loadzone_messages.py
+pylogmessagedir = $(pyexecdir)/isc/log_messages/
+
+CLEANFILES = b10-loadzone loadzone.pyc
+CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/loadzone_messages.py
+CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/loadzone_messages.pyc
 
 man_MANS = b10-loadzone.8
 DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) b10-loadzone.xml
+EXTRA_DIST = $(man_MANS) b10-loadzone.xml loadzone_messages.mes
 
 if GENERATE_DOCS
 
@@ -21,10 +26,13 @@ $(man_MANS):
 
 endif
 
-b10-loadzone: b10-loadzone.py
-	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" \
-	       -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" \
-	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" b10-loadzone.py >$@
+# Define rule to build logging source files from message file
+$(PYTHON_LOGMSGPKG_DIR)/work/loadzone_messages.py : loadzone_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message \
+	-d $(PYTHON_LOGMSGPKG_DIR)/work -p $(srcdir)/loadzone_messages.mes
+
+b10-loadzone: loadzone.py $(PYTHON_LOGMSGPKG_DIR)/work/loadzone_messages.py
+	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" loadzone.py >$@
 	chmod a+x $@
 
 EXTRA_DIST += tests/normal/README
@@ -48,6 +56,7 @@ EXTRA_DIST += tests/normal/sql1.example.com.signed
 EXTRA_DIST += tests/normal/sql2.example.com
 EXTRA_DIST += tests/normal/sql2.example.com.signed
 
-pytest:
-	$(SHELL) tests/correct/correct_test.sh
-	$(SHELL) tests/error/error_test.sh
+CLEANDIRS = __pycache__
+
+clean-local:
+	rm -rf $(CLEANDIRS)

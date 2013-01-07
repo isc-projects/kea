@@ -210,7 +210,7 @@
 
   <refsect1>
     <title>FILES</title>
-    <para><filename>/usr/local/share/bind10-devel/stats.spec</filename>
+    <para><filename>/usr/local/share/bind10/stats.spec</filename>
       <!--TODO: The filename should be computed from prefix-->
       &mdash; This is a spec file for <command>b10-stats</command>. It
       contains commands for <command>b10-stats</command>. They can be

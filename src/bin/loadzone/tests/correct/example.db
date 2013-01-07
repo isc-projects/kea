@@ -2,11 +2,17 @@
 $ORIGIN example.com.
 $TTL 60
 @    IN SOA   ns1.example.com. hostmaster.example.com. (1 43200 900 1814400 7200)
-     IN     20      NS  ns1
-                    NS  ns2
+; these need #2390
+;     IN     20      NS  ns1
+;                    NS  ns2
+     IN     20      NS  ns1.example.com.
+                    NS  ns2.example.com.
 ns1  IN     30      A   192.168.1.102
-            70      NS  ns3
-     IN             NS  ns4
+; these need #2390
+;            70      NS  ns3
+;     IN             NS  ns4
+            70      NS  ns3.example.com.
+     IN             NS  ns4.example.com.
      10     IN      MX  10  mail.example.com.
 ns2         80      A   1.1.1.1
 ns3  IN             A   2.2.2.2

@@ -122,7 +122,7 @@ as the class in the Zone Section, ANY, or NONE.
 A FORMERR response is sent back to the client.
 
 % LIBDDNS_UPDATE_DATASRC_ERROR error in datasource during DDNS update: %1
-An error occured while committing the DDNS update changes to the
+An error occurred while committing the DDNS update changes to the
 datasource. The specific error is printed. A SERVFAIL response is sent
 back to the client.
 
