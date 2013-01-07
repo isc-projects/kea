@@ -1,3 +1,7 @@
+539.	[func]		stephen
+	Add logging to the DHCP server library.
+	(Trac #2524, git b55b8b6686cc80eed41793c53d1779f4de3e9e3c)
+
 538.	[bug]		muks
 	Added escaping of special characters (double-quotes, semicolon,
 	backslash, etc.) in text-like RRType's toText() implementation.
