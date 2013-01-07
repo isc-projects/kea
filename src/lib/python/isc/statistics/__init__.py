@@ -1,1 +1,1 @@
-from isc.statistics.counter import *
+from isc.statistics.counters import *
