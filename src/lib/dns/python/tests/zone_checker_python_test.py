@@ -119,17 +119,18 @@ class ZoneCheckerTest(unittest.TestCase):
             # This is the Python-only collection class.  Its find() makes
             # the check pass by default, by returning hardcoded RRsets.
             # If raise_on_find is set to True, find() raises an exception.
-            # If find_result is set to something other than False, find()
-            # returns that specified value.
+            # If find_result is set to something other than 'use_default'
+            # (as a string), find() returns that specified value (note that
+            # it can be None).
 
-            def __init__(self, raise_on_find=False, find_result=False):
+            def __init__(self, raise_on_find=False, find_result='use_default'):
                 self.__raise_on_find = raise_on_find
                 self.__find_result = find_result
 
             def find(self, name, rrclass, rrtype):
                 if self.__raise_on_find:
                     raise FakeException('find error')
-                if self.__find_result is not False:
+                if self.__find_result is not 'use_default':
                     return self.__find_result
                 if rrtype == RRType.SOA():
                     soa = RRset(Name('example'), RRClass.IN(), rrtype,
