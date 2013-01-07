@@ -65,7 +65,7 @@ RRsetCollection::constructHelper(T source, const isc::dns::Name& origin,
 RRsetCollection::RRsetCollection(const char* filename, const Name& origin,
                                  const RRClass& rrclass)
 {
-    constructHelper<const char*>(filename, origin, rrclass);
+    constructHelper(filename, origin, rrclass);
 }
 
 RRsetCollection::RRsetCollection(std::istream& input_stream, const Name& origin,
