@@ -42,9 +42,9 @@ public:
     /// The \c origin and \c rrclass arguments are required for the zone
     /// loading, but \c RRsetCollection itself does not do any
     /// validation, and the collection of RRsets does not have to form a
-    /// valid zone. The constructor throws MasterLoaderError if there is
-    /// an error during loading.
+    /// valid zone.
     ///
+    /// \throws MasterLoaderError if there is an error during loading.
     /// \param filename Name of a file containing a collection of RRs in
     /// the master file format (which may or may not form a valid zone).
     /// \param origin The zone origin.
@@ -56,9 +56,9 @@ public:
     ///
     /// This constructor is similar to the previous one, but instead of
     /// taking a filename to load a zone from, it takes an input
-    /// stream. The constructor throws MasterLoaderError if there is an
-    /// error during loading.
+    /// stream.
     ///
+    /// \throws MasterLoaderError if there is an error during loading.
     /// \param input_stream The input stream to load from.
     /// \param origin The zone origin.
     /// \param rrclass The zone class.
