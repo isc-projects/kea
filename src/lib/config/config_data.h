@@ -93,8 +93,8 @@ public:
     void setLocalConfig(isc::data::ElementPtr config) { _config = config; }
 
     /// Returns the local (i.e. non-default) configuration.
-    /// \returns An ElementPtr pointing to a MapElement containing all
-    ///          non-default configuration options.
+    /// \return An ElementPtr pointing to a MapElement containing all
+    ///         non-default configuration options.
     isc::data::ElementPtr getLocalConfig() { return (_config); }
 
     /// Returns a list of all possible configuration options as specified
