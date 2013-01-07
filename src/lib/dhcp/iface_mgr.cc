@@ -212,8 +212,8 @@ bool IfaceMgr::openSockets4(const uint16_t port) {
              addr != addrs.end();
              ++addr) {
 
-            // Skip IPv6 addresses
-            if (addr->getFamily() != AF_INET) {
+            // Skip all but V4 addresses.
+            if (!addr->isV4()) {
                 continue;
             }
 
@@ -247,8 +247,8 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
              addr != addrs.end();
              ++addr) {
 
-            // skip IPv4 addresses
-            if (addr->getFamily() != AF_INET6) {
+            // Skip all but V6 addresses.
+            if (!addr->isV6()) {
                 continue;
             }
 
@@ -356,12 +356,13 @@ int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,
     if (!iface) {
         isc_throw(BadValue, "There is no " << ifname << " interface present.");
     }
-    switch (addr.getFamily()) {
-    case AF_INET:
+    if (addr.isV4()) {
         return openSocket4(*iface, addr, port);
-    case AF_INET6:
+
+    } else if (addr.isV6()) {
         return openSocket6(*iface, addr, port);
-    default:
+
+    } else {
         isc_throw(BadValue, "Failed to detect family of address: "
                   << addr.toText());
     }
@@ -469,7 +470,7 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
     asio::error_code err_code;
     // If remote address is broadcast address we have to
     // allow this on the socket.
-    if (remote_addr.getAddress().is_v4() &&
+    if (remote_addr.isV4() &&
         (remote_addr == IOAddress(DHCP_IPV4_BROADCAST_ADDRESS))) {
         // Socket has to be open prior to setting the broadcast
         // option. Otherwise set_option will complain about
@@ -556,9 +557,7 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
         addr6.sin6_scope_id = if_nametoindex(iface.getName().c_str());
     }
 
-    memcpy(&addr6.sin6_addr,
-           addr.getAddress().to_v6().to_bytes().data(),
-           sizeof(addr6.sin6_addr));
+    memcpy(&addr6.sin6_addr, &addr.toBytes()[0], sizeof(addr6.sin6_addr));
 #ifdef HAVE_SA_LEN
     addr6.sin6_len = sizeof(addr6);
 #endif
@@ -660,7 +659,7 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
     to.sin6_family = AF_INET6;
     to.sin6_port = htons(pkt->getRemotePort());
     memcpy(&to.sin6_addr,
-           pkt->getRemoteAddr().getAddress().to_v6().to_bytes().data(),
+           &pkt->getRemoteAddr().toBytes()[0],
            16);
     to.sin6_scope_id = pkt->getIndex();
 
@@ -798,7 +797,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
              s != socket_collection.end(); ++s) {
 
             // Only deal with IPv4 addresses.
-            if (s->addr_.getFamily() == AF_INET) {
+            if (s->addr_.isV4()) {
                 names << s->sockfd_ << "(" << iface->getName() << ") ";
 
                 // Add this socket to listening set
@@ -950,8 +949,8 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         for (SocketCollection::const_iterator s = socket_collection.begin();
              s != socket_collection.end(); ++s) {
 
-            // Only deal with IPv4 addresses.
-            if (s->addr_.getFamily() == AF_INET6) {
+            // Only deal with IPv6 addresses.
+            if (s->addr_.isV6()) {
                 names << s->sockfd_ << "(" << iface->getName() << ") ";
 
                 // Add this socket to listening set

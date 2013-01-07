@@ -196,12 +196,10 @@ PktTransform::unpackOptions(const OptionBuffer& in_buffer,
 
         // Get option length which is supposed to be after option type.
         offset += offset_step;
-        uint16_t opt_len = in_buffer[offset] * 256 + in_buffer[offset + 1];
-        if (option->getUniverse() == Option::V6) {
-            opt_len = in_buffer[offset] * 256 + in_buffer[offset + 1];
-        } else {
-            opt_len = in_buffer[offset];
-        }
+        const uint16_t opt_len =
+            (option->getUniverse() == Option::V6) ?
+            in_buffer[offset] * 256 + in_buffer[offset + 1] :
+            in_buffer[offset];
 
         // Check if packet is not truncated.
         if (offset + option->getHeaderLen() + opt_len > in_buffer.size()) {

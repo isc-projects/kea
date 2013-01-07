@@ -30,22 +30,24 @@ AllocEngine::IterativeAllocator::IterativeAllocator()
 
 isc::asiolink::IOAddress
 AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress& addr) {
+    // Get a buffer holding an address.
+    const std::vector<uint8_t>& vec = addr.toBytes();
+    // Get the address length.
+    const int len = vec.size();
+
+    // Since the same array will be used to hold the IPv4 and IPv6
+    // address we have to make sure that the size of the array
+    // we allocate will work for both types of address.
+    BOOST_STATIC_ASSERT(V4ADDRESS_LEN <= V6ADDRESS_LEN);
     uint8_t packed[V6ADDRESS_LEN];
-    int len;
 
-    // First we copy the whole address as 16 bytes.
-    if (addr.getFamily()==AF_INET) {
-        // IPv4
-        std::memcpy(packed, addr.getAddress().to_v4().to_bytes().data(), 4);
-        len = 4;
-    } else {
-        // IPv6
-        std::memcpy(packed, addr.getAddress().to_v6().to_bytes().data(), 16);
-        len = 16;
-    }
+    // Copy the address. It can be either V4 or V6.
+    std::memcpy(packed, &vec[0], len);
 
+    // Start increasing the least significant byte
     for (int i = len - 1; i >= 0; --i) {
         ++packed[i];
+        // if we haven't overflowed (0xff -> 0x0), than we are done
         if (packed[i] != 0) {
             break;
         }
@@ -197,8 +199,30 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
             if (lease) {
                 return (lease);
             }
+        } else {
+            if (existing->expired()) {
+                return (reuseExpiredLease(existing, subnet, duid, iaid,
+                                          fake_allocation));
+            }
+
         }
     }
+
+    // Hint is in the pool but is not available. Search the pool until first of
+    // the following occurs:
+    // - we find a free address
+    // - we find an address for which the lease has expired
+    // - we exhaust number of tries
+    //
+    // @todo: Current code does not handle pool exhaustion well. It will be
+    // improved. Current problems:
+    // 1. with attempts set to too large value (e.g. 1000) and a small pool (e.g.
+    // 10 addresses), we will iterate over it 100 times before giving up
+    // 2. attempts 0 mean unlimited (this is really UINT_MAX, not infinite)
+    // 3. the whole concept of infinite attempts is just asking for infinite loop
+    // We may consider some form or reference counting (this pool has X addresses
+    // left), but this has one major problem. We exactly control allocation
+    // moment, but we currently do not control expiration time at all
 
     unsigned int i = attempts_;
     do {
@@ -208,9 +232,9 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
         /// implemented
 
         Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(candidate);
-        // there's no existing lease for selected candidate, so it is
-        // free. Let's allocate it.
         if (!existing) {
+            // there's no existing lease for selected candidate, so it is
+            // free. Let's allocate it.
             Lease6Ptr lease = createLease(subnet, duid, iaid, candidate,
                                           fake_allocation);
             if (lease) {
@@ -220,6 +244,11 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
             // Although the address was free just microseconds ago, it may have
             // been taken just now. If the lease insertion fails, we continue
             // allocation attempts.
+        } else {
+            if (existing->expired()) {
+                return (reuseExpiredLease(existing, subnet, duid, iaid,
+                                          fake_allocation));
+            }
         }
 
         // continue trying allocation until we run out of attempts
@@ -229,6 +258,46 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
 
     isc_throw(AllocFailed, "Failed to allocate address after " << attempts_
               << " tries");
+}
+
+Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
+                                         const Subnet6Ptr& subnet,
+                                         const DuidPtr& duid,
+                                         uint32_t iaid,
+                                         bool fake_allocation /*= false */ ) {
+
+    if (!expired->expired()) {
+        isc_throw(BadValue, "Attempt to recycle lease that is still valid");
+    }
+
+    // address, lease type and prefixlen (0) stay the same
+    expired->iaid_ = iaid;
+    expired->duid_ = duid;
+    expired->preferred_lft_ = subnet->getPreferred();
+    expired->valid_lft_ = subnet->getValid();
+    expired->t1_ = subnet->getT1();
+    expired->t2_ = subnet->getT2();
+    expired->cltt_ = time(NULL);
+    expired->subnet_id_ = subnet->getID();
+    expired->fixed_ = false;
+    expired->hostname_ = std::string("");
+    expired->fqdn_fwd_ = false;
+    expired->fqdn_rev_ = false;
+
+    /// @todo: log here that the lease was reused (there's ticket #2524 for
+    /// logging in libdhcpsrv)
+
+    if (!fake_allocation) {
+        // for REQUEST we do update the lease
+        LeaseMgrFactory::instance().updateLease6(expired);
+    }
+
+    // We do nothing for SOLICIT. We'll just update database when
+    // the client gets back to us with REQUEST message.
+
+    // it's not really expired at this stage anymore - let's return it as
+    // an updated lease
+    return (expired);
 }
 
 Lease6Ptr AllocEngine::createLease(const Subnet6Ptr& subnet,

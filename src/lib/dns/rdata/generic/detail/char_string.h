@@ -17,6 +17,7 @@
 
 #include <dns/master_lexer.h>
 
+#include <string>
 #include <vector>
 #include <stdint.h>
 
@@ -48,8 +49,22 @@ typedef std::vector<uint8_t> CharString;
 /// \brief str_region A string that represents a character-string.
 /// \brief result A placeholder vector where the resulting data are to be
 /// stored.  Expected to be empty, but it's not checked.
-void strToCharString(const MasterToken::StringRegion& str_region,
-                     CharString& result);
+void stringToCharString(const MasterToken::StringRegion& str_region,
+                        CharString& result);
+
+/// \brief Convert a CharString into a textual DNS character-string.
+///
+/// This method converts a binary 8-bit representation of a DNS
+/// character string into a textual string representation, escaping any
+/// special characters in the process. For example, characters like
+/// double-quotes, semi-colon and backspace are prefixed with backspace
+/// character, and characters not in the printable range of [0x20, 0x7e]
+/// (inclusive) are converted to the \xxx 3-digit decimal
+/// representation.
+///
+/// \param char_string The \c CharString to convert.
+/// \return A string representation of \c char_string.
+std::string charStringToString(const CharString& char_string);
 
 } // namespace detail
 } // namespace generic

@@ -384,6 +384,10 @@ struct Lease6 {
     /// @return String form of the lease
     std::string toText() const;
 
+    /// @brief returns true if the lease is expired
+    /// @return true if the lease is expired
+    bool expired() const;
+
     /// @brief Compare two leases for equality
     ///
     /// @param other lease6 object with which to compare

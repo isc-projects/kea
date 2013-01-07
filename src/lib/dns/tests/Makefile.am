@@ -33,6 +33,7 @@ run_unittests_SOURCES += name_unittest.cc
 run_unittests_SOURCES += nsec3hash_unittest.cc
 run_unittests_SOURCES += rrclass_unittest.cc rrtype_unittest.cc
 run_unittests_SOURCES += rrttl_unittest.cc
+run_unittests_SOURCES += rrcollator_unittest.cc
 run_unittests_SOURCES += opcode_unittest.cc
 run_unittests_SOURCES += rcode_unittest.cc
 run_unittests_SOURCES += rdata_unittest.h rdata_unittest.cc

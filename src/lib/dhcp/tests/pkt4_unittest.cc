@@ -462,13 +462,17 @@ TEST(Pkt4Test, file) {
     EXPECT_THROW(pkt4.setFile(NULL, 0), InvalidParameter);
 }
 
+/// V4 Options being used for pack/unpack testing.
+/// For test simplicity, all selected options have
+/// variable length data so as there are no restrictions
+/// on a length of their data.
 static uint8_t v4Opts[] = {
-    12,  3, 0,   1,  2,
-    13,  3, 10, 11, 12,
-    14,  3, 20, 21, 22,
-    53, 1, 1, // DHCP_MESSAGE_TYPE (required to not throw exception during unpack)
-    128, 3, 30, 31, 32,
-    254, 3, 40, 41, 42,
+    12,  3, 0,   1,  2, // Hostname
+    14,  3, 10, 11, 12, // Merit Dump File
+    53, 1, 1, // Message Type (required to not throw exception during unpack)
+    60,  3, 20, 21, 22, // Class Id
+    128, 3, 30, 31, 32, // Vendor specific
+    254, 3, 40, 41, 42, // Reserved
 };
 
 TEST(Pkt4Test, options) {
@@ -482,9 +486,9 @@ TEST(Pkt4Test, options) {
     }
 
     boost::shared_ptr<Option> opt1(new Option(Option::V4, 12, payload[0]));
-    boost::shared_ptr<Option> opt2(new Option(Option::V4, 13, payload[1]));
-    boost::shared_ptr<Option> opt3(new Option(Option::V4, 14, payload[2]));
+    boost::shared_ptr<Option> opt3(new Option(Option::V4, 14, payload[1]));
     boost::shared_ptr<Option> optMsgType(new Option(Option::V4, DHO_DHCP_MESSAGE_TYPE));
+    boost::shared_ptr<Option> opt2(new Option(Option::V4, 60, payload[2]));
     boost::shared_ptr<Option> opt5(new Option(Option::V4,128, payload[3]));
     boost::shared_ptr<Option> opt4(new Option(Option::V4,254, payload[4]));
     optMsgType->setUint8(static_cast<uint8_t>(DHCPDISCOVER));
@@ -497,7 +501,7 @@ TEST(Pkt4Test, options) {
     pkt->addOption(optMsgType);
 
     EXPECT_TRUE(pkt->getOption(12));
-    EXPECT_TRUE(pkt->getOption(13));
+    EXPECT_TRUE(pkt->getOption(60));
     EXPECT_TRUE(pkt->getOption(14));
     EXPECT_TRUE(pkt->getOption(128));
     EXPECT_TRUE(pkt->getOption(254));
@@ -554,7 +558,7 @@ TEST(Pkt4Test, unpackOptions) {
     );
 
     EXPECT_TRUE(pkt->getOption(12));
-    EXPECT_TRUE(pkt->getOption(13));
+    EXPECT_TRUE(pkt->getOption(60));
     EXPECT_TRUE(pkt->getOption(14));
     EXPECT_TRUE(pkt->getOption(128));
     EXPECT_TRUE(pkt->getOption(254));
@@ -566,19 +570,19 @@ TEST(Pkt4Test, unpackOptions) {
     EXPECT_EQ(5, x->len()); // total option length 5
     EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+2, 3)); // data len=3
 
-    x = pkt->getOption(13);
+    x = pkt->getOption(14);
     ASSERT_TRUE(x); // option 13 should exist
-    EXPECT_EQ(13, x->getType());  // this should be option 13
+    EXPECT_EQ(14, x->getType());  // this should be option 13
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
     EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+7, 3)); // data len=3
 
-    x = pkt->getOption(14);
-    ASSERT_TRUE(x); // option 14 should exist
-    EXPECT_EQ(14, x->getType());  // this should be option 14
+    x = pkt->getOption(60);
+    ASSERT_TRUE(x); // option 60 should exist
+    EXPECT_EQ(60, x->getType());  // this should be option 60
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+12, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+15, 3)); // data len=3
 
     x = pkt->getOption(128);
     ASSERT_TRUE(x); // option 3 should exist
