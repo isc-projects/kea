@@ -1,3 +1,10 @@
+538.	[bug]		muks
+	Added escaping of special characters (double-quotes, semicolon,
+	backslash, etc.) in text-like RRType's toText() implementation.
+	Without this change, some TXT and SPF RDATA were incorrectly
+	stored in SQLite3 datasource as they were not escaped.
+	(Trac #2535, git f516fc484544b7e08475947d6945bc87636d4115)
+
 537.	[func]		tomek
 	b10-dhcp6: Support for RELEASE message has been added. Clients
 	are now able to release their non-temporary IPv6 addresses.
