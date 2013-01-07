@@ -75,28 +75,30 @@ TEST_F(CfgMgrTest, getOptionDefs) {
     }
 
     // Sanity check that all 10 option definitions are there.
-    const OptionDefContainer& option_defs1 = cfg_mgr.getOptionDefs("isc");
-    ASSERT_EQ(10, option_defs1.size());
+    OptionDefContainerPtr option_defs1 = cfg_mgr.getOptionDefs("isc");
+    ASSERT_TRUE(option_defs1);
+    ASSERT_EQ(10, option_defs1->size());
 
     // Iterate over all option definitions and check that they have
     // valid codes. Also, their order should be the same as they
     // were added (codes 100-109).
     uint16_t code = 100;
-    for (OptionDefContainer::const_iterator it = option_defs1.begin();
-         it != option_defs1.end(); ++it, ++code) {
+    for (OptionDefContainer::const_iterator it = option_defs1->begin();
+         it != option_defs1->end(); ++it, ++code) {
         OptionDefinitionPtr def(*it);
         ASSERT_TRUE(def);
         EXPECT_EQ(code, def->getCode());
     }
 
     // Sanity check that all 10 option definitions are there.
-    const OptionDefContainer& option_defs2 = cfg_mgr.getOptionDefs("abcde");
-    ASSERT_EQ(10, option_defs2.size());
+    OptionDefContainerPtr option_defs2 = cfg_mgr.getOptionDefs("abcde");
+    ASSERT_TRUE(option_defs2);
+    ASSERT_EQ(10, option_defs2->size());
 
     // Check that the option codes are valid.
     code = 105;
-    for (OptionDefContainer::const_iterator it = option_defs2.begin();
-         it != option_defs2.end(); ++it, ++code) {
+    for (OptionDefContainer::const_iterator it = option_defs2->begin();
+         it != option_defs2->end(); ++it, ++code) {
         OptionDefinitionPtr def(*it);
         ASSERT_TRUE(def);
         EXPECT_EQ(code, def->getCode());
@@ -104,8 +106,9 @@ TEST_F(CfgMgrTest, getOptionDefs) {
 
     // Let's make one more check that the empty set is returned when
     // invalid option space is used.
-    const OptionDefContainer& option_defs3 = cfg_mgr.getOptionDefs("non-existing");
-    ASSERT_TRUE(option_defs3.empty());
+    OptionDefContainerPtr option_defs3 = cfg_mgr.getOptionDefs("non-existing");
+    ASSERT_TRUE(option_defs3);
+    EXPECT_TRUE(option_defs3->empty());
 }
 
 // This test verifies that single option definition is correctly
