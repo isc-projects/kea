@@ -109,8 +109,7 @@ public:
 
     /// \name pure virtuals, every derived class must implement these
 
-    /// \returns true if the other ElementPtr has the same type and
-    ///          value
+    /// \return true if the other ElementPtr has the same type and value
     virtual bool equals(const Element& other) const = 0;
 
     /// Converts the Element to JSON format and appends it to
