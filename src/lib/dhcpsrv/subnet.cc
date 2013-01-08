@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -44,14 +44,63 @@ bool Subnet::inRange(const isc::asiolink::IOAddress& addr) const {
 }
 
 void
-Subnet::addOption(OptionPtr& option, bool persistent /* = false */) {
+Subnet::addOption(OptionPtr& option, bool persistent,
+                  const std::string& option_space) {
+    // @todo Once the #2313 is merged we need to use the OptionSpace object to
+    // validate the option space name here. For now, let's check that the name
+    // is not empty as the empty namespace has a special meaning here - it is
+    // returned when desired namespace is not found when getOptions is called.
+    if (option_space.empty()) {
+        isc_throw(isc::BadValue, "option space name must not be empty");
+    }
     validateOption(option);
-    options_.push_back(OptionDescriptor(option, persistent));
+
+    OptionContainerPtr container = getOptionDescriptors(option_space);
+    // getOptionDescriptors is expected to return the pointer to the
+    // valid container. Let's make sure it does by performing an assert.
+    assert(container);
+    // Actually add the new descriptor.
+    container->push_back(OptionDescriptor(option, persistent));
+    option_spaces_[option_space] = container;
 }
 
 void
 Subnet::delOptions() {
-    options_.clear();
+    option_spaces_.clear();
+}
+
+Subnet::OptionContainerPtr
+Subnet::getOptionDescriptors(const std::string& option_space) const {
+    // Search the map to get the options container for the particular
+    // option space.
+    const OptionSpacesPtr::const_iterator& options =
+        option_spaces_.find(option_space);
+    // If the option space has not been found it means that no option
+    // has been configured for this option space yet. Thus we have to
+    // return an empty container to the caller.
+    if (options == option_spaces_.end()) {
+        // The default constructor creates an empty container.
+        return (OptionContainerPtr(new OptionContainer()));
+    }
+    // We found some option container for the option space specified.
+    // Let's return a const reference to it.
+    return (options->second);
+}
+
+Subnet::OptionDescriptor
+Subnet::getOptionDescriptor(const std::string& option_space,
+                            const uint16_t option_code) {
+    OptionContainerPtr options = getOptionDescriptors(option_space);
+    if (!options || options->empty()) {
+        return (OptionDescriptor(false));
+    }
+    const OptionContainerTypeIndex& idx = options->get<1>();
+    const OptionContainerTypeRange& range = idx.equal_range(option_code);
+    if (std::distance(range.first, range.second) == 0) {
+        return (OptionDescriptor(false));
+    }
+
+    return (*range.first);
 }
 
 std::string Subnet::toText() const {

@@ -1151,9 +1151,8 @@ private:
             subnet_->addPool6(*it);
         }
 
-        // Get the options search index.
-        const Subnet::OptionContainer& options = subnet_->getOptions();
-        const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+        Subnet::OptionContainerPtr options = subnet_->getOptionDescriptors("dhcp6");
+        const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
 
         // Add subnet specific options.
         BOOST_FOREACH(Subnet::OptionDescriptor desc, options_) {
@@ -1162,7 +1161,7 @@ private:
                 LOG_WARN(dhcp6_logger, DHCP6_CONFIG_OPTION_DUPLICATE)
                     .arg(desc.option->getType()).arg(addr.toText());
             }
-            subnet_->addOption(desc.option);
+            subnet_->addOption(desc.option, false, "dhcp6");
         }
 
         // Check all global options and add them to the subnet object if
@@ -1172,6 +1171,8 @@ private:
         BOOST_FOREACH(Subnet::OptionDescriptor desc, option_defaults) {
             // Get all options specified locally in the subnet and having
             // code equal to global option's code.
+            Subnet::OptionContainerPtr options = subnet_->getOptionDescriptors("dhcp6");
+            const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
             Subnet::OptionContainerTypeRange range = idx.equal_range(desc.option->getType());
             // @todo: In the future we will be searching for options using either
             // an option code or namespace. Currently we have only the option
@@ -1182,7 +1183,7 @@ private:
             // want to issue a warning about dropping the configuration of
             // a global option if one already exsists.
             if (std::distance(range.first, range.second) == 0) {
-                subnet_->addOption(desc.option);
+                subnet_->addOption(desc.option, false, "dhcp6");
             }
         }
     }
