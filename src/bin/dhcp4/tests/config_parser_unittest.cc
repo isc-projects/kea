@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,9 +17,10 @@
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 
+#include <config/ccsession.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/config_parser.h>
-#include <config/ccsession.h>
+#include <dhcp/option4_addrlst.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <boost/foreach.hpp>
@@ -35,12 +36,6 @@ using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::config;
 
-namespace isc {
-namespace dhcp {
-extern Uint32Storage uint32_defaults;
-}
-}
-
 namespace {
 
 class Dhcp4ParserTest : public ::testing::Test {
@@ -55,7 +50,9 @@ public:
 
     // Checks if global parameter of name have expected_value
     void checkGlobalUint32(string name, uint32_t expected_value) {
-        Uint32Storage::const_iterator it = uint32_defaults.find(name);
+        const std::map<std::string, uint32_t>& uint32_defaults = getUint32Defaults();
+        std::map<std::string, uint32_t>::const_iterator it =
+            uint32_defaults.find(name);
         if (it == uint32_defaults.end()) {
             ADD_FAILURE() << "Expected uint32 with name " << name
                           << " not found";
@@ -81,7 +78,8 @@ public:
     /// @brief Create the simple configuration with single option.
     ///
     /// This function allows to set one of the parameters that configure
-    /// option value. These parameters are: "name", "code" and "data".
+    /// option value. These parameters are: "name", "code", "data" and
+    /// "csv-format".
     ///
     /// @param param_value string holiding option parameter value to be
     /// injected into the configuration string.
@@ -96,14 +94,22 @@ public:
             params["name"] = param_value;
             params["code"] = "56";
             params["data"] = "AB CDEF0105";
+            params["csv-format"] = "False";
         } else if (parameter == "code") {
             params["name"] = "option_foo";
             params["code"] = param_value;
             params["data"] = "AB CDEF0105";
+            params["csv-format"] = "False";
         } else if (parameter == "data") {
             params["name"] = "option_foo";
             params["code"] = "56";
             params["data"] = param_value;
+            params["csv-format"] = "False";
+        } else if (parameter == "csv-format") {
+            params["name"] = "option_foo";
+            params["code"] = "56";
+            params["data"] = "AB CDEF0105";
+            params["csv-format"] = param_value;
         }
         return (createConfigWithOption(params));
     }
@@ -140,6 +146,8 @@ public:
                 stream << "\"code\": " << param.second << "";
             } else if (param.first == "data") {
                 stream << "\"data\": \"" << param.second << "\"";
+            } else if (param.first == "csv-format") {
+                stream << "\"csv-format\": " << param.second;
             }
         }
         stream <<
@@ -393,9 +401,9 @@ TEST_F(Dhcp4ParserTest, poolOutOfSubnet) {
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
-    // returned value must be 2 (values error)
+    // returned value must be 1 (values error)
     // as the pool does not belong to that subnet
-    checkResult(status, 2);
+    checkResult(status, 1);
 }
 
 // Goal of this test is to verify if pools can be defined
@@ -439,12 +447,14 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
         "\"option-data\": [ {"
         "    \"name\": \"option_foo\","
         "    \"code\": 56,"
-        "    \"data\": \"AB CDEF0105\""
+        "    \"data\": \"AB CDEF0105\","
+        "    \"csv-format\": False"
         " },"
         " {"
         "    \"name\": \"option_foo2\","
         "    \"code\": 23,"
-        "    \"data\": \"01\""
+        "    \"data\": \"01\","
+        "    \"csv-format\": False"
         " } ],"
         "\"subnet4\": [ { "
         "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
@@ -502,7 +512,8 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
         "\"option-data\": [ {"
         "      \"name\": \"option_foo\","
         "      \"code\": 56,"
-        "      \"data\": \"AB\""
+        "      \"data\": \"AB\","
+        "      \"csv-format\": False"
         " } ],"
         "\"subnet4\": [ { "
         "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
@@ -510,12 +521,14 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
         "    \"option-data\": [ {"
         "          \"name\": \"option_foo\","
         "          \"code\": 56,"
-        "          \"data\": \"AB CDEF0105\""
+        "          \"data\": \"AB CDEF0105\","
+        "          \"csv-format\": False"
         "        },"
         "        {"
         "          \"name\": \"option_foo2\","
         "          \"code\": 23,"
-        "          \"data\": \"01\""
+        "          \"data\": \"01\","
+        "          \"csv-format\": False"
         "        } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }";
@@ -571,7 +584,8 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
         "    \"option-data\": [ {"
         "          \"name\": \"option_foo\","
         "          \"code\": 56,"
-        "          \"data\": \"0102030405060708090A\""
+        "          \"data\": \"0102030405060708090A\","
+        "          \"csv-format\": False"
         "        } ]"
         " },"
         " {"
@@ -580,7 +594,8 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
         "    \"option-data\": [ {"
         "          \"name\": \"option_foo2\","
         "          \"code\": 23,"
-        "          \"data\": \"FF\""
+        "          \"data\": \"FF\","
+        "          \"csv-format\": False"
         "        } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }";
@@ -724,10 +739,70 @@ TEST_F(Dhcp4ParserTest, optionDataLowerCase) {
     testOption(*range.first, 56, foo_expected, sizeof(foo_expected));
 }
 
+// Verify that specific option object is returned for standard
+// option which has dedicated option class derived from Option.
+TEST_F(Dhcp4ParserTest, stdOptionData) {
+    ConstElementPtr x;
+    std::map<std::string, std::string> params;
+    params["name"] = "nis-servers";
+    // Option code 41 means nis-servers.
+    params["code"] = "41";
+    // Specify option values in a CSV (user friendly) format.
+    params["data"] = "192.0.2.10, 192.0.2.1, 192.0.2.3";
+    params["csv-format"] = "True";
+
+    std::string config = createConfigWithOption(params);
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    ASSERT_TRUE(subnet);
+    const Subnet::OptionContainer& options = subnet->getOptions();
+    ASSERT_EQ(1, options.size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+              Subnet::OptionContainerTypeIndex::const_iterator> range =
+        idx.equal_range(DHO_NIS_SERVERS);
+    // Expect single option with the code equal to NIS_SERVERS option code.
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    // The actual pointer to the option is held in the option field
+    // in the structure returned.
+    OptionPtr option = range.first->option;
+    ASSERT_TRUE(option);
+    // Option object returned for here is expected to be Option6IA
+    // which is derived from Option. This class is dedicated to
+    // represent standard option IA_NA.
+    boost::shared_ptr<Option4AddrLst> option_addrs =
+        boost::dynamic_pointer_cast<Option4AddrLst>(option);
+    // If cast is unsuccessful than option returned was of a
+    // differnt type than Option6IA. This is wrong.
+    ASSERT_TRUE(option_addrs);
+
+    // Get addresses from the option.
+    Option4AddrLst::AddressContainer addrs = option_addrs->getAddresses();
+    // Verify that the addresses have been configured correctly.
+    ASSERT_EQ(3, addrs.size());
+    EXPECT_EQ("192.0.2.10", addrs[0].toText());
+    EXPECT_EQ("192.0.2.1", addrs[1].toText());
+    EXPECT_EQ("192.0.2.3", addrs[2].toText());
+}
+
 /// This test checks if Uint32Parser can really parse the whole range
 /// and properly err of out of range values. As we can't call Uint32Parser
 /// directly, we are exploiting the fact that it is used to parse global
 /// parameter renew-timer and the results are stored in uint32_defaults.
+/// We get the uint32_defaults using a getUint32Defaults functions which
+/// is defined only to access the values from this test.
 TEST_F(Dhcp4ParserTest, DISABLED_Uint32Parser) {
 
     ConstElementPtr status;

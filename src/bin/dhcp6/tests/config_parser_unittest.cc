@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -56,7 +56,8 @@ public:
     /// @brief Create the simple configuration with single option.
     ///
     /// This function allows to set one of the parameters that configure
-    /// option value. These parameters are: "name", "code" and "data".
+    /// option value. These parameters are: "name", "code", "data" and
+    /// "csv-format".
     ///
     /// @param param_value string holiding option parameter value to be
     /// injected into the configuration string.
@@ -69,14 +70,22 @@ public:
             params["name"] = param_value;
             params["code"] = "80";
             params["data"] = "AB CDEF0105";
+            params["csv-format"] = "False";
         } else if (parameter == "code") {
             params["name"] = "option_foo";
             params["code"] = param_value;
             params["data"] = "AB CDEF0105";
+            params["csv-format"] = "False";
         } else if (parameter == "data") {
             params["name"] = "option_foo";
             params["code"] = "80";
             params["data"] = param_value;
+            params["csv-format"] = "False";
+        } else if (parameter == "csv-format") {
+            params["name"] = "option_foo";
+            params["code"] = "80";
+            params["data"] = "AB CDEF0105";
+            params["csv-format"] = param_value;
         }
         return (createConfigWithOption(params));
     }
@@ -105,9 +114,11 @@ public:
             if (param.first == "name") {
                 stream << "\"name\": \"" << param.second << "\"";
             } else if (param.first == "code") {
-                stream << "\"code\": " << param.second << "";
+                stream << "\"code\": " << param.second;;
             } else if (param.first == "data") {
                 stream << "\"data\": \"" << param.second << "\"";
+            } else if (param.first == "csv-format") {
+                stream << "\"csv-format\": " << param.second;
             }
         }
         stream <<
@@ -374,11 +385,12 @@ TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
-    // returned value must be 2 (values error)
+    // returned value must be 1 (values error)
     // as the pool does not belong to that subnet
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
-    EXPECT_EQ(2, rcode_);
+
+    EXPECT_EQ(1, rcode_);
 }
 
 // Goal of this test is to verify if pools can be defined
@@ -427,12 +439,14 @@ TEST_F(Dhcp6ParserTest, optionDataDefaults) {
         "\"option-data\": [ {"
         "    \"name\": \"option_foo\","
         "    \"code\": 100,"
-        "    \"data\": \"AB CDEF0105\""
+        "    \"data\": \"AB CDEF0105\","
+        "    \"csv-format\": False"
         " },"
         " {"
         "    \"name\": \"option_foo2\","
         "    \"code\": 101,"
-        "    \"data\": \"01\""
+        "    \"data\": \"01\","
+        "    \"csv-format\": False"
         " } ],"
         "\"subnet6\": [ { "
         "    \"pool\": [ \"2001:db8:1::/80\" ],"
@@ -497,7 +511,8 @@ TEST_F(Dhcp6ParserTest, optionDataInSingleSubnet) {
         "\"option-data\": [ {"
         "      \"name\": \"option_foo\","
         "      \"code\": 100,"
-        "      \"data\": \"AB\""
+        "      \"data\": \"AB\","
+        "      \"csv-format\": False"
         " } ],"
         "\"subnet6\": [ { "
         "    \"pool\": [ \"2001:db8:1::/80\" ],"
@@ -505,12 +520,14 @@ TEST_F(Dhcp6ParserTest, optionDataInSingleSubnet) {
         "    \"option-data\": [ {"
         "          \"name\": \"option_foo\","
         "          \"code\": 100,"
-        "          \"data\": \"AB CDEF0105\""
+        "          \"data\": \"AB CDEF0105\","
+        "          \"csv-format\": False"
         "        },"
         "        {"
         "          \"name\": \"option_foo2\","
         "          \"code\": 101,"
-        "          \"data\": \"01\""
+        "          \"data\": \"01\","
+        "          \"csv-format\": False"
         "        } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }";
@@ -567,7 +584,8 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
         "    \"option-data\": [ {"
         "          \"name\": \"option_foo\","
         "          \"code\": 100,"
-        "          \"data\": \"0102030405060708090A\""
+        "          \"data\": \"0102030405060708090A\","
+        "          \"csv-format\": False"
         "        } ]"
         " },"
         " {"
@@ -576,7 +594,8 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
         "    \"option-data\": [ {"
         "          \"name\": \"option_foo2\","
         "          \"code\": 101,"
-        "          \"data\": \"FFFEFDFCFB\""
+        "          \"data\": \"FFFEFDFCFB\","
+        "          \"csv-format\": False"
         "        } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }";
@@ -737,7 +756,8 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     params["name"] = "OPTION_IA_NA";
     // Option code 3 means OPTION_IA_NA.
     params["code"] = "3";
-    params["data"] = "ABCDEF01 02030405 06070809";
+    params["data"] = "12345, 6789, 1516";
+    params["csv-format"] = "True";
 
     std::string config = createConfigWithOption(params);
     ElementPtr json = Element::fromJSON(config);
@@ -778,9 +798,9 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     // If cast was successful we may use accessors exposed by
     // Option6IA to validate that the content of this option
     // has been set correctly.
-    EXPECT_EQ(0xABCDEF01, optionIA->getIAID());
-    EXPECT_EQ(0x02030405, optionIA->getT1());
-    EXPECT_EQ(0x06070809, optionIA->getT2());
+    EXPECT_EQ(12345, optionIA->getIAID());
+    EXPECT_EQ(6789, optionIA->getT1());
+    EXPECT_EQ(1516, optionIA->getT2());
 }
 
 };
