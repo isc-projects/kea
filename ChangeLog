@@ -1,3 +1,12 @@
+540.	[func]		marcin
+	DHCP Option values can be now specified using a string of
+	tokens separated with comma sign. Subsequent tokens are used
+	to set values for corresponding data fields in a particular
+	DHCP option. The format of the token matches the data type
+	of the corresponding option field: e.g. "192.168.2.1" for IPv4
+	address, "5" for integer value etc.
+	(Trac #2545, git 792c129a0785c73dd28fd96a8f1439fe6534a3f1)
+
 539.	[func]		stephen
 	Add logging to the DHCP server library.
 	(Trac #2524, git b55b8b6686cc80eed41793c53d1779f4de3e9e3c)
