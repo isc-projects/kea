@@ -79,7 +79,8 @@ incicates successful operation.
 % DHCP4_LEASE_ALLOC_FAIL failed to grant a lease for client-id %1, hwaddr %2
 This message indicates that the server failed to grant a lease to the
 specified client after receiving a REQUEST message from it.  There are many
-possible reasons for such a failure
+possible reasons for such a failure. Additional messages will indicate the
+reason.
 
 % DHCP4_NOT_RUNNING IPv4 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the

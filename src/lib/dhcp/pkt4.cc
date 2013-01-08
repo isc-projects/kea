@@ -49,11 +49,12 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
       yiaddr_(DEFAULT_ADDRESS),
       siaddr_(DEFAULT_ADDRESS),
       giaddr_(DEFAULT_ADDRESS),
-      bufferOut_(DHCPV4_PKT_HDR_LEN),
-      msg_type_(msg_type)
+      bufferOut_(DHCPV4_PKT_HDR_LEN)
 {
     memset(sname_, 0, MAX_SNAME_LEN);
     memset(file_, 0, MAX_FILE_LEN);
+
+    setType(msg_type);
 }
 
 Pkt4::Pkt4(const uint8_t* data, size_t len)
@@ -72,8 +73,7 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       yiaddr_(DEFAULT_ADDRESS),
       siaddr_(DEFAULT_ADDRESS),
       giaddr_(DEFAULT_ADDRESS),
-      bufferOut_(0), // not used, this is RX packet
-      msg_type_(DHCPDISCOVER)
+      bufferOut_(0) // not used, this is RX packet
 {
     if (len < DHCPV4_PKT_HDR_LEN) {
         isc_throw(OutOfRange, "Truncated DHCPv4 packet (len=" << len
@@ -215,20 +215,43 @@ Pkt4::unpack() {
 }
 
 void Pkt4::check() {
-    boost::shared_ptr<OptionInt<uint8_t> > typeOpt =
-        boost::dynamic_pointer_cast<OptionInt<uint8_t> >(getOption(DHO_DHCP_MESSAGE_TYPE));
-    if (typeOpt) {
-        uint8_t msg_type = typeOpt->getValue();
-        if (msg_type > DHCPLEASEACTIVE) {
-            isc_throw(BadValue, "Invalid DHCP message type received: "
-                      << msg_type);
-        }
-        msg_type_ = msg_type;
-
-    } else {
-        isc_throw(Unexpected, "Missing DHCP Message Type option");
+    uint8_t msg_type = getType();
+    if (msg_type > DHCPLEASEACTIVE) {
+        isc_throw(BadValue, "Invalid DHCP message type received: "
+                  << msg_type);
     }
 }
+
+uint8_t Pkt4::getType() const {
+    OptionPtr generic = getOption(DHO_DHCP_MESSAGE_TYPE);
+    if (!generic) {
+        isc_throw(Unexpected, "Missing DHCP Message Type option");
+    }
+
+    // Check if Message Type is specified as OptionInt<uint8_t>
+    boost::shared_ptr<OptionInt<uint8_t> > typeOpt =
+        boost::dynamic_pointer_cast<OptionInt<uint8_t> >(generic);
+    if (typeOpt) {
+        return (typeOpt->getValue());
+    }
+
+    // Try to use it as generic option
+    return (generic->getUint8());
+}
+
+void Pkt4::setType(uint8_t dhcp_type) {
+    OptionPtr opt = getOption(DHO_DHCP_MESSAGE_TYPE);
+    if (opt) {
+        // There is message type option already, update it
+        opt->setUint8(dhcp_type);
+    } else {
+        // There is no message type option yet, add it
+        std::vector<uint8_t> tmp(1, dhcp_type);
+        opt = OptionPtr(new Option(Option::V4, DHO_DHCP_MESSAGE_TYPE, tmp));
+        addOption(opt);
+    }
+}
+
 
 void Pkt4::repack() {
     bufferOut_.writeData(&data_[0], data_.size());
@@ -239,7 +262,7 @@ Pkt4::toText() {
     stringstream tmp;
     tmp << "localAddr=" << local_addr_.toText() << ":" << local_port_
         << " remoteAddr=" << remote_addr_.toText()
-        << ":" << remote_port_ << ", msgtype=" << int(msg_type_)
+        << ":" << remote_port_ << ", msgtype=" << getType()
         << ", transid=0x" << hex << transid_ << dec << endl;
 
     for (isc::dhcp::Option::OptionCollection::iterator opt=options_.begin();
@@ -361,7 +384,7 @@ Pkt4::addOption(boost::shared_ptr<Option> opt) {
 }
 
 boost::shared_ptr<isc::dhcp::Option>
-Pkt4::getOption(uint8_t type) {
+Pkt4::getOption(uint8_t type) const {
     Option::OptionCollection::const_iterator x = options_.find(type);
     if (x != options_.end()) {
         return (*x).second;

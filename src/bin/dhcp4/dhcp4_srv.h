@@ -207,14 +207,6 @@ protected:
     /// @return server-id option
     OptionPtr getServerID() { return serverid_; }
 
-
-    /// @brief Sets DHCPv4 message type
-    ///
-    /// It tries to find existing DHCP TYPE (53) option and update
-    /// it to specified value. If there is no such option, it is
-    /// added.
-    static void setMsgType(Pkt4Ptr& pkt, uint8_t dhcp_type);
-
     /// @brief Sets server-identifier.
     ///
     /// This method attempts to set server-identifier DUID. It tries to
