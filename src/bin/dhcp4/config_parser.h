@@ -28,20 +28,6 @@ namespace dhcp {
 
 class Dhcpv4Srv;
 
-/// An exception that is thrown if an error occurs while configuring an
-/// @c Dhcpv4Srv object.
-class Dhcp4ConfigError : public isc::Exception {
-public:
-
-    /// @brief constructor
-    ///
-    /// @param file name of the file, where exception occurred
-    /// @param line line of the file, where exception occurred
-    /// @param what text description of the issue that caused exception
-    Dhcp4ConfigError(const char* file, size_t line, const char* what)
-        : isc::Exception(file, line, what) {}
-};
-
 /// @brief Configure DHCPv4 server (@c Dhcpv4Srv) with a set of configuration values.
 ///
 /// This function parses configuration information stored in @c config_set
