@@ -148,7 +148,7 @@
                       "item_default": ""
                     },
                     { "item_name": "csv-format",
-                      "item_type": "bool",
+                      "item_type": "boolean",
                       "item_optional": false,
                       "item_default": False
                     } ]
