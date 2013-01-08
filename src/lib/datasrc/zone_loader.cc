@@ -27,6 +27,8 @@
 
 #include <boost/bind.hpp>
 
+#include <string>
+
 using isc::dns::Name;
 using isc::dns::ConstRRsetPtr;
 using isc::dns::MasterLoader;
