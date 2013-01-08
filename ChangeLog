@@ -1,6 +1,8 @@
 541.	[func]		marcin
-	Added routines to search for configured options and their
+	Added routines to search for configured DHCP options and their
 	definitions using name of the option space they belong to.
+	New routines are called internally from the DHCPv4 and DHCPv6
+	servers code.
 	(Trac #2315, git 741fe7bc96c70df35d9a79016b0aa1488e9b3ac8)
 
 540.	[func]		marcin
