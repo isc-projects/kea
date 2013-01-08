@@ -213,6 +213,7 @@ void Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         answer->setRemoteAddr(question->getRemoteAddr());
     }
 
+    // Let's copy client-id to response. See RFC6842.
     OptionPtr client_id = question->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
     if (client_id) {
         answer->addOption(client_id);
@@ -267,10 +268,10 @@ void Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         answer->setType(DHCPNAK);
         answer->setYiaddr(IOAddress("0.0.0.0"));
         return;
-    } else {
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_SUBNET_SELECTED)
-            .arg(subnet->toText());
     }
+
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_SUBNET_SELECTED)
+        .arg(subnet->toText());
 
     // Get client-id option
     ClientIdPtr client_id;
@@ -290,10 +291,7 @@ void Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     // the user selects this server to do actual allocation (i.e. sends REQUEST)
     // it should include this hint. That will help us during the actual lease
     // allocation.
-    bool fake_allocation = false;
-    if (question->getType() == DHCPDISCOVER) {
-        fake_allocation = true;
-    }
+    bool fake_allocation = (question->getType() == DHCPDISCOVER);
 
     // Use allocation engine to pick a lease for this client. Allocation engine
     // will try to honour the hint, but it is just a hint - some other address
@@ -303,8 +301,8 @@ void Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
                                                       hint, fake_allocation);
 
     if (lease) {
-        // We have a lease! Let's wrap its content into IA_NA option
-        // with IAADDR suboption.
+        // We have a lease! Let's set it in the packet and send it back to
+        // the client.
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, fake_allocation?
                   DHCP4_LEASE_ADVERT:DHCP4_LEASE_ALLOC)
             .arg(lease->addr_.toText())
@@ -381,50 +379,71 @@ Pkt4Ptr Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 }
 
 void Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
+
+    // Try to find client-id
     ClientIdPtr client_id;
     OptionPtr opt = release->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
     if (opt) {
         client_id = ClientIdPtr(new ClientId(opt->getData()));
     }
 
-    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(release->getYiaddr());
+    try {
+        // Do we have a lease for that particular address?
+        Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(release->getYiaddr());
 
-    if (!lease) {
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_NO_LEASE)
-            .arg(release->getYiaddr().toText())
-            .arg(release->getHWAddr()->toText())
-            .arg(client_id ? client_id->toText() : "(no client-id)");
-        return;
+        if (!lease) {
+            // No such lease - bogus release
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_NO_LEASE)
+                .arg(release->getYiaddr().toText())
+                .arg(release->getHWAddr()->toText())
+                .arg(client_id ? client_id->toText() : "(no client-id)");
+            return;
+        }
+
+        // Does the hardware address match? We don't want one client releasing
+        // second client's leases.
+        if (lease->hwaddr_ != release->getHWAddr()->hwaddr_) {
+            // @todo: Print hwaddr from lease as part of ticket #2589
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_HWADDR)
+                .arg(release->getYiaddr().toText())
+                .arg(client_id ? client_id->toText() : "(no client-id)")
+                .arg(release->getHWAddr()->toText());
+            return;
+        }
+
+        // Does the lease have client-id info? If it has, then check it with what
+        // the client sent us.
+        if (lease->client_id_ && client_id && *lease->client_id_ != *client_id) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_CLIENT_ID)
+                .arg(release->getYiaddr().toText())
+                .arg(client_id->toText())
+                .arg(lease->client_id_->toText());
+            return;
+        }
+
+        // Ok, hw and client-id match - let's release the lease.
+        if (LeaseMgrFactory::instance().deleteLease(lease->addr_)) {
+
+            // Release successful - we're done here
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE)
+                .arg(lease->addr_.toText())
+                .arg(client_id ? client_id->toText() : "(no client-id)")
+                .arg(release->getHWAddr()->toText());
+        } else {
+
+            // Release failed -
+            LOG_ERROR(dhcp4_logger, DHCP4_RELEASE_FAIL)
+                .arg(lease->addr_.toText())
+                .arg(client_id ? client_id->toText() : "(no client-id)")
+                .arg(release->getHWAddr()->toText());
+        }
+    } catch (const isc::Exception& ex) {
+        // Rethrow the exception with a bit more data.
+        LOG_ERROR(dhcp4_logger, DHCP4_RELEASE_EXCEPTION)
+            .arg(ex.what())
+            .arg(release->getYiaddr());
     }
 
-    if (lease->hwaddr_ != release->getHWAddr()->hwaddr_) {
-        // @todo: Print hwaddr from lease as part of ticket #2589
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_HWADDR)
-            .arg(release->getYiaddr().toText())
-            .arg(client_id ? client_id->toText() : "(no client-id)")
-            .arg(release->getHWAddr()->toText());
-        return;
-    }
-
-    if (lease->client_id_ && client_id && *lease->client_id_ != *client_id) {
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_CLIENT_ID)
-            .arg(release->getYiaddr().toText())
-            .arg(client_id->toText())
-            .arg(lease->client_id_->toText());
-        return;
-    }
-
-    if (LeaseMgrFactory::instance().deleteLease(lease->addr_)) {
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE)
-            .arg(lease->addr_.toText())
-            .arg(client_id ? client_id->toText() : "(no client-id)")
-            .arg(release->getHWAddr()->toText());
-    } else {
-        LOG_ERROR(dhcp4_logger, DHCP4_RELEASE_FAIL)
-            .arg(lease->addr_.toText())
-            .arg(client_id ? client_id->toText() : "(no client-id)")
-            .arg(release->getHWAddr()->toText());
-    }
 }
 
 void Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {

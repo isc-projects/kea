@@ -234,6 +234,7 @@ protected:
     private:
 
     /// @brief Constructs netmask option based on subnet4
+    /// @param subnet subnet for which the netmask will be calculated
     ///
     /// @return Option that contains netmask information
     static OptionPtr getNetmaskOption(const Subnet4Ptr& subnet);
