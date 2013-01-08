@@ -287,6 +287,9 @@ class BaseTestCounters():
 
 class TestCounters0(unittest.TestCase, BaseTestCounters):
     TEST_SPECFILE_LOCATION = None
+    @classmethod
+    def setUpClass(cls):
+        imp.reload(counters)
     def setUp(self):
         BaseTestCounters.setUp(self)
     def tearDown(self):
@@ -294,6 +297,9 @@ class TestCounters0(unittest.TestCase, BaseTestCounters):
 
 class TestCounters1(unittest.TestCase, BaseTestCounters):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
+    @classmethod
+    def setUpClass(cls):
+        imp.reload(counters)
     def setUp(self):
         BaseTestCounters.setUp(self)
     def tearDown(self):
@@ -301,6 +307,9 @@ class TestCounters1(unittest.TestCase, BaseTestCounters):
 
 class TestCounters2(unittest.TestCase, BaseTestCounters):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec2.spec'
+    @classmethod
+    def setUpClass(cls):
+        imp.reload(counters)
     def setUp(self):
         BaseTestCounters.setUp(self)
     def tearDown(self):
@@ -308,6 +317,9 @@ class TestCounters2(unittest.TestCase, BaseTestCounters):
 
 class TestCounters3(unittest.TestCase, BaseTestCounters):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec3.spec'
+    @classmethod
+    def setUpClass(cls):
+        imp.reload(counters)
     def setUp(self):
         BaseTestCounters.setUp(self)
     def tearDown(self):
