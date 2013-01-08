@@ -471,11 +471,11 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
 
     Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
-    const Subnet::OptionContainer& options = subnet->getOptions();
-    ASSERT_EQ(2, options.size());
+    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
+    ASSERT_EQ(2, options->size());
 
     // Get the search index. Index #1 is to search using option code.
-    const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+    const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
 
     // Get the options for specified index. Expecting one option to be
     // returned but in theory we may have multiple options with the same
@@ -542,11 +542,11 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
 
     Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.24"));
     ASSERT_TRUE(subnet);
-    const Subnet::OptionContainer& options = subnet->getOptions();
-    ASSERT_EQ(2, options.size());
+    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
+    ASSERT_EQ(2, options->size());
 
     // Get the search index. Index #1 is to search using option code.
-    const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+    const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
 
     // Get the options for specified index. Expecting one option to be
     // returned but in theory we may have multiple options with the same
@@ -609,11 +609,11 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
 
     Subnet4Ptr subnet1 = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.100"));
     ASSERT_TRUE(subnet1);
-    const Subnet::OptionContainer& options1 = subnet1->getOptions();
-    ASSERT_EQ(1, options1.size());
+    Subnet::OptionContainerPtr options1 = subnet1->getOptionDescriptors("dhcp4");
+    ASSERT_EQ(1, options1->size());
 
     // Get the search index. Index #1 is to search using option code.
-    const Subnet::OptionContainerTypeIndex& idx1 = options1.get<1>();
+    const Subnet::OptionContainerTypeIndex& idx1 = options1->get<1>();
 
     // Get the options for specified index. Expecting one option to be
     // returned but in theory we may have multiple options with the same
@@ -633,10 +633,10 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     // Test another subnet in the same way.
     Subnet4Ptr subnet2 = CfgMgr::instance().getSubnet4(IOAddress("192.0.3.102"));
     ASSERT_TRUE(subnet2);
-    const Subnet::OptionContainer& options2 = subnet2->getOptions();
-    ASSERT_EQ(1, options2.size());
+    Subnet::OptionContainerPtr options2 = subnet2->getOptionDescriptors("dhcp4");
+    ASSERT_EQ(1, options2->size());
 
-    const Subnet::OptionContainerTypeIndex& idx2 = options2.get<1>();
+    const Subnet::OptionContainerTypeIndex& idx2 = options2->get<1>();
     std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
               Subnet::OptionContainerTypeIndex::const_iterator> range2 =
         idx2.equal_range(23);
@@ -718,11 +718,11 @@ TEST_F(Dhcp4ParserTest, optionDataLowerCase) {
 
     Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
     ASSERT_TRUE(subnet);
-    const Subnet::OptionContainer& options = subnet->getOptions();
-    ASSERT_EQ(1, options.size());
+    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
+    ASSERT_EQ(1, options->size());
 
     // Get the search index. Index #1 is to search using option code.
-    const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+    const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
 
     // Get the options for specified index. Expecting one option to be
     // returned but in theory we may have multiple options with the same
@@ -761,11 +761,13 @@ TEST_F(Dhcp4ParserTest, stdOptionData) {
 
     Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
     ASSERT_TRUE(subnet);
-    const Subnet::OptionContainer& options = subnet->getOptions();
-    ASSERT_EQ(1, options.size());
+    Subnet::OptionContainerPtr options =
+        subnet->getOptionDescriptors("dhcp4");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(1, options->size());
 
     // Get the search index. Index #1 is to search using option code.
-    const Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+    const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
 
     // Get the options for specified index. Expecting one option to be
     // returned but in theory we may have multiple options with the same
