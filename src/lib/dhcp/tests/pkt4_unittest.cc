@@ -69,8 +69,9 @@ TEST(Pkt4Test, constructor) {
         pkt = new Pkt4(DHCPDISCOVER, 0xffffffff);
     );
 
-    // DHCPv4 packet must be at least 236 bytes long
-    EXPECT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN), pkt->len());
+    // DHCPv4 packet must be at least 236 bytes long, with Message Type
+    // Option taking extra 3 bytes it is 239
+    EXPECT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) + 3, pkt->len());
     EXPECT_EQ(DHCPDISCOVER, pkt->getType());
     EXPECT_EQ(0xffffffff, pkt->getTransid());
     EXPECT_NO_THROW(
@@ -219,8 +220,9 @@ TEST(Pkt4Test, fixedFields) {
     EXPECT_EQ(dummySiaddr.toText(), pkt->getSiaddr().toText());
     EXPECT_EQ(dummyGiaddr.toText(), pkt->getGiaddr().toText());
 
-    // chaddr is always 16 bytes long and contains link-layer addr (MAC)
-    EXPECT_EQ(0, memcmp(dummyChaddr, &pkt->getHWAddr()->hwaddr_[0], 16));
+    // Chaddr contains link-layer addr (MAC). It is no longer always 16 bytes
+    // long and its length depends on hlen value (it is up to 16 bytes now).
+    EXPECT_EQ(0, memcmp(dummyChaddr, &pkt->getHWAddr()->hwaddr_[0], dummyHlen));
 
     EXPECT_EQ(0, memcmp(dummySname, &pkt->getSname()[0], 64));
 
@@ -237,7 +239,9 @@ TEST(Pkt4Test, fixedFieldsPack) {
         pkt->pack();
     );
 
-    ASSERT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN), pkt->len());
+    // Minimum packet size is 236 bytes + 3 bytes of mandatory
+    // DHCP Message Type Option
+    ASSERT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) + 3, pkt->len());
 
     // redundant but MUCH easier for debug in gdb
     const uint8_t* exp = &expectedFormat[0];
@@ -469,7 +473,7 @@ TEST(Pkt4Test, file) {
 static uint8_t v4Opts[] = {
     12,  3, 0,   1,  2, // Hostname
     14,  3, 10, 11, 12, // Merit Dump File
-    53, 1, 1, // Message Type (required to not throw exception during unpack)
+    53, 1, 2, // Message Type (required to not throw exception during unpack)
     60,  3, 20, 21, 22, // Class Id
     128, 3, 30, 31, 32, // Vendor specific
     254, 3, 40, 41, 42, // Reserved
@@ -487,18 +491,15 @@ TEST(Pkt4Test, options) {
 
     boost::shared_ptr<Option> opt1(new Option(Option::V4, 12, payload[0]));
     boost::shared_ptr<Option> opt3(new Option(Option::V4, 14, payload[1]));
-    boost::shared_ptr<Option> optMsgType(new Option(Option::V4, DHO_DHCP_MESSAGE_TYPE));
     boost::shared_ptr<Option> opt2(new Option(Option::V4, 60, payload[2]));
     boost::shared_ptr<Option> opt5(new Option(Option::V4,128, payload[3]));
     boost::shared_ptr<Option> opt4(new Option(Option::V4,254, payload[4]));
-    optMsgType->setUint8(static_cast<uint8_t>(DHCPDISCOVER));
 
     pkt->addOption(opt1);
     pkt->addOption(opt2);
     pkt->addOption(opt3);
     pkt->addOption(opt4);
     pkt->addOption(opt5);
-    pkt->addOption(optMsgType);
 
     EXPECT_TRUE(pkt->getOption(12));
     EXPECT_TRUE(pkt->getOption(60));

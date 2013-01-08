@@ -218,16 +218,15 @@ public:
     /// @return transaction-id
     uint32_t getTransid() const { return (transid_); };
 
-    /// @brief Returns message type (e.g. 1 = DHCPDISCOVER).
+    /// @brief Returns DHCP message type (e.g. 1 = DHCPDISCOVER).
     ///
     /// @return message type
-    uint8_t
-    getType() const { return (msg_type_); }
+    uint8_t getType() const;
 
-    /// @brief Sets message type (e.g. 1 = DHCPDISCOVER).
+    /// @brief Sets DHCP message type (e.g. 1 = DHCPDISCOVER).
     ///
     /// @param type message type to be set
-    void setType(uint8_t type) { msg_type_=type; };
+    void setType(uint8_t type);
 
     /// @brief Returns sname field
     ///
@@ -323,7 +322,7 @@ public:
     /// @return returns option of requested type (or NULL)
     ///         if no such option is present
     boost::shared_ptr<Option>
-    getOption(uint8_t opt_type);
+    getOption(uint8_t opt_type) const;
 
     /// @brief Deletes specified option
     /// @param type option type to be deleted
@@ -521,11 +520,6 @@ protected:
     /// changes to this member such as access scope restriction or
     /// data format change etc.
     std::vector<uint8_t> data_;
-
-    /// message type (e.g. 1=DHCPDISCOVER)
-    /// @todo this will eventually be replaced with DHCP Message Type
-    /// option (option 53)
-    uint8_t msg_type_;
 
     /// collection of options present in this message
     ///
