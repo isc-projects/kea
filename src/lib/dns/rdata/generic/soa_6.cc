@@ -14,18 +14,22 @@
 
 #include <config.h>
 
-#include <string>
-
-#include <boost/static_assert.hpp>
-#include <boost/lexical_cast.hpp>
-
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
 #include <dns/name.h>
+#include <dns/master_lexer.h>
+#include <dns/master_loader.h>
+#include <dns/master_loader_callbacks.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+
+#include <boost/static_assert.hpp>
+#include <boost/lexical_cast.hpp>
+
+#include <string>
+#include <sstream>
 
 using namespace std;
 using boost::lexical_cast;
@@ -42,35 +46,55 @@ SOA::SOA(InputBuffer& buffer, size_t) :
     buffer.readData(numdata_, sizeof(numdata_));
 }
 
-SOA::SOA(const std::string& soastr) :
-    mname_("."), rname_(".")    // quick hack workaround
-{
-    istringstream iss(soastr);
-    string token;
+namespace {
+Name
+createName(MasterLexer& lexer, const Name* origin) {
+    const MasterToken::StringRegion& str_region =
+        lexer.getNextToken(MasterToken::STRING).getStringRegion();
+    return (Name(str_region.beg, str_region.len, origin));
+}
 
-    iss >> token;
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid SOA MNAME");
-    }
-    mname_ = Name(token);
-    iss >> token;
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid SOA RNAME");
-    }
-    rname_ = Name(token);
-
-    uint32_t serial, refresh, retry, expire, minimum;
-    iss >> serial >> refresh >> retry >> expire >> minimum;
-    if (iss.rdstate() != ios::eofbit) {
-        isc_throw(InvalidRdataText, "Invalid SOA format");
-    }
+void
+fillParameters(MasterLexer& lexer, uint8_t numdata[20]) {
+    // Copy serial, refresh, retry, expire, minimum.  We accept the extended
+    // TTL-compatible style for the latter four.
     OutputBuffer buffer(20);
-    buffer.writeUint32(serial);
-    buffer.writeUint32(refresh);
-    buffer.writeUint32(retry);
-    buffer.writeUint32(expire);
-    buffer.writeUint32(minimum);
-    memcpy(numdata_,  buffer.getData(), buffer.getLength());
+    buffer.writeUint32(lexer.getNextToken(MasterToken::NUMBER).getNumber());
+    for (int i = 0; i < 4; ++i) {
+        buffer.writeUint32(RRTTL(lexer.getNextToken(MasterToken::STRING).
+                                 getString()).getValue());
+    }
+    memcpy(numdata,  buffer.getData(), buffer.getLength());
+}
+}
+
+SOA::SOA(const std::string& soastr) :
+    mname_(Name::ROOT_NAME()), rname_(Name::ROOT_NAME())
+{
+    try {
+        std::istringstream ss(soastr);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
+
+        mname_ = createName(lexer, NULL);
+        rname_ = createName(lexer, NULL);
+        fillParameters(lexer, numdata_);
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText, "extra input text for SOA: "
+                      << soastr);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText, "Failed to construct SOA from '" <<
+                  soastr << "': " << ex.what());
+    }
+}
+
+SOA::SOA(MasterLexer& lexer, const Name* origin,
+         MasterLoader::Options, MasterLoaderCallbacks&) :
+    mname_(createName(lexer, origin)), rname_(createName(lexer, origin))
+{
+    fillParameters(lexer, numdata_);
 }
 
 SOA::SOA(const Name& mname, const Name& rname, uint32_t serial,

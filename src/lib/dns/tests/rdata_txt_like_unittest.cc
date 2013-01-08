@@ -57,7 +57,6 @@ template<class TXT_LIKE>
 class Rdata_TXT_LIKE_Test : public RdataTest {
 protected:
     Rdata_TXT_LIKE_Test() :
-        loader_cb(MasterLoaderCallbacks::getNullCallbacks()),
         wiredata_longesttxt(256, 'a'),
         rdata_txt_like("Test-String"),
         rdata_txt_like_empty("\"\""),
@@ -67,7 +66,6 @@ protected:
     }
 
 protected:
-    MasterLoaderCallbacks loader_cb;
     vector<uint8_t> wiredata_longesttxt;
     const TXT_LIKE rdata_txt_like;
     const TXT_LIKE rdata_txt_like_empty;
