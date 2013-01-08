@@ -49,10 +49,26 @@ typedef std::map<std::string, OptionSpacePtr> OptionSpaceCollection;
 /// assigned to option instances represented by isc::dhcp::Option and
 /// other classes derived from it. Each particular option may belong to
 /// multiple option spaces.
-/// This class may be used to represent any DHCPv4 option space. In theory
-/// this class can be also used to represent non-vendor specific DHCPv6
-/// option space but this is disencouraged. For DHCPv6 option spaces the
-/// OptionSpace6 class should be used instead.
+/// This class may be used to represent any DHCPv4 option space. If the
+/// option space is to group DHCPv4 Vendor Encapsulated Options then
+/// "vendor space" flag must be set using \ref OptionSpace::setVendorSpace
+/// or the argument passed to the constructor. In theory, this class can
+/// be also used to represent non-vendor specific DHCPv6 option space
+/// but this is discouraged. For DHCPv6 option spaces the OptionSpace6
+/// class should be used instead.
+///
+/// @note this class is intended to be used to represent DHCPv4 option
+/// spaces only. However, it hasn't been called OptionSpace4 (that would
+/// suggest that it is specific to DHCPv4) because it can be also
+/// used to represent some DHCPv6 option spaces and is a base class
+/// for \ref OptionSpace6. Thus, if one declared the container as follows:
+/// @code
+/// std::vector<OptionSpace4> container;
+/// @endcode
+/// it would suggest that the container holds DHCPv4 option spaces while
+/// it could hold both DHCPv4 and DHCPv6 option spaces as the OptionSpace6
+/// object could be upcast to OptionSpace4. This confusion does not appear
+/// when OptionSpace is used as a name for the base class.
 class OptionSpace {
 public:
 
@@ -68,15 +84,15 @@ public:
     /// correct.
     OptionSpace(const std::string& name, const bool vendor_space = false);
 
-    /// @brief Mark option space as non-vendor space.
-    void clearVendorSpace() {
-        vendor_space_ = false;
-    }
-
     /// @brief Return option space name.
     ///
     /// @return option space name.
     const std::string& getName() const { return (name_); }
+
+    /// @brief Mark option space as non-vendor space.
+    void clearVendorSpace() {
+        vendor_space_ = false;
+    }
 
     /// @brief Check if option space is vendor specific.
     ///
