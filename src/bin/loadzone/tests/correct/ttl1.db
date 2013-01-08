@@ -1,7 +1,5 @@
 $ORIGIN ttl1.
-; this needs #2500
-;@			IN SOA	ns hostmaster (
-@			IN SOA	ns.ttl1. hostmaster.ttl1. (
+@			IN SOA	ns hostmaster (
 				1        ; serial
 				3600
 				1800
