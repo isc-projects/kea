@@ -28,6 +28,7 @@
 #include <datasrc/data_source.h>
 #include <datasrc/iterator.h>
 #include <datasrc/sqlite3_accessor.h>
+#include <datasrc/rrset_collection.h>
 
 #include <testutils/dnsmessage_test.h>
 
@@ -4149,6 +4150,45 @@ TYPED_TEST(DatabaseClientTest, createZoneRollbackOnExists) {
     // createZone started a transaction, but since it failed,
     // it should have been rolled back, and the next attempt should succeed
     ASSERT_TRUE(this->client_->createZone(new_name));
+}
+
+class RRsetCollectionTest : public DatabaseClientTest<TestSQLite3Accessor> {
+public:
+    RRsetCollectionTest() :
+        DatabaseClientTest<TestSQLite3Accessor>(),
+        collection(this->client_->getUpdater(this->zname_, false))
+    {}
+
+    RRsetCollection collection;
+};
+
+TEST_F(RRsetCollectionTest, find) {
+    // Test the find() that returns ConstRRsetPtr
+    ConstRRsetPtr rrset = collection.find(Name("www.example.org."),
+                                          RRClass::IN(), RRType::A());
+    ASSERT_TRUE(rrset);
+    EXPECT_EQ(RRType::A(), rrset->getType());
+    EXPECT_EQ(RRTTL(3600), rrset->getTTL());
+    EXPECT_EQ(RRClass("IN"), rrset->getClass());
+    EXPECT_EQ(Name("www.example.org"), rrset->getName());
+
+    // foo.example.org doesn't exist
+    rrset = collection.find(Name("foo.example.org"), qclass_, RRType::A());
+    EXPECT_FALSE(rrset);
+
+    // www.example.org exists, but not with MX
+    rrset = collection.find(Name("www.example.org"), qclass_, RRType::MX());
+    EXPECT_FALSE(rrset);
+
+    // www.example.org exists, with AAAA
+    rrset = collection.find(Name("www.example.org"), qclass_, RRType::AAAA());
+    EXPECT_TRUE(rrset);
+}
+
+TEST_F(RRsetCollectionTest, iteratorTest) {
+    // Iterators are currently not implemented.
+    EXPECT_THROW(collection.begin(), isc::NotImplemented);
+    EXPECT_THROW(collection.end(), isc::NotImplemented);
 }
 
 }
