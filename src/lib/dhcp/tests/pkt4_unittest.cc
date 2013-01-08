@@ -222,6 +222,7 @@ TEST(Pkt4Test, fixedFields) {
 
     // Chaddr contains link-layer addr (MAC). It is no longer always 16 bytes
     // long and its length depends on hlen value (it is up to 16 bytes now).
+    ASSERT_EQ(pkt->getHWAddr()->hwaddr_.size(), dummyHlen);
     EXPECT_EQ(0, memcmp(dummyChaddr, &pkt->getHWAddr()->hwaddr_[0], dummyHlen));
 
     EXPECT_EQ(0, memcmp(dummySname, &pkt->getSname()[0], 64));

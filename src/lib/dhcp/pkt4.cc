@@ -112,7 +112,7 @@ Pkt4::pack() {
 
     bufferOut_.writeUint8(op_);
     bufferOut_.writeUint8(hwaddr_->htype_);
-    bufferOut_.writeUint8(hw_len < 16 ? hw_len : 16);
+    bufferOut_.writeUint8(hw_len < MAX_CHADDR_LEN ? hw_len : MAX_CHADDR_LEN);
     bufferOut_.writeUint8(hops_);
     bufferOut_.writeUint32(transid_);
     bufferOut_.writeUint16(secs_);
@@ -123,13 +123,14 @@ Pkt4::pack() {
     bufferOut_.writeUint32(giaddr_);
 
 
-    if (hw_len <=16) {
+    if (hw_len <= MAX_CHADDR_LEN) {
         // write up to 16 bytes of the hardware address (CHADDR field is 16
         // bytes long in DHCPv4 message).
-        bufferOut_.writeData(&hwaddr_->hwaddr_[0], (hw_len<16?hw_len:16) );
-        hw_len = 16 - hw_len;
+        bufferOut_.writeData(&hwaddr_->hwaddr_[0],
+                             (hw_len < MAX_CHADDR_LEN ? hw_len : MAX_CHADDR_LEN) );
+        hw_len = MAX_CHADDR_LEN - hw_len;
     } else {
-        hw_len = 16;
+        hw_len = MAX_CHADDR_LEN;
     }
 
     // write (len) bytes of padding
@@ -288,7 +289,7 @@ Pkt4::setHWAddr(uint8_t hType, uint8_t hlen,
         isc_throw(OutOfRange, "Invalid HW Address specified");
     }
 
-    hwaddr_ = HWAddrPtr(new HWAddr(mac_addr, hType));
+    hwaddr_.reset(new HWAddr(mac_addr, hType));
 }
 
 void
@@ -370,7 +371,7 @@ Pkt4::getHlen() const {
         isc_throw(InvalidOperation, "Can't get HType. HWAddr not defined");
     }
     uint8_t len = hwaddr_->hwaddr_.size();
-    return (len <= 16 ? len : 16);
+    return (len <= MAX_CHADDR_LEN ? len : MAX_CHADDR_LEN);
 }
 
 void
@@ -395,7 +396,7 @@ Pkt4::getOption(uint8_t type) const {
 bool
 Pkt4::delOption(uint8_t type) {
     isc::dhcp::Option::OptionCollection::iterator x = options_.find(type);
-    if (x!=options_.end()) {
+    if (x != options_.end()) {
         options_.erase(x);
         return (true); // delete successful
     }

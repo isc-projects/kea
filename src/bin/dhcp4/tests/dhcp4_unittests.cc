@@ -21,15 +21,9 @@ main(int argc, char* argv[]) {
 
     ::testing::InitGoogleTest(&argc, argv);
 
+    // See the documentation of the B10_* environment variables in
+    // src/lib/log/README for info on how to tweak logging
     isc::log::initLogger();
-
-    // Uncomment those to get much more verbose tests
-    /*
-    isc::log::initLogger("b10-dhcp4",
-                         isc::log::DEBUG,
-                         isc::log::MAX_DEBUG_LEVEL, NULL, false);
-    isc::dhcp::dhcp4_logger.setSeverity(isc::log::DEBUG, 99);
-    */
 
     int result = RUN_ALL_TESTS();
 

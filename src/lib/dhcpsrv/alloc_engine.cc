@@ -267,36 +267,32 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
                               const IOAddress& hint,
                               bool fake_allocation /* = false */ ) {
 
-    // That check is not necessary. We create allocator in AllocEngine
-    // constructor
+    // Allocator is always created in AllocEngine constructor and there is
+    // currently no other way to set it, so that check is not really necessary.
     if (!allocator_) {
         isc_throw(InvalidOperation, "No allocator selected");
     }
 
-    // check if there's existing lease for that subnet/clientid/hwaddr combination.
+    // Check if there's existing lease for that subnet/clientid/hwaddr combination.
     Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(hwaddr->hwaddr_, subnet->getID());
     if (existing) {
-        // we have a lease already. This is a returning client, probably after
-        // his reboot.
-
+        // We have a lease already. This is a returning client, probably after
+        // its reboot.
         existing = renewLease4(subnet, clientid, hwaddr, existing, fake_allocation);
-
         if (existing) {
             return (existing);
         }
 
         // If renewal failed (e.g. the lease no longer matches current configuration)
-        // let's continue allocation process
+        // let's continue the allocation process
     }
 
     if (clientid) {
         existing = LeaseMgrFactory::instance().getLease4(*clientid, subnet->getID());
         if (existing) {
             // we have a lease already. This is a returning client, probably after
-            // his reboot.
-
+            // its reboot.
             existing = renewLease4(subnet, clientid, hwaddr, existing, fake_allocation);
-
             // @todo: produce a warning. We haven't found him using MAC address, but
             // we found him using client-id
             if (existing) {
@@ -309,10 +305,10 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
     if (subnet->inPool(hint)) {
         existing = LeaseMgrFactory::instance().getLease4(hint);
         if (!existing) {
-            /// @todo: check if the hint is reserved once we have host support
+            /// @todo: Check if the hint is reserved once we have host support
             /// implemented
 
-            // the hint is valid and not currently used, let's create a lease for it
+            // The hint is valid and not currently used, let's create a lease for it
             Lease4Ptr lease = createLease4(subnet, clientid, hwaddr, hint, fake_allocation);
 
             // It can happen that the lease allocation failed (we could have lost
@@ -334,7 +330,7 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
     // the following occurs:
     // - we find a free address
     // - we find an address for which the lease has expired
-    // - we exhaust number of tries
+    // - we exhaust the number of tries
     //
     // @todo: Current code does not handle pool exhaustion well. It will be
     // improved. Current problems:
@@ -373,7 +369,7 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
             }
         }
 
-        // continue trying allocation until we run out of attempts
+        // Continue trying allocation until we run out of attempts
         // (or attempts are set to 0, which means infinite)
         --i;
     } while ( i || !attempts_);
@@ -545,7 +541,6 @@ Lease4Ptr AllocEngine::createLease4(const SubnetPtr& subnet,
     if (!fake_allocation) {
         // That is a real (REQUEST) allocation
         bool status = LeaseMgrFactory::instance().addLease(lease);
-
         if (status) {
             return (lease);
         } else {
@@ -568,7 +563,6 @@ Lease4Ptr AllocEngine::createLease4(const SubnetPtr& subnet,
         }
     }
 }
-
 
 AllocEngine::~AllocEngine() {
     // no need to delete allocator. smart_ptr will do the trick for us
