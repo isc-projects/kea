@@ -27,20 +27,6 @@ namespace dhcp {
 
 class Dhcpv6Srv;
 
-/// An exception that is thrown if an error occurs while configuring an
-/// @c Dhcpv6Srv object.
-class Dhcp6ConfigError : public isc::Exception {
-public:
-
-    /// @brief constructor
-    ///
-    /// @param file name of the file, where exception occurred
-    /// @param line line of the file, where exception occurred
-    /// @param what text description of the issue that caused exception
-    Dhcp6ConfigError(const char* file, size_t line, const char* what)
-        : isc::Exception(file, line, what) {}
-};
-
 /// @brief Configures DHCPv6 server
 ///
 /// This function is called every time a new configuration is received. The extra
