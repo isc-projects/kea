@@ -436,6 +436,37 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
     EXPECT_EQ(4000, subnet->getValid());
 }
 
+// The goal of this test is to check whether an option definition
+// can be added to the dhcp4 option space.
+TEST_F(Dhcp4ParserTest, optionDefAdd) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"ipv4-address\","
+        "      \"array\": False,"
+        "      \"record_types\": [ ],"
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Make sure that the particular option definition does not exist.
+    OptionDefinitionPtr def = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_FALSE(def);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+
+    // The option definition should now be available in the CfgMgr.
+    def = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_TRUE(def);
+}
+
 // Goal of this test is to verify that global option
 // data is configured for the subnet if the subnet
 // configuration does not include options configuration.

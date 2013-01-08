@@ -956,6 +956,130 @@ public:
     ParserCollection parsers_;
 };
 
+/// @brief Parser for a single option definition.
+///
+/// This parser creates an instance of a single option definition.
+class OptionDefParser: DhcpConfigParser {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// This constructor sets the pointer to the option definitions
+    /// storage to NULL. It must be set to point to the actual storage
+    /// before \ref build is called.
+    OptionDefParser(const std::string&)
+        : storage_(NULL) {
+    }
+
+    /// @brief Parses an entry that describes single option definition.
+    ///
+    /// @param option_def a configuration entry to be parsed.
+    ///
+    /// @throw Dhcp4ConfigError if parsing was unsuccessful.
+    void build(ConstElementPtr option_def) {
+    }
+
+    /// @brief Stores the parsed option definition in a storage.
+    void commit() {
+    }
+
+    /// @brief Sets a pointer to a storage.
+    ///
+    /// The newly created instance of an option definition will be
+    /// added to a storage given by the argument.
+    ///
+    /// @param storage pointer to a storage where the option definition
+    /// will be added to.
+    void setStorage(OptionDefContainer* storage) {
+        storage_ = storage;
+    }
+
+private:
+
+    /// Instance of option definition being created by this parser.
+    OptionDefinitionPtr option_definition_;
+
+    /// Pointer to a storage where the option definition will be
+    /// added when \ref commit is called.
+    OptionDefContainer* storage_;
+};
+
+/// @brief Parser for a list of option definitions.
+///
+/// This parser iterates over all configuration entries that define
+/// option definitions and creates instances of these definitions.
+/// If the parsing is successful, the collection of created definitions
+/// is put into the provided storage.
+class OptionDefListParser : DhcpConfigParser {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// This constructor initializes the pointer to option definitions
+    /// storage to NULL value. This pointer has to be set to point to
+    /// the actual storage before the \ref build function is called.
+    OptionDefListParser(const std::string&)
+        : option_defs_(NULL) {
+    }
+
+    /// @brief Parse configuration entries.
+    ///
+    /// This function parses configuration entries and creates instances
+    /// of option definitions.
+    ///
+    /// @param option_def_list pointer to an element that holds entries
+    /// that define option definitions.
+    /// @throw Dhcp4ConfigError if configuration parsing fails.
+    void build(ConstElementPtr option_def_list) {
+        if (!option_def_list) {
+            isc_throw(Dhcp4ConfigError, "parser error: a pointer to a list of"
+                      << " option definitions is NULL");
+        } else if (option_defs_ == NULL) {
+            isc_throw(Dhcp4ConfigError, "parser error: the storage for option"
+                      << " definitions must be set before parsing option"
+                      << " definitions");
+        }
+
+        BOOST_FOREACH(ConstElementPtr option_def, option_def_list->listValue()) {
+            boost::shared_ptr<OptionDefParser>
+                parser(new OptionDefParser("single-option-def"));
+            parser->setStorage(&option_defs_local_);
+            parser->build(option_def);
+        }
+    }
+
+    /// @brief Stores option definitions in the provided storage.
+    void commit() {
+    }
+
+    /// @brief Create an OptionDefListParser object.
+    ///
+    /// @param param_name configuration entry holding option definitions.
+    ///
+    /// @return OptionDefListParser object.
+    static DhcpConfigParser* factory(const std::string& param_name) {
+        return (new OptionDefListParser(param_name));
+    }
+
+    /// @brief Set storage for option definition instances.
+    ///
+    /// @param storage pointer to the option definition storage
+    /// where created option instances should be stored.
+    void setStorage(OptionDefContainer* storage) {
+        option_defs_ = storage;
+    }
+
+private:
+
+    /// Pointer to the container where option definitions should
+    /// be stored when \ref commit is called.
+    OptionDefContainer* option_defs_;
+
+    /// Temporary storage for option definitions. It holds option
+    /// definitions before \ref commit is called.
+    OptionDefContainer option_defs_local_;
+};
+
 /// @brief this class parses a single subnet
 ///
 /// This class parses the whole subnet definition. It creates parsers
