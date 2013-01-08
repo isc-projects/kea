@@ -39,6 +39,8 @@ protected:
                   2010012601, 3600, 300, 3600000, 1200)
     {}
 
+    // Common check to see if the given text can be used to construct SOA
+    // Rdata that is identical rdata_soa.
     void checkFromText(const char* soa_txt, const Name* origin = NULL) {
         std::stringstream ss(soa_txt);
         MasterLexer lexer;
@@ -53,6 +55,10 @@ protected:
                                   loader_cb).compare(rdata_soa));
     }
 
+    // Common check if given text (which is invalid as SOA RDATA) is rejected
+    // with the specified type of exception: ExForString is the expected
+    // exception for the "from string" constructor; ExForLexer is for the
+    // constructor with master lexer.
     template <typename ExForString, typename ExForLexer>
     void checkFromBadTexxt(const char* soa_txt, const Name* origin = NULL) {
         EXPECT_THROW(generic::SOA soa(soa_txt), ExForString);
@@ -127,6 +133,7 @@ TEST_F(Rdata_SOA_Test, createFromText) {
     EXPECT_THROW(generic::SOA soa(". . 0 0 0 0 0 extra"), InvalidRdataText);
     // Likewise.  Redundant newline is also considered an error.
     EXPECT_THROW(generic::SOA soa(". . 0 0 0 0 0\n"), InvalidRdataText);
+    EXPECT_THROW(generic::SOA soa("\n. . 0 0 0 0 0"), InvalidRdataText);
     // lexer version defers the check to the upper layer (we pass origin
     // to skip the check with the string version).
     checkFromText("ns root 2010012601 1H 5M 1000H 20M extra", &origin);
