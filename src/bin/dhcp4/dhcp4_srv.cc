@@ -223,10 +223,7 @@ void Dhcpv4Srv::appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type) {
     OptionPtr opt;
 
     // add Message Type Option (type 53)
-    std::vector<uint8_t> tmp;
-    tmp.push_back(static_cast<uint8_t>(msg_type));
-    opt = OptionPtr(new Option(Option::V4, DHO_DHCP_MESSAGE_TYPE, tmp));
-    msg->addOption(opt);
+    msg->setType(msg_type);
 
     // DHCP Server Identifier (type 54)
     msg->addOption(getServerID());
@@ -267,7 +264,7 @@ void Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         LOG_ERROR(dhcp4_logger, DHCP4_SUBNET_SELECTION_FAILED)
             .arg(question->getRemoteAddr().toText())
             .arg(serverReceivedPacketName(question->getType()));
-        setMsgType(answer, DHCPNAK);
+        answer->setType(DHCPNAK);
         answer->setYiaddr(IOAddress("0.0.0.0"));
         return;
     } else {
@@ -343,7 +340,7 @@ void Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
             .arg(hwaddr?hwaddr->toText():"(no hwaddr info)")
             .arg(hint.toText());
 
-        setMsgType(answer, DHCPNAK);
+        answer->setType(DHCPNAK);
         answer->setYiaddr(IOAddress("0.0.0.0"));
     }
 }
@@ -355,19 +352,6 @@ OptionPtr Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
                   DHO_SUBNET_MASK, netmask));
 
     return (opt);
-}
-
-void Dhcpv4Srv::setMsgType(Pkt4Ptr& pkt, uint8_t dhcp_type) {
-    OptionPtr opt = pkt->getOption(DHO_DHCP_MESSAGE_TYPE);
-    if (opt) {
-        // There is message type option already, update it
-        opt->setUint8(dhcp_type);
-    } else {
-        // There is no message type option yet, add it
-        std::vector<uint8_t> tmp(1, dhcp_type);
-        opt = OptionPtr(new Option(Option::V4, DHO_DHCP_MESSAGE_TYPE, tmp));
-        pkt->addOption(opt);
-    }
 }
 
 Pkt4Ptr Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
@@ -484,9 +468,18 @@ Dhcpv4Srv::serverReceivedPacketName(uint8_t type) {
 }
 
 Subnet4Ptr Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(question->getRemoteAddr());
 
-    return (subnet);
+    // Is this relayed message?
+    IOAddress relay = question->getGiaddr();
+    if (relay.toText() == "0.0.0.0") {
+
+        // Yes: Use relay address to select subnet
+        return (CfgMgr::instance().getSubnet4(relay));
+    } else {
+
+        // No: Use client's address to select subnet
+        return (CfgMgr::instance().getSubnet4(question->getRemoteAddr()));
+    }
 }
 
 void Dhcpv4Srv::sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid) {
