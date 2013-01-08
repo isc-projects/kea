@@ -1,3 +1,8 @@
+541.	[func]		marcin
+	Added routines to search for configured options and their
+	definitions using name of the option space they belong to.
+	(Trac #2315, git 741fe7bc96c70df35d9a79016b0aa1488e9b3ac8)
+
 540.	[func]		marcin
 	DHCP Option values can be now specified using a string of
 	tokens separated with comma sign. Subsequent tokens are used
