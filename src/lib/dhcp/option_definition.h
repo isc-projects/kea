@@ -361,7 +361,7 @@ public:
 
     /// @brief Factory function to create option with array of integer values.
     ///
-    /// @param universe (V4 or V6).
+    /// @param u universe (V4 or V6).
     /// @param type option type.
     /// @param begin iterator pointing to the beginning of the buffer.
     /// @param end iterator pointing to the end of the buffer.
