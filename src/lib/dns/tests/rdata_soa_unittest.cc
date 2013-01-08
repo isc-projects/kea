@@ -33,15 +33,103 @@ using namespace isc::dns::rdata;
 namespace {
 class Rdata_SOA_Test : public RdataTest {
 protected:
-    Rdata_SOA_Test() : rdata_soa(Name("ns.example.com"),
-                                 Name("root.example.com"),
-                                 2010012601, 3600, 300, 3600000, 1200)
+    Rdata_SOA_Test() :
+        rdata_soa(Name("ns.example.com"),
+                  Name("root.example.com"),
+                  2010012601, 3600, 300, 3600000, 1200)
     {}
+
+    void checkFromText(const char* soa_txt, const Name* origin = NULL) {
+        std::stringstream ss(soa_txt);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
+
+        if (origin == NULL) {
+            // from-string constructor works correctly only when origin
+            // is NULL (by its nature).
+            EXPECT_EQ(0, generic::SOA(soa_txt).compare(rdata_soa));
+        }
+        EXPECT_EQ(0, generic::SOA(lexer, origin, MasterLoader::DEFAULT,
+                                  loader_cb).compare(rdata_soa));
+    }
+
+    template <typename ExForString, typename ExForLexer>
+    void checkFromBadTexxt(const char* soa_txt, const Name* origin = NULL) {
+        EXPECT_THROW(generic::SOA soa(soa_txt), ExForString);
+
+        std::stringstream ss(soa_txt);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
+        EXPECT_THROW(generic::SOA soa(lexer, origin, MasterLoader::DEFAULT,
+                                      loader_cb), ExForLexer);
+    }
+
     const generic::SOA rdata_soa;
 };
 
 TEST_F(Rdata_SOA_Test, createFromText) {
-    //TBD
+    // A simple case.
+    checkFromText("ns.example.com. root.example.com. "
+                  "2010012601 3600 300 3600000 1200");
+
+    // Beginning and trailing space are ignored.
+    checkFromText("  ns.example.com. root.example.com. "
+                  "2010012601 3600 300 3600000 1200  ");
+
+    // using extended TTL-like form for some parameters.
+    checkFromText("ns.example.com. root.example.com. "
+                  "2010012601 1H 5M 1000H 20M");
+
+    // multi-line.
+    checkFromText("ns.example.com. (root.example.com.\n"
+                  "2010012601 1H 5M 1000H) 20M");
+
+    // relative names for MNAME and RNAME with a separate origin (lexer
+    // version only)
+    const Name origin("example.com");
+    checkFromText("ns root 2010012601 1H 5M 1000H 20M", &origin);
+
+    // with the '@' notation with a separate origin (lexer version only)
+    const Name full_mname("ns.example.com");
+    checkFromText("@ root.example.com. 2010012601 1H 5M 1000H 20M",
+                  &full_mname);
+
+    // bad MNAME/RNAMEs
+    checkFromBadTexxt<EmptyLabel, EmptyLabel>(
+        "bad..example. . 2010012601 1H 5M 1000H 20M");
+    checkFromBadTexxt<EmptyLabel, EmptyLabel>(
+        ". bad..example. 2010012601 1H 5M 1000H 20M");
+
+    // Missing MAME or RNAME: for the string version, the serial would be
+    // tried as RNAME and result in "not absolute".  For the lexer version,
+    // it reaches the end-of-line, missing min TTL.
+    checkFromBadTexxt<MissingNameOrigin, MasterLexer::LexerError>(
+        ". 2010012601 0 0 0 0", &Name::ROOT_NAME());
+
+    // bad serial.  the string version converts lexer error to
+    // InvalidRdataText.
+    checkFromBadTexxt<InvalidRdataText, MasterLexer::LexerError>(
+        ". . bad 0 0 0 0");
+
+    // Bad format for other numeric parameters.  These will be tried as a TTL,
+    // and result in an exception there.
+    checkFromBadTexxt<InvalidRRTTL, InvalidRRTTL>(". . 2010012601 bad 0 0 0");
+    checkFromBadTexxt<InvalidRRTTL, InvalidRRTTL>(". . 2010012601 0 bad 0 0");
+    checkFromBadTexxt<InvalidRRTTL, InvalidRRTTL>(". . 2010012601 0 0 bad 0");
+    checkFromBadTexxt<InvalidRRTTL, InvalidRRTTL>(". . 2010012601 0 0 0 bad");
+
+    // No space between RNAME and serial.  This case is the same as missing
+    // M/RNAME.
+    checkFromBadTexxt<MissingNameOrigin, MasterLexer::LexerError>(
+        ". example.0 0 0 0 0", &Name::ROOT_NAME());
+
+    // Extra parameter.  string version immediately detects the error.
+    EXPECT_THROW(generic::SOA soa(". . 0 0 0 0 0 extra"), InvalidRdataText);
+    // Likewise.  Redundant newline is also considered an error.
+    EXPECT_THROW(generic::SOA soa(". . 0 0 0 0 0\n"), InvalidRdataText);
+    // lexer version defers the check to the upper layer (we pass origin
+    // to skip the check with the string version).
+    checkFromText("ns root 2010012601 1H 5M 1000H 20M extra", &origin);
 }
 
 TEST_F(Rdata_SOA_Test, createFromWire) {
