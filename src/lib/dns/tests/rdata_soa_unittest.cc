@@ -117,12 +117,24 @@ TEST_F(Rdata_SOA_Test, createFromText) {
     checkFromBadTexxt<InvalidRdataText, MasterLexer::LexerError>(
         ". . bad 0 0 0 0");
 
+    // bad serial; exceeding the uint32_t range (4294967296 = 2^32)
+    checkFromBadTexxt<InvalidRdataText, MasterLexer::LexerError>(
+        ". . 4294967296 0 0 0 0");
+
     // Bad format for other numeric parameters.  These will be tried as a TTL,
     // and result in an exception there.
     checkFromBadTexxt<InvalidRRTTL, InvalidRRTTL>(". . 2010012601 bad 0 0 0");
+    checkFromBadTexxt<InvalidRRTTL, InvalidRRTTL>(
+        ". . 2010012601 4294967296 0 0 0");
     checkFromBadTexxt<InvalidRRTTL, InvalidRRTTL>(". . 2010012601 0 bad 0 0");
+    checkFromBadTexxt<InvalidRRTTL, InvalidRRTTL>(
+        ". . 2010012601 0 4294967296 0 0");
     checkFromBadTexxt<InvalidRRTTL, InvalidRRTTL>(". . 2010012601 0 0 bad 0");
+    checkFromBadTexxt<InvalidRRTTL, InvalidRRTTL>(
+        ". . 2010012601 0 0 4294967296 0");
     checkFromBadTexxt<InvalidRRTTL, InvalidRRTTL>(". . 2010012601 0 0 0 bad");
+    checkFromBadTexxt<InvalidRRTTL, InvalidRRTTL>(
+        ". . 2010012601 0 0 0 4294967296");
 
     // No space between RNAME and serial.  This case is the same as missing
     // M/RNAME.
