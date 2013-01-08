@@ -313,5 +313,105 @@ class TestCounters3(unittest.TestCase, BaseTestCounters):
     def tearDown(self):
         BaseTestCounters.tearDown(self)
 
+class BaseDummyModule():
+    """A base dummy class"""
+    TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec2.spec'
+    def __init__(self):
+        self.counters = counters.Counters(self.TEST_SPECFILE_LOCATION)
+
+    def get_counters(self):
+        return self.counters.get_statistics()
+
+    def clear_counters(self):
+        self.counters.clear_all()
+
+class DummyNotifyOut(BaseDummyModule):
+    """A dummy class equivalent to notify.notify_out.NotifyOut"""
+    def __init__(self):
+        self.counters = counters.Counters()
+
+    def inc_counters(self):
+        """increments counters"""
+        self.counters.inc('zones', TEST_ZONE_NAME_STR, 'notifyoutv4')
+        self.counters.inc('zones', TEST_ZONE_NAME_STR, 'notifyoutv6')
+
+class DummyXfroutSession(BaseDummyModule):
+    """A dummy class equivalent to XfroutSession in b10-xfrout"""
+    def inc_counters(self):
+        """increments counters"""
+        self.counters.inc('zones', TEST_ZONE_NAME_STR, 'xfrreqdone')
+        self.counters.inc('zones', TEST_ZONE_NAME_STR, 'xfrrej')
+        self.counters.inc('axfr_running')
+        self.counters.inc('ixfr_running')
+        self.counters.dec('axfr_running')
+        self.counters.dec('ixfr_running')
+
+class DummyUnixSockServer(BaseDummyModule):
+    """A dummy class equivalent to UnixSockServer in b10-xfrout"""
+    def inc_counters(self):
+        """increments counters"""
+        self.counters.inc('socket', 'unixdomain', 'open')
+        self.counters.inc('socket', 'unixdomain', 'close')
+
+class DummyXfroutServer(BaseDummyModule):
+    """A dummy class equivalent to XfroutServer in b10-xfrout"""
+    def __init__(self):
+        super().__init__()
+        self.xfrout_sess = DummyXfroutSession()
+        self.unix_socket_server = DummyUnixSockServer()
+        self.notifier = DummyNotifyOut()
+
+    def inc_counters(self):
+        self.xfrout_sess.inc_counters()
+        self.unix_socket_server.inc_counters()
+        self.notifier.inc_counters()
+
+class TestDummyNotifyOut(unittest.TestCase):
+    """Tests counters are incremented in which the spec file is not
+    loaded"""
+    @classmethod
+    def setUpClass(cls):
+        imp.reload(counters)
+
+    def setUp(self):
+        self.notifier = DummyNotifyOut()
+        self.notifier.inc_counters()
+
+    def tearDown(self):
+        self.notifier.clear_counters()
+
+    def test_counters(self):
+        self.assertEqual(
+            {'zones': {'_SERVER_': {'notifyoutv4': 1, 'notifyoutv6': 1},
+                       TEST_ZONE_NAME_STR: {'notifyoutv4': 1, 'notifyoutv6': 1}}},
+            self.notifier.get_counters())
+
+class TestDummyXfroutServer(unittest.TestCase):
+    """Tests counters are incremented or decremented in which the same
+    spec file is multiply loaded in each child class"""
+    @classmethod
+    def setUpClass(cls):
+        imp.reload(counters)
+
+    def setUp(self):
+        self.xfrout_server = DummyXfroutServer()
+        self.xfrout_server.inc_counters()
+
+    def tearDown(self):
+        self.xfrout_server.clear_counters()
+
+    def test_counters(self):
+        self.assertEqual(
+            {'axfr_running': 0, 'ixfr_running': 0,
+             'socket': {'unixdomain': {'open': 1, 'close': 1}},
+             'zones': {'_SERVER_': {'notifyoutv4': 1,
+                                    'notifyoutv6': 1,
+                                    'xfrrej': 1, 'xfrreqdone': 1},
+                       TEST_ZONE_NAME_STR: {'notifyoutv4': 1,
+                                        'notifyoutv6': 1,
+                                        'xfrrej': 1,
+                                        'xfrreqdone': 1}}},
+            self.xfrout_server.get_counters())
+
 if __name__== "__main__":
     unittest.main()
