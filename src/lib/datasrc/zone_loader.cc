@@ -146,9 +146,9 @@ ZoneLoader::loadIncremental(size_t limit) {
     if (complete_) {
         // Everything is loaded. Perform some basic sanity checks on the zone.
         RRsetCollection collection(updater_);
-        dns::Name zone_name(updater_->getFinder().getOrigin());
-        dns::RRClass zone_class(updater_->getFinder().getClass());
-        dns::ZoneCheckerCallbacks
+        const dns::Name zone_name(updater_->getFinder().getOrigin());
+        const dns::RRClass zone_class(updater_->getFinder().getClass());
+        const dns::ZoneCheckerCallbacks
             callbacks(boost::bind(&logError, &zone_name, &zone_class, _1),
                       boost::bind(&logWarning, &zone_name, &zone_class, _1));
         if (!dns::checkZone(zone_name, zone_class, collection, callbacks)) {
