@@ -30,14 +30,22 @@ OptionSpace::OptionSpace(const std::string& name, const bool vendor_space)
 
 bool
 OptionSpace::validateName(const std::string& name) {
-    // Allowed digits are: lower or upper case letters, digits,
+
+    using namespace boost::algorithm;
+
+    // Allowed characters are: lower or upper case letters, digits,
     // underscores and dashes. Empty option spaces are not allowed.
-    if (boost::algorithm::all(name, boost::is_from_range('a', 'z') ||
-                              boost::is_from_range('A', 'Z') ||
-                              boost::is_digit() ||
-                              boost::is_any_of("-_")) &&
-        !name.empty()) {
+    if (all(name, boost::is_from_range('a', 'z') ||
+            boost::is_from_range('A', 'Z') ||
+            boost::is_digit() ||
+            boost::is_any_of("-_")) &&
+        !name.empty() &&
+        // Hyphens are not allowed at the beginning and at
+        // the end of the option space name.
+        !all(find_head(name, 1), boost::is_any_of("-_")) &&
+        !all(find_tail(name, 1), boost::is_any_of("-_"))) {
         return (true);
+
     }
     return (false);
 }
