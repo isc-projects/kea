@@ -66,6 +66,12 @@ protected:
         /// reserved - AllocEngine will check that and will call pickAddress
         /// again if necessary. The number of times this method is called will
         /// increase as the number of available leases will decrease.
+        ///
+        /// @param subnet next address will be returned from pool of that subnet
+        /// @param duid Client's DUID
+        /// @param hint client's hint
+        ///
+        /// @return the next address
         virtual isc::asiolink::IOAddress
         pickAddress(const SubnetPtr& subnet, const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint) = 0;
@@ -197,12 +203,12 @@ protected:
 
     /// @brief Renews a IPv4 lease
     ///
-    /// Since both request and renew are implemented in DHCPv4 as sending
-    /// REQUEST packet, it is difficult to easily distinguish between those
-    /// cases. Therefore renew for DHCPv4 is done in allocation engine.
+    /// Since both request and renew are implemented in DHCPv4 as the sending of
+    /// a REQUEST packet, it is difficult to easily distinguish between those
+    /// cases. Therefore renew for DHCPv4 is done in the allocation engine.
     /// This method is also used when client crashed/rebooted and tries
     /// to get a new lease. It thinks that it gets a new lease, but in fact
-    /// we are only renewing still valid lease for that client.
+    /// we are only renewing the still valid lease for that client.
     ///
     /// @param subnet subnet the client is attached to
     /// @param clientid client identifier
@@ -241,10 +247,10 @@ protected:
     virtual ~AllocEngine();
 private:
 
-    /// @brief creates a lease and inserts it in LeaseMgr if necessary
+    /// @brief Creates a lease and inserts it in LeaseMgr if necessary
     ///
     /// Creates a lease based on specified parameters and tries to insert it
-    /// into the database. That may fail in some cases, i.e. when there is another
+    /// into the database. That may fail in some cases, e.g. when there is another
     /// allocation process and we lost a race to a specific lease.
     ///
     /// @param subnet subnet the lease is allocated from
@@ -278,7 +284,7 @@ private:
                            uint32_t iaid, const isc::asiolink::IOAddress& addr,
                            bool fake_allocation = false);
 
-    /// @brief reuses expired IPv4 lease
+    /// @brief Reuses expired IPv4 lease
     ///
     /// Updates existing expired lease with new information. Lease database
     /// is updated if this is real (i.e. REQUEST, fake_allocation = false), not
@@ -297,7 +303,7 @@ private:
                                 const HWAddrPtr& hwaddr,
                                 bool fake_allocation = false);
 
-    /// @brief reuses expired IPv6 lease
+    /// @brief Reuses expired IPv6 lease
     ///
     /// Updates existing expired lease with new information. Lease database
     /// is updated if this is real (i.e. REQUEST, fake_allocation = false), not

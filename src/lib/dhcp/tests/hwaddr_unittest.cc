@@ -90,8 +90,9 @@ TEST(HWAddrTest, operators) {
     EXPECT_TRUE(*hw4 != *hw5);
 }
 
+// Checks that toText() method produces appropriate text representation
 TEST(HWAddrTest, toText) {
-    uint8_t data[] = {0, 1, 2, 3, 4, 5}; // last digit different
+    uint8_t data[] = {0, 1, 2, 3, 4, 5};
     uint8_t htype = 15;
 
     HWAddrPtr hw(new HWAddr(data, sizeof(data), htype));

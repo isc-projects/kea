@@ -93,7 +93,7 @@ PoolPtr Subnet::getPool(isc::asiolink::IOAddress hint) {
     // getPool() as pure virtual and have Subnet4 and Subnet6 provide their
     // own methods. Those two implementation would only differ by a default
     // value, so it would just include duplicate code.
-    if (dynamic_cast<Subnet6*>(this) && hint.toText() == "::") {
+    if (dynamic_cast<Subnet4*>(this) && hint.toText() == "::") {
         hint = IOAddress("0.0.0.0");
     }
 
