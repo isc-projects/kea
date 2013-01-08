@@ -23,10 +23,22 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief Hardware type that represents information from DHCPv4 packet
 struct HWAddr {
 public:
+
+    /// @brief default constructor
     HWAddr();
+
+    /// @brief constructor, based on C-style pointer and length
+    /// @param hwaddr pointer to hardware address
+    /// @param len length of the address pointed by hwaddr
+    /// @param htype hardware type
     HWAddr(const uint8_t* hwaddr, size_t len, uint8_t htype);
+
+    /// @brief constructor, based on C++ vector<uint8_t>
+    /// @param hwaddr const reference to hardware address
+    /// @param htype hardware type
     HWAddr(const std::vector<uint8_t>& hwaddr, uint8_t htype);
 
     // Vector that keeps the actual hardware address
@@ -47,7 +59,6 @@ public:
 
 /// @brief Shared pointer to a hardware address structure
 typedef boost::shared_ptr<HWAddr> HWAddrPtr;
-
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
