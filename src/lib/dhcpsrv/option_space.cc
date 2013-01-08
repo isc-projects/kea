@@ -34,14 +34,14 @@ OptionSpace::validateName(const std::string& name) {
     using namespace boost::algorithm;
 
     // Allowed characters are: lower or upper case letters, digits,
-    // underscores and dashes. Empty option spaces are not allowed.
+    // underscores and hyphens. Empty option spaces are not allowed.
     if (all(name, boost::is_from_range('a', 'z') ||
             boost::is_from_range('A', 'Z') ||
             boost::is_digit() ||
             boost::is_any_of("-_")) &&
         !name.empty() &&
-        // Hyphens are not allowed at the beginning and at
-        // the end of the option space name.
+        // Hyphens and underscores are not allowed at the beginning
+        // and at the end of the option space name.
         !all(find_head(name, 1), boost::is_any_of("-_")) &&
         !all(find_tail(name, 1), boost::is_any_of("-_"))) {
         return (true);

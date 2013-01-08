@@ -77,8 +77,8 @@ TEST(OptionSpaceTest, validateName) {
     EXPECT_FALSE(OptionSpace::validateName(" isc"));
     EXPECT_FALSE(OptionSpace::validateName("isc with-space"));
 
-    // Hyphens are not allowed at the beginning and at the end
-    // of the option space name.
+    // Hyphens and underscores are not allowed at the beginning
+    // and at the end of the option space name.
     EXPECT_FALSE(OptionSpace::validateName("-isc"));
     EXPECT_FALSE(OptionSpace::validateName("isc-"));
     EXPECT_FALSE(OptionSpace::validateName("_isc"));
