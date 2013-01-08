@@ -27,6 +27,7 @@
 #include <gtest/gtest.h>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/foreach.hpp>
 #include <string>
 #include <vector>
 
@@ -34,6 +35,7 @@ using isc::dns::RRClass;
 using isc::dns::Name;
 using isc::dns::RRType;
 using isc::dns::ConstRRsetPtr;
+using isc::dns::RRsetPtr;
 using std::string;
 using std::vector;
 using boost::shared_ptr;
@@ -64,10 +66,9 @@ public:
     // since many client methods are const, but we still want to know they
     // were called.
     mutable vector<Name> provided_updaters_;
-    // We store string representations of the RRsets. This is simpler than
-    // copying them and we can't really put them into shared pointers, because
-    // we get them as references.
-    vector<string> rrsets_;
+    vector<RRsetPtr> rrsets_;
+    // List of rrsets as texts, for easier manipulation
+    vector<string> rrset_texts_;
     bool commit_called_;
     // If set to true, getUpdater returns NULL
     bool missing_zone_;
@@ -84,7 +85,7 @@ class Updater : public ZoneUpdater {
 public:
     Updater(MockClient* client, const Name& name) :
         client_(client),
-        finder_(client_->rrclass_, name)
+        finder_(client_->rrclass_, name, client_->rrsets_)
     {}
     virtual ZoneFinder& getFinder() {
         return (finder_);
@@ -93,7 +94,18 @@ public:
         if (client_->commit_called_) {
             isc_throw(DataSourceError, "Add after commit");
         }
-        client_->rrsets_.push_back(rrset.toText());
+        // We need to copy the RRset. We don't do it properly (we omit the
+        // signature, for example), because we don't need to.
+        RRsetPtr newRRset(new isc::dns::BasicRRset(rrset.getName(),
+                                                   rrset.getClass(),
+                                                   rrset.getType(),
+                                                   rrset.getTTL()));
+        for (isc::dns::RdataIteratorPtr i(rrset.getRdataIterator());
+             !i->isLast(); i->next()) {
+            newRRset->addRdata(i->getCurrent());
+        }
+        client_->rrsets_.push_back(newRRset);
+        client_->rrset_texts_.push_back(rrset.toText());
     }
     virtual void deleteRRset(const isc::dns::AbstractRRset&) {
         isc_throw(isc::NotImplemented, "Method not used in tests");
@@ -105,9 +117,11 @@ private:
     MockClient* client_;
     class Finder : public ZoneFinder {
     public:
-        Finder(const RRClass& rrclass, const Name& name) :
+        Finder(const RRClass& rrclass, const Name& name,
+               const vector<RRsetPtr> &rrsets) :
             class_(rrclass),
-            name_(name)
+            name_(name),
+            rrsets_(rrsets)
         {}
         virtual RRClass getClass() const {
             return (class_);
@@ -115,10 +129,23 @@ private:
         virtual Name getOrigin() const {
             return (name_);
         }
-        virtual shared_ptr<Context> find(const Name&, const RRType&,
-                                         const FindOptions)
+        virtual shared_ptr<Context> find(const Name& name, const RRType& type,
+                                         const FindOptions options)
         {
-            isc_throw(isc::NotImplemented, "Method not used in tests");
+            // The method is not completely correct. It ignores many special
+            // cases and also the options except for the result. But this is
+            // enough for the tests.  We care only about exact match here.
+            BOOST_FOREACH(const RRsetPtr& rrset, rrsets_) {
+                if (rrset->getName() == name && rrset->getType() == type) {
+                    return (shared_ptr<Context>(
+                        new GenericContext(*this, options,
+                                           ResultContext(SUCCESS,
+                                                         rrset))));
+                }
+            }
+            return (shared_ptr<Context>(
+                new GenericContext(*this, options,
+                                   ResultContext(NXRRSET, ConstRRsetPtr()))));
         }
         virtual shared_ptr<Context> findAll(const Name&,
                                             vector<ConstRRsetPtr>&,
@@ -132,6 +159,7 @@ private:
     private:
         const RRClass class_;
         const Name name_;
+        const vector<RRsetPtr>& rrsets_;
     } finder_;
 };
 
@@ -197,12 +225,12 @@ TEST_F(ZoneLoaderTest, copyUnsigned) {
     // The count is 34 because we expect the RRs to be separated.
     EXPECT_EQ(34, destination_client_.rrsets_.size());
     // Ensure known order.
-    std::sort(destination_client_.rrsets_.begin(),
-              destination_client_.rrsets_.end());
+    std::sort(destination_client_.rrset_texts_.begin(),
+              destination_client_.rrset_texts_.end());
     EXPECT_EQ(". 518400 IN NS a.root-servers.net.\n",
-              destination_client_.rrsets_.front());
+              destination_client_.rrset_texts_.front());
     EXPECT_EQ("m.root-servers.net. 3600000 IN AAAA 2001:dc3::35\n",
-              destination_client_.rrsets_.back());
+              destination_client_.rrset_texts_.back());
 
     // It isn't possible to try again now
     EXPECT_THROW(loader.load(), isc::InvalidOperation);
@@ -251,18 +279,18 @@ TEST_F(ZoneLoaderTest, copySigned) {
     EXPECT_EQ(14, destination_client_.rrsets_.size());
     EXPECT_TRUE(destination_client_.commit_called_);
     // Same trick with sorting to know where they are
-    std::sort(destination_client_.rrsets_.begin(),
-              destination_client_.rrsets_.end());
+    std::sort(destination_client_.rrset_texts_.begin(),
+              destination_client_.rrset_texts_.end());
     // Due to the R at the beginning, this one should be last
     EXPECT_EQ("09GM5T42SMIMT7R8DF6RTG80SFMS1NLU.example.org. 1200 IN NSEC3 "
               "1 0 10 AABBCCDD RKOF8QMFRB5F2V9EJHFBVB2JPVSA0DJD A RRSIG\n",
-              destination_client_.rrsets_[0]);
+              destination_client_.rrset_texts_[0]);
     EXPECT_EQ("09GM5T42SMIMT7R8DF6RTG80SFMS1NLU.example.org. 1200 IN RRSIG "
               "NSEC3 7 3 1200 20120301040838 20120131040838 19562 example.org."
               " EdwMeepLf//lV+KpCAN+213Scv1rrZyj4i2OwoCP4XxxS3CWGSuvYuKOyfZc8w"
               "KRcrD/4YG6nZVXE0s5O8NahjBJmDIyVt4WkfZ6QthxGg8ggLVvcD3dFksPyiKHf"
               "/WrTOZPSsxvN5m/i1Ey6+YWS01Gf3WDCMWDauC7Nmh3CTM=\n",
-              destination_client_.rrsets_[1]);
+              destination_client_.rrset_texts_[1]);
 }
 
 // If the destination zone does not exist, it throws
@@ -303,12 +331,12 @@ TEST_F(ZoneLoaderTest, loadUnsigned) {
     // The count is 34 because we expect the RRs to be separated.
     EXPECT_EQ(34, destination_client_.rrsets_.size());
     // Ensure known order.
-    std::sort(destination_client_.rrsets_.begin(),
-              destination_client_.rrsets_.end());
+    std::sort(destination_client_.rrset_texts_.begin(),
+              destination_client_.rrset_texts_.end());
     EXPECT_EQ(". 518400 IN NS a.root-servers.net.\n",
-              destination_client_.rrsets_.front());
+              destination_client_.rrset_texts_.front());
     EXPECT_EQ("m.root-servers.net. 3600000 IN AAAA 2001:dc3::35\n",
-              destination_client_.rrsets_.back());
+              destination_client_.rrset_texts_.back());
 
     // It isn't possible to try again now
     EXPECT_THROW(loader.load(), isc::InvalidOperation);
@@ -361,18 +389,18 @@ TEST_F(ZoneLoaderTest, loadSigned) {
     EXPECT_EQ(14, destination_client_.rrsets_.size());
     EXPECT_TRUE(destination_client_.commit_called_);
     // Same trick with sorting to know where they are
-    std::sort(destination_client_.rrsets_.begin(),
-              destination_client_.rrsets_.end());
+    std::sort(destination_client_.rrset_texts_.begin(),
+              destination_client_.rrset_texts_.end());
     // Due to the R at the beginning, this one should be last
     EXPECT_EQ("09GM5T42SMIMT7R8DF6RTG80SFMS1NLU.example.org. 1200 IN NSEC3 "
               "1 0 10 AABBCCDD RKOF8QMFRB5F2V9EJHFBVB2JPVSA0DJD A RRSIG\n",
-              destination_client_.rrsets_[0]);
+              destination_client_.rrset_texts_[0]);
     EXPECT_EQ("09GM5T42SMIMT7R8DF6RTG80SFMS1NLU.example.org. 1200 IN RRSIG "
               "NSEC3 7 3 1200 20120301040838 20120131040838 19562 example.org."
               " EdwMeepLf//lV+KpCAN+213Scv1rrZyj4i2OwoCP4XxxS3CWGSuvYuKOyfZc8w"
               "KRcrD/4YG6nZVXE0s5O8NahjBJmDIyVt4WkfZ6QthxGg8ggLVvcD3dFksPyiKHf"
               "/WrTOZPSsxvN5m/i1Ey6+YWS01Gf3WDCMWDauC7Nmh3CTM=\n",
-              destination_client_.rrsets_[1]);
+              destination_client_.rrset_texts_[1]);
 }
 
 // Test it throws when there's no such file
