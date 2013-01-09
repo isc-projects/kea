@@ -447,7 +447,7 @@ TEST_F(Dhcp4ParserTest, optionDefAdd) {
         "      \"code\": 100,"
         "      \"type\": \"ipv4-address\","
         "      \"array\": False,"
-        "      \"record_types\": [ ],"
+        //        "      \"record_types\": [ ],"
         "      \"space\": \"isc\""
         "  } ]"
         "}";
@@ -465,6 +465,12 @@ TEST_F(Dhcp4ParserTest, optionDefAdd) {
     // The option definition should now be available in the CfgMgr.
     def = CfgMgr::instance().getOptionDef("isc", 100);
     ASSERT_TRUE(def);
+
+    // Verify that the option definition data is valid.
+    EXPECT_EQ("foo", def->getName());
+    EXPECT_EQ(100, def->getCode());
+    EXPECT_FALSE(def->getArrayType());
+    EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, def->getType());
 }
 
 // Goal of this test is to verify that global option
