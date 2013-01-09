@@ -48,7 +48,7 @@ public:
     {}
 };
 
-/// \brief Exception thrown when the zone doesn't validate.
+/// \brief Exception thrown when the zone doesn't pass post-load check.
 ///
 /// This is thrown by the ZoneLoader when the zone is loaded, but it
 /// doesn't pass basic sanity checks.
@@ -138,7 +138,8 @@ public:
     /// After the last RR is loaded, a sanity check of the zone is performed by
     /// isc::dns::validateZone. It reports errors and warnings by logging them
     /// directly. If there are any errors, a ZoneContentError exception is
-    /// thrown.
+    /// thrown and the load is aborted (preserving the old version of zone, if
+    /// any).
     ///
     /// \param limit The maximum allowed number of RRs to be loaded during this
     ///     call.
