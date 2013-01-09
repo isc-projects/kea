@@ -35,11 +35,17 @@ RRsetCollection::find(const isc::dns::Name& name,
     }
 
     ZoneFinder& finder = updater_->getFinder();
-    ZoneFinderContextPtr result =
-        finder.find(name, rrtype,
-                    ZoneFinder::NO_WILDCARD | ZoneFinder::FIND_GLUE_OK);
-
-    return (result->rrset);
+    try {
+        ZoneFinderContextPtr result =
+            finder.find(name, rrtype,
+                        ZoneFinder::NO_WILDCARD | ZoneFinder::FIND_GLUE_OK);
+        return (result->rrset);
+    } catch (const OutOfZone&) {
+        // As RRsetCollection is an arbitrary set of RRsets, in case the
+        // searched name is out of zone, we return nothing instead of
+        // propagating the exception.
+        return (ConstRRsetPtr());
+    }
 }
 
 RRsetCollectionBase::IterPtr

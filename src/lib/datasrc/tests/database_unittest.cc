@@ -4198,6 +4198,11 @@ TYPED_TEST(RRsetCollectionTest, find) {
     rrset = this->collection.find(Name("www.example.org"), RRClass::CH(),
                                   RRType::AAAA());
     EXPECT_FALSE(rrset);
+
+    // Out of zone find()s must not throw.
+    rrset = this->collection.find(Name("www.example.com"), this->qclass_,
+                                  RRType::A());
+    EXPECT_FALSE(rrset);
 }
 
 TYPED_TEST(RRsetCollectionTest, iteratorTest) {
