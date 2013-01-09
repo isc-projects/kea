@@ -25,6 +25,8 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
+#include <dns/rdata/generic/detail/lexer_util.h>
+
 #include <boost/static_assert.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -34,6 +36,7 @@
 using namespace std;
 using boost::lexical_cast;
 using namespace isc::util;
+using isc::dns::rdata::generic::detail::createNameFromLexer;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -47,13 +50,6 @@ SOA::SOA(InputBuffer& buffer, size_t) :
 }
 
 namespace {
-Name
-createName(MasterLexer& lexer, const Name* origin) {
-    const MasterToken::StringRegion& str_region =
-        lexer.getNextToken(MasterToken::STRING).getStringRegion();
-    return (Name(str_region.beg, str_region.len, origin));
-}
-
 void
 fillParameters(MasterLexer& lexer, uint8_t numdata[20]) {
     // Copy serial, refresh, retry, expire, minimum.  We accept the extended
@@ -84,6 +80,7 @@ fillParameters(MasterLexer& lexer, uint8_t numdata[20]) {
 /// \throw Others Exception from the Name and RRTTL constructors.
 /// \throw InvalidRdataText Other general syntax errors.
 SOA::SOA(const std::string& soastr) :
+    // Fill in dummy name and replace them soon below.
     mname_(Name::ROOT_NAME()), rname_(Name::ROOT_NAME())
 {
     try {
@@ -91,8 +88,8 @@ SOA::SOA(const std::string& soastr) :
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        mname_ = createName(lexer, NULL);
-        rname_ = createName(lexer, NULL);
+        mname_ = createNameFromLexer(lexer, NULL);
+        rname_ = createNameFromLexer(lexer, NULL);
         fillParameters(lexer, numdata_);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
@@ -126,7 +123,8 @@ SOA::SOA(const std::string& soastr) :
 /// they are non absolute.
 SOA::SOA(MasterLexer& lexer, const Name* origin,
          MasterLoader::Options, MasterLoaderCallbacks&) :
-    mname_(createName(lexer, origin)), rname_(createName(lexer, origin))
+    mname_(createNameFromLexer(lexer, origin)),
+    rname_(createNameFromLexer(lexer, origin))
 {
     fillParameters(lexer, numdata_);
 }

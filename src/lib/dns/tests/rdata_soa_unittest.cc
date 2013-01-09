@@ -106,6 +106,13 @@ TEST_F(Rdata_SOA_Test, createFromText) {
     checkFromBadTexxt<EmptyLabel, EmptyLabel>(
         ". bad..example. 2010012601 1H 5M 1000H 20M");
 
+    // Names shouldn't be quoted. (Note: on completion of #2534, the resulting
+    // exception will be different).
+    checkFromBadTexxt<MissingNameOrigin, MissingNameOrigin>(
+        "\".\" . 0 0 0 0 0");
+    checkFromBadTexxt<MissingNameOrigin, MissingNameOrigin>(
+        ". \".\" 0 0 0 0 0");
+
     // Missing MAME or RNAME: for the string version, the serial would be
     // tried as RNAME and result in "not absolute".  For the lexer version,
     // it reaches the end-of-line, missing min TTL.
