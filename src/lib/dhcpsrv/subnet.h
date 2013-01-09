@@ -306,8 +306,19 @@ public:
     ///
     /// @param addr address that the returned pool should cover (optional)
     /// @return Pointer to found Pool4 or Pool6 (or NULL)
-    PoolPtr getPool(isc::asiolink::IOAddress addr =
-                    isc::asiolink::IOAddress("::"));
+    PoolPtr getPool(isc::asiolink::IOAddress addr);
+
+    /// @brief Returns a pool without any address specified
+    /// @return returns one of the pools defined
+    PoolPtr getPool() {
+        return (getPool(default_pool()));
+    }
+
+    /// @brief Returns the default address that will be used for pool selection
+    ///
+    /// It must be implemented in derived classes (should return :: for Subnet6
+    /// and 0.0.0.0 for Subnet4)
+    virtual isc::asiolink::IOAddress default_pool() const = 0;
 
     /// @brief returns all pools
     ///
@@ -421,6 +432,11 @@ protected:
     /// @throw isc::BadValue if provided option is invalid.
     virtual void validateOption(const OptionPtr& option) const;
 
+    /// @brief Returns default address for pool selection
+    /// @return ANY IPv4 address
+    virtual isc::asiolink::IOAddress default_pool() const {
+        return (isc::asiolink::IOAddress("0.0.0.0"));
+    }
 };
 
 /// @brief A pointer to a Subnet4 object
@@ -465,6 +481,12 @@ protected:
     ///
     /// @throw isc::BadValue if provided option is invalid.
     virtual void validateOption(const OptionPtr& option) const;
+
+    /// @brief Returns default address for pool selection
+    /// @return ANY IPv6 address
+    virtual isc::asiolink::IOAddress default_pool() const {
+        return (isc::asiolink::IOAddress("::"));
+    }
 
     /// @brief collection of pools in that list
     Pool6Collection pools_;
