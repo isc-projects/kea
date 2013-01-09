@@ -119,3 +119,4 @@ EXTRA_DIST += testdata/newschema.sqlite3
 EXTRA_DIST += testdata/oldschema.sqlite3
 EXTRA_DIST += testdata/static.zone
 EXTRA_DIST += testdata/novalidate.zone
+EXTRA_DIST += testdata/checkwarn.zone

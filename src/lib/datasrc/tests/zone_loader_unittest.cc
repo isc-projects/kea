@@ -440,4 +440,26 @@ TEST_F(ZoneLoaderTest, copyCheck) {
     EXPECT_FALSE(destination_client_.commit_called_);
 }
 
+// Check a warning doesn't disrupt the loading of the zone
+TEST_F(ZoneLoaderTest, loadCheckWarn) {
+    ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
+                      TEST_DATA_DIR "/checkwarn.zone");
+    EXPECT_TRUE(loader.loadIncremental(10));
+    // The messages go to the log. We don't have an easy way to examine them.
+    // But the zone was committed and contains all 3 RRs
+    EXPECT_TRUE(destination_client_.commit_called_);
+    EXPECT_EQ(3, destination_client_.rrsets_.size());
+}
+
+TEST_F(ZoneLoaderTest, copyCheckWarn) {
+    prepareSource(Name::ROOT_NAME(), "checkwarn.zone");
+    ZoneLoader loader(destination_client_, Name::ROOT_NAME(), source_client_);
+    EXPECT_TRUE(loader.loadIncremental(10));
+    // The messages go to the log. We don't have an easy way to examine them.
+    // But the zone was committed and contains all 3 RRs
+    EXPECT_TRUE(destination_client_.commit_called_);
+    EXPECT_EQ(3, destination_client_.rrsets_.size());
+
+}
+
 }
