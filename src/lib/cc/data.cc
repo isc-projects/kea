@@ -16,6 +16,7 @@
 
 #include <cc/data.h>
 
+#include <cstring>
 #include <cassert>
 #include <climits>
 #include <map>
@@ -241,7 +242,8 @@ Element::createMap() {
 namespace {
 bool
 charIn(const int c, const char* chars) {
-    for (size_t i = 0; i < strlen(chars); ++i) {
+    const size_t chars_len = std::strlen(chars);
+    for (size_t i = 0; i < chars_len; ++i) {
         if (chars[i] == c) {
             return (true);
         }
