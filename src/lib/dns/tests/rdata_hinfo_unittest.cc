@@ -51,10 +51,9 @@ TEST_F(Rdata_HINFO_Test, createFromText) {
     HINFO hinfo(hinfo_str);
     EXPECT_EQ(string("Pentium"), hinfo.getCPU());
     EXPECT_EQ(string("Linux"), hinfo.getOS());
-
     // Test the text with double quotes in the middle of string
     HINFO hinfo1(hinfo_str1);
-    EXPECT_EQ(string("Pen\"tium"), hinfo1.getCPU());
+    EXPECT_EQ(string("Pen\\\"tium"), hinfo1.getCPU());
 }
 
 TEST_F(Rdata_HINFO_Test, badText) {
@@ -96,6 +95,8 @@ TEST_F(Rdata_HINFO_Test, createFromLexer) {
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
                                              "\"Pentium\" \"Linux\" "
                                              "\"Computer\""));
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
+                                             "\"Pentium\""));
 }
 
 TEST_F(Rdata_HINFO_Test, toText) {
