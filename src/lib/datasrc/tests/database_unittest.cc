@@ -4162,17 +4162,18 @@ class RRsetCollectionTest : public DatabaseClientTest<ACCESSOR_TYPE> {
 public:
     RRsetCollectionTest() :
         DatabaseClientTest<ACCESSOR_TYPE>(),
-        collection(this->client_->getUpdater(this->zname_, false),
-                   this->qclass_)
+        updater(this->client_->getUpdater(this->zname_, false)),
+        collection(updater->getRRsetCollection())
     {}
 
-    RRsetCollection collection;
+    ZoneUpdaterPtr updater;
+    RRsetCollectionPtr collection;
 };
 
 TYPED_TEST(RRsetCollectionTest, find) {
     // Test the find() that returns ConstRRsetPtr
-    ConstRRsetPtr rrset = this->collection.find(Name("www.example.org."),
-                                                RRClass::IN(), RRType::A());
+    ConstRRsetPtr rrset = this->collection->find(Name("www.example.org."),
+                                                 RRClass::IN(), RRType::A());
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::A(), rrset->getType());
     EXPECT_EQ(RRTTL(3600), rrset->getTTL());
@@ -4180,46 +4181,47 @@ TYPED_TEST(RRsetCollectionTest, find) {
     EXPECT_EQ(Name("www.example.org"), rrset->getName());
 
     // foo.example.org doesn't exist
-    rrset = this->collection.find(Name("foo.example.org"), this->qclass_,
-                                  RRType::A());
+    rrset = this->collection->find(Name("foo.example.org"), this->qclass_,
+                                   RRType::A());
     EXPECT_FALSE(rrset);
 
     // www.example.org exists, but not with MX
-    rrset = this->collection.find(Name("www.example.org"), this->qclass_,
-                                  RRType::MX());
+    rrset = this->collection->find(Name("www.example.org"), this->qclass_,
+                                   RRType::MX());
     EXPECT_FALSE(rrset);
 
     // www.example.org exists, with AAAA
-    rrset = this->collection.find(Name("www.example.org"), this->qclass_,
-                                  RRType::AAAA());
+    rrset = this->collection->find(Name("www.example.org"), this->qclass_,
+                                   RRType::AAAA());
     EXPECT_TRUE(rrset);
 
     // www.example.org with AAAA does not exist in RRClass::CH()
-    rrset = this->collection.find(Name("www.example.org"), RRClass::CH(),
-                                  RRType::AAAA());
+    rrset = this->collection->find(Name("www.example.org"), RRClass::CH(),
+                                   RRType::AAAA());
     EXPECT_FALSE(rrset);
 
     // Out of zone find()s must not throw.
-    rrset = this->collection.find(Name("www.example.com"), this->qclass_,
-                                  RRType::A());
+    rrset = this->collection->find(Name("www.example.com"), this->qclass_,
+                                   RRType::A());
     EXPECT_FALSE(rrset);
 }
 
 TYPED_TEST(RRsetCollectionTest, iteratorTest) {
     // Iterators are currently not implemented.
-    EXPECT_THROW(this->collection.begin(), isc::NotImplemented);
-    EXPECT_THROW(this->collection.end(), isc::NotImplemented);
+    EXPECT_THROW(this->collection->begin(), isc::NotImplemented);
+    EXPECT_THROW(this->collection->end(), isc::NotImplemented);
 }
 
 class MockRRsetCollectionTest : public DatabaseClientTest<MockAccessor> {
 public:
     MockRRsetCollectionTest() :
         DatabaseClientTest<MockAccessor>(),
-        collection(this->client_->getUpdater(this->zname_, false),
-                   this->qclass_)
+        updater(this->client_->getUpdater(this->zname_, false)),
+        collection(updater->getRRsetCollection())
     {}
 
-    RRsetCollection collection;
+    ZoneUpdaterPtr updater;
+    RRsetCollectionPtr collection;
 };
 
 TEST_F(MockRRsetCollectionTest, findError) {
@@ -4230,8 +4232,8 @@ TEST_F(MockRRsetCollectionTest, findError) {
     // The "dsexception.example.org." name is rigged by the MockAccessor
     // to throw a DataSourceError.
     EXPECT_THROW({
-        this->collection.find(Name("dsexception.example.org"), this->qclass_,
-                              RRType::A());
+        this->collection->find(Name("dsexception.example.org"), this->qclass_,
+                               RRType::A());
     }, RRsetCollectionBase::FindError);
 }
 

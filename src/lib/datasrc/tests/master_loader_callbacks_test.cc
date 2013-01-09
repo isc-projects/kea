@@ -65,6 +65,9 @@ public:
     virtual ZoneFinder& getFinder() {
         isc_throw(isc::NotImplemented, "Not to be called in this test");
     }
+    virtual isc::dns::RRsetCollectionPtr getRRsetCollection() {
+        isc_throw(isc::NotImplemented, "Not to be called in this test");
+    }
     virtual void deleteRRset(const isc::dns::AbstractRRset&) {
         isc_throw(isc::NotImplemented, "Not to be called in this test");
     }
