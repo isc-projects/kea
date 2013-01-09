@@ -14,119 +14,141 @@
 
 #include <config.h>
 
-#include <string>
-
-#include <boost/lexical_cast.hpp>
-
-#include <exceptions/exceptions.h>
-
-#include <dns/character_string.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/rdata/generic/detail/char_string.h>
+#include <exceptions/exceptions.h>
+
+#include <string>
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 using boost::lexical_cast;
 using namespace isc::util;
 using namespace isc::dns;
-using namespace isc::dns::characterstr;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-namespace {
-/// Skip the left whitespaces of the input string
-///
-/// \param input_str The input string
-/// \param input_iterator From which the skipping started
-void
-skipLeftSpaces(const std::string& input_str,
-               std::string::const_iterator& input_iterator)
-{
-    if (input_iterator >= input_str.end()) {
-        isc_throw(InvalidRdataText,
-                  "Invalid NAPTR text format, field is missing.");
+class NAPTRImpl {
+public:
+    NAPTRImpl() : replacement(".") {}
+
+    NAPTRImpl(InputBuffer& buffer, size_t rdata_len) : replacement(".") {
+        if (rdata_len < 4 || buffer.getLength() < 4) {
+            isc_throw(isc::dns::DNSMessageFORMERR, "Error in parsing "
+                      "NAPTR RDATA wire format: insufficient length ");
+        }
+        order = buffer.readUint16();
+        preference = buffer.readUint16();
+        rdata_len -= 4;
+
+        rdata_len -= readTextField(flags, buffer, rdata_len);
+        rdata_len -= readTextField(services, buffer, rdata_len);
+        rdata_len -= readTextField(regexp, buffer, rdata_len);
+        replacement = Name(buffer);
+        if (rdata_len < 1) {
+            isc_throw(isc::dns::DNSMessageFORMERR, "Error in parsing "
+                      "NAPTR RDATA wire format: missing replacement name");
+        }
+        rdata_len -= replacement.getLength();
+
+        if (rdata_len != 0) {
+            isc_throw(isc::dns::DNSMessageFORMERR, "Error in parsing " <<
+                      "NAPTR RDATA: bytes left at end: " <<
+                      static_cast<int>(rdata_len));
+        }
     }
 
-    if (!isspace(*input_iterator)) {
-        isc_throw(InvalidRdataText,
-            "Invalid NAPTR text format, fields are not separated by space.");
+    NAPTRImpl(const std::string& naptr_str) : replacement(".") {
+        std::istringstream ss(naptr_str);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
+
+        try {
+            parseNAPTRData(lexer);
+            // Should be at end of data now
+            if (lexer.getNextToken(MasterToken::QSTRING, true).getType() !=
+                MasterToken::END_OF_FILE) {
+                isc_throw(InvalidRdataText,
+                          "Invalid NAPTR text format: too many fields.");
+            }
+        } catch (const MasterLexer::LexerError& ex) {
+            isc_throw(InvalidRdataText, "Failed to construct NAPTR RDATA from "
+                                        << naptr_str << "': " << ex.what());
+        }
     }
-    // Skip white spaces
-    while (input_iterator < input_str.end() && isspace(*input_iterator)) {
-        ++input_iterator;
+
+    NAPTRImpl(MasterLexer& lexer) : replacement(".")
+    {
+        parseNAPTRData(lexer);
     }
-}
 
-} // Anonymous namespace
+private:
+    void
+    parseNAPTRData(MasterLexer& lexer) {
+        MasterToken token = lexer.getNextToken(MasterToken::NUMBER);
+        if (token.getNumber() > 65535) {
+            isc_throw(InvalidRdataText,
+                      "Invalid NAPTR text format: order out of range: "
+                      << token.getNumber());
+        }
+        order = token.getNumber();
+        token = lexer.getNextToken(MasterToken::NUMBER);
+        if (token.getNumber() > 65535) {
+            isc_throw(InvalidRdataText,
+                      "Invalid NAPTR text format: preference out of range: "
+                      << token.getNumber());
+        }
+        preference = token.getNumber();
 
-NAPTR::NAPTR(InputBuffer& buffer, size_t len):
-    replacement_(".")
-{
-    order_ = buffer.readUint16();
-    preference_ = buffer.readUint16();
+        token = lexer.getNextToken(MasterToken::QSTRING);
+        stringToCharString(token.getStringRegion(), flags);
+        token = lexer.getNextToken(MasterToken::QSTRING);
+        stringToCharString(token.getStringRegion(), services);
+        token = lexer.getNextToken(MasterToken::QSTRING);
+        stringToCharString(token.getStringRegion(), regexp);
 
-    flags_ = getNextCharacterString(buffer, len);
-    services_ = getNextCharacterString(buffer, len);
-    regexp_ = getNextCharacterString(buffer, len);
-    replacement_ = Name(buffer);
-}
+        token = lexer.getNextToken(MasterToken::STRING);
+        replacement = Name(token.getString());
+    }
 
-NAPTR::NAPTR(const std::string& naptr_str):
-    replacement_(".")
-{
-    istringstream iss(naptr_str);
+
+public:
     uint16_t order;
     uint16_t preference;
+    detail::CharString flags;
+    detail::CharString services;
+    detail::CharString regexp;
+    Name replacement;
+};
 
-    iss >> order >> preference;
+NAPTR::NAPTR(InputBuffer& buffer, size_t rdata_len) :
+    impl_(new NAPTRImpl(buffer, rdata_len))
+{}
 
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid NAPTR text format");
-    }
+NAPTR::NAPTR(const std::string& naptr_str) : impl_(new NAPTRImpl(naptr_str))
+{}
 
-    order_ = order;
-    preference_ = preference;
+NAPTR::NAPTR(MasterLexer& lexer, const Name*,
+             MasterLoader::Options, MasterLoaderCallbacks&) :
+    impl_(new NAPTRImpl(lexer))
+{}
 
-    string::const_iterator input_iterator = naptr_str.begin() + iss.tellg();
+NAPTR::NAPTR(const NAPTR& naptr) :  Rdata(),
+                                    impl_(new NAPTRImpl(*naptr.impl_))
+{}
 
-    skipLeftSpaces(naptr_str, input_iterator);
-
-    flags_ = getNextCharacterString(naptr_str, input_iterator);
-
-    skipLeftSpaces(naptr_str, input_iterator);
-
-    services_ = getNextCharacterString(naptr_str, input_iterator);
-
-    skipLeftSpaces(naptr_str, input_iterator);
-
-    regexp_ = getNextCharacterString(naptr_str, input_iterator);
-
-    skipLeftSpaces(naptr_str, input_iterator);
-
-    if (input_iterator < naptr_str.end()) {
-        string replacementStr(input_iterator, naptr_str.end());
-
-        replacement_ = Name(replacementStr);
-    } else {
-        isc_throw(InvalidRdataText,
-                  "Invalid NAPTR text format, replacement field is missing");
-    }
-}
-
-NAPTR::NAPTR(const NAPTR& naptr):
-    Rdata(), order_(naptr.order_), preference_(naptr.preference_),
-    flags_(naptr.flags_), services_(naptr.services_), regexp_(naptr.regexp_),
-    replacement_(naptr.replacement_)
-{
+NAPTR::~NAPTR() {
+    delete impl_;
 }
 
 void
 NAPTR::toWire(OutputBuffer& buffer) const {
     toWireHelper(buffer);
-    replacement_.toWire(buffer);
-
+    impl_->replacement.toWire(buffer);
 }
 
 void
@@ -134,23 +156,23 @@ NAPTR::toWire(AbstractMessageRenderer& renderer) const {
     toWireHelper(renderer);
     // Type NAPTR is not "well-known", and name compression must be disabled
     // per RFC3597.
-    renderer.writeName(replacement_, false);
+    renderer.writeName(impl_->replacement, false);
 }
 
 string
 NAPTR::toText() const {
     string result;
-    result += lexical_cast<string>(order_);
+    result += lexical_cast<string>(impl_->order);
     result += " ";
-    result += lexical_cast<string>(preference_);
+    result += lexical_cast<string>(impl_->preference);
     result += " \"";
-    result += flags_;
+    result += detail::charStringToString(impl_->flags);
     result += "\" \"";
-    result += services_;
+    result += detail::charStringToString(impl_->services);
     result += "\" \"";
-    result += regexp_;
+    result += detail::charStringToString(impl_->regexp);
     result += "\" ";
-    result += replacement_.toText();
+    result += impl_->replacement.toText();
     return (result);
 }
 
@@ -158,67 +180,78 @@ int
 NAPTR::compare(const Rdata& other) const {
     const NAPTR other_naptr = dynamic_cast<const NAPTR&>(other);
 
-    if (order_ < other_naptr.order_) {
+    if (impl_->order < other_naptr.impl_->order) {
         return (-1);
-    } else if (order_ > other_naptr.order_) {
+    } else if (impl_->order > other_naptr.impl_->order) {
         return (1);
     }
 
-    if (preference_ < other_naptr.preference_) {
+    if (impl_->preference < other_naptr.impl_->preference) {
         return (-1);
-    } else if (preference_ > other_naptr.preference_) {
+    } else if (impl_->preference > other_naptr.impl_->preference) {
         return (1);
     }
 
-    if (flags_ < other_naptr.flags_) {
+    if (impl_->flags < other_naptr.impl_->flags) {
         return (-1);
-    } else if (flags_ > other_naptr.flags_) {
+    } else if (impl_->flags > other_naptr.impl_->flags) {
         return (1);
     }
 
-    if (services_ < other_naptr.services_) {
+    if (impl_->services < other_naptr.impl_->services) {
         return (-1);
-    } else if (services_ > other_naptr.services_) {
+    } else if (impl_->services > other_naptr.impl_->services) {
         return (1);
     }
 
-    if (regexp_ < other_naptr.regexp_) {
+    if (impl_->regexp < other_naptr.impl_->regexp) {
         return (-1);
-    } else if (regexp_ > other_naptr.regexp_) {
+    } else if (impl_->regexp > other_naptr.impl_->regexp) {
         return (1);
     }
 
-    return (compareNames(replacement_, other_naptr.replacement_));
+    return (compareNames(impl_->replacement, other_naptr.impl_->replacement));
 }
 
 uint16_t
 NAPTR::getOrder() const {
-    return (order_);
+    return (impl_->order);
 }
 
 uint16_t
 NAPTR::getPreference() const {
-    return (preference_);
+    return (impl_->preference);
 }
 
-const std::string&
+const std::string
 NAPTR::getFlags() const {
-    return (flags_);
+    return (detail::charStringToString(impl_->flags));
 }
 
-const std::string&
+const std::string
 NAPTR::getServices() const {
-    return (services_);
+    return (detail::charStringToString(impl_->services));
 }
 
-const std::string&
+const std::string
 NAPTR::getRegexp() const {
-    return (regexp_);
+    return (detail::charStringToString(impl_->regexp));
 }
 
 const Name&
 NAPTR::getReplacement() const {
-    return (replacement_);
+    return (impl_->replacement);
+}
+
+template <typename T>
+void
+NAPTR::toWireHelper(T& outputer) const {
+    outputer.writeUint16(impl_->order);
+    outputer.writeUint16(impl_->preference);
+
+    outputer.writeData(&impl_->flags[0], impl_->flags.size());
+    outputer.writeData(&impl_->services[0], impl_->services.size());
+    outputer.writeData(&impl_->regexp[0], impl_->regexp.size());
 }
 
 // END_RDATA_NAMESPACE
