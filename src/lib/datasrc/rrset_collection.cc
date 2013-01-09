@@ -35,7 +35,7 @@ RRsetCollection::find(const isc::dns::Name& name,
         return (ConstRRsetPtr());
     }
 
-    ZoneFinder& finder = updater_->getFinder();
+    ZoneFinder& finder = updater_.getFinder();
     try {
         ZoneFinderContextPtr result =
             finder.find(name, rrtype,
