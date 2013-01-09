@@ -24,6 +24,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
+#include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/triplet.h>
 
@@ -383,12 +384,11 @@ protected:
 
 private:
 
-    /// Container holding options grouped by option space names.
-    typedef std::map<std::string, OptionContainerPtr> OptionSpacesPtr;
+    /// A collection of option spaces grouping option descriptors.
+    typedef OptionSpaceContainer<OptionContainer,
+                                 OptionDescriptor> OptionSpaceCollection;
+    OptionSpaceCollection option_spaces_;
 
-    /// @brief a collection of DHCP option spaces holding options
-    /// configured for a subnet.
-    OptionSpacesPtr option_spaces_;
 };
 
 /// @brief A configuration holder for IPv4 subnet.
