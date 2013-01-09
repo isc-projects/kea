@@ -96,15 +96,15 @@ public:
         }
         // We need to copy the RRset. We don't do it properly (we omit the
         // signature, for example), because we don't need to.
-        RRsetPtr newRRset(new isc::dns::BasicRRset(rrset.getName(),
-                                                   rrset.getClass(),
-                                                   rrset.getType(),
-                                                   rrset.getTTL()));
+        RRsetPtr new_rrset(new isc::dns::BasicRRset(rrset.getName(),
+                                                    rrset.getClass(),
+                                                    rrset.getType(),
+                                                    rrset.getTTL()));
         for (isc::dns::RdataIteratorPtr i(rrset.getRdataIterator());
              !i->isLast(); i->next()) {
-            newRRset->addRdata(i->getCurrent());
+            new_rrset->addRdata(i->getCurrent());
         }
-        client_->rrsets_.push_back(newRRset);
+        client_->rrsets_.push_back(new_rrset);
         client_->rrset_texts_.push_back(rrset.toText());
     }
     virtual void deleteRRset(const isc::dns::AbstractRRset&) {
@@ -118,7 +118,7 @@ private:
     class Finder : public ZoneFinder {
     public:
         Finder(const RRClass& rrclass, const Name& name,
-               const vector<RRsetPtr> &rrsets) :
+               const vector<RRsetPtr>& rrsets) :
             class_(rrclass),
             name_(name),
             rrsets_(rrsets)
@@ -139,8 +139,7 @@ private:
                 if (rrset->getName() == name && rrset->getType() == type) {
                     return (shared_ptr<Context>(
                         new GenericContext(*this, options,
-                                           ResultContext(SUCCESS,
-                                                         rrset))));
+                                           ResultContext(SUCCESS, rrset))));
                 }
             }
             return (shared_ptr<Context>(
