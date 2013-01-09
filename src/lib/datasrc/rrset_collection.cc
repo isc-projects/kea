@@ -23,11 +23,16 @@ namespace datasrc {
 
 ConstRRsetPtr
 RRsetCollection::find(const isc::dns::Name& name,
-                      const isc::dns::RRClass&,
+                      const isc::dns::RRClass& rrclass,
                       const isc::dns::RRType& rrtype) const
 {
-    // TODO: RRClass needs to be checked here to see if it is as
-    // expected.
+    if (rrclass != rrclass_) {
+        // We could throw an exception here, but RRsetCollection is
+        // expected to support an arbitrary collection of RRsets, and it
+        // can be queried just as arbitrarily. So we just return nothing
+        // here.
+        return (ConstRRsetPtr());
+    }
 
     ZoneFinder& finder = updater_->getFinder();
     ZoneFinderContextPtr result =
