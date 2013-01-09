@@ -447,7 +447,7 @@ TEST_F(Dhcp4ParserTest, optionDefAdd) {
         "      \"code\": 100,"
         "      \"type\": \"ipv4-address\","
         "      \"array\": False,"
-        //        "      \"record_types\": [ ],"
+        "      \"record-types\": \"\","
         "      \"space\": \"isc\""
         "  } ]"
         "}";

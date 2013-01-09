@@ -71,16 +71,9 @@
           },
 
           { "item_name": "record_types",
-            "item_type": "list",
+            "item_type": "string",
             "item_optional": false,
-            "item_default": [],
-            "list_item_spec":
-            {
-              "item_name": "record-type",
-              "item_type": "string",
-              "item_optional": false,
-              "item_default": ""
-            }
+            "item_default": "",
           },
 
           { "item_name": "space",
