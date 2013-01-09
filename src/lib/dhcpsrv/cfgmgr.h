@@ -18,6 +18,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
+#include <dhcpsrv/option_space.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
 #include <util/buffer.h>
@@ -65,7 +66,6 @@ namespace dhcp {
 /// Parameter inheritance is likely to be implemented in configuration handling
 /// routines, so there is no storage capability in a global scope for
 /// subnet-specific parameters.
-///
 /// @todo: Implement Subnet4 support (ticket #2237)
 /// @todo: Implement option definition support
 /// @todo: Implement parameter inheritance
@@ -112,6 +112,36 @@ public:
     /// has not been found.
     OptionDefinitionPtr getOptionDef(const std::string& option_space,
                                      const uint16_t option_code) const;
+
+    /// @brief Adds new DHCPv4 option space to the collection.
+    ///
+    /// @param space option space to be added.
+    ///
+    /// @throw isc::dhcp::InvalidOptionSpace invalid option space
+    /// has been specified.
+    void addOptionSpace4(const OptionSpacePtr& space);
+
+    /// @brief Adds new DHCPv6 option space to the collection.
+    ///
+    /// @param space option space to be added.
+    ///
+    /// @throw isc::dhcp::InvalidOptionSpace invalid option space
+    /// has been specified.
+    void addOptionSpace6(const OptionSpacePtr& space);
+
+    /// @brief Return option spaces for DHCPv4.
+    ///
+    /// @return A collection of option spaces.
+    const OptionSpaceCollection& getOptionSpaces4() const {
+        return (spaces4_);
+    }
+
+    /// @brief Return option spaces for DHCPv6.
+    ///
+    /// @return A collection of option spaces.
+    const OptionSpaceCollection& getOptionSpaces6() const {
+        return (spaces6_);
+    }
 
     /// @brief get IPv6 subnet by address
     ///
@@ -229,6 +259,12 @@ private:
     /// A map containing option definitions for different option spaces.
     /// The map key holds an option space name.
     OptionDefsMap option_def_spaces_;
+
+    /// @brief Container for defined DHCPv6 option spaces.
+    OptionSpaceCollection spaces6_;
+
+    /// @brief Container for defined DHCPv4 option spaces.
+    OptionSpaceCollection spaces4_;
 
 };
 
