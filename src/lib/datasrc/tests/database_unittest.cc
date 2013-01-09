@@ -4152,20 +4152,26 @@ TYPED_TEST(DatabaseClientTest, createZoneRollbackOnExists) {
     ASSERT_TRUE(this->client_->createZone(new_name));
 }
 
-class RRsetCollectionTest : public DatabaseClientTest<TestSQLite3Accessor> {
+TYPED_TEST_CASE(RRsetCollectionTest, TestAccessorTypes);
+
+// This test fixture is templated so that we can share (most of) the test
+// cases with different types of data sources.  Note that in test cases
+// we need to use 'this' to refer to member variables of the test class.
+template <typename ACCESSOR_TYPE>
+class RRsetCollectionTest : public DatabaseClientTest<ACCESSOR_TYPE> {
 public:
     RRsetCollectionTest() :
-        DatabaseClientTest<TestSQLite3Accessor>(),
+        DatabaseClientTest<ACCESSOR_TYPE>(),
         collection(this->client_->getUpdater(this->zname_, false))
     {}
 
     RRsetCollection collection;
 };
 
-TEST_F(RRsetCollectionTest, find) {
+TYPED_TEST(RRsetCollectionTest, find) {
     // Test the find() that returns ConstRRsetPtr
-    ConstRRsetPtr rrset = collection.find(Name("www.example.org."),
-                                          RRClass::IN(), RRType::A());
+    ConstRRsetPtr rrset = this->collection.find(Name("www.example.org."),
+                                                RRClass::IN(), RRType::A());
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::A(), rrset->getType());
     EXPECT_EQ(RRTTL(3600), rrset->getTTL());
@@ -4173,22 +4179,25 @@ TEST_F(RRsetCollectionTest, find) {
     EXPECT_EQ(Name("www.example.org"), rrset->getName());
 
     // foo.example.org doesn't exist
-    rrset = collection.find(Name("foo.example.org"), qclass_, RRType::A());
+    rrset = this->collection.find(Name("foo.example.org"), this->qclass_,
+                                  RRType::A());
     EXPECT_FALSE(rrset);
 
     // www.example.org exists, but not with MX
-    rrset = collection.find(Name("www.example.org"), qclass_, RRType::MX());
+    rrset = this->collection.find(Name("www.example.org"), this->qclass_,
+                                  RRType::MX());
     EXPECT_FALSE(rrset);
 
     // www.example.org exists, with AAAA
-    rrset = collection.find(Name("www.example.org"), qclass_, RRType::AAAA());
+    rrset = this->collection.find(Name("www.example.org"), this->qclass_,
+                                  RRType::AAAA());
     EXPECT_TRUE(rrset);
 }
 
-TEST_F(RRsetCollectionTest, iteratorTest) {
+TYPED_TEST(RRsetCollectionTest, iteratorTest) {
     // Iterators are currently not implemented.
-    EXPECT_THROW(collection.begin(), isc::NotImplemented);
-    EXPECT_THROW(collection.end(), isc::NotImplemented);
+    EXPECT_THROW(this->collection.begin(), isc::NotImplemented);
+    EXPECT_THROW(this->collection.end(), isc::NotImplemented);
 }
 
 }
