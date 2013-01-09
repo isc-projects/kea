@@ -500,6 +500,7 @@ TEST_F(Dhcp4ParserTest, optionDefRecord) {
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
+    checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
     def = CfgMgr::instance().getOptionDef("isc", 100);
@@ -520,6 +521,240 @@ TEST_F(Dhcp4ParserTest, optionDefRecord) {
     EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, record_fields[1]);
     EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, record_fields[2]);
     EXPECT_EQ(OPT_STRING_TYPE, record_fields[3]);
+}
+
+// The goal of this test is to verify that multiple option definitions
+// can be created.
+TEST_F(Dhcp4ParserTest, optionDefMultiple) {
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"uint32\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\""
+        "  },"
+        "  {"
+        "      \"name\": \"foo-2\","
+        "      \"code\": 101,"
+        "      \"type\": \"ipv4-address\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Make sure that the option definitions do not exist yet.
+    ASSERT_FALSE(CfgMgr::instance().getOptionDef("isc", 100));
+    ASSERT_FALSE(CfgMgr::instance().getOptionDef("isc", 101));
+
+    // Use the configuration string to create new option definitions.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Check the first definition we have created.
+    OptionDefinitionPtr def1 = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_TRUE(def1);
+
+    // Check the option data.
+    EXPECT_EQ("foo", def1->getName());
+    EXPECT_EQ(100, def1->getCode());
+    EXPECT_EQ(OPT_UINT32_TYPE, def1->getType());
+    EXPECT_FALSE(def1->getArrayType());
+
+    // Check the second option definition we have created.
+    OptionDefinitionPtr def2 = CfgMgr::instance().getOptionDef("isc", 101);
+    ASSERT_TRUE(def2);
+
+    // Check the option data.
+    EXPECT_EQ("foo-2", def2->getName());
+    EXPECT_EQ(101, def2->getCode());
+    EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, def2->getType());
+    EXPECT_FALSE(def2->getArrayType());
+}
+
+// The goal of this test is to verify that the option definition
+// comprising an array of uint32 values can be created.
+TEST_F(Dhcp4ParserTest, optionDefArray) {
+
+    // Configuration string. Created option definition should
+    // comprise an array of uint32 values.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"uint32\","
+        "      \"array\": True,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Make sure that the particular option definition does not exist.
+    OptionDefinitionPtr def = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_FALSE(def);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // The option definition should now be available in the CfgMgr.
+    def = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_TRUE(def);
+
+    // Check the option data.
+    EXPECT_EQ("foo", def->getName());
+    EXPECT_EQ(100, def->getCode());
+    EXPECT_EQ(OPT_UINT32_TYPE, def->getType());
+    EXPECT_TRUE(def->getArrayType());
+}
+
+/// The purpose of this test is to verify that the option definition
+/// with invalid name is not accepted.
+TEST_F(Dhcp4ParserTest, optionDefInvalidName) {
+    // Configuration string. The option name is invalid as it
+    // contains the % character.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"invalid%name\","
+        "      \"code\": 100,"
+        "      \"type\": \"string\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting parsing error (error code 1).
+    checkResult(status, 1);
+}
+
+/// The purpose of this test is to verify that the option definition
+/// with invalid type is not accepted.
+TEST_F(Dhcp4ParserTest, optionDefInvalidType) {
+    // Configuration string. The option type is invalid. It is
+    // "sting" instead of "string".
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"sting\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting parsing error (error code 1).
+    checkResult(status, 1);
+}
+
+/// The purpose of this test is to verify that the option definition
+/// with invalid type is not accepted.
+TEST_F(Dhcp4ParserTest, optionDefInvalidRecordType) {
+    // Configuration string. The third of the record fields
+    // is invalid. It is "sting" instead of "string".
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"record\","
+        "      \"array\": False,"
+        "      \"record-types\": \"uint32,uint8,sting\","
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting parsing error (error code 1).
+    checkResult(status, 1);
+}
+
+
+/// The purpose of this test is to verify that it is not allowed
+/// to override the standard option (that belongs to dhcp4 option
+/// space) and that it is allowed to define option in the dhcp4
+/// option space that has a code which is not used by any of the
+/// standard options.
+TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
+
+    // Configuration string. The option code 109 is unassigned
+    // so it can be used for a custom option definition in
+    // dhcp4 option space.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 109,"
+        "      \"type\": \"string\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"dhcp4\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    OptionDefinitionPtr def = CfgMgr::instance().getOptionDef("dhcp4", 109);
+    ASSERT_FALSE(def);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // The option definition should now be available in the CfgMgr.
+    def = CfgMgr::instance().getOptionDef("dhcp4", 109);
+    ASSERT_TRUE(def);
+
+    // Check the option data.
+    EXPECT_EQ("foo", def->getName());
+    EXPECT_EQ(109, def->getCode());
+    EXPECT_EQ(OPT_STRING_TYPE, def->getType());
+    EXPECT_FALSE(def->getArrayType());
+
+    // The combination of option space and code is
+    // invalid. The 'dhcp4' option space groups
+    // standard options and the code 100 is reserved
+    // for one of them.
+    config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"string\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"dhcp4\""
+        "  } ]"
+        "}";
+    json = Element::fromJSON(config);
+
+    // Use the configuration string to create new option definition.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting parsing error (error code 1).
+    checkResult(status, 1);
 }
 
 // Goal of this test is to verify that global option
