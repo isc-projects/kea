@@ -51,12 +51,29 @@ public:
     ///
     /// @return pointer to the container holding items.
     ItemsContainerPtr getItems(const std::string& option_space) const {
-        const typename OptionSpaceMap::const_iterator& items = 
+        const typename OptionSpaceMap::const_iterator& items =
             option_space_map_.find(option_space);
         if (items == option_space_map_.end()) {
             return (ItemsContainerPtr(new ContainerType()));
         }
         return (items->second);
+    }
+
+    /// @brief Get a list of existing option spaces.
+    ///
+    /// @return a list of option spaces.
+    ///
+    /// @todo This function is likely to be removed once
+    /// we create a structore of OptionSpaces defined
+    /// through the configuration manager.
+    std::list<std::string> getOptionSpaceNames() {
+        std::list<std::string> names;
+        for (typename OptionSpaceMap::const_iterator space =
+                 option_space_map_.begin();
+             space != option_space_map_.end(); ++space) {
+            names.push_back(space->first);
+        }
+        return (names);
     }
 
     /// @brief Remove all items from the container.
