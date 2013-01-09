@@ -19,6 +19,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcp_config_parser.h>
+#include <dhcpsrv/option_space_container.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <boost/foreach.hpp>
@@ -65,6 +66,10 @@ typedef std::map<std::string, std::string> StringStorage;
 
 /// @brief Storage for parsed boolean values.
 typedef std::map<string, bool> BooleanStorage;
+
+/// @brief Storage for option definitions.
+typedef OptionSpaceContainer<OptionDefContainer,
+                             OptionDefinitionPtr> OptionDefStorage;
 
 /// @brief a collection of pools
 ///
@@ -986,11 +991,31 @@ public:
             parser->commit();
         }
 
+        // Create an instance of option definition.
         createOptionDef();
+
+        // Get all items we collected so far for the particular option space.
+        OptionDefContainerPtr defs = storage_->getItems(option_space_name_);
+        // Check if there are any items with option code the same as the
+        // one specified for the definition we are now creating.
+        const OptionDefContainerTypeIndex& idx = defs->get<1>();
+        const OptionDefContainerTypeRange& range =
+            idx.equal_range(option_definition_->getCode());
+        // If there are any items with this option code already we need
+        // to issue an error because we don't allow duplicates for
+        // option definitions within an option space.
+        if (std::distance(range.first, range.second) > 0) {
+            isc_throw(DhcpConfigError, "duplicated option definition for"
+                      << " code '" << option_definition_->getCode() << "'");
+        }
     }
 
     /// @brief Stores the parsed option definition in a storage.
     void commit() {
+        // @todo validate option space name once 2313 is merged.
+        if (storage_ && option_definition_) {
+            storage_->addItem(option_definition_, option_space_name_);
+        }
     }
 
     /// @brief Sets a pointer to a storage.
@@ -1000,7 +1025,7 @@ public:
     ///
     /// @param storage pointer to a storage where the option definition
     /// will be added to.
-    void setStorage(OptionDefContainer* storage) {
+    void setStorage(OptionDefStorage* storage) {
         storage_ = storage;
     }
 
@@ -1033,15 +1058,18 @@ private:
                       << " parameters" << ex.what());
         }
         // Option definition has been created successfully.
+        option_space_name_ = space;
         option_definition_ = def;
     }
 
     /// Instance of option definition being created by this parser.
     OptionDefinitionPtr option_definition_;
 
+    std::string option_space_name_;
+
     /// Pointer to a storage where the option definition will be
     /// added when \ref commit is called.
-    OptionDefContainer* storage_;
+    OptionDefStorage* storage_;
 
     /// Storage for boolean values.
     BooleanStorage boolean_values_;
@@ -1065,8 +1093,7 @@ public:
     /// This constructor initializes the pointer to option definitions
     /// storage to NULL value. This pointer has to be set to point to
     /// the actual storage before the \ref build function is called.
-    OptionDefListParser(const std::string&)
-        : option_defs_(NULL) {
+    OptionDefListParser(const std::string&) {
     }
 
     /// @brief Parse configuration entries.
@@ -1081,10 +1108,6 @@ public:
         if (!option_def_list) {
             isc_throw(DhcpConfigError, "parser error: a pointer to a list of"
                       << " option definitions is NULL");
-        } else if (option_defs_ == NULL) {
-            isc_throw(DhcpConfigError, "parser error: the storage for option"
-                      << " definitions must be set before parsing option"
-                      << " definitions");
         }
 
         BOOST_FOREACH(ConstElementPtr option_def, option_def_list->listValue()) {
@@ -1092,11 +1115,44 @@ public:
                 parser(new OptionDefParser("single-option-def"));
             parser->setStorage(&option_defs_local_);
             parser->build(option_def);
+            parser->commit();
         }
     }
 
     /// @brief Stores option definitions in the provided storage.
     void commit() {
+
+        CfgMgr& cfg_mgr = CfgMgr::instance();
+
+        // We need to move option definitions from the temporary
+        // storage to the global storage. However for new definition
+        // we need to check whether such a definition already exists
+        // or we are adding it for the fitsy time.
+        BOOST_FOREACH(std::string space_name,
+                      option_defs_local_.getOptionSpaceNames()) {
+            // For the particular option space we have to get all
+            // items in the temporary storage and store it in the
+            // global storage.
+            BOOST_FOREACH(OptionDefinitionPtr def,
+                          *option_defs_local_.getItems(space_name)) {
+                assert(def);
+                // For the particular option space get all definitions
+                // existing in the global storage.
+                OptionDefContainerPtr global_defs = cfg_mgr.getOptionDefs(space_name);
+                assert(global_defs);
+                // Find the option definition for the particular
+                // option code.
+                OptionDefContainerTypeIndex& idx = global_defs->get<1>();
+                const OptionDefContainerTypeRange& range =
+                    idx.equal_range(def->getCode());
+                // If there is one in the global storage, erase it.
+                if (std::distance(range.first, range.second) > 0) {
+                    idx.erase(range.first, range.second);
+                }
+                // Add the newly created option definition.
+                cfg_mgr.addOptionDef(def, space_name);
+            }
+        }
     }
 
     /// @brief Create an OptionDefListParser object.
@@ -1108,23 +1164,11 @@ public:
         return (new OptionDefListParser(param_name));
     }
 
-    /// @brief Set storage for option definition instances.
-    ///
-    /// @param storage pointer to the option definition storage
-    /// where created option instances should be stored.
-    void setStorage(OptionDefContainer* storage) {
-        option_defs_ = storage;
-    }
-
 private:
-
-    /// Pointer to the container where option definitions should
-    /// be stored when \ref commit is called.
-    OptionDefContainer* option_defs_;
 
     /// Temporary storage for option definitions. It holds option
     /// definitions before \ref commit is called.
-    OptionDefContainer option_defs_local_;
+    OptionDefStorage option_defs_local_;
 };
 
 /// @brief this class parses a single subnet
@@ -1490,6 +1534,7 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
     factories["interface"] = InterfaceListConfigParser::factory;
     factories["subnet4"] = Subnets4ListConfigParser::factory;
     factories["option-data"] = OptionDataListParser::factory;
+    factories["option-def"] = OptionDefListParser::factory;
     factories["version"] = StringParser::factory;
 
     FactoryMap::iterator f = factories.find(config_id);
