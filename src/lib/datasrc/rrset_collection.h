@@ -33,8 +33,10 @@ public:
     /// destroyed by the client.
     ///
     /// \param updater The ZoneUpdater to wrap around.
-    RRsetCollection(ZoneUpdaterPtr updater) :
-        updater_(updater)
+    /// \param rrclass The RRClass of the records in the zone.
+    RRsetCollection(ZoneUpdaterPtr updater, const isc::dns::RRClass& rrclass) :
+        updater_(updater),
+        rrclass_(rrclass)
     {}
 
     /// \brief Destructor
@@ -56,6 +58,7 @@ public:
 
 private:
     ZoneUpdaterPtr updater_;
+    isc::dns::RRClass rrclass_;
 
 protected:
     // TODO: RRsetCollectionBase::Iter is not implemented and the
