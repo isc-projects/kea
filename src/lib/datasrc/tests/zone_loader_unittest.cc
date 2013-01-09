@@ -186,10 +186,10 @@ protected:
     {}
     void prepareSource(const Name& zone, const char* filename) {
         // TODO:
-        // Currently, load uses an urelated implementation. In the long term,
-        // the method will probably be deprecated. At that time, we should
-        // probably prepare the data in some other way (using sqlite3 or
-        // something). This is simpler for now.
+        // Currently, load uses an implementation unrelated to the ZoneLoader.
+        // In the long term, the method will probably be deprecated. At that
+        // time, we should probably prepare the data in some other way (using
+        // sqlite3 or something). This is simpler for now.
         source_client_.load(zone, string(TEST_DATA_DIR) + "/" + filename);
     }
 private:
