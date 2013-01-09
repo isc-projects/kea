@@ -58,28 +58,8 @@ private:
     ZoneUpdaterPtr updater_;
 
 protected:
-    class DatasrcIter : public RRsetCollectionBase::Iter {
-    public:
-        DatasrcIter()
-        {}
-
-        virtual const isc::dns::AbstractRRset& getValue() {
-            isc_throw(isc::NotImplemented, "This method is not implemented.");
-        }
-
-        virtual IterPtr getNext() {
-            isc_throw(isc::NotImplemented, "This method is not implemented.");
-        }
-
-        virtual bool equals(Iter& other) {
-            const DatasrcIter* other_real = dynamic_cast<DatasrcIter*>(&other);
-            if (other_real == NULL) {
-                return (false);
-            }
-
-            isc_throw(isc::NotImplemented, "This method is not implemented.");
-        }
-    };
+    // TODO: RRsetCollectionBase::Iter is not implemented and the
+    // following two methods just throw.
 
     virtual RRsetCollectionBase::IterPtr getBeginning();
     virtual RRsetCollectionBase::IterPtr getEnd();
