@@ -422,7 +422,7 @@ TEST_F(ZoneLoaderTest, loadSyntaxError) {
 }
 
 // Test there's validation of the data in the zone loader.
-TEST_F(ZoneLoaderTest, loadValidation) {
+TEST_F(ZoneLoaderTest, loadCheck) {
     ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
                       TEST_DATA_DIR "/novalidate.zone");
     EXPECT_THROW(loader.loadIncremental(10), ZoneContentError);
@@ -431,7 +431,7 @@ TEST_F(ZoneLoaderTest, loadValidation) {
 }
 
 // The same test, but for copying from other data source
-TEST_F(ZoneLoaderTest, copyValidation) {
+TEST_F(ZoneLoaderTest, copyCheck) {
     prepareSource(Name::ROOT_NAME(), "novalidate.zone");
     ZoneLoader loader(destination_client_, Name::ROOT_NAME(), source_client_);
 
