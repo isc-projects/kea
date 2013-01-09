@@ -235,7 +235,7 @@ ConfigData::getItemList(const std::string& identifier, bool recurse) const {
 ConstElementPtr
 ConfigData::getFullConfig() const {
     ElementPtr result = Element::createMap();
-    ConstElementPtr items = getItemList("", true);
+    ConstElementPtr items = getItemList("", false);
     BOOST_FOREACH(ConstElementPtr item, items->listValue()) {
         result->set(item->stringValue(), getValue(item->stringValue()));
     }
