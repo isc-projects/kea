@@ -38,12 +38,26 @@ namespace dns {
 /// STL container. libdatasrc will have another implementation.
 class RRsetCollectionBase {
 public:
+    /// \brief Error during find operation
+    ///
+    /// This exception is thrown when an calling implementation of
+    /// \c find() results in an error which is not due to unmatched
+    /// data, but because of some other underlying error condition.
+    class FindError : public Exception {
+    public:
+        FindError(const char* file, size_t line, const char* what) :
+            Exception(file, line, what)
+        {}
+    };
+
     /// \brief Find a matching RRset in the collection.
     ///
     /// Returns the RRset in the collection that exactly matches the
     /// given \c name, \c rrclass and \c rrtype.  If no matching RRset
     /// is found, \c NULL is returned.
     ///
+    /// \throw FindError if find() results in some
+    /// implementation-specific error.
     /// \param name The name of the RRset to search for.
     /// \param rrtype The type of the RRset to search for.
     /// \param rrclass The class of the RRset to search for.

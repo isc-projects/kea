@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/rrset_collection.h>
+#include <datasrc/zone_loader.h>
 #include <exceptions/exceptions.h>
 
 using namespace isc;
@@ -45,6 +46,9 @@ RRsetCollection::find(const isc::dns::Name& name,
         // searched name is out of zone, we return nothing instead of
         // propagating the exception.
         return (ConstRRsetPtr());
+    } catch (const DataSourceError& e) {
+        isc_throw(FindError, "ZoneFinder threw a DataSourceError: " <<
+                  e.getMessage().c_str());
     }
 }
 
