@@ -18,6 +18,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
+#include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
 #include <util/buffer.h>
@@ -220,15 +221,12 @@ protected:
 
 private:
 
-    /// A map containing option definitions for various option spaces.
-    /// They key of this map is the name of the option space. The
-    /// value is the the option container holding option definitions
-    /// for the particular option space.
-    typedef std::map<std::string, OptionDefContainerPtr> OptionDefsMap;
+    /// A collection of option definitions accessible with option
+    /// space name.
+    typedef OptionSpaceContainer<OptionDefContainer,
+                                 OptionDefinitionPtr> OptionSpaceCollection;
 
-    /// A map containing option definitions for different option spaces.
-    /// The map key holds an option space name.
-    OptionDefsMap option_def_spaces_;
+    OptionSpaceCollection option_def_spaces_;
 
 };
 
