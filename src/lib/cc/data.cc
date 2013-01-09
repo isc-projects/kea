@@ -31,7 +31,7 @@
 using namespace std;
 
 namespace {
-const char* WHITESPACE = " \b\f\n\r\t";
+const char* const WHITESPACE = " \b\f\n\r\t";
 } // end anonymous namespace
 
 namespace isc {
@@ -183,7 +183,7 @@ throwJSONError(const std::string& error, const std::string& file, int line,
 }
 
 std::ostream&
-operator<<(std::ostream &out, const Element& e) {
+operator<<(std::ostream& out, const Element& e) {
     return (out << e.str());
 }
 
@@ -240,7 +240,7 @@ Element::createMap() {
 //
 namespace {
 bool
-char_in(const int c, const char *chars) {
+charIn(const int c, const char* chars) {
     for (size_t i = 0; i < strlen(chars); ++i) {
         if (chars[i] == c) {
             return (true);
@@ -250,9 +250,9 @@ char_in(const int c, const char *chars) {
 }
 
 void
-skip_chars(std::istream &in, const char *chars, int& line, int& pos) {
+skipChars(std::istream& in, const char* chars, int& line, int& pos) {
     int c = in.peek();
-    while (char_in(c, chars) && c != EOF) {
+    while (charIn(c, chars) && c != EOF) {
         if (c == '\n') {
             ++line;
             pos = 1;
@@ -270,8 +270,8 @@ skip_chars(std::istream &in, const char *chars, int& line, int& pos) {
 //
 // the character found is left on the stream
 void
-skip_to(std::istream &in, const std::string& file, int& line,
-        int& pos, const char* chars, const char* may_skip="")
+skipTo(std::istream& in, const std::string& file, int& line,
+       int& pos, const char* chars, const char* may_skip="")
 {
     int c = in.get();
     ++pos;
@@ -280,11 +280,11 @@ skip_to(std::istream &in, const std::string& file, int& line,
             pos = 1;
             ++line;
         }
-        if (char_in(c, may_skip)) {
+        if (charIn(c, may_skip)) {
             c = in.get();
             ++pos;
-        } else if (char_in(c, chars)) {
-            while(char_in(in.peek(), may_skip)) {
+        } else if (charIn(c, chars)) {
+            while (charIn(in.peek(), may_skip)) {
                 if (in.peek() == '\n') {
                     pos = 1;
                     ++line;
@@ -305,8 +305,8 @@ skip_to(std::istream &in, const std::string& file, int& line,
 // TODO: Should we check for all other official escapes here (and
 // error on the rest)?
 std::string
-str_from_stringstream(std::istream &in, const std::string& file, const int line,
-                      int& pos) throw (JSONError)
+strFromStringstream(std::istream& in, const std::string& file,
+                    const int line, int& pos) throw (JSONError)
 {
     std::stringstream ss;
     int c = in.get();
@@ -364,7 +364,7 @@ str_from_stringstream(std::istream &in, const std::string& file, const int line,
 }
 
 std::string
-word_from_stringstream(std::istream &in, int& pos) {
+wordFromStringstream(std::istream& in, int& pos) {
     std::stringstream ss;
     while (isalpha(in.peek())) {
         ss << (char) in.get();
@@ -373,8 +373,8 @@ word_from_stringstream(std::istream &in, int& pos) {
     return (ss.str());
 }
 
-static std::string
-number_from_stringstream(std::istream &in, int& pos) {
+std::string
+numberFromStringstream(std::istream& in, int& pos) {
     std::stringstream ss;
     while (isdigit(in.peek()) || in.peek() == '+' || in.peek() == '-' ||
            in.peek() == '.' || in.peek() == 'e' || in.peek() == 'E') {
@@ -388,13 +388,13 @@ number_from_stringstream(std::istream &in, int& pos) {
 // that can also hold an e value? (and have specific getters if the
 // value is larger than an int can handle)
 ElementPtr
-from_stringstream_number(std::istream &in, int &pos) {
+fromStringstreamNumber(std::istream& in, int& pos) {
     long int i;
     double d = 0.0;
     bool is_double = false;
-    char *endptr;
+    char* endptr;
 
-    std::string number = number_from_stringstream(in, pos);
+    std::string number = numberFromStringstream(in, pos);
 
     i = strtol(number.c_str(), &endptr, 10);
     if (*endptr != '\0') {
@@ -421,10 +421,10 @@ from_stringstream_number(std::istream &in, int &pos) {
 }
 
 ElementPtr
-from_stringstream_bool(std::istream &in, const std::string& file,
-                       const int line, int& pos)
+fromStringstreamBool(std::istream& in, const std::string& file,
+                     const int line, int& pos)
 {
-    const std::string word = word_from_stringstream(in, pos);
+    const std::string word = wordFromStringstream(in, pos);
     if (boost::iequals(word, "True")) {
         return (Element::create(true));
     } else if (boost::iequals(word, "False")) {
@@ -437,10 +437,10 @@ from_stringstream_bool(std::istream &in, const std::string& file,
 }
 
 ElementPtr
-from_stringstream_null(std::istream &in, const std::string& file,
-                       const int line, int& pos)
+fromStringstreamNull(std::istream& in, const std::string& file,
+                     const int line, int& pos)
 {
-    const std::string word = word_from_stringstream(in, pos);
+    const std::string word = wordFromStringstream(in, pos);
     if (boost::iequals(word, "null")) {
         return (Element::create());
     } else {
@@ -450,26 +450,26 @@ from_stringstream_null(std::istream &in, const std::string& file,
 }
 
 ElementPtr
-from_stringstream_string(std::istream& in, const std::string& file, int& line,
-                         int& pos)
+fromStringstreamString(std::istream& in, const std::string& file, int& line,
+                       int& pos)
 {
-    return (Element::create(str_from_stringstream(in, file, line, pos)));
+    return (Element::create(strFromStringstream(in, file, line, pos)));
 }
 
 ElementPtr
-from_stringstream_list(std::istream &in, const std::string& file, int& line,
-                       int& pos)
+fromStringstreamList(std::istream& in, const std::string& file, int& line,
+                     int& pos)
 {
     int c = 0;
     ElementPtr list = Element::createList();
     ConstElementPtr cur_list_element;
 
-    skip_chars(in, WHITESPACE, line, pos);
+    skipChars(in, WHITESPACE, line, pos);
     while (c != EOF && c != ']') {
         if (in.peek() != ']') {
             cur_list_element = Element::fromJSON(in, file, line, pos);
             list->add(cur_list_element);
-            skip_to(in, file, line, pos, ",]", WHITESPACE);
+            skipTo(in, file, line, pos, ",]", WHITESPACE);
         }
         c = in.get();
         pos++;
@@ -478,11 +478,11 @@ from_stringstream_list(std::istream &in, const std::string& file, int& line,
 }
 
 ElementPtr
-from_stringstream_map(std::istream &in, const std::string& file, int& line,
-                      int& pos)
+fromStringstreamMap(std::istream& in, const std::string& file, int& line,
+                    int& pos)
 {
     ElementPtr map = Element::createMap();
-    skip_chars(in, WHITESPACE, line, pos);
+    skipChars(in, WHITESPACE, line, pos);
     int c = in.peek();
     if (c == EOF) {
         throwJSONError(std::string("Unterminated map, <string> or } expected"), file, line, pos);
@@ -491,9 +491,9 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
         c = in.get();
     } else {
         while (c != EOF && c != '}') {
-            std::string key = str_from_stringstream(in, file, line, pos);
+            std::string key = strFromStringstream(in, file, line, pos);
 
-            skip_to(in, file, line, pos, ":", WHITESPACE);
+            skipTo(in, file, line, pos, ":", WHITESPACE);
             // skip the :
             in.get();
             pos++;
@@ -501,14 +501,14 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
             ConstElementPtr value = Element::fromJSON(in, file, line, pos);
             map->set(key, value);
 
-            skip_to(in, file, line, pos, ",}", WHITESPACE);
+            skipTo(in, file, line, pos, ",}", WHITESPACE);
             c = in.get();
             pos++;
         }
     }
     return (map);
 }
-}
+} // unnamed namespace
 
 std::string
 Element::typeToName(Element::types type) {
@@ -574,13 +574,13 @@ Element::fromJSON(std::istream& in, const std::string& file_name)
 }
 
 ElementPtr
-Element::fromJSON(std::istream &in, const std::string& file, int& line,
+Element::fromJSON(std::istream& in, const std::string& file, int& line,
                   int& pos) throw(JSONError)
 {
     int c = 0;
     ElementPtr element;
     bool el_read = false;
-    skip_chars(in, WHITESPACE, line, pos);
+    skipChars(in, WHITESPACE, line, pos);
     while (c != EOF && !el_read) {
         c = in.get();
         pos++;
@@ -599,7 +599,7 @@ Element::fromJSON(std::istream &in, const std::string& file, int& line,
             case '+':
             case '.':
                 in.putback(c);
-                element = from_stringstream_number(in, pos);
+                element = fromStringstreamNumber(in, pos);
                 el_read = true;
                 break;
             case 't':
@@ -607,26 +607,26 @@ Element::fromJSON(std::istream &in, const std::string& file, int& line,
             case 'f':
             case 'F':
                 in.putback(c);
-                element = from_stringstream_bool(in, file, line, pos);
+                element = fromStringstreamBool(in, file, line, pos);
                 el_read = true;
                 break;
             case 'n':
             case 'N':
                 in.putback(c);
-                element = from_stringstream_null(in, file, line, pos);
+                element = fromStringstreamNull(in, file, line, pos);
                 el_read = true;
                 break;
             case '"':
                 in.putback('"');
-                element = from_stringstream_string(in, file, line, pos);
+                element = fromStringstreamString(in, file, line, pos);
                 el_read = true;
                 break;
             case '[':
-                element = from_stringstream_list(in, file, line, pos);
+                element = fromStringstreamList(in, file, line, pos);
                 el_read = true;
                 break;
             case '{':
-                element = from_stringstream_map(in, file, line, pos);
+                element = fromStringstreamMap(in, file, line, pos);
                 el_read = true;
                 break;
             case EOF:
@@ -644,12 +644,12 @@ Element::fromJSON(std::istream &in, const std::string& file, int& line,
 }
 
 ElementPtr
-Element::fromJSON(const std::string &in) {
+Element::fromJSON(const std::string& in) {
     std::stringstream ss;
     ss << in;
     int line = 1, pos = 1;
     ElementPtr result(fromJSON(ss, "<string>", line, pos));
-    skip_chars(ss, WHITESPACE, line, pos);
+    skipChars(ss, WHITESPACE, line, pos);
     // ss must now be at end
     if (ss.peek() != EOF) {
         throwJSONError("Extra data", "<string>", line, pos);
