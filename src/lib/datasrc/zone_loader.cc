@@ -24,6 +24,8 @@
 
 #include <dns/rrset.h>
 #include <dns/zone_checker.h>
+#include <dns/name.h>
+#include <dns/rrclass.h>
 
 #include <boost/bind.hpp>
 
