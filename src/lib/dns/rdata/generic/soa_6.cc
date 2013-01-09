@@ -73,7 +73,8 @@ fillParameters(MasterLexer& lexer, uint8_t numdata[20]) {
 ///
 /// The MNAME and RNAME must be absolute since there's no parameter that
 /// specifies the origin name; if these are not absolute, \c MissingNameOrigin
-/// exception will be thrown.
+/// exception will be thrown.  These must not be represented as a quoted
+/// string.
 ///
 /// See the construction that takes \c MasterLexer for other fields.
 ///
@@ -107,7 +108,7 @@ SOA::SOA(const std::string& soastr) :
 /// The \c lexer should point to the beginning of valid textual representation
 /// of an SOA RDATA.  The MNAME and RNAME fields can be non absolute if
 /// \c origin is non NULL, in which case \c origin is used to make them
-/// absolute.
+/// absolute.  These must not be represented as a quoted string.
 ///
 /// The REFRESH, RETRY, EXPIRE, and MINIMUM fields can be either a valid
 /// decimal representation of an unsigned 32-bit integer or other
