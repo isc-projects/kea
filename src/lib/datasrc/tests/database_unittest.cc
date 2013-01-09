@@ -4162,7 +4162,8 @@ class RRsetCollectionTest : public DatabaseClientTest<ACCESSOR_TYPE> {
 public:
     RRsetCollectionTest() :
         DatabaseClientTest<ACCESSOR_TYPE>(),
-        collection(this->client_->getUpdater(this->zname_, false))
+        collection(this->client_->getUpdater(this->zname_, false),
+                   this->qclass_)
     {}
 
     RRsetCollection collection;
@@ -4192,6 +4193,11 @@ TYPED_TEST(RRsetCollectionTest, find) {
     rrset = this->collection.find(Name("www.example.org"), this->qclass_,
                                   RRType::AAAA());
     EXPECT_TRUE(rrset);
+
+    // www.example.org with AAAA does not exist in RRClass::CH()
+    rrset = this->collection.find(Name("www.example.org"), RRClass::CH(),
+                                  RRType::AAAA());
+    EXPECT_FALSE(rrset);
 }
 
 TYPED_TEST(RRsetCollectionTest, iteratorTest) {
