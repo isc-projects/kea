@@ -18,6 +18,7 @@
 #include <dns/name.h>
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
+#include <dns/rrset_collection_base.h>
 
 #include <datasrc/exceptions.h>
 #include <datasrc/result.h>
@@ -801,6 +802,9 @@ public:
     ///
     /// \return A reference to a \c ZoneFinder for the updated zone
     virtual ZoneFinder& getFinder() = 0;
+
+    /// Return an RRsetCollection for the updater.
+    virtual isc::dns::RRsetCollectionPtr getRRsetCollection() = 0;
 
     /// Add an RRset to a zone via the updater
     ///
