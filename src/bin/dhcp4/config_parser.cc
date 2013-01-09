@@ -1145,32 +1145,16 @@ public:
 
         CfgMgr& cfg_mgr = CfgMgr::instance();
 
+        cfg_mgr.deleteOptionDefs();
+
         // We need to move option definitions from the temporary
-        // storage to the global storage. However for new definition
-        // we need to check whether such a definition already exists
-        // or we are adding it for the fitsy time.
+        // storage to the global storage.
         BOOST_FOREACH(std::string space_name,
                       option_defs_local_.getOptionSpaceNames()) {
-            // For the particular option space we have to get all
-            // items in the temporary storage and store it in the
-            // global storage.
+
             BOOST_FOREACH(OptionDefinitionPtr def,
                           *option_defs_local_.getItems(space_name)) {
                 assert(def);
-                // For the particular option space get all definitions
-                // existing in the global storage.
-                OptionDefContainerPtr global_defs = cfg_mgr.getOptionDefs(space_name);
-                assert(global_defs);
-                // Find the option definition for the particular
-                // option code.
-                OptionDefContainerTypeIndex& idx = global_defs->get<1>();
-                const OptionDefContainerTypeRange& range =
-                    idx.equal_range(def->getCode());
-                // If there is one in the global storage, erase it.
-                if (std::distance(range.first, range.second) > 0) {
-                    idx.erase(range.first, range.second);
-                }
-                // Add the newly created option definition.
                 cfg_mgr.addOptionDef(def, space_name);
             }
         }

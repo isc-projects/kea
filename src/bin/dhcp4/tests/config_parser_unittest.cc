@@ -234,6 +234,7 @@ public:
             "\"renew-timer\": 1000, "
             "\"valid-lifetime\": 4000, "
             "\"subnet4\": [ ], "
+            "\"option-def\": [ ], "
             "\"option-data\": [ ] }";
 
         try {
@@ -437,8 +438,8 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
 }
 
 // The goal of this test is to check whether an option definition
-// can be added to the dhcp4 option space.
-TEST_F(Dhcp4ParserTest, optionDefAdd) {
+// that defines an option carrying an IPv4 address can be created.
+TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {
 
     // Configuration string.
     std::string config =
@@ -471,6 +472,54 @@ TEST_F(Dhcp4ParserTest, optionDefAdd) {
     EXPECT_EQ(100, def->getCode());
     EXPECT_FALSE(def->getArrayType());
     EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, def->getType());
+}
+
+// The goal of this test is to check whether an option definiiton
+// that defines an option carrying a record of data fields can
+// be created.
+TEST_F(Dhcp4ParserTest, optionDefRecord) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"record\","
+        "      \"array\": False,"
+        "      \"record-types\": \"uint16, ipv4-address, ipv6-address, string\","
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Make sure that the particular option definition does not exist.
+    OptionDefinitionPtr def = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_FALSE(def);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+
+    // The option definition should now be available in the CfgMgr.
+    def = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_TRUE(def);
+
+    // Check the option data.
+    EXPECT_EQ("foo", def->getName());
+    EXPECT_EQ(100, def->getCode());
+    EXPECT_EQ(OPT_RECORD_TYPE, def->getType());
+    EXPECT_FALSE(def->getArrayType());
+    
+    // The option comprises the record of data fields. Verify that all
+    // fields are present and they are of the expected types.
+    const OptionDefinition::RecordFieldsCollection& record_fields =
+        def->getRecordFields();
+    ASSERT_EQ(4, record_fields.size());
+    EXPECT_EQ(OPT_UINT16_TYPE, record_fields[0]);
+    EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, record_fields[1]);
+    EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, record_fields[2]);
+    EXPECT_EQ(OPT_STRING_TYPE, record_fields[3]);
 }
 
 // Goal of this test is to verify that global option
