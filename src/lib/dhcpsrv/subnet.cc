@@ -55,36 +55,18 @@ Subnet::addOption(OptionPtr& option, bool persistent,
     }
     validateOption(option);
 
-    OptionContainerPtr container = getOptionDescriptors(option_space);
-    // getOptionDescriptors is expected to return the pointer to the
-    // valid container. Let's make sure it does by performing an assert.
-    assert(container);
-    // Actually add the new descriptor.
-    container->push_back(OptionDescriptor(option, persistent));
-    option_spaces_[option_space] = container;
+    // Actually add new option descriptor.
+    option_spaces_.addItem(OptionDescriptor(option, persistent), option_space);
 }
 
 void
 Subnet::delOptions() {
-    option_spaces_.clear();
+    option_spaces_.clearItems();
 }
 
 Subnet::OptionContainerPtr
 Subnet::getOptionDescriptors(const std::string& option_space) const {
-    // Search the map to get the options container for the particular
-    // option space.
-    const OptionSpacesPtr::const_iterator& options =
-        option_spaces_.find(option_space);
-    // If the option space has not been found it means that no option
-    // has been configured for this option space yet. Thus we have to
-    // return an empty container to the caller.
-    if (options == option_spaces_.end()) {
-        // The default constructor creates an empty container.
-        return (OptionContainerPtr(new OptionContainer()));
-    }
-    // We found some option container for the option space specified.
-    // Let's return a const reference to it.
-    return (options->second);
+    return (option_spaces_.getItems(option_space));
 }
 
 Subnet::OptionDescriptor
