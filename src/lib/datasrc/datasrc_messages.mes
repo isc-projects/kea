@@ -70,6 +70,19 @@ The maximum allowed number of items of the hotspot cache is set to the given
 number. If there are too many, some of them will be dropped. The size of 0
 means no limit.
 
+% DATASRC_CHECK_ERROR post-load check of zone %1/%2 failed: %3
+The zone was loaded into the data source successfully, but the content fails
+basic sanity checks. See the message if you want to know what exactly is wrong
+with the data. The data can not be used and previous version, if any, will be
+preserved.
+
+% DATASRC_CHECK_WARNING %1/%2: %3
+The zone was loaded into the data source successfully, but there's some problem
+with the content. The problem does not stop the new version from being used
+(though there may be other problems that do, see DATASRC_CHECK_ERROR),
+but it should still be checked and fixed. See the message to know what exactly
+is wrong with the data.
+
 % DATASRC_DATABASE_COVER_NSEC_UNSUPPORTED %1 doesn't support DNSSEC when asked for NSEC data covering %2
 The datasource tried to provide an NSEC proof that the named domain does not
 exist, but the database backend doesn't support DNSSEC. No proof is included
@@ -844,14 +857,3 @@ data source.
 % DATASRC_UNEXPECTED_QUERY_STATE unexpected query state
 This indicates a programming error. An internal task of unknown type was
 generated.
-
-% DATASRC_VALIDATE_ERROR validation of zone %1/%2 failed: %3
-The zone was loaded into the data source successfully, but the content fails
-basic sanity checks. See the message if you want to know what exactly is wrong
-with the data. The data can not be used and previous version, if any, will be
-preserved.
-
-% DATASRC_VALIDATE_WARNING %1/%2: %3
-The zone was loaded, but there's some problem with the content. The problem
-is not serious enough to make the zone unusable, but it should still be checked
-and fixed. See the message to know what exactly is wrong with the data.

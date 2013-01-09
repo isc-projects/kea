@@ -110,7 +110,7 @@ void
 logWarning(const dns::Name* zone_name, const dns::RRClass* rrclass,
            const std::string& reason)
 {
-    LOG_WARN(logger, DATASRC_VALIDATE_WARNING).arg(*zone_name).arg(*rrclass).
+    LOG_WARN(logger, DATASRC_CHECK_WARNING).arg(*zone_name).arg(*rrclass).
         arg(reason);
 }
 
@@ -118,7 +118,7 @@ void
 logError(const dns::Name* zone_name, const dns::RRClass* rrclass,
          const std::string& reason)
 {
-    LOG_ERROR(logger, DATASRC_VALIDATE_ERROR).arg(*zone_name).arg(*rrclass).
+    LOG_ERROR(logger, DATASRC_CHECK_ERROR).arg(*zone_name).arg(*rrclass).
         arg(reason);
 }
 
