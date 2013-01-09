@@ -274,6 +274,7 @@ TEST_F(Dhcpv4SrvTest, basic) {
         naked_srv = new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000);
     });
     EXPECT_TRUE(naked_srv->getServerID());
+    delete naked_srv;
 
     ASSERT_NO_THROW({
         naked_srv = new NakedDhcpv4Srv(0);
