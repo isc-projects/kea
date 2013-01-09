@@ -89,6 +89,9 @@ public:
     virtual ZoneFinder& getFinder() {
         return (finder_);
     }
+    virtual isc::dns::RRsetCollectionPtr getRRsetCollection() {
+        isc_throw(isc::NotImplemented, "Method not used in tests");
+    }
     virtual void addRRset(const isc::dns::AbstractRRset& rrset) {
         if (client_->commit_called_) {
             isc_throw(DataSourceError, "Add after commit");
