@@ -3504,7 +3504,7 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
       <itemizedlist>
           <listitem>
             <simpara>RFC2131: Supported messages are DISCOVER, OFFER,
-            REQUEST, ACK, NACK, RELEASE.</simpara>
+            REQUEST, ACK, NAK, RELEASE.</simpara>
           </listitem>
           <listitem>
             <simpara>RFC2132: Supported options are: PAD (0),

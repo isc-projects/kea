@@ -123,10 +123,11 @@ This debug message indicates that an address was released properly. It
 is a normal operation during client shutdown.
 
 % DHCP4_RELEASE_EXCEPTION exception %1 while trying to release address %2
-This error message indicates that an exception was raised during an attempt
-to process RELEASE message. This does not affect the client as it does not expect
-any response for RELEASE message. Depending on the nature of exception it may
-affect future server operation.
+This message is output when an error was encountered during an attempt
+to process a RELEASE message. The error will not affect the client,
+which does not expect any response from the server for RELEASE
+messages. Depending on the nature of problem, it may affect future
+server operation.
 
 % DHCP4_RELEASE_FAIL failed to remove lease for address %1 for duid %2, hwaddr %3
 This error message indicates that the software failed to remove a
