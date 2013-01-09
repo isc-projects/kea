@@ -960,7 +960,8 @@ public:
         BOOST_FOREACH(ConfigPair param, option_def->mapValue()) {
             std::string entry(param.first);
             ParserPtr parser;
-            if (entry == "name" || entry == "type" || entry == "space") {
+            if (entry == "name" || entry == "type" ||
+                entry == "record-types" || entry == "space") {
                 StringParserPtr
                     str_parser(dynamic_cast<StringParser*>(StringParser::factory(entry)));
                 if (str_parser) {
@@ -981,8 +982,6 @@ public:
                     array_parser->setStorage(&boolean_values_);
                     parser = array_parser;
                 }
-            } else if (entry == "record_types") {
-                // do nothing yet
             } else {
                 isc_throw(DhcpConfigError, "invalid parameter: " << entry);
             }
@@ -1050,6 +1049,28 @@ private:
 
         OptionDefinitionPtr def(new OptionDefinition(name, code,
                                                      type, array_type));
+        // The record-types field may carry a list of comma separated names
+        // of data types that form a record.
+        std::string record_types = getParam<std::string>("record-types",
+                                                         string_values_);
+        // Split the list of record types into tokens.
+        std::vector<std::string> record_tokens =
+            isc::util::str::tokens(record_types, ",");
+        // Iterate over each token and add a record typy into
+        // option definition.
+        BOOST_FOREACH(std::string record_type, record_tokens) {
+            try {
+                boost::trim(record_type);
+                if (!record_type.empty()) {
+                    def->addRecordField(record_type);
+                }
+            } catch (const Exception& ex) {
+                isc_throw(DhcpConfigError, "invalid record type values"
+                          << " specified for the option  definition: "
+                          << ex.what());
+            }
+        }
+
         // Check the option definition parameters are valid.
         try {
             def->validate();
