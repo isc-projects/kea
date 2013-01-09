@@ -31,6 +31,7 @@
 
 #include <datasrc/data_source.h>
 #include <datasrc/logger.h>
+#include <datasrc/rrset_collection.h>
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -1410,6 +1411,10 @@ public:
     }
 
     virtual ZoneFinder& getFinder() { return (*finder_); }
+
+    virtual RRsetCollectionPtr getRRsetCollection() {
+        return (RRsetCollectionPtr(new RRsetCollection(*this, zone_class_)));
+    }
 
     virtual void addRRset(const AbstractRRset& rrset);
     virtual void deleteRRset(const AbstractRRset& rrset);
