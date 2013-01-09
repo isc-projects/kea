@@ -52,9 +52,9 @@ private:
     ZoneUpdaterPtr updater_;
 
 protected:
-    class DsIter : public RRsetCollectionBase::Iter {
+    class DatasrcIter : public RRsetCollectionBase::Iter {
     public:
-        DsIter()
+        DatasrcIter()
         {}
 
         virtual const isc::dns::AbstractRRset& getValue() {
@@ -66,7 +66,7 @@ protected:
         }
 
         virtual bool equals(Iter& other) {
-            const DsIter* other_real = dynamic_cast<DsIter*>(&other);
+            const DatasrcIter* other_real = dynamic_cast<DatasrcIter*>(&other);
             if (other_real == NULL) {
                 return (false);
             }
