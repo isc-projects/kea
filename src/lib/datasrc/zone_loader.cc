@@ -154,7 +154,7 @@ ZoneLoader::loadIncremental(size_t limit) {
             callbacks(boost::bind(&logError, &zone_name, &zone_class, _1),
                       boost::bind(&logWarning, &zone_name, &zone_class, _1));
         if (!dns::checkZone(zone_name, zone_class, collection, callbacks)) {
-            // Validation failed.
+            // The post-load check failed.
             loaded_ok_ = false;
             isc_throw(ZoneContentError, "Errors found when validating zone " <<
                       zone_name << "/" << zone_class);
