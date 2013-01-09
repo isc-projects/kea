@@ -4211,4 +4211,28 @@ TYPED_TEST(RRsetCollectionTest, iteratorTest) {
     EXPECT_THROW(this->collection.end(), isc::NotImplemented);
 }
 
+class MockRRsetCollectionTest : public DatabaseClientTest<MockAccessor> {
+public:
+    MockRRsetCollectionTest() :
+        DatabaseClientTest<MockAccessor>(),
+        collection(this->client_->getUpdater(this->zname_, false),
+                   this->qclass_)
+    {}
+
+    RRsetCollection collection;
+};
+
+TEST_F(MockRRsetCollectionTest, findError) {
+    // A test using the MockAccessor for checking that FindError is
+    // thrown properly if a find attempt using ZoneFinder results in a
+    // DataSourceError.
+    //
+    // The "dsexception.example.org." name is rigged by the MockAccessor
+    // to throw a DataSourceError.
+    EXPECT_THROW({
+        this->collection.find(Name("dsexception.example.org"), this->qclass_,
+                              RRType::A());
+    }, RRsetCollectionBase::FindError);
+}
+
 }
