@@ -423,7 +423,7 @@ TEST_F(ZoneLoaderTest, loadSyntaxError) {
 
 // Test there's validation of the data in the zone loader.
 TEST_F(ZoneLoaderTest, loadCheck) {
-    ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
+    ZoneLoader loader(destination_client_, Name("example.org"),
                       TEST_DATA_DIR "/novalidate.zone");
     EXPECT_THROW(loader.loadIncremental(10), ZoneContentError);
     // The messages go to the log. We don't have an easy way to examine them.
@@ -432,8 +432,9 @@ TEST_F(ZoneLoaderTest, loadCheck) {
 
 // The same test, but for copying from other data source
 TEST_F(ZoneLoaderTest, copyCheck) {
-    prepareSource(Name::ROOT_NAME(), "novalidate.zone");
-    ZoneLoader loader(destination_client_, Name::ROOT_NAME(), source_client_);
+    prepareSource(Name("example.org"), "novalidate.zone");
+    ZoneLoader loader(destination_client_, Name("example.org"),
+                      source_client_);
 
     EXPECT_THROW(loader.loadIncremental(10), ZoneContentError);
     // The messages go to the log. We don't have an easy way to examine them.
@@ -442,7 +443,7 @@ TEST_F(ZoneLoaderTest, copyCheck) {
 
 // Check a warning doesn't disrupt the loading of the zone
 TEST_F(ZoneLoaderTest, loadCheckWarn) {
-    ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
+    ZoneLoader loader(destination_client_, Name("example.org"),
                       TEST_DATA_DIR "/checkwarn.zone");
     EXPECT_TRUE(loader.loadIncremental(10));
     // The messages go to the log. We don't have an easy way to examine them.
@@ -452,8 +453,9 @@ TEST_F(ZoneLoaderTest, loadCheckWarn) {
 }
 
 TEST_F(ZoneLoaderTest, copyCheckWarn) {
-    prepareSource(Name::ROOT_NAME(), "checkwarn.zone");
-    ZoneLoader loader(destination_client_, Name::ROOT_NAME(), source_client_);
+    prepareSource(Name("example.org"), "checkwarn.zone");
+    ZoneLoader loader(destination_client_, Name("example.org"),
+                      source_client_);
     EXPECT_TRUE(loader.loadIncremental(10));
     // The messages go to the log. We don't have an easy way to examine them.
     // But the zone was committed and contains all 3 RRs
