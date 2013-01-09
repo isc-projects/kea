@@ -1,3 +1,14 @@
+542.	[func]		marcin
+	Created OptionSpace and OptionSpace6 classes to represent DHCP
+	option spaces. The option spaces are used to group instances
+	and definitions of options having uniqe codes. A special type
+	of option space is the so-called "vendor specific option space"
+	which groups sub-options sent within Vendor Encapsulated Options.
+	The new classes are not used yet but they will be used once
+	the creation of option spaces by configuration manager is
+	implemented.
+	(Trac #2313, git 37a27e19be874725ea3d560065e5591a845daa89)
+
 541.	[func]		marcin
 	Added routines to search for configured DHCP options and their
 	definitions using name of the option space they belong to.
