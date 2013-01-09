@@ -26,6 +26,12 @@ namespace datasrc {
 class RRsetCollection : public isc::dns::RRsetCollectionBase {
 public:
     /// \brief Constructor.
+    ///
+    /// A reference to the \c updater (via \c shared_ptr) is taken when
+    /// the collection is constructed. As long as the collection object
+    /// is alive, the reference to the updater is kept and it cannot be
+    /// destroyed by the client.
+    ///
     /// \param updater The ZoneUpdater to wrap around.
     RRsetCollection(ZoneUpdaterPtr updater) :
         updater_(updater)
