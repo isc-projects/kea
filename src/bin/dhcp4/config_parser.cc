@@ -991,7 +991,6 @@ public:
 
     /// @brief Stores the parsed option definition in a storage.
     void commit() {
-        
     }
 
     /// @brief Sets a pointer to a storage.
@@ -1007,12 +1006,34 @@ public:
 
 private:
 
+    /// @brief Create option definition from the parsed parameters.
     void createOptionDef() {
+        // Get the option space name and validate it.
+        std::string space = getParam<std::string>("space", string_values_);
+        // @todo uncomment the code below when the #2313 is merged.
+        /*        if (!OptionSpace::validateName()) {
+            isc_throw(DhcpConfigError, "invalid option space name '"
+                      << space << "'");
+                      } */
+
+        // Get other parameters that are needed to create the
+        // option definition.
         std::string name = getParam<std::string>("name", string_values_);
         uint32_t code = getParam<uint32_t>("code", uint32_values_);
         std::string type = getParam<std::string>("type", string_values_);
         bool array_type = getParam<bool>("array", boolean_values_);
-        std::string space = getParam<std::string>("space", string_values_);
+
+        OptionDefinitionPtr def(new OptionDefinition(name, code,
+                                                     type, array_type));
+        // Check the option definition parameters are valid.
+        try {
+            def->validate();
+        } catch (const isc::Exception ex) {
+            isc_throw(DhcpConfigError, "invalid option definition"
+                      << " parameters" << ex.what());
+        }
+        // Option definition has been created successfully.
+        option_definition_ = def;
     }
 
     /// Instance of option definition being created by this parser.
