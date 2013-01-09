@@ -578,6 +578,43 @@ TEST_F(Dhcp4ParserTest, optionDefMultiple) {
     EXPECT_FALSE(def2->getArrayType());
 }
 
+// The goal of this test is to verify that the duplicated option
+// definition is not accepted.
+TEST_F(Dhcp4ParserTest, optionDefDuplicate) {
+
+    // Configuration string. Both option definitions have
+    // the same code and belong to the same option space.
+    // This configuration should not be accepted.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"uint32\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\""
+        "  },"
+        "  {"
+        "      \"name\": \"foo-2\","
+        "      \"code\": 100,"
+        "      \"type\": \"ipv4-address\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Make sure that the option definition does not exist yet.
+    ASSERT_FALSE(CfgMgr::instance().getOptionDef("isc", 100));
+
+    // Use the configuration string to create new option definitions.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 1);
+}
+
 // The goal of this test is to verify that the option definition
 // comprising an array of uint32 values can be created.
 TEST_F(Dhcp4ParserTest, optionDefArray) {
