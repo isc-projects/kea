@@ -204,4 +204,42 @@ TEST_F(Rdata_SOA_Test, getMinimum) {
                                         0, 0, 0, 0, 0x80706050).getMinimum());
 }
 
+void
+compareCheck(const generic::SOA& small, const generic::SOA& large) {
+    EXPECT_GT(0, small.compare(large));
+    EXPECT_LT(0, large.compare(small));
+}
+
+TEST_F(Rdata_SOA_Test, compare) {
+    // Check simple equivalence
+    EXPECT_EQ(0, rdata_soa.compare(generic::SOA(
+                                       "ns.example.com. root.example.com. "
+                                       "2010012601 3600 300 3600000 1200")));
+    // Check name comparison is case insensitive
+    EXPECT_EQ(0, rdata_soa.compare(generic::SOA(
+                                       "NS.example.com. root.EXAMPLE.com. "
+                                       "2010012601 3600 300 3600000 1200")));
+
+    // Check names are compared in the RDATA comparison semantics (different
+    // from DNSSEC ordering for owner names)
+    compareCheck(generic::SOA("a.example. . 0 0 0 0 0"),
+                 generic::SOA("example. . 0 0 0 0 0"));
+    compareCheck(generic::SOA(". a.example. 0 0 0 0 0"),
+                 generic::SOA(". example. 0 0 0 0 0"));
+
+    // Compare other numeric fields: 1076895760 = 0x40302010,
+    // 270544960 = 0x10203040.  These are chosen to make sure that machine
+    // endian doesn't confuse the comparison results.
+    compareCheck(generic::SOA(". . 270544960 0 0 0 0"),
+                 generic::SOA(". . 1076895760 0 0 0 0"));
+    compareCheck(generic::SOA(". . 0 270544960 0 0 0"),
+                 generic::SOA(". . 0 1076895760 0 0 0"));
+    compareCheck(generic::SOA(". . 0 0 270544960 0 0"),
+                 generic::SOA(". . 0 0 1076895760 0 0"));
+    compareCheck(generic::SOA(". . 0 0 0 270544960 0"),
+                 generic::SOA(". . 0 0 0 1076895760 0"));
+    compareCheck(generic::SOA(". . 0 0 0 0 270544960"),
+                 generic::SOA(". . 0 0 0 0 1076895760"));
+}
+
 }
