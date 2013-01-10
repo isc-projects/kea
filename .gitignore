@@ -34,5 +34,6 @@ TAGS
 /all.info
 /coverage-cpp-html
 /dns++.pc
-/report.info
+/local.zone.sqlite3
 /logger_lockfile
+/report.info

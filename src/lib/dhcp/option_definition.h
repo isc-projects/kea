@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -39,6 +39,14 @@ public:
 class MalformedOptionDefinition : public Exception {
 public:
     MalformedOptionDefinition(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief Exception to be thrown when the particular option definition
+/// duplicates existing option definition.
+class DuplicateOptionDefinition : public Exception {
+public:
+    DuplicateOptionDefinition(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
@@ -361,7 +369,7 @@ public:
 
     /// @brief Factory function to create option with array of integer values.
     ///
-    /// @param universe (V4 or V6).
+    /// @param u universe (V4 or V6).
     /// @param type option type.
     /// @param begin iterator pointing to the beginning of the buffer.
     /// @param end iterator pointing to the end of the buffer.
@@ -491,6 +499,9 @@ typedef boost::multi_index_container<
         >
     >
 > OptionDefContainer;
+
+/// Pointer to an option definition container.
+typedef boost::shared_ptr<OptionDefContainer> OptionDefContainerPtr;
 
 /// Type of the index #1 - option type.
 typedef OptionDefContainer::nth_index<1>::type OptionDefContainerTypeIndex;
