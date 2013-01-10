@@ -1,3 +1,10 @@
+543.	[func]*		jelte
+	When calling getFullConfig() as a module, , the configuration is now
+	returned as properly-structured JSON.  Previously, the structure had
+	been flattened, with all data being labelled by fully-qualified element
+	names.
+	(Trac #2619, git bed3c88c25ea8f7e951317775e99ebce3340ca22)
+
 542.	[func]		marcin
 	Created OptionSpace and OptionSpace6 classes to represent DHCP
 	option spaces. The option spaces are used to group instances
