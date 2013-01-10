@@ -37,16 +37,27 @@ createStreamName(const std::istream& input_stream) {
 size_t
 getStreamSize(std::istream& is) {
     is.seekg(0, std::ios_base::end);
-    if (is.fail() || is.bad()) {
+    if (is.bad()) {
+        // This means the istream has an integrity error.  It doesn't make
+        // sense to continue from this point, so we treat it as a fatal error.
         isc_throw(InputSource::OpenError,
                   "failed to seek end of input source");
+    } else if (is.fail()) {
+        // This is an error specific to seekg().  There can be several
+        // reasons, but the most likely cause in this context is that the
+        // stream is associated with a special type of file such as a pipe.
+        // In this case, it's more likely that other main operations of
+        // the input source work fine, so we continue with just setting
+        // the stream size to "unknown".
+        is.clear();   // clear this error not to confuse later ops.
+        return (MasterLexer::SOURCE_SIZE_UNKNOWN);
     }
     const std::streampos len = is.tellg();
     if (len == -1) {
         isc_throw(InputSource::OpenError, "failed to get input size");
     }
     is.seekg(0, std::ios::beg);
-    if (is.fail() || is.bad()) {
+    if (is.fail()) {
         isc_throw(InputSource::OpenError,
                   "failed to seek beginning of input source");
     }

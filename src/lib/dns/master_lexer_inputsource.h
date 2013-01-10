@@ -89,8 +89,10 @@ public:
 
     /// \brief Returns the size of the input source in bytes.
     ///
+    /// If the size is unknown, it returns \c MasterLexer::SOURCE_SIZE_UNKNOWN.
+    ///
     /// See \c MasterLexer::getTotalSourceSize() for the definition of
-    /// the size of sources.
+    /// the size of sources and for when the size can be unknown.
     ///
     /// \throw None
     size_t getSize() const { return (input_size_); }
