@@ -17,9 +17,9 @@
 #include <config/ccsession.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp6/config_parser.h>
-#include <dhcp6/dbaccess_parser.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dbaccess_parser.h>
 #include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
