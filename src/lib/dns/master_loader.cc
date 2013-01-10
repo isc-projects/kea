@@ -222,7 +222,12 @@ private:
         const MaybeRRClass rrclass =
             RRClass::createFromText(rrparam_token.getString());
         if (rrclass) {
-            if (*rrclass != zone_class_) {
+            // FIXME: The following code re-parses the rrparam_token to
+            // make an RRClass instead of using the MaybeRRClass above,
+            // because some old versions of boost::optional (that we
+            // still want to support) have a bug (see trac #2593). This
+            // workaround should be removed at some point in the future.
+            if (RRClass(rrparam_token.getString()) != zone_class_) {
                 isc_throw(InternalException, "Class mismatch: " << *rrclass <<
                           " vs. " << zone_class_);
             }
