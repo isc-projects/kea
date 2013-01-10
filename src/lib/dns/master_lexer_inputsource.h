@@ -83,6 +83,17 @@ public:
         return (name_);
     }
 
+    /// \brief Returns the size of the input source in bytes.
+    ///
+    /// If the input source is a normal file, the return value should be
+    /// equal to the file size at the time of the source is created.
+    /// If the input source is other type of input stream, its the size of
+    /// the data available in the stream at the time of the construction of
+    /// the source.
+    ///
+    /// \throw None.
+    size_t getSize() const { return (input_size_); }
+
     /// \brief Returns if the input source is at end of file.
     bool atEOF() const {
         return (at_eof_);
@@ -146,6 +157,7 @@ private:
     const std::string name_;
     std::ifstream file_stream_;
     std::istream& input_;
+    const size_t input_size_;
 };
 
 } // namespace master_lexer_internal
