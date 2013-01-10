@@ -76,6 +76,7 @@ checkGetAndUngetChar(InputSource& source,
 {
     for (size_t i = 0; i < str_length; ++i) {
         EXPECT_EQ(str[i], source.getChar());
+        EXPECT_EQ(i + 1, source.getPosition());
         EXPECT_FALSE(source.atEOF());
     }
 
@@ -88,12 +89,19 @@ checkGetAndUngetChar(InputSource& source,
     // Now, EOF should be set.
     EXPECT_TRUE(source.atEOF());
 
+    // It doesn't increase the position count.
+    EXPECT_EQ(str_length, source.getPosition());
+    EXPECT_EQ(str_length, source.getSize()); // this should be == getSize().
+
     // Now, let's go backwards. This should cause the EOF to be set to
     // false.
     source.ungetChar();
 
     // Now, EOF should be false.
     EXPECT_FALSE(source.atEOF());
+
+    // But the position shouldn't change.
+    EXPECT_EQ(str_length, source.getPosition());
 
     // This should cause EOF to be set again.
     EXPECT_EQ(InputSource::END_OF_STREAM, source.getChar());
@@ -109,6 +117,7 @@ checkGetAndUngetChar(InputSource& source,
         // Skip one character.
         source.ungetChar();
         EXPECT_EQ(str[index], source.getChar());
+        EXPECT_EQ(index + 1, source.getPosition());
         // Skip the character we received again.
         source.ungetChar();
     }
@@ -147,6 +156,7 @@ TEST_F(InputSourceTest, ungetAll) {
     // Now we are back to where we started.
     EXPECT_EQ(1, source_.getCurrentLine());
     EXPECT_FALSE(source_.atEOF());
+    EXPECT_EQ(0, source_.getPosition());
 }
 
 TEST_F(InputSourceTest, compact) {
@@ -177,6 +187,9 @@ TEST_F(InputSourceTest, compact) {
     // We are still at EOF.
     EXPECT_TRUE(source_.atEOF());
     EXPECT_EQ(4, source_.getCurrentLine());
+
+    // compact shouldn't change the position count.
+    EXPECT_EQ(source_.getSize(), source_.getPosition());
 
     // Skip the EOF.
     source_.ungetChar();
@@ -341,6 +354,12 @@ TEST_F(InputSourceTest, getSize) {
     // Check with input source from file name.  We hardcode the file size
     // for simplicity.  It won't change too often.
     EXPECT_EQ(143, InputSource(TEST_DATA_SRCDIR "/masterload.txt").getSize());
+}
+
+TEST_F(InputSourceTest, getPosition) {
+    // Initially the position is set to 0.
+    EXPECT_EQ(0, source_.getPosition());
+    EXPECT_EQ(0, InputSource(TEST_DATA_SRCDIR "/masterload.txt").getPosition());
 }
 
 } // end namespace

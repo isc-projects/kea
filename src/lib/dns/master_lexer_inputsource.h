@@ -91,8 +91,26 @@ public:
     /// the data available in the stream at the time of the construction of
     /// the source.
     ///
-    /// \throw None.
+    /// \throw None
     size_t getSize() const { return (input_size_); }
+
+    /// \brief Returns the current read position in the input source.
+    ///
+    /// This method returns the position of the character that was last
+    /// retrieved from the source.  Unless some characters have been
+    /// "ungotten" by \c ungetChar() or \c ungetAll(), this value is equal
+    /// to the number of calls to \c getChar() until it reaches the
+    /// END_OF_STREAM.  Note that the position of the first character in
+    /// the source is 1.  At the point of the last character, the return value
+    /// of this method should be equal to that of \c getSize(), and
+    /// recognizing END_OF_STREAM doesn't increase the position.
+    ///
+    /// If \c ungetChar() or \c ungetAll() is called, the position is
+    /// decreased by the number of "ungotten" characters.  So the return
+    /// values may not always monotonically increase.
+    ///
+    /// \throw None
+    size_t getPosition() const { return (total_pos_); }
 
     /// \brief Returns if the input source is at end of file.
     bool atEOF() const {
@@ -153,6 +171,7 @@ private:
 
     std::vector<char> buffer_;
     size_t buffer_pos_;
+    size_t total_pos_;
 
     const std::string name_;
     std::ifstream file_stream_;
