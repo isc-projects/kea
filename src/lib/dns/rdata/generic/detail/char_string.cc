@@ -118,6 +118,15 @@ charStringToString(const CharString& char_string) {
 
 int compareCharStrings(const detail::CharString& self,
                        const detail::CharString& other) {
+    if (self.size() == 0 && other.size() == 0) {
+        return (0);
+    }
+    if (self.size() == 0) {
+        return (-1);
+    }
+    if (other.size() == 0) {
+        return (1);
+    }
     const size_t self_len = self[0];
     const size_t other_len = other[0];
     const size_t cmp_len = std::min(self_len, other_len);
@@ -138,7 +147,7 @@ int compareCharStrings(const detail::CharString& self,
 size_t
 bufferToCharString(isc::util::InputBuffer& buffer, size_t rdata_len,
                    CharString& target) {
-    if (rdata_len < 1 || buffer.getLength() < 1) {
+    if (rdata_len < 1 || buffer.getLength() - buffer.getPosition() < 1) {
         isc_throw(isc::dns::DNSMessageFORMERR,
                   "insufficient data to read character-string length");
     }
@@ -148,9 +157,10 @@ bufferToCharString(isc::util::InputBuffer& buffer, size_t rdata_len,
                   "character string length is too large: " <<
                   static_cast<int>(len));
     }
-    if (buffer.getLength() < len) {
+    if (buffer.getLength() - buffer.getPosition() < len) {
         isc_throw(isc::dns::DNSMessageFORMERR,
-                  "not enough data in buffer to read character-string");
+                  "not enough data in buffer to read character-string of len"
+                  << static_cast<int>(len));
     }
 
     target.resize(len + 1);
