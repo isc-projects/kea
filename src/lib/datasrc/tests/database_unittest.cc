@@ -4211,17 +4211,7 @@ TYPED_TEST(RRsetCollectionTest, iteratorTest) {
     EXPECT_THROW(this->collection->end(), isc::NotImplemented);
 }
 
-class MockRRsetCollectionTest : public DatabaseClientTest<MockAccessor> {
-public:
-    MockRRsetCollectionTest() :
-        DatabaseClientTest<MockAccessor>(),
-        updater(this->client_->getUpdater(this->zname_, false)),
-        collection(updater->getRRsetCollection())
-    {}
-
-    ZoneUpdaterPtr updater;
-    RRsetCollectionPtr collection;
-};
+typedef RRsetCollectionTest<MockAccessor> MockRRsetCollectionTest;
 
 TEST_F(MockRRsetCollectionTest, findError) {
     // A test using the MockAccessor for checking that FindError is
