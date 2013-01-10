@@ -1284,6 +1284,10 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
     if (!pkt4) {
         isc_throw(Unexpected, "failed to create DISCOVER packet");
     }
+
+    // Delete the default Message Type option set by Pkt4
+    pkt4->delOption(DHO_DHCP_MESSAGE_TYPE);
+
     // Set options: DHCP_MESSAGE_TYPE and DHCP_PARAMETER_REQUEST_LIST
     OptionBuffer buf_msg_type;
     buf_msg_type.push_back(DHCPDISCOVER);
@@ -1371,11 +1375,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
                           const dhcp::Pkt4Ptr& offer_pkt4) {
     const uint32_t transid = generateTransid();
     Pkt4Ptr pkt4(new Pkt4(DHCPREQUEST, transid));
-    OptionBuffer buf_msg_type;
-    buf_msg_type.push_back(DHCPREQUEST);
-    OptionPtr opt_msg_type = Option::factory(Option::V4, DHO_DHCP_MESSAGE_TYPE,
-                                             buf_msg_type);
-    pkt4->addOption(opt_msg_type);
+
     // Use first flags indicates that we want to use the server
     // id captured in first packet.
     if (CommandOptions::instance().isUseFirst() &&
