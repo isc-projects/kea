@@ -335,4 +335,61 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
     checkAccessString("Compatible incremental change", dbaccess, config4);
 }
 
+// Check reconfiguration and that elements set to an empty string are omitted.
+TEST_F(DbAccessParserTest, emptyStringOmission) {
+    const char* config1[] = {"type", "memfile",
+                             NULL};
+
+    // Applying config2 will cause a wholesale change.
+    const char* config2[] = {"type",     "mysql",
+                             "host",     "erewhon",
+                             "user",     "kea",
+                             "password", "keapassword",
+                             "name",     "keatest",
+                             NULL};
+
+    // Applying incremental2 should cause a change to config3.
+    const char* incremental2[] = {"user",     "me",
+                                  "password", "",
+                                  "host",     "",
+                                  NULL};
+
+    const char* config3[] = {"type",     "mysql",
+                             "user",     "me",
+                             "name",     "keatest",
+                             NULL};
+
+    DbAccessParser parser("lease-database");
+
+    // First configuration string should cause a representation of that string
+    // to be held.
+    string json_config = toJson(config1);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    EXPECT_NO_THROW(parser.build(json_elements));
+    string dbaccess = parser.getDbAccessString();
+    checkAccessString("Initial configuration", dbaccess, config1);
+
+    // Applying a wholesale change will cause the access string to change
+    // to a representation of the new configuration.
+    json_config = toJson(config2);
+    json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    EXPECT_NO_THROW(parser.build(json_elements));
+    dbaccess = parser.getDbAccessString();
+    checkAccessString("Subsequent configuration", dbaccess, config2);
+
+    // Applying an incremental change will cause the representation to change
+    // incrementally.
+    json_config = toJson(incremental2);
+    json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    EXPECT_NO_THROW(parser.build(json_elements));
+    dbaccess = parser.getDbAccessString();
+    checkAccessString("Incremental configuration", dbaccess, config3);
+}
+
 };  // Anonymous namespace
