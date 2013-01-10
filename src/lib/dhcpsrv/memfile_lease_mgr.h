@@ -15,7 +15,7 @@
 #ifndef MEMFILE_LEASE_MGR_H
 #define MEMFILE_LEASE_MGR_H
 
-#include <dhcpsrv/hwaddr.h>
+#include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease_mgr.h>
 
 #include <boost/multi_index/indexed_by.hpp>
@@ -81,7 +81,7 @@ public:
     /// @param hwaddr hardware address of the client
     ///
     /// @return lease collection
-    virtual Lease4Collection getLease4(const HWAddr& hwaddr) const;
+    virtual Lease4Collection getLease4(const isc::dhcp::HWAddr& hwaddr) const;
 
     /// @brief Returns existing IPv4 leases for specified hardware address
     ///        and a subnet
@@ -226,12 +226,28 @@ protected:
             // IPv6 address that are unique. That particular key is a member
             // of the Lease6 structure, is of type IOAddress and can be accessed
             // by doing &Lease6::addr_
-            boost::multi_index::ordered_unique< 
-                boost::multi_index::member<Lease6, isc::asiolink::IOAddress, &Lease6::addr_> 
+            boost::multi_index::ordered_unique<
+                boost::multi_index::member<Lease, isc::asiolink::IOAddress, &Lease::addr_>
             >
         >
     > Lease6Storage; // Let the whole contraption be called Lease6Storage.
 
+    typedef boost::multi_index_container< // this is a multi-index container...
+    Lease4Ptr, // it will hold shared_ptr to leases6
+        boost::multi_index::indexed_by< // and will be sorted by
+            // IPv6 address that are unique. That particular key is a member
+            // of the Lease6 structure, is of type IOAddress and can be accessed
+            // by doing &Lease6::addr_
+            boost::multi_index::ordered_unique<
+                boost::multi_index::member<Lease, isc::asiolink::IOAddress, &Lease::addr_>
+            >
+        >
+    > Lease4Storage; // Let the whole contraption be called Lease6Storage.
+
+    /// @brief stores IPv4 leases
+    Lease4Storage storage4_;
+
+    /// @brief stores IPv6 leases
     Lease6Storage storage6_;
 };
 
@@ -239,4 +255,3 @@ protected:
 }; // end of isc namespace
 
 #endif // MEMFILE_LEASE_MGR
-

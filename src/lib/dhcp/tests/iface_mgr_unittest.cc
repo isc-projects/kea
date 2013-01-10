@@ -702,11 +702,9 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     sendPkt->setYiaddr(IOAddress("192.0.2.3"));
     sendPkt->setGiaddr(IOAddress("192.0.2.4"));
 
-    // unpack() now checks if mandatory DHCP_MESSAGE_TYPE is present
-    boost::shared_ptr<Option> msgType(new Option(Option::V4,
-           static_cast<uint16_t>(DHO_DHCP_MESSAGE_TYPE)));
-    msgType->setUint8(static_cast<uint8_t>(DHCPDISCOVER));
-    sendPkt->addOption(msgType);
+    // Unpack() now checks if mandatory DHCP_MESSAGE_TYPE is present.
+    // Workarounds (creating DHCP Message Type Option by hand) are no longer
+    // needed as setDhcpType() is called in constructor.
 
     uint8_t sname[] = "That's just a string that will act as SNAME";
     sendPkt->setSname(sname, strlen((const char*)sname));
@@ -744,7 +742,6 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     EXPECT_EQ(sendPkt->getYiaddr(), rcvPkt->getYiaddr());
     EXPECT_EQ(sendPkt->getGiaddr(), rcvPkt->getGiaddr());
     EXPECT_EQ(sendPkt->getTransid(), rcvPkt->getTransid());
-    EXPECT_EQ(sendPkt->getType(), rcvPkt->getType());
     EXPECT_TRUE(sendPkt->getSname() == rcvPkt->getSname());
     EXPECT_TRUE(sendPkt->getFile() == rcvPkt->getFile());
     EXPECT_EQ(sendPkt->getHtype(), rcvPkt->getHtype());

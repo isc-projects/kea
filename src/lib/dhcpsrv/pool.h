@@ -179,6 +179,13 @@ typedef boost::shared_ptr<Pool6> Pool6Ptr;
 /// @brief a container for IPv6 Pools
 typedef std::vector<Pool6Ptr> Pool6Collection;
 
+/// @brief a pointer to either IPv4 or IPv6 Pool
+typedef boost::shared_ptr<Pool> PoolPtr;
+
+/// @brief a container for either IPv4 or IPv6 Pools
+typedef std::vector<PoolPtr> PoolCollection;
+
+
 } // end of isc::dhcp namespace
 } // end of isc namespace
 

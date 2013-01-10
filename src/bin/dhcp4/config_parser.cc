@@ -1114,7 +1114,7 @@ private:
         subnet_.reset(new Subnet4(addr, len, t1, t2, valid));
 
         for (PoolStorage::iterator it = pools_.begin(); it != pools_.end(); ++it) {
-            subnet_->addPool4(*it);
+            subnet_->addPool(*it);
         }
 
         Subnet::OptionContainerPtr options = subnet_->getOptionDescriptors("dhcp4");
