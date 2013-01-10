@@ -52,6 +52,7 @@ void
 checkEmptySource(const MasterLexer& lexer) {
     EXPECT_TRUE(lexer.getSourceName().empty());
     EXPECT_EQ(0, lexer.getSourceLine());
+    EXPECT_EQ(0, lexer.getTotalSourceSize());
 }
 
 TEST_F(MasterLexerTest, preOpen) {
@@ -61,9 +62,11 @@ TEST_F(MasterLexerTest, preOpen) {
 
 TEST_F(MasterLexerTest, pushStream) {
     EXPECT_EQ(0, lexer.getSourceCount());
+    ss << "test";
     lexer.pushSource(ss);
     EXPECT_EQ(expected_stream_name, lexer.getSourceName());
     EXPECT_EQ(1, lexer.getSourceCount());
+    EXPECT_EQ(4, lexer.getTotalSourceSize()); // 4 = len("test")
 
     // From the point of view of this test, we only have to check (though
     // indirectly) getSourceLine calls InputSource::getCurrentLine.  It should
@@ -84,6 +87,10 @@ TEST_F(MasterLexerTest, pushFile) {
     EXPECT_EQ(1, lexer.getSourceCount());
     EXPECT_EQ(TEST_DATA_SRCDIR "/masterload.txt", lexer.getSourceName());
     EXPECT_EQ(1, lexer.getSourceLine());
+
+    // 143 = size of the test zone file.  hardcode it assuming it won't change
+    // too often.
+    EXPECT_EQ(143, lexer.getTotalSourceSize());
 
     lexer.popSource();
     checkEmptySource(lexer);
@@ -116,16 +123,19 @@ TEST_F(MasterLexerTest, pushFileFail) {
 }
 
 TEST_F(MasterLexerTest, nestedPush) {
+    ss << "test";
     lexer.pushSource(ss);
     EXPECT_EQ(expected_stream_name, lexer.getSourceName());
 
     // We can push another source without popping the previous one.
     lexer.pushSource(TEST_DATA_SRCDIR "/masterload.txt");
     EXPECT_EQ(TEST_DATA_SRCDIR "/masterload.txt", lexer.getSourceName());
+    EXPECT_EQ(143 + 4, lexer.getTotalSourceSize()); // see above for magic nums
 
     // popSource() works on the "topmost" (last-pushed) source
     lexer.popSource();
     EXPECT_EQ(expected_stream_name, lexer.getSourceName());
+    EXPECT_EQ(4, lexer.getTotalSourceSize());
 
     lexer.popSource();
     EXPECT_TRUE(lexer.getSourceName().empty());
