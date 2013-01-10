@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <dhcp6/dbaccess_parser.h>
+#include <dhcpsrv/dbaccess_parser.h>
 
 #include <boost/foreach.hpp>
 
@@ -34,7 +34,6 @@ typedef pair<string, string> StringPair;
 // Parse the configuration and check that the various keywords are consistent.
 void
 DbAccessParser::build(isc::data::ConstElementPtr config_value) {
-    const ConfigPairMap& config_map = config_value->mapValue();
 
     // To cope with incremental updates, the strategy is:
     // 1. Take a copy of the stored keyword/value pairs.
