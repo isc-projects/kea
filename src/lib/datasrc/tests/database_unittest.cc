@@ -28,7 +28,6 @@
 #include <datasrc/data_source.h>
 #include <datasrc/iterator.h>
 #include <datasrc/sqlite3_accessor.h>
-#include <datasrc/rrset_collection.h>
 
 #include <testutils/dnsmessage_test.h>
 
