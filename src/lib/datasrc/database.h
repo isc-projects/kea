@@ -1401,7 +1401,9 @@ public:
     /// does not, creates it, commits, and returns true. If the zone
     /// does exist already, it does nothing (except abort the transaction)
     /// and returns false.
-    virtual bool createZone(const isc::dns::Name& name);
+    virtual bool createZone(const isc::dns::Name& zone_name);
+
+    virtual bool deleteZone(const isc::dns::Name& zone_name);
 
     /// \brief Get the zone iterator
     ///

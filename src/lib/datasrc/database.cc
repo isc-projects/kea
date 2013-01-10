@@ -117,13 +117,25 @@ DatabaseClient::findZone(const Name& name) const {
 }
 
 bool
-DatabaseClient::createZone(const Name& name) {
+DatabaseClient::createZone(const Name& zone_name) {
     TransactionHolder transaction(*accessor_);
-    std::pair<bool, int> zone(accessor_->getZone(name.toText()));
+    const std::pair<bool, int> zone(accessor_->getZone(zone_name.toText()));
     if (zone.first) {
         return (false);
     }
-    accessor_->addZone(name.toText());
+    accessor_->addZone(zone_name.toText());
+    transaction.commit();
+    return (true);
+}
+
+bool
+DatabaseClient::deleteZone(const Name& zone_name) {
+    TransactionHolder transaction(*accessor_);
+    const std::pair<bool, int> zinfo(accessor_->getZone(zone_name.toText()));
+    if (!zinfo.first) {         // if it doesn't exist just return false
+        return (false);
+    }
+    accessor_->deleteZone(zinfo.second);
     transaction.commit();
     return (true);
 }
