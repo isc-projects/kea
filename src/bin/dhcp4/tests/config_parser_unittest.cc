@@ -523,7 +523,7 @@ TEST_F(Dhcp4ParserTest, optionDefRecord) {
     EXPECT_EQ(100, def->getCode());
     EXPECT_EQ(OPT_RECORD_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
-    
+
     // The option comprises the record of data fields. Verify that all
     // fields are present and they are of the expected types.
     const OptionDefinition::RecordFieldsCollection& record_fields =
@@ -916,7 +916,7 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
         "}";
 
     ConstElementPtr status;
-   
+
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));

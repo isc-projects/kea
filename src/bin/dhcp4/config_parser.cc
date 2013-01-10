@@ -593,12 +593,6 @@ private:
 /// and data carried by the option. If parsing is successful then an
 /// instance of an option is created and added to the storage provided
 /// by the calling class.
-///
-/// @todo This class parses and validates the option name. However it is
-/// not used anywhere until support for option spaces is implemented
-/// (see tickets #2319, #2314). When option spaces are implemented
-/// there will be a way to reference the particular option using
-/// its type (code) or option name.
 class OptionDataParser : public DhcpConfigParser {
 public:
 
@@ -626,7 +620,6 @@ public:
     /// the configuration.
     /// @throw isc::InvalidOperation if failed to set storage prior to
     /// calling build.
-    /// @throw isc::BadValue if option data storage is invalid.
     virtual void build(ConstElementPtr option_data_entries) {
         if (options_ == NULL) {
             isc_throw(isc::InvalidOperation, "Parser logic error: storage must be set before "
@@ -1019,7 +1012,7 @@ public:
             } else {
                 isc_throw(DhcpConfigError, "invalid parameter: " << entry);
             }
-            
+
             parser->build(param.second);
             parser->commit();
         }
@@ -1119,7 +1112,7 @@ private:
 
     /// Instance of option definition being created by this parser.
     OptionDefinitionPtr option_definition_;
-
+    /// Name of the space the option definition belongs to.
     std::string option_space_name_;
 
     /// Pointer to a storage where the option definition will be
@@ -1178,7 +1171,7 @@ public:
         }
     }
 
-    /// @brief Stores option definitions in the provided storage.
+    /// @brief Stores option definitions in the CfgMgr.
     void commit() {
 
         CfgMgr& cfg_mgr = CfgMgr::instance();
@@ -1207,11 +1200,6 @@ public:
         return (new OptionDefListParser(param_name));
     }
 
-private:
-
-    /// Temporary storage for option definitions. It holds option
-    /// definitions before \ref commit is called.
-    //    OptionDefStorage option_defs_local_;
 };
 
 /// @brief this class parses a single subnet
@@ -1375,10 +1363,6 @@ private:
             subnet_->addPool4(*it);
         }
 
-        // We have to get all option space names for options we are
-        // configuring and iterate over them to add options that belong
-        // to them to the subnet.
-
         // We are going to move configured options to the Subnet object.
         // Configured options reside in the container where options
         // are grouped by space names. Thus we need to get all space names
@@ -1452,13 +1436,13 @@ private:
             // return new DebugParser(config_id);
 
             isc_throw(NotImplemented,
-                      "Parser error: Subnet4 parameter not supported: "
+                      "parser error: Subnet4 parameter not supported: "
                       << config_id);
         }
         return (f->second(config_id));
     }
 
-    /// @brief returns value for a given parameter (after using inheritance)
+    /// @brief Returns value for a given parameter (after using inheritance)
     ///
     /// This method implements inheritance. For a given parameter name, it first
     /// checks if there is a global value for it and overwrites it with specific
