@@ -1423,7 +1423,7 @@ public:
             // etc. are returned by the ZoneFinder.
             //
             // Note that in the case that the queried type itself is
-            // CNAME, then the finder will return SUCCESS.
+            // CNAME or DNAME, then the finder will return SUCCESS.
             if (result->code == ZoneFinder::SUCCESS) {
                 return (result->rrset);
             } else {
