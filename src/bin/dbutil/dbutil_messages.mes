@@ -53,7 +53,7 @@ inconsistent state, and it is advised to restore it from the backup that was
 created when b10-dbutil started.
 
 % DBUTIL_EXECUTE Executing SQL statement: %1
-Debug message; the given SQL statement is executed
+Debug message; the given SQL statement is executed.
 
 % DBUTIL_FILE Database file: %1
 The database file that is being checked.
@@ -67,7 +67,7 @@ The given database statement failed to execute. The error is shown in the
 message.
 
 % DBUTIL_TOO_MANY_ARGUMENTS too many arguments to the command, maximum of one expected
-There were too many command-line arguments to b10-dbutil
+There were too many command-line arguments to b10-dbutil.
 
 % DBUTIL_UPGRADE_CANCELED upgrade canceled; database has not been changed
 The user aborted the upgrade, and b10-dbutil will now exit.
@@ -95,7 +95,7 @@ again.
 
 % DBUTIL_UPGRADE_PREPARATION_FAILED upgrade preparation failed: %1
 An unexpected error occurred while b10-dbutil was preparing to upgrade the
-database schema. The error is shown in the message
+database schema. The error is shown in the message.
 
 % DBUTIL_UPGRADE_SUCCESFUL database upgrade successfully completed
 The database schema update was completed successfully.

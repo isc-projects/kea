@@ -384,16 +384,22 @@ public:
     /// \brief Convert a textual representation of an RR type to the
     /// corresponding 16-bit integer code.
     ///
-    /// This method searches the \c RRParamRegistry for the mapping from the
-    /// given textual representation of RR type to the corresponding integer
-    /// code.  If a mapping is found, it returns the associated type code;
-    /// otherwise, if the given string is in the form of "TYPEnnnn", it returns
-    /// the corresponding number as the type code; otherwise, it throws an
-    /// exception of class \c InvalidRRType.
+    /// This method searches the \c RRParamRegistry for the mapping from
+    /// the given textual representation of RR type to the corresponding
+    /// integer code. If a mapping is found, it returns true with the
+    /// associated type code in \c type_code; otherwise, if the given
+    /// string is in the form of "TYPEnnnn", it returns true with the
+    /// corresponding number as the type code in \c type_code;
+    /// otherwise, it returns false and \c type_code is untouched.
+    ///
+    /// It returns \c false and avoids throwing an exception in the case
+    /// of an error to avoid the exception overhead in some situations.
     ///
     /// \param type_string The textual representation of the RR type.
-    /// \return The RR type code for \c type_string.
-    uint16_t textToTypeCode(const std::string& type_string) const;
+    /// \param type_code Returns the RR type code in this argument.
+    /// \return true if conversion is successful, false otherwise.
+    bool textToTypeCode(const std::string& type_string,
+                        uint16_t& type_code) const;
 
     /// \brief Convert type code into its textual representation.
     ///
@@ -415,16 +421,23 @@ public:
     /// \brief Convert a textual representation of an RR class to the
     /// corresponding 16-bit integer code.
     ///
-    /// This method searches the \c RRParamRegistry for the mapping from the
-    /// given textual representation of RR class to the corresponding integer
-    /// code.  If a mapping is found, it returns the associated class code;
-    /// otherwise, if the given string is in the form of "CLASSnnnn", it returns
-    /// the corresponding number as the class code; otherwise, it throws an
-    /// exception of class \c InvalidRRClass.
+    /// This method searches the \c RRParamRegistry for the mapping from
+    /// the given textual representation of RR class to the
+    /// corresponding integer code.  If a mapping is found, it returns
+    /// true with the associated class code in \c class_code; otherwise,
+    /// if the given string is in the form of "CLASSnnnn", it returns
+    /// true with the corresponding number as the class code in
+    /// \c class_code; otherwise, it returns false and \c class_code is
+    /// untouched.
+    ///
+    /// It returns \c false and avoids throwing an exception in the case
+    /// of an error to avoid the exception overhead in some situations.
     ///
     /// \param class_string The textual representation of the RR class.
-    /// \return The RR class code for \c class_string.
-    uint16_t textToClassCode(const std::string& class_string) const;
+    /// \param class_code Returns the RR class code in this argument.
+    /// \return true if conversion is successful, false otherwise.
+    bool textToClassCode(const std::string& class_string,
+                         uint16_t& class_code) const;
 
     /// \brief Convert class code into its textual representation.
     ///

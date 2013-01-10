@@ -177,8 +177,14 @@ class BaseComponent:
             self._start_internal()
         except Exception as e:
             logger.error(BIND10_COMPONENT_START_EXCEPTION, self.name(), e)
-            self.failed(None)
-            raise
+            try:
+                self.failed(None)
+            finally:
+                # Even failed() can fail if this happens during initial startup
+                # time.  In that case we'd rather propagate the original reason
+                # for the failure than the fact that failed() failed.  So we
+                # always re-raise the original exception.
+                raise e
 
     def stop(self):
         """

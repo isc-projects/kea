@@ -30,8 +30,11 @@ using namespace isc::util;
 namespace isc {
 namespace dns {
 
-RRClass::RRClass(const std::string& classstr) {
-    classcode_ = RRParamRegistry::getRegistry().textToClassCode(classstr);
+RRClass::RRClass(const std::string& class_str) {
+    if (!RRParamRegistry::getRegistry().textToClassCode(class_str, classcode_)) {
+        isc_throw(InvalidRRClass,
+                  "Unrecognized RR class string: " + class_str);
+    }
 }
 
 RRClass::RRClass(InputBuffer& buffer) {
@@ -54,6 +57,16 @@ RRClass::toWire(OutputBuffer& buffer) const {
 void
 RRClass::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint16(classcode_);
+}
+
+MaybeRRClass
+RRClass::createFromText(const string& class_str) {
+    uint16_t class_code;
+    if (RRParamRegistry::getRegistry().textToClassCode(class_str,
+                                                       class_code)) {
+        return (MaybeRRClass(class_code));
+    }
+    return (MaybeRRClass());
 }
 
 ostream&

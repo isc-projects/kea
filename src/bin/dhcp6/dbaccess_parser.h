@@ -16,7 +16,7 @@
 #define DBACCESS_PARSER_H
 
 #include <cc/data.h>
-#include <dhcp6/config_parser.h>
+#include <dhcpsrv/dhcp_config_parser.h>
 #include <exceptions/exceptions.h>
 
 #include <string>

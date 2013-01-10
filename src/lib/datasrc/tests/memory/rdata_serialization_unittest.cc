@@ -409,6 +409,7 @@ public:
         reader.nextSig();
         reader.rewind();
         // Do the actual rendering
+        // cppcheck-suppress unreadVariable
         current = &renderer;
         reader.iterate();
         renderer.writeName(dummyName2());
@@ -484,6 +485,8 @@ public:
         current = NULL;
         reader.iterateAllSigs();
         // Now return the renderer and render the rest of the data
+        // cppcheck-suppress redundantAssignment
+        // cppcheck-suppress unreadVariable
         current = &renderer;
         reader.iterate();
         // Now, this should not break anything and should be valid, but should

@@ -154,7 +154,7 @@ The boss module received the given signal.
 % BIND10_RESTART_COMPONENT_SKIPPED Skipped restarting a component %1
 The boss module tried to restart a component after it failed (crashed)
 unexpectedly, but the boss then found that the component had been removed
-from its local configuration of components to run.  This is an unusal
+from its local configuration of components to run.  This is an unusual
 situation but can happen if the administrator removes the component from
 the configuration after the component's crash and before the restart time.
 The boss module simply skipped restarting that module, and the whole system
@@ -262,7 +262,7 @@ indicated OS API function with given error.
 The boss forwards a request for a socket to the socket creator.
 
 % BIND10_STARTED_CC started configuration/command session
-Debug message given when BIND 10 has successfull started the object that
+Debug message given when BIND 10 has successfully started the object that
 handles configuration and commands.
 
 % BIND10_STARTED_PROCESS started %1
@@ -307,13 +307,6 @@ of sequence.
 During the startup process, a number of messages are exchanged between the
 Boss process and the processes it starts.  This error is output when a
 message received by the Boss process is not recognised.
-
-% BIND10_START_AS_NON_ROOT_RESOLVER starting b10-resolver as a user, not root. This might fail.
-The resolver is being started or restarted without root privileges.
-If the module needs these privileges, it may have problems starting.
-Note that this issue should be resolved by the pending 'socket-creator'
-process; once that has been implemented, modules should not need root
-privileges anymore. See tickets #800 and #801 for more information.
 
 % BIND10_STOP_PROCESS asking %1 to shut down
 The boss module is sending a shutdown command to the given module over
