@@ -459,6 +459,34 @@ public:
     /// \throw None
     size_t getTotalSourceSize() const;
 
+    /// \brief Return the position of lexer in the currently pushed sources.
+    ///
+    /// This method returns the position in terms of the number of recognized
+    /// characters from all sources.  Roughly speaking, the position in a
+    /// single source is the offset from the beginning of the file or stream
+    /// to the current "read cursor" of the lexer, and the return value of
+    /// this method is the sum of the position in all the pushed sources.
+    ///
+    /// If the lexer reaches the end for each of all the pushed sources,
+    /// the return value should be equal to that of \c getTotalSourceSize().
+    ///
+    /// If there is no source pushed in the lexer, it returns 0.
+    ///
+    /// The return values of this method and \c getTotalSourceSize() would
+    /// give the caller an idea of the progress of the lexer at the time of
+    /// the call.  Note, however, that since it's not predictable whether
+    /// more sources will be pushed after the call, the progress determined
+    /// this way may not make much sense; it can only give an informational
+    /// hint of the progress.
+    ///
+    /// Note also that if a source is pushed, this method will normally return
+    /// a smaller number by definition.  Likewise, the conceptual "read
+    /// cursor" would move backward after a call to \c ungetToken(), in which
+    /// case this method will return a smaller value, too.
+    ///
+    /// \throw None
+    size_t getPosition() const;
+
     /// \brief Parse and return another token from the input.
     ///
     /// It reads a bit of the last opened source and produces another token

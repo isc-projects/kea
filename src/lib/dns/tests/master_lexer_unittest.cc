@@ -53,6 +53,7 @@ checkEmptySource(const MasterLexer& lexer) {
     EXPECT_TRUE(lexer.getSourceName().empty());
     EXPECT_EQ(0, lexer.getSourceLine());
     EXPECT_EQ(0, lexer.getTotalSourceSize());
+    EXPECT_EQ(0, lexer.getPosition());
 }
 
 TEST_F(MasterLexerTest, preOpen) {
@@ -151,25 +152,31 @@ TEST_F(MasterLexerTest, noSource) {
     EXPECT_THROW(lexer.getNextToken(), isc::InvalidOperation);
 }
 
-// Test getting some tokens
+// Test getting some tokens.  It also check basic behavior of getPosition().
 TEST_F(MasterLexerTest, getNextToken) {
     ss << "\n   \n\"STRING\"\n";
     lexer.pushSource(ss);
 
     // First, the newline should get out.
     EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
+    EXPECT_EQ(1, lexer.getPosition());
     // Then the whitespace, if we specify the option.
     EXPECT_EQ(MasterToken::INITIAL_WS,
               lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
+    EXPECT_EQ(2, lexer.getPosition());
     // The newline
     EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
+    EXPECT_EQ(5, lexer.getPosition()); // 1st \n + 3 spaces, then 2nd \n
     // The (quoted) string
     EXPECT_EQ(MasterToken::QSTRING,
               lexer.getNextToken(MasterLexer::QSTRING).getType());
+    EXPECT_EQ(5 + 8, lexer.getPosition()); // 8 = len("STRING') + quotes
 
     // And the end of line and file
     EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
+    EXPECT_EQ(5 + 8 + 1, lexer.getPosition()); // previous + 3rd \n
     EXPECT_EQ(MasterToken::END_OF_FILE, lexer.getNextToken().getType());
+    EXPECT_EQ(5 + 8 + 1, lexer.getPosition()); // position doesn't change
 }
 
 // Test we correctly find end of file.
@@ -214,20 +221,25 @@ TEST_F(MasterLexerTest, getUnbalancedString) {
     EXPECT_EQ(MasterToken::END_OF_FILE, lexer.getNextToken().getType());
 }
 
-// Test ungetting tokens works
+// Test ungetting tokens works.  Also check getPosition() is adjusted
 TEST_F(MasterLexerTest, ungetToken) {
     ss << "\n (\"string\"\n) more";
     lexer.pushSource(ss);
 
     // Try getting the newline
     EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
+    EXPECT_EQ(1, lexer.getPosition());
     // Return it and get again
     lexer.ungetToken();
+    EXPECT_EQ(0, lexer.getPosition());
     EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
+    EXPECT_EQ(1, lexer.getPosition());
     // Get the string and return it back
     EXPECT_EQ(MasterToken::QSTRING,
               lexer.getNextToken(MasterLexer::QSTRING).getType());
+    EXPECT_EQ(string("\n (\"string\"").size(), lexer.getPosition());
     lexer.ungetToken();
+    EXPECT_EQ(1, lexer.getPosition()); // back to just after 1st \n
     // But if we change the options, it honors them
     EXPECT_EQ(MasterToken::INITIAL_WS,
               lexer.getNextToken(MasterLexer::QSTRING |
@@ -263,7 +275,8 @@ TEST_F(MasterLexerTest, ungetRealOptions) {
 }
 
 // Check the initial whitespace is found even in the first line of included
-// file
+// file.  It also confirms getPosition() works for multiple sources, each
+// of which is partially parsed.
 TEST_F(MasterLexerTest, includeAndInitialWS) {
     ss << "    \n";
     lexer.pushSource(ss);
@@ -273,9 +286,11 @@ TEST_F(MasterLexerTest, includeAndInitialWS) {
 
     EXPECT_EQ(MasterToken::INITIAL_WS,
               lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
+    EXPECT_EQ(1, lexer.getPosition());
     lexer.pushSource(ss2);
     EXPECT_EQ(MasterToken::INITIAL_WS,
               lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
+    EXPECT_EQ(2, lexer.getPosition()); // should be sum of position positions.
 }
 
 // Test only one token can be ungotten
