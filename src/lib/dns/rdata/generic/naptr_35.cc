@@ -37,7 +37,7 @@ public:
     NAPTRImpl() : replacement(".") {}
 
     NAPTRImpl(InputBuffer& buffer, size_t rdata_len) : replacement(".") {
-        if (rdata_len < 4 || buffer.getLength() < 4) {
+        if (rdata_len < 4 || buffer.getLength() - buffer.getPosition() < 4) {
             isc_throw(isc::dns::DNSMessageFORMERR, "Error in parsing "
                       "NAPTR RDATA wire format: insufficient length ");
         }
