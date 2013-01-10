@@ -4242,10 +4242,11 @@ TYPED_TEST(RRsetCollectionTest, find) {
     // Is this correct behavior?
     EXPECT_FALSE(rrset);
 
-    // With the FIND_GLUE_OK passed to ZoneFinder's find(),
-    // "delegation.example.org." with type NS should return the NS
-    // record. Without FIND_GLUE_OK, ZoneFinder's find() would return
-    // DELEGATION and the find() below would return nothing.
+    // With the FIND_GLUE_OK option passed to ZoneFinder's find(),
+    // searching for "delegation.example.org." with type NS should
+    // return the NS record. Without FIND_GLUE_OK, ZoneFinder's find()
+    // would return DELEGATION and the find() below would return
+    // nothing.
     rrset = this->collection->find(Name("delegation.example.org"),
                                    this->qclass_, RRType::NS());
     ASSERT_TRUE(rrset);
