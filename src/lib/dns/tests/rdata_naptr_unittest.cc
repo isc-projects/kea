@@ -199,16 +199,27 @@ TEST_F(Rdata_NAPTR_Test, compare) {
     NAPTR naptr_large5(naptr_str_large5);
 
     EXPECT_EQ(0, naptr.compare(NAPTR(naptr_str)));
-    EXPECT_EQ(1, naptr.compare(NAPTR(naptr_str_small1)));
-    EXPECT_EQ(1, naptr.compare(NAPTR(naptr_str_small2)));
-    EXPECT_EQ(1, naptr.compare(NAPTR(naptr_str_small3)));
-    EXPECT_EQ(1, naptr.compare(NAPTR(naptr_str_small4)));
-    EXPECT_EQ(1, naptr.compare(NAPTR(naptr_str_small5)));
-    EXPECT_EQ(-1, naptr.compare(NAPTR(naptr_str_large1)));
-    EXPECT_EQ(-1, naptr.compare(NAPTR(naptr_str_large2)));
-    EXPECT_EQ(-1, naptr.compare(NAPTR(naptr_str_large3)));
-    EXPECT_EQ(-1, naptr.compare(NAPTR(naptr_str_large4)));
-    EXPECT_EQ(-1, naptr.compare(NAPTR(naptr_str_large5)));
+    EXPECT_EQ(1, naptr.compare(naptr_small1));
+    EXPECT_EQ(1, naptr.compare(naptr_small2));
+    EXPECT_EQ(1, naptr.compare(naptr_small3));
+    EXPECT_EQ(1, naptr.compare(naptr_small4));
+    EXPECT_EQ(1, naptr.compare(naptr_small5));
+    EXPECT_EQ(-1, naptr.compare(naptr_large1));
+    EXPECT_EQ(-1, naptr.compare(naptr_large2));
+    EXPECT_EQ(-1, naptr.compare(naptr_large3));
+    EXPECT_EQ(-1, naptr.compare(naptr_large4));
+    EXPECT_EQ(-1, naptr.compare(naptr_large5));
+    EXPECT_EQ(-1, naptr_small1.compare(naptr));
+    EXPECT_EQ(-1, naptr_small2.compare(naptr));
+    EXPECT_EQ(-1, naptr_small3.compare(naptr));
+    EXPECT_EQ(-1, naptr_small4.compare(naptr));
+    EXPECT_EQ(-1, naptr_small5.compare(naptr));
+    EXPECT_EQ(1, naptr_large1.compare(naptr));
+    EXPECT_EQ(1, naptr_large2.compare(naptr));
+    EXPECT_EQ(1, naptr_large3.compare(naptr));
+    EXPECT_EQ(1, naptr_large4.compare(naptr));
+    EXPECT_EQ(1, naptr_large5.compare(naptr));
+
 }
 
 }

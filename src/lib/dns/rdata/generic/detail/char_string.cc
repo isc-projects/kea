@@ -14,9 +14,11 @@
 
 #include <exceptions/exceptions.h>
 
+#include <dns/exceptions.h>
 #include <dns/rdata.h>
 #include <dns/master_lexer.h>
 #include <dns/rdata/generic/detail/char_string.h>
+#include <util/buffer.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -112,6 +114,50 @@ charStringToString(const CharString& char_string) {
     }
 
     return (s);
+}
+
+int compareCharStrings(const detail::CharString& self,
+                       const detail::CharString& other) {
+    const size_t self_len = self[0];
+    const size_t other_len = other[0];
+    const size_t cmp_len = std::min(self_len, other_len);
+    const int cmp = memcmp(&self[1], &other[1], cmp_len);
+    if (cmp < 0) {
+        return (-1);
+    } else if (cmp > 0) {
+        return (1);
+    } else if (self_len < other_len) {
+        return (-1);
+    } else if (self_len > other_len) {
+        return (1);
+    } else {
+        return (0);
+    }
+}
+
+size_t
+bufferToCharString(isc::util::InputBuffer& buffer, size_t rdata_len,
+                   CharString& target) {
+    if (rdata_len < 1 || buffer.getLength() < 1) {
+        isc_throw(isc::dns::DNSMessageFORMERR,
+                  "insufficient data to read character-string length");
+    }
+    const uint8_t len = buffer.readUint8();
+    if (rdata_len < len + 1) {
+        isc_throw(isc::dns::DNSMessageFORMERR,
+                  "character string length is too large: " <<
+                  static_cast<int>(len));
+    }
+    if (buffer.getLength() < len) {
+        isc_throw(isc::dns::DNSMessageFORMERR,
+                  "not enough data in buffer to read character-string");
+    }
+
+    target.resize(len + 1);
+    target[0] = len;
+    buffer.readData(&target[0] + 1, len);
+
+    return (len + 1);
 }
 
 } // end of detail

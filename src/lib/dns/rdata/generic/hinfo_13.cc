@@ -35,67 +35,6 @@ using namespace isc::dns;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-// helper(s)
-namespace {
-
-/// \brief Reads one text field from the given buffer into the given CharString
-///
-/// \return The number of bytes read
-size_t
-readTextField(detail::CharString& target, InputBuffer& buffer,
-              size_t rdata_len) {
-    if (rdata_len < 1 || buffer.getLength() < 1) {
-        isc_throw(isc::dns::DNSMessageFORMERR, "Error in parsing "
-                  "HINFO RDATA: insufficient data");
-    }
-    const uint8_t len = buffer.readUint8();
-    if (rdata_len < len + 1) {
-        isc_throw(isc::dns::DNSMessageFORMERR, "Error in parsing "
-                  "HINFO RDATA: character string length is too large: " <<
-                  static_cast<int>(len));
-    }
-    if (buffer.getLength() < len) {
-        isc_throw(isc::dns::DNSMessageFORMERR, "Error in parsing "
-                  "HINFO RDATA: not enough data in buffer to read: " <<
-                  static_cast<int>(len) << " bytes");
-    }
-
-    target.resize(len + 1);
-    target[0] = len;
-    buffer.readData(&target[0] + 1, len);
-
-    return (len + 1);
-}
-
-/// \brief Compare one CharString field to another
-///
-/// \param self The CharString field to compare
-/// \param other The CharString field to compare to
-///
-/// \return -1 if \c self would be sorted before \c other
-///          1 if \c self would be sorted after \c other
-///          0 if \c self and \c other are equal
-int compareField(const detail::CharString& self,
-                 const detail::CharString& other) {
-    const size_t self_len = self[0];
-    const size_t other_len = other[0];
-    const size_t cmp_len = min(self_len, other_len);
-    const int cmp = memcmp(&self[1], &other[1], cmp_len);
-    if (cmp < 0) {
-        return (-1);
-    } else if (cmp > 0) {
-        return (1);
-    } else if (self_len < other_len) {
-        return (-1);
-    } else if (self_len > other_len) {
-        return (1);
-    } else {
-        return (0);
-    }
-}
-
-} // end unnamed namespace
-
 class HINFOImpl {
 public:
     HINFOImpl(const std::string& hinfo_str) {
@@ -118,8 +57,8 @@ public:
     }
 
     HINFOImpl(InputBuffer& buffer, size_t rdata_len) {
-        rdata_len -= readTextField(cpu, buffer, rdata_len);
-        rdata_len -= readTextField(os, buffer, rdata_len);
+        rdata_len -= detail::bufferToCharString(buffer, rdata_len, cpu);
+        rdata_len -= detail::bufferToCharString(buffer, rdata_len, os);
         if (rdata_len != 0) {
             isc_throw(isc::dns::DNSMessageFORMERR, "Error in parsing " <<
                       "HINFO RDATA: bytes left at end: " <<
@@ -193,11 +132,11 @@ int
 HINFO::compare(const Rdata& other) const {
     const HINFO& other_hinfo = dynamic_cast<const HINFO&>(other);
 
-    const int cmp = compareField(impl_->cpu, other_hinfo.impl_->cpu);
+    const int cmp = compareCharStrings(impl_->cpu, other_hinfo.impl_->cpu);
     if (cmp != 0) {
         return (cmp);
     }
-    return (compareField(impl_->os, other_hinfo.impl_->os));
+    return (compareCharStrings(impl_->os, other_hinfo.impl_->os));
 }
 
 const std::string
