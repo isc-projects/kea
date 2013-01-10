@@ -4164,15 +4164,14 @@ TYPED_TEST(DatabaseClientTest, createZoneRollbackOnLocked) {
 }
 
 TYPED_TEST(DatabaseClientTest, createZoneRollbackOnExists) {
-    // skip test for mock (it requires multiple transactions)
-    if (this->is_mock_) {
-        return;
-    }
-
     const Name new_name("example.com");
     ASSERT_FALSE(this->client_->createZone(this->zname_));
-    // createZone started a transaction, but since it failed,
-    // it should have been rolled back, and the next attempt should succeed
+
+    // deleteZone started a transaction, but since the zone didn't even exist
+    // the transaction was not committed but should have been rolled back.
+    // The first transaction shouldn't leave any state, lock, etc, that
+    // would hinder the second attempt.
+    this->allowMoreTransaction(true);
     ASSERT_TRUE(this->client_->createZone(new_name));
 }
 
@@ -4180,14 +4179,14 @@ TYPED_TEST(DatabaseClientTest, deleteZone) {
     // Check the zone currently exists.
     EXPECT_EQ(result::SUCCESS, this->client_->findZone(this->zname_).code);
 
-    // Deleting an existing zone; it should work and return false (not
-    // previously existent)
+    // Deleting an existing zone; it should work and return true (previously
+    // existed and is now deleted)
     EXPECT_TRUE(this->client_->deleteZone(this->zname_));
 
     // Now it's not found by findZone
     EXPECT_EQ(result::NOTFOUND, this->client_->findZone(this->zname_).code);
 
-    // And the second call should return false since it now exists
+    // And the second call should return false since it doesn't exist any more
     this->allowMoreTransaction(true);
     EXPECT_FALSE(this->client_->deleteZone(this->zname_));
 }
@@ -4213,8 +4212,10 @@ TYPED_TEST(DatabaseClientTest, deleteZoneRollbackOnNotFind) {
     const Name new_name("example.com");
     EXPECT_FALSE(this->client_->deleteZone(new_name));
 
-    // deleteZone started a transaction, but since it failed,
-    // it should have been rolled back, and the next attempt should succeed
+    // deleteZone started a transaction, but since the zone didn't even exist
+    // the transaction was not committed but should have been rolled back.
+    // The first transaction shouldn't leave any state, lock, etc, that
+    // would hinder the second attempt.
     this->allowMoreTransaction(true);
     EXPECT_TRUE(this->client_->deleteZone(this->zname_));
 }
