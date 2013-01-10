@@ -77,10 +77,10 @@ typedef OptionSpaceContainer<OptionDefContainer,
 /// no subnet object created yet to store them.
 typedef std::vector<Pool4Ptr> PoolStorage;
 
-/// @brief Collection of option descriptors. This container allows searching for
-/// options using the option code or persistency flag. This is useful when merging
-/// existing options with newly configured options.
-typedef Subnet::OptionContainer OptionStorage;
+/// Collection of containers holding option spaces. Each container within
+/// a particular option space holds so-called option descriptors.
+typedef OptionSpaceContainer<Subnet::OptionContainer,
+                             Subnet::OptionDescriptor> OptionStorage;
 
 /// @brief Global uint32 parameters that will be used as defaults.
 Uint32Storage uint32_defaults;
@@ -690,7 +690,9 @@ public:
                       " thus there is nothing to commit. Has build() been called?");
         }
         uint16_t opt_type = option_descriptor_.option->getType();
-        Subnet::OptionContainerTypeIndex& idx = options_->get<1>();
+        Subnet::OptionContainerPtr options = options_->getItems(option_space_);
+        assert(options);
+        Subnet::OptionContainerTypeIndex& idx = options->get<1>();
         // Try to find options with the particular option code in the main
         // storage. If found, remove these options because they will be
         // replaced with new one.
@@ -700,7 +702,7 @@ public:
             idx.erase(range.first, range.second);
         }
         // Append new option to the main storage.
-        options_->push_back(option_descriptor_);
+        options_->addItem(option_descriptor_, option_space_);
     }
 
     /// @brief Set storage for the parser.
@@ -852,6 +854,8 @@ private:
                           << ex.what());
             }
         }
+        // All went good, so we can set the option space name.
+        option_space_ = option_space;
     }
 
     /// Storage for uint32 values (e.g. option code).
@@ -865,6 +869,8 @@ private:
     OptionStorage* options_;
     /// Option descriptor holds newly configured option.
     Subnet::OptionDescriptor option_descriptor_;
+    /// Option space name where the option belongs to.
+    std::string option_space_;
 };
 
 /// @brief Parser for option data values within a subnet.
@@ -1354,14 +1360,21 @@ private:
         Subnet::OptionContainerPtr options = subnet_->getOptionDescriptors("dhcp4");
         const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
 
-        // Add subnet specific options.
-        BOOST_FOREACH(Subnet::OptionDescriptor desc, options_) {
-            Subnet::OptionContainerTypeRange range = idx.equal_range(desc.option->getType());
-            if (std::distance(range.first, range.second) > 0) {
-                LOG_WARN(dhcp4_logger, DHCP4_CONFIG_OPTION_DUPLICATE)
-                    .arg(desc.option->getType()).arg(addr.toText());
+        // We have to get all option space names for options we are
+        // configuring and iterate over them to add options that belong
+        // to them to the subnet.
+        BOOST_FOREACH(std::string option_space, options_.getOptionSpaceNames()) {
+            BOOST_FOREACH(Subnet::OptionDescriptor desc, *options_.getItems(option_space)) {
+                assert(desc.option);
+                Subnet::OptionDescriptor existing_desc =
+                    subnet_->getOptionDescriptor("option_space",
+                                                 desc.option->getType());
+                if (existing_desc.option) {
+                    LOG_WARN(dhcp4_logger, DHCP4_CONFIG_OPTION_DUPLICATE)
+                        .arg(desc.option->getType()).arg(addr.toText());
+                }
+                subnet_->addOption(desc.option, false, option_space);
             }
-            subnet_->addOption(desc.option, false, "dhcp4");
         }
 
         // Check all global options and add them to the subnet object if
