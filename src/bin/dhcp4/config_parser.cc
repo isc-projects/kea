@@ -91,6 +91,9 @@ StringStorage string_defaults;
 /// @brief Global storage for options that will be used as defaults.
 OptionStorage option_defaults;
 
+/// @brief Global storage for option definitions.
+OptionDefStorage option_def_defaults;
+
 /// @brief a dummy configuration parser
 ///
 /// It is a debugging parser. It does not configure anything,
@@ -769,12 +772,22 @@ private:
             isc_throw(DhcpConfigError, "'dhcp6' option space name is reserved"
                       << " for DHCPv6 server");
         } else {
-            def = CfgMgr::instance().getOptionDef(option_space, option_code);
+            // If we are not dealing with a standard option then we
+            // need to search for its definition among user-configured
+            // options. They are expected to be in the global storage
+            // already.
+            OptionDefContainerPtr defs = option_def_defaults.getItems(option_space);
+            assert(defs);
+            const OptionDefContainerTypeIndex& idx = defs->get<1>();
+            OptionDefContainerTypeRange range = idx.equal_range(option_code);
+            if (std::distance(range.first, range.second) > 0) {
+                def = *range.first;
+            }
             if (!def) {
                 isc_throw(DhcpConfigError, "definition for the option '"
                           << option_space << "." << option_name
                           << "' having code '" <<  option_code
-                          << " does not exist");
+                          << "' does not exist");
             }
 
         }
@@ -834,9 +847,9 @@ private:
             // definition of option value makes sense.
             if (def->getName() != option_name) {
                 isc_throw(DhcpConfigError, "specified option name '"
-                          << option_name << " does not match the in "
-                          << "option definition: '" << def->getName()
-                          << "'");
+                          << option_name << " does not match the "
+                          << "option definition: '" << option_space
+                          << "." << def->getName() << "'");
             }
 
             // Option definition has been found so let's use it to create
@@ -849,8 +862,9 @@ private:
                 option_descriptor_.option = option;
                 option_descriptor_.persistent = false;
             } catch (const isc::Exception& ex) {
-                isc_throw(DhcpConfigError, "Parser error: option data does not match"
-                          << " option definition (code " << option_code << "): "
+                isc_throw(DhcpConfigError, "option data does not match"
+                          << " option definition (space: " << option_space
+                          << ", code: " << option_code << "): "
                           << ex.what());
             }
         }
@@ -1033,6 +1047,7 @@ public:
     void commit() {
         // @todo validate option space name once 2313 is merged.
         if (storage_ && option_definition_) {
+            std::cout << "Adding item" << std::endl;
             storage_->addItem(option_definition_, option_space_name_);
         }
     }
@@ -1146,6 +1161,10 @@ public:
     /// that define option definitions.
     /// @throw DhcpConfigError if configuration parsing fails.
     void build(ConstElementPtr option_def_list) {
+        // Clear existing items in the global storage.
+        // We are going to replace all of them.
+        option_def_defaults.clearItems();
+
         if (!option_def_list) {
             isc_throw(DhcpConfigError, "parser error: a pointer to a list of"
                       << " option definitions is NULL");
@@ -1154,7 +1173,7 @@ public:
         BOOST_FOREACH(ConstElementPtr option_def, option_def_list->listValue()) {
             boost::shared_ptr<OptionDefParser>
                 parser(new OptionDefParser("single-option-def"));
-            parser->setStorage(&option_defs_local_);
+            parser->setStorage(&option_def_defaults);
             parser->build(option_def);
             parser->commit();
         }
@@ -1170,10 +1189,10 @@ public:
         // We need to move option definitions from the temporary
         // storage to the global storage.
         BOOST_FOREACH(std::string space_name,
-                      option_defs_local_.getOptionSpaceNames()) {
+                      option_def_defaults.getOptionSpaceNames()) {
 
             BOOST_FOREACH(OptionDefinitionPtr def,
-                          *option_defs_local_.getItems(space_name)) {
+                          *option_def_defaults.getItems(space_name)) {
                 assert(def);
                 cfg_mgr.addOptionDef(def, space_name);
             }
@@ -1193,7 +1212,7 @@ private:
 
     /// Temporary storage for option definitions. It holds option
     /// definitions before \ref commit is called.
-    OptionDefStorage option_defs_local_;
+    //    OptionDefStorage option_defs_local_;
 };
 
 /// @brief this class parses a single subnet
@@ -1357,15 +1376,23 @@ private:
             subnet_->addPool4(*it);
         }
 
-        Subnet::OptionContainerPtr options = subnet_->getOptionDescriptors("dhcp4");
-        const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
-
         // We have to get all option space names for options we are
         // configuring and iterate over them to add options that belong
         // to them to the subnet.
+
+        // We are going to move configured options to the Subnet object.
+        // Configured options reside in the container where options
+        // are grouped by space names. Thus we need to get all space names
+        // and iterate over all options that belong to them.
         BOOST_FOREACH(std::string option_space, options_.getOptionSpaceNames()) {
-            BOOST_FOREACH(Subnet::OptionDescriptor desc, *options_.getItems(option_space)) {
+            // Get all options within a particular option space.
+            BOOST_FOREACH(Subnet::OptionDescriptor desc,
+                          *options_.getItems(option_space)) {
+                // In theory, option should be non-NULL.
                 assert(desc.option);
+                // We want to check whether an option with the particular
+                // option code has been already added. If so, we want
+                // to issue a warning.
                 Subnet::OptionDescriptor existing_desc =
                     subnet_->getOptionDescriptor("option_space",
                                                  desc.option->getType());
@@ -1373,6 +1400,7 @@ private:
                     LOG_WARN(dhcp4_logger, DHCP4_CONFIG_OPTION_DUPLICATE)
                         .arg(desc.option->getType()).arg(addr.toText());
                 }
+                // In any case, we add the option to the subnet.
                 subnet_->addOption(desc.option, false, option_space);
             }
         }
@@ -1381,22 +1409,23 @@ private:
         // they have been configured in the global scope. If they have been
         // configured in the subnet scope we don't add global option because
         // the one configured in the subnet scope always takes precedence.
-        BOOST_FOREACH(Subnet::OptionDescriptor desc, option_defaults) {
-            // Get all options specified locally in the subnet and having
-            // code equal to global option's code.
-            Subnet::OptionContainerPtr options = subnet_->getOptionDescriptors("dhcp4");
-            const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
-            Subnet::OptionContainerTypeRange range = idx.equal_range(desc.option->getType());
-            // @todo: In the future we will be searching for options using either
-            // an option code or namespace. Currently we have only the option
-            // code available so if there is at least one option found with the
-            // specific code we don't add the globally configured option.
-            // @todo with this code the first globally configured option
-            // with the given code will be added to a subnet. We may
-            // want to issue a warning about dropping the configuration of
-            // a global option if one already exsists.
-            if (std::distance(range.first, range.second) == 0) {
-                subnet_->addOption(desc.option, false, "dhcp4");
+        BOOST_FOREACH(std::string option_space,
+                      option_defaults.getOptionSpaceNames()) {
+            // Get all global options for the particular option space.
+            BOOST_FOREACH(Subnet::OptionDescriptor desc,
+                          *option_defaults.getItems(option_space)) {
+                assert(desc.option);
+                // Check if the particular option has been already added.
+                // This would mean that it has been configured in the
+                // subnet scope. Since option values configured in the
+                // subnet scope take precedence over globally configured
+                // values we don't add option from the global storage
+                // if there is one already.
+                Subnet::OptionDescriptor existing_desc =
+                    subnet_->getOptionDescriptor(option_space, desc.option->getType());
+                if (!existing_desc.option) {
+                    subnet_->addOption(desc.option, false, option_space);
+                }
             }
         }
     }
@@ -1603,6 +1632,8 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
     // that must process data when the independent data is already
     // processed (dependent_parsers).
     ParserCollection independent_parsers;
+    ParserPtr subnet_parser;
+    ParserPtr option_parser;
     ParserCollection dependent_parsers;
 
     // The subnet parsers implement data inheritance by directly
@@ -1615,6 +1646,7 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
     Uint32Storage uint32_local(uint32_defaults);
     StringStorage string_local(string_defaults);
     OptionStorage option_local(option_defaults);
+    OptionDefStorage option_def_local(option_def_defaults);
 
     // answer will hold the result.
     ConstElementPtr answer;
@@ -1624,11 +1656,15 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
 
     try {
 
-        // Iterate over all independent parsers first (all but subnet4)
-        // and try to parse the data.
-        BOOST_FOREACH(ConfigPair config_pair, config_set->mapValue()) {
-            if (config_pair.first != "subnet4") {
-                ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first));
+        const std::map<std::string, ConstElementPtr>& values_map =
+            config_set->mapValue();
+        BOOST_FOREACH(ConfigPair config_pair, values_map) {
+            ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first));
+            if (config_pair.first == "subnet4") {
+                subnet_parser = parser;
+            } else if (config_pair.first == "option-data") {
+                option_parser = parser;
+            } else {
                 independent_parsers.push_back(parser);
                 parser->build(config_pair.second);
                 // The commit operation here may modify the global storage
@@ -1638,13 +1674,18 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
             }
         }
 
-        // Process dependent configuration data.
-        BOOST_FOREACH(ConfigPair config_pair, config_set->mapValue()) {
-            if (config_pair.first == "subnet4") {
-                ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first));
-                dependent_parsers.push_back(parser);
-                parser->build(config_pair.second);
-            }
+        std::map<std::string, ConstElementPtr>::const_iterator option_config =
+            values_map.find("option-data");
+        if (option_config != values_map.end()) {
+            option_parser->build(option_config->second);
+            option_parser->commit();
+        }
+
+        std::map<std::string, ConstElementPtr>::const_iterator subnet_config =
+            values_map.find("subnet4");
+        if (subnet_config != values_map.end()) {
+            subnet_parser->build(subnet_config->second);
+            subnet_parser->commit();
         }
 
     } catch (const isc::Exception& ex) {
@@ -1692,6 +1733,7 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
         std::swap(uint32_defaults, uint32_local);
         std::swap(string_defaults, string_local);
         std::swap(option_defaults, option_local);
+        std::swap(option_def_defaults, option_def_local);
         return (answer);
     }
 
