@@ -45,9 +45,9 @@ public:
         preference = buffer.readUint16();
         rdata_len -= 4;
 
-        rdata_len -= readTextField(flags, buffer, rdata_len);
-        rdata_len -= readTextField(services, buffer, rdata_len);
-        rdata_len -= readTextField(regexp, buffer, rdata_len);
+        rdata_len -= detail::bufferToCharString(buffer, rdata_len, flags);
+        rdata_len -= detail::bufferToCharString(buffer, rdata_len, services);
+        rdata_len -= detail::bufferToCharString(buffer, rdata_len, regexp);
         replacement = Name(buffer);
         if (rdata_len < 1) {
             isc_throw(isc::dns::DNSMessageFORMERR, "Error in parsing "
@@ -192,22 +192,22 @@ NAPTR::compare(const Rdata& other) const {
         return (1);
     }
 
-    if (impl_->flags < other_naptr.impl_->flags) {
-        return (-1);
-    } else if (impl_->flags > other_naptr.impl_->flags) {
-        return (1);
+    const int fcmp = detail::compareCharStrings(impl_->flags,
+                                                other_naptr.impl_->flags);
+    if (fcmp != 0) {
+        return (fcmp);
     }
 
-    if (impl_->services < other_naptr.impl_->services) {
-        return (-1);
-    } else if (impl_->services > other_naptr.impl_->services) {
-        return (1);
+    const int scmp = detail::compareCharStrings(impl_->services,
+                                                other_naptr.impl_->services);
+    if (scmp != 0) {
+        return (scmp);
     }
 
-    if (impl_->regexp < other_naptr.impl_->regexp) {
-        return (-1);
-    } else if (impl_->regexp > other_naptr.impl_->regexp) {
-        return (1);
+    const int rcmp = detail::compareCharStrings(impl_->regexp,
+                                                other_naptr.impl_->regexp);
+    if (rcmp != 0) {
+        return (rcmp);
     }
 
     return (compareNames(impl_->replacement, other_naptr.impl_->replacement));
