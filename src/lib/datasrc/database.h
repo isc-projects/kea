@@ -155,7 +155,7 @@ public:
     ///
     /// It is empty, but needs a virtual one, since we will use the derived
     /// classes in polymorphic way.
-    virtual ~DatabaseAccessor() { }
+    virtual ~DatabaseAccessor() {}
 
     /// \brief Retrieve a zone identifier
     ///
@@ -164,8 +164,8 @@ public:
     /// apex), as the DatabaseClient will loop trough the labels itself and
     /// find the most suitable zone.
     ///
-    /// It is not specified if and what implementation of this method may throw,
-    /// so code should expect anything.
+    /// It is not specified if and what implementation of this method may
+    /// throw, so code should expect anything.
     ///
     /// \param name The (fully qualified) domain name of the zone's apex to be
     ///             looked up.
@@ -195,6 +195,8 @@ public:
     ///         or was created by this call).
     virtual int addZone(const std::string& name) = 0;
 
+    virtual void deleteZone(int zone_id) = 0;
+
     /// \brief This holds the internal context of ZoneIterator for databases
     ///
     /// While the ZoneIterator implementation from DatabaseClient does all the
@@ -212,15 +214,15 @@ public:
         /// \brief Destructor
         ///
         /// Virtual destructor, so any descendand class is destroyed correctly.
-        virtual ~IteratorContext() { }
+        virtual ~IteratorContext() {}
 
         /// \brief Function to provide next resource record
         ///
         /// This function should provide data about the next resource record
         /// from the data that is searched. The data is not converted yet.
         ///
-        /// Depending on how the iterator was constructed, there is a difference
-        /// in behaviour; for a 'full zone iterator', created with
+        /// Depending on how the iterator was constructed, there is a
+        /// difference in behaviour; for a 'full zone iterator', created with
         /// getAllRecords(), all COLUMN_COUNT elements of the array are
         /// overwritten.
         /// For a 'name iterator', created with getRecords(), the column
