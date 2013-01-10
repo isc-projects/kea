@@ -18,6 +18,7 @@
 #include <dns/master_lexer_inputsource.h>
 #include <dns/master_lexer_state.h>
 
+#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -170,6 +171,15 @@ MasterLexer::getSourceLine() const {
         return (0);
     }
     return (impl_->sources_.back()->getCurrentLine());
+}
+
+size_t
+MasterLexer::getTotalSourceSize() const {
+    size_t total_size = 0;
+    BOOST_FOREACH(InputSourcePtr& src, impl_->sources_) {
+        total_size += src->getSize();
+    }
+    return (total_size);
 }
 
 const MasterToken&
