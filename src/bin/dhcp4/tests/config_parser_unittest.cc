@@ -67,7 +67,6 @@ public:
     void checkResult(ConstElementPtr status, int expected_code) {
         ASSERT_TRUE(status);
         comment_ = parseAnswer(rcode_, status);
-        std::cout << comment_->str() << std::endl;
         EXPECT_EQ(expected_code, rcode_);
     }
 
@@ -79,8 +78,8 @@ public:
     /// @brief Create the simple configuration with single option.
     ///
     /// This function allows to set one of the parameters that configure
-    /// option value. These parameters are: "name", "code", "data" and
-    /// "csv-format".
+    /// option value. These parameters are: "name", "code", "data",
+    /// "csv-format" and "space".
     ///
     /// @param param_value string holiding option parameter value to be
     /// injected into the configuration string.
