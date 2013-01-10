@@ -29,10 +29,13 @@ using namespace isc::dns::master_lexer_internal;
 
 namespace {
 
+const char* const test_input =
+    "Line1 to scan.\nLine2 to scan.\nLine3 to scan.\n";
+
 class InputSourceTest : public ::testing::Test {
 protected:
     InputSourceTest() :
-        str_("Line1 to scan.\nLine2 to scan.\nLine3 to scan.\n"),
+        str_(test_input),
         str_length_(strlen(str_)),
         iss_(str_),
         source_(iss_)
@@ -320,6 +323,24 @@ TEST_F(InputSourceTest, saveLine) {
     // Now we are back to where we last-saved.
     EXPECT_EQ(2, source_.getCurrentLine());
     EXPECT_FALSE(source_.atEOF());
+}
+
+TEST_F(InputSourceTest, getSize) {
+    // A simple case using string stream
+    EXPECT_EQ(strlen(test_input), source_.getSize());
+
+    // Check it works with an empty input
+    istringstream iss("");
+    EXPECT_EQ(0, InputSource(iss).getSize());
+
+    // Pretend there's an error in the stream.  The constructor will throw
+    // in the attempt of getting the input size.
+    iss.setstate(std::ios_base::failbit);
+    EXPECT_THROW(InputSource isrc(iss), InputSource::OpenError);
+
+    // Check with input source from file name.  We hardcode the file size
+    // for simplicity.  It won't change too often.
+    EXPECT_EQ(143, InputSource(TEST_DATA_SRCDIR "/masterload.txt").getSize());
 }
 
 } // end namespace
