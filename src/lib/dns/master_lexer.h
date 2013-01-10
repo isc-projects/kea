@@ -387,6 +387,10 @@ public:
     /// The caller can explicitly tell \c MasterLexer to stop using the
     /// stream by calling the \c popSource() method.
     ///
+    /// The data in \c input must be complete at the time of this call.
+    /// The behavior of the lexer is undefined if the caller builds or adds
+    /// data in \c input after pushing it.
+    ///
     /// \param input An input stream object that produces textual
     /// representation of DNS RRs.
     void pushSource(std::istream& input);
