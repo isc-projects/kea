@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,31 +12,29 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef DHCPSRV_UTILS_H
+#define DHCPSRV_UTILS_H
 
-#include <dhcpsrv/hwaddr.h>
-
-#include <string>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
+#include <exceptions/exceptions.h>
 
 namespace isc {
 namespace dhcp {
 
-std::string
-hardwareAddressString(const HWAddr& hwaddr) {
-    std::ostringstream stream;
+/// An exception that is thrown if a DHCPv6 protocol violation occurs while
+/// processing a message (e.g. a mandatory option is missing)
+class RFCViolation : public isc::Exception {
+public:
 
-    for (size_t i = 0; i < hwaddr.size(); ++i) {
-        if (i > 0) {
-            stream << ":";
-        }
-        stream << std::setw(2) << std::hex << std::setfill('0')
-               << static_cast<unsigned int>(hwaddr[i]);
-    }
+/// @brief constructor
+///
+/// @param file name of the file, where exception occurred
+/// @param line line of the file, where exception occurred
+/// @param what text description of the issue that caused exception
+RFCViolation(const char* file, size_t line, const char* what) :
+    isc::Exception(file, line, what) {}
+};
 
-    return (stream.str());
-}
+}; // namespace isc::dhcp
+}; // namespace isc
 
-};  // namespace dhcp
-};  // namespace isc
+#endif // DHCPSRV_UTILS_H
