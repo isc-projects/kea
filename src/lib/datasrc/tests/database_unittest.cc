@@ -4252,6 +4252,22 @@ TYPED_TEST(RRsetCollectionTest, find) {
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::NS(), rrset->getType());
     EXPECT_EQ(Name("delegation.example.org"), rrset->getName());
+
+    // With the NO_WILDCARD option passed to ZoneFinder's find(),
+    // searching for some "foo.wildcard.example.org." would make
+    // ZoneFinder's find() return NXDOMAIN, and the find() below should
+    // return nothing.
+    rrset = this->collection->find(Name("foo.wild.example.org"),
+                                   this->qclass_, RRType::A());
+    EXPECT_FALSE(rrset);
+
+    // Searching directly for "*.wild.example.org." should return the
+    // record.
+    rrset = this->collection->find(Name("*.wild.example.org"),
+                                   this->qclass_, RRType::A());
+    ASSERT_TRUE(rrset);
+    EXPECT_EQ(RRType::A(), rrset->getType());
+    EXPECT_EQ(Name("*.wild.example.org"), rrset->getName());
 }
 
 TYPED_TEST(RRsetCollectionTest, iteratorTest) {
