@@ -122,6 +122,11 @@
             "item_type": "boolean",
             "item_optional": false,
             "item_default": False
+          },
+          { "item_name": "space",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": "dhcp6"
           } ]
         }
       },
@@ -212,6 +217,11 @@
                       "item_type": "boolean",
                       "item_optional": false,
                       "item_default": False
+                    },
+                    { "item_name": "space",
+                      "item_type": "string",
+                      "item_optional": false,
+                      "item_default": "dhcp6"
                     } ]
                   }
                 } ]
