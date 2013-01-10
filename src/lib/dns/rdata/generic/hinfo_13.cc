@@ -16,19 +16,12 @@
 
 #include <exceptions/exceptions.h>
 #include <dns/exceptions.h>
-#include <dns/name.h>
-#include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rdata/generic/detail/char_string.h>
-#include <util/strutil.h>
-
-#include <string>
-
-#include <boost/lexical_cast.hpp>
+#include <util/buffer.h>
 
 using namespace std;
-using boost::lexical_cast;
 using namespace isc::util;
 using namespace isc::dns;
 
