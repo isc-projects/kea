@@ -187,6 +187,12 @@ size_t
 MasterLexer::getTotalSourceSize() const {
     size_t total_size = 0;
     BOOST_FOREACH(InputSourcePtr& src, impl_->sources_) {
+        // If the size of any pushed source is unknown, the total is also
+        // considered unknown.
+        if (src->getSize() == SOURCE_SIZE_UNKNOWN) {
+            return (SOURCE_SIZE_UNKNOWN);
+        }
+
         total_size += src->getSize();
     }
     return (total_size);
