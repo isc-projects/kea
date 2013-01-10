@@ -279,6 +279,11 @@ public:
                   "This database datasource can't add zones");
     }
 
+    virtual void deleteZone(int) {
+        isc_throw(isc::NotImplemented,
+                  "This database datasource can't delete zones");
+    }
+
     virtual boost::shared_ptr<DatabaseAccessor> clone() {
         // This accessor is stateless, so we can simply return a new instance.
         return (boost::shared_ptr<DatabaseAccessor>(new NopAccessor));

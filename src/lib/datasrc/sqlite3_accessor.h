@@ -139,6 +139,8 @@ public:
     /// \return the id of the zone that has been added
     virtual int addZone(const std::string& name);
 
+    virtual void deleteZone(int zone_id);
+
     /// \brief Look up all resource records for a name
     ///
     /// This implements the getRecords() method from DatabaseAccessor
