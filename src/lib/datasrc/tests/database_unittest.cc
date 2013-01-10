@@ -2184,6 +2184,12 @@ TYPED_TEST(DatabaseClientTest, findDelegation) {
                this->rrttl_, ZoneFinder::DNAME, this->expected_rdatas_,
                this->expected_sig_rdatas_, ZoneFinder::RESULT_DEFAULT,
                isc::dns::Name("dname.example.org."));
+    // below.dname.example.org. has an A record
+    doFindTest(*finder, isc::dns::Name("below.dname.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::DNAME(),
+               this->rrttl_, ZoneFinder::DNAME, this->expected_rdatas_,
+               this->expected_sig_rdatas_, ZoneFinder::RESULT_DEFAULT,
+               isc::dns::Name("dname.example.org."));
     doFindTest(*finder, isc::dns::Name("really.deep.below.dname.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
                this->rrttl_, ZoneFinder::DNAME, this->expected_rdatas_,
@@ -4199,9 +4205,41 @@ TYPED_TEST(RRsetCollectionTest, find) {
                                    RRType::AAAA());
     EXPECT_FALSE(rrset);
 
-    // Out of zone find()s must not throw.
+    // Out-of-zone find()s must not throw.
     rrset = this->collection->find(Name("www.example.com"), this->qclass_,
                                    RRType::A());
+    EXPECT_FALSE(rrset);
+
+    // "cname.example.org." with type CNAME should return the CNAME RRset
+    rrset = this->collection->find(Name("cname.example.org"), this->qclass_,
+                                   RRType::CNAME());
+    ASSERT_TRUE(rrset);
+    EXPECT_EQ(RRType::CNAME(), rrset->getType());
+    EXPECT_EQ(Name("cname.example.org"), rrset->getName());
+
+    // "cname.example.org." with type A should return nothing
+    rrset = this->collection->find(Name("cname.example.org"), this->qclass_,
+                                   RRType::A());
+    EXPECT_FALSE(rrset);
+
+    // "dname.example.org." with type DNAME should return the DNAME RRset
+    rrset = this->collection->find(Name("dname.example.org"), this->qclass_,
+                                   RRType::DNAME());
+    ASSERT_TRUE(rrset);
+    EXPECT_EQ(RRType::DNAME(), rrset->getType());
+    EXPECT_EQ(Name("dname.example.org"), rrset->getName());
+
+    // "below.dname.example.org." with type AAAA should return nothing
+    rrset = this->collection->find(Name("below.dname.example.org"),
+                                   this->qclass_, RRType::AAAA());
+    EXPECT_FALSE(rrset);
+
+    // TODO: "below.dname.example.org." with type A does not return the
+    // record (see top of file). It needs to be checked if this is what
+    // we want.
+    rrset = this->collection->find(Name("below.dname.example.org"),
+                                   this->qclass_, RRType::A());
+    // Is this correct behavior?
     EXPECT_FALSE(rrset);
 }
 
