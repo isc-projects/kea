@@ -72,13 +72,20 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
     // 4. If all is OK, update the stored keyword/value pairs.
     values_ = values_copy;
 
-    // 5. Construct the updated database access string.
+    // 5. Construct the updated database access string: omit keywords where
+    //    the value string is empty.
     dbaccess_ = "";
     BOOST_FOREACH(StringPair keyval, values_) {
-        if (! dbaccess_.empty()) {
-            dbaccess_ += std::string(" ");
+        if (!keyval.second.empty()) {
+
+            // Separate keyword/value pair from predecessor (if there is one).
+            if (! dbaccess_.empty()) {
+                dbaccess_ += std::string(" ");
+            }
+
+            // Add the keyword/value pair to the access string.
+            dbaccess_ += (keyval.first + std::string("=") + keyval.second);
         }
-        dbaccess_ += (keyval.first + std::string("=") + keyval.second);
     }
 }
 
