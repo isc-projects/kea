@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dns/master_lexer_inputsource.h>
+#include <dns/master_lexer.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -346,9 +347,16 @@ TEST_F(InputSourceTest, getSize) {
     istringstream iss("");
     EXPECT_EQ(0, InputSource(iss).getSize());
 
-    // Pretend there's an error in the stream.  The constructor will throw
-    // in the attempt of getting the input size.
+    // Pretend there's an error in seeking in the stream.  It will be
+    // considered a seek specific error, and getSize() returns "unknown".
     iss.setstate(std::ios_base::failbit);
+    EXPECT_EQ(MasterLexer::SOURCE_SIZE_UNKNOWN, InputSource(iss).getSize());
+    // The fail bit should have been cleared.
+    EXPECT_FALSE(iss.fail());
+
+    // Pretend there's a *critical* error in the stream.  The constructor will
+    // throw in the attempt of getting the input size.
+    iss.setstate(std::ios_base::badbit);
     EXPECT_THROW(InputSource isrc(iss), InputSource::OpenError);
 
     // Check with input source from file name.  We hardcode the file size
