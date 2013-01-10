@@ -40,11 +40,23 @@
 #include <stdint.h>
 
 using namespace std;
+using namespace isc;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 
 namespace {
+
+// Forward declarations of some of the parser classes.
+// They are used to define pointer types for these classes.
+class BooleanParser;
+class StringParser;
+class Uint32Parser;
+
+// Pointers to various parser objects.
+typedef boost::shared_ptr<BooleanParser> BooleanParserPtr;
+typedef boost::shared_ptr<StringParser> StringParserPtr;
+typedef boost::shared_ptr<Uint32Parser> Uint32ParserPtr;
 
 /// @brief Auxiliary type used for storing an element name and its parser.
 typedef pair<string, ConstElementPtr> ConfigPair;
@@ -63,6 +75,10 @@ typedef std::map<string, uint32_t> Uint32Storage;
 
 /// @brief Collection of elements that store string values.
 typedef std::map<string, string> StringStorage;
+
+/// @brief Storage for option definitions.
+typedef OptionSpaceContainer<OptionDefContainer,
+                             OptionDefinitionPtr> OptionDefStorage;
 
 /// @brief Collection of address pools.
 ///
@@ -943,6 +959,251 @@ public:
     ParserCollection parsers_;
 };
 
+/// @brief Parser for a single option definition.
+///
+/// This parser creates an instance of a single option definition.
+class OptionDefParser: DhcpConfigParser {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// This constructor sets the pointer to the option definitions
+    /// storage to NULL. It must be set to point to the actual storage
+    /// before \ref build is called.
+    OptionDefParser(const std::string&)
+        : storage_(NULL) {
+    }
+
+    /// @brief Parses an entry that describes single option definition.
+    ///
+    /// @param option_def a configuration entry to be parsed.
+    ///
+    /// @throw DhcpConfigError if parsing was unsuccessful.
+    void build(ConstElementPtr option_def) {
+        if (storage_ == NULL) {
+            isc_throw(DhcpConfigError, "parser logic error: storage must be set"
+                      " before parsing option definition data");
+        }
+        // Parse the elements that make up the option definition.
+        BOOST_FOREACH(ConfigPair param, option_def->mapValue()) {
+            std::string entry(param.first);
+            ParserPtr parser;
+            if (entry == "name" || entry == "type" ||
+                entry == "record-types" || entry == "space") {
+                StringParserPtr
+                    str_parser(dynamic_cast<StringParser*>(StringParser::factory(entry)));
+                if (str_parser) {
+                    str_parser->setStorage(&string_values_);
+                    parser = str_parser;
+                }
+            } else if (entry == "code") {
+                Uint32ParserPtr
+                    code_parser(dynamic_cast<Uint32Parser*>(Uint32Parser::factory(entry)));
+                if (code_parser) {
+                    code_parser->setStorage(&uint32_values_);
+                    parser = code_parser;
+                }
+            } else if (entry == "array") {
+                BooleanParserPtr
+                    array_parser(dynamic_cast<BooleanParser*>(BooleanParser::factory(entry)));
+                if (array_parser) {
+                    array_parser->setStorage(&boolean_values_);
+                    parser = array_parser;
+                }
+            } else {
+                isc_throw(DhcpConfigError, "invalid parameter: " << entry);
+            }
+            
+            parser->build(param.second);
+            parser->commit();
+        }
+
+        // Create an instance of option definition.
+        createOptionDef();
+
+        // Get all items we collected so far for the particular option space.
+        OptionDefContainerPtr defs = storage_->getItems(option_space_name_);
+        // Check if there are any items with option code the same as the
+        // one specified for the definition we are now creating.
+        const OptionDefContainerTypeIndex& idx = defs->get<1>();
+        const OptionDefContainerTypeRange& range =
+            idx.equal_range(option_definition_->getCode());
+        // If there are any items with this option code already we need
+        // to issue an error because we don't allow duplicates for
+        // option definitions within an option space.
+        if (std::distance(range.first, range.second) > 0) {
+            isc_throw(DhcpConfigError, "duplicated option definition for"
+                      << " code '" << option_definition_->getCode() << "'");
+        }
+    }
+
+    /// @brief Stores the parsed option definition in a storage.
+    void commit() {
+        // @todo validate option space name once 2313 is merged.
+        if (storage_ && option_definition_) {
+            storage_->addItem(option_definition_, option_space_name_);
+        }
+    }
+
+    /// @brief Sets a pointer to a storage.
+    ///
+    /// The newly created instance of an option definition will be
+    /// added to a storage given by the argument.
+    ///
+    /// @param storage pointer to a storage where the option definition
+    /// will be added to.
+    void setStorage(OptionDefStorage* storage) {
+        storage_ = storage;
+    }
+
+private:
+
+    /// @brief Create option definition from the parsed parameters.
+    void createOptionDef() {
+        // Get the option space name and validate it.
+        std::string space = getParam<std::string>("space", string_values_);
+        // @todo uncomment the code below when the #2313 is merged.
+        /*        if (!OptionSpace::validateName()) {
+            isc_throw(DhcpConfigError, "invalid option space name '"
+                      << space << "'");
+                      } */
+
+        // Get other parameters that are needed to create the
+        // option definition.
+        std::string name = getParam<std::string>("name", string_values_);
+        uint32_t code = getParam<uint32_t>("code", uint32_values_);
+        std::string type = getParam<std::string>("type", string_values_);
+        bool array_type = getParam<bool>("array", boolean_values_);
+
+        OptionDefinitionPtr def(new OptionDefinition(name, code,
+                                                     type, array_type));
+        // The record-types field may carry a list of comma separated names
+        // of data types that form a record.
+        std::string record_types = getParam<std::string>("record-types",
+                                                         string_values_);
+        // Split the list of record types into tokens.
+        std::vector<std::string> record_tokens =
+            isc::util::str::tokens(record_types, ",");
+        // Iterate over each token and add a record typy into
+        // option definition.
+        BOOST_FOREACH(std::string record_type, record_tokens) {
+            try {
+                boost::trim(record_type);
+                if (!record_type.empty()) {
+                    def->addRecordField(record_type);
+                }
+            } catch (const Exception& ex) {
+                isc_throw(DhcpConfigError, "invalid record type values"
+                          << " specified for the option  definition: "
+                          << ex.what());
+            }
+        }
+
+        // Check the option definition parameters are valid.
+        try {
+            def->validate();
+        } catch (const isc::Exception ex) {
+            isc_throw(DhcpConfigError, "invalid option definition"
+                      << " parameters" << ex.what());
+        }
+        // Option definition has been created successfully.
+        option_space_name_ = space;
+        option_definition_ = def;
+    }
+
+    /// Instance of option definition being created by this parser.
+    OptionDefinitionPtr option_definition_;
+
+    std::string option_space_name_;
+
+    /// Pointer to a storage where the option definition will be
+    /// added when \ref commit is called.
+    OptionDefStorage* storage_;
+
+    /// Storage for boolean values.
+    BooleanStorage boolean_values_;
+    /// Storage for string values.
+    StringStorage string_values_;
+    /// Storage for uint32 values.
+    Uint32Storage uint32_values_;
+};
+
+/// @brief Parser for a list of option definitions.
+///
+/// This parser iterates over all configuration entries that define
+/// option definitions and creates instances of these definitions.
+/// If the parsing is successful, the collection of created definitions
+/// is put into the provided storage.
+class OptionDefListParser : DhcpConfigParser {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// This constructor initializes the pointer to option definitions
+    /// storage to NULL value. This pointer has to be set to point to
+    /// the actual storage before the \ref build function is called.
+    OptionDefListParser(const std::string&) {
+    }
+
+    /// @brief Parse configuration entries.
+    ///
+    /// This function parses configuration entries and creates instances
+    /// of option definitions.
+    ///
+    /// @param option_def_list pointer to an element that holds entries
+    /// that define option definitions.
+    /// @throw DhcpConfigError if configuration parsing fails.
+    void build(ConstElementPtr option_def_list) {
+        if (!option_def_list) {
+            isc_throw(DhcpConfigError, "parser error: a pointer to a list of"
+                      << " option definitions is NULL");
+        }
+
+        BOOST_FOREACH(ConstElementPtr option_def, option_def_list->listValue()) {
+            boost::shared_ptr<OptionDefParser>
+                parser(new OptionDefParser("single-option-def"));
+            parser->setStorage(&option_defs_local_);
+            parser->build(option_def);
+            parser->commit();
+        }
+    }
+
+    /// @brief Stores option definitions in the provided storage.
+    void commit() {
+
+        CfgMgr& cfg_mgr = CfgMgr::instance();
+
+        cfg_mgr.deleteOptionDefs();
+
+        // We need to move option definitions from the temporary
+        // storage to the global storage.
+        BOOST_FOREACH(std::string space_name,
+                      option_defs_local_.getOptionSpaceNames()) {
+
+            BOOST_FOREACH(OptionDefinitionPtr def,
+                          *option_defs_local_.getItems(space_name)) {
+                assert(def);
+                cfg_mgr.addOptionDef(def, space_name);
+            }
+        }
+    }
+
+    /// @brief Create an OptionDefListParser object.
+    ///
+    /// @param param_name configuration entry holding option definitions.
+    ///
+    /// @return OptionDefListParser object.
+    static DhcpConfigParser* factory(const std::string& param_name) {
+        return (new OptionDefListParser(param_name));
+    }
+
+private:
+
+    /// Temporary storage for option definitions. It holds option
+    /// definitions before \ref commit is called.
+    OptionDefStorage option_defs_local_;
+};
+
 /// @brief this class parses a single subnet
 ///
 /// This class parses the whole subnet definition. It creates parsers
@@ -1310,6 +1571,7 @@ DhcpConfigParser* createGlobalDhcpConfigParser(const std::string& config_id) {
     factories["interface"] = InterfaceListConfigParser::factory;
     factories["subnet6"] = Subnets6ListConfigParser::factory;
     factories["option-data"] = OptionDataListParser::factory;
+    factories["option-def"] = OptionDefListParser::factory;
     factories["version"] = StringParser::factory;
 
     FactoryMap::iterator f = factories.find(config_id);
