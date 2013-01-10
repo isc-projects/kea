@@ -195,6 +195,21 @@ public:
     ///         or was created by this call).
     virtual int addZone(const std::string& name) = 0;
 
+    /// \brief Delete a zone from the database
+    ///
+    /// Like for deleteRecordToZone, implementations are not required to
+    /// check for the existence of the given zone name, it is the
+    /// responsibility of the caller to do so.
+    ///
+    /// Callers must also start a transaction before calling this method.
+    /// Implementations should throw InvalidOperation if this has not been
+    /// done. Callers should also expect DataSourceError for other potential
+    /// problems specific to the database.
+    ///
+    /// \note This method does not delete other database records related to
+    /// the zone.  See \c DataSourceClient::deleteZone for the rationale.
+    ///
+    /// \param zone_id The ID of the zone, that would be returned by getZone().
     virtual void deleteZone(int zone_id) = 0;
 
     /// \brief This holds the internal context of ZoneIterator for databases
