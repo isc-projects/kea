@@ -631,7 +631,8 @@ public:
         }
         BOOST_FOREACH(ConfigPair param, option_data_entries->mapValue()) {
             ParserPtr parser;
-            if (param.first == "name") {
+            if (param.first == "name" || param.first == "data" ||
+                param.first == "space") {
                 boost::shared_ptr<StringParser>
                     name_parser(dynamic_cast<StringParser*>(StringParser::factory(param.first)));
                 if (name_parser) {
@@ -644,13 +645,6 @@ public:
                 if (code_parser) {
                     code_parser->setStorage(&uint32_values_);
                     parser = code_parser;
-                }
-            } else if (param.first == "data") {
-                boost::shared_ptr<StringParser>
-                    value_parser(dynamic_cast<StringParser*>(StringParser::factory(param.first)));
-                if (value_parser) {
-                    value_parser->setStorage(&string_values_);
-                    parser = value_parser;
                 }
             } else if (param.first == "csv-format") {
                 boost::shared_ptr<BooleanParser>
@@ -687,12 +681,12 @@ public:
     /// remain un-modified.
     virtual void commit() {
         if (options_ == NULL) {
-            isc_throw(isc::InvalidOperation, "Parser logic error: storage must be set before "
+            isc_throw(isc::InvalidOperation, "parser logic error: storage must be set before "
                       "commiting option data.");
         } else  if (!option_descriptor_.option) {
             // Before we can commit the new option should be configured. If it is not
             // than somebody must have called commit() before build().
-            isc_throw(isc::InvalidOperation, "Parser logic error: no option has been configured and"
+            isc_throw(isc::InvalidOperation, "parser logic error: no option has been configured and"
                       " thus there is nothing to commit. Has build() been called?");
         }
         uint16_t opt_type = option_descriptor_.option->getType();
@@ -761,9 +755,32 @@ private:
                       << " spaces");
         }
 
+        std::string option_space = getParam<std::string>("space", string_values_);
+        /// @todo Validate option space once #2313 is merged.
+
+        OptionDefinitionPtr def;
+        if (option_space == "dhcp4" &&
+            LibDHCP::isStandardOption(Option::V4, option_code)) {
+            def = LibDHCP::getOptionDef(Option::V4, option_code);
+
+        } else if (option_space == "dhcp6") {
+            isc_throw(DhcpConfigError, "'dhcp6' option space name is reserved"
+                      << " for DHCPv6 server");
+        } else {
+            def = CfgMgr::instance().getOptionDef(option_space, option_code);
+            if (!def) {
+                isc_throw(DhcpConfigError, "definition for the option '"
+                          << option_space << "." << option_name
+                          << "' having code '" <<  option_code
+                          << " does not exist");
+            }
+
+        }
+
         // Get option data from the configuration database ('data' field).
         const std::string option_data = getParam<std::string>("data", string_values_);
         const bool csv_format = getParam<bool>("csv-format", boolean_values_);
+
         // Transform string of hexadecimal digits into binary format.
         std::vector<uint8_t> binary;
         std::vector<std::string> data_tokens;
@@ -784,24 +801,9 @@ private:
                           << " string of hexadecimal digits: " << option_data);
             }
         }
-        // Get all existing DHCPv4 option definitions. The one that matches
-        // our option will be picked and used to create it.
-        OptionDefContainer option_defs = LibDHCP::getOptionDefs(Option::V4);
-        // Get search index #1. It allows searching for options definitions
-        // using option type value.
-        const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
-        // Get all option definitions matching option code we want to create.
-        const OptionDefContainerTypeRange& range = idx.equal_range(option_code);
-        size_t num_defs = std::distance(range.first, range.second);
+
         OptionPtr option;
-        // Currently we do not allow duplicated definitions and if there are
-        // any duplicates we issue internal server error.
-        if (num_defs > 1) {
-            isc_throw(DhcpConfigError, "Internal error: currently it is not"
-                      << " supported to initialize multiple option definitions"
-                      << " for the same option code. This will be supported once"
-                      << " there option spaces are implemented.");
-        } else if (num_defs == 0) {
+        if (!def) {
             if (csv_format) {
                 isc_throw(DhcpConfigError, "the CSV option data format can be"
                           " used to specify values for an option that has a"
@@ -822,9 +824,21 @@ private:
             option_descriptor_.option = option;
             option_descriptor_.persistent = false;
         } else {
-            // We have exactly one option definition for the particular option code
-            // use it to create the option instance.
-            const OptionDefinitionPtr& def = *(range.first);
+
+            // Option name should match the definition. The option name
+            // may seem to be redundant but in the future we may want
+            // to reference options and definitions using their names
+            // and/or option codes so keeping the option name in the
+            // definition of option value makes sense.
+            if (def->getName() != option_name) {
+                isc_throw(DhcpConfigError, "specified option name '"
+                          << option_name << " does not match the in "
+                          << "option definition: '" << def->getName()
+                          << "'");
+            }
+
+            // Option definition has been found so let's use it to create
+            // an instance of our option.
             try {
                 OptionPtr option = csv_format ?
                     def->optionFactory(Option::V4, option_code, data_tokens) :
