@@ -56,6 +56,9 @@ public:
     /// given \c name, \c rrclass and \c rrtype.  If no matching RRset
     /// is found, \c NULL is returned.
     ///
+    /// This method's implementations currently are not specified to
+    /// handle \c RRTypes such as RRSIG, NSEC3, ANY, or AXFR.
+    ///
     /// \throw FindError if find() results in some
     /// implementation-specific error.
     /// \param name The name of the RRset to search for.
