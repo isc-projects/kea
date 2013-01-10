@@ -92,7 +92,7 @@ int compareCharStrings(const CharString& self, const CharString& other);
 /// (used for integrity checks in the wire data)
 /// \param target The \c CharString where the result will be stored. Any
 /// existing data in the target will be overwritten.
-/// \throw DNSMessageFormERR If the available data is not enough to read
+/// \throw DNSMessageFORMERR If the available data is not enough to read
 /// the character-string, or if the character-string length is out of bounds
 /// \return The number of bytes read
 size_t bufferToCharString(isc::util::InputBuffer& buffer, size_t rdata_len,
