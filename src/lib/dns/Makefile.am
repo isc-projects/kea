@@ -125,7 +125,6 @@ libb10_dns___la_SOURCES += tsig.h tsig.cc
 libb10_dns___la_SOURCES += tsigerror.h tsigerror.cc
 libb10_dns___la_SOURCES += tsigkey.h tsigkey.cc
 libb10_dns___la_SOURCES += tsigrecord.h tsigrecord.cc
-libb10_dns___la_SOURCES += character_string.h character_string.cc
 libb10_dns___la_SOURCES += master_loader_callbacks.h master_loader_callbacks.cc
 libb10_dns___la_SOURCES += master_loader.h
 libb10_dns___la_SOURCES += rrset_collection_base.h
