@@ -31,7 +31,6 @@
 
 #include <datasrc/data_source.h>
 #include <datasrc/logger.h>
-#include <datasrc/rrset_collection.h>
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -1372,6 +1371,81 @@ DatabaseClient::getIterator(const isc::dns::Name& name,
 
     return (iterator);
 }
+
+/// \brief datasrc implementation of RRsetCollectionBase.
+class RRsetCollection : public isc::dns::RRsetCollectionBase {
+public:
+    /// \brief Constructor.
+    ///
+    /// No reference (count via \c shared_ptr) to the ZoneUpdater is
+    /// acquired. As long as the collection object is alive, the
+    /// corresponding \c ZoneUpdater should be kept alive.
+    ///
+    /// \param updater The ZoneUpdater to wrap around.
+    /// \param rrclass The RRClass of the records in the zone.
+    RRsetCollection(ZoneUpdater& updater, const isc::dns::RRClass& rrclass) :
+        updater_(updater),
+        rrclass_(rrclass)
+    {}
+
+    /// \brief Destructor
+    virtual ~RRsetCollection() {}
+
+    /// \brief Find a matching RRset in the collection.
+    ///
+    /// Returns the RRset in the collection that exactly matches the
+    /// given \c name, \c rrclass and \c rrtype.  If no matching RRset
+    /// is found, \c NULL is returned.
+    ///
+    /// \throw FindError if find() results in some underlying datasrc error.
+    /// \param name The name of the RRset to search for.
+    /// \param rrclass The class of the RRset to search for.
+    /// \param rrtype The type of the RRset to search for.
+    /// \returns The RRset if found, \c NULL otherwise.
+    virtual isc::dns::ConstRRsetPtr find(const isc::dns::Name& name,
+                                         const isc::dns::RRClass& rrclass,
+                                         const isc::dns::RRType& rrtype) const {
+        if (rrclass != rrclass_) {
+            // We could throw an exception here, but RRsetCollection is
+            // expected to support an arbitrary collection of RRsets,
+            // and it can be queried just as arbitrarily. So we just
+            // return nothing here.
+            return (ConstRRsetPtr());
+        }
+
+        ZoneFinder& finder = updater_.getFinder();
+        try {
+            ZoneFinderContextPtr result =
+                finder.find(name, rrtype,
+                            ZoneFinder::NO_WILDCARD | ZoneFinder::FIND_GLUE_OK);
+            return (result->rrset);
+        } catch (const OutOfZone&) {
+            // As RRsetCollection is an arbitrary set of RRsets, in case
+            // the searched name is out of zone, we return nothing
+            // instead of propagating the exception.
+            return (ConstRRsetPtr());
+        } catch (const DataSourceError& e) {
+            isc_throw(FindError, "ZoneFinder threw a DataSourceError: " <<
+                      e.getMessage().c_str());
+        }
+    }
+
+private:
+    ZoneUpdater& updater_;
+    isc::dns::RRClass rrclass_;
+
+protected:
+    // TODO: RRsetCollectionBase::Iter is not implemented and the
+    // following two methods just throw.
+
+    virtual RRsetCollectionBase::IterPtr getBeginning() {
+        isc_throw(NotImplemented, "This method is not implemented.");
+    }
+
+    virtual RRsetCollectionBase::IterPtr getEnd() {
+        isc_throw(NotImplemented, "This method is not implemented.");
+    }
+};
 
 //
 // Zone updater using some database system as the underlying data source.
