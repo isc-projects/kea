@@ -93,8 +93,8 @@ public:
     void setLocalConfig(isc::data::ElementPtr config) { _config = config; }
 
     /// Returns the local (i.e. non-default) configuration.
-    /// \returns An ElementPtr pointing to a MapElement containing all
-    ///          non-default configuration options.
+    /// \return An ElementPtr pointing to a MapElement containing all
+    ///         non-default configuration options.
     isc::data::ElementPtr getLocalConfig() { return (_config); }
 
     /// Returns a list of all possible configuration options as specified
@@ -110,11 +110,11 @@ public:
     isc::data::ConstElementPtr getItemList(const std::string& identifier = "",
                                            bool recurse = false) const;
 
-    /// Returns all current configuration settings (both non-default and default).
+    /// Returns a map of the top-level configuration items, as currently
+    /// set or their defaults
+    ///
     /// \return An ElementPtr pointing to a MapElement containing
-    ///         string->value elements, where the string is the
-    ///         full identifier of the configuration option and the
-    ///         value is an ElementPtr with the value.
+    ///         the top-level configuration items
     isc::data::ConstElementPtr getFullConfig() const;
 
 private:
@@ -126,6 +126,6 @@ private:
 }
 #endif
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

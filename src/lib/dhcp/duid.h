@@ -107,6 +107,9 @@ public:
     /// @brief Returns reference to the client-id data
     const std::vector<uint8_t> getClientId() const;
 
+    /// @brief Returns textual representation of a DUID (e.g. 00:01:02:03:ff)
+    std::string toText() const;
+
     /// @brief Compares two client-ids for equality
     bool operator==(const ClientId& other) const;
 

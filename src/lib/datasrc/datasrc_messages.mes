@@ -144,7 +144,7 @@ instead.
 % DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL empty non-terminal %2 in %1
 The domain name does not have any RRs associated with it, so it doesn't
 exist in the database.  However, it has a subdomain, so it does exist
-in the DNS address space. This type of domain is known an an "empty
+in the DNS address space. This type of domain is known as an "empty
 non-terminal" and so we return NXRRSET instead of NXDOMAIN.
 
 % DATASRC_DATABASE_FOUND_NXDOMAIN search in datasource %1 resulted in NXDOMAIN for %2/%3/%4
@@ -202,7 +202,7 @@ a zone's difference sequences from a database-based data source.  The
 zone's name and class, database name, and the start and end serials
 are shown in the message.
 
-% DATASRC_DATABASE_JOURNALREADR_BADDATA failed to convert a diff to RRset in %1/%2 on %3 between %4 and %5: %6
+% DATASRC_DATABASE_JOURNALREADER_BADDATA failed to convert a diff to RRset in %1/%2 on %3 between %4 and %5: %6
 This is an error message indicating that a zone's diff is broken and
 the data source library failed to convert it to a valid RRset.  The
 most likely cause of this is that someone has manually modified the
@@ -287,7 +287,7 @@ matching the name.  This is returned as the result of the search.
 The given wildcard matches the name being sough but it as an empty
 nonterminal (e.g. there's nothing at *.example.com but something like
 subdomain.*.example.org, do exist: so *.example.org exists in the
-namespace but has no RRs assopciated with it). This will produce NXRRSET.
+namespace but has no RRs associated with it). This will produce NXRRSET.
 
 % DATASRC_DATABASE_WILDCARD_MATCH search in datasource %1 resulted in wildcard match at %2 with RRset %3
 The database doesn't contain directly matching name.  When searching
@@ -490,7 +490,7 @@ destroyed.
 % DATASRC_MEM_WILDCARD_CANCEL wildcard match canceled for '%1'
 Debug information. A domain above wildcard was reached, but there's something
 below the requested domain. Therefore the wildcard doesn't apply here.  This
-behaviour is specified by RFC 1034, section 4.3.3
+behaviour is specified by RFC 1034, section 4.3.3.
 
 % DATASRC_MEM_WILDCARD_DNAME DNAME record in wildcard domain '%1'
 The software refuses to load DNAME records into a wildcard domain.  It isn't

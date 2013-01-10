@@ -108,6 +108,14 @@ TEST(DuidTest, getType) {
     EXPECT_EQ(DUID::DUID_UNKNOWN, duid_invalid->getType());
 }
 
+// Test checks if the toText() returns valid texual representation
+TEST(DuidTest, toText) {
+    uint8_t data1[] = {0, 1, 2, 3, 4, 0xff, 0xfe};
+
+    DUID duid(data1, sizeof(data1));
+    EXPECT_EQ("00:01:02:03:04:ff:fe", duid.toText());
+}
+
 // This test checks if the comparison operators are sane.
 TEST(DuidTest, operators) {
     uint8_t data1[] = {0, 1, 2, 3, 4, 5, 6};
@@ -174,8 +182,8 @@ TEST(ClientIdTest, operators) {
 TEST(ClientIdTest, toText) {
     uint8_t data1[] = {0, 1, 2, 3, 4, 0xff, 0xfe};
 
-    DUID duid(data1, sizeof(data1));
-    EXPECT_EQ("00:01:02:03:04:ff:fe", duid.toText());
+    ClientId clientid(data1, sizeof(data1));
+    EXPECT_EQ("00:01:02:03:04:ff:fe", clientid.toText());
 }
 
 } // end of anonymous namespace

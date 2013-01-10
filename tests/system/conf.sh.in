@@ -51,7 +51,10 @@ export RNDC=$BIND9_TOP/bin/rndc/rndc
 export TESTSOCK=$BIND9_TOP/bin/tests/system/testsock.pl
 export DIGCOMP=$BIND9_TOP/bin/tests/system/digcomp.pl
 
-export SUBDIRS="bindctl glue ixfr/in-2"
+# bindctl test doesn't work right now and is disabled (see #2568)
+#export SUBDIRS="bindctl glue ixfr/in-2"
+export SUBDIRS="glue ixfr/in-2"
+
 # Add appropriate subdirectories to the above statement as the tests become
 # available.
 #SUBDIRS="dnssec masterfile ixfr/in-1 ixfr/in-2 ixfr/in-4"

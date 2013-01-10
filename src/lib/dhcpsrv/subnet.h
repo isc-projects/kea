@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -77,6 +77,9 @@ public:
         OptionDescriptor(bool persist)
             : option(OptionPtr()), persistent(persist) {};
     };
+
+    /// A pointer to option descriptor.
+    typedef boost::shared_ptr<OptionDescriptor> OptionDescriptorPtr;
 
     /// @brief Extractor class to extract key with another key.
     ///
@@ -198,6 +201,8 @@ public:
         >
     > OptionContainer;
 
+    // Pointer to the OptionContainer object.
+    typedef boost::shared_ptr<OptionContainer> OptionContainerPtr;
     /// Type of the index #1 - option type.
     typedef OptionContainer::nth_index<1>::type OptionContainerTypeIndex;
     /// Pair of iterators to represent the range of options having the
@@ -216,9 +221,11 @@ public:
     /// @param option option instance.
     /// @param persistent if true, send an option regardless if client
     /// requested it or not.
+    /// @param option_space name of the option space to add an option to.
     ///
     /// @throw isc::BadValue if invalid option provided.
-    void addOption(OptionPtr& option, bool persistent = false);
+    void addOption(OptionPtr& option, bool persistent,
+                   const std::string& option_space);
 
     /// @brief Delete all options configured for the subnet.
     void delOptions();
@@ -252,14 +259,24 @@ public:
         return (t2_);
     }
 
-    /// @brief Return a collection of options.
+    /// @brief Return a collection of option descriptors.
     ///
-    /// @return reference to collection of options configured for a subnet.
-    /// The returned reference is valid as long as the Subnet object which
-    /// returned it still exists.
-    const OptionContainer& getOptions() const {
-        return (options_);
-    }
+    /// @param option_space name of the option space.
+    ///
+    /// @return pointer to collection of options configured for a subnet.
+    OptionContainerPtr
+    getOptionDescriptors(const std::string& option_space) const;
+
+    /// @brief Return single option descriptor.
+    ///
+    /// @param option_space name of the option space.
+    /// @param option_code code of the option to be returned.
+    ///
+    /// @return option descriptor found for the specified option space
+    /// and option code.
+    OptionDescriptor
+    getOptionDescriptor(const std::string& option_space,
+                        const uint16_t option_code);
 
     /// @brief returns the last address that was tried from this pool
     ///
@@ -353,9 +370,6 @@ protected:
     /// @brief a tripet (min/default/max) holding allowed valid lifetime values
     Triplet<uint32_t> valid_;
 
-    /// @brief a collection of DHCP options configured for a subnet.
-    OptionContainer options_;
-
     /// @brief last allocated address
     ///
     /// This is the last allocated address that was previously allocated from
@@ -366,6 +380,15 @@ protected:
     /// that purpose it should be only considered a help that should not be
     /// fully trusted.
     isc::asiolink::IOAddress last_allocated_;
+
+private:
+
+    /// Container holding options grouped by option space names.
+    typedef std::map<std::string, OptionContainerPtr> OptionSpacesPtr;
+
+    /// @brief a collection of DHCP option spaces holding options
+    /// configured for a subnet.
+    OptionSpacesPtr option_spaces_;
 };
 
 /// @brief A configuration holder for IPv4 subnet.
