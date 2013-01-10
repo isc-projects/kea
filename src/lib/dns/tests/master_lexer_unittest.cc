@@ -142,6 +142,24 @@ TEST_F(MasterLexerTest, nestedPush) {
     EXPECT_TRUE(lexer.getSourceName().empty());
 }
 
+TEST_F(MasterLexerTest, unknownSourceSize) {
+    // Similar to the previous case, but the size of the second source
+    // will be considered "unknown" (by emulating an error).
+    ss << "test";
+    lexer.pushSource(ss);
+    EXPECT_EQ(4, lexer.getTotalSourceSize());
+
+    stringstream ss2;
+    ss2.setstate(std::ios_base::failbit); // this will make the size unknown
+    lexer.pushSource(ss2);
+    // Then the total size is also unknown.
+    EXPECT_EQ(MasterLexer::SOURCE_SIZE_UNKNOWN, lexer.getTotalSourceSize());
+
+    // If we pop that source, the size becomes known again.
+    lexer.popSource();
+    EXPECT_EQ(4, lexer.getTotalSourceSize());
+}
+
 TEST_F(MasterLexerTest, invalidPop) {
     // popSource() cannot be called if the sources stack is empty.
     EXPECT_THROW(lexer.popSource(), isc::InvalidOperation);
