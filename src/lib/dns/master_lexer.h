@@ -499,7 +499,7 @@ public:
     /// this way may not make much sense; it can only give an informational
     /// hint of the progress.
     ///
-    /// Note also that if a source is pushed, this method will normally return
+    /// Note also that if a source is popped, this method will normally return
     /// a smaller number by definition.  Likewise, the conceptual "read
     /// cursor" would move backward after a call to \c ungetToken(), in which
     /// case this method will return a smaller value, too.
