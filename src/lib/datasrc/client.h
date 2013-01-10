@@ -385,9 +385,11 @@ public:
     ///                       direct zone creation.
     /// \throw DataSourceError If something goes wrong in the data source
     ///                        while creating the zone.
-    /// \param name The (fully qualified) name of the zone to create
+    /// \param zone_name The (fully qualified) name of the zone to create
     /// \return True if the zone was added, false if it already existed
-    virtual bool createZone(const dns::Name& name);
+    virtual bool createZone(const dns::Name& zone_name);
+
+    virtual bool deleteZone(const dns::Name& zone_name);
 };
 }
 }
