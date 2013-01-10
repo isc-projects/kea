@@ -1047,7 +1047,6 @@ public:
     void commit() {
         // @todo validate option space name once 2313 is merged.
         if (storage_ && option_definition_) {
-            std::cout << "Adding item" << std::endl;
             storage_->addItem(option_definition_, option_space_name_);
         }
     }
@@ -1624,17 +1623,13 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_START).arg(config_set->str());
 
     // Some of the values specified in the configuration depend on
-    // other values. Typically, the values in the subnet6 structure
-    // depend on the global values. Thus we need to make sure that
-    // the global values are processed first and that they can be
-    // accessed by the subnet6 parsers. We separate parsers that
-    // should process data first (independent_parsers) from those
-    // that must process data when the independent data is already
-    // processed (dependent_parsers).
+    // other values. Typically, the values in the subnet4 structure
+    // depend on the global values. Also, option values configuration
+    // must be performed after the option definitions configurations.
+    // Thus we group parsers and will fire them in the right order.
     ParserCollection independent_parsers;
     ParserPtr subnet_parser;
     ParserPtr option_parser;
-    ParserCollection dependent_parsers;
 
     // The subnet parsers implement data inheritance by directly
     // accessing global storage. For this reason the global data
@@ -1655,16 +1650,20 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
     bool rollback = false;
 
     try {
-
+        // Make parsers grouping.
         const std::map<std::string, ConstElementPtr>& values_map =
             config_set->mapValue();
         BOOST_FOREACH(ConfigPair config_pair, values_map) {
             ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first));
             if (config_pair.first == "subnet4") {
                 subnet_parser = parser;
+
             } else if (config_pair.first == "option-data") {
                 option_parser = parser;
+
             } else {
+                // Those parsers should be started before other
+                // parsers so we can call build straight away.
                 independent_parsers.push_back(parser);
                 parser->build(config_pair.second);
                 // The commit operation here may modify the global storage
@@ -1674,6 +1673,7 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
             }
         }
 
+        // The option values parser is the next one to be run.
         std::map<std::string, ConstElementPtr>::const_iterator option_config =
             values_map.find("option-data");
         if (option_config != values_map.end()) {
@@ -1681,11 +1681,11 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
             option_parser->commit();
         }
 
+        // The subnet parser is the last one to be run.
         std::map<std::string, ConstElementPtr>::const_iterator subnet_config =
             values_map.find("subnet4");
         if (subnet_config != values_map.end()) {
             subnet_parser->build(subnet_config->second);
-            subnet_parser->commit();
         }
 
     } catch (const isc::Exception& ex) {
@@ -1710,8 +1710,8 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
     // This operation should be exception safe but let's make sure.
     if (!rollback) {
         try {
-            BOOST_FOREACH(ParserPtr parser, dependent_parsers) {
-                parser->commit();
+            if (subnet_parser) {
+                subnet_parser->commit();
             }
         }
         catch (const isc::Exception& ex) {
