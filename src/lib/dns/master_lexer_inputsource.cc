@@ -65,6 +65,7 @@ InputSource::InputSource(std::istream& input_stream) :
     line_(1),
     saved_line_(line_),
     buffer_pos_(0),
+    total_pos_(0),
     name_(createStreamName(input_stream)),
     input_(input_stream),
     input_size_(getStreamSize(input_))
@@ -96,6 +97,7 @@ InputSource::InputSource(const char* filename) :
     line_(1),
     saved_line_(line_),
     buffer_pos_(0),
+    total_pos_(0),
     name_(filename),
     input_(openFileStream(file_stream_, filename)),
     input_size_(getStreamSize(input_))
@@ -137,6 +139,7 @@ InputSource::getChar() {
 
     const int c = buffer_[buffer_pos_];
     ++buffer_pos_;
+    ++total_pos_;
     if (c == '\n') {
         ++line_;
     }
@@ -153,6 +156,7 @@ InputSource::ungetChar() {
                   "Cannot skip before the start of buffer");
     } else {
         --buffer_pos_;
+        --total_pos_;
         if (buffer_[buffer_pos_] == '\n') {
             --line_;
         }
@@ -161,6 +165,8 @@ InputSource::ungetChar() {
 
 void
 InputSource::ungetAll() {
+    assert(total_pos_ >= buffer_pos_);
+    total_pos_ -= buffer_pos_;
     buffer_pos_ = 0;
     line_ = saved_line_;
     at_eof_ = false;
