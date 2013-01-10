@@ -24,11 +24,21 @@
 
 #include <bitset>
 #include <cassert>
+#include <limits>
 #include <string>
 #include <vector>
 
 namespace isc {
 namespace dns {
+
+// The definition of SOURCE_SIZE_UNKNOWN.  Note that we initialize it using
+// a method of another library.  Technically, this could trigger a static
+// initialization fiasco.  But in this particular usage it's very unlikely
+// to happen because this value is expected to be used only as a return
+// value of a MasterLexer's method, and its constructor needs definitions
+// here.
+const size_t MasterLexer::SOURCE_SIZE_UNKNOWN =
+    std::numeric_limits<size_t>::max();
 
 namespace {
 typedef boost::shared_ptr<master_lexer_internal::InputSource> InputSourcePtr;

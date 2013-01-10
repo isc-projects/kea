@@ -331,6 +331,16 @@ public:
         const MasterToken token_;
     };
 
+    /// \brief Special value for input source size meaning "unknown".
+    ///
+    /// This constant value will be used as a return value of
+    /// \c getTotalSourceSize() when the size of one of the pushed sources
+    /// is unknown.  Note that this value itself is a valid integer in the
+    /// range of the type, so there's still a small possibility of
+    /// ambiguity.  In practice, however, the value should be sufficiently
+    /// large that should eliminate the possibility.
+    static const size_t SOURCE_SIZE_UNKNOWN;
+
     /// \brief Options for getNextToken.
     ///
     /// A compound option, indicating multiple options are set, can be
@@ -457,6 +467,12 @@ public:
     /// the source is pushed.  The size of other type of input stream is
     /// the size of the data available in the stream at the time of the
     /// source is pushed.
+    ///
+    /// In some special cases, it's possible that the size of the file or
+    /// stream is unknown.  It happens, for example, if the standard input
+    /// is associated with a pipe from the output of another process and it's
+    /// specified as an input source.  If the size of some of the pushed
+    /// pushed source is unknown, this method returns SOURCE_SIZE_UNKNOWN.
     ///
     /// If there is no source pushed in the lexer, it returns 0.
     ///
