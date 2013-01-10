@@ -443,6 +443,22 @@ public:
     /// \return The current line number of the source (see the description)
     size_t getSourceLine() const;
 
+    /// \brief Return the total size of pushed sources.
+    ///
+    /// This method returns the sum of the size of sources that have been
+    /// pushed to the lexer by the time of the call.  It would give the
+    /// caller of some hint about the amount of data the lexer is working on.
+    ///
+    /// The size of a normal file is equal to the file size at the time of
+    /// the source is pushed.  The size of other type of input stream is
+    /// the size of the data available in the stream at the time of the
+    /// source is pushed.
+    ///
+    /// If there is no source pushed in the lexer, it returns 0.
+    ///
+    /// \throw None
+    size_t getTotalSourceSize() const;
+
     /// \brief Parse and return another token from the input.
     ///
     /// It reads a bit of the last opened source and produces another token

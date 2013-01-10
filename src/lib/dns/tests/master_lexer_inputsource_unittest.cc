@@ -357,7 +357,8 @@ TEST_F(InputSourceTest, getSize) {
 }
 
 TEST_F(InputSourceTest, getPosition) {
-    // Initially the position is set to 0.
+    // Initially the position is set to 0.  Other cases are tested in tests
+    // for get and unget.
     EXPECT_EQ(0, source_.getPosition());
     EXPECT_EQ(0, InputSource(TEST_DATA_SRCDIR "/masterload.txt").getPosition());
 }
