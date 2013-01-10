@@ -67,6 +67,7 @@ public:
     void checkResult(ConstElementPtr status, int expected_code) {
         ASSERT_TRUE(status);
         comment_ = parseAnswer(rcode_, status);
+        std::cout << comment_->str() << std::endl;
         EXPECT_EQ(expected_code, rcode_);
     }
 
@@ -870,6 +871,74 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
         0x01
     };
     testOption(*range.first, 23, foo2_expected, sizeof(foo2_expected));
+}
+
+/// The goal of this test is to verify that two options having the same
+/// option code can be added to different option spaces.
+TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
+
+    // This configuration string is to configure two options
+    // sharing the code 56 and having different definitions
+    // and belonging to the different option spaces.
+    // The option definition must be provided for the
+    // option that belongs to the 'isc' option space.
+    // The definition is not required for the option that
+    // belongs to the 'dhcp4' option space as it is the
+    // standard option.
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"dhcp-message\","
+        "    \"space\": \"dhcp4\","
+        "    \"code\": 56,"
+        "    \"data\": \"AB CDEF0105\","
+        "    \"csv-format\": False"
+        " },"
+        " {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 56,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 56,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"isc\""
+        " } ],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
+   
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Options should be now availabe for the subnet.
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+    // Try to get the option from the space dhcp4.
+    Subnet::OptionDescriptor desc1 = subnet->getOptionDescriptor("dhcp4", 56);
+    ASSERT_TRUE(desc1.option);
+    EXPECT_EQ(56, desc1.option->getType());
+    // Try to get the option from the space isc.
+    Subnet::OptionDescriptor desc2 = subnet->getOptionDescriptor("isc", 56);
+    ASSERT_TRUE(desc2.option);
+    EXPECT_EQ(56, desc1.option->getType());
+    // Try to get the non-existing option from the non-existing
+    // option space and  expect that option is not returned.
+    Subnet::OptionDescriptor desc3 = subnet->getOptionDescriptor("non-existing", 56);
+    ASSERT_FALSE(desc3.option);
 }
 
 // Goal of this test is to verify options configuration
