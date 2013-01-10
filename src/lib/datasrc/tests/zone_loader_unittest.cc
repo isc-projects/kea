@@ -186,10 +186,12 @@ protected:
     {}
     void prepareSource(const Name& zone, const char* filename) {
         // TODO:
-        // Currently, load uses an implementation unrelated to the ZoneLoader.
-        // In the long term, the method will probably be deprecated. At that
-        // time, we should probably prepare the data in some other way (using
-        // sqlite3 or something). This is simpler for now.
+        // Currently, source_client_ is of InMemoryClient and its load()
+        // uses a different code than the ZoneLoader (so we can cross-check
+        // the implementations). Currently, the load() doesn't perform any
+        // post-load checks. It will change in #2499, at which point the
+        // loading may start failing depending on details of the test data. We
+        // should prepare the data by some different method then.
         source_client_.load(zone, string(TEST_DATA_DIR) + "/" + filename);
     }
 private:
