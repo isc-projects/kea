@@ -182,6 +182,15 @@ MasterLexer::getTotalSourceSize() const {
     return (total_size);
 }
 
+size_t
+MasterLexer::getPosition() const {
+    size_t position = 0;
+    BOOST_FOREACH(InputSourcePtr& src, impl_->sources_) {
+        position += src->getPosition();
+    }
+    return (position);
+}
+
 const MasterToken&
 MasterLexer::getNextToken(Options options) {
     if (impl_->source_ == NULL) {
