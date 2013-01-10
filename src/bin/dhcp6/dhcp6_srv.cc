@@ -32,6 +32,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet.h>
+#include <dhcpsrv/utils.h>
 #include <exceptions/exceptions.h>
 #include <util/io_utilities.h>
 #include <util/range_utilities.h>
@@ -405,7 +406,7 @@ void Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
     switch (serverid) {
     case FORBIDDEN:
         if (server_ids.size() > 0) {
-            isc_throw(RFCViolation, "Exactly 1 server-id option expected, but "
+            isc_throw(RFCViolation, "Server-id option was not expected, but "
                       << server_ids.size() << " received in " << pkt->getName());
         }
         break;
@@ -452,7 +453,10 @@ void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 
         // perhaps this should be logged on some higher level? This is most likely
         // configuration bug.
-        LOG_ERROR(dhcp6_logger, DHCP6_SUBNET_SELECTION_FAILED);
+        LOG_ERROR(dhcp6_logger, DHCP6_SUBNET_SELECTION_FAILED)
+            .arg(question->getRemoteAddr().toText())
+            .arg(question->getName());
+
     } else {
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_SUBNET_SELECTED)
             .arg(subnet->toText());

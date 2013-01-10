@@ -1148,7 +1148,7 @@ private:
 
         // Add pools to it.
         for (PoolStorage::iterator it = pools_.begin(); it != pools_.end(); ++it) {
-            subnet_->addPool6(*it);
+            subnet_->addPool(*it);
         }
 
         Subnet::OptionContainerPtr options = subnet_->getOptionDescriptors("dhcp6");

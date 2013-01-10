@@ -1,3 +1,13 @@
+544.	[func]		tomek
+	b10-dhcp4: Allocation engine support for IPv4 added. Currently
+	supported operations are server selection (Discover/Offer),
+	address assignment (Request/Ack), address renewal (Request/Ack),
+	and address release (Release). Expired leases can be reused.
+	Some options (e.g. Router Option) are still hardcoded, so the
+	DHCPv4 server is not yet usable, although its address allocation
+	is operational.
+	(Trac #2320, git 60606cabb1c9584700b1f642bf2af21a35c64573)
+
 543.	[func]*		jelte
 	When calling getFullConfig() as a module, , the configuration is now
 	returned as properly-structured JSON.  Previously, the structure had
