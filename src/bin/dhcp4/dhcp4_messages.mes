@@ -88,6 +88,41 @@ This error is output if the server failed to assemble the data to be
 returned to the client into a valid packet.  The cause is most likely
 to be a programming error: please raise a bug report.
 
+% DHCP4_PARSER_COMMIT_EXCEPTION parser failed to commit changes
+On receipt of message containing details to a change of the IPv4 DHCP
+server configuration, a set of parsers were successfully created, but one
+of them failed to commit its changes due to a low-level system exception
+being raised.  Additional messages may be output indicating the reason.
+
+% DHCP4_PARSER_COMMIT_FAIL parser failed to commit changes: %1
+On receipt of message containing details to a change of the IPv4 DHCP
+server configuration, a set of parsers were successfully created, but
+one of them failed to commit its changes.  The reason for the failure
+is given in the message.
+
+% DHCP4_PARSER_CREATED1 created parser for configuration element %1
+A debug message output during a configuration update of the IPv4 DHCP
+server, notifying that the parser for the specified configuration element
+has been successfully created in the first pass through creating parsers
+
+% DHCP4_PARSER_CREATED2 created parser for configuration element %1
+A debug message output during a configuration update of the IPv4 DHCP
+server, notifying that the parser for the specified configuration element
+has been successfully created in the second pass through creating parsers
+
+% DHCP4_PARSER_CREATE_FAIL failed to create parser for configuration element %1: %2
+On receipt of message containing details to a change of its configuration,
+the IPv4 DHCP server failed to create a parser to decode the contents of the
+named configuration element.  The reason for the failure is given in the
+message.
+
+% DHCP4_PARSER_CREATE_EXCEPTION failed to create parser for configuration element %1
+On receipt of message containing details to a change of its configuration,
+the IPv4 DHCP server failed to create a parser to decode the contents
+of the named configuration element.  The message has been output in
+response to a non-BIND 10 exception being raised.  Additional messages
+may give further information.
+
 % DHCP4_QUERY_DATA received packet type %1, data is <%2>
 A debug message listing the data received from the client.
 
