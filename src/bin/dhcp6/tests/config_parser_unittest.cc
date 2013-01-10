@@ -77,22 +77,32 @@ public:
         std::map<std::string, std::string> params;
         if (parameter == "name") {
             params["name"] = param_value;
-            params["code"] = "80";
+            params["space"] = "dhcp6";
+            params["code"] = "38";
+            params["data"] = "AB CDEF0105";
+            params["csv-format"] = "False";
+        } else if (parameter == "name") {
+            params["name"] = "subscriber-id";
+            params["space"] = param_value;
+            params["code"] = "38";
             params["data"] = "AB CDEF0105";
             params["csv-format"] = "False";
         } else if (parameter == "code") {
-            params["name"] = "option_foo";
+            params["name"] = "subscriber-id";
+            params["space"] = "dhcp6";
             params["code"] = param_value;
             params["data"] = "AB CDEF0105";
             params["csv-format"] = "False";
         } else if (parameter == "data") {
-            params["name"] = "option_foo";
-            params["code"] = "80";
+            params["name"] = "subscriber-id";
+            params["space"] = "dhcp6";
+            params["code"] = "38";
             params["data"] = param_value;
             params["csv-format"] = "False";
         } else if (parameter == "csv-format") {
-            params["name"] = "option_foo";
-            params["code"] = "80";
+            params["name"] = "subscriber-id";
+            params["space"] = "dhcp6";
+            params["code"] = "38";
             params["data"] = "AB CDEF0105";
             params["csv-format"] = param_value;
         }
@@ -122,6 +132,8 @@ public:
             }
             if (param.first == "name") {
                 stream << "\"name\": \"" << param.second << "\"";
+            } else if (param.first == "space") {
+                stream << "\"space\": \"" << param.second << "\"";
             } else if (param.first == "code") {
                 stream << "\"code\": " << param.second;;
             } else if (param.first == "data") {
@@ -511,7 +523,7 @@ TEST_F(Dhcp6ParserTest, optionDefRecord) {
     EXPECT_EQ(100, def->getCode());
     EXPECT_EQ(OPT_RECORD_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
-    
+
     // The option comprises the record of data fields. Verify that all
     // fields are present and they are of the expected types.
     const OptionDefinition::RecordFieldsCollection& record_fields =
@@ -731,8 +743,8 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidRecordType) {
 
 
 /// The purpose of this test is to verify that it is not allowed
-/// to override the standard option (that belongs to dhcp4 option
-/// space) and that it is allowed to define option in the dhcp4
+/// to override the standard option (that belongs to dhcp6 option
+/// space) and that it is allowed to define option in the dhcp6
 /// option space that has a code which is not used by any of the
 /// standard options.
 TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
@@ -804,16 +816,18 @@ TEST_F(Dhcp6ParserTest, optionDataDefaults) {
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
-        "    \"name\": \"option_foo\","
-        "    \"code\": 100,"
+        "    \"name\": \"subscriber-id\","
+        "    \"space\": \"dhcp6\","
+        "    \"code\": 38,"
         "    \"data\": \"AB CDEF0105\","
         "    \"csv-format\": False"
         " },"
         " {"
-        "    \"name\": \"option_foo2\","
-        "    \"code\": 101,"
+        "    \"name\": \"preference\","
+        "    \"space\": \"dhcp6\","
+        "    \"code\": 7,"
         "    \"data\": \"01\","
-        "    \"csv-format\": False"
+        "    \"csv-format\": True"
         " } ],"
         "\"subnet6\": [ { "
         "    \"pool\": [ \"2001:db8:1::/80\" ],"
@@ -841,31 +855,101 @@ TEST_F(Dhcp6ParserTest, optionDataDefaults) {
     // code so we get the range.
     std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
               Subnet::OptionContainerTypeIndex::const_iterator> range =
-        idx.equal_range(100);
-    // Expect single option with the code equal to 100.
+        idx.equal_range(D6O_SUBSCRIBER_ID);
+    // Expect single option with the code equal to 38.
     ASSERT_EQ(1, std::distance(range.first, range.second));
-    const uint8_t foo_expected[] = {
+    const uint8_t subid_expected[] = {
         0xAB, 0xCD, 0xEF, 0x01, 0x05
     };
     // Check if option is valid in terms of code and carried data.
-    testOption(*range.first, 100, foo_expected, sizeof(foo_expected));
+    testOption(*range.first, D6O_SUBSCRIBER_ID, subid_expected,
+               sizeof(subid_expected));
 
-    range = idx.equal_range(101);
+    range = idx.equal_range(D6O_PREFERENCE);
     ASSERT_EQ(1, std::distance(range.first, range.second));
     // Do another round of testing with second option.
-    const uint8_t foo2_expected[] = {
+    const uint8_t pref_expected[] = {
         0x01
     };
-    testOption(*range.first, 101, foo2_expected, sizeof(foo2_expected));
+    testOption(*range.first, D6O_PREFERENCE, pref_expected,
+               sizeof(pref_expected));
 
     // Check that options with other option codes are not returned.
-    for (uint16_t code = 102; code < 110; ++code) {
+    for (uint16_t code = 47; code < 57; ++code) {
         range = idx.equal_range(code);
         EXPECT_EQ(0, std::distance(range.first, range.second));
     }
 }
 
-// Goal of this test is to verify options configuration
+/// The goal of this test is to verify that two options having the same
+/// option code can be added to different option spaces.
+TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
+
+    // This configuration string is to configure two options
+    // sharing the code 56 and having different definitions
+    // and belonging to the different option spaces.
+    // The option definition must be provided for the
+    // option that belongs to the 'isc' option space.
+    // The definition is not required for the option that
+    // belongs to the 'dhcp6' option space as it is the
+    // standard option.
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"subscriber-id\","
+        "    \"space\": \"dhcp6\","
+        "    \"code\": 38,"
+        "    \"data\": \"AB CDEF0105\","
+        "    \"csv-format\": False"
+        " },"
+        " {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 38,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 38,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"isc\""
+        " } ],"
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\""
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Options should be now availabe for the subnet.
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet);
+    // Try to get the option from the space dhcp6.
+    Subnet::OptionDescriptor desc1 = subnet->getOptionDescriptor("dhcp6", 38);
+    ASSERT_TRUE(desc1.option);
+    EXPECT_EQ(38, desc1.option->getType());
+    // Try to get the option from the space isc.
+    Subnet::OptionDescriptor desc2 = subnet->getOptionDescriptor("isc", 38);
+    ASSERT_TRUE(desc2.option);
+    EXPECT_EQ(38, desc1.option->getType());
+    // Try to get the non-existing option from the non-existing
+    // option space and  expect that option is not returned.
+    Subnet::OptionDescriptor desc3 = subnet->getOptionDescriptor("non-existing", 38);
+    ASSERT_FALSE(desc3.option);
+}
+
+// The goal of this test is to verify options configuration
 // for a single subnet. In particular this test checks
 // that local options configuration overrides global
 // option setting.
@@ -876,8 +960,9 @@ TEST_F(Dhcp6ParserTest, optionDataInSingleSubnet) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"option-data\": [ {"
-        "      \"name\": \"option_foo\","
-        "      \"code\": 100,"
+        "      \"name\": \"subscriber-id\","
+        "      \"space\": \"dhcp6\","
+        "      \"code\": 38,"
         "      \"data\": \"AB\","
         "      \"csv-format\": False"
         " } ],"
@@ -885,14 +970,16 @@ TEST_F(Dhcp6ParserTest, optionDataInSingleSubnet) {
         "    \"pool\": [ \"2001:db8:1::/80\" ],"
         "    \"subnet\": \"2001:db8:1::/64\", "
         "    \"option-data\": [ {"
-        "          \"name\": \"option_foo\","
-        "          \"code\": 100,"
+        "          \"name\": \"subscriber-id\","
+        "          \"space\": \"dhcp6\","
+        "          \"code\": 38,"
         "          \"data\": \"AB CDEF0105\","
         "          \"csv-format\": False"
         "        },"
         "        {"
-        "          \"name\": \"option_foo2\","
-        "          \"code\": 101,"
+        "          \"name\": \"preference\","
+        "          \"space\": \"dhcp6\","
+        "          \"code\": 7,"
         "          \"data\": \"01\","
         "          \"csv-format\": False"
         "        } ]"
@@ -919,22 +1006,24 @@ TEST_F(Dhcp6ParserTest, optionDataInSingleSubnet) {
     // code so we get the range.
     std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
               Subnet::OptionContainerTypeIndex::const_iterator> range =
-        idx.equal_range(100);
-    // Expect single option with the code equal to 100.
+        idx.equal_range(D6O_SUBSCRIBER_ID);
+    // Expect single option with the code equal to 38.
     ASSERT_EQ(1, std::distance(range.first, range.second));
-    const uint8_t foo_expected[] = {
+    const uint8_t subid_expected[] = {
         0xAB, 0xCD, 0xEF, 0x01, 0x05
     };
     // Check if option is valid in terms of code and carried data.
-    testOption(*range.first, 100, foo_expected, sizeof(foo_expected));
+    testOption(*range.first, D6O_SUBSCRIBER_ID, subid_expected,
+               sizeof(subid_expected));
 
-    range = idx.equal_range(101);
+    range = idx.equal_range(D6O_PREFERENCE);
     ASSERT_EQ(1, std::distance(range.first, range.second));
     // Do another round of testing with second option.
-    const uint8_t foo2_expected[] = {
+    const uint8_t pref_expected[] = {
         0x01
     };
-    testOption(*range.first, 101, foo2_expected, sizeof(foo2_expected));
+    testOption(*range.first, D6O_PREFERENCE, pref_expected,
+               sizeof(pref_expected));
 }
 
 // Goal of this test is to verify options configuration
@@ -949,8 +1038,9 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
         "    \"pool\": [ \"2001:db8:1::/80\" ],"
         "    \"subnet\": \"2001:db8:1::/64\", "
         "    \"option-data\": [ {"
-        "          \"name\": \"option_foo\","
-        "          \"code\": 100,"
+        "          \"name\": \"subscriber-id\","
+        "          \"space\": \"dhcp6\","
+        "          \"code\": 38,"
         "          \"data\": \"0102030405060708090A\","
         "          \"csv-format\": False"
         "        } ]"
@@ -959,8 +1049,9 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
         "    \"pool\": [ \"2001:db8:2::/80\" ],"
         "    \"subnet\": \"2001:db8:2::/64\", "
         "    \"option-data\": [ {"
-        "          \"name\": \"option_foo2\","
-        "          \"code\": 101,"
+        "          \"name\": \"user-class\","
+        "          \"space\": \"dhcp6\","
+        "          \"code\": 15,"
         "          \"data\": \"FFFEFDFCFB\","
         "          \"csv-format\": False"
         "        } ]"
@@ -987,15 +1078,16 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     // code so we get the range.
     std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
               Subnet::OptionContainerTypeIndex::const_iterator> range1 =
-        idx1.equal_range(100);
-    // Expect single option with the code equal to 100.
+        idx1.equal_range(D6O_SUBSCRIBER_ID);
+    // Expect single option with the code equal to 38.
     ASSERT_EQ(1, std::distance(range1.first, range1.second));
-    const uint8_t foo_expected[] = {
+    const uint8_t subid_expected[] = {
         0x01, 0x02, 0x03, 0x04, 0x05,
         0x06, 0x07, 0x08, 0x09, 0x0A
     };
     // Check if option is valid in terms of code and carried data.
-    testOption(*range1.first, 100, foo_expected, sizeof(foo_expected));
+    testOption(*range1.first, D6O_SUBSCRIBER_ID, subid_expected,
+               sizeof(subid_expected));
 
     // Test another subnet in the same way.
     Subnet6Ptr subnet2 = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:2::4"));
@@ -1006,13 +1098,14 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     const Subnet::OptionContainerTypeIndex& idx2 = options2->get<1>();
     std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
               Subnet::OptionContainerTypeIndex::const_iterator> range2 =
-        idx2.equal_range(101);
+        idx2.equal_range(D6O_USER_CLASS);
     ASSERT_EQ(1, std::distance(range2.first, range2.second));
 
-    const uint8_t foo2_expected[] = {
+    const uint8_t user_class_expected[] = {
         0xFF, 0xFE, 0xFD, 0xFC, 0xFB
     };
-    testOption(*range2.first, 101, foo2_expected, sizeof(foo2_expected));
+    testOption(*range2.first, D6O_USER_CLASS, user_class_expected,
+               sizeof(user_class_expected));
 }
 
 // Verify that empty option name is rejected in the configuration.
@@ -1105,14 +1198,15 @@ TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
     // code so we get the range.
     std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
               Subnet::OptionContainerTypeIndex::const_iterator> range =
-        idx.equal_range(80);
-    // Expect single option with the code equal to 100.
+        idx.equal_range(D6O_SUBSCRIBER_ID);
+    // Expect single option with the code equal to 38.
     ASSERT_EQ(1, std::distance(range.first, range.second));
-    const uint8_t foo_expected[] = {
+    const uint8_t subid_expected[] = {
         0x0A, 0x0B, 0x0C, 0x0D
     };
     // Check if option is valid in terms of code and carried data.
-    testOption(*range.first, 80, foo_expected, sizeof(foo_expected));
+    testOption(*range.first, D6O_SUBSCRIBER_ID, subid_expected,
+               sizeof(subid_expected));
 }
 
 // Verify that specific option object is returned for standard
@@ -1120,7 +1214,8 @@ TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
 TEST_F(Dhcp6ParserTest, stdOptionData) {
     ConstElementPtr x;
     std::map<std::string, std::string> params;
-    params["name"] = "OPTION_IA_NA";
+    params["name"] = "ia-na";
+    params["space"] = "dhcp6";
     // Option code 3 means OPTION_IA_NA.
     params["code"] = "3";
     params["data"] = "12345, 6789, 1516";
