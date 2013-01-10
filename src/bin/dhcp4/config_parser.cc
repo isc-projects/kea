@@ -1373,14 +1373,17 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
     // rollback informs whether error occured and original data
     // have to be restored to global storages.
     bool rollback = false;
-
+    string current_parser;  // For error messages
     try {
 
         // Iterate over all independent parsers first (all but subnet4)
         // and try to parse the data.
         BOOST_FOREACH(ConfigPair config_pair, config_set->mapValue()) {
             if (config_pair.first != "subnet4") {
+                current_parser = config_pair.first;
                 ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first));
+                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PARSER_CREATED1)
+                          .arg(current_parser);
                 independent_parsers.push_back(parser);
                 parser->build(config_pair.second);
                 // The commit operation here may modify the global storage
@@ -1393,13 +1396,18 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
         // Process dependent configuration data.
         BOOST_FOREACH(ConfigPair config_pair, config_set->mapValue()) {
             if (config_pair.first == "subnet4") {
+                current_parser = config_pair.first;
                 ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first));
+                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PARSER_CREATED2)
+                          .arg(current_parser);
                 dependent_parsers.push_back(parser);
                 parser->build(config_pair.second);
             }
         }
 
     } catch (const isc::Exception& ex) {
+        LOG_ERROR(dhcp4_logger, DHCP4_PARSER_CREATE_FAIL).arg(current_parser)
+                  .arg(ex.what());
         answer =
             isc::config::createAnswer(1, string("Configuration parsing failed: ") + ex.what());
 
@@ -1408,6 +1416,8 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
 
     } catch (...) {
         // for things like bad_cast in boost::lexical_cast
+        LOG_ERROR(dhcp4_logger, DHCP4_PARSER_CREATE_EXCEPTION)
+                  .arg(current_parser);
         answer =
             isc::config::createAnswer(1, string("Configuration parsing failed"));
 
@@ -1426,12 +1436,14 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
             }
         }
         catch (const isc::Exception& ex) {
+            LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
             answer =
                 isc::config::createAnswer(2, string("Configuration commit failed: ") + ex.what());
             rollback = true;
 
         } catch (...) {
             // for things like bad_cast in boost::lexical_cast
+            LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_EXCEPTION);
             answer =
                 isc::config::createAnswer(2, string("Configuration commit failed"));
             rollback = true;
