@@ -73,7 +73,6 @@ run_unittests_SOURCES += tsig_unittest.cc
 run_unittests_SOURCES += tsigerror_unittest.cc
 run_unittests_SOURCES += tsigkey_unittest.cc
 run_unittests_SOURCES += tsigrecord_unittest.cc
-run_unittests_SOURCES += character_string_unittest.cc
 run_unittests_SOURCES += master_loader_callbacks_test.cc
 run_unittests_SOURCES += rrset_collection_unittest.cc
 run_unittests_SOURCES += zone_checker_unittest.cc
