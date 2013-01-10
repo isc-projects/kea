@@ -1418,7 +1418,17 @@ public:
             ZoneFinderContextPtr result =
                 finder.find(name, rrtype,
                             ZoneFinder::NO_WILDCARD | ZoneFinder::FIND_GLUE_OK);
-            return (result->rrset);
+            // We return the result rrset only if the result code is
+            // SUCCESS. We return empty if CNAME, DNAME, DELEGATION,
+            // etc. are returned by the ZoneFinder.
+            //
+            // Note that in the case that the queried type itself is
+            // CNAME, then the finder will return SUCCESS.
+            if (result->code == ZoneFinder::SUCCESS) {
+                return (result->rrset);
+            } else {
+                return (ConstRRsetPtr());
+            }
         } catch (const OutOfZone&) {
             // As RRsetCollection is an arbitrary set of RRsets, in case
             // the searched name is out of zone, we return nothing
