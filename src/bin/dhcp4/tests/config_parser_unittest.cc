@@ -92,21 +92,31 @@ public:
         std::map<std::string, std::string> params;
         if (parameter == "name") {
             params["name"] = param_value;
+            params["space"] = "dhcp4";
+            params["code"] = "56";
+            params["data"] = "AB CDEF0105";
+            params["csv-format"] = "False";
+        } else if (parameter == "space") {
+            params["name"] = "dhcp-message";
+            params["space"] = param_value;
             params["code"] = "56";
             params["data"] = "AB CDEF0105";
             params["csv-format"] = "False";
         } else if (parameter == "code") {
-            params["name"] = "option_foo";
+            params["name"] = "dhcp-message";
+            params["space"] = "dhcp4";
             params["code"] = param_value;
             params["data"] = "AB CDEF0105";
             params["csv-format"] = "False";
         } else if (parameter == "data") {
-            params["name"] = "option_foo";
+            params["name"] = "dhcp-message";
+            params["space"] = "dhcp4";
             params["code"] = "56";
             params["data"] = param_value;
             params["csv-format"] = "False";
         } else if (parameter == "csv-format") {
-            params["name"] = "option_foo";
+            params["name"] = "dhcp-message";
+            params["space"] = "dhcp4";
             params["code"] = "56";
             params["data"] = "AB CDEF0105";
             params["csv-format"] = param_value;
@@ -142,6 +152,8 @@ public:
             }
             if (param.first == "name") {
                 stream << "\"name\": \"" << param.second << "\"";
+            } else if (param.first == "space") {
+                stream << "\"space\": \"" << param.second << "\"";
             } else if (param.first == "code") {
                 stream << "\"code\": " << param.second << "";
             } else if (param.first == "data") {
@@ -803,13 +815,15 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
-        "    \"name\": \"option_foo\","
+        "    \"name\": \"dhcp-message\","
+        "    \"space\": \"dhcp4\","
         "    \"code\": 56,"
         "    \"data\": \"AB CDEF0105\","
         "    \"csv-format\": False"
         " },"
         " {"
-        "    \"name\": \"option_foo2\","
+        "    \"name\": \"default-ip-ttl\","
+        "    \"space\": \"dhcp4\","
         "    \"code\": 23,"
         "    \"data\": \"01\","
         "    \"csv-format\": False"
@@ -868,7 +882,8 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"option-data\": [ {"
-        "      \"name\": \"option_foo\","
+        "      \"name\": \"dhcp-message\","
+        "      \"space\": \"dhcp4\","
         "      \"code\": 56,"
         "      \"data\": \"AB\","
         "      \"csv-format\": False"
@@ -877,13 +892,15 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
         "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"option-data\": [ {"
-        "          \"name\": \"option_foo\","
+        "          \"name\": \"dhcp-message\","
+        "          \"space\": \"dhcp4\","
         "          \"code\": 56,"
         "          \"data\": \"AB CDEF0105\","
         "          \"csv-format\": False"
         "        },"
         "        {"
-        "          \"name\": \"option_foo2\","
+        "          \"name\": \"default-ip-ttl\","
+        "          \"space\": \"dhcp4\","
         "          \"code\": 23,"
         "          \"data\": \"01\","
         "          \"csv-format\": False"
@@ -940,7 +957,8 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
         "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"option-data\": [ {"
-        "          \"name\": \"option_foo\","
+        "          \"name\": \"dhcp-message\","
+        "          \"space\": \"dhcp4\","
         "          \"code\": 56,"
         "          \"data\": \"0102030405060708090A\","
         "          \"csv-format\": False"
@@ -950,7 +968,8 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
         "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
         "    \"subnet\": \"192.0.3.0/24\", "
         "    \"option-data\": [ {"
-        "          \"name\": \"option_foo2\","
+        "          \"name\": \"default-ip-ttl\","
+        "          \"space\": \"dhcp4\","
         "          \"code\": 23,"
         "          \"data\": \"FF\","
         "          \"csv-format\": False"
@@ -1103,6 +1122,7 @@ TEST_F(Dhcp4ParserTest, stdOptionData) {
     ConstElementPtr x;
     std::map<std::string, std::string> params;
     params["name"] = "nis-servers";
+    params["space"] = "dhcp4";
     // Option code 41 means nis-servers.
     params["code"] = "41";
     // Specify option values in a CSV (user friendly) format.
