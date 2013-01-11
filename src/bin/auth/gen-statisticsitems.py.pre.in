@@ -219,6 +219,7 @@ def generate_docfile(docfile, def_mtime):
                     if word == xmldocument_command_name:
                         command = ElementTree.SubElement(sim_para, 'command')
                         command.text = word
+                        # append empty string for trailing text
                         command.tail = ''
                         prev = command
                     else:
@@ -226,6 +227,7 @@ def generate_docfile(docfile, def_mtime):
                             sim_para.text += word + ' '
                         else:
                             prev.tail += word + ' '
+                # remove extra trailing whitespaces
                 sim_para.text = sim_para.text.rstrip()
                 if prev is not None:
                     prev.tail = prev.tail.rstrip()
