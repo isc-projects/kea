@@ -25,6 +25,19 @@
 namespace isc {
 namespace dns {
 
+/// \brief Error during RRsetCollectionBase find() operation
+///
+/// This exception is thrown when an calling implementation of
+/// \c RRsetCollectionBase::find() results in an error which is not due
+/// to unmatched data, but because of some other underlying error
+/// condition.
+class RRsetCollectionError : public Exception {
+public:
+    RRsetCollectionError(const char* file, size_t line, const char* what) :
+        Exception(file, line, what)
+    {}
+};
+
 /// \brief Generic class to represent a set of RRsets.
 ///
 /// This is a generic container and the stored set of RRsets does not
@@ -38,18 +51,6 @@ namespace dns {
 /// STL container. libdatasrc will have another implementation.
 class RRsetCollectionBase {
 public:
-    /// \brief Error during find operation
-    ///
-    /// This exception is thrown when an calling implementation of
-    /// \c find() results in an error which is not due to unmatched
-    /// data, but because of some other underlying error condition.
-    class FindError : public Exception {
-    public:
-        FindError(const char* file, size_t line, const char* what) :
-            Exception(file, line, what)
-        {}
-    };
-
     /// \brief Find a matching RRset in the collection.
     ///
     /// Returns the RRset in the collection that exactly matches the
@@ -59,7 +60,7 @@ public:
     /// This method's implementations currently are not specified to
     /// handle \c RRTypes such as RRSIG, NSEC3, ANY, or AXFR.
     ///
-    /// \throw FindError if find() results in some
+    /// \throw RRsetCollectionError if find() results in some
     /// implementation-specific error.
     /// \param name The name of the RRset to search for.
     /// \param rrtype The type of the RRset to search for.
