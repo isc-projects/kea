@@ -1322,8 +1322,11 @@ public:
     // Mock-only; control whether to allow subsequent transaction.
     void allowMoreTransaction(bool is_allowed) {
         if (is_mock_) {
-            dynamic_cast<MockAccessor&>(*current_accessor_).
-                allowMoreTransaction(is_allowed);
+            // Use a separate variable for MockAccessor&; some compilers
+            // would be confused otherwise.
+            MockAccessor& mock_accessor =
+                dynamic_cast<MockAccessor&>(*current_accessor_);
+            mock_accessor.allowMoreTransaction(is_allowed);
         }
     }
 
