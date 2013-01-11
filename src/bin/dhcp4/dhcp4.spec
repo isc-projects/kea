@@ -73,10 +73,16 @@
           { "item_name": "record_types",
             "item_type": "string",
             "item_optional": false,
-            "item_default": "",
+            "item_default": ""
           },
 
           { "item_name": "space",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": ""
+          },
+
+          { "item_name": "encapsulate",
             "item_type": "string",
             "item_optional": false,
             "item_default": ""
