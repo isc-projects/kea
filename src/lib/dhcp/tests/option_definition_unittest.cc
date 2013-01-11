@@ -53,38 +53,62 @@ public:
 TEST_F(OptionDefinitionTest, constructor) {
     // Specify the option data type as string. This should get converted
     // to enum value returned by getType().
-    OptionDefinition opt_def1("OPTION_CLIENTID", 1, "string");
+    OptionDefinition opt_def1("OPTION_CLIENTID", D6O_CLIENTID, "string");
     EXPECT_EQ("OPTION_CLIENTID", opt_def1.getName());
 
     EXPECT_EQ(1, opt_def1.getCode());
     EXPECT_EQ(OPT_STRING_TYPE,  opt_def1.getType());
     EXPECT_FALSE(opt_def1.getArrayType());
+    EXPECT_TRUE(opt_def1.getEncapsulatedSpace().empty());
     EXPECT_NO_THROW(opt_def1.validate());
 
     // Specify the option data type as an enum value.
-    OptionDefinition opt_def2("OPTION_RAPID_COMMIT", 14,
+    OptionDefinition opt_def2("OPTION_RAPID_COMMIT", D6O_RAPID_COMMIT,
                               OPT_EMPTY_TYPE);
     EXPECT_EQ("OPTION_RAPID_COMMIT", opt_def2.getName());
     EXPECT_EQ(14, opt_def2.getCode());
     EXPECT_EQ(OPT_EMPTY_TYPE, opt_def2.getType());
     EXPECT_FALSE(opt_def2.getArrayType());
-    EXPECT_NO_THROW(opt_def1.validate());
+    EXPECT_TRUE(opt_def2.getEncapsulatedSpace().empty());
+    EXPECT_NO_THROW(opt_def2.validate());
+
+    // Specify encapsulated option space name and option data type
+    // as enum value.
+    OptionDefinition opt_def3("OPTION_VENDOR_OPTS", D6O_VENDOR_OPTS,
+                              OPT_UINT32_TYPE, "isc");
+    EXPECT_EQ("OPTION_VENDOR_OPTS", opt_def3.getName());
+    EXPECT_EQ(D6O_VENDOR_OPTS, opt_def3.getCode());
+    EXPECT_EQ(OPT_UINT32_TYPE, opt_def3.getType());
+    EXPECT_FALSE(opt_def3.getArrayType());
+    EXPECT_EQ("isc", opt_def3.getEncapsulatedSpace());
+    EXPECT_NO_THROW(opt_def3.validate());
+
+    // Specify encapsulated option space name and option data type
+    // as string value.
+    OptionDefinition opt_def4("OPTION_VENDOR_OPTS", D6O_VENDOR_OPTS,
+                              "uint32", "isc");
+    EXPECT_EQ("OPTION_VENDOR_OPTS", opt_def4.getName());
+    EXPECT_EQ(D6O_VENDOR_OPTS, opt_def4.getCode());
+    EXPECT_EQ(OPT_UINT32_TYPE, opt_def4.getType());
+    EXPECT_FALSE(opt_def4.getArrayType());
+    EXPECT_EQ("isc", opt_def4.getEncapsulatedSpace());
+    EXPECT_NO_THROW(opt_def4.validate());
 
     // Check if it is possible to set that option is an array.
-    OptionDefinition opt_def3("OPTION_NIS_SERVERS", 27,
+    OptionDefinition opt_def5("OPTION_NIS_SERVERS", 27,
                               OPT_IPV6_ADDRESS_TYPE,
                               true);
-    EXPECT_EQ("OPTION_NIS_SERVERS", opt_def3.getName());
-    EXPECT_EQ(27, opt_def3.getCode());
-    EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, opt_def3.getType());
-    EXPECT_TRUE(opt_def3.getArrayType());
-    EXPECT_NO_THROW(opt_def3.validate());
+    EXPECT_EQ("OPTION_NIS_SERVERS", opt_def5.getName());
+    EXPECT_EQ(27, opt_def5.getCode());
+    EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, opt_def5.getType());
+    EXPECT_TRUE(opt_def5.getArrayType());
+    EXPECT_NO_THROW(opt_def5.validate());
 
     // The created object is invalid if invalid data type is specified but
     // constructor shouldn't throw exception. The object is validated after
     // it has been created.
     EXPECT_NO_THROW(
-        OptionDefinition opt_def4("OPTION_SERVERID",
+        OptionDefinition opt_def6("OPTION_SERVERID",
                                   OPT_UNKNOWN_TYPE + 10,
                                   OPT_STRING_TYPE);
     );
@@ -213,6 +237,11 @@ TEST_F(OptionDefinitionTest, validate) {
                                "record");
     opt_def16.addRecordField("uint8");
     opt_def16.addRecordField("string");
+
+    // Check invalid encapsulated option space name.
+    OptionDefinition opt_def17("OPTION_VENDOR_OPTS", D6O_VENDOR_OPTS,
+                               "uint32", "invalid%space%name");
+    EXPECT_THROW(opt_def17.validate(), MalformedOptionDefinition);
 }
 
 

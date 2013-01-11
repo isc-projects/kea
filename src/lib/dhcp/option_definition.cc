@@ -21,6 +21,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_space.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <boost/algorithm/string/classification.hpp>
@@ -40,7 +41,8 @@ OptionDefinition::OptionDefinition(const std::string& name,
     : name_(name),
       code_(code),
       type_(OPT_UNKNOWN_TYPE),
-      array_type_(array_type) {
+      array_type_(array_type),
+      encapsulated_space_("") {
     // Data type is held as enum value by this class.
     // Use the provided option type string to get the
     // corresponding enum value.
@@ -54,7 +56,34 @@ OptionDefinition::OptionDefinition(const std::string& name,
     : name_(name),
       code_(code),
       type_(type),
-      array_type_(array_type) {
+      array_type_(array_type),
+      encapsulated_space_("") {
+}
+
+OptionDefinition::OptionDefinition(const std::string& name,
+                                   const uint16_t code,
+                                   const std::string& type,
+                                   const char* encapsulated_space)
+    : name_(name),
+      code_(code),
+      type_(OPT_UNKNOWN_TYPE),
+      array_type_(false),
+      encapsulated_space_(encapsulated_space) {
+    // Data type is held as enum value by this class.
+    // Use the provided option type string to get the
+    // corresponding enum value.
+    type_ = OptionDataTypeUtil::getDataType(type);
+}
+
+OptionDefinition::OptionDefinition(const std::string& name,
+                                   const uint16_t code,
+                                   const OptionDataType type,
+                                   const char* encapsulated_space)
+    : name_(name),
+      code_(code),
+      type_(type),
+      array_type_(false),
+      encapsulated_space_(encapsulated_space) {
 }
 
 void
@@ -227,6 +256,11 @@ OptionDefinition::validate() const {
         all(find_head(name_, 1), boost::is_any_of(std::string("-_"))) ||
         all(find_tail(name_, 1), boost::is_any_of(std::string("-_")))) {
         err_str << "invalid option name '" << name_ << "'";
+
+    } else if (!encapsulated_space_.empty() &&
+               !OptionSpace::validateName(encapsulated_space_)) {
+        err_str << "invalid encapsulated option space name: '"
+                << encapsulated_space_ << "'";
 
     } else if (type_ >= OPT_UNKNOWN_TYPE) {
         // Option definition must be of a known type.
