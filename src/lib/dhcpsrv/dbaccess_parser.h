@@ -44,13 +44,20 @@ public:
 /// depend on the datbase chosen.
 class DbAccessParser: public DhcpConfigParser {
 public:
+    /// @brief Combination of parameter name and configuration contents
+    typedef std::pair<std::string, isc::data::ConstElementPtr> ConfigPair;
+
+    /// @brief Keyword and associated value
+    typedef std::pair<std::string, std::string> StringPair;
+
+    /// @brief Keyword/value collection of database access parameters
+    typedef std::map<std::string, std::string> StringPairMap;
 
     /// @brief Default constructor
     ///
-    /// @param param_name Name of the configuration parameter being parsed.
-    DbAccessParser(const std::string& param_name)
-        : dbaccess_(), param_name_(param_name), values_()
-    {}
+    /// @param param_name Name of the parameter under which the database
+    ///        access details are held.
+    DbAccessParser(const std::string& param_name);
 
     /// The destructor.
     virtual ~DbAccessParser()
@@ -89,23 +96,28 @@ public:
     /// @brief Factory method to create parser
     ///
     /// Creates an instance of this parser.
+    ///
+    /// @param name Name of the parameter used to access the configuration.
+    ///
+    /// @return Pointer to a DbAccessParser.  The caller is responsible for
+    ///         destroying the parser after use.
     static DhcpConfigParser* factory(const std::string& param_name) {
         return (new DbAccessParser(param_name));
     }
 
-    /// @brief Get database access string
+    /// @brief Get database access parameters
     ///
     /// Used in testing to check that the configuration information has been
     /// parsed corrected.
-    std::string getDbAccessString() const {
-        return (dbaccess_);
+    ///
+    /// @return Map of keyword/value pairs representing database access
+    ///         information.
+    const StringPairMap& getDbAccessParameters() const {
+        return (values_);
     }
 
 private:
-    std::string     dbaccess_;      ///< Database access string
-    std::string     param_name_;    ///< Parameter name
-    std::map<std::string, std::string> values_;
-                                    ///< Stored parameter values
+    std::map<std::string, std::string> values_; ///< Stored parameter values
 };
 
 };  // namespace dhcp
