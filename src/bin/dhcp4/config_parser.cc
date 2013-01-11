@@ -880,6 +880,7 @@ private:
                           << ", code: " << option_code << "): "
                           << ex.what());
             }
+
         }
         // All went good, so we can set the option space name.
         option_space_ = option_space;
@@ -1139,7 +1140,7 @@ private:
                 }
             } catch (const Exception& ex) {
                 isc_throw(DhcpConfigError, "invalid record type values"
-                          << " specified for the option  definition: "
+                          << " specified for the option definition: "
                           << ex.what());
             }
         }
