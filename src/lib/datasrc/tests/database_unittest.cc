@@ -4288,7 +4288,7 @@ TEST_F(MockRRsetCollectionTest, findError) {
     EXPECT_THROW({
         this->collection->find(Name("dsexception.example.org"), this->qclass_,
                                RRType::A());
-    }, RRsetCollectionBase::FindError);
+    }, RRsetCollectionError);
 }
 
 }

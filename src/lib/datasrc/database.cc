@@ -1397,7 +1397,8 @@ public:
     /// given \c name, \c rrclass and \c rrtype.  If no matching RRset
     /// is found, \c NULL is returned.
     ///
-    /// \throw FindError if find() results in some underlying datasrc error.
+    /// \throw isc::dns::RRsetCollectionError if find() results in some
+    /// underlying datasrc error.
     /// \param name The name of the RRset to search for.
     /// \param rrclass The class of the RRset to search for.
     /// \param rrtype The type of the RRset to search for.
@@ -1435,8 +1436,9 @@ public:
             // instead of propagating the exception.
             return (ConstRRsetPtr());
         } catch (const DataSourceError& e) {
-            isc_throw(FindError, "ZoneFinder threw a DataSourceError: " <<
-                      e.getMessage().c_str());
+            isc_throw(RRsetCollectionError,
+                      "ZoneFinder threw a DataSourceError: "
+                          << e.getMessage().c_str());
         }
     }
 
