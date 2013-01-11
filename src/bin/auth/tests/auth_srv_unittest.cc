@@ -47,6 +47,8 @@
 #include <testutils/portconfig.h>
 #include <testutils/socket_request.h>
 
+#include "statistics_util.h"
+
 #include <gtest/gtest.h>
 
 #include <boost/lexical_cast.hpp>
@@ -73,6 +75,7 @@ using namespace isc::asiodns;
 using namespace isc::asiolink;
 using namespace isc::testutils;
 using namespace isc::server_common::portconfig;
+using namespace isc::auth::unittest;
 using isc::UnitTestUtil;
 using boost::scoped_ptr;
 using isc::auth::statistics::Counters;
@@ -91,17 +94,6 @@ const char* const STATIC_DSRC_FILE = DSRC_DIR "/static.zone";
 // a signed example zone.
 const char* const CONFIG_INMEMORY_EXAMPLE =
     TEST_DATA_DIR "/rfc5155-example.zone.signed";
-
-// Check if the item has expected value.
-// Before reading the item, check the item exists.
-void
-expectCounterItem(ConstElementPtr stats,
-                  const std::string& item, const int expected) {
-    ConstElementPtr value(Element::create(0));
-    ASSERT_TRUE(stats->find(item, value)) << "    Item: " << item;
-    value = stats->find(item);
-    EXPECT_EQ(expected, value->intValue()) << "    Item: " << item;
-}
 
 class AuthSrvTest : public SrvTestBase {
 protected:
@@ -206,31 +198,10 @@ protected:
     // Check if the counters exist and are initialized to 0.
     void
     checkCountersAreInitialized() {
+        std::map<std::string, int> expect;
         ConstElementPtr stats = server.getStatistics()->
             get("zones")->get("_SERVER_");
-        expectCounterItem(stats->get("request"), "v4", 0);
-        expectCounterItem(stats->get("request"), "v6", 0);
-        expectCounterItem(stats->get("request"), "udp", 0);
-        expectCounterItem(stats->get("request"), "tcp", 0);
-        expectCounterItem(stats->get("request"), "edns0", 0);
-        expectCounterItem(stats->get("request"), "badednsver", 0);
-        expectCounterItem(stats->get("request"), "tsig", 0);
-        expectCounterItem(stats->get("request"), "sig0", 0);
-        expectCounterItem(stats->get("request"), "badsig", 0);
-        expectCounterItem(stats->get("request"), "dnssec_ok", 0);
-        expectCounterItem(stats->get("opcode"), "query", 0);
-        expectCounterItem(stats, "responses", 0);
-        expectCounterItem(stats->get("response"), "truncated", 0);
-        expectCounterItem(stats->get("response"), "edns0", 0);
-        expectCounterItem(stats->get("response"), "tsig", 0);
-        expectCounterItem(stats->get("response"), "sig0", 0);
-        expectCounterItem(stats->get("rcode"), "refused", 0);
-        expectCounterItem(stats, "qrysuccess", 0);
-        expectCounterItem(stats, "qryauthans", 0);
-        expectCounterItem(stats, "qrynoauthans", 0);
-        expectCounterItem(stats, "qryreferral", 0);
-        expectCounterItem(stats, "qrynxrrset", 0);
-        expectCounterItem(stats, "authqryrej", 0);
+        checkStatisticsCounters(stats, expect);
     }
 
     MockDNSService dnss_;
@@ -290,9 +261,15 @@ TEST_F(AuthSrvTest, noClientList) {
 
     ConstElementPtr stats_after = server.getStatistics()->get("zones")->
         get("_SERVER_");
-    expectCounterItem(stats_after->get("opcode"), "query", 1);
-    expectCounterItem(stats_after, "responses", 1);
-    expectCounterItem(stats_after->get("rcode"), "refused", 1);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.udp"] = 1;
+    expect["opcode.query"] = 1;
+    expect["responses"] = 1;
+    expect["qrynoauthans"] = 1;
+    expect["authqryrej"] = 1;
+    expect["rcode.refused"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 // Unsupported requests.  Should result in NOTIMP.
@@ -313,10 +290,13 @@ TEST_F(AuthSrvTest, multiQuestion) {
 TEST_F(AuthSrvTest, shortMessage) {
     shortMessage();
 
-    checkAllRcodeCountersZero();
     ConstElementPtr stats_after = server.getStatistics()->get("zones")->
         get("_SERVER_");
-    expectCounterItem(stats_after, "responses", 0);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.udp"] = 1;
+    expect["opcode.other"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 // Response messages.  Must be silently dropped, whether it's a valid response
@@ -324,10 +304,13 @@ TEST_F(AuthSrvTest, shortMessage) {
 TEST_F(AuthSrvTest, response) {
     response();
 
-    checkAllRcodeCountersZero();
     ConstElementPtr stats_after = server.getStatistics()->get("zones")->
         get("_SERVER_");
-    expectCounterItem(stats_after, "responses", 0);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 3;
+    expect["request.udp"] = 3;
+    expect["opcode.other"] = 3;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 // Query with a broken question
@@ -346,11 +329,16 @@ TEST_F(AuthSrvTest, shortAnswer) {
 TEST_F(AuthSrvTest, ednsBadVers) {
     ednsBadVers();
 
-    checkAllRcodeCountersZeroExcept(Rcode::BADVERS(), 1);
     ConstElementPtr stats_after = server.getStatistics()->get("zones")->
         get("_SERVER_");
-    expectCounterItem(stats_after, "responses", 1);
-    expectCounterItem(stats_after->get("request"), "badednsver", 1);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.badednsver"] = 1;
+    expect["request.udp"] = 1;
+    expect["opcode.other"] = 1;
+    expect["responses"] = 1;
+    expect["rcode.badvers"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 TEST_F(AuthSrvTest, AXFROverUDP) {
@@ -370,12 +358,13 @@ TEST_F(AuthSrvTest, AXFRSuccess) {
     EXPECT_FALSE(dnsserv.hasAnswer());
     EXPECT_TRUE(xfrout.isConnected());
 
-    checkAllRcodeCountersZero();
     ConstElementPtr stats_after = server.getStatistics()->get("zones")->
         get("_SERVER_");
-    expectCounterItem(stats_after->get("opcode"), "query", 1);
-    expectCounterItem(stats_after, "responses", 0);
-    expectCounterItem(stats_after->get("response"), "truncated", 0);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.tcp"] = 1;
+    expect["opcode.query"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 // Give the server a signed request, but don't give it the key. It will
@@ -413,10 +402,15 @@ TEST_F(AuthSrvTest, TSIGSignedBadKey) {
     checkAllRcodeCountersZeroExcept(Rcode::NOTAUTH(), 1);
     ConstElementPtr stats_after = server.getStatistics()->get("zones")->
         get("_SERVER_");
-    expectCounterItem(stats_after->get("request"), "tsig", 1);
-    expectCounterItem(stats_after->get("request"), "badsig", 1);
-    expectCounterItem(stats_after, "responses", 1);
-    expectCounterItem(stats_after->get("response"), "tsig", 1);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.tsig"] = 1;
+    expect["request.badsig"] = 1;
+    expect["request.udp"] = 1;
+    expect["responses"] = 1;
+    expect["response.tsig"] = 1;
+    expect["rcode.notauth"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 // Give the server a signed request, but signed by a different key
@@ -451,13 +445,17 @@ TEST_F(AuthSrvTest, TSIGBadSig) {
     EXPECT_EQ(0, tsig->getRdata().getMACSize()) <<
         "It should be unsigned with this error";
 
-    checkAllRcodeCountersZeroExcept(Rcode::NOTAUTH(), 1);
     ConstElementPtr stats_after = server.getStatistics()->get("zones")->
         get("_SERVER_");
-    expectCounterItem(stats_after->get("request"), "tsig", 1);
-    expectCounterItem(stats_after->get("request"), "badsig", 1);
-    expectCounterItem(stats_after, "responses", 1);
-    expectCounterItem(stats_after->get("response"), "tsig", 1);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.tsig"] = 1;
+    expect["request.badsig"] = 1;
+    expect["request.udp"] = 1;
+    expect["responses"] = 1;
+    expect["response.tsig"] = 1;
+    expect["rcode.notauth"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 // Give the server a signed unsupported request with a bad signature.
@@ -497,14 +495,15 @@ TEST_F(AuthSrvTest, TSIGCheckFirst) {
 
     ConstElementPtr stats_after = server.getStatistics()->get("zones")->
         get("_SERVER_");
-    expectCounterItem(stats_after->get("request"), "tsig", 1);
-    expectCounterItem(stats_after->get("request"), "badsig", 1);
-    expectCounterItem(stats_after, "responses", 1);
-    expectCounterItem(stats_after->get("response"), "tsig", 1);
-    // TSIG should have failed, and so the per opcode counter shouldn't be
-    // incremented.
-    expectCounterItem(stats_after->get("opcode"), "other", 0);
-    checkAllRcodeCountersZeroExcept(Rcode::NOTAUTH(), 1);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.tsig"] = 1;
+    expect["request.badsig"] = 1;
+    expect["request.udp"] = 1;
+    expect["responses"] = 1;
+    expect["response.tsig"] = 1;
+    expect["rcode.notauth"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 TEST_F(AuthSrvTest, AXFRConnectFail) {
@@ -661,11 +660,15 @@ TEST_F(AuthSrvTest, notify) {
     EXPECT_EQ(RRClass::IN(), question->getClass());
     EXPECT_EQ(RRType::SOA(), question->getType());
 
-    checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 1);
     ConstElementPtr stats_after = server.getStatistics()->get("zones")->
         get("_SERVER_");
-    expectCounterItem(stats_after->get("opcode"), "notify", 1);
-    expectCounterItem(stats_after, "responses", 1);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.udp"] = 1;
+    expect["opcode.notify"] = 1;
+    expect["responses"] = 1;
+    expect["rcode.noerror"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 TEST_F(AuthSrvTest, notifyForCHClass) {
@@ -685,11 +688,15 @@ TEST_F(AuthSrvTest, notifyForCHClass) {
         notify_session.getSentMessage()->get("command")->get(1);
     EXPECT_EQ("CH", notify_args->get("zone_class")->stringValue());
 
-    checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 1);
     ConstElementPtr stats_after = server.getStatistics()->get("zones")->
         get("_SERVER_");
-    expectCounterItem(stats_after->get("opcode"), "notify", 1);
-    expectCounterItem(stats_after, "responses", 1);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.udp"] = 1;
+    expect["opcode.notify"] = 1;
+    expect["responses"] = 1;
+    expect["rcode.noerror"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 TEST_F(AuthSrvTest, notifyEmptyQuestion) {
@@ -708,9 +715,13 @@ TEST_F(AuthSrvTest, notifyEmptyQuestion) {
 
     ConstElementPtr stats_after = server.getStatistics()->get("zones")->
         get("_SERVER_");
-    expectCounterItem(stats_after->get("opcode"), "notify", 1);
-    expectCounterItem(stats_after, "responses", 1);
-    expectCounterItem(stats_after->get("rcode"), "formerr", 1);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.udp"] = 1;
+    expect["opcode.notify"] = 1;
+    expect["responses"] = 1;
+    expect["rcode.formerr"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 TEST_F(AuthSrvTest, notifyMultiQuestions) {
@@ -918,12 +929,17 @@ TEST_F(AuthSrvTest, TSIGSigned) {
     checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 1);
     ConstElementPtr stats_after = server.getStatistics()->get("zones")->
         get("_SERVER_");
-    expectCounterItem(stats_after->get("request"), "tsig", 1);
-    expectCounterItem(stats_after->get("request"), "sig0", 0);
-    expectCounterItem(stats_after->get("request"), "badsig", 0);
-    expectCounterItem(stats_after, "responses", 1);
-    expectCounterItem(stats_after, "qryauthans", 1);
-    expectCounterItem(stats_after->get("response"), "tsig", 1);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.tsig"] = 1;
+    expect["request.udp"] = 1;
+    expect["opcode.query"] = 1;
+    expect["responses"] = 1;
+    expect["response.tsig"] = 1;
+    expect["qrysuccess"] = 1;
+    expect["qryauthans"] = 1;
+    expect["rcode.noerror"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 // Same test emulating the UDPServer class behavior (defined in libasiolink).
@@ -1049,7 +1065,14 @@ TEST_F(AuthSrvTest, datasourceFail) {
     checkAllRcodeCountersZeroExcept(Rcode::SERVFAIL(), 1);
     ConstElementPtr stats = server.getStatistics()->get("zones")->
         get("_SERVER_");
-    expectCounterItem(stats, "responses", 1);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.udp"] = 1;
+    expect["opcode.query"] = 1;
+    expect["responses"] = 1;
+    expect["qrynoauthans"] = 1;
+    expect["rcode.servfail"] = 1;
+    checkStatisticsCounters(stats, expect);
 }
 
 #ifdef USE_STATIC_LINK
@@ -1166,13 +1189,6 @@ TEST_F(AuthSrvTest, queryCounterTruncTest) {
     // use CONFIG_TESTDB for large-rdata.example.com.
     updateDatabase(&server, CONFIG_TESTDB);
 
-    // The counters should be initialized to 0.
-    ConstElementPtr stats_init = server.getStatistics()->
-        get("zones")->get("_SERVER_");
-    expectCounterItem(stats_init, "responses", 0);
-    expectCounterItem(stats_init, "qryauthans", 0);
-    expectCounterItem(stats_init->get("response"), "truncated", 0);
-
     // Create UDP message and process.
     // large-rdata.example.com. TXT; expect it exceeds 512 octet
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
@@ -1185,10 +1201,16 @@ TEST_F(AuthSrvTest, queryCounterTruncTest) {
 
     ConstElementPtr stats_after = server.getStatistics()->
         get("zones")->get("_SERVER_");
-    expectCounterItem(stats_after, "responses", 1);
-    expectCounterItem(stats_after, "qryauthans", 1);
-    expectCounterItem(stats_after->get("rcode"), "noerror", 1);
-    expectCounterItem(stats_after->get("response"), "truncated", 1);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.udp"] = 1;
+    expect["opcode.query"] = 1;
+    expect["responses"] = 1;
+    expect["response.truncated"] = 1;
+    expect["qrysuccess"] = 1;
+    expect["qryauthans"] = 1;
+    expect["rcode.noerror"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 // Submit UDP normal query and check query counter
 TEST_F(AuthSrvTest, queryCounterUDPNormal) {
@@ -1202,29 +1224,15 @@ TEST_F(AuthSrvTest, queryCounterUDPNormal) {
 
     ConstElementPtr stats_after = server.getStatistics()->
         get("zones")->get("_SERVER_");
-    expectCounterItem(stats_after->get("request"), "v4", 1);
-    expectCounterItem(stats_after->get("request"), "v6", 0);
-    expectCounterItem(stats_after->get("request"), "udp", 1);
-    expectCounterItem(stats_after->get("request"), "tcp", 0);
-    expectCounterItem(stats_after->get("request"), "edns0", 0);
-    expectCounterItem(stats_after->get("request"), "badednsver", 0);
-    expectCounterItem(stats_after->get("request"), "tsig", 0);
-    expectCounterItem(stats_after->get("request"), "sig0", 0);
-    expectCounterItem(stats_after->get("request"), "badsig", 0);
-    expectCounterItem(stats_after->get("request"), "dnssec_ok", 0);
-    expectCounterItem(stats_after->get("opcode"), "query", 1);
-    expectCounterItem(stats_after, "responses", 1);
-    expectCounterItem(stats_after->get("response"), "truncated", 0);
-    expectCounterItem(stats_after->get("response"), "edns0", 0);
-    expectCounterItem(stats_after->get("response"), "tsig", 0);
-    expectCounterItem(stats_after->get("response"), "sig0", 0);
-    expectCounterItem(stats_after->get("rcode"), "refused", 1);
-    expectCounterItem(stats_after, "qrysuccess", 0);
-    expectCounterItem(stats_after, "qryauthans", 0);
-    expectCounterItem(stats_after, "qrynoauthans", 1);
-    expectCounterItem(stats_after, "qryreferral", 0);
-    expectCounterItem(stats_after, "qrynxrrset", 0);
-    expectCounterItem(stats_after, "authqryrej", 1);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.udp"] = 1;
+    expect["opcode.query"] = 1;
+    expect["responses"] = 1;
+    expect["qrynoauthans"] = 1;
+    expect["authqryrej"] = 1;
+    expect["rcode.refused"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 // Submit UDP normal query with DNSSEC and check query counter
@@ -1239,11 +1247,20 @@ TEST_F(AuthSrvTest, queryCounterUDPNormalWithDNSSEC) {
 
     ConstElementPtr stats_after = server.getStatistics()->
         get("zones")->get("_SERVER_");
-    expectCounterItem(stats_after->get("request"), "edns0", 1);
-    expectCounterItem(stats_after->get("request"), "dnssec_ok", 1);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.edns0"] = 1;
+    expect["request.udp"] = 1;
+    expect["request.dnssec_ok"] = 1;
+    expect["opcode.query"] = 1;
+    expect["responses"] = 1;
+    expect["qrynoauthans"] = 1;
+    expect["authqryrej"] = 1;
+    expect["rcode.refused"] = 1;
     // XXX: with the current implementation, EDNS0 is omitted in
     // makeErrorMessage.
-    expectCounterItem(stats_after->get("response"), "edns0", 0);
+    expect["response.edns0"] = 0;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 // Submit TCP normal query and check query counter
@@ -1258,8 +1275,15 @@ TEST_F(AuthSrvTest, queryCounterTCPNormal) {
 
     ConstElementPtr stats_after = server.getStatistics()->
         get("zones")->get("_SERVER_");
-    expectCounterItem(stats_after->get("request"), "udp", 0);
-    expectCounterItem(stats_after->get("request"), "tcp", 1);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.tcp"] = 1;
+    expect["opcode.query"] = 1;
+    expect["responses"] = 1;
+    expect["qrynoauthans"] = 1;
+    expect["authqryrej"] = 1;
+    expect["rcode.refused"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 // Submit TCP AXFR query and check query counter
@@ -1275,9 +1299,11 @@ TEST_F(AuthSrvTest, queryCounterTCPAXFR) {
 
     ConstElementPtr stats_after = server.getStatistics()->
         get("zones")->get("_SERVER_");
-    expectCounterItem(stats_after->get("opcode"), "query", 1);
-    expectCounterItem(stats_after, "responses", 0);
-    expectCounterItem(stats_after->get("response"), "truncated", 0);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.tcp"] = 1;
+    expect["opcode.query"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 // Submit TCP IXFR query and check query counter
@@ -1293,9 +1319,11 @@ TEST_F(AuthSrvTest, queryCounterTCPIXFR) {
 
     ConstElementPtr stats_after = server.getStatistics()->
         get("zones")->get("_SERVER_");
-    expectCounterItem(stats_after->get("opcode"), "query", 1);
-    expectCounterItem(stats_after, "responses", 0);
-    expectCounterItem(stats_after->get("response"), "truncated", 0);
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.tcp"] = 1;
+    expect["opcode.query"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 TEST_F(AuthSrvTest, queryCounterOpcodes) {
@@ -1304,7 +1332,8 @@ TEST_F(AuthSrvTest, queryCounterOpcodes) {
         std::string item_name;
         int expected;
         if (isc::auth::statistics::opcode_to_msgcounter[i] ==
-            isc::auth::statistics::MSG_OPCODE_OTHER) {
+                isc::auth::statistics::MSG_OPCODE_OTHER)
+        {
             item_name = "OTHER";
             other_expected += i + 1;
             expected = other_expected;
@@ -1316,9 +1345,9 @@ TEST_F(AuthSrvTest, queryCounterOpcodes) {
                        ::tolower);
 
         // The counter should be initialized to expected value.
-        expectCounterItem(server.getStatistics()->
-                              get("zones")->get("_SERVER_")->get("opcode"),
-                          item_name, expected - (i + 1));
+        EXPECT_EQ(server.getStatistics()->get("zones")->get("_SERVER_")->
+                      get("opcode")->get(item_name)->intValue(),
+                  expected - (i + 1));
 
         // For each possible opcode, create a request message and send it
         UnitTestUtil::createRequestMessage(request_message, Opcode(i),
@@ -1336,9 +1365,11 @@ TEST_F(AuthSrvTest, queryCounterOpcodes) {
         }
 
         // Confirm the counter.
-        expectCounterItem(server.getStatistics()->
-                              get("zones")->get("_SERVER_")->get("opcode"),
-                          item_name, expected);
+        // This test only checks for opcodes; some part of the other items
+        // depends on the opcode.
+        EXPECT_EQ(server.getStatistics()->get("zones")->get("_SERVER_")->
+                      get("opcode")->get(item_name)->intValue(),
+                  expected);
     }
 }
 
