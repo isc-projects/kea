@@ -290,11 +290,9 @@ class Counters():
 
     def _incdec(self, *args, step=1):
         """A common helper function for incrementing or decrementing a
-        counter. It locks the thread because it is considered to be
-        invoked by a multi-threading
-        caller. isc.cc.data.DataNotFoundError is raised when
-        incrementing the counter of the item undefined in the spec
-        file."""
+        counter. It acquires a lock to support multi-threaded
+        use. isc.cc.data.DataNotFoundError is raised when incrementing
+        the counter of the item undefined in the spec file."""
         identifier = _concat(*args)
         with self._rlock:
             if self._disabled: return
@@ -303,19 +301,15 @@ class Counters():
                          identifier, step)
 
     def inc(self, *args):
-        """An incrementer for a counter. Locks the thread because it is
-        considered to be invoked by a multi-threading
-        caller. isc.cc.data.DataNotFoundError is raised when
-        incrementing the counter of the item undefined in the spec
-        file."""
+        """An incrementer for a counter. It acquires a lock to support
+        multi-threaded use. isc.cc.data.DataNotFoundError is raised when
+        incrementing the counter of the item undefined in the spec file."""
         return self._incdec(*args)
 
     def dec(self, *args):
-        """A decrementer for a counter. Locks the thread because it is
-        considered to be invoked by a multi-threading
-        caller. isc.cc.data.DataNotFoundError is raised when
-        decrementing the counter of the item undefined in the spec
-        file."""
+        """A decrementer for a counter. It acquires a lock to support
+        multi-threaded use. isc.cc.data.DataNotFoundError is raised when
+        decrementing the counter of the item undefined in the spec file."""
         return self._incdec(*args, step=-1)
 
     def get(self, *args):
@@ -327,19 +321,18 @@ class Counters():
 
     def start_timer(self, *args):
         """Starts a timer which is identified by args and keeps it
-        running until stop_timer() is called. It's also considered to
-        be called from multi-threads."""
+        running until stop_timer() is called. It acquires a lock to
+        support multi-threaded use."""
         identifier = _concat(*args)
         with self._rlock:
             if self._disabled: return
             isc.cc.data.set(self._start_time, identifier, _start_timer())
 
     def stop_timer(self, *args):
-        """Stops a timer which is identified by args.  It's also
-        considered to be called from multi-threads.  If the timer
-        isn't started by start_timer() yet, it raises no
-        exception. However if args aren't defined in the spec file, it
-        raises DataNotFoundError.
+        """Stops a timer which is identified by args. It acquires a lock
+        to support multi-threaded use. If the timer isn't started by
+        start_timer() yet, it raises no exception. However if args
+        aren't defined in the spec file, it raises DataNotFoundError.
         """
         identifier = _concat(*args)
         with self._rlock:
