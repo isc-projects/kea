@@ -58,12 +58,12 @@ private:
     TransportProtocolType req_transport_protocol_;  // Transport layer protocol
     boost::optional<isc::dns::Opcode> req_opcode_;  // OpCode
     enum BitAttributes {
-        REQ_IS_EDNS_0,              // request is EDNS ver.0
-        REQ_IS_DNSSEC_OK,           // DNSSEC OK (DO) bit is set in request
-        REQ_IS_TSIG,                // request is signed with valid TSIG
-        REQ_IS_BADSIG,              // request is signed but bad signature
+        REQ_WITH_EDNS_0,            // request with EDNS ver.0
+        REQ_WITH_DNSSEC_OK,         // DNSSEC OK (DO) bit is set in request
+        REQ_TSIG_SIGNED,            // request is signed with valid TSIG
+        REQ_BADSIG,                 // request is signed but bad signature
         RES_IS_TRUNCATED,           // response is truncated
-        RES_IS_TSIG_SIGNED,         // response is TSIG signed
+        RES_TSIG_SIGNED,            // response is signed with TSIG
         BIT_ATTRIBUTES_TYPES
     };
     std::bitset<BIT_ATTRIBUTES_TYPES> bit_attributes_;
@@ -76,7 +76,7 @@ public:
         req_transport_protocol_(TRANSPORT_UNSPEC)
     {}
 
-    /// \brief Return request opcode.
+    /// \brief Return opcode of the request.
     /// \return opcode of the request
     /// \throw isc::InvalidOperation Opcode is not set
     const isc::dns::Opcode& getRequestOpCode() const {
@@ -87,7 +87,7 @@ public:
         }
     }
 
-    /// \brief Set request opcode.
+    /// \brief Set opcode of the request.
     /// \param opcode Opcode of the request
     /// \throw None
     void setRequestOpCode(const isc::dns::Opcode& opcode) {
@@ -134,52 +134,52 @@ public:
     /// \return true if EDNS version of the request is 0
     /// \throw None
     bool getRequestEDNS0() const {
-        return (bit_attributes_[REQ_IS_EDNS_0]);
+        return (bit_attributes_[REQ_WITH_EDNS_0]);
     }
 
     /// \brief Set EDNS attribute of the request.
-    /// \param is_edns_0 true if EDNS version of the request is 0
+    /// \param with_edns_0 true if EDNS version of the request is 0
     /// \throw None
-    void setRequestEDNS0(const bool is_edns_0) {
-        bit_attributes_[REQ_IS_EDNS_0] = is_edns_0;
+    void setRequestEDNS0(const bool with_edns_0) {
+        bit_attributes_[REQ_WITH_EDNS_0] = with_edns_0;
     }
 
     /// \brief Return DNSSEC OK (DO) bit of the request.
     /// \return true if DNSSEC OK (DO) bit of the request is set
     /// \throw None
     bool getRequestDO() const {
-        return (bit_attributes_[REQ_IS_DNSSEC_OK]);
+        return (bit_attributes_[REQ_WITH_DNSSEC_OK]);
     }
 
     /// \brief Set DNSSEC OK (DO) bit of the request.
     /// \param is_dnssec_ok true if DNSSEC OK (DO) bit of the request is set
     /// \throw None
-    void setRequestDO(const bool is_dnssec_ok) {
-        bit_attributes_[REQ_IS_DNSSEC_OK] = is_dnssec_ok;
+    void setRequestDO(const bool with_dnssec_ok) {
+        bit_attributes_[REQ_WITH_DNSSEC_OK] = with_dnssec_ok;
     }
 
     /// \brief Return TSIG attribute of the request.
     /// \return true if the request is TSIG signed
     /// \throw None
     bool getRequestSigTSIG() const {
-        return (bit_attributes_[REQ_IS_TSIG]);
+        return (bit_attributes_[REQ_TSIG_SIGNED]);
     }
 
     /// \brief Return the status of the signature of the request.
     /// \return true if the signature of the request is bad
     /// \throw None
     bool getRequestSigBadSig() const {
-        return (bit_attributes_[REQ_IS_BADSIG]);
+        return (bit_attributes_[REQ_BADSIG]);
     }
 
     /// \brief Set TSIG attributes of the request.
     /// \param is_tsig true if the request is TSIG signed
     /// \param is_badsig true if the signature of the request is bad
     /// \throw None
-    void setRequestSig(const bool is_tsig, const bool is_badsig) {
-        assert(!(!is_tsig && is_badsig));
-        bit_attributes_[REQ_IS_TSIG] = is_tsig;
-        bit_attributes_[REQ_IS_BADSIG] = is_badsig;
+    void setRequestSig(const bool tsig_signed, const bool badsig) {
+        assert(!(!tsig_signed && badsig));
+        bit_attributes_[REQ_TSIG_SIGNED] = tsig_signed;
+        bit_attributes_[REQ_BADSIG] = badsig;
     }
 
     /// \brief Return TC (truncated) bit of the response.
@@ -200,14 +200,14 @@ public:
     /// \return true if the response is TSIG signed
     /// \throw None
     bool getResponseSigTSIG() const {
-        return (bit_attributes_[RES_IS_TSIG_SIGNED]);
+        return (bit_attributes_[RES_TSIG_SIGNED]);
     }
 
     /// \brief Set TSIG attributes of the response.
     /// \param is_tsig_signed true if the response is TSIG signed
     /// \throw None
-    void setResponseSigTSIG(const bool is_tsig_signed) {
-        bit_attributes_[RES_IS_TSIG_SIGNED] = is_tsig_signed;
+    void setResponseSigTSIG(const bool signed_tsig) {
+        bit_attributes_[RES_TSIG_SIGNED] = signed_tsig;
     }
 };
 
