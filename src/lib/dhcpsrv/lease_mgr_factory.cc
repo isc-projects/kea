@@ -141,6 +141,12 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
 
 void
 LeaseMgrFactory::destroy() {
+    // Destroy current lease manager.  This is a no-op if no lease manager
+    // is available.
+    if (getLeaseMgrPtr()) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CLOSE_DB)
+            .arg(getLeaseMgrPtr()->getType());
+    }
     getLeaseMgrPtr().reset();
 }
 
