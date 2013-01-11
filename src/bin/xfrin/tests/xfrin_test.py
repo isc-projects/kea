@@ -60,7 +60,7 @@ TSIG_KEY = TSIGKey("example.com:SFuWd/q99SzF8Yzd1QbB9g==")
 
 # SOA intended to be used for the new SOA as a result of transfer.
 soa_rdata = Rdata(RRType.SOA(), TEST_RRCLASS,
-                  'master.example.com. admin.example.com ' +
+                  'master.example.com. admin.example.com. ' +
                   '1234 3600 1800 2419200 7200')
 soa_rrset = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(), RRTTL(3600))
 soa_rrset.add_rdata(soa_rdata)
@@ -68,7 +68,7 @@ soa_rrset.add_rdata(soa_rdata)
 # SOA intended to be used for the current SOA at the secondary side.
 # Note that its serial is smaller than that of soa_rdata.
 begin_soa_rdata = Rdata(RRType.SOA(), TEST_RRCLASS,
-                        'master.example.com. admin.example.com ' +
+                        'master.example.com. admin.example.com. ' +
                         '1230 3600 1800 2419200 7200')
 begin_soa_rrset = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA(), RRTTL(3600))
 begin_soa_rrset.add_rdata(begin_soa_rdata)

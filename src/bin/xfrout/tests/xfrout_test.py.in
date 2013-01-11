@@ -249,7 +249,7 @@ class TestXfroutSessionBase(unittest.TestCase):
             # In the RDATA only the serial matters.
             for i in range(0, num_soa):
                 soa.add_rdata(Rdata(RRType.SOA(), soa_class,
-                                    'm r ' + str(ixfr) + ' 1 1 1 1'))
+                                    'm. r. ' + str(ixfr) + ' 1 1 1 1'))
             msg.add_rrset(Message.SECTION_AUTHORITY, soa)
 
         renderer = MessageRenderer()
