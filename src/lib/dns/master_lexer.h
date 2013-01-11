@@ -331,6 +331,16 @@ public:
         const MasterToken token_;
     };
 
+    /// \brief Special value for input source size meaning "unknown".
+    ///
+    /// This constant value will be used as a return value of
+    /// \c getTotalSourceSize() when the size of one of the pushed sources
+    /// is unknown.  Note that this value itself is a valid integer in the
+    /// range of the type, so there's still a small possibility of
+    /// ambiguity.  In practice, however, the value should be sufficiently
+    /// large that should eliminate the possibility.
+    static const size_t SOURCE_SIZE_UNKNOWN;
+
     /// \brief Options for getNextToken.
     ///
     /// A compound option, indicating multiple options are set, can be
@@ -387,6 +397,10 @@ public:
     /// The caller can explicitly tell \c MasterLexer to stop using the
     /// stream by calling the \c popSource() method.
     ///
+    /// The data in \c input must be complete at the time of this call.
+    /// The behavior of the lexer is undefined if the caller builds or adds
+    /// data in \c input after pushing it.
+    ///
     /// \param input An input stream object that produces textual
     /// representation of DNS RRs.
     void pushSource(std::istream& input);
@@ -442,6 +456,57 @@ public:
     ///
     /// \return The current line number of the source (see the description)
     size_t getSourceLine() const;
+
+    /// \brief Return the total size of pushed sources.
+    ///
+    /// This method returns the sum of the size of sources that have been
+    /// pushed to the lexer by the time of the call.  It would give the
+    /// caller of some hint about the amount of data the lexer is working on.
+    ///
+    /// The size of a normal file is equal to the file size at the time of
+    /// the source is pushed.  The size of other type of input stream is
+    /// the size of the data available in the stream at the time of the
+    /// source is pushed.
+    ///
+    /// In some special cases, it's possible that the size of the file or
+    /// stream is unknown.  It happens, for example, if the standard input
+    /// is associated with a pipe from the output of another process and it's
+    /// specified as an input source.  If the size of some of the pushed
+    /// pushed source is unknown, this method returns SOURCE_SIZE_UNKNOWN.
+    ///
+    /// If there is no source pushed in the lexer, it returns 0.
+    ///
+    /// \throw None
+    size_t getTotalSourceSize() const;
+
+    /// \brief Return the position of lexer in the currently pushed sources.
+    ///
+    /// This method returns the position in terms of the number of recognized
+    /// characters from all sources.  Roughly speaking, the position in a
+    /// single source is the offset from the beginning of the file or stream
+    /// to the current "read cursor" of the lexer, and the return value of
+    /// this method is the sum of the position in all the pushed sources.
+    ///
+    /// If the lexer reaches the end for each of all the pushed sources,
+    /// the return value should be equal to that of \c getTotalSourceSize().
+    ///
+    /// If there is no source pushed in the lexer, it returns 0.
+    ///
+    /// The return values of this method and \c getTotalSourceSize() would
+    /// give the caller an idea of the progress of the lexer at the time of
+    /// the call.  Note, however, that since it's not predictable whether
+    /// more sources will be pushed after the call, the progress determined
+    /// this way may not make much sense; it can only give an informational
+    /// hint of the progress.
+    ///
+    /// Note also that if a source is popped, this method will normally return
+    /// a smaller number by definition (and so will \c getTotalSourceSize()).
+    /// Likewise, the conceptual "read cursor" would move backward after a
+    /// call to \c ungetToken(), in which case this method will return a
+    /// smaller value, too.
+    ///
+    /// \throw None
+    size_t getPosition() const;
 
     /// \brief Parse and return another token from the input.
     ///
