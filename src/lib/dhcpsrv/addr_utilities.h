@@ -52,6 +52,11 @@ isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefi
 isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix,
                                            uint8_t len);
 
+/// @brief generates an IPv4 netmask of specified length
+/// @throw BadValue if len is greater than 32
+/// @return netmask
+isc::asiolink::IOAddress getNetmask4(uint8_t len);
+
 };
 };
 

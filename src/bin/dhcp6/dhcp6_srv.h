@@ -31,22 +31,6 @@
 namespace isc {
 namespace dhcp {
 
-/// An exception that is thrown if a DHCPv6 protocol violation occurs while
-/// processing a message (e.g. a mandatory option is missing)
-class RFCViolation : public isc::Exception {
-public:
-
-/// @brief constructor
-///
-/// @param file name of the file, where exception occurred
-/// @param line line of the file, where exception occurred
-/// @param what text description of the issue that caused exception
-RFCViolation(const char* file, size_t line, const char* what) :
-    isc::Exception(file, line, what) {}
-};
-
-
-
 /// @brief DHCPv6 server service.
 ///
 /// This class represents DHCPv6 server. It contains all
@@ -83,7 +67,7 @@ public:
     /// @param dbconfig Lease manager configuration string.  The default
     ///        of the "memfile" manager is used for testing.
     Dhcpv6Srv(uint16_t port = DHCP6_SERVER_PORT,
-            const char* dbconfig = "type=memfile");
+              const char* dbconfig = "type=memfile");
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();
@@ -324,7 +308,7 @@ private:
     boost::shared_ptr<AllocEngine> alloc_engine_;
 
     /// Server DUID (to be sent in server-identifier option)
-    boost::shared_ptr<isc::dhcp::Option> serverid_;
+    OptionPtr serverid_;
 
     /// Indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
