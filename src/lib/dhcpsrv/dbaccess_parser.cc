@@ -13,6 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcpsrv/dbaccess_parser.h>
+#include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 
 #include <boost/foreach.hpp>
 
@@ -26,10 +28,14 @@ using namespace isc::data;
 namespace isc {
 namespace dhcp {
 
-typedef map<string, ConstElementPtr> ConfigPairMap;
-typedef pair<string, ConstElementPtr> ConfigPair;
-typedef map<string, string> StringPairMap;
-typedef pair<string, string> StringPair;
+
+// Factory function to build the parser
+DbAccessParser::DbAccessParser(const std::string& param_name) : values_()
+{
+    if (param_name != "lease-database") {
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_UNEXPECTED_NAME).arg(param_name);
+    }
+}
 
 // Parse the configuration and check that the various keywords are consistent.
 void
@@ -46,7 +52,7 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
     map<string, string> values_copy = values_;
 
     // 2. Update the copy with the passed keywords.
-    BOOST_FOREACH(ConfigPair param, config_value->mapValue()) {
+    BOOST_FOREACH(DbAccessParser::ConfigPair param, config_value->mapValue()) {
         values_copy[param.first] = param.second->stringValue();
     }
 
@@ -71,28 +77,32 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
 
     // 4. If all is OK, update the stored keyword/value pairs.
     values_ = values_copy;
-
-    // 5. Construct the updated database access string: omit keywords where
-    //    the value string is empty.
-    dbaccess_ = "";
-    BOOST_FOREACH(StringPair keyval, values_) {
-        if (!keyval.second.empty()) {
-
-            // Separate keyword/value pair from predecessor (if there is one).
-            if (! dbaccess_.empty()) {
-                dbaccess_ += std::string(" ");
-            }
-
-            // Add the keyword/value pair to the access string.
-            dbaccess_ += (keyval.first + std::string("=") + keyval.second);
-        }
-    }
 }
 
 // Commit the changes - reopen the database with the new parameters
 void
 DbAccessParser::commit() {
-    std::cout << "DB_ACCESS_PARSER_COMMIT: " << dbaccess_ << "\n";
+    // Close current lease manager.
+    LeaseMgrFactory::destroy();
+
+    // Construct the database access string from all keywords and values in the
+    // parameter map where the value is not null.
+    string dbaccess;
+    BOOST_FOREACH(StringPair keyval, values_) {
+        if (!keyval.second.empty()) {
+
+            // Separate keyword/value pair from predecessor (if there is one).
+            if (! dbaccess.empty()) {
+                dbaccess += std::string(" ");
+            }
+
+            // Add the keyword/value pair to the access string.
+            dbaccess += (keyval.first + std::string("=") + keyval.second);
+        }
+    }
+
+    // ... and open the database using that access string.
+    LeaseMgrFactory::create(dbaccess);
 }
 
 };  // namespace dhcp

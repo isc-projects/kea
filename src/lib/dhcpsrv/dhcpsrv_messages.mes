@@ -233,6 +233,13 @@ a database backend, but where no 'type' keyword has been included in
 the access string.  The access string (less any passwords) is included
 in the message.
 
+% DHCPSRV_UNEXPECTED_NAME database access parameters passed through '%1', expected 'lease-database'
+The parameters for access the lease database were passed to the server through
+the named configuration parameter, but the code was expecting them to be
+passed via the parameter named "lease-database".  If the database opens
+successfully, there is no impact on server operation.  However, as this does
+indicate an error in the source code, please submit a bug report.
+
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
 message) that is unknown to the software.  This is a configuration error.

@@ -101,15 +101,15 @@ public:
     ///
     /// @param trace_string String that will be used to set the value of a
     ///        SCOPED_TRACE for this call.
-    /// @param dbaccess Database access string to check
+    /// @param dbaccess set of database access parameters to check
     /// @param keyval Array of "const char*" strings in the order keyword,
     ///        value, keyword, value ...  A NULL entry terminates the list.
-    void checkAccessString(const char* trace_string, std::string& dbaccess,
+    void checkAccessString(const char* trace_string,
+                           const DbAccessParser::StringPairMap& parameters,
                            const char* keyval[]) {
         SCOPED_TRACE(trace_string);
 
-        // Construct a map of keyword value pairs.  Check that no keyword
-        // is repeated.
+        // Construct a map of keyword value pairs.
         map<string, string> expected;
         size_t expected_count = 0;
         for (size_t i = 0; keyval[i] != NULL; i += 2) {
@@ -123,20 +123,18 @@ public:
             ++expected_count;
         }
 
-        // Check no duplicates in the supplied keywords
+        // Check no duplicates in the test set of reference keywords.
         ASSERT_EQ(expected_count, expected.size()) << 
             "Supplied reference keyword/value list contains duplicate keywords";
 
-        // Split the database access string.
-        const LeaseMgr::ParameterMap dbamap = LeaseMgrFactory::parse(dbaccess);
-
-        // It should have the same number keyword value pairs as the
-        EXPECT_EQ(expected_count, dbamap.size());
+        // The passed parameter map should have the same number of entries as
+        // the reference set of keywords.
+        EXPECT_EQ(expected_count, parameters.size());
 
         // Check that the keywords and keyword values are the same: loop
         // through the keywords in the database access string.
-        for (LeaseMgr::ParameterMap::const_iterator actual = dbamap.begin();
-             actual != dbamap.end(); ++actual) {
+        for (LeaseMgr::ParameterMap::const_iterator actual = parameters.begin();
+             actual != parameters.end(); ++actual) {
 
             // Does the keyword exist in the set of expected keywords?
             map<string, string>::iterator corresponding =
@@ -160,8 +158,23 @@ TEST_F(DbAccessParserTest, validTypeMemfile) {
 
     DbAccessParser parser("lease-database");
     EXPECT_NO_THROW(parser.build(json_elements));
-    string dbaccess = parser.getDbAccessString();
-    checkAccessString("Valid memfile", dbaccess, config);
+    checkAccessString("Valid memfile", parser.getDbAccessParameters(), config);
+}
+
+// Check that the parser works with a simple configuration that
+// includes empty elements.
+TEST_F(DbAccessParserTest, emptyKeyword) {
+    const char* config[] = {"type", "memfile",
+                            "name", "",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    DbAccessParser parser("lease-database");
+    EXPECT_NO_THROW(parser.build(json_elements));
+    checkAccessString("Valid memfile", parser.getDbAccessParameters(), config);
 }
 
 // Check that the parser works with a valid MySQL configuration
@@ -179,8 +192,7 @@ TEST_F(DbAccessParserTest, validTypeMysql) {
 
     DbAccessParser parser("lease-database");
     EXPECT_NO_THROW(parser.build(json_elements));
-    string dbaccess = parser.getDbAccessString();
-    checkAccessString("Valid mysql", dbaccess, config);
+    checkAccessString("Valid mysql", parser.getDbAccessParameters(), config);
 }
 
 // A missing 'type' keyword should cause an exception to be thrown.
@@ -234,8 +246,7 @@ TEST_F(DbAccessParserTest, factory) {
     // Access the "raw" parser.
     DbAccessParser* dbap = dynamic_cast<DbAccessParser*>(parser.get());
     EXPECT_NE(static_cast<DbAccessParser*>(NULL), dbap);
-    string dbaccess = dbap->getDbAccessString();
-    checkAccessString("Valid mysql", dbaccess, config);
+    checkAccessString("Valid mysql", dbap->getDbAccessParameters(), config);
 }
 
 // Check reconfiguration.  Checks that incremental changes applied to the
@@ -273,12 +284,12 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
     // incremental4 is a compatible change and should cause a transition
     // to config4.
     const char* incremental4[] = {"user",     "them",
-                                  "password", "themagain",
+                                  "password", "",
                                   NULL};
     const char* config4[] = {"type",     "mysql",
                              "host",     "erewhon",
                              "user",     "them",
-                             "password", "themagain",
+                             "password", "",
                              "name",     "keatest",
                              NULL};
 
@@ -291,8 +302,8 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
     EXPECT_TRUE(json_elements);
 
     EXPECT_NO_THROW(parser.build(json_elements));
-    string dbaccess = parser.getDbAccessString();
-    checkAccessString("Initial configuration", dbaccess, config1);
+    checkAccessString("Initial configuration", parser.getDbAccessParameters(),
+                      config1);
 
     // Applying a wholesale change will cause the access string to change
     // to a representation of the new configuration.
@@ -301,8 +312,8 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
     EXPECT_TRUE(json_elements);
 
     EXPECT_NO_THROW(parser.build(json_elements));
-    dbaccess = parser.getDbAccessString();
-    checkAccessString("Subsequent configuration", dbaccess, config2);
+    checkAccessString("Subsequent configuration", parser.getDbAccessParameters(),
+                      config2);
 
     // Applying an incremental change will cause the representation to change
     // incrementally.
@@ -311,8 +322,8 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
     EXPECT_TRUE(json_elements);
 
     EXPECT_NO_THROW(parser.build(json_elements));
-    dbaccess = parser.getDbAccessString();
-    checkAccessString("Incremental configuration", dbaccess, config3);
+    checkAccessString("Incremental configuration", parser.getDbAccessParameters(),
+                      config3);
 
     // Applying the next incremental change should cause an exception to be
     // thrown and there be no change to the access string.
@@ -321,8 +332,8 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
     EXPECT_TRUE(json_elements);
 
     EXPECT_THROW(parser.build(json_elements), BadValue);
-    dbaccess = parser.getDbAccessString();
-    checkAccessString("Incompatible incremental change", dbaccess, config3);
+    checkAccessString("Incompatible incremental change", parser.getDbAccessParameters(),
+                      config3);
 
     // Applying an incremental change will cause the representation to change
     // incrementally.
@@ -331,65 +342,8 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
     EXPECT_TRUE(json_elements);
 
     EXPECT_NO_THROW(parser.build(json_elements));
-    dbaccess = parser.getDbAccessString();
-    checkAccessString("Compatible incremental change", dbaccess, config4);
-}
-
-// Check reconfiguration and that elements set to an empty string are omitted.
-TEST_F(DbAccessParserTest, emptyStringOmission) {
-    const char* config1[] = {"type", "memfile",
-                             NULL};
-
-    // Applying config2 will cause a wholesale change.
-    const char* config2[] = {"type",     "mysql",
-                             "host",     "erewhon",
-                             "user",     "kea",
-                             "password", "keapassword",
-                             "name",     "keatest",
-                             NULL};
-
-    // Applying incremental2 should cause a change to config3.
-    const char* incremental2[] = {"user",     "me",
-                                  "password", "",
-                                  "host",     "",
-                                  NULL};
-
-    const char* config3[] = {"type",     "mysql",
-                             "user",     "me",
-                             "name",     "keatest",
-                             NULL};
-
-    DbAccessParser parser("lease-database");
-
-    // First configuration string should cause a representation of that string
-    // to be held.
-    string json_config = toJson(config1);
-    ConstElementPtr json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
-
-    EXPECT_NO_THROW(parser.build(json_elements));
-    string dbaccess = parser.getDbAccessString();
-    checkAccessString("Initial configuration", dbaccess, config1);
-
-    // Applying a wholesale change will cause the access string to change
-    // to a representation of the new configuration.
-    json_config = toJson(config2);
-    json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
-
-    EXPECT_NO_THROW(parser.build(json_elements));
-    dbaccess = parser.getDbAccessString();
-    checkAccessString("Subsequent configuration", dbaccess, config2);
-
-    // Applying an incremental change will cause the representation to change
-    // incrementally.
-    json_config = toJson(incremental2);
-    json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
-
-    EXPECT_NO_THROW(parser.build(json_elements));
-    dbaccess = parser.getDbAccessString();
-    checkAccessString("Incremental configuration", dbaccess, config3);
+    checkAccessString("Compatible incremental change", parser.getDbAccessParameters(),
+                      config4);
 }
 
 };  // Anonymous namespace
