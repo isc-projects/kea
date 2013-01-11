@@ -15,7 +15,7 @@
 #ifndef MYSQL_LEASE_MGR_H
 #define MYSQL_LEASE_MGR_H
 
-#include <dhcpsrv/hwaddr.h>
+#include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -132,7 +132,7 @@ public:
     ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual Lease4Collection getLease4(const HWAddr& hwaddr) const;
+    virtual Lease4Collection getLease4(const isc::dhcp::HWAddr& hwaddr) const;
 
     /// @brief Returns existing IPv4 leases for specified hardware address
     ///        and a subnet
@@ -150,7 +150,7 @@ public:
     ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual Lease4Ptr getLease4(const HWAddr& hwaddr,
+    virtual Lease4Ptr getLease4(const isc::dhcp::HWAddr& hwaddr,
                                 SubnetID subnet_id) const;
 
     /// @brief Returns existing IPv4 lease for specified client-id

@@ -29,6 +29,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/utils.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
 
@@ -72,8 +73,9 @@ public:
         subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 48, 1000,
                                          2000, 3000, 4000));
         pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
-        subnet_->addPool6(pool_);
+        subnet_->addPool(pool_);
 
+        CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().addSubnet6(subnet_);
     }
 
@@ -607,7 +609,7 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
 
 // This test checks that the server is offering different addresses to different
 // clients in ADVERTISEs. Please note that ADVERTISE is not a guarantee that such
-// and address will be assigned. Had the pool was very small and contained only
+// an address will be assigned. Had the pool was very small and contained only
 // 2 addresses, the third client would get the same advertise as the first one
 // and this is a correct behavior. It is REQUEST that will fail for the third
 // client. ADVERTISE is basically saying "if you send me a request, you will

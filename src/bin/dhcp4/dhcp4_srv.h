@@ -18,14 +18,16 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/option.h>
+#include <dhcpsrv/subnet.h>
+#include <dhcpsrv/alloc_engine.h>
 
 #include <boost/noncopyable.hpp>
 
 #include <iostream>
 
 namespace isc {
-
 namespace dhcp {
+
 /// @brief DHCPv4 server service.
 ///
 /// This singleton class represents DHCPv4 server. It contains all
@@ -44,6 +46,14 @@ namespace dhcp {
 class Dhcpv4Srv : public boost::noncopyable {
 
     public:
+
+    /// @brief defines if certain option may, must or must not appear
+    typedef enum {
+        FORBIDDEN,
+        MANDATORY,
+        OPTIONAL
+    } RequirementLevel;
+
     /// @brief Default constructor.
     ///
     /// Instantiates necessary services, required to run DHCPv4 server.
@@ -54,7 +64,10 @@ class Dhcpv4Srv : public boost::noncopyable {
     /// for testing purposes.
     ///
     /// @param port specifies port number to listen on
-    Dhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT);
+    /// @param dbconfig Lease manager configuration string.  The default
+    ///        of the "memfile" manager is used for testing.
+    Dhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT,
+              const char* dbconfig = "type=memfile");
 
     /// @brief Destructor. Used during DHCPv4 service shutdown.
     ~Dhcpv4Srv();
@@ -82,6 +95,8 @@ class Dhcpv4Srv : public boost::noncopyable {
     /// As the operation of the method does not depend on any server state, it
     /// is declared static.
     ///
+    /// @todo: This should be named static Pkt4::getName()
+    ///
     /// @param type DHCPv4 packet type
     ///
     /// @return Pointer to "const" string containing the packet name.
@@ -90,6 +105,17 @@ class Dhcpv4Srv : public boost::noncopyable {
     static const char* serverReceivedPacketName(uint8_t type);
 
 protected:
+
+    /// @brief verifies if specified packet meets RFC requirements
+    ///
+    /// Checks if mandatory option is really there, that forbidden option
+    /// is not there, and that client-id or server-id appears only once.
+    ///
+    /// @param pkt packet to be checked
+    /// @param serverid expectation regarding server-id option
+    /// @throw RFCViolation if any issues are detected
+    void sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid);
+
     /// @brief Processes incoming DISCOVER and returns response.
     ///
     /// Processes received DISCOVER message and verifies that its sender
@@ -156,11 +182,19 @@ protected:
     /// client and assigning it. Options corresponding to the lease
     /// are added to specific message.
     ///
-    /// Note: Lease manager is not implemented yet, so this method
-    /// used fixed, hardcoded lease.
+    /// @param question DISCOVER or REQUEST message from client
+    /// @param answer OFFER or ACK/NAK message (lease options will be added here)
+    void assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer);
+
+    /// @brief Attempts to renew received addresses
     ///
-    /// @param msg OFFER or ACK message (lease options will be added here)
-    void tryAssignLease(Pkt4Ptr& msg);
+    /// Attempts to renew existing lease. This typically includes finding a lease that
+    /// corresponds to the received address. If no such lease is found, a status code
+    /// response is generated.
+    ///
+    /// @param renew client's message asking for renew
+    /// @param reply server's response (ACK or NAK)
+    void renewLease(const Pkt4Ptr& renew, Pkt4Ptr& reply);
 
     /// @brief Appends default options to a message
     ///
@@ -184,12 +218,33 @@ protected:
     //          previously stored configuration and no network interfaces available)
     void setServerID();
 
+    /// @brief Selects a subnet for a given client's packet.
+    ///
+    /// @param question client's message
+    /// @return selected subnet (or NULL if no suitable subnet was found)
+    isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& question);
+
     /// server DUID (to be sent in server-identifier option)
     OptionPtr serverid_;
 
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
+
+    private:
+
+    /// @brief Constructs netmask option based on subnet4
+    /// @param subnet subnet for which the netmask will be calculated
+    ///
+    /// @return Option that contains netmask information
+    static OptionPtr getNetmaskOption(const Subnet4Ptr& subnet);
+
+    /// @brief Allocation Engine.
+    /// Pointer to the allocation engine that we are currently using
+    /// It must be a pointer, because we will support changing engines
+    /// during normal operation (e.g. to use different allocators)
+    boost::shared_ptr<AllocEngine> alloc_engine_;
+
 };
 
 }; // namespace isc::dhcp
