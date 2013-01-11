@@ -153,11 +153,13 @@ TEST_F(MasterLoaderTest, basicLoad) {
               RRClass::IN(), MasterLoader::MANY_ERRORS);
 
     EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_EQ(0, loader_->getRRCount());
     loader_->load();
     EXPECT_TRUE(loader_->loadedSucessfully());
 
     EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
+    EXPECT_EQ(4, loader_->getRRCount());
 
     checkBasicRRs();
 }
@@ -260,7 +262,7 @@ TEST_F(MasterLoaderTest, popAfterError) {
     const string include_str = "$include " TEST_DATA_SRCDIR
         "/broken.zone\nwww 3600 IN AAAA 2001:db8::1\n";
     stringstream ss(include_str);
-    // We don't test without MANY_ERRORS, we want to see what happens
+    // We perform the test with MANY_ERRORS, we want to see what happens
     // after the error.
     setLoader(ss, Name("example.org."), RRClass::IN(),
               MasterLoader::MANY_ERRORS);
@@ -269,6 +271,7 @@ TEST_F(MasterLoaderTest, popAfterError) {
     EXPECT_FALSE(loader_->loadedSucessfully());
     EXPECT_EQ(1, errors_.size()); // For the broken RR
     EXPECT_EQ(1, warnings_.size()); // For missing EOLN
+    EXPECT_EQ(1, loader_->getRRCount()); // broken RR shouldn't be counted
 
     // The included file doesn't contain anything usable, but the
     // line after the include should be there.

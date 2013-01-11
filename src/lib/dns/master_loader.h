@@ -142,6 +142,10 @@ public:
     ///     finishing the load.
     bool loadedSucessfully() const;
 
+    size_t getRRCount() const;
+    size_t getSize() const;
+    size_t getPosition() const;
+
 private:
     class MasterLoaderImpl;
     MasterLoaderImpl* impl_;
@@ -151,3 +155,7 @@ private:
 } // end namespace isc
 
 #endif // MASTER_LOADER_H
+
+// Local Variables:
+// mode: c++
+// End:
