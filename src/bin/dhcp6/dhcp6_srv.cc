@@ -340,14 +340,9 @@ void Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer)
     }
     // Get the list of options that client requested.
     const std::vector<uint16_t>& requested_opts = option_oro->getValues();
-    // Get the list of options configured for a subnet.
-    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp6");
-    const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
-    // Try to match requested options with those configured for a subnet.
-    // If match is found, append configured option to the answer message.
     BOOST_FOREACH(uint16_t opt, requested_opts) {
-        const Subnet::OptionContainerTypeRange& range = idx.equal_range(opt);
-        BOOST_FOREACH(Subnet::OptionDescriptor desc, range) {
+        Subnet::OptionDescriptor desc = subnet->getOptionDescriptor("dhcp6", opt);
+        if (desc.option) {
             answer->addOption(desc.option);
         }
     }
