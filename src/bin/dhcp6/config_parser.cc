@@ -103,7 +103,6 @@ OptionStorage option_defaults;
 /// @brief Global storage for option definitions.
 OptionDefStorage option_def_intermediate;
 
-
 /// @brief a dummy configuration parser
 ///
 /// This is a debugging parser. It does not configure anything,
@@ -1037,8 +1036,8 @@ public:
         BOOST_FOREACH(ConfigPair param, option_def->mapValue()) {
             std::string entry(param.first);
             ParserPtr parser;
-            if (entry == "name" || entry == "type" ||
-                entry == "record-types" || entry == "space") {
+            if (entry == "name" || entry == "type" || entry == "record-types" ||
+                entry == "space" || entry == "encapsulate") {
                 StringParserPtr
                     str_parser(dynamic_cast<StringParser*>(StringParser::factory(entry)));
                 if (str_parser) {
@@ -1122,9 +1121,36 @@ private:
         uint32_t code = getParam<uint32_t>("code", uint32_values_);
         std::string type = getParam<std::string>("type", string_values_);
         bool array_type = getParam<bool>("array", boolean_values_);
+        std::string encapsulates = getParam<std::string>("encapsulate",
+                                                         string_values_);
 
-        OptionDefinitionPtr def(new OptionDefinition(name, code,
-                                                     type, array_type));
+        // Create option definition.
+        OptionDefinitionPtr def;
+        // We need to check if user has set encapsulated option space
+        // name. If so, different constructor will be used.
+        if (!encapsulates.empty()) {
+            // Arrays can't be used together with sub-options.
+            if (array_type) {
+                isc_throw(DhcpConfigError, "option '" << space << "."
+                          << "name" << "', comprising an array of data"
+                          << " fields may not encapsulate any option space");
+
+            } else if (encapsulates == space) {
+                isc_throw(DhcpConfigError, "option must not encapsulate"
+                          << " an option space it belongs to: '"
+                          << space << "." << name << "' is set to"
+                          << " encapsulate '" << space << "'");
+
+            } else {
+                def.reset(new OptionDefinition(name, code, type,
+                                               encapsulates.c_str()));
+            }
+
+        } else {
+            def.reset(new OptionDefinition(name, code, type, array_type));
+
+        }
+
         // The record-types field may carry a list of comma separated names
         // of data types that form a record.
         std::string record_types = getParam<std::string>("record-types",
@@ -1142,7 +1168,7 @@ private:
                 }
             } catch (const Exception& ex) {
                 isc_throw(DhcpConfigError, "invalid record type values"
-                          << " specified for the option  definition: "
+                          << " specified for the option definition: "
                           << ex.what());
             }
         }
