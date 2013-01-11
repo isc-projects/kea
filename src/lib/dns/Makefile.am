@@ -23,6 +23,7 @@ EXTRA_DIST += rdata/generic/cname_5.cc
 EXTRA_DIST += rdata/generic/cname_5.h
 EXTRA_DIST += rdata/generic/detail/char_string.cc
 EXTRA_DIST += rdata/generic/detail/char_string.h
+EXTRA_DIST += rdata/generic/detail/lexer_util.h
 EXTRA_DIST += rdata/generic/detail/nsec_bitmap.cc
 EXTRA_DIST += rdata/generic/detail/nsec_bitmap.h
 EXTRA_DIST += rdata/generic/detail/nsec3param_common.cc

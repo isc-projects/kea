@@ -16,6 +16,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
+#include <dhcp/hwaddr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
 
@@ -451,9 +452,10 @@ public:
         time_t cltt = 0;
         MySqlLeaseMgr::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
 
+        // note that T1 and T2 are not stored
         return (Lease4Ptr(new Lease4(addr4_, hwaddr_buffer_, hwaddr_length_,
                                      client_id_buffer_, client_id_length_,
-                                     valid_lifetime_, cltt, subnet_id_)));
+                                     valid_lifetime_, 0, 0, cltt, subnet_id_)));
     }
 
     /// @brief Return columns in error
@@ -1289,7 +1291,7 @@ MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
 Lease4Collection
 MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_HWADDR).arg(hardwareAddressString(hwaddr));
+              DHCPSRV_MYSQL_GET_HWADDR).arg(hwaddr.toText());
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
@@ -1300,8 +1302,8 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
     // a "char*". (We could avoid the "const_cast" by copying the data to a
     // local variable, but as the data is only being read, this introduces
     // an unnecessary copy).
-    unsigned long hwaddr_length = hwaddr.size();
-    uint8_t* data = const_cast<uint8_t*>(&hwaddr[0]);
+    unsigned long hwaddr_length = hwaddr.hwaddr_.size();
+    uint8_t* data = const_cast<uint8_t*>(&hwaddr.hwaddr_[0]);
 
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
     inbind[0].buffer = reinterpret_cast<char*>(data);
@@ -1320,7 +1322,7 @@ Lease4Ptr
 MySqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_GET_SUBID_HWADDR)
-              .arg(subnet_id).arg(hardwareAddressString(hwaddr));
+        .arg(subnet_id).arg(hwaddr.toText());
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
@@ -1331,8 +1333,8 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
     // a "char*". (We could avoid the "const_cast" by copying the data to a
     // local variable, but as the data is only being read, this introduces
     // an unnecessary copy).
-    unsigned long hwaddr_length = hwaddr.size();
-    uint8_t* data = const_cast<uint8_t*>(&hwaddr[0]);
+    unsigned long hwaddr_length = hwaddr.hwaddr_.size();
+    uint8_t* data = const_cast<uint8_t*>(&hwaddr.hwaddr_[0]);
 
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
     inbind[0].buffer = reinterpret_cast<char*>(data);
