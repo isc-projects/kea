@@ -385,9 +385,41 @@ public:
     ///                       direct zone creation.
     /// \throw DataSourceError If something goes wrong in the data source
     ///                        while creating the zone.
-    /// \param name The (fully qualified) name of the zone to create
+    /// \param zone_name The (fully qualified) name of the zone to create
     /// \return True if the zone was added, false if it already existed
-    virtual bool createZone(const dns::Name& name);
+    virtual bool createZone(const dns::Name& zone_name);
+
+    /// \brief Delete a zone from the data source
+    ///
+    /// This method also checks if the specified zone exists in the data
+    /// source, and returns true/false depending on whether the zone
+    /// existed/not existed, respectively.  In either case, on successful
+    /// return it ensures the data source does not contain the specified
+    /// name of the zone.
+    ///
+    /// \note This is a tentative API, and this method is likely to change
+    /// or be removed in the near future. For that reason, it currently
+    /// provides a default implementation that throws NotImplemented.
+    /// Note also that this method does not delete other database records
+    /// related to the zone, such as zone's resource records or differences
+    /// corresponding to updates made in the zone.  This is primarily for
+    /// implementation simplicity (in the currently intended usage there
+    /// wouldn't be such other data at the time of this call anyway) and due
+    /// to the fact that details of managing zones is still in flux.  Once
+    /// the design in this area is fixed we may revisit the behavior.
+    ///
+    /// Apart from the two exceptions mentioned below, in theory this
+    /// call can throw anything, depending on the implementation of
+    /// the datasource backend.
+    ///
+    /// \throw NotImplemented If the datasource backend does not support
+    ///                       direct zone deletion.
+    /// \throw DataSourceError If something goes wrong in the data source
+    ///                        while deleting the zone.
+    /// \param zone_name The (fully qualified) name of the zone to be deleted
+    /// \return true if the zone previously existed and has been deleted by
+    /// this method; false if the zone didn't exist.
+    virtual bool deleteZone(const dns::Name& zone_name);
 };
 }
 }
