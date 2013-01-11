@@ -53,7 +53,7 @@ getStreamSize(std::istream& is) {
         return (MasterLexer::SOURCE_SIZE_UNKNOWN);
     }
     const std::streampos len = is.tellg();
-    if (len == -1) {
+    if (len == static_cast<std::streampos>(-1)) { // cast for some compilers
         isc_throw(InputSource::OpenError, "failed to get input size");
     }
     is.seekg(0, std::ios::beg);
