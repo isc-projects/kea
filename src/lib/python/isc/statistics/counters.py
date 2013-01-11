@@ -303,7 +303,7 @@ class Counters():
                          identifier, step)
 
     def inc(self, *args):
-        """A incrementer for a counter. Locks the thread because it is
+        """An incrementer for a counter. Locks the thread because it is
         considered to be invoked by a multi-threading
         caller. isc.cc.data.DataNotFoundError is raised when
         incrementing the counter of the item undefined in the spec
