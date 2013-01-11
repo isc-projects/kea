@@ -18,6 +18,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dbaccess_parser.h>
 #include <dhcpsrv/dhcp_config_parser.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
@@ -1320,6 +1321,7 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
     factories["subnet4"] = Subnets4ListConfigParser::factory;
     factories["option-data"] = OptionDataListParser::factory;
     factories["version"] = StringParser::factory;
+    factories["lease-database"] = DbAccessParser::factory;
 
     FactoryMap::iterator f = factories.find(config_id);
     if (f == factories.end()) {
