@@ -18,16 +18,27 @@
 #include <dns/master_lexer_inputsource.h>
 #include <dns/master_lexer_state.h>
 
+#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <bitset>
 #include <cassert>
+#include <limits>
 #include <string>
 #include <vector>
 
 namespace isc {
 namespace dns {
+
+// The definition of SOURCE_SIZE_UNKNOWN.  Note that we initialize it using
+// a method of another library.  Technically, this could trigger a static
+// initialization fiasco.  But in this particular usage it's very unlikely
+// to happen because this value is expected to be used only as a return
+// value of a MasterLexer's method, and its constructor needs definitions
+// here.
+const size_t MasterLexer::SOURCE_SIZE_UNKNOWN =
+    std::numeric_limits<size_t>::max();
 
 namespace {
 typedef boost::shared_ptr<master_lexer_internal::InputSource> InputSourcePtr;
@@ -170,6 +181,30 @@ MasterLexer::getSourceLine() const {
         return (0);
     }
     return (impl_->sources_.back()->getCurrentLine());
+}
+
+size_t
+MasterLexer::getTotalSourceSize() const {
+    size_t total_size = 0;
+    BOOST_FOREACH(InputSourcePtr& src, impl_->sources_) {
+        // If the size of any pushed source is unknown, the total is also
+        // considered unknown.
+        if (src->getSize() == SOURCE_SIZE_UNKNOWN) {
+            return (SOURCE_SIZE_UNKNOWN);
+        }
+
+        total_size += src->getSize();
+    }
+    return (total_size);
+}
+
+size_t
+MasterLexer::getPosition() const {
+    size_t position = 0;
+    BOOST_FOREACH(InputSourcePtr& src, impl_->sources_) {
+        position += src->getPosition();
+    }
+    return (position);
 }
 
 const MasterToken&

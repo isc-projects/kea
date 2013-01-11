@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dns/master_lexer_inputsource.h>
+#include <dns/master_lexer.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -29,10 +30,13 @@ using namespace isc::dns::master_lexer_internal;
 
 namespace {
 
+const char* const test_input =
+    "Line1 to scan.\nLine2 to scan.\nLine3 to scan.\n";
+
 class InputSourceTest : public ::testing::Test {
 protected:
     InputSourceTest() :
-        str_("Line1 to scan.\nLine2 to scan.\nLine3 to scan.\n"),
+        str_(test_input),
         str_length_(strlen(str_)),
         iss_(str_),
         source_(iss_)
@@ -73,6 +77,7 @@ checkGetAndUngetChar(InputSource& source,
 {
     for (size_t i = 0; i < str_length; ++i) {
         EXPECT_EQ(str[i], source.getChar());
+        EXPECT_EQ(i + 1, source.getPosition());
         EXPECT_FALSE(source.atEOF());
     }
 
@@ -85,12 +90,19 @@ checkGetAndUngetChar(InputSource& source,
     // Now, EOF should be set.
     EXPECT_TRUE(source.atEOF());
 
+    // It doesn't increase the position count.
+    EXPECT_EQ(str_length, source.getPosition());
+    EXPECT_EQ(str_length, source.getSize()); // this should be == getSize().
+
     // Now, let's go backwards. This should cause the EOF to be set to
     // false.
     source.ungetChar();
 
     // Now, EOF should be false.
     EXPECT_FALSE(source.atEOF());
+
+    // But the position shouldn't change.
+    EXPECT_EQ(str_length, source.getPosition());
 
     // This should cause EOF to be set again.
     EXPECT_EQ(InputSource::END_OF_STREAM, source.getChar());
@@ -106,6 +118,7 @@ checkGetAndUngetChar(InputSource& source,
         // Skip one character.
         source.ungetChar();
         EXPECT_EQ(str[index], source.getChar());
+        EXPECT_EQ(index + 1, source.getPosition());
         // Skip the character we received again.
         source.ungetChar();
     }
@@ -144,6 +157,7 @@ TEST_F(InputSourceTest, ungetAll) {
     // Now we are back to where we started.
     EXPECT_EQ(1, source_.getCurrentLine());
     EXPECT_FALSE(source_.atEOF());
+    EXPECT_EQ(0, source_.getPosition());
 }
 
 TEST_F(InputSourceTest, compact) {
@@ -174,6 +188,9 @@ TEST_F(InputSourceTest, compact) {
     // We are still at EOF.
     EXPECT_TRUE(source_.atEOF());
     EXPECT_EQ(4, source_.getCurrentLine());
+
+    // compact shouldn't change the position count.
+    EXPECT_EQ(source_.getSize(), source_.getPosition());
 
     // Skip the EOF.
     source_.ungetChar();
@@ -320,6 +337,38 @@ TEST_F(InputSourceTest, saveLine) {
     // Now we are back to where we last-saved.
     EXPECT_EQ(2, source_.getCurrentLine());
     EXPECT_FALSE(source_.atEOF());
+}
+
+TEST_F(InputSourceTest, getSize) {
+    // A simple case using string stream
+    EXPECT_EQ(strlen(test_input), source_.getSize());
+
+    // Check it works with an empty input
+    istringstream iss("");
+    EXPECT_EQ(0, InputSource(iss).getSize());
+
+    // Pretend there's an error in seeking in the stream.  It will be
+    // considered a seek specific error, and getSize() returns "unknown".
+    iss.setstate(std::ios_base::failbit);
+    EXPECT_EQ(MasterLexer::SOURCE_SIZE_UNKNOWN, InputSource(iss).getSize());
+    // The fail bit should have been cleared.
+    EXPECT_FALSE(iss.fail());
+
+    // Pretend there's a *critical* error in the stream.  The constructor will
+    // throw in the attempt of getting the input size.
+    iss.setstate(std::ios_base::badbit);
+    EXPECT_THROW(InputSource isrc(iss), InputSource::OpenError);
+
+    // Check with input source from file name.  We hardcode the file size
+    // for simplicity.  It won't change too often.
+    EXPECT_EQ(143, InputSource(TEST_DATA_SRCDIR "/masterload.txt").getSize());
+}
+
+TEST_F(InputSourceTest, getPosition) {
+    // Initially the position is set to 0.  Other cases are tested in tests
+    // for get and unget.
+    EXPECT_EQ(0, source_.getPosition());
+    EXPECT_EQ(0, InputSource(TEST_DATA_SRCDIR "/masterload.txt").getPosition());
 }
 
 } // end namespace

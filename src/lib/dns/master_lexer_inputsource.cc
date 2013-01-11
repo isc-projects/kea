@@ -15,6 +15,9 @@
 #include <dns/master_lexer_inputsource.h>
 #include <dns/master_lexer.h>
 
+#include <istream>
+#include <iostream>
+#include <cassert>
 #include <cerrno>
 #include <cstring>
 
@@ -31,6 +34,37 @@ createStreamName(const std::istream& input_stream) {
      return (ss.str());
 }
 
+size_t
+getStreamSize(std::istream& is) {
+    is.seekg(0, std::ios_base::end);
+    if (is.bad()) {
+        // This means the istream has an integrity error.  It doesn't make
+        // sense to continue from this point, so we treat it as a fatal error.
+        isc_throw(InputSource::OpenError,
+                  "failed to seek end of input source");
+    } else if (is.fail()) {
+        // This is an error specific to seekg().  There can be several
+        // reasons, but the most likely cause in this context is that the
+        // stream is associated with a special type of file such as a pipe.
+        // In this case, it's more likely that other main operations of
+        // the input source work fine, so we continue with just setting
+        // the stream size to "unknown".
+        is.clear();   // clear this error not to confuse later ops.
+        return (MasterLexer::SOURCE_SIZE_UNKNOWN);
+    }
+    const std::streampos len = is.tellg();
+    if (len == -1) {
+        isc_throw(InputSource::OpenError, "failed to get input size");
+    }
+    is.seekg(0, std::ios::beg);
+    if (is.fail()) {
+        isc_throw(InputSource::OpenError,
+                  "failed to seek beginning of input source");
+    }
+    assert(len >= 0);
+    return (len);
+}
+
 } // end of unnamed namespace
 
 // Explicit definition of class static constant.  The value is given in the
@@ -42,30 +76,43 @@ InputSource::InputSource(std::istream& input_stream) :
     line_(1),
     saved_line_(line_),
     buffer_pos_(0),
+    total_pos_(0),
     name_(createStreamName(input_stream)),
-    input_(input_stream)
+    input_(input_stream),
+    input_size_(getStreamSize(input_))
 {}
 
-InputSource::InputSource(const char* filename) :
-    at_eof_(false),
-    line_(1),
-    saved_line_(line_),
-    buffer_pos_(0),
-    name_(filename),
-    input_(file_stream_)
-{
+namespace {
+// A helper to initialize InputSource::input_ in the member initialization
+// list.
+std::istream&
+openFileStream(std::ifstream& file_stream, const char* filename) {
     errno = 0;
-    file_stream_.open(filename);
-    if (file_stream_.fail()) {
+    file_stream.open(filename);
+    if (file_stream.fail()) {
         std::string error_txt("Error opening the input source file: ");
         error_txt += filename;
         if (errno != 0) {
             error_txt += "; possible cause: ";
             error_txt += std::strerror(errno);
         }
-        isc_throw(OpenError, error_txt);
+        isc_throw(InputSource::OpenError, error_txt);
     }
+
+    return (file_stream);
 }
+}
+
+InputSource::InputSource(const char* filename) :
+    at_eof_(false),
+    line_(1),
+    saved_line_(line_),
+    buffer_pos_(0),
+    total_pos_(0),
+    name_(filename),
+    input_(openFileStream(file_stream_, filename)),
+    input_size_(getStreamSize(input_))
+{}
 
 InputSource::~InputSource()
 {
@@ -103,6 +150,7 @@ InputSource::getChar() {
 
     const int c = buffer_[buffer_pos_];
     ++buffer_pos_;
+    ++total_pos_;
     if (c == '\n') {
         ++line_;
     }
@@ -119,6 +167,7 @@ InputSource::ungetChar() {
                   "Cannot skip before the start of buffer");
     } else {
         --buffer_pos_;
+        --total_pos_;
         if (buffer_[buffer_pos_] == '\n') {
             --line_;
         }
@@ -127,6 +176,8 @@ InputSource::ungetChar() {
 
 void
 InputSource::ungetAll() {
+    assert(total_pos_ >= buffer_pos_);
+    total_pos_ -= buffer_pos_;
     buffer_pos_ = 0;
     line_ = saved_line_;
     at_eof_ = false;
