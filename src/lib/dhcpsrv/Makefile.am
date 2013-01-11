@@ -46,6 +46,7 @@ libb10_dhcpsrv_la_SOURCES += option_space.cc option_space.h
 libb10_dhcpsrv_la_SOURCES += pool.cc pool.h
 libb10_dhcpsrv_la_SOURCES += subnet.cc subnet.h
 libb10_dhcpsrv_la_SOURCES += triplet.h
+libb10_dhcpsrv_la_SOURCES += utils.h
 
 nodist_libb10_dhcpsrv_la_SOURCES = dhcpsrv_messages.h dhcpsrv_messages.cc
 
