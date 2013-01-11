@@ -29,8 +29,7 @@
 
 #include <dns/tests/unittest_util.h>
 
-#include <string>
-#include <map>
+#include "statistics_util.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -42,6 +41,7 @@ using namespace std;
 using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::auth::statistics;
+using namespace isc::auth::unittest;
 
 namespace {
 
@@ -53,52 +53,6 @@ protected:
     ~CountersTest() {}
     Counters counters;
 };
-
-// flatten counters
-void
-flatten(std::map<std::string, int>& flat_map, const std::string& prefix,
-        const isc::data::ConstElementPtr map_element) {
-    std::map<std::string, ConstElementPtr> map = map_element->mapValue();
-    for (std::map<std::string, ConstElementPtr>::const_iterator
-             i = map.begin(), e = map.end();
-         i != e;
-         ++i)
-    {
-        switch (i->second->getType()) {
-            case isc::data::Element::map:
-                flatten(flat_map, i->first + ".", i->second);
-                break;
-            case isc::data::Element::integer:
-                flat_map[prefix + i->first] = i->second->intValue();
-                break;
-            default:
-                FAIL() << "Element Parse Error";
-        }
-    }
-}
-
-// Test if the counters has expected values specified in expect and the others
-// are zero.
-void
-checkCounters(const isc::data::ConstElementPtr counters,
-              const std::map<std::string, int>& expect)
-{
-    std::map<std::string, int> stats_map;
-    flatten(stats_map, "", counters);
-
-    for (std::map<std::string, int>::const_iterator
-            i = stats_map.begin(), e = stats_map.end();
-            i != e;
-            ++i)
-    {
-        const int value =
-            expect.find(i->first) == expect.end() ?
-                0 : expect.find(i->first)->second;
-        EXPECT_EQ(value, i->second) << "Expected counter "
-            << i->first << " = " << value << ", actual: "
-            << i->second;
-    }
-}
 
 void
 buildSkeletonMessage(MessageAttributes& msgattrs) {
@@ -164,7 +118,8 @@ TEST_F(CountersTest, incrementResponse) {
         expect["qrynoauthans"] = responded ? 1 : 0;
         expect["rcode.refused"] = responded ? 1 : 0;
         expect["authqryrej"] = responded ? 1 : 0;
-        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+        checkStatisticsCounters(counters.get()->get("zones")->get("_SERVER_"),
+                                expect);
     }
 }
 
@@ -226,7 +181,8 @@ TEST_F(CountersTest, incrementProtocolType) {
         expect["qrynoauthans"] = i+1;
         expect["rcode.refused"] = i+1;
         expect["authqryrej"] = i+1;
-        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+        checkStatisticsCounters(counters.get()->get("zones")->get("_SERVER_"),
+                                expect);
     }
 }
 
@@ -263,7 +219,8 @@ TEST_F(CountersTest, incrementDO) {
         expect["qrynoauthans"] = i+1;
         expect["rcode.refused"] = i+1;
         expect["authqryrej"] = i+1;
-        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+        checkStatisticsCounters(counters.get()->get("zones")->get("_SERVER_"),
+                                expect);
     }
 }
 
@@ -316,7 +273,8 @@ TEST_F(CountersTest, incrementEDNS) {
         expect["qrynoauthans"] = i+1;
         expect["rcode.refused"] = i+1;
         expect["authqryrej"] = i+1;
-        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+        checkStatisticsCounters(counters.get()->get("zones")->get("_SERVER_"),
+                                expect);
     }
 }
 
@@ -375,7 +333,8 @@ TEST_F(CountersTest, incrementTSIG) {
         expect["qrynoauthans"] = i+1 - count_badsig;
         expect["rcode.refused"] = i+1 - count_badsig;
         expect["authqryrej"] = i+1 - count_badsig;
-        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+        checkStatisticsCounters(counters.get()->get("zones")->get("_SERVER_"),
+                                expect);
     }
 }
 
@@ -430,7 +389,8 @@ TEST_F(CountersTest, incrementOpcode) {
                 expect["opcode."+code_text] = j;
             }
         }
-        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+        checkStatisticsCounters(counters.get()->get("zones")->get("_SERVER_"),
+                                expect);
     }
 }
 
@@ -489,7 +449,8 @@ TEST_F(CountersTest, incrementRcode) {
                 expect["rcode."+code_text] = j;
             }
         }
-        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+        checkStatisticsCounters(counters.get()->get("zones")->get("_SERVER_"),
+                                expect);
     }
 }
 
@@ -531,7 +492,8 @@ TEST_F(CountersTest, incrementTruncated) {
         expect["responses"] = i+1;
         expect["rcode.servfail"] = i+1;
         expect["response.truncated"] = count_truncated;
-        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+        checkStatisticsCounters(counters.get()->get("zones")->get("_SERVER_"),
+                                expect);
     }
 }
 
@@ -575,7 +537,8 @@ TEST_F(CountersTest, incrementQryAuthAnsAndNoAuthAns) {
         expect["rcode.servfail"] = i+1;
         expect["qryauthans"] = count_authans;
         expect["qrynoauthans"] = count_noauthans;
-        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+        checkStatisticsCounters(counters.get()->get("zones")->get("_SERVER_"),
+                                expect);
     }
 }
 
@@ -617,7 +580,8 @@ TEST_F(CountersTest, incrementQrySuccess) {
     expect["qrysuccess"] = 1;
     // noauthans is also incremented
     expect["qrynoauthans"] = 1;
-    checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+    checkStatisticsCounters(counters.get()->get("zones")->get("_SERVER_"),
+                            expect);
 }
 
 TEST_F(CountersTest, incrementQryReferralAndNxrrset) {
@@ -667,7 +631,8 @@ TEST_F(CountersTest, incrementQryReferralAndNxrrset) {
         // qryauthans or qrynoauthans is also incremented
         expect["qryauthans"] = count_nxrrset;
         expect["qrynoauthans"] = count_referral;
-        checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+        checkStatisticsCounters(counters.get()->get("zones")->get("_SERVER_"),
+                                expect);
     }
 }
 
@@ -702,7 +667,8 @@ TEST_F(CountersTest, incrementAuthQryRej) {
     expect["authqryrej"] = 1;
     // noauthans is also incremented since AA bit is not set
     expect["qrynoauthans"] = 1;
-    checkCounters(counters.get()->get("zones")->get("_SERVER_"), expect);
+    checkStatisticsCounters(counters.get()->get("zones")->get("_SERVER_"),
+                            expect);
 }
 
 int
