@@ -307,8 +307,7 @@ class Counters():
         considered to be invoked by a multi-threading
         caller. isc.cc.data.DataNotFoundError is raised when
         incrementing the counter of the item undefined in the spec
-        file. It calls internally a common helper function
-        _incdec()"""
+        file."""
         return self._incdec(*args)
 
     def dec(self, *args):
@@ -316,8 +315,7 @@ class Counters():
         considered to be invoked by a multi-threading
         caller. isc.cc.data.DataNotFoundError is raised when
         decrementing the counter of the item undefined in the spec
-        file. It calls internally a common helper function
-        _incdec()"""
+        file."""
         return self._incdec(*args, step=-1)
 
     def get(self, *args):
