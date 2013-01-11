@@ -15,6 +15,9 @@
 #ifndef OPTION_SPACE_CONTAINER_H
 #define OPTION_SPACE_CONTAINER_H
 
+#include <list>
+#include <string>
+
 namespace isc {
 namespace dhcp {
 
