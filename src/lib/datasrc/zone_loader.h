@@ -135,10 +135,76 @@ public:
     ///     similar problem is found when loading the master file.
     /// \note If the limit is exactly the number of RRs available to be loaded,
     ///     the method still returns false and true'll be returned on the next
-    ///     call (which will load 0 RRs). This is because the end of iterator or
-    ///     master file is detected when reading past the end, not when the last
-    ///     one is read.
+    ///     call (which will load 0 RRs). This is because the end of iterator
+    ///     or master file is detected when reading past the end, not when the
+    ///     last one is read.
     bool loadIncremental(size_t limit);
+
+    /// \brief Return the number of RRs loaded.
+    ///
+    /// This method returns the number of RRs loaded via this loader by the
+    /// time of the call.  Before starting the load it will return 0.
+    /// It will return the total number of RRs of the zone on and after
+    /// completing the load.
+    ///
+    /// \throw None
+    size_t getRRCount() const;
+
+    /// \brief Return the (estimated) total size of the entire zone.
+    ///
+    /// This method returns some hint on how large the zone will be when
+    /// completing the load.  The returned size is a conceptual value that
+    /// can internally mean anything.  The intended usage of the value is
+    /// to compare it to the return value of \c getPosition() to estimate
+    /// the progress of the load at the time of the call.
+    ///
+    /// In this implementation, if the loader is constructed with a file
+    /// name, the returned size is the size of the zone file.  If it includes
+    /// other files via the $INCLUDE directive, it will be the sum of the
+    /// file sizes of all such files that the loader has handled.
+    /// Note that it may be smaller than the final size if there are more
+    /// files to be included which the loader has not seen by the time of
+    /// the call.
+    ///
+    /// Currently, if the loader is constructed with another data source
+    /// client, this method always returns 0.  In future, it may be possible
+    /// to return something more effective, e.g, the total number of RRs
+    /// if the underlying data source can provide that information efficiently.
+    ///
+    /// In any case, the caller shouldn't assume anything specific about the
+    /// meaning of the value other than for comparing it to the result of
+    /// \c getPosition().
+    ///
+    /// \throw None
+    size_t getSize() const;
+
+    /// \brief Return the current position of the loader in the zone being
+    /// loaded.
+    ///
+    /// This method returns a conceptual "position" of this loader in the
+    /// loader relative to the return value of \c getSize().  Before starting
+    /// the load the position is set to 0; on successful completion,
+    /// it will be equal to the \c getSize() value; in the middle of the load,
+    /// it's expected to be between these values, which would give some
+    /// hint about the progress of the loader.
+    ///
+    /// In the current implementation, if the loader is constructed with a
+    /// file name, the returned value is the number of characters from the
+    /// zone file (and any included files) recognized by the underlying zone
+    /// file parser.
+    ///
+    /// If it's constructed with another data source client, it's always
+    /// 0 for now; however, if \c getPosition() is extended in this case
+    /// as documented (see the method description), the result of
+    /// \c getRRCount() could be used for the current position.
+    ///
+    /// Like \c getSize(), the value is conceptual and the caller shouldn't
+    /// assume any specific meaning of the value except for comparing it
+    /// to \c getSize() results.
+    ///
+    /// \throw None
+    size_t getPosition() const;
+
 private:
     /// \brief The iterator used as source of data in case of the copy mode.
     const ZoneIteratorPtr iterator_;
@@ -150,9 +216,14 @@ private:
     bool complete_;
     /// \brief Was the loading successful?
     bool loaded_ok_;
+    size_t rr_count_;
 };
 
 }
 }
 
-#endif
+#endif  // DATASRC_ZONE_LOADER_H
+
+// Local Variables:
+// mode: c++
+// End:

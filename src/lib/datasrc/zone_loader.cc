@@ -35,7 +35,7 @@ ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
     // have to aggregate them) and also because our limit semantics.
     iterator_(source.getIterator(zone_name, true)),
     updater_(destination.getUpdater(zone_name, true, false)),
-    complete_(false)
+    complete_(false), rr_count_(0)
 {
     // The getIterator should never return NULL. So we check it.
     // Or should we throw instead?
@@ -59,8 +59,7 @@ ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
 ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
                        const char* filename) :
     updater_(destination.getUpdater(zone_name, true, false)),
-    complete_(false),
-    loaded_ok_(true)
+    complete_(false), loaded_ok_(true), rr_count_(0)
 {
     if (updater_ == ZoneUpdaterPtr()) {
         isc_throw(DataSourceError, "Zone " << zone_name << " not found in "
@@ -83,7 +82,7 @@ namespace {
 // Copy up to limit RRsets from source to destination
 bool
 copyRRsets(const ZoneUpdaterPtr& destination, const ZoneIteratorPtr& source,
-           size_t limit)
+           size_t limit, size_t& rr_count_)
 {
     size_t loaded = 0;
     while (loaded < limit) {
@@ -95,6 +94,7 @@ copyRRsets(const ZoneUpdaterPtr& destination, const ZoneIteratorPtr& source,
             destination->addRRset(*rrset);
         }
         ++loaded;
+        rr_count_ += rrset->getRdataCount();
     }
     return (false); // Not yet, there may be more
 }
@@ -118,14 +118,36 @@ ZoneLoader::loadIncremental(size_t limit) {
         if (complete_ && !loaded_ok_) {
             isc_throw(MasterFileError, "Error while loading master file");
         }
+        rr_count_ = loader_->getRRCount();
     } else {
-        complete_ = copyRRsets(updater_, iterator_, limit);
+        complete_ = copyRRsets(updater_, iterator_, limit, rr_count_);
     }
 
     if (complete_) {
         updater_->commit();
     }
     return (complete_);
+}
+
+size_t
+ZoneLoader::getRRCount() const {
+    return (rr_count_);
+}
+
+size_t
+ZoneLoader::getSize() const {
+    if (!loader_) {
+        return (0);
+    }
+    return (loader_->getSize());
+}
+
+size_t
+ZoneLoader::getPosition() const {
+    if (!loader_) {
+        return (0);
+    }
+    return (loader_->getPosition());
 }
 
 } // end namespace datasrc
