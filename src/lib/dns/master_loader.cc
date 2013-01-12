@@ -104,6 +104,9 @@ public:
 
     bool loadIncremental(size_t count_limit);
 
+    size_t getSize() const { return (lexer_.getTotalSourceSize()); }
+    size_t getPosition() const { return (lexer_.getPosition()); }
+
 private:
     void reportError(const std::string& filename, size_t line,
                      const std::string& reason)
@@ -637,6 +640,16 @@ MasterLoader::loadedSucessfully() const {
 size_t
 MasterLoader::getRRCount() const {
     return (impl_->rr_count_);
+}
+
+size_t
+MasterLoader::getSize() const {
+    return (impl_->getSize());
+}
+
+size_t
+MasterLoader::getPosition() const {
+    return (impl_->getPosition());
 }
 
 } // end namespace dns
