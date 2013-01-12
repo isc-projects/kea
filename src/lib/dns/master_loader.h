@@ -142,8 +142,52 @@ public:
     ///     finishing the load.
     bool loadedSucessfully() const;
 
+    /// \brief Return the number of RRs loaded.
+    ///
+    /// This method returns the number of RRs loaded via this loader by the
+    /// time of the call.  Before starting the load it will return 0.
+    /// It will return the total number of RRs of the zone on and after
+    /// completing the load.
+    ///
+    /// \throw None
     size_t getRRCount() const;
+
+    /// \brief Return the total size of the zone files and streams.
+    ///
+    /// This method returns the size of the source of the zone to be loaded
+    /// (master zone files or streams) that is known at the time of the call.
+    /// For a zone file, it's the size of the file; for a stream, it's the
+    /// size of the data (in bytes) available at the start of the load.
+    /// If separate zone files are included via the $INCLUDE directive, the
+    /// sum of the sizes of these files are added.
+    ///
+    /// If the loader is constructed with a stream, the size can be
+    /// "unknown" as described for \c MasterLexer::getTotalSourceSize().
+    /// In this case this method always returns
+    /// \c MasterLexer::SOURCE_SIZE_UNKNOWN.
+    ///
+    /// If the loader is constructed with a zone file, this method
+    /// initially returns 0.  So until either \c load() or \c loadIncremental()
+    /// is called, the value is meaningless.
+    ///
+    /// Note that when the source includes separate files, this method
+    /// cannot take into account the included files that the loader has not
+    /// recognized at the time of call.  So it's possible that this method
+    /// returns different values at different times of call.
+    ///
+    /// \throw None
     size_t getSize() const;
+
+    /// \brief Return the position of the loader in zone.
+    ///
+    /// This method returns a conceptual "position" of the loader in the
+    /// zone to be loaded.  Specifically, it returns the total number of
+    /// characters contained in the zone files and streams and recognized
+    /// by the loader.  Before starting the load it returns 0; on successful
+    /// completion it will be equal to the return value of \c getSize()
+    /// (unless the latter returns \c MasterLexer::SOURCE_SIZE_UNKNOWN).
+    ///
+    /// \throw None
     size_t getPosition() const;
 
 private:
