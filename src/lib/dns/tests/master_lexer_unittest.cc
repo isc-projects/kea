@@ -52,7 +52,6 @@ void
 checkEmptySource(const MasterLexer& lexer) {
     EXPECT_TRUE(lexer.getSourceName().empty());
     EXPECT_EQ(0, lexer.getSourceLine());
-    EXPECT_EQ(0, lexer.getTotalSourceSize());
     EXPECT_EQ(0, lexer.getPosition());
 }
 
@@ -78,6 +77,7 @@ TEST_F(MasterLexerTest, pushStream) {
     lexer.popSource();
     EXPECT_EQ(0, lexer.getSourceCount());
     checkEmptySource(lexer);
+    EXPECT_EQ(4, lexer.getTotalSourceSize()); // this shouldn't change
 }
 
 TEST_F(MasterLexerTest, pushFile) {
@@ -96,6 +96,7 @@ TEST_F(MasterLexerTest, pushFile) {
     lexer.popSource();
     checkEmptySource(lexer);
     EXPECT_EQ(0, lexer.getSourceCount());
+    EXPECT_EQ(143, lexer.getTotalSourceSize()); // this shouldn't change
 
     // If we give a non NULL string pointer, its content will be intact
     // if pushSource succeeds.
@@ -124,22 +125,44 @@ TEST_F(MasterLexerTest, pushFileFail) {
 }
 
 TEST_F(MasterLexerTest, nestedPush) {
-    ss << "test";
+    const string test_txt = "test";
+    ss << test_txt;
     lexer.pushSource(ss);
+
+    EXPECT_EQ(test_txt.size(), lexer.getTotalSourceSize());
+    EXPECT_EQ(0, lexer.getPosition());
+
     EXPECT_EQ(expected_stream_name, lexer.getSourceName());
+
+    // Read the string; getPosition() should reflect that.
+    EXPECT_EQ(MasterToken::STRING, lexer.getNextToken().getType());
+    EXPECT_EQ(test_txt.size(), lexer.getPosition());
 
     // We can push another source without popping the previous one.
     lexer.pushSource(TEST_DATA_SRCDIR "/masterload.txt");
     EXPECT_EQ(TEST_DATA_SRCDIR "/masterload.txt", lexer.getSourceName());
-    EXPECT_EQ(143 + 4, lexer.getTotalSourceSize()); // see above for magic nums
+    EXPECT_EQ(143 + test_txt.size(),
+              lexer.getTotalSourceSize()); // see above for magic nums
+
+    // the next token should be the EOL (skipping a comment line), its
+    // position in the file is 35 (hardcoded).
+    EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
+    EXPECT_EQ(test_txt.size() + 35, lexer.getPosition());
 
     // popSource() works on the "topmost" (last-pushed) source
     lexer.popSource();
     EXPECT_EQ(expected_stream_name, lexer.getSourceName());
-    EXPECT_EQ(4, lexer.getTotalSourceSize());
+
+    // pop shouldn't change the total size and the current position
+    EXPECT_EQ(143 + test_txt.size(), lexer.getTotalSourceSize());
+    EXPECT_EQ(test_txt.size() + 35, lexer.getPosition());
 
     lexer.popSource();
     EXPECT_TRUE(lexer.getSourceName().empty());
+
+    // size and position still shouldn't change
+    EXPECT_EQ(143 + test_txt.size(), lexer.getTotalSourceSize());
+    EXPECT_EQ(test_txt.size() + 35, lexer.getPosition());
 }
 
 TEST_F(MasterLexerTest, unknownSourceSize) {
@@ -155,9 +178,9 @@ TEST_F(MasterLexerTest, unknownSourceSize) {
     // Then the total size is also unknown.
     EXPECT_EQ(MasterLexer::SOURCE_SIZE_UNKNOWN, lexer.getTotalSourceSize());
 
-    // If we pop that source, the size becomes known again.
+    // Even if we pop that source, the size is still unknown.
     lexer.popSource();
-    EXPECT_EQ(4, lexer.getTotalSourceSize());
+    EXPECT_EQ(MasterLexer::SOURCE_SIZE_UNKNOWN, lexer.getTotalSourceSize());
 }
 
 TEST_F(MasterLexerTest, invalidPop) {
@@ -308,7 +331,7 @@ TEST_F(MasterLexerTest, includeAndInitialWS) {
     lexer.pushSource(ss2);
     EXPECT_EQ(MasterToken::INITIAL_WS,
               lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
-    EXPECT_EQ(2, lexer.getPosition()); // should be sum of position positions.
+    EXPECT_EQ(2, lexer.getPosition()); // should be sum of pushed positions.
 }
 
 // Test only one token can be ungotten
