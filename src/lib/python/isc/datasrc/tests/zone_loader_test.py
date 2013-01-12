@@ -111,21 +111,48 @@ class ZoneLoaderTests(unittest.TestCase):
     def test_load_from_file(self):
         self.loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
                                              self.test_file)
+        self.assertEqual(0, self.loader.get_rr_count())
+        self.assertEqual(0, self.loader.get_size())
+        self.assertEqual(0, self.loader.get_position())
+
         self.check_load()
+
+        # Expected values are hardcoded, taken from the test zone file,
+        # assuming it won't change too often.
+        self.assertEqual(8, self.loader.get_rr_count())
+        self.assertEqual(422, self.loader.get_size())
+        self.assertEqual(422, self.loader.get_position())
 
     def test_load_from_client(self):
         self.source_client = isc.datasrc.DataSourceClient('sqlite3',
                                     DB_SOURCE_CLIENT_CONFIG)
         self.loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
                                              self.source_client)
+
+        self.assertEqual(0, self.loader.get_rr_count())
+        self.assertEqual(0, self.loader.get_size())
+        self.assertEqual(0, self.loader.get_position())
+
         self.check_load()
 
-    def check_load_incremental(self):
+        # In case of loading from another data source, size and position are
+        # always 0.
+        self.assertEqual(8, self.loader.get_rr_count())
+        self.assertEqual(0, self.loader.get_size())
+        self.assertEqual(0, self.loader.get_position())
+
+    def check_load_incremental(self, from_file=True):
         # New zone has 8 RRs
         # After 5, it should return False
         self.assertFalse(self.loader.load_incremental(5))
         # New zone should not have been loaded yet
         self.check_zone_soa(ORIG_SOA_TXT)
+
+        # In case it's from a zone file, check get_size() and get_position()
+        # are different.  expected values are taken from the test zone file.
+        if from_file:
+            self.assertEqual(422, self.loader.get_size())
+            self.assertEqual(288, self.loader.get_position())
 
         # After 5 more, it should return True (only having read 3)
         self.assertTrue(self.loader.load_incremental(5))
@@ -147,7 +174,7 @@ class ZoneLoaderTests(unittest.TestCase):
                                             DB_SOURCE_CLIENT_CONFIG)
         self.loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
                                              self.source_client)
-        self.check_load_incremental()
+        self.check_load_incremental(False)
 
     def test_bad_file(self):
         self.check_zone_soa(ORIG_SOA_TXT)
