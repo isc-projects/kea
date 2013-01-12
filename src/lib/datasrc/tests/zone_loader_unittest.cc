@@ -186,6 +186,12 @@ TEST_F(ZoneLoaderTest, copyUnsigned) {
     // It gets the updater directly in the constructor
     ASSERT_EQ(1, destination_client_.provided_updaters_.size());
     EXPECT_EQ(Name::ROOT_NAME(), destination_client_.provided_updaters_[0]);
+
+    // Counters are initialized to 0.
+    EXPECT_EQ(0, loader.getRRCount());
+    EXPECT_EQ(0, loader.getSize());
+    EXPECT_EQ(0, loader.getPosition());
+
     // Now load the whole zone
     loader.load();
     EXPECT_TRUE(destination_client_.commit_called_);
@@ -194,6 +200,13 @@ TEST_F(ZoneLoaderTest, copyUnsigned) {
 
     // The count is 34 because we expect the RRs to be separated.
     EXPECT_EQ(34, destination_client_.rrsets_.size());
+
+    // Check various counters.  getRRCount should be identical of the RRs
+    // we've seen.  size and position should be still 0 in the copy operation.
+    EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
+    EXPECT_EQ(0, loader.getSize());
+    EXPECT_EQ(0, loader.getPosition());
+
     // Ensure known order.
     std::sort(destination_client_.rrsets_.begin(),
               destination_client_.rrsets_.end());
@@ -220,6 +233,12 @@ TEST_F(ZoneLoaderTest, copyUnsignedIncremental) {
     EXPECT_EQ(10, destination_client_.rrsets_.size());
     // Not committed yet, we didn't complete the loading
     EXPECT_FALSE(destination_client_.commit_called_);
+
+    // Check we can get intermediate counters.  size/position are always 0
+    // in case of copy.
+    EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
+    EXPECT_EQ(0, loader.getSize());
+    EXPECT_EQ(0, loader.getPosition());
 
     // This is unusual, but allowed. Check it doesn't do anything
     loader.loadIncremental(0);
@@ -289,6 +308,12 @@ TEST_F(ZoneLoaderTest, classMismatch) {
 TEST_F(ZoneLoaderTest, loadUnsigned) {
     ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
                       TEST_DATA_DIR "/root.zone");
+
+    // Counters are initialized to 0.
+    EXPECT_EQ(0, loader.getRRCount());
+    EXPECT_EQ(0, loader.getSize());
+    EXPECT_EQ(0, loader.getPosition());
+
     // It gets the updater directly in the constructor
     ASSERT_EQ(1, destination_client_.provided_updaters_.size());
     EXPECT_EQ(Name::ROOT_NAME(), destination_client_.provided_updaters_[0]);
@@ -300,6 +325,14 @@ TEST_F(ZoneLoaderTest, loadUnsigned) {
 
     // The count is 34 because we expect the RRs to be separated.
     EXPECT_EQ(34, destination_client_.rrsets_.size());
+
+    // Check various counters.  getRRCount should be identical of the RRs
+    // we've seen.  size and position should be identical of the RRs
+    // file (hardcoded, assuming we won't change it so often).
+    EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
+    EXPECT_EQ(1541, loader.getSize());
+    EXPECT_EQ(1541, loader.getPosition());
+
     // Ensure known order.
     std::sort(destination_client_.rrsets_.begin(),
               destination_client_.rrsets_.end());
@@ -307,6 +340,13 @@ TEST_F(ZoneLoaderTest, loadUnsigned) {
               destination_client_.rrsets_.front());
     EXPECT_EQ("m.root-servers.net. 3600000 IN AAAA 2001:dc3::35\n",
               destination_client_.rrsets_.back());
+
+    // Check various counters.  getRRCount should be identical of the RRs
+    // we've seen.  size and position should be equal to the size of the zone
+    // file (hardcoded assuming we won't change it so often).
+    EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
+    EXPECT_EQ(1541, loader.getSize());
+    EXPECT_EQ(1541, loader.getPosition());
 
     // It isn't possible to try again now
     EXPECT_THROW(loader.load(), isc::InvalidOperation);
@@ -320,6 +360,11 @@ TEST_F(ZoneLoaderTest, loadUnsignedIncremental) {
     ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
                       TEST_DATA_DIR "/root.zone");
 
+    // Counters are initialized to 0.
+    EXPECT_EQ(0, loader.getRRCount());
+    EXPECT_EQ(0, loader.getSize());
+    EXPECT_EQ(0, loader.getPosition());
+
     // Try loading few RRs first.
     loader.loadIncremental(10);
     // We should get the 10 we asked for
@@ -330,10 +375,22 @@ TEST_F(ZoneLoaderTest, loadUnsignedIncremental) {
     EXPECT_EQ(10, destination_client_.rrsets_.size());
     EXPECT_FALSE(destination_client_.commit_called_);
 
+    // Check we can get intermediate counters.  size is the size of the
+    // zone file; position is the offset to the end of 10th RR (both
+    // hardcoded).
+    EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
+    EXPECT_EQ(1541, loader.getSize());
+    EXPECT_EQ(428, loader.getPosition());
+
     // We can finish the rest
     loader.loadIncremental(30);
     EXPECT_EQ(34, destination_client_.rrsets_.size());
     EXPECT_TRUE(destination_client_.commit_called_);
+
+    // Counters are updated accordingly.  size and position are now identical.
+    EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
+    EXPECT_EQ(1541, loader.getSize());
+    EXPECT_EQ(1541, loader.getPosition());
 
     // No more loading now
     EXPECT_THROW(loader.load(), isc::InvalidOperation);
