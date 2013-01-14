@@ -69,6 +69,9 @@ incompatible version of a module and message queue daemon.
 There was a low-level error when sending data to a socket. The error is logged
 and the corresponding socket is dropped.
 
+% MSGQ_SHUTDOWN Stopping Msgq
+Debug message. The message queue is shutting down.
+
 % MSGQ_SOCK_CLOSE Closing socket fd %1
 Debug message. Closing the mentioned socket.
 
