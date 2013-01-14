@@ -107,6 +107,8 @@ TEST_F(Rdata_HINFO_Test, toText) {
     EXPECT_EQ("\"a\" \"b\"", HINFO("a b").toText());
     // will not add additional quotes
     EXPECT_EQ("\"a\" \"b\"", HINFO("\"a\" \"b\"").toText());
+    // And make sure escaped quotes and spaces are left intact
+    EXPECT_EQ("\"a\\\"\" \"b c\"", HINFO("\"a\\\"\" \"b c\"").toText());
 }
 
 TEST_F(Rdata_HINFO_Test, toWire) {

@@ -52,7 +52,6 @@ public:
     const std::string getCPU() const;
     const std::string getOS() const;
 
-    void ptr() const;
 private:
     /// Helper template function for toWire()
     ///
