@@ -231,14 +231,15 @@ WARNING: Python readline module isn't available, so the command line editor
                 return True
 
         count = 0
-        print("[TEMP MESSAGE]: username :root  password :bind10")
+        print("No stored password file found, please see sections 7.1 and "
+              "8.1 of the BIND 10 guide.")
         while True:
             count = count + 1
             if count > 3:
                 print("Too many authentication failures")
                 return False
 
-            username = input("Username:")
+            username = input("Username: ")
             passwd = getpass.getpass()
             param = {'username': username, 'password' : passwd}
             try:
