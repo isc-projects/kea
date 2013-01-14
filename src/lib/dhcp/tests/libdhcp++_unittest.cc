@@ -68,12 +68,16 @@ public:
     /// used to create option instance.
     /// @param expected_type type of the option created by the
     /// factory function returned by the option definition.
+    /// @param encapsulates name of the option space being encapsulated
+    /// by the option.
     static void testStdOptionDefs4(const uint16_t code,
                                    const OptionBufferConstIter begin,
                                    const OptionBufferConstIter end,
-                                   const std::type_info& expected_type) {
+                                   const std::type_info& expected_type,
+                                   const std::string& encapsulates = "") {
         // Use V4 universe.
-        testStdOptionDefs(Option::V4, code, begin, end, expected_type);
+        testStdOptionDefs(Option::V4, code, begin, end, expected_type,
+                          encapsulates);
     }
 
     /// @brief Test DHCPv6 option definition.
@@ -88,12 +92,16 @@ public:
     /// used to create option instance.
     /// @param expected_type type of the option created by the
     /// factory function returned by the option definition.
+    /// @param encapsulates name of the option space being encapsulated
+    /// by the option.
     static void testStdOptionDefs6(const uint16_t code,
                                    const OptionBufferConstIter begin,
                                    const OptionBufferConstIter end,
-                                   const std::type_info& expected_type) {
+                                   const std::type_info& expected_type,
+                                   const std::string& encapsulates = "") {
         // Use V6 universe.
-        testStdOptionDefs(Option::V6, code, begin, end, expected_type);
+        testStdOptionDefs(Option::V6, code, begin, end, expected_type,
+                          encapsulates);
     }
 private:
 
@@ -109,11 +117,14 @@ private:
     /// used to create option instance.
     /// @param expected_type type of the option created by the
     /// factory function returned by the option definition.
+    /// @param encapsulates name of the option space being encapsulated
+    /// by the option.
     static void testStdOptionDefs(const Option::Universe u,
                                   const uint16_t code,
                                   const OptionBufferConstIter begin,
                                   const OptionBufferConstIter end,
-                                  const std::type_info& expected_type) {
+                                  const std::type_info& expected_type,
+                                  const std::string& encapsulates) {
         // Get all option definitions, we will use them to extract
         // the definition for a particular option code.
         // We don't have to initialize option definitions here because they
@@ -141,6 +152,9 @@ private:
         ASSERT_NO_THROW(def->validate())
             << "Option definition for the option code " << code
             << " is invalid";
+        // Check that the valid encapsulated option space name
+        // has been specified.
+        EXPECT_EQ(encapsulates, def->getEncapsulatedSpace());
         OptionPtr option;
         // Create the option.
         ASSERT_NO_THROW(option = def->optionFactory(u, code, begin, end))
@@ -648,7 +662,8 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     typeid(Option4AddrLst));
 
     LibDhcpTest::testStdOptionDefs4(DHO_VENDOR_ENCAPSULATED_OPTIONS, begin, end,
-                                    typeid(Option));
+                                    typeid(Option),
+                                    "vendor-encapsulated-options-space");
 
     LibDhcpTest::testStdOptionDefs4(DHO_NETBIOS_NAME_SERVERS, begin, end,
                                     typeid(Option4AddrLst));
@@ -717,7 +732,7 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     typeid(OptionCustom));
 
     LibDhcpTest::testStdOptionDefs4(DHO_DHCP_AGENT_OPTIONS, begin, end,
-                                    typeid(Option));
+                                    typeid(Option), "dhcp-agent-options-space");
 
     LibDhcpTest::testStdOptionDefs4(DHO_AUTHENTICATE, begin, end,
                                     typeid(Option));
@@ -816,7 +831,8 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     typeid(OptionCustom));
 
     LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_OPTS, begin, end,
-                                    typeid(OptionCustom));
+                                    typeid(OptionInt<uint32_t>),
+                                    "vendor-opts-space");
 
     LibDhcpTest::testStdOptionDefs6(D6O_INTERFACE_ID, begin, end,
                                     typeid(Option));
