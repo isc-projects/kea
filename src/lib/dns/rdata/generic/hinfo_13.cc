@@ -96,8 +96,14 @@ HINFO::HINFO(MasterLexer& lexer, const Name*,
     impl_(new HINFOImpl(lexer))
 {}
 
+HINFO&
+HINFO::operator=(const HINFO& source)
+{
+    impl_.reset(new HINFOImpl(*source.impl_));
+    return (*this);
+}
+
 HINFO::~HINFO() {
-    delete impl_;
 }
 
 std::string
@@ -147,6 +153,10 @@ void
 HINFO::toWireHelper(T& outputer) const {
     outputer.writeData(&impl_->cpu[0], impl_->cpu.size());
     outputer.writeData(&impl_->os[0], impl_->os.size());
+}
+
+void HINFO::ptr() const {
+    std::cout << "[XX] PTR: " << impl_.get() << std::endl;
 }
 
 // END_RDATA_NAMESPACE
