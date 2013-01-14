@@ -219,7 +219,18 @@ TEST_F(Rdata_NAPTR_Test, compare) {
     EXPECT_EQ(1, naptr_large3.compare(naptr));
     EXPECT_EQ(1, naptr_large4.compare(naptr));
     EXPECT_EQ(1, naptr_large5.compare(naptr));
+}
 
+TEST_F(Rdata_NAPTR_Test, copy) {
+    NAPTR naptr(naptr_str);
+    NAPTR naptr2(naptr);
+    NAPTR naptr3 = naptr;
+
+    EXPECT_EQ(0, naptr.compare(naptr2));
+    EXPECT_EQ(0, naptr.compare(naptr3));
+
+    naptr3 = naptr;
+    EXPECT_EQ(0, naptr.compare(naptr3));
 }
 
 }
