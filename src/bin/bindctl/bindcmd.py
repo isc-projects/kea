@@ -208,12 +208,13 @@ WARNING: Python readline module isn't available, so the command line editor
         return True
 
     def login_to_cmdctl(self):
-        '''Login to cmdctl with the username and password inputted
-        from user. After the login is sucessful, the username and
+        '''Login to cmdctl with the username and password given by
+        the user. After the login is sucessful, the username and
         password will be saved in 'default_user.csv', when run the next
         time, username and password saved in 'default_user.csv' will be
         used first.
         '''
+        # Look at existing username/password combinations and try to log in
         users = self._get_saved_user_info(self.csv_file_dir, CSV_FILE_NAME)
         for row in users:
             param = {'username': row[0], 'password' : row[1]}
@@ -230,9 +231,11 @@ WARNING: Python readline module isn't available, so the command line editor
                     print(data + ' login as ' + row[0])
                 return True
 
+        # No valid logins were found, prompt the user for a username/password
         count = 0
-        print("No stored password file found, please see sections 7.1 and "
-              "8.1 of the BIND 10 guide.")
+        print('No stored password file found, please see sections '
+              '"Configuration specification for b10-cmdctl" and "bindctl '
+              'command-line options" of the BIND 10 guide.')
         while True:
             count = count + 1
             if count > 3:
