@@ -92,7 +92,7 @@ StringStorage string_defaults;
 OptionStorage option_defaults;
 
 /// @brief Global storage for option definitions.
-OptionDefStorage option_def_defaults;
+OptionDefStorage option_def_intermediate;
 
 /// @brief a dummy configuration parser
 ///
@@ -590,9 +590,20 @@ private:
 ///
 /// This parser parses configuration entries that specify value of
 /// a single option. These entries include option name, option code
-/// and data carried by the option. If parsing is successful then an
-/// instance of an option is created and added to the storage provided
-/// by the calling class.
+/// and data carried by the option. The option data can be specified
+/// in one of the two available formats: binary value represented as
+/// a string of hexadecimal digits or a list of comma separated values.
+/// The format being used is controlled by csv-format configuration
+/// parameter. When setting this value to True, the latter format is
+/// used. The subsequent values in the CSV format apply to relevant
+/// option data fields in the configured option. For example the
+/// configuration: "data" : "192.168.2.0, 56, hello world" can be
+/// used to set values for the option comprising IPv4 address,
+/// integer and string data field. Note that order matters. If the
+/// order of values does not match the order of data fields within
+/// an option the configuration will not be accepted. If parsing
+/// is successful then an instance of an option is created and
+/// added to the storage provided by the calling class.
 class OptionDataParser : public DhcpConfigParser {
 public:
 
@@ -687,6 +698,9 @@ public:
         }
         uint16_t opt_type = option_descriptor_.option->getType();
         Subnet::OptionContainerPtr options = options_->getItems(option_space_);
+        // The getItems() should never return NULL pointer. If there are no
+        // options configured for the particular option space a pointer
+        // to an empty container should be returned.
         assert(options);
         Subnet::OptionContainerTypeIndex& idx = options->get<1>();
         // Try to find options with the particular option code in the main
@@ -769,7 +783,10 @@ private:
             // need to search for its definition among user-configured
             // options. They are expected to be in the global storage
             // already.
-            OptionDefContainerPtr defs = option_def_defaults.getItems(option_space);
+            OptionDefContainerPtr defs = option_def_intermediate.getItems(option_space);
+            // The getItems() should never return the NULL pointer. If there are
+            // no option definitions for the particular option space a pointer
+            // to an empty container should be returned.
             assert(defs);
             const OptionDefContainerTypeIndex& idx = defs->get<1>();
             OptionDefContainerTypeRange range = idx.equal_range(option_code);
@@ -1044,12 +1061,12 @@ public:
         }
     }
 
-    /// @brief Sets a pointer to a storage.
+    /// @brief Sets a pointer to the data store.
     ///
     /// The newly created instance of an option definition will be
-    /// added to a storage given by the argument.
+    /// added to the data store given by the argument.
     ///
-    /// @param storage pointer to a storage where the option definition
+    /// @param storage pointer to the data store where the option definition
     /// will be added to.
     void setStorage(OptionDefStorage* storage) {
         storage_ = storage;
@@ -1083,7 +1100,7 @@ private:
         // Split the list of record types into tokens.
         std::vector<std::string> record_tokens =
             isc::util::str::tokens(record_types, ",");
-        // Iterate over each token and add a record typy into
+        // Iterate over each token and add a record type into
         // option definition.
         BOOST_FOREACH(std::string record_type, record_tokens) {
             try {
@@ -1103,7 +1120,7 @@ private:
             def->validate();
         } catch (const isc::Exception ex) {
             isc_throw(DhcpConfigError, "invalid option definition"
-                      << " parameters" << ex.what());
+                      << " parameters: " << ex.what());
         }
         // Option definition has been created successfully.
         option_space_name_ = space;
@@ -1155,7 +1172,7 @@ public:
     void build(ConstElementPtr option_def_list) {
         // Clear existing items in the global storage.
         // We are going to replace all of them.
-        option_def_defaults.clearItems();
+        option_def_intermediate.clearItems();
 
         if (!option_def_list) {
             isc_throw(DhcpConfigError, "parser error: a pointer to a list of"
@@ -1165,7 +1182,7 @@ public:
         BOOST_FOREACH(ConstElementPtr option_def, option_def_list->listValue()) {
             boost::shared_ptr<OptionDefParser>
                 parser(new OptionDefParser("single-option-def"));
-            parser->setStorage(&option_def_defaults);
+            parser->setStorage(&option_def_intermediate);
             parser->build(option_def);
             parser->commit();
         }
@@ -1181,10 +1198,13 @@ public:
         // We need to move option definitions from the temporary
         // storage to the global storage.
         BOOST_FOREACH(std::string space_name,
-                      option_def_defaults.getOptionSpaceNames()) {
+                      option_def_intermediate.getOptionSpaceNames()) {
 
             BOOST_FOREACH(OptionDefinitionPtr def,
-                          *option_def_defaults.getItems(space_name)) {
+                          *option_def_intermediate.getItems(space_name)) {
+                // All option definitions should be initialized to non-NULL
+                // values. The validation is expected to be made by the
+                // OptionDefParser when creating an option definition.
                 assert(def);
                 cfg_mgr.addOptionDef(def, space_name);
             }
@@ -1371,7 +1391,9 @@ private:
             // Get all options within a particular option space.
             BOOST_FOREACH(Subnet::OptionDescriptor desc,
                           *options_.getItems(option_space)) {
-                // In theory, option should be non-NULL.
+                // The pointer should be non-NULL. The validation is expected
+                // to be performed by the OptionDataParser before adding an
+                // option descriptor to the container.
                 assert(desc.option);
                 // We want to check whether an option with the particular
                 // option code has been already added. If so, we want
@@ -1397,6 +1419,9 @@ private:
             // Get all global options for the particular option space.
             BOOST_FOREACH(Subnet::OptionDescriptor desc,
                           *option_defaults.getItems(option_space)) {
+                // The pointer should be non-NULL. The validation is expected
+                // to be performed by the OptionDataParser before adding an
+                // option descriptor to the container.
                 assert(desc.option);
                 // Check if the particular option has been already added.
                 // This would mean that it has been configured in the
@@ -1610,7 +1635,9 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
     // other values. Typically, the values in the subnet4 structure
     // depend on the global values. Also, option values configuration
     // must be performed after the option definitions configurations.
-    // Thus we group parsers and will fire them in the right order.
+    // Thus we group parsers and will fire them in the right order:
+    // all parsers other than subnet4 and option-data parser,
+    // option-data parser, subnet4 parser.
     ParserCollection independent_parsers;
     ParserPtr subnet_parser;
     ParserPtr option_parser;
@@ -1625,7 +1652,7 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
     Uint32Storage uint32_local(uint32_defaults);
     StringStorage string_local(string_defaults);
     OptionStorage option_local(option_defaults);
-    OptionDefStorage option_def_local(option_def_defaults);
+    OptionDefStorage option_def_local(option_def_intermediate);
 
     // answer will hold the result.
     ConstElementPtr answer;
@@ -1717,7 +1744,7 @@ configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
         std::swap(uint32_defaults, uint32_local);
         std::swap(string_defaults, string_local);
         std::swap(option_defaults, option_local);
-        std::swap(option_def_defaults, option_def_local);
+        std::swap(option_def_intermediate, option_def_local);
         return (answer);
     }
 
