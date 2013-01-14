@@ -1,3 +1,10 @@
+5XX.	[func]		tomek
+	b10-dhcp4: Server identifier is now generated automatically and
+	stored to a file. It is also read during server start.
+	b10-dhcp6: Server identifier is now stores to a file and read
+	during server start.
+	(Trac #2597, git TBD)
+
 545.	[func]		jinmei
 	libdns++: the SOA Rdata class now uses the generic lexer in
 	constructors from text.  This means that the MNAME and RNAME of an
