@@ -1,6 +1,6 @@
 SUBDIRS = . tests
 
-AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib -DDHCP_DATA_DIR="\"$(localstatedir)\""
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 if HAVE_MYSQL
 AM_CPPFLAGS += $(MYSQL_CPPFLAGS)

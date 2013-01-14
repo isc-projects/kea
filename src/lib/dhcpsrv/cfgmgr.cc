@@ -242,7 +242,14 @@ void CfgMgr::deleteSubnets6() {
     subnets6_.clear();
 }
 
-CfgMgr::CfgMgr() {
+std::string CfgMgr::getDataDir() {
+    return (datadir_);
+}
+
+
+CfgMgr::CfgMgr()
+    :datadir_(DHCP_DATA_DIR) {
+    // DHCP_DATA_DIR is set with -DDHCP_DATA_DIR in Makefile.am
 }
 
 CfgMgr::~CfgMgr() {
