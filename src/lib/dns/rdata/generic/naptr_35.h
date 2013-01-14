@@ -16,6 +16,8 @@
 
 #include <string>
 
+#include <boost/scoped_ptr.hpp>
+
 #include <dns/name.h>
 #include <dns/rdata.h>
 #include <util/buffer.h>
@@ -43,6 +45,8 @@ public:
     // NAPTR specific methods
     ~NAPTR();
 
+    NAPTR& operator=(const NAPTR& source);
+
     uint16_t getOrder() const;
     uint16_t getPreference() const;
     const std::string getFlags() const;
@@ -56,7 +60,7 @@ private:
     template <typename T>
     void toWireHelper(T& outputer) const;
 
-    NAPTRImpl* impl_;
+    boost::scoped_ptr<NAPTRImpl> impl_;
 };
 
 // END_RDATA_NAMESPACE

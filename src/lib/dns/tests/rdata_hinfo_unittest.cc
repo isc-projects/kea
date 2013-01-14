@@ -136,4 +136,17 @@ TEST_F(Rdata_HINFO_Test, compare) {
     EXPECT_EQ(-1, hinfo.compare(HINFO(hinfo_str_large2)));
 }
 
+// Copy/assign test
+TEST_F(Rdata_HINFO_Test, copy) {
+    HINFO hinfo(hinfo_str);
+    HINFO hinfo2(hinfo);
+    HINFO hinfo3 = hinfo;
+
+    EXPECT_EQ(0, hinfo.compare(hinfo2));
+    EXPECT_EQ(0, hinfo.compare(hinfo3));
+
+    hinfo3 = hinfo;
+    EXPECT_EQ(0, hinfo.compare(hinfo3));
+}
+
 }

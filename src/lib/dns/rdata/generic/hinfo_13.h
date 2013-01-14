@@ -17,6 +17,9 @@
 
 #include <string>
 
+#include <boost/scoped_ptr.hpp>
+#include <boost/noncopyable.hpp>
+
 #include <dns/name.h>
 #include <dns/rdata.h>
 #include <util/buffer.h>
@@ -44,9 +47,12 @@ public:
     // HINFO specific methods
     ~HINFO();
 
+    HINFO& operator=(const HINFO&);
+
     const std::string getCPU() const;
     const std::string getOS() const;
 
+    void ptr() const;
 private:
     /// Helper template function for toWire()
     ///
@@ -54,7 +60,7 @@ private:
     template <typename T>
     void toWireHelper(T& outputer) const;
 
-    HINFOImpl* impl_;
+    boost::scoped_ptr<HINFOImpl> impl_;
 };
 
 
