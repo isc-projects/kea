@@ -101,7 +101,7 @@ class TestSubscriptionManager(unittest.TestCase):
         try:
             msgq.setup()
             self.assertTrue(os.path.exists(socket_file))
-            msgq.shutdown();
+            msgq.shutdown()
             self.assertFalse(os.path.exists(socket_file))
         except socket.error:
             # ok, the install path doesn't exist at all,
@@ -115,6 +115,8 @@ class TestSubscriptionManager(unittest.TestCase):
     def test_open_socket_bad(self):
         msgq = MsgQ("/does/not/exist")
         self.assertRaises(socket.error, msgq.setup)
+        # But we can clean up after that.
+        msgq.shutdown()
 
 class DummySocket:
     """
@@ -282,8 +284,10 @@ class SendNonblock(unittest.TestCase):
             if queue_pid == 0:
                 signal.alarm(120)
                 msgq.setup_poller()
+                msgq.setup_signalsock()
                 msgq.register_socket(queue)
                 msgq.run()
+                msgq.cleanup_signalsock()
             else:
                 try:
                     def killall(signum, frame):
@@ -357,6 +361,7 @@ class SendNonblock(unittest.TestCase):
         # Don't need a listen_socket
         msgq.listen_socket = DummySocket
         msgq.setup_poller()
+        msgq.setup_signalsock()
         msgq.register_socket(write)
         msgq.register_socket(control_write)
         # Queue the message for sending
@@ -383,6 +388,10 @@ class SendNonblock(unittest.TestCase):
         msgq_thread.join(60)
         # Fail the test if it didn't stop
         self.assertFalse(msgq_thread.isAlive(), "Thread did not stop")
+
+        # Clean up some internals of msgq (usually called as part of
+        # shutdown, but we skip that one here)
+        msgq.cleanup_signalsock()
 
         # Check the exception from the thread, if any
         # First, if we didn't expect it; reraise it (to make test fail and
