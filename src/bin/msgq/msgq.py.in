@@ -530,8 +530,7 @@ class MsgQ:
 
     def shutdown(self):
         """Stop the MsgQ master."""
-        if self.verbose:
-            sys.stdout.write("[b10-msgq] Stopping the server.\n")
+        logger.debug(TRACE_START, MSGQ_SHUTDOWN)
         self.listen_socket.close()
         if os.path.exists(self.socket_file):
             os.remove(self.socket_file)
