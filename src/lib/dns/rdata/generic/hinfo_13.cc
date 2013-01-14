@@ -155,9 +155,5 @@ HINFO::toWireHelper(T& outputer) const {
     outputer.writeData(&impl_->os[0], impl_->os.size());
 }
 
-void HINFO::ptr() const {
-    std::cout << "[XX] PTR: " << impl_.get() << std::endl;
-}
-
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
