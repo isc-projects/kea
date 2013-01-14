@@ -1148,7 +1148,7 @@ private:
         // Check the option definition parameters are valid.
         try {
             def->validate();
-        } catch (const isc::Exception ex) {
+        } catch (const isc::Exception& ex) {
             isc_throw(DhcpConfigError, "invalid option definition"
                       << " parameters: " << ex.what());
         }
