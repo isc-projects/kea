@@ -102,6 +102,11 @@ TEST_F(Rdata_HINFO_Test, createFromLexer) {
 TEST_F(Rdata_HINFO_Test, toText) {
     HINFO hinfo(hinfo_str);
     EXPECT_EQ(hinfo_str, hinfo.toText());
+
+    // will add quotes even if they were not in the original input
+    EXPECT_EQ("\"a\" \"b\"", HINFO("a b").toText());
+    // will not add additional quotes
+    EXPECT_EQ("\"a\" \"b\"", HINFO("\"a\" \"b\"").toText());
 }
 
 TEST_F(Rdata_HINFO_Test, toWire) {
