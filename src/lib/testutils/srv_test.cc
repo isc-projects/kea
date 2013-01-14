@@ -83,14 +83,13 @@ SrvTestBase::createRequestPacket(Message& message,
         message.toWire(request_renderer, *context);
     }
 
-    delete io_message;
     delete endpoint;
-
     endpoint = IOEndpoint::create(protocol, IOAddress(remote_address),
                                   remote_port);
     io_sock = (protocol == IPPROTO_UDP) ? &IOSocket::getDummyUDPSocket() :
         &IOSocket::getDummyTCPSocket();
 
+    delete io_message;
     io_message = new IOMessage(request_renderer.getData(),
                                request_renderer.getLength(),
                                *io_sock, *endpoint);
