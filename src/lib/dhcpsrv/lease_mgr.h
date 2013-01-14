@@ -117,6 +117,8 @@ struct Lease {
     Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
           uint32_t valid_lft, SubnetID subnet_id, time_t cltt);
 
+    virtual ~Lease() {};
+
     /// @brief IPv4 ot IPv6 address
     ///
     /// IPv4, IPv6 address or, in the case of a prefix delegation, the prefix.
