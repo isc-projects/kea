@@ -81,7 +81,7 @@ public:
             params["code"] = "38";
             params["data"] = "AB CDEF0105";
             params["csv-format"] = "False";
-        } else if (parameter == "name") {
+        } else if (parameter == "space") {
             params["name"] = "subscriber-id";
             params["space"] = param_value;
             params["code"] = "38";
