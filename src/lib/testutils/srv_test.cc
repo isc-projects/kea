@@ -84,6 +84,7 @@ SrvTestBase::createRequestPacket(Message& message,
     }
 
     delete io_message;
+    delete endpoint;
 
     endpoint = IOEndpoint::create(protocol, IOAddress(remote_address),
                                   remote_port);
@@ -151,7 +152,7 @@ SrvTestBase::shortMessage() {
 // or malformed or could otherwise cause a protocol error.
 void
 SrvTestBase::response() {
-    // A valid (although unusual) response 
+    // A valid (although unusual) response
     createDataFromFile("simpleresponse_fromWire.wire");
     processMessage();
     EXPECT_FALSE(dnsserv.hasAnswer());
@@ -242,6 +243,6 @@ SrvTestBase::axfrOverUDP() {
 } // end of namespace isc
 
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:
