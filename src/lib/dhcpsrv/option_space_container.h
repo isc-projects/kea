@@ -50,6 +50,10 @@ public:
 
     /// @brief Get all items for the particular option space.
     ///
+    /// @warning when there are no items for the specified option
+    /// space an empty container is created and returned. However
+    /// this container is not added to the list of option spaces.
+    ///
     /// @param option_space name of the option space.
     ///
     /// @return pointer to the container holding items.
