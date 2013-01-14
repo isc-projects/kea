@@ -28,6 +28,15 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief file name of a server-id file
+///
+/// Server must store its duid in persistent storage that must not change
+/// between restarts. This is name of the file that is created in dataDir
+/// (see isc::dhcp::CfgMgr::getDataDir()). It is a text file that uses
+/// regular IPv4 address, e.g. 192.0.2.1. Server will create it during
+/// first run and then use it afterwards.
+static const char* SERVER_ID_FILE = "b10-dhcp4-serverid";
+
 /// @brief DHCPv4 server service.
 ///
 /// This singleton class represents DHCPv4 server. It contains all
@@ -216,7 +225,32 @@ protected:
     ///
     /// @throws isc::Unexpected Failed to obtain server identifier (i.e. no
     //          previously stored configuration and no network interfaces available)
-    void setServerID();
+    void generateServerID();
+
+    /// @brief attempts to load server-id from a file
+    ///
+    /// Tries to load duid from a text file. If the load is successful,
+    /// it creates server-id option and stores it in serverid_ (to be used
+    /// later by getServerID()).
+    ///
+    /// @param file_name name of the server-id file to load
+    /// @return true if load was successful, false otherwise
+    bool loadServerID(const std::string& file_name);
+
+    /// @brief attempts to write server-id to a file
+    /// Tries to write server-id content (stored in serverid_) to a text file.
+    ///
+    /// @param file_name name of the server-id file to write
+    /// @return true if write was successful, false otherwise
+    bool writeServerID(const std::string& file_name);
+
+    /// @brief converts server-id to text
+    /// Converts content of server-id option to a text representation, e.g.
+    /// "192.0.2.1"
+    ///
+    /// @param opt option that contains server-id
+    /// @return string representation
+    static std::string srvidToString(const OptionPtr& opt);
 
     /// @brief Selects a subnet for a given client's packet.
     ///
