@@ -183,6 +183,14 @@ TEST_F(Rdata_NAPTR_Test, toWireRenderer) {
 TEST_F(Rdata_NAPTR_Test, toText) {
     NAPTR naptr(naptr_str);
     EXPECT_EQ(naptr_str, naptr.toText());
+
+    // will add quotes even if they were not in the original input
+    EXPECT_EQ("10 100 \"S\" \"SIP+D2U\" \".*\" _sip._udp.example.com.",
+              NAPTR("10 100 S SIP+D2U .* _sip._udp.example.com.").toText());
+    // will not add additional quotes
+    EXPECT_EQ("10 100 \"S\" \"SIP+D2U\" \".*\" _sip._udp.example.com.",
+              NAPTR("10 100 \"S\" \"SIP+D2U\" \".*\" _sip._udp.example.com.")
+                .toText());
 }
 
 TEST_F(Rdata_NAPTR_Test, compare) {
