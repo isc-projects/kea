@@ -136,8 +136,8 @@ protected:
     /// @throw DhcpConfigError if the entry has not been found
     /// in the storage.
     template<typename ReturnType, typename StorageType>
-    ReturnType getParam(const std::string param_id,
-                        const StorageType& storage) const {
+    static ReturnType getParam(const std::string& param_id,
+                        const StorageType& storage) {
         typename StorageType::const_iterator param = storage.find(param_id);
         if (param == storage.end()) {
             isc_throw(DhcpConfigError, "missing parameter '"
