@@ -1716,9 +1716,18 @@ void
 checkAddrPort(const struct sockaddr& actual_sa,
               const string& expected_addr, uint16_t expected_port)
 {
+    // ASIO does not set as_len, which is not a problem on most
+    // systems, but it will make getnameinfo() fail on NetBSD 4
+    // So we make a copy and if the field is available, we set it
+    const socklen_t sa_len = getSALength(actual_sa);
+    struct sockaddr sa;
+    memcpy(&sa, &actual_sa, sa_len);
+#ifdef HAVE_SA_LEN
+    sa.sa_len = sa_len;
+#endif
     char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-    const int error = getnameinfo(&actual_sa, getSALength(actual_sa), hbuf,
-                                  sizeof(hbuf), sbuf, sizeof(sbuf),
+    const int error = getnameinfo(&sa, sa_len, hbuf, sizeof(hbuf),
+                                  sbuf, sizeof(sbuf),
                                   NI_NUMERICHOST | NI_NUMERICSERV);
     if (error != 0) {
         isc_throw(isc::Unexpected, "getnameinfo failed: " <<
