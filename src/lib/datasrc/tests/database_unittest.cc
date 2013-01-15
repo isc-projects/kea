@@ -4307,6 +4307,8 @@ public:
     ZoneUpdaterPtr updater_;
 };
 
+// Test that using addRRset() or deleteRRset() on the ZoneUpdater throws
+// after an RRsetCollection is created.
 TYPED_TEST(RRsetCollectionAndUpdaterTest, updateThrows) {
     // 1. Addition test
 
@@ -4339,6 +4341,24 @@ TYPED_TEST(RRsetCollectionAndUpdaterTest, updateThrows) {
     // deleteRRset() must throw isc::InvalidOperation here.
     EXPECT_THROW(this->updater_->deleteRRset(*this->rrset_),
                  isc::InvalidOperation);
+}
+
+// Test that using an RRsetCollection after calling commit() on the
+// ZoneUpdater throws, as the RRsetCollection is disabled.
+TYPED_TEST(RRsetCollectionAndUpdaterTest, useAfterCommitThrows) {
+     isc::datasrc::RRsetCollectionBase& collection =
+         this->updater_->getRRsetCollection();
+
+     // find() must not throw here.
+     collection.find(Name("foo.wild.example.org"), this->qclass_, RRType::A());
+
+     this->updater_->commit();
+
+     // find() must throw RRsetCollectionError here, as the
+     // RRsetCollection is disabled.
+     EXPECT_THROW(collection.find(Name("foo.wild.example.org"),
+                                  this->qclass_, RRType::A()),
+                  RRsetCollectionError);
 }
 
 }
