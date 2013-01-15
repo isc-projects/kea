@@ -30,6 +30,7 @@ import time
 import select
 import random
 import threading
+import isc.config.ccsession
 from optparse import OptionParser, OptionValueError
 import isc.util.process
 import isc.log
@@ -38,6 +39,8 @@ from isc.log_messages.msgq_messages import *
 import isc.cc
 
 isc.util.process.rename()
+
+isc.log.init("b10-msgq")
 # Logger that is used in the actual msgq handling - startup, shutdown and the
 # poller thread.
 logger = isc.log.Logger("msgq")
@@ -53,6 +56,17 @@ TRACE_DETAIL = logger.DBGLVL_TRACE_DETAIL
 # The VERSION string consists of the module name, the module version
 # number, and the overall BIND 10 version number (set in configure.ac).
 VERSION = "b10-msgq 20110127 (BIND 10 @PACKAGE_VERSION@)"
+
+# If B10_FROM_BUILD is set in the environment, we use data files
+# from a directory relative to that, otherwise we use the ones
+# installed on the system
+if "B10_FROM_BUILD" in os.environ:
+    SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/msgq"
+else:
+    PREFIX = "@prefix@"
+    DATAROOTDIR = "@datarootdir@"
+    SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+SPECFILE_LOCATION = SPECFILE_PATH + "/msgq.spec"
 
 class MsgQReceiveError(Exception): pass
 
@@ -630,6 +644,18 @@ class MsgQ:
         if os.path.exists(self.socket_file):
             os.remove(self.socket_file)
 
+    def config_handler(self, new_config):
+        """The configuration handler (run in a separate thread).
+           Not tested, currently effectively empty.
+        """
+        return isc.config.create_answer(0)
+
+    def command_handler(self, command, args):
+        """The command handler (run in a separate thread).
+           Not tested, currently effectively empty.
+        """
+        return isc.config.create_answer(1, 'unknown command: ' + command)
+
 # can signal handling and calling a destructor be done without a
 # global variable?
 msgq = None
@@ -649,20 +675,13 @@ if __name__ == "__main__":
 
     # Parse any command-line options.
     parser = OptionParser(version=VERSION)
+    # TODO: Should we remove the option?
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
                       help="display more about what is going on")
     parser.add_option("-s", "--socket-file", dest="msgq_socket_file",
                       type="string", default=None,
                       help="UNIX domain socket file the msgq daemon will use")
     (options, args) = parser.parse_args()
-
-    # Init logging, according to the parameters.
-    # FIXME: Do proper logger configuration, this is just a hack
-    # This is #2582
-    sev = 'INFO'
-    if options.verbose:
-        sev = 'DEBUG'
-    isc.log.init("b10-msgq", buffer=False, severity=sev, debuglevel=99)
 
     signal.signal(signal.SIGTERM, signal_handler)
 
@@ -685,6 +704,15 @@ if __name__ == "__main__":
     poller_thread.daemon = True
     try:
         poller_thread.start()
+        if msgq.wait_cfgmgr():
+            # Once we get the config manager, we can read our own config.
+            session = isc.config.ModuleCCSession(SPECFILE_LOCATION,
+                                                 msgq.config_handler,
+                                                 msgq.command_handler,
+                                                 None, True,
+                                                 msgq.socket_file)
+            session.start()
+            # TODO: Background the session loop
         poller_thread.join()
     except KeyboardInterrupt:
         pass
