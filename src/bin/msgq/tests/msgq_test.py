@@ -562,6 +562,5 @@ class ThreadTests(unittest.TestCase):
         self.assertTrue(self.__result)
 
 if __name__ == '__main__':
-    isc.log.init("b10-msgq")
     isc.log.resetUnitTestRootLogger()
     unittest.main()
