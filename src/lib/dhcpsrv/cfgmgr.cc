@@ -86,30 +86,15 @@ CfgMgr::addOptionDef(const OptionDefinitionPtr& def,
                   << option_space << "'.");
 
     }
-    // Get existing option definitions for the option space.
-    OptionDefContainerPtr defs = getOptionDefs(option_space);
-    // getOptionDefs always returns a valid pointer to
-    // the container. Let's make an assert to make sure.
-    assert(defs);
-    // Actually add the new definition.
-    defs->push_back(def);
-    option_def_spaces_[option_space] = defs;
+    // Actually add a new item.
+    option_def_spaces_.addItem(def, option_space);
 }
 
 OptionDefContainerPtr
 CfgMgr::getOptionDefs(const std::string& option_space) const {
     // @todo Validate the option space once the #2313 is implemented.
 
-    // Get all option definitions for the particular option space.
-    const OptionDefsMap::const_iterator& defs =
-        option_def_spaces_.find(option_space);
-    // If there are no option definitions for the particular option space
-    // then return empty container.
-    if (defs == option_def_spaces_.end()) {
-        return (OptionDefContainerPtr(new OptionDefContainer()));
-    }
-    // If option definitions found, return them.
-    return (defs->second);
+    return (option_def_spaces_.getItems(option_space));
 }
 
 OptionDefinitionPtr
@@ -229,7 +214,7 @@ void CfgMgr::addSubnet4(const Subnet4Ptr& subnet) {
 }
 
 void CfgMgr::deleteOptionDefs() {
-    option_def_spaces_.clear();
+    option_def_spaces_.clearItems();
 }
 
 void CfgMgr::deleteSubnets4() {

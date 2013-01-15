@@ -19,6 +19,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/option_space.h>
+#include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
 #include <util/buffer.h>
@@ -66,6 +67,7 @@ namespace dhcp {
 /// Parameter inheritance is likely to be implemented in configuration handling
 /// routines, so there is no storage capability in a global scope for
 /// subnet-specific parameters.
+///
 /// @todo: Implement Subnet4 support (ticket #2237)
 /// @todo: Implement option definition support
 /// @todo: Implement parameter inheritance
@@ -250,15 +252,12 @@ protected:
 
 private:
 
-    /// A map containing option definitions for various option spaces.
-    /// They key of this map is the name of the option space. The
-    /// value is the the option container holding option definitions
-    /// for the particular option space.
-    typedef std::map<std::string, OptionDefContainerPtr> OptionDefsMap;
-
-    /// A map containing option definitions for different option spaces.
-    /// The map key holds an option space name.
-    OptionDefsMap option_def_spaces_;
+    /// @brief A collection of option definitions.
+    ///
+    /// A collection of option definitions that can be accessed
+    /// using option space name they belong to.
+    OptionSpaceContainer<OptionDefContainer,
+                         OptionDefinitionPtr> option_def_spaces_;
 
     /// @brief Container for defined DHCPv6 option spaces.
     OptionSpaceCollection spaces6_;
