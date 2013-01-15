@@ -19,6 +19,7 @@
 #include <datasrc/database.h>
 #include <datasrc/data_source.h>
 #include <datasrc/iterator.h>
+#include <datasrc/rrset_collection_base.h>
 
 #include <exceptions/exceptions.h>
 #include <dns/name.h>
@@ -1373,78 +1374,15 @@ DatabaseClient::getIterator(const isc::dns::Name& name,
 }
 
 /// \brief datasrc implementation of RRsetCollectionBase.
-class RRsetCollection : public isc::dns::RRsetCollectionBase {
+class RRsetCollection : public isc::datasrc::RRsetCollectionBase {
 public:
     /// \brief Constructor.
-    ///
-    /// No reference (count via \c shared_ptr) to the \c ZoneUpdater is
-    /// acquired. The RRsetCollection must not be used after its
-    /// \c ZoneUpdater has been destroyed.
-    ///
-    /// \param updater The ZoneUpdater to wrap around.
-    /// \param rrclass The RRClass of the records in the zone.
     RRsetCollection(ZoneUpdater& updater, const isc::dns::RRClass& rrclass) :
-        updater_(updater),
-        rrclass_(rrclass)
+        isc::datasrc::RRsetCollectionBase(updater, rrclass)
     {}
 
     /// \brief Destructor
     virtual ~RRsetCollection() {}
-
-    /// \brief Find a matching RRset in the collection.
-    ///
-    /// Returns the RRset in the collection that exactly matches the
-    /// given \c name, \c rrclass and \c rrtype.  If no matching RRset
-    /// is found, \c NULL is returned.
-    ///
-    /// \throw isc::dns::RRsetCollectionError if find() results in some
-    /// underlying datasrc error.
-    /// \param name The name of the RRset to search for.
-    /// \param rrclass The class of the RRset to search for.
-    /// \param rrtype The type of the RRset to search for.
-    /// \returns The RRset if found, \c NULL otherwise.
-    virtual isc::dns::ConstRRsetPtr find(const isc::dns::Name& name,
-                                         const isc::dns::RRClass& rrclass,
-                                         const isc::dns::RRType& rrtype) const {
-        if (rrclass != rrclass_) {
-            // We could throw an exception here, but RRsetCollection is
-            // expected to support an arbitrary collection of RRsets,
-            // and it can be queried just as arbitrarily. So we just
-            // return nothing here.
-            return (ConstRRsetPtr());
-        }
-
-        ZoneFinder& finder = updater_.getFinder();
-        try {
-            ZoneFinderContextPtr result =
-                finder.find(name, rrtype,
-                            ZoneFinder::NO_WILDCARD | ZoneFinder::FIND_GLUE_OK);
-            // We return the result rrset only if the result code is
-            // SUCCESS. We return empty if CNAME, DNAME, DELEGATION,
-            // etc. are returned by the ZoneFinder.
-            //
-            // Note that in the case that the queried type itself is
-            // CNAME or DNAME, then the finder will return SUCCESS.
-            if (result->code == ZoneFinder::SUCCESS) {
-                return (result->rrset);
-            } else {
-                return (ConstRRsetPtr());
-            }
-        } catch (const OutOfZone&) {
-            // As RRsetCollection is an arbitrary set of RRsets, in case
-            // the searched name is out of zone, we return nothing
-            // instead of propagating the exception.
-            return (ConstRRsetPtr());
-        } catch (const DataSourceError& e) {
-            isc_throw(RRsetCollectionError,
-                      "ZoneFinder threw a DataSourceError: "
-                          << e.getMessage().c_str());
-        }
-    }
-
-private:
-    ZoneUpdater& updater_;
-    isc::dns::RRClass rrclass_;
 
 protected:
     // TODO: RRsetCollectionBase::Iter is not implemented and the
@@ -1498,7 +1436,7 @@ public:
 
     virtual ZoneFinder& getFinder() { return (*finder_); }
 
-    virtual RRsetCollectionBase& getRRsetCollection() {
+    virtual isc::dns::RRsetCollectionBase& getRRsetCollection() {
         if (!rrset_collection_) {
             // This is only assigned the first time and remains for the
             // lifetime of the DatabaseUpdater.
