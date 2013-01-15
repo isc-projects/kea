@@ -54,7 +54,16 @@ namespace {
 class NakedDhcpv6Srv: public Dhcpv6Srv {
     // "naked" Interface Manager, exposes internal members
 public:
-    NakedDhcpv6Srv(uint16_t port):Dhcpv6Srv(port) { }
+    NakedDhcpv6Srv(uint16_t port) : Dhcpv6Srv(port) {
+        // Open the "memfile" database for leases
+        std::string memfile = "type=memfile";
+        LeaseMgrFactory::create(memfile);
+    }
+
+    virtual ~NakedDhcpv6Srv() {
+        // Close the lease database
+        LeaseMgrFactory::destroy();
+    }
 
     using Dhcpv6Srv::processSolicit;
     using Dhcpv6Srv::processRequest;
