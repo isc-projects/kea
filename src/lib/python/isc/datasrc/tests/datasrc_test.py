@@ -634,22 +634,26 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertEqual(None, iterator.get_soa())
         self.assertEqual(None, iterator.get_next_rrset())
 
-    def test_create_zone_args(self):
+    def test_create_or_delete_zone_args(self):
         dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
 
-        self.assertRaises(TypeError, dsc.create_zone)
-        self.assertRaises(TypeError, dsc.create_zone, 1)
-        self.assertRaises(TypeError, dsc.create_zone, None)
-        self.assertRaises(TypeError, dsc.create_zone, "foo.")
-        self.assertRaises(TypeError, dsc.create_zone,
-                          isc.dns.Name("example.org"), 1)
+        for method in [dsc.create_zone, dsc.delete_zone]:
+            self.assertRaises(TypeError, method)
+            self.assertRaises(TypeError, method, 1)
+            self.assertRaises(TypeError, method, None)
+            self.assertRaises(TypeError, method, "foo.")
+            self.assertRaises(TypeError, method, isc.dns.Name("example.org"),
+                              1)
 
-    def test_create_zone(self):
+    def test_create_delete_zone(self):
         dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
         # Note, using example.org here, which should not exist
         zone_name = isc.dns.Name("example.org")
         self.assertIsNone(dsc.get_updater(zone_name, True))
         self.assertRaises(isc.datasrc.Error, dsc.get_iterator, zone_name)
+
+        # delete_zone should return False, meaning it didn't exist.
+        self.assertFalse(dsc.delete_zone(zone_name))
 
         self.assertTrue(dsc.create_zone(zone_name))
 
@@ -663,6 +667,12 @@ class DataSrcUpdater(unittest.TestCase):
         # Trying to create it again should return False
         self.assertFalse(dsc.create_zone(zone_name))
 
+        # Now that it exists, delete_zone should return True, and it cannot
+        # be found any more.
+        self.assertTrue(dsc.delete_zone(zone_name))
+        self.assertEqual(isc.datasrc.DataSourceClient.NOTFOUND,
+                         dsc.find_zone(zone_name)[0])
+
     def test_create_zone_locked(self):
         zone_name = isc.dns.Name("example.org")
         dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
@@ -670,10 +680,13 @@ class DataSrcUpdater(unittest.TestCase):
 
         # Should fail since db is locked
         self.assertRaises(isc.datasrc.Error, dsc.create_zone, zone_name)
+        self.assertRaises(isc.datasrc.Error, dsc.delete_zone,
+                          isc.dns.Name('example.com'))
 
-        # Cancel updater, then create should succeed
+        # Cancel updater, then create/delete should succeed
         updater = None
         self.assertTrue(dsc.create_zone(zone_name))
+        self.assertTrue(dsc.delete_zone(zone_name))
 
     def test_create_zone_not_implemented(self):
         mem_cfg = '{ "type": "memory", "class": "IN", "zones": [] }';
