@@ -860,7 +860,7 @@ private:
             // definition of option value makes sense.
             if (def->getName() != option_name) {
                 isc_throw(DhcpConfigError, "specified option name '"
-                          << option_name << " does not match the "
+                          << option_name << "' does not match the "
                           << "option definition: '" << option_space
                           << "." << def->getName() << "'");
             }
@@ -1361,6 +1361,64 @@ private:
         return (false);
     }
 
+    /// @brief Append sub-options to an option.
+    ///
+    /// @param option_space a name of the encapsulated option space.
+    /// @param option option instance to append sub-options to.
+    void appendSubOptions(const std::string& option_space, OptionPtr& option) {
+        // If invalid pointer there is nothing to do.
+        if (!option) {
+            return;
+        }
+
+        OptionDefinitionPtr def;
+        if (option_space == "dhcp4" &&
+            LibDHCP::isStandardOption(Option::V4, option->getType())) {
+            def = LibDHCP::getOptionDef(Option::V4, option->getType());
+            // Definitions for some of the standard options hasn't been
+            // implemented so it is ok to leave here.
+            if (!def) {
+                return;
+            }
+        } else {
+            const OptionDefContainerPtr defs =
+                option_def_intermediate.getItems(option_space);
+            const OptionDefContainerTypeIndex& idx = defs->get<1>();
+            const OptionDefContainerTypeRange& range =
+                idx.equal_range(option->getType());
+            // There is no definition so we have to leave.
+            if (std::distance(range.first, range.second) == 0) {
+                return;
+            }
+
+            def = *range.first;
+
+            // If the definition exists, it must be non-NULL.
+            // Otherwise it is a programming error.
+            assert(def);
+        }
+
+        // We need to get option definition fo the particular option space
+        // and code. This definition holds the information whether our
+        // option encapsulates any option space.
+        // Get the encapsulated option space name.
+        std::string encapsulated_space = def->getEncapsulatedSpace();
+        // If option space name is empty it means that our option does not
+        // encapsulate any option space (does not include sub-options).
+        if (!encapsulated_space.empty()) {
+            // Get the sub-options that belong to the encapsulated
+            // option space.
+            const Subnet::OptionContainerPtr sub_opts =
+                option_defaults.getItems(encapsulated_space);
+            // Append sub-options to the option.
+            BOOST_FOREACH(Subnet::OptionDescriptor desc, *sub_opts) {
+                if (desc.option) {
+                    option->addOption(desc.option);
+                }
+            }
+        }
+    }
+
     /// @brief Create a new subnet using a data from child parsers.
     ///
     /// @throw isc::dhcp::DhcpConfigError if subnet configuration parsing failed.
@@ -1435,6 +1493,8 @@ private:
                     LOG_WARN(dhcp4_logger, DHCP4_CONFIG_OPTION_DUPLICATE)
                         .arg(desc.option->getType()).arg(addr.toText());
                 }
+                // Add sub-options (if any).
+                appendSubOptions(option_space, desc.option);
                 // In any case, we add the option to the subnet.
                 subnet_->addOption(desc.option, false, option_space);
             }
@@ -1462,6 +1522,9 @@ private:
                 Subnet::OptionDescriptor existing_desc =
                     subnet_->getOptionDescriptor(option_space, desc.option->getType());
                 if (!existing_desc.option) {
+                    // Add sub-options (if any).
+                    appendSubOptions(option_space, desc.option);
+
                     subnet_->addOption(desc.option, false, option_space);
                 }
             }
