@@ -4291,4 +4291,54 @@ TEST_F(MockRRsetCollectionTest, findError) {
     }, RRsetCollectionError);
 }
 
+TYPED_TEST_CASE(RRsetCollectionAndUpdaterTest, TestAccessorTypes);
+
+// This test fixture is templated so that we can share (most of) the test
+// cases with different types of data sources.  Note that in test cases
+// we need to use 'this' to refer to member variables of the test class.
+template <typename ACCESSOR_TYPE>
+class RRsetCollectionAndUpdaterTest : public DatabaseClientTest<ACCESSOR_TYPE> {
+public:
+    RRsetCollectionAndUpdaterTest() :
+        DatabaseClientTest<ACCESSOR_TYPE>(),
+        updater_(this->client_->getUpdater(this->zname_, false))
+    {}
+
+    ZoneUpdaterPtr updater_;
+};
+
+TYPED_TEST(RRsetCollectionAndUpdaterTest, updateThrows) {
+    // 1. Addition test
+
+    // addRRset() must not throw.
+    this->updater_->addRRset(*this->rrset_);
+
+    // Now setup a new updater and call getRRsetCollection() on it.
+    this->updater_.reset();
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    (void) this->updater_->getRRsetCollection();
+
+    // addRRset() must throw isc::InvalidOperation here.
+    EXPECT_THROW(this->updater_->addRRset(*this->rrset_),
+                 isc::InvalidOperation);
+
+    // 2. Deletion test
+
+    // deleteRRset() must not throw.
+    this->updater_.reset();
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->updater_->addRRset(*this->rrset_);
+    this->updater_->deleteRRset(*this->rrset_);
+
+    // Now setup a new updater and call getRRsetCollection() on it.
+    this->updater_.reset();
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->updater_->addRRset(*this->rrset_);
+    (void) this->updater_->getRRsetCollection();
+
+    // deleteRRset() must throw isc::InvalidOperation here.
+    EXPECT_THROW(this->updater_->deleteRRset(*this->rrset_),
+                 isc::InvalidOperation);
+}
+
 }
