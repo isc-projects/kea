@@ -18,6 +18,8 @@
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/option.h>
+#include <dhcp/option4_addrlst.h>
+#include <dhcp/option_int_array.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -72,7 +74,7 @@ public:
     /// @brief checks that the response matches request
     /// @param q query (client's message)
     /// @param a answer (server's message)
-    void MessageCheck(const boost::shared_ptr<Pkt4>& q,
+    void messageCheck(const boost::shared_ptr<Pkt4>& q,
                       const boost::shared_ptr<Pkt4>& a) {
         ASSERT_TRUE(q);
         ASSERT_TRUE(a);
@@ -312,6 +314,34 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
     pkt->setHops(3);
     pkt->setRemotePort(DHCP4_SERVER_PORT);
 
+    // We are going to test that certain options are returned
+    // in the OFFER message when requested using 'Parameter
+    // Request List' option. Let's configure those options that
+    // are returned when requested.
+    OptionPtr option_log_servers(new Option4AddrLst(DHO_LOG_SERVERS));
+    ASSERT_NO_THROW(subnet_->addOption(option_log_servers, false, "dhcp4"));
+    OptionPtr option_cookie_servers(new Option4AddrLst(DHO_COOKIE_SERVERS));
+    ASSERT_NO_THROW(subnet_->addOption(option_cookie_servers, false, "dhcp4"));
+
+    // Add 'Parameter Request List' option. In this option we are going
+    // specify which options we request to be retured in the OFFER
+    // message.
+    OptionUint8ArrayPtr option_prl =
+        OptionUint8ArrayPtr(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+
+    std::vector<uint8_t> opts;
+    // Let's request options that have been configured for the subnet.
+    opts.push_back(DHO_LOG_SERVERS);
+    opts.push_back(DHO_COOKIE_SERVERS);
+    // Let's also request the option that hasn't been configured. In such
+    // case server should ignore request for this particular option.
+    opts.push_back(DHO_LPR_SERVERS);
+    // Put the requested option codes into the 'Parameter Request List'.
+    option_prl->setValues(opts);
+    // And add 'Parameter Request List' option into the DISCOVER packet.
+    pkt->addOption(option_prl);
+
     // Should not throw
     EXPECT_NO_THROW(
         offer = srv->processDiscover(pkt);
@@ -325,7 +355,7 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
     // This is relayed message. It should be sent back to relay address.
     EXPECT_EQ(pkt->getGiaddr(), offer->getRemoteAddr());
 
-    MessageCheck(pkt, offer);
+    messageCheck(pkt, offer);
 
     // Now repeat the test for directly sent message
     pkt->setHops(0);
@@ -345,7 +375,15 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
     // to relay.
     EXPECT_EQ(pkt->getRemoteAddr(), offer->getRemoteAddr());
 
-    MessageCheck(pkt, offer);
+    messageCheck(pkt, offer);
+
+    // Check that the requested and configured options are returned
+    // in the OFFER message.
+    EXPECT_TRUE(offer->getOption(DHO_LOG_SERVERS));
+    EXPECT_TRUE(offer->getOption(DHO_COOKIE_SERVERS));
+    // Check that the requested but not configured options are not
+    // returned in the OFFER message.
+    EXPECT_FALSE(offer->getOption(DHO_LPR_SERVERS));
 
     delete srv;
 }
@@ -386,7 +424,7 @@ TEST_F(Dhcpv4SrvTest, processRequest) {
     // This is relayed message. It should be sent back to relay address.
     EXPECT_EQ(req->getGiaddr(), ack->getRemoteAddr());
 
-    MessageCheck(req, ack);
+    messageCheck(req, ack);
 
     // Now repeat the test for directly sent message
     req->setHops(0);
@@ -406,7 +444,7 @@ TEST_F(Dhcpv4SrvTest, processRequest) {
     // to relay.
     EXPECT_EQ(ack->getRemoteAddr(), req->getRemoteAddr());
 
-    MessageCheck(req, ack);
+    messageCheck(req, ack);
 
     delete srv;
 }
