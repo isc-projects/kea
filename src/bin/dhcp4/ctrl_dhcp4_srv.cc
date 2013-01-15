@@ -19,6 +19,7 @@
 #include <cc/session.h>
 #include <config/ccsession.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/spec_config.h>
@@ -121,7 +122,7 @@ void ControlledDhcpv4Srv::establishSession() {
 
     try {
         configureDhcp4Server(*this, config_session_->getFullConfig());
-    } catch (const Dhcp4ConfigError& ex) {
+    } catch (const DhcpConfigError& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL).arg(ex.what());
     }
 

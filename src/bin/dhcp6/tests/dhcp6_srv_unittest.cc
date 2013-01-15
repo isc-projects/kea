@@ -370,14 +370,16 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
         "    \"pool\": [ \"2001:db8:1::/64\" ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"option-data\": [ {"
-        "          \"name\": \"OPTION_DNS_SERVERS\","
+        "          \"name\": \"dns-servers\","
+        "          \"space\": \"dhcp6\","
         "          \"code\": 23,"
         "          \"data\": \"2001:db8:1234:FFFF::1, 2001:db8:1234:FFFF::2\","
         "          \"csv-format\": True"
         "        },"
         "        {"
-        "          \"name\": \"OPTION_FOO\","
-        "          \"code\": 1000,"
+        "          \"name\": \"subscriber-id\","
+        "          \"space\": \"dhcp6\","
+        "          \"code\": 38,"
         "          \"data\": \"1234\","
         "          \"csv-format\": False"
         "        } ]"
@@ -406,18 +408,18 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     // check if we get response at all
     ASSERT_TRUE(adv);
 
-    // We have not requested option with code 1000 so it should not
+    // We have not requested any options so they should not
     // be included in the response.
-    ASSERT_FALSE(adv->getOption(1000));
+    ASSERT_FALSE(adv->getOption(D6O_SUBSCRIBER_ID));
     ASSERT_FALSE(adv->getOption(D6O_NAME_SERVERS));
 
-    // Let's now request option with code 1000.
-    // We expect that server will include this option in its reply.
+    // Let's now request some options. We expect that the server
+    // will include them in its response.
     boost::shared_ptr<OptionIntArray<uint16_t> >
         option_oro(new OptionIntArray<uint16_t>(Option::V6, D6O_ORO));
     // Create vector with two option codes.
     std::vector<uint16_t> codes(2);
-    codes[0] = 1000;
+    codes[0] = D6O_SUBSCRIBER_ID;
     codes[1] = D6O_NAME_SERVERS;
     // Pass this code to option.
     option_oro->setValues(codes);
@@ -442,7 +444,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
 
     // There is a dummy option with code 1000 we requested from a server.
     // Expect that this option is in server's response.
-    tmp = adv->getOption(1000);
+    tmp = adv->getOption(D6O_SUBSCRIBER_ID);
     ASSERT_TRUE(tmp);
 
     // Check that the option contains valid data (from configuration).
