@@ -61,7 +61,7 @@ public:
         EXPECT_EQ(expected_value, it->second);
     }
 
-    // Checks if config_result (result of DHCP server configuration) has
+    // Checks if the result of DHCP server configuration has
     // expected code (0 for success, other for failures).
     // Also stores result in rcode_ and comment_.
     void checkResult(ConstElementPtr status, int expected_code) {
@@ -1077,6 +1077,166 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
     // option space and  expect that option is not returned.
     Subnet::OptionDescriptor desc3 = subnet->getOptionDescriptor("non-existing", 56);
     ASSERT_FALSE(desc3.option);
+}
+
+// The goal of this test is to verify that it is possible to
+// encapsulate option space containing some options with
+// another option. In this test we create base option that
+// encapsulates option space 'isc' that comprises two other
+// options. Also, for all options their definitions are
+// created.
+TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
+
+    // @todo DHCP configurations has many dependencies between
+    // parameters. First of all, configuration for subnet is
+    // inherited from the global values. Thus subnet has to be
+    // configured when all global values have been configured.
+    // Also, an option can encapsulate another option only
+    // if the latter has been configured. For this reason in this
+    // test we created two-stage configuration where first we
+    // created options that belong to encapsulated option space.
+    // In the second stage we add the base option. Also, the Subnet
+    // object is configured in the second stage so it is created
+    // at the very end (when all other parameters are configured).
+
+    // Starting stage 1. Configure sub-options and their definitions.
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 1,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"space\": \"isc\","
+        "    \"code\": 2,"
+        "    \"data\": \"192.168.2.1\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 1,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"isc\","
+        "    \"encapsulate\": \"\""
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"code\": 2,"
+        "    \"type\": \"ipv4-address\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"isc\","
+        "    \"encapsulate\": \"\""
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Stage 2. Configure base option and a subnet. Please note that
+    // the configuration from the stage 2 is repeated because BIND
+    // configuration manager sends whole configuration for the lists
+    // where at least one element is being modified or added.
+    config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"base-option\","
+        "    \"space\": \"dhcp4\","
+        "    \"code\": 222,"
+        "    \"data\": \"11\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 1,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"space\": \"isc\","
+        "    \"code\": 2,"
+        "    \"data\": \"192.168.2.1\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"base-option\","
+        "    \"code\": 222,"
+        "    \"type\": \"uint8\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"dhcp4\","
+        "    \"encapsulate\": \"isc\""
+        "},"
+        "{"
+        "    \"name\": \"foo\","
+        "    \"code\": 1,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"isc\","
+        "    \"encapsulate\": \"\""
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"code\": 2,"
+        "    \"type\": \"ipv4-address\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"isc\","
+        "    \"encapsulate\": \"\""
+        " } ],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        " } ]"
+        "}";
+
+
+    json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Get the subnet.
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    ASSERT_TRUE(subnet);
+
+    // We should have one option available.
+    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(1, options->size());
+
+    // Get the option.
+    Subnet::OptionDescriptor desc = subnet->getOptionDescriptor("dhcp4", 222);
+    EXPECT_TRUE(desc.option);
+    EXPECT_EQ(222, desc.option->getType());
+
+    // This opton should comprise two sub-options.
+    // One of them is 'foo' with code 1.
+    OptionPtr option_foo = desc.option->getOption(1);
+    ASSERT_TRUE(option_foo);
+    EXPECT_EQ(1, option_foo->getType());
+
+    // ...another one 'foo2' with code 2.
+    OptionPtr option_foo2 = desc.option->getOption(2);
+    ASSERT_TRUE(option_foo2);
+    EXPECT_EQ(2, option_foo2->getType());
 }
 
 // Goal of this test is to verify options configuration
