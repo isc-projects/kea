@@ -202,5 +202,15 @@ Subnet6::validateOption(const OptionPtr& option) const {
     }
 }
 
+
+void Subnet6::setIface(const std::string& iface_name) {
+    iface_ = iface_name;
+}
+
+std::string Subnet6::getIface() {
+    return (iface_);
+}
+
+
 } // end of isc::dhcp namespace
 } // end of isc namespace

@@ -1135,6 +1135,15 @@ private:
         Triplet<uint32_t> pref = getParam("preferred-lifetime");
         Triplet<uint32_t> valid = getParam("valid-lifetime");
 
+        // Get interface name. If it is defined, then the subnet is available
+        // directly over specified network interface.
+
+        string iface;
+        StringStorage::iterator iface_iter = string_values_.find("interface");
+        if (iface_iter != string_values_.end()) {
+            iface = iface_iter->second;
+        }
+
         /// @todo: Convert this to logger once the parser is working reliably
         stringstream tmp;
         tmp << addr.toText() << "/" << (int)len
@@ -1149,6 +1158,11 @@ private:
         // Add pools to it.
         for (PoolStorage::iterator it = pools_.begin(); it != pools_.end(); ++it) {
             subnet_->addPool(*it);
+        }
+
+        // Configure interface, if defined
+        if (iface.length()) {
+            subnet_->setIface(iface);
         }
 
         Subnet::OptionContainerPtr options = subnet_->getOptionDescriptors("dhcp6");
@@ -1205,6 +1219,7 @@ private:
         factories["subnet"] = StringParser::factory;
         factories["pool"] = PoolParser::factory;
         factories["option-data"] = OptionDataListParser::factory;
+        factories["interface"] = StringParser::factory;
 
         FactoryMap::iterator f = factories.find(config_id);
         if (f == factories.end()) {

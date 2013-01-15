@@ -1294,6 +1294,120 @@ TEST_F(Dhcpv6SrvTest, sanityCheck) {
                  RFCViolation);
 }
 
+// This test verifies if selectSubnet() selects proper subnet for a given
+// source address.
+TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
+    NakedDhcpv6Srv srv(0);
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+
+    // CASE 1: We have only one subnet defined and we received local traffic.
+    // The only available subnet should be selected
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+
+    Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    pkt->setRemoteAddr(IOAddress("fe80::abcd"));
+
+    Subnet6Ptr selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet1);
+
+    // CASE 2: We have only one subnet defined and we received relayed traffic.
+    // We should NOT select it.
+
+    // Identical steps as in case 1, but repeated for clarity
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+    pkt->setRemoteAddr(IOAddress("2001:db8:abcd::2345"));
+    selected = srv.selectSubnet(pkt);
+    EXPECT_FALSE(selected);
+
+    // CASE 3: We have three subnets defined and we received local traffic.
+    // Nothing should be selected.
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1);
+    CfgMgr::instance().addSubnet6(subnet2);
+    CfgMgr::instance().addSubnet6(subnet3);
+    pkt->setRemoteAddr(IOAddress("fe80::abcd"));
+    selected = srv.selectSubnet(pkt);
+    EXPECT_FALSE(selected);
+
+    // CASE 4: We have three subnets defined and we received relayed traffic
+    // that came out of subnet 2. We should select subnet2 then
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1);
+    CfgMgr::instance().addSubnet6(subnet2);
+    CfgMgr::instance().addSubnet6(subnet3);
+    pkt->setRemoteAddr(IOAddress("2001:db8:2::baca"));
+    selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet2);
+
+    // CASE 5: We have three subnets defined and we received relayed traffic
+    // that came out of undefined subnet. We should select nothing
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1);
+    CfgMgr::instance().addSubnet6(subnet2);
+    CfgMgr::instance().addSubnet6(subnet3);
+    pkt->setRemoteAddr(IOAddress("2001:db8:4::baca"));
+    selected = srv.selectSubnet(pkt);
+    EXPECT_FALSE(selected);
+
+}
+
+// This test verifies if selectSubnet() selects proper subnet for a given
+// network interface name.
+TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
+    NakedDhcpv6Srv srv(0);
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+
+    subnet1->setIface("eth0");
+    subnet3->setIface("wifi1");
+
+    // CASE 1: We have only one subnet defined and it is available via eth0.
+    // Packet came from eth0. The only available subnet should be selected
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+
+    Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    pkt->setIface("eth0");
+
+    Subnet6Ptr selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet1);
+
+    // CASE 2: We have only one subnet defined and it is available via eth0.
+    // Packet came from eth1. We should not select it
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+
+    pkt->setIface("eth1");
+
+    selected = srv.selectSubnet(pkt);
+    EXPECT_FALSE(selected);
+
+    // CASE 3: We have only 3 subnets defined, one over eth0, one remote and
+    // one over wifi1.
+    // Packet came from eth1. We should not select it
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1);
+    CfgMgr::instance().addSubnet6(subnet2);
+    CfgMgr::instance().addSubnet6(subnet3);
+
+    pkt->setIface("eth0");
+    EXPECT_EQ(subnet1, srv.selectSubnet(pkt));
+
+    pkt->setIface("eth3"); // no such interface
+    EXPECT_EQ(Subnet6Ptr(), srv.selectSubnet(pkt)); // nothing selected
+
+    pkt->setIface("wifi1");
+    EXPECT_EQ(subnet3, srv.selectSubnet(pkt));
+
+}
+
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.
 
