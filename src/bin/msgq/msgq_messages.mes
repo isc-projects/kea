@@ -19,6 +19,10 @@
 # <topsrcdir>/tools/reorder_message_file.py to make sure the
 # messages are in the correct order.
 
+% MSGQ_CFGMGR_SUBSCRIBED The config manager subscribed to message queue
+This is a debug message. The message queue has little bit of special handling
+for the configuration manager. This special handling is happening now.
+
 % MSGQ_HDR_DECODE_ERR Error decoding header received from socket %1: %2
 The socket with mentioned file descriptor sent a packet. However, it was not
 possible to decode the routing header of the packet. The packet is ignored.
