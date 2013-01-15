@@ -735,7 +735,15 @@ if __name__ == "__main__":
                                                  None, True,
                                                  msgq.socket_file)
             session.start()
-            # TODO: Background the session loop
+            # And we create a thread that'll just wait for commands and
+            # handle them. We don't terminate the thread, we set it to
+            # daemon. Once the main thread terminates, it'll just die.
+            def run_session():
+                while True:
+                    session.check_command(False)
+            background_thread = threading.Thread(target=run_session)
+            background_thread.daemon = True
+            background_thread.start()
         poller_thread.join()
     except KeyboardInterrupt:
         pass
