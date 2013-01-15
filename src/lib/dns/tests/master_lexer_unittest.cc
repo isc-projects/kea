@@ -80,6 +80,15 @@ TEST_F(MasterLexerTest, pushStream) {
     checkEmptySource(lexer);
 }
 
+TEST_F(MasterLexerTest, pushStreamFail) {
+    // Pretend a "bad" thing happened in the stream.  This will make the
+    // initialization throw an exception.
+    ss << "test";
+    ss.setstate(std::ios_base::badbit);
+
+    EXPECT_THROW(lexer.pushSource(ss), isc::Unexpected);
+}
+
 TEST_F(MasterLexerTest, pushFile) {
     // We use zone file (-like) data, but in this test that actually doesn't
     // matter.
