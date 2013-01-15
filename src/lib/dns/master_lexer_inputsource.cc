@@ -59,7 +59,8 @@ getStreamSize(std::istream& is) {
         is.clear();   // clear this error not to confuse later ops.
         return (MasterLexer::SOURCE_SIZE_UNKNOWN);
     }
-    std::streampos len = is.tellg();
+    const std::streampos len = is.tellg();
+    size_t ret = len;
     if (len == static_cast<std::streampos>(-1)) { // cast for some compilers
         if (!is.fail()) {
             // tellg() returns -1 if istream::fail() would be true, but it's
@@ -67,7 +68,7 @@ getStreamSize(std::istream& is) {
             // In fact, with the combination of SunStudio and stlport,
             // an stringstream created by the default constructor showed that
             // behavior.  We treat such cases as an unknown size.
-            len = MasterLexer::SOURCE_SIZE_UNKNOWN;
+            ret = MasterLexer::SOURCE_SIZE_UNKNOWN;
         } else {
             isc_throw(InputSource::OpenError, "failed to get input size");
         }
@@ -77,8 +78,8 @@ getStreamSize(std::istream& is) {
         isc_throw(InputSource::OpenError,
                   "failed to seek beginning of input source");
     }
-    assert(len >= 0 || len == MasterLexer::SOURCE_SIZE_UNKNOWN);
-    return (len);
+    assert(len >= 0 || ret == MasterLexer::SOURCE_SIZE_UNKNOWN);
+    return (ret);
 }
 
 } // end of unnamed namespace
