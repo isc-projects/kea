@@ -1600,6 +1600,14 @@ isNSEC3KindType(RRType rrtype, const Rdata& rdata) {
 
 void
 DatabaseUpdater::addRRset(const AbstractRRset& rrset) {
+    if (rrset_collection_) {
+        isc_throw(InvalidOperation,
+                  "Cannot add RRset after an RRsetCollection has been "
+                  "requested for ZoneUpdater for "
+                  << zone_name_ << "/" << zone_class_ << " on "
+                  << db_name_);
+    }
+
     validateAddOrDelete("add", rrset, DELETE, ADD);
 
     // It's guaranteed rrset has at least one RDATA at this point.
@@ -1650,6 +1658,14 @@ DatabaseUpdater::addRRset(const AbstractRRset& rrset) {
 
 void
 DatabaseUpdater::deleteRRset(const AbstractRRset& rrset) {
+    if (rrset_collection_) {
+        isc_throw(InvalidOperation,
+                  "Cannot delete RRset after an RRsetCollection has been "
+                  "requested for ZoneUpdater for "
+                  << zone_name_ << "/" << zone_class_ << " on "
+                  << db_name_);
+    }
+
     // If this is the first operation, pretend we are starting a new delete
     // sequence after adds.  This will simplify the validation below.
     if (diff_phase_ == NOT_STARTED) {
