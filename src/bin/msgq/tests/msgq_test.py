@@ -19,7 +19,12 @@ import isc.log
 
 class TestSubscriptionManager(unittest.TestCase):
     def setUp(self):
-        self.sm = SubscriptionManager()
+        self.__cfgmgr_ready_called = 0
+        self.sm = SubscriptionManager(self.cfgmgr_ready)
+
+    def cfgmgr_ready(self):
+        # Called one more time
+        self.__cfgmgr_ready_called += 1
 
     def test_subscription_add_delete_manager(self):
         self.sm.subscribe("a", "*", 'sock1')
@@ -117,6 +122,23 @@ class TestSubscriptionManager(unittest.TestCase):
         self.assertRaises(socket.error, msgq.setup)
         # But we can clean up after that.
         msgq.shutdown()
+
+    def test_subscribe_cfgmgr(self):
+        """Test special handling of the config manager. Once it subscribes,
+           the message queue needs to connect and read the config. But not
+           before and only once.
+        """
+        self.assertEqual(0, self.__cfgmgr_ready_called)
+        # Not called when something else subscribes
+        self.sm.subscribe('SomethingElse', '*', 's1')
+        self.assertEqual(0, self.__cfgmgr_ready_called)
+        # Called whenever the config manager subscribes
+        self.sm.subscribe('ConfigManager', '*', 's2')
+        self.assertEqual(1, self.__cfgmgr_ready_called)
+        # But not called again when it subscribes again (should not
+        # happen in practice, but we make sure anyway)
+        self.sm.subscribe('ConfigManager', '*', 's3')
+        self.assertEqual(1, self.__cfgmgr_ready_called)
 
 class DummySocket:
     """

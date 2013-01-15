@@ -57,8 +57,17 @@ VERSION = "b10-msgq 20110127 (BIND 10 @PACKAGE_VERSION@)"
 class MsgQReceiveError(Exception): pass
 
 class SubscriptionManager:
-    def __init__(self):
+    def __init__(self, cfgmgr_ready):
+        """
+        Initialize the subscription manager.
+        parameters:
+        * cfgmgr_ready: A callable object run once the config manager
+            subscribes. This is a hackish solution, but we can't read
+            the configuration sooner.
+        """
         self.subscriptions = {}
+        self.__cfgmgr_ready = cfgmgr_ready
+        self.__cfgmgr_ready_called = False
 
     def subscribe(self, group, instance, socket):
         """Add a subscription."""
@@ -70,6 +79,10 @@ class SubscriptionManager:
         else:
             logger.debug(TRACE_BASIC, MSGQ_SUBS_NEW_TARGET, group, instance)
             self.subscriptions[target] = [ socket ]
+        if group == "ConfigManager" and not self.__cfgmgr_ready_called:
+            logger.debug(TRACE_BASIC, MSGQ_CFGMGR_SUBSCRIBED)
+            self.__cfgmgr_ready_called = True
+            self.__cfgmgr_ready()
 
     def unsubscribe(self, group, instance, socket):
         """Remove the socket from the one specific subscription."""
@@ -137,10 +150,13 @@ class MsgQ:
         self.sockets = {}
         self.connection_counter = random.random()
         self.hostname = socket.gethostname()
-        self.subs = SubscriptionManager()
+        self.subs = SubscriptionManager(self.cfgmgr_ready)
         self.lnames = {}
         self.sendbuffs = {}
         self.running = False
+
+    def cfgmgr_ready(self):
+        pass
 
     def setup_poller(self):
         """Set up the poll thing.  Internal function."""

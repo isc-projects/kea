@@ -234,6 +234,7 @@ class ConfigManager:
 
     def notify_boss(self):
         """Notifies the Boss module that the Config Manager is running"""
+        # TODO: Use a real, broadcast notification here.
         self.cc.group_sendmsg({"running": "ConfigManager"}, "Boss")
 
     def set_module_spec(self, spec):
