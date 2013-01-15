@@ -1377,9 +1377,9 @@ class RRsetCollection : public isc::dns::RRsetCollectionBase {
 public:
     /// \brief Constructor.
     ///
-    /// No reference (count via \c shared_ptr) to the ZoneUpdater is
-    /// acquired. As long as the collection object is alive, the
-    /// corresponding \c ZoneUpdater should be kept alive.
+    /// No reference (count via \c shared_ptr) to the \c ZoneUpdater is
+    /// acquired. The RRsetCollection must not be used after its
+    /// \c ZoneUpdater has been destroyed.
     ///
     /// \param updater The ZoneUpdater to wrap around.
     /// \param rrclass The RRClass of the records in the zone.
