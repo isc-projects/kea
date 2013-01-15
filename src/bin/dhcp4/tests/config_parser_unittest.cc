@@ -21,6 +21,8 @@
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/config_parser.h>
 #include <dhcp/option4_addrlst.h>
+#include <dhcp/option_custom.h>
+#include <dhcp/option_int.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <boost/foreach.hpp>
@@ -67,6 +69,7 @@ public:
     void checkResult(ConstElementPtr status, int expected_code) {
         ASSERT_TRUE(status);
         comment_ = parseAnswer(rcode_, status);
+        std::cout << comment_->str() << std::endl;
         EXPECT_EQ(expected_code, rcode_);
     }
 
@@ -1588,5 +1591,166 @@ TEST_F(Dhcp4ParserTest, DISABLED_Uint32Parser) {
     // returned value must be rejected (1 configuration error)
     checkResult(status, 1);
 }
+
+// The goal of this test is to verify that the standard option can
+// be configured to encapsulate multiple other options.
+TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
+
+    // The configuration is two stage process in this test.
+    // In the first stahe we create definitions of suboptions
+    // that we will add to the base option.
+    // Let's create some dummy options: foo and foo2.
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"vendor-encapsulated-options-space\","
+        "    \"code\": 1,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"space\": \"vendor-encapsulated-options-space\","
+        "    \"code\": 2,"
+        "    \"data\": \"192.168.2.1\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 1,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-encapsulated-options-space\","
+        "    \"encapsulate\": \"\""
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"code\": 2,"
+        "    \"type\": \"ipv4-address\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-encapsulated-options-space\","
+        "    \"encapsulate\": \"\""
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Once the definitions have been added we can configure the
+    // standard option #17. This option comprises an enterprise
+    // number and sub options. By convention (introduced in
+    // std_option_defs.h) option named 'vendor-opts'
+    // encapsulates the option space named 'vendor-opts-space'.
+    // We add our dummy options to this option space and thus
+    // they should be included as sub-options in the 'vendor-opts'
+    // option.
+    config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"vendor-encapsulated-options\","
+        "    \"space\": \"dhcp4\","
+        "    \"code\": 43,"
+        "    \"data\": \"\","
+        "    \"csv-format\": False"
+        " },"
+        " {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"vendor-encapsulated-options-space\","
+        "    \"code\": 1,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"space\": \"vendor-encapsulated-options-space\","
+        "    \"code\": 2,"
+        "    \"data\": \"192.168.2.1\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 1,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-encapsulated-options-space\","
+        "    \"encapsulate\": \"\""
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"code\": 2,"
+        "    \"type\": \"ipv4-address\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-encapsulated-options-space\","
+        "    \"encapsulate\": \"\""
+        " } ],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        " } ]"
+        "}";
+
+
+    json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Get the subnet.
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    ASSERT_TRUE(subnet);
+
+    // We should have one option available.
+    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(1, options->size());
+
+    // Get the option.
+    Subnet::OptionDescriptor desc =
+        subnet->getOptionDescriptor("dhcp4", DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    EXPECT_TRUE(desc.option);
+    EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS, desc.option->getType());
+
+    // Option with the code 1 should be added as a sub-option.
+    OptionPtr option_foo = desc.option->getOption(1);
+    ASSERT_TRUE(option_foo);
+    EXPECT_EQ(1, option_foo->getType());
+    // This option comprises a single uint32_t value thus it is
+    // represented by OptionInt<uint32_t> class. Let's get the
+    // object of this type.
+    boost::shared_ptr<OptionInt<uint32_t> > option_foo_uint32 =
+        boost::dynamic_pointer_cast<OptionInt<uint32_t> >(option_foo);
+    ASSERT_TRUE(option_foo_uint32);
+    // Validate the value according to the configuration.
+    EXPECT_EQ(1234, option_foo_uint32->getValue());
+
+    // Option with the code 2 should be added as a sub-option.
+    OptionPtr option_foo2 = desc.option->getOption(2);
+    ASSERT_TRUE(option_foo2);
+    EXPECT_EQ(2, option_foo2->getType());
+    // This option comprises the IPV4 address. Such option is
+    // represented by OptionCustom object.
+    OptionCustomPtr option_foo2_v4 =
+        boost::dynamic_pointer_cast<OptionCustom>(option_foo2);
+    ASSERT_TRUE(option_foo2_v4);
+    // Get the IP address carried by this option and validate it.
+    EXPECT_EQ("192.168.2.1", option_foo2_v4->readAddress().toText());
+
+    // Option with the code 3 should not be added.
+    EXPECT_FALSE(desc.option->getOption(3));
+}
+
 
 };
