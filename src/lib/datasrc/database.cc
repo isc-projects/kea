@@ -1384,6 +1384,12 @@ public:
     /// \brief Destructor
     virtual ~RRsetCollection() {}
 
+    /// \brief A wrapper around \c disable() so that it can be used as a
+    /// public method. \c disable() is protected.
+    void disableWrapper() {
+        disable();
+    }
+
 protected:
     // TODO: RRsetCollectionBase::Iter is not implemented and the
     // following two methods just throw.
@@ -1469,7 +1475,7 @@ private:
     DiffPhase diff_phase_;
     Serial serial_;
     boost::scoped_ptr<DatabaseClient::Finder> finder_;
-    RRsetCollectionPtr rrset_collection_;
+    boost::shared_ptr<isc::datasrc::RRsetCollection> rrset_collection_;
 
     // This is a set of validation checks commonly used for addRRset() and
     // deleteRRset to minimize duplicate code logic and to make the main
@@ -1719,6 +1725,11 @@ DatabaseUpdater::commit() {
     }
     accessor_->commit();
     committed_ = true; // make sure the destructor won't trigger rollback
+
+    // Disable the RRsetCollection if it exists.
+    if (rrset_collection_) {
+        rrset_collection_->disableWrapper();
+    }
 
     // We release the accessor immediately after commit is completed so that
     // we don't hold the possible internal resource any longer.

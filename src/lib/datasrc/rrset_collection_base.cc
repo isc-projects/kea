@@ -27,6 +27,10 @@ isc::datasrc::RRsetCollectionBase::find(const isc::dns::Name& name,
                                         const isc::dns::RRClass& rrclass,
                                         const isc::dns::RRType& rrtype) const
 {
+    if (isDisabled()) {
+        isc_throw(RRsetCollectionError, "This RRsetCollection is disabled.");
+    }
+
     if (rrclass != rrclass_) {
         // We could throw an exception here, but RRsetCollection is
         // expected to support an arbitrary collection of RRsets, and it

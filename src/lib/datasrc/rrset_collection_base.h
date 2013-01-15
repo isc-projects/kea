@@ -43,7 +43,8 @@ public:
     RRsetCollectionBase(ZoneUpdater& updater,
                         const isc::dns::RRClass& rrclass) :
         updater_(updater),
-        rrclass_(rrclass)
+        rrclass_(rrclass),
+        disabled_(false)
     {}
 
     /// \brief Destructor
@@ -55,8 +56,9 @@ public:
     /// given \c name, \c rrclass and \c rrtype.  If no matching RRset
     /// is found, \c NULL is returned.
     ///
-    /// \throw isc::dns::RRsetCollectionError if find() results in some
-    /// underlying datasrc error.
+    /// \throw isc::dns::RRsetCollectionError if \c find() results in
+    /// some underlying datasrc error, or if \c disable() was called.
+    ///
     /// \param name The name of the RRset to search for.
     /// \param rrclass The class of the RRset to search for.
     /// \param rrtype The type of the RRset to search for.
@@ -65,9 +67,42 @@ public:
                                          const isc::dns::RRClass& rrclass,
                                          const isc::dns::RRType& rrtype) const;
 
+protected:
+    /// \brief Disable the RRsetCollection.
+    ///
+    /// After calling this method, calling operations such as find() or
+    /// using the iterator would result in an \c
+    /// isc::dns::RRsetCollectionError. This method is typically called
+    /// in the \c commit() implementations of some \c ZoneUpdaters.
+    void disable() {
+        disabled_ = true;
+    }
+
+    /// \brief Return if the RRsetCollection is disabled.
+    bool isDisabled() const {
+        return (disabled_);
+    }
+
+    /// \brief See \c isc::dns::RRsetCollectionBase::getBeginning() for
+    /// documentation.
+    ///
+    /// \throw isc::dns::RRsetCollectionError if using the iterator
+    /// results in some underlying datasrc error, or if \c disable() was
+    /// called.
+    virtual IterPtr getBeginning() = 0;
+
+    /// \brief See \c isc::dns::RRsetCollectionBase::getEnd() for
+    /// documentation.
+    ///
+    /// \throw isc::dns::RRsetCollectionError if using the iterator
+    /// results in some underlying datasrc error, or if \c disable() was
+    /// called.
+    virtual IterPtr getEnd() = 0;
+
 private:
     ZoneUpdater& updater_;
     isc::dns::RRClass rrclass_;
+    bool disabled_;
 };
 
 /// \brief A pointer-like type pointing to an
