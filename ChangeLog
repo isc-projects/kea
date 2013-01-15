@@ -1,3 +1,12 @@
+546.	[func]		marcin
+	DHCP option definitions can be now created using the
+	Configuration Manager. The option definition specifies
+	the option code, name and the types of the data being
+	carried by the option.  The Configuration Manager
+	reports an error on attempt to override standard DHCP
+	option definition.
+	(Trac #2317, git 71e25eb81e58a695cf3bad465c4254b13a50696e)
+
 545.	[func]		jinmei
 	libdns++: the SOA Rdata class now uses the generic lexer in
 	constructors from text.  This means that the MNAME and RNAME of an
