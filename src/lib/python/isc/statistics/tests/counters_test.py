@@ -50,6 +50,7 @@ class TestBasicMethods(unittest.TestCase):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
 
     def setUp(self):
+        imp.reload(counters)
         self.counters = counters.Counters(self.TEST_SPECFILE_LOCATION)
 
     def tearDown(self):
@@ -161,6 +162,7 @@ class TestBasicMethods(unittest.TestCase):
 class BaseTestCounters():
 
     def setUp(self):
+        imp.reload(counters)
         self._statistics_data = {}
         self.counters = counters.Counters(self.TEST_SPECFILE_LOCATION)
         self._entire_server    = self.counters._entire_server
@@ -287,9 +289,6 @@ class BaseTestCounters():
 
 class TestCounters0(unittest.TestCase, BaseTestCounters):
     TEST_SPECFILE_LOCATION = None
-    @classmethod
-    def setUpClass(cls):
-        imp.reload(counters)
     def setUp(self):
         BaseTestCounters.setUp(self)
     def tearDown(self):
@@ -297,9 +296,6 @@ class TestCounters0(unittest.TestCase, BaseTestCounters):
 
 class TestCounters1(unittest.TestCase, BaseTestCounters):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
-    @classmethod
-    def setUpClass(cls):
-        imp.reload(counters)
     def setUp(self):
         BaseTestCounters.setUp(self)
     def tearDown(self):
@@ -307,9 +303,6 @@ class TestCounters1(unittest.TestCase, BaseTestCounters):
 
 class TestCounters2(unittest.TestCase, BaseTestCounters):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec2.spec'
-    @classmethod
-    def setUpClass(cls):
-        imp.reload(counters)
     def setUp(self):
         BaseTestCounters.setUp(self)
     def tearDown(self):
@@ -381,11 +374,8 @@ class DummyXfroutServer(BaseDummyModule):
 class TestDummyNotifyOut(unittest.TestCase):
     """Tests counters are incremented in which the spec file is not
     loaded"""
-    @classmethod
-    def setUpClass(cls):
-        imp.reload(counters)
-
     def setUp(self):
+        imp.reload(counters)
         self.notifier = DummyNotifyOut()
         self.notifier.inc_counters()
 
@@ -401,11 +391,8 @@ class TestDummyNotifyOut(unittest.TestCase):
 class TestDummyXfroutServer(unittest.TestCase):
     """Tests counters are incremented or decremented in which the same
     spec file is multiply loaded in each child class"""
-    @classmethod
-    def setUpClass(cls):
-        imp.reload(counters)
-
     def setUp(self):
+        imp.reload(counters)
         self.xfrout_server = DummyXfroutServer()
         self.xfrout_server.inc_counters()
 
