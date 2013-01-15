@@ -1345,9 +1345,9 @@ TEST_F(AuthSrvTest, queryCounterOpcodes) {
                        ::tolower);
 
         // The counter should be initialized to expected value.
-        EXPECT_EQ(server.getStatistics()->get("zones")->get("_SERVER_")->
-                      get("opcode")->get(item_name)->intValue(),
-                  expected - (i + 1));
+        EXPECT_EQ(expected - (i + 1),
+                  server.getStatistics()->get("zones")->get("_SERVER_")->
+                  get("opcode")->get(item_name)->intValue());
 
         // For each possible opcode, create a request message and send it
         UnitTestUtil::createRequestMessage(request_message, Opcode(i),
@@ -1367,9 +1367,9 @@ TEST_F(AuthSrvTest, queryCounterOpcodes) {
         // Confirm the counter.
         // This test only checks for opcodes; some part of the other items
         // depends on the opcode.
-        EXPECT_EQ(server.getStatistics()->get("zones")->get("_SERVER_")->
-                      get("opcode")->get(item_name)->intValue(),
-                  expected);
+        EXPECT_EQ(expected,
+                  server.getStatistics()->get("zones")->get("_SERVER_")->
+                  get("opcode")->get(item_name)->intValue());
     }
 }
 
