@@ -61,8 +61,8 @@ returned the specified IPv6 subnet when given the address hint specified
 as the address is within the subnet.
 
 % DHCPSRV_CLOSE_DB closing currently open %1 database
-This is a debug message, issues when the DHCP server closed the currently
-open lease database.  It is issued at program shutdown, and whenever
+This is a debug message, issued when the DHCP server closes the currently
+open lease database.  It is issued at program shutdown and whenever
 the database access parameters are changed: in the latter case, the
 server closes the currently open database, and opens a database using
 the new parameters.
