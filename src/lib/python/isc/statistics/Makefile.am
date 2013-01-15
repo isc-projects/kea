@@ -1,6 +1,6 @@
 SUBDIRS = . tests
 
-python_PYTHON = __init__.py counter.py
+python_PYTHON = __init__.py counters.py
 pythondir = $(pyexecdir)/isc/statistics
 
 CLEANDIRS = __pycache__
