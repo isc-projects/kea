@@ -50,7 +50,7 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-Dhcpv6Srv::Dhcpv6Srv(uint16_t port, const char* dbconfig)
+Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
     : alloc_engine_(), serverid_(), shutdown_(true) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
@@ -70,12 +70,6 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port, const char* dbconfig)
         }
 
         setServerID();
-
-        // Instantiate LeaseMgr
-        LeaseMgrFactory::create(dbconfig);
-        LOG_INFO(dhcp6_logger, DHCP6_DB_BACKEND_STARTED)
-            .arg(LeaseMgrFactory::instance().getType())
-            .arg(LeaseMgrFactory::instance().getName());
 
         // Instantiate allocation engine
         alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
