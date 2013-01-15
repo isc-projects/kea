@@ -798,7 +798,10 @@ private:
         }
 
         std::string option_space = getParam<std::string>("space", string_values_);
-        /// @todo Validate option space once #2313 is merged.
+        if (!OptionSpace::validateName(option_space)) {
+            isc_throw(DhcpConfigError, "invalid option space name'"
+                      << option_space << "'");
+        }
 
         OptionDefinitionPtr def;
         if (option_space == "dhcp6" &&
@@ -1085,8 +1088,8 @@ public:
 
     /// @brief Stores the parsed option definition in the data store.
     void commit() {
-        // @todo validate option space name once 2313 is merged.
-        if (storage_ && option_definition_) {
+        if (storage_ && option_definition_ &&
+            OptionSpace::validateName(option_space_name_)) {
             storage_->addItem(option_definition_, option_space_name_);
         }
     }
@@ -1108,11 +1111,10 @@ private:
     void createOptionDef() {
         // Get the option space name and validate it.
         std::string space = getParam<std::string>("space", string_values_);
-        // @todo uncomment the code below when the #2313 is merged.
-        /*        if (!OptionSpace::validateName()) {
+        if (!OptionSpace::validateName(space)) {
             isc_throw(DhcpConfigError, "invalid option space name '"
                       << space << "'");
-                      } */
+        }
 
         // Get other parameters that are needed to create the
         // option definition.
