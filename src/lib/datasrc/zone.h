@@ -18,10 +18,10 @@
 #include <dns/name.h>
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
-#include <dns/rrset_collection_base.h>
 
 #include <datasrc/exceptions.h>
 #include <datasrc/result.h>
+#include <datasrc/rrset_collection_base.h>
 
 #include <utility>
 #include <vector>
@@ -741,6 +741,9 @@ typedef boost::shared_ptr<ZoneFinder::Context> ZoneFinderContextPtr;
 /// \c ZoneFinder::Context object.
 typedef boost::shared_ptr<ZoneFinder::Context> ConstZoneFinderContextPtr;
 
+/// \brief A forward declaration
+class RRsetCollectionBase;
+
 /// The base class to make updates to a single zone.
 ///
 /// On construction, each derived class object will start a "transaction"
@@ -806,7 +809,7 @@ public:
     /// Return an RRsetCollection for the updater.
     ///
     /// This method returns an \c RRsetCollection for the updater,
-    /// implementing the \c isc::dns::RRsetCollectionBase
+    /// implementing the \c isc::datasrc::RRsetCollectionBase
     /// interface. Typically, the returned \c RRsetCollection is a
     /// singleton for its \c ZoneUpdater. The returned RRsetCollection
     /// object must not be used after its corresponding \c ZoneUpdater
@@ -819,7 +822,7 @@ public:
     /// of the \c Zonefinder returned by \c getFinder() with regards to
     /// adding and deleting RRsets via \c addRRset() and \c
     /// deleteRRset().
-    virtual isc::dns::RRsetCollectionBase& getRRsetCollection() = 0;
+    virtual isc::datasrc::RRsetCollectionBase& getRRsetCollection() = 0;
 
     /// Add an RRset to a zone via the updater
     ///

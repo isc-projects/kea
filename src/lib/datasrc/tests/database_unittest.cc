@@ -4172,7 +4172,7 @@ public:
     {}
 
     ZoneUpdaterPtr updater;
-    RRsetCollectionBase& collection;
+    isc::datasrc::RRsetCollectionBase& collection;
 };
 
 TYPED_TEST(RRsetCollectionTest, find) {

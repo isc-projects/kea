@@ -171,12 +171,6 @@ public:
     }
 };
 
-/// \brief A pointer-like type pointing to an \c RRsetCollection object.
-///
-/// This type is used to handle RRsetCollections in a polymorphic manner
-/// in the BIND 10 codebase.
-typedef boost::shared_ptr<RRsetCollectionBase> RRsetCollectionPtr;
-
 } // end of namespace dns
 } // end of namespace isc
 
