@@ -100,21 +100,54 @@ Note: This is a tentative API, and this method is likely to change or\n\
 be removed in the near future. For that reason, it currently provides\n\
 a default implementation that throws NotImplemented.\n\
 \n\
-Apart from the two exceptions mentioned below, in theory this call can\n\
-throw anything, depending on the implementation of the datasource\n\
-backend.\n\
-\n\
 Exceptions:\n\
   NotImplemented If the datasource backend does not support direct\n\
              zone creation.\n\
   DataSourceError If something goes wrong in the data source while\n\
-             creating the zone.\n\
+             creating the zone, or there are some really unexpected\n\
+             errors.\n\
 \n\
 Parameters:\n\
   name       The (fully qualified) name of the zone to create\n\
 \n\
 Return Value(s): True if the zone was added, False if it already\n\
 existed\n\
+";
+
+const char* const DataSourceClient_deleteZone_doc = "\
+delete_zone(zone_name) -> bool\n\
+\n\
+Delete a zone from the data source.\n\
+\n\
+This method also checks if the specified zone exists in the data\n\
+source, and returns true/false depending on whether the zone\n\
+existed/not existed, respectively. In either case, on successful\n\
+return it ensures the data source does not contain the specified name\n\
+of the zone.\n\
+\n\
+Note: This is a tentative API, and this method is likely to change or\n\
+be removed in the near future. For that reason, it currently provides\n\
+a default implementation that throws NotImplemented. Note also that\n\
+this method does not delete other database records related to the\n\
+zone, such as zone's resource records or differences corresponding to\n\
+updates made in the zone. This is primarily for implementation\n\
+simplicity (in the currently intended usage there wouldn't be such\n\
+other data at the time of this call anyway) and due to the fact that\n\
+details of managing zones is still in flux. Once the design in this\n\
+area is fixed we may revisit the behavior.\n\
+\n\
+Exceptions:\n\
+  NotImplemented If the datasource backend does not support direct\n\
+             zone deletion.\n\
+  DataSourceError If something goes wrong in the data source while\n\
+             deleting the zone, or there are some really unexpected\n\
+             errors.\n\
+\n\
+Parameters:\n\
+  zone_name  The (fully qualified) name of the zone to be deleted\n\
+\n\
+Return Value(s): true if the zone previously existed and has been\n\
+deleted by this method; false if the zone didn't exist.\n\
 ";
 
 const char* const DataSourceClient_getIterator_doc = "\
