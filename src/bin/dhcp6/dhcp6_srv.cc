@@ -405,7 +405,7 @@ void Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
     Option::OptionCollection server_ids = pkt->getOptions(D6O_SERVERID);
     switch (serverid) {
     case FORBIDDEN:
-        if (server_ids.size() > 0) {
+        if (!server_ids.empty()) {
             isc_throw(RFCViolation, "Server-id option was not expected, but "
                       << server_ids.size() << " received in " << pkt->getName());
         }
