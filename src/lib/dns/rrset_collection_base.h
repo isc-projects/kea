@@ -58,7 +58,13 @@ public:
     /// is found, \c NULL is returned.
     ///
     /// This method's implementations currently are not specified to
-    /// handle \c RRTypes such as RRSIG, NSEC3, ANY, or AXFR.
+    /// handle \c RRTypes such as RRSIG and NSEC3. RRSIGs are attached
+    /// to their corresponding \c RRset and it is not straightforward to
+    /// search for them. Searching for RRSIGs will return \c false
+    /// always. Support for RRSIGs may be added in the future.
+    ///
+    /// Non-concrete types such as ANY and AXFR are unsupported and will
+    /// return \c false always.
     ///
     /// \throw RRsetCollectionError if find() results in some
     /// implementation-specific error.
