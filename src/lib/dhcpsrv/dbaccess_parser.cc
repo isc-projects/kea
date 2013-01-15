@@ -46,7 +46,6 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
     // 2. Update the copy with the passed keywords.
     // 3. Perform validation checks on the updated keyword/value pairs.
     // 4. If all is OK, update the stored keyword/value pairs.
-    // 5. Construct the updated database access string.
 
     // 1. Take a copy of the stored keyword/value pairs.
     map<string, string> values_copy = values_;
@@ -71,9 +70,6 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
     if ((dbtype != "memfile") && (dbtype != "mysql")) {
         isc_throw(BadValue, "unknown backend database type: " << dbtype);
     }
-
-    /// @todo Log a warning if the type is memfile and there are other keywords.
-    ///       This will be done when the module is moved to libdhcpsrv
 
     // 4. If all is OK, update the stored keyword/value pairs.
     values_ = values_copy;
