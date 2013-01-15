@@ -505,4 +505,15 @@ TEST(Subnet6Test, get) {
     EXPECT_EQ(32, subnet.get().second);
 }
 
+// This trivial test checks if interface name is stored properly
+// in Subnet6 objects.
+TEST(Subnet6Test, iface) {
+    Subnet6 subnet(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
+
+    EXPECT_EQ("", subnet.getIface());
+
+    subnet.setIface("en1");
+    EXPECT_EQ("en1", subnet.getIface());
+}
+
 };

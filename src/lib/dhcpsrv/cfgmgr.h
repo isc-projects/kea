@@ -153,8 +153,17 @@ public:
     ///
     /// @param hint an address that belongs to a searched subnet
     ///
-    /// @return a subnet object
+    /// @return a subnet object (or NULL if no suitable match was fount)
     Subnet6Ptr getSubnet6(const isc::asiolink::IOAddress& hint);
+
+    /// @brief get IPv6 subnet by interface name
+    ///
+    /// Finds a matching local subnet, based on interface name. This
+    /// is used for selecting subnets that were explicitly marked by the
+    /// user as reachable over specified network interface.
+    /// @param iface_name interface name
+    /// @return a subnet object (or NULL if no suitable match was fount)
+    Subnet6Ptr getSubnet6(const std::string& iface_name);
 
     /// @brief get IPv6 subnet by interface-id
     ///

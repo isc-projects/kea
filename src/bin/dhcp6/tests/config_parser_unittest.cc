@@ -272,9 +272,8 @@ TEST_F(Dhcp6ParserTest, bogusCommand) {
     EXPECT_EQ(1, rcode_);
 }
 
-/// The goal of this test is to verify if wrongly defined subnet will
-/// be rejected. Properly defined subnet must include at least one
-/// pool definition.
+/// The goal of this test is to verify if configuration without any
+/// subnets defined can be accepted.
 TEST_F(Dhcp6ParserTest, emptySubnet) {
 
     ConstElementPtr status;
@@ -365,6 +364,64 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
     EXPECT_EQ(4, subnet->getValid());
 }
 
+// This test checks if it is possible to define a subnet with an
+// interface defined.
+TEST_F(Dhcp6ParserTest, subnetInterface) {
+
+    ConstElementPtr status;
+
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::1 - 2001:db8:1::ffff\" ],"
+        "    \"interface\": \"eth0\","
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+    cout << config << endl;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 0 (configuration success)
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    EXPECT_EQ(0, rcode_);
+
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("eth0", subnet->getIface());
+}
+
+// This test checks if it is not allowed to define global interface
+// parameter.
+TEST_F(Dhcp6ParserTest, interfaceGlobal) {
+
+    ConstElementPtr status;
+
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"interface\": \"eth0\"," // Not valid. Can be defined in subnet only
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::1 - 2001:db8:1::ffff\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+    cout << config << endl;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 1 (parse error)
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    EXPECT_EQ(1, rcode_);
+}
+
 // Test verifies that a subnet with pool values that do not belong to that
 // pool are rejected.
 TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
@@ -389,7 +446,6 @@ TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
     // as the pool does not belong to that subnet
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
-
     EXPECT_EQ(1, rcode_);
 }
 
