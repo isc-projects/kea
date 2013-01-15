@@ -29,6 +29,11 @@
 namespace isc {
 namespace dhcp {
 
+/// Forward declaration to Option4AddrLst class.
+class Option4AddrLst;
+
+/// A pointer to the Option4AddrLst object.
+typedef boost::shared_ptr<Option4AddrLst> Option4AddrLstPtr;
 
 /// @brief DHCPv4 Option class for handling list of IPv4 addresses.
 ///
