@@ -220,12 +220,12 @@ OptionDefinition::validate() const {
     if (!all(name_, boost::is_from_range('a', 'z') ||
              boost::is_from_range('A', 'Z') ||
              boost::is_digit() ||
-             boost::is_any_of("-_")) ||
+             boost::is_any_of(std::string("-_"))) ||
         name_.empty() ||
         // Hyphens and underscores are not allowed at the beginning
         // and at the end of the option name.
-        all(find_head(name_, 1), boost::is_any_of("-_")) ||
-        all(find_tail(name_, 1), boost::is_any_of("-_"))) {
+        all(find_head(name_, 1), boost::is_any_of(std::string("-_"))) ||
+        all(find_tail(name_, 1), boost::is_any_of(std::string("-_")))) {
         err_str << "invalid option name '" << name_ << "'";
 
     } else if (type_ >= OPT_UNKNOWN_TYPE) {
