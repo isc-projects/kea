@@ -822,6 +822,11 @@ public:
     /// of the \c Zonefinder returned by \c getFinder().
     /// Implementations of \c ZoneUpdater may not allow adding or
     /// deleting RRsets after \c getRRsetCollection() is called.
+    /// Implementations of \c ZoneUpdater may disable a previously
+    /// returned \c RRsetCollection after \c commit() is called. If an
+    /// \c RRsetCollection is disabled, using methods such as \c find()
+    /// and using its iterator would cause an exception to be
+    /// thrown. See \c isc::datasrc::RRsetCollectionBase for details.
     virtual isc::datasrc::RRsetCollectionBase& getRRsetCollection() = 0;
 
     /// Add an RRset to a zone via the updater

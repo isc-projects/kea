@@ -112,10 +112,16 @@ protected:
 
     /// \brief Returns an \c IterPtr wrapping an Iter pointing to the
     /// beginning of the collection.
+    ///
+    /// \throw isc::dns::RRsetCollectionError if using the iterator
+    /// results in some underlying datasrc error.
     virtual IterPtr getBeginning() = 0;
 
     /// \brief Returns an \c IterPtr wrapping an Iter pointing past the
     /// end of the collection.
+    ///
+    /// \throw isc::dns::RRsetCollectionError if using the iterator
+    /// results in some underlying datasrc error.
     virtual IterPtr getEnd() = 0;
 
 public:
