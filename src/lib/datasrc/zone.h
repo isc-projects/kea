@@ -819,9 +819,9 @@ public:
     /// \c ZoneUpdater implementation.
     ///
     /// The behavior of the RRsetCollection is similar to the behavior
-    /// of the \c Zonefinder returned by \c getFinder() with regards to
-    /// adding and deleting RRsets via \c addRRset() and \c
-    /// deleteRRset().
+    /// of the \c Zonefinder returned by \c getFinder().
+    /// Implementations of \c ZoneUpdater may not allow adding or
+    /// deleting RRsets after \c getRRsetCollection() is called.
     virtual isc::datasrc::RRsetCollectionBase& getRRsetCollection() = 0;
 
     /// Add an RRset to a zone via the updater
@@ -870,6 +870,10 @@ public:
     /// This method must not be called once commit() is performed.  If it
     /// calls after \c commit() the implementation must throw a
     /// \c DataSourceError exception.
+    ///
+    /// Implementations of \c ZoneUpdater may not allow adding or
+    /// deleting RRsets after \c getRRsetCollection() is called. In this
+    /// case, implementations throw an \c InvalidOperation exception.
     ///
     /// If journaling was requested when getting this updater, it will reject
     /// to add the RRset if the squence doesn't look like and IXFR (see
@@ -941,6 +945,10 @@ public:
     /// This method must not be called once commit() is performed.  If it
     /// calls after \c commit() the implementation must throw a
     /// \c DataSourceError exception.
+    ///
+    /// Implementations of \c ZoneUpdater may not allow adding or
+    /// deleting RRsets after \c getRRsetCollection() is called. In this
+    /// case, implementations throw an \c InvalidOperation exception.
     ///
     /// If journaling was requested when getting this updater, it will reject
     /// to add the RRset if the squence doesn't look like and IXFR (see
