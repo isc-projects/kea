@@ -17,6 +17,8 @@
 #include <config/ccsession.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_ia.h>
+#include <dhcp/option_custom.h>
+#include <dhcp/option_int.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -1479,6 +1481,166 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     EXPECT_EQ(12345, optionIA->getIAID());
     EXPECT_EQ(6789, optionIA->getT1());
     EXPECT_EQ(1516, optionIA->getT2());
+}
+
+// The goal of this test is to verify that the standard option can
+// be configured to encapsulate multiple other options.
+TEST_F(Dhcp6ParserTest, stdOptionDataEncapsulate) {
+
+    // The configuration is two stage process in this test.
+    // In the first stahe we create definitions of suboptions
+    // that we will add to the base option.
+    // Let's create some dummy options: foo and foo2.
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"code\": 110,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"code\": 111,"
+        "    \"data\": \"192.168.2.1\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 110,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"encapsulate\": \"\""
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"code\": 111,"
+        "    \"type\": \"ipv4-address\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"encapsulate\": \"\""
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Once the definitions have been added we can configure the
+    // standard option #17. This option comprises an enterprise
+    // number and sub options. By convention (introduced in
+    // std_option_defs.h) option named 'vendor-opts'
+    // encapsulates the option space named 'vendor-opts-space'.
+    // We add our dummy options to this option space and thus
+    // they should be included as sub-options in the 'vendor-opts'
+    // option.
+    config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"vendor-opts\","
+        "    \"space\": \"dhcp6\","
+        "    \"code\": 17,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"code\": 110,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"code\": 111,"
+        "    \"data\": \"192.168.2.1\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 110,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"encapsulate\": \"\""
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"code\": 111,"
+        "    \"type\": \"ipv4-address\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"encapsulate\": \"\""
+        " } ],"
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\""
+        " } ]"
+        "}";
+
+
+    json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Get the subnet.
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet);
+
+    // We should have one option available.
+    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp6");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(1, options->size());
+
+    // Get the option.
+    Subnet::OptionDescriptor desc =
+        subnet->getOptionDescriptor("dhcp6", D6O_VENDOR_OPTS);
+    EXPECT_TRUE(desc.option);
+    EXPECT_EQ(D6O_VENDOR_OPTS, desc.option->getType());
+
+    // Option with the code 110 should be added as a sub-option.
+    OptionPtr option_foo = desc.option->getOption(110);
+    ASSERT_TRUE(option_foo);
+    EXPECT_EQ(110, option_foo->getType());
+    // This option comprises a single uint32_t value thus it is
+    // represented by OptionInt<uint32_t> class. Let's get the
+    // object of this type.
+    boost::shared_ptr<OptionInt<uint32_t> > option_foo_uint32 =
+        boost::dynamic_pointer_cast<OptionInt<uint32_t> >(option_foo);
+    ASSERT_TRUE(option_foo_uint32);
+    // Validate the value according to the configuration.
+    EXPECT_EQ(1234, option_foo_uint32->getValue());
+
+    // Option with the code 111 should be added as a sub-option.
+    OptionPtr option_foo2 = desc.option->getOption(111);
+    ASSERT_TRUE(option_foo2);
+    EXPECT_EQ(111, option_foo2->getType());
+    // This option comprises the IPV4 address. Such option is
+    // represented by OptionCustom object.
+    OptionCustomPtr option_foo2_v4 =
+        boost::dynamic_pointer_cast<OptionCustom>(option_foo2);
+    ASSERT_TRUE(option_foo2_v4);
+    // Get the IP address carried by this option and validate it.
+    EXPECT_EQ("192.168.2.1", option_foo2_v4->readAddress().toText());
+
+    // Option with the code 112 should not be added.
+    EXPECT_FALSE(desc.option->getOption(112));
 }
 
 };

@@ -352,6 +352,9 @@ private:
     std::vector<OptionBuffer> buffers_;
 };
 
+/// A pointer to the OptionCustom object.
+typedef boost::shared_ptr<OptionCustom> OptionCustomPtr;
+
 } // namespace isc::dhcp
 } // namespace isc
 
