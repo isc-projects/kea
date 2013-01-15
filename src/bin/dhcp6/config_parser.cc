@@ -1395,21 +1395,39 @@ private:
         if (!option) {
             return;
         }
+
+        OptionDefinitionPtr def;
+        if (option_space == "dhcp6" &&
+            LibDHCP::isStandardOption(Option::V6, option->getType())) {
+            def = LibDHCP::getOptionDef(Option::V6, option->getType());
+            // Definitions for some of the standard options hasn't been
+            // implemented so it is ok to leave here.
+            if (!def) {
+                return;
+            }
+        } else {
+            const OptionDefContainerPtr defs =
+                option_def_intermediate.getItems(option_space);
+            const OptionDefContainerTypeIndex& idx = defs->get<1>();
+            const OptionDefContainerTypeRange& range =
+                idx.equal_range(option->getType());
+            // There is no definition so we have to leave.
+            if (std::distance(range.first, range.second) == 0) {
+                return;
+            }
+
+            def = *range.first;
+
+            // If the definition exists, it must be non-NULL.
+            // Otherwise it is a programming error.
+            assert(def);
+        }
+
         // We need to get option definition fo the particular option space
         // and code. This definition holds the information whether our
         // option encapsulates any option space.
-        const OptionDefContainerPtr defs =
-            option_def_defaults.getItems(option_space);
-
-        const OptionDefContainerTypeIndex& idx = defs->get<1>();
-        const OptionDefContainerTypeRange& range =
-            idx.equal_range(option->getType());
-        // There is no definition so we have to leave.
-        if (std::distance(range.first, range.second) == 0) {
-            return;
-        }
         // Get the encapsulated option space name.
-        std::string encapsulated_space = (*range.first)->getEncapsulatedSpace();
+        std::string encapsulated_space = def->getEncapsulatedSpace();
         // If option space name is empty it means that our option does not
         // encapsulate any option space (does not include sub-options).
         if (!encapsulated_space.empty()) {
