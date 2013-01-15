@@ -1720,13 +1720,16 @@ checkAddrPort(const struct sockaddr& actual_sa,
     // systems, but it will make getnameinfo() fail on NetBSD 4
     // So we make a copy and if the field is available, we set it
     const socklen_t sa_len = getSALength(actual_sa);
-    struct sockaddr sa;
-    memcpy(&sa, &actual_sa, sa_len);
+    struct sockaddr_storage ss;
+    memcpy(&ss, &actual_sa, sa_len);
+
+    struct sockaddr* sa =
+        static_cast<struct sockaddr*>(static_cast<void*>(&ss));
 #ifdef HAVE_SA_LEN
-    sa.sa_len = sa_len;
+    sa->sa_len = sa_len;
 #endif
     char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-    const int error = getnameinfo(&sa, sa_len, hbuf, sizeof(hbuf),
+    const int error = getnameinfo(sa, sa_len, hbuf, sizeof(hbuf),
                                   sbuf, sizeof(sbuf),
                                   NI_NUMERICHOST | NI_NUMERICSERV);
     if (error != 0) {
