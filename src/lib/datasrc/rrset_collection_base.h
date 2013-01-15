@@ -22,6 +22,9 @@
 namespace isc {
 namespace datasrc {
 
+/// \brief A forward declaration
+class ZoneUpdater;
+
 /// \brief datasrc derivation of \c isc::dns::RRsetCollectionBase.
 ///
 /// This is an abstract class that adds datasrc related detail to
@@ -66,6 +69,13 @@ private:
     ZoneUpdater& updater_;
     isc::dns::RRClass rrclass_;
 };
+
+/// \brief A pointer-like type pointing to an
+/// \c isc::datasrc::RRsetCollectionBase object.
+///
+/// This type is used to handle RRsetCollections in a polymorphic manner
+/// in libdatasrc.
+typedef boost::shared_ptr<isc::datasrc::RRsetCollectionBase> RRsetCollectionPtr;
 
 } // end of namespace datasrc
 } // end of namespace isc
