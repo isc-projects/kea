@@ -126,7 +126,8 @@ def _stop_timer(start_time, element, spec, identifier):
     the element, which is in seconds between start_time and the
     current time and is float-type."""
     delta = datetime.now() - start_time
-    sec = delta.total_seconds()
+    sec = round(delta.days * 86400 + delta.seconds + \
+                    delta.microseconds * 1E-6, 6)
     _set_counter(element, spec, identifier, sec)
 
 def _concat(*args, sep='/'):
