@@ -3495,19 +3495,20 @@ const std::string HARDCODED_DOMAIN_NAME = "isc.example.com";</screen>
 
     <section id="dhcp4-serverid">
       <title>Server Identifier in DHCPv4</title>
-      <para>DHCPv4 protocol uses server identifier for clients to be able
-      to discriminate between several servers present on the same link.
-      This value is an IPv4 address of the server. Server will automatically
-      use one of its IPv4 address as its server-id and will store it to
-      a b10-dhcp4-serverid file. Location of that file is dependant on the
-      parameters specified during source configuration (see --localstatedir
-      parameter passed to configure). This file will be created during first
-      server run and will be read from that file during consecutive starts.
+      <para>The DHCPv4 protocol uses a "server identifier" for clients to be able
+      to discriminate between several servers present on the same link: this
+      value is an IPv4 address of the server. When started for the first time,
+      the DHCPv4 server will choose one of its IPv4 addresses as its server-id,
+      and store the chosen value to a file. (The file is named b10-dhcp4-serverid and is
+      stored in the "local state directory".  This is set during installation
+      when "configure" is run, and can be changed by using "--localstatedir"
+      on the "configure" command line.)  That file will be read by the server
+      and the contained value used whenever the server is subsequently started.
       </para>
       <para>
         It is unlikely that this parameter needs to be changed. If such a need
-        arises, please stop the server, edit the file and start the server
-        again. It is a text file that should contain an IPv4 address. Spaces are
+        arises, please stop the server, edit the file and restart the server.
+        It is a text file that should contain an IPv4 address. Spaces are
         ignored.  No extra characters are allowed in this file.
       </para>
     </section>
@@ -3858,16 +3859,18 @@ Dhcp6/subnet6	         []     list    (default)</screen>
 
     <section id="dhcp6-serverid">
       <title>Server Identifier in DHCPv6</title>
-      <para>DHCPv6 protocol uses server identifier (DUID) for clients to be able
-      to discriminate between several servers present on the same link.  There
-      are several types of DUIDs currently defined, but RFC3315 instructs the
-      servers to use DUID-LLT if possible. This format consists of a link-layer
-      (MAC) address and a timestamp. Server will generate automatically such a
-      DUID and will store it to a b10-dhcp6-serverid file. Location of that file
-      is dependant on the parameters specified during source configuration (see
-      --localstatedir parameter passed to configure). This file will be created
-      during first server run and will be read from that file during consecutive
-      starts.
+      <para>The DHCPv6 protocol uses a "server identifier" (also known
+      as a DUID) for clients to be able to discriminate between several
+      servers present on the same link.  There are several types of
+      DUIDs defined, but RFC 3315 instructs servers to use DUID-LLT if
+      possible. This format consists of a link-layer (MAC) address and a
+      timestamp. When started for the first time, the DHCPv6 server will
+      automatically generate such a DUID and store the chosen value to
+      a file (The file is named b10-dhcp6-serverid and is stored in the
+      "local state directory".  This is set during installation when
+      "configure" is run, and can be changed by using "--localstatedir"
+      on the "configure" command line.)  That file will be read by the server
+      and the contained value used whenever the server is subsequently started.
       </para>
       <para>
         It is unlikely that this parameter needs to be changed. If such a need
