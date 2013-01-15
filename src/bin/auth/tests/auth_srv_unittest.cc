@@ -198,7 +198,7 @@ protected:
     // Check if the counters exist and are initialized to 0.
     void
     checkCountersAreInitialized() {
-        std::map<std::string, int> expect;
+        const std::map<std::string, int> expect;
         ConstElementPtr stats = server.getStatistics()->
             get("zones")->get("_SERVER_");
         checkStatisticsCounters(stats, expect);
