@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -173,8 +173,9 @@ protected:
     /// This method assigns options that were requested by client
     /// (sent in PRL) or are enforced by server.
     ///
+    /// @param question DISCOVER or REQUEST message from a client.
     /// @param msg outgoing message (options will be added here)
-    void appendRequestedOptions(Pkt4Ptr& msg);
+    void appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg);
 
     /// @brief Assigns a lease and appends corresponding options
     ///
