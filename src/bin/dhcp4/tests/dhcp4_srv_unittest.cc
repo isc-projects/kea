@@ -19,6 +19,7 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/option.h>
 #include <dhcp/option4_addrlst.h>
+#include <dhcp/option_custom.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
@@ -318,8 +319,21 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
     // in the OFFER message when requested using 'Parameter
     // Request List' option. Let's configure those options that
     // are returned when requested.
+
+    // dns-servers
+    OptionPtr option_dns_servers(new Option4AddrLst(DHO_DOMAIN_NAME_SERVERS));
+    ASSERT_NO_THROW(subnet_->addOption(option_dns_servers, false, "dhcp4"));
+    // domain-name
+    OptionDefinition def("domain-name", DHO_DOMAIN_NAME, OPT_FQDN_TYPE);
+    boost::shared_ptr<OptionCustom>
+        option_domain_name(new OptionCustom(def, Option::V4));
+    option_domain_name->writeFqdn("example.com");
+    OptionPtr opt_domain = boost::dynamic_pointer_cast<Option>(option_domain_name);
+    subnet_->addOption(opt_domain, false, "dhcp4");
+    // log-servers
     OptionPtr option_log_servers(new Option4AddrLst(DHO_LOG_SERVERS));
     ASSERT_NO_THROW(subnet_->addOption(option_log_servers, false, "dhcp4"));
+    // cookie-servers
     OptionPtr option_cookie_servers(new Option4AddrLst(DHO_COOKIE_SERVERS));
     ASSERT_NO_THROW(subnet_->addOption(option_cookie_servers, false, "dhcp4"));
 
@@ -332,6 +346,8 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
 
     std::vector<uint8_t> opts;
     // Let's request options that have been configured for the subnet.
+    opts.push_back(DHO_DOMAIN_NAME_SERVERS);
+    opts.push_back(DHO_DOMAIN_NAME);
     opts.push_back(DHO_LOG_SERVERS);
     opts.push_back(DHO_COOKIE_SERVERS);
     // Let's also request the option that hasn't been configured. In such
