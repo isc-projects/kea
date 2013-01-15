@@ -89,7 +89,7 @@ public:
     virtual ZoneFinder& getFinder() {
         return (finder_);
     }
-    virtual isc::dns::RRsetCollectionPtr getRRsetCollection() {
+    virtual isc::dns::RRsetCollectionBase& getRRsetCollection() {
         isc_throw(isc::NotImplemented, "Method not used in tests");
     }
     virtual void addRRset(const isc::dns::AbstractRRset& rrset) {

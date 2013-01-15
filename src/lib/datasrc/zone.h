@@ -807,10 +807,11 @@ public:
     ///
     /// This method returns an \c RRsetCollection for the updater,
     /// implementing the \c isc::dns::RRsetCollectionBase
-    /// interface. While the returned RRsetCollection object is
-    /// existing, the corresponding \c ZoneUpdater must not be
-    /// destroyed. The returned RRsetCollection object may be used to
-    /// search RRsets from the ZoneUpdater. The actual
+    /// interface. Typically, the returned \c RRsetCollection is a
+    /// singleton for its \c ZoneUpdater. The returned RRsetCollection
+    /// object must not be used after its corresponding \c ZoneUpdater
+    /// has been destroyed. The returned RRsetCollection object may be
+    /// used to search RRsets from the ZoneUpdater. The actual
     /// \c RRsetCollection returned has a behavior dependent on the
     /// \c ZoneUpdater implementation.
     ///
@@ -818,7 +819,7 @@ public:
     /// of the \c Zonefinder returned by \c getFinder() with regards to
     /// adding and deleting RRsets via \c addRRset() and \c
     /// deleteRRset().
-    virtual isc::dns::RRsetCollectionPtr getRRsetCollection() = 0;
+    virtual isc::dns::RRsetCollectionBase& getRRsetCollection() = 0;
 
     /// Add an RRset to a zone via the updater
     ///
