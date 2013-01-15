@@ -4172,13 +4172,13 @@ public:
     {}
 
     ZoneUpdaterPtr updater;
-    RRsetCollectionPtr collection;
+    RRsetCollectionBase& collection;
 };
 
 TYPED_TEST(RRsetCollectionTest, find) {
     // Test the find() that returns ConstRRsetPtr
-    ConstRRsetPtr rrset = this->collection->find(Name("www.example.org."),
-                                                 RRClass::IN(), RRType::A());
+    ConstRRsetPtr rrset = this->collection.find(Name("www.example.org."),
+                                                RRClass::IN(), RRType::A());
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::A(), rrset->getType());
     EXPECT_EQ(RRTTL(3600), rrset->getTTL());
@@ -4186,59 +4186,59 @@ TYPED_TEST(RRsetCollectionTest, find) {
     EXPECT_EQ(Name("www.example.org"), rrset->getName());
 
     // foo.example.org doesn't exist
-    rrset = this->collection->find(Name("foo.example.org"), this->qclass_,
-                                   RRType::A());
+    rrset = this->collection.find(Name("foo.example.org"), this->qclass_,
+                                  RRType::A());
     EXPECT_FALSE(rrset);
 
     // www.example.org exists, but not with MX
-    rrset = this->collection->find(Name("www.example.org"), this->qclass_,
-                                   RRType::MX());
+    rrset = this->collection.find(Name("www.example.org"), this->qclass_,
+                                  RRType::MX());
     EXPECT_FALSE(rrset);
 
     // www.example.org exists, with AAAA
-    rrset = this->collection->find(Name("www.example.org"), this->qclass_,
-                                   RRType::AAAA());
+    rrset = this->collection.find(Name("www.example.org"), this->qclass_,
+                                  RRType::AAAA());
     EXPECT_TRUE(rrset);
 
     // www.example.org with AAAA does not exist in RRClass::CH()
-    rrset = this->collection->find(Name("www.example.org"), RRClass::CH(),
-                                   RRType::AAAA());
+    rrset = this->collection.find(Name("www.example.org"), RRClass::CH(),
+                                  RRType::AAAA());
     EXPECT_FALSE(rrset);
 
     // Out-of-zone find()s must not throw.
-    rrset = this->collection->find(Name("www.example.com"), this->qclass_,
-                                   RRType::A());
+    rrset = this->collection.find(Name("www.example.com"), this->qclass_,
+                                  RRType::A());
     EXPECT_FALSE(rrset);
 
     // "cname.example.org." with type CNAME should return the CNAME RRset
-    rrset = this->collection->find(Name("cname.example.org"), this->qclass_,
-                                   RRType::CNAME());
+    rrset = this->collection.find(Name("cname.example.org"), this->qclass_,
+                                  RRType::CNAME());
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::CNAME(), rrset->getType());
     EXPECT_EQ(Name("cname.example.org"), rrset->getName());
 
     // "cname.example.org." with type A should return nothing
-    rrset = this->collection->find(Name("cname.example.org"), this->qclass_,
-                                   RRType::A());
+    rrset = this->collection.find(Name("cname.example.org"), this->qclass_,
+                                  RRType::A());
     EXPECT_FALSE(rrset);
 
     // "dname.example.org." with type DNAME should return the DNAME RRset
-    rrset = this->collection->find(Name("dname.example.org"), this->qclass_,
-                                   RRType::DNAME());
+    rrset = this->collection.find(Name("dname.example.org"), this->qclass_,
+                                  RRType::DNAME());
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::DNAME(), rrset->getType());
     EXPECT_EQ(Name("dname.example.org"), rrset->getName());
 
     // "below.dname.example.org." with type AAAA should return nothing
-    rrset = this->collection->find(Name("below.dname.example.org"),
-                                   this->qclass_, RRType::AAAA());
+    rrset = this->collection.find(Name("below.dname.example.org"),
+                                  this->qclass_, RRType::AAAA());
     EXPECT_FALSE(rrset);
 
     // TODO: "below.dname.example.org." with type A does not return the
     // record (see top of file). It needs to be checked if this is what
     // we want.
-    rrset = this->collection->find(Name("below.dname.example.org"),
-                                   this->qclass_, RRType::A());
+    rrset = this->collection.find(Name("below.dname.example.org"),
+                                  this->qclass_, RRType::A());
     // Is this correct behavior?
     EXPECT_FALSE(rrset);
 
@@ -4247,8 +4247,8 @@ TYPED_TEST(RRsetCollectionTest, find) {
     // return the NS record. Without FIND_GLUE_OK, ZoneFinder's find()
     // would return DELEGATION and the find() below would return
     // nothing.
-    rrset = this->collection->find(Name("delegation.example.org"),
-                                   this->qclass_, RRType::NS());
+    rrset = this->collection.find(Name("delegation.example.org"),
+                                  this->qclass_, RRType::NS());
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::NS(), rrset->getType());
     EXPECT_EQ(Name("delegation.example.org"), rrset->getName());
@@ -4257,14 +4257,14 @@ TYPED_TEST(RRsetCollectionTest, find) {
     // searching for some "foo.wildcard.example.org." would make
     // ZoneFinder's find() return NXDOMAIN, and the find() below should
     // return nothing.
-    rrset = this->collection->find(Name("foo.wild.example.org"),
-                                   this->qclass_, RRType::A());
+    rrset = this->collection.find(Name("foo.wild.example.org"),
+                                  this->qclass_, RRType::A());
     EXPECT_FALSE(rrset);
 
     // Searching directly for "*.wild.example.org." should return the
     // record.
-    rrset = this->collection->find(Name("*.wild.example.org"),
-                                   this->qclass_, RRType::A());
+    rrset = this->collection.find(Name("*.wild.example.org"),
+                                  this->qclass_, RRType::A());
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::A(), rrset->getType());
     EXPECT_EQ(Name("*.wild.example.org"), rrset->getName());
@@ -4272,8 +4272,8 @@ TYPED_TEST(RRsetCollectionTest, find) {
 
 TYPED_TEST(RRsetCollectionTest, iteratorTest) {
     // Iterators are currently not implemented.
-    EXPECT_THROW(this->collection->begin(), isc::NotImplemented);
-    EXPECT_THROW(this->collection->end(), isc::NotImplemented);
+    EXPECT_THROW(this->collection.begin(), isc::NotImplemented);
+    EXPECT_THROW(this->collection.end(), isc::NotImplemented);
 }
 
 typedef RRsetCollectionTest<MockAccessor> MockRRsetCollectionTest;
@@ -4286,8 +4286,8 @@ TEST_F(MockRRsetCollectionTest, findError) {
     // The "dsexception.example.org." name is rigged by the MockAccessor
     // to throw a DataSourceError.
     EXPECT_THROW({
-        this->collection->find(Name("dsexception.example.org"), this->qclass_,
-                               RRType::A());
+        this->collection.find(Name("dsexception.example.org"), this->qclass_,
+                              RRType::A());
     }, RRsetCollectionError);
 }
 

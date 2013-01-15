@@ -1498,8 +1498,13 @@ public:
 
     virtual ZoneFinder& getFinder() { return (*finder_); }
 
-    virtual RRsetCollectionPtr getRRsetCollection() {
-        return (RRsetCollectionPtr(new RRsetCollection(*this, zone_class_)));
+    virtual RRsetCollectionBase& getRRsetCollection() {
+        if (!rrset_collection_) {
+            // This is only assigned the first time and remains for the
+            // lifetime of the DatabaseUpdater.
+            rrset_collection_.reset(new RRsetCollection(*this, zone_class_));
+        }
+        return (*rrset_collection_);
     }
 
     virtual void addRRset(const AbstractRRset& rrset);
@@ -1526,6 +1531,7 @@ private:
     DiffPhase diff_phase_;
     Serial serial_;
     boost::scoped_ptr<DatabaseClient::Finder> finder_;
+    RRsetCollectionPtr rrset_collection_;
 
     // This is a set of validation checks commonly used for addRRset() and
     // deleteRRset to minimize duplicate code logic and to make the main
