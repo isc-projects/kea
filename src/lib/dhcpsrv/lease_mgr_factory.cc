@@ -120,15 +120,13 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     // Yes, check what it is.
 #ifdef HAVE_MYSQL
     if (parameters[type] == string("mysql")) {
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_MYSQL_DB)
-            .arg(redacted);
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_DB).arg(redacted);
         getLeaseMgrPtr().reset(new MySqlLeaseMgr(parameters));
         return;
     }
 #endif
     if (parameters[type] == string("memfile")) {
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_MEMFILE_DB)
-            .arg(redacted);
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_DB).arg(redacted);
         getLeaseMgrPtr().reset(new Memfile_LeaseMgr(parameters));
         return;
     }
