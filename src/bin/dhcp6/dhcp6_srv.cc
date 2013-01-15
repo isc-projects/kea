@@ -428,7 +428,17 @@ void Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
 }
 
 Subnet6Ptr Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr());
+
+    /// @todo: pass interface information only if received direct (non-relayed) message
+
+    // Try to find a subnet if received packet from a directly connected client
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(question->getIface());
+    if (subnet) {
+        return (subnet);
+    }
+
+    // If no subnet was found, try to find it based on remote address
+    subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr());
 
     return (subnet);
 }
