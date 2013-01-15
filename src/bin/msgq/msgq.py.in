@@ -675,11 +675,7 @@ class MsgQ:
             # TODO: Any commands go here
             return isc.config.create_answer(1, 'unknown command: ' + command)
 
-# can signal handling and calling a destructor be done without a
-# global variable?
-msgq = None
-
-def signal_handler(signal, frame):
+def signal_handler(msgq, signal, frame):
     if msgq:
         msgq.stop()
 
@@ -702,12 +698,13 @@ if __name__ == "__main__":
                       help="UNIX domain socket file the msgq daemon will use")
     (options, args) = parser.parse_args()
 
-    signal.signal(signal.SIGTERM, signal_handler)
-
     # Announce startup.
     logger.debug(TRACE_START, MSGQ_START, VERSION)
 
     msgq = MsgQ(options.msgq_socket_file, options.verbose)
+
+    signal.signal(signal.SIGTERM,
+                  lambda signal, frame: signal_handler(msgq, signal, frame))
 
     try:
         msgq.setup()
