@@ -154,9 +154,41 @@ class MsgQ:
         self.lnames = {}
         self.sendbuffs = {}
         self.running = False
+        self.__cfgmgr_ready = None
+        self.__cfgmgr_ready_cond = threading.Condition()
 
-    def cfgmgr_ready(self):
-        pass
+    def cfgmgr_ready(self, ready=True):
+        """Notify that the config manager is either subscribed, or
+           that the msgq is shutting down and it won't connect, but
+           anybody waiting for it should stop anyway.
+
+           The ready parameter signifies if the config manager is subscribed.
+
+           This method can be called multiple times, but second and any
+           following call is simply ignored. This means the "abort" version
+           of the call can be used on any stop unconditionally, even when
+           the config manager already connected.
+        """
+        with self.__cfgmgr_ready_cond:
+            if self.__cfgmgr_ready is not None:
+                # This is a second call to this method. In that case it does
+                # nothing.
+                return
+            self.__cfgmgr_ready = ready
+            self.__cfgmgr_ready_cond.notify_all()
+
+    def wait_cfgmgr(self):
+        """Wait for msgq to subscribe.
+
+           When this returs, the config manager is either subscribed, or
+           msgq gave up waiting for it. Success is signified by the return
+           value.
+        """
+        with self.__cfgmgr_ready_cond:
+            # Wait until it either aborts or subscribes
+            while self.__cfgmgr_ready is None:
+                self.__cfgmgr_ready_cond.wait()
+            return self.__cfgmgr_ready
 
     def setup_poller(self):
         """Set up the poll thing.  Internal function."""
@@ -575,6 +607,9 @@ class MsgQ:
         # Signal it should terminate.
         self.__control_sock.close()
         self.__control_sock = None
+        # Abort anything waiting on the condition, just to make sure it's not
+        # blocked forever
+        self.cfgmgr_ready(False)
 
     def cleanup_signalsock(self):
         """Close the signal sockets. We could do it directly in shutdown,
