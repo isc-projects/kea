@@ -23,6 +23,17 @@
 This is a debug message. The message queue has little bit of special handling
 for the configuration manager. This special handling is happening now.
 
+% MSGQ_COMMAND Running command %1 with arguments %2
+Debug message. The message queue received a command and it is running it.
+
+% MSGQ_COMMAND_UNKNOWN Unknown command '%1'
+The message queue received a command from other module, but it doesn't
+recognize it. This is probably either a coding error or inconsistency between
+the message queue version and version of the module.
+
+% MSGQ_CONFIG_DATA Received configuration for the msgq: %1
+Debug message. The message queue received a configuration, handling it.
+
 % MSGQ_HDR_DECODE_ERR Error decoding header received from socket %1: %2
 The socket with mentioned file descriptor sent a packet. However, it was not
 possible to decode the routing header of the packet. The packet is ignored.

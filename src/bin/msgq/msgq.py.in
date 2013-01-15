@@ -657,22 +657,29 @@ class MsgQ:
         """The configuration handler (run in a separate thread).
            Not tested, currently effectively empty.
         """
+        config_logger.debug(TRACE_DETAIL, MSGQ_CONFIG_DATA, new_config)
+
         with self.__lock:
             if not self.running:
                 return
 
             # TODO: Any config handlig goes here.
+
             return isc.config.create_answer(0)
 
     def command_handler(self, command, args):
         """The command handler (run in a separate thread).
            Not tested, currently effectively empty.
         """
+        config_logger.debug(TRACE_DETAIL, MSGQ_COMMAND, command, args)
+
         with self.__lock:
             if not self.running:
                 return
 
             # TODO: Any commands go here
+
+            config_logger.error(MSGQ_COMMAND_UNKNOWN, command)
             return isc.config.create_answer(1, 'unknown command: ' + command)
 
 def signal_handler(msgq, signal, frame):
