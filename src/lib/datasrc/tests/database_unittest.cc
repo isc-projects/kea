@@ -4234,12 +4234,11 @@ TYPED_TEST(RRsetCollectionTest, find) {
                                   this->qclass_, RRType::AAAA());
     EXPECT_FALSE(rrset);
 
-    // TODO: "below.dname.example.org." with type A does not return the
-    // record (see top of file). It needs to be checked if this is what
-    // we want.
+    // "below.dname.example.org." with type A does not return the record
+    // (see top of file). See \c isc::datasrc::RRsetCollectionBase::find()
+    // documentation for details.
     rrset = this->collection.find(Name("below.dname.example.org"),
                                   this->qclass_, RRType::A());
-    // Is this correct behavior?
     EXPECT_FALSE(rrset);
 
     // With the FIND_GLUE_OK option passed to ZoneFinder's find(),
