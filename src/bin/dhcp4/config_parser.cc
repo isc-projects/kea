@@ -1619,7 +1619,7 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
 }
 
 isc::data::ConstElementPtr
-configureDhcp4Server(Dhcpv4Srv& , ConstElementPtr config_set) {
+configureDhcp4Server(Dhcpv4Srv&, ConstElementPtr config_set) {
     if (!config_set) {
         ConstElementPtr answer = isc::config::createAnswer(1,
                                  string("Can't parse NULL config"));
