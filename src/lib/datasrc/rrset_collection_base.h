@@ -56,6 +56,10 @@ public:
     /// given \c name, \c rrclass and \c rrtype.  If no matching RRset
     /// is found, \c NULL is returned.
     ///
+    /// Note that not all records added through the updater may
+    /// necessarily be found by this method, such as RRs subject to
+    /// DNAME substitution.
+    ///
     /// \throw isc::dns::RRsetCollectionError if \c find() results in
     /// some underlying datasrc error, or if \c disable() was called.
     ///
