@@ -25,6 +25,23 @@
 namespace isc {
 namespace dhcp {
 
+/// Forward declaration of OptionIntArray.
+template<typename T>
+class OptionIntArray;
+
+/// @defgroup option_int_array_defs Typedefs for OptionIntArray class.
+///
+/// @brief Classes that represent options comprising array of integers.
+///
+/// @{
+typedef OptionIntArray<uint8_t> OptionUint8Array;
+typedef boost::shared_ptr<OptionUint8Array> OptionUint8ArrayPtr;
+typedef OptionIntArray<uint16_t> OptionUint16Array;
+typedef boost::shared_ptr<OptionUint16Array> OptionUint16ArrayPtr;
+typedef OptionIntArray<uint32_t> OptionUint32Array;
+typedef boost::shared_ptr<OptionUint32Array> OptionUint32ArrayPtr;
+/// @}
+
 /// This template class represents DHCP (v4 or v6) option with an
 /// array of integer values. The type of the elements in the array
 /// can be any of the following:
