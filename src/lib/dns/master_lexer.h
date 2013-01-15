@@ -401,6 +401,22 @@ public:
     /// The behavior of the lexer is undefined if the caller builds or adds
     /// data in \c input after pushing it.
     ///
+    /// Except for rare case system errors such as memory allocation failure,
+    /// this method is generally expected to be exception free.  However,
+    /// it can still throw if it encounters an unexpected failure when it
+    /// tries to identify the "size" of the input source (see
+    /// \c getTotalSourceSize()).  It's an unexpected result unless the
+    /// caller intentionally passes a broken stream; otherwise it would mean
+    /// some system-dependent unexpected behavior or possibly an internal bug.
+    /// In these cases it throws an \c Unexpected exception.  Note that
+    /// this version of the method doesn't return a boolean unlike the
+    /// other version that takes a file name; since this failure is really
+    /// unexpected and can be critical, it doesn't make sense to give the
+    /// caller an option to continue (other than by explicitly catching the
+    /// exception).
+    ///
+    /// \throw Unexpected An unexpected failure happens in initialization.
+    ///
     /// \param input An input stream object that produces textual
     /// representation of DNS RRs.
     void pushSource(std::istream& input);
