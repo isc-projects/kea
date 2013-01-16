@@ -144,7 +144,13 @@ MasterLexer::pushSource(const char* filename, std::string* error) {
 
 void
 MasterLexer::pushSource(std::istream& input) {
-    impl_->sources_.push_back(InputSourcePtr(new InputSource(input)));
+    try {
+        impl_->sources_.push_back(InputSourcePtr(new InputSource(input)));
+    } catch (const InputSource::OpenError& ex) {
+        // Convert the "internal" exception to public one.
+        isc_throw(Unexpected, "Failed to push a stream to lexer: " <<
+                  ex.what());
+    }
     impl_->source_ = impl_->sources_.back().get();
     impl_->has_previous_ = false;
     impl_->last_was_eol_ = true;
