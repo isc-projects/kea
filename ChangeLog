@@ -1,3 +1,8 @@
+547.	[func]*		vorner
+	The b10-loadzone now performs more thorough sanity check on the
+	loaded data.  Some of the checks are now fatal and zone failing
+	them will be rejected.
+
 546.	[func]		marcin
 	DHCP option definitions can be now created using the
 	Configuration Manager. The option definition specifies
