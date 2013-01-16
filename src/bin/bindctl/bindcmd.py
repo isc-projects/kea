@@ -39,6 +39,7 @@ import csv
 import pwd
 import getpass
 import copy
+import errno
 
 try:
     from collections import OrderedDict
@@ -207,6 +208,18 @@ WARNING: Python readline module isn't available, so the command line editor
 
         return True
 
+    def __try_login(self, username, password):
+        param = {'username': username, 'password' : password}
+        try:
+            return self.send_POST('/login', param)
+        except socket.error as err:
+            print("Socket error while sending login information: ", err)
+            if err.errno == errno.ECONNRESET:
+                print("Please check the logs of b10-cmdctl, there may be a "
+                      "problem accepting SSL connections, such as a "
+                      "permission problem on the server certificate file.")
+            raise FailToLogin()
+
     def login_to_cmdctl(self):
         '''Login to cmdctl with the username and password given by
         the user. After the login is sucessful, the username and
@@ -217,14 +230,8 @@ WARNING: Python readline module isn't available, so the command line editor
         # Look at existing username/password combinations and try to log in
         users = self._get_saved_user_info(self.csv_file_dir, CSV_FILE_NAME)
         for row in users:
-            param = {'username': row[0], 'password' : row[1]}
-            try:
-                response = self.send_POST('/login', param)
-                data = response.read().decode()
-            except socket.error as err:
-                print("Socket error while sending login information:", err)
-                raise FailToLogin()
-
+            response = self.__try_login(row[0], row[1])
+            data = response.read().decode()
             if response.status == http.client.OK:
                 # Is interactive?
                 if sys.stdin.isatty():
@@ -244,14 +251,10 @@ WARNING: Python readline module isn't available, so the command line editor
 
             username = input("Username: ")
             passwd = getpass.getpass()
-            param = {'username': username, 'password' : passwd}
-            try:
-                response = self.send_POST('/login', param)
-                data = response.read().decode()
-                print(data)
-            except socket.error as err:
-                print("Socket error while sending login information:", err)
-                raise FailToLogin()
+
+            response = self.__try_login(username, passwd)
+            data = response.read().decode()
+            print(data)
 
             if response.status == http.client.OK:
                 self._save_user_info(username, passwd, self.csv_file_dir,
