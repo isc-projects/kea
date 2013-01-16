@@ -82,6 +82,25 @@ SPECFILE_LOCATION = SPECFILE_PATH + os.sep + "cmdctl.spec"
 class CmdctlException(Exception):
     pass
 
+class CmdctlFatalException(Exception):
+    """
+    Exception for fatal errors, which should not be caught anywhere but on
+    the highest level.
+    """
+    pass
+
+def check_file(file_name):
+    # TODO: Check contents of certificate file
+    if not os.path.exists(file_name):
+        raise CmdctlException("'%s' does not exist" % file_name)
+
+    if not os.path.isfile(file_name):
+        raise CmdctlException("'%s' is not a file" % file_name)
+
+    if not os.access(file_name, os.R_OK):
+        raise CmdctlException("'%s' is not readable" % file_name)
+
+
 class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     '''https connection request handler.
     Currently only GET and POST are supported.  '''
@@ -152,7 +171,6 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(rcode)
         self.end_headers()
         self.wfile.write(json.dumps(reply).encode())
-
 
     def _handle_login(self):
         if self._is_user_logged_in():
@@ -282,8 +300,10 @@ class CommandControl():
                 # further check need to be done: eg. whether
                 # the private/certificate is valid.
                 path = new_config[key]
-                if not os.path.exists(path):
-                    errstr = "the file doesn't exist: " + path
+                try:
+                    check_file(path)
+                except CmdctlException as cce:
+                    errstr = str(cce)
             elif key == 'accounts_file':
                 errstr = self._accounts_file_check(new_config[key])
             else:
@@ -524,12 +544,8 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
         self.user_sessions[session_id] = time.time()
 
     def _check_key_and_cert(self, key, cert):
-        # TODO, check the content of key/certificate file
-        if not os.path.exists(key):
-            raise CmdctlException("key file '%s' doesn't exist " % key)
-
-        if not os.path.exists(cert):
-            raise CmdctlException("certificate file '%s' doesn't exist " % cert)
+        check_file(key)
+        check_file(cert);
 
     def _wrap_socket_in_ssl_context(self, sock, key, cert):
         try:
@@ -540,11 +556,14 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
                                       keyfile = key,
                                       ssl_version = ssl.PROTOCOL_SSLv23)
             return ssl_sock
-        except (ssl.SSLError, CmdctlException) as err :
+        except ssl.SSLError as err :
             logger.error(CMDCTL_SSL_SETUP_FAILURE_USER_DENIED, err)
             self.close_request(sock)
             # raise socket error to finish the request
             raise socket.error
+        except CmdctlException as cce:
+            logger.fatal(CMDCTL_SSL_SETUP_FAILURE_READING_CERT, cce)
+            raise CmdctlFatalException("Unable to accept SSL connections")
 
     def get_request(self):
         '''Get client request socket and wrap it in SSL context. '''
@@ -633,6 +652,8 @@ if __name__ == '__main__':
         logger.info(CMDCTL_STOPPED_BY_KEYBOARD)
     except CmdctlException as err:
         logger.fatal(CMDCTL_UNCAUGHT_EXCEPTION, err);
+    except CmdctlFatalException as fe:
+        logger.fatal(CMDCTL_FATAL_EXCEPTION, fe)
 
     if httpd:
         httpd.shutdown()
