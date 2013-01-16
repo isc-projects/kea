@@ -70,8 +70,13 @@ RRsetCollectionBase_init(PyObject*, PyObject*, PyObject*) {
 void
 RRsetCollectionBase_destroy(PyObject* po_self) {
     s_RRsetCollection* self = static_cast<s_RRsetCollection*>(po_self);
-    delete self->cppobj;
-    self->cppobj = NULL;
+
+    // Any C++-wrapper of derived RRsetCollection class should have its own
+    // destroy function (as it may manage cppobj in its own way);
+    // Python-only derived classes shouldn't set cppobj (which is
+    // 0-initialized).  So this assertion must hold.
+    assert(self->cppobj == NULL);
+
     Py_TYPE(self)->tp_free(self);
 }
 
