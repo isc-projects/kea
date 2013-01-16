@@ -27,4 +27,4 @@ cp -f $IXFR_TOP/db.example.n4 ns1/db.example
 
 # Set up the IXFR client - load the same version of the zone.
 cp -f $IXFR_TOP/b10-config.db nsx2/b10-config.db
-${B10_LOADZONE} -o . -d $IXFR_TOP/zone.sqlite3 $IXFR_TOP/db.example.n4
+${B10_LOADZONE} -c "{\"database_file\": \"$IXFR_TOP/zone.sqlite3\"}" example. $IXFR_TOP/db.example.n4

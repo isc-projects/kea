@@ -59,7 +59,7 @@ RRClassTest::rrclassFactoryFromWire(const char* datafile) {
     return (RRClass(buffer));
 }
 
-TEST_F(RRClassTest, fromText) {
+TEST_F(RRClassTest, fromTextConstructor) {
     EXPECT_EQ("IN", RRClass("IN").toText());
     EXPECT_EQ("CH", RRClass("CH").toText());
 
@@ -94,6 +94,14 @@ TEST_F(RRClassTest, caseConstruct) {
 TEST_F(RRClassTest, toText) {
     EXPECT_EQ("IN", RRClass(1).toText());
     EXPECT_EQ("CLASS65000", RRClass(65000).toText());
+}
+
+TEST_F(RRClassTest, createFromText) {
+    const MaybeRRClass rrclass("IN");
+    EXPECT_TRUE(rrclass);
+    EXPECT_EQ("IN", rrclass->toText());
+    EXPECT_TRUE(RRClass::createFromText("CH"));
+    EXPECT_FALSE(RRClass::createFromText("ZZ"));
 }
 
 TEST_F(RRClassTest, toWireBuffer) {

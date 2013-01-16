@@ -12,6 +12,7 @@ PYTESTS += rrclass_python_test.py
 PYTESTS += rrset_python_test.py
 PYTESTS += rrttl_python_test.py
 PYTESTS += rrtype_python_test.py
+PYTESTS += rrset_collection_python_test.py
 PYTESTS += serial_python_test.py
 PYTESTS += tsig_python_test.py
 PYTESTS += tsig_rdata_python_test.py
