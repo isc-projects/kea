@@ -17,6 +17,9 @@
 
 #include <string>
 
+#include <boost/scoped_ptr.hpp>
+#include <boost/noncopyable.hpp>
+
 #include <dns/name.h>
 #include <dns/rdata.h>
 #include <util/buffer.h>
@@ -27,6 +30,8 @@
 // END_COMMON_DECLARATIONS
 
 // BEGIN_RDATA_NAMESPACE
+
+class HINFOImpl;
 
 /// \brief \c HINFO class represents the HINFO rdata defined in
 /// RFC1034, RFC1035
@@ -40,38 +45,21 @@ public:
     // END_COMMON_MEMBERS
 
     // HINFO specific methods
-    const std::string& getCPU() const;
-    const std::string& getOS() const;
+    ~HINFO();
+
+    HINFO& operator=(const HINFO&);
+
+    const std::string getCPU() const;
+    const std::string getOS() const;
 
 private:
-    /// Skip the left whitespaces of the input string
-    ///
-    /// If \c optional argument is \c true and no spaces occur at the
-    /// current location, then nothing happens. If \c optional is
-    /// \c false and no spaces occur at the current location, then
-    /// the \c InvalidRdataText exception is thrown.
-    ///
-    /// \param input_str The input string
-    /// \param input_iterator From which the skipping started
-    /// \param optional If true, the spaces are optionally skipped.
-    void skipLeftSpaces(const std::string& input_str,
-                        std::string::const_iterator& input_iterator,
-                        bool optional);
-
     /// Helper template function for toWire()
     ///
     /// \param outputer Where to write data in
     template <typename T>
-    void toWireHelper(T& outputer) const {
-        outputer.writeUint8(cpu_.size());
-        outputer.writeData(cpu_.c_str(), cpu_.size());
+    void toWireHelper(T& outputer) const;
 
-        outputer.writeUint8(os_.size());
-        outputer.writeData(os_.c_str(), os_.size());
-    }
-
-    std::string cpu_;
-    std::string os_;
+    boost::scoped_ptr<HINFOImpl> impl_;
 };
 
 

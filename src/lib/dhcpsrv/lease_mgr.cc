@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -32,19 +32,32 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
+Lease::Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
+             uint32_t valid_lft, SubnetID subnet_id, time_t cltt)
+    :addr_(addr), t1_(t1), t2_(t2), valid_lft_(valid_lft), cltt_(cltt),
+     subnet_id_(subnet_id), fixed_(false), fqdn_fwd_(false), fqdn_rev_(false) {
+}
+
 Lease6::Lease6(LeaseType type, const isc::asiolink::IOAddress& addr,
                DuidPtr duid, uint32_t iaid, uint32_t preferred, uint32_t valid,
                uint32_t t1, uint32_t t2, SubnetID subnet_id, uint8_t prefixlen)
-    : addr_(addr), type_(type), prefixlen_(prefixlen), iaid_(iaid), duid_(duid),
-      preferred_lft_(preferred), valid_lft_(valid), t1_(t1), t2_(t2),
-      subnet_id_(subnet_id), fixed_(false), fqdn_fwd_(false),
-      fqdn_rev_(false) {
+    : Lease(addr, t1, t2, valid, subnet_id, 0/*cltt*/),
+      type_(type), prefixlen_(prefixlen), iaid_(iaid), duid_(duid),
+      preferred_lft_(preferred) {
     if (!duid) {
         isc_throw(InvalidOperation, "DUID must be specified for a lease");
     }
 
     cltt_ = time(NULL);
 }
+
+bool Lease::expired() const {
+
+    // Let's use int64 to avoid problems with negative/large uint32 values
+    int64_t expire_time = cltt_ + valid_lft_;
+    return (expire_time < time(NULL));
+}
+
 
 std::string LeaseMgr::getParameter(const std::string& name) const {
     ParameterMap::const_iterator param = parameters_.find(name);
@@ -55,7 +68,7 @@ std::string LeaseMgr::getParameter(const std::string& name) const {
 }
 
 std::string
-Lease6::toText() {
+Lease6::toText() const {
     ostringstream stream;
 
     stream << "Type:          " << static_cast<int>(type_) << " (";
@@ -82,6 +95,21 @@ Lease6::toText() {
 
     return (stream.str());
 }
+
+std::string
+Lease4::toText() const {
+    ostringstream stream;
+
+    stream << "Address:       " << addr_.toText() << "\n"
+           << "Valid life:    " << valid_lft_ << "\n"
+           << "T1:            " << t1_ << "\n"
+           << "T2:            " << t2_ << "\n"
+           << "Cltt:          " << cltt_ << "\n"
+           << "Subnet ID:     " << subnet_id_ << "\n";
+
+    return (stream.str());
+}
+
 
 bool
 Lease4::operator==(const Lease4& other) const {

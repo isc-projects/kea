@@ -42,6 +42,7 @@ protected:
     /// used to test the compare() method against a well-known RR type.
     RdataPtr rdata_nomatch;
     MasterLexer lexer;
+    MasterLoaderCallbacks loader_cb;
 };
 
 namespace test {

@@ -40,6 +40,56 @@
         "item_default": 4000
       },
 
+      { "item_name": "option-def",
+        "item_type": "list",
+        "item_optional": false,
+        "item_default": [],
+        "list_item_spec":
+        {
+          "item_name": "single-option-def",
+          "item_type": "map",
+          "item_optional": false,
+          "item_default": {},
+          "map_item_spec": [
+          {
+            "item_name": "name",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": ""
+          },
+
+          { "item_name": "code",
+            "item_type": "integer",
+            "item_optional": false,
+            "item_default": 0,
+          },
+
+          { "item_name": "type",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": "",
+          },
+
+          { "item_name": "array",
+            "item_type": "boolean",
+            "item_optional": false,
+            "item_default": False
+          },
+
+          { "item_name": "record_types",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": "",
+          },
+
+          { "item_name": "space",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": ""
+          } ]
+        }
+      },
+
       { "item_name": "option-data",
         "item_type": "list",
         "item_optional": false,
@@ -67,6 +117,16 @@
             "item_type": "string",
             "item_optional": false,
             "item_default": ""
+          },
+          { "item_name": "csv-format",
+            "item_type": "boolean",
+            "item_optional": false,
+            "item_default": False
+          },
+          { "item_name": "space",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": "dhcp6"
           } ]
         }
       },
@@ -152,6 +212,16 @@
                       "item_type": "string",
                       "item_optional": false,
                       "item_default": ""
+                    },
+                    { "item_name": "csv-format",
+                      "item_type": "boolean",
+                      "item_optional": false,
+                      "item_default": False
+                    },
+                    { "item_name": "space",
+                      "item_type": "string",
+                      "item_optional": false,
+                      "item_default": "dhcp6"
                     } ]
                   }
                 } ]

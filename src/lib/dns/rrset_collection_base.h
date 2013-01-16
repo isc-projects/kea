@@ -96,6 +96,8 @@ protected:
     /// iterator only.
     class Iter {
     public:
+        virtual ~Iter() {};
+
         /// \brief Returns the \c AbstractRRset currently pointed to by
         /// the iterator.
         virtual const isc::dns::AbstractRRset& getValue() = 0;

@@ -119,7 +119,7 @@ private:
                 break;
             }
             string_list_.push_back(std::vector<uint8_t>());
-            strToCharString(token.getStringRegion(), string_list_.back());
+            stringToCharString(token.getStringRegion(), string_list_.back());
         }
 
         // Let upper layer handle eol/eof.
@@ -177,18 +177,14 @@ public:
     toText() const {
         std::string s;
 
-        // XXX: this implementation is not entirely correct.  for example, it
-        // should escape double-quotes if they appear in the character string.
         for (std::vector<std::vector<uint8_t> >::const_iterator it =
-                 string_list_.begin();
-             it != string_list_.end();
-             ++it)
+                 string_list_.begin(); it != string_list_.end(); ++it)
         {
             if (!s.empty()) {
                 s.push_back(' ');
             }
             s.push_back('"');
-            s.insert(s.end(), (*it).begin() + 1, (*it).end());
+            s.append(charStringToString(*it));
             s.push_back('"');
         }
 

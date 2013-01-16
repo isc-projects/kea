@@ -17,6 +17,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
+#include <dhcp/hwaddr.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_mgr.h>
 
@@ -65,8 +66,14 @@ protected:
         /// reserved - AllocEngine will check that and will call pickAddress
         /// again if necessary. The number of times this method is called will
         /// increase as the number of available leases will decrease.
+        ///
+        /// @param subnet next address will be returned from pool of that subnet
+        /// @param duid Client's DUID
+        /// @param hint client's hint
+        ///
+        /// @return the next address
         virtual isc::asiolink::IOAddress
-        pickAddress(const Subnet6Ptr& subnet, const DuidPtr& duid,
+        pickAddress(const SubnetPtr& subnet, const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint) = 0;
 
         /// @brief virtual destructor
@@ -96,7 +103,7 @@ protected:
         /// @param hint client's hint (ignored)
         /// @return the next address
         virtual isc::asiolink::IOAddress
-            pickAddress(const Subnet6Ptr& subnet,
+            pickAddress(const SubnetPtr& subnet,
                         const DuidPtr& duid,
                         const isc::asiolink::IOAddress& hint);
     private:
@@ -125,7 +132,7 @@ protected:
         /// @param duid Client's DUID
         /// @param hint a hint (last address that was picked)
         /// @return selected address
-        virtual isc::asiolink::IOAddress pickAddress(const Subnet6Ptr& subnet,
+        virtual isc::asiolink::IOAddress pickAddress(const SubnetPtr& subnet,
                                                      const DuidPtr& duid,
                                                      const isc::asiolink::IOAddress& hint);
     };
@@ -148,7 +155,7 @@ protected:
         /// @param hint the last address that was picked (ignored)
         /// @return a random address from the pool
         virtual isc::asiolink::IOAddress
-        pickAddress(const Subnet6Ptr& subnet, const DuidPtr& duid,
+        pickAddress(const SubnetPtr& subnet, const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint);
     };
 
@@ -174,6 +181,48 @@ protected:
     ///        we give up (0 means unlimited)
     AllocEngine(AllocType engine_type, unsigned int attempts);
 
+    /// @brief Allocates an IPv4 lease
+    ///
+    /// This method uses currently selected allocator to pick an address from
+    /// specified subnet, creates a lease for that address and then inserts
+    /// it into LeaseMgr (if this allocation is not fake).
+    ///
+    /// @param subnet subnet the allocation should come from
+    /// @param clientid Client identifier
+    /// @param hwaddr client's hardware address info
+    /// @param hint a hint that the client provided
+    /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
+    ///        an address for DISCOVER that is not really allocated (true)
+    /// @return Allocated IPv4 lease (or NULL if allocation failed)
+    Lease4Ptr
+    allocateAddress4(const SubnetPtr& subnet,
+                     const ClientIdPtr& clientid,
+                     const HWAddrPtr& hwaddr,
+                     const isc::asiolink::IOAddress& hint,
+                     bool fake_allocation);
+
+    /// @brief Renews a IPv4 lease
+    ///
+    /// Since both request and renew are implemented in DHCPv4 as the sending of
+    /// a REQUEST packet, it is difficult to easily distinguish between those
+    /// cases. Therefore renew for DHCPv4 is done in the allocation engine.
+    /// This method is also used when client crashed/rebooted and tries
+    /// to get a new lease. It thinks that it gets a new lease, but in fact
+    /// we are only renewing the still valid lease for that client.
+    ///
+    /// @param subnet subnet the client is attached to
+    /// @param clientid client identifier
+    /// @param hwaddr client's hardware address
+    /// @param lease lease to be renewed
+    /// @param renewed lease (typically the same passed as lease parameter)
+    ///        or NULL if the lease cannot be renewed
+    Lease4Ptr
+    renewLease4(const SubnetPtr& subnet,
+                const ClientIdPtr& clientid,
+                const HWAddrPtr& hwaddr,
+                const Lease4Ptr& lease,
+                bool fake_allocation /* = false */);
+
     /// @brief Allocates an IPv6 lease
     ///
     /// This method uses currently selected allocator to pick an address from
@@ -181,7 +230,7 @@ protected:
     /// it into LeaseMgr (if this allocation is not fake).
     ///
     /// @param subnet subnet the allocation should come from
-    /// @param duid Client'd DUID
+    /// @param duid Client's DUID
     /// @param iaid iaid field from the IA_NA container that client sent
     /// @param hint a hint that the client provided
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
@@ -198,6 +247,25 @@ protected:
     virtual ~AllocEngine();
 private:
 
+    /// @brief Creates a lease and inserts it in LeaseMgr if necessary
+    ///
+    /// Creates a lease based on specified parameters and tries to insert it
+    /// into the database. That may fail in some cases, e.g. when there is another
+    /// allocation process and we lost a race to a specific lease.
+    ///
+    /// @param subnet subnet the lease is allocated from
+    /// @param clientid client identifier
+    /// @param hwaddr client's hardware address
+    /// @param addr an address that was selected and is confirmed to be available
+    /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
+    ///        an address for DISCOVER that is not really allocated (true)
+    /// @return allocated lease (or NULL in the unlikely case of the lease just
+    ///        becomed unavailable)
+    Lease4Ptr createLease4(const SubnetPtr& subnet, const DuidPtr& clientid,
+                           const HWAddrPtr& hwaddr,
+                           const isc::asiolink::IOAddress& addr,
+                           bool fake_allocation = false);
+
     /// @brief creates a lease and inserts it in LeaseMgr if necessary
     ///
     /// Creates a lease based on specified parameters and tries to insert it
@@ -212,9 +280,46 @@ private:
     ///        an address for SOLICIT that is not really allocated (true)
     /// @return allocated lease (or NULL in the unlikely case of the lease just
     ///        becomed unavailable)
-    Lease6Ptr createLease(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                          uint32_t iaid, const isc::asiolink::IOAddress& addr,
-                          bool fake_allocation = false);
+    Lease6Ptr createLease6(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                           uint32_t iaid, const isc::asiolink::IOAddress& addr,
+                           bool fake_allocation = false);
+
+    /// @brief Reuses expired IPv4 lease
+    ///
+    /// Updates existing expired lease with new information. Lease database
+    /// is updated if this is real (i.e. REQUEST, fake_allocation = false), not
+    /// dummy allocation request (i.e. DISCOVER, fake_allocation = true).
+    ///
+    /// @param expired old, expired lease
+    /// @param subnet subnet the lease is allocated from
+    /// @param clientid client identifier
+    /// @param hwaddr client's hardware address
+    /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
+    ///        an address for DISCOVER that is not really allocated (true)
+    /// @return refreshed lease
+    /// @throw BadValue if trying to recycle lease that is still valid
+    Lease4Ptr reuseExpiredLease(Lease4Ptr& expired, const SubnetPtr& subnet,
+                                const ClientIdPtr& clientid,
+                                const HWAddrPtr& hwaddr,
+                                bool fake_allocation = false);
+
+    /// @brief Reuses expired IPv6 lease
+    ///
+    /// Updates existing expired lease with new information. Lease database
+    /// is updated if this is real (i.e. REQUEST, fake_allocation = false), not
+    /// dummy allocation request (i.e. SOLICIT, fake_allocation = true).
+    ///
+    /// @param expired old, expired lease
+    /// @param subnet subnet the lease is allocated from
+    /// @param duid client's DUID
+    /// @param iaid IAID from the IA_NA container the client sent to us
+    /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
+    ///        an address for SOLICIT that is not really allocated (true)
+    /// @return refreshed lease
+    /// @throw BadValue if trying to recycle lease that is still valid
+    Lease6Ptr reuseExpiredLease(Lease6Ptr& expired, const Subnet6Ptr& subnet,
+                                const DuidPtr& duid, uint32_t iaid,
+                                bool fake_allocation = false);
 
     /// @brief a pointer to currently used allocator
     boost::shared_ptr<Allocator> allocator_;

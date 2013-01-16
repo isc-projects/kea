@@ -1,3 +1,130 @@
+546.	[func]		marcin
+	DHCP option definitions can be now created using the
+	Configuration Manager. The option definition specifies
+	the option code, name and the types of the data being
+	carried by the option.  The Configuration Manager
+	reports an error on attempt to override standard DHCP
+	option definition.
+	(Trac #2317, git 71e25eb81e58a695cf3bad465c4254b13a50696e)
+
+545.	[func]		jinmei
+	libdns++: the SOA Rdata class now uses the generic lexer in
+	constructors from text.  This means that the MNAME and RNAME of an
+	SOA RR in a zone file can now be non absolute (the origin name
+	in that context will be used), e.g., when loaded by b10-loadzone.
+	(Trac #2500, git 019ca218027a218921519f205139b96025df2bb5)
+
+544.	[func]		tomek
+	b10-dhcp4: Allocation engine support for IPv4 added. Currently
+	supported operations are server selection (Discover/Offer),
+	address assignment (Request/Ack), address renewal (Request/Ack),
+	and address release (Release). Expired leases can be reused.
+	Some options (e.g. Router Option) are still hardcoded, so the
+	DHCPv4 server is not yet usable, although its address allocation
+	is operational.
+	(Trac #2320, git 60606cabb1c9584700b1f642bf2af21a35c64573)
+
+543.	[func]*		jelte
+	When calling getFullConfig() as a module, , the configuration is now
+	returned as properly-structured JSON.  Previously, the structure had
+	been flattened, with all data being labelled by fully-qualified element
+	names.
+	(Trac #2619, git bed3c88c25ea8f7e951317775e99ebce3340ca22)
+
+542.	[func]		marcin
+	Created OptionSpace and OptionSpace6 classes to represent DHCP
+	option spaces. The option spaces are used to group instances
+	and definitions of options having uniqe codes. A special type
+	of option space is the so-called "vendor specific option space"
+	which groups sub-options sent within Vendor Encapsulated Options.
+	The new classes are not used yet but they will be used once
+	the creation of option spaces by configuration manager is
+	implemented.
+	(Trac #2313, git 37a27e19be874725ea3d560065e5591a845daa89)
+
+541.	[func]		marcin
+	Added routines to search for configured DHCP options and their
+	definitions using name of the option space they belong to.
+	New routines are called internally from the DHCPv4 and DHCPv6
+	servers code.
+	(Trac #2315, git 741fe7bc96c70df35d9a79016b0aa1488e9b3ac8)
+
+540.	[func]		marcin
+	DHCP Option values can be now specified using a string of
+	tokens separated with comma sign. Subsequent tokens are used
+	to set values for corresponding data fields in a particular
+	DHCP option. The format of the token matches the data type
+	of the corresponding option field: e.g. "192.168.2.1" for IPv4
+	address, "5" for integer value etc.
+	(Trac #2545, git 792c129a0785c73dd28fd96a8f1439fe6534a3f1)
+
+539.	[func]		stephen
+	Add logging to the DHCP server library.
+	(Trac #2524, git b55b8b6686cc80eed41793c53d1779f4de3e9e3c)
+
+538.	[bug]		muks
+	Added escaping of special characters (double-quotes, semicolon,
+	backslash, etc.) in text-like RRType's toText() implementation.
+	Without this change, some TXT and SPF RDATA were incorrectly
+	stored in SQLite3 datasource as they were not escaped.
+	(Trac #2535, git f516fc484544b7e08475947d6945bc87636d4115)
+
+537.	[func]		tomek
+	b10-dhcp6: Support for RELEASE message has been added. Clients
+	are now able to release their non-temporary IPv6 addresses.
+	(Trac #2326, git 0974318566abe08d0702ddd185156842c6642424)
+
+536.	[build]		jinmei
+	Detect a build issue on FreeBSD with g++ 4.2 and Boost installed via
+	FreeBSD ports at ./configure time.  This seems to be a bug of
+	FreeBSD	ports setup and has been reported to the maintainer:
+	http://www.freebsd.org/cgi/query-pr.cgi?pr=174753
+	Until it's fixed, you need to build BIND 10 for FreeBSD that has
+	this problem with specifying --without-werror, with clang++
+	(development version), or with manually extracted Boost header
+	files (no compiled Boost library is necessary).
+	(Trac #1991, git 6b045bcd1f9613e3835551cdebd2616ea8319a36)
+
+535.	[bug]		jelte
+	The log4cplus internal logging mechanism has been disabled, and no
+	output from the log4cplus library itself should be printed to
+	stderr anymore. This output can be enabled by using the
+	compile-time option --enable-debug.
+	(Trac #1081, git db55f102b30e76b72b134cbd77bd183cd01f95c0)
+
+534.	[func]*			vorner
+	The b10-msgq now uses the same logging format as the rest
+	of the system. However, it still doesn't obey the common
+	configuration, as due to technical issues it is not able
+	to read it yet.
+	(git 9e6e821c0a33aab0cd0e70e51059d9a2761f76bb)
+
+bind10-1.0.0-beta released on December 20, 2012
+
+533.	[build]*		jreed
+	Changed the package name in configure.ac from bind10-devel
+	to bind10. This means the default sub-directories for
+	etc, include, libexec, share, share/doc, and var are changed.
+	If upgrading from a previous version, you may need to move
+	and update your configurations or change references for the
+	old locations.
+	(git bf53fbd4e92ae835280d49fbfdeeebd33e0ce3f2)
+
+532.	[func]		marcin
+	Implemented configuration of DHCPv4 option values using
+	the configuration manager. In order to set values for the
+	data fields carried by a particular option, the user
+	specifies a string of hexadecimal digits that is converted
+	to binary data and stored in the option buffer. A more
+	user-friendly way of specifying option content is planned.
+	(Trac #2544, git fed1aab5a0f813c41637807f8c0c5f8830d71942)
+
+531.	[func]		tomek
+	b10-dhcp6: Added support for expired leases. Leases for IPv6
+	addresses that are past their valid lifetime may be recycled, i.e.
+	rellocated to other clients if needed.
+	(Trac #2327, git 62a23854f619349d319d02c3a385d9bc55442d5e)
+
 530.	[func]*		team
 	b10-loadzone was fully overhauled.  It now uses C++-based zone
 	parser and loader library, performing stricter checks, having
@@ -13,16 +140,17 @@
 	(Trac #2380, git 689b015753a9e219bc90af0a0b818ada26cc5968)
 
 529.	[func]*		team
-	The in-memory data source now uses a more complete master file
-	parser to load textual zone files.  As of this change it supports
-	multi-line RR representation and more complete support for escaped
-	and quoted strings.  It also produces more helpful log when there
-	is an error in the zone file.  It will be enhanced as more
-	specific tasks in the #2368 meta ticket are completed.  The new
-	parser is generally upper compatible to the previous one, but due
-	to the tighter checks some input that has been accepted so far
-	could now be rejected, so it's advisable to check if you use
-	textual zone files directly loaded to memory.
+	The in-memory data source now uses a more complete master
+	file parser to load textual zone files.  As of this change
+	it supports multi-line RR representation and more complete
+	support for escaped and quoted strings.  It also produces
+	more helpful log messages when there is an error in the zone
+	file.  It will be enhanced as more specific tasks in the
+	#2368 meta ticket are completed.  The new parser is generally
+	backward compatible to the previous one, but due to the
+	tighter checks some input that has been accepted so far
+	could now be rejected, so it's advisable to check if you
+	use textual zone files directly loaded to memory.
 	(Trac #2470, git c4cf36691115c15440b65cac16f1c7fcccc69521)
 
 528.	[func]		marcin

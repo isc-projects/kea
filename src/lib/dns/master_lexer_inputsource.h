@@ -65,12 +65,16 @@ public:
 
     /// \brief Constructor which takes an input stream. The stream is
     /// read-from, but it is not closed.
+    ///
+    /// \throws OpenError If the data size of the input stream cannot be
+    /// detected.
     explicit InputSource(std::istream& input_stream);
 
     /// \brief Constructor which takes a filename to read from. The
     /// associated file stream is managed internally.
     ///
-    /// \throws OpenError when opening the input file fails.
+    /// \throws OpenError when opening the input file fails or the size of
+    /// the file cannot be detected.
     explicit InputSource(const char* filename);
 
     /// \brief Destructor
@@ -82,6 +86,34 @@ public:
     const std::string& getName() const {
         return (name_);
     }
+
+    /// \brief Returns the size of the input source in bytes.
+    ///
+    /// If the size is unknown, it returns \c MasterLexer::SOURCE_SIZE_UNKNOWN.
+    ///
+    /// See \c MasterLexer::getTotalSourceSize() for the definition of
+    /// the size of sources and for when the size can be unknown.
+    ///
+    /// \throw None
+    size_t getSize() const { return (input_size_); }
+
+    /// \brief Returns the current read position in the input source.
+    ///
+    /// This method returns the position of the character that was last
+    /// retrieved from the source.  Unless some characters have been
+    /// "ungotten" by \c ungetChar() or \c ungetAll(), this value is equal
+    /// to the number of calls to \c getChar() until it reaches the
+    /// END_OF_STREAM.  Note that the position of the first character in
+    /// the source is 1.  At the point of the last character, the return value
+    /// of this method should be equal to that of \c getSize(), and
+    /// recognizing END_OF_STREAM doesn't increase the position.
+    ///
+    /// If \c ungetChar() or \c ungetAll() is called, the position is
+    /// decreased by the number of "ungotten" characters.  So the return
+    /// values may not always monotonically increase.
+    ///
+    /// \throw None
+    size_t getPosition() const { return (total_pos_); }
 
     /// \brief Returns if the input source is at end of file.
     bool atEOF() const {
@@ -142,10 +174,12 @@ private:
 
     std::vector<char> buffer_;
     size_t buffer_pos_;
+    size_t total_pos_;
 
     const std::string name_;
     std::ifstream file_stream_;
     std::istream& input_;
+    const size_t input_size_;
 };
 
 } // namespace master_lexer_internal

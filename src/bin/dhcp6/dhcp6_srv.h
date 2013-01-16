@@ -31,22 +31,6 @@
 namespace isc {
 namespace dhcp {
 
-/// An exception that is thrown if a DHCPv6 protocol violation occurs while
-/// processing a message (e.g. a mandatory option is missing)
-class RFCViolation : public isc::Exception {
-public:
-
-/// @brief constructor
-///
-/// @param file name of the file, where exception occurred
-/// @param line line of the file, where exception occurred
-/// @param what text description of the issue that caused exception
-RFCViolation(const char* file, size_t line, const char* what) :
-    isc::Exception(file, line, what) {}
-};
-
-
-
 /// @brief DHCPv6 server service.
 ///
 /// This class represents DHCPv6 server. It contains all
@@ -83,7 +67,7 @@ public:
     /// @param dbconfig Lease manager configuration string.  The default
     ///        of the "memfile" manager is used for testing.
     Dhcpv6Srv(uint16_t port = DHCP6_SERVER_PORT,
-            const char* dbconfig = "type=memfile");
+              const char* dbconfig = "type=memfile");
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();
@@ -212,16 +196,38 @@ protected:
 
     /// @brief Renews specific IA_NA option
     ///
-    /// Generates response to IA_NA. This typically includes finding a lease that
-    /// corresponds to the received address. If no such lease is found, an IA_NA
-    /// response is generated with an appropriate status code.
+    /// Generates response to IA_NA in Renew. This typically includes finding a
+    /// lease that corresponds to the received address. If no such lease is
+    /// found, an IA_NA response is generated with an appropriate status code.
     ///
     /// @param subnet subnet the sender belongs to
     /// @param duid client's duid
     /// @param question client's message
     /// @param ia IA_NA option that is being renewed
+    /// @return IA_NA option (server's response)
     OptionPtr renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
                          Pkt6Ptr question, boost::shared_ptr<Option6IA> ia);
+
+    /// @brief Releases specific IA_NA option
+    ///
+    /// Generates response to IA_NA in Release message. This covers finding and
+    /// removal of a lease that corresponds to the received address. If no such
+    /// lease is found, an IA_NA response is generated with an appropriate
+    /// status code.
+    ///
+    /// As RFC 3315 requires that a single status code be sent for the whole message,
+    /// this method may update the passed general_status: it is set to SUCCESS when
+    /// message processing begins, but may be updated to some error code if the
+    /// release process fails.
+    ///
+    /// @param duid client's duid
+    /// @param question client's message
+    /// @param general_status a global status (it may be updated in case of errors)
+    /// @param ia IA_NA option that is being renewed
+    /// @return IA_NA option (server's response)
+    OptionPtr releaseIA_NA(const DuidPtr& duid, Pkt6Ptr question,
+                           int& general_status,
+                           boost::shared_ptr<Option6IA> ia);
 
     /// @brief Copies required options from client message to server answer.
     ///
@@ -271,6 +277,17 @@ protected:
     /// @param reply server's response
     void renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply);
 
+    /// @brief Attempts to release received addresses
+    ///
+    /// It iterates through received IA_NA options and attempts to release
+    /// received addresses. If no such leases are found, or the lease fails
+    /// proper checks (e.g. belongs to someone else), a proper status
+    /// code is added to reply message. Released addresses are not added
+    /// to REPLY packet, just its IA_NA containers.
+    /// @param release client's message asking to release
+    /// @param reply server's response
+    void releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply);
+
     /// @brief Sets server-identifier.
     ///
     /// This method attempts to set server-identifier DUID. It loads it
@@ -291,7 +308,7 @@ private:
     boost::shared_ptr<AllocEngine> alloc_engine_;
 
     /// Server DUID (to be sent in server-identifier option)
-    boost::shared_ptr<isc::dhcp::Option> serverid_;
+    OptionPtr serverid_;
 
     /// Indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
