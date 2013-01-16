@@ -27,6 +27,8 @@
 #include <gtest/gtest.h>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/foreach.hpp>
 #include <string>
 #include <vector>
 
@@ -34,6 +36,7 @@ using isc::dns::RRClass;
 using isc::dns::Name;
 using isc::dns::RRType;
 using isc::dns::ConstRRsetPtr;
+using isc::dns::RRsetPtr;
 using std::string;
 using std::vector;
 using boost::shared_ptr;
@@ -64,15 +67,34 @@ public:
     // since many client methods are const, but we still want to know they
     // were called.
     mutable vector<Name> provided_updaters_;
-    // We store string representations of the RRsets. This is simpler than
-    // copying them and we can't really put them into shared pointers, because
-    // we get them as references.
-    vector<string> rrsets_;
+    vector<RRsetPtr> rrsets_;
+    // List of rrsets as texts, for easier manipulation
+    vector<string> rrset_texts_;
     bool commit_called_;
     // If set to true, getUpdater returns NULL
     bool missing_zone_;
     // The pretended class of the client. Usualy IN, but can be overriden.
     RRClass rrclass_;
+};
+
+// Test implementation of RRsetCollectionBase.
+class TestRRsetCollection : public isc::datasrc::RRsetCollectionBase {
+public:
+    TestRRsetCollection(ZoneUpdater& updater,
+                        const isc::dns::RRClass& rrclass) :
+        isc::datasrc::RRsetCollectionBase(updater, rrclass)
+    {}
+
+    virtual ~TestRRsetCollection() {}
+
+protected:
+    virtual RRsetCollectionBase::IterPtr getBeginning() {
+        isc_throw(isc::NotImplemented, "This method is not implemented.");
+    }
+
+    virtual RRsetCollectionBase::IterPtr getEnd() {
+        isc_throw(isc::NotImplemented, "This method is not implemented.");
+    }
 };
 
 // The updater isn't really correct according to the API. For example,
@@ -82,21 +104,36 @@ public:
 // and this way, it is much simpler.
 class Updater : public ZoneUpdater {
 public:
-    Updater(MockClient* client) :
+    Updater(MockClient* client, const Name& name) :
         client_(client),
-        finder_(client_->rrclass_)
+        finder_(client_->rrclass_, name, client_->rrsets_)
     {}
     virtual ZoneFinder& getFinder() {
         return (finder_);
     }
     virtual isc::datasrc::RRsetCollectionBase& getRRsetCollection() {
-        isc_throw(isc::NotImplemented, "Method not used in tests");
+        if (!rrset_collection_) {
+            rrset_collection_.reset(new TestRRsetCollection(*this,
+                                                            client_->rrclass_));
+        }
+        return (*rrset_collection_);
     }
     virtual void addRRset(const isc::dns::AbstractRRset& rrset) {
         if (client_->commit_called_) {
             isc_throw(DataSourceError, "Add after commit");
         }
-        client_->rrsets_.push_back(rrset.toText());
+        // We need to copy the RRset. We don't do it properly (we omit the
+        // signature, for example), because we don't need to.
+        RRsetPtr new_rrset(new isc::dns::BasicRRset(rrset.getName(),
+                                                    rrset.getClass(),
+                                                    rrset.getType(),
+                                                    rrset.getTTL()));
+        for (isc::dns::RdataIteratorPtr i(rrset.getRdataIterator());
+             !i->isLast(); i->next()) {
+            new_rrset->addRdata(i->getCurrent());
+        }
+        client_->rrsets_.push_back(new_rrset);
+        client_->rrset_texts_.push_back(rrset.toText());
     }
     virtual void deleteRRset(const isc::dns::AbstractRRset&) {
         isc_throw(isc::NotImplemented, "Method not used in tests");
@@ -106,21 +143,37 @@ public:
     }
 private:
     MockClient* client_;
+    boost::scoped_ptr<TestRRsetCollection> rrset_collection_;
     class Finder : public ZoneFinder {
     public:
-        Finder(const RRClass& rrclass) :
-            class_(rrclass)
+        Finder(const RRClass& rrclass, const Name& name,
+               const vector<RRsetPtr>& rrsets) :
+            class_(rrclass),
+            name_(name),
+            rrsets_(rrsets)
         {}
         virtual RRClass getClass() const {
             return (class_);
         }
         virtual Name getOrigin() const {
-            isc_throw(isc::NotImplemented, "Method not used in tests");
+            return (name_);
         }
-        virtual shared_ptr<Context> find(const Name&, const RRType&,
-                                         const FindOptions)
+        virtual shared_ptr<Context> find(const Name& name, const RRType& type,
+                                         const FindOptions options)
         {
-            isc_throw(isc::NotImplemented, "Method not used in tests");
+            // The method is not completely correct. It ignores many special
+            // cases and also the options except for the result. But this is
+            // enough for the tests.  We care only about exact match here.
+            BOOST_FOREACH(const RRsetPtr& rrset, rrsets_) {
+                if (rrset->getName() == name && rrset->getType() == type) {
+                    return (shared_ptr<Context>(
+                        new GenericContext(*this, options,
+                                           ResultContext(SUCCESS, rrset))));
+                }
+            }
+            return (shared_ptr<Context>(
+                new GenericContext(*this, options,
+                                   ResultContext(NXRRSET, ConstRRsetPtr()))));
         }
         virtual shared_ptr<Context> findAll(const Name&,
                                             vector<ConstRRsetPtr>&,
@@ -133,6 +186,8 @@ private:
         }
     private:
         const RRClass class_;
+        const Name name_;
+        const vector<RRsetPtr>& rrsets_;
     } finder_;
 };
 
@@ -147,7 +202,7 @@ MockClient::getUpdater(const Name& name, bool replace, bool journaling) const {
     // const_cast is bad. But the const on getUpdater seems wrong in the first
     // place, since updater will be modifying the data there. And the updater
     // wants to store data into the client so we can examine it later.
-    return (ZoneUpdaterPtr(new Updater(const_cast<MockClient*>(this))));
+    return (ZoneUpdaterPtr(new Updater(const_cast<MockClient*>(this), name)));
 }
 
 class ZoneLoaderTest : public ::testing::Test {
@@ -160,10 +215,12 @@ protected:
     {}
     void prepareSource(const Name& zone, const char* filename) {
         // TODO:
-        // Currently, load uses an urelated implementation. In the long term,
-        // the method will probably be deprecated. At that time, we should
-        // probably prepare the data in some other way (using sqlite3 or
-        // something). This is simpler for now.
+        // Currently, source_client_ is of InMemoryClient and its load()
+        // uses a different code than the ZoneLoader (so we can cross-check
+        // the implementations). Currently, the load() doesn't perform any
+        // post-load checks. It will change in #2499, at which point the
+        // loading may start failing depending on details of the test data. We
+        // should prepare the data by some different method then.
         source_client_.load(zone, string(TEST_DATA_DIR) + "/" + filename);
     }
 private:
@@ -198,12 +255,12 @@ TEST_F(ZoneLoaderTest, copyUnsigned) {
     // The count is 34 because we expect the RRs to be separated.
     EXPECT_EQ(34, destination_client_.rrsets_.size());
     // Ensure known order.
-    std::sort(destination_client_.rrsets_.begin(),
-              destination_client_.rrsets_.end());
+    std::sort(destination_client_.rrset_texts_.begin(),
+              destination_client_.rrset_texts_.end());
     EXPECT_EQ(". 518400 IN NS a.root-servers.net.\n",
-              destination_client_.rrsets_.front());
+              destination_client_.rrset_texts_.front());
     EXPECT_EQ("m.root-servers.net. 3600000 IN AAAA 2001:dc3::35\n",
-              destination_client_.rrsets_.back());
+              destination_client_.rrset_texts_.back());
 
     // It isn't possible to try again now
     EXPECT_THROW(loader.load(), isc::InvalidOperation);
@@ -252,18 +309,18 @@ TEST_F(ZoneLoaderTest, copySigned) {
     EXPECT_EQ(14, destination_client_.rrsets_.size());
     EXPECT_TRUE(destination_client_.commit_called_);
     // Same trick with sorting to know where they are
-    std::sort(destination_client_.rrsets_.begin(),
-              destination_client_.rrsets_.end());
+    std::sort(destination_client_.rrset_texts_.begin(),
+              destination_client_.rrset_texts_.end());
     // Due to the R at the beginning, this one should be last
     EXPECT_EQ("09GM5T42SMIMT7R8DF6RTG80SFMS1NLU.example.org. 1200 IN NSEC3 "
               "1 0 10 AABBCCDD RKOF8QMFRB5F2V9EJHFBVB2JPVSA0DJD A RRSIG\n",
-              destination_client_.rrsets_[0]);
+              destination_client_.rrset_texts_[0]);
     EXPECT_EQ("09GM5T42SMIMT7R8DF6RTG80SFMS1NLU.example.org. 1200 IN RRSIG "
               "NSEC3 7 3 1200 20120301040838 20120131040838 19562 example.org."
               " EdwMeepLf//lV+KpCAN+213Scv1rrZyj4i2OwoCP4XxxS3CWGSuvYuKOyfZc8w"
               "KRcrD/4YG6nZVXE0s5O8NahjBJmDIyVt4WkfZ6QthxGg8ggLVvcD3dFksPyiKHf"
               "/WrTOZPSsxvN5m/i1Ey6+YWS01Gf3WDCMWDauC7Nmh3CTM=\n",
-              destination_client_.rrsets_[1]);
+              destination_client_.rrset_texts_[1]);
 }
 
 // If the destination zone does not exist, it throws
@@ -304,12 +361,12 @@ TEST_F(ZoneLoaderTest, loadUnsigned) {
     // The count is 34 because we expect the RRs to be separated.
     EXPECT_EQ(34, destination_client_.rrsets_.size());
     // Ensure known order.
-    std::sort(destination_client_.rrsets_.begin(),
-              destination_client_.rrsets_.end());
+    std::sort(destination_client_.rrset_texts_.begin(),
+              destination_client_.rrset_texts_.end());
     EXPECT_EQ(". 518400 IN NS a.root-servers.net.\n",
-              destination_client_.rrsets_.front());
+              destination_client_.rrset_texts_.front());
     EXPECT_EQ("m.root-servers.net. 3600000 IN AAAA 2001:dc3::35\n",
-              destination_client_.rrsets_.back());
+              destination_client_.rrset_texts_.back());
 
     // It isn't possible to try again now
     EXPECT_THROW(loader.load(), isc::InvalidOperation);
@@ -362,18 +419,18 @@ TEST_F(ZoneLoaderTest, loadSigned) {
     EXPECT_EQ(14, destination_client_.rrsets_.size());
     EXPECT_TRUE(destination_client_.commit_called_);
     // Same trick with sorting to know where they are
-    std::sort(destination_client_.rrsets_.begin(),
-              destination_client_.rrsets_.end());
+    std::sort(destination_client_.rrset_texts_.begin(),
+              destination_client_.rrset_texts_.end());
     // Due to the R at the beginning, this one should be last
     EXPECT_EQ("09GM5T42SMIMT7R8DF6RTG80SFMS1NLU.example.org. 1200 IN NSEC3 "
               "1 0 10 AABBCCDD RKOF8QMFRB5F2V9EJHFBVB2JPVSA0DJD A RRSIG\n",
-              destination_client_.rrsets_[0]);
+              destination_client_.rrset_texts_[0]);
     EXPECT_EQ("09GM5T42SMIMT7R8DF6RTG80SFMS1NLU.example.org. 1200 IN RRSIG "
               "NSEC3 7 3 1200 20120301040838 20120131040838 19562 example.org."
               " EdwMeepLf//lV+KpCAN+213Scv1rrZyj4i2OwoCP4XxxS3CWGSuvYuKOyfZc8w"
               "KRcrD/4YG6nZVXE0s5O8NahjBJmDIyVt4WkfZ6QthxGg8ggLVvcD3dFksPyiKHf"
               "/WrTOZPSsxvN5m/i1Ey6+YWS01Gf3WDCMWDauC7Nmh3CTM=\n",
-              destination_client_.rrsets_[1]);
+              destination_client_.rrset_texts_[1]);
 }
 
 // Test it throws when there's no such file
@@ -393,6 +450,49 @@ TEST_F(ZoneLoaderTest, loadSyntaxError) {
                       TEST_DATA_DIR "/example.org.sqlite3");
     EXPECT_THROW(loader.load(), MasterFileError);
     EXPECT_FALSE(destination_client_.commit_called_);
+}
+
+// Test there's validation of the data in the zone loader.
+TEST_F(ZoneLoaderTest, loadCheck) {
+    ZoneLoader loader(destination_client_, Name("example.org"),
+                      TEST_DATA_DIR "/novalidate.zone");
+    EXPECT_THROW(loader.loadIncremental(10), ZoneContentError);
+    // The messages go to the log. We don't have an easy way to examine them.
+    EXPECT_FALSE(destination_client_.commit_called_);
+}
+
+// The same test, but for copying from other data source
+TEST_F(ZoneLoaderTest, copyCheck) {
+    prepareSource(Name("example.org"), "novalidate.zone");
+    ZoneLoader loader(destination_client_, Name("example.org"),
+                      source_client_);
+
+    EXPECT_THROW(loader.loadIncremental(10), ZoneContentError);
+    // The messages go to the log. We don't have an easy way to examine them.
+    EXPECT_FALSE(destination_client_.commit_called_);
+}
+
+// Check a warning doesn't disrupt the loading of the zone
+TEST_F(ZoneLoaderTest, loadCheckWarn) {
+    ZoneLoader loader(destination_client_, Name("example.org"),
+                      TEST_DATA_DIR "/checkwarn.zone");
+    EXPECT_TRUE(loader.loadIncremental(10));
+    // The messages go to the log. We don't have an easy way to examine them.
+    // But the zone was committed and contains all 3 RRs
+    EXPECT_TRUE(destination_client_.commit_called_);
+    EXPECT_EQ(3, destination_client_.rrsets_.size());
+}
+
+TEST_F(ZoneLoaderTest, copyCheckWarn) {
+    prepareSource(Name("example.org"), "checkwarn.zone");
+    ZoneLoader loader(destination_client_, Name("example.org"),
+                      source_client_);
+    EXPECT_TRUE(loader.loadIncremental(10));
+    // The messages go to the log. We don't have an easy way to examine them.
+    // But the zone was committed and contains all 3 RRs
+    EXPECT_TRUE(destination_client_.commit_called_);
+    EXPECT_EQ(3, destination_client_.rrsets_.size());
+
 }
 
 }

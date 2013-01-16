@@ -1,0 +1,3 @@
+example.org.			86400	IN	SOA	a.root-servers.net. nstld.verisign-grs.com. 2010030802 1800 900 604800 86400
+; Missing the NS here, will generate an error in post-load check of the zone.
+www.example.org.        3600    IN  A   192.0.2.1
