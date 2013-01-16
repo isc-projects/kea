@@ -638,11 +638,6 @@ MasterLoader::loadedSucessfully() const {
 }
 
 size_t
-MasterLoader::getRRCount() const {
-    return (impl_->rr_count_);
-}
-
-size_t
 MasterLoader::getSize() const {
     return (impl_->getSize());
 }
