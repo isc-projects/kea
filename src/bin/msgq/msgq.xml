@@ -111,7 +111,7 @@
         <listitem><para>
           The UNIX domain socket file this daemon will use.
           The default is
-          <filename>/usr/local/var/bind10-devel/msg_socket</filename>.
+          <filename>/usr/local/var/bind10/msg_socket</filename>.
 <!-- @localstatedir@/@PACKAGE_NAME@/msg_socket -->
           </para></listitem>
       </varlistentry>

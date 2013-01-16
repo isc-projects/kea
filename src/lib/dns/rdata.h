@@ -60,7 +60,7 @@ public:
 
 ///
 /// \brief A standard DNS module exception that is thrown if RDATA parser
-/// parser encounters a character-string (as defined in RFC1035) exceeding
+/// encounters a character-string (as defined in RFC1035) exceeding
 /// the maximum allowable length (\c MAX_CHARSTRING_LEN).
 ///
 class CharStringTooLong : public Exception {

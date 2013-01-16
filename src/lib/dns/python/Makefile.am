@@ -25,6 +25,8 @@ libb10_pydnspp_la_SOURCES += tsigrecord_python.cc tsigrecord_python.h
 libb10_pydnspp_la_SOURCES += tsig_python.cc tsig_python.h
 libb10_pydnspp_la_SOURCES += edns_python.cc edns_python.h
 libb10_pydnspp_la_SOURCES += message_python.cc message_python.h
+libb10_pydnspp_la_SOURCES += rrset_collection_python.cc
+libb10_pydnspp_la_SOURCES += rrset_collection_python.h
 
 libb10_pydnspp_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 libb10_pydnspp_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
@@ -43,6 +45,7 @@ pydnspp_la_LDFLAGS = $(PYTHON_LDFLAGS)
 EXTRA_DIST = tsigerror_python_inc.cc
 EXTRA_DIST += message_python_inc.cc
 EXTRA_DIST += nsec3hash_python_inc.cc
+EXTRA_DIST += rrset_collection_python_inc.cc
 
 # Python prefers .so, while some OSes (specifically MacOS) use a different
 # suffix for dynamic objects.  -module is necessary to work this around.

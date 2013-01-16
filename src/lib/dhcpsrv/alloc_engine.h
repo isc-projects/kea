@@ -216,6 +216,24 @@ private:
                           uint32_t iaid, const isc::asiolink::IOAddress& addr,
                           bool fake_allocation = false);
 
+    /// @brief reuses expired lease
+    ///
+    /// Updates existing expired lease with new information. Lease database
+    /// is updated if this is real (i.e. REQUEST, fake_allocation = false), not
+    /// dummy allocation request (i.e. SOLICIT, fake_allocation = true).
+    ///
+    /// @param expired old, expired lease
+    /// @param subnet subnet the lease is allocated from
+    /// @param duid client's DUID
+    /// @param iaid IAID from the IA_NA container the client sent to us
+    /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
+    ///        an address for SOLICIT that is not really allocated (true)
+    /// @return refreshed lease
+    /// @throw BadValue if trying to recycle lease that is still valid
+    Lease6Ptr reuseExpiredLease(Lease6Ptr& expired, const Subnet6Ptr& subnet,
+                                const DuidPtr& duid, uint32_t iaid,
+                                bool fake_allocation = false);
+
     /// @brief a pointer to currently used allocator
     boost::shared_ptr<Allocator> allocator_;
 

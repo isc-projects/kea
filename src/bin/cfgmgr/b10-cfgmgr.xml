@@ -136,7 +136,7 @@
   <refsect1>
     <title>FILES</title>
 <!-- TODO: fix path -->
-    <para><filename>/usr/local/var/bind10-devel/b10-config.db</filename>
+    <para><filename>/usr/local/var/bind10/b10-config.db</filename>
       &mdash; Configuration storage file.
     </para>
   </refsect1>
