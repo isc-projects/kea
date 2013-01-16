@@ -25,6 +25,8 @@
 #include <dns/master_loader.h>
 #include <dns/master_lexer.h>
 
+#include <boost/bind.hpp>
+
 using isc::dns::Name;
 using isc::dns::ConstRRsetPtr;
 using isc::dns::MasterLoader;
@@ -62,6 +64,21 @@ ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
     }
 }
 
+namespace {
+// Unified callback to install RR and increment RR count at the same time.
+void
+addRR(const dns::Name& name, const dns::RRClass& rrclass,
+      const dns::RRType& type, const dns::RRTTL& ttl,
+      const dns::rdata::RdataPtr& data, ZoneUpdater* updater,
+      size_t* rr_count)
+{
+    isc::dns::BasicRRset rrset(name, rrclass, type, ttl);
+    rrset.addRdata(data);
+    updater->addRRset(rrset);
+    ++*rr_count;
+}
+}
+
 ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
                        const char* filename) :
     updater_(destination.getUpdater(zone_name, true, false)),
@@ -79,7 +96,8 @@ ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
                                    createMasterLoaderCallbacks(zone_name,
                                        updater_->getFinder().getClass(),
                                        &loaded_ok_),
-                                   createMasterLoaderAddCallback(*updater_)));
+                                   boost::bind(addRR, _1, _2, _3, _4, _5,
+                                               updater_.get(), &rr_count_)));
     }
 }
 
@@ -114,8 +132,8 @@ ZoneLoader::loadIncremental(size_t limit) {
                   "Loading has been completed previously");
     }
 
-    if (iterator_ == ZoneIteratorPtr()) {
-        assert(loader_.get() != NULL);
+    if (!iterator_) {
+        assert(loader_);
         try {
             complete_ = loader_->loadIncremental(limit);
         } catch (const isc::dns::MasterLoaderError& e) {
@@ -124,7 +142,6 @@ ZoneLoader::loadIncremental(size_t limit) {
         if (complete_ && !loaded_ok_) {
             isc_throw(MasterFileError, "Error while loading master file");
         }
-        rr_count_ = loader_->getRRCount();
     } else {
         complete_ = copyRRsets(updater_, iterator_, limit, rr_count_);
     }
